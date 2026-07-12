@@ -12,8 +12,8 @@ import { JiraAdapter } from "./JiraAdapter";
  *
  * These tests pin: JQL construction (fixVersion = / sprint =), the `parent`
  * field addition to the fields param, nextPageToken pagination mirroring
- * `searchIssues`, mapped `parent` ref extraction, and the DC/Server no-op.
- * All MUST fail at authoring time — `getMilestoneIssues` does not exist yet.
+ * `searchIssues`, mapped `parent` ref extraction, and the Server/Data Center
+ * v2 `/search` dialect (classic endpoint, startAt pagination).
  */
 
 // Mock global fetch
@@ -237,8 +237,24 @@ describe("JiraAdapter.getMilestoneIssues", () => {
     });
   });
 
-  describe("Data Center / Server deployment — Cloud-only no-op", () => {
-    it("returns an empty membership result without throwing on a DC/Server-shaped adapter", async () => {
+  describe("Data Center / Server deployment — v2 /search dialect", () => {
+    // A live DC v2 /search member row: name/key user refs, plain-string
+    // description, self on /rest/api/2. Mirrors the dcIssue shape used by the
+    // Data Center search tests in JiraAdapter.test.ts.
+    const dcMember = {
+      id: "20001",
+      key: "DC-1",
+      self: "https://jira.internal.example.com/rest/api/2/issue/20001",
+      fields: {
+        summary: "DC member",
+        description: "DC body",
+        status: { name: "Open" },
+        created: "2026-01-01T00:00:00.000Z",
+        updated: "2026-01-02T00:00:00.000Z",
+      },
+    };
+
+    async function makeServerAdapter() {
       const serverAdapter = new JiraAdapter({
         provider: "JIRA",
         baseUrl: "https://jira.internal.example.com",
@@ -251,16 +267,76 @@ describe("JiraAdapter.getMilestoneIssues", () => {
         baseUrl: "https://jira.internal.example.com",
       });
       mockFetch.mockClear();
+      return serverAdapter;
+    }
+
+    it("queries the classic /rest/api/2/search endpoint (not search/jql) with the fixVersion clause", async () => {
+      const serverAdapter = await makeServerAdapter();
+      mockFetch.mockResolvedValueOnce(
+        jsonResponse({ issues: [], total: 0, startAt: 0 })
+      );
+
+      await (serverAdapter as any).getMilestoneIssues({
+        id: "10000",
+        kind: "RELEASE",
+      });
+
+      const [calledUrl] = mockFetch.mock.calls[0];
+      expect(calledUrl).toContain("/rest/api/2/search?");
+      expect(calledUrl).not.toContain("search/jql");
+      const params = new URL(calledUrl).searchParams;
+      expect(params.get("jql")).toContain("fixVersion = 10000");
+    });
+
+    it("maps returned members and synthesizes a startAt-based nextPageToken when more pages exist", async () => {
+      const serverAdapter = await makeServerAdapter();
+      // Page 1: one member back, total=3 → two more exist.
+      mockFetch.mockResolvedValueOnce(
+        jsonResponse({ issues: [dcMember], total: 3, startAt: 0 })
+      );
 
       const result = await (serverAdapter as any).getMilestoneIssues({
         id: "10000",
         kind: "RELEASE",
       });
 
-      expect(result.issues).toEqual([]);
+      expect(result.issues).toHaveLength(1);
+      expect(result.issues[0].id).toBe("20001");
+      expect(result.hasMore).toBe(true);
+      expect(result.nextPageToken).toBe("1");
+    });
+
+    it("sends an incoming pageToken back as startAt (not nextPageToken) on DC", async () => {
+      const serverAdapter = await makeServerAdapter();
+      mockFetch.mockResolvedValueOnce(
+        jsonResponse({ issues: [dcMember], total: 3, startAt: 1 })
+      );
+
+      await (serverAdapter as any).getMilestoneIssues(
+        { id: "200", kind: "ITERATION" },
+        { pageToken: "1" }
+      );
+
+      const [calledUrl] = mockFetch.mock.calls[0];
+      const params = new URL(calledUrl).searchParams;
+      expect(params.get("startAt")).toBe("1");
+      expect(params.get("nextPageToken")).toBeNull();
+      expect(params.get("jql")).toContain("sprint = 200");
+    });
+
+    it("omits nextPageToken once the last page is reached", async () => {
+      const serverAdapter = await makeServerAdapter();
+      mockFetch.mockResolvedValueOnce(
+        jsonResponse({ issues: [dcMember], total: 1, startAt: 0 })
+      );
+
+      const result = await (serverAdapter as any).getMilestoneIssues({
+        id: "10000",
+        kind: "RELEASE",
+      });
+
       expect(result.hasMore).toBe(false);
-      // Clean skip — no upstream request attempted for the Cloud-only endpoint.
-      expect(mockFetch).not.toHaveBeenCalled();
+      expect(result.nextPageToken).toBeUndefined();
     });
   });
 });

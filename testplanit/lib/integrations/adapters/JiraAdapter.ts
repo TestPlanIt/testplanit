@@ -1258,6 +1258,90 @@ export class JiraAdapter extends BaseAdapter {
     };
   }
 
+  /**
+   * Shared executor for a bounded JQL search. The Cloud/Server dialect split
+   * lives here so every JQL-backed read (searchIssues, getMilestoneIssues)
+   * paginates identically and can never drift:
+   *
+   *   - Cloud ships the enhanced `/rest/api/3/search/jql` endpoint — an opaque
+   *     `nextPageToken` cursor and `isLast`, and no `total` (Atlassian
+   *     CHANGE-2046). Passing `startAt` is silently ignored.
+   *   - Server/Data Center only ships the classic `/rest/api/2/search`
+   *     endpoint — it pages by `startAt`, returns `total`/`startAt`, and has no
+   *     cursor of its own, so a startAt-based `nextPageToken` is synthesized
+   *     (the deployment accepts an incoming pageToken back as `startAt`).
+   *
+   * The caller supplies a complete JQL string (including any ORDER BY); this
+   * only layers on pagination and the shared field set.
+   */
+  private async runJqlSearch(
+    jqlString: string,
+    options?: { pageToken?: string; limit?: number }
+  ): Promise<{
+    issues: IssueData[];
+    total: number;
+    hasMore: boolean;
+    nextPageToken?: string;
+  }> {
+    const params = new URLSearchParams({
+      jql: jqlString,
+      maxResults: (options?.limit || 50).toString(),
+      // `parent` included (D-14) so every synced-issue path captures hierarchy
+      // the same way for buildSyncedIssueData.
+      fields:
+        "summary,description,status,priority,issuetype,assignee,reporter,labels,created,updated,parent",
+    });
+    if (options?.pageToken) {
+      if (this.deployment === "server") {
+        // DC pages by startAt (see the synthesized nextPageToken below).
+        params.set("startAt", options.pageToken);
+      } else {
+        params.set("nextPageToken", options.pageToken);
+      }
+    }
+
+    const searchPath =
+      this.deployment === "server"
+        ? `/rest/api/2/search?${params.toString()}`
+        : `/rest/api/3/search/jql?${params.toString()}`;
+    const response = await this.makeRequest<any>(this.buildUrl(searchPath));
+
+    const issues = (response.issues || []).map((issue: any) =>
+      this.mapJiraIssue(issue)
+    );
+    // Prefer the cursor / isLast flag the enhanced endpoint provides; fall back
+    // to the legacy total+startAt math (Server/DC), then to "a full page
+    // implies more".
+    const cloudNextPageToken: string | undefined = response.nextPageToken;
+    const hasMore =
+      typeof response.isLast === "boolean"
+        ? !response.isLast
+        : cloudNextPageToken
+          ? true
+          : typeof response.total === "number"
+            ? (response.startAt || 0) + issues.length < response.total
+            : issues.length >= (options?.limit || 50);
+    // Server/DC's classic /search has no cursor of its own — synthesize a
+    // startAt one so callers that only advance via pageToken don't re-read
+    // page 1 forever.
+    const nextPageToken =
+      cloudNextPageToken ??
+      (this.deployment === "server" && hasMore
+        ? String((response.startAt ?? 0) + issues.length)
+        : undefined);
+
+    return {
+      issues,
+      // The enhanced endpoint omits `total`; report the page count so callers
+      // reading `total` get an honest number instead of NaN/undefined. Exact
+      // match counts come from paginating via `nextPageToken`.
+      total:
+        typeof response.total === "number" ? response.total : issues.length,
+      hasMore,
+      nextPageToken,
+    };
+  }
+
   async searchIssues(options: IssueSearchOptions): Promise<{
     issues: IssueData[];
     total: number;
@@ -1317,85 +1401,19 @@ export class JiraAdapter extends BaseAdapter {
       // Automatic/incremental sync - limit to last 30 days
       jqlString = "created >= -30d ORDER BY created DESC";
     }
-    // Jira Cloud's enhanced search (`/rest/api/3/search/jql`) paginates by an
-    // opaque `nextPageToken`, NOT `startAt`, and no longer returns a `total`.
-    // (See Atlassian CHANGE-2046.) Passing `startAt` is silently ignored and
-    // reading `response.total`/`response.startAt` yields `undefined` — which is
-    // exactly why the pre-migration parsing reported 0 results / hasMore=false.
-    const params = new URLSearchParams({
-      jql: jqlString,
-      maxResults: (options.limit || 50).toString(),
-      // `parent` included (D-14) so regular bulk-import issues capture
-      // hierarchy the same way membership import does — consistency across
-      // both synced-issue paths that feed buildSyncedIssueData.
-      fields:
-        "summary,description,status,priority,issuetype,assignee,reporter,labels,created,updated,parent",
+    return this.runJqlSearch(jqlString, {
+      pageToken: options.pageToken,
+      limit: options.limit,
     });
-    if (options.pageToken) {
-      if (this.deployment === "server") {
-        // DC uses startAt for pagination
-        params.set("startAt", options.pageToken);
-      } else {
-        params.set("nextPageToken", options.pageToken);
-      }
-    }
-
-    // Cloud exposes the enhanced JQL endpoint /search/jql; Server/Data
-    // Center only ships the classic /search endpoint (same response shape).
-    const searchPath =
-      this.deployment === "server"
-        ? `/rest/api/2/search?${params.toString()}`
-        : `/rest/api/3/search/jql?${params.toString()}`;
-    const searchUrl = this.buildUrl(searchPath);
-
-    const response = await this.makeRequest<any>(searchUrl);
-
-    const issues = (response.issues || []).map((issue: any) =>
-      this.mapJiraIssue(issue)
-    );
-    const cloudNextPageToken: string | undefined = response.nextPageToken;
-    // Prefer the cursor / isLast flag the new endpoint provides; fall back to
-    // the legacy total+startAt math only if the response still carries them
-    // (older Server/DC instances), then to "a full page implies more".
-    const hasMore =
-      typeof response.isLast === "boolean"
-        ? !response.isLast
-        : cloudNextPageToken
-          ? true
-          : typeof response.total === "number"
-            ? (response.startAt || 0) + issues.length < response.total
-            : issues.length >= (options.limit || 50);
-
-    // Server/Data Center's classic /search endpoint has no cursor of its own
-    // (no nextPageToken, no isLast) — it pages by startAt. Synthesize one so
-    // callers that only advance via pageToken (SyncService.
-    // performProjectImport) don't re-read page 1 forever: the deployment
-    // already accepts an incoming pageToken as startAt (see options.pageToken
-    // handling above).
-    const nextPageToken =
-      cloudNextPageToken ??
-      (this.deployment === "server" && hasMore
-        ? String((response.startAt ?? 0) + issues.length)
-        : undefined);
-
-    return {
-      issues,
-      // The new endpoint omits `total`; report the page count so callers that
-      // read `total` get an honest number instead of NaN/undefined. Callers
-      // needing an exact match count paginate via `nextPageToken`.
-      total:
-        typeof response.total === "number" ? response.total : issues.length,
-      hasMore,
-      nextPageToken,
-    };
   }
 
   /**
-   * Membership fetch for a milestone (Jira Fix Version / Sprint). Mirrors
-   * searchIssues' pagination idiom but is a separate method rather than a
-   * searchIssues option — the JQL clause (fixVersion=/sprint=) and the
-   * `parent` field addition have no equivalent hook in searchIssues' filter
-   * set (D-14 / interfaces lock, IssueAdapter.ts:271-279).
+   * Membership fetch for a milestone (Jira Fix Version / Sprint). Builds the
+   * fixVersion=/sprint= JQL clause and delegates to the shared runJqlSearch
+   * executor, so it inherits the same Cloud/Server pagination dialect as
+   * searchIssues. It stays a distinct method rather than a searchIssues option
+   * because that clause has no equivalent hook in searchIssues' filter set
+   * (D-14 / interfaces lock, IssueAdapter.ts:271-279).
    */
   async getMilestoneIssues(
     ref: { id: string; kind: "RELEASE" | "ITERATION" },
@@ -1406,56 +1424,19 @@ export class JiraAdapter extends BaseAdapter {
     hasMore: boolean;
     nextPageToken?: string;
   }> {
-    // Cloud-only for now: membership sync against Server/DC (fixVersion=/
-    // sprint= JQL through the classic v2 /search endpoint) has not been
-    // validated against a live instance — clean no-op skip rather than
-    // throwing, per deferred-items.md.
-    if (this.deployment === "server") {
-      return { issues: [], hasMore: false };
-    }
-
+    // fixVersion / sprint membership resolves identically on Cloud and
+    // Server/Data Center — same JQL fields, only the search endpoint and
+    // pagination dialect differ, both handled by runJqlSearch. `sprint` JQL
+    // requires the Jira Software (Agile) plugin, which is present on any
+    // instance that surfaces sprints at all (same assumption as the versions/
+    // sprints discovery path). The ORDER BY keeps DC's startAt paging
+    // deterministic across pages.
     const jqlClause =
-      ref.kind === "RELEASE" ? `fixVersion = ${ref.id}` : `sprint = ${ref.id}`;
+      ref.kind === "RELEASE"
+        ? `fixVersion = ${ref.id} ORDER BY created DESC`
+        : `sprint = ${ref.id} ORDER BY created DESC`;
 
-    const params = new URLSearchParams({
-      jql: jqlClause,
-      maxResults: (options?.limit || 50).toString(),
-      fields:
-        "summary,description,status,priority,issuetype,assignee,reporter,labels,created,updated,parent",
-    });
-    if (options?.pageToken) {
-      params.set("nextPageToken", options.pageToken);
-    }
-
-    // NOTE: intentionally NOT parameterized on this.apiVersion — Server/DC
-    // is handled by the no-op guard above, so this only ever runs against
-    // Cloud's enhanced-JQL endpoint.
-    const searchUrl = this.buildUrl(
-      `/rest/api/3/search/jql?${params.toString()}`
-    );
-
-    const response = await this.makeRequest<any>(searchUrl);
-
-    const issues = (response.issues || []).map((issue: any) =>
-      this.mapJiraIssue(issue)
-    );
-    const nextPageToken: string | undefined = response.nextPageToken;
-    const hasMore =
-      typeof response.isLast === "boolean"
-        ? !response.isLast
-        : nextPageToken
-          ? true
-          : typeof response.total === "number"
-            ? (response.startAt || 0) + issues.length < response.total
-            : issues.length >= (options?.limit || 50);
-
-    return {
-      issues,
-      total:
-        typeof response.total === "number" ? response.total : issues.length,
-      hasMore,
-      nextPageToken,
-    };
+    return this.runJqlSearch(jqlClause, options);
   }
 
   protected async addComment(issueId: string, comment: string): Promise<void> {
