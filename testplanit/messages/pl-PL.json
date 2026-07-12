@@ -2086,6 +2086,11 @@
       "testRuns": "Brak przebiegów testowych",
       "forecasts": "Brak dostępnych danych prognostycznych"
     },
+    "browser": {
+      "kindAll": "Wszystkie kamienie milowe",
+      "kindReleases": "Zsynchronizowane wydania",
+      "kindSprints": "Zsynchronizowane sprinty"
+    },
     "statusLabels": {
       "NOT_STARTED": "Nie rozpoczęto",
       "IN_PROGRESS": "W toku",
@@ -2241,6 +2246,8 @@
       "unlinkConfirmTitle": "Odłączyć zgłoszenie?",
       "unlinkConfirmDescription": "To usuwa zgłoszenie z tego kamienia milowego. Samo zgłoszenie zostaje zachowane i można je ponownie połączyć później.",
       "totalsUncovered": "{count, plural, one {# zgłoszenie nieobjęte testami} few {# zgłoszenia nieobjęte testami} many {# zgłoszeń nieobjętych testami} other {# zgłoszenia nieobjętego testami}}",
+      "percentReady": "{percent, number}% gotowe",
+      "readinessSummary": "{passed, number} zaliczonych · {failed, number} niezaliczonych · {inProgress, number} w trakcie · {notRun, number} nieprzetestowanych · {uncovered, number} nieobjętych (z {total, number} zgłoszeń)",
       "filterHasUntested": "Zawiera nieprzetestowane przypadki",
       "createRunNoCases": "Żadne z wybranych zgłoszeń nie ma połączonych przypadków testowych.",
       "createTestRunDetailed": "Utwórz przebieg testu ({issues, plural, one {# zgłoszenie} few {# zgłoszenia} many {# zgłoszeń} other {# zgłoszenia}} · {cases, plural, one {# przypadek} few {# przypadki} many {# przypadków} other {# przypadku}})"

@@ -2086,6 +2086,11 @@
       "testRuns": "テスト実行なし",
       "forecasts": "予測データはありません"
     },
+    "browser": {
+      "kindAll": "すべてのマイルストーン",
+      "kindReleases": "同期されたリリース",
+      "kindSprints": "同期されたスプリント"
+    },
     "statusLabels": {
       "NOT_STARTED": "開始されていません",
       "IN_PROGRESS": "進行中",
@@ -2241,6 +2246,8 @@
       "unlinkConfirmTitle": "問題のリンクを解除しますか？",
       "unlinkConfirmDescription": "これによりこのマイルストーンから問題が削除されます。問題自体は保持され、後で再度リンクできます。",
       "totalsUncovered": "{count, plural, other {未カバーの問題 # 件}}",
+      "percentReady": "{percent, number}% 準備完了",
+      "readinessSummary": "成功 {passed, number} 件 · 失敗 {failed, number} 件 · 進行中 {inProgress, number} 件 · 未実行 {notRun, number} 件 · 未対応 {uncovered, number} 件（全 {total, number} 件の課題中）",
       "filterHasUntested": "未テストのケースあり",
       "createRunNoCases": "選択した問題にリンクされたテストケースはありません。",
       "createTestRunDetailed": "テスト実行を作成 ({issues, plural, other {# 件の問題}} · {cases, plural, other {# 件のケース}})"

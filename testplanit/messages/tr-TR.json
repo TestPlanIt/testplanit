@@ -2086,6 +2086,11 @@
       "testRuns": "Test çalışması yok.",
       "forecasts": "Tahmin verisi mevcut değil."
     },
+    "browser": {
+      "kindAll": "Tüm dönüm noktaları",
+      "kindReleases": "Senkronize edilmiş sürümler",
+      "kindSprints": "Senkronize edilmiş sprintler"
+    },
     "statusLabels": {
       "NOT_STARTED": "Başlamadı",
       "IN_PROGRESS": "Devam etmekte",
@@ -2241,6 +2246,8 @@
       "unlinkConfirmTitle": "Sorun bağlantısı kaldırılsın mı?",
       "unlinkConfirmDescription": "Bu, sorunu bu dönüm noktasından kaldırır. Sorunun kendisi saklanır ve daha sonra tekrar bağlanabilir.",
       "totalsUncovered": "{count, plural, one {# kapsanmamış sorun} other {# kapsanmamış sorun}}",
+      "percentReady": "%{percent, number} hazır",
+      "readinessSummary": "{passed, number} başarılı · {failed, number} başarısız · {inProgress, number} devam ediyor · {notRun, number} çalıştırılmadı · {uncovered, number} kapsanmadı (toplam {total, number} sorundan)",
       "filterHasUntested": "Test edilmemiş durumları var",
       "createRunNoCases": "Seçilen sorunların hiçbirinin bağlı test durumu yok.",
       "createTestRunDetailed": "Test çalıştırması oluştur ({issues, plural, one {# sorun} other {# sorun}} · {cases, plural, one {# durum} other {# durum}})"

@@ -2086,6 +2086,11 @@
       "testRuns": "Тестовые запуски не проводились.",
       "forecasts": "Данные прогноза отсутствуют."
     },
+    "browser": {
+      "kindAll": "Все этапы",
+      "kindReleases": "Синхронизированные релизы",
+      "kindSprints": "Синхронизированные спринты"
+    },
     "statusLabels": {
       "NOT_STARTED": "Не запущено",
       "IN_PROGRESS": "В ходе выполнения",
@@ -2241,6 +2246,8 @@
       "unlinkConfirmTitle": "Отвязать задачу?",
       "unlinkConfirmDescription": "Это удалит задачу из этой вехи. Сама задача сохранится и может быть привязана снова позже.",
       "totalsUncovered": "{count, plural, one {# непокрытая задача} few {# непокрытые задачи} many {# непокрытых задач} other {# непокрытых задач}}",
+      "percentReady": "Готово на {percent, number}%",
+      "readinessSummary": "пройдено: {passed, number} · не пройдено: {failed, number} · в процессе: {inProgress, number} · не выполнено: {notRun, number} · без покрытия: {uncovered, number} (из {total, number} задач)",
       "filterHasUntested": "Есть непротестированные случаи",
       "createRunNoCases": "Ни одна из выбранных задач не имеет привязанных тестовых случаев.",
       "createTestRunDetailed": "Создать тестовый запуск ({issues, plural, one {# задача} few {# задачи} many {# задач} other {# задач}} · {cases, plural, one {# случай} few {# случая} many {# случаев} other {# случаев}})"

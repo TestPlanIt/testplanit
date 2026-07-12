@@ -751,6 +751,7 @@
       "sortByDate": "Sort by date",
       "testRuns": "{count, plural, =0 {No Test Runs} =1 {1 Test Run} other {# Test Runs}}",
       "sessions": "{count, plural, =0 {No Sessions} =1 {1 Session} other {# Sessions}}",
+      "issues": "{count, plural, =0 {No Issues} =1 {1 Issue} other {# Issues}}",
       "noOptions": "No options available",
       "multiConfiguration": "Part of a multi-configuration group",
       "otherConfigurations": "Other configurations",

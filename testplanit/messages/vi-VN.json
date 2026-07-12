@@ -2086,6 +2086,11 @@
       "testRuns": "Không có thử nghiệm nào được thực hiện",
       "forecasts": "Không có dữ liệu dự báo nào."
     },
+    "browser": {
+      "kindAll": "Tất cả mốc quan trọng",
+      "kindReleases": "Bản phát hành đã đồng bộ",
+      "kindSprints": "Sprint đã đồng bộ"
+    },
     "statusLabels": {
       "NOT_STARTED": "Chưa bắt đầu",
       "IN_PROGRESS": "Đang tiến hành",
@@ -2241,6 +2246,8 @@
       "unlinkConfirmTitle": "Hủy liên kết vấn đề?",
       "unlinkConfirmDescription": "Việc này sẽ xóa vấn đề khỏi cột mốc này. Vấn đề vẫn được giữ lại và có thể được liên kết lại sau.",
       "totalsUncovered": "{count, plural, other {# vấn đề chưa được phủ}}",
+      "percentReady": "{percent, number}% sẵn sàng",
+      "readinessSummary": "{passed, number} đạt · {failed, number} lỗi · {inProgress, number} đang thực hiện · {notRun, number} chưa chạy · {uncovered, number} chưa được kiểm tra (trong tổng số {total, number} vấn đề)",
       "filterHasUntested": "Có trường hợp chưa được kiểm thử",
       "createRunNoCases": "Không có vấn đề nào trong số đã chọn có trường hợp thử nghiệm được liên kết.",
       "createTestRunDetailed": "Tạo lần chạy thử nghiệm ({issues, plural, other {# vấn đề}} · {cases, plural, other {# trường hợp}})"

@@ -2086,6 +2086,11 @@
       "testRuns": "Aucun essai.",
       "forecasts": "Aucune donnée prévisionnelle disponible"
     },
+    "browser": {
+      "kindAll": "Toutes les étapes importantes",
+      "kindReleases": "Versions synchronisées",
+      "kindSprints": "Sprints synchronisés"
+    },
     "statusLabels": {
       "NOT_STARTED": "Non démarré",
       "IN_PROGRESS": "En cours",
@@ -2241,6 +2246,8 @@
       "unlinkConfirmTitle": "Dissocier le ticket ?",
       "unlinkConfirmDescription": "Cela supprime le ticket de cette étape clé. Le ticket lui-même est conservé et peut être lié à nouveau ultérieurement.",
       "totalsUncovered": "{count, plural, one {# ticket non couvert} other {# tickets non couverts}}",
+      "percentReady": "{percent, number} % prêt",
+      "readinessSummary": "{passed, number} réussis · {failed, number} échoués · {inProgress, number} en cours · {notRun, number} non exécutés · {uncovered, number} non couverts (sur {total, number} éléments)",
       "filterHasUntested": "Contient des cas non testés",
       "createRunNoCases": "Aucun des tickets sélectionnés n'a de cas de test lié.",
       "createTestRunDetailed": "Créer une exécution de test ({issues, plural, one {# ticket} other {# tickets}} · {cases, plural, one {# cas} other {# cas}})"

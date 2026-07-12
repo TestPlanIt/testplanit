@@ -2086,6 +2086,11 @@
       "testRuns": "No hay pruebas",
       "forecasts": "No hay datos de previsión disponibles"
     },
+    "browser": {
+      "kindAll": "Todos los hitos",
+      "kindReleases": "Lanzamientos sincronizados",
+      "kindSprints": "Sprints sincronizados"
+    },
     "statusLabels": {
       "NOT_STARTED": "No iniciado",
       "IN_PROGRESS": "En curso",
@@ -2241,6 +2246,8 @@
       "unlinkConfirmTitle": "¿Desvincular incidencia?",
       "unlinkConfirmDescription": "Esto elimina la incidencia de este hito. La incidencia en sí se conserva y puede vincularse de nuevo más adelante.",
       "totalsUncovered": "{count, plural, one {# incidencia sin cobertura} other {# incidencias sin cobertura}}",
+      "percentReady": "{percent, number}% listo",
+      "readinessSummary": "{passed, number} aprobadas · {failed, number} fallidas · {inProgress, number} en progreso · {notRun, number} no ejecutadas · {uncovered, number} sin cubrir (de {total, number} incidencias)",
       "filterHasUntested": "Tiene casos sin probar",
       "createRunNoCases": "Ninguna de las incidencias seleccionadas tiene casos de prueba vinculados.",
       "createTestRunDetailed": "Crear ejecución de prueba ({issues, plural, one {# incidencia} other {# incidencias}} · {cases, plural, one {# caso} other {# casos}})"

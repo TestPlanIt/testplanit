@@ -2086,6 +2086,11 @@
       "testRuns": "테스트 실행 없음",
       "forecasts": "예측 데이터가 없습니다."
     },
+    "browser": {
+      "kindAll": "모든 마일스톤",
+      "kindReleases": "동기화된 릴리스",
+      "kindSprints": "동기화된 스프린트"
+    },
     "statusLabels": {
       "NOT_STARTED": "시작 안 함",
       "IN_PROGRESS": "진행 중",
@@ -2241,6 +2246,8 @@
       "unlinkConfirmTitle": "이슈 연결을 해제하시겠습니까?",
       "unlinkConfirmDescription": "이 작업은 이슈를 이 마일스톤에서 제거합니다. 이슈 자체는 유지되며 나중에 다시 연결할 수 있습니다.",
       "totalsUncovered": "{count, plural, other {# 커버되지 않은 이슈}}",
+      "percentReady": "{percent, number}% 준비됨",
+      "readinessSummary": "통과 {passed, number}건 · 실패 {failed, number}건 · 진행 중 {inProgress, number}건 · 미실행 {notRun, number}건 · 미포함 {uncovered, number}건 (총 {total, number}개 이슈 중)",
       "filterHasUntested": "테스트되지 않은 케이스 있음",
       "createRunNoCases": "선택한 이슈 중 연결된 테스트 케이스가 있는 항목이 없습니다.",
       "createTestRunDetailed": "테스트 실행 생성 ({issues, plural, other {# 이슈}} · {cases, plural, other {# 케이스}})"

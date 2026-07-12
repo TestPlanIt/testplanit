@@ -2086,6 +2086,11 @@
       "testRuns": "Geen testritten",
       "forecasts": "Geen prognosegegevens beschikbaar"
     },
+    "browser": {
+      "kindAll": "Alle mijlpalen",
+      "kindReleases": "Gesynchroniseerde releases",
+      "kindSprints": "Gesynchroniseerde sprints"
+    },
     "statusLabels": {
       "NOT_STARTED": "Niet gestart",
       "IN_PROGRESS": "In uitvoering",
@@ -2241,6 +2246,8 @@
       "unlinkConfirmTitle": "Probleem ontkoppelen?",
       "unlinkConfirmDescription": "Dit verwijdert het probleem van deze mijlpaal. Het probleem zelf blijft behouden en kan later opnieuw worden gekoppeld.",
       "totalsUncovered": "{count, plural, one {# niet-gedekt probleem} other {# niet-gedekte problemen}}",
+      "percentReady": "{percent, number}% gereed",
+      "readinessSummary": "{passed, number} geslaagd · {failed, number} mislukt · {inProgress, number} in behandeling · {notRun, number} niet uitgevoerd · {uncovered, number} onbedekt (van {total, number} problemen)",
       "filterHasUntested": "Heeft ongeteste gevallen",
       "createRunNoCases": "Geen van de geselecteerde problemen heeft gekoppelde testgevallen.",
       "createTestRunDetailed": "Testrun aanmaken ({issues, plural, one {# probleem} other {# problemen}} · {cases, plural, one {# geval} other {# gevallen}})"

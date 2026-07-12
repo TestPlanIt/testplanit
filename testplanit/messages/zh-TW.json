@@ -2086,6 +2086,11 @@
       "testRuns": "沒有測試運行",
       "forecasts": "暫無預測數據"
     },
+    "browser": {
+      "kindAll": "所有里程碑",
+      "kindReleases": "已同步的發行版",
+      "kindSprints": "已同步的衝刺"
+    },
     "statusLabels": {
       "NOT_STARTED": "尚未開始",
       "IN_PROGRESS": "進行中",
@@ -2241,6 +2246,8 @@
       "unlinkConfirmTitle": "取消連結問題？",
       "unlinkConfirmDescription": "這將從此里程碑移除該問題。問題本身將被保留，之後可再次連結。",
       "totalsUncovered": "{count, plural, other {# 個未覆蓋問題}}",
+      "percentReady": "已完成 {percent, number}%",
+      "readinessSummary": "通過 {passed, number} 個 · 失敗 {failed, number} 個 · 進行中 {inProgress, number} 個 · 未執行 {notRun, number} 個 · 未涵蓋 {uncovered, number} 個(共 {total, number} 個議題)",
       "filterHasUntested": "有未測試的案例",
       "createRunNoCases": "所選問題均未連結測試案例。",
       "createTestRunDetailed": "建立測試執行（{issues, plural, other {# 個問題}} · {cases, plural, other {# 個案例}}）"

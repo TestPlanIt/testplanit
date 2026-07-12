@@ -2086,6 +2086,11 @@
       "testRuns": "Keine Testläufe",
       "forecasts": "Es sind keine Prognosedaten verfügbar."
     },
+    "browser": {
+      "kindAll": "Alle Meilensteine",
+      "kindReleases": "Synchronisierte Releases",
+      "kindSprints": "Synchronisierte Sprints"
+    },
     "statusLabels": {
       "NOT_STARTED": "Nicht gestartet",
       "IN_PROGRESS": "Im Gange",
@@ -2241,6 +2246,8 @@
       "unlinkConfirmTitle": "Verknüpfung des Vorgangs aufheben?",
       "unlinkConfirmDescription": "Dadurch wird der Vorgang von diesem Meilenstein entfernt. Der Vorgang selbst bleibt erhalten und kann später erneut verknüpft werden.",
       "totalsUncovered": "{count, plural, one {# nicht abgedeckter Vorgang} other {# nicht abgedeckte Vorgänge}}",
+      "percentReady": "{percent, number}% fertig",
+      "readinessSummary": "{passed, number} bestanden · {failed, number} fehlgeschlagen · {inProgress, number} in Bearbeitung · {notRun, number} nicht ausgeführt · {uncovered, number} nicht abgedeckt (von {total, number} Issues)",
       "filterHasUntested": "Hat ungetestete Fälle",
       "createRunNoCases": "Keiner der ausgewählten Vorgänge hat verknüpfte Testfälle.",
       "createTestRunDetailed": "Testlauf erstellen ({issues, plural, one {# Vorgang} other {# Vorgänge}} · {cases, plural, one {# Fall} other {# Fälle}})"

@@ -826,7 +826,7 @@
         "title": "تحميل المرفقات",
         "description": "اسحب وأسقط ملفاتك أو اضغط على الزر أدناه لتحديد ملفات.",
         "selectFiles": "{count, plural, =0 {تحديد الملفات} one {ملف واحد محدد} other {# ملفات محددة}}",
-        "selectFile": "{count, plural, =0 {Select File} other {1 Selected File}}",
+        "selectFile": "{count, plural, =0 {اختيار ملف} other {ملف واحد محدد}}",
         "filesSelected": "{count, plural, zero {# ملف محدد} one {ملف واحد محدد} two {ملفان محددان} few {# ملفات محددة} many {# ملفاً محدداً} other {# ملف محدد}}",
         "addMoreFiles": "إضافة ملفات أخرى...",
         "replaceFile": "استبدال الملف...",
@@ -2086,6 +2086,11 @@
       "testRuns": "لا توجد تشغيلات اختبار",
       "forecasts": "لا توجد بيانات توقع متاحة"
     },
+    "browser": {
+      "kindAll": "جميع المعالم",
+      "kindReleases": "الإصدارات المتزامنة",
+      "kindSprints": "السبرنتات المتزامنة"
+    },
     "statusLabels": {
       "NOT_STARTED": "لم يبدأ",
       "IN_PROGRESS": "قيد التنفيذ",
@@ -2241,6 +2246,8 @@
       "unlinkConfirmTitle": "إلغاء ربط القضية؟",
       "unlinkConfirmDescription": "يؤدي هذا إلى إزالة القضية من هذا المعلم. يتم الاحتفاظ بالقضية نفسها ويمكن ربطها مرة أخرى لاحقًا.",
       "totalsUncovered": "{count, plural, zero {# قضية غير مغطاة} one {قضية واحدة غير مغطاة} two {قضيتان غير مغطاتان} few {# قضايا غير مغطاة} many {# قضية غير مغطاة} other {# قضية غير مغطاة}}",
+      "percentReady": "{percent, number}% جاهز",
+      "readinessSummary": "{passed, number} ناجح · {failed, number} فاشل · {inProgress, number} قيد التنفيذ · {notRun, number} غير منفذ · {uncovered, number} غير مغطى (من إجمالي {total, number} مشكلة)",
       "filterHasUntested": "يحتوي على حالات غير مختبرة",
       "createRunNoCases": "لا تحتوي أي من القضايا المحددة على حالات اختبار مرتبطة.",
       "createTestRunDetailed": "إنشاء تشغيل اختبار ({issues, plural, zero {# قضية} one {قضية واحدة} two {قضيتان} few {# قضايا} many {# قضية} other {# قضية}} · {cases, plural, zero {# حالة} one {حالة واحدة} two {حالتان} few {# حالات} many {# حالة} other {# حالة}})"
@@ -2677,7 +2684,7 @@
     },
     "templateNotAssignedWarning": "تستخدم حالة الاختبار هذه القالب \"{templateName}\" غير المخصص حاليًا للمشروع \"{projectName}\". قد تحتاج إلى تخصيص هذا القالب للمشروع أو تغيير حالة الاختبار لاستخدام قالب مختلف.",
     "orphanedStepsWarning": "تحتوي حالة الاختبار هذه على خطوات، لكن القالب الحالي \"{templateName}\" لا يتضمن حقل الخطوات. لا يمكن تعديل الخطوات حتى يكون لدى حالة الاختبار قالب يحتوي على حقل الخطوات.",
-    "orphanedFieldsWarning": "This test case has {count, plural, =1 {# field value} other {# field values}} that {count, plural, =1 {is} other {are}} not included in the current template \"{templateName}\". {count, plural, =1 {This field is} other {These fields are}} shown below but may not be editable until added to the template.",
+    "orphanedFieldsWarning": "لدى حالة الاختبار هذه {count, plural, =1 {# قيمة حقل} zero {# قيمة حقل} two {قيمتا حقل} few {# قيم حقول} many {# قيمة حقل} other {# قيمة حقل}} {count, plural, =1 {غير مضمنة} zero {غير مضمنة} two {غير مضمنتين} few {غير مضمنة} many {غير مضمنة} other {غير مضمنة}} في القالب الحالي \"{templateName}\". {count, plural, =1 {هذا الحقل معروض} zero {لا يوجد حقل معروض} two {هذان الحقلان معروضان} few {هذه الحقول معروضة} many {هذه الحقول معروضة} other {هذه الحقول معروضة}} أدناه، ولكن قد لا تكون قابلة للتحرير حتى تتم إضافتها إلى القالب.",
     "title": "مستودع حالات الاختبار",
     "folders": "المجلدات",
     "showDescendants": "إظهار جميع العناصر التابعة",
@@ -7158,7 +7165,7 @@
         "detailView": "تفصيلي (حسب حالة الاختبار)",
         "issue": "المشكلة",
         "testCase": "حالة الاختبار",
-        "testCases": "{count, plural, =1 {Test Case} other {Test Cases}}",
+        "testCases": "{count, plural, =1 {حالة اختبار} zero {# حالة اختبار} two {حالتا اختبار} few {# حالات اختبار} many {# حالة اختبار} other {# حالة اختبار}}",
         "issueStatus": "الحالة",
         "priority": "الأولوية",
         "linkedTests": "الاختبارات المرتبطة",
@@ -7491,7 +7498,7 @@
       },
       "attempts": {
         "noAttemptsRemaining": "لا توجد محاولات متبقية. يرجى المحاولة مرة أخرى لاحقاً.",
-        "attemptsRemaining": "{count, plural, =1 {1 attempt} other {# attempts}} remaining."
+        "attemptsRemaining": "{count, plural, =1 {1 محاولة متبقية.} zero {لا توجد محاولات متبقية.} two {محاولتان متبقيتان.} few {# محاولات متبقية.} many {# محاولة متبقية.} other {# محاولة متبقية.}}"
       }
     },
     "sharedReport": {
@@ -7504,7 +7511,7 @@
       "fromProject": "من المشروع:",
       "dateRange": "النطاق الزمني:",
       "readOnlyNotice": "هذا عرض مشترك للقراءة فقط",
-      "viewCount": "{count, plural, =1 {1 view} other {# views}}",
+      "viewCount": "{count, plural, =1 {1 مشاهدة} zero {لا مشاهدات} two {مشاهدتان} few {# مشاهدات} many {# مشاهدة} other {# مشاهدة}}",
       "viewInFullApp": "عرض في التطبيق الكامل",
       "pagination": {
         "showing": "عرض",

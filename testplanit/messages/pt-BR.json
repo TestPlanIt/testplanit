@@ -2086,6 +2086,11 @@
       "testRuns": "Sem testes corridos",
       "forecasts": "Não há dados de previsão disponíveis."
     },
+    "browser": {
+      "kindAll": "Todos os marcos",
+      "kindReleases": "Lançamentos sincronizados",
+      "kindSprints": "Sprints sincronizados"
+    },
     "statusLabels": {
       "NOT_STARTED": "Não iniciado",
       "IN_PROGRESS": "Em andamento",
@@ -2241,6 +2246,8 @@
       "unlinkConfirmTitle": "Desvincular issue?",
       "unlinkConfirmDescription": "Isso remove a issue deste marco. A issue em si é mantida e pode ser vinculada novamente mais tarde.",
       "totalsUncovered": "{count, plural, one {# issue sem cobertura} other {# issues sem cobertura}}",
+      "percentReady": "{percent, number}% pronto",
+      "readinessSummary": "{passed, number} aprovados · {failed, number} reprovados · {inProgress, number} em andamento · {notRun, number} não executados · {uncovered, number} não cobertos (de {total, number} itens)",
       "filterHasUntested": "Possui casos não testados",
       "createRunNoCases": "Nenhuma das issues selecionadas possui casos de teste vinculados.",
       "createTestRunDetailed": "Criar execução de teste ({issues, plural, one {# issue} other {# issues}} · {cases, plural, one {# caso} other {# casos}})"

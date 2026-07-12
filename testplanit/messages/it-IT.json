@@ -2086,6 +2086,11 @@
       "testRuns": "Nessuna prova",
       "forecasts": "Nessun dato di previsione disponibile"
     },
+    "browser": {
+      "kindAll": "Tutti i traguardi",
+      "kindReleases": "Release sincronizzate",
+      "kindSprints": "Sprint sincronizzati"
+    },
     "statusLabels": {
       "NOT_STARTED": "Non iniziato",
       "IN_PROGRESS": "In corso",
@@ -2241,6 +2246,8 @@
       "unlinkConfirmTitle": "Scollegare il problema?",
       "unlinkConfirmDescription": "Questo rimuove il problema da questo traguardo. Il problema stesso viene conservato e può essere collegato di nuovo in futuro.",
       "totalsUncovered": "{count, plural, one {# problema non coperto} other {# problemi non coperti}}",
+      "percentReady": "{percent, number}% pronto",
+      "readinessSummary": "{passed, number} superati · {failed, number} non riusciti · {inProgress, number} in corso · {notRun, number} non eseguiti · {uncovered, number} non coperti (su {total, number} problemi)",
       "filterHasUntested": "Ha casi non testati",
       "createRunNoCases": "Nessuno dei problemi selezionati ha casi di test collegati.",
       "createTestRunDetailed": "Crea esecuzione test ({issues, plural, one {# problema} other {# problemi}} · {cases, plural, one {# caso} other {# casi}})"
