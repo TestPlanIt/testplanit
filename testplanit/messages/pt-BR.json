@@ -291,6 +291,7 @@
       "account": "Conta",
       "accountHistory": "Histórico da conta",
       "activity": "Atividade",
+      "activityLog": "Registro de Atividade",
       "lastActive": "Última atividade",
       "theme": "Tema",
       "locale": "Linguagem",
@@ -2057,6 +2058,9 @@
   },
   "milestones": {
     "title": "Detalhes do Marco",
+    "auditLog": {
+      "description": "Todas as alterações registradas para este marco."
+    },
     "fields": {
       "parent": "Marco dos Pais",
       "dueDate": "Data de vencimento",
@@ -2245,7 +2249,6 @@
   "sessions": {
     "auditLog": {
       "trigger": "Atividade",
-      "title": "Log de Atividade",
       "description": "Todas as alterações registradas para esta sessão."
     },
     "title": "{count, plural, =1 {Sessão} other {Sessões}}",
@@ -2616,7 +2619,6 @@
     },
     "auditLog": {
       "trigger": "Atividade",
-      "title": "Log de Atividade",
       "description": "Todas as alterações registradas para este caso de teste."
     },
     "fields": {
@@ -3465,7 +3467,6 @@
   "runs": {
     "auditLog": {
       "trigger": "Atividade",
-      "title": "Log de Atividade",
       "description": "Todas as alterações registradas para esta execução de teste."
     },
     "notFound": "Teste de execução não encontrado.",

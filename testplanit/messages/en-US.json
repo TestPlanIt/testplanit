@@ -291,6 +291,7 @@
       "account": "Account",
       "accountHistory": "Account History",
       "activity": "Activity",
+      "activityLog": "Activity Log",
       "lastActive": "Last Active",
       "theme": "Theme",
       "locale": "Language",
@@ -2057,6 +2058,9 @@
   },
   "milestones": {
     "title": "Milestone Details",
+    "auditLog": {
+      "description": "All changes recorded for this milestone."
+    },
     "fields": {
       "parent": "Parent Milestone",
       "dueDate": "Due Date",
@@ -2245,7 +2249,6 @@
   "sessions": {
     "auditLog": {
       "trigger": "Activity",
-      "title": "Activity Log",
       "description": "All changes recorded for this session."
     },
     "title": "{count, plural, =1 {Session} other {Sessions}}",
@@ -2616,7 +2619,6 @@
     },
     "auditLog": {
       "trigger": "Activity",
-      "title": "Activity Log",
       "description": "All changes recorded for this test case."
     },
     "fields": {
@@ -3465,7 +3467,6 @@
   "runs": {
     "auditLog": {
       "trigger": "Activity",
-      "title": "Activity Log",
       "description": "All changes recorded for this test run."
     },
     "notFound": "Test run not found.",

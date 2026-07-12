@@ -291,6 +291,7 @@
       "account": "Hesap",
       "accountHistory": "Hesap Geçmişi",
       "activity": "Aktivite",
+      "activityLog": "Aktivite Günlüğü",
       "lastActive": "Son Aktivite",
       "theme": "Tema",
       "locale": "Dil",
@@ -2057,6 +2058,9 @@
   },
   "milestones": {
     "title": "Dönüm Noktası Ayrıntıları",
+    "auditLog": {
+      "description": "Bu kilometre taşı için kaydedilen tüm değişiklikler."
+    },
     "fields": {
       "parent": "Ebeveyn Dönüm Noktası",
       "dueDate": "Bitiş tarihi",
@@ -2245,7 +2249,6 @@
   "sessions": {
     "auditLog": {
       "trigger": "Aktivite",
-      "title": "Aktivite Kaydı",
       "description": "Bu oturum için kaydedilen tüm değişiklikler."
     },
     "title": "{count, plural, =1 {Oturum} other {Oturumlar}}",
@@ -2616,7 +2619,6 @@
     },
     "auditLog": {
       "trigger": "Aktivite",
-      "title": "Aktivite Kaydı",
       "description": "Bu test durumu için kaydedilen tüm değişiklikler."
     },
     "fields": {
@@ -3465,7 +3467,6 @@
   "runs": {
     "auditLog": {
       "trigger": "Aktivite",
-      "title": "Aktivite Kaydı",
       "description": "Bu test çalıştırması için kaydedilen tüm değişiklikler."
     },
     "notFound": "Test çalıştırması bulunamadı.",

@@ -291,6 +291,7 @@
       "account": "Konto",
       "accountHistory": "Historia konta",
       "activity": "Działalność",
+      "activityLog": "Dziennik aktywności",
       "lastActive": "Ostatnio aktywny",
       "theme": "Temat",
       "locale": "Język",
@@ -2057,6 +2058,9 @@
   },
   "milestones": {
     "title": "Szczegóły kamienia milowego",
+    "auditLog": {
+      "description": "Wszystkie zmiany zarejestrowane dla tego kamienia milowego."
+    },
     "fields": {
       "parent": "Kamień milowy dla rodziców",
       "dueDate": "Termin wykonania",
@@ -2245,7 +2249,6 @@
   "sessions": {
     "auditLog": {
       "trigger": "Aktywność",
-      "title": "Dziennik aktywności",
       "description": "Wszystkie zmiany odnotowane dla tej sesji."
     },
     "title": "{count, plural, =1 {Sesja} other {Sesje}}",
@@ -2616,7 +2619,6 @@
     },
     "auditLog": {
       "trigger": "Aktywność",
-      "title": "Dziennik aktywności",
       "description": "Wszystkie zmiany odnotowane dla tego przypadku testowego."
     },
     "fields": {
@@ -3465,7 +3467,6 @@
   "runs": {
     "auditLog": {
       "trigger": "Aktywność",
-      "title": "Dziennik aktywności",
       "description": "Wszystkie zmiany odnotowane dla tego przebiegu testu."
     },
     "notFound": "Nie znaleziono przebiegu testowego.",

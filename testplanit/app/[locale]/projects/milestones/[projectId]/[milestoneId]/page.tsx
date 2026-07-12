@@ -7,6 +7,7 @@ import LoadingSpinnerPage from "@/components/LoadingSpinnerAlert";
 import { MilestoneSummary } from "@/components/MilestoneSummary";
 import TipTapEditor from "@/components/tiptap/TipTapEditor";
 import { Button } from "@/components/ui/button";
+import { MilestoneAuditLogSheet } from "@/components/milestones/MilestoneAuditLogSheet";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   FormControl,
@@ -73,6 +74,7 @@ import { MilestoneSourceBadge } from "../MilestoneSourceBadge";
 import { IssuesCard, type IssuesCardHandle } from "./IssuesCard";
 import MilestoneFormControls from "./MilestoneFormControls";
 import { buildMilestoneUpdatePayload } from "./milestoneUpdatePayload";
+import { Loading } from "~/components/Loading";
 
 interface MilestoneForecastData {
   manualEstimate: number;
@@ -227,24 +229,35 @@ export default function MilestoneDetailsPage() {
   // page today, so this is a net-new subscriber, not a retirement.
   useMilestoneLiveStream({
     milestoneId: Number(milestoneId),
-    onWakeUp: React.useCallback(() => {
-      void queryClient.invalidateQueries({
-        predicate: (query) =>
-          JSON.stringify(query.queryKey).includes("Milestones") ||
-          JSON.stringify(query.queryKey).includes("MilestoneIssue"),
-      });
-      void queryClient.invalidateQueries({
-        queryKey: ["milestoneMemberCoverage", Number(milestoneId)],
-      });
-      void queryClient.invalidateQueries({
-        queryKey: ["milestoneMemberOverflow", Number(milestoneId)],
-      });
-      // Both the MilestoneSummary chips (scopeCount) and the sibling "Found
-      // in testing" section (issues) read this same cache entry.
-      void queryClient.invalidateQueries({
-        queryKey: ["milestoneSummary", Number(milestoneId)],
-      });
-    }, [queryClient, milestoneId]),
+    onWakeUp: React.useCallback(
+      (event) => {
+        // The `sync` checkpoint fires on every (re)subscribe — including the
+        // routine EventSource reconnects that happen on any transport blip or
+        // dev-mode HMR recompile — and is NOT a data change. Refetching the
+        // whole page on it turns reconnect churn into a request flood that can
+        // saturate the browser's per-origin connection pool. Only react to real
+        // change events (mirrors MemberIssuesOverflowPanel's membership_changed
+        // filter).
+        if (event.event === "sync") return;
+        void queryClient.invalidateQueries({
+          predicate: (query) =>
+            JSON.stringify(query.queryKey).includes("Milestones") ||
+            JSON.stringify(query.queryKey).includes("MilestoneIssue"),
+        });
+        void queryClient.invalidateQueries({
+          queryKey: ["milestoneMemberCoverage", Number(milestoneId)],
+        });
+        void queryClient.invalidateQueries({
+          queryKey: ["milestoneMemberOverflow", Number(milestoneId)],
+        });
+        // Both the MilestoneSummary chips (scopeCount) and the sibling "Found
+        // in testing" section (issues) read this same cache entry.
+        void queryClient.invalidateQueries({
+          queryKey: ["milestoneSummary", Number(milestoneId)],
+        });
+      },
+      [queryClient, milestoneId]
+    ),
   });
 
   const { data: milestoneTypes, isLoading: isTypesLoading } = useClientQueries(
@@ -620,7 +633,7 @@ export default function MilestoneDetailsPage() {
     router.refresh();
   };
 
-  if (!isFormReady || isLoading) return <LoadingSpinnerPage />;
+  if (!isFormReady || isLoading) return <Loading />;
 
   return (
     <FormProvider {...methods}>
@@ -723,6 +736,9 @@ export default function MilestoneDetailsPage() {
                   </>
                 ) : (
                   <div className="flex items-center gap-1">
+                    {milestone && (
+                      <MilestoneAuditLogSheet milestoneId={milestone.id} />
+                    )}
                     {showEditButtonPerm && (
                       <Button
                         type="button"

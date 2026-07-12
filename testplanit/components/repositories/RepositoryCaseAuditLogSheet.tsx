@@ -16,13 +16,14 @@ export function RepositoryCaseAuditLogSheet({
   caseId,
 }: RepositoryCaseAuditLogSheetProps) {
   const t = useTranslations("repository.auditLog");
+  const tCommon = useTranslations("common");
 
   return (
     <ScopedAuditLogSheet
       entityType="RepositoryCases"
       entityId={String(caseId)}
       triggerLabel={t("trigger")}
-      title={t("title")}
+      title={tCommon("fields.activityLog")}
       description={t("description")}
       triggerTestId="case-history-trigger"
       tableTestIdPrefix="case-audit-log-table"

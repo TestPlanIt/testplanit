@@ -291,6 +291,7 @@
       "account": "帳戶",
       "accountHistory": "帳戶歷史記錄",
       "activity": "活動",
+      "activityLog": "活動記錄",
       "lastActive": "最後活躍時間",
       "theme": "主題",
       "locale": "語言",
@@ -2057,6 +2058,9 @@
   },
   "milestones": {
     "title": "里程碑詳情",
+    "auditLog": {
+      "description": "為此里程碑記錄的所有變更。"
+    },
     "fields": {
       "parent": "家長里程碑",
       "dueDate": "到期日",
@@ -2245,7 +2249,6 @@
   "sessions": {
     "auditLog": {
       "trigger": "活動",
-      "title": "活動日誌",
       "description": "此工作階段的所有變更記錄。"
     },
     "title": "{count, plural, =1 {會話} other {會話}}",
@@ -2616,7 +2619,6 @@
     },
     "auditLog": {
       "trigger": "活動",
-      "title": "活動日誌",
       "description": "此測試案例的所有變更記錄。"
     },
     "fields": {
@@ -3465,7 +3467,6 @@
   "runs": {
     "auditLog": {
       "trigger": "活動",
-      "title": "活動日誌",
       "description": "此測試執行的所有變更記錄。"
     },
     "notFound": "未找到測試運行。",

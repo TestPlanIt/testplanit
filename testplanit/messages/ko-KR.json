@@ -291,6 +291,7 @@
       "account": "계정",
       "accountHistory": "계정 내역",
       "activity": "활동",
+      "activityLog": "활동 로그",
       "lastActive": "최근 활동",
       "theme": "주제",
       "locale": "언어",
@@ -2057,6 +2058,9 @@
   },
   "milestones": {
     "title": "주요 단계 세부 정보",
+    "auditLog": {
+      "description": "이 마일스톤에 대해 기록된 모든 변경 사항입니다."
+    },
     "fields": {
       "parent": "부모의 중요한 순간",
       "dueDate": "마감일",
@@ -2245,7 +2249,6 @@
   "sessions": {
     "auditLog": {
       "trigger": "활동",
-      "title": "활동 로그",
       "description": "이 세션에 기록된 모든 변경 사항입니다."
     },
     "title": "{count, plural, =1 {세션} other {세션들}}",
@@ -2616,7 +2619,6 @@
     },
     "auditLog": {
       "trigger": "활동",
-      "title": "활동 로그",
       "description": "이 테스트 케이스에 기록된 모든 변경 사항입니다."
     },
     "fields": {
@@ -3465,7 +3467,6 @@
   "runs": {
     "auditLog": {
       "trigger": "활동",
-      "title": "활동 로그",
       "description": "이 테스트 실행에 기록된 모든 변경 사항입니다."
     },
     "notFound": "테스트 실행을 찾을 수 없습니다.",

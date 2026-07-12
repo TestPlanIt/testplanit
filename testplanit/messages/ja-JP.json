@@ -291,6 +291,7 @@
       "account": "アカウント",
       "accountHistory": "アカウント履歴",
       "activity": "活動",
+      "activityLog": "アクティビティログ",
       "lastActive": "最終アクティブ",
       "theme": "テーマ",
       "locale": "言語",
@@ -2057,6 +2058,9 @@
   },
   "milestones": {
     "title": "マイルストーンの詳細",
+    "auditLog": {
+      "description": "このマイルストーンに記録されたすべての変更。"
+    },
     "fields": {
       "parent": "親のマイルストーン",
       "dueDate": "期日",
@@ -2245,7 +2249,6 @@
   "sessions": {
     "auditLog": {
       "trigger": "活動",
-      "title": "活動ログ",
       "description": "このセッションで記録されたすべての変更です。"
     },
     "title": "{count, plural, =1 {セッション} other {セッション}}",
@@ -2616,7 +2619,6 @@
     },
     "auditLog": {
       "trigger": "活動",
-      "title": "活動ログ",
       "description": "このテストケースで記録されたすべての変更です。"
     },
     "fields": {
@@ -3465,7 +3467,6 @@
   "runs": {
     "auditLog": {
       "trigger": "活動",
-      "title": "活動ログ",
       "description": "このテスト実行で記録されたすべての変更です。"
     },
     "notFound": "テスト実行が見つかりません。",

@@ -15,13 +15,14 @@ interface SessionAuditLogSheetProps {
  */
 export function SessionAuditLogSheet({ sessionId }: SessionAuditLogSheetProps) {
   const t = useTranslations("sessions.auditLog");
+  const tCommon = useTranslations("common");
 
   return (
     <ScopedAuditLogSheet
       entityType="Sessions"
       entityId={String(sessionId)}
       triggerLabel={t("trigger")}
-      title={t("title")}
+      title={tCommon("fields.activityLog")}
       description={t("description")}
       triggerTestId="session-history-trigger"
       tableTestIdPrefix="session-audit-log-table"

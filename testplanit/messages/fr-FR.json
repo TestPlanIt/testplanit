@@ -291,6 +291,7 @@
       "account": "Compte",
       "accountHistory": "Historique du compte",
       "activity": "Activité",
+      "activityLog": "Journal d'activité",
       "lastActive": "Dernière activité",
       "theme": "Thème",
       "locale": "Langue",
@@ -2057,6 +2058,9 @@
   },
   "milestones": {
     "title": "Détails des étapes importantes",
+    "auditLog": {
+      "description": "Toutes les modifications enregistrées pour ce jalon."
+    },
     "fields": {
       "parent": "Étape importante pour les parents",
       "dueDate": "Date d'échéance",
@@ -2245,7 +2249,6 @@
   "sessions": {
     "auditLog": {
       "trigger": "Activité",
-      "title": "Journal d'activité",
       "description": "Toutes les modifications enregistrées pour cette session."
     },
     "title": "{count, plural, =1 {Session} other {Sessions}}",
@@ -2616,7 +2619,6 @@
     },
     "auditLog": {
       "trigger": "Activité",
-      "title": "Journal d'activité",
       "description": "Toutes les modifications enregistrées pour ce cas de test."
     },
     "fields": {
@@ -3465,7 +3467,6 @@
   "runs": {
     "auditLog": {
       "trigger": "Activité",
-      "title": "Journal d'activité",
       "description": "Toutes les modifications enregistrées pour cette exécution de test."
     },
     "notFound": "Exécution de test introuvable.",

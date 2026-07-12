@@ -14,13 +14,14 @@ interface RunAuditLogSheetProps {
  */
 export function RunAuditLogSheet({ runId }: RunAuditLogSheetProps) {
   const t = useTranslations("runs.auditLog");
+  const tCommon = useTranslations("common");
 
   return (
     <ScopedAuditLogSheet
       entityType="TestRuns"
       entityId={String(runId)}
       triggerLabel={t("trigger")}
-      title={t("title")}
+      title={tCommon("fields.activityLog")}
       description={t("description")}
       triggerTestId="run-history-trigger"
       tableTestIdPrefix="run-audit-log-table"

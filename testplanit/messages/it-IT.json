@@ -291,6 +291,7 @@
       "account": "Account",
       "accountHistory": "Cronologia dell'account",
       "activity": "Attività",
+      "activityLog": "Registro attività",
       "lastActive": "Ultimo attivo",
       "theme": "Tema",
       "locale": "Lingua",
@@ -2057,6 +2058,9 @@
   },
   "milestones": {
     "title": "Dettagli della pietra miliare",
+    "auditLog": {
+      "description": "Tutte le modifiche registrate per questa milestone."
+    },
     "fields": {
       "parent": "Traguardo dei genitori",
       "dueDate": "Scadenza",
@@ -2245,7 +2249,6 @@
   "sessions": {
     "auditLog": {
       "trigger": "Attività",
-      "title": "Registro attività",
       "description": "Tutte le modifiche registrate per questa sessione."
     },
     "title": "{count, plural, =1 {Sessione} other {Sessioni}}",
@@ -2616,7 +2619,6 @@
     },
     "auditLog": {
       "trigger": "Attività",
-      "title": "Registro attività",
       "description": "Tutte le modifiche registrate per questo caso di test."
     },
     "fields": {
@@ -3465,7 +3467,6 @@
   "runs": {
     "auditLog": {
       "trigger": "Attività",
-      "title": "Registro attività",
       "description": "Tutte le modifiche registrate per questa esecuzione di test."
     },
     "notFound": "Esecuzione del test non trovata.",

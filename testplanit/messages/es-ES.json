@@ -291,6 +291,7 @@
       "account": "Cuenta",
       "accountHistory": "Historial de cuentas",
       "activity": "Actividad",
+      "activityLog": "Registro de actividad",
       "lastActive": "Última actividad",
       "theme": "Tema",
       "locale": "Idioma",
@@ -2057,6 +2058,9 @@
   },
   "milestones": {
     "title": "Detalles del hito",
+    "auditLog": {
+      "description": "Todos los cambios registrados para este hito."
+    },
     "fields": {
       "parent": "Hito Padre",
       "dueDate": "Fecha de fin",
@@ -2245,7 +2249,6 @@
   "sessions": {
     "auditLog": {
       "trigger": "Actividad",
-      "title": "Registro de actividad",
       "description": "Todos los cambios registrados para esta sesión."
     },
     "title": "{count, plural, =1 {Sesión} other {Sesiones}}",
@@ -2616,7 +2619,6 @@
     },
     "auditLog": {
       "trigger": "Actividad",
-      "title": "Registro de actividad",
       "description": "Todos los cambios registrados para este caso de prueba."
     },
     "fields": {
@@ -3465,7 +3467,6 @@
   "runs": {
     "auditLog": {
       "trigger": "Actividad",
-      "title": "Registro de actividad",
       "description": "Todos los cambios registrados para esta ejecución de prueba."
     },
     "notFound": "No se encontró ejecución de prueba.",

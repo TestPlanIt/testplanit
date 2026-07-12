@@ -291,6 +291,7 @@
       "account": "Rekening",
       "accountHistory": "Accountgeschiedenis",
       "activity": "Activiteit",
+      "activityLog": "Activiteitenlogboek",
       "lastActive": "Laatst actief",
       "theme": "Thema",
       "locale": "Taal",
@@ -2057,6 +2058,9 @@
   },
   "milestones": {
     "title": "Mijlpaaldetails",
+    "auditLog": {
+      "description": "Alle wijzigingen die voor deze mijlpaal zijn geregistreerd."
+    },
     "fields": {
       "parent": "Ouderlijke mijlpaal",
       "dueDate": "Deadline",
@@ -2245,7 +2249,6 @@
   "sessions": {
     "auditLog": {
       "trigger": "Activiteit",
-      "title": "Activiteitenlogboek",
       "description": "Alle wijzigingen vastgelegd voor deze sessie."
     },
     "title": "{count, plural, =1 {Sessie} other {Sessies}}",
@@ -2616,7 +2619,6 @@
     },
     "auditLog": {
       "trigger": "Activiteit",
-      "title": "Activiteitenlogboek",
       "description": "Alle wijzigingen vastgelegd voor deze testcase."
     },
     "fields": {
@@ -3465,7 +3467,6 @@
   "runs": {
     "auditLog": {
       "trigger": "Activiteit",
-      "title": "Activiteitenlogboek",
       "description": "Alle wijzigingen vastgelegd voor deze testrun."
     },
     "notFound": "Testrun niet gevonden.",

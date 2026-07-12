@@ -291,6 +291,7 @@
       "account": "Tài khoản",
       "accountHistory": "Lịch sử tài khoản",
       "activity": "Hoạt động",
+      "activityLog": "Nhật ký hoạt động",
       "lastActive": "Lần hoạt động cuối cùng",
       "theme": "Chủ đề",
       "locale": "Ngôn ngữ",
@@ -2057,6 +2058,9 @@
   },
   "milestones": {
     "title": "Chi tiết cột mốc",
+    "auditLog": {
+      "description": "Tất cả các thay đổi được ghi lại cho mốc quan trọng này."
+    },
     "fields": {
       "parent": "Cột mốc của cha mẹ",
       "dueDate": "Ngày đến hạn",
@@ -2245,7 +2249,6 @@
   "sessions": {
     "auditLog": {
       "trigger": "Hoạt động",
-      "title": "Nhật ký hoạt động",
       "description": "Tất cả các thay đổi được ghi lại cho phiên này."
     },
     "title": "{count, plural, =1 {Phiên} other {Các phiên}}",
@@ -2616,7 +2619,6 @@
     },
     "auditLog": {
       "trigger": "Hoạt động",
-      "title": "Nhật ký hoạt động",
       "description": "Tất cả các thay đổi được ghi lại cho trường hợp thử nghiệm này."
     },
     "fields": {
@@ -3465,7 +3467,6 @@
   "runs": {
     "auditLog": {
       "trigger": "Hoạt động",
-      "title": "Nhật ký hoạt động",
       "description": "Tất cả các thay đổi được ghi lại cho lần chạy thử nghiệm này."
     },
     "notFound": "Không tìm thấy kết quả chạy thử nghiệm.",

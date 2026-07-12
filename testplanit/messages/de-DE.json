@@ -291,6 +291,7 @@
       "account": "Konto",
       "accountHistory": "Kontoverlauf",
       "activity": "Aktivität",
+      "activityLog": "Aktivitätsprotokoll",
       "lastActive": "Zuletzt aktiv",
       "theme": "Erscheinungsbild",
       "locale": "Sprache",
@@ -2057,6 +2058,9 @@
   },
   "milestones": {
     "title": "Meilenstein-Details",
+    "auditLog": {
+      "description": "Alle für diesen Meilenstein erfassten Änderungen."
+    },
     "fields": {
       "parent": "Meilenstein der Elterngruppe",
       "dueDate": "Fälligkeitsdatum",
@@ -2245,7 +2249,6 @@
   "sessions": {
     "auditLog": {
       "trigger": "Aktivität",
-      "title": "Aktivitätsprotokoll",
       "description": "Alle für diese Sitzung aufgezeichneten Änderungen."
     },
     "title": "{count, plural, =1 {Sitzung} other {Sitzungen}}",
@@ -2616,7 +2619,6 @@
     },
     "auditLog": {
       "trigger": "Aktivität",
-      "title": "Aktivitätsprotokoll",
       "description": "Alle für diesen Testfall aufgezeichneten Änderungen."
     },
     "fields": {
@@ -3465,7 +3467,6 @@
   "runs": {
     "auditLog": {
       "trigger": "Aktivität",
-      "title": "Aktivitätsprotokoll",
       "description": "Alle für diesen Testlauf aufgezeichneten Änderungen."
     },
     "notFound": "Testlauf nicht gefunden.",

@@ -5907,22 +5907,23 @@ model AuditLog {
     @@deny('all', auth() == null)
     @@deny('update, delete', true)
 
-    // Case / run / session audit entries inherit the underlying entity's own read
-    // restrictions, so audit visibility tracks exactly who can view that entity
-    // (mirrors the project NONE / NO_ACCESS denies, scoped through the project).
-    @@deny('read', (entityType == 'RepositoryCases' || entityType == 'TestRuns' || entityType == 'Sessions') && auth().access == 'NONE')
-    @@deny('read', (entityType == 'RepositoryCases' || entityType == 'TestRuns' || entityType == 'Sessions') && project.userPermissions?[user == auth() && accessType == 'NO_ACCESS'])
+    // Case / run / session / milestone audit entries inherit the underlying
+    // entity's own read restrictions, so audit visibility tracks exactly who can
+    // view that entity (mirrors the project NONE / NO_ACCESS denies, scoped
+    // through the project).
+    @@deny('read', (entityType == 'RepositoryCases' || entityType == 'TestRuns' || entityType == 'Sessions' || entityType == 'Milestones') && auth().access == 'NONE')
+    @@deny('read', (entityType == 'RepositoryCases' || entityType == 'TestRuns' || entityType == 'Sessions' || entityType == 'Milestones') && project.userPermissions?[user == auth() && accessType == 'NO_ACCESS'])
 
     @@allow('read', auth().access == 'ADMIN')
     @@allow('read', auth().id == userId)
     @@allow('read', project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN'])
 
-    // Anyone who can read a case / run / session can read that entity's audit
-    // trail. These entities share one project-membership read model, so the same
-    // predicate (resolved through the audit log's denormalized project relation)
-    // grants audit visibility for all three.
+    // Anyone who can read a case / run / session / milestone can read that
+    // entity's audit trail. These entities share one project-membership read
+    // model, so the same predicate (resolved through the audit log's
+    // denormalized project relation) grants audit visibility for all of them.
     @@allow('read',
-        (entityType == 'RepositoryCases' || entityType == 'TestRuns' || entityType == 'Sessions') && (
+        (entityType == 'RepositoryCases' || entityType == 'TestRuns' || entityType == 'Sessions' || entityType == 'Milestones') && (
             project.creator == auth() ||
             project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE'] ||
             project.userPermissions?[user == auth() && accessType == 'GLOBAL_ROLE'] ||
