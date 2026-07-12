@@ -123,12 +123,18 @@ const ProjectMilestones: React.FC<ProjectMilestonesProps> = ({ params }) => {
   // queries the polling window used to force-refetch.
   useProjectMilestoneStream({
     projectId: Number(projectId),
-    onWakeUp: React.useCallback(() => {
-      void queryClient.invalidateQueries({
-        predicate: (query) =>
-          JSON.stringify(query.queryKey).includes("Milestones"),
-      });
-    }, [queryClient]),
+    onWakeUp: React.useCallback(
+      (event) => {
+        // Ignore the `sync` checkpoint (fires on every reconnect) so routine
+        // EventSource reconnects don't storm-invalidate the milestone list.
+        if (event.event === "sync") return;
+        void queryClient.invalidateQueries({
+          predicate: (query) =>
+            JSON.stringify(query.queryKey).includes("Milestones"),
+        });
+      },
+      [queryClient]
+    ),
   });
 
   const { data: incompleteMilestones } = useClientQueries(

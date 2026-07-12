@@ -15,7 +15,10 @@ import { RequestReviewButton } from "@/components/reviews/RequestReviewButton";
 import { RunAuditLogSheet } from "@/components/runs/RunAuditLogSheet";
 import { ReviewStatusBanner } from "@/components/reviews/ReviewStatusBanner";
 import { TestRunCaseDetails } from "@/components/TestRunCaseDetails";
-import { useTestRunLiveStream } from "~/hooks/useTestRunLiveStream";
+import {
+  useTestRunLiveStream,
+  type TestRunWakeUp,
+} from "~/hooks/useTestRunLiveStream";
 import { useTransitionGateStatus } from "~/hooks/useTransitionGateStatus";
 import { IterationAwareTestRunCaseDetails } from "~/components/iterations/IterationAwareTestRunCaseDetails";
 import TipTapEditor from "@/components/tiptap/TipTapEditor";
@@ -472,18 +475,24 @@ export default function TestRunPage() {
   // disabled once the run is completed so we don't hold an EventSource
   // open indefinitely on a historical run page.
   const queryClient = useQueryClient();
-  const onLiveWakeUp = useCallback(() => {
-    refetchTestRun();
-    void queryClient.invalidateQueries({
-      queryKey: ["testRunSummary", Number(runId)],
-    });
-    // Automation runs render their results from JUnit suites; refresh those
-    // so reporter-streamed results appear live (the run refetch alone doesn't
-    // cover the separate suite/result query).
-    void queryClient.invalidateQueries({
-      queryKey: ["zenstack", "JUnitTestSuite"],
-    });
-  }, [refetchTestRun, queryClient, runId]);
+  const onLiveWakeUp = useCallback(
+    (event: TestRunWakeUp) => {
+      // Ignore the `sync` checkpoint (fires on every reconnect) so routine
+      // EventSource reconnects don't refetch the run + summary + JUnit suites.
+      if (event.event === "sync") return;
+      refetchTestRun();
+      void queryClient.invalidateQueries({
+        queryKey: ["testRunSummary", Number(runId)],
+      });
+      // Automation runs render their results from JUnit suites; refresh those
+      // so reporter-streamed results appear live (the run refetch alone doesn't
+      // cover the separate suite/result query).
+      void queryClient.invalidateQueries({
+        queryKey: ["zenstack", "JUnitTestSuite"],
+      });
+    },
+    [refetchTestRun, queryClient, runId]
+  );
   useTestRunLiveStream({
     runId: !isNaN(Number(runId)) ? Number(runId) : null,
     enabled: !testRunData?.isCompleted,

@@ -11,7 +11,10 @@ import type {
   TestRunsGetPayload,
 } from "~/zenstack/input";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useProjectTestRunStream } from "~/hooks/useTestRunLiveStream";
+import {
+  useProjectTestRunStream,
+  type TestRunWakeUp,
+} from "~/hooks/useTestRunLiveStream";
 import { CirclePlus, GripVertical } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
@@ -501,18 +504,26 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
   // The stream stays dormant when no run on this page is in progress —
   // nothing live to update — matching the detail page's gating on
   // !testRunData?.isCompleted.
-  const onLiveWakeUp = useCallback(() => {
-    void queryClient.invalidateQueries({
-      queryKey: ["batchTestRunSummaries", testRunIds],
-    });
-    void queryClient.invalidateQueries({ queryKey: ["zenstack", "TestRuns"] });
-    void queryClient.invalidateQueries({
-      queryKey: ["zenstack", "TestRunCases"],
-    });
-    void queryClient.invalidateQueries({
-      queryKey: ["zenstack", "ReviewRequest"],
-    });
-  }, [queryClient, testRunIds]);
+  const onLiveWakeUp = useCallback(
+    (event: TestRunWakeUp) => {
+      // Ignore the `sync` checkpoint (fires on every reconnect) so routine
+      // EventSource reconnects don't storm the four project-wide invalidations.
+      if (event.event === "sync") return;
+      void queryClient.invalidateQueries({
+        queryKey: ["batchTestRunSummaries", testRunIds],
+      });
+      void queryClient.invalidateQueries({
+        queryKey: ["zenstack", "TestRuns"],
+      });
+      void queryClient.invalidateQueries({
+        queryKey: ["zenstack", "TestRunCases"],
+      });
+      void queryClient.invalidateQueries({
+        queryKey: ["zenstack", "ReviewRequest"],
+      });
+    },
+    [queryClient, testRunIds]
+  );
   useProjectTestRunStream({
     projectId: !isNaN(numericProjectId) ? numericProjectId : null,
     enabled: incompleteTestRuns.length > 0,
