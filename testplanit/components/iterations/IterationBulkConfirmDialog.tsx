@@ -128,11 +128,14 @@ export function IterationBulkConfirmDialog({
         return;
       }
       toast.success(t("iterationBulkSuccess", { count, action }));
-      // Bulk-apply touches multiple models and rolls up the case-level
-      // status; broad invalidation matches AddResultModal/IterationResultPanel
-      // so every consumer (run page, repository, history) refetches.
-      await queryClient.invalidateQueries();
       onOpenChange(false);
+      // Bulk-apply touches multiple models and rolls up the case-level status,
+      // so broadly invalidate to refetch every consumer (run page, repository,
+      // history). Fire-and-forget: the write is durable, so closing the dialog
+      // must not block on a page-wide refetch — awaiting it here would keep the
+      // dialog open until this heavy run page settles every query (matches the
+      // IterationResultPanel submit path).
+      void queryClient.invalidateQueries().catch(() => {});
     } catch {
       toast.error(t("iterationBulkError"));
     } finally {

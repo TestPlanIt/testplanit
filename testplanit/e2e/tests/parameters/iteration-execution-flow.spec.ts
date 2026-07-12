@@ -3,30 +3,30 @@ import { createRawDbClient } from "~/lib/rawDbClient";
 import { expect, test } from "../../fixtures/index";
 
 /**
- * Parameterized-run execution surface, driven through the UI.
+ * Full parameterized-run execution loop, driven through the UI.
  *
- * The iteration data model, fan-out, per-iteration result submission, override
- * dialog, and bulk-skip dialog each have unit/integration coverage, and INT-04
- * covers the outbound-webhook round-trip — but nothing drives a real user
- * through the run *execution surface*. This spec closes that gap for the two
- * core actions that a parameterized run adds on top of a normal run:
+ * The iteration data model, fan-out, per-iteration submission, override dialog,
+ * and bulk-skip dialog each have unit/integration coverage, and INT-04 covers
+ * the outbound-webhook round-trip — but nothing drives a real user through the
+ * run *execution surface* end to end. This spec closes that gap and, in doing
+ * so, guards the fix that made it possible: the result panel now refreshes
+ * consumers in the background instead of blocking the Pass button on a
+ * page-wide refetch, so recording iterations back-to-back no longer stalls.
  *
  *   1. Seed a parameterized case (1 param `env`) + a 3-row inline dataset + a
  *      run, and materialize its iterations exactly as the fan-out worker would
  *      (raw db — the policy layer rejects iteration writes from the admin
  *      session for an in-flight project; same rationale as INT-04).
- *   2. Open the run's execution sheet and:
- *        - Iteration 1 (env=qa)      → record a Pass via the panel.
- *        - Iteration 2 (env=staging) → override its value via the dialog.
- *   3. Assert both persisted (result + override value) and that the parameter
- *      rolls up into the Iteration Matrix CSV export.
+ *   2. Open the run's execution sheet and, per iteration:
+ *        - Iteration 1 (env=qa)      → record a Pass.
+ *        - Iteration 2 (env=staging) → OVERRIDE the value, then record a Pass.
+ *        - Iteration 3 (env=prod)    → SKIP (bulk-confirm dialog, one row).
+ *   3. Assert each iteration's persisted result (status + override value) and
+ *      that the parameter rolls up into the Iteration Matrix CSV export.
  *
- * Scope note: recording a result triggers a page-wide React-Query invalidation
- * that refetches this (heavy) run page; the panel's own Pass button can stay
- * disabled while that settles, so this spec records once and verifies each
- * mutation against the DB rather than chaining further clicks on the same
- * panel. Skip/reset and multi-iteration recording are covered by the
- * IterationBulkConfirmDialog / iterationFanOut / result-submission suites.
+ * Each step gates on the DB reaching the expected state before the next UI
+ * action rather than trusting transient UI, and navigation retries the sidebar
+ * click until the values strip reflects the target iteration.
  *
  * Required env: E2E_PROD=on. Exercised by the full
  * `pnpm build && E2E_PROD=on pnpm test:e2e` chain, not per-task unit runs.
@@ -37,12 +37,13 @@ const uniqueId = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 test.use({ storageState: "e2e/.auth/admin.json" });
 test.describe.configure({ mode: "serial" });
 
-test.describe("Parameterized run — UI execution surface (record + override)", () => {
+test.describe("Parameterized run — UI execution loop (record / override / skip)", () => {
   let projectId: number;
   let db: ReturnType<typeof createRawDbClient>;
   let repositoryCaseId: number;
   let testRunId: number;
   let testRunCaseId: number;
+  let skipStatusId: number;
 
   test.beforeAll(async ({ api }) => {
     test.setTimeout(120_000);
@@ -50,24 +51,47 @@ test.describe("Parameterized run — UI execution surface (record + override)", 
     db = createRawDbClient();
 
     // The execution panel's Pass button is gated on the project having a
-    // Test-Run *success* status. createProject assigns the default statuses to
-    // the project, but that link can lag the create response — poll (with the
-    // panel's exact scoping) until it exists before seeding the run, so the
-    // page isn't opened before its statuses do. Winning or losing this race is
-    // what otherwise makes the panel flaky.
+    // Test-Run *success* status, and the bulk-skip dialog needs a *non-success*
+    // one. createProject assigns the default statuses to the project, but that
+    // link can lag the create response — poll (with the exact scoping both
+    // surfaces query) until both exist before seeding the run, so the page
+    // isn't opened before its statuses do. Winning or losing this race is what
+    // otherwise makes the panel flaky.
+    const successStatusFor = () =>
+      db.status.findFirst({
+        where: {
+          isSuccess: true,
+          isEnabled: true,
+          isDeleted: false,
+          projects: { some: { projectId } },
+          scope: { some: { scope: { name: "Test Run" } } },
+        },
+        select: { id: true },
+      });
+    // "Skipped" specifically — a terminal non-success outcome the bulk-skip
+    // dialog accepts. (An "untested"/not-run status is not a valid skip
+    // target, so the generic "first non-success status" won't do.)
+    const skippedStatusFor = () =>
+      db.status.findFirst({
+        where: {
+          systemName: "skipped",
+          isEnabled: true,
+          isDeleted: false,
+          projects: { some: { projectId } },
+          scope: { some: { scope: { name: "Test Run" } } },
+        },
+        select: { id: true },
+      });
     await expect
       .poll(
-        async () =>
-          (await db.status.findFirst({
-            where: {
-              isSuccess: true,
-              isEnabled: true,
-              isDeleted: false,
-              projects: { some: { projectId } },
-              scope: { some: { scope: { name: "Test Run" } } },
-            },
-            select: { id: true },
-          })) != null,
+        async () => {
+          const [success, skipped] = await Promise.all([
+            successStatusFor(),
+            skippedStatusFor(),
+          ]);
+          if (skipped) skipStatusId = skipped.id;
+          return success != null && skipped != null;
+        },
         { timeout: 30_000, intervals: [500] }
       )
       .toBe(true);
@@ -188,13 +212,14 @@ test.describe("Parameterized run — UI execution surface (record + override)", 
     if (db) await db.$disconnect();
   });
 
-  test("record a Pass on iteration 1 and override iteration 2's values — both persist and roll up into the matrix", async ({
+  test("pass iteration 1, override + pass iteration 2, skip iteration 3 — all persist and roll up into the matrix", async ({
     page,
     baseURL,
     request,
   }) => {
     test.setTimeout(180_000);
     const strip = page.getByTestId("iteration-values-strip");
+    const passButton = page.getByTestId("iteration-pass-and-next-button");
 
     const iterationRow = (rowIndex: number) =>
       db.testRunCaseIteration.findFirst({
@@ -216,6 +241,10 @@ test.describe("Parameterized run — UI execution surface (record + override)", 
         })
         .toBe(true);
 
+    const recordPass = async () => {
+      await expect(passButton).toBeEnabled({ timeout: 30_000 });
+      await passButton.click();
+    };
     // Activating a row is a URL-param switch that an in-flight refetch can
     // revert — retry the click until the values strip reflects the target.
     const activateIteration = async (rowIndex: number, expectValue: string) => {
@@ -233,7 +262,6 @@ test.describe("Parameterized run — UI execution surface (record + override)", 
       await expect(page.getByTestId("iteration-sidebar")).toBeVisible({
         timeout: 30_000,
       });
-      // All three dataset rows materialized as iterations.
       await expect(
         page
           .getByTestId("iteration-sidebar-list")
@@ -241,20 +269,16 @@ test.describe("Parameterized run — UI execution surface (record + override)", 
       ).toHaveCount(3);
     });
 
-    await test.step("Iteration 1 (qa) — record a Pass via the panel", async () => {
+    await test.step("Iteration 1 (qa) — record a Pass", async () => {
       await expect(strip).toContainText("qa", { timeout: 20_000 });
-      const passButton = page.getByTestId("iteration-pass-and-next-button");
-      await expect(passButton).toBeEnabled({ timeout: 60_000 });
-      await passButton.click();
-      // Verify persistence against the DB (not the button, which can stay
-      // disabled while the page-wide cache refetches after the submit).
+      await recordPass();
       await pollRow(
         0,
         (r) => r?.isCompleted === true && r?.status?.isSuccess === true
       );
     });
 
-    await test.step("Iteration 2 (staging) — override the value via the dialog", async () => {
+    await test.step("Iteration 2 (staging) — override the value, then record a Pass", async () => {
       await activateIteration(1, "staging");
       await page.getByTestId("iteration-header-menu-trigger").click();
       await page.getByTestId("iteration-header-menu-override-values").click();
@@ -267,9 +291,36 @@ test.describe("Parameterized run — UI execution surface (record + override)", 
         (r) =>
           (r?.valuesJson as { env?: string } | null)?.env === "staging-override"
       );
+
+      await recordPass();
+      await pollRow(
+        1,
+        (r) => r?.isCompleted === true && r?.status?.isSuccess === true
+      );
     });
 
-    await test.step("Assert persisted state: iteration 1 passed, iteration 2 overridden", async () => {
+    await test.step("Iteration 3 (prod) — skip via the bulk-confirm dialog", async () => {
+      await activateIteration(2, "prod");
+      await page.getByTestId("iteration-header-menu-trigger").click();
+      await page.getByTestId("iteration-header-menu-skip").click();
+      await expect(
+        page.getByTestId("iteration-bulk-confirm-dialog")
+      ).toBeVisible();
+      // Confirm is disabled until a status is chosen (bulk-skip records a
+      // non-success status against the iteration).
+      await page.getByTestId("iteration-bulk-status-trigger").click();
+      await page.getByTestId(`iteration-bulk-status-${skipStatusId}`).click();
+      await page.getByTestId("iteration-bulk-confirm").click();
+      await expect(
+        page.getByTestId("iteration-bulk-confirm-dialog")
+      ).toBeHidden();
+      await pollRow(
+        2,
+        (r) => r?.isCompleted === true && r?.status?.isSuccess === false
+      );
+    });
+
+    await test.step("Assert the final persisted state of all three iterations", async () => {
       const rows = await db.testRunCaseIteration.findMany({
         where: { testRunCaseId },
         orderBy: { rowIndex: "asc" },
@@ -280,15 +331,23 @@ test.describe("Parameterized run — UI execution surface (record + override)", 
           status: { select: { isSuccess: true } },
         },
       });
-      const env = (r: (typeof rows)[number]) =>
-        (r.valuesJson as { env?: string } | null)?.env ?? null;
-
-      expect(rows[0].isCompleted).toBe(true);
-      expect(rows[0].status?.isSuccess).toBe(true);
-      expect(env(rows[0])).toBe("qa");
-      // Iteration 2 carries the override; the untouched snapshot row is intact.
-      expect(env(rows[1])).toBe("staging-override");
-      expect(env(rows[2])).toBe("prod");
+      expect(
+        rows.map((r) => ({
+          rowIndex: r.rowIndex,
+          completed: r.isCompleted,
+          success: r.status?.isSuccess ?? null,
+          env: (r.valuesJson as { env?: string } | null)?.env ?? null,
+        }))
+      ).toEqual([
+        { rowIndex: 0, completed: true, success: true, env: "qa" },
+        {
+          rowIndex: 1,
+          completed: true,
+          success: true,
+          env: "staging-override",
+        },
+        { rowIndex: 2, completed: true, success: false, env: "prod" },
+      ]);
     });
 
     await test.step("Assert the parameter rolls up into the Iteration Matrix CSV export", async () => {
@@ -300,8 +359,6 @@ test.describe("Parameterized run — UI execution surface (record + override)", 
         "text/csv; charset=utf-8"
       );
       const csv = await exportRes.text();
-      // The `env` parameter surfaces as a bare column — proof the parameterized
-      // case + its execution data reach the matrix rollup surface.
       expect(csv).toContain("env");
     });
   });

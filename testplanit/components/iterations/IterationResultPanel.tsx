@@ -165,12 +165,13 @@ export function IterationResultPanel({
   const successStatus = statuses?.find((s) => s.isSuccess === true);
 
   const invalidateAfterSubmit = async () => {
-    // Match the AddResultModal pattern — submit-result writes touch
-    // multiple models (TestRunResults, TestRunCases, TestRunCaseIteration)
-    // and the case-level rollup is read via different queries on different
-    // surfaces (run page, repository, test-result-history). A blanket
-    // invalidation is what AddResultModal already uses and is the simplest
-    // way to keep every consumer fresh.
+    // A submit-result write touches multiple models (TestRunResults,
+    // TestRunCases, TestRunCaseIteration) whose rollups are read via different
+    // queries on different surfaces (run page, repository, test-result-history),
+    // so a blanket invalidation is the simplest way to keep every consumer
+    // fresh. It runs in the BACKGROUND (see the fire-and-forget call site) — it
+    // must never gate `isSubmitting`, or the page-wide refetch on this heavy run
+    // page would hold the Pass button disabled until every query settles.
     await queryClient.invalidateQueries();
   };
 
@@ -197,11 +198,18 @@ export function IterationResultPanel({
         inProgressStateId: inProgressWorkflow?.id ?? null,
         iterationId: iteration.id,
       });
-      await invalidateAfterSubmit();
+      // The result is durably written — surface success and advance now, and
+      // refresh consumers in the background. Deliberately NOT awaited: blocking
+      // on the page-wide refetch would keep `isSubmitting` (and therefore the
+      // Pass button, on a panel instance reused across iteration navigation)
+      // disabled for as long as this heavy run page takes to settle. A
+      // background refresh failure is non-fatal — the next navigation/refetch
+      // reconciles.
       toast.success(tCommon("actions.resultAdded"), {
         description: tCommon("actions.resultAddedDescription"),
       });
       onAfterSubmit?.({ wasSuccess });
+      void invalidateAfterSubmit().catch(() => {});
     } catch (error) {
       console.error("Iteration result submit failed", error);
       if (isPermissionDeniedSubmitResultError(error)) {
