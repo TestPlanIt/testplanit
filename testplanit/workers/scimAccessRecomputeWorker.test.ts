@@ -2,16 +2,17 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 // ── Hooked baseDb client mock ────────────────────────────────────────────────
 vi.mock("../lib/db", () => {
-  const tx = {
-    appConfig: { findUnique: vi.fn() },
-    user: { findMany: vi.fn() },
-    groupAssignment: { findMany: vi.fn() },
-  };
+  // The transaction callback receives an opaque tx handle; the recompute
+  // helpers that consume it (recomputeUserAccess / readScimFallbackDefault)
+  // are themselves mocked below, so it needs no real shape.
+  const tx = {};
   return {
     baseDb: {
       $transaction: vi.fn(async (cb: (tx: unknown) => unknown) => cb(tx)),
+      // Both sweep paths fetch their id set at the top level (outside the
+      // transaction) and then batch the recompute into BATCH_SIZE/tx chunks.
       groupAssignment: { findMany: vi.fn() },
-      __tx: tx,
+      user: { findMany: vi.fn() },
     },
   };
 });
@@ -68,20 +69,19 @@ import { runWithAuditContext } from "../lib/auditContext";
 import { validateMultiTenantJobData } from "../lib/multiTenantDb";
 import { recomputeUserAccess } from "../lib/scim/services/recompute";
 
-interface TxLike {
-  appConfig: { findUnique: ReturnType<typeof vi.fn> };
-  user: { findMany: ReturnType<typeof vi.fn> };
-  groupAssignment: { findMany: ReturnType<typeof vi.fn> };
-}
-
-const tx = (baseDb as unknown as { __tx: TxLike }).__tx;
-// Top-level baseDb.groupAssignment.findMany is called outside the transaction
-// for the groupId batch path.
+// Top-level baseDb.groupAssignment.findMany / baseDb.user.findMany are called
+// outside the transaction — the groupId path fetches members, the sweep path
+// fetches all group-mapped users — before either batches the recompute.
 const dbGroupAssignment = (
   baseDb as unknown as {
     groupAssignment: { findMany: ReturnType<typeof vi.fn> };
   }
 ).groupAssignment;
+const dbUser = (
+  baseDb as unknown as {
+    user: { findMany: ReturnType<typeof vi.fn> };
+  }
+).user;
 
 afterEach(() => {
   vi.clearAllMocks();
@@ -141,11 +141,11 @@ describe("scimAccessRecomputeWorker processor", () => {
 
   it("W3: job WITHOUT groupId — selects all accessSource=GROUP_MAPPING users and recomputes each", async () => {
     const users = [{ id: "user-x" }, { id: "user-y" }, { id: "user-z" }];
-    tx.user.findMany.mockResolvedValue(users);
+    dbUser.findMany.mockResolvedValue(users);
 
     await processor(makeJob({ adminUserId: "admin-1" }));
 
-    expect(tx.user.findMany).toHaveBeenCalledWith(
+    expect(dbUser.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: expect.objectContaining({
           accessSource: "GROUP_MAPPING",
@@ -169,6 +169,17 @@ describe("scimAccessRecomputeWorker processor", () => {
       "user-z",
       "NONE"
     );
+  });
+
+  it("W6: fallback sweep batches a large directory into BATCH_SIZE-sized transactions instead of one unbounded tx", async () => {
+    const users = Array.from({ length: 250 }, (_, i) => ({ id: `user-${i}` }));
+    dbUser.findMany.mockResolvedValue(users);
+
+    await processor(makeJob({ adminUserId: "admin-1" }));
+
+    // 250 users / 100-per-batch = 3 transactions — not one sweep-wide tx.
+    expect((baseDb as any).$transaction).toHaveBeenCalledTimes(3);
+    expect(recomputeUserAccess).toHaveBeenCalledTimes(250);
   });
 
   it("W4: audit frame carries adminUserId, scimGroupId, and scimTokenId when groupId is present", async () => {

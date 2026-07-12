@@ -76,17 +76,25 @@ export const processor = async (
           });
         }
       } else {
-        await baseDb.$transaction(async (tx) => {
-          const fallbackDefault = await readScimFallbackDefault(tx);
-          const users = await tx.user.findMany({
-            where: { accessSource: "GROUP_MAPPING", isDeleted: false },
-            select: { id: true },
-          });
-
-          for (const { id } of users) {
-            await recomputeUserAccess(tx, id, fallbackDefault);
-          }
+        // Fallback-default sweep: recompute every group-mapped user. Fetch the
+        // ids up front and batch the recompute the same way the group path
+        // does (BATCH_SIZE/tx) so a large directory can't run as one unbounded
+        // transaction holding locks for the whole sweep. Per-user recompute is
+        // idempotent, so a mid-sweep failure is safe to retry from the top.
+        const users = await baseDb.user.findMany({
+          where: { accessSource: "GROUP_MAPPING", isDeleted: false },
+          select: { id: true },
         });
+
+        for (let i = 0; i < users.length; i += BATCH_SIZE) {
+          const batch = users.slice(i, i + BATCH_SIZE);
+          await baseDb.$transaction(async (tx) => {
+            const fallbackDefault = await readScimFallbackDefault(tx);
+            for (const { id } of batch) {
+              await recomputeUserAccess(tx, id, fallbackDefault);
+            }
+          });
+        }
       }
     }
   );
