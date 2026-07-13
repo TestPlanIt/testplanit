@@ -2212,9 +2212,11 @@
       "ideal": "理想",
       "today": "今天",
       "tooltipRemaining": "剩餘 {count, number} 個",
+      "heatAhead": "領先理想進度",
       "heatOnTrack": "進度正常",
       "heatBehind": "落後於理想進度",
-      "tooltipBehind": "落後理想進度 {count, number}"
+      "tooltipBehind": "落後理想進度 {count, number}",
+      "tooltipAhead": "{count, number} 領先理想進度"
     },
     "members": {
       "cardTitle": "問題",
@@ -6939,6 +6941,10 @@
           "label": "項目健康",
           "description": "專案進度、里程碑和完成狀態"
         },
+        "milestoneReadiness": {
+          "label": "里程碑就緒度",
+          "description": "每個里程碑的發布就緒度：範圍內問題完全通過的百分比，以及各狀態的數量"
+        },
         "sessionAnalysis": {
           "label": "會話分析",
           "description": "會話完成狀況、持續時間和作業指標"
@@ -7294,6 +7300,13 @@
       "tag": "標籤"
     },
     "metrics": {
+      "percentReady": "就緒 (%)",
+      "passed": "通過",
+      "failed": "失敗",
+      "inProgress": "進行中",
+      "notRun": "未執行",
+      "uncovered": "未覆蓋",
+      "totalIssues": "問題總數",
       "testResults": "測試結果",
       "testResultCount": "檢測結果計數",
       "passRate": "通過率（%）",

@@ -2212,9 +2212,11 @@
       "ideal": "Ideaal",
       "today": "Vandaag",
       "tooltipRemaining": "{count, number} resterend",
+      "heatAhead": "Vooruit op ideaallijn",
       "heatOnTrack": "Op schema",
       "heatBehind": "Achter op schema",
-      "tooltipBehind": "{count, number} achter op schema"
+      "tooltipBehind": "{count, number} achter op schema",
+      "tooltipAhead": "{count, number} vooruit op ideaallijn"
     },
     "members": {
       "cardTitle": "Problemen",
@@ -6939,6 +6941,10 @@
           "label": "Project Gezondheid",
           "description": "Projectvoortgang, mijlpalen en voltooiingsstatus"
         },
+        "milestoneReadiness": {
+          "label": "Mijlpaalgereedheid",
+          "description": "Releasegereedheid per mijlpaal: % van de issues binnen scope die volledig slagen, en de aantallen per status"
+        },
         "sessionAnalysis": {
           "label": "Sessieanalyse",
           "description": "Sessievoltooiing, duur en toewijzingsstatistieken"
@@ -7294,6 +7300,13 @@
       "tag": "Tag"
     },
     "metrics": {
+      "percentReady": "Gereed (%)",
+      "passed": "Geslaagd",
+      "failed": "Mislukt",
+      "inProgress": "In behandeling",
+      "notRun": "Niet uitgevoerd",
+      "uncovered": "Niet gedekt",
+      "totalIssues": "Totaal aantal issues",
       "testResults": "Testresultaten",
       "testResultCount": "Testresultaten tellen",
       "passRate": "Slagingspercentage (%)",

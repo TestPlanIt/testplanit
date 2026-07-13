@@ -2212,9 +2212,11 @@
       "ideal": "Idealny",
       "today": "Dzisiaj",
       "tooltipRemaining": "Pozostało {count, number}",
+      "heatAhead": "Przed planem",
       "heatOnTrack": "Zgodnie z planem",
       "heatBehind": "Za planem",
-      "tooltipBehind": "{count, number} za planem"
+      "tooltipBehind": "{count, number} za planem",
+      "tooltipAhead": "{count, number} przed planem"
     },
     "members": {
       "cardTitle": "Zgłoszenia",
@@ -6939,6 +6941,10 @@
           "label": "Projekt Zdrowie",
           "description": "Postęp projektu, kamienie milowe i status ukończenia"
         },
+        "milestoneReadiness": {
+          "label": "Gotowość kamienia milowego",
+          "description": "Gotowość wydania dla każdego kamienia milowego: % zadań w zakresie w pełni zaliczonych oraz liczby dla każdego stanu"
+        },
         "sessionAnalysis": {
           "label": "Analiza sesji",
           "description": "Metryki ukończenia sesji, czasu trwania i zadań"
@@ -7294,6 +7300,13 @@
       "tag": "Etykietka"
     },
     "metrics": {
+      "percentReady": "Gotowe (%)",
+      "passed": "Zaliczone",
+      "failed": "Niezaliczone",
+      "inProgress": "W toku",
+      "notRun": "Nie uruchomiono",
+      "uncovered": "Bez pokrycia",
+      "totalIssues": "Łączna liczba zgłoszeń",
       "testResults": "Wyniki testów",
       "testResultCount": "Liczba wyników testów",
       "passRate": "Wskaźnik zdawalności (%)",

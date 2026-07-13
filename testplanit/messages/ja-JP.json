@@ -2212,9 +2212,11 @@
       "ideal": "理想",
       "today": "今日",
       "tooltipRemaining": "残り{count, number}件",
+      "heatAhead": "理想より進んでいる",
       "heatOnTrack": "順調",
       "heatBehind": "理想より遅れている",
-      "tooltipBehind": "理想より {count, number} 遅れている"
+      "tooltipBehind": "理想より {count, number} 遅れている",
+      "tooltipAhead": "{count, number}件、理想より進んでいる"
     },
     "members": {
       "cardTitle": "問題",
@@ -6939,6 +6941,10 @@
           "label": "プロジェクトヘルス",
           "description": "プロジェクトの進捗状況、マイルストーン、完了状況"
         },
+        "milestoneReadiness": {
+          "label": "マイルストーンの準備状況",
+          "description": "マイルストーンごとのリリース準備状況：対象課題のうち完全合格した割合、および状態別件数"
+        },
         "sessionAnalysis": {
           "label": "セッション分析",
           "description": "セッションの完了、期間、および割り当ての指標"
@@ -7294,6 +7300,13 @@
       "tag": "タグ"
     },
     "metrics": {
+      "percentReady": "準備完了率（%）",
+      "passed": "合格",
+      "failed": "不合格",
+      "inProgress": "進行中",
+      "notRun": "未実行",
+      "uncovered": "未カバー",
+      "totalIssues": "総課題数",
       "testResults": "検査結果",
       "testResultCount": "テスト結果の数",
       "passRate": "合格率（％）",

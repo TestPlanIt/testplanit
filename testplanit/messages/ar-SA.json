@@ -2212,9 +2212,11 @@
       "ideal": "المثالي",
       "today": "اليوم",
       "tooltipRemaining": "{count, number} متبقٍ",
+      "heatAhead": "متقدم عن المسار المثالي",
       "heatOnTrack": "على المسار الصحيح",
       "heatBehind": "متأخر عن المثالي",
-      "tooltipBehind": "{count, number} متأخر عن المثالي"
+      "tooltipBehind": "{count, number} متأخر عن المثالي",
+      "tooltipAhead": "{count, number} متقدم عن المسار المثالي"
     },
     "members": {
       "cardTitle": "القضايا",
@@ -6939,6 +6941,10 @@
           "label": "صحة المشروع",
           "description": "تقدم المشروع، والمعالم الرئيسية، وحالة الإكمال"
         },
+        "milestoneReadiness": {
+          "label": "جاهزية المعلم",
+          "description": "جاهزية الإصدار لكل معلم: نسبة % من المشكلات ضمن النطاق التي نجحت بالكامل، وعدد الحالات لكل حالة"
+        },
         "sessionAnalysis": {
           "label": "تحليل الجلسة",
           "description": "إكمال الجلسة، والمدة، ومقاييس التعيين"
@@ -7294,6 +7300,13 @@
       "tag": "الوسم"
     },
     "metrics": {
+      "percentReady": "جاهز (%)",
+      "passed": "ناجح",
+      "failed": "فاشل",
+      "inProgress": "قيد التنفيذ",
+      "notRun": "لم يتم التشغيل",
+      "uncovered": "غير مغطى",
+      "totalIssues": "إجمالي المشكلات",
       "testResults": "نتائج الاختبار",
       "testResultCount": "عدد نتائج الاختبار",
       "passRate": "معدل النجاح (%)",

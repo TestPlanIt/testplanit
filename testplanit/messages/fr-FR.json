@@ -2212,9 +2212,11 @@
       "ideal": "Idéal",
       "today": "Aujourd'hui",
       "tooltipRemaining": "{count, number} restantes",
+      "heatAhead": "En avance sur l'idéal",
       "heatOnTrack": "Dans les délais",
       "heatBehind": "En retard par rapport à l'idéal",
-      "tooltipBehind": "{count, number} de retard par rapport à l'idéal"
+      "tooltipBehind": "{count, number} de retard par rapport à l'idéal",
+      "tooltipAhead": "{count, number} en avance sur l'idéal"
     },
     "members": {
       "cardTitle": "Tickets",
@@ -6939,6 +6941,10 @@
           "label": "Projet Santé",
           "description": "État d'avancement, étapes clés et achèvement du projet"
         },
+        "milestoneReadiness": {
+          "label": "Préparation du jalon",
+          "description": "Préparation de la publication par jalon : % de tickets inclus entièrement réussis, et le nombre par état"
+        },
         "sessionAnalysis": {
           "label": "Analyse de session",
           "description": "Indicateurs de réussite, de durée et d'attribution des sessions"
@@ -7294,6 +7300,13 @@
       "tag": "Étiqueter"
     },
     "metrics": {
+      "percentReady": "Prêt (%)",
+      "passed": "Réussi",
+      "failed": "Échoué",
+      "inProgress": "En cours",
+      "notRun": "Non exécuté",
+      "uncovered": "Non couvert",
+      "totalIssues": "Nombre total de tickets",
       "testResults": "Résultats des tests",
       "testResultCount": "Nombre de résultats de test",
       "passRate": "Taux de réussite (%)",

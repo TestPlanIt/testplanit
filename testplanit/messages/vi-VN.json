@@ -2212,9 +2212,11 @@
       "ideal": "Lý tưởng",
       "today": "Hôm nay",
       "tooltipRemaining": "còn lại {count, number}",
+      "heatAhead": "Trước tiến độ lý tưởng",
       "heatOnTrack": "Đúng tiến độ",
       "heatBehind": "Chậm so với dự kiến",
-      "tooltipBehind": "Chậm {count, number} so với dự kiến"
+      "tooltipBehind": "Chậm {count, number} so với dự kiến",
+      "tooltipAhead": "{count, number} trước tiến độ lý tưởng"
     },
     "members": {
       "cardTitle": "Vấn đề",
@@ -6939,6 +6941,10 @@
           "label": "Dự án Sức khỏe",
           "description": "Tiến độ dự án, các mốc quan trọng và tình trạng hoàn thành"
         },
+        "milestoneReadiness": {
+          "label": "Mức Độ Sẵn Sàng Của Cột Mốc",
+          "description": "Mức độ sẵn sàng phát hành theo từng cột mốc: % vấn đề trong phạm vi đã đạt hoàn toàn và số lượng theo từng trạng thái"
+        },
         "sessionAnalysis": {
           "label": "Phân tích phiên",
           "description": "Số liệu về việc hoàn thành phiên, thời lượng và bài tập"
@@ -7294,6 +7300,13 @@
       "tag": "Nhãn"
     },
     "metrics": {
+      "percentReady": "Sẵn Sàng (%)",
+      "passed": "Đạt",
+      "failed": "Không Đạt",
+      "inProgress": "Đang Tiến Hành",
+      "notRun": "Chưa Chạy",
+      "uncovered": "Chưa Được Bao Phủ",
+      "totalIssues": "Tổng Số Vấn Đề",
       "testResults": "Kết quả kiểm tra",
       "testResultCount": "Số kết quả xét nghiệm",
       "passRate": "Tỷ lệ đậu (%)",

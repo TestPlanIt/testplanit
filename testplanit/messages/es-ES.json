@@ -2212,9 +2212,11 @@
       "ideal": "Óptimo",
       "today": "Hoy",
       "tooltipRemaining": "{count, number} restantes",
+      "heatAhead": "Por delante de lo ideal",
       "heatOnTrack": "En camino",
       "heatBehind": "Detrás de lo ideal",
-      "tooltipBehind": "{count, number} por detrás de lo ideal"
+      "tooltipBehind": "{count, number} por detrás de lo ideal",
+      "tooltipAhead": "{count, number} por delante de lo ideal"
     },
     "members": {
       "cardTitle": "Incidencias",
@@ -6939,6 +6941,10 @@
           "label": "Salud del Proyecto",
           "description": "Progreso del proyecto, hitos y estado de finalización"
         },
+        "milestoneReadiness": {
+          "label": "Preparación del hito",
+          "description": "Preparación de la versión por hito: % de incidencias dentro del alcance totalmente aprobadas y los recuentos por estado"
+        },
         "sessionAnalysis": {
           "label": "Análisis de sesiones",
           "description": "Métricas de finalización de la sesión, duración y asignación"
@@ -7294,6 +7300,13 @@
       "tag": "Etiqueta"
     },
     "metrics": {
+      "percentReady": "Preparado (%)",
+      "passed": "Aprobado",
+      "failed": "Fallido",
+      "inProgress": "En curso",
+      "notRun": "No ejecutado",
+      "uncovered": "Sin cobertura",
+      "totalIssues": "Incidencias totales",
       "testResults": "Resultados de la prueba",
       "testResultCount": "Número de resultados de la prueba",
       "passRate": "Tasa de pasaje (%)",

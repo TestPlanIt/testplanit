@@ -2212,9 +2212,11 @@
       "ideal": "Idealverlauf",
       "today": "Heute",
       "tooltipRemaining": "{count, number} verbleibend",
+      "heatAhead": "Vor dem Idealwert",
       "heatOnTrack": "Im Zeitplan",
       "heatBehind": "Hinter Plan",
-      "tooltipBehind": "{count, number} hinter Plan"
+      "tooltipBehind": "{count, number} hinter Plan",
+      "tooltipAhead": "{count, number} vor dem Idealwert"
     },
     "members": {
       "cardTitle": "Vorgänge",
@@ -6939,6 +6941,10 @@
           "label": "Projekt Gesundheit",
           "description": "Projektfortschritt, Meilensteine und Fertigstellungsstatus"
         },
+        "milestoneReadiness": {
+          "label": "Meilenstein-Bereitschaft",
+          "description": "Release-Bereitschaft pro Meilenstein: % der im Geltungsbereich befindlichen Vorgänge, die vollständig bestanden haben, sowie die Anzahl pro Status"
+        },
         "sessionAnalysis": {
           "label": "Sitzungsanalyse",
           "description": "Metriken zu Sitzungsabschluss, -dauer und Aufgabenverteilung"
@@ -7294,6 +7300,13 @@
       "tag": "Etikett"
     },
     "metrics": {
+      "percentReady": "Bereit (%)",
+      "passed": "Bestanden",
+      "failed": "Fehlgeschlagen",
+      "inProgress": "Im Gange",
+      "notRun": "Nicht ausgeführt",
+      "uncovered": "Nicht abgedeckt",
+      "totalIssues": "Gesamtzahl der Vorgänge",
       "testResults": "Testergebnisse",
       "testResultCount": "Testergebnisse zählen",
       "passRate": "Bestehensquote (%)",

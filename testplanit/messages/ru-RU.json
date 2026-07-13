@@ -2212,9 +2212,11 @@
       "ideal": "Идеальный",
       "today": "Сегодня",
       "tooltipRemaining": "Осталось {count, number}",
+      "heatAhead": "Опережение идеала",
       "heatOnTrack": "По плану",
       "heatBehind": "Позади идеала",
-      "tooltipBehind": "{count, number} позади идеала"
+      "tooltipBehind": "{count, number} позади идеала",
+      "tooltipAhead": "{count, number} впереди идеала"
     },
     "members": {
       "cardTitle": "Задачи",
@@ -6939,6 +6941,10 @@
           "label": "Проект Здоровье",
           "description": "Ход проекта, этапы и статус завершения."
         },
+        "milestoneReadiness": {
+          "label": "Готовность вехи",
+          "description": "Готовность к релизу по вехам: % полностью пройденных задач в рамках охвата, и количество по каждому статусу"
+        },
         "sessionAnalysis": {
           "label": "Анализ сессии",
           "description": "Показатели завершения сессии, её продолжительности и выполнения заданий."
@@ -7294,6 +7300,13 @@
       "tag": "Ярлык"
     },
     "metrics": {
+      "percentReady": "Готово (%)",
+      "passed": "Пройден",
+      "failed": "Не пройден",
+      "inProgress": "В процессе",
+      "notRun": "Не выполнено",
+      "uncovered": "Не охвачено",
+      "totalIssues": "Всего задач",
       "testResults": "Результаты испытаний",
       "testResultCount": "Результаты тестов имеют значение",
       "passRate": "Процент сдавших экзамен (%)",

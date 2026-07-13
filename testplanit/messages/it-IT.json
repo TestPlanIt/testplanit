@@ -2212,9 +2212,11 @@
       "ideal": "Ideale",
       "today": "Oggi",
       "tooltipRemaining": "{count, number} rimanenti",
+      "heatAhead": "In anticipo rispetto all'ideale",
       "heatOnTrack": "In linea",
       "heatBehind": "Dietro l'ideale",
-      "tooltipBehind": "{count, number} dietro l'ideale"
+      "tooltipBehind": "{count, number} dietro l'ideale",
+      "tooltipAhead": "{count, number} in anticipo rispetto all'ideale"
     },
     "members": {
       "cardTitle": "Problemi",
@@ -6939,6 +6941,10 @@
           "label": "Progetto Salute",
           "description": "Avanzamento del progetto, traguardi e stato di completamento"
         },
+        "milestoneReadiness": {
+          "label": "Preparazione della milestone",
+          "description": "Preparazione al rilascio per milestone: % di problemi in ambito completamente superati e i conteggi per stato"
+        },
         "sessionAnalysis": {
           "label": "Analisi della sessione",
           "description": "Metriche di completamento, durata e assegnazione della sessione"
@@ -7294,6 +7300,13 @@
       "tag": "Etichetta"
     },
     "metrics": {
+      "percentReady": "Pronto (%)",
+      "passed": "Superato",
+      "failed": "Fallito",
+      "inProgress": "In corso",
+      "notRun": "Non eseguito",
+      "uncovered": "Non coperto",
+      "totalIssues": "Problemi totali",
       "testResults": "Risultati del test",
       "testResultCount": "Conteggio dei risultati dei test",
       "passRate": "Tasso di superamento (%)",

@@ -2212,9 +2212,11 @@
       "ideal": "이상적",
       "today": "오늘",
       "tooltipRemaining": "{count, number} 남음",
+      "heatAhead": "이상적인 진행보다 앞섬",
       "heatOnTrack": "정상 진행",
       "heatBehind": "목표보다 지연",
-      "tooltipBehind": "목표보다 {count, number} 지연"
+      "tooltipBehind": "목표보다 {count, number} 지연",
+      "tooltipAhead": "이상적인 진행보다 {count, number} 앞섬"
     },
     "members": {
       "cardTitle": "이슈",
@@ -6939,6 +6941,10 @@
           "label": "프로젝트 헬스",
           "description": "프로젝트 진행 상황, 주요 일정 및 완료 현황"
         },
+        "milestoneReadiness": {
+          "label": "마일스톤 준비도",
+          "description": "마일스톤별 릴리스 준비도: 대상 이슈 중 완전히 통과한 비율(%) 및 상태별 개수"
+        },
         "sessionAnalysis": {
           "label": "세션 분석",
           "description": "수업 완료율, 소요 시간 및 과제 관련 지표"
@@ -7294,6 +7300,13 @@
       "tag": "꼬리표"
     },
     "metrics": {
+      "percentReady": "준비됨 (%)",
+      "passed": "통과됨",
+      "failed": "실패함",
+      "inProgress": "진행 중",
+      "notRun": "실행 안 됨",
+      "uncovered": "미커버",
+      "totalIssues": "총 이슈 수",
       "testResults": "시험 결과",
       "testResultCount": "테스트 결과 집계",
       "passRate": "합격률(%)",

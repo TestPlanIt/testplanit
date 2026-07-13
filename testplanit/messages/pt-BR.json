@@ -2212,9 +2212,11 @@
       "ideal": "Esperado",
       "today": "Hoje",
       "tooltipRemaining": "{count, number} restantes",
+      "heatAhead": "Adiantado em relação ao ideal",
       "heatOnTrack": "No prazo",
       "heatBehind": "Atrás do ideal",
-      "tooltipBehind": "{count, number} atrás do ideal"
+      "tooltipBehind": "{count, number} atrás do ideal",
+      "tooltipAhead": "{count, number} adiantado em relação ao ideal"
     },
     "members": {
       "cardTitle": "Issues",
@@ -6939,6 +6941,10 @@
           "label": "Projeto Saúde",
           "description": "Progresso do projeto, marcos e status de conclusão"
         },
+        "milestoneReadiness": {
+          "label": "Prontidão do Marco",
+          "description": "Prontidão de lançamento por marco: % de problemas no escopo totalmente aprovados e as contagens por estado"
+        },
         "sessionAnalysis": {
           "label": "Análise da sessão",
           "description": "Métricas de conclusão, duração e atribuição de sessões"
@@ -7294,6 +7300,13 @@
       "tag": "Marcação"
     },
     "metrics": {
+      "percentReady": "Pronto (%)",
+      "passed": "Aprovado",
+      "failed": "Reprovado",
+      "inProgress": "Em Andamento",
+      "notRun": "Não Executado",
+      "uncovered": "Não Coberto",
+      "totalIssues": "Total de Problemas",
       "testResults": "Resultados dos testes",
       "testResultCount": "Contagem de resultados de testes",
       "passRate": "Taxa de aprovação (%)",

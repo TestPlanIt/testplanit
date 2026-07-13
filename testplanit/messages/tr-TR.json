@@ -2212,9 +2212,11 @@
       "ideal": "İdeal",
       "today": "Bugün",
       "tooltipRemaining": "{count, number} kalan",
+      "heatAhead": "İdealin önünde",
       "heatOnTrack": "Yolunda",
       "heatBehind": "İdealden Geride",
-      "tooltipBehind": "İdealden {count, number} geride"
+      "tooltipBehind": "İdealden {count, number} geride",
+      "tooltipAhead": "İdealin {count, number} önünde"
     },
     "members": {
       "cardTitle": "Sorunlar",
@@ -6939,6 +6941,10 @@
           "label": "Proje Sağlığı",
           "description": "Proje ilerlemesi, kilometre taşları ve tamamlanma durumu"
         },
+        "milestoneReadiness": {
+          "label": "Kilometre Taşı Hazırlığı",
+          "description": "Kilometre taşına göre sürüm hazırlığı: kapsam dahilindeki sorunların tamamen geçme yüzdesi ve duruma göre sayılar"
+        },
         "sessionAnalysis": {
           "label": "Oturum Analizi",
           "description": "Oturum tamamlama, süre ve atama ölçütleri"
@@ -7294,6 +7300,13 @@
       "tag": "Etiket"
     },
     "metrics": {
+      "percentReady": "Hazır (%)",
+      "passed": "Geçti",
+      "failed": "Başarısız",
+      "inProgress": "Devam Ediyor",
+      "notRun": "Çalıştırılmadı",
+      "uncovered": "Kapsanmamış",
+      "totalIssues": "Toplam Sorun",
       "testResults": "Test Sonuçları",
       "testResultCount": "Test Sonuçları Sayısı",
       "passRate": "Geçme Oranı (%)",
