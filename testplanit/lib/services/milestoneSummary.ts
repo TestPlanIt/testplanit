@@ -20,11 +20,14 @@ export type MilestoneIssue = {
   id: number;
   name: string;
   title: string;
+  description: string | null;
   externalId: string | null;
   externalKey: string | null;
   externalUrl: string | null;
   externalStatus: string | null;
   data: any;
+  issueTypeName: string | null;
+  issueTypeIconUrl: string | null;
   integrationId: number | null;
   lastSyncedAt: Date | null;
   integration: {
@@ -434,11 +437,14 @@ export async function getMilestoneLinkedIssues(
             id: true,
             name: true,
             title: true,
+            description: true,
             externalId: true,
             externalKey: true,
             externalUrl: true,
             externalStatus: true,
             data: true,
+            issueTypeName: true,
+            issueTypeIconUrl: true,
             integrationId: true,
             lastSyncedAt: true,
             integration: {

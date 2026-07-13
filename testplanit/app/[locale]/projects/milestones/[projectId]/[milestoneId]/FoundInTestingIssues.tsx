@@ -1,9 +1,15 @@
 "use client";
 
+import DOMPurify from "dompurify";
 import { IssueStatusDisplay } from "@/components/IssueStatusDisplay";
 import { IssuesDisplay } from "@/components/tables/IssuesDisplay";
 import { VirtualizedDataTable } from "@/components/tables/VirtualizedDataTable";
 import { Badge } from "@/components/ui/badge";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Collapsible,
   CollapsibleContent,
@@ -18,6 +24,18 @@ import type { MilestoneIssue } from "~/lib/services/milestoneSummary";
 import { useMilestoneSummary } from "~/hooks/useMilestoneSummary";
 
 const FOUND_IN_TESTING_COLLAPSED_KEY = "tpi.milestone.foundInTesting.collapsed";
+
+/** Plain-text preview of an issue's (possibly HTML) description. */
+function stripHtmlTags(html: string | null | undefined): string {
+  if (!html) return "";
+  return html
+    .replace(/<[^>]*>/g, "")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .trim();
+}
 
 interface FoundInTestingIssuesProps {
   milestoneId: number;
@@ -123,8 +141,82 @@ export function FoundInTestingIssues({
                   (issue.integrationId ? "JIRA" : undefined)
                 }
                 integrationId={issue.integrationId || issue.integration?.id}
+                issueTypeName={issue.issueTypeName}
+                issueTypeIconUrl={issue.issueTypeIconUrl}
               />
             </div>
+          );
+        },
+      },
+      {
+        id: "description",
+        accessorFn: (row) => stripHtmlTags(row.description),
+        header: t("columnDescription"),
+        enableSorting: false,
+        enableResizing: true,
+        size: 300,
+        minSize: 150,
+        maxSize: 600,
+        cell: ({ row, column }) => {
+          const description = row.original.description;
+          const plainText = stripHtmlTags(description);
+
+          if (!plainText)
+            return <span className="text-muted-foreground">-</span>;
+
+          const hasHtml = description && /<[^>]+>/.test(description);
+
+          return (
+            <Popover>
+              <PopoverTrigger asChild>
+                <div
+                  className="line-clamp-2 overflow-hidden text-ellipsis text-sm cursor-pointer hover:bg-accent/50 rounded px-1 -mx-1 py-0.5 transition-colors"
+                  style={{ maxWidth: column.getSize() }}
+                  title={plainText}
+                >
+                  {plainText}
+                </div>
+              </PopoverTrigger>
+              <PopoverContent className="w-[500px] max-h-[400px] overflow-auto">
+                <div className="space-y-2">
+                  <h4 className="font-semibold text-sm">
+                    {t("columnDescription")}
+                  </h4>
+                  {hasHtml ? (
+                    <div
+                      className="text-sm [&_a]:text-primary [&_a]:underline [&_p]:mb-2 [&_p:last-child]:mb-0 [&_ul]:list-disc [&_ul]:ms-4 [&_ol]:list-decimal [&_ol]:ms-4"
+                      dangerouslySetInnerHTML={{
+                        __html: DOMPurify.sanitize(description!, {
+                          ALLOWED_TAGS: [
+                            "p",
+                            "br",
+                            "a",
+                            "strong",
+                            "em",
+                            "u",
+                            "ul",
+                            "ol",
+                            "li",
+                            "h1",
+                            "h2",
+                            "h3",
+                            "h4",
+                            "h5",
+                            "h6",
+                            "blockquote",
+                            "code",
+                            "pre",
+                          ],
+                          ALLOWED_ATTR: ["href", "target", "rel"],
+                        }),
+                      }}
+                    />
+                  ) : (
+                    <p className="text-sm whitespace-pre-wrap">{description}</p>
+                  )}
+                </div>
+              </PopoverContent>
+            </Popover>
           );
         },
       },
