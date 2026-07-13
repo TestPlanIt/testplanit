@@ -2,6 +2,7 @@ import {
   HeartPulse,
   Bug,
   Compass,
+  Flag,
   Grid3x3,
   Heart,
   ListTree,
@@ -64,6 +65,13 @@ export const getProjectReportTypes = (tReports: any): ReportType[] => [
     description: tReports("reportTypes.projectHealth.description"),
     icon: Heart,
     endpoint: "/api/report-builder/project-health",
+  },
+  {
+    id: "milestone-readiness",
+    label: tReports("reportTypes.milestoneReadiness.label"),
+    description: tReports("reportTypes.milestoneReadiness.description"),
+    icon: Flag,
+    endpoint: "/api/report-builder/milestone-readiness",
   },
   {
     id: "session-analysis",

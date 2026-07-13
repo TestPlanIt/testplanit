@@ -6939,6 +6939,10 @@
           "label": "Project Health",
           "description": "Project progress, milestones, and completion status"
         },
+        "milestoneReadiness": {
+          "label": "Milestone Readiness",
+          "description": "Release readiness per milestone: % of in-scope issues fully passing, and the per-state counts"
+        },
         "sessionAnalysis": {
           "label": "Session Analysis",
           "description": "Session completion, duration, and assignment metrics"
@@ -7294,6 +7298,13 @@
       "tag": "Tag"
     },
     "metrics": {
+      "percentReady": "Ready (%)",
+      "passed": "Passed",
+      "failed": "Failed",
+      "inProgress": "In Progress",
+      "notRun": "Not Run",
+      "uncovered": "Uncovered",
+      "totalIssues": "Total Issues",
       "testResults": "Test Results",
       "testResultCount": "Test Results Count",
       "passRate": "Pass Rate (%)",
