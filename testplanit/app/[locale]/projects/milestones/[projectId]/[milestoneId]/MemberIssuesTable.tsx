@@ -682,7 +682,6 @@ export function MemberIssuesTable({
                 <RefreshCw
                   className={`h-3.5 w-3.5 ${isManualRefreshing ? "animate-spin" : ""}`}
                 />
-                {t("refresh")}
               </Button>
             </div>
           </div>
