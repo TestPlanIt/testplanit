@@ -6,8 +6,10 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { LinkIcon } from "lucide-react";
+import { useLocale } from "next-intl";
 import { Link } from "~/lib/navigation";
 import { IconName } from "~/types/globals";
+import { formatDateRange } from "~/utils/dateFormat";
 
 interface MilestoneIconAndNameProps {
   milestone: {
@@ -33,25 +35,6 @@ interface MilestoneIconAndNameProps {
   showSourceIcon?: boolean;
 }
 
-/** "Aug 26, 2025 – Sep 27, 2025" (or a single side when only one date is set). */
-function formatDateRange(
-  start?: Date | string | null,
-  end?: Date | string | null
-): string | undefined {
-  const fmt = (d?: Date | string | null) =>
-    d
-      ? new Date(d).toLocaleDateString(undefined, {
-          year: "numeric",
-          month: "short",
-          day: "numeric",
-        })
-      : null;
-  const s = fmt(start);
-  const e = fmt(end);
-  if (s && e) return `${s} – ${e}`;
-  return s ?? e ?? undefined;
-}
-
 export const MilestoneIconAndName: React.FC<MilestoneIconAndNameProps> = ({
   milestone,
   projectId,
@@ -62,7 +45,12 @@ export const MilestoneIconAndName: React.FC<MilestoneIconAndNameProps> = ({
     ? `/projects/milestones/${projectId}/${milestone.id}`
     : `/milestone/${milestone.id}`;
 
-  const dateRange = formatDateRange(milestone.startedAt, milestone.completedAt);
+  const locale = useLocale();
+  const dateRange = formatDateRange(
+    milestone.startedAt,
+    milestone.completedAt,
+    { locale }
+  );
 
   const linkEl = (
     <Link href={href} className="group max-w-full min-w-0 overflow-hidden">

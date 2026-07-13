@@ -28,7 +28,6 @@ import {
   endOfQuarter,
   endOfWeek,
   endOfYear,
-  format,
   startOfDay,
   startOfMonth,
   startOfQuarter,
@@ -45,7 +44,7 @@ import { useState } from "react";
 import { DateRange } from "react-day-picker";
 import { Control, FieldPath, FieldValues } from "react-hook-form";
 import { cn, type ClassValue } from "~/utils";
-import { getDateFnsLocale } from "~/utils/locales";
+import { formatDateRange } from "~/utils/dateFormat";
 
 interface DateRangePickerFieldProps<T extends FieldValues = FieldValues> {
   control: Control<T>;
@@ -258,21 +257,6 @@ export function DateRangePickerField<T extends FieldValues = FieldValues>({
     return found?.range.label || tReports("dateRange.custom");
   };
 
-  const formatDateRange = (dateRange: DateRange | undefined) => {
-    if (!dateRange?.from) return null;
-    const formatStr = "MMM d, yyyy";
-    const localeObj = getDateFnsLocale(locale);
-
-    if (dateRange.to) {
-      return `${format(dateRange.from, formatStr, { locale: localeObj })} - ${format(
-        dateRange.to,
-        formatStr,
-        { locale: localeObj }
-      )}`;
-    }
-    return format(dateRange.from, formatStr, { locale: localeObj });
-  };
-
   return (
     <FormField
       control={control}
@@ -304,7 +288,9 @@ export function DateRangePickerField<T extends FieldValues = FieldValues>({
                   data-testid="date-range-button"
                 >
                   {field.value ? (
-                    formatDateRange(field.value)
+                    formatDateRange(field.value.from, field.value.to, {
+                      locale,
+                    })
                   ) : (
                     <span>
                       {placeholder || tReports("dateRange.selectDateRange")}
