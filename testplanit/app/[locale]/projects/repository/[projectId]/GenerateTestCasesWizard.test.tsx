@@ -121,6 +121,48 @@ describe("GenerateTestCasesWizard — INT-06 plumbing", () => {
   });
 });
 
+describe("GenerateTestCasesWizard — case-field eligibility", () => {
+  it("filters the template caseFields query to enabled, non-deleted fields", () => {
+    const src = readWizard();
+    // The templates query must constrain caseFields to fields that are still
+    // enabled and not soft-deleted so disabled/deleted fields are never
+    // selectable for generation.
+    expect(src).toMatch(
+      /caseField:\s*\{\s*isEnabled:\s*true,\s*isDeleted:\s*false\s*\}/
+    );
+  });
+
+  it("reads the TestCaseRestrictedFields add/edit permission", () => {
+    const src = readWizard();
+    expect(src).toMatch(
+      /useProjectPermissions\(\s*projectId,\s*ApplicationArea\.TestCaseRestrictedFields\s*\)/
+    );
+    // Super admins bypass; everyone else needs explicit add/edit.
+    expect(src).toMatch(
+      /const canEditRestrictedFields =\s*\(restrictedFieldsPermissions\?\.canAddEdit \?\? false\) \|\| isAdmin/
+    );
+  });
+
+  it("gates restricted fields on canEditRestrictedFields via isTemplateFieldVisible", () => {
+    const src = readWizard();
+    // The predicate hides disabled/deleted fields and any restricted field the
+    // user lacks permission to edit.
+    expect(src).toMatch(
+      /const isTemplateFieldVisible = useCallback\([\s\S]*?isRestricted \|\| canEditRestrictedFields/
+    );
+  });
+
+  it("applies the visibility filter to selection, auto-select, and restore paths", () => {
+    const src = readWizard();
+    // Only visible fields are ever added to selectedFieldIds or rendered in
+    // the field-selection list.
+    const matches = src.match(/\.filter\(isTemplateFieldVisible\)/g) ?? [];
+    // field-selection list + selectAllFields + auto-select effect + sanitizer
+    // + restoreTemplateFromResult.
+    expect(matches.length).toBeGreaterThanOrEqual(4);
+  });
+});
+
 describe("en-US.json — INT-06 i18n keys", () => {
   it("contains all new generateTestCases keys", () => {
     const en = JSON.parse(

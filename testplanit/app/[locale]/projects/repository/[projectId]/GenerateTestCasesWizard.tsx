@@ -1564,6 +1564,10 @@ export function GenerateTestCasesWizard({
     },
     include: {
       caseFields: {
+        // Only surface case fields that are still enabled and not soft-deleted.
+        // Disabled/deleted fields remain in the template assignment but must
+        // never be selectable for generation.
+        where: { caseField: { isEnabled: true, isDeleted: false } },
         select: {
           caseFieldId: true,
           templateId: true,
@@ -1641,6 +1645,28 @@ export function GenerateTestCasesWizard({
   );
   const canAddEdit = permissions?.canAddEdit ?? false;
 
+  // Restricted case fields are only offered to users who can add/edit them.
+  // Super admins always qualify; everyone else needs explicit add/edit on the
+  // TestCaseRestrictedFields area.
+  const { permissions: restrictedFieldsPermissions } = useProjectPermissions(
+    projectId,
+    ApplicationArea.TestCaseRestrictedFields
+  );
+  const canEditRestrictedFields =
+    (restrictedFieldsPermissions?.canAddEdit ?? false) || isAdmin;
+
+  // A template case field may be offered for generation only when it is
+  // enabled, not soft-deleted, and — if restricted — the user is allowed to
+  // edit restricted fields. The query already filters enabled/deleted, but we
+  // re-check defensively so callers can rely on this predicate alone.
+  const isTemplateFieldVisible = useCallback(
+    (cf: any) =>
+      cf?.caseField?.isEnabled !== false &&
+      cf?.caseField?.isDeleted !== true &&
+      (!cf?.caseField?.isRestricted || canEditRestrictedFields),
+    [canEditRestrictedFields]
+  );
+
   useEffect(() => {
     if (project) {
       const hasIntegrations = project.projectIntegrations.length > 0;
@@ -1674,12 +1700,38 @@ export function GenerateTestCasesWizard({
       const template = templates.find((t) => t.id === selectedTemplateId);
       if (template) {
         const allFieldIds = new Set(
-          template.caseFields.map((cf) => cf.caseFieldId)
+          template.caseFields
+            .filter(isTemplateFieldVisible)
+            .map((cf) => cf.caseFieldId)
         );
         setSelectedFieldIds(allFieldIds);
       }
     }
-  }, [selectedTemplateId, templates, currentStep]);
+  }, [selectedTemplateId, templates, currentStep, isTemplateFieldVisible]);
+
+  // Safety net: never let a hidden field (disabled, deleted, or restricted
+  // without permission) linger in the selection — e.g. when restoring a prior
+  // job's field IDs. This keeps the generation payload and preview in sync
+  // with what the user is actually allowed to select.
+  useEffect(() => {
+    if (!selectedTemplateId || !templates) return;
+    const template = templates.find((t) => t.id === selectedTemplateId);
+    if (!template) return;
+    const visibleIds = new Set(
+      template.caseFields
+        .filter(isTemplateFieldVisible)
+        .map((cf) => cf.caseFieldId)
+    );
+    setSelectedFieldIds((prev) => {
+      let changed = false;
+      const next = new Set<number>();
+      prev.forEach((id) => {
+        if (visibleIds.has(id)) next.add(id);
+        else changed = true;
+      });
+      return changed ? next : prev;
+    });
+  }, [selectedTemplateId, templates, isTemplateFieldVisible]);
 
   // Convert option names → IDs for dropdown/multi-select fields in generated test cases.
   // The worker returns string names but the UI expects numeric option IDs.
@@ -1721,19 +1773,25 @@ export function GenerateTestCasesWizard({
     (resultTemplateId?: number, resultFieldIds?: number[]) => {
       if (!resultTemplateId || !templates) return;
       setSelectedTemplateId(resultTemplateId);
+      const tmpl = templates.find((t) => t.id === resultTemplateId);
+      // Only restore fields the user is still allowed to select — a prior job
+      // may have included fields that are now disabled/deleted or restricted
+      // beyond the current user's permission.
+      const visibleIds = new Set(
+        (tmpl?.caseFields ?? [])
+          .filter(isTemplateFieldVisible)
+          .map((cf: any) => cf.caseFieldId)
+      );
       if (resultFieldIds && resultFieldIds.length > 0) {
-        setSelectedFieldIds(new Set(resultFieldIds));
+        setSelectedFieldIds(
+          new Set(resultFieldIds.filter((id) => visibleIds.has(id)))
+        );
       } else {
-        // Fallback: select all fields if the job didn't carry field IDs
-        const tmpl = templates.find((t) => t.id === resultTemplateId);
-        if (tmpl) {
-          setSelectedFieldIds(
-            new Set(tmpl.caseFields.map((cf: any) => cf.caseFieldId))
-          );
-        }
+        // Fallback: select all visible fields if the job didn't carry field IDs
+        setSelectedFieldIds(new Set(visibleIds));
       }
     },
-    [templates]
+    [templates, isTemplateFieldVisible]
   );
 
   // Poll URL job status while a job is active
@@ -1980,7 +2038,9 @@ export function GenerateTestCasesWizard({
       const template = templates.find((t) => t.id === selectedTemplateId);
       if (template) {
         const allFieldIds = new Set(
-          template.caseFields.map((cf) => cf.caseFieldId)
+          template.caseFields
+            .filter(isTemplateFieldVisible)
+            .map((cf) => cf.caseFieldId)
         );
         setSelectedFieldIds(allFieldIds);
       }
@@ -1991,10 +2051,12 @@ export function GenerateTestCasesWizard({
     if (selectedTemplateId && templates) {
       const template = templates.find((t) => t.id === selectedTemplateId);
       if (template) {
-        // Keep only required fields
+        // Keep only required fields that are still visible to this user
         const requiredFieldIds = new Set(
           template.caseFields
-            .filter((cf) => cf.caseField.isRequired)
+            .filter(
+              (cf) => cf.caseField.isRequired && isTemplateFieldVisible(cf)
+            )
             .map((cf) => cf.caseFieldId)
         );
         setSelectedFieldIds(requiredFieldIds);
@@ -4548,6 +4610,7 @@ export function GenerateTestCasesWizard({
                               {templates
                                 ?.find((t) => t.id === selectedTemplateId)
                                 ?.caseFields.slice()
+                                .filter(isTemplateFieldVisible)
                                 .sort((a, b) => a.order - b.order)
                                 .map((field) => (
                                   <div
