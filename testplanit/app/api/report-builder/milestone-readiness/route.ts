@@ -5,6 +5,7 @@ import { baseDb } from "~/lib/db";
 import { getMemberCoverage } from "~/lib/services/milestoneMemberCoverage";
 import { aggregateMilestoneReadiness } from "~/app/[locale]/projects/milestones/[projectId]/[milestoneId]/milestoneReadiness";
 import { authOptions } from "~/server/auth";
+import { isMilestoneInDateRange, milestoneDate } from "./milestoneDateRange";
 
 /**
  * Milestone Readiness report (fast-follow READY, R5). One row per milestone,
@@ -54,38 +55,16 @@ const METRIC_BY_ID = new Map(METRICS.map((m) => [m.id, m]));
 
 /**
  * Milestones the caller may see in this project (name, type icon, and window
- * dates for the Date dimension). When a date range is supplied, only milestones
- * whose own window overlaps it are returned — a null start or end is treated as
- * open-ended, so an undated or still-running milestone still matches.
+ * dates for the Date dimension). Every visible milestone is returned; the date
+ * filter is applied afterwards on each milestone's effective plotting date (see
+ * `isMilestoneInDateRange`), so the filter and the chart stay consistent.
  */
-async function listVisibleMilestones(
-  session: any,
-  projectId: number,
-  range?: { startDate?: string; endDate?: string }
-) {
+async function listVisibleMilestones(session: any, projectId: number) {
   const db = await getEnhancedDb(session);
-  const overlap: any[] = [];
-  if (range?.endDate) {
-    overlap.push({
-      OR: [
-        { startedAt: null },
-        { startedAt: { lte: new Date(range.endDate) } },
-      ],
-    });
-  }
-  if (range?.startDate) {
-    overlap.push({
-      OR: [
-        { completedAt: null },
-        { completedAt: { gte: new Date(range.startDate) } },
-      ],
-    });
-  }
   return db.milestones.findMany({
     where: {
       projectId,
       isDeleted: false,
-      ...(overlap.length ? { AND: overlap } : {}),
     },
     select: {
       id: true,
@@ -102,15 +81,6 @@ async function listVisibleMilestones(
     },
     orderBy: { name: "asc" },
   });
-}
-
-/**
- * The date a milestone plots at on a time axis. Synced milestones often have no
- * `startedAt`, so fall back to the target/end date, then the row's creation —
- * every milestone gets a real date to sort/plot by.
- */
-function milestoneDate(m: any): Date {
-  return m.startedAt ?? m.completedAt ?? m.createdAt;
 }
 
 export async function GET(req: NextRequest) {
@@ -183,10 +153,12 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const milestones = await listVisibleMilestones(session, Number(projectId), {
-    startDate,
-    endDate,
-  });
+  // Filter on each milestone's effective plotting date (the same date the chart
+  // renders), not a start/end window — so an undated milestone can't pass the
+  // filter yet plot outside the visible range.
+  const milestones = (
+    await listVisibleMilestones(session, Number(projectId))
+  ).filter((m: any) => isMilestoneInDateRange(m, { startDate, endDate }));
   const milestoneIds = milestones.map((m: any) => m.id);
 
   // Skip the (expensive) coverage query for milestones with no in-scope issues:
