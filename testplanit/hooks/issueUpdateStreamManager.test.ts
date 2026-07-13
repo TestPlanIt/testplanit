@@ -52,7 +52,13 @@ function flush() {
 }
 
 beforeEach(() => {
-  vi.useFakeTimers();
+  // Fake only the setTimeout family (the reconcile debounce) so the shared
+  // setup's synchronous requestIdleCallback — which the deferred EventSource
+  // wrapper connects through — stays intact. Faking every timer would also
+  // fake requestIdleCallback, leaving the connection deferred.
+  vi.useFakeTimers({
+    toFake: ["setTimeout", "clearTimeout", "setInterval", "clearInterval"],
+  });
   constructed.length = 0;
   (globalThis as any).EventSource =
     FakeEventSource as unknown as typeof EventSource;

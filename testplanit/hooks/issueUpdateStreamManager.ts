@@ -26,6 +26,11 @@
  * unavailable (server render, jsdom without polyfill).
  */
 
+import {
+  createDeferredEventSource,
+  type DeferredEventSource,
+} from "./deferredEventSource";
+
 type IssueUpdateListener = () => void;
 
 // How many active subscribers currently watch each project id.
@@ -34,7 +39,7 @@ const projectRefCounts: Map<number, number> = new Map();
 // passed). Message routing keys on the event's projectId.
 const listenersByProject: Map<number, Set<IssueUpdateListener>> = new Map();
 
-let es: EventSource | null = null;
+let es: DeferredEventSource | null = null;
 // Sorted csv of the project ids the current `es` is subscribed to ("" = none).
 let connectedKey = "";
 let reconcileHandle: ReturnType<typeof setTimeout> | null = null;
@@ -92,7 +97,9 @@ function reconcile() {
   }
   if (!key) return;
 
-  const next = new EventSource(`/api/issues/stream?projectIds=${key}`);
+  const next = createDeferredEventSource(
+    `/api/issues/stream?projectIds=${key}`
+  );
   next.onmessage = (ev) => {
     // The route emits `{event:"sync"}` as its first byte (a ready handshake);
     // it carries no issueId, so it's skipped here — broad invalidation on sync

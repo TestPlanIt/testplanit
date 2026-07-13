@@ -37,6 +37,7 @@ import {
   markNotificationAsRead,
   markNotificationAsUnread,
 } from "~/app/actions/notifications";
+import { createDeferredEventSource } from "~/hooks/deferredEventSource";
 import { usePathname, useRouter } from "~/lib/navigation";
 import { cn } from "~/utils";
 
@@ -219,7 +220,7 @@ export function NotificationBell() {
     if (typeof window === "undefined" || typeof EventSource === "undefined") {
       return;
     }
-    const eventSource = new EventSource("/api/notifications/stream");
+    const eventSource = createDeferredEventSource("/api/notifications/stream");
     eventSource.onmessage = () => {
       void refetch();
     };

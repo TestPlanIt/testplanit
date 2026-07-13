@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { createDeferredEventSource } from "./deferredEventSource";
 
 /**
  * Subscribe to the SSE wake-up stream for one test run and invoke
@@ -61,7 +62,9 @@ export function useTestRunLiveStream({
       return;
     }
 
-    const eventSource = new EventSource(`/api/test-runs/${runId}/stream`);
+    const eventSource = createDeferredEventSource(
+      `/api/test-runs/${runId}/stream`
+    );
 
     eventSource.onmessage = (msg) => {
       try {
@@ -128,7 +131,7 @@ export function useProjectTestRunStream({
       return;
     }
 
-    const eventSource = new EventSource(
+    const eventSource = createDeferredEventSource(
       `/api/projects/${projectId}/test-runs/stream`
     );
 

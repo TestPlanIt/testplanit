@@ -200,6 +200,21 @@ class MockResizeObserver {
 }
 global.ResizeObserver = MockResizeObserver as any;
 
+// jsdom doesn't implement requestIdleCallback. The SSE stream helpers defer
+// their EventSource connection to the first idle callback (see
+// hooks/deferredEventSource.ts). Collapsing it to a synchronous call here lets
+// the stream unit tests exercise connection logic without threading timers
+// through every assertion; deferredEventSource.test.ts overrides these locally
+// to verify the deferral timing itself.
+if (typeof global.requestIdleCallback === "undefined") {
+  global.requestIdleCallback = ((cb: () => void) => {
+    cb();
+    return 0;
+  }) as unknown as typeof global.requestIdleCallback;
+  global.cancelIdleCallback =
+    (() => {}) as unknown as typeof global.cancelIdleCallback;
+}
+
 // jsdom doesn't implement elementFromPoint, which TipTap's placeholder
 // viewport tracking calls via prosemirror's posAtCoords on editor mount.
 // Guarded like the matchMedia mock above so node-env tests (no `Document`)

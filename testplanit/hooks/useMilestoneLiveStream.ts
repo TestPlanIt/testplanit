@@ -2,6 +2,10 @@
 
 import { useEffect, useRef } from "react";
 import type { MilestoneWakeUpEvent } from "~/lib/live/publish";
+import {
+  createDeferredEventSource,
+  type DeferredEventSource,
+} from "./deferredEventSource";
 
 /**
  * Client-side parse shape for messages arriving on the milestone SSE
@@ -41,7 +45,7 @@ type MilestoneWakeUpListener = (event: MilestoneWakeUp) => void;
  * reconcile.
  */
 interface StreamEntry {
-  es: EventSource;
+  es: DeferredEventSource;
   listeners: Set<MilestoneWakeUpListener>;
   refCount: number;
   closeHandle: ReturnType<typeof setTimeout> | null;
@@ -62,7 +66,7 @@ function subscribeToMilestoneStream(
       entry.closeHandle = null;
     }
   } else {
-    const es = new EventSource(url);
+    const es = createDeferredEventSource(url);
     const created: StreamEntry = {
       es,
       listeners: new Set(),

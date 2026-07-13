@@ -31,7 +31,13 @@ const created: MockEventSource[] = [];
 const OriginalEventSource = globalThis.EventSource;
 
 beforeEach(() => {
-  vi.useFakeTimers();
+  // Fake only the setTimeout family (the registry's close-grace timer) so the
+  // shared setup's synchronous requestIdleCallback — which the deferred
+  // EventSource wrapper connects through — is left intact. Faking every timer
+  // would also fake requestIdleCallback, leaving the connection deferred.
+  vi.useFakeTimers({
+    toFake: ["setTimeout", "clearTimeout", "setInterval", "clearInterval"],
+  });
   created.length = 0;
   // Replace with a constructor that records each instance.
   (globalThis as { EventSource: unknown }).EventSource = function (
