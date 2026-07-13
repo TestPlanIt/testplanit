@@ -168,7 +168,10 @@ export default function MilestoneFormControls({
   return (
     <div className="space-y-4">
       {isSynced && (
-        <Alert data-testid="milestone-sync-locked-alert">
+        <Alert
+          data-testid="milestone-sync-locked-alert"
+          className="bg-inherit border-muted-foreground"
+        >
           <Cloud className="h-4 w-4" aria-hidden="true" />
           <AlertTitle>{t("sync.managedByJira")}</AlertTitle>
           <AlertDescription>

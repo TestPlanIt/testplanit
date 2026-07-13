@@ -15,6 +15,15 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import DynamicIcon from "@/components/DynamicIcon";
+import type { IconName } from "~/types/globals";
 import { AddMilestone } from "@/projects/milestones/[projectId]/AddMilestoneModal";
 import { ImportMilestonesDialog } from "@/projects/milestones/[projectId]/ImportMilestonesDialog";
 import MilestoneDisplay from "@/projects/milestones/[projectId]/MilestoneDisplay";
@@ -27,6 +36,7 @@ import { use, useEffect, useRef, useState } from "react";
 import { useProjectMilestoneStream } from "~/hooks/useMilestoneLiveStream";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { useRequireAuth } from "~/hooks/useRequireAuth";
+import { useTabState } from "~/hooks/useTabState";
 import { useRouter } from "~/lib/navigation";
 
 /**
@@ -47,7 +57,13 @@ const ProjectMilestones: React.FC<ProjectMilestonesProps> = ({ params }) => {
   const router = useRouter();
   const [isClientLoading, setIsClientLoading] = useState(true);
   const [addMilestoneOpen, setAddMilestoneOpen] = useState(false);
+  // Milestone-browser kind filter (fast-follow READY, D4): "ALL", the synced
+  // kinds ("RELEASE"/"ITERATION"), or "local:<milestoneTypeId>" for each local
+  // milestone type present — applied across the active/completed state tabs.
+  const [kindFilter, setKindFilter] = useState<string>("ALL");
   const [importMilestonesOpen, setImportMilestonesOpen] = useState(false);
+  // Tab State - persisted in URL so browser history lands on the last-used tab
+  const [activeTab, setActiveTab] = useTabState("tab", "active");
   const {
     session,
     isLoading: isAuthLoading,
@@ -384,6 +400,81 @@ const ProjectMilestones: React.FC<ProjectMilestonesProps> = ({ params }) => {
   }
 
   if (session && session.user.access !== "NONE") {
+    const matchesKind = (m: {
+      externalKind?: string | null;
+      milestoneType?: { id: number } | null;
+    }) => {
+      if (kindFilter === "ALL") return true;
+      if (kindFilter === "RELEASE" || kindFilter === "ITERATION") {
+        return m.externalKind === kindFilter;
+      }
+      if (kindFilter.startsWith("local:")) {
+        return (
+          m.externalKind == null &&
+          m.milestoneType?.id === Number(kindFilter.slice("local:".length))
+        );
+      }
+      return true;
+    };
+
+    const allMilestones = [
+      ...(incompleteMilestones ?? []),
+      ...(completedMilestones ?? []),
+    ];
+    // Build the filter options from what's actually present: the synced kinds
+    // (RELEASE/ITERATION), then one entry per distinct LOCAL milestone type —
+    // so a user's local Sprint/Release-typed milestones are filterable by their
+    // own type + icon, not lumped into a single "Local" bucket. Each option
+    // carries the milestone type's icon.
+    type KindOption = { value: string; label: string; icon?: string | null };
+    const releaseSample = allMilestones.find(
+      (m) => m.externalKind === "RELEASE"
+    );
+    const sprintSample = allMilestones.find(
+      (m) => m.externalKind === "ITERATION"
+    );
+    const localTypes = new Map<
+      number,
+      { name: string; icon?: string | null }
+    >();
+    for (const m of allMilestones) {
+      if (m.externalKind == null && m.milestoneType) {
+        localTypes.set(m.milestoneType.id, {
+          name: m.milestoneType.name,
+          icon: m.milestoneType.icon?.name,
+        });
+      }
+    }
+    const kindOptions: KindOption[] = [
+      ...(releaseSample
+        ? [
+            {
+              value: "RELEASE",
+              label: t("milestones.browser.kindReleases"),
+              icon: releaseSample.milestoneType?.icon?.name,
+            },
+          ]
+        : []),
+      ...(sprintSample
+        ? [
+            {
+              value: "ITERATION",
+              label: t("milestones.browser.kindSprints"),
+              icon: sprintSample.milestoneType?.icon?.name,
+            },
+          ]
+        : []),
+      ...Array.from(localTypes, ([id, v]) => ({
+        value: `local:${id}`,
+        label: v.name,
+        icon: v.icon,
+      })).sort((a, b) => a.label.localeCompare(b.label)),
+    ];
+    // Only worth showing when there's a real choice (2+ groups beyond "All").
+    const showKindFilter = kindOptions.length > 1;
+    const filteredIncomplete = (incompleteMilestones ?? []).filter(matchesKind);
+    const filteredCompleted = (completedMilestones ?? []).filter(matchesKind);
+
     return (
       <Card className="flex w-full min-w-[400px]">
         <div className="flex-1 w-full">
@@ -460,7 +551,37 @@ const ProjectMilestones: React.FC<ProjectMilestonesProps> = ({ params }) => {
             </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col">
-            <Tabs defaultValue="active">
+            {showKindFilter && (
+              <div className="flex items-center justify-end pb-3">
+                <Select value={kindFilter} onValueChange={setKindFilter}>
+                  <SelectTrigger
+                    className="w-[200px]"
+                    data-testid="milestone-kind-filter"
+                  >
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ALL">
+                      {t("milestones.browser.kindAll")}
+                    </SelectItem>
+                    {kindOptions.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        <span className="flex items-center gap-2">
+                          {opt.icon && (
+                            <DynamicIcon
+                              name={opt.icon as IconName}
+                              className="h-4 w-4 shrink-0"
+                            />
+                          )}
+                          {opt.label}
+                        </span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            <Tabs value={activeTab} onValueChange={setActiveTab}>
               <TabsList className="w-full">
                 <TabsTrigger value="active" className="w-1/2">
                   {t("common.fields.isActive")}
@@ -472,38 +593,34 @@ const ProjectMilestones: React.FC<ProjectMilestonesProps> = ({ params }) => {
 
               <TabsContent value="active">
                 <div className="flex flex-col">
-                  {incompleteMilestones?.length === 0 ? (
+                  {filteredIncomplete.length === 0 ? (
                     <div className="mt-4 text-center text-muted-foreground">
                       {t("milestones.empty.active")}
                     </div>
                   ) : (
                     <MilestoneDisplay
                       projectId={Number(projectId)}
-                      milestones={
-                        incompleteMilestones?.map((milestone) => ({
-                          ...milestone,
-                          children: [],
-                        })) || []
-                      }
+                      milestones={filteredIncomplete.map((milestone) => ({
+                        ...milestone,
+                        children: [],
+                      }))}
                     />
                   )}
                 </div>
               </TabsContent>
               <TabsContent value="completed">
                 <div className="flex flex-col">
-                  {completedMilestones?.length === 0 ? (
+                  {filteredCompleted.length === 0 ? (
                     <div className="mt-4 text-center text-muted-foreground">
                       {t("milestones.empty.completed")}
                     </div>
                   ) : (
                     <MilestoneDisplay
                       projectId={Number(projectId)}
-                      milestones={
-                        completedMilestones?.map((milestone) => ({
-                          ...milestone,
-                          children: [],
-                        })) || []
-                      }
+                      milestones={filteredCompleted.map((milestone) => ({
+                        ...milestone,
+                        children: [],
+                      }))}
                     />
                   )}
                 </div>
