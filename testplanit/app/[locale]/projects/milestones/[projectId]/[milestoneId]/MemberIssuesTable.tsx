@@ -205,6 +205,43 @@ export function MemberIssuesTable({
     staleTime: 30000,
   });
 
+  // The "Test Cases" column COUNT comes from the canonical, project-scoped
+  // /api/issues/counts (the same source the project Issues page uses) rather
+  // than the coverage service's linkedCaseCount, which counts cases linked to
+  // the issue across ALL projects. Without this, a case linked to the same
+  // tracker issue in another project would inflate this milestone's count.
+  const memberIssueIdsForCounts = useMemo(
+    () => (memberRows ?? []).map((r) => r.issueId),
+    [memberRows]
+  );
+  const memberIssueIdsCountsKey = memberIssueIdsForCounts.join(",");
+  const { data: caseCountsData, refetch: refetchCounts } = useQuery<
+    Record<number, { repositoryCases: number }>
+  >({
+    queryKey: [
+      "milestoneMemberCaseCounts",
+      milestoneId,
+      memberIssueIdsCountsKey,
+    ],
+    enabled: memberIssueIdsForCounts.length > 0,
+    queryFn: async () => {
+      const response = await fetch("/api/issues/counts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          issueIds: memberIssueIdsForCounts,
+          projectId,
+        }),
+      });
+      if (!response.ok) {
+        throw new Error("Failed to fetch member case counts");
+      }
+      const data = await response.json();
+      return data.counts ?? {};
+    },
+    staleTime: 30000,
+  });
+
   // Spin/disable the Refresh button only for a USER-initiated refresh —
   // deriving it from isFetching made it strobe on every background
   // SSE-wake-up refetch.
@@ -212,18 +249,21 @@ export function MemberIssuesTable({
 
   const handleRefresh = useCallback(() => {
     setIsManualRefreshing(true);
-    void Promise.allSettled([refetchMembers(), refetchCoverage()]).finally(() =>
-      setIsManualRefreshing(false)
-    );
-  }, [refetchMembers, refetchCoverage]);
+    void Promise.allSettled([
+      refetchMembers(),
+      refetchCoverage(),
+      refetchCounts(),
+    ]).finally(() => setIsManualRefreshing(false));
+  }, [refetchMembers, refetchCoverage, refetchCounts]);
 
   const rows: ExtendedMemberIssue[] = useMemo(() => {
     if (!memberRows) return [];
     return memberRows.map((row) => ({
       ...(row as unknown as ExtendedMemberIssue),
       coverage: coverageData?.[row.issueId],
+      caseCount: caseCountsData?.[row.issueId]?.repositoryCases,
     }));
-  }, [memberRows, coverageData]);
+  }, [memberRows, coverageData, caseCountsData]);
 
   // Release-readiness rollup (fast-follow READY, D4): each member issue rolls
   // up to one state; "% ready" = fully-passing issues / total. Aggregated from

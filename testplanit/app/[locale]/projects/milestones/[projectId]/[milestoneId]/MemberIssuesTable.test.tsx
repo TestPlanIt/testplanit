@@ -850,6 +850,14 @@ describe("MemberIssuesTable — range select and case counts", () => {
             untested: 0,
           },
         });
+      if (url.includes("/api/issues/counts"))
+        // Project-scoped linked-case count for the "Test Cases" column badge.
+        return respond({
+          counts: {
+            10: { repositoryCases: 3 },
+            11: { repositoryCases: 0 },
+          },
+        });
       if (url.includes("/members/overflow"))
         return respond({
           members: [],
@@ -924,13 +932,13 @@ describe("MemberIssuesTable — range select and case counts", () => {
     });
   });
 
-  it("renders the per-issue linked-cases badge (CasesListDisplay) from coverage data", async () => {
+  it("renders the per-issue linked-cases badge (CasesListDisplay) from the project-scoped counts API", async () => {
     renderWithQueryClient(<MemberIssuesTable milestoneId={42} projectId={7} />);
     await waitFor(() => {
       const counts = screen
         .getAllByTestId("member-issue-case-count")
         .map((el) => el.textContent);
-      // Issues absent from the coverage payload are still loading.
+      // Issues absent from the /api/issues/counts payload are still loading.
       expect(counts).toEqual(["3", "0", "loading", "loading"]);
     });
   });

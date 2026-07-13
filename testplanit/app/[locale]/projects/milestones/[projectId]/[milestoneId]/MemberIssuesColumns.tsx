@@ -37,6 +37,12 @@ import {
 export interface ExtendedMemberIssue extends MilestoneIssueRow {
   issue: Issue & { integration?: Integration | null };
   coverage?: CoverageBreakdown;
+  /**
+   * Project-scoped linked-case count from /api/issues/counts (the same source
+   * the project Issues page uses). Distinct from `coverage.linkedCaseCount`,
+   * which counts cases linked to the issue across all projects.
+   */
+  caseCount?: number;
 }
 
 // Same helper the project Issues page keeps file-local for its
@@ -305,8 +311,7 @@ export function useMemberIssueColumns({
       },
       {
         id: "cases",
-        accessorKey: "coverage.linkedCaseCount",
-        accessorFn: (row) => row.coverage?.linkedCaseCount ?? 0,
+        accessorFn: (row) => row.caseCount ?? 0,
         header: tCases,
         enableSorting: true,
         enableResizing: true,
@@ -314,16 +319,20 @@ export function useMemberIssueColumns({
         minSize: 80,
         maxSize: 160,
         cell: ({ row }) => (
-          // Same linked-cases badge/list the project Issues page uses for
-          // its Test Cases column — count comes from the coverage fetch, so
-          // the component skips its own count query.
+          // Same linked-cases badge/list the project Issues page uses for its
+          // Test Cases column. Count + list are BOTH project-scoped: the count
+          // comes from /api/issues/counts (scoped to this project), and the
+          // expandable list filters cases to this project too — so a case
+          // linked to the same tracker issue in another project doesn't show
+          // up here or inflate the number.
           <div className="text-center" data-testid="member-issue-case-count">
             <CasesListDisplay
-              count={row.original.coverage?.linkedCaseCount}
+              count={row.original.caseCount}
               filter={{
                 caseIssues: { some: { issueId: row.original.issueId } },
+                projectId,
               }}
-              isLoading={!row.original.coverage}
+              isLoading={row.original.caseCount === undefined}
             />
           </div>
         ),
