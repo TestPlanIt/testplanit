@@ -870,35 +870,53 @@ Worked example (single test case for a login feature with a "role" SELECT and a 
 }`;
 }
 
+/**
+ * Render the source issue's comment thread as a prompt section. Shared by the
+ * single-shot, outline, and expand prompt builders so issue-based generation
+ * enriches identically regardless of which path assembles the prompt.
+ * Returns "" when there are no comments.
+ */
+export function buildCommentsSection(comments?: IssueComment[]): string {
+  if (!comments || comments.length === 0) return "";
+  let section = `\n\nRELEVANT COMMENTS:`;
+  comments.forEach((c, i) => {
+    section += `\n${i + 1}. ${c.author}: ${c.body}`;
+  });
+  return section;
+}
+
+/**
+ * Render one-hop linked issues (title + body + comments each) as a prompt
+ * section. Shared by the single-shot, outline, and expand prompt builders.
+ * Returns "" when there are no linked issues.
+ */
+export function buildLinkedIssuesSection(
+  linkedIssues?: LinkedIssueContext[]
+): string {
+  if (!linkedIssues || linkedIssues.length === 0) return "";
+  let section = `\n\nRELATED LINKED ISSUES:`;
+  linkedIssues.forEach((li, i) => {
+    const idLabel = li.ref.key ?? li.ref.id;
+    section += `\n${i + 1}. ${idLabel} (${li.ref.linkType}, ${li.ref.direction}): ${li.title}`;
+    if (li.body) {
+      section += `\n   Body: ${li.body}`;
+    }
+    if (li.comments.length > 0) {
+      li.comments.forEach((c, ci) => {
+        section += `\n   Comment ${ci + 1} (${c.author}): ${c.body}`;
+      });
+    }
+  });
+  return section;
+}
+
 export function buildUserPrompt(
   issue: IssueData,
   context: GenerationContext,
   baseTemplate?: string
 ): string {
-  let commentsSection = "";
-  if (issue.comments && issue.comments.length > 0) {
-    commentsSection = `\n\nRELEVANT COMMENTS:`;
-    issue.comments.forEach((c, i) => {
-      commentsSection += `\n${i + 1}. ${c.author}: ${c.body}`;
-    });
-  }
-
-  let linkedIssuesSection = "";
-  if (context.linkedIssues && context.linkedIssues.length > 0) {
-    linkedIssuesSection = `\n\nRELATED LINKED ISSUES:`;
-    context.linkedIssues.forEach((li, i) => {
-      const idLabel = li.ref.key ?? li.ref.id;
-      linkedIssuesSection += `\n${i + 1}. ${idLabel} (${li.ref.linkType}, ${li.ref.direction}): ${li.title}`;
-      if (li.body) {
-        linkedIssuesSection += `\n   Body: ${li.body}`;
-      }
-      if (li.comments.length > 0) {
-        li.comments.forEach((c, ci) => {
-          linkedIssuesSection += `\n   Comment ${ci + 1} (${c.author}): ${c.body}`;
-        });
-      }
-    });
-  }
+  const commentsSection = buildCommentsSection(issue.comments);
+  const linkedIssuesSection = buildLinkedIssuesSection(context.linkedIssues);
 
   let userNotesSection = "";
   if (context.userNotes) {
@@ -1043,6 +1061,14 @@ ${issue.description || "No description provided"}
 
 STATUS: ${issue.status}${issue.priority ? ` | PRIORITY: ${issue.priority}` : ""}`;
 
+  // Enrich scenario selection with the source issue's comments and one-hop
+  // linked issues (title/body/comments). This is where the SET of test cases
+  // is chosen, so it's the highest-value place for this context. Both sections
+  // are "" when the issue has no comments / no linked issues (e.g. manual
+  // issues), so this is a no-op for the un-enriched case.
+  prompt += buildCommentsSection(issue.comments);
+  prompt += buildLinkedIssuesSection(context.linkedIssues);
+
   if (context.userNotes) {
     prompt += `\n\nADDITIONAL TESTING GUIDANCE: ${context.userNotes}`;
   }
@@ -1087,6 +1113,14 @@ export function buildExpandUserPrompt(
 ): string {
   const outlineSection = `\n\nTEST CASE TO GENERATE:\nTitle: "${outline.title}"\nSummary: ${outline.summary}\n\nGenerate a complete test case for the title and summary above. The test case must match that title exactly.`;
 
+  // Ground each expanded case in the same issue context the outline saw:
+  // source comments + one-hop linked issues. The enrichment is fetched once
+  // during the outline phase and threaded back in via `issue.comments` /
+  // `context.linkedIssues`, so expand does not re-hit the integration adapter.
+  // Both sections are "" when the issue is un-enriched.
+  const commentsSection = buildCommentsSection(issue.comments);
+  const linkedIssuesSection = buildLinkedIssuesSection(context.linkedIssues);
+
   if (baseTemplate) {
     return baseTemplate
       .replace("{{ISSUE_KEY}}", issue.key)
@@ -1100,8 +1134,8 @@ export function buildExpandUserPrompt(
         "{{ISSUE_PRIORITY}}",
         issue.priority ? ` | PRIORITY: ${issue.priority}` : ""
       )
-      .replace("{{COMMENTS_SECTION}}", "")
-      .replace("{{LINKED_ISSUES_SECTION}}", "")
+      .replace("{{COMMENTS_SECTION}}", commentsSection)
+      .replace("{{LINKED_ISSUES_SECTION}}", linkedIssuesSection)
       .replace(
         "{{USER_NOTES_SECTION}}",
         context.userNotes
@@ -1117,6 +1151,9 @@ ISSUE DETAILS:
 ${issue.description || "No description provided"}
 
 STATUS: ${issue.status}${issue.priority ? ` | PRIORITY: ${issue.priority}` : ""}`;
+
+  prompt += commentsSection;
+  prompt += linkedIssuesSection;
 
   if (context.userNotes) {
     prompt += `\n\nADDITIONAL TESTING GUIDANCE: ${context.userNotes}`;

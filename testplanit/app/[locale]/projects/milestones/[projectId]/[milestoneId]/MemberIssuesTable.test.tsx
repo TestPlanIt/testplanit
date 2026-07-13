@@ -46,6 +46,10 @@ vi.mock("@zenstackhq/tanstack-query/react", () => ({
     status: {
       useFindMany: () => ({ data: [] }),
     },
+    // Drives the "project has an LLM" check behind the Generate Test Cases icon.
+    projectLlmIntegration: {
+      useFindMany: () => ({ data: [] }),
+    },
   }),
 }));
 
@@ -57,7 +61,10 @@ vi.mock("@/components/iterations/IterationStatusLegendPopover", () => ({
 
 vi.mock("~/zenstack/schema", () => ({ schema: {} }));
 vi.mock("~/zenstack/models", () => ({
-  ApplicationArea: { Milestones: "Milestones" },
+  ApplicationArea: {
+    Milestones: "Milestones",
+    TestCaseRepository: "TestCaseRepository",
+  },
 }));
 
 // MilestoneIssueManager (the "Add issue" entry point + upsert/link logic) has

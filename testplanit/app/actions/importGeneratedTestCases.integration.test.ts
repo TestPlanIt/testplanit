@@ -67,6 +67,7 @@ describeIntegration(
       testCaseParameterIds: number[];
       repositoryCaseIds: number[];
       repositoryFolderIds: number[];
+      issueIds: number[];
       repositoryIds: number[];
       workflowIds: number[];
       templateIds: number[];
@@ -78,6 +79,7 @@ describeIntegration(
       testCaseParameterIds: [],
       repositoryCaseIds: [],
       repositoryFolderIds: [],
+      issueIds: [],
       repositoryIds: [],
       workflowIds: [],
       templateIds: [],
@@ -86,6 +88,8 @@ describeIntegration(
 
     afterEach(async () => {
       const baseDb = await importDb();
+      // RepositoryCaseIssue has a composite PK and cascades on case/issue
+      // delete, so deleting the cases/issues below removes the join rows.
       for (const [model, ids] of [
         ["dataSetRow", cleanup.dataSetRowIds],
         ["dataSetVersion", cleanup.dataSetVersionIds],
@@ -93,6 +97,7 @@ describeIntegration(
         ["testCaseParameter", cleanup.testCaseParameterIds],
         ["repositoryCases", cleanup.repositoryCaseIds],
         ["repositoryFolders", cleanup.repositoryFolderIds],
+        ["issue", cleanup.issueIds],
         ["repositories", cleanup.repositoryIds],
         ["workflows", cleanup.workflowIds],
         ["templates", cleanup.templateIds],
@@ -359,6 +364,137 @@ describeIntegration(
 
         expect(result.importedCount).toBe(0);
         expect(result.errors[0]).toMatch(/duplicate parameter name/i);
+      }
+    );
+
+    it(
+      "lands cases in a per-issue folder (create-on-save, root-level) and links them to an existing issue",
+      { timeout: 60_000 },
+      async () => {
+        const baseDb = await importDb();
+        const { importGeneratedTestCases } =
+          await import("./importGeneratedTestCases");
+        const { tag, creator, project, template, workflow, repo, folder } =
+          await seedFixture(baseDb);
+
+        // An existing internal issue, standing in for a milestone scope issue.
+        const issue = await baseDb.issue.create({
+          data: {
+            name: `${tag}-ISSUE-1`,
+            title: "Password reset",
+            description: "User can reset their password",
+            projectId: project.id,
+            createdById: creator.id,
+          },
+          select: { id: true },
+        });
+        cleanup.issueIds.push(issue.id);
+
+        const destFolderName = `${tag}-ISSUE-1`;
+        const baseInput = {
+          projectId: project.id,
+          projectName: project.name,
+          repositoryId: repo.id,
+          // The seeded folder is intentionally passed but must be OVERRIDDEN
+          // by destinationFolder.
+          folderId: folder.id,
+          folderName: folder.name,
+          templateId: template.id,
+          templateName: template.templateName,
+          stateId: workflow.id,
+          stateName: workflow.name,
+          maxOrder: 0,
+          autoGenerateTags: false,
+          source: "MANUAL" as const,
+          fieldMappings: [],
+          linkIssueId: issue.id,
+          destinationFolder: { name: destFolderName, parentId: null },
+        };
+
+        const result = await importGeneratedTestCases({
+          ...baseInput,
+          testCases: [
+            {
+              id: `${tag}-c0`,
+              name: `${tag}-generated-case`,
+              fieldValues: {},
+              steps: [],
+            },
+          ],
+        } as any);
+
+        expect(result.status).toBe("success");
+        expect(result.importedIds.length).toBe(1);
+        const caseId = result.importedIds[0];
+        cleanup.repositoryCaseIds.push(caseId);
+
+        // A new ROOT-level (parentId null) folder was created with the issue's
+        // name — the null-parent path through findOrCreateFolder.
+        const perIssueFolder = await baseDb.repositoryFolders.findFirst({
+          where: {
+            projectId: project.id,
+            repositoryId: repo.id,
+            parentId: null,
+            name: destFolderName,
+            isDeleted: false,
+          },
+          select: { id: true },
+        });
+        expect(perIssueFolder).not.toBeNull();
+        cleanup.repositoryFolderIds.push(perIssueFolder!.id);
+
+        // The case landed in the per-issue folder, NOT the seeded folderId.
+        const caseRow = await baseDb.repositoryCases.findUnique({
+          where: { id: caseId },
+          select: { folderId: true },
+        });
+        expect(caseRow?.folderId).toBe(perIssueFolder!.id);
+        expect(caseRow?.folderId).not.toBe(folder.id);
+
+        // The case is linked to the pre-existing issue by id. (RepositoryCaseIssue
+        // has a composite PK (caseId, issueId) — no `id` column.)
+        const links = await baseDb.repositoryCaseIssue.findMany({
+          where: { caseId },
+          select: { caseId: true, issueId: true },
+        });
+        expect(links.map((l: any) => l.issueId)).toContain(issue.id);
+
+        // The version snapshot records the per-issue folder name + linked issue.
+        const version = await baseDb.repositoryCaseVersions.findFirst({
+          where: { repositoryCaseId: caseId, version: 1 },
+          select: { folderName: true, issues: true },
+        });
+        expect(version?.folderName).toBe(destFolderName);
+        const versionIssues = (version?.issues as any[]) ?? [];
+        expect(versionIssues.some((i) => i.id === issue.id)).toBe(true);
+
+        // A second import into the same destination REUSES the folder rather
+        // than creating a duplicate (find-or-create).
+        const result2 = await importGeneratedTestCases({
+          ...baseInput,
+          testCases: [
+            {
+              id: `${tag}-c1`,
+              name: `${tag}-generated-case-2`,
+              fieldValues: {},
+              steps: [],
+            },
+          ],
+        } as any);
+        expect(result2.status).toBe("success");
+        cleanup.repositoryCaseIds.push(...result2.importedIds);
+
+        const rootFolders = await baseDb.repositoryFolders.findMany({
+          where: {
+            projectId: project.id,
+            repositoryId: repo.id,
+            parentId: null,
+            name: destFolderName,
+            isDeleted: false,
+          },
+          select: { id: true },
+        });
+        expect(rootFolders.length).toBe(1);
       }
     );
   }

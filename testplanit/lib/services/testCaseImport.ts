@@ -115,6 +115,21 @@ export const ImportInputSchema = z.object({
       externalUrl: z.string().optional(),
     })
     .optional(),
+  // Link every imported case to an EXISTING internal Issue by id (used by the
+  // milestone Generate flow, where the Issue already exists). Mutually
+  // exclusive with `issue` (which upserts an external issue). Project-scoped
+  // on lookup so a crafted id can't link cases to another project's issue.
+  linkIssueId: z.number().optional(),
+  // When set, land all imported cases in a folder with this name instead of
+  // `folderId` — create-or-reuse it under `parentId` (null = repository root).
+  // Used by the milestone Generate flow to group each issue's cases in its own
+  // folder without pre-creating (and orphaning) it on cancel.
+  destinationFolder: z
+    .object({
+      name: z.string(),
+      parentId: z.number().nullable(),
+    })
+    .optional(),
 });
 
 export type ImportInput = z.infer<typeof ImportInputSchema>;
@@ -213,6 +228,50 @@ function convertStepToTipTapForVersion(value: any) {
 }
 
 /**
+ * Find-or-create-or-restore a repository folder by (project, repo, parent,
+ * name). `parentId` may be null (repository root), so this uses `findFirst`
+ * rather than a compound-key `findUnique` (which can't match on a null member).
+ * A soft-deleted match is restored rather than duplicated.
+ */
+async function findOrCreateFolder(
+  tx: any,
+  params: {
+    projectId: number;
+    repositoryId: number;
+    parentId: number | null;
+    name: string;
+    creatorId: string;
+    order: number;
+  }
+): Promise<{ id: number }> {
+  const { projectId, repositoryId, parentId, name, creatorId, order } = params;
+  const base = { projectId, repositoryId, parentId, name };
+
+  const existingActive = await tx.repositoryFolders.findFirst({
+    where: { ...base, isDeleted: false },
+    select: { id: true },
+  });
+  if (existingActive) return existingActive;
+
+  const existingDeleted = await tx.repositoryFolders.findFirst({
+    where: { ...base, isDeleted: true },
+    select: { id: true },
+  });
+  if (existingDeleted) {
+    return tx.repositoryFolders.update({
+      where: { id: existingDeleted.id },
+      data: { isDeleted: false, order },
+      select: { id: true },
+    });
+  }
+
+  return tx.repositoryFolders.create({
+    data: { name, projectId, repositoryId, parentId, creatorId, order },
+    select: { id: true },
+  });
+}
+
+/**
  * Persist a batch of generated test cases (and, optionally, link them to an
  * external issue) on behalf of `author`. This is the shared core behind both
  * the session-bound `importGeneratedTestCases` server action and the
@@ -279,6 +338,18 @@ export async function persistGeneratedTestCases(
             title: data.issue.title,
             externalKey: data.issue.issueKey,
             externalUrl: data.issue.externalUrl,
+          },
+          select: { id: true, name: true, externalId: true },
+        });
+      } else if (data.linkIssueId) {
+        // Milestone Generate flow: the Issue already exists — link by id.
+        // Project-scoped so a crafted id can't reach another project's issue.
+        // Fail-soft: an unresolved id simply leaves the cases unlinked.
+        sharedIssue = await tx.issue.findFirst({
+          where: {
+            id: data.linkIssueId,
+            projectId: data.projectId,
+            isDeleted: false,
           },
           select: { id: true, name: true, externalId: true },
         });
@@ -399,6 +470,24 @@ export async function persistGeneratedTestCases(
         }
       }
 
+      // Milestone Generate flow: land all cases in a single named folder
+      // (create-or-reuse), overriding `folderId`. Mutually exclusive with the
+      // URL multi-page subfolder logic above — the issue flow has no sourceUrl.
+      let resolvedTargetFolderId = data.folderId;
+      let resolvedFolderName = data.folderName;
+      if (data.destinationFolder) {
+        const folder = await findOrCreateFolder(tx, {
+          projectId: data.projectId,
+          repositoryId: data.repositoryId,
+          parentId: data.destinationFolder.parentId,
+          name: data.destinationFolder.name,
+          creatorId: userId,
+          order: 0,
+        });
+        resolvedTargetFolderId = folder.id;
+        resolvedFolderName = data.destinationFolder.name;
+      }
+
       // Strict-transitive gate: if the caller picked a state at or past
       // the first gated state in this project's CASES scope, remap to the
       // default state. The schema gate only fires on `update`, so without
@@ -423,10 +512,13 @@ export async function persistGeneratedTestCases(
       for (const testCase of data.testCases) {
         try {
           const calculatedOrder = data.maxOrder + importedCount + 1;
-          // Use subfolder if one was created for this page, otherwise use the target folder
+          // Use subfolder if one was created for this page, otherwise use the
+          // resolved target folder (the per-issue folder when destinationFolder
+          // is set, else the caller's folderId).
           const targetFolderId = testCase.sourceUrl
-            ? (folderIdBySourceUrl.get(testCase.sourceUrl) ?? data.folderId)
-            : data.folderId;
+            ? (folderIdBySourceUrl.get(testCase.sourceUrl) ??
+              resolvedTargetFolderId)
+            : resolvedTargetFolderId;
 
           // Resolve tag connects: prefer explicit IDs, fall back to autoGenerateTags map
           const tagConnects = testCase.tagIds?.length
@@ -606,7 +698,7 @@ export async function persistGeneratedTestCases(
               projectId: data.projectId,
               repositoryId: data.repositoryId,
               folderId: targetFolderId,
-              folderName: data.folderName,
+              folderName: resolvedFolderName,
               templateId: data.templateId,
               templateName: data.templateName,
               name: testCase.name.slice(0, 255),

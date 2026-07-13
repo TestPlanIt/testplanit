@@ -20,7 +20,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Cloud, MoreHorizontal, Plus, X } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { Cloud, MoreHorizontal, Plus, Sparkles, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -210,6 +215,15 @@ interface MemberIssueRowActionsProps {
   issueId: number;
   source: string;
   onUnlinked?: () => void;
+  /** Whether the current user may unlink (milestone add/edit). Default true. */
+  canUnlink?: boolean;
+  /**
+   * Whether to show the "Generate test cases" action (the viewer has Test Case
+   * Repository add/edit AND the project is connected to an LLM). Default false.
+   */
+  canGenerate?: boolean;
+  /** Opens the seeded Generate Test Cases wizard for this issue. */
+  onGenerate?: () => void;
 }
 
 /**
@@ -224,9 +238,13 @@ export function MemberIssueRowActions({
   issueId,
   source,
   onUnlinked,
+  canUnlink = true,
+  canGenerate = false,
+  onGenerate,
 }: MemberIssueRowActionsProps) {
   const t = useTranslations("milestones.members");
   const tCommon = useTranslations("common");
+  const tRepo = useTranslations("repository");
   const { mutateAsync: deleteMilestoneIssue } =
     useClientQueries(schema).milestoneIssue.useDelete();
   const [isUnlinking, setIsUnlinking] = useState(false);
@@ -251,45 +269,73 @@ export function MemberIssueRowActions({
     }
   };
 
-  if (isSynced) {
-    return (
-      <Badge
-        variant="outline"
-        className="flex items-center gap-1 text-muted-foreground cursor-default"
-        title={t("managedByJira")}
-        data-testid="member-issue-synced-lock"
-      >
-        <Cloud className="h-3 w-3" />
-      </Badge>
-    );
-  }
-
-  return (
-    <>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
+  // Quick "Generate Test Cases for this issue" launcher. Shown for both MANUAL
+  // and SYNCED rows — eligibility depends on Test Case Repository access + an
+  // LLM connection, not on who owns the issue link.
+  const generateButton =
+    canGenerate && onGenerate ? (
+      <Tooltip>
+        <TooltipTrigger asChild>
           <Button
             variant="ghost"
             size="icon"
             className="h-8 w-8"
-            aria-label={tCommon("actions.actionsLabel")}
-            data-testid="member-issue-row-actions"
+            aria-label={tRepo("generateTestCases.buttonText")}
+            data-testid="member-issue-generate-cases"
+            onClick={onGenerate}
           >
-            <MoreHorizontal className="h-4 w-4" />
+            <Sparkles className="h-4 w-4" />
           </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem
-            className="text-destructive focus:text-destructive"
-            disabled={isUnlinking}
-            onClick={() => setConfirmOpen(true)}
-            data-testid="member-issue-unlink"
-          >
-            <X className="h-4 w-4" />
-            {t("unlink")}
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+        </TooltipTrigger>
+        <TooltipContent>{tRepo("generateTestCases.title")}</TooltipContent>
+      </Tooltip>
+    ) : null;
+
+  if (isSynced) {
+    return (
+      <div className="flex items-center justify-end gap-1">
+        {generateButton}
+        <Badge
+          variant="outline"
+          className="flex items-center gap-1 text-muted-foreground cursor-default"
+          title={t("managedByJira")}
+          data-testid="member-issue-synced-lock"
+        >
+          <Cloud className="h-3 w-3" />
+        </Badge>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex items-center justify-end gap-1">
+      {generateButton}
+      {canUnlink && (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              aria-label={tCommon("actions.actionsLabel")}
+              data-testid="member-issue-row-actions"
+            >
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem
+              className="text-destructive focus:text-destructive"
+              disabled={isUnlinking}
+              onClick={() => setConfirmOpen(true)}
+              data-testid="member-issue-unlink"
+            >
+              <X className="h-4 w-4" />
+              {t("unlink")}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -312,6 +358,6 @@ export function MemberIssueRowActions({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </>
+    </div>
   );
 }
