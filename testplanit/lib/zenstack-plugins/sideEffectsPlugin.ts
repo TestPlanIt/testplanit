@@ -82,20 +82,46 @@ import { invalidateApiTokenCache } from "~/lib/api-token-cache";
 // auditedTransaction) MUST appear here, or the CDC trigger records a null actor
 // and the change is mis-attributed to `__system__` — general entity edits are
 // CDC-only (ENTITY_AUDIT_MODELS / AUDITED_CONFIG_MODELS are both empty). Entities
-// that instead emit an app-layer `captureAuditEvent` for their edits are left
-// OUT to avoid double-logging (semantic row + CDC row) the same change.
+// that instead emit an app-layer `captureAuditEvent`/`auditSystemConfigChange`
+// for their edits are left OUT to avoid double-logging the same change: User,
+// Groups, ApiToken, DataSet, ReviewRequest, SsoProvider, AppConfig, WebhookDelivery.
 export const GUC_MODELS = new Set<string>([
-  "WebhookConfig",
+  // Content root entities.
   "RepositoryCases",
   "TestRuns",
+  "TestRunResults",
   "Sessions",
+  "SessionResults",
   "Milestones",
   "Projects",
+  "Issue",
   "Comment",
   "SharedStepGroup",
-  "Issue",
-  "TestRunResults",
-  "SessionResults",
+  "WebhookConfig",
+  // Admin-config catalog — CDC-only, no semantic (captureAuditEvent /
+  // auditSystemConfigChange) coverage for general edits, so no double-logging.
+  "Workflows",
+  "Status",
+  "CaseFields",
+  "ResultFields",
+  "FieldOptions",
+  "Tags",
+  "Templates",
+  "CaseExportTemplate",
+  "Roles",
+  "MilestoneTypes",
+  "ConfigCategories",
+  "ConfigVariants",
+  "Configurations",
+  "Integration",
+  "LlmIntegration",
+  "CodeRepository",
+  "SamlConfiguration",
+  "LlmProviderConfig",
+  "LlmFeatureConfig",
+  "OllamaModelRegistry",
+  "PromptConfig",
+  "AllowedEmailDomain",
 ]);
 
 // Models that need their before-image for an update/delete diff or emit.
