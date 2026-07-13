@@ -8,10 +8,13 @@
  *   COV-01 — Cases / Runs / Sessions families + every child/value table.
  *   COV-02 — implicit many-to-many join tables linking Tags/Issue to those entities.
  *   COV-04 — all remaining app-audited data entities (45 tables, Phase 15).
- *   SAF-02 — per-table denylist: camelCase timestamps (where the table has them) + named
- *            TipTap rich-text columns (Steps.step/expectedResult, Sessions.note/mission,
- *            SessionVersions.note/mission, Comment.content, Issue.note/externalData/data,
- *            Milestones.note/docs) + credential columns on Integration/LlmIntegration/CodeRepository.
+ *   SAF-02 — per-table denylist: camelCase timestamps (where the table has them) + credential
+ *            columns on User/Integration/LlmIntegration/CodeRepository/WebhookConfig + opaque
+ *            machine-written integration payloads (Issue.externalData/data) + the high-volume TipTap
+ *            step columns (Steps.step/expectedResult). Human-authored rich-text description columns
+ *            (Milestones.note/docs, Sessions.note/mission, Issue.note, Comment.content) are NOT
+ *            denylisted — they are captured and flattened to plain text at render
+ *            (lib/audit/humanize.ts RICH_TEXT_COLUMNS), mirroring how case Text-Long field values show.
  *   SAF-04 — credential/token tables are deliberately ABSENT (see the exclusion block below);
  *            DataChangeLog/AuditLog can never appear (REGISTRY_PROHIBITED + assertRegistrySafe).
  */
@@ -101,10 +104,10 @@ export const TRIGGER_REGISTRY: TriggerConfig[] = [
   // ── Sessions family ───────────────────────────────────────────────────────
   {
     table: "Sessions",
-    denylist: ["createdAt", "updatedAt", "note", "mission"],
+    denylist: ["createdAt", "updatedAt"],
     nameCol: "name",
     projectCol: "projectId",
-  }, // note/mission are TipTap
+  }, // note/mission are TipTap descriptions — captured, flattened at render (humanize.ts)
   { table: "SessionResults", denylist: ["createdAt", "updatedAt"] },
   { table: "SessionFieldValues", denylist: [], captureCols: ["fieldId"] }, // no timestamps; fieldId identifies which field
   // SessionVersions deliberately NOT audited — it is a version snapshot the app
@@ -144,26 +147,29 @@ export const TRIGGER_REGISTRY: TriggerConfig[] = [
     nameCol: "name",
     projectCol: "id",
   }, // no updatedAt column; a Projects audit belongs to its own id
-  // note/externalData/data are TipTap or opaque integration payloads; no updatedAt column.
+  // externalData/data are opaque machine-written integration payloads (denylisted); note is a
+  // human-authored TipTap description — captured, flattened at render (humanize.ts). No updatedAt.
   {
     table: "Issue",
-    denylist: ["createdAt", "note", "externalData", "data"],
+    denylist: ["createdAt", "externalData", "data"],
     // Issue.name is the reference key (e.g. "#213"); title is the human summary
     // ("[FEATURE] Webhook System"), which reads far better in the audit log.
     nameCol: "title",
     projectCol: "projectId",
   },
-  // note/docs are TipTap (confirmed: AddMilestoneModal and page.tsx use TipTapEditor); no updatedAt.
+  // note/docs are human-authored TipTap description columns — captured and flattened to plain text
+  // at render (humanize.ts RICH_TEXT_COLUMNS). No updatedAt column.
   {
     table: "Milestones",
-    denylist: ["createdAt", "note", "docs"],
+    denylist: ["createdAt"],
     nameCol: "name",
     projectCol: "projectId",
   },
-  // content is explicitly TipTap JSON (schema comment: "TipTap JSON format").
+  // content is a human-authored TipTap description — captured and flattened to plain text at render
+  // (humanize.ts RICH_TEXT_COLUMNS).
   {
     table: "Comment",
-    denylist: ["createdAt", "updatedAt", "content"],
+    denylist: ["createdAt", "updatedAt"],
     projectCol: "projectId",
   },
   {

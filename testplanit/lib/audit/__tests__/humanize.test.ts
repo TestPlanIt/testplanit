@@ -141,6 +141,66 @@ describe("humanize (COR-03) — FK → display name with TTL cache", () => {
   });
 });
 
+describe("humanize — root-table rich-text (TipTap) columns flatten to plain text", () => {
+  const tiptapDoc = (text: string) => ({
+    type: "doc",
+    content: [{ type: "paragraph", content: [{ type: "text", text }] }],
+  });
+
+  it("flattens a Milestones.note change (object-encoded TipTap) to plain text", async () => {
+    const { createHumanizeCache, humanize } = await loadModule();
+    const cache = createHumanizeCache(async () => null, { ttlMs: 60_000 });
+
+    const out = await humanize(cache, "Milestones", {
+      note: {
+        old: tiptapDoc("Old description"),
+        new: tiptapDoc("New description"),
+      },
+    });
+
+    expect(out).toEqual({
+      note: { old: "Old description", new: "New description" },
+    });
+  });
+
+  it("flattens a string-encoded TipTap doc and both configured Milestones columns", async () => {
+    const { createHumanizeCache, humanize } = await loadModule();
+    const cache = createHumanizeCache(async () => null, { ttlMs: 60_000 });
+
+    const out = await humanize(cache, "Milestones", {
+      docs: { old: null, new: JSON.stringify(tiptapDoc("Runbook link")) },
+    });
+
+    expect(out).toEqual({ docs: { old: null, new: "Runbook link" } });
+  });
+
+  it("keeps a null old side null and renders a present-but-empty doc as (empty)", async () => {
+    const { createHumanizeCache, humanize } = await loadModule();
+    const cache = createHumanizeCache(async () => null, { ttlMs: 60_000 });
+
+    const out = await humanize(cache, "Comment", {
+      content: { old: null, new: { type: "doc", content: [] } },
+    });
+
+    expect(out).toEqual({ content: { old: null, new: "(empty)" } });
+  });
+
+  it("does not flatten a non-rich-text column on the same table (name passes through)", async () => {
+    const { createHumanizeCache, humanize } = await loadModule();
+    const cache = createHumanizeCache(async () => null, { ttlMs: 60_000 });
+
+    const out = await humanize(cache, "Milestones", {
+      name: { old: "8.13", new: "8.14" },
+      note: { old: tiptapDoc("a"), new: tiptapDoc("b") },
+    });
+
+    expect(out).toEqual({
+      name: { old: "8.13", new: "8.14" },
+      note: { old: "a", new: "b" },
+    });
+  });
+});
+
 describeDb("humanize (COR-03) — live rawDb catalog lookup", () => {
   it("resolves a seeded CaseFields.id to its displayName via the real lookup", async () => {
     const { Client } = await import("pg");

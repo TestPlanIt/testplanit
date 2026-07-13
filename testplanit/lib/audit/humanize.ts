@@ -289,6 +289,25 @@ async function resolveName(
  * column — the linked tag/issue — verified against ROLLUP_MAP.fkCol. humanize()
  * keeps ONLY that column, relabels it to its entity, and resolves its name.
  */
+/**
+ * Human-authored TipTap rich-text columns on root tables (mirrors the SAF-02 note in
+ * scripts/trigger-registry.ts). These are captured raw in the DataChangeLog diff, so here we flatten
+ * each side to a truncated plain-text string — "note: <old text…> → <new text…>" — exactly as case
+ * Text-Long field values render via renderFieldValue. A column absent from this map is untouched.
+ */
+const RICH_TEXT_COLUMNS: Record<string, ReadonlySet<string>> = {
+  Milestones: new Set(["note", "docs"]),
+  Sessions: new Set(["note", "mission"]),
+  Issue: new Set(["note"]),
+  Comment: new Set(["content"]),
+};
+
+/** Flatten a raw TipTap column value in a diff: null stays null; a present doc → plain text or "(empty)". */
+function renderRichTextValue(value: number | string | null): string | null {
+  if (value === null || value === undefined) return null;
+  return tiptapToPlainText(value) || "(empty)";
+}
+
 const M2M_JOIN_TABLES: Record<
   string,
   { col: string; label: string; model: string }
@@ -341,8 +360,19 @@ export async function humanize(
     };
   }
 
+  const richTextColumns = RICH_TEXT_COLUMNS[tableName];
+
   const out: HumanizedCols = {};
   for (const [column, entry] of Object.entries(changedCols)) {
+    // Root-table TipTap columns: flatten each side to readable plain text instead of dumping the
+    // raw doc JSON into the audit diff.
+    if (richTextColumns?.has(column)) {
+      out[column] = {
+        old: renderRichTextValue(entry.old),
+        new: renderRichTextValue(entry.new),
+      };
+      continue;
+    }
     const catalog = catalogFor(tableName, column);
     if (!catalog) {
       out[column] = entry;
