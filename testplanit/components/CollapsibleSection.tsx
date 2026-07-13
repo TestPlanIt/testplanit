@@ -30,6 +30,12 @@ interface CollapsibleSectionProps {
   contentClassName?: string;
   /** Collapsed on first render before localStorage is read (default false). */
   defaultCollapsed?: boolean;
+  /**
+   * Bump this number to force the section open (and persist it) — lets a parent
+   * programmatically expand it, e.g. a summary chip that jumps to a collapsed
+   * card. Ignored while 0/undefined.
+   */
+  openSignal?: number;
   "data-testid"?: string;
   children: ReactNode;
 }
@@ -53,6 +59,7 @@ export function CollapsibleSection({
   className,
   contentClassName = "px-6",
   defaultCollapsed = false,
+  openSignal,
   "data-testid": testId,
   children,
 }: CollapsibleSectionProps) {
@@ -66,6 +73,17 @@ export function CollapsibleSection({
       // localStorage unavailable (private mode etc.) — keep the default.
     }
   }, [storageKey]);
+
+  // Force-open when the parent bumps the signal (e.g. a chip jumping here).
+  useEffect(() => {
+    if (!openSignal) return;
+    setOpen(ITEM);
+    try {
+      window.localStorage.setItem(storageKey, "false");
+    } catch {
+      // Persistence is best-effort.
+    }
+  }, [openSignal, storageKey]);
 
   const handleChange = (value: string) => {
     setOpen(value);

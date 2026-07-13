@@ -5,6 +5,7 @@ import { Bug } from "lucide-react";
 import { useTranslations } from "next-intl";
 import {
   forwardRef,
+  type RefObject,
   useImperativeHandle,
   useMemo,
   useRef,
@@ -72,12 +73,21 @@ export const IssuesCard = forwardRef<IssuesCardHandle, IssuesCardProps>(
       inScope: number;
       foundInTesting: number;
     }>({ inScope: 0, foundInTesting: 0 });
+    // Bumped to force-open the OUTER Issues accordion — a collapsed accordion
+    // unmounts its content, so a chip must reopen the card before its section
+    // is reachable.
+    const [issuesOpenSignal, setIssuesOpenSignal] = useState(0);
 
-    // jsdom (unit tests) has no scrollIntoView implementation — guard so the
-    // imperative handle stays callable in that environment instead of
-    // throwing before the localStorage/expand side effects run.
-    const scrollToSection = (target: HTMLDivElement | null) => {
-      target?.scrollIntoView?.({ behavior: "smooth", block: "start" });
+    // Defer the scroll: opening the accordion re-mounts its content on the next
+    // render, so the section wrapper isn't in the DOM yet when the chip fires.
+    // jsdom (unit tests) has no scrollIntoView — the optional chaining guards it.
+    const scrollToSection = (target: RefObject<HTMLDivElement | null>) => {
+      setTimeout(() => {
+        target.current?.scrollIntoView?.({
+          behavior: "smooth",
+          block: "start",
+        });
+      }, 120);
     };
 
     useImperativeHandle(ref, () => ({
@@ -87,8 +97,9 @@ export const IssuesCard = forwardRef<IssuesCardHandle, IssuesCardProps>(
         } catch {
           // Persistence is best-effort.
         }
+        setIssuesOpenSignal((n) => n + 1);
         setForceOpen((prev) => ({ ...prev, inScope: prev.inScope + 1 }));
-        scrollToSection(inScopeRef.current);
+        scrollToSection(inScopeRef);
       },
       expandFoundInTesting: () => {
         try {
@@ -96,11 +107,12 @@ export const IssuesCard = forwardRef<IssuesCardHandle, IssuesCardProps>(
         } catch {
           // Persistence is best-effort.
         }
+        setIssuesOpenSignal((n) => n + 1);
         setForceOpen((prev) => ({
           ...prev,
           foundInTesting: prev.foundInTesting + 1,
         }));
-        scrollToSection(foundInTestingRef.current);
+        scrollToSection(foundInTestingRef);
       },
     }));
 
@@ -112,6 +124,7 @@ export const IssuesCard = forwardRef<IssuesCardHandle, IssuesCardProps>(
         icon={<Bug className="h-5 w-5" />}
         title={tCommon("labels.issues", { count: totalIssueCount })}
         contentClassName="p-0"
+        openSignal={issuesOpenSignal}
       >
         <div className="divide-y">
           <div ref={inScopeRef} className="scroll-mt-16">
