@@ -2206,6 +2206,13 @@
       "foundInTesting": "{count, plural, one {# found in testing} other {# found in testing}}",
       "includesChildMilestones": "Includes child milestones"
     },
+    "burndown": {
+      "title": "Burndown",
+      "remaining": "Items Remaining",
+      "ideal": "Ideal",
+      "today": "Today",
+      "tooltipRemaining": "{count, number} remaining"
+    },
     "members": {
       "cardTitle": "Issues",
       "inScope": "In scope",

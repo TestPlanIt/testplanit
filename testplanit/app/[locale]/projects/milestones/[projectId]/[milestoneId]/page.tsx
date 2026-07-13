@@ -45,6 +45,7 @@ import {
   Save,
   SquarePen,
   Trash2,
+  TrendingDown,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";
@@ -59,9 +60,11 @@ import { emptyEditorContent } from "~/app/constants";
 import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
 import type { IconName } from "~/types/globals";
 import { CommentsSection } from "~/components/comments/CommentsSection";
+import MilestoneBurndownChart from "~/components/dataVisualizations/MilestoneBurndownChart";
 import LoadingSpinner from "~/components/LoadingSpinner";
 import { VirtualizedCardList } from "~/components/VirtualizedCardList";
 import { useExportMilestonePdf } from "~/hooks/pdf/useExportMilestonePdf";
+import { useMilestoneBurndown } from "~/hooks/useMilestoneBurndown";
 import { useMilestoneLiveStream } from "~/hooks/useMilestoneLiveStream";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { Link, useRouter } from "~/lib/navigation";
@@ -258,10 +261,19 @@ export default function MilestoneDetailsPage() {
         void queryClient.invalidateQueries({
           queryKey: ["milestoneSummary", Number(milestoneId)],
         });
+        // Burndown re-derives from execution, so refresh it on the same wake-up.
+        void queryClient.invalidateQueries({
+          queryKey: ["milestoneBurndown", Number(milestoneId)],
+        });
       },
       [queryClient, milestoneId]
     ),
   });
+
+  // Burndown series for the milestone/sprint window (fast-follow READY, D4).
+  const { data: burndown } = useMilestoneBurndown(
+    milestone?.id ?? Number(milestoneId)
+  );
 
   const { data: milestoneTypes, isLoading: isTypesLoading } = useClientQueries(
     schema
@@ -976,9 +988,35 @@ export default function MilestoneDetailsPage() {
                       </div>
                     )}
 
-                  {/* Issues, Test Runs, and Sessions stack as sibling cards in
-                      the left panel: in-scope + found-in-testing issues, then
-                      the milestone's test runs and sessions. */}
+                  {/* Burndown, Issues, Test Runs, and Sessions stack as sibling
+                      cards in the left panel: the execution burndown over the
+                      window, then in-scope + found-in-testing issues, then the
+                      milestone's test runs and sessions. The burndown only
+                      appears once there's a window anchor and executable scope
+                      (a fresh, empty milestone has nothing to plot). */}
+                  {!isEditMode &&
+                    milestone &&
+                    burndown &&
+                    burndown.start &&
+                    burndown.actual.length > 0 && (
+                      <Card
+                        data-testid="milestone-burndown-card"
+                        className={completedCardClassName}
+                      >
+                        <div className="px-6 pt-6">
+                          <CardTitle className="flex items-center gap-2">
+                            <TrendingDown className="h-5 w-5" />
+                            {t("burndown.title")}
+                          </CardTitle>
+                        </div>
+                        <div className="px-6 pb-6 pt-2">
+                          <div className="h-64 w-full">
+                            <MilestoneBurndownChart data={burndown} />
+                          </div>
+                        </div>
+                      </Card>
+                    )}
+
                   {!isEditMode && milestone && (
                     <IssuesCard
                       ref={issuesCardRef}
