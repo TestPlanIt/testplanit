@@ -74,14 +74,25 @@ import {
 import { invalidateApiTokenCache } from "~/lib/api-token-cache";
 
 // Models whose standalone hooked-client writes set the app.audit_context GUC so
-// the CDC trigger records the acting user (parity with the v2 `withHookTx`
-// blocks). When the write is already inside an `auditedTransaction` the GUC was
-// set as that transaction's first statement, so we skip a redundant SET LOCAL.
-const GUC_MODELS = new Set<string>([
+// the CDC trigger records the acting user. When the write is already inside an
+// `auditedTransaction` the GUC was set as that transaction's first statement, so
+// the beforeEntityMutation gate skips a redundant SET LOCAL.
+//
+// A user-editable audited root entity edited directly via the model API (not an
+// auditedTransaction) MUST appear here, or the CDC trigger records a null actor
+// and the change is mis-attributed to `__system__` — general entity edits are
+// CDC-only (ENTITY_AUDIT_MODELS / AUDITED_CONFIG_MODELS are both empty). Entities
+// that instead emit an app-layer `captureAuditEvent` for their edits are left
+// OUT to avoid double-logging (semantic row + CDC row) the same change.
+export const GUC_MODELS = new Set<string>([
   "WebhookConfig",
   "RepositoryCases",
   "TestRuns",
   "Sessions",
+  "Milestones",
+  "Projects",
+  "Comment",
+  "SharedStepGroup",
   "Issue",
   "TestRunResults",
   "SessionResults",
