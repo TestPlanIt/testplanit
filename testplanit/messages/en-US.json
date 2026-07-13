@@ -2211,7 +2211,10 @@
       "remaining": "Items Remaining",
       "ideal": "Ideal",
       "today": "Today",
-      "tooltipRemaining": "{count, number} remaining"
+      "tooltipRemaining": "{count, number} remaining",
+      "heatOnTrack": "On track",
+      "heatBehind": "Behind ideal",
+      "tooltipBehind": "{count, number} behind ideal"
     },
     "members": {
       "cardTitle": "Issues",

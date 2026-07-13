@@ -16,6 +16,17 @@ const COLORS = {
   today: "#d97706", // amber-600 — today marker
 };
 
+// Variance heat strip (schedule health per day): how far actual remaining sits
+// from the ideal that day, as a fraction of the ideal. On/ahead → green,
+// warming to red as it falls behind; days not yet reached stay neutral.
+const HEAT = {
+  onTrack: "#16a34a", // green-600 — at or ahead of ideal
+  mid: "#eab308", // yellow-500 — slipping
+  behind: "#dc2626", // red-600 — behind ideal
+  future: "#e5e7eb", // gray-200 — day not reached yet
+};
+const STRIP_H = 12;
+
 const parseDay = (day: string) => new Date(`${day}T00:00:00.000Z`);
 
 /**
@@ -78,7 +89,10 @@ const MilestoneBurndownChart: React.FC<MilestoneBurndownChartProps> = ({
     const svg = d3.select(svgRef.current);
     svg.selectAll("*").remove();
 
-    const margin = { top: 24, right: 20, bottom: 32, left: 44 };
+    // The variance heat strip only renders when there's a target to compare
+    // against; reserve room beneath the x-axis labels for it in that case.
+    const hasHeat = data.hasTarget;
+    const margin = { top: 24, right: 20, bottom: hasHeat ? 50 : 32, left: 44 };
     const chartWidth = width - margin.left - margin.right;
     const chartHeight = height - margin.top - margin.bottom;
     if (chartWidth <= 0 || chartHeight <= 0) return;
@@ -195,6 +209,72 @@ const MilestoneBurndownChart: React.FC<MilestoneBurndownChartProps> = ({
         .text(t("today"));
     }
 
+    // --- Variance heat strip (beneath the x-axis): per-day schedule health,
+    //     colored by how far actual sits from that day's ideal, as a fraction
+    //     of the ideal. On/ahead → green, warming to red when behind; days not
+    //     yet reached stay neutral. Only meaningful against a target. ---
+    if (hasHeat && targetDate) {
+      const idealStart = actual[0].remaining;
+      const spanMs = targetDate.getTime() - startDate.getTime();
+      const nowMs = now.getTime();
+      const stripY = chartHeight + 22;
+      const heatScale = d3
+        .scaleLinear<string>()
+        .domain([0, 0.25, 0.5])
+        .range([HEAT.onTrack, HEAT.mid, HEAT.behind])
+        .clamp(true);
+      const idealAt = (dMs: number) => {
+        const progress = spanMs > 0 ? (dMs - startDate.getTime()) / spanMs : 1;
+        return Math.max(0, idealStart * (1 - progress));
+      };
+      const cellFill = (remaining: number, dMs: number) => {
+        if (dMs > nowMs) return HEAT.future; // day not reached yet
+        const ideal = idealAt(dMs);
+        const variance = remaining - ideal; // > 0 = behind schedule
+        if (variance <= 0) return HEAT.onTrack;
+        return heatScale(ideal > 1 ? variance / ideal : 1);
+      };
+      const heatG = g.append("g");
+      actual.forEach((pt, i) => {
+        const x0 = xScale(pt.date);
+        const x1 =
+          i < actual.length - 1 ? xScale(actual[i + 1].date) : chartWidth;
+        const dMs = pt.date.getTime();
+        heatG
+          .append("rect")
+          .attr("x", x0)
+          .attr("y", stripY)
+          .attr("width", Math.max(1, x1 - x0))
+          .attr("height", STRIP_H)
+          .attr("fill", cellFill(pt.remaining, dMs))
+          .style("cursor", "pointer")
+          .on("mouseover", function () {
+            if (!tooltipRef.current) return;
+            tooltipRef.current.style.display = "block";
+            const label = d3.timeFormat("%B %d, %Y")(pt.date);
+            const variance = Math.round(pt.remaining - idealAt(dMs));
+            const status =
+              dMs > nowMs
+                ? null
+                : variance > 0
+                  ? t("tooltipBehind", { count: variance })
+                  : t("heatOnTrack");
+            tooltipRef.current.innerHTML = `<strong>${label}</strong>${
+              status ? `<br/>${status}` : ""
+            }`;
+          })
+          .on("mousemove", function (event) {
+            if (tooltipRef.current) {
+              tooltipRef.current.style.left = `${event.clientX + 15}px`;
+              tooltipRef.current.style.top = `${event.clientY - 10}px`;
+            }
+          })
+          .on("mouseout", function () {
+            if (tooltipRef.current) tooltipRef.current.style.display = "none";
+          });
+      });
+    }
+
     // --- Actual remaining line (step-after: flat until an execution drops it) ---
     const actualLine = d3
       .line<{ date: Date; remaining: number }>()
@@ -257,14 +337,26 @@ const MilestoneBurndownChart: React.FC<MilestoneBurndownChartProps> = ({
       .append("g")
       .attr("class", "legend")
       .attr("transform", `translate(${margin.left}, 6)`);
-    const legendItems: { label: string; color: string; dashed: boolean }[] = [
-      { label: t("remaining"), color: COLORS.actual, dashed: false },
+    type LegendKind = "line" | "dashed" | "square";
+    const legendItems: { label: string; color: string; kind: LegendKind }[] = [
+      { label: t("remaining"), color: COLORS.actual, kind: "line" },
     ];
     if (data.hasTarget) {
       legendItems.push({
         label: t("ideal"),
         color: COLORS.ideal,
-        dashed: true,
+        kind: "dashed",
+      });
+      // Heat-strip key: what the green→red cells beneath the axis mean.
+      legendItems.push({
+        label: t("heatOnTrack"),
+        color: HEAT.onTrack,
+        kind: "square",
+      });
+      legendItems.push({
+        label: t("heatBehind"),
+        color: HEAT.behind,
+        kind: "square",
       });
     }
     // Lay items out left-to-right, advancing by each label's measured width so
@@ -275,29 +367,41 @@ const MilestoneBurndownChart: React.FC<MilestoneBurndownChartProps> = ({
       const itemGroup = legend
         .append("g")
         .attr("transform", `translate(${legendX}, 0)`);
-      itemGroup
-        .append("line")
-        .attr("x1", 0)
-        .attr("x2", 18)
-        .attr("y1", 0)
-        .attr("y2", 0)
-        .attr("stroke", item.color)
-        .attr("stroke-width", 2)
-        .attr("stroke-dasharray", item.dashed ? "4 4" : null);
+      if (item.kind === "square") {
+        itemGroup
+          .append("rect")
+          .attr("x", 0)
+          .attr("y", -5)
+          .attr("width", 10)
+          .attr("height", 10)
+          .attr("rx", 2)
+          .attr("fill", item.color);
+      } else {
+        itemGroup
+          .append("line")
+          .attr("x1", 0)
+          .attr("x2", 18)
+          .attr("y1", 0)
+          .attr("y2", 0)
+          .attr("stroke", item.color)
+          .attr("stroke-width", 2)
+          .attr("stroke-dasharray", item.kind === "dashed" ? "4 4" : null);
+      }
+      // Swatch (~18px line / 10px square) + gap, the label width, then a 16px
+      // gutter. getComputedTextLength is 0 in jsdom, so estimate there.
+      const swatchW = item.kind === "square" ? 15 : 23;
       const textNode = itemGroup
         .append("text")
-        .attr("x", 23)
+        .attr("x", swatchW)
         .attr("y", 0)
         .attr("dy", "0.32em")
         .style("font-size", "10px")
         .style("fill", "currentColor")
         .text(item.label);
-      // 23px swatch + gap, the label's width, then a 16px gutter before the
-      // next item. getComputedTextLength is 0 in jsdom, so estimate there.
       const textWidth =
         (textNode.node() as SVGTextElement)?.getComputedTextLength?.() ||
         item.label.length * 6;
-      legendX += 23 + textWidth + 16;
+      legendX += swatchW + textWidth + 16;
     });
   }, [data, width, height, t]);
 

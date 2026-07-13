@@ -60,6 +60,24 @@ describe("MilestoneBurndownChart", () => {
     expect(svg?.querySelectorAll("path").length ?? 0).toBe(0);
   });
 
+  it("renders variance heat-strip cells when there is a target", () => {
+    const { container } = render(<MilestoneBurndownChart data={withTarget} />);
+    // One <rect> per day in the strip (plus the two legend key squares).
+    expect(container.querySelectorAll("rect").length).toBeGreaterThanOrEqual(
+      withTarget.actual.length
+    );
+  });
+
+  it("draws no heat strip without a target", () => {
+    const noTarget: MilestoneBurndownData = {
+      ...withTarget,
+      end: null,
+      hasTarget: false,
+    };
+    const { container } = render(<MilestoneBurndownChart data={noTarget} />);
+    expect(container.querySelectorAll("rect").length).toBe(0);
+  });
+
   it("omits the ideal guideline when there is no target date", () => {
     const noTarget: MilestoneBurndownData = {
       ...withTarget,
