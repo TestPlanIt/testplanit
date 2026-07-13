@@ -129,9 +129,15 @@ export const ReportLineChart: React.FC<ReportLineChartProps> = ({ data }) => {
       .on("mouseover", (event, d) => {
         if (tooltipRef.current) {
           tooltipRef.current.style.display = "block";
-          tooltipRef.current.innerHTML = `<strong>${
-            d.name
-          }</strong><br/>Value: ${d.formattedValue}`;
+          const dt = new Date(d.name);
+          const dateLabel = isNaN(dt.getTime())
+            ? d.name
+            : d3.timeFormat("%b %d, %Y")(dt);
+          // When a label is present (e.g. a milestone name plotted on its date),
+          // lead with it and show the date beneath; otherwise the date is the title.
+          tooltipRef.current.innerHTML = d.label
+            ? `<strong>${d.label}</strong><br/>${dateLabel}<br/>Value: ${d.formattedValue}`
+            : `<strong>${dateLabel}</strong><br/>Value: ${d.formattedValue}`;
         }
       })
       .on("mousemove", (event) => {

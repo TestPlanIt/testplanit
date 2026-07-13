@@ -68,6 +68,13 @@ export const ReportMultiLineChart: React.FC<ReportMultiLineChartProps> = ({
     const chartWidth = width - margin.left - margin.right;
     const chartHeight = height - margin.top - margin.bottom - legendHeight;
 
+    // A short container (e.g. mid-resize) makes chartHeight go negative, which
+    // SVG rejects; skip rendering until there's room instead of erroring.
+    if (chartWidth <= 0 || chartHeight <= 0) {
+      svg.selectAll("*").remove();
+      return;
+    }
+
     const allDates = data.flatMap((series) => series.values.map((d) => d.date));
     const allValues = data.flatMap((series) =>
       series.values.map((d) => d.value)
@@ -207,7 +214,7 @@ export const ReportMultiLineChart: React.FC<ReportMultiLineChartProps> = ({
       <svg
         ref={svgRef}
         width={width}
-        height={height - 120}
+        height={Math.max(0, height - 120)}
         style={{ flexShrink: 0 }}
       ></svg>
       <div

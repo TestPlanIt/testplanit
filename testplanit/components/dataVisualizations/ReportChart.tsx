@@ -54,6 +54,9 @@ export interface SimpleChartDataPoint {
   value: number;
   formattedValue: string;
   color?: string;
+  /** Human label distinct from the plotted X value — e.g. a milestone's name
+   *  when its date is used on the X axis. Shown in tooltips when present. */
+  label?: string;
 }
 
 export interface GroupedChartDataPoint {
@@ -106,11 +109,40 @@ interface ReportChartProps {
 // Helper to determine chart type
 const getChartType = (
   dimensions: { value: string; label: string }[],
-  metrics: { value: string; label: string; originalLabel?: string }[]
+  metrics: { value: string; label: string; originalLabel?: string }[],
+  results: any[] = []
 ): ChartType => {
   const dimCount = dimensions.length;
   const metricCount = metrics.length;
   const firstDimType = dimensions[0]?.value;
+
+  // Milestones are inherently time-based, so — like the "date" dimension — they
+  // plot on a chronological (line) axis rather than as categories. Gate it on
+  // the data actually carrying each milestone's date, so reports that don't
+  // supply one keep their categorical charts instead of a broken time axis.
+  const milestoneHasDates = results.some((r) => r?.milestone?.date != null);
+  const isTimeDimension = (v?: string) =>
+    v === "date" || (v === "milestone" && milestoneHasDates);
+
+  // Categorical dimensions that render as donut / grouped bars. Milestone is
+  // time-based (see isTimeDimension) when the data carries dates.
+  const categoricalDims = [
+    "status",
+    "user",
+    "folder",
+    "creator",
+    "template",
+    "source",
+    "state",
+    "role",
+    "session",
+    "assignedTo",
+    "issueType",
+    "issueStatus",
+    "issueTracker",
+    "priority",
+    "configuration",
+  ];
 
   if (dimCount === 0 || metricCount === 0) {
     return ChartType.None;
@@ -132,36 +164,16 @@ const getChartType = (
 
   if (dimCount === 1) {
     if (metricCount === 1) {
-      // Dimensions that work well as donut charts (categorical with limited values)
-      if (
-        [
-          "status",
-          "user",
-          "milestone",
-          "folder",
-          "creator",
-          "template",
-          "source",
-          "state",
-          "role",
-          "session",
-          "assignedTo",
-          "issueType",
-          "issueStatus",
-          "issueTracker",
-          "priority",
-          "configuration",
-        ].includes(firstDimType)
-      ) {
-        return ChartType.Donut;
-      }
-      if (firstDimType === "date") {
+      if (isTimeDimension(firstDimType)) {
         return ChartType.Line;
+      }
+      if (categoricalDims.includes(firstDimType)) {
+        return ChartType.Donut;
       }
       return ChartType.Bar;
     } else {
       // 1 dimension, N metrics
-      if (firstDimType === "date") {
+      if (isTimeDimension(firstDimType)) {
         return ChartType.MultiLine;
       }
       return ChartType.MultiMetricBar;
@@ -170,28 +182,10 @@ const getChartType = (
 
   if (dimCount === 2) {
     if (metricCount === 1) {
-      if (dimensions.some((d) => d.value === "date")) {
+      if (dimensions.some((d) => isTimeDimension(d.value))) {
         return ChartType.MultiLine;
       }
       // Use GroupedBar for two categorical dimensions, Sunburst for more complex hierarchies
-      const categoricalDims = [
-        "status",
-        "user",
-        "milestone",
-        "folder",
-        "creator",
-        "template",
-        "source",
-        "state",
-        "role",
-        "session",
-        "assignedTo",
-        "issueType",
-        "issueStatus",
-        "issueTracker",
-        "priority",
-        "configuration",
-      ];
       if (dimensions.every((d) => categoricalDims.includes(d.value))) {
         return ChartType.GroupedBar;
       }
@@ -204,7 +198,7 @@ const getChartType = (
 
   if (dimCount >= 3) {
     if (metricCount === 1) {
-      if (dimensions.some((d) => d.value === "date")) {
+      if (dimensions.some((d) => isTimeDimension(d.value))) {
         return ChartType.MultiLine;
       }
       return ChartType.Sunburst;
@@ -220,8 +214,9 @@ const getChartType = (
 // Helper to get the value for a dimension from a row
 const getDimensionValue = (
   row: any,
-  dimension: { value: string; label: string }
+  dimension: { value: string; label: string } | undefined
 ): string => {
+  if (!dimension) return "Unknown";
   const dimValueKey = dimension.value;
 
   // First, try to get the dimension value object
@@ -234,6 +229,13 @@ const getDimensionValue = (
     }
     // Fallback: try to get date from label or other fields
     return row[dimension.label] ?? row[dimValueKey] ?? "Unknown";
+  }
+
+  // Milestones are time-based: their X value is the milestone's own date, so
+  // charts lay them out chronologically. The name is preserved separately for
+  // tooltips/labels (see getDimensionLabel).
+  if (dimValueKey === "milestone" && dimValue?.date) {
+    return String(dimValue.date);
   }
 
   // For non-date dimensions, extract the name from the dimension object
@@ -255,6 +257,22 @@ const getDimensionValue = (
     row[dimension.label] ??
     (dimValue !== undefined && dimValue !== null ? String(dimValue) : "Unknown")
   );
+};
+
+/**
+ * Human label for a dimension value, distinct from its plotted X value. For a
+ * milestone the X value is its date, so the label carries the milestone NAME
+ * for tooltips; returns undefined when there's nothing extra to show.
+ */
+const getDimensionLabel = (
+  row: any,
+  dimension: { value: string; label: string }
+): string | undefined => {
+  const dimValue = row[dimension.value];
+  if (dimValue && typeof dimValue === "object" && dimValue.name) {
+    return String(dimValue.name);
+  }
+  return undefined;
 };
 
 const getMetricValue = (
@@ -486,7 +504,7 @@ export const ReportChart: React.FC<ReportChartProps> = ({
     return <IssueTestCoverageChart data={results} projectId={projectId} />;
   }
 
-  const chartType = getChartType(dimensions, chartMetrics);
+  const chartType = getChartType(dimensions, chartMetrics, results);
 
   if (
     results.length === 0 ||
@@ -572,9 +590,19 @@ export const ReportChart: React.FC<ReportChartProps> = ({
         const value = isElapsed ? rawValue / 1000 : rawValue;
         const color = getColor(row, dimension, issueColorFns);
         const formattedValue = formatMetricValue(rawValue, metric);
+        // Keep the milestone name for the tooltip when its date is on the X axis.
+        const label = getDimensionLabel(row, dimension);
 
-        return { id: name, name, value, color, formattedValue };
+        return { id: name, name, value, color, formattedValue, label };
       });
+      // A time-series line connects points in array order, so sort chronologically.
+      // Line only happens for time dimensions (date, or milestone with dates), so
+      // the chart-type check alone tells us the X axis is a date.
+      if (chartType === ChartType.Line) {
+        transformedData.sort(
+          (a, b) => new Date(a.name).getTime() - new Date(b.name).getTime()
+        );
+      }
 
       if (chartType === ChartType.Donut) {
         let formattedTotal: string;
@@ -795,14 +823,21 @@ export const ReportChart: React.FC<ReportChartProps> = ({
       return <ReportMultiMetricBarChart data={transformedData} />;
     }
     case ChartType.MultiLine: {
-      const dateDimension = dimensions.find((d) => d.value === "date");
-      const otherDimensions = dimensions.filter((d) => d.value !== "date");
+      // The chronological axis is the date dimension, or a milestone plotted by
+      // its own date; the remaining dimensions split into separate series.
+      const dateDimension =
+        dimensions.find((d) => d.value === "date") ??
+        dimensions.find((d) => d.value === "milestone");
+      if (!dateDimension) return null;
+      const otherDimensions = dimensions.filter(
+        (d) => d.value !== dateDimension.value
+      );
       const isSingleMetric = chartMetrics.length === 1;
 
       const seriesMap = new Map<string, MultiLineSeries>();
 
       results.forEach((row) => {
-        const date = new Date(getDimensionValue(row, dateDimension!));
+        const date = new Date(getDimensionValue(row, dateDimension));
 
         if (isSingleMetric) {
           const metric = chartMetrics[0];
@@ -845,6 +880,11 @@ export const ReportChart: React.FC<ReportChartProps> = ({
       });
 
       const transformedData = Array.from(seriesMap.values());
+      // Rows arrive in dimension order, not date order, so sort each series
+      // chronologically to keep the connecting line from zig-zagging.
+      transformedData.forEach((series) =>
+        series.values.sort((a, b) => a.date.getTime() - b.date.getTime())
+      );
       return <ReportMultiLineChart data={transformedData} />;
     }
     default:
