@@ -122,8 +122,6 @@ function MilestoneTypes() {
 
   const { mutateAsync: updateMilestoneType } =
     useClientQueries(schema).milestoneTypes.useUpdate();
-  const { mutateAsync: updateManyMilestoneTypes } =
-    useClientQueries(schema).milestoneTypes.useUpdateMany();
   const { mutateAsync: createManyMilestoneTypeProjectAssignment } =
     useClientQueries(schema).milestoneTypesAssignment.useCreateMany();
   const { mutateAsync: deleteManyMilestoneTypesAssignment } =
@@ -138,10 +136,8 @@ function MilestoneTypes() {
     setIsAlertDialogOpen(false);
     try {
       if (selectedMilestoneTypeId !== undefined) {
-        await updateManyMilestoneTypes({
-          where: { isDefault: true },
-          data: { isDefault: false },
-        });
+        // Setting isDefault=true clears the previous default atomically via the
+        // tpl_single_default_milestonetypes DB trigger — no app-side clear needed.
         await updateMilestoneType({
           where: { id: selectedMilestoneTypeId },
           data: { isDefault: true },

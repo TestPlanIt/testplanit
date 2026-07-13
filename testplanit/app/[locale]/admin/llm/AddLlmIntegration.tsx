@@ -223,13 +223,6 @@ export function AddLlmIntegration({
     useClientQueries(schema).llmIntegration.useUpsert();
   const { mutateAsync: createLlmProviderConfig } =
     useClientQueries(schema).llmProviderConfig.useCreate();
-  const { mutateAsync: updateLlmProviderConfig } =
-    useClientQueries(schema).llmProviderConfig.useUpdate();
-  const { data: existingDefaultConfigs } = useClientQueries(
-    schema
-  ).llmProviderConfig.useFindMany({
-    where: { isDefault: true },
-  });
   const { data: existingIntegrations } = useClientQueries(
     schema
   ).llmIntegration.useFindMany({
@@ -489,21 +482,9 @@ export function AddLlmIntegration({
     }
 
     try {
-      // If setting as default, unset other defaults first
-      if (
-        values.isDefault &&
-        existingDefaultConfigs &&
-        existingDefaultConfigs.length > 0
-      ) {
-        await Promise.all(
-          existingDefaultConfigs.map((config) =>
-            updateLlmProviderConfig({
-              where: { id: config.id },
-              data: { isDefault: false },
-            })
-          )
-        );
-      }
+      // The single-default DB trigger (tpl_single_default_llmproviderconfig)
+      // clears the previous default atomically when this config is created as
+      // the default.
 
       // Create the integration using ZenStack hook
       // Build settings object only with relevant fields for the provider

@@ -329,3 +329,37 @@ export function assertRegistrySafe(): void {
     );
   }
 }
+
+/**
+ * Single-default enforcement (a business rule, NOT audit capture). Each listed
+ * table enforces "at most one row with isDefault = true" (per `scopeCol` when
+ * set) via a `tpl_single_default_<table>` trigger that clears the other
+ * in-scope defaults in the SAME transaction whenever a row is set default. This
+ * replaces the app's non-atomic "updateMany-clear-all → set-one" client
+ * sequence (which could leave zero defaults on a mid-sequence failure and
+ * churned the target isDefault true→false→true). The clear excludes the target
+ * row, so setting an already-default row is a no-op rather than a churn.
+ *
+ * The `tpl_single_default_` prefix keeps these out of the `tpl_audit_%` drift
+ * self-check in scripts/apply-triggers.ts. Attaching the trigger is idempotent
+ * and applied on the same startup / db-push paths as the audit triggers.
+ */
+export interface SingleDefaultConfig {
+  table: string;
+  /**
+   * Column that scopes uniqueness (e.g. `Workflows.scope` — one default per
+   * scope). Omit for a single global default across the whole table.
+   */
+  scopeCol?: string;
+}
+
+export const SINGLE_DEFAULT_REGISTRY: SingleDefaultConfig[] = [
+  { table: "MilestoneTypes" }, // one default milestone type (global)
+  { table: "Workflows", scopeCol: "scope" }, // one default per RUNS/SESSIONS scope
+  { table: "Roles" }, // one default role
+  { table: "CaseExportTemplate" }, // QuickScript admin: one default export template
+  { table: "Templates" }, // one default case/result field template
+  { table: "LlmProviderConfig" }, // one default LLM provider
+  { table: "PromptConfig" }, // one default prompt config
+  { table: "IntegrationProject", scopeCol: "projectIntegrationId" }, // one default external project per project-integration
+];

@@ -38,6 +38,7 @@ import { Client } from "pg";
 
 import {
   TRIGGER_REGISTRY,
+  SINGLE_DEFAULT_REGISTRY,
   DEFAULT_DENYLIST,
   assertRegistrySafe,
 } from "./trigger-registry";
@@ -79,6 +80,51 @@ export interface ApplyAuditTriggersOptions {
 function triggerNameFor(table: string): string {
   return "tpl_audit_" + table.toLowerCase().replace(/[^a-z0-9]/g, "_");
 }
+
+/** tpl_single_default_<lowercased table>. Distinct prefix keeps these out of the tpl_audit_% drift check. */
+function singleDefaultTriggerNameFor(table: string): string {
+  return "tpl_single_default_" + table.toLowerCase().replace(/[^a-z0-9]/g, "_");
+}
+
+/**
+ * Business-rule trigger (NOT audit): enforce "at most one isDefault = true" per
+ * table (optionally scoped by TG_ARGV[0]). Fires AFTER a row is set default and
+ * clears the OTHER in-scope defaults in the same transaction — so exclusivity is
+ * atomic and the app never has to run its own non-atomic clear-all. Excludes the
+ * target row (`id <> NEW.id`), so re-saving an already-default row is a no-op.
+ * The clear sets isDefault = false, and the WHEN clause fires only on TRUE, so
+ * the trigger's own UPDATE never re-fires it (no recursion).
+ */
+const SINGLE_DEFAULT_FN_SQL = `
+CREATE OR REPLACE FUNCTION tpl_enforce_single_default() RETURNS TRIGGER AS $$
+DECLARE
+  scope_col text := NULLIF(TG_ARGV[0], '');
+  scope_val text;
+BEGIN
+  -- Only enforce when a row BECOMES default (INSERT with true, or an UPDATE
+  -- transitioning false→true). Re-saving an already-default row (e.g. editing
+  -- its name) must NOT clear sibling defaults — that would be a surprising side
+  -- effect, and it lets a pre-existing multi-default state be reconciled
+  -- explicitly rather than by an unrelated edit.
+  IF TG_OP = 'UPDATE' AND OLD."isDefault" IS TRUE THEN
+    RETURN NULL;
+  END IF;
+  IF scope_col IS NULL THEN
+    EXECUTE format(
+      'UPDATE %I SET "isDefault" = false WHERE "isDefault" = true AND "id" <> $1',
+      TG_TABLE_NAME
+    ) USING NEW."id";
+  ELSE
+    scope_val := to_jsonb(NEW) ->> scope_col;
+    EXECUTE format(
+      'UPDATE %I SET "isDefault" = false WHERE "isDefault" = true AND "id" <> $1 AND (%I)::text IS NOT DISTINCT FROM $2',
+      TG_TABLE_NAME, scope_col
+    ) USING NEW."id", scope_val;
+  END IF;
+  RETURN NULL;
+END;
+$$ LANGUAGE plpgsql;
+`;
 
 /**
  * Append-only ENFORCEMENT for DataChangeLog. These BEFORE triggers RAISE a 42501 privilege error
@@ -255,6 +301,45 @@ export async function applyAuditTriggers(
       }
     }
 
+    // 2c. Single-default enforcement (business rule). CREATE OR REPLACE the shared
+    //     function, then attach one tpl_single_default_<table> trigger per entry and
+    //     drop orphans. Distinct prefix keeps these out of the tpl_audit_% drift check.
+    await client.query(SINGLE_DEFAULT_FN_SQL);
+    for (const entry of SINGLE_DEFAULT_REGISTRY) {
+      const triggerName = singleDefaultTriggerNameFor(entry.table);
+      const scopeArg = entry.scopeCol ?? "";
+      await client.query(
+        `DROP TRIGGER IF EXISTS ${triggerName} ON "${entry.table}";`
+      );
+      await client.query(
+        `CREATE TRIGGER ${triggerName}
+           AFTER INSERT OR UPDATE OF "isDefault" ON "${entry.table}"
+           FOR EACH ROW WHEN (NEW."isDefault" IS TRUE)
+           EXECUTE FUNCTION tpl_enforce_single_default('${scopeArg}');`
+      );
+    }
+    const expectedSingleDefault = new Set(
+      SINGLE_DEFAULT_REGISTRY.map((e) => singleDefaultTriggerNameFor(e.table))
+    );
+    const { rows: liveSingleDefault } = await client.query<{
+      trigger_name: string;
+      event_object_table: string;
+    }>(
+      `SELECT DISTINCT trigger_name, event_object_table
+         FROM information_schema.triggers
+        WHERE trigger_name LIKE 'tpl_single_default_%'`
+    );
+    for (const t of liveSingleDefault) {
+      if (!expectedSingleDefault.has(t.trigger_name)) {
+        await client.query(
+          `DROP TRIGGER IF EXISTS ${t.trigger_name} ON "${t.event_object_table}";`
+        );
+        log(
+          `[apply-triggers] dropped orphaned single-default trigger ${t.trigger_name} on "${t.event_object_table}"`
+        );
+      }
+    }
+
     // 3. Append-only ENFORCEMENT triggers on DataChangeLog (the real SAF-03 guarantee).
     await client.query(APPEND_ONLY_ENFORCEMENT_SQL);
 
@@ -333,6 +418,7 @@ export async function applyAuditTriggers(
 
     log(
       `[apply-triggers] applied audit_row_change() + ${TRIGGER_REGISTRY.length} tpl_audit_* triggers ` +
+        `+ tpl_enforce_single_default() + ${SINGLE_DEFAULT_REGISTRY.length} tpl_single_default_* triggers ` +
         `+ DataChangeLog append-only enforcement (tpl_dcl_no_delete/tpl_dcl_no_update) + GRANT/REVOKE defense-in-depth ` +
         `+ AuditLog CDC idempotency index (audit_log_cdc_idempotency) ` +
         `(idempotent, via ${usingDirect ? "DIRECT_DATABASE_URL" : "DATABASE_URL"}).`

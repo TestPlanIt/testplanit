@@ -75,8 +75,6 @@ export function AddRole({ open, onClose }: AddRoleProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { mutateAsync: createRole } =
     useClientQueries(schema).roles.useCreate();
-  const { mutateAsync: updateManyRoles } =
-    useClientQueries(schema).roles.useUpdateMany();
   const upsertRolePermission =
     useClientQueries(schema).rolePermission.useUpsert();
 
@@ -178,15 +176,9 @@ export function AddRole({ open, onClose }: AddRoleProps) {
     setIsSubmitting(true);
     let newRole: { id: number } | undefined;
     try {
-      // 1. Handle default role status update (if applicable)
-      if (data.isDefault) {
-        await updateManyRoles({
-          where: { isDefault: true },
-          data: { isDefault: false },
-        });
-      }
-
-      // 2. Create the new Role record (without permissions)
+      // 1. Create the new Role record (without permissions). The single-default
+      // DB trigger (tpl_single_default_roles) clears the previous default
+      // atomically when this role is created as the default.
       newRole = await createRole({
         data: {
           name: data.name,

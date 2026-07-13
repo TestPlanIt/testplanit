@@ -73,8 +73,6 @@ export function EditMilestoneType({
 
   const { mutateAsync: updateMilestoneType } =
     useClientQueries(schema).milestoneTypes.useUpdate();
-  const { mutateAsync: updateManyMilestoneTypes } =
-    useClientQueries(schema).milestoneTypes.useUpdateMany();
   const { mutateAsync: createManyMilestoneTypesAssignment } =
     useClientQueries(schema).milestoneTypesAssignment.useCreateMany();
   const { mutateAsync: deleteManyMilestoneTypesAssignment } =
@@ -125,14 +123,8 @@ export function EditMilestoneType({
   async function onSubmit(data: z.infer<typeof FormSchema>) {
     setIsSubmitting(true);
     try {
-      if (data.isDefault) {
-        await updateManyMilestoneTypes({
-          where: { isDefault: true },
-          data: {
-            isDefault: false,
-          },
-        });
-      }
+      // Setting isDefault=true clears the previous default atomically via the
+      // tpl_single_default_milestonetypes DB trigger — no app-side clear needed.
       await updateMilestoneType({
         where: { id: milestoneType.id },
         data: {

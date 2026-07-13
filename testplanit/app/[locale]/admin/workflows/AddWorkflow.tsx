@@ -118,8 +118,6 @@ export function AddWorkflows({ open, onClose }: AddWorkflowsProps) {
 
   const { mutateAsync: createWorkflows } =
     useClientQueries(schema).workflows.useCreate();
-  const { mutateAsync: updateManyWorkflows } =
-    useClientQueries(schema).workflows.useUpdateMany();
   const { mutateAsync: createManyProjectWorkflowAssignment } =
     useClientQueries(schema).projectWorkflowAssignment.useCreateMany();
 
@@ -181,18 +179,8 @@ export function AddWorkflows({ open, onClose }: AddWorkflowsProps) {
   async function onSubmit(data: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
     try {
-      if (data.isDefault) {
-        await updateManyWorkflows({
-          where: {
-            isDefault: true,
-            scope: data.scope,
-          },
-          data: {
-            isDefault: false,
-          },
-        });
-      }
-
+      // The single-default DB trigger (tpl_single_default_workflows) clears the
+      // previous default for this scope atomically.
       const newWorkflow = await createWorkflows({
         data: {
           name: data.name,

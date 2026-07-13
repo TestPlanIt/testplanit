@@ -94,16 +94,8 @@ function PromptConfigList() {
       if (currentIsDefault) return; // Can't un-default the current default
 
       try {
-        // Find and unset current default
-        const currentDefaults = configs?.filter((c) => c.isDefault) || [];
-        for (const config of currentDefaults) {
-          if (config.id !== id) {
-            await updatePromptConfigRef.current({
-              where: { id: config.id },
-              data: { isDefault: false },
-            });
-          }
-        }
+        // The single-default DB trigger (tpl_single_default_promptconfig)
+        // clears the previous default atomically.
 
         // Set new default (force active)
         await updatePromptConfigRef.current({

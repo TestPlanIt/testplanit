@@ -79,8 +79,6 @@ export function AddTemplate({ open, onClose }: AddTemplateProps) {
 
   const { mutateAsync: createTemplate } =
     useClientQueries(schema).templates.useCreate();
-  const { mutateAsync: updateManyTemplates } =
-    useClientQueries(schema).templates.useUpdateMany();
   const { mutateAsync: createTemplateProjectAssignment } =
     useClientQueries(schema).templateProjectAssignment.useCreateMany();
   const { mutateAsync: createTemplateCaseAssignment } =
@@ -213,15 +211,8 @@ export function AddTemplate({ open, onClose }: AddTemplateProps) {
   async function onSubmit(data: z.infer<typeof FormSchema>) {
     setIsSubmitting(true);
     try {
-      if (data.isDefault) {
-        await updateManyTemplates({
-          where: { isDefault: true },
-          data: {
-            isDefault: false,
-          },
-        });
-      }
-
+      // The single-default DB trigger (tpl_single_default_templates) clears the
+      // previous default atomically.
       const newTemplate = await createTemplate({
         data: {
           templateName: data.name,

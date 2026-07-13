@@ -107,8 +107,6 @@ export function EditTemplate({ template, open, onClose }: EditTemplateProps) {
 
   const { mutateAsync: updateTemplate } =
     useClientQueries(schema).templates.useUpdate();
-  const { mutateAsync: updateManyTemplates } =
-    useClientQueries(schema).templates.useUpdateMany();
   const { mutateAsync: createManyTemplateProjectAssignment } =
     useClientQueries(schema).templateProjectAssignment.useCreateMany();
   const { mutateAsync: deleteManyTemplateProjectAssignment } =
@@ -275,16 +273,8 @@ export function EditTemplate({ template, open, onClose }: EditTemplateProps) {
   async function onSubmit(data: FormValues) {
     setIsSubmitting(true);
     try {
-      if (data.isDefault) {
-        await updateManyTemplates({
-          where: { isDefault: true },
-          data: {
-            isDefault: false,
-          },
-        });
-      }
-
-      // Update the template details
+      // Update the template details. The single-default DB trigger
+      // (tpl_single_default_templates) clears the previous default atomically.
       await updateTemplate({
         where: { id: template.id },
         data: {

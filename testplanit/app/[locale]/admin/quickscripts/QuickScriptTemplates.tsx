@@ -61,8 +61,6 @@ export default function QuickScriptTemplates() {
 
   const { mutateAsync: updateTemplate } =
     useClientQueries(schema).caseExportTemplate.useUpdate();
-  const { mutateAsync: updateManyTemplates } =
-    useClientQueries(schema).caseExportTemplate.useUpdateMany();
 
   const updateTemplateRef = useRef(updateTemplate);
   useEffect(() => {
@@ -106,10 +104,9 @@ export default function QuickScriptTemplates() {
     setIsAlertDialogOpen(false);
     try {
       if (selectedTemplateId !== undefined) {
-        await updateManyTemplates({
-          where: { isDefault: true },
-          data: { isDefault: false },
-        });
+        // The single-default DB trigger
+        // (tpl_single_default_caseexporttemplate) clears the previous default
+        // atomically.
         await updateTemplate({
           where: { id: selectedTemplateId },
           data: { isDefault: true, isEnabled: true },

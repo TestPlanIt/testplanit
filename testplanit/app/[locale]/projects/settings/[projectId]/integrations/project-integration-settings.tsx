@@ -217,15 +217,8 @@ export function ProjectIntegrationSettings({
 
   const handleSetDefault = async (id: string) => {
     try {
-      // Unset current default first
-      const currentDefault = integrationProjects?.find((ip) => ip.isDefault);
-      if (currentDefault && currentDefault.id !== id) {
-        await updateIntegrationProject({
-          where: { id: currentDefault.id },
-          data: { isDefault: false },
-        });
-      }
-      // Set new default
+      // The single-default DB trigger (tpl_single_default_integrationproject)
+      // clears the previous default for this integration atomically.
       await updateIntegrationProject({
         where: { id },
         data: { isDefault: true },

@@ -81,8 +81,6 @@ function WorkflowComponent() {
 
   const { mutateAsync: updateWorkflows } =
     useClientQueries(schema).workflows.useUpdate();
-  const { mutateAsync: updateManyWorkflows } =
-    useClientQueries(schema).workflows.useUpdateMany();
   const { mutateAsync: createManyProjectWorkflowAssignment } =
     useClientQueries(schema).projectWorkflowAssignment.useCreateMany();
   const { mutateAsync: deleteManyProjectWorkflowAssignment } =
@@ -193,10 +191,8 @@ function WorkflowComponent() {
         selectedWorkflowId !== undefined &&
         selectedWorkflowScope !== undefined
       ) {
-        await updateManyWorkflows({
-          where: { isDefault: true, scope: selectedWorkflowScope },
-          data: { isDefault: false },
-        });
+        // The single-default DB trigger (tpl_single_default_workflows) clears
+        // the previous default for this scope atomically.
         await updateWorkflows({
           where: { id: selectedWorkflowId },
           data: { isDefault: true, isEnabled: true },

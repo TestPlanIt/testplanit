@@ -54,8 +54,6 @@ export function AddMilestoneType({ open, onClose }: AddMilestoneTypeProps) {
 
   const { mutateAsync: createMilestoneType } =
     useClientQueries(schema).milestoneTypes.useCreate();
-  const { mutateAsync: updateManyMilestoneTypes } =
-    useClientQueries(schema).milestoneTypes.useUpdateMany();
 
   const handleIconSelect = (iconId: number) => {
     setSelectedIconId(iconId);
@@ -76,14 +74,8 @@ export function AddMilestoneType({ open, onClose }: AddMilestoneTypeProps) {
   async function onSubmit(data: z.infer<typeof FormSchema>) {
     setIsSubmitting(true);
     try {
-      if (data.isDefault) {
-        await updateManyMilestoneTypes({
-          where: { isDefault: true },
-          data: {
-            isDefault: false,
-          },
-        });
-      }
+      // A new default clears the previous one atomically via the
+      // tpl_single_default_milestonetypes DB trigger — no app-side clear needed.
       await createMilestoneType({
         data: {
           name: data.name,

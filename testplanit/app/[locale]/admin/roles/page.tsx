@@ -88,25 +88,19 @@ function RoleList() {
 
   const { mutateAsync: updateRole } =
     useClientQueries(schema).roles.useUpdate();
-  const { mutateAsync: updateManyRoles } =
-    useClientQueries(schema).roles.useUpdateMany();
 
   // Stabilize mutation refs — ZenStack's mutateAsync changes identity every render
   const updateRoleRef = useRef(updateRole);
-  const updateManyRolesRef = useRef(updateManyRoles);
   useEffect(() => {
     updateRoleRef.current = updateRole;
-    updateManyRolesRef.current = updateManyRoles;
   });
 
   const handleToggleDefault = useCallback(
     async (id: number, isDefault: boolean) => {
       try {
         if (isDefault) {
-          await updateManyRolesRef.current({
-            where: { isDefault: true },
-            data: { isDefault: false },
-          });
+          // The single-default DB trigger (tpl_single_default_roles) clears the
+          // previous default atomically.
           await updateRoleRef.current({
             where: { id },
             data: { isDefault: true },

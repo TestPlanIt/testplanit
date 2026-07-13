@@ -47,17 +47,13 @@ function LlmIntegrationList() {
     useClientQueries(schema).llmIntegration.useUpdate();
   const { mutateAsync: updateLlmProviderConfig } =
     useClientQueries(schema).llmProviderConfig.useUpdate();
-  const { mutateAsync: updateManyLlmProviderConfig } =
-    useClientQueries(schema).llmProviderConfig.useUpdateMany();
 
   // Stabilize mutation refs — ZenStack's mutateAsync changes identity every render
   const updateLlmIntegrationRef = useRef(updateLlmIntegration);
   const updateLlmProviderConfigRef = useRef(updateLlmProviderConfig);
-  const updateManyLlmProviderConfigRef = useRef(updateManyLlmProviderConfig);
   useEffect(() => {
     updateLlmIntegrationRef.current = updateLlmIntegration;
     updateLlmProviderConfigRef.current = updateLlmProviderConfig;
-    updateManyLlmProviderConfigRef.current = updateManyLlmProviderConfig;
   });
 
   const handleToggle = useCallback(
@@ -69,10 +65,8 @@ function LlmIntegrationList() {
     ) => {
       try {
         if (key === "isDefault" && llmProviderConfigId && value) {
-          await updateManyLlmProviderConfigRef.current({
-            where: { isDefault: true },
-            data: { isDefault: false },
-          });
+          // The single-default DB trigger (tpl_single_default_llmproviderconfig)
+          // clears the previous default atomically.
           await updateLlmProviderConfigRef.current({
             where: { id: llmProviderConfigId },
             data: { isDefault: true },

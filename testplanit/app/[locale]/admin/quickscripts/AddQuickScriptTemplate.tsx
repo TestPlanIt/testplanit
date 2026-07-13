@@ -83,8 +83,6 @@ export function AddQuickScriptTemplate({
 
   const { mutateAsync: createTemplate } =
     useClientQueries(schema).caseExportTemplate.useCreate();
-  const { mutateAsync: updateManyTemplates } =
-    useClientQueries(schema).caseExportTemplate.useUpdateMany();
 
   const { data: existingTemplates } = useClientQueries(
     schema
@@ -192,13 +190,8 @@ export function AddQuickScriptTemplate({
   async function onSubmit(data: z.infer<typeof FormSchema>) {
     setIsSubmitting(true);
     try {
-      if (data.isDefault) {
-        await updateManyTemplates({
-          where: { isDefault: true },
-          data: { isDefault: false },
-        });
-      }
-
+      // The single-default DB trigger (tpl_single_default_caseexporttemplate)
+      // clears the previous default atomically.
       await createTemplate({
         data: {
           name: data.name,

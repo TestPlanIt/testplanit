@@ -167,11 +167,6 @@ export function EditLlmIntegration({
     useClientQueries(schema).llmUsage.useDeleteMany();
   const [testingConnection, setTestingConnection] = useState(false);
   const [resettingSpend, setResettingSpend] = useState(false);
-  const { data: existingDefaultConfigs } = useClientQueries(
-    schema
-  ).llmProviderConfig.useFindMany({
-    where: { isDefault: true },
-  });
   const { data: existingIntegrations } = useClientQueries(
     schema
   ).llmIntegration.useFindMany({
@@ -450,23 +445,8 @@ export function EditLlmIntegration({
     }
 
     try {
-      // If setting as default, unset other defaults first
-      if (
-        values.isDefault &&
-        existingDefaultConfigs &&
-        existingDefaultConfigs.length > 0
-      ) {
-        await Promise.all(
-          existingDefaultConfigs
-            .filter((config) => config.id !== integration.llmProviderConfig?.id)
-            .map((config) =>
-              updateLlmProviderConfig({
-                where: { id: config.id },
-                data: { isDefault: false },
-              })
-            )
-        );
-      }
+      // The single-default DB trigger (tpl_single_default_llmproviderconfig)
+      // clears the previous default atomically.
 
       // Update the integration
       await updateLlmIntegration({

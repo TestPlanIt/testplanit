@@ -77,8 +77,6 @@ export function EditRole({ role, open, onClose }: EditRoleProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { mutateAsync: updateRole } =
     useClientQueries(schema).roles.useUpdate();
-  const { mutateAsync: updateManyRoles } =
-    useClientQueries(schema).roles.useUpdateMany();
   const { mutateAsync: upsertRolePermission } =
     useClientQueries(schema).rolePermission.useUpsert();
 
@@ -157,15 +155,8 @@ export function EditRole({ role, open, onClose }: EditRoleProps) {
   async function onSubmit(data: EditRoleFormData) {
     setIsSubmitting(true);
     try {
-      // 1. Update Role name and isDefault status (existing logic)
-      if (data.isDefault && !role.isDefault) {
-        // Check if default status changed to true
-        // Ensure only one role is default
-        await updateManyRoles({
-          where: { isDefault: true },
-          data: { isDefault: false },
-        });
-      }
+      // 1. Update Role name and isDefault status. The single-default DB trigger
+      // (tpl_single_default_roles) clears the previous default atomically.
       await updateRole({
         where: { id: role.id },
         data: {

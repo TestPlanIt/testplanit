@@ -55,8 +55,6 @@ export default function TemplateComponent() {
 
   const { mutateAsync: updateTemplate } =
     useClientQueries(schema).templates.useUpdate();
-  const { mutateAsync: updateManyTemplate } =
-    useClientQueries(schema).templates.useUpdateMany();
   const { mutateAsync: createManyTemplateProjectAssignment } =
     useClientQueries(schema).templateProjectAssignment.useCreateMany();
   const { mutateAsync: deleteManyTemplateProjectAssignment } =
@@ -115,10 +113,8 @@ export default function TemplateComponent() {
     setIsAlertDialogOpen(false);
     try {
       if (selectedTemplateId !== undefined) {
-        await updateManyTemplate({
-          where: { isDefault: true },
-          data: { isDefault: false },
-        });
+        // The single-default DB trigger (tpl_single_default_templates) clears
+        // the previous default atomically.
         await updateTemplate({
           where: { id: selectedTemplateId },
           data: { isDefault: true, isEnabled: true },
