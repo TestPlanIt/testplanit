@@ -80,7 +80,8 @@ vi.mock("~/hooks/useProjectPermissions", () => ({
 }));
 
 vi.mock("~/lib/navigation", () => ({
-  useRouter: () => ({ push: vi.fn() }),
+  useRouter: () => ({ push: vi.fn(), replace: vi.fn() }),
+  usePathname: () => "/projects/milestones/1",
 }));
 
 vi.mock("next-intl", () => ({
