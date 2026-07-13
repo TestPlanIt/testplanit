@@ -2212,9 +2212,11 @@
       "ideal": "Ideal",
       "today": "Today",
       "tooltipRemaining": "{count, number} remaining",
+      "heatAhead": "Ahead of ideal",
       "heatOnTrack": "On track",
       "heatBehind": "Behind ideal",
-      "tooltipBehind": "{count, number} behind ideal"
+      "tooltipBehind": "{count, number} behind ideal",
+      "tooltipAhead": "{count, number} ahead of ideal"
     },
     "members": {
       "cardTitle": "Issues",

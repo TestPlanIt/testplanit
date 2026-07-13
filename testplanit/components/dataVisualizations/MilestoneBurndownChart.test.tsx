@@ -62,7 +62,7 @@ describe("MilestoneBurndownChart", () => {
 
   it("renders variance heat-strip cells when there is a target", () => {
     const { container } = render(<MilestoneBurndownChart data={withTarget} />);
-    // One <rect> per day in the strip (plus the two legend key squares).
+    // One <rect> per day in the strip (plus the legend key squares).
     expect(container.querySelectorAll("rect").length).toBeGreaterThanOrEqual(
       withTarget.actual.length
     );

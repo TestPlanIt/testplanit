@@ -17,11 +17,14 @@ const COLORS = {
 };
 
 // Variance heat strip (schedule health per day): how far actual remaining sits
-// from the ideal that day, as a fraction of the ideal. On/ahead → green,
-// warming to red as it falls behind; days not yet reached stay neutral.
+// from the ideal that day, as a signed fraction of the ideal. Ahead → blue/
+// purple, on the line → green, warming through yellow to red as it falls
+// behind; days not yet reached stay neutral.
 const HEAT = {
-  onTrack: "#16a34a", // green-600 — at or ahead of ideal
-  mid: "#eab308", // yellow-500 — slipping
+  ahead: "#9333ea", // purple-600 — comfortably ahead of ideal
+  aheadMid: "#3b82f6", // blue-500 — running ahead
+  onTrack: "#16a34a", // green-600 — on the ideal line
+  mid: "#eab308", // yellow-500 — slipping behind
   behind: "#dc2626", // red-600 — behind ideal
   future: "#e5e7eb", // gray-200 — day not reached yet
 };
@@ -210,9 +213,10 @@ const MilestoneBurndownChart: React.FC<MilestoneBurndownChartProps> = ({
     }
 
     // --- Variance heat strip (beneath the x-axis): per-day schedule health,
-    //     colored by how far actual sits from that day's ideal, as a fraction
-    //     of the ideal. On/ahead → green, warming to red when behind; days not
-    //     yet reached stay neutral. Only meaningful against a target. ---
+    //     colored by how far actual sits from that day's ideal, as a signed
+    //     fraction of the ideal. Ahead → blue/purple, on the line → green,
+    //     warming to red when behind; days not yet reached stay neutral. Only
+    //     meaningful against a target. ---
     if (hasHeat && targetDate) {
       const idealStart = actual[0].remaining;
       const spanMs = targetDate.getTime() - startDate.getTime();
@@ -220,8 +224,8 @@ const MilestoneBurndownChart: React.FC<MilestoneBurndownChartProps> = ({
       const stripY = chartHeight + 22;
       const heatScale = d3
         .scaleLinear<string>()
-        .domain([0, 0.25, 0.5])
-        .range([HEAT.onTrack, HEAT.mid, HEAT.behind])
+        .domain([-0.5, -0.25, 0, 0.25, 0.5])
+        .range([HEAT.ahead, HEAT.aheadMid, HEAT.onTrack, HEAT.mid, HEAT.behind])
         .clamp(true);
       const idealAt = (dMs: number) => {
         const progress = spanMs > 0 ? (dMs - startDate.getTime()) / spanMs : 1;
@@ -230,9 +234,12 @@ const MilestoneBurndownChart: React.FC<MilestoneBurndownChartProps> = ({
       const cellFill = (remaining: number, dMs: number) => {
         if (dMs > nowMs) return HEAT.future; // day not reached yet
         const ideal = idealAt(dMs);
-        const variance = remaining - ideal; // > 0 = behind schedule
-        if (variance <= 0) return HEAT.onTrack;
-        return heatScale(ideal > 1 ? variance / ideal : 1);
+        const variance = remaining - ideal; // > 0 behind, < 0 ahead
+        // Signed fraction of that day's ideal. Near the finish (ideal ≈ 0) the
+        // fraction blows up, so fall back to the sign alone — a still-open
+        // milestone reads behind, an already-cleared one reads ahead.
+        const ratio = ideal > 1 ? variance / ideal : Math.sign(variance) * 0.5;
+        return heatScale(ratio);
       };
       const heatG = g.append("g");
       actual.forEach((pt, i) => {
@@ -258,7 +265,9 @@ const MilestoneBurndownChart: React.FC<MilestoneBurndownChartProps> = ({
                 ? null
                 : variance > 0
                   ? t("tooltipBehind", { count: variance })
-                  : t("heatOnTrack");
+                  : variance < 0
+                    ? t("tooltipAhead", { count: -variance })
+                    : t("heatOnTrack");
             tooltipRef.current.innerHTML = `<strong>${label}</strong>${
               status ? `<br/>${status}` : ""
             }`;
@@ -347,7 +356,12 @@ const MilestoneBurndownChart: React.FC<MilestoneBurndownChartProps> = ({
         color: COLORS.ideal,
         kind: "dashed",
       });
-      // Heat-strip key: what the green→red cells beneath the axis mean.
+      // Heat-strip key: what the purple→green→red cells beneath the axis mean.
+      legendItems.push({
+        label: t("heatAhead"),
+        color: HEAT.ahead,
+        kind: "square",
+      });
       legendItems.push({
         label: t("heatOnTrack"),
         color: HEAT.onTrack,
