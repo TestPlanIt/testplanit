@@ -1,6 +1,6 @@
 "use client";
 
-import { Card, CardTitle } from "@/components/ui/card";
+import { CollapsibleSection } from "~/components/CollapsibleSection";
 import { Bug } from "lucide-react";
 import { useTranslations } from "next-intl";
 import {
@@ -47,7 +47,6 @@ interface IssuesCardProps {
 export const IssuesCard = forwardRef<IssuesCardHandle, IssuesCardProps>(
   function IssuesCard({ milestoneId, projectId, className }, ref) {
     const tCommon = useTranslations("common");
-    const cardRef = useRef<HTMLDivElement>(null);
     // Section wrappers (NOT the keyed children) so each chip scrolls to its
     // own accordion trigger — the wrappers survive the force-expand key bump
     // below, keeping the scroll target stable across the remount.
@@ -106,13 +105,14 @@ export const IssuesCard = forwardRef<IssuesCardHandle, IssuesCardProps>(
     }));
 
     return (
-      <Card ref={cardRef} data-testid="issues-card" className={className}>
-        <div className="px-6 pt-6">
-          <CardTitle className="flex items-center gap-2">
-            <Bug className="h-5 w-5" />
-            {tCommon("labels.issues", { count: totalIssueCount })}
-          </CardTitle>
-        </div>
+      <CollapsibleSection
+        data-testid="issues-card"
+        className={className}
+        storageKey="tpi.milestone.issues.collapsed"
+        icon={<Bug className="h-5 w-5" />}
+        title={tCommon("labels.issues", { count: totalIssueCount })}
+        contentClassName="p-0"
+      >
         <div className="divide-y">
           <div ref={inScopeRef} className="scroll-mt-16">
             <MemberIssuesTable
@@ -130,7 +130,7 @@ export const IssuesCard = forwardRef<IssuesCardHandle, IssuesCardProps>(
             />
           </div>
         </div>
-      </Card>
+      </CollapsibleSection>
     );
   }
 );

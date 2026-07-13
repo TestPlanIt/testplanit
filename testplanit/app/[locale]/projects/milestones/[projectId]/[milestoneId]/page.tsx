@@ -59,6 +59,7 @@ import type { BatchTestRunSummaryResponse } from "~/app/api/test-runs/summaries/
 import { emptyEditorContent } from "~/app/constants";
 import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
 import type { IconName } from "~/types/globals";
+import { CollapsibleSection } from "~/components/CollapsibleSection";
 import { CommentsSection } from "~/components/comments/CommentsSection";
 import MilestoneBurndownChart from "~/components/dataVisualizations/MilestoneBurndownChart";
 import LoadingSpinner from "~/components/LoadingSpinner";
@@ -999,22 +1000,17 @@ export default function MilestoneDetailsPage() {
                     burndown &&
                     burndown.start &&
                     burndown.actual.length > 0 && (
-                      <Card
+                      <CollapsibleSection
                         data-testid="milestone-burndown-card"
                         className={completedCardClassName}
+                        storageKey="tpi.milestone.burndown.collapsed"
+                        icon={<TrendingDown className="h-5 w-5" />}
+                        title={t("burndown.title")}
                       >
-                        <div className="px-6 pt-6">
-                          <CardTitle className="flex items-center gap-2">
-                            <TrendingDown className="h-5 w-5" />
-                            {t("burndown.title")}
-                          </CardTitle>
+                        <div className="h-64 w-full">
+                          <MilestoneBurndownChart data={burndown} />
                         </div>
-                        <div className="px-6 pb-6 pt-2">
-                          <div className="h-64 w-full">
-                            <MilestoneBurndownChart data={burndown} />
-                          </div>
-                        </div>
-                      </Card>
+                      </CollapsibleSection>
                     )}
 
                   {!isEditMode && milestone && (
@@ -1027,132 +1023,120 @@ export default function MilestoneDetailsPage() {
                   )}
 
                   {!isEditMode && (
-                    <Card
+                    <CollapsibleSection
                       data-testid="milestone-test-runs-card"
                       className={completedCardClassName}
+                      storageKey="tpi.milestone.testRuns.collapsed"
+                      icon={<PlayCircle className="h-5 w-5" />}
+                      title={tCommon("labels.testRuns", {
+                        count: milestoneTestRuns?.length || 0,
+                      })}
                     >
-                      <div className="px-6 pt-6">
-                        <CardTitle className="flex items-center gap-2">
-                          <PlayCircle className="h-5 w-5" />
-                          {tCommon("labels.testRuns", {
-                            count: milestoneTestRuns?.length || 0,
-                          })}
-                        </CardTitle>
-                      </div>
-                      <div className="px-6 pb-6 pt-2">
-                        {milestoneTestRuns && milestoneTestRuns.length > 0 ? (
-                          <VirtualizedCardList
-                            items={milestoneTestRuns}
-                            getKey={(testRun) => testRun.id}
-                            data-testid="milestone-test-runs-list"
-                            renderItem={(testRun) => {
-                              const transformedTestRun: TestRunItemProps["testRun"] =
-                                {
-                                  id: testRun.id,
-                                  name: testRun.name,
-                                  testRunType: testRun.testRunType,
-                                  isCompleted: testRun.isCompleted,
-                                  configuration: testRun.configuration,
-                                  configurationGroupId:
-                                    testRun.configurationGroupId,
-                                  state: {
-                                    id: testRun.state.id,
-                                    name: testRun.state.name,
-                                    icon: testRun.state.icon,
-                                    color: testRun.state.color,
-                                  },
-                                  note:
-                                    typeof testRun.note === "string"
-                                      ? testRun.note
-                                      : testRun.note
-                                        ? JSON.stringify(testRun.note)
-                                        : "",
-                                  completedAt: testRun.completedAt || undefined,
-                                  milestone: testRun.milestone
-                                    ? {
-                                        id: testRun.milestone.id,
-                                        name: testRun.milestone.name,
-                                        startedAt: testRun.milestone.startedAt,
-                                        completedAt:
-                                          testRun.milestone.completedAt,
-                                        isCompleted:
-                                          testRun.milestone.isCompleted,
-                                        milestoneType: {
-                                          id: testRun.milestone.milestoneType
-                                            .id,
-                                          name: testRun.milestone.milestoneType
-                                            .name,
-                                          icon: testRun.milestone.milestoneType
-                                            .icon,
-                                        },
-                                      }
-                                    : undefined,
-                                  projectId: testRun.projectId,
-                                  createdBy: testRun.createdBy,
-                                  forecastManual: testRun.forecastManual,
-                                  forecastAutomated: testRun.forecastAutomated,
-                                };
-                              return (
-                                <TestRunItem
-                                  testRun={transformedTestRun}
-                                  showMilestone={
-                                    testRun.milestoneId !== Number(milestoneId)
-                                  }
-                                  summaryData={
-                                    batchSummaries?.summaries[testRun.id]
-                                  }
-                                />
-                              );
-                            }}
-                          />
-                        ) : (
-                          <div className="text-muted-foreground text-sm">
-                            {t("empty.testRuns")}
-                          </div>
-                        )}
-                      </div>
-                    </Card>
+                      {milestoneTestRuns && milestoneTestRuns.length > 0 ? (
+                        <VirtualizedCardList
+                          items={milestoneTestRuns}
+                          getKey={(testRun) => testRun.id}
+                          data-testid="milestone-test-runs-list"
+                          renderItem={(testRun) => {
+                            const transformedTestRun: TestRunItemProps["testRun"] =
+                              {
+                                id: testRun.id,
+                                name: testRun.name,
+                                testRunType: testRun.testRunType,
+                                isCompleted: testRun.isCompleted,
+                                configuration: testRun.configuration,
+                                configurationGroupId:
+                                  testRun.configurationGroupId,
+                                state: {
+                                  id: testRun.state.id,
+                                  name: testRun.state.name,
+                                  icon: testRun.state.icon,
+                                  color: testRun.state.color,
+                                },
+                                note:
+                                  typeof testRun.note === "string"
+                                    ? testRun.note
+                                    : testRun.note
+                                      ? JSON.stringify(testRun.note)
+                                      : "",
+                                completedAt: testRun.completedAt || undefined,
+                                milestone: testRun.milestone
+                                  ? {
+                                      id: testRun.milestone.id,
+                                      name: testRun.milestone.name,
+                                      startedAt: testRun.milestone.startedAt,
+                                      completedAt:
+                                        testRun.milestone.completedAt,
+                                      isCompleted:
+                                        testRun.milestone.isCompleted,
+                                      milestoneType: {
+                                        id: testRun.milestone.milestoneType.id,
+                                        name: testRun.milestone.milestoneType
+                                          .name,
+                                        icon: testRun.milestone.milestoneType
+                                          .icon,
+                                      },
+                                    }
+                                  : undefined,
+                                projectId: testRun.projectId,
+                                createdBy: testRun.createdBy,
+                                forecastManual: testRun.forecastManual,
+                                forecastAutomated: testRun.forecastAutomated,
+                              };
+                            return (
+                              <TestRunItem
+                                testRun={transformedTestRun}
+                                showMilestone={
+                                  testRun.milestoneId !== Number(milestoneId)
+                                }
+                                summaryData={
+                                  batchSummaries?.summaries[testRun.id]
+                                }
+                              />
+                            );
+                          }}
+                        />
+                      ) : (
+                        <div className="text-muted-foreground text-sm">
+                          {t("empty.testRuns")}
+                        </div>
+                      )}
+                    </CollapsibleSection>
                   )}
 
                   {!isEditMode && (
-                    <Card
+                    <CollapsibleSection
                       data-testid="milestone-sessions-card"
                       className={completedCardClassName}
+                      storageKey="tpi.milestone.sessions.collapsed"
+                      icon={<Compass className="h-5 w-5" />}
+                      title={tCommon("labels.sessions", {
+                        count: milestoneSessions?.length || 0,
+                      })}
                     >
-                      <div className="px-6 pt-6">
-                        <CardTitle className="flex items-center gap-2">
-                          <Compass className="h-5 w-5" />
-                          {tCommon("labels.sessions", {
-                            count: milestoneSessions?.length || 0,
-                          })}
-                        </CardTitle>
-                      </div>
-                      <div className="px-6 pb-6 pt-2">
-                        {milestoneSessions && milestoneSessions.length > 0 ? (
-                          <VirtualizedCardList
-                            items={milestoneSessions}
-                            getKey={(testSession) => testSession.id}
-                            data-testid="milestone-sessions-list"
-                            renderItem={(testSession) => (
-                              <SessionItem
-                                testSession={testSession as SessionsWithDetails}
-                                isCompleted={testSession.isCompleted}
-                                onComplete={handleCompleteSession}
-                                canComplete={canCompleteSession}
-                                showMilestone={
-                                  testSession.milestoneId !==
-                                  Number(milestoneId)
-                                }
-                              />
-                            )}
-                          />
-                        ) : (
-                          <div className="text-muted-foreground text-sm">
-                            {tGlobal("common.empty.sessions")}
-                          </div>
-                        )}
-                      </div>
-                    </Card>
+                      {milestoneSessions && milestoneSessions.length > 0 ? (
+                        <VirtualizedCardList
+                          items={milestoneSessions}
+                          getKey={(testSession) => testSession.id}
+                          data-testid="milestone-sessions-list"
+                          renderItem={(testSession) => (
+                            <SessionItem
+                              testSession={testSession as SessionsWithDetails}
+                              isCompleted={testSession.isCompleted}
+                              onComplete={handleCompleteSession}
+                              canComplete={canCompleteSession}
+                              showMilestone={
+                                testSession.milestoneId !== Number(milestoneId)
+                              }
+                            />
+                          )}
+                        />
+                      ) : (
+                        <div className="text-muted-foreground text-sm">
+                          {tGlobal("common.empty.sessions")}
+                        </div>
+                      )}
+                    </CollapsibleSection>
                   )}
                 </div>
               </ResizablePanel>
