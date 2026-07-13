@@ -496,9 +496,12 @@ export function VirtualizedDataTable({
         style={{ width: tableWidth, minWidth: hasFlex ? totalWidth : "100%" }}
       >
         {/* Header — stays put vertically (lives above the scroll body) and
-            scrolls horizontally with the body via the outer container. */}
+            scrolls horizontally with the body via the outer container. The
+            muted fill is translucent so it overlays (rather than masks) the
+            container's background, letting a tinted card — e.g. a
+            completed-milestone card — show through. */}
         <div
-          className="flex shrink-0 border-b bg-muted text-foreground"
+          className="flex shrink-0 border-b bg-muted-foreground/20 text-foreground"
           role="row"
         >
           {headers
@@ -553,7 +556,7 @@ export function VirtualizedDataTable({
                   {isSortable && column.id !== "expander" && (
                     <button
                       onClick={() => onSortChange?.(column.id)}
-                      className="ms-1 shrink-0"
+                      className="ms-1 shrink-0 cursor-pointer"
                       aria-label={t("sort")}
                     >
                       {isActiveSort && direction === "asc" ? (
