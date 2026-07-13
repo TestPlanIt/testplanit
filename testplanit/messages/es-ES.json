@@ -751,6 +751,7 @@
       "sortByDate": "Ordenar por fecha",
       "testRuns": "{count, plural, =0 {No hay ejecuciones de prueba} =1 {1 Prueba de ejecución} other {# Prueba de ejecuciones}}",
       "sessions": "{count, plural, =0 {Sin Sesiones} =1 {1 Sesión} other {# Sesiones}}",
+      "issues": "{count, plural, =0 {Ningún problema} =1 {1 problema} other {# problemas}}",
       "noOptions": "No hay opciones disponibles",
       "multiConfiguration": "Parte de un grupo de configuración múltiple",
       "otherConfigurations": "Otras configuraciones",
@@ -2204,6 +2205,16 @@
       "inScope": "{count, plural, one {# en alcance} other {# en alcance}}",
       "foundInTesting": "{count, plural, one {# encontrado en pruebas} other {# encontrados en pruebas}}",
       "includesChildMilestones": "Incluye hitos secundarios"
+    },
+    "burndown": {
+      "title": "Progreso restante",
+      "remaining": "Elementos restantes",
+      "ideal": "Óptimo",
+      "today": "Hoy",
+      "tooltipRemaining": "{count, number} restantes",
+      "heatOnTrack": "En camino",
+      "heatBehind": "Detrás de lo ideal",
+      "tooltipBehind": "{count, number} por detrás de lo ideal"
     },
     "members": {
       "cardTitle": "Incidencias",

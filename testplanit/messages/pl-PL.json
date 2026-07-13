@@ -751,6 +751,7 @@
       "sortByDate": "Sortuj według daty",
       "testRuns": "{count, plural, =0 {Brak przebiegów testowych} =1 {1 przebieg testowy} other {# przebiegów testowych}}",
       "sessions": "{count, plural, =0 {Brak sesji} =1 {1 sesja} other {# sesji}}",
+      "issues": "{count, plural, =0 {Brak problemów} =1 {1 problem} other {# problemów}}",
       "noOptions": "Brak dostępnych opcji",
       "multiConfiguration": "Część grupy wielokonfiguracyjnej",
       "otherConfigurations": "Inne konfiguracje",
@@ -2204,6 +2205,16 @@
       "inScope": "{count, plural, one {# w zakresie} few {# w zakresie} many {# w zakresie} other {# w zakresie}}",
       "foundInTesting": "{count, plural, one {# znalezione podczas testowania} few {# znalezione podczas testowania} many {# znalezione podczas testowania} other {# znalezione podczas testowania}}",
       "includesChildMilestones": "Obejmuje kamienie milowe podrzędne"
+    },
+    "burndown": {
+      "title": "Wykres spalania",
+      "remaining": "Pozostałe elementy",
+      "ideal": "Idealny",
+      "today": "Dzisiaj",
+      "tooltipRemaining": "Pozostało {count, number}",
+      "heatOnTrack": "Zgodnie z planem",
+      "heatBehind": "Za planem",
+      "tooltipBehind": "{count, number} za planem"
     },
     "members": {
       "cardTitle": "Zgłoszenia",

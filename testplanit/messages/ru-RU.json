@@ -751,6 +751,7 @@
       "sortByDate": "Сортировать по дате",
       "testRuns": "{count, plural, =0 {Нет тестовых запусков} =1 {1 тестовый запуск} other {Количество тестовых запусков}}",
       "sessions": "{count, plural, =0 {Нет занятий} =1 {1 занятие} other {Количество занятий}}",
+      "issues": "{count, plural, =0 {Нет задач} =1 {1 задача} other {# задач}}",
       "noOptions": "Вариантов нет",
       "multiConfiguration": "Часть многоконфигурационной группы",
       "otherConfigurations": "Другие конфигурации",
@@ -2204,6 +2205,16 @@
       "inScope": "{count, plural, one {# в охвате} few {# в охвате} many {# в охвате} other {# в охвате}}",
       "foundInTesting": "{count, plural, one {# найдено при тестировании} few {# найдено при тестировании} many {# найдено при тестировании} other {# найдено при тестировании}}",
       "includesChildMilestones": "Включает дочерние вехи"
+    },
+    "burndown": {
+      "title": "Диаграмма сгорания",
+      "remaining": "Осталось элементов",
+      "ideal": "Идеальный",
+      "today": "Сегодня",
+      "tooltipRemaining": "Осталось {count, number}",
+      "heatOnTrack": "По плану",
+      "heatBehind": "Позади идеала",
+      "tooltipBehind": "{count, number} позади идеала"
     },
     "members": {
       "cardTitle": "Задачи",

@@ -751,6 +751,7 @@
       "sortByDate": "Nach Datum sortieren",
       "testRuns": "{count, plural, =0 {Keine Testläufe} =1 {1 Testlauf} other {Anzahl Testläufe}}",
       "sessions": "{count, plural, =0 {Keine Sitzungen} =1 {1 Sitzung} other {Anzahl Sitzungen}}",
+      "issues": "{count, plural, =0 {Keine Probleme} =1 {1 Problem} other {# Probleme}}",
       "noOptions": "Keine Optionen verfügbar",
       "multiConfiguration": "Teil einer Multi-Konfigurationsgruppe",
       "otherConfigurations": "Andere Konfigurationen",
@@ -2204,6 +2205,16 @@
       "inScope": "{count, plural, one {# im Geltungsbereich} other {# im Geltungsbereich}}",
       "foundInTesting": "{count, plural, one {# beim Testen gefunden} other {# beim Testen gefunden}}",
       "includesChildMilestones": "Einschließlich untergeordneter Meilensteine"
+    },
+    "burndown": {
+      "title": "Burndown-Diagramm",
+      "remaining": "Verbleibende Elemente",
+      "ideal": "Idealverlauf",
+      "today": "Heute",
+      "tooltipRemaining": "{count, number} verbleibend",
+      "heatOnTrack": "Im Zeitplan",
+      "heatBehind": "Hinter Plan",
+      "tooltipBehind": "{count, number} hinter Plan"
     },
     "members": {
       "cardTitle": "Vorgänge",

@@ -751,6 +751,7 @@
       "sortByDate": "Tarihe göre sırala",
       "testRuns": "{count, plural, =0 {Test Çalıştırması Yok} =1 {1 Test Çalıştırması} other {# Test Çalıştırması}}",
       "sessions": "{count, plural, =0 {Oturum Yok} =1 {1 Oturum} other {# Oturumlar}}",
+      "issues": "{count, plural, =0 {Sorun Yok} =1 {1 Sorun} other {# Sorun}}",
       "noOptions": "Hiçbir seçenek mevcut değil.",
       "multiConfiguration": "Çoklu konfigürasyon grubunun bir parçası",
       "otherConfigurations": "Diğer yapılandırmalar",
@@ -2204,6 +2205,16 @@
       "inScope": "{count, plural, one {# kapsamda} other {# kapsamda}}",
       "foundInTesting": "{count, plural, one {# test sırasında bulundu} other {# test sırasında bulundu}}",
       "includesChildMilestones": "Alt dönüm noktalarını içerir"
+    },
+    "burndown": {
+      "title": "Tükenme Grafiği",
+      "remaining": "Kalan Öğeler",
+      "ideal": "İdeal",
+      "today": "Bugün",
+      "tooltipRemaining": "{count, number} kalan",
+      "heatOnTrack": "Yolunda",
+      "heatBehind": "İdealden Geride",
+      "tooltipBehind": "İdealden {count, number} geride"
     },
     "members": {
       "cardTitle": "Sorunlar",

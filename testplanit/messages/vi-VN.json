@@ -751,6 +751,7 @@
       "sortByDate": "Sắp xếp theo ngày",
       "testRuns": "{count, plural, =0 {Không có lần chạy thử} =1 {1 lần chạy thử} other {# lần chạy thử}}",
       "sessions": "{count, plural, =0 {Không có buổi nào} =1 {1 buổi} other {# Buổi}}",
+      "issues": "{count, plural, =0 {Không có Vấn đề} =1 {1 Vấn đề} other {# Vấn đề}}",
       "noOptions": "Không có tùy chọn nào.",
       "multiConfiguration": "Một phần của nhóm cấu hình đa dạng",
       "otherConfigurations": "Các cấu hình khác",
@@ -2204,6 +2205,16 @@
       "inScope": "{count, plural, other {# trong phạm vi}}",
       "foundInTesting": "{count, plural, other {# được tìm thấy trong kiểm thử}}",
       "includesChildMilestones": "Bao gồm các cột mốc con"
+    },
+    "burndown": {
+      "title": "Biểu đồ Burndown",
+      "remaining": "Mục còn lại",
+      "ideal": "Lý tưởng",
+      "today": "Hôm nay",
+      "tooltipRemaining": "còn lại {count, number}",
+      "heatOnTrack": "Đúng tiến độ",
+      "heatBehind": "Chậm so với dự kiến",
+      "tooltipBehind": "Chậm {count, number} so với dự kiến"
     },
     "members": {
       "cardTitle": "Vấn đề",

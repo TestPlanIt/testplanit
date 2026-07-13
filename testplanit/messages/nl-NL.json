@@ -751,6 +751,7 @@
       "sortByDate": "Sorteren op datum",
       "testRuns": "{count, plural, =0 {Geen testruns} =1 {1 testrun} other {# testruns}}",
       "sessions": "{count, plural, =0 {Geen sessies} =1 {1 sessie} other {# sessies}}",
+      "issues": "{count, plural, =0 {Geen problemen} =1 {1 probleem} other {# problemen}}",
       "noOptions": "Geen opties beschikbaar",
       "multiConfiguration": "Onderdeel van een groep met meerdere configuraties",
       "otherConfigurations": "Andere configuraties",
@@ -2204,6 +2205,16 @@
       "inScope": "{count, plural, one {# binnen bereik} other {# binnen bereik}}",
       "foundInTesting": "{count, plural, one {# gevonden tijdens testen} other {# gevonden tijdens testen}}",
       "includesChildMilestones": "Inclusief onderliggende mijlpalen"
+    },
+    "burndown": {
+      "title": "Burndown-grafiek",
+      "remaining": "Resterende items",
+      "ideal": "Ideaal",
+      "today": "Vandaag",
+      "tooltipRemaining": "{count, number} resterend",
+      "heatOnTrack": "Op schema",
+      "heatBehind": "Achter op schema",
+      "tooltipBehind": "{count, number} achter op schema"
     },
     "members": {
       "cardTitle": "Problemen",

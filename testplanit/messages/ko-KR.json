@@ -751,6 +751,7 @@
       "sortByDate": "날짜순으로 정렬",
       "testRuns": "{count, plural, =0 {테스트 실행 없음} =1 {테스트 실행 1회} other {테스트 실행 횟수}}",
       "sessions": "{count, plural, =0 {세션 없음} =1 {세션 1개} other {세션 수}}",
+      "issues": "{count, plural, =0 {문제 없음} =1 {문제 1개} other {문제 #개}}",
       "noOptions": "사용 가능한 옵션이 없습니다",
       "multiConfiguration": "다중 구성 그룹의 일부",
       "otherConfigurations": "기타 구성",
@@ -2204,6 +2205,16 @@
       "inScope": "{count, plural, other {# 범위 내}}",
       "foundInTesting": "{count, plural, other {# 테스트에서 발견됨}}",
       "includesChildMilestones": "하위 마일스톤 포함"
+    },
+    "burndown": {
+      "title": "번다운",
+      "remaining": "남은 항목",
+      "ideal": "이상적",
+      "today": "오늘",
+      "tooltipRemaining": "{count, number} 남음",
+      "heatOnTrack": "정상 진행",
+      "heatBehind": "목표보다 지연",
+      "tooltipBehind": "목표보다 {count, number} 지연"
     },
     "members": {
       "cardTitle": "이슈",

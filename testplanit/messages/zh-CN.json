@@ -751,6 +751,7 @@
       "sortByDate": "按日期排序",
       "testRuns": "{count, plural, =0 {无测试运行} =1 {1 次测试运行} other {# 次测试运行}}",
       "sessions": "{count, plural, =0 {无会话} =1 {1 个会话} other {# 个会话}}",
+      "issues": "{count, plural, =0 {没有问题} =1 {1 个问题} other {# 个问题}}",
       "noOptions": "暂无选项",
       "multiConfiguration": "属于多配置组",
       "otherConfigurations": "其他配置",
@@ -2204,6 +2205,16 @@
       "inScope": "{count, plural, other {# 个在范围内}}",
       "foundInTesting": "{count, plural, other {# 个在测试中发现}}",
       "includesChildMilestones": "包含子里程碑"
+    },
+    "burndown": {
+      "title": "燃尽图",
+      "remaining": "剩余项目",
+      "ideal": "理想值",
+      "today": "今天",
+      "tooltipRemaining": "剩余 {count, number} 个",
+      "heatOnTrack": "进度正常",
+      "heatBehind": "落后于理想进度",
+      "tooltipBehind": "落后理想进度 {count, number} 个"
     },
     "members": {
       "cardTitle": "问题",

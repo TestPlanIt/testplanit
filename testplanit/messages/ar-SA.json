@@ -751,6 +751,7 @@
       "sortByDate": "الترتيب حسب التاريخ",
       "testRuns": "{count, plural, =0 {لا توجد تشغيلات اختبار} =1 {تشغيل اختبار واحد} other {# تشغيلات اختبار}}",
       "sessions": "{count, plural, =0 {لا توجد جلسات} =1 {جلسة واحدة} other {# جلسات}}",
+      "issues": "{count, plural, =0 {لا توجد مشكلات} =1 {مشكلة واحدة} zero {لا توجد مشكلات} one {مشكلة واحدة} two {مشكلتان} few {# مشكلات} many {# مشكلة} other {# مشكلة}}",
       "noOptions": "لا توجد خيارات متاحة",
       "multiConfiguration": "جزء من مجموعة متعددة التكوينات",
       "otherConfigurations": "تكوينات أخرى",
@@ -2204,6 +2205,16 @@
       "inScope": "{count, plural, zero {# ضمن النطاق} one {قضية واحدة ضمن النطاق} two {قضيتان ضمن النطاق} few {# قضايا ضمن النطاق} many {# قضية ضمن النطاق} other {# قضية ضمن النطاق}}",
       "foundInTesting": "{count, plural, zero {# موجودة في الاختبار} one {قضية واحدة موجودة في الاختبار} two {قضيتان موجودتان في الاختبار} few {# قضايا موجودة في الاختبار} many {# قضية موجودة في الاختبار} other {# قضية موجودة في الاختبار}}",
       "includesChildMilestones": "يشمل المعالم الفرعية"
+    },
+    "burndown": {
+      "title": "مخطط الإنجاز",
+      "remaining": "العناصر المتبقية",
+      "ideal": "المثالي",
+      "today": "اليوم",
+      "tooltipRemaining": "{count, number} متبقٍ",
+      "heatOnTrack": "على المسار الصحيح",
+      "heatBehind": "متأخر عن المثالي",
+      "tooltipBehind": "{count, number} متأخر عن المثالي"
     },
     "members": {
       "cardTitle": "القضايا",
