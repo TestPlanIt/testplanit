@@ -4,7 +4,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { QuerySettingsProvider as ZenStackProvider } from "@zenstackhq/tanstack-query/react";
 import { SessionProvider } from "next-auth/react";
 import type { ReactNode } from "react";
-import { useEffect, useState } from "react";
 import { ThemeProvider } from "~/components/theme-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { SearchStateProvider } from "~/lib/contexts/SearchStateContext";
@@ -22,23 +21,16 @@ const queryClient = new QueryClient({
 });
 
 export default function Providers({ children }: { children: ReactNode }) {
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  const content = mounted ? (
+  const content = (
     <ThemeProvider
       attribute="class"
       defaultTheme="system"
       enableSystem
+      disableTransitionOnChange
       themes={["light", "dark", "green", "orange", "purple"]}
     >
       <SearchStateProvider>{children}</SearchStateProvider>
     </ThemeProvider>
-  ) : (
-    <SearchStateProvider>{children}</SearchStateProvider>
   );
 
   return (

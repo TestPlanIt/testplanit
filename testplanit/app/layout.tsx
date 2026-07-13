@@ -71,7 +71,12 @@ export default async function RootLayout({
   const dir = getLocaleDirection(locale);
 
   return (
-    <html lang={locale} dir={dir} className={`${notoSans.variable}`}>
+    <html
+      lang={locale}
+      dir={dir}
+      className={`${notoSans.variable}`}
+      suppressHydrationWarning
+    >
       <head>
         <meta name="storage-mode" content={storageMode} />
         <Script
