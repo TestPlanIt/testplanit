@@ -278,13 +278,23 @@ export const importIssues = async (
     const projectId =
       projectSourceId !== null ? projectIdMap.get(projectSourceId) : null;
 
-    // Check if issue already exists with this external ID and integration
-    const existing = await tx.issue.findFirst({
-      where: {
-        externalId: displayId,
-        integrationId,
-      },
-    });
+    // Testmo's display_id is the human-readable KEY (e.g. "ADM-3095"), not the
+    // integration's native id. Match on externalKey so we reuse the row the
+    // app's own Jira sync/link created (which keys externalId on the native
+    // numeric id) instead of minting a duplicate, and never write the key into
+    // externalId (see the create below). Prefer an already-synced row when
+    // several share the same key.
+    const existing =
+      (await tx.issue.findFirst({
+        where: {
+          externalKey: displayId,
+          integrationId,
+          externalStatus: { not: null },
+        },
+      })) ??
+      (await tx.issue.findFirst({
+        where: { externalKey: displayId, integrationId },
+      }));
 
     if (existing) {
       issueIdMap.set(sourceId, existing.id);
@@ -319,7 +329,9 @@ export const importIssues = async (
         data: {
           name: displayId,
           title: displayId,
-          externalId: displayId,
+          // externalId left null: Testmo carries no native id, so a later issue
+          // refresh can populate it without colliding on the
+          // (externalId, integrationId) unique constraint. Key lives in externalKey.
           externalKey: displayId,
           externalUrl,
           integrationId,
