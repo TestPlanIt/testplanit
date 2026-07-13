@@ -1,5 +1,5 @@
 import type { DbClient } from "~/lib/zenstack";
-import { Decimal } from "decimal.js";
+import type { Decimal } from "decimal.js";
 import {
   AnthropicAdapter,
   AzureOpenAIAdapter,
@@ -10,6 +10,15 @@ import {
   OpenAIAdapter,
 } from "../adapters";
 import { getAllowedPrivateHosts } from "~/lib/utils/ssrf";
+
+/**
+ * ZenStack v3 accepts a plain number for `Decimal` columns at runtime (its
+ * input validator coerces number/string), but the generated create-input type
+ * is the strict decimal.js `Decimal` class — and a real decimal.js instance is
+ * rejected at runtime as a foreign class. So pass numbers and assert the input
+ * type here.
+ */
+const asDecimal = (value: number): Decimal => value as unknown as Decimal;
 
 interface LlmCredentials {
   apiKey?: string;
@@ -574,17 +583,19 @@ export class LlmManager {
 
     await this.db.llmUsage.create({
       data: {
-        llmIntegrationId,
-        userId: request.userId,
-        projectId: request.projectId,
+        llmIntegration: { connect: { id: llmIntegrationId } },
+        user: { connect: { id: request.userId } },
+        ...(request.projectId
+          ? { project: { connect: { id: request.projectId } } }
+          : {}),
         feature: request.feature,
         model: response.model,
         promptTokens: response.promptTokens,
         completionTokens: response.completionTokens,
         totalTokens: response.totalTokens,
-        inputCost: new Decimal(inputCost),
-        outputCost: new Decimal(outputCost),
-        totalCost: new Decimal(inputCost + outputCost),
+        inputCost: asDecimal(inputCost),
+        outputCost: asDecimal(outputCost),
+        totalCost: asDecimal(inputCost + outputCost),
         latency: 0, // TODO: Track actual latency
         success: true,
       },
@@ -629,17 +640,19 @@ export class LlmManager {
 
     await this.db.llmUsage.create({
       data: {
-        llmIntegrationId,
-        userId: request.userId,
-        projectId: request.projectId,
+        llmIntegration: { connect: { id: llmIntegrationId } },
+        user: { connect: { id: request.userId } },
+        ...(request.projectId
+          ? { project: { connect: { id: request.projectId } } }
+          : {}),
         feature: request.feature,
         model: request.model || config.defaultModel,
         promptTokens: 0,
         completionTokens: estimatedTokens,
         totalTokens: estimatedTokens,
-        inputCost: new Decimal(0),
-        outputCost: new Decimal(estimatedCost),
-        totalCost: new Decimal(estimatedCost),
+        inputCost: asDecimal(0),
+        outputCost: asDecimal(estimatedCost),
+        totalCost: asDecimal(estimatedCost),
         latency: 0, // TODO: Track actual latency for streaming
         success: true,
       },
@@ -675,17 +688,19 @@ export class LlmManager {
   ): Promise<void> {
     await this.db.llmUsage.create({
       data: {
-        llmIntegrationId,
-        userId: request.userId,
-        projectId: request.projectId,
+        llmIntegration: { connect: { id: llmIntegrationId } },
+        user: { connect: { id: request.userId } },
+        ...(request.projectId
+          ? { project: { connect: { id: request.projectId } } }
+          : {}),
         feature: request.feature,
         model: request.model || "unknown",
         promptTokens: 0,
         completionTokens: 0,
         totalTokens: 0,
-        inputCost: new Decimal(0),
-        outputCost: new Decimal(0),
-        totalCost: new Decimal(0),
+        inputCost: asDecimal(0),
+        outputCost: asDecimal(0),
+        totalCost: asDecimal(0),
         latency: 0,
         success: false,
         error: error.message || "Unknown error",

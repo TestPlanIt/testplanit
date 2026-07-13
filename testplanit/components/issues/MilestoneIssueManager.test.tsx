@@ -104,6 +104,14 @@ vi.mock("@/components/ui/alert-dialog", () => ({
   ),
 }));
 
+// Radix Tooltip needs a provider context; stub it to render children inline.
+vi.mock("@/components/ui/tooltip", () => ({
+  Tooltip: ({ children }: any) => <div>{children}</div>,
+  TooltipTrigger: ({ children }: any) => <>{children}</>,
+  TooltipContent: ({ children }: any) => <div>{children}</div>,
+  TooltipProvider: ({ children }: any) => <>{children}</>,
+}));
+
 vi.mock("./search-issues-dialog", () => ({
   SearchIssuesDialog: ({ open, onIssueSelected }: any) => {
     if (!open) return null;
@@ -294,5 +302,66 @@ describe("MemberIssueRowActions", () => {
       screen.queryByTestId("member-issue-row-actions")
     ).not.toBeInTheDocument();
     expect(mockDeleteMilestoneIssue).not.toHaveBeenCalled();
+  });
+
+  it("hides the Generate icon by default (canGenerate defaults false)", () => {
+    renderWithQueryClient(
+      <MemberIssueRowActions milestoneId={42} issueId={55} source="MANUAL" />
+    );
+    expect(
+      screen.queryByTestId("member-issue-generate-cases")
+    ).not.toBeInTheDocument();
+  });
+
+  it("shows the Generate icon and fires onGenerate when eligible (MANUAL row)", () => {
+    const onGenerate = vi.fn();
+    renderWithQueryClient(
+      <MemberIssueRowActions
+        milestoneId={42}
+        issueId={55}
+        source="MANUAL"
+        canGenerate
+        onGenerate={onGenerate}
+      />
+    );
+    fireEvent.click(screen.getByTestId("member-issue-generate-cases"));
+    expect(onGenerate).toHaveBeenCalledTimes(1);
+  });
+
+  it("shows the Generate icon for a SYNCED row alongside the managed-by-Jira lock", () => {
+    const onGenerate = vi.fn();
+    renderWithQueryClient(
+      <MemberIssueRowActions
+        milestoneId={42}
+        issueId={55}
+        source="SYNCED"
+        canGenerate
+        onGenerate={onGenerate}
+      />
+    );
+    expect(screen.getByTestId("member-issue-synced-lock")).toBeInTheDocument();
+    fireEvent.click(screen.getByTestId("member-issue-generate-cases"));
+    expect(onGenerate).toHaveBeenCalledTimes(1);
+  });
+
+  it("hides the unlink action when canUnlink is false but still offers Generate", () => {
+    renderWithQueryClient(
+      <MemberIssueRowActions
+        milestoneId={42}
+        issueId={55}
+        source="MANUAL"
+        canUnlink={false}
+        canGenerate
+        onGenerate={vi.fn()}
+      />
+    );
+    // Repository-only viewer: can generate, but the unlink dropdown is absent.
+    expect(
+      screen.getByTestId("member-issue-generate-cases")
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByTestId("member-issue-row-actions")
+    ).not.toBeInTheDocument();
+    expect(screen.queryByTestId("member-issue-unlink")).not.toBeInTheDocument();
   });
 });

@@ -7,11 +7,16 @@ import type {
 } from "~/lib/integrations/adapters/IssueAdapter";
 import { parameterCreateSchema } from "~/lib/schemas/parameterSchema";
 import {
+  buildCommentsSection,
+  buildExpandUserPrompt,
+  buildLinkedIssuesSection,
   buildOutlineSystemPrompt,
   buildOutlineUserPrompt,
   buildSystemPrompt,
   fetchLinkedIssuesContext,
   parseAndValidateTestCases,
+  type GenerationContext,
+  type LinkedIssueContext,
   type TemplateData,
   type IssueData as LlmIssueData,
 } from "./shared";
@@ -863,5 +868,162 @@ describe("buildOutlineUserPrompt — existing cases context", () => {
     expect(prompt).not.toContain("Some description");
     expect(prompt).not.toContain("Open page");
     expect(prompt).not.toContain("Modal opens");
+  });
+});
+
+// Enrichment restored after the two-phase refactor (#304) dropped it: the
+// outline and expand prompts must fold in the source issue's comments and its
+// one-hop linked issues (title/body/comments).
+describe("issue enrichment sections — comments + linked issues", () => {
+  const enrichedIssue: LlmIssueData = {
+    key: "PROJ-9",
+    title: "Password reset",
+    description: "User can reset their password",
+    status: "Open",
+    priority: "High",
+    comments: [
+      {
+        author: "alice",
+        body: "Reset link must expire after 15 minutes",
+        created: "2026-01-01T00:00:00Z",
+      },
+      {
+        author: "bob",
+        body: "Rate-limit reset requests",
+        created: "2026-01-02T00:00:00Z",
+      },
+    ],
+  };
+
+  const linkedIssues: LinkedIssueContext[] = [
+    {
+      ref: {
+        id: "100",
+        key: "PROJ-2",
+        linkType: "blocks",
+        direction: "outward",
+      },
+      title: "Email delivery service",
+      body: "Sends the reset emails",
+      comments: [
+        {
+          author: "carol",
+          body: "Handle SMTP timeouts",
+          created: "2026-01-03T00:00:00Z",
+        },
+      ],
+    },
+  ];
+
+  const enrichedContext: GenerationContext = {
+    folderContext: 0,
+    linkedIssues,
+  };
+
+  describe("buildCommentsSection", () => {
+    it("returns '' for undefined or empty comments", () => {
+      expect(buildCommentsSection(undefined)).toBe("");
+      expect(buildCommentsSection([])).toBe("");
+    });
+
+    it("renders each comment as a numbered author: body line", () => {
+      const section = buildCommentsSection(enrichedIssue.comments);
+      expect(section).toContain("RELEVANT COMMENTS:");
+      expect(section).toContain(
+        "1. alice: Reset link must expire after 15 minutes"
+      );
+      expect(section).toContain("2. bob: Rate-limit reset requests");
+    });
+  });
+
+  describe("buildLinkedIssuesSection", () => {
+    it("returns '' for undefined or empty linked issues", () => {
+      expect(buildLinkedIssuesSection(undefined)).toBe("");
+      expect(buildLinkedIssuesSection([])).toBe("");
+    });
+
+    it("renders key, link type/direction, title, body, and comments", () => {
+      const section = buildLinkedIssuesSection(linkedIssues);
+      expect(section).toContain("RELATED LINKED ISSUES:");
+      expect(section).toContain(
+        "1. PROJ-2 (blocks, outward): Email delivery service"
+      );
+      expect(section).toContain("Body: Sends the reset emails");
+      expect(section).toContain("Comment 1 (carol): Handle SMTP timeouts");
+    });
+
+    it("falls back to the ref id when no key is present", () => {
+      const section = buildLinkedIssuesSection([
+        {
+          ref: { id: "555", linkType: "relates to", direction: "inward" },
+          title: "Untitled dep",
+          comments: [],
+        },
+      ]);
+      expect(section).toContain("1. 555 (relates to, inward): Untitled dep");
+    });
+  });
+
+  describe("buildOutlineUserPrompt — enrichment", () => {
+    it("folds comments and linked issues into the outline prompt", () => {
+      const prompt = buildOutlineUserPrompt(enrichedIssue, enrichedContext);
+      expect(prompt).toContain("RELEVANT COMMENTS:");
+      expect(prompt).toContain(
+        "1. alice: Reset link must expire after 15 minutes"
+      );
+      expect(prompt).toContain("RELATED LINKED ISSUES:");
+      expect(prompt).toContain(
+        "1. PROJ-2 (blocks, outward): Email delivery service"
+      );
+      expect(prompt).toContain("Comment 1 (carol): Handle SMTP timeouts");
+    });
+
+    it("omits both sections for an un-enriched (e.g. manual) issue", () => {
+      const prompt = buildOutlineUserPrompt(sampleIssue, { folderContext: 0 });
+      expect(prompt).not.toContain("RELEVANT COMMENTS:");
+      expect(prompt).not.toContain("RELATED LINKED ISSUES:");
+    });
+  });
+
+  describe("buildExpandUserPrompt — enrichment", () => {
+    const outline = {
+      title: "Reset link expires",
+      summary: "Link expires in 15m",
+    };
+
+    it("inline prompt grounds the case in comments + linked issues", () => {
+      const prompt = buildExpandUserPrompt(
+        enrichedIssue,
+        outline,
+        enrichedContext
+      );
+      expect(prompt).toContain("RELEVANT COMMENTS:");
+      expect(prompt).toContain("RELATED LINKED ISSUES:");
+      expect(prompt).toContain('Title: "Reset link expires"');
+    });
+
+    it("base-template prompt fills the comments + linked-issue placeholders", () => {
+      const baseTemplate =
+        "ISSUE {{ISSUE_KEY}} {{ISSUE_TITLE}}{{COMMENTS_SECTION}}{{LINKED_ISSUES_SECTION}}{{USER_NOTES_SECTION}}{{EXISTING_CASES_SECTION}}";
+      const prompt = buildExpandUserPrompt(
+        enrichedIssue,
+        outline,
+        enrichedContext,
+        baseTemplate
+      );
+      expect(prompt).toContain("RELEVANT COMMENTS:");
+      expect(prompt).toContain(
+        "1. PROJ-2 (blocks, outward): Email delivery service"
+      );
+      expect(prompt).toContain('Title: "Reset link expires"');
+    });
+
+    it("omits both sections for an un-enriched issue", () => {
+      const prompt = buildExpandUserPrompt(sampleIssue, outline, {
+        folderContext: 0,
+      });
+      expect(prompt).not.toContain("RELEVANT COMMENTS:");
+      expect(prompt).not.toContain("RELATED LINKED ISSUES:");
+    });
   });
 });

@@ -33,11 +33,23 @@ import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import dynamic from "next/dynamic";
 import AddTestRunModal from "@/[locale]/projects/runs/[projectId]/AddTestRunModal";
+import type { GenerateTestCasesSeedIssue } from "@/[locale]/projects/repository/[projectId]/GenerateTestCasesWizard";
 import {
   MemberIssueRowActions,
   MilestoneIssueManager,
 } from "@/components/issues/MilestoneIssueManager";
+
+// Lazy-load the (large) generation wizard so it's only fetched when a user
+// actually launches it — keeps it out of the milestone page's initial bundle.
+const GenerateTestCasesWizard = dynamic(
+  () =>
+    import("@/[locale]/projects/repository/[projectId]/GenerateTestCasesWizard").then(
+      (m) => m.GenerateTestCasesWizard
+    ),
+  { ssr: false }
+);
 import { IterationStatusLegendPopover } from "@/components/iterations/IterationStatusLegendPopover";
 import type { CoverageBreakdown } from "./CoverageChip";
 import { coverageSortValue, hasCompletedCoverage } from "./CoverageChip";
@@ -121,6 +133,27 @@ export function MemberIssuesTable({
     ApplicationArea.Milestones
   );
   const canAddEdit = milestonePermissions?.canAddEdit ?? false;
+
+  // "Generate Test Cases" eligibility: the viewer can add/edit the Test Case
+  // Repository AND the project is connected to an LLM. Independent of the
+  // milestone add/edit permission that gates unlink.
+  const { permissions: tcRepoPermissions } = useProjectPermissions(
+    projectId,
+    ApplicationArea.TestCaseRepository
+  );
+  const tcRepoCanAddEdit = tcRepoPermissions?.canAddEdit ?? false;
+  // Same lightweight project-default LLM check the Generate wizard uses, so the
+  // icon and the wizard never disagree about availability.
+  const { data: projectLlmIntegrations } = useClientQueries(
+    schema
+  ).projectLlmIntegration.useFindMany({
+    where: { projectId, isActive: true },
+  });
+  const hasLlm = (projectLlmIntegrations?.length ?? 0) > 0;
+  const canGenerateCases = tcRepoCanAddEdit && hasLlm;
+
+  const [generateSeed, setGenerateSeed] =
+    useState<GenerateTestCasesSeedIssue | null>(null);
 
   const [searchString, setSearchString] = useState("");
   const debouncedSearchString = useDebounce(searchString, 300);
@@ -347,11 +380,29 @@ export function MemberIssuesTable({
         issueId={row.issueId}
         source={row.source}
         onUnlinked={handleRefresh}
+        canUnlink={canAddEdit}
+        canGenerate={canGenerateCases}
+        onGenerate={() =>
+          setGenerateSeed({
+            issueId: row.issueId,
+            key: row.issue.externalKey ?? row.issue.name,
+            title: row.issue.title,
+            description: row.issue.description ?? undefined,
+            status: row.issue.externalStatus ?? row.issue.status ?? undefined,
+            priority: row.issue.priority ?? undefined,
+            externalId: row.issue.externalId,
+            externalUrl: row.issue.externalUrl,
+            integrationId: row.issue.integrationId,
+          })
+        }
       />
     ),
-    [milestoneId, handleRefresh]
+    [milestoneId, handleRefresh, canAddEdit, canGenerateCases]
   );
-  const rowActionsRenderer = canAddEdit ? renderRowActions : undefined;
+  // Show the Actions column when the user can unlink (milestone add/edit) OR
+  // generate test cases — the two actions have independent permissions.
+  const rowActionsRenderer =
+    canAddEdit || canGenerateCases ? renderRowActions : undefined;
 
   // Row selection (issueId-keyed via getRowId, so filter/sort can't
   // re-target selections) drives "Create test run from selected issues":
@@ -891,6 +942,20 @@ export function MemberIssuesTable({
           }
           initialLinkedIssueIds={runSeed.issueIds}
           defaultMilestoneId={milestoneId}
+        />
+      )}
+
+      {generateSeed && (
+        <GenerateTestCasesWizard
+          folderId={0}
+          open
+          onOpenChange={(isOpen) => {
+            if (!isOpen) setGenerateSeed(null);
+          }}
+          seedIssue={generateSeed}
+          // Refresh members + coverage so the newly linked cases show up in the
+          // issue's coverage column without a manual reload.
+          onImportComplete={handleRefresh}
         />
       )}
     </div>

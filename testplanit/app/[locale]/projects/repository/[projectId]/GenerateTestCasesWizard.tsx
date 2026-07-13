@@ -419,12 +419,38 @@ interface LlmErrorState {
   timestamp: string;
 }
 
+/**
+ * Seed for opening the wizard pre-focused on a specific existing issue (the
+ * milestone "Generate Test Cases" action). When provided, the wizard skips the
+ * issue-picker step, and on import lands the cases in a per-issue folder and
+ * links them back to this issue so they show up in the milestone's coverage.
+ */
+export interface GenerateTestCasesSeedIssue {
+  /** Internal Issue.id — used to link generated cases back to the issue. */
+  issueId: number;
+  /** Display key, e.g. "PROJ-123". */
+  key: string;
+  title: string;
+  description?: string;
+  status?: string;
+  priority?: string;
+  externalId?: string | null;
+  externalUrl?: string | null;
+  /**
+   * Source integration id when the issue is synced from a tracker; enables
+   * comment + linked-issue enrichment. Omit for manual issues.
+   */
+  integrationId?: number | null;
+}
+
 interface GenerateTestCasesWizardProps {
   folderId: number;
   folderName?: string | null;
   onImportComplete?: () => void;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /** When set, seed the wizard from an existing issue (milestone flow). */
+  seedIssue?: GenerateTestCasesSeedIssue;
 }
 
 enum WizardStep {
@@ -1307,10 +1333,12 @@ export function GenerateTestCasesWizard({
   onImportComplete,
   open,
   onOpenChange,
+  seedIssue,
 }: GenerateTestCasesWizardProps) {
   // Alias kept for minimal diff — prefer calling onOpenChange directly
   // for future call sites.
   const setOpen = onOpenChange;
+  const isSeeded = Boolean(seedIssue);
   const t = useTranslations("repository");
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
@@ -2073,31 +2101,33 @@ export function GenerateTestCasesWizard({
     }
   }
 
-  // Define wizard steps with icons
+  // Define wizard steps with icons. When seeded from an issue the picker step
+  // is hidden — the issue is fixed and the wizard opens on template selection.
   const wizardSteps = useMemo<WizardStepDefinition[]>(
-    () => [
-      {
-        id: WizardStep.SELECT_ISSUE,
-        label: t(stepTitles[0] as any),
-        icon: Search,
-      },
-      {
-        id: WizardStep.SELECT_TEMPLATE,
-        label: t(stepTitles[1] as any),
-        icon: Settings,
-      },
-      {
-        id: WizardStep.ADD_NOTES,
-        label: t(stepTitles[2] as any),
-        icon: FileText,
-      },
-      {
-        id: WizardStep.REVIEW_GENERATED,
-        label: t(stepTitles[3] as any),
-        icon: ListChecks,
-      },
-    ],
-    [t]
+    () =>
+      [
+        {
+          id: WizardStep.SELECT_ISSUE,
+          label: t(stepTitles[0] as any),
+          icon: Search,
+        },
+        {
+          id: WizardStep.SELECT_TEMPLATE,
+          label: t(stepTitles[1] as any),
+          icon: Settings,
+        },
+        {
+          id: WizardStep.ADD_NOTES,
+          label: t(stepTitles[2] as any),
+          icon: FileText,
+        },
+        {
+          id: WizardStep.REVIEW_GENERATED,
+          label: t(stepTitles[3] as any),
+          icon: ListChecks,
+        },
+      ].filter((step) => !isSeeded || step.id !== WizardStep.SELECT_ISSUE),
+    [t, isSeeded]
   );
 
   // Determine which steps are unlocked based on validation
@@ -2192,13 +2222,17 @@ export function GenerateTestCasesWizard({
   }, [maxUnlockedStep]);
 
   const goPrev = useCallback(() => {
+    // When seeded, the issue picker is hidden — don't let Back reach it.
+    const floor = isSeeded
+      ? WizardStep.SELECT_TEMPLATE
+      : WizardStep.SELECT_ISSUE;
     setCurrentStep((previous) => {
-      if (previous > WizardStep.SELECT_ISSUE) {
+      if (previous > floor) {
         return (previous - 1) as WizardStep;
       }
       return previous;
     });
-  }, []);
+  }, [isSeeded]);
 
   const handleBack = useCallback(() => {
     goPrev();
@@ -2211,6 +2245,35 @@ export function GenerateTestCasesWizard({
       goNext();
     }
   };
+
+  // Seed the wizard from an existing issue (milestone Generate flow). Runs once
+  // per opened issue: pre-selects the issue and jumps past the issue picker to
+  // the template step. Re-seeds if a different issue is opened while mounted.
+  const seededIssueIdRef = useRef<number | null>(null);
+  useEffect(() => {
+    if (!open) {
+      seededIssueIdRef.current = null;
+      return;
+    }
+    if (!seedIssue || seededIssueIdRef.current === seedIssue.issueId) return;
+    seededIssueIdRef.current = seedIssue.issueId;
+    setSourceType("issue");
+    setSelectedIssue({
+      id: seedIssue.externalId ?? String(seedIssue.issueId),
+      key: seedIssue.key,
+      title: seedIssue.title,
+      description: seedIssue.description,
+      status: seedIssue.status ?? "",
+      priority: seedIssue.priority,
+      externalId: seedIssue.externalId ?? undefined,
+      externalKey: seedIssue.key,
+      externalUrl: seedIssue.externalUrl ?? undefined,
+      url: seedIssue.externalUrl ?? undefined,
+      isExternal: Boolean(seedIssue.integrationId),
+    });
+    // The issue is fixed — skip the picker and land on template selection.
+    setCurrentStep(WizardStep.SELECT_TEMPLATE);
+  }, [open, seedIssue]);
 
   const resetWizard = () => {
     // Abort any in-progress SSE stream
@@ -2815,6 +2878,19 @@ export function GenerateTestCasesWizard({
           issue: issueData,
           context: contextPayload,
           quantity,
+          // Enrich real synced issues with their comments + one-hop linked
+          // issues. The document flow (issue.key = a document id) never maps to
+          // a tracker issue; a seeded MANUAL milestone issue has no source
+          // integration — both stay un-enriched.
+          enrichFromIssue:
+            sourceType === "issue" &&
+            (!seedIssue || Boolean(seedIssue.integrationId)),
+          // For a seeded synced issue, enrich via its own source integration;
+          // the repository search flow omits it and the server falls back to
+          // the project's first active integration.
+          ...(seedIssue?.integrationId
+            ? { integrationId: seedIssue.integrationId }
+            : {}),
           // outline endpoint accepts-but-ignores includeParameters — kept for
           // uniform wizard plumbing.
           includeParameters,
@@ -2835,7 +2911,7 @@ export function GenerateTestCasesWizard({
         );
       }
 
-      const { outlines } = await outlineRes.json();
+      const { outlines, enrichment } = await outlineRes.json();
       if (!Array.isArray(outlines) || outlines.length === 0) {
         throw new Error(
           JSON.stringify({
@@ -2843,6 +2919,20 @@ export function GenerateTestCasesWizard({
           })
         );
       }
+
+      // The outline endpoint fetches the source issue's comments + one-hop
+      // linked issues once and returns them here. Thread that context into
+      // every expand call (so each case is grounded in the same context) and
+      // surface any linked issues dropped for the token budget.
+      const enrichedIssueData = {
+        ...issueData,
+        comments: enrichment?.comments ?? [],
+      };
+      const expandContextPayload = {
+        ...contextPayload,
+        linkedIssues: enrichment?.linkedIssues ?? [],
+      };
+      setDroppedLinkedIssues(enrichment?.droppedLinkedIssues ?? []);
 
       // Show outline cards immediately — user sees titles before details arrive
       setCaseOutlines(
@@ -2878,9 +2968,9 @@ export function GenerateTestCasesWizard({
                   headers: { "Content-Type": "application/json" },
                   body: JSON.stringify({
                     projectId,
-                    issue: issueData,
+                    issue: enrichedIssueData,
                     template: templatePayload,
-                    context: contextPayload,
+                    context: expandContextPayload,
                     outline,
                     autoGenerateTags,
                     includeParameters,
@@ -3362,7 +3452,10 @@ export function GenerateTestCasesWizard({
           }
         | undefined;
 
-      if (sourceType === "issue" && selectedIssue) {
+      // The repository search flow upserts an external issue to link against.
+      // The seeded (milestone) flow links to the EXISTING internal issue by id
+      // instead (via linkIssueId below), so skip the external upsert here.
+      if (sourceType === "issue" && selectedIssue && !seedIssue) {
         const issueKey = selectedIssue.key || selectedIssue.externalKey;
         const integrationId = project?.projectIntegrations?.[0]?.integrationId;
         if (integrationId && issueKey) {
@@ -3408,6 +3501,17 @@ export function GenerateTestCasesWizard({
         }),
         fieldMappings,
         issue,
+        // Milestone flow: link every case to the existing issue and land them
+        // in a per-issue folder (created on save, at the repository root).
+        ...(seedIssue
+          ? {
+              linkIssueId: seedIssue.issueId,
+              destinationFolder: {
+                name: seedIssue.key.slice(0, 100),
+                parentId: null,
+              },
+            }
+          : {}),
       });
 
       if (result.status === "error") {

@@ -6,13 +6,21 @@ import { baseDb } from "@/lib/db";
 import { ProjectAccessType } from "~/zenstack/models";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
+import { IntegrationManager } from "~/lib/integrations/IntegrationManager";
+import type {
+  IssueAdapter,
+  IssueComment,
+  LinkedIssueRef,
+} from "~/lib/integrations/adapters/IssueAdapter";
 import { authOptions } from "~/server/auth";
 import {
   buildOutlineSystemPrompt,
   buildOutlineUserPrompt,
   fetchHierarchyContext,
+  fetchLinkedIssuesContext,
   type GenerationContext,
   type IssueData,
+  type LinkedIssueContext,
   type TestCaseOutline,
 } from "../shared";
 import {
@@ -34,12 +42,29 @@ export async function POST(request: NextRequest) {
     // The outline endpoint accepts `includeParameters` for uniform wizard
     // plumbing but ignores it — outlines are titles + summaries only.
     // The expand endpoint applies the flag.
-    const { projectId, issue, context, quantity } = body as {
+    const {
+      projectId,
+      issue,
+      context,
+      quantity,
+      enrichFromIssue,
+      integrationId: sourceIntegrationId,
+    } = body as {
       projectId: number;
       issue: IssueData;
       context: GenerationContext;
       quantity?: string;
       includeParameters?: boolean;
+      // Opt-in: fetch the source issue's comments + one-hop linked issues from
+      // its tracker and fold them into the prompt. Set only for real synced
+      // issues (repository issue-search flow, milestone SYNCED rows). Left
+      // false for documents, URLs, and manual issues so we never make a
+      // pointless/incorrect adapter call.
+      enrichFromIssue?: boolean;
+      // Optional source integration for enrichment. Milestone-issue generation
+      // passes the issue's own integration; the repository wizard omits it and
+      // falls back to the project's first active integration.
+      integrationId?: number;
     };
 
     if (!projectId || !issue) {
@@ -85,7 +110,12 @@ export async function POST(request: NextRequest) {
 
     const project = await baseDb.projects.findFirst({
       where: projectAccessWhere,
-      select: { id: true },
+      include: {
+        projectIntegrations: {
+          where: { isActive: true },
+          include: { integration: true },
+        },
+      },
     });
 
     if (!project) {
@@ -136,6 +166,66 @@ export async function POST(request: NextRequest) {
     const integrationId = resolved.integrationId;
     const { maxRetries, baseDelayMs } = SYNC_RETRY_PROFILE;
 
+    // --- Issue enrichment (parity with the single-shot /stream path) ---
+    // Resolve the issue-tracking adapter best-effort. Prefer an explicit
+    // source integration (milestone issues carry their own), otherwise fall
+    // back to the project's first active integration (the repository wizard's
+    // flow). A client-supplied integrationId must belong to the project.
+    let adapter: IssueAdapter | null = null;
+    const allowedIntegrationIds = new Set(
+      project.projectIntegrations.map((pi) => pi.integrationId)
+    );
+    const targetIntegrationId =
+      sourceIntegrationId && allowedIntegrationIds.has(sourceIntegrationId)
+        ? sourceIntegrationId
+        : project.projectIntegrations[0]?.integrationId;
+    if (enrichFromIssue && targetIntegrationId && issue.key) {
+      try {
+        adapter = await IntegrationManager.getInstance().getAdapter(
+          String(targetIntegrationId)
+        );
+      } catch (err) {
+        console.warn(
+          `[outline] Failed to resolve issue-tracking adapter for project %s:`,
+          projectId,
+          err
+        );
+        adapter = null;
+      }
+    }
+
+    // Source-issue comments come from the adapter server-side (server is the
+    // source of truth). Fail-soft to [] — e.g. manual issues with no adapter.
+    let sourceComments: IssueComment[] = [];
+    if (adapter?.getIssueComments && issue.key) {
+      try {
+        sourceComments = await adapter.getIssueComments(issue.key);
+      } catch (err) {
+        console.warn(
+          `[outline] Failed to fetch source-issue comments for %s:`,
+          issue.key,
+          err
+        );
+        sourceComments = [];
+      }
+    }
+    const issueWithComments: IssueData = { ...issue, comments: sourceComments };
+
+    // One-hop linked issues, fetched ONCE here (outside the adaptive-budget
+    // retry loop). They don't change between retries, and re-fetching would
+    // re-hit the adapter. Bounded by the starting context budget; folder
+    // hierarchy cases claim whatever budget the linked issues don't use and
+    // shrink first on a timeout retry.
+    const startingBudget = getStartingBudget(integrationId);
+    const linkedResult: {
+      included: LinkedIssueContext[];
+      dropped: LinkedIssueRef[];
+      tokensUsed: number;
+    } =
+      startingBudget > 0 && adapter?.getLinkedIssues && issue.key
+        ? await fetchLinkedIssuesContext(adapter, issue.key, startingBudget)
+        : { included: [], dropped: [], tokensUsed: 0 };
+
     // Run the LLM with an adaptive existing-cases context budget. On a
     // timeout we halve the budget and retry within the same request, up to
     // OUTLINE_RETRY_MAX_DEPTH halvings. The smaller working budget is
@@ -146,13 +236,19 @@ export async function POST(request: NextRequest) {
     ): Promise<{ response: LlmResponse; finalBudget: number }> => {
       const effectiveBudget = budget < OUTLINE_CTX_MIN_USEFUL ? 0 : budget;
 
+      // Linked issues (fetched once above) get first claim on the budget;
+      // folder hierarchy cases get the remainder.
+      const hierarchyBudget = Math.max(
+        0,
+        effectiveBudget - linkedResult.tokensUsed
+      );
       const hierarchyContext =
-        effectiveBudget > 0 && typeof context.folderContext === "number"
+        hierarchyBudget > 0 && typeof context.folderContext === "number"
           ? await fetchHierarchyContext(
               baseDb,
               projectId,
               context.folderContext,
-              effectiveBudget,
+              hierarchyBudget,
               "names"
             )
           : [];
@@ -160,8 +256,12 @@ export async function POST(request: NextRequest) {
       const enrichedContext: GenerationContext = {
         ...context,
         existingTestCases: hierarchyContext,
+        linkedIssues: linkedResult.included,
       };
-      const userPrompt = buildOutlineUserPrompt(issue, enrichedContext);
+      const userPrompt = buildOutlineUserPrompt(
+        issueWithComments,
+        enrichedContext
+      );
 
       const llmRequest: LlmRequest = {
         messages: [
@@ -203,7 +303,6 @@ export async function POST(request: NextRequest) {
       }
     };
 
-    const startingBudget = getStartingBudget(integrationId);
     const { response, finalBudget } = await runWithBudget(startingBudget, 0);
 
     // Remember the budget that worked so the next call starts at a sane size
@@ -271,7 +370,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    return NextResponse.json({ outlines: parsed.outlines });
+    // Return the assembled enrichment so the client can thread it into each
+    // expand call (fetched once here) and surface any linked issues that were
+    // dropped for budget. `comments`/`linkedIssues` are empty for un-enriched
+    // (e.g. manual) issues.
+    return NextResponse.json({
+      outlines: parsed.outlines,
+      enrichment: {
+        comments: sourceComments,
+        linkedIssues: linkedResult.included,
+        droppedLinkedIssues: linkedResult.dropped.map(
+          (r) => r.key ?? String(r.id)
+        ),
+      },
+    });
   } catch (error) {
     console.error("Error in POST /api/llm/generate-test-cases/outline:", error);
     return NextResponse.json(

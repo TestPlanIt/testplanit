@@ -374,10 +374,15 @@ describe("LlmManager", () => {
       expect(response.model).toBe("gpt-4");
       expect(mockDb.llmUsage.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
-          llmIntegrationId: 1,
-          userId: "user-123",
-          projectId: 1,
+          // v3 requires relation connects, not scalar FKs, and plain-number
+          // costs (not Decimal instances).
+          llmIntegration: { connect: { id: 1 } },
+          user: { connect: { id: "user-123" } },
+          project: { connect: { id: 1 } },
           feature: "test",
+          inputCost: expect.any(Number),
+          outputCost: expect.any(Number),
+          totalCost: expect.any(Number),
           success: true,
         }),
       });
@@ -438,7 +443,7 @@ describe("LlmManager", () => {
       // Should track stream usage with estimated tokens
       expect(mockDb.llmUsage.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
-          llmIntegrationId: 1,
+          llmIntegration: { connect: { id: 1 } },
           success: true,
           completionTokens: expect.any(Number),
         }),

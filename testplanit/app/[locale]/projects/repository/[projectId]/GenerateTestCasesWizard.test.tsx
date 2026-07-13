@@ -79,7 +79,7 @@ describe("GenerateTestCasesWizard — INT-06 plumbing", () => {
       '"/api/llm/generate-test-cases/outline"'
     );
     expect(outlineFetchIdx).toBeGreaterThan(-1);
-    const outlineSnippet = src.slice(outlineFetchIdx, outlineFetchIdx + 1000);
+    const outlineSnippet = src.slice(outlineFetchIdx, outlineFetchIdx + 1500);
     expect(outlineSnippet).toMatch(/includeParameters,?\s*\n/);
   });
 
