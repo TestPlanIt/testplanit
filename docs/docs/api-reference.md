@@ -300,6 +300,16 @@ The `TIER` environment variable selects the hourly limit:
 
 When the limit is exceeded, requests return **HTTP 429** with a `Retry-After` header indicating seconds until the window resets.
 
+### Custom Limit (Self-Hosted)
+
+Self-hosted instances aren't bound by the tier presets. Set `API_RATE_LIMIT` to an explicit hourly limit (a positive integer) to override `TIER`:
+
+```bash
+API_RATE_LIMIT=100000
+```
+
+When set, it takes precedence over `TIER`. Invalid values (non-integers, zero, or negative numbers) are ignored with a warning and the `TIER` preset applies instead. To remove rate limiting entirely, see [Disabling Rate Limiting](#disabling-rate-limiting-load-testing-only) below.
+
 ### Response Headers
 
 Every API response includes the following headers:

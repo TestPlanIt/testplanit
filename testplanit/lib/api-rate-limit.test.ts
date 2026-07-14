@@ -78,14 +78,41 @@ describe("api-rate-limit", () => {
       expect(getTierLimit()).toBe(25_000);
     });
 
-    it("should default to essentials for unknown tier", () => {
+    it("should default to professional for unknown tier", () => {
       vi.stubEnv("TIER", "unknown");
-      expect(getTierLimit()).toBe(1_000);
+      expect(getTierLimit()).toBe(10_000);
     });
 
-    it("should default to essentials when TIER env var is not set", () => {
+    it("should default to professional when TIER env var is not set", () => {
       vi.stubEnv("TIER", "");
-      expect(getTierLimit()).toBe(1_000);
+      expect(getTierLimit()).toBe(10_000);
+    });
+
+    describe("API_RATE_LIMIT override", () => {
+      it("should use API_RATE_LIMIT when set to a positive integer", () => {
+        vi.stubEnv("API_RATE_LIMIT", "100000");
+        expect(getTierLimit()).toBe(100_000);
+      });
+
+      it("should take precedence over TIER", () => {
+        vi.stubEnv("TIER", "essentials");
+        vi.stubEnv("API_RATE_LIMIT", "50000");
+        expect(getTierLimit()).toBe(50_000);
+      });
+
+      it("should ignore surrounding whitespace", () => {
+        vi.stubEnv("API_RATE_LIMIT", "  75000  ");
+        expect(getTierLimit()).toBe(75_000);
+      });
+
+      it.each(["0", "-100", "abc", "10.5", "1e5", "1_000", " "])(
+        "should ignore invalid value %j and fall back to TIER",
+        (value) => {
+          vi.stubEnv("TIER", "team");
+          vi.stubEnv("API_RATE_LIMIT", value);
+          expect(getTierLimit()).toBe(5_000);
+        }
+      );
     });
   });
 
@@ -178,6 +205,7 @@ describe("api-rate-limit", () => {
     });
 
     it("should clean up old window entries", async () => {
+      vi.stubEnv("TIER", "essentials");
       vi.useFakeTimers();
 
       // Set time to hour 10
