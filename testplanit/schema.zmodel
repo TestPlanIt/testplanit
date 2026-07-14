@@ -2480,6 +2480,10 @@ model Sessions {
     issues               Issue[]
     comments             Comment[]
     configurationGroupId String?
+    // Source session id when this row was created by duplicating another;
+    // drives the session.duplicated webhook event. A provenance marker, not a
+    // live FK — it intentionally survives deletion of the source.
+    duplicatedFromId     Int?
 
     @@index([projectId, isDeleted])
     @@index([createdById])
@@ -2875,6 +2879,10 @@ model TestRuns {
     junitTestSuites      JUnitTestSuite[]
     comments             Comment[]
     configurationGroupId String?
+    // Source run id when this row was created by duplicating another; drives
+    // the test_run.duplicated webhook event. A provenance marker, not a live
+    // FK — it intentionally survives deletion of the source.
+    duplicatedFromId     Int?
 
     @@index([projectId, isDeleted])
     @@index([createdById])

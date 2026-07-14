@@ -319,6 +319,7 @@ const SessionDisplay: React.FC<SessionDisplayProps> = ({
   useEffect(() => {
     if (duplicateSource && duplicateSessionData && !isDuplicateLoading) {
       const preset: SessionDuplicationPreset = {
+        originalSessionId: duplicateSource.id,
         originalName: duplicateSessionData.name || duplicateSource.name,
         originalConfigId: duplicateSessionData.configId,
         originalConfigName:

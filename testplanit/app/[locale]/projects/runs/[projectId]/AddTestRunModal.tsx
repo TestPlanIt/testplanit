@@ -1460,6 +1460,10 @@ export default function AddTestRunModal({
           projectId: Number(projectId),
           createdById: session.user.id,
           configurationGroupId: configurationGroupId,
+          // Provenance marker so the create emits test_run.duplicated.
+          ...(duplicationPreset
+            ? { duplicatedFromId: duplicationPreset.originalRunId }
+            : {}),
           tags: {
             connect: selectedTags.map((tagId) => ({ id: tagId })),
           },

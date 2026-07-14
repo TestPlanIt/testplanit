@@ -73,6 +73,9 @@ interface ConfigurationOption {
 }
 
 export interface SessionDuplicationPreset {
+  /** Source session id, persisted as duplicatedFromId so the create emits the
+   * session.duplicated webhook event. */
+  originalSessionId: number;
   originalName: string;
   originalConfigId: number | null;
   originalConfigName: string | null;
@@ -633,6 +636,10 @@ export function AddSessionModal({
             name: data.name,
             currentVersion: 1,
             configurationGroupId,
+            // Provenance marker so the create emits session.duplicated.
+            ...(duplicationPreset
+              ? { duplicatedFromId: duplicationPreset.originalSessionId }
+              : {}),
             ...(configId
               ? { configuration: { connect: { id: configId } } }
               : {}),

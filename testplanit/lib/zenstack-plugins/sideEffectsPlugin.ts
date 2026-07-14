@@ -45,12 +45,14 @@ import { syncProjectToElasticsearch } from "~/services/projectSearch";
 
 import {
   emitTestRunCreated,
+  emitTestRunDuplicated,
   emitTestRunResultAdded,
   emitJUnitResultAdded,
   emitTestRunUpdateEvents,
 } from "~/lib/webhooks/event-emitters/testRunEvents";
 import {
   emitSessionCreated,
+  emitSessionDuplicated,
   emitSessionResultAdded,
   emitSessionUpdateEvents,
 } from "~/lib/webhooks/event-emitters/sessionEvents";
@@ -261,6 +263,12 @@ export const sideEffectsPlugin = definePlugin(schema, {
             );
             if (row.projectId != null) {
               if (old) await emitTestRunUpdateEvents(old, row, tx);
+              // A duplicate carries the source run id — emit the richer
+              // test_run.duplicated event instead of the generic .created.
+              else if (row.duplicatedFromId != null)
+                await emitTestRunDuplicated(row.id, row.duplicatedFromId, tx, {
+                  projectId: row.projectId,
+                });
               else await emitTestRunCreated(row, tx);
             }
           }
@@ -286,6 +294,12 @@ export const sideEffectsPlugin = definePlugin(schema, {
             );
             if (row.projectId != null) {
               if (old) await emitSessionUpdateEvents(old, row, tx);
+              // A duplicate carries the source session id — emit the richer
+              // session.duplicated event instead of the generic .created.
+              else if (row.duplicatedFromId != null)
+                await emitSessionDuplicated(row.id, row.duplicatedFromId, tx, {
+                  projectId: row.projectId,
+                });
               else await emitSessionCreated(row, tx);
             }
           }
