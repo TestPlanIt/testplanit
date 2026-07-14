@@ -38,6 +38,30 @@ export interface ReindexJobData extends MultiTenantJobData {
   userId: string; // User who initiated the reindex
 }
 
+/**
+ * Count non-deleted issues linked to a test run in the project.
+ *
+ * Equivalent to `db.issue.count({ where: { isDeleted: false,
+ * testRuns: { some: { projectId } } } })`, but ZenStack v3 compiles that `some`
+ * filter inside a count into a correlated nested-loop semi-join that materializes
+ * every project run against every issue (~413M-row cost, ~60s per call on
+ * production data — it stalled the whole reindex). Counting through the join
+ * table is a hash join (~25ms). See lib/projectIssueIds.ts for the same pattern.
+ */
+async function countProjectIssuesLinkedToRuns(
+  db: any,
+  projectId: number
+): Promise<number> {
+  const rows = (await db.$queryRaw`
+    SELECT count(DISTINCT i."id")::int AS count
+    FROM "Issue" i
+    JOIN "_IssueToTestRuns" it ON it."A" = i."id"
+    JOIN "TestRuns" tr ON tr."id" = it."B"
+    WHERE i."isDeleted" = false AND tr."projectId" = ${projectId}
+  `) as Array<{ count: number }>;
+  return Number(rows[0]?.count ?? 0);
+}
+
 const processor = async (job: Job<ReindexJobData>) => {
   console.log(
     `Processing Elasticsearch reindex job ${job.id}${job.data.tenantId ? ` for tenant ${job.data.tenantId}` : ""}`
@@ -161,12 +185,7 @@ const processor = async (job: Job<ReindexJobData>) => {
       if (entityType === "all" || entityType === "issues") {
         totalCounts.issues =
           (totalCounts.issues || 0) +
-          (await db.issue.count({
-            where: {
-              isDeleted: false,
-              testRuns: { some: { projectId: project.id } },
-            },
-          }));
+          (await countProjectIssuesLinkedToRuns(db, project.id));
       }
       if (entityType === "all" || entityType === "milestones") {
         totalCounts.milestones =
@@ -294,16 +313,7 @@ const processor = async (job: Job<ReindexJobData>) => {
       }
 
       if (entityType === "all" || entityType === "issues") {
-        const count = await db.issue.count({
-          where: {
-            isDeleted: false,
-            testRuns: {
-              some: {
-                projectId: project.id,
-              },
-            },
-          },
-        });
+        const count = await countProjectIssuesLinkedToRuns(db, project.id);
         if (count > 0) {
           await job.log(`Syncing ${count} issues for project ${project.name}`);
           await syncProjectIssuesToElasticsearch(project.id, db, tenantId);
