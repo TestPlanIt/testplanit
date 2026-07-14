@@ -9,8 +9,9 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import DOMPurify from "dompurify";
+import { Activity } from "lucide-react";
 import type { ColumnDef } from "@tanstack/react-table";
-import { useMemo } from "react";
+import { useMemo, type CSSProperties } from "react";
 import type {
   Integration,
   Issue,
@@ -22,6 +23,39 @@ import {
   CoverageChip,
   coverageSortValue,
 } from "./CoverageChip";
+
+/**
+ * Inline backgrounds for pinned (frozen) columns when the Issues table sits in a
+ * COMPLETED-milestone card. That surface is tinted `bg-muted-foreground/20` (see
+ * page.tsx `completedCardClassName`), which the table's translucent rows/header
+ * show through — but pinned columns must be OPAQUE (so horizontally-scrolled
+ * content doesn't bleed under them), so a plain `bg-background`/`bg-muted` pinned
+ * column clashes with the tint.
+ *
+ * Rather than approximate the composited color (which risks an oklab-vs-sRGB
+ * blending gap), each pinned surface is rebuilt from the SAME translucent tint
+ * layers the real cells stack over, painted on an opaque page-background base —
+ * pixel-identical to the non-pinned cells by construction, in both themes. The
+ * completed Issues card nests TWO `bg-muted-foreground/20` ancestors above the
+ * table (the outer Card + its inner section wrapper), so:
+ *   - BODY cells show through TWO tint layers.
+ *   - HEADER cells sit under the table's own `bg-muted-foreground/20` header
+ *     strip as well, so they show through THREE and render a shade darker —
+ *     exactly as the non-pinned header does.
+ * `MUTED_FG_20`/`TINT` match Tailwind's `bg-muted-foreground/20` expansion.
+ * Active milestones (no tint) pass neither and keep the default opaque fill.
+ */
+const MUTED_FG_20 =
+  "color-mix(in oklab, var(--color-muted-foreground) 20%, transparent)";
+const TINT = `linear-gradient(${MUTED_FG_20}, ${MUTED_FG_20})`;
+
+export const COMPLETED_CARD_PINNED_STYLE: CSSProperties = {
+  background: `${TINT}, ${TINT}, var(--color-background)`,
+};
+
+export const COMPLETED_CARD_PINNED_HEADER_STYLE: CSSProperties = {
+  background: `${TINT}, ${TINT}, ${TINT}, var(--color-background)`,
+};
 
 /**
  * Row shape for the Member Issues table: a `MilestoneIssue` link row plus its
@@ -89,6 +123,7 @@ export interface MemberIssuesColumnsTranslations {
   source: string;
   sourceSynced: string;
   sourceManual: string;
+  actions: string;
 }
 
 interface UseMemberIssueColumnsArgs {
@@ -127,6 +162,7 @@ export function useMemberIssueColumns({
     source: tSource,
     sourceSynced: tSourceSynced,
     sourceManual: tSourceManual,
+    actions: tActions,
   } = translations;
 
   return useMemo(() => {
@@ -139,6 +175,7 @@ export function useMemberIssueColumns({
         size: 48,
         minSize: 48,
         maxSize: 48,
+        meta: { isPinned: "left" },
         // No centering wrappers: the header content renders inside the
         // table's TruncatedHeaderLabel span (shrink-to-content), so a
         // centered header checkbox lands a few px off the centered body
@@ -373,10 +410,27 @@ export function useMemberIssueColumns({
     if (renderRowActions) {
       columns.push({
         id: "actions",
-        header: "",
+        // Centered icon header, matching the repository Cases table's Actions
+        // column. VirtualizedDataTable wraps header content in a
+        // shrink-to-content TruncatedHeaderLabel span, so a plain `w-full` would
+        // collapse to the icon's own width; sizing the wrapper to the column's
+        // inner width (its size minus the header cell's px-3 on both sides) lets
+        // `justify-center` land the icon dead-center.
+        header: ({ column }) => (
+          <div
+            className="flex justify-center"
+            style={{ width: Math.max(column.getSize() - 24, 0) }}
+          >
+            <Activity
+              className="h-4 w-4 text-muted-foreground"
+              aria-label={tActions}
+            />
+          </div>
+        ),
         enableSorting: false,
         enableResizing: false,
         enableHiding: false,
+        meta: { isPinned: "right" },
         size: 60,
         minSize: 50,
         maxSize: 80,
@@ -395,6 +449,7 @@ export function useMemberIssueColumns({
     tSource,
     tSourceSynced,
     tSourceManual,
+    tActions,
     projectId,
     renderRowActions,
     onRowCheckboxClick,

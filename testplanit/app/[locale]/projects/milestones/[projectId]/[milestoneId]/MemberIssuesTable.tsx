@@ -58,7 +58,11 @@ import {
   resolvePipColor,
 } from "@/components/iterations/IterationStatusPip";
 import type { ExtendedMemberIssue } from "./MemberIssuesColumns";
-import { useMemberIssueColumns } from "./MemberIssuesColumns";
+import {
+  COMPLETED_CARD_PINNED_HEADER_STYLE,
+  COMPLETED_CARD_PINNED_STYLE,
+  useMemberIssueColumns,
+} from "./MemberIssuesColumns";
 import { MemberIssuesOverflowPanel } from "./MemberIssuesOverflowPanel";
 import type { MemberCoverageResponse } from "~/app/api/milestones/[milestoneId]/members/coverage/route";
 import { aggregateMilestoneReadiness } from "./milestoneReadiness";
@@ -184,7 +188,7 @@ export function MemberIssuesTable({
     schema
   ).milestones.useFindFirst({
     where: { id: milestoneId },
-    select: { integrationId: true },
+    select: { integrationId: true, isCompleted: true },
   });
 
   const {
@@ -642,6 +646,7 @@ export function MemberIssuesTable({
       source: t("columnSource"),
       sourceSynced: t("sourceSynced"),
       sourceManual: t("sourceManual"),
+      actions: tCommon("actions.actionsLabel"),
     },
     projectId,
     renderRowActions: rowActionsRenderer,
@@ -948,6 +953,17 @@ export function MemberIssuesTable({
                 isLoading={isLoading}
                 columnVisibility={columnVisibility}
                 onColumnVisibilityChange={setColumnVisibility}
+                enableColumnPinning
+                pinnedColumnStyle={
+                  milestoneRow?.isCompleted
+                    ? COMPLETED_CARD_PINNED_STYLE
+                    : undefined
+                }
+                pinnedHeaderStyle={
+                  milestoneRow?.isCompleted
+                    ? COMPLETED_CARD_PINNED_HEADER_STYLE
+                    : undefined
+                }
                 hasMore={false}
                 rowSelection={rowSelection}
                 onRowSelectionChange={setRowSelection}

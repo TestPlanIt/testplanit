@@ -104,14 +104,6 @@ vi.mock("@/components/ui/alert-dialog", () => ({
   ),
 }));
 
-// Radix Tooltip needs a provider context; stub it to render children inline.
-vi.mock("@/components/ui/tooltip", () => ({
-  Tooltip: ({ children }: any) => <div>{children}</div>,
-  TooltipTrigger: ({ children }: any) => <>{children}</>,
-  TooltipContent: ({ children }: any) => <div>{children}</div>,
-  TooltipProvider: ({ children }: any) => <>{children}</>,
-}));
-
 vi.mock("./search-issues-dialog", () => ({
   SearchIssuesDialog: ({ open, onIssueSelected }: any) => {
     if (!open) return null;
@@ -292,15 +284,17 @@ describe("MemberIssueRowActions", () => {
     expect(mockDeleteMilestoneIssue).not.toHaveBeenCalled();
   });
 
-  it("does NOT call delete for a SYNCED row — shows the managed-by-Jira lock instead", () => {
+  it("offers no Remove for a SYNCED row (Jira-managed) — no menu, no delete", () => {
     renderWithQueryClient(
       <MemberIssueRowActions milestoneId={42} issueId={55} source="SYNCED" />
     );
 
-    expect(screen.getByTestId("member-issue-synced-lock")).toBeInTheDocument();
+    // With no generate access there's no action at all for a synced row; the
+    // Source column already conveys its Jira-managed origin.
     expect(
       screen.queryByTestId("member-issue-row-actions")
     ).not.toBeInTheDocument();
+    expect(screen.queryByTestId("member-issue-unlink")).not.toBeInTheDocument();
     expect(mockDeleteMilestoneIssue).not.toHaveBeenCalled();
   });
 
@@ -313,7 +307,7 @@ describe("MemberIssueRowActions", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("shows the Generate icon and fires onGenerate when eligible (MANUAL row)", () => {
+  it("offers Generate above Remove in the menu and fires onGenerate (MANUAL row)", () => {
     const onGenerate = vi.fn();
     renderWithQueryClient(
       <MemberIssueRowActions
@@ -324,11 +318,18 @@ describe("MemberIssueRowActions", () => {
         onGenerate={onGenerate}
       />
     );
+    // Both actions share the single 3-dot menu, Generate stacked above Remove.
+    const items = screen.getAllByRole("menuitem");
+    expect(items[0]).toHaveAttribute(
+      "data-testid",
+      "member-issue-generate-cases"
+    );
+    expect(items[1]).toHaveAttribute("data-testid", "member-issue-unlink");
     fireEvent.click(screen.getByTestId("member-issue-generate-cases"));
     expect(onGenerate).toHaveBeenCalledTimes(1);
   });
 
-  it("shows the Generate icon for a SYNCED row alongside the managed-by-Jira lock", () => {
+  it("offers Generate (but no Remove) for a SYNCED row when eligible", () => {
     const onGenerate = vi.fn();
     renderWithQueryClient(
       <MemberIssueRowActions
@@ -339,7 +340,8 @@ describe("MemberIssueRowActions", () => {
         onGenerate={onGenerate}
       />
     );
-    expect(screen.getByTestId("member-issue-synced-lock")).toBeInTheDocument();
+    // Generate is available on synced rows; Remove is not (Jira-managed).
+    expect(screen.queryByTestId("member-issue-unlink")).not.toBeInTheDocument();
     fireEvent.click(screen.getByTestId("member-issue-generate-cases"));
     expect(onGenerate).toHaveBeenCalledTimes(1);
   });
@@ -355,13 +357,12 @@ describe("MemberIssueRowActions", () => {
         onGenerate={vi.fn()}
       />
     );
-    // Repository-only viewer: can generate, but the unlink dropdown is absent.
+    // Repository-only viewer: the 3-dot menu renders (it carries Generate) but
+    // offers no Remove item.
     expect(
       screen.getByTestId("member-issue-generate-cases")
     ).toBeInTheDocument();
-    expect(
-      screen.queryByTestId("member-issue-row-actions")
-    ).not.toBeInTheDocument();
+    expect(screen.getByTestId("member-issue-row-actions")).toBeInTheDocument();
     expect(screen.queryByTestId("member-issue-unlink")).not.toBeInTheDocument();
   });
 });

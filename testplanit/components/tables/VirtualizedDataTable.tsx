@@ -4,7 +4,9 @@
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
+  Column,
   ColumnDef,
+  ColumnPinningState,
   ColumnSizingState,
   ExpandedState,
   flexRender,
@@ -29,6 +31,7 @@ import {
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import {
+  type CSSProperties,
   type ReactNode,
   useCallback,
   useEffect,
@@ -40,16 +43,44 @@ import { useVirtualizedInfiniteList } from "~/hooks/useVirtualizedInfiniteList";
 import { cn } from "~/utils";
 
 /**
+ * Sticky-column CSS for a pinned column, mirroring `DataTable`'s
+ * `getCommonPinningStyles`. Only applied when the caller opts in via
+ * `enableColumnPinning`; returns `{}` for unpinned columns. The pinned cell
+ * also needs an opaque background (applied via className) so horizontally
+ * scrolled content doesn't bleed through.
+ */
+function getPinningStyles(column: Column<any, any>): CSSProperties {
+  const isPinned = column.getIsPinned();
+  if (!isPinned) return {};
+  const isLastLeftPinned =
+    isPinned === "left" && column.getIsLastColumn("left");
+  const isFirstRightPinned =
+    isPinned === "right" && column.getIsFirstColumn("right");
+  return {
+    position: "sticky",
+    left: isPinned === "left" ? column.getStart("left") : undefined,
+    right: isPinned === "right" ? column.getStart("right") : undefined,
+    zIndex: 2,
+    boxShadow: isLastLeftPinned
+      ? "4px 0 8px -4px rgba(0,0,0,0.3)"
+      : isFirstRightPinned
+        ? "-4px 0 8px -4px rgba(0,0,0,0.3)"
+        : undefined,
+  };
+}
+
+/**
  * Virtualized, infinite-scrolling table.
  *
  * A lighter-weight alternative to the shared `DataTable` for surfaces that need
  * to render an arbitrarily large result set as one continuous, page-seam-free
  * list. It supports draggable column resizing (live, and optionally persisted
- * per user via `columnSizingStorageKey`) but deliberately does NOT replicate
- * `DataTable`'s column pinning / drag-reorder; it keeps the table features that
- * scroll well (sorting, grouping, expansion, sub-rows, column visibility) by
- * driving a TanStack `useReactTable` instance and rendering its flattened row
- * model (`getRowModel().rows`) through `useVirtualizedInfiniteList`.
+ * per user via `columnSizingStorageKey`) and opt-in column pinning
+ * (`enableColumnPinning`, off by default), but not `DataTable`'s drag-reorder;
+ * it keeps the table features that scroll well (sorting, grouping, expansion,
+ * sub-rows, column visibility) by driving a TanStack `useReactTable` instance
+ * and rendering its flattened row model (`getRowModel().rows`) through
+ * `useVirtualizedInfiniteList`.
  *
  * Consumed by the reports results panel and the admin audit-log table; both
  * converge on the same scroll model. Per-surface chrome (empty-state copy,
@@ -146,6 +177,35 @@ interface VirtualizedDataTableProps {
   flexColumnId?: string;
 
   /**
+   * Opt into frozen/pinned columns. When true, columns declaring
+   * `meta: { isPinned: "left" | "right" }` are pinned to the table edges and
+   * stay put during horizontal scroll (like the repository `DataTable`). This
+   * switches the table to a synced-scroll layout (the body scrolls horizontally
+   * and a header viewport mirrors it) so `position: sticky` actually sticks.
+   * Off by default — the many other tables that share this component (and even
+   * declare a currently-inert `meta.isPinned`) are unaffected.
+   */
+  enableColumnPinning?: boolean;
+
+  /**
+   * Extra inline style for pinned BODY cells, merged over the sticky
+   * positioning. Use it to override the default opaque background so pinned
+   * columns match a tinted surface — e.g. a completed-milestone card, where the
+   * default white/muted fills would otherwise clash. Only applied to pinned
+   * cells when `enableColumnPinning` is on.
+   */
+  pinnedColumnStyle?: CSSProperties;
+
+  /**
+   * Extra inline style for pinned HEADER cells specifically. The header row
+   * carries its own translucent `bg-muted-foreground/20` strip, so over a tinted
+   * surface it renders a shade darker than the body; a pinned header therefore
+   * needs a different opaque fill than a pinned body cell to match. Falls back to
+   * `pinnedColumnStyle` when omitted.
+   */
+  pinnedHeaderStyle?: CSSProperties;
+
+  /**
    * When set, resized column widths are persisted per user to localStorage under
    * this key (scope it per surface, e.g. per report type). Column resizing is
    * always enabled regardless; without a key the widths just reset on remount.
@@ -238,6 +298,9 @@ export function VirtualizedDataTable({
   onRowSelectionChange,
   getRowId,
   flexColumnId,
+  enableColumnPinning = false,
+  pinnedColumnStyle,
+  pinnedHeaderStyle,
   columnSizingStorageKey,
   hasMore = false,
   isLoading = false,
@@ -308,6 +371,32 @@ export function VirtualizedDataTable({
     }
   });
 
+  // Column pinning (opt-in). Seed the left/right pin sets from each column's
+  // `meta.isPinned` once, then let TanStack own the state. Mirrors DataTable.
+  const [columnPinning, setColumnPinning] = useState<ColumnPinningState>({
+    left: [],
+    right: [],
+  });
+  const initialPinningDone = useRef(false);
+  useEffect(() => {
+    if (!enableColumnPinning || initialPinningDone.current) return;
+    const left: string[] = [];
+    const right: string[] = [];
+    for (const column of columns) {
+      const pin = (column.meta as { isPinned?: "left" | "right" } | undefined)
+        ?.isPinned;
+      const id = column.id as string;
+      if (pin === "left") left.push(id);
+      else if (pin === "right") right.push(id);
+    }
+    setColumnPinning({ left, right });
+    initialPinningDone.current = true;
+  }, [enableColumnPinning, columns]);
+
+  // In pinning mode the body scrolls horizontally; this ref lets the header
+  // viewport mirror the body's scrollLeft so the columns stay aligned.
+  const headerScrollRef = useRef<HTMLDivElement>(null);
+
   // Prepend an expander column when rows can nest (grouping or sub-rows).
   const expanderColumn: ColumnDef<any, any> = useMemo(
     () => ({
@@ -370,6 +459,7 @@ export function VirtualizedDataTable({
     getSubRows,
     enableSorting: true,
     enableColumnResizing: true,
+    enableColumnPinning,
     enableRowSelection: rowSelection !== undefined,
     ...(getRowId ? { getRowId } : {}),
     columnResizeMode: "onChange",
@@ -377,10 +467,12 @@ export function VirtualizedDataTable({
       columnVisibility,
       sorting,
       columnSizing,
+      ...(enableColumnPinning && { columnPinning }),
       ...(rowSelection !== undefined && { rowSelection }),
       ...(grouping !== undefined && { grouping }),
       ...(expanded !== undefined && { expanded }),
     },
+    ...(enableColumnPinning && { onColumnPinningChange: setColumnPinning }),
     ...(onGroupingChange !== undefined && { onGroupingChange }),
     ...(onExpandedChange !== undefined && { onExpandedChange }),
     ...(onRowSelectionChange !== undefined && { onRowSelectionChange }),
@@ -485,7 +577,10 @@ export function VirtualizedDataTable({
   return (
     <div
       className={cn(
-        "overflow-x-auto rounded-lg border-2 border-primary/10",
+        "rounded-lg border-2 border-primary/10",
+        // Pinning mode moves horizontal scroll onto the body (so sticky columns
+        // can stick); otherwise the whole table scrolls horizontally here.
+        enableColumnPinning ? "overflow-hidden" : "overflow-x-auto",
         !fillViewport && "h-full"
       )}
       role="table"
@@ -493,113 +588,149 @@ export function VirtualizedDataTable({
     >
       <div
         className={cn("flex min-h-0 flex-col", !fillViewport && "h-full")}
-        style={{ width: tableWidth, minWidth: hasFlex ? totalWidth : "100%" }}
+        style={
+          enableColumnPinning
+            ? { width: "100%", minWidth: "100%" }
+            : { width: tableWidth, minWidth: hasFlex ? totalWidth : "100%" }
+        }
       >
-        {/* Header — stays put vertically (lives above the scroll body) and
+        {/* Header — stays put vertically (lives above the scroll body). In
+            pinning mode it's wrapped in an overflow-hidden viewport whose
+            scrollLeft mirrors the body (see onScroll below); otherwise it
             scrolls horizontally with the body via the outer container. The
             muted fill is translucent so it overlays (rather than masks) the
             container's background, letting a tinted card — e.g. a
             completed-milestone card — show through. */}
         <div
-          className="flex shrink-0 border-b bg-muted-foreground/20 text-foreground"
-          role="row"
+          ref={enableColumnPinning ? headerScrollRef : undefined}
+          className={cn("shrink-0", enableColumnPinning && "overflow-hidden")}
         >
-          {headers
-            .filter((header) => header.column.getIsVisible())
-            .map((header) => {
-              const { column } = header;
-              const isSortable = column.columnDef.enableSorting !== false;
-              const isActiveSort = sortConfig?.column === column.id;
-              const direction = isActiveSort
-                ? sortConfig?.direction
-                : undefined;
-              const isFlex = hasFlex && column.id === flexColumnId;
-              return (
-                <div
-                  key={header.id}
-                  role="columnheader"
-                  className={cn(
-                    "relative flex select-none items-center gap-1 border-e px-3 py-2 text-xs font-medium last:border-e-0",
-                    isFlex ? "min-w-0" : "shrink-0"
-                  )}
-                  style={
-                    isFlex
-                      ? { flex: "1 1 0%", minWidth: column.getSize() }
-                      : { width: column.getSize() }
-                  }
-                >
-                  {column.getCanGroup() && onGroupingChange ? (
-                    <button
-                      onClick={column.getToggleGroupingHandler()}
-                      className="me-1"
-                      aria-label={
-                        column.getIsGrouped()
-                          ? tAria("grouped")
-                          : tAria("group")
-                      }
-                      title={
-                        column.getIsGrouped()
-                          ? tAria("grouped")
-                          : tAria("group")
-                      }
-                    >
-                      {column.getIsGrouped() ? (
-                        <UnfoldVertical className="h-4 w-4" />
-                      ) : (
-                        <Group className="h-4 w-4" />
-                      )}
-                    </button>
-                  ) : null}
-                  <TruncatedHeaderLabel>
-                    {flexRender(column.columnDef.header, header.getContext())}
-                  </TruncatedHeaderLabel>
-                  {isSortable && column.id !== "expander" && (
-                    <button
-                      onClick={() => onSortChange?.(column.id)}
-                      className="ms-1 shrink-0 cursor-pointer"
-                      aria-label={t("sort")}
-                    >
-                      {isActiveSort && direction === "asc" ? (
-                        <ArrowDownAZ className="h-4 w-4" />
-                      ) : isActiveSort && direction === "desc" ? (
-                        <ArrowUpZA className="h-4 w-4" />
-                      ) : (
-                        <ArrowDownUp className="h-4 w-4 opacity-50" />
-                      )}
-                    </button>
-                  )}
-                  {/* Drag-to-resize handle on the column's right edge. The flex
+          <div
+            className="flex border-b bg-muted-foreground/20 text-foreground"
+            role="row"
+            style={enableColumnPinning ? { width: tableWidth } : undefined}
+          >
+            {headers
+              .filter((header) => header.column.getIsVisible())
+              .map((header) => {
+                const { column } = header;
+                const isSortable = column.columnDef.enableSorting !== false;
+                const isActiveSort = sortConfig?.column === column.id;
+                const direction = isActiveSort
+                  ? sortConfig?.direction
+                  : undefined;
+                const isFlex = hasFlex && column.id === flexColumnId;
+                return (
+                  <div
+                    key={header.id}
+                    role="columnheader"
+                    className={cn(
+                      "relative flex select-none items-center gap-1 border-e px-3 py-2 text-xs font-medium last:border-e-0",
+                      isFlex ? "min-w-0" : "shrink-0",
+                      // Opaque fill so scrolled header cells don't bleed under a
+                      // pinned one.
+                      enableColumnPinning && column.getIsPinned() && "bg-muted"
+                    )}
+                    style={{
+                      ...(isFlex
+                        ? { flex: "1 1 0%", minWidth: column.getSize() }
+                        : { width: column.getSize() }),
+                      ...(enableColumnPinning ? getPinningStyles(column) : {}),
+                      ...(enableColumnPinning && column.getIsPinned()
+                        ? (pinnedHeaderStyle ?? pinnedColumnStyle ?? {})
+                        : {}),
+                    }}
+                  >
+                    {column.getCanGroup() && onGroupingChange ? (
+                      <button
+                        onClick={column.getToggleGroupingHandler()}
+                        className="me-1"
+                        aria-label={
+                          column.getIsGrouped()
+                            ? tAria("grouped")
+                            : tAria("group")
+                        }
+                        title={
+                          column.getIsGrouped()
+                            ? tAria("grouped")
+                            : tAria("group")
+                        }
+                      >
+                        {column.getIsGrouped() ? (
+                          <UnfoldVertical className="h-4 w-4" />
+                        ) : (
+                          <Group className="h-4 w-4" />
+                        )}
+                      </button>
+                    ) : null}
+                    <TruncatedHeaderLabel>
+                      {flexRender(column.columnDef.header, header.getContext())}
+                    </TruncatedHeaderLabel>
+                    {isSortable && column.id !== "expander" && (
+                      <button
+                        onClick={() => onSortChange?.(column.id)}
+                        className="ms-1 shrink-0 cursor-pointer"
+                        aria-label={t("sort")}
+                      >
+                        {isActiveSort && direction === "asc" ? (
+                          <ArrowDownAZ className="h-4 w-4" />
+                        ) : isActiveSort && direction === "desc" ? (
+                          <ArrowUpZA className="h-4 w-4" />
+                        ) : (
+                          <ArrowDownUp className="h-4 w-4 opacity-50" />
+                        )}
+                      </button>
+                    )}
+                    {/* Drag-to-resize handle on the column's right edge. The flex
                       column absorbs slack (no fixed width to drag) and the
                       expander column opts out via enableResizing:false. */}
-                  {column.getCanResize() && !isFlex && (
-                    <div
-                      onMouseDown={header.getResizeHandler()}
-                      onTouchStart={header.getResizeHandler()}
-                      onDoubleClick={() => column.resetSize()}
-                      role="separator"
-                      aria-orientation="vertical"
-                      aria-label={t("resize")}
-                      title={t("resize")}
-                      className={cn(
-                        "absolute end-0 top-0 z-10 h-full w-1.5 cursor-col-resize touch-none select-none transition-colors hover:bg-primary/40",
-                        column.getIsResizing() ? "bg-primary" : "bg-transparent"
-                      )}
-                      data-testid={`${testIdPrefix}-resize-${column.id}`}
-                    />
-                  )}
-                </div>
-              );
-            })}
+                    {column.getCanResize() && !isFlex && (
+                      <div
+                        onMouseDown={header.getResizeHandler()}
+                        onTouchStart={header.getResizeHandler()}
+                        onDoubleClick={() => column.resetSize()}
+                        role="separator"
+                        aria-orientation="vertical"
+                        aria-label={t("resize")}
+                        title={t("resize")}
+                        className={cn(
+                          "absolute end-0 top-0 z-10 h-full w-1.5 cursor-col-resize touch-none select-none transition-colors hover:bg-primary/40",
+                          column.getIsResizing()
+                            ? "bg-primary"
+                            : "bg-transparent"
+                        )}
+                        data-testid={`${testIdPrefix}-resize-${column.id}`}
+                      />
+                    )}
+                  </div>
+                );
+              })}
+          </div>
         </div>
 
         {/* Body — the virtualizer's scroll element. CSS-bounded height
-            (flex-1) so it works inside a bounded panel or card. */}
+            (flex-1) so it works inside a bounded panel or card. In pinning mode
+            it also owns horizontal scroll and mirrors scrollLeft to the header
+            viewport so the frozen columns and headers stay aligned. */}
         <div
           ref={scrollRef}
           className={cn(
-            "relative min-h-0 overflow-y-auto overflow-x-hidden",
+            "relative min-h-0",
+            enableColumnPinning
+              ? "overflow-auto"
+              : "overflow-y-auto overflow-x-hidden",
             !fillViewport && "flex-1"
           )}
+          onScroll={
+            enableColumnPinning
+              ? (e) => {
+                  if (headerScrollRef.current) {
+                    headerScrollRef.current.scrollLeft =
+                      e.currentTarget.scrollLeft;
+                  }
+                }
+              : undefined
+          }
           style={
             fillViewport
               ? { height: maxHeight ?? undefined, minHeight: 200 }
@@ -711,6 +842,11 @@ export function VirtualizedDataTable({
                           className={cn(
                             "flex min-w-0 items-center overflow-hidden border-e px-3 py-2 text-sm last:border-e-0",
                             !isFlex && "shrink-0",
+                            // Opaque fill so scrolled cells don't bleed under a
+                            // pinned column.
+                            enableColumnPinning &&
+                              column.getIsPinned() &&
+                              "bg-background",
                             // Nesting guide: a wide colored bar on the RIGHT edge of
                             // the first (indent) cell of a sub-row, marking where the
                             // nested content begins.
@@ -718,11 +854,19 @@ export function VirtualizedDataTable({
                               cellIndex === 0 &&
                               "border-e-4 border-e-primary"
                           )}
-                          style={
-                            isFlex
+                          style={{
+                            ...(isFlex
                               ? { flex: "1 1 0%", minWidth: column.getSize() }
-                              : { width: column.getSize() }
-                          }
+                              : { width: column.getSize() }),
+                            ...(enableColumnPinning
+                              ? getPinningStyles(column)
+                              : {}),
+                            ...(enableColumnPinning &&
+                            column.getIsPinned() &&
+                            pinnedColumnStyle
+                              ? pinnedColumnStyle
+                              : {}),
+                          }}
                         >
                           {content}
                         </div>

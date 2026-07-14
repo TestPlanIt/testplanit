@@ -22,6 +22,12 @@ import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
 import type { MilestoneIssue } from "~/lib/services/milestoneSummary";
 import { useMilestoneSummary } from "~/hooks/useMilestoneSummary";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
+import {
+  COMPLETED_CARD_PINNED_HEADER_STYLE,
+  COMPLETED_CARD_PINNED_STYLE,
+} from "./MemberIssuesColumns";
 
 const FOUND_IN_TESTING_COLLAPSED_KEY = "tpi.milestone.foundInTesting.collapsed";
 
@@ -62,6 +68,14 @@ export function FoundInTestingIssues({
 
   const { data: summaryData, isLoading } = useMilestoneSummary(milestoneId);
   const issues: MilestoneIssue[] = summaryData?.issues ?? [];
+
+  // Completed milestones render in a tinted card; pinned columns must match it.
+  const { data: milestoneRow } = useClientQueries(
+    schema
+  ).milestones.useFindFirst({
+    where: { id: milestoneId },
+    select: { isCompleted: true },
+  });
 
   const memberIssueIdSet = useMemo(
     () => new Set(memberIssueIds),
@@ -344,6 +358,17 @@ export function FoundInTestingIssues({
                 onColumnVisibilityChange={setColumnVisibility}
                 sortConfig={sortConfig}
                 onSortChange={handleSortChange}
+                enableColumnPinning
+                pinnedColumnStyle={
+                  milestoneRow?.isCompleted
+                    ? COMPLETED_CARD_PINNED_STYLE
+                    : undefined
+                }
+                pinnedHeaderStyle={
+                  milestoneRow?.isCompleted
+                    ? COMPLETED_CARD_PINNED_HEADER_STYLE
+                    : undefined
+                }
                 hasMore={false}
                 isLoading={isLoading}
                 getRowId={(row: MilestoneIssue) => String(row.id)}

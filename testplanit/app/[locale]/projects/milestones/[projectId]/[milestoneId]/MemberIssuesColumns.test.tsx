@@ -36,6 +36,7 @@ const translations = {
   source: "Source",
   sourceSynced: "Synced",
   sourceManual: "Manual",
+  actions: "Actions",
 };
 
 const baseRow: ExtendedMemberIssue = {

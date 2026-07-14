@@ -12,7 +12,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -20,12 +19,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { Cloud, MoreHorizontal, Plus, Sparkles, X } from "lucide-react";
+import { MoreVertical, Plus, Sparkles, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -269,48 +263,20 @@ export function MemberIssueRowActions({
     }
   };
 
-  // Quick "Generate Test Cases for this issue" launcher. Shown for both MANUAL
-  // and SYNCED rows — eligibility depends on Test Case Repository access + an
-  // LLM connection, not on who owns the issue link.
-  const generateButton =
-    canGenerate && onGenerate ? (
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-            aria-label={tRepo("generateTestCases.buttonText")}
-            data-testid="member-issue-generate-cases"
-            onClick={onGenerate}
-          >
-            <Sparkles className="h-4 w-4" />
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent>{tRepo("generateTestCases.title")}</TooltipContent>
-      </Tooltip>
-    ) : null;
-
-  if (isSynced) {
-    return (
-      <div className="flex items-center justify-end gap-1">
-        {generateButton}
-        <Badge
-          variant="outline"
-          className="flex items-center gap-1 text-muted-foreground cursor-default"
-          title={t("managedByJira")}
-          data-testid="member-issue-synced-lock"
-        >
-          <Cloud className="h-3 w-3" />
-        </Badge>
-      </div>
-    );
-  }
+  // Both per-row actions live in a single 3-dot menu (kept narrow so the pinned
+  // Actions column doesn't clip a second inline icon). "Generate Test Cases" is
+  // offered for both MANUAL and SYNCED rows — eligibility depends on Test Case
+  // Repository access + an LLM connection, not on who owns the link — and sits
+  // ABOVE "Remove". Unlink is MANUAL-only: a SYNCED row simply has no Remove
+  // item (its Jira-managed origin is already shown by the Source column, so no
+  // separate lock indicator is needed here).
+  const showGenerate = canGenerate && !!onGenerate;
+  const showUnlink = canUnlink && !isSynced;
+  const hasMenu = showGenerate || showUnlink;
 
   return (
-    <div className="flex items-center justify-end gap-1">
-      {generateButton}
-      {canUnlink && (
+    <div className="flex w-full items-center justify-center gap-1">
+      {hasMenu && (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
@@ -320,19 +286,30 @@ export function MemberIssueRowActions({
               aria-label={tCommon("actions.actionsLabel")}
               data-testid="member-issue-row-actions"
             >
-              <MoreHorizontal className="h-4 w-4" />
+              <MoreVertical className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem
-              className="text-destructive focus:text-destructive"
-              disabled={isUnlinking}
-              onClick={() => setConfirmOpen(true)}
-              data-testid="member-issue-unlink"
-            >
-              <X className="h-4 w-4" />
-              {t("unlink")}
-            </DropdownMenuItem>
+            {showGenerate && (
+              <DropdownMenuItem
+                onClick={onGenerate}
+                data-testid="member-issue-generate-cases"
+              >
+                <Sparkles className="h-4 w-4 me-2" />
+                {tRepo("generateTestCases.buttonText")}
+              </DropdownMenuItem>
+            )}
+            {showUnlink && (
+              <DropdownMenuItem
+                className="text-destructive focus:text-destructive"
+                disabled={isUnlinking}
+                onClick={() => setConfirmOpen(true)}
+                data-testid="member-issue-unlink"
+              >
+                <X className="h-4 w-4 me-2" />
+                {t("unlink")}
+              </DropdownMenuItem>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       )}
