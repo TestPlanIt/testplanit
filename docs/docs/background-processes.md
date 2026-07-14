@@ -243,6 +243,7 @@ Most workers run with a 512 MB `max_memory_restart` ceiling and a 384 MB old-spa
 | Sync Worker | 1G | 768M | Loads integration adapters + Elasticsearch sync extensions |
 | Testmo Import Worker | 4G (configurable) | 3072M (configurable) | Streams and analyzes multi-GB Testmo JSON exports; the default 512 MB tier OOM-killed large imports. Override both via `TESTMO_IMPORT_MAX_MEMORY_RESTART` and `TESTMO_IMPORT_MAX_OLD_SPACE_MB` for very large exports (e.g. `18G` / `16384`), host RAM permitting |
 | Forecast Worker | 2G | 1536M | Recomputes run/case forecasts over large historical result sets; the default 512 MB tier was OOM-killed under production data volumes |
+| Elasticsearch Reindex Worker | 2G (configurable) | 1536M (configurable) | A full reindex sweeps every project's cases/runs/sessions/issues/milestones and bulk-loads them into Elasticsearch; the default 512 MB tier OOM-killed full-DB reindexes mid-job — PM2 SIGKILLs the worker, BullMQ redelivers the same job, and it restarts from the top, so runs never finish indexing. Override both via `ELASTICSEARCH_REINDEX_MAX_MEMORY_RESTART` and `ELASTICSEARCH_REINDEX_MAX_OLD_SPACE_MB` for very large tenants (many projects / large run history), host RAM permitting |
 | SCIM Access Recompute Worker | 2G | 1536M | Loads the full ZenStack runtime to recompute `User.access` tiers from IdP group mappings; boots to ~1.4 GB RSS at idle, so the default 512 MB tier triggered a tight PM2 SIGINT/restart loop rather than a real OOM |
 | Audit Log Worker | 3G | 2304M | The CDC correlation loop (Loop B) caches one raw Prisma client per tenant in multi-tenant mode — one Rust query engine per tenant, the same per-tenant footprint as the webhook outbox worker. Harmless headroom in single-tenant mode (a single client). |
 | Webhook Dispatch Worker | 3G | 2304M | Loads ZenStack runtime + ES sync services + audit log service; carries full `test_run.completed` payloads under concurrency=5; observed steady-state RSS in multi-tenant clusters sits near 1.9 GB |
@@ -312,7 +313,7 @@ You can monitor worker health and performance using:
 
 ### Memory issues
 
-- Most workers run with a 512 MB ceiling; the sync worker runs with a 1 GB ceiling; the forecast and SCIM access recompute workers run with a 2 GB ceiling; the audit log worker, the three webhook workers (dispatch, outbox, retention), and the DataChangeLog retention worker run with a 3 GB ceiling. See the **Worker memory tiers** table above for the rationale on each elevated tier.
+- Most workers run with a 512 MB ceiling; the sync worker runs with a 1 GB ceiling; the forecast, SCIM access recompute, and Elasticsearch reindex workers run with a 2 GB ceiling; the audit log worker, the three webhook workers (dispatch, outbox, retention), and the DataChangeLog retention worker run with a 3 GB ceiling. See the **Worker memory tiers** table above for the rationale on each elevated tier.
 - If a worker is being killed and restarted by PM2 in a tight loop (visible as repeated `restart` events in `pm2 status`), raise `max_memory_restart` and `--max-old-space-size` in `ecosystem.config.js` for that worker before assuming there is a real leak.
 - Monitor with `pm2 monit`
 
@@ -369,6 +370,11 @@ BUDGET_ALERT_CONCURRENCY=2
 # Elasticsearch Reindex Worker (I/O-intensive, default: 2)
 # Balanced for Elasticsearch performance; increase for faster reindexing
 ELASTICSEARCH_REINDEX_CONCURRENCY=2
+
+# Elasticsearch Reindex Worker memory ceiling (defaults: 2G restart / 1536 MB heap).
+# Raise both for very large tenants (many projects / large run history), host RAM permitting.
+# ELASTICSEARCH_REINDEX_MAX_MEMORY_RESTART=4G
+# ELASTICSEARCH_REINDEX_MAX_OLD_SPACE_MB=3072
 
 # Audit Log Worker (lightweight independent writes, default: 10)
 # Can safely be set higher on powerful machines

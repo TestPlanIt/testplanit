@@ -104,8 +104,19 @@ module.exports = {
       instances: 1,
       autorestart: true,
       watch: false,
-      max_memory_restart: "512M",
-      node_args: "--max-old-space-size=384",
+      // A full reindex sweeps every project's cases/runs/sessions/issues and
+      // bulk-loads them into Elasticsearch, so this worker needs far more
+      // headroom than the 512M default that OOM-killed full-DB reindexes: PM2
+      // SIGKILLs the worker mid-job, BullMQ redelivers the same job, and it
+      // restarts from the top — never finishing. Defaults to a 2G ceiling
+      // (matching the forecast worker's full-history sweeps); very large tenants
+      // can raise both via env (host RAM permitting), e.g.
+      // ELASTICSEARCH_REINDEX_MAX_MEMORY_RESTART=4G ELASTICSEARCH_REINDEX_MAX_OLD_SPACE_MB=3072.
+      max_memory_restart:
+        process.env.ELASTICSEARCH_REINDEX_MAX_MEMORY_RESTART || "2G",
+      node_args: `--max-old-space-size=${
+        process.env.ELASTICSEARCH_REINDEX_MAX_OLD_SPACE_MB || "1536"
+      }`,
       env: {
         NODE_ENV: "production",
       },
