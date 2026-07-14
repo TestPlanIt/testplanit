@@ -2186,7 +2186,6 @@
     },
     "sync": {
       "managedByJira": "Jira tarafından yönetiliyor",
-      "managedByJiraDescription": "Bu dönüm noktasının adı, tarihleri ve durumu Jira tarafından yönetilmektedir. Bunları burada güncellemek için orada değişiklik yapın.",
       "lastSynced": "Son senkronizasyon: {time}",
       "openInJira": "Jira'da aç",
       "providerJira": "Jira",
@@ -6249,7 +6248,8 @@
       "description": "## Açıklama\nKilometre taşının amacı, gereksinimleri ve kapsamı hakkında ayrıntılı bilgi.\n\n- Ekip üyeleri için bağlam sağlar\n- Temel gereksinimleri ve hedefleri belgeler\n- İş birliğini ve uyumu destekler",
       "documentation": "## Dokümantasyon\nEk detaylar, referanslar ve destekleyici materyaller.\n\n- Teknik özellikler\n- Tasarım belgeleri\n- Harici referanslar\n- Toplantı notları ve kararlar",
       "automaticCompletion": "## Son Tarihte Otomatik Tamamlama\nSon tarihine ulaşıldığında bu kilometre taşını otomatik olarak tamamlanmış olarak işaretler.\n\n- Kilometre taşı, son tarihte planlanan saatte tamamlanacaktır.\n- Tamamlanma durumundan bağımsız olarak kapanması gereken zaman sınırlı kilometre taşları için kullanışlıdır.\n- Son tarihten önce kilometre taşını manuel olarak tamamlayarak geçersiz kılınabilir.\n- Bir son tarih belirlenmesini gerektirir.",
-      "notifyDaysBefore": "## Son Teslim Tarihinden Günler Önce Bildirim Gönder\nKilometre taşı son teslim tarihi yaklaştığında atanmış ekip üyelerine bildirim gönderin.\n\n- Bildirimleri etkinleştirmek için açın, devre dışı bırakmak için kapatın\n- Hatırlatıcı göndermeye başlamak için son teslim tarihinden kaç gün önce olduğunu girin\n- Bildirimler, bu kilometre taşı içindeki test çalıştırmalarına ve oturumlarına atanmış kullanıcılara gönderilir\n- Süresi geçmiş kilometre taşları tamamlanana kadar hatırlatıcı göndermeye devam edecektir"
+      "notifyDaysBefore": "## Son Teslim Tarihinden Günler Önce Bildirim Gönder\nKilometre taşı son teslim tarihi yaklaştığında atanmış ekip üyelerine bildirim gönderin.\n\n- Bildirimleri etkinleştirmek için açın, devre dışı bırakmak için kapatın\n- Hatırlatıcı göndermeye başlamak için son teslim tarihinden kaç gün önce olduğunu girin\n- Bildirimler, bu kilometre taşı içindeki test çalıştırmalarına ve oturumlarına atanmış kullanıcılara gönderilir\n- Süresi geçmiş kilometre taşları tamamlanana kadar hatırlatıcı göndermeye devam edecektir",
+      "managedByJira": "Bu kilometre taşının adı, tarihleri ve durumu Jira tarafından yönetilmektedir. Bunları burada güncellemek için orada değişiklik yapın."
     },
     "session": {
       "name": "## Oturum Adı\nTest oturumunuzun amacını belirten açık ve açıklayıcı bir ad.\n\n- Benzersiz ve anlamlı olmalıdır\n- Ekip üyelerinin neyin test edildiğini anlamalarına yardımcı olur\n- Raporlarda ve izlemede kullanılır",

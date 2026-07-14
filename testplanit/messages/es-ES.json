@@ -2186,7 +2186,6 @@
     },
     "sync": {
       "managedByJira": "Gestionado por Jira",
-      "managedByJiraDescription": "El nombre, las fechas y el estado de este hito son gestionados por Jira. Realiza los cambios allí para actualizarlos aquí.",
       "lastSynced": "Última sincronización {time}",
       "openInJira": "Abrir en Jira",
       "providerJira": "Jira",
@@ -6249,7 +6248,8 @@
       "description": "## Descripción\nInformación detallada sobre el propósito, los requisitos y el ámbito del hito.\n\n- Contexto de proveedores para los miembros del equipo\n- Requisitos y objetivos clave\n- Soporta colaboración y alineación",
       "documentation": "## Documentación\nMás detalles, referencias y materiales de soporte.\n\n- Especificaciones técnicas\n- Documentos de diseño\n- Referencias externas\n- Notas y decisiones de reuniones",
       "automaticCompletion": "## Completar automáticamente en la fecha de vencimiento\nMarca automáticamente este hito como completado cuando se alcanza su fecha de vencimiento.\n\n- El hito se completará a la hora programada en la fecha de vencimiento\n- Útil para hitos con límite de tiempo que deben cerrarse independientemente del estado de finalización\n- Se puede anular completando manualmente el hito antes de la fecha de vencimiento\n- Requiere que se establezca una fecha de vencimiento",
-      "notifyDaysBefore": "## Notificar días antes de la fecha de vencimiento\nEnvíe notificaciones a los miembros del equipo asignados cuando se acerque la fecha de vencimiento del hito.\n\n- Active para habilitar las notificaciones, desactívelas para deshabilitarlas\n- Ingrese el número de días antes de la fecha de vencimiento para comenzar a enviar recordatorios\n- Las notificaciones se envían a los usuarios asignados a ejecuciones de prueba y sesiones dentro de este hito\n- Los hitos vencidos continuarán enviando recordatorios hasta que se completen"
+      "notifyDaysBefore": "## Notificar días antes de la fecha de vencimiento\nEnvíe notificaciones a los miembros del equipo asignados cuando se acerque la fecha de vencimiento del hito.\n\n- Active para habilitar las notificaciones, desactívelas para deshabilitarlas\n- Ingrese el número de días antes de la fecha de vencimiento para comenzar a enviar recordatorios\n- Las notificaciones se envían a los usuarios asignados a ejecuciones de prueba y sesiones dentro de este hito\n- Los hitos vencidos continuarán enviando recordatorios hasta que se completen",
+      "managedByJira": "El nombre, las fechas y el estado de este hito son gestionados por Jira. Realiza los cambios necesarios allí para actualizarlos aquí."
     },
     "session": {
       "name": "## Nombre de la sesión\nUn nombre claro y descriptivo que identifica el propósito de su sesión de prueba.\n\n- Debe ser único y significativo\n- Ayuda a los miembros del equipo a entender lo que se está probando\n- Utilizado en informes y seguimiento",

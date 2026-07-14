@@ -2186,7 +2186,6 @@
     },
     "sync": {
       "managedByJira": "Verwaltet von Jira",
-      "managedByJiraDescription": "Name, Termine und Status dieses Meilensteins werden von Jira verwaltet. Nehmen Sie dort Änderungen vor, um sie hier zu aktualisieren.",
       "lastSynced": "Zuletzt synchronisiert: {time}",
       "openInJira": "In Jira öffnen",
       "providerJira": "Jira",
@@ -6249,7 +6248,8 @@
       "description": "## Beschreibung\nDetaillierte Informationen zu Zweck, Anforderungen und Umfang des Meilensteins.\n\n- Bietet Kontext für Teammitglieder\n- Dokumentiert wichtige Anforderungen und Ziele\n- Unterstützt Zusammenarbeit und Abstimmung",
       "documentation": "## Dokumentation\nZusätzliche Details, Referenzen und Begleitmaterialien.\n\n- Technische Spezifikationen\n- Konstruktionsdokumente\n- Externe Referenzen\n- Besprechungsprotokolle und Beschlüsse",
       "automaticCompletion": "## Automatische Fertigstellung am Fälligkeitsdatum\nMarkiert diesen Meilenstein automatisch als abgeschlossen, sobald sein Fälligkeitsdatum erreicht ist.\n\n- Der Meilenstein wird zum geplanten Zeitpunkt am Fälligkeitsdatum abgeschlossen.\n- Nützlich für zeitlich begrenzte Meilensteine, die unabhängig vom Abschlussstatus abgeschlossen werden sollen.\n- Kann durch manuelles Abschließen des Meilensteins vor dem Fälligkeitsdatum überschrieben werden.\n- Erfordert die Festlegung eines Fälligkeitsdatums.",
-      "notifyDaysBefore": "## Benachrichtigung Tage vor dem Fälligkeitsdatum\nBenachrichtigungen an zugewiesene Teammitglieder senden, wenn sich das Fälligkeitsdatum des Meilensteins nähert.\n\n- Aktivieren, um Benachrichtigungen einzuschalten, deaktivieren, um sie zu deaktivieren.\n- Anzahl der Tage vor dem Fälligkeitsdatum eingeben, um Erinnerungen zu versenden.\n- Benachrichtigungen werden an Benutzer gesendet, die Testläufen und Sitzungen innerhalb dieses Meilensteins zugewiesen sind.\n- Überfällige Meilensteine senden weiterhin Erinnerungen, bis sie abgeschlossen sind."
+      "notifyDaysBefore": "## Benachrichtigung Tage vor dem Fälligkeitsdatum\nBenachrichtigungen an zugewiesene Teammitglieder senden, wenn sich das Fälligkeitsdatum des Meilensteins nähert.\n\n- Aktivieren, um Benachrichtigungen einzuschalten, deaktivieren, um sie zu deaktivieren.\n- Anzahl der Tage vor dem Fälligkeitsdatum eingeben, um Erinnerungen zu versenden.\n- Benachrichtigungen werden an Benutzer gesendet, die Testläufen und Sitzungen innerhalb dieses Meilensteins zugewiesen sind.\n- Überfällige Meilensteine senden weiterhin Erinnerungen, bis sie abgeschlossen sind.",
+      "managedByJira": "Name, Datum und Status dieses Meilensteins werden von Jira verwaltet. Nehmen Sie dort Änderungen vor, um diese hier zu aktualisieren."
     },
     "session": {
       "name": "## Sitzungsname\nEin klarer, aussagekräftiger Name, der den Zweck Ihrer Testsitzung beschreibt.\n\n- Sollte eindeutig und aussagekräftig sein.\n- Hilft Teammitgliedern zu verstehen, was getestet wird.\n- Wird in Berichten und zur Nachverfolgung verwendet.",

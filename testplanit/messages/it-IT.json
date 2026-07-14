@@ -2186,7 +2186,6 @@
     },
     "sync": {
       "managedByJira": "Gestito da Jira",
-      "managedByJiraDescription": "Il nome, le date e lo stato di questo traguardo sono gestiti da Jira. Apporta le modifiche lì per aggiornarli anche qui.",
       "lastSynced": "Ultima sincronizzazione {time}",
       "openInJira": "Apri in Jira",
       "providerJira": "Jira",
@@ -6249,7 +6248,8 @@
       "description": "## Descrizione\nInformazioni dettagliate sullo scopo, i requisiti e l'ambito della milestone.\n\n- Fornisce il contesto per i membri del team\n- Documenta i requisiti e gli obiettivi chiave\n- Supporta la collaborazione e l'allineamento",
       "documentation": "## Documentazione\nDettagli aggiuntivi, riferimenti e materiali di supporto.\n\n- Specifiche tecniche\n- Documenti di progettazione\n- Riferimenti esterni\n- Appunti e decisioni delle riunioni",
       "automaticCompletion": "## Completamento automatico alla data di scadenza\nContrassegna automaticamente questa milestone come completata al raggiungimento della data di scadenza.\n\n- La milestone verrà completata all'ora programmata alla data di scadenza\n- Utile per milestone a tempo limitato che devono essere chiuse indipendentemente dallo stato di completamento\n- Può essere sovrascritto completando manualmente la milestone prima della data di scadenza\n- Richiede l'impostazione di una data di scadenza",
-      "notifyDaysBefore": "## Notifica giorni prima della data di scadenza\nInvia notifiche ai membri del team assegnati quando si avvicina la data di scadenza della milestone.\n\n- Attiva per abilitare le notifiche, disattiva per disabilitarle\n- Inserisci il numero di giorni prima della data di scadenza per iniziare a inviare promemoria\n- Le notifiche vengono inviate agli utenti assegnati alle esecuzioni di test e alle sessioni all'interno di questa milestone\n- Le milestone in ritardo continueranno a inviare promemoria fino al completamento"
+      "notifyDaysBefore": "## Notifica giorni prima della data di scadenza\nInvia notifiche ai membri del team assegnati quando si avvicina la data di scadenza della milestone.\n\n- Attiva per abilitare le notifiche, disattiva per disabilitarle\n- Inserisci il numero di giorni prima della data di scadenza per iniziare a inviare promemoria\n- Le notifiche vengono inviate agli utenti assegnati alle esecuzioni di test e alle sessioni all'interno di questa milestone\n- Le milestone in ritardo continueranno a inviare promemoria fino al completamento",
+      "managedByJira": "Il nome, le date e lo stato di questa milestone sono gestiti da Jira. Apporta le modifiche lì per aggiornarli anche qui."
     },
     "session": {
       "name": "## Nome sessione\nUn nome chiaro e descrittivo che identifichi lo scopo della sessione di test.\n\n- Deve essere univoco e significativo\n- Aiuta i membri del team a capire cosa viene testato\n- Utilizzato nei report e nel monitoraggio",

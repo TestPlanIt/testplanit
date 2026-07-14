@@ -9,7 +9,7 @@ import {
 } from "@/components/forms/MilestoneSelect";
 import { UserDisplay } from "@/components/search/UserDisplay";
 import TipTapEditor from "@/components/tiptap/TipTapEditor";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Alert, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import {
   FormControl,
@@ -29,7 +29,7 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
-import { Cloud } from "lucide-react";
+import { Cloud, ExternalLink } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
 import React, { useEffect, useMemo, useRef, useState } from "react";
@@ -165,18 +165,47 @@ export default function MilestoneFormControls({
   // owns isCompleted for a synced milestone (see forecastWorker LOCK-04).
   const isSynced = milestone?.integrationId != null;
 
+  // Tracker-provided deep link to the source version/sprint. Only linkable when
+  // it's a real http(s) URL (never `javascript:` etc.), mirroring the safety
+  // check in MilestoneSourceBadge.
+  const jiraUrl =
+    typeof milestone?.externalUrl === "string" &&
+    /^https?:\/\//i.test(milestone.externalUrl)
+      ? milestone.externalUrl
+      : null;
+
   return (
     <div className="space-y-4">
       {isSynced && (
         <Alert
           data-testid="milestone-sync-locked-alert"
-          className="bg-inherit border-muted-foreground"
+          className="bg-inherit border-muted-foreground w-fit"
         >
-          <Cloud className="h-4 w-4" aria-hidden="true" />
-          <AlertTitle>{t("sync.managedByJira")}</AlertTitle>
-          <AlertDescription>
-            {t("sync.managedByJiraDescription")}
-          </AlertDescription>
+          {/* Title only, with the explanatory copy tucked behind a help popover
+              so the locked-sync notice stays a single compact line. The icon +
+              title share a flex row (not the Alert's default absolute-svg slot,
+              which is positioned for a taller title+description alert) so they
+              stay vertically centered. */}
+          <div className="flex items-center">
+            <Cloud className="h-4 w-4 shrink-0" aria-hidden="true" />
+            <AlertTitle className="mb-0 ms-2 flex items-center">
+              {jiraUrl ? (
+                <a
+                  href={jiraUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 hover:underline"
+                  title={t("sync.openInJira")}
+                >
+                  {t("sync.managedByJira")}
+                  <ExternalLink className="h-3.5 w-3.5" />
+                </a>
+              ) : (
+                t("sync.managedByJira")
+              )}
+              <HelpPopover helpKey="milestone.managedByJira" />
+            </AlertTitle>
+          </div>
         </Alert>
       )}
       {isEditMode ? (
@@ -314,15 +343,20 @@ export default function MilestoneFormControls({
             >
               {t(`statusLabels.${getStatus(milestone)}` as any)}
             </Badge>
-            <DateTextDisplay
-              startDate={
-                milestone.startedAt ? new Date(milestone.startedAt) : null
-              }
-              endDate={
-                milestone.completedAt ? new Date(milestone.completedAt) : null
-              }
-              isCompleted={milestone.isCompleted}
-            />
+            {/* Shrink to the date text so the shared DateTextDisplay's baked-in
+                text-end has no slack to push against, and the fit-content box
+                sits at the start (left) of the sidebar. */}
+            <div className="w-fit">
+              <DateTextDisplay
+                startDate={
+                  milestone.startedAt ? new Date(milestone.startedAt) : null
+                }
+                endDate={
+                  milestone.completedAt ? new Date(milestone.completedAt) : null
+                }
+                isCompleted={milestone.isCompleted}
+              />
+            </div>
             {milestone.completedAt && (
               <div className="space-y-1 pt-2">
                 <div className="flex items-center gap-2 text-sm">

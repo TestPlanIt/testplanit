@@ -2186,7 +2186,6 @@
     },
     "sync": {
       "managedByJira": "Managed by Jira",
-      "managedByJiraDescription": "This milestone's name, dates, and status are managed by Jira. Make changes there to update them here.",
       "lastSynced": "Last synced {time}",
       "openInJira": "Open in Jira",
       "providerJira": "Jira",
@@ -6249,7 +6248,8 @@
       "description": "## Description\nDetailed information about the milestone's purpose, requirements, and scope.\n\n- Provides context for team members\n- Documents key requirements and objectives\n- Supports collaboration and alignment",
       "documentation": "## Documentation\nAdditional details, references, and supporting materials.\n\n- Technical specifications\n- Design documents\n- External references\n- Meeting notes and decisions",
       "automaticCompletion": "## Auto-Complete on Due Date\nAutomatically marks this milestone as completed when its due date is reached.\n\n- Milestone will be completed at the scheduled time on the due date\n- Useful for time-boxed milestones that should close regardless of completion status\n- Can be overridden by manually completing the milestone before the due date\n- Requires a due date to be set",
-      "notifyDaysBefore": "## Notify Days Before Due Date\nSend notifications to assigned team members when the milestone due date is approaching.\n\n- Toggle on to enable notifications, off to disable\n- Enter the number of days before the due date to start sending reminders\n- Notifications are sent to users assigned to test runs and sessions within this milestone\n- Overdue milestones will continue to send reminders until completed"
+      "notifyDaysBefore": "## Notify Days Before Due Date\nSend notifications to assigned team members when the milestone due date is approaching.\n\n- Toggle on to enable notifications, off to disable\n- Enter the number of days before the due date to start sending reminders\n- Notifications are sent to users assigned to test runs and sessions within this milestone\n- Overdue milestones will continue to send reminders until completed",
+      "managedByJira": "This milestone's name, dates, and status are managed by Jira. Make changes there to update them here."
     },
     "session": {
       "name": "## Session Name\nA clear, descriptive name that identifies the purpose of your testing session.\n\n- Should be unique and meaningful\n- Helps team members understand what is being tested\n- Used in reports and tracking",

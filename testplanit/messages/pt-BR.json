@@ -2186,7 +2186,6 @@
     },
     "sync": {
       "managedByJira": "Gerenciado pelo Jira",
-      "managedByJiraDescription": "O nome, as datas e o status deste marco são gerenciados pelo Jira. Faça alterações lá para atualizá-los aqui.",
       "lastSynced": "Última sincronização {time}",
       "openInJira": "Abrir no Jira",
       "providerJira": "Jira",
@@ -6249,7 +6248,8 @@
       "description": "## Descrição\nInformações detalhadas sobre o propósito, os requisitos e o escopo do marco.\n\n- Fornece contexto para os membros da equipe\n- Documenta os principais requisitos e objetivos\n- Apoia a colaboração e o alinhamento",
       "documentation": "## Documentação\nDetalhes adicionais, referências e materiais de apoio.\n\n- Especificações técnicas\n- Documentos de projeto\n- Referências externas\n- Atas e decisões de reuniões",
       "automaticCompletion": "## Preenchimento automático na data de vencimento\nMarca automaticamente este marco como concluído quando a data de vencimento for atingida.\n\n- O marco será concluído no horário agendado na data de vencimento.\n- Útil para marcos com tempo definido que devem ser fechados independentemente do status de conclusão.\n- Pode ser substituído pela conclusão manual do marco antes da data de vencimento.\n- Requer que uma data de vencimento seja definida.",
-      "notifyDaysBefore": "## Notificar dias antes do prazo\nEnviar notificações aos membros da equipe atribuídos quando a data de vencimento do marco estiver se aproximando.\n\n- Ative para habilitar as notificações, desative para desabilitar\n- Insira o número de dias antes do prazo para começar a enviar lembretes\n- As notificações são enviadas aos usuários atribuídos às execuções e sessões de teste dentro deste marco\n- Marcos atrasados continuarão enviando lembretes até serem concluídos"
+      "notifyDaysBefore": "## Notificar dias antes do prazo\nEnviar notificações aos membros da equipe atribuídos quando a data de vencimento do marco estiver se aproximando.\n\n- Ative para habilitar as notificações, desative para desabilitar\n- Insira o número de dias antes do prazo para começar a enviar lembretes\n- As notificações são enviadas aos usuários atribuídos às execuções e sessões de teste dentro deste marco\n- Marcos atrasados continuarão enviando lembretes até serem concluídos",
+      "managedByJira": "O nome, as datas e o status deste marco são gerenciados pelo Jira. Faça alterações lá para atualizá-los aqui."
     },
     "session": {
       "name": "## Nome da Sessão\nUm nome claro e descritivo que identifique o propósito da sua sessão de testes.\n\n- Deve ser único e significativo\n- Ajuda os membros da equipe a entenderem o que está sendo testado\n- Usado em relatórios e rastreamento",

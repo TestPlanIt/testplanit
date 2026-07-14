@@ -2186,7 +2186,6 @@
     },
     "sync": {
       "managedByJira": "Zarządzane przez Jira",
-      "managedByJiraDescription": "Nazwa, daty i status tego kamienia milowego są zarządzane przez Jira. Wprowadź zmiany tam, aby zaktualizować je tutaj.",
       "lastSynced": "Ostatnia synchronizacja {time}",
       "openInJira": "Otwórz w Jira",
       "providerJira": "Jira",
@@ -6249,7 +6248,8 @@
       "description": "## Opis\nSzczegółowe informacje o celu, wymaganiach i zakresie kamienia milowego.\n\n— Zapewnia kontekst dla członków zespołu\n— Dokumentuje kluczowe wymagania i cele\n— Wspiera współpracę i spójność",
       "documentation": "## Dokumentacja\nDodatkowe szczegóły, odniesienia i materiały pomocnicze.\n\n- Specyfikacje techniczne\n- Dokumentacja projektowa\n- Odniesienia zewnętrzne\n- Notatki ze spotkań i decyzje",
       "automaticCompletion": "## Automatyczne uzupełnianie w terminie\nAutomatycznie oznacza ten kamień milowy jako ukończony po osiągnięciu jego terminu.\n\n- Kamień milowy zostanie ukończony w zaplanowanym czasie w terminie\n- Przydatne w przypadku kamieni milowych ograniczonych czasowo, które powinny zostać zamknięte niezależnie od statusu ukończenia\n- Można pominąć, ręcznie uzupełniając kamień milowy przed terminem\n- Wymaga ustawienia terminu",
-      "notifyDaysBefore": "## Powiadom na dni przed terminem\nWysyłaj powiadomienia do przypisanych członków zespołu, gdy zbliża się termin osiągnięcia kamienia milowego.\n\n— Włącz, aby włączyć powiadomienia, wyłącz, aby je wyłączyć\n— Wprowadź liczbę dni przed terminem, aby rozpocząć wysyłanie przypomnień\n— Powiadomienia są wysyłane do użytkowników przypisanych do przebiegów testowych i sesji w ramach tego kamienia milowego\n— Przekroczone kamienie milowe będą nadal wysyłać przypomnienia do momentu ich ukończenia"
+      "notifyDaysBefore": "## Powiadom na dni przed terminem\nWysyłaj powiadomienia do przypisanych członków zespołu, gdy zbliża się termin osiągnięcia kamienia milowego.\n\n— Włącz, aby włączyć powiadomienia, wyłącz, aby je wyłączyć\n— Wprowadź liczbę dni przed terminem, aby rozpocząć wysyłanie przypomnień\n— Powiadomienia są wysyłane do użytkowników przypisanych do przebiegów testowych i sesji w ramach tego kamienia milowego\n— Przekroczone kamienie milowe będą nadal wysyłać przypomnienia do momentu ich ukończenia",
+      "managedByJira": "Nazwa, daty i status tego kamienia milowego są zarządzane przez Jira. Wprowadź zmiany, aby je zaktualizować tutaj."
     },
     "session": {
       "name": "## Nazwa sesji\nJasna, opisowa nazwa identyfikująca cel sesji testowej.\n\n– Powinna być unikatowa i znacząca\n– Pomaga członkom zespołu zrozumieć, co jest testowane\n– Używana w raportach i śledzeniu",

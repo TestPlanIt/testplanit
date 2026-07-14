@@ -2186,7 +2186,6 @@
     },
     "sync": {
       "managedByJira": "Beheerd door Jira",
-      "managedByJiraDescription": "De naam, data en status van deze mijlpaal worden beheerd door Jira. Wijzig deze daar om ze hier bij te werken.",
       "lastSynced": "Laatst gesynchroniseerd {time}",
       "openInJira": "Openen in Jira",
       "providerJira": "Jira",
@@ -6249,7 +6248,8 @@
       "description": "## Beschrijving\nGedetailleerde informatie over het doel, de vereisten en de reikwijdte van de mijlpaal.\n\n- Biedt context voor teamleden\n- Documenteert de belangrijkste vereisten en doelstellingen\n- Ondersteunt samenwerking en afstemming",
       "documentation": "## Documentatie\nAanvullende details, referenties en ondersteunend materiaal.\n\n- Technische specificaties\n- Ontwerpdocumenten\n- Externe referenties\n- Vergadernotities en beslissingen",
       "automaticCompletion": "## Automatisch voltooien op de vervaldatum\nMarkeer deze mijlpaal automatisch als voltooid wanneer de vervaldatum is bereikt.\n\n- De mijlpaal wordt voltooid op het geplande tijdstip op de vervaldatum.\n- Handig voor mijlpalen met een tijdslimiet die moeten worden afgesloten ongeacht de voltooiingsstatus.\n- Kan worden overschreven door de mijlpaal handmatig te voltooien vóór de vervaldatum.\n- Vereist dat een vervaldatum is ingesteld.",
-      "notifyDaysBefore": "## Meldingen versturen dagen voor de deadline\nStuur meldingen naar toegewezen teamleden wanneer de deadline van de mijlpaal nadert.\n\n- Schakel de schakelaar in om meldingen in te schakelen, uit om ze uit te schakelen.\n- Voer het aantal dagen voor de deadline in om herinneringen te verzenden.\n- Meldingen worden verzonden naar gebruikers die zijn toegewezen aan testruns en sessies binnen deze mijlpaal.\n- Mijlpalen die te laat zijn, blijven herinneringen verzenden totdat ze zijn voltooid."
+      "notifyDaysBefore": "## Meldingen versturen dagen voor de deadline\nStuur meldingen naar toegewezen teamleden wanneer de deadline van de mijlpaal nadert.\n\n- Schakel de schakelaar in om meldingen in te schakelen, uit om ze uit te schakelen.\n- Voer het aantal dagen voor de deadline in om herinneringen te verzenden.\n- Meldingen worden verzonden naar gebruikers die zijn toegewezen aan testruns en sessies binnen deze mijlpaal.\n- Mijlpalen die te laat zijn, blijven herinneringen verzenden totdat ze zijn voltooid.",
+      "managedByJira": "De naam, datums en status van deze mijlpaal worden beheerd door Jira. Voer daar wijzigingen door om ze hier bij te werken."
     },
     "session": {
       "name": "## Sessienaam\nEen duidelijke, beschrijvende naam die het doel van uw testsessie aangeeft.\n\n- Moet uniek en betekenisvol zijn.\n- Helpt teamleden te begrijpen wat er wordt getest.\n- Wordt gebruikt in rapporten en tracking.",

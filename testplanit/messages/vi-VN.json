@@ -2186,7 +2186,6 @@
     },
     "sync": {
       "managedByJira": "Được quản lý bởi Jira",
-      "managedByJiraDescription": "Tên, ngày và trạng thái của cột mốc này được quản lý bởi Jira. Hãy thực hiện các thay đổi ở đó để cập nhật chúng ở đây.",
       "lastSynced": "Đồng bộ lần cuối {time}",
       "openInJira": "Mở trong Jira",
       "providerJira": "Jira",
@@ -6249,7 +6248,8 @@
       "description": "## Mô tả\nThông tin chi tiết về mục đích, yêu cầu và phạm vi của cột mốc.\n\n- Cung cấp bối cảnh cho các thành viên nhóm\n- Ghi lại các yêu cầu và mục tiêu chính\n- Hỗ trợ sự hợp tác và thống nhất",
       "documentation": "## Tài liệu\nThông tin chi tiết bổ sung, tài liệu tham khảo và tài liệu hỗ trợ.\n\n- Thông số kỹ thuật\n- Tài liệu thiết kế\n- Tài liệu tham khảo bên ngoài\n- Biên bản cuộc họp và quyết định",
       "automaticCompletion": "## Tự động hoàn thành khi đến hạn\nTự động đánh dấu mốc này là đã hoàn thành khi đến hạn.\n\n- Mốc sẽ được hoàn thành vào thời gian đã lên lịch vào ngày đến hạn\n- Hữu ích cho các mốc có giới hạn thời gian, cần được đóng lại bất kể trạng thái hoàn thành\n- Có thể bị ghi đè bằng cách hoàn thành mốc thủ công trước ngày đến hạn\n- Yêu cầu phải đặt ngày đến hạn",
-      "notifyDaysBefore": "## Thông báo trước ngày đến hạn\nGửi thông báo cho các thành viên nhóm được chỉ định khi ngày đến hạn của mốc thời gian sắp đến.\n\n- Bật để kích hoạt thông báo, tắt để vô hiệu hóa\n- Nhập số ngày trước ngày đến hạn để bắt đầu gửi lời nhắc\n- Thông báo được gửi đến người dùng được chỉ định cho các lần chạy thử nghiệm và phiên trong mốc thời gian này\n- Các mốc thời gian quá hạn sẽ tiếp tục gửi lời nhắc cho đến khi hoàn thành"
+      "notifyDaysBefore": "## Thông báo trước ngày đến hạn\nGửi thông báo cho các thành viên nhóm được chỉ định khi ngày đến hạn của mốc thời gian sắp đến.\n\n- Bật để kích hoạt thông báo, tắt để vô hiệu hóa\n- Nhập số ngày trước ngày đến hạn để bắt đầu gửi lời nhắc\n- Thông báo được gửi đến người dùng được chỉ định cho các lần chạy thử nghiệm và phiên trong mốc thời gian này\n- Các mốc thời gian quá hạn sẽ tiếp tục gửi lời nhắc cho đến khi hoàn thành",
+      "managedByJira": "Tên, ngày và trạng thái của cột mốc này được quản lý bởi Jira. Hãy thực hiện các thay đổi ở đó để cập nhật chúng ở đây."
     },
     "session": {
       "name": "## Tên phiên\nMột tên rõ ràng, mô tả mục đích của phiên kiểm thử.\n\n- Nên là duy nhất và có ý nghĩa\n- Giúp các thành viên nhóm hiểu được điều gì đang được kiểm thử\n- Được sử dụng trong báo cáo và theo dõi",
