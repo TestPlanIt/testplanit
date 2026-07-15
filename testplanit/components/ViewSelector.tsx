@@ -218,7 +218,7 @@ export function ViewSelector({
         </SelectContent>
       </Select>
 
-      <div className="px-4 space-y-1">
+      <div className="px-4 space-y-1 pt-2">
         {selectedItem === "templates" && (
           <>
             <div
