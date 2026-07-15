@@ -273,7 +273,7 @@ test.describe("LLM Integration Management - Edit and Delete Operations", () => {
         await page.waitForLoadState("networkidle");
 
         // Find the row with the integration name
-        row = page.locator("tbody tr").filter({ hasText: integrationName });
+        row = page.getByRole("row").filter({ hasText: integrationName });
         await expect(row).toBeVisible({ timeout: 10000 });
       });
 
@@ -359,7 +359,7 @@ test.describe("LLM Integration Management - Edit and Delete Operations", () => {
       await page.waitForLoadState("networkidle");
 
       // Find the row with the integration
-      const row = page.locator("tbody tr").filter({ hasText: integrationName });
+      const row = page.getByRole("row").filter({ hasText: integrationName });
       await expect(row).toBeVisible({ timeout: 10000 });
 
       // Click the delete button using its test ID
@@ -386,7 +386,7 @@ test.describe("LLM Integration Management - Edit and Delete Operations", () => {
         await page.goto("/en-US/admin/llm");
         await page.waitForLoadState("networkidle");
         const deletedRow = page
-          .locator("tbody tr")
+          .getByRole("row")
           .filter({ hasText: integrationName });
         await expect(deletedRow).not.toBeVisible({ timeout: 10000 });
       } else {
@@ -449,9 +449,7 @@ test.describe("LLM Integration Management - Test Connection", () => {
         await page.goto("/en-US/admin/llm");
         await page.waitForLoadState("networkidle");
 
-        const row = page
-          .locator("tbody tr")
-          .filter({ hasText: integrationName });
+        const row = page.getByRole("row").filter({ hasText: integrationName });
         await expect(row).toBeVisible({ timeout: 10000 });
 
         // Click the test button using its test ID

@@ -32,12 +32,13 @@ test.describe("Role Management", () => {
     });
 
     await test.step("Verify the roles table lists at least one role", async () => {
-      // DataTable should be rendered
-      const table = page.locator("table");
+      // VirtualizedDataTable renders a div grid (role="table"), not a <table>
+      const table = page.getByRole("table");
       await expect(table).toBeVisible({ timeout: 10000 });
 
-      // There should be at least one role row (seeded data)
-      const roleRows = page.locator("tbody tr");
+      // There should be at least one role row (seeded data); data rows carry
+      // data-row-id, which excludes the header row
+      const roleRows = page.locator("[data-row-id]");
       await expect(roleRows.first()).toBeVisible({ timeout: 10000 });
     });
   });
@@ -79,7 +80,7 @@ test.describe("Role Management", () => {
       await page.waitForLoadState("networkidle");
 
       // Verify the new role appears in the table
-      const newRoleRow = page.locator("tr").filter({ hasText: roleName });
+      const newRoleRow = page.getByRole("row").filter({ hasText: roleName });
       await expect(newRoleRow).toBeVisible({ timeout: 10000 });
 
       // Get the role ID for cleanup
@@ -118,11 +119,11 @@ test.describe("Role Management", () => {
       await page.waitForLoadState("networkidle");
 
       // Find the role row
-      const roleRow = page.locator("tr").filter({ hasText: originalName });
+      const roleRow = page.getByRole("row").filter({ hasText: originalName });
       await expect(roleRow).toBeVisible({ timeout: 10000 });
 
       // Click the edit button (SquarePen icon button) in actions cell
-      const actionsCell = roleRow.locator("td").last();
+      const actionsCell = roleRow.getByRole("cell").last();
       const editButton = actionsCell.locator("button").first();
       await expect(editButton).toBeVisible();
       await editButton.click();
@@ -153,7 +154,7 @@ test.describe("Role Management", () => {
       await page.waitForLoadState("networkidle");
 
       // Verify updated name appears
-      const updatedRow = page.locator("tr").filter({ hasText: updatedName });
+      const updatedRow = page.getByRole("row").filter({ hasText: updatedName });
       await expect(updatedRow).toBeVisible({ timeout: 10000 });
     } finally {
       if (createdRoleId) {
@@ -179,11 +180,11 @@ test.describe("Role Management", () => {
       await page.waitForLoadState("networkidle");
 
       // Find the role row
-      const roleRow = page.locator("tr").filter({ hasText: roleName });
+      const roleRow = page.getByRole("row").filter({ hasText: roleName });
       await expect(roleRow).toBeVisible({ timeout: 10000 });
 
       // Click the delete button in actions cell
-      const actionsCell = roleRow.locator("td").last();
+      const actionsCell = roleRow.getByRole("cell").last();
       const deleteButton = actionsCell
         .locator("button[class*='destructive']")
         .first();
@@ -215,7 +216,7 @@ test.describe("Role Management", () => {
         await page.reload();
         await page.waitForLoadState("networkidle");
         await expect(
-          page.locator("tr").filter({ hasText: roleName })
+          page.getByRole("row").filter({ hasText: roleName })
         ).toHaveCount(0, { timeout: 5000 });
       }).toPass({ timeout: 20000 });
 
@@ -245,7 +246,7 @@ test.describe("Role Management", () => {
       await page.waitForLoadState("networkidle");
 
       // Find the role row
-      const roleRow = page.locator("tr").filter({ hasText: roleName });
+      const roleRow = page.getByRole("row").filter({ hasText: roleName });
       await expect(roleRow).toBeVisible({ timeout: 10000 });
 
       // The isDefault column has a Switch — find it in the role row
@@ -330,11 +331,11 @@ test.describe("Role Management", () => {
       await page.waitForLoadState("networkidle");
 
       // Find the role row
-      const roleRow = page.locator("tr").filter({ hasText: roleName });
+      const roleRow = page.getByRole("row").filter({ hasText: roleName });
       await expect(roleRow).toBeVisible({ timeout: 10000 });
 
       // Open the edit modal
-      const actionsCell = roleRow.locator("td").last();
+      const actionsCell = roleRow.getByRole("cell").last();
       const editButton = actionsCell.locator("button").first();
       await expect(editButton).toBeVisible();
       await editButton.click();

@@ -48,7 +48,7 @@ test.describe("User Management Gaps", () => {
 
         await test.step("Locate test user row and confirm active toggle", async () => {
           // Find the test user row and the active toggle
-          const userRow = page.locator("tr").filter({ hasText: testEmail });
+          const userRow = page.getByRole("row").filter({ hasText: testEmail });
           await expect(userRow).toBeVisible();
 
           await expect(activeSwitch).toBeVisible();

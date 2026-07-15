@@ -368,8 +368,11 @@ test.describe("Tags", () => {
       await filterInput.fill(originalName);
       await page.waitForLoadState("networkidle");
 
-      // Find the row with our tag
-      const tagRow = page.locator(`tr:has-text("${originalName}")`).first();
+      // Find the row with our tag (admin tags list is a VirtualizedDataTable)
+      const tagRow = page
+        .getByRole("row")
+        .filter({ hasText: originalName })
+        .first();
       await expect(tagRow).toBeVisible({ timeout: 5000 });
 
       // Click the edit button in that row - try multiple icon selectors
@@ -443,8 +446,8 @@ test.describe("Tags", () => {
       await filterInput.fill(tagName);
       await page.waitForLoadState("networkidle");
 
-      // Find the row with our tag
-      const tagRow = page.locator(`tr:has-text("${tagName}")`).first();
+      // Find the row with our tag (admin tags list is a VirtualizedDataTable)
+      const tagRow = page.getByRole("row").filter({ hasText: tagName }).first();
       await expect(tagRow).toBeVisible({ timeout: 5000 });
 
       // Click the delete button in that row
@@ -468,7 +471,9 @@ test.describe("Tags", () => {
 
     await test.step("Verify the tag is no longer in the list", async () => {
       // Verify tag is no longer visible in the filtered list
-      await expect(page.locator(`tr:has-text("${tagName}")`)).not.toBeVisible({
+      await expect(
+        page.getByRole("row").filter({ hasText: tagName })
+      ).not.toBeVisible({
         timeout: 5000,
       });
     });
@@ -1093,8 +1098,11 @@ test.describe("Tags", () => {
       await page.waitForLoadState("networkidle");
 
       // Find the specific row containing our tag name, then click its edit button
-      tableBody = page.locator("table tbody");
-      const tagRow = tableBody.locator("tr").filter({ hasText: activeTagName });
+      // (admin tags list is a VirtualizedDataTable — role="table"/row, no <table>)
+      tableBody = page.getByRole("table");
+      const tagRow = tableBody
+        .getByRole("row")
+        .filter({ hasText: activeTagName });
       await expect(tagRow).toBeVisible({ timeout: 5000 });
 
       const editButton = tagRow.locator("button:has(svg.lucide-square-pen)");
@@ -1251,14 +1259,14 @@ test.describe("Tags", () => {
     });
 
     await test.step("Verify the usage count shows 2", async () => {
-      // Find the row with our tag
-      const tagRow = page.locator(`tr:has-text("${tagName}")`).first();
+      // Find the row with our tag (admin tags list is a VirtualizedDataTable)
+      const tagRow = page.getByRole("row").filter({ hasText: tagName }).first();
       await expect(tagRow).toBeVisible({ timeout: 5000 });
 
       // The "Test Cases" column shows the usage count
       // Looking at columns.tsx, test cases count is in the "cases" column
       // The cell contains CasesListDisplay with a count
-      const testCasesCell = tagRow.locator("td").nth(1); // Second column (after name) is "cases"
+      const testCasesCell = tagRow.getByRole("cell").nth(1); // Second column (after name) is "cases"
 
       // The count should show "2" since we applied the tag to 2 test cases
       // Verify the count displays before clicking

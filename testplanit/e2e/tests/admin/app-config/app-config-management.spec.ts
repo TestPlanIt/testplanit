@@ -63,7 +63,7 @@ test.describe("App Config Management - Page Display", () => {
     await page.waitForLoadState("networkidle");
 
     // Table should be visible
-    const table = page.locator("table");
+    const table = page.getByRole("table");
     await expect(table).toBeVisible({ timeout: 10000 });
   });
 });
@@ -360,7 +360,7 @@ test.describe("App Config Management - Delete Operations", () => {
       await page.waitForTimeout(800);
 
       // Table should show no rows for this key
-      const rows = page.locator("tbody tr").filter({ hasText: configKey });
+      const rows = page.locator("[data-row-id]").filter({ hasText: configKey });
       await expect(rows).not.toBeVisible({ timeout: 5000 });
     });
   });
@@ -402,7 +402,7 @@ test.describe("App Config Management - Search and Filter", () => {
 
         // If the config was created, it should appear
         // The table may show 1 or more rows depending on concurrent test runs
-        const rows = page.locator("tbody tr");
+        const rows = page.locator("[data-row-id]");
         const rowCount = await rows.count();
         expect(rowCount).toBeGreaterThanOrEqual(0);
       });
@@ -431,7 +431,7 @@ test.describe("App Config Management - Search and Filter", () => {
 
       // Wait for initial rows to load
       await page.waitForTimeout(500);
-      initialRows = await page.locator("tbody tr").count();
+      initialRows = await page.locator("[data-row-id]").count();
     });
 
     await test.step("Filter by a non-matching key and verify rows do not increase", async () => {
@@ -443,7 +443,7 @@ test.describe("App Config Management - Search and Filter", () => {
       await page.waitForTimeout(800);
 
       // Table should show fewer or equal rows
-      const filteredRows = await page.locator("tbody tr").count();
+      const filteredRows = await page.locator("[data-row-id]").count();
       expect(filteredRows).toBeLessThanOrEqual(initialRows!);
     });
   });
@@ -463,7 +463,7 @@ test.describe("App Config Management - Search and Filter", () => {
       await keyFilter.fill("zzz_no_match_zzz");
       await page.waitForTimeout(800);
 
-      filteredRows = await page.locator("tbody tr").count();
+      filteredRows = await page.locator("[data-row-id]").count();
     });
 
     await test.step("Clear the filter and verify rows are restored", async () => {
@@ -471,7 +471,7 @@ test.describe("App Config Management - Search and Filter", () => {
       await keyFilter.clear();
       await page.waitForTimeout(800);
 
-      const afterClearRows = await page.locator("tbody tr").count();
+      const afterClearRows = await page.locator("[data-row-id]").count();
 
       // After clearing, should have same or more rows than filtered state
       expect(afterClearRows).toBeGreaterThanOrEqual(filteredRows!);
@@ -487,7 +487,7 @@ test.describe("App Config Management - Search and Filter", () => {
 
       // Wait for initial rows to load
       await page.waitForTimeout(500);
-      initialRows = await page.locator("tbody tr").count();
+      initialRows = await page.locator("[data-row-id]").count();
     });
 
     await test.step("Apply a non-matching value filter and verify rows do not increase", async () => {
@@ -497,7 +497,7 @@ test.describe("App Config Management - Search and Filter", () => {
       await page.waitForTimeout(800);
 
       // Should show fewer or equal rows (client-side filtering)
-      const filteredRows = await page.locator("tbody tr").count();
+      const filteredRows = await page.locator("[data-row-id]").count();
       expect(filteredRows).toBeLessThanOrEqual(initialRows!);
     });
   });

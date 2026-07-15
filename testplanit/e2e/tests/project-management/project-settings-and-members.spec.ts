@@ -237,7 +237,7 @@ test.describe("Project Member Management", () => {
     await filterInput.fill(projectPrefix);
 
     // Wait for the debounced search to filter results
-    const projectRow = page.locator("tr").filter({
+    const projectRow = page.getByRole("row").filter({
       hasText: new RegExp(projectPrefix, "i"),
     });
     await expect(projectRow.first()).toBeVisible({ timeout: 15000 });
@@ -254,7 +254,7 @@ test.describe("Project Member Management", () => {
     const projectRow = await navigateAndFindProject(page);
 
     // The edit button is the first button in the last cell (actions column)
-    const actionsCell = projectRow.locator("td").last();
+    const actionsCell = projectRow.getByRole("cell").last();
     const editButton = actionsCell.locator("button").first();
     await expect(editButton).toBeVisible({ timeout: 5000 });
     await editButton.click();

@@ -28,7 +28,7 @@ test.describe("User Update Operations", () => {
 
         // Find admin user row by email and click profile link
         const adminRow = page
-          .locator("tr")
+          .getByRole("row")
           .filter({ hasText: "admin@example.com" });
         await expect(adminRow).toBeVisible();
         const adminProfileLink = adminRow.locator("a").first();
@@ -104,7 +104,7 @@ test.describe("User Update Operations", () => {
 
         // Find admin user row by email and click profile link
         const adminRow = page
-          .locator("tr")
+          .getByRole("row")
           .filter({ hasText: "admin@example.com" });
         await expect(adminRow).toBeVisible();
         const adminProfileLink = adminRow.locator("a").first();
@@ -207,7 +207,7 @@ test.describe("User Update Operations", () => {
 
         // Find admin user row by email and click profile link
         const adminRow = page
-          .locator("tr")
+          .getByRole("row")
           .filter({ hasText: "admin@example.com" });
         await expect(adminRow).toBeVisible();
         const adminProfileLink = adminRow.locator("a").first();
@@ -329,7 +329,7 @@ test.describe("User Update Operations", () => {
           }
 
           // Find the test user row
-          const userRow = page.locator("tr").filter({ hasText: testEmail });
+          const userRow = page.getByRole("row").filter({ hasText: testEmail });
           await expect(userRow).toBeVisible();
 
           // Use the test ID to find the active toggle switch
@@ -385,11 +385,11 @@ test.describe("User Update Operations", () => {
           await page.waitForLoadState("networkidle");
 
           // Find the test user row
-          const userRow = page.locator("tr").filter({ hasText: testEmail });
+          const userRow = page.getByRole("row").filter({ hasText: testEmail });
           await expect(userRow).toBeVisible();
 
           // Open three-dot dropdown menu and click Edit
-          const actionsCell = userRow.locator("td").last();
+          const actionsCell = userRow.getByRole("cell").last();
           await actionsCell.locator("button").first().click();
           const menu = page.locator('[role="menu"]');
           await expect(menu).toBeVisible({ timeout: 5000 });
@@ -432,7 +432,7 @@ test.describe("User Update Operations", () => {
 
           // Verify update - the updated name should appear in the table
           await expect(
-            page.locator("tr").filter({ hasText: "Updated Edit Test User" })
+            page.getByRole("row").filter({ hasText: "Updated Edit Test User" })
           ).toBeVisible({ timeout: 10000 });
         });
       } finally {
@@ -460,11 +460,11 @@ test.describe("User Update Operations", () => {
           await page.waitForLoadState("networkidle");
 
           // Find the test user row
-          const userRow = page.locator("tr").filter({ hasText: testEmail });
+          const userRow = page.getByRole("row").filter({ hasText: testEmail });
           await expect(userRow).toBeVisible();
 
           // Open three-dot dropdown menu and click Delete
-          const actionsCell = userRow.locator("td").last();
+          const actionsCell = userRow.getByRole("cell").last();
           await actionsCell.locator("button").first().click();
           const menu = page.locator('[role="menu"]');
           await expect(menu).toBeVisible({ timeout: 5000 });
@@ -495,7 +495,7 @@ test.describe("User Update Operations", () => {
 
           // User should no longer be visible (soft deleted users are excluded from the default view)
           await expect(
-            page.locator("tr").filter({ hasText: testEmail })
+            page.getByRole("row").filter({ hasText: testEmail })
           ).toHaveCount(0, { timeout: 5000 });
         });
       } catch (error) {
@@ -594,7 +594,7 @@ test.describe("User Update Operations", () => {
           await page.waitForLoadState("networkidle");
 
           // Verify the user is now visible in the table (not deleted)
-          const userRow = page.locator("tr").filter({ hasText: testEmail });
+          const userRow = page.getByRole("row").filter({ hasText: testEmail });
           await expect(userRow).toBeVisible({ timeout: 10000 });
         });
       } finally {

@@ -232,11 +232,11 @@ test.describe("Modal form state leak regression", () => {
  * which renders a single <table> element.
  */
 async function waitForTableRows(page: Page, minRows: number = 2) {
-  const rows = page.locator("tbody tr");
+  const rows = page.locator("[data-row-id]");
   await expect(rows.first()).toBeVisible({ timeout: 10000 });
   // Give seed data a moment to hydrate
   await page.waitForFunction(
-    (min) => document.querySelectorAll("tbody tr").length >= min,
+    (min) => document.querySelectorAll("[data-row-id]").length >= min,
     minRows,
     { timeout: 10000 }
   );
@@ -248,9 +248,9 @@ async function waitForTableRows(page: Page, minRows: number = 2) {
  * pinned column. Strips whitespace and extra markup noise.
  */
 async function readRowName(page: Page, rowIndex: number): Promise<string> {
-  const row = page.locator("tbody tr").nth(rowIndex);
+  const row = page.locator("[data-row-id]").nth(rowIndex);
   // First td is the pinned name cell for every admin columns.tsx we touched.
-  const cell = row.locator("td").first();
+  const cell = row.getByRole("cell").first();
   const text = (await cell.innerText()).trim();
   // Some cells include badge text like "Default" — take the first line.
   return text.split("\n")[0].trim();
@@ -263,9 +263,9 @@ async function readRowName(page: Page, rowIndex: number): Promise<string> {
  * rightmost column. We target the first button in that cell.
  */
 async function clickRowEditButton(page: Page, rowIndex: number) {
-  const row = page.locator("tbody tr").nth(rowIndex);
+  const row = page.locator("[data-row-id]").nth(rowIndex);
   // The actions cell is the last td and contains 2 buttons: edit + delete.
-  const actionsCell = row.locator("td").last();
+  const actionsCell = row.getByRole("cell").last();
   // Edit is always the first button (ghost variant, SquarePen icon).
   await actionsCell.locator("button").first().click();
 }

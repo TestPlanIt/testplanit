@@ -30,7 +30,7 @@ test.describe("Group Management", () => {
       await expect(groupsTitle).toBeVisible({ timeout: 10000 });
 
       // DataTable should be rendered
-      const table = page.locator("table");
+      const table = page.getByRole("table");
       await expect(table).toBeVisible({ timeout: 10000 });
     });
   });
@@ -81,7 +81,9 @@ test.describe("Group Management", () => {
 
       await test.step("Verify the new group appears and capture its ID", async () => {
         // Verify the new group appears in the table
-        const newGroupRow = page.locator("tr").filter({ hasText: groupName });
+        const newGroupRow = page
+          .getByRole("row")
+          .filter({ hasText: groupName });
         await expect(newGroupRow).toBeVisible({ timeout: 10000 });
 
         // Try to get the group ID for cleanup via API lookup
@@ -137,11 +139,13 @@ test.describe("Group Management", () => {
         await page.waitForLoadState("networkidle");
 
         // Find the group row
-        const groupRow = page.locator("tr").filter({ hasText: originalName });
+        const groupRow = page
+          .getByRole("row")
+          .filter({ hasText: originalName });
         await expect(groupRow).toBeVisible({ timeout: 10000 });
 
         // Click the edit button (SquarePen icon button) in the actions cell
-        const actionsCell = groupRow.locator("td").last();
+        const actionsCell = groupRow.getByRole("cell").last();
         const editButton = actionsCell.locator("button").first();
         await expect(editButton).toBeVisible();
         await editButton.click();
@@ -175,7 +179,9 @@ test.describe("Group Management", () => {
         await page.waitForLoadState("networkidle");
 
         // Verify updated name appears
-        const updatedRow = page.locator("tr").filter({ hasText: updatedName });
+        const updatedRow = page
+          .getByRole("row")
+          .filter({ hasText: updatedName });
         await expect(updatedRow).toBeVisible({ timeout: 10000 });
       });
     } finally {
@@ -218,11 +224,11 @@ test.describe("Group Management", () => {
         await page.waitForLoadState("networkidle");
 
         // Find the group row
-        const groupRow = page.locator("tr").filter({ hasText: groupName });
+        const groupRow = page.getByRole("row").filter({ hasText: groupName });
         await expect(groupRow).toBeVisible({ timeout: 10000 });
 
         // Click the delete button in the actions cell
-        const actionsCell = groupRow.locator("td").last();
+        const actionsCell = groupRow.getByRole("cell").last();
         const deleteButton = actionsCell
           .locator("button[class*='destructive']")
           .first();
@@ -234,18 +240,9 @@ test.describe("Group Management", () => {
       });
 
       await test.step("Confirm the deletion", async () => {
-        // Confirm deletion
-        const _confirmButton = alertDialog
-          .locator(
-            'button[class*="destructive"]:not([disabled]), [data-role="destructive"]'
-          )
-          .last();
-
-        // Fallback if data-role not present — find the action button
-        const alertActions = alertDialog.locator(
-          "button:not([data-radix-alert-dialog-cancel])"
-        );
-        const actionButton = alertActions.last();
+        // Click the confirm delete action button. The destructive
+        // AlertDialogAction is the last button in the dialog footer.
+        const actionButton = alertDialog.locator("button").last();
         await expect(actionButton).toBeVisible();
         await actionButton.click();
 
@@ -254,13 +251,18 @@ test.describe("Group Management", () => {
       });
 
       await test.step("Reload and verify the group is gone", async () => {
-        // Reload and verify group is gone
-        await page.reload();
-        await page.waitForLoadState("networkidle");
-
-        await expect(
-          page.locator("tr").filter({ hasText: groupName })
-        ).toHaveCount(0, { timeout: 5000 });
+        // Let the soft-delete mutation settle, then retry the reload + check —
+        // the table can read a stale row even after a single networkidle, so
+        // reload until the row is gone or the budget expires (mirrors the
+        // passing roles delete test).
+        await page.waitForTimeout(1000);
+        await expect(async () => {
+          await page.reload();
+          await page.waitForLoadState("networkidle");
+          await expect(
+            page.getByRole("row").filter({ hasText: groupName })
+          ).toHaveCount(0, { timeout: 5000 });
+        }).toPass({ timeout: 20000 });
 
         // Group was deleted, clear ID so cleanup doesn't double-delete
         createdGroupId = undefined;
@@ -316,11 +318,11 @@ test.describe("Group Management", () => {
         await page.waitForLoadState("networkidle");
 
         // Find the group row
-        const groupRow = page.locator("tr").filter({ hasText: groupName });
+        const groupRow = page.getByRole("row").filter({ hasText: groupName });
         await expect(groupRow).toBeVisible({ timeout: 10000 });
 
         // Open the edit modal
-        const actionsCell = groupRow.locator("td").last();
+        const actionsCell = groupRow.getByRole("cell").last();
         const editButton = actionsCell.locator("button").first();
         await expect(editButton).toBeVisible();
         await editButton.click();
