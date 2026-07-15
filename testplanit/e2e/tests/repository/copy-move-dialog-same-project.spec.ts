@@ -285,15 +285,15 @@ test.describe("Copy/Move dialog same-project", () => {
       await page.getByTestId("copy-move-next-button").click();
     });
 
-    await test.step("Switch to Move, choose rename, and run the move", async () => {
+    await test.step("Switch to Move and run the move", async () => {
       // Switch to Move.
       await page.getByTestId("copy-move-operation-move").click();
       await expect(page.getByTestId("copy-move-operation-move")).toBeChecked();
 
-      // Same-project move collides with itself on (projectId, name, ...);
-      // pick rename so the worker doesn't skip then soft-delete the original.
-      await page.locator("label[for='cr-rename']").click();
-
+      // A same-project move to a different folder no longer self-collides:
+      // preflight excludes the moved case from collision detection (see
+      // app/api/repository/copy-move/preflight/route.ts), so no conflict-
+      // resolution radio appears. Just run the move.
       await page.getByTestId("copy-move-go-button").click();
     });
 
