@@ -551,11 +551,15 @@ test.describe("Documentation", () => {
       await expect(editor).toBeFocused();
 
       await page.keyboard.press("ControlOrMeta+a");
-      // Let the select-all selection register in ProseMirror's view before
-      // the first keystroke arrives — without this Tiptap occasionally
-      // swallows the leading character.
-      await page.waitForTimeout(100);
-      await page.keyboard.type(testContent);
+      // Insert the whole string atomically (a single insertText input event)
+      // rather than char-by-char typing — Tiptap otherwise occasionally
+      // swallows the leading keystroke ("Persistent" -> "ersistent").
+      await page.keyboard.insertText(testContent);
+
+      // Confirm the editor actually holds the content before we save, so a
+      // swallowed keystroke fails here rather than surfacing as a phantom
+      // "content did not persist" after reload.
+      await expect(editor).toContainText(testContent, { timeout: 5000 });
     });
 
     await test.step("Save the changes", async () => {
