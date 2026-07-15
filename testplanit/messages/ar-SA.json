@@ -3377,6 +3377,15 @@
     "delete": {
       "confirmMessage": "هل أنت متأكد أنك تريد حذف هذا المرفق؟",
       "deferredMessage": "سيتم حذف هذا المرفق عند الحفظ."
+    },
+    "preview": {
+      "unavailable": "المعاينة غير متوفرة",
+      "tooLarge": "هذا الملف كبير جدًا بحيث لا يمكن معاينته.",
+      "empty": "يبدو أن هذا المستند فارغ.",
+      "download": "قم بالتنزيل للعرض",
+      "slideCounter": "الشريحة {current} من {total}",
+      "previousSlide": "الشريحة السابقة",
+      "nextSlide": "الشريحة التالية"
     }
   },
   "reviews": {

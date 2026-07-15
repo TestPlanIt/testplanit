@@ -3377,6 +3377,15 @@
     "delete": {
       "confirmMessage": "Tem certeza de que deseja excluir este anexo?",
       "deferredMessage": "Este anexo será apagado ao salvar."
+    },
+    "preview": {
+      "unavailable": "Pré-visualização indisponível",
+      "tooLarge": "Este arquivo é muito grande para visualizar.",
+      "empty": "Este documento parece estar vazio.",
+      "download": "Baixar para visualizar",
+      "slideCounter": "Slide {current} de {total}",
+      "previousSlide": "Slide anterior",
+      "nextSlide": "Próximo slide"
     }
   },
   "reviews": {

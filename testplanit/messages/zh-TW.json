@@ -3377,6 +3377,15 @@
     "delete": {
       "confirmMessage": "您確定要刪除此附件嗎？",
       "deferredMessage": "儲存時，此附件將被刪除。"
+    },
+    "preview": {
+      "unavailable": "預覽功能無法使用",
+      "tooLarge": "此檔案過大，無法預覽。",
+      "empty": "此文件似乎是空的。",
+      "download": "下載以檢視",
+      "slideCounter": "第 {current} 張投影片，共 {total} 張",
+      "previousSlide": "上一張投影片",
+      "nextSlide": "下一張投影片"
     }
   },
   "reviews": {

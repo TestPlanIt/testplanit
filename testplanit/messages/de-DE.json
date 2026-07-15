@@ -3377,6 +3377,15 @@
     "delete": {
       "confirmMessage": "Möchten Sie diesen Anhang wirklich löschen?",
       "deferredMessage": "Dieser Anhang wird beim Speichern gelöscht."
+    },
+    "preview": {
+      "unavailable": "Vorschau nicht verfügbar",
+      "tooLarge": "Diese Datei ist zu groß für eine Vorschau.",
+      "empty": "Dieses Dokument scheint leer zu sein.",
+      "download": "Zum Anzeigen herunterladen",
+      "slideCounter": "Folie {current} von {total}",
+      "previousSlide": "Vorherige Folie",
+      "nextSlide": "Nächste Folie"
     }
   },
   "reviews": {

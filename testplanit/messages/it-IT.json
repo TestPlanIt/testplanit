@@ -3377,6 +3377,15 @@
     "delete": {
       "confirmMessage": "Sei sicuro di voler eliminare questo allegato?",
       "deferredMessage": "Questo allegato verrà eliminato al momento del salvataggio."
+    },
+    "preview": {
+      "unavailable": "Anteprima non disponibile",
+      "tooLarge": "Questo file è troppo grande per essere visualizzato in anteprima.",
+      "empty": "Questo documento sembra essere vuoto.",
+      "download": "Scarica per visualizzare",
+      "slideCounter": "Diapositiva {current} di {total}",
+      "previousSlide": "Diapositiva precedente",
+      "nextSlide": "Diapositiva successiva"
     }
   },
   "reviews": {

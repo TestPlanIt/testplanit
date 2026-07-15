@@ -3377,6 +3377,15 @@
     "delete": {
       "confirmMessage": "Bạn có chắc chắn muốn xóa tệp đính kèm này không?",
       "deferredMessage": "Tệp đính kèm này sẽ bị xóa khi bạn lưu."
+    },
+    "preview": {
+      "unavailable": "Không thể xem trước",
+      "tooLarge": "Tệp này quá lớn để xem trước.",
+      "empty": "Tài liệu này có vẻ trống.",
+      "download": "Tải xuống để xem",
+      "slideCounter": "Trang chiếu {current} trên {total}",
+      "previousSlide": "Trang chiếu trước",
+      "nextSlide": "Trang chiếu tiếp theo"
     }
   },
   "reviews": {

@@ -3377,6 +3377,15 @@
     "delete": {
       "confirmMessage": "Weet u zeker dat u deze bijlage wilt verwijderen?",
       "deferredMessage": "Deze bijlage wordt verwijderd wanneer u opslaat."
+    },
+    "preview": {
+      "unavailable": "Voorvertoning niet beschikbaar",
+      "tooLarge": "Dit bestand is te groot om te voorvertonen.",
+      "empty": "Dit document lijkt leeg te zijn.",
+      "download": "Downloaden om te bekijken",
+      "slideCounter": "Dia {current} van {total}",
+      "previousSlide": "Vorige dia",
+      "nextSlide": "Volgende dia"
     }
   },
   "reviews": {

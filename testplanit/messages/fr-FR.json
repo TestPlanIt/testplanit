@@ -3377,6 +3377,15 @@
     "delete": {
       "confirmMessage": "Êtes-vous sûr de vouloir supprimer cette pièce jointe ?",
       "deferredMessage": "Cette pièce jointe sera supprimée lors de l'enregistrement."
+    },
+    "preview": {
+      "unavailable": "Aperçu indisponible",
+      "tooLarge": "Ce fichier est trop volumineux pour être prévisualisé.",
+      "empty": "Ce document semble être vide.",
+      "download": "Télécharger pour visualiser",
+      "slideCounter": "Diapositive {current} sur {total}",
+      "previousSlide": "Diapositive précédente",
+      "nextSlide": "Diapositive suivante"
     }
   },
   "reviews": {

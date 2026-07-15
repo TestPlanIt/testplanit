@@ -3377,6 +3377,15 @@
     "delete": {
       "confirmMessage": "Czy na pewno chcesz usunąć ten załącznik?",
       "deferredMessage": "Ten załącznik zostanie usunięty po zapisaniu."
+    },
+    "preview": {
+      "unavailable": "Podgląd niedostępny",
+      "tooLarge": "Ten plik jest zbyt duży, aby wyświetlić podgląd.",
+      "empty": "Ten dokument wydaje się być pusty.",
+      "download": "Pobierz, aby wyświetlić",
+      "slideCounter": "Slajd {current} z {total}",
+      "previousSlide": "Poprzedni slajd",
+      "nextSlide": "Następny slajd"
     }
   },
   "reviews": {

@@ -3377,6 +3377,15 @@
     "delete": {
       "confirmMessage": "您确定要删除此附件吗？",
       "deferredMessage": "保存时，此附件将被删除。"
+    },
+    "preview": {
+      "unavailable": "预览不可用",
+      "tooLarge": "此文件太大，无法预览。",
+      "empty": "此文档似乎为空。",
+      "download": "下载以查看",
+      "slideCounter": "第 {current} 张幻灯片，共 {total} 张",
+      "previousSlide": "上一张幻灯片",
+      "nextSlide": "下一张幻灯片"
     }
   },
   "reviews": {

@@ -3377,6 +3377,15 @@
     "delete": {
       "confirmMessage": "この添付ファイルを削除してもよろしいですか?",
       "deferredMessage": "この添付ファイルは保存すると削除されます。"
+    },
+    "preview": {
+      "unavailable": "プレビューを利用できません",
+      "tooLarge": "このファイルはプレビューするには大きすぎます。",
+      "empty": "このドキュメントは空のようです。",
+      "download": "表示するにはダウンロードしてください",
+      "slideCounter": "{current} / {total}スライド",
+      "previousSlide": "前のスライド",
+      "nextSlide": "次のスライド"
     }
   },
   "reviews": {

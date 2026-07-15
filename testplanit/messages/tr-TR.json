@@ -3377,6 +3377,15 @@
     "delete": {
       "confirmMessage": "Bu eki silmek istediğinizden emin misiniz?",
       "deferredMessage": "Kaydettiğinizde bu ek silinecektir."
+    },
+    "preview": {
+      "unavailable": "Önizleme kullanılamıyor",
+      "tooLarge": "Bu dosya önizleme için çok büyük.",
+      "empty": "Bu belge boş görünüyor.",
+      "download": "Görüntülemek için indirin",
+      "slideCounter": "Slayt {current} / {total}",
+      "previousSlide": "Önceki slayt",
+      "nextSlide": "Sonraki slayt"
     }
   },
   "reviews": {

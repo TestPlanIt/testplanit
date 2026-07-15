@@ -3377,6 +3377,15 @@
     "delete": {
       "confirmMessage": "¿Está seguro que desea eliminar este archivo adjunto?",
       "deferredMessage": "Este archivo adjunto se eliminará cuando lo guardes."
+    },
+    "preview": {
+      "unavailable": "Vista previa no disponible",
+      "tooLarge": "Este archivo es demasiado grande para obtener una vista previa.",
+      "empty": "Este documento parece estar vacío.",
+      "download": "Descargar para ver",
+      "slideCounter": "Diapositiva {current} de {total}",
+      "previousSlide": "Diapositiva anterior",
+      "nextSlide": "Siguiente diapositiva"
     }
   },
   "reviews": {
