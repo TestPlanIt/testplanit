@@ -1,0 +1,64 @@
+/* Scoped styles for injected Office-document markup so it cannot leak into app
+ * chrome. docx-preview self-namespaces under .docx-wrapper/.docx and injects
+ * its own <style>; SheetJS emits a bare, unstyled <table> we style here. */
+
+.wrapper {
+  position: relative;
+  width: 100%;
+  min-height: 384px;
+  max-height: 70vh;
+  overflow: auto;
+  border-radius: 0.5rem;
+}
+
+.loadingOverlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* docx-preview paints its own paginated white pages on a gray gutter. */
+.docContainer {
+  width: 100%;
+}
+
+/* SheetJS sheet_to_html output: render a legible, spreadsheet-like table on a
+ * white surface regardless of app theme (spreadsheets read as white). */
+.excel {
+  padding: 0.5rem;
+  background: #ffffff;
+  color: #111827;
+}
+
+.excel :global(table) {
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+}
+
+.excel :global(td),
+.excel :global(th) {
+  border: 1px solid #d1d5db;
+  padding: 0.25rem 0.5rem;
+  white-space: nowrap;
+}
+
+.excel :global(th) {
+  background: #f3f4f6;
+  font-weight: 600;
+}
+
+/* PowerPoint slides render to a canvas one at a time. */
+.pptxStage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+}
+
+.canvas {
+  max-width: 100%;
+  height: auto;
+}

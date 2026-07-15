@@ -19,15 +19,18 @@ import {
 import { filesize } from "filesize";
 import {
   CloudUpload,
+  FileSpreadsheet,
   FileStack,
   FileText,
   Link as LinkIcon,
   Loader2,
+  Presentation,
   XCircle,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
 import React, { useEffect, useId, useRef, useState } from "react";
+import { getOfficeKind } from "~/lib/utils/officeDocuments";
 
 /**
  * Shape staged by the inline "Add Link" affordance and surfaced to parents
@@ -336,9 +339,18 @@ export default function UploadAttachments({
       return (
         <audio src={fileURL} controls className="w-full h-full rounded-lg" />
       );
-    } else {
-      return <CloudUpload className="m-3 w-full h-full text-primary" />;
     }
+
+    const officeKind = getOfficeKind(file.type, file.name);
+    if (officeKind === "word") {
+      return <FileText className="m-3 w-full h-full text-primary" />;
+    } else if (officeKind === "excel") {
+      return <FileSpreadsheet className="m-3 w-full h-full text-primary" />;
+    } else if (officeKind === "powerpoint") {
+      return <Presentation className="m-3 w-full h-full text-primary" />;
+    }
+
+    return <CloudUpload className="m-3 w-full h-full text-primary" />;
   };
 
   const _truncateFileName = (fileName: string, maxLength = 24) => {

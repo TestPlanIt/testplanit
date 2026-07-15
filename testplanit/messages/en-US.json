@@ -3377,6 +3377,15 @@
     "delete": {
       "confirmMessage": "Are you sure you want to delete this attachment?",
       "deferredMessage": "This attachment will be deleted when you save."
+    },
+    "preview": {
+      "unavailable": "Preview unavailable",
+      "tooLarge": "This file is too large to preview.",
+      "empty": "This document appears to be empty.",
+      "download": "Download to view",
+      "slideCounter": "Slide {current} of {total}",
+      "previousSlide": "Previous slide",
+      "nextSlide": "Next slide"
     }
   },
   "reviews": {

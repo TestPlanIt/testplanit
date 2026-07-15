@@ -1,5 +1,6 @@
 import { LinkFavicon } from "@/components/LinkFavicon";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import { OfficeDocumentPreview } from "@/components/OfficeDocumentPreview";
 import type { Attachments } from "~/zenstack/models";
 import { ExternalLink, File } from "lucide-react";
 import Image from "next/image";
@@ -8,6 +9,7 @@ import type { Components } from "react-markdown";
 import Markdown from "react-markdown";
 import { Link } from "~/lib/navigation";
 import { highlightCode, mapLanguageToPrism } from "~/lib/utils/codeHighlight";
+import { getOfficeKind } from "~/lib/utils/officeDocuments";
 import { getStorageUrlClient } from "~/utils/storageUrl";
 import "prismjs/themes/prism-tomorrow.css";
 
@@ -32,6 +34,7 @@ export const AttachmentPreview: React.FC<AttachmentPreviewProps> = ({
   // Convert MinIO URLs to proxy URLs for trial instances
   const fileURL = getStorageUrlClient(attachment.url) || attachment.url;
   const fileType = attachment.mimeType;
+  const officeKind = getOfficeKind(fileType, attachment.name);
 
   useEffect(() => {
     if (fileType.startsWith("image/")) {
@@ -327,6 +330,16 @@ export const AttachmentPreview: React.FC<AttachmentPreviewProps> = ({
         controls
         className="min-h-[50px] rounded-lg"
         style={{ width: `${width}px` }}
+      />
+    );
+  } else if (officeKind) {
+    return (
+      <OfficeDocumentPreview
+        fileURL={fileURL}
+        name={attachment.name}
+        kind={officeKind}
+        size={size}
+        sizeBytes={attachment.size}
       />
     );
   } else {
