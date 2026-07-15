@@ -6,6 +6,47 @@ installs. You build it yourself from the source attached below.
 
 > ⚠️ This is pre-release software. **Back up your database before trying it.**
 
+### What's new since beta.3
+
+#### Milestones
+
+- Burndown chart on the milestone detail page, with a variance/heat strip and a
+  "% ready" release-readiness rollup on the Issues section
+- New milestone-readiness report, plotted on a time axis
+- Quick-generate test cases directly from the scope-issues table (LLM-assisted)
+- Detail-page overhaul: collapsible persisted accordions, virtualized run/session
+  lists, a milestone-kind filter, and a per-case traceability matrix in the PDF export
+- An activity-log section on the milestone detail page
+- Jira Server/Data Center: milestone-membership sync; compact "managed by Jira"
+  notice; a Milestones linkage column on the Issues tables
+
+#### Attachments
+
+- Inline preview of Word, Excel, and PowerPoint documents
+- Attachment filtering and localization; full-height PDF previews with carousel
+  keyboard navigation
+
+#### Test runs & sessions
+
+- Distribute test-case assignments across team members
+- Webhooks emit `test_run.duplicated` / `session.duplicated` on duplicate
+- Fixed iteration result recording stalling on a page-wide refetch
+
+#### Audit log
+
+- Edits attribute to the acting user (admin config, milestones, projects, comments)
+- Rich-text description edits are recorded, and JSON diff columns now render
+  readably instead of showing `[object Object]`
+
+#### Platform & fixes
+
+- Configurable API rate limit (`API_RATE_LIMIT`)
+- Single-default-per-catalog enforced atomically via database triggers
+- Testmo import no longer writes the Jira key into the external id
+- PDF exports handle non-Latin text; steadier live-stream connections and fewer
+  reconnect refetch storms; no more theme-change flash on load
+- Dependency bumps, translation syncs, and documentation updates
+
 ### Try it
 
 1. Download **Source code (zip / tar.gz)** from the Assets below (or
