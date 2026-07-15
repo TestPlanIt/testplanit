@@ -19,7 +19,7 @@ test.describe("Milestone CRUD", () => {
 
     await test.step("Open the milestones page", async () => {
       await page.goto(`/en-US/projects/milestones/${projectId}`);
-      await page.waitForLoadState("networkidle");
+      await page.waitForLoadState("load");
 
       // Verify page loaded
       const activeTab = page.getByRole("tab", { name: /Active/i });
@@ -106,7 +106,7 @@ test.describe("Milestone CRUD", () => {
       await page.goto(
         `/en-US/projects/milestones/${projectId}/${milestoneId}?edit=true`
       );
-      await page.waitForLoadState("networkidle");
+      await page.waitForLoadState("load");
 
       // Wait for the form to be in edit mode (Save button visible)
       saveButton = page.getByRole("button", { name: /Save/i });
@@ -154,7 +154,7 @@ test.describe("Milestone CRUD", () => {
     await test.step("Open the parent milestone detail page", async () => {
       // Navigate to the parent milestone detail page
       await page.goto(`/en-US/projects/milestones/${projectId}/${parentId}`);
-      await page.waitForLoadState("networkidle");
+      await page.waitForLoadState("load");
 
       // Wait for page to fully render
       await expect(page.getByRole("button", { name: /Edit/i })).toBeVisible({
@@ -180,7 +180,7 @@ test.describe("Milestone CRUD", () => {
 
     await test.step("Open the milestones page and confirm the milestone is listed", async () => {
       await page.goto(`/en-US/projects/milestones/${projectId}`);
-      await page.waitForLoadState("networkidle");
+      await page.waitForLoadState("load");
 
       // Active tab should be visible
       const activeTab = page.getByRole("tab", { name: /Active/i });
@@ -246,7 +246,7 @@ test.describe("Milestone CRUD", () => {
       // automatically invalidated by server actions. Reload the page to
       // get fresh data from the server.
       await page.reload();
-      await page.waitForLoadState("networkidle");
+      await page.waitForLoadState("load");
 
       // Switch to Completed tab to verify
       const completedTab = page.getByRole("tab", { name: /Completed/i });
@@ -281,7 +281,7 @@ test.describe("Milestone CRUD", () => {
     await test.step("Open the milestones list and confirm the parent is listed", async () => {
       // Navigate to milestones list
       await page.goto(`/en-US/projects/milestones/${projectId}`);
-      await page.waitForLoadState("networkidle");
+      await page.waitForLoadState("load");
 
       const activeTab = page.getByRole("tab", { name: /Active/i });
       await expect(activeTab).toBeVisible({ timeout: 10000 });
@@ -322,7 +322,7 @@ test.describe("Milestone CRUD", () => {
 
     await test.step("Verify the parent milestone is gone", async () => {
       // Wait for the list to refresh after deletion
-      await page.waitForLoadState("networkidle");
+      await page.waitForLoadState("load");
 
       // Parent should no longer be visible
       await expect(page.getByText(parentName)).not.toBeVisible({
@@ -349,7 +349,7 @@ test.describe("Milestone CRUD", () => {
       await page.goto(
         `/en-US/projects/milestones/${projectId}/${milestoneId}?edit=true`
       );
-      await page.waitForLoadState("networkidle");
+      await page.waitForLoadState("load");
 
       // Wait for edit mode (Save button visible)
       await expect(page.getByRole("button", { name: /Save/i })).toBeVisible({

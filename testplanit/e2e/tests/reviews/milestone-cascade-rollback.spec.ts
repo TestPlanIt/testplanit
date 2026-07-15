@@ -148,7 +148,7 @@ test.describe("Milestone cascade rollback", () => {
     await test.step("Open milestone Complete dialog", async () => {
       // Open milestones page and click into the milestone's 3-dot menu.
       await page.goto(`/en-US/projects/milestones/${projectId}`);
-      await page.waitForLoadState("networkidle");
+      await page.waitForLoadState("load");
 
       // Ensure the Active tab is loaded (milestone seeded with isStarted=true).
       const activeTab = page.getByRole("tab", { name: /Active/i });

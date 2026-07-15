@@ -168,7 +168,7 @@ test("Project Milestones AddMilestone modal resets between opens", async ({
 
   await test.step("Open the project milestones page", async () => {
     await page.goto(`/en-US/projects/milestones/${projectId}`);
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
     await expect(addMilestoneButton).toBeVisible({ timeout: 10000 });
   });
 
@@ -215,7 +215,7 @@ test("Project Sessions AddSessionModal resets between opens", async ({
 
   await test.step("Open the project sessions page", async () => {
     await page.goto(`/en-US/projects/sessions/${projectId}`);
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
     await expect(addSessionButton).toBeVisible({ timeout: 10000 });
   });
 
@@ -266,7 +266,7 @@ test("Project Test Runs AddTestRunModal resets between opens", async ({
 
   await test.step("Open the project test runs page", async () => {
     await page.goto(`/en-US/projects/runs/${projectId}`);
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
     await expect(addRunButton).toBeVisible({ timeout: 10000 });
   });
 

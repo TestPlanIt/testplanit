@@ -76,7 +76,7 @@ test.describe("Milestone manual unlink", () => {
 
     await test.step("Open the synced milestone's detail page", async () => {
       await page.goto(`/en-US/projects/milestones/${projectId}/${milestoneId}`);
-      await page.waitForLoadState("networkidle");
+      await page.waitForLoadState("load");
       await expect(page.getByTestId("milestone-source-badge")).toBeVisible();
     });
 
@@ -140,7 +140,7 @@ test.describe("Milestone manual unlink", () => {
 
     await test.step("Open the detail page and the unlink dialog", async () => {
       await page.goto(`/en-US/projects/milestones/${projectId}/${milestoneId}`);
-      await page.waitForLoadState("networkidle");
+      await page.waitForLoadState("load");
       await page.getByTestId("milestone-source-badge").click();
       await page.getByTestId("milestone-source-menu-unlink").click();
       await expect(
