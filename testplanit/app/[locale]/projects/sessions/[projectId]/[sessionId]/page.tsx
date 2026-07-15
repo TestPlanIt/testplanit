@@ -90,6 +90,7 @@ import {
   CircleCheckBig,
   CircleSlash2,
   Combine,
+  Compass,
   FileDown,
   Save,
   SquarePen,
@@ -1822,7 +1823,10 @@ export default function SessionPage() {
                     )}
                   />
                 ) : (
-                  sessionData?.name || ""
+                  <span className="flex items-center gap-2">
+                    <Compass className="h-6 w-6 shrink-0" />
+                    {sessionData?.name || ""}
+                  </span>
                 )}
               </CardTitle>
               <div className="flex items-start gap-2">

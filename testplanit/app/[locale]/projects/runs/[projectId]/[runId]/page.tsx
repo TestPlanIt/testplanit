@@ -87,6 +87,7 @@ import {
   Copy,
   FileDown,
   Maximize2,
+  PlayCircle,
   Save,
   SquarePen,
   Trash2,
@@ -1598,7 +1599,10 @@ export default function TestRunPage() {
                     )}
                   />
                 ) : (
-                  testRunData?.name
+                  <span className="flex items-center gap-2">
+                    <PlayCircle className="h-6 w-6 shrink-0" />
+                    {testRunData?.name}
+                  </span>
                 )}
               </CardTitle>
               <div className="flex items-start gap-2 flex-wrap">
