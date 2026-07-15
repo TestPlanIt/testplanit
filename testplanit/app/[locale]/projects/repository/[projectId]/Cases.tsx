@@ -93,6 +93,135 @@ import { QuickScriptModal } from "./QuickScriptModal";
 
 type PageSizeOption = number | "All";
 
+// Shared select fragments for the repository-case row shape. Both the
+// repository list query (REPOSITORY_CASE_LIST_SELECT) and the run-mode
+// testRunCases query further down embed these identical fragments so the
+// shared column renderers in ./columns receive the same row shape in either
+// mode. Keeping them in one place stops the two query paths from silently
+// drifting — run mode previously rendered raw field values because its
+// caseFieldValues select omitted the nested field.type the renderer keys off.
+const CASE_STATE_SELECT = {
+  select: {
+    id: true,
+    name: true,
+    workflowType: true,
+    icon: {
+      select: {
+        name: true,
+      },
+    },
+    color: {
+      select: {
+        value: true,
+      },
+    },
+  },
+} as const;
+
+const CASE_TEMPLATE_SELECT = {
+  select: {
+    id: true,
+    templateName: true,
+    caseFields: {
+      select: {
+        caseField: {
+          select: {
+            id: true,
+            defaultValue: true,
+            displayName: true,
+            type: {
+              select: {
+                type: true,
+              },
+            },
+            fieldOptions: {
+              select: {
+                fieldOption: {
+                  select: {
+                    id: true,
+                    icon: true,
+                    iconColor: true,
+                    name: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  },
+} as const;
+
+const CASE_FIELD_VALUES_SELECT = {
+  select: {
+    id: true,
+    value: true,
+    fieldId: true,
+    field: {
+      select: {
+        id: true,
+        displayName: true,
+        type: {
+          select: {
+            type: true,
+          },
+        },
+      },
+    },
+  },
+  where: { field: { isEnabled: true, isDeleted: false } },
+} as const;
+
+const CASE_ATTACHMENTS_SELECT = {
+  orderBy: { createdAt: "desc" },
+  where: { isDeleted: false },
+} as const;
+
+// Kept as a standalone (non-`as const`) array so the OR clause types as a
+// mutable WhereInput[]; a readonly tuple produced by `as const` is rejected by
+// the generated query-args type.
+const STEP_VISIBILITY_OR = [
+  { sharedStepGroupId: null },
+  { sharedStepGroup: { isDeleted: false } },
+];
+
+const CASE_STEPS_SELECT = {
+  where: {
+    isDeleted: false,
+    OR: STEP_VISIBILITY_OR,
+  },
+  orderBy: { order: "asc" },
+  select: {
+    id: true,
+    order: true,
+    step: true,
+    expectedResult: true,
+    sharedStepGroupId: true,
+    sharedStepGroup: {
+      select: {
+        name: true,
+      },
+    },
+  },
+} as const;
+
+const CASE_TAGS_SELECT = {
+  where: { tag: { isDeleted: false } },
+  include: { tag: true },
+} as const;
+
+const CASE_ISSUES_SELECT = {
+  where: { issue: { isDeleted: false } },
+  include: {
+    issue: {
+      include: {
+        integration: true,
+      },
+    },
+  },
+} as const;
+
 // Shared select shape for repository case list queries. Used by both the
 // ZenStack useFindManyRepositoryCases hook (default GET path) and the
 // by-folder-descendants POST endpoint (used when "Show all descendants" is
@@ -120,116 +249,13 @@ const REPOSITORY_CASE_LIST_SELECT = {
   isDeleted: true,
   currentVersion: true,
   source: true,
-  state: {
-    select: {
-      id: true,
-      name: true,
-      workflowType: true,
-      icon: {
-        select: {
-          name: true,
-        },
-      },
-      color: {
-        select: {
-          value: true,
-        },
-      },
-    },
-  },
-  template: {
-    select: {
-      id: true,
-      templateName: true,
-      caseFields: {
-        select: {
-          caseField: {
-            select: {
-              id: true,
-              defaultValue: true,
-              displayName: true,
-              type: {
-                select: {
-                  type: true,
-                },
-              },
-              fieldOptions: {
-                select: {
-                  fieldOption: {
-                    select: {
-                      id: true,
-                      icon: true,
-                      iconColor: true,
-                      name: true,
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
-    },
-  },
-  caseFieldValues: {
-    select: {
-      id: true,
-      value: true,
-      fieldId: true,
-      field: {
-        select: {
-          id: true,
-          displayName: true,
-          type: {
-            select: {
-              type: true,
-            },
-          },
-        },
-      },
-    },
-    where: { field: { isEnabled: true, isDeleted: false } },
-  },
-  attachments: {
-    orderBy: { createdAt: "desc" },
-    where: { isDeleted: false },
-  },
-  steps: {
-    where: {
-      isDeleted: false,
-      OR: [
-        { sharedStepGroupId: null },
-        { sharedStepGroup: { isDeleted: false } },
-      ],
-    },
-    orderBy: { order: "asc" },
-    select: {
-      id: true,
-      order: true,
-      step: true,
-      expectedResult: true,
-      sharedStepGroupId: true,
-      sharedStepGroup: {
-        select: {
-          name: true,
-        },
-      },
-    },
-  },
-  caseTags: {
-    where: { tag: { isDeleted: false } },
-    include: { tag: true },
-  },
-  caseIssues: {
-    where: { issue: { isDeleted: false } },
-    include: {
-      issue: {
-        include: {
-          integration: true,
-        },
-      },
-    },
-  },
+  state: CASE_STATE_SELECT,
+  template: CASE_TEMPLATE_SELECT,
+  caseFieldValues: CASE_FIELD_VALUES_SELECT,
+  attachments: CASE_ATTACHMENTS_SELECT,
+  steps: CASE_STEPS_SELECT,
+  caseTags: CASE_TAGS_SELECT,
+  caseIssues: CASE_ISSUES_SELECT,
   testRuns: {
     select: {
       id: true,
@@ -1833,61 +1859,13 @@ export default function Cases({
               isDeleted: true,
               currentVersion: true,
               source: true,
-              state: {
-                select: {
-                  id: true,
-                  name: true,
-                  icon: {
-                    select: {
-                      name: true,
-                    },
-                  },
-                  color: {
-                    select: {
-                      value: true,
-                    },
-                  },
-                },
-              },
-              template: {
-                select: {
-                  id: true,
-                  templateName: true,
-                  caseFields: {
-                    select: {
-                      caseField: {
-                        select: {
-                          id: true,
-                          defaultValue: true,
-                          displayName: true,
-                          type: {
-                            select: {
-                              type: true,
-                            },
-                          },
-                          fieldOptions: {
-                            select: {
-                              fieldOption: {
-                                select: {
-                                  id: true,
-                                  icon: true,
-                                  iconColor: true,
-                                  name: true,
-                                },
-                              },
-                            },
-                          },
-                        },
-                      },
-                    },
-                  },
-                },
-              },
-              caseFieldValues: true,
-              attachments: true,
-              steps: true,
-              caseTags: { include: { tag: true } },
-              caseIssues: { include: { issue: true } },
+              state: CASE_STATE_SELECT,
+              template: CASE_TEMPLATE_SELECT,
+              caseFieldValues: CASE_FIELD_VALUES_SELECT,
+              attachments: CASE_ATTACHMENTS_SELECT,
+              steps: CASE_STEPS_SELECT,
+              caseTags: CASE_TAGS_SELECT,
+              caseIssues: CASE_ISSUES_SELECT,
               testRuns: {
                 select: {
                   id: true,

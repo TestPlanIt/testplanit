@@ -329,6 +329,7 @@ function SortableItem<
           return (
             <TableCell
               key={cell.id} // Use cell.id from the found cell
+              data-column-id={String(cell.column.id)}
               onClick={
                 cell.column.id === "actions"
                   ? (e) => e.stopPropagation()

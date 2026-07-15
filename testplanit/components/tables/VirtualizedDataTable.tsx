@@ -839,6 +839,7 @@ export function VirtualizedDataTable({
                         <div
                           key={column.id}
                           role="cell"
+                          data-column-id={String(column.id)}
                           className={cn(
                             "flex min-w-0 items-center overflow-hidden border-e px-3 py-2 text-sm last:border-e-0",
                             !isFlex && "shrink-0",

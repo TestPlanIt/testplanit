@@ -946,6 +946,7 @@ export function DataTable<TData extends DataRow, TValue>({
                     return (
                       <TableCell
                         key={String(column.id)}
+                        data-column-id={String(column.id)}
                         style={cellPinningStyleFn(column)}
                         className={`${column.getIsPinned() ? "bg-background shadow-md" : isSelected ? "bg-primary/20" : "bg-primary-foreground/80"} ${
                           column.id === "expander" ||
