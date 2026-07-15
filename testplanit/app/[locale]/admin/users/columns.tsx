@@ -58,9 +58,7 @@ export const useColumns = (
       {
         id: "name",
         accessorKey: "name",
-        header: () => (
-          <div className="bg-primary-foreground">{tCommon("name")}</div>
-        ),
+        header: tCommon("name"),
         enableSorting: true,
         enableResizing: true,
         enableHiding: false,
