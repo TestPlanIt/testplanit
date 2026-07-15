@@ -1,3 +1,4 @@
+import { useDirection } from "@radix-ui/react-direction";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { AttachmentPreview } from "@/components/AttachmentPreview";
@@ -53,6 +54,7 @@ export const AttachmentsCarousel: React.FC<AttachmentsCarouselProps> = ({
 }) => {
   const { data: session } = useSession();
   const t = useTranslations();
+  const dir = useDirection();
   const [api, setApi] = useState<CarouselApi>();
   const [current, setCurrent] = useState(initialIndex);
   const { mutateAsync: updateAttachments } =
@@ -85,6 +87,36 @@ export const AttachmentsCarousel: React.FC<AttachmentsCarouselProps> = ({
       };
     }
   }, [api]);
+
+  // Arrow-key navigation. The shadcn Carousel only listens for arrows while
+  // focus is within its own root, which never happens here — focus lands on the
+  // dialog chrome or an embedded viewer — so wire a window-level handler that
+  // works wherever focus sits inside the modal. If focus is inside the carousel
+  // root its own handler runs first and calls preventDefault, so bail on an
+  // already-handled event to avoid moving two slides at once.
+  useEffect(() => {
+    if (!api) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.defaultPrevented) return;
+      if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+      const target = event.target as HTMLElement | null;
+      if (
+        target instanceof HTMLInputElement ||
+        target instanceof HTMLTextAreaElement ||
+        target instanceof HTMLSelectElement ||
+        target?.isContentEditable
+      ) {
+        return;
+      }
+      event.preventDefault();
+      // In RTL the visual order flips, so the physical arrow keys swap.
+      const goPrev = (event.key === "ArrowLeft") !== (dir === "rtl");
+      if (goPrev) api.scrollPrev();
+      else api.scrollNext();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [api, dir]);
 
   const handlePrev = () => {
     if (api && current > 0) {

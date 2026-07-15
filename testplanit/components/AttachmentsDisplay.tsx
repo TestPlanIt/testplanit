@@ -493,7 +493,7 @@ export const AttachmentsDisplay: React.FC<AttachmentsProps> = ({
                     <div className="text-lg font-bold text-center mb-2 cursor-pointer">
                       {prevAttachment.name}
                     </div>
-                    <div className="flex flex-col md:flex-row w-full h-80">
+                    <div className="flex flex-col md:flex-row w-full h-80 overflow-hidden">
                       <div className="md:w-2/3 flex flex-col h-full">
                         <div className="w-full h-full flex justify-center cursor-pointer">
                           <AttachmentPreview

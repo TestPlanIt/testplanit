@@ -125,12 +125,27 @@ export const AttachmentPreview: React.FC<AttachmentPreviewProps> = ({
       </div>
     );
   } else if (fileType === "application/pdf") {
-    const { height: _height } = getSizeClasses(32);
+    // A bare iframe defaults to 150px tall, and `h-full` collapsed here because
+    // the flex ancestors have no definite height — so the PDF rendered short
+    // with empty space below it. Give large previews (details page + carousel)
+    // a tall height that their containers clamp via overflow-hidden: the details
+    // page caps at max-h-96, the carousel at max-h-[80vh]. Compact list badges
+    // (small/medium) stay proportionally sized.
+    const pdfHeight =
+      size === "large"
+        ? "h-[70vh] min-h-[384px]"
+        : size === "medium"
+          ? "h-48"
+          : "h-24";
     return (
       <iframe
         src={fileURL}
-        className={`w-full h-full rounded-lg`}
+        className={`w-full ${pdfHeight} rounded-lg`}
         title={attachment.name}
+        // Keep the PDF viewer out of the tab order so it doesn't grab focus when
+        // the carousel dialog opens — focus inside the iframe swallows Escape and
+        // arrow keys. It's still clickable to interact with the document.
+        tabIndex={-1}
       />
     );
   } else if (fileType.startsWith("text/uri")) {

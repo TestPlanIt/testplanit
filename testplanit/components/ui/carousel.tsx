@@ -89,6 +89,17 @@ const Carousel = React.forwardRef<
 
     const handleKeyDown = React.useCallback(
       (event: React.KeyboardEvent<HTMLDivElement>) => {
+        // Don't hijack arrow keys while the user is typing in a form control
+        // inside the carousel (e.g. an editable caption) — let the caret move.
+        const target = event.target as HTMLElement | null;
+        if (
+          target instanceof HTMLInputElement ||
+          target instanceof HTMLTextAreaElement ||
+          target instanceof HTMLSelectElement ||
+          target?.isContentEditable
+        ) {
+          return;
+        }
         // In RTL the carousel scrolls the opposite way, so arrow keys swap.
         if (event.key === "ArrowLeft") {
           event.preventDefault();
