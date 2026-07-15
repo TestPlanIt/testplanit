@@ -202,14 +202,14 @@ export const AttachmentsCarousel: React.FC<AttachmentsCarouselProps> = ({
 
   return (
     <Dialog open={true} onOpenChange={onClose}>
-      <DialogContent className="w-full min-w-md max-w-6xl overflow-hidden">
-        <DialogHeader>
+      <DialogContent className="w-full min-w-md max-w-6xl overflow-hidden flex flex-col">
+        <DialogHeader className="shrink-0">
           <DialogTitle>{t("attachments.viewer.title")}</DialogTitle>
           <DialogDescription>
             {current + 1} {t("common.of")} {attachments.length}
           </DialogDescription>
         </DialogHeader>
-        <div className="relative w-full max-h-[80vh] overflow-hidden">
+        <div className="relative w-full flex-1 min-h-0 overflow-hidden">
           <Carousel
             setApi={setApi}
             className="w-full min-w-sm max-w-5xl mx-auto"
@@ -394,7 +394,7 @@ export const AttachmentsCarousel: React.FC<AttachmentsCarouselProps> = ({
             <ChevronRight className="w-6 h-6" />
           </Button>
         </div>
-        <DialogFooter>
+        <DialogFooter className="shrink-0">
           <div className="flex items-center gap-4">
             {(() => {
               const isLink = attachments[current].mimeType === "text/uri-list";

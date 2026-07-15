@@ -368,7 +368,7 @@ export const AttachmentsDisplay: React.FC<AttachmentsProps> = ({
                             )}
                           />
                         ) : (
-                          <div className="w-full">
+                          <div className="w-full max-h-24 overflow-y-auto whitespace-pre-wrap">
                             {displayValues.note || t("common.access.none")}
                           </div>
                         )}
