@@ -27,6 +27,7 @@ The header displays:
     - **Edit**: Switches the page to Edit mode (if user has permission).
     - **Duplicate**: Opens the duplication dialog to create a copy of the test run.
     - **Export PDF**: Exports the test run to a PDF document including all metadata, description, documentation, test cases (ordered by run order) with their execution status, results, step results, custom field values, and attachments. Available for both regular and JUnit/automated test runs.
+    - **Assign**: Opens the [Distribute assignments](#distributing-assignments) dialog to spread the run's test cases across several team members at once (requires add/edit permission on Test Runs).
     - **Complete**: Opens a confirmation dialog to mark the run as finished. Here you select the final "Done" state from the workflow and set the completion date. This action is irreversible (if user has permission).
   - **View Mode (Completed Run)**:
     - Displays a "Completed On [Date]" badge.
@@ -78,6 +79,38 @@ This feature is useful for:
 - Comparing test results across different browsers, operating systems, or environments
 - Getting an overview of testing progress across a matrix of configurations
 - Identifying test cases that fail in specific configurations
+
+## Distributing Assignments
+
+The **Assign** button in the header (View mode, active runs) opens the **Distribute assignments** dialog, which spreads the run's test cases across several team members in one step — instead of assigning each case individually. It is available to users with add/edit permission on Test Runs and is disabled once a run is completed.
+
+Rather than splitting cases at random, the distributor keeps related work together and balances the load, so testers spend less time switching context.
+
+### Team members
+
+Select one or more members to distribute the cases among. Only users with access to the project are listed.
+
+### Options
+
+- **Configurations** (multi-configuration runs only): distribute across **All configurations** in the group, or **This run only** (the currently viewed configuration).
+- **Configuration strategy** (multi-configuration runs only):
+  - **Split by configuration** (default): each tester owns whole configurations. Best when environments are expensive to set up, or specific people own specific environments, since each tester stays in one environment.
+  - **Keep configurations together**: each tester owns a set of cases across every configuration. Best when the cost of learning a case outweighs the cost of switching environments, since each case is learned once and then repeated across configurations.
+- **Group similar cases** (on by default): keeps cases in the same repository section — and sharing the same tags — with one tester, reducing context switching. (Applies to the Keep configurations together strategy.)
+- **Balance by**:
+  - **Estimated time** (default): balances the summed case estimates so each tester receives roughly equal _effort_. Cases without an estimate fall back to the median estimate; if no case has an estimate, this falls back to case count.
+  - **Number of cases**: balances the case count so each tester receives roughly the same _number_ of cases.
+- **Existing assignments**:
+  - **Only fill unassigned cases** (default): leaves already-assigned cases untouched and distributes the rest.
+  - **Reassign everything**: redistributes every case, overwriting existing assignees.
+
+Completed cases are always skipped, as they can no longer be modified.
+
+### Preview
+
+A live preview updates as you change the options, showing each selected member with the number of **Cases** and the total **Estimate** they will receive. For multi-configuration runs, a column per configuration shows the per-environment breakdown; the **Team Member** and **Cases** columns stay pinned while the configuration columns scroll. Any skipped cases (already assigned, or completed) are noted below the table.
+
+Click **Assign** to apply the distribution. Each assignee is notified of their newly assigned cases.
 
 ## Right Panel Content
 

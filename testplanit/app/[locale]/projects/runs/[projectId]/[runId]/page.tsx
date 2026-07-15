@@ -91,6 +91,7 @@ import {
   SquarePen,
   Trash2,
   TriangleAlert,
+  UsersRound,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
@@ -117,6 +118,7 @@ import DuplicateTestRunDialog, {
   AddTestRunModalInitProps,
 } from "../DuplicateTestRunDialog";
 import CompleteTestRunDialog from "./CompleteTestRunDialog";
+import { DistributeAssignmentsModal } from "./DistributeAssignmentsModal";
 import { DeleteTestRunModal } from "./DeleteTestRun";
 import JunitTableSection from "./JunitTableSection";
 import {
@@ -323,6 +325,7 @@ export default function TestRunPage() {
     useClientQueries(schema).testRunCaseIteration.useUpdateMany();
   const [zoomedChart, setZoomedChart] = useState<null | "donut">(null);
   const [isDuplicateDialogOpen, setIsDuplicateDialogOpen] = useState(false);
+  const [isDistributeDialogOpen, setIsDistributeDialogOpen] = useState(false);
 
   // State for AddTestRunModal when opened for duplication
   const [isAddRunModalOpenForDuplicate, setIsAddRunModalOpenForDuplicate] =
@@ -1692,6 +1695,20 @@ export default function TestRunPage() {
                             <Button
                               type="button"
                               variant="secondary"
+                              onClick={() => setIsDistributeDialogOpen(true)}
+                              className="group px-3 hover:px-3 transition-all duration-200 gap-0 hover:gap-2"
+                            >
+                              <UsersRound className="h-4 w-4 shrink-0" />
+                              <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
+                                {t("common.actions.assign")}
+                              </span>
+                            </Button>
+                          )}
+                        {canAddEditRun &&
+                          !isAutomatedTestRunType(testRunData?.testRunType) && (
+                            <Button
+                              type="button"
+                              variant="secondary"
                               onClick={() => setIsDuplicateDialogOpen(true)}
                               className="group px-3 hover:px-3 transition-all duration-200 gap-0 hover:gap-2"
                             >
@@ -2258,6 +2275,20 @@ export default function TestRunPage() {
           onPrepareCloneDataAndProceed={handlePrepareCloneDataAndProceed}
         />
       )}
+      {canAddEditRun &&
+        !testRunData?.isCompleted &&
+        !isAutomatedTestRunType(testRunData?.testRunType) && (
+          <DistributeAssignmentsModal
+            isOpen={isDistributeDialogOpen}
+            onClose={() => setIsDistributeDialogOpen(false)}
+            projectId={Number(projectId)}
+            runId={Number(runId)}
+            configurationGroupId={testRunData?.configurationGroupId ?? null}
+            onDone={() => {
+              void refetchTestRun();
+            }}
+          />
+        )}
       {/* Render AddTestRunModal for Duplication - wrapped in SimpleDndProvider for DnD context */}
       {isAddRunModalOpenForDuplicate && addRunModalInitPropsForDuplicate && (
         <SimpleDndProvider>

@@ -56,6 +56,7 @@ TestPlanIt is a comprehensive test management platform designed to help teams pl
 - **Flexible run creation** - Create test runs from entire folders, filtered sets, or individual test cases
 - **Magic Select** - Create test runs from similar test cases using AI
 - **Multi-configuration runs** - Execute tests against different configurations (browsers, environments, OS, etc.) in parallel; configurations are scoped to projects
+- **Assignment distribution** - Spread a run's cases across team members in one step, balanced by estimated time or case count, keeping related cases (and whole configurations) together to reduce context switching
 - **Bulk status updates** - Quickly update multiple test results at once
 - **Execution history** - View the complete history of test executions for any run or individual test case
 - **Immutable completed runs** - Once a run is marked complete its case set, results, and configuration are structurally frozen; admins can edit a single result via the audit-log-tracked override path
