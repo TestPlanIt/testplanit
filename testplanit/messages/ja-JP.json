@@ -325,6 +325,8 @@
       "notAutomated": "自動化されていない",
       "parameterized": "パラメータ化",
       "notParameterized": "パラメータ化されていません",
+      "hasAttachments": "添付ファイルあり",
+      "noAttachments": "添付ファイルなし",
       "testRuns": "テスト実行",
       "title": "タイトル",
       "project": "プロジェクト",
@@ -2891,6 +2893,7 @@
     "views": {
       "byAutomation": "オートメーション",
       "byParameterized": "パラメータ化",
+      "byAttachments": "添付ファイル",
       "allTemplates": "すべてのテンプレート",
       "allStates": "すべての州",
       "allCreators": "すべてのクリエイター",

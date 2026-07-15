@@ -325,6 +325,8 @@
       "notAutomated": "Non automatisé",
       "parameterized": "Paramétré",
       "notParameterized": "Non paramétré",
+      "hasAttachments": "Avec pièces jointes",
+      "noAttachments": "Sans pièces jointes",
       "testRuns": "Essais",
       "title": "Titre",
       "project": "Projet",
@@ -2891,6 +2893,7 @@
     "views": {
       "byAutomation": "Automation",
       "byParameterized": "Paramétrisation",
+      "byAttachments": "Pièces jointes",
       "allTemplates": "Tous les modèles",
       "allStates": "Tous les États",
       "allCreators": "Tous les créateurs",

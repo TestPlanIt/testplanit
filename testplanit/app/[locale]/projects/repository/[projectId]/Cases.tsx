@@ -79,6 +79,7 @@ import {
   useFindManyRepositoryCasesFiltered,
 } from "~/hooks/useRepositoryCasesWithFilteredFields";
 import { usePagination } from "~/lib/contexts/PaginationContext";
+import { attachmentsWhereClause } from "~/lib/repositoryCaseAttachmentsFilter";
 import { useReviewFeatureEnabled } from "~/hooks/useReviewFeatureEnabled";
 import { usePathname, useRouter } from "~/lib/navigation";
 import { computeLastTestResult } from "~/lib/utils/computeLastTestResult";
@@ -1500,6 +1501,11 @@ export default function Cases({
               filterConditions.push({
                 hasParameters: (singleFilterId as number) === 1,
               });
+              break;
+            case "attachments":
+              filterConditions.push(
+                attachmentsWhereClause((singleFilterId as number) === 1)
+              );
               break;
             case "tags":
               if (singleFilterId === "any") {

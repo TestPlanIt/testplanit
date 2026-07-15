@@ -325,6 +325,8 @@
       "notAutomated": "Otomatikleştirilmemiş",
       "parameterized": "Parametreli",
       "notParameterized": "Parametrelendirilmemiş",
+      "hasAttachments": "Eki Var",
+      "noAttachments": "Eki Yok",
       "testRuns": "Test Çalışmaları",
       "title": "Başlık",
       "project": "Proje",
@@ -2891,6 +2893,7 @@
     "views": {
       "byAutomation": "Otomasyon",
       "byParameterized": "Parametrizasyon",
+      "byAttachments": "Ekler",
       "allTemplates": "Tüm Şablonlar",
       "allStates": "Tüm Eyaletler",
       "allCreators": "Tüm Yaratıcılar",

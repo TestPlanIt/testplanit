@@ -325,6 +325,8 @@
       "notAutomated": "Niet geautomatiseerd",
       "parameterized": "Geparameteriseerd",
       "notParameterized": "Niet geparameteriseerd",
+      "hasAttachments": "Heeft bijlagen",
+      "noAttachments": "Geen bijlagen",
       "testRuns": "Testruns",
       "title": "Titel",
       "project": "Project",
@@ -2891,6 +2893,7 @@
     "views": {
       "byAutomation": "Automatisering",
       "byParameterized": "Parameterisering",
+      "byAttachments": "Bijlagen",
       "allTemplates": "Alle sjablonen",
       "allStates": "Alle staten",
       "allCreators": "Alle makers",

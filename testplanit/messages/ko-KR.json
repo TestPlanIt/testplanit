@@ -325,6 +325,8 @@
       "notAutomated": "자동화되지 않음",
       "parameterized": "매개변수화된",
       "notParameterized": "매개변수화되지 않음",
+      "hasAttachments": "첨부파일 있음",
+      "noAttachments": "첨부파일 없음",
       "testRuns": "테스트 실행",
       "title": "제목",
       "project": "프로젝트",
@@ -2891,6 +2893,7 @@
     "views": {
       "byAutomation": "오토메이션",
       "byParameterized": "매개변수화",
+      "byAttachments": "첨부파일",
       "allTemplates": "모든 템플릿",
       "allStates": "모든 주",
       "allCreators": "모든 크리에이터",

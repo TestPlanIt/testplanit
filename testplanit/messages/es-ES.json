@@ -325,6 +325,8 @@
       "notAutomated": "No Automatizado",
       "parameterized": "Parametrizado",
       "notParameterized": "No parametrizado",
+      "hasAttachments": "Con archivos adjuntos",
+      "noAttachments": "Sin archivos adjuntos",
       "testRuns": "Prueba de ejecuciones",
       "title": "Título",
       "project": "Proyecto",
@@ -2891,6 +2893,7 @@
     "views": {
       "byAutomation": "Automatización",
       "byParameterized": "Parametrización",
+      "byAttachments": "Adjuntos",
       "allTemplates": "Todas las plantillas",
       "allStates": "Todos los Estados",
       "allCreators": "Todos los Creadores",

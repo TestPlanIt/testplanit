@@ -4,6 +4,10 @@ import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import { getUserAccessibleProjects } from "~/app/actions/getUserAccessibleProjects";
 import { baseDb } from "~/lib/db";
+import {
+  attachmentsWhereClause,
+  shapeAttachmentsFacet,
+} from "~/lib/repositoryCaseAttachmentsFilter";
 import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
 import { authOptions } from "~/server/auth";
 
@@ -850,6 +854,46 @@ export async function POST(request: Request) {
         allTestRunCaseIds.length - effectiveCasesWithIssues;
     }
 
+    // Calculate attachment counts. Attachments is a relation, not a scalar
+    // column, so we can't groupBy — count cases that have at least one live
+    // attachment and derive the remainder (see attachmentsWhereClause for the
+    // isDeleted:false guard rationale).
+    const casesWithAttachments = await baseDb.repositoryCases.count({
+      where: {
+        ...baseWhere,
+        ...attachmentsWhereClause(true),
+      },
+    });
+
+    // For multi-config, recalculate attachment counts based on TestRunCases
+    let effectiveCasesWithAttachments = casesWithAttachments;
+
+    if (casePropertiesMap && allTestRunCaseIds.length > 0) {
+      // Fetch which cases have live attachments
+      const casesWithAttachmentsSet = new Set(
+        (
+          await baseDb.repositoryCases.findMany({
+            where: {
+              id: { in: effectiveSelectedTestCases },
+              ...attachmentsWhereClause(true),
+            },
+            select: { id: true },
+          })
+        ).map((c) => c.id)
+      );
+
+      effectiveCasesWithAttachments = allTestRunCaseIds.filter((id) =>
+        casesWithAttachmentsSet.has(id)
+      ).length;
+    }
+
+    // Shape attachments as Array<{ value: boolean; count: number }> to match
+    // the automated/parameterized contract the ViewSelector consumes.
+    const attachmentsWithCounts = shapeAttachmentsFacet(
+      effectiveTotalCount,
+      effectiveCasesWithAttachments
+    );
+
     // For multi-config, recalculate individual issue counts
     let issueCountsForList = issues.map((i) => ({
       issueId: i.issueId,
@@ -1362,6 +1406,7 @@ export async function POST(request: Request) {
       creators: creatorsWithCounts.sort((a, b) => a.name.localeCompare(b.name)),
       automated: automatedWithCounts,
       parameterized: parameterizedWithCounts,
+      attachments: attachmentsWithCounts,
       tags: tagsWithCounts,
       issues: issuesWithCounts,
       dynamicFields,

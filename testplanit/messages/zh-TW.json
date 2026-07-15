@@ -325,6 +325,8 @@
       "notAutomated": "非自動化",
       "parameterized": "參數化",
       "notParameterized": "未參數化",
+      "hasAttachments": "有附件",
+      "noAttachments": "無附件",
       "testRuns": "測試運行",
       "title": "標題",
       "project": "專案",
@@ -2891,6 +2893,7 @@
     "views": {
       "byAutomation": "自動化",
       "byParameterized": "參數化",
+      "byAttachments": "附件",
       "allTemplates": "所有模板",
       "allStates": "所有州",
       "allCreators": "所有創作者",

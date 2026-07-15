@@ -325,6 +325,8 @@
       "notAutomated": "Niezautomatyzowane",
       "parameterized": "Sparametryzowane",
       "notParameterized": "Nie sparametryzowane",
+      "hasAttachments": "Zawiera załączniki",
+      "noAttachments": "Brak załączników",
       "testRuns": "Testy biegowe",
       "title": "Tytuł",
       "project": "Projekt",
@@ -2891,6 +2893,7 @@
     "views": {
       "byAutomation": "Automatyzacja",
       "byParameterized": "Parametryzacja",
+      "byAttachments": "Załączniki",
       "allTemplates": "Wszystkie szablony",
       "allStates": "Wszystkie stany",
       "allCreators": "Wszyscy twórcy",

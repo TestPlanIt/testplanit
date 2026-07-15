@@ -17,8 +17,10 @@ import {
   Bot,
   CircleCheckBig,
   CircleDashed,
+  FileX,
   LayoutTemplate,
   LucideIcon,
+  Paperclip,
   Square,
   SquareStack,
   User,
@@ -76,6 +78,7 @@ interface ViewSelectorProps {
     creators: Array<{ id: string; name: string; count?: number }>;
     automated: Array<{ value: boolean; count: number }>;
     parameterized: Array<{ value: boolean; count: number }>;
+    attachments: Array<{ value: boolean; count: number }>;
     dynamicFields: Record<string, any>;
     tags?: Array<{
       id: number | string;
@@ -451,6 +454,60 @@ export function ViewSelector({
                         {item.value
                           ? tCommon("fields.parameterized")
                           : tCommon("fields.notParameterized")}
+                      </span>
+                    </div>
+                    <span className="text-sm text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
+                      {item.count}
+                    </span>
+                  </div>
+                );
+              }
+            )}
+          </>
+        )}
+
+        {selectedItem === "attachments" && (
+          <>
+            <div
+              role="button"
+              tabIndex={0}
+              className={cn(
+                "w-full flex items-center justify-between text-start font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
+                selectedFilter === null && "bg-primary/20 hover:bg-primary/30"
+              )}
+              onClick={(e) => handleFilterClick(null, e)}
+            >
+              <div className="flex items-center gap-2 min-w-0 flex-1">
+                <span className="truncate">{t("views.allCases")}</span>
+              </div>
+              <span className="text-sm text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
+                {totalCount}
+              </span>
+            </div>
+            {viewOptions?.attachments?.map(
+              (item: { value: boolean; count: number }) => {
+                return (
+                  <div
+                    role="button"
+                    tabIndex={0}
+                    key={item.value.toString()}
+                    className={cn(
+                      "w-full flex items-center justify-between text-start font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
+                      isValueSelected(item.value ? 1 : 0) &&
+                        "bg-primary/20 hover:bg-primary/30"
+                    )}
+                    onClick={(e) => handleFilterClick(item.value ? 1 : 0, e)}
+                  >
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                      {item.value ? (
+                        <Paperclip className="w-4 h-4 shrink-0 text-primary" />
+                      ) : (
+                        <FileX className="w-4 h-4 shrink-0 opacity-60" />
+                      )}
+                      <span className="truncate">
+                        {item.value
+                          ? tCommon("fields.hasAttachments")
+                          : tCommon("fields.noAttachments")}
                       </span>
                     </div>
                     <span className="text-sm text-muted-foreground shrink-0 ms-2 whitespace-nowrap">

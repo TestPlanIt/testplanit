@@ -325,6 +325,8 @@
       "notAutomated": "Não automatizado",
       "parameterized": "Parametrizado",
       "notParameterized": "Não parametrizado",
+      "hasAttachments": "Possui Anexos",
+      "noAttachments": "Sem Anexos",
       "testRuns": "Testes de execução",
       "title": "Título",
       "project": "Projeto",
@@ -2891,6 +2893,7 @@
     "views": {
       "byAutomation": "Automação",
       "byParameterized": "Parametrização",
+      "byAttachments": "Anexos",
       "allTemplates": "Todos os modelos",
       "allStates": "Todos os estados",
       "allCreators": "Todos os Criadores",

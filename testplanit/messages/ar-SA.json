@@ -325,6 +325,8 @@
       "notAutomated": "غير مؤتمت",
       "parameterized": "معلمن",
       "notParameterized": "غير معلمن",
+      "hasAttachments": "يحتوي على مرفقات",
+      "noAttachments": "بدون مرفقات",
       "testRuns": "تشغيلات الاختبار",
       "title": "العنوان",
       "project": "المشروع",
@@ -2891,6 +2893,7 @@
     "views": {
       "byAutomation": "الأتمتة",
       "byParameterized": "المعلمة",
+      "byAttachments": "المرفقات",
       "allTemplates": "جميع القوالب",
       "allStates": "جميع الحالات",
       "allCreators": "جميع المُنشِئين",

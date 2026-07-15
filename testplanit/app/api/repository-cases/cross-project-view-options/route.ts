@@ -1,4 +1,8 @@
 import { baseDb } from "@/lib/db"; // Use raw baseDb client (no enhance) for cross-project admin queries
+import {
+  attachmentsWhereClause,
+  shapeAttachmentsFacet,
+} from "~/lib/repositoryCaseAttachmentsFilter";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { authOptions } from "~/server/auth";
@@ -541,12 +545,27 @@ export async function POST(request: NextRequest) {
       where: baseWhere,
     });
 
+    // Attachments is a relation, not a scalar column, so it can't be grouped —
+    // count cases with at least one live attachment and derive the rest (see
+    // attachmentsWhereClause for the isDeleted:false guard rationale).
+    const casesWithAttachments = await baseDb.repositoryCases.count({
+      where: {
+        ...baseWhere,
+        ...attachmentsWhereClause(true),
+      },
+    });
+    const attachmentsWithCounts = shapeAttachmentsFacet(
+      totalCount,
+      casesWithAttachments
+    );
+
     return NextResponse.json({
       projects: projectsWithCounts,
       templates: templatesWithCounts,
       states: statesWithCounts,
       automated: automatedWithCounts,
       parameterized: parameterizedWithCounts,
+      attachments: attachmentsWithCounts,
       dynamicFields,
       totalCount,
     });

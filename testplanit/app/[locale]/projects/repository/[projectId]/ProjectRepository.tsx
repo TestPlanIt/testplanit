@@ -45,6 +45,7 @@ import {
   Link,
   ListChecks,
   ListOrdered,
+  Paperclip,
   Search,
   Sparkles,
   SquareCheckBig,
@@ -250,6 +251,10 @@ interface ViewOptions {
     count: number;
   }>;
   parameterized: Array<{
+    value: boolean;
+    count: number;
+  }>;
+  attachments: Array<{
     value: boolean;
     count: number;
   }>;
@@ -714,6 +719,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
         creators: [],
         automated: [],
         parameterized: [],
+        attachments: [],
         dynamicFields: {},
         tags: [],
         issues: [],
@@ -767,6 +773,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
       creators: viewOptionsData.creators,
       automated: viewOptionsData.automated || [],
       parameterized: viewOptionsData.parameterized || [],
+      attachments: viewOptionsData.attachments || [],
       dynamicFields,
       tags: tagOptions,
       issues: issueOptions,
@@ -805,6 +812,11 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
         id: "parameterized",
         name: t("repository.views.byParameterized"),
         icon: SquareStack,
+      },
+      {
+        id: "attachments",
+        name: t("repository.views.byAttachments"),
+        icon: Paperclip,
       },
       // Always include Tags view
       {
@@ -928,6 +940,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
       "creators",
       "automated",
       "parameterized",
+      "attachments",
       "status",
       "assignedTo",
       "tags",
@@ -980,6 +993,8 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
         "states",
         "creators",
         "automated",
+        "parameterized",
+        "attachments",
         "status",
         "assignedTo",
         "tags",
@@ -1229,6 +1244,8 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
       } else if (value === "automated") {
         setSelectedFilter([1]);
       } else if (value === "parameterized") {
+        setSelectedFilter([1]);
+      } else if (value === "attachments") {
         setSelectedFilter([1]);
       } else if (value === "assignedTo") {
         const assignedToView = viewItems.find(

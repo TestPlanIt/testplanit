@@ -325,6 +325,8 @@
       "notAutomated": "Не автоматизировано",
       "parameterized": "Параметризованный",
       "notParameterized": "Не параметризовано",
+      "hasAttachments": "Есть вложения",
+      "noAttachments": "Без вложений",
       "testRuns": "Тестовые запуски",
       "title": "Заголовок",
       "project": "Проект",
@@ -2891,6 +2893,7 @@
     "views": {
       "byAutomation": "Автоматизация",
       "byParameterized": "Параметризация",
+      "byAttachments": "Вложения",
       "allTemplates": "Все шаблоны",
       "allStates": "Все штаты",
       "allCreators": "Все Создатели",

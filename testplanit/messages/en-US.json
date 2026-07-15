@@ -325,6 +325,8 @@
       "notAutomated": "Not Automated",
       "parameterized": "Parameterized",
       "notParameterized": "Not Parameterized",
+      "hasAttachments": "Has Attachments",
+      "noAttachments": "No Attachments",
       "testRuns": "Test Runs",
       "title": "Title",
       "project": "Project",
@@ -2891,6 +2893,7 @@
     "views": {
       "byAutomation": "Automation",
       "byParameterized": "Parameterization",
+      "byAttachments": "Attachments",
       "allTemplates": "All Templates",
       "allStates": "All States",
       "allCreators": "All Creators",

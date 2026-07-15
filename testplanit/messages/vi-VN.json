@@ -325,6 +325,8 @@
       "notAutomated": "Không tự động",
       "parameterized": "Tham số hóa",
       "notParameterized": "Không có tham số",
+      "hasAttachments": "Có tệp đính kèm",
+      "noAttachments": "Không có tệp đính kèm",
       "testRuns": "Chạy thử nghiệm",
       "title": "Tiêu đề",
       "project": "Dự án",
@@ -2891,6 +2893,7 @@
     "views": {
       "byAutomation": "Tự động hóa",
       "byParameterized": "Tham số hóa",
+      "byAttachments": "Tệp đính kèm",
       "allTemplates": "Tất cả các mẫu",
       "allStates": "Tất cả các tiểu bang",
       "allCreators": "Tất cả những người sáng tạo",
