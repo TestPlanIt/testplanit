@@ -308,6 +308,31 @@ function renderRichTextValue(value: number | string | null): string | null {
   return tiptapToPlainText(value) || "(empty)";
 }
 
+/**
+ * Coerce an un-mapped diff value for display. `changed_cols` can carry raw Json columns — a TipTap
+ * doc (e.g. TestRunResults/TestRunCases `notes`) or arbitrary JSON (e.g. `evidence`) — that the
+ * generic path would otherwise pass through as an object and `String()` would render as the literal
+ * "[object Object]" (visible in the audit detail view). Flatten a TipTap doc to plain text; render
+ * any other object/array as compact JSON (empty {}/[] → "(empty)"); pass scalars through untouched.
+ */
+function coerceDiffValue(
+  value: number | string | null
+): number | string | null {
+  if (value === null || value === undefined) return null;
+  if (typeof value !== "object") return value;
+  // A TipTap document on any table (even one not in RICH_TEXT_COLUMNS) → readable plain text.
+  if ((value as { type?: unknown }).type === "doc") {
+    return renderRichTextValue(value);
+  }
+  try {
+    const json = JSON.stringify(value);
+    if (json === "{}" || json === "[]") return "(empty)";
+    return json.length > 140 ? `${json.slice(0, 140)}…` : json;
+  } catch {
+    return "(unserializable)";
+  }
+}
+
 const M2M_JOIN_TABLES: Record<
   string,
   { col: string; label: string; model: string }
@@ -375,7 +400,13 @@ export async function humanize(
     }
     const catalog = catalogFor(tableName, column);
     if (!catalog) {
-      out[column] = entry;
+      // No FK catalog / not rich-text: coerce so a raw Json column (notes doc,
+      // evidence, …) never reaches the diff as an object → "[object Object]".
+      out[column] = {
+        ...entry,
+        old: coerceDiffValue(entry.old),
+        new: coerceDiffValue(entry.new),
+      };
       continue;
     }
     out[column] = {

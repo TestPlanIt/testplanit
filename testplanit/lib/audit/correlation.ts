@@ -379,12 +379,16 @@ function mergeColumnEntries(
   a: ChangedColEntry | HumanizedColEntry,
   b: ChangedColEntry | HumanizedColEntry
 ): HumanizedColEntry {
+  const render = (v: unknown): string =>
+    // Values are humanized (flattened) before merge, so this normally sees strings/numbers; guard
+    // anyway so a stray object never becomes the literal "[object Object]" in the joined diff.
+    typeof v === "object" ? JSON.stringify(v) : String(v);
   const join = (x: unknown, y: unknown): string | null => {
     const seen = new Set<string>();
     const parts: string[] = [];
     for (const v of [x, y]) {
       if (v === null || v === undefined) continue;
-      for (const piece of String(v).split(", ")) {
+      for (const piece of render(v).split(", ")) {
         if (piece !== "" && !seen.has(piece)) {
           seen.add(piece);
           parts.push(piece);

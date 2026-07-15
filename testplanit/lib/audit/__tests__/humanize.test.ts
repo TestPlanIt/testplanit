@@ -201,6 +201,54 @@ describe("humanize — root-table rich-text (TipTap) columns flatten to plain te
   });
 });
 
+describe("humanize — un-mapped Json columns never render as [object Object]", () => {
+  const tiptapDoc = (text: string) => ({
+    type: "doc",
+    content: [{ type: "paragraph", content: [{ type: "text", text }] }],
+  });
+
+  it("flattens a TestRunResults.notes TipTap doc even though the table isn't in RICH_TEXT_COLUMNS", async () => {
+    const { createHumanizeCache, humanize } = await loadModule();
+    const cache = createHumanizeCache(async () => null, { ttlMs: 60_000 });
+
+    const out = await humanize(cache, "TestRunResults", {
+      notes: { old: null, new: tiptapDoc("Repro steps") },
+    });
+
+    expect(out.notes).toEqual({ old: null, new: "Repro steps" });
+  });
+
+  it("renders an empty TipTap doc as (empty), not the raw doc JSON or [object Object]", async () => {
+    const { createHumanizeCache, humanize } = await loadModule();
+    const cache = createHumanizeCache(async () => null, { ttlMs: 60_000 });
+
+    const out = await humanize(cache, "TestRunResults", {
+      notes: {
+        old: null,
+        new: { type: "doc", content: [{ type: "paragraph" }] },
+      },
+    });
+
+    expect(out.notes.new).toBe("(empty)");
+  });
+
+  it("renders an empty evidence {} as (empty) and populated JSON as text, never [object Object]", async () => {
+    const { createHumanizeCache, humanize } = await loadModule();
+    const cache = createHumanizeCache(async () => null, { ttlMs: 60_000 });
+
+    const out = await humanize(cache, "TestRunResults", {
+      evidence: { old: null, new: {} },
+    });
+    expect(out.evidence.new).toBe("(empty)");
+
+    const populated = await humanize(cache, "TestRunResults", {
+      evidence: { old: null, new: { screenshots: 2 } },
+    });
+    expect(populated.evidence.new).toBe(JSON.stringify({ screenshots: 2 }));
+    expect(String(populated.evidence.new)).not.toContain("[object Object]");
+  });
+});
+
 describeDb("humanize (COR-03) — live rawDb catalog lookup", () => {
   it("resolves a seeded CaseFields.id to its displayName via the real lookup", async () => {
     const { Client } = await import("pg");
