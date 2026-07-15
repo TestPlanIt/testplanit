@@ -81,7 +81,7 @@ A filter row (search, coverage state, source, and issue type) appears once there
 
 Select one or more issues and click **Create test run** to open the Add Test Run wizard pre-seeded with every non-deleted test case linked to the selected issues, with the contributing issues pre-linked to the new run.
 
-Use **Link Issue** to attach an issue manually, and the per-row action to unlink one. Synced issue links can't be unlinked here — they're marked "Managed by Jira" and must be removed from the version/sprint in Jira instead.
+Use **Link Issue** to attach an issue manually. Each row's overflow menu (⋮) offers **Generate Test Cases** — which opens the seeded generation wizard for that issue, for viewers with test-case create permission — and, for manually-linked rows only, **Unlink**. A synced link can't be unlinked here: its **Source** reads **Synced** and its menu offers no Unlink action — remove it from the version/sprint in Jira instead.
 
 When the linked Jira sprint or version has more issues than are linked here — because an automatic sync hit its import cap, or membership has simply drifted since the last sync — a **More issues in Jira** panel appears below the table listing the missing issues, with an **Import & link** action to pull them in.
 
@@ -114,7 +114,7 @@ Clicking the **Edit** button (or accessing via an edit link) activates Edit Mode
 On a milestone that's actively synced from Jira, several fields are locked because the tracker owns them:
 
 :::warning Managed by Jira
-The **Name**, **Started**/**Completed** toggles, **Start**/**Due** dates, and **Description** are read-only while the milestone is synced — an amber notice explains this in the right panel. The **Auto-Complete** toggle is hidden entirely, since the tracker (not the local auto-complete worker) owns whether a synced milestone is complete. **Type**, **Parent**, and the notification settings stay editable.
+The **Name**, **Started**/**Completed** toggles, **Start**/**Due** dates, and **Description** are read-only while the milestone is synced — a compact **Managed by Jira** notice in the right panel explains this. A help icon on the notice reveals the full detail, and its title links out to the artifact in Jira when a URL is stored. The **Auto-Complete** toggle is hidden entirely, since the tracker (not the local auto-complete worker) owns whether a synced milestone is complete. **Type**, **Parent**, and the notification settings stay editable.
 
 These locks lift once the milestone is no longer actively synced — either its upstream artifact was removed in Jira, or it was [manually unlinked](#source-badge) — at which point it behaves like any local milestone.
 :::
