@@ -128,9 +128,7 @@ test("test-run detail renders custom-field columns formatted, not raw", async ({
     // Custom-field columns are hidden by default; the column id equals the
     // numeric field id (columns.tsx: `id: field.id.toString()`).
     for (const fieldId of [dropdownFieldId, multiFieldId, textFieldId]) {
-      const checkbox = page.locator(
-        `button[role="checkbox"][id="${fieldId}"]`
-      );
+      const checkbox = page.locator(`button[role="checkbox"][id="${fieldId}"]`);
       await expect(checkbox).toBeVisible({ timeout: 10000 });
       if ((await checkbox.getAttribute("aria-checked")) !== "true") {
         await checkbox.click();

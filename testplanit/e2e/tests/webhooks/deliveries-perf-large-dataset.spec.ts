@@ -145,8 +145,7 @@ test.describe("Webhook deliveries tab — large dataset performance (N-03)", () 
         { timeout: PAGE_LOAD_BUDGET_MS }
       );
       const body = (await resp.json()) as
-        | { data?: Array<{ id: unknown }> }
-        | Array<{ id: unknown }>;
+        { data?: Array<{ id: unknown }> } | Array<{ id: unknown }>;
       const rows = Array.isArray(body) ? body : (body?.data ?? []);
       return rows.map((r) => String(r.id));
     };
