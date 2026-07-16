@@ -464,19 +464,74 @@ export function getUpgradeNotificationsBetweenVersions(
 }
 
 /**
- * Compare two semantic version strings
- * Returns: negative if a < b, positive if a > b, 0 if equal
+ * Compare two semantic version strings by SemVer 2.0 precedence, including
+ * pre-release tags such as `1.0.0-beta.5`.
+ * Returns: negative if a < b, positive if a > b, 0 if equal.
+ *
+ * Pre-release handling matters on the beta channel: the current version can be
+ * a tag like `1.0.0-beta.5`, which must rank below `1.0.0` and order against
+ * sibling betas by their numeric identifier. A plain `split(".").map(Number)`
+ * turns the `0-beta` segment into `NaN`, and every `NaN` comparison is false —
+ * which silently drops in-range notifications from the upgrade window — so the
+ * release core and the pre-release tag are parsed separately here.
  */
-function compareVersions(a: string, b: string): number {
-  const aParts = a.split(".").map(Number);
-  const bParts = b.split(".").map(Number);
+export function compareVersions(a: string, b: string): number {
+  const [aCore, aPre] = splitVersion(a);
+  const [bCore, bPre] = splitVersion(b);
 
-  for (let i = 0; i < Math.max(aParts.length, bParts.length); i++) {
-    const aPart = aParts[i] || 0;
-    const bPart = bParts[i] || 0;
-    if (aPart !== bPart) {
-      return aPart - bPart;
-    }
+  // Compare the numeric release core (major.minor.patch), padding the shorter.
+  for (let i = 0; i < Math.max(aCore.length, bCore.length); i++) {
+    const diff = (aCore[i] ?? 0) - (bCore[i] ?? 0);
+    if (diff !== 0) return diff < 0 ? -1 : 1;
+  }
+
+  // Equal cores: a version WITH a pre-release ranks below one without.
+  if (aPre.length === 0 && bPre.length === 0) return 0;
+  if (aPre.length === 0) return 1;
+  if (bPre.length === 0) return -1;
+
+  // Both pre-release: compare identifiers left to right; a longer set of
+  // identifiers outranks a shorter prefix (`1.0.0-beta` < `1.0.0-beta.1`).
+  for (let i = 0; i < Math.max(aPre.length, bPre.length); i++) {
+    if (i >= aPre.length) return -1;
+    if (i >= bPre.length) return 1;
+    const diff = comparePreReleaseIds(aPre[i], bPre[i]);
+    if (diff !== 0) return diff;
   }
   return 0;
+}
+
+/**
+ * Split "1.0.0-beta.5" into its numeric release core ([1, 0, 0]) and its
+ * dot-separated pre-release identifiers (["beta", "5"]). Build metadata
+ * (`+...`) is discarded per SemVer.
+ */
+function splitVersion(version: string): [number[], string[]] {
+  const [coreAndPre] = version.split("+");
+  const dash = coreAndPre.indexOf("-");
+  const core = dash === -1 ? coreAndPre : coreAndPre.slice(0, dash);
+  const pre = dash === -1 ? "" : coreAndPre.slice(dash + 1);
+  const coreNums = core.split(".").map((part) => {
+    const n = parseInt(part, 10);
+    return Number.isNaN(n) ? 0 : n;
+  });
+  return [coreNums, pre.length === 0 ? [] : pre.split(".")];
+}
+
+/**
+ * Compare two pre-release identifiers per SemVer: numeric identifiers compare
+ * numerically and always rank below alphanumeric ones; alphanumeric compare in
+ * ASCII order.
+ */
+function comparePreReleaseIds(a: string, b: string): number {
+  const aNum = /^\d+$/.test(a);
+  const bNum = /^\d+$/.test(b);
+  if (aNum && bNum) {
+    const diff = parseInt(a, 10) - parseInt(b, 10);
+    return diff === 0 ? 0 : diff < 0 ? -1 : 1;
+  }
+  if (aNum) return -1;
+  if (bNum) return 1;
+  if (a === b) return 0;
+  return a < b ? -1 : 1;
 }

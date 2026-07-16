@@ -1,6 +1,7 @@
 import { Access } from "~/zenstack/models";
 import { describe, expect, it } from "vitest";
 import {
+  compareVersions,
   getUpgradeNotificationsBetweenVersions,
   notificationTargetsAccess,
   upgradeNotifications,
@@ -154,6 +155,66 @@ describe("upgrade-notifications", () => {
         expect(versions).toContain("0.5.0");
         expect(versions.length).toBe(1);
       });
+    });
+  });
+
+  describe("compareVersions (SemVer precedence, incl. pre-release)", () => {
+    it("orders numeric release cores", () => {
+      expect(compareVersions("0.3.0", "0.10.0")).toBeLessThan(0);
+      expect(compareVersions("1.0.0", "0.40.9")).toBeGreaterThan(0);
+      expect(compareVersions("0.40.6", "0.40.6")).toBe(0);
+    });
+
+    it("ranks a pre-release below the matching release", () => {
+      expect(compareVersions("1.0.0-beta.5", "1.0.0")).toBeLessThan(0);
+      expect(compareVersions("1.0.0", "1.0.0-beta.5")).toBeGreaterThan(0);
+    });
+
+    it("orders sibling betas by numeric identifier, not lexically", () => {
+      expect(compareVersions("1.0.0-beta.4", "1.0.0-beta.5")).toBeLessThan(0);
+      // 10 > 2 numerically, even though "10" < "2" as strings
+      expect(compareVersions("1.0.0-beta.2", "1.0.0-beta.10")).toBeLessThan(0);
+    });
+
+    it("ranks a shorter pre-release prefix below a longer one", () => {
+      expect(compareVersions("1.0.0-beta", "1.0.0-beta.1")).toBeLessThan(0);
+    });
+
+    it("ranks a beta above every prior release core", () => {
+      expect(compareVersions("1.0.0-beta.5", "0.40.9")).toBeGreaterThan(0);
+    });
+
+    it("never returns NaN when a pre-release string is involved", () => {
+      for (const other of ["0.40.6", "1.0.0", "1.0.0-beta.4", "1.0.0-beta.5"]) {
+        expect(Number.isNaN(compareVersions("1.0.0-beta.5", other))).toBe(
+          false
+        );
+        expect(Number.isNaN(compareVersions(other, "1.0.0-beta.5"))).toBe(
+          false
+        );
+      }
+    });
+  });
+
+  describe("upgrade window with a beta currentVersion", () => {
+    it("returns only notifications newer than lastSeen, never the whole history", () => {
+      // Upgrading from a version ahead of the entire notification list to a beta
+      // must yield nothing (everything was already seen), not the full backlog.
+      const result = getUpgradeNotificationsBetweenVersions(
+        "0.49.0",
+        "1.0.0-beta.5"
+      );
+      expect(result).toEqual([]);
+    });
+
+    it("still surfaces genuinely-newer 0.x notifications under a 1.0 beta ceiling", () => {
+      // A user far behind sees every 0.x notification; the 1.0.0-beta.5 ceiling
+      // sits above all of them, so none are wrongly excluded by the beta suffix.
+      const result = getUpgradeNotificationsBetweenVersions(
+        "0.2.0",
+        "1.0.0-beta.5"
+      );
+      expect(result.length).toBe(Object.keys(upgradeNotifications).length);
     });
   });
 
