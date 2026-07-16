@@ -4396,17 +4396,31 @@ model DataSet {
 }
 
 model DataSetRow {
-    id         Int       @id @default(autoincrement())
-    dataSetId  Int
-    dataSet    DataSet   @relation(fields: [dataSetId], references: [id], onDelete: Cascade)
-    rowIndex   Int       @default(0)
-    label      String?
-    valuesJson Json
-    isDeleted  Boolean   @default(false)
-    deletedAt  DateTime? @db.Timestamptz(6)
+    id             Int       @id @default(autoincrement())
+    dataSetId      Int
+    dataSet        DataSet   @relation(fields: [dataSetId], references: [id], onDelete: Cascade)
+    rowIndex       Int       @default(0)
+    label          String?
+    valuesJson     Json
+    isDeleted      Boolean   @default(false)
+    deletedAt      DateTime? @db.Timestamptz(6)
+
+    // Row-level lease primitive (999.12) — lets a parallel CI orchestrator
+    // check out one unlocked row at a time so two jobs never provision the
+    // same external fixture. Writes go through raw SQL on the base client
+    // (FOR UPDATE SKIP LOCKED — not expressible via the ORM), so no @@allow
+    // rule is needed; the acquire route authorizes by re-using the read
+    // policy below (dataset-readable == project member), and release/extend
+    // authorize on the fencing token or ADMIN.
+    leasedById     String? // authenticated actor that holds the lease (RBAC + audit)
+    leasedAt       DateTime? @db.Timestamptz(6)
+    leaseExpiresAt DateTime? @db.Timestamptz(6)
+    leaseToken     String? // opaque fencing token minted per acquire; required to release/extend
 
     @@unique([dataSetId, rowIndex])
     @@index([dataSetId])
+    @@index([leaseExpiresAt]) // expired-lease sweep scan
+    @@index([dataSetId, leaseExpiresAt]) // acquire "next free row in pool" scan
     @@deny('all', auth() == null)
     @@deny('all', auth().access == 'NONE')
 

@@ -365,5 +365,20 @@ module.exports = {
         NODE_ENV: "production",
       },
     },
+    {
+      name: "dataset-lease-sweep-worker",
+      script: isDev ? "tsx" : "node",
+      args: isDev
+        ? "workers/datasetLeaseSweepWorker.ts"
+        : "dist/workers/datasetLeaseSweepWorker.js",
+      instances: 1,
+      autorestart: true,
+      watch: false,
+      max_memory_restart: "3G",
+      node_args: "--max-old-space-size=2304",
+      env: {
+        NODE_ENV: "production",
+      },
+    },
   ],
 };
