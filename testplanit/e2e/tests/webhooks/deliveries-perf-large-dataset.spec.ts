@@ -8,9 +8,12 @@ import { seedOutboundConfig } from "../../fixtures/webhooks-seed";
  * Deliveries tab performance against a large dataset (N-03).
  *
  * Workflow under test: an admin lands on the Deliveries tab for a project
- * with N existing rows. The tab MUST render the first page within a
- * generous time budget, the cursor pagination "Load more" button must be
- * visible at PAGE_SIZE=50, and applying a filter must not stall the UI.
+ * with N existing rows. The tab MUST render the first page (take:PAGE_SIZE,
+ * not all rows) within a generous time budget, infinite scroll must fetch a
+ * disjoint next page, and applying a filter must not stall the UI. The
+ * deliveries table is virtualized (only the visible window is in the DOM), so
+ * assertions read the loaded page from the webhookDelivery findMany responses
+ * rather than counting DOM rows.
  *
  * Why this spec exists: `useFindManyWebhookDelivery` in
  * webhook-deliveries-tab.tsx requests `take: PAGE_SIZE` via ZenStack's
@@ -125,133 +128,98 @@ test.describe("Webhook deliveries tab — large dataset performance (N-03)", () 
     page,
     baseURL,
   }) => {
-    // page-1 row ids are captured in one step and reused to confirm page 2
-    // is a disjoint set, so hoist the declaration above the steps.
-    let page1Ids: (string | null)[] | undefined;
+    // page-1 row ids, captured from the network. The deliveries table is
+    // virtualized, so the DOM only holds a viewport window of rows, not the
+    // loaded page — assert on the loaded page from the findMany response
+    // instead of counting DOM rows. Reused to confirm page 2 is disjoint.
+    let page1Ids: string[] = [];
 
-    await test.step("Navigate to Deliveries tab and render first page within budget", async () => {
-      // 1. Navigate to the Deliveries tab and time the path from URL submit
-      //    to the first row rendering. Use a since=epoch filter so the
-      //    default last-7-days filter does not exclude the seeded rows
-      //    (seed timestamps are based on Date.now() so technically they ARE
-      //    within last-7-days, but pinning the filter explicitly removes a
-      //    subtle dependency on test wall-clock).
-      // Pin pageSize=50 explicitly — the admin's user preferences may set
-      // itemsPerPage=P10 which the PaginationProvider applies by default.
-      // The perf assertion expects PAGE_SIZE rows on page 1, so override.
+    // Await the next webhookDelivery findMany response and return its row ids.
+    // Call it *before* the action that triggers the fetch, then await it:
+    //   const p = nextDeliveriesRows(); await <action>; const ids = await p;
+    const nextDeliveriesRows = async (): Promise<string[]> => {
+      const resp = await page.waitForResponse(
+        (r) =>
+          r.url().includes("/api/model/webhookDelivery/findMany") &&
+          r.status() === 200,
+        { timeout: PAGE_LOAD_BUDGET_MS }
+      );
+      const body = (await resp.json()) as
+        | { data?: Array<{ id: unknown }> }
+        | Array<{ id: unknown }>;
+      const rows = Array.isArray(body) ? body : (body?.data ?? []);
+      return rows.map((r) => String(r.id));
+    };
+
+    await test.step("First page loads exactly PAGE_SIZE rows (not all) within budget", async () => {
+      // Navigate to the Deliveries tab with since=epoch so the default
+      // last-7-days filter does not exclude the seeded rows. The deliveries
+      // query requests take:PAGE_SIZE; a regression that drops `take` (or
+      // explodes an include into an N+1) would return all SEEDED_ROW_COUNT
+      // rows and blow the budget. We assert on the loaded page from the
+      // findMany response (the table is virtualized, so a DOM count would only
+      // see the visible window).
       const deliveriesUrl =
         `${baseURL}/projects/settings/${projectId}/webhooks` +
-        `?tab=deliveries&since=${new Date(0).toISOString()}&pageSize=${PAGE_SIZE}`;
+        `?tab=deliveries&since=${new Date(0).toISOString()}`;
 
       const t0 = Date.now();
+      const firstPage = nextDeliveriesRows();
       await page.goto(deliveriesUrl);
       await expect(page.getByTestId("webhook-deliveries-tab")).toBeVisible({
         timeout: PAGE_LOAD_BUDGET_MS,
       });
-      await expect(page.getByTestId("webhook-deliveries-table")).toBeVisible({
-        timeout: PAGE_LOAD_BUDGET_MS,
-      });
-      // Wait for the first row to render — proves the table is not just an
-      // empty skeleton. Without this guard the budget could pass while the
-      // useFindManyWebhookDelivery query is still in-flight.
-      await expect(
-        page.locator('[data-testid^="webhook-delivery-row-"]').first()
-      ).toBeVisible({
-        timeout: PAGE_LOAD_BUDGET_MS,
-      });
+      page1Ids = await firstPage;
       const initialRenderMs = Date.now() - t0;
+
+      // take:PAGE_SIZE honoured — exactly one page loaded, not all rows.
       expect(
-        initialRenderMs,
-        `Deliveries tab took ${initialRenderMs}ms to render against ${SEEDED_ROW_COUNT} rows; budget=${PAGE_LOAD_BUDGET_MS}ms. A useFindManyWebhookDelivery query without 'take' would explode here.`
-      ).toBeLessThan(PAGE_LOAD_BUDGET_MS);
-    });
-
-    await test.step("Verify first page renders exactly PAGE_SIZE rows", async () => {
-      // 2. The first page renders exactly PAGE_SIZE rows (proves the `take`
-      //    in useFindManyWebhookDelivery is honoured). A naive table that
-      //    hydrates ALL 1,000 rows would fail this assertion AND the
-      //    timing assertion above.
-      const visibleRowCount = await page
-        .locator('[data-testid^="webhook-delivery-row-"]')
-        .count();
-      expect(
-        visibleRowCount,
-        `Expected exactly ${PAGE_SIZE} rows on page 1; got ${visibleRowCount}`
-      ).toBe(PAGE_SIZE);
-    });
-
-    await test.step("Capture page-1 row ids", async () => {
-      // 3. Capture the page-1 row ids — used to confirm page 2 returns a
-      //    disjoint set after we navigate forward. The cursor "Load more"
-      //    button was replaced by server-side pagination via PaginationProvider,
-      //    so we drive page changes via the `page` URL param.
-      page1Ids = await page
-        .locator('[data-testid^="webhook-delivery-row-"]')
-        .evaluateAll((els) =>
-          els.map((el) => (el as HTMLElement).getAttribute("data-testid"))
-        );
-      expect(page1Ids).toHaveLength(PAGE_SIZE);
-    });
-
-    await test.step("Navigate to page 2 and verify a disjoint PAGE_SIZE set", async () => {
-      // 4. Navigate to page 2 by setting `page=2` in the URL (the same
-      //    mechanism the rendered paginator uses internally). Assert page 2
-      //    returns PAGE_SIZE rows, all disjoint from page 1 — proves
-      //    skip/take are honoured by useFindManyWebhookDelivery.
-      const page2Url = new URL(page.url());
-      page2Url.searchParams.set("page", "2");
-      await page.goto(page2Url.toString());
+        page1Ids,
+        `first page returned ${page1Ids.length} rows (expected ${PAGE_SIZE}); a query without 'take' would return all ${SEEDED_ROW_COUNT}`
+      ).toHaveLength(PAGE_SIZE);
+      // Rows actually paint (not just an empty skeleton). Virtualized, so only
+      // the visible window is in the DOM — assert the first row, not a count.
       await expect(
         page.locator('[data-testid^="webhook-delivery-row-"]').first()
       ).toBeVisible({ timeout: PAGE_LOAD_BUDGET_MS });
-      await expect
-        .poll(
-          async () => {
-            const ids = await page
-              .locator('[data-testid^="webhook-delivery-row-"]')
-              .evaluateAll((els) =>
-                els.map((el) => (el as HTMLElement).getAttribute("data-testid"))
-              );
-            // Settled = exactly PAGE_SIZE rows AND none overlap with page 1.
-            if (ids.length !== PAGE_SIZE) return false;
-            return ids.every((id) => !page1Ids!.includes(id));
-          },
-          {
-            message: `page=2 did not converge on a fresh PAGE_SIZE-sized page disjoint from page 1`,
-            timeout: PAGE_LOAD_BUDGET_MS,
-          }
-        )
-        .toBe(true);
+      expect(
+        initialRenderMs,
+        `Deliveries tab took ${initialRenderMs}ms against ${SEEDED_ROW_COUNT} rows; budget=${PAGE_LOAD_BUDGET_MS}ms`
+      ).toBeLessThan(PAGE_LOAD_BUDGET_MS);
     });
 
-    await test.step("Apply config filter and re-fetch within budget", async () => {
-      // 5. Apply the config filter — drive it through the URL (same path the
-      //    Select dropdown's onValueChange uses internally). This isolates
-      //    the perf assertion from Radix Select interaction quirks; the
-      //    important thing is the round-trip time of the re-fetch under the
-      //    new where clause, not the dropdown UI surface (which has its own
-      //    coverage in webhook-deliveries-tab.test.tsx).
+    await test.step("Infinite scroll loads a disjoint next page of PAGE_SIZE rows", async () => {
+      // The virtualized table pulls the next page when its load-more sentinel
+      // scrolls into view (cursor pagination via useInfiniteFindMany). Assert
+      // the next fetch returns a fresh PAGE_SIZE-sized page with no overlap —
+      // proves the cursor advances rather than re-reading page 1.
+      const page2 = nextDeliveriesRows();
+      await page
+        .getByTestId("webhook-deliveries-vtable-sentinel")
+        .scrollIntoViewIfNeeded();
+      const page2Ids = await page2;
+      expect(page2Ids).toHaveLength(PAGE_SIZE);
+      expect(
+        page2Ids.every((id) => !page1Ids.includes(id)),
+        "page 2 overlaps page 1 — cursor pagination is not advancing"
+      ).toBe(true);
+    });
+
+    await test.step("Applying a config filter re-fetches one bounded page within budget", async () => {
+      // Drive the filter through the URL (configIds param — the same key
+      // parseFilterFromSearchParams reads). Only the seeded outbound config has
+      // rows in this project, so the filtered first page is still PAGE_SIZE.
+      // The re-fetch under the new where clause must stay within budget.
       const t1 = Date.now();
+      const filtered = nextDeliveriesRows();
       const filteredUrl = new URL(page.url());
       filteredUrl.searchParams.set("configIds", outboundConfigId);
-      filteredUrl.searchParams.set("page", "1");
       await page.goto(filteredUrl.toString());
-      // The first page after filter applies — by design only the seeded
-      // outbound config has rows in this project, so post-filter row count
-      // matches PAGE_SIZE again (same config, just under-filter).
-      await expect
-        .poll(
-          async () =>
-            await page
-              .locator('[data-testid^="webhook-delivery-row-"]')
-              .count(),
-          {
-            message:
-              "Filter apply did not converge to PAGE_SIZE rows within budget — useFindManyWebhookDelivery may be over-fetching",
-            timeout: FILTER_APPLY_BUDGET_MS,
-          }
-        )
-        .toBe(PAGE_SIZE);
+      const filteredIds = await filtered;
+      expect(
+        filteredIds,
+        `filtered first page returned ${filteredIds.length} rows (expected ${PAGE_SIZE})`
+      ).toHaveLength(PAGE_SIZE);
       const filterApplyMs = Date.now() - t1;
       expect(
         filterApplyMs,
@@ -259,22 +227,12 @@ test.describe("Webhook deliveries tab — large dataset performance (N-03)", () 
       ).toBeLessThan(FILTER_APPLY_BUDGET_MS);
     });
 
-    await test.step("Verify URL preserves the config filter", async () => {
-      // 6. URL preserves the filter (D-32 — filter state lives in URL params
-      //    so reload is idempotent). Poll because router.replace inside
-      //    updateFilter is async with respect to the click that triggered
-      //    it, and the row-count poll above can settle before the URL
-      //    commits (this project has one config so post-filter row count
-      //    equals pre-filter row count). The param key is `configIds`
-      //    plural — matches updateFilter / parseFilterFromSearchParams in
-      //    webhook-deliveries-tab.tsx; a single selection is the bare id.
-      await expect
-        .poll(() => page.url(), {
-          message:
-            "Filter selection did not push configIds=<id> into the URL within budget — router.replace may have failed",
-          timeout: 5_000,
-        })
-        .toContain(`configIds=${outboundConfigId}`);
+    await test.step("URL preserves the config filter", async () => {
+      // Filter state lives in the URL (configIds param) so reloads are
+      // idempotent (D-32). The filter was applied via the URL above, so the
+      // param must still be present. The key is `configIds` — matches
+      // parseFilterFromSearchParams in webhook-deliveries-tab.tsx.
+      expect(page.url()).toContain(`configIds=${outboundConfigId}`);
     });
   });
 });
