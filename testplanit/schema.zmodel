@@ -109,6 +109,7 @@ model User {
     role                            Roles                         @relation(fields: [roleId], references: [id])
     isActive                        Boolean                       @default(true) @deny('update', scimGivenName != null)
     isDeleted                       Boolean                       @default(false)
+    deletedAt                       DateTime?                     @db.Timestamptz(6)
     isApi                           Boolean                       @default(false)
     createdAt                       DateTime                      @default(now()) @db.Timestamptz(6)
     createdById                     String?
@@ -432,6 +433,7 @@ model Groups {
     url                String?                  @url
     note               String?
     isDeleted          Boolean                  @default(false)
+    deletedAt          DateTime?                @db.Timestamptz(6)
     updatedAt          DateTime?                @updatedAt
     scimDisplayName    String?
     scimExtensions     Json?
@@ -470,6 +472,7 @@ model Roles {
     name                     String                   @unique @length(1)
     isDefault                Boolean                  @default(false)
     isDeleted                Boolean                  @default(false)
+    deletedAt                DateTime?                @db.Timestamptz(6)
     users                    User[]
     rolePermissions          RolePermission[]
     defaultForProjects       Projects[]               @relation("ProjectDefaultRole")
@@ -491,6 +494,7 @@ model Projects {
     docs                           String?
     isCompleted                    Boolean                               @default(false)
     isDeleted                      Boolean                               @default(false)
+    deletedAt                      DateTime?                             @db.Timestamptz(6)
     completedAt                    DateTime?                             @db.Date
     createdAt                      DateTime                              @default(now()) @db.Timestamptz(6)
     createdBy                      String
@@ -727,6 +731,7 @@ model Milestones {
     isStarted           Boolean                @default(false) @deny('update', integrationId != null && detachedAt == null)
     isCompleted         Boolean                @default(false) @deny('update', integrationId != null && detachedAt == null)
     isDeleted           Boolean                @default(false)
+    deletedAt           DateTime?              @db.Timestamptz(6)
     automaticCompletion Boolean                @default(false)
     notifyDaysBefore    Int                    @default(0)
     startedAt           DateTime?              @db.Timestamptz(6) @deny('update', integrationId != null && detachedAt == null)
@@ -820,6 +825,7 @@ model MilestoneTypes {
     icon       FieldIcon?                 @relation(fields: [iconId], references: [id], onDelete: SetNull)
     isDefault  Boolean                    @default(false)
     isDeleted  Boolean                    @default(false)
+    deletedAt  DateTime?                  @db.Timestamptz(6)
     projects   MilestoneTypesAssignment[]
     milestones Milestones[]
 
@@ -942,6 +948,7 @@ model CaseFields {
     type               CaseFieldTypes           @relation(name: "TypeToCaseFields", fields: [typeId], references: [id])
     isEnabled          Boolean                  @default(true)
     isDeleted          Boolean                  @default(false)
+    deletedAt          DateTime?                @db.Timestamptz(6)
     isRequired         Boolean                  @default(false)
     isRestricted       Boolean                  @default(false)
     defaultValue       String?
@@ -968,6 +975,7 @@ model ResultFields {
     type              CaseFieldTypes             @relation(name: "TypeToResultFields", fields: [typeId], references: [id])
     isEnabled         Boolean                    @default(true)
     isDeleted         Boolean                    @default(false)
+    deletedAt         DateTime?                  @db.Timestamptz(6)
     isRequired        Boolean                    @default(false)
     isRestricted      Boolean                    @default(false)
     defaultValue      String?
@@ -991,6 +999,7 @@ model FieldOptions {
     icon         FieldIcon?              @relation(fields: [iconId], references: [id], onDelete: SetNull)
     isEnabled    Boolean                 @default(true)
     isDeleted    Boolean                 @default(false)
+    deletedAt    DateTime?               @db.Timestamptz(6)
     iconColorId  Int?
     iconColor    Color?                  @relation(fields: [iconColorId], references: [id], onDelete: SetNull)
     isDefault    Boolean                 @default(false)
@@ -1020,6 +1029,7 @@ model Templates {
     templateName    String                      @unique @length(1)
     isEnabled       Boolean
     isDeleted       Boolean                     @default(false)
+    deletedAt       DateTime?                   @db.Timestamptz(6)
     isDefault       Boolean
     caseFields      TemplateCaseAssignment[]
     resultFields    TemplateResultAssignment[]
@@ -1088,6 +1098,7 @@ model CaseExportTemplate {
     isDefault          Boolean                               @default(false)
     isEnabled          Boolean                               @default(true)
     isDeleted          Boolean                               @default(false)
+    deletedAt          DateTime?                             @db.Timestamptz(6)
     createdAt          DateTime                              @default(now()) @db.Timestamptz(6)
     updatedAt          DateTime                              @updatedAt
     projects           CaseExportTemplateProjectAssignment[]
@@ -1148,6 +1159,7 @@ model Status {
     colorId               Int
     color                 Color                     @relation(fields: [colorId], references: [id])
     isDeleted             Boolean                   @default(false)
+    deletedAt             DateTime?                 @db.Timestamptz(6)
     isEnabled             Boolean
     isSuccess             Boolean
     isFailure             Boolean
@@ -1202,6 +1214,7 @@ model Workflows {
     color                   Color                       @relation(fields: [colorId], references: [id])
     isEnabled               Boolean                     @default(true)
     isDeleted               Boolean                     @default(false)
+    deletedAt               DateTime?                   @db.Timestamptz(6)
     isDefault               Boolean                     @default(false)
     workflowType            WorkflowType                @default(NOT_STARTED)
     scope                   WorkflowScope
@@ -1251,6 +1264,7 @@ model ConfigCategories {
     id        Int              @id @default(autoincrement())
     name      String           @length(1)
     isDeleted Boolean          @default(false)
+    deletedAt DateTime?        @db.Timestamptz(6)
     variants  ConfigVariants[]
 
     @@deny('all', auth() == null)
@@ -1263,6 +1277,7 @@ model ConfigVariants {
     name           String                       @length(1)
     isEnabled      Boolean                      @default(true)
     isDeleted      Boolean                      @default(false)
+    deletedAt      DateTime?                    @db.Timestamptz(6)
     categoryId     Int
     category       ConfigCategories             @relation(fields: [categoryId], references: [id], onDelete: Cascade)
     configurations ConfigurationConfigVariant[]
@@ -1277,6 +1292,7 @@ model Configurations {
     name      String                           @length(1)
     isEnabled Boolean                          @default(true)
     isDeleted Boolean                          @default(false)
+    deletedAt DateTime?                        @db.Timestamptz(6)
     variants  ConfigurationConfigVariant[]
     sessions  Sessions[]
     testRuns  TestRuns[]
@@ -1303,6 +1319,7 @@ model Tags {
     id        Int                 @id @default(autoincrement())
     name      String              @unique @length(1)
     isDeleted Boolean             @default(false)
+    deletedAt DateTime?           @db.Timestamptz(6)
     caseTags  RepositoryCaseTag[]
     sessions  Sessions[]
     testRuns  TestRuns[]
@@ -1320,6 +1337,7 @@ model Repositories {
     isActive   Boolean             @default(true)
     isArchived Boolean             @default(false)
     isDeleted  Boolean             @default(false)
+    deletedAt  DateTime?           @db.Timestamptz(6)
     folders    RepositoryFolders[]
     cases      RepositoryCases[]
 
@@ -1405,6 +1423,7 @@ model RepositoryFolders {
     creator      User                @relation(fields: [creatorId], references: [id])
     order        Int                 @default(0)
     isDeleted    Boolean             @default(false)
+    deletedAt    DateTime?           @db.Timestamptz(6)
     cases        RepositoryCases[]
 
     @@unique([projectId, repositoryId, parentId, name, isDeleted])
@@ -1484,6 +1503,7 @@ model RepositoryCaseLink {
     caseB       RepositoryCases @relation("CaseBLinks", fields: [caseBId], references: [id], onDelete: Cascade)
     type        LinkType
     isDeleted   Boolean         @default(false)
+    deletedAt   DateTime?       @db.Timestamptz(6)
     createdAt   DateTime        @default(now())
     createdById String
     createdBy   User            @relation("UserCreatedCaseLinks", fields: [createdById], references: [id])
@@ -1680,6 +1700,7 @@ model DuplicateScanResult {
     status          DuplicateScanResultStatus @default(PENDING)
     scanJobId       String?
     isDeleted       Boolean                   @default(false)
+    deletedAt       DateTime?                 @db.Timestamptz(6)
     createdAt       DateTime                  @default(now()) @db.Timestamptz(6)
 
     @@unique([caseAId, caseBId, scanJobId])
@@ -1755,6 +1776,7 @@ model StepSequenceMatch {
     status      StepSequenceMatchStatus @default(PENDING)
     scanJobId   String?
     isDeleted   Boolean                 @default(false)
+    deletedAt   DateTime?               @db.Timestamptz(6)
     createdAt   DateTime                @default(now()) @db.Timestamptz(6)
     members     StepSequenceMatchCase[]
 
@@ -1809,6 +1831,7 @@ model StepSequenceMatchCase {
     startStepId Int
     endStepId   Int
     isDeleted   Boolean           @default(false)
+    deletedAt   DateTime?         @db.Timestamptz(6)
 
     @@unique([matchId, caseId])
     @@index([caseId])
@@ -1892,6 +1915,7 @@ model RepositoryCases {
     automated               Boolean                      @default(false)
     isArchived              Boolean                      @default(false)
     isDeleted               Boolean                      @default(false)
+    deletedAt               DateTime?                    @db.Timestamptz(6)
     currentVersion          Int                          @default(1)
     hasParameters           Boolean                      @default(false)
     repositoryCaseVersions  RepositoryCaseVersions[]
@@ -2018,6 +2042,7 @@ model RepositoryCaseVersions {
     automated              Boolean                  @default(false)
     isArchived             Boolean                  @default(false)
     isDeleted              Boolean                  @default(false)
+    deletedAt              DateTime?                @db.Timestamptz(6)
     version                Int
     caseFieldVersionValues CaseFieldVersionValues[]
     steps                  Json?
@@ -2248,6 +2273,7 @@ model Attachments {
     name                String              @length(1)
     note                String?
     isDeleted           Boolean             @default(false)
+    deletedAt           DateTime?           @db.Timestamptz(6)
     mimeType            String              @length(1)
     size                BigInt
     createdAt           DateTime            @default(now()) @db.Timestamptz(6)
@@ -2282,6 +2308,7 @@ model Attachments {
 model Steps {
     id                Int                  @id @default(autoincrement())
     isDeleted         Boolean              @default(false)
+    deletedAt         DateTime?            @db.Timestamptz(6)
     step              Json?
     expectedResult    Json?
     testCaseId        Int
@@ -2376,6 +2403,7 @@ model TestCaseParameter {
     lookupDataSetId   Int?
     lookupDataSet     DataSet?        @relation("ParamLookupDataSet", fields: [lookupDataSetId], references: [id], onDelete: SetNull)
     isDeleted         Boolean         @default(false)
+    deletedAt         DateTime?       @db.Timestamptz(6)
 
     @@unique([testCaseId, name])
     @@index([testCaseId])
@@ -2467,6 +2495,7 @@ model Sessions {
     elapsed              Int?
     isCompleted          Boolean              @default(false)
     isDeleted            Boolean              @default(false)
+    deletedAt            DateTime?            @db.Timestamptz(6)
     completedAt          DateTime?
     createdAt            DateTime             @default(now()) @db.Timestamptz(6)
     createdById          String
@@ -2576,6 +2605,7 @@ model Sessions {
 model SessionResults {
     id                Int                 @id @default(autoincrement())
     isDeleted         Boolean             @default(false)
+    deletedAt         DateTime?           @db.Timestamptz(6)
     sessionId         Int
     session           Sessions            @relation(fields: [sessionId], references: [id], onDelete: Cascade)
     resultData        Json?
@@ -2866,6 +2896,7 @@ model TestRuns {
     elapsed              Int?
     isCompleted          Boolean          @default(false)
     isDeleted            Boolean          @default(false)
+    deletedAt            DateTime?        @db.Timestamptz(6)
     completedAt          DateTime?
     createdAt            DateTime         @default(now()) @db.Timestamptz(6)
     createdById          String
@@ -3009,6 +3040,7 @@ model TestRunCases {
     totalIterations   Int                         @default(0)
     createdAt         DateTime                    @default(now()) @db.Timestamptz(6)
     isDeleted         Boolean                     @default(false)
+    deletedAt         DateTime?                   @db.Timestamptz(6)
     results           TestRunResults[]
     iterations        TestRunCaseIteration[]
     dataSetSnapshot   TestRunCaseDataSetSnapshot?
@@ -3144,6 +3176,7 @@ model TestRunResults {
     iteration          TestRunCaseIteration? @relation(fields: [iterationId], references: [id], onDelete: SetNull)
     stepResults        TestRunStepResults[]
     isDeleted          Boolean               @default(false)
+    deletedAt          DateTime?             @db.Timestamptz(6)
     issues             Issue[]
 
     @@index([testRunCaseId])
@@ -3233,6 +3266,7 @@ model TestRunStepResults {
     elapsed          Int?
     attachments      Attachments[]
     isDeleted        Boolean         @default(false)
+    deletedAt        DateTime?       @db.Timestamptz(6)
     issues           Issue[]
 
     @@index([sharedStepItemId])
@@ -3319,6 +3353,7 @@ model TestRunCaseIteration {
     elapsed           Int?
     notes             Json?
     isDeleted         Boolean                     @default(false)
+    deletedAt         DateTime?                   @db.Timestamptz(6)
     dataSetSnapshotId Int?
     dataSetSnapshot   TestRunCaseDataSetSnapshot? @relation(fields: [dataSetSnapshotId], references: [id], onDelete: SetNull)
     results           TestRunResults[]
@@ -3430,6 +3465,7 @@ model TestRunCaseDataSetSnapshot {
     rowsJson          Json
     snapshotAt        DateTime               @default(now()) @db.Timestamptz(6)
     isDeleted         Boolean                @default(false)
+    deletedAt         DateTime?              @db.Timestamptz(6)
     iterations        TestRunCaseIteration[]
 
     @@index([testRunCaseId])
@@ -3491,6 +3527,7 @@ model Issue {
     data               Json?
     note               Json?
     isDeleted          Boolean               @default(false)
+    deletedAt          DateTime?             @db.Timestamptz(6)
     createdAt          DateTime              @default(now()) @db.Timestamptz(6)
     createdById        String
     createdBy          User                  @relation("IssueCreator", fields: [createdById], references: [id])
@@ -3647,6 +3684,7 @@ model Integration {
     settings             Json?                    // Provider-specific settings
     lastSyncAt           DateTime?
     isDeleted            Boolean               @default(false)
+    deletedAt            DateTime?             @db.Timestamptz(6)
     createdAt            DateTime              @default(now())
     updatedAt            DateTime              @updatedAt
     userIntegrationAuths UserIntegrationAuth[]
@@ -3674,6 +3712,7 @@ model CodeRepository {
     status         IntegrationStatus             @default(ACTIVE)
     lastTestedAt   DateTime?
     isDeleted      Boolean                       @default(false)
+    deletedAt      DateTime?                     @db.Timestamptz(6)
     createdAt      DateTime                      @default(now())
     updatedAt      DateTime                      @updatedAt
     projectConfigs ProjectCodeRepositoryConfig[]
@@ -3722,6 +3761,7 @@ model LlmIntegration {
     credentials            Json                  // Encrypted API keys
     settings               Json?                 // Provider-specific settings
     isDeleted              Boolean                 @default(false)
+    deletedAt              DateTime?               @db.Timestamptz(6)
     createdAt              DateTime                @default(now())
     updatedAt              DateTime                @updatedAt
     llmProviderConfig      LlmProviderConfig?
@@ -4300,6 +4340,7 @@ model DataSet {
     versions          DataSetVersion[]              @relation("DataSetVersions")
     sharedAssignments CaseSharedDataSetAssignment[] @relation("CaseSharedDataSet")
     isDeleted         Boolean                       @default(false)
+    deletedAt         DateTime?                     @db.Timestamptz(6)
     createdAt         DateTime                      @default(now()) @db.Timestamptz(6)
     createdById       String
     createdBy         User                          @relation(fields: [createdById], references: [id])
@@ -4355,13 +4396,14 @@ model DataSet {
 }
 
 model DataSetRow {
-    id         Int     @id @default(autoincrement())
+    id         Int       @id @default(autoincrement())
     dataSetId  Int
-    dataSet    DataSet @relation(fields: [dataSetId], references: [id], onDelete: Cascade)
-    rowIndex   Int     @default(0)
+    dataSet    DataSet   @relation(fields: [dataSetId], references: [id], onDelete: Cascade)
+    rowIndex   Int       @default(0)
     label      String?
     valuesJson Json
-    isDeleted  Boolean @default(false)
+    isDeleted  Boolean   @default(false)
+    deletedAt  DateTime? @db.Timestamptz(6)
 
     @@unique([dataSetId, rowIndex])
     @@index([dataSetId])
@@ -4561,6 +4603,7 @@ model Notification {
     data              Json?
     isRead            Boolean          @default(false)
     isDeleted         Boolean          @default(false)
+    deletedAt         DateTime?        @db.Timestamptz(6)
     relatedEntityId   String?
     relatedEntityType String?
     createdAt         DateTime         @default(now()) @db.Timestamptz(6)
@@ -4653,6 +4696,7 @@ model ReviewRequest {
     lastRemindedAt    DateTime?        @db.Timestamptz(6)
 
     isDeleted         Boolean          @default(false)
+    deletedAt         DateTime?        @db.Timestamptz(6)
     createdAt         DateTime         @default(now()) @db.Timestamptz(6)
     updatedAt         DateTime         @updatedAt
 
@@ -4779,6 +4823,7 @@ model ShareLink {
     description  String?
     isRevoked    Boolean              @default(false)
     isDeleted    Boolean              @default(false)
+    deletedAt    DateTime?            @db.Timestamptz(6)
     viewCount    Int                  @default(0)
     lastViewedAt DateTime?            @db.Timestamptz(6)
     createdAt    DateTime             @default(now()) @db.Timestamptz(6)
@@ -5151,6 +5196,7 @@ model PromptConfig {
     isDefault   Boolean              @default(false)
     isActive    Boolean              @default(true)
     isDeleted   Boolean              @default(false)
+    deletedAt   DateTime?            @db.Timestamptz(6)
     createdAt   DateTime             @default(now()) @db.Timestamptz(6)
     updatedAt   DateTime             @updatedAt
 
@@ -5399,6 +5445,7 @@ model LlmReportSnapshot {
     startedAt        DateTime        @default(now()) @db.Timestamptz(6)
     completedAt      DateTime?       @db.Timestamptz(6)
     isDeleted        Boolean         @default(false)
+    deletedAt        DateTime?       @db.Timestamptz(6)
     createdAt        DateTime        @default(now()) @db.Timestamptz(6)
     updatedAt        DateTime        @updatedAt
 
@@ -5732,6 +5779,7 @@ model Comment {
     updatedAt        DateTime         @updatedAt
     isEdited         Boolean          @default(false)
     isDeleted        Boolean          @default(false)
+    deletedAt        DateTime?        @db.Timestamptz(6)
 
     // Relations
     mentionedUsers   CommentMention[]

@@ -39,6 +39,7 @@ import { Client } from "pg";
 import {
   TRIGGER_REGISTRY,
   SINGLE_DEFAULT_REGISTRY,
+  SOFT_DELETE_REGISTRY,
   DEFAULT_DENYLIST,
   assertRegistrySafe,
 } from "./trigger-registry";
@@ -86,6 +87,13 @@ function singleDefaultTriggerNameFor(table: string): string {
   return "tpl_single_default_" + table.toLowerCase().replace(/[^a-z0-9]/g, "_");
 }
 
+/** tpl_stamp_deleted_at_<lowercased table>. Distinct prefix keeps these out of the tpl_audit_% / tpl_single_default_% drift checks. */
+function stampDeletedAtTriggerNameFor(table: string): string {
+  return (
+    "tpl_stamp_deleted_at_" + table.toLowerCase().replace(/[^a-z0-9]/g, "_")
+  );
+}
+
 /**
  * Business-rule trigger (NOT audit): enforce "at most one isDefault = true" per
  * table (optionally scoped by TG_ARGV[0]). Fires AFTER a row is set default and
@@ -122,6 +130,38 @@ BEGIN
     ) USING NEW."id", scope_val;
   END IF;
   RETURN NULL;
+END;
+$$ LANGUAGE plpgsql;
+`;
+
+/**
+ * Soft-delete stamping (a business rule, NOT audit). Records WHEN a row was soft-deleted so a
+ * retention/purge job has a timestamp to key off (Option A — additive alongside `isDeleted`, which
+ * stays the queryable liveness flag). This is a BEFORE UPDATE trigger because it MODIFIES the row
+ * being written (sets NEW."deletedAt") rather than running a side-effect UPDATE like the AFTER
+ * business-rule/audit triggers.
+ *
+ * The attaching trigger is gated `WHEN (NEW."isDeleted" IS DISTINCT FROM OLD."isDeleted")`, so the
+ * function body runs ONLY on an actual flip — a no-op re-save or any unrelated column update never
+ * enters it (no overhead on hot write paths, and no risk of re-stamping an already-deleted row).
+ * Given that gate, NEW."isDeleted" TRUE means false→true (stamp) and FALSE means true→false (restore,
+ * clear). An explicit deletedAt supplied in the same flip write is respected (stamped only when NULL).
+ * Deliberately UPDATE-only: a row INSERTed already-deleted keeps deletedAt NULL (a safe omission — the
+ * purge job simply never sweeps a NULL-deletedAt row; it is not a wrong deletion time).
+ */
+const STAMP_DELETED_AT_FN_SQL = `
+CREATE OR REPLACE FUNCTION tpl_stamp_deleted_at() RETURNS TRIGGER AS $$
+BEGIN
+  IF NEW."isDeleted" IS TRUE THEN
+    -- false -> true: stamp the deletion moment, unless the write set one explicitly.
+    IF NEW."deletedAt" IS NULL THEN
+      NEW."deletedAt" := now();
+    END IF;
+  ELSE
+    -- true -> false (restore): the row is live again, so drop the tombstone timestamp.
+    NEW."deletedAt" := NULL;
+  END IF;
+  RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 `;
@@ -340,6 +380,45 @@ export async function applyAuditTriggers(
       }
     }
 
+    // 2d. Soft-delete deletedAt stamping (business rule). CREATE OR REPLACE the shared function, then
+    //     attach one tpl_stamp_deleted_at_<table> BEFORE UPDATE OF "isDeleted" trigger per entry and
+    //     drop orphans. The WHEN gate fires the function only on a real isDeleted flip. Distinct prefix
+    //     keeps these out of the tpl_audit_% / tpl_single_default_% drift checks.
+    await client.query(STAMP_DELETED_AT_FN_SQL);
+    for (const entry of SOFT_DELETE_REGISTRY) {
+      const triggerName = stampDeletedAtTriggerNameFor(entry.table);
+      await client.query(
+        `DROP TRIGGER IF EXISTS ${triggerName} ON "${entry.table}";`
+      );
+      await client.query(
+        `CREATE TRIGGER ${triggerName}
+           BEFORE UPDATE OF "isDeleted" ON "${entry.table}"
+           FOR EACH ROW WHEN (NEW."isDeleted" IS DISTINCT FROM OLD."isDeleted")
+           EXECUTE FUNCTION tpl_stamp_deleted_at();`
+      );
+    }
+    const expectedStampDeletedAt = new Set(
+      SOFT_DELETE_REGISTRY.map((e) => stampDeletedAtTriggerNameFor(e.table))
+    );
+    const { rows: liveStampDeletedAt } = await client.query<{
+      trigger_name: string;
+      event_object_table: string;
+    }>(
+      `SELECT DISTINCT trigger_name, event_object_table
+         FROM information_schema.triggers
+        WHERE trigger_name LIKE 'tpl_stamp_deleted_at_%'`
+    );
+    for (const t of liveStampDeletedAt) {
+      if (!expectedStampDeletedAt.has(t.trigger_name)) {
+        await client.query(
+          `DROP TRIGGER IF EXISTS ${t.trigger_name} ON "${t.event_object_table}";`
+        );
+        log(
+          `[apply-triggers] dropped orphaned stamp-deletedAt trigger ${t.trigger_name} on "${t.event_object_table}"`
+        );
+      }
+    }
+
     // 3. Append-only ENFORCEMENT triggers on DataChangeLog (the real SAF-03 guarantee).
     await client.query(APPEND_ONLY_ENFORCEMENT_SQL);
 
@@ -419,6 +498,7 @@ export async function applyAuditTriggers(
     log(
       `[apply-triggers] applied audit_row_change() + ${TRIGGER_REGISTRY.length} tpl_audit_* triggers ` +
         `+ tpl_enforce_single_default() + ${SINGLE_DEFAULT_REGISTRY.length} tpl_single_default_* triggers ` +
+        `+ tpl_stamp_deleted_at() + ${SOFT_DELETE_REGISTRY.length} tpl_stamp_deleted_at_* triggers ` +
         `+ DataChangeLog append-only enforcement (tpl_dcl_no_delete/tpl_dcl_no_update) + GRANT/REVOKE defense-in-depth ` +
         `+ AuditLog CDC idempotency index (audit_log_cdc_idempotency) ` +
         `(idempotent, via ${usingDirect ? "DIRECT_DATABASE_URL" : "DATABASE_URL"}).`

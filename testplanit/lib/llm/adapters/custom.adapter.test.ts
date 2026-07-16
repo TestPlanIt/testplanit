@@ -23,6 +23,7 @@ const createTestConfig = (
       ...settingsOverrides,
     },
     isDeleted: false,
+    deletedAt: null,
     createdAt: new Date(),
     updatedAt: new Date(),
   },

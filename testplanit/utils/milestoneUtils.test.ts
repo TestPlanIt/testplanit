@@ -263,6 +263,7 @@ const baseMockMilestone: Milestones = {
   isStarted: false,
   isCompleted: false,
   isDeleted: false,
+  deletedAt: null,
   startedAt: null,
   completedAt: null,
   createdAt: new Date("2024-01-01T00:00:00.000Z"),
@@ -287,6 +288,7 @@ const mockMilestoneType: MilestoneTypes & { icon: FieldIcon | null } = {
   icon: { id: 1, name: "lucide:box" },
   isDefault: false,
   isDeleted: false,
+  deletedAt: null,
 };
 
 // --- createColorMap Tests ---

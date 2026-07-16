@@ -313,6 +313,7 @@ export function EditResultField({
             ? fieldOption.iconColor.value
             : undefined,
           isDeleted: false,
+          deletedAt: null,
         }))
         .sort((a, b) => a.order - b.order);
 
@@ -368,6 +369,7 @@ export function EditResultField({
           isEnabled: true,
           order: prevOptions.length + 1,
           isDeleted: false,
+          deletedAt: null,
         },
       ];
     });

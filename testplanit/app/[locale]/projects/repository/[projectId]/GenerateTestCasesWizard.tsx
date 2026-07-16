@@ -847,6 +847,7 @@ const GeneratedTestCaseCard = memo(function GeneratedTestCaseCard({
         sharedStepGroup,
         isShared: step?.isShared ?? Boolean(step?.sharedStepGroupId),
         isDeleted: step?.isDeleted ?? false,
+        deletedAt: step?.deletedAt ?? null,
         testCaseId: typeof step?.testCaseId === "number" ? step.testCaseId : 0,
       };
     });

@@ -53,6 +53,7 @@ export async function POST(request: NextRequest) {
           apiVersion: provider === "AZURE_OPENAI" ? "2024-02-01" : undefined,
         } as JsonValue,
         isDeleted: false,
+        deletedAt: null,
         createdAt: new Date(),
         updatedAt: new Date(),
       },

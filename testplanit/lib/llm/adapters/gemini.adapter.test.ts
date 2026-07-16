@@ -17,6 +17,7 @@ const createTestConfig = (
     credentials: {},
     settings: null,
     isDeleted: false,
+    deletedAt: null,
     createdAt: new Date(),
     updatedAt: new Date(),
   },
