@@ -287,6 +287,7 @@ export function TestRunCaseDetails({
         createdBy: { select: { name: true, id: true } },
         testCaseId: true,
         isDeleted: true,
+        deletedAt: true,
         createdById: true,
         sessionId: true,
         sessionResultsId: true,
@@ -306,6 +307,7 @@ export function TestRunCaseDetails({
         order: true,
         expectedResult: true,
         isDeleted: true,
+        deletedAt: true,
         sharedStepGroupId: true,
         sharedStepGroup: {
           select: {

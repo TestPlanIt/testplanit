@@ -363,3 +363,81 @@ export const SINGLE_DEFAULT_REGISTRY: SingleDefaultConfig[] = [
   { table: "PromptConfig" }, // one default prompt config
   { table: "IntegrationProject", scopeCol: "projectIntegrationId" }, // one default external project per project-integration
 ];
+
+/**
+ * Soft-delete deletedAt stamping (a business rule, NOT audit capture). Every table
+ * carrying an `isDeleted` boolean also carries a nullable `deletedAt` timestamp
+ * (Option A — additive; `isDeleted` stays the queryable liveness flag). Each listed
+ * table gets a `tpl_stamp_deleted_at_<table>` BEFORE UPDATE trigger that stamps
+ * `deletedAt = now()` on the isDeleted false→true flip and clears it (→ NULL) on a
+ * true→false restore, in the SAME write. The trigger is gated on an actual flip
+ * (WHEN NEW.isDeleted IS DISTINCT FROM OLD.isDeleted), so normal updates never enter
+ * the function — no overhead on hot write paths. Doing it in the DB, not app code,
+ * means every soft-delete write path (both Prisma clients, raw SQL, future code) is
+ * covered with zero drift; an explicit deletedAt in the flip write is respected
+ * (only stamped when NULL).
+ *
+ * The `tpl_stamp_deleted_at_` prefix keeps these out of the `tpl_audit_%` and
+ * `tpl_single_default_%` drift self-checks in scripts/apply-triggers.ts. Attaching is
+ * idempotent and runs on the same startup / db-push paths as the other triggers.
+ *
+ * INVARIANT: this list must equal the set of models declaring `isDeleted` in
+ * schema.zmodel — enforced by scripts/__tests__/softDeleteRegistry.test.ts, so a new
+ * soft-deletable model that forgets its trigger fails the unit lane, not silently in prod.
+ */
+export interface SoftDeleteConfig {
+  /** Postgres table name (exact case, no quotes — the apply script quotes it). Must have an `isDeleted` boolean + a nullable `deletedAt` column. */
+  table: string;
+}
+
+export const SOFT_DELETE_REGISTRY: SoftDeleteConfig[] = [
+  { table: "User" },
+  { table: "Groups" },
+  { table: "Roles" },
+  { table: "Projects" },
+  { table: "Milestones" },
+  { table: "MilestoneTypes" },
+  { table: "CaseFields" },
+  { table: "ResultFields" },
+  { table: "FieldOptions" },
+  { table: "Templates" },
+  { table: "CaseExportTemplate" },
+  { table: "Status" },
+  { table: "Workflows" },
+  { table: "ConfigCategories" },
+  { table: "ConfigVariants" },
+  { table: "Configurations" },
+  { table: "Tags" },
+  { table: "Repositories" },
+  { table: "RepositoryFolders" },
+  { table: "RepositoryCaseLink" },
+  { table: "DuplicateScanResult" },
+  { table: "StepSequenceMatch" },
+  { table: "StepSequenceMatchCase" },
+  { table: "RepositoryCases" },
+  { table: "RepositoryCaseVersions" },
+  { table: "Attachments" },
+  { table: "Steps" },
+  { table: "TestCaseParameter" },
+  { table: "Sessions" },
+  { table: "SessionResults" },
+  { table: "TestRuns" },
+  { table: "TestRunCases" },
+  { table: "TestRunResults" },
+  { table: "TestRunStepResults" },
+  { table: "TestRunCaseIteration" },
+  { table: "TestRunCaseDataSetSnapshot" },
+  { table: "Issue" },
+  { table: "Integration" },
+  { table: "CodeRepository" },
+  { table: "LlmIntegration" },
+  { table: "SharedStepGroup" },
+  { table: "DataSet" },
+  { table: "DataSetRow" },
+  { table: "Notification" },
+  { table: "ReviewRequest" },
+  { table: "ShareLink" },
+  { table: "PromptConfig" },
+  { table: "LlmReportSnapshot" },
+  { table: "Comment" },
+];

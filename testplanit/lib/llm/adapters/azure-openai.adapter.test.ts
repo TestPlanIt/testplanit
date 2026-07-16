@@ -21,6 +21,7 @@ const createTestConfig = (
       apiVersion: "2024-02-01",
     },
     isDeleted: false,
+    deletedAt: null,
     createdAt: new Date(),
     updatedAt: new Date(),
   },

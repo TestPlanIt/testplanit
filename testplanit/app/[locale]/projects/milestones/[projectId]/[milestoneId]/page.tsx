@@ -366,6 +366,7 @@ export default function MilestoneDetailsPage() {
           name: true,
           isEnabled: true,
           isDeleted: true,
+          deletedAt: true,
         },
       },
       state: {
