@@ -31,6 +31,7 @@ export interface WebhookEventDefinition {
     | "session"
     | "issue"
     | "review"
+    | "dataset"
     | "system";
   /** One-sentence human-readable description. */
   description: string;
@@ -228,6 +229,39 @@ export const WEBHOOK_EVENT_CATALOG: WebhookEventDefinition[] = [
     category: "issue",
     description: "An issue was soft-deleted (unlinked).",
     payloadKeys: ["id", "projectId"],
+  },
+
+  // --- Dataset row leases (999.12 — test-data reservation) ---
+  {
+    name: "dataset.row.acquired",
+    category: "dataset",
+    description:
+      "A parallel-run orchestrator leased (checked out) a dataset row. Payload carries identifiers only — never the row's values.",
+    payloadKeys: [
+      "dataSetId",
+      "rowId",
+      "rowIndex",
+      "label",
+      "projectId",
+      "leasedById",
+      "leaseExpiresAt",
+    ],
+  },
+  {
+    name: "dataset.row.released",
+    category: "dataset",
+    description:
+      "A leased dataset row was released — explicitly by the holder (reason=released) or reaped after its TTL by the sweep (reason=expired).",
+    payloadKeys: [
+      "dataSetId",
+      "rowId",
+      "rowIndex",
+      "label",
+      "projectId",
+      "leasedById",
+      "leaseExpiresAt",
+      "reason",
+    ],
   },
 
   // --- System ---

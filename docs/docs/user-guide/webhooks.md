@@ -65,11 +65,11 @@ If your project's [Milestones](./projects/milestones.md) are synced from a track
 
 Per-provider capability:
 
-| Provider | Version/sprint events | Notes |
-| --- | --- | --- |
-| **Jira Cloud** | Full support — `jira:version_created`, `jira:version_updated`, `jira:version_moved`, `jira:version_released`, `jira:version_unreleased`, `jira:version_deleted` (plus `jira:version_deleted` with a `mergedTo` field for merges) and `jira:sprint_created`, `jira:sprint_updated`, `jira:sprint_started`, `jira:sprint_closed`, `jira:sprint_deleted` | These events support **no JQL, field, or property filtering** — unlike issue events, the admin webhook fires for every project on the site once subscribed. TestPlanIt filters to the correct project/board using the event's own payload, so this is safe, but it does mean the admin webhook cannot be scoped to "only this project" for version/sprint traffic. |
-| **Jira Data Center** | Same admin webhook mechanism as Cloud | Event names and payload shapes are expected to match Cloud's admin webhook; verify parity against your specific Data Center version if you rely on near-real-time milestone refresh, since self-hosted instances can lag behind Cloud's webhook catalog. |
-| **All other providers** (GitHub, GitLab, Gitea/Forgejo/Gogs, Azure DevOps, Redmine, MantisBT, Simple URL) | Not supported | These trackers don't expose an equivalent time-based-artifact event. Synced milestones on these providers still refresh on page load and via the project's manual **Sync now** action — there is no near-real-time push for milestone changes. |
+| Provider                                                                                                  | Version/sprint events                                                                                                                                                                                                                                                                                                                                 | Notes                                                                                                                                                                                                                                                                                                                                                              |
+| --------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Jira Cloud**                                                                                            | Full support — `jira:version_created`, `jira:version_updated`, `jira:version_moved`, `jira:version_released`, `jira:version_unreleased`, `jira:version_deleted` (plus `jira:version_deleted` with a `mergedTo` field for merges) and `jira:sprint_created`, `jira:sprint_updated`, `jira:sprint_started`, `jira:sprint_closed`, `jira:sprint_deleted` | These events support **no JQL, field, or property filtering** — unlike issue events, the admin webhook fires for every project on the site once subscribed. TestPlanIt filters to the correct project/board using the event's own payload, so this is safe, but it does mean the admin webhook cannot be scoped to "only this project" for version/sprint traffic. |
+| **Jira Data Center**                                                                                      | Same admin webhook mechanism as Cloud                                                                                                                                                                                                                                                                                                                 | Event names and payload shapes are expected to match Cloud's admin webhook; verify parity against your specific Data Center version if you rely on near-real-time milestone refresh, since self-hosted instances can lag behind Cloud's webhook catalog.                                                                                                           |
+| **All other providers** (GitHub, GitLab, Gitea/Forgejo/Gogs, Azure DevOps, Redmine, MantisBT, Simple URL) | Not supported                                                                                                                                                                                                                                                                                                                                         | These trackers don't expose an equivalent time-based-artifact event. Synced milestones on these providers still refresh on page load and via the project's manual **Sync now** action — there is no near-real-time push for milestone changes.                                                                                                                     |
 
 :::warning Admin prerequisite: subscribe version/sprint events
 Version and sprint events are **not** included by default when you subscribe a Jira site webhook to issue events. Your Jira administrator must explicitly add the version and sprint event types to the site webhook's subscribed-events list (in addition to issue-created/issue-updated) before any near-real-time milestone refresh will work. Without this step, synced milestones still work — they just fall back to page-load and manual-sync freshness only, the same as a polling-only provider.
@@ -101,17 +101,18 @@ Each event name follows a `subject.verb` convention. The reserved verbs are `cre
 - `session.created`, `session.state_changed`, `session.completed`, `session.duplicated`, `session.result_added`
 - `case.created`, `case.updated`, `case.deleted`
 - `issue.created`, `issue.updated`, `issue.deleted`
+- `dataset.row.acquired`, `dataset.row.released` — emitted by the [test-data reservation](../test-data-reservation.md) (dataset row lease) API; payloads carry row identifiers only, never the row's values
 
 Toggling a checkbox saves immediately; a brief check-mark flashes next to the event name to confirm the change reached the server.
 
 ### Slack vs generic HMAC
 
-| Feature | Slack | Generic HMAC |
-| --- | --- | --- |
-| URL detection | Auto-detected from `hooks.slack.com` | Anything else |
-| Signing secret | Not used (Slack URL is the credential) | Server-minted, revealed once |
-| Payload shape | Slack-formatted message | TestPlanIt's standard event envelope, signed with HMAC-SHA256 |
-| Rotation | Replace the URL by deleting and recreating the webhook | Use the **Rotate Secret** button (see below) |
+| Feature        | Slack                                                  | Generic HMAC                                                  |
+| -------------- | ------------------------------------------------------ | ------------------------------------------------------------- |
+| URL detection  | Auto-detected from `hooks.slack.com`                   | Anything else                                                 |
+| Signing secret | Not used (Slack URL is the credential)                 | Server-minted, revealed once                                  |
+| Payload shape  | Slack-formatted message                                | TestPlanIt's standard event envelope, signed with HMAC-SHA256 |
+| Rotation       | Replace the URL by deleting and recreating the webhook | Use the **Rotate Secret** button (see below)                  |
 
 ## Health and Monitoring
 

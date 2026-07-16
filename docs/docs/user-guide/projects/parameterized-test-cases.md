@@ -39,12 +39,12 @@ There are two entry points:
 
 Declare the parameters your case needs. Each parameter has:
 
-| Field | What it means |
-|---|---|
-| **Name** | The chip name you'll use in steps (e.g. `username`). Lowercase + numbers + underscore is conventional. |
-| **Type** | `STRING`, `INTEGER`, `BOOLEAN`, or `SELECT` (see [SELECT availability](#select-parameter-availability)). Controls cell editing and per-row validation. |
-| **Default** | Value to use when no row supplies one. |
-| **Required** | When set, rows with no value for this parameter fail validation on save. |
+| Field         | What it means                                                                                                                                                         |
+| ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Name**      | The chip name you'll use in steps (e.g. `username`). Lowercase + numbers + underscore is conventional.                                                                |
+| **Type**      | `STRING`, `INTEGER`, `BOOLEAN`, or `SELECT` (see [SELECT availability](#select-parameter-availability)). Controls cell editing and per-row validation.                |
+| **Default**   | Value to use when no row supplies one.                                                                                                                                |
+| **Required**  | When set, rows with no value for this parameter fail validation on save.                                                                                              |
 | **Sensitive** | When set, values are masked as `••••••` in the UI for users without the right role permission (see [Permissions & Sensitive Values](#permissions--sensitive-values)). |
 
 #### SELECT parameter availability
@@ -165,13 +165,13 @@ The matrix supports CSV export. Sensitive cells in the export are written as `[R
 
 Most CI emitters can mark a test case as one row of a parameterized run by writing a property, attribute, or trait on the test result. TestPlanIt reads that signal and routes the result to the matching iteration row.
 
-| Format | Where the iteration property lives |
-|---|---|
-| JUnit XML | `<property name="iteration" value="N"/>` child of `<testcase>` |
-| TestNG XML | `<attribute name="iteration">N</attribute>` |
-| xUnit XML | `<traits><trait name="iteration" value="N"/></traits>` |
-| NUnit XML | `<property name="iteration" value="N"/>` |
-| MSTest TRX | Any `metadata` map exposing the configured name |
+| Format     | Where the iteration property lives                             |
+| ---------- | -------------------------------------------------------------- |
+| JUnit XML  | `<property name="iteration" value="N"/>` child of `<testcase>` |
+| TestNG XML | `<attribute name="iteration">N</attribute>`                    |
+| xUnit XML  | `<traits><trait name="iteration" value="N"/></traits>`         |
+| NUnit XML  | `<property name="iteration" value="N"/>`                       |
+| MSTest TRX | Any `metadata` map exposing the configured name                |
 
 The lookup name defaults to `iteration` (case-insensitive). To configure additional names — `iterationIndex`, `dataRow`, whatever your CI emits — open **Project Settings → Test Case Parameters → Iteration Property Mapping** and add the names there. Lookup is case-insensitive across the whole configured list.
 
@@ -182,6 +182,14 @@ When the imported file requests an iteration index above the 5000 cap, the entir
 ### Behavior when no iteration property is present
 
 A test case in a CI emitter without an iteration property routes to the case-level status exactly the way it did before this feature shipped — no behavior change for non-parameterized cases.
+
+## Reserving Dataset Rows for Automated Tests
+
+CI Imports above cover **pushing results back** — routing each automated result to the right iteration. The complementary question is what happens **at execution time**: when several automated jobs run the same suite in parallel, they often draw from a shared pool of real fixtures (test accounts, sandbox records, seat licenses) where only one job may use a given row at a time. Nothing stops two parallel jobs from picking the same dataset row and colliding on the real thing that row describes.
+
+The **[Test-Data Reservation](../../test-data-reservation.md)** API solves this. It turns a dataset into a reservation pool: a job **acquires** the next free row, uses its values to provision the real fixture, and **releases** the row when done — with a TTL so a crashed job never pins a row forever. It's the natural next step once your dataset exists — the machine-facing way to consume those rows safely from an automation harness.
+
+This is deliberately separate from the in-app iteration playback described above: a test run snapshots its own copy of the dataset when the run is created, so runs never contend on the live rows. Reservation operates on the **live** dataset rows for external orchestration. See **[Test-Data Reservation](../../test-data-reservation.md)** for the endpoints, a CI reservation-loop example, and the webhook events.
 
 ## Linking Issues from a Failed Iteration
 
@@ -218,6 +226,7 @@ A small tag-input list of property/attribute/trait names the CI import path will
 The CRUD list of shared datasets in this project. Columns: Name, Columns, Rows, Version, Last edited, Owner, In use by (the count of cases assigned to the dataset, clickable to drill into the list), Actions (Open editor / Delete). Delete is blocked by an active confirm if the dataset has assignments; the prompt surfaces the count.
 
 Access to both surfaces:
+
 - **System Admin** — unconditional.
 - **Project Admin** — must be assigned to this specific project.
 
@@ -225,9 +234,9 @@ Access to both surfaces:
 
 Sensitive parameter values are gated by the existing **Read Sensitive** flag on two role permission areas — no new permission was introduced for this feature:
 
-| Surface | Gate |
-|---|---|
-| Dataset rows on a case (Configure Parameters → Dataset tab, standalone editor) | `Test Case Restricted Fields` → `canReadSensitive` |
+| Surface                                                                           | Gate                                                     |
+| --------------------------------------------------------------------------------- | -------------------------------------------------------- |
+| Dataset rows on a case (Configure Parameters → Dataset tab, standalone editor)    | `Test Case Restricted Fields` → `canReadSensitive`       |
 | Iteration cells in execution, matrix cells, matrix CSV export, issue-prefill body | `Test Run Result Restricted Fields` → `canReadSensitive` |
 
 Without the relevant grant, sensitive values render as `••••••` in the UI and `[REDACTED]` in the issue body and CSV exports. System admins bypass both gates. For the broader role permission model see the [Roles guide](../roles.md) and [Permissions overview](../permissions-guide.md).
