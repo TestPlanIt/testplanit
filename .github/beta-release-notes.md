@@ -6,46 +6,35 @@ installs. You build it yourself from the source attached below.
 
 > ⚠️ This is pre-release software. **Back up your database before trying it.**
 
-### What's new since beta.3
+### What's new since beta.4
 
-#### Milestones
+#### Test data & CI
 
-- Burndown chart on the milestone detail page, with a variance/heat strip and a
-  "% ready" release-readiness rollup on the Issues section
-- New milestone-readiness report, plotted on a time axis
-- Quick-generate test cases directly from the scope-issues table (LLM-assisted)
-- Detail-page overhaul: collapsible persisted accordions, virtualized run/session
-  lists, a milestone-kind filter, and a per-case traceability matrix in the PDF export
-- An activity-log section on the milestone detail page
-- Jira Server/Data Center: milestone-membership sync; compact "managed by Jira"
-  notice; a Milestones linkage column on the Issues tables
-
-#### Attachments
-
-- Inline preview of Word, Excel, and PowerPoint documents
-- Attachment filtering and localization; full-height PDF previews with carousel
-  keyboard navigation
+- Row-level lease primitive for datasets: parallel test runs can reserve
+  distinct dataset rows without colliding, with acquire / release / extend
+  guarded by a per-lease fencing token and automatic expiry of stale leases
 
 #### Test runs & sessions
 
-- Distribute test-case assignments across team members
-- Webhooks emit `test_run.duplicated` / `session.duplicated` on duplicate
-- Fixed iteration result recording stalling on a page-wide refetch
+- Custom-field columns on the test-run detail page now show formatted values —
+  Dropdown / Multi-Select option labels and rendered rich text — instead of raw
+  option ids or raw editor JSON
+- Test run and session names now carry an icon for quicker visual scanning
 
-#### Audit log
+#### Repository
 
-- Edits attribute to the acting user (admin config, milestones, projects, comments)
-- Rich-text description edits are recorded, and JSON diff columns now render
-  readably instead of showing `[object Object]`
+- The inline "add case" row keeps focus after you add the first case, so you can
+  add several cases in a row without clicking back into the field
 
 #### Platform & fixes
 
-- Configurable API rate limit (`API_RATE_LIMIT`)
-- Single-default-per-catalog enforced atomically via database triggers
-- Testmo import no longer writes the Jira key into the external id
-- PDF exports handle non-Latin text; steadier live-stream connections and fewer
-  reconnect refetch storms; no more theme-change flash on load
-- Dependency bumps, translation syncs, and documentation updates
+- The in-app version now reflects the beta you built from (e.g.
+  `v1.0.0-beta.5`) instead of the underlying package version
+- Soft-deleted records now record a `deletedAt` timestamp, stamped by a database
+  trigger — the basis for time-based retention and purging of old soft-deleted
+  data
+- Table cells expose a `data-column-id` attribute for improved accessibility
+- Continued end-to-end test-suite hardening for steadier runs
 
 ### Try it
 
