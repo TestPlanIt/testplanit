@@ -3898,9 +3898,6 @@ export default function Cases({
                 <div className="m-1 mb-4 text-muted-foreground">
                   {t("repository.cases.noTestCases")}
                 </div>
-                {!isSelectionMode && folderId && canAddEdit && (
-                  <AddCaseRow folderId={folderId} />
-                )}
               </>
             );
           }
@@ -3933,12 +3930,16 @@ export default function Cases({
                 onRowSelectionChange={handleTableRowSelectionChange}
                 selectedItemsForDrag={selectedItemsForDrag}
               />
-              {!isSelectionMode && !isRunMode && folderId && canAddEdit && (
-                <AddCaseRow folderId={folderId} />
-              )}
             </>
           );
         })()}
+        {/* Render the inline add-case row once, outside the loading/empty/
+            populated branch swap above, so it is never unmounted when the
+            folder transitions empty→populated (adding the first case). A
+            remount there discards the just-restored input focus. */}
+        {!isSelectionMode && !isRunMode && folderId && canAddEdit && (
+          <AddCaseRow folderId={folderId} />
+        )}
         {selectedAttachmentIndex !== null && (
           <AttachmentsCarousel
             attachments={selectedAttachments}
