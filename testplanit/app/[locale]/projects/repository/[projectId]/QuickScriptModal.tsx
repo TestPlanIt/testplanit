@@ -11,10 +11,8 @@ import {
   generateAiExportBatch,
   type AiExportResult,
 } from "~/app/actions/aiExportActions";
-import {
-  fetchCasesForQuickScript,
-  type QuickScriptCaseData,
-} from "~/app/actions/quickScriptActions";
+import { fetchCasesForQuickScript } from "~/app/actions/quickScriptActions";
+import type { QuickScriptCaseData } from "~/lib/services/quickscript-generation";
 import { logDataExport } from "~/lib/services/auditClient";
 
 import { Badge } from "@/components/ui/badge";
@@ -760,7 +758,7 @@ export function QuickScriptModal({
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent
         className={cn(
-          showPreview ? "sm:max-w-225 h-[95vh]" : "sm:max-w-125",
+          showPreview ? "sm:max-w-225 max-h-[95vh]" : "sm:max-w-125",
           "transition-all overflow-hidden flex flex-col"
         )}
         data-testid="quickscript-dialog"

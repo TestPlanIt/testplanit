@@ -1923,6 +1923,8 @@
           "statusPending": "Orzeźwiający...",
           "lastFetched": "Ostatnio pobrano",
           "filesCached": "Pliki w pamięci podręcznej",
+          "contentsCached": "Zawartość w pamięci podręcznej",
+          "contentsIncomplete": "Tylko {cached} z {total} zawartości plików jest w pamięci podręcznej — wygenerowane skrypty nie będą używać brakujących plików. Odśwież ponownie, aby zakończyć.",
           "totalSize": "Całkowity rozmiar"
         },
         "save": "Zapisz konfigurację",

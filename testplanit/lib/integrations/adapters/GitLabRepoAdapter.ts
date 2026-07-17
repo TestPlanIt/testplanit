@@ -100,6 +100,14 @@ export class GitLabRepoAdapter extends GitRepoAdapter {
     return this.makeTextRequest(url, { headers: this.authHeaders });
   }
 
+  /** Single-request zip archive of the whole tree at `ref`. */
+  protected buildArchiveRequest(ref: string) {
+    return {
+      url: `${this.baseUrl}/api/v4/projects/${this.encodedProjectPath}/repository/archive.zip?sha=${encodeURIComponent(ref)}`,
+      headers: this.authHeaders,
+    };
+  }
+
   async testConnection(): Promise<TestConnectionResult> {
     try {
       const data = await this.makeRequest<any>(

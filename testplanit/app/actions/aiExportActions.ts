@@ -1,24 +1,16 @@
 "use server";
 
-import type { QuickScriptCaseData } from "~/app/actions/quickScriptActions";
-import { LLM_FEATURES } from "~/lib/llm/constants";
-import { CodeContextService } from "~/lib/llm/services/code-context.service";
-import { LlmManager } from "~/lib/llm/services/llm-manager.service";
-import { PromptResolver } from "~/lib/llm/services/prompt-resolver.service";
-import type { LlmRequest } from "~/lib/llm/types";
 import { baseDb } from "~/lib/db";
+import { CodeContextService } from "~/lib/llm/services/code-context.service";
+import {
+  generateQuickScript,
+  type QuickScriptCaseData,
+  type QuickScriptResult,
+} from "~/lib/services/quickscript-generation";
 import { getServerAuthSession } from "~/server/auth";
-import { formatAiError, stripMarkdownFences } from "~/utils/ai-export-helpers";
 
-export interface AiExportResult {
-  code: string;
-  generatedBy: "ai" | "template";
-  error?: string; // Present when generatedBy=template due to failure
-  truncated?: boolean; // True when the AI hit its token limit and the output was cut off
-  caseId: number;
-  caseName: string;
-  contextFiles?: string[]; // File paths included in AI context (optional for backward compat)
-}
+/** @deprecated Prefer `QuickScriptResult` from `~/lib/services/quickscript-generation`. */
+export type AiExportResult = QuickScriptResult;
 
 /**
  * Check whether AI export is available for a given project.
@@ -51,19 +43,8 @@ export async function checkAiExportAvailable(args: {
 }
 
 /**
- * Generate AI-powered export code for a single test case.
- *
- * Orchestrates: prompt resolution -> context assembly -> LLM call -> header/footer wrapping.
- * On LLM failure, falls back to Mustache template rendering (GEN-05).
- * Usage is tracked automatically via LlmManager.chat() with feature="export_code_generation" (GEN-07).
- */
-/**
- * Generate AI-powered export code for multiple test cases as a single cohesive file.
- *
- * Sends all cases to the LLM in one prompt so it can produce a unified file with
- * a single import block and all tests together. Used when outputMode === "single"
- * and multiple cases are selected.
- * Falls back to Mustache template rendering on LLM failure.
+ * Generate AI-powered export code for multiple test cases as a single cohesive
+ * file. Thin session-authed wrapper over the shared QuickScript service.
  */
 export async function generateAiExportBatch(args: {
   caseIds: number[];
@@ -76,366 +57,35 @@ export async function generateAiExportBatch(args: {
     throw new Error("Not authenticated");
   }
 
-  const template = await baseDb.caseExportTemplate.findUnique({
-    where: { id: args.templateId },
+  return generateQuickScript({
+    projectId: args.projectId,
+    templateId: args.templateId,
+    cases: args.cases,
+    userId: session.user.id,
+    mode: "batch",
   });
-
-  if (!template) {
-    throw new Error(`Export template not found: ${args.templateId}`);
-  }
-
-  // Render header/footer and per-case bodies for fallback
-  const Mustache = (await import("mustache")).default;
-  Mustache.escape = (text: string) =>
-    String(text).replace(/\\/g, "\\\\").replace(/"/g, '\\"');
-
-  const mustacheBodies = args.cases.map((caseData) =>
-    Mustache.render(template.templateBody, caseData)
-  );
-  // Use first case data for header/footer template vars (they're typically file-level)
-  const header = template.headerBody
-    ? Mustache.render(template.headerBody, args.cases[0])
-    : "";
-  const footer = template.footerBody
-    ? Mustache.render(template.footerBody, args.cases[0])
-    : "";
-  const mustacheFallback = [header, ...mustacheBodies, footer]
-    .filter(Boolean)
-    .join("\n\n");
-
-  const caseName = `Combined (${args.cases.length} tests)`;
-
-  // Resolve prompt
-  const resolver = new PromptResolver(baseDb);
-  const resolvedPrompt = await resolver.resolve(
-    LLM_FEATURES.EXPORT_CODE_GENERATION,
-    args.projectId
-  );
-
-  // Resolve LLM integration via 3-tier chain
-  const llmManager = LlmManager.getInstance(baseDb);
-  const resolved = await llmManager.resolveIntegration(
-    LLM_FEATURES.EXPORT_CODE_GENERATION,
-    args.projectId,
-    resolvedPrompt
-  );
-
-  if (!resolved) {
-    return {
-      code: mustacheFallback,
-      generatedBy: "template",
-      error: "No active LLM integration",
-      caseId: args.caseIds[0],
-      caseName,
-    };
-  }
-
-  // Determine token budget and assemble code context (if repo configured)
-  const providerConfig = await baseDb.llmProviderConfig.findFirst({
-    where: { llmIntegrationId: resolved.integrationId },
-    select: { defaultMaxTokens: true },
-  });
-  const maxContextTokens = providerConfig?.defaultMaxTokens || 8000;
-
-  const repoConfig = await baseDb.projectCodeRepositoryConfig.findUnique({
-    where: { projectId: args.projectId },
-    select: { id: true },
-  });
-
-  let contextResult = {
-    context: "",
-    filesUsed: [] as string[],
-    tokenEstimate: 0,
-    truncated: false,
-  };
-
-  if (repoConfig) {
-    const relevanceHint = args.cases
-      .flatMap((c) => [
-        c.name,
-        ...c.steps.map((s: any) => `${s.step} ${s.expectedResult}`),
-      ])
-      .join(" ");
-    console.log(
-      `[generateAiExportBatch] Assembling context for ${args.cases.length} cases (budget: ${maxContextTokens} tokens)`
-    );
-    contextResult = await CodeContextService.assembleContext(
-      repoConfig.id,
-      maxContextTokens,
-      relevanceHint
-    );
-  }
-
-  // Build system prompt (same as single-case: framework/language context)
-  let systemPrompt = resolvedPrompt.systemPrompt;
-  systemPrompt = systemPrompt
-    .replace(/\{\{FRAMEWORK\}\}/g, template.framework || "unknown")
-    .replace(/\{\{LANGUAGE\}\}/g, template.language || "unknown");
-
-  // Build combined cases text
-  const casesText = args.cases
-    .map((caseData, idx) => {
-      const stepsText = caseData.steps
-        .map((s) => `${s.order}. ${s.step}\n   Expected: ${s.expectedResult}`)
-        .join("\n");
-      return `--- Test Case ${idx + 1}: ${caseData.name} ---\n${stepsText}`;
-    })
-    .join("\n\n");
-
-  // Build user prompt for batch: all cases in one file.
-  // Note: resolvedPrompt.userPrompt is intentionally not used here — the single-case
-  // placeholders ({{CASE_NAME}}, {{STEPS_TEXT}}) don't map cleanly to multiple cases.
-  // The system prompt and temperature from resolvedPrompt still apply.
-  const contextSection = contextResult.context
-    ? `REPOSITORY CONTEXT:\n${contextResult.context}`
-    : `No repository context available. Generate test code using standard ${template.framework || "framework"} patterns and best practices.`;
-  let userPrompt = `Generate a single complete ${template.language || ""} test file that contains ALL ${args.cases.length} test cases below. Use a single set of imports at the top of the file — do not repeat imports between tests.\n\n${casesText}\n\n${contextSection}`;
-
-  if (header) {
-    userPrompt += `\n\nDEFAULT HEADER (use as a starting point — extend or modify imports/setup as needed based on the repository context):\n\`\`\`\n${header}\n\`\`\``;
-  }
-  if (footer) {
-    userPrompt += `\n\nDEFAULT FOOTER (use as a starting point — extend or modify teardown as needed):\n\`\`\`\n${footer}\n\`\`\``;
-  }
-  // FRAMEWORK SYNTAX EXAMPLE — the rendered template body shows the
-  // framework's actual API shape: fixture destructuring, locator factories,
-  // assertion calls, idiomatic helpers. Crucial when the framework is
-  // niche or new enough that the model's training data could plausibly
-  // confuse it with a closer-named neighbor (e.g. `@mobilewright/test`
-  // vs `@playwright/test`). Mirror the rendered structure, not generic
-  // assumptions from the framework name.
-  if (mustacheBodies[0]) {
-    userPrompt += `\n\nFRAMEWORK SYNTAX EXAMPLE — this is what one rendered test from the template looks like. Match this API shape (imports, fixtures, locators, action methods, assertion style) when writing the cases above. Do not substitute APIs from a similarly-named framework you happen to know better:\n\`\`\`\n${mustacheBodies[0]}\n\`\`\``;
-  }
-
-  try {
-    const request: LlmRequest = {
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt },
-      ],
-      temperature: resolvedPrompt.temperature,
-      maxTokens: resolvedPrompt.maxOutputTokens,
-      userId: session.user.id,
-      projectId: args.projectId,
-      feature: LLM_FEATURES.EXPORT_CODE_GENERATION,
-      ...(resolved.model ? { model: resolved.model } : {}),
-    };
-
-    const response = await llmManager.chat(resolved.integrationId, request);
-
-    const fullCode = stripMarkdownFences(response.content);
-
-    return {
-      code: fullCode,
-      generatedBy: "ai",
-      caseId: args.caseIds[0],
-      caseName,
-      contextFiles: contextResult.filesUsed,
-    };
-  } catch (err) {
-    console.error(
-      "[generateAiExportBatch] LLM generation failed, falling back to template:",
-      err
-    );
-
-    return {
-      code: mustacheFallback,
-      generatedBy: "template",
-      error: formatAiError(err),
-      caseId: args.caseIds[0],
-      caseName,
-    };
-  }
 }
 
+/**
+ * Generate AI-powered export code for a single test case. Thin session-authed
+ * wrapper over the shared QuickScript service.
+ */
 export async function generateAiExport(args: {
   caseId: number;
   projectId: number;
   templateId: number;
   caseData: QuickScriptCaseData;
 }): Promise<AiExportResult> {
-  // 1. Auth check
   const session = await getServerAuthSession();
   if (!session?.user) {
     throw new Error("Not authenticated");
   }
 
-  // 2. Load template
-  const template = await baseDb.caseExportTemplate.findUnique({
-    where: { id: args.templateId },
+  return generateQuickScript({
+    projectId: args.projectId,
+    templateId: args.templateId,
+    cases: [args.caseData],
+    userId: session.user.id,
+    mode: "single",
   });
-
-  if (!template) {
-    throw new Error(`Export template not found: ${args.templateId}`);
-  }
-
-  // 3. Render header/footer with Mustache (EXP-03 -- deterministic wrapping)
-  const Mustache = (await import("mustache")).default;
-  // Override escape to handle backslashes and quotes in code output
-  Mustache.escape = (text: string) =>
-    String(text).replace(/\\/g, "\\\\").replace(/"/g, '\\"');
-
-  const header = template.headerBody
-    ? Mustache.render(template.headerBody, args.caseData)
-    : "";
-  const footer = template.footerBody
-    ? Mustache.render(template.footerBody, args.caseData)
-    : "";
-
-  // 4. Render Mustache fallback (needed for GEN-05 fallback path)
-  const mustacheFallback = Mustache.render(
-    template.templateBody,
-    args.caseData
-  );
-
-  // 5. Resolve prompt
-  const resolver = new PromptResolver(baseDb);
-  const resolvedPrompt = await resolver.resolve(
-    LLM_FEATURES.EXPORT_CODE_GENERATION,
-    args.projectId
-  );
-
-  // 6. Resolve LLM integration via 3-tier chain
-  const llmManager = LlmManager.getInstance(baseDb);
-  const resolved = await llmManager.resolveIntegration(
-    LLM_FEATURES.EXPORT_CODE_GENERATION,
-    args.projectId,
-    resolvedPrompt
-  );
-
-  if (!resolved) {
-    const fullCode = [header, mustacheFallback, footer]
-      .filter(Boolean)
-      .join("\n\n");
-    return {
-      code: fullCode,
-      generatedBy: "template",
-      error: "No active LLM integration",
-      caseId: args.caseId,
-      caseName: args.caseData.name,
-    };
-  }
-
-  // 7. Determine token budget and assemble code context (if repo configured)
-  const providerConfig = await baseDb.llmProviderConfig.findFirst({
-    where: { llmIntegrationId: resolved.integrationId },
-    select: { defaultMaxTokens: true },
-  });
-  const maxContextTokens = providerConfig?.defaultMaxTokens || 8000;
-
-  const repoConfig = await baseDb.projectCodeRepositoryConfig.findUnique({
-    where: { projectId: args.projectId },
-    select: { id: true },
-  });
-
-  let contextResult = {
-    context: "",
-    filesUsed: [] as string[],
-    tokenEstimate: 0,
-    truncated: false,
-  };
-
-  if (repoConfig) {
-    const relevanceHint = [
-      args.caseData.name,
-      ...args.caseData.steps.map((s: any) => `${s.step} ${s.expectedResult}`),
-    ].join(" ");
-    console.log(
-      `[generateAiExport] Assembling context for case ${args.caseId} (budget: ${maxContextTokens} tokens)`
-    );
-    contextResult = await CodeContextService.assembleContext(
-      repoConfig.id,
-      maxContextTokens,
-      relevanceHint
-    );
-    console.log(
-      `[generateAiExport] Context assembled: ${contextResult.filesUsed.length} files, ~${contextResult.tokenEstimate} tokens, truncated=${contextResult.truncated}`
-    );
-  }
-
-  // 9. Build LLM messages with placeholder replacement
-  let systemPrompt = resolvedPrompt.systemPrompt;
-  systemPrompt = systemPrompt
-    .replace(/\{\{FRAMEWORK\}\}/g, template.framework || "unknown")
-    .replace(/\{\{LANGUAGE\}\}/g, template.language || "unknown");
-
-  const stepsText = args.caseData.steps
-    .map((s) => `${s.order}. ${s.step}\n   Expected: ${s.expectedResult}`)
-    .join("\n");
-
-  let userPrompt = resolvedPrompt.userPrompt;
-  userPrompt = userPrompt
-    .replace(/\{\{CASE_NAME\}\}/g, args.caseData.name)
-    .replace(/\{\{STEPS_TEXT\}\}/g, stepsText)
-    .replace(
-      /\{\{CODE_CONTEXT\}\}/g,
-      contextResult.context ||
-        `No repository context available. Generate test code using standard ${template.framework || "framework"} patterns and best practices.`
-    );
-
-  // Show header/footer as a starting point — AI generates the full file and may extend them
-  if (header) {
-    userPrompt += `\n\nDEFAULT HEADER (use as a starting point — extend or modify imports/setup as needed based on the repository context):\n\`\`\`\n${header}\n\`\`\``;
-  }
-  if (footer) {
-    userPrompt += `\n\nDEFAULT FOOTER (use as a starting point — extend or modify teardown as needed):\n\`\`\`\n${footer}\n\`\`\``;
-  }
-  // FRAMEWORK SYNTAX EXAMPLE — same fix as the batch path. Without this
-  // section the model only sees framework name + a one-line import, and
-  // for niche or newer frameworks (or any framework whose package name
-  // looks like a more-popular neighbor's) it falls back to whatever
-  // similarly-named API it knows best instead.
-  if (mustacheFallback) {
-    userPrompt += `\n\nFRAMEWORK SYNTAX EXAMPLE — this is what one rendered test from the template looks like. Match this API shape (imports, fixtures, locators, action methods, assertion style) when writing the case above. Do not substitute APIs from a similarly-named framework you happen to know better:\n\`\`\`\n${mustacheFallback}\n\`\`\``;
-  }
-
-  // 10. Call LLM (wrapped in try/catch for GEN-05 fallback)
-  try {
-    const request: LlmRequest = {
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt },
-      ],
-      temperature: resolvedPrompt.temperature,
-      maxTokens: resolvedPrompt.maxOutputTokens,
-      userId: session.user.id,
-      projectId: args.projectId,
-      feature: LLM_FEATURES.EXPORT_CODE_GENERATION, // GEN-07: usage tracked automatically
-      ...(resolved.model ? { model: resolved.model } : {}),
-    };
-
-    const response = await llmManager.chat(resolved.integrationId, request);
-
-    // AI generates the complete file — just strip any markdown fences
-    const fullCode = stripMarkdownFences(response.content);
-
-    return {
-      code: fullCode,
-      generatedBy: "ai",
-      caseId: args.caseId,
-      caseName: args.caseData.name,
-      contextFiles: contextResult.filesUsed,
-    };
-  } catch (err) {
-    // 11. Fallback on failure (GEN-05)
-    console.error(
-      "[generateAiExport] LLM generation failed for case",
-      args.caseId,
-      "falling back to template:",
-      err
-    );
-
-    const fullCode = [header, mustacheFallback, footer]
-      .filter(Boolean)
-      .join("\n\n");
-
-    return {
-      code: fullCode,
-      generatedBy: "template",
-      error: formatAiError(err),
-      caseId: args.caseId,
-      caseName: args.caseData.name,
-    };
-  }
 }

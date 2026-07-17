@@ -19,8 +19,9 @@ The TestPlanIt MCP server lets AI agents — Claude Desktop, Cursor, custom MCP-
 - Traverse the bridge between automated tests (repository cases) and manual test cases via repository case links
 - List code repositories configured in a project (with credentials never returned)
 - List folders and tags scoped to a project, with usage counts and tree relationships preserved
+- Generate a QuickScript (AI automation script) from one or more test cases, following the project's connected code repository when one is configured
 
-See the [npm package README](https://www.npmjs.com/package/@testplanit/mcp-server) for the full tool reference, including request/response schemas for all 44 tools.
+See the [npm package README](https://www.npmjs.com/package/@testplanit/mcp-server) for the full tool reference, including request/response schemas for all 45 tools.
 
 ## Installation
 

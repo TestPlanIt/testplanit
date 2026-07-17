@@ -1923,6 +1923,8 @@
           "statusPending": "Refrescante...",
           "lastFetched": "Última busca",
           "filesCached": "Arquivos em cache",
+          "contentsCached": "Conteúdo em Cache",
+          "contentsIncomplete": "Apenas {cached} de {total} conteúdos de arquivos estão em cache — os scripts gerados não usarão os arquivos ausentes. Atualize novamente para completar.",
           "totalSize": "Tamanho total"
         },
         "save": "Salvar configuração",

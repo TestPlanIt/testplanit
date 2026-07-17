@@ -236,145 +236,150 @@ export function ExportPreviewPane({
   }
 
   return (
-    <div className="space-y-4 min-w-0 min-h-0 overflow-y-auto">
-      {/* Code display */}
-      {results.length === 0 && hasStreamingContent ? (
-        // Streaming first result — show full-width live code view
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <Loader2 className="h-3 w-3 animate-spin" />
-              <span>{t("generating")}</span>
+    <div className="flex min-h-0 flex-1 flex-col">
+      <div className="min-w-0 flex-1 space-y-4 overflow-y-auto">
+        {/* Code display */}
+        {results.length === 0 && hasStreamingContent ? (
+          // Streaming first result — show full-width live code view
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Loader2 className="h-3 w-3 animate-spin" />
+                <span>{t("generating")}</span>
+              </div>
+              {onCancel && (
+                <Button variant="outline" size="sm" onClick={onCancel}>
+                  {tCommon("cancel")}
+                </Button>
+              )}
             </div>
-            {onCancel && (
-              <Button variant="outline" size="sm" onClick={onCancel}>
-                {tCommon("cancel")}
-              </Button>
-            )}
+            <div
+              ref={streamingScrollRef}
+              className="max-h-[70vh] overflow-y-auto"
+            >
+              <CodeBlock code={streamingCode!} prismLanguage={prismLanguage} />
+            </div>
           </div>
+        ) : results.length === 1 && !hasStreamingContent ? (
+          // Single completed result
+          <SingleResultView
+            result={results[0]}
+            prismLanguage={prismLanguage}
+            onRetry={onRetry ? () => handleRetry(results[0].caseId) : undefined}
+            isRetrying={retryingCaseId === results[0].caseId}
+            t={t}
+          />
+        ) : (
+          // Multiple completed results and/or a case currently streaming
           <div
             ref={streamingScrollRef}
             className="max-h-[70vh] overflow-y-auto"
           >
-            <CodeBlock code={streamingCode!} prismLanguage={prismLanguage} />
-          </div>
-        </div>
-      ) : results.length === 1 && !hasStreamingContent ? (
-        // Single completed result
-        <SingleResultView
-          result={results[0]}
-          prismLanguage={prismLanguage}
-          onRetry={onRetry ? () => handleRetry(results[0].caseId) : undefined}
-          isRetrying={retryingCaseId === results[0].caseId}
-          t={t}
-        />
-      ) : (
-        // Multiple completed results and/or a case currently streaming
-        <div ref={streamingScrollRef} className="max-h-[70vh] overflow-y-auto">
-          <div className="space-y-4">
-            {results.map((result, index) => (
-              <div key={result.caseId}>
-                <div className="flex items-center justify-between mb-2 min-w-0">
-                  <div className="flex items-center gap-2 min-w-0 flex-1">
-                    <FileCode className="h-4 w-4 text-muted-foreground shrink-0" />
-                    <span className="text-sm font-medium truncate">
-                      {result.caseName}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <Badge
-                      variant={
-                        result.generatedBy === "ai" ? "default" : "secondary"
-                      }
-                      className="flex items-center gap-1 ms-2"
-                    >
-                      {result.generatedBy === "ai"
-                        ? t("aiGenerated")
-                        : t("templateGenerated")}
-                      {result.generatedBy === "template" && result.error && (
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <HelpCircle className="h-4 w-4 shrink-0" />
-                          </TooltipTrigger>
-                          <TooltipContent side="top" className="max-w-xs">
-                            {result.error}
-                          </TooltipContent>
-                        </Tooltip>
+            <div className="space-y-4">
+              {results.map((result, index) => (
+                <div key={result.caseId}>
+                  <div className="flex items-center justify-between mb-2 min-w-0">
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                      <FileCode className="h-4 w-4 text-muted-foreground shrink-0" />
+                      <span className="text-sm font-medium truncate">
+                        {result.caseName}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <Badge
+                        variant={
+                          result.generatedBy === "ai" ? "default" : "secondary"
+                        }
+                        className="flex items-center gap-1 ms-2"
+                      >
+                        {result.generatedBy === "ai"
+                          ? t("aiGenerated")
+                          : t("templateGenerated")}
+                        {result.generatedBy === "template" && result.error && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <HelpCircle className="h-4 w-4 shrink-0" />
+                            </TooltipTrigger>
+                            <TooltipContent side="top" className="max-w-xs">
+                              {result.error}
+                            </TooltipContent>
+                          </Tooltip>
+                        )}
+                      </Badge>
+                      {results.length > 1 && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 px-2"
+                          onClick={async () => {
+                            try {
+                              await navigator.clipboard.writeText(result.code);
+                              setCopiedCaseId(result.caseId);
+                              toast.success(t("copySuccess"));
+                              setTimeout(() => setCopiedCaseId(null), 2000);
+                            } catch {
+                              toast.error(
+                                tCommon("errors.failedToCopyToClipboard")
+                              );
+                            }
+                          }}
+                        >
+                          {copiedCaseId === result.caseId ? (
+                            <Check className="h-3 w-3" />
+                          ) : (
+                            <Copy className="h-3 w-3" />
+                          )}
+                        </Button>
                       )}
-                    </Badge>
-                    {results.length > 1 && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 px-2"
-                        onClick={async () => {
-                          try {
-                            await navigator.clipboard.writeText(result.code);
-                            setCopiedCaseId(result.caseId);
-                            toast.success(t("copySuccess"));
-                            setTimeout(() => setCopiedCaseId(null), 2000);
-                          } catch {
-                            toast.error(
-                              tCommon("errors.failedToCopyToClipboard")
-                            );
-                          }
-                        }}
-                      >
-                        {copiedCaseId === result.caseId ? (
-                          <Check className="h-3 w-3" />
-                        ) : (
-                          <Copy className="h-3 w-3" />
-                        )}
-                      </Button>
-                    )}
-                    {result.generatedBy === "template" && onRetry && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleRetry(result.caseId)}
-                        disabled={retryingCaseId === result.caseId}
-                        className="h-7 px-2"
-                      >
-                        {retryingCaseId === result.caseId ? (
-                          <Loader2 className="h-3 w-3 animate-spin" />
-                        ) : (
-                          <RefreshCw className="h-3 w-3" />
-                        )}
-                      </Button>
-                    )}
+                      {result.generatedBy === "template" && onRetry && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleRetry(result.caseId)}
+                          disabled={retryingCaseId === result.caseId}
+                          className="h-7 px-2"
+                        >
+                          {retryingCaseId === result.caseId ? (
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                          ) : (
+                            <RefreshCw className="h-3 w-3" />
+                          )}
+                        </Button>
+                      )}
+                    </div>
                   </div>
+                  <CodeBlock code={result.code} prismLanguage={prismLanguage} />
+                  {result.truncated && (
+                    <div className="flex items-center gap-2 mt-2 px-3 py-2 rounded-md bg-destructive/10 border border-destructive/30 text-destructive text-xs">
+                      <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                      {t("truncatedWarning")}
+                    </div>
+                  )}
+                  {result.contextFiles && result.contextFiles.length > 0 && (
+                    <ContextFilesList files={result.contextFiles} />
+                  )}
+                  {(index < results.length - 1 || hasStreamingContent) && (
+                    <Separator className="mt-4" />
+                  )}
                 </div>
-                <CodeBlock code={result.code} prismLanguage={prismLanguage} />
-                {result.truncated && (
-                  <div className="flex items-center gap-2 mt-2 px-3 py-2 rounded-md bg-destructive/10 border border-destructive/30 text-destructive text-xs">
-                    <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
-                    {t("truncatedWarning")}
+              ))}
+              {/* Next case currently streaming */}
+              {hasStreamingContent && (
+                <div>
+                  <div className="flex items-center gap-2 mb-2 text-xs text-muted-foreground">
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                    <span>{t("generating")}</span>
                   </div>
-                )}
-                {result.contextFiles && result.contextFiles.length > 0 && (
-                  <ContextFilesList files={result.contextFiles} />
-                )}
-                {(index < results.length - 1 || hasStreamingContent) && (
-                  <Separator className="mt-4" />
-                )}
-              </div>
-            ))}
-            {/* Next case currently streaming */}
-            {hasStreamingContent && (
-              <div>
-                <div className="flex items-center gap-2 mb-2 text-xs text-muted-foreground">
-                  <Loader2 className="h-3 w-3 animate-spin" />
-                  <span>{t("generating")}</span>
+                  <CodeBlock
+                    code={streamingCode!}
+                    prismLanguage={prismLanguage}
+                  />
                 </div>
-                <CodeBlock
-                  code={streamingCode!}
-                  prismLanguage={prismLanguage}
-                />
-              </div>
-            )}
+              )}
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Progress bar during per-case generation (not shown during streaming code display) */}
       {isGenerating && progress && !hasStreamingContent && (
@@ -398,7 +403,7 @@ export function ExportPreviewPane({
 
       {/* Action buttons */}
       {!isGenerating && (
-        <div className="flex items-center justify-between pt-2">
+        <div className="flex shrink-0 items-center justify-between border-t pt-3">
           <Button variant="outline" size="sm" onClick={onClose}>
             {tCommon("actions.back")}
           </Button>
@@ -482,10 +487,10 @@ function SingleResultView({
       )}
       <div className="max-h-[70vh] overflow-y-auto">
         <CodeBlock code={result.code} prismLanguage={prismLanguage} />
+        {result.contextFiles && result.contextFiles.length > 0 && (
+          <ContextFilesList files={result.contextFiles} />
+        )}
       </div>
-      {result.contextFiles && result.contextFiles.length > 0 && (
-        <ContextFilesList files={result.contextFiles} />
-      )}
     </div>
   );
 }
@@ -524,12 +529,12 @@ function ContextFilesList({ files }: { files: string[] }) {
   if (files.length === 0) return null;
   return (
     <Collapsible className="mt-2">
-      <CollapsibleTrigger className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors">
-        <ChevronDown className="h-3 w-3" />
+      <CollapsibleTrigger className="group flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors">
+        <ChevronDown className="h-3 w-3 -rotate-90 transition-transform group-data-[state=open]:rotate-0" />
         {t("contextFiles", { count: files.length })}
       </CollapsibleTrigger>
       <CollapsibleContent>
-        <ul className="mt-1 space-y-0.5 ps-4">
+        <ul className="mt-1 max-h-40 space-y-0.5 overflow-y-auto ps-4">
           {files.map((f) => (
             <li
               key={f}

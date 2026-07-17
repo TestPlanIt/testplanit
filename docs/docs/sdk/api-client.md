@@ -192,6 +192,32 @@ const testCase = await client.findOrCreateTestCase({
 });
 ```
 
+### QuickScript Generation
+
+Generate an AI-authored automation script from one or more stored test cases.
+QuickScript must be enabled for the project (**Project Settings → QuickScript**),
+and an AI provider must be configured. When a code repository is connected to
+the project, generation follows the repo's existing framework, fixtures, and
+page objects — this takes precedence over the export template's framework. When
+no AI provider is configured or generation fails, each file falls back to the
+deterministic template render (`generatedBy: 'template'`).
+
+```typescript
+const result = await client.generateQuickScript({
+  projectId: 1,
+  caseIds: [456, 457],
+  templateId: 3,            // Optional: defaults to the project's default/assigned template
+  outputMode: 'combined',   // 'combined' (default): one file for all cases; 'perCase': one file per case
+});
+
+console.log(result.framework, result.language, result.fileExtension);
+for (const file of result.results) {
+  // file.code — the generated script; file.generatedBy — 'ai' | 'template'
+  // file.caseName — for naming; file.contextFiles — repo files used as context
+  console.log(file.caseName, file.generatedBy);
+}
+```
+
 ### Test Run Cases
 
 Link test cases to test runs:

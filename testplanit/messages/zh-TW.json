@@ -1923,6 +1923,8 @@
           "statusPending": "令人耳目一新…",
           "lastFetched": "最後獲取時間",
           "filesCached": "文件已快取",
+          "contentsCached": "內容已快取",
+          "contentsIncomplete": "僅快取了 {total} 個檔案內容中的 {cached} 個 — 產生的腳本將不會使用缺少的檔案。請再次重新整理以完成。",
           "totalSize": "總尺寸"
         },
         "save": "儲存配置",

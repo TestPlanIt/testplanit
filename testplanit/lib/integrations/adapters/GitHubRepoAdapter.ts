@@ -81,6 +81,14 @@ export class GitHubRepoAdapter extends GitRepoAdapter {
     return Buffer.from(data.content, "base64").toString("utf-8");
   }
 
+  /** Single-request zip archive of the whole tree at `ref` (302s to codeload). */
+  protected buildArchiveRequest(ref: string) {
+    return {
+      url: `${this.baseUrl}/repos/${this.owner}/${this.repo}/zipball/${encodeURIComponent(ref)}`,
+      headers: this.authHeaders,
+    };
+  }
+
   async testConnection(): Promise<TestConnectionResult> {
     try {
       const data = await this.makeRequest<any>(

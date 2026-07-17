@@ -1923,6 +1923,8 @@
           "statusPending": "상쾌한...",
           "lastFetched": "마지막으로 가져온",
           "filesCached": "캐시된 파일",
+          "contentsCached": "콘텐츠 캐시됨",
+          "contentsIncomplete": "전체 {total}개 파일 중 {cached}개의 콘텐츠만 캐시되었습니다 — 생성된 스크립트는 누락된 파일을 사용하지 않습니다. 완료하려면 다시 새로고침하세요.",
           "totalSize": "전체 크기"
         },
         "save": "설정 저장",

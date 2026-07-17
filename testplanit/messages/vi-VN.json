@@ -1923,6 +1923,8 @@
           "statusPending": "Thật sảng khoái...",
           "lastFetched": "Lần tải cuối cùng",
           "filesCached": "Tệp tin được lưu vào bộ nhớ cache",
+          "contentsCached": "Nội dung được lưu vào bộ nhớ cache",
+          "contentsIncomplete": "Chỉ có {cached} trong {total} nội dung tệp được lưu vào bộ nhớ cache — các script được tạo sẽ không sử dụng các tệp còn thiếu. Làm mới lại để hoàn tất.",
           "totalSize": "Tổng kích thước"
         },
         "save": "Lưu cấu hình",

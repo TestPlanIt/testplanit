@@ -1,5 +1,8 @@
 import type { DbClient } from "~/lib/zenstack";
-import { createGitRepoAdapter } from "~/lib/integrations/adapters/GitRepoAdapter";
+import {
+  createGitRepoAdapter,
+  type ArchiveTree,
+} from "~/lib/integrations/adapters/GitRepoAdapter";
 import {
   repoFileCache,
   type RepoFileEntry,
@@ -165,50 +168,79 @@ export async function refreshRepoCache(
   try {
     const pathPatterns =
       (config.pathPatterns as unknown as PathPattern[]) ?? [];
-    // Bound each base's scan depth to its glob so a non-recursive root pattern
-    // (e.g. "." + "*.md") doesn't crawl the whole repo.
-    const scopes = extractBasePathScopes(pathPatterns);
-    const basePaths = scopes.map((s) => s.path);
-    const maxDepthByPath = Object.fromEntries(
-      scopes.map((s) => [s.path, s.maxDepth])
-    );
 
-    const { files: allFiles, truncated } = await adapter.listFilesInPaths(
-      branch,
-      basePaths,
-      undefined,
-      maxDepthByPath
-    );
+    let files: RepoFileEntry[];
+    let truncated = false;
+    let contentMap: Map<string, string>;
+    let contentRateLimited = false;
 
-    // Apply glob pattern filtering
-    const files = applyPathPatterns(allFiles, pathPatterns);
+    // Prefer ONE archive download that yields BOTH the file list and the file
+    // contents (like `git clone`) — no per-directory API tree-walk and no
+    // per-file rate limits. Fall back to the API tree-walk + per-file fetch
+    // when the provider has no archive support or the archive download fails.
+    let tree: ArchiveTree | null = null;
+    try {
+      tree = await adapter.downloadArchiveTree(branch);
+    } catch (archiveErr) {
+      console.warn(
+        `[repoCacheRefresh] Archive download failed, falling back to tree-walk + per-file fetch:`,
+        archiveErr
+      );
+      tree = null;
+    }
 
-    // Store file list in Valkey
-    await repoFileCache.setFiles(config.id, files, config.cacheTtlDays, {
-      truncated: truncated ?? false,
-    });
+    if (tree) {
+      const matched = applyPathPatterns(tree.files, pathPatterns);
+      contentMap = await tree.getContents(new Set(matched.map((f) => f.path)));
+      // Archive entries carry no size up front — resolve it from the
+      // decompressed content so cacheTotalSize stays accurate.
+      files = matched.map((f) => ({
+        ...f,
+        size: Buffer.byteLength(contentMap.get(f.path) ?? "", "utf8"),
+      }));
+    } else {
+      // Bound each base's scan depth to its glob so a non-recursive root pattern
+      // (e.g. "." + "*.md") doesn't crawl the whole repo.
+      const scopes = extractBasePathScopes(pathPatterns);
+      const basePaths = scopes.map((s) => s.path);
+      const maxDepthByPath = Object.fromEntries(
+        scopes.map((s) => [s.path, s.maxDepth])
+      );
+      const listing = await adapter.listFilesInPaths(
+        branch,
+        basePaths,
+        undefined,
+        maxDepthByPath
+      );
+      truncated = listing.truncated ?? false;
+      files = applyPathPatterns(listing.files, pathPatterns);
+      ({ contentMap, contentRateLimited } = await fetchContentsBatched(
+        files,
+        adapter,
+        branch,
+        10
+      ));
+    }
 
     const totalSize = files.reduce((sum, f) => sum + (f.size ?? 0), 0);
 
-    // Update DB with success status
+    // Store file list in Valkey
+    await repoFileCache.setFiles(config.id, files, config.cacheTtlDays, {
+      truncated,
+    });
+
+    // Record the file list now so the UI can show the list count. Status stays
+    // "pending" until contents are cached so "success" never lies about content
+    // being available.
     await (dbClient as any).projectCodeRepositoryConfig.update({
       where: { id: config.id },
       data: {
-        cacheStatus: "success",
         cacheLastFetchedAt: new Date(),
         cacheFileCount: files.length,
         cacheTotalSize: BigInt(totalSize),
         cacheError: null,
       },
     });
-
-    // Fetch and cache file contents (with rate-limit retry)
-    const { contentMap, contentRateLimited } = await fetchContentsBatched(
-      files,
-      adapter,
-      branch,
-      10
-    );
 
     if (contentMap.size > 0) {
       await repoFileCache.setFileContents(
@@ -218,11 +250,22 @@ export async function refreshRepoCache(
       );
     }
 
+    // Finalize: mark success now that contents are cached. cacheContentFileCount
+    // records how many file contents were actually stored — the UI warns when
+    // it is below the file count (e.g. a rate-limited per-file fallback).
+    await (dbClient as any).projectCodeRepositoryConfig.update({
+      where: { id: config.id },
+      data: {
+        cacheStatus: "success",
+        cacheContentFileCount: contentMap.size,
+      },
+    });
+
     return {
       success: true,
       fileCount: files.length,
       totalSize,
-      truncated: truncated ?? false,
+      truncated,
       contentCached: contentMap.size,
       contentRateLimited,
     };

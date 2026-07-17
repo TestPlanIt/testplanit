@@ -1923,6 +1923,8 @@
           "statusPending": "令人耳目一新……",
           "lastFetched": "最后获取时间",
           "filesCached": "文件已缓存",
+          "contentsCached": "内容已缓存",
+          "contentsIncomplete": "仅 {total} 个文件中的 {cached} 个文件内容已缓存 — 生成的脚本将不会使用缺失的文件。请再次刷新以完成。",
           "totalSize": "总尺寸"
         },
         "save": "保存配置",

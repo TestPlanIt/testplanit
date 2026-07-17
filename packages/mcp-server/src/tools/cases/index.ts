@@ -8,6 +8,10 @@ import {
 } from "./createMany.js";
 import { registerCasesUpdate, type CasesUpdateDeps } from "./update.js";
 import { registerCasesDelete, type CasesDeleteDeps } from "./delete.js";
+import {
+  registerCasesGenerateScript,
+  type CasesGenerateScriptDeps,
+} from "./generate-script.js";
 
 export type CasesDeps =
   & CasesListDeps
@@ -15,7 +19,8 @@ export type CasesDeps =
   & CasesCreateDeps
   & CasesCreateManyDeps
   & CasesUpdateDeps
-  & CasesDeleteDeps;
+  & CasesDeleteDeps
+  & CasesGenerateScriptDeps;
 
 export function registerCases(server: McpServer, deps: CasesDeps): void {
   registerCasesList(server, deps);
@@ -24,6 +29,7 @@ export function registerCases(server: McpServer, deps: CasesDeps): void {
   registerCasesCreateMany(server, deps);
   registerCasesUpdate(server, deps);
   registerCasesDelete(server, deps);
+  registerCasesGenerateScript(server, deps);
 }
 
 export {
@@ -33,6 +39,7 @@ export {
   registerCasesCreateMany,
   registerCasesUpdate,
   registerCasesDelete,
+  registerCasesGenerateScript,
 };
 export type {
   CasesListDeps,
@@ -41,4 +48,5 @@ export type {
   CasesCreateManyDeps,
   CasesUpdateDeps,
   CasesDeleteDeps,
+  CasesGenerateScriptDeps,
 };

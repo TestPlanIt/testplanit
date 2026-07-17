@@ -513,6 +513,7 @@ export default function QuickScriptPage() {
         cacheStatus: string | null;
         cacheLastFetchedAt: string | Date | null;
         cacheFileCount: number | null;
+        cacheContentFileCount: number | null;
         cacheTotalSize: bigint | number | null;
         cacheError: string | null;
       })
@@ -1036,6 +1037,16 @@ export default function QuickScriptPage() {
 
                                 <div>
                                   <span className="text-muted-foreground">
+                                    {t("cache.contentsCached")}
+                                  </span>
+                                  <div className="mt-1">
+                                    {configData.cacheContentFileCount ??
+                                      "\u2014"}
+                                  </div>
+                                </div>
+
+                                <div>
+                                  <span className="text-muted-foreground">
                                     {t("cache.totalSize")}
                                   </span>
                                   <div className="mt-1">
@@ -1054,6 +1065,26 @@ export default function QuickScriptPage() {
                                     <XCircle className="h-4 w-4" />
                                     <AlertDescription>
                                       {configData.cacheError}
+                                    </AlertDescription>
+                                  </Alert>
+                                )}
+
+                              {configData.cacheStatus === "success" &&
+                                configData.cacheContentFileCount != null &&
+                                configData.cacheFileCount != null &&
+                                configData.cacheContentFileCount <
+                                  configData.cacheFileCount && (
+                                  <Alert>
+                                    <AlertTriangle className="h-4 w-4" />
+                                    <AlertDescription>
+                                      {t("cache.contentsIncomplete", {
+                                        cached: String(
+                                          configData.cacheContentFileCount
+                                        ),
+                                        total: String(
+                                          configData.cacheFileCount
+                                        ),
+                                      })}
                                     </AlertDescription>
                                   </Alert>
                                 )}

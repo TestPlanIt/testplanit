@@ -92,6 +92,16 @@ The AI prompt for QuickScript can be customized in **Administration > [Prompt Co
 - Increase **max output tokens** if your generated scripts are being truncated
 - Add framework-specific guidance to the system prompt if the AI isn't following your project's conventions
 
+## Generating QuickScript Outside the App
+
+QuickScript generation isn't limited to the repository UI — the same engine is reachable from external tools, so an agent or pipeline can generate scripts on demand. Every surface resolves the project's export template and connected code repository server-side, so callers only pass a project and the test cases:
+
+- **Jira** — the [TestPlanIt for Jira](../sdk/jira-forge-app.md) issue panel offers **Generate QuickScript** for the test cases linked to an issue.
+- **MCP** — the [MCP server](../sdk/mcp-overview.md) exposes the `testplanit_cases_generate_script` tool for AI agents.
+- **API client** — [`@testplanit/api`](../sdk/api-client.md#quickscript-generation)'s `generateQuickScript()` method for scripts and CI pipelines.
+
+The project must have QuickScript enabled and an active AI provider. As in the app, when a code repository is connected the generated script follows the repository's existing framework, fixtures, and page objects rather than the export template's framework; with no repository it uses standard patterns for the template's framework.
+
 ## Troubleshooting
 
 ### Generate with AI Toggle Not Visible

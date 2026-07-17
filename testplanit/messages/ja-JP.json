@@ -1923,6 +1923,8 @@
           "statusPending": "爽快…",
           "lastFetched": "最後に取得したデータ",
           "filesCached": "キャッシュされたファイル",
+          "contentsCached": "キャッシュされたコンテンツ",
+          "contentsIncomplete": "{total}件中{cached}件のファイルコンテンツのみがキャッシュされています。生成されたスクリプトは不足しているファイルを使用しません。完了するには再度更新してください。",
           "totalSize": "総サイズ"
         },
         "save": "設定を保存",

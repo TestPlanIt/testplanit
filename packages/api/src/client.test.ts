@@ -731,6 +731,68 @@ describe('TestPlanItClient', () => {
       expect(mockFetch).toHaveBeenCalledTimes(1);
     });
   });
+
+  describe('generateQuickScript', () => {
+    const mockResult = {
+      projectId: 1,
+      templateId: 3,
+      templateName: 'Playwright',
+      framework: 'Playwright',
+      language: 'TypeScript',
+      fileExtension: '.spec.ts',
+      outputMode: 'combined',
+      hasCodeContext: true,
+      results: [
+        {
+          code: "test('login', async () => {});",
+          generatedBy: 'ai',
+          caseId: 456,
+          caseName: 'Login',
+        },
+      ],
+    };
+
+    it('POSTs caseIds to /api/export/quickscript and returns the result', async () => {
+      mockFetch.mockResolvedValueOnce(jsonResponse(mockResult));
+
+      const result = await client.generateQuickScript({
+        projectId: 1,
+        caseIds: [456],
+      });
+
+      expect(result).toEqual(mockResult);
+      expect(mockFetch).toHaveBeenCalledWith(
+        'https://testplanit.example.com/api/export/quickscript',
+        expect.objectContaining({
+          method: 'POST',
+          body: JSON.stringify({ projectId: 1, caseIds: [456] }),
+        })
+      );
+    });
+
+    it('includes templateId and outputMode only when provided', async () => {
+      mockFetch.mockResolvedValueOnce(jsonResponse(mockResult));
+
+      await client.generateQuickScript({
+        projectId: 1,
+        caseIds: [456, 457],
+        templateId: 3,
+        outputMode: 'perCase',
+      });
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        'https://testplanit.example.com/api/export/quickscript',
+        expect.objectContaining({
+          body: JSON.stringify({
+            projectId: 1,
+            caseIds: [456, 457],
+            templateId: 3,
+            outputMode: 'perCase',
+          }),
+        })
+      );
+    });
+  });
 });
 
 describe('importTestResults', () => {

@@ -1923,6 +1923,8 @@
           "statusPending": "Verfrissend...",
           "lastFetched": "Laatst opgehaald",
           "filesCached": "Bestanden in cache opgeslagen",
+          "contentsCached": "Inhoud in cache opgeslagen",
+          "contentsIncomplete": "Slechts {cached} van {total} bestandsinhoud is in cache opgeslagen — gegenereerde scripts gebruiken de ontbrekende bestanden niet. Vernieuw opnieuw om te voltooien.",
           "totalSize": "Totale grootte"
         },
         "save": "Configuratie opslaan",

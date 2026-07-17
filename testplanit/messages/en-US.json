@@ -1923,6 +1923,8 @@
           "statusPending": "Refreshing...",
           "lastFetched": "Last Fetched",
           "filesCached": "Files Cached",
+          "contentsCached": "Contents Cached",
+          "contentsIncomplete": "Only {cached} of {total} file contents are cached — generated scripts won't use the missing files. Refresh again to complete.",
           "totalSize": "Total Size"
         },
         "save": "Save Configuration",

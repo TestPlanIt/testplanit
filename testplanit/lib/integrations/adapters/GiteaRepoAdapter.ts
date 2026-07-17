@@ -107,6 +107,14 @@ export class GiteaRepoAdapter extends GitRepoAdapter {
     );
   }
 
+  /** Single-request zip archive of the whole tree at `ref`. */
+  protected buildArchiveRequest(ref: string) {
+    return {
+      url: `${this.baseUrl}/api/v1/repos/${encodeURIComponent(this.owner)}/${encodeURIComponent(this.repo)}/archive/${encodeURIComponent(ref)}.zip`,
+      headers: this.authHeaders,
+    };
+  }
+
   async testConnection(): Promise<TestConnectionResult> {
     try {
       const data = await this.makeRequest<any>(

@@ -10,6 +10,8 @@ The TestPlanIt for Jira app is an [Atlassian Forge](https://developer.atlassian.
 ## Features
 
 - **Issue Panel** — View linked test cases, test runs, and sessions on every Jira issue
+- **Generate Test Cases** — Generate AI test cases for an issue and import them into a project
+- **Generate QuickScript** — Generate an AI automation script from the test cases linked to an issue, following the project's connected code repository when one is configured
 - **Settings Page** — Admin configuration for your TestPlanIt instance URL and API key
 - **Secure Authentication** — API key authentication with timing-safe validation
 
@@ -168,5 +170,12 @@ The app calls these endpoints on your TestPlanIt instance:
 | ---------- | --------- |
 | `GET /version.json` | Connection test (returns app version) |
 | `GET /api/integrations/jira/test-info` | Fetch linked test cases, runs, and sessions |
+| `GET /api/integrations/jira/generate-context` | Projects, templates, and readiness for Generate Test Cases |
+| `POST /api/integrations/jira/generate-token` | Mint a short-lived token to stream test-case generation |
+| `POST /api/integrations/jira/generate-stream` | Stream AI-generated test cases (browser-direct) |
+| `POST /api/integrations/jira/import-test-cases` | Persist the confirmed generated cases |
+| `GET /api/integrations/jira/quickscript-context` | Projects, export templates, readiness, and issue-linked cases for QuickScript |
+| `POST /api/integrations/jira/quickscript-token` | Mint a short-lived token to stream QuickScript generation |
+| `POST /api/integrations/jira/quickscript-stream` | Stream the generated QuickScript (browser-direct) |
 
-The `test-info` endpoint requires the `X-Forge-Api-Key` header for authentication.
+Most endpoints require the `X-Forge-Api-Key` header for authentication; the streaming endpoints use a short-lived `X-Forge-Token` minted by their `*-token` counterpart.

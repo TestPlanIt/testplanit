@@ -361,4 +361,87 @@ resolver.define('getGenerateToken', async ({ context, payload }) => {
   }
 });
 
+// --- Generate QuickScript (AI test-script) --------------------------------
+
+// Fetch the projects/export-templates/readiness + issue-linked cases the panel
+// needs to drive the QuickScript flow. Pass an optional projectId to re-resolve
+// when the user switches project.
+resolver.define('getQuickScriptContext', async ({ context, payload }) => {
+  const issueKey = context.extension?.issue?.key;
+  const issueId = context.extension?.issue?.id;
+
+  try {
+    const instanceUrl = await getInstanceUrl();
+    if (!instanceUrl) {
+      return {
+        error: 'TestPlanIt instance URL not configured.',
+        notConfigured: true,
+      };
+    }
+
+    const apiKey = await getApiKey();
+    const user = await getCurrentJiraUser();
+    const cleanUrl = instanceUrl.replace(/\/+$/, '');
+
+    const qs = new URLSearchParams();
+    if (issueKey) qs.set('issueKey', issueKey);
+    if (issueId) qs.set('issueId', issueId);
+    if (payload?.projectId) qs.set('projectId', String(payload.projectId));
+
+    const response = await api.fetch(
+      `${cleanUrl}/api/integrations/jira/quickscript-context?${qs.toString()}`,
+      { method: 'GET', headers: buildAuthHeaders(apiKey, user) }
+    );
+
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      return { error: data.error || `Failed to load context (${response.status})` };
+    }
+    return data;
+  } catch (error) {
+    return { error: error.message };
+  }
+});
+
+// Mint a short-lived token so the panel can stream QuickScript generation
+// directly from the browser (Forge resolvers can't run the >25s LLM call).
+resolver.define('getQuickScriptToken', async ({ context, payload }) => {
+  const issueKey = context.extension?.issue?.key;
+  const issueId = context.extension?.issue?.id;
+
+  try {
+    const instanceUrl = await getInstanceUrl();
+    if (!instanceUrl) {
+      return { error: 'TestPlanIt instance URL not configured.', notConfigured: true };
+    }
+
+    const apiKey = await getApiKey();
+    const user = await getCurrentJiraUser();
+    const cleanUrl = instanceUrl.replace(/\/+$/, '');
+
+    const response = await api.fetch(
+      `${cleanUrl}/api/integrations/jira/quickscript-token`,
+      {
+        method: 'POST',
+        headers: buildAuthHeaders(apiKey, user),
+        body: JSON.stringify({
+          projectId: payload?.projectId,
+          issueKey,
+          issueId,
+        }),
+      }
+    );
+
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      return {
+        error: data.error || `Failed to start generation (${response.status})`,
+      };
+    }
+    return { token: data.token, instanceUrl: cleanUrl };
+  } catch (error) {
+    return { error: error.message };
+  }
+});
+
 export const handler = resolver.getDefinitions();

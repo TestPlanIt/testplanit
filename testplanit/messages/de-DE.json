@@ -1923,6 +1923,8 @@
           "statusPending": "Erfrischend...",
           "lastFetched": "Zuletzt abgerufen",
           "filesCached": "Zwischengespeicherte Dateien",
+          "contentsCached": "Inhalte im Cache",
+          "contentsIncomplete": "Nur {cached} von {total} Dateiinhalten sind zwischengespeichert — generierte Skripte verwenden die fehlenden Dateien nicht. Zum Abschließen erneut aktualisieren.",
           "totalSize": "Gesamtgröße"
         },
         "save": "Konfiguration speichern",

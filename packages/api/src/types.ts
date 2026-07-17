@@ -652,6 +652,68 @@ export interface RequestStepDerivationOptions {
   overwrite?: boolean;
 }
 
+/** Whether QuickScript emits one combined file or one file per case. */
+export type QuickScriptOutputMode = 'combined' | 'perCase';
+
+export interface GenerateQuickScriptOptions {
+  projectId: number;
+  /** Stored test cases to generate a script from (1–50). */
+  caseIds: number[];
+  /**
+   * Export template to use. Omit to use the project's default/assigned template.
+   * When a code repository is connected, generation follows the repo's existing
+   * framework/fixtures over the template's framework (intended behavior).
+   */
+  templateId?: number;
+  /**
+   * "combined" (default): a single file containing all cases.
+   * "perCase": one generated file per case.
+   */
+  outputMode?: QuickScriptOutputMode;
+  /**
+   * Override the request timeout (ms) for this call. Generation invokes an LLM
+   * and can be slow; defaults to 180000 (well above the client's default).
+   */
+  timeoutMs?: number;
+}
+
+/** One generated script file returned by {@link GenerateQuickScriptResult}. */
+export interface QuickScriptFile {
+  /** The generated script text. */
+  code: string;
+  /**
+   * "ai" when the LLM produced the script; "template" when generation fell back
+   * to the deterministic template render (LLM failure or no integration).
+   */
+  generatedBy: 'ai' | 'template';
+  /** Present when generatedBy=template due to an LLM failure / no integration. */
+  error?: string;
+  /** True when the AI hit its token limit and output was cut off. */
+  truncated?: boolean;
+  caseId: number;
+  caseName: string;
+  /** Repository file paths included as AI context (absent when no repo connected). */
+  contextFiles?: string[];
+}
+
+export interface GenerateQuickScriptResult {
+  projectId: number;
+  /** The export template that was resolved and used. */
+  templateId: number;
+  templateName: string;
+  /** Resolved framework (may come from the connected repo, not the template). */
+  framework: string;
+  language: string;
+  /** e.g. ".spec.ts" — suitable for naming the written file. */
+  fileExtension: string;
+  outputMode: QuickScriptOutputMode;
+  /** Whether repository context was available and fed to the model. */
+  hasCodeContext: boolean;
+  /** Requested caseIds not found in the project (omitted when all resolved). */
+  missingCaseIds?: number[];
+  results: QuickScriptFile[];
+}
+
 // ============================================================================
 // Automation Step Mapper Types
 // ============================================================================

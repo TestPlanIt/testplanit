@@ -1923,6 +1923,8 @@
           "statusPending": "Ferahlatıcı...",
           "lastFetched": "Son Getirilen",
           "filesCached": "Önbelleğe alınan dosyalar",
+          "contentsCached": "İçerikler Önbelleğe Alındı",
+          "contentsIncomplete": "{total} dosya içeriğinin yalnızca {cached} tanesi önbelleğe alındı — oluşturulan betikler eksik dosyaları kullanmayacaktır. Tamamlamak için yeniden yenileyin.",
           "totalSize": "Toplam Boyut"
         },
         "save": "Yapılandırmayı Kaydet",

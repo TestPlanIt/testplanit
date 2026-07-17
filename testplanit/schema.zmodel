@@ -3730,22 +3730,23 @@ model CodeRepository {
 }
 
 model ProjectCodeRepositoryConfig {
-    id                 Int            @id @default(autoincrement())
-    projectId          Int            @unique
-    project            Projects       @relation(fields: [projectId], references: [id], onDelete: Cascade)
-    repositoryId       Int
-    repository         CodeRepository @relation(fields: [repositoryId], references: [id])
-    branch             String?        // null = use repository's default branch
-    pathPatterns       Json           // Array of { path: string, pattern: string }
-    cacheEnabled       Boolean        @default(true)   // false = no file caching (privacy mode)
-    cacheTtlDays       Int            @default(7)
-    cacheStatus        String?        // "success" | "error" | "pending" | null (never fetched)
-    cacheLastFetchedAt DateTime?
-    cacheFileCount     Int?
-    cacheTotalSize     BigInt?        // bytes
-    cacheError         String?
-    createdAt          DateTime       @default(now())
-    updatedAt          DateTime       @updatedAt
+    id                    Int            @id @default(autoincrement())
+    projectId             Int            @unique
+    project               Projects       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    repositoryId          Int
+    repository            CodeRepository @relation(fields: [repositoryId], references: [id])
+    branch                String?        // null = use repository's default branch
+    pathPatterns          Json           // Array of { path: string, pattern: string }
+    cacheEnabled          Boolean        @default(true)   // false = no file caching (privacy mode)
+    cacheTtlDays          Int            @default(7)
+    cacheStatus           String?        // "success" | "error" | "pending" | null (never fetched)
+    cacheLastFetchedAt    DateTime?
+    cacheFileCount        Int?
+    cacheContentFileCount Int?        // how many file CONTENTS are cached (<= cacheFileCount when a fetch was rate-limited)
+    cacheTotalSize        BigInt?        // bytes
+    cacheError            String?
+    createdAt             DateTime       @default(now())
+    updatedAt             DateTime       @updatedAt
 
     @@deny('all', auth() == null)
     @@allow('all', auth().access == 'ADMIN')

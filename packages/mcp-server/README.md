@@ -96,6 +96,7 @@ Your MCP client discovers each tool's full parameters automatically, so the list
 | `testplanit_cases_create_many` | Create many test cases in one call — far faster than per-case creates. Each case takes the same fields as a single create plus optional per-case `folderId`/`stateName`; returns a per-case success/failure result so partial failures are visible. |
 | `testplanit_cases_update` | Update a test case. Custom fields are validated against the case's template. |
 | `testplanit_cases_delete` | Delete a test case. |
+| `testplanit_cases_generate_script` | Generate a QuickScript (AI automation test script) from one or more test cases. Resolves the project's export template and, when a code repository is connected, follows the repo's existing framework/fixtures/page objects. Requires QuickScript to be enabled for the project. Returns the generated file(s) plus the resolved framework/language/fileExtension. |
 
 ### Templates
 
