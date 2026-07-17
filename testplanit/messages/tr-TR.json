@@ -2639,7 +2639,8 @@
       "green": "Yeşil",
       "purple": "Mor",
       "orange": "Turuncu",
-      "accessible": "Erişilebilir"
+      "accessible": "Erişilebilir",
+      "accessibledark": "Erişilebilir (Koyu)"
     }
   },
   "repository": {

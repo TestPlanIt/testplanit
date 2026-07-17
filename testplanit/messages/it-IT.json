@@ -2639,7 +2639,8 @@
       "green": "Verde",
       "purple": "Viola",
       "orange": "Arancia",
-      "accessible": "Accessibile"
+      "accessible": "Accessibile",
+      "accessibledark": "Accessibile (Scuro)"
     }
   },
   "repository": {

@@ -2639,7 +2639,8 @@
       "green": "Зеленый",
       "purple": "Фиолетовый",
       "orange": "Апельсин",
-      "accessible": "Доступно"
+      "accessible": "Доступно",
+      "accessibledark": "Доступная (тёмная)"
     }
   },
   "repository": {

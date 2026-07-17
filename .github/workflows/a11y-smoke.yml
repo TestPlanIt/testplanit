@@ -1,0 +1,134 @@
+# Accessibility smoke gate.
+#
+# A fast, ENFORCING axe-core check: it scans the curated SMOKE_ROUTES subset
+# (e2e/a11y/routes.ts) under the accessible theme(s) only, and FAILS the build
+# on any serious/critical WCAG 2.2 A/AA violation. The accessible themes are the
+# project's conformance target, so this gate keeps them from regressing without
+# constraining the brand themes (which are covered report-only by the weekly
+# full scan in ci-workflow.draft.yml).
+#
+# Scope of enforcement is deliberate: A11Y_THEME pins .accessible / .accessibledark
+# and A11Y_SMOKE trims the route set, so the job stays well under the full sweep's
+# cost while still exercising every major shared component (shell, DataTable,
+# editor, forms, charts, admin tables).
+
+name: A11y Smoke (Accessible themes)
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "testplanit/app/**"
+      - "testplanit/components/**"
+      - "testplanit/styles/globals.css"
+      - "testplanit/e2e/a11y/**"
+
+defaults:
+  run:
+    working-directory: testplanit
+
+jobs:
+  a11y-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+
+    strategy:
+      fail-fast: false
+      matrix:
+        theme: [accessible, accessibledark]
+
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: user
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: tpi_test
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd "pg_isready -U user"
+          --health-interval 10s --health-timeout 5s --health-retries 5
+      valkey:
+        image: valkey/valkey:8-alpine
+        ports:
+          - 6377:6379
+        options: >-
+          --health-cmd "valkey-cli ping"
+          --health-interval 10s --health-timeout 5s --health-retries 5
+      elasticsearch:
+        image: elasticsearch:9.0.3
+        env:
+          discovery.type: single-node
+          xpack.security.enabled: "false"
+          ES_JAVA_OPTS: "-Xms512m -Xmx512m"
+        ports:
+          - 9221:9200
+        options: >-
+          --health-cmd "curl -f http://localhost:9200/_cluster/health || exit 1"
+          --health-interval 15s --health-timeout 10s --health-retries 8
+
+    env:
+      DATABASE_URL: "postgresql://user:password@localhost:5433/tpi_test?schema=public"
+      VALKEY_URL: "redis://localhost:6377"
+      ELASTICSEARCH_NODE: "http://localhost:9221"
+      NEXTAUTH_URL: "http://localhost:3002"
+      NEXTAUTH_SECRET: "ci-a11y-secret-not-for-production"
+      ENCRYPTION_KEY: "ci-a11y-encryption-key-32-chars--"
+      ADMIN_EMAIL: "admin@example.com"
+      ADMIN_PASSWORD: "admin"
+      E2E_PROD: "on"
+      E2E_PORT: "3002"
+      NODE_OPTIONS: "--max-old-space-size=8192"
+      # Enforcing, accessible-theme-only, smoke subset.
+      A11Y_STRICT: "on"
+      A11Y_SMOKE: "on"
+      A11Y_THEME: ${{ matrix.theme }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate ZenStack/Prisma client
+        run: pnpm generate
+
+      - name: Install Playwright browser
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Production build
+        run: pnpm build
+
+      - name: Start app server
+        run: |
+          pnpm start --port 3002 &
+          pnpm exec wait-on -t 120000 http://localhost:3002
+
+      # globalSetup reseeds the DB, logs in (storageState), and spawns workers;
+      # the scan then seeds fixture data and runs axe across the smoke routes,
+      # forcing the matrix theme. A11Y_STRICT makes any serious/critical WCAG
+      # violation fail the job.
+      - name: Run accessibility smoke gate (${{ matrix.theme }})
+        run: pnpm a11y:scan
+
+      - name: Upload accessibility report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: a11y-smoke-${{ matrix.theme }}
+          path: |
+            testplanit/e2e/a11y/results/report.md
+            testplanit/e2e/a11y/results/*.json
+          retention-days: 14
+
+      - name: Summarize in job log
+        if: always()
+        run: cat e2e/a11y/results/report.md >> "$GITHUB_STEP_SUMMARY" || true

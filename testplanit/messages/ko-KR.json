@@ -2639,7 +2639,8 @@
       "green": "녹색",
       "purple": "보라",
       "orange": "주황색",
-      "accessible": "얻기 쉬운"
+      "accessible": "얻기 쉬운",
+      "accessibledark": "접근성 (다크)"
     }
   },
   "repository": {

@@ -43,7 +43,7 @@ export function ShareLayoutContent({
   const getUserTheme = () => {
     if (!userPreferences?.theme) return "system";
 
-    // Theme enum values: Purple, Green, Orange, Light, Dark, System
+    // Theme enum values -> next-themes class name (lowercased enum).
     const themeMap: Record<string, string> = {
       Purple: "purple",
       Green: "green",
@@ -51,6 +51,8 @@ export function ShareLayoutContent({
       Light: "light",
       Dark: "dark",
       System: "system",
+      Accessible: "accessible",
+      AccessibleDark: "accessibledark",
     };
 
     return themeMap[userPreferences.theme] || "system";
@@ -65,7 +67,15 @@ export function ShareLayoutContent({
       attribute="class"
       defaultTheme={defaultTheme}
       enableSystem
-      themes={["light", "dark", "green", "orange", "purple"]}
+      themes={[
+        "light",
+        "dark",
+        "green",
+        "orange",
+        "purple",
+        "accessible",
+        "accessibledark",
+      ]}
       storageKey={session ? `theme-${session.user.id}` : "theme-public-share"}
       disableTransitionOnChange
     >

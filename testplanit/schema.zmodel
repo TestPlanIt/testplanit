@@ -304,6 +304,7 @@ enum Theme {
     Orange
     Purple
     Accessible
+    AccessibleDark
 
     @@deny('all', auth() == null)
     @@allow('update', auth().access == 'ADMIN')

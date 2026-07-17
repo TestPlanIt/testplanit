@@ -2639,7 +2639,8 @@
       "green": "Groente",
       "purple": "Paars",
       "orange": "Oranje",
-      "accessible": "Toegankelijk"
+      "accessible": "Toegankelijk",
+      "accessibledark": "Toegankelijk (Donker)"
     }
   },
   "repository": {

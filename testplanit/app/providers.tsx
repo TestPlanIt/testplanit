@@ -27,7 +27,15 @@ export default function Providers({ children }: { children: ReactNode }) {
       defaultTheme="system"
       enableSystem
       disableTransitionOnChange
-      themes={["light", "dark", "green", "orange", "purple"]}
+      themes={[
+        "light",
+        "dark",
+        "green",
+        "orange",
+        "purple",
+        "accessible",
+        "accessibledark",
+      ]}
     >
       <SearchStateProvider>{children}</SearchStateProvider>
     </ThemeProvider>

@@ -176,6 +176,7 @@ export function UserDropdownMenu() {
       orange: "rgba(251, 146, 60, 1)", // Orange primary color
       purple: "rgba(147, 51, 234, 1)", // Purple primary color
       accessible: "rgba(29, 78, 216, 1)", // Strong blue for the accessible theme
+      accessibledark: "rgba(23, 37, 84, 1)", // Deep blue for the accessible dark theme
     };
 
     wipeOverlay.style.backgroundColor =
@@ -359,6 +360,11 @@ export function UserDropdownMenu() {
                   "Accessible",
                   <Accessibility className="h-4 w-4" />,
                   "text-blue-700"
+                )}
+                {renderThemeOption(
+                  "AccessibleDark",
+                  <Accessibility className="h-4 w-4" />,
+                  "text-blue-400"
                 )}
               </DropdownMenuSubContent>
             </DropdownMenuPortal>

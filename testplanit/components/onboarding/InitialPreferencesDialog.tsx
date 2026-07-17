@@ -206,6 +206,8 @@ export function InitialPreferencesDialog() {
         return <Circle className="h-4 w-4 fill-purple-500" />;
       case "Accessible":
         return <Accessibility className="h-4 w-4 text-blue-700" />;
+      case "AccessibleDark":
+        return <Accessibility className="h-4 w-4 text-blue-400" />;
       default:
         return <Circle className="h-4 w-4" />;
     }
@@ -227,6 +229,8 @@ export function InitialPreferencesDialog() {
         return "text-purple-500";
       case "Accessible":
         return "text-blue-700";
+      case "AccessibleDark":
+        return "text-blue-400";
       default:
         return "";
     }
@@ -252,15 +256,16 @@ export function InitialPreferencesDialog() {
             "green",
             "orange",
             "purple",
-            "accessible"
+            "accessible",
+            "accessibledark"
           );
           // Add the new theme class
           html.classList.add(themeLower);
           // Update color scheme for browser native elements
           html.style.colorScheme =
-            themeLower === "dark"
+            themeLower === "dark" || themeLower === "accessibledark"
               ? "dark"
-              : themeLower === "light"
+              : themeLower === "light" || themeLower === "accessible"
                 ? "light"
                 : "";
         });
@@ -373,13 +378,15 @@ export function InitialPreferencesDialog() {
           "system",
           "green",
           "orange",
-          "purple"
+          "purple",
+          "accessible",
+          "accessibledark"
         );
         html.classList.add(originalTheme);
         html.style.colorScheme =
-          originalTheme === "dark"
+          originalTheme === "dark" || originalTheme === "accessibledark"
             ? "dark"
-            : originalTheme === "light"
+            : originalTheme === "light" || originalTheme === "accessible"
               ? "light"
               : "";
       }

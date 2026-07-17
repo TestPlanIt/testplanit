@@ -2639,7 +2639,8 @@
       "green": "Màu xanh lá",
       "purple": "Màu tím",
       "orange": "Quả cam",
-      "accessible": "Có thể truy cập"
+      "accessible": "Có thể truy cập",
+      "accessibledark": "Có thể truy cập (Tối)"
     }
   },
   "repository": {

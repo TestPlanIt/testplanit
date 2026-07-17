@@ -2639,7 +2639,8 @@
       "green": "緑",
       "purple": "紫",
       "orange": "オレンジ",
-      "accessible": "アクセス可能"
+      "accessible": "アクセス可能",
+      "accessibledark": "アクセシブル(ダーク)"
     }
   },
   "repository": {

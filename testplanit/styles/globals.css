@@ -330,18 +330,55 @@ svg[class*="plot-"] .gantt-task-label text {
   --input: 215 16% 40%;
   --ring: 217 91% 40%; /* strong, clearly visible focus indicator */
   --radius: 0.5rem;
+  color-scheme: light;
 }
 
-/* Override layer — the part that actually enforces conformance. */
-.accessible [class*="text-muted-foreground/"] {
+/*
+ * Accessible Dark theme — the dark-mode counterpart of .accessible.
+ * A high-contrast dark palette that meets the same WCAG 2.2 AA presentation
+ * criteria (every text pair >=4.5:1, UI/border/focus >=3:1) so users who need
+ * a dark UI (e.g. light sensitivity) still get a conformant option. Class name
+ * is "accessibledark" so the Theme enum -> lowercase -> class convention holds.
+ */
+.accessibledark {
+  --background: 222 47% 9%;
+  --foreground: 210 40% 98%;
+  --card: 222 47% 11%;
+  --card-foreground: 210 40% 98%;
+  --popover: 222 47% 11%;
+  --popover-foreground: 210 40% 98%;
+  --primary: 210 40% 96%;
+  --primary-foreground: 222 47% 11%;
+  --secondary: 217 33% 24%;
+  --secondary-foreground: 210 40% 98%;
+  --muted: 217 33% 20%;
+  --muted-foreground: 215 25% 78%; /* ~10.6:1 on bg, 7.7:1 on muted */
+  --accent: 217 33% 26%;
+  --accent-foreground: 210 40% 98%;
+  --destructive: 0 65% 45%; /* white text 6.0:1, 3.1:1 vs bg */
+  --destructive-foreground: 0 0% 100%;
+  --warning: 38 92% 60%;
+  --warning-foreground: 38 92% 12%;
+  --success: 142 60% 30%; /* white text 5.4:1, 3.5:1 vs bg */
+  --success-foreground: 0 0% 100%;
+  --border: 215 20% 48%; /* 4.0:1 non-text contrast (1.4.11) */
+  --input: 215 20% 52%;
+  --ring: 210 90% 72%; /* bright, clearly visible focus indicator on dark */
+  --radius: 0.5rem;
+  color-scheme: dark;
+}
+
+/* Override layer — the part that actually enforces conformance.
+   Applies to both accessible variants (light + dark). */
+:is(.accessible, .accessibledark) [class*="text-muted-foreground/"] {
   /* 1.4.3 Contrast: neutralize the opacity modifiers that drop muted text below 4.5:1 */
   color: hsl(var(--muted-foreground)) !important;
 }
-.accessible [class*="text-primary/"] {
+:is(.accessible, .accessibledark) [class*="text-primary/"] {
   /* 1.4.3 Contrast: same problem on de-emphasized primary text (e.g. breadcrumb links) */
   color: hsl(var(--primary)) !important;
 }
-.accessible
+:is(.accessible, .accessibledark)
   :is(
     button,
     [role="button"],
@@ -355,7 +392,7 @@ svg[class*="plot-"] .gantt-task-label text {
   min-height: 1.5rem;
   min-width: 1.5rem;
 }
-.accessible :focus-visible {
+:is(.accessible, .accessibledark) :focus-visible {
   /* 2.4.7 Focus Visible: consistent, high-contrast focus ring */
   outline: 2px solid hsl(var(--ring)) !important;
   outline-offset: 2px;
@@ -393,7 +430,8 @@ mark {
   border-radius: 0.125rem;
 }
 
-.dark mark {
+.dark mark,
+.accessibledark mark {
   background-color: hsl(var(--warning) / 0.45);
 }
 

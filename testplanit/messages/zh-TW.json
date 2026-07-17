@@ -2639,7 +2639,8 @@
       "green": "綠色的",
       "purple": "紫色的",
       "orange": "橘子",
-      "accessible": "無障礙"
+      "accessible": "無障礙",
+      "accessibledark": "無障礙(深色)"
     }
   },
   "repository": {

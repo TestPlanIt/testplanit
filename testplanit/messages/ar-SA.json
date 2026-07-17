@@ -2639,7 +2639,8 @@
       "green": "أخضر",
       "purple": "بنفسجي",
       "orange": "برتقالي",
-      "accessible": "سهل الوصول"
+      "accessible": "سهل الوصول",
+      "accessibledark": "سهل الوصول (داكن)"
     }
   },
   "repository": {
