@@ -28,6 +28,16 @@ Each test case row in the Repository table has a **QuickScript** icon (scroll ic
 
 This opens QuickScript for that single test case.
 
+### Outside the web app
+
+QuickScript generation is also reachable outside the repository UI, backed by the same engine and repository context:
+
+- **Jira** — the [TestPlanIt for Jira](../../sdk/jira-forge-app.md) issue panel offers **Generate QuickScript** for the test cases linked to an issue.
+- **MCP** — the [MCP server](../../sdk/mcp-overview.md)'s `testplanit_cases_generate_script` tool lets AI agents generate scripts from stored cases.
+- **API** — [`@testplanit/api`](../../sdk/api-client.md#quickscript-generation)'s `generateQuickScript()` method, for scripts and CI pipelines.
+
+Each requires QuickScript to be enabled for the project and an active AI provider. See [AI-Powered QuickScript](../llm-quickscript.md#generating-quickscript-outside-the-app) for details.
+
 ## Using the QuickScript Dialog
 
 The dialog has two settings:

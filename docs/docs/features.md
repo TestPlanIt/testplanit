@@ -148,6 +148,7 @@ TestPlanIt is a comprehensive test management platform designed to help teams pl
 - **Generate from the Jira panel** - Create test cases from a Jira issue inside the TestPlanIt for Jira app, streamed live and linked back to the issue
 - **Markdown Parsing** - Pasted Markdown is parsed by an LLM into structured cases (name, steps, expected results, custom field values) on the Import Markdown surface
 - **QuickScript AI generation** - Convert manual test cases into automation scripts with AI, optionally informed by your code repository (GitHub, GitLab, Bitbucket, Azure DevOps, Gitea/Forgejo/Gogs); ships with templates spanning web, mobile, API, and Mobilewright targets
+- **QuickScript outside the web app** - Generate automation scripts from the TestPlanIt for Jira panel, the MCP server (`testplanit_cases_generate_script`), and API-token clients (`@testplanit/api`), all backed by the same repository-aware generation
 - **Enhance Writing** - Get AI recommendations to improve writing for any rich text field
 - **Magic Select** - AI-assisted test case selection for quickly building test runs
 - **Auto Tag** - Automatically suggest and apply tags to test cases, test runs, and sessions using AI analysis; incorporates linked-issue context (Jira labels + components, etc.) for sharper suggestions
