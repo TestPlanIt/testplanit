@@ -23,17 +23,24 @@ You need your own Forge app deployment.
 
 ### Prerequisites
 
-1. **Node.js 18.x, 20.x, or 22.x**
-2. **pnpm** package manager
+1. **Node.js 22.x or 24.x** — Node 20 reached end-of-life (April 2026) and Forge
+   no longer recommends it. The repo ships and is tested on Node 24.
+2. **npm** — deploy this app with npm, **not pnpm**. The Forge CLI bundles
+   `node_modules` at deploy time and does not understand pnpm's symlinked store.
+   In the monorepo, work from an isolated copy outside the pnpm workspace.
 3. **Atlassian account** with access to create Forge apps
-4. **Forge CLI** (`pnpm install -g @forge/cli`)
+4. **A Developer Space** — every new Forge app must belong to one (Atlassian's
+   container for managing and billing apps). You'll pick or create it during
+   `forge register`. The first admin of a new space also becomes its billing
+   admin, so for a company deployment create it under a company-owned account.
+5. **Forge CLI** (`npm install -g @forge/cli`)
 
 ### Step 1: Clone the Repository
 
 ```bash
 git clone <your-testplanit-repo>
 cd testplanit/forge-app
-pnpm install
+npm install
 ```
 
 ### Step 2: Create Your Own Forge App
@@ -52,12 +59,13 @@ Edit `manifest.yml`:
 app:
   id: ari:cloud:ecosystem::app/YOUR-APP-ID-HERE
   runtime:
-    name: nodejs20.x
+    name: nodejs24.x   # or nodejs22.x; avoid nodejs20.x (end-of-life)
 
 permissions:
   scopes:
     - read:jira-work
     - write:jira-work
+    - read:jira-user   # required: the app reads /rest/api/3/myself to attribute generated cases
     - storage:app
   external:
     fetch:
@@ -117,29 +125,29 @@ external:
 
 4. Verify login:
    ```bash
-   pnpm exec forge whoami
+   npx forge whoami
    ```
 
 ### Step 5: Build and Deploy
 
 ```bash
 # Build webpack bundles
-pnpm run build
+npm run build
 
-# Deploy to Forge
-./deploy.sh
+# Deploy to Forge (development environment)
+npx forge deploy
 ```
 
 You should see:
 ```
 ✔ Deployed
-Deployed testplanit-integration to the development environment.
+Deployed <your-app-name> to the development environment.
 ```
 
 ### Step 6: Install on Your Jira
 
 ```bash
-pnpm exec forge install
+npx forge install
 ```
 
 Select your Jira instance when prompted.
@@ -168,8 +176,8 @@ When you need to update the app:
 ```bash
 cd testplanit/forge-app
 source .env.forge
-pnpm run build
-./deploy.sh
+npm run build
+npx forge deploy
 ```
 
 No need to reinstall - updates are automatic.
@@ -200,20 +208,21 @@ Then redeploy.
 
 ### "Authorization failed" Error
 - Make sure you ran `source .env.forge`
-- Verify account with `pnpm exec forge whoami`
+- Verify account with `npx forge whoami`
 - Check that the account created the Forge app
 
 ### "Connection test failed"
 - Verify your domain is in the manifest
 - Check that TestPlanIt is accessible at the URL
-- Ensure `/api/health` endpoint exists
+- The app tests connectivity against `/version.json` and validates the key
+  against `/api/integrations/jira/test-connection` — confirm both respond
 
 ### "Not logged in" Error
 - Run `source .env.forge` before each terminal session
 - Or add credentials to your shell profile
 
 ### Permission Errors
-- Ensure you have `read:jira-work`, `write:jira-work`, and `storage:app` scopes
+- Ensure you have `read:jira-work`, `write:jira-work`, `read:jira-user`, and `storage:app` scopes
 - Check that your domain is listed under all three: `backend`, `client`, and `images`
 
 ---
@@ -233,8 +242,8 @@ Then redeploy.
    - Updates to the source code require redeployment
 
 4. **Development vs Production**
-   - Use `./deploy.sh` for development environment
-   - Use `pnpm exec forge deploy --environment production` for production
+   - Use `npx forge deploy` for the development environment
+   - Use `npx forge deploy --environment production` for production
    - Test thoroughly in development before promoting to production
 
 ---
