@@ -1966,6 +1966,17 @@
       "advanced": {
         "title": "Avanzato",
         "description": "Opzioni di attivazione specifiche per ogni progetto, relative a funzionalità predefinite. Le nuove opzioni verranno visualizzate qui man mano che saranno introdotte.",
+        "recordKey": {
+          "label": "Codice progetto",
+          "description": "Un codice breve usato nelle chiavi di record estetiche come {example}. Da 2 a 10 lettere maiuscole, senza cifre. Lascia vuoto per mostrare ID numerici semplici.",
+          "placeholder": "es. PROGETTO",
+          "previewLabel": "Chiave di esempio:",
+          "useSuggestion": "Usa il codice suggerito: {code}",
+          "invalid": "Usa da 2 a 10 lettere maiuscole (senza cifre).",
+          "taken": "Questo codice è già utilizzato da un altro progetto. Scegline un altro.",
+          "savedToast": "Codice progetto salvato.",
+          "saveError": "Non è stato possibile salvare il codice progetto. Potrebbe essere già utilizzato da un altro progetto."
+        },
         "reviewWorkflow": {
           "label": "Abilita il flusso di lavoro di revisione",
           "description": "Quando abilitata, la transizione verso stati che richiedono una revisione è vincolata a una richiesta di revisione approvata. I tester visualizzano il pulsante Richiedi revisione; i revisori ricevono notifiche.",
@@ -3697,6 +3708,7 @@
       "tags": "Etichette",
       "issues": "Problemi",
       "appConfig": "Configurazione dell'applicazione",
+      "recordKeys": "Chiavi record",
       "notifications": "Notifiche",
       "imports": "Importazioni di dati",
       "integrations": "Integrazioni dei problemi",
@@ -4960,6 +4972,20 @@
         "forSession": "Per la sessione",
         "color": "Colore"
       }
+    },
+    "recordKeys": {
+      "pageDescription": "Configura identificatori estetici con prefisso di progetto, come PROGETTO-TC-1234, che rendono facile capire a quale progetto appartiene un record e di che tipo di record si tratta. L'ID numerico sottostante rimane invariato e continua a funzionare ovunque.",
+      "title": "Chiavi record con prefisso di progetto",
+      "description": "Se attivata, i record mostrano una chiave opzionale che combina il codice del progetto, un token di tipo e l'ID numerico del record. Imposta il codice di ciascun progetto in Impostazioni progetto → Avanzate.",
+      "toggleAriaLabel": "Attiva/disattiva chiavi record con prefisso di progetto",
+      "tokensHeading": "Token di tipo",
+      "tokensHelp": "Il token usato per ogni tipo di record. Da 1 a 6 lettere maiuscole, senza cifre o trattini. I token devono essere univoci.",
+      "invalidToken": "Non valido",
+      "duplicateToken": "Token duplicato",
+      "tokensSaved": "Token di tipo salvati.",
+      "enableSuccess": "Chiavi record con prefisso di progetto attivate.",
+      "disableSuccess": "Chiavi record con prefisso di progetto disattivate.",
+      "saveError": "Impossibile salvare. Riprova."
     },
     "appConfig": {
       "description": "Gestire le configurazioni globali delle applicazioni",

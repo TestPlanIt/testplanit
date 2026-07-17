@@ -2,6 +2,8 @@
 
 import { DateFormatter } from "@/components/DateFormatter";
 import { CaseDisplay } from "@/components/tables/CaseDisplay";
+import { RecordId } from "@/components/RecordId";
+import { RECORD_TYPES } from "~/lib/recordKey";
 import { UserDisplay } from "@/components/search/UserDisplay";
 import { TagsListDisplay } from "@/components/tables/TagListDisplay";
 import { Badge } from "@/components/ui/badge";
@@ -234,10 +236,12 @@ function CasePanel({
           if (e.key === "Enter" || e.key === " ") onSelect();
         }}
       >
-        <div className="mb-1 text-xs text-muted-foreground">
-          {tCommon("fields.id")}
-          {": "}
-          {caseDetails.id}
+        <div className="mb-1">
+          <RecordId
+            type={RECORD_TYPES.TEST_CASE}
+            id={caseDetails.id}
+            projectId={projectId}
+          />
         </div>
         <div className="mb-3 flex items-center gap-2">
           <CaseDisplay

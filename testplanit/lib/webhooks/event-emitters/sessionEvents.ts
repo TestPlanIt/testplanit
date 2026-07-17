@@ -1,6 +1,33 @@
 import type { TxClient } from "~/lib/zenstack";
 
+import { formatRecordKey, RECORD_TYPES } from "~/lib/recordKey";
+import { readRecordKeyConfig } from "~/lib/services/recordKeyConfig";
 import { webhookEvents } from "~/lib/webhooks/events";
+
+/**
+ * Derive the cosmetic `SESSION` display key (e.g. `WEB-SN-1234`) for a session
+ * whose project `key` we don't already hold. Reads the record-key config and
+ * only spends the project lookup when the feature is enabled. Returns `null`
+ * when disabled or the project has no key configured.
+ */
+async function resolveSessionDisplayKey(
+  tx: TxClient,
+  projectId: number,
+  id: number
+): Promise<string | null> {
+  const { enabled, tokens } = await readRecordKeyConfig(tx);
+  if (!enabled) return null;
+  const project = await tx.projects.findUnique({
+    where: { id: projectId },
+    select: { key: true },
+  });
+  return formatRecordKey({
+    projectKey: project?.key ?? null,
+    type: RECORD_TYPES.SESSION,
+    id,
+    tokens,
+  });
+}
 
 /**
  * Emit per-mutation outbound webhook events for Sessions lifecycle.
@@ -45,12 +72,14 @@ export async function emitSessionCreated(
     stateColor = state?.color?.value ?? null;
     stateIsCompleted = state?.workflowType === "DONE";
   }
+  const displayKey = await resolveSessionDisplayKey(tx, row.projectId, row.id);
   await webhookEvents.emit(
     "session.created",
     {
       sessionId: row.id,
       sessionName: row.name,
       projectId: row.projectId,
+      displayKey,
       stateId: row.stateId,
       stateName,
       stateColor,
@@ -81,6 +110,14 @@ export async function emitSessionUpdateEvents(
     oldRow.isCompleted !== true && newRow.isCompleted === true;
   if (!stateChanged && !completedTransition) return;
 
+  // Resolve the cosmetic session key once; both the state_changed and
+  // completed payloads below share it.
+  const displayKey = await resolveSessionDisplayKey(
+    tx,
+    newRow.projectId,
+    newRow.id
+  );
+
   if (stateChanged) {
     const stateSelect = {
       name: true,
@@ -108,6 +145,7 @@ export async function emitSessionUpdateEvents(
         sessionId: newRow.id,
         sessionName: newRow.name,
         projectId: newRow.projectId,
+        displayKey,
         from: {
           stateId: oldRow.stateId,
           stateName: fromState?.name ?? null,
@@ -193,6 +231,7 @@ export async function emitSessionUpdateEvents(
         sessionId: newRow.id,
         sessionTitle: newRow.name,
         projectId: newRow.projectId,
+        displayKey,
         totalResults,
         totalElapsed, // seconds
         statusCounts,

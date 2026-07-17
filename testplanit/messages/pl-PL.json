@@ -1966,6 +1966,17 @@
       "advanced": {
         "title": "Zaawansowany",
         "description": "Przełączniki dla poszczególnych projektów, umożliwiające tworzenie funkcji, które są brane pod uwagę. Nowe przełączniki będą się pojawiać tutaj w miarę ich wprowadzania.",
+        "recordKey": {
+          "label": "Kod projektu",
+          "description": "Krótki kod używany w kosmetycznych kluczach rekordów, takich jak {example}. 2–10 wielkich liter, bez cyfr. Pozostaw puste, aby wyświetlać zwykłe numeryczne identyfikatory.",
+          "placeholder": "np. PROJECT",
+          "previewLabel": "Przykładowy klucz:",
+          "useSuggestion": "Użyj sugerowanego kodu: {code}",
+          "invalid": "Użyj 2–10 wielkich liter (bez cyfr).",
+          "taken": "Ten kod jest już używany przez inny projekt. Wybierz inny.",
+          "savedToast": "Kod projektu zapisany.",
+          "saveError": "Nie można zapisać kodu projektu. Może być już używany przez inny projekt."
+        },
         "reviewWorkflow": {
           "label": "Włącz przepływ pracy przeglądu",
           "description": "Po włączeniu, przejścia do stanów wymagających przeglądu są blokowane przez zatwierdzoną prośbę o przegląd. Testerzy widzą przycisk „Poproś o przegląd”, a recenzenci otrzymują powiadomienia.",
@@ -3697,6 +3708,7 @@
       "tags": "Tagi",
       "issues": "Kwestie",
       "appConfig": "Konfiguracja aplikacji",
+      "recordKeys": "Klucze rekordów",
       "notifications": "Powiadomienia",
       "imports": "Import danych",
       "integrations": "Integracje problemów",
@@ -4960,6 +4972,20 @@
         "forSession": "Na sesję",
         "color": "Kolor"
       }
+    },
+    "recordKeys": {
+      "pageDescription": "Skonfiguruj kosmetyczne identyfikatory z prefiksem projektu, takie jak PROJECT-TC-1234, które ułatwiają rozpoznanie, do którego projektu należy rekord i jakiego typu jest to rekord. Bazowy numeryczny identyfikator pozostaje niezmieniony i nadal działa wszędzie.",
+      "title": "Klucze rekordów z prefiksem projektu",
+      "description": "Gdy ta opcja jest włączona, rekordy wyświetlają opcjonalny klucz łączący kod projektu, token typu i numeryczny identyfikator rekordu. Ustaw kod każdego projektu w Ustawieniach projektu → Zaawansowane.",
+      "toggleAriaLabel": "Przełącz klucze rekordów z prefiksem projektu",
+      "tokensHeading": "Tokeny typu",
+      "tokensHelp": "Token używany dla każdego rodzaju rekordu. 1–6 wielkich liter, bez cyfr i myślników. Tokeny muszą być unikalne.",
+      "invalidToken": "Nieprawidłowy",
+      "duplicateToken": "Zduplikowany token",
+      "tokensSaved": "Tokeny typu zapisane.",
+      "enableSuccess": "Klucze rekordów z prefiksem projektu włączone.",
+      "disableSuccess": "Klucze rekordów z prefiksem projektu wyłączone.",
+      "saveError": "Nie można zapisać. Spróbuj ponownie."
     },
     "appConfig": {
       "description": "Zarządzaj globalnymi konfiguracjami aplikacji",

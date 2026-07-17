@@ -1966,6 +1966,17 @@
       "advanced": {
         "title": "Gelişmiş",
         "description": "Proje bazında, kişisel tercihlere dayalı özellikler için geçiş düğmeleri. Yeni geçiş düğmeleri eklendikçe burada görünecektir.",
+        "recordKey": {
+          "label": "Proje kodu",
+          "description": "{example} gibi kozmetik kayıt anahtarlarında kullanılan kısa bir kod. 2–10 büyük harf, rakam içermez. Sade sayısal kimlikleri göstermek için boş bırakın.",
+          "placeholder": "örn. PROJECT",
+          "previewLabel": "Örnek anahtar:",
+          "useSuggestion": "Önerilen kodu kullan: {code}",
+          "invalid": "2–10 büyük harf kullanın (rakam olmadan).",
+          "taken": "Bu kod başka bir proje tarafından zaten kullanılıyor. Farklı bir kod seçin.",
+          "savedToast": "Proje kodu kaydedildi.",
+          "saveError": "Proje kodu kaydedilemedi. Başka bir proje tarafından zaten kullanılıyor olabilir."
+        },
         "reviewWorkflow": {
           "label": "İnceleme iş akışını etkinleştirin",
           "description": "Etkinleştirildiğinde, inceleme gerektiren durumlara geçişler, onaylanmış bir inceleme talebiyle sınırlandırılır. Test edenler \"İnceleme Talep Et\" düğmesini görür; inceleyenler ise bildirim alır.",
@@ -3697,6 +3708,7 @@
       "tags": "Etiketler",
       "issues": "Sorunlar",
       "appConfig": "Uygulama Yapılandırması",
+      "recordKeys": "Kayıt Anahtarları",
       "notifications": "Bildirimler",
       "imports": "Veri İçe Aktarımları",
       "integrations": "Sorun Entegrasyonları",
@@ -4960,6 +4972,20 @@
         "forSession": "Oturum için",
         "color": "Renk"
       }
+    },
+    "recordKeys": {
+      "pageDescription": "PROJECT-TC-1234 gibi, bir kaydın hangi projeye ait olduğunu ve hangi tür kayıt olduğunu anlamayı kolaylaştıran kozmetik, proje önekli tanımlayıcıları yapılandırın. Altta yatan sayısal kimlik değişmez ve her yerde çalışmaya devam eder.",
+      "title": "Proje önekli kayıt anahtarları",
+      "description": "Etkinleştirildiğinde, kayıtlar proje kodunu, bir tür belirtecini ve kaydın sayısal kimliğini birleştiren isteğe bağlı bir anahtar görüntüler. Her projenin kodunu Proje Ayarları → Gelişmiş bölümünden ayarlayın.",
+      "toggleAriaLabel": "Proje önekli kayıt anahtarlarını aç/kapat",
+      "tokensHeading": "Tür belirteçleri",
+      "tokensHelp": "Her kayıt türü için kullanılan belirteç. 1–6 büyük harf, rakam veya tire içermez. Belirteçler benzersiz olmalıdır.",
+      "invalidToken": "Geçersiz",
+      "duplicateToken": "Yinelenen belirteç",
+      "tokensSaved": "Tür belirteçleri kaydedildi.",
+      "enableSuccess": "Proje önekli kayıt anahtarları etkinleştirildi.",
+      "disableSuccess": "Proje önekli kayıt anahtarları devre dışı bırakıldı.",
+      "saveError": "Kaydedilemedi. Lütfen tekrar deneyin."
     },
     "appConfig": {
       "description": "Küresel uygulama yapılandırmalarını yönetin",

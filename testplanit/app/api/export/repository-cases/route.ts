@@ -21,6 +21,8 @@ import { getAuthDb } from "~/lib/zenstack";
 import { authenticateRequest } from "~/lib/api-token-auth";
 import { baseDb } from "~/lib/db";
 import { authOptions } from "~/server/auth";
+import { readRecordKeyConfig } from "~/lib/services/recordKeyConfig";
+import { formatRecordKey, RECORD_TYPES } from "~/lib/recordKey";
 import { ndjsonResponse, type PageSource } from "~/lib/export/ndjson";
 import {
   buildManifest,
@@ -50,6 +52,7 @@ interface CaseRow {
   currentVersion: number;
   createdAt: string;
   creatorId: string;
+  displayKey: string | null;
 }
 
 export async function GET(request: NextRequest) {
@@ -112,6 +115,9 @@ export async function GET(request: NextRequest) {
     Object.assign(where, cursorWhere("createdAt", cursor));
   }
 
+  const { enabled: recordKeyEnabled, tokens: recordKeyTokens } =
+    await readRecordKeyConfig(reader);
+
   let exportedCount = 0;
   let lastRow: CaseRow | null = null;
 
@@ -138,6 +144,7 @@ export async function GET(request: NextRequest) {
         currentVersion: true,
         createdAt: true,
         creatorId: true,
+        project: { select: { key: true } },
       },
     });
 
@@ -159,6 +166,14 @@ export async function GET(request: NextRequest) {
       currentVersion: c.currentVersion,
       createdAt: c.createdAt.toISOString(),
       creatorId: c.creatorId,
+      displayKey: recordKeyEnabled
+        ? formatRecordKey({
+            projectKey: c.project?.key ?? null,
+            type: RECORD_TYPES.TEST_CASE,
+            id: c.id,
+            tokens: recordKeyTokens,
+          })
+        : null,
     }));
     exportedCount = page.length;
     lastRow = page[page.length - 1] ?? null;

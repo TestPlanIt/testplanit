@@ -25,6 +25,8 @@ import { getAuthDb } from "~/lib/zenstack";
 import { authenticateRequest } from "~/lib/api-token-auth";
 import { baseDb } from "~/lib/db";
 import { authOptions } from "~/server/auth";
+import { readRecordKeyConfig } from "~/lib/services/recordKeyConfig";
+import { formatRecordKey, RECORD_TYPES } from "~/lib/recordKey";
 import { ndjsonResponse, type PageSource } from "~/lib/export/ndjson";
 import {
   buildManifest,
@@ -53,6 +55,7 @@ interface ResultRow {
   iterationId: number | null;
   editedAt: string | null;
   editedById: string | null;
+  displayKey: string | null;
 }
 
 export async function GET(request: NextRequest) {
@@ -120,6 +123,9 @@ export async function GET(request: NextRequest) {
     Object.assign(where, cursorWhere("executedAt", cursor));
   }
 
+  const { enabled: recordKeyEnabled, tokens: recordKeyTokens } =
+    await readRecordKeyConfig(reader);
+
   let exportedCount = 0;
   let lastRow: ResultRow | null = null;
 
@@ -141,7 +147,9 @@ export async function GET(request: NextRequest) {
         editedById: true,
         statusId: true,
         status: { select: { name: true, isSuccess: true, isFailure: true } },
-        testRun: { select: { projectId: true } },
+        testRun: {
+          select: { projectId: true, project: { select: { key: true } } },
+        },
         testRunCase: { select: { repositoryCaseId: true } },
       },
     });
@@ -163,6 +171,14 @@ export async function GET(request: NextRequest) {
       iterationId: r.iterationId,
       editedAt: r.editedAt ? r.editedAt.toISOString() : null,
       editedById: r.editedById,
+      displayKey: recordKeyEnabled
+        ? formatRecordKey({
+            projectKey: r.testRun.project?.key ?? null,
+            type: RECORD_TYPES.TEST_CASE,
+            id: r.testRunCase.repositoryCaseId,
+            tokens: recordKeyTokens,
+          })
+        : null,
     }));
     exportedCount = page.length;
     lastRow = page[page.length - 1] ?? null;

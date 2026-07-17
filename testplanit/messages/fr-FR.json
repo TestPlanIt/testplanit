@@ -1966,6 +1966,17 @@
       "advanced": {
         "title": "Avancé",
         "description": "Options par projet pour les fonctionnalités spécifiques. Les nouvelles options apparaîtront ici au fur et à mesure de leur introduction.",
+        "recordKey": {
+          "label": "Code du projet",
+          "description": "Un code court utilisé dans les clés d'enregistrement esthétiques comme {example}. 2 à 10 lettres majuscules, sans chiffres. Laissez vide pour afficher des ID numériques simples.",
+          "placeholder": "p. ex. PROJECT",
+          "previewLabel": "Exemple de clé :",
+          "useSuggestion": "Utiliser le code suggéré : {code}",
+          "invalid": "Utilisez 2 à 10 lettres majuscules (sans chiffres).",
+          "taken": "Ce code est déjà utilisé par un autre projet. Choisissez-en un autre.",
+          "savedToast": "Code du projet enregistré.",
+          "saveError": "Impossible d'enregistrer le code du projet. Il est peut-être déjà utilisé par un autre projet."
+        },
         "reviewWorkflow": {
           "label": "Activer le flux de travail de révision",
           "description": "Lorsque cette option est activée, le passage à un état nécessitant une révision est conditionné par l'approbation de la demande de révision. Les testeurs voient le bouton « Demander une révision » ; les réviseurs reçoivent une notification.",
@@ -3697,6 +3708,7 @@
       "tags": "Étiquettes",
       "issues": "Problèmes",
       "appConfig": "Configuration de l'application",
+      "recordKeys": "Clés d'enregistrement",
       "notifications": "Notifications",
       "imports": "Importation de données",
       "integrations": "Intégrations de problèmes",
@@ -4960,6 +4972,20 @@
         "forSession": "Pour la session",
         "color": "Couleur"
       }
+    },
+    "recordKeys": {
+      "pageDescription": "Configurez des identifiants esthétiques préfixés par projet, tels que PROJECT-TC-1234, qui permettent de savoir facilement à quel projet appartient un enregistrement et de quel type d'enregistrement il s'agit. L'ID numérique sous-jacent reste inchangé et continue de fonctionner partout.",
+      "title": "Clés d'enregistrement préfixées par projet",
+      "description": "Lorsque cette option est activée, les enregistrements affichent une clé optionnelle combinant le code du projet, un jeton de type et l'ID numérique de l'enregistrement. Définissez le code de chaque projet dans Paramètres du projet → Avancé.",
+      "toggleAriaLabel": "Activer/désactiver les clés d'enregistrement préfixées par projet",
+      "tokensHeading": "Jetons de type",
+      "tokensHelp": "Le jeton utilisé pour chaque type d'enregistrement. 1 à 6 lettres majuscules, sans chiffres ni traits d'union. Les jetons doivent être uniques.",
+      "invalidToken": "Invalide",
+      "duplicateToken": "Jeton en double",
+      "tokensSaved": "Jetons de type enregistrés.",
+      "enableSuccess": "Clés d'enregistrement préfixées par projet activées.",
+      "disableSuccess": "Clés d'enregistrement préfixées par projet désactivées.",
+      "saveError": "Impossible d'enregistrer. Veuillez réessayer."
     },
     "appConfig": {
       "description": "Gérer les configurations globales des applications",

@@ -11,6 +11,7 @@ import { AttachmentChanges } from "@/components/AttachmentsDisplay";
 import { Loading } from "@/components/Loading";
 import { RequestReviewButton } from "@/components/reviews/RequestReviewButton";
 import { SessionAuditLogSheet } from "@/components/sessions/SessionAuditLogSheet";
+import { RecordId } from "@/components/RecordId";
 import { ReviewStatusBanner } from "@/components/reviews/ReviewStatusBanner";
 import { useTransitionGateStatus } from "~/hooks/useTransitionGateStatus";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -1788,7 +1789,7 @@ export default function SessionPage() {
             />
           </div>
           <CardHeader>
-            <div className="flex justify-between items-start">
+            <div className="flex justify-between items-center gap-2">
               {!isEditMode && (
                 <div className="me-2">
                   <Link href={`/projects/sessions/${projectId}`}>
@@ -1829,203 +1830,213 @@ export default function SessionPage() {
                   </span>
                 )}
               </CardTitle>
-              <div className="flex items-start gap-2">
-                {sessionData && (
-                  <SessionAuditLogSheet sessionId={sessionData.id} />
+              <div className="flex flex-col items-end gap-1">
+                {!isEditMode && sessionData && (
+                  <RecordId
+                    type="SESSION"
+                    id={sessionData.id}
+                    projectId={numericProjectId ?? undefined}
+                    className="shrink-0 whitespace-nowrap"
+                  />
                 )}
-                {sessionData?.isCompleted ? (
-                  <div className="flex items-center gap-1">
-                    <Badge
-                      variant="secondary"
-                      className="flex items-center text-md whitespace-nowrap text-sm gap-1 p-2 px-4"
-                    >
-                      <CircleCheckBig className="h-6 w-6 shrink-0" />
-                      <div className="hidden md:block">
-                        <span className="me-1">
-                          {tCommon("fields.completedOn")}
-                        </span>
-                        <DateFormatter
-                          date={sessionData?.completedAt}
-                          formatString={session?.user.preferences?.dateFormat}
-                          timezone={session?.user.preferences?.timezone}
-                        />
-                      </div>
-                    </Badge>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={handleExportPdf}
-                      disabled={isExportingPdf}
-                      className="group px-3 hover:px-3 transition-all duration-200 gap-0 hover:gap-2"
-                    >
-                      <FileDown className="h-4 w-4 shrink-0" />
-                      <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-                        {isExportingPdf
-                          ? tCommon("actions.exportingPdf")
-                          : tCommon("actions.exportPdf")}
-                      </span>
-                    </Button>
-                    {(canDeleteClosedSession || isSuperAdmin) && (
+                <div className="flex items-start gap-2">
+                  {sessionData && (
+                    <SessionAuditLogSheet sessionId={sessionData.id} />
+                  )}
+                  {sessionData?.isCompleted ? (
+                    <div className="flex items-center gap-1">
+                      <Badge
+                        variant="secondary"
+                        className="flex items-center text-md whitespace-nowrap text-sm gap-1 p-2 px-4"
+                      >
+                        <CircleCheckBig className="h-6 w-6 shrink-0" />
+                        <div className="hidden md:block">
+                          <span className="me-1">
+                            {tCommon("fields.completedOn")}
+                          </span>
+                          <DateFormatter
+                            date={sessionData?.completedAt}
+                            formatString={session?.user.preferences?.dateFormat}
+                            timezone={session?.user.preferences?.timezone}
+                          />
+                        </div>
+                      </Badge>
                       <Button
                         type="button"
-                        variant="destructive"
-                        onClick={() => setIsDeleteDialogOpen(true)}
+                        variant="outline"
+                        onClick={handleExportPdf}
+                        disabled={isExportingPdf}
                         className="group px-3 hover:px-3 transition-all duration-200 gap-0 hover:gap-2"
                       >
-                        <Trash2 className="h-4 w-4 shrink-0" />
+                        <FileDown className="h-4 w-4 shrink-0" />
                         <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-                          {t("actions.delete")}
+                          {isExportingPdf
+                            ? tCommon("actions.exportingPdf")
+                            : tCommon("actions.exportPdf")}
                         </span>
                       </Button>
-                    )}
-                  </div>
-                ) : (
-                  <>
-                    {versions && versions.length > 1 && (
-                      <VersionSelect
-                        versions={versions}
-                        currentVersion={
-                          sessionData?.versions.length.toString() || "latest"
-                        }
-                        onVersionChange={handleVersionChange}
-                        userDateFormat={session?.user.preferences?.dateFormat}
-                        userTimeFormat={session?.user.preferences?.timeFormat}
-                      />
-                    )}
-                    {!isEditMode ? (
-                      <div className="flex items-center gap-1">
-                        <RequestReviewButton
-                          entityType="SESSION"
-                          entityId={sessionData.id}
-                          projectId={Number(projectId)}
-                          currentStateId={sessionData.stateId}
-                          reachableGatedStates={reachableGatedStates}
-                        />
-                        {showEditButtonPerm && !sessionData?.isCompleted && (
-                          <Button
-                            type="button"
-                            variant="secondary"
-                            onClick={handleEditClick}
-                            className="group px-3 hover:px-3 transition-all duration-200 gap-0 hover:gap-2"
-                          >
-                            <SquarePen className="h-4 w-4 shrink-0" />
-                            <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-                              {tCommon("actions.edit")}
-                            </span>
-                          </Button>
-                        )}
+                      {(canDeleteClosedSession || isSuperAdmin) && (
                         <Button
                           type="button"
-                          variant="outline"
-                          onClick={handleExportPdf}
-                          disabled={isExportingPdf}
+                          variant="destructive"
+                          onClick={() => setIsDeleteDialogOpen(true)}
                           className="group px-3 hover:px-3 transition-all duration-200 gap-0 hover:gap-2"
                         >
-                          <FileDown className="h-4 w-4 shrink-0" />
+                          <Trash2 className="h-4 w-4 shrink-0" />
                           <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-                            {isExportingPdf
-                              ? tCommon("actions.exportingPdf")
-                              : tCommon("actions.exportPdf")}
+                            {t("actions.delete")}
                           </span>
                         </Button>
-                        {showCompleteButtonPerm &&
-                          !sessionData?.isCompleted && (
+                      )}
+                    </div>
+                  ) : (
+                    <>
+                      {versions && versions.length > 1 && (
+                        <VersionSelect
+                          versions={versions}
+                          currentVersion={
+                            sessionData?.versions.length.toString() || "latest"
+                          }
+                          onVersionChange={handleVersionChange}
+                          userDateFormat={session?.user.preferences?.dateFormat}
+                          userTimeFormat={session?.user.preferences?.timeFormat}
+                        />
+                      )}
+                      {!isEditMode ? (
+                        <div className="flex items-center gap-1">
+                          <RequestReviewButton
+                            entityType="SESSION"
+                            entityId={sessionData.id}
+                            projectId={Number(projectId)}
+                            currentStateId={sessionData.stateId}
+                            reachableGatedStates={reachableGatedStates}
+                          />
+                          {showEditButtonPerm && !sessionData?.isCompleted && (
                             <Button
                               type="button"
                               variant="secondary"
-                              onClick={() => setIsCompleteDialogOpen(true)}
+                              onClick={handleEditClick}
                               className="group px-3 hover:px-3 transition-all duration-200 gap-0 hover:gap-2"
                             >
-                              <CircleCheckBig className="h-4 w-4 shrink-0" />
+                              <SquarePen className="h-4 w-4 shrink-0" />
                               <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-                                {tCommon("actions.complete")}
+                                {tCommon("actions.edit")}
                               </span>
                             </Button>
                           )}
-                      </div>
-                    ) : (
-                      <div className="flex flex-col gap-2">
-                        <div className="flex gap-2">
-                          {(() => {
-                            const gateBlocked =
-                              !transitionCheck.allowed &&
-                              transitionCheck.blockingGate;
-                            const formHasErrors =
-                              Object.keys(errors).length > 0;
-                            const saveBlocked = gateBlocked || formHasErrors;
-                            const tooltipMessage = gateBlocked
-                              ? tGlobal(
-                                  "reviews.transitionGate.blockedByGate",
-                                  {
-                                    gateName:
-                                      transitionCheck.blockingGate!.name,
-                                  }
-                                )
-                              : tGlobal(
-                                  "reviews.transitionGate.saveBlockedByFormErrors"
-                                );
-
-                            if (!saveBlocked) {
-                              return (
-                                <Button
-                                  type="submit"
-                                  variant="default"
-                                  disabled={isSubmitting}
-                                >
-                                  <Save className="h-4 w-4" />
-                                  {tCommon("actions.save")}
-                                </Button>
-                              );
-                            }
-
-                            return (
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <span tabIndex={0}>
-                                    <Button
-                                      type="submit"
-                                      variant="default"
-                                      disabled
-                                      className="ring-2 ring-destructive ring-offset-2 ring-offset-background"
-                                    >
-                                      <Save className="h-4 w-4" />
-                                      {tCommon("actions.save")}
-                                    </Button>
-                                  </span>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  {tooltipMessage}
-                                </TooltipContent>
-                              </Tooltip>
-                            );
-                          })()}
                           <Button
                             type="button"
                             variant="outline"
-                            onClick={handleCancel}
-                            disabled={isSubmitting}
+                            onClick={handleExportPdf}
+                            disabled={isExportingPdf}
+                            className="group px-3 hover:px-3 transition-all duration-200 gap-0 hover:gap-2"
                           >
-                            <CircleSlash2 className="h-4 w-4" />
-                            {tCommon("cancel")}
+                            <FileDown className="h-4 w-4 shrink-0" />
+                            <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
+                              {isExportingPdf
+                                ? tCommon("actions.exportingPdf")
+                                : tCommon("actions.exportPdf")}
+                            </span>
                           </Button>
+                          {showCompleteButtonPerm &&
+                            !sessionData?.isCompleted && (
+                              <Button
+                                type="button"
+                                variant="secondary"
+                                onClick={() => setIsCompleteDialogOpen(true)}
+                                className="group px-3 hover:px-3 transition-all duration-200 gap-0 hover:gap-2"
+                              >
+                                <CircleCheckBig className="h-4 w-4 shrink-0" />
+                                <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
+                                  {tCommon("actions.complete")}
+                                </span>
+                              </Button>
+                            )}
                         </div>
-                        {(sessionData?.isCompleted
-                          ? canDeleteClosedSession || isSuperAdmin
-                          : canDeleteSession || isSuperAdmin) && (
-                          <Button
-                            type="button"
-                            variant="destructive"
-                            onClick={() => setIsDeleteDialogOpen(true)}
-                            disabled={isSubmitting}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                            {tCommon("actions.delete")}
-                          </Button>
-                        )}
-                      </div>
-                    )}
-                  </>
-                )}
+                      ) : (
+                        <div className="flex flex-col gap-2">
+                          <div className="flex gap-2">
+                            {(() => {
+                              const gateBlocked =
+                                !transitionCheck.allowed &&
+                                transitionCheck.blockingGate;
+                              const formHasErrors =
+                                Object.keys(errors).length > 0;
+                              const saveBlocked = gateBlocked || formHasErrors;
+                              const tooltipMessage = gateBlocked
+                                ? tGlobal(
+                                    "reviews.transitionGate.blockedByGate",
+                                    {
+                                      gateName:
+                                        transitionCheck.blockingGate!.name,
+                                    }
+                                  )
+                                : tGlobal(
+                                    "reviews.transitionGate.saveBlockedByFormErrors"
+                                  );
+
+                              if (!saveBlocked) {
+                                return (
+                                  <Button
+                                    type="submit"
+                                    variant="default"
+                                    disabled={isSubmitting}
+                                  >
+                                    <Save className="h-4 w-4" />
+                                    {tCommon("actions.save")}
+                                  </Button>
+                                );
+                              }
+
+                              return (
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <span tabIndex={0}>
+                                      <Button
+                                        type="submit"
+                                        variant="default"
+                                        disabled
+                                        className="ring-2 ring-destructive ring-offset-2 ring-offset-background"
+                                      >
+                                        <Save className="h-4 w-4" />
+                                        {tCommon("actions.save")}
+                                      </Button>
+                                    </span>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    {tooltipMessage}
+                                  </TooltipContent>
+                                </Tooltip>
+                              );
+                            })()}
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={handleCancel}
+                              disabled={isSubmitting}
+                            >
+                              <CircleSlash2 className="h-4 w-4" />
+                              {tCommon("cancel")}
+                            </Button>
+                          </div>
+                          {(sessionData?.isCompleted
+                            ? canDeleteClosedSession || isSuperAdmin
+                            : canDeleteSession || isSuperAdmin) && (
+                            <Button
+                              type="button"
+                              variant="destructive"
+                              onClick={() => setIsDeleteDialogOpen(true)}
+                              disabled={isSubmitting}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                              {tCommon("actions.delete")}
+                            </Button>
+                          )}
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
               </div>
             </div>
           </CardHeader>

@@ -1966,6 +1966,17 @@
       "advanced": {
         "title": "Avanzado",
         "description": "Opciones de configuración específicas para cada proyecto. Las nuevas opciones aparecerán aquí a medida que se vayan implementando.",
+        "recordKey": {
+          "label": "Código del proyecto",
+          "description": "Un código corto que se usa en claves de registro decorativas como {example}. De 2 a 10 letras mayúsculas, sin dígitos. Déjelo en blanco para mostrar identificadores numéricos simples.",
+          "placeholder": "p. ej. PROYECTO",
+          "previewLabel": "Clave de ejemplo:",
+          "useSuggestion": "Usar código sugerido: {code}",
+          "invalid": "Use de 2 a 10 letras mayúsculas (sin dígitos).",
+          "taken": "Ese código ya está en uso por otro proyecto. Elija uno diferente.",
+          "savedToast": "Código del proyecto guardado.",
+          "saveError": "No se pudo guardar el código del proyecto. Es posible que ya esté en uso por otro proyecto."
+        },
         "reviewWorkflow": {
           "label": "Habilitar el flujo de trabajo de revisión",
           "description": "Cuando está habilitada, la transición a estados que requieren revisión está sujeta a una solicitud de revisión aprobada. Los evaluadores ven el botón \"Solicitar revisión\"; los revisores reciben notificaciones.",
@@ -3697,6 +3708,7 @@
       "tags": "Etiquetas",
       "issues": "Asuntos",
       "appConfig": "Configuración de la aplicación",
+      "recordKeys": "Claves de registro",
       "notifications": "Notificaciones",
       "imports": "Importaciones de datos",
       "integrations": "Integraciones del problema",
@@ -4960,6 +4972,20 @@
         "forSession": "Para la sesión",
         "color": "Color"
       }
+    },
+    "recordKeys": {
+      "pageDescription": "Configure identificadores decorativos con prefijo de proyecto, como PROYECTO-TC-1234, que facilitan identificar a qué proyecto pertenece un registro y qué tipo de registro es. El ID numérico subyacente no cambia y sigue funcionando en todas partes.",
+      "title": "Claves de registro con prefijo de proyecto",
+      "description": "Cuando está habilitado, los registros muestran una clave opcional que combina el código del proyecto, un token de tipo y el ID numérico del registro. Configure el código de cada proyecto en Configuración del proyecto → Avanzado.",
+      "toggleAriaLabel": "Activar o desactivar las claves de registro con prefijo de proyecto",
+      "tokensHeading": "Tokens de tipo",
+      "tokensHelp": "El token usado para cada tipo de registro. De 1 a 6 letras mayúsculas, sin dígitos ni guiones. Los tokens deben ser únicos.",
+      "invalidToken": "No válido",
+      "duplicateToken": "Token duplicado",
+      "tokensSaved": "Tokens de tipo guardados.",
+      "enableSuccess": "Claves de registro con prefijo de proyecto habilitadas.",
+      "disableSuccess": "Claves de registro con prefijo de proyecto deshabilitadas.",
+      "saveError": "No se pudo guardar. Inténtelo de nuevo."
     },
     "appConfig": {
       "description": "Administrar configuraciones globales de la aplicación",

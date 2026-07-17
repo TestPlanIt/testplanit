@@ -100,6 +100,9 @@ import LoadingSpinner from "~/components/LoadingSpinner";
 import { Link } from "~/lib/navigation";
 import { IconName } from "~/types/globals";
 import { isAutomatedCaseSource } from "~/utils/testResultTypes";
+import { RecordId } from "@/components/RecordId";
+import { RecordKeyMenuItem } from "@/components/RecordKeyMenuItem";
+import { RECORD_TYPES } from "~/lib/recordKey";
 import { AssignTestCaseModal } from "./AssignTestCase";
 import { DeleteCaseModal } from "./DeleteCase";
 
@@ -1113,6 +1116,13 @@ const ActionsCell = React.memo(function ActionsCell({
               <span>{t("repository.cases.copyMoveToProject")}</span>
             </DropdownMenuItem>
           )}
+          {!isRunMode && (
+            <RecordKeyMenuItem
+              type="TEST_CASE"
+              id={row.original.id}
+              projectId={row.original.projectId}
+            />
+          )}
           {canDelete && (
             <DropdownMenuItem
               onClick={(e) => {
@@ -2050,9 +2060,15 @@ export const getColumns = (
       meta: {
         isVisible: false,
       },
-      size: 50,
-      minSize: 50,
-      cell: ({ row }) => <div>{row.original.id}</div>,
+      size: 140,
+      minSize: 60,
+      cell: ({ row }) => (
+        <RecordId
+          type={RECORD_TYPES.TEST_CASE}
+          id={row.original.id}
+          projectId={row.original.projectId}
+        />
+      ),
     },
     {
       id: "currentVersion",

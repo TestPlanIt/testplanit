@@ -25,7 +25,7 @@ import { ApplicationArea } from "~/zenstack/models";
 import {
   CheckCircle,
   Combine,
-  Copy,
+  CopyPlus,
   Flame,
   LinkIcon,
   MoreVertical,
@@ -39,6 +39,7 @@ import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { Link, useRouter } from "~/lib/navigation";
 import type { IconName } from "~/types/globals";
 import { cn } from "~/utils";
+import { RecordKeyMenuItem } from "@/components/RecordKeyMenuItem";
 import { SessionsWithDetails } from "./SessionDisplay";
 
 interface SessionItemProps {
@@ -298,7 +299,7 @@ const SessionItem: React.FC<SessionItemProps> = ({
                     }
                     data-testid={`session-duplicate-${testSession.id}`}
                   >
-                    <Copy className="me-2 h-4 w-4" />
+                    <CopyPlus className="me-2 h-4 w-4" />
                     {t("common.actions.duplicate")}
                   </DropdownMenuItem>
                 )}
@@ -309,6 +310,11 @@ const SessionItem: React.FC<SessionItemProps> = ({
                     {t("sessions.actions.complete")}
                   </DropdownMenuItem>
                 )}
+                <RecordKeyMenuItem
+                  type="SESSION"
+                  id={testSession.id}
+                  projectId={numericProjectId}
+                />
               </DropdownMenuGroup>
             </DropdownMenuContent>
           </DropdownMenu>

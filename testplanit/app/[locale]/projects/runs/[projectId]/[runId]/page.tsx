@@ -13,6 +13,7 @@ import { Loading } from "@/components/Loading";
 import LoadingSpinnerAlert from "@/components/LoadingSpinnerAlert";
 import { RequestReviewButton } from "@/components/reviews/RequestReviewButton";
 import { RunAuditLogSheet } from "@/components/runs/RunAuditLogSheet";
+import { RecordId } from "@/components/RecordId";
 import { ReviewStatusBanner } from "@/components/reviews/ReviewStatusBanner";
 import { TestRunCaseDetails } from "@/components/TestRunCaseDetails";
 import {
@@ -84,7 +85,7 @@ import {
   ChevronLeft,
   CircleCheckBig,
   CircleSlash2,
-  Copy,
+  CopyPlus,
   FileDown,
   Maximize2,
   PlayCircle,
@@ -1571,7 +1572,7 @@ export default function TestRunPage() {
             />
           </div>
           <CardHeader>
-            <div className="flex justify-between items-start">
+            <div className="flex justify-between items-center gap-2">
               {!isEditMode && (
                 <div className="me-2">
                   <Link href={`/projects/runs/${projectId}`}>
@@ -1605,243 +1606,258 @@ export default function TestRunPage() {
                   </span>
                 )}
               </CardTitle>
-              <div className="flex items-start gap-2 flex-wrap">
-                {testRunData && <RunAuditLogSheet runId={testRunData.id} />}
-                {testRunData?.isCompleted ? (
-                  <div className="flex items-center gap-1">
-                    <Badge
-                      variant="secondary"
-                      className="flex items-center text-md whitespace-nowrap text-sm gap-1 p-2 px-4"
-                    >
-                      <CircleCheckBig className="h-6 w-6 shrink-0" />
-                      <div className="hidden md:block">
-                        <span className="me-1">
-                          {t("common.fields.completedOn")}
-                        </span>
-                        <DateFormatter
-                          date={testRunData?.completedAt}
-                          formatString={session?.user.preferences?.dateFormat}
-                          timezone={session?.user.preferences?.timezone}
-                        />
-                      </div>
-                    </Badge>
-                    {/* Action buttons for COMPLETED runs */}
-                    {canAddEditRun &&
-                      !isAutomatedTestRunType(testRunData?.testRunType) && (
-                        <Button
-                          type="button"
-                          variant="secondary"
-                          onClick={() => setIsDuplicateDialogOpen(true)}
-                          className="group px-3 hover:px-3 transition-all duration-200 gap-0 hover:gap-2"
-                        >
-                          <Copy className="h-4 w-4 shrink-0" />
-                          <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-                            {t("common.actions.duplicate")}
-                          </span>
-                        </Button>
-                      )}
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      onClick={handleExportPdf}
-                      disabled={isExportingPdf}
-                      className="group px-3 hover:px-3 transition-all duration-200 gap-0 hover:gap-2"
-                    >
-                      <FileDown className="h-4 w-4 shrink-0" />
-                      <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-                        {isExportingPdf
-                          ? t("common.actions.exportingPdf")
-                          : t("common.actions.exportPdf")}
-                      </span>
-                    </Button>
-                    {effectiveCanDelete && (
-                      <Button
-                        type="button"
+              <div className="flex flex-col items-end gap-1">
+                {!isEditMode && testRunData && (
+                  <RecordId
+                    type="TEST_RUN"
+                    id={testRunData.id}
+                    projectId={numericProjectId}
+                    className="shrink-0 whitespace-nowrap"
+                  />
+                )}
+                <div className="flex items-start gap-2 flex-wrap">
+                  {testRunData && <RunAuditLogSheet runId={testRunData.id} />}
+                  {testRunData?.isCompleted ? (
+                    <div className="flex items-center gap-1">
+                      <Badge
                         variant="secondary"
-                        onClick={() => setIsDeleteDialogOpen(true)}
-                        className="group px-3 hover:px-3 transition-all duration-200 gap-0 hover:gap-2 text-destructive"
+                        className="flex items-center text-md whitespace-nowrap text-sm gap-1 p-2 px-4"
                       >
-                        <Trash2 className="h-4 w-4 shrink-0" />
-                        <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-                          {t("common.actions.delete")}
-                        </span>
-                      </Button>
-                    )}
-                  </div>
-                ) : (
-                  // Buttons for NON-COMPLETED runs
-                  <>
-                    {!isEditMode ? (
-                      // View Mode Buttons for NON-COMPLETED runs
-                      <div className="flex items-center gap-1">
-                        <RequestReviewButton
-                          entityType="RUN"
-                          entityId={testRunData.id}
-                          projectId={Number(projectId)}
-                          currentStateId={testRunData.stateId}
-                          reachableGatedStates={reachableGatedStates}
-                        />
-                        {canAddEditRun && !isMultiConfigSelected && (
+                        <CircleCheckBig className="h-6 w-6 shrink-0" />
+                        <div className="hidden md:block">
+                          <span className="me-1">
+                            {t("common.fields.completedOn")}
+                          </span>
+                          <DateFormatter
+                            date={testRunData?.completedAt}
+                            formatString={session?.user.preferences?.dateFormat}
+                            timezone={session?.user.preferences?.timezone}
+                          />
+                        </div>
+                      </Badge>
+                      {/* Action buttons for COMPLETED runs */}
+                      {canAddEditRun &&
+                        !isAutomatedTestRunType(testRunData?.testRunType) && (
                           <Button
                             type="button"
                             variant="secondary"
-                            onClick={handleEditClick}
+                            onClick={() => setIsDuplicateDialogOpen(true)}
                             className="group px-3 hover:px-3 transition-all duration-200 gap-0 hover:gap-2"
                           >
-                            <SquarePen className="h-4 w-4 shrink-0" />
+                            <CopyPlus className="h-4 w-4 shrink-0" />
                             <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-                              {t("common.actions.edit")}
+                              {t("common.actions.duplicate")}
                             </span>
                           </Button>
                         )}
-                        {canAddEditRun &&
-                          !isAutomatedTestRunType(testRunData?.testRunType) && (
-                            <Button
-                              type="button"
-                              variant="secondary"
-                              onClick={() => setIsDistributeDialogOpen(true)}
-                              className="group px-3 hover:px-3 transition-all duration-200 gap-0 hover:gap-2"
-                            >
-                              <UsersRound className="h-4 w-4 shrink-0" />
-                              <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-                                {t("common.actions.assign")}
-                              </span>
-                            </Button>
-                          )}
-                        {canAddEditRun &&
-                          !isAutomatedTestRunType(testRunData?.testRunType) && (
-                            <Button
-                              type="button"
-                              variant="secondary"
-                              onClick={() => setIsDuplicateDialogOpen(true)}
-                              className="group px-3 hover:px-3 transition-all duration-200 gap-0 hover:gap-2"
-                            >
-                              <Copy className="h-4 w-4 shrink-0" />
-                              <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-                                {t("common.actions.duplicate")}
-                              </span>
-                            </Button>
-                          )}
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        onClick={handleExportPdf}
+                        disabled={isExportingPdf}
+                        className="group px-3 hover:px-3 transition-all duration-200 gap-0 hover:gap-2"
+                      >
+                        <FileDown className="h-4 w-4 shrink-0" />
+                        <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
+                          {isExportingPdf
+                            ? t("common.actions.exportingPdf")
+                            : t("common.actions.exportPdf")}
+                        </span>
+                      </Button>
+                      {effectiveCanDelete && (
                         <Button
                           type="button"
                           variant="secondary"
-                          onClick={handleExportPdf}
-                          disabled={isExportingPdf}
-                          className="group px-3 hover:px-3 transition-all duration-200 gap-0 hover:gap-2"
+                          onClick={() => setIsDeleteDialogOpen(true)}
+                          className="group px-3 hover:px-3 transition-all duration-200 gap-0 hover:gap-2 text-destructive"
                         >
-                          <FileDown className="h-4 w-4 shrink-0" />
+                          <Trash2 className="h-4 w-4 shrink-0" />
                           <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-                            {isExportingPdf
-                              ? t("common.actions.exportingPdf")
-                              : t("common.actions.exportPdf")}
+                            {t("common.actions.delete")}
                           </span>
                         </Button>
-                        {canCloseRun && (
-                          <>
+                      )}
+                    </div>
+                  ) : (
+                    // Buttons for NON-COMPLETED runs
+                    <>
+                      {!isEditMode ? (
+                        // View Mode Buttons for NON-COMPLETED runs
+                        <div className="flex items-center gap-1">
+                          <RequestReviewButton
+                            entityType="RUN"
+                            entityId={testRunData.id}
+                            projectId={Number(projectId)}
+                            currentStateId={testRunData.stateId}
+                            reachableGatedStates={reachableGatedStates}
+                          />
+                          {canAddEditRun && !isMultiConfigSelected && (
                             <Button
                               type="button"
                               variant="secondary"
+                              onClick={handleEditClick}
                               className="group px-3 hover:px-3 transition-all duration-200 gap-0 hover:gap-2"
-                              onClick={() => setIsCompleteDialogOpen(true)}
                             >
-                              <CircleCheckBig className="h-4 w-4 shrink-0" />
+                              <SquarePen className="h-4 w-4 shrink-0" />
                               <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-                                {t("common.actions.complete")}
+                                {t("common.actions.edit")}
                               </span>
                             </Button>
-                            {isCompleteDialogOpen && (
-                              <CompleteTestRunDialog
-                                open={isCompleteDialogOpen}
-                                onClose={() => setIsCompleteDialogOpen(false)}
-                                testRunId={Number(runId)}
-                                projectId={Number(projectId)}
-                                stateId={testRunData?.stateId || 0}
-                                stateName={testRunData?.state?.name || ""}
-                              />
+                          )}
+                          {canAddEditRun &&
+                            !isAutomatedTestRunType(
+                              testRunData?.testRunType
+                            ) && (
+                              <Button
+                                type="button"
+                                variant="secondary"
+                                onClick={() => setIsDistributeDialogOpen(true)}
+                                className="group px-3 hover:px-3 transition-all duration-200 gap-0 hover:gap-2"
+                              >
+                                <UsersRound className="h-4 w-4 shrink-0" />
+                                <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
+                                  {t("common.actions.assign")}
+                                </span>
+                              </Button>
                             )}
-                          </>
-                        )}
-                      </div>
-                    ) : (
-                      // Edit Mode Buttons for NON-COMPLETED runs
-                      <div className="flex flex-col gap-2">
-                        <div className="flex gap-2">
-                          {(() => {
-                            const gateBlocked =
-                              !transitionCheck.allowed &&
-                              transitionCheck.blockingGate;
-                            const formHasErrors =
-                              Object.keys(errors).length > 0;
-                            const saveBlocked = gateBlocked || formHasErrors;
-                            const tooltipMessage = gateBlocked
-                              ? t("reviews.transitionGate.blockedByGate", {
-                                  gateName: transitionCheck.blockingGate!.name,
-                                })
-                              : t(
-                                  "reviews.transitionGate.saveBlockedByFormErrors"
-                                );
-
-                            if (!saveBlocked) {
-                              return (
-                                <Button
-                                  type="submit"
-                                  variant="default"
-                                  disabled={isSubmitting || !canAddEditRun}
-                                >
-                                  <Save className="h-4 w-4 me-2" />{" "}
-                                  {t("common.actions.save")}
-                                </Button>
-                              );
-                            }
-
-                            return (
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <span tabIndex={0}>
-                                    <Button
-                                      type="submit"
-                                      variant="default"
-                                      disabled
-                                      className="ring-2 ring-destructive ring-offset-2 ring-offset-background"
-                                    >
-                                      <Save className="h-4 w-4" />
-                                      {t("common.actions.save")}
-                                    </Button>
-                                  </span>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  {tooltipMessage}
-                                </TooltipContent>
-                              </Tooltip>
-                            );
-                          })()}
-                          <Button
-                            type="button"
-                            variant="outline"
-                            onClick={handleCancel}
-                            disabled={isSubmitting}
-                          >
-                            <CircleSlash2 className="h-4 w-4" />
-                            {t("common.cancel")}
-                          </Button>
-                        </div>
-                        {/* Delete button in edit mode for non-completed runs */}
-                        {effectiveCanDelete && (
+                          {canAddEditRun &&
+                            !isAutomatedTestRunType(
+                              testRunData?.testRunType
+                            ) && (
+                              <Button
+                                type="button"
+                                variant="secondary"
+                                onClick={() => setIsDuplicateDialogOpen(true)}
+                                className="group px-3 hover:px-3 transition-all duration-200 gap-0 hover:gap-2"
+                              >
+                                <CopyPlus className="h-4 w-4 shrink-0" />
+                                <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
+                                  {t("common.actions.duplicate")}
+                                </span>
+                              </Button>
+                            )}
                           <Button
                             type="button"
                             variant="secondary"
-                            onClick={() => setIsDeleteDialogOpen(true)}
-                            disabled={isSubmitting}
-                            className="text-destructive"
+                            onClick={handleExportPdf}
+                            disabled={isExportingPdf}
+                            className="group px-3 hover:px-3 transition-all duration-200 gap-0 hover:gap-2"
                           >
-                            <Trash2 className="h-4 w-4 " />
-                            {t("common.actions.delete")}
+                            <FileDown className="h-4 w-4 shrink-0" />
+                            <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
+                              {isExportingPdf
+                                ? t("common.actions.exportingPdf")
+                                : t("common.actions.exportPdf")}
+                            </span>
                           </Button>
-                        )}
-                      </div>
-                    )}
-                  </>
-                )}
+                          {canCloseRun && (
+                            <>
+                              <Button
+                                type="button"
+                                variant="secondary"
+                                className="group px-3 hover:px-3 transition-all duration-200 gap-0 hover:gap-2"
+                                onClick={() => setIsCompleteDialogOpen(true)}
+                              >
+                                <CircleCheckBig className="h-4 w-4 shrink-0" />
+                                <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
+                                  {t("common.actions.complete")}
+                                </span>
+                              </Button>
+                              {isCompleteDialogOpen && (
+                                <CompleteTestRunDialog
+                                  open={isCompleteDialogOpen}
+                                  onClose={() => setIsCompleteDialogOpen(false)}
+                                  testRunId={Number(runId)}
+                                  projectId={Number(projectId)}
+                                  stateId={testRunData?.stateId || 0}
+                                  stateName={testRunData?.state?.name || ""}
+                                />
+                              )}
+                            </>
+                          )}
+                        </div>
+                      ) : (
+                        // Edit Mode Buttons for NON-COMPLETED runs
+                        <div className="flex flex-col gap-2">
+                          <div className="flex gap-2">
+                            {(() => {
+                              const gateBlocked =
+                                !transitionCheck.allowed &&
+                                transitionCheck.blockingGate;
+                              const formHasErrors =
+                                Object.keys(errors).length > 0;
+                              const saveBlocked = gateBlocked || formHasErrors;
+                              const tooltipMessage = gateBlocked
+                                ? t("reviews.transitionGate.blockedByGate", {
+                                    gateName:
+                                      transitionCheck.blockingGate!.name,
+                                  })
+                                : t(
+                                    "reviews.transitionGate.saveBlockedByFormErrors"
+                                  );
+
+                              if (!saveBlocked) {
+                                return (
+                                  <Button
+                                    type="submit"
+                                    variant="default"
+                                    disabled={isSubmitting || !canAddEditRun}
+                                  >
+                                    <Save className="h-4 w-4 me-2" />{" "}
+                                    {t("common.actions.save")}
+                                  </Button>
+                                );
+                              }
+
+                              return (
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <span tabIndex={0}>
+                                      <Button
+                                        type="submit"
+                                        variant="default"
+                                        disabled
+                                        className="ring-2 ring-destructive ring-offset-2 ring-offset-background"
+                                      >
+                                        <Save className="h-4 w-4" />
+                                        {t("common.actions.save")}
+                                      </Button>
+                                    </span>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    {tooltipMessage}
+                                  </TooltipContent>
+                                </Tooltip>
+                              );
+                            })()}
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={handleCancel}
+                              disabled={isSubmitting}
+                            >
+                              <CircleSlash2 className="h-4 w-4" />
+                              {t("common.cancel")}
+                            </Button>
+                          </div>
+                          {/* Delete button in edit mode for non-completed runs */}
+                          {effectiveCanDelete && (
+                            <Button
+                              type="button"
+                              variant="secondary"
+                              onClick={() => setIsDeleteDialogOpen(true)}
+                              disabled={isSubmitting}
+                              className="text-destructive"
+                            >
+                              <Trash2 className="h-4 w-4 " />
+                              {t("common.actions.delete")}
+                            </Button>
+                          )}
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
               </div>
             </div>
             <CardDescription>

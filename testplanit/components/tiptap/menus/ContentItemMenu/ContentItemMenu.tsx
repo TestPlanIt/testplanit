@@ -94,7 +94,7 @@ export const ContentItemMenu = ({ editor, editable }: ContentItemMenuProps) => {
                 </Popover.Close>
                 <Popover.Close>
                   <DropdownButton onClick={actions.duplicateNode}>
-                    <Icon name="Copy" />
+                    <Icon name="CopyPlus" />
                     {tActions("duplicate")}
                   </DropdownButton>
                 </Popover.Close>

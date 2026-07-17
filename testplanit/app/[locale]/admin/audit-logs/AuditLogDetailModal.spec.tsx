@@ -34,6 +34,13 @@ vi.mock("@/components/DateFormatter", () => ({
   ),
 }));
 
+// The record-key config hook reads AppConfig via React Query (not part of the
+// mocked useClientQueries below); stub it so the modal renders without the extra
+// key field (feature-off: formatKey → null).
+vi.mock("~/hooks/useRecordKeyConfig", () => ({
+  useRecordKeyConfig: () => ({ formatKey: () => null }),
+}));
+
 // Mock the ZenStack hook the modal uses to fetch the full audit log by id.
 // Tests mutate `mockHookReturn.value` before each render to control what the
 // modal receives.

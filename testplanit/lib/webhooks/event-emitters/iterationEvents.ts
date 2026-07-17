@@ -13,6 +13,8 @@
 
 import type { TxClient } from "~/lib/zenstack";
 
+import { formatRecordKey, RECORD_TYPES } from "~/lib/recordKey";
+import { readRecordKeyConfig } from "~/lib/services/recordKeyConfig";
 import { webhookEvents } from "~/lib/webhooks/events";
 
 /**
@@ -134,15 +136,27 @@ export async function emitIterationResultRecorded(
       : Promise.resolve(null),
     tx.testRuns.findUnique({
       where: { id: payload.testRunId },
-      select: { name: true },
+      select: { name: true, project: { select: { key: true } } },
     }),
   ]);
+  // The run's cosmetic key (WEB-TR-1234) is the most useful decoration here —
+  // an iteration result is always scoped to a single run.
+  const { enabled, tokens } = await readRecordKeyConfig(tx);
+  const displayKey = enabled
+    ? formatRecordKey({
+        projectKey: run?.project?.key ?? null,
+        type: RECORD_TYPES.TEST_RUN,
+        id: payload.testRunId,
+        tokens,
+      })
+    : null;
   await webhookEvents.emit(
     "iteration.result.recorded",
     {
       ...safePayload,
       statusName: status?.name ?? null,
       runTitle: run?.name ?? null,
+      displayKey,
     },
     {
       projectId: opts.projectId ?? payload.projectId,

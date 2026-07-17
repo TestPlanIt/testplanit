@@ -172,6 +172,7 @@ const sidebars: SidebarsConfig = {
               label: 'System',
               items: [
                 'user-guide/app-config', // Corresponds to app-config.md
+                'user-guide/record-keys', // Project-prefixed record keys (cosmetic IDs)
                 'user-guide/data-imports', // Data Imports (Testmo JSON wizard)
                 'user-guide/search-engine', // Elasticsearch status, replicas, reindex
                 'user-guide/queues', // Background job queue management

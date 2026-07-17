@@ -1,5 +1,7 @@
 import type { TxClient } from "~/lib/zenstack";
 
+import { formatRecordKey, RECORD_TYPES } from "~/lib/recordKey";
+import { readRecordKeyConfig } from "~/lib/services/recordKeyConfig";
 import { computeObjectDiff } from "~/lib/webhooks/diff";
 import { webhookEvents } from "~/lib/webhooks/events";
 import {
@@ -53,6 +55,33 @@ interface EmitOptions {
   actorUserId?: string | null;
 }
 
+/**
+ * Derive the cosmetic `TEST_CASE` display key (e.g. `WEB-TC-1234`) for a case
+ * whose row we already hold but whose project `key` we don't. Reads the
+ * record-key config, and only when the feature is enabled does it spend a
+ * single AppConfig-scoped project lookup. Returns `null` when the feature is
+ * disabled or the project has no key configured — callers fall back to the
+ * bare numeric id.
+ */
+async function resolveCaseDisplayKey(
+  tx: TxClient,
+  projectId: number,
+  id: number
+): Promise<string | null> {
+  const { enabled, tokens } = await readRecordKeyConfig(tx);
+  if (!enabled) return null;
+  const project = await tx.projects.findUnique({
+    where: { id: projectId },
+    select: { key: true },
+  });
+  return formatRecordKey({
+    projectKey: project?.key ?? null,
+    type: RECORD_TYPES.TEST_CASE,
+    id,
+    tokens,
+  });
+}
+
 export async function emitCaseCreated(
   row: RepositoryCaseRow,
   tx: TxClient,
@@ -71,11 +100,22 @@ export async function emitCaseCreated(
       stateId: true,
       state: { select: { name: true, color: { select: { value: true } } } },
       templateId: true,
+      project: { select: { key: true } },
       caseFieldValues: true,
       steps: true,
     },
   });
   if (!fullCase) return;
+
+  const { enabled, tokens } = await readRecordKeyConfig(tx);
+  const displayKey = enabled
+    ? formatRecordKey({
+        projectKey: fullCase.project?.key ?? null,
+        type: RECORD_TYPES.TEST_CASE,
+        id: fullCase.id,
+        tokens,
+      })
+    : null;
 
   await webhookEvents.emit(
     "case.created",
@@ -83,6 +123,7 @@ export async function emitCaseCreated(
       id: fullCase.id,
       projectId: fullCase.projectId,
       name: fullCase.name,
+      displayKey,
       className: fullCase.className ?? null,
       automated: fullCase.automated ?? false,
       stateId: fullCase.stateId,
@@ -122,12 +163,19 @@ export async function emitCaseUpdated(
   const changes = await resolveCaseScalarChanges(tx, diff);
   if (changes.length === 0) return;
 
+  const displayKey = await resolveCaseDisplayKey(
+    tx,
+    newRow.projectId,
+    newRow.id
+  );
+
   await webhookEvents.emit(
     "case.updated",
     {
       id: newRow.id,
       projectId: newRow.projectId,
       name: newRow.name,
+      displayKey,
       after: newRow,
       diff,
       changes,
@@ -176,7 +224,13 @@ export async function emitCaseFieldValueChanged(
   const [caseRow, field] = await Promise.all([
     tx.repositoryCases.findUnique({
       where: { id: row.testCaseId },
-      select: { id: true, name: true, projectId: true, isDeleted: true },
+      select: {
+        id: true,
+        name: true,
+        projectId: true,
+        isDeleted: true,
+        project: { select: { key: true } },
+      },
     }),
     tx.caseFields.findUnique({
       where: { id: row.fieldId },
@@ -197,12 +251,23 @@ export async function emitCaseFieldValueChanged(
   const to = formatFieldValue(newValue, meta);
   if (from === to) return;
 
+  const { enabled, tokens } = await readRecordKeyConfig(tx);
+  const displayKey = enabled
+    ? formatRecordKey({
+        projectKey: caseRow.project?.key ?? null,
+        type: RECORD_TYPES.TEST_CASE,
+        id: caseRow.id,
+        tokens,
+      })
+    : null;
+
   await webhookEvents.emit(
     "case.updated",
     {
       id: caseRow.id,
       projectId: caseRow.projectId,
       name: caseRow.name,
+      displayKey,
       fieldChange: {
         fieldId: row.fieldId,
         fieldName: field.displayName,
@@ -224,12 +289,18 @@ export async function emitCaseDeleted(
   tx: TxClient,
   opts: EmitOptions = {}
 ): Promise<void> {
+  const displayKey = await resolveCaseDisplayKey(
+    tx,
+    oldRow.projectId,
+    oldRow.id
+  );
   await webhookEvents.emit(
     "case.deleted",
     {
       id: oldRow.id,
       name: oldRow.name,
       projectId: oldRow.projectId,
+      displayKey,
     },
     {
       projectId: opts.projectId ?? oldRow.projectId,

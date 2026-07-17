@@ -206,7 +206,7 @@ function AuditLogsContent({ session }: { session: Session }) {
       userEmail: true,
       userName: true,
       projectId: true,
-      project: { select: { name: true } },
+      project: { select: { name: true, key: true } },
       operationId: true,
       sourceTable: true,
     },

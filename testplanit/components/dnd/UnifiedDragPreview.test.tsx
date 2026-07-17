@@ -49,7 +49,7 @@ vi.mock("~/types/dndTypes", () => ({
 vi.mock("lucide-react", () => ({
   ListChecks: () => <svg data-testid="list-checks-icon" />,
   Folder: () => <svg data-testid="folder-icon" />,
-  Copy: () => <svg data-testid="copy-plus-icon" />,
+  CopyPlus: () => <svg data-testid="copy-plus-icon" />,
   ArrowRightLeft: () => <svg data-testid="arrow-right-icon" />,
   ArrowUpDown: () => <svg data-testid="arrow-up-down-icon" />,
 }));

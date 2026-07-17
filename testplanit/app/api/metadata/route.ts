@@ -1,5 +1,6 @@
 import { getAuthDb } from "~/lib/zenstack";
 import { NextRequest, NextResponse } from "next/server";
+import { parseRecordId } from "~/lib/recordKey";
 
 /**
  * Public metadata API for Open Graph link previews.
@@ -24,7 +25,8 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  const numericId = parseInt(id, 10);
+  // Accept either a bare id or a cosmetic prefixed key (e.g. PROJECT-TC-1234).
+  const numericId = parseRecordId(id) ?? NaN;
   if (isNaN(numericId)) {
     return NextResponse.json({ error: "Invalid id" }, { status: 400 });
   }

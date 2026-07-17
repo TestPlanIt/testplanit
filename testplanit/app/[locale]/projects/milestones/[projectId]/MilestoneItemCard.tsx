@@ -2,6 +2,7 @@
 
 import { CalendarDisplay } from "@/components/DateCalendarDisplay";
 import { DateTextDisplay } from "@/components/DateTextDisplay";
+import { RecordKeyMenuItem } from "@/components/RecordKeyMenuItem";
 import { ForecastDisplay } from "@/components/ForecastDisplay";
 import { MilestoneIconAndName } from "@/components/MilestoneIconAndName";
 import { MilestoneSummary } from "@/components/MilestoneSummary";
@@ -280,6 +281,11 @@ const MilestoneItemCard: React.FC<MilestoneItemCardProps> = ({
                         {tGlobal("common.actions.complete")}
                       </DropdownMenuItem>
                     )}
+                  <RecordKeyMenuItem
+                    type="MILESTONE"
+                    id={milestone.id}
+                    projectId={projectId}
+                  />
                   <DropdownMenuItem
                     onSelect={() => onOpenDeleteModal(milestone)}
                     className="text-destructive hover:text-destructive-foreground"

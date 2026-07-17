@@ -3,6 +3,7 @@
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import DynamicIcon from "@/components/DynamicIcon";
+import { RecordId } from "@/components/RecordId";
 import { ForecastDisplay } from "@/components/ForecastDisplay";
 import LoadingSpinnerPage from "@/components/LoadingSpinnerAlert";
 import { MilestoneSummary } from "@/components/MilestoneSummary";
@@ -679,7 +680,7 @@ export default function MilestoneDetailsPage() {
         >
           {isSubmitting && <LoadingSpinnerPage />}
           <CardHeader>
-            <div className="flex justify-between items-start">
+            <div className="flex justify-between items-center gap-2">
               <div className="flex items-start gap-2 grow">
                 {!isEditMode && (
                   <Link href={`/projects/milestones/${projectId}`}>
@@ -729,6 +730,14 @@ export default function MilestoneDetailsPage() {
                 </CardTitle>
               </div>
               <div className="flex flex-col gap-2 ms-4">
+                {!isEditMode && milestone && (
+                  <RecordId
+                    type="MILESTONE"
+                    id={milestone.id}
+                    projectId={Number(projectId)}
+                    className="self-end shrink-0 whitespace-nowrap"
+                  />
+                )}
                 {isEditMode ? (
                   <>
                     <div className="flex gap-2">

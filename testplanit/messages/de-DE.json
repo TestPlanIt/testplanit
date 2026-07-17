@@ -1966,6 +1966,17 @@
       "advanced": {
         "title": "Fortschrittlich",
         "description": "Projektspezifische Schalter für vordefinierte Funktionen. Neue Schalter werden hier angezeigt, sobald sie eingeführt werden.",
+        "recordKey": {
+          "label": "Projektcode",
+          "description": "Ein kurzer Code, der in optischen Datensatzschlüsseln wie {example} verwendet wird. 2–10 Großbuchstaben, keine Ziffern. Leer lassen, um einfache numerische IDs anzuzeigen.",
+          "placeholder": "z. B. PROJECT",
+          "previewLabel": "Beispielschlüssel:",
+          "useSuggestion": "Vorgeschlagenen Code verwenden: {code}",
+          "invalid": "Verwenden Sie 2–10 Großbuchstaben (keine Ziffern).",
+          "taken": "Dieser Code wird bereits von einem anderen Projekt verwendet. Wählen Sie einen anderen.",
+          "savedToast": "Projektcode gespeichert.",
+          "saveError": "Der Projektcode konnte nicht gespeichert werden. Er wird möglicherweise bereits von einem anderen Projekt verwendet."
+        },
         "reviewWorkflow": {
           "label": "Prüfworkflow aktivieren",
           "description": "Wenn diese Option aktiviert ist, werden Übergänge in Zustände, die eine Überprüfung erfordern, durch eine genehmigte Überprüfungsanfrage blockiert. Tester sehen die Schaltfläche „Überprüfung anfordern“; Prüfer erhalten Benachrichtigungen.",
@@ -3697,6 +3708,7 @@
       "tags": "Tags",
       "issues": "Probleme",
       "appConfig": "Anwendungskonfiguration",
+      "recordKeys": "Datensatzschlüssel",
       "notifications": "Benachrichtigungen",
       "imports": "Datenimporte",
       "integrations": "Problemintegrationen",
@@ -4960,6 +4972,20 @@
         "forSession": "Für die Sitzung",
         "color": "Farbe"
       }
+    },
+    "recordKeys": {
+      "pageDescription": "Konfigurieren Sie optische, projektspezifische Bezeichner wie PROJECT-TC-1234, die es einfach machen zu erkennen, zu welchem Projekt ein Datensatz gehört und um welche Art von Datensatz es sich handelt. Die zugrunde liegende numerische ID bleibt unverändert und funktioniert weiterhin überall.",
+      "title": "Projektspezifische Datensatzschlüssel",
+      "description": "Wenn aktiviert, zeigen Datensätze einen optionalen Schlüssel an, der den Projektcode, ein Typ-Token und die numerische ID des Datensatzes kombiniert. Legen Sie den Code jedes Projekts unter Projekteinstellungen → Erweitert fest.",
+      "toggleAriaLabel": "Projektspezifische Datensatzschlüssel umschalten",
+      "tokensHeading": "Typ-Tokens",
+      "tokensHelp": "Das Token, das für jede Art von Datensatz verwendet wird. 1–6 Großbuchstaben, keine Ziffern oder Bindestriche. Tokens müssen eindeutig sein.",
+      "invalidToken": "Ungültig",
+      "duplicateToken": "Doppeltes Token",
+      "tokensSaved": "Typ-Tokens gespeichert.",
+      "enableSuccess": "Projektspezifische Datensatzschlüssel aktiviert.",
+      "disableSuccess": "Projektspezifische Datensatzschlüssel deaktiviert.",
+      "saveError": "Konnte nicht gespeichert werden. Bitte versuchen Sie es erneut."
     },
     "appConfig": {
       "description": "Globale Anwendungskonfigurationen verwalten",

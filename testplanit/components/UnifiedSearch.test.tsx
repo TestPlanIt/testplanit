@@ -14,6 +14,10 @@ const virtualListMock = vi.hoisted(() => ({
   lastOptions: null as Record<string, unknown> | null,
 }));
 
+vi.mock("~/hooks/useRecordKeyHits", () => ({
+  useRecordKeyHits: () => [],
+}));
+
 vi.mock("~/hooks/useVirtualizedInfiniteList", () => ({
   useVirtualizedInfiniteList: (opts: {
     count: number;

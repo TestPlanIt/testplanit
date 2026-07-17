@@ -2,6 +2,7 @@ import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { DateTextDisplay } from "@/components/DateTextDisplay";
 import DynamicIcon from "@/components/DynamicIcon";
+import { RecordKeyMenuItem } from "@/components/RecordKeyMenuItem";
 import { ForecastDisplay } from "@/components/ForecastDisplay";
 import { MemberList } from "@/components/MemberList";
 import { MilestoneIconAndName } from "@/components/MilestoneIconAndName";
@@ -31,7 +32,7 @@ import {
   Bot,
   CheckCircle,
   Combine,
-  Copy,
+  CopyPlus,
   Flame,
   LinkIcon,
   MoreVertical,
@@ -444,7 +445,7 @@ const TestRunItem: React.FC<TestRunItemProps> = ({
                         }
                         data-testid={`testrun-duplicate-${testRun.id}`}
                       >
-                        <Copy className="me-2 h-4 w-4" />
+                        <CopyPlus className="me-2 h-4 w-4" />
                         {tCommon("actions.duplicate")}
                       </DropdownMenuItem>
                     )}
@@ -461,6 +462,11 @@ const TestRunItem: React.FC<TestRunItemProps> = ({
                         {tCommon("actions.complete")}
                       </DropdownMenuItem>
                     )}
+                    <RecordKeyMenuItem
+                      type="TEST_RUN"
+                      id={testRun.id}
+                      projectId={numericProjectId}
+                    />
                   </DropdownMenuGroup>
                 </DropdownMenuContent>
               </DropdownMenu>

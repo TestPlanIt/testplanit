@@ -33,10 +33,15 @@ const emitMock = webhookEvents.emit as unknown as ReturnType<typeof vi.fn>;
 
 function makeTx() {
   // The emitter resolves statusName (Status) and runTitle (TestRuns) before
-  // forwarding; the readers return fixed names regardless of id.
+  // forwarding; the readers return fixed names regardless of id. appConfig
+  // backs readRecordKeyConfig — null rows keep the record-key feature disabled
+  // so displayKey resolves to null.
   return {
     status: { findUnique: vi.fn(async () => ({ name: "Passed" })) },
-    testRuns: { findUnique: vi.fn(async () => ({ name: "Run 7" })) },
+    testRuns: {
+      findUnique: vi.fn(async () => ({ name: "Run 7", project: null })),
+    },
+    appConfig: { findUnique: vi.fn(async () => null) },
   } as any;
 }
 
@@ -79,6 +84,7 @@ describe("emitIterationResultRecorded — Wave 2 INT-04 contract", () => {
       },
       statusName: "Passed",
       runTitle: "Run 7",
+      displayKey: null,
     });
     expect(opts.tx).toBe(tx);
     expect(opts.projectId).toBe(42);

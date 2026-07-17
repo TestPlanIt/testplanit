@@ -17,6 +17,18 @@ vi.mock("~/server/auth", () => ({
   getServerAuthSession: mockGetServerAuthSession,
 }));
 
+vi.mock("~/lib/services/recordKeyConfig", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("~/lib/services/recordKeyConfig")>();
+  return {
+    ...actual,
+    readRecordKeyConfig: async () => ({
+      enabled: false,
+      tokens: actual.DEFAULT_TYPE_TOKENS,
+    }),
+  };
+});
+
 vi.mock("~/lib/db", () => ({
   baseDb: mockDb,
 }));

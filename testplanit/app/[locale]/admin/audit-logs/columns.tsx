@@ -1,4 +1,5 @@
 import { DateFormatter } from "@/components/DateFormatter";
+import { RecordId } from "@/components/RecordId";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -8,15 +9,37 @@ import {
 } from "@/components/ui/tooltip";
 import { AuditAction } from "~/zenstack/models";
 import type { AuditLog } from "~/zenstack/models";
+import { useRecordKeyConfig } from "~/hooks/useRecordKeyConfig";
+import { parseRecordId, RECORD_TYPES, type RecordType } from "~/lib/recordKey";
 import { ColumnDef } from "@tanstack/react-table";
 import { Cog, Eye } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useMemo } from "react";
 import { SYSTEM_ACTOR_ID } from "~/lib/auditContextConstants";
 
+/**
+ * Audit `entityType` values (the CDC source-table names) that carry a cosmetic
+ * project-prefixed record key. Only these map to a {@link RecordType}; every
+ * other audit entity type renders no extra key.
+ */
+const AUDIT_ENTITY_RECORD_TYPES: Record<string, RecordType> = {
+  RepositoryCases: RECORD_TYPES.TEST_CASE,
+  TestRuns: RECORD_TYPES.TEST_RUN,
+  Sessions: RECORD_TYPES.SESSION,
+  Milestones: RECORD_TYPES.MILESTONE,
+};
+
+/** Map an audit `entityType` to a {@link RecordType}, or `undefined` if unmapped. */
+export function auditRecordType(
+  entityType: string | null | undefined
+): RecordType | undefined {
+  return entityType ? AUDIT_ENTITY_RECORD_TYPES[entityType] : undefined;
+}
+
 export interface ExtendedAuditLog extends AuditLog {
   project?: {
     name: string;
+    key?: string | null;
   } | null;
   // operationId / sourceTable are now part of the generated AuditLog (regenerated
   // Prisma client): operationId groups multi-request logical saves in the UI and
@@ -93,6 +116,7 @@ export const useColumns = (
   tCommon: ReturnType<typeof useTranslations<"common">>,
   tUserMenu: ReturnType<typeof useTranslations<"userMenu">>
 ): ColumnDef<ExtendedAuditLog>[] => {
+  const { formatKey } = useRecordKeyConfig();
   return useMemo(
     () => [
       {
@@ -156,19 +180,44 @@ export const useColumns = (
         enableSorting: false,
         size: 300,
         minSize: 150,
-        cell: ({ getValue }) => {
+        cell: ({ row, getValue }) => {
           const name = getValue() as string | null;
-          return name ? (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <span className="truncate block w-full">{name}</span>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>{name}</p>
-              </TooltipContent>
-            </Tooltip>
-          ) : (
-            <span className="text-muted-foreground">-</span>
+          // Only the mapped, project-scoped root entities show a cosmetic key,
+          // and only when the feature is on and the project has a code
+          // (formatKey returns null otherwise).
+          const recordType = auditRecordType(row.original.entityType);
+          const numericId = parseRecordId(row.original.entityId);
+          const projectKey = row.original.project?.key;
+          // Bulk operations record a synthetic batch id (not a real record id),
+          // so don't render a misleading key for them.
+          const isBulkAction = String(row.original.action).startsWith("BULK");
+          const displayKey =
+            recordType && numericId != null && projectKey && !isBulkAction
+              ? formatKey(recordType, projectKey, numericId)
+              : null;
+          return (
+            <div className="flex min-w-0 flex-col gap-0.5">
+              {name ? (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="truncate block w-full">{name}</span>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{name}</p>
+                  </TooltipContent>
+                </Tooltip>
+              ) : (
+                !displayKey && <span className="text-muted-foreground">-</span>
+              )}
+              {displayKey && recordType && numericId != null && (
+                <RecordId
+                  type={recordType}
+                  id={numericId}
+                  projectKey={projectKey}
+                  className="text-xs text-muted-foreground"
+                />
+              )}
+            </div>
           );
         },
       },
@@ -253,6 +302,6 @@ export const useColumns = (
         ),
       },
     ],
-    [userPreferences, onViewDetails, t, tCommon, tUserMenu]
+    [userPreferences, onViewDetails, t, tCommon, tUserMenu, formatKey]
   );
 };

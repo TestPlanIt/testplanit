@@ -489,6 +489,12 @@ model Roles {
 model Projects {
     id                             Int                                   @id @default(autoincrement())
     name                           String                                @unique @length(1)
+    /// Optional, admin-defined short prefix (e.g. `PROJECT`) used to render
+    /// cosmetic project-prefixed record keys like `PROJECT-TC-1234`.
+    /// Purely additive: the numeric `id` stays canonical. Stored normalized to
+    /// uppercase; format is validated in the app layer (lib/recordKey.ts) since
+    /// a schema @@validate re-fires on unrelated partial updates in v3.
+    key                            String?                               @unique
     iconUrl                        String?
     note                           String?
     docs                           String?

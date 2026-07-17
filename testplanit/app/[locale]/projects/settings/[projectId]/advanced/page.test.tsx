@@ -69,6 +69,11 @@ vi.mock("@zenstackhq/tanstack-query/react", () => ({
         data: mockProjectData,
         isLoading: mockProjectLoading,
       }),
+      // Live project-code uniqueness check (record-keys feature).
+      useFindFirst: () => ({
+        data: null,
+        isFetching: false,
+      }),
       useUpdate: () => ({
         mutateAsync: mockMutateAsync,
         isPending: false,

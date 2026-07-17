@@ -2,6 +2,8 @@
 
 import { format } from "date-fns";
 import { baseDb } from "~/lib/db";
+import { readRecordKeyConfig } from "~/lib/services/recordKeyConfig";
+import { formatRecordKey, RECORD_TYPES } from "~/lib/recordKey";
 import { resolveSharedSteps } from "~/lib/utils/resolveSharedSteps";
 import { getServerAuthSession } from "~/server/auth";
 import { extractTextFromNode } from "~/utils/extractTextFromJson";
@@ -9,6 +11,7 @@ import { extractTextFromNode } from "~/utils/extractTextFromJson";
 export interface QuickScriptCaseData {
   name: string;
   id: number;
+  displayKey: string | null;
   folder: string;
   state: string;
   estimate: number | null;
@@ -47,6 +50,7 @@ export async function fetchCasesForQuickScript(args: {
         folder: true,
         state: true,
         creator: true,
+        project: { select: { key: true } },
         caseTags: {
           where: { tag: { isDeleted: false } },
           include: { tag: true },
@@ -82,6 +86,9 @@ export async function fetchCasesForQuickScript(args: {
 
     // Resolve shared step references (expand placeholders into actual step items)
     const resolvedCases = await resolveSharedSteps(cases);
+
+    const { enabled: recordKeyEnabled, tokens: recordKeyTokens } =
+      await readRecordKeyConfig(baseDb);
 
     const data: QuickScriptCaseData[] = resolvedCases.map((c: any) => {
       const fields: Record<string, string> = {};
@@ -134,6 +141,14 @@ export async function fetchCasesForQuickScript(args: {
       return {
         name: c.name,
         id: c.id,
+        displayKey: recordKeyEnabled
+          ? formatRecordKey({
+              projectKey: c.project?.key ?? null,
+              type: RECORD_TYPES.TEST_CASE,
+              id: c.id,
+              tokens: recordKeyTokens,
+            })
+          : null,
         folder: c.folder?.name || "",
         state: c.state?.name || "",
         estimate: c.estimate,

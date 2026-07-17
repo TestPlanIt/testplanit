@@ -1966,6 +1966,17 @@
       "advanced": {
         "title": "先進的",
         "description": "每個項目都設有針對特定功能的開關。新增的開關將在此處顯示。",
+        "recordKey": {
+          "label": "專案代碼",
+          "description": "用於美化記錄鍵(例如 {example})的簡短代碼。2–10 個大寫字母，不含數字。留空則顯示純數字 ID。",
+          "placeholder": "例如 PROJECT",
+          "previewLabel": "範例鍵：",
+          "useSuggestion": "使用建議代碼：{code}",
+          "invalid": "請使用 2–10 個大寫字母（不含數字）。",
+          "taken": "該代碼已被其他專案使用。請選擇其他代碼。",
+          "savedToast": "專案代碼已儲存。",
+          "saveError": "無法儲存專案代碼。可能已被其他專案使用。"
+        },
         "reviewWorkflow": {
           "label": "啟用審核工作流程",
           "description": "啟用此功能後，需要審核的狀態轉換將由已核准的審核請求控制。測試人員會看到「請求審核」按鈕；審核人員會收到通知。",
@@ -3697,6 +3708,7 @@
       "tags": "標籤",
       "issues": "問題",
       "appConfig": "應用程式配置",
+      "recordKeys": "記錄鍵",
       "notifications": "通知",
       "imports": "數據導入",
       "integrations": "問題整合",
@@ -4960,6 +4972,20 @@
         "forSession": "會議期間",
         "color": "顏色"
       }
+    },
+    "recordKeys": {
+      "pageDescription": "設定美化的專案前綴識別碼，例如 PROJECT-TC-1234，可輕鬆分辨記錄所屬的專案及其類型。底層的數字 ID 保持不變，並可繼續在各處正常使用。",
+      "title": "專案前綴記錄鍵",
+      "description": "啟用後，記錄將顯示一個可選的鍵，結合專案代碼、類型標記與記錄的數字 ID。請在「專案設定 → 進階」中設定每個專案的代碼。",
+      "toggleAriaLabel": "切換專案前綴記錄鍵",
+      "tokensHeading": "類型標記",
+      "tokensHelp": "用於每種記錄類型的標記。1–6 個大寫字母，不含數字或連字號。標記必須唯一。",
+      "invalidToken": "無效",
+      "duplicateToken": "重複的標記",
+      "tokensSaved": "類型標記已儲存。",
+      "enableSuccess": "已啟用專案前綴記錄鍵。",
+      "disableSuccess": "已停用專案前綴記錄鍵。",
+      "saveError": "無法儲存，請再試一次。"
     },
     "appConfig": {
       "description": "管理全域應用程式配置",

@@ -3,6 +3,10 @@
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { DateFormatter } from "@/components/DateFormatter";
+import { RecordId } from "@/components/RecordId";
+import { parseRecordId } from "~/lib/recordKey";
+import { useRecordKeyConfig } from "~/hooks/useRecordKeyConfig";
+import { auditRecordType } from "./columns";
 import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
@@ -29,6 +33,7 @@ export function AuditLogDetailModal({
   const t = useTranslations("admin.auditLogs");
   const tGlobal = useTranslations();
   const { data: session } = useSession();
+  const { formatKey } = useRecordKeyConfig();
 
   // Metadata can carry sensitive request details (IP address, user agent), so
   // the section is only surfaced to administrators. The case-scoped audit sheet
@@ -46,7 +51,7 @@ export function AuditLogDetailModal({
   ).auditLog.useFindUnique(
     {
       where: { id: logId ?? "" },
-      include: { project: { select: { name: true } } },
+      include: { project: { select: { name: true, key: true } } },
     },
     { enabled: !!logId }
   );
@@ -58,6 +63,20 @@ export function AuditLogDetailModal({
     { old: unknown; new: unknown; oldName?: unknown; newName?: unknown }
   > | null;
   const metadata = (log?.metadata ?? null) as Record<string, unknown> | null;
+
+  // Cosmetic project-prefixed key for the mapped root entities. Rendered only
+  // when the entity type maps, the project has a code, and the feature is on
+  // (formatKey returns null otherwise).
+  const recordType = auditRecordType(log?.entityType);
+  const entityNumericId = parseRecordId(log?.entityId);
+  const displayProjectKey = log?.project?.key ?? null;
+  // Bulk operations record a synthetic batch id (not a real record id), so
+  // don't render a misleading key for them.
+  const isBulkAction = String(log?.action ?? "").startsWith("BULK");
+  const displayKey =
+    recordType && entityNumericId != null && displayProjectKey && !isBulkAction
+      ? formatKey(recordType, displayProjectKey, entityNumericId)
+      : null;
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -116,6 +135,20 @@ export function AuditLogDetailModal({
                   </label>
                   <p className="text-sm font-mono break-all">{log.entityId}</p>
                 </div>
+                {displayKey && recordType && entityNumericId != null && (
+                  <div className="overflow-hidden">
+                    <label className="text-sm font-medium text-muted-foreground">
+                      {tGlobal("common.fields.key")}
+                    </label>
+                    <p className="text-sm">
+                      <RecordId
+                        type={recordType}
+                        id={entityNumericId}
+                        projectKey={displayProjectKey}
+                      />
+                    </p>
+                  </div>
+                )}
                 <div className="overflow-hidden">
                   <label className="text-sm font-medium text-muted-foreground">
                     {t("columns.entityName")}

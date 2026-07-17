@@ -16,6 +16,7 @@ import LoadingSpinnerAlert from "@/components/LoadingSpinnerAlert";
 import { ConfigureParametersButton } from "@/components/parameters/ConfigureParametersButton";
 import { ConfigureParametersSheet } from "@/components/parameters/ConfigureParametersSheet";
 import { CaseDisplay } from "@/components/tables/CaseDisplay";
+import { RecordId } from "@/components/RecordId";
 import { TemplateNameDisplay } from "@/components/TemplateNameDisplay";
 import TestResultHistory from "@/components/TestResultHistory";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -1889,7 +1890,7 @@ export default function TestCaseDetails() {
           </div>
           <CardHeader>
             <CardTitle>
-              <div>
+              <div className="flex items-center justify-between gap-2">
                 {isEditMode && !isSubmitting && folders ? (
                   <FormField
                     control={control}
@@ -1929,6 +1930,14 @@ export default function TestCaseDetails() {
                   <BreadcrumbComponent
                     breadcrumbItems={breadcrumbItems}
                     projectId={Number(projectId)}
+                  />
+                )}
+                {!isEditMode && (
+                  <RecordId
+                    type="TEST_CASE"
+                    id={testcase.id}
+                    projectId={numericProjectId}
+                    className="shrink-0 whitespace-nowrap"
                   />
                 )}
               </div>

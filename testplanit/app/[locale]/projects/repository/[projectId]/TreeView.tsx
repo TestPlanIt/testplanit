@@ -17,7 +17,7 @@ import type { RepositoryFolders } from "~/zenstack/models";
 import {
   ArrowRightLeft,
   ChevronRight,
-  Copy,
+  CopyPlus,
   Folder,
   FolderOpen,
   Loader2,
@@ -1496,7 +1496,7 @@ const TreeView: React.FC<{
               setPendingDrop(null);
             }}
           >
-            <Copy className="h-4 w-4" />
+            <CopyPlus className="h-4 w-4" />
             {t("repository.dragDrop.copy")}
           </Button>
           <p className="text-xs text-muted-foreground pt-1 border-t">

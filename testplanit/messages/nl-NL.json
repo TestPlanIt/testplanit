@@ -1966,6 +1966,17 @@
       "advanced": {
         "title": "Geavanceerd",
         "description": "Per project kunt u opties in- of uitschakelen voor specifieke functies. Nieuwe opties verschijnen hier zodra ze beschikbaar komen.",
+        "recordKey": {
+          "label": "Projectcode",
+          "description": "Een korte code die wordt gebruikt in cosmetische recordsleutels zoals {example}. 2-10 hoofdletters, geen cijfers. Laat leeg om gewone numerieke ID's weer te geven.",
+          "placeholder": "bijv. PROJECT",
+          "previewLabel": "Voorbeeldsleutel:",
+          "useSuggestion": "Gebruik voorgestelde code: {code}",
+          "invalid": "Gebruik 2-10 hoofdletters (geen cijfers).",
+          "taken": "Die code wordt al gebruikt door een ander project. Kies een andere.",
+          "savedToast": "Projectcode opgeslagen.",
+          "saveError": "De projectcode kon niet worden opgeslagen. Deze wordt mogelijk al gebruikt door een ander project."
+        },
         "reviewWorkflow": {
           "label": "Schakel de beoordelingsworkflow in",
           "description": "Wanneer deze functie is ingeschakeld, worden overgangen naar statussen die beoordeling vereisen, geblokkeerd door een goedgekeurd beoordelingsverzoek. Testers zien de knop 'Beoordeling aanvragen'; beoordelaars ontvangen meldingen.",
@@ -3697,6 +3708,7 @@
       "tags": "Tags",
       "issues": "Problemen",
       "appConfig": "Toepassingsconfiguratie",
+      "recordKeys": "Recordsleutels",
       "notifications": "Meldingen",
       "imports": "Gegevensimport",
       "integrations": "Probleemintegraties",
@@ -4960,6 +4972,20 @@
         "forSession": "Voor sessie",
         "color": "Kleur"
       }
+    },
+    "recordKeys": {
+      "pageDescription": "Configureer cosmetische, met een projectprefix voorziene identificatiecodes, zoals PROJECT-TC-1234, waarmee eenvoudig te zien is bij welk project een record hoort en om wat voor soort record het gaat. De onderliggende numerieke ID blijft ongewijzigd en werkt overal verder.",
+      "title": "Recordsleutels met projectprefix",
+      "description": "Indien ingeschakeld, tonen records een optionele sleutel die de projectcode, een typetoken en de numerieke ID van het record combineert. Stel de code van elk project in bij Projectinstellingen → Geavanceerd.",
+      "toggleAriaLabel": "Recordsleutels met projectprefix in- of uitschakelen",
+      "tokensHeading": "Typetokens",
+      "tokensHelp": "Het token dat voor elk type record wordt gebruikt. 1-6 hoofdletters, geen cijfers of streepjes. Tokens moeten uniek zijn.",
+      "invalidToken": "Ongeldig",
+      "duplicateToken": "Dubbel token",
+      "tokensSaved": "Typetokens opgeslagen.",
+      "enableSuccess": "Recordsleutels met projectprefix ingeschakeld.",
+      "disableSuccess": "Recordsleutels met projectprefix uitgeschakeld.",
+      "saveError": "Opslaan mislukt. Probeer het opnieuw."
     },
     "appConfig": {
       "description": "Beheer globale applicatieconfiguraties",

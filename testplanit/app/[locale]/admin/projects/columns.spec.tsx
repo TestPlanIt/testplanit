@@ -130,6 +130,7 @@ function renderCell(
 const testProject: ExtendedProjects = {
   id: 1,
   name: "Test Project",
+  key: null,
   note: null,
   iconUrl: null,
   isDeleted: false,

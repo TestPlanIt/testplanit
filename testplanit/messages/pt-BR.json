@@ -1966,6 +1966,17 @@
       "advanced": {
         "title": "Avançado",
         "description": "Opções específicas para cada projeto que definem suas preferências. Novas opções aparecerão aqui conforme forem introduzidas.",
+        "recordKey": {
+          "label": "Código do projeto",
+          "description": "Um código curto usado em chaves de registro cosméticas como {example}. 2 a 10 letras maiúsculas, sem dígitos. Deixe em branco para mostrar IDs numéricos simples.",
+          "placeholder": "ex.: PROJECT",
+          "previewLabel": "Exemplo de chave:",
+          "useSuggestion": "Usar código sugerido: {code}",
+          "invalid": "Use de 2 a 10 letras maiúsculas (sem dígitos).",
+          "taken": "Esse código já está sendo usado por outro projeto. Escolha um diferente.",
+          "savedToast": "Código do projeto salvo.",
+          "saveError": "Não foi possível salvar o código do projeto. Ele pode já estar sendo usado por outro projeto."
+        },
         "reviewWorkflow": {
           "label": "Ativar fluxo de trabalho de revisão",
           "description": "Quando ativada, a transição para estados que exigem revisão é controlada por uma solicitação de revisão aprovada. Os testadores veem o botão \"Solicitar revisão\"; os revisores recebem notificações.",
@@ -3697,6 +3708,7 @@
       "tags": "Etiquetas",
       "issues": "Problemas",
       "appConfig": "Configuração do aplicativo",
+      "recordKeys": "Chaves de Registro",
       "notifications": "Notificações",
       "imports": "Importação de dados",
       "integrations": "Integrações de problemas",
@@ -4960,6 +4972,20 @@
         "forSession": "Para Sessão",
         "color": "Cor"
       }
+    },
+    "recordKeys": {
+      "pageDescription": "Configure identificadores cosméticos prefixados por projeto, como PROJECT-TC-1234, que facilitam identificar a qual projeto um registro pertence e que tipo de registro é. O ID numérico subjacente permanece inalterado e continua funcionando em todos os lugares.",
+      "title": "Chaves de registro prefixadas por projeto",
+      "description": "Quando ativado, os registros exibem uma chave opcional combinando o código do projeto, um token de tipo e o ID numérico do registro. Defina o código de cada projeto em Configurações do Projeto → Avançado.",
+      "toggleAriaLabel": "Ativar/desativar chaves de registro prefixadas por projeto",
+      "tokensHeading": "Tokens de tipo",
+      "tokensHelp": "O token usado para cada tipo de registro. 1 a 6 letras maiúsculas, sem dígitos ou hifens. Os tokens devem ser exclusivos.",
+      "invalidToken": "Inválido",
+      "duplicateToken": "Token duplicado",
+      "tokensSaved": "Tokens de tipo salvos.",
+      "enableSuccess": "Chaves de registro prefixadas por projeto ativadas.",
+      "disableSuccess": "Chaves de registro prefixadas por projeto desativadas.",
+      "saveError": "Não foi possível salvar. Tente novamente."
     },
     "appConfig": {
       "description": "Gerenciar configurações globais de aplicativos",

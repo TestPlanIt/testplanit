@@ -1966,6 +1966,17 @@
       "advanced": {
         "title": "Trình độ cao",
         "description": "Các tùy chọn bật/tắt riêng cho từng dự án đối với các tính năng mang tính chủ quan. Các tùy chọn mới sẽ xuất hiện ở đây khi chúng được giới thiệu.",
+        "recordKey": {
+          "label": "Mã dự án",
+          "description": "Mã ngắn được sử dụng trong các khóa bản ghi mang tính hình thức như {example}. Gồm 2–10 chữ cái in hoa, không có chữ số. Để trống để hiển thị ID số thông thường.",
+          "placeholder": "ví dụ: PROJECT",
+          "previewLabel": "Khóa ví dụ:",
+          "useSuggestion": "Sử dụng mã được đề xuất: {code}",
+          "invalid": "Sử dụng 2–10 chữ cái in hoa (không có chữ số).",
+          "taken": "Mã này đã được sử dụng bởi một dự án khác. Vui lòng chọn mã khác.",
+          "savedToast": "Đã lưu mã dự án.",
+          "saveError": "Không thể lưu mã dự án. Mã này có thể đã được một dự án khác sử dụng."
+        },
         "reviewWorkflow": {
           "label": "Kích hoạt quy trình xem xét",
           "description": "Khi được kích hoạt, quá trình chuyển đổi sang các trạng thái yêu cầu xem xét sẽ được kiểm soát bằng yêu cầu xem xét đã được phê duyệt. Người kiểm thử sẽ thấy nút \"Yêu cầu xem xét\"; người xem xét sẽ nhận được thông báo.",
@@ -3697,6 +3708,7 @@
       "tags": "Thẻ",
       "issues": "Vấn đề",
       "appConfig": "Cấu hình ứng dụng",
+      "recordKeys": "Khóa bản ghi",
       "notifications": "Thông báo",
       "imports": "Nhập dữ liệu",
       "integrations": "Tích hợp vấn đề",
@@ -4960,6 +4972,20 @@
         "forSession": "Cho phiên họp",
         "color": "Màu sắc"
       }
+    },
+    "recordKeys": {
+      "pageDescription": "Cấu hình các định danh mang tính hình thức, có tiền tố dự án như PROJECT-TC-1234 giúp dễ dàng nhận biết bản ghi thuộc dự án nào và thuộc loại nào. ID số gốc không thay đổi và vẫn hoạt động ở mọi nơi.",
+      "title": "Khóa bản ghi có tiền tố dự án",
+      "description": "Khi được bật, các bản ghi sẽ hiển thị một khóa tùy chọn kết hợp mã dự án, mã thông báo loại và ID số của bản ghi. Đặt mã của từng dự án trong Cài đặt dự án → Nâng cao.",
+      "toggleAriaLabel": "Chuyển đổi khóa bản ghi có tiền tố dự án",
+      "tokensHeading": "Mã thông báo loại",
+      "tokensHelp": "Mã thông báo được sử dụng cho từng loại bản ghi. Gồm 1–6 chữ cái in hoa, không có chữ số hoặc gạch nối. Các mã thông báo phải là duy nhất.",
+      "invalidToken": "Không hợp lệ",
+      "duplicateToken": "Mã thông báo trùng lặp",
+      "tokensSaved": "Đã lưu mã thông báo loại.",
+      "enableSuccess": "Đã bật khóa bản ghi có tiền tố dự án.",
+      "disableSuccess": "Đã tắt khóa bản ghi có tiền tố dự án.",
+      "saveError": "Không thể lưu. Vui lòng thử lại."
     },
     "appConfig": {
       "description": "Quản lý cấu hình ứng dụng toàn cầu",

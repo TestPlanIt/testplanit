@@ -9,6 +9,7 @@ import { FacetedSearchFilters } from "@/components/search/FacetedSearchFilters";
 import { ProjectNameDisplay } from "@/components/search/ProjectNameDisplay";
 import { SavedSearchesMenu } from "@/components/search/SavedSearchesMenu";
 import { SearchHelpContent } from "@/components/search/SearchHelpContent";
+import { useRecordKeyHits } from "~/hooks/useRecordKeyHits";
 import {
   BadgeList,
   DateDisplay,
@@ -119,6 +120,10 @@ export function UnifiedSearch({
 
   // Initialize state from saved search state or defaults
   const [query, setQuery] = useState(searchState?.query || initialQuery);
+  // Records resolved directly from an id / cosmetic key typed into the box.
+  // Rendered as normal result cards above the text-search results.
+  const recordKeyHits = useRecordKeyHits(query);
+  const hasRecordKeyHits = recordKeyHits.length > 0;
   const [filters, setFilters] = useState<UnifiedSearchFilters>(
     searchState?.filters || initialFilters || searchContext.defaultFilters
   );
@@ -748,6 +753,8 @@ export function UnifiedSearch({
   // Default result renderer with tab support over the virtualized list.
   const defaultResultRenderer = (results: UnifiedSearchResult) => {
     if (!results.hits.length && results.total === 0) {
+      // A resolved record-key jump is showing above; don't also say "no results".
+      if (hasRecordKeyHits) return null;
       return (
         <div className="py-12 space-y-12">
           <div className="text-center">
@@ -1025,6 +1032,19 @@ export function UnifiedSearch({
           </div>
         )}
 
+        {hasRecordKeyHits && (
+          <div className="mb-2 flex flex-col gap-2">
+            {recordKeyHits.map((hit) => (
+              <SearchResultCard
+                key={`${hit.entityType}-${hit.id}`}
+                hit={hit}
+                onClick={() => onResultClick?.(hit)}
+                searchQuery={query}
+              />
+            ))}
+          </div>
+        )}
+
         {!isInitialLoading && !error && results && (
           <>
             {renderResults
@@ -1033,11 +1053,15 @@ export function UnifiedSearch({
           </>
         )}
 
-        {!loading && !error && !results && !isFirstSearch && (
-          <div className="text-center py-12 text-muted-foreground">
-            <p>{t("common.labels.noResults")}</p>
-          </div>
-        )}
+        {!loading &&
+          !error &&
+          !results &&
+          !isFirstSearch &&
+          !hasRecordKeyHits && (
+            <div className="text-center py-12 text-muted-foreground">
+              <p>{t("common.labels.noResults")}</p>
+            </div>
+          )}
 
         {!loading && !error && !results && isFirstSearch && query === "" && (
           <div className="text-center py-12 text-muted-foreground">

@@ -1,7 +1,7 @@
 import {
   ArrowRightLeft,
   ArrowUpDown,
-  Copy,
+  CopyPlus,
   Folder,
   ListChecks,
 } from "lucide-react";
@@ -161,7 +161,7 @@ export const UnifiedDragPreview: React.FC = () => {
                     data-testid="drag-preview-copy-badge"
                     className="absolute -top-2 -end-2 rounded-full bg-primary-foreground/70 text-primary p-1 ring-2 ring-primary/70"
                   >
-                    <Copy size={16} />
+                    <CopyPlus size={16} />
                   </div>
                 )}
                 {moveHeld && !copyHeld && (

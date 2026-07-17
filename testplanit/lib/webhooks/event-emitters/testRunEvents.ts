@@ -1,6 +1,8 @@
 import type { JsonValue } from "@zenstackhq/orm";
 import type { TxClient } from "~/lib/zenstack";
 
+import { formatRecordKey, RECORD_TYPES } from "~/lib/recordKey";
+import { readRecordKeyConfig } from "~/lib/services/recordKeyConfig";
 import {
   getPerCaseIterationCounts,
   getTestRunSummary,
@@ -11,6 +13,31 @@ import {
 } from "~/lib/services/parameterRedaction";
 import { publishTestRunWakeUp } from "~/lib/live/publish";
 import { webhookEvents } from "~/lib/webhooks/events";
+
+/**
+ * Derive the cosmetic `TEST_RUN` display key (e.g. `WEB-TR-1234`) for a run
+ * whose project `key` we don't already hold. Reads the record-key config and
+ * only spends the project lookup when the feature is enabled. Returns `null`
+ * when disabled or the project has no key configured.
+ */
+async function resolveRunDisplayKey(
+  tx: TxClient,
+  projectId: number,
+  id: number
+): Promise<string | null> {
+  const { enabled, tokens } = await readRecordKeyConfig(tx);
+  if (!enabled) return null;
+  const project = await tx.projects.findUnique({
+    where: { id: projectId },
+    select: { key: true },
+  });
+  return formatRecordKey({
+    projectKey: project?.key ?? null,
+    type: RECORD_TYPES.TEST_RUN,
+    id,
+    tokens,
+  });
+}
 
 /**
  * Per-value cap for parameter values emitted into webhook payloads.
@@ -132,12 +159,14 @@ export async function emitTestRunCreated(
     stateColor = state?.color?.value ?? null;
     stateIsCompleted = state?.workflowType === "DONE";
   }
+  const displayKey = await resolveRunDisplayKey(tx, row.projectId, row.id);
   await webhookEvents.emit(
     "test_run.created",
     {
       runId: row.id,
       runTitle: row.name,
       projectId: row.projectId,
+      displayKey,
       stateId: row.stateId,
       stateName,
       stateColor,
@@ -180,6 +209,14 @@ export async function emitTestRunUpdateEvents(
     oldRow.isCompleted !== true && newRow.isCompleted === true;
   if (!stateChanged && !completedTransition) return;
 
+  // Resolve the cosmetic run key once; both the state_changed and completed
+  // payloads below share it.
+  const displayKey = await resolveRunDisplayKey(
+    tx,
+    newRow.projectId,
+    newRow.id
+  );
+
   if (stateChanged) {
     const [fromState, toState] = await Promise.all([
       oldRow.stateId != null
@@ -210,6 +247,7 @@ export async function emitTestRunUpdateEvents(
         runId: newRow.id,
         runTitle: newRow.name,
         projectId: newRow.projectId,
+        displayKey,
         from: {
           stateId: oldRow.stateId,
           stateName: fromState?.name ?? null,
@@ -271,6 +309,7 @@ export async function emitTestRunUpdateEvents(
         perCaseRedactedIterations,
         runId: newRow.id,
         runTitle: newRow.name,
+        displayKey,
         runUrl,
       },
       {
@@ -364,7 +403,12 @@ export async function emitTestRunResultAdded(
   const [run, status, testRunCase] = await Promise.all([
     tx.testRuns.findUnique({
       where: { id: row.testRunId },
-      select: { id: true, name: true, projectId: true },
+      select: {
+        id: true,
+        name: true,
+        projectId: true,
+        project: { select: { key: true } },
+      },
     }),
     row.statusId != null
       ? tx.status.findUnique({
@@ -387,12 +431,22 @@ export async function emitTestRunResultAdded(
     }),
   ]);
   if (!run) return; // testRun deleted between insert and emit — skip.
+  const { enabled, tokens } = await readRecordKeyConfig(tx);
+  const displayKey = enabled
+    ? formatRecordKey({
+        projectKey: run.project?.key ?? null,
+        type: RECORD_TYPES.TEST_RUN,
+        id: run.id,
+        tokens,
+      })
+    : null;
   await webhookEvents.emit(
     "test_run.result_added",
     {
       runId: run.id,
       runTitle: run.name,
       projectId: run.projectId,
+      displayKey,
       caseId: testRunCase?.repositoryCase?.id ?? null,
       caseName: testRunCase?.repositoryCase?.name ?? null,
       resultId: row.id,

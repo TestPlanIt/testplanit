@@ -1,6 +1,18 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+vi.mock("~/lib/services/recordKeyConfig", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("~/lib/services/recordKeyConfig")>();
+  return {
+    ...actual,
+    readRecordKeyConfig: async () => ({
+      enabled: false,
+      tokens: actual.DEFAULT_TYPE_TOKENS,
+    }),
+  };
+});
+
 vi.mock("next-auth", () => ({ getServerSession: vi.fn() }));
 vi.mock("~/server/auth", () => ({ authOptions: {} }));
 vi.mock("~/lib/api-token-auth", () => ({ authenticateRequest: vi.fn() }));

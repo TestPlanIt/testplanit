@@ -7,6 +7,8 @@ import { CustomColumnDef } from "../components/tables/ColumnSelection";
 import { logDataExport } from "../lib/services/auditClient";
 import { extractTextFromNode } from "../utils/extractTextFromJson";
 import { tiptapToMarkdown } from "../utils/tiptapToMarkdown";
+import { useRecordKeyConfig } from "~/hooks/useRecordKeyConfig";
+import { RECORD_TYPES } from "~/lib/recordKey";
 
 // --- Start: Added Helper Functions ---
 // Helper function to parse JSON safely
@@ -177,7 +179,8 @@ const formatItemData = (
   item: any, // Input item (can be TData or transformed multi-row item)
   options: ExportOptions,
   exportableColumns: CustomColumnDef<any>[], // Pass the final columns list
-  t: TFunction // Pass translation function
+  t: TFunction, // Pass translation function
+  formatKey: ReturnType<typeof useRecordKeyConfig>["formatKey"] // Cosmetic record-key formatter
 ): Record<string, any> => {
   const formattedRow: Record<string, any> = {};
 
@@ -209,6 +212,9 @@ const formatItemData = (
       columnId === "expectedResultContent"
     ) {
       value = item[columnId]; // This value was pre-formatted in the transformation step
+    } else if (columnId === "displayKey") {
+      value =
+        formatKey(RECORD_TYPES.TEST_CASE, item.project?.key, item.id) ?? "";
     }
     // Handle existing special cases
     else if (columnId === "stateId") {
@@ -425,6 +431,7 @@ export function useExportData<
   attachmentFormat: _attachmentFormat,
 }: UseExportDataProps<TData>) {
   const [isExporting, setIsExporting] = useState(false);
+  const { enabled: recordKeyEnabled, formatKey } = useRecordKeyConfig();
 
   const handleExport = useCallback(
     async (options: ExportOptions) => {
@@ -507,6 +514,24 @@ export function useExportData<
         if (!exportableColumns.some((col) => col.id === "name")) {
           const nameCol = columns.find((col) => col.id === "name");
           if (nameCol) exportableColumns.unshift(nameCol);
+        }
+
+        // Add cosmetic Display Key column (e.g. WEB-TC-1234) near id/name when
+        // the record-key feature is enabled.
+        if (
+          recordKeyEnabled &&
+          !exportableColumns.some((col) => col.id === "displayKey")
+        ) {
+          const displayKeyCol: CustomColumnDef<TData> = {
+            id: "displayKey",
+            header: t("common.fields.key"),
+          };
+          const idIndex = exportableColumns.findIndex((col) => col.id === "id");
+          if (idIndex >= 0) {
+            exportableColumns.splice(idIndex + 1, 0, displayKeyCol);
+          } else {
+            exportableColumns.unshift(displayKeyCol);
+          }
         }
 
         // Add Step Columns Conditionally
@@ -594,7 +619,8 @@ export function useExportData<
                 { ...item, combinedStepData },
                 effectiveOptions,
                 exportableColumns,
-                t
+                t,
+                formatKey
               );
               return [{ formatted: formattedBase, rawAttachments }];
             } else {
@@ -614,7 +640,8 @@ export function useExportData<
                     },
                     effectiveOptions,
                     exportableColumns,
-                    t
+                    t,
+                    formatKey
                   ),
                   rawAttachments,
                 });
@@ -641,7 +668,8 @@ export function useExportData<
                         },
                         effectiveOptions,
                         exportableColumns,
-                        t
+                        t,
+                        formatKey
                       ),
                       rawAttachments,
                     });
@@ -658,7 +686,8 @@ export function useExportData<
                         },
                         effectiveOptions,
                         exportableColumns,
-                        t
+                        t,
+                        formatKey
                       ),
                       rawAttachments: [], // Continuation rows don't carry attachments
                     });
@@ -1092,6 +1121,8 @@ export function useExportData<
       testRunCasesData,
       isDefaultSort,
       project?.id,
+      recordKeyEnabled,
+      formatKey,
     ]
   );
 

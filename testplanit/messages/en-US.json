@@ -1966,6 +1966,17 @@
       "advanced": {
         "title": "Advanced",
         "description": "Per-project toggles for opinionated features. New toggles will appear here as they are introduced.",
+        "recordKey": {
+          "label": "Project code",
+          "description": "A short code used in cosmetic record keys like {example}. 2–10 uppercase letters, no digits. Leave blank to show plain numeric IDs.",
+          "placeholder": "e.g. PROJECT",
+          "previewLabel": "Example key:",
+          "useSuggestion": "Use suggested code: {code}",
+          "invalid": "Use 2–10 uppercase letters (no digits).",
+          "taken": "That code is already used by another project. Choose a different one.",
+          "savedToast": "Project code saved.",
+          "saveError": "Could not save the project code. It may already be used by another project."
+        },
         "reviewWorkflow": {
           "label": "Enable review workflow",
           "description": "When enabled, transitions into states that require review are gated by an approved review request. Testers see the Request Review button; reviewers receive notifications.",
@@ -3697,6 +3708,7 @@
       "tags": "Tags",
       "issues": "Issues",
       "appConfig": "Application Configuration",
+      "recordKeys": "Record Keys",
       "notifications": "Notifications",
       "imports": "Data Imports",
       "integrations": "Issue Integrations",
@@ -4960,6 +4972,20 @@
         "forSession": "For Session",
         "color": "Color"
       }
+    },
+    "recordKeys": {
+      "pageDescription": "Configure cosmetic, project-prefixed identifiers such as PROJECT-TC-1234 that make it easy to tell which project a record belongs to and what kind of record it is. The underlying numeric ID is unchanged and continues to work everywhere.",
+      "title": "Project-prefixed record keys",
+      "description": "When enabled, records display an optional key combining the project code, a type token, and the record's numeric ID. Set each project's code in Project Settings → Advanced.",
+      "toggleAriaLabel": "Toggle project-prefixed record keys",
+      "tokensHeading": "Type tokens",
+      "tokensHelp": "The token used for each kind of record. 1–6 uppercase letters, no digits or hyphens. Tokens must be unique.",
+      "invalidToken": "Invalid",
+      "duplicateToken": "Duplicate token",
+      "tokensSaved": "Type tokens saved.",
+      "enableSuccess": "Project-prefixed record keys enabled.",
+      "disableSuccess": "Project-prefixed record keys disabled.",
+      "saveError": "Could not save. Please try again."
     },
     "appConfig": {
       "description": "Manage global application configurations",

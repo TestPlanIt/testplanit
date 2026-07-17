@@ -4,6 +4,8 @@ import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { useCallback, useState } from "react";
 import { logDataExport } from "~/lib/services/auditClient";
+import { useRecordKeyConfig } from "~/hooks/useRecordKeyConfig";
+import { RECORD_TYPES } from "~/lib/recordKey";
 import { toHumanReadable } from "~/utils/duration";
 import { extractTextFromNode } from "~/utils/extractTextFromJson";
 import { formatFieldValue, PdfRenderer, preloadImages } from "./pdfHelpers";
@@ -15,7 +17,7 @@ import { formatFieldValue, PdfRenderer, preloadImages } from "./pdfHelpers";
  * rather than on every run-page load.
  */
 const EXPORT_INCLUDE = {
-  project: { select: { id: true, name: true } },
+  project: { select: { id: true, name: true, key: true } },
   configuration: { select: { name: true } },
   milestone: { select: { name: true } },
   state: { select: { name: true } },
@@ -136,6 +138,7 @@ export function useExportTestRunPdf({
   locale = "en-US",
 }: UseExportTestRunPdfProps) {
   const [isExporting, setIsExporting] = useState(false);
+  const { formatKey } = useRecordKeyConfig();
 
   // Disabled query; the heavy data is fetched only when the user exports.
   const { refetch } = useClientQueries(schema).testRuns.useFindUnique(
@@ -172,6 +175,14 @@ export function useExportTestRunPdf({
 
       // --- Test Run Header ---
       pdf.renderSectionHeader(testRunData.name);
+      pdf.renderField(
+        "Key",
+        formatKey(
+          RECORD_TYPES.TEST_RUN,
+          testRunData.project?.key,
+          testRunData.id
+        )
+      );
 
       // --- Metadata ---
       if (testRunData.testRunType && testRunData.testRunType !== "REGULAR") {
@@ -290,6 +301,16 @@ export function useExportTestRunPdf({
 
           pdf.ensureSpace(20);
           pdf.renderSubHeader(caseName);
+          if (tc.repositoryCase?.id != null) {
+            pdf.renderField(
+              "Key",
+              formatKey(
+                RECORD_TYPES.TEST_CASE,
+                testRunData.project?.key,
+                tc.repositoryCase.id
+              )
+            );
+          }
           pdf.renderField("Status", statusName, {
             color: hexToRgb(statusObj?.color?.value),
           });
@@ -426,7 +447,7 @@ export function useExportTestRunPdf({
     } finally {
       setIsExporting(false);
     }
-  }, [testRunId, projectId, refetch, embedImages, locale]);
+  }, [testRunId, projectId, refetch, embedImages, locale, formatKey]);
 
   return { isExporting, handleExport };
 }

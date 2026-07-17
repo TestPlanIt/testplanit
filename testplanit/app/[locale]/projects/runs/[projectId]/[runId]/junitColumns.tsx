@@ -1,4 +1,5 @@
 import { DateFormatter } from "@/components/DateFormatter";
+import { RecordId } from "@/components/RecordId";
 import SystemErrorPopover from "@/components/junit/SystemErrorPopover";
 import SystemOutputPopover from "@/components/junit/SystemOutputPopover";
 import { AttachmentsListDisplay } from "@/components/tables/AttachmentsListDisplay";
@@ -9,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import type { Attachments } from "~/zenstack/models";
 import { LinkIcon } from "lucide-react";
 import type { Session } from "next-auth";
+import { RECORD_TYPES } from "~/lib/recordKey";
 import { toHumanReadable } from "~/utils/duration";
 
 export function getJunitColumns({
@@ -90,7 +92,11 @@ export function getJunitColumns({
         isVisible: false,
       },
       cell: ({ row }: { row: { original: any } }) => (
-        <span>{row.original.id}</span>
+        <RecordId
+          type={RECORD_TYPES.TEST_CASE}
+          id={row.original.id}
+          projectId={Number(projectId)}
+        />
       ),
       size: 85,
       maxSize: 125,

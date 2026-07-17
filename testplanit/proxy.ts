@@ -3,6 +3,7 @@ import createMiddleware from "next-intl/middleware";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { checkApiRateLimit, type RateLimitResult } from "~/lib/api-rate-limit";
+import { normalizeRecordKeyPath } from "~/lib/recordKeyRoutes";
 import { defaultLocale, locales } from "./i18n/navigation";
 
 const middleware = createMiddleware({
@@ -74,6 +75,24 @@ function isExternalApiRequest(request: NextRequest): boolean {
 export default async function middlewareWithPreferences(request: NextRequest) {
   const url = new URL(request.url);
   const pathname = url.pathname;
+
+  // Cosmetic project-prefixed record keys: if a detail-route URL carries a
+  // prefixed key (e.g. /projects/repository/5/PROJECT-TC-1234),
+  // redirect to the canonical numeric URL (/projects/repository/5/1234) before
+  // anything else runs. The number is embedded in the key, so this is a pure
+  // string transform — no DB lookup. Browser routes only (never /api/*).
+  if (!pathname.startsWith("/api/")) {
+    const firstSegment = pathname.split("/")[1] ?? "";
+    const hasLocale = (locales as readonly string[]).includes(firstSegment);
+    const localePrefix = hasLocale ? `/${firstSegment}` : "";
+    const pathAfterLocale = pathname.slice(localePrefix.length);
+    const normalized = normalizeRecordKeyPath(pathAfterLocale);
+    if (normalized) {
+      const redirectUrl = new URL(request.url);
+      redirectUrl.pathname = `${localePrefix}${normalized}`;
+      return NextResponse.redirect(redirectUrl);
+    }
+  }
 
   // Handle /share and /passwordless routes - redirect to localized version
   // These are entered from emailed (locale-less) URLs, so we redirect to the

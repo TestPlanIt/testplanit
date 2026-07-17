@@ -1966,6 +1966,17 @@
       "advanced": {
         "title": "先进的",
         "description": "每个项目都设有针对特定功能的开关。新增的开关将在此处显示。",
+        "recordKey": {
+          "label": "项目代码",
+          "description": "用于装饰性记录键(如 {example})的短代码。2-10 个大写字母，不含数字。留空则显示纯数字 ID。",
+          "placeholder": "例如 PROJECT",
+          "previewLabel": "示例键：",
+          "useSuggestion": "使用建议代码：{code}",
+          "invalid": "请使用 2–10 个大写字母（不含数字）。",
+          "taken": "该代码已被其他项目使用。请选择其他代码。",
+          "savedToast": "项目代码已保存。",
+          "saveError": "无法保存项目代码。该代码可能已被其他项目使用。"
+        },
         "reviewWorkflow": {
           "label": "启用审核工作流程",
           "description": "启用此功能后，需要审核的状态转换将由已批准的审核请求控制。测试人员会看到“请求审核”按钮；审核人员会收到通知。",
@@ -3697,6 +3708,7 @@
       "tags": "标签",
       "issues": "问题",
       "appConfig": "应用程序配置",
+      "recordKeys": "记录键",
       "notifications": "通知",
       "imports": "数据导入",
       "integrations": "问题整合",
@@ -4960,6 +4972,20 @@
         "forSession": "会议期间",
         "color": "颜色"
       }
+    },
+    "recordKeys": {
+      "pageDescription": "配置装饰性的、带项目前缀的标识符(例如 PROJECT-TC-1234)，以便轻松辨别记录所属的项目以及记录的类型。底层的数字 ID 保持不变，并可在任何地方继续使用。",
+      "title": "带项目前缀的记录键",
+      "description": "启用后，记录将显示一个可选的键，由项目代码、类型标记和记录的数字 ID 组合而成。请在“项目设置”→“高级”中设置每个项目的代码。",
+      "toggleAriaLabel": "切换带项目前缀的记录键",
+      "tokensHeading": "类型标记",
+      "tokensHelp": "每种记录类型使用的标记。1–6 个大写字母，不含数字或连字符。标记必须唯一。",
+      "invalidToken": "无效",
+      "duplicateToken": "重复的标记",
+      "tokensSaved": "类型标记已保存。",
+      "enableSuccess": "已启用带项目前缀的记录键。",
+      "disableSuccess": "已禁用带项目前缀的记录键。",
+      "saveError": "无法保存，请重试。"
     },
     "appConfig": {
       "description": "管理全局应用程序配置",

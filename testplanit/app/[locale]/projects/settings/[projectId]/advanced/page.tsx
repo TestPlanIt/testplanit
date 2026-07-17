@@ -30,12 +30,22 @@ import { notFound, useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useReviewFeatureEnabled } from "~/hooks/useReviewFeatureEnabled";
+import { useRecordKeyConfig } from "~/hooks/useRecordKeyConfig";
+import {
+  isValidProjectKey,
+  normalizeProjectKey,
+  RECORD_TYPES,
+  sanitizeKeyInput,
+  suggestProjectKey,
+} from "~/lib/recordKey";
+import { useDebounce } from "@/components/Debounce";
 
 export default function AdvancedPage() {
   const params = useParams();
   const projectId = parseInt(params.projectId as string);
   const { data: session, status } = useSession();
   const t = useTranslations("projects.settings.advanced");
+  const tActions = useTranslations("common.actions");
 
   const { data: project, isLoading: projectLoading } = useClientQueries(
     schema
@@ -48,6 +58,7 @@ export default function AdvancedPage() {
         id: true,
         name: true,
         iconUrl: true,
+        key: true,
         reviewWorkflowEnabled: true,
         requireResultFlipJustification: true,
         editResultsDurationSeconds: true,
@@ -235,6 +246,86 @@ export default function AdvancedPage() {
     }
   };
 
+  // Project record-key code. Only relevant when the system feature is enabled;
+  // the code becomes the prefix in cosmetic keys like PROJECT-TC-1234.
+  const { enabled: recordKeyFeatureEnabled, formatKey } = useRecordKeyConfig();
+  const [projectKeyInput, setProjectKeyInput] = useState("");
+  useEffect(() => {
+    if (project?.key === undefined) return;
+    setProjectKeyInput(project.key ?? "");
+  }, [project?.key]);
+
+  const normalizedProjectKey = normalizeProjectKey(projectKeyInput);
+  const projectKeyValid =
+    normalizedProjectKey === null || isValidProjectKey(normalizedProjectKey);
+  const projectKeyDirty =
+    (normalizedProjectKey ?? null) !== (project?.key ?? null);
+
+  // Recommended code derived from the project name (e.g. "Web" → "WEB").
+  const suggestedProjectKey = suggestProjectKey(project?.name);
+
+  // Live uniqueness check: as the user types a valid, changed code, ask whether
+  // another project already uses it. Codes are stored uppercase, so this is
+  // case-insensitive. Debounced to avoid a query per keystroke and scoped to
+  // projects the user can see; the DB unique index is the ultimate backstop.
+  const debouncedProjectKey = useDebounce(normalizedProjectKey ?? "", 300);
+  const shouldCheckUniqueness =
+    recordKeyFeatureEnabled &&
+    projectKeyValid &&
+    debouncedProjectKey !== "" &&
+    debouncedProjectKey !== (project?.key ?? "");
+  const { data: conflictingProject, isFetching: checkingUniqueness } =
+    useClientQueries(schema).projects.useFindFirst(
+      {
+        where: { key: debouncedProjectKey, id: { not: projectId } },
+        select: { id: true },
+      },
+      { enabled: shouldCheckUniqueness }
+    );
+  const debounceCaughtUp = debouncedProjectKey === (normalizedProjectKey ?? "");
+  const uniquenessPending =
+    shouldCheckUniqueness && (!debounceCaughtUp || checkingUniqueness);
+  const projectKeyTaken =
+    shouldCheckUniqueness &&
+    debounceCaughtUp &&
+    !checkingUniqueness &&
+    !!conflictingProject;
+
+  const projectKeyPreview =
+    normalizedProjectKey && projectKeyValid && !projectKeyTaken
+      ? formatKey(RECORD_TYPES.TEST_CASE, normalizedProjectKey, 1234)
+      : null;
+
+  const canSaveProjectKey =
+    !projectLoading &&
+    !updateProject.isPending &&
+    projectKeyValid &&
+    projectKeyDirty &&
+    !projectKeyTaken &&
+    !uniquenessPending;
+
+  const handleSaveProjectKey = async () => {
+    if (!projectKeyValid) {
+      toast.error(t("recordKey.invalid"));
+      return;
+    }
+    if (projectKeyTaken) {
+      toast.error(t("recordKey.taken"));
+      return;
+    }
+    try {
+      await updateProject.mutateAsync({
+        where: { id: projectId },
+        data: { key: normalizedProjectKey },
+      });
+      toast.success(t("recordKey.savedToast"));
+    } catch {
+      // Backstop for the DB unique index (e.g. a conflicting project the user
+      // can't see, or a race with a concurrent save).
+      toast.error(t("recordKey.saveError"));
+    }
+  };
+
   return (
     <main data-testid="advanced-settings-page">
       <Card>
@@ -252,6 +343,94 @@ export default function AdvancedPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
+          {/* Project record-key code. Only shown when the system-wide
+              record-key feature is enabled — the code becomes the prefix in
+              cosmetic keys like PROJECT-TC-1234. */}
+          {recordKeyFeatureEnabled && (
+            <Card>
+              <CardContent className="pt-6">
+                <div className="space-y-3">
+                  <Label
+                    htmlFor="project-record-key-input"
+                    className="text-base font-medium"
+                  >
+                    {t("recordKey.label")}
+                  </Label>
+                  <p className="text-sm text-muted-foreground">
+                    {t("recordKey.description", {
+                      example:
+                        formatKey(
+                          RECORD_TYPES.TEST_CASE,
+                          suggestedProjectKey || "PROJECT",
+                          1234
+                        ) ?? "PROJECT-TC-1234",
+                    })}
+                  </p>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Input
+                      id="project-record-key-input"
+                      data-testid="project-record-key-input"
+                      value={projectKeyInput}
+                      maxLength={10}
+                      placeholder={
+                        suggestedProjectKey || t("recordKey.placeholder")
+                      }
+                      onChange={(e) =>
+                        setProjectKeyInput(sanitizeKeyInput(e.target.value))
+                      }
+                      disabled={projectLoading || updateProject.isPending}
+                      aria-invalid={!projectKeyValid || projectKeyTaken}
+                      className="w-48 uppercase"
+                    />
+                    <Button
+                      type="button"
+                      data-testid="project-record-key-save"
+                      onClick={handleSaveProjectKey}
+                      disabled={!canSaveProjectKey}
+                    >
+                      {tActions("save")}
+                    </Button>
+                  </div>
+                  {suggestedProjectKey &&
+                    normalizedProjectKey !== suggestedProjectKey && (
+                      <button
+                        type="button"
+                        data-testid="project-record-key-suggestion"
+                        className="text-sm text-primary hover:underline"
+                        onClick={() => setProjectKeyInput(suggestedProjectKey)}
+                      >
+                        {t("recordKey.useSuggestion", {
+                          code: suggestedProjectKey,
+                        })}
+                      </button>
+                    )}
+                  {!projectKeyValid && (
+                    <p className="text-sm text-destructive">
+                      {t("recordKey.invalid")}
+                    </p>
+                  )}
+                  {projectKeyTaken && (
+                    <p
+                      className="text-sm text-destructive"
+                      data-testid="project-record-key-taken"
+                    >
+                      {t("recordKey.taken")}
+                    </p>
+                  )}
+                  {projectKeyPreview && (
+                    <p
+                      className="text-sm text-muted-foreground"
+                      data-testid="project-record-key-preview"
+                    >
+                      {t("recordKey.previewLabel")}{" "}
+                      <span className="font-mono">{projectKeyPreview}</span>
+                    </p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Review workflow toggle (Phase 2's single Advanced toggle).
               Future Advanced toggles can append additional <Card> sections
               below without restructuring this layout. */}

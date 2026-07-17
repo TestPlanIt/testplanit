@@ -18,6 +18,7 @@ import {
   Combine,
   Drama,
   GitBranch,
+  Hash,
   ImportIcon,
   KeyRound,
   LayoutList,
@@ -233,6 +234,12 @@ const menuOptions: MenuOption[] = [
     icon: Settings,
     translationKey: "appConfig",
     path: "app-config",
+    section: "system",
+  },
+  {
+    icon: Hash,
+    translationKey: "recordKeys",
+    path: "record-keys",
     section: "system",
   },
   {
