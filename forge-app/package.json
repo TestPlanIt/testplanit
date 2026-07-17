@@ -19,7 +19,7 @@
     "@forge/react": "^11.17.0",
     "@forge/resolver": "^2.0.0",
     "date-fns": "^4.4.0",
-    "lucide-react": "^1.24.0",
+    "lucide-react": "^1.25.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7"
   },
@@ -28,15 +28,15 @@
     "@babel/preset-env": "^8.0.2",
     "@babel/preset-react": "^8.0.1",
     "@forge/cli": "^13.1.0",
-    "@tailwindcss/postcss": "^4.3.2",
+    "@tailwindcss/postcss": "^4.3.3",
     "babel-loader": "^10.1.1",
     "css-loader": "^7.1.4",
     "html-webpack-plugin": "^5.6.7",
     "mini-css-extract-plugin": "^2.10.2",
-    "postcss": "^8.5.16",
+    "postcss": "^8.5.19",
     "postcss-loader": "^8.2.1",
     "style-loader": "^4.0.0",
-    "tailwindcss": "^4.3.2",
+    "tailwindcss": "^4.3.3",
     "webpack": "^5.108.4",
     "webpack-cli": "^7.2.1"
   }
