@@ -32,7 +32,7 @@ This resolution chain ensures AI features always work, even before any prompt co
 
 ### Accessing the Page
 
-Navigate to **Administration** → **Prompt Configurations** in the admin menu (under the **Tools & Integrations** section).
+Navigate to **Administration** → **Prompt Configurations** in the admin menu (under the **AI Tools** section).
 
 ### Creating a Configuration
 

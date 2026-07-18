@@ -12,6 +12,7 @@ import {
   Activity,
   Bell,
   Boxes,
+  BrainCircuit,
   Bug,
   ChartNoAxesCombined,
   CircleCheckBig,
@@ -51,6 +52,7 @@ type MenuSection =
   | "peopleAndAccess"
   | "authentication"
   | "toolsAndIntegrations"
+  | "aiTools"
   | "system";
 
 type MenuOption = {
@@ -65,6 +67,7 @@ const sectionIcons: Record<MenuSection, React.ElementType> = {
   peopleAndAccess: Users,
   authentication: Lock,
   toolsAndIntegrations: Plug,
+  aiTools: BrainCircuit,
   system: Settings,
 };
 
@@ -73,6 +76,7 @@ const sectionOrder: MenuSection[] = [
   "peopleAndAccess",
   "authentication",
   "toolsAndIntegrations",
+  "aiTools",
   "system",
 ];
 
@@ -204,29 +208,31 @@ const menuOptions: MenuOption[] = [
     path: "notifications",
     section: "toolsAndIntegrations",
   },
+
+  // AI Tools
   {
     icon: Sparkles,
     translationKey: "llm",
     path: "llm",
-    section: "toolsAndIntegrations",
+    section: "aiTools",
   },
   {
     icon: MessageSquareCode,
     translationKey: "prompts",
     path: "prompts",
-    section: "toolsAndIntegrations",
+    section: "aiTools",
   },
   {
     icon: ScrollText,
     translationKey: "quickscriptTemplates",
     path: "quickscripts",
-    section: "toolsAndIntegrations",
+    section: "aiTools",
   },
   {
     icon: GitBranch,
     translationKey: "codeRepositories",
     path: "code-repositories",
-    section: "toolsAndIntegrations",
+    section: "aiTools",
   },
 
   // System

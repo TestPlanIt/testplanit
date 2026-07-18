@@ -144,6 +144,13 @@ const sidebars: SidebarsConfig = {
                     'upgrade-notifications', // Version upgrade notifications
                   ],
                 },
+              ],
+            },
+            // AI Tools
+            {
+              type: 'category',
+              label: 'AI Tools',
+              items: [
                 {
                   type: 'category',
                   label: 'AI Models',
