@@ -5240,7 +5240,9 @@
         "noResults": "沒有找到與您的搜尋「{query}」相符的已刪除的 {itemType}。",
         "restoreConfirmationMessage": "您確定要從 {itemType} 表格中還原此行嗎？關聯資料也可能會恢復。",
         "purgeConfirmationMessage": "您確定要從 {itemType} 表格中永久刪除此行嗎？此操作無法撤銷，並且可能會刪除關聯資料。"
-      }
+      },
+      "filterTypesPlaceholder": "篩選項目類型……",
+      "summary": "{count, plural, =0 {垃圾桶是空的} other {垃圾桶中有 # 個項目}}"
     },
     "notifications": {
       "title": "通知管理",

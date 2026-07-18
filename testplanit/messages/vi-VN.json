@@ -5240,7 +5240,9 @@
         "noResults": "Không tìm thấy {itemType} đã xóa phù hợp với tìm kiếm của bạn cho \"{query}\".",
         "restoreConfirmationMessage": "Bạn có chắc chắn muốn khôi phục hàng này từ bảng {itemType} không? Dữ liệu liên quan cũng có thể được khôi phục.",
         "purgeConfirmationMessage": "Bạn có chắc chắn muốn xóa vĩnh viễn hàng này khỏi bảng {itemType} không? Thao tác này không thể hoàn tác và có thể xóa dữ liệu liên quan."
-      }
+      },
+      "filterTypesPlaceholder": "Lọc loại mục...",
+      "summary": "{count, plural, =0 {Thùng rác trống} other {# mục trong thùng rác}}"
     },
     "notifications": {
       "title": "Quản lý thông báo",

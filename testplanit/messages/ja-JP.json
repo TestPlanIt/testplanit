@@ -5240,7 +5240,9 @@
         "noResults": "「{query}」の検索に一致する削除済みの {itemType} は見つかりませんでした。",
         "restoreConfirmationMessage": "{itemType} テーブルからこの行を復元してもよろしいですか? 関連データも復元される可能性があります。",
         "purgeConfirmationMessage": "{itemType} テーブルからこの行を完全に削除してもよろしいですか? この操作は元に戻すことができず、関連データが削除される可能性があります。"
-      }
+      },
+      "filterTypesPlaceholder": "アイテムの種類をフィルタリング…",
+      "summary": "{count, plural, =0 {ゴミ箱は空です} other {ゴミ箱に#件のアイテムがあります}}"
     },
     "notifications": {
       "title": "通知管理",

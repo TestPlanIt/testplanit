@@ -5240,7 +5240,9 @@
         "noResults": "Es wurden keine gelöschten {itemType} gefunden, die Ihrer Suche nach \"{query}\" entsprechen.",
         "restoreConfirmationMessage": "Sind Sie sicher, dass Sie diese Zeile aus der Tabelle {itemType} wiederherstellen möchten? Zugehörige Daten werden möglicherweise ebenfalls wiederhergestellt.",
         "purgeConfirmationMessage": "Sind Sie sicher, dass Sie diese Zeile aus der Tabelle {itemType} endgültig löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden und könnte zugehörige Daten löschen."
-      }
+      },
+      "filterTypesPlaceholder": "Elementtypen filtern...",
+      "summary": "{count, plural, =0 {Papierkorb ist leer} one {# Element im Papierkorb} other {# Elemente im Papierkorb}}"
     },
     "notifications": {
       "title": "Benachrichtigungsverwaltung",

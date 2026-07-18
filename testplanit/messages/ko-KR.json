@@ -5240,7 +5240,9 @@
         "noResults": "삭제된 {itemType} 이 \"{query} \"와 일치하는 항목이 없습니다.",
         "restoreConfirmationMessage": "{itemType} 테이블에서 이 행을 복원하시겠습니까? 관련 데이터도 함께 복원될 수 있습니다.",
         "purgeConfirmationMessage": "{itemType} 테이블에서 이 행을 영구적으로 삭제하시겠습니까? 이 작업은 되돌릴 수 없으며 관련 데이터도 삭제될 수 있습니다."
-      }
+      },
+      "filterTypesPlaceholder": "항목 유형 필터...",
+      "summary": "{count, plural, =0 {휴지통이 비어 있습니다} other {휴지통에 항목 #개가 있습니다}}"
     },
     "notifications": {
       "title": "알림 관리",

@@ -5240,7 +5240,9 @@
         "noResults": "Er zijn geen verwijderde {itemType} gevonden die overeenkomen met uw zoekopdracht naar \"{query}\".",
         "restoreConfirmationMessage": "Weet u zeker dat u deze rij uit de tabel {itemType} wilt herstellen? Gekoppelde gegevens worden mogelijk ook hersteld.",
         "purgeConfirmationMessage": "Weet u zeker dat u deze rij definitief uit de tabel {itemType} wilt verwijderen? Deze actie kan niet ongedaan worden gemaakt en kan de bijbehorende gegevens verwijderen."
-      }
+      },
+      "filterTypesPlaceholder": "Itemtypen filteren...",
+      "summary": "{count, plural, =0 {Prullenbak is leeg} one {# item in prullenbak} other {# items in prullenbak}}"
     },
     "notifications": {
       "title": "Meldingsbeheer",

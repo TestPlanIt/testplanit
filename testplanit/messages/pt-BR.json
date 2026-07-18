@@ -5240,7 +5240,9 @@
         "noResults": "Nenhum {itemType} excluído encontrado que corresponda à sua pesquisa por \"{query}\".",
         "restoreConfirmationMessage": "Tem certeza de que deseja restaurar esta linha da tabela {itemType} ? Os dados associados também podem ser restaurados.",
         "purgeConfirmationMessage": "Tem certeza de que deseja excluir permanentemente esta linha da tabela {itemType} ? Esta ação não pode ser desfeita e pode remover dados associados."
-      }
+      },
+      "filterTypesPlaceholder": "Filtrar tipos de item...",
+      "summary": "{count, plural, =0 {A lixeira está vazia} one {# item na lixeira} other {# itens na lixeira}}"
     },
     "notifications": {
       "title": "Administração de notificações",

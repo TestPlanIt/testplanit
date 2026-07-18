@@ -5240,7 +5240,9 @@
         "noResults": "No se ha encontrado ningún {itemType} borrado que coincida con su búsqueda de \"{query}\".",
         "restoreConfirmationMessage": "¿Está seguro de que desea restaurar esta fila desde la tabla {itemType} ? Los datos asociados también podrían ser restaurados.",
         "purgeConfirmationMessage": "¿Está seguro de que desea eliminar permanentemente esta fila de la tabla {itemType} ? Esta acción no se puede deshacer y podría eliminar los datos asociados."
-      }
+      },
+      "filterTypesPlaceholder": "Filtrar tipos de elemento...",
+      "summary": "{count, plural, =0 {La papelera está vacía} one {# elemento en la papelera} other {# elementos en la papelera}}"
     },
     "notifications": {
       "title": "Administración de notificaciones",

@@ -5240,7 +5240,9 @@
         "noResults": "\"{query} \" için yaptığınız aramayla eşleşen silinmiş {itemType} bulunamadı.",
         "restoreConfirmationMessage": "{itemType} tablosundan bu satırı geri yüklemek istediğinizden emin misiniz? İlişkili veriler de geri yüklenebilir.",
         "purgeConfirmationMessage": "{itemType} tablosundan bu satırı kalıcı olarak silmek istediğinizden emin misiniz? Bu işlem geri alınamaz ve ilgili verileri silebilir."
-      }
+      },
+      "filterTypesPlaceholder": "Öğe türlerini filtrele...",
+      "summary": "{count, plural, =0 {Çöp kutusu boş} one {Çöp kutusunda # öğe var} other {Çöp kutusunda # öğe var}}"
     },
     "notifications": {
       "title": "Bildirim Yönetimi",

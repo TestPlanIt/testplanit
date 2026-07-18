@@ -5240,7 +5240,9 @@
         "noResults": "没有找到与您的搜索“{query}”匹配的已删除的 {itemType} 。",
         "restoreConfirmationMessage": "您确定要从 {itemType} 表中恢复此行吗？关联数据也可能会恢复。",
         "purgeConfirmationMessage": "您确定要从 {itemType} 表中永久删除此行吗？此操作无法撤销，并且可能会删除关联数据。"
-      }
+      },
+      "filterTypesPlaceholder": "筛选项目类型……",
+      "summary": "{count, plural, =0 {回收站为空} other {回收站中有 # 个项目}}"
     },
     "notifications": {
       "title": "通知管理",

@@ -5240,7 +5240,9 @@
         "noResults": "Nie znaleziono usuniętych {itemType} odpowiadających wyszukiwaniu „{query}”.",
         "restoreConfirmationMessage": "Czy na pewno chcesz przywrócić ten wiersz z tabeli {itemType} ? Powiązane dane również mogą zostać przywrócone.",
         "purgeConfirmationMessage": "Czy na pewno chcesz trwale usunąć ten wiersz z tabeli {itemType} ? Tej czynności nie można cofnąć i może ona spowodować usunięcie powiązanych danych."
-      }
+      },
+      "filterTypesPlaceholder": "Filtruj typy elementów...",
+      "summary": "{count, plural, =0 {Kosz jest pusty} one {# element w koszu} few {# elementy w koszu} many {# elementów w koszu} other {# elementu w koszu}}"
     },
     "notifications": {
       "title": "Administracja powiadomień",

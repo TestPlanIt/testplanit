@@ -5240,7 +5240,9 @@
         "noResults": "Aucun {itemType} supprimé ne correspond à votre recherche pour \"{query}\".",
         "restoreConfirmationMessage": "Êtes-vous sûr de vouloir restaurer cette ligne de la table {itemType}  ? Les données associées pourraient également être restaurées.",
         "purgeConfirmationMessage": "Êtes-vous sûr de vouloir supprimer définitivement cette ligne du tableau {itemType}  ? Cette action est irréversible et pourrait supprimer les données associées."
-      }
+      },
+      "filterTypesPlaceholder": "Filtrer les types d'éléments...",
+      "summary": "{count, plural, =0 {La corbeille est vide} one {# élément dans la corbeille} other {# éléments dans la corbeille}}"
     },
     "notifications": {
       "title": "Administration des notifications",

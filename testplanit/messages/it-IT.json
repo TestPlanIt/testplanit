@@ -5240,7 +5240,9 @@
         "noResults": "Nessun {itemType} eliminato trovato corrispondente alla tua ricerca per \"{query}\".",
         "restoreConfirmationMessage": "Vuoi davvero ripristinare questa riga dalla tabella {itemType} ? Potrebbero essere ripristinati anche i dati associati.",
         "purgeConfirmationMessage": "Vuoi davvero eliminare definitivamente questa riga dalla tabella {itemType} ? Questa azione non può essere annullata e potrebbe rimuovere i dati associati."
-      }
+      },
+      "filterTypesPlaceholder": "Filtra tipi di elemento...",
+      "summary": "{count, plural, =0 {Il cestino è vuoto} one {# elemento nel cestino} other {# elementi nel cestino}}"
     },
     "notifications": {
       "title": "Amministrazione delle notifiche",

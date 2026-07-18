@@ -1,10 +1,9 @@
 "use client";
 
 import { useDebounce } from "@/components/Debounce";
-import { DataTable } from "@/components/tables/DataTable";
+import { Loading } from "@/components/Loading";
 import { Filter } from "@/components/tables/Filter";
-import { PaginationComponent } from "@/components/tables/Pagination";
-import { PaginationInfo } from "@/components/tables/PaginationControls";
+import { VirtualizedDataTable } from "@/components/tables/VirtualizedDataTable";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,8 +19,7 @@ import { CardContent } from "@/components/ui/card";
 import { ColumnDef, VisibilityState } from "@tanstack/react-table";
 import { AlertTriangle, UndoDot } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { usePageSizeOptions } from "~/hooks/usePageSizeOptions";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { cn } from "~/utils";
 
 // Item type is now generic, but we ensure 'id' for actions
@@ -32,13 +30,20 @@ interface SoftDeletedItem extends Record<string, any> {
 interface SoftDeletedDataTableProps {
   itemType: string;
   translationKey: string; // Keep this prop to translate the item type name
+  // Called after a successful restore/purge so callers can refresh derived
+  // state (e.g. the sidebar counts). Optional and non-breaking.
+  onMutate?: () => void;
 }
 
-const DEFAULT_PAGE_SIZE = 10;
+// Rows fetched per scroll page. Infinite scroll pulls the next batch as the
+// sentinel nears the viewport, so a large bin (e.g. TestRunStepResults) never
+// loads more than one page up front.
+const PAGE_SIZE = 50;
 
 export default function SoftDeletedDataTable({
   itemType,
   translationKey,
+  onMutate,
 }: SoftDeletedDataTableProps) {
   const t = useTranslations("admin.trash.table");
   const tActions = useTranslations("common.actions");
@@ -46,14 +51,14 @@ export default function SoftDeletedDataTable({
   const tCommon = useTranslations("common");
 
   const [data, setData] = useState<SoftDeletedItem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [totalItems, setTotalItems] = useState(0);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [loadMoreError, setLoadMoreError] = useState(false);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
 
-  // Pagination, sorting, and search state
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState<number | "All">(DEFAULT_PAGE_SIZE);
-  const [totalItems, setTotalItems] = useState(0);
+  // Sorting and search state
   const [sortConfig, setSortConfig] = useState<{
     column: string;
     direction: "asc" | "desc";
@@ -68,77 +73,115 @@ export default function SoftDeletedDataTable({
   >(null);
   const [alertItemId, setAlertItemId] = useState<string | number | null>(null);
 
-  const effectivePageSize =
-    typeof pageSize === "number"
-      ? pageSize
-      : totalItems > 0
-        ? totalItems
-        : DEFAULT_PAGE_SIZE;
-  const skip =
-    (currentPage - 1) * (typeof pageSize === "number" ? pageSize : 0); // if pageSize is "All", skip is 0 or not used if take is totalItems
-  const totalPages = Math.ceil(
-    totalItems / (typeof pageSize === "number" ? pageSize : totalItems || 1)
-  );
-  const startIndex = totalItems > 0 ? skip + 1 : 0;
-  const endIndex = Math.min(skip + effectivePageSize, totalItems);
+  // Bumped after a restore/purge to reset the virtualizer's scroll to the top
+  // once the first page reloads (the acted-on row is gone).
+  const [reloadNonce, setReloadNonce] = useState(0);
 
-  const fetchData = useCallback(async () => {
-    setIsLoading(true);
+  // Refs so the infinite-scroll callbacks stay stable while still reading the
+  // latest values: `requestIdRef` invalidates responses from a superseded
+  // reset, `loadingMoreRef` guards against overlapping load-more fetches, and
+  // the length/total refs feed the next page's skip without re-creating the
+  // callback on every append.
+  const requestIdRef = useRef(0);
+  const loadingMoreRef = useRef(false);
+  const dataLengthRef = useRef(0);
+  const totalItemsRef = useRef(0);
+  useEffect(() => {
+    dataLengthRef.current = data.length;
+  }, [data]);
+  useEffect(() => {
+    totalItemsRef.current = totalItems;
+  }, [totalItems]);
+
+  const buildQuery = useCallback(
+    (skip: number) => {
+      const params = new URLSearchParams();
+      params.append("skip", String(skip));
+      params.append("take", String(PAGE_SIZE));
+      params.append("sortBy", sortConfig.column);
+      params.append("sortDir", sortConfig.direction);
+      if (debouncedSearchString) {
+        params.append("search", debouncedSearchString);
+      }
+      return params.toString();
+    },
+    [sortConfig.column, sortConfig.direction, debouncedSearchString]
+  );
+
+  // Load (or reload) the first page. Runs on mount and whenever the search or
+  // sort changes; each call takes a new request id so a slower in-flight
+  // response from a superseded query is dropped.
+  const loadFirstPage = useCallback(async () => {
+    const reqId = ++requestIdRef.current;
+    loadingMoreRef.current = false;
+    setIsInitialLoading(true);
     setError(null);
-    const params = new URLSearchParams();
-    params.append("skip", String(skip));
-    params.append("take", String(effectivePageSize));
-    params.append("sortBy", sortConfig.column);
-    params.append("sortDir", sortConfig.direction);
-    if (debouncedSearchString) {
-      params.append("search", debouncedSearchString);
-    }
+    setLoadMoreError(false);
 
     try {
       const response = await fetch(
-        `/api/admin/trash/${itemType}?${params.toString()}`
+        `/api/admin/trash/${itemType}?${buildQuery(0)}`
       );
       if (!response.ok) {
-        const errorData = await response.json();
+        const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.error || `Failed to fetch ${itemType}`);
       }
-      const { items: resultData, totalCount } = await response.json();
-      setData(resultData);
+      const { items, totalCount } = await response.json();
+      if (reqId !== requestIdRef.current) return;
+      setData(items);
       setTotalItems(totalCount);
     } catch (e: any) {
+      if (reqId !== requestIdRef.current) return;
       setError(e.message || "An unexpected error occurred.");
       setData([]);
       setTotalItems(0);
     } finally {
-      setIsLoading(false);
+      if (reqId === requestIdRef.current) setIsInitialLoading(false);
     }
-  }, [
-    itemType,
-    skip,
-    effectivePageSize,
-    sortConfig.column,
-    sortConfig.direction,
-    debouncedSearchString,
-  ]);
+  }, [itemType, buildQuery]);
 
   useEffect(() => {
-    if (itemType) {
-      void fetchData();
+    void loadFirstPage();
+  }, [loadFirstPage]);
+
+  // Append the next page. The shared virtualizer guard already prevents
+  // double-firing; `loadingMoreRef` is a belt-and-braces guard against an
+  // overlapping fetch, and the request-id check drops a page that landed after
+  // a reset.
+  const handleLoadMore = useCallback(async () => {
+    if (loadingMoreRef.current) return;
+    if (dataLengthRef.current >= totalItemsRef.current) return;
+    const reqId = requestIdRef.current;
+    loadingMoreRef.current = true;
+    setIsLoadingMore(true);
+    setLoadMoreError(false);
+
+    try {
+      const response = await fetch(
+        `/api/admin/trash/${itemType}?${buildQuery(dataLengthRef.current)}`
+      );
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Failed to fetch ${itemType}`);
+      }
+      const { items } = await response.json();
+      if (reqId !== requestIdRef.current) return;
+      setData((prev) => [...prev, ...items]);
+    } catch {
+      if (reqId === requestIdRef.current) setLoadMoreError(true);
+    } finally {
+      loadingMoreRef.current = false;
+      setIsLoadingMore(false);
     }
-  }, [itemType, fetchData]);
+  }, [itemType, buildQuery]);
 
-  // Reset to first page when search, sort or page size changes
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [debouncedSearchString, sortConfig, pageSize]);
-
-  const handleRestore = async (itemId: string | number) => {
+  const handleRestore = (itemId: string | number) => {
     setAlertActionType("restore");
     setAlertItemId(itemId);
     setIsAlertOpen(true);
   };
 
-  const handlePurge = async (itemId: string | number) => {
+  const handlePurge = (itemId: string | number) => {
     setAlertActionType("purge");
     setAlertItemId(itemId);
     setIsAlertOpen(true);
@@ -146,8 +189,6 @@ export default function SoftDeletedDataTable({
 
   const executeConfirmedAction = async () => {
     if (!alertActionType || alertItemId === null) return;
-
-    const _currentItemTypeDisplay = tGlobal(translationKey as any);
 
     try {
       let response;
@@ -169,7 +210,11 @@ export default function SoftDeletedDataTable({
           errorData.error || `Failed to ${alertActionType} ${itemType}`
         );
       }
-      void fetchData(); // Refetch data on success
+      // Reload the first page so the removed row disappears and the total
+      // updates, and reset the scroll to the top.
+      setReloadNonce((n) => n + 1);
+      void loadFirstPage();
+      onMutate?.(); // Let callers refresh derived state (e.g. counts)
     } catch (e: any) {
       setError(
         e.message || `An unexpected error occurred during ${alertActionType}.`
@@ -195,6 +240,7 @@ export default function SoftDeletedDataTable({
   const columns = useMemo<ColumnDef<SoftDeletedItem>[]>(() => {
     const defaultColumns: ColumnDef<SoftDeletedItem>[] = [
       {
+        id: "id",
         accessorKey: "id",
         header: "ID",
         cell: ({ getValue }: { getValue: () => any }) => String(getValue()),
@@ -205,11 +251,14 @@ export default function SoftDeletedDataTable({
         id: "actions",
         header: tActions("actionsLabel"),
         meta: { isPinned: "right" },
+        size: 240,
+        minSize: 240,
+        enableResizing: false,
         cell: () => <div className="flex space-x-2"></div>,
       },
     ];
 
-    if (isLoading && data.length === 0) {
+    if (isInitialLoading && data.length === 0) {
       return defaultColumns;
     }
 
@@ -240,6 +289,7 @@ export default function SoftDeletedDataTable({
       }));
 
     const idColumn: ColumnDef<SoftDeletedItem> = {
+      id: "id",
       accessorKey: "id",
       header: "ID",
       cell: ({ getValue }: { getValue: () => any }) => String(getValue()),
@@ -254,6 +304,9 @@ export default function SoftDeletedDataTable({
         id: "actions",
         header: tActions("actionsLabel"),
         meta: { isPinned: "right" },
+        size: 240,
+        minSize: 240,
+        enableResizing: false,
         cell: ({ row }: { row: { original: SoftDeletedItem } }) => {
           // Add type to row
           const item = row.original;
@@ -280,102 +333,73 @@ export default function SoftDeletedDataTable({
         },
       },
     ];
-  }, [data, tActions, isLoading]);
+  }, [data, tActions, isInitialLoading]);
 
-  const pageSizeOptions = usePageSizeOptions(totalItems);
-
-  let tableContent;
-  if (isLoading && data.length === 0 && !error) {
-    tableContent = (
-      <p>{t("loading", { itemType: tGlobal(translationKey as any) })}</p>
-    );
-  } else if (error) {
-    tableContent = (
-      <p>
-        {t("error", {
-          itemType: tGlobal(translationKey as any),
-          message: error,
-        })}
-      </p>
-    );
-  } else if (!isLoading && data.length === 0 && !debouncedSearchString) {
-    tableContent = (
-      <p className="mt-4 text-center">
-        {t("noItems", { itemType: tGlobal(translationKey as any) })}
-      </p>
-    );
-  } else if (!isLoading && data.length === 0 && debouncedSearchString) {
-    tableContent = (
-      <p className="mt-4 text-center">
-        {t("noResults", {
-          itemType: tGlobal(translationKey as any),
-          query: debouncedSearchString,
-        })}
-      </p>
-    );
-  } else {
-    tableContent = (
-      <DataTable
-        columns={columns as ColumnDef<any>[]}
-        data={data as any[]}
-        columnVisibility={columnVisibility}
-        onColumnVisibilityChange={setColumnVisibility}
-        onSortChange={handleSortChange}
-        sortConfig={sortConfig}
-        isLoading={isLoading}
-      />
-    );
-  }
+  const itemTypeLabel = tGlobal(translationKey as any);
+  const hasMore = data.length < totalItems;
 
   return (
-    <CardContent>
-      {/* Row 1: Filter and Pagination Info */}
-      <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+    <CardContent className="flex h-full min-h-0 flex-col gap-4 p-0">
+      {/* Filter row */}
+      <div className="flex shrink-0 flex-col md:flex-row items-center justify-between gap-4">
         <div className="w-full md:w-1/3 min-w-[250px]">
           <Filter
             key={`${itemType}-filter`}
             placeholder={tCommon("filter.placeholder", {
-              item: tGlobal(translationKey as any).toLowerCase(),
+              item: itemTypeLabel.toLowerCase(),
             })}
             initialSearchString={searchString}
             onSearchChange={setSearchString}
           />
         </div>
-        <div className="w-full md:w-auto">
-          {" "}
-          {/* md:w-auto allows PaginationInfo to take its natural width */}
-          {totalItems > 0 && (
-            <PaginationInfo
-              key={`${itemType}-pagination-info`}
-              startIndex={startIndex}
-              endIndex={endIndex}
-              totalRows={totalItems}
-              searchString={debouncedSearchString}
-              pageSize={pageSize}
-              pageSizeOptions={pageSizeOptions}
-              handlePageSizeChange={(size) => setPageSize(size)}
-            />
-          )}
-        </div>
+        {totalItems > 0 && (
+          <p className="text-sm text-muted-foreground">
+            {tGlobal("admin.auditLogs.showing", {
+              loaded: data.length.toLocaleString(),
+              total: totalItems.toLocaleString(),
+            })}
+          </p>
+        )}
       </div>
 
-      {/* Row 2: Pagination Component (actual page buttons) - right justified */}
-      {/* This div will span the full width, and justify-end will push the PaginationComponent to the right */}
-      {totalItems > 0 && totalPages > 1 && (
-        <div className="flex flex-col items-end w-full mb-4">
-          <div className="w-fit">
-            <PaginationComponent
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={setCurrentPage}
-            />
-          </div>
+      {error && data.length === 0 ? (
+        <div className="flex flex-1 items-center justify-center text-center text-muted-foreground">
+          {t("error", { itemType: itemTypeLabel, message: error })}
+        </div>
+      ) : isInitialLoading && data.length === 0 ? (
+        <Loading />
+      ) : data.length === 0 ? (
+        // Empty bin: show a plain message, not an empty table with a bare
+        // ID/Actions header.
+        <div className="flex flex-1 items-center justify-center text-center text-muted-foreground">
+          {debouncedSearchString
+            ? t("noResults", {
+                itemType: itemTypeLabel,
+                query: debouncedSearchString,
+              })
+            : t("noItems", { itemType: itemTypeLabel })}
+        </div>
+      ) : (
+        <div className="min-h-[400px] w-full flex-1">
+          <VirtualizedDataTable
+            columns={columns as ColumnDef<any, any>[]}
+            data={data}
+            columnVisibility={columnVisibility}
+            onColumnVisibilityChange={setColumnVisibility}
+            sortConfig={sortConfig}
+            onSortChange={handleSortChange}
+            enableColumnPinning
+            hasMore={hasMore}
+            isLoading={isInitialLoading || isLoadingMore}
+            onLoadMore={handleLoadMore}
+            loadMoreError={loadMoreError}
+            onRetryLoadMore={handleLoadMore}
+            resetKey={`${debouncedSearchString}|${reloadNonce}`}
+            testIdPrefix={`trash-${itemType}-table`}
+            rowTestIdPrefix={`trash-${itemType}-row`}
+          />
         </div>
       )}
-
-      {tableContent}
-
-      {/* Bottom pagination has been removed based on user request */}
 
       <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
         <AlertDialogContent>
@@ -387,11 +411,11 @@ export default function SoftDeletedDataTable({
             <AlertDialogDescription>
               {alertActionType === "restore" &&
                 t("restoreConfirmationMessage", {
-                  itemType: tGlobal(translationKey as any),
+                  itemType: itemTypeLabel,
                 })}
               {alertActionType === "purge" &&
                 t("purgeConfirmationMessage", {
-                  itemType: tGlobal(translationKey as any),
+                  itemType: itemTypeLabel,
                 })}
             </AlertDialogDescription>
           </AlertDialogHeader>
