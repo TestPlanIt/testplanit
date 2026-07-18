@@ -5188,7 +5188,7 @@ model LlmProviderConfig {
 
     // Settings
     defaultTemperature    Float           @default(0.7)
-    defaultMaxTokens      Int             @default(2048)
+    defaultMaxTokens      Int             @default(8192)
     timeout               Int             @default(30000) // milliseconds
     retryAttempts         Int             @default(3)
     streamingEnabled      Boolean         @default(false) // Ollama supports streaming

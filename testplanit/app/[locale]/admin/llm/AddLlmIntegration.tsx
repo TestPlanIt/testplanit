@@ -28,6 +28,11 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { HelpPopover } from "@/components/ui/help-popover";
+import {
+  getModelContextWindow,
+  getQuickScriptContextBudget,
+  formatTokenCount,
+} from "~/lib/llm/model-capabilities";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -117,7 +122,7 @@ const FIELD_TO_SECTION: Record<string, string> = {
   monthlyBudget: "cost-and-budget",
   billingPeriodStartDay: "cost-and-budget",
   defaultTemperature: "advanced",
-  defaultMaxTokens: "advanced",
+  defaultMaxTokens: "provider",
   timeout: "advanced",
   streamingEnabled: "advanced",
 };
@@ -131,7 +136,7 @@ const providerDefaults: Record<string, Partial<FormData>> = {
     costPerInputToken: 0.15,
     costPerOutputToken: 0.6,
     defaultTemperature: 0.7,
-    defaultMaxTokens: 1000,
+    defaultMaxTokens: 8192,
     timeout: 30000, // 30 seconds
   },
   ANTHROPIC: {
@@ -142,7 +147,7 @@ const providerDefaults: Record<string, Partial<FormData>> = {
     costPerInputToken: 1.0,
     costPerOutputToken: 5.0,
     defaultTemperature: 0.7,
-    defaultMaxTokens: 1000,
+    defaultMaxTokens: 8192,
     timeout: 30000, // 30 seconds
   },
   AZURE_OPENAI: {
@@ -152,7 +157,7 @@ const providerDefaults: Record<string, Partial<FormData>> = {
     costPerInputToken: 0.15,
     costPerOutputToken: 0.6,
     defaultTemperature: 0.7,
-    defaultMaxTokens: 1000,
+    defaultMaxTokens: 8192,
     timeout: 30000, // 30 seconds
   },
   GEMINI: {
@@ -163,7 +168,7 @@ const providerDefaults: Record<string, Partial<FormData>> = {
     costPerInputToken: 0.1,
     costPerOutputToken: 0.4,
     defaultTemperature: 0.7,
-    defaultMaxTokens: 2048,
+    defaultMaxTokens: 8192,
     timeout: 30000, // 30 seconds
   },
   OLLAMA: {
@@ -174,7 +179,7 @@ const providerDefaults: Record<string, Partial<FormData>> = {
     costPerInputToken: 0,
     costPerOutputToken: 0,
     defaultTemperature: 0.7,
-    defaultMaxTokens: 1000,
+    defaultMaxTokens: 8192,
     timeout: 120000, // 2 minutes for local models
   },
   CUSTOM_LLM: {
@@ -184,7 +189,7 @@ const providerDefaults: Record<string, Partial<FormData>> = {
     costPerInputToken: 0,
     costPerOutputToken: 0,
     defaultTemperature: 0.7,
-    defaultMaxTokens: 1000,
+    defaultMaxTokens: 8192,
     timeout: 60000, // 1 minute
   },
 };
@@ -248,7 +253,7 @@ export function AddLlmIntegration({
       monthlyBudget: 0,
       billingPeriodStartDay: 1,
       defaultTemperature: 0.7,
-      defaultMaxTokens: 2048,
+      defaultMaxTokens: 8192,
       timeout: 30000,
       streamingEnabled: true,
       isDefault: false,
@@ -878,6 +883,29 @@ export function AddLlmIntegration({
 
                     <FormField
                       control={form.control}
+                      name="defaultMaxTokens"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="flex items-center">
+                            {t("defaultMaxTokens")}
+                            <HelpPopover helpKey="llm.defaultMaxTokens" />
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              {...field}
+                              onChange={(e) =>
+                                field.onChange(parseInt(e.target.value))
+                              }
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
                       name="maxRequestsPerMinute"
                       render={({ field }) => (
                         <FormItem>
@@ -898,6 +926,23 @@ export function AddLlmIntegration({
                         </FormItem>
                       )}
                     />
+                  </div>
+
+                  <div className="rounded-md border bg-muted/40 px-3 py-2">
+                    <div className="flex items-center text-sm font-medium">
+                      {t("repoContextBudgetLabel")}
+                      <HelpPopover helpKey="llm.repoContextBudget" />
+                    </div>
+                    <p className="mt-0.5 text-sm text-muted-foreground">
+                      {t("repoContextBudgetAuto", {
+                        window: formatTokenCount(
+                          getModelContextWindow(provider, watchedModel)
+                        ),
+                        budget: formatTokenCount(
+                          getQuickScriptContextBudget(provider, watchedModel)
+                        ),
+                      })}
+                    </p>
                   </div>
                 </AccordionContent>
               </AccordionItem>
@@ -1037,6 +1082,35 @@ export function AddLlmIntegration({
                   <div className="grid grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
+                      name="timeout"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="flex items-center">
+                            {t("timeout")}
+                            <HelpPopover helpKey="llm.timeout" />
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              min="5000"
+                              max="600000"
+                              step="1000"
+                              {...field}
+                              onChange={(e) =>
+                                field.onChange(parseInt(e.target.value))
+                              }
+                            />
+                          </FormControl>
+                          <FormDescription>
+                            {t("timeoutDescription")}
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
                       name="defaultTemperature"
                       render={({ field }) => (
                         <FormItem>
@@ -1060,59 +1134,7 @@ export function AddLlmIntegration({
                         </FormItem>
                       )}
                     />
-
-                    <FormField
-                      control={form.control}
-                      name="defaultMaxTokens"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="flex items-center">
-                            {t("defaultMaxTokens")}
-                            <HelpPopover helpKey="llm.defaultMaxTokens" />
-                          </FormLabel>
-                          <FormControl>
-                            <Input
-                              type="number"
-                              {...field}
-                              onChange={(e) =>
-                                field.onChange(parseInt(e.target.value))
-                              }
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
                   </div>
-
-                  <FormField
-                    control={form.control}
-                    name="timeout"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="flex items-center">
-                          {t("timeout")}
-                          <HelpPopover helpKey="llm.timeout" />
-                        </FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            min="5000"
-                            max="600000"
-                            step="1000"
-                            {...field}
-                            onChange={(e) =>
-                              field.onChange(parseInt(e.target.value))
-                            }
-                          />
-                        </FormControl>
-                        <FormDescription>
-                          {t("timeoutDescription")}
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
 
                   <FormField
                     control={form.control}

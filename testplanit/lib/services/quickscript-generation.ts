@@ -20,6 +20,7 @@ import { format } from "date-fns";
 import { baseDb } from "~/lib/db";
 import { LLM_FEATURES } from "~/lib/llm/constants";
 import { CodeContextService } from "~/lib/llm/services/code-context.service";
+import { getQuickScriptContextBudget } from "~/lib/llm/model-capabilities";
 import { LlmManager } from "~/lib/llm/services/llm-manager.service";
 import { PromptResolver } from "~/lib/llm/services/prompt-resolver.service";
 import type { LlmRequest } from "~/lib/llm/types";
@@ -287,14 +288,24 @@ async function prepareQuickScript(
     };
   }
 
-  // Token budget. maxTokensPerRequest is the hard ceiling enforced by the base
-  // adapter's validateRequest(); defaultMaxTokens is the context budget.
+  // Token budgets. maxTokensPerRequest is the hard OUTPUT ceiling enforced by
+  // the base adapter's validateRequest(). The repo-context budget is sized from
+  // the model's INPUT context window (getQuickScriptContextBudget) — NOT from
+  // defaultMaxTokens, which is an output-token default and would starve context
+  // when an admin leaves it small.
   const providerConfig = await baseDb.llmProviderConfig.findFirst({
     where: { llmIntegrationId: resolved.integrationId },
-    select: { defaultMaxTokens: true, maxTokensPerRequest: true },
+    select: {
+      maxTokensPerRequest: true,
+      defaultModel: true,
+      llmIntegration: { select: { provider: true } },
+    },
   });
-  const maxContextTokens = providerConfig?.defaultMaxTokens || 8000;
   const outputTokenCap = providerConfig?.maxTokensPerRequest ?? Infinity;
+  const maxContextTokens = getQuickScriptContextBudget(
+    providerConfig?.llmIntegration?.provider,
+    resolved.model ?? providerConfig?.defaultModel
+  );
 
   // Assemble code context when the project has a connected repository.
   const repoConfig = await baseDb.projectCodeRepositoryConfig.findUnique({

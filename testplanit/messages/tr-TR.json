@@ -3741,6 +3741,7 @@
       "peopleAndAccess": "İnsanlar ve Erişim",
       "authentication": "Kimlik doğrulama",
       "toolsAndIntegrations": "Araçlar ve Entegrasyonlar",
+      "aiTools": "Yapay Zeka Araçları",
       "system": "Sistem"
     },
     "imports": {
@@ -5581,6 +5582,8 @@
         "billingPeriodStartDayDescription": "Faturalama döneminizin başladığı ayın günü (1-31). 29-31 arasındaki değerler, daha kısa ayların son gününü kullanır.",
         "defaultTemperature": "Varsayılan Sıcaklık",
         "defaultMaxTokens": "Varsayılan Maksimum Jeton Sayısı",
+        "repoContextBudgetLabel": "Depo Bağlam Bütçesi (QuickScript)",
+        "repoContextBudgetAuto": "Modelin ~{window} bağlam penceresine göre otomatik boyutlandırıldı — üretim başına yaklaşık {budget} token depo kodu.",
         "timeout": "İstek Zaman Aşımı (ms)",
         "timeoutDescription": "Yapay zeka modelinin yanıtını beklemek için maksimum süre (5000-600000 ms). Akış istekleri için geçerli değildir.",
         "streamingEnabled": "Akışı Etkinleştir",
@@ -6399,8 +6402,9 @@
       "endpoint": "## API Uç Noktası\nLLM sağlayıcısının API'si için temel URL.\n\n- OpenAI, Anthropic ve Gemini için boş bırakın — resmi URL'ler otomatik olarak kullanılır\n- Ollama (örneğin `http://localhost:11434`), Azure OpenAI ve Özel LLM için gereklidir\n- Herhangi bir sağlayıcı için isteğe bağlıdır — URL'sini girerek OpenAI uyumlu bir proxy'ye (örneğin LiteLLM) işaret edin\n- **Özel/dahili adresler** (localhost, 127.0.0.1, özel IP'ler, bulut meta verileri) `ALLOWED_PRIVATE_HOSTS` ortam değişkeni aracılığıyla açıkça izin verilmedikçe engellenir",
       "deploymentName": "## Azure Dağıtım Adı\nAzure OpenAI model dağıtımınızın adı.\n\n- Azure OpenAI Studio'da Dağıtımlar altında bulunur\n- Model adından farklıdır — örneğin `my-gpt4-deploy`, `gpt-4` ile eşleşir\n- Yalnızca Azure OpenAI için gereklidir",
       "defaultModel": "## Varsayılan Model\nBu entegrasyonla yapay zeka istekleri için kullanılan model.\n\n- OpenAI, Anthropic ve Gemini için — kullanılabilir modeller API anahtarınızdan otomatik olarak alınır\n- Modelin sağlayıcı hesabınızda etkinleştirildiğinden emin olun\n- Örnek: `gpt-4o`, `claude-3-5-sonnet-20241022`, `gemini-1.5-pro`",
-      "maxTokensPerRequest": "## İstek Başına Maksimum Token Sayısı\nHerhangi bir istek için çıktı token'larının **üst sınırı**.\n\n- Bunu aşan istekler, LLM'ye ulaşmadan önce **bir hata ile reddedilir**.\n- Bunu modelinizin gerçek maksimum çıktı token kapasitesine ayarlayın.\n- Örnek: GPT-4o için `16384`, Claude 3.5 Sonnet için `8192`.\n- Bunu çok düşük ayarlamak, yapay zeka özelliklerinin başarısız olmasına veya eksik çıktı üretmesine neden olur.",
-      "defaultMaxTokens": "## Varsayılan Maksimum Token Sayısı\nBir istek kendi token sayısını belirtmediğinde kullanılan **yedek** çıktı token sınırı.\n\n- Her yapay zeka özelliği (test oluşturma, kod dışa aktarma vb.) **Yönetici → İstemi Yapılandırması** bölümünde kendi sınırını belirler.\n- Bu değer yalnızca belirli bir sınırı yapılandırılmamış özellikler için yedek olarak kullanılır.\n- ≤ İstek Başına Maksimum Token Sayısı olmalıdır.",
+      "maxTokensPerRequest": "## İstek Başına Maksimum Token\nModelin tek bir yanıtta üretebileceği **_çıktı_ tokenleri için kesin üst sınır**.\n\n- Modelin **yanıtının** uzunluğunu sınırlar — ona gönderdiğiniz bağlam miktarını değil\n- Bundan daha fazlasını isteyen istekler, **modele ulaşmadan önce reddedilir**\n- Bunu modelinizin gerçek maksimum çıktısına ayarlayın — örneğin Claude Opus/Sonnet için `128000`, Claude Haiku için `64000`, Gemini için `65536`, GPT-4o için `16384`\n- Çok düşük olursa → AI özellikleri başarısız olur veya kesilmiş çıktı üretir",
+      "defaultMaxTokens": "## Varsayılan Maksimum Token\nBir özellik kendi değerini ayarlamadığında bir isteğin talep ettiği **varsayılan _çıktı_ uzunluğu**.\n\n- Modelin **yanıtının** ne kadar uzun olabileceğini kontrol eder, _İstek Başına Maksimum Token_ ile sınırlıdır\n- Çoğu AI özelliği kendi değerini **Yönetim → İstem Yapılandırması**'nda ayarlar; bu sadece yedek değerdir\n- QuickScript'in modele gönderdiği depo kodu miktarını **kontrol etmez** — bu bütçe, modelin bağlam penceresinden otomatik olarak türetilir\n- Bunu _İstek Başına Maksimum Token_'den küçük veya eşit tutun",
+      "repoContextBudget": "## Depo Bağlam Bütçesi\nBir betik oluştururken QuickScript'in modele bağlı deponuzun kodundan ne kadarını beslediği.\n\n- Seçilen modelin girdi bağlam penceresine göre **otomatik olarak ayarlanır** — burada yapılandırılacak bir şey yoktur\n- Daha büyük bağlamlı modeller (Claude, Gemini) daha fazlasını alır; küçük yerel modeller taşmayacak güvenli bir miktar alır\n- Daha fazla bağlam, betiği gerçek sayfa nesnelerinize ve fixture'larınıza dayandırır — oluşturulan betiğin uzunluğunu değiştirmez",
       "maxRequestsPerMinute": "## Dakika Başına Maksimum İstek Sayısı\nBu sağlayıcıya dakikada yapılabilecek API çağrılarının sayısını sınırlar.\n\n- Sağlayıcı planınızın hız sınırına uyacak şekilde ayarlayın\n- Fazla istekler reddedilmez, kuyruğa alınır\n- Planınızın sınırı için sağlayıcınızın belgelerini kontrol edin",
       "costPerInputToken": "## Giriş Tokeni Başına Maliyet (USD)\nModele gönderilen her giriş (istem) tokeni için USD cinsinden maliyet.\n\n- Maliyet takibi ve bütçe uyarıları için kullanılır\n- Bunu sağlayıcınızın fiyatlandırma sayfasında bulabilirsiniz\n- Örnek: `0.000005` = milyon giriş tokeni başına 5 ABD doları",
       "costPerOutputToken": "## Çıktı Tokeni Başına Maliyet (USD)\nModel tarafından üretilen her çıktı (tamamlama) tokeni için USD cinsinden maliyet.\n\n- Genellikle girdi tokeni maliyetinden daha yüksektir\n- Maliyet takibi ve bütçe uyarıları için kullanılır\n- Örnek: `0.000015` = milyon çıktı tokeni başına 15 $",

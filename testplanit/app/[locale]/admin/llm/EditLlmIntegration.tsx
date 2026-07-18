@@ -29,6 +29,11 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { HelpPopover } from "@/components/ui/help-popover";
+import {
+  getModelContextWindow,
+  getQuickScriptContextBudget,
+  formatTokenCount,
+} from "~/lib/llm/model-capabilities";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -120,7 +125,7 @@ const FIELD_TO_SECTION: Record<string, string> = {
   monthlyBudget: "cost-and-budget",
   billingPeriodStartDay: "cost-and-budget",
   defaultTemperature: "advanced",
-  defaultMaxTokens: "advanced",
+  defaultMaxTokens: "provider",
   timeout: "advanced",
   streamingEnabled: "advanced",
 };
@@ -193,7 +198,7 @@ export function EditLlmIntegration({
       monthlyBudget: 0,
       billingPeriodStartDay: 1,
       defaultTemperature: 0.7,
-      defaultMaxTokens: 1000,
+      defaultMaxTokens: 8192,
       timeout: 30000,
       streamingEnabled: true,
       isDefault: false,
@@ -335,7 +340,7 @@ export function EditLlmIntegration({
         defaultTemperature:
           integration.llmProviderConfig?.defaultTemperature || 0.7,
         defaultMaxTokens:
-          integration.llmProviderConfig?.defaultMaxTokens || 1000,
+          integration.llmProviderConfig?.defaultMaxTokens || 8192,
         timeout: integration.llmProviderConfig?.timeout || 30000,
         streamingEnabled:
           integration.llmProviderConfig?.streamingEnabled ?? true,
@@ -908,6 +913,29 @@ export function EditLlmIntegration({
 
                         <FormField
                           control={form.control}
+                          name="defaultMaxTokens"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="flex items-center">
+                                {tAdd("defaultMaxTokens")}
+                                <HelpPopover helpKey="llm.defaultMaxTokens" />
+                              </FormLabel>
+                              <FormControl>
+                                <Input
+                                  type="number"
+                                  {...field}
+                                  onChange={(e) =>
+                                    field.onChange(parseInt(e.target.value))
+                                  }
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
                           name="maxRequestsPerMinute"
                           render={({ field }) => (
                             <FormItem>
@@ -928,6 +956,26 @@ export function EditLlmIntegration({
                             </FormItem>
                           )}
                         />
+                      </div>
+
+                      <div className="rounded-md border bg-muted/40 px-3 py-2">
+                        <div className="flex items-center text-sm font-medium">
+                          {tAdd("repoContextBudgetLabel")}
+                          <HelpPopover helpKey="llm.repoContextBudget" />
+                        </div>
+                        <p className="mt-0.5 text-sm text-muted-foreground">
+                          {tAdd("repoContextBudgetAuto", {
+                            window: formatTokenCount(
+                              getModelContextWindow(provider, watchedModel)
+                            ),
+                            budget: formatTokenCount(
+                              getQuickScriptContextBudget(
+                                provider,
+                                watchedModel
+                              )
+                            ),
+                          })}
+                        </p>
                       </div>
                     </AccordionContent>
                   </AccordionItem>
@@ -1162,6 +1210,35 @@ export function EditLlmIntegration({
                       <div className="grid grid-cols-2 gap-4">
                         <FormField
                           control={form.control}
+                          name="timeout"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="flex items-center">
+                                {tAdd("timeout")}
+                                <HelpPopover helpKey="llm.timeout" />
+                              </FormLabel>
+                              <FormControl>
+                                <Input
+                                  type="number"
+                                  min="5000"
+                                  max="600000"
+                                  step="1000"
+                                  {...field}
+                                  onChange={(e) =>
+                                    field.onChange(parseInt(e.target.value))
+                                  }
+                                />
+                              </FormControl>
+                              <FormDescription>
+                                {tAdd("timeoutDescription")}
+                              </FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
                           name="defaultTemperature"
                           render={({ field }) => (
                             <FormItem>
@@ -1185,59 +1262,7 @@ export function EditLlmIntegration({
                             </FormItem>
                           )}
                         />
-
-                        <FormField
-                          control={form.control}
-                          name="defaultMaxTokens"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="flex items-center">
-                                {tAdd("defaultMaxTokens")}
-                                <HelpPopover helpKey="llm.defaultMaxTokens" />
-                              </FormLabel>
-                              <FormControl>
-                                <Input
-                                  type="number"
-                                  {...field}
-                                  onChange={(e) =>
-                                    field.onChange(parseInt(e.target.value))
-                                  }
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
                       </div>
-
-                      <FormField
-                        control={form.control}
-                        name="timeout"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="flex items-center">
-                              {tAdd("timeout")}
-                              <HelpPopover helpKey="llm.timeout" />
-                            </FormLabel>
-                            <FormControl>
-                              <Input
-                                type="number"
-                                min="5000"
-                                max="600000"
-                                step="1000"
-                                {...field}
-                                onChange={(e) =>
-                                  field.onChange(parseInt(e.target.value))
-                                }
-                              />
-                            </FormControl>
-                            <FormDescription>
-                              {tAdd("timeoutDescription")}
-                            </FormDescription>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
 
                       <FormField
                         control={form.control}

@@ -3741,6 +3741,7 @@
       "peopleAndAccess": "人员与通道",
       "authentication": "验证",
       "toolsAndIntegrations": "工具与集成",
+      "aiTools": "人工智能工具",
       "system": "系统"
     },
     "imports": {
@@ -5581,6 +5582,8 @@
         "billingPeriodStartDayDescription": "账单周期开始的日期（1-31）。29-31 使用的是较短月份的最后一天。",
         "defaultTemperature": "默认温度",
         "defaultMaxTokens": "默认最大令牌数",
+        "repoContextBudgetLabel": "仓库上下文预算(QuickScript)",
+        "repoContextBudgetAuto": "根据模型约 {window} 的上下文窗口自动调整大小 — 每次生成约 {budget} 个仓库代码 token。",
         "timeout": "请求超时时间（毫秒）",
         "timeoutDescription": "等待 AI 模型响应的最长时间（5000-600000 毫秒）。不适用于流式请求。",
         "streamingEnabled": "启用流媒体",
@@ -6399,8 +6402,9 @@
       "endpoint": "## API 端点\nLLM 提供商 API 的基本 URL。\n\n- OpenAI、Anthropic 和 Gemini 留空 — 系统会自动使用官方 URL。\n- Ollama（例如 `http://localhost:11434`）、Azure OpenAI 和自定义 LLM 为必填项。\n- 所有提供商均为可选 — 通过输入 URL 指向 OpenAI 兼容的代理（例如 LiteLLM）。\n- **私有/内部地址**（localhost、127.0.0.1、私有 IP、云元数据）将被阻止，除非通过 `ALLOWED_PRIVATE_HOSTS` 环境变量显式允许。",
       "deploymentName": "## Azure 部署名称\n您的 Azure OpenAI 模型部署的名称。\n\n- 在 Azure OpenAI Studio 的“部署”下找到。\n- 与模型名称不同，例如 `my-gpt4-deploy` 映射到 `gpt-4`。\n- 仅 Azure OpenAI 需要。",
       "defaultModel": "## 默认模型\n此集成用于 AI 请求的模型。\n\n- 对于 OpenAI、Anthropic 和 Gemini — 可用模型将根据您的 API 密钥自动获取。\n- 请确保已在您的提供商帐户中启用该模型。\n- 例如：`gpt-4o`、`claude-3-5-sonnet-20241022`、`gemini-1.5-pro`",
-      "maxTokensPerRequest": "## 每次请求的最大令牌数\n单个请求输出令牌数的**硬性上限**。\n\n- 超过此值的请求会在到达 LLM 之前被**拒绝并返回错误**。\n- 将此值设置为模型的实际最大输出令牌容量。\n- 例如：GPT-4o 为 `16384`，Claude 3.5 Sonnet 为 `8192`。\n- 此值设置过低会导致 AI 功能失效或生成截断的输出。",
-      "defaultMaxTokens": "## 默认最大令牌数\n当请求未指定自身令牌数限制时，使用此**备用**输出令牌数限制。\n\n- 每个 AI 功能（测试生成、代码导出等）在**管理 → 提示配置**中设置自己的限制。\n- 此值仅用作未配置特定限制的功能的备用值。\n- 应≤每个请求的最大令牌数。",
+      "maxTokensPerRequest": "## 每次请求的最大令牌数\n模型在单次响应中可生成的**输出**令牌数的**硬性上限**。\n\n- 限制模型**回复**的长度——而非您发送的上下文量\n- 超过此限制的请求将在**到达模型之前被拒绝**\n- 请设置为您模型的实际最大输出值——例如 Claude Opus/Sonnet 为 `128000`，Claude Haiku 为 `64000`，Gemini 为 `65536`，GPT-4o 为 `16384`\n- 设置过低 → AI 功能将失败或产生截断的输出",
+      "defaultMaxTokens": "## 默认最大令牌数\n当某项功能未设置自己的值时，请求所要求的**默认输出**长度。\n\n- 控制模型**回复**的长度，受限于_每次请求的最大令牌数_\n- 大多数 AI 功能会在**管理 → 提示词配置**中设置自己的值；此项仅作为后备值\n- 该值**不**控制 QuickScript 向模型发送的代码库数量——该预算是根据模型的上下文窗口自动计算的\n- 请保持此值不超过_每次请求的最大令牌数_",
+      "repoContextBudget": "## 仓库上下文预算\nQuickScript 在生成脚本时,会将您所连接仓库中的多少代码提供给模型。\n\n- **自动设置**,根据所选模型的输入上下文窗口而定 — 此处无需进行任何配置\n- 上下文更大的模型(Claude、Gemini)可获得更多;小型本地模型则获得一个不会溢出的安全数量\n- 更多上下文可让脚本更贴合您真实的页面对象和测试数据(fixtures)— 但不会改变生成脚本的长度",
       "maxRequestsPerMinute": "## 每分钟最大请求数\n限制每分钟可向此提供商发出的 API 调用次数。\n\n- 设置以匹配您的提供商套餐的速率限制。\n- 超出限制的请求将被排队，不会被拒绝。\n- 请查看您的提供商文档以了解您的套餐限制。",
       "costPerInputToken": "## 每个输入令牌的成本（美元）\n发送到模型的每个输入（提示）令牌的成本（以美元计）。\n\n- 用于成本跟踪和预算提醒。\n- 可在服务提供商的定价页面找到。\n- 例如：`0.000005` = 每百万个输入令牌 5 美元",
       "costPerOutputToken": "## 每个输出代币的成本（美元）\n模型生成的每个输出（完成）代币的成本（以美元计）。\n\n- 通常高于输入代币的成本\n- 用于成本跟踪和预算提醒\n- 例如：`0.000015` = 每百万个输出代币 15 美元",
