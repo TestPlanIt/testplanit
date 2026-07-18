@@ -318,10 +318,13 @@ export const sideEffectsPlugin = definePlugin(schema, {
             const old = before[i] ?? null;
             if (!row?.id) continue;
             syncIssueToElasticsearch(row.id).catch(logEsError("issue", row.id));
-            if (row.projectId != null) {
-              if (old) await emitIssueUpdated(old, row, tx);
-              else await emitIssueCreated(row, tx);
-            }
+            // No projectId gate here — the emitter resolves the full set of
+            // target projects (home ∪ linked-entity projects) and no-ops when
+            // there is nothing to fan out to. Integration-only issues with a
+            // null home project still reach subscribers in the projects their
+            // linked entities live in.
+            if (old) await emitIssueUpdated(old, row, tx);
+            else await emitIssueCreated(row, tx);
           }
           break;
         }

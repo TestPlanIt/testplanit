@@ -1716,7 +1716,12 @@ export class SyncService {
       const updatedIssue = await defaultDb.issue.findUnique({
         where: { id: existingIssue.id },
       });
-      if (updatedIssue && updatedIssue.projectId != null) {
+      // No projectId gate — emitIssueUpdated fans out to the union of the
+      // issue's home project and every project its linked entities live in, so
+      // a synced status change reaches subscribers across all touched projects
+      // (and integration-only issues with a null home project still route via
+      // their linked entities).
+      if (updatedIssue) {
         const { baseDb: extendedDb } = await import("@/lib/db");
         const { emitIssueUpdated } =
           await import("~/lib/webhooks/event-emitters/issueEvents");
