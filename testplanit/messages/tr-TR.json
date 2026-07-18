@@ -756,6 +756,7 @@
       "issues": "{count, plural, =0 {Sorun Yok} =1 {1 Sorun} other {# Sorun}}",
       "noOptions": "Hiçbir seçenek mevcut değil.",
       "multiConfiguration": "Çoklu konfigürasyon grubunun bir parçası",
+      "compositionLocked": "Bileşim kilitlendi — senaryo seti donduruldu",
       "otherConfigurations": "Diğer yapılandırmalar",
       "selected": "Seçilen: {count}",
       "defaultProjectAccess": "Varsayılan Proje Erişimi",
@@ -2011,6 +2012,13 @@
           "disabledToast": "Taslak vakalar artık çalıştırmalara eklenebilir.",
           "saveError": "Taslak dava hariç tutma ayarı güncellenemedi.",
           "skippedToast": "{count, plural, =1 {1 taslak vaka başlatılmadı durumunda olduğu için atlandı} other {# taslak vaka başlatılmadı durumunda olduğu için atlandı}}"
+        },
+        "autoLockComposition": {
+          "label": "Yürütme başladığında Test Çalıştırması bileşimini kilitle",
+          "description": "Etkinleştirildiğinde, bir test koşumunun durum kompozisyonu, koşum Devam Ediyor durumuna geçtiği anda otomatik olarak kilitlenir. Kilitleme, yürütme ve atama devam ederken koşumda hangi durumların bulunduğunu dondurur (ekleme, kaldırma veya yeniden sıralama yapılamaz). Koşumun oluşturucusu veya bir Proje Yöneticisi, durum kümesini değiştirmek için kilidi açabilir.",
+          "enabledToast": "Yürütme başladığında Test Çalıştırmaları bileşimlerini kilitleyecek",
+          "disabledToast": "Test Çalıştırmaları artık bileşimlerini otomatik olarak kilitlemeyecek",
+          "saveError": "Bileşim otomatik kilitleme ayarını güncelleme başarısız oldu"
         },
         "editWindow": {
           "label": "Sonuç düzenleme penceresi",
@@ -3510,6 +3518,18 @@
     }
   },
   "runs": {
+    "composition": {
+      "lock": "Kilitli Vakalar",
+      "unlock": "Kilidi aç",
+      "locked": "Bileşim kilitli",
+      "lockHint": "Bu çalıştırmada hangi senaryoların bulunduğunu dondurun. Kullanıcılar test senaryolarını atamaya ve yürütmeye devam edebilir.",
+      "lockedBy": "Bileşim {name} tarafından kilitlendi.",
+      "lockedAutomatically": "Yürütme başladığında bileşim otomatik olarak kilitlendi.",
+      "frozenNotice": "Bileşim kilitli — test senaryoları eklenemez, kaldırılamaz veya yeniden sıralanamaz. Test senaryolarını atamaya ve yürütmeye devam edebilirsiniz.",
+      "lockError": "Koşum bileşimini kilitleme başarısız oldu",
+      "unlockError": "Koşum bileşiminin kilidini açma başarısız oldu",
+      "addBlocked": "Bu çalıştırmanın bileşimi kilitli, bu nedenle test senaryoları eklenemez. Senaryo setini değiştirmek için önce kilidini açın."
+    },
     "distribute": {
       "title": "Görevleri dağıt",
       "description": "Bu çalıştırmanın test durumlarını, ilgili durumları bir arada tutarak ekip üyeleri arasında eşit şekilde dağıtın.",

@@ -756,6 +756,7 @@
       "issues": "{count, plural, =0 {Aucun problème} =1 {1 problème} other {# problèmes}}",
       "noOptions": "Aucune option disponible",
       "multiConfiguration": "Faisant partie d'un groupe à configurations multiples",
+      "compositionLocked": "Composition verrouillée — l'ensemble des cas est figé",
       "otherConfigurations": "Autres configurations",
       "selected": "Sélectionné : {count}",
       "defaultProjectAccess": "Accès au projet par défaut",
@@ -2011,6 +2012,13 @@
           "disabledToast": "Il est désormais possible d'ajouter des brouillons de dossiers aux séries.",
           "saveError": "Échec de la mise à jour du paramètre d'exclusion des brouillons",
           "skippedToast": "{count, plural, =1 {1 brouillon a été ignoré car il est à l'état « Non démarré »} other {# brouillons ont été ignorés car ils sont à l'état « Non démarré »}}"
+        },
+        "autoLockComposition": {
+          "label": "Verrouiller la composition du Test Run au démarrage de l'exécution",
+          "description": "Lorsque cette option est activée, la composition des cas de test d'une exécution est automatiquement verrouillée dès que l'exécution passe à l'état En cours. Le verrouillage fige les cas présents dans l'exécution (impossible d'en ajouter, d'en supprimer ou de les réorganiser) tandis que l'exécution et l'attribution continuent. Le créateur de l'exécution ou un administrateur de projet peut la déverrouiller pour modifier l'ensemble des cas.",
+          "enabledToast": "Les Test Runs verrouilleront leur composition au démarrage de l'exécution",
+          "disabledToast": "Les Test Runs ne verrouilleront plus automatiquement leur composition",
+          "saveError": "Échec de la mise à jour du paramètre de verrouillage automatique de la composition"
         },
         "editWindow": {
           "label": "Fenêtre d'édition des résultats",
@@ -3510,6 +3518,18 @@
     }
   },
   "runs": {
+    "composition": {
+      "lock": "Cas verrouillés",
+      "unlock": "Déverrouiller",
+      "locked": "Composition verrouillée",
+      "lockHint": "Fige les cas inclus dans cette exécution. Les utilisateurs peuvent toujours assigner et exécuter les cas de test.",
+      "lockedBy": "Composition verrouillée par {name}.",
+      "lockedAutomatically": "Composition verrouillée automatiquement au démarrage de l'exécution.",
+      "frozenNotice": "La composition est verrouillée — les cas de test ne peuvent pas être ajoutés, supprimés ou réorganisés. Vous pouvez toujours assigner et exécuter les cas de test.",
+      "lockError": "Échec du verrouillage de la composition de l'exécution",
+      "unlockError": "Échec du déverrouillage de la composition de l'exécution",
+      "addBlocked": "La composition de cette exécution est verrouillée, les cas de test ne peuvent donc pas être ajoutés. Déverrouillez-la d'abord pour modifier l'ensemble des cas."
+    },
     "distribute": {
       "title": "Distribuer les affectations",
       "description": "Répartissez équitablement les cas de test de cette exécution entre les membres de l'équipe, en gardant les cas liés ensemble.",

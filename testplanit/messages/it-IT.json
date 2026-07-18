@@ -756,6 +756,7 @@
       "issues": "{count, plural, =0 {Nessun problema} =1 {1 problema} other {# problemi}}",
       "noOptions": "Nessuna opzione disponibile",
       "multiConfiguration": "Parte di un gruppo multiconfigurazione",
+      "compositionLocked": "Composizione bloccata — l'insieme dei casi è congelato",
       "otherConfigurations": "Altre configurazioni",
       "selected": "Selezionato: {count}",
       "defaultProjectAccess": "Accesso predefinito al progetto",
@@ -2011,6 +2012,13 @@
           "disabledToast": "Ora è possibile aggiungere casi di bozza alle esecuzioni",
           "saveError": "Impossibile aggiornare l'impostazione di esclusione del caso di bozza.",
           "skippedToast": "{count, plural, =1 {1 caso di bozza è stato saltato perché si trova nello stato Non avviato} other {# casi di bozza sono stati saltati perché si trovano nello stato Non avviato}}"
+        },
+        "autoLockComposition": {
+          "label": "Blocca la composizione del Test Run all'avvio dell'esecuzione",
+          "description": "Quando attivata, la composizione dei casi di un test run viene bloccata automaticamente nel momento in cui il run passa allo stato In corso. Il blocco impedisce modifiche ai casi presenti nel run (nessuna aggiunta, rimozione o riordino) mentre l'esecuzione e l'assegnazione continuano normalmente. Il creatore del run o un Amministratore del progetto può sbloccarlo per modificare l'insieme dei casi.",
+          "enabledToast": "I Test Run bloccheranno la loro composizione all'avvio dell'esecuzione",
+          "disabledToast": "I Test Run non bloccheranno più automaticamente la loro composizione",
+          "saveError": "Impossibile aggiornare l'impostazione di blocco automatico della composizione"
         },
         "editWindow": {
           "label": "Finestra di modifica dei risultati",
@@ -3510,6 +3518,18 @@
     }
   },
   "runs": {
+    "composition": {
+      "lock": "Casi bloccati",
+      "unlock": "Sblocca",
+      "locked": "Composizione bloccata",
+      "lockHint": "Congela i casi presenti in questa esecuzione. Gli utenti possono ancora assegnare ed eseguire i casi di test.",
+      "lockedBy": "Composizione bloccata da {name}.",
+      "lockedAutomatically": "Composizione bloccata automaticamente all'avvio dell'esecuzione.",
+      "frozenNotice": "La composizione è bloccata — non è possibile aggiungere, rimuovere o riordinare i casi di test. È comunque possibile assegnare ed eseguire i casi di test.",
+      "lockError": "Impossibile bloccare la composizione del run",
+      "unlockError": "Impossibile sbloccare la composizione del run",
+      "addBlocked": "La composizione di questa esecuzione è bloccata, quindi non è possibile aggiungere casi di test. Sbloccala prima per modificare l'insieme dei casi."
+    },
     "distribute": {
       "title": "Distribuisci le assegnazioni",
       "description": "Assegna in modo uniforme i casi di prova di questa sessione tra i membri del team, mantenendo insieme i casi correlati.",

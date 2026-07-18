@@ -756,6 +756,7 @@
       "issues": "{count, plural, =0 {沒有問題} =1 {1 個問題} other {# 個問題}}",
       "noOptions": "暫無選項",
       "multiConfiguration": "屬於多配置組",
+      "compositionLocked": "組成已鎖定 — 案例集已凍結",
       "otherConfigurations": "其他配置",
       "selected": "已選擇： {count}",
       "defaultProjectAccess": "預設項目存取權限",
@@ -2011,6 +2012,13 @@
           "disabledToast": "現在可以將草稿案例新增到運行中。",
           "saveError": "更新草稿案例排除設定失敗",
           "skippedToast": "{count, plural, =1 {已跳過 1 個草稿案例，因其處於未開始狀態} other {已跳過 # 個草稿案例，因其處於未開始狀態}}"
+        },
+        "autoLockComposition": {
+          "label": "執行開始時鎖定測試執行組成",
+          "description": "啟用後，測試執行的案例組成會在執行進入「進行中」狀態時自動鎖定。鎖定會固定該執行中的案例（無法新增、移除或重新排序），但執行與指派仍可繼續進行。該執行的建立者或專案管理員可解鎖以變更案例集。",
+          "enabledToast": "測試執行將在執行開始時鎖定其組成",
+          "disabledToast": "測試執行將不再自動鎖定其組成",
+          "saveError": "更新組成自動鎖定設定失敗"
         },
         "editWindow": {
           "label": "結果編輯視窗",
@@ -3510,6 +3518,18 @@
     }
   },
   "runs": {
+    "composition": {
+      "lock": "案例已鎖定",
+      "unlock": "解鎖",
+      "locked": "組成已鎖定",
+      "lockHint": "凍結此次執行中的案例。使用者仍可指派並執行測試案例。",
+      "lockedBy": "組成已由 {name} 鎖定。",
+      "lockedAutomatically": "執行開始時已自動鎖定組成。",
+      "frozenNotice": "組成已鎖定 — 無法新增、移除或重新排序測試案例。您仍可指派並執行測試案例。",
+      "lockError": "鎖定測試執行組成失敗",
+      "unlockError": "解鎖測試執行組成失敗",
+      "addBlocked": "此執行的組成已鎖定，因此無法新增測試案例。請先解鎖以變更案例集。"
+    },
     "distribute": {
       "title": "分配任務",
       "description": "將此測試運行的測試用例平均分配給團隊成員，並保持相關案例的關聯性。",

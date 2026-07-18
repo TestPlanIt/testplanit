@@ -756,6 +756,7 @@
       "issues": "{count, plural, =0 {Ningún problema} =1 {1 problema} other {# problemas}}",
       "noOptions": "No hay opciones disponibles",
       "multiConfiguration": "Parte de un grupo de configuración múltiple",
+      "compositionLocked": "Composición bloqueada: el conjunto de casos está congelado",
       "otherConfigurations": "Otras configuraciones",
       "selected": "Seleccionado: {count}",
       "defaultProjectAccess": "Acceso al proyecto por defecto",
@@ -2011,6 +2012,13 @@
           "disabledToast": "Ahora se pueden agregar casos de borrador a las ejecuciones.",
           "saveError": "No se pudo actualizar la configuración de exclusión del caso preliminar.",
           "skippedToast": "{count, plural, =1 {Se omitió 1 caso de borrador porque está en estado No iniciado} other {Se omitieron # casos de borrador porque están en estado No iniciado}}"
+        },
+        "autoLockComposition": {
+          "label": "Bloquear la composición de la ejecución de pruebas al iniciar la ejecución",
+          "description": "Cuando está habilitado, la composición de casos de un ciclo de pruebas se bloquea automáticamente en el momento en que el ciclo pasa a un estado En progreso. El bloqueo congela qué casos están en el ciclo (no se pueden agregar, quitar ni reordenar) mientras la ejecución y la asignación continúan. El creador del ciclo o un administrador del proyecto puede desbloquearlo para cambiar el conjunto de casos.",
+          "enabledToast": "Las ejecuciones de pruebas bloquearán su composición al iniciar la ejecución",
+          "disabledToast": "Las ejecuciones de pruebas ya no bloquearán automáticamente su composición",
+          "saveError": "No se pudo actualizar la configuración de bloqueo automático de composición"
         },
         "editWindow": {
           "label": "Ventana de edición de resultados",
@@ -3510,6 +3518,18 @@
     }
   },
   "runs": {
+    "composition": {
+      "lock": "Casos Bloqueados",
+      "unlock": "Desbloquear",
+      "locked": "Composición bloqueada",
+      "lockHint": "Congela qué casos están en esta ejecución. Los usuarios aún pueden asignar y ejecutar casos de prueba.",
+      "lockedBy": "Composición bloqueada por {name}.",
+      "lockedAutomatically": "Composición bloqueada automáticamente al iniciar la ejecución.",
+      "frozenNotice": "La composición está bloqueada: no se pueden agregar, eliminar ni reordenar casos de prueba. Aún puedes asignar y ejecutar casos de prueba.",
+      "lockError": "No se pudo bloquear la composición del ciclo",
+      "unlockError": "No se pudo desbloquear la composición del ciclo",
+      "addBlocked": "La composición de esta ejecución está bloqueada, por lo que no se pueden agregar casos de prueba. Desbloquéala primero para cambiar el conjunto de casos."
+    },
     "distribute": {
       "title": "Distribuir asignaciones",
       "description": "Asignar de manera uniforme los casos de prueba de esta ejecución entre los miembros del equipo, manteniendo juntos los casos relacionados.",

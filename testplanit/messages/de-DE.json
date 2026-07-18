@@ -756,6 +756,7 @@
       "issues": "{count, plural, =0 {Keine Probleme} =1 {1 Problem} other {# Probleme}}",
       "noOptions": "Keine Optionen verfügbar",
       "multiConfiguration": "Teil einer Multi-Konfigurationsgruppe",
+      "compositionLocked": "Zusammensetzung gesperrt — die Fallmenge ist eingefroren",
       "otherConfigurations": "Andere Konfigurationen",
       "selected": "Ausgewählt: {count}",
       "defaultProjectAccess": "Standard-Projektzugriff",
@@ -2011,6 +2012,13 @@
           "disabledToast": "Entwürfe können nun zu Spielzügen hinzugefügt werden.",
           "saveError": "Fehler beim Aktualisieren der Einstellung zum Ausschluss von Entwürfen",
           "skippedToast": "{count, plural, =1 {1 Entwurf wurde übersprungen, da er sich im Status „Nicht begonnen“ befindet.} other {# Entwürfe wurden übersprungen, da sie sich im Status „Nicht begonnen“ befinden.}}"
+        },
+        "autoLockComposition": {
+          "label": "Zusammensetzung des Testlaufs bei Ausführungsstart sperren",
+          "description": "Wenn aktiviert, wird die Fallzusammensetzung eines Testlaufs automatisch gesperrt, sobald der Lauf in den Status „In Bearbeitung“ wechselt. Durch die Sperrung wird eingefroren, welche Fälle im Lauf enthalten sind (kein Hinzufügen, Entfernen oder Umordnen), während die Ausführung und Zuweisung fortgesetzt werden. Der Ersteller des Laufs oder ein Projektadministrator kann ihn entsperren, um die Fallauswahl zu ändern.",
+          "enabledToast": "Testläufe sperren ihre Zusammensetzung, wenn die Ausführung beginnt",
+          "disabledToast": "Testläufe sperren ihre Zusammensetzung nicht mehr automatisch",
+          "saveError": "Die Aktualisierung der Einstellung für die automatische Sperrung der Zusammensetzung ist fehlgeschlagen"
         },
         "editWindow": {
           "label": "Ergebnisbearbeitungsfenster",
@@ -3510,6 +3518,18 @@
     }
   },
   "runs": {
+    "composition": {
+      "lock": "Fälle gesperrt",
+      "unlock": "Entsperren",
+      "locked": "Zusammensetzung gesperrt",
+      "lockHint": "Legt fest, welche Fälle in diesem Lauf enthalten sind. Benutzer können Testfälle weiterhin zuweisen und ausführen.",
+      "lockedBy": "Zusammensetzung von {name} gesperrt.",
+      "lockedAutomatically": "Zusammensetzung automatisch gesperrt, als die Ausführung begann.",
+      "frozenNotice": "Die Zusammensetzung ist gesperrt — Testfälle können nicht hinzugefügt, entfernt oder neu angeordnet werden. Sie können Testfälle weiterhin zuweisen und ausführen.",
+      "lockError": "Die Sperrung der Testlaufzusammensetzung ist fehlgeschlagen",
+      "unlockError": "Die Entsperrung der Testlaufzusammensetzung ist fehlgeschlagen",
+      "addBlocked": "Die Zusammensetzung dieses Laufs ist gesperrt, daher können keine Testfälle hinzugefügt werden. Entsperren Sie sie zuerst, um die Fallmenge zu ändern."
+    },
     "distribute": {
       "title": "Zuweisungen verteilen",
       "description": "Testfälle dieses Testlaufs gleichmäßig auf Teammitglieder verteilen und dabei zusammengehörige Fälle beisammen halten.",

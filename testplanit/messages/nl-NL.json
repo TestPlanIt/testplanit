@@ -756,6 +756,7 @@
       "issues": "{count, plural, =0 {Geen problemen} =1 {1 probleem} other {# problemen}}",
       "noOptions": "Geen opties beschikbaar",
       "multiConfiguration": "Onderdeel van een groep met meerdere configuraties",
+      "compositionLocked": "Samenstelling vergrendeld — de testcaseset is bevroren",
       "otherConfigurations": "Andere configuraties",
       "selected": "Geselecteerd: {count}",
       "defaultProjectAccess": "Standaard projecttoegang",
@@ -2011,6 +2012,13 @@
           "disabledToast": "Conceptcases kunnen nu aan runs worden toegevoegd.",
           "saveError": "Het bijwerken van de instelling voor het uitsluiten van conceptzaken is mislukt.",
           "skippedToast": "{count, plural, =1 {1 conceptcase is overgeslagen omdat deze de status 'Niet gestart' heeft} other {# conceptcases zijn overgeslagen omdat ze de status 'Niet gestart' hebben}}"
+        },
+        "autoLockComposition": {
+          "label": "Vergrendel de samenstelling van een testrun wanneer de uitvoering begint",
+          "description": "Indien ingeschakeld, wordt de samenstelling van testgevallen van een testrun automatisch vergrendeld zodra de run naar de status In behandeling gaat. Vergrendelen bevriest welke testgevallen zich in de run bevinden (niet toevoegen, verwijderen of opnieuw ordenen), terwijl uitvoering en toewijzing doorgaan. De maker van de run of een projectbeheerder kan deze ontgrendelen om de set testgevallen te wijzigen.",
+          "enabledToast": "Testruns vergrendelen hun samenstelling wanneer de uitvoering begint",
+          "disabledToast": "Testruns vergrendelen hun samenstelling niet langer automatisch",
+          "saveError": "Het bijwerken van de automatische vergrendelingsinstelling voor de samenstelling is mislukt"
         },
         "editWindow": {
           "label": "Resultaatbewerkingsvenster",
@@ -3510,6 +3518,18 @@
     }
   },
   "runs": {
+    "composition": {
+      "lock": "Testgevallen vergrendeld",
+      "unlock": "Ontgrendelen",
+      "locked": "Samenstelling vergrendeld",
+      "lockHint": "Bevries welke testcases in deze run zijn opgenomen. Gebruikers kunnen testcases nog wel toewijzen en uitvoeren.",
+      "lockedBy": "Samenstelling vergrendeld door {name}.",
+      "lockedAutomatically": "Samenstelling automatisch vergrendeld toen de uitvoering begon.",
+      "frozenNotice": "Samenstelling is vergrendeld — testcases kunnen niet worden toegevoegd, verwijderd of opnieuw gerangschikt. U kunt testcases nog wel toewijzen en uitvoeren.",
+      "lockError": "Het vergrendelen van de samenstelling van de run is mislukt",
+      "unlockError": "Het ontgrendelen van de samenstelling van de run is mislukt",
+      "addBlocked": "De samenstelling van deze run is vergrendeld, dus testcases kunnen niet worden toegevoegd. Ontgrendel eerst om de testcaseset te wijzigen."
+    },
     "distribute": {
       "title": "Opdrachten verdelen",
       "description": "Verdeel de testcases van deze run gelijk over teamleden, waarbij gerelateerde testcases bij elkaar blijven.",

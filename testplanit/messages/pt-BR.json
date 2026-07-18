@@ -756,6 +756,7 @@
       "issues": "{count, plural, =0 {Nenhum problema} =1 {1 problema} other {# problemas}}",
       "noOptions": "Nenhuma opção disponível",
       "multiConfiguration": "Parte de um grupo de múltiplas configurações",
+      "compositionLocked": "Composição bloqueada — o conjunto de casos está congelado",
       "otherConfigurations": "Outras configurações",
       "selected": "Selecionado: {count}",
       "defaultProjectAccess": "Acesso ao projeto padrão",
@@ -2011,6 +2012,13 @@
           "disabledToast": "Agora é possível adicionar casos de rascunho às execuções.",
           "saveError": "Falha ao atualizar a configuração de exclusão de casos em rascunho",
           "skippedToast": "{count, plural, =1 {1 caso de rascunho foi ignorado porque está no estado Não Iniciado} other {# casos de rascunho foram ignorados porque estão no estado Não Iniciado}}"
+        },
+        "autoLockComposition": {
+          "label": "Bloquear composição da Execução de Teste quando a execução iniciar",
+          "description": "Quando ativado, a composição de casos de uma execução de teste é bloqueada automaticamente no momento em que a execução entra no estado Em Progresso. O bloqueio congela quais casos estão na execução (sem adicionar, remover ou reordenar) enquanto a execução e a atribuição continuam. O criador da execução ou um Administrador do Projeto pode desbloqueá-la para alterar o conjunto de casos.",
+          "enabledToast": "As Execuções de Teste bloquearão sua composição quando a execução iniciar",
+          "disabledToast": "As Execuções de Teste não bloquearão mais sua composição automaticamente",
+          "saveError": "Falha ao atualizar a configuração de bloqueio automático da composição"
         },
         "editWindow": {
           "label": "Janela de edição de resultados",
@@ -3510,6 +3518,18 @@
     }
   },
   "runs": {
+    "composition": {
+      "lock": "Casos bloqueados",
+      "unlock": "Desbloquear",
+      "locked": "Composição bloqueada",
+      "lockHint": "Congele quais casos estão nesta execução. Os usuários ainda podem atribuir e executar casos de teste.",
+      "lockedBy": "Composição bloqueada por {name}.",
+      "lockedAutomatically": "Composição bloqueada automaticamente quando a execução iniciou.",
+      "frozenNotice": "A composição está bloqueada — casos de teste não podem ser adicionados, removidos ou reordenados. Você ainda pode atribuir e executar casos de teste.",
+      "lockError": "Falha ao bloquear a composição da execução",
+      "unlockError": "Falha ao desbloquear a composição da execução",
+      "addBlocked": "A composição desta execução está bloqueada, portanto casos de teste não podem ser adicionados. Desbloqueie-a primeiro para alterar o conjunto de casos."
+    },
     "distribute": {
       "title": "Distribuir atribuições",
       "description": "Distribua uniformemente os casos de teste desta execução entre os membros da equipe, mantendo os casos relacionados juntos.",

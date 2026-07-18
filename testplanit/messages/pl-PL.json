@@ -756,6 +756,7 @@
       "issues": "{count, plural, =0 {Brak problemów} =1 {1 problem} other {# problemów}}",
       "noOptions": "Brak dostępnych opcji",
       "multiConfiguration": "Część grupy wielokonfiguracyjnej",
+      "compositionLocked": "Kompozycja zablokowana — zestaw przypadków jest zamrożony",
       "otherConfigurations": "Inne konfiguracje",
       "selected": "Wybrano: {count}",
       "defaultProjectAccess": "Domyślny dostęp do projektu",
@@ -2011,6 +2012,13 @@
           "disabledToast": "Projekty spraw można teraz dodawać do przebiegów",
           "saveError": "Nie udało się zaktualizować ustawienia wykluczenia wersji roboczej sprawy",
           "skippedToast": "{count, plural, =1 {1 projekt sprawy został pominięty, ponieważ ma stan Nierozpoczęty} other {# projektów sprawy zostało pominiętych, ponieważ mają stan Nierozpoczęty}}"
+        },
+        "autoLockComposition": {
+          "label": "Blokuj kompozycję przebiegu testowego po rozpoczęciu wykonania",
+          "description": "Po włączeniu tej opcji skład przypadków testowych w przebiegu jest automatycznie blokowany w momencie przejścia przebiegu do stanu W trakcie. Blokada zamraża zestaw przypadków w przebiegu (bez możliwości dodawania, usuwania lub zmiany kolejności), podczas gdy wykonywanie i przypisywanie mogą być kontynuowane. Twórca przebiegu lub administrator projektu może odblokować przebieg, aby zmienić zestaw przypadków.",
+          "enabledToast": "Przebiegi testowe zablokują swoją kompozycję po rozpoczęciu wykonania",
+          "disabledToast": "Przebiegi testowe nie będą już automatycznie blokować swojej kompozycji",
+          "saveError": "Nie udało się zaktualizować ustawienia automatycznej blokady składu"
         },
         "editWindow": {
           "label": "Okno edycji wyników",
@@ -3510,6 +3518,18 @@
     }
   },
   "runs": {
+    "composition": {
+      "lock": "Przypadki zablokowane",
+      "unlock": "Odblokuj",
+      "locked": "Skład zablokowany",
+      "lockHint": "Zamroź, które przypadki znajdują się w tym przebiegu. Użytkownicy nadal mogą przypisywać i wykonywać przypadki testowe.",
+      "lockedBy": "Kompozycja zablokowana przez {name}.",
+      "lockedAutomatically": "Kompozycja została automatycznie zablokowana po rozpoczęciu wykonania.",
+      "frozenNotice": "Kompozycja jest zablokowana — nie można dodawać, usuwać ani zmieniać kolejności przypadków testowych. Nadal można przypisywać i wykonywać przypadki testowe.",
+      "lockError": "Nie udało się zablokować składu przebiegu",
+      "unlockError": "Nie udało się odblokować składu przebiegu",
+      "addBlocked": "Kompozycja tego przebiegu jest zablokowana, więc nie można dodawać przypadków testowych. Odblokuj ją, aby zmienić zestaw przypadków."
+    },
     "distribute": {
       "title": "Rozdziel przypisania",
       "description": "Równomiernie przydziel przypadki testowe tego przebiegu pomiędzy członków zespołu, zachowując powiązane przypadki razem.",

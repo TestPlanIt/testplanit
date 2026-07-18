@@ -756,6 +756,7 @@
       "issues": "{count, plural, =0 {没有问题} =1 {1 个问题} other {# 个问题}}",
       "noOptions": "暂无选项",
       "multiConfiguration": "属于多配置组",
+      "compositionLocked": "组成已锁定 — 用例集已被冻结",
       "otherConfigurations": "其他配置",
       "selected": "已选择： {count}",
       "defaultProjectAccess": "默认项目访问权限",
@@ -2011,6 +2012,13 @@
           "disabledToast": "现在可以将草稿案例添加到运行中",
           "saveError": "更新草稿案例排除设置失败",
           "skippedToast": "{count, plural, =1 {1 个草稿案例因处于“未开始”状态而被跳过} other {# 个草稿案例因处于“未开始”状态而被跳过}}"
+        },
+        "autoLockComposition": {
+          "label": "执行开始时锁定测试运行的组成",
+          "description": "启用后，测试运行的用例组成将在运行进入“进行中”状态时自动锁定。锁定后运行中的用例将被冻结（无法添加、移除或重新排序），但执行和分配仍可继续进行。运行的创建者或项目管理员可以解锁以更改用例集。",
+          "enabledToast": "测试运行将在执行开始时锁定其组成",
+          "disabledToast": "测试运行将不再自动锁定其组成",
+          "saveError": "更新组成自动锁定设置失败"
         },
         "editWindow": {
           "label": "结果编辑窗口",
@@ -3510,6 +3518,18 @@
     }
   },
   "runs": {
+    "composition": {
+      "lock": "用例已锁定",
+      "unlock": "解锁",
+      "locked": "组成已锁定",
+      "lockHint": "冻结此运行中包含的用例。用户仍可分配和执行测试用例。",
+      "lockedBy": "组成已被 {name} 锁定。",
+      "lockedAutomatically": "执行开始时组成已自动锁定。",
+      "frozenNotice": "组成已锁定 — 无法添加、删除或重新排序测试用例。您仍可分配和执行测试用例。",
+      "lockError": "锁定运行组成失败",
+      "unlockError": "解锁运行组成失败",
+      "addBlocked": "此运行的组成已锁定，因此无法添加测试用例。请先解锁以更改用例集。"
+    },
     "distribute": {
       "title": "分配任务",
       "description": "将此测试运行的测试用例均匀分配给团队成员，同时将相关用例保持在一起。",
