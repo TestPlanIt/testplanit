@@ -82,6 +82,7 @@ import {
   GripVertical,
   LinkIcon,
   ListChecks,
+  Lock,
   MoreVertical,
   PlayCircle,
   Plus,
@@ -947,7 +948,14 @@ const AddToTestRunDropdown = React.memo(function AddToTestRunDropdown({
     orderBy: { name: "asc" },
   });
 
-  const handleAddToTestRun = async (testRunId: number) => {
+  const handleAddToTestRun = async (testRunId: number, isLocked: boolean) => {
+    // A composition-locked run's case set is frozen — the create would be
+    // rejected by the policy/DB guard (422). Stop early with a clear message
+    // instead of firing a doomed request.
+    if (isLocked) {
+      toast.error(t("runs.composition.addBlocked"));
+      return;
+    }
     try {
       // Get the current maximum order for the selected test run
       const maxOrder = await getMaxOrderInTestRun(testRunId);
@@ -1001,10 +1009,24 @@ const AddToTestRunDropdown = React.memo(function AddToTestRunDropdown({
       {testRuns?.map((testRun) => (
         <DropdownMenuItem
           key={testRun.id}
-          onClick={() => handleAddToTestRun(testRun.id)}
+          onClick={() =>
+            handleAddToTestRun(testRun.id, !!testRun.compositionLockedAt)
+          }
         >
           <PlayCircle className="me-1 h-4 w-4" />
           <span>{testRun.name}</span>
+          {testRun.compositionLockedAt && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="ms-1 shrink-0">
+                  <Lock className="w-3 h-3 text-muted-foreground" />
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>
+                {t("common.labels.compositionLocked")}
+              </TooltipContent>
+            </Tooltip>
+          )}
         </DropdownMenuItem>
       ))}
     </div>
@@ -2328,8 +2350,12 @@ export const getColumns = (
     // Mode 2 (Test Run Edit): Only selection column
     orderedColumns.unshift(selectionColumn);
   } else if (isRunMode) {
-    // Mode 3 (Test Run Execute): Selection (with conditional handle inside)
-    orderedColumns.unshift(selectionColumn);
+    // Mode 3 (Test Run Execute): Selection (with conditional handle inside).
+    // A completed run is read-only — there is nothing to do with selected
+    // cases — so omit the selection checkboxes entirely.
+    if (!isCompleted) {
+      orderedColumns.unshift(selectionColumn);
+    }
   } else {
     // Mode 1 (Repository): Selection (with conditional handle inside)
     orderedColumns.unshift(selectionColumn);

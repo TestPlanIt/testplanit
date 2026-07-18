@@ -356,6 +356,7 @@ function TagDetail() {
         id: true,
         name: true,
         isCompleted: true,
+        compositionLockedAt: true,
         projectId: true,
         project: {
           select: {
@@ -436,6 +437,7 @@ function TagDetail() {
         id: testRun.id,
         name: testRun.name,
         isCompleted: testRun.isCompleted,
+        compositionLockedAt: testRun.compositionLockedAt,
         projectId: testRun.projectId,
         projectName: testRun.project?.name || t("tags.noProject"),
         iconUrl: testRun.project?.iconUrl || null,

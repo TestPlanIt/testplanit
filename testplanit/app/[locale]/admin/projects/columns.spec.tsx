@@ -151,6 +151,7 @@ const testProject: ExtendedProjects = {
   editResultsDurationSeconds: null,
   requireIssueOnFailure: false,
   excludeNotStartedFromRuns: false,
+  autoLockCompositionOnInProgress: false,
   creator: {
     id: "user-1",
     name: "Test User",

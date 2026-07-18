@@ -49,6 +49,7 @@ interface CommentDisplayProps {
     testRun?: {
       id: number;
       name: string;
+      compositionLockedAt?: Date | string | null;
     } | null;
     sessionId: number | null;
     session?: {
@@ -123,6 +124,7 @@ function CommentDisplay({ comment }: CommentDisplayProps) {
         testRun={{
           id: comment.testRunId,
           name: comment.testRun.name,
+          compositionLockedAt: comment.testRun.compositionLockedAt,
         }}
         showIcon={true}
       />

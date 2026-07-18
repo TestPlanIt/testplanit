@@ -345,7 +345,12 @@ function ReviewsInboxContent({ userId }: { userId: string }) {
   const { data: runRows } = useClientQueries(schema).testRuns.useFindMany(
     {
       where: { id: { in: runIds }, isDeleted: false },
-      select: { id: true, name: true, isDeleted: true },
+      select: {
+        id: true,
+        name: true,
+        isDeleted: true,
+        compositionLockedAt: true,
+      },
     } as any,
     { enabled: runIds.length > 0 } as any
   );

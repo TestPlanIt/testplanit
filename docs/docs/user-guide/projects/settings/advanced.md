@@ -1,7 +1,7 @@
 ---
 sidebar_label: 'Advanced'
 title: 'Advanced (Project Settings)'
-description: Per-project toggles for review gating, result governance, draft-case handling, and the result edit window
+description: Per-project toggles for review gating, result governance, draft-case handling, composition locking, and the result edit window
 ---
 
 # Advanced
@@ -42,6 +42,12 @@ This setting is unavailable (and shown off) when the project has no active issue
 ### Exclude draft cases from test runs
 
 When enabled, test cases in a *Not Started* workflow state are hidden from the **Add Cases** picker and can't be added to a run. If an existing case is reverted to *Not Started* (for example by a Review & Approval rejection), it's removed from any open run — unless it already has a recorded result, in which case it stays in the run but becomes read-only.
+
+### Lock run composition when execution starts
+
+When enabled, a test run's case composition is **automatically locked** the moment the run moves into an *In Progress* workflow state. A locked run's case set is frozen — no adding, removing, or reordering cases — while assigning and executing cases continue to work. See [Composition lock](../run-details.md#composition-lock) for how the lock behaves and who can unlock it.
+
+This is off by default; existing projects are unaffected on upgrade. Even with the toggle off, a run's composition can still be locked manually from the run itself.
 
 ### Result edit window
 

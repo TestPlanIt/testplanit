@@ -9,6 +9,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import type {
   Projects,
   Sessions,
@@ -18,7 +23,7 @@ import type {
 } from "~/zenstack/models";
 import type { UserGetPayload } from "~/zenstack/input";
 import { useQuery } from "@tanstack/react-query";
-import { CirclePlay, Compass, LinkIcon, Star } from "lucide-react";
+import { CirclePlay, Compass, LinkIcon, Lock, Star } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useMemo } from "react";
@@ -854,6 +859,18 @@ export function UserDashboard() {
                       className="font-medium hover:underline flex items-center gap-1 group max-w-[75%]"
                     >
                       <span className="truncate">{run.name}</span>
+                      {run.compositionLockedAt && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="ms-1 shrink-0">
+                              <Lock className="w-3 h-3 text-muted-foreground" />
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            {t("common.labels.compositionLocked")}
+                          </TooltipContent>
+                        </Tooltip>
+                      )}
                       <LinkIcon className="w-4 h-4 inline ms-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
                     </Link>
                     <span className="text-xs text-muted-foreground ms-2 max-w-[25%] truncate">

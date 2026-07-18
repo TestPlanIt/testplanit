@@ -365,6 +365,9 @@ interface CasesProps {
   isRunMode?: boolean;
   onTestCaseClick?: (caseId: number) => void;
   isCompleted?: boolean;
+  /** When the run's composition is locked, reordering is frozen — hides drag
+   * handles and disables drag-to-reorder. */
+  compositionLocked?: boolean;
   canAddEdit: boolean;
   canAddEditRun: boolean;
   canDelete: boolean;
@@ -404,6 +407,7 @@ export default function Cases({
   isRunMode = false,
   onTestCaseClick,
   isCompleted = false,
+  compositionLocked = false,
   canAddEdit,
   canAddEditRun,
   canDelete,
@@ -3182,10 +3186,12 @@ export default function Cases({
         ? selectedTestCases.length
         : selectedCaseIdsForBulkEdit.length,
       // Pass enableReorder to show/hide grip handle
-      // Disabled in multi-config mode: ordering a merged view of multiple runs is undefined
+      // Disabled in multi-config mode: ordering a merged view of multiple runs is undefined.
+      // Disabled when the run's composition is locked: reordering is frozen.
       isDefaultSort &&
         !isSelectionMode &&
         !isCompleted &&
+        !compositionLocked &&
         !isMultiConfigMode &&
         ((isRunMode && canAddEditRun) || (!isRunMode && canAddEdit)),
       // QuickScript per-row action
@@ -3915,6 +3921,7 @@ export default function Cases({
                   isDefaultSort &&
                   !isSelectionMode &&
                   !isCompleted &&
+                  !compositionLocked &&
                   !isMultiConfigMode &&
                   ((isRunMode && canAddEditRun) || (!isRunMode && canAddEdit))
                 }

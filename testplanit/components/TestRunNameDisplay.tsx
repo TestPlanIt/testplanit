@@ -3,7 +3,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { CirclePlay, Combine, Trash2 } from "lucide-react";
+import { CirclePlay, Combine, Lock, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Link } from "~/lib/navigation";
 import { cn } from "~/utils";
@@ -16,6 +16,7 @@ interface TestRunNameDisplayProps {
         isDeleted?: boolean;
         configurationGroupId?: number | null;
         configuration?: { id: number; name: string } | null;
+        compositionLockedAt?: Date | string | null;
       }
     | null
     | undefined;
@@ -46,6 +47,7 @@ export function TestRunNameDisplay({
   const isDeleted = testRun.isDeleted || false;
   const configurationGroupId = testRun.configurationGroupId;
   const configuration = testRun.configuration;
+  const isCompositionLocked = !!testRun.compositionLockedAt;
 
   // Determine which icon to show
   let icon = null;
@@ -80,11 +82,24 @@ export function TestRunNameDisplay({
     </Tooltip>
   ) : null;
 
+  // Composition-lock indicator (BOR-1): shown when the run's case set is frozen.
+  const lockIndicator = isCompositionLocked ? (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span className="ms-1 shrink-0">
+          <Lock className="w-3 h-3 text-muted-foreground" />
+        </span>
+      </TooltipTrigger>
+      <TooltipContent>{t("compositionLocked")}</TooltipContent>
+    </Tooltip>
+  ) : null;
+
   const content = (
     <>
       {icon}
       <span className={cn("min-w-0", className)}>{displayName}</span>
       {configIndicator}
+      {lockIndicator}
     </>
   );
 

@@ -271,6 +271,39 @@ export const sideEffectsPlugin = definePlugin(schema, {
                 });
               else await emitTestRunCreated(row, tx);
             }
+            // Execution-start auto-lock: when a run TRANSITIONS into an
+            // IN_PROGRESS state and the project opts in, freeze its case
+            // composition (add/remove/reorder) while execution continues.
+            // lockedBy is left null = automatic; reversible in-app by the
+            // creator / a Project Admin. In-tx so it commits with the state
+            // change. Only fires on an update that changes stateId (execution
+            // "start" is a transition, not a create), and skips when already
+            // locked — which also breaks the recursion from the nested update
+            // below (it changes only lock fields, so it re-enters here with the
+            // stateId unchanged and short-circuits).
+            if (
+              old != null &&
+              row.compositionLockedAt == null &&
+              row.projectId != null &&
+              row.stateId !== old.stateId
+            ) {
+              const newState = await tx.workflows.findUnique({
+                where: { id: row.stateId },
+                select: { workflowType: true },
+              });
+              if (newState?.workflowType === WorkflowType.IN_PROGRESS) {
+                const project = await tx.projects.findUnique({
+                  where: { id: row.projectId },
+                  select: { autoLockCompositionOnInProgress: true },
+                });
+                if (project?.autoLockCompositionOnInProgress) {
+                  await tx.testRuns.update({
+                    where: { id: row.id },
+                    data: { compositionLockedAt: new Date() },
+                  });
+                }
+              }
+            }
           }
           break;
         }

@@ -7,7 +7,8 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { ColumnDef } from "@tanstack/react-table";
-import { CheckCircle2, PlayCircle } from "lucide-react";
+import { CheckCircle2, Lock, PlayCircle } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useMemo } from "react";
 import { Link } from "~/lib/navigation";
 import { cn } from "~/utils";
@@ -139,8 +140,17 @@ const TestRunLinkDisplay: React.FC<{
   name: string;
   projectId: number;
   isCompleted: boolean;
+  compositionLockedAt?: Date | string | null;
   maxLines?: number;
-}> = ({ id, name, projectId, isCompleted, maxLines = 2 }) => {
+}> = ({
+  id,
+  name,
+  projectId,
+  isCompleted,
+  compositionLockedAt,
+  maxLines = 2,
+}) => {
+  const t = useTranslations("common.labels");
   if (!id) return null;
 
   const clampClass =
@@ -162,6 +172,7 @@ const TestRunLinkDisplay: React.FC<{
     >
       <PlayCircle className="w-4 h-4 shrink-0 mt-0.5" />
       <span className={cn(textClass, "min-w-0")}>{name}</span>
+      {compositionLockedAt && <Lock className="w-3 h-3 shrink-0 mt-0.5" />}
     </Link>
   );
 
@@ -174,6 +185,12 @@ const TestRunLinkDisplay: React.FC<{
       <TooltipTrigger asChild>{content}</TooltipTrigger>
       <TooltipContent>
         <span>{name}</span>
+        {compositionLockedAt && (
+          <p className="flex text-xs mt-1">
+            <Lock className="w-3 h-3 shrink-0 me-1" />
+            {t("compositionLocked")}
+          </p>
+        )}
       </TooltipContent>
     </Tooltip>
   );
@@ -188,6 +205,7 @@ export const useTestRunColumns = (translations: {
   id: number;
   name: string;
   isCompleted: boolean;
+  compositionLockedAt?: Date | string | null;
   projectId: number;
 }>[] => {
   const { testRuns, status, completed, inProgress } = translations;
@@ -209,6 +227,7 @@ export const useTestRunColumns = (translations: {
               name={row.original.name}
               projectId={row.original.projectId}
               isCompleted={row.original.isCompleted}
+              compositionLockedAt={row.original.compositionLockedAt}
               maxLines={2}
             />
           </div>

@@ -15,7 +15,7 @@ The component uses a 4-column grid:
 
 1. **Name & Note (Left Column)**:
 
-    - **Name**: Displays the test run name with a Play Circle icon. The name is a link that navigates to the [Test Run Details](./run-details.md) page for that specific run. Hovering over the name shows a link icon.
+    - **Name**: Displays the test run name with a Play Circle icon. The name is a link that navigates to the [Test Run Details](./run-details.md) page for that specific run. Hovering over the name shows a link icon. A **lock icon** appears next to the name when the run's [composition is locked](./run-details.md#composition-lock).
     - **Note**: A single line preview of the test run's description (if provided). Uses the plain text version from the rich-text editor.
 
 2. **Status (Middle Column 1)**:

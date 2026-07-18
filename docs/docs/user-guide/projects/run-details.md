@@ -28,6 +28,7 @@ The header displays:
     - **Duplicate**: Opens the duplication dialog to create a copy of the test run.
     - **Export PDF**: Exports the test run to a PDF document including all metadata, description, documentation, test cases (ordered by run order) with their execution status, results, step results, custom field values, and attachments. Available for both regular and JUnit/automated test runs.
     - **Assign**: Opens the [Distribute assignments](#distributing-assignments) dialog to spread the run's test cases across several team members at once (requires add/edit permission on Test Runs).
+    - **Lock composition**: A toggle that freezes the run's case set. See [Composition lock](#composition-lock).
     - **Complete**: Opens a confirmation dialog to mark the run as finished. Here you select the final "Done" state from the workflow and set the completion date. This action is irreversible (if user has permission).
   - **View Mode (Completed Run)**:
     - Displays a "Completed On [Date]" badge.
@@ -112,6 +113,30 @@ A live preview updates as you change the options, showing each selected member w
 
 Click **Assign** to apply the distribution. Each assignee is notified of their newly assigned cases.
 
+## Composition Lock
+
+Composition locking freezes **which cases are in a run** so a cycle can start against a fixed scope. A locked run's case set can't change — but the run keeps running.
+
+When a run is locked:
+
+- **Frozen**: adding cases (including from the repository **Add to Test Run** action), removing cases, and reordering them. In the run's case table the drag handles disappear, and Edit mode shows the cases read-only.
+- **Still works**: recording results, assigning testers, editing run metadata (name, state, configuration, milestone, tags, attachments), and adding comments.
+
+A locked run is marked with a **lock icon** next to its name — on the run page and in the [Test Runs](./runs.md) list — and the cases section shows a banner explaining that the composition is frozen.
+
+This is different from **completing** a run: completion permanently freezes _everything_ (composition and results), whereas a composition lock freezes only the case set while execution continues, and it can be unlocked.
+
+### Locking and unlocking
+
+- **Lock**: use the **Lock composition** toggle in the run header. Any user with add/edit permission on Test Runs can lock a run.
+- **Unlock**: only the run's **creator**, a **Project Admin**, or a **system administrator** can unlock. For everyone else the toggle appears but is disabled, so an in‑flight scope can't be quietly reopened by any editor.
+
+### Automatic locking
+
+A project can lock runs automatically when they enter execution — enable **Lock run composition when execution starts** in the project's [Advanced settings](settings/advanced.md#lock-run-composition-when-execution-starts). Auto‑locked runs behave exactly like manually locked ones and can be unlocked the same way.
+
+The lock is enforced everywhere — in the interface, through the API, and at the database — so a locked run's composition can't be changed by any path, whether or not the lock was applied automatically.
+
 ## Right Panel Content
 
 - **Default View / Edit Mode**: Displays metadata and controls:
@@ -148,4 +173,4 @@ This table lists all the test cases included in the current test run:
     - **Execute**: Starts the test case execution flow.
     - **View Execution(s)**: Shows the history of attempts for this case in this run.
     - **Assign**: Allows changing the assigned tester.
-    - **Remove**: Removes the test case from this run (often only possible before execution starts).
+    - **Remove**: Removes the test case from this run (not available once the run's [composition is locked](#composition-lock) or completed).

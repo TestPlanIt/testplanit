@@ -756,6 +756,7 @@
       "issues": "{count, plural, =0 {No Issues} =1 {1 Issue} other {# Issues}}",
       "noOptions": "No options available",
       "multiConfiguration": "Part of a multi-configuration group",
+      "compositionLocked": "Composition locked — the case set is frozen",
       "otherConfigurations": "Other configurations",
       "selected": "Selected: {count}",
       "defaultProjectAccess": "Default Project Access",
@@ -2011,6 +2012,13 @@
           "disabledToast": "Draft cases can now be added to runs",
           "saveError": "Failed to update draft-case exclusion setting",
           "skippedToast": "{count, plural, =1 {1 draft case was skipped because it is in Not Started state} other {# draft cases were skipped because they are in Not Started state}}"
+        },
+        "autoLockComposition": {
+          "label": "Lock Test Run composition when execution starts",
+          "description": "When enabled, a test run's case composition is automatically locked the moment the run moves into an In Progress state. Locking freezes which cases are in the run (no adding, removing, or reordering) while execution and assignment continue. The run's creator or a Project Admin can unlock it to change the case set.",
+          "enabledToast": "Test Runs will lock their composition when execution starts",
+          "disabledToast": "Test Runs will no longer auto-lock their composition",
+          "saveError": "Failed to update the composition auto-lock setting"
         },
         "editWindow": {
           "label": "Result edit window",
@@ -3510,6 +3518,18 @@
     }
   },
   "runs": {
+    "composition": {
+      "lock": "Cases Locked",
+      "unlock": "Unlock",
+      "locked": "Composition locked",
+      "lockHint": "Freeze which cases are in this run. Users can still assign and execute test cases.",
+      "lockedBy": "Composition locked by {name}.",
+      "lockedAutomatically": "Composition locked automatically when execution started.",
+      "frozenNotice": "Composition is locked — test cases can't be added, removed, or reordered. You can still assign and execute test cases.",
+      "lockError": "Failed to lock the run composition",
+      "unlockError": "Failed to unlock the run composition",
+      "addBlocked": "This run's composition is locked, so test cases can't be added. Unlock it first to change the case set."
+    },
     "distribute": {
       "title": "Distribute assignments",
       "description": "Evenly assign this run's test cases across team members, keeping related cases together.",

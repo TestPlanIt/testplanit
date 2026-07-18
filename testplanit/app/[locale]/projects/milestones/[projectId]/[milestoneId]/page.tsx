@@ -1054,6 +1054,8 @@ export default function MilestoneDetailsPage() {
                                 name: testRun.name,
                                 testRunType: testRun.testRunType,
                                 isCompleted: testRun.isCompleted,
+                                compositionLockedAt:
+                                  testRun.compositionLockedAt,
                                 configuration: testRun.configuration,
                                 configurationGroupId:
                                   testRun.configurationGroupId,

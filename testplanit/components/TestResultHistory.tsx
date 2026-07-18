@@ -54,6 +54,7 @@ import {
   Layers,
   LinkIcon,
   ListOrdered,
+  Lock,
   Pencil,
   PlayCircle,
   PlusSquare,
@@ -180,6 +181,7 @@ const AddToTestRunDropdown = React.memo(function AddToTestRunDropdown({
   projectId: number;
 }) {
   const tCommon = useTranslations("common");
+  const tRunComposition = useTranslations("runs.composition");
   const queryClient = useQueryClient();
   const { data: testRuns } = useClientQueries(schema).testRuns.useFindMany({
     where: {
@@ -213,7 +215,13 @@ const AddToTestRunDropdown = React.memo(function AddToTestRunDropdown({
   const { mutateAsync: createTestRunCase } =
     useClientQueries(schema).testRunCases.useCreate();
 
-  const handleAddToTestRun = async (testRunId: number) => {
+  const handleAddToTestRun = async (testRunId: number, isLocked: boolean) => {
+    // A composition-locked run's case set is frozen — the create would be
+    // rejected by the policy/DB guard (422). Stop early with a clear message.
+    if (isLocked) {
+      toast.error(tRunComposition("addBlocked"));
+      return;
+    }
     try {
       // Just add the test case to the end
       await createTestRunCase({
@@ -250,7 +258,12 @@ const AddToTestRunDropdown = React.memo(function AddToTestRunDropdown({
       {testRuns.map((testRun) => (
         <DropdownMenuItem
           key={testRun.id}
-          onClick={() => handleAddToTestRun(testRun.id)}
+          onClick={() =>
+            handleAddToTestRun(
+              testRun.id,
+              !!(testRun as any).compositionLockedAt
+            )
+          }
           className="flex items-center"
         >
           <PlayCircle className="me-1 h-4 w-4 shrink-0" />
@@ -272,6 +285,18 @@ const AddToTestRunDropdown = React.memo(function AddToTestRunDropdown({
                     {testRun.configuration.name}
                   </p>
                 )}
+              </TooltipContent>
+            </Tooltip>
+          )}
+          {(testRun as any).compositionLockedAt && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="ms-1 shrink-0">
+                  <Lock className="w-3 h-3 text-muted-foreground" />
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>
+                {tCommon("labels.compositionLocked")}
               </TooltipContent>
             </Tooltip>
           )}

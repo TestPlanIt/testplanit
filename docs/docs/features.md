@@ -59,6 +59,7 @@ TestPlanIt is a comprehensive test management platform designed to help teams pl
 - **Assignment distribution** - Spread a run's cases across team members in one step, balanced by estimated time or case count, keeping related cases (and whole configurations) together to reduce context switching
 - **Bulk status updates** - Quickly update multiple test results at once
 - **Execution history** - View the complete history of test executions for any run or individual test case
+- **Composition lock** - Freeze which cases are in a run (no adding, removing, or reordering) while execution and assignment continue; lock manually or automatically when a run enters execution, with unlocking reserved for the run's creator or a project admin. Enforced in the UI, API, and database
 - **Immutable completed runs** - Once a run is marked complete its case set, results, and configuration are structurally frozen; admins can edit a single result via the audit-log-tracked override path
 - **Live updates** - SSE-driven push so multiple testers watching the same run see each other's status changes without refreshing
 - **PDF export** - Per-run PDF with expanded step details and per-iteration values; also available at the milestone level

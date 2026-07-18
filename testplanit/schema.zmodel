@@ -128,6 +128,7 @@ model User {
     createdSessions                 Sessions[]                    @relation("SessionCreatedBy")
     sessionResults                  SessionResults[]
     testRunCreatedBy                TestRuns[]                    @relation("TestRunCreatedBy")
+    compositionLockedTestRuns       TestRuns[]                    @relation("TestRunCompositionLockedBy")
     testRunCasesAssigned            TestRunCases[]
     testRunResults                  TestRunResults[]
     editedTestRunResults            TestRunResults[]              @relation("TestRunResultEditor")
@@ -488,83 +489,83 @@ model Roles {
 }
 
 model Projects {
-    id                             Int                                   @id @default(autoincrement())
-    name                           String                                @unique @length(1)
+    id                              Int                                   @id @default(autoincrement())
+    name                            String                                @unique @length(1)
     /// Optional, admin-defined short prefix (e.g. `PROJECT`) used to render
     /// cosmetic project-prefixed record keys like `PROJECT-TC-1234`.
     /// Purely additive: the numeric `id` stays canonical. Stored normalized to
     /// uppercase; format is validated in the app layer (lib/recordKey.ts) since
     /// a schema @@validate re-fires on unrelated partial updates in v3.
-    key                            String?                               @unique
-    iconUrl                        String?
-    note                           String?
-    docs                           String?
-    isCompleted                    Boolean                               @default(false)
-    isDeleted                      Boolean                               @default(false)
-    deletedAt                      DateTime?                             @db.Timestamptz(6)
-    completedAt                    DateTime?                             @db.Date
-    createdAt                      DateTime                              @default(now()) @db.Timestamptz(6)
-    createdBy                      String
-    creator                        User                                  @relation("ProjectCreator", fields: [createdBy], references: [id])
-    assignedUsers                  ProjectAssignment[]
-    assignedStatuses               ProjectStatusAssignment[]
-    milestoneTypes                 MilestoneTypesAssignment[]
-    assignedTemplates              TemplateProjectAssignment[]
-    assignedWorkflows              ProjectWorkflowAssignment[]
-    assignedConfigurations         ProjectConfigurationAssignment[]
-    milestones                     Milestones[]
-    repositories                   Repositories[]
-    repositoryFolders              RepositoryFolders[]
-    repositoryCases                RepositoryCases[]
-    repositoryCaseVersions         RepositoryCaseVersions[]
-    sessions                       Sessions[]
-    sessionVersions                SessionVersions[]
-    testRuns                       TestRuns[]
-    defaultAccessType              ProjectAccessType                     @default(GLOBAL_ROLE)
-    defaultRoleId                  Int?
-    defaultRole                    Roles?                                @relation("ProjectDefaultRole", fields: [defaultRoleId], references: [id])
-    userPermissions                UserProjectPermission[]
-    groupPermissions               GroupProjectPermission[]
-    sharedStepGroups               SharedStepGroup[]
-    dataSets                       DataSet[]
-    projectIntegrations            ProjectIntegration[]
-    webhookConfigs                 WebhookConfig[]
-    webhookOutboxEvents            WebhookOutboxEvent[]
-    projectLlmIntegrations         ProjectLlmIntegration[]
-    codeRepositoryConfig           ProjectCodeRepositoryConfig?
-    promptConfigId                 String?
-    promptConfig                   PromptConfig?                         @relation(fields: [promptConfigId], references: [id])
-    issues                         Issue[]
-    llmUsages                      LlmUsage[]
-    llmFeatureConfigs              LlmFeatureConfig[]
-    llmResponseCaches              LlmResponseCache[]
-    llmReportSnapshots             LlmReportSnapshot[]
-    comments                       Comment[]
-    auditLogs                      AuditLog[]
-    shareLinks                     ShareLink[]
-    assignedExportTemplates        CaseExportTemplateProjectAssignment[]
-    defaultCaseExportTemplateId    Int?
-    defaultCaseExportTemplate      CaseExportTemplate?                   @relation("ProjectDefaultExportTemplate", fields: [defaultCaseExportTemplateId], references: [id], onDelete: SetNull)
-    quickScriptEnabled             Boolean                               @default(false)
+    key                             String?                               @unique
+    iconUrl                         String?
+    note                            String?
+    docs                            String?
+    isCompleted                     Boolean                               @default(false)
+    isDeleted                       Boolean                               @default(false)
+    deletedAt                       DateTime?                             @db.Timestamptz(6)
+    completedAt                     DateTime?                             @db.Date
+    createdAt                       DateTime                              @default(now()) @db.Timestamptz(6)
+    createdBy                       String
+    creator                         User                                  @relation("ProjectCreator", fields: [createdBy], references: [id])
+    assignedUsers                   ProjectAssignment[]
+    assignedStatuses                ProjectStatusAssignment[]
+    milestoneTypes                  MilestoneTypesAssignment[]
+    assignedTemplates               TemplateProjectAssignment[]
+    assignedWorkflows               ProjectWorkflowAssignment[]
+    assignedConfigurations          ProjectConfigurationAssignment[]
+    milestones                      Milestones[]
+    repositories                    Repositories[]
+    repositoryFolders               RepositoryFolders[]
+    repositoryCases                 RepositoryCases[]
+    repositoryCaseVersions          RepositoryCaseVersions[]
+    sessions                        Sessions[]
+    sessionVersions                 SessionVersions[]
+    testRuns                        TestRuns[]
+    defaultAccessType               ProjectAccessType                     @default(GLOBAL_ROLE)
+    defaultRoleId                   Int?
+    defaultRole                     Roles?                                @relation("ProjectDefaultRole", fields: [defaultRoleId], references: [id])
+    userPermissions                 UserProjectPermission[]
+    groupPermissions                GroupProjectPermission[]
+    sharedStepGroups                SharedStepGroup[]
+    dataSets                        DataSet[]
+    projectIntegrations             ProjectIntegration[]
+    webhookConfigs                  WebhookConfig[]
+    webhookOutboxEvents             WebhookOutboxEvent[]
+    projectLlmIntegrations          ProjectLlmIntegration[]
+    codeRepositoryConfig            ProjectCodeRepositoryConfig?
+    promptConfigId                  String?
+    promptConfig                    PromptConfig?                         @relation(fields: [promptConfigId], references: [id])
+    issues                          Issue[]
+    llmUsages                       LlmUsage[]
+    llmFeatureConfigs               LlmFeatureConfig[]
+    llmResponseCaches               LlmResponseCache[]
+    llmReportSnapshots              LlmReportSnapshot[]
+    comments                        Comment[]
+    auditLogs                       AuditLog[]
+    shareLinks                      ShareLink[]
+    assignedExportTemplates         CaseExportTemplateProjectAssignment[]
+    defaultCaseExportTemplateId     Int?
+    defaultCaseExportTemplate       CaseExportTemplate?                   @relation("ProjectDefaultExportTemplate", fields: [defaultCaseExportTemplateId], references: [id], onDelete: SetNull)
+    quickScriptEnabled              Boolean                               @default(false)
     /// Empty = default ['iteration']. Lookup is case-insensitive at read time.
-    junitIterationPropertyNames    String[]                              @default([])
+    junitIterationPropertyNames     String[]                              @default([])
     /// Per-project opt-in for Review & Approval. Defaults to false so the
     /// feature stays dormant on upgrade — admins flip the system kill switch
     /// AND each project's toggle explicitly. New projects start opted out.
-    reviewWorkflowEnabled          Boolean                               @default(false)
+    reviewWorkflowEnabled           Boolean                               @default(false)
     /// Per-project opt-in for mandatory result-flip justification. When true,
     /// recording a result that flips a completed outcome must carry notes.
     /// Defaults to false so existing projects are unaffected on upgrade.
-    requireResultFlipJustification Boolean                               @default(false)
+    requireResultFlipJustification  Boolean                               @default(false)
     /// Per-project override for the in-place result edit window, in seconds.
     /// Resolved against the system `edit_results_duration` ceiling: null =
     /// inherit system; 0 = editing disabled for this project; N = editable for
     /// N seconds, capped at the system max when one is set.
-    editResultsDurationSeconds     Int?
+    editResultsDurationSeconds      Int?
     /// Per-project opt-in: when true, recording or editing a failure-class
     /// result (a status with isFailure set) requires at least one linked Issue.
     /// Defaults to false so existing projects are unaffected on upgrade.
-    requireIssueOnFailure          Boolean                               @default(false)
+    requireIssueOnFailure           Boolean                               @default(false)
     /// Per-project opt-in: when true, RepositoryCases whose current Workflow
     /// state has workflowType=NOT_STARTED are excluded from every "add to run"
     /// entry point (picker tree, server actions, importers, Testmo workers).
@@ -576,10 +577,18 @@ model Projects {
     /// Independent of the system-wide Review & Approval kill switch — projects
     /// without R&A can still use this flag for draft-quality hygiene.
     /// Defaults to false so existing projects are unaffected on upgrade.
-    excludeNotStartedFromRuns      Boolean                               @default(false)
-    duplicateScanResults           DuplicateScanResult[]
-    stepSequenceMatches            StepSequenceMatch[]
-    reviewRequests                 ReviewRequest[]
+    excludeNotStartedFromRuns       Boolean                               @default(false)
+    /// Per-project opt-in: when true, a TestRun's case composition is
+    /// automatically locked (compositionLockedAt stamped, lockedBy left null =
+    /// automatic) the moment the run transitions into a workflow state whose
+    /// workflowType is IN_PROGRESS. The lock freezes which cases are in the run
+    /// (add/remove/reorder) while execution and assignment continue; it can be
+    /// reversed in-app by the run creator or a Project Admin. Defaults to false
+    /// so existing projects are unaffected on upgrade.
+    autoLockCompositionOnInProgress Boolean                               @default(false)
+    duplicateScanResults            DuplicateScanResult[]
+    stepSequenceMatches             StepSequenceMatch[]
+    reviewRequests                  ReviewRequest[]
 
     @@index([isDeleted, isCompleted])
     @@index([createdBy])
@@ -2886,41 +2895,54 @@ model SessionFieldValues {
 }
 
 model TestRuns {
-    id                   Int              @id @default(autoincrement())
-    projectId            Int
-    project              Projects         @relation(fields: [projectId], references: [id], onDelete: Cascade)
-    name                 String           @length(1)
-    note                 Json?
-    docs                 Json?
-    configId             Int?
-    configuration        Configurations?  @relation(fields: [configId], references: [id], onDelete: SetNull)
-    milestoneId          Int?
-    milestone            Milestones?      @relation(fields: [milestoneId], references: [id], onDelete: SetNull)
-    stateId              Int
-    state                Workflows        @relation(fields: [stateId], references: [id])
-    forecastManual       Int?
-    forecastAutomated    Float?
-    elapsed              Int?
-    isCompleted          Boolean          @default(false)
-    isDeleted            Boolean          @default(false)
-    deletedAt            DateTime?        @db.Timestamptz(6)
-    completedAt          DateTime?
-    createdAt            DateTime         @default(now()) @db.Timestamptz(6)
-    createdById          String
-    createdBy            User             @relation("TestRunCreatedBy", fields: [createdById], references: [id])
-    attachments          Attachments[]
-    testCases            TestRunCases[]
-    results              TestRunResults[]
-    tags                 Tags[]
-    issues               Issue[]
-    testRunType          TestRunType      @default(REGULAR)
-    junitTestSuites      JUnitTestSuite[]
-    comments             Comment[]
-    configurationGroupId String?
+    id                    Int              @id @default(autoincrement())
+    projectId             Int
+    project               Projects         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    name                  String           @length(1)
+    note                  Json?
+    docs                  Json?
+    configId              Int?
+    configuration         Configurations?  @relation(fields: [configId], references: [id], onDelete: SetNull)
+    milestoneId           Int?
+    milestone             Milestones?      @relation(fields: [milestoneId], references: [id], onDelete: SetNull)
+    stateId               Int
+    state                 Workflows        @relation(fields: [stateId], references: [id])
+    forecastManual        Int?
+    forecastAutomated     Float?
+    elapsed               Int?
+    isCompleted           Boolean          @default(false)
+    isDeleted             Boolean          @default(false)
+    deletedAt             DateTime?        @db.Timestamptz(6)
+    completedAt           DateTime?
+    createdAt             DateTime         @default(now()) @db.Timestamptz(6)
+    createdById           String
+    createdBy             User             @relation("TestRunCreatedBy", fields: [createdById], references: [id])
+    // Execution-start composition lock: freezes which cases are in the run
+    // (add / remove / reorder) while execution continues. Distinct from the
+    // completion lock (testRun.isCompleted), which freezes everything. null =
+    // unlocked. compositionLockedById is the user who locked it, or null when
+    // the run was auto-locked on entering an IN_PROGRESS state. The fields are
+    // written only by the lock/unlock endpoints and the auto-lock hook (both via
+    // the un-policed base client); @deny('update', true) blocks any direct
+    // enhanced-client/RPC write so an editor can't clear the lock by bypassing
+    // the creator/admin unlock gate. A Postgres trigger (scripts/apply-triggers)
+    // is the authoritative backstop on TestRunCases.
+    compositionLockedAt   DateTime?        @db.Timestamptz(6) @deny('update', true)
+    compositionLockedById String?          @deny('update', true)
+    compositionLockedBy   User?            @relation("TestRunCompositionLockedBy", fields: [compositionLockedById], references: [id])
+    attachments           Attachments[]
+    testCases             TestRunCases[]
+    results               TestRunResults[]
+    tags                  Tags[]
+    issues                Issue[]
+    testRunType           TestRunType      @default(REGULAR)
+    junitTestSuites       JUnitTestSuite[]
+    comments              Comment[]
+    configurationGroupId  String?
     // Source run id when this row was created by duplicating another; drives
     // the test_run.duplicated webhook event. A provenance marker, not a live
     // FK — it intentionally survives deletion of the source.
-    duplicatedFromId     Int?
+    duplicatedFromId      Int?
 
     @@index([projectId, isDeleted])
     @@index([createdById])
@@ -3031,7 +3053,8 @@ model TestRunCases {
     testRun           TestRuns                    @relation(fields: [testRunId], references: [id], onDelete: Cascade)
     repositoryCaseId  Int
     repositoryCase    RepositoryCases             @relation(fields: [repositoryCaseId], references: [id], onDelete: Cascade)
-    order             Int                         @default(0)
+    // Composition-lock: reorder is frozen while the parent run is locked.
+    order             Int                         @default(0) @deny('update', testRun.compositionLockedAt != null)
     statusId          Int?
     status            Status?                     @relation(fields: [statusId], references: [id])
     assignedToId      String?
@@ -3046,7 +3069,9 @@ model TestRunCases {
     skippedIterations Int                         @default(0)
     totalIterations   Int                         @default(0)
     createdAt         DateTime                    @default(now()) @db.Timestamptz(6)
-    isDeleted         Boolean                     @default(false)
+    // Composition-lock: soft-remove (true) and re-add (false) are frozen while
+    // the parent run is locked.
+    isDeleted         Boolean                     @default(false) @deny('update', testRun.compositionLockedAt != null)
     deletedAt         DateTime?                   @db.Timestamptz(6)
     results           TestRunResults[]
     iterations        TestRunCaseIteration[]
@@ -3066,6 +3091,16 @@ model TestRunCases {
     // frozen — no adding, removing, or reordering. There is no in-app reopen;
     // the only reversal is clearing isCompleted directly in the database.
     @@deny('create,update,delete', testRun.isCompleted)
+
+    // Execution-start composition lock: when the parent run is composition-locked
+    // its case SET is frozen but execution continues. Surgical (unlike the
+    // completion lock above): only add (create) / remove (delete) and the two
+    // composition-defining columns (isDeleted = soft remove/re-add, order =
+    // reorder) are denied; status/iteration/assignment fields stay writable so
+    // recording results and assigning testers keep working on a locked run.
+    // A Postgres BEFORE trigger (tpl_composition_lock_guard) is the authoritative
+    // DB-level backstop for the same rules.
+    @@deny('create,delete', testRun.compositionLockedAt != null)
 
     // Explicit NO_ACCESS denial
     @@deny('read', testRun.project.userPermissions?[user == auth() && accessType == 'NO_ACCESS'])

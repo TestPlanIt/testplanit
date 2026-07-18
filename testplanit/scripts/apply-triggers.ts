@@ -240,6 +240,59 @@ CREATE UNIQUE INDEX IF NOT EXISTS audit_log_cdc_idempotency
 `;
 
 /**
+ * Execution-start composition lock (BOR-1) — the authoritative DB-level guard.
+ * When a TestRun is composition-locked (compositionLockedAt IS NOT NULL) its case
+ * SET is frozen: no adding cases (INSERT) and no removing/reordering
+ * (UPDATE of "isDeleted"/"order"). Execution and assignment writes (statusId,
+ * iteration counts, assignedToId, notes, timestamps) are untouched — the UPDATE
+ * trigger is scoped to the two composition columns, so those never reach here.
+ *
+ * Mirrors the ZenStack @@deny/@deny policy rules on TestRunCases and holds even
+ * for raw SQL / baseDb / rawClient paths that bypass the ORM policy layer.
+ *
+ * Intentionally NOT a BEFORE DELETE guard: the app removes a case by
+ * soft-deleting it (UPDATE "isDeleted" = true, caught above), never by hard
+ * DELETE. Hard DELETE of a TestRunCases row happens only via ON DELETE CASCADE
+ * (deleting the run or its repository case) or the retention purge — legitimate
+ * operations a delete guard would wrongly block (the parent run row is still
+ * visible mid-cascade and would look "locked"). The distinct tpl_composition_*
+ * prefix keeps these out of the tpl_audit_% / tpl_single_default_% / tpl_stamp_%
+ * drift checks.
+ */
+export const COMPOSITION_LOCK_GUARD_SQL = `
+CREATE OR REPLACE FUNCTION tpl_composition_lock_guard() RETURNS TRIGGER AS $$
+DECLARE
+  locked timestamptz;
+BEGIN
+  IF TG_OP = 'INSERT' THEN
+    SELECT "compositionLockedAt" INTO locked FROM "TestRuns" WHERE "id" = NEW."testRunId";
+    IF locked IS NOT NULL THEN
+      RAISE EXCEPTION 'Test run % composition is locked: cannot add cases', NEW."testRunId" USING ERRCODE = 'check_violation'; -- 23514
+    END IF;
+    RETURN NEW;
+  END IF;
+  -- UPDATE (fires only on "order"/"isDeleted" via UPDATE OF); re-check the value actually changed.
+  IF NEW."order" IS DISTINCT FROM OLD."order"
+     OR NEW."isDeleted" IS DISTINCT FROM OLD."isDeleted" THEN
+    SELECT "compositionLockedAt" INTO locked FROM "TestRuns" WHERE "id" = NEW."testRunId";
+    IF locked IS NOT NULL THEN
+      RAISE EXCEPTION 'Test run % composition is locked: cannot add, remove, or reorder cases', NEW."testRunId" USING ERRCODE = 'check_violation'; -- 23514
+    END IF;
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS tpl_composition_lock_guard_ins ON "TestRunCases";
+CREATE TRIGGER tpl_composition_lock_guard_ins BEFORE INSERT ON "TestRunCases"
+  FOR EACH ROW EXECUTE FUNCTION tpl_composition_lock_guard();
+
+DROP TRIGGER IF EXISTS tpl_composition_lock_guard_upd ON "TestRunCases";
+CREATE TRIGGER tpl_composition_lock_guard_upd BEFORE UPDATE OF "order", "isDeleted" ON "TestRunCases"
+  FOR EACH ROW EXECUTE FUNCTION tpl_composition_lock_guard();
+`;
+
+/**
  * Apply the full audit-trigger substrate to one database, idempotently. Importable so the app can
  * self-install on boot (see lib/audit/ensureAuditTriggers + instrumentation.ts) in addition to the
  * CLI / deploy-entrypoint paths — `db push` silently drops these triggers, so they must be
@@ -421,6 +474,11 @@ export async function applyAuditTriggers(
 
     // 3. Append-only ENFORCEMENT triggers on DataChangeLog (the real SAF-03 guarantee).
     await client.query(APPEND_ONLY_ENFORCEMENT_SQL);
+
+    // 3b. Composition-lock ENFORCEMENT on TestRunCases (BOR-1). Idempotent
+    //     CREATE OR REPLACE + DROP/CREATE TRIGGER. Distinct tpl_composition_*
+    //     prefix keeps it out of every drift self-check below.
+    await client.query(COMPOSITION_LOCK_GUARD_SQL);
 
     // 4. GRANT/REVOKE defense-in-depth: the connecting role keeps INSERT/SELECT/UPDATE/DELETE (the
     //    worker cursor + retention purge need UPDATE/DELETE); UPDATE/DELETE revoked from PUBLIC. The

@@ -66,6 +66,7 @@ export interface InboxTestRunRow {
   id: number;
   name: string;
   isDeleted?: boolean;
+  compositionLockedAt?: Date | string | null;
 }
 
 export interface InboxSessionRow {

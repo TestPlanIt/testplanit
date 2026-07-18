@@ -9,7 +9,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import type { TestRunsWhereInput } from "~/zenstack/input";
-import { Combine, PlayCircle, Trash2 } from "lucide-react";
+import { Combine, Lock, PlayCircle, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import React, { useCallback, useMemo } from "react";
 import { Link } from "~/lib/navigation";
@@ -32,6 +32,7 @@ type TestRunOption = {
   isDeleted?: boolean;
   configurationGroupId?: string | null;
   configuration?: { id: number; name: string } | null;
+  compositionLockedAt?: Date | string | null;
 };
 
 const clampClassForLines = (maxLines?: number) => {
@@ -63,6 +64,7 @@ interface TestRunLinkDisplayProps {
   className?: string;
   configurationGroupId?: string | null;
   configuration?: { id: number; name: string } | null;
+  compositionLockedAt?: Date | string | null;
   /**
    * Extra query params appended to the run URL — e.g. `?iteration=3` so
    * deep-link callers (matrix popover) can preselect an iteration / case
@@ -81,6 +83,7 @@ export const TestRunLinkDisplay: React.FC<TestRunLinkDisplayProps> = ({
   className,
   configurationGroupId,
   configuration,
+  compositionLockedAt,
   searchParams,
 }) => {
   const t = useTranslations("common");
@@ -116,6 +119,7 @@ export const TestRunLinkDisplay: React.FC<TestRunLinkDisplayProps> = ({
         {configurationGroupId && (
           <Combine className="w-3 h-3 shrink-0 mt-0.5" />
         )}
+        {compositionLockedAt && <Lock className="w-3 h-3 shrink-0 mt-0.5" />}
       </div>
     );
 
@@ -135,6 +139,12 @@ export const TestRunLinkDisplay: React.FC<TestRunLinkDisplayProps> = ({
             <p className="flex text-xs mt-1">
               <Combine className="w-3 h-3 shrink-0 me-1" />
               {configuration.name}
+            </p>
+          )}
+          {compositionLockedAt && (
+            <p className="flex text-xs mt-1">
+              <Lock className="w-3 h-3 shrink-0 me-1" />
+              {t("labels.compositionLocked")}
             </p>
           )}
         </TooltipContent>
@@ -165,6 +175,9 @@ export const TestRunLinkDisplay: React.FC<TestRunLinkDisplayProps> = ({
       {configurationGroupId && (
         <Combine className="w-3 h-3 shrink-0 mt-0.5 opacity-70" />
       )}
+      {compositionLockedAt && (
+        <Lock className="w-3 h-3 shrink-0 mt-0.5 opacity-70" />
+      )}
     </Link>
   );
 
@@ -181,6 +194,12 @@ export const TestRunLinkDisplay: React.FC<TestRunLinkDisplayProps> = ({
           <p className="flex text-xs mt-1">
             <Combine className="w-3 h-3 shrink-0 me-1" />
             {configuration.name}
+          </p>
+        )}
+        {compositionLockedAt && (
+          <p className="flex text-xs mt-1">
+            <Lock className="w-3 h-3 shrink-0 me-1" />
+            {t("labels.compositionLocked")}
           </p>
         )}
       </TooltipContent>
@@ -284,6 +303,7 @@ export const TestRunsListDisplay: React.FC<TestRunsListDisplayProps> = ({
           projectId: true,
           isCompleted: true,
           isDeleted: true,
+          compositionLockedAt: true,
         },
       };
 
@@ -357,6 +377,7 @@ export const TestRunsListDisplay: React.FC<TestRunsListDisplayProps> = ({
           projectId={option.projectId}
           isCompleted={option.isCompleted}
           isDeleted={option.isDeleted}
+          compositionLockedAt={option.compositionLockedAt}
           maxLines={2}
         />
       )}

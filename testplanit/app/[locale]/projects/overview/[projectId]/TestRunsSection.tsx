@@ -7,7 +7,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Combine, LinkIcon, PlayCircle } from "lucide-react";
+import { Combine, LinkIcon, Lock, PlayCircle } from "lucide-react";
 import { useTranslations } from "next-intl";
 import React from "react";
 import { TestRunCasesSummary } from "~/components/TestRunCasesSummary";
@@ -114,6 +114,18 @@ const TestRunsSection: React.FC<TestRunsSectionProps> = ({ projectId }) => {
                                 {testRun.configuration.name}
                               </p>
                             )}
+                          </TooltipContent>
+                        </Tooltip>
+                      )}
+                      {(testRun as any).compositionLockedAt && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="shrink-0 me-1">
+                              <Lock className="w-4 h-4 text-muted-foreground" />
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            {t("common.labels.compositionLocked")}
                           </TooltipContent>
                         </Tooltip>
                       )}

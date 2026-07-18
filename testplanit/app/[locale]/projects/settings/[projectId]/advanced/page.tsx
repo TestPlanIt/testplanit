@@ -64,6 +64,7 @@ export default function AdvancedPage() {
         editResultsDurationSeconds: true,
         requireIssueOnFailure: true,
         excludeNotStartedFromRuns: true,
+        autoLockCompositionOnInProgress: true,
         projectIntegrations: {
           where: { isActive: true, integration: { status: "ACTIVE" } },
           select: { id: true },
@@ -127,6 +128,8 @@ export default function AdvancedPage() {
     project?.requireResultFlipJustification ?? false;
   const requireIssueOnFailure = project?.requireIssueOnFailure ?? false;
   const excludeNotStartedFromRuns = project?.excludeNotStartedFromRuns ?? false;
+  const autoLockCompositionOnInProgress =
+    project?.autoLockCompositionOnInProgress ?? false;
   // Requiring a linked issue is only meaningful when the project has an active
   // issue integration to link from; without one the toggle is forced off.
   const hasIssueIntegration = (project?.projectIntegrations?.length ?? 0) > 0;
@@ -192,6 +195,22 @@ export default function AdvancedPage() {
       );
     } catch {
       toast.error(t("excludeNotStarted.saveError"));
+    }
+  };
+
+  const handleToggleAutoLockComposition = async (enabled: boolean) => {
+    try {
+      await updateProject.mutateAsync({
+        where: { id: projectId },
+        data: { autoLockCompositionOnInProgress: enabled },
+      });
+      toast.success(
+        enabled
+          ? t("autoLockComposition.enabledToast")
+          : t("autoLockComposition.disabledToast")
+      );
+    } catch {
+      toast.error(t("autoLockComposition.saveError"));
     }
   };
 
@@ -546,6 +565,28 @@ export default function AdvancedPage() {
                 </Label>
                 <p className="text-sm text-muted-foreground">
                   {t("excludeNotStarted.description")}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-6">
+              <div className="space-y-3">
+                <Label className="flex items-center gap-3">
+                  <Switch
+                    id="auto-lock-composition-toggle"
+                    data-testid="auto-lock-composition-toggle"
+                    checked={autoLockCompositionOnInProgress}
+                    onCheckedChange={handleToggleAutoLockComposition}
+                    disabled={projectLoading || updateProject.isPending}
+                  />
+                  <span className="text-base font-medium">
+                    {t("autoLockComposition.label")}
+                  </span>
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  {t("autoLockComposition.description")}
                 </p>
               </div>
             </CardContent>

@@ -321,6 +321,7 @@ function TagDetail() {
         id: true,
         name: true,
         isCompleted: true,
+        compositionLockedAt: true,
       },
       orderBy: { createdAt: "desc" as const },
       take: PAGE_SIZE,
@@ -389,6 +390,7 @@ function TagDetail() {
         id: testRun.id,
         name: testRun.name,
         isCompleted: testRun.isCompleted,
+        compositionLockedAt: testRun.compositionLockedAt,
         projectId: Number(projectId),
       })) || []
     );

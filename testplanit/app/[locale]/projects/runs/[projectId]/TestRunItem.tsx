@@ -35,6 +35,7 @@ import {
   CopyPlus,
   Flame,
   LinkIcon,
+  Lock,
   MoreVertical,
   Pencil,
 } from "lucide-react";
@@ -54,6 +55,7 @@ export interface TestRunItemProps {
     id: number;
     name: string;
     isCompleted: boolean;
+    compositionLockedAt?: Date | string | null;
     testRunType: string;
     configuration: Configurations | null;
     configurationGroupId: string | null;
@@ -113,6 +115,7 @@ const TestRunItem: React.FC<TestRunItemProps> = ({
   pendingRequest,
 }) => {
   const tCommon = useTranslations("common");
+  const t = useTranslations();
   const { projectId } = useParams();
   const router = useRouter();
   const [isCompleteDialogOpen, setIsCompleteDialogOpen] = useState(false);
@@ -310,6 +313,18 @@ const TestRunItem: React.FC<TestRunItemProps> = ({
                             {testRun.configuration.name}
                           </p>
                         )}
+                      </TooltipContent>
+                    </Tooltip>
+                  )}
+                  {testRun.compositionLockedAt && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="shrink-0">
+                          <Lock className="w-4 h-4 text-muted-foreground" />
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        {t("runs.composition.locked")}
                       </TooltipContent>
                     </Tooltip>
                   )}

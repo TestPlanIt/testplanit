@@ -172,6 +172,9 @@ export interface ProjectRepositoryProps {
   isRunMode?: boolean;
   onTestCaseClick?: (caseId: number) => void;
   isCompleted?: boolean;
+  /** When the run's composition is locked, reordering is frozen — hides the
+   * drag handles and disables drag-to-reorder. */
+  compositionLocked?: boolean;
   projectId: string;
   ApplicationArea: ApplicationArea;
   selectedTestCaseId?: number | null;
@@ -376,6 +379,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
   isRunMode = false,
   onTestCaseClick,
   isCompleted = false,
+  compositionLocked = false,
   projectId,
   ApplicationArea: _ApplicationArea,
   selectedTestCaseId,
@@ -1830,6 +1834,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                         isRunMode={isRunMode}
                         onTestCaseClick={onTestCaseClick}
                         isCompleted={isCompleted}
+                        compositionLocked={compositionLocked}
                         canAddEdit={canAddEdit}
                         canAddEditRun={canAddEditRun}
                         canDelete={canDelete}

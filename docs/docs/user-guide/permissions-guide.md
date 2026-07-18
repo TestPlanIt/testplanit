@@ -237,9 +237,9 @@ Permissions are granted per application area. The complete list of areas is:
 - **Milestones** - Creating, editing, and deleting project milestones
 - **TestCaseRepository** - Creating, editing, deleting, and organizing test case folders and test cases (including test steps)
 - **TestCaseRestrictedFields** - Editing restricted field values on test cases, and viewing sensitive parameter values in shared/owner-bound datasets attached to test cases (see [Parameterized Test Cases](./projects/parameterized-test-cases.md))
-- **TestRuns** - Creating, editing, and deleting active test runs
+- **TestRuns** - Creating, editing, and deleting active test runs, including locking a run's composition
 - **ClosedTestRuns** - Deleting completed or archived test runs
-- **TestRunResults** - Recording and managing results for test cases within a run
+- **TestRunResults** - Recording and managing results for test cases within a run (works even when the run's composition is locked)
 - **TestRunResultRestrictedFields** - Recording restricted field values on test run results, and viewing sensitive parameter values on iteration results, matrix cells, matrix exports, and the issue-prefill body when linking an external issue from a failed iteration (see [Parameterized Test Cases](./projects/parameterized-test-cases.md))
 - **Sessions** - Creating and managing active test sessions
 - **SessionsRestrictedFields** - Recording restricted field values on test sessions
@@ -252,6 +252,10 @@ Permissions are granted per application area. The complete list of areas is:
 - **Forecasting** - Time and effort forecasting
 - **Reporting** - Reports and analytics
 - **Settings** - Project settings
+
+:::note Unlocking a run's composition requires the creator or project admin
+Any user with the `TestRuns` **Add/Edit** permission can **lock** a run's composition, but **unlocking** is restricted to the run's **creator**, a **project admin** (the project creator or a user with the **Project Admin** role), or a user with `PROJECTADMIN`/`ADMIN` system access. See [Composition lock](./projects/run-details.md#composition-lock).
+:::
 
 :::note Milestone sync actions require project admin
 Most milestone actions follow the `Milestones` area's **Add/Edit** permission as described above — including linking or unlinking individual issues and editing milestone fields. A few actions that reach out to the external tracker instead require **project admin** status (the project creator, a user with the **Project Admin** role on the project, or a user with `PROJECTADMIN`/`ADMIN` system access), regardless of the acting user's `Milestones` permission:

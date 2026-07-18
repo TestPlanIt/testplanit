@@ -2,7 +2,7 @@ import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { SelectedTestCasesDrawer } from "@/components/SelectedTestCasesDrawer";
 import { ApplicationArea, RepositoryCaseSource } from "~/zenstack/models";
-import { CirclePlay, Combine } from "lucide-react";
+import { CirclePlay, Combine, Lock } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useParams, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -93,6 +93,9 @@ interface TestCasesSectionProps {
   isEditMode?: boolean;
   onTestCasesChange?: (testCaseIds: number[]) => void;
   canAddEdit: boolean;
+  /** When true the run's composition is frozen: cases cannot be added, removed,
+   * or reordered even in edit mode (execution & assignment still work). */
+  compositionLocked?: boolean;
   refetchTestRun: () => void;
   onMultiConfigSelected?: (isMulti: boolean) => void;
   onSelectedConfigurationsChange?: (
@@ -105,6 +108,7 @@ export function TestCasesSection({
   isEditMode = false,
   onTestCasesChange,
   canAddEdit,
+  compositionLocked = false,
   refetchTestRun: _refetchTestRun,
   onMultiConfigSelected,
   onSelectedConfigurationsChange,
@@ -486,13 +490,16 @@ export function TestCasesSection({
                     : testRunData.testCases.length,
                 })}
           </span>
-          {isEditMode && canAddEdit && selectedTestCases.length > 0 && (
-            <SelectedTestCasesDrawer
-              selectedTestCases={selectedTestCases}
-              onSelectionChange={setSelectedTestCases}
-              projectId={Number(params.projectId)}
-            />
-          )}
+          {isEditMode &&
+            canAddEdit &&
+            !compositionLocked &&
+            selectedTestCases.length > 0 && (
+              <SelectedTestCasesDrawer
+                selectedTestCases={selectedTestCases}
+                onSelectionChange={setSelectedTestCases}
+                projectId={Number(params.projectId)}
+              />
+            )}
         </div>
         {!isEditMode &&
           !testRunData.isCompleted &&
@@ -549,22 +556,37 @@ export function TestCasesSection({
         </div>
       )}
 
+      {/* Composition-lock notice: the case set is frozen; execution continues. */}
+      {compositionLocked && (
+        <div className="flex items-center gap-2 rounded-md border border-border bg-muted/50 p-2 text-sm text-muted-foreground">
+          <Lock className="h-4 w-4 shrink-0" />
+          <span>{t("runs.composition.frozenNotice")}</span>
+        </div>
+      )}
+
       <div className="space-y-4">
         {(isEditMode || testRunData.testCases.length > 0) && (
           <ProjectRepository
-            isSelectionMode={isEditMode && canAddEdit}
+            isSelectionMode={isEditMode && canAddEdit && !compositionLocked}
             selectedTestCases={
-              isEditMode
+              isEditMode && !compositionLocked
                 ? selectedTestCases
                 : testRunData.testCases.map((tc) => tc.repositoryCase.id)
             }
             selectedRunIds={
-              isMultiConfigRun && !isEditMode ? selectedRunIds : undefined
+              isMultiConfigRun && (!isEditMode || compositionLocked)
+                ? selectedRunIds
+                : undefined
             }
             onSelectionChange={setSelectedTestCases}
             hideHeader={true}
-            isRunMode={!isEditMode}
+            // A composition-locked run's case set is frozen, so render it in
+            // read-only run mode even in edit mode — same as an unlocked run's
+            // view — which also hides the repository management buttons that the
+            // non-run, non-selection mode would otherwise show.
+            isRunMode={!isEditMode || compositionLocked}
             isCompleted={testRunData.isCompleted}
+            compositionLocked={compositionLocked}
             projectId={params.projectId}
             ApplicationArea={ApplicationArea.TestRuns}
           />

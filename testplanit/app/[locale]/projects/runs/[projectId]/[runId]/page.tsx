@@ -61,6 +61,7 @@ import {
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
 import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
 import {
   Sheet,
   SheetContent,
@@ -87,6 +88,9 @@ import {
   CircleSlash2,
   CopyPlus,
   FileDown,
+  Loader2,
+  Lock,
+  LockOpen,
   Maximize2,
   PlayCircle,
   Save,
@@ -97,6 +101,7 @@ import {
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
+import { toast } from "sonner";
 import { useParams, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Resolver } from "react-hook-form";
@@ -224,6 +229,9 @@ type TestRunWithRelations = {
   isDeleted: boolean;
   isCompleted: boolean;
   completedAt: Date | null;
+  compositionLockedAt: Date | null;
+  compositionLockedById: string | null;
+  compositionLockedBy: { id: string; name: string } | null;
   forecastManual: number | null;
   forecastAutomated: number | null;
   project: { id: number; name: string };
@@ -338,8 +346,11 @@ export default function TestRunPage() {
   ] = useState<AddTestRunModalInitProps | null>(null);
 
   // Fetch TestRuns permissions
-  const { permissions: testRunPermissions, isLoading: isLoadingPermissions } =
-    useProjectPermissions(numericProjectId, ApplicationArea.TestRuns);
+  const {
+    permissions: testRunPermissions,
+    isProjectAdmin,
+    isLoading: isLoadingPermissions,
+  } = useProjectPermissions(numericProjectId, ApplicationArea.TestRuns);
 
   // Fetch ClosedTestRuns permissions
   const {
@@ -358,6 +369,9 @@ export default function TestRunPage() {
   const canAddEditTags = tagsPermissions?.canAddEdit ?? false;
   const isSuperAdmin = session?.user?.access === "ADMIN";
   const showAddEditTagsPerm = canAddEditTags || isSuperAdmin;
+
+  const [isTogglingCompositionLock, setIsTogglingCompositionLock] =
+    useState(false);
 
   // Get the selected test case ID from URL parameters
   const selectedTestCaseId = searchParams.get("selectedCase")
@@ -404,6 +418,7 @@ export default function TestRunPage() {
           },
         },
         createdBy: true,
+        compositionLockedBy: { select: { id: true, name: true } },
         attachments: true,
         testCases: {
           where: { isDeleted: false },
@@ -468,6 +483,45 @@ export default function TestRunPage() {
   ) as {
     data: (TestRunWithRelations & { testRunType?: string }) | null;
     refetch: () => void;
+  };
+
+  // Execution-start composition lock (BOR-1): freezes which cases are in the
+  // run (add/remove/reorder) while execution & assignment continue. Locking is
+  // open to any run editor; unlocking is gated to the run creator / a Project
+  // Admin / system ADMIN.
+  const compositionLocked = !!testRunData?.compositionLockedAt;
+  const canUnlockComposition =
+    isSuperAdmin ||
+    isProjectAdmin ||
+    (!!session?.user?.id && testRunData?.createdBy?.id === session.user.id);
+
+  const setCompositionLock = async (locked: boolean) => {
+    if (isTogglingCompositionLock) return;
+    setIsTogglingCompositionLock(true);
+    try {
+      const res = await fetch(
+        `/api/test-runs/${Number(runId)}/composition-lock`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ locked }),
+        }
+      );
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body?.error || `Request failed (${res.status})`);
+      }
+      await refetchTestRun();
+    } catch (error) {
+      console.error("Failed to update composition lock:", error);
+      toast.error(
+        locked
+          ? t("runs.composition.lockError")
+          : t("runs.composition.unlockError")
+      );
+    } finally {
+      setIsTogglingCompositionLock(false);
+    }
   };
 
   // SSE wake-up: refetch the run (which carries the per-case statuses)
@@ -851,15 +905,18 @@ export default function TestRunPage() {
         docsContent = JSON.stringify(docsContent);
       }
 
-      // Check if test cases have changed
+      // Check if test cases have changed. A composition-locked run's case set is
+      // frozen — never treat cases as changed (the UI disables selection; this
+      // also keeps a stray diff from hitting the DB guard trigger).
       const hasTestCasesChanged =
-        selectedTestCaseIds.length !== currentTestCaseIds.length ||
-        !selectedTestCaseIds.every((id: number) =>
-          currentTestCaseIds.includes(id)
-        ) ||
-        !currentTestCaseIds.every((id: number) =>
-          selectedTestCaseIds.includes(id)
-        );
+        !compositionLocked &&
+        (selectedTestCaseIds.length !== currentTestCaseIds.length ||
+          !selectedTestCaseIds.every((id: number) =>
+            currentTestCaseIds.includes(id)
+          ) ||
+          !currentTestCaseIds.every((id: number) =>
+            selectedTestCaseIds.includes(id)
+          ));
 
       // Handle test case changes
       if (hasTestCasesChanged) {
@@ -1046,15 +1103,18 @@ export default function TestRunPage() {
       const currentTestCaseIds =
         testRunData?.testCases.map((tc) => tc.repositoryCase.id) || [];
 
-      // Check if test cases have changed
+      // Check if test cases have changed. A composition-locked run's case set is
+      // frozen — never treat cases as changed (the UI disables selection; this
+      // also keeps a stray diff from hitting the DB guard trigger).
       const hasTestCasesChanged =
-        selectedTestCaseIds.length !== currentTestCaseIds.length ||
-        !selectedTestCaseIds.every((id: number) =>
-          currentTestCaseIds.includes(id)
-        ) ||
-        !currentTestCaseIds.every((id: number) =>
-          selectedTestCaseIds.includes(id)
-        );
+        !compositionLocked &&
+        (selectedTestCaseIds.length !== currentTestCaseIds.length ||
+          !selectedTestCaseIds.every((id: number) =>
+            currentTestCaseIds.includes(id)
+          ) ||
+          !currentTestCaseIds.every((id: number) =>
+            selectedTestCaseIds.includes(id)
+          ));
 
       if (!hasTestCasesChanged) {
         // No changes to test cases, just save the test run
@@ -1603,6 +1663,18 @@ export default function TestRunPage() {
                   <span className="flex items-center gap-2">
                     <PlayCircle className="h-6 w-6 shrink-0" />
                     {testRunData?.name}
+                    {compositionLocked && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="shrink-0">
+                            <Lock className="h-5 w-5 text-muted-foreground" />
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          {t("runs.composition.locked")}
+                        </TooltipContent>
+                      </Tooltip>
+                    )}
                   </span>
                 )}
               </CardTitle>
@@ -1615,16 +1687,16 @@ export default function TestRunPage() {
                     className="shrink-0 whitespace-nowrap"
                   />
                 )}
-                <div className="flex items-start gap-2 flex-wrap">
-                  {testRunData && <RunAuditLogSheet runId={testRunData.id} />}
+                <div className="flex items-end gap-2 flex-wrap">
                   {testRunData?.isCompleted ? (
-                    <div className="flex items-center gap-1">
+                    <div className="flex flex-col items-end gap-1">
+                      {/* Row 1: Completed On date */}
                       <Badge
                         variant="secondary"
                         className="flex items-center text-md whitespace-nowrap text-sm gap-1 p-2 px-4"
                       >
                         <CircleCheckBig className="h-6 w-6 shrink-0" />
-                        <div className="hidden md:block">
+                        <div>
                           <span className="me-1">
                             {t("common.fields.completedOn")}
                           </span>
@@ -1635,146 +1707,213 @@ export default function TestRunPage() {
                           />
                         </div>
                       </Badge>
-                      {/* Action buttons for COMPLETED runs */}
-                      {canAddEditRun &&
-                        !isAutomatedTestRunType(testRunData?.testRunType) && (
-                          <Button
-                            type="button"
-                            variant="secondary"
-                            onClick={() => setIsDuplicateDialogOpen(true)}
-                            className="group px-3 hover:px-3 transition-all duration-200 gap-0 hover:gap-2"
-                          >
-                            <CopyPlus className="h-4 w-4 shrink-0" />
-                            <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-                              {t("common.actions.duplicate")}
-                            </span>
-                          </Button>
+                      {/* Row 2: activity log + action buttons for COMPLETED runs */}
+                      <div className="flex items-center gap-1">
+                        {testRunData && (
+                          <RunAuditLogSheet runId={testRunData.id} />
                         )}
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        onClick={handleExportPdf}
-                        disabled={isExportingPdf}
-                        className="group px-3 hover:px-3 transition-all duration-200 gap-0 hover:gap-2"
-                      >
-                        <FileDown className="h-4 w-4 shrink-0" />
-                        <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-                          {isExportingPdf
-                            ? t("common.actions.exportingPdf")
-                            : t("common.actions.exportPdf")}
-                        </span>
-                      </Button>
-                      {effectiveCanDelete && (
+                        {canAddEditRun &&
+                          !isAutomatedTestRunType(testRunData?.testRunType) && (
+                            <Button
+                              type="button"
+                              variant="secondary"
+                              onClick={() => setIsDuplicateDialogOpen(true)}
+                              className="group px-3 hover:px-3 transition-all duration-200 gap-0 hover:gap-2"
+                            >
+                              <CopyPlus className="h-4 w-4 shrink-0" />
+                              <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
+                                {t("common.actions.duplicate")}
+                              </span>
+                            </Button>
+                          )}
                         <Button
                           type="button"
                           variant="secondary"
-                          onClick={() => setIsDeleteDialogOpen(true)}
-                          className="group px-3 hover:px-3 transition-all duration-200 gap-0 hover:gap-2 text-destructive"
+                          onClick={handleExportPdf}
+                          disabled={isExportingPdf}
+                          className="group px-3 hover:px-3 transition-all duration-200 gap-0 hover:gap-2"
                         >
-                          <Trash2 className="h-4 w-4 shrink-0" />
+                          <FileDown className="h-4 w-4 shrink-0" />
                           <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-                            {t("common.actions.delete")}
+                            {isExportingPdf
+                              ? t("common.actions.exportingPdf")
+                              : t("common.actions.exportPdf")}
                           </span>
                         </Button>
-                      )}
+                        {effectiveCanDelete && (
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            onClick={() => setIsDeleteDialogOpen(true)}
+                            className="group px-3 hover:px-3 transition-all duration-200 gap-0 hover:gap-2 text-destructive"
+                          >
+                            <Trash2 className="h-4 w-4 shrink-0" />
+                            <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
+                              {t("common.actions.delete")}
+                            </span>
+                          </Button>
+                        )}
+                      </div>
                     </div>
                   ) : (
                     // Buttons for NON-COMPLETED runs
                     <>
                       {!isEditMode ? (
                         // View Mode Buttons for NON-COMPLETED runs
-                        <div className="flex items-center gap-1">
-                          <RequestReviewButton
-                            entityType="RUN"
-                            entityId={testRunData.id}
-                            projectId={Number(projectId)}
-                            currentStateId={testRunData.stateId}
-                            reachableGatedStates={reachableGatedStates}
-                          />
-                          {canAddEditRun && !isMultiConfigSelected && (
+                        <div className="flex flex-col items-end gap-1">
+                          {/* Row 1: activity log + primary run actions */}
+                          <div className="flex items-center gap-1">
+                            {testRunData && (
+                              <RunAuditLogSheet runId={testRunData.id} />
+                            )}
+                            <RequestReviewButton
+                              entityType="RUN"
+                              entityId={testRunData.id}
+                              projectId={Number(projectId)}
+                              currentStateId={testRunData.stateId}
+                              reachableGatedStates={reachableGatedStates}
+                            />
+                            {canAddEditRun && !isMultiConfigSelected && (
+                              <Button
+                                type="button"
+                                variant="secondary"
+                                onClick={handleEditClick}
+                                className="group px-3 hover:px-3 transition-all duration-200 gap-0 hover:gap-2"
+                              >
+                                <SquarePen className="h-4 w-4 shrink-0" />
+                                <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
+                                  {t("common.actions.edit")}
+                                </span>
+                              </Button>
+                            )}
+                            {canAddEditRun &&
+                              !isAutomatedTestRunType(
+                                testRunData?.testRunType
+                              ) && (
+                                <Button
+                                  type="button"
+                                  variant="secondary"
+                                  onClick={() => setIsDuplicateDialogOpen(true)}
+                                  className="group px-3 hover:px-3 transition-all duration-200 gap-0 hover:gap-2"
+                                >
+                                  <CopyPlus className="h-4 w-4 shrink-0" />
+                                  <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
+                                    {t("common.actions.duplicate")}
+                                  </span>
+                                </Button>
+                              )}
                             <Button
                               type="button"
                               variant="secondary"
-                              onClick={handleEditClick}
+                              onClick={handleExportPdf}
+                              disabled={isExportingPdf}
                               className="group px-3 hover:px-3 transition-all duration-200 gap-0 hover:gap-2"
                             >
-                              <SquarePen className="h-4 w-4 shrink-0" />
+                              <FileDown className="h-4 w-4 shrink-0" />
                               <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-                                {t("common.actions.edit")}
+                                {isExportingPdf
+                                  ? t("common.actions.exportingPdf")
+                                  : t("common.actions.exportPdf")}
                               </span>
                             </Button>
-                          )}
-                          {canAddEditRun &&
-                            !isAutomatedTestRunType(
-                              testRunData?.testRunType
-                            ) && (
-                              <Button
-                                type="button"
-                                variant="secondary"
-                                onClick={() => setIsDistributeDialogOpen(true)}
-                                className="group px-3 hover:px-3 transition-all duration-200 gap-0 hover:gap-2"
-                              >
-                                <UsersRound className="h-4 w-4 shrink-0" />
-                                <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-                                  {t("common.actions.assign")}
-                                </span>
-                              </Button>
+                            {canCloseRun && (
+                              <>
+                                <Button
+                                  type="button"
+                                  variant="secondary"
+                                  className="group px-3 hover:px-3 transition-all duration-200 gap-0 hover:gap-2"
+                                  onClick={() => setIsCompleteDialogOpen(true)}
+                                >
+                                  <CircleCheckBig className="h-4 w-4 shrink-0" />
+                                  <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
+                                    {t("common.actions.complete")}
+                                  </span>
+                                </Button>
+                                {isCompleteDialogOpen && (
+                                  <CompleteTestRunDialog
+                                    open={isCompleteDialogOpen}
+                                    onClose={() =>
+                                      setIsCompleteDialogOpen(false)
+                                    }
+                                    testRunId={Number(runId)}
+                                    projectId={Number(projectId)}
+                                    stateId={testRunData?.stateId || 0}
+                                    stateName={testRunData?.state?.name || ""}
+                                  />
+                                )}
+                              </>
                             )}
-                          {canAddEditRun &&
-                            !isAutomatedTestRunType(
-                              testRunData?.testRunType
-                            ) && (
-                              <Button
-                                type="button"
-                                variant="secondary"
-                                onClick={() => setIsDuplicateDialogOpen(true)}
-                                className="group px-3 hover:px-3 transition-all duration-200 gap-0 hover:gap-2"
-                              >
-                                <CopyPlus className="h-4 w-4 shrink-0" />
-                                <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-                                  {t("common.actions.duplicate")}
-                                </span>
-                              </Button>
-                            )}
-                          <Button
-                            type="button"
-                            variant="secondary"
-                            onClick={handleExportPdf}
-                            disabled={isExportingPdf}
-                            className="group px-3 hover:px-3 transition-all duration-200 gap-0 hover:gap-2"
-                          >
-                            <FileDown className="h-4 w-4 shrink-0" />
-                            <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-                              {isExportingPdf
-                                ? t("common.actions.exportingPdf")
-                                : t("common.actions.exportPdf")}
-                            </span>
-                          </Button>
-                          {canCloseRun && (
-                            <>
-                              <Button
-                                type="button"
-                                variant="secondary"
-                                className="group px-3 hover:px-3 transition-all duration-200 gap-0 hover:gap-2"
-                                onClick={() => setIsCompleteDialogOpen(true)}
-                              >
-                                <CircleCheckBig className="h-4 w-4 shrink-0" />
-                                <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-                                  {t("common.actions.complete")}
-                                </span>
-                              </Button>
-                              {isCompleteDialogOpen && (
-                                <CompleteTestRunDialog
-                                  open={isCompleteDialogOpen}
-                                  onClose={() => setIsCompleteDialogOpen(false)}
-                                  testRunId={Number(runId)}
-                                  projectId={Number(projectId)}
-                                  stateId={testRunData?.stateId || 0}
-                                  stateName={testRunData?.state?.name || ""}
-                                />
+                          </div>
+                          {/* Row 2: assign + composition lock/unlock */}
+                          <div className="flex items-center gap-1">
+                            {canAddEditRun &&
+                              !isAutomatedTestRunType(
+                                testRunData?.testRunType
+                              ) && (
+                                <Button
+                                  type="button"
+                                  variant="secondary"
+                                  onClick={() =>
+                                    setIsDistributeDialogOpen(true)
+                                  }
+                                  className="group px-3 hover:px-3 transition-all duration-200 gap-0 hover:gap-2"
+                                >
+                                  <UsersRound className="h-4 w-4 shrink-0" />
+                                  <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
+                                    {t("common.actions.assign")}
+                                  </span>
+                                </Button>
                               )}
-                            </>
-                          )}
+                            {/* Execution-start composition lock (BOR-1) —
+                                single toggle. Locking needs run-edit rights;
+                                unlocking is gated to creator/admin, so the
+                                switch is disabled (but still shown, for
+                                context) when a locked run can't be unlocked. */}
+                            {(compositionLocked ||
+                              (canAddEditRun && !isMultiConfigSelected)) && (
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <div className="flex h-9 items-center gap-2 rounded-md border bg-secondary px-3 text-secondary-foreground">
+                                    <Switch
+                                      checked={compositionLocked}
+                                      onCheckedChange={(v) =>
+                                        setCompositionLock(v)
+                                      }
+                                      disabled={
+                                        isTogglingCompositionLock ||
+                                        (compositionLocked
+                                          ? !canUnlockComposition
+                                          : !canAddEditRun ||
+                                            isMultiConfigSelected)
+                                      }
+                                      aria-label={t("runs.composition.lock")}
+                                    />
+                                    {isTogglingCompositionLock ? (
+                                      <Loader2 className="h-4 w-4 shrink-0 animate-spin" />
+                                    ) : compositionLocked ? (
+                                      <Lock className="h-4 w-4 shrink-0" />
+                                    ) : (
+                                      <LockOpen className="h-4 w-4 shrink-0" />
+                                    )}
+                                    <span className="whitespace-nowrap text-sm">
+                                      {t("runs.composition.lock")}
+                                    </span>
+                                  </div>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  {compositionLocked
+                                    ? testRunData.compositionLockedBy?.name?.trim()
+                                      ? t("runs.composition.lockedBy", {
+                                          name: testRunData.compositionLockedBy.name.trim(),
+                                        })
+                                      : t(
+                                          "runs.composition.lockedAutomatically"
+                                        )
+                                    : t("runs.composition.lockHint")}
+                                </TooltipContent>
+                              </Tooltip>
+                            )}
+                          </div>
                         </div>
                       ) : (
                         // Edit Mode Buttons for NON-COMPLETED runs
@@ -2015,6 +2154,7 @@ export default function TestRunPage() {
                           isEditMode={isEditMode}
                           onTestCasesChange={handleTestCasesChange}
                           canAddEdit={canAddEditRun}
+                          compositionLocked={compositionLocked}
                           refetchTestRun={refetchTestRun}
                           onMultiConfigSelected={setIsMultiConfigSelected}
                           onSelectedConfigurationsChange={
