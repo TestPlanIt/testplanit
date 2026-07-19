@@ -118,6 +118,7 @@ interface TipTapEditorProps {
   onUpdate?: (content: object) => void;
   readOnly?: boolean;
   className?: string;
+  style?: React.CSSProperties;
   projectId?: string; // Made optional - AI features only work when valid project ID provided
   placeholder?: string;
   parameters?: ParameterChipMeta[];
@@ -129,6 +130,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
   onUpdate,
   readOnly = false,
   className = "h-[150px]",
+  style,
   projectId,
   placeholder,
   parameters,
@@ -699,6 +701,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
   return (
     <div
       className={cn("overflow-auto flex flex-col w-full", className)}
+      style={style}
       ref={editorContainerRef}
     >
       {loading && <LoadingSpinnerAlert />}

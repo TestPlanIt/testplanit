@@ -27,6 +27,7 @@ import MultiSelect from "react-select";
 import { emptyEditorContent } from "~/app/constants";
 import type { ParameterChipMeta } from "~/lib/tiptap/parameterMentionExtension";
 import { getCustomStyles } from "~/styles/multiSelectStyles";
+import { editorMinHeightStyle } from "~/utils/editorHeight";
 import StepsForm from "./StepsForm";
 
 interface RenderFieldProps {
@@ -300,20 +301,16 @@ const RenderField: React.FC<RenderFieldProps> = ({
 
         // Access initialHeight from the field definition
         const initialHeight = field.caseField.initialHeight;
-        const editorClassName = `ring-2 ring-muted rounded-lg ${
-          initialHeight ? `min-h-[${initialHeight}px]` : "min-h-[300px]"
-        }`;
 
         return (
-          <div className={editorClassName}>
+          <div className="ring-2 ring-muted rounded-lg">
             <TipTapEditor
               key={field.caseField.id}
               content={initialContent} // Use determined initial content
               onUpdate={handleEditorUpdate}
               projectId={String(projectId)}
-              className={
-                initialHeight ? `min-h-[${initialHeight}px]` : "min-h-[300px]"
-              }
+              className=""
+              style={editorMinHeightStyle(initialHeight)}
               readOnly={isDisabled}
             />
           </div>

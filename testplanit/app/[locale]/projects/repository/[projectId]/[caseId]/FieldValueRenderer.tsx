@@ -30,6 +30,7 @@ import { Minus, Plus } from "lucide-react";
 import { Link } from "~/lib/navigation";
 import type { ParameterChipMeta } from "~/lib/tiptap/parameterMentionExtension";
 import { ensureTipTapJSON } from "~/utils/tiptapConversion";
+import { editorMinHeightStyle } from "~/utils/editorHeight";
 
 // Re-defining DisplayStep here for clarity, assuming it's similar to StepsDisplay's internal type
 interface DisplayStep extends DbSteps {
@@ -511,22 +512,16 @@ const FieldValueRenderer: React.FC<FieldValueRendererProps> = ({
                 (cf: any) => cf.caseField.id === fieldId
               )?.caseField;
               const initialHeight = caseFieldDefinition?.initialHeight;
-              const editorClassName = `ring-2 ring-muted rounded-lg ${
-                initialHeight ? `min-h-[${initialHeight}px]` : "min-h-[300px]"
-              }`;
 
               return (
-                <div className={editorClassName}>
+                <div className="ring-2 ring-muted rounded-lg">
                   <TipTapEditor
                     key={fieldId}
                     content={initialEditorContent}
                     onUpdate={handleEditorUpdate}
                     projectId={projectId ? String(projectId) : undefined}
-                    className={
-                      initialHeight
-                        ? `min-h-[${initialHeight}px]`
-                        : "min-h-[100px]" // Keep inner class if needed, or adjust
-                    }
+                    className=""
+                    style={editorMinHeightStyle(initialHeight)}
                     readOnly={!isEditorEditable}
                   />
                 </div>
