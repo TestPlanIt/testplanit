@@ -1,0 +1,66 @@
+{{- $esNode := include "testplanit.elasticsearchNode" . -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "testplanit.configMapName" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "testplanit.labels" . | nindent 4 }}
+  {{- with .Values.commonAnnotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+data:
+  NODE_ENV: "production"
+  NEXTAUTH_URL: {{ required "appUrl is required (the public https URL of this instance)" .Values.appUrl | quote }}
+  NODE_OPTIONS: {{ .Values.config.nodeOptions | quote }}
+  # Authentication surface
+  ENABLE_SIGNUP: {{ .Values.config.auth.enableSignup | quote }}
+  ENABLE_PASSWORD_AUTH: {{ .Values.config.auth.enablePasswordAuth | quote }}
+  ENABLE_MAGIC_LINK: {{ .Values.config.auth.enableMagicLink | quote }}
+  ENABLE_EMAIL_VERIFICATION: {{ .Values.config.auth.enableEmailVerification | quote }}
+  # Initial admin (password is in the Secret)
+  ADMIN_EMAIL: {{ .Values.config.admin.email | quote }}
+  ADMIN_NAME: {{ .Values.config.admin.name | quote }}
+  {{- if $esNode }}
+  ELASTICSEARCH_NODE: {{ $esNode | quote }}
+  {{- end }}
+  # Object storage (credentials live in the Secret)
+  {{- if .Values.objectStorage.minio.enabled }}
+  AWS_ENDPOINT_URL: "http://{{ include "testplanit.minio.fullname" . }}:9000"
+  AWS_BUCKET_NAME: {{ .Values.objectStorage.minio.bucket | quote }}
+  AWS_REGION: "us-east-1"
+  {{- if and .Values.ingress.enabled .Values.ingress.minioPath }}
+  AWS_PUBLIC_ENDPOINT_URL: "{{ .Values.appUrl | trimSuffix "/" }}{{ .Values.ingress.minioPath }}"
+  {{- end }}
+  {{- else }}
+  {{- with .Values.objectStorage.external.endpoint }}
+  AWS_ENDPOINT_URL: {{ . | quote }}
+  {{- end }}
+  {{- with .Values.objectStorage.external.publicEndpoint }}
+  AWS_PUBLIC_ENDPOINT_URL: {{ . | quote }}
+  {{- end }}
+  AWS_BUCKET_NAME: {{ .Values.objectStorage.external.bucket | quote }}
+  AWS_REGION: {{ .Values.objectStorage.external.region | quote }}
+  {{- end }}
+  # SMTP (optional; password in the Secret)
+  {{- with .Values.config.email.host }}
+  EMAIL_SERVER_HOST: {{ . | quote }}
+  {{- end }}
+  {{- with .Values.config.email.port }}
+  EMAIL_SERVER_PORT: {{ . | quote }}
+  {{- end }}
+  {{- with .Values.config.email.user }}
+  EMAIL_SERVER_USER: {{ . | quote }}
+  {{- end }}
+  {{- with .Values.config.email.from }}
+  EMAIL_FROM: {{ . | quote }}
+  {{- end }}
+  # Valkey Sentinel (optional; only when pointing at an external Sentinel cluster)
+  {{- if and (not .Values.redis.enabled) .Values.redis.external.sentinels }}
+  VALKEY_SENTINELS: {{ .Values.redis.external.sentinels | quote }}
+  VALKEY_SENTINEL_MASTER: {{ .Values.redis.external.sentinelMaster | quote }}
+  {{- end }}
+  {{- range $k, $v := .Values.config.extraEnv }}
+  {{ $k }}: {{ $v | quote }}
+  {{- end }}

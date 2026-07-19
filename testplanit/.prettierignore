@@ -7,6 +7,9 @@ lib/openapi/zenstack-openapi.json
 # Handlebars templates (prettier HTML parser chokes on block helpers)
 *.hbs
 
+# Helm chart — Go-template YAML ({{ ... }}); prettier's YAML parser can't parse it
+helm/
+
 # Lockfiles
 pnpm-lock.yaml
 

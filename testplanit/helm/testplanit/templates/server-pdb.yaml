@@ -1,0 +1,15 @@
+{{- if and .Values.server.pdb.enabled (ge (int .Values.server.replicaCount) 2) }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "testplanit.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "testplanit.labels" . | nindent 4 }}
+    app.kubernetes.io/component: server
+spec:
+  maxUnavailable: {{ .Values.server.pdb.maxUnavailable }}
+  selector:
+    matchLabels:
+      {{- include "testplanit.componentSelectorLabels" (dict "root" $ "component" "server") | nindent 6 }}
+{{- end }}

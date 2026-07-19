@@ -1,0 +1,95 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "testplanit.fullname" . }}-workers
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "testplanit.labels" . | nindent 4 }}
+    app.kubernetes.io/component: workers
+  {{- with .Values.commonAnnotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  replicas: {{ .Values.workers.replicaCount }}
+  # The workers pod also registers scheduled/repeatable jobs, so a single writer
+  # avoids duplicate cron registration. Recreate to guarantee only one at a time.
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      {{- include "testplanit.componentSelectorLabels" (dict "root" $ "component" "workers") | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "testplanit.componentSelectorLabels" (dict "root" $ "component" "workers") | nindent 8 }}
+        {{- with .Values.workers.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        {{- if not .Values.secrets.existingSecret }}
+        checksum/secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
+        {{- end }}
+        {{- with .Values.workers.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      serviceAccountName: {{ include "testplanit.serviceAccountName" . }}
+      {{- include "testplanit.imagePullSecrets" . | nindent 6 }}
+      terminationGracePeriodSeconds: {{ .Values.workers.terminationGracePeriodSeconds }}
+      {{- with .Values.workers.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.workers.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.workers.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.workers.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      initContainers:
+        {{- include "testplanit.initWaitForDb" (dict "root" .) | nindent 8 }}
+      containers:
+        - name: workers
+          image: {{ include "testplanit.workersImage" . }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          # Register scheduled jobs, then run all workers under pm2. Bypasses the
+          # image's default wait-for-postgres (which assumes a host named
+          # "postgres"); the wait-for-db init container already gated readiness.
+          command:
+            - /bin/sh
+            - -c
+            - tsx scheduler.ts && exec pm2-runtime start ecosystem.config.js
+          {{- include "testplanit.appEnvFrom" . | nindent 10 }}
+          env:
+            # The workers image runs pm2-runtime; give it a writable HOME so the
+            # pod can run as a non-root user (pm2 writes its daemon state to $HOME).
+            - name: HOME
+              value: /tmp
+            {{- if .Values.workers.auditTriggerBootstrapFatal }}
+            - name: AUDIT_TRIGGER_BOOTSTRAP_FATAL
+              value: "1"
+            {{- end }}
+            {{- with .Values.workers.extraEnv }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          livenessProbe:
+            exec:
+              command: ["/bin/sh", "-c", "ps aux | grep -v grep | grep -q node"]
+            initialDelaySeconds: 40
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          resources:
+            {{- toYaml .Values.workers.resources | nindent 12 }}
+          {{- with .Values.workers.containerSecurityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}

@@ -155,6 +155,13 @@ const nextConfig: NextConfig = {
     },
   },
   images: {
+    // Self-hosted / OSS images are built with SELF_HOSTED=true, which turns off
+    // Next's image optimizer. That makes the build domain-agnostic: <Image>
+    // renders a plain <img> pointing straight at the operator's own storage, so
+    // no build-time remotePatterns allowlist (and therefore no baked domain) is
+    // needed and a single published image runs on any host. The multi-tenant
+    // SaaS build leaves this off and relies on the BASE_DOMAIN allowlist below.
+    unoptimized: process.env.SELF_HOSTED === "true",
     remotePatterns: [
       // Dynamic patterns from environment variables
       ...buildDynamicRemotePatterns(),

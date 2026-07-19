@@ -1,0 +1,399 @@
+# Default values for the TestPlanIt chart.
+# This is a single-tenant, self-hosted deployment of TestPlanIt.
+#
+# Minimum you MUST set:
+#   appUrl                        — the public https URL of this instance
+#   ingress.host                  — the hostname it is served on
+#   secrets.adminPassword         — initial admin password (or provide via existingSecret)
+#   secrets.encryptionKey         — 64-char hex; MUST be stable forever (see note)
+# The image defaults to the official public self-host image (below); override
+# only to pin a version or use your own build.
+#
+# Everything under postgresql/redis/elasticsearch/objectStorage.minio is
+# bundled and enabled by default so `helm install` yields a working instance.
+# Flip each `enabled: false` and fill its `external:` block to use RDS /
+# ElastiCache / OpenSearch / S3 in production.
+
+# -----------------------------------------------------------------------------
+# Image
+# -----------------------------------------------------------------------------
+# Defaults to the official public self-host image: domain-agnostic (no baked
+# domain) and multi-arch (linux/amd64 + linux/arm64), so it runs unmodified on
+# standard x86 EKS/GKE/AKS nodes and on arm64 / Graviton.
+#
+# Pin `tag` to a released version (e.g. "1.0.0") for reproducible deploys instead
+# of the moving "latest". The workers image is "<repository>:<tag>-workers"
+# unless you override workersRepository/workersTag.
+#
+# To build & push your own instead: `docker buildx bake -f docker-bake.hcl --push
+# selfhost --set "*.args.VERSION=1.0.0" --set "*-selfhost.tags=<registry>/…"`.
+image:
+  repository: ghcr.io/testplanit/testplanit-selfhost
+  tag: latest
+  workersRepository: "" # defaults to `repository`
+  workersTag: "" # defaults to "<tag>-workers"
+  pullPolicy: IfNotPresent
+  # Names of pre-created imagePullSecrets (e.g. for a private registry / ECR).
+  pullSecrets: []
+  # - name: regcred
+
+# Public URL of this instance (the hostname you serve it on). Sets NEXTAUTH_URL.
+# REQUIRED.
+appUrl: "" # e.g. https://testplanit.example.com
+
+nameOverride: ""
+fullnameOverride: ""
+
+# Extra labels/annotations applied to all chart-managed objects.
+commonLabels: {}
+commonAnnotations: {}
+
+serviceAccount:
+  create: true
+  name: ""
+  # Annotations — e.g. an IRSA role ARN so pods can reach S3 without static keys:
+  #   eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/testplanit
+  annotations: {}
+
+# -----------------------------------------------------------------------------
+# Web application (Next.js server)
+# -----------------------------------------------------------------------------
+server:
+  replicaCount: 1
+  resources:
+    requests:
+      cpu: 100m
+      memory: 512Mi
+    limits:
+      cpu: "2"
+      memory: 1536Mi
+  # Wait 15s after SIGTERM so ingress-nginx drops this pod from its upstreams
+  # before node exits — eliminates the rollout 502/503 deregistration race.
+  preStopSleepSeconds: 15
+  terminationGracePeriodSeconds: 45
+  # Spread replicas across nodes. Set to [] to disable.
+  topologySpreadConstraints:
+    - maxSkew: 1
+      topologyKey: kubernetes.io/hostname
+      whenUnsatisfiable: ScheduleAnyway
+      # labelSelector is injected by the template (matches this release's app pods)
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  podAnnotations: {}
+  podLabels: {}
+  # Pod-level securityContext (defaults are safe; override as needed).
+  podSecurityContext:
+    runAsNonRoot: true
+    runAsUser: 1001
+    runAsGroup: 1001
+    fsGroup: 1001
+  containerSecurityContext:
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: false
+    capabilities:
+      drop: ["ALL"]
+  # Probes. Readiness uses /api/health (returns 200 healthy/degraded, 503 only
+  # when the database is unreachable). Liveness is a plain TCP check so a
+  # transient dependency blip never restarts the web tier.
+  readinessProbe:
+    httpGet:
+      path: /api/health
+      port: http
+    initialDelaySeconds: 15
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 6
+  livenessProbe:
+    tcpSocket:
+      port: http
+    initialDelaySeconds: 30
+    periodSeconds: 20
+    timeoutSeconds: 5
+    failureThreshold: 6
+  # Extra non-secret env vars (list of {name,value} or {name,valueFrom}).
+  extraEnv: []
+  # PodDisruptionBudget (auto-created only when replicaCount >= 2).
+  pdb:
+    enabled: true
+    maxUnavailable: 1
+
+service:
+  type: ClusterIP
+  port: 3000
+  annotations: {}
+
+# -----------------------------------------------------------------------------
+# Background workers (BullMQ + scheduler)
+# -----------------------------------------------------------------------------
+# The workers pod also registers the scheduled/cron jobs, so keep replicaCount
+# at 1 unless you have externalized scheduling. Multiple replicas would register
+# duplicate repeatable jobs.
+workers:
+  replicaCount: 1
+  resources:
+    requests:
+      cpu: 100m
+      memory: 512Mi
+    limits:
+      cpu: "2"
+      memory: 2Gi
+  terminationGracePeriodSeconds: 45
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  podAnnotations: {}
+  podLabels: {}
+  podSecurityContext:
+    runAsNonRoot: true
+    runAsUser: 1001
+    runAsGroup: 1001
+    fsGroup: 1001
+  containerSecurityContext:
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: false
+    capabilities:
+      drop: ["ALL"]
+  # Worker audit-trigger integrity is load-bearing; fail fast if the boot-time
+  # trigger bootstrap fails on the worker tier (see docs).
+  auditTriggerBootstrapFatal: true
+  extraEnv: []
+
+# -----------------------------------------------------------------------------
+# Migrate + seed job
+# -----------------------------------------------------------------------------
+# One-shot Helm hook that runs BEFORE the app/workers serve traffic:
+#   zenstack migrate deploy  ->  apply audit triggers  ->  setup pg extensions
+#   ->  seed (creates the initial admin + Magic Link provider)
+# Idempotent; re-runs safely on every `helm upgrade`.
+migrate:
+  enabled: true
+  # Run db/seed.ts (creates the initial admin user from secrets.adminEmail /
+  # secrets.adminPassword). Safe/idempotent; set false to skip seeding.
+  seed: true
+  # Hook config. Runs as post-install,post-upgrade so bundled datastores (normal
+  # resources) are already present. Old job is removed before each run.
+  backoffLimit: 3
+  activeDeadlineSeconds: 1200
+  resources:
+    requests:
+      cpu: 100m
+      memory: 512Mi
+    limits:
+      cpu: "2"
+      memory: 1536Mi
+
+# -----------------------------------------------------------------------------
+# Ingress
+# -----------------------------------------------------------------------------
+ingress:
+  enabled: true
+  className: nginx
+  host: "" # e.g. testplanit.example.com  (REQUIRED when enabled)
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: "100m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "120"
+    nginx.ingress.kubernetes.io/custom-http-errors: "403,404,500,502,503,504"
+    # Retry the other healthy pod on a transient upstream 5xx (safe for GETs).
+    nginx.ingress.kubernetes.io/proxy-next-upstream: "error timeout http_502 http_503"
+    nginx.ingress.kubernetes.io/proxy-next-upstream-tries: "3"
+  tls:
+    enabled: false
+    # secretName holding the cert for `host`. With cert-manager, also add the
+    # issuer annotation above and set this to the secret cert-manager will fill.
+    secretName: ""
+  # When bundled MinIO is used, expose it for browser file access at this path
+  # on the same host. Ignored when objectStorage.minio.enabled=false.
+  minioPath: /files
+
+# -----------------------------------------------------------------------------
+# Application configuration (non-secret env)
+# -----------------------------------------------------------------------------
+config:
+  nodeOptions: "--max-old-space-size=4096"
+  # Authentication surface. Defaults suit an internal enterprise install
+  # (password auth on, open signup off). Magic Link needs SMTP configured.
+  auth:
+    enableSignup: false
+    enablePasswordAuth: true
+    enableMagicLink: false
+    enableEmailVerification: false
+  admin:
+    email: "admin@example.com"
+    name: "Administrator"
+    # password -> secrets.adminPassword
+  # Outbound SMTP for notifications / magic links (optional).
+  email:
+    host: ""
+    port: "587"
+    user: ""
+    from: ""
+    # password -> secrets.emailPassword
+  # Arbitrary extra non-secret env (map of KEY: value). Use for OAuth client ids,
+  # tuning knobs, DATABASE_REPLICA_URLS, ALLOWED_PRIVATE_HOSTS, etc.
+  extraEnv: {}
+
+# -----------------------------------------------------------------------------
+# Secrets
+# -----------------------------------------------------------------------------
+secrets:
+  # If set, the chart creates NO Secret and every secret env is read from this
+  # pre-existing Secret (e.g. managed by Vault / External Secrets / SOPS). It
+  # must contain all required keys — see the chart README. When using bundled
+  # Postgres/MinIO with an existingSecret, it must also carry POSTGRES_PASSWORD /
+  # MINIO_ROOT_USER / MINIO_ROOT_PASSWORD.
+  existingSecret: ""
+
+  # Auth secret for NextAuth. Auto-generated and preserved across upgrades if
+  # left empty.
+  nextauthSecret: ""
+  # ENCRYPTION_KEY (64-char hex) for encrypting integration credentials/tokens
+  # at rest. Auto-generated on first install and PRESERVED across upgrades.
+  # WARNING: if this ever changes, all encrypted data becomes unreadable. Set it
+  # explicitly here (or via existingSecret) and back it up.
+  encryptionKey: ""
+  # Initial admin password (used by the seed job). REQUIRED unless migrate.seed
+  # is false or you provide it via existingSecret.
+  adminPassword: ""
+  # SMTP password (optional).
+  emailPassword: ""
+  # Arbitrary extra secret env (map of KEY: value) folded into the chart Secret.
+  extraEnv: {}
+
+# -----------------------------------------------------------------------------
+# PostgreSQL (required datastore)
+# -----------------------------------------------------------------------------
+postgresql:
+  enabled: true
+  image: postgres:18-alpine
+  imagePullPolicy: IfNotPresent
+  auth:
+    username: testplanit
+    database: testplanit
+    # password auto-generated & preserved if empty.
+    password: ""
+  primary:
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: "2"
+        memory: 2Gi
+    nodeSelector: {}
+    tolerations: []
+    affinity: {}
+  persistence:
+    enabled: true
+    size: 20Gi
+    storageClass: ""
+    accessModes: ["ReadWriteOnce"]
+  # Used ONLY when enabled=false — point at an external PostgreSQL (e.g. RDS).
+  external:
+    # Full connection URL, incl. credentials. Required when enabled=false.
+    url: "" # postgresql://user:pass@host:5432/testplanit?schema=public
+    # Optional direct (non-pooled) URL for schema sync when a transaction-mode
+    # pooler (pgbouncer / RDS Proxy) fronts the primary URL above. Falls back to
+    # `url` when empty.
+    directUrl: ""
+
+# -----------------------------------------------------------------------------
+# Valkey / Redis (required — cache + BullMQ queue)
+# -----------------------------------------------------------------------------
+redis:
+  enabled: true
+  image: valkey/valkey:8-alpine
+  imagePullPolicy: IfNotPresent
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: "1"
+      memory: 1Gi
+  persistence:
+    enabled: true
+    size: 8Gi
+    storageClass: ""
+    accessModes: ["ReadWriteOnce"]
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  # Used ONLY when enabled=false — point at external Valkey/Redis (ElastiCache).
+  external:
+    url: "" # valkey://host:6379  (or with password: valkey://:pass@host:6379)
+    # Optional Sentinel HA (managed services usually don't need this):
+    sentinels: "" # comma-separated host:port list
+    sentinelMaster: "mymaster"
+
+# -----------------------------------------------------------------------------
+# Elasticsearch (optional — full-text search feature)
+# -----------------------------------------------------------------------------
+elasticsearch:
+  enabled: true
+  image: elasticsearch:9.0.3
+  imagePullPolicy: IfNotPresent
+  javaOpts: "-Xms512m -Xmx512m"
+  resources:
+    requests:
+      cpu: 250m
+      memory: 1Gi
+    limits:
+      cpu: "1"
+      memory: 2Gi
+  persistence:
+    enabled: true
+    size: 10Gi
+    storageClass: ""
+    accessModes: ["ReadWriteOnce"]
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  # Some managed/hardened nodes disallow the privileged sysctl init container.
+  # Set false and ensure vm.max_map_count>=262144 on the nodes another way.
+  setVmMaxMapCount: true
+  # Used ONLY when enabled=false — point at external ES/OpenSearch. Empty node
+  # with enabled=false disables search entirely (app degrades gracefully).
+  external:
+    node: "" # https://your-opensearch.region.es.amazonaws.com:9200
+
+# -----------------------------------------------------------------------------
+# Object storage (attachments) — bundled MinIO OR external S3
+# -----------------------------------------------------------------------------
+objectStorage:
+  minio:
+    enabled: true
+    image: minio/minio:latest
+    imagePullPolicy: IfNotPresent
+    auth:
+      rootUser: "minioadmin"
+      # rootPassword auto-generated & preserved if empty.
+      rootPassword: ""
+    bucket: "testplanit"
+    resources:
+      requests:
+        cpu: 50m
+        memory: 256Mi
+      limits:
+        cpu: "1"
+        memory: 1Gi
+    persistence:
+      enabled: true
+      size: 20Gi
+      storageClass: ""
+      accessModes: ["ReadWriteOnce"]
+    nodeSelector: {}
+    tolerations: []
+    affinity: {}
+  # Used when minio.enabled=false — external S3-compatible storage.
+  external:
+    # Empty endpoint => AWS S3. Set for S3-compatible services (MinIO, OCI, etc.).
+    endpoint: ""
+    # Browser-facing URL for downloading attachments (empty => AWS S3 default).
+    publicEndpoint: ""
+    region: "us-east-1"
+    bucket: ""
+    # Static credentials. Leave BOTH empty to use pod IAM (IRSA) — set the role
+    # ARN on serviceAccount.annotations.
+    accessKeyId: ""
+    secretAccessKey: ""

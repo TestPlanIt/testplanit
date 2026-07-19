@@ -1,0 +1,170 @@
+# Self-Host Image Release
+#
+# Publishes the PUBLIC, domain-agnostic images that the Helm chart and
+# docker-compose self-hosters pull. Unlike the SaaS images (release.yml), these:
+#   - are built with SELF_HOSTED=true (Next image optimizer off, no baked
+#     BASE_DOMAIN) so one image runs on ANY host/domain, and
+#   - are MULTI-ARCH (linux/amd64 + linux/arm64) so they run on standard x86
+#     EKS/GKE/AKS nodegroups as well as arm64 / Graviton.
+#
+# Built the same way as the docs image (docs-release.yml): each arch natively on
+# its own self-hosted runner, then merged into a multi-arch manifest.
+#
+# Images published (see docker-bake.hcl "selfhost" group):
+#   ghcr.io/testplanit/testplanit-selfhost:<version>            (server)
+#   ghcr.io/testplanit/testplanit-selfhost:<version>-workers    (workers)
+#   :latest / :latest-workers  (only when the tag is the newest semver)
+name: Release Self-Host Images
+
+on:
+  push:
+    tags:
+      - 'v*'
+      # Skip prereleases (e.g. v1.0.0-beta.1) — betas ship as source only.
+      - '!v*-*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to build (e.g., v1.0.0)'
+        required: true
+        type: string
+
+jobs:
+  build-amd64:
+    runs-on: [self-hosted, linux, x64]
+    permissions:
+      contents: read
+      packages: write
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v7
+      with:
+        ref: ${{ github.event.inputs.tag || github.ref_name }}
+
+    - name: Set lowercase repo owner
+      run: echo "OWNER_LC=$(echo ${{ github.repository_owner }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v4
+
+    - name: Log in to GitHub Container Registry
+      uses: docker/login-action@v4
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Generate version info
+      run: |
+        cd testplanit
+        node scripts/generate-version.js
+        mkdir -p public && cp public/version.json .docker-version.json || echo "version file not generated"
+
+    - name: Build & push amd64 self-host images
+      working-directory: ./testplanit
+      run: |
+        VERSION="${{ github.event.inputs.tag || github.ref_name }}"; VERSION_NUM="${VERSION#v}"
+        REG="ghcr.io/${OWNER_LC}/testplanit-selfhost"
+        docker buildx bake -f docker-bake.hcl --allow=fs.read=.. --push selfhost \
+          --set "*.platform=linux/amd64" \
+          --set "*.args.VERSION=${VERSION}" \
+          --set "*.args.GIT_COMMIT=${{ github.sha }}" \
+          --set "production-selfhost.tags=${REG}:${VERSION_NUM}-amd64" \
+          --set "workers-selfhost.tags=${REG}:${VERSION_NUM}-workers-amd64"
+
+  build-arm64:
+    runs-on: [self-hosted, macOS, arm64]
+    permissions:
+      contents: read
+      packages: write
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v7
+      with:
+        ref: ${{ github.event.inputs.tag || github.ref_name }}
+
+    - name: Set lowercase repo owner
+      run: echo "OWNER_LC=$(echo ${{ github.repository_owner }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+
+    - name: Start Colima
+      run: |
+        if ! colima status 2>/dev/null; then
+          colima start --cpu 6 --memory 24
+        fi
+        docker context use colima
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v4
+
+    - name: Log in to GitHub Container Registry
+      uses: docker/login-action@v4
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Generate version info
+      run: |
+        cd testplanit
+        node scripts/generate-version.js
+        mkdir -p public && cp public/version.json .docker-version.json || echo "version file not generated"
+
+    - name: Build & push arm64 self-host images
+      working-directory: ./testplanit
+      run: |
+        VERSION="${{ github.event.inputs.tag || github.ref_name }}"; VERSION_NUM="${VERSION#v}"
+        REG="ghcr.io/${OWNER_LC}/testplanit-selfhost"
+        docker buildx bake -f docker-bake.hcl --allow=fs.read=.. --push selfhost \
+          --set "*.platform=linux/arm64" \
+          --set "*.args.VERSION=${VERSION}" \
+          --set "*.args.GIT_COMMIT=${{ github.sha }}" \
+          --set "production-selfhost.tags=${REG}:${VERSION_NUM}-arm64" \
+          --set "workers-selfhost.tags=${REG}:${VERSION_NUM}-workers-arm64"
+
+  merge-manifests:
+    needs: [build-amd64, build-arm64]
+    runs-on: [self-hosted]
+    permissions:
+      contents: read
+      packages: write
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v7
+      with:
+        ref: ${{ github.event.inputs.tag || github.ref_name }}
+        fetch-depth: 0  # tags for the 'latest' comparison
+
+    - name: Set lowercase repo owner
+      run: echo "OWNER_LC=$(echo ${{ github.repository_owner }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+
+    - name: Log in to GitHub Container Registry
+      uses: docker/login-action@v4
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Create multi-arch manifests
+      run: |
+        VERSION="${{ github.event.inputs.tag || github.ref_name }}"; VERSION_NUM="${VERSION#v}"
+        REG="ghcr.io/${OWNER_LC}/testplanit-selfhost"
+
+        # server (production)
+        docker buildx imagetools create -t "${REG}:${VERSION_NUM}" -t "${REG}:${VERSION}" \
+          "${REG}:${VERSION_NUM}-amd64" "${REG}:${VERSION_NUM}-arm64"
+        # workers
+        docker buildx imagetools create -t "${REG}:${VERSION_NUM}-workers" -t "${REG}:${VERSION}-workers" \
+          "${REG}:${VERSION_NUM}-workers-amd64" "${REG}:${VERSION_NUM}-workers-arm64"
+
+    - name: Move 'latest' if this is the newest release
+      run: |
+        VERSION="${{ github.event.inputs.tag || github.ref_name }}"; VERSION_NUM="${VERSION#v}"
+        REG="ghcr.io/${OWNER_LC}/testplanit-selfhost"
+        LATEST_TAG=$(git tag -l 'v*.*.*' | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n1)
+        echo "Current: $VERSION, newest semver: $LATEST_TAG"
+        if [ "$VERSION" = "$LATEST_TAG" ]; then
+          docker buildx imagetools create -t "${REG}:latest"         "${REG}:${VERSION_NUM}"
+          docker buildx imagetools create -t "${REG}:latest-workers" "${REG}:${VERSION_NUM}-workers"
+        else
+          echo "Skipping 'latest' — $VERSION is not the newest release"
+        fi

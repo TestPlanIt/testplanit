@@ -128,6 +128,11 @@ RUN cd /app/deploy/node_modules/.pnpm && \
 # ---- Build ----
 FROM base AS build
 ARG BASE_DOMAIN
+# SELF_HOSTED=true builds a domain-agnostic image (Next image optimizer off, no
+# baked remotePatterns allowlist) so one published image runs on any host. The
+# SaaS build leaves it unset and bakes BASE_DOMAIN instead. See next.config.ts.
+ARG SELF_HOSTED
+ENV SELF_HOSTED=${SELF_HOSTED}
 ENV NODE_ENV=production
 # next build self-caps at 4096 (build script); the whole build tree peaks ~7 GB,
 # so 8192 leaves comfortable headroom.

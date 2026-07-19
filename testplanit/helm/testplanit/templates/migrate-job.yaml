@@ -1,0 +1,65 @@
+{{- if .Values.migrate.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "testplanit.fullname" . }}-migrate
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "testplanit.labels" . | nindent 4 }}
+    app.kubernetes.io/component: migrate
+  annotations:
+    # Runs after the datastores (normal resources) exist. Re-runs on every
+    # upgrade; the old hook Job is deleted first so the immutable spec can change.
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "0"
+    "helm.sh/hook-delete-policy": before-hook-creation
+    {{- with .Values.commonAnnotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  backoffLimit: {{ .Values.migrate.backoffLimit }}
+  activeDeadlineSeconds: {{ .Values.migrate.activeDeadlineSeconds }}
+  template:
+    metadata:
+      labels:
+        {{- include "testplanit.componentSelectorLabels" (dict "root" $ "component" "migrate") | nindent 8 }}
+    spec:
+      restartPolicy: OnFailure
+      serviceAccountName: {{ include "testplanit.serviceAccountName" . }}
+      {{- include "testplanit.imagePullSecrets" . | nindent 6 }}
+      {{- with .Values.server.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      initContainers:
+        {{- include "testplanit.initWaitForDb" (dict "root" .) | nindent 8 }}
+      containers:
+        - name: migrate
+          image: {{ include "testplanit.serverImage" . }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -eu
+              # Schema sync + DDL run on the direct (non-pooled) connection.
+              export DATABASE_URL="${DIRECT_DATABASE_URL:-$DATABASE_URL}"
+              echo "==> Applying migrations..."
+              zenstack migrate deploy --schema schema.zmodel --no-version-check
+              echo "==> Applying audit triggers..."
+              tsx scripts/apply-triggers.ts
+              echo "==> Setting up PostgreSQL extensions..."
+              tsx db/setup-extensions.ts
+              {{- if .Values.migrate.seed }}
+              echo "==> Seeding database (idempotent)..."
+              tsx db/seed.ts
+              {{- end }}
+              echo "==> Migrate job complete."
+          {{- include "testplanit.appEnvFrom" . | nindent 10 }}
+          resources:
+            {{- toYaml .Values.migrate.resources | nindent 12 }}
+          {{- with .Values.server.containerSecurityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+{{- end }}

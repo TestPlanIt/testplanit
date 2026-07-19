@@ -1,0 +1,102 @@
+{{- if .Values.redis.enabled }}
+{{- $name := include "testplanit.redis.fullname" . }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "testplanit.labels" . | nindent 4 }}
+    app.kubernetes.io/component: valkey
+spec:
+  selector:
+    {{- include "testplanit.componentSelectorLabels" (dict "root" $ "component" "valkey") | nindent 4 }}
+  ports:
+    - name: valkey
+      port: 6379
+      targetPort: valkey
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ $name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "testplanit.labels" . | nindent 4 }}
+    app.kubernetes.io/component: valkey
+spec:
+  serviceName: {{ $name }}
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "testplanit.componentSelectorLabels" (dict "root" $ "component" "valkey") | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "testplanit.componentSelectorLabels" (dict "root" $ "component" "valkey") | nindent 8 }}
+    spec:
+      {{- with .Values.redis.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.redis.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.redis.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        fsGroup: 999
+        runAsUser: 999
+        runAsGroup: 999
+        runAsNonRoot: true
+      containers:
+        - name: valkey
+          image: {{ .Values.redis.image }}
+          imagePullPolicy: {{ .Values.redis.imagePullPolicy }}
+          # appendonly + noeviction are REQUIRED for BullMQ: LRU eviction could
+          # silently drop job state under memory pressure.
+          args:
+            - --appendonly
+            - "yes"
+            - --maxmemory-policy
+            - noeviction
+          ports:
+            - name: valkey
+              containerPort: 6379
+          readinessProbe:
+            exec:
+              command: ["valkey-cli", "ping"]
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          livenessProbe:
+            exec:
+              command: ["valkey-cli", "ping"]
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          resources:
+            {{- toYaml .Values.redis.resources | nindent 12 }}
+          volumeMounts:
+            - name: data
+              mountPath: /data
+      {{- if not .Values.redis.persistence.enabled }}
+      volumes:
+        - name: data
+          emptyDir: {}
+      {{- end }}
+  {{- if .Values.redis.persistence.enabled }}
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: {{ toYaml .Values.redis.persistence.accessModes | nindent 10 }}
+        {{- with .Values.redis.persistence.storageClass }}
+        storageClassName: {{ . | quote }}
+        {{- end }}
+        resources:
+          requests:
+            storage: {{ .Values.redis.persistence.size | quote }}
+  {{- end }}
+{{- end }}

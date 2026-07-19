@@ -1,0 +1,28 @@
+apiVersion: v2
+name: testplanit
+description: |
+  TestPlanIt — open-source test management platform. Single-tenant, self-hosted
+  Helm chart for Kubernetes (EKS/GKE/AKS/k3s). Deploys the web app, background
+  workers, and a one-shot migrate/seed job, with optional bundled PostgreSQL,
+  Valkey, Elasticsearch, and MinIO that can each be swapped for managed services
+  (RDS / ElastiCache / OpenSearch / S3).
+type: application
+# Chart version — bump on chart changes (independent of the app image version).
+version: 0.1.1
+# appVersion is intentionally unset: the application image is bring-your-own
+# (its domain is baked at build time), so the running app version is whatever
+# image tag the operator supplies via `image.tag`.
+kubeVersion: ">=1.25.0-0"
+home: https://testplanit.com
+sources:
+  - https://github.com/testplanit/testplanit
+keywords:
+  - test-management
+  - testing
+  - qa
+  - testplanit
+maintainers:
+  - name: TestPlanIt
+    url: https://testplanit.com
+annotations:
+  category: Productivity

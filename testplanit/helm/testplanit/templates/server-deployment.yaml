@@ -1,0 +1,112 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "testplanit.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "testplanit.labels" . | nindent 4 }}
+    app.kubernetes.io/component: server
+  {{- with .Values.commonAnnotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  replicas: {{ .Values.server.replicaCount }}
+  # Zero-downtime rollout: surge a new pod up before retiring an old one.
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      {{- include "testplanit.componentSelectorLabels" (dict "root" $ "component" "server") | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "testplanit.componentSelectorLabels" (dict "root" $ "component" "server") | nindent 8 }}
+        {{- with .Values.server.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      annotations:
+        # Roll pods when config/secret content changes.
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        {{- if not .Values.secrets.existingSecret }}
+        checksum/secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
+        {{- end }}
+        {{- with .Values.server.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      serviceAccountName: {{ include "testplanit.serviceAccountName" . }}
+      {{- include "testplanit.imagePullSecrets" . | nindent 6 }}
+      terminationGracePeriodSeconds: {{ .Values.server.terminationGracePeriodSeconds }}
+      {{- with .Values.server.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      dnsConfig:
+        options:
+          - name: single-request-reopen
+          - name: ndots
+            value: "2"
+      {{- with .Values.server.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.server.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.server.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.server.topologySpreadConstraints }}
+      topologySpreadConstraints:
+        {{- $sel := fromYaml (include "testplanit.componentSelectorLabels" (dict "root" $ "component" "server")) }}
+        {{- range . }}
+        {{- $c := merge (deepCopy .) (dict "labelSelector" (dict "matchLabels" $sel)) }}
+        - {{ toYaml $c | nindent 10 | trim }}
+        {{- end }}
+      {{- end }}
+      initContainers:
+        {{- include "testplanit.initWaitForDb" (dict "root" .) | nindent 8 }}
+      containers:
+        - name: app
+          image: {{ include "testplanit.serverImage" . }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          # Bypass the image entrypoint's per-boot migration; the migrate job is
+          # the single authoritative schema owner.
+          command: ["node", "server.js"]
+          ports:
+            - name: http
+              containerPort: 3000
+          {{- include "testplanit.appEnvFrom" . | nindent 10 }}
+          env:
+            # Bind all interfaces (Next standalone otherwise binds the pod IP
+            # only, from the injected HOSTNAME=<pod-name>, which breaks
+            # kubectl port-forward and in-pod loopback).
+            - name: HOSTNAME
+              value: "0.0.0.0"
+            {{- with .Values.server.extraEnv }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          {{- with .Values.server.readinessProbe }}
+          readinessProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.server.livenessProbe }}
+          livenessProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          lifecycle:
+            preStop:
+              exec:
+                command: ["/bin/sh", "-c", "sleep {{ .Values.server.preStopSleepSeconds }}"]
+          resources:
+            {{- toYaml .Values.server.resources | nindent 12 }}
+          {{- with .Values.server.containerSecurityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
