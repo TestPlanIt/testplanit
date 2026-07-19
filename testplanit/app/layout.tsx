@@ -87,7 +87,12 @@ export default async function RootLayout({
           }}
         />
       </head>
-      <body className="text-foreground bg-background underline:text-link w-full">
+      {/* `flow-root` establishes a block formatting context so descendant top
+          margins (e.g. the app shell's `m-4`) don't collapse out through the
+          body. That keeps `document.body.getBoundingClientRect().top` at 0, which
+          the onboarding tour's spotlight positioning relies on to align with its
+          target elements. */}
+      <body className="flow-root text-foreground bg-background underline:text-link w-full">
         {children}
       </body>
     </html>
