@@ -97,6 +97,25 @@ export function InitialPreferencesDialog() {
   const { mutateAsync: updateUserPreferences } =
     useClientQueries(schema).userPreferences.useUpdate();
 
+  // Guess the user's timezone from the browser so first-time setup is pre-filled
+  // with a sensible value instead of UTC. Falls back to UTC when the browser
+  // reports a zone we don't offer (or Intl is unavailable).
+  const detectedTimezone = useMemo(() => {
+    try {
+      const resolved = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      if (
+        resolved &&
+        (typeof (Intl as any).supportedValuesOf !== "function" ||
+          (Intl.supportedValuesOf("timeZone") as string[]).includes(resolved))
+      ) {
+        return resolved;
+      }
+    } catch {
+      // Intl unavailable or timezone resolution failed; fall back to UTC.
+    }
+    return "Etc/UTC";
+  }, []);
+
   const defaultValues = useMemo(
     () => ({
       theme: userPreferences?.theme ?? Theme.Purple,
@@ -104,11 +123,16 @@ export function InitialPreferencesDialog() {
       itemsPerPage: userPreferences?.itemsPerPage ?? ItemsPerPage.P10,
       dateFormat: userPreferences?.dateFormat ?? DateFormat.MM_DD_YYYY_DASH,
       timeFormat: userPreferences?.timeFormat ?? TimeFormat.HH_MM_A,
-      timezone: userPreferences?.timezone ?? "Etc/UTC",
+      // Pre-fill the browser-detected zone unless the user already chose one
+      // (a stored value other than the untouched "Etc/UTC" default).
+      timezone:
+        userPreferences?.timezone && userPreferences.timezone !== "Etc/UTC"
+          ? userPreferences.timezone
+          : detectedTimezone,
       notificationMode:
         userPreferences?.notificationMode ?? NotificationMode.USE_GLOBAL,
     }),
-    [userPreferences]
+    [userPreferences, detectedTimezone]
   );
 
   const form = useForm<z.infer<typeof FormSchema>>({
@@ -640,7 +664,9 @@ export function InitialPreferencesDialog() {
                 name="timezone"
                 render={({ field }) => (
                   <FormItem className="sm:col-span-2">
-                    <FormLabel>{tGlobal("common.fields.timezone")}</FormLabel>
+                    <FormLabel className="mr-2">
+                      {tGlobal("common.fields.timezone")}
+                    </FormLabel>
                     <FormControl>
                       <AsyncCombobox<TimezoneOption>
                         value={

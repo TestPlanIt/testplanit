@@ -753,7 +753,7 @@
       "sortByDate": "按日期排序",
       "testRuns": "{count, plural, =0 {无测试运行} =1 {1 次测试运行} other {# 次测试运行}}",
       "sessions": "{count, plural, =0 {无会话} =1 {1 个会话} other {# 个会话}}",
-      "issues": "{count, plural, =0 {没有问题} =1 {1 个问题} other {# 个问题}}",
+      "issues": "{count, plural, =0 {无问题} =1 {1 个问题} other {# 个问题}}",
       "noOptions": "暂无选项",
       "multiConfiguration": "属于多配置组",
       "compositionLocked": "组成已锁定 — 用例集已被冻结",
@@ -1388,7 +1388,7 @@
           "importPreviewFailed": "无法估算匹配数量",
           "milestoneSync": {
             "title": "里程碑同步",
-            "description": "从该跟踪器的基于时间的工作项同步 TestPlanIt 里程碑。",
+            "description": "从该跟踪器的基于时间的工件同步 TestPlanIt 里程碑。",
             "enableLabel": "启用里程碑同步",
             "releasesLabel": "版本",
             "sprintsLabel": "迭代",
@@ -1925,7 +1925,7 @@
           "lastFetched": "最后获取时间",
           "filesCached": "文件已缓存",
           "contentsCached": "内容已缓存",
-          "contentsIncomplete": "仅 {total} 个文件中的 {cached} 个文件内容已缓存 — 生成的脚本将不会使用缺失的文件。请再次刷新以完成。",
+          "contentsIncomplete": "仅缓存了 {total} 个文件内容中的 {cached} 个 — 生成的脚本将不会使用缺失的文件。请再次刷新以完成。",
           "totalSize": "总尺寸"
         },
         "save": "保存配置",
@@ -1971,14 +1971,14 @@
         "description": "每个项目都设有针对特定功能的开关。新增的开关将在此处显示。",
         "recordKey": {
           "label": "项目代码",
-          "description": "用于装饰性记录键(如 {example})的短代码。2-10 个大写字母，不含数字。留空则显示纯数字 ID。",
+          "description": "用于诸如 {example} 之类的装饰性记录键的简短代码。2–10 个大写字母，不含数字。留空则显示纯数字 ID。",
           "placeholder": "例如 PROJECT",
           "previewLabel": "示例键：",
-          "useSuggestion": "使用建议代码：{code}",
+          "useSuggestion": "使用建议的代码：{code}",
           "invalid": "请使用 2–10 个大写字母（不含数字）。",
-          "taken": "该代码已被其他项目使用。请选择其他代码。",
+          "taken": "该代码已被另一个项目使用。请选择其他代码。",
           "savedToast": "项目代码已保存。",
-          "saveError": "无法保存项目代码。该代码可能已被其他项目使用。"
+          "saveError": "无法保存项目代码。该代码可能已被另一个项目使用。"
         },
         "reviewWorkflow": {
           "label": "启用审核工作流程",
@@ -2014,9 +2014,9 @@
           "skippedToast": "{count, plural, =1 {1 个草稿案例因处于“未开始”状态而被跳过} other {# 个草稿案例因处于“未开始”状态而被跳过}}"
         },
         "autoLockComposition": {
-          "label": "执行开始时锁定测试运行的组成",
-          "description": "启用后，测试运行的用例组成将在运行进入“进行中”状态时自动锁定。锁定后运行中的用例将被冻结（无法添加、移除或重新排序），但执行和分配仍可继续进行。运行的创建者或项目管理员可以解锁以更改用例集。",
-          "enabledToast": "测试运行将在执行开始时锁定其组成",
+          "label": "执行开始时锁定测试运行组成",
+          "description": "启用后，测试运行进入“进行中”状态的那一刻，其用例组成会自动锁定。锁定会固定运行中包含哪些用例（不能添加、移除或重新排序），同时执行和分配仍可继续进行。运行的创建者或项目管理员可以解锁以更改用例集。",
+          "enabledToast": "测试运行在开始执行时将锁定其组成",
           "disabledToast": "测试运行将不再自动锁定其组成",
           "saveError": "更新组成自动锁定设置失败"
         },
@@ -2083,7 +2083,7 @@
   "milestones": {
     "title": "里程碑详情",
     "auditLog": {
-      "description": "记录此里程碑的所有更改。"
+      "description": "此里程碑的所有更改均已记录。"
     },
     "fields": {
       "parent": "家长里程碑",
@@ -2112,7 +2112,7 @@
     },
     "browser": {
       "kindAll": "所有里程碑",
-      "kindReleases": "已同步的发布",
+      "kindReleases": "已同步的版本",
       "kindSprints": "已同步的迭代"
     },
     "statusLabels": {
@@ -2157,7 +2157,7 @@
     "delete": {
       "title": "删除里程碑",
       "confirmMessage": "您确定要删除里程碑 {name}吗？",
-      "childrenWarning": "{count, plural, other {其 # 个子里程碑及后代里程碑}}也将被删除。",
+      "childrenWarning": "{count, plural, other {其 # 个子级和后代里程碑}}也将被删除。",
       "warning": "此里程碑将从项目中移除。该里程碑的历史数据仍将保留在项目中。",
       "toast": {
         "loading": "删除里程碑……",
@@ -2201,27 +2201,27 @@
       "kindSprint": "迭代",
       "selectAll": "全选",
       "searchPlaceholder": "搜索版本和迭代……",
-      "emptyFiltered": "没有符合您筛选条件的里程碑。",
-      "partialWarning": "部分 Jira 项目无法获取：",
+      "emptyFiltered": "没有符合筛选条件的里程碑。",
+      "partialWarning": "无法获取部分 Jira 项目：",
       "importing": "正在从 Jira 导入 {count, plural, other {# 个里程碑}}…",
       "completed": "已从 Jira 导入 {count, plural, other {# 个里程碑}}",
       "stillRunning": "导入仍在后台运行 — 完成后里程碑将会显示。"
     },
     "sync": {
       "managedByJira": "由 Jira 管理",
-      "lastSynced": "上次同步时间：{time}",
+      "lastSynced": "上次同步：{time}",
       "openInJira": "在 Jira 中打开",
       "providerJira": "Jira",
       "sourceBadge": "{provider} · {kind} · {state}",
       "syncNow": "立即同步",
       "unlinkMenuItem": "取消与 {provider} 的链接",
       "unlinkConfirmTitle": "取消链接里程碑？",
-      "unlinkConfirmDescription": "这将停止与跟踪器的同步：字段将重新变为可编辑状态，已同步的问题链接将变为手动链接（您可以保留或移除），并可以通过再次导入该工作项来重新建立链接。",
+      "unlinkConfirmDescription": "这将停止与跟踪器的同步：字段将再次变为可编辑状态，已同步的问题链接将变为手动链接（您可以保留或移除），之后可以通过重新导入该工件来重新建立链接。",
       "unlinkConfirmAction": "取消链接",
       "unlinkSuccess": "里程碑已与跟踪器取消链接。",
-      "unlinkError": "取消链接里程碑失败。",
-      "sourceRemoved": "源已在 {provider} 中移除",
-      "mergedInto": "已合并至 {target}"
+      "unlinkError": "取消里程碑链接失败。",
+      "sourceRemoved": "在 {provider} 中已移除源",
+      "mergedInto": "已合并到 {target}"
     },
     "summary": {
       "inScope": "{count, plural, other {# 个在范围内}}",
@@ -2231,14 +2231,14 @@
     "burndown": {
       "title": "燃尽图",
       "remaining": "剩余项目",
-      "ideal": "理想值",
+      "ideal": "理想",
       "today": "今天",
       "tooltipRemaining": "剩余 {count, number} 个",
-      "heatAhead": "领先理想进度",
+      "heatAhead": "领先于理想值",
       "heatOnTrack": "进度正常",
-      "heatBehind": "落后于理想进度",
-      "tooltipBehind": "落后理想进度 {count, number} 个",
-      "tooltipAhead": "领先理想进度 {count, number} 个"
+      "heatBehind": "落后于理想值",
+      "tooltipBehind": "落后理想值 {count, number} 个",
+      "tooltipAhead": "领先理想值 {count, number} 个"
     },
     "members": {
       "cardTitle": "问题",
@@ -2261,17 +2261,17 @@
       "filterAllCoverage": "所有覆盖率",
       "filterAllSources": "所有来源",
       "filterAllTypes": "所有类型",
-      "empty": "尚未有问题链接到此里程碑。",
+      "empty": "尚无问题链接到此里程碑。",
       "emptyFiltered": "没有符合当前筛选条件的问题。",
       "unlink": "取消链接",
-      "managedByJira": "由 Jira 管理 — 请在 Jira 中从该版本/迭代中移除",
+      "managedByJira": "由 Jira 管理 — 请在 Jira 中的版本/迭代中移除它",
       "linkSuccess": "问题已链接到此里程碑。",
       "linkError": "将问题链接到此里程碑失败。",
       "unlinkSuccess": "问题已从此里程碑中移除。",
       "unlinkError": "从此里程碑中移除问题失败。",
-      "overflowTitle": "Jira 中的更多问题",
+      "overflowTitle": "Jira 中还有更多问题",
       "overflowDescription": "这些问题存在于已链接的 Jira 版本/迭代中，但尚未在此处链接。",
-      "overflowCapped": "上限为 {cap, number} — Jira 中还有 {overflowTotal, number} 个",
+      "overflowCapped": "已限制为 {cap, number} 个 — Jira 中还有 {overflowTotal, number} 个",
       "overflowMoreAvailable": "Jira 中还有 {overflowTotal, number} 个可用",
       "overflowImportAction": "导入并链接",
       "overflowImportSuccess": "导入已开始 — 问题将在同步后显示。",
@@ -2279,10 +2279,10 @@
       "emptyCta": "链接一个问题以开始使用。",
       "columnDescription": "描述",
       "unlinkConfirmTitle": "取消链接问题？",
-      "unlinkConfirmDescription": "这将从此里程碑中移除该问题。问题本身将被保留，并可以在以后重新链接。",
+      "unlinkConfirmDescription": "这将从此里程碑中移除该问题。问题本身会被保留，之后可以再次链接。",
       "totalsUncovered": "{count, plural, other {# 个未覆盖问题}}",
-      "percentReady": "{percent, number}% 已就绪",
-      "readinessSummary": "{passed, number} 已通过 · {failed, number} 已失败 · {inProgress, number} 进行中 · {notRun, number} 未运行 · {uncovered, number} 未覆盖（共 {total, number} 个问题）",
+      "percentReady": "{percent, number}% 就绪",
+      "readinessSummary": "{passed, number} 个通过 · {failed, number} 个失败 · {inProgress, number} 个进行中 · {notRun, number} 个未运行 · {uncovered, number} 个未覆盖（共 {total, number} 个问题）",
       "filterHasUntested": "有未测试的用例",
       "createRunNoCases": "所选问题均未链接测试用例。",
       "createTestRunDetailed": "创建测试运行（{issues, plural, other {# 个问题}} · {cases, plural, other {# 个用例}}）"
@@ -2459,6 +2459,12 @@
       "contact": "请联系您的系统管理员申请项目访问权限。",
       "adminAddProject": "添加您的第一个项目即可开始！",
       "footer": "需要获得访问权限才能查看和参与测试计划活动。"
+    },
+    "getStarted": {
+      "title": "开始使用",
+      "description": "当您准备开始规划时，添加您自己的项目。",
+      "adminAddProject": "创建您的第一个项目",
+      "footer": "演示项目包含示例数据，您可以随时浏览或删除。"
     },
     "noProjectAccess": {
       "description": "您无权访问此项目。",
@@ -2648,7 +2654,7 @@
       "purple": "紫色的",
       "orange": "橙子",
       "accessible": "无障碍",
-      "accessibledark": "无障碍(深色)"
+      "accessibledark": "无障碍（深色）"
     }
   },
   "repository": {
@@ -3402,7 +3408,7 @@
     },
     "preview": {
       "unavailable": "预览不可用",
-      "tooLarge": "此文件太大，无法预览。",
+      "tooLarge": "此文件过大，无法预览。",
       "empty": "此文档似乎为空。",
       "download": "下载以查看",
       "slideCounter": "第 {current} 张幻灯片，共 {total} 张",
@@ -3522,46 +3528,46 @@
       "lock": "用例已锁定",
       "unlock": "解锁",
       "locked": "组成已锁定",
-      "lockHint": "冻结此运行中包含的用例。用户仍可分配和执行测试用例。",
-      "lockedBy": "组成已被 {name} 锁定。",
+      "lockHint": "固定此运行中包含哪些用例。用户仍可以分配和执行测试用例。",
+      "lockedBy": "组成已由 {name} 锁定。",
       "lockedAutomatically": "执行开始时组成已自动锁定。",
-      "frozenNotice": "组成已锁定 — 无法添加、删除或重新排序测试用例。您仍可分配和执行测试用例。",
+      "frozenNotice": "组成已锁定 — 无法添加、移除或重新排序测试用例。您仍可以分配和执行测试用例。",
       "lockError": "锁定运行组成失败",
       "unlockError": "解锁运行组成失败",
       "addBlocked": "此运行的组成已锁定，因此无法添加测试用例。请先解锁以更改用例集。"
     },
     "distribute": {
       "title": "分配任务",
-      "description": "将此测试运行的测试用例均匀分配给团队成员，同时将相关用例保持在一起。",
+      "description": "将此运行的测试用例平均分配给团队成员，同时保持相关用例集中在一起。",
       "selectUsers": "团队成员",
       "usersPlaceholder": "选择团队成员",
       "scopeAllConfigs": "所有配置",
-      "scopeThisRun": "仅此测试运行",
+      "scopeThisRun": "仅此运行",
       "strategyLabel": "配置策略",
-      "strategyKeepTogether": "保持配置在一起",
-      "strategyKeepTogetherHint": "每位测试人员在每个配置中拥有一组用例。",
+      "strategyKeepTogether": "保持配置集中",
+      "strategyKeepTogetherHint": "每位测试人员负责跨所有配置的一组用例。",
       "strategySplitByConfig": "按配置拆分",
-      "strategySplitByConfigHint": "每位测试人员拥有完整的配置。",
+      "strategySplitByConfigHint": "每位测试人员负责整个配置。",
       "groupingLabel": "分组相似用例",
-      "groupingHint": "将同一部分且共享标签的用例分配给同一位测试人员。",
+      "groupingHint": "将同一部分及共享标签的用例分配给同一位测试人员。",
       "balancingLabel": "按以下方式平衡",
       "balancingEffort": "预计时间",
       "balancingCount": "用例数量",
-      "balancingFallbackHint": "这些用例没有估算 — 改为按用例数量进行平衡。",
-      "existingLabel": "现有任务",
+      "balancingFallbackHint": "这些用例没有估算时间 — 将改为按用例数量进行平衡。",
+      "existingLabel": "现有分配",
       "existingOnlyUnassigned": "仅填充未分配的用例",
       "existingReassignAll": "重新分配所有内容",
       "previewTitle": "预览",
-      "previewNoUsers": "选择团队成员以预览分配。",
+      "previewNoUsers": "选择团队成员以预览分配情况。",
       "previewUser": "团队成员",
       "previewCases": "用例",
-      "previewSkipped": "{count, plural, other {已跳过 # 个用例}}（已分配或已完成）",
+      "previewSkipped": "{count, plural, other {# 个用例已跳过}}（已分配或已完成）",
       "confirming": "正在分配…",
-      "success": "已将 {count, plural, other {# 个用例}} 分配给 {users, plural, other {# 名成员}}",
+      "success": "已将 {count, plural, other {# 个用例}} 分配给 {users, plural, other {# 个成员}}",
       "errorGeneric": "分配任务失败",
-      "errorRunCompleted": "此测试运行已完成，无法再进行更改",
-      "errorNeedUsers": "请至少选择一位要分配的项目成员",
-      "errorNoAssignable": "此测试运行中没有可分配的用例"
+      "errorRunCompleted": "此运行已完成，无法再更改",
+      "errorNeedUsers": "请至少选择一位项目成员进行分配",
+      "errorNoAssignable": "此运行中没有可分配的用例"
     },
     "auditLog": {
       "trigger": "活动",
@@ -3761,7 +3767,7 @@
       "peopleAndAccess": "人员与通道",
       "authentication": "验证",
       "toolsAndIntegrations": "工具与集成",
-      "aiTools": "人工智能工具",
+      "aiTools": "AI 工具",
       "system": "系统"
     },
     "imports": {
@@ -4998,17 +5004,17 @@
       }
     },
     "recordKeys": {
-      "pageDescription": "配置装饰性的、带项目前缀的标识符(例如 PROJECT-TC-1234)，以便轻松辨别记录所属的项目以及记录的类型。底层的数字 ID 保持不变，并可在任何地方继续使用。",
+      "pageDescription": "配置诸如 PROJECT-TC-1234 之类的带项目前缀的装饰性标识符，使人们能够轻松分辨记录所属的项目以及记录的类型。底层的数字 ID 保持不变，并可在任何地方继续使用。",
       "title": "带项目前缀的记录键",
-      "description": "启用后，记录将显示一个可选的键，由项目代码、类型标记和记录的数字 ID 组合而成。请在“项目设置”→“高级”中设置每个项目的代码。",
+      "description": "启用后，记录将显示一个可选的键，该键结合了项目代码、类型令牌和记录的数字 ID。请在“项目设置 → 高级”中设置每个项目的代码。",
       "toggleAriaLabel": "切换带项目前缀的记录键",
-      "tokensHeading": "类型标记",
-      "tokensHelp": "每种记录类型使用的标记。1–6 个大写字母，不含数字或连字符。标记必须唯一。",
+      "tokensHeading": "类型令牌",
+      "tokensHelp": "用于每种记录类型的令牌。1–6 个大写字母，不含数字或连字符。令牌必须唯一。",
       "invalidToken": "无效",
-      "duplicateToken": "重复的标记",
-      "tokensSaved": "类型标记已保存。",
-      "enableSuccess": "已启用带项目前缀的记录键。",
-      "disableSuccess": "已禁用带项目前缀的记录键。",
+      "duplicateToken": "重复的令牌",
+      "tokensSaved": "类型令牌已保存。",
+      "enableSuccess": "带项目前缀的记录键已启用。",
+      "disableSuccess": "带项目前缀的记录键已禁用。",
       "saveError": "无法保存，请重试。"
     },
     "appConfig": {
@@ -5604,8 +5610,8 @@
         "billingPeriodStartDayDescription": "账单周期开始的日期（1-31）。29-31 使用的是较短月份的最后一天。",
         "defaultTemperature": "默认温度",
         "defaultMaxTokens": "默认最大令牌数",
-        "repoContextBudgetLabel": "仓库上下文预算(QuickScript)",
-        "repoContextBudgetAuto": "根据模型约 {window} 的上下文窗口自动调整大小 — 每次生成约 {budget} 个仓库代码 token。",
+        "repoContextBudgetLabel": "仓库上下文预算（QuickScript）",
+        "repoContextBudgetAuto": "根据模型约 {window} 的上下文窗口自动确定大小 — 每次生成约使用 {budget} 个令牌的仓库代码。",
         "timeout": "请求超时时间（毫秒）",
         "timeoutDescription": "等待 AI 模型响应的最长时间（5000-600000 毫秒）。不适用于流式请求。",
         "streamingEnabled": "启用流媒体",
@@ -6348,7 +6354,7 @@
       "documentation": "## 文档\n更多详情、参考资料和支持材料。\n\n- 技术规范\n- 设计文档\n- 外部参考资料\n- 会议记录和决议",
       "automaticCompletion": "## 截止日期自动完成\n当里程碑的截止日期到来时，会自动将其标记为已完成。\n\n- 里程碑将在截止日期当天按计划时间完成。\n- 适用于无论完成状态如何都应关闭的限时里程碑。\n- 可以通过在截止日期前手动完成里程碑来覆盖此设置。\n- 需要设置截止日期。",
       "notifyDaysBefore": "## 截止日期前通知\n当里程碑截止日期临近时，向指定的团队成员发送通知。\n\n- 开启此开关以启用通知，关闭此开关以禁用通知。\n- 输入截止日期前开始发送提醒的天数。\n- 通知将发送给分配到此里程碑内测试运行和会话的用户。\n- 逾期里程碑将持续发送提醒，直至完成。",
-      "managedByJira": "此里程碑的名称、日期和状态由 Jira 管理。请在 Jira 处进行更改，以在此处更新这些信息。"
+      "managedByJira": "此里程碑的名称、日期和状态由 Jira 管理。请在 Jira 中进行更改，以在此处更新它们。"
     },
     "session": {
       "name": "## 会话名称\n一个清晰、描述性的名称，用于明确测试会话的目的。\n\n- 应唯一且有意义\n- 帮助团队成员了解测试内容\n- 用于报告和跟踪",
@@ -6424,9 +6430,9 @@
       "endpoint": "## API 端点\nLLM 提供商 API 的基本 URL。\n\n- OpenAI、Anthropic 和 Gemini 留空 — 系统会自动使用官方 URL。\n- Ollama（例如 `http://localhost:11434`）、Azure OpenAI 和自定义 LLM 为必填项。\n- 所有提供商均为可选 — 通过输入 URL 指向 OpenAI 兼容的代理（例如 LiteLLM）。\n- **私有/内部地址**（localhost、127.0.0.1、私有 IP、云元数据）将被阻止，除非通过 `ALLOWED_PRIVATE_HOSTS` 环境变量显式允许。",
       "deploymentName": "## Azure 部署名称\n您的 Azure OpenAI 模型部署的名称。\n\n- 在 Azure OpenAI Studio 的“部署”下找到。\n- 与模型名称不同，例如 `my-gpt4-deploy` 映射到 `gpt-4`。\n- 仅 Azure OpenAI 需要。",
       "defaultModel": "## 默认模型\n此集成用于 AI 请求的模型。\n\n- 对于 OpenAI、Anthropic 和 Gemini — 可用模型将根据您的 API 密钥自动获取。\n- 请确保已在您的提供商帐户中启用该模型。\n- 例如：`gpt-4o`、`claude-3-5-sonnet-20241022`、`gemini-1.5-pro`",
-      "maxTokensPerRequest": "## 每次请求的最大令牌数\n模型在单次响应中可生成的**输出**令牌数的**硬性上限**。\n\n- 限制模型**回复**的长度——而非您发送的上下文量\n- 超过此限制的请求将在**到达模型之前被拒绝**\n- 请设置为您模型的实际最大输出值——例如 Claude Opus/Sonnet 为 `128000`，Claude Haiku 为 `64000`，Gemini 为 `65536`，GPT-4o 为 `16384`\n- 设置过低 → AI 功能将失败或产生截断的输出",
-      "defaultMaxTokens": "## 默认最大令牌数\n当某项功能未设置自己的值时，请求所要求的**默认输出**长度。\n\n- 控制模型**回复**的长度，受限于_每次请求的最大令牌数_\n- 大多数 AI 功能会在**管理 → 提示词配置**中设置自己的值；此项仅作为后备值\n- 该值**不**控制 QuickScript 向模型发送的代码库数量——该预算是根据模型的上下文窗口自动计算的\n- 请保持此值不超过_每次请求的最大令牌数_",
-      "repoContextBudget": "## 仓库上下文预算\nQuickScript 在生成脚本时,会将您所连接仓库中的多少代码提供给模型。\n\n- **自动设置**,根据所选模型的输入上下文窗口而定 — 此处无需进行任何配置\n- 上下文更大的模型(Claude、Gemini)可获得更多;小型本地模型则获得一个不会溢出的安全数量\n- 更多上下文可让脚本更贴合您真实的页面对象和测试数据(fixtures)— 但不会改变生成脚本的长度",
+      "maxTokensPerRequest": "## 每次请求的最大令牌数\n模型在单次响应中可生成的**输出**令牌数的**硬性上限**。\n\n- 限制模型**回复**的长度 — 而不是您发送给它的上下文量\n- 超过此限制的请求会在**到达模型之前被拒绝**\n- 请将其设置为您模型的实际最大输出量 — 例如，Claude Opus/Sonnet 为 `128000`，Claude Haiku 为 `64000`，Gemini 为 `65536`，GPT-4o 为 `16384`\n- 设置过低 → AI 功能将失败或生成被截断的输出",
+      "defaultMaxTokens": "## 默认最大令牌数\n当某项功能未设置自己的值时，请求所要求的**默认输出**长度。\n\n- 控制模型**回复**的长度上限，受限于*每次请求的最大令牌数*\n- 大多数 AI 功能会在**管理 → 提示配置**中设置自己的值；此项仅作为回退值\n- 它**不**控制 QuickScript 向模型发送多少仓库代码 — 该预算会根据模型的上下文窗口自动确定\n- 请保持其 ≤ *每次请求的最大令牌数*",
+      "repoContextBudget": "## 仓库上下文预算\n生成脚本时，QuickScript 向模型提供的已连接仓库代码的数量。\n\n- 根据所选模型的输入上下文窗口**自动设置** — 此处无需进行任何配置\n- 上下文窗口更大的模型（Claude、Gemini）会获得更多；较小的本地模型会获得一个不会溢出的安全数量\n- 更多的上下文能让脚本更贴合您真实的页面对象和测试夹具 — 但不会改变生成脚本的长度",
       "maxRequestsPerMinute": "## 每分钟最大请求数\n限制每分钟可向此提供商发出的 API 调用次数。\n\n- 设置以匹配您的提供商套餐的速率限制。\n- 超出限制的请求将被排队，不会被拒绝。\n- 请查看您的提供商文档以了解您的套餐限制。",
       "costPerInputToken": "## 每个输入令牌的成本（美元）\n发送到模型的每个输入（提示）令牌的成本（以美元计）。\n\n- 用于成本跟踪和预算提醒。\n- 可在服务提供商的定价页面找到。\n- 例如：`0.000005` = 每百万个输入令牌 5 美元",
       "costPerOutputToken": "## 每个输出代币的成本（美元）\n模型生成的每个输出（完成）代币的成本（以美元计）。\n\n- 通常高于输入代币的成本\n- 用于成本跟踪和预算提醒\n- 例如：`0.000015` = 每百万个输出代币 15 美元",
@@ -7042,8 +7048,8 @@
           "description": "项目进度、里程碑和完成状态"
         },
         "milestoneReadiness": {
-          "label": "里程碑就绪度",
-          "description": "每个里程碑的发布就绪度：完全通过的范围内问题百分比，以及各状态的数量"
+          "label": "里程碑就绪情况",
+          "description": "各里程碑的发布就绪情况：范围内问题完全通过的百分比，以及各状态的数量"
         },
         "sessionAnalysis": {
           "label": "会话分析",
@@ -7400,7 +7406,7 @@
       "tag": "标签"
     },
     "metrics": {
-      "percentReady": "就绪率 (%)",
+      "percentReady": "就绪（%）",
       "passed": "通过",
       "failed": "失败",
       "inProgress": "进行中",

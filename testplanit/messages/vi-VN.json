@@ -753,10 +753,10 @@
       "sortByDate": "Sắp xếp theo ngày",
       "testRuns": "{count, plural, =0 {Không có lần chạy thử} =1 {1 lần chạy thử} other {# lần chạy thử}}",
       "sessions": "{count, plural, =0 {Không có buổi nào} =1 {1 buổi} other {# Buổi}}",
-      "issues": "{count, plural, =0 {Không có Vấn đề} =1 {1 Vấn đề} other {# Vấn đề}}",
+      "issues": "{count, plural, =0 {Không có vấn đề nào} =1 {1 vấn đề} other {# vấn đề}}",
       "noOptions": "Không có tùy chọn nào.",
       "multiConfiguration": "Một phần của nhóm cấu hình đa dạng",
-      "compositionLocked": "Đã khóa thành phần — tập hợp test case đã bị đóng băng",
+      "compositionLocked": "Thành phần đã bị khóa — tập hợp trường hợp thử nghiệm đã bị đóng băng",
       "otherConfigurations": "Các cấu hình khác",
       "selected": "Đã chọn: {count}",
       "defaultProjectAccess": "Quyền truy cập dự án mặc định",
@@ -1388,13 +1388,13 @@
           "importPreviewFailed": "Không thể ước tính số lượng khớp",
           "milestoneSync": {
             "title": "Đồng bộ cột mốc",
-            "description": "Đồng bộ Cột mốc TestPlanIt từ các đối tượng theo thời gian của công cụ theo dõi này.",
+            "description": "Đồng bộ hóa các Cột mốc TestPlanIt từ các đối tượng theo thời gian của công cụ theo dõi này.",
             "enableLabel": "Bật đồng bộ cột mốc",
             "releasesLabel": "Bản phát hành",
             "sprintsLabel": "Sprint",
-            "kindsLabel": "Loại cần đồng bộ",
+            "kindsLabel": "Các loại cần đồng bộ",
             "autoTrackLabel": "Tự động thêm mục mới",
-            "autoTrackProjectsLabel": "Quét các dự án đã kết nối này để tìm các milestone mới",
+            "autoTrackProjectsLabel": "Quét các dự án đã kết nối này để tìm cột mốc mới",
             "settingsSaved": "Đã lưu cài đặt đồng bộ cột mốc",
             "saveError": "Không thể lưu cài đặt đồng bộ cột mốc"
           }
@@ -1924,8 +1924,8 @@
           "statusPending": "Thật sảng khoái...",
           "lastFetched": "Lần tải cuối cùng",
           "filesCached": "Tệp tin được lưu vào bộ nhớ cache",
-          "contentsCached": "Nội dung được lưu vào bộ nhớ cache",
-          "contentsIncomplete": "Chỉ có {cached} trong {total} nội dung tệp được lưu vào bộ nhớ cache — các script được tạo sẽ không sử dụng các tệp còn thiếu. Làm mới lại để hoàn tất.",
+          "contentsCached": "Nội dung đã được lưu vào bộ nhớ đệm",
+          "contentsIncomplete": "Chỉ có {cached} trên {total} nội dung tệp được lưu vào bộ nhớ đệm — các script được tạo sẽ không sử dụng các tệp còn thiếu. Hãy làm mới lại để hoàn tất.",
           "totalSize": "Tổng kích thước"
         },
         "save": "Lưu cấu hình",
@@ -1971,14 +1971,14 @@
         "description": "Các tùy chọn bật/tắt riêng cho từng dự án đối với các tính năng mang tính chủ quan. Các tùy chọn mới sẽ xuất hiện ở đây khi chúng được giới thiệu.",
         "recordKey": {
           "label": "Mã dự án",
-          "description": "Mã ngắn được sử dụng trong các khóa bản ghi mang tính hình thức như {example}. Gồm 2–10 chữ cái in hoa, không có chữ số. Để trống để hiển thị ID số thông thường.",
+          "description": "Mã ngắn được sử dụng trong khóa bản ghi mang tính hiển thị như {example}. 2–10 chữ hoa, không có chữ số. Để trống để hiển thị ID dạng số thông thường.",
           "placeholder": "ví dụ: PROJECT",
           "previewLabel": "Khóa ví dụ:",
           "useSuggestion": "Sử dụng mã được đề xuất: {code}",
-          "invalid": "Sử dụng 2–10 chữ cái in hoa (không có chữ số).",
-          "taken": "Mã này đã được sử dụng bởi một dự án khác. Vui lòng chọn mã khác.",
+          "invalid": "Sử dụng 2–10 chữ hoa (không có chữ số).",
+          "taken": "Mã đó đã được sử dụng bởi một dự án khác. Vui lòng chọn mã khác.",
           "savedToast": "Đã lưu mã dự án.",
-          "saveError": "Không thể lưu mã dự án. Mã này có thể đã được một dự án khác sử dụng."
+          "saveError": "Không thể lưu mã dự án. Mã này có thể đã được sử dụng bởi một dự án khác."
         },
         "reviewWorkflow": {
           "label": "Kích hoạt quy trình xem xét",
@@ -2014,10 +2014,10 @@
           "skippedToast": "{count, plural, =1 {1 bản nháp đã bị bỏ qua vì ở trạng thái Chưa bắt đầu} other {# bản nháp đã bị bỏ qua vì ở trạng thái Chưa bắt đầu}}"
         },
         "autoLockComposition": {
-          "label": "Khóa thành phần Test Run khi bắt đầu thực thi",
-          "description": "Khi được bật, thành phần trường hợp kiểm thử của một đợt kiểm thử sẽ tự động bị khóa ngay khi đợt kiểm thử chuyển sang trạng thái Đang thực hiện. Việc khóa sẽ giữ nguyên các trường hợp kiểm thử có trong đợt kiểm thử (không thêm, xóa hoặc sắp xếp lại) trong khi việc thực thi và phân công vẫn tiếp tục. Người tạo đợt kiểm thử hoặc Quản trị viên Dự án có thể mở khóa để thay đổi tập hợp trường hợp kiểm thử.",
-          "enabledToast": "Test Run sẽ khóa thành phần của chúng khi bắt đầu thực thi",
-          "disabledToast": "Test Run sẽ không còn tự động khóa thành phần của chúng nữa",
+          "label": "Khóa thành phần Lần chạy thử nghiệm khi bắt đầu thực thi",
+          "description": "Khi được bật, thành phần trường hợp thử nghiệm của một lần chạy sẽ tự động bị khóa ngay khi lần chạy chuyển sang trạng thái Đang tiến hành. Việc khóa sẽ đóng băng các trường hợp thử nghiệm có trong lần chạy (không thể thêm, xóa hoặc sắp xếp lại) trong khi việc thực thi và phân công vẫn tiếp tục. Người tạo lần chạy hoặc Quản trị viên Dự án có thể mở khóa để thay đổi tập hợp trường hợp thử nghiệm.",
+          "enabledToast": "Các Lần chạy thử nghiệm sẽ khóa thành phần của chúng khi bắt đầu thực thi",
+          "disabledToast": "Các Lần chạy thử nghiệm sẽ không còn tự động khóa thành phần của chúng nữa",
           "saveError": "Không thể cập nhật cài đặt tự động khóa thành phần"
         },
         "editWindow": {
@@ -2083,7 +2083,7 @@
   "milestones": {
     "title": "Chi tiết cột mốc",
     "auditLog": {
-      "description": "Tất cả các thay đổi được ghi lại cho mốc quan trọng này."
+      "description": "Tất cả thay đổi được ghi lại cho cột mốc này."
     },
     "fields": {
       "parent": "Cột mốc của cha mẹ",
@@ -2111,7 +2111,7 @@
       "forecasts": "Không có dữ liệu dự báo nào."
     },
     "browser": {
-      "kindAll": "Tất cả mốc quan trọng",
+      "kindAll": "Tất cả cột mốc",
       "kindReleases": "Bản phát hành đã đồng bộ",
       "kindSprints": "Sprint đã đồng bộ"
     },
@@ -2157,7 +2157,7 @@
     "delete": {
       "title": "Xóa mốc thời gian",
       "confirmMessage": "Bạn có chắc chắn muốn xóa mốc {name} không?",
-      "childrenWarning": "{count, plural, other {# mốc con và các mốc con cháu của nó}} cũng sẽ bị xóa.",
+      "childrenWarning": "{count, plural, other {# cột mốc con và cột mốc cháu của nó}} cũng sẽ bị xóa.",
       "warning": "Mốc thời gian này sẽ bị xóa khỏi dự án. Dữ liệu lịch sử liên quan đến mốc thời gian này vẫn sẽ được lưu giữ trong dự án.",
       "toast": {
         "loading": "Đang xóa mốc thời gian...",
@@ -2189,7 +2189,7 @@
     "import": {
       "importTitle": "Nhập từ Jira",
       "importDescription": "Chọn các Fix Version và Sprint của Jira để đồng bộ dưới dạng Cột mốc TestPlanIt.",
-      "showClosed": "Hiển thị đã đóng",
+      "showClosed": "Hiện đã đóng",
       "alreadyLinked": "Đã được liên kết",
       "selectedCount": "{count, plural, other {# đã chọn}}",
       "confirmSelection": "Nhập mục đã chọn",
@@ -2198,11 +2198,11 @@
       "importFailed": "Không thể nhập các cột mốc đã chọn",
       "importStarted": "Đã bắt đầu nhập",
       "kindRelease": "Bản phát hành",
-      "kindSprint": "Kỳ Sprint",
+      "kindSprint": "Đợt Sprint",
       "selectAll": "Chọn tất cả",
       "searchPlaceholder": "Tìm kiếm bản phát hành và sprint...",
-      "emptyFiltered": "Không có cột mốc nào phù hợp với bộ lọc của bạn.",
-      "partialWarning": "Không thể tải một số dự án Jira:",
+      "emptyFiltered": "Không có cột mốc nào khớp với bộ lọc của bạn.",
+      "partialWarning": "Một số dự án Jira không thể được tải:",
       "importing": "Đang nhập {count, plural, other {# cột mốc}} từ Jira…",
       "completed": "Đã nhập {count, plural, other {# cột mốc}} từ Jira",
       "stillRunning": "Quá trình nhập vẫn đang chạy trong nền — các cột mốc sẽ xuất hiện khi hoàn tất."
@@ -2214,9 +2214,9 @@
       "providerJira": "Jira",
       "sourceBadge": "{provider} · {kind} · {state}",
       "syncNow": "Đồng bộ ngay",
-      "unlinkMenuItem": "Hủy liên kết khỏi {provider}",
+      "unlinkMenuItem": "Hủy liên kết từ {provider}",
       "unlinkConfirmTitle": "Hủy liên kết cột mốc?",
-      "unlinkConfirmDescription": "Việc này sẽ ngừng đồng bộ với công cụ theo dõi: các trường sẽ có thể chỉnh sửa trở lại, các liên kết vấn đề đã đồng bộ sẽ trở thành thủ công (bạn có thể giữ hoặc xóa), và có thể liên kết lại sau này bằng cách nhập lại đối tượng này.",
+      "unlinkConfirmDescription": "Việc này sẽ ngừng đồng bộ với công cụ theo dõi: các trường sẽ có thể chỉnh sửa lại, các liên kết vấn đề đã đồng bộ trở thành liên kết thủ công (bạn có thể giữ lại hoặc xóa), và bạn có thể liên kết lại sau bằng cách nhập đối tượng này một lần nữa.",
       "unlinkConfirmAction": "Hủy liên kết",
       "unlinkSuccess": "Đã hủy liên kết cột mốc khỏi công cụ theo dõi.",
       "unlinkError": "Không thể hủy liên kết cột mốc.",
@@ -2224,27 +2224,27 @@
       "mergedInto": "đã hợp nhất vào {target}"
     },
     "summary": {
-      "inScope": "{count, plural, other {# trong phạm vi}}",
-      "foundInTesting": "{count, plural, other {# được tìm thấy trong kiểm thử}}",
+      "inScope": "{count, plural, other {# thuộc phạm vi}}",
+      "foundInTesting": "{count, plural, other {# được phát hiện trong quá trình kiểm thử}}",
       "includesChildMilestones": "Bao gồm các cột mốc con"
     },
     "burndown": {
       "title": "Biểu đồ Burndown",
-      "remaining": "Mục còn lại",
+      "remaining": "Số mục còn lại",
       "ideal": "Lý tưởng",
       "today": "Hôm nay",
-      "tooltipRemaining": "còn lại {count, number}",
-      "heatAhead": "Trước tiến độ lý tưởng",
+      "tooltipRemaining": "{count, number} còn lại",
+      "heatAhead": "Vượt trước lý tưởng",
       "heatOnTrack": "Đúng tiến độ",
-      "heatBehind": "Chậm so với dự kiến",
-      "tooltipBehind": "Chậm {count, number} so với dự kiến",
-      "tooltipAhead": "{count, number} trước tiến độ lý tưởng"
+      "heatBehind": "Chậm hơn lý tưởng",
+      "tooltipBehind": "{count, number} chậm hơn lý tưởng",
+      "tooltipAhead": "{count, number} vượt trước lý tưởng"
     },
     "members": {
       "cardTitle": "Vấn đề",
       "inScope": "Trong phạm vi",
-      "foundInTesting": "Được tìm thấy trong kiểm thử",
-      "foundInTestingEmpty": "Không có vấn đề nào được tìm thấy trong kiểm thử.",
+      "foundInTesting": "Được phát hiện trong quá trình kiểm thử",
+      "foundInTestingEmpty": "Không có vấn đề nào được phát hiện trong quá trình kiểm thử.",
       "inScopeCrossBadge": "Trong phạm vi",
       "refresh": "Làm mới",
       "columnKey": "Tên",
@@ -2254,37 +2254,37 @@
       "sourceSynced": "Đã đồng bộ",
       "sourceManual": "Thủ công",
       "coveragePassed": "Đạt",
-      "coverageFailed": "Thất bại",
+      "coverageFailed": "Không đạt",
       "coverageInProgress": "Đang tiến hành",
       "coverageNotRun": "Chưa chạy",
       "coverageUncovered": "Chưa được phủ",
       "filterAllCoverage": "Tất cả độ phủ",
       "filterAllSources": "Tất cả nguồn",
-      "filterAllTypes": "Tất cả các loại",
+      "filterAllTypes": "Tất cả loại",
       "empty": "Chưa có vấn đề nào được liên kết với cột mốc này.",
-      "emptyFiltered": "Không có vấn đề nào phù hợp với bộ lọc hiện tại.",
+      "emptyFiltered": "Không có vấn đề nào khớp với bộ lọc hiện tại.",
       "unlink": "Hủy liên kết",
       "managedByJira": "Được quản lý bởi Jira — hãy xóa nó khỏi version/sprint trong Jira",
-      "linkSuccess": "Đã liên kết vấn đề với cột mốc này.",
+      "linkSuccess": "Vấn đề đã được liên kết với cột mốc này.",
       "linkError": "Không thể liên kết vấn đề với cột mốc này.",
-      "unlinkSuccess": "Đã xóa vấn đề khỏi cột mốc này.",
+      "unlinkSuccess": "Vấn đề đã được xóa khỏi cột mốc này.",
       "unlinkError": "Không thể xóa vấn đề khỏi cột mốc này.",
       "overflowTitle": "Thêm vấn đề trong Jira",
-      "overflowDescription": "Các vấn đề này nằm trong version/sprint Jira đã liên kết nhưng chưa được liên kết ở đây.",
+      "overflowDescription": "Các vấn đề này thuộc version/sprint Jira đã liên kết nhưng chưa được liên kết ở đây.",
       "overflowCapped": "Giới hạn ở {cap, number} — còn {overflowTotal, number} vấn đề khác trong Jira",
-      "overflowMoreAvailable": "Còn {overflowTotal, number} vấn đề khác có sẵn trong Jira",
-      "overflowImportAction": "Nhập và liên kết",
+      "overflowMoreAvailable": "Còn {overflowTotal, number} vấn đề khác trong Jira",
+      "overflowImportAction": "Nhập & liên kết",
       "overflowImportSuccess": "Đã bắt đầu nhập — các vấn đề sẽ xuất hiện khi được đồng bộ.",
       "overflowImportError": "Không thể nhập các vấn đề thành viên từ Jira.",
       "emptyCta": "Liên kết một vấn đề để bắt đầu.",
       "columnDescription": "Mô tả",
       "unlinkConfirmTitle": "Hủy liên kết vấn đề?",
-      "unlinkConfirmDescription": "Việc này sẽ xóa vấn đề khỏi cột mốc này. Vấn đề vẫn được giữ lại và có thể được liên kết lại sau.",
+      "unlinkConfirmDescription": "Việc này sẽ xóa vấn đề khỏi cột mốc này. Vấn đề vẫn được giữ lại và có thể liên kết lại sau.",
       "totalsUncovered": "{count, plural, other {# vấn đề chưa được phủ}}",
       "percentReady": "{percent, number}% sẵn sàng",
-      "readinessSummary": "{passed, number} đạt · {failed, number} lỗi · {inProgress, number} đang thực hiện · {notRun, number} chưa chạy · {uncovered, number} chưa được kiểm tra (trong tổng số {total, number} vấn đề)",
-      "filterHasUntested": "Có trường hợp chưa được kiểm thử",
-      "createRunNoCases": "Không có vấn đề nào trong số đã chọn có trường hợp thử nghiệm được liên kết.",
+      "readinessSummary": "{passed, number} đạt · {failed, number} không đạt · {inProgress, number} đang tiến hành · {notRun, number} chưa chạy · {uncovered, number} chưa được phủ (trong tổng số {total, number} vấn đề)",
+      "filterHasUntested": "Có trường hợp thử nghiệm chưa kiểm thử",
+      "createRunNoCases": "Không có vấn đề nào trong số các vấn đề đã chọn có trường hợp thử nghiệm liên kết.",
       "createTestRunDetailed": "Tạo lần chạy thử nghiệm ({issues, plural, other {# vấn đề}} · {cases, plural, other {# trường hợp}})"
     }
   },
@@ -2459,6 +2459,12 @@
       "contact": "Hãy liên hệ với quản trị viên hệ thống của bạn để yêu cầu quyền truy cập vào các dự án.",
       "adminAddProject": "Thêm dự án đầu tiên của bạn để bắt đầu!",
       "footer": "Cần có quyền truy cập để xem và tham gia vào các hoạt động lập kế hoạch thử nghiệm."
+    },
+    "getStarted": {
+      "title": "Bắt đầu",
+      "description": "Thêm Dự án của riêng bạn khi bạn sẵn sàng bắt đầu lập kế hoạch.",
+      "adminAddProject": "Tạo Dự án đầu tiên của bạn",
+      "footer": "Dự án Demo chứa dữ liệu mẫu mà bạn có thể khám phá hoặc xóa bất cứ lúc nào."
     },
     "noProjectAccess": {
       "description": "Bạn không có quyền truy cập vào dự án này.",
@@ -2648,7 +2654,7 @@
       "purple": "Màu tím",
       "orange": "Quả cam",
       "accessible": "Có thể truy cập",
-      "accessibledark": "Có thể truy cập (Tối)"
+      "accessibledark": "Dễ tiếp cận (Tối)"
     }
   },
   "repository": {
@@ -3401,13 +3407,13 @@
       "deferredMessage": "Tệp đính kèm này sẽ bị xóa khi bạn lưu."
     },
     "preview": {
-      "unavailable": "Không thể xem trước",
+      "unavailable": "Không có bản xem trước",
       "tooLarge": "Tệp này quá lớn để xem trước.",
-      "empty": "Tài liệu này có vẻ trống.",
+      "empty": "Tài liệu này có vẻ như trống.",
       "download": "Tải xuống để xem",
-      "slideCounter": "Trang chiếu {current} trên {total}",
-      "previousSlide": "Trang chiếu trước",
-      "nextSlide": "Trang chiếu tiếp theo"
+      "slideCounter": "Slide {current} trên {total}",
+      "previousSlide": "Slide trước",
+      "nextSlide": "Slide tiếp theo"
     }
   },
   "reviews": {
@@ -3519,27 +3525,27 @@
   },
   "runs": {
     "composition": {
-      "lock": "Trường Hợp Đã Khóa",
+      "lock": "Trường hợp thử nghiệm đã bị khóa",
       "unlock": "Mở khóa",
       "locked": "Thành phần đã bị khóa",
-      "lockHint": "Đóng băng các test case có trong run này. Người dùng vẫn có thể gán và thực thi test case.",
-      "lockedBy": "Thành phần đã được khóa bởi {name}.",
-      "lockedAutomatically": "Thành phần đã được khóa tự động khi bắt đầu thực thi.",
-      "frozenNotice": "Thành phần đã bị khóa — không thể thêm, xóa hoặc sắp xếp lại test case. Bạn vẫn có thể gán và thực thi test case.",
-      "lockError": "Không thể khóa thành phần đợt kiểm thử",
-      "unlockError": "Không thể mở khóa thành phần đợt kiểm thử",
-      "addBlocked": "Thành phần của run này đã bị khóa, vì vậy không thể thêm test case. Hãy mở khóa trước để thay đổi tập hợp test case."
+      "lockHint": "Đóng băng các trường hợp thử nghiệm có trong lần chạy này. Người dùng vẫn có thể phân công và thực thi trường hợp thử nghiệm.",
+      "lockedBy": "Thành phần đã bị khóa bởi {name}.",
+      "lockedAutomatically": "Thành phần đã tự động bị khóa khi bắt đầu thực thi.",
+      "frozenNotice": "Thành phần đã bị khóa — không thể thêm, xóa hoặc sắp xếp lại trường hợp thử nghiệm. Bạn vẫn có thể phân công và thực thi trường hợp thử nghiệm.",
+      "lockError": "Không thể khóa thành phần của lần chạy",
+      "unlockError": "Không thể mở khóa thành phần của lần chạy",
+      "addBlocked": "Thành phần của lần chạy này đã bị khóa, do đó không thể thêm trường hợp thử nghiệm. Hãy mở khóa trước để thay đổi tập hợp trường hợp thử nghiệm."
     },
     "distribute": {
       "title": "Phân bổ phân công",
-      "description": "Phân bổ đều các trường hợp kiểm thử của lần chạy này cho các thành viên trong nhóm, đồng thời giữ các trường hợp liên quan với nhau.",
+      "description": "Phân công đồng đều các trường hợp thử nghiệm của lần chạy này cho các thành viên trong nhóm, đồng thời giữ các trường hợp liên quan với nhau.",
       "selectUsers": "Thành viên nhóm",
       "usersPlaceholder": "Chọn thành viên nhóm",
       "scopeAllConfigs": "Tất cả cấu hình",
       "scopeThisRun": "Chỉ lần chạy này",
       "strategyLabel": "Chiến lược cấu hình",
       "strategyKeepTogether": "Giữ các cấu hình cùng nhau",
-      "strategyKeepTogetherHint": "Mỗi người kiểm thử sở hữu một tập hợp các trường hợp trên tất cả các cấu hình.",
+      "strategyKeepTogetherHint": "Mỗi người kiểm thử sở hữu một tập hợp trường hợp trên tất cả các cấu hình.",
       "strategySplitByConfig": "Chia theo cấu hình",
       "strategySplitByConfigHint": "Mỗi người kiểm thử sở hữu toàn bộ cấu hình.",
       "groupingLabel": "Nhóm các trường hợp tương tự",
@@ -3547,15 +3553,15 @@
       "balancingLabel": "Cân bằng theo",
       "balancingEffort": "Thời gian ước tính",
       "balancingCount": "Số lượng trường hợp",
-      "balancingFallbackHint": "Không có ước tính cho các trường hợp này — thay vào đó sẽ cân bằng theo số lượng trường hợp.",
+      "balancingFallbackHint": "Không có ước tính cho các trường hợp này — sẽ cân bằng theo số lượng trường hợp.",
       "existingLabel": "Phân công hiện có",
       "existingOnlyUnassigned": "Chỉ điền vào các trường hợp chưa được phân công",
-      "existingReassignAll": "Phân công lại tất cả",
+      "existingReassignAll": "Phân công lại toàn bộ",
       "previewTitle": "Xem trước",
       "previewNoUsers": "Chọn thành viên nhóm để xem trước việc phân bổ.",
       "previewUser": "Thành viên nhóm",
       "previewCases": "Trường hợp",
-      "previewSkipped": "{count, plural, other {# trường hợp đã bị bỏ qua}} (đã được phân công hoặc đã hoàn thành)",
+      "previewSkipped": "{count, plural, other {# trường hợp bị bỏ qua}} (đã được phân công hoặc đã hoàn thành)",
       "confirming": "Đang phân công…",
       "success": "Đã phân bổ {count, plural, other {# trường hợp}} cho {users, plural, other {# thành viên}}",
       "errorGeneric": "Không thể phân bổ phân công",
@@ -4998,15 +5004,15 @@
       }
     },
     "recordKeys": {
-      "pageDescription": "Cấu hình các định danh mang tính hình thức, có tiền tố dự án như PROJECT-TC-1234 giúp dễ dàng nhận biết bản ghi thuộc dự án nào và thuộc loại nào. ID số gốc không thay đổi và vẫn hoạt động ở mọi nơi.",
+      "pageDescription": "Cấu hình các mã định danh mang tính hiển thị, có tiền tố dự án như PROJECT-TC-1234, giúp dễ dàng nhận biết bản ghi thuộc dự án nào và loại bản ghi gì. ID dạng số bên dưới không thay đổi và vẫn tiếp tục hoạt động ở mọi nơi.",
       "title": "Khóa bản ghi có tiền tố dự án",
-      "description": "Khi được bật, các bản ghi sẽ hiển thị một khóa tùy chọn kết hợp mã dự án, mã thông báo loại và ID số của bản ghi. Đặt mã của từng dự án trong Cài đặt dự án → Nâng cao.",
+      "description": "Khi được bật, bản ghi sẽ hiển thị một khóa tùy chọn kết hợp mã dự án, token loại và ID dạng số của bản ghi. Đặt mã của từng dự án trong Cài đặt Dự án → Nâng cao.",
       "toggleAriaLabel": "Chuyển đổi khóa bản ghi có tiền tố dự án",
-      "tokensHeading": "Mã thông báo loại",
-      "tokensHelp": "Mã thông báo được sử dụng cho từng loại bản ghi. Gồm 1–6 chữ cái in hoa, không có chữ số hoặc gạch nối. Các mã thông báo phải là duy nhất.",
+      "tokensHeading": "Token loại",
+      "tokensHelp": "Token được sử dụng cho từng loại bản ghi. 1–6 chữ hoa, không có chữ số hoặc gạch nối. Các token phải là duy nhất.",
       "invalidToken": "Không hợp lệ",
-      "duplicateToken": "Mã thông báo trùng lặp",
-      "tokensSaved": "Đã lưu mã thông báo loại.",
+      "duplicateToken": "Token trùng lặp",
+      "tokensSaved": "Đã lưu token loại.",
       "enableSuccess": "Đã bật khóa bản ghi có tiền tố dự án.",
       "disableSuccess": "Đã tắt khóa bản ghi có tiền tố dự án.",
       "saveError": "Không thể lưu. Vui lòng thử lại."
@@ -5483,7 +5489,7 @@
         "encrypted": "Đã mã hóa",
         "encryptedHelp": "Trường này được mã hóa và lưu trữ an toàn.",
         "changeCredential": "Thay đổi",
-        "leaveBlankToKeep": "Để trống để giữ giá trị hiện có",
+        "leaveBlankToKeep": "Để trống nếu muốn giữ giá trị hiện tại",
         "apiKeyWarningTitle": "Thông báo xác thực khóa API",
         "apiKeyWarningDescription": "Với xác thực bằng khóa API, người báo cáo sự cố được tạo có thể không trùng khớp với người dùng TestPlanIt đã tạo ra chúng — ngay cả khi địa chỉ email trùng khớp:",
         "apiKeyWarningPoint1": "Việc thiết lập người báo cáo Jira yêu cầu tài khoản có mã thông báo API phải có quyền quản trị Jira (\"Sửa đổi người báo cáo\"). Nếu không có quyền này, Jira sẽ bỏ qua người báo cáo và chủ sở hữu mã thông báo API sẽ được ghi nhận là người tạo.",
@@ -5604,8 +5610,8 @@
         "billingPeriodStartDayDescription": "Ngày trong tháng (1-31) khi kỳ thanh toán của bạn bắt đầu. Các giá trị 29-31 sử dụng ngày cuối cùng của các tháng ngắn hơn.",
         "defaultTemperature": "Nhiệt độ mặc định",
         "defaultMaxTokens": "Số lượng token tối đa mặc định",
-        "repoContextBudgetLabel": "Ngân sách bối cảnh Repository (QuickScript)",
-        "repoContextBudgetAuto": "Tự động điều chỉnh dựa trên cửa sổ bối cảnh ~{window} của mô hình — khoảng {budget} token mã nguồn repository cho mỗi lần tạo.",
+        "repoContextBudgetLabel": "Ngân sách Ngữ cảnh Repository (QuickScript)",
+        "repoContextBudgetAuto": "Tự động điều chỉnh kích thước theo cửa sổ ngữ cảnh ~{window} của mô hình — khoảng {budget} token mã repository cho mỗi lần tạo.",
         "timeout": "Thời gian chờ yêu cầu (ms)",
         "timeoutDescription": "Thời gian chờ tối đa để nhận phản hồi từ mô hình AI (5000-600000ms). Không áp dụng cho các yêu cầu truyền phát trực tuyến.",
         "streamingEnabled": "Bật tính năng phát trực tuyến",
@@ -6424,9 +6430,9 @@
       "endpoint": "## Điểm cuối API\nURL cơ sở cho API của nhà cung cấp LLM.\n\n- Để trống đối với OpenAI, Anthropic và Gemini — URL chính thức sẽ được sử dụng tự động\n- Bắt buộc đối với Ollama (ví dụ: `http://localhost:11434`), Azure OpenAI và LLM tùy chỉnh\n- Tùy chọn đối với bất kỳ nhà cung cấp nào — trỏ đến một proxy tương thích với OpenAI (ví dụ: LiteLLM) bằng cách nhập URL của nó\n- **Các địa chỉ riêng tư/nội bộ** (localhost, 127.0.0.1, địa chỉ IP riêng, siêu dữ liệu đám mây) bị chặn trừ khi được cho phép rõ ràng thông qua biến môi trường `ALLOWED_PRIVATE_HOSTS`",
       "deploymentName": "## Tên triển khai Azure\nTên của triển khai mô hình Azure OpenAI của bạn.\n\n- Được tìm thấy trong Azure OpenAI Studio trong mục Triển khai\n- Khác với tên mô hình — ví dụ: `my-gpt4-deploy` tương ứng với `gpt-4`\n- Chỉ bắt buộc đối với Azure OpenAI",
       "defaultModel": "## Mô hình mặc định\nMô hình được sử dụng cho các yêu cầu AI với tích hợp này.\n\n- Đối với OpenAI, Anthropic và Gemini — các mô hình có sẵn được tự động lấy từ khóa API của bạn\n- Đảm bảo mô hình đã được kích hoạt trong tài khoản nhà cung cấp của bạn\n- Ví dụ: `gpt-4o`, `claude-3-5-sonnet-20241022`, `gemini-1.5-pro`",
-      "maxTokensPerRequest": "## Số Token Tối Đa Mỗi Yêu Cầu\n**Giới hạn cứng về số token _đầu ra_** mà mô hình có thể tạo ra trong một phản hồi duy nhất.\n\n- Giới hạn độ dài của **phản hồi** của mô hình — không phải lượng ngữ cảnh bạn gửi cho nó\n- Các yêu cầu đòi hỏi nhiều hơn giá trị này sẽ **bị từ chối trước khi đến được mô hình**\n- Đặt giá trị này bằng mức đầu ra tối đa thực tế của mô hình của bạn — ví dụ: `128000` cho Claude Opus/Sonnet, `64000` cho Claude Haiku, `65536` cho Gemini, `16384` cho GPT-4o\n- Nếu đặt quá thấp → các tính năng AI sẽ thất bại hoặc tạo ra kết quả bị cắt ngắn",
-      "defaultMaxTokens": "## Số Token Tối Đa Mặc Định\n**Độ dài đầu ra mặc định** mà một yêu cầu sẽ dùng khi một tính năng không tự đặt giá trị riêng.\n\n- Kiểm soát độ dài **phản hồi** của mô hình có thể đạt được, bị giới hạn bởi _Số Token Tối Đa Mỗi Yêu Cầu_\n- Hầu hết các tính năng AI đều tự đặt giá trị riêng trong **Quản trị → Cấu hình Prompt**; đây chỉ là giá trị dự phòng\n- Giá trị này **không** kiểm soát lượng mã nguồn repository mà QuickScript gửi đến mô hình — hạn mức đó được tính toán tự động dựa trên cửa sổ ngữ cảnh của mô hình\n- Giữ giá trị này ≤ _Số Token Tối Đa Mỗi Yêu Cầu_",
-      "repoContextBudget": "## Ngân sách bối cảnh Repository\nLượng mã nguồn từ repository đã kết nối mà QuickScript cung cấp cho mô hình khi tạo script.\n\n- **Được đặt tự động** dựa trên cửa sổ bối cảnh đầu vào của mô hình đã chọn — không cần cấu hình gì ở đây\n- Các mô hình có bối cảnh lớn hơn (Claude, Gemini) sẽ nhận được nhiều hơn; các mô hình cục bộ nhỏ sẽ nhận một lượng an toàn để không bị tràn\n- Nhiều bối cảnh hơn giúp script gắn liền với các đối tượng trang và fixture thực tế của bạn — điều này không làm thay đổi độ dài của script được tạo ra",
+      "maxTokensPerRequest": "## Số Token Tối Đa Mỗi Yêu Cầu\n**Giới hạn cứng về số token _đầu ra_** mà mô hình có thể tạo ra trong một phản hồi.\n\n- Giới hạn độ dài **phản hồi** của mô hình — không phải lượng ngữ cảnh bạn gửi cho nó\n- Các yêu cầu yêu cầu nhiều hơn giới hạn này sẽ bị **từ chối trước khi đến được mô hình**\n- Đặt giá trị này bằng đầu ra tối đa thực tế của mô hình của bạn — ví dụ: `128000` cho Claude Opus/Sonnet, `64000` cho Claude Haiku, `65536` cho Gemini, `16384` cho GPT-4o\n- Quá thấp → các tính năng AI sẽ thất bại hoặc tạo ra đầu ra bị cắt ngắn",
+      "defaultMaxTokens": "## Số Token Tối Đa Mặc Định\n**Độ dài _đầu ra_ mặc định** mà một yêu cầu sử dụng khi một tính năng không đặt giá trị riêng.\n\n- Kiểm soát độ dài **phản hồi** của mô hình, bị giới hạn bởi _Số Token Tối Đa Mỗi Yêu Cầu_\n- Hầu hết các tính năng AI đặt giá trị riêng của chúng trong **Admin → Cấu hình Prompt**; đây chỉ là giá trị dự phòng\n- Nó **không** kiểm soát lượng mã repository mà QuickScript gửi cho mô hình — ngân sách đó được tự động tính toán từ cửa sổ ngữ cảnh của mô hình\n- Giữ giá trị này ≤ _Số Token Tối Đa Mỗi Yêu Cầu_",
+      "repoContextBudget": "## Ngân Sách Ngữ Cảnh Repository\nLượng mã trong repository đã kết nối mà QuickScript cung cấp cho mô hình khi tạo script.\n\n- **Được đặt tự động** từ cửa sổ ngữ cảnh đầu vào của mô hình đã chọn — không có gì cần cấu hình ở đây\n- Các mô hình có cửa sổ ngữ cảnh lớn hơn (Claude, Gemini) sẽ nhận được nhiều hơn; các mô hình cục bộ nhỏ sẽ nhận được một lượng an toàn để không bị tràn\n- Nhiều ngữ cảnh hơn giúp script gắn kết chặt chẽ hơn với các page object và fixture thực tế của bạn — nó không thay đổi độ dài của script được tạo ra",
       "maxRequestsPerMinute": "## Số lượng yêu cầu tối đa mỗi phút\nGiới hạn số lượng cuộc gọi API có thể được thực hiện đến nhà cung cấp này mỗi phút.\n\n- Đặt để phù hợp với giới hạn tốc độ của gói dịch vụ của nhà cung cấp\n- Các yêu cầu vượt quá sẽ được xếp vào hàng đợi, không bị từ chối\n- Kiểm tra tài liệu của nhà cung cấp để biết giới hạn của gói dịch vụ của bạn",
       "costPerInputToken": "## Chi phí mỗi Token đầu vào (USD)\nChi phí bằng USD cho mỗi token đầu vào (lời nhắc) được gửi đến mô hình.\n\n- Được sử dụng để theo dõi chi phí và cảnh báo ngân sách\n- Tìm thông tin này trên trang giá của nhà cung cấp\n- Ví dụ: `0.000005` = 5 USD cho mỗi triệu token đầu vào",
       "costPerOutputToken": "## Chi phí trên mỗi Token đầu ra (USD)\nChi phí bằng USD cho mỗi token đầu ra (hoàn thành) được tạo ra bởi mô hình.\n\n- Thường cao hơn chi phí token đầu vào\n- Được sử dụng để theo dõi chi phí và cảnh báo ngân sách\n- Ví dụ: `0.000015` = 15 USD cho mỗi triệu token đầu ra",
@@ -7042,8 +7048,8 @@
           "description": "Tiến độ dự án, các mốc quan trọng và tình trạng hoàn thành"
         },
         "milestoneReadiness": {
-          "label": "Mức Độ Sẵn Sàng Của Cột Mốc",
-          "description": "Mức độ sẵn sàng phát hành theo từng cột mốc: % vấn đề trong phạm vi đã đạt hoàn toàn và số lượng theo từng trạng thái"
+          "label": "Mức độ sẵn sàng của cột mốc",
+          "description": "Mức độ sẵn sàng phát hành theo từng cột mốc: % vấn đề trong phạm vi đạt hoàn toàn, và số lượng theo từng trạng thái"
         },
         "sessionAnalysis": {
           "label": "Phân tích phiên",
@@ -7400,13 +7406,13 @@
       "tag": "Nhãn"
     },
     "metrics": {
-      "percentReady": "Sẵn Sàng (%)",
+      "percentReady": "Sẵn sàng (%)",
       "passed": "Đạt",
-      "failed": "Không Đạt",
-      "inProgress": "Đang Tiến Hành",
-      "notRun": "Chưa Chạy",
-      "uncovered": "Chưa Được Bao Phủ",
-      "totalIssues": "Tổng Số Vấn Đề",
+      "failed": "Không đạt",
+      "inProgress": "Đang tiến hành",
+      "notRun": "Chưa chạy",
+      "uncovered": "Chưa được phủ",
+      "totalIssues": "Tổng số vấn đề",
       "testResults": "Kết quả kiểm tra",
       "testResultCount": "Số kết quả xét nghiệm",
       "passRate": "Tỷ lệ đậu (%)",

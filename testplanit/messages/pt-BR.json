@@ -291,7 +291,7 @@
       "account": "Conta",
       "accountHistory": "Histórico da conta",
       "activity": "Atividade",
-      "activityLog": "Registro de Atividade",
+      "activityLog": "Registro de Atividades",
       "lastActive": "Última atividade",
       "theme": "Tema",
       "locale": "Linguagem",
@@ -753,7 +753,7 @@
       "sortByDate": "Ordenar por data",
       "testRuns": "{count, plural, =0 {Nenhum teste realizado} =1 {1 teste realizado} other {Número total de testes realizados}}",
       "sessions": "{count, plural, =0 {Sem sessões} =1 {1 sessão} other {Número de sessões}}",
-      "issues": "{count, plural, =0 {Nenhum problema} =1 {1 problema} other {# problemas}}",
+      "issues": "{count, plural, =0 {Nenhuma Issue} =1 {1 Issue} other {# Issues}}",
       "noOptions": "Nenhuma opção disponível",
       "multiConfiguration": "Parte de um grupo de múltiplas configurações",
       "compositionLocked": "Composição bloqueada — o conjunto de casos está congelado",
@@ -1387,16 +1387,16 @@
           "importFailed": "Falha na importação",
           "importPreviewFailed": "Não foi possível estimar as correspondências",
           "milestoneSync": {
-            "title": "Sincronização de Marcos",
-            "description": "Sincronize Marcos do TestPlanIt a partir dos artefatos baseados em tempo deste rastreador.",
-            "enableLabel": "Ativar sincronização de marcos",
-            "releasesLabel": "Lançamentos",
+            "title": "Sincronização de Marco",
+            "description": "Sincronize os Marcos do TestPlanIt a partir dos artefatos baseados em tempo deste rastreador.",
+            "enableLabel": "Ativar sincronização de marco",
+            "releasesLabel": "Versões",
             "sprintsLabel": "Sprints",
-            "kindsLabel": "Tipos a sincronizar",
+            "kindsLabel": "Tipos para sincronizar",
             "autoTrackLabel": "Adicionar novos automaticamente",
-            "autoTrackProjectsLabel": "Verificar esses projetos conectados em busca de novos marcos",
-            "settingsSaved": "Configurações de sincronização de marcos salvas",
-            "saveError": "Falha ao salvar as configurações de sincronização de marcos"
+            "autoTrackProjectsLabel": "Verificar estes projetos conectados em busca de novos marcos",
+            "settingsSaved": "Configurações de sincronização de marco salvas",
+            "saveError": "Falha ao salvar as configurações de sincronização de marco"
           }
         },
         "integrationAssigned": "Integração atribuída com sucesso",
@@ -1924,8 +1924,8 @@
           "statusPending": "Refrescante...",
           "lastFetched": "Última busca",
           "filesCached": "Arquivos em cache",
-          "contentsCached": "Conteúdo em Cache",
-          "contentsIncomplete": "Apenas {cached} de {total} conteúdos de arquivos estão em cache — os scripts gerados não usarão os arquivos ausentes. Atualize novamente para completar.",
+          "contentsCached": "Conteúdos em Cache",
+          "contentsIncomplete": "Apenas {cached} de {total} conteúdos de arquivo estão em cache — os scripts gerados não usarão os arquivos ausentes. Atualize novamente para concluir.",
           "totalSize": "Tamanho total"
         },
         "save": "Salvar configuração",
@@ -1971,11 +1971,11 @@
         "description": "Opções específicas para cada projeto que definem suas preferências. Novas opções aparecerão aqui conforme forem introduzidas.",
         "recordKey": {
           "label": "Código do projeto",
-          "description": "Um código curto usado em chaves de registro cosméticas como {example}. 2 a 10 letras maiúsculas, sem dígitos. Deixe em branco para mostrar IDs numéricos simples.",
+          "description": "Um código curto usado em chaves de registro cosméticas como {example}. 2 a 10 letras maiúsculas, sem dígitos. Deixe em branco para exibir IDs numéricos simples.",
           "placeholder": "ex.: PROJECT",
-          "previewLabel": "Exemplo de chave:",
+          "previewLabel": "Chave de exemplo:",
           "useSuggestion": "Usar código sugerido: {code}",
-          "invalid": "Use de 2 a 10 letras maiúsculas (sem dígitos).",
+          "invalid": "Use 2 a 10 letras maiúsculas (sem dígitos).",
           "taken": "Esse código já está sendo usado por outro projeto. Escolha um diferente.",
           "savedToast": "Código do projeto salvo.",
           "saveError": "Não foi possível salvar o código do projeto. Ele pode já estar sendo usado por outro projeto."
@@ -2014,11 +2014,11 @@
           "skippedToast": "{count, plural, =1 {1 caso de rascunho foi ignorado porque está no estado Não Iniciado} other {# casos de rascunho foram ignorados porque estão no estado Não Iniciado}}"
         },
         "autoLockComposition": {
-          "label": "Bloquear composição da Execução de Teste quando a execução iniciar",
-          "description": "Quando ativado, a composição de casos de uma execução de teste é bloqueada automaticamente no momento em que a execução entra no estado Em Progresso. O bloqueio congela quais casos estão na execução (sem adicionar, remover ou reordenar) enquanto a execução e a atribuição continuam. O criador da execução ou um Administrador do Projeto pode desbloqueá-la para alterar o conjunto de casos.",
-          "enabledToast": "As Execuções de Teste bloquearão sua composição quando a execução iniciar",
-          "disabledToast": "As Execuções de Teste não bloquearão mais sua composição automaticamente",
-          "saveError": "Falha ao atualizar a configuração de bloqueio automático da composição"
+          "label": "Bloquear composição do Test Run ao iniciar a execução",
+          "description": "Quando ativado, a composição de casos de um test run é bloqueada automaticamente no momento em que o run passa para o estado Em Progresso. O bloqueio congela quais casos estão no run (sem adicionar, remover ou reordenar) enquanto a execução e a atribuição continuam. O criador do run ou um Administrador do Projeto pode desbloqueá-lo para alterar o conjunto de casos.",
+          "enabledToast": "Os Test Runs bloquearão sua composição quando a execução começar",
+          "disabledToast": "Os Test Runs não bloquearão mais automaticamente sua composição",
+          "saveError": "Falha ao atualizar a configuração de bloqueio automático de composição"
         },
         "editWindow": {
           "label": "Janela de edição de resultados",
@@ -2112,8 +2112,8 @@
     },
     "browser": {
       "kindAll": "Todos os marcos",
-      "kindReleases": "Lançamentos sincronizados",
-      "kindSprints": "Sprints sincronizados"
+      "kindReleases": "Releases sincronizadas",
+      "kindSprints": "Sprints sincronizadas"
     },
     "statusLabels": {
       "NOT_STARTED": "Não iniciado",
@@ -2157,7 +2157,7 @@
     "delete": {
       "title": "Excluir marco",
       "confirmMessage": "Tem certeza de que deseja excluir o marco {name}?",
-      "childrenWarning": "{count, plural, one {Seu # marco filho também será excluído.} other {Seus # marcos filhos e descendentes também serão excluídos.}}",
+      "childrenWarning": "{count, plural, one {Seu # marco filho} other {Seus # marcos filhos e descendentes}} também serão excluídos.",
       "warning": "Este marco será removido do projeto. Os dados históricos referentes a este marco permanecerão no projeto.",
       "toast": {
         "loading": "Excluindo marco...",
@@ -2188,24 +2188,24 @@
     },
     "import": {
       "importTitle": "Importar do Jira",
-      "importDescription": "Selecione as Versões de Correção e Sprints do Jira para sincronizar como Marcos do TestPlanIt.",
+      "importDescription": "Selecione as Fix Versions e Sprints do Jira para sincronizar como Marcos do TestPlanIt.",
       "showClosed": "Mostrar fechados",
       "alreadyLinked": "Já vinculado",
       "selectedCount": "{count, plural, one {# selecionado} other {# selecionados}}",
-      "confirmSelection": "Importar selecionados",
+      "confirmSelection": "Importar Selecionados",
       "empty": "Nenhum marco encontrado",
       "previewFailed": "Falha ao carregar marcos do Jira",
       "importFailed": "Falha ao importar os marcos selecionados",
       "importStarted": "Importação iniciada",
-      "kindRelease": "Lançamento",
+      "kindRelease": "Versão",
       "kindSprint": "Sprint",
       "selectAll": "Selecionar tudo",
-      "searchPlaceholder": "Pesquisar lançamentos e sprints...",
+      "searchPlaceholder": "Buscar releases e sprints...",
       "emptyFiltered": "Nenhum marco corresponde aos seus filtros.",
       "partialWarning": "Alguns projetos do Jira não puderam ser obtidos:",
       "importing": "Importando {count, plural, one {# marco} other {# marcos}} do Jira…",
-      "completed": "{count, plural, one {# marco importado} other {# marcos importados}} do Jira",
-      "stillRunning": "A importação ainda está em execução em segundo plano — os marcos aparecerão quando ela terminar."
+      "completed": "{count, plural, one {Importado # marco} other {Importados # marcos}} do Jira",
+      "stillRunning": "A importação ainda está em execução em segundo plano — os marcos aparecerão quando ela for concluída."
     },
     "sync": {
       "managedByJira": "Gerenciado pelo Jira",
@@ -2216,35 +2216,35 @@
       "syncNow": "Sincronizar agora",
       "unlinkMenuItem": "Desvincular de {provider}",
       "unlinkConfirmTitle": "Desvincular marco?",
-      "unlinkConfirmDescription": "Isso interrompe a sincronização com o rastreador: os campos voltam a ser editáveis, os links de issues sincronizados se tornam manuais (você pode mantê-los ou removê-los), e a nova vinculação é possível mais tarde importando este artefato novamente.",
+      "unlinkConfirmDescription": "Isso interrompe a sincronização com o rastreador: os campos voltam a ser editáveis, os links de issues sincronizados se tornam manuais (você pode mantê-los ou removê-los), e é possível vincular novamente mais tarde importando este artefato outra vez.",
       "unlinkConfirmAction": "Desvincular",
       "unlinkSuccess": "Marco desvinculado do rastreador.",
       "unlinkError": "Falha ao desvincular o marco.",
-      "sourceRemoved": "origem removida no {provider}",
+      "sourceRemoved": "origem removida em {provider}",
       "mergedInto": "mesclado em {target}"
     },
     "summary": {
       "inScope": "{count, plural, one {# no escopo} other {# no escopo}}",
-      "foundInTesting": "{count, plural, one {# encontrado em testes} other {# encontrados em testes}}",
+      "foundInTesting": "{count, plural, one {# encontrado em teste} other {# encontrados em teste}}",
       "includesChildMilestones": "Inclui marcos filhos"
     },
     "burndown": {
-      "title": "Gráfico de burndown",
+      "title": "Burndown",
       "remaining": "Itens Restantes",
-      "ideal": "Esperado",
+      "ideal": "Ideal",
       "today": "Hoje",
       "tooltipRemaining": "{count, number} restantes",
       "heatAhead": "Adiantado em relação ao ideal",
-      "heatOnTrack": "No prazo",
-      "heatBehind": "Atrás do ideal",
-      "tooltipBehind": "{count, number} atrás do ideal",
+      "heatOnTrack": "No caminho certo",
+      "heatBehind": "Atrasado em relação ao ideal",
+      "tooltipBehind": "{count, number} atrasado em relação ao ideal",
       "tooltipAhead": "{count, number} adiantado em relação ao ideal"
     },
     "members": {
-      "cardTitle": "Issues",
+      "cardTitle": "Problemas",
       "inScope": "No escopo",
-      "foundInTesting": "Encontrado em testes",
-      "foundInTestingEmpty": "Nenhuma issue encontrada em testes.",
+      "foundInTesting": "Encontrado em teste",
+      "foundInTestingEmpty": "Nenhuma issue encontrada em teste.",
       "inScopeCrossBadge": "No escopo",
       "refresh": "Atualizar",
       "columnKey": "Nome",
@@ -2255,10 +2255,10 @@
       "sourceManual": "Manual",
       "coveragePassed": "Aprovado",
       "coverageFailed": "Reprovado",
-      "coverageInProgress": "Em andamento",
-      "coverageNotRun": "Não executado",
-      "coverageUncovered": "Sem cobertura",
-      "filterAllCoverage": "Toda a cobertura",
+      "coverageInProgress": "Em Progresso",
+      "coverageNotRun": "Não Executado",
+      "coverageUncovered": "Não Coberto",
+      "filterAllCoverage": "Toda cobertura",
       "filterAllSources": "Todas as origens",
       "filterAllTypes": "Todos os tipos",
       "empty": "Nenhuma issue vinculada a este marco ainda.",
@@ -2280,12 +2280,12 @@
       "columnDescription": "Descrição",
       "unlinkConfirmTitle": "Desvincular issue?",
       "unlinkConfirmDescription": "Isso remove a issue deste marco. A issue em si é mantida e pode ser vinculada novamente mais tarde.",
-      "totalsUncovered": "{count, plural, one {# issue sem cobertura} other {# issues sem cobertura}}",
+      "totalsUncovered": "{count, plural, one {# issue não coberta} other {# issues não cobertas}}",
       "percentReady": "{percent, number}% pronto",
-      "readinessSummary": "{passed, number} aprovados · {failed, number} reprovados · {inProgress, number} em andamento · {notRun, number} não executados · {uncovered, number} não cobertos (de {total, number} itens)",
+      "readinessSummary": "{passed, number} aprovados · {failed, number} reprovados · {inProgress, number} em progresso · {notRun, number} não executados · {uncovered, number} não cobertos (de {total, number} issues)",
       "filterHasUntested": "Possui casos não testados",
       "createRunNoCases": "Nenhuma das issues selecionadas possui casos de teste vinculados.",
-      "createTestRunDetailed": "Criar execução de teste ({issues, plural, one {# issue} other {# issues}} · {cases, plural, one {# caso} other {# casos}})"
+      "createTestRunDetailed": "Criar test run ({issues, plural, one {# issue} other {# issues}} · {cases, plural, one {# caso} other {# casos}})"
     }
   },
   "sessions": {
@@ -2459,6 +2459,12 @@
       "contact": "Contate o administrador do sistema para solicitar acesso aos projetos.",
       "adminAddProject": "Adicione seu primeiro projeto para começar!",
       "footer": "É necessário acesso para visualizar e participar das atividades de planejamento de testes."
+    },
+    "getStarted": {
+      "title": "Primeiros passos",
+      "description": "Adicione seu próprio Projeto quando estiver pronto para começar a planejar.",
+      "adminAddProject": "Crie seu primeiro Projeto",
+      "footer": "O Projeto de Demonstração contém dados de exemplo que você pode explorar ou remover a qualquer momento."
     },
     "noProjectAccess": {
       "description": "Você não tem acesso a este projeto.",
@@ -3401,7 +3407,7 @@
       "deferredMessage": "Este anexo será apagado ao salvar."
     },
     "preview": {
-      "unavailable": "Pré-visualização indisponível",
+      "unavailable": "Visualização indisponível",
       "tooLarge": "Este arquivo é muito grande para visualizar.",
       "empty": "Este documento parece estar vazio.",
       "download": "Baixar para visualizar",
@@ -3519,49 +3525,49 @@
   },
   "runs": {
     "composition": {
-      "lock": "Casos bloqueados",
+      "lock": "Casos Bloqueados",
       "unlock": "Desbloquear",
       "locked": "Composição bloqueada",
-      "lockHint": "Congele quais casos estão nesta execução. Os usuários ainda podem atribuir e executar casos de teste.",
+      "lockHint": "Congela quais casos estão neste run. Os usuários ainda podem atribuir e executar casos de teste.",
       "lockedBy": "Composição bloqueada por {name}.",
-      "lockedAutomatically": "Composição bloqueada automaticamente quando a execução iniciou.",
-      "frozenNotice": "A composição está bloqueada — casos de teste não podem ser adicionados, removidos ou reordenados. Você ainda pode atribuir e executar casos de teste.",
-      "lockError": "Falha ao bloquear a composição da execução",
-      "unlockError": "Falha ao desbloquear a composição da execução",
-      "addBlocked": "A composição desta execução está bloqueada, portanto casos de teste não podem ser adicionados. Desbloqueie-a primeiro para alterar o conjunto de casos."
+      "lockedAutomatically": "Composição bloqueada automaticamente quando a execução começou.",
+      "frozenNotice": "A composição está bloqueada — os casos de teste não podem ser adicionados, removidos ou reordenados. Você ainda pode atribuir e executar casos de teste.",
+      "lockError": "Falha ao bloquear a composição do run",
+      "unlockError": "Falha ao desbloquear a composição do run",
+      "addBlocked": "A composição deste run está bloqueada, portanto casos de teste não podem ser adicionados. Desbloqueie-a primeiro para alterar o conjunto de casos."
     },
     "distribute": {
       "title": "Distribuir atribuições",
-      "description": "Distribua uniformemente os casos de teste desta execução entre os membros da equipe, mantendo os casos relacionados juntos.",
+      "description": "Atribua igualmente os casos de teste deste run entre os membros da equipe, mantendo casos relacionados juntos.",
       "selectUsers": "Membros da equipe",
-      "usersPlaceholder": "Selecione os membros da equipe",
+      "usersPlaceholder": "Selecionar membros da equipe",
       "scopeAllConfigs": "Todas as configurações",
-      "scopeThisRun": "Somente esta execução",
+      "scopeThisRun": "Somente este run",
       "strategyLabel": "Estratégia de configuração",
       "strategyKeepTogether": "Manter configurações juntas",
       "strategyKeepTogetherHint": "Cada testador possui um conjunto de casos em todas as configurações.",
       "strategySplitByConfig": "Dividir por configuração",
       "strategySplitByConfigHint": "Cada testador possui configurações completas.",
       "groupingLabel": "Agrupar casos semelhantes",
-      "groupingHint": "Manter os casos da mesma seção e com tags em comum com um único testador.",
+      "groupingHint": "Mantenha casos na mesma seção e com tags em comum com um único testador.",
       "balancingLabel": "Balancear por",
       "balancingEffort": "Tempo estimado",
       "balancingCount": "Número de casos",
-      "balancingFallbackHint": "Não há estimativas nesses casos — balanceando pelo número de casos.",
+      "balancingFallbackHint": "Sem estimativas nesses casos — balanceando pelo número de casos.",
       "existingLabel": "Atribuições existentes",
       "existingOnlyUnassigned": "Preencher apenas casos não atribuídos",
       "existingReassignAll": "Reatribuir tudo",
       "previewTitle": "Pré-visualização",
       "previewNoUsers": "Selecione os membros da equipe para pré-visualizar a distribuição.",
-      "previewUser": "Membro da equipe",
+      "previewUser": "Membro da Equipe",
       "previewCases": "Casos",
       "previewSkipped": "{count, plural, one {# caso ignorado} other {# casos ignorados}} (já atribuído ou concluído)",
       "confirming": "Atribuindo…",
-      "success": "{count, plural, one {# caso} other {# casos}} distribuído entre {users, plural, one {# membro} other {# membros}}",
+      "success": "Distribuídos {count, plural, one {# caso} other {# casos}} entre {users, plural, one {# membro} other {# membros}}",
       "errorGeneric": "Falha ao distribuir atribuições",
-      "errorRunCompleted": "Esta execução está concluída e não pode mais ser alterada",
-      "errorNeedUsers": "Selecione ao menos um membro do projeto para distribuir",
-      "errorNoAssignable": "Não há casos para distribuir nesta execução"
+      "errorRunCompleted": "Este run está concluído e não pode mais ser alterado",
+      "errorNeedUsers": "Selecione pelo menos um membro do projeto para distribuir",
+      "errorNoAssignable": "Não há casos para distribuir neste run"
     },
     "auditLog": {
       "trigger": "Atividade",
@@ -4998,12 +5004,12 @@
       }
     },
     "recordKeys": {
-      "pageDescription": "Configure identificadores cosméticos prefixados por projeto, como PROJECT-TC-1234, que facilitam identificar a qual projeto um registro pertence e que tipo de registro é. O ID numérico subjacente permanece inalterado e continua funcionando em todos os lugares.",
+      "pageDescription": "Configure identificadores cosméticos prefixados por projeto, como PROJECT-TC-1234, que facilitam identificar a qual projeto um registro pertence e qual tipo de registro ele é. O ID numérico subjacente permanece inalterado e continua funcionando em todos os lugares.",
       "title": "Chaves de registro prefixadas por projeto",
       "description": "Quando ativado, os registros exibem uma chave opcional combinando o código do projeto, um token de tipo e o ID numérico do registro. Defina o código de cada projeto em Configurações do Projeto → Avançado.",
-      "toggleAriaLabel": "Ativar/desativar chaves de registro prefixadas por projeto",
+      "toggleAriaLabel": "Alternar chaves de registro prefixadas por projeto",
       "tokensHeading": "Tokens de tipo",
-      "tokensHelp": "O token usado para cada tipo de registro. 1 a 6 letras maiúsculas, sem dígitos ou hifens. Os tokens devem ser exclusivos.",
+      "tokensHelp": "O token usado para cada tipo de registro. 1 a 6 letras maiúsculas, sem dígitos ou hifens. Os tokens devem ser únicos.",
       "invalidToken": "Inválido",
       "duplicateToken": "Token duplicado",
       "tokensSaved": "Tokens de tipo salvos.",
@@ -5605,7 +5611,7 @@
         "defaultTemperature": "Temperatura padrão",
         "defaultMaxTokens": "Número máximo padrão de tokens",
         "repoContextBudgetLabel": "Orçamento de Contexto do Repositório (QuickScript)",
-        "repoContextBudgetAuto": "Dimensionado automaticamente a partir da janela de contexto de ~{window} do modelo — aproximadamente {budget} tokens de código do repositório por geração.",
+        "repoContextBudgetAuto": "Dimensionado automaticamente com base na janela de contexto de ~{window} do modelo — cerca de {budget} tokens de código do repositório por geração.",
         "timeout": "Tempo limite da solicitação (ms)",
         "timeoutDescription": "Tempo máximo de espera para resposta do modelo de IA (5000-600000 ms). Não se aplica a solicitações de streaming.",
         "streamingEnabled": "Ativar streaming",
@@ -6348,7 +6354,7 @@
       "documentation": "## Documentação\nDetalhes adicionais, referências e materiais de apoio.\n\n- Especificações técnicas\n- Documentos de projeto\n- Referências externas\n- Atas e decisões de reuniões",
       "automaticCompletion": "## Preenchimento automático na data de vencimento\nMarca automaticamente este marco como concluído quando a data de vencimento for atingida.\n\n- O marco será concluído no horário agendado na data de vencimento.\n- Útil para marcos com tempo definido que devem ser fechados independentemente do status de conclusão.\n- Pode ser substituído pela conclusão manual do marco antes da data de vencimento.\n- Requer que uma data de vencimento seja definida.",
       "notifyDaysBefore": "## Notificar dias antes do prazo\nEnviar notificações aos membros da equipe atribuídos quando a data de vencimento do marco estiver se aproximando.\n\n- Ative para habilitar as notificações, desative para desabilitar\n- Insira o número de dias antes do prazo para começar a enviar lembretes\n- As notificações são enviadas aos usuários atribuídos às execuções e sessões de teste dentro deste marco\n- Marcos atrasados continuarão enviando lembretes até serem concluídos",
-      "managedByJira": "O nome, as datas e o status deste marco são gerenciados pelo Jira. Faça alterações lá para atualizá-los aqui."
+      "managedByJira": "O nome, as datas e o status deste marco são gerenciados pelo Jira. Faça as alterações lá para atualizá-los aqui."
     },
     "session": {
       "name": "## Nome da Sessão\nUm nome claro e descritivo que identifique o propósito da sua sessão de testes.\n\n- Deve ser único e significativo\n- Ajuda os membros da equipe a entenderem o que está sendo testado\n- Usado em relatórios e rastreamento",
@@ -6424,9 +6430,9 @@
       "endpoint": "## Endpoint da API\nA URL base para a API do provedor LLM.\n\n- Deixe em branco para OpenAI, Anthropic e Gemini — as URLs oficiais são usadas automaticamente\n- Obrigatório para Ollama (ex.: `http://localhost:11434`), Azure OpenAI e LLM personalizado\n- Opcional para qualquer provedor — aponte para um proxy compatível com OpenAI (ex.: LiteLLM) inserindo sua URL\n- **Endereços privados/internos** (localhost, 127.0.0.1, IPs privados, metadados da nuvem) são bloqueados, a menos que sejam explicitamente permitidos por meio da variável de ambiente `ALLOWED_PRIVATE_HOSTS`",
       "deploymentName": "## Nome da Implantação do Azure\nO nome da sua implantação do modelo do Azure OpenAI.\n\n- Encontrado no Azure OpenAI Studio em Implantações\n- Diferente do nome do modelo — por exemplo, `my-gpt4-deploy` corresponde a `gpt-4`\n- Necessário apenas para o Azure OpenAI",
       "defaultModel": "## Modelo Padrão\nO modelo usado para solicitações de IA com esta integração.\n\n- Para OpenAI, Anthropic e Gemini — os modelos disponíveis são obtidos automaticamente da sua chave de API\n- Certifique-se de que o modelo esteja habilitado na sua conta de provedor\n- Exemplo: `gpt-4o`, `claude-3-5-sonnet-20241022`, `gemini-1.5-pro`",
-      "maxTokensPerRequest": "## Máximo de Tokens Por Solicitação\nO **limite máximo de tokens de _saída_** que o modelo pode gerar em uma única resposta.\n\n- Limita o tamanho da **resposta** do modelo — não quanto contexto você envia a ele\n- Solicitações que pedem mais do que isso são **rejeitadas antes de chegar ao modelo**\n- Defina para o máximo real de saída do seu modelo — por exemplo, `128000` para Claude Opus/Sonnet, `64000` para Claude Haiku, `65536` para Gemini, `16384` para GPT-4o\n- Muito baixo → recursos de IA falham ou produzem saída truncada",
-      "defaultMaxTokens": "## Máximo de Tokens Padrão\nO **tamanho de saída padrão** que uma solicitação pede quando um recurso não define o seu próprio.\n\n- Controla o tamanho da **resposta** do modelo, limitado pelo _Máximo de Tokens Por Solicitação_\n- A maioria dos recursos de IA define seu próprio valor em **Admin → Configuração de Prompt**; isso é apenas o valor padrão\n- Isso **não** controla quanto código do repositório o QuickScript envia ao modelo — esse orçamento é derivado automaticamente da janela de contexto do modelo\n- Mantenha ≤ _Máximo de Tokens Por Solicitação_",
-      "repoContextBudget": "## Orçamento de Contexto do Repositório\nQuanto do código do seu repositório conectado o QuickScript envia ao modelo ao gerar um script.\n\n- **Definido automaticamente** a partir da janela de contexto de entrada do modelo selecionado — não há nada para configurar aqui\n- Modelos com contexto maior (Claude, Gemini) recebem mais; modelos locais pequenos recebem uma quantidade segura que não causará sobrecarga\n- Mais contexto fundamenta o script em seus objetos de página e fixtures reais — isso não altera o tamanho do script gerado",
+      "maxTokensPerRequest": "## Máximo de Tokens por Requisição\nO **limite máximo de tokens de _saída_** que o modelo pode gerar em uma única resposta.\n\n- Limita o tamanho da **resposta** do modelo — não a quantidade de contexto que você envia a ele\n- Requisições que solicitam mais do que isso são **rejeitadas antes de chegar ao modelo**\n- Defina-o para a saída máxima real do seu modelo — por exemplo, `128000` para Claude Opus/Sonnet, `64000` para Claude Haiku, `65536` para Gemini, `16384` para GPT-4o\n- Muito baixo → os recursos de IA falham ou produzem saída truncada",
+      "defaultMaxTokens": "## Máximo de Tokens Padrão\nO **tamanho de _saída_ padrão** que uma requisição solicita quando um recurso não define o seu próprio.\n\n- Controla o quão longa a **resposta** do modelo pode ser, limitada pelo _Máximo de Tokens por Requisição_\n- A maioria dos recursos de IA define seu próprio valor em **Admin → Configuração de Prompt**; isso é apenas o valor de fallback\n- Isso **não** controla quanto código do repositório o QuickScript envia ao modelo — esse orçamento é derivado automaticamente da janela de contexto do modelo\n- Mantenha-o ≤ _Máximo de Tokens por Requisição_",
+      "repoContextBudget": "## Orçamento de Contexto do Repositório\nQuanto do código do seu repositório conectado o QuickScript envia ao modelo ao gerar um script.\n\n- **Definido automaticamente** com base na janela de contexto de entrada do modelo selecionado — não há nada para configurar aqui\n- Modelos com contexto maior (Claude, Gemini) recebem mais; modelos locais pequenos recebem uma quantidade segura que não excederá o limite\n- Mais contexto fundamenta o script em seus objetos de página e fixtures reais — não altera o tamanho do script gerado",
       "maxRequestsPerMinute": "## Número máximo de solicitações por minuto\nLimita quantas chamadas de API podem ser feitas para este provedor por minuto.\n\n- Defina para corresponder ao limite de taxa do seu plano de provedor.\n- Solicitações excedentes são enfileiradas, não rejeitadas.\n- Consulte a documentação do seu provedor para verificar o limite do seu plano.",
       "costPerInputToken": "## Custo por Token de Entrada (USD)\nO custo em USD para cada token de entrada (prompt) enviado ao modelo.\n\n- Usado para rastreamento de custos e alertas de orçamento\n- Encontre isso na página de preços do seu provedor\n- Exemplo: `0,000005` = US$ 5 por milhão de tokens de entrada",
       "costPerOutputToken": "## Custo por Token de Saída (USD)\nO custo em USD para cada token de saída (conclusão) gerado pelo modelo.\n\n- Geralmente maior que o custo do token de entrada\n- Usado para controle de custos e alertas de orçamento\n- Exemplo: `0,000015` = US$ 15 por milhão de tokens de saída",
@@ -7042,8 +7048,8 @@
           "description": "Progresso do projeto, marcos e status de conclusão"
         },
         "milestoneReadiness": {
-          "label": "Prontidão do Marco",
-          "description": "Prontidão de lançamento por marco: % de problemas no escopo totalmente aprovados e as contagens por estado"
+          "label": "Preparação do Marco",
+          "description": "Preparação de release por marco: % de issues no escopo totalmente aprovadas e as contagens por estado"
         },
         "sessionAnalysis": {
           "label": "Análise da sessão",
@@ -7403,10 +7409,10 @@
       "percentReady": "Pronto (%)",
       "passed": "Aprovado",
       "failed": "Reprovado",
-      "inProgress": "Em Andamento",
+      "inProgress": "Em Progresso",
       "notRun": "Não Executado",
       "uncovered": "Não Coberto",
-      "totalIssues": "Total de Problemas",
+      "totalIssues": "Total de Issues",
       "testResults": "Resultados dos testes",
       "testResultCount": "Contagem de resultados de testes",
       "passRate": "Taxa de aprovação (%)",

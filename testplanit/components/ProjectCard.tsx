@@ -16,7 +16,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Link } from "@/lib/navigation";
+import { Link, useRouter } from "@/lib/navigation";
 import {
   Bug,
   CirclePlay,
@@ -49,6 +49,15 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
 }) => {
   const { data: session } = useSession();
   const t = useTranslations();
+  const router = useRouter();
+
+  // Navigate to the project overview when the card is clicked, unless the
+  // click originated from a nested link or button (e.g. the count links,
+  // which navigate to their own destinations).
+  const handleCardClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if ((e.target as HTMLElement).closest("a, button")) return;
+    router.push(`/projects/overview/${project.id}`);
+  };
 
   // Extract counts, defaulting to 0 if not present
   const milestoneCount = project._count?.milestones ?? 0;
@@ -59,7 +68,8 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
 
   return (
     <Card
-      className={`group transition-colors ${project.isCompleted ? "bg-muted-foreground/20 border-muted-foreground" : "border-primary"}`}
+      onClick={handleCardClick}
+      className={`group cursor-pointer transition-all duration-200 ease-in hover:ring-offset-2 hover:ring-4 hover:ring-primary ${project.isCompleted ? "bg-muted-foreground/20 border-muted-foreground" : "border-primary"}`}
     >
       <CardHeader>
         <CardTitle className="text-primary text-xl">

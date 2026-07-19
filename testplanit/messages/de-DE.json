@@ -756,7 +756,7 @@
       "issues": "{count, plural, =0 {Keine Probleme} =1 {1 Problem} other {# Probleme}}",
       "noOptions": "Keine Optionen verfügbar",
       "multiConfiguration": "Teil einer Multi-Konfigurationsgruppe",
-      "compositionLocked": "Zusammensetzung gesperrt — die Fallmenge ist eingefroren",
+      "compositionLocked": "Zusammensetzung gesperrt – die Fallmenge ist eingefroren",
       "otherConfigurations": "Andere Konfigurationen",
       "selected": "Ausgewählt: {count}",
       "defaultProjectAccess": "Standard-Projektzugriff",
@@ -1388,7 +1388,7 @@
           "importPreviewFailed": "Übereinstimmungen konnten nicht geschätzt werden",
           "milestoneSync": {
             "title": "Meilenstein-Synchronisierung",
-            "description": "Synchronisieren Sie TestPlanIt-Meilensteine aus den zeitbasierten Artefakten dieses Trackers.",
+            "description": "Synchronisiere TestPlanIt-Meilensteine aus den zeitbasierten Artefakten dieses Trackers.",
             "enableLabel": "Meilenstein-Synchronisierung aktivieren",
             "releasesLabel": "Versionen",
             "sprintsLabel": "Sprints",
@@ -1924,8 +1924,8 @@
           "statusPending": "Erfrischend...",
           "lastFetched": "Zuletzt abgerufen",
           "filesCached": "Zwischengespeicherte Dateien",
-          "contentsCached": "Inhalte im Cache",
-          "contentsIncomplete": "Nur {cached} von {total} Dateiinhalten sind zwischengespeichert — generierte Skripte verwenden die fehlenden Dateien nicht. Zum Abschließen erneut aktualisieren.",
+          "contentsCached": "Inhalte zwischengespeichert",
+          "contentsIncomplete": "Nur {cached} von {total} Dateiinhalten sind zwischengespeichert – generierte Skripte verwenden die fehlenden Dateien nicht. Aktualisiere erneut, um den Vorgang abzuschließen.",
           "totalSize": "Gesamtgröße"
         },
         "save": "Konfiguration speichern",
@@ -1971,14 +1971,14 @@
         "description": "Projektspezifische Schalter für vordefinierte Funktionen. Neue Schalter werden hier angezeigt, sobald sie eingeführt werden.",
         "recordKey": {
           "label": "Projektcode",
-          "description": "Ein kurzer Code, der in optischen Datensatzschlüsseln wie {example} verwendet wird. 2–10 Großbuchstaben, keine Ziffern. Leer lassen, um einfache numerische IDs anzuzeigen.",
+          "description": "Ein kurzer Code, der in kosmetischen Datensatzschlüsseln wie {example} verwendet wird. 2–10 Großbuchstaben, keine Ziffern. Leer lassen, um einfache numerische IDs anzuzeigen.",
           "placeholder": "z. B. PROJECT",
           "previewLabel": "Beispielschlüssel:",
           "useSuggestion": "Vorgeschlagenen Code verwenden: {code}",
-          "invalid": "Verwenden Sie 2–10 Großbuchstaben (keine Ziffern).",
-          "taken": "Dieser Code wird bereits von einem anderen Projekt verwendet. Wählen Sie einen anderen.",
+          "invalid": "Verwende 2–10 Großbuchstaben (keine Ziffern).",
+          "taken": "Dieser Code wird bereits von einem anderen Projekt verwendet. Wähle einen anderen.",
           "savedToast": "Projektcode gespeichert.",
-          "saveError": "Der Projektcode konnte nicht gespeichert werden. Er wird möglicherweise bereits von einem anderen Projekt verwendet."
+          "saveError": "Der Projektcode konnte nicht gespeichert werden. Möglicherweise wird er bereits von einem anderen Projekt verwendet."
         },
         "reviewWorkflow": {
           "label": "Prüfworkflow aktivieren",
@@ -2014,11 +2014,11 @@
           "skippedToast": "{count, plural, =1 {1 Entwurf wurde übersprungen, da er sich im Status „Nicht begonnen“ befindet.} other {# Entwürfe wurden übersprungen, da sie sich im Status „Nicht begonnen“ befinden.}}"
         },
         "autoLockComposition": {
-          "label": "Zusammensetzung des Testlaufs bei Ausführungsstart sperren",
-          "description": "Wenn aktiviert, wird die Fallzusammensetzung eines Testlaufs automatisch gesperrt, sobald der Lauf in den Status „In Bearbeitung“ wechselt. Durch die Sperrung wird eingefroren, welche Fälle im Lauf enthalten sind (kein Hinzufügen, Entfernen oder Umordnen), während die Ausführung und Zuweisung fortgesetzt werden. Der Ersteller des Laufs oder ein Projektadministrator kann ihn entsperren, um die Fallauswahl zu ändern.",
+          "label": "Zusammensetzung des Testlaufs sperren, wenn die Ausführung beginnt",
+          "description": "Wenn aktiviert, wird die Fallzusammensetzung eines Testlaufs automatisch gesperrt, sobald der Lauf in den Status „Im Gange“ wechselt. Durch das Sperren wird festgelegt, welche Fälle im Lauf enthalten sind (kein Hinzufügen, Entfernen oder Neuanordnen), während Ausführung und Zuweisung fortgesetzt werden können. Der Ersteller des Laufs oder ein Projektadministrator kann ihn entsperren, um die Fallmenge zu ändern.",
           "enabledToast": "Testläufe sperren ihre Zusammensetzung, wenn die Ausführung beginnt",
           "disabledToast": "Testläufe sperren ihre Zusammensetzung nicht mehr automatisch",
-          "saveError": "Die Aktualisierung der Einstellung für die automatische Sperrung der Zusammensetzung ist fehlgeschlagen"
+          "saveError": "Die Einstellung für die automatische Sperrung der Zusammensetzung konnte nicht aktualisiert werden"
         },
         "editWindow": {
           "label": "Ergebnisbearbeitungsfenster",
@@ -2083,7 +2083,7 @@
   "milestones": {
     "title": "Meilenstein-Details",
     "auditLog": {
-      "description": "Alle für diesen Meilenstein erfassten Änderungen."
+      "description": "Alle Änderungen für diesen Meilenstein wurden aufgezeichnet."
     },
     "fields": {
       "parent": "Meilenstein der Elterngruppe",
@@ -2157,7 +2157,7 @@
     "delete": {
       "title": "Meilenstein löschen",
       "confirmMessage": "Möchten Sie den Meilenstein {name}wirklich löschen?",
-      "childrenWarning": "{count, plural, one {Sein # untergeordneter Meilenstein} other {Seine # untergeordneten und nachfolgenden Meilensteine}} werden ebenfalls gelöscht.",
+      "childrenWarning": "{count, plural, one {Sein # untergeordneter Meilenstein} other {Seine # untergeordneten und nachgeordneten Meilensteine}} werden ebenfalls gelöscht.",
       "warning": "Dieser Meilenstein wird aus dem Projekt entfernt. Die historischen Daten für diesen Meilenstein bleiben jedoch im Projekt erhalten.",
       "toast": {
         "loading": "Meilenstein wird gelöscht...",
@@ -2188,11 +2188,11 @@
     },
     "import": {
       "importTitle": "Aus Jira importieren",
-      "importDescription": "Wählen Sie die Jira-Fix-Versionen und Sprints aus, die als TestPlanIt-Meilensteine synchronisiert werden sollen.",
+      "importDescription": "Wähle die Jira-Fix-Versionen und Sprints aus, die als TestPlanIt-Meilensteine synchronisiert werden sollen.",
       "showClosed": "Geschlossene anzeigen",
-      "alreadyLinked": "Bereits verknüpft",
+      "alreadyLinked": "Bereits verlinkt",
       "selectedCount": "{count, plural, one {# ausgewählt} other {# ausgewählt}}",
-      "confirmSelection": "Auswahl importieren",
+      "confirmSelection": "Ausgewählte importieren",
       "empty": "Keine Meilensteine gefunden",
       "previewFailed": "Meilensteine konnten nicht aus Jira geladen werden",
       "importFailed": "Ausgewählte Meilensteine konnten nicht importiert werden",
@@ -2201,50 +2201,50 @@
       "kindSprint": "Sprint",
       "selectAll": "Alle auswählen",
       "searchPlaceholder": "Releases und Sprints durchsuchen...",
-      "emptyFiltered": "Keine Meilensteine entsprechen Ihren Filtern.",
+      "emptyFiltered": "Keine Meilensteine entsprechen deinen Filtern.",
       "partialWarning": "Einige Jira-Projekte konnten nicht abgerufen werden:",
-      "importing": "{count, plural, one {# Meilenstein} other {# Meilensteine}} werden aus Jira importiert…",
+      "importing": "Importiere {count, plural, one {# Meilenstein} other {# Meilensteine}} aus Jira…",
       "completed": "{count, plural, one {# Meilenstein} other {# Meilensteine}} aus Jira importiert",
-      "stillRunning": "Der Import wird noch im Hintergrund ausgeführt — die Meilensteine werden angezeigt, sobald er abgeschlossen ist."
+      "stillRunning": "Der Import läuft noch im Hintergrund – die Meilensteine werden angezeigt, sobald er abgeschlossen ist."
     },
     "sync": {
       "managedByJira": "Verwaltet von Jira",
-      "lastSynced": "Zuletzt synchronisiert: {time}",
+      "lastSynced": "Zuletzt synchronisiert {time}",
       "openInJira": "In Jira öffnen",
       "providerJira": "Jira",
       "sourceBadge": "{provider} · {kind} · {state}",
       "syncNow": "Jetzt synchronisieren",
-      "unlinkMenuItem": "Verknüpfung mit {provider} aufheben",
-      "unlinkConfirmTitle": "Meilenstein-Verknüpfung aufheben?",
-      "unlinkConfirmDescription": "Dadurch wird die Synchronisierung mit dem Tracker beendet: Felder werden wieder bearbeitbar, synchronisierte Vorgangsverknüpfungen werden manuell (Sie entscheiden, ob sie beibehalten oder entfernt werden), und eine erneute Verknüpfung ist später möglich, indem dieses Artefakt erneut importiert wird.",
-      "unlinkConfirmAction": "Verknüpfung aufheben",
-      "unlinkSuccess": "Verknüpfung des Meilensteins mit dem Tracker wurde aufgehoben.",
-      "unlinkError": "Verknüpfung des Meilensteins konnte nicht aufgehoben werden.",
-      "sourceRemoved": "Quelle in {provider} entfernt",
-      "mergedInto": "zusammengeführt mit {target}"
+      "unlinkMenuItem": "Von {provider} trennen",
+      "unlinkConfirmTitle": "Meilenstein trennen?",
+      "unlinkConfirmDescription": "Dies beendet die Synchronisierung mit dem Tracker: Felder werden wieder bearbeitbar, synchronisierte Problem-Verknüpfungen werden manuell (du kannst sie behalten oder entfernen), und eine erneute Verknüpfung ist später möglich, indem dieses Artefakt erneut importiert wird.",
+      "unlinkConfirmAction": "Trennen",
+      "unlinkSuccess": "Meilenstein wurde vom Tracker getrennt.",
+      "unlinkError": "Der Meilenstein konnte nicht getrennt werden.",
+      "sourceRemoved": "Quelle entfernt in {provider}",
+      "mergedInto": "zusammengeführt in {target}"
     },
     "summary": {
       "inScope": "{count, plural, one {# im Geltungsbereich} other {# im Geltungsbereich}}",
       "foundInTesting": "{count, plural, one {# beim Testen gefunden} other {# beim Testen gefunden}}",
-      "includesChildMilestones": "Einschließlich untergeordneter Meilensteine"
+      "includesChildMilestones": "Enthält untergeordnete Meilensteine"
     },
     "burndown": {
-      "title": "Burndown-Diagramm",
+      "title": "Burndown",
       "remaining": "Verbleibende Elemente",
-      "ideal": "Idealverlauf",
+      "ideal": "Ideal",
       "today": "Heute",
       "tooltipRemaining": "{count, number} verbleibend",
-      "heatAhead": "Vor dem Idealwert",
-      "heatOnTrack": "Im Zeitplan",
-      "heatBehind": "Hinter Plan",
-      "tooltipBehind": "{count, number} hinter Plan",
-      "tooltipAhead": "{count, number} vor dem Idealwert"
+      "heatAhead": "Vor dem Ideal",
+      "heatOnTrack": "Im Plan",
+      "heatBehind": "Hinter dem Ideal",
+      "tooltipBehind": "{count, number} hinter dem Ideal",
+      "tooltipAhead": "{count, number} vor dem Ideal"
     },
     "members": {
-      "cardTitle": "Vorgänge",
+      "cardTitle": "Probleme",
       "inScope": "Im Geltungsbereich",
       "foundInTesting": "Beim Testen gefunden",
-      "foundInTestingEmpty": "Keine Vorgänge beim Testen gefunden.",
+      "foundInTestingEmpty": "Keine Probleme beim Testen gefunden.",
       "inScopeCrossBadge": "Im Geltungsbereich",
       "refresh": "Aktualisieren",
       "columnKey": "Name",
@@ -2255,37 +2255,37 @@
       "sourceManual": "Manuell",
       "coveragePassed": "Bestanden",
       "coverageFailed": "Fehlgeschlagen",
-      "coverageInProgress": "In Bearbeitung",
+      "coverageInProgress": "Im Gange",
       "coverageNotRun": "Nicht ausgeführt",
       "coverageUncovered": "Nicht abgedeckt",
       "filterAllCoverage": "Alle Abdeckungen",
       "filterAllSources": "Alle Quellen",
-      "filterAllTypes": "Alle Arten",
-      "empty": "Diesem Meilenstein sind noch keine Vorgänge zugeordnet.",
-      "emptyFiltered": "Keine Vorgänge entsprechen den aktuellen Filtern.",
-      "unlink": "Verknüpfung aufheben",
-      "managedByJira": "Verwaltet von Jira — entfernen Sie es aus der Version/dem Sprint in Jira",
-      "linkSuccess": "Vorgang mit diesem Meilenstein verknüpft.",
-      "linkError": "Vorgang konnte nicht mit diesem Meilenstein verknüpft werden.",
-      "unlinkSuccess": "Vorgang von diesem Meilenstein entfernt.",
-      "unlinkError": "Vorgang konnte nicht von diesem Meilenstein entfernt werden.",
-      "overflowTitle": "Weitere Vorgänge in Jira",
-      "overflowDescription": "Diese Vorgänge befinden sich in der verknüpften Jira-Version/dem Sprint, sind hier aber noch nicht verknüpft.",
-      "overflowCapped": "Begrenzt auf {cap, number} — {overflowTotal, number} weitere in Jira",
+      "filterAllTypes": "Alle Typen",
+      "empty": "Noch keine Probleme mit diesem Meilenstein verknüpft.",
+      "emptyFiltered": "Keine Probleme entsprechen den aktuellen Filtern.",
+      "unlink": "Trennen",
+      "managedByJira": "Verwaltet von Jira – entferne es aus der Version/dem Sprint in Jira",
+      "linkSuccess": "Problem mit diesem Meilenstein verknüpft.",
+      "linkError": "Das Problem konnte nicht mit diesem Meilenstein verknüpft werden.",
+      "unlinkSuccess": "Problem von diesem Meilenstein entfernt.",
+      "unlinkError": "Das Problem konnte nicht von diesem Meilenstein entfernt werden.",
+      "overflowTitle": "Weitere Probleme in Jira",
+      "overflowDescription": "Diese Probleme befinden sich in der verknüpften Jira-Version/dem Sprint, sind hier aber noch nicht verknüpft.",
+      "overflowCapped": "Begrenzt auf {cap, number} – {overflowTotal, number} weitere in Jira",
       "overflowMoreAvailable": "{overflowTotal, number} weitere verfügbar in Jira",
       "overflowImportAction": "Importieren & verknüpfen",
-      "overflowImportSuccess": "Import gestartet — Vorgänge werden angezeigt, sobald sie synchronisiert sind.",
-      "overflowImportError": "Zugehörige Vorgänge konnten nicht aus Jira importiert werden.",
-      "emptyCta": "Verknüpfen Sie einen Vorgang, um zu beginnen.",
+      "overflowImportSuccess": "Import gestartet – Probleme werden angezeigt, sobald sie synchronisiert sind.",
+      "overflowImportError": "Mitgliedsprobleme konnten nicht aus Jira importiert werden.",
+      "emptyCta": "Verknüpfe ein Problem, um zu beginnen.",
       "columnDescription": "Beschreibung",
-      "unlinkConfirmTitle": "Verknüpfung des Vorgangs aufheben?",
-      "unlinkConfirmDescription": "Dadurch wird der Vorgang von diesem Meilenstein entfernt. Der Vorgang selbst bleibt erhalten und kann später erneut verknüpft werden.",
-      "totalsUncovered": "{count, plural, one {# nicht abgedeckter Vorgang} other {# nicht abgedeckte Vorgänge}}",
-      "percentReady": "{percent, number}% fertig",
-      "readinessSummary": "{passed, number} bestanden · {failed, number} fehlgeschlagen · {inProgress, number} in Bearbeitung · {notRun, number} nicht ausgeführt · {uncovered, number} nicht abgedeckt (von {total, number} Issues)",
+      "unlinkConfirmTitle": "Problem trennen?",
+      "unlinkConfirmDescription": "Dadurch wird das Problem von diesem Meilenstein entfernt. Das Problem selbst bleibt erhalten und kann später erneut verknüpft werden.",
+      "totalsUncovered": "{count, plural, one {# nicht abgedecktes Problem} other {# nicht abgedeckte Probleme}}",
+      "percentReady": "{percent, number}% bereit",
+      "readinessSummary": "{passed, number} bestanden · {failed, number} fehlgeschlagen · {inProgress, number} im Gange · {notRun, number} nicht ausgeführt · {uncovered, number} nicht abgedeckt (von {total, number} Problemen)",
       "filterHasUntested": "Hat ungetestete Fälle",
-      "createRunNoCases": "Keiner der ausgewählten Vorgänge hat verknüpfte Testfälle.",
-      "createTestRunDetailed": "Testlauf erstellen ({issues, plural, one {# Vorgang} other {# Vorgänge}} · {cases, plural, one {# Fall} other {# Fälle}})"
+      "createRunNoCases": "Keines der ausgewählten Probleme hat verknüpfte Testfälle.",
+      "createTestRunDetailed": "Testlauf erstellen ({issues, plural, one {# Problem} other {# Probleme}} · {cases, plural, one {# Fall} other {# Fälle}})"
     }
   },
   "sessions": {
@@ -2459,6 +2459,12 @@
       "contact": "Wenden Sie sich an Ihren Systemadministrator, um Zugriff auf Projekte zu beantragen.",
       "adminAddProject": "Füge dein erstes Projekt hinzu, um loszulegen!",
       "footer": "Für die Teilnahme an den Testplanungsaktivitäten ist ein Zugriff erforderlich."
+    },
+    "getStarted": {
+      "title": "Erste Schritte",
+      "description": "Füge dein eigenes Projekt hinzu, wenn du bereit bist, mit der Planung zu beginnen.",
+      "adminAddProject": "Erstelle dein erstes Projekt",
+      "footer": "Das Demo-Projekt enthält Beispieldaten, die du jederzeit erkunden oder entfernen kannst."
     },
     "noProjectAccess": {
       "description": "Sie haben keinen Zugriff auf dieses Projekt.",
@@ -2648,7 +2654,7 @@
       "purple": "Lila",
       "orange": "Orange",
       "accessible": "Zugänglich",
-      "accessibledark": "Zugänglich (Dunkel)"
+      "accessibledark": "Barrierefrei (Dunkel)"
     }
   },
   "repository": {
@@ -3523,45 +3529,45 @@
       "unlock": "Entsperren",
       "locked": "Zusammensetzung gesperrt",
       "lockHint": "Legt fest, welche Fälle in diesem Lauf enthalten sind. Benutzer können Testfälle weiterhin zuweisen und ausführen.",
-      "lockedBy": "Zusammensetzung von {name} gesperrt.",
+      "lockedBy": "Zusammensetzung gesperrt von {name}.",
       "lockedAutomatically": "Zusammensetzung automatisch gesperrt, als die Ausführung begann.",
-      "frozenNotice": "Die Zusammensetzung ist gesperrt — Testfälle können nicht hinzugefügt, entfernt oder neu angeordnet werden. Sie können Testfälle weiterhin zuweisen und ausführen.",
-      "lockError": "Die Sperrung der Testlaufzusammensetzung ist fehlgeschlagen",
-      "unlockError": "Die Entsperrung der Testlaufzusammensetzung ist fehlgeschlagen",
-      "addBlocked": "Die Zusammensetzung dieses Laufs ist gesperrt, daher können keine Testfälle hinzugefügt werden. Entsperren Sie sie zuerst, um die Fallmenge zu ändern."
+      "frozenNotice": "Die Zusammensetzung ist gesperrt – Testfälle können nicht hinzugefügt, entfernt oder neu angeordnet werden. Du kannst Testfälle weiterhin zuweisen und ausführen.",
+      "lockError": "Die Zusammensetzung des Laufs konnte nicht gesperrt werden",
+      "unlockError": "Die Zusammensetzung des Laufs konnte nicht entsperrt werden",
+      "addBlocked": "Die Zusammensetzung dieses Laufs ist gesperrt, daher können keine Testfälle hinzugefügt werden. Entsperre sie zuerst, um die Fallmenge zu ändern."
     },
     "distribute": {
       "title": "Zuweisungen verteilen",
-      "description": "Testfälle dieses Testlaufs gleichmäßig auf Teammitglieder verteilen und dabei zusammengehörige Fälle beisammen halten.",
+      "description": "Verteile die Testfälle dieses Laufs gleichmäßig auf die Teammitglieder und halte zusammengehörige Fälle zusammen.",
       "selectUsers": "Teammitglieder",
       "usersPlaceholder": "Teammitglieder auswählen",
       "scopeAllConfigs": "Alle Konfigurationen",
-      "scopeThisRun": "Nur dieser Testlauf",
+      "scopeThisRun": "Nur dieser Lauf",
       "strategyLabel": "Konfigurationsstrategie",
       "strategyKeepTogether": "Konfigurationen zusammenhalten",
-      "strategyKeepTogetherHint": "Jeder Tester verantwortet eine Reihe von Fällen über alle Konfigurationen hinweg.",
+      "strategyKeepTogetherHint": "Jeder Tester besitzt eine Menge von Fällen über alle Konfigurationen hinweg.",
       "strategySplitByConfig": "Nach Konfiguration aufteilen",
-      "strategySplitByConfigHint": "Jeder Tester verantwortet ganze Konfigurationen.",
+      "strategySplitByConfigHint": "Jeder Tester besitzt ganze Konfigurationen.",
       "groupingLabel": "Ähnliche Fälle gruppieren",
-      "groupingHint": "Fälle im selben Abschnitt und mit gemeinsamen Tags einem Tester zuordnen.",
+      "groupingHint": "Halte Fälle im selben Abschnitt und mit gemeinsamen Tags bei einem Tester.",
       "balancingLabel": "Ausgleichen nach",
       "balancingEffort": "Geschätzte Zeit",
       "balancingCount": "Anzahl der Fälle",
-      "balancingFallbackHint": "Keine Schätzungen für diese Fälle vorhanden — Ausgleich erfolgt stattdessen nach Anzahl der Fälle.",
-      "existingLabel": "Bestehende Zuweisungen",
+      "balancingFallbackHint": "Keine Schätzungen für diese Fälle – Ausgleich stattdessen nach Anzahl der Fälle.",
+      "existingLabel": "Vorhandene Zuweisungen",
       "existingOnlyUnassigned": "Nur nicht zugewiesene Fälle auffüllen",
       "existingReassignAll": "Alles neu zuweisen",
       "previewTitle": "Vorschau",
-      "previewNoUsers": "Teammitglieder auswählen, um die Verteilung in der Vorschau anzuzeigen.",
+      "previewNoUsers": "Wähle Teammitglieder aus, um die Verteilung in der Vorschau anzuzeigen.",
       "previewUser": "Teammitglied",
       "previewCases": "Fälle",
       "previewSkipped": "{count, plural, one {# Fall übersprungen} other {# Fälle übersprungen}} (bereits zugewiesen oder abgeschlossen)",
       "confirming": "Wird zugewiesen…",
       "success": "{count, plural, one {# Fall} other {# Fälle}} auf {users, plural, one {# Mitglied} other {# Mitglieder}} verteilt",
       "errorGeneric": "Zuweisungen konnten nicht verteilt werden",
-      "errorRunCompleted": "Dieser Testlauf ist abgeschlossen und kann nicht mehr geändert werden",
-      "errorNeedUsers": "Wählen Sie mindestens ein Projektmitglied aus, dem zugewiesen werden soll",
-      "errorNoAssignable": "Es gibt keine Fälle zum Verteilen in diesem Testlauf"
+      "errorRunCompleted": "Dieser Lauf ist abgeschlossen und kann nicht mehr geändert werden",
+      "errorNeedUsers": "Wähle mindestens ein Projektmitglied aus, dem verteilt werden soll",
+      "errorNoAssignable": "In diesem Lauf gibt es keine Fälle zum Verteilen"
     },
     "auditLog": {
       "trigger": "Aktivität",
@@ -3761,7 +3767,7 @@
       "peopleAndAccess": "Personen & Zugriff",
       "authentication": "Authentifizierung",
       "toolsAndIntegrations": "Tools & Integrationen",
-      "aiTools": "KI-Tools",
+      "aiTools": "KI-Werkzeuge",
       "system": "System"
     },
     "imports": {
@@ -4998,18 +5004,18 @@
       }
     },
     "recordKeys": {
-      "pageDescription": "Konfigurieren Sie optische, projektspezifische Bezeichner wie PROJECT-TC-1234, die es einfach machen zu erkennen, zu welchem Projekt ein Datensatz gehört und um welche Art von Datensatz es sich handelt. Die zugrunde liegende numerische ID bleibt unverändert und funktioniert weiterhin überall.",
-      "title": "Projektspezifische Datensatzschlüssel",
-      "description": "Wenn aktiviert, zeigen Datensätze einen optionalen Schlüssel an, der den Projektcode, ein Typ-Token und die numerische ID des Datensatzes kombiniert. Legen Sie den Code jedes Projekts unter Projekteinstellungen → Erweitert fest.",
-      "toggleAriaLabel": "Projektspezifische Datensatzschlüssel umschalten",
+      "pageDescription": "Konfiguriere kosmetische, projektpräfixierte Kennungen wie PROJECT-TC-1234, mit denen sich leicht erkennen lässt, zu welchem Projekt ein Datensatz gehört und um welche Art von Datensatz es sich handelt. Die zugrunde liegende numerische ID bleibt unverändert und funktioniert weiterhin überall.",
+      "title": "Projektpräfixierte Datensatzschlüssel",
+      "description": "Wenn aktiviert, zeigen Datensätze einen optionalen Schlüssel an, der den Projektcode, ein Typ-Token und die numerische ID des Datensatzes kombiniert. Lege den Code für jedes Projekt unter Projekteinstellungen → Erweitert fest.",
+      "toggleAriaLabel": "Projektpräfixierte Datensatzschlüssel umschalten",
       "tokensHeading": "Typ-Tokens",
       "tokensHelp": "Das Token, das für jede Art von Datensatz verwendet wird. 1–6 Großbuchstaben, keine Ziffern oder Bindestriche. Tokens müssen eindeutig sein.",
       "invalidToken": "Ungültig",
       "duplicateToken": "Doppeltes Token",
       "tokensSaved": "Typ-Tokens gespeichert.",
-      "enableSuccess": "Projektspezifische Datensatzschlüssel aktiviert.",
-      "disableSuccess": "Projektspezifische Datensatzschlüssel deaktiviert.",
-      "saveError": "Konnte nicht gespeichert werden. Bitte versuchen Sie es erneut."
+      "enableSuccess": "Projektpräfixierte Datensatzschlüssel aktiviert.",
+      "disableSuccess": "Projektpräfixierte Datensatzschlüssel deaktiviert.",
+      "saveError": "Konnte nicht gespeichert werden. Bitte versuche es erneut."
     },
     "appConfig": {
       "description": "Globale Anwendungskonfigurationen verwalten",
@@ -5605,7 +5611,7 @@
         "defaultTemperature": "Standardtemperatur",
         "defaultMaxTokens": "Standard-Maximalanzahl an Tokens",
         "repoContextBudgetLabel": "Repository-Kontextbudget (QuickScript)",
-        "repoContextBudgetAuto": "Automatisch dimensioniert basierend auf dem ~{window}-Kontextfenster des Modells — etwa {budget} Tokens an Repository-Code pro Generierung.",
+        "repoContextBudgetAuto": "Automatisch angepasst an das ~{window}-Kontextfenster des Modells – etwa {budget} Tokens Repository-Code pro Generierung.",
         "timeout": "Zeitüberschreitung der Anfrage (ms)",
         "timeoutDescription": "Maximale Wartezeit für die Antwort des KI-Modells (5000–600000 ms). Gilt nicht für Streaming-Anfragen.",
         "streamingEnabled": "Streaming aktivieren",
@@ -6348,7 +6354,7 @@
       "documentation": "## Dokumentation\nZusätzliche Details, Referenzen und Begleitmaterialien.\n\n- Technische Spezifikationen\n- Konstruktionsdokumente\n- Externe Referenzen\n- Besprechungsprotokolle und Beschlüsse",
       "automaticCompletion": "## Automatische Fertigstellung am Fälligkeitsdatum\nMarkiert diesen Meilenstein automatisch als abgeschlossen, sobald sein Fälligkeitsdatum erreicht ist.\n\n- Der Meilenstein wird zum geplanten Zeitpunkt am Fälligkeitsdatum abgeschlossen.\n- Nützlich für zeitlich begrenzte Meilensteine, die unabhängig vom Abschlussstatus abgeschlossen werden sollen.\n- Kann durch manuelles Abschließen des Meilensteins vor dem Fälligkeitsdatum überschrieben werden.\n- Erfordert die Festlegung eines Fälligkeitsdatums.",
       "notifyDaysBefore": "## Benachrichtigung Tage vor dem Fälligkeitsdatum\nBenachrichtigungen an zugewiesene Teammitglieder senden, wenn sich das Fälligkeitsdatum des Meilensteins nähert.\n\n- Aktivieren, um Benachrichtigungen einzuschalten, deaktivieren, um sie zu deaktivieren.\n- Anzahl der Tage vor dem Fälligkeitsdatum eingeben, um Erinnerungen zu versenden.\n- Benachrichtigungen werden an Benutzer gesendet, die Testläufen und Sitzungen innerhalb dieses Meilensteins zugewiesen sind.\n- Überfällige Meilensteine senden weiterhin Erinnerungen, bis sie abgeschlossen sind.",
-      "managedByJira": "Name, Datum und Status dieses Meilensteins werden von Jira verwaltet. Nehmen Sie dort Änderungen vor, um diese hier zu aktualisieren."
+      "managedByJira": "Name, Termine und Status dieses Meilensteins werden von Jira verwaltet. Nimm dort Änderungen vor, um sie hier zu aktualisieren."
     },
     "session": {
       "name": "## Sitzungsname\nEin klarer, aussagekräftiger Name, der den Zweck Ihrer Testsitzung beschreibt.\n\n- Sollte eindeutig und aussagekräftig sein.\n- Hilft Teammitgliedern zu verstehen, was getestet wird.\n- Wird in Berichten und zur Nachverfolgung verwendet.",
@@ -6424,9 +6430,9 @@
       "endpoint": "## API-Endpunkt\nDie Basis-URL für die API des LLM-Anbieters.\n\n- Für OpenAI, Anthropic und Gemini leer lassen – offizielle URLs werden automatisch verwendet.\n- Erforderlich für Ollama (z. B. `http://localhost:11434`), Azure OpenAI und benutzerdefiniertes LLM.\n- Optional für jeden Anbieter – geben Sie einen OpenAI-kompatiblen Proxy (z. B. LiteLLM) an, indem Sie dessen URL eingeben.\n- **Private/interne Adressen** (localhost, 127.0.0.1, private IPs, Cloud-Metadaten) sind blockiert, sofern sie nicht explizit über die Umgebungsvariable `ALLOWED_PRIVATE_HOSTS` zugelassen werden.",
       "deploymentName": "## Azure-Bereitstellungsname\nDer Name Ihrer Azure OpenAI-Modellbereitstellung.\n\n- Zu finden in Azure OpenAI Studio unter Bereitstellungen.\n- Unterscheidet sich vom Modellnamen – z. B. wird `my-gpt4-deploy` auf `gpt-4` abgebildet.\n- Nur für Azure OpenAI erforderlich.",
       "defaultModel": "## Standardmodell\nDas für KI-Anfragen mit dieser Integration verwendete Modell.\n\n- Für OpenAI, Anthropic und Gemini werden verfügbare Modelle automatisch von Ihrem API-Schlüssel abgerufen.\n- Stellen Sie sicher, dass das Modell in Ihrem Anbieterkonto aktiviert ist.\n- Beispiel: `gpt-4o`, `claude-3-5-sonnet-20241022`, `gemini-1.5-pro`",
-      "maxTokensPerRequest": "## Maximale Tokens pro Anfrage\nDie **absolute Obergrenze für _Ausgabe_-Tokens**, die das Modell in einer einzelnen Antwort generieren darf.\n\n- Begrenzt die Länge der **Antwort** des Modells — nicht, wie viel Kontext Sie ihm senden\n- Anfragen, die mehr als diesen Wert verlangen, werden **abgelehnt, bevor sie das Modell erreichen**\n- Setzen Sie ihn auf die tatsächliche maximale Ausgabe Ihres Modells — z. B. `128000` für Claude Opus/Sonnet, `64000` für Claude Haiku, `65536` für Gemini, `16384` für GPT-4o\n- Zu niedrig → KI-Funktionen schlagen fehl oder liefern abgeschnittene Ausgaben",
-      "defaultMaxTokens": "## Standard-Maximaltokens\nDie **standardmäßige _Ausgabe_-Länge**, die eine Anfrage anfordert, wenn eine Funktion keinen eigenen Wert festlegt.\n\n- Steuert, wie lang die **Antwort** des Modells sein kann, begrenzt durch _Maximale Tokens pro Anfrage_\n- Die meisten KI-Funktionen legen ihren eigenen Wert in **Admin → Prompt-Konfiguration** fest; dies ist nur der Fallback-Wert\n- Er steuert **nicht**, wie viel Repository-Code QuickScript an das Modell sendet — dieses Budget wird automatisch aus dem Kontextfenster des Modells abgeleitet\n- Halten Sie ihn ≤ _Maximale Tokens pro Anfrage_",
-      "repoContextBudget": "## Repository-Kontextbudget\nWie viel Code aus Ihrem verbundenen Repository QuickScript dem Modell bei der Generierung eines Skripts bereitstellt.\n\n- Wird **automatisch** anhand des Eingabekontextfensters des ausgewählten Modells festgelegt — hier ist nichts zu konfigurieren\n- Modelle mit größerem Kontext (Claude, Gemini) erhalten mehr; kleine lokale Modelle erhalten eine sichere Menge, die keinen Überlauf verursacht\n- Mehr Kontext verankert das Skript in Ihren realen Page-Objekten und Fixtures — es ändert nicht die Länge des generierten Skripts",
+      "maxTokensPerRequest": "## Max Tokens Per Request\nDie **feste Obergrenze für _Ausgabe_-Tokens**, die das Modell in einer einzelnen Antwort erzeugen darf.\n\n- Begrenzt die Länge der **Antwort** des Modells — nicht, wie viel Kontext du ihm sendest\n- Anfragen, die mehr als dieses Limit verlangen, werden **abgelehnt, bevor sie das Modell erreichen**\n- Setze es auf das tatsächliche maximale Ausgabelimit deines Modells — z. B. `128000` für Claude Opus/Sonnet, `64000` für Claude Haiku, `65536` für Gemini, `16384` für GPT-4o\n- Zu niedrig → KI-Funktionen schlagen fehl oder erzeugen abgeschnittene Ausgaben",
+      "defaultMaxTokens": "## Standard-Max-Tokens\nDie **Standard-_Ausgabe_-Länge**, die eine Anfrage anfordert, wenn eine Funktion keinen eigenen Wert festlegt.\n\n- Steuert, wie lang die **Antwort** des Modells sein kann, begrenzt durch _Max Tokens Per Request_\n- Die meisten KI-Funktionen legen ihren eigenen Wert unter **Admin → Prompt Config** fest; dies ist nur der Fallback-Wert\n- Es steuert **nicht**, wie viel Repository-Code QuickScript an das Modell sendet – dieses Budget wird automatisch aus dem Kontextfenster des Modells abgeleitet\n- Halte es ≤ _Max Tokens Per Request_",
+      "repoContextBudget": "## Repository-Kontextbudget\nWie viel Code deines verbundenen Repositorys QuickScript dem Modell bei der Skriptgenerierung zuführt.\n\n- **Wird automatisch festgelegt** anhand des Eingabekontextfensters des ausgewählten Modells — hier gibt es nichts zu konfigurieren\n- Modelle mit größerem Kontext (Claude, Gemini) erhalten mehr; kleine lokale Modelle erhalten eine sichere Menge, die nicht überläuft\n- Mehr Kontext verankert das Skript in deinen echten Page Objects und Fixtures – es ändert nicht, wie lang das generierte Skript ist",
       "maxRequestsPerMinute": "## Maximale Anfragen pro Minute\nBegrenzt die Anzahl der API-Aufrufe, die pro Minute an diesen Anbieter gesendet werden können.\n\n- Entsprechend dem Ratenlimit Ihres Anbietertarifs einstellen.\n- Überschüssige Anfragen werden in eine Warteschlange gestellt, nicht abgelehnt.\n- Informationen zum Limit Ihres Tarifs finden Sie in der Dokumentation Ihres Anbieters.",
       "costPerInputToken": "## Kosten pro Eingabe-Token (USD)\nDie Kosten in USD für jedes an das Modell gesendete Eingabe-Token (Prompt-Token).\n\n- Wird für die Kostenverfolgung und Budgetwarnungen verwendet.\n- Diesen Wert finden Sie auf der Preisseite Ihres Anbieters.\n- Beispiel: `0,000005` = 5 $ pro Million Eingabe-Token.",
       "costPerOutputToken": "## Kosten pro Output-Token (USD)\nDie Kosten in USD für jeden vom Modell generierten Output-Token (Abschluss-Token).\n\n- Normalerweise höher als die Kosten des Input-Tokens.\n- Wird zur Kostenverfolgung und für Budgetwarnungen verwendet.\n- Beispiel: `0,000015` = 15 $ pro Million Output-Token.",
@@ -7043,7 +7049,7 @@
         },
         "milestoneReadiness": {
           "label": "Meilenstein-Bereitschaft",
-          "description": "Release-Bereitschaft pro Meilenstein: % der im Geltungsbereich befindlichen Vorgänge, die vollständig bestanden haben, sowie die Anzahl pro Status"
+          "description": "Release-Bereitschaft pro Meilenstein: % der vollständig bestandenen Probleme im Geltungsbereich sowie die Anzahl pro Status"
         },
         "sessionAnalysis": {
           "label": "Sitzungsanalyse",
@@ -7406,7 +7412,7 @@
       "inProgress": "Im Gange",
       "notRun": "Nicht ausgeführt",
       "uncovered": "Nicht abgedeckt",
-      "totalIssues": "Gesamtzahl der Vorgänge",
+      "totalIssues": "Probleme insgesamt",
       "testResults": "Testergebnisse",
       "testResultCount": "Testergebnisse zählen",
       "passRate": "Bestehensquote (%)",

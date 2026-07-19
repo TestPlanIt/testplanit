@@ -18,7 +18,7 @@
     "searchTags": "Zoeken naar tags...",
     "searchRuns": "{count, plural, =0 {Zoektestruns} one {Zoek # testrun} other {Zoek # testruns}}",
     "searchSessions": "{count, plural, =0 {Zoeksessies} one {Zoek # sessie} other {Zoek # sessies}}",
-    "searchMilestones": "{count, plural, =0 {Mijlpalen zoeken} one {Zoek # mijlpaal} other {Zoek # mijlpalen}}",
+    "searchMilestones": "{count, plural, =0 {Zoek mijlpalen} one {Zoek # mijlpaal} other {Zoek # mijlpalen}}",
     "search": "Zoekopdracht...",
     "defaultOption": "Standaardoptie",
     "yes": "Ja",
@@ -756,7 +756,7 @@
       "issues": "{count, plural, =0 {Geen problemen} =1 {1 probleem} other {# problemen}}",
       "noOptions": "Geen opties beschikbaar",
       "multiConfiguration": "Onderdeel van een groep met meerdere configuraties",
-      "compositionLocked": "Samenstelling vergrendeld — de testcaseset is bevroren",
+      "compositionLocked": "Samenstelling vergrendeld — de set testgevallen is bevroren",
       "otherConfigurations": "Andere configuraties",
       "selected": "Geselecteerd: {count}",
       "defaultProjectAccess": "Standaard projecttoegang",
@@ -1394,7 +1394,7 @@
             "sprintsLabel": "Sprints",
             "kindsLabel": "Soorten om te synchroniseren",
             "autoTrackLabel": "Nieuwe automatisch toevoegen",
-            "autoTrackProjectsLabel": "Deze gekoppelde projecten scannen op nieuwe mijlpalen",
+            "autoTrackProjectsLabel": "Scan deze verbonden projecten op nieuwe mijlpalen",
             "settingsSaved": "Instellingen voor mijlpaalsynchronisatie opgeslagen",
             "saveError": "Instellingen voor mijlpaalsynchronisatie konden niet worden opgeslagen"
           }
@@ -1971,11 +1971,11 @@
         "description": "Per project kunt u opties in- of uitschakelen voor specifieke functies. Nieuwe opties verschijnen hier zodra ze beschikbaar komen.",
         "recordKey": {
           "label": "Projectcode",
-          "description": "Een korte code die wordt gebruikt in cosmetische recordsleutels zoals {example}. 2-10 hoofdletters, geen cijfers. Laat leeg om gewone numerieke ID's weer te geven.",
+          "description": "Een korte code die wordt gebruikt in cosmetische recordsleutels zoals {example}. 2–10 hoofdletters, geen cijfers. Laat leeg om gewone numerieke ID's weer te geven.",
           "placeholder": "bijv. PROJECT",
           "previewLabel": "Voorbeeldsleutel:",
           "useSuggestion": "Gebruik voorgestelde code: {code}",
-          "invalid": "Gebruik 2-10 hoofdletters (geen cijfers).",
+          "invalid": "Gebruik 2–10 hoofdletters (geen cijfers).",
           "taken": "Die code wordt al gebruikt door een ander project. Kies een andere.",
           "savedToast": "Projectcode opgeslagen.",
           "saveError": "De projectcode kon niet worden opgeslagen. Deze wordt mogelijk al gebruikt door een ander project."
@@ -2014,11 +2014,11 @@
           "skippedToast": "{count, plural, =1 {1 conceptcase is overgeslagen omdat deze de status 'Niet gestart' heeft} other {# conceptcases zijn overgeslagen omdat ze de status 'Niet gestart' hebben}}"
         },
         "autoLockComposition": {
-          "label": "Vergrendel de samenstelling van een testrun wanneer de uitvoering begint",
-          "description": "Indien ingeschakeld, wordt de samenstelling van testgevallen van een testrun automatisch vergrendeld zodra de run naar de status In behandeling gaat. Vergrendelen bevriest welke testgevallen zich in de run bevinden (niet toevoegen, verwijderen of opnieuw ordenen), terwijl uitvoering en toewijzing doorgaan. De maker van de run of een projectbeheerder kan deze ontgrendelen om de set testgevallen te wijzigen.",
-          "enabledToast": "Testruns vergrendelen hun samenstelling wanneer de uitvoering begint",
+          "label": "Vergrendel testrunsamenstelling wanneer de uitvoering start",
+          "description": "Indien ingeschakeld, wordt de gevallensamenstelling van een testrun automatisch vergrendeld zodra de run de status In behandeling bereikt. Vergrendelen bevriest welke gevallen zich in de run bevinden (geen toevoegen, verwijderen of opnieuw ordenen) terwijl uitvoering en toewijzing doorgaan. De maker van de run of een projectbeheerder kan deze ontgrendelen om de gevallenset te wijzigen.",
+          "enabledToast": "Testruns vergrendelen hun samenstelling wanneer de uitvoering start",
           "disabledToast": "Testruns vergrendelen hun samenstelling niet langer automatisch",
-          "saveError": "Het bijwerken van de automatische vergrendelingsinstelling voor de samenstelling is mislukt"
+          "saveError": "De instelling voor automatisch vergrendelen van de samenstelling kon niet worden bijgewerkt"
         },
         "editWindow": {
           "label": "Resultaatbewerkingsvenster",
@@ -2083,7 +2083,7 @@
   "milestones": {
     "title": "Mijlpaaldetails",
     "auditLog": {
-      "description": "Alle wijzigingen die voor deze mijlpaal zijn geregistreerd."
+      "description": "Alle wijzigingen voor deze mijlpaal zijn geregistreerd."
     },
     "fields": {
       "parent": "Ouderlijke mijlpaal",
@@ -2157,7 +2157,7 @@
     "delete": {
       "title": "Mijlpaal verwijderen",
       "confirmMessage": "Weet u zeker dat u de mijlpaal {name}wilt verwijderen?",
-      "childrenWarning": "{count, plural, one {Zijn # onderliggende mijlpaal} other {Zijn # onderliggende en afstammende mijlpalen}} worden ook verwijderd.",
+      "childrenWarning": "{count, plural, one {De # onderliggende mijlpaal} other {De # onderliggende en afstammende mijlpalen}} worden ook verwijderd.",
       "warning": "Deze mijlpaal wordt uit het project verwijderd. Historische gegevens voor deze mijlpaal blijven wel in het project aanwezig.",
       "toast": {
         "loading": "Mijlpaal verwijderen...",
@@ -2187,25 +2187,25 @@
       "overdue": "Mijlpaal \"{name}\" moest op {dueDate} plaatsvinden"
     },
     "import": {
-      "importTitle": "Importeren vanuit Jira",
+      "importTitle": "Importeren uit Jira",
       "importDescription": "Selecteer de Jira Fix Versions en Sprints om te synchroniseren als TestPlanIt-mijlpalen.",
       "showClosed": "Gesloten weergeven",
       "alreadyLinked": "Al gekoppeld",
       "selectedCount": "{count, plural, one {# geselecteerd} other {# geselecteerd}}",
       "confirmSelection": "Selectie importeren",
       "empty": "Geen mijlpalen gevonden",
-      "previewFailed": "Het is niet gelukt om mijlpalen uit Jira te laden",
-      "importFailed": "Het is niet gelukt om geselecteerde mijlpalen te importeren",
-      "importStarted": "Importeren gestart",
+      "previewFailed": "Mijlpalen konden niet worden geladen vanuit Jira",
+      "importFailed": "Geselecteerde mijlpalen konden niet worden geïmporteerd",
+      "importStarted": "Import gestart",
       "kindRelease": "Release",
       "kindSprint": "Sprint",
       "selectAll": "Alles selecteren",
       "searchPlaceholder": "Releases en sprints zoeken...",
-      "emptyFiltered": "Er zijn geen mijlpalen die overeenkomen met uw filters.",
+      "emptyFiltered": "Geen mijlpalen komen overeen met uw filters.",
       "partialWarning": "Sommige Jira-projecten konden niet worden opgehaald:",
-      "importing": "{count, plural, one {# mijlpaal} other {# mijlpalen}} importeren vanuit Jira…",
-      "completed": "{count, plural, one {# mijlpaal} other {# mijlpalen}} geïmporteerd vanuit Jira",
-      "stillRunning": "De import wordt nog op de achtergrond uitgevoerd — mijlpalen worden weergegeven zodra deze is voltooid."
+      "importing": "{count, plural, one {# mijlpaal} other {# mijlpalen}} importeren uit Jira…",
+      "completed": "{count, plural, one {# mijlpaal} other {# mijlpalen}} geïmporteerd uit Jira",
+      "stillRunning": "De import wordt nog steeds op de achtergrond uitgevoerd — mijlpalen verschijnen zodra deze is voltooid."
     },
     "sync": {
       "managedByJira": "Beheerd door Jira",
@@ -2219,7 +2219,7 @@
       "unlinkConfirmDescription": "Dit stopt de synchronisatie met de tracker: velden worden weer bewerkbaar, gesynchroniseerde probleemkoppelingen worden handmatig (u kunt ze behouden of verwijderen), en opnieuw koppelen is later mogelijk door dit artefact opnieuw te importeren.",
       "unlinkConfirmAction": "Ontkoppelen",
       "unlinkSuccess": "Mijlpaal ontkoppeld van de tracker.",
-      "unlinkError": "Het is niet gelukt om de mijlpaal te ontkoppelen.",
+      "unlinkError": "Mijlpaal kon niet worden ontkoppeld.",
       "sourceRemoved": "bron verwijderd in {provider}",
       "mergedInto": "samengevoegd met {target}"
     },
@@ -2229,16 +2229,16 @@
       "includesChildMilestones": "Inclusief onderliggende mijlpalen"
     },
     "burndown": {
-      "title": "Burndown-grafiek",
+      "title": "Burndown",
       "remaining": "Resterende items",
       "ideal": "Ideaal",
       "today": "Vandaag",
       "tooltipRemaining": "{count, number} resterend",
-      "heatAhead": "Vooruit op ideaallijn",
+      "heatAhead": "Voor op ideaal",
       "heatOnTrack": "Op schema",
-      "heatBehind": "Achter op schema",
-      "tooltipBehind": "{count, number} achter op schema",
-      "tooltipAhead": "{count, number} vooruit op ideaallijn"
+      "heatBehind": "Achter op ideaal",
+      "tooltipBehind": "{count, number} achter op ideaal",
+      "tooltipAhead": "{count, number} voor op ideaal"
     },
     "members": {
       "cardTitle": "Problemen",
@@ -2262,27 +2262,27 @@
       "filterAllSources": "Alle bronnen",
       "filterAllTypes": "Alle soorten",
       "empty": "Nog geen problemen gekoppeld aan deze mijlpaal.",
-      "emptyFiltered": "Geen problemen voldoen aan de huidige filters.",
+      "emptyFiltered": "Geen problemen komen overeen met de huidige filters.",
       "unlink": "Ontkoppelen",
       "managedByJira": "Beheerd door Jira — verwijder het uit de versie/sprint in Jira",
       "linkSuccess": "Probleem gekoppeld aan deze mijlpaal.",
-      "linkError": "Het is niet gelukt om het probleem aan deze mijlpaal te koppelen.",
+      "linkError": "Probleem kon niet worden gekoppeld aan deze mijlpaal.",
       "unlinkSuccess": "Probleem verwijderd van deze mijlpaal.",
-      "unlinkError": "Het is niet gelukt om het probleem van deze mijlpaal te verwijderen.",
+      "unlinkError": "Probleem kon niet worden verwijderd van deze mijlpaal.",
       "overflowTitle": "Meer problemen in Jira",
       "overflowDescription": "Deze problemen bevinden zich in de gekoppelde Jira-versie/sprint, maar zijn hier nog niet gekoppeld.",
       "overflowCapped": "Beperkt tot {cap, number} — {overflowTotal, number} meer in Jira",
       "overflowMoreAvailable": "{overflowTotal, number} meer beschikbaar in Jira",
-      "overflowImportAction": "Importeren en koppelen",
-      "overflowImportSuccess": "Import gestart — problemen worden weergegeven zodra ze zijn gesynchroniseerd.",
-      "overflowImportError": "Het is niet gelukt om lidproblemen uit Jira te importeren.",
+      "overflowImportAction": "Importeren & koppelen",
+      "overflowImportSuccess": "Import gestart — problemen verschijnen zodra ze zijn gesynchroniseerd.",
+      "overflowImportError": "Het importeren van gekoppelde problemen uit Jira is mislukt.",
       "emptyCta": "Koppel een probleem om te beginnen.",
       "columnDescription": "Beschrijving",
       "unlinkConfirmTitle": "Probleem ontkoppelen?",
       "unlinkConfirmDescription": "Dit verwijdert het probleem van deze mijlpaal. Het probleem zelf blijft behouden en kan later opnieuw worden gekoppeld.",
       "totalsUncovered": "{count, plural, one {# niet-gedekt probleem} other {# niet-gedekte problemen}}",
       "percentReady": "{percent, number}% gereed",
-      "readinessSummary": "{passed, number} geslaagd · {failed, number} mislukt · {inProgress, number} in behandeling · {notRun, number} niet uitgevoerd · {uncovered, number} onbedekt (van {total, number} problemen)",
+      "readinessSummary": "{passed, number} geslaagd · {failed, number} mislukt · {inProgress, number} in behandeling · {notRun, number} niet uitgevoerd · {uncovered, number} niet gedekt (van {total, number} problemen)",
       "filterHasUntested": "Heeft ongeteste gevallen",
       "createRunNoCases": "Geen van de geselecteerde problemen heeft gekoppelde testgevallen.",
       "createTestRunDetailed": "Testrun aanmaken ({issues, plural, one {# probleem} other {# problemen}} · {cases, plural, one {# geval} other {# gevallen}})"
@@ -2459,6 +2459,12 @@
       "contact": "Neem contact op met uw systeembeheerder om toegang tot projecten aan te vragen.",
       "adminAddProject": "Voeg je eerste project toe om aan de slag te gaan!",
       "footer": "Toegang is vereist om testplanningsactiviteiten te bekijken en eraan deel te nemen."
+    },
+    "getStarted": {
+      "title": "Aan de slag",
+      "description": "Voeg uw eigen project toe wanneer u klaar bent om te beginnen met plannen.",
+      "adminAddProject": "Maak uw eerste project aan",
+      "footer": "Het demoproject bevat voorbeeldgegevens die u op elk moment kunt verkennen of verwijderen."
     },
     "noProjectAccess": {
       "description": "U hebt geen toegang tot dit project.",
@@ -3401,8 +3407,8 @@
       "deferredMessage": "Deze bijlage wordt verwijderd wanneer u opslaat."
     },
     "preview": {
-      "unavailable": "Voorvertoning niet beschikbaar",
-      "tooLarge": "Dit bestand is te groot om te voorvertonen.",
+      "unavailable": "Voorbeeld niet beschikbaar",
+      "tooLarge": "Dit bestand is te groot om een voorbeeld te tonen.",
       "empty": "Dit document lijkt leeg te zijn.",
       "download": "Downloaden om te bekijken",
       "slideCounter": "Dia {current} van {total}",
@@ -3519,49 +3525,49 @@
   },
   "runs": {
     "composition": {
-      "lock": "Testgevallen vergrendeld",
+      "lock": "Gevallen vergrendeld",
       "unlock": "Ontgrendelen",
       "locked": "Samenstelling vergrendeld",
-      "lockHint": "Bevries welke testcases in deze run zijn opgenomen. Gebruikers kunnen testcases nog wel toewijzen en uitvoeren.",
+      "lockHint": "Bevries welke gevallen zich in deze run bevinden. Gebruikers kunnen nog steeds testgevallen toewijzen en uitvoeren.",
       "lockedBy": "Samenstelling vergrendeld door {name}.",
-      "lockedAutomatically": "Samenstelling automatisch vergrendeld toen de uitvoering begon.",
-      "frozenNotice": "Samenstelling is vergrendeld — testcases kunnen niet worden toegevoegd, verwijderd of opnieuw gerangschikt. U kunt testcases nog wel toewijzen en uitvoeren.",
-      "lockError": "Het vergrendelen van de samenstelling van de run is mislukt",
-      "unlockError": "Het ontgrendelen van de samenstelling van de run is mislukt",
-      "addBlocked": "De samenstelling van deze run is vergrendeld, dus testcases kunnen niet worden toegevoegd. Ontgrendel eerst om de testcaseset te wijzigen."
+      "lockedAutomatically": "Samenstelling automatisch vergrendeld toen de uitvoering startte.",
+      "frozenNotice": "Samenstelling is vergrendeld — testgevallen kunnen niet worden toegevoegd, verwijderd of opnieuw geordend. U kunt nog steeds testgevallen toewijzen en uitvoeren.",
+      "lockError": "De runsamenstelling kon niet worden vergrendeld",
+      "unlockError": "De runsamenstelling kon niet worden ontgrendeld",
+      "addBlocked": "De samenstelling van deze run is vergrendeld, dus testgevallen kunnen niet worden toegevoegd. Ontgrendel deze eerst om de gevallenset te wijzigen."
     },
     "distribute": {
-      "title": "Opdrachten verdelen",
-      "description": "Verdeel de testcases van deze run gelijk over teamleden, waarbij gerelateerde testcases bij elkaar blijven.",
+      "title": "Toewijzingen verdelen",
+      "description": "Wijs de testgevallen van deze run gelijkmatig toe aan teamleden, waarbij verwante gevallen bij elkaar blijven.",
       "selectUsers": "Teamleden",
       "usersPlaceholder": "Selecteer teamleden",
       "scopeAllConfigs": "Alle configuraties",
       "scopeThisRun": "Alleen deze run",
       "strategyLabel": "Configuratiestrategie",
       "strategyKeepTogether": "Configuraties bij elkaar houden",
-      "strategyKeepTogetherHint": "Elke tester beheert een set testcases voor elke configuratie.",
-      "strategySplitByConfig": "Splitsen per configuratie",
+      "strategyKeepTogetherHint": "Elke tester beheert een set gevallen over alle configuraties.",
+      "strategySplitByConfig": "Splitsen op configuratie",
       "strategySplitByConfigHint": "Elke tester beheert volledige configuraties.",
-      "groupingLabel": "Vergelijkbare testcases groeperen",
-      "groupingHint": "Houd testcases in dezelfde sectie en met dezelfde tags bij één tester.",
+      "groupingLabel": "Groepeer vergelijkbare gevallen",
+      "groupingHint": "Houd gevallen in dezelfde sectie en met gedeelde tags bij één tester.",
       "balancingLabel": "Balanceren op",
       "balancingEffort": "Geschatte tijd",
-      "balancingCount": "Aantal testcases",
-      "balancingFallbackHint": "Geen schattingen voor deze testcases — er wordt in plaats daarvan gebalanceerd op aantal testcases.",
-      "existingLabel": "Bestaande opdrachten",
-      "existingOnlyUnassigned": "Alleen niet-toegewezen testcases invullen",
+      "balancingCount": "Aantal gevallen",
+      "balancingFallbackHint": "Geen schattingen voor deze gevallen — er wordt in plaats daarvan gebalanceerd op aantal gevallen.",
+      "existingLabel": "Bestaande toewijzingen",
+      "existingOnlyUnassigned": "Alleen niet-toegewezen gevallen invullen",
       "existingReassignAll": "Alles opnieuw toewijzen",
       "previewTitle": "Voorbeeld",
       "previewNoUsers": "Selecteer teamleden om een voorbeeld van de verdeling te bekijken.",
       "previewUser": "Teamlid",
-      "previewCases": "Testcases",
-      "previewSkipped": "{count, plural, one {# testcase overgeslagen} other {# testcases overgeslagen}} (al toegewezen of voltooid)",
+      "previewCases": "Gevallen",
+      "previewSkipped": "{count, plural, one {# geval overgeslagen} other {# gevallen overgeslagen}} (al toegewezen of voltooid)",
       "confirming": "Toewijzen…",
-      "success": "{count, plural, one {# testcase} other {# testcases}} verdeeld over {users, plural, one {# lid} other {# leden}}",
-      "errorGeneric": "Verdelen van opdrachten mislukt",
+      "success": "{count, plural, one {# geval} other {# gevallen}} verdeeld over {users, plural, one {# lid} other {# leden}}",
+      "errorGeneric": "Toewijzingen konden niet worden verdeeld",
       "errorRunCompleted": "Deze run is voltooid en kan niet meer worden gewijzigd",
       "errorNeedUsers": "Selecteer ten minste één projectlid om aan te verdelen",
-      "errorNoAssignable": "Er zijn geen testcases om te verdelen in deze run"
+      "errorNoAssignable": "Er zijn geen gevallen om te verdelen in deze run"
     },
     "auditLog": {
       "trigger": "Activiteit",
@@ -4998,18 +5004,18 @@
       }
     },
     "recordKeys": {
-      "pageDescription": "Configureer cosmetische, met een projectprefix voorziene identificatiecodes, zoals PROJECT-TC-1234, waarmee eenvoudig te zien is bij welk project een record hoort en om wat voor soort record het gaat. De onderliggende numerieke ID blijft ongewijzigd en werkt overal verder.",
-      "title": "Recordsleutels met projectprefix",
-      "description": "Indien ingeschakeld, tonen records een optionele sleutel die de projectcode, een typetoken en de numerieke ID van het record combineert. Stel de code van elk project in bij Projectinstellingen → Geavanceerd.",
-      "toggleAriaLabel": "Recordsleutels met projectprefix in- of uitschakelen",
+      "pageDescription": "Configureer cosmetische, met projectvoorvoegsel voorziene id's, zoals PROJECT-TC-1234, waarmee eenvoudig te zien is tot welk project een record behoort en welk type record het is. De onderliggende numerieke ID blijft ongewijzigd en werkt overal verder.",
+      "title": "Recordsleutels met projectvoorvoegsel",
+      "description": "Indien ingeschakeld, geven records een optionele sleutel weer die de projectcode, een typetoken en de numerieke ID van het record combineert. Stel de code van elk project in bij Projectinstellingen → Geavanceerd.",
+      "toggleAriaLabel": "Recordsleutels met projectvoorvoegsel in-/uitschakelen",
       "tokensHeading": "Typetokens",
-      "tokensHelp": "Het token dat voor elk type record wordt gebruikt. 1-6 hoofdletters, geen cijfers of streepjes. Tokens moeten uniek zijn.",
+      "tokensHelp": "Het token dat voor elk type record wordt gebruikt. 1–6 hoofdletters, geen cijfers of streepjes. Tokens moeten uniek zijn.",
       "invalidToken": "Ongeldig",
-      "duplicateToken": "Dubbel token",
+      "duplicateToken": "Duplicaattoken",
       "tokensSaved": "Typetokens opgeslagen.",
-      "enableSuccess": "Recordsleutels met projectprefix ingeschakeld.",
-      "disableSuccess": "Recordsleutels met projectprefix uitgeschakeld.",
-      "saveError": "Opslaan mislukt. Probeer het opnieuw."
+      "enableSuccess": "Recordsleutels met projectvoorvoegsel ingeschakeld.",
+      "disableSuccess": "Recordsleutels met projectvoorvoegsel uitgeschakeld.",
+      "saveError": "Kon niet opslaan. Probeer het opnieuw."
     },
     "appConfig": {
       "description": "Beheer globale applicatieconfiguraties",
@@ -6348,7 +6354,7 @@
       "documentation": "## Documentatie\nAanvullende details, referenties en ondersteunend materiaal.\n\n- Technische specificaties\n- Ontwerpdocumenten\n- Externe referenties\n- Vergadernotities en beslissingen",
       "automaticCompletion": "## Automatisch voltooien op de vervaldatum\nMarkeer deze mijlpaal automatisch als voltooid wanneer de vervaldatum is bereikt.\n\n- De mijlpaal wordt voltooid op het geplande tijdstip op de vervaldatum.\n- Handig voor mijlpalen met een tijdslimiet die moeten worden afgesloten ongeacht de voltooiingsstatus.\n- Kan worden overschreven door de mijlpaal handmatig te voltooien vóór de vervaldatum.\n- Vereist dat een vervaldatum is ingesteld.",
       "notifyDaysBefore": "## Meldingen versturen dagen voor de deadline\nStuur meldingen naar toegewezen teamleden wanneer de deadline van de mijlpaal nadert.\n\n- Schakel de schakelaar in om meldingen in te schakelen, uit om ze uit te schakelen.\n- Voer het aantal dagen voor de deadline in om herinneringen te verzenden.\n- Meldingen worden verzonden naar gebruikers die zijn toegewezen aan testruns en sessies binnen deze mijlpaal.\n- Mijlpalen die te laat zijn, blijven herinneringen verzenden totdat ze zijn voltooid.",
-      "managedByJira": "De naam, datums en status van deze mijlpaal worden beheerd door Jira. Voer daar wijzigingen door om ze hier bij te werken."
+      "managedByJira": "De naam, data en status van deze mijlpaal worden beheerd door Jira. Breng daar wijzigingen aan om ze hier bij te werken."
     },
     "session": {
       "name": "## Sessienaam\nEen duidelijke, beschrijvende naam die het doel van uw testsessie aangeeft.\n\n- Moet uniek en betekenisvol zijn.\n- Helpt teamleden te begrijpen wat er wordt getest.\n- Wordt gebruikt in rapporten en tracking.",
@@ -6424,9 +6430,9 @@
       "endpoint": "## API-eindpunt\nDe basis-URL voor de API van de LLM-provider.\n\n- Laat leeg voor OpenAI, Anthropic en Gemini — officiële URL's worden automatisch gebruikt\n- Vereist voor Ollama (bijv. `http://localhost:11434`), Azure OpenAI en Custom LLM\n- Optioneel voor elke provider — verwijs naar een OpenAI-compatibele proxy (bijv. LiteLLM) door de URL in te voeren\n- **Privé-/interne adressen** (localhost, 127.0.0.1, privé-IP's, cloudmetadata) worden geblokkeerd, tenzij expliciet toegestaan via de omgevingsvariabele `ALLOWED_PRIVATE_HOSTS`",
       "deploymentName": "## Azure-implementatienaam\nDe naam van uw Azure OpenAI-modelimplementatie.\n\n- Te vinden in Azure OpenAI Studio onder Implementaties\n- Verschilt van de modelnaam — bijvoorbeeld `my-gpt4-deploy` komt overeen met `gpt-4`\n- Alleen vereist voor Azure OpenAI",
       "defaultModel": "## Standaardmodel\nHet model dat wordt gebruikt voor AI-verzoeken met deze integratie.\n\n- Voor OpenAI, Anthropic en Gemini worden beschikbare modellen automatisch opgehaald van uw API-sleutel.\n- Zorg ervoor dat het model is ingeschakeld in uw provideraccount.\n- Voorbeeld: `gpt-4o`, `claude-3-5-sonnet-20241022`, `gemini-1.5-pro`",
-      "maxTokensPerRequest": "## Max Tokens Per Verzoek\nDe **absolute limiet op _uitgaande_ tokens** die het model in één enkele reactie mag genereren.\n\n- Beperkt de lengte van het **antwoord** van het model — niet hoeveel context je meestuurt\n- Verzoeken die om meer dan dit vragen worden **geweigerd voordat ze het model bereiken**\n- Stel dit in op de werkelijke maximale output van je model — bijv. `128000` voor Claude Opus/Sonnet, `64000` voor Claude Haiku, `65536` voor Gemini, `16384` voor GPT-4o\n- Te laag → AI-functies mislukken of leveren afgekapte output",
-      "defaultMaxTokens": "## Standaard Max Tokens\nDe **standaard _uitgaande_ lengte** die een verzoek opvraagt wanneer een functie geen eigen waarde instelt.\n\n- Bepaalt hoe lang het **antwoord** van het model kan zijn, begrensd door _Max Tokens Per Verzoek_\n- De meeste AI-functies stellen hun eigen waarde in bij **Beheer → Promptconfiguratie**; dit is slechts de terugvaloptie\n- Het bepaalt **niet** hoeveel repository-code QuickScript naar het model stuurt — dat budget wordt automatisch afgeleid van het contextvenster van het model\n- Houd dit ≤ _Max Tokens Per Verzoek_",
-      "repoContextBudget": "## Repository-contextbudget\nHoeveel code van uw gekoppelde repository QuickScript naar het model stuurt bij het genereren van een script.\n\n- **Wordt automatisch ingesteld** op basis van het invoercontextvenster van het geselecteerde model — hier is niets te configureren\n- Modellen met een groter contextvenster (Claude, Gemini) krijgen meer; kleine lokale modellen krijgen een veilige hoeveelheid die niet overloopt\n- Meer context zorgt ervoor dat het script gebaseerd is op uw echte pagina-objecten en fixtures — het verandert niet hoe lang het gegenereerde script is",
+      "maxTokensPerRequest": "## Maximum tokens per verzoek\nDe **absolute limiet op _output_-tokens** die het model in één antwoord mag genereren.\n\n- Beperkt de lengte van het **antwoord** van het model — niet hoeveel context u verstuurt\n- Verzoeken die om meer vragen dan deze limiet worden **geweigerd voordat ze het model bereiken**\n- Stel dit in op de werkelijke maximale output van uw model — bijv. `128000` voor Claude Opus/Sonnet, `64000` voor Claude Haiku, `65536` voor Gemini, `16384` voor GPT-4o\n- Te laag → AI-functies mislukken of produceren afgekapte output",
+      "defaultMaxTokens": "## Standaard maximum tokens\nDe **standaard _output_-lengte** die een verzoek aanvraagt wanneer een functie geen eigen waarde instelt.\n\n- Bepaalt hoe lang het **antwoord** van het model kan zijn, begrensd door _Maximum tokens per verzoek_\n- De meeste AI-functies stellen hun eigen waarde in bij **Beheer → Promptconfiguratie**; dit is alleen de terugval-optie\n- Het bepaalt **niet** hoeveel repositorycode QuickScript naar het model stuurt — dat budget wordt automatisch afgeleid van het contextvenster van het model\n- Houd dit ≤ _Maximum tokens per verzoek_",
+      "repoContextBudget": "## Repository-contextbudget\nHoeveel code van uw verbonden repository QuickScript naar het model stuurt bij het genereren van een script.\n\n- **Automatisch ingesteld** op basis van het invoercontextvenster van het geselecteerde model — er is hier niets te configureren\n- Modellen met een groter contextvenster (Claude, Gemini) krijgen meer; kleine lokale modellen krijgen een veilige hoeveelheid die niet zal overlopen\n- Meer context zorgt ervoor dat het script beter aansluit op uw werkelijke page objects en fixtures — het verandert niet hoe lang het gegenereerde script is",
       "maxRequestsPerMinute": "## Maximaal aantal verzoeken per minuut\nBeperkt het aantal API-aanroepen dat per minuut naar deze provider kan worden gedaan.\n\n- Stel dit in op de limiet van uw providerabonnement.\n- Overtollige verzoeken worden in de wachtrij geplaatst, niet geweigerd.\n- Raadpleeg de documentatie van uw provider voor de limiet van uw abonnement.",
       "costPerInputToken": "## Kosten per invoertoken (USD)\nDe kosten in USD voor elk invoertoken (prompt) dat naar het model wordt verzonden.\n\n- Gebruikt voor kostenbewaking en budgetwaarschuwingen\n- Vind dit op de prijslijst van uw provider\n- Voorbeeld: `0,000005` = $5 per miljoen invoertokens",
       "costPerOutputToken": "## Kosten per outputtoken (USD)\nDe kosten in USD voor elk outputtoken (voltooiingstoken) dat door het model wordt gegenereerd.\n\n- Meestal hoger dan de kosten van de inputtokens\n- Gebruikt voor kostenbewaking en budgetwaarschuwingen\n- Voorbeeld: `0,000015` = $15 per miljoen outputtokens",
@@ -7043,7 +7049,7 @@
         },
         "milestoneReadiness": {
           "label": "Mijlpaalgereedheid",
-          "description": "Releasegereedheid per mijlpaal: % van de issues binnen scope die volledig slagen, en de aantallen per status"
+          "description": "Releasegereedheid per mijlpaal: % van de problemen binnen bereik die volledig geslaagd zijn, en de aantallen per status"
         },
         "sessionAnalysis": {
           "label": "Sessieanalyse",
@@ -7406,7 +7412,7 @@
       "inProgress": "In behandeling",
       "notRun": "Niet uitgevoerd",
       "uncovered": "Niet gedekt",
-      "totalIssues": "Totaal aantal issues",
+      "totalIssues": "Totaal aantal problemen",
       "testResults": "Testresultaten",
       "testResultCount": "Testresultaten tellen",
       "passRate": "Slagingspercentage (%)",

@@ -2460,6 +2460,12 @@
       "adminAddProject": "Add your first Project to get started!",
       "footer": "Access is required to view and participate in test planning activities."
     },
+    "getStarted": {
+      "title": "Get started",
+      "description": "Add your own Project when you're ready to start planning.",
+      "adminAddProject": "Create your first Project",
+      "footer": "The Demo Project contains sample data you can explore or remove at any time."
+    },
     "noProjectAccess": {
       "description": "You do not have access to this project.",
       "contact": "Contact your project administrator to request access."

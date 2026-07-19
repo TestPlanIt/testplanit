@@ -18,7 +18,7 @@
     "searchTags": "Etiketleri ara...",
     "searchRuns": "{count, plural, =0 {Arama test çalıştırmaları} one {Arama # test çalıştırmaları} other {Arama # test çalıştırmaları}}",
     "searchSessions": "{count, plural, =0 {Oturumları ara} one {Oturum sayısı ara} other {Oturum sayısı ara}}",
-    "searchMilestones": "{count, plural, =0 {Kilometre taşı ara} one {# kilometre taşını ara} other {# kilometre taşını ara}}",
+    "searchMilestones": "{count, plural, =0 {Dönüm noktalarını ara} one {# dönüm noktasını ara} other {# dönüm noktasını ara}}",
     "search": "Aramak...",
     "defaultOption": "Varsayılan Seçenek",
     "yes": "Evet",
@@ -325,8 +325,8 @@
       "notAutomated": "Otomatikleştirilmemiş",
       "parameterized": "Parametreli",
       "notParameterized": "Parametrelendirilmemiş",
-      "hasAttachments": "Eki Var",
-      "noAttachments": "Eki Yok",
+      "hasAttachments": "Ekleri Var",
+      "noAttachments": "Ek Yok",
       "testRuns": "Test Çalışmaları",
       "title": "Başlık",
       "project": "Proje",
@@ -756,7 +756,7 @@
       "issues": "{count, plural, =0 {Sorun Yok} =1 {1 Sorun} other {# Sorun}}",
       "noOptions": "Hiçbir seçenek mevcut değil.",
       "multiConfiguration": "Çoklu konfigürasyon grubunun bir parçası",
-      "compositionLocked": "Bileşim kilitlendi — senaryo seti donduruldu",
+      "compositionLocked": "Kompozisyon kilitli — durum kümesi donduruldu",
       "otherConfigurations": "Diğer yapılandırmalar",
       "selected": "Seçilen: {count}",
       "defaultProjectAccess": "Varsayılan Proje Erişimi",
@@ -1388,13 +1388,13 @@
           "importPreviewFailed": "Eşleşmeler tahmin edilemedi",
           "milestoneSync": {
             "title": "Dönüm Noktası Senkronizasyonu",
-            "description": "Bu izleyicinin zaman tabanlı yapılarından TestPlanIt Dönüm Noktalarını senkronize edin.",
+            "description": "Bu takip sisteminin zamana dayalı yapılarından TestPlanIt Dönüm Noktalarını senkronize edin.",
             "enableLabel": "Dönüm noktası senkronizasyonunu etkinleştir",
             "releasesLabel": "Sürümler",
             "sprintsLabel": "Sprintler",
             "kindsLabel": "Senkronize edilecek türler",
             "autoTrackLabel": "Yenilerini otomatik olarak ekle",
-            "autoTrackProjectsLabel": "Yeni kilometre taşları için bu bağlı projeleri tara",
+            "autoTrackProjectsLabel": "Yeni dönüm noktaları için bu bağlı projeleri tara",
             "settingsSaved": "Dönüm noktası senkronizasyon ayarları kaydedildi",
             "saveError": "Dönüm noktası senkronizasyon ayarları kaydedilemedi"
           }
@@ -1925,7 +1925,7 @@
           "lastFetched": "Son Getirilen",
           "filesCached": "Önbelleğe alınan dosyalar",
           "contentsCached": "İçerikler Önbelleğe Alındı",
-          "contentsIncomplete": "{total} dosya içeriğinin yalnızca {cached} tanesi önbelleğe alındı — oluşturulan betikler eksik dosyaları kullanmayacaktır. Tamamlamak için yeniden yenileyin.",
+          "contentsIncomplete": "{total} dosya içeriğinden yalnızca {cached} önbelleğe alındı — oluşturulan komut dosyaları eksik dosyaları kullanmayacaktır. Tamamlamak için yeniden yenileyin.",
           "totalSize": "Toplam Boyut"
         },
         "save": "Yapılandırmayı Kaydet",
@@ -1971,7 +1971,7 @@
         "description": "Proje bazında, kişisel tercihlere dayalı özellikler için geçiş düğmeleri. Yeni geçiş düğmeleri eklendikçe burada görünecektir.",
         "recordKey": {
           "label": "Proje kodu",
-          "description": "{example} gibi kozmetik kayıt anahtarlarında kullanılan kısa bir kod. 2–10 büyük harf, rakam içermez. Sade sayısal kimlikleri göstermek için boş bırakın.",
+          "description": "{example} gibi kozmetik kayıt anahtarlarında kullanılan kısa bir kod. 2–10 büyük harf, rakam yok. Sade sayısal kimlikleri göstermek için boş bırakın.",
           "placeholder": "örn. PROJECT",
           "previewLabel": "Örnek anahtar:",
           "useSuggestion": "Önerilen kodu kullan: {code}",
@@ -2014,11 +2014,11 @@
           "skippedToast": "{count, plural, =1 {1 taslak vaka başlatılmadı durumunda olduğu için atlandı} other {# taslak vaka başlatılmadı durumunda olduğu için atlandı}}"
         },
         "autoLockComposition": {
-          "label": "Yürütme başladığında Test Çalıştırması bileşimini kilitle",
-          "description": "Etkinleştirildiğinde, bir test koşumunun durum kompozisyonu, koşum Devam Ediyor durumuna geçtiği anda otomatik olarak kilitlenir. Kilitleme, yürütme ve atama devam ederken koşumda hangi durumların bulunduğunu dondurur (ekleme, kaldırma veya yeniden sıralama yapılamaz). Koşumun oluşturucusu veya bir Proje Yöneticisi, durum kümesini değiştirmek için kilidi açabilir.",
-          "enabledToast": "Yürütme başladığında Test Çalıştırmaları bileşimlerini kilitleyecek",
-          "disabledToast": "Test Çalıştırmaları artık bileşimlerini otomatik olarak kilitlemeyecek",
-          "saveError": "Bileşim otomatik kilitleme ayarını güncelleme başarısız oldu"
+          "label": "Yürütme başladığında Test Çalıştırması kompozisyonunu kilitle",
+          "description": "Etkinleştirildiğinde, bir test çalıştırmasının durum kompozisyonu, çalıştırma Devam Ediyor durumuna geçtiği anda otomatik olarak kilitlenir. Kilitleme, yürütme ve atama sürerken çalıştırmadaki durumları dondurur (ekleme, kaldırma veya yeniden sıralama yapılamaz). Çalıştırmanın oluşturucusu veya bir Proje Yöneticisi, durum kümesini değiştirmek için kilidi açabilir.",
+          "enabledToast": "Test Çalıştırmaları, yürütme başladığında kompozisyonlarını kilitleyecek",
+          "disabledToast": "Test Çalıştırmaları artık kompozisyonlarını otomatik olarak kilitlemeyecek",
+          "saveError": "Kompozisyon otomatik kilitleme ayarı güncellenemedi"
         },
         "editWindow": {
           "label": "Sonuç düzenleme penceresi",
@@ -2083,7 +2083,7 @@
   "milestones": {
     "title": "Dönüm Noktası Ayrıntıları",
     "auditLog": {
-      "description": "Bu kilometre taşı için kaydedilen tüm değişiklikler."
+      "description": "Bu dönüm noktası için kaydedilen tüm değişiklikler."
     },
     "fields": {
       "parent": "Ebeveyn Dönüm Noktası",
@@ -2112,8 +2112,8 @@
     },
     "browser": {
       "kindAll": "Tüm dönüm noktaları",
-      "kindReleases": "Senkronize edilmiş sürümler",
-      "kindSprints": "Senkronize edilmiş sprintler"
+      "kindReleases": "Senkronize edilen sürümler",
+      "kindSprints": "Senkronize edilen sprintler"
     },
     "statusLabels": {
       "NOT_STARTED": "Başlamadı",
@@ -2157,7 +2157,7 @@
     "delete": {
       "title": "Kilometre taşını sil",
       "confirmMessage": "{name} kilometre taşını silmek istediğinizden emin misiniz?",
-      "childrenWarning": "{count, plural, one {# alt kilometre taşı da} other {# alt ve ast kilometre taşı da}} silinecek.",
+      "childrenWarning": "{count, plural, one {# alt dönüm noktası} other {# alt ve alt öğe dönüm noktası}} da silinecek.",
       "warning": "Bu kilometre taşı projeden kaldırılacaktır. Bu kilometre taşına ait geçmiş veriler projede kalmaya devam edecektir.",
       "toast": {
         "loading": "Dönüm noktası siliniyor...",
@@ -2188,7 +2188,7 @@
     },
     "import": {
       "importTitle": "Jira'dan içe aktar",
-      "importDescription": "TestPlanIt Dönüm Noktaları olarak senkronize edilecek Jira Fix Version'larını ve Sprintlerini seçin.",
+      "importDescription": "TestPlanIt Dönüm Noktaları olarak senkronize edilecek Jira Fix Versions ve Sprints'i seçin.",
       "showClosed": "Kapatılanları göster",
       "alreadyLinked": "Zaten bağlantılı",
       "selectedCount": "{count, plural, one {# seçili} other {# seçili}}",
@@ -2196,16 +2196,16 @@
       "empty": "Dönüm noktası bulunamadı",
       "previewFailed": "Jira'dan dönüm noktaları yüklenemedi",
       "importFailed": "Seçilen dönüm noktaları içe aktarılamadı",
-      "importStarted": "İçe aktarma başlatıldı",
+      "importStarted": "İçe aktarma başladı",
       "kindRelease": "Sürüm",
       "kindSprint": "Sprint",
       "selectAll": "Tümünü seç",
-      "searchPlaceholder": "Sürümlerde ve sprintlerde ara...",
+      "searchPlaceholder": "Sürümleri ve sprintleri ara...",
       "emptyFiltered": "Filtrelerinize uyan dönüm noktası bulunamadı.",
       "partialWarning": "Bazı Jira projeleri alınamadı:",
       "importing": "Jira'dan {count, plural, one {# dönüm noktası} other {# dönüm noktası}} içe aktarılıyor…",
       "completed": "Jira'dan {count, plural, one {# dönüm noktası} other {# dönüm noktası}} içe aktarıldı",
-      "stillRunning": "İçe aktarma işlemi arka planda hâlâ çalışıyor — tamamlandığında dönüm noktaları görünecektir."
+      "stillRunning": "İçe aktarma arka planda hâlâ çalışıyor — tamamlandığında dönüm noktaları görünecektir."
     },
     "sync": {
       "managedByJira": "Jira tarafından yönetiliyor",
@@ -2216,52 +2216,52 @@
       "syncNow": "Şimdi senkronize et",
       "unlinkMenuItem": "{provider} bağlantısını kaldır",
       "unlinkConfirmTitle": "Dönüm noktası bağlantısı kaldırılsın mı?",
-      "unlinkConfirmDescription": "Bu, izleyiciyle senkronizasyonu durdurur: alanlar yeniden düzenlenebilir hale gelir, senkronize edilen sorun bağlantıları manuel hale gelir (tutmak veya kaldırmak size kalır) ve bu yapı yeniden içe aktarılarak daha sonra tekrar bağlanabilir.",
+      "unlinkConfirmDescription": "Bu, takip sistemiyle senkronizasyonu durdurur: alanlar yeniden düzenlenebilir hale gelir, senkronize edilen sorun bağlantıları manuel hale gelir (tutmak veya kaldırmak size kalır) ve bu yapı yeniden içe aktarılarak daha sonra tekrar bağlanabilir.",
       "unlinkConfirmAction": "Bağlantıyı kaldır",
-      "unlinkSuccess": "Dönüm noktasının izleyici bağlantısı kaldırıldı.",
-      "unlinkError": "Dönüm noktası bağlantısı kaldırılamadı.",
+      "unlinkSuccess": "Dönüm noktasının takip sistemiyle bağlantısı kaldırıldı.",
+      "unlinkError": "Dönüm noktasının bağlantısı kaldırılamadı.",
       "sourceRemoved": "{provider} içinde kaynak kaldırıldı",
       "mergedInto": "{target} içine birleştirildi"
     },
     "summary": {
       "inScope": "{count, plural, one {# kapsamda} other {# kapsamda}}",
-      "foundInTesting": "{count, plural, one {# test sırasında bulundu} other {# test sırasında bulundu}}",
+      "foundInTesting": "{count, plural, one {# testte bulundu} other {# testte bulundu}}",
       "includesChildMilestones": "Alt dönüm noktalarını içerir"
     },
     "burndown": {
-      "title": "Tükenme Grafiği",
+      "title": "Burndown",
       "remaining": "Kalan Öğeler",
       "ideal": "İdeal",
       "today": "Bugün",
-      "tooltipRemaining": "{count, number} kalan",
+      "tooltipRemaining": "{count, number} kaldı",
       "heatAhead": "İdealin önünde",
       "heatOnTrack": "Yolunda",
-      "heatBehind": "İdealden Geride",
-      "tooltipBehind": "İdealden {count, number} geride",
+      "heatBehind": "İdealin arkasında",
+      "tooltipBehind": "İdealin {count, number} arkasında",
       "tooltipAhead": "İdealin {count, number} önünde"
     },
     "members": {
       "cardTitle": "Sorunlar",
       "inScope": "Kapsamda",
-      "foundInTesting": "Test sırasında bulundu",
-      "foundInTestingEmpty": "Test sırasında sorun bulunamadı.",
+      "foundInTesting": "Testte bulundu",
+      "foundInTestingEmpty": "Testte hiçbir sorun bulunamadı.",
       "inScopeCrossBadge": "Kapsamda",
       "refresh": "Yenile",
       "columnKey": "İsim",
       "columnStatus": "Durum",
-      "columnCoverage": "Kapsama",
+      "columnCoverage": "Kapsam",
       "columnSource": "Kaynak",
       "sourceSynced": "Senkronize edildi",
       "sourceManual": "Manuel",
       "coveragePassed": "Geçti",
-      "coverageFailed": "Başarısız",
+      "coverageFailed": "Arızalı",
       "coverageInProgress": "Devam etmekte",
       "coverageNotRun": "Çalıştırılmadı",
       "coverageUncovered": "Kapsanmamış",
-      "filterAllCoverage": "Tüm kapsama",
+      "filterAllCoverage": "Tüm kapsam",
       "filterAllSources": "Tüm kaynaklar",
       "filterAllTypes": "Tüm tipler",
-      "empty": "Bu dönüm noktasına henüz bağlı sorun yok.",
+      "empty": "Bu dönüm noktasına henüz sorun bağlanmadı.",
       "emptyFiltered": "Mevcut filtrelere uyan sorun bulunamadı.",
       "unlink": "Bağlantıyı kaldır",
       "managedByJira": "Jira tarafından yönetiliyor — Jira'daki sürüm/sprint'ten kaldırın",
@@ -2270,21 +2270,21 @@
       "unlinkSuccess": "Sorun bu dönüm noktasından kaldırıldı.",
       "unlinkError": "Sorun bu dönüm noktasından kaldırılamadı.",
       "overflowTitle": "Jira'da daha fazla sorun",
-      "overflowDescription": "Bu sorunlar bağlı Jira sürümünde/sprintinde bulunuyor ancak henüz buraya bağlanmadı.",
-      "overflowCapped": "{cap, number} ile sınırlandı — Jira'da {overflowTotal, number} tane daha var",
-      "overflowMoreAvailable": "Jira'da {overflowTotal, number} tane daha mevcut",
+      "overflowDescription": "Bu sorunlar bağlı Jira sürümünde/sprint'inde bulunuyor ancak henüz buraya bağlanmadı.",
+      "overflowCapped": "{cap, number} ile sınırlandı — Jira'da {overflowTotal, number} daha fazla var",
+      "overflowMoreAvailable": "Jira'da {overflowTotal, number} daha fazla mevcut",
       "overflowImportAction": "İçe aktar ve bağla",
-      "overflowImportSuccess": "İçe aktarma başlatıldı — sorunlar senkronize edildikçe görünecektir.",
+      "overflowImportSuccess": "İçe aktarma başladı — sorunlar senkronize edildikçe görünecektir.",
       "overflowImportError": "Jira'dan üye sorunları içe aktarılamadı.",
       "emptyCta": "Başlamak için bir sorun bağlayın.",
       "columnDescription": "Tanım",
       "unlinkConfirmTitle": "Sorun bağlantısı kaldırılsın mı?",
-      "unlinkConfirmDescription": "Bu, sorunu bu dönüm noktasından kaldırır. Sorunun kendisi saklanır ve daha sonra tekrar bağlanabilir.",
+      "unlinkConfirmDescription": "Bu, sorunu bu dönüm noktasından kaldırır. Sorunun kendisi saklanır ve daha sonra yeniden bağlanabilir.",
       "totalsUncovered": "{count, plural, one {# kapsanmamış sorun} other {# kapsanmamış sorun}}",
       "percentReady": "%{percent, number} hazır",
-      "readinessSummary": "{passed, number} başarılı · {failed, number} başarısız · {inProgress, number} devam ediyor · {notRun, number} çalıştırılmadı · {uncovered, number} kapsanmadı (toplam {total, number} sorundan)",
+      "readinessSummary": "{passed, number} geçti · {failed, number} arızalı · {inProgress, number} devam ediyor · {notRun, number} çalıştırılmadı · {uncovered, number} kapsanmamış ({total, number} sorundan)",
       "filterHasUntested": "Test edilmemiş durumları var",
-      "createRunNoCases": "Seçilen sorunların hiçbirinin bağlı test durumu yok.",
+      "createRunNoCases": "Seçilen sorunların hiçbirinde bağlı test durumu yok.",
       "createTestRunDetailed": "Test çalıştırması oluştur ({issues, plural, one {# sorun} other {# sorun}} · {cases, plural, one {# durum} other {# durum}})"
     }
   },
@@ -2459,6 +2459,12 @@
       "contact": "Projelere erişim talebinde bulunmak için sistem yöneticinizle iletişime geçin.",
       "adminAddProject": "Başlamak için ilk projenizi ekleyin!",
       "footer": "Test planlama faaliyetlerini görüntülemek ve bunlara katılmak için erişim gereklidir."
+    },
+    "getStarted": {
+      "title": "Başlarken",
+      "description": "Planlamaya başlamaya hazır olduğunuzda kendi Projenizi ekleyin.",
+      "adminAddProject": "İlk Projenizi oluşturun",
+      "footer": "Demo Proje, istediğiniz zaman inceleyebileceğiniz veya kaldırabileceğiniz örnek veriler içerir."
     },
     "noProjectAccess": {
       "description": "Bu projeye erişiminiz yok.",
@@ -3519,46 +3525,46 @@
   },
   "runs": {
     "composition": {
-      "lock": "Kilitli Vakalar",
-      "unlock": "Kilidi aç",
-      "locked": "Bileşim kilitli",
-      "lockHint": "Bu çalıştırmada hangi senaryoların bulunduğunu dondurun. Kullanıcılar test senaryolarını atamaya ve yürütmeye devam edebilir.",
-      "lockedBy": "Bileşim {name} tarafından kilitlendi.",
-      "lockedAutomatically": "Yürütme başladığında bileşim otomatik olarak kilitlendi.",
-      "frozenNotice": "Bileşim kilitli — test senaryoları eklenemez, kaldırılamaz veya yeniden sıralanamaz. Test senaryolarını atamaya ve yürütmeye devam edebilirsiniz.",
-      "lockError": "Koşum bileşimini kilitleme başarısız oldu",
-      "unlockError": "Koşum bileşiminin kilidini açma başarısız oldu",
-      "addBlocked": "Bu çalıştırmanın bileşimi kilitli, bu nedenle test senaryoları eklenemez. Senaryo setini değiştirmek için önce kilidini açın."
+      "lock": "Durumlar Kilitli",
+      "unlock": "Kilidi Aç",
+      "locked": "Kompozisyon kilitli",
+      "lockHint": "Bu çalıştırmadaki durumları dondurur. Kullanıcılar test durumlarını atayabilir ve yürütebilir.",
+      "lockedBy": "Kompozisyon {name} tarafından kilitlendi.",
+      "lockedAutomatically": "Yürütme başladığında kompozisyon otomatik olarak kilitlendi.",
+      "frozenNotice": "Kompozisyon kilitli — test durumları eklenemez, kaldırılamaz veya yeniden sıralanamaz. Test durumlarını atayabilir ve yürütebilirsiniz.",
+      "lockError": "Çalıştırma kompozisyonu kilitlenemedi",
+      "unlockError": "Çalıştırma kompozisyonunun kilidi açılamadı",
+      "addBlocked": "Bu çalıştırmanın kompozisyonu kilitli, bu nedenle test durumları eklenemez. Durum kümesini değiştirmek için önce kilidini açın."
     },
     "distribute": {
-      "title": "Görevleri dağıt",
-      "description": "Bu çalıştırmanın test durumlarını, ilgili durumları bir arada tutarak ekip üyeleri arasında eşit şekilde dağıtın.",
+      "title": "Atamaları dağıt",
+      "description": "Bu çalıştırmanın test durumlarını, ilişkili durumları bir arada tutarak ekip üyeleri arasında eşit şekilde dağıtın.",
       "selectUsers": "Ekip üyeleri",
       "usersPlaceholder": "Ekip üyelerini seçin",
       "scopeAllConfigs": "Tüm yapılandırmalar",
       "scopeThisRun": "Yalnızca bu çalıştırma",
       "strategyLabel": "Yapılandırma stratejisi",
       "strategyKeepTogether": "Yapılandırmaları bir arada tut",
-      "strategyKeepTogetherHint": "Her test uzmanı, tüm yapılandırmalar genelinde bir dizi duruma sahip olur.",
+      "strategyKeepTogetherHint": "Her test uzmanı, her yapılandırmada bir dizi duruma sahip olur.",
       "strategySplitByConfig": "Yapılandırmaya göre böl",
-      "strategySplitByConfigHint": "Her test uzmanı, yapılandırmaların tamamına sahip olur.",
+      "strategySplitByConfigHint": "Her test uzmanı tam yapılandırmalara sahip olur.",
       "groupingLabel": "Benzer durumları grupla",
-      "groupingHint": "Aynı bölümdeki ve etiketleri paylaşan durumları bir test uzmanıyla birlikte tut.",
-      "balancingLabel": "Dengeleme ölçütü",
+      "groupingHint": "Aynı bölümdeki ve etiketleri paylaşan durumları bir test uzmanıyla eşleştir.",
+      "balancingLabel": "Şuna göre dengele",
       "balancingEffort": "Tahmini süre",
       "balancingCount": "Durum sayısı",
-      "balancingFallbackHint": "Bu durumlarda tahmin bulunmuyor — bunun yerine durum sayısına göre dengeleniyor.",
+      "balancingFallbackHint": "Bu durumlarda tahmin yok — bunun yerine durum sayısına göre dengeleniyor.",
       "existingLabel": "Mevcut atamalar",
       "existingOnlyUnassigned": "Yalnızca atanmamış durumları doldur",
       "existingReassignAll": "Her şeyi yeniden ata",
       "previewTitle": "Önizleme",
-      "previewNoUsers": "Dağıtımı önizlemek için ekip üyelerini seçin.",
+      "previewNoUsers": "Dağılımı önizlemek için ekip üyelerini seçin.",
       "previewUser": "Ekip Üyesi",
       "previewCases": "Durumlar",
       "previewSkipped": "{count, plural, one {# durum atlandı} other {# durum atlandı}} (zaten atanmış veya tamamlanmış)",
       "confirming": "Atanıyor…",
-      "success": "{count, plural, one {# durum} other {# durum}}, {users, plural, one {# üye} other {# üye}} arasında dağıtıldı",
-      "errorGeneric": "Görevler dağıtılamadı",
+      "success": "{users, plural, one {# üye} other {# üye}} arasında {count, plural, one {# durum} other {# durum}} dağıtıldı",
+      "errorGeneric": "Atamalar dağıtılamadı",
       "errorRunCompleted": "Bu çalıştırma tamamlandı ve artık değiştirilemez",
       "errorNeedUsers": "Dağıtım yapmak için en az bir proje üyesi seçin",
       "errorNoAssignable": "Bu çalıştırmada dağıtılacak durum yok"
@@ -4998,12 +5004,12 @@
       }
     },
     "recordKeys": {
-      "pageDescription": "PROJECT-TC-1234 gibi, bir kaydın hangi projeye ait olduğunu ve hangi tür kayıt olduğunu anlamayı kolaylaştıran kozmetik, proje önekli tanımlayıcıları yapılandırın. Altta yatan sayısal kimlik değişmez ve her yerde çalışmaya devam eder.",
+      "pageDescription": "PROJECT-TC-1234 gibi, bir kaydın hangi projeye ait olduğunu ve ne tür bir kayıt olduğunu anlamayı kolaylaştıran kozmetik, proje önekli tanımlayıcıları yapılandırın. Altta yatan sayısal kimlik değişmez ve her yerde çalışmaya devam eder.",
       "title": "Proje önekli kayıt anahtarları",
-      "description": "Etkinleştirildiğinde, kayıtlar proje kodunu, bir tür belirtecini ve kaydın sayısal kimliğini birleştiren isteğe bağlı bir anahtar görüntüler. Her projenin kodunu Proje Ayarları → Gelişmiş bölümünden ayarlayın.",
+      "description": "Etkinleştirildiğinde, kayıtlar; proje kodunu, bir tür belirteci ve kaydın sayısal kimliğini birleştiren isteğe bağlı bir anahtar görüntüler. Her projenin kodunu Proje Ayarları → Gelişmiş bölümünden ayarlayın.",
       "toggleAriaLabel": "Proje önekli kayıt anahtarlarını aç/kapat",
       "tokensHeading": "Tür belirteçleri",
-      "tokensHelp": "Her kayıt türü için kullanılan belirteç. 1–6 büyük harf, rakam veya tire içermez. Belirteçler benzersiz olmalıdır.",
+      "tokensHelp": "Her kayıt türü için kullanılan belirteç. 1–6 büyük harf, rakam veya kısa çizgi yok. Belirteçler benzersiz olmalıdır.",
       "invalidToken": "Geçersiz",
       "duplicateToken": "Yinelenen belirteç",
       "tokensSaved": "Tür belirteçleri kaydedildi.",
@@ -5262,7 +5268,7 @@
         "purgeConfirmationMessage": "{itemType} tablosundan bu satırı kalıcı olarak silmek istediğinizden emin misiniz? Bu işlem geri alınamaz ve ilgili verileri silebilir."
       },
       "filterTypesPlaceholder": "Öğe türlerini filtrele...",
-      "summary": "{count, plural, =0 {Çöp kutusu boş} one {Çöp kutusunda # öğe var} other {Çöp kutusunda # öğe var}}"
+      "summary": "{count, plural, =0 {Çöp kutusu boş} one {Çöp kutusunda # öğe} other {Çöp kutusunda # öğe}}"
     },
     "notifications": {
       "title": "Bildirim Yönetimi",
@@ -5605,7 +5611,7 @@
         "defaultTemperature": "Varsayılan Sıcaklık",
         "defaultMaxTokens": "Varsayılan Maksimum Jeton Sayısı",
         "repoContextBudgetLabel": "Depo Bağlam Bütçesi (QuickScript)",
-        "repoContextBudgetAuto": "Modelin ~{window} bağlam penceresine göre otomatik boyutlandırıldı — üretim başına yaklaşık {budget} token depo kodu.",
+        "repoContextBudgetAuto": "Modelin ~{window} bağlam penceresine göre otomatik olarak boyutlandırılır — her üretim için yaklaşık {budget} token'lık depo kodu.",
         "timeout": "İstek Zaman Aşımı (ms)",
         "timeoutDescription": "Yapay zeka modelinin yanıtını beklemek için maksimum süre (5000-600000 ms). Akış istekleri için geçerli değildir.",
         "streamingEnabled": "Akışı Etkinleştir",
@@ -6348,7 +6354,7 @@
       "documentation": "## Dokümantasyon\nEk detaylar, referanslar ve destekleyici materyaller.\n\n- Teknik özellikler\n- Tasarım belgeleri\n- Harici referanslar\n- Toplantı notları ve kararlar",
       "automaticCompletion": "## Son Tarihte Otomatik Tamamlama\nSon tarihine ulaşıldığında bu kilometre taşını otomatik olarak tamamlanmış olarak işaretler.\n\n- Kilometre taşı, son tarihte planlanan saatte tamamlanacaktır.\n- Tamamlanma durumundan bağımsız olarak kapanması gereken zaman sınırlı kilometre taşları için kullanışlıdır.\n- Son tarihten önce kilometre taşını manuel olarak tamamlayarak geçersiz kılınabilir.\n- Bir son tarih belirlenmesini gerektirir.",
       "notifyDaysBefore": "## Son Teslim Tarihinden Günler Önce Bildirim Gönder\nKilometre taşı son teslim tarihi yaklaştığında atanmış ekip üyelerine bildirim gönderin.\n\n- Bildirimleri etkinleştirmek için açın, devre dışı bırakmak için kapatın\n- Hatırlatıcı göndermeye başlamak için son teslim tarihinden kaç gün önce olduğunu girin\n- Bildirimler, bu kilometre taşı içindeki test çalıştırmalarına ve oturumlarına atanmış kullanıcılara gönderilir\n- Süresi geçmiş kilometre taşları tamamlanana kadar hatırlatıcı göndermeye devam edecektir",
-      "managedByJira": "Bu kilometre taşının adı, tarihleri ve durumu Jira tarafından yönetilmektedir. Bunları burada güncellemek için orada değişiklik yapın."
+      "managedByJira": "Bu dönüm noktasının adı, tarihleri ve durumu Jira tarafından yönetilmektedir. Bunları burada güncellemek için orada değişiklik yapın."
     },
     "session": {
       "name": "## Oturum Adı\nTest oturumunuzun amacını belirten açık ve açıklayıcı bir ad.\n\n- Benzersiz ve anlamlı olmalıdır\n- Ekip üyelerinin neyin test edildiğini anlamalarına yardımcı olur\n- Raporlarda ve izlemede kullanılır",
@@ -6424,9 +6430,9 @@
       "endpoint": "## API Uç Noktası\nLLM sağlayıcısının API'si için temel URL.\n\n- OpenAI, Anthropic ve Gemini için boş bırakın — resmi URL'ler otomatik olarak kullanılır\n- Ollama (örneğin `http://localhost:11434`), Azure OpenAI ve Özel LLM için gereklidir\n- Herhangi bir sağlayıcı için isteğe bağlıdır — URL'sini girerek OpenAI uyumlu bir proxy'ye (örneğin LiteLLM) işaret edin\n- **Özel/dahili adresler** (localhost, 127.0.0.1, özel IP'ler, bulut meta verileri) `ALLOWED_PRIVATE_HOSTS` ortam değişkeni aracılığıyla açıkça izin verilmedikçe engellenir",
       "deploymentName": "## Azure Dağıtım Adı\nAzure OpenAI model dağıtımınızın adı.\n\n- Azure OpenAI Studio'da Dağıtımlar altında bulunur\n- Model adından farklıdır — örneğin `my-gpt4-deploy`, `gpt-4` ile eşleşir\n- Yalnızca Azure OpenAI için gereklidir",
       "defaultModel": "## Varsayılan Model\nBu entegrasyonla yapay zeka istekleri için kullanılan model.\n\n- OpenAI, Anthropic ve Gemini için — kullanılabilir modeller API anahtarınızdan otomatik olarak alınır\n- Modelin sağlayıcı hesabınızda etkinleştirildiğinden emin olun\n- Örnek: `gpt-4o`, `claude-3-5-sonnet-20241022`, `gemini-1.5-pro`",
-      "maxTokensPerRequest": "## İstek Başına Maksimum Token\nModelin tek bir yanıtta üretebileceği **_çıktı_ tokenleri için kesin üst sınır**.\n\n- Modelin **yanıtının** uzunluğunu sınırlar — ona gönderdiğiniz bağlam miktarını değil\n- Bundan daha fazlasını isteyen istekler, **modele ulaşmadan önce reddedilir**\n- Bunu modelinizin gerçek maksimum çıktısına ayarlayın — örneğin Claude Opus/Sonnet için `128000`, Claude Haiku için `64000`, Gemini için `65536`, GPT-4o için `16384`\n- Çok düşük olursa → AI özellikleri başarısız olur veya kesilmiş çıktı üretir",
-      "defaultMaxTokens": "## Varsayılan Maksimum Token\nBir özellik kendi değerini ayarlamadığında bir isteğin talep ettiği **varsayılan _çıktı_ uzunluğu**.\n\n- Modelin **yanıtının** ne kadar uzun olabileceğini kontrol eder, _İstek Başına Maksimum Token_ ile sınırlıdır\n- Çoğu AI özelliği kendi değerini **Yönetim → İstem Yapılandırması**'nda ayarlar; bu sadece yedek değerdir\n- QuickScript'in modele gönderdiği depo kodu miktarını **kontrol etmez** — bu bütçe, modelin bağlam penceresinden otomatik olarak türetilir\n- Bunu _İstek Başına Maksimum Token_'den küçük veya eşit tutun",
-      "repoContextBudget": "## Depo Bağlam Bütçesi\nBir betik oluştururken QuickScript'in modele bağlı deponuzun kodundan ne kadarını beslediği.\n\n- Seçilen modelin girdi bağlam penceresine göre **otomatik olarak ayarlanır** — burada yapılandırılacak bir şey yoktur\n- Daha büyük bağlamlı modeller (Claude, Gemini) daha fazlasını alır; küçük yerel modeller taşmayacak güvenli bir miktar alır\n- Daha fazla bağlam, betiği gerçek sayfa nesnelerinize ve fixture'larınıza dayandırır — oluşturulan betiğin uzunluğunu değiştirmez",
+      "maxTokensPerRequest": "## İstek Başına Maksimum Token\nModelin tek bir yanıtta üretebileceği **_çıktı_ tokenlarının kesin üst sınırı**.\n\n- Modelin **yanıtının** uzunluğunu sınırlar — ona gönderdiğiniz bağlam miktarını değil\n- Bundan daha fazlasını isteyen istekler **modele ulaşmadan önce reddedilir**\n- Bunu modelinizin gerçek maksimum çıktısına ayarlayın — örneğin Claude Opus/Sonnet için `128000`, Claude Haiku için `64000`, Gemini için `65536`, GPT-4o için `16384`\n- Çok düşükse → yapay zeka özellikleri başarısız olur veya kesilmiş çıktı üretir",
+      "defaultMaxTokens": "## Varsayılan Maksimum Token\nBir özellik kendi değerini belirlemediğinde bir isteğin talep ettiği **varsayılan _çıktı_ uzunluğu**.\n\n- Modelin **yanıtının** ne kadar uzun olabileceğini kontrol eder, _İstek Başına Maksimum Token_ ile sınırlıdır\n- Çoğu yapay zeka özelliği kendi değerini **Yönetici → İstem Yapılandırması** bölümünde ayarlar; bu yalnızca yedek değerdir\n- QuickScript'in modele ne kadar depo kodu gönderdiğini **kontrol etmez** — bu bütçe modelin bağlam penceresinden otomatik olarak hesaplanır\n- Bunu ≤ _İstek Başına Maksimum Token_ olarak tutun",
+      "repoContextBudget": "## Depo Bağlam Bütçesi\nQuickScript'in bir komut dosyası oluştururken bağlı deponuzun kodunun ne kadarını modele beslediği.\n\n- Seçilen modelin girdi bağlam penceresine göre **otomatik olarak ayarlanır** — burada yapılandırılacak bir şey yoktur\n- Daha büyük bağlamlı modeller (Claude, Gemini) daha fazlasını alır; küçük yerel modeller taşmayacak güvenli bir miktar alır\n- Daha fazla bağlam, komut dosyasını gerçek sayfa nesnelerinize ve fixture'larınıza dayandırır — oluşturulan komut dosyasının uzunluğunu değiştirmez",
       "maxRequestsPerMinute": "## Dakika Başına Maksimum İstek Sayısı\nBu sağlayıcıya dakikada yapılabilecek API çağrılarının sayısını sınırlar.\n\n- Sağlayıcı planınızın hız sınırına uyacak şekilde ayarlayın\n- Fazla istekler reddedilmez, kuyruğa alınır\n- Planınızın sınırı için sağlayıcınızın belgelerini kontrol edin",
       "costPerInputToken": "## Giriş Tokeni Başına Maliyet (USD)\nModele gönderilen her giriş (istem) tokeni için USD cinsinden maliyet.\n\n- Maliyet takibi ve bütçe uyarıları için kullanılır\n- Bunu sağlayıcınızın fiyatlandırma sayfasında bulabilirsiniz\n- Örnek: `0.000005` = milyon giriş tokeni başına 5 ABD doları",
       "costPerOutputToken": "## Çıktı Tokeni Başına Maliyet (USD)\nModel tarafından üretilen her çıktı (tamamlama) tokeni için USD cinsinden maliyet.\n\n- Genellikle girdi tokeni maliyetinden daha yüksektir\n- Maliyet takibi ve bütçe uyarıları için kullanılır\n- Örnek: `0.000015` = milyon çıktı tokeni başına 15 $",
@@ -7042,8 +7048,8 @@
           "description": "Proje ilerlemesi, kilometre taşları ve tamamlanma durumu"
         },
         "milestoneReadiness": {
-          "label": "Kilometre Taşı Hazırlığı",
-          "description": "Kilometre taşına göre sürüm hazırlığı: kapsam dahilindeki sorunların tamamen geçme yüzdesi ve duruma göre sayılar"
+          "label": "Dönüm Noktası Hazırlığı",
+          "description": "Dönüm noktası başına sürüm hazırlığı: kapsamdaki sorunların tam olarak geçme yüzdesi ve durum bazında sayılar"
         },
         "sessionAnalysis": {
           "label": "Oturum Analizi",
@@ -7402,11 +7408,11 @@
     "metrics": {
       "percentReady": "Hazır (%)",
       "passed": "Geçti",
-      "failed": "Başarısız",
-      "inProgress": "Devam Ediyor",
+      "failed": "Arızalı",
+      "inProgress": "Devam etmekte",
       "notRun": "Çalıştırılmadı",
       "uncovered": "Kapsanmamış",
-      "totalIssues": "Toplam Sorun",
+      "totalIssues": "Toplam Sorunlar",
       "testResults": "Test Sonuçları",
       "testResultCount": "Test Sonuçları Sayısı",
       "passRate": "Geçme Oranı (%)",

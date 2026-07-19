@@ -12,6 +12,7 @@ import {
   processProjectsWithEffectiveMembers,
 } from "~/utils/projectUtils";
 
+import { CreateFirstProjectCard } from "@/components/CreateFirstProjectCard";
 import { Loading } from "@/components/Loading";
 import { NoProjectsCard } from "@/components/NoProjectsCard";
 import { InitialPreferencesDialog } from "@/components/onboarding/InitialPreferencesDialog";
@@ -32,6 +33,11 @@ type AuthUser = {
   name?: string | null;
   access?: string | null;
 };
+
+// The seeded sample project (db/seedDemoProject.ts) is identified only by its
+// unique name. A workspace whose sole project is the Demo Project is treated as
+// a fresh install and nudged to create a real project.
+const DEMO_PROJECT_NAME = "Demo Project";
 
 const Welcome = ({ user: _user }: { user: AuthUser }) => {
   const t = useTranslations();
@@ -161,6 +167,15 @@ const Welcome = ({ user: _user }: { user: AuthUser }) => {
     ? projectsForCards.length
     : 0;
 
+  const isAdmin = session.user.access === "ADMIN";
+
+  // A fresh install still has the seeded Demo Project. Prompt admins to create
+  // their own project while keeping the Demo Project visible to explore.
+  const showGetStartedPrompt =
+    isAdmin &&
+    projectCount === 1 &&
+    projectsForCards[0]?.name === DEMO_PROJECT_NAME;
+
   const toggleCollapse = () => {
     setIsTransitioning(true);
     if (panelRef.current) {
@@ -230,16 +245,19 @@ const Welcome = ({ user: _user }: { user: AuthUser }) => {
                   className="grid grid-cols-[repeat(auto-fit,minmax(350px,1fr))] gap-4"
                 >
                   {projectCount === 0 ? (
-                    <NoProjectsCard isAdmin={session.user.access === "ADMIN"} />
+                    <NoProjectsCard isAdmin={isAdmin} />
                   ) : (
-                    projectsForCards?.map((project) => (
-                      <ProjectCard
-                        key={project.id}
-                        project={project}
-                        users={project.users}
-                        isLoadingIssueCounts={isLoadingIssueCounts}
-                      />
-                    ))
+                    <>
+                      {showGetStartedPrompt && <CreateFirstProjectCard />}
+                      {projectsForCards?.map((project) => (
+                        <ProjectCard
+                          key={project.id}
+                          project={project}
+                          users={project.users}
+                          isLoadingIssueCounts={isLoadingIssueCounts}
+                        />
+                      ))}
+                    </>
                   )}
                 </div>
               </CardContent>

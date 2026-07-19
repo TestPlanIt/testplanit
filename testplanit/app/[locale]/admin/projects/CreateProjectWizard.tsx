@@ -496,8 +496,16 @@ export function CreateProjectWizard({
     defaultValues: defaultValues,
   });
 
-  const { watch, setValue, reset, control, handleSubmit, setError, getValues } =
-    form;
+  const {
+    watch,
+    setValue,
+    reset,
+    control,
+    handleSubmit,
+    setError,
+    getValues,
+    setFocus,
+  } = form;
 
   const isCompleted = watch("isCompleted");
   const defaultAccessType = watch("defaultAccessType");
@@ -1968,7 +1976,13 @@ export function CreateProjectWizard({
         }
       }}
     >
-      <DialogContent className="sm:max-w-[900px] lg:max-w-[1200px] h-[90vh] flex flex-col overflow-hidden">
+      <DialogContent
+        className="sm:max-w-[900px] lg:max-w-[1200px] h-[90vh] flex flex-col overflow-hidden"
+        onOpenAutoFocus={(e) => {
+          e.preventDefault();
+          setFocus("name");
+        }}
+      >
         <Form {...form}>
           <form
             onSubmit={(e) => {

@@ -18,7 +18,7 @@
     "searchTags": "태그를 검색하세요...",
     "searchRuns": "{count, plural, =0 {테스트 실행 횟수 검색} one {테스트 실행 횟수 검색} other {테스트 실행 횟수 검색}}",
     "searchSessions": "{count, plural, =0 {검색 세션} one {검색 # 세션} other {검색 # 세션}}",
-    "searchMilestones": "{count, plural, =0 {마일스톤 검색} other {마일스톤 # 개 검색}}",
+    "searchMilestones": "{count, plural, =0 {마일스톤 검색} other {마일스톤 #개 검색}}",
     "search": "찾다...",
     "defaultOption": "기본 옵션",
     "yes": "예",
@@ -753,10 +753,10 @@
       "sortByDate": "날짜순으로 정렬",
       "testRuns": "{count, plural, =0 {테스트 실행 없음} =1 {테스트 실행 1회} other {테스트 실행 횟수}}",
       "sessions": "{count, plural, =0 {세션 없음} =1 {세션 1개} other {세션 수}}",
-      "issues": "{count, plural, =0 {문제 없음} =1 {문제 1개} other {문제 #개}}",
+      "issues": "{count, plural, =0 {이슈 없음} =1 {이슈 1개} other {이슈 #개}}",
       "noOptions": "사용 가능한 옵션이 없습니다",
       "multiConfiguration": "다중 구성 그룹의 일부",
-      "compositionLocked": "구성 잠김 — 케이스 세트가 고정되었습니다",
+      "compositionLocked": "구성이 잠김 — 케이스 세트가 고정되었습니다",
       "otherConfigurations": "기타 구성",
       "selected": "선택됨: {count}",
       "defaultProjectAccess": "기본 프로젝트 액세스",
@@ -1389,14 +1389,14 @@
           "milestoneSync": {
             "title": "마일스톤 동기화",
             "description": "이 트래커의 시간 기반 아티팩트에서 TestPlanIt 마일스톤을 동기화합니다.",
-            "enableLabel": "마일스톤 동기화 사용",
+            "enableLabel": "마일스톤 동기화 활성화",
             "releasesLabel": "릴리스",
             "sprintsLabel": "스프린트",
             "kindsLabel": "동기화할 종류",
             "autoTrackLabel": "새 항목 자동 추가",
-            "autoTrackProjectsLabel": "연결된 프로젝트에서 새 마일스톤 검색",
+            "autoTrackProjectsLabel": "새 마일스톤을 위해 연결된 프로젝트 스캔",
             "settingsSaved": "마일스톤 동기화 설정이 저장되었습니다",
-            "saveError": "마일스톤 동기화 설정 저장에 실패했습니다"
+            "saveError": "마일스톤 동기화 설정을 저장하는 데 실패했습니다"
           }
         },
         "integrationAssigned": "통합 작업이 성공적으로 완료되었습니다.",
@@ -1925,7 +1925,7 @@
           "lastFetched": "마지막으로 가져온",
           "filesCached": "캐시된 파일",
           "contentsCached": "콘텐츠 캐시됨",
-          "contentsIncomplete": "전체 {total}개 파일 중 {cached}개의 콘텐츠만 캐시되었습니다 — 생성된 스크립트는 누락된 파일을 사용하지 않습니다. 완료하려면 다시 새로고침하세요.",
+          "contentsIncomplete": "{total}개 파일 중 {cached}개의 콘텐츠만 캐시되었습니다 — 생성된 스크립트는 누락된 파일을 사용하지 않습니다. 완료하려면 다시 새로고침하세요.",
           "totalSize": "전체 크기"
         },
         "save": "설정 저장",
@@ -1971,12 +1971,12 @@
         "description": "프로젝트별로 특정 기능을 활성화/비활성화할 수 있는 토글 기능입니다. 새로운 토글 기능은 추가되는 대로 여기에 표시됩니다.",
         "recordKey": {
           "label": "프로젝트 코드",
-          "description": "{example}와 같은 장식용 레코드 키에 사용되는 짧은 코드입니다. 대문자 2~10자, 숫자 제외. 비워두면 일반 숫자 ID가 표시됩니다.",
+          "description": "{example}와 같은 표시용 레코드 키에 사용되는 짧은 코드입니다. 2~10자의 대문자로 숫자는 포함할 수 없습니다. 일반 숫자 ID를 표시하려면 비워 두세요.",
           "placeholder": "예: PROJECT",
           "previewLabel": "예시 키:",
           "useSuggestion": "제안된 코드 사용: {code}",
-          "invalid": "대문자 2~10자를 사용하세요(숫자 제외).",
-          "taken": "해당 코드는 이미 다른 프로젝트에서 사용 중입니다. 다른 코드를 선택하세요.",
+          "invalid": "2~10자의 대문자(숫자 제외)를 사용하세요.",
+          "taken": "해당 코드는 다른 프로젝트에서 이미 사용 중입니다. 다른 코드를 선택하세요.",
           "savedToast": "프로젝트 코드가 저장되었습니다.",
           "saveError": "프로젝트 코드를 저장할 수 없습니다. 다른 프로젝트에서 이미 사용 중일 수 있습니다."
         },
@@ -2014,10 +2014,10 @@
           "skippedToast": "{count, plural, =1 {1개의 초안 케이스가 시작되지 않은 상태이므로 건너뛰었습니다.} other {#개의 초안 케이스가 시작되지 않은 상태이므로 건너뛰었습니다.}}"
         },
         "autoLockComposition": {
-          "label": "실행 시작 시 테스트 실행 구성 잠금",
-          "description": "이 옵션을 활성화하면 테스트 실행의 케이스 구성이 실행이 진행 중 상태로 전환되는 순간 자동으로 잠깁니다. 잠금 상태에서는 실행에 포함된 케이스를 고정하여(추가, 제거, 순서 변경 불가) 실행 및 할당은 계속 진행할 수 있습니다. 실행을 생성한 사용자 또는 프로젝트 관리자가 잠금을 해제하여 케이스 구성을 변경할 수 있습니다.",
-          "enabledToast": "테스트 실행은 실행이 시작되면 구성이 잠깁니다",
-          "disabledToast": "테스트 실행이 더 이상 구성을 자동으로 잠그지 않습니다",
+          "label": "실행이 시작되면 테스트 실행 구성 잠금",
+          "description": "이 옵션을 활성화하면 테스트 실행이 진행 중 상태로 전환되는 즉시 해당 실행의 케이스 구성이 자동으로 잠깁니다. 잠금 상태에서는 실행에 포함된 케이스를 변경할 수 없지만(추가, 제거, 순서 변경 불가) 실행 및 할당은 계속할 수 있습니다. 실행 생성자 또는 프로젝트 관리자는 잠금을 해제하여 케이스 세트를 변경할 수 있습니다.",
+          "enabledToast": "테스트 실행은 실행이 시작되면 구성을 잠급니다",
+          "disabledToast": "테스트 실행은 더 이상 구성을 자동으로 잠그지 않습니다",
           "saveError": "구성 자동 잠금 설정을 업데이트하는 데 실패했습니다"
         },
         "editWindow": {
@@ -2157,7 +2157,7 @@
     "delete": {
       "title": "마일스톤 삭제",
       "confirmMessage": "마일스톤 {name}을 정말로 삭제하시겠습니까?",
-      "childrenWarning": "{count, plural, other {하위 마일스톤 및 하위 항목 #개도 함께 삭제됩니다.}}",
+      "childrenWarning": "{count, plural, other {하위 마일스톤 및 그 하위 마일스톤 #개}}도 함께 삭제됩니다.",
       "warning": "이 마일스톤은 프로젝트에서 삭제됩니다. 하지만 이 마일스톤에 대한 과거 데이터는 프로젝트에 계속 남아 있습니다.",
       "toast": {
         "loading": "마일스톤 삭제 중...",
@@ -2191,9 +2191,9 @@
       "importDescription": "TestPlanIt 마일스톤으로 동기화할 Jira 수정 버전 및 스프린트를 선택하세요.",
       "showClosed": "닫힌 항목 표시",
       "alreadyLinked": "이미 연결됨",
-      "selectedCount": "{count, plural, other {# 선택됨}}",
+      "selectedCount": "{count, plural, other {#개 선택됨}}",
       "confirmSelection": "선택 항목 가져오기",
-      "empty": "마일스톤이 없습니다",
+      "empty": "마일스톤을 찾을 수 없습니다",
       "previewFailed": "Jira에서 마일스톤을 불러오는 데 실패했습니다",
       "importFailed": "선택한 마일스톤을 가져오는 데 실패했습니다",
       "importStarted": "가져오기가 시작되었습니다",
@@ -2203,29 +2203,29 @@
       "searchPlaceholder": "릴리스 및 스프린트 검색...",
       "emptyFiltered": "필터 조건에 맞는 마일스톤이 없습니다.",
       "partialWarning": "일부 Jira 프로젝트를 가져올 수 없습니다:",
-      "importing": "Jira에서 마일스톤 {count, plural, other {#개}}를 가져오는 중…",
-      "completed": "Jira에서 마일스톤 {count, plural, other {#개}}를 가져왔습니다",
+      "importing": "Jira에서 {count, plural, other {마일스톤 #개}}를 가져오는 중…",
+      "completed": "Jira에서 {count, plural, other {마일스톤 #개}}를 가져왔습니다",
       "stillRunning": "가져오기가 백그라운드에서 계속 실행 중입니다 — 완료되면 마일스톤이 표시됩니다."
     },
     "sync": {
       "managedByJira": "Jira에서 관리됨",
       "lastSynced": "마지막 동기화: {time}",
       "openInJira": "Jira에서 열기",
-      "providerJira": "Jira",
+      "providerJira": "지라",
       "sourceBadge": "{provider} · {kind} · {state}",
       "syncNow": "지금 동기화",
       "unlinkMenuItem": "{provider}에서 연결 해제",
       "unlinkConfirmTitle": "마일스톤 연결을 해제하시겠습니까?",
-      "unlinkConfirmDescription": "이 작업은 트래커와의 동기화를 중지합니다. 필드가 다시 편집 가능해지고, 동기화된 이슈 링크는 수동으로 전환되며(유지하거나 제거할 수 있음), 이 아티팩트를 다시 가져오면 나중에 다시 연결할 수 있습니다.",
+      "unlinkConfirmDescription": "이렇게 하면 트래커와의 동기화가 중지됩니다. 필드가 다시 편집 가능해지고, 동기화된 이슈 링크는 수동으로 전환되어(유지하거나 제거할 수 있음) 나중에 이 아티팩트를 다시 가져오면 재연결할 수 있습니다.",
       "unlinkConfirmAction": "연결 해제",
-      "unlinkSuccess": "마일스톤이 트래커에서 연결 해제되었습니다.",
+      "unlinkSuccess": "마일스톤이 트래커와의 연결이 해제되었습니다.",
       "unlinkError": "마일스톤 연결 해제에 실패했습니다.",
       "sourceRemoved": "{provider}에서 원본이 삭제됨",
       "mergedInto": "{target}으로 병합됨"
     },
     "summary": {
-      "inScope": "{count, plural, other {# 범위 내}}",
-      "foundInTesting": "{count, plural, other {# 테스트에서 발견됨}}",
+      "inScope": "{count, plural, other {#개 범위 내}}",
+      "foundInTesting": "{count, plural, other {테스트 중 발견 #개}}",
       "includesChildMilestones": "하위 마일스톤 포함"
     },
     "burndown": {
@@ -2233,18 +2233,18 @@
       "remaining": "남은 항목",
       "ideal": "이상적",
       "today": "오늘",
-      "tooltipRemaining": "{count, number} 남음",
-      "heatAhead": "이상적인 진행보다 앞섬",
-      "heatOnTrack": "정상 진행",
-      "heatBehind": "목표보다 지연",
-      "tooltipBehind": "목표보다 {count, number} 지연",
-      "tooltipAhead": "이상적인 진행보다 {count, number} 앞섬"
+      "tooltipRemaining": "{count, number}개 남음",
+      "heatAhead": "이상보다 앞섬",
+      "heatOnTrack": "정상 진행 중",
+      "heatBehind": "이상보다 지연됨",
+      "tooltipBehind": "이상보다 {count, number}개 지연됨",
+      "tooltipAhead": "이상보다 {count, number}개 앞섬"
     },
     "members": {
       "cardTitle": "이슈",
       "inScope": "범위 내",
-      "foundInTesting": "테스트에서 발견됨",
-      "foundInTestingEmpty": "테스트에서 발견된 이슈가 없습니다.",
+      "foundInTesting": "테스트 중 발견",
+      "foundInTestingEmpty": "테스트 중 발견된 이슈가 없습니다.",
       "inScopeCrossBadge": "범위 내",
       "refresh": "새로 고침",
       "columnKey": "이름",
@@ -2261,7 +2261,7 @@
       "filterAllCoverage": "모든 커버리지",
       "filterAllSources": "모든 원본",
       "filterAllTypes": "모든 유형",
-      "empty": "이 마일스톤에 연결된 이슈가 아직 없습니다.",
+      "empty": "아직 이 마일스톤에 연결된 이슈가 없습니다.",
       "emptyFiltered": "현재 필터 조건에 맞는 이슈가 없습니다.",
       "unlink": "연결 해제",
       "managedByJira": "Jira에서 관리됨 — Jira의 버전/스프린트에서 제거하세요",
@@ -2272,20 +2272,20 @@
       "overflowTitle": "Jira의 추가 이슈",
       "overflowDescription": "이 이슈들은 연결된 Jira 버전/스프린트에 있지만 아직 여기에 연결되지 않았습니다.",
       "overflowCapped": "{cap, number}개로 제한됨 — Jira에 {overflowTotal, number}개 더 있음",
-      "overflowMoreAvailable": "Jira에서 {overflowTotal, number}개 더 사용 가능",
+      "overflowMoreAvailable": "Jira에 {overflowTotal, number}개 더 사용 가능",
       "overflowImportAction": "가져오기 및 연결",
-      "overflowImportSuccess": "가져오기가 시작되었습니다 — 동기화되면 이슈가 표시됩니다.",
+      "overflowImportSuccess": "가져오기가 시작되었습니다 — 동기화되는 대로 이슈가 표시됩니다.",
       "overflowImportError": "Jira에서 구성원 이슈를 가져오는 데 실패했습니다.",
       "emptyCta": "시작하려면 이슈를 연결하세요.",
       "columnDescription": "설명",
       "unlinkConfirmTitle": "이슈 연결을 해제하시겠습니까?",
-      "unlinkConfirmDescription": "이 작업은 이슈를 이 마일스톤에서 제거합니다. 이슈 자체는 유지되며 나중에 다시 연결할 수 있습니다.",
-      "totalsUncovered": "{count, plural, other {# 커버되지 않은 이슈}}",
+      "unlinkConfirmDescription": "이렇게 하면 이 마일스톤에서 이슈가 제거됩니다. 이슈 자체는 유지되며 나중에 다시 연결할 수 있습니다.",
+      "totalsUncovered": "{count, plural, other {커버되지 않은 이슈 #개}}",
       "percentReady": "{percent, number}% 준비됨",
-      "readinessSummary": "통과 {passed, number}건 · 실패 {failed, number}건 · 진행 중 {inProgress, number}건 · 미실행 {notRun, number}건 · 미포함 {uncovered, number}건 (총 {total, number}개 이슈 중)",
+      "readinessSummary": "통과 {passed, number} · 실패 {failed, number} · 진행 중 {inProgress, number} · 실행되지 않음 {notRun, number} · 커버되지 않음 {uncovered, number} (총 {total, number}개 이슈 중)",
       "filterHasUntested": "테스트되지 않은 케이스 있음",
       "createRunNoCases": "선택한 이슈 중 연결된 테스트 케이스가 있는 항목이 없습니다.",
-      "createTestRunDetailed": "테스트 실행 생성 ({issues, plural, other {# 이슈}} · {cases, plural, other {# 케이스}})"
+      "createTestRunDetailed": "테스트 실행 생성 ({issues, plural, other {이슈 #개}} · {cases, plural, other {케이스 #개}})"
     }
   },
   "sessions": {
@@ -2459,6 +2459,12 @@
       "contact": "프로젝트 접근 권한을 요청하려면 시스템 관리자에게 문의하십시오.",
       "adminAddProject": "지금 바로 첫 번째 프로젝트를 추가하여 시작해 보세요!",
       "footer": "테스트 계획 활동을 보고 참여하려면 접근 권한이 필요합니다."
+    },
+    "getStarted": {
+      "title": "시작하기",
+      "description": "계획을 시작할 준비가 되면 나만의 프로젝트를 추가하세요.",
+      "adminAddProject": "첫 번째 프로젝트를 만드세요",
+      "footer": "데모 프로젝트에는 언제든지 살펴보거나 삭제할 수 있는 샘플 데이터가 포함되어 있습니다."
     },
     "noProjectAccess": {
       "description": "이 프로젝트에 대한 접근 권한이 없습니다.",
@@ -3401,11 +3407,11 @@
       "deferredMessage": "이 첨부 파일은 저장하면 삭제됩니다."
     },
     "preview": {
-      "unavailable": "미리보기를 사용할 수 없습니다",
-      "tooLarge": "이 파일은 너무 커서 미리 볼 수 없습니다.",
-      "empty": "이 문서는 비어 있는 것 같습니다.",
-      "download": "보려면 다운로드하세요",
-      "slideCounter": "슬라이드 {current}/{total}",
+      "unavailable": "미리보기를 사용할 수 없음",
+      "tooLarge": "이 파일은 크기가 너무 커서 미리볼 수 없습니다.",
+      "empty": "이 문서는 비어 있는 것으로 보입니다.",
+      "download": "다운로드하여 보기",
+      "slideCounter": "{total}개 중 {current}번째 슬라이드",
       "previousSlide": "이전 슬라이드",
       "nextSlide": "다음 슬라이드"
     }
@@ -3519,49 +3525,49 @@
   },
   "runs": {
     "composition": {
-      "lock": "잠긴 사례",
+      "lock": "케이스 잠김",
       "unlock": "잠금 해제",
-      "locked": "구성이 잠겨 있음",
+      "locked": "구성 잠김",
       "lockHint": "이 실행에 포함된 케이스를 고정합니다. 사용자는 여전히 테스트 케이스를 할당하고 실행할 수 있습니다.",
       "lockedBy": "{name}님이 구성을 잠갔습니다.",
       "lockedAutomatically": "실행이 시작되어 구성이 자동으로 잠겼습니다.",
-      "frozenNotice": "구성이 잠겨 있어 테스트 케이스를 추가, 삭제 또는 순서 변경할 수 없습니다. 테스트 케이스는 계속 할당하고 실행할 수 있습니다.",
+      "frozenNotice": "구성이 잠겨 있습니다 — 테스트 케이스를 추가, 제거 또는 재정렬할 수 없습니다. 테스트 케이스를 할당하고 실행하는 것은 계속 가능합니다.",
       "lockError": "실행 구성을 잠그는 데 실패했습니다",
       "unlockError": "실행 구성을 잠금 해제하는 데 실패했습니다",
       "addBlocked": "이 실행의 구성이 잠겨 있어 테스트 케이스를 추가할 수 없습니다. 케이스 세트를 변경하려면 먼저 잠금을 해제하세요."
     },
     "distribute": {
-      "title": "과제 분배",
-      "description": "관련 사례를 함께 유지하면서 이 실행의 테스트 사례를 팀원들에게 균등하게 할당합니다.",
+      "title": "할당 배분",
+      "description": "관련 케이스를 함께 유지하면서 이 실행의 테스트 케이스를 팀원들에게 균등하게 할당합니다.",
       "selectUsers": "팀원",
       "usersPlaceholder": "팀원 선택",
       "scopeAllConfigs": "모든 구성",
       "scopeThisRun": "이 실행만",
       "strategyLabel": "구성 전략",
       "strategyKeepTogether": "구성을 함께 유지",
-      "strategyKeepTogetherHint": "각 테스터가 모든 구성에서 사례 세트를 담당합니다.",
+      "strategyKeepTogetherHint": "각 테스터는 모든 구성에서 케이스 세트를 소유합니다.",
       "strategySplitByConfig": "구성별로 분할",
-      "strategySplitByConfigHint": "각 테스터가 전체 구성을 담당합니다.",
-      "groupingLabel": "유사한 사례 그룹화",
-      "groupingHint": "동일한 섹션에 있고 태그를 공유하는 사례를 한 테스터에게 유지합니다.",
+      "strategySplitByConfigHint": "각 테스터는 전체 구성을 소유합니다.",
+      "groupingLabel": "유사한 케이스 그룹화",
+      "groupingHint": "동일한 섹션에 있고 태그를 공유하는 케이스를 한 테스터에게 유지합니다.",
       "balancingLabel": "균형 기준",
       "balancingEffort": "예상 시간",
-      "balancingCount": "사례 수",
-      "balancingFallbackHint": "이 사례들에는 예상 시간이 없어 대신 사례 수를 기준으로 균형을 맞춥니다.",
+      "balancingCount": "케이스 수",
+      "balancingFallbackHint": "이 케이스들에는 예상 시간이 없습니다 — 대신 케이스 수를 기준으로 균형을 맞춥니다.",
       "existingLabel": "기존 할당",
-      "existingOnlyUnassigned": "할당되지 않은 사례만 채우기",
-      "existingReassignAll": "전체 재할당",
+      "existingOnlyUnassigned": "할당되지 않은 케이스만 채우기",
+      "existingReassignAll": "모두 재할당",
       "previewTitle": "미리보기",
-      "previewNoUsers": "분배를 미리 보려면 팀원을 선택하세요.",
+      "previewNoUsers": "배분을 미리 보려면 팀원을 선택하세요.",
       "previewUser": "팀원",
-      "previewCases": "사례",
-      "previewSkipped": "{count, plural, other {# 개 사례가 건너뛰어짐}} (이미 할당되었거나 완료됨)",
+      "previewCases": "케이스",
+      "previewSkipped": "{count, plural, other {케이스 #개 건너뜀}} (이미 할당됨 또는 완료됨)",
       "confirming": "할당 중…",
-      "success": "{count, plural, other {# 개 사례}}를 {users, plural, other {# 명}} 팀원에게 분배했습니다",
-      "errorGeneric": "과제 분배에 실패했습니다",
+      "success": "{users, plural, other {팀원 #명}}에게 {count, plural, other {케이스 #개}}를 배분했습니다",
+      "errorGeneric": "할당을 배분하는 데 실패했습니다",
       "errorRunCompleted": "이 실행은 완료되어 더 이상 변경할 수 없습니다",
-      "errorNeedUsers": "분배할 프로젝트 멤버를 최소 한 명 선택하세요",
-      "errorNoAssignable": "이 실행에서 분배할 사례가 없습니다"
+      "errorNeedUsers": "배분할 프로젝트 구성원을 한 명 이상 선택하세요",
+      "errorNoAssignable": "이 실행에는 배분할 케이스가 없습니다"
     },
     "auditLog": {
       "trigger": "활동",
@@ -4998,17 +5004,17 @@
       }
     },
     "recordKeys": {
-      "pageDescription": "레코드가 속한 프로젝트와 레코드 종류를 쉽게 알아볼 수 있도록 PROJECT-TC-1234와 같은 장식용 프로젝트 접두사 식별자를 구성합니다. 기본 숫자 ID는 변경되지 않으며 모든 곳에서 계속 작동합니다.",
-      "title": "프로젝트 접두사 레코드 키",
-      "description": "활성화하면 레코드에 프로젝트 코드, 유형 토큰, 레코드의 숫자 ID를 결합한 선택적 키가 표시됩니다. 각 프로젝트의 코드는 프로젝트 설정 → 고급에서 설정하세요.",
-      "toggleAriaLabel": "프로젝트 접두사 레코드 키 전환",
+      "pageDescription": "PROJECT-TC-1234와 같이 프로젝트가 접두어로 붙은 표시용 식별자를 구성하여 어느 프로젝트에 속한 레코드인지, 어떤 종류의 레코드인지 쉽게 알아볼 수 있게 합니다. 기본 숫자 ID는 변경되지 않으며 계속 모든 곳에서 작동합니다.",
+      "title": "프로젝트 접두어 레코드 키",
+      "description": "이 옵션을 활성화하면 레코드에 프로젝트 코드, 유형 토큰, 레코드의 숫자 ID를 결합한 선택적 키가 표시됩니다. 각 프로젝트의 코드는 프로젝트 설정 → 고급에서 설정하세요.",
+      "toggleAriaLabel": "프로젝트 접두어 레코드 키 전환",
       "tokensHeading": "유형 토큰",
-      "tokensHelp": "각 레코드 종류에 사용되는 토큰입니다. 대문자 1~6자, 숫자나 하이픈은 사용할 수 없습니다. 토큰은 고유해야 합니다.",
+      "tokensHelp": "각 레코드 종류에 사용되는 토큰입니다. 1~6자의 대문자로 숫자나 하이픈은 포함할 수 없습니다. 토큰은 고유해야 합니다.",
       "invalidToken": "유효하지 않음",
       "duplicateToken": "중복된 토큰",
       "tokensSaved": "유형 토큰이 저장되었습니다.",
-      "enableSuccess": "프로젝트 접두사 레코드 키가 활성화되었습니다.",
-      "disableSuccess": "프로젝트 접두사 레코드 키가 비활성화되었습니다.",
+      "enableSuccess": "프로젝트 접두어 레코드 키가 활성화되었습니다.",
+      "disableSuccess": "프로젝트 접두어 레코드 키가 비활성화되었습니다.",
       "saveError": "저장할 수 없습니다. 다시 시도해 주세요."
     },
     "appConfig": {
@@ -5262,7 +5268,7 @@
         "purgeConfirmationMessage": "{itemType} 테이블에서 이 행을 영구적으로 삭제하시겠습니까? 이 작업은 되돌릴 수 없으며 관련 데이터도 삭제될 수 있습니다."
       },
       "filterTypesPlaceholder": "항목 유형 필터...",
-      "summary": "{count, plural, =0 {휴지통이 비어 있습니다} other {휴지통에 항목 #개가 있습니다}}"
+      "summary": "{count, plural, =0 {휴지통이 비어 있음} other {휴지통에 항목 #개}}"
     },
     "notifications": {
       "title": "알림 관리",
@@ -5604,8 +5610,8 @@
         "billingPeriodStartDayDescription": "청구 기간이 시작되는 날짜(1~31일)를 입력합니다. 29~31일의 경우 청구 기간이 더 짧은 달의 마지막 날을 사용합니다.",
         "defaultTemperature": "기본 온도",
         "defaultMaxTokens": "기본 최대 토큰",
-        "repoContextBudgetLabel": "저장소 컨텍스트 예산(QuickScript)",
-        "repoContextBudgetAuto": "모델의 약 {window} 컨텍스트 윈도우를 기준으로 자동 크기 조정됨 — 생성당 저장소 코드 약 {budget} 토큰입니다.",
+        "repoContextBudgetLabel": "리포지토리 컨텍스트 예산 (QuickScript)",
+        "repoContextBudgetAuto": "모델의 ~{window} 컨텍스트 윈도우를 기준으로 자동 크기 조정됨 — 생성당 약 {budget} 토큰의 리포지토리 코드.",
         "timeout": "요청 시간 초과(밀리초)",
         "timeoutDescription": "AI 모델 응답 대기 최대 시간(5000~600000ms). 스트리밍 요청에는 적용되지 않습니다.",
         "streamingEnabled": "스트리밍 활성화",
@@ -6348,7 +6354,7 @@
       "documentation": "## 문서\n추가 정보, 참고 자료 및 보충 자료.\n\n- 기술 사양\n- 설계 문서\n- 외부 참고 자료\n- 회의록 및 결정 사항",
       "automaticCompletion": "## 마감일 자동 완료\n마감일이 되면 이 마일스톤을 자동으로 완료로 표시합니다.\n\n- 마일스톤은 마감일의 예정된 시간에 완료됩니다.\n- 완료 여부와 관계없이 마감되어야 하는 시간 제한 마일스톤에 유용합니다.\n- 마감일 전에 수동으로 마일스톤을 완료하면 이 설정을 무시할 수 있습니다.\n- 마감일을 설정해야 합니다.",
       "notifyDaysBefore": "## 마감일 며칠 전 알림\n마일스톤 마감일이 다가오면 지정된 팀원에게 알림을 보냅니다.\n\n- 알림을 활성화하려면 켜고, 비활성화하려면 끄세요.\n- 마감일 며칠 전부터 알림을 보낼지 입력하세요.\n- 이 마일스톤 내의 테스트 실행 및 세션에 지정된 사용자에게 알림이 전송됩니다.\n- 마감일이 지난 마일스톤은 완료될 때까지 알림이 계속 전송됩니다.",
-      "managedByJira": "이 마일스톤의 이름, 날짜 및 상태는 Jira가 관리합니다. 여기에서도 해당 정보를 업데이트하려면 Jira에서 변경하십시오."
+      "managedByJira": "이 마일스톤의 이름, 날짜, 상태는 Jira에서 관리됩니다. 여기에서 업데이트하려면 Jira에서 변경하세요."
     },
     "session": {
       "name": "## 세션 이름\n테스트 세션의 목적을 명확하고 설명적으로 나타내는 이름입니다.\n\n- 고유하고 의미 있는 이름이어야 합니다.\n- 팀 구성원이 테스트 대상을 이해하는 데 도움이 됩니다.\n- 보고서 및 추적에 사용됩니다.",
@@ -6424,9 +6430,9 @@
       "endpoint": "## API 엔드포인트\nLLM 공급자 API의 기본 URL입니다.\n\n- OpenAI, Anthropic, Gemini의 경우 비워 두세요. 공식 URL이 자동으로 사용됩니다.\n- Ollama(예: `http://localhost:11434`), Azure OpenAI, Custom LLM의 경우 필수입니다.\n- 모든 공급자의 경우 선택 사항입니다. OpenAI 호환 프록시(예: LiteLLM)의 URL을 입력하여 해당 프록시를 가리키도록 설정할 수 있습니다.\n- **개인/내부 주소**(localhost, 127.0.0.1, 개인 IP, 클라우드 메타데이터)는 `ALLOWED_PRIVATE_HOSTS` 환경 변수를 통해 명시적으로 허용하지 않는 한 차단됩니다.",
       "deploymentName": "## Azure 배포 이름\nAzure OpenAI 모델 배포의 이름입니다.\n\n- Azure OpenAI Studio의 배포에서 찾을 수 있습니다.\n- 모델 이름과 다릅니다. 예: `my-gpt4-deploy`는 `gpt-4`에 해당합니다.\n- Azure OpenAI에만 필요합니다.",
       "defaultModel": "## 기본 모델\n이 통합을 통해 AI 요청에 사용되는 모델입니다.\n\n- OpenAI, Anthropic, Gemini의 경우 사용 가능한 모델이 API 키에서 자동으로 가져와집니다.\n- 공급자 계정에서 모델이 활성화되어 있는지 확인하세요.\n- 예시: `gpt-4o`, `claude-3-5-sonnet-20241022`, `gemini-1.5-pro`",
-      "maxTokensPerRequest": "## 요청당 최대 토큰 수\n모델이 단일 응답에서 생성할 수 있는 **_출력_ 토큰의 상한선**입니다.\n\n- 모델의 **응답** 길이를 제한합니다 — 전송하는 컨텍스트의 양이 아닙니다\n- 이 값을 초과하는 요청은 **모델에 도달하기 전에 거부**됩니다\n- 사용 중인 모델의 실제 최대 출력 값으로 설정하세요 — 예: Claude Opus/Sonnet은 `128000`, Claude Haiku는 `64000`, Gemini는 `65536`, GPT-4o는 `16384`\n- 값이 너무 낮으면 → AI 기능이 실패하거나 출력이 잘릴 수 있습니다",
-      "defaultMaxTokens": "## 기본 최대 토큰 수\n기능이 자체 값을 설정하지 않을 때 요청이 요청하는 **기본 _출력_ 길이**입니다.\n\n- 모델의 **응답** 길이를 제어하며, _요청당 최대 토큰 수_ 값을 초과할 수 없습니다\n- 대부분의 AI 기능은 **관리자 → 프롬프트 설정**에서 자체 값을 설정합니다. 이 값은 대체 값일 뿐입니다\n- QuickScript가 모델에 전송하는 저장소 코드의 양은 제어하지 **않습니다** — 해당 예산은 모델의 컨텍스트 윈도우에서 자동으로 산출됩니다\n- _요청당 최대 토큰 수_ 이하로 유지하세요",
-      "repoContextBudget": "## 저장소 컨텍스트 예산\nQuickScript가 스크립트를 생성할 때 연결된 저장소의 코드 중 모델에 얼마나 제공하는지를 나타냅니다.\n\n- 선택한 모델의 입력 컨텍스트 윈도우에 따라 **자동으로 설정**되며, 별도로 구성할 필요가 없습니다\n- 컨텍스트가 더 큰 모델(Claude, Gemini)은 더 많이 받고, 소형 로컬 모델은 오버플로우가 발생하지 않는 안전한 양을 받습니다\n- 더 많은 컨텍스트는 스크립트를 실제 페이지 객체 및 픽스처에 기반하게 하며, 생성된 스크립트의 길이를 바꾸지는 않습니다",
+      "maxTokensPerRequest": "## 요청당 최대 토큰 수\n모델이 단일 응답에서 생성할 수 있는 **출력 토큰의 상한선**입니다.\n\n- 모델의 **응답** 길이를 제한합니다 — 보내는 컨텍스트의 양이 아닙니다\n- 이 한도를 초과하는 요청은 **모델에 도달하기 전에 거부됩니다**\n- 모델의 실제 최대 출력값으로 설정하세요 — 예: Claude Opus/Sonnet은 `128000`, Claude Haiku는 `64000`, Gemini는 `65536`, GPT-4o는 `16384`\n- 너무 낮게 설정하면 → AI 기능이 실패하거나 잘린 출력이 생성됩니다",
+      "defaultMaxTokens": "## 기본 최대 토큰 수\n기능이 자체 값을 설정하지 않은 경우 요청이 요구하는 **기본 출력 길이**입니다.\n\n- 모델의 **응답** 길이를 제어하며, _요청당 최대 토큰 수_ 를 상한으로 합니다\n- 대부분의 AI 기능은 **관리자 → 프롬프트 설정**에서 자체 값을 설정합니다. 이 값은 대체 값일 뿐입니다\n- QuickScript가 모델에 전송하는 리포지토리 코드의 양은 제어하지 **않습니다** — 해당 예산은 모델의 컨텍스트 윈도우에서 자동으로 산출됩니다\n- _요청당 최대 토큰 수_ 이하로 유지하세요",
+      "repoContextBudget": "## 리포지토리 컨텍스트 예산\n스크립트를 생성할 때 QuickScript가 모델에 제공하는 연결된 리포지토리 코드의 양입니다.\n\n- 선택한 모델의 입력 컨텍스트 윈도우를 기준으로 **자동으로 설정**되며 여기서 별도로 구성할 항목은 없습니다\n- 컨텍스트가 더 큰 모델(Claude, Gemini)은 더 많이 받고, 작은 로컬 모델은 오버플로되지 않는 안전한 양을 받습니다\n- 더 많은 컨텍스트는 스크립트를 실제 페이지 객체 및 픽스처에 기반하게 하지만, 생성된 스크립트의 길이를 바꾸지는 않습니다",
       "maxRequestsPerMinute": "## 분당 최대 요청 수\n이 공급자에게 분당 할 수 있는 API 호출 횟수를 제한합니다.\n\n- 공급자 요금제의 요청 제한에 맞춰 설정하세요.\n- 초과 요청은 거부되지 않고 대기열에 저장됩니다.\n- 요금제별 제한 사항은 공급자 문서를 확인하세요.",
       "costPerInputToken": "## 입력 토큰당 비용(USD)\n모델에 전송되는 각 입력(프롬프트) 토큰에 대한 비용(USD)입니다.\n\n- 비용 추적 및 예산 알림에 사용됩니다.\n- 서비스 제공업체의 가격 페이지에서 확인할 수 있습니다.\n- 예: `0.000005` = 입력 토큰 백만 개당 5달러",
       "costPerOutputToken": "## 출력 토큰당 비용(USD)\n모델에서 생성된 각 출력(완료) 토큰의 비용(USD)입니다.\n\n- 일반적으로 입력 토큰 비용보다 높습니다.\n- 비용 추적 및 예산 알림에 사용됩니다.\n- 예: `0.000015` = 출력 토큰 백만 개당 15달러",
@@ -7042,8 +7048,8 @@
           "description": "프로젝트 진행 상황, 주요 일정 및 완료 현황"
         },
         "milestoneReadiness": {
-          "label": "마일스톤 준비도",
-          "description": "마일스톤별 릴리스 준비도: 대상 이슈 중 완전히 통과한 비율(%) 및 상태별 개수"
+          "label": "마일스톤 준비 상태",
+          "description": "마일스톤별 릴리스 준비 상태: 범위 내 이슈 중 완전히 통과한 비율 % 및 상태별 개수"
         },
         "sessionAnalysis": {
           "label": "세션 분석",
@@ -7402,10 +7408,10 @@
     "metrics": {
       "percentReady": "준비됨 (%)",
       "passed": "통과됨",
-      "failed": "실패함",
+      "failed": "실패",
       "inProgress": "진행 중",
-      "notRun": "실행 안 됨",
-      "uncovered": "미커버",
+      "notRun": "실행되지 않음",
+      "uncovered": "커버되지 않음",
       "totalIssues": "총 이슈 수",
       "testResults": "시험 결과",
       "testResultCount": "테스트 결과 집계",

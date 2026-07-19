@@ -18,7 +18,7 @@
     "searchTags": "タグを検索…",
     "searchRuns": "{count, plural, =0 {テスト実行を検索} one {テスト実行番号を検索} other {テスト実行番号を検索}}",
     "searchSessions": "{count, plural, =0 {セッションを検索} one {セッション番号を検索} other {セッション番号を検索}}",
-    "searchMilestones": "{count, plural, =0 {マイルストーンを検索} other {マイルストーン#件を検索}}",
+    "searchMilestones": "{count, plural, =0 {マイルストーンを検索} other {#件のマイルストーンを検索}}",
     "search": "検索…",
     "defaultOption": "デフォルトオプション",
     "yes": "はい",
@@ -753,10 +753,10 @@
       "sortByDate": "日付順に並べ替え",
       "testRuns": "{count, plural, =0 {テスト実行なし} =1 {テスト実行 1 回} other {テスト実行回数}}",
       "sessions": "{count, plural, =0 {セッションなし} =1 {セッション 1 件} other {セッション数}}",
-      "issues": "{count, plural, =0 {問題なし} =1 {問題 1件} other {問題 #件}}",
+      "issues": "{count, plural, =0 {問題なし} =1 {1件の問題} other {#件の問題}}",
       "noOptions": "利用可能なオプションはありません",
       "multiConfiguration": "複数構成グループの一部",
-      "compositionLocked": "構成がロックされました — ケースセットは固定されています",
+      "compositionLocked": "構成がロックされています — ケースセットは固定されています",
       "otherConfigurations": "その他の構成",
       "selected": "選択済み: {count}",
       "defaultProjectAccess": "デフォルトのプロジェクトアクセス",
@@ -1394,7 +1394,7 @@
             "sprintsLabel": "スプリント",
             "kindsLabel": "同期する種類",
             "autoTrackLabel": "新しいものを自動的に追加する",
-            "autoTrackProjectsLabel": "接続されたこれらのプロジェクトで新しいマイルストーンをスキャンする",
+            "autoTrackProjectsLabel": "これらの接続されたプロジェクトを新しいマイルストーンについてスキャンする",
             "settingsSaved": "マイルストーン同期設定を保存しました",
             "saveError": "マイルストーン同期設定の保存に失敗しました"
           }
@@ -1924,8 +1924,8 @@
           "statusPending": "爽快…",
           "lastFetched": "最後に取得したデータ",
           "filesCached": "キャッシュされたファイル",
-          "contentsCached": "キャッシュされたコンテンツ",
-          "contentsIncomplete": "{total}件中{cached}件のファイルコンテンツのみがキャッシュされています。生成されたスクリプトは不足しているファイルを使用しません。完了するには再度更新してください。",
+          "contentsCached": "コンテンツがキャッシュされました",
+          "contentsIncomplete": "{total}件中{cached}件のファイルコンテンツのみキャッシュされています — 生成されたスクリプトは不足しているファイルを使用しません。完了するには再度更新してください。",
           "totalSize": "総サイズ"
         },
         "save": "設定を保存",
@@ -1971,14 +1971,14 @@
         "description": "プロジェクトごとに、独自の機能設定を切り替えることができます。新しい設定項目は、導入され次第ここに表示されます。",
         "recordKey": {
           "label": "プロジェクトコード",
-          "description": "{example} のようなコスメティックなレコードキーに使用される短いコードです。2～10文字の大文字を使用し、数字は使用できません。空欄の場合は数値IDのみが表示されます。",
-          "placeholder": "例：PROJECT",
+          "description": "{example} のような見せかけのレコードキーに使用される短いコードです。2〜10文字の大文字で、数字は使用できません。空欄にすると、単純な数値IDが表示されます。",
+          "placeholder": "例: PROJECT",
           "previewLabel": "キーの例：",
-          "useSuggestion": "提案されたコードを使用：{code}",
-          "invalid": "2～10文字の大文字を使用してください（数字は不可）。",
-          "taken": "そのコードは既に他のプロジェクトで使用されています。別のコードを選択してください。",
+          "useSuggestion": "推奨コードを使用: {code}",
+          "invalid": "2〜10文字の大文字を使用してください（数字は不可）。",
+          "taken": "そのコードは既に別のプロジェクトで使用されています。別のコードを選択してください。",
           "savedToast": "プロジェクトコードを保存しました。",
-          "saveError": "プロジェクトコードを保存できませんでした。既に他のプロジェクトで使用されている可能性があります。"
+          "saveError": "プロジェクトコードを保存できませんでした。既に別のプロジェクトで使用されている可能性があります。"
         },
         "reviewWorkflow": {
           "label": "レビューワークフローを有効にする",
@@ -2015,9 +2015,9 @@
         },
         "autoLockComposition": {
           "label": "実行開始時にテスト実行の構成をロックする",
-          "description": "有効にすると、テスト実行が進行中の状態に移行した瞬間に、そのテスト実行のケース構成が自動的にロックされます。ロックすると、実行に含まれるケースが固定され(追加、削除、並べ替えが不可)、実行と割り当ては継続して行えます。実行の作成者またはプロジェクト管理者は、ロックを解除してケースセットを変更できます。",
-          "enabledToast": "テスト実行は、実行開始時に構成をロックするようになります",
-          "disabledToast": "テスト実行は構成を自動的にロックしなくなります",
+          "description": "有効にすると、テスト実行が進行中の状態になった時点で、ケースの構成が自動的にロックされます。ロックすると、実行に含まれるケースが固定され（追加、削除、並べ替えができなくなります）、実行と割り当ては継続できます。実行の作成者またはプロジェクト管理者は、ケースセットを変更するためにロックを解除できます。",
+          "enabledToast": "テスト実行は、実行開始時に構成がロックされます",
+          "disabledToast": "テスト実行は、構成が自動的にロックされなくなります",
           "saveError": "構成の自動ロック設定の更新に失敗しました"
         },
         "editWindow": {
@@ -2083,7 +2083,7 @@
   "milestones": {
     "title": "マイルストーンの詳細",
     "auditLog": {
-      "description": "このマイルストーンに記録されたすべての変更。"
+      "description": "このマイルストーンに関するすべての変更が記録されています。"
     },
     "fields": {
       "parent": "親のマイルストーン",
@@ -2157,7 +2157,7 @@
     "delete": {
       "title": "マイルストーンを削除",
       "confirmMessage": "マイルストーン {name}を削除してもよろしいですか?",
-      "childrenWarning": "その子マイルストーンと子孫マイルストーン{count, plural, other {#件}}も削除されます。",
+      "childrenWarning": "{count, plural, other {その#件の子および子孫のマイルストーンも削除されます。}}",
       "warning": "このマイルストーンはプロジェクトから削除されます。このマイルストーンの履歴データはプロジェクト内に残ります。",
       "toast": {
         "loading": "マイルストーンを削除しています...",
@@ -2188,10 +2188,10 @@
     },
     "import": {
       "importTitle": "Jira からインポート",
-      "importDescription": "TestPlanIt マイルストーンとして同期する Jira の修正バージョンとスプリントを選択してください。",
-      "showClosed": "クローズ済みを表示",
-      "alreadyLinked": "すでにリンクされています",
-      "selectedCount": "{count, plural, other {# 件選択済み}}",
+      "importDescription": "TestPlanIt マイルストーンとして同期する Jira の Fix Version とスプリントを選択してください。",
+      "showClosed": "終了したものを表示",
+      "alreadyLinked": "既にリンクされています",
+      "selectedCount": "{count, plural, other {#件選択済み}}",
       "confirmSelection": "選択項目をインポート",
       "empty": "マイルストーンが見つかりません",
       "previewFailed": "Jira からマイルストーンを読み込めませんでした",
@@ -2203,29 +2203,29 @@
       "searchPlaceholder": "リリースとスプリントを検索…",
       "emptyFiltered": "フィルター条件に一致するマイルストーンはありません。",
       "partialWarning": "一部の Jira プロジェクトを取得できませんでした：",
-      "importing": "Jira から {count, plural, other {# 件のマイルストーン}} をインポート中…",
-      "completed": "Jira から {count, plural, other {# 件のマイルストーン}} をインポートしました",
+      "importing": "{count, plural, other {#件のマイルストーン}}を Jira からインポート中…",
+      "completed": "{count, plural, other {#件のマイルストーン}}を Jira からインポートしました",
       "stillRunning": "インポートはバックグラウンドで実行中です — 完了するとマイルストーンが表示されます。"
     },
     "sync": {
       "managedByJira": "Jira によって管理されています",
       "lastSynced": "最終同期: {time}",
-      "openInJira": "Jiraで開く",
-      "providerJira": "ジラ",
-      "sourceBadge": "{provider}・{kind}・{state}",
+      "openInJira": "Jira で開く",
+      "providerJira": "Jira",
+      "sourceBadge": "{provider} · {kind} · {state}",
       "syncNow": "今すぐ同期",
       "unlinkMenuItem": "{provider} からリンクを解除",
       "unlinkConfirmTitle": "マイルストーンのリンクを解除しますか？",
-      "unlinkConfirmDescription": "これによりトラッカーとの同期が停止します: フィールドは再度編集可能になり、同期された問題のリンクは手動管理になります(保持または削除はご自身で選択できます)。後でこのアーティファクトを再度インポートすることで、再リンクも可能です。",
+      "unlinkConfirmDescription": "これにより、トラッカーとの同期が停止します。フィールドは再度編集可能になり、同期された問題のリンクは手動管理になります（保持または削除は自由です）。後でこのアーティファクトを再度インポートすれば、再リンクが可能です。",
       "unlinkConfirmAction": "リンクを解除",
       "unlinkSuccess": "マイルストーンのトラッカーとのリンクを解除しました。",
       "unlinkError": "マイルストーンのリンク解除に失敗しました。",
       "sourceRemoved": "{provider} でソースが削除されました",
-      "mergedInto": "{target} に統合されました"
+      "mergedInto": "{target} にマージされました"
     },
     "summary": {
-      "inScope": "{count, plural, other {# 件が対象範囲内}}",
-      "foundInTesting": "{count, plural, other {テストで# 件検出}}",
+      "inScope": "{count, plural, other {#件が対象}}",
+      "foundInTesting": "{count, plural, other {#件がテストで発見}}",
       "includesChildMilestones": "子マイルストーンを含む"
     },
     "burndown": {
@@ -2237,55 +2237,55 @@
       "heatAhead": "理想より進んでいる",
       "heatOnTrack": "順調",
       "heatBehind": "理想より遅れている",
-      "tooltipBehind": "理想より {count, number} 遅れている",
-      "tooltipAhead": "{count, number}件、理想より進んでいる"
+      "tooltipBehind": "理想より{count, number}件遅れている",
+      "tooltipAhead": "理想より{count, number}件進んでいる"
     },
     "members": {
       "cardTitle": "問題",
-      "inScope": "対象範囲内",
-      "foundInTesting": "テストで検出",
-      "foundInTestingEmpty": "テストで検出された問題はありません。",
-      "inScopeCrossBadge": "対象範囲内",
-      "refresh": "リフレッシュ",
+      "inScope": "対象",
+      "foundInTesting": "テストで発見",
+      "foundInTestingEmpty": "テストで発見された問題はありません。",
+      "inScopeCrossBadge": "対象",
+      "refresh": "更新",
       "columnKey": "名前",
       "columnStatus": "状態",
       "columnCoverage": "カバレッジ",
       "columnSource": "ソース",
       "sourceSynced": "同期済み",
       "sourceManual": "マニュアル",
-      "coveragePassed": "合格",
-      "coverageFailed": "失敗",
+      "coveragePassed": "合格した",
+      "coverageFailed": "失敗した",
       "coverageInProgress": "進行中",
       "coverageNotRun": "未実行",
       "coverageUncovered": "未カバー",
       "filterAllCoverage": "すべてのカバレッジ",
       "filterAllSources": "すべてのソース",
       "filterAllTypes": "すべてのタイプ",
-      "empty": "このマイルストーンにリンクされた問題はまだありません。",
+      "empty": "このマイルストーンにはまだ問題がリンクされていません。",
       "emptyFiltered": "現在のフィルターに一致する問題はありません。",
       "unlink": "リンクを解除",
       "managedByJira": "Jira によって管理されています — Jira のバージョン/スプリントから削除してください",
-      "linkSuccess": "問題をこのマイルストーンにリンクしました。",
-      "linkError": "問題をこのマイルストーンにリンクできませんでした。",
-      "unlinkSuccess": "問題をこのマイルストーンから削除しました。",
-      "unlinkError": "このマイルストーンから問題を削除できませんでした。",
-      "overflowTitle": "Jira の他の問題",
-      "overflowDescription": "これらの問題はリンクされている Jira のバージョン/スプリントに含まれていますが、まだここにリンクされていません。",
-      "overflowCapped": "{cap, number} 件で上限に達しました — Jiraにさらに {overflowTotal, number} 件あります",
-      "overflowMoreAvailable": "Jira にさらに {overflowTotal, number} 件利用可能です",
+      "linkSuccess": "問題がこのマイルストーンにリンクされました。",
+      "linkError": "このマイルストーンへの問題のリンクに失敗しました。",
+      "unlinkSuccess": "問題がこのマイルストーンから削除されました。",
+      "unlinkError": "このマイルストーンからの問題の削除に失敗しました。",
+      "overflowTitle": "Jira にさらに問題があります",
+      "overflowDescription": "これらの問題はリンクされた Jira のバージョン/スプリントに含まれていますが、まだここにはリンクされていません。",
+      "overflowCapped": "{cap, number}件で上限に達しています — Jira にさらに{overflowTotal, number}件あります",
+      "overflowMoreAvailable": "Jira にさらに{overflowTotal, number}件利用可能です",
       "overflowImportAction": "インポートしてリンク",
       "overflowImportSuccess": "インポートを開始しました — 同期されると問題が表示されます。",
-      "overflowImportError": "Jira からメンバーの問題をインポートできませんでした。",
-      "emptyCta": "問題をリンクして開始してください。",
+      "overflowImportError": "Jira からメンバーの問題のインポートに失敗しました。",
+      "emptyCta": "開始するには問題をリンクしてください。",
       "columnDescription": "説明",
       "unlinkConfirmTitle": "問題のリンクを解除しますか？",
-      "unlinkConfirmDescription": "これによりこのマイルストーンから問題が削除されます。問題自体は保持され、後で再度リンクできます。",
-      "totalsUncovered": "{count, plural, other {未カバーの問題 # 件}}",
+      "unlinkConfirmDescription": "これにより、このマイルストーンから問題が削除されます。問題自体は保持され、後で再度リンクできます。",
+      "totalsUncovered": "{count, plural, other {#件の未カバーの問題}}",
       "percentReady": "{percent, number}% 準備完了",
-      "readinessSummary": "成功 {passed, number} 件 · 失敗 {failed, number} 件 · 進行中 {inProgress, number} 件 · 未実行 {notRun, number} 件 · 未対応 {uncovered, number} 件（全 {total, number} 件の課題中）",
+      "readinessSummary": "{passed, number}件合格 · {failed, number}件失敗 · {inProgress, number}件進行中 · {notRun, number}件未実行 · {uncovered, number}件未カバー（全{total, number}件の問題中）",
       "filterHasUntested": "未テストのケースあり",
-      "createRunNoCases": "選択した問題にリンクされたテストケースはありません。",
-      "createTestRunDetailed": "テスト実行を作成 ({issues, plural, other {# 件の問題}} · {cases, plural, other {# 件のケース}})"
+      "createRunNoCases": "選択した問題にはリンクされたテストケースがありません。",
+      "createTestRunDetailed": "テスト実行を作成（{issues, plural, other {#件の問題}} · {cases, plural, other {#件のケース}}）"
     }
   },
   "sessions": {
@@ -2459,6 +2459,12 @@
       "contact": "プロジェクトへのアクセスを要求するには、システム管理者に連絡してください。",
       "adminAddProject": "始めるには最初のプロジェクトを追加してください。",
       "footer": "テスト計画アクティビティを表示および参加するにはアクセスが必要です。"
+    },
+    "getStarted": {
+      "title": "はじめに",
+      "description": "計画を開始する準備ができたら、独自のプロジェクトを追加してください。",
+      "adminAddProject": "最初のプロジェクトを作成する",
+      "footer": "デモプロジェクトには、いつでも確認または削除できるサンプルデータが含まれています。"
     },
     "noProjectAccess": {
       "description": "このプロジェクトへのアクセス権がありません。",
@@ -2648,7 +2654,7 @@
       "purple": "紫",
       "orange": "オレンジ",
       "accessible": "アクセス可能",
-      "accessibledark": "アクセシブル(ダーク)"
+      "accessibledark": "アクセシブル（ダーク）"
     }
   },
   "repository": {
@@ -3405,7 +3411,7 @@
       "tooLarge": "このファイルはプレビューするには大きすぎます。",
       "empty": "このドキュメントは空のようです。",
       "download": "表示するにはダウンロードしてください",
-      "slideCounter": "{current} / {total}スライド",
+      "slideCounter": "{current} / {total} スライド",
       "previousSlide": "前のスライド",
       "nextSlide": "次のスライド"
     }
@@ -3519,49 +3525,49 @@
   },
   "runs": {
     "composition": {
-      "lock": "ケースがロックされました",
+      "lock": "ケースロック済み",
       "unlock": "ロック解除",
-      "locked": "構成はロックされています",
-      "lockHint": "このテスト実行に含まれるケースを固定します。ユーザーはテストケースの割り当てや実行を続けて行えます。",
-      "lockedBy": "構成は{name}によってロックされました。",
+      "locked": "構成がロックされました",
+      "lockHint": "この実行に含まれるケースを固定します。ユーザーはテストケースの割り当てと実行を続けることができます。",
+      "lockedBy": "{name} によって構成がロックされました。",
       "lockedAutomatically": "実行開始時に構成が自動的にロックされました。",
-      "frozenNotice": "構成がロックされているため、テストケースの追加、削除、順序の変更はできません。テストケースの割り当てや実行は引き続き行えます。",
-      "lockError": "実行の構成のロックに失敗しました",
-      "unlockError": "実行の構成のロック解除に失敗しました",
-      "addBlocked": "このテスト実行の構成はロックされているため、テストケースを追加できません。ケースセットを変更するには、まずロックを解除してください。"
+      "frozenNotice": "構成はロックされています — テストケースの追加、削除、並べ替えはできません。テストケースの割り当てと実行は引き続き行えます。",
+      "lockError": "実行構成のロックに失敗しました",
+      "unlockError": "実行構成のロック解除に失敗しました",
+      "addBlocked": "この実行の構成はロックされているため、テストケースを追加できません。ケースセットを変更するには、まずロックを解除してください。"
     },
     "distribute": {
       "title": "割り当てを分配",
-      "description": "関連するケースをまとめたまま、このランのテストケースをチームメンバー間で均等に割り当てます。",
+      "description": "関連するケースをまとめながら、この実行のテストケースをチームメンバーに均等に割り当てます。",
       "selectUsers": "チームメンバー",
       "usersPlaceholder": "チームメンバーを選択",
       "scopeAllConfigs": "すべての構成",
-      "scopeThisRun": "このランのみ",
-      "strategyLabel": "構成戦略",
+      "scopeThisRun": "この実行のみ",
+      "strategyLabel": "構成の戦略",
       "strategyKeepTogether": "構成をまとめる",
-      "strategyKeepTogetherHint": "各テスターがすべての構成にわたるケースのセットを担当します。",
-      "strategySplitByConfig": "構成別に分割",
-      "strategySplitByConfigHint": "各テスターが構成全体を担当します。",
-      "groupingLabel": "類似ケースをグループ化",
-      "groupingHint": "同じセクションに属し、タグを共有するテストケースを1人のテスターにまとめます。",
-      "balancingLabel": "バランス基準",
+      "strategyKeepTogetherHint": "各テスターは、すべての構成にわたるケースのセットを担当します。",
+      "strategySplitByConfig": "構成ごとに分割",
+      "strategySplitByConfigHint": "各テスターは構成全体を担当します。",
+      "groupingLabel": "類似のケースをグループ化",
+      "groupingHint": "同じセクション内でタグを共有するケースを、1人のテスターにまとめます。",
+      "balancingLabel": "バランスの基準",
       "balancingEffort": "推定時間",
       "balancingCount": "ケース数",
-      "balancingFallbackHint": "これらのケースには推定値がありません — 代わりにケース数でバランスを取ります。",
+      "balancingFallbackHint": "これらのケースには見積もりがありません — 代わりにケース数でバランスを取ります。",
       "existingLabel": "既存の割り当て",
       "existingOnlyUnassigned": "未割り当てのケースのみ埋める",
       "existingReassignAll": "すべて再割り当て",
       "previewTitle": "プレビュー",
-      "previewNoUsers": "分配をプレビューするには、チームメンバーを選択してください。",
+      "previewNoUsers": "分配をプレビューするにはチームメンバーを選択してください。",
       "previewUser": "チームメンバー",
       "previewCases": "ケース",
-      "previewSkipped": "{count, plural, other {#件のケースがスキップされました}} (割り当て済みまたは完了済み)",
+      "previewSkipped": "{count, plural, other {#件のケースがスキップされました}}（既に割り当てまたは完了済み）",
       "confirming": "割り当て中…",
-      "success": "{users, plural, other {#人のメンバー}}に{count, plural, other {#件のケース}}を分配しました",
+      "success": "{count, plural, other {#件のケース}}を{users, plural, other {#人のメンバー}}に分配しました",
       "errorGeneric": "割り当ての分配に失敗しました",
-      "errorRunCompleted": "このランは完了しているため、変更できません",
-      "errorNeedUsers": "配布先のプロジェクトメンバーを1人以上選択してください",
-      "errorNoAssignable": "このランには分配可能なケースがありません"
+      "errorRunCompleted": "この実行は完了しており、変更できません",
+      "errorNeedUsers": "分配先として、少なくとも1人のプロジェクトメンバーを選択してください",
+      "errorNoAssignable": "この実行には分配するケースがありません"
     },
     "auditLog": {
       "trigger": "活動",
@@ -4998,12 +5004,12 @@
       }
     },
     "recordKeys": {
-      "pageDescription": "PROJECT-TC-1234のような、コスメティックでプロジェクトごとに接頭辞が付いた識別子を設定します。これにより、どのプロジェクトに属するレコードか、どの種類のレコードかが一目でわかります。内部の数値IDは変更されず、これまでと同様にどこでも利用できます。",
+      "pageDescription": "PROJECT-TC-1234 のような、プロジェクトを識別しやすくするための見せかけのプロジェクト接頭辞付き識別子を設定します。レコードがどのプロジェクトに属し、どの種類のレコードであるかが分かりやすくなります。基となる数値IDは変更されず、すべての場所で引き続き機能します。",
       "title": "プロジェクト接頭辞付きレコードキー",
-      "description": "有効にすると、レコードにはプロジェクトコード、種類のトークン、レコードの数値IDを組み合わせたオプションのキーが表示されます。各プロジェクトのコードは、プロジェクト設定 → 高度な設定で設定してください。",
+      "description": "有効にすると、レコードにはプロジェクトコード、種類トークン、レコードの数値IDを組み合わせたオプションのキーが表示されます。各プロジェクトのコードは、プロジェクト設定 → 高度な設定で設定します。",
       "toggleAriaLabel": "プロジェクト接頭辞付きレコードキーの切り替え",
       "tokensHeading": "種類トークン",
-      "tokensHelp": "各種のレコードに使用されるトークンです。1～6文字の大文字を使用し、数字やハイフンは使用できません。トークンは一意である必要があります。",
+      "tokensHelp": "各種類のレコードに使用されるトークンです。1〜6文字の大文字で、数字やハイフンは使用できません。トークンは一意である必要があります。",
       "invalidToken": "無効",
       "duplicateToken": "重複したトークン",
       "tokensSaved": "種類トークンを保存しました。",
@@ -5261,8 +5267,8 @@
         "restoreConfirmationMessage": "{itemType} テーブルからこの行を復元してもよろしいですか? 関連データも復元される可能性があります。",
         "purgeConfirmationMessage": "{itemType} テーブルからこの行を完全に削除してもよろしいですか? この操作は元に戻すことができず、関連データが削除される可能性があります。"
       },
-      "filterTypesPlaceholder": "アイテムの種類をフィルタリング…",
-      "summary": "{count, plural, =0 {ゴミ箱は空です} other {ゴミ箱に#件のアイテムがあります}}"
+      "filterTypesPlaceholder": "項目タイプをフィルタリング…",
+      "summary": "{count, plural, =0 {ゴミ箱は空です} other {ゴミ箱内に#件のアイテム}}"
     },
     "notifications": {
       "title": "通知管理",
@@ -5604,8 +5610,8 @@
         "billingPeriodStartDayDescription": "請求期間の開始日（1～31日）。29～31の値は、日数の少ない月の最終日を使用します。",
         "defaultTemperature": "デフォルト温度",
         "defaultMaxTokens": "デフォルトの最大トークン数",
-        "repoContextBudgetLabel": "リポジトリコンテキスト予算 (QuickScript)",
-        "repoContextBudgetAuto": "モデルの約{window}のコンテキストウィンドウに基づいて自動調整されます。1回の生成あたりリポジトリコードは約{budget}トークンです。",
+        "repoContextBudgetLabel": "リポジトリコンテキスト予算（QuickScript）",
+        "repoContextBudgetAuto": "モデルの約{window}のコンテキストウィンドウから自動調整されます — 生成ごとに約{budget}トークンのリポジトリコードです。",
         "timeout": "リクエストタイムアウト（ミリ秒）",
         "timeoutDescription": "AIモデルからの応答を待つ最大時間（5000～600000ミリ秒）。ストリーミングリクエストには適用されません。",
         "streamingEnabled": "ストリーミングを有効にする",
@@ -6348,7 +6354,7 @@
       "documentation": "## ドキュメント\n追加の詳細、参考資料、およびサポート資料。\n\n- 技術仕様\n- 設計ドキュメント\n- 外部参照\n- 会議の議事録と決定事項",
       "automaticCompletion": "## 期日自動完了\n期日が来ると、このマイルストーンを自動的に完了としてマークします。\n\n- マイルストーンは期日の予定時刻に完了します\n- 完了ステータスに関係なく閉じる必要がある時間指定のマイルストーンに役立ちます\n- 期日前にマイルストーンを手動で完了することで上書きできます\n- 期日を設定する必要があります",
       "notifyDaysBefore": "## 期日前に通知\nマイルストーンの期日が近づくと、割り当てられたチームメンバーに通知を送信します。\n\n- 通知を有効にするにはオンに切り替え、無効にするにはオフにします\n- 期日の何日前にリマインダーの送信を開始するかを入力します\n- 通知は、このマイルストーン内のテスト実行とセッションに割り当てられたユーザーに送信されます\n- 期限を過ぎたマイルストーンは、完了するまでリマインダーを送信し続けます",
-      "managedByJira": "このマイルストーンの名前、日付、ステータスはJiraによって管理されています。こちらで更新するには、そちらで変更してください。"
+      "managedByJira": "このマイルストーンの名前、日付、状態は Jira によって管理されています。こちらで更新するには、そちらで変更してください。"
     },
     "session": {
       "name": "## セッション名\nテストセッションの目的を明確に示す説明的な名前。\n\n- ユニークで意味のあるものにする必要があります\n- チームメンバーがテスト対象を理解するのに役立ちます\n- レポートや追跡で使用されます",
@@ -6424,9 +6430,9 @@
       "endpoint": "## APIエンドポイント\nLLMプロバイダーのAPIのベースURL。\n\n- OpenAI、Anthropic、Geminiの場合は空白のままにしてください。公式URLが自動的に使用されます。\n- Ollama（例：`http://localhost:11434`）、Azure OpenAI、カスタムLLMには必須です。\n- どのプロバイダーでもオプションです。OpenAI互換プロキシ（例：LiteLLM）を指定するには、そのURLを入力します。\n- **プライベート/内部アドレス**（localhost、127.0.0.1、プライベートIP、クラウドメタデータ）は、`ALLOWED_PRIVATE_HOSTS`環境変数で明示的に許可されていない限りブロックされます。",
       "deploymentName": "## Azure デプロイメント名\nAzure OpenAI モデルデプロイメントの名前。\n\n- Azure OpenAI Studio の「デプロイメント」に表示されます。\n- モデル名とは異なります。例: `my-gpt4-deploy` は `gpt-4` にマッピングされます。\n- Azure OpenAI でのみ必要です。",
       "defaultModel": "## デフォルトモデル\nこの統合でAIリクエストに使用されるモデル。\n\n- OpenAI、Anthropic、Geminiの場合、利用可能なモデルはAPIキーから自動的に取得されます。\n- プロバイダーアカウントでモデルが有効になっていることを確認してください。\n- 例: `gpt-4o`、`claude-3-5-sonnet-20241022`、`gemini-1.5-pro`",
-      "maxTokensPerRequest": "## リクエストあたりの最大トークン数\nモデルが単一の応答で生成できる**_出力_トークンの上限**です。\n\n- モデルの**返答**の長さを制限します — 送信するコンテキストの量ではありません\n- これを超えるトークン数を要求すると、**モデルに到達する前に拒否されます**\n- モデルの実際の最大出力に設定してください — 例：Claude Opus/Sonnetは`128000`、Claude Haikuは`64000`、Geminiは`65536`、GPT-4oは`16384`\n- 低すぎると → AI機能が失敗するか、出力が途中で切れます",
-      "defaultMaxTokens": "## デフォルト最大トークン数\n機能が独自の値を設定していない場合にリクエストが要求する**デフォルトの_出力_長**です。\n\n- モデルの**返答**の長さを制御します。これは_リクエストあたりの最大トークン数_によって制限されます\n- ほとんどのAI機能は**管理 → プロンプト設定**で独自の値を設定します。これはあくまでフォールバックです\n- QuickScriptがモデルに送信するリポジトリコードの量は制御**しません** — その予算はモデルのコンテキストウィンドウから自動的に算出されます\n- _リクエストあたりの最大トークン数_以下に設定してください",
-      "repoContextBudget": "## リポジトリコンテキスト予算\n接続されたリポジトリのコードのうち、スクリプト生成時にQuickScriptがモデルに渡す量です。\n\n- 選択したモデルの入力コンテキストウィンドウから**自動的に設定**されます — ここで設定する項目はありません\n- より大きなコンテキストを持つモデル（Claude、Geminiなど）はより多く取得し、小規模なローカルモデルはオーバーフローしない安全な量を取得します\n- コンテキストが多いほど、スクリプトは実際のページオブジェクトやフィクスチャに基づいたものになります — 生成されるスクリプトの長さが変わるわけではありません",
+      "maxTokensPerRequest": "## リクエストごとの最大トークン数\nモデルが1回の応答で生成できる**_出力_トークンの上限**です。\n\n- モデルの**返信**の長さを制限します — 送信するコンテキストの量ではありません\n- これを超えるリクエストは、**モデルに到達する前に拒否されます**\n- モデルの実際の最大出力に設定してください — 例: Claude Opus/Sonnet は `128000`、Claude Haiku は `64000`、Gemini は `65536`、GPT-4o は `16384`\n- 低すぎると → AI機能が失敗するか、出力が切り捨てられます",
+      "defaultMaxTokens": "## デフォルトの最大トークン数\n機能が独自の値を設定していない場合にリクエストが要求する**デフォルトの_出力_の長さ**です。\n\n- モデルの**返信**の長さを制御し、_リクエストごとの最大トークン数_によって制限されます\n- ほとんどのAI機能は**管理 → プロンプト設定**で独自の値を設定します。これはフォールバックにすぎません\n- QuickScript がモデルに送信するリポジトリコードの量は制御**しません** — その予算はモデルのコンテキストウィンドウから自動的に算出されます\n- _リクエストごとの最大トークン数_以下に保ってください",
+      "repoContextBudget": "## リポジトリコンテキスト予算\nスクリプトを生成する際に、QuickScript が接続されたリポジトリのコードをどれだけモデルに送るかを示します。\n\n- 選択したモデルの入力コンテキストウィンドウから**自動的に設定**されます — ここで設定する項目はありません\n- コンテキストが大きいモデル（Claude、Gemini）はより多く受け取り、小さなローカルモデルは溢れない安全な量を受け取ります\n- コンテキストが多いほど、実際のページオブジェクトやフィクスチャに基づいたスクリプトになります — 生成されるスクリプトの長さが変わるわけではありません",
       "maxRequestsPerMinute": "## 1分あたりの最大リクエスト数\nこのプロバイダに対して1分あたりに実行できるAPI呼び出しの数を制限します。\n\n- プロバイダプランのレート制限に合わせて設定します。\n- 超過リクエストは拒否されず、キューに格納されます。\n- プランの制限については、プロバイダのドキュメントを確認してください。",
       "costPerInputToken": "## 入力トークンあたりのコスト (USD)\nモデルに送信される入力 (プロンプト) トークンごとのコスト (USD)。\n\n- コスト追跡と予算アラートに使用されます。\n- プロバイダーの料金ページで確認できます。\n- 例: `0.000005` = 100万入力トークンあたり5ドル",
       "costPerOutputToken": "## 出力トークンあたりのコスト (USD)\nモデルによって生成される出力 (完了) トークンごとのコスト (USD)。\n\n- 通常は入力トークンのコストよりも高くなります。\n- コスト追跡と予算アラートに使用されます。\n- 例: `0.000015` = 100万出力トークンあたり 15 ドル",
@@ -7043,7 +7049,7 @@
         },
         "milestoneReadiness": {
           "label": "マイルストーンの準備状況",
-          "description": "マイルストーンごとのリリース準備状況：対象課題のうち完全合格した割合、および状態別件数"
+          "description": "マイルストーンごとのリリース準備状況: 対象の問題が完全に合格している割合と、状態ごとの件数"
         },
         "sessionAnalysis": {
           "label": "セッション分析",
@@ -7400,13 +7406,13 @@
       "tag": "タグ"
     },
     "metrics": {
-      "percentReady": "準備完了率（%）",
-      "passed": "合格",
-      "failed": "不合格",
+      "percentReady": "準備完了（%）",
+      "passed": "合格した",
+      "failed": "失敗した",
       "inProgress": "進行中",
       "notRun": "未実行",
       "uncovered": "未カバー",
-      "totalIssues": "総課題数",
+      "totalIssues": "問題の総数",
       "testResults": "検査結果",
       "testResultCount": "テスト結果の数",
       "passRate": "合格率（％）",
