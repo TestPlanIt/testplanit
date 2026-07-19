@@ -377,12 +377,76 @@ describe("TipTapEditor", () => {
       const dragEvent = fireEvent.dragOver(editorContainer, {
         dataTransfer: {
           files: [],
+          types: ["Files"],
           dropEffect: "none",
         },
       });
 
       // The dragOver event should be handled (preventDefault called)
       expect(dragEvent).toBe(false); // fireEvent returns false when preventDefault was called
+    });
+
+    it("leaves non-file drags to ProseMirror so blocks stay reorderable", async () => {
+      const TipTapEditorComponent = (await import("./TipTapEditor")).default;
+
+      const { container } = render(<TipTapEditorComponent {...defaultProps} />);
+
+      const editorContainer = container.firstChild as Element;
+
+      const dragEvent = fireEvent.dragOver(editorContainer, {
+        dataTransfer: {
+          files: [],
+          types: ["text/html"],
+          dropEffect: "none",
+        },
+      });
+
+      // preventDefault must NOT be called: the block-reordering drag belongs to
+      // ProseMirror, and claiming it here would force a "copy" drop effect.
+      expect(dragEvent).toBe(true);
+    });
+
+    it("stops editor drags from reaching a page-level react-dnd backend", async () => {
+      const TipTapEditorComponent = (await import("./TipTapEditor")).default;
+
+      const { container } = render(<TipTapEditorComponent {...defaultProps} />);
+
+      const editorContainer = container.firstChild as Element;
+      const onWindow = {
+        dragstart: vi.fn(),
+        dragenter: vi.fn(),
+        dragover: vi.fn(),
+        drop: vi.fn(),
+        dragend: vi.fn(),
+      };
+      Object.entries(onWindow).forEach(([type, fn]) =>
+        window.addEventListener(type, fn)
+      );
+
+      try {
+        const dataTransfer = {
+          files: [],
+          types: ["text/html"],
+          dropEffect: "none",
+        };
+        fireEvent.dragStart(editorContainer, { dataTransfer });
+        fireEvent.dragEnter(editorContainer, { dataTransfer });
+        fireEvent.dragOver(editorContainer, { dataTransfer });
+        fireEvent.drop(editorContainer, { dataTransfer });
+        fireEvent.dragEnd(editorContainer, { dataTransfer });
+
+        // react-dnd's HTML5Backend listens on window: its dragstart handler
+        // calls preventDefault() on drags it did not start, which cancels
+        // block reordering outright, and its dragover handler stamps
+        // dropEffect="none". No editor drag event may reach it.
+        Object.entries(onWindow).forEach(([type, fn]) =>
+          expect(fn, `${type} escaped the editor`).not.toHaveBeenCalled()
+        );
+      } finally {
+        Object.entries(onWindow).forEach(([type, fn]) =>
+          window.removeEventListener(type, fn)
+        );
+      }
     });
   });
 
