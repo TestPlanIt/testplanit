@@ -269,15 +269,20 @@ export const AttachmentsDisplay: React.FC<AttachmentsProps> = ({
             <div className="p-2 w-full">
               <div className="flex flex-col items-center p-2 w-full h-full mb-2">
                 {/* Clickable title - always shows display value (which may include pending edits) */}
-                <div
-                  onClick={() => handleSelect(sortedAttachments, index)}
-                  className="text-lg font-bold text-center mb-2 cursor-pointer line-clamp-2 hover:line-clamp-none"
-                >
-                  {renderFieldWithDifferences(
-                    displayValues.name,
-                    previousAttachment?.name
-                  )}
-                </div>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div
+                      onClick={() => handleSelect(sortedAttachments, index)}
+                      className="text-lg font-bold text-center mb-2 cursor-pointer w-full max-w-full truncate [&_div]:truncate"
+                    >
+                      {renderFieldWithDifferences(
+                        displayValues.name,
+                        previousAttachment?.name
+                      )}
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>{displayValues.name}</TooltipContent>
+                </Tooltip>
                 <div
                   className={`flex w-full max-h-96 overflow-hidden ${
                     attachment.mimeType === "text/uri-list"
