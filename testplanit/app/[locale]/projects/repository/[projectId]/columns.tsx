@@ -367,6 +367,21 @@ const NameCell = React.memo(function NameCell({
     return getFolderPath(folder.id);
   }, [folder, allFolders, folderPathMap]);
 
+  const showFolderInfo = Boolean(
+    (viewType && viewType !== "folders" && folder) ||
+      (showDescendants && folder)
+  );
+
+  // When the folder chip is shown (e.g. "Show all descendants"), split the
+  // column between the case name and the chip so both fit within the column
+  // instead of overflowing when it is narrow. The name keeps priority; the
+  // chip shrinks — truncating the folder name — as the column narrows.
+  const folderChipReserve = 150;
+  const nameMaxWidth = showFolderInfo
+    ? Math.max(columnSize - folderChipReserve, 150)
+    : columnSize;
+  const folderChipMaxWidth = Math.max(columnSize - nameMaxWidth, 48);
+
   if (isRunMode && canAddEditResults) {
     const handleClick = () => {
       if (isSoftDeletedInRun) return;
@@ -374,10 +389,6 @@ const NameCell = React.memo(function NameCell({
       params.set("selectedCase", id.toString());
       router.replace(`${pathname}?${params.toString()}`);
     };
-
-    const showFolderInfo =
-      (viewType && viewType !== "folders" && folder) ||
-      (showDescendants && folder);
 
     return (
       <div className="flex items-center">
@@ -398,11 +409,7 @@ const NameCell = React.memo(function NameCell({
             isSoftDeletedInRun ? "cursor-default" : "cursor-pointer",
             isSoftDeletedInRun && "line-through text-muted-foreground"
           )}
-          style={{
-            maxWidth: showFolderInfo
-              ? Math.max(columnSize - 150, 150)
-              : columnSize,
-          }}
+          style={{ maxWidth: nameMaxWidth }}
           onClick={handleClick}
         >
           {name}
@@ -415,7 +422,8 @@ const NameCell = React.memo(function NameCell({
               <TooltipTrigger asChild>
                 <button
                   type="button"
-                  className="ms-2 text-muted-foreground text-xs bg-muted px-2 py-0.5 rounded truncate max-w-[150px] flex items-center hover:bg-muted/80 transition-colors cursor-pointer"
+                  className="ms-2 text-muted-foreground text-xs bg-muted px-2 py-0.5 rounded flex items-center min-w-0 hover:bg-muted/80 transition-colors cursor-pointer"
+                  style={{ maxWidth: folderChipMaxWidth }}
                   onClick={(e) => {
                     e.stopPropagation();
                     e.preventDefault();
@@ -426,7 +434,7 @@ const NameCell = React.memo(function NameCell({
                   }}
                 >
                   <Folder className="w-3 h-3 me-1 shrink-0" />
-                  {folder.name}
+                  <span className="truncate">{folder.name}</span>
                 </button>
               </TooltipTrigger>
               <TooltipContent side="top" className="max-w-md">
@@ -438,10 +446,6 @@ const NameCell = React.memo(function NameCell({
       </div>
     );
   }
-
-  const showFolderInfo =
-    (viewType && viewType !== "folders" && folder) ||
-    (showDescendants && folder);
 
   return (
     <div className="flex items-center">
@@ -482,11 +486,7 @@ const NameCell = React.memo(function NameCell({
       >
         <div
           className="truncate whitespace-nowrap overflow-hidden"
-          style={{
-            maxWidth: showFolderInfo
-              ? Math.max(columnSize - 150, 150)
-              : columnSize,
-          }}
+          style={{ maxWidth: nameMaxWidth }}
         >
           {name}
           {/* The link icon signals "opens a new page" — only true when the
@@ -505,7 +505,8 @@ const NameCell = React.memo(function NameCell({
             <TooltipTrigger asChild>
               <button
                 type="button"
-                className="ms-2 text-muted-foreground text-xs bg-muted px-2 py-0.5 rounded truncate max-w-[150px] flex items-center hover:bg-muted/80 transition-colors cursor-pointer"
+                className="ms-2 text-muted-foreground text-xs bg-muted px-2 py-0.5 rounded flex items-center min-w-0 hover:bg-muted/80 transition-colors cursor-pointer"
+                style={{ maxWidth: folderChipMaxWidth }}
                 onClick={(e) => {
                   e.stopPropagation();
                   e.preventDefault();
@@ -516,7 +517,7 @@ const NameCell = React.memo(function NameCell({
                 }}
               >
                 <Folder className="w-3 h-3 me-1 shrink-0" />
-                {folder.name}
+                <span className="truncate">{folder.name}</span>
               </button>
             </TooltipTrigger>
             <TooltipContent side="top" className="max-w-md">
