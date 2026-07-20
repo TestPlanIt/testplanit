@@ -1,0 +1,267 @@
+services:
+  prod:
+    container_name: testplanit-prod
+    build:
+      context: ..
+      dockerfile: testplanit/Dockerfile
+      target: production
+      args:
+        # Baked into next.config's image remotePatterns at build time so the
+        # Next.js image optimizer accepts <subdomain>.${BASE_DOMAIN} MinIO URLs.
+        BASE_DOMAIN: ${BASE_DOMAIN:-example.com}
+    env_file:
+      - .env.production
+    ports:
+      - "${DOCKER_PROD_APP_PORT:-30000}:3000"
+    networks:
+      testplanit-net:
+        ipv4_address: 172.19.0.10
+    restart: unless-stopped
+
+  workers:
+    container_name: testplanit-workers
+    build:
+      context: ..
+      dockerfile: testplanit/Dockerfile
+      target: workers
+    env_file:
+      - .env.production
+    networks:
+      testplanit-net:
+        ipv4_address: 172.19.0.11
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          # Recommended ceiling for the worker fleet (see the resource-allocation
+          # table in docs: Installation > Docker Setup). Raise it for very large
+          # Testmo imports or busy multi-tenant clusters, host RAM permitting
+          # (see docs: Background Processes > Worker memory tiers).
+          memory: 4G
+    depends_on:
+      prod:
+        condition: service_started
+
+  db-init-prod:
+    container_name: testplanit-db-init
+    build:
+      context: ..
+      dockerfile: testplanit/Dockerfile
+      target: development
+    env_file:
+      - .env.production
+    working_dir: /app/testplanit
+    # Apply migrations and seed database.
+    # If Postgres is fronted by a transaction-mode pooler (pgbouncer), point this
+    # service at the direct DB — `zenstack migrate deploy` needs a real (non-pooled) session.
+    # Existing pre-migration databases must be baselined once (testplanit/migrations/README.md).
+    command:
+      [
+        "sh",
+        "-c",
+        "echo 'Waiting for DB...' && /usr/local/bin/wait-for-postgres.sh ${POSTGRES_HOST:-postgres} ${POSTGRES_PORT:-5432} -- echo 'DB ready, applying migrations...' && npx zenstack migrate deploy --schema schema.zmodel --no-version-check && echo 'Applying audit triggers...' && pnpm tsx scripts/apply-triggers.ts && echo 'Migrations applied, seeding...' && pnpm tsx db/seed.ts && echo 'DB initialized and seeded.'",
+      ]
+    networks:
+      - testplanit-net
+    profiles:
+      - with-postgres
+
+  minio-init:
+    image: minio/mc:latest
+    networks:
+      - testplanit-net
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+        echo 'Waiting for MinIO to be ready...';
+        until /usr/bin/mc alias set local http://minio:9000 minioadmin minioadmin123; do
+          echo 'MinIO not ready, waiting...';
+          sleep 2;
+        done;
+        echo 'MinIO ready, creating bucket...';
+        /usr/bin/mc mb local/testplanit --ignore-existing;
+        echo 'Setting bucket permissions...';
+        /usr/bin/mc anonymous set public local/testplanit;
+        echo 'MinIO initialization complete.';
+      "
+    profiles:
+      - with-minio
+
+  postgres:
+    container_name: testplanit-postgres
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: testplanit_prod
+      # Postgres 18 defaults PGDATA to a version-specific subdirectory
+      # (/var/lib/postgresql/18/docker) and expects the volume mounted at
+      # /var/lib/postgresql instead of .../data. Pin the old flat layout so the
+      # mount path below doesn't have to change across major-version bumps, and
+      # to avoid a still-open docker-library/postgres detection bug around the
+      # new layout (github.com/docker-library/postgres/issues/1400).
+      PGDATA: /var/lib/postgresql/data
+    # Cap Postgres CPU usage so the app, workers, nginx, and valkey keep their
+    # share of the host; tune to your host's core count.
+    cpus: "2"
+    command: >
+      postgres
+      -c max_parallel_workers=2
+      -c max_parallel_workers_per_gather=1
+      -c max_worker_processes=4
+    # Named volume, not a bind mount: Postgres's data directory must never live
+    # inside the build context (context: .. at the repo root). Once Postgres has
+    # run, it chmods the directory 0700, which makes BuildKit's context walker
+    # fail with "permission denied" on any subsequent `docker compose build`.
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    ports:
+      - "${DOCKER_POSTGRES_PORT:-5432}:5432"
+    networks:
+      testplanit-net:
+        ipv4_address: 172.19.0.30
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d testplanit_prod"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    profiles:
+      - with-postgres
+
+  valkey:
+    container_name: testplanit-valkey
+    image: valkey/valkey:8-alpine
+    ports:
+      - "${DOCKER_VALKEY_PORT:-6379}:6379"
+    networks:
+      testplanit-net:
+        ipv4_address: 172.19.0.40
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - ./docker-data/valkey:/data
+    profiles:
+      - with-valkey
+
+  # Init service to create elasticsearch directory with proper permissions
+  elasticsearch-init:
+    image: alpine:latest
+    user: root
+    command: >
+      sh -c "
+        mkdir -p /data &&
+        chown -R 1000:1000 /data &&
+        chmod -R 755 /data
+      "
+    volumes:
+      - ./docker-data/elasticsearch:/data
+    profiles:
+      - with-elasticsearch
+
+  elasticsearch:
+    container_name: testplanit-elasticsearch
+    image: elasticsearch:9.0.3
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "${DOCKER_ELASTICSEARCH_HTTP_PORT:-9200}:9200"
+      - "${DOCKER_ELASTICSEARCH_TRANSPORT_PORT:-9300}:9300"
+    networks:
+      testplanit-net:
+        ipv4_address: 172.19.0.50
+    restart: unless-stopped
+    volumes:
+      - ./docker-data/elasticsearch:/usr/share/elasticsearch/data
+    user: "1000:1000"
+    depends_on:
+      elasticsearch-init:
+        condition: service_completed_successfully
+    healthcheck:
+      test:
+        ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    profiles:
+      - with-elasticsearch
+
+  minio:
+    container_name: testplanit-minio
+    image: minio/minio:latest
+    command: server /data --console-address ":9001" --address ":9000"
+    # Load MINIO_SERVER_URL (and other vars) from the same env file as the app so
+    # MinIO's public URL matches the presigned URLs the app generates.
+    env_file:
+      - .env.production
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin123
+    ports:
+      - "${DOCKER_MINIO_API_PORT:-9000}:9000" # MinIO API (for external access)
+      - "${DOCKER_MINIO_CONSOLE_PORT:-9001}:9001" # MinIO Console (direct access for admin)
+    networks:
+      testplanit-net:
+        ipv4_address: 172.19.0.20
+    restart: unless-stopped
+    volumes:
+      - ./docker-data/minio:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    profiles:
+      - with-minio
+
+  # Nginx reverse proxy for internal routing
+  nginx:
+    container_name: testplanit-nginx
+    image: nginx:alpine
+    ports:
+      - "${DOCKER_NGINX_HTTP_PORT:-80}:80" # HTTP port (your external reverse proxy should point here)
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./maintenance.html:/etc/nginx/maintenance.html:ro
+    networks:
+      testplanit-net:
+        ipv4_address: 172.19.0.60
+    restart: unless-stopped
+    depends_on:
+      prod:
+        condition: service_started
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--quiet",
+          "--tries=1",
+          "--spider",
+          "http://localhost/health",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    profiles:
+      - with-minio
+
+networks:
+  testplanit-net:
+    driver: bridge
+    ipam:
+      config:
+        # Fixed subnet so service IPs below stay stable across restarts.
+        - subnet: 172.19.0.0/16
+
+volumes:
+  postgres-data:
+    name: testplanit-postgres-data
