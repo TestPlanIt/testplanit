@@ -1,8 +1,8 @@
 # Device-Bound Magic Link Sign-In
 
-TestPlanIt's Magic Link sign-in can run in a **device-bound** mode that is
-immune to corporate mail-security link scanners (Microsoft Defender Safe
-Links, Mimecast, Proofpoint, Barracuda). With the stock email flow, those
+TestPlanIt's Magic Link sign-in runs in a **device-bound** mode by default,
+which is immune to corporate mail-security link scanners (Microsoft Defender
+Safe Links, Mimecast, Proofpoint, Barracuda). With the stock email flow, those
 scanners prefetch — and thereby consume — the single-use sign-in link before
 the human clicks it, producing "link expired" errors. In device-bound mode the
 emailed link is inert on its own: nothing is consumed when a link is opened,
@@ -30,28 +30,31 @@ attempts before locking, and a new request for the same email supersedes any
 previous pending link. Only hashes of the secrets are stored: HMAC-SHA256 for
 the two 256-bit tokens, and bcrypt over the HMAC for the short relay code.
 
-## Enabling it (per deployment / tenant)
+## Default behavior and opting out
 
-The flow ships behind an environment flag and is **off by default** — the
-stock NextAuth email flow keeps working unchanged when the flag is off.
+Device-bound sign-in is **the default** whenever Magic Link is available — no
+configuration is needed to turn it on. A deployment (or a single tenant) can
+opt out and fall back to the stock NextAuth email flow (a plain clickable link)
+by setting:
 
 ```bash
-PASSWORDLESS_DEVICE_BOUND=true
+PASSWORDLESS_DEVICE_BOUND=false
 ```
 
-Requirements:
+Requirements for the default flow to take effect:
 
-- The Magic Link SSO provider must already be enabled (Admin → SSO) and the
-  `EMAIL_SERVER_*` / `EMAIL_FROM` variables configured.
-- The database schema is synced on boot (`prisma db push`); the flow's
-  `PendingAuth` table is purely additive, so the standard rollout picks it up
-  automatically. No data migration is involved.
+- The Magic Link SSO provider is enabled (Admin → SSO) and the
+  `EMAIL_SERVER_*` / `EMAIL_FROM` variables are configured. When Magic Link
+  isn't available, this flag has no effect.
+- The `PendingAuth` table exists. It is created by the standard schema
+  migration and is purely additive, so no data migration is involved.
 
-To pilot on a single tenant, set the variable on that tenant's deployment only
-and restart it. Roll out fleet-wide by adding it to the shared environment
-once validated. Roll back by removing the variable — in-flight device-bound
-links stop working (users just request a new link), and the legacy email flow
-resumes immediately.
+To opt a single tenant out, set `PASSWORDLESS_DEVICE_BOUND=false` on that
+tenant's deployment and restart it; opt out fleet-wide by adding it to the
+shared environment. While opted out, any in-flight device-bound sign-in stops
+completing — users simply request a new link and receive the stock email link
+instead. Return to the default by removing the variable (or setting it to
+anything other than `false`).
 
 ## Validating against a real Safe Links mailbox
 
@@ -59,8 +62,8 @@ Use a mailbox that actually rewrites/prefetches links — an Outlook.com /
 Hotmail address, or a Microsoft 365 tenant with Defender Safe Links enabled
 (university addresses are ideal).
 
-1. On the staging tenant with `PASSWORDLESS_DEVICE_BOUND=true`, request a
-   magic link for a user whose address is on that mailbox.
+1. On a staging tenant (device-bound sign-in is the default), request a magic
+   link for a user whose address is on that mailbox.
 2. Wait for delivery (Safe Links prefetch happens at delivery time), then wait
    another minute or two for good measure.
 3. Click the link in the same browser that requested it. **Expected: signed in

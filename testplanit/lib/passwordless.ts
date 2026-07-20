@@ -45,9 +45,14 @@ export const PASSWORDLESS_CODE_LENGTH = 8;
  */
 export const PASSWORDLESS_CODE_ALPHABET = "ABCDEFGHJKMNPQRSTVWXYZ23456789";
 
-/** Feature flag: enables the device-bound flow for this deployment. */
+/**
+ * Feature flag: the device-bound flow (scanner-proof magic link + sign-in
+ * code) is the default. A deployment opts out by setting
+ * PASSWORDLESS_DEVICE_BOUND to "false", which falls back to the stock NextAuth
+ * email flow (a plain clickable link).
+ */
 export function isPasswordlessDeviceBoundEnabled(): boolean {
-  return process.env.PASSWORDLESS_DEVICE_BOUND === "true";
+  return process.env.PASSWORDLESS_DEVICE_BOUND?.toLowerCase() !== "false";
 }
 
 function secureCookiesEnabled(): boolean {

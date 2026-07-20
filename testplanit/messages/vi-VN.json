@@ -808,7 +808,8 @@
       "sortAscending": "Sắp xếp tăng dần",
       "sortDescending": "Sắp xếp theo thứ tự giảm dần",
       "sortNone": "Chưa được sắp xếp",
-      "resize": "Thay đổi kích thước cột"
+      "resize": "Thay đổi kích thước cột",
+      "reorderColumn": "Kéo để sắp xếp lại cột"
     },
     "pagination": {
       "selectPage": "Chọn trang",
@@ -2758,7 +2759,12 @@
       "dragPreviewCase": "Trường hợp thử nghiệm",
       "dragPreviewCount": "{count, plural, =1 {# trường hợp thử nghiệm} other {# các trường hợp thử nghiệm}}",
       "modifierHintMac": "Nhấn giữ ⇧ để di chuyển hoặc ⌥ để sao chép trong khi kéo chuột để bỏ qua menu này.",
-      "modifierHintWin": "Giữ phím Shift để di chuyển hoặc phím Ctrl để sao chép trong khi kéo chuột để bỏ qua menu này."
+      "modifierHintWin": "Giữ phím Shift để di chuyển hoặc phím Ctrl để sao chép trong khi kéo chuột để bỏ qua menu này.",
+      "dropZoneReorder": "Thả để sắp xếp lại",
+      "dropZoneTreeMac": "Thả vào một thư mục — giữ ⇧ để di chuyển, ⌥ để sao chép",
+      "dropZoneTreeWin": "Thả vào một thư mục — giữ Shift để di chuyển, Ctrl để sao chép",
+      "dropZoneTreeMove": "Thả vào một thư mục để di chuyển",
+      "dropZoneTreeCopy": "Thả vào một thư mục để sao chép"
     },
     "folderActions": {
       "edit": "Chỉnh sửa thư mục",
@@ -2897,7 +2903,7 @@
     "columns": {
       "selectCase": "Chọn trường hợp",
       "runOrder": "Thứ tự chạy",
-      "lastTestResult": "Kết quả cuối cùng",
+      "latestResults": "Kết quả gần nhất",
       "testedOn": "Lần kiểm tra cuối cùng"
     },
     "actions": {

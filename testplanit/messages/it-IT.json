@@ -808,7 +808,8 @@
       "sortAscending": "Ordinato in ordine crescente",
       "sortDescending": "Ordinato in ordine decrescente",
       "sortNone": "Non ordinato",
-      "resize": "Ridimensiona colonna"
+      "resize": "Ridimensiona colonna",
+      "reorderColumn": "Trascina per riordinare la colonna"
     },
     "pagination": {
       "selectPage": "Seleziona pagina",
@@ -2758,7 +2759,12 @@
       "dragPreviewCase": "Caso di prova",
       "dragPreviewCount": "{count, plural, =1 {# caso di test} other {# casi di test}}",
       "modifierHintMac": "Tieni premuto ⇧ per spostare o ⌥ per copiare mentre trascini per saltare questo menu.",
-      "modifierHintWin": "Tieni premuto Maiusc per spostare o Ctrl per copiare mentre trascini per saltare questo menu."
+      "modifierHintWin": "Tieni premuto Maiusc per spostare o Ctrl per copiare mentre trascini per saltare questo menu.",
+      "dropZoneReorder": "Rilascia per riordinare",
+      "dropZoneTreeMac": "Rilascia su una cartella — tieni premuto ⇧ per spostare, ⌥ per copiare",
+      "dropZoneTreeWin": "Rilascia su una cartella — tieni premuto Shift per spostare, Ctrl per copiare",
+      "dropZoneTreeMove": "Rilascia su una cartella per spostare",
+      "dropZoneTreeCopy": "Rilascia su una cartella per copiare"
     },
     "folderActions": {
       "edit": "Modifica cartella",
@@ -2897,7 +2903,7 @@
     "columns": {
       "selectCase": "Seleziona caso",
       "runOrder": "Ordine di esecuzione",
-      "lastTestResult": "Risultato rosso",
+      "latestResults": "Ultimi risultati",
       "testedOn": "Ultimo test effettuato"
     },
     "actions": {

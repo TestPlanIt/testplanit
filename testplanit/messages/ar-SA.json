@@ -808,7 +808,8 @@
       "sortAscending": "مرتب تصاعديًا",
       "sortDescending": "مرتب تنازليًا",
       "sortNone": "غير مرتب",
-      "resize": "تغيير حجم العمود"
+      "resize": "تغيير حجم العمود",
+      "reorderColumn": "اسحب لإعادة ترتيب العمود"
     },
     "pagination": {
       "selectPage": "حدد الصفحة",
@@ -2758,7 +2759,12 @@
       "dragPreviewCase": "حالة الاختبار",
       "dragPreviewCount": "{count, plural, =1 {# حالة اختبار} zero {# حالة اختبار} two {حالتا اختبار} few {# حالات اختبار} many {# حالة اختبار} other {# حالة اختبار}}",
       "modifierHintMac": "اضغط مع الاستمرار على ⇧ للنقل أو ⌥ للنسخ أثناء السحب لتخطي هذه القائمة.",
-      "modifierHintWin": "اضغط مع الاستمرار على Shift للنقل أو Ctrl للنسخ أثناء السحب لتخطي هذه القائمة."
+      "modifierHintWin": "اضغط مع الاستمرار على Shift للنقل أو Ctrl للنسخ أثناء السحب لتخطي هذه القائمة.",
+      "dropZoneReorder": "أفلت لإعادة الترتيب",
+      "dropZoneTreeMac": "أفلت على مجلد — اضغط باستمرار على ⇧ للنقل، و⌥ للنسخ",
+      "dropZoneTreeWin": "أفلت على مجلد — اضغط باستمرار على Shift للنقل، و Ctrl للنسخ",
+      "dropZoneTreeMove": "أفلت على مجلد للنقل",
+      "dropZoneTreeCopy": "أفلت على مجلد للنسخ"
     },
     "folderActions": {
       "edit": "تعديل المجلد",
@@ -2897,7 +2903,7 @@
     "columns": {
       "selectCase": "حدد الحالة",
       "runOrder": "ترتيب التشغيل",
-      "lastTestResult": "آخر نتيجة",
+      "latestResults": "أحدث النتائج",
       "testedOn": "آخر اختبار"
     },
     "actions": {

@@ -808,7 +808,8 @@
       "sortAscending": "오름차순 정렬",
       "sortDescending": "내림차순 정렬",
       "sortNone": "정렬되지 않음",
-      "resize": "열 크기 조정"
+      "resize": "열 크기 조정",
+      "reorderColumn": "드래그하여 열 순서 변경"
     },
     "pagination": {
       "selectPage": "페이지를 선택하세요",
@@ -2758,7 +2759,12 @@
       "dragPreviewCase": "테스트 케이스",
       "dragPreviewCount": "{count, plural, =1 {# 테스트 케이스} other {# 테스트 케이스}}",
       "modifierHintMac": "드래그하는 동안 ⇧ 키를 누른 상태로 이동하거나 ⌥ 키를 누른 상태로 복사하면 이 메뉴를 건너뛸 수 있습니다.",
-      "modifierHintWin": "드래그하는 동안 Shift 키를 누른 상태로 이동하거나 Ctrl 키를 누른 상태로 복사하면 이 메뉴를 건너뛸 수 있습니다."
+      "modifierHintWin": "드래그하는 동안 Shift 키를 누른 상태로 이동하거나 Ctrl 키를 누른 상태로 복사하면 이 메뉴를 건너뛸 수 있습니다.",
+      "dropZoneReorder": "놓아서 순서 변경",
+      "dropZoneTreeMac": "폴더에 놓기 — ⇧를 누르면 이동, ⌥를 누르면 복사",
+      "dropZoneTreeWin": "폴더에 놓기 — Shift를 누르면 이동, Ctrl을 누르면 복사",
+      "dropZoneTreeMove": "폴더에 놓아서 이동",
+      "dropZoneTreeCopy": "폴더에 놓아서 복사"
     },
     "folderActions": {
       "edit": "폴더 편집",
@@ -2897,7 +2903,7 @@
     "columns": {
       "selectCase": "케이스를 선택하세요",
       "runOrder": "실행 순서",
-      "lastTestResult": "최종 결과",
+      "latestResults": "최신 결과",
       "testedOn": "최근 테스트됨"
     },
     "actions": {

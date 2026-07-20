@@ -808,7 +808,8 @@
       "sortAscending": "昇順でソート",
       "sortDescending": "降順でソート",
       "sortNone": "ソートされていません",
-      "resize": "列のサイズを変更する"
+      "resize": "列のサイズを変更する",
+      "reorderColumn": "ドラッグして列を並べ替え"
     },
     "pagination": {
       "selectPage": "ページを選択",
@@ -2758,7 +2759,12 @@
       "dragPreviewCase": "テストケース",
       "dragPreviewCount": "{count, plural, =1 {# テストケース} other {# テストケース}}",
       "modifierHintMac": "⇧キーを押しながらドラッグすると移動、⌥キーを押しながらドラッグするとコピーできます。このメニューをスキップするには、⇧キーを押しながらドラッグしてください。",
-      "modifierHintWin": "このメニューをスキップするには、ドラッグ中にShiftキーを押しながら移動するか、Ctrlキーを押しながらドラッグしてコピーしてください。"
+      "modifierHintWin": "このメニューをスキップするには、ドラッグ中にShiftキーを押しながら移動するか、Ctrlキーを押しながらドラッグしてコピーしてください。",
+      "dropZoneReorder": "ドロップして並べ替え",
+      "dropZoneTreeMac": "フォルダにドロップ — ⇧を押しながらで移動、⌥を押しながらでコピー",
+      "dropZoneTreeWin": "フォルダにドロップ — Shiftを押しながらで移動、Ctrlを押しながらでコピー",
+      "dropZoneTreeMove": "フォルダにドロップして移動",
+      "dropZoneTreeCopy": "フォルダにドロップしてコピー"
     },
     "folderActions": {
       "edit": "フォルダを編集",
@@ -2897,7 +2903,7 @@
     "columns": {
       "selectCase": "ケースを選択",
       "runOrder": "実行順序",
-      "lastTestResult": "最終結果",
+      "latestResults": "最新の検査結果",
       "testedOn": "最終テスト"
     },
     "actions": {

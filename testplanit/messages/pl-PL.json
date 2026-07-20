@@ -808,7 +808,8 @@
       "sortAscending": "Posortowane rosnąco",
       "sortDescending": "Posortowane malejąco",
       "sortNone": "Nie posortowano",
-      "resize": "Zmień rozmiar kolumny"
+      "resize": "Zmień rozmiar kolumny",
+      "reorderColumn": "Przeciągnij, aby zmienić kolejność kolumny"
     },
     "pagination": {
       "selectPage": "Wybierz stronę",
@@ -2758,7 +2759,12 @@
       "dragPreviewCase": "Przypadek testowy",
       "dragPreviewCount": "{count, plural, =1 {# przypadek testowy} other {# przypadki testowe}}",
       "modifierHintMac": "Przytrzymaj ⇧, aby przesunąć lub ⌥, aby skopiować, a przeciągając, aby pominąć to menu.",
-      "modifierHintWin": "Aby pominąć to menu, przytrzymaj klawisz Shift, aby przesunąć, lub klawisz Ctrl, aby skopiować, podczas przeciągania."
+      "modifierHintWin": "Aby pominąć to menu, przytrzymaj klawisz Shift, aby przesunąć, lub klawisz Ctrl, aby skopiować, podczas przeciągania.",
+      "dropZoneReorder": "Upuść, aby zmienić kolejność",
+      "dropZoneTreeMac": "Upuść na folder — przytrzymaj ⇧, aby przenieść, ⌥, aby skopiować",
+      "dropZoneTreeWin": "Upuść na folder — przytrzymaj Shift, aby przenieść, Ctrl, aby skopiować",
+      "dropZoneTreeMove": "Upuść na folder, aby przenieść",
+      "dropZoneTreeCopy": "Upuść na folder, aby skopiować"
     },
     "folderActions": {
       "edit": "Edytuj folder",
@@ -2897,7 +2903,7 @@
     "columns": {
       "selectCase": "Wybierz sprawę",
       "runOrder": "Kolejność wykonania",
-      "lastTestResult": "Ostatni wynik",
+      "latestResults": "Najnowsze wyniki",
       "testedOn": "Ostatnio testowane"
     },
     "actions": {

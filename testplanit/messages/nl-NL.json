@@ -808,7 +808,8 @@
       "sortAscending": "Oplopend gesorteerd",
       "sortDescending": "Aflopend gesorteerd",
       "sortNone": "Niet gesorteerd",
-      "resize": "Kolomgrootte wijzigen"
+      "resize": "Kolomgrootte wijzigen",
+      "reorderColumn": "Sleep om kolom te herschikken"
     },
     "pagination": {
       "selectPage": "Selecteer pagina",
@@ -2758,7 +2759,12 @@
       "dragPreviewCase": "Testgeval",
       "dragPreviewCount": "{count, plural, =1 {# testgeval} other {# testgevallen}}",
       "modifierHintMac": "Houd ⇧ ingedrukt om te verplaatsen of ⌥ om te kopiëren terwijl u sleept om dit menu over te slaan.",
-      "modifierHintWin": "Houd Shift ingedrukt om te verplaatsen of Ctrl om te kopiëren tijdens het slepen om dit menu over te slaan."
+      "modifierHintWin": "Houd Shift ingedrukt om te verplaatsen of Ctrl om te kopiëren tijdens het slepen om dit menu over te slaan.",
+      "dropZoneReorder": "Neerzetten om te herschikken",
+      "dropZoneTreeMac": "Zet neer op een map — houd ⇧ ingedrukt om te verplaatsen, ⌥ om te kopiëren",
+      "dropZoneTreeWin": "Zet neer op een map — houd Shift ingedrukt om te verplaatsen, Ctrl om te kopiëren",
+      "dropZoneTreeMove": "Zet neer op een map om te verplaatsen",
+      "dropZoneTreeCopy": "Zet neer op een map om te kopiëren"
     },
     "folderActions": {
       "edit": "Map bewerken",
@@ -2897,7 +2903,7 @@
     "columns": {
       "selectCase": "Selecteer zaak",
       "runOrder": "Volgorde van de uitvoering",
-      "lastTestResult": "Laatste resultaat",
+      "latestResults": "Laatste resultaten",
       "testedOn": "Laatst getest"
     },
     "actions": {

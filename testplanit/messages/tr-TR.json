@@ -808,7 +808,8 @@
       "sortAscending": "Artan sırada sıralanmıştır",
       "sortDescending": "Azalan sırada sıralanmıştır",
       "sortNone": "Sıralanmadı",
-      "resize": "Sütunu yeniden boyutlandır"
+      "resize": "Sütunu yeniden boyutlandır",
+      "reorderColumn": "Sütunu yeniden sıralamak için sürükleyin"
     },
     "pagination": {
       "selectPage": "Sayfa seçin",
@@ -2758,7 +2759,12 @@
       "dragPreviewCase": "Test Durumu",
       "dragPreviewCount": "{count, plural, =1 {# test durumu} other {# test durumları}}",
       "modifierHintMac": "Bu menüyü atlamak için sürüklerken ⇧ tuşunu basılı tutarak taşıyabilir veya ⌥ tuşunu basılı tutarak kopyalayabilirsiniz.",
-      "modifierHintWin": "Bu menüyü atlamak için sürüklerken Shift tuşunu basılı tutarak taşıyın veya Ctrl tuşunu basılı tutarak kopyalayın."
+      "modifierHintWin": "Bu menüyü atlamak için sürüklerken Shift tuşunu basılı tutarak taşıyın veya Ctrl tuşunu basılı tutarak kopyalayın.",
+      "dropZoneReorder": "Yeniden sıralamak için bırakın",
+      "dropZoneTreeMac": "Bir klasöre bırakın — taşımak için ⇧, kopyalamak için ⌥ tuşunu basılı tutun",
+      "dropZoneTreeWin": "Bir klasöre bırakın — taşımak için Shift, kopyalamak için Ctrl tuşunu basılı tutun",
+      "dropZoneTreeMove": "Taşımak için bir klasöre bırakın",
+      "dropZoneTreeCopy": "Kopyalamak için bir klasöre bırakın"
     },
     "folderActions": {
       "edit": "Klasörü Düzenle",
@@ -2897,7 +2903,7 @@
     "columns": {
       "selectCase": "Büyük/küçük harf seçimi",
       "runOrder": "Çalıştırma Sırası",
-      "lastTestResult": "Sonuç",
+      "latestResults": "Son Sonuçlar",
       "testedOn": "Son Test Edilen"
     },
     "actions": {

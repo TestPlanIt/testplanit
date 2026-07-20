@@ -808,7 +808,8 @@
       "sortAscending": "Aufsteigend sortiert",
       "sortDescending": "Absteigend sortiert",
       "sortNone": "Nicht sortiert",
-      "resize": "Spalte vergrößern"
+      "resize": "Spalte vergrößern",
+      "reorderColumn": "Zum Neuordnen der Spalte ziehen"
     },
     "pagination": {
       "selectPage": "Seite auswählen",
@@ -2758,7 +2759,12 @@
       "dragPreviewCase": "Testfall",
       "dragPreviewCount": "{count, plural, =1 {# Testfall} other {# Testfälle}}",
       "modifierHintMac": "Halten Sie ⇧ gedrückt, um zu verschieben, oder ⌥, um zu kopieren, während Sie ziehen, um dieses Menü zu überspringen.",
-      "modifierHintWin": "Halten Sie beim Ziehen die Umschalttaste gedrückt, um zu verschieben, oder die Strg-Taste, um zu kopieren, um dieses Menü zu überspringen."
+      "modifierHintWin": "Halten Sie beim Ziehen die Umschalttaste gedrückt, um zu verschieben, oder die Strg-Taste, um zu kopieren, um dieses Menü zu überspringen.",
+      "dropZoneReorder": "Zum Neuordnen ablegen",
+      "dropZoneTreeMac": "Auf einem Ordner ablegen — ⇧ halten zum Verschieben, ⌥ zum Kopieren",
+      "dropZoneTreeWin": "Auf einem Ordner ablegen — Umschalt halten zum Verschieben, Strg zum Kopieren",
+      "dropZoneTreeMove": "Auf einem Ordner ablegen, um zu verschieben",
+      "dropZoneTreeCopy": "Auf einem Ordner ablegen, um zu kopieren"
     },
     "folderActions": {
       "edit": "Ordner bearbeiten",
@@ -2897,7 +2903,7 @@
     "columns": {
       "selectCase": "Fall auswählen",
       "runOrder": "Ablaufreihenfolge",
-      "lastTestResult": "Letztes Ergebnis",
+      "latestResults": "Neueste Ergebnisse",
       "testedOn": "Zuletzt getestet"
     },
     "actions": {

@@ -808,7 +808,8 @@
       "sortAscending": "按升序排列",
       "sortDescending": "按降序排列",
       "sortNone": "未分類",
-      "resize": "調整列寬"
+      "resize": "調整列寬",
+      "reorderColumn": "拖曳以重新排序欄"
     },
     "pagination": {
       "selectPage": "選擇頁面",
@@ -2758,7 +2759,12 @@
       "dragPreviewCase": "測試用例",
       "dragPreviewCount": "{count, plural, =1 {# 測試案例} other {# 測試案例}}",
       "modifierHintMac": "按住 ⇧ 移動或按住 ⌥ 複製，拖曳即可跳過此選單。",
-      "modifierHintWin": "按住Shift鍵移動或按住Ctrl鍵複製，拖曳即可跳過此選單。"
+      "modifierHintWin": "按住Shift鍵移動或按住Ctrl鍵複製，拖曳即可跳過此選單。",
+      "dropZoneReorder": "放置以重新排序",
+      "dropZoneTreeMac": "放置到資料夾 — 按住 ⇧ 移動，按住 ⌥ 複製",
+      "dropZoneTreeWin": "放置到資料夾 — 按住 Shift 移動，按住 Ctrl 複製",
+      "dropZoneTreeMove": "放置到資料夾以移動",
+      "dropZoneTreeCopy": "放置到資料夾以複製"
     },
     "folderActions": {
       "edit": "編輯資料夾",
@@ -2897,7 +2903,7 @@
     "columns": {
       "selectCase": "選擇個案",
       "runOrder": "運行順序",
-      "lastTestResult": "最新結果",
+      "latestResults": "最新結果",
       "testedOn": "上次測試"
     },
     "actions": {
