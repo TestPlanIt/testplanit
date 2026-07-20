@@ -1893,7 +1893,7 @@ export const getColumns = (
           {
             id: "latestResults",
             header: columnTranslations.latestResults,
-            enableSorting: false,
+            enableSorting: !isCompleted,
             enableResizing: true,
             enableHiding: true,
             meta: { isVisible: true },

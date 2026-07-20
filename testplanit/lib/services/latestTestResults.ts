@@ -26,6 +26,7 @@ export interface RawExecutionResult {
   status_color: string;
   is_success: boolean;
   is_failure: boolean;
+  status_order: number | null;
   executed_at: Date;
   row_num: bigint;
   project_id?: number;
@@ -114,6 +115,7 @@ export async function queryLatestTestResults({
           c.value as status_color,
           s."isSuccess" as is_success,
           s."isFailure" as is_failure,
+          s."order" as status_order,
           trr."executedAt" as executed_at
           ${projectSelectFields}
         FROM "RepositoryCases" rc
@@ -149,6 +151,7 @@ export async function queryLatestTestResults({
           ) as status_color,
           COALESCE(s."isSuccess", jr.type = 'PASSED') as is_success,
           COALESCE(s."isFailure", jr.type IN ('FAILURE', 'ERROR')) as is_failure,
+          s."order" as status_order,
           jr."executedAt" as executed_at
           ${projectSelectFields}
         FROM "RepositoryCases" rc
@@ -178,6 +181,7 @@ export async function queryLatestTestResults({
           status_color,
           is_success,
           is_failure,
+          status_order,
           executed_at
           ${includeProject ? sql`, project_id, project_name` : sql``},
           ROW_NUMBER() OVER (${partitionBy} ORDER BY executed_at DESC) as row_num
@@ -214,4 +218,57 @@ export async function getLatestTestResultsByCase(
     byCase.set(row.test_case_id, executions);
   }
   return byCase;
+}
+
+/**
+ * Case ids ordered by the status of their most recent execution, then by how
+ * recent that execution was.
+ *
+ * Cases that have never been executed always sort last, in either direction —
+ * "no result" is not a status, and burying them keeps the informative rows
+ * together at the top.
+ */
+export async function orderCaseIdsByLatestStatus(
+  caseIds: number[],
+  direction: "asc" | "desc"
+): Promise<number[]> {
+  const rows = await queryLatestTestResults({ caseIds, limit: 1 });
+  return sortCaseIdsByNewestStatus(caseIds, rows, direction);
+}
+
+/**
+ * Ordering rule, separated from the query so it can be exercised directly.
+ */
+export function sortCaseIdsByNewestStatus(
+  caseIds: number[],
+  newestRows: Pick<
+    RawExecutionResult,
+    "test_case_id" | "status_order" | "executed_at"
+  >[],
+  direction: "asc" | "desc"
+): number[] {
+  const newest = new Map<number, { order: number; executedAt: number }>();
+  for (const row of newestRows) {
+    newest.set(row.test_case_id, {
+      // A status with no configured order sorts after the configured ones.
+      order: row.status_order ?? Number.MAX_SAFE_INTEGER,
+      executedAt: new Date(row.executed_at).getTime(),
+    });
+  }
+
+  const sign = direction === "asc" ? 1 : -1;
+  return [...caseIds].sort((a, b) => {
+    const left = newest.get(a);
+    const right = newest.get(b);
+    if (!left && !right) return a - b;
+    if (!left) return 1;
+    if (!right) return -1;
+    if (left.order !== right.order) return sign * (left.order - right.order);
+    // Same status: most recently executed first, so the ordering is stable and
+    // the freshest evidence for that status leads.
+    if (left.executedAt !== right.executedAt) {
+      return right.executedAt - left.executedAt;
+    }
+    return a - b;
+  });
 }

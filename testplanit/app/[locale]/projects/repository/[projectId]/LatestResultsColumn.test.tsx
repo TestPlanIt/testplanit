@@ -232,9 +232,27 @@ describe("latestResults column via getColumns", () => {
 
       expect(column).toBeDefined();
       expect(column?.header).toBe("Latest Results");
-      expect(column?.enableSorting).toBe(false);
+      expect(column?.enableSorting).toBe(true);
       expect(column?.enableResizing).toBe(true);
       expect(column?.enableHiding).toBe(true);
+    });
+
+    it("should not offer sorting once the run is completed", () => {
+      const columns = getColumns(
+        mockSession,
+        mockUniqueFieldList,
+        mockHandleSelect,
+        mockColumnTranslations,
+        false,
+        false,
+        undefined,
+        undefined,
+        undefined,
+        true // isCompleted
+      );
+      const column = columns.find((col) => col.id === "latestResults");
+
+      expect(column?.enableSorting).toBe(false);
     });
 
     it("should NOT include the latestResults column in run mode", () => {

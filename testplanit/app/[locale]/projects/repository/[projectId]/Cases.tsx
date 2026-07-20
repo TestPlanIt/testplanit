@@ -84,6 +84,7 @@ import { useReviewFeatureEnabled } from "~/hooks/useReviewFeatureEnabled";
 import { usePathname, useRouter } from "~/lib/navigation";
 import { LatestResultsCell } from "@/components/tables/LatestResultsCell";
 import { useLatestTestResults } from "~/hooks/useLatestTestResults";
+import { useCaseIdsByLatestStatus } from "~/hooks/useCaseIdsByLatestStatus";
 import { LATEST_RESULTS_COUNT } from "~/lib/types/latestTestResults";
 import { AddCaseRow } from "./AddCaseRow";
 import { AddResultModal } from "./AddResultModal";
@@ -1974,6 +1975,13 @@ export default function Cases({
         return { creator: { name: direction } };
       }
 
+      // Ordered by a window function over the result tables instead, so the
+      // query keeps its default order and the page ids come from
+      // useCaseIdsByLatestStatus below.
+      if (column === "latestResults") {
+        return { order: "asc" };
+      }
+
       // Direct field sorting (existing behavior)
       return { [column]: direction };
     }, [sortConfig, isDefaultSort]);
@@ -2106,19 +2114,41 @@ export default function Cases({
     }
   }, [allCaseIdsData, selectAllAction, isSelectionMode, onSelectionChange, t]);
 
+  // Sorting by Latest Results orders on the status of each case's most recent
+  // result, which no ZenStack orderBy can express. The ids for the page are
+  // resolved first, then handed to the query below as the whole filter, so the
+  // existing hook still does the hydration, policy checks and caching.
+  const isLatestResultsSort =
+    !isDefaultSort && sortConfig?.column === "latestResults";
+  const { pageIds: latestStatusPageIds } = useCaseIdsByLatestStatus({
+    where: repositoryCaseWhereClause,
+    direction: sortConfig?.direction ?? "asc",
+    skip: (currentPage - 1) * (pageSize === "All" ? 0 : pageSize),
+    take: pageSize === "All" ? undefined : pageSize,
+    enabled: Boolean(
+      isLatestResultsSort &&
+      !isRunMode &&
+      !searchResultIds &&
+      !isDescendantsMode &&
+      postFetchFilters.length === 0
+    ),
+  });
+
   const result = useFindManyRepositoryCasesFiltered(
     {
       orderBy: orderBy,
-      where: repositoryCaseWhereClause,
+      where: latestStatusPageIds
+        ? { ...repositoryCaseWhereClause, id: { in: latestStatusPageIds } }
+        : repositoryCaseWhereClause,
       select: REPOSITORY_CASE_LIST_SELECT,
       // When post-fetch filtering is active, fetch all data (no pagination)
       // Otherwise apply server-side pagination for repository mode
       skip:
-        postFetchFilters.length > 0
+        postFetchFilters.length > 0 || latestStatusPageIds
           ? undefined
           : (currentPage - 1) * (pageSize === "All" ? 0 : pageSize),
       take:
-        postFetchFilters.length > 0
+        postFetchFilters.length > 0 || latestStatusPageIds
           ? undefined
           : pageSize === "All"
             ? undefined
@@ -2536,7 +2566,7 @@ export default function Cases({
     }
     // Not in isRunMode. Use 'data' directly (already server-side paginated and filtered).
     if (data) {
-      return data.map((caseItem) => ({
+      const mapped = data.map((caseItem) => ({
         ...caseItem,
         // Derive the legacy tags/issues array shape from the explicit join rows
         // so downstream consumers (columns) are unaffected.
@@ -2544,6 +2574,16 @@ export default function Cases({
         issues:
           (caseItem as CaseJoinRels).caseIssues?.map((ci) => ci.issue) ?? [],
       }));
+
+      // The query was filtered by the ordered page ids but returns them in its
+      // own order, so re-impose the one they were resolved in.
+      if (latestStatusPageIds) {
+        const byId = new Map(mapped.map((c) => [c.id, c]));
+        return latestStatusPageIds
+          .map((id) => byId.get(id))
+          .filter((c): c is (typeof mapped)[number] => c !== undefined);
+      }
+      return mapped;
     }
     return [];
   }, [
@@ -2553,6 +2593,7 @@ export default function Cases({
     optimisticReorder,
     searchResultIds,
     searchData,
+    latestStatusPageIds,
   ]);
 
   const uniqueCaseFieldList = useMemo(() => {
