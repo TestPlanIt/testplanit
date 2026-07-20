@@ -15,13 +15,21 @@ vi.mock("next-intl", () => ({
   useTranslations: mockUseTranslations,
 }));
 
-// Mock Link from ~/lib/navigation as a plain anchor
+// Mock Link from ~/lib/navigation as a plain anchor, plus a no-op router
 vi.mock("~/lib/navigation", () => ({
   Link: ({ href, children, ...rest }: any) => (
     <a href={href} {...rest}>
       {children}
     </a>
   ),
+  useRouter: () => ({
+    push: vi.fn(),
+    replace: vi.fn(),
+    back: vi.fn(),
+    forward: vi.fn(),
+    refresh: vi.fn(),
+    prefetch: vi.fn(),
+  }),
 }));
 
 // Mock sub-components with complex dependencies
