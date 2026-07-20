@@ -809,7 +809,12 @@
       "sortDescending": "按降序排列",
       "sortNone": "未分类",
       "resize": "调整列宽",
-      "reorderColumn": "拖动以重新排列列"
+      "reorderColumn": "拖动以重新排列列",
+      "sortAsc": "升序排列",
+      "sortDesc": "降序排列",
+      "removeSort": "手动排序",
+      "hideColumn": "隐藏列",
+      "columnOptions": "列选项"
     },
     "pagination": {
       "selectPage": "选择页面",

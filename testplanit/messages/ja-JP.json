@@ -809,7 +809,12 @@
       "sortDescending": "降順でソート",
       "sortNone": "ソートされていません",
       "resize": "列のサイズを変更する",
-      "reorderColumn": "ドラッグして列を並べ替え"
+      "reorderColumn": "ドラッグして列を並べ替え",
+      "sortAsc": "昇順で並べ替え",
+      "sortDesc": "降順で並べ替え",
+      "removeSort": "手動並べ替え",
+      "hideColumn": "列を非表示",
+      "columnOptions": "列のオプション"
     },
     "pagination": {
       "selectPage": "ページを選択",

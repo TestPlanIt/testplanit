@@ -38,10 +38,20 @@ import {
   ArrowDownAZ,
   ArrowDownUp,
   ArrowUpZA,
+  Check,
+  ChevronDown,
+  EyeOff,
   Group,
   GripVertical,
   UnfoldVertical,
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   closestCenter,
   DndContext,
@@ -99,6 +109,18 @@ interface DataTableProps<TData extends DataRow, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
   onSortChange?: (columnId: string) => void;
+  /**
+   * Explicit-direction sort, used by the header column menu (the cycling
+   * `onSortChange` can't express a direction). `null` clears the sort.
+   */
+  onSortColumn?: (columnId: string, direction: "asc" | "desc" | null) => void;
+  /**
+   * Hide a column from the header menu. Routed to a callback (rather than
+   * TanStack's `toggleVisibility`) so the owner of visibility state — the
+   * Columns control — makes the change, keeping persistence and the checkboxes
+   * in sync. The menu's Hide item only renders when this is provided.
+   */
+  onHideColumn?: (columnId: string) => void;
   sortConfig?: { column: string; direction: "asc" | "desc" };
   enableReorder?: boolean;
   onReorder?: (dragIndex: number, hoverIndex: number) => void;
@@ -141,6 +163,9 @@ interface DataTableProps<TData extends DataRow, TValue> {
   /** Enable drag-to-reorder columns. Defaults to `!!storageKey` — reordering is
    * only useful when the order is remembered. */
   enableColumnReorder?: boolean;
+  /** Enable the per-column header menu (sort + hide column). Defaults to
+   * `!!storageKey`; requires `onSortColumn`/`onColumnVisibilityChange` to act. */
+  enableColumnMenu?: boolean;
 }
 
 interface CustomColumnMeta {
@@ -209,6 +234,9 @@ type HeadCellContentProps = {
   onSortIconClick: (header: any) => void;
   onResizeMouseDown: (header: any, e: React.MouseEvent) => void;
   onGroupingChange?: OnChangeFn<string[]>;
+  onSortColumn?: (columnId: string, direction: "asc" | "desc" | null) => void;
+  onHideColumn?: (columnId: string) => void;
+  enableColumnMenu?: boolean;
 };
 
 /**
@@ -222,6 +250,9 @@ function HeadCellContent({
   onSortIconClick,
   onResizeMouseDown,
   onGroupingChange,
+  onSortColumn,
+  onHideColumn,
+  enableColumnMenu,
   dragHandle,
 }: HeadCellContentProps & { dragHandle?: React.ReactNode }) {
   const t = useTranslations("common.table");
@@ -229,6 +260,18 @@ function HeadCellContent({
   const isSortable = header.column.columnDef.enableSorting;
   const isActiveSort = sortConfig?.column === header.column.id;
   const sortDirection = isActiveSort ? sortConfig?.direction : undefined;
+  // Hide is only offered when the column can be hidden AND an owner is wired to
+  // apply it (so persistence + the Columns control stay in sync).
+  const canHide = header.column.getCanHide() && Boolean(onHideColumn);
+  const hasMenu = Boolean(enableColumnMenu) && (isSortable || canHide);
+  const sortIndicator =
+    isActiveSort && sortDirection === "asc" ? (
+      <ArrowDownAZ className="h-4 w-4" aria-label={t("sortAscending")} />
+    ) : isActiveSort && sortDirection === "desc" ? (
+      <ArrowUpZA className="h-4 w-4" aria-label={t("sortDescending")} />
+    ) : (
+      <ArrowDownUp className="h-4 w-4" aria-label={t("sortNone")} />
+    );
   return (
     <div
       className={`flex gap-2 items-center justify-between relative h-full ${isActiveSort ? "font-extrabold" : ""}`}
@@ -257,32 +300,84 @@ function HeadCellContent({
             )}
           </button>
         ) : null}
-        {flexRender(header.column.columnDef.header, header.getContext())}
-        {isSortable && (
-          <div
-            onClick={() => onSortIconClick(header)}
-            className="ms-1 cursor-pointer"
-            aria-label={t("sort")}
-            role="button"
-          >
-            {isActiveSort ? (
-              sortDirection === "asc" ? (
-                <ArrowDownAZ
-                  className="h-4 w-4"
-                  aria-label={t("sortAscending")}
+        {hasMenu ? (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                className="flex items-center gap-1 whitespace-nowrap cursor-pointer outline-none"
+                aria-label={t("columnOptions")}
+              >
+                {flexRender(
+                  header.column.columnDef.header,
+                  header.getContext()
+                )}
+                {isSortable && sortIndicator}
+                <ChevronDown
+                  className="h-3 w-3 opacity-50"
+                  aria-hidden="true"
                 />
-              ) : sortDirection === "desc" ? (
-                <ArrowUpZA
-                  className="h-4 w-4"
-                  aria-label={t("sortDescending")}
-                />
-              ) : (
-                <ArrowDownUp className="h-4 w-4" aria-label={t("sortNone")} />
-              )
-            ) : (
-              <ArrowDownUp className="h-4 w-4" aria-label={t("sortNone")} />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start">
+              {isSortable && (
+                <>
+                  <DropdownMenuItem
+                    className="gap-1"
+                    onSelect={() => onSortColumn?.(header.column.id, "asc")}
+                  >
+                    <ArrowDownAZ className="h-4 w-4" />
+                    {t("sortAsc")}
+                    {sortDirection === "asc" && (
+                      <Check className="ms-auto h-4 w-4" />
+                    )}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    className="gap-1"
+                    onSelect={() => onSortColumn?.(header.column.id, "desc")}
+                  >
+                    <ArrowUpZA className="h-4 w-4" />
+                    {t("sortDesc")}
+                    {sortDirection === "desc" && (
+                      <Check className="ms-auto h-4 w-4" />
+                    )}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    className="gap-1"
+                    disabled={!isActiveSort}
+                    onSelect={() => onSortColumn?.(header.column.id, null)}
+                  >
+                    <ArrowDownUp className="h-4 w-4" />
+                    {t("removeSort")}
+                  </DropdownMenuItem>
+                </>
+              )}
+              {isSortable && canHide && <DropdownMenuSeparator />}
+              {canHide && (
+                <DropdownMenuItem
+                  className="gap-1"
+                  onSelect={() => onHideColumn?.(header.column.id)}
+                >
+                  <EyeOff className="h-4 w-4" />
+                  {t("hideColumn")}
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ) : (
+          <>
+            {flexRender(header.column.columnDef.header, header.getContext())}
+            {isSortable && (
+              <div
+                onClick={() => onSortIconClick(header)}
+                className="ms-1 cursor-pointer"
+                aria-label={t("sort")}
+                role="button"
+              >
+                {sortIndicator}
+              </div>
             )}
-          </div>
+          </>
         )}
       </div>
       {header.column.getCanResize() && (
@@ -307,6 +402,29 @@ function HeadCellContent({
       )}
     </div>
   );
+}
+
+/**
+ * Class names for a header cell, including the sorted-column indicator: a faint
+ * primary tint plus a solid primary accent bar whose edge encodes the direction
+ * — top edge when sorted ascending, bottom edge when descending. Every header
+ * cell reserves transparent top/bottom borders so colouring one edge doesn't
+ * shift the row. The tint is a flat gradient overlay so it sits on top of the
+ * cell's own background colour rather than replacing it.
+ */
+function getHeadCellClassName(
+  header: any,
+  sortConfig?: { column: string; direction: "asc" | "desc" }
+): string {
+  const base = `select-none ${tableStyles.headerCell} px-2 border-y-2 border-transparent ${
+    header.column.getIsPinned()
+      ? "bg-primary-foreground"
+      : "bg-primary-foreground/80"
+  }`;
+  if (!sortConfig || sortConfig.column !== header.column.id) return base;
+  const bar =
+    sortConfig.direction === "asc" ? "border-t-primary" : "border-b-primary";
+  return `${base} bg-gradient-to-b from-primary/10 to-primary/10 ${bar}`;
 }
 
 /**
@@ -361,7 +479,7 @@ function SortableHeadCell({
     <TableHead
       ref={setNodeRef}
       style={style}
-      className={`select-none ${tableStyles.headerCell} px-2 ${column.getIsPinned() ? "bg-primary-foreground" : "bg-primary-foreground/80"}`}
+      className={getHeadCellClassName(header, contentProps.sortConfig)}
     >
       <HeadCellContent header={header} dragHandle={grip} {...contentProps} />
     </TableHead>
@@ -372,6 +490,8 @@ export function DataTable<TData extends DataRow, TValue>({
   columns,
   data,
   onSortChange,
+  onSortColumn,
+  onHideColumn,
   sortConfig,
   enableReorder,
   onReorder,
@@ -402,6 +522,7 @@ export function DataTable<TData extends DataRow, TValue>({
   scrollToSelectedRow = true,
   storageKey,
   enableColumnReorder = !!storageKey,
+  enableColumnMenu = !!storageKey,
 }: DataTableProps<TData, TValue>) {
   const tLabels = useTranslations("common.labels");
   const tActions = useTranslations("common.actions");
@@ -986,6 +1107,9 @@ export function DataTable<TData extends DataRow, TValue>({
                       onSortIconClick: handleSortIconClick,
                       onResizeMouseDown: handleMouseDown,
                       onGroupingChange,
+                      onSortColumn,
+                      onHideColumn,
+                      enableColumnMenu,
                     };
                     if (enableColumnReorder && !header.column.getIsPinned()) {
                       return (
@@ -1000,7 +1124,7 @@ export function DataTable<TData extends DataRow, TValue>({
                       <TableHead
                         key={String(header.id)}
                         style={cellPinningStyleFn(header.column)}
-                        className={`select-none ${tableStyles.headerCell} px-2 ${header.column.getIsPinned() ? "bg-primary-foreground" : "bg-primary-foreground/80"}`}
+                        className={getHeadCellClassName(header, sortConfig)}
                       >
                         <HeadCellContent {...contentProps} />
                       </TableHead>

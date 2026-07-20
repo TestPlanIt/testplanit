@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -26,9 +26,11 @@ import {
   ColumnSelection,
   CustomColumnDef,
   readStoredColumnOrder,
+  readStoredColumnSort,
   readStoredColumnVisibility,
   readStoredColumnWidths,
   writeStoredColumnOrder,
+  writeStoredColumnSort,
   writeStoredColumnVisibility,
   writeStoredColumnWidths,
 } from "./ColumnSelection";
@@ -36,6 +38,7 @@ import {
 const STORAGE_PREFIX = "testplanit:columnVisibility:";
 const ORDER_PREFIX = "testplanit:columnOrder:";
 const WIDTH_PREFIX = "testplanit:columnWidth:";
+const SORT_PREFIX = "testplanit:columnSort:";
 
 interface Row {
   id: number;
@@ -195,6 +198,48 @@ describe("column width storage helpers", () => {
     // fieldA reset -> absent from the new sizing; present columns = [fieldA]
     writeStoredColumnWidths("view-a", {}, ["fieldA"]);
     expect(readStoredColumnWidths("view-a")).toEqual({ fieldOther: 300 });
+  });
+});
+
+describe("column sort storage helpers", () => {
+  it("returns null when nothing is stored / no key", () => {
+    expect(readStoredColumnSort("view-a")).toBeNull();
+    expect(readStoredColumnSort(undefined)).toBeNull();
+  });
+
+  it("round-trips a stored sort", () => {
+    writeStoredColumnSort("view-a", {
+      column: "latestResults",
+      direction: "desc",
+    });
+    expect(readStoredColumnSort("view-a")).toEqual({
+      column: "latestResults",
+      direction: "desc",
+    });
+  });
+
+  it("clears the stored sort when passed null", () => {
+    writeStoredColumnSort("view-a", { column: "name", direction: "asc" });
+    writeStoredColumnSort("view-a", null);
+    expect(readStoredColumnSort("view-a")).toBeNull();
+    expect(window.localStorage.getItem(`${SORT_PREFIX}view-a`)).toBeNull();
+  });
+
+  it("returns null for a malformed or invalid stored value", () => {
+    window.localStorage.setItem(`${SORT_PREFIX}view-a`, "not json");
+    expect(readStoredColumnSort("view-a")).toBeNull();
+
+    window.localStorage.setItem(
+      `${SORT_PREFIX}view-b`,
+      JSON.stringify({ column: "name", direction: "sideways" })
+    );
+    expect(readStoredColumnSort("view-b")).toBeNull();
+
+    window.localStorage.setItem(
+      `${SORT_PREFIX}view-c`,
+      JSON.stringify({ column: "", direction: "asc" })
+    );
+    expect(readStoredColumnSort("view-c")).toBeNull();
   });
 });
 
@@ -521,5 +566,41 @@ describe("columns that load after mount", () => {
     // remembered choice, so a "select all" made before the reload still applies
     // instead of the column falling back to its hidden default.
     expect(lastVisibility(onVisibilityChange).customField).toBe(true);
+  });
+});
+
+// (5) Hiding a column through the ref out-param (used by the header "Hide
+// column" menu) drives this control's own state — the same path as the
+// checkbox — so it emits, persists, and keeps the checkbox in sync.
+describe("hideColumnRef", () => {
+  it("hides a column when the exposed function is called (emits + persists)", async () => {
+    const onVisibilityChange = vi.fn();
+    const hideColumnRef: { current: ((columnId: string) => void) | null } = {
+      current: null,
+    };
+
+    render(
+      <ColumnSelection
+        storageKey="hide-view"
+        columns={columns}
+        hideColumnRef={hideColumnRef}
+        onVisibilityChange={onVisibilityChange}
+      />
+    );
+
+    // The control exposes its hide function and nothing is persisted yet.
+    expect(hideColumnRef.current).toBeInstanceOf(Function);
+    expect(lastVisibility(onVisibilityChange).description).toBe(true);
+    expect(readStoredColumnVisibility("hide-view")).toBeNull();
+
+    // The header menu hides `description` through the ref.
+    act(() => hideColumnRef.current?.("description"));
+
+    // It is emitted (so the table hides it and the checkbox unchecks)...
+    expect(lastVisibility(onVisibilityChange).description).toBe(false);
+    // ...and persisted so it survives a reload.
+    await waitFor(() =>
+      expect(readStoredColumnVisibility("hide-view")?.description).toBe(false)
+    );
   });
 });

@@ -809,7 +809,12 @@
       "sortDescending": "내림차순 정렬",
       "sortNone": "정렬되지 않음",
       "resize": "열 크기 조정",
-      "reorderColumn": "드래그하여 열 순서 변경"
+      "reorderColumn": "드래그하여 열 순서 변경",
+      "sortAsc": "오름차순 정렬",
+      "sortDesc": "내림차순 정렬",
+      "removeSort": "수동 정렬",
+      "hideColumn": "열 숨기기",
+      "columnOptions": "열 옵션"
     },
     "pagination": {
       "selectPage": "페이지를 선택하세요",

@@ -809,7 +809,12 @@
       "sortDescending": "Sorted descending",
       "sortNone": "Not sorted",
       "resize": "Resize column",
-      "reorderColumn": "Drag to reorder column"
+      "reorderColumn": "Drag to reorder column",
+      "sortAsc": "Sort ascending",
+      "sortDesc": "Sort descending",
+      "removeSort": "Manual sort",
+      "hideColumn": "Hide column",
+      "columnOptions": "Column options"
     },
     "pagination": {
       "selectPage": "Select page",

@@ -809,7 +809,12 @@
       "sortDescending": "Aflopend gesorteerd",
       "sortNone": "Niet gesorteerd",
       "resize": "Kolomgrootte wijzigen",
-      "reorderColumn": "Sleep om kolom te herschikken"
+      "reorderColumn": "Sleep om kolom te herschikken",
+      "sortAsc": "Oplopend sorteren",
+      "sortDesc": "Aflopend sorteren",
+      "removeSort": "Handmatig sorteren",
+      "hideColumn": "Kolom verbergen",
+      "columnOptions": "Kolomopties"
     },
     "pagination": {
       "selectPage": "Selecteer pagina",

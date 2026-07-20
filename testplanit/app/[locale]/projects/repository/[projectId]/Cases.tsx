@@ -13,6 +13,8 @@ import {
   ColumnMetadata,
   ColumnSelection,
   CustomColumnDef,
+  readStoredColumnSort,
+  writeStoredColumnSort,
 } from "@/components/tables/ColumnSelection";
 import { DataTable } from "@/components/tables/DataTable";
 import { Filter } from "@/components/tables/Filter";
@@ -460,13 +462,20 @@ export default function Cases({
   const totalPages =
     effectivePageSize > 0 ? Math.ceil(totalItems / effectivePageSize) : 1;
 
+  // Restore a remembered sort (per project, alongside column visibility/order/
+  // width). No stored sort means the default order — isDefaultSort stays true.
   const [sortConfig, setSortConfig] = useState<
     { column: string; direction: "asc" | "desc" } | undefined
-  >({
-    column: "order",
-    direction: "asc",
-  });
-  const [isDefaultSort, setIsDefaultSort] = useState(true);
+  >(
+    () =>
+      readStoredColumnSort(`repository-cases:${projectId}`) ?? {
+        column: "order",
+        direction: "asc",
+      }
+  );
+  const [isDefaultSort, setIsDefaultSort] = useState(
+    () => readStoredColumnSort(`repository-cases:${projectId}`) === null
+  );
   const [searchString, setSearchString] = useState("");
   const debouncedSearchString = useDebounce(searchString, 500);
   const deferredSearchString = useDeferredValue(debouncedSearchString);
@@ -790,6 +799,54 @@ export default function Cases({
       setIsDefaultSort(false);
     }
   };
+
+  // Explicit-direction sort from the column header menu (asc/desc/clear),
+  // unlike handleSortChange which only cycles.
+  const handleSortColumn = (
+    column: string,
+    direction: "asc" | "desc" | null
+  ) => {
+    if (isCompleted) return;
+    if (direction === null) {
+      setSortConfig(undefined);
+      setIsDefaultSort(true);
+    } else {
+      setSortConfig({ column, direction });
+      setIsDefaultSort(false);
+    }
+  };
+
+  // Remember the active sort per project. Store nothing for the default order
+  // (isDefaultSort) so a reload restores the default rather than a stale sort.
+  useEffect(() => {
+    writeStoredColumnSort(
+      `repository-cases:${projectId}`,
+      isDefaultSort || !sortConfig ? null : sortConfig
+    );
+  }, [projectId, sortConfig, isDefaultSort]);
+
+  // Single, stable visibility setter shared by the Columns control and the
+  // header "Hide column" menu. Stable (useCallback) so ColumnSelection's emit
+  // effect doesn't re-fire on every render, and shallow-equal-guarded so an
+  // equal-but-new-reference map (the two controls echoing each other) bails
+  // instead of looping.
+  const handleColumnVisibilityChange = useCallback(
+    (next: Record<string, boolean>) => {
+      setColumnVisibility((prev) => {
+        const keys = new Set([...Object.keys(prev), ...Object.keys(next)]);
+        for (const key of keys) {
+          if (prev[key] !== next[key]) return next;
+        }
+        return prev;
+      });
+    },
+    []
+  );
+
+  // ColumnSelection assigns its "hide a column" function here; the header "Hide
+  // column" menu calls it so the hide goes through the Columns control's own
+  // state (persists + keeps the checkboxes in sync), not a table round-trip.
+  const columnHideRef = useRef<((columnId: string) => void) | null>(null);
 
   // This callback is passed to Filter, which Filter should call with its internally debounced value.
   const handleFilterChange = useCallback((value: string) => {
@@ -2180,6 +2237,15 @@ export default function Cases({
     ),
   });
 
+  // A latest-results sort that resolved to an empty page: the ordered page-id
+  // list came back empty (no matching cases, or a transient during the sort).
+  // The list derives empty from this anyway, so skip the id-filtered fetch that
+  // would otherwise query `id: { in: [] }`.
+  const latestStatusEmpty =
+    isLatestResultsSort &&
+    Array.isArray(latestStatusPageIds) &&
+    latestStatusPageIds.length === 0;
+
   const result = useFindManyRepositoryCasesFiltered(
     {
       orderBy: orderBy,
@@ -2208,8 +2274,10 @@ export default function Cases({
     postFetchFilters.length > 0 ? postFetchFilters : undefined,
     {
       enabled: Boolean(
-        // Disable when ES search is active (data comes from POST fetch instead)
-        searchResultIds
+        // Skip the fetch when a latest-results sort resolved to an empty page
+        // (its where would be `id: { in: [] }`), or when ES search is active
+        // (data comes from the POST fetch instead).
+        latestStatusEmpty || searchResultIds
           ? false
           : // Disable in descendants mode (data comes from the POST endpoint) —
             // except when sorting by latest result, where the ordered page is
@@ -3850,9 +3918,8 @@ export default function Cases({
                 storageKey={`repository-cases:${projectId}`}
                 columns={columns}
                 columnMetadata={columnMetadata}
-                onVisibilityChange={(newVisibility) => {
-                  setColumnVisibility(newVisibility);
-                }}
+                hideColumnRef={columnHideRef}
+                onVisibilityChange={handleColumnVisibilityChange}
               />
             </div>
           </div>
@@ -4030,11 +4097,13 @@ export default function Cases({
                 columns={columns}
                 data={[]} // Pass empty data while loading
                 onSortChange={isCompleted ? undefined : handleSortChange}
+                onSortColumn={isCompleted ? undefined : handleSortColumn}
+                onHideColumn={(columnId) => columnHideRef.current?.(columnId)}
                 sortConfig={isCompleted ? undefined : sortConfig}
                 enableReorder={false} // No reorder while loading
                 onReorder={handleReorder}
                 columnVisibility={columnVisibility}
-                onColumnVisibilityChange={setColumnVisibility}
+                onColumnVisibilityChange={handleColumnVisibilityChange}
                 isLoading={true}
                 pageSize={typeof pageSize === "number" ? pageSize : totalItems}
                 storageKey={`repository-cases:${projectId}`}
@@ -4082,6 +4151,8 @@ export default function Cases({
                 }
                 scrollToSelectedRow={false}
                 onSortChange={isCompleted ? undefined : handleSortChange}
+                onSortColumn={isCompleted ? undefined : handleSortColumn}
+                onHideColumn={(columnId) => columnHideRef.current?.(columnId)}
                 sortConfig={isCompleted ? undefined : sortConfig}
                 enableReorder={
                   isDefaultSort &&
@@ -4093,7 +4164,7 @@ export default function Cases({
                 }
                 onReorder={handleReorder}
                 columnVisibility={columnVisibility}
-                onColumnVisibilityChange={setColumnVisibility}
+                onColumnVisibilityChange={handleColumnVisibilityChange}
                 isLoading={false} // Explicitly false as loading is handled above
                 pageSize={typeof pageSize === "number" ? pageSize : totalItems}
                 canEdit={

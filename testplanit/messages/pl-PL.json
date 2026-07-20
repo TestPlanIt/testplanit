@@ -809,7 +809,12 @@
       "sortDescending": "Posortowane malejąco",
       "sortNone": "Nie posortowano",
       "resize": "Zmień rozmiar kolumny",
-      "reorderColumn": "Przeciągnij, aby zmienić kolejność kolumny"
+      "reorderColumn": "Przeciągnij, aby zmienić kolejność kolumny",
+      "sortAsc": "Sortuj rosnąco",
+      "sortDesc": "Sortuj malejąco",
+      "removeSort": "Sortowanie ręczne",
+      "hideColumn": "Skryj kolumnę",
+      "columnOptions": "Opcje kolumny"
     },
     "pagination": {
       "selectPage": "Wybierz stronę",

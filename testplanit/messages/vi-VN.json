@@ -809,7 +809,12 @@
       "sortDescending": "Sắp xếp theo thứ tự giảm dần",
       "sortNone": "Chưa được sắp xếp",
       "resize": "Thay đổi kích thước cột",
-      "reorderColumn": "Kéo để sắp xếp lại cột"
+      "reorderColumn": "Kéo để sắp xếp lại cột",
+      "sortAsc": "Sắp xếp tăng dần",
+      "sortDesc": "Sắp xếp giảm dần",
+      "removeSort": "Sắp xếp thủ công",
+      "hideColumn": "Ẩn cột",
+      "columnOptions": "Tùy chọn cột"
     },
     "pagination": {
       "selectPage": "Chọn trang",

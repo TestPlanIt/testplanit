@@ -809,7 +809,12 @@
       "sortDescending": "Azalan sırada sıralanmıştır",
       "sortNone": "Sıralanmadı",
       "resize": "Sütunu yeniden boyutlandır",
-      "reorderColumn": "Sütunu yeniden sıralamak için sürükleyin"
+      "reorderColumn": "Sütunu yeniden sıralamak için sürükleyin",
+      "sortAsc": "Artan sıraya göre sırala",
+      "sortDesc": "Azalan sıraya göre sırala",
+      "removeSort": "Manuel sıralama",
+      "hideColumn": "Sütunu gizle",
+      "columnOptions": "Sütun seçenekleri"
     },
     "pagination": {
       "selectPage": "Sayfa seçin",

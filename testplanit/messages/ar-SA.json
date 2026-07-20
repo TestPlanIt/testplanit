@@ -809,7 +809,12 @@
       "sortDescending": "مرتب تنازليًا",
       "sortNone": "غير مرتب",
       "resize": "تغيير حجم العمود",
-      "reorderColumn": "اسحب لإعادة ترتيب العمود"
+      "reorderColumn": "اسحب لإعادة ترتيب العمود",
+      "sortAsc": "ترتيب تصاعدي",
+      "sortDesc": "ترتيب تنازلي",
+      "removeSort": "ترتيب يدوي",
+      "hideColumn": "إخفاء العمود",
+      "columnOptions": "خيارات العمود"
     },
     "pagination": {
       "selectPage": "حدد الصفحة",

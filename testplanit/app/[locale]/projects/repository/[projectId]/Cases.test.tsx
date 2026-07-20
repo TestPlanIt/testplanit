@@ -234,6 +234,8 @@ vi.mock("@/components/tables/ColumnSelection", () => ({
   ColumnSelection: vi.fn(() => (
     <div data-testid="column-selection">ColumnSelection stub</div>
   )),
+  readStoredColumnSort: vi.fn(() => null),
+  writeStoredColumnSort: vi.fn(),
 }));
 
 vi.mock("./BulkEditModal", () => ({

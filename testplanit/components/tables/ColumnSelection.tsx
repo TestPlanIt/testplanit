@@ -10,12 +10,21 @@ import { ColumnDef } from "@tanstack/react-table";
 import { CircleMinus, CirclePlus, Columns3 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  type MutableRefObject,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { usePathname, useRouter } from "~/lib/navigation";
 
 const COLUMN_VISIBILITY_STORAGE_PREFIX = "testplanit:columnVisibility:";
 const COLUMN_ORDER_STORAGE_PREFIX = "testplanit:columnOrder:";
 const COLUMN_WIDTH_STORAGE_PREFIX = "testplanit:columnWidth:";
+const COLUMN_SORT_STORAGE_PREFIX = "testplanit:columnSort:";
+
+export type StoredColumnSort = { column: string; direction: "asc" | "desc" };
 
 /**
  * Read the remembered column visibility map for a view. Returns null when
@@ -174,6 +183,60 @@ export function writeStoredColumnWidths(
   }
 }
 
+/**
+ * Read the remembered sort (column + direction) for a view. Returns null when
+ * nothing is stored, on the server, or when unusable. The caller decides
+ * whether the stored column still exists in the current view.
+ */
+export function readStoredColumnSort(
+  storageKey?: string
+): StoredColumnSort | null {
+  if (!storageKey || typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(
+      `${COLUMN_SORT_STORAGE_PREFIX}${storageKey}`
+    );
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as unknown;
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+      return null;
+    }
+    const { column, direction } = parsed as Record<string, unknown>;
+    if (
+      typeof column === "string" &&
+      column.length > 0 &&
+      (direction === "asc" || direction === "desc")
+    ) {
+      return { column, direction };
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Persist the sort for a view. Pass `null` to clear it (e.g. when the table
+ * returns to its default order), so a reload restores the default rather than a
+ * stale sort.
+ */
+export function writeStoredColumnSort(
+  storageKey: string,
+  sort: StoredColumnSort | null
+): void {
+  if (typeof window === "undefined") return;
+  try {
+    const key = `${COLUMN_SORT_STORAGE_PREFIX}${storageKey}`;
+    if (sort === null) {
+      window.localStorage.removeItem(key);
+      return;
+    }
+    window.localStorage.setItem(key, JSON.stringify(sort));
+  } catch {
+    // ignore storage errors (quota exceeded, private browsing, etc.)
+  }
+}
+
 export interface CustomColumnMeta {
   isVisible?: boolean;
   isPinned?: "left" | "right";
@@ -212,6 +275,14 @@ interface ColumnSelectionProps<TData> {
    * each project's repository remembers its own columns).
    */
   storageKey?: string;
+  /**
+   * Optional out-param. This control assigns a `hideColumn(id)` function to the
+   * ref's `current` so an outside affordance (e.g. a "Hide column" action in the
+   * table header) can hide a column through this control's own state — the same
+   * path as unchecking its checkbox, so it persists and the checkbox stays in
+   * sync. Left undefined by callers that don't need it.
+   */
+  hideColumnRef?: MutableRefObject<((columnId: string) => void) | null>;
 }
 
 export function ColumnSelection<TData>({
@@ -219,6 +290,7 @@ export function ColumnSelection<TData>({
   columnMetadata,
   onVisibilityChange,
   storageKey,
+  hideColumnRef,
 }: ColumnSelectionProps<TData>) {
   const router = useRouter();
   const pathname = usePathname();
@@ -339,6 +411,21 @@ export function ColumnSelection<TData>({
     }
     writeStoredColumnVisibility(storageKey, columnVisibility);
   }, [storageKey, columnVisibility]);
+
+  // Expose a hide-a-column function to an outside affordance (the header "Hide
+  // column" menu) via the ref out-param. It drives this control's own state —
+  // exactly like unchecking the column's checkbox — so the change persists and
+  // the checkbox stays in sync, and it flows to the table one-way (through
+  // onVisibilityChange) with no feedback loop.
+  useEffect(() => {
+    if (!hideColumnRef) return;
+    hideColumnRef.current = (columnId: string) => {
+      setColumnVisibility((prev) => ({ ...prev, [columnId]: false }));
+    };
+    return () => {
+      hideColumnRef.current = null;
+    };
+  }, [hideColumnRef]);
 
   // Fold newly-present columns into the visibility map when the column set grows
   // — e.g. custom-field columns whose template data loads after mount. Without

@@ -809,7 +809,12 @@
       "sortDescending": "Absteigend sortiert",
       "sortNone": "Nicht sortiert",
       "resize": "Spalte vergrößern",
-      "reorderColumn": "Zum Neuordnen der Spalte ziehen"
+      "reorderColumn": "Zum Neuordnen der Spalte ziehen",
+      "sortAsc": "Aufsteigend sortieren",
+      "sortDesc": "Absteigend sortieren",
+      "removeSort": "Manuelle Sortierung",
+      "hideColumn": "Spalte ausblenden",
+      "columnOptions": "Spaltenoptionen"
     },
     "pagination": {
       "selectPage": "Seite auswählen",

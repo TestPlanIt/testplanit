@@ -809,7 +809,12 @@
       "sortDescending": "Trié par ordre décroissant",
       "sortNone": "Non trié",
       "resize": "Redimensionner la colonne",
-      "reorderColumn": "Glisser pour réorganiser la colonne"
+      "reorderColumn": "Glisser pour réorganiser la colonne",
+      "sortAsc": "Trier par ordre croissant",
+      "sortDesc": "Trier par ordre décroissant",
+      "removeSort": "Tri manuel",
+      "hideColumn": "Masquer la colonne",
+      "columnOptions": "Options de colonne"
     },
     "pagination": {
       "selectPage": "Sélectionner la page",
