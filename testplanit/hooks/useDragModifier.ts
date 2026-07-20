@@ -8,6 +8,18 @@ export interface DragModifierState {
 }
 
 /**
+ * Whether the copy/move modifiers are the macOS pair (⌥/⇧) rather than the
+ * Windows pair (Ctrl/Shift). Exported so the hint shown to the user and the
+ * keys actually listened for below can never disagree.
+ */
+export function isMacPlatform(): boolean {
+  return (
+    typeof navigator !== "undefined" &&
+    /Mac|iPhone|iPod|iPad/i.test(navigator.userAgent)
+  );
+}
+
+/**
  * Tracks modifier-key state during an HTML5 drag operation.
  *
  * Browsers suppress window keydown/keyup delivery during native HTML5
@@ -29,9 +41,7 @@ export function useDragModifier(isDragging: boolean): DragModifierState {
       return;
     }
 
-    const isMac =
-      typeof navigator !== "undefined" &&
-      /Mac|iPhone|iPod|iPad/i.test(navigator.userAgent);
+    const isMac = isMacPlatform();
 
     const handleDragOver = (e: DragEvent) => {
       const copy = isMac ? e.altKey : e.ctrlKey;

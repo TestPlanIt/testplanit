@@ -53,6 +53,7 @@ import React, {
 import { usePathname, useRouter } from "~/lib/navigation";
 import { Button } from "../ui/button";
 import SortableItem from "./SortableItem";
+import { tableStyles } from "./tableStyles";
 
 // Define DataRow to include folderId optionally, required by SortableItem
 interface DataRow {
@@ -697,7 +698,7 @@ export function DataTable<TData extends DataRow, TValue>({
           {table.getHeaderGroups().map((headerGroup) => (
             <TableRow
               key={headerGroup.id}
-              className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted shadow-xs bg-accent"
+              className={`transition-colors ${tableStyles.headerRow}`}
             >
               {headerGroup.headers
                 .filter((header) => {
@@ -749,10 +750,10 @@ export function DataTable<TData extends DataRow, TValue>({
                     <TableHead
                       key={String(header.id)}
                       style={cellPinningStyleFn(column)}
-                      className={`select-none ${column.getIsPinned() ? "bg-primary-foreground" : "bg-primary-foreground/80"}`}
+                      className={`select-none ${tableStyles.headerCell} px-2 ${column.getIsPinned() ? "bg-primary-foreground" : "bg-primary-foreground/80"}`}
                     >
                       <div
-                        className={`flex gap-2 items-center justify-between relative ${isActiveSort ? "font-extrabold" : ""}`}
+                        className={`flex gap-2 items-center justify-between relative h-full ${isActiveSort ? "font-extrabold" : ""}`}
                       >
                         <div className="flex items-center gap-1 whitespace-nowrap">
                           {/* Grouping toggle button */}
@@ -824,7 +825,11 @@ export function DataTable<TData extends DataRow, TValue>({
                             onDoubleClick={() => header.column.resetSize()}
                             onMouseDown={(e) => handleMouseDown(header, e)}
                             onTouchStart={header.getResizeHandler()}
-                            className={`absolute end-[-14px] h-full top-0 w-2 cursor-col-resize select-none touch-none ${
+                            // The wrapper fills the cell's content box, which
+                            // sits inside the header's vertical padding — grow
+                            // past it (2 × py-2) so the separator runs the full
+                            // height of the header row.
+                            className={`absolute end-[-15px] -top-2 h-[calc(100%+1rem)] w-2 cursor-col-resize select-none touch-none ${
                               header.column.getIsResizing()
                                 ? "bg-primary/50"
                                 : "hover:bg-primary/20"
@@ -888,14 +893,14 @@ export function DataTable<TData extends DataRow, TValue>({
               <React.Fragment key={row.id}>
                 <TableRow
                   data-state={row.getIsSelected() ? "selected" : undefined}
-                  className={`${onTestCaseClick || handleExpandClick ? "cursor-pointer" : "cursor-default"} ${
+                  className={`${onTestCaseClick || handleExpandClick ? "cursor-pointer" : "cursor-default"} ${tableStyles.rowDivider} ${
                     isSelected
                       ? "bg-primary/20 hover:bg-primary/30 border-4 border-primary"
                       : isSubRow
-                        ? "bg-muted/5 hover:bg-muted/20"
+                        ? tableStyles.rowSurfaceNested
                         : isGrouped
                           ? "bg-accent font-semibold"
-                          : "hover:bg-muted/50"
+                          : tableStyles.rowSurface
                   }`}
                   data-row-id={row.original.id}
                   data-testid={`${rowTestIdPrefix}-${row.original.id}`}
@@ -973,16 +978,21 @@ export function DataTable<TData extends DataRow, TValue>({
                         key={String(column.id)}
                         data-column-id={String(column.id)}
                         style={cellPinningStyleFn(column)}
-                        className={`${
+                        // Only a pinned cell needs its own fill, to hide the
+                        // cells scrolling under it — the row's own surface, or for
+                        // a selected row the opaque equivalent of its primary/20
+                        // tint so the highlight covers the pinned column too.
+                        // Everything else stays transparent so the row surface
+                        // shows through; this path renders whenever reorder is
+                        // off, e.g. while sorted.
+                        className={`${tableStyles.cell} px-2 ${
                           column.getIsPinned()
                             ? isSelected
-                              ? // Opaque equivalent of the row's primary/20 tint so
-                                // the highlight covers the sticky pinned column too.
-                                "bg-[color-mix(in_srgb,var(--color-primary)_36%,var(--color-background))] shadow-md"
-                              : "bg-background shadow-md"
+                              ? "shadow-md bg-[color-mix(in_srgb,var(--color-primary)_36%,var(--color-background))]"
+                              : `shadow-md ${isSubRow ? "table-row-surface-nested" : "table-row-surface"}`
                             : isSelected
                               ? "bg-primary/20"
-                              : "bg-primary-foreground/80"
+                              : ""
                         } ${
                           column.id === "expander" ||
                           (column.getIsPinned() &&
@@ -990,7 +1000,7 @@ export function DataTable<TData extends DataRow, TValue>({
                               column.getIsPinned() as "left" | "right"
                             ))
                             ? "border-e-0"
-                            : "border-e border-accent"
+                            : "border-e"
                         }`}
                       >
                         {/* Render content directly like SortableItem does to preserve cell alignment */}

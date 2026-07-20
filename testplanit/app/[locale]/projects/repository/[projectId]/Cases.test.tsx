@@ -125,6 +125,14 @@ vi.mock("@zenstackhq/tanstack-query/react", () => ({
   }),
 }));
 
+vi.mock("~/hooks/useLatestTestResults", () => ({
+  useLatestTestResults: () => ({}),
+}));
+
+vi.mock("~/hooks/useCaseIdsByLatestStatus", () => ({
+  useCaseIdsByLatestStatus: () => ({ pageIds: null, isFetching: false }),
+}));
+
 vi.mock("~/hooks/useReviewFeatureEnabled", () => ({
   useReviewFeatureEnabled: vi.fn(() => ({
     enabled: false,
@@ -183,10 +191,6 @@ vi.mock("~/lib/contexts/PaginationContext", () => ({
 
 vi.mock("~/app/actions/exportActions", () => ({
   fetchAllCasesForExport: vi.fn(),
-}));
-
-vi.mock("~/lib/utils/computeLastTestResult", () => ({
-  computeLastTestResult: vi.fn(() => null),
 }));
 
 vi.mock("sonner", () => ({
@@ -340,7 +344,6 @@ const mockCase = {
   folder: null,
   creator: null,
   createdAt: new Date(),
-  lastTestResult: null,
 };
 
 const defaultProps = {

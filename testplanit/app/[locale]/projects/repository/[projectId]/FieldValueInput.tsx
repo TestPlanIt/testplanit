@@ -54,6 +54,7 @@ import { getCustomStyles } from "~/styles/multiSelectStyles";
 import { IconName } from "~/types/globals";
 import { cn } from "~/utils";
 import { getDateFnsLocale } from "~/utils/locales";
+import { editorMinHeightStyle } from "~/utils/editorHeight";
 import StepsForm from "./StepsForm";
 
 interface FieldValueInputProps {
@@ -457,19 +458,16 @@ export function FieldValueInput({
 
       // Determine initial height
       const initialHeight = fieldDefinition?.initialHeight;
-      const editorClassName = `ring-2 ring-muted rounded-lg ${initialHeight ? `min-h-[${initialHeight}px]` : "min-h-[200px]"}`;
-      const editorInnerClassName = initialHeight
-        ? `min-h-[${initialHeight}px]`
-        : "min-h-[100px]"; // Default inner min height
 
       return (
-        <div className={editorClassName}>
+        <div className="ring-2 ring-muted rounded-lg">
           <TipTapEditor
             key={fieldKey}
             content={initialTextContent}
             onUpdate={handleEditorUpdate}
             projectId={String(projectId)}
-            className={editorInnerClassName}
+            className=""
+            style={editorMinHeightStyle(initialHeight)}
             readOnly={isDisabled}
           />
         </div>

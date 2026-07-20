@@ -82,7 +82,10 @@ import { usePagination } from "~/lib/contexts/PaginationContext";
 import { attachmentsWhereClause } from "~/lib/repositoryCaseAttachmentsFilter";
 import { useReviewFeatureEnabled } from "~/hooks/useReviewFeatureEnabled";
 import { usePathname, useRouter } from "~/lib/navigation";
-import { computeLastTestResult } from "~/lib/utils/computeLastTestResult";
+import { LatestResultsCell } from "@/components/tables/LatestResultsCell";
+import { useLatestTestResults } from "~/hooks/useLatestTestResults";
+import { useCaseIdsByLatestStatus } from "~/hooks/useCaseIdsByLatestStatus";
+import { LATEST_RESULTS_COUNT } from "~/lib/types/latestTestResults";
 import { AddCaseRow } from "./AddCaseRow";
 import { AddResultModal } from "./AddResultModal";
 import { BulkEditModal } from "./BulkEditModal";
@@ -268,30 +271,6 @@ const REPOSITORY_CASE_LIST_SELECT = {
           isCompleted: true,
         },
       },
-      results: {
-        select: {
-          id: true,
-          executedAt: true,
-          status: {
-            select: {
-              id: true,
-              name: true,
-              color: {
-                select: {
-                  value: true,
-                },
-              },
-            },
-          },
-        },
-        where: {
-          isDeleted: false,
-        },
-        orderBy: {
-          executedAt: "desc",
-        },
-        take: 1,
-      },
     },
   },
   linksFrom: {
@@ -307,39 +286,6 @@ const REPOSITORY_CASE_LIST_SELECT = {
       type: true,
       isDeleted: true,
     },
-  },
-  junitResults: {
-    select: {
-      id: true,
-      executedAt: true,
-      status: {
-        select: {
-          id: true,
-          name: true,
-          color: {
-            select: {
-              value: true,
-            },
-          },
-        },
-      },
-      testSuite: {
-        select: {
-          id: true,
-          testRun: {
-            select: {
-              id: true,
-              name: true,
-              isDeleted: true,
-            },
-          },
-        },
-      },
-    },
-    orderBy: {
-      executedAt: "desc",
-    },
-    take: 1,
   },
   _count: {
     select: {
@@ -2074,6 +2020,13 @@ export default function Cases({
         return { creator: { name: direction } };
       }
 
+      // Ordered by a window function over the result tables instead, so the
+      // query keeps its default order and the page ids come from
+      // useCaseIdsByLatestStatus below.
+      if (column === "latestResults") {
+        return { order: "asc" };
+      }
+
       // Direct field sorting (existing behavior)
       return { [column]: direction };
     }, [sortConfig, isDefaultSort]);
@@ -2206,19 +2159,41 @@ export default function Cases({
     }
   }, [allCaseIdsData, selectAllAction, isSelectionMode, onSelectionChange, t]);
 
+  // Sorting by Latest Results orders on the status of each case's most recent
+  // result, which no ZenStack orderBy can express. The ids for the page are
+  // resolved first, then handed to the query below as the whole filter, so the
+  // existing hook still does the hydration, policy checks and caching.
+  const isLatestResultsSort =
+    !isDefaultSort && sortConfig?.column === "latestResults";
+  const { pageIds: latestStatusPageIds } = useCaseIdsByLatestStatus({
+    where: repositoryCaseWhereClause,
+    direction: sortConfig?.direction ?? "asc",
+    skip: (currentPage - 1) * (pageSize === "All" ? 0 : pageSize),
+    take: pageSize === "All" ? undefined : pageSize,
+    enabled: Boolean(
+      isLatestResultsSort &&
+      !isRunMode &&
+      !searchResultIds &&
+      !isDescendantsMode &&
+      postFetchFilters.length === 0
+    ),
+  });
+
   const result = useFindManyRepositoryCasesFiltered(
     {
       orderBy: orderBy,
-      where: repositoryCaseWhereClause,
+      where: latestStatusPageIds
+        ? { ...repositoryCaseWhereClause, id: { in: latestStatusPageIds } }
+        : repositoryCaseWhereClause,
       select: REPOSITORY_CASE_LIST_SELECT,
       // When post-fetch filtering is active, fetch all data (no pagination)
       // Otherwise apply server-side pagination for repository mode
       skip:
-        postFetchFilters.length > 0
+        postFetchFilters.length > 0 || latestStatusPageIds
           ? undefined
           : (currentPage - 1) * (pageSize === "All" ? 0 : pageSize),
       take:
-        postFetchFilters.length > 0
+        postFetchFilters.length > 0 || latestStatusPageIds
           ? undefined
           : pageSize === "All"
             ? undefined
@@ -2395,30 +2370,6 @@ export default function Cases({
                     isDeleted: true;
                     isCompleted: true;
                   };
-                };
-                results: {
-                  select: {
-                    id: true;
-                    executedAt: true;
-                    status: {
-                      select: {
-                        id: true;
-                        name: true;
-                        color: {
-                          select: {
-                            value: true;
-                          };
-                        };
-                      };
-                    };
-                  };
-                  where: {
-                    isDeleted: false;
-                  };
-                  orderBy: {
-                    executedAt: "desc";
-                  };
-                  take: 1;
                 };
               };
             };
@@ -2623,7 +2574,6 @@ export default function Cases({
     if (searchResultIds && searchData) {
       return searchData.map((caseItem: any) => ({
         ...caseItem,
-        lastTestResult: computeLastTestResult(caseItem),
       }));
     }
 
@@ -2633,7 +2583,7 @@ export default function Cases({
       return testRunCasesData.map((trc) => ({
         ...trc.repositoryCase,
         // Derive the legacy tags/issues array shape from the explicit join rows
-        // so downstream consumers (columns, computeLastTestResult) are unaffected.
+        // so downstream consumers (columns) are unaffected.
         tags:
           (trc.repositoryCase as CaseJoinRels).caseTags?.map((ct) => ct.tag) ??
           [],
@@ -2660,17 +2610,25 @@ export default function Cases({
       }));
     }
     // Not in isRunMode. Use 'data' directly (already server-side paginated and filtered).
-    // Compute lastTestResult for each case using the shared server-side function
     if (data) {
-      return data.map((caseItem) => ({
+      const mapped = data.map((caseItem) => ({
         ...caseItem,
         // Derive the legacy tags/issues array shape from the explicit join rows
-        // so downstream consumers (columns, computeLastTestResult) are unaffected.
+        // so downstream consumers (columns) are unaffected.
         tags: (caseItem as CaseJoinRels).caseTags?.map((ct) => ct.tag) ?? [],
         issues:
           (caseItem as CaseJoinRels).caseIssues?.map((ci) => ci.issue) ?? [],
-        lastTestResult: computeLastTestResult(caseItem),
       }));
+
+      // The query was filtered by the ordered page ids but returns them in its
+      // own order, so re-impose the one they were resolved in.
+      if (latestStatusPageIds) {
+        const byId = new Map(mapped.map((c) => [c.id, c]));
+        return latestStatusPageIds
+          .map((id) => byId.get(id))
+          .filter((c): c is (typeof mapped)[number] => c !== undefined);
+      }
+      return mapped;
     }
     return [];
   }, [
@@ -2680,6 +2638,7 @@ export default function Cases({
     optimisticReorder,
     searchResultIds,
     searchData,
+    latestStatusPageIds,
   ]);
 
   const uniqueCaseFieldList = useMemo(() => {
@@ -2808,6 +2767,21 @@ export default function Cases({
       <PendingReviewBadge pendingRequest={pendingByCaseId.get(caseId)} />
     ),
     [pendingByCaseId]
+  );
+
+  // Recent executions for the visible page, one round trip per render like the
+  // review badges above.
+  const latestResultsByCase = useLatestTestResults(visibleCaseIds);
+  const renderLatestResults = useCallback(
+    (caseId: number, caseProjectId: number) => (
+      <LatestResultsCell
+        executions={latestResultsByCase[caseId] ?? []}
+        slots={LATEST_RESULTS_COUNT}
+        projectId={caseProjectId}
+        testCaseId={caseId}
+      />
+    ),
+    [latestResultsByCase]
   );
 
   // Clear optimistic reorder when underlying data changes
@@ -3267,7 +3241,7 @@ export default function Cases({
         clickToViewFullContent: t("repository.fields.clickToViewFullContent"),
         comments: t("comments.title"),
         configuration: t("common.fields.configuration"),
-        lastTestResult: t("repository.columns.lastTestResult"),
+        latestResults: t("repository.columns.latestResults"),
         newBadge: t("common.labels.new"),
       },
       isRunMode,
@@ -3327,6 +3301,7 @@ export default function Cases({
       showDescendants,
       folderPathMap,
       renderPendingBadge,
+      renderLatestResults,
       excludeNotStartedFromRuns
     );
   }, [
@@ -3359,6 +3334,7 @@ export default function Cases({
     showDescendants,
     folderPathMap,
     renderPendingBadge,
+    renderLatestResults,
     excludeNotStartedFromRuns,
   ]);
 

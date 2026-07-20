@@ -6,6 +6,7 @@ import { DropTargetMonitor, useDrag, useDrop, XYCoord } from "react-dnd";
 import { getEmptyImage } from "react-dnd-html5-backend";
 import { useDragTargetKind } from "~/hooks/useDragTargetKind";
 import { ItemTypes } from "~/types/dndTypes";
+import { tableStyles } from "./tableStyles";
 
 // Structure for individual items within draggedItems array
 interface DraggedCaseInfo {
@@ -260,29 +261,30 @@ function SortableItem<
     const classes = [
       "relative",
       "z-10",
-      "p-2",
-      "align-middle",
+      tableStyles.cell,
+      "px-2",
       "border-e",
-      "border-accent",
       "whitespace-nowrap",
     ];
 
     // Apply background based on pinned status first
     if (isPinned && isSelected) {
-      // Pinned cells are sticky and need an OPAQUE background so other cells
-      // don't show through them during horizontal scroll. Use the opaque
-      // equivalent of the row's translucent primary/20 tint (the row's /20 plus
-      // the cell's /20 composite to ~36% over the background) so the selection
-      // highlight extends across the pinned column too.
+      // Pinned cells are sticky and need an OPAQUE background so cells scrolling
+      // underneath don't show through. Use the opaque equivalent of the selected
+      // row's translucent primary/20 tint (the row's /20 plus the cell's /20
+      // composite to ~36% over the background) so the highlight covers the
+      // pinned column too.
       classes.push(
         "bg-[color-mix(in_srgb,var(--color-primary)_36%,var(--color-background))] border-e-0"
       );
     } else if (isPinned) {
-      classes.push("bg-background border-e-0"); // Use bg-background for pinned cells like in DataTable non-sortable rows
+      // Unselected: the same opaque surface as the row, so the pinned column
+      // reads as part of the row while still hiding cells scrolling under it.
+      classes.push("table-row-surface border-e-0");
     } else if (isSelected) {
       classes.push("bg-primary/20 border-e-0"); // Apply selection highlight if not pinned
     }
-    // If not pinned and not selected, the background will be inherited from the TableRow (hover:bg-muted/50)
+    // If not pinned and not selected, the background is inherited from the TableRow
 
     return classes.join(" ");
   };
@@ -294,10 +296,10 @@ function SortableItem<
         style={style}
         className={`
           relative
-          border-b
+          border-b table-row-divider
           data-[state=selected]:bg-muted
           ${isDragging ? "cursor-grabbing" : ""}
-          ${isSelected ? "bg-primary/20 hover:bg-primary/20" : "hover:bg-muted/50"}
+          ${isSelected ? "bg-primary/20 hover:bg-primary/20" : "table-row-surface table-row-surface-hover"}
           transition-opacity duration-100 ease-in-out
         `}
         data-row-id={row.original.id}

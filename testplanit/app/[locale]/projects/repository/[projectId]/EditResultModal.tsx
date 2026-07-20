@@ -37,6 +37,7 @@ import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
 import type { ParameterChipMeta } from "~/lib/tiptap/parameterMentionExtension";
 import { toHumanReadable } from "~/utils/duration";
 import { fetchSignedUrl } from "~/utils/fetchSignedUrl";
+import { editorMinHeightStyle } from "~/utils/editorHeight";
 
 import {
   AlertDialog,
@@ -1383,9 +1384,7 @@ export function EditResultModal({
         {
           // Get initialHeight
           const initialHeight = field.resultField.initialHeight;
-          const editorClassName = `min-h-[100px] border rounded-md w-full ${
-            initialHeight ? `min-h-[${initialHeight}px]` : ""
-          }`;
+          const editorClassName = "border rounded-md w-full";
 
           fieldComponent = (
             <FormField
@@ -1424,6 +1423,7 @@ export function EditResultModal({
                         onUpdate={(content) => formField.onChange(content)}
                         projectId={projectId.toString()}
                         className={editorClassName}
+                        style={editorMinHeightStyle(initialHeight)}
                         placeholder={`Enter ${displayName.toLowerCase()} here...`}
                         readOnly={isDisabled}
                       />

@@ -23,7 +23,6 @@ import { StepsListDisplay } from "@/components/tables/StepsListDisplay";
 import { TagsListDisplay } from "@/components/tables/TagListDisplay";
 import { TestRunsListDisplay } from "@/components/tables/TestRunsListDisplay";
 import { UserNameCell } from "@/components/tables/UserNameCell";
-import { TestRunNameDisplay } from "@/components/TestRunNameDisplay";
 import PlainTextFromJson from "@/components/TextFromJson";
 import { AsyncCombobox } from "@/components/ui/async-combobox";
 import { Button } from "@/components/ui/button";
@@ -69,7 +68,6 @@ import type {
   User,
   Workflows,
 } from "~/zenstack/models";
-import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 import {
   Activity,
   ArrowRight,
@@ -93,7 +91,6 @@ import {
   Trash2,
   UserCog,
 } from "lucide-react";
-import { useSession } from "next-auth/react";
 import { searchProjectMembers } from "~/app/actions/searchProjectMembers";
 import { notifyTestCaseAssignment } from "~/app/actions/test-run-notifications";
 import { ForecastDisplay } from "~/components/ForecastDisplay";
@@ -231,21 +228,6 @@ export interface ExtendedCases extends RepositoryCases {
   linksFrom?: { caseBId: number; isDeleted: boolean }[];
   linksTo?: { caseAId: number; isDeleted: boolean }[];
   testRunConfiguration?: { id: number; name: string } | null;
-  // Last test result for repository mode (most recent result across all test runs)
-  lastTestResult?: {
-    status: {
-      id: number;
-      name: string;
-      color?: {
-        value: string;
-      };
-    };
-    executedAt: Date;
-    testRun?: {
-      id: number;
-      name: string;
-    };
-  } | null;
 }
 
 /**
@@ -1290,68 +1272,6 @@ const AssigneeCell = React.memo(function AssigneeCell({
 });
 
 // Component for displaying last test result in repository mode
-const LastTestResultCell = React.memo(function LastTestResultCell({
-  lastTestResult,
-  projectId,
-  caseId,
-}: {
-  lastTestResult: ExtendedCases["lastTestResult"];
-  projectId: number;
-  caseId: number;
-}) {
-  const t = useTranslations();
-  const { data: session } = useSession();
-
-  if (!lastTestResult || !lastTestResult.status) {
-    return null;
-  }
-
-  const dateFormat = session?.user?.preferences?.dateFormat;
-  const timeFormat = session?.user?.preferences?.timeFormat;
-  const timezone = session?.user?.preferences?.timezone;
-  const formatString =
-    dateFormat && timeFormat ? `${dateFormat} ${timeFormat}` : undefined;
-
-  return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Link
-            href={`/projects/repository/${projectId}/${caseId}#result-history`}
-            className="flex items-center gap-2 hover:underline"
-          >
-            <StatusDotDisplay
-              name={lastTestResult.status.name}
-              color={lastTestResult.status.color?.value}
-            />
-          </Link>
-        </TooltipTrigger>
-        <TooltipPrimitive.Portal>
-          <TooltipContent side="top" className="max-w-xs">
-            <div className="space-y-1 text-xs">
-              <div className="flex items-center gap-1">
-                <span>{t("repository.columns.testedOn")}:</span>
-                <DateFormatter
-                  date={lastTestResult.executedAt}
-                  formatString={formatString}
-                  timezone={timezone}
-                />
-              </div>
-              {lastTestResult.testRun && (
-                <TestRunNameDisplay
-                  testRun={lastTestResult.testRun}
-                  projectId={projectId}
-                  showIcon={true}
-                />
-              )}
-            </div>
-          </TooltipContent>
-        </TooltipPrimitive.Portal>
-      </Tooltip>
-    </TooltipProvider>
-  );
-});
-
 // Component for select all checkbox with shift-key detection and tooltip
 const SelectAllCheckbox = React.memo(function SelectAllCheckbox({
   table,
@@ -1490,7 +1410,7 @@ export const getColumns = (
     clickToViewFullContent: string;
     comments: string;
     configuration: string;
-    lastTestResult: string;
+    latestResults: string;
     newBadge: string;
   },
   isRunMode: boolean = false,
@@ -1527,6 +1447,7 @@ export const getColumns = (
   showDescendants?: boolean,
   folderPathMap?: Map<number, string> | null,
   renderPendingBadge?: (caseId: number) => React.ReactNode,
+  renderLatestResults?: (caseId: number, projectId: number) => React.ReactNode,
   excludeNotStartedFromRuns?: boolean
 ): ColumnDef<ExtendedCases>[] => {
   const isStepsFieldPresent = uniqueCaseFieldList.some(
@@ -1996,21 +1917,17 @@ export const getColumns = (
     ...(!isRunMode && !isSelectionMode
       ? [
           {
-            id: "lastTestResult",
-            header: columnTranslations.lastTestResult,
-            enableSorting: false,
+            id: "latestResults",
+            header: columnTranslations.latestResults,
+            enableSorting: !isCompleted,
             enableResizing: true,
             enableHiding: true,
             meta: { isVisible: true },
             size: 130,
-            minSize: 100,
-            cell: ({ row }: { row: { original: ExtendedCases } }) => (
-              <LastTestResultCell
-                lastTestResult={row.original.lastTestResult}
-                projectId={row.original.projectId}
-                caseId={row.original.id}
-              />
-            ),
+            minSize: 110,
+            cell: ({ row }: { row: { original: ExtendedCases } }) =>
+              renderLatestResults?.(row.original.id, row.original.projectId) ??
+              null,
           },
           {
             id: "testRuns",

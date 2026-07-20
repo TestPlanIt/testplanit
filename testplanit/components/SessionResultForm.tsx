@@ -41,6 +41,7 @@ import { emptyEditorContent, MAX_DURATION } from "~/app/constants";
 import { getBackgroundStyle } from "~/utils/colorUtils";
 import { toHumanReadable } from "~/utils/duration";
 import { fetchSignedUrl } from "~/utils/fetchSignedUrl";
+import { editorMinHeightStyle } from "~/utils/editorHeight";
 import { Separator } from "@/components/ui/separator";
 // Import Spanish locale for parseDuration
 // @ts-expect-error - No type definitions for parse-duration locales
@@ -837,9 +838,7 @@ export function SessionResultForm({
         {
           // Get initialHeight
           const initialHeight = field.resultField.initialHeight;
-          const editorClassName = `min-h-[100px] border rounded-md w-full ${
-            initialHeight ? `min-h-[${initialHeight}px]` : ""
-          }`;
+          const editorClassName = "border rounded-md w-full";
 
           fieldComponent = (
             <FormField
@@ -864,6 +863,7 @@ export function SessionResultForm({
                       onUpdate={(content) => formField.onChange(content)}
                       projectId={projectId?.toString() ?? "0"}
                       className={editorClassName}
+                      style={editorMinHeightStyle(initialHeight)}
                       placeholder={`Enter ${displayName.toLowerCase()} here...`}
                       readOnly={isFieldDisabled}
                     />

@@ -5,6 +5,8 @@ import { schema } from "~/zenstack/schema";
 import BreadcrumbComponent from "@/components/BreadcrumbComponent";
 import { useDebounce } from "@/components/Debounce";
 import { UnifiedDragPreview } from "@/components/dnd/UnifiedDragPreview";
+import { DragStateBridge } from "@/components/dnd/DragStateBridge";
+import { DropZoneOverlay } from "@/components/dnd/DropZoneOverlay";
 import { PageFileDropOverlay } from "@/components/PageFileDropOverlay";
 import TipTapEditor from "@/components/tiptap/TipTapEditor";
 import { Button } from "@/components/ui/button";
@@ -110,6 +112,7 @@ const ConditionalDndWrapper = ({
     <DragTargetProvider>
       <SimpleDndProvider>
         <UnifiedDragPreview />
+        <DragStateBridge />
         {children}
       </SimpleDndProvider>
     </DragTargetProvider>
@@ -1702,7 +1705,12 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                             )}
                         </div>
                       </div>
-                      <div className="flex-1 mt-4 min-h-10">
+                      <DropZoneOverlay
+                        kind="tree"
+                        enabled={selectedItem === "folders"}
+                        className="flex-1 mt-4 min-h-10"
+                        testId="tree-drop-zone"
+                      >
                         {selectedItem === "folders" ? (
                           <TreeView
                             onSelectFolder={handleSelectFolder}
@@ -1731,7 +1739,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                             }
                           />
                         ) : null}
-                      </div>
+                      </DropZoneOverlay>
                     </div>
                   </ResizablePanel>
                   <ResizableHandle
@@ -1947,36 +1955,45 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                               </>
                             )}
                         </div>
-                        <Cases
-                          folderId={isEsSearchActive ? null : selectedFolderId}
-                          viewType={isEsSearchActive ? "folders" : selectedItem}
-                          filterId={isEsSearchActive ? null : selectedFilter}
-                          isSelectionMode={isSelectionMode}
-                          selectedTestCases={selectedTestCases}
-                          selectedRunIds={selectedRunIds}
-                          onSelectionChange={onSelectionChange}
-                          onConfirm={onConfirm}
-                          hideHeader={hideHeader}
-                          isRunMode={isRunMode}
-                          onTestCaseClick={onTestCaseClick}
-                          isCompleted={isCompleted}
-                          compositionLocked={compositionLocked}
-                          canAddEdit={canAddEdit}
-                          canAddEditRun={canAddEditRun}
-                          canDelete={canDelete}
-                          selectedFolderCaseCount={selectedFolderCaseCount}
-                          overridePagination={overridePagination}
-                          searchResultIds={esSearchResultIds}
-                          copyMoveFolderId={copyMoveFolderId}
-                          copyMoveFolderName={copyMoveFolderName}
-                          onCopyMoveFolderDialogClose={
-                            handleCopyMoveFolderDialogClose
-                          }
-                          descendantFolderIds={descendantFolderIds}
-                          showDescendants={showDescendants}
-                          folderPathMap={folderPathMap}
-                          onCaseNavChange={setCaseNav}
-                        />
+                        <DropZoneOverlay
+                          kind="reorder"
+                          testId="reorder-drop-zone"
+                        >
+                          <Cases
+                            folderId={
+                              isEsSearchActive ? null : selectedFolderId
+                            }
+                            viewType={
+                              isEsSearchActive ? "folders" : selectedItem
+                            }
+                            filterId={isEsSearchActive ? null : selectedFilter}
+                            isSelectionMode={isSelectionMode}
+                            selectedTestCases={selectedTestCases}
+                            selectedRunIds={selectedRunIds}
+                            onSelectionChange={onSelectionChange}
+                            onConfirm={onConfirm}
+                            hideHeader={hideHeader}
+                            isRunMode={isRunMode}
+                            onTestCaseClick={onTestCaseClick}
+                            isCompleted={isCompleted}
+                            compositionLocked={compositionLocked}
+                            canAddEdit={canAddEdit}
+                            canAddEditRun={canAddEditRun}
+                            canDelete={canDelete}
+                            selectedFolderCaseCount={selectedFolderCaseCount}
+                            overridePagination={overridePagination}
+                            searchResultIds={esSearchResultIds}
+                            copyMoveFolderId={copyMoveFolderId}
+                            copyMoveFolderName={copyMoveFolderName}
+                            onCopyMoveFolderDialogClose={
+                              handleCopyMoveFolderDialogClose
+                            }
+                            descendantFolderIds={descendantFolderIds}
+                            showDescendants={showDescendants}
+                            folderPathMap={folderPathMap}
+                            onCaseNavChange={setCaseNav}
+                          />
+                        </DropZoneOverlay>
                       </ResizablePanel>
                       {selectedCaseId && (
                         <>

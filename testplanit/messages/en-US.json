@@ -2758,7 +2758,12 @@
       "dragPreviewCase": "Test Case",
       "dragPreviewCount": "{count, plural, =1 {# test case} other {# test cases}}",
       "modifierHintMac": "Hold ⇧ to move or ⌥ to copy while dragging to skip this menu.",
-      "modifierHintWin": "Hold Shift to move or Ctrl to copy while dragging to skip this menu."
+      "modifierHintWin": "Hold Shift to move or Ctrl to copy while dragging to skip this menu.",
+      "dropZoneReorder": "Drop to reorder",
+      "dropZoneTreeMac": "Drop on a folder — hold ⇧ to move, ⌥ to copy",
+      "dropZoneTreeWin": "Drop on a folder — hold Shift to move, Ctrl to copy",
+      "dropZoneTreeMove": "Drop on a folder to move",
+      "dropZoneTreeCopy": "Drop on a folder to copy"
     },
     "folderActions": {
       "edit": "Edit Folder",
@@ -2897,7 +2902,7 @@
     "columns": {
       "selectCase": "Select Case",
       "runOrder": "Run Order",
-      "lastTestResult": "Last Result",
+      "latestResults": "Latest Results",
       "testedOn": "Last Tested"
     },
     "actions": {

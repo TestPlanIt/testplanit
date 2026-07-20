@@ -41,6 +41,12 @@
     --tp-tooltip-border: hsl(var(--border));
     --tp-axis-label-text: hsl(var(--muted-foreground));
     --tp-grid-line-color: hsl(var(--border));
+    /* Data-table surfaces and grid line. */
+    --tp-table-row: 210 40% 96.7%;
+    --tp-table-row-hover: 210 40% 92.4%;
+    --tp-table-row-nested: 210 40% 92.4%;
+    --tp-table-row-nested-hover: 210 40% 89%;
+    --tp-table-grid-line: 214.3 31.8% 76%;
   }
 
   .dark {
@@ -84,6 +90,12 @@
     --tp-tooltip-border: hsl(var(--border));
     --tp-axis-label-text: hsl(var(--muted-foreground));
     --tp-grid-line-color: hsl(var(--border));
+    /* Data-table surfaces and grid line. */
+    --tp-table-row: 217.5 75% 6.3%;
+    --tp-table-row-hover: 216.9 59.1% 8.6%;
+    --tp-table-row-nested: 216.9 59.1% 8.6%;
+    --tp-table-row-nested-hover: 215.6 50.9% 10.4%;
+    --tp-table-grid-line: 215.2 30.5% 18.6%;
   }
 
   /* Theme wipe transition using scale */
@@ -245,6 +257,12 @@ svg[class*="plot-"] .gantt-task-label text {
   --border: 20 5.9% 90%;
   --input: 20 5.9% 90%;
   --ring: 24.6 95% 53.1%;
+  /* Data-table surfaces and grid line. */
+  --tp-table-row: 60 4.8% 96.5%;
+  --tp-table-row-hover: 60 4.8% 92.2%;
+  --tp-table-row-nested: 60 4.8% 92.2%;
+  --tp-table-row-nested-hover: 60 4.8% 88.8%;
+  --tp-table-grid-line: 20 5.9% 76%;
 }
 
 .green {
@@ -271,6 +289,12 @@ svg[class*="plot-"] .gantt-task-label text {
   --border: 240 5.9% 90%;
   --input: 240 5.9% 90%;
   --ring: 142.1 76.2% 36.3%;
+  /* Data-table surfaces and grid line. */
+  --tp-table-row: 240 4.8% 96.5%;
+  --tp-table-row-hover: 240 4.8% 92.2%;
+  --tp-table-row-nested: 240 4.8% 92.2%;
+  --tp-table-row-nested-hover: 240 4.8% 88.8%;
+  --tp-table-grid-line: 240 5.9% 76%;
 }
 
 .purple {
@@ -297,6 +321,12 @@ svg[class*="plot-"] .gantt-task-label text {
   --border: 220 13% 91%;
   --input: 220 13% 91%;
   --ring: 262.1 83.3% 57.8%;
+  /* Data-table surfaces and grid line. */
+  --tp-table-row: 220 14.3% 96.7%;
+  --tp-table-row-hover: 220 14.3% 92.2%;
+  --tp-table-row-nested: 220 14.3% 92.2%;
+  --tp-table-row-nested-hover: 220 14.3% 88.8%;
+  --tp-table-grid-line: 220 13% 76%;
 }
 
 /*
@@ -331,6 +361,16 @@ svg[class*="plot-"] .gantt-task-label text {
   --ring: 217 91% 40%; /* strong, clearly visible focus indicator */
   --radius: 0.5rem;
   color-scheme: light;
+  /* Data-table surfaces and grid line. Rows sit at the page background so
+     text keeps the theme's full contrast ratio; the grid line and the hover
+     state carry the row structure instead of a tinted fill. The states are
+     stepped harder than in the other themes — against a white row a subtle
+     tint is not a usable hover cue for someone who needs high contrast. */
+  --tp-table-row: var(--background);
+  --tp-table-row-hover: 214 20% 76%;
+  --tp-table-row-nested: 214 20% 86%;
+  --tp-table-row-nested-hover: 214 20% 68%;
+  --tp-table-grid-line: var(--border);
 }
 
 /*
@@ -366,6 +406,15 @@ svg[class*="plot-"] .gantt-task-label text {
   --ring: 210 90% 72%; /* bright, clearly visible focus indicator on dark */
   --radius: 0.5rem;
   color-scheme: dark;
+  /* Data-table surfaces and grid line. Mirrors the light accessible theme:
+     rows sit at the page background so text keeps the theme's full contrast
+     ratio, and the states are stepped harder than in the other themes so the
+     hover cue stays visible. */
+  --tp-table-row: var(--background);
+  --tp-table-row-hover: 220 25% 26%;
+  --tp-table-row-nested: 220 25% 19%;
+  --tp-table-row-nested-hover: 220 25% 32%;
+  --tp-table-grid-line: var(--border);
 }
 
 /* Override layer — the part that actually enforces conformance.
@@ -420,6 +469,60 @@ svg[class*="plot-"] .gantt-task-label text {
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
   }
+}
+
+/* Data-table row surfaces and grid.
+
+   Colours come from the --tp-table-* theme tokens defined in each theme block
+   above, alongside --tp-grid-line-color and the --tp-tooltip-* tokens.
+   They are separate tokens rather than --card/--muted because those equal
+   --background in the dark theme, which would leave the fill invisible.
+
+   The surfaces are opaque so a pinned cell can reuse the exact same colour and
+   still hide the row scrolling underneath it. */
+.table-row-surface {
+  background-color: hsl(var(--tp-table-row));
+}
+
+.table-row-surface-nested {
+  background-color: hsl(var(--tp-table-row-nested));
+}
+
+.table-row-surface-hover:hover {
+  background-color: hsl(var(--tp-table-row-hover));
+}
+
+.table-row-surface-nested-hover:hover {
+  background-color: hsl(var(--tp-table-row-nested-hover));
+}
+
+/* A pinned cell paints its own opaque fill so the row cannot show through it,
+   which would otherwise leave it behind when the row is hovered. */
+.table-row-surface-hover:hover .table-row-surface {
+  background-color: hsl(var(--tp-table-row-hover));
+}
+
+.table-row-surface-nested-hover:hover .table-row-surface-nested {
+  background-color: hsl(var(--tp-table-row-nested-hover));
+}
+
+/* One colour on both axes so row dividers and column separators match: the row
+   itself (div-based table), its cells' inline-end borders, and the bottom
+   border below. The divider has to be drawn on the cells for DataTable, whose
+   border-separate table never paints <tr> borders. */
+.table-row-divider,
+.table-row-divider > td,
+.table-row-divider [role="cell"] {
+  border-color: hsl(var(--tp-table-grid-line));
+}
+
+.table-row-divider > td {
+  border-bottom-width: 1px;
+  border-bottom-style: solid;
+}
+
+tbody > tr:last-child.table-row-divider > td {
+  border-bottom-width: 0;
 }
 
 /* Search result highlighting - outside @layer to override browser defaults */

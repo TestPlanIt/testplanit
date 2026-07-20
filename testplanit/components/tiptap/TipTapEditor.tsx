@@ -118,6 +118,7 @@ interface TipTapEditorProps {
   onUpdate?: (content: object) => void;
   readOnly?: boolean;
   className?: string;
+  style?: React.CSSProperties;
   projectId?: string; // Made optional - AI features only work when valid project ID provided
   placeholder?: string;
   parameters?: ParameterChipMeta[];
@@ -129,6 +130,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
   onUpdate,
   readOnly = false,
   className = "h-[150px]",
+  style,
   projectId,
   placeholder,
   parameters,
@@ -395,22 +397,46 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
     const editorContainer = editorContainerRef.current;
     if (!editorContainer) return;
 
+    // A page-level react-dnd HTML5Backend listens on `window`. Its dragstart
+    // handler calls preventDefault() on any drag it did not start, cancelling
+    // block reordering outright, and its dragover handler stamps
+    // dropEffect="none", refusing the drop. Keep editor drags from reaching
+    // it — ProseMirror owns drag behaviour inside the editor.
+    const containEditorDrag = (e: DragEvent) => {
+      e.stopPropagation();
+    };
+
+    const isFileDrag = (e: DragEvent) =>
+      e.dataTransfer?.types?.includes("Files") ?? false;
+
     const handleDragOver = (e: DragEvent) => {
+      e.stopPropagation();
+      if (!isFileDrag(e)) return;
       e.preventDefault();
-      e.dataTransfer!.dropEffect = "copy";
+      if (e.dataTransfer) {
+        e.dataTransfer.dropEffect = "copy";
+      }
     };
 
     const handleDrop = (e: DragEvent) => {
+      e.stopPropagation();
+      if (!isFileDrag(e)) return;
       e.preventDefault();
       if (e.dataTransfer?.files) {
         void handleFile(editor, Array.from(e.dataTransfer.files));
       }
     };
 
+    editorContainer.addEventListener("dragstart", containEditorDrag);
+    editorContainer.addEventListener("dragenter", containEditorDrag);
+    editorContainer.addEventListener("dragend", containEditorDrag);
     editorContainer.addEventListener("dragover", handleDragOver);
     editorContainer.addEventListener("drop", handleDrop);
 
     return () => {
+      editorContainer.removeEventListener("dragstart", containEditorDrag);
+      editorContainer.removeEventListener("dragenter", containEditorDrag);
+      editorContainer.removeEventListener("dragend", containEditorDrag);
       editorContainer.removeEventListener("dragover", handleDragOver);
       editorContainer.removeEventListener("drop", handleDrop);
     };
@@ -699,6 +725,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
   return (
     <div
       className={cn("overflow-auto flex flex-col w-full", className)}
+      style={style}
       ref={editorContainerRef}
     >
       {loading && <LoadingSpinnerAlert />}

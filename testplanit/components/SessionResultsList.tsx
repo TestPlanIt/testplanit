@@ -72,6 +72,7 @@ import { usePathname, useRouter } from "~/lib/navigation";
 import { getBackgroundStyle } from "~/utils/colorUtils";
 import { toHumanReadable } from "~/utils/duration";
 import { fetchSignedUrl } from "~/utils/fetchSignedUrl";
+import { editorMinHeightStyle } from "~/utils/editorHeight";
 import { AttachmentsCarousel } from "./AttachmentsCarousel";
 import { AttachmentChanges, AttachmentsDisplay } from "./AttachmentsDisplay";
 import { SimpleUnifiedIssueManager } from "./issues/UnifiedIssueManager";
@@ -1191,9 +1192,7 @@ export function SessionResultsList({
         const isRequired = field.resultField.isRequired;
         // Get initialHeight
         const initialHeight = field.resultField.initialHeight;
-        const editorClassName = `min-h-[100px] border rounded-md w-full ${
-          initialHeight ? `min-h-[${initialHeight}px]` : ""
-        }`;
+        const editorClassName = "border rounded-md w-full";
 
         return (
           <FormField
@@ -1214,6 +1213,7 @@ export function SessionResultsList({
                     onUpdate={updateFieldValue}
                     projectId={projectId.toString()}
                     className={editorClassName}
+                    style={editorMinHeightStyle(initialHeight)}
                     placeholder={`Enter ${displayName.toLowerCase()} here...`}
                     readOnly={isFieldDisabled}
                   />
