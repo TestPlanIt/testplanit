@@ -57,6 +57,8 @@ The Duplicates page lists all candidate pairs sorted by confidence (High first).
 
 Click any row to open the **comparison dialog**, which shows a side-by-side view of both test cases including steps, tags, custom fields, folder, and last test result. Use this view to decide how to resolve the pair.
 
+To make the differences easy to spot, the dialog highlights every field whose value differs between the two cases — name, source, folder, creator, tags, attachments, steps, and each template field value. For the name, source, and folder, the highlighting is word-level: only the exact words that changed are marked, so matching text stays plain. The creator, tags, attachments, steps, and template field values are highlighted whenever they differ between the two cases.
+
 ## Resolving Duplicates
 
 The comparison dialog offers three resolution options.

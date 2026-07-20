@@ -15,6 +15,7 @@ The Report Builder lets you compose a custom report by picking a data source, th
 | **Repository Stats** | Cases in the project's test repository (counts, automation status, custom fields) |
 | **User Engagement** | Per-user activity across the project (executions, sessions, results) |
 | **Project Health** | Project-level health metrics (pass rates, churn, recent activity) |
+| **Milestone Readiness** | Release readiness per milestone — % of in-scope issues fully passing, plus per-state counts (passed, failed, in progress, not run, uncovered, total). Supports a date-range filter on each milestone's effective date, and a Date dimension that plots readiness chronologically as a line chart |
 | **Session Analysis** | Exploratory testing sessions (durations, findings, executions) |
 | **Issue Tracking** | Linked external issues and their associated test cases |
 

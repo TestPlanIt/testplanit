@@ -7,6 +7,10 @@ sidebar_position: 4 # Adjust position as needed
 
 This guide outlines the steps to deploy TestPlanIt to production using the comprehensive Docker Compose setup that includes all required services.
 
+:::tip Deploying on Kubernetes?
+If you already run your internal tools on Kubernetes, see the **[Kubernetes (Helm)](./kubernetes-deployment.md)** guide to deploy with the official Helm chart instead.
+:::
+
 ## Prerequisites
 
 - A server with Docker and Docker Compose installed
@@ -148,7 +152,7 @@ docker compose -f docker-compose.prod.yml $PROFILES up -d
 What happens during startup:
 
 - Application and worker images are built
-- **Database migrations run automatically** - The `migrate` service runs `zenstack db push` to sync the database schema with the application before starting
+- **Database migrations run automatically** - The `migrate` service runs `zenstack migrate deploy` to apply pending migrations to the database schema before starting
 - Selected services start (based on profiles)
 - Database is seeded with initial data (if using `with-postgres` profile for first-time setup)
 - MinIO buckets are created (if using `with-minio`)

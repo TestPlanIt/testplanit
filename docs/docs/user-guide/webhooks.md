@@ -103,6 +103,8 @@ Each event name follows a `subject.verb` convention. The reserved verbs are `cre
 - `issue.created`, `issue.updated`, `issue.deleted`
 - `dataset.row.acquired`, `dataset.row.released` — emitted by the [test-data reservation](../test-data-reservation.md) (dataset row lease) API; payloads carry row identifiers only, never the row's values
 
+**Issue event scope.** An `issue.created` or `issue.updated` event fans out to every project that links the issue — through that project's repository cases, test runs, run results, run step results, sessions, or session results — in addition to the issue's home project. An issue with no home project (one that exists only through an integration) still fans out to every project that links it. `issue.deleted` is the exception: it is delivered to the issue's home project only, because the cross-project links are already gone by the time the delete fires.
+
 Toggling a checkbox saves immediately; a brief check-mark flashes next to the event name to confirm the change reached the server.
 
 ### Slack vs generic HMAC

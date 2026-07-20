@@ -32,7 +32,7 @@ You will see:
 
 * **Renaming/Deleting Folders:** Typically done via context menus (right-click) or buttons within the folder tree.
 * **Moving Folders/Cases (Drag & Drop):** Folders and test cases can often be reorganized by dragging and dropping them within the tree or list.
-* **Editing Cases:** Click on a test case name or an edit icon to navigate to the [Case Details](./repository-case-details.mdx) page.
+* **Editing Cases:** Click a test case name to open its [Case Details](./repository-case-details.mdx) in a docked panel beside the list, or use the row's **Edit** action to open the full details page in edit mode.
 * **Deleting Cases:** Often done via buttons or context menus in the test case list or on the details page.
 
 :::info Permissions Required
@@ -67,9 +67,10 @@ The page features a resizable two-panel layout:
     * **Column Selection**: Choose which columns are visible in the table using the **Columns** control. Your selection is remembered automatically — it is saved in your browser and scoped to this project's repository, so the columns you pick are still there the next time you open it.
     * **Pagination**: Controls for navigating through pages of test cases.
     * **Test Case Table (`DataTable`)**: Displays the list of test cases based on the current selection/filters. Supports:
-        * Sorting by clicking column headers (Name, State, etc.).
+        * **Sorting via the column header menu**: Each column header opens a menu with **Sort ascending**, **Sort descending**, **Manual sort** (clears the sort), and **Hide column**. The active sort column shows a faint tint plus a directional accent bar — along the top edge when sorted ascending, the bottom edge when descending. The sort column and direction are remembered per project.
+        * **Reordering and resizing columns**: Drag a header by its grip to reorder columns, or drag a header's right edge to resize it. The pinned checkbox, Name, and Actions columns stay in place. Column order and width are remembered per project alongside your visibility choices.
         * Reordering cases via drag-and-drop within the table (only when sorted by the default `order` column and not in selection mode).
-        * Clicking a test case name navigates to its **Test Case Details** page (to be documented separately).
+        * Clicking a test case name opens its details in a docked [Test Case Details](./repository-case-details.mdx) panel beside the list (see [Test Case Details Panel](#test-case-details-panel) below).
     * **Quick Add Row (`AddCaseRow`)**: An inline form at the bottom of the table for quickly adding a new test case with just a name and state (uses the project's default template).
 
 ## Views & Filtering
@@ -97,14 +98,14 @@ When you open the repository as part of a **test run** (Run Mode), two additiona
 The main table displays the following information for each test case:
 
 * **Checkbox**: For selecting multiple cases for bulk actions (like adding to a test run or deleting).
-* **Name**: The title of the test case. Each row shows a type icon — robot for automated cases, checklist for manual cases — followed by a stacked-squares badge when the case is [parameterized](./parameterized-test-cases.md). Clicking the name navigates to the [Test Case Details](./repository-case-details.mdx) page.
+* **Name**: The title of the test case. Each row shows a type icon — robot for automated cases, checklist for manual cases — followed by a stacked-squares badge when the case is [parameterized](./parameterized-test-cases.md). Clicking the name opens the [Test Case Details](./repository-case-details.mdx) panel beside the list.
 * **Template**: The template used by the test case.
 * **State**: The current workflow state of the test case.
 * **Priority**: The assigned priority level.
 * **Estimate**: The manually set estimated time (often shown in a human-readable format like "5m") required to execute the test case.
 * **Forecast**: An automatically calculated prediction of execution time based on historical results. See [Test Case Details](./repository-case-details.mdx#forecast-calculation) for more info.
 * **Tags**: Associated tags.
-* **Last Result**: The most recent test result for this case across all test runs. Displays the status (e.g., Passed, Failed, Blocked) as a colored dot with the status name. Hovering over the status reveals a tooltip showing when the test was last executed and which test run produced the result.
+* **Latest Results**: The case's last five results across all test runs, newest first, drawn as small colored squares (the most recent at full strength, older ones progressively faded). Each square links to the run that produced it, and the history covers both manual run results and automated JUnit results. Hovering over a square shows the status and when it was executed. The column is sortable: clicking the header groups cases by the status of their most recent result, and cases that have never been executed always sort last, in either direction.
 * **Last Updated**: Timestamp of the last modification.
 * **Actions** (Ellipsis Menu):
     * **Edit**: Opens the [Test Case Details](./repository-case-details.mdx) page in edit mode.
@@ -114,9 +115,23 @@ Additional dynamic columns appear based on the fields defined in the templates u
 
 ### Remembered column choices
 
-Your column selections are saved per project and restored each time you return. Because the available columns change with the templates in view, choices are matched by column: a column you hid or showed is restored whenever that column is present, and any saved choice for a column that is not in the current view — for example a removed template field, or a field that belongs to a template you are not currently looking at — is simply ignored. Switching between templates therefore keeps each template's columns the way you left them. If you open the repository from a shared link whose URL specifies columns, those columns take precedence for that visit.
+Your column layout — which columns are visible, the order they appear in, and each column's width — is saved per project and restored each time you return. The sort column and direction you last applied are remembered the same way. Because the available columns change with the templates in view, choices are matched by column: a column you hid or showed is restored whenever that column is present, and any saved choice for a column that is not in the current view — for example a removed template field, or a field that belongs to a template you are not currently looking at — is simply ignored. Switching between templates therefore keeps each template's columns the way you left them. If you open the repository from a shared link whose URL specifies columns, those columns take precedence for that visit.
+
+## Test Case Details Panel
+
+Clicking a test case name opens its [Test Case Details](./repository-case-details.mdx) in a docked panel to the right of the case list, without leaving the repository. The selected case's row stays highlighted in the list — the highlight fills across the pinned columns — and stepping between cases moves the highlight without scrolling the list.
+
+* **Resizable split**: Drag the divider between the list and the panel to set how much space each takes. Your split is remembered.
+* **Full-width toggle**: The expand control in the panel header hides the folder tree and case list so the details fill the whole content area; collapse it to return to the split view. On narrow viewports the panel automatically takes over the full width.
+* **Prev/next navigation**: The header shows the selected case's position as "N of total" and steps through the entire filtered result set — across page boundaries, not just the visible page. With **Show all descendants** enabled, it spans every case in the selected folder and its subfolders. When focus is not in a field or editor, the left/right arrow keys step to the previous/next case.
+* **Open full page and close**: The header also links to the standalone full-page view (opens in a new tab) and provides a close control. The browser Back button closes the panel as well.
 
 ## Drag and Drop
+
+While you drag a test case, the valid drop destinations are outlined with a dashed border and labeled so the outcome is clear before you release:
+
+* The reorder zone within the case list shows **Drop to reorder**.
+* The folder tree shows **Drop on a folder — hold ⇧ to move, ⌥ to copy** (on Windows and Linux, **Drop on a folder — hold Shift to move, Ctrl to copy**). Once you hold a modifier, the label switches to **Drop on a folder to move** or **Drop on a folder to copy** to confirm the chosen action.
 
 ### Reordering Test Cases
 

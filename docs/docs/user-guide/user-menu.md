@@ -14,8 +14,8 @@ Once opened, the menu displays:
 1. **Your Name and Email**: Shown at the top for identification.
 2. **View Profile**: Navigates you directly to your **[User Profile](./user-profile.md)** page.
 3. **Theme**: Opens a sub-menu where you can select your preferred visual theme for the application.
-    - Options include Light, Dark, System (matches your operating system setting), Green, Orange, Purple, and **Accessible**.
-    - **Accessible** is a high-contrast theme tuned for accessibility (WCAG 2.2 AA): it strengthens text and border contrast, enlarges small interactive targets, and adds a clearly visible keyboard focus ring. Choose it if you rely on these aids — see [Accessibility](#accessibility) below.
+    - Options include Light, Dark, System (matches your operating system setting), Green, Orange, Purple, **Accessible**, and **Accessible (Dark)**.
+    - **Accessible** and **Accessible (Dark)** are high-contrast themes tuned for accessibility (WCAG 2.2 AA): they strengthen text and border contrast, enlarge small interactive targets, and add a clearly visible keyboard focus ring. **Accessible** is light; **Accessible (Dark)** is its dark counterpart for anyone who needs a dark interface (for example, light sensitivity). Choose either if you rely on these aids — see [Accessibility](#accessibility) below.
     - A checkmark indicates the currently active theme.
     - Selecting a new theme saves the preference to your profile and reloads the application to apply the change.
 4. **Language**: Opens a sub-menu to select the display language for the application interface.
@@ -27,9 +27,9 @@ Once opened, the menu displays:
 
 ## Accessibility
 
-TestPlanIt includes an opt-in **Accessible** theme designed to meet the [WCAG 2.2](https://www.w3.org/TR/WCAG22/) Level AA presentation requirements. It is one of the regular theme choices in the **Theme** sub-menu (and on your [User Profile](./user-profile.md) preferences), so you can turn it on or off at any time without affecting other users.
+TestPlanIt includes two opt-in high-contrast themes designed to meet the [WCAG 2.2](https://www.w3.org/TR/WCAG22/) Level AA presentation requirements: **Accessible** (light) and **Accessible (Dark)**. Both are regular theme choices in the **Theme** sub-menu (and on your [User Profile](./user-profile.md) preferences), so you can turn one on or off at any time without affecting other users. **Accessible (Dark)** is the dark-mode counterpart for anyone who needs a dark interface — for example, users with light sensitivity — with every text pairing meeting at least 4.5:1 contrast and UI borders, controls, and the focus ring meeting at least 3:1.
 
-Compared to the default themes, the Accessible theme:
+Compared to the default themes, the Accessible and Accessible (Dark) themes:
 
 - **Increases contrast** for body text, secondary ("muted") text, and UI borders so content meets the minimum contrast ratio.
 - **Enlarges small interactive targets** (such as compact icon buttons and toggles) to at least the recommended minimum size.

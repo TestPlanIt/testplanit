@@ -88,6 +88,13 @@ secrets:
 #   tag: "1.0.0"                  # pin instead of latest
 ```
 
+:::tip Live updates (SSE)
+The notification bell and live milestone / test-run updates use long-lived SSE
+streams. The chart's default ingress annotations do not disable proxy buffering, so
+for these to work reliably override `ingress.annotations` — see
+[SSE Notifications and Live Updates](./sse-notifications.md#helm-chart-deployment).
+:::
+
 ## Step 2: Install
 
 ```bash

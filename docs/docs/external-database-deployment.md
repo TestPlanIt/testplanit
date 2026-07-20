@@ -255,21 +255,21 @@ docker compose -f docker-compose.prod.yml up -d
 If you're using an external PostgreSQL database for the first time, initialize the schema manually:
 
 ```bash
-# Run db push and seed using a temporary container
+# Apply migrations and seed using a temporary container
 docker compose -f docker-compose.prod.yml run --rm \
   -e DATABASE_URL="your-external-database-url" \
-  prod sh -c "pnpm exec zenstack db push --schema schema.zmodel --accept-data-loss && pnpm tsx db/seed.ts"
+  db-init-prod sh -c "npx zenstack migrate deploy --schema schema.zmodel --no-version-check && pnpm tsx db/seed.ts"
 ```
 
 If your database sits behind a transaction-mode pooler (e.g. pgbouncer), point this
-command at a connection that bypasses the pooler — `zenstack db push` and the index
+command at a connection that bypasses the pooler — `zenstack migrate deploy` and the index
 setup require a real (non-pooled) session. See [Configure connection pooling](#best-practices)
 below for the matching `DIRECT_DATABASE_URL` setup the running container uses.
 
 You do **not** need a separate step to install the audit-capture database triggers.
-`prisma db push` silently drops them, but the application re-installs them
-automatically on every boot (idempotent, advisory-locked across replicas), so a plain
-`db push` followed by starting the app leaves audit capture intact. Two optional
+`zenstack migrate deploy` does not install them, but the application re-installs them
+automatically on every boot (idempotent, advisory-locked across replicas), so applying
+migrations and then starting the app leaves audit capture intact. Two optional
 environment variables tune this self-install:
 
 - `AUDIT_TRIGGER_BOOTSTRAP=off` — skip the install entirely. Use this only when the
@@ -344,10 +344,13 @@ Error: Table already exists
 ```
 
 **Solution:**
-If you're migrating an existing database:
+A database created before the migration history exists (any database built by the old `db push` flow) has no recorded migrations, so `migrate deploy` tries to run the baseline migration and fails because the tables already exist. Baseline it **once**, on a direct (non-pooled) connection, before the first deploy:
 
-1. Remove `--accept-data-loss` from the `db-init-prod` command
-2. Use `pnpm exec zenstack db push --schema schema.zmodel` without the flag to preserve data
+1. Mark the baseline as already applied — it matches the schema the database already has, so it is recorded without being run:
+   `npx zenstack migrate resolve --applied 20260625193632_init --schema schema.zmodel`
+2. Apply the remaining migrations (data-preserving): `npx zenstack migrate deploy --schema schema.zmodel`
+
+See [`testplanit/migrations/README.md`](https://github.com/testplanit/testplanit/blob/main/testplanit/migrations/README.md) for the full baseline procedure.
 
 ### Issue 5: Different User Created Tables
 
@@ -402,7 +405,7 @@ To run multiple TestPlanIt instances against different databases:
      ```
 
    - Set `DIRECT_DATABASE_URL` to a connection that **bypasses the pooler** (straight
-     to Postgres). Startup schema sync (`zenstack db push`) and extension/index setup
+     to Postgres). Startup migrations (`zenstack migrate deploy`) and extension/index setup
      (`CREATE INDEX CONCURRENTLY`) use it, since those need a real session. Leave it
      unset when no pooler is used — it falls back to `DATABASE_URL`.
 

@@ -44,6 +44,9 @@ The table displays the following information for each issue:
 - **Sessions:**
     - Shows a count of how many test sessions (directly or via results) are linked to this issue across all accessible projects.
     - Clicking the count opens a modal displaying the list of linked sessions.
+- **Milestones:**
+    - Shows a count of how many milestones the issue belongs to across all accessible projects.
+    - Clicking the count opens a popover that lists those milestones, each shown with its milestone type icon and, for synced milestones, a Jira source badge.
 - **Projects:**
     - Shows icons representing the projects associated with the issue through linked test cases, test runs, or sessions.
     - Clicking the project icons opens a modal displaying the list of associated projects.

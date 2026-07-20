@@ -144,7 +144,7 @@ The lock is enforced everywhere — in the interface, through the API, and at th
   - **Configuration**: Shows the linked configuration. In Edit mode, it becomes a dropdown limited to [Configurations](../configurations.md) assigned to this project.
   - **Milestone**: Shows the linked milestone. In Edit mode, it becomes a searchable dropdown (type to filter; only active milestones are shown; completed milestones are excluded).
   - **Tags**: Displays assigned tags. In Edit mode, allows managing tags.
-  - **Attachments**: Displays attachments. In Edit mode, allows uploading and managing attachments.
+  - **Attachments**: Displays attachments. Image, PDF, and Office (Word/Excel/PowerPoint) attachments can be previewed inline — click one to open the keyboard-navigable [large-preview carousel](../../file-storage.md#inline-previews). In Edit mode, allows uploading and managing attachments.
   - **Created By**: Shows the user who created the run (View mode only).
 - **Test Case Execution View** (When a test case is selected from the left panel in View mode):
   - The right panel switches to display the `TestRunCaseDetails` component.

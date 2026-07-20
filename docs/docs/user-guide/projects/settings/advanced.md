@@ -19,7 +19,17 @@ Only system administrators and project administrators can open this page. There 
 
 ## Settings
 
-Each toggle saves immediately, except the result edit window, which has its own **Save** button.
+Each toggle saves immediately. The project code (when shown) and the result edit window each have their own **Save** button.
+
+### Project code
+
+Appears only when the **Record Keys** feature is enabled system-wide. It sets this project's short code — the prefix used in cosmetic record keys such as `PROJECT-TC-1234`.
+
+- Enter **2–10 uppercase letters** (no digits). The field suggests a code derived from the project name, which you can accept with one click or replace.
+- As you type, an example key is previewed and the code is checked live against other projects; codes are unique across the instance, so one already in use is rejected before you save.
+- Leave it **blank** to keep showing plain numeric IDs for this project.
+
+See [Record Keys](../../record-keys.md) for how keys are formatted and where they appear.
 
 ### Enable review workflow
 

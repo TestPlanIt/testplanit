@@ -14,10 +14,13 @@ The page uses a resizable two-panel layout:
 - **Left Panel (Main Content)**:
   - **Milestone Name**: Displays the name (editable in Edit Mode). A milestone synced from an external tracker shows a [source badge](#source-badge) next to the name.
   - **Documentation**: Shows the rich text documentation associated with this milestone (`docs` field). Editable in Edit Mode via a `TipTapEditor`.
-  - **(View Mode Only)** Lists of:
-    - **Child Milestones**: Displays any direct children of this milestone, showing their name, status badge, and dates. Clicking a child navigates to its own detail page.
-    - **Associated Test Runs**: Lists Test Runs linked to this milestone and all descendant milestones. Runs from child milestones display a milestone label to indicate their source.
-    - **Associated Sessions**: Lists Test Sessions linked to this milestone and all descendant milestones. Sessions from child milestones display a milestone label to indicate their source.
+  - **Forecast**: The estimated time to execute the milestone's test cases.
+  - **(View Mode Only) Child Milestones**: Displays any direct children of this milestone, showing their name, status badge, and dates. Clicking a child navigates to its own detail page.
+  - **(View Mode Only)** A stack of icon-and-title cards follows — **Burndown**, **Issues**, **Test Runs**, and **Sessions**. Each card is an independently collapsible accordion that remembers whether you last left it expanded or collapsed (persisted per browser):
+    - **Burndown**: The [execution burndown](#burndown) over the milestone window. Appears only when the milestone has both a window anchor and executable scope.
+    - **Issues**: The [Issues card](#issues), whose header shows a single deduped issue total across its two sections.
+    - **Test Runs**: Test Runs linked to this milestone and all descendant milestones. Runs from child milestones display a milestone label to indicate their source. Long lists are virtualized, loading each row as you scroll.
+    - **Sessions**: Test Sessions linked to this milestone and all descendant milestones. Sessions from child milestones display a milestone label to indicate their source. Long lists are virtualized, loading each row as you scroll.
 - **Right Panel (Controls & Details)**:
   - Displays/allows editing of core milestone properties using form controls.
 
@@ -27,6 +30,7 @@ In the default view mode:
 
 - All fields are read-only.
 - A **Back Arrow** button in the header navigates back to the main Milestones list.
+- An **Activity** button — the leftmost of the header actions — opens a slide-out **Activity Log** sheet listing the milestone's audit history. Which entries appear is governed by the milestone audit-log read policy.
 - An **Edit** button (icon: SquarePen) is available for users with **ADMIN** or **PROJECTADMIN** access.
 - An **Export PDF** button generates a print/evidence-grade PDF report of the milestone (see [Exporting to PDF](#exporting-to-pdf)).
 - The right panel displays:
@@ -64,9 +68,30 @@ At the top of the page (view mode only), a summary bar breaks down the test run 
 
 Hovering either chip shows its full label as a tooltip. Clicking a chip scrolls down to the [Issues card](#issues) and expands the matching section.
 
+## Burndown
+
+Once the milestone has both a window anchor and executable scope, a collapsible **Burndown** card charts execution progress over the milestone's window. A fresh, empty milestone has nothing to plot, so the card stays hidden until work exists.
+
+- The **actual** line plots how many test items still lack a first result on each day, stepping down as executions land. Its window anchor is the milestone's **Start date**, or — when that's unset — the earliest recorded execution, falling back to the **created** date.
+- When the milestone has a **Due date**, a dashed **Ideal** guideline runs from the remaining-at-start down to zero on that date.
+- A **Today** marker highlights the current day within the window.
+
+Hovering a point on the actual line shows that day and its remaining count.
+
+### Schedule-health heat strip
+
+When a Due date exists, a per-day **heat strip** sits beneath the x-axis, coloring each day by how far the actual remaining work sat from that day's ideal:
+
+- **Ahead of ideal** shifts from green through blue to purple the further ahead the milestone runs.
+- **On track** — sitting on the ideal line — is green.
+- **Behind ideal** warms from yellow to red as the milestone falls further behind.
+- Days not yet reached stay neutral.
+
+A legend keys the strip with **Ahead of ideal**, **On track**, and **Behind ideal** swatches, and hovering a day shows how many items it was ahead of or behind ideal.
+
 ## Issues
 
-Below the summary, the **Issues** card gathers every issue related to the milestone into two independently collapsible sections. Each section remembers whether you last left it expanded or collapsed.
+The **Issues** card gathers every issue related to the milestone into two independently collapsible sections — **In scope** and **Found in testing**. Its header shows a single deduped issue total: the union of both sections, since one issue can appear in each. The card and each of its sections remember whether you last left them expanded or collapsed.
 
 ### In Scope
 
@@ -74,6 +99,8 @@ Issues that belong to this milestone: those synced automatically from the linked
 
 - **Coverage** — a chip summarizing the latest completed outcome of every test case linked to that issue, as one colored pip per status plus an Untested pip, or an **Uncovered** chip when none of the linked cases has a completed result yet.
 - **Source** — **Synced** or **Manual**.
+
+The section header carries a **% ready** badge — the share of member issues that are fully passing (every linked test case passed), rounded to a whole percent. Hovering it breaks the total down by state (passed, failed, in progress, not run, uncovered). Uncovered and not-run issues count against readiness, so a milestone reaches 100% only once every in-scope issue is fully covered and passing.
 
 Above the table, milestone-wide coverage totals roll up every listed issue's per-status pips — with a legend popover explaining the colors — plus a count of uncovered issues.
 
@@ -94,7 +121,7 @@ When the linked Jira sprint or version has more issues than are linked here — 
 
 ### Found in Testing
 
-A read-only list of issues surfaced by test runs and sessions linked to this milestone **and its child milestones**. An issue that also appears in **In scope** carries an **In scope** badge here.
+A read-only table of issues surfaced by test runs and sessions linked to this milestone **and its child milestones**. It uses the same table layout as **In scope**, with each row showing the issue (including its issue-type icon), a **Description** column, and the issue's status. An issue that also appears in **In scope** carries an **In scope** badge here.
 
 This section has no linking controls of its own — to change what a milestone is linked to, use **In scope** above.
 
@@ -136,7 +163,9 @@ The report aggregates the milestone **and all of its descendant sub-milestones**
 - **Contributing Test Runs**: one row per run with its per-status breakdown.
 - **Contributing Sessions**: each session with its latest status.
 - **Sub-milestones**: descendant milestones with their status.
-- **Linked Issues**: issues linked to the contributing runs and sessions.
+- **In Scope**: the milestone's member issues with their status, coverage, and source, plus milestone-wide coverage totals.
+- **Found in Testing**: issues surfaced by the contributing test runs and sessions, with their status.
+- **Traceability**: each member issue paired with its linked test cases and each case's latest in-scope result — the result status, the run it was executed in, and the execution date. An uncovered issue (one with no linked cases) appears once as a coverage gap; a linked case with no in-scope result reads **Not run**.
 - **Review & Approval Decisions**: the decision (approved, rejected, etc.), reviewer, date, and comment for contributing runs and sessions that went through review.
 
 Dates and durations are formatted for your locale. As with the test run and session PDF exports, the document body text is in English by design — see [Exported PDFs are in English](../../import-export.md#pdf-export).

@@ -179,14 +179,39 @@ Both are non-fatal: SSE is a wake-up signal, the `Notification` row is the sourc
 
 The route registers a `SIGTERM` handler that, on signal, writes `event: shutdown\ndata: {}\n\n` to every active stream, unsubscribes each subscriber, and closes the underlying Valkey clients. EventSource's built-in auto-reconnect on the client kicks in — combined with the route's sync-on-connect, users are reconnected and resynced on a different pod within seconds. Set `terminationGracePeriodSeconds` on the pod to at least 30 seconds (60 seconds is a safer margin) to give the handler room to drain.
 
-## Future helm chart checklist
+## Helm chart deployment
 
-The TestPlanIt helm chart is planned for a future milestone. The same TestPlanIt application image runs in every environment — the only environment-specific knobs are ingress annotations and the two tuning env vars. When the chart is built, the following values must be exposed for SSE to work portably:
+TestPlanIt ships an official Helm chart at [`testplanit/helm/testplanit`](https://github.com/testplanit/testplanit/tree/main/testplanit/helm/testplanit); see [Kubernetes (Helm)](./kubernetes-deployment.md) for the full install guide. The same application image runs in every environment, so the only SSE-specific tuning on Kubernetes is the ingress annotations and the connection-cap env vars.
 
-- `sse.perTenantCap` → `SSE_PER_TENANT_CAP` env var
-- `sse.perUserCap` → `SSE_PER_USER_CAP` env var
-- Ingress annotations block that defaults to the nginx-ingress / Traefik / ALB examples above
-- `terminationGracePeriodSeconds` ≥ 30 on the application Deployment (60 recommended)
+### Ingress annotations for SSE
+
+The chart's default `ingress.annotations` target ingress-nginx and set `proxy-body-size: "100m"` and `proxy-read-timeout: "120"`, but they do not disable response buffering or set a send timeout. For reliable long-lived streams, add and raise these annotations under `ingress.annotations`:
+
+```yaml
+ingress:
+  annotations:
+    # Disable response buffering so SSE bytes are forwarded as soon as they arrive.
+    nginx.ingress.kubernetes.io/proxy-buffering: 'off'
+    # Lengthen idle timeouts so streams survive periods without messages.
+    # These also raise the chart's default proxy-read-timeout of 120 seconds.
+    nginx.ingress.kubernetes.io/proxy-read-timeout: '3600'
+    nginx.ingress.kubernetes.io/proxy-send-timeout: '3600'
+```
+
+### Connection caps
+
+Set the per-tenant and per-user caps through `config.extraEnv`, which the chart injects into the application ConfigMap:
+
+```yaml
+config:
+  extraEnv:
+    SSE_PER_TENANT_CAP: '1000'
+    SSE_PER_USER_CAP: '4'
+    SSE_ISSUES_PER_TENANT_CAP: '1000'
+    SSE_ISSUES_PER_USER_CAP: '8'
+```
+
+The chart already sets `server.terminationGracePeriodSeconds: 45` on the web Deployment, which satisfies the ≥ 30-second drain window the SIGTERM handler needs.
 
 ## Reference files
 

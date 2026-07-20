@@ -19,20 +19,20 @@ Only system administrators can open this page.
 
 ## Browsing deleted records
 
-Trash groups deleted records by type in a set of collapsible sections — projects, templates, fields, workflows, statuses, milestones, configurations, users, groups, roles, tags, issues, test runs, results, sessions, repository folders and cases, steps, attachments, integrations, prompts, code repositories, and more.
+Trash is a **master-detail** view. A filterable rail on the left lists every record type that can hold deleted records — projects, templates, fields, workflows, statuses, milestones, configurations, users, groups, roles, tags, issues, test runs and results, sessions, repository folders and cases, steps, attachments, integrations, prompts, code repositories, and more. Each type carries a **count badge** of how many deleted records it holds, and the filter box at the top of the rail narrows the list by name. The page header shows the total across all types.
 
-Expand a section to see its deleted records in a table. Each section has a **search** box and column sorting to help you find a specific record.
+Select a type to load its deleted records in the detail pane. That table is **virtualized and loads on scroll** — there are no page buttons; the next batch of rows is fetched automatically as you approach the bottom. The **ID** and **Actions** columns stay pinned while the rest of the table scrolls, so a record's identifier and its Restore and Purge controls remain visible. Click a column header to sort.
 
 ## Restoring a record
 
-1. Find the record in its section.
+1. Select the record's type in the sidebar, then find it in the detail table.
 2. Click **Restore** and confirm.
 
 Restoring clears the deleted flag and returns the record to normal use. Associated data may be restored alongside it.
 
 ## Purging a record
 
-1. Find the record in its section.
+1. Select the record's type in the sidebar, then find it in the detail table.
 2. Click **Purge** and confirm.
 
 :::danger

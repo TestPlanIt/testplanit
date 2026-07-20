@@ -48,5 +48,8 @@ The table structure is similar to the global Issues List but focuses on the cont
 - **Sessions:**
     - Shows a count of test sessions *within this project* (directly or via results) linked to the issue.
     - Clicking the count opens a modal listing these specific sessions.
+- **Milestones:**
+    - Shows a count of the milestones *within this project* that the issue belongs to.
+    - Clicking the count opens a popover that lists those milestones, each shown with its milestone type icon and, for synced milestones, a Jira source badge.
 
 *(Note: The "Projects" column from the global list is not present here, as the view is already scoped to a single project).*

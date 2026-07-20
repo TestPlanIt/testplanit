@@ -226,9 +226,21 @@ Attachments appear in several locations:
 ### Download and Access
 
 - **Direct Download**: Click attachment name to download
-- **Preview**: Supported file types show inline preview
+- **Preview**: Supported file types show inline preview (see [Inline Previews](#inline-previews))
 - **Secure Access**: All downloads use signed URLs with expiration
 - **Permission Checks**: Access based on entity permissions
+
+### Inline Previews
+
+Many attachment types render inline rather than only downloading:
+
+- **Images and PDFs** render inline on an entity's details view and open in a large-preview carousel. The carousel is keyboard-navigable — the left/right arrow keys move between attachments and Escape closes it.
+- **Word (`.docx`), Excel (`.xlsx`, `.xls`), and PowerPoint (`.pptx`) documents** render in the browser: Word and Excel as formatted HTML, and PowerPoint slide-by-slide with previous/next controls.
+- **Text and Markdown files** show their contents inline, with Markdown formatted and fenced code blocks syntax-highlighted.
+
+Full Office documents render only in the large preview (details view and carousel); in the compact attachment-count list they stay icon-only, so listing many attachments stays fast.
+
+An Office document falls back to a generic file icon with a download link when it can't be previewed — files larger than 25 MB, empty spreadsheets, and legacy binary `.doc` and `.ppt` files, which have no client-side renderer.
 
 ### Deleting Attachments
 

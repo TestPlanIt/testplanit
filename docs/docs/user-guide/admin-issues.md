@@ -32,6 +32,7 @@ Issues are listed in a sortable, filterable table. Use the **Filter issues...** 
 | **Test Cases** | Count of repository cases linked to this issue. |
 | **Test Runs** | Count of linked test runs. |
 | **Sessions** | Count of linked sessions. |
+| **Milestones** | Count of milestones the issue belongs to. Click the count to open a popover listing them, each with its milestone type icon and, for synced milestones, a Jira source badge. |
 | **Projects** | The projects the issue appears in. |
 | **Integration** | The integration the issue was linked through, or `-`. |
 | **Actions** | Per-row actions (see below). Always shown. |
