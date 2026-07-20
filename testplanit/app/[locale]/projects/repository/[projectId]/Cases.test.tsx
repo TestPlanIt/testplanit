@@ -187,10 +187,6 @@ vi.mock("~/app/actions/exportActions", () => ({
   fetchAllCasesForExport: vi.fn(),
 }));
 
-vi.mock("~/lib/utils/computeLastTestResult", () => ({
-  computeLastTestResult: vi.fn(() => null),
-}));
-
 vi.mock("sonner", () => ({
   toast: {
     success: vi.fn(),
@@ -342,7 +338,6 @@ const mockCase = {
   folder: null,
   creator: null,
   createdAt: new Date(),
-  lastTestResult: null,
 };
 
 const defaultProps = {

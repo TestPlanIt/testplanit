@@ -82,7 +82,6 @@ import { usePagination } from "~/lib/contexts/PaginationContext";
 import { attachmentsWhereClause } from "~/lib/repositoryCaseAttachmentsFilter";
 import { useReviewFeatureEnabled } from "~/hooks/useReviewFeatureEnabled";
 import { usePathname, useRouter } from "~/lib/navigation";
-import { computeLastTestResult } from "~/lib/utils/computeLastTestResult";
 import { LatestResultsCell } from "@/components/tables/LatestResultsCell";
 import { useLatestTestResults } from "~/hooks/useLatestTestResults";
 import { LATEST_RESULTS_COUNT } from "~/lib/types/latestTestResults";
@@ -271,30 +270,6 @@ const REPOSITORY_CASE_LIST_SELECT = {
           isCompleted: true,
         },
       },
-      results: {
-        select: {
-          id: true,
-          executedAt: true,
-          status: {
-            select: {
-              id: true,
-              name: true,
-              color: {
-                select: {
-                  value: true,
-                },
-              },
-            },
-          },
-        },
-        where: {
-          isDeleted: false,
-        },
-        orderBy: {
-          executedAt: "desc",
-        },
-        take: 1,
-      },
     },
   },
   linksFrom: {
@@ -310,39 +285,6 @@ const REPOSITORY_CASE_LIST_SELECT = {
       type: true,
       isDeleted: true,
     },
-  },
-  junitResults: {
-    select: {
-      id: true,
-      executedAt: true,
-      status: {
-        select: {
-          id: true,
-          name: true,
-          color: {
-            select: {
-              value: true,
-            },
-          },
-        },
-      },
-      testSuite: {
-        select: {
-          id: true,
-          testRun: {
-            select: {
-              id: true,
-              name: true,
-              isDeleted: true,
-            },
-          },
-        },
-      },
-    },
-    orderBy: {
-      executedAt: "desc",
-    },
-    take: 1,
   },
   _count: {
     select: {
@@ -2354,30 +2296,6 @@ export default function Cases({
                     isCompleted: true;
                   };
                 };
-                results: {
-                  select: {
-                    id: true;
-                    executedAt: true;
-                    status: {
-                      select: {
-                        id: true;
-                        name: true;
-                        color: {
-                          select: {
-                            value: true;
-                          };
-                        };
-                      };
-                    };
-                  };
-                  where: {
-                    isDeleted: false;
-                  };
-                  orderBy: {
-                    executedAt: "desc";
-                  };
-                  take: 1;
-                };
               };
             };
             linksFrom: {
@@ -2581,7 +2499,6 @@ export default function Cases({
     if (searchResultIds && searchData) {
       return searchData.map((caseItem: any) => ({
         ...caseItem,
-        lastTestResult: computeLastTestResult(caseItem),
       }));
     }
 
@@ -2591,7 +2508,7 @@ export default function Cases({
       return testRunCasesData.map((trc) => ({
         ...trc.repositoryCase,
         // Derive the legacy tags/issues array shape from the explicit join rows
-        // so downstream consumers (columns, computeLastTestResult) are unaffected.
+        // so downstream consumers (columns) are unaffected.
         tags:
           (trc.repositoryCase as CaseJoinRels).caseTags?.map((ct) => ct.tag) ??
           [],
@@ -2618,16 +2535,14 @@ export default function Cases({
       }));
     }
     // Not in isRunMode. Use 'data' directly (already server-side paginated and filtered).
-    // Compute lastTestResult for each case using the shared server-side function
     if (data) {
       return data.map((caseItem) => ({
         ...caseItem,
         // Derive the legacy tags/issues array shape from the explicit join rows
-        // so downstream consumers (columns, computeLastTestResult) are unaffected.
+        // so downstream consumers (columns) are unaffected.
         tags: (caseItem as CaseJoinRels).caseTags?.map((ct) => ct.tag) ?? [],
         issues:
           (caseItem as CaseJoinRels).caseIssues?.map((ci) => ci.issue) ?? [],
-        lastTestResult: computeLastTestResult(caseItem),
       }));
     }
     return [];

@@ -228,21 +228,6 @@ export interface ExtendedCases extends RepositoryCases {
   linksFrom?: { caseBId: number; isDeleted: boolean }[];
   linksTo?: { caseAId: number; isDeleted: boolean }[];
   testRunConfiguration?: { id: number; name: string } | null;
-  // Last test result for repository mode (most recent result across all test runs)
-  lastTestResult?: {
-    status: {
-      id: number;
-      name: string;
-      color?: {
-        value: string;
-      };
-    };
-    executedAt: Date;
-    testRun?: {
-      id: number;
-      name: string;
-    };
-  } | null;
 }
 
 /**
