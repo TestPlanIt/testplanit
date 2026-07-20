@@ -123,6 +123,10 @@ vi.mock("@zenstackhq/tanstack-query/react", () => ({
   }),
 }));
 
+vi.mock("~/hooks/useLatestTestResults", () => ({
+  useLatestTestResults: () => ({}),
+}));
+
 vi.mock("~/hooks/useReviewFeatureEnabled", () => ({
   useReviewFeatureEnabled: vi.fn(() => ({
     enabled: false,

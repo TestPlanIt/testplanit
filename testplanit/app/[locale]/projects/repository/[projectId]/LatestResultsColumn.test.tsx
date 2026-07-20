@@ -6,9 +6,7 @@ import {
   Theme,
   TimeFormat,
 } from "~/zenstack/models";
-import { render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
-import { beforeAll, describe, expect, it, vi } from "vitest";
+import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 // These tests exercise real Radix tooltip behaviour (user.hover triggers
 // TooltipContent rendering). Override the global stub from vitest.setup
@@ -18,7 +16,6 @@ vi.mock("@/components/ui/tooltip", async () =>
     "@/components/ui/tooltip"
   )
 );
-import { TooltipProvider } from "@/components/ui/tooltip";
 
 // Mock server-side modules first (before any other imports)
 vi.mock("~/app/actions/test-run", () => ({
@@ -144,7 +141,7 @@ vi.mock("next-auth/react", () => ({
 }));
 
 // Import the component under test dynamically after mocks are in place
-// Since LastTestResultCell is not exported directly, we need to test the column definition
+// The cell delegates to LatestResultsCell, which has its own test; here we
 import { getColumns, type ExtendedCases } from "./columns";
 
 // Setup to fix hasPointerCapture issue with Radix UI
@@ -163,7 +160,7 @@ beforeAll(() => {
   }
 });
 
-describe("LastTestResultCell via getColumns", () => {
+describe("latestResults column via getColumns", () => {
   const mockSession = {
     user: {
       id: "user-123",
@@ -206,66 +203,105 @@ describe("LastTestResultCell via getColumns", () => {
     clickToViewFullContent: "Click to view full content",
     comments: "Comments",
     configuration: "Configuration",
-    lastTestResult: "Last Result",
+    latestResults: "Latest Results",
     newBadge: "New",
   };
 
+  const renderLatestResults = vi.fn(
+    (caseId: number, projectId: number) =>
+      `results-${projectId}-${caseId}` as unknown as React.ReactNode
+  );
+
+  beforeEach(() => {
+    renderLatestResults.mockClear();
+  });
+
+  const buildColumns = (isRunMode = false, isSelectionMode = false) =>
+    getColumns(
+      mockSession,
+      mockUniqueFieldList,
+      mockHandleSelect,
+      mockColumnTranslations,
+      isRunMode,
+      isSelectionMode
+    );
+
   describe("Column definition", () => {
-    it("should include lastTestResult column in repository mode (not run mode)", () => {
-      const columns = getColumns(
-        mockSession, // session
-        mockUniqueFieldList, // uniqueCaseFieldList
-        mockHandleSelect, // handleSelect
-        mockColumnTranslations,
-        false, // isRunMode - NOT in run mode
-        false // isSelectionMode
-      );
+    it("should include the latestResults column in repository mode", () => {
+      const column = buildColumns().find((col) => col.id === "latestResults");
 
-      const lastResultColumn = columns.find(
-        (col) => col.id === "lastTestResult"
-      );
-      expect(lastResultColumn).toBeDefined();
-      expect(lastResultColumn?.header).toBe("Last Result");
-      expect(lastResultColumn?.enableSorting).toBe(false);
-      expect(lastResultColumn?.enableResizing).toBe(true);
-      expect(lastResultColumn?.enableHiding).toBe(true);
+      expect(column).toBeDefined();
+      expect(column?.header).toBe("Latest Results");
+      expect(column?.enableSorting).toBe(false);
+      expect(column?.enableResizing).toBe(true);
+      expect(column?.enableHiding).toBe(true);
     });
 
-    it("should NOT include lastTestResult column in run mode", () => {
-      const columns = getColumns(
-        mockSession,
-        mockUniqueFieldList,
-        mockHandleSelect,
-        mockColumnTranslations,
-        true, // isRunMode - IN run mode
-        false
-      );
-
-      const lastResultColumn = columns.find(
-        (col) => col.id === "lastTestResult"
-      );
-      expect(lastResultColumn).toBeUndefined();
+    it("should NOT include the latestResults column in run mode", () => {
+      expect(
+        buildColumns(true, false).find((col) => col.id === "latestResults")
+      ).toBeUndefined();
     });
 
-    it("should NOT include lastTestResult column in selection mode", () => {
-      const columns = getColumns(
-        mockSession,
-        mockUniqueFieldList,
-        mockHandleSelect,
-        mockColumnTranslations,
-        false,
-        true // isSelectionMode - IN selection mode
-      );
-
-      const lastResultColumn = columns.find(
-        (col) => col.id === "lastTestResult"
-      );
-      expect(lastResultColumn).toBeUndefined();
+    it("should NOT include the latestResults column in selection mode", () => {
+      expect(
+        buildColumns(false, true).find((col) => col.id === "latestResults")
+      ).toBeUndefined();
     });
   });
 
   describe("Cell rendering", () => {
-    const getLastResultColumn = () => {
+    // The sequence itself is owned by LatestResultsCell and covered by its own
+    // test; the column's job is only to delegate with the right identifiers.
+    const cellFor = (row: { original: ExtendedCases }) => {
+      const columns = getColumns(
+        mockSession,
+        mockUniqueFieldList,
+        mockHandleSelect,
+        mockColumnTranslations,
+        false,
+        false,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        renderLatestResults
+      );
+      const column = columns.find((col) => col.id === "latestResults");
+      const cell = column?.cell;
+      return typeof cell === "function" ? cell({ row } as any) : cell;
+    };
+
+    it("delegates to the render prop with the case and project ids", () => {
+      const row = {
+        original: { id: 42, projectId: 7 } as ExtendedCases,
+      };
+
+      const rendered = cellFor(row);
+
+      expect(renderLatestResults).toHaveBeenCalledWith(42, 7);
+      expect(rendered).toBe("results-7-42");
+    });
+
+    it("renders nothing when no render prop is supplied", () => {
       const columns = getColumns(
         mockSession,
         mockUniqueFieldList,
@@ -274,308 +310,14 @@ describe("LastTestResultCell via getColumns", () => {
         false,
         false
       );
-      return columns.find((col) => col.id === "lastTestResult");
-    };
-
-    // Helper to render a cell - handles the union type of cell being string | function
-    const renderCell = (
-      column: ReturnType<typeof getLastResultColumn>,
-      mockRow: { original: ExtendedCases }
-    ) => {
+      const column = columns.find((col) => col.id === "latestResults");
       const cell = column?.cell;
-      const node =
-        typeof cell === "function" ? cell({ row: mockRow } as any) : cell;
-      // Wrap in a real TooltipProvider since the page-level provider in
-      // app/providers.tsx isn't included in unit-test renders.
-      return render(
-        <TooltipProvider>
-          <div>{node}</div>
-        </TooltipProvider>
-      );
-    };
+      const rendered =
+        typeof cell === "function"
+          ? cell({ row: { original: { id: 1, projectId: 1 } } } as any)
+          : cell;
 
-    it("should render null when lastTestResult is undefined", () => {
-      const column = getLastResultColumn();
-      const mockRow = {
-        original: {
-          id: 1,
-          projectId: 1,
-          lastTestResult: undefined,
-        } as ExtendedCases,
-      };
-
-      const { container } = renderCell(column, mockRow);
-
-      // Should render empty (just the wrapper div)
-      expect(container.textContent).toBe("");
-    });
-
-    it("should render null when lastTestResult is null", () => {
-      const column = getLastResultColumn();
-      const mockRow = {
-        original: {
-          id: 1,
-          projectId: 1,
-          lastTestResult: null,
-        } as ExtendedCases,
-      };
-
-      const { container } = renderCell(column, mockRow);
-
-      expect(container.textContent).toBe("");
-    });
-
-    it("should render status dot with status name when lastTestResult exists", () => {
-      const column = getLastResultColumn();
-      const mockRow = {
-        original: {
-          id: 1,
-          projectId: 1,
-          lastTestResult: {
-            status: {
-              id: 1,
-              name: "Passed",
-              color: { value: "#00FF00" },
-            },
-            executedAt: new Date("2025-12-25T10:30:00Z"),
-            testRun: { id: 5, name: "Sprint 10 Test Run" },
-          },
-        } as ExtendedCases,
-      };
-
-      renderCell(column, mockRow);
-
-      // Should display the status name
-      expect(screen.getByText("Passed")).toBeInTheDocument();
-    });
-
-    it("should render status with correct color", () => {
-      const column = getLastResultColumn();
-      const mockRow = {
-        original: {
-          id: 1,
-          projectId: 1,
-          lastTestResult: {
-            status: {
-              id: 2,
-              name: "Failed",
-              color: { value: "#FF0000" },
-            },
-            executedAt: new Date("2025-12-25T10:30:00Z"),
-            testRun: { id: 5, name: "Sprint 10 Test Run" },
-          },
-        } as ExtendedCases,
-      };
-
-      renderCell(column, mockRow);
-
-      expect(screen.getByText("Failed")).toBeInTheDocument();
-      // The color dot should have the correct background color
-      const dot = document.querySelector('[style*="background-color"]');
-      expect(dot).toHaveStyle({ backgroundColor: "#FF0000" });
-    });
-
-    it("should render status without color (default gray)", () => {
-      const column = getLastResultColumn();
-      const mockRow = {
-        original: {
-          id: 1,
-          projectId: 1,
-          lastTestResult: {
-            status: {
-              id: 3,
-              name: "Blocked",
-              // No color provided
-            },
-            executedAt: new Date("2025-12-25T10:30:00Z"),
-          },
-        } as ExtendedCases,
-      };
-
-      renderCell(column, mockRow);
-
-      expect(screen.getByText("Blocked")).toBeInTheDocument();
-    });
-
-    it("should display tooltip with execution date on hover", async () => {
-      const user = userEvent.setup();
-      const column = getLastResultColumn();
-      const mockRow = {
-        original: {
-          id: 1,
-          projectId: 1,
-          lastTestResult: {
-            status: {
-              id: 1,
-              name: "Passed",
-              color: { value: "#00FF00" },
-            },
-            executedAt: new Date("2025-12-25T10:30:00Z"),
-            testRun: { id: 5, name: "Sprint 10 Test Run" },
-          },
-        } as ExtendedCases,
-      };
-
-      renderCell(column, mockRow);
-
-      // Hover over the status to trigger tooltip
-      const statusElement = screen.getByText("Passed");
-      await user.hover(statusElement);
-
-      // Wait for tooltip to appear - it contains the "Last Tested" text
-      // Use getAllByText since Radix may render duplicates. Bumped timeout
-      // beyond the testing-library default (1s) because the CI runner has
-      // been observed taking >19× longer than local for the full suite,
-      // squeezing Radix's hover-delay + portal-mount race window past 1s.
-      const testedOnElements = await screen.findAllByText(
-        /\[t\]repository\.columns\.testedOn/,
-        undefined,
-        { timeout: 5000 }
-      );
-      expect(testedOnElements.length).toBeGreaterThan(0);
-    });
-
-    it("should display test run name in tooltip when available", async () => {
-      const user = userEvent.setup();
-      const column = getLastResultColumn();
-      const mockRow = {
-        original: {
-          id: 1,
-          projectId: 1,
-          lastTestResult: {
-            status: {
-              id: 1,
-              name: "Passed",
-              color: { value: "#00FF00" },
-            },
-            executedAt: new Date("2025-12-25T10:30:00Z"),
-            testRun: { id: 5, name: "Sprint 10 Test Run" },
-          },
-        } as ExtendedCases,
-      };
-
-      renderCell(column, mockRow);
-
-      const statusElement = screen.getByText("Passed");
-      await user.hover(statusElement);
-
-      // Should display the test run name (may be multiple due to Radix rendering).
-      // See above — bumped timeout for CI load resilience.
-      const testRunElements = await screen.findAllByText(
-        "Sprint 10 Test Run",
-        undefined,
-        { timeout: 5000 }
-      );
-      expect(testRunElements.length).toBeGreaterThan(0);
-    });
-
-    it("should not display test run in tooltip when testRun is not provided", async () => {
-      const user = userEvent.setup();
-      const column = getLastResultColumn();
-      const mockRow = {
-        original: {
-          id: 1,
-          projectId: 1,
-          lastTestResult: {
-            status: {
-              id: 1,
-              name: "Passed",
-              color: { value: "#00FF00" },
-            },
-            executedAt: new Date("2025-12-25T10:30:00Z"),
-            // No testRun provided
-          },
-        } as ExtendedCases,
-      };
-
-      renderCell(column, mockRow);
-
-      const statusElement = screen.getByText("Passed");
-      await user.hover(statusElement);
-
-      // Should show the date but no link to a test run page.
-      // See above — bumped timeout for CI load resilience.
-      const testedOnElements = await screen.findAllByText(
-        /\[t\]repository\.columns\.testedOn/,
-        undefined,
-        { timeout: 5000 }
-      );
-      expect(testedOnElements.length).toBeGreaterThan(0);
-
-      // The cell itself wraps in a link to the case history; that's expected.
-      // What must NOT be present is a link to a test run page.
-      const links = screen.queryAllByRole("link");
-      expect(
-        links.find((l) => l.getAttribute("href")?.includes("/projects/runs/"))
-      ).toBeUndefined();
-    });
-
-    it("should wrap the cell in a link to the case result history", () => {
-      const column = getLastResultColumn();
-      const mockRow = {
-        original: {
-          id: 42,
-          projectId: 7,
-          lastTestResult: {
-            status: {
-              id: 1,
-              name: "Passed",
-              color: { value: "#00FF00" },
-            },
-            executedAt: new Date("2025-12-25T10:30:00Z"),
-          },
-        } as ExtendedCases,
-      };
-
-      renderCell(column, mockRow);
-
-      const cellLink = screen.getByRole("link");
-      expect(cellLink).toHaveAttribute(
-        "href",
-        "/projects/repository/7/42#result-history"
-      );
-    });
-
-    it("should have link to test run in tooltip", async () => {
-      const user = userEvent.setup();
-      const column = getLastResultColumn();
-      const mockRow = {
-        original: {
-          id: 1,
-          projectId: 1,
-          lastTestResult: {
-            status: {
-              id: 1,
-              name: "Passed",
-              color: { value: "#00FF00" },
-            },
-            executedAt: new Date("2025-12-25T10:30:00Z"),
-            testRun: { id: 5, name: "Sprint 10 Test Run" },
-          },
-        } as ExtendedCases,
-      };
-
-      renderCell(column, mockRow);
-
-      const statusElement = screen.getByText("Passed");
-      await user.hover(statusElement);
-
-      // Wait for tooltip content (may be multiple due to Radix rendering).
-      // See above — bumped timeout for CI load resilience.
-      const testRunElements = await screen.findAllByText(
-        "Sprint 10 Test Run",
-        undefined,
-        { timeout: 5000 }
-      );
-      expect(testRunElements.length).toBeGreaterThan(0);
-
-      // Two links rendered: the cell wrapper (case history) + the test run name
-      // inside the tooltip. Find the test run one specifically.
-      const links = screen.getAllByRole("link");
-      const testRunLink = links.find(
-        (l) => l.getAttribute("href") === "/projects/runs/1/5"
-      );
-      expect(testRunLink).toBeDefined();
+      expect(rendered).toBeNull();
     });
   });
 });

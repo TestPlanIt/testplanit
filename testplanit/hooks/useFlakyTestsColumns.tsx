@@ -1,17 +1,9 @@
-import StatusDotDisplay from "@/components/StatusDotDisplay";
 import { CaseDisplay } from "@/components/tables/CaseDisplay";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { LatestResultsCell } from "@/components/tables/LatestResultsCell";
 import { RepositoryCaseSource } from "~/zenstack/models";
 import { ColumnDef, createColumnHelper } from "@tanstack/react-table";
-import { format } from "date-fns";
 import { useTranslations } from "next-intl";
 import { useMemo } from "react";
-import { Link } from "~/lib/navigation";
 
 interface ExecutionStatus {
   resultId: number;
@@ -152,86 +144,14 @@ export function useFlakyTestsColumns(
         ),
         cell: (info) => {
           if (!info.row.original) return null;
-          const executions = info.row.original.executions || [];
-          const totalSlots = Math.max(executions.length, consecutiveRuns);
-
-          // Calculate opacity: index 0 = 1 (full), index 1 = 0.7, then fade to 0.2
-          const getOpacity = (index: number) => {
-            if (index === 0) return 1;
-            if (totalSlots <= 2) return 0.7;
-            // From index 1 (0.7) to the last index (0.2)
-            return 0.7 - ((index - 1) / (totalSlots - 2)) * 0.5;
-          };
-
           return (
-            <TooltipProvider>
-              <div className="flex items-center gap-0.5">
-                {executions
-                  .slice(0, consecutiveRuns)
-                  .map((execution, index) => {
-                    const testCaseId = info.row.original.testCaseId;
-                    // Use project ID from row data for cross-project, or fall back to prop
-                    const rowProjectId =
-                      info.row.original.project?.id || projectId;
-                    const hasLink = rowProjectId && execution.testRunId;
-                    const linkHref = hasLink
-                      ? `/projects/runs/${rowProjectId}/${execution.testRunId}?selectedCase=${testCaseId}`
-                      : undefined;
-
-                    const boxStyle = {
-                      backgroundColor: execution.statusColor,
-                      opacity: getOpacity(index),
-                    };
-
-                    const boxContent = hasLink ? (
-                      <Link
-                        href={linkHref!}
-                        className="block w-4 h-4 rounded-sm transition-all hover:opacity-80"
-                        style={boxStyle}
-                      />
-                    ) : (
-                      <div
-                        className="w-4 h-4 rounded-sm cursor-default"
-                        style={boxStyle}
-                      />
-                    );
-
-                    return (
-                      <Tooltip
-                        key={`${info.row.original.testCaseId}-exec-${execution.resultId}-${index}`}
-                      >
-                        <TooltipTrigger asChild>{boxContent}</TooltipTrigger>
-                        <TooltipContent>
-                          <div className="text-xs space-y-1">
-                            <StatusDotDisplay
-                              name={execution.statusName}
-                              color={execution.statusColor}
-                            />
-                            <div className="opacity-80">
-                              {format(new Date(execution.executedAt), "PPp")}
-                            </div>
-                            {!execution.testRunId && (
-                              <div className="text-destructive text-xs">
-                                {t("reports.ui.flakyTests.testRunDeleted")}
-                              </div>
-                            )}
-                          </div>
-                        </TooltipContent>
-                      </Tooltip>
-                    );
-                  })}
-                {executions.length < consecutiveRuns &&
-                  Array.from({
-                    length: consecutiveRuns - executions.length,
-                  }).map((_, index) => (
-                    <div
-                      key={`${info.row.original.testCaseId}-empty-${executions.length + index}`}
-                      className="w-4 h-4 rounded-sm bg-muted"
-                      style={{ opacity: getOpacity(executions.length + index) }}
-                    />
-                  ))}
-              </div>
-            </TooltipProvider>
+            <LatestResultsCell
+              executions={info.row.original.executions || []}
+              slots={consecutiveRuns}
+              // Cross-project rows carry their own project; otherwise the prop.
+              projectId={info.row.original.project?.id || projectId}
+              testCaseId={info.row.original.testCaseId}
+            />
           );
         },
         enableSorting: false,

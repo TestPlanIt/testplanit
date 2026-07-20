@@ -83,6 +83,9 @@ import { attachmentsWhereClause } from "~/lib/repositoryCaseAttachmentsFilter";
 import { useReviewFeatureEnabled } from "~/hooks/useReviewFeatureEnabled";
 import { usePathname, useRouter } from "~/lib/navigation";
 import { computeLastTestResult } from "~/lib/utils/computeLastTestResult";
+import { LatestResultsCell } from "@/components/tables/LatestResultsCell";
+import { useLatestTestResults } from "~/hooks/useLatestTestResults";
+import { LATEST_RESULTS_COUNT } from "~/lib/types/latestTestResults";
 import { AddCaseRow } from "./AddCaseRow";
 import { AddResultModal } from "./AddResultModal";
 import { BulkEditModal } from "./BulkEditModal";
@@ -2694,6 +2697,21 @@ export default function Cases({
     [pendingByCaseId]
   );
 
+  // Recent executions for the visible page, one round trip per render like the
+  // review badges above.
+  const latestResultsByCase = useLatestTestResults(visibleCaseIds);
+  const renderLatestResults = useCallback(
+    (caseId: number, caseProjectId: number) => (
+      <LatestResultsCell
+        executions={latestResultsByCase[caseId] ?? []}
+        slots={LATEST_RESULTS_COUNT}
+        projectId={caseProjectId}
+        testCaseId={caseId}
+      />
+    ),
+    [latestResultsByCase]
+  );
+
   // Clear optimistic reorder when underlying data changes
   useEffect(() => {
     setOptimisticReorder({ inProgress: false, cases: null });
@@ -3151,7 +3169,7 @@ export default function Cases({
         clickToViewFullContent: t("repository.fields.clickToViewFullContent"),
         comments: t("comments.title"),
         configuration: t("common.fields.configuration"),
-        lastTestResult: t("repository.columns.lastTestResult"),
+        latestResults: t("repository.columns.latestResults"),
         newBadge: t("common.labels.new"),
       },
       isRunMode,
@@ -3211,6 +3229,7 @@ export default function Cases({
       showDescendants,
       folderPathMap,
       renderPendingBadge,
+      renderLatestResults,
       excludeNotStartedFromRuns
     );
   }, [
@@ -3243,6 +3262,7 @@ export default function Cases({
     showDescendants,
     folderPathMap,
     renderPendingBadge,
+    renderLatestResults,
     excludeNotStartedFromRuns,
   ]);
 

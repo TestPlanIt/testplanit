@@ -2890,7 +2890,7 @@
     "columns": {
       "selectCase": "Select Case",
       "runOrder": "Run Order",
-      "lastTestResult": "Last Result",
+      "latestResults": "Latest Results",
       "testedOn": "Last Tested"
     },
     "actions": {
