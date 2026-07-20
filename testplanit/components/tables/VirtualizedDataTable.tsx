@@ -41,6 +41,7 @@ import {
 } from "react";
 import { useVirtualizedInfiniteList } from "~/hooks/useVirtualizedInfiniteList";
 import { cn } from "~/utils";
+import { tableStyles } from "./tableStyles";
 
 /**
  * Sticky-column CSS for a pinned column, mirroring `DataTable`'s
@@ -606,7 +607,7 @@ export function VirtualizedDataTable({
           className={cn("shrink-0", enableColumnPinning && "overflow-hidden")}
         >
           <div
-            className="flex border-b bg-muted-foreground/20 text-foreground"
+            className={cn("flex", tableStyles.headerRow)}
             role="row"
             style={enableColumnPinning ? { width: tableWidth } : undefined}
           >
@@ -625,7 +626,8 @@ export function VirtualizedDataTable({
                     key={header.id}
                     role="columnheader"
                     className={cn(
-                      "relative flex select-none items-center gap-1 border-e px-3 py-2 text-xs font-medium last:border-e-0",
+                      "relative flex select-none items-center gap-1 border-e px-3 last:border-e-0",
+                      tableStyles.headerCell,
                       isFlex ? "min-w-0" : "shrink-0",
                       // Opaque fill so scrolled header cells don't bleed under a
                       // pinned one.
@@ -769,15 +771,16 @@ export function VirtualizedDataTable({
                     data-testid={`${rowTestIdPrefix}-${row.original?.id ?? vItem.index}`}
                     className={cn(
                       "absolute start-0 top-0 flex border-b",
+                      tableStyles.rowDivider,
                       isGrouped
-                        ? "bg-muted font-semibold text-foreground"
+                        ? "bg-accent font-semibold text-foreground"
                         : isSubRow
                           ? // Nested detail rows: a shaded block (the colored nesting
                             // bar is drawn on the right edge of the first/indent cell
                             // below) so the run of sub-rows reads as one group and the
-                            // next (unshaded) parent row is clearly the boundary.
-                            "bg-muted/40 hover:bg-muted/60"
-                          : "hover:bg-muted/50",
+                            // next (lighter) parent row is clearly the boundary.
+                            tableStyles.rowSurfaceNested
+                          : tableStyles.rowSurface,
                       isHighlighted &&
                         "bg-primary/10 outline outline-4 -outline-offset-2 outline-primary"
                     )}
@@ -841,13 +844,17 @@ export function VirtualizedDataTable({
                           role="cell"
                           data-column-id={String(column.id)}
                           className={cn(
-                            "flex min-w-0 items-center overflow-hidden border-e px-3 py-2 text-sm last:border-e-0",
+                            "flex min-w-0 items-center overflow-hidden border-e px-3 last:border-e-0",
+                            tableStyles.cell,
                             !isFlex && "shrink-0",
                             // Opaque fill so scrolled cells don't bleed under a
-                            // pinned column.
+                            // pinned column. Matches the row surface so the
+                            // pinned column reads as part of its row.
                             enableColumnPinning &&
                               column.getIsPinned() &&
-                              "bg-background",
+                              (isSubRow
+                                ? "table-row-surface-nested"
+                                : "table-row-surface"),
                             // Nesting guide: a wide colored bar on the RIGHT edge of
                             // the first (indent) cell of a sub-row, marking where the
                             // nested content begins.
