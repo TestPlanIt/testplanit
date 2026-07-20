@@ -71,7 +71,7 @@ export function DropZoneOverlay({
         data-testid={testId}
         className="pointer-events-none absolute inset-0 z-30 rounded-md border-2 border-dashed border-primary bg-primary/5"
       >
-        <div className="absolute inset-x-0 top-2 flex justify-center px-2">
+        <div className="absolute inset-x-0 top-0 flex -translate-y-1/2 justify-center px-2">
           <span className="max-w-full truncate rounded-full bg-primary px-3 py-1 text-xs font-medium text-primary-foreground shadow-md">
             {label}
           </span>

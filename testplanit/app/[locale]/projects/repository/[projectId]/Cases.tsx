@@ -2687,9 +2687,25 @@ export default function Cases({
 
   const allCaseIds = useMemo<number[]>(() => {
     if (searchResultIds) return searchResultIds;
-    if (allCaseIdRows) return allCaseIdRows.map((r: { id: number }) => r.id);
-    return visibleCaseIds;
-  }, [searchResultIds, allCaseIdRows, visibleCaseIds]);
+    if (!allCaseIdRows) return visibleCaseIds;
+    const ids = allCaseIdRows.map((r: { id: number }) => r.id);
+    // A drag-reorder only shuffles the current page, but `allCaseIdRows` keeps
+    // the pre-reorder order until its query refetches. The current page is a
+    // contiguous block within `ids` (same orderBy), so while the optimistic
+    // reorder is in flight, overwrite that block with the reordered visible ids
+    // — otherwise the details panel's prev/next steps through the stale order.
+    if (optimisticReorder.inProgress) {
+      const visibleSet = new Set(visibleCaseIds);
+      let vi = 0;
+      return ids.map((id) => (visibleSet.has(id) ? visibleCaseIds[vi++] : id));
+    }
+    return ids;
+  }, [
+    searchResultIds,
+    allCaseIdRows,
+    visibleCaseIds,
+    optimisticReorder.inProgress,
+  ]);
 
   // Lift the selected case's prev/next context up to ProjectRepository, which
   // renders the docked details panel.
