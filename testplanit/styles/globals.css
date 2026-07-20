@@ -361,11 +361,15 @@ svg[class*="plot-"] .gantt-task-label text {
   --ring: 217 91% 40%; /* strong, clearly visible focus indicator */
   --radius: 0.5rem;
   color-scheme: light;
-  /* Data-table surfaces and grid line. */
-  --tp-table-row: 240 5.9% 96.7%;
-  --tp-table-row-hover: 220 7.7% 92.4%;
-  --tp-table-row-nested: 220 7.7% 92.4%;
-  --tp-table-row-nested-hover: 225 7.1% 89%;
+  /* Data-table surfaces and grid line. Rows sit at the page background so
+     text keeps the theme's full contrast ratio; the grid line and the hover
+     state carry the row structure instead of a tinted fill. The states are
+     stepped harder than in the other themes — against a white row a subtle
+     tint is not a usable hover cue for someone who needs high contrast. */
+  --tp-table-row: var(--background);
+  --tp-table-row-hover: 214 20% 76%;
+  --tp-table-row-nested: 214 20% 86%;
+  --tp-table-row-nested-hover: 214 20% 68%;
   --tp-table-grid-line: var(--border);
 }
 
@@ -402,11 +406,14 @@ svg[class*="plot-"] .gantt-task-label text {
   --ring: 210 90% 72%; /* bright, clearly visible focus indicator on dark */
   --radius: 0.5rem;
   color-scheme: dark;
-  /* Data-table surfaces and grid line. */
-  --tp-table-row: 222.9 36.8% 11.2%;
-  --tp-table-row-hover: 220.9 30.6% 14.1%;
-  --tp-table-row-nested: 220.9 30.6% 14.1%;
-  --tp-table-row-nested-hover: 222.9 25.3% 16.3%;
+  /* Data-table surfaces and grid line. Mirrors the light accessible theme:
+     rows sit at the page background so text keeps the theme's full contrast
+     ratio, and the states are stepped harder than in the other themes so the
+     hover cue stays visible. */
+  --tp-table-row: var(--background);
+  --tp-table-row-hover: 220 25% 26%;
+  --tp-table-row-nested: 220 25% 19%;
+  --tp-table-row-nested-hover: 220 25% 32%;
   --tp-table-grid-line: var(--border);
 }
 
@@ -486,6 +493,16 @@ svg[class*="plot-"] .gantt-task-label text {
 }
 
 .table-row-surface-nested-hover:hover {
+  background-color: hsl(var(--tp-table-row-nested-hover));
+}
+
+/* A pinned cell paints its own opaque fill so the row cannot show through it,
+   which would otherwise leave it behind when the row is hovered. */
+.table-row-surface-hover:hover .table-row-surface {
+  background-color: hsl(var(--tp-table-row-hover));
+}
+
+.table-row-surface-nested-hover:hover .table-row-surface-nested {
   background-color: hsl(var(--tp-table-row-nested-hover));
 }
 
