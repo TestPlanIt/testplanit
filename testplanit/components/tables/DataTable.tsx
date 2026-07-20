@@ -99,6 +99,14 @@ interface DataTableProps<TData extends DataRow, TValue> {
   subRowColumns?: ColumnDef<any, any>[];
   subRowsLabel?: string;
   rowTestIdPrefix?: string;
+  /** Explicit id of the row to highlight and scroll to. Falls back to the
+   * `selectedCase` search param when not provided (e.g. the run page), so the
+   * repository details panel can drive it from its own `case` param. */
+  selectedRowId?: number | null;
+  /** Whether to scroll the selected row into view. Defaults to true (the run
+   * page); the repository details panel disables it so opening/stepping through
+   * a case highlights the row without jumping the list. */
+  scrollToSelectedRow?: boolean;
 }
 
 interface CustomColumnMeta {
@@ -160,6 +168,8 @@ export function DataTable<TData extends DataRow, TValue>({
   subRowColumns: _subRowColumns,
   subRowsLabel,
   rowTestIdPrefix = "case-row",
+  selectedRowId,
+  scrollToSelectedRow = true,
 }: DataTableProps<TData, TValue>) {
   const t = useTranslations("common.table");
   const tLabels = useTranslations("common.labels");
@@ -168,9 +178,11 @@ export function DataTable<TData extends DataRow, TValue>({
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
-  const selectedCaseId = searchParams.get("selectedCase")
-    ? parseInt(searchParams.get("selectedCase")!)
-    : null;
+  const selectedCaseId =
+    selectedRowId ??
+    (searchParams.get("selectedCase")
+      ? parseInt(searchParams.get("selectedCase")!)
+      : null);
 
   const [showSkeleton, setShowSkeleton] = useState(false);
   const [hasScrolledToSelected, setHasScrolledToSelected] = useState(false);
@@ -545,7 +557,11 @@ export function DataTable<TData extends DataRow, TValue>({
 
   // Scroll to selected row only after the correct page is loaded and the row is present
   useEffect(() => {
-    if (selectedCaseId != null && !hasScrolledToSelected) {
+    if (
+      scrollToSelectedRow &&
+      selectedCaseId != null &&
+      !hasScrolledToSelected
+    ) {
       const row = document.querySelector(
         `[data-row-id="${selectedCaseId}"]`
       ) as HTMLElement | null;
@@ -554,7 +570,14 @@ export function DataTable<TData extends DataRow, TValue>({
         setHasScrolledToSelected(true);
       }
     }
-  }, [selectedCaseId, localData, hasScrolledToSelected, router, pathname]);
+  }, [
+    scrollToSelectedRow,
+    selectedCaseId,
+    localData,
+    hasScrolledToSelected,
+    router,
+    pathname,
+  ]);
 
   // Reset scroll flag if selectedCaseId changes
   useEffect(() => {
@@ -855,6 +878,8 @@ export function DataTable<TData extends DataRow, TValue>({
                   cellPinningStyleFn={cellPinningStyleFn}
                   selectedItemsForDrag={selectedItemsForDragFinal}
                   itemType={itemType}
+                  selectedRowId={selectedCaseId}
+                  scrollToSelectedRow={scrollToSelectedRow}
                 />
               );
             }
@@ -948,7 +973,17 @@ export function DataTable<TData extends DataRow, TValue>({
                         key={String(column.id)}
                         data-column-id={String(column.id)}
                         style={cellPinningStyleFn(column)}
-                        className={`${column.getIsPinned() ? "bg-background shadow-md" : isSelected ? "bg-primary/20" : "bg-primary-foreground/80"} ${
+                        className={`${
+                          column.getIsPinned()
+                            ? isSelected
+                              ? // Opaque equivalent of the row's primary/20 tint so
+                                // the highlight covers the sticky pinned column too.
+                                "bg-[color-mix(in_srgb,var(--color-primary)_36%,var(--color-background))] shadow-md"
+                              : "bg-background shadow-md"
+                            : isSelected
+                              ? "bg-primary/20"
+                              : "bg-primary-foreground/80"
+                        } ${
                           column.id === "expander" ||
                           (column.getIsPinned() &&
                             !column.getIsLastColumn(

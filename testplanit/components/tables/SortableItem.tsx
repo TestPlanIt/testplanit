@@ -37,6 +37,8 @@ function SortableItem<
   cellPinningStyleFn,
   selectedItemsForDrag,
   itemType = ItemTypes.TEST_CASE,
+  selectedRowId,
+  scrollToSelectedRow = true,
 }: {
   id: string;
   row: any;
@@ -50,15 +52,19 @@ function SortableItem<
   cellPinningStyleFn: (column: Column<any>) => CSSProperties;
   selectedItemsForDrag?: DraggedCaseInfo[];
   itemType?: string;
+  selectedRowId?: number | null;
+  scrollToSelectedRow?: boolean;
 }) {
   const [hoverPosition, setHoverPosition] = useState<"top" | "bottom" | null>(
     null
   );
   const { setIsOverReorderZone } = useDragTargetKind();
   const searchParams = useSearchParams();
-  const selectedCaseId = searchParams.get("selectedCase")
-    ? parseInt(searchParams.get("selectedCase")!)
-    : null;
+  const selectedCaseId =
+    selectedRowId ??
+    (searchParams.get("selectedCase")
+      ? parseInt(searchParams.get("selectedCase")!)
+      : null);
   const isSelected = selectedCaseId === row.original.id;
 
   const rowRef = useRef<HTMLTableRowElement>(null);
@@ -229,10 +235,10 @@ function SortableItem<
   }, [dragPreview]);
 
   useEffect(() => {
-    if (isSelected && rowRef.current) {
+    if (scrollToSelectedRow && isSelected && rowRef.current) {
       rowRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
     }
-  }, [isSelected]);
+  }, [isSelected, scrollToSelectedRow]);
 
   useEffect(() => {
     drag(drop(rowRef));
@@ -262,7 +268,16 @@ function SortableItem<
     ];
 
     // Apply background based on pinned status first
-    if (isPinned) {
+    if (isPinned && isSelected) {
+      // Pinned cells are sticky and need an OPAQUE background so other cells
+      // don't show through them during horizontal scroll. Use the opaque
+      // equivalent of the row's translucent primary/20 tint (the row's /20 plus
+      // the cell's /20 composite to ~36% over the background) so the selection
+      // highlight extends across the pinned column too.
+      classes.push(
+        "bg-[color-mix(in_srgb,var(--color-primary)_36%,var(--color-background))] border-e-0"
+      );
+    } else if (isPinned) {
       classes.push("bg-background border-e-0"); // Use bg-background for pinned cells like in DataTable non-sortable rows
     } else if (isSelected) {
       classes.push("bg-primary/20 border-e-0"); // Apply selection highlight if not pinned

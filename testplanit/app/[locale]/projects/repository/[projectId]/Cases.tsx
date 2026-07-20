@@ -4036,6 +4036,10 @@ export default function Cases({
                 key={`${folderId}-${viewType}-${filterId}-datatable`}
                 columns={columns}
                 data={cases}
+                selectedRowId={
+                  selectedCaseIdParam ? Number(selectedCaseIdParam) : null
+                }
+                scrollToSelectedRow={false}
                 onSortChange={isCompleted ? undefined : handleSortChange}
                 sortConfig={isCompleted ? undefined : sortConfig}
                 enableReorder={
