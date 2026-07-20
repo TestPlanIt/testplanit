@@ -42,11 +42,11 @@
     --tp-axis-label-text: hsl(var(--muted-foreground));
     --tp-grid-line-color: hsl(var(--border));
     /* Data-table surfaces and grid line. */
-    --tp-table-row: 240 5.9% 96.7%;
-    --tp-table-row-hover: 220 7.7% 92.4%;
-    --tp-table-row-nested: 220 7.7% 92.4%;
-    --tp-table-row-nested-hover: 225 7.1% 89%;
-    --tp-table-grid-line: 217.5 6.6% 76.1%;
+    --tp-table-row: 210 40% 96.7%;
+    --tp-table-row-hover: 210 40% 92.4%;
+    --tp-table-row-nested: 210 40% 92.4%;
+    --tp-table-row-nested-hover: 210 40% 89%;
+    --tp-table-grid-line: 214.3 31.8% 76%;
   }
 
   .dark {
@@ -258,11 +258,11 @@ svg[class*="plot-"] .gantt-task-label text {
   --input: 20 5.9% 90%;
   --ring: 24.6 95% 53.1%;
   /* Data-table surfaces and grid line. */
-  --tp-table-row: 0 0% 96.5%;
-  --tp-table-row-hover: 0 0% 92.2%;
-  --tp-table-row-nested: 0 0% 92.2%;
-  --tp-table-row-nested-hover: 60 1.8% 88.8%;
-  --tp-table-grid-line: 0 0.8% 75.9%;
+  --tp-table-row: 60 4.8% 96.5%;
+  --tp-table-row-hover: 60 4.8% 92.2%;
+  --tp-table-row-nested: 60 4.8% 92.2%;
+  --tp-table-row-nested-hover: 60 4.8% 88.8%;
+  --tp-table-grid-line: 20 5.9% 76%;
 }
 
 .green {
@@ -290,11 +290,11 @@ svg[class*="plot-"] .gantt-task-label text {
   --input: 240 5.9% 90%;
   --ring: 142.1 76.2% 36.3%;
   /* Data-table surfaces and grid line. */
-  --tp-table-row: 0 0% 96.5%;
-  --tp-table-row-hover: 0 0% 92.2%;
-  --tp-table-row-nested: 0 0% 92.2%;
-  --tp-table-row-nested-hover: 240 1.8% 88.8%;
-  --tp-table-grid-line: 240 0.8% 75.9%;
+  --tp-table-row: 240 4.8% 96.5%;
+  --tp-table-row-hover: 240 4.8% 92.2%;
+  --tp-table-row-nested: 240 4.8% 92.2%;
+  --tp-table-row-nested-hover: 240 4.8% 88.8%;
+  --tp-table-grid-line: 240 5.9% 76%;
 }
 
 .purple {
@@ -322,11 +322,11 @@ svg[class*="plot-"] .gantt-task-label text {
   --input: 220 13% 91%;
   --ring: 262.1 83.3% 57.8%;
   /* Data-table surfaces and grid line. */
-  --tp-table-row: 240 5.9% 96.7%;
-  --tp-table-row-hover: 210 5% 92.2%;
-  --tp-table-row-nested: 210 5% 92.2%;
-  --tp-table-row-nested-hover: 220 5.3% 88.8%;
-  --tp-table-grid-line: 220 4.8% 75.7%;
+  --tp-table-row: 220 14.3% 96.7%;
+  --tp-table-row-hover: 220 14.3% 92.2%;
+  --tp-table-row-nested: 220 14.3% 92.2%;
+  --tp-table-row-nested-hover: 220 14.3% 88.8%;
+  --tp-table-grid-line: 220 13% 76%;
 }
 
 /*
