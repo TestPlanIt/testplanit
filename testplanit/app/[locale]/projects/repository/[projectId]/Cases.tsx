@@ -2521,18 +2521,27 @@ export default function Cases({
   const filteredTotalCount = isDescendantsMode
     ? descendantsResult.totalCount
     : zenStackFilteredTotalCount;
-  const refetchData = useDescendantsData
-    ? descendantsResult.refetch
-    : isDescendantsMode
-      ? // Latest-sort under descendants: refresh both the id-filtered page and
-        // the POST-endpoint count.
-        async () => {
-          await Promise.all([
-            zenStackRefetchData(),
-            descendantsResult.refetch(),
-          ]);
-        }
-      : zenStackRefetchData;
+  // Memoized so its identity is stable across renders (it feeds effect/callback
+  // dependency lists); the ternary would otherwise build a new function each
+  // render. `descendantsResult` is a fresh object each render, so depend on its
+  // stable `refetch` method, not the whole object.
+  const descendantsRefetch = descendantsResult.refetch;
+  const refetchData = useMemo(() => {
+    if (useDescendantsData) return descendantsRefetch;
+    if (isDescendantsMode) {
+      // Latest-sort under descendants: refresh both the id-filtered page and
+      // the POST-endpoint count.
+      return async () => {
+        await Promise.all([zenStackRefetchData(), descendantsRefetch()]);
+      };
+    }
+    return zenStackRefetchData;
+  }, [
+    useDescendantsData,
+    isDescendantsMode,
+    descendantsRefetch,
+    zenStackRefetchData,
+  ]);
 
   // --- ES search POST-based data fetching ---
   // When searchResultIds is active, fetch case data via POST to avoid URL length limits.
@@ -2751,9 +2760,9 @@ export default function Cases({
   // Ordered id list of the FULL filtered result set (all pages), powering the
   // docked details panel's prev/next stepper. ES search already yields an ordered
   // id list; otherwise fetch ids-only with the same where/orderBy as the list.
-  // Disabled in descendants mode (its ids come from a POST endpoint the ZenStack
-  // GET can't reproduce without risking a 414 on deep trees) and when no case is
-  // open — prev/next then falls back to the current page's visible ids.
+  // Disabled in descendants mode — its ids come from a POST endpoint the ZenStack
+  // GET can't reproduce without risking a 414 on deep trees, so `descendantsAllIdRows`
+  // below supplies them there — and when no case is open.
   const { data: allCaseIdRows } = useClientQueries(
     schema
   ).repositoryCases.useFindMany(
@@ -2778,7 +2787,9 @@ export default function Cases({
   // but unpaginated: the details panel's prev/next must step across the whole
   // filtered set, not just the current page. Latest-results sort can't be
   // expressed as an `orderBy`, so `allCaseIdRows` above stays in default order
-  // and can't drive prev/next when this sort is active.
+  // and can't drive prev/next when this sort is active. Works in descendants
+  // mode too — the where scopes to the resolved descendant folders and this is
+  // a POST server action, so a deep subtree can't overflow a URL.
   const { pageIds: latestStatusAllIds } = useCaseIdsByLatestStatus({
     where: repositoryCaseWhereClause,
     direction: sortConfig?.direction ?? "asc",
@@ -2788,11 +2799,35 @@ export default function Cases({
       !isSelectionMode &&
       !!selectedCaseIdParam &&
       !searchResultIds &&
-      !isDescendantsMode &&
       postFetchFilters.length === 0 &&
       !!session?.user
     ),
   });
+
+  // Descendants mode: the paginated list comes from the by-descendants POST (a
+  // deep tree would 414 a ZenStack GET). Fetch that same subtree's ids-only and
+  // unpaginated so the details panel's prev/next steps across every page, not
+  // just the visible one. Latest-results sort is handled by `latestStatusAllIds`
+  // above; this covers the ordinary `orderBy` case.
+  const { data: descendantsAllIdRows } =
+    useFindManyRepositoryCasesByDescendants({
+      projectId,
+      folderId: folderId ?? 0,
+      where: repositoryCaseWhereClauseWithoutFolderFilter,
+      orderBy,
+      select: { id: true },
+      enabled: Boolean(
+        isDescendantsMode &&
+        !isRunMode &&
+        !isSelectionMode &&
+        !!selectedCaseIdParam &&
+        !searchResultIds &&
+        !isLatestResultsSort &&
+        postFetchFilters.length === 0 &&
+        !!session?.user &&
+        isValidProjectId
+      ),
+    });
 
   const allCaseIds = useMemo<number[]>(() => {
     if (searchResultIds) return searchResultIds;
@@ -2801,6 +2836,13 @@ export default function Cases({
     // is in default order. Walk the full window-function ordering instead to
     // keep prev/next in step with the sorted list.
     if (latestStatusAllIds) return latestStatusAllIds;
+    // Descendants mode: the full ordered id list comes from the by-descendants
+    // POST (the GET can't reproduce the subtree), so prev/next spans every page.
+    if (isDescendantsMode) {
+      return descendantsAllIdRows
+        ? descendantsAllIdRows.map((r: { id: number }) => r.id)
+        : visibleCaseIds;
+    }
     if (!allCaseIdRows) return visibleCaseIds;
     const ids = allCaseIdRows.map((r: { id: number }) => r.id);
     // A drag-reorder only shuffles the current page, but `allCaseIdRows` keeps
@@ -2817,6 +2859,8 @@ export default function Cases({
   }, [
     searchResultIds,
     latestStatusAllIds,
+    isDescendantsMode,
+    descendantsAllIdRows,
     allCaseIdRows,
     visibleCaseIds,
     optimisticReorder.inProgress,
@@ -3174,6 +3218,7 @@ export default function Cases({
     },
     [
       cases,
+      isMultiConfigMode,
       lastSelectedIndex,
       rowSelection,
       handleTableRowSelectionChange,
@@ -3305,6 +3350,7 @@ export default function Cases({
     },
     [
       cases,
+      isMultiConfigMode,
       rowSelection,
       isSelectionMode,
       onSelectionChange,
@@ -3467,6 +3513,8 @@ export default function Cases({
     renderPendingBadge,
     renderLatestResults,
     excludeNotStartedFromRuns,
+    compositionLocked,
+    isMultiConfigMode,
   ]);
 
   // Create lightweight column metadata for ColumnSelection component
@@ -3822,7 +3870,6 @@ export default function Cases({
     setCreateRunSeedIds(idsToSeed);
   }, [
     selectedCaseIdsForBulkEdit,
-    projectId,
     isValidProjectId,
     excludeNotStartedFromRuns,
     t,
