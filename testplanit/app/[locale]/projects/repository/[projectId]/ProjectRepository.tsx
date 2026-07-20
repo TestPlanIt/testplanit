@@ -1897,7 +1897,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                             !isRunMode &&
                             !isEsSearchActive && (
                               <>
-                                <div className="flex items-center justify-between mt-2">
+                                <div className="@container flex items-center justify-between mt-2">
                                   <BreadcrumbComponent
                                     breadcrumbItems={getBreadcrumbItems}
                                     projectId={projectIdParam}
@@ -1913,10 +1913,12 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                                       aria-label={t(
                                         "repository.showDescendants"
                                       )}
-                                      className="h-7 gap-1 text-xs me-2 shrink-0 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+                                      className="group h-7 gap-0 hover:gap-1 focus-visible:gap-1 @lg:gap-1 text-xs me-2 shrink-0 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
                                     >
-                                      <FolderDown className="h-3.5 w-3.5" />
-                                      {t("repository.showDescendants")}
+                                      <FolderDown className="h-3.5 w-3.5 shrink-0" />
+                                      <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-64 group-focus-visible:max-w-64 @lg:max-w-64 select-none">
+                                        {t("repository.showDescendants")}
+                                      </span>
                                     </Toggle>
                                   )}
                                 </div>
