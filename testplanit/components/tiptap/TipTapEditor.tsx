@@ -247,12 +247,12 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
     [handleImageUpload]
   );
 
-  const validateContent = (content: any) => {
+  const validateContent = useCallback((content: any) => {
     if (!content || typeof content !== "object" || !content.type) {
       return emptyEditorContent;
     }
     return content;
-  };
+  }, []);
 
   const editor = useEditor(
     {
@@ -392,6 +392,24 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
       editor.setEditable(!readOnly);
     }
   }, [readOnly, editor, handleFile]);
+
+  // A read-only editor treats `content` as the source of truth, and that
+  // content often arrives (or changes) a tick after this component mounts —
+  // e.g. a project's saved docs resolve after the first render. `useEditor`
+  // only applies `content` when it *creates* the editor, and this editor is
+  // only re-created when `parameters` change, so a late-arriving doc would
+  // otherwise never reach it: the user sees a blank editor until a full reload
+  // happens to have the content ready before creation. Push the prop into the
+  // editor whenever it changes. Editable mode is intentionally excluded — there
+  // `onUpdate` drives `content`, and re-setting it on every keystroke would
+  // reset the caret. Mirrors the read-only editor in
+  // components/comments/CommentItem.tsx.
+  useEffect(() => {
+    if (!editor || !readOnly) return;
+    const next = validateContent(content);
+    if (JSON.stringify(editor.getJSON()) === JSON.stringify(next)) return;
+    editor.commands.setContent(next, { emitUpdate: false });
+  }, [editor, content, readOnly, validateContent]);
 
   useEffect(() => {
     const editorContainer = editorContainerRef.current;
