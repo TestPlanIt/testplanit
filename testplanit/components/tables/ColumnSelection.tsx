@@ -14,6 +14,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "~/lib/navigation";
 
 const COLUMN_VISIBILITY_STORAGE_PREFIX = "testplanit:columnVisibility:";
+const COLUMN_ORDER_STORAGE_PREFIX = "testplanit:columnOrder:";
+const COLUMN_WIDTH_STORAGE_PREFIX = "testplanit:columnWidth:";
 
 /**
  * Read the remembered column visibility map for a view. Returns null when
@@ -59,6 +61,112 @@ export function writeStoredColumnVisibility(
     const merged = { ...existing, ...visibility };
     window.localStorage.setItem(
       `${COLUMN_VISIBILITY_STORAGE_PREFIX}${storageKey}`,
+      JSON.stringify(merged)
+    );
+  } catch {
+    // ignore storage errors (quota exceeded, private browsing, etc.)
+  }
+}
+
+/**
+ * Read the remembered column order for a view — a total, ordered list of column
+ * ids. Returns null when nothing is stored, on the server, or when unusable.
+ * Callers reconcile against the columns currently present, so stale ids are
+ * dropped and newly-added columns are spliced in at their natural position.
+ */
+export function readStoredColumnOrder(storageKey?: string): string[] | null {
+  if (!storageKey || typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(
+      `${COLUMN_ORDER_STORAGE_PREFIX}${storageKey}`
+    );
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as unknown;
+    if (!Array.isArray(parsed)) return null;
+    const result = parsed.filter((id): id is string => typeof id === "string");
+    return result.length > 0 ? result : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Persist column order for a view. Order is a total list, so this replaces the
+ * stored value rather than merging (unlike widths and visibility).
+ */
+export function writeStoredColumnOrder(
+  storageKey: string,
+  order: string[]
+): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(
+      `${COLUMN_ORDER_STORAGE_PREFIX}${storageKey}`,
+      JSON.stringify(order)
+    );
+  } catch {
+    // ignore storage errors (quota exceeded, private browsing, etc.)
+  }
+}
+
+/**
+ * Read the remembered column widths (column id -> pixels) for a view. Returns
+ * null when nothing is stored, on the server, or when unusable. Widths for
+ * columns not currently present are ignored by the table, which falls back to
+ * the column def size.
+ */
+export function readStoredColumnWidths(
+  storageKey?: string
+): Record<string, number> | null {
+  if (!storageKey || typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(
+      `${COLUMN_WIDTH_STORAGE_PREFIX}${storageKey}`
+    );
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as unknown;
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+      return null;
+    }
+    const result: Record<string, number> = {};
+    for (const [key, value] of Object.entries(parsed)) {
+      if (typeof value === "number" && Number.isFinite(value)) {
+        result[key] = value;
+      }
+    }
+    return result;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Persist column widths for a view. Merges with any previously-saved map so
+ * widths for columns from a different template that shares this storage key
+ * survive. Pass `presentColumnIds` (the columns currently in view) so a width
+ * that was reset — absent from `widths` — is cleared rather than re-loaded from
+ * the old stored value.
+ */
+export function writeStoredColumnWidths(
+  storageKey: string,
+  widths: Record<string, number>,
+  presentColumnIds?: string[]
+): void {
+  if (typeof window === "undefined") return;
+  try {
+    const existing = readStoredColumnWidths(storageKey) ?? {};
+    let base = existing;
+    if (presentColumnIds) {
+      // Drop stored widths for columns currently in view so a reset clears them,
+      // while keeping widths for columns from other templates sharing this key.
+      const present = new Set(presentColumnIds);
+      base = Object.fromEntries(
+        Object.entries(existing).filter(([id]) => !present.has(id))
+      );
+    }
+    const merged = { ...base, ...widths };
+    window.localStorage.setItem(
+      `${COLUMN_WIDTH_STORAGE_PREFIX}${storageKey}`,
       JSON.stringify(merged)
     );
   } catch {
@@ -231,6 +339,47 @@ export function ColumnSelection<TData>({
     }
     writeStoredColumnVisibility(storageKey, columnVisibility);
   }, [storageKey, columnVisibility]);
+
+  // Fold newly-present columns into the visibility map when the column set grows
+  // — e.g. custom-field columns whose template data loads after mount. Without
+  // this, a column absent at mount never receives its remembered choice, so a
+  // "select all" made earlier wouldn't apply to it and it would fall back to its
+  // (hidden) default. Uses the stored choice when there is one, else the
+  // column's own default; already-known columns are left untouched.
+  useEffect(() => {
+    setColumnVisibility((prev) => {
+      const stored = readStoredColumnVisibility(storageKey);
+      const next = { ...prev };
+      let changed = false;
+      metadataSource.forEach((item, index) => {
+        const columnId = (
+          "id" in item ? item.id : (item as CustomColumnDef<TData>).id
+        ) as string;
+        if (!columnId || columnId in next) return;
+        const enableHiding =
+          "enableHiding" in item
+            ? item.enableHiding
+            : (item as CustomColumnDef<TData>).enableHiding;
+        const isVisible =
+          "isVisible" in item
+            ? item.isVisible
+            : (item as CustomColumnDef<TData>).meta?.isVisible;
+        if (
+          enableHiding === false ||
+          index === 0 ||
+          index === metadataSource.length - 1
+        ) {
+          next[columnId] = true;
+        } else if (stored && typeof stored[columnId] === "boolean") {
+          next[columnId] = stored[columnId];
+        } else {
+          next[columnId] = isVisible ?? true;
+        }
+        changed = true;
+      });
+      return changed ? next : prev;
+    });
+  }, [metadataSource, storageKey]);
 
   useEffect(() => {
     onVisibilityChange(columnVisibility);

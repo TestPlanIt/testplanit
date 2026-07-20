@@ -18,6 +18,7 @@ import {
 import {
   Column,
   ColumnDef,
+  ColumnOrderState,
   ColumnPinningState,
   ColumnSizingState,
   ExpandedState,
@@ -38,8 +39,26 @@ import {
   ArrowDownUp,
   ArrowUpZA,
   Group,
+  GripVertical,
   UnfoldVertical,
 } from "lucide-react";
+import {
+  closestCenter,
+  DndContext,
+  type DragEndEvent,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import { restrictToHorizontalAxis } from "@dnd-kit/modifiers";
+import {
+  arrayMove,
+  horizontalListSortingStrategy,
+  SortableContext,
+  useSortable,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
 import React, {
@@ -54,6 +73,12 @@ import { usePathname, useRouter } from "~/lib/navigation";
 import { Button } from "../ui/button";
 import SortableItem from "./SortableItem";
 import { tableStyles } from "./tableStyles";
+import {
+  readStoredColumnOrder,
+  readStoredColumnWidths,
+  writeStoredColumnOrder,
+  writeStoredColumnWidths,
+} from "./ColumnSelection";
 
 // Define DataRow to include folderId optionally, required by SortableItem
 interface DataRow {
@@ -108,6 +133,14 @@ interface DataTableProps<TData extends DataRow, TValue> {
    * page); the repository details panel disables it so opening/stepping through
    * a case highlights the row without jumping the list. */
   scrollToSelectedRow?: boolean;
+  /** When set, column order and widths are remembered in localStorage under
+   * this key (the same namespace `ColumnSelection` uses for visibility), and
+   * column reordering is enabled by default. Omit to keep the table stateless
+   * (the default for most callers). */
+  storageKey?: string;
+  /** Enable drag-to-reorder columns. Defaults to `!!storageKey` — reordering is
+   * only useful when the order is remembered. */
+  enableColumnReorder?: boolean;
 }
 
 interface CustomColumnMeta {
@@ -138,6 +171,202 @@ const getCommonPinningStyles = (column: Column<any>): CSSProperties => {
     zIndex: isPinned ? 1 : 0,
   };
 };
+
+/**
+ * Merge a stored column order with the columns present now: keep stored ids that
+ * still exist (in their saved order), then splice any new id in after its
+ * nearest preceding natural neighbour. Falls back to the natural order when
+ * nothing usable is stored. Exported for unit testing.
+ */
+export function reconcileColumnOrder(
+  natural: string[],
+  stored: string[] | null
+): string[] {
+  if (!stored || stored.length === 0) return natural;
+  const naturalSet = new Set(natural);
+  const result = stored.filter((id) => naturalSet.has(id));
+  const present = new Set(result);
+  natural.forEach((id, i) => {
+    if (present.has(id)) return;
+    // Insert after the nearest preceding natural column already placed.
+    let insertAt = 0;
+    for (let j = i - 1; j >= 0; j--) {
+      const idx = result.indexOf(natural[j]);
+      if (idx !== -1) {
+        insertAt = idx + 1;
+        break;
+      }
+    }
+    result.splice(insertAt, 0, id);
+    present.add(id);
+  });
+  return result;
+}
+
+type HeadCellContentProps = {
+  header: any;
+  sortConfig?: { column: string; direction: "asc" | "desc" };
+  onSortIconClick: (header: any) => void;
+  onResizeMouseDown: (header: any, e: React.MouseEvent) => void;
+  onGroupingChange?: OnChangeFn<string[]>;
+};
+
+/**
+ * The inner content of a header cell — grouping toggle, header label, sort icon,
+ * and resize separator — plus an optional leading drag handle. Renders
+ * identically in the plain and the reorderable header-cell variants.
+ */
+function HeadCellContent({
+  header,
+  sortConfig,
+  onSortIconClick,
+  onResizeMouseDown,
+  onGroupingChange,
+  dragHandle,
+}: HeadCellContentProps & { dragHandle?: React.ReactNode }) {
+  const t = useTranslations("common.table");
+  const tCommon = useTranslations("common");
+  const isSortable = header.column.columnDef.enableSorting;
+  const isActiveSort = sortConfig?.column === header.column.id;
+  const sortDirection = isActiveSort ? sortConfig?.direction : undefined;
+  return (
+    <div
+      className={`flex gap-2 items-center justify-between relative h-full ${isActiveSort ? "font-extrabold" : ""}`}
+    >
+      <div className="flex items-center gap-1 whitespace-nowrap">
+        {dragHandle}
+        {header.column.getCanGroup() && onGroupingChange ? (
+          <button
+            onClick={header.column.getToggleGroupingHandler()}
+            style={{ cursor: "pointer" }}
+            className="me-1"
+            title={
+              header.column.getIsGrouped() ? "Ungroup" : "Group by this column"
+            }
+          >
+            {header.column.getIsGrouped() ? (
+              <UnfoldVertical
+                className="inline h-4 w-4"
+                aria-label={tCommon("aria.grouped")}
+              />
+            ) : (
+              <Group
+                className="inline h-4 w-4"
+                aria-label={tCommon("aria.group")}
+              />
+            )}
+          </button>
+        ) : null}
+        {flexRender(header.column.columnDef.header, header.getContext())}
+        {isSortable && (
+          <div
+            onClick={() => onSortIconClick(header)}
+            className="ms-1 cursor-pointer"
+            aria-label={t("sort")}
+            role="button"
+          >
+            {isActiveSort ? (
+              sortDirection === "asc" ? (
+                <ArrowDownAZ
+                  className="h-4 w-4"
+                  aria-label={t("sortAscending")}
+                />
+              ) : sortDirection === "desc" ? (
+                <ArrowUpZA
+                  className="h-4 w-4"
+                  aria-label={t("sortDescending")}
+                />
+              ) : (
+                <ArrowDownUp className="h-4 w-4" aria-label={t("sortNone")} />
+              )
+            ) : (
+              <ArrowDownUp className="h-4 w-4" aria-label={t("sortNone")} />
+            )}
+          </div>
+        )}
+      </div>
+      {header.column.getCanResize() && (
+        <div
+          role="separator"
+          aria-orientation="vertical"
+          onDoubleClick={() => header.column.resetSize()}
+          onMouseDown={(e) => onResizeMouseDown(header, e)}
+          onTouchStart={header.getResizeHandler()}
+          // The wrapper fills the cell's content box, which sits inside the
+          // header's vertical padding — grow past it (2 × py-2) so the separator
+          // runs the full height of the header row.
+          className={`absolute end-[-15px] -top-2 h-[calc(100%+1rem)] w-2 cursor-col-resize select-none touch-none ${
+            header.column.getIsResizing()
+              ? "bg-primary/50"
+              : "hover:bg-primary/20"
+          }`}
+          aria-label={t("resize")}
+        >
+          <div className="h-full w-px bg-primary/30" />
+        </div>
+      )}
+    </div>
+  );
+}
+
+/**
+ * A reorderable (dnd-kit) header cell. The whole cell is the sortable node (so
+ * it slides during a drag), but only the grip carries the drag listeners — sort
+ * clicks and the resize handle keep working, and the 5px pointer-activation
+ * constraint means a click never starts a drag. Used only for non-pinned
+ * columns when reordering is enabled.
+ */
+function SortableHeadCell({
+  header,
+  cellPinningStyleFn,
+  ...contentProps
+}: HeadCellContentProps & {
+  cellPinningStyleFn: (column: Column<any>) => CSSProperties;
+}) {
+  const t = useTranslations("common.table");
+  const { column } = header;
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    setActivatorNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: column.id });
+  const style: CSSProperties = {
+    ...cellPinningStyleFn(column),
+    transform: CSS.Translate.toString(transform),
+    transition,
+    opacity: isDragging ? 0.7 : undefined,
+    zIndex: isDragging ? 3 : undefined,
+  };
+  const grip = (
+    <button
+      type="button"
+      ref={setActivatorNodeRef}
+      {...attributes}
+      {...listeners}
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+      }}
+      aria-label={t("reorderColumn")}
+      className="me-1 shrink-0 cursor-grab touch-none text-muted-foreground/50 hover:text-foreground active:cursor-grabbing"
+    >
+      <GripVertical className="h-4 w-4" />
+    </button>
+  );
+  return (
+    <TableHead
+      ref={setNodeRef}
+      style={style}
+      className={`select-none ${tableStyles.headerCell} px-2 ${column.getIsPinned() ? "bg-primary-foreground" : "bg-primary-foreground/80"}`}
+    >
+      <HeadCellContent header={header} dragHandle={grip} {...contentProps} />
+    </TableHead>
+  );
+}
 
 export function DataTable<TData extends DataRow, TValue>({
   columns,
@@ -171,10 +400,10 @@ export function DataTable<TData extends DataRow, TValue>({
   rowTestIdPrefix = "case-row",
   selectedRowId,
   scrollToSelectedRow = true,
+  storageKey,
+  enableColumnReorder = !!storageKey,
 }: DataTableProps<TData, TValue>) {
-  const t = useTranslations("common.table");
   const tLabels = useTranslations("common.labels");
-  const tCommon = useTranslations("common");
   const tActions = useTranslations("common.actions");
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -320,6 +549,13 @@ export function DataTable<TData extends DataRow, TValue>({
     right: [],
   });
   const [columnSizing, setColumnSizing] = useState<ColumnSizingState>({});
+  const [columnOrder, setColumnOrder] = useState<ColumnOrderState>([]);
+  // Column order/width remembered in localStorage (opt-in via storageKey): init
+  // empty and hydrate in an effect so the server render (no localStorage) and
+  // the first client render match. `finalColumnsRef` gives the width-persist
+  // handler the current column set without re-creating the callback.
+  const didHydrateColumnPrefs = useRef(false);
+  const finalColumnsRef = useRef<ColumnDef<TData, any>[]>([]);
   const [internalRowSelection, setInternalRowSelection] =
     useState<RowSelectionState>({});
   const rowSelection = externalRowSelection ?? internalRowSelection;
@@ -419,9 +655,44 @@ export function DataTable<TData extends DataRow, TValue>({
             ? updaterOrValue(columnSizing)
             : updaterOrValue;
         setColumnSizing(newValue);
+        // Persist widths (opt-in). Pass the current column ids so a reset
+        // (a width dropped from `newValue`) clears the stored value instead of
+        // being re-loaded, while widths for other templates sharing the key are
+        // preserved. Only user resizes flow through here — hydration sets
+        // `columnSizing` directly — so this never fires on initial load.
+        if (storageKey) {
+          writeStoredColumnWidths(
+            storageKey,
+            newValue,
+            finalColumnsRef.current.map((c) => c.id as string)
+          );
+        }
       }, 1); // 1ms debounce
     },
-    [columnSizing]
+    [columnSizing, storageKey]
+  );
+
+  // dnd-kit sensors for column-header reordering. The 5px activation distance
+  // keeps a click (sort) or a resize-handle drag from starting a column drag.
+  const columnDragSensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor)
+  );
+
+  const handleColumnDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      const { active, over } = event;
+      if (!over || active.id === over.id) return;
+      setColumnOrder((prev) => {
+        const oldIndex = prev.indexOf(active.id as string);
+        const newIndex = prev.indexOf(over.id as string);
+        if (oldIndex === -1 || newIndex === -1) return prev;
+        const next = arrayMove(prev, oldIndex, newIndex);
+        if (storageKey) writeStoredColumnOrder(storageKey, next);
+        return next;
+      });
+    },
+    [storageKey]
   );
 
   // Add expander column if grouping is set
@@ -477,6 +748,34 @@ export function DataTable<TData extends DataRow, TValue>({
     return columns;
   }, [columns, grouping, expanderColumn, getSubRows]);
 
+  // Keep the current column set available to the width-persist handler without
+  // rebuilding the callback each render.
+  useEffect(() => {
+    finalColumnsRef.current = finalColumns;
+  }, [finalColumns]);
+
+  // Hydrate order/width from localStorage on mount, then re-reconcile the order
+  // whenever the column set changes (e.g. switching templates adds/removes
+  // custom fields) so the user's arrangement of still-present columns is kept.
+  // Skipped entirely for callers that neither reorder nor persist, leaving the
+  // table in its default (natural-order) behaviour.
+  useEffect(() => {
+    if (!enableColumnReorder && !storageKey) return;
+    const natural = finalColumns.map((c) => c.id as string);
+    if (!didHydrateColumnPrefs.current) {
+      didHydrateColumnPrefs.current = true;
+      setColumnOrder(
+        reconcileColumnOrder(natural, readStoredColumnOrder(storageKey))
+      );
+      const storedWidths = readStoredColumnWidths(storageKey);
+      if (storedWidths) setColumnSizing(storedWidths);
+      return;
+    }
+    setColumnOrder((prev) =>
+      reconcileColumnOrder(natural, prev.length > 0 ? prev : null)
+    );
+  }, [finalColumns, storageKey, enableColumnReorder]);
+
   const table = useReactTable({
     data: localData,
     columns: finalColumns,
@@ -496,6 +795,7 @@ export function DataTable<TData extends DataRow, TValue>({
     state: {
       columnPinning,
       columnSizing,
+      columnOrder,
       columnVisibility: effectiveColumnVisibility,
       rowSelection,
       sorting,
@@ -507,6 +807,7 @@ export function DataTable<TData extends DataRow, TValue>({
     onSortingChange: handleSortingChange,
     onRowSelectionChange: onRowSelectionChange,
     onColumnSizingChange: handleColumnSizingChange,
+    onColumnOrderChange: setColumnOrder,
     onColumnPinningChange: setColumnPinning,
     onColumnVisibilityChange: handleVisibilityChange,
     defaultColumn: {
@@ -597,94 +898,32 @@ export function DataTable<TData extends DataRow, TValue>({
   // Track leaf row IDs rendered as part of a flattened group (for grouped/expandable rendering)
   const _renderedLeafRowIds = new Set<string | number>();
 
-  if (showSkeleton) {
-    const skeletonHeaders =
-      table.getHeaderGroups()[0]?.headers.filter((header) => {
-        // Filter headers using the same logic as visibleColumns
-        if (Object.keys(effectiveColumnVisibility).length > 0) {
-          // Always show columns that cannot be hidden
-          if (header.column.columnDef.enableHiding === false) {
-            return true;
-          }
-          return effectiveColumnVisibility[header.column.id] === true;
-        }
-
-        // If columnVisibility from parent is empty, we're still initializing
-        if (Object.keys(columnVisibility).length === 0) {
-          const column = header.column.columnDef;
-          // Always show columns that cannot be hidden
-          if (column.enableHiding === false) {
-            return true;
-          }
-          // Always show first and last columns
-          if (
-            header.column.id === finalColumns[0]?.id ||
-            header.column.id === finalColumns[finalColumns.length - 1]?.id
-          ) {
-            return true;
-          }
-          // Check meta visibility - if explicitly set to false, hide the column
-          const metaVisible = (column.meta as CustomColumnMeta)?.isVisible;
-          if (metaVisible === false) {
-            return false;
-          }
-          // Default to showing columns that don't have isVisible set
-          return true;
-        }
-
-        // Fallback to showing all headers
-        return true;
-      }) ?? [];
-
-    return (
-      <div className="rounded-md border h-full">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              {enableReorder && <TableHead className="w-[30px]" />}
-              {skeletonHeaders.map((header) => (
-                <TableHead
-                  key={header.id}
-                  className="select-none"
-                  style={cellPinningStyleFn(header.column)}
-                >
-                  {flexRender(
-                    header.column.columnDef.header,
-                    header.getContext()
-                  )}
-                </TableHead>
-              ))}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {Array.from({ length: pageSize }).map((_, index) => (
-              <TableRow key={index}>
-                {enableReorder && (
-                  <TableCell>
-                    <Skeleton className="h-8 w-4" />
-                  </TableCell>
-                )}
-                {skeletonHeaders.map((header) => (
-                  <TableCell
-                    key={String(header.column.id)}
-                    style={cellPinningStyleFn(header.column)}
-                  >
-                    <Skeleton className="h-8 w-full" />
-                  </TableCell>
-                ))}
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-    );
-  }
-
   if (!data) {
     return null;
   }
 
-  return (
+  // While loading, render skeleton rows in the SAME table/header so the header
+  // (surface, grips, resize handles) matches the loaded state exactly — no
+  // separate skeleton layout that drifts from the real one.
+  const skeletonRows = Array.from({
+    length: typeof pageSize === "number" ? pageSize : 10,
+  }).map((_, index) => (
+    <TableRow key={`skeleton-${index}`} className={tableStyles.rowDivider}>
+      {table.getVisibleLeafColumns().map((column) => (
+        <TableCell
+          key={String(column.id)}
+          style={cellPinningStyleFn(column)}
+          className={`${tableStyles.cell} px-2 ${
+            column.getIsPinned() ? `shadow-md ${tableStyles.rowSurface}` : ""
+          }`}
+        >
+          <Skeleton className="h-6 w-full" />
+        </TableCell>
+      ))}
+    </TableRow>
+  ));
+
+  const tableElement = (
     <div
       className="flex flex-col overflow-x-auto rounded-lg border-2 border-primary/10 w-fit max-w-full"
       onMouseUp={handleMouseUp}
@@ -695,345 +934,307 @@ export function DataTable<TData extends DataRow, TValue>({
         data-testid="case-table"
       >
         <TableHeader className="[&_tr]:border-b">
-          {table.getHeaderGroups().map((headerGroup) => (
-            <TableRow
-              key={headerGroup.id}
-              className={`transition-colors ${tableStyles.headerRow}`}
-            >
-              {headerGroup.headers
-                .filter((header) => {
-                  // Filter headers using the same logic as visibleColumns
-                  if (Object.keys(effectiveColumnVisibility).length > 0) {
-                    // Always show columns that cannot be hidden
-                    if (header.column.columnDef.enableHiding === false) {
+          {(() => {
+            const reorderableColumnIds = enableColumnReorder
+              ? table
+                  .getVisibleLeafColumns()
+                  .filter((c) => !c.getIsPinned())
+                  .map((c) => c.id)
+              : [];
+            const headerRows = table.getHeaderGroups().map((headerGroup) => (
+              <TableRow
+                key={headerGroup.id}
+                className={`transition-colors ${tableStyles.headerRow}`}
+              >
+                {headerGroup.headers
+                  .filter((header) => {
+                    // Filter headers using the same logic as visibleColumns
+                    if (Object.keys(effectiveColumnVisibility).length > 0) {
+                      if (header.column.columnDef.enableHiding === false) {
+                        return true;
+                      }
+                      return (
+                        effectiveColumnVisibility[header.column.id] === true
+                      );
+                    }
+                    // Still initializing (parent visibility empty)
+                    if (Object.keys(columnVisibility).length === 0) {
+                      const column = header.column.columnDef;
+                      if (column.enableHiding === false) {
+                        return true;
+                      }
+                      if (
+                        header.column.id === finalColumns[0]?.id ||
+                        header.column.id ===
+                          finalColumns[finalColumns.length - 1]?.id
+                      ) {
+                        return true;
+                      }
+                      const metaVisible = (column.meta as CustomColumnMeta)
+                        ?.isVisible;
+                      if (metaVisible === false) {
+                        return false;
+                      }
                       return true;
                     }
-                    return effectiveColumnVisibility[header.column.id] === true;
-                  }
-
-                  // If columnVisibility from parent is empty, we're still initializing
-                  if (Object.keys(columnVisibility).length === 0) {
-                    const column = header.column.columnDef;
-                    // Always show columns that cannot be hidden
-                    if (column.enableHiding === false) {
-                      return true;
-                    }
-                    // Always show first and last columns
-                    if (
-                      header.column.id === finalColumns[0]?.id ||
-                      header.column.id ===
-                        finalColumns[finalColumns.length - 1]?.id
-                    ) {
-                      return true;
-                    }
-                    // Check meta visibility - if explicitly set to false, hide the column
-                    const metaVisible = (column.meta as CustomColumnMeta)
-                      ?.isVisible;
-                    if (metaVisible === false) {
-                      return false;
-                    }
-                    // Default to showing columns that don't have isVisible set
                     return true;
-                  }
-
-                  // Fallback to showing all headers
-                  return true;
-                })
-                .map((header) => {
-                  const { column } = header;
-                  const isSortable = header.column.columnDef.enableSorting;
-                  const isActiveSort = sortConfig?.column === header.column.id;
-                  const sortDirection = isActiveSort
-                    ? sortConfig.direction
-                    : undefined;
-                  return (
-                    <TableHead
-                      key={String(header.id)}
-                      style={cellPinningStyleFn(column)}
-                      className={`select-none ${tableStyles.headerCell} px-2 ${column.getIsPinned() ? "bg-primary-foreground" : "bg-primary-foreground/80"}`}
-                    >
-                      <div
-                        className={`flex gap-2 items-center justify-between relative h-full ${isActiveSort ? "font-extrabold" : ""}`}
-                      >
-                        <div className="flex items-center gap-1 whitespace-nowrap">
-                          {/* Grouping toggle button */}
-                          {header.column.getCanGroup() && onGroupingChange ? (
-                            <button
-                              onClick={header.column.getToggleGroupingHandler()}
-                              style={{ cursor: "pointer" }}
-                              className="me-1"
-                              title={
-                                header.column.getIsGrouped()
-                                  ? "Ungroup"
-                                  : "Group by this column"
-                              }
-                            >
-                              {header.column.getIsGrouped() ? (
-                                <UnfoldVertical
-                                  className="inline h-4 w-4"
-                                  aria-label={tCommon("aria.grouped")}
-                                />
-                              ) : (
-                                <Group
-                                  className="inline h-4 w-4"
-                                  aria-label={tCommon("aria.group")}
-                                />
-                              )}
-                            </button>
-                          ) : null}
-                          {flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
-                          {isSortable && (
-                            <div
-                              onClick={() => handleSortIconClick(header)}
-                              className="ms-1 cursor-pointer"
-                              aria-label={t("sort")}
-                              role="button"
-                            >
-                              {isActiveSort ? (
-                                sortDirection === "asc" ? (
-                                  <ArrowDownAZ
-                                    className="h-4 w-4"
-                                    aria-label={t("sortAscending")}
-                                  />
-                                ) : sortDirection === "desc" ? (
-                                  <ArrowUpZA
-                                    className="h-4 w-4"
-                                    aria-label={t("sortDescending")}
-                                  />
-                                ) : (
-                                  <ArrowDownUp
-                                    className="h-4 w-4"
-                                    aria-label={t("sortNone")}
-                                  />
-                                )
-                              ) : (
-                                <ArrowDownUp
-                                  className="h-4 w-4"
-                                  aria-label={t("sortNone")}
-                                />
-                              )}
-                            </div>
-                          )}
-                        </div>
-                        {header.column.getCanResize() && (
-                          <div
-                            role="separator"
-                            aria-orientation="vertical"
-                            onDoubleClick={() => header.column.resetSize()}
-                            onMouseDown={(e) => handleMouseDown(header, e)}
-                            onTouchStart={header.getResizeHandler()}
-                            // The wrapper fills the cell's content box, which
-                            // sits inside the header's vertical padding — grow
-                            // past it (2 × py-2) so the separator runs the full
-                            // height of the header row.
-                            className={`absolute end-[-15px] -top-2 h-[calc(100%+1rem)] w-2 cursor-col-resize select-none touch-none ${
-                              header.column.getIsResizing()
-                                ? "bg-primary/50"
-                                : "hover:bg-primary/20"
-                            }`}
-                            aria-label={t("resize")}
-                          >
-                            <div className="h-full w-px bg-primary/30" />
-                          </div>
-                        )}
-                      </div>
-                    </TableHead>
-                  );
-                })}
-            </TableRow>
-          ))}
-        </TableHeader>
-        <TableBody className="[&_tr:last-child]:border-0">
-          {table.getRowModel().rows.map((row, index) => {
-            const isSelected = selectedCaseId === row.original.id;
-            const depth = row.depth;
-            const isGrouped = row.getIsGrouped();
-            const isSubRow = depth > 0;
-
-            // Use SortableItem when enableReorder is true and not a grouped row
-            if (enableReorder && !isGrouped && onReorder) {
-              // Ensure row data conforms to SortableItem's expected type
-              const sortableRow = {
-                ...row,
-                original: {
-                  ...row.original,
-                  folderId: row.original.folderId ?? null, // Convert undefined to null
-                },
-              };
-
-              return (
-                <SortableItem
-                  key={row.id}
-                  id={row.id}
-                  row={sortableRow}
-                  index={index}
-                  visibleColumns={visibleColumns}
-                  handleExpandClick={handleExpandClick}
-                  expandedRows={expandedRows}
-                  renderExpandedRow={
-                    renderExpandedRow
-                      ? (row: any) => renderExpandedRow(row)
-                      : undefined
-                  }
-                  canDragTestCase={true}
-                  onReorder={onReorder}
-                  cellPinningStyleFn={cellPinningStyleFn}
-                  selectedItemsForDrag={selectedItemsForDragFinal}
-                  itemType={itemType}
-                  selectedRowId={selectedCaseId}
-                  scrollToSelectedRow={scrollToSelectedRow}
-                />
-              );
-            }
-
-            return (
-              <React.Fragment key={row.id}>
-                <TableRow
-                  data-state={row.getIsSelected() ? "selected" : undefined}
-                  className={`${onTestCaseClick || handleExpandClick ? "cursor-pointer" : "cursor-default"} ${tableStyles.rowDivider} ${
-                    isSelected
-                      ? "bg-primary/20 hover:bg-primary/30 border-4 border-primary"
-                      : isSubRow
-                        ? tableStyles.rowSurfaceNested
-                        : isGrouped
-                          ? "bg-accent font-semibold"
-                          : tableStyles.rowSurface
-                  }`}
-                  data-row-id={row.original.id}
-                  data-testid={`${rowTestIdPrefix}-${row.original.id}`}
-                  onClick={() => {
-                    if (onTestCaseClick && !isGrouped) {
-                      onTestCaseClick(row.original.id);
-                    } else if (handleExpandClick && !isGrouped) {
-                      handleExpandClick(row.original.id);
-                    }
-                  }}
-                >
-                  {row.getVisibleCells().map((cell, cellIndex) => {
-                    const { column } = cell;
-                    let cellContent: React.ReactNode = null;
-                    const _shouldIndent = cellIndex === 0 && isSubRow;
-                    const groupingActive = !!(grouping && grouping.length > 0);
-
-                    if (groupingActive && cell.getIsGrouped()) {
-                      // If grouped, show group label and count
-                      // Only show count if there's no custom aggregatedCell (which handles its own display)
-                      const showCount = !cell.column.columnDef.aggregatedCell;
-
-                      cellContent = (
-                        <div className="flex items-center gap-1">
-                          <Button
-                            {...{
-                              variant: "ghost",
-                              onClick: row.getToggleExpandedHandler(),
-                              style: { cursor: "pointer" },
-                              className: "me-1 p-1",
-                            }}
-                          >
-                            <span
-                              className="inline-flex items-center justify-center w-4 transition-transform duration-200"
-                              style={{
-                                transform: row.getIsExpanded()
-                                  ? "rotate(90deg)"
-                                  : "rotate(0deg)",
-                              }}
-                            >
-                              {"▶"}
-                            </span>
-                          </Button>
-                          {flexRender(
-                            cell.column.columnDef.cell,
-                            cell.getContext()
-                          )}
-                          {showCount && (
-                            <>
-                              {" "}
-                              {"("}
-                              {row.subRows.length}
-                              {")"}
-                            </>
-                          )}
-                        </div>
-                      );
-                    } else if (groupingActive && cell.getIsAggregated()) {
-                      // If aggregated, show aggregate value
-                      cellContent = flexRender(
-                        cell.column.columnDef.aggregatedCell ??
-                          cell.column.columnDef.cell,
-                        cell.getContext()
-                      );
-                    } else if (groupingActive && cell.getIsPlaceholder()) {
-                      cellContent = null;
-                    } else {
-                      cellContent = flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
+                  })
+                  .map((header) => {
+                    const contentProps = {
+                      header,
+                      sortConfig,
+                      onSortIconClick: handleSortIconClick,
+                      onResizeMouseDown: handleMouseDown,
+                      onGroupingChange,
+                    };
+                    if (enableColumnReorder && !header.column.getIsPinned()) {
+                      return (
+                        <SortableHeadCell
+                          key={String(header.id)}
+                          cellPinningStyleFn={cellPinningStyleFn}
+                          {...contentProps}
+                        />
                       );
                     }
                     return (
-                      <TableCell
-                        key={String(column.id)}
-                        data-column-id={String(column.id)}
-                        style={cellPinningStyleFn(column)}
-                        // Only a pinned cell needs its own fill, to hide the
-                        // cells scrolling under it — the row's own surface, or for
-                        // a selected row the opaque equivalent of its primary/20
-                        // tint so the highlight covers the pinned column too.
-                        // Everything else stays transparent so the row surface
-                        // shows through; this path renders whenever reorder is
-                        // off, e.g. while sorted.
-                        className={`${tableStyles.cell} px-2 ${
-                          column.getIsPinned()
-                            ? isSelected
-                              ? "shadow-md bg-[color-mix(in_srgb,var(--color-primary)_36%,var(--color-background))]"
-                              : `shadow-md ${isSubRow ? "table-row-surface-nested" : "table-row-surface"}`
-                            : isSelected
-                              ? "bg-primary/20"
-                              : ""
-                        } ${
-                          column.id === "expander" ||
-                          (column.getIsPinned() &&
-                            !column.getIsLastColumn(
-                              column.getIsPinned() as "left" | "right"
-                            ))
-                            ? "border-e-0"
-                            : "border-e"
-                        }`}
+                      <TableHead
+                        key={String(header.id)}
+                        style={cellPinningStyleFn(header.column)}
+                        className={`select-none ${tableStyles.headerCell} px-2 ${header.column.getIsPinned() ? "bg-primary-foreground" : "bg-primary-foreground/80"}`}
                       >
-                        {/* Render content directly like SortableItem does to preserve cell alignment */}
-                        {cellContent}
-                      </TableCell>
+                        <HeadCellContent {...contentProps} />
+                      </TableHead>
                     );
                   })}
-                </TableRow>
-                {row.getIsExpanded() && renderExpandedRow && (
-                  <TableRow className="w-fit">
-                    <TableCell
-                      colSpan={visibleColumns.length}
-                      className="bg-muted/30 w-fit"
-                    >
-                      {renderExpandedRow(row.original)}
-                    </TableCell>
-                  </TableRow>
-                )}
-              </React.Fragment>
-            );
-          })}
-          {table.getRowModel().rows.length === 0 && !isLoading && (
-            <TableRow>
-              <TableCell
-                colSpan={visibleColumns.length}
-                className="h-12 text-center text-muted-foreground"
+              </TableRow>
+            ));
+            if (!enableColumnReorder) return headerRows;
+            // Only SortableContext goes inside <thead> — it renders no DOM. The
+            // DndContext (which renders a hidden a11y <div>) wraps the whole
+            // table below, so it isn't an invalid child of <thead>.
+            return (
+              <SortableContext
+                items={reorderableColumnIds}
+                strategy={horizontalListSortingStrategy}
               >
-                {tLabels("noResults")}
-              </TableCell>
-            </TableRow>
-          )}
+                {headerRows}
+              </SortableContext>
+            );
+          })()}
+        </TableHeader>
+        <TableBody className="[&_tr:last-child]:border-0">
+          {showSkeleton
+            ? skeletonRows
+            : table.getRowModel().rows.map((row, index) => {
+                const isSelected = selectedCaseId === row.original.id;
+                const depth = row.depth;
+                const isGrouped = row.getIsGrouped();
+                const isSubRow = depth > 0;
+
+                // Use SortableItem when enableReorder is true and not a grouped row
+                if (enableReorder && !isGrouped && onReorder) {
+                  // Ensure row data conforms to SortableItem's expected type
+                  const sortableRow = {
+                    ...row,
+                    original: {
+                      ...row.original,
+                      folderId: row.original.folderId ?? null, // Convert undefined to null
+                    },
+                  };
+
+                  return (
+                    <SortableItem
+                      key={row.id}
+                      id={row.id}
+                      row={sortableRow}
+                      index={index}
+                      // Table-ordered (reflects columnOrder + pinning + visibility)
+                      // so reorderable rows stay aligned with the header, which
+                      // renders in table order.
+                      visibleColumns={table.getVisibleLeafColumns()}
+                      handleExpandClick={handleExpandClick}
+                      expandedRows={expandedRows}
+                      renderExpandedRow={
+                        renderExpandedRow
+                          ? (row: any) => renderExpandedRow(row)
+                          : undefined
+                      }
+                      canDragTestCase={true}
+                      onReorder={onReorder}
+                      cellPinningStyleFn={cellPinningStyleFn}
+                      selectedItemsForDrag={selectedItemsForDragFinal}
+                      itemType={itemType}
+                      selectedRowId={selectedCaseId}
+                      scrollToSelectedRow={scrollToSelectedRow}
+                    />
+                  );
+                }
+
+                return (
+                  <React.Fragment key={row.id}>
+                    <TableRow
+                      data-state={row.getIsSelected() ? "selected" : undefined}
+                      className={`${onTestCaseClick || handleExpandClick ? "cursor-pointer" : "cursor-default"} ${tableStyles.rowDivider} ${
+                        isSelected
+                          ? "bg-primary/20 hover:bg-primary/30 border-4 border-primary"
+                          : isSubRow
+                            ? tableStyles.rowSurfaceNested
+                            : isGrouped
+                              ? "bg-accent font-semibold"
+                              : tableStyles.rowSurface
+                      }`}
+                      data-row-id={row.original.id}
+                      data-testid={`${rowTestIdPrefix}-${row.original.id}`}
+                      onClick={() => {
+                        if (onTestCaseClick && !isGrouped) {
+                          onTestCaseClick(row.original.id);
+                        } else if (handleExpandClick && !isGrouped) {
+                          handleExpandClick(row.original.id);
+                        }
+                      }}
+                    >
+                      {row.getVisibleCells().map((cell, cellIndex) => {
+                        const { column } = cell;
+                        let cellContent: React.ReactNode = null;
+                        const _shouldIndent = cellIndex === 0 && isSubRow;
+                        const groupingActive = !!(
+                          grouping && grouping.length > 0
+                        );
+
+                        if (groupingActive && cell.getIsGrouped()) {
+                          // If grouped, show group label and count
+                          // Only show count if there's no custom aggregatedCell (which handles its own display)
+                          const showCount =
+                            !cell.column.columnDef.aggregatedCell;
+
+                          cellContent = (
+                            <div className="flex items-center gap-1">
+                              <Button
+                                {...{
+                                  variant: "ghost",
+                                  onClick: row.getToggleExpandedHandler(),
+                                  style: { cursor: "pointer" },
+                                  className: "me-1 p-1",
+                                }}
+                              >
+                                <span
+                                  className="inline-flex items-center justify-center w-4 transition-transform duration-200"
+                                  style={{
+                                    transform: row.getIsExpanded()
+                                      ? "rotate(90deg)"
+                                      : "rotate(0deg)",
+                                  }}
+                                >
+                                  {"▶"}
+                                </span>
+                              </Button>
+                              {flexRender(
+                                cell.column.columnDef.cell,
+                                cell.getContext()
+                              )}
+                              {showCount && (
+                                <>
+                                  {" "}
+                                  {"("}
+                                  {row.subRows.length}
+                                  {")"}
+                                </>
+                              )}
+                            </div>
+                          );
+                        } else if (groupingActive && cell.getIsAggregated()) {
+                          // If aggregated, show aggregate value
+                          cellContent = flexRender(
+                            cell.column.columnDef.aggregatedCell ??
+                              cell.column.columnDef.cell,
+                            cell.getContext()
+                          );
+                        } else if (groupingActive && cell.getIsPlaceholder()) {
+                          cellContent = null;
+                        } else {
+                          cellContent = flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext()
+                          );
+                        }
+                        return (
+                          <TableCell
+                            key={String(column.id)}
+                            data-column-id={String(column.id)}
+                            style={cellPinningStyleFn(column)}
+                            // Only a pinned cell needs its own fill, to hide the
+                            // cells scrolling under it — the row's own surface, or for
+                            // a selected row the opaque equivalent of its primary/20
+                            // tint so the highlight covers the pinned column too.
+                            // Everything else stays transparent so the row surface
+                            // shows through; this path renders whenever reorder is
+                            // off, e.g. while sorted.
+                            className={`${tableStyles.cell} px-2 ${
+                              column.getIsPinned()
+                                ? isSelected
+                                  ? "shadow-md bg-[color-mix(in_srgb,var(--color-primary)_36%,var(--color-background))]"
+                                  : `shadow-md ${isSubRow ? "table-row-surface-nested" : "table-row-surface"}`
+                                : isSelected
+                                  ? "bg-primary/20"
+                                  : ""
+                            } ${
+                              column.id === "expander" ||
+                              (column.getIsPinned() &&
+                                !column.getIsLastColumn(
+                                  column.getIsPinned() as "left" | "right"
+                                ))
+                                ? "border-e-0"
+                                : "border-e"
+                            }`}
+                          >
+                            {/* Render content directly like SortableItem does to preserve cell alignment */}
+                            {cellContent}
+                          </TableCell>
+                        );
+                      })}
+                    </TableRow>
+                    {row.getIsExpanded() && renderExpandedRow && (
+                      <TableRow className="w-fit">
+                        <TableCell
+                          colSpan={visibleColumns.length}
+                          className="bg-muted/30 w-fit"
+                        >
+                          {renderExpandedRow(row.original)}
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </React.Fragment>
+                );
+              })}
+          {!showSkeleton &&
+            table.getRowModel().rows.length === 0 &&
+            !isLoading && (
+              <TableRow>
+                <TableCell
+                  colSpan={visibleColumns.length}
+                  className="h-12 text-center text-muted-foreground"
+                >
+                  {tLabels("noResults")}
+                </TableCell>
+              </TableRow>
+            )}
         </TableBody>
       </Table>
     </div>
+  );
+
+  if (!enableColumnReorder) return tableElement;
+
+  // The DndContext wraps the whole table (not the <thead>) because it renders a
+  // hidden accessibility <div> that would be an invalid child of <thead>.
+  return (
+    <DndContext
+      sensors={columnDragSensors}
+      collisionDetection={closestCenter}
+      modifiers={[restrictToHorizontalAxis]}
+      onDragEnd={handleColumnDragEnd}
+    >
+      {tableElement}
+    </DndContext>
   );
 }

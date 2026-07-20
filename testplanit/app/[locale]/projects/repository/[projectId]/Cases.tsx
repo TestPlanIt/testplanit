@@ -2685,8 +2685,33 @@ export default function Cases({
     }
   );
 
+  // Same window-function ordering the list applies through `latestStatusPageIds`,
+  // but unpaginated: the details panel's prev/next must step across the whole
+  // filtered set, not just the current page. Latest-results sort can't be
+  // expressed as an `orderBy`, so `allCaseIdRows` above stays in default order
+  // and can't drive prev/next when this sort is active.
+  const { pageIds: latestStatusAllIds } = useCaseIdsByLatestStatus({
+    where: repositoryCaseWhereClause,
+    direction: sortConfig?.direction ?? "asc",
+    enabled: Boolean(
+      isLatestResultsSort &&
+      !isRunMode &&
+      !isSelectionMode &&
+      !!selectedCaseIdParam &&
+      !searchResultIds &&
+      !isDescendantsMode &&
+      postFetchFilters.length === 0 &&
+      !!session?.user
+    ),
+  });
+
   const allCaseIds = useMemo<number[]>(() => {
     if (searchResultIds) return searchResultIds;
+    // Latest-results sort is ordered via a window function (through
+    // `latestStatusPageIds` for the list), not via `orderBy`, so `allCaseIdRows`
+    // is in default order. Walk the full window-function ordering instead to
+    // keep prev/next in step with the sorted list.
+    if (latestStatusAllIds) return latestStatusAllIds;
     if (!allCaseIdRows) return visibleCaseIds;
     const ids = allCaseIdRows.map((r: { id: number }) => r.id);
     // A drag-reorder only shuffles the current page, but `allCaseIdRows` keeps
@@ -2702,6 +2727,7 @@ export default function Cases({
     return ids;
   }, [
     searchResultIds,
+    latestStatusAllIds,
     allCaseIdRows,
     visibleCaseIds,
     optimisticReorder.inProgress,
@@ -3990,6 +4016,7 @@ export default function Cases({
                 onColumnVisibilityChange={setColumnVisibility}
                 isLoading={true}
                 pageSize={typeof pageSize === "number" ? pageSize : totalItems}
+                storageKey={`repository-cases:${projectId}`}
               />
             );
           }
@@ -4028,6 +4055,7 @@ export default function Cases({
                 key={`${folderId}-${viewType}-${filterId}-datatable`}
                 columns={columns}
                 data={cases}
+                storageKey={`repository-cases:${projectId}`}
                 selectedRowId={
                   selectedCaseIdParam ? Number(selectedCaseIdParam) : null
                 }

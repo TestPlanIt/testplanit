@@ -808,7 +808,8 @@
       "sortAscending": "Sorted ascending",
       "sortDescending": "Sorted descending",
       "sortNone": "Not sorted",
-      "resize": "Resize column"
+      "resize": "Resize column",
+      "reorderColumn": "Drag to reorder column"
     },
     "pagination": {
       "selectPage": "Select page",
