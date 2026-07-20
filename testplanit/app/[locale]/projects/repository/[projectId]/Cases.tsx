@@ -2174,7 +2174,8 @@ export default function Cases({
       isLatestResultsSort &&
       !isRunMode &&
       !searchResultIds &&
-      !isDescendantsMode &&
+      // Works in descendants mode too: this is a server action (the where goes
+      // in the POST body), so a large folder subtree can't overflow a URL.
       postFetchFilters.length === 0
     ),
   });
@@ -2183,7 +2184,12 @@ export default function Cases({
     {
       orderBy: orderBy,
       where: latestStatusPageIds
-        ? { ...repositoryCaseWhereClause, id: { in: latestStatusPageIds } }
+        ? isDescendantsMode
+          ? // A folder subtree can be too large to serialize into the GET query
+            // string; the page ids already encode the descendants scope (they
+            // came from the same where), so filter by them alone.
+            { id: { in: latestStatusPageIds } }
+          : { ...repositoryCaseWhereClause, id: { in: latestStatusPageIds } }
         : repositoryCaseWhereClause,
       select: REPOSITORY_CASE_LIST_SELECT,
       // When post-fetch filtering is active, fetch all data (no pagination)
@@ -2205,8 +2211,10 @@ export default function Cases({
         // Disable when ES search is active (data comes from POST fetch instead)
         searchResultIds
           ? false
-          : // Disable in descendants mode (data comes from POST endpoint)
-            isDescendantsMode
+          : // Disable in descendants mode (data comes from the POST endpoint) —
+            // except when sorting by latest result, where the ordered page is
+            // fetched here by id (a short list, safe for GET).
+            isDescendantsMode && !latestStatusPageIds
             ? false
             : // Skip query if we know the selected folder has 0 cases
               viewType === "folders" && selectedFolderCaseCount === 0
@@ -2434,16 +2442,29 @@ export default function Cases({
       : undefined
   );
 
-  const data = isDescendantsMode ? descendantsResult.data : zenStackData;
-  const isLoading = isDescendantsMode
+  // When sorting by latest result under "show all descendants", the ordered
+  // page comes from the id-filtered GET query, not the descendants POST — but
+  // the total count still comes from the POST endpoint.
+  const useDescendantsData = isDescendantsMode && !latestStatusPageIds;
+  const data = useDescendantsData ? descendantsResult.data : zenStackData;
+  const isLoading = useDescendantsData
     ? descendantsResult.isLoading
     : zenStackIsLoading;
   const filteredTotalCount = isDescendantsMode
     ? descendantsResult.totalCount
     : zenStackFilteredTotalCount;
-  const refetchData = isDescendantsMode
+  const refetchData = useDescendantsData
     ? descendantsResult.refetch
-    : zenStackRefetchData;
+    : isDescendantsMode
+      ? // Latest-sort under descendants: refresh both the id-filtered page and
+        // the POST-endpoint count.
+        async () => {
+          await Promise.all([
+            zenStackRefetchData(),
+            descendantsResult.refetch(),
+          ]);
+        }
+      : zenStackRefetchData;
 
   // --- ES search POST-based data fetching ---
   // When searchResultIds is active, fetch case data via POST to avoid URL length limits.
