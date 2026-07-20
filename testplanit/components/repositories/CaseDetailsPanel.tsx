@@ -35,7 +35,7 @@ function focusWantsArrowKeys(el: Element | null): boolean {
     'input, textarea, select, [contenteditable="true"], [role="textbox"], ' +
       '[role="searchbox"], [role="combobox"], [role="listbox"], [role="menu"], ' +
       '[role="grid"], [role="slider"], [role="spinbutton"], [role="tree"], ' +
-      '[role="tablist"], [role="dialog"], [role="alertdialog"]'
+      '[role="tablist"], [role="dialog"], [role="alertdialog"], [role="separator"]'
   );
 }
 

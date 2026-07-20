@@ -426,6 +426,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
   const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
   const [isTransitioning, setIsTransitioning] = useState<boolean>(false);
   const panelRef = useRef<PanelImperativeHandle>(null);
+  const listPanelRef = useRef<PanelImperativeHandle>(null);
   const refetchFoldersRef = useRef<(() => Promise<unknown>) | null>(null);
   // Ref for scoping DnD events when used in portaled contexts (modals)
   const dndContainerRef = useRef<HTMLDivElement>(null);
@@ -497,6 +498,20 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
       collapsedBeforeFullWidthRef.current = null;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [effectiveFullWidth]);
+
+  // Full-width also collapses the list panel (in the nested list|details group)
+  // so the details view fills the pane; expand it back on exit. The folder tree
+  // collapses separately (effect above). collapse()/expand() preserve a user-
+  // dragged split ratio when toggling back.
+  useEffect(() => {
+    const panel = listPanelRef.current;
+    if (!panel) return;
+    if (effectiveFullWidth) {
+      if (!panel.isCollapsed()) panel.collapse();
+    } else if (panel.isCollapsed()) {
+      panel.expand();
+    }
   }, [effectiveFullWidth]);
 
   const closeDetails = useCallback(() => {
@@ -1742,16 +1757,19 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                     className="p-0 m-0 min-w-[400px]"
                   >
                     {/* Empty state is now handled by TreeView component */}
-                    <div className="flex h-full w-full min-w-0">
-                      <div
-                        className={cn(
-                          "min-w-0",
-                          effectiveFullWidth
-                            ? "hidden"
-                            : selectedCaseId
-                              ? "flex-1"
-                              : "w-full"
-                        )}
+                    <ResizablePanelGroup
+                      direction="horizontal"
+                      autoSaveId="repository-details-split"
+                      className="h-full w-full min-w-0"
+                    >
+                      <ResizablePanel
+                        order={1}
+                        ref={listPanelRef}
+                        collapsible
+                        collapsedSize={0}
+                        defaultSize={56}
+                        minSize={30}
+                        className="min-w-0"
                         data-testid="repository-list-pane"
                       >
                         <div data-testid="repository-right-panel-header">
@@ -1959,39 +1977,44 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                           folderPathMap={folderPathMap}
                           onCaseNavChange={setCaseNav}
                         />
-                      </div>
+                      </ResizablePanel>
                       {selectedCaseId && (
-                        <div
-                          className={cn(
-                            "h-full min-w-0",
-                            effectiveFullWidth
-                              ? "flex-1"
-                              : "w-[44%] min-w-[460px] max-w-[900px] border-s"
-                          )}
-                          data-testid="repository-details-pane"
-                        >
-                          <CaseDetailsPanel
-                            caseId={selectedCaseId}
-                            projectId={String(numericProjectId)}
-                            fullWidth={effectiveFullWidth}
-                            onToggleFullWidth={toggleDetailsFullWidth}
-                            onClose={closeDetails}
-                            onPrev={() =>
-                              caseNav?.prevId != null &&
-                              goToCase(caseNav.prevId)
-                            }
-                            onNext={() =>
-                              caseNav?.nextId != null &&
-                              goToCase(caseNav.nextId)
-                            }
-                            hasPrev={!!caseNav?.hasPrev}
-                            hasNext={!!caseNav?.hasNext}
-                            position={caseNav?.position ?? null}
-                            total={caseNav?.total ?? 0}
+                        <>
+                          <ResizableHandle
+                            withHandle
+                            id="repository-details-resize-handle"
+                            className={cn(effectiveFullWidth && "hidden")}
                           />
-                        </div>
+                          <ResizablePanel
+                            order={2}
+                            defaultSize={44}
+                            minSize={28}
+                            className="h-full min-w-0"
+                            data-testid="repository-details-pane"
+                          >
+                            <CaseDetailsPanel
+                              caseId={selectedCaseId}
+                              projectId={String(numericProjectId)}
+                              fullWidth={effectiveFullWidth}
+                              onToggleFullWidth={toggleDetailsFullWidth}
+                              onClose={closeDetails}
+                              onPrev={() =>
+                                caseNav?.prevId != null &&
+                                goToCase(caseNav.prevId)
+                              }
+                              onNext={() =>
+                                caseNav?.nextId != null &&
+                                goToCase(caseNav.nextId)
+                              }
+                              hasPrev={!!caseNav?.hasPrev}
+                              hasNext={!!caseNav?.hasNext}
+                              position={caseNav?.position ?? null}
+                              total={caseNav?.total ?? 0}
+                            />
+                          </ResizablePanel>
+                        </>
                       )}
-                    </div>
+                    </ResizablePanelGroup>
                   </ResizablePanel>
                 </ResizablePanelGroup>
               </ConditionalDndWrapper>
