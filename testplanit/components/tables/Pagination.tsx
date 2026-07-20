@@ -23,12 +23,16 @@ interface PaginationProps {
   currentPage: number;
   totalPages: number;
   onPageChange: (page: number) => void;
+  /** When true, Previous/Next show only their chevron (label hidden) to fit a
+   * narrow list pane. The aria-labels keep them accessible. */
+  compact?: boolean;
 }
 
 const PaginationComponent: React.FC<PaginationProps> = ({
   currentPage,
   totalPages,
   onPageChange,
+  compact = false,
 }) => {
   const [selectedPage, _setSelectedPage] = useState<string>("");
   const t = useTranslations("common.pagination");
@@ -85,7 +89,7 @@ const PaginationComponent: React.FC<PaginationProps> = ({
           }}
           aria-disabled={isFirstPage ? "true" : undefined}
           tabIndex={isFirstPage ? -1 : undefined}
-          className={`px-2 py-1 h-auto ${isFirstPage ? "pointer-events-none opacity-50" : ""}`}
+          className={`px-2 py-1 h-auto ${isFirstPage ? "pointer-events-none opacity-50" : ""} ${compact ? "[&>span]:hidden" : ""}`}
           aria-label={t("goToPrevious")}
         />
       </PaginationItem>
@@ -149,7 +153,7 @@ const PaginationComponent: React.FC<PaginationProps> = ({
           }}
           aria-disabled={isLastPage ? "true" : undefined}
           tabIndex={isLastPage ? -1 : undefined}
-          className={`px-2 py-1 h-auto ${isLastPage ? "pointer-events-none opacity-50" : ""}`}
+          className={`px-2 py-1 h-auto ${isLastPage ? "pointer-events-none opacity-50" : ""} ${compact ? "[&>span]:hidden" : ""}`}
           aria-label={t("goToNext")}
         />
       </PaginationItem>

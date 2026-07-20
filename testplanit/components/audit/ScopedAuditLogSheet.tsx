@@ -57,6 +57,11 @@ interface ScopedAuditLogSheetProps {
   triggerTestId: string;
   tableTestIdPrefix: string;
   rowTestIdPrefix: string;
+  /** Controlled open state (optional). When omitted the sheet self-manages. */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  /** Hide the built-in trigger button (e.g. when opened from a menu item). */
+  hideTrigger?: boolean;
 }
 
 /**
@@ -79,24 +84,31 @@ export function ScopedAuditLogSheet({
   triggerTestId,
   tableTestIdPrefix,
   rowTestIdPrefix,
+  open: openProp,
+  onOpenChange,
+  hideTrigger = false,
 }: ScopedAuditLogSheetProps) {
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = openProp ?? internalOpen;
+  const setOpen = onOpenChange ?? setInternalOpen;
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
-      <SheetTrigger asChild>
-        <Button
-          type="button"
-          variant="outline"
-          className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2"
-          data-testid={triggerTestId}
-        >
-          <History className="text-foreground h-4 w-4 shrink-0" />
-          <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-            {triggerLabel}
-          </span>
-        </Button>
-      </SheetTrigger>
+      {!hideTrigger && (
+        <SheetTrigger asChild>
+          <Button
+            type="button"
+            variant="outline"
+            className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2"
+            data-testid={triggerTestId}
+          >
+            <History className="text-foreground h-4 w-4 shrink-0" />
+            <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
+              {triggerLabel}
+            </span>
+          </Button>
+        </SheetTrigger>
+      )}
       <SheetContent className="w-full sm:max-w-3xl">
         <SheetHeader>
           <SheetTitle>{title}</SheetTitle>

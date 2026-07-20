@@ -352,6 +352,22 @@ const REPOSITORY_CASE_LIST_SELECT = {
   },
 } as const satisfies RepositoryCasesSelect;
 
+/**
+ * Prev/next context for the docked case-details panel. Cases owns the list's
+ * filter/sort so it derives the ordered id set and the selected case's position
+ * within it; ProjectRepository consumes this to drive the panel's stepper.
+ */
+export interface CaseNav {
+  /** 1-based position of the selected case in the full filtered set, or null. */
+  position: number | null;
+  /** Total cases in the current filtered result set. */
+  total: number;
+  prevId: number | null;
+  nextId: number | null;
+  hasPrev: boolean;
+  hasNext: boolean;
+}
+
 interface CasesProps {
   folderId: number | null;
   viewType: string;
@@ -364,6 +380,9 @@ interface CasesProps {
   hideHeader?: boolean;
   isRunMode?: boolean;
   onTestCaseClick?: (caseId: number) => void;
+  /** Lifts prev/next context for the selected `?case` up to ProjectRepository,
+   * which renders the docked details panel. Null when no case is selected. */
+  onCaseNavChange?: (nav: CaseNav | null) => void;
   isCompleted?: boolean;
   /** When the run's composition is locked, reordering is frozen — hides drag
    * handles and disables drag-to-reorder. */
@@ -406,6 +425,7 @@ export default function Cases({
   hideHeader = false,
   isRunMode = false,
   onTestCaseClick,
+  onCaseNavChange,
   isCompleted = false,
   compositionLocked = false,
   canAddEdit,
@@ -444,6 +464,31 @@ export default function Cases({
   const projectId = isValidProjectId ? parseInt(projectIdParam) : -1;
   const runId = params?.runId ? Number(params.runId) : undefined;
   const isRunIdValidNumeric = runId !== undefined && !isNaN(runId);
+
+  // The selected case (`case` URL param) is rendered by ProjectRepository as a
+  // docked details panel to the right of the list. Cases only needs it to build
+  // the prev/next navigation context (see `onCaseNavChange` below). Only in plain
+  // repository browsing — run mode has its own run-page sheet, and selection mode
+  // opens the case in a new tab.
+  const selectedCaseIdParam =
+    !isRunMode && !isSelectionMode ? searchParams.get("case") : null;
+
+  // Collapse the pagination controls when the list pane is narrow (e.g. the
+  // details panel is open in split mode). Measured via ResizeObserver on the
+  // pagination footer so it reflects the actual available width in any context.
+  const [paginationCompact, setPaginationCompact] = useState(false);
+  const paginationResizeObserverRef = useRef<ResizeObserver | null>(null);
+  const setPaginationFooterRef = useCallback((node: HTMLDivElement | null) => {
+    paginationResizeObserverRef.current?.disconnect();
+    if (node && typeof ResizeObserver !== "undefined") {
+      const ro = new ResizeObserver((entries) => {
+        const width = entries[0]?.contentRect.width ?? 0;
+        setPaginationCompact(width > 0 && width < 440);
+      });
+      ro.observe(node);
+      paginationResizeObserverRef.current = ro;
+    }
+  }, []);
 
   // Use override pagination if provided (for modal), otherwise use context (for normal page)
   const contextPagination = usePagination();
@@ -2654,6 +2699,77 @@ export default function Cases({
     () => cases.map((c: { id: number }) => c.id),
     [cases]
   );
+
+  // Ordered id list of the FULL filtered result set (all pages), powering the
+  // docked details panel's prev/next stepper. ES search already yields an ordered
+  // id list; otherwise fetch ids-only with the same where/orderBy as the list.
+  // Disabled in descendants mode (its ids come from a POST endpoint the ZenStack
+  // GET can't reproduce without risking a 414 on deep trees) and when no case is
+  // open — prev/next then falls back to the current page's visible ids.
+  const { data: allCaseIdRows } = useClientQueries(
+    schema
+  ).repositoryCases.useFindMany(
+    {
+      where: repositoryCaseWhereClause,
+      orderBy,
+      select: { id: true },
+    },
+    {
+      enabled: Boolean(
+        !isRunMode &&
+        !isSelectionMode &&
+        !!selectedCaseIdParam &&
+        !searchResultIds &&
+        !isDescendantsMode &&
+        !!session?.user
+      ),
+    }
+  );
+
+  const allCaseIds = useMemo<number[]>(() => {
+    if (searchResultIds) return searchResultIds;
+    if (allCaseIdRows) return allCaseIdRows.map((r: { id: number }) => r.id);
+    return visibleCaseIds;
+  }, [searchResultIds, allCaseIdRows, visibleCaseIds]);
+
+  // Lift the selected case's prev/next context up to ProjectRepository, which
+  // renders the docked details panel.
+  useEffect(() => {
+    if (!onCaseNavChange) return;
+    if (isRunMode || isSelectionMode || !selectedCaseIdParam) {
+      onCaseNavChange(null);
+      return;
+    }
+    const id = Number(selectedCaseIdParam);
+    const idx = allCaseIds.indexOf(id);
+    const total = allCaseIds.length;
+    if (idx === -1) {
+      onCaseNavChange({
+        position: null,
+        total,
+        prevId: null,
+        nextId: null,
+        hasPrev: false,
+        hasNext: false,
+      });
+      return;
+    }
+    onCaseNavChange({
+      position: idx + 1,
+      total,
+      prevId: idx > 0 ? allCaseIds[idx - 1] : null,
+      nextId: idx < total - 1 ? allCaseIds[idx + 1] : null,
+      hasPrev: idx > 0,
+      hasNext: idx < total - 1,
+    });
+  }, [
+    allCaseIds,
+    selectedCaseIdParam,
+    isRunMode,
+    isSelectionMode,
+    onCaseNavChange,
+  ]);
+
   const { data: pendingReviewsForVisibleCases } = useClientQueries(
     schema
   ).reviewRequest.useFindMany(
@@ -3702,7 +3818,10 @@ export default function Cases({
             </div>
           </div>
 
-          <div className="flex flex-col w-full sm:w-2/3 items-end">
+          <div
+            ref={setPaginationFooterRef}
+            className="flex flex-col w-full sm:w-2/3 items-end"
+          >
             {isSelectionMode && onSelectionChange && !hideHeader && (
               <div className="mb-4">
                 <SelectedTestCasesDrawer
@@ -3722,6 +3841,7 @@ export default function Cases({
                 pageSize={typeof pageSize === "number" ? pageSize : "All"}
                 pageSizeOptions={pageSizeOptions}
                 handlePageSizeChange={handlePageSizeChange}
+                compact={paginationCompact}
               />
             </div>
             <div className="justify-end -mx-4">
@@ -3729,6 +3849,7 @@ export default function Cases({
                 currentPage={currentPage}
                 totalPages={totalPages}
                 onPageChange={setCurrentPage}
+                compact={paginationCompact}
               />
             </div>
             <div className="flex gap-2 pt-2 items-center -mb-2">

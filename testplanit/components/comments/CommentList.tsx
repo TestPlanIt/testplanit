@@ -3,7 +3,7 @@
 import { JSONContent } from "@tiptap/core";
 import { MessageSquare } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   createComment,
   deleteComment,
@@ -55,6 +55,24 @@ export function CommentList({
   const [comments, setComments] = useState<Comment[]>(initialComments);
   const [isCreating, setIsCreating] = useState(false);
   const [editorKey, setEditorKey] = useState(0);
+
+  // Collapse the header to just the icon + count when the section is narrow
+  // (e.g. the details side-panel in a slim browser). Measured synchronously on
+  // attach so a remount doesn't flash the wide header.
+  const [narrow, setNarrow] = useState(false);
+  const resizeObserverRef = useRef<ResizeObserver | null>(null);
+  const setRootRef = useCallback((node: HTMLDivElement | null) => {
+    resizeObserverRef.current?.disconnect();
+    if (node && typeof ResizeObserver !== "undefined") {
+      setNarrow(node.offsetWidth > 0 && node.offsetWidth < 280);
+      const ro = new ResizeObserver((entries) => {
+        const width = entries[0]?.contentRect.width ?? 0;
+        setNarrow(width > 0 && width < 280);
+      });
+      ro.observe(node);
+      resizeObserverRef.current = ro;
+    }
+  }, []);
 
   // Sync local list with `initialComments` whenever the parent useQuery
   // refetches — without this a paired-Comment landing from another submit
@@ -155,12 +173,13 @@ export function CommentList({
   };
 
   return (
-    <div className="space-y-2 bg-primary/10 rounded-md p-2">
+    <div ref={setRootRef} className="space-y-2 bg-primary/10 rounded-md p-2">
       <div className="flex items-center gap-1 text-primary">
-        <MessageSquare className="h-5 w-5" />
+        <MessageSquare className="h-5 w-5 shrink-0" />
         <h3 className="text-md font-semibold">
-          {t("comments.title")}
-          {` (${comments.length})`}
+          {narrow
+            ? `(${comments.length})`
+            : `${t("comments.title")} (${comments.length})`}
         </h3>
       </div>
 
@@ -186,6 +205,7 @@ export function CommentList({
                 isAdmin={isAdmin}
                 onUpdate={handleUpdate}
                 onDelete={handleDelete}
+                narrow={narrow}
               />
             </div>
           ))}

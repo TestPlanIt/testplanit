@@ -18,6 +18,9 @@ interface PaginationInfoProps {
   pageSize: number | "All";
   pageSizeOptions: (number | "All")[];
   handlePageSizeChange: (size: number | "All") => void;
+  /** When true, drop the "/Page Size" suffix and the "Showing …" / "Items"
+   * labels so the controls fit a narrow list pane. */
+  compact?: boolean;
 }
 
 const PaginationInfo: React.FC<PaginationInfoProps> = ({
@@ -28,6 +31,7 @@ const PaginationInfo: React.FC<PaginationInfoProps> = ({
   pageSize,
   pageSizeOptions,
   handlePageSizeChange,
+  compact = false,
 }) => {
   const t = useTranslations("common.pagination");
   const tCommon = useTranslations("common");
@@ -39,7 +43,9 @@ const PaginationInfo: React.FC<PaginationInfoProps> = ({
             <Button variant="link" className="-m-2">
               {totalRows <= 10 || pageSize === "All" || pageSize === totalRows
                 ? t("all")
-                : `${t("entries", { count: pageSize })}/${t("pageSize")}`}
+                : compact
+                  ? t("entries", { count: pageSize })
+                  : `${t("entries", { count: pageSize })}/${t("pageSize")}`}
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent>
@@ -58,8 +64,12 @@ const PaginationInfo: React.FC<PaginationInfoProps> = ({
         </DropdownMenu>
         {/* <Separator orientation="vertical" className="px-2" /> */}
         <div className=" whitespace-nowrap gap-1" data-testid="pagination-info">
-          {t("showing")} {startIndex}-{endIndex} {tCommon("of")}{" "}
-          {t("entries", { count: totalRows })}
+          {compact
+            ? `${startIndex}-${endIndex} ${tCommon("of")} ${totalRows}`
+            : `${t("showing")} ${startIndex}-${endIndex} ${tCommon("of")} ${t(
+                "entries",
+                { count: totalRows }
+              )}`}
           {searchString
             ? ` ${t("filtered")} ${t("total", { count: totalRows })}`
             : ""}

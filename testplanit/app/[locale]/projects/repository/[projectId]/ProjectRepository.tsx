@@ -84,7 +84,9 @@ import { usePathname, useRouter } from "~/lib/navigation";
 import { useFolderStats } from "~/lib/useFolderStats";
 import { AddCase } from "./AddCase";
 import { AddFolder } from "./AddFolder";
-import Cases from "./Cases";
+import Cases, { type CaseNav } from "./Cases";
+import { CaseDetailsPanel } from "@/components/repositories/CaseDetailsPanel";
+import { cn } from "~/utils";
 import { GenerateTestCasesWizard } from "./GenerateTestCasesWizard";
 import { ImportCasesWizard } from "./ImportCasesWizard";
 import type { FolderNode } from "./TreeView";
@@ -427,6 +429,95 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
   const refetchFoldersRef = useRef<(() => Promise<unknown>) | null>(null);
   // Ref for scoping DnD events when used in portaled contexts (modals)
   const dndContainerRef = useRef<HTMLDivElement>(null);
+
+  // --- Docked case-details panel (Testiny-style) ---------------------------
+  // The selected case (`case` URL param) renders as a details panel to the right
+  // of the list; on narrow widths (or via the toggle) it takes over full width,
+  // collapsing the folder tree + list. Only in plain repository browsing — run
+  // mode has its own run-page sheet and selection mode opens the case in a tab.
+  const caseParam = searchParams.get("case");
+  const selectedCaseId =
+    !isRunMode && !isSelectionMode && caseParam ? caseParam : null;
+  const [caseNav, setCaseNav] = useState<CaseNav | null>(null);
+  const [detailsFullWidth, setDetailsFullWidth] = useState(false);
+  const [isNarrowForDetails, setIsNarrowForDetails] = useState(false);
+  const collapsedBeforeFullWidthRef = useRef<boolean | null>(null);
+  const effectiveFullWidth =
+    !!selectedCaseId && (detailsFullWidth || isNarrowForDetails);
+
+  // Persist the full-width preference across sessions.
+  useEffect(() => {
+    try {
+      setDetailsFullWidth(
+        window.localStorage.getItem("repository-details-fullwidth") === "1"
+      );
+    } catch {
+      /* ignore private-mode / quota */
+    }
+  }, []);
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(
+        "repository-details-fullwidth",
+        detailsFullWidth ? "1" : "0"
+      );
+    } catch {
+      /* ignore */
+    }
+  }, [detailsFullWidth]);
+
+  // Responsive takeover: below a viewport width the panel goes full-width.
+  useEffect(() => {
+    const check = () => setIsNarrowForDetails(window.innerWidth < 1200);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
+  // When full-width, collapse the folder tree (mirrors the ES-search auto-
+  // collapse); restore it to the user's prior state on exit.
+  useEffect(() => {
+    if (effectiveFullWidth) {
+      if (collapsedBeforeFullWidthRef.current === null) {
+        collapsedBeforeFullWidthRef.current = isCollapsed;
+        if (!isCollapsed && panelRef.current) {
+          setIsTransitioning(true);
+          panelRef.current.collapse();
+          setIsCollapsed(true);
+          setTimeout(() => setIsTransitioning(false), 300);
+        }
+      }
+    } else {
+      if (collapsedBeforeFullWidthRef.current === false && panelRef.current) {
+        setIsTransitioning(true);
+        panelRef.current.expand();
+        setIsCollapsed(false);
+        setTimeout(() => setIsTransitioning(false), 300);
+      }
+      collapsedBeforeFullWidthRef.current = null;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [effectiveFullWidth]);
+
+  const closeDetails = useCallback(() => {
+    const p = new URLSearchParams(searchParams.toString());
+    p.delete("case");
+    router.replace(`${pathName}?${p.toString()}`, { scroll: false });
+  }, [searchParams, pathName, router]);
+
+  const goToCase = useCallback(
+    (id: number) => {
+      const p = new URLSearchParams(searchParams.toString());
+      p.set("case", String(id));
+      router.replace(`${pathName}?${p.toString()}`, { scroll: false });
+    },
+    [searchParams, pathName, router]
+  );
+
+  const toggleDetailsFullWidth = useCallback(
+    () => setDetailsFullWidth((v) => !v),
+    []
+  );
 
   // Folder copy/move state — wired from TreeView context menu to Cases dialog
   const [copyMoveFolderId, setCopyMoveFolderId] = useState<number | null>(null);
@@ -1651,206 +1742,256 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                     className="p-0 m-0 min-w-[400px]"
                   >
                     {/* Empty state is now handled by TreeView component */}
-                    <>
-                      <div data-testid="repository-right-panel-header">
-                        <div className="flex items-center justify-between mx-2 pt-0.5 gap-2">
-                          <div className="text-primary text-lg md:text-xl font-extrabold shrink-0">
-                            <div className="flex items-center space-x-1">
-                              <ListChecks className="w-5 h-5 min-w-5 min-h-5" />
-                              <div>{t("common.fields.testCases")}</div>
+                    <div className="flex h-full w-full min-w-0">
+                      <div
+                        className={cn(
+                          "min-w-0",
+                          effectiveFullWidth
+                            ? "hidden"
+                            : selectedCaseId
+                              ? "flex-1"
+                              : "w-full"
+                        )}
+                        data-testid="repository-list-pane"
+                      >
+                        <div data-testid="repository-right-panel-header">
+                          <div className="flex items-center justify-between mx-2 pt-0.5 gap-2">
+                            <div className="text-primary text-lg md:text-xl font-extrabold shrink-0">
+                              <div className="flex items-center space-x-1">
+                                <ListChecks className="w-5 h-5 min-w-5 min-h-5" />
+                                <div>{t("common.fields.testCases")}</div>
+                              </div>
                             </div>
-                          </div>
-                          {/* Elasticsearch search bar for selection mode */}
-                          {isSelectionMode && (
-                            <div className="relative flex-1 max-w-md">
-                              <Search className="absolute start-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                              <Input
-                                type="text"
-                                placeholder={t(
-                                  "search.placeholder.thisProject"
-                                )}
-                                value={esSearchQuery}
-                                onChange={(e) =>
-                                  setEsSearchQuery(e.target.value)
-                                }
-                                className="ps-10 pe-10 h-8"
-                              />
-                              {esSearchQuery && (
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="absolute end-1 top-1/2 transform -translate-y-1/2 h-6 w-6"
-                                  onClick={cancelEsSearch}
-                                >
-                                  <X className="h-4 w-4" />
-                                </Button>
-                              )}
-                            </div>
-                          )}
-                          {!isSelectionMode && !isRunMode && canAddEdit && (
-                            <div className="flex gap-2 items-center">
-                              <Button
-                                variant="outline"
-                                className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2"
-                                onClick={() => setImportDialogOpen(true)}
-                              >
-                                <Download className="h-4 w-4 shrink-0" />
-                                <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-                                  {t("repository.cases.importWizard.title")}
-                                </span>
-                              </Button>
-                              {importDialogOpen && (
-                                <ImportCasesWizard
-                                  onImportComplete={refetchFolderStats}
-                                  open={importDialogOpen}
-                                  onClose={() => {
-                                    setImportDialogOpen(false);
-                                    setDroppedFile(null);
-                                  }}
-                                  initialFile={droppedFile}
+                            {/* Elasticsearch search bar for selection mode */}
+                            {isSelectionMode && (
+                              <div className="relative flex-1 max-w-md">
+                                <Search className="absolute start-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                                <Input
+                                  type="text"
+                                  placeholder={t(
+                                    "search.placeholder.thisProject"
+                                  )}
+                                  value={esSearchQuery}
+                                  onChange={(e) =>
+                                    setEsSearchQuery(e.target.value)
+                                  }
+                                  className="ps-10 pe-10 h-8"
                                 />
-                              )}
-                              {generateWizardOpen && (
-                                <GenerateTestCasesWizard
-                                  folderId={selectedFolderId ?? 0}
-                                  folderName={selectedFolderName}
-                                  onImportComplete={refetchFolderStats}
-                                  open={generateWizardOpen}
-                                  onOpenChange={setGenerateWizardOpen}
-                                />
-                              )}
-                              <Button
-                                variant="outline"
-                                disabled={folderHierarchy.length === 0}
-                                onClick={() => setGenerateWizardOpen(true)}
-                                className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2"
-                              >
-                                <Sparkles className="w-4 h-4 shrink-0" />
-                                <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-                                  {t("repository.generateTestCases.buttonText")}
-                                </span>
-                              </Button>
-                              <FindDuplicatesButton
-                                projectId={projectIdParam}
-                                disabled={
-                                  !folderStatsData ||
-                                  folderStatsData.reduce(
-                                    (sum, s) => sum + s.totalCaseCount,
-                                    0
-                                  ) === 0
-                                }
-                              />
-                              <Button
-                                variant="default"
-                                disabled={!selectedFolderId}
-                                data-testid="add-case-button"
-                                className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2"
-                                onClick={() => setAddCaseOpen(true)}
-                              >
-                                <CirclePlus className="w-4 shrink-0" />
-                                <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40 select-none">
-                                  {t("repository.cases.addCase")}
-                                </span>
-                              </Button>
-                              {addCaseOpen && (
-                                <AddCase
-                                  folderId={selectedFolderId ?? 0}
-                                  open={addCaseOpen}
-                                  onClose={() => setAddCaseOpen(false)}
-                                />
-                              )}
-                            </div>
-                          )}
-                        </div>
-
-                        {selectedItem === "folders" &&
-                          !isRunMode &&
-                          !isEsSearchActive && (
-                            <>
-                              <div className="flex items-center justify-between mt-2">
-                                <BreadcrumbComponent
-                                  breadcrumbItems={getBreadcrumbItems}
-                                  projectId={projectIdParam}
-                                  onClick={handleBreadcrumbClick}
-                                  isLastClickable={false}
-                                />
-                                {selectedFolderId !== null && (
-                                  <Toggle
-                                    variant="outline"
-                                    size="sm"
-                                    pressed={showDescendants}
-                                    onPressedChange={setShowDescendants}
-                                    aria-label={t("repository.showDescendants")}
-                                    className="h-7 gap-1 text-xs me-2 shrink-0 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+                                {esSearchQuery && (
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="absolute end-1 top-1/2 transform -translate-y-1/2 h-6 w-6"
+                                    onClick={cancelEsSearch}
                                   >
-                                    <FolderDown className="h-3.5 w-3.5" />
-                                    {t("repository.showDescendants")}
-                                  </Toggle>
+                                    <X className="h-4 w-4" />
+                                  </Button>
                                 )}
                               </div>
-                              {/* Display Folder Documentation */}
-                              {selectedItem === "folders" &&
-                                !isRunMode &&
-                                selectedFolderId !== null &&
-                                (() => {
-                                  const selectedFolderNode =
-                                    folderHierarchy.find(
-                                      (folder) => folder.id === selectedFolderId
-                                    );
-                                  if (selectedFolderNode?.data?.docs) {
-                                    const docsContent = parseTipTapContent(
-                                      selectedFolderNode.data.docs
-                                    );
-                                    const isEmpty = isTiptapEmpty(docsContent);
-
-                                    if (!isEmpty) {
-                                      return (
-                                        <div className="ms-4 bg-muted rounded-lg">
-                                          <TipTapEditor
-                                            content={docsContent}
-                                            readOnly={true}
-                                            projectId={projectIdParam}
-                                            className="prose prose-sm max-w-none dark:prose-invert"
-                                          />
-                                        </div>
-                                      );
-                                    }
+                            )}
+                            {!isSelectionMode && !isRunMode && canAddEdit && (
+                              <div className="flex gap-2 items-center">
+                                <Button
+                                  variant="outline"
+                                  className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2"
+                                  onClick={() => setImportDialogOpen(true)}
+                                >
+                                  <Download className="h-4 w-4 shrink-0" />
+                                  <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
+                                    {t("repository.cases.importWizard.title")}
+                                  </span>
+                                </Button>
+                                {importDialogOpen && (
+                                  <ImportCasesWizard
+                                    onImportComplete={refetchFolderStats}
+                                    open={importDialogOpen}
+                                    onClose={() => {
+                                      setImportDialogOpen(false);
+                                      setDroppedFile(null);
+                                    }}
+                                    initialFile={droppedFile}
+                                  />
+                                )}
+                                {generateWizardOpen && (
+                                  <GenerateTestCasesWizard
+                                    folderId={selectedFolderId ?? 0}
+                                    folderName={selectedFolderName}
+                                    onImportComplete={refetchFolderStats}
+                                    open={generateWizardOpen}
+                                    onOpenChange={setGenerateWizardOpen}
+                                  />
+                                )}
+                                <Button
+                                  variant="outline"
+                                  disabled={folderHierarchy.length === 0}
+                                  onClick={() => setGenerateWizardOpen(true)}
+                                  className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2"
+                                >
+                                  <Sparkles className="w-4 h-4 shrink-0" />
+                                  <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
+                                    {t(
+                                      "repository.generateTestCases.buttonText"
+                                    )}
+                                  </span>
+                                </Button>
+                                <FindDuplicatesButton
+                                  projectId={projectIdParam}
+                                  disabled={
+                                    !folderStatsData ||
+                                    folderStatsData.reduce(
+                                      (sum, s) => sum + s.totalCaseCount,
+                                      0
+                                    ) === 0
                                   }
-                                  return null;
-                                })()}
-                            </>
-                          )}
+                                />
+                                <Button
+                                  variant="default"
+                                  disabled={!selectedFolderId}
+                                  data-testid="add-case-button"
+                                  className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2"
+                                  onClick={() => setAddCaseOpen(true)}
+                                >
+                                  <CirclePlus className="w-4 shrink-0" />
+                                  <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40 select-none">
+                                    {t("repository.cases.addCase")}
+                                  </span>
+                                </Button>
+                                {addCaseOpen && (
+                                  <AddCase
+                                    folderId={selectedFolderId ?? 0}
+                                    open={addCaseOpen}
+                                    onClose={() => setAddCaseOpen(false)}
+                                  />
+                                )}
+                              </div>
+                            )}
+                          </div>
+
+                          {selectedItem === "folders" &&
+                            !isRunMode &&
+                            !isEsSearchActive && (
+                              <>
+                                <div className="flex items-center justify-between mt-2">
+                                  <BreadcrumbComponent
+                                    breadcrumbItems={getBreadcrumbItems}
+                                    projectId={projectIdParam}
+                                    onClick={handleBreadcrumbClick}
+                                    isLastClickable={false}
+                                  />
+                                  {selectedFolderId !== null && (
+                                    <Toggle
+                                      variant="outline"
+                                      size="sm"
+                                      pressed={showDescendants}
+                                      onPressedChange={setShowDescendants}
+                                      aria-label={t(
+                                        "repository.showDescendants"
+                                      )}
+                                      className="h-7 gap-1 text-xs me-2 shrink-0 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+                                    >
+                                      <FolderDown className="h-3.5 w-3.5" />
+                                      {t("repository.showDescendants")}
+                                    </Toggle>
+                                  )}
+                                </div>
+                                {/* Display Folder Documentation */}
+                                {selectedItem === "folders" &&
+                                  !isRunMode &&
+                                  selectedFolderId !== null &&
+                                  (() => {
+                                    const selectedFolderNode =
+                                      folderHierarchy.find(
+                                        (folder) =>
+                                          folder.id === selectedFolderId
+                                      );
+                                    if (selectedFolderNode?.data?.docs) {
+                                      const docsContent = parseTipTapContent(
+                                        selectedFolderNode.data.docs
+                                      );
+                                      const isEmpty =
+                                        isTiptapEmpty(docsContent);
+
+                                      if (!isEmpty) {
+                                        return (
+                                          <div className="ms-4 bg-muted rounded-lg">
+                                            <TipTapEditor
+                                              content={docsContent}
+                                              readOnly={true}
+                                              projectId={projectIdParam}
+                                              className="prose prose-sm max-w-none dark:prose-invert"
+                                            />
+                                          </div>
+                                        );
+                                      }
+                                    }
+                                    return null;
+                                  })()}
+                              </>
+                            )}
+                        </div>
+                        <Cases
+                          folderId={isEsSearchActive ? null : selectedFolderId}
+                          viewType={isEsSearchActive ? "folders" : selectedItem}
+                          filterId={isEsSearchActive ? null : selectedFilter}
+                          isSelectionMode={isSelectionMode}
+                          selectedTestCases={selectedTestCases}
+                          selectedRunIds={selectedRunIds}
+                          onSelectionChange={onSelectionChange}
+                          onConfirm={onConfirm}
+                          hideHeader={hideHeader}
+                          isRunMode={isRunMode}
+                          onTestCaseClick={onTestCaseClick}
+                          isCompleted={isCompleted}
+                          compositionLocked={compositionLocked}
+                          canAddEdit={canAddEdit}
+                          canAddEditRun={canAddEditRun}
+                          canDelete={canDelete}
+                          selectedFolderCaseCount={selectedFolderCaseCount}
+                          overridePagination={overridePagination}
+                          searchResultIds={esSearchResultIds}
+                          copyMoveFolderId={copyMoveFolderId}
+                          copyMoveFolderName={copyMoveFolderName}
+                          onCopyMoveFolderDialogClose={
+                            handleCopyMoveFolderDialogClose
+                          }
+                          descendantFolderIds={descendantFolderIds}
+                          showDescendants={showDescendants}
+                          folderPathMap={folderPathMap}
+                          onCaseNavChange={setCaseNav}
+                        />
                       </div>
-                      <Cases
-                        folderId={isEsSearchActive ? null : selectedFolderId}
-                        viewType={isEsSearchActive ? "folders" : selectedItem}
-                        filterId={isEsSearchActive ? null : selectedFilter}
-                        isSelectionMode={isSelectionMode}
-                        selectedTestCases={selectedTestCases}
-                        selectedRunIds={selectedRunIds}
-                        onSelectionChange={onSelectionChange}
-                        onConfirm={onConfirm}
-                        hideHeader={hideHeader}
-                        isRunMode={isRunMode}
-                        onTestCaseClick={onTestCaseClick}
-                        isCompleted={isCompleted}
-                        compositionLocked={compositionLocked}
-                        canAddEdit={canAddEdit}
-                        canAddEditRun={canAddEditRun}
-                        canDelete={canDelete}
-                        selectedFolderCaseCount={selectedFolderCaseCount}
-                        overridePagination={overridePagination}
-                        searchResultIds={esSearchResultIds}
-                        copyMoveFolderId={copyMoveFolderId}
-                        copyMoveFolderName={copyMoveFolderName}
-                        onCopyMoveFolderDialogClose={
-                          handleCopyMoveFolderDialogClose
-                        }
-                        descendantFolderIds={descendantFolderIds}
-                        showDescendants={showDescendants}
-                        folderPathMap={folderPathMap}
-                      />
-                    </>
+                      {selectedCaseId && (
+                        <div
+                          className={cn(
+                            "h-full min-w-0",
+                            effectiveFullWidth
+                              ? "flex-1"
+                              : "w-[44%] min-w-[460px] max-w-[900px] border-s"
+                          )}
+                          data-testid="repository-details-pane"
+                        >
+                          <CaseDetailsPanel
+                            caseId={selectedCaseId}
+                            projectId={String(numericProjectId)}
+                            fullWidth={effectiveFullWidth}
+                            onToggleFullWidth={toggleDetailsFullWidth}
+                            onClose={closeDetails}
+                            onPrev={() =>
+                              caseNav?.prevId != null &&
+                              goToCase(caseNav.prevId)
+                            }
+                            onNext={() =>
+                              caseNav?.nextId != null &&
+                              goToCase(caseNav.nextId)
+                            }
+                            hasPrev={!!caseNav?.hasPrev}
+                            hasNext={!!caseNav?.hasNext}
+                            position={caseNav?.position ?? null}
+                            total={caseNav?.total ?? 0}
+                          />
+                        </div>
+                      )}
+                    </div>
                   </ResizablePanel>
                 </ResizablePanelGroup>
               </ConditionalDndWrapper>

@@ -477,6 +477,26 @@ const NameCell = React.memo(function NameCell({
           isSoftDeletedInRun && "line-through text-muted-foreground"
         )}
         target={isSelectionMode ? "_blank" : undefined}
+        onClick={(e) => {
+          // In plain repository browsing, open the case in the docked details
+          // panel (via the `case` URL param) instead of navigating away — but let
+          // modified/middle clicks fall through so the full page still opens in
+          // a new tab. Run and selection modes keep their existing behavior.
+          if (isRunMode || isSelectionMode) return;
+          if (
+            e.metaKey ||
+            e.ctrlKey ||
+            e.shiftKey ||
+            e.altKey ||
+            e.button !== 0
+          )
+            return;
+          e.preventDefault();
+          const params = new URLSearchParams(searchParams.toString());
+          params.set("case", id.toString());
+          // push (not replace) so the browser Back button closes the panel.
+          router.push(`${pathname}?${params.toString()}`);
+        }}
       >
         <div
           className="truncate whitespace-nowrap overflow-hidden"
@@ -487,7 +507,13 @@ const NameCell = React.memo(function NameCell({
           }}
         >
           {name}
-          <LinkIcon className="w-4 h-4 inline ms-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+          {/* The link icon signals "opens a new page" — only true when the
+              click navigates (selection mode → new tab, run mode → case page).
+              In plain repository browsing the click opens the docked details
+              panel, so hide it. */}
+          {(isRunMode || isSelectionMode) && (
+            <LinkIcon className="w-4 h-4 inline ms-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+          )}
         </div>
       </Link>
 

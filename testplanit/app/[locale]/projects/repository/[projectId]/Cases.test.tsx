@@ -96,6 +96,8 @@ vi.mock("@zenstackhq/tanstack-query/react", () => ({
         mutateAsync: vi.fn(),
         isPending: false,
       })),
+      // ids-only query backing the docked panel's prev/next (allCaseIds)
+      useFindMany: vi.fn(() => ({ data: [], isLoading: false })),
     },
     templates: { useFindMany: vi.fn(() => ({ data: [], isLoading: false })) },
     projectLlmIntegration: {

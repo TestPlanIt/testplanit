@@ -1,4 +1,5 @@
 import { AttachmentsCarousel } from "@/components/AttachmentsCarousel";
+import { AttachmentsListDisplay } from "@/components/tables/AttachmentsListDisplay";
 import {
   AttachmentChanges,
   AttachmentsDisplay,
@@ -44,6 +45,9 @@ interface TestCaseFormControlsProps {
   canCreateTags?: boolean;
   session?: any;
   onAttachmentPendingChanges?: (changes: AttachmentChanges) => void;
+  /** When true (narrow pane), the read-only Attachments section collapses to a
+   * compact paperclip-count popover. Edit mode is unaffected. */
+  compact?: boolean;
 }
 
 const TestCaseFormControls: React.FC<TestCaseFormControlsProps> = ({
@@ -64,6 +68,7 @@ const TestCaseFormControls: React.FC<TestCaseFormControlsProps> = ({
   canCreateTags = false,
   session,
   onAttachmentPendingChanges,
+  compact = false,
 }) => {
   const t = useTranslations();
 
@@ -304,7 +309,7 @@ const TestCaseFormControls: React.FC<TestCaseFormControlsProps> = ({
                         id={tag.id}
                         name={tag.name}
                         link={`/projects/tags/${testcase.projectId}/${tag.id}`}
-                        size="large"
+                        size="small"
                       />
                     </div>
                   ))}
@@ -343,7 +348,7 @@ const TestCaseFormControls: React.FC<TestCaseFormControlsProps> = ({
                         title={issue.title}
                         status={issue.externalStatus}
                         projectIds={[testcase.projectId]}
-                        size="large"
+                        size="small"
                         data={issue.data}
                         integrationProvider={issue.integration?.provider}
                         integrationId={
@@ -367,11 +372,18 @@ const TestCaseFormControls: React.FC<TestCaseFormControlsProps> = ({
                   {t("common.fields.attachments")}
                 </div>
                 <div aria-labelledby="attachments-display">
-                  <AttachmentsDisplay
-                    attachments={testcase.attachments}
-                    onSelect={handleSelect}
-                    preventEditing={!canAddEdit}
-                  />
+                  {compact ? (
+                    <AttachmentsListDisplay
+                      attachments={testcase.attachments}
+                      onSelect={handleSelect}
+                    />
+                  ) : (
+                    <AttachmentsDisplay
+                      attachments={testcase.attachments}
+                      onSelect={handleSelect}
+                      preventEditing={!canAddEdit}
+                    />
+                  )}
                   {selectedAttachmentIndex !== null && (
                     <AttachmentsCarousel
                       attachments={selectedAttachments}

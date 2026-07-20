@@ -209,7 +209,10 @@ export function ReviewStatusBanner({
   if (latest.status === "PENDING") {
     return (
       <>
-        <WarningAlert data-testid="review-status-banner-pending">
+        <WarningAlert
+          className="my-4"
+          data-testid="review-status-banner-pending"
+        >
           <MessageSquareWarning className="h-5 w-5" />
           {/*
             `flex-wrap` keeps the prose + pills from overflowing into the
@@ -400,7 +403,7 @@ export function ReviewStatusBanner({
         // The button itself is absolute-positioned below, anchored to
         // the top-right corner so reviewers find the call-to-action in
         // the same spot the PENDING banner puts "Cancel request".
-        className="mb-2 pe-44"
+        className="my-4 pe-44"
       >
         <DecisionIcon className="h-5 w-5" />
         <AlertTitle>

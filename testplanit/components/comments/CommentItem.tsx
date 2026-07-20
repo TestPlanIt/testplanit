@@ -7,6 +7,7 @@ import { formatDistanceToNow } from "date-fns";
 import {
   Ban,
   CheckCircle2,
+  Clock,
   Edit,
   MessageCircleWarning,
   MessageSquareWarning,
@@ -34,6 +35,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "~/components/ui/tooltip";
 import { createMentionExtension } from "~/lib/tiptap/mentionExtension";
 import { cn } from "~/utils";
 import { CommentEditor } from "./CommentEditor";
@@ -65,6 +71,9 @@ interface CommentItemProps {
   onUpdate: (commentId: string, content: JSONContent) => Promise<void>;
   onDelete: (commentId: string) => Promise<void>;
   className?: string;
+  /** When true (narrow container), collapse the timestamp to a clock icon with
+   * the time in a tooltip. */
+  narrow?: boolean;
 }
 
 export function CommentItem({
@@ -75,6 +84,7 @@ export function CommentItem({
   onUpdate,
   onDelete,
   className,
+  narrow = false,
 }: CommentItemProps) {
   const t = useTranslations();
   const [isEditing, setIsEditing] = useState(false);
@@ -239,11 +249,26 @@ export function CommentItem({
             <UserNameCell userId={comment.creator.id} hideLink />
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            <span className="text-xs text-muted-foreground line-clamp-1">
-              {formatDistanceToNow(new Date(comment.createdAt), {
+            {(() => {
+              const timeAgo = formatDistanceToNow(new Date(comment.createdAt), {
                 addSuffix: true,
-              })}
-            </span>
+              });
+              return narrow ? (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Clock
+                      className="h-3.5 w-3.5 shrink-0 text-muted-foreground"
+                      aria-label={timeAgo}
+                    />
+                  </TooltipTrigger>
+                  <TooltipContent>{timeAgo}</TooltipContent>
+                </Tooltip>
+              ) : (
+                <span className="text-xs text-muted-foreground line-clamp-1">
+                  {timeAgo}
+                </span>
+              );
+            })()}
             {comment.isEdited && (
               <span className="text-xs text-muted-foreground italic">
                 {t("comments.edited")}

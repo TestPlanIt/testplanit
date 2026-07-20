@@ -59,12 +59,14 @@ export const UserNameCell: React.FC<UserNameCellProps> = ({
   // Content to display (avatar + name)
   const content = (
     <span className="flex items-center gap-1 min-w-0">
-      <Avatar
-        alt={user?.name}
-        height={20}
-        width={20}
-        image={user?.image ?? ""}
-      />
+      <span className="shrink-0">
+        <Avatar
+          alt={user?.name}
+          height={20}
+          width={20}
+          image={user?.image ?? ""}
+        />
+      </span>
       <Tooltip>
         <TooltipTrigger asChild>
           <div
