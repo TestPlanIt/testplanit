@@ -326,6 +326,37 @@ Files are accessed directly through signed URLs generated during upload. The sys
 - Ensure storage credentials are valid
 - Review bucket permissions
 
+### Broken Images (400 from `/_next/image`)
+
+**Issue**: Project icons or avatars are broken in some places (e.g. the header
+Projects dropdown) but fine in others (e.g. Admin → Projects). The browser
+console shows repeated `Failed to load resource: 400` for `image`.
+
+**Cause**: Next.js's image optimizer is on and rejecting your storage host. It
+only serves URLs whose host+path are in `next.config`'s `remotePatterns`
+allowlist, which is baked at **build time** from `BASE_DOMAIN`. If `BASE_DOMAIN`
+didn't reach the build (or doesn't match your real domain), `/_next/image`
+returns `400`. Components that render through `<ProjectIcon>` (Admin) set
+`unoptimized` and bypass the optimizer, which is why they still work — that's the
+"some places" symptom.
+
+**Solutions**:
+
+- **Recommended:** rebuild with `SELF_HOSTED=true` (the compose default) so the
+  optimizer is off and images load straight from storage on any domain. It must
+  be a **build arg** — a runtime `.env.production` value is read too late and has
+  no effect. See [Images and custom domains](./building-from-source.md#images-and-custom-domains).
+- Confirm what the running image actually baked (this is authoritative — not a
+  browser cache issue if it says `false`):
+  ```bash
+  docker exec testplanit-prod \
+    grep -o '"unoptimized":[a-z]*' /app/testplanit/.next/required-server-files.json
+  # → "unoptimized":true on a correct self-hosted build
+  ```
+- If you want the optimizer on instead, rebuild with `SELF_HOSTED=false` **and**
+  `BASE_DOMAIN=<your real domain>`.
+- After a correct rebuild, hard-refresh (Cmd/Ctrl+Shift+R) to drop cached `400`s.
+
 ### Storage Configuration
 
 **Issue**: Storage backend not working

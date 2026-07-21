@@ -56,20 +56,46 @@ the full stack (app, workers, Postgres, Valkey, Elasticsearch, MinIO):
 docker compose -f testplanit/docker-compose.prod.yml up -d --build
 ```
 
-### Custom domain (optional)
+### Images and custom domains
 
-`BASE_DOMAIN` is a **build-time** argument that enables Next.js image
-optimization for a wildcard domain — it's only needed if you serve multiple
-subdomains (`a.example.com`, `b.example.com`, …) from a single image. A
-single-domain install does not need it. To set it, build with:
+How TestPlanIt serves uploaded images (project icons, avatars, attachments) is
+fixed at **build time** by the `SELF_HOSTED` build argument. This is the single
+most common self-hosting gotcha, so read this before your first build.
+
+> ⚠️ `SELF_HOSTED` (and `BASE_DOMAIN` below) are **build-time** arguments. They
+> are baked into the Next.js standalone build (`.next/required-server-files.json`)
+> and the running server reads that frozen config. Setting them only at runtime
+> in `.env.production` is **too late and silently has no effect** — the symptom
+> is broken images that return `400` from `/_next/image`. They must reach
+> `next build`, i.e. the `prod` service's `build.args` (already wired in the
+> compose file). Compose fills those from your shell / default `.env` /
+> `--env-file` — **not** from the `.env.production` `env_file`, which only injects
+> runtime variables into the container.
+
+**Default — `SELF_HOSTED=true` (recommended for self-hosting).** The compose file
+defaults to this. Next.js's image optimizer is turned **off**, so `<Image>`
+renders a plain `<img>` pointing straight at your storage. One build then works
+on **any** domain with no allowlist to configure, and `BASE_DOMAIN` is ignored.
+The default build needs nothing extra:
 
 ```bash
-docker build --build-arg BASE_DOMAIN=example.com \
-  --target production -f testplanit/Dockerfile -t testplanit:local .
+docker compose -f testplanit/docker-compose.prod.yml up -d --build
 ```
 
-(or add `args: { BASE_DOMAIN: "${BASE_DOMAIN}" }` under the `prod` service's
-`build:` block in the compose file).
+**Optional — `SELF_HOSTED=false` (Next.js image optimizer on).** Turn the
+optimizer back on only if you want automatic image resizing/re-encoding. You must
+then set `BASE_DOMAIN` to your real domain: it is baked into `next.config`'s image
+`remotePatterns` allowlist so the optimizer accepts `*.your-domain` storage URLs.
+Requests for any host outside the allowlist (including the `example.com` default)
+return `400`.
+
+```bash
+SELF_HOSTED=false BASE_DOMAIN=example.com \
+  docker compose -f testplanit/docker-compose.prod.yml up -d --build
+```
+
+Both are wired through the `prod` service's `build.args` in the compose file
+(`SELF_HOSTED: ${SELF_HOSTED:-true}` and `BASE_DOMAIN: ${BASE_DOMAIN:-example.com}`).
 
 ## Upgrading an existing database
 
