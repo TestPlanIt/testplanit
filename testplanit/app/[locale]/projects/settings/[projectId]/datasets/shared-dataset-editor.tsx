@@ -11,6 +11,7 @@ import { SharedDatasetVersionPicker } from "@/components/parameters/SharedDatase
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { PageTitle } from "@/components/ui/typography";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   AlertTriangle,
@@ -366,7 +367,7 @@ export function SharedDatasetEditor({
     return (
       <Card>
         <CardContent className="flex flex-col items-center justify-center gap-3 py-16 text-center">
-          <h2 className="text-2xl font-semibold">{tEditor("notFound")}</h2>
+          <PageTitle>{tEditor("notFound")}</PageTitle>
           <p className="text-muted-foreground">
             {tEditor("notFoundDescription")}
           </p>

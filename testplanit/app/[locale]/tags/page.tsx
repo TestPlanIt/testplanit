@@ -6,6 +6,7 @@ import { useDebounce } from "@/components/Debounce";
 import { Filter } from "@/components/tables/Filter";
 import { VirtualizedDataTable } from "@/components/tables/VirtualizedDataTable";
 import { Button } from "@/components/ui/button";
+import { SectionHeader } from "@/components/ui/typography";
 import {
   Card,
   CardContent,
@@ -338,7 +339,7 @@ function Tags() {
     <main>
       <Card>
         <CardHeader className="w-full">
-          <div className="flex items-center justify-between text-primary text-2xl md:text-4xl">
+          <SectionHeader className="flex items-center justify-between">
             <CardTitle>{t("enums.ApplicationArea.Tags")}</CardTitle>
             <Popover open={autoTagOpen} onOpenChange={setAutoTagOpen}>
               <PopoverTrigger asChild>
@@ -410,7 +411,7 @@ function Tags() {
                 </Command>
               </PopoverContent>
             </Popover>
-          </div>
+          </SectionHeader>
           <CardDescription>{t("tags.description")}</CardDescription>
         </CardHeader>
         <CardContent>

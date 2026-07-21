@@ -248,7 +248,7 @@ export const useColumns = (
         size: 200,
         meta: { isPinned: "right" },
         cell: ({ row }) => (
-          <div className="bg-primary-foreground whitespace-nowrap flex justify-center gap-1">
+          <div className="bg-primary-foreground whitespace-nowrap flex justify-end gap-1">
             {/* Always render the Authorize slot. Rows that aren't an
                 unauthorized OAuth integration get an invisible, same-size
                 placeholder so the remaining action icons stay aligned. */}

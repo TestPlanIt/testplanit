@@ -18,6 +18,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { SectionHeader } from "@/components/ui/typography";
 import {
   ResizableHandle,
   ResizablePanel,
@@ -1613,9 +1614,9 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
             {!hideHeader ? (
               <CardHeader>
                 <CardTitle>
-                  <div className="flex items-center justify-between text-primary text-xl md:text-2xl">
+                  <SectionHeader className="flex items-center justify-between">
                     <CardTitle>{t("repository.title")}</CardTitle>
-                  </div>
+                  </SectionHeader>
                 </CardTitle>
                 <CardDescription className="uppercase">
                   <span className="flex items-center gap-2 uppercase shrink-0">
@@ -1872,7 +1873,9 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                                     <Button
                                       variant="outline"
                                       disabled={folderHierarchy.length === 0}
-                                      onClick={() => setGenerateWizardOpen(true)}
+                                      onClick={() =>
+                                        setGenerateWizardOpen(true)
+                                      }
                                       className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2"
                                     >
                                       <Sparkles className="w-4 h-4 shrink-0" />

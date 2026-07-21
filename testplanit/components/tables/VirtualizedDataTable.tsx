@@ -178,15 +178,23 @@ interface VirtualizedDataTableProps {
   flexColumnId?: string;
 
   /**
-   * Opt into frozen/pinned columns. When true, columns declaring
-   * `meta: { isPinned: "left" | "right" }` are pinned to the table edges and
-   * stay put during horizontal scroll (like the repository `DataTable`). This
-   * switches the table to a synced-scroll layout (the body scrolls horizontally
-   * and a header viewport mirrors it) so `position: sticky` actually sticks.
-   * Off by default — the many other tables that share this component (and even
-   * declare a currently-inert `meta.isPinned`) are unaffected.
+   * Frozen/pinned columns. On by default: with no explicit config the first and
+   * last columns freeze to the table edges and stay put during horizontal
+   * scroll (row identity + actions always visible), via a synced-scroll layout
+   * (the body scrolls horizontally and a header viewport mirrors it) so
+   * `position: sticky` actually sticks. Declare `meta: { isPinned: "left" |
+   * "right" }` on columns to pin an exact set instead (that replaces the
+   * first/last default). Pass `false` to turn pinning off entirely.
    */
   enableColumnPinning?: boolean;
+
+  /**
+   * Whether the first and last columns freeze automatically (only applies when
+   * the caller pinned nothing via `meta.isPinned`). Defaults to true; pass false
+   * to keep pinning available for explicit `meta.isPinned` columns without the
+   * automatic first/last freeze.
+   */
+  pinFirstLast?: boolean;
 
   /**
    * Extra inline style for pinned BODY cells, merged over the sticky
@@ -299,7 +307,8 @@ export function VirtualizedDataTable({
   onRowSelectionChange,
   getRowId,
   flexColumnId,
-  enableColumnPinning = false,
+  enableColumnPinning = true,
+  pinFirstLast = true,
   pinnedColumnStyle,
   pinnedHeaderStyle,
   columnSizingStorageKey,
@@ -359,8 +368,18 @@ export function VirtualizedDataTable({
   // Draggable column widths. TanStack owns the live width during a drag (via
   // column.getSize(), which both header and body cells already read); we only
   // seed it from and flush it back to localStorage when a storage key is given.
-  const columnSizingStorage = columnSizingStorageKey
-    ? `vdt:colsize:${columnSizingStorageKey}`
+  // Persist column widths under an explicit key, or fall back to the table's
+  // `testIdPrefix` (unique per surface) so every table remembers its widths
+  // without each caller wiring a separate key. The shared default prefix opts
+  // out, so a table with neither an explicit key nor a real testIdPrefix stays
+  // stateless.
+  const effectiveColumnSizingKey =
+    columnSizingStorageKey ??
+    (testIdPrefix && testIdPrefix !== "virtualized-table"
+      ? testIdPrefix
+      : undefined);
+  const columnSizingStorage = effectiveColumnSizingKey
+    ? `vdt:colsize:${effectiveColumnSizingKey}`
     : null;
   const [columnSizing, setColumnSizing] = useState<ColumnSizingState>(() => {
     if (!columnSizingStorage || typeof window === "undefined") return {};
@@ -372,8 +391,11 @@ export function VirtualizedDataTable({
     }
   });
 
-  // Column pinning (opt-in). Seed the left/right pin sets from each column's
-  // `meta.isPinned` once, then let TanStack own the state. Mirrors DataTable.
+  // Column pinning. Seed the left/right pin sets once, then let TanStack own the
+  // state. First, honor any explicit `meta.isPinned`. When the caller pinned
+  // nothing, default to freezing the first and last columns (the auto-added
+  // expander rides along on the left so it doesn't scroll out from under the
+  // pinned first column). Mirrors DataTable's explicit path.
   const [columnPinning, setColumnPinning] = useState<ColumnPinningState>({
     left: [],
     right: [],
@@ -390,9 +412,22 @@ export function VirtualizedDataTable({
       if (pin === "left") left.push(id);
       else if (pin === "right") right.push(id);
     }
+    if (
+      pinFirstLast &&
+      left.length === 0 &&
+      right.length === 0 &&
+      columns.length > 1
+    ) {
+      const firstId = columns[0]?.id as string | undefined;
+      const lastId = columns[columns.length - 1]?.id as string | undefined;
+      const hasExpander = !!(grouping && grouping.length > 0) || !!getSubRows;
+      if (firstId) left.push(firstId);
+      if (hasExpander) left.unshift("expander");
+      if (lastId && lastId !== firstId) right.push(lastId);
+    }
     setColumnPinning({ left, right });
     initialPinningDone.current = true;
-  }, [enableColumnPinning, columns]);
+  }, [enableColumnPinning, pinFirstLast, columns, grouping, getSubRows]);
 
   // In pinning mode the body scrolls horizontally; this ref lets the header
   // viewport mirror the body's scrollLeft so the columns stay aligned.
@@ -520,6 +555,13 @@ export function VirtualizedDataTable({
   const hasFlex =
     !!flexColumnId && leafColumns.some((c) => c.id === flexColumnId);
   const tableWidth = hasFlex ? "100%" : totalWidth;
+  // With a flex column the full-width layers stretch to "100%" so the flex
+  // column soaks up slack — but a resized fixed column can still push the
+  // summed column width past the container. Floor those layers at that summed
+  // width so the header fill and row surfaces span the whole horizontally
+  // scrolled content; otherwise they stop at the container edge and leave a
+  // bare gap before the right-pinned column once the body is scrolled right.
+  const flexMinWidth = hasFlex ? totalWidth : undefined;
 
   // Reset scroll + measurements when the *result set identity* changes (sort,
   // grouping, the column set, or a caller-supplied external signal such as a
@@ -609,7 +651,11 @@ export function VirtualizedDataTable({
           <div
             className={cn("flex", tableStyles.headerRow)}
             role="row"
-            style={enableColumnPinning ? { width: tableWidth } : undefined}
+            style={
+              enableColumnPinning
+                ? { width: tableWidth, minWidth: flexMinWidth }
+                : undefined
+            }
           >
             {headers
               .filter((header) => header.column.getIsVisible())
@@ -747,7 +793,11 @@ export function VirtualizedDataTable({
           ) : (
             <div
               className="relative"
-              style={{ height: totalSize, width: tableWidth }}
+              style={{
+                height: totalSize,
+                width: tableWidth,
+                minWidth: flexMinWidth,
+              }}
             >
               {virtualItems.map((vItem) => {
                 const row = rows[vItem.index];
@@ -786,6 +836,7 @@ export function VirtualizedDataTable({
                     )}
                     style={{
                       width: tableWidth,
+                      minWidth: flexMinWidth,
                       transform: `translateY(${vItem.start}px)`,
                     }}
                   >
@@ -838,6 +889,13 @@ export function VirtualizedDataTable({
                         );
                       }
                       const isFlex = hasFlex && column.id === flexColumnId;
+                      // Cells truncate to a single line by default so long raw
+                      // text doesn't wrap and grow the row — the user widens the
+                      // column to see more. A column opts out with
+                      // `meta: { wrap: true }`.
+                      const wrap = (
+                        column.columnDef.meta as { wrap?: boolean } | undefined
+                      )?.wrap;
                       return (
                         <div
                           key={column.id}
@@ -876,7 +934,13 @@ export function VirtualizedDataTable({
                               : {}),
                           }}
                         >
-                          {content}
+                          {wrap ? (
+                            content
+                          ) : (
+                            <div className="min-w-0 flex-1 truncate">
+                              {content}
+                            </div>
+                          )}
                         </div>
                       );
                     })}

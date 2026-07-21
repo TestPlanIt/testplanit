@@ -14,6 +14,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod/v4";
 
 import { Button } from "@/components/ui/button";
+import { SectionTitle } from "@/components/ui/typography";
 import { Input } from "@/components/ui/input";
 
 import {
@@ -309,9 +310,9 @@ export function EditRole({ role, open, onClose }: EditRoleProps) {
 
             {/* Permissions Section */}
             <div className="space-y-4 pt-4 border-t">
-              <h3 className="text-lg font-medium">
+              <SectionTitle>
                 {t("admin.roles.edit.permissionsTitle")}
-              </h3>
+              </SectionTitle>
               {isLoadingPermissions ? (
                 // Loading Skeleton
                 <div className="space-y-3">

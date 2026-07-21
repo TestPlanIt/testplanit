@@ -15,7 +15,9 @@ import { Filter } from "@/components/tables/Filter";
 import { VirtualizedDataTable } from "@/components/tables/VirtualizedDataTable";
 import { AsyncCombobox } from "@/components/ui/async-combobox";
 import { Button } from "@/components/ui/button";
+import { SectionHeader } from "@/components/ui/typography";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { HelpPopover } from "@/components/ui/help-popover";
 import { Form } from "@/components/ui/form";
 import { Label } from "@/components/ui/label";
 import {
@@ -27,7 +29,7 @@ import {
 } from "@/components/ui/select";
 import { AuditAction } from "~/zenstack/models";
 import { endOfDay, format, startOfDay } from "date-fns";
-import { Download, ShieldCheck, Users } from "lucide-react";
+import { Download, Users } from "lucide-react";
 import type { Session } from "next-auth";
 import {
   AuditLogUserOption,
@@ -490,46 +492,43 @@ function AuditLogsContent({ session }: { session: Session }) {
     <main>
       <Card>
         <CardHeader className="w-full">
-          <div className="flex items-center justify-between text-primary text-2xl md:text-4xl">
-            <div className="flex items-center gap-3">
-              <ShieldCheck className="h-8 w-8" />
+          <div className="flex items-center justify-between gap-2">
+            <SectionHeader className="flex items-center gap-2">
               <CardTitle data-testid="audit-logs-page-title">
                 {tGlobal("admin.menu.auditLogs")}
               </CardTitle>
-            </div>
-          </div>
-          <p className="text-muted-foreground text-sm mt-2">
-            {t("description")}
-          </p>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col gap-4">
-            {/* Search + Export Row */}
-            <div className="flex flex-wrap items-center justify-between gap-4">
-              <div className="min-w-[350px]">
-                <Filter
-                  key="audit-logs-filter"
-                  placeholder={t("filterPlaceholder")}
-                  initialSearchString={searchString}
-                  onSearchChange={setSearchString}
-                />
-              </div>
-
-              <Button
-                variant="outline"
-                onClick={handleExportCsv}
-                disabled={isExporting || !totalCount}
-              >
-                <Download className="h-4 w-4" />
+              <HelpPopover helpKey="auditLogs" />
+            </SectionHeader>
+            <Button
+              variant="outline"
+              onClick={handleExportCsv}
+              disabled={isExporting || !totalCount}
+              aria-label={t("exportCsv")}
+              className="group gap-0 transition-all duration-200 hover:gap-2"
+            >
+              <Download className="h-4 w-4" />
+              <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
                 {isExporting
                   ? tGlobal("repository.exportModal.exporting")
                   : t("exportCsv")}
-              </Button>
-            </div>
+              </span>
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col gap-4">
+            {/* Search */}
+            <Filter
+              key="audit-logs-filter"
+              className="max-w-none"
+              placeholder={t("filterPlaceholder")}
+              initialSearchString={searchString}
+              onSearchChange={setSearchString}
+            />
 
-            {/* Filters Row */}
-            <div className="flex flex-wrap items-center gap-4">
-              <div className="w-[260px]">
+            {/* Filters */}
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+              <div>
                 <Label className="sr-only">{t("timeRange")}</Label>
                 <Form {...dateForm}>
                   <DateRangePickerField
@@ -539,7 +538,7 @@ function AuditLogsContent({ session }: { session: Session }) {
                 </Form>
               </div>
 
-              <div className="w-[180px]">
+              <div>
                 <Label className="sr-only">{t("filterAction")}</Label>
                 <Select
                   value={actionFilter}
@@ -561,7 +560,7 @@ function AuditLogsContent({ session }: { session: Session }) {
                 </Select>
               </div>
 
-              <div className="w-[180px]">
+              <div>
                 <Label className="sr-only">{t("filterEntityType")}</Label>
                 <Select
                   value={entityTypeFilter}
@@ -581,7 +580,7 @@ function AuditLogsContent({ session }: { session: Session }) {
                 </Select>
               </div>
 
-              <div className="w-[180px]">
+              <div>
                 <Label className="sr-only">{tCommon("fields.project")}</Label>
                 <Select value={projectFilter} onValueChange={setProjectFilter}>
                   <SelectTrigger>
@@ -601,7 +600,7 @@ function AuditLogsContent({ session }: { session: Session }) {
                 </Select>
               </div>
 
-              <div className="w-[260px]">
+              <div>
                 <Label className="sr-only">{tCommon("access.user")}</Label>
                 <AsyncCombobox<AuditLogUserOption>
                   className="w-full"
@@ -640,8 +639,8 @@ function AuditLogsContent({ session }: { session: Session }) {
               </div>
             </div>
 
-            {/* Controls Row */}
-            <div className="flex justify-between items-center">
+            {/* Table toolbar: column control + result count */}
+            <div className="flex items-center justify-between">
               <ColumnSelection
                 key="audit-logs-column-selection"
                 storageKey="admin-audit-logs"

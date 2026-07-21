@@ -6,6 +6,7 @@ import { useDebounce } from "@/components/Debounce";
 import { VirtualizedDataTable } from "@/components/tables/VirtualizedDataTable";
 import { Filter } from "@/components/tables/Filter";
 import { Button } from "@/components/ui/button";
+import { SectionHeader } from "@/components/ui/typography";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CirclePlus } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -102,47 +103,53 @@ function AppConfigs() {
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center justify-between text-primary text-2xl md:text-4xl">
-          <CardTitle data-testid="app-config-title">
-            {tGlobal("admin.menu.appConfig")}
-          </CardTitle>
-          <Button onClick={() => setAddAppConfigOpen(true)}>
+        <div className="flex items-center justify-between gap-2">
+          <SectionHeader className="flex items-center gap-2">
+            <CardTitle data-testid="app-config-title">
+              {tGlobal("admin.menu.appConfig")}
+            </CardTitle>
+          </SectionHeader>
+          <Button
+            onClick={() => setAddAppConfigOpen(true)}
+            aria-label={t("addConfig")}
+            className="group gap-0 transition-all duration-200 hover:gap-2"
+          >
             <CirclePlus className="h-4 w-4" />
-            {t("addConfig")}
+            <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-xs">
+              {t("addConfig")}
+            </span>
           </Button>
-          {addAppConfigOpen && (
-            <AddAppConfig
-              open={addAppConfigOpen}
-              onClose={() => setAddAppConfigOpen(false)}
-            />
-          )}
         </div>
+        {addAppConfigOpen && (
+          <AddAppConfig
+            open={addAppConfigOpen}
+            onClose={() => setAddAppConfigOpen(false)}
+          />
+        )}
       </CardHeader>
       <CardContent>
-        <div className="flex flex-row items-start justify-between gap-4">
-          <div className="flex flex-col grow w-full sm:w-1/2 min-w-[250px] space-y-2">
-            <div className="text-muted-foreground w-full text-nowrap">
-              <Filter
-                key="app-config-filter"
-                placeholder={t("filterPlaceholder")}
-                initialSearchString={searchString}
-                onSearchChange={setSearchString}
-                dataTestId="app-config-filter-input"
-              />
-            </div>
-            <div className="text-muted-foreground w-full text-nowrap">
-              <Filter
-                key="app-config-value-filter"
-                placeholder={tCommon("placeholders.filterByValue")}
-                initialSearchString={valueSearchString}
-                onSearchChange={setValueSearchString}
-                dataTestId="app-config-value-filter-input"
-              />
-            </div>
+        <div className="flex flex-col gap-4">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <Filter
+              key="app-config-filter"
+              className="max-w-none"
+              placeholder={t("filterPlaceholder")}
+              initialSearchString={searchString}
+              onSearchChange={setSearchString}
+              dataTestId="app-config-filter-input"
+            />
+            <Filter
+              key="app-config-value-filter"
+              className="max-w-none"
+              placeholder={tCommon("placeholders.filterByValue")}
+              initialSearchString={valueSearchString}
+              onSearchChange={setValueSearchString}
+              dataTestId="app-config-value-filter-input"
+            />
           </div>
 
           {tableData.length > 0 && (
-            <p className="text-sm text-muted-foreground shrink-0">
+            <p className="text-end text-sm text-muted-foreground">
               {tGlobal("admin.auditLogs.showing", {
                 loaded: tableData.length.toLocaleString(),
                 total: tableData.length.toLocaleString(),
@@ -153,6 +160,7 @@ function AppConfigs() {
         <div className="mt-4 w-full">
           <VirtualizedDataTable
             fillViewport
+            flexColumnId="value"
             columns={columns as any}
             data={tableData}
             onSortChange={handleSortChange}

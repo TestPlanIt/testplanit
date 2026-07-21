@@ -595,7 +595,7 @@ const UserProfile: React.FC<UserProfileProps> = ({
                     <div className="space-y-2 flex-1">
                       {!isEditing ? (
                         <>
-                          <CardTitle className="text-2xl sm:text-3xl font-bold text-primary">
+                          <CardTitle className="text-2xl text-primary">
                             {user.name}
                           </CardTitle>
                           <CardDescription className="text-base">

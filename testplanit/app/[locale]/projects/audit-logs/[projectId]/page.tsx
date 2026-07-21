@@ -11,6 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { PageTitle, SectionHeader } from "@/components/ui/typography";
 import { ShieldCheck } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { notFound, useParams } from "next/navigation";
@@ -86,9 +87,9 @@ export default function ProjectAuditLogsPage() {
     return (
       <Card className="flex flex-col w-full min-w-100 h-full">
         <CardContent className="flex flex-col items-center justify-center h-full">
-          <h2 className="text-2xl font-semibold mb-2">
+          <PageTitle className="mb-2">
             {tCommon("errors.projectNotFound")}
-          </h2>
+          </PageTitle>
           <p className="text-muted-foreground">
             {tCommon("errors.projectNotFoundDescription")}
           </p>
@@ -101,12 +102,12 @@ export default function ProjectAuditLogsPage() {
     <main>
       <Card>
         <CardHeader className="w-full">
-          <div className="flex items-center justify-between text-primary text-xl md:text-2xl pb-2 pt-1">
+          <SectionHeader className="flex items-center justify-between pb-2 pt-1">
             <CardTitle className="flex items-center gap-3">
               <ShieldCheck className="h-7 w-7" />
               {t("auditLogs")}
             </CardTitle>
-          </div>
+          </SectionHeader>
           <CardDescription className="uppercase">
             <span className="flex items-center gap-2 shrink-0">
               <ProjectIcon iconUrl={project.iconUrl} />

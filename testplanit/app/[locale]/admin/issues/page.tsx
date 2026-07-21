@@ -11,13 +11,9 @@ import { useDebounce } from "@/components/Debounce";
 import { ColumnSelection } from "@/components/tables/ColumnSelection";
 import { VirtualizedDataTable } from "@/components/tables/VirtualizedDataTable";
 import { Filter } from "@/components/tables/Filter";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { HelpPopover } from "@/components/ui/help-popover";
+import { SectionHeader } from "@/components/ui/typography";
 import { ExtendedIssue, useIssueColumns } from "./columns";
 import { DeleteIssue } from "./DeleteIssue";
 import { EditIssue } from "./EditIssue";
@@ -335,14 +331,12 @@ function IssueList() {
     <main>
       <Card>
         <CardHeader className="w-full">
-          <div className="flex items-center justify-between text-primary text-2xl md:text-4xl">
-            <div>
-              <CardTitle data-testid="issues-page-title">
-                {tGlobal("common.fields.issues")}
-              </CardTitle>
-            </div>
-          </div>
-          <CardDescription>{t("description")}</CardDescription>
+          <SectionHeader className="flex items-center gap-2">
+            <CardTitle data-testid="issues-page-title">
+              {tGlobal("common.fields.issues")}
+            </CardTitle>
+            <HelpPopover helpKey="issues" />
+          </SectionHeader>
         </CardHeader>
         <CardContent>
           <div className="flex flex-row items-start justify-between gap-4">

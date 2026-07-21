@@ -3,13 +3,9 @@
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { HelpPopover } from "@/components/ui/help-popover";
+import { SectionHeader } from "@/components/ui/typography";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -19,6 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Save } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -94,18 +91,20 @@ export function ResultEditingPolicyCard() {
   return (
     <Card className="mb-6" data-testid="result-editing-policy-card">
       <CardHeader>
-        <CardTitle className="text-xl">{t("title")}</CardTitle>
-        <CardDescription>{t("description")}</CardDescription>
+        <SectionHeader className="flex items-center gap-2">
+          <CardTitle>{t("title")}</CardTitle>
+          <HelpPopover helpKey="resultEditingPolicy" />
+        </SectionHeader>
       </CardHeader>
       <CardContent>
-        <div className="space-y-3 max-w-md">
+        <div className="flex flex-wrap items-center gap-4">
           <Select
             value={mode}
             onValueChange={(value) => setMode(value as PolicyMode)}
             disabled={isPending}
           >
             <SelectTrigger
-              className="max-w-xs"
+              className="w-full sm:w-80"
               data-testid="edit-policy-mode-select"
               aria-label={t("modeAria")}
             >
@@ -118,8 +117,13 @@ export function ResultEditingPolicyCard() {
             </SelectContent>
           </Select>
           {mode === "max" && (
-            <div className="space-y-1">
-              <Label htmlFor="edit-policy-minutes">{t("minutesLabel")}</Label>
+            <div className="flex items-center gap-2">
+              <Label
+                htmlFor="edit-policy-minutes"
+                className="whitespace-nowrap"
+              >
+                {t("minutesLabel")}
+              </Label>
               <Input
                 id="edit-policy-minutes"
                 data-testid="edit-policy-minutes-input"
@@ -127,18 +131,22 @@ export function ResultEditingPolicyCard() {
                 min={1}
                 value={maxMinutes}
                 onChange={(event) => setMaxMinutes(event.target.value)}
-                className="max-w-xs"
+                className="w-24"
               />
             </div>
           )}
           <Button
             type="button"
-            size="sm"
             onClick={handleSave}
             disabled={isPending}
+            aria-label={t("save")}
             data-testid="edit-policy-save"
+            className="group gap-0 transition-all duration-200 hover:gap-2"
           >
-            {t("save")}
+            <Save className="h-4 w-4" />
+            <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
+              {t("save")}
+            </span>
           </Button>
         </div>
       </CardContent>

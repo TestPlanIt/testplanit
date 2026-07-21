@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { PageTitle } from "@/components/ui/typography";
 import { StepDuplicateResultsTable } from "@/components/step-duplicates/StepDuplicateResultsTable";
 import { ApplicationArea } from "~/zenstack/models";
 import { ArrowLeft, GitCompare, Loader2, RefreshCw, X } from "lucide-react";
@@ -175,10 +176,10 @@ export default function StepDuplicatesPage() {
           </Button>
         </Link>
         <div className="flex-1">
-          <h1 className="text-2xl font-bold flex gap-1 items-center">
+          <PageTitle as="h1" className="flex gap-1 items-center">
             <GitCompare className="w-6 h-6 shrink-0" />
             {t("pageTitle")}
-          </h1>
+          </PageTitle>
           <p className="text-muted-foreground">{t("pageDescription")}</p>
         </div>
         <div className="flex items-center gap-3">

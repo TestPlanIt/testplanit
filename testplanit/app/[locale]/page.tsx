@@ -19,6 +19,7 @@ import { InitialPreferencesDialog } from "@/components/onboarding/InitialPrefere
 import { ProjectCard } from "@/components/ProjectCard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { SectionHeader } from "@/components/ui/typography";
 import {
   ResizableHandle,
   ResizablePanel,
@@ -230,9 +231,9 @@ const Welcome = ({ user: _user }: { user: AuthUser }) => {
             <Card data-testid="dashboard-card" className="w-full h-full">
               <CardHeader id="your-projects-header">
                 <CardTitle>
-                  <div className="items-center justify-between text-primary text-xl md:text-2xl">
+                  <SectionHeader className="items-center justify-between">
                     {t("home.dashboard.yourProjects")}
-                  </div>
+                  </SectionHeader>
                 </CardTitle>
                 <div className="mb-2 flex items-center">
                   <Boxes className="w-5 h-5 me-1" />

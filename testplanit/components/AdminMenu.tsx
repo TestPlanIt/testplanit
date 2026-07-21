@@ -12,7 +12,7 @@ import {
   Activity,
   Bell,
   Boxes,
-  BrainCircuit,
+  BrainCog,
   Bug,
   ChartNoAxesCombined,
   CircleCheckBig,
@@ -67,7 +67,7 @@ const sectionIcons: Record<MenuSection, React.ElementType> = {
   peopleAndAccess: Users,
   authentication: Lock,
   toolsAndIntegrations: Plug,
-  aiTools: BrainCircuit,
+  aiTools: BrainCog,
   system: Settings,
 };
 

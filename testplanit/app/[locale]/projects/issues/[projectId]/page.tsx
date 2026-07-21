@@ -13,6 +13,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { SectionHeader } from "@/components/ui/typography";
 import {
   Select,
   SelectContent,
@@ -532,9 +533,9 @@ function ProjectIssues() {
     <main>
       <Card>
         <CardHeader id="issues-page-header" className="w-full">
-          <div className="flex items-center justify-between text-primary text-xl md:text-2xl pb-2 pt-1">
+          <SectionHeader className="flex items-center justify-between pb-2 pt-1">
             <CardTitle>{t("common.fields.issues")}</CardTitle>
-          </div>
+          </SectionHeader>
           <CardDescription className="uppercase">
             <span className="flex items-center gap-2 shrink-0">
               <ProjectIcon iconUrl={project?.iconUrl} />

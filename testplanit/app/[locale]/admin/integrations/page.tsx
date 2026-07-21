@@ -18,6 +18,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { SectionHeader } from "@/components/ui/typography";
 import {
   Card,
   CardContent,
@@ -26,7 +27,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import type { Integration } from "~/zenstack/models";
-import { CirclePlus, Plug, Trash2 } from "lucide-react";
+import { CirclePlus, Trash2 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -234,13 +235,12 @@ function IntegrationList() {
     <main>
       <Card>
         <CardHeader className="w-full">
-          <div className="flex items-center justify-between text-primary text-2xl md:text-4xl">
+          <SectionHeader className="flex items-center justify-between">
             <div>
               <CardTitle
                 data-testid="integrations-admin-page-title"
                 className="items-center flex"
               >
-                <Plug className="inline me-2 h-8 w-8" />
                 {tAdminMenu("integrations")}
               </CardTitle>
               <CardDescription data-testid="integrations-admin-page-description">
@@ -251,7 +251,7 @@ function IntegrationList() {
               <CirclePlus className="h-4 w-4" />
               <span className="hidden md:inline">{tCommon("add")}</span>
             </Button>
-          </div>
+          </SectionHeader>
         </CardHeader>
         <CardContent>
           <div className="flex flex-row items-start justify-between gap-4">

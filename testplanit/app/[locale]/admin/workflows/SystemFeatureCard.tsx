@@ -10,8 +10,10 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { HelpPopover } from "@/components/ui/help-popover";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
+import { Save } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useSession } from "next-auth/react";
@@ -40,7 +42,13 @@ function parseStoredDays(value: unknown): number {
   return REMINDER_THRESHOLD_DEFAULT;
 }
 
-export function SystemFeatureCard() {
+export function SystemFeatureCard({
+  embedded = false,
+}: {
+  /** Render the review-workflow controls inline (no surrounding Card) so they
+   * can live inside another card's content. Defaults to a standalone Card. */
+  embedded?: boolean;
+} = {}) {
   const t = useTranslations("admin.workflows.systemFeatureCard");
   const queryClient = useQueryClient();
   const { data: session } = useSession();
@@ -63,6 +71,23 @@ export function SystemFeatureCard() {
       setThresholdInput(String(persistedThresholdDays));
     }
   }, [thresholdLoading, persistedThresholdDays]);
+
+  // Reveal/hide the settings smoothly when the feature is toggled: keep the
+  // content mounted while it collapses, then unmount it — so it isn't rendered
+  // (or its per-project list fetched) while the feature is off, yet it still
+  // animates out rather than snapping away.
+  const [renderSettings, setRenderSettings] = useState(isEnabled);
+  const [settingsExpanded, setSettingsExpanded] = useState(isEnabled);
+  useEffect(() => {
+    if (isEnabled) {
+      setRenderSettings(true);
+      const raf = requestAnimationFrame(() => setSettingsExpanded(true));
+      return () => cancelAnimationFrame(raf);
+    }
+    setSettingsExpanded(false);
+    const timer = setTimeout(() => setRenderSettings(false), 300);
+    return () => clearTimeout(timer);
+  }, [isEnabled]);
 
   const remindersEnabled = persistedThresholdDays > 0;
   const parsedThresholdInput = Number(thresholdInput);
@@ -116,96 +141,118 @@ export function SystemFeatureCard() {
     void persistThreshold(parsedThresholdInput);
   };
 
+  const header = (
+    <Label className="flex w-fit items-center gap-3">
+      <Switch
+        id="system-feature-toggle"
+        data-testid="system-feature-toggle"
+        aria-label={t("toggleAriaLabel")}
+        checked={isEnabled}
+        onCheckedChange={handleToggle}
+        disabled={disabled}
+      />
+      <CardTitle>{t("title")}</CardTitle>
+    </Label>
+  );
+
+  const adminOnlyNotice = (
+    <p
+      data-testid="system-feature-admin-only-notice"
+      className="text-sm text-muted-foreground"
+    >
+      {t("adminOnlyNotice")}
+    </p>
+  );
+
+  const settings = (
+    <>
+      <div
+        data-testid="reminder-threshold-row"
+        className="mb-6 flex flex-wrap items-center gap-2"
+      >
+        <Label className="flex items-center gap-3 text-sm font-medium">
+          <Switch
+            id="reminders-enabled-toggle"
+            data-testid="reminders-enabled-toggle"
+            aria-label={t("remindersToggleAriaLabel")}
+            checked={remindersEnabled}
+            onCheckedChange={handleRemindersToggle}
+            disabled={disabled || thresholdLoading}
+          />
+          <span>{t("remindersToggleLabel")}</span>
+        </Label>
+        <Input
+          id="reminder-threshold-input"
+          data-testid="reminder-threshold-input"
+          type="number"
+          inputMode="numeric"
+          min={1}
+          step={1}
+          value={thresholdInput}
+          onChange={(e) => setThresholdInput(e.target.value)}
+          disabled={disabled || thresholdLoading || !remindersEnabled}
+          aria-label={t("thresholdLabel")}
+          className="w-16"
+        />
+        <span className="text-sm font-medium">
+          {t("thresholdUnit", { count: Number(thresholdInput) || 0 })}
+        </span>
+        <HelpPopover helpKey="reviewReminders" />
+        <Button
+          type="button"
+          data-testid="reminder-threshold-save"
+          onClick={handleThresholdSave}
+          disabled={thresholdSaveDisabled}
+          aria-label={t("thresholdSaveButton")}
+          className="group gap-0 transition-all duration-200 hover:gap-2"
+        >
+          <Save className="h-4 w-4" />
+          <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
+            {t("thresholdSaveButton")}
+          </span>
+        </Button>
+      </div>
+      <ProjectReviewToggleList />
+    </>
+  );
+
+  // Animate a collapsing grid row (0fr ↔ 1fr). `renderSettings` keeps the
+  // content mounted through the collapse then drops it, so it's absent while the
+  // feature is off; `settingsExpanded` drives the open/closed row.
+  const collapsibleSettings = (padded: boolean) =>
+    renderSettings ? (
+      <div
+        aria-hidden={!settingsExpanded}
+        className={`grid transition-[grid-template-rows] duration-300 ease-in-out ${
+          settingsExpanded ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
+        }`}
+      >
+        <div className="overflow-hidden">
+          {padded ? <div className="px-6 pb-6">{settings}</div> : settings}
+        </div>
+      </div>
+    ) : null;
+
+  if (embedded) {
+    // Description is surfaced by the parent card's help popover here, so it is
+    // omitted inline; the standalone Card below keeps it (e.g. project settings).
+    return (
+      <div data-testid="system-feature-card" className="flex flex-col gap-4">
+        {header}
+        {!isAdmin && adminOnlyNotice}
+        {isAdmin && collapsibleSettings(false)}
+      </div>
+    );
+  }
+
   return (
     <Card data-testid="system-feature-card">
       <CardHeader>
-        <Label className="flex items-center gap-3">
-          <Switch
-            id="system-feature-toggle"
-            data-testid="system-feature-toggle"
-            aria-label={t("toggleAriaLabel")}
-            checked={isEnabled}
-            onCheckedChange={handleToggle}
-            disabled={disabled}
-          />
-          <CardTitle>{t("title")}</CardTitle>
-        </Label>
+        {header}
         <CardDescription>{t("description")}</CardDescription>
       </CardHeader>
-      {!isAdmin && (
-        <CardContent>
-          <p
-            data-testid="system-feature-admin-only-notice"
-            className="text-sm text-muted-foreground"
-          >
-            {t("adminOnlyNotice")}
-          </p>
-        </CardContent>
-      )}
-      {isAdmin && isEnabled && (
-        <CardContent>
-          <div
-            data-testid="reminder-threshold-row"
-            className="flex flex-col gap-2 mb-6"
-          >
-            <Label className="flex items-center gap-3 text-sm font-medium">
-              <Switch
-                id="reminders-enabled-toggle"
-                data-testid="reminders-enabled-toggle"
-                aria-label={t("remindersToggleAriaLabel")}
-                checked={remindersEnabled}
-                onCheckedChange={handleRemindersToggle}
-                disabled={disabled || thresholdLoading}
-              />
-              <span>{t("remindersToggleLabel")}</span>
-            </Label>
-            {remindersEnabled && (
-              <>
-                <Label
-                  htmlFor="reminder-threshold-input"
-                  className="text-sm font-medium"
-                >
-                  {t("thresholdLabel")}
-                </Label>
-                <div className="flex items-center gap-2">
-                  <Input
-                    id="reminder-threshold-input"
-                    data-testid="reminder-threshold-input"
-                    type="number"
-                    inputMode="numeric"
-                    min={1}
-                    step={1}
-                    value={thresholdInput}
-                    onChange={(e) => setThresholdInput(e.target.value)}
-                    disabled={disabled || thresholdLoading}
-                    className="w-32"
-                    aria-describedby="reminder-threshold-help"
-                  />
-                  <span className="text-sm text-muted-foreground">
-                    {t("thresholdUnit")}
-                  </span>
-                  <Button
-                    type="button"
-                    data-testid="reminder-threshold-save"
-                    size="sm"
-                    onClick={handleThresholdSave}
-                    disabled={thresholdSaveDisabled}
-                  >
-                    {t("thresholdSaveButton")}
-                  </Button>
-                </div>
-                <p
-                  id="reminder-threshold-help"
-                  className="text-sm text-muted-foreground"
-                >
-                  {t("thresholdHelp")}
-                </p>
-              </>
-            )}
-          </div>
-          <ProjectReviewToggleList />
-        </CardContent>
-      )}
+      {!isAdmin && <CardContent>{adminOnlyNotice}</CardContent>}
+      {isAdmin && collapsibleSettings(true)}
     </Card>
   );
 }

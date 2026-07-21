@@ -722,4 +722,51 @@ describe("handleAutomationTrendsPOST (cross-project scale)", () => {
       expect(args.where.repositoryCaseId.in.length).toBeLessThanOrEqual(10_000);
     }
   });
+
+  it("drops orphaned cases whose project was hard-deleted (null project) instead of 500ing", async () => {
+    // Regression: a case whose project row was hard-deleted comes back with
+    // projectId still set but `project: null`. Reading `project.name` while
+    // building the project map threw "Cannot read properties of null (reading
+    // 'name')", so the whole cross-project report 500'd.
+    const created = new Date("2024-01-15T00:00:00Z");
+    (baseDb.repositoryCases.findMany as any).mockResolvedValue([
+      {
+        id: 1,
+        createdAt: created,
+        isDeleted: false,
+        automated: true,
+        projectId: 1,
+        project: { id: 1, name: "Alpha" },
+      },
+      {
+        // Orphaned — its project no longer exists.
+        id: 2,
+        createdAt: created,
+        isDeleted: false,
+        automated: false,
+        projectId: 999,
+        project: null,
+      },
+    ]);
+    (baseDb.repositoryCaseVersions.findMany as any).mockResolvedValue([
+      { repositoryCaseId: 1, createdAt: created, automated: true, version: 1 },
+    ]);
+
+    const res = await handleAutomationTrendsPOST(
+      makeReq({ dateGrouping: "monthly" }),
+      true // cross-project
+    );
+
+    // No crash: the orphaned case is dropped, the valid project still reports.
+    expect(res.status).toBe(200);
+    const json = await res.json();
+    expect(json.data).toHaveLength(1);
+    expect(json.data[0].Alpha_total).toBe(1);
+    expect(json.data[0].Alpha_automated).toBe(1);
+    // The orphaned case contributes no column and doesn't leak a bad key.
+    const columns = Object.keys(json.data[0]);
+    expect(
+      columns.some((c) => c.includes("null") || c.includes("undefined"))
+    ).toBe(false);
+  });
 });

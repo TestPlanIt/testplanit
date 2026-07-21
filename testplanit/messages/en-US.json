@@ -382,7 +382,8 @@
         "notificationSettings": "Notification Global Setting",
         "elasticsearch_replicas": "Elasticsearch Replicas",
         "review_feature_enabled": "Review and Approvals Enabled",
-        "review_reminder_threshold_days": "Remind Reviewers Threshold Days"
+        "review_reminder_threshold_days": "Remind Reviewers Threshold Days",
+        "record_key_enabled": "Record Keys Enabled"
       },
       "options": {
         "label": "Label",
@@ -800,7 +801,8 @@
     "table": {
       "columns": {
         "columns": "Columns",
-        "required": "(required)"
+        "required": "(required)",
+        "resetColumns": "Reset columns to default"
       },
       "filter": "Filter list...",
       "selectNone": "Select None",
@@ -4883,6 +4885,7 @@
     },
     "workflows": {
       "description": "Manage test case workflows",
+      "reviewsTitle": "Review Workflow",
       "systemFeatureCard": {
         "title": "Review Workflow",
         "description": "Enforce reviews by gating workflow transitions until approval is granted. When enabled, projects may opt in or out individually via their Advanced settings. Disable to prevent workflow approval gates.",
@@ -4891,10 +4894,10 @@
         "updateSuccessEnabled": "Review workflow enabled.",
         "updateSuccessDisabled": "Review workflow disabled.",
         "updateError": "Failed to update review workflow setting. Try again in a moment.",
-        "remindersToggleLabel": "Send reminder notifications for pending reviews",
+        "remindersToggleLabel": "Send reminder notifications for pending reviews after",
         "remindersToggleAriaLabel": "Toggle review reminder notifications",
         "thresholdLabel": "Remind reviewers after",
-        "thresholdUnit": "day(s)",
+        "thresholdUnit": "{count, plural, one {day} other {days}}",
         "thresholdSaveButton": "Save",
         "thresholdHelp": "How many days a review request can sit pending before reviewers get a reminder notification. New requests start the clock at submission.",
         "thresholdUpdateSuccess": "Review reminder settings updated.",
@@ -5177,6 +5180,8 @@
       "confirmDefault": "Confirm Default",
       "confirmDefaultDescription": "Are you sure you want to set this Milestone Type as the Default?",
       "warning": "This Milestone Type will be added to all Projects.",
+      "defaultLockedTitle": "Default Milestone Type",
+      "defaultLockedDescription": "To change the default, edit a different Milestone Type and set it as the default.",
       "wizard": {
         "selectProjects": "Select Projects",
         "projectsSelected": "{count, plural, =0 {No projects selected} one {# project selected} other {# projects selected}}",
@@ -6322,6 +6327,21 @@
     "noTasks": "No tasks to display in the Gantt chart."
   },
   "help": {
+    "auditLogs": "View system-wide audit trail for security and compliance tracking",
+    "statuses": "Manage test statuses",
+    "configurations": "Configurations are a combination of categories and variants used to define a test environment. For example, OS/Browser, Test Server, Language, etc.",
+    "categories": "Categories group related variants — like Browser or Operating System — that combine to define a test environment.",
+    "templates": "Manage test case templates and fields",
+    "caseFields": "Custom fields available on test cases, assigned to templates to control which cases use them.",
+    "resultFields": "Custom fields captured when recording a test result, assigned to templates to control where they apply.",
+    "milestoneTypes": "Milestone types categorize milestones — like Sprint, Release, or Version — and can be reused across projects.",
+    "tags": "Tags label and organize test cases and sessions so you can group and find related work across projects.",
+    "issues": "Issues are external tracker items — from Jira, GitHub, Azure DevOps, and other integrations — synced into TestPlanIt so they can be linked to test cases, runs, and sessions.",
+    "crossProjectReports": "Build, run, and analyze reports that span multiple projects, such as automation trends across your entire test suite.",
+    "workflows": "Manage the workflow states for test cases, test runs, and sessions.",
+    "workflowReviews": "Enforce reviews by gating workflow transitions until approval is granted. When enabled, projects may opt in or out individually via their Advanced settings. Disable to prevent workflow approval gates.",
+    "reviewReminders": "How many days a review request can sit pending before reviewers get a reminder notification. New requests start the clock at submission.",
+    "resultEditingPolicy": "Control how long after a result is recorded it can still be edited in place, across all projects. Projects can tighten this in their Advanced settings but never loosen it. System administrators can always edit.",
     "project": {
       "name": "## Project Name\nThe unique identifier for your project.\n\n- Must be unique across all projects\n- Used in navigation and reports\n- Should be clear and descriptive\n- Helps team members identify the project scope",
       "description": "## Project Description\nAdditional details about the project's purpose and scope.\n\n- Optional but recommended\n- Helps team members understand project goals\n- Can include key objectives or requirements\n- Limited to 256 characters",
@@ -6332,6 +6352,7 @@
       "issueTracker": "## Issue Tracker Configuration\nSelect the issue tracker configuration to be used for managing issues related to this project."
     },
     "projects": {
+      "overview": "Projects are the top-level containers for your test cases, runs, sessions, and milestones. Create and manage every project from here.",
       "settings": {
         "integrations": {
           "externalProjectHelp": "## External Project\nSelect the project or repository in the external system to link with this TestPlanIt project.\n\n- Issues created from TestPlanIt will be created in this project\n- Enables issue tracking integration between systems\n- Must have appropriate permissions in the external system",

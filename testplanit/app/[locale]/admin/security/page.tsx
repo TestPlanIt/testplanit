@@ -3,6 +3,7 @@
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { Button } from "@/components/ui/button";
+import { PageTitle } from "@/components/ui/typography";
 import {
   Card,
   CardContent,
@@ -22,7 +23,6 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
-import { Shield } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
@@ -220,10 +220,9 @@ export default function SecurityAdminPage() {
     <div className="space-y-6">
       {/* Page Header */}
       <div className="pt-4">
-        <h1 className="flex items-center text-primary text-2xl md:text-4xl font-bold">
-          <Shield className="inline me-2 h-8 w-8" />
+        <PageTitle as="h1" className="flex items-center text-primary">
           <span>{t("title")}</span>
-        </h1>
+        </PageTitle>
         <p className="text-muted-foreground mt-1">{t("description")}</p>
       </div>
 

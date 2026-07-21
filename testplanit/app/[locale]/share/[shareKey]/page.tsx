@@ -1,4 +1,5 @@
 import { ShareContent } from "@/components/share/ShareContent";
+import { PageTitle } from "@/components/ui/typography";
 import { Loader2 } from "lucide-react";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
@@ -57,7 +58,9 @@ export default async function SharePage({ params }: SharePageProps) {
     return (
       <div className="flex min-h-screen items-center justify-center p-4">
         <div className="max-w-md text-center">
-          <h1 className="text-2xl font-bold mb-2">{t("revoked.title")}</h1>
+          <PageTitle as="h1" className="mb-2">
+            {t("revoked.title")}
+          </PageTitle>
           <p className="text-muted-foreground">{t("revoked.description")}</p>
         </div>
       </div>
@@ -69,7 +72,9 @@ export default async function SharePage({ params }: SharePageProps) {
     return (
       <div className="flex min-h-screen items-center justify-center p-4">
         <div className="max-w-md text-center">
-          <h1 className="text-2xl font-bold mb-2">{t("expired.title")}</h1>
+          <PageTitle as="h1" className="mb-2">
+            {t("expired.title")}
+          </PageTitle>
           <p className="text-muted-foreground">{t("expired.description")}</p>
         </div>
       </div>

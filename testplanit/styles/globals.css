@@ -485,7 +485,14 @@ svg[class*="plot-"] .gantt-task-label text {
 }
 
 .table-row-surface-nested {
-  background-color: hsl(var(--tp-table-row-nested));
+  /* A nested row is a percentage tint of its parent's surface (mixed toward the
+     foreground) rather than a separately-tuned colour, so sub-rows read as a
+     shade of their parent consistently across every theme. */
+  background-color: color-mix(
+    in srgb,
+    hsl(var(--tp-table-row)),
+    hsl(var(--foreground)) 8%
+  );
 }
 
 .table-row-surface-hover:hover {
@@ -523,6 +530,31 @@ svg[class*="plot-"] .gantt-task-label text {
 
 tbody > tr:last-child.table-row-divider > td {
   border-bottom-width: 0;
+}
+
+/* Keep the divider around a nested group tied to the same percentage tint as
+   the nested fill: the dividers between sub-rows (and the sub-rows' own column
+   separators) plus the boundary from a parent row into its first sub-row, so a
+   parent and its children read as one cohesive block instead of being split by
+   the full-strength grid line. */
+.table-row-surface-nested.table-row-divider,
+.table-row-surface-nested.table-row-divider > td,
+.table-row-surface-nested.table-row-divider [role="cell"] {
+  border-color: color-mix(
+    in srgb,
+    hsl(var(--tp-table-row)),
+    hsl(var(--foreground)) 16%
+  );
+}
+
+.table-row-divider:has(+ .table-row-surface-nested),
+.table-row-divider:has(+ .table-row-surface-nested) > td,
+.table-row-divider:has(+ .table-row-surface-nested) [role="cell"] {
+  border-bottom-color: color-mix(
+    in srgb,
+    hsl(var(--tp-table-row)),
+    hsl(var(--foreground)) 16%
+  );
 }
 
 /* Search result highlighting - outside @layer to override browser defaults */

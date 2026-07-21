@@ -5,6 +5,7 @@ import { schema } from "~/zenstack/schema";
 import { isUniqueConstraintError } from "~/lib/utils/errors";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { PageTitle } from "@/components/ui/typography";
 import {
   Card,
   CardContent,
@@ -33,15 +34,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Access, SsoProviderType } from "~/zenstack/models";
-import {
-  Edit,
-  KeyRound,
-  Mail,
-  Plus,
-  Settings,
-  ShieldUser,
-  X,
-} from "lucide-react";
+import { Edit, KeyRound, Mail, Plus, Settings, X } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
@@ -919,13 +912,13 @@ export default function SSOAdminPage() {
     <div className="space-y-6">
       {/* Page Header */}
       <div className="pt-4">
-        <h1
+        <PageTitle
+          as="h1"
           data-testid="sso-page-title"
-          className="flex items-center text-primary text-2xl md:text-4xl font-bold"
+          className="flex items-center text-primary"
         >
-          <ShieldUser className="inline me-2 h-8 w-8" />
           <span>{t("admin.menu.sso")}</span>
-        </h1>
+        </PageTitle>
         <p
           data-testid="sso-page-description"
           className="text-muted-foreground mt-1"

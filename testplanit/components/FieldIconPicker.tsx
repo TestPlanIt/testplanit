@@ -12,7 +12,7 @@ import { Ellipsis } from "lucide-react";
 import { useTranslations } from "next-intl";
 import React, { useEffect, useRef, useState } from "react";
 import { IconName } from "~/types/globals";
-import DynamicIcon from "./DynamicIcon";
+import DynamicIcon, { isKnownIconName } from "./DynamicIcon";
 
 interface FieldIconPickerProps {
   onIconSelect: (iconId: number) => void;
@@ -87,8 +87,13 @@ export const FieldIconPicker: React.FC<FieldIconPickerProps> = ({
     }
   }, [colors, onColorSelect, selectedColorId, initialColorId]);
 
-  const filteredIcons = allIcons?.filter((icon) =>
-    icon.name.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredIcons = allIcons?.filter(
+    (icon) =>
+      // Don't offer icons that no longer exist in the installed lucide version
+      // (removed/renamed brand logos, etc.). Existing DB rows self-heal here
+      // without a migration.
+      isKnownIconName(icon.name) &&
+      icon.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const handleIconSelect = (iconId: number) => {

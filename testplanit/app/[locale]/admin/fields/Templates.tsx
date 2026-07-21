@@ -15,8 +15,10 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { HelpPopover } from "@/components/ui/help-popover";
+import { SectionHeader } from "@/components/ui/typography";
 import type { Templates } from "~/zenstack/models";
-import { CirclePlus, LayoutTemplate } from "lucide-react";
+import { CirclePlus } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -179,31 +181,29 @@ export default function TemplateComponent() {
       <>
         <Card data-testid="templates-section">
           <CardHeader>
-            <div className="flex items-center justify-between text-primary">
-              <div className="flex items-center justify-between text-primary text-xl md:text-2xl">
-                <CardTitle>
-                  <div className="flex items-center">
-                    <LayoutTemplate className="me-1" />
-                    {tGlobal("common.labels.templates")}
-                  </div>
-                </CardTitle>
-              </div>
-              <div>
-                <Button
-                  data-testid="add-template-button"
-                  onClick={() => setAddTemplateOpen(true)}
-                >
-                  <CirclePlus className="w-4" />
-                  <span className="hidden md:inline">{t("add.title")}</span>
-                </Button>
-                {addTemplateOpen && (
-                  <AddTemplate
-                    open={addTemplateOpen}
-                    onClose={() => setAddTemplateOpen(false)}
-                  />
-                )}
-              </div>
+            <div className="flex items-center justify-between gap-2">
+              <SectionHeader className="flex items-center gap-2">
+                <CardTitle>{tGlobal("common.labels.templates")}</CardTitle>
+                <HelpPopover helpKey="templates" />
+              </SectionHeader>
+              <Button
+                data-testid="add-template-button"
+                onClick={() => setAddTemplateOpen(true)}
+                aria-label={t("add.title")}
+                className="group gap-0 transition-all duration-200 hover:gap-2"
+              >
+                <CirclePlus className="h-4 w-4" />
+                <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-xs">
+                  {t("add.title")}
+                </span>
+              </Button>
             </div>
+            {addTemplateOpen && (
+              <AddTemplate
+                open={addTemplateOpen}
+                onClose={() => setAddTemplateOpen(false)}
+              />
+            )}
           </CardHeader>
           <CardContent>
             <div className="flex justify-between">
@@ -215,6 +215,8 @@ export default function TemplateComponent() {
                 columnVisibility={columnVisibility}
                 onColumnVisibilityChange={setColumnVisibility}
                 isLoading={isLoading}
+                storageKey="admin-templates"
+                enableColumnMenu={false}
               />
             </div>
           </CardContent>

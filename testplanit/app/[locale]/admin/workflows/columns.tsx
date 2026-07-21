@@ -190,7 +190,7 @@ export const useColumns = (
           const canDelete =
             !isLastWorkflowOfType(workflow, workflows) && !workflow.isDefault;
           return (
-            <div className="bg-primary-foreground whitespace-nowrap flex justify-center gap-1">
+            <div className="bg-primary-foreground whitespace-nowrap flex justify-end gap-1">
               <Button
                 variant="ghost"
                 className="px-2 py-1 h-auto"

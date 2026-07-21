@@ -42,6 +42,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { SimpleDndProvider } from "@/components/ui/SimpleDndProvider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { PageTitle, SectionHeader } from "@/components/ui/typography";
 import { ApplicationArea } from "~/zenstack/models";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { CirclePlus, Maximize2, Upload } from "lucide-react";
@@ -1003,9 +1004,9 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
     return (
       <Card className="flex flex-col w-full min-w-[400px] h-full">
         <CardContent className="flex flex-col items-center justify-center h-full">
-          <h2 className="text-2xl font-semibold mb-2">
+          <PageTitle className="mb-2">
             {tCommon("errors.projectNotFound")}
-          </h2>
+          </PageTitle>
           <p className="text-muted-foreground">
             {tCommon("errors.projectNotFoundDescription")}
           </p>
@@ -1029,7 +1030,7 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
           <div className="flex-1 w-full">
             <CardHeader id="test-runs-page-header">
               <CardTitle>
-                <div className="flex items-center justify-between text-primary text-xl md:text-2xl">
+                <SectionHeader className="flex items-center justify-between">
                   <div>
                     <CardTitle>
                       {tGlobal("enums.ApplicationArea.TestRuns")}
@@ -1076,7 +1077,7 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
                       </div>
                     )}
                   </div>
-                </div>
+                </SectionHeader>
               </CardTitle>
               <CardDescription className="uppercase">
                 <span className="flex items-center gap-2 uppercase shrink-0">

@@ -9,6 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { SectionHeader } from "@/components/ui/typography";
 import {
   Tooltip,
   TooltipContent,
@@ -783,9 +784,9 @@ export function UserDashboard() {
     <Card className="w-full" data-testid="dashboard-card">
       <CardHeader id="dashboard-header">
         <CardTitle>
-          <div className="flex items-center justify-between text-primary text-xl md:text-2xl">
+          <SectionHeader className="flex items-center justify-between">
             {t("home.dashboard.yourAssignments")}
-          </div>
+          </SectionHeader>
         </CardTitle>
         {showCalendar && scheduleSummary && (
           <CardDescription className="text-xs text-muted-foreground mt-1 flex flex-col gap-0.5">

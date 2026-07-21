@@ -10,6 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { SectionHeader } from "@/components/ui/typography";
 import QuickScriptTemplates from "./QuickScriptTemplates";
 
 export default function QuickScriptTemplatesPage() {
@@ -28,10 +29,10 @@ export default function QuickScriptTemplatesPage() {
       <main>
         <Card>
           <CardHeader>
-            <div className="text-primary text-2xl md:text-4xl">
+            <SectionHeader>
               <CardTitle>{t("title")}</CardTitle>
               <CardDescription>{t("description")}</CardDescription>
-            </div>
+            </SectionHeader>
           </CardHeader>
         </Card>
         <div className="mt-4">

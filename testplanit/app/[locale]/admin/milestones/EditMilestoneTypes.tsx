@@ -3,21 +3,21 @@ import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import type { MilestoneTypes } from "~/zenstack/models";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod/v4";
 
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { WarningAlert } from "@/components/ui/warning-alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { TriangleAlert } from "lucide-react";
-import { useTheme } from "next-themes";
-import MultiSelect from "react-select";
-import { getCustomStyles } from "~/styles/multiSelectStyles";
 
 import { FieldIconPicker } from "@/components/FieldIconPicker";
+import { ProjectIcon } from "@/components/ProjectIcon";
+import { MultiAsyncCombobox } from "@/components/ui/multi-async-combobox";
 
 import {
   Form,
@@ -78,26 +78,26 @@ export function EditMilestoneType({
   const { mutateAsync: deleteManyMilestoneTypesAssignment } =
     useClientQueries(schema).milestoneTypesAssignment.useDeleteMany();
 
-  const { theme } = useTheme();
-  const customStyles = getCustomStyles({ theme });
-
   const { data: projects } = useClientQueries(schema).projects.useFindMany({
     orderBy: { name: "asc" },
     where: { isDeleted: false },
   });
 
-  const projectOptions =
-    projects && projects.length > 0
-      ? projects.map((project) => ({
-          value: project.id,
-          label: `${project.name}`,
-        }))
-      : [];
+  type ProjectOption = NonNullable<typeof projects>[number];
 
-  const selectAllProjects = () => {
-    const allProjectIds = projectOptions.map((option) => option.value);
-    setValue("projects", allProjectIds);
-  };
+  const fetchProjectOptions = useCallback(
+    (query: string, page: number, pageSize: number) => {
+      const q = query.toLowerCase();
+      const filtered = (projects ?? []).filter((project) =>
+        project.name.toLowerCase().includes(q)
+      );
+      return Promise.resolve({
+        results: filtered.slice(page * pageSize, page * pageSize + pageSize),
+        total: filtered.length,
+      });
+    },
+    [projects]
+  );
 
   const handleIconSelect = (iconId: number) => {
     setSelectedIconId(iconId);
@@ -116,7 +116,6 @@ export function EditMilestoneType({
 
   const {
     control,
-    setValue,
     formState: { errors },
   } = form;
 
@@ -218,21 +217,37 @@ export function EditMilestoneType({
               control={form.control}
               name="isDefault"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-center space-x-3 space-y-0">
-                  <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                  <FormLabel className="flex items-center mt-0!">
-                    {tCommon("fields.default")}
-                    <HelpPopover helpKey="milestoneType.isDefault" />
-                  </FormLabel>
-                  {field.value && (
-                    <div>
-                      <Alert>
-                        <TriangleAlert className="w-8 h-8 -mx-2" />
+                <FormItem>
+                  <div className="flex flex-row items-center space-x-3 space-y-0">
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                        // There must always be exactly one default milestone
+                        // type, so the current default can't be unset directly —
+                        // it moves when another type is set as the default.
+                        disabled={milestoneType.isDefault}
+                      />
+                    </FormControl>
+                    <FormLabel className="flex items-center mt-0!">
+                      {tCommon("fields.default")}
+                      <HelpPopover helpKey="milestoneType.isDefault" />
+                    </FormLabel>
+                  </div>
+                  {milestoneType.isDefault ? (
+                    <WarningAlert data-testid="milestone-type-default-locked-warning">
+                      <TriangleAlert className="h-4 w-4" />
+                      <AlertTitle>
+                        {tGlobal("admin.milestones.defaultLockedTitle")}
+                      </AlertTitle>
+                      <AlertDescription>
+                        {tGlobal("admin.milestones.defaultLockedDescription")}
+                      </AlertDescription>
+                    </WarningAlert>
+                  ) : (
+                    field.value && (
+                      <WarningAlert data-testid="milestone-type-set-default-warning">
+                        <TriangleAlert className="h-4 w-4" />
                         <AlertTitle>
                           {tGlobal(
                             "admin.milestones.confirmDefaultDescription"
@@ -241,8 +256,8 @@ export function EditMilestoneType({
                         <AlertDescription>
                           {tGlobal("admin.milestones.warning")}
                         </AlertDescription>
-                      </Alert>
-                    </div>
+                      </WarningAlert>
+                    )
                   )}
                   <FormMessage />
                 </FormItem>
@@ -251,44 +266,51 @@ export function EditMilestoneType({
             <FormField
               control={form.control}
               name="projects"
-              render={({ field: _field }) => (
+              render={() => (
                 <FormItem>
-                  <FormLabel className="flex justify-between items-center">
-                    <div className="flex items-center">
-                      {tCommon("fields.projects")}
-                      <HelpPopover helpKey="milestoneType.projects" />
-                    </div>
-                    <div
-                      onClick={selectAllProjects}
-                      style={{ cursor: "pointer" }}
-                    >
-                      {tCommon("actions.selectAll")}
-                    </div>
+                  <FormLabel className="flex items-center">
+                    {tCommon("fields.projects")}
+                    <HelpPopover helpKey="milestoneType.projects" />
                   </FormLabel>
                   <FormControl>
                     <Controller
                       control={control}
                       name="projects"
-                      render={({ field }) => (
-                        <MultiSelect
-                          {...field}
-                          isMulti
-                          maxMenuHeight={300}
-                          className="w-[445px] sm:w-[550px] lg:w-[950px]"
-                          classNamePrefix="select"
-                          styles={customStyles}
-                          options={projectOptions}
-                          onChange={(selected: any) => {
-                            const value = selected
-                              ? selected.map((option: any) => option.value)
-                              : [];
-                            field.onChange(value);
-                          }}
-                          value={projectOptions.filter((option) =>
-                            field.value?.includes(option.value)
-                          )}
-                        />
-                      )}
+                      render={({ field }) => {
+                        const selectedProjects = (projects ?? []).filter(
+                          (project) => field.value?.includes(project.id)
+                        );
+                        return (
+                          <MultiAsyncCombobox<ProjectOption>
+                            value={selectedProjects}
+                            onValueChange={(selected) =>
+                              field.onChange(
+                                selected.map((project) => project.id)
+                              )
+                            }
+                            fetchOptions={fetchProjectOptions}
+                            renderOption={(project) => (
+                              <div className="flex min-w-0 items-center gap-2">
+                                <ProjectIcon
+                                  iconUrl={project.iconUrl}
+                                  width={16}
+                                  height={16}
+                                />
+                                <span className="truncate">{project.name}</span>
+                              </div>
+                            )}
+                            renderSelectedOption={(project) => (
+                              <span>{project.name}</span>
+                            )}
+                            getOptionValue={(project) => project.id}
+                            getOptionLabel={(project) => project.name}
+                            placeholder={tCommon("fields.projects")}
+                            className="w-full"
+                            pageSize={20}
+                            showTotal
+                          />
+                        );
+                      }}
                     />
                   </FormControl>
                   <FormMessage />

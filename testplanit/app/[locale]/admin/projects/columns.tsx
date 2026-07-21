@@ -69,14 +69,19 @@ export const useColumns = (
         meta: { isPinned: "left" },
         size: 500,
         cell: ({ row }) => (
-          <div className="flex items-start gap-1">
-            <span className="mt-1 shrink-0">
-              <ProjectIcon iconUrl={row.original.iconUrl} />
+          <div className="flex items-start gap-1.5">
+            <span className="mt-0.5 shrink-0">
+              <ProjectIcon
+                iconUrl={row.original.iconUrl}
+                width={16}
+                height={16}
+              />
             </span>
             <ProjectNameCell
               value={row.original.name}
               projectId={row.original.id}
               note={row.original.note}
+              size="sm"
             />
           </div>
         ),
@@ -307,7 +312,7 @@ export const useColumns = (
         meta: { isPinned: "right" },
         size: 80,
         cell: ({ row }) => (
-          <div className="bg-primary-foreground whitespace-nowrap flex justify-center gap-1">
+          <div className="bg-primary-foreground whitespace-nowrap flex justify-end gap-1">
             <Button
               variant="ghost"
               size="icon"

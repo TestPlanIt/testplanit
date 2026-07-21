@@ -21,6 +21,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { PageTitle } from "@/components/ui/typography";
 import {
   ChevronLeft,
   Compass,
@@ -109,9 +110,9 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({ params }) => {
     return (
       <Card className="flex flex-col w-full min-w-[400px] h-full">
         <CardContent className="flex flex-col items-center justify-center h-full">
-          <h2 className="text-2xl font-semibold mb-2">
+          <PageTitle className="mb-2">
             {t("common.errors.projectNotFound")}
-          </h2>
+          </PageTitle>
           <p className="text-muted-foreground">
             {t("common.errors.projectNotFoundDescription")}
           </p>

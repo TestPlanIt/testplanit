@@ -8,6 +8,8 @@ import { ProjectIcon } from "@/components/ProjectIcon";
 import { AsyncCombobox } from "@/components/ui/async-combobox";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { HelpPopover } from "@/components/ui/help-popover";
+import { SectionHeader } from "@/components/ui/typography";
 import type { RowSelectionState } from "@tanstack/react-table";
 import { Boxes, PenSquare } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -260,26 +262,24 @@ function Configurations(): React.ReactElement | null {
       <main>
         <Card>
           <CardHeader className="w-full">
-            <div className="flex items-center justify-between text-primary">
-              <div className="flex items-center justify-between text-primary text-xl md:text-2xl">
+            <div className="flex items-center justify-between gap-2">
+              <SectionHeader className="flex items-center gap-2">
                 <CardTitle>{tGlobal("common.fields.configurations")}</CardTitle>
-              </div>
-              <div>
-                <AddConfigurationWizard />
-              </div>
+                <HelpPopover helpKey="configurations" />
+              </SectionHeader>
+              <AddConfigurationWizard />
             </div>
           </CardHeader>
           <CardContent>
-            <div className="flex flex-row items-start">
-              <div className="flex flex-row items-center grow w-full min-w-[250px] gap-2">
-                <div className="text-muted-foreground grow text-nowrap max-w-sm">
-                  <Filter
-                    key="configuration-filter"
-                    placeholder={t("filterPlaceholder")}
-                    initialSearchString={searchString}
-                    onSearchChange={setSearchString}
-                  />
-                </div>
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-wrap items-center gap-3">
+                <Filter
+                  key="configuration-filter"
+                  className="w-full min-w-[250px] sm:w-80"
+                  placeholder={t("filterPlaceholder")}
+                  initialSearchString={searchString}
+                  onSearchChange={setSearchString}
+                />
                 <AsyncCombobox<{
                   id: number;
                   name: string;
@@ -323,7 +323,7 @@ function Configurations(): React.ReactElement | null {
               </div>
 
               {filteredConfigurations.length > 0 && (
-                <p className="text-sm text-muted-foreground shrink-0">
+                <p className="text-end text-sm text-muted-foreground">
                   {tGlobal("admin.auditLogs.showing", {
                     loaded: filteredConfigurations.length.toLocaleString(),
                     total: filteredConfigurations.length.toLocaleString(),
@@ -335,6 +335,7 @@ function Configurations(): React.ReactElement | null {
               <VirtualizedDataTable
                 columns={columns as any}
                 data={configurations || []}
+                flexColumnId="name"
                 onSortChange={handleSortChange}
                 sortConfig={sortConfig}
                 columnVisibility={columnVisibility}

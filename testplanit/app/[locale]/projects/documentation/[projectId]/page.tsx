@@ -18,6 +18,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { SectionHeader } from "@/components/ui/typography";
 import { CircleSlash2, Save, SquarePen } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
@@ -192,7 +193,7 @@ export default function ProjectDocumentation({
         <div className="flex-1 w-3/4">
           <CardHeader>
             <CardTitle>
-              <div className="flex items-center justify-between text-primary text-xl md:text-2xl">
+              <SectionHeader className="flex items-center justify-between">
                 <div>
                   <CardTitle>{t("common.fields.documentation")}</CardTitle>
                 </div>
@@ -209,7 +210,7 @@ export default function ProjectDocumentation({
                     </div>
                   </Button>
                 )}
-              </div>
+              </SectionHeader>
             </CardTitle>
             <CardDescription className="uppercase flex w-full items-top items-center gap-2">
               <span className="flex items-center gap-2 uppercase shrink-0">

@@ -339,6 +339,13 @@ export async function handleAutomationTrendsPOST(
       });
     }
 
+    // Cases whose project row was hard-deleted come back orphaned: projectId is
+    // still set but the `project` relation resolves to null. They can't be
+    // attributed to a project in this project-grouped report, so drop them
+    // before grouping — otherwise reading `project.name` below throws and the
+    // endpoint 500s.
+    allCases = allCases.filter((testCase) => testCase.project !== null);
+
     if (allCases.length === 0) {
       return Response.json({
         data: [],

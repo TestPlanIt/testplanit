@@ -7,6 +7,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { SectionTitle } from "@/components/ui/typography";
 import { IntegrationProvider } from "~/zenstack/models";
 import { Link } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -92,7 +93,7 @@ export function IntegrationTypeSelector({
 
   return (
     <div className="space-y-2">
-      <h3 className="text-lg font-medium">{t("selectType")}</h3>
+      <SectionTitle>{t("selectType")}</SectionTitle>
 
       <Select
         value={selectedType ?? undefined}

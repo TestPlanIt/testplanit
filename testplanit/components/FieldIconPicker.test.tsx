@@ -20,6 +20,7 @@ vi.mock("next-intl", () => ({
 
 vi.mock("./DynamicIcon", () => ({
   default: () => <span data-testid="dynamic-icon" />,
+  isKnownIconName: () => true,
 }));
 
 vi.mock("@/components/ColorPicker", () => ({

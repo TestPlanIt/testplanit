@@ -3,6 +3,7 @@
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { SectionHeader } from "@/components/ui/typography";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { History, Inbox } from "lucide-react";
@@ -440,14 +441,13 @@ function ReviewsInboxContent({ userId }: { userId: string }) {
     <main data-testid="reviews-inbox-page">
       <Card>
         <CardHeader className="w-full">
-          <div className="flex items-center justify-between text-primary text-2xl md:text-4xl">
+          <SectionHeader className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <Inbox className="h-8 w-8" aria-hidden="true" />
               <CardTitle data-testid="reviews-inbox-page-title">
                 {t("reviews.inbox.pageTitle")}
               </CardTitle>
             </div>
-          </div>
+          </SectionHeader>
           <p className="text-muted-foreground text-sm mt-2">
             {view === "pending"
               ? t("reviews.inbox.pageDescription")
@@ -605,6 +605,8 @@ function ReviewsInboxContent({ userId }: { userId: string }) {
                   columnVisibility={columnVisibility}
                   onColumnVisibilityChange={setColumnVisibility}
                   rowTestIdPrefix="reviews-inbox-row"
+                  storageKey="reviews-inbox"
+                  enableColumnMenu={false}
                 />
               </div>
             )}

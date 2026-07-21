@@ -21,6 +21,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { SectionHeader } from "@/components/ui/typography";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -186,14 +187,14 @@ export default function QuickScriptTemplates() {
         <Card data-testid="quickscript-templates-section">
           <CardHeader>
             <div className="flex items-center justify-between text-primary">
-              <div className="flex items-center justify-between text-primary text-xl md:text-2xl">
+              <SectionHeader className="flex items-center justify-between">
                 <CardTitle>
                   <div className="flex items-center">
                     <ScrollText className="me-1" />
                     {t("title")}
                   </div>
                 </CardTitle>
-              </div>
+              </SectionHeader>
               <div>
                 <Button
                   data-testid="add-export-template-button"

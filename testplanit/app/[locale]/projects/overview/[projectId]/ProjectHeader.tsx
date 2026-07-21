@@ -1,6 +1,7 @@
 import { DateFormatter } from "@/components/DateFormatter";
 import { ProjectIcon } from "@/components/ProjectIcon";
 import { CardDescription, CardTitle } from "@/components/ui/card";
+import { SectionHeader } from "@/components/ui/typography";
 import type { Projects } from "~/zenstack/models";
 import { useTranslations } from "next-intl";
 import React from "react";
@@ -19,11 +20,11 @@ const ProjectHeader: React.FC<ProjectHeaderProps> = ({
   return (
     <div>
       <CardTitle>
-        <div className="flex items-center justify-between text-primary text-xl md:text-2xl pb-3 pt-1.5">
+        <SectionHeader className="flex items-center justify-between pb-3 pt-1.5">
           <div>
             <CardTitle>{t("projects.overview.title")}</CardTitle>
           </div>
-        </div>
+        </SectionHeader>
       </CardTitle>
       <CardDescription className="flex w-full items-start justify-between ">
         <span className="flex items-center gap-2 uppercase shrink-0">

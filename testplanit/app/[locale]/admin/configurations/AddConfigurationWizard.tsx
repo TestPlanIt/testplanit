@@ -404,9 +404,16 @@ const AddConfigurationWizard = (): React.ReactElement => {
 
   return (
     <>
-      <Button onClick={() => setOpen(true)} type="button">
-        <PlusCircle className="w-4" />
-        <span className="hidden md:inline">{t("addConfiguration")}</span>
+      <Button
+        onClick={() => setOpen(true)}
+        type="button"
+        aria-label={t("addConfiguration")}
+        className="group gap-0 transition-all duration-200 hover:gap-2"
+      >
+        <PlusCircle className="h-4 w-4" />
+        <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-xs">
+          {t("addConfiguration")}
+        </span>
       </Button>
 
       <Dialog

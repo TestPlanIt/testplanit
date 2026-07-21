@@ -369,7 +369,7 @@ const NameCell = React.memo(function NameCell({
 
   const showFolderInfo = Boolean(
     (viewType && viewType !== "folders" && folder) ||
-      (showDescendants && folder)
+    (showDescendants && folder)
   );
 
   // When the folder chip is shown (e.g. "Show all descendants"), split the

@@ -39,7 +39,11 @@ export const ProjectNameCell: React.FC<ProjectNameCellProps> = ({
         <LinkIcon className="w-4 h-4 inline ms-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
       </Link>
       {note && (
-        <div className="text-sm text-foreground font-extralight">{note}</div>
+        <div
+          className={`${size === "md" ? "text-sm" : "text-xs"} text-foreground font-extralight truncate`}
+        >
+          {note}
+        </div>
       )}
     </div>
   );

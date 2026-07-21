@@ -13,6 +13,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod/v4";
 
 import { Button } from "@/components/ui/button";
+import { SectionTitle } from "@/components/ui/typography";
 import { Input } from "@/components/ui/input";
 
 import { Checkbox } from "@/components/ui/checkbox";
@@ -282,9 +283,9 @@ export function AddRole({ open, onClose }: AddRoleProps) {
             />
             {/* Permissions Table Section (moved here) */}
             <div className="space-y-4 pt-4 border-t">
-              <h3 className="text-lg font-medium">
+              <SectionTitle>
                 {t("admin.roles.edit.permissionsTitle")}
-              </h3>
+              </SectionTitle>
               <table className="w-full border-collapse border-2">
                 <thead className="bg-primary/10 border">
                   <tr className="border-b">

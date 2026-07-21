@@ -8,6 +8,7 @@ import { Filter } from "@/components/tables/Filter";
 import { TagsDisplay } from "@/components/tables/TagDisplay";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { SectionHeader } from "@/components/ui/typography";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -437,7 +438,7 @@ function TagDetail() {
       <div className="flex-1 w-full relative">
         <CardHeader>
           <CardTitle>
-            <div className="flex items-center justify-between text-primary text-xl md:text-2xl">
+            <SectionHeader className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <span>
                   {t("common.fields.testCases")}, {t("common.fields.testRuns")}{" "}
@@ -446,7 +447,7 @@ function TagDetail() {
                 </span>
                 <TagsDisplay id={Number(tagId)} name={tagName} size="large" />
               </div>
-            </div>
+            </SectionHeader>
           </CardTitle>
         </CardHeader>
         <CardContent>

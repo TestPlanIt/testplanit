@@ -202,7 +202,7 @@ export const useColumns = (
             return null;
           }
           return (
-            <div className="bg-primary-foreground whitespace-nowrap flex justify-center gap-1">
+            <div className="bg-primary-foreground whitespace-nowrap flex justify-end gap-1">
               <TestScimButton tokenId={token.id} />
               <RevokeScimTokenButton
                 tokenId={token.id}

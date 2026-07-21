@@ -6,6 +6,7 @@ import { Loading } from "@/components/Loading";
 import { VirtualizedDataTable } from "@/components/tables/VirtualizedDataTable";
 import TipTapEditor from "@/components/tiptap/TipTapEditor";
 import { Button } from "@/components/ui/button";
+import { SectionHeader } from "@/components/ui/typography";
 import {
   Card,
   CardContent,
@@ -18,7 +19,7 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
 import { NotificationMode } from "~/zenstack/models";
-import { Bell, Megaphone, Send } from "lucide-react";
+import { Send } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -282,20 +283,19 @@ function NotificationSettingsContent() {
     <div className="space-y-6">
       <Card>
         <CardHeader className="w-full">
-          <div className="flex items-center justify-between text-primary text-2xl md:text-4xl">
+          <SectionHeader className="flex items-center justify-between">
             <div>
               <CardTitle
                 data-testid="notifications-page-title"
                 className="items-center flex"
               >
-                <Bell className="inline me-2 h-8 w-8" />
                 {t("title")}
               </CardTitle>
               <CardDescription data-testid="notifications-page-description">
                 {t("description")}
               </CardDescription>
             </div>
-          </div>
+          </SectionHeader>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="space-y-4">
@@ -357,20 +357,19 @@ function NotificationSettingsContent() {
 
       <Card>
         <CardHeader className="w-full">
-          <div className="flex items-center justify-between text-primary text-2xl md:text-4xl">
+          <SectionHeader className="flex items-center justify-between">
             <div>
               <CardTitle
                 data-testid="system-notifications-section"
                 className="items-center flex"
               >
-                <Megaphone className="inline me-2 h-8 w-8" />
                 {t("systemNotification.title")}
               </CardTitle>
               <CardDescription data-testid="system-notifications-description">
                 {t("systemNotification.description")}
               </CardDescription>
             </div>
-          </div>
+          </SectionHeader>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="space-y-4">

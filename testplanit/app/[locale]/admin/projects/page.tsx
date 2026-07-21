@@ -18,6 +18,8 @@ import { ExtendedProjects, useColumns } from "./columns";
 import { CreateProjectWizard } from "@/admin/projects/CreateProjectWizard";
 import { Filter } from "@/components/tables/Filter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { HelpPopover } from "@/components/ui/help-popover";
+import { SectionHeader } from "@/components/ui/typography";
 import { DeleteProject } from "./DeleteProject";
 import { EditProjectModal } from "./EditProject";
 
@@ -410,9 +412,15 @@ function ProjectAdmin() {
   if (status === "loading") return null;
 
   const AddProjectButton = () => (
-    <Button onClick={handleOpenAddModal}>
-      <CirclePlus className="w-4" />
-      <span className="hidden md:inline">{t("add.button")}</span>
+    <Button
+      onClick={handleOpenAddModal}
+      aria-label={t("add.button")}
+      className="group gap-0 transition-all duration-200 hover:gap-2"
+    >
+      <CirclePlus className="h-4 w-4" />
+      <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-xs">
+        {t("add.button")}
+      </span>
     </Button>
   );
 
@@ -420,15 +428,14 @@ function ProjectAdmin() {
     <>
       <Card>
         <CardHeader className="w-full">
-          <div className="flex items-center justify-between text-primary text-2xl md:text-4xl">
-            <div>
+          <div className="flex items-center justify-between gap-2">
+            <SectionHeader className="flex items-center gap-2">
               <CardTitle data-testid="admin-projects-page-title">
                 {tGlobal("common.fields.projects")}
               </CardTitle>
-            </div>
-            <div>
-              <AddProjectButton />
-            </div>
+              <HelpPopover helpKey="projects.overview" />
+            </SectionHeader>
+            <AddProjectButton />
           </div>
         </CardHeader>
         <CardContent>

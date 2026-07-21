@@ -5,8 +5,10 @@ import { schema } from "~/zenstack/schema";
 import { CustomColumnDef } from "@/components/tables/ColumnSelection";
 import { DataTable } from "@/components/tables/DataTable";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { HelpPopover } from "@/components/ui/help-popover";
+import { SectionHeader } from "@/components/ui/typography";
 import { Button } from "@/components/ui/button";
-import { CirclePlus, LayoutList } from "lucide-react";
+import { CirclePlus } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -131,31 +133,29 @@ export default function CaseFields() {
     return (
       <Card data-testid="case-fields-section">
         <CardHeader>
-          <div className="flex items-center justify-between text-primary">
-            <div className="flex items-center justify-between text-primary text-xl md:text-2xl">
-              <CardTitle>
-                <div className="flex items-center">
-                  <LayoutList className="me-1" />
-                  {tGlobal("common.fields.caseFields")}
-                </div>
-              </CardTitle>
-            </div>
-            <div>
-              <Button
-                data-testid="add-case-field-button"
-                onClick={() => setAddCaseFieldOpen(true)}
-              >
-                <CirclePlus className="w-4" />
-                <span className="hidden md:inline">{t("add.title")}</span>
-              </Button>
-              {addCaseFieldOpen && (
-                <AddCaseFieldModal
-                  open={addCaseFieldOpen}
-                  onClose={() => setAddCaseFieldOpen(false)}
-                />
-              )}
-            </div>
+          <div className="flex items-center justify-between gap-2">
+            <SectionHeader className="flex items-center gap-2">
+              <CardTitle>{tGlobal("common.fields.caseFields")}</CardTitle>
+              <HelpPopover helpKey="caseFields" />
+            </SectionHeader>
+            <Button
+              data-testid="add-case-field-button"
+              onClick={() => setAddCaseFieldOpen(true)}
+              aria-label={t("add.title")}
+              className="group gap-0 transition-all duration-200 hover:gap-2"
+            >
+              <CirclePlus className="h-4 w-4" />
+              <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-xs">
+                {t("add.title")}
+              </span>
+            </Button>
           </div>
+          {addCaseFieldOpen && (
+            <AddCaseFieldModal
+              open={addCaseFieldOpen}
+              onClose={() => setAddCaseFieldOpen(false)}
+            />
+          )}
         </CardHeader>
         <CardContent>
           <div className="flex justify-between">
@@ -167,6 +167,8 @@ export default function CaseFields() {
               columnVisibility={columnVisibility}
               onColumnVisibilityChange={setColumnVisibility}
               isLoading={isLoading}
+              storageKey="admin-case-fields"
+              enableColumnMenu={false}
             />
           </div>
         </CardContent>

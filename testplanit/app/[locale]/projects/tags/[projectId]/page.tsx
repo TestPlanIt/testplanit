@@ -15,6 +15,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { PageTitle, SectionHeader } from "@/components/ui/typography";
 import { Tags } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useParams, useSearchParams } from "next/navigation";
@@ -464,9 +465,9 @@ function TagList() {
     return (
       <Card className="flex flex-col w-full min-w-[400px] h-full">
         <CardContent className="flex flex-col items-center justify-center h-full">
-          <h2 className="text-2xl font-semibold mb-2">
+          <PageTitle className="mb-2">
             {t("common.errors.projectNotFound")}
-          </h2>
+          </PageTitle>
           <p className="text-muted-foreground">
             {t("common.errors.projectNotFoundDescription")}
           </p>
@@ -480,7 +481,7 @@ function TagList() {
       <Card>
         <CardHeader id="tags-page-header">
           <CardTitle>
-            <div className="flex items-center justify-between text-primary text-xl md:text-2xl pb-2 pt-1">
+            <SectionHeader className="flex items-center justify-between pb-2 pt-1">
               <CardTitle>{t("common.fields.tags")}</CardTitle>
               <Button
                 variant="default"
@@ -496,7 +497,7 @@ function TagList() {
                 <Tags className="h-4 w-4" />
                 {t("autoTag.actions.aiAutoTag")}
               </Button>
-            </div>
+            </SectionHeader>
           </CardTitle>
           <CardDescription className="uppercase">
             <span className="flex items-center gap-2 uppercase shrink-0">

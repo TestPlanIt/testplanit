@@ -21,6 +21,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { SectionHeader } from "@/components/ui/typography";
 import {
   ResizableHandle,
   ResizablePanel,
@@ -654,7 +655,7 @@ export default function TestCaseVersions() {
       <div className="bg-linear-to-b from-primary/0 to-primary/10  rounded-xl">
         <CardHeader>
           <CardTitle>
-            <div className="flex items-start justify-between text-primary text-xl md:text-2xl max-w-full">
+            <SectionHeader className="flex items-start justify-between max-w-full">
               <div className="flex items-center space-x-2 w-fit">
                 {renderFieldValue(
                   "name",
@@ -739,7 +740,7 @@ export default function TestCaseVersions() {
                   </>
                 )}
               </div>
-            </div>
+            </SectionHeader>
           </CardTitle>
           <CardDescription className="flex items-center justify-between">
             {workflowState &&

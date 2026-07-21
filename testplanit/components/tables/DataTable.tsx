@@ -171,6 +171,8 @@ interface DataTableProps<TData extends DataRow, TValue> {
 interface CustomColumnMeta {
   isVisible?: boolean;
   isPinned?: "left" | "right";
+  /** Opt a column out of the default single-line truncation so its cells wrap. */
+  wrap?: boolean;
 }
 
 // Define this OUTSIDE the component function
@@ -385,17 +387,23 @@ function HeadCellContent({
           onDoubleClick={() => header.column.resetSize()}
           onMouseDown={(e) => onResizeMouseDown(header, e)}
           onTouchStart={header.getResizeHandler()}
-          // The wrapper fills the cell's content box, which sits inside the
-          // header's vertical padding — grow past it (2 × py-2) so the separator
-          // runs the full height of the header row.
-          className={`absolute end-[-15px] -top-2 h-[calc(100%+1rem)] w-2 cursor-col-resize select-none touch-none ${
-            header.column.getIsResizing()
-              ? "bg-primary/50"
-              : "hover:bg-primary/20"
-          }`}
+          // A wide, transparent hit area centred on the column boundary so the
+          // handle is easy to grab on every column — not just a pinned one,
+          // whose own stacking context used to be the only place the thin handle
+          // sat above its neighbours. `-top-2 / h+1rem` grows past the header's
+          // vertical padding so it spans the full row height; `z-20` lifts it
+          // above adjacent (including pinned) cells; the visible 1px line stays
+          // centred on the boundary and highlights on hover.
+          className="group/resize absolute end-[-15px] -top-2 z-20 flex h-[calc(100%+1rem)] w-3.5 cursor-col-resize touch-none select-none justify-center"
           aria-label={t("resize")}
         >
-          <div className="h-full w-px bg-primary/30" />
+          <div
+            className={`h-full w-px ${
+              header.column.getIsResizing()
+                ? "bg-primary/60"
+                : "bg-primary/30 group-hover/resize:bg-primary/60"
+            }`}
+          />
         </div>
       )}
     </div>
@@ -741,13 +749,22 @@ export function DataTable<TData extends DataRow, TValue>({
       }
     });
 
+    // The auto-added expander column (present when grouping or sub-rows are on)
+    // carries its own `isPinned: "left"`, but it isn't part of the `columns`
+    // prop above — pin it here so the toggle leads the row at the far left
+    // rather than floating between the last left-pinned column and the first
+    // center column.
+    if ((grouping && grouping.length > 0) || getSubRows) {
+      leftPinned.unshift("expander");
+    }
+
     setColumnPinning({
       left: leftPinned,
       right: rightPinned,
     });
 
     initialPinningDone.current = true;
-  }, [columns]);
+  }, [columns, grouping, getSubRows]);
 
   // Adapter function to handle react-table's updater function format
   const handleVisibilityChange = (updaterOrValue: Updater<VisibilityState>) => {
@@ -930,7 +947,7 @@ export function DataTable<TData extends DataRow, TValue>({
     onColumnVisibilityChange: handleVisibilityChange,
     defaultColumn: {
       minSize: 50, // Min column width
-      maxSize: 500, // Max column width
+      maxSize: 1500, // Max column width (matches VirtualizedDataTable)
       size: 150, // Default column width
       enableResizing: true, // Explicitly enable resizing by default
     },
@@ -1308,8 +1325,23 @@ export function DataTable<TData extends DataRow, TValue>({
                                 : "border-e"
                             }`}
                           >
-                            {/* Render content directly like SortableItem does to preserve cell alignment */}
-                            {cellContent}
+                            {/* Cells truncate to a single line by default so long
+                                raw text doesn't wrap and grow the row — the user
+                                widens the column to see more. A column opts out
+                                with `meta: { wrap: true }`. maxWidth pins the
+                                truncation to the column's width under the table's
+                                auto layout. */}
+                            {(column.columnDef.meta as CustomColumnMeta)
+                              ?.wrap ? (
+                              cellContent
+                            ) : (
+                              <div
+                                className="truncate"
+                                style={{ maxWidth: column.getSize() }}
+                              >
+                                {cellContent}
+                              </div>
+                            )}
                           </TableCell>
                         );
                       })}

@@ -11,6 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { SectionHeader } from "@/components/ui/typography";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -349,11 +350,11 @@ export default function AdvancedPage() {
     <main data-testid="advanced-settings-page">
       <Card>
         <CardHeader className="w-full">
-          <div className="flex items-center justify-between text-primary text-xl md:text-2xl pb-2 pt-1">
+          <SectionHeader className="flex items-center justify-between pb-2 pt-1">
             <CardTitle>
               <span>{t("title")}</span>
             </CardTitle>
-          </div>
+          </SectionHeader>
           <CardDescription className="uppercase">
             <span className="flex items-center gap-2">
               <ProjectIcon iconUrl={project?.iconUrl} />

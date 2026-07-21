@@ -14,6 +14,7 @@ import { ExtendedGroups, useColumns } from "./columns";
 
 import { Filter } from "@/components/tables/Filter";
 import { Button } from "@/components/ui/button";
+import { SectionHeader } from "@/components/ui/typography";
 import {
   Card,
   CardContent,
@@ -143,7 +144,7 @@ function GroupList() {
       <main>
         <Card>
           <CardHeader className="w-full">
-            <div className="flex items-center justify-between text-primary text-2xl md:text-4xl">
+            <SectionHeader className="flex items-center justify-between">
               <div>
                 <CardTitle>{tGlobal("common.fields.groups")}</CardTitle>
               </div>
@@ -160,7 +161,7 @@ function GroupList() {
                   />
                 )}
               </div>
-            </div>
+            </SectionHeader>
             <CardDescription>{t("description.groupInfo")}</CardDescription>
           </CardHeader>
           <CardContent>

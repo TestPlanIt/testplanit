@@ -91,9 +91,15 @@ function buildFormSchema(t: (key: any) => string): any {
 interface AddWorkflowsProps {
   open: boolean;
   onClose: () => void;
+  /** Pre-select the scope (e.g. when opened from a specific scope's card). */
+  defaultScope?: (typeof scopeKeys)[number];
 }
 
-export function AddWorkflows({ open, onClose }: AddWorkflowsProps) {
+export function AddWorkflows({
+  open,
+  onClose,
+  defaultScope,
+}: AddWorkflowsProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const t = useTranslations("admin.workflows");
@@ -154,7 +160,7 @@ export function AddWorkflows({ open, onClose }: AddWorkflowsProps) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: standardSchemaResolver(formSchema),
     defaultValues: {
-      scope: undefined,
+      scope: defaultScope,
       name: "",
       isDefault: false,
       isEnabled: true,

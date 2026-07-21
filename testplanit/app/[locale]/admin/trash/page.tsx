@@ -1,13 +1,13 @@
 "use client";
 
 import { Filter } from "@/components/tables/Filter";
-import { Trash2 } from "lucide-react";
 import dynamicIconImports from "lucide-react/dynamicIconImports";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import DynamicIcon from "~/components/DynamicIcon";
 import { Badge } from "~/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
+import { SectionHeader } from "@/components/ui/typography";
 import { cn } from "~/utils";
 import SoftDeletedDataTable from ".//SoftDeletedDataTable";
 
@@ -234,9 +234,8 @@ export default function TrashPage() {
   return (
     <Card>
       <CardHeader className="w-full">
-        <div className="flex flex-wrap items-center justify-between gap-2 text-primary text-2xl md:text-4xl">
+        <SectionHeader className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-3">
-            <Trash2 className="h-8 w-8" />
             <CardTitle>{tGlobal("admin.menu.trash")}</CardTitle>
           </div>
           {hasCounts && (
@@ -244,7 +243,7 @@ export default function TrashPage() {
               {t("summary", { count: totalCount })}
             </span>
           )}
-        </div>
+        </SectionHeader>
       </CardHeader>
       <CardContent>
         {/* Bound the master-detail region to the viewport on desktop so the page

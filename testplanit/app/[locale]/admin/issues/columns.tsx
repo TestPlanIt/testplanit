@@ -477,7 +477,7 @@ export function useIssueColumns({
         minSize: 120,
         maxSize: 200,
         cell: ({ row }) => (
-          <div className="bg-primary-foreground whitespace-nowrap flex justify-center gap-1">
+          <div className="bg-primary-foreground whitespace-nowrap flex justify-end gap-1">
             <SyncIssue key={`sync-${row.original.id}`} issue={row.original} />
             <Button
               variant="ghost"

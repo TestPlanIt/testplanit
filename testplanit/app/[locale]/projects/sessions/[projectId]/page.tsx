@@ -55,6 +55,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { PageTitle, SectionHeader } from "@/components/ui/typography";
 
 interface ProjectSessionsProps {
   params: Promise<{ projectId: string }>;
@@ -684,9 +685,9 @@ const ProjectSessions: React.FC<ProjectSessionsProps> = ({ params }) => {
     return (
       <Card className="flex flex-col w-full min-w-[400px] h-full">
         <CardContent className="flex flex-col items-center justify-center h-full">
-          <h2 className="text-2xl font-semibold mb-2">
+          <PageTitle className="mb-2">
             {t("common.errors.projectNotFound")}
-          </h2>
+          </PageTitle>
           <p className="text-muted-foreground">
             {t("common.errors.projectNotFoundDescription")}
           </p>
@@ -702,7 +703,7 @@ const ProjectSessions: React.FC<ProjectSessionsProps> = ({ params }) => {
           <div className="flex-1 w-full">
             <CardHeader id="sessions-page-header">
               <CardTitle>
-                <div className="flex items-center justify-between text-primary text-xl md:text-2xl">
+                <SectionHeader className="flex items-center justify-between">
                   <div>
                     <CardTitle>{t("sessions.title", { count: 2 })}</CardTitle>
                   </div>
@@ -728,7 +729,7 @@ const ProjectSessions: React.FC<ProjectSessionsProps> = ({ params }) => {
                       </>
                     )}
                   </div>
-                </div>
+                </SectionHeader>
               </CardTitle>
               <CardDescription className="uppercase">
                 <span className="flex items-center gap-2 uppercase shrink-0">

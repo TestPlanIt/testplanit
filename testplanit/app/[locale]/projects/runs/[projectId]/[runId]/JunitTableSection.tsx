@@ -586,6 +586,8 @@ function JunitTableSection({
                         pageSize={effectivePageSize}
                         sortConfig={junitSortConfig}
                         onSortChange={handleJunitSortChange}
+                        storageKey="run-junit-results"
+                        enableColumnMenu={false}
                       />
                       {!isJUnitLoading &&
                         (!jUnitSuites || jUnitSuites.length === 0) && (

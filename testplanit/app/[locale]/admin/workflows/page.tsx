@@ -16,13 +16,9 @@ import { useColumns } from "./columns";
 
 import { WorkflowDragPreview } from "@/components/dnd/WorkflowDragPreview";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { HelpPopover } from "@/components/ui/help-popover";
+import { SectionHeader } from "@/components/ui/typography";
 import { CirclePlus } from "lucide-react";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
@@ -64,7 +60,8 @@ function WorkflowComponent() {
   >([]);
 
   const [isAlertDialogOpen, setIsAlertDialogOpen] = useState(false);
-  const [addWorkflowOpen, setAddWorkflowOpen] = useState(false);
+  const [addWorkflowScope, setAddWorkflowScope] =
+    useState<WorkflowScope | null>(null);
   const [editingWorkflow, setEditingWorkflow] =
     useState<ExtendedWorkflows | null>(null);
   const [deletingWorkflow, setDeletingWorkflow] =
@@ -222,28 +219,21 @@ function WorkflowComponent() {
   ) => (
     <Card>
       <CardHeader>
-        <CardTitle>
-          <div className="flex items-center text-primary text-xl md:text-2xl">
-            {scope === "CASES" && (
-              <>
-                <scopeDisplayData.CASES.icon className="me-2" />
-                {scopeDisplayData.CASES.text}
-              </>
-            )}
-            {scope === "RUNS" && (
-              <>
-                <scopeDisplayData.RUNS.icon className="me-2" />
-                {scopeDisplayData.RUNS.text}
-              </>
-            )}
-            {scope === "SESSIONS" && (
-              <>
-                <scopeDisplayData.SESSIONS.icon className="me-2" />
-                {scopeDisplayData.SESSIONS.text}
-              </>
-            )}
-          </div>
-        </CardTitle>
+        <div className="flex items-center justify-between gap-2">
+          <SectionHeader className="flex items-center gap-2">
+            <CardTitle>{scopeDisplayData[scope].text}</CardTitle>
+          </SectionHeader>
+          <Button
+            onClick={() => setAddWorkflowScope(scope)}
+            aria-label={t("add.button")}
+            className="group gap-0 transition-all duration-200 hover:gap-2"
+          >
+            <CirclePlus className="h-4 w-4" />
+            <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-xs">
+              {t("add.button")}
+            </span>
+          </Button>
+        </div>
       </CardHeader>
       <CardContent>
         {/* <ColumnSelection
@@ -263,6 +253,9 @@ function WorkflowComponent() {
             isLoading={isLoading}
             pageSize={pageSize}
             itemType={ItemTypes.WORKFLOW}
+            storageKey="admin-workflows"
+            enableColumnReorder={false}
+            enableColumnMenu={false}
           />
         </div>
       </CardContent>
@@ -330,29 +323,15 @@ function WorkflowComponent() {
           <WorkflowDragPreview />
           <Card>
             <CardHeader className="w-full">
-              <div className="flex items-center justify-between text-primary text-2xl md:text-4xl">
-                <div>
-                  <CardTitle>{tCommon("labels.workflows")}</CardTitle>
-                </div>
-                <div>
-                  <Button onClick={() => setAddWorkflowOpen(true)}>
-                    <CirclePlus className="w-4" />
-                    <span className="hidden md:inline">{t("add.button")}</span>
-                  </Button>
-                  {addWorkflowOpen && (
-                    <AddWorkflows
-                      open={addWorkflowOpen}
-                      onClose={() => setAddWorkflowOpen(false)}
-                    />
-                  )}
-                </div>
-              </div>
-              <CardDescription>{t("description")}</CardDescription>
+              <SectionHeader className="flex items-center gap-2">
+                <CardTitle>{t("reviewsTitle")}</CardTitle>
+                <HelpPopover helpKey="workflowReviews" />
+              </SectionHeader>
             </CardHeader>
+            <CardContent>
+              <SystemFeatureCard embedded />
+            </CardContent>
           </Card>
-          <div className="mt-4">
-            <SystemFeatureCard />
-          </div>
           <div className="mt-4">
             {renderWorkflowCard(casesWorkflows, WorkflowScope.CASES)}
           </div>
@@ -389,6 +368,13 @@ function WorkflowComponent() {
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
+          {addWorkflowScope && (
+            <AddWorkflows
+              open
+              onClose={() => setAddWorkflowScope(null)}
+              defaultScope={addWorkflowScope}
+            />
+          )}
         </DndProvider>
       )}
       {editingWorkflow && (

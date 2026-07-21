@@ -13,6 +13,7 @@ import { ExtendedRoles, useColumns } from "./columns";
 
 import { Filter } from "@/components/tables/Filter";
 import { Button } from "@/components/ui/button";
+import { SectionHeader } from "@/components/ui/typography";
 import {
   Card,
   CardContent,
@@ -144,7 +145,7 @@ function RoleList() {
     <main>
       <Card>
         <CardHeader className="w-full">
-          <div className="flex items-center justify-between text-primary text-2xl md:text-4xl">
+          <SectionHeader className="flex items-center justify-between">
             <div>
               <CardTitle>{tGlobal("common.labels.roles")}</CardTitle>
             </div>
@@ -160,7 +161,7 @@ function RoleList() {
                 />
               )}
             </div>
-          </div>
+          </SectionHeader>
           <CardDescription>{t("description")}</CardDescription>
         </CardHeader>
         <CardContent>

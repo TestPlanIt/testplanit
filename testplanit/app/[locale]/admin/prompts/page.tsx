@@ -12,8 +12,9 @@ import { ColumnSelection } from "@/components/tables/ColumnSelection";
 import { VirtualizedDataTable } from "@/components/tables/VirtualizedDataTable";
 import { Filter } from "@/components/tables/Filter";
 import { Button } from "@/components/ui/button";
+import { SectionHeader } from "@/components/ui/typography";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CirclePlus, MessageSquareCode } from "lucide-react";
+import { CirclePlus } from "lucide-react";
 import { toast } from "sonner";
 import { AddPromptConfig } from "./AddPromptConfig";
 import { ExtendedPromptConfig, useColumns } from "./columns";
@@ -165,10 +166,9 @@ function PromptConfigList() {
     <main>
       <Card>
         <CardHeader className="w-full">
-          <div className="flex items-center justify-between text-primary text-2xl md:text-4xl">
+          <SectionHeader className="flex items-center justify-between">
             <div>
               <CardTitle data-testid="prompts-admin-page-title">
-                <MessageSquareCode className="inline me-2 h-8 w-8" />
                 {t("title")}
               </CardTitle>
             </div>
@@ -178,7 +178,7 @@ function PromptConfigList() {
                 <span className="hidden md:inline">{t("addPromptConfig")}</span>
               </Button>
             </div>
-          </div>
+          </SectionHeader>
         </CardHeader>
         <CardContent>
           <div className="flex flex-row items-start justify-between gap-4">

@@ -1452,9 +1452,31 @@ export async function seedFieldIcons() {
     "zoom-out",
   ];
 
+  // Only seed icons that actually exist in the installed lucide version. The
+  // hardcoded list above drifts as lucide adds/removes icons between releases
+  // (brand logos were dropped for trademark reasons, for example); validating
+  // against the real icon set keeps fresh installs from persisting dead names
+  // that would later fail to render. Falls back to the full list if the icon
+  // map can't be resolved so seeding never breaks.
+  let seedableIconNames = iconNames;
+  try {
+    const { default: dynamicIconImports } =
+      await import("lucide-react/dynamicIconImports");
+    const validNames = new Set(Object.keys(dynamicIconImports));
+    const dropped = iconNames.filter((name) => !validNames.has(name));
+    if (dropped.length > 0) {
+      console.warn(
+        `seedFieldIcons: skipping ${dropped.length} icon(s) not present in the installed lucide version: ${dropped.join(", ")}`
+      );
+    }
+    seedableIconNames = iconNames.filter((name) => validNames.has(name));
+  } catch {
+    // Couldn't resolve the lucide icon map — seed the full list as before.
+  }
+
   const chunkSize = 50;
-  for (let i = 0; i < iconNames.length; i += chunkSize) {
-    const chunk = iconNames.slice(i, i + chunkSize);
+  for (let i = 0; i < seedableIconNames.length; i += chunkSize) {
+    const chunk = seedableIconNames.slice(i, i + chunkSize);
     await Promise.all(
       chunk.map((iconName) =>
         db.fieldIcon.upsert({

@@ -234,9 +234,9 @@ export function ProjectUserPermissions({
   return (
     <div className="space-y-4">
       {/* Table/List of Assigned Users */}
-      <div className="rounded-md border">
+      <div className="rounded-md border max-h-[55vh] overflow-y-auto">
         <table className="w-full caption-bottom text-sm">
-          <thead className="[&_tr]:border-b">
+          <thead className="[&_tr]:border-b sticky top-0 z-10 bg-background">
             <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
               <th className="h-12 px-4 text-start align-middle font-medium text-muted-foreground">
                 {tGlobal("common.access.user")}

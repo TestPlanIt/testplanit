@@ -25,6 +25,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { SectionHeader } from "@/components/ui/typography";
 import {
   Card,
   CardContent,
@@ -248,7 +249,7 @@ function ApiTokensList() {
     <main>
       <Card>
         <CardHeader className="w-full">
-          <div className="flex items-center justify-between text-primary text-2xl md:text-4xl">
+          <SectionHeader className="flex items-center justify-between">
             <div>
               <CardTitle data-testid="api-tokens-page-title">
                 {tGlobal("admin.menu.apiTokens")}
@@ -269,7 +270,7 @@ function ApiTokensList() {
                 </Button>
               )}
             </div>
-          </div>
+          </SectionHeader>
         </CardHeader>
         <CardContent>
           <div className="flex flex-row items-start justify-between gap-4">

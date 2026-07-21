@@ -17,17 +17,28 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { HelpPopover } from "@/components/ui/help-popover";
+import { SectionHeader } from "@/components/ui/typography";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { PlusCircle, SquarePen, Trash } from "lucide-react";
+import { PlusCircle } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
-import React, { useEffect, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { z } from "zod/v4";
 import { useRouter } from "~/lib/navigation";
-import { ConfigCategoryWithVariants, useColumns } from "./categoryColumns";
+import {
+  CategoryRow,
+  ConfigCategoryWithVariants,
+  useColumns,
+  VariantRow,
+} from "./categoryColumns";
 import { DeleteConfigCategory } from "./DeleteCategory";
 import { EditCategory } from "./EditCategory";
 import { DeleteVariantModal } from "./DeleteVariantModal";
@@ -61,14 +72,12 @@ function ConfigCategoriesList() {
     useClientQueries(schema).configurations.useUpdateMany();
 
   const inputRef = useRef<HTMLInputElement>(null);
-  const variantInputRef = useRef<HTMLInputElement>(null);
   const [sortConfig, setSortConfig] = useState<{
     column: string;
     direction: "asc" | "desc";
   }>({ column: "name", direction: "asc" });
   const [isAdding, setIsAdding] = useState(false);
   const [newRecordName, setNewRecordName] = useState("");
-  const [newVariantName, setNewVariantName] = useState("");
   const [addingVariantForCategory, setAddingVariantForCategory] = useState<
     number | null
   >(null);
@@ -137,11 +146,6 @@ function ConfigCategoriesList() {
   }, [isAdding]);
 
   useEffect(() => {
-    if (addingVariantForCategory !== null && variantInputRef.current)
-      variantInputRef.current.focus();
-  }, [addingVariantForCategory]);
-
-  useEffect(() => {
     if (status !== "loading" && !session) router.push("/");
   }, [status, session, router]);
 
@@ -155,24 +159,30 @@ function ConfigCategoriesList() {
     setSortConfig({ column, direction });
   };
 
-  const handleAddVariantClick = (categoryId: number | string) =>
-    setAddingVariantForCategory(Number(categoryId));
-
-  const handleVariantNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setNewVariantName(e.target.value);
+  const handleSortColumn = (
+    column: string,
+    direction: "asc" | "desc" | null
+  ) => {
+    setSortConfig(
+      direction === null
+        ? { column: "name", direction: "asc" }
+        : { column, direction }
+    );
   };
 
-  const handleVariantCancel = () => {
-    setAddingVariantForCategory(null);
-    setNewVariantName("");
+  const handleAddVariantClick = useCallback((categoryId: number) => {
+    setAddingVariantForCategory(categoryId);
     setVariantError(null);
-  };
+  }, []);
 
-  const handleVariantSubmit = async (categoryId: number | string) => {
+  const handleVariantCancel = useCallback(() => {
+    setAddingVariantForCategory(null);
+    setVariantError(null);
+  }, []);
+
+  const handleVariantSubmit = async (categoryId: number, name: string) => {
     try {
-      const result = ConfigVariantSchema.safeParse({
-        name: newVariantName.trim(),
-      });
+      const result = ConfigVariantSchema.safeParse({ name });
 
       if (!result.success) {
         setVariantError(result.error.issues[0].message);
@@ -180,32 +190,15 @@ function ConfigCategoriesList() {
       }
 
       await createConfigVariant({
-        data: {
-          name: newVariantName.trim(),
-          categoryId: Number(categoryId),
-          isEnabled: true,
-        },
+        data: { name, categoryId, isEnabled: true },
       });
 
       setAddingVariantForCategory(null);
-      setNewVariantName("");
       setVariantError(null);
       void refetch();
     } catch (error) {
       console.error("Failed to create variant:", error);
       setVariantError(tCommon("errors.unknown"));
-    }
-  };
-
-  const handleVariantKeyDown = (
-    e: React.KeyboardEvent<HTMLInputElement>,
-    categoryId: number | string
-  ) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      void handleVariantSubmit(categoryId);
-    } else if (e.key === "Escape") {
-      handleVariantCancel();
     }
   };
 
@@ -328,7 +321,84 @@ function ConfigCategoriesList() {
   const [deletingCategory, setDeletingCategory] =
     useState<ConfigCategoryWithVariants | null>(null);
 
-  const columns = useColumns(tCommon, setEditingCategory, setDeletingCategory);
+  // Stabilize the mutation-backed handlers so the column set (which closes over
+  // them) keeps a steady identity — ZenStack's mutateAsync changes identity
+  // every render, which would otherwise rebuild the columns on each render.
+  const toggleVariantRef = useRef(handleToggleVariant);
+  const submitVariantRef = useRef(handleVariantSubmit);
+  useEffect(() => {
+    toggleVariantRef.current = handleToggleVariant;
+    submitVariantRef.current = handleVariantSubmit;
+  });
+
+  const onToggleVariant = useCallback(
+    (variantId: number, isEnabled: boolean) =>
+      toggleVariantRef.current(variantId, isEnabled),
+    []
+  );
+  const onVariantSubmit = useCallback(
+    (categoryId: number, name: string) =>
+      submitVariantRef.current(categoryId, name),
+    []
+  );
+  const onEditVariant = useCallback(
+    (variant: VariantRow) => setVariantToEdit(variant),
+    []
+  );
+  const onDeleteVariant = useCallback(
+    (variant: VariantRow) => setVariantToDelete(variant),
+    []
+  );
+
+  const columns = useColumns(tCommon, {
+    onEditCategory: setEditingCategory,
+    onDeleteCategory: setDeletingCategory,
+    onToggleVariant,
+    onEditVariant,
+    onDeleteVariant,
+    addingVariantForCategory,
+    isSubmitting,
+    variantError,
+    onAddVariantClick: handleAddVariantClick,
+    onVariantSubmit,
+    onVariantCancel: handleVariantCancel,
+  });
+
+  // Adapt the loaded categories into the table's row model: each category is a
+  // `category` row whose sub-rows are its `variant` rows plus a trailing `add`
+  // affordance (see CategoryRow). `getSubRows` hands those to TanStack so they
+  // render as real nested rows that match the parent's columns and height.
+  const tableData = useMemo<CategoryRow[]>(
+    () =>
+      configCategories.map((category) => ({
+        ...category,
+        rowKind: "category" as const,
+      })),
+    [configCategories]
+  );
+
+  const getSubRows = useCallback(
+    (row: CategoryRow): CategoryRow[] | undefined => {
+      if (row.rowKind !== "category") return undefined;
+      const variantRows: CategoryRow[] = row.variants.map((variant) => ({
+        rowKind: "variant" as const,
+        id: variant.id!,
+        name: variant.name,
+        isEnabled: variant.isEnabled,
+        categoryId: variant.categoryId,
+      }));
+      return [
+        ...variantRows,
+        {
+          rowKind: "add" as const,
+          id: `add-${row.id}`,
+          name: "",
+          categoryId: Number(row.id),
+        },
+      ];
+    },
+    []
+  );
 
   const [columnVisibility, setColumnVisibility] = useState<
     Record<string, boolean>
@@ -352,129 +422,29 @@ function ConfigCategoriesList() {
     return initialVisibility;
   });
 
-  const renderExpandedRow = (row: ConfigCategoryWithVariants) => (
-    <div className="p-4 bg-muted/50">
-      {/* Display existing variants */}
-      <ul className="list-outside ms-4 space-y-2 mb-4">
-        {row.variants.map((variant) => (
-          <li
-            key={variant.id}
-            className="flex items-center justify-between p-1 rounded-md hover:bg-background"
-          >
-            <div className="flex items-center">
-              <Switch
-                checked={variant.isEnabled}
-                onCheckedChange={() =>
-                  handleToggleVariant(variant.id!, variant.isEnabled)
-                }
-                id={`checkbox-${variant.id}`}
-                className="me-2 w-8 h-4"
-              />
-              <Label
-                htmlFor={`checkbox-${variant.id}`}
-                className={`cursor-pointer text-sm font-medium leading-none ${
-                  !variant.isEnabled ? "text-muted-foreground" : ""
-                }`}
-              >
-                {variant.name}
-              </Label>
-            </div>
-            <div className="flex items-center gap-1">
-              <Button
-                variant="link"
-                className="p-0"
-                onClick={() => setVariantToEdit(variant)}
-              >
-                <SquarePen className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="link"
-                className="p-0 ms-2"
-                onClick={() => setVariantToDelete(variant)}
-              >
-                <Trash className="h-4 w-4" />
-              </Button>
-            </div>
-          </li>
-        ))}
-      </ul>
-
-      {/* Add new variant section (conditional) */}
-      <div className="ms-4">
-        {addingVariantForCategory === row.id ? (
-          <div className="flex items-center gap-2 mt-2">
-            <Input
-              ref={variantInputRef}
-              value={newVariantName}
-              onChange={handleVariantNameChange}
-              onKeyDown={(e) => handleVariantKeyDown(e, row.id)}
-              placeholder={tCommon("fields.placeholders.addVariant")}
-              className="max-w-xs"
-            />
-            <Button
-              onClick={() => handleVariantSubmit(row.id)}
-              disabled={isSubmitting || !newVariantName.trim()}
-              size="sm"
-            >
-              {tCommon("actions.save")}
-            </Button>
-            <Button
-              variant="outline"
-              onClick={handleVariantCancel}
-              disabled={isSubmitting}
-              size="sm"
-            >
-              {tCommon("cancel")}
-            </Button>
-            {variantError && (
-              <div className="text-sm text-destructive mt-1">
-                {variantError}
-              </div>
-            )}
-          </div>
-        ) : (
-          <Button
-            variant="link"
-            onClick={(e) => {
-              e.stopPropagation(); // Prevent row collapse
-              handleAddVariantClick(row.id);
-            }}
-            className="flex items-center p-0 h-auto text-sm"
-          >
-            <PlusCircle className="w-4 h-4" />
-            {`${tCommon("add")} Variant`}
-          </Button>
-        )}
-      </div>
-    </div>
-  );
-
   const renderCategories = () => (
     <div className="flex flex-col gap-4 w-fit">
-      <div className="flex flex-row items-start">
-        <div className="flex flex-col grow w-full sm:w-1/2 min-w-[250px]">
-          <div className="text-muted-foreground w-full text-nowrap">
-            <Filter
-              key="category-filter"
-              placeholder={t("filterPlaceholder")}
-              initialSearchString={searchString}
-              onSearchChange={setSearchString}
-            />
-          </div>
-        </div>
-      </div>
+      <Filter
+        key="category-filter"
+        className="max-w-sm min-w-[250px]"
+        placeholder={t("filterPlaceholder")}
+        initialSearchString={searchString}
+        onSearchChange={setSearchString}
+      />
 
       <DataTable
         columns={columns}
-        data={configCategories}
+        data={tableData}
+        getSubRows={getSubRows}
         onSortChange={handleSortChange}
+        onSortColumn={handleSortColumn}
         sortConfig={sortConfig}
         columnVisibility={columnVisibility}
         onColumnVisibilityChange={setColumnVisibility}
         isLoading={isLoading}
         expanded={expanded}
         onExpandedChange={setExpanded}
-        renderExpandedRow={renderExpandedRow}
+        storageKey="admin-config-categories"
       />
     </div>
   );
@@ -485,11 +455,18 @@ function ConfigCategoriesList() {
     <main>
       <Card className="w-full">
         <CardHeader>
-          <div className="flex items-center justify-between text-primary">
-            <CardTitle className="text-xl md:text-2xl">{t("title")}</CardTitle>
-            <Button onClick={() => setIsAdding(true)}>
-              <PlusCircle className="w-4" />
-              <span className="hidden md:inline">
+          <div className="flex items-center justify-between gap-2">
+            <SectionHeader className="flex items-center gap-2">
+              <CardTitle>{t("title")}</CardTitle>
+              <HelpPopover helpKey="categories" />
+            </SectionHeader>
+            <Button
+              onClick={() => setIsAdding(true)}
+              aria-label={tGlobal("common.fields.placeholders.addCategory")}
+              className="group gap-0 transition-all duration-200 hover:gap-2"
+            >
+              <PlusCircle className="h-4 w-4" />
+              <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-xs">
                 {tGlobal("common.fields.placeholders.addCategory")}
               </span>
             </Button>

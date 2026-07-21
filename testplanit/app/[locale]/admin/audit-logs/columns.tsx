@@ -124,6 +124,7 @@ export const useColumns = (
         accessorKey: "timestamp",
         header: t("columns.timestamp"),
         enableSorting: true,
+        enableHiding: false,
         size: 180,
         cell: ({ row: _row, getValue }) => (
           <div className="whitespace-nowrap text-sm">
@@ -287,6 +288,7 @@ export const useColumns = (
         id: "actions",
         header: "",
         enableSorting: false,
+        enableHiding: false,
         size: 55,
         minSize: 55,
         cell: ({ row }) => (

@@ -12,13 +12,9 @@ import { ColumnSelection } from "@/components/tables/ColumnSelection";
 import { VirtualizedDataTable } from "@/components/tables/VirtualizedDataTable";
 import { Filter } from "@/components/tables/Filter";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { HelpPopover } from "@/components/ui/help-popover";
+import { SectionHeader } from "@/components/ui/typography";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CirclePlus } from "lucide-react";
 import { AddTag } from "./AddTag";
 import { ExtendedTags, useColumns } from "./columns";
@@ -267,28 +263,27 @@ function TagList() {
     <main>
       <Card>
         <CardHeader className="w-full">
-          <div className="flex items-center justify-between text-primary text-2xl md:text-4xl">
-            <div>
+          <div className="flex items-center justify-between gap-2">
+            <SectionHeader className="flex items-center gap-2">
               <CardTitle data-testid="tags-page-title">
                 {tGlobal("common.fields.tags")}
               </CardTitle>
-            </div>
-            <div>
-              <Button onClick={() => setAddTagOpen(true)}>
-                <CirclePlus className="w-4" />
-                <span className="hidden md:inline">
-                  {tGlobal("tags.add.button")}
-                </span>
-              </Button>
-              {addTagOpen && (
-                <AddTag
-                  open={addTagOpen}
-                  onClose={() => setAddTagOpen(false)}
-                />
-              )}
-            </div>
+              <HelpPopover helpKey="tags" />
+            </SectionHeader>
+            <Button
+              onClick={() => setAddTagOpen(true)}
+              aria-label={tGlobal("tags.add.button")}
+              className="group gap-0 transition-all duration-200 hover:gap-2"
+            >
+              <CirclePlus className="h-4 w-4" />
+              <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-xs">
+                {tGlobal("tags.add.button")}
+              </span>
+            </Button>
           </div>
-          <CardDescription>{tGlobal("tags.description")}</CardDescription>
+          {addTagOpen && (
+            <AddTag open={addTagOpen} onClose={() => setAddTagOpen(false)} />
+          )}
         </CardHeader>
         <CardContent>
           <div className="flex flex-row items-start justify-between gap-4">

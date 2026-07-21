@@ -12,6 +12,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { SectionHeader } from "@/components/ui/typography";
 import {
   Select,
   SelectContent,
@@ -401,11 +402,11 @@ function Issues() {
     <main>
       <Card>
         <CardHeader className="w-full">
-          <div className="flex items-center justify-between text-primary text-2xl md:text-4xl">
+          <SectionHeader className="flex items-center justify-between">
             <div>
               <CardTitle>{t("common.fields.issues")}</CardTitle>
             </div>
-          </div>
+          </SectionHeader>
           <CardDescription>{t("Pages.Issues.description")}</CardDescription>
         </CardHeader>
         <CardContent>

@@ -12,6 +12,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { PageTitle, SectionHeader } from "@/components/ui/typography";
 import { CirclePlus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { notFound, useParams } from "next/navigation";
@@ -77,9 +78,9 @@ export default function ProjectParametersSettingsPage() {
     return (
       <Card className="flex flex-col w-full min-w-[400px] h-full">
         <CardContent className="flex flex-col items-center justify-center h-full">
-          <h2 className="text-2xl font-semibold mb-2">
+          <PageTitle className="mb-2">
             {tCommon("errors.projectNotFound")}
-          </h2>
+          </PageTitle>
           <p className="text-muted-foreground">
             {tCommon("errors.projectNotFoundDescription")}
           </p>
@@ -92,11 +93,11 @@ export default function ProjectParametersSettingsPage() {
     <main className="space-y-6">
       <Card>
         <CardHeader className="w-full">
-          <div className="flex items-center justify-between text-primary text-xl md:text-2xl pb-2 pt-1">
+          <SectionHeader className="flex items-center justify-between pb-2 pt-1">
             <CardTitle>
               <span>{tParameters("title")}</span>
             </CardTitle>
-          </div>
+          </SectionHeader>
           <CardDescription className="uppercase">
             <span className="flex items-center gap-2">
               <ProjectIcon iconUrl={project.iconUrl} />
@@ -107,11 +108,11 @@ export default function ProjectParametersSettingsPage() {
         <CardContent className="space-y-6">
           <Card id="junit">
             <CardHeader className="w-full">
-              <div className="flex items-center justify-between text-primary text-xl md:text-2xl pb-2 pt-1">
+              <SectionHeader className="flex items-center justify-between pb-2 pt-1">
                 <CardTitle>
                   <span>{tParameters("tabJunit")}</span>
                 </CardTitle>
-              </div>
+              </SectionHeader>
               <p className="text-sm text-muted-foreground pt-2">
                 {tJunit("description")}
               </p>
@@ -129,7 +130,7 @@ export default function ProjectParametersSettingsPage() {
 
           <Card id="datasets">
             <CardHeader className="w-full">
-              <div className="flex items-center justify-between text-primary text-xl md:text-2xl pb-2 pt-1">
+              <SectionHeader className="flex items-center justify-between pb-2 pt-1">
                 <CardTitle>
                   <span>{tDatasets("title")}</span>
                 </CardTitle>
@@ -142,7 +143,7 @@ export default function ProjectParametersSettingsPage() {
                     {tDatasets("newButton")}
                   </span>
                 </Button>
-              </div>
+              </SectionHeader>
               <p className="text-sm text-muted-foreground pt-2">
                 {tDatasets("description")}
               </p>

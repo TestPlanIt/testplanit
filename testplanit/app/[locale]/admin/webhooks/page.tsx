@@ -8,8 +8,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { SectionHeader } from "@/components/ui/typography";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Activity, Send, Webhook } from "lucide-react";
+import { Activity, Send } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { notFound, useSearchParams } from "next/navigation";
 import { usePathname, useRouter } from "~/lib/navigation";
@@ -69,12 +70,11 @@ export default function AdminWebhooksPage() {
     <main>
       <Card>
         <CardHeader className="w-full">
-          <div className="flex items-center justify-between text-primary text-xl md:text-2xl pb-2 pt-1">
+          <SectionHeader className="flex items-center justify-between pb-2 pt-1">
             <CardTitle className="flex items-center gap-2">
-              <Webhook className="h-6 w-6" />
               <span>{t("title")}</span>
             </CardTitle>
-          </div>
+          </SectionHeader>
           <CardDescription>{t("description")}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
