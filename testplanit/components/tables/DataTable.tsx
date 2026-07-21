@@ -273,9 +273,7 @@ function HeadCellContent({
       <ArrowDownUp className="h-4 w-4" aria-label={t("sortNone")} />
     );
   return (
-    <div
-      className={`flex gap-2 items-center justify-between relative h-full ${isActiveSort ? "font-extrabold" : ""}`}
-    >
+    <div className="flex gap-2 items-center justify-between relative h-full">
       <div className="flex items-center gap-1 whitespace-nowrap">
         {dragHandle}
         {header.column.getCanGroup() && onGroupingChange ? (
@@ -405,12 +403,11 @@ function HeadCellContent({
 }
 
 /**
- * Class names for a header cell, including the sorted-column indicator: a faint
- * primary tint plus a solid primary accent bar whose edge encodes the direction
- * — top edge when sorted ascending, bottom edge when descending. Every header
- * cell reserves transparent top/bottom borders so colouring one edge doesn't
- * shift the row. The tint is a flat gradient overlay so it sits on top of the
- * cell's own background colour rather than replacing it.
+ * Class names for a header cell, including the sorted-column indicator: a solid
+ * primary accent bar whose edge encodes the direction — top edge when sorted
+ * ascending, bottom edge when descending. Every header cell reserves transparent
+ * top/bottom borders so colouring one edge doesn't shift the row. The cell keeps
+ * its own background; the sort is signalled by the accent bar alone.
  */
 function getHeadCellClassName(
   header: any,
@@ -424,7 +421,7 @@ function getHeadCellClassName(
   if (!sortConfig || sortConfig.column !== header.column.id) return base;
   const bar =
     sortConfig.direction === "asc" ? "border-t-primary" : "border-b-primary";
-  return `${base} bg-gradient-to-b from-primary/10 to-primary/10 ${bar}`;
+  return `${base} ${bar}`;
 }
 
 /**
