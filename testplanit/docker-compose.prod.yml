@@ -247,6 +247,9 @@ services:
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
       - ./maintenance.html:/etc/nginx/maintenance.html:ro
+      # Per-deployment overrides (custom error pages, etc.). Tracked dir holds
+      # only a README + *.example; real *.conf and pages are gitignored/local.
+      - ./nginx-local:/etc/nginx/local:ro
     networks:
       testplanit-net:
         ipv4_address: 172.19.0.60
