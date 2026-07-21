@@ -1,0 +1,20 @@
+# Custom error pages — copy to `error-pages.conf` to activate (only real *.conf
+# files are loaded by the include hook in nginx.conf; this .example is inert).
+#
+# proxy_intercept_errors is intentionally NOT enabled, so these replace ONLY
+# errors nginx itself generates — chiefly 502/504 when the app is down or
+# redeploying. Responses proxied from the app pass through untouched.
+#
+# 503 is deliberately left alone — it is owned by the maintenance-mode handler.
+#
+# Put the referenced HTML files in ./error-pages/ (self-contained: inline
+# CSS/SVG, no dependency on the app being reachable).
+
+error_page 404 /__error-pages/404.html;
+error_page 500 /__error-pages/500.html;
+error_page 502 504 /__error-pages/502.html;
+
+location ^~ /__error-pages/ {
+    internal;
+    alias /etc/nginx/local/error-pages/;
+}
