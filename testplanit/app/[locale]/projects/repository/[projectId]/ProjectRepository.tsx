@@ -612,6 +612,22 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
     { enabled: isValidProjectId }
   );
 
+  // Whether the project has an active AI model integration. The Generate Test
+  // Cases wizard requires one — without it the wizard renders nothing — so the
+  // toolbar button is gated on this to avoid a button that does nothing.
+  const { data: activeLlmIntegrations } = useClientQueries(
+    schema
+  ).projectLlmIntegration.useFindMany(
+    {
+      where: { projectId: numericProjectId, isActive: true },
+      select: { id: true },
+      take: 1,
+    },
+    { enabled: isValidProjectId }
+  );
+  const hasActiveLlm =
+    !!activeLlmIntegrations && activeLlmIntegrations.length > 0;
+
   // Fetch aggregated view options for filters (lightweight query)
   const { data: viewOptionsData } = useQuery({
     queryKey: [
@@ -1838,28 +1854,36 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                                     initialFile={droppedFile}
                                   />
                                 )}
-                                {generateWizardOpen && (
-                                  <GenerateTestCasesWizard
-                                    folderId={selectedFolderId ?? 0}
-                                    folderName={selectedFolderName}
-                                    onImportComplete={refetchFolderStats}
-                                    open={generateWizardOpen}
-                                    onOpenChange={setGenerateWizardOpen}
-                                  />
-                                )}
-                                <Button
-                                  variant="outline"
-                                  disabled={folderHierarchy.length === 0}
-                                  onClick={() => setGenerateWizardOpen(true)}
-                                  className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2"
-                                >
-                                  <Sparkles className="w-4 h-4 shrink-0" />
-                                  <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-                                    {t(
-                                      "repository.generateTestCases.buttonText"
+                                {/* The wizard requires an active AI model
+                                    integration; without one it renders nothing,
+                                    so the button is gated on the same condition
+                                    to avoid a button that does nothing. */}
+                                {hasActiveLlm && (
+                                  <>
+                                    {generateWizardOpen && (
+                                      <GenerateTestCasesWizard
+                                        folderId={selectedFolderId ?? 0}
+                                        folderName={selectedFolderName}
+                                        onImportComplete={refetchFolderStats}
+                                        open={generateWizardOpen}
+                                        onOpenChange={setGenerateWizardOpen}
+                                      />
                                     )}
-                                  </span>
-                                </Button>
+                                    <Button
+                                      variant="outline"
+                                      disabled={folderHierarchy.length === 0}
+                                      onClick={() => setGenerateWizardOpen(true)}
+                                      className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2"
+                                    >
+                                      <Sparkles className="w-4 h-4 shrink-0" />
+                                      <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
+                                        {t(
+                                          "repository.generateTestCases.buttonText"
+                                        )}
+                                      </span>
+                                    </Button>
+                                  </>
+                                )}
                                 <FindDuplicatesButton
                                   projectId={projectIdParam}
                                   disabled={
