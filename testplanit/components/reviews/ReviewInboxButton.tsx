@@ -8,6 +8,9 @@ import { Inbox } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 
+import { useEffect } from "react";
+
+import { createDeferredEventSource } from "~/hooks/deferredEventSource";
 import { useReviewFeatureEnabled } from "~/hooks/useReviewFeatureEnabled";
 import { Link } from "~/lib/navigation";
 
@@ -83,7 +86,9 @@ export function ReviewInboxButton() {
     return Array.from(ids);
   })();
 
-  const { data: count } = useClientQueries(schema).reviewRequest.useCount(
+  const { data: count, refetch: refetchCount } = useClientQueries(
+    schema
+  ).reviewRequest.useCount(
     {
       where: {
         status: "PENDING",
@@ -97,6 +102,31 @@ export function ReviewInboxButton() {
     },
     { enabled: !!session?.user?.id && enabled === true }
   );
+
+  // The Header mounts once and never unmounts across client-side navigation,
+  // and the app's QueryClient defaults to refetchOnWindowFocus: false — so
+  // without an external signal this count is fetched at app load and never
+  // again, leaving the badge permanently stale. Requesting a review already
+  // dispatches a REVIEW_REQUESTED notification to the assignee, so the
+  // notification stream NotificationBell listens on doubles as the wake-up
+  // for the badge. Reconnect emits {event:"sync"}, which refetches and
+  // catches anything missed while disconnected.
+  useEffect(() => {
+    if (!session?.user?.id || enabled !== true) return;
+    if (typeof window === "undefined" || typeof EventSource === "undefined") {
+      return;
+    }
+    const eventSource = createDeferredEventSource("/api/notifications/stream");
+    eventSource.onmessage = () => {
+      void refetchCount();
+    };
+    eventSource.onerror = (err) => {
+      console.warn("[ReviewInboxButton] SSE transport error", err);
+    };
+    return () => {
+      eventSource.close();
+    };
+  }, [session?.user?.id, enabled, refetchCount]);
 
   // Count of access-visible projects with the per-project toggle on. The
   // enhanced auto-API enforces project access policies, so this naturally

@@ -13,6 +13,18 @@ vi.mock("next-auth/react", () => ({
   useSession: () => mockUseSession(),
 }));
 
+// SSE wake-up — the badge subscribes to the notification stream so a review
+// requested while the tab is open refreshes the count.
+const mockEventSource = { onmessage: null, onerror: null, close: vi.fn() };
+const mockCreateDeferredEventSource = vi.fn(() => mockEventSource);
+// The component guards on `typeof EventSource === "undefined"` so it degrades
+// gracefully outside the browser; jsdom doesn't provide it.
+vi.stubGlobal("EventSource", class {});
+vi.mock("~/hooks/deferredEventSource", () => ({
+  createDeferredEventSource: (...args: unknown[]) =>
+    mockCreateDeferredEventSource(...args),
+}));
+
 // feature flag (system-level — no projectId)
 const mockUseReviewFeatureEnabled = vi.fn();
 vi.mock("~/hooks/useReviewFeatureEnabled", () => ({
@@ -22,6 +34,7 @@ vi.mock("~/hooks/useReviewFeatureEnabled", () => ({
 
 // ZenStack hooks: count + user role lookup + access-visible project count
 const mockUseCountReviewRequest = vi.fn();
+const mockRefetchCount = vi.fn();
 const mockUseFindUniqueUser = vi.fn();
 const mockUseCountProjects = vi.fn();
 vi.mock("@zenstackhq/tanstack-query/react", () => ({
@@ -98,7 +111,10 @@ function setupDefaults({
       : undefined,
   });
 
-  mockUseCountReviewRequest.mockReturnValue({ data: count });
+  mockUseCountReviewRequest.mockReturnValue({
+    data: count,
+    refetch: mockRefetchCount,
+  });
 
   mockUseCountProjects.mockReturnValue({
     data: reviewEnabledProjectCount,
@@ -117,6 +133,8 @@ describe("ReviewInboxButton", () => {
     mockUseCountReviewRequest.mockReset();
     mockUseFindUniqueUser.mockReset();
     mockUseCountProjects.mockReset();
+    mockRefetchCount.mockReset();
+    mockCreateDeferredEventSource.mockClear();
   });
 
   it("(a) renders null when feature flag is disabled", () => {
@@ -236,5 +254,25 @@ describe("ReviewInboxButton", () => {
     expect(svg).not.toBeNull();
     // Inbox icon — assert it's present via lucide class naming convention.
     expect(svg?.getAttribute("class") ?? "").toMatch(/lucide-inbox|h-5/);
+  });
+
+  it("(k) subscribes to the notification stream and refetches the count on each event", () => {
+    setupDefaults({ count: 0 });
+    render(<ReviewInboxButton />);
+
+    expect(mockCreateDeferredEventSource).toHaveBeenCalledWith(
+      "/api/notifications/stream"
+    );
+    // The Header never unmounts, so the SSE event is the only thing that
+    // refreshes a badge that would otherwise stay stale from app load.
+    expect(mockRefetchCount).not.toHaveBeenCalled();
+    mockEventSource.onmessage?.(new MessageEvent("message"));
+    expect(mockRefetchCount).toHaveBeenCalledTimes(1);
+  });
+
+  it("(l) opens no stream while the feature flag is off", () => {
+    setupDefaults({ count: 0, enabled: false });
+    render(<ReviewInboxButton />);
+    expect(mockCreateDeferredEventSource).not.toHaveBeenCalled();
   });
 });
