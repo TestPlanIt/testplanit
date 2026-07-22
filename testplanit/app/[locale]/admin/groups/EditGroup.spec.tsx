@@ -99,35 +99,6 @@ vi.mock("@/components/ui/select", () => {
   };
 });
 
-// Mock Combobox
-vi.mock("@/components/ui/combobox", () => ({
-  Combobox: ({
-    onValueChange,
-    placeholder,
-    disabled,
-    users,
-  }: {
-    onValueChange: (value: string | null) => void;
-    placeholder?: string;
-    disabled?: boolean;
-    users?: any[];
-  }) => (
-    <div data-testid="combobox" data-disabled={disabled}>
-      <span>{placeholder}</span>
-      {users?.map((u) => (
-        <button
-          key={u.id}
-          type="button"
-          data-testid={`combobox-option-${u.id}`}
-          onClick={() => onValueChange(u.id)}
-        >
-          {u.name}
-        </button>
-      ))}
-    </div>
-  ),
-}));
-
 // Use vi.hoisted() to create stable mock refs to prevent OOM from infinite re-renders
 // (new array/object instances per render trigger infinite useEffect loops)
 const {
@@ -253,21 +224,21 @@ describe("EditGroup", () => {
     expect(screen.getByDisplayValue("Test Group")).toBeInTheDocument();
   });
 
-  test("shows assigned users list when loaded", async () => {
+  test("shows assigned users as combobox badges when loaded", async () => {
     renderWithProvider();
     await waitFor(() => {
-      // UserNameCell renders userId as text
-      expect(screen.getByTestId("user-name-cell-u1")).toBeInTheDocument();
+      // Assigned users render as badges showing their name (renderSelectedOption)
+      expect(screen.getByText("User One")).toBeInTheDocument();
     });
   });
 
-  test("shows no users assigned message when assignment list is empty", async () => {
+  test("shows the combobox placeholder when no users are assigned", async () => {
     useEmptyAssignments = true;
     const emptyGroup = { ...testGroup, assignedUsers: [] };
     renderWithProvider(emptyGroup as any);
     await waitFor(() => {
       expect(
-        screen.getByText("admin.groups.noUsersAssigned")
+        screen.getByText("common.placeholders.select")
       ).toBeInTheDocument();
     });
   });
@@ -289,23 +260,21 @@ describe("EditGroup", () => {
     });
   });
 
-  test("remove user button removes user from assigned list", async () => {
+  test("removing a user badge removes them from the assignment", async () => {
     const { user } = renderWithProvider();
 
-    // User should be displayed
+    // User appears as a selected badge
     await waitFor(() => {
-      expect(screen.getByTestId("user-name-cell-u1")).toBeInTheDocument();
+      expect(screen.getByText("User One")).toBeInTheDocument();
     });
 
-    // Click the delete button for the user
-    const deleteButton = screen.getByRole("button", {
-      name: "common.actions.delete",
-    });
-    await user.click(deleteButton);
+    // Each badge has a remove control whose accessible name is the user's name
+    const removeButton = screen.getByRole("button", { name: "User One" });
+    await user.click(removeButton);
 
-    // User should be removed from the list
+    // The badge should be gone
     await waitFor(() => {
-      expect(screen.queryByTestId("user-name-cell-u1")).not.toBeInTheDocument();
+      expect(screen.queryByText("User One")).not.toBeInTheDocument();
     });
   });
 

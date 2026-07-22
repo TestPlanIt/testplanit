@@ -3,7 +3,7 @@
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import type { Projects } from "~/zenstack/models";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { Controller, useForm } from "react-hook-form";
@@ -15,9 +15,8 @@ import {
 } from "@/components/DraggableCaseFields";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useTheme } from "next-themes";
-import MultiSelect from "react-select";
-import { getCustomStyles } from "~/styles/multiSelectStyles";
+import { ProjectIcon } from "@/components/ProjectIcon";
+import { MultiAsyncCombobox } from "@/components/ui/multi-async-combobox";
 
 import {
   Form,
@@ -86,21 +85,26 @@ export function AddTemplate({ open, onClose }: AddTemplateProps) {
   const { mutateAsync: createTemplateResultAssignment } =
     useClientQueries(schema).templateResultAssignment.useCreateMany();
 
-  const { theme } = useTheme();
-  const customStyles = getCustomStyles({ theme });
-
   const { data: projects } = useClientQueries(schema).projects.useFindMany({
     where: { isDeleted: false },
     orderBy: { name: "asc" },
   });
 
-  const projectOptions =
-    projects && projects.length > 0
-      ? projects.map((project) => ({
-          value: project.id,
-          label: `${project.name}`,
-        }))
-      : [];
+  type ProjectOption = NonNullable<typeof projects>[number];
+
+  const fetchProjectOptions = useCallback(
+    (query: string, page: number, pageSize: number) => {
+      const q = query.toLowerCase();
+      const filtered = (projects ?? []).filter((project) =>
+        project.name.toLowerCase().includes(q)
+      );
+      return Promise.resolve({
+        results: filtered.slice(page * pageSize, page * pageSize + pageSize),
+        total: filtered.length,
+      });
+    },
+    [projects]
+  );
 
   const { data: caseFields } = useClientQueries(schema).caseFields.useFindMany({
     where: { isDeleted: false },
@@ -147,11 +151,6 @@ export function AddTemplate({ open, onClose }: AddTemplateProps) {
       resultFields?.map((rf) => ({ id: rf.id, label: rf.displayName })) || []
     );
   }, [caseFields, resultFields]);
-
-  const selectAllProjects = () => {
-    const allProjectIds = projectOptions.map((option) => option.value);
-    setValue("projects", allProjectIds);
-  };
 
   const handleAddField = (field: any, type: string) => {
     // console.log(`adding ${field.label} to ${type} fields`);
@@ -435,47 +434,51 @@ export function AddTemplate({ open, onClose }: AddTemplateProps) {
             <FormField
               control={form.control}
               name="projects"
-              render={({ field: _field }) => (
+              render={() => (
                 <FormItem>
-                  <FormLabel className="flex justify-between items-center">
-                    <div className="flex items-center">
-                      {tCommon("fields.projects")}
-                      <HelpPopover helpKey="template.projects" />
-                    </div>
-                    <div
-                      onClick={selectAllProjects}
-                      style={{ cursor: "pointer" }}
-                      data-testid="select-all-projects"
-                    >
-                      {tCommon("actions.selectAll")}
-                    </div>
-                  </FormLabel>{" "}
+                  <FormLabel className="flex items-center">
+                    {tCommon("fields.projects")}
+                    <HelpPopover helpKey="template.projects" />
+                  </FormLabel>
                   <FormControl>
                     <Controller
                       control={control}
                       name="projects"
-                      render={({ field }) => (
-                        <MultiSelect
-                          {...field}
-                          isMulti
-                          maxMenuHeight={300}
-                          className="w-[445px] sm:w-[550px] lg:w-[950px]"
-                          classNamePrefix="select"
-                          styles={customStyles}
-                          options={projectOptions}
-                          onChange={(selected: any) => {
-                            // Convert selected options to the format expected by react-hook-form (an array of values)
-                            const value = selected
-                              ? selected.map((option: any) => option.value)
-                              : [];
-                            field.onChange(value);
-                          }}
-                          // Dynamically set the value based on the form's current state
-                          value={projectOptions.filter((option) =>
-                            field.value?.includes(option.value)
-                          )}
-                        />
-                      )}
+                      render={({ field }) => {
+                        const selectedProjects = (projects ?? []).filter(
+                          (project) => field.value?.includes(project.id)
+                        );
+                        return (
+                          <MultiAsyncCombobox<ProjectOption>
+                            value={selectedProjects}
+                            onValueChange={(selected) =>
+                              field.onChange(
+                                selected.map((project) => project.id)
+                              )
+                            }
+                            fetchOptions={fetchProjectOptions}
+                            renderOption={(project) => (
+                              <div className="flex min-w-0 items-center gap-2">
+                                <ProjectIcon
+                                  iconUrl={project.iconUrl}
+                                  width={16}
+                                  height={16}
+                                />
+                                <span className="truncate">{project.name}</span>
+                              </div>
+                            )}
+                            renderSelectedOption={(project) => (
+                              <span>{project.name}</span>
+                            )}
+                            getOptionValue={(project) => project.id}
+                            getOptionLabel={(project) => project.name}
+                            placeholder={tCommon("fields.projects")}
+                            className="w-full"
+                            pageSize={20}
+                            showTotal
+                          />
+                        );
+                      }}
                     />
                   </FormControl>
                   <FormMessage />

@@ -3,7 +3,7 @@ import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { Controller, useForm, useWatch } from "react-hook-form";
@@ -26,9 +26,8 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Star } from "lucide-react";
-import { useTheme } from "next-themes";
-import MultiSelect from "react-select";
-import { getCustomStyles } from "~/styles/multiSelectStyles";
+import { ProjectIcon } from "@/components/ProjectIcon";
+import { MultiAsyncCombobox } from "@/components/ui/multi-async-combobox";
 
 import {
   Form,
@@ -76,10 +75,6 @@ export function AddUser({ open, onClose }: AddUserProps) {
     useClientQueries(schema).projectAssignment.useCreateMany();
   const { mutateAsync: createManyGroupAssignment } =
     useClientQueries(schema).groupAssignment.useCreateMany();
-
-  // Theme the MultiSelect component
-  const { theme } = useTheme();
-  const customStyles = getCustomStyles({ theme });
 
   // Fetch roles, projects, groups, and registration settings...
   const { data: roles } = useClientQueries(schema).roles.useFindMany();
@@ -235,36 +230,42 @@ export function AddUser({ open, onClose }: AddUserProps) {
     orderBy: { name: "asc" },
   });
 
-  const projectOptions =
-    projects && projects.length > 0
-      ? projects.map((project) => ({
-          value: project.id,
-          label: `${project.name}`,
-        }))
-      : [];
+  type ProjectOption = NonNullable<typeof projects>[number];
 
-  const selectAllProjects = () => {
-    const allProjectIds = projectOptions.map((option) => option.value);
-    setValue("projects", allProjectIds);
-  };
+  const fetchProjectOptions = useCallback(
+    (query: string, page: number, pageSize: number) => {
+      const q = query.toLowerCase();
+      const filtered = (projects ?? []).filter((project) =>
+        project.name.toLowerCase().includes(q)
+      );
+      return Promise.resolve({
+        results: filtered.slice(page * pageSize, page * pageSize + pageSize),
+        total: filtered.length,
+      });
+    },
+    [projects]
+  );
 
   const { data: groups } = useClientQueries(schema).groups.useFindMany({
     where: { isDeleted: false },
     orderBy: { name: "asc" },
   });
 
-  const groupOptions =
-    groups && groups.length > 0
-      ? groups.map((group) => ({
-          value: group.id,
-          label: `${group.name}`,
-        }))
-      : [];
+  type GroupOption = NonNullable<typeof groups>[number];
 
-  const selectAllGroups = () => {
-    const allGroupIds = groupOptions.map((option) => option.value);
-    setValue("groups", allGroupIds);
-  };
+  const fetchGroupOptions = useCallback(
+    (query: string, page: number, pageSize: number) => {
+      const q = query.toLowerCase();
+      const filtered = (groups ?? []).filter((group) =>
+        group.name.toLowerCase().includes(q)
+      );
+      return Promise.resolve({
+        results: filtered.slice(page * pageSize, page * pageSize + pageSize),
+        total: filtered.length,
+      });
+    },
+    [groups]
+  );
 
   // Use the new form-specific validation schema
   const form = useForm<z.infer<typeof AddUserFormValidationSchema>>({
@@ -719,46 +720,44 @@ export function AddUser({ open, onClose }: AddUserProps) {
               <FormField
                 control={form.control}
                 name="groups"
-                render={({ field: _field }) => (
+                render={() => (
                   <FormItem>
-                    <FormLabel className="flex items-center justify-between">
-                      <div className="flex items-center">
-                        {tCommon("fields.groups")}
-                        <HelpPopover helpKey="user.groups" />
-                      </div>
-                      <div
-                        onClick={selectAllGroups}
-                        style={{ cursor: "pointer" }}
-                      >
-                        {tCommon("actions.selectAll")}
-                      </div>
+                    <FormLabel className="flex items-center">
+                      {tCommon("fields.groups")}
+                      <HelpPopover helpKey="user.groups" />
                     </FormLabel>
                     <FormControl>
                       <Controller
                         control={control}
                         name="groups"
-                        render={({ field }) => (
-                          <MultiSelect
-                            {...field}
-                            isMulti
-                            maxMenuHeight={300}
-                            className="w-[445px] sm:w-[550px] lg:w-[950px]"
-                            classNamePrefix="select"
-                            styles={customStyles}
-                            options={groupOptions}
-                            onChange={(selected: any) => {
-                              // Convert selected options to the format expected by react-hook-form (an array of values)
-                              const value = selected
-                                ? selected.map((option: any) => option.value)
-                                : [];
-                              field.onChange(value);
-                            }}
-                            // Dynamically set the value based on the form's current state
-                            value={groupOptions.filter((option) =>
-                              field.value?.includes(option.value)
-                            )}
-                          />
-                        )}
+                        render={({ field }) => {
+                          const selectedGroups = (groups ?? []).filter(
+                            (group) => field.value?.includes(group.id)
+                          );
+                          return (
+                            <MultiAsyncCombobox<GroupOption>
+                              value={selectedGroups}
+                              onValueChange={(selected) =>
+                                field.onChange(
+                                  selected.map((group) => group.id)
+                                )
+                              }
+                              fetchOptions={fetchGroupOptions}
+                              renderOption={(group) => (
+                                <span className="truncate">{group.name}</span>
+                              )}
+                              renderSelectedOption={(group) => (
+                                <span>{group.name}</span>
+                              )}
+                              getOptionValue={(group) => group.id}
+                              getOptionLabel={(group) => group.name}
+                              placeholder={tCommon("fields.groups")}
+                              className="w-full"
+                              pageSize={20}
+                              showTotal
+                            />
+                          );
+                        }}
                       />
                     </FormControl>
                     <FormMessage />
@@ -769,46 +768,53 @@ export function AddUser({ open, onClose }: AddUserProps) {
               <FormField
                 control={form.control}
                 name="projects"
-                render={({ field: _field }) => (
+                render={() => (
                   <FormItem>
-                    <FormLabel className="flex items-center justify-between">
-                      <div className="flex items-center">
-                        {tCommon("fields.projects")}
-                        <HelpPopover helpKey="user.projects" />
-                      </div>
-                      <div
-                        onClick={selectAllProjects}
-                        style={{ cursor: "pointer" }}
-                      >
-                        {tCommon("actions.selectAll")}
-                      </div>
+                    <FormLabel className="flex items-center">
+                      {tCommon("fields.projects")}
+                      <HelpPopover helpKey="user.projects" />
                     </FormLabel>
                     <FormControl>
                       <Controller
                         control={control}
                         name="projects"
-                        render={({ field }) => (
-                          <MultiSelect
-                            {...field}
-                            isMulti
-                            maxMenuHeight={300}
-                            className="w-[445px] sm:w-[550px] lg:w-[950px]"
-                            classNamePrefix="select"
-                            styles={customStyles}
-                            options={projectOptions}
-                            onChange={(selected: any) => {
-                              // Convert selected options to the format expected by react-hook-form (an array of values)
-                              const value = selected
-                                ? selected.map((option: any) => option.value)
-                                : [];
-                              field.onChange(value);
-                            }}
-                            // Dynamically set the value based on the form's current state
-                            value={projectOptions.filter((option) =>
-                              field.value?.includes(option.value)
-                            )}
-                          />
-                        )}
+                        render={({ field }) => {
+                          const selectedProjects = (projects ?? []).filter(
+                            (project) => field.value?.includes(project.id)
+                          );
+                          return (
+                            <MultiAsyncCombobox<ProjectOption>
+                              value={selectedProjects}
+                              onValueChange={(selected) =>
+                                field.onChange(
+                                  selected.map((project) => project.id)
+                                )
+                              }
+                              fetchOptions={fetchProjectOptions}
+                              renderOption={(project) => (
+                                <div className="flex min-w-0 items-center gap-2">
+                                  <ProjectIcon
+                                    iconUrl={project.iconUrl}
+                                    width={16}
+                                    height={16}
+                                  />
+                                  <span className="truncate">
+                                    {project.name}
+                                  </span>
+                                </div>
+                              )}
+                              renderSelectedOption={(project) => (
+                                <span>{project.name}</span>
+                              )}
+                              getOptionValue={(project) => project.id}
+                              getOptionLabel={(project) => project.name}
+                              placeholder={tCommon("fields.projects")}
+                              className="w-full"
+                              pageSize={20}
+                              showTotal
+                            />
+                          );
+                        }}
                       />
                     </FormControl>
                     <FormMessage />

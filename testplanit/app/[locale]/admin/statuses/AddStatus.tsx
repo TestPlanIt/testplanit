@@ -1,9 +1,7 @@
 "use client";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
-import DynamicIcon from "@/components/DynamicIcon";
-import { useEffect, useState } from "react";
-import { IconName } from "~/types/globals";
+import { useCallback, useEffect, useState } from "react";
 
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { Controller, useForm } from "react-hook-form";
@@ -13,6 +11,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 import { ColorPicker } from "@/components/ColorPicker";
+import DynamicIcon from "@/components/DynamicIcon";
+import { ProjectIcon } from "@/components/ProjectIcon";
+import { MultiAsyncCombobox } from "@/components/ui/multi-async-combobox";
+import { IconName } from "~/types/globals";
 
 import {
   Form,
@@ -35,9 +37,6 @@ import {
 import { HelpPopover } from "@/components/ui/help-popover";
 import { Switch } from "@/components/ui/switch";
 import { useTranslations } from "next-intl";
-import { useTheme } from "next-themes";
-import MultiSelect from "react-select";
-import { getCustomStyles } from "~/styles/multiSelectStyles";
 import { isUniqueConstraintError } from "~/lib/utils/errors";
 
 const createAddStatusFormSchema = (
@@ -92,46 +91,44 @@ export function AddStatus({ open, onClose }: AddStatusProps) {
   const { mutateAsync: createManyProjectStatusAssignment } =
     useClientQueries(schema).projectStatusAssignment.useCreateMany();
 
-  const { theme } = useTheme();
-  const customStyles = getCustomStyles({ theme });
-
   const { data: scopes } = useClientQueries(schema).statusScope.useFindMany();
 
-  const scopeOptions =
-    scopes && scopes.length > 0
-      ? scopes.map((scope) => ({
-          value: scope.id,
-          label: (
-            <div className="flex gap-1 items-center">
-              <DynamicIcon name={scope.icon as IconName} size={20} />
-              <span>{scope.name}</span>
-            </div>
-          ),
-        }))
-      : [];
+  type ScopeOption = NonNullable<typeof scopes>[number];
 
-  const selectAllScopes = () => {
-    const allScopeIds = scopeOptions.map((option) => option.value);
-    setValue("scope", allScopeIds);
-  };
+  const fetchScopeOptions = useCallback(
+    (query: string, page: number, pageSize: number) => {
+      const q = query.toLowerCase();
+      const filtered = (scopes ?? []).filter((scope) =>
+        scope.name.toLowerCase().includes(q)
+      );
+      return Promise.resolve({
+        results: filtered.slice(page * pageSize, page * pageSize + pageSize),
+        total: filtered.length,
+      });
+    },
+    [scopes]
+  );
 
   const { data: projects } = useClientQueries(schema).projects.useFindMany({
     where: { isDeleted: false },
     orderBy: { name: "asc" },
   });
 
-  const projectOptions =
-    projects && projects.length > 0
-      ? projects.map((project) => ({
-          value: project.id,
-          label: `${project.name}`,
-        }))
-      : [];
+  type ProjectOption = NonNullable<typeof projects>[number];
 
-  const selectAllProjects = () => {
-    const allProjectIds = projectOptions.map((option) => option.value);
-    setValue("projects", allProjectIds);
-  };
+  const fetchProjectOptions = useCallback(
+    (query: string, page: number, pageSize: number) => {
+      const q = query.toLowerCase();
+      const filtered = (projects ?? []).filter((project) =>
+        project.name.toLowerCase().includes(q)
+      );
+      return Promise.resolve({
+        results: filtered.slice(page * pageSize, page * pageSize + pageSize),
+        total: filtered.length,
+      });
+    },
+    [projects]
+  );
 
   const handleColorSelect = (colorId: number) => {
     setSelectedColorId(colorId);
@@ -444,44 +441,48 @@ export function AddStatus({ open, onClose }: AddStatusProps) {
             <FormField
               control={form.control}
               name="scope"
-              render={({ field: _field }) => (
+              render={() => (
                 <FormItem>
-                  <FormLabel className="flex justify-between items-center">
-                    <span className="flex items-center">
-                      {tCommon("fields.scope")}
-                      <HelpPopover helpKey="status.scope" />
-                    </span>
-                    <div
-                      onClick={selectAllScopes}
-                      style={{ cursor: "pointer" }}
-                    >
-                      {tCommon("actions.selectAll")}
-                    </div>
+                  <FormLabel className="flex items-center">
+                    {tCommon("fields.scope")}
+                    <HelpPopover helpKey="status.scope" />
                   </FormLabel>
                   <FormControl>
                     <Controller
                       control={control}
                       name="scope"
-                      render={({ field }) => (
-                        <MultiSelect
-                          {...field}
-                          isMulti
-                          maxMenuHeight={300}
-                          className="w-[445px] sm:w-[550px] lg:w-[950px]"
-                          classNamePrefix="select"
-                          styles={customStyles}
-                          options={scopeOptions}
-                          onChange={(selected: any) => {
-                            const value = selected
-                              ? selected.map((option: any) => option.value)
-                              : [];
-                            field.onChange(value);
-                          }}
-                          value={scopeOptions.filter((option) =>
-                            field.value?.includes(option.value)
-                          )}
-                        />
-                      )}
+                      render={({ field }) => {
+                        const selectedScopes = (scopes ?? []).filter((scope) =>
+                          field.value?.includes(scope.id)
+                        );
+                        return (
+                          <MultiAsyncCombobox<ScopeOption>
+                            value={selectedScopes}
+                            onValueChange={(selected) =>
+                              field.onChange(selected.map((scope) => scope.id))
+                            }
+                            fetchOptions={fetchScopeOptions}
+                            renderOption={(scope) => (
+                              <div className="flex min-w-0 items-center gap-2">
+                                <DynamicIcon
+                                  name={scope.icon as IconName}
+                                  size={16}
+                                />
+                                <span className="truncate">{scope.name}</span>
+                              </div>
+                            )}
+                            renderSelectedOption={(scope) => (
+                              <span>{scope.name}</span>
+                            )}
+                            getOptionValue={(scope) => scope.id}
+                            getOptionLabel={(scope) => scope.name}
+                            placeholder={tCommon("fields.scope")}
+                            className="w-full"
+                            pageSize={20}
+                            showTotal
+                          />
+                        );
+                      }}
                     />
                   </FormControl>
                   <FormMessage />
@@ -491,44 +492,51 @@ export function AddStatus({ open, onClose }: AddStatusProps) {
             <FormField
               control={form.control}
               name="projects"
-              render={({ field: _field }) => (
+              render={() => (
                 <FormItem>
-                  <FormLabel className="flex justify-between items-center">
-                    <span className="flex items-center">
-                      {tCommon("fields.projects")}
-                      <HelpPopover helpKey="status.projects" />
-                    </span>
-                    <div
-                      onClick={selectAllProjects}
-                      style={{ cursor: "pointer" }}
-                    >
-                      {tCommon("actions.selectAll")}
-                    </div>
+                  <FormLabel className="flex items-center">
+                    {tCommon("fields.projects")}
+                    <HelpPopover helpKey="status.projects" />
                   </FormLabel>
                   <FormControl>
                     <Controller
                       control={control}
                       name="projects"
-                      render={({ field }) => (
-                        <MultiSelect
-                          {...field}
-                          isMulti
-                          maxMenuHeight={300}
-                          className="w-[445px] sm:w-[550px] lg:w-[950px]"
-                          classNamePrefix="select"
-                          styles={customStyles}
-                          options={projectOptions}
-                          onChange={(selected: any) => {
-                            const value = selected
-                              ? selected.map((option: any) => option.value)
-                              : [];
-                            field.onChange(value);
-                          }}
-                          value={projectOptions.filter((option) =>
-                            field.value?.includes(option.value)
-                          )}
-                        />
-                      )}
+                      render={({ field }) => {
+                        const selectedProjects = (projects ?? []).filter(
+                          (project) => field.value?.includes(project.id)
+                        );
+                        return (
+                          <MultiAsyncCombobox<ProjectOption>
+                            value={selectedProjects}
+                            onValueChange={(selected) =>
+                              field.onChange(
+                                selected.map((project) => project.id)
+                              )
+                            }
+                            fetchOptions={fetchProjectOptions}
+                            renderOption={(project) => (
+                              <div className="flex min-w-0 items-center gap-2">
+                                <ProjectIcon
+                                  iconUrl={project.iconUrl}
+                                  width={16}
+                                  height={16}
+                                />
+                                <span className="truncate">{project.name}</span>
+                              </div>
+                            )}
+                            renderSelectedOption={(project) => (
+                              <span>{project.name}</span>
+                            )}
+                            getOptionValue={(project) => project.id}
+                            getOptionLabel={(project) => project.name}
+                            placeholder={tCommon("fields.projects")}
+                            className="w-full"
+                            pageSize={20}
+                            showTotal
+                          />
+                        );
+                      }}
                     />
                   </FormControl>
                   <FormMessage />

@@ -18,38 +18,6 @@ vi.mock("next-auth/react", () => ({
   }),
 }));
 
-// Mock next-themes
-vi.mock("next-themes", () => ({
-  useTheme: () => ({ theme: "light" }),
-}));
-
-// Mock react-select as a simplified component
-vi.mock("react-select", () => ({
-  default: ({ options, onChange, value, isDisabled }: any) => (
-    <div data-testid="react-select" data-disabled={isDisabled}>
-      {options?.map((opt: any) => (
-        <div key={opt.value} data-option-value={opt.value}>
-          {opt.label}
-        </div>
-      ))}
-      {value &&
-        Array.isArray(value) &&
-        value.map((v: any) => (
-          <div key={v.value} data-selected-value={v.value}>
-            {v.label}
-          </div>
-        ))}
-      <button
-        type="button"
-        onClick={() => onChange && onChange([])}
-        data-testid="react-select-clear"
-      >
-        clear
-      </button>
-    </div>
-  ),
-}));
-
 // Mock @tanstack/react-query useQueryClient
 const mockRefetchQueries = vi.fn();
 vi.mock("@tanstack/react-query", async (importOriginal) => {
@@ -60,11 +28,6 @@ vi.mock("@tanstack/react-query", async (importOriginal) => {
     useQueryClient: () => ({ refetchQueries: mockRefetchQueries }),
   };
 });
-
-// Mock multiSelectStyles
-vi.mock("~/styles/multiSelectStyles", () => ({
-  getCustomStyles: () => ({}),
-}));
 
 // Mock HelpPopover to avoid complexity
 vi.mock("@/components/ui/help-popover", () => ({

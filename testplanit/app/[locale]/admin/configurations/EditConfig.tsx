@@ -4,15 +4,14 @@ import { schema } from "~/zenstack/schema";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import type { Configurations } from "~/zenstack/models";
 import { useTranslations } from "next-intl";
-import { useTheme } from "next-themes";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
-import MultiSelect from "react-select";
 import { z } from "zod/v4";
-import { getCustomStyles } from "~/styles/multiSelectStyles";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ProjectIcon } from "@/components/ProjectIcon";
+import { MultiAsyncCombobox } from "@/components/ui/multi-async-combobox";
 
 import {
   Form,
@@ -67,21 +66,26 @@ export function EditConfiguration({
     useClientQueries(schema).projectConfigurationAssignment.useDeleteMany();
   const tCommon = useTranslations("common");
 
-  const { theme } = useTheme();
-  const customStyles = getCustomStyles({ theme });
-
   const { data: projects } = useClientQueries(schema).projects.useFindMany({
     where: { isDeleted: false },
     orderBy: { name: "asc" },
   });
 
-  const projectOptions =
-    projects && projects.length > 0
-      ? projects.map((project) => ({
-          value: project.id,
-          label: `${project.name}`,
-        }))
-      : [];
+  type ProjectOption = NonNullable<typeof projects>[number];
+
+  const fetchProjectOptions = useCallback(
+    (query: string, page: number, pageSize: number) => {
+      const q = query.toLowerCase();
+      const filtered = (projects ?? []).filter((project) =>
+        project.name.toLowerCase().includes(q)
+      );
+      return Promise.resolve({
+        results: filtered.slice(page * pageSize, page * pageSize + pageSize),
+        total: filtered.length,
+      });
+    },
+    [projects]
+  );
 
   const form = useForm<z.infer<ReturnType<typeof FormSchema>>>({
     resolver: standardSchemaResolver(FormSchema(tCommon)),
@@ -92,13 +96,6 @@ export function EditConfiguration({
   });
 
   const { control } = form;
-
-  const selectAllProjects = () => {
-    form.setValue(
-      "projects",
-      projectOptions.map((option) => option.value)
-    );
-  };
 
   const {
     formState: { errors },
@@ -179,42 +176,49 @@ export function EditConfiguration({
               name="projects"
               render={() => (
                 <FormItem>
-                  <FormLabel className="flex justify-between items-center">
-                    <span className="flex items-center">
-                      {tCommon("fields.projects")}
-                      <HelpPopover helpKey="config.projects" />
-                    </span>
-                    <div
-                      onClick={selectAllProjects}
-                      style={{ cursor: "pointer" }}
-                    >
-                      {tCommon("actions.selectAll")}
-                    </div>
+                  <FormLabel className="flex items-center">
+                    {tCommon("fields.projects")}
+                    <HelpPopover helpKey="config.projects" />
                   </FormLabel>
                   <FormControl>
                     <Controller
                       control={control}
                       name="projects"
-                      render={({ field }) => (
-                        <MultiSelect
-                          {...field}
-                          isMulti
-                          maxMenuHeight={300}
-                          className="w-[445px] sm:w-[550px] lg:w-[950px]"
-                          classNamePrefix="select"
-                          styles={customStyles}
-                          options={projectOptions}
-                          onChange={(selected: any) => {
-                            const value = selected
-                              ? selected.map((option: any) => option.value)
-                              : [];
-                            field.onChange(value);
-                          }}
-                          value={projectOptions.filter((option) =>
-                            field.value?.includes(option.value)
-                          )}
-                        />
-                      )}
+                      render={({ field }) => {
+                        const selectedProjects = (projects ?? []).filter(
+                          (project) => field.value?.includes(project.id)
+                        );
+                        return (
+                          <MultiAsyncCombobox<ProjectOption>
+                            value={selectedProjects}
+                            onValueChange={(selected) =>
+                              field.onChange(
+                                selected.map((project) => project.id)
+                              )
+                            }
+                            fetchOptions={fetchProjectOptions}
+                            renderOption={(project) => (
+                              <div className="flex min-w-0 items-center gap-2">
+                                <ProjectIcon
+                                  iconUrl={project.iconUrl}
+                                  width={16}
+                                  height={16}
+                                />
+                                <span className="truncate">{project.name}</span>
+                              </div>
+                            )}
+                            renderSelectedOption={(project) => (
+                              <span>{project.name}</span>
+                            )}
+                            getOptionValue={(project) => project.id}
+                            getOptionLabel={(project) => project.name}
+                            placeholder={tCommon("fields.projects")}
+                            className="w-full"
+                            pageSize={20}
+                            showTotal
+                          />
+                        );
+                      }}
                     />
                   </FormControl>
                   <FormMessage />

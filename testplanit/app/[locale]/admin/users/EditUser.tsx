@@ -5,7 +5,7 @@ import type { Roles, User } from "~/zenstack/models";
 import { useQueryClient } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { Controller, useForm, useWatch } from "react-hook-form";
@@ -16,9 +16,8 @@ import UploadAvatar from "@/components/UploadAvatar";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useTheme } from "next-themes";
-import MultiSelect from "react-select";
-import { getCustomStyles } from "~/styles/multiSelectStyles";
+import { ProjectIcon } from "@/components/ProjectIcon";
+import { MultiAsyncCombobox } from "@/components/ui/multi-async-combobox";
 
 import {
   Select,
@@ -130,10 +129,6 @@ export function EditUser({ user, open, onClose }: EditUserProps) {
     useClientQueries(schema).groupAssignment.useDeleteMany();
   const { data: session } = useSession();
 
-  // Theme the MultiSelect component
-  const { theme } = useTheme();
-  const customStyles = getCustomStyles({ theme });
-
   // Fetch data for dropdowns/multiselects
   const { data: allRoles } = useClientQueries(schema).roles.useFindMany({
     where: { isDeleted: false },
@@ -150,36 +145,49 @@ export function EditUser({ user, open, onClose }: EditUserProps) {
     where: { isDeleted: false },
     orderBy: { name: "asc" },
   });
-  const projectOptions = projects
-    ? projects.map((project) => ({
-        value: project.id,
-        label: project.name,
-      }))
-    : [];
-  const selectAllProjects = () => {
-    const allProjectIds = projectOptions.map((option) => option.value);
-    setValue("projects", allProjectIds);
-  };
+  type ProjectOption = NonNullable<typeof projects>[number];
+
+  const fetchProjectOptions = useCallback(
+    (query: string, page: number, pageSize: number) => {
+      const q = query.toLowerCase();
+      const filtered = (projects ?? []).filter((project) =>
+        project.name.toLowerCase().includes(q)
+      );
+      return Promise.resolve({
+        results: filtered.slice(page * pageSize, page * pageSize + pageSize),
+        total: filtered.length,
+      });
+    },
+    [projects]
+  );
 
   const { data: groups } = useClientQueries(schema).groups.useFindMany({
     where: { isDeleted: false },
     orderBy: { name: "asc" },
   });
+  type GroupOption = NonNullable<typeof groups>[number];
+
   // SCIM-managed groups (scimDisplayName != null) cannot accept locally-added
-  // members; the schema rule on GroupAssignment blocks the create. Filter
-  // them out of the picker so admins don't see options that would 403.
-  const groupOptions = groups
-    ? groups
+  // members; the schema rule on GroupAssignment blocks the create. Filter them
+  // out of the picker (both options and displayed selection) so admins don't
+  // see options that would 403.
+  const assignableGroups = (groups ?? []).filter(
+    (group) => group.scimDisplayName === null
+  );
+
+  const fetchGroupOptions = useCallback(
+    (query: string, page: number, pageSize: number) => {
+      const q = query.toLowerCase();
+      const filtered = (groups ?? [])
         .filter((group) => group.scimDisplayName === null)
-        .map((group) => ({
-          value: group.id,
-          label: group.name,
-        }))
-    : [];
-  const selectAllGroups = () => {
-    const allGroupIds = groupOptions.map((option) => option.value);
-    setValue("groups", allGroupIds);
-  };
+        .filter((group) => group.name.toLowerCase().includes(q));
+      return Promise.resolve({
+        results: filtered.slice(page * pageSize, page * pageSize + pageSize),
+        total: filtered.length,
+      });
+    },
+    [groups]
+  );
 
   // Use the new form-specific validation schema
   const form = useForm<z.infer<typeof EditUserFormValidationSchema>>({
@@ -620,44 +628,42 @@ export function EditUser({ user, open, onClose }: EditUserProps) {
             <FormField
               control={form.control}
               name="groups"
-              render={({ field: _field }) => (
+              render={() => (
                 <FormItem>
-                  <FormLabel className="flex justify-between">
-                    <div className="flex items-center">
-                      <div>{tCommon("fields.groups")}</div>
-                      <HelpPopover helpKey="user.groups" />
-                    </div>
-                    <div
-                      onClick={selectAllGroups}
-                      style={{ cursor: "pointer" }}
-                    >
-                      {tCommon("actions.selectAll")}
-                    </div>
-                  </FormLabel>{" "}
+                  <FormLabel className="flex items-center">
+                    {tCommon("fields.groups")}
+                    <HelpPopover helpKey="user.groups" />
+                  </FormLabel>
                   <FormControl>
                     <Controller
                       control={control}
                       name="groups"
-                      render={({ field }) => (
-                        <MultiSelect
-                          {...field}
-                          isMulti
-                          maxMenuHeight={300}
-                          className="w-[445px] sm:w-[550px] lg:w-[950px]"
-                          classNamePrefix="select"
-                          styles={customStyles}
-                          options={groupOptions}
-                          onChange={(selected: any) => {
-                            const value = selected
-                              ? selected.map((option: any) => option.value)
-                              : [];
-                            field.onChange(value);
-                          }}
-                          value={groupOptions.filter((option) =>
-                            field.value?.includes(option.value)
-                          )}
-                        />
-                      )}
+                      render={({ field }) => {
+                        const selectedGroups = assignableGroups.filter(
+                          (group) => field.value?.includes(group.id)
+                        );
+                        return (
+                          <MultiAsyncCombobox<GroupOption>
+                            value={selectedGroups}
+                            onValueChange={(selected) =>
+                              field.onChange(selected.map((group) => group.id))
+                            }
+                            fetchOptions={fetchGroupOptions}
+                            renderOption={(group) => (
+                              <span className="truncate">{group.name}</span>
+                            )}
+                            renderSelectedOption={(group) => (
+                              <span>{group.name}</span>
+                            )}
+                            getOptionValue={(group) => group.id}
+                            getOptionLabel={(group) => group.name}
+                            placeholder={tCommon("fields.groups")}
+                            className="w-full"
+                            pageSize={20}
+                            showTotal
+                          />
+                        );
+                      }}
                     />
                   </FormControl>
                   <FormMessage />
@@ -668,45 +674,51 @@ export function EditUser({ user, open, onClose }: EditUserProps) {
             <FormField
               control={form.control}
               name="projects"
-              render={({ field: _field }) => (
+              render={() => (
                 <FormItem>
-                  <FormLabel className="flex justify-between">
-                    <div className="flex items-center">
-                      <div>{tCommon("fields.projects")}</div>
-                      <HelpPopover helpKey="user.projects" />
-                    </div>
-
-                    <div
-                      onClick={selectAllProjects}
-                      style={{ cursor: "pointer" }}
-                    >
-                      {tCommon("actions.selectAll")}
-                    </div>
-                  </FormLabel>{" "}
+                  <FormLabel className="flex items-center">
+                    {tCommon("fields.projects")}
+                    <HelpPopover helpKey="user.projects" />
+                  </FormLabel>
                   <FormControl>
                     <Controller
                       control={control}
                       name="projects"
-                      render={({ field }) => (
-                        <MultiSelect
-                          {...field}
-                          isMulti
-                          maxMenuHeight={300}
-                          className="w-[445px] sm:w-[550px] lg:w-[950px]"
-                          classNamePrefix="select"
-                          styles={customStyles}
-                          options={projectOptions}
-                          onChange={(selected: any) => {
-                            const value = selected
-                              ? selected.map((option: any) => option.value)
-                              : [];
-                            field.onChange(value);
-                          }}
-                          value={projectOptions.filter((option) =>
-                            field.value?.includes(option.value)
-                          )}
-                        />
-                      )}
+                      render={({ field }) => {
+                        const selectedProjects = (projects ?? []).filter(
+                          (project) => field.value?.includes(project.id)
+                        );
+                        return (
+                          <MultiAsyncCombobox<ProjectOption>
+                            value={selectedProjects}
+                            onValueChange={(selected) =>
+                              field.onChange(
+                                selected.map((project) => project.id)
+                              )
+                            }
+                            fetchOptions={fetchProjectOptions}
+                            renderOption={(project) => (
+                              <div className="flex min-w-0 items-center gap-2">
+                                <ProjectIcon
+                                  iconUrl={project.iconUrl}
+                                  width={16}
+                                  height={16}
+                                />
+                                <span className="truncate">{project.name}</span>
+                              </div>
+                            )}
+                            renderSelectedOption={(project) => (
+                              <span>{project.name}</span>
+                            )}
+                            getOptionValue={(project) => project.id}
+                            getOptionLabel={(project) => project.name}
+                            placeholder={tCommon("fields.projects")}
+                            className="w-full"
+                            pageSize={20}
+                            showTotal
+                          />
+                        );
+                      }}
                     />
                   </FormControl>
                   <FormMessage />

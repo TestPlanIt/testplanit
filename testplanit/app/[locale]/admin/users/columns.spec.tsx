@@ -46,8 +46,8 @@ vi.mock("@/components/tables/RoleNameCell", () => ({
 vi.mock("@/components/tables/GroupListDisplay", () => ({
   GroupListDisplay: () => <span data-testid="group-list" />,
 }));
-vi.mock("@/components/tables/UserProjectsDisplay", () => ({
-  UserProjectsDisplay: () => <span data-testid="user-projects" />,
+vi.mock("@/components/tables/ProjectListDisplay", () => ({
+  ProjectListDisplay: () => <span data-testid="user-projects" />,
 }));
 vi.mock("~/components/LastActiveDisplay", () => ({
   LastActiveDisplay: () => <span data-testid="last-active" />,

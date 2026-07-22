@@ -18,6 +18,7 @@ import { ExtendedUser, useColumns } from "./columns";
 import { Filter } from "@/components/tables/Filter";
 
 import { Button } from "@/components/ui/button";
+import { HelpPopover } from "@/components/ui/help-popover";
 import { SectionHeader } from "@/components/ui/typography";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -282,25 +283,27 @@ function UserList() {
     <main>
       <Card>
         <CardHeader className="w-full">
-          <SectionHeader className="flex items-center justify-between">
-            <div>
+          <div className="flex items-center justify-between gap-2">
+            <SectionHeader className="flex items-center gap-2">
               <CardTitle data-testid="users-page-title">
                 {tGlobal("common.fields.users")}
               </CardTitle>
-            </div>
-            <div>
-              <Button onClick={() => setAddUserOpen(true)}>
-                <CirclePlus className="w-4" />
-                <span className="hidden md:inline">{t("add.button")}</span>
-              </Button>
-              {addUserOpen && (
-                <AddUser
-                  open={addUserOpen}
-                  onClose={() => setAddUserOpen(false)}
-                />
-              )}
-            </div>
-          </SectionHeader>
+              <HelpPopover helpKey="users" />
+            </SectionHeader>
+            <Button
+              onClick={() => setAddUserOpen(true)}
+              aria-label={t("add.button")}
+              className="group gap-0 transition-all duration-200 hover:gap-2"
+            >
+              <CirclePlus className="h-4 w-4" />
+              <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-xs">
+                {t("add.button")}
+              </span>
+            </Button>
+          </div>
+          {addUserOpen && (
+            <AddUser open={addUserOpen} onClose={() => setAddUserOpen(false)} />
+          )}
         </CardHeader>
         <CardContent>
           <div className="flex flex-row items-start justify-between gap-4">

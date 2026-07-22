@@ -1,6 +1,6 @@
 import { EmailCell } from "@/components/EmailDisplay";
 import { UserNameCell } from "@/components/tables/UserNameCell";
-import { UserProjectsDisplay } from "@/components/tables/UserProjectsDisplay";
+import { ProjectListDisplay } from "@/components/tables/ProjectListDisplay";
 import type { AccessibleProject } from "~/app/actions/getUserAccessibleProjects";
 import type { User } from "~/zenstack/models";
 import { ColumnDef } from "@tanstack/react-table";
@@ -49,7 +49,10 @@ export const useUserColumns = (tCommon: any): ColumnDef<ExtendedUser>[] =>
         size: 75,
         cell: ({ row }) => (
           <div className="bg-primary-foreground text-center">
-            <UserProjectsDisplay projects={row.original.accessibleProjects} />
+            <ProjectListDisplay
+              projects={row.original.accessibleProjects ?? []}
+              isLoading={row.original.accessibleProjects === undefined}
+            />
           </div>
         ),
       },

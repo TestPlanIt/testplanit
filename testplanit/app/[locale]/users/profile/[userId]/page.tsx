@@ -8,7 +8,8 @@ import { EmailCell } from "@/components/EmailDisplay";
 import { AccessLevelDisplay } from "@/components/tables/AccessLevelDisplay";
 import { GroupListDisplay } from "@/components/tables/GroupListDisplay";
 import { UserListDisplay } from "@/components/tables/UserListDisplay";
-import { UserProjectsDisplay } from "@/components/tables/UserProjectsDisplay";
+import { ProjectListDisplay } from "@/components/tables/ProjectListDisplay";
+import { getUsersAccessibleProjects } from "~/app/actions/getUserAccessibleProjects";
 import {
   Accordion,
   AccordionContent,
@@ -56,7 +57,7 @@ import {
   Theme,
   TimeFormat,
 } from "~/zenstack/models";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Accessibility,
   Check,
@@ -105,6 +106,18 @@ const UserProfile: React.FC<UserProfileProps> = ({
 
   const router = useRouter();
   const queryClient = useQueryClient();
+
+  // Resolve this user's effective accessible projects (via roles + group
+  // memberships), mirroring the batched table columns. Rendered inline below.
+  const { data: accessibleProjects, isLoading: accessibleProjectsLoading } =
+    useQuery({
+      queryKey: ["user-accessible-projects", userId],
+      queryFn: async () => {
+        const map = await getUsersAccessibleProjects([userId]);
+        return map[userId] ?? [];
+      },
+    });
+
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -951,16 +964,20 @@ const UserProfile: React.FC<UserProfileProps> = ({
                             <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide mb-2">
                               {tCommon("fields.projects")}
                             </h4>
-                            <UserProjectsDisplay
+                            <ProjectListDisplay
                               usePopover={false}
-                              userId={user.id}
+                              projects={accessibleProjects ?? []}
+                              isLoading={accessibleProjectsLoading}
                             />
                           </div>
                           <div>
                             <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide mb-2">
                               {tCommon("fields.groups")}
                             </h4>
-                            <GroupListDisplay groups={user.groups} />
+                            <GroupListDisplay
+                              groups={user.groups}
+                              usePopover={false}
+                            />
                           </div>
                         </div>
                       </AccordionContent>

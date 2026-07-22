@@ -4,7 +4,7 @@ import { AccessLevelDisplay } from "@/components/tables/AccessLevelDisplay";
 import { GroupListDisplay } from "@/components/tables/GroupListDisplay";
 import { RoleNameCell } from "@/components/tables/RoleNameCell";
 import { UserNameCell } from "@/components/tables/UserNameCell";
-import { UserProjectsDisplay } from "@/components/tables/UserProjectsDisplay";
+import { ProjectListDisplay } from "@/components/tables/ProjectListDisplay";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,7 +17,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import type { User } from "~/zenstack/models";
 import { ColumnDef } from "@tanstack/react-table";
-import { MoreHorizontal } from "lucide-react";
+import { Ban, KeyRound, MoreHorizontal, SquarePen, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useMemo } from "react";
 import type { AccessibleProject } from "~/app/actions/getUserAccessibleProjects";
@@ -204,7 +204,10 @@ export const useColumns = (
         size: 100,
         cell: ({ row }) => (
           <div className="text-center">
-            <UserProjectsDisplay projects={row.original.accessibleProjects} />
+            <ProjectListDisplay
+              projects={row.original.accessibleProjects ?? []}
+              isLoading={row.original.accessibleProjects === undefined}
+            />
           </div>
         ),
       },
@@ -329,6 +332,7 @@ export const useColumns = (
                     }
                     onClick={() => onEditUser?.(row.original)}
                   >
+                    <SquarePen className="me-2 h-4 w-4" />
                     {tCommon("actions.edit")}
                   </DropdownMenuItem>
                   {row.original.authMethod !== "SSO" &&
@@ -338,11 +342,13 @@ export const useColumns = (
                         <DropdownMenuItem
                           onClick={() => onForceChangePassword?.(row.original)}
                         >
+                          <KeyRound className="me-2 h-4 w-4" />
                           {tAdmin("forcePasswordChange")}
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           onClick={() => onRevokePassword?.(row.original)}
                         >
+                          <Ban className="me-2 h-4 w-4" />
                           {tAdmin("revokePassword")}
                         </DropdownMenuItem>
                       </>
@@ -353,6 +359,7 @@ export const useColumns = (
                       className="text-destructive focus:text-destructive"
                       onClick={() => onDeleteUser?.(row.original)}
                     >
+                      <Trash2 className="me-2 h-4 w-4" />
                       {tCommon("actions.delete")}
                     </DropdownMenuItem>
                   ) : null}

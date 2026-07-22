@@ -218,20 +218,17 @@ export const ProjectListDisplay: React.FC<ProjectListProps> = ({
     }
 
     return (
-      <div className="flex flex-wrap gap-2">
+      <div className="grid grid-cols-2 gap-x-6 gap-y-1.5 sm:grid-cols-3">
         {prefetchedProjects.map((project) => (
           <Link
             key={project.id}
             href={`/projects/overview/${project.id}`}
-            className={cn(
-              badgeVariants({ variant: "default" }),
-              "items-center px-3"
-            )}
+            className="flex items-center gap-2 text-sm hover:underline"
           >
-            <div className="max-w-5 max-h-5 shrink-0">
-              <ProjectIcon iconUrl={project.iconUrl} />
+            <div className="max-w-4 max-h-4 shrink-0">
+              <ProjectIcon iconUrl={project.iconUrl} width={16} height={16} />
             </div>
-            <span>{project.name}</span>
+            <span className="truncate">{project.name}</span>
           </Link>
         ))}
       </div>

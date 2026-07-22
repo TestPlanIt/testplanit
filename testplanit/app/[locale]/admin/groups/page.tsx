@@ -14,14 +14,9 @@ import { ExtendedGroups, useColumns } from "./columns";
 
 import { Filter } from "@/components/tables/Filter";
 import { Button } from "@/components/ui/button";
+import { HelpPopover } from "@/components/ui/help-popover";
 import { SectionHeader } from "@/components/ui/typography";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CirclePlus } from "lucide-react";
 import { AddGroup } from "./AddGroup";
 import { DeleteGroup } from "./DeleteGroup";
@@ -144,25 +139,28 @@ function GroupList() {
       <main>
         <Card>
           <CardHeader className="w-full">
-            <SectionHeader className="flex items-center justify-between">
-              <div>
+            <div className="flex items-center justify-between gap-2">
+              <SectionHeader className="flex items-center gap-2">
                 <CardTitle>{tGlobal("common.fields.groups")}</CardTitle>
-              </div>
-              <div>
-                <Button onClick={() => setAddGroupOpen(true)}>
-                  <CirclePlus className="w-4 me-1" />
-                  <span className="hidden md:inline">{t("add.button")}</span>
-                  <span className="md:hidden">{tCommon("add")}</span>
-                </Button>
-                {addGroupOpen && (
-                  <AddGroup
-                    open={addGroupOpen}
-                    onClose={() => setAddGroupOpen(false)}
-                  />
-                )}
-              </div>
-            </SectionHeader>
-            <CardDescription>{t("description.groupInfo")}</CardDescription>
+                <HelpPopover helpKey="groups" />
+              </SectionHeader>
+              <Button
+                onClick={() => setAddGroupOpen(true)}
+                aria-label={t("add.button")}
+                className="group gap-0 transition-all duration-200 hover:gap-2"
+              >
+                <CirclePlus className="h-4 w-4" />
+                <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-xs">
+                  {t("add.button")}
+                </span>
+              </Button>
+            </div>
+            {addGroupOpen && (
+              <AddGroup
+                open={addGroupOpen}
+                onClose={() => setAddGroupOpen(false)}
+              />
+            )}
           </CardHeader>
           <CardContent>
             <div className="flex flex-row items-start justify-between gap-4">

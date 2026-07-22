@@ -13,9 +13,13 @@ import React from "react";
 
 interface GroupListProps {
   groups: { groupId: number }[];
+  usePopover?: boolean;
 }
 
-export const GroupListDisplay: React.FC<GroupListProps> = ({ groups }) => {
+export const GroupListDisplay: React.FC<GroupListProps> = ({
+  groups,
+  usePopover = true,
+}) => {
   const tGroups = useTranslations("admin.groups");
   const { data: allGroups } = useClientQueries(schema).groups.useFindMany({
     orderBy: { name: "asc" },
@@ -35,6 +39,30 @@ export const GroupListDisplay: React.FC<GroupListProps> = ({ groups }) => {
 
   if (!allGroups || allGroups.length === 0) {
     return null;
+  }
+
+  if (!usePopover) {
+    return (
+      <div className="grid grid-cols-2 gap-x-6 gap-y-1.5 sm:grid-cols-3">
+        {allGroups.map((group: Groups) => {
+          const isScimManaged = group.scimDisplayName !== null;
+          return (
+            <div
+              key={group.id}
+              className="flex items-center gap-2 text-sm"
+              title={isScimManaged ? tGroups("scimManagedTooltip") : undefined}
+            >
+              {isScimManaged ? (
+                <UserRoundCog className="h-4 w-4 shrink-0" />
+              ) : (
+                <UsersRound className="h-4 w-4 shrink-0" />
+              )}
+              <span className="truncate">{group.name}</span>
+            </div>
+          );
+        })}
+      </div>
+    );
   }
 
   return (

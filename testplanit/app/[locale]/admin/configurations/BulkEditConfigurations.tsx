@@ -4,17 +4,16 @@ import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { useTranslations } from "next-intl";
-import { useTheme } from "next-themes";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
-import MultiSelect from "react-select";
 import { z } from "zod/v4";
-import { getCustomStyles } from "~/styles/multiSelectStyles";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { ProjectIcon } from "@/components/ProjectIcon";
+import { MultiAsyncCombobox } from "@/components/ui/multi-async-combobox";
 
 import {
   AlertDialog,
@@ -95,21 +94,26 @@ export function BulkEditConfigurations({
   const { mutateAsync: updateManyConfigurations } =
     useClientQueries(schema).configurations.useUpdateMany();
 
-  const { theme } = useTheme();
-  const customStyles = getCustomStyles({ theme });
-
   const { data: projects } = useClientQueries(schema).projects.useFindMany({
     where: { isDeleted: false },
     orderBy: { name: "asc" },
   });
 
-  const projectOptions =
-    projects && projects.length > 0
-      ? projects.map((project) => ({
-          value: project.id,
-          label: `${project.name}`,
-        }))
-      : [];
+  type ProjectOption = NonNullable<typeof projects>[number];
+
+  const fetchProjectOptions = useCallback(
+    (query: string, page: number, pageSize: number) => {
+      const q = query.toLowerCase();
+      const filtered = (projects ?? []).filter((project) =>
+        project.name.toLowerCase().includes(q)
+      );
+      return Promise.resolve({
+        results: filtered.slice(page * pageSize, page * pageSize + pageSize),
+        total: filtered.length,
+      });
+    },
+    [projects]
+  );
 
   const form = useForm<BulkEditFormData>({
     resolver: standardSchemaResolver(FormSchema),
@@ -128,13 +132,6 @@ export function BulkEditConfigurations({
   const enabledState = form.watch("enabledState");
 
   const { control } = form;
-
-  const selectAllProjects = () => {
-    form.setValue(
-      "projects",
-      projectOptions.map((option) => option.value)
-    );
-  };
 
   const {
     formState: { errors },
@@ -237,19 +234,9 @@ export function BulkEditConfigurations({
               name="projects"
               render={() => (
                 <FormItem>
-                  <FormLabel className="flex justify-between items-center">
-                    <span className="flex items-center">
-                      {tCommon("fields.projects")}
-                      <HelpPopover helpKey="config.projects" />
-                    </span>
-                    {applyProjects && (
-                      <div
-                        onClick={selectAllProjects}
-                        style={{ cursor: "pointer" }}
-                      >
-                        {tCommon("actions.selectAll")}
-                      </div>
-                    )}
+                  <FormLabel className="flex items-center">
+                    {tCommon("fields.projects")}
+                    <HelpPopover helpKey="config.projects" />
                   </FormLabel>
                   <FormControl>
                     <div className="flex items-center gap-3">
@@ -264,34 +251,44 @@ export function BulkEditConfigurations({
                       <Controller
                         control={control}
                         name="projects"
-                        render={({ field }) => (
-                          <MultiSelect
-                            {...field}
-                            isMulti
-                            isDisabled={!applyProjects}
-                            maxMenuHeight={300}
-                            className="grow w-[400px] sm:w-[500px] lg:w-[900px]"
-                            classNamePrefix="select"
-                            // Keep the menu inline (no portal): the shared
-                            // `customStyles` already sets the menu's z-index
-                            // to 9999 so it stacks above other dialog content,
-                            // and the dialog's `min-h` reserves room for it.
-                            // Portaling it to the body broke wheel-scrolling
-                            // because Radix Dialog's scroll-lock captures
-                            // wheel events outside the dialog tree.
-                            styles={customStyles}
-                            options={projectOptions}
-                            onChange={(selected: any) => {
-                              const value = selected
-                                ? selected.map((option: any) => option.value)
-                                : [];
-                              field.onChange(value);
-                            }}
-                            value={projectOptions.filter((option) =>
-                              field.value?.includes(option.value)
-                            )}
-                          />
-                        )}
+                        render={({ field }) => {
+                          const selectedProjects = (projects ?? []).filter(
+                            (project) => field.value?.includes(project.id)
+                          );
+                          return (
+                            <MultiAsyncCombobox<ProjectOption>
+                              value={selectedProjects}
+                              onValueChange={(selected) =>
+                                field.onChange(
+                                  selected.map((project) => project.id)
+                                )
+                              }
+                              fetchOptions={fetchProjectOptions}
+                              disabled={!applyProjects}
+                              renderOption={(project) => (
+                                <div className="flex min-w-0 items-center gap-2">
+                                  <ProjectIcon
+                                    iconUrl={project.iconUrl}
+                                    width={16}
+                                    height={16}
+                                  />
+                                  <span className="truncate">
+                                    {project.name}
+                                  </span>
+                                </div>
+                              )}
+                              renderSelectedOption={(project) => (
+                                <span>{project.name}</span>
+                              )}
+                              getOptionValue={(project) => project.id}
+                              getOptionLabel={(project) => project.name}
+                              placeholder={tCommon("fields.projects")}
+                              className="grow"
+                              pageSize={20}
+                              showTotal
+                            />
+                          );
+                        }}
                       />
                     </div>
                   </FormControl>

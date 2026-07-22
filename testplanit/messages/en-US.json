@@ -6338,6 +6338,8 @@
     "tags": "Tags label and organize test cases and sessions so you can group and find related work across projects.",
     "issues": "Issues are external tracker items — from Jira, GitHub, Azure DevOps, and other integrations — synced into TestPlanIt so they can be linked to test cases, runs, and sessions.",
     "crossProjectReports": "Build, run, and analyze reports that span multiple projects, such as automation trends across your entire test suite.",
+    "users": "Users are the people with access to TestPlanIt. Manage their accounts, access level, role, and active status here.",
+    "groups": "Groups let you assign project access and roles to many users at once. Add members directly, or map a group from your identity provider.",
     "workflows": "Manage the workflow states for test cases, test runs, and sessions.",
     "workflowReviews": "Enforce reviews by gating workflow transitions until approval is granted. When enabled, projects may opt in or out individually via their Advanced settings. Disable to prevent workflow approval gates.",
     "reviewReminders": "How many days a review request can sit pending before reviewers get a reminder notification. New requests start the clock at submission.",
