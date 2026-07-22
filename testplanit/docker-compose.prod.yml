@@ -258,6 +258,9 @@ services:
       prod:
         condition: service_started
     healthcheck:
+      # Use 127.0.0.1, not localhost: nginx.conf binds IPv4 only (`listen 80;`),
+      # but `localhost` resolves to IPv6 ::1 first, so wget gets connection
+      # refused and the container falsely reports unhealthy.
       test:
         [
           "CMD",
@@ -265,7 +268,7 @@ services:
           "--quiet",
           "--tries=1",
           "--spider",
-          "http://localhost/health",
+          "http://127.0.0.1/health",
         ]
       interval: 30s
       timeout: 5s
