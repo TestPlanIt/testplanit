@@ -3497,7 +3497,7 @@
       "sheetDescription": "Soumettez cette entité pour examen avant de passer à l'état cible.",
       "assigneeLabel": "Cessionnaire",
       "assigneePlaceholder": "Sélectionnez un utilisateur ou un rôle",
-      "usersHoldRole": "{count, plural, one {# utilisateur détient ce rôle} other {# utilisateurs détiennent ce rôle}}",
+      "usersNotified": "{count, plural, =0 {Personne ne sera notifié} one {# utilisateur sera notifié} other {# utilisateurs seront notifiés}}",
       "targetStateLabel": "État cible",
       "targetStatePlaceholder": "Sélectionnez un état cible",
       "commentLabel": "Commentaire",

@@ -3497,7 +3497,7 @@
       "sheetDescription": "目標状態に移行する前に、このエンティティをレビューに提出してください。",
       "assigneeLabel": "譲受人",
       "assigneePlaceholder": "ユーザーまたは役割を選択してください",
-      "usersHoldRole": "{count, plural, one {# このロールを持つユーザー} other {# このロールを持つユーザー}}",
+      "usersNotified": "{count, plural, =0 {No one will be notified} one {# user will be notified} other {# users will be notified}}",
       "targetStateLabel": "目標状態",
       "targetStatePlaceholder": "対象州を選択してください",
       "commentLabel": "コメント",

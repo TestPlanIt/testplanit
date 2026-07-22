@@ -3497,7 +3497,7 @@
       "sheetDescription": "在过渡到目标状态之前，请将此实体发送给我们进行审核。",
       "assigneeLabel": "受让人",
       "assigneePlaceholder": "选择用户或角色",
-      "usersHoldRole": "{count, plural, one {# 用户拥有此角色} other {# 用户拥有此角色}}",
+      "usersNotified": "{count, plural, =0 {No one will be notified} one {# user will be notified} other {# users will be notified}}",
       "targetStateLabel": "目标状态",
       "targetStatePlaceholder": "选择目标状态",
       "commentLabel": "评论",

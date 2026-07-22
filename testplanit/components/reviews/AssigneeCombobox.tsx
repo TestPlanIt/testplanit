@@ -23,7 +23,7 @@ export type AssigneeOption =
       kind: "role";
       id: number;
       name: string;
-      userCount: number;
+      notifyCount: number;
     };
 
 interface AssigneeComboboxProps {
@@ -51,9 +51,9 @@ export function AssigneeCombobox({
   // Project-scoped roles: only roles whose holders have effective access to
   // this project. A role with no project-eligible holders is a dead-end
   // assignment — the decide path would resolve it to zero reviewers — so
-  // hiding it from the picker prevents that footgun. Counts are also
-  // project-scoped so the "{n} users hold this role" subtitle matches the
-  // actual eligible-reviewer count for the assignment.
+  // hiding it from the picker prevents that footgun. The subtitle reports
+  // `notifyCount`, the recipient set the request would actually fan out to
+  // (requester and notification-disabled holders already removed).
   //
   // Filtering by `name` substring still happens client-side after the
   // server action returns (TestPlanIt installs typically have a handful
@@ -111,7 +111,7 @@ export function AssigneeCombobox({
                 kind: "role",
                 id: r.id,
                 name: r.name,
-                userCount: r.userCount,
+                notifyCount: r.notifyCount,
               }))
           : [];
 
@@ -135,8 +135,8 @@ export function AssigneeCombobox({
         ) : (
           <RoleOptionRow
             option={option}
-            usersHoldRoleLabel={t("reviews.requester.usersHoldRole", {
-              count: option.userCount,
+            usersNotifiedLabel={t("reviews.requester.usersNotified", {
+              count: option.notifyCount,
             })}
           />
         )
@@ -232,10 +232,10 @@ function UserOptionRow({
 
 function RoleOptionRow({
   option,
-  usersHoldRoleLabel,
+  usersNotifiedLabel,
 }: {
   option: Extract<AssigneeOption, { kind: "role" }>;
-  usersHoldRoleLabel: string;
+  usersNotifiedLabel: string;
 }) {
   return (
     <div
@@ -253,7 +253,7 @@ function RoleOptionRow({
       <div className="flex flex-col">
         <span className="text-sm">{option.name}</span>
         <span className="text-xs text-muted-foreground">
-          {usersHoldRoleLabel}
+          {usersNotifiedLabel}
         </span>
       </div>
     </div>

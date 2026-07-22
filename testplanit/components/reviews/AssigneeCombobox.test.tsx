@@ -37,7 +37,12 @@ vi.mock("@/components/Avatar", () => ({
 }));
 
 function setRoles(
-  result: Array<{ id: number; name: string; userCount: number }>
+  result: Array<{
+    id: number;
+    name: string;
+    userCount: number;
+    notifyCount: number;
+  }>
 ) {
   mockUseQuery.mockReturnValue({
     data: result,
@@ -128,7 +133,7 @@ describe("AssigneeCombobox", () => {
 
   it("(c) selecting a role emits onValueChange with kind: 'role'", async () => {
     const onValueChange = vi.fn<(v: AssigneeOption | null) => void>();
-    setRoles([{ id: 7, name: "Tester", userCount: 3 }]);
+    setRoles([{ id: 7, name: "Tester", userCount: 3, notifyCount: 3 }]);
     setUsers([]);
 
     render(
@@ -152,7 +157,7 @@ describe("AssigneeCombobox", () => {
       kind: "role",
       id: 7,
       name: "Tester",
-      userCount: 3,
+      notifyCount: 3,
     });
   });
 
@@ -162,8 +167,8 @@ describe("AssigneeCombobox", () => {
       { id: "user-2", name: "Bob", email: null, image: null },
     ]);
     setRoles([
-      { id: 7, name: "Tester", userCount: 3 },
-      { id: 8, name: "Manager", userCount: 1 },
+      { id: 7, name: "Tester", userCount: 3, notifyCount: 3 },
+      { id: 8, name: "Manager", userCount: 1, notifyCount: 1 },
     ]);
 
     render(
@@ -195,7 +200,7 @@ describe("AssigneeCombobox", () => {
 
   it("(e) renderOption distinguishes user rows from role rows", async () => {
     setUsers([{ id: "user-1", name: "Alice", email: null, image: null }]);
-    setRoles([{ id: 7, name: "Tester", userCount: 3 }]);
+    setRoles([{ id: 7, name: "Tester", userCount: 3, notifyCount: 3 }]);
 
     render(
       <AssigneeCombobox projectId={42} value={null} onValueChange={vi.fn()} />

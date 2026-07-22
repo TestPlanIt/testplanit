@@ -3497,7 +3497,7 @@
       "sheetDescription": "Stuur deze entiteit ter beoordeling door voordat u overgaat naar de doelstatus.",
       "assigneeLabel": "Cessionaris",
       "assigneePlaceholder": "Selecteer een gebruiker of rol",
-      "usersHoldRole": "{count, plural, one {# gebruiker heeft deze rol} other {# gebruikers hebben deze rol}}",
+      "usersNotified": "{count, plural, =0 {Niemand wordt op de hoogte gebracht} one {# gebruiker wordt op de hoogte gebracht} other {# gebruikers worden op de hoogte gebracht}}",
       "targetStateLabel": "Doelstaat",
       "targetStatePlaceholder": "Selecteer een doeltoestand",
       "commentLabel": "Opmerking",

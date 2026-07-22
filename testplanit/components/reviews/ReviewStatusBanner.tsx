@@ -150,7 +150,7 @@ export function ReviewStatusBanner({
             kind: "role",
             id: latest.assigneeRole.id,
             name: latest.assigneeRole.name,
-            userCount: 0,
+            notifyCount: 0,
           }
         : undefined;
 

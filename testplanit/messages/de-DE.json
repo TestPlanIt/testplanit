@@ -3497,7 +3497,7 @@
       "sheetDescription": "Senden Sie diese Entität zur Überprüfung, bevor Sie in den Zielzustand übergehen.",
       "assigneeLabel": "Abtretungsempfänger",
       "assigneePlaceholder": "Wählen Sie einen Benutzer oder eine Rolle aus",
-      "usersHoldRole": "{count, plural, one {# Benutzer mit dieser Rolle} other {# Benutzer mit dieser Rolle}}",
+      "usersNotified": "{count, plural, =0 {Niemand wird benachrichtigt} one {# Benutzer wird benachrichtigt} other {# Benutzer werden benachrichtigt}}",
       "targetStateLabel": "Zielzustand",
       "targetStatePlaceholder": "Wählen Sie einen Zielzustand aus",
       "commentLabel": "Kommentar",

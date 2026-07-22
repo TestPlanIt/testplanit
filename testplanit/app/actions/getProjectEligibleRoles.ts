@@ -2,6 +2,43 @@
 
 import { ApplicationArea } from "~/zenstack/models";
 import { baseDb } from "~/lib/db";
+import { getServerAuthSession } from "~/server/auth";
+
+/**
+ * Users the notification worker would drop on delivery: an explicit NONE
+ * preference, or USE_GLOBAL (the implied mode when the user has no
+ * preferences row) while the global default mode is NONE. Mirrors the
+ * JOB_CREATE_NOTIFICATION branch of workers/notificationWorker.ts.
+ */
+async function resolveSilencedUserIds(userIds: string[]): Promise<Set<string>> {
+  const silenced = new Set<string>();
+  if (userIds.length === 0) return silenced;
+
+  const [prefs, globalSettings] = await Promise.all([
+    baseDb.userPreferences.findMany({
+      where: { userId: { in: userIds } },
+      select: { userId: true, notificationMode: true },
+    }),
+    baseDb.appConfig.findUnique({
+      where: { key: "notificationSettings" },
+      select: { value: true },
+    }),
+  ]);
+
+  const globalMode =
+    (globalSettings?.value as { defaultMode?: string } | null)?.defaultMode ||
+    "IN_APP";
+  const modeByUser = new Map(prefs.map((p) => [p.userId, p.notificationMode]));
+
+  for (const userId of userIds) {
+    const mode = modeByUser.get(userId) || "USE_GLOBAL";
+    if (mode === "NONE" || (mode === "USE_GLOBAL" && globalMode === "NONE")) {
+      silenced.add(userId);
+    }
+  }
+
+  return silenced;
+}
 
 /**
  * Resolve the roles that are pickable as a review assignee for a project.
@@ -17,11 +54,20 @@ import { baseDb } from "~/lib/db";
  *   3. Group SPECIFIC_ROLE assignment with matching roleId (group member)
  *   4. Group GLOBAL_ROLE assignment (group member) with matching User.roleId
  *
- * The previous implementation collapsed to paths 2 + 4 only — it counted
- * users whose global role matched AND who had any effective project
- * access. That undercounted any user assigned the role per-project (path
- * 1 or 3) and produced a number that didn't match the actual reviewer
- * pool the decide path would resolve to.
+ * Two counts come back per role, because they answer different questions:
+ *
+ *   - `userCount` — every holder. Drives role visibility: a role with no
+ *     holders is a dead-end assignment the decide path would resolve to
+ *     zero reviewers, so it never reaches the picker.
+ *   - `notifyCount` — holders who actually receive the REVIEW_REQUESTED
+ *     notification, matching `resolveRoleHolderUserIds` exactly: the
+ *     requester is dropped (you don't get pinged about your own request)
+ *     and so is anyone the notification worker would skip for having
+ *     notifications turned off.
+ *
+ * A role can therefore be selectable while notifying nobody — silenced
+ * holders still see the request in their review inbox and can decide it,
+ * so hiding the role would remove a legitimate assignment target.
  *
  * Returns an empty array on any failure rather than throwing — the
  * AssigneeCombobox already falls back to the users page when roles are
@@ -36,6 +82,7 @@ export async function getProjectEligibleRoles(
     id: number;
     name: string;
     userCount: number;
+    notifyCount: number;
   }>
 > {
   try {
@@ -150,12 +197,35 @@ export async function getProjectEligibleRoles(
       });
     }
 
+    const session = await getServerAuthSession();
+    const requesterUserId = session?.user?.id ?? null;
+
+    const recipientCandidates = new Set<string>();
+    for (const holders of holdersByRole.values()) {
+      for (const userId of holders) {
+        if (userId !== requesterUserId) recipientCandidates.add(userId);
+      }
+    }
+    const silencedUserIds = await resolveSilencedUserIds(
+      Array.from(recipientCandidates)
+    );
+
     return allRoles
-      .map((r) => ({
-        id: r.id,
-        name: r.name,
-        userCount: holdersByRole.get(r.id)?.size ?? 0,
-      }))
+      .map((r) => {
+        const holders = holdersByRole.get(r.id) ?? new Set<string>();
+        let notifyCount = 0;
+        for (const userId of holders) {
+          if (userId === requesterUserId) continue;
+          if (silencedUserIds.has(userId)) continue;
+          notifyCount++;
+        }
+        return {
+          id: r.id,
+          name: r.name,
+          userCount: holders.size,
+          notifyCount,
+        };
+      })
       .filter((r) => r.userCount > 0);
   } catch (error) {
     console.error("Error fetching project eligible roles:", error);

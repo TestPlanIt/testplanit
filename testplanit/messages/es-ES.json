@@ -3497,7 +3497,7 @@
       "sheetDescription": "Envíe esta entidad para su revisión antes de la transición al estado de destino.",
       "assigneeLabel": "Cesionario",
       "assigneePlaceholder": "Seleccione un usuario o rol.",
-      "usersHoldRole": "{count, plural, one {# el usuario tiene este rol} other {# los usuarios tienen este rol}}",
+      "usersNotified": "{count, plural, =0 {No se notificará a nadie} one {Se notificará a # usuario} other {Se notificará a # usuarios}}",
       "targetStateLabel": "Estado objetivo",
       "targetStatePlaceholder": "Seleccione un estado objetivo",
       "commentLabel": "Comentario",

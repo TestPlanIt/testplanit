@@ -3497,7 +3497,7 @@
       "sheetDescription": "Hãy gửi thực thể này để xem xét trước khi chuyển sang trạng thái mục tiêu.",
       "assigneeLabel": "Người được chỉ định",
       "assigneePlaceholder": "Chọn người dùng hoặc vai trò",
-      "usersHoldRole": "{count, plural, one {# người dùng giữ vai trò này} other {# người dùng giữ vai trò này}}",
+      "usersNotified": "{count, plural, =0 {Không ai sẽ được thông báo} other {# người dùng sẽ được thông báo}}",
       "targetStateLabel": "Trạng thái mục tiêu",
       "targetStatePlaceholder": "Chọn tiểu bang mục tiêu",
       "commentLabel": "Bình luận",

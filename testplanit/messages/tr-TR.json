@@ -3497,7 +3497,7 @@
       "sheetDescription": "Hedef duruma geçmeden önce bu varlığı incelemeye gönderin.",
       "assigneeLabel": "Atanan kişi",
       "assigneePlaceholder": "Bir kullanıcı veya rol seçin",
-      "usersHoldRole": "{count, plural, one {# Bu role sahip kullanıcı sayısı} other {Bu role sahip kullanıcı sayısı}}",
+      "usersNotified": "{count, plural, =0 {Kimse bilgilendirilmeyecek} one {# kullanıcı bilgilendirilecek} other {# kullanıcı bilgilendirilecek}}",
       "targetStateLabel": "Hedef durum",
       "targetStatePlaceholder": "Hedef bir eyalet seçin",
       "commentLabel": "Yorum",

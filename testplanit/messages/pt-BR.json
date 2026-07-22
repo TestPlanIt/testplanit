@@ -3497,7 +3497,7 @@
       "sheetDescription": "Envie esta entidade para revisão antes de fazer a transição para o estado de destino.",
       "assigneeLabel": "Cedente",
       "assigneePlaceholder": "Selecione um usuário ou função",
-      "usersHoldRole": "{count, plural, one {# usuário detém esta função} other {# usuários detêm esta função}}",
+      "usersNotified": "{count, plural, =0 {Ninguém será notificado} one {# usuário será notificado} other {# usuários serão notificados}}",
       "targetStateLabel": "Estado alvo",
       "targetStatePlaceholder": "Selecione um estado de destino",
       "commentLabel": "Comentário",

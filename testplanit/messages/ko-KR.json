@@ -3497,7 +3497,7 @@
       "sheetDescription": "목표 상태로 전환하기 전에 이 엔티티를 검토를 위해 보내십시오.",
       "assigneeLabel": "양수인",
       "assigneePlaceholder": "사용자 또는 역할을 선택하세요",
-      "usersHoldRole": "{count, plural, one {# 사용자가 이 역할을 맡고 있습니다} other {# 사용자들이 이 역할을 맡고 있습니다}}",
+      "usersNotified": "{count, plural, =0 {아무에게도 알리지 않습니다} other {#명의 사용자에게 알립니다}}",
       "targetStateLabel": "목표 상태",
       "targetStatePlaceholder": "목표 상태를 선택하세요",
       "commentLabel": "논평",

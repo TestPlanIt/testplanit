@@ -3497,7 +3497,7 @@
       "sheetDescription": "Invia questa entità per la revisione prima di passare allo stato di destinazione.",
       "assigneeLabel": "Assegnatario",
       "assigneePlaceholder": "Seleziona un utente o un ruolo",
-      "usersHoldRole": "{count, plural, one {# l'utente detiene questo ruolo} other {# gli utenti detengono questo ruolo}}",
+      "usersNotified": "{count, plural, =0 {Nessuno sarà notificato} one {# utente sarà notificato} other {# utenti saranno notificati}}",
       "targetStateLabel": "Stato bersaglio",
       "targetStatePlaceholder": "Seleziona uno stato di destinazione",
       "commentLabel": "Commento",

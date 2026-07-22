@@ -3497,7 +3497,7 @@
       "sheetDescription": "Prześlij tę jednostkę do przeglądu przed przejściem do stanu docelowego.",
       "assigneeLabel": "Mandatariusz",
       "assigneePlaceholder": "Wybierz użytkownika lub rolę",
-      "usersHoldRole": "{count, plural, one {# użytkownik ma tę rolę} other {# użytkownicy mają tę rolę}}",
+      "usersNotified": "{count, plural, =0 {Nikt nie zostanie powiadomiony} one {# użytkownik zostanie powiadomiony} few {# użytkownicy zostaną powiadomieni} many {# użytkowników zostanie powiadomionych} other {# użytkownika zostanie powiadomionego}}",
       "targetStateLabel": "Stan docelowy",
       "targetStatePlaceholder": "Wybierz stan docelowy",
       "commentLabel": "Komentarz",

@@ -17,7 +17,8 @@ type EffectiveRoleDbClient = Pick<
  *   1. user-specific permission row (NO_ACCESS → null; GLOBAL_ROLE → user's
  *      global roleId; SPECIFIC_ROLE → row.roleId).
  *   2. group permission rows for any group the user belongs to
- *      (SPECIFIC_ROLE wins; DEFAULT defers to project default).
+ *      (SPECIFIC_ROLE wins; GLOBAL_ROLE → the user's own global roleId;
+ *      DEFAULT defers to project default).
  *   3. project default access type (NO_ACCESS → null; GLOBAL_ROLE → user's
  *      global roleId; SPECIFIC_ROLE → project.defaultRoleId).
  *
@@ -77,6 +78,14 @@ export async function resolveEffectiveProjectRoleId(
       (p) => p.accessType === ProjectAccessType.SPECIFIC_ROLE
     );
     if (specific) return specific.roleId ?? null;
+    // A group granted GLOBAL_ROLE access carries the member's own global
+    // role onto the project — the same membership path counted as path 4
+    // by getProjectEligibleRoles / resolveRoleHolderUserIds and matched by
+    // `isRoleHolderViaGroupGlobal` in the decide gate.
+    const global = groupPerms.find(
+      (p) => p.accessType === ProjectAccessType.GLOBAL_ROLE
+    );
+    if (global) return user.roleId ?? null;
   }
 
   // 3. Project default.
@@ -175,20 +184,26 @@ export async function resolveEffectiveProjectRolesForUsers(
       // DEFAULT → fall through.
     }
 
-    // 2. Group permissions.
-    let decidedByGroup = false;
-    for (const g of user.groups) {
-      const perms = groupPermsByGroupId.get(g.groupId) ?? [];
-      const specific = perms.find(
-        (p) => p.accessType === ProjectAccessType.SPECIFIC_ROLE
-      );
-      if (specific) {
-        result.set(userId, specific.roleId ?? null);
-        decidedByGroup = true;
-        break;
-      }
+    // 2. Group permissions. SPECIFIC_ROLE anywhere in the user's groups
+    // wins over a GLOBAL_ROLE grant, so both passes run across the flattened
+    // permission list rather than short-circuiting on the first group.
+    const userGroupPerms = user.groups.flatMap(
+      (g) => groupPermsByGroupId.get(g.groupId) ?? []
+    );
+    const groupSpecific = userGroupPerms.find(
+      (p) => p.accessType === ProjectAccessType.SPECIFIC_ROLE
+    );
+    if (groupSpecific) {
+      result.set(userId, groupSpecific.roleId ?? null);
+      continue;
     }
-    if (decidedByGroup) continue;
+    const groupGlobal = userGroupPerms.find(
+      (p) => p.accessType === ProjectAccessType.GLOBAL_ROLE
+    );
+    if (groupGlobal) {
+      result.set(userId, user.roleId ?? null);
+      continue;
+    }
 
     // 3. Project default.
     switch (project.defaultAccessType) {

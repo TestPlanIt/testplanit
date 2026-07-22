@@ -3497,7 +3497,7 @@
       "sheetDescription": "Send this entity for review before transitioning to the target state.",
       "assigneeLabel": "Assignee",
       "assigneePlaceholder": "Select a user or role",
-      "usersHoldRole": "{count, plural, one {# user holds this role} other {# users hold this role}}",
+      "usersNotified": "{count, plural, =0 {No one will be notified} one {# user will be notified} other {# users will be notified}}",
       "targetStateLabel": "Target state",
       "targetStatePlaceholder": "Select a target state",
       "commentLabel": "Comment",
