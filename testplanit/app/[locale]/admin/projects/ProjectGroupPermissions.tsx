@@ -190,8 +190,9 @@ export function ProjectGroupPermissions({
                   </td>
                   {/* Add Members Cell */}
                   <td className="px-4 align-middle">
-                    <UserListDisplay users={group.users} />{" "}
-                    {/* Pass group users */}
+                    <UserListDisplay
+                      filter={{ groups: { some: { groupId: group.id } } }}
+                    />
                   </td>
                   <td className="px-1 align-middle">
                     {/* Wrap Select and Effective Access in a flex container */}

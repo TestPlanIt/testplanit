@@ -13,14 +13,9 @@ import { ExtendedRoles, useColumns } from "./columns";
 
 import { Filter } from "@/components/tables/Filter";
 import { Button } from "@/components/ui/button";
+import { HelpPopover } from "@/components/ui/help-popover";
 import { SectionHeader } from "@/components/ui/typography";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CirclePlus } from "lucide-react";
 import { AddRole } from "./AddRoles";
 import { DeleteRole } from "./DeleteRoles";
@@ -145,24 +140,25 @@ function RoleList() {
     <main>
       <Card>
         <CardHeader className="w-full">
-          <SectionHeader className="flex items-center justify-between">
-            <div>
+          <div className="flex items-center justify-between gap-2">
+            <SectionHeader className="flex items-center gap-2">
               <CardTitle>{tGlobal("common.labels.roles")}</CardTitle>
-            </div>
-            <div>
-              <Button onClick={() => setAddRoleOpen(true)}>
-                <CirclePlus className="w-4" />
-                <span className="hidden md:inline">{t("add.button")}</span>
-              </Button>
-              {addRoleOpen && (
-                <AddRole
-                  open={addRoleOpen}
-                  onClose={() => setAddRoleOpen(false)}
-                />
-              )}
-            </div>
-          </SectionHeader>
-          <CardDescription>{t("description")}</CardDescription>
+              <HelpPopover helpKey="roles" />
+            </SectionHeader>
+            <Button
+              onClick={() => setAddRoleOpen(true)}
+              aria-label={t("add.button")}
+              className="group gap-0 transition-all duration-200 hover:gap-2"
+            >
+              <CirclePlus className="h-4 w-4" />
+              <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-xs">
+                {t("add.button")}
+              </span>
+            </Button>
+          </div>
+          {addRoleOpen && (
+            <AddRole open={addRoleOpen} onClose={() => setAddRoleOpen(false)} />
+          )}
         </CardHeader>
         <CardContent>
           <div className="flex flex-row items-start justify-between gap-4">

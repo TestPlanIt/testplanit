@@ -19,9 +19,7 @@ vi.mock("~/components/tables/GroupNameCell", () => ({
 
 // Mock UserListDisplay
 vi.mock("@/components/tables/UserListDisplay", () => ({
-  UserListDisplay: ({ users }: { users: { userId: string }[] }) => (
-    <span data-testid="user-list-display">{users.length} users</span>
-  ),
+  UserListDisplay: () => <span data-testid="user-list-display" />,
 }));
 
 // Mock ProjectListDisplay
@@ -164,7 +162,6 @@ describe("Groups columns", () => {
 
       const display = screen.getByTestId("user-list-display");
       expect(display).toBeInTheDocument();
-      expect(display).toHaveTextContent("2 users");
     });
   });
 

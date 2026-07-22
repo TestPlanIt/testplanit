@@ -61,13 +61,9 @@ export const useColumns = (
         enableSorting: false,
         enableResizing: true,
         size: 75,
-        cell: ({ row }) => {
-          const users = row.original.users;
-          const mappedUsers = users
-            ? users.map((user) => ({ userId: user.id }))
-            : [];
-          return <UserListDisplay users={mappedUsers} />;
-        },
+        cell: ({ row }) => (
+          <UserListDisplay filter={{ roleId: row.original.id }} />
+        ),
       },
       {
         id: "actions",

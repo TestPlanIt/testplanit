@@ -70,7 +70,9 @@ export const useColumns = (
         size: 75,
         cell: ({ row }) => (
           <div className="text-center">
-            <UserListDisplay users={row.original.assignedUsers} />
+            <UserListDisplay
+              filter={{ groups: { some: { groupId: row.original.id } } }}
+            />
           </div>
         ),
       },

@@ -32,9 +32,7 @@ vi.mock("@/components/tables/ProjectNameCell", () => ({
 
 // Mock UserListDisplay
 vi.mock("@/components/tables/UserListDisplay", () => ({
-  UserListDisplay: ({ users }: { users: { userId: string }[] }) => (
-    <span data-testid="user-list-display">{users.length} users</span>
-  ),
+  UserListDisplay: () => <span data-testid="user-list-display" />,
 }));
 
 // Mock GroupListDisplay

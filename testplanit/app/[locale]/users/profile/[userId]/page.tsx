@@ -1721,7 +1721,7 @@ const UserProfile: React.FC<UserProfileProps> = ({
                                   {tCommon("fields.usersCreated")}
                                 </span>
                                 <UserListDisplay
-                                  users={user.createdUsers as any}
+                                  filter={{ createdById: userId }}
                                 />
                               </div>
                             </div>

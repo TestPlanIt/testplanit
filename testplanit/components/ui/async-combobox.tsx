@@ -285,7 +285,7 @@ export function AsyncCombobox<T>({
                 <Spinner />
               </div>
             )}
-            <CommandList className="max-h-[300px]">
+            <CommandList className="max-h-[70vh]">
               <CommandEmpty>{tCommon("labels.noResults")}</CommandEmpty>
               <CommandGroup
                 className={cn(loading ? "opacity-50 pointer-events-none" : "")}

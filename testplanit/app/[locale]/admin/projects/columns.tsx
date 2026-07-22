@@ -97,9 +97,7 @@ export const useColumns = (
         cell: ({ row }) => (
           <div className="text-center">
             <UserListDisplay
-              users={row.original.effectiveUserIds.map((id) => ({
-                userId: id,
-              }))}
+              filter={{ id: { in: row.original.effectiveUserIds } }}
             />
           </div>
         ),
