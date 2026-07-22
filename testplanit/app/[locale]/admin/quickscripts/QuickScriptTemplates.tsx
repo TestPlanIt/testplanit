@@ -22,6 +22,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SectionHeader } from "@/components/ui/typography";
+import { HelpPopover } from "@/components/ui/help-popover";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -32,7 +33,7 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import type { CaseExportTemplate } from "~/zenstack/models";
-import { CirclePlus, ScrollText, Search, Trash2, Edit } from "lucide-react";
+import { CirclePlus, Search, Trash2, Edit } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -186,31 +187,29 @@ export default function QuickScriptTemplates() {
       <>
         <Card data-testid="quickscript-templates-section">
           <CardHeader>
-            <div className="flex items-center justify-between text-primary">
-              <SectionHeader className="flex items-center justify-between">
-                <CardTitle>
-                  <div className="flex items-center">
-                    <ScrollText className="me-1" />
-                    {t("title")}
-                  </div>
-                </CardTitle>
+            <div className="flex items-center justify-between gap-2">
+              <SectionHeader className="flex items-center gap-2">
+                <CardTitle>{t("title")}</CardTitle>
+                <HelpPopover helpKey="quickscripts" />
               </SectionHeader>
-              <div>
-                <Button
-                  data-testid="add-export-template-button"
-                  onClick={() => setAddTemplateOpen(true)}
-                >
-                  <CirclePlus className="w-4" />
-                  <span className="hidden md:inline">{t("add.button")}</span>
-                </Button>
-                {addTemplateOpen && (
-                  <AddQuickScriptTemplate
-                    open={addTemplateOpen}
-                    onClose={() => setAddTemplateOpen(false)}
-                  />
-                )}
-              </div>
+              <Button
+                data-testid="add-export-template-button"
+                onClick={() => setAddTemplateOpen(true)}
+                aria-label={t("add.button")}
+                className="group gap-0 transition-all duration-200 hover:gap-2"
+              >
+                <CirclePlus className="h-4 w-4" />
+                <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-xs">
+                  {t("add.button")}
+                </span>
+              </Button>
             </div>
+            {addTemplateOpen && (
+              <AddQuickScriptTemplate
+                open={addTemplateOpen}
+                onClose={() => setAddTemplateOpen(false)}
+              />
+            )}
           </CardHeader>
           <CardContent>
             <div className="flex flex-wrap items-center gap-3 mb-4">
@@ -386,7 +385,7 @@ export default function QuickScriptTemplates() {
                                   />
                                 </td>
                                 <td className="px-4 py-2">
-                                  <div className="flex justify-center gap-1">
+                                  <div className="flex justify-end gap-1">
                                     <Button
                                       variant="outline"
                                       className="px-2 py-1 h-auto"

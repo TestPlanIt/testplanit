@@ -19,13 +19,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { SectionHeader } from "@/components/ui/typography";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { HelpPopover } from "@/components/ui/help-popover";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useQueryClient } from "@tanstack/react-query";
 import { CirclePlus, GitBranch, Trash2 } from "lucide-react";
 import { useSession } from "next-auth/react";
@@ -232,23 +227,24 @@ function CodeRepositoryList() {
     <main>
       <Card>
         <CardHeader className="w-full">
-          <SectionHeader className="flex items-center justify-between">
-            <div>
-              <CardTitle
-                data-testid="code-repositories-admin-page-title"
-                className="items-center flex"
-              >
+          <div className="flex items-center justify-between gap-2">
+            <SectionHeader className="flex items-center gap-2">
+              <CardTitle data-testid="code-repositories-admin-page-title">
                 {t("title")}
               </CardTitle>
-              <CardDescription data-testid="code-repositories-admin-page-description">
-                {t("description")}
-              </CardDescription>
-            </div>
-            <Button onClick={handleAddRepo}>
+              <HelpPopover helpKey="codeRepositories" />
+            </SectionHeader>
+            <Button
+              onClick={handleAddRepo}
+              aria-label={tCommon("add")}
+              className="group gap-0 transition-all duration-200 hover:gap-2"
+            >
               <CirclePlus className="h-4 w-4" />
-              <span className="hidden md:inline">{tCommon("add")}</span>
+              <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-xs">
+                {tCommon("add")}
+              </span>
             </Button>
-          </SectionHeader>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="flex flex-row items-start justify-between gap-4">

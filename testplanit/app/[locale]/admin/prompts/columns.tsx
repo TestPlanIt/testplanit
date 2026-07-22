@@ -64,7 +64,7 @@ export const useColumns = (
         enableResizing: true,
         enableHiding: false,
         meta: { isPinned: "left" },
-        size: 300,
+        size: 240,
         cell: ({ row }) => (
           <div className="bg-primary-foreground flex items-center gap-2">
             <MessageSquareCode className="h-4 w-4 text-muted-foreground" />
@@ -83,7 +83,7 @@ export const useColumns = (
         header: tCommon("fields.description"),
         enableSorting: true,
         enableResizing: true,
-        size: 300,
+        size: 250,
         cell: ({ row }) => (
           <span className="text-sm text-muted-foreground">
             {row.original.description || "-"}

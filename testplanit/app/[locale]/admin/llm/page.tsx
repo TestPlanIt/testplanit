@@ -13,6 +13,7 @@ import { VirtualizedDataTable } from "@/components/tables/VirtualizedDataTable";
 import { Filter } from "@/components/tables/Filter";
 import { Button } from "@/components/ui/button";
 import { SectionHeader } from "@/components/ui/typography";
+import { HelpPopover } from "@/components/ui/help-popover";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CirclePlus, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
@@ -285,19 +286,24 @@ function LlmIntegrationList() {
     <main>
       <Card>
         <CardHeader className="w-full">
-          <SectionHeader className="flex items-center justify-between">
-            <div>
+          <div className="flex items-center justify-between gap-2">
+            <SectionHeader className="flex items-center gap-2">
               <CardTitle data-testid="llm-admin-page-title">
                 {tGlobal("admin.menu.llm")}
               </CardTitle>
-            </div>
-            <div>
-              <Button onClick={() => setShowAddDialog(true)}>
-                <CirclePlus className="w-4" />
-                <span className="hidden md:inline">{t("addIntegration")}</span>
-              </Button>
-            </div>
-          </SectionHeader>
+              <HelpPopover helpKey="aiModels" />
+            </SectionHeader>
+            <Button
+              onClick={() => setShowAddDialog(true)}
+              aria-label={t("addIntegration")}
+              className="group gap-0 transition-all duration-200 hover:gap-2"
+            >
+              <CirclePlus className="h-4 w-4" />
+              <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-xs">
+                {t("addIntegration")}
+              </span>
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="flex flex-row items-start justify-between gap-4">

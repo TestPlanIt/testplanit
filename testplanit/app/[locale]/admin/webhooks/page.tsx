@@ -1,14 +1,9 @@
 "use client";
 
 import { Loading } from "@/components/Loading";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SectionHeader } from "@/components/ui/typography";
+import { HelpPopover } from "@/components/ui/help-popover";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Activity, Send } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -70,12 +65,10 @@ export default function AdminWebhooksPage() {
     <main>
       <Card>
         <CardHeader className="w-full">
-          <SectionHeader className="flex items-center justify-between pb-2 pt-1">
-            <CardTitle className="flex items-center gap-2">
-              <span>{t("title")}</span>
-            </CardTitle>
+          <SectionHeader className="flex items-center gap-2 pb-2 pt-1">
+            <CardTitle>{t("title")}</CardTitle>
+            <HelpPopover helpKey="systemWebhooks" />
           </SectionHeader>
-          <CardDescription>{t("description")}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <Tabs value={activeTab} onValueChange={handleTabChange}>

@@ -415,107 +415,116 @@ function WebhookDeliveriesTabContent({ projectId }: WebhookDeliveriesTabProps) {
   // ─── Renderers ──────────────────────────────────────────────────────
   function renderFilterBar() {
     return (
-      <div className="flex flex-wrap items-center gap-2">
-        <Select
-          value={filter.configIds[0] ?? ""}
-          onValueChange={(v: string) =>
-            updateFilter({ configIds: v === "__all__" || v === "" ? null : v })
-          }
-        >
-          <SelectTrigger
-            data-testid="webhook-deliveries-filter-config"
-            className="w-56"
+      <div className="space-y-3">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+          <DateRangePicker
+            className="w-full"
+            buttonTestId="webhook-deliveries-filter-date-range-trigger"
+            value={
+              filter.since || filter.until
+                ? {
+                    from: filter.since ?? undefined,
+                    to: filter.until ?? undefined,
+                  }
+                : undefined
+            }
+            onChange={(range) =>
+              updateFilter({
+                since: range?.from ? range.from.toISOString() : null,
+                until: range?.to ? range.to.toISOString() : null,
+              })
+            }
+          />
+
+          <Select
+            value={filter.configIds[0] ?? ""}
+            onValueChange={(v: string) =>
+              updateFilter({
+                configIds: v === "__all__" || v === "" ? null : v,
+              })
+            }
           >
-            <SelectValue placeholder={t("filterConfigPlaceholder")} />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="__all__">
-              {t("filterConfigPlaceholder")}
-            </SelectItem>
-            {configList.map((c) => {
-              const fallbackKey = adapterLabelKey(c.adapterType);
-              const fallback = fallbackKey ? t(fallbackKey) : c.adapterType;
-              return (
-                <SelectItem key={c.id} value={c.id}>
-                  <span className="inline-flex items-center gap-2">
-                    {c.direction === "INBOUND" ? (
-                      <Inbox className="h-3.5 w-3.5" aria-hidden="true" />
-                    ) : (
-                      <Send className="h-3.5 w-3.5" aria-hidden="true" />
-                    )}
-                    <span>{c.name ?? fallback}</span>
-                  </span>
-                </SelectItem>
-              );
-            })}
-          </SelectContent>
-        </Select>
+            <SelectTrigger
+              data-testid="webhook-deliveries-filter-config"
+              className="w-full"
+            >
+              <SelectValue placeholder={t("filterConfigPlaceholder")} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__all__">
+                {t("filterConfigPlaceholder")}
+              </SelectItem>
+              {configList.map((c) => {
+                const fallbackKey = adapterLabelKey(c.adapterType);
+                const fallback = fallbackKey ? t(fallbackKey) : c.adapterType;
+                return (
+                  <SelectItem key={c.id} value={c.id}>
+                    <span className="inline-flex items-center gap-2">
+                      {c.direction === "INBOUND" ? (
+                        <Inbox className="h-3.5 w-3.5" aria-hidden="true" />
+                      ) : (
+                        <Send className="h-3.5 w-3.5" aria-hidden="true" />
+                      )}
+                      <span>{c.name ?? fallback}</span>
+                    </span>
+                  </SelectItem>
+                );
+              })}
+            </SelectContent>
+          </Select>
 
-        <Select
-          value={filter.status}
-          onValueChange={(v: string) =>
-            updateFilter({ status: v === "all" ? null : v })
-          }
-        >
-          <SelectTrigger
-            data-testid="webhook-deliveries-filter-status"
-            className="w-40"
+          <Select
+            value={filter.status}
+            onValueChange={(v: string) =>
+              updateFilter({ status: v === "all" ? null : v })
+            }
           >
-            <SelectValue placeholder={t("filterStatusAll")} />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">{t("filterStatusAll")}</SelectItem>
-            <SelectItem value="failed">{t("filterStatusFailed")}</SelectItem>
-            <SelectItem value="success">{t("filterStatusSuccess")}</SelectItem>
-          </SelectContent>
-        </Select>
+            <SelectTrigger
+              data-testid="webhook-deliveries-filter-status"
+              className="w-full"
+            >
+              <SelectValue placeholder={t("filterStatusAll")} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t("filterStatusAll")}</SelectItem>
+              <SelectItem value="failed">{t("filterStatusFailed")}</SelectItem>
+              <SelectItem value="success">
+                {t("filterStatusSuccess")}
+              </SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
 
-        <DateRangePicker
-          buttonTestId="webhook-deliveries-filter-date-range-trigger"
-          value={
-            filter.since || filter.until
-              ? {
-                  from: filter.since ?? undefined,
-                  to: filter.until ?? undefined,
-                }
-              : undefined
-          }
-          onChange={(range) =>
-            updateFilter({
-              since: range?.from ? range.from.toISOString() : null,
-              until: range?.to ? range.to.toISOString() : null,
-            })
-          }
-        />
-
-        <Button
-          type="button"
-          variant="ghost"
-          data-testid="webhook-deliveries-reset-top"
-          onClick={resetFilters}
-        >
-          {t("filterReset")}
-        </Button>
-
-        {showBulkReplay && (
+        <div className="flex flex-wrap items-center gap-2">
           <Button
             type="button"
-            variant="destructive"
-            data-testid="webhook-bulk-replay-button"
-            onClick={() => setBulkReplayOpen(true)}
-            disabled={bulkInFlight}
+            variant="ghost"
+            data-testid="webhook-deliveries-reset-top"
+            onClick={resetFilters}
           >
-            {t("filterBulkReplayButton", { count: outboundFailedCount })}
+            {t("filterReset")}
           </Button>
-        )}
-        {showBulkReplayHiddenHelper && (
-          <span
-            data-testid="webhook-bulk-replay-hidden-helper"
-            className="text-xs text-muted-foreground"
-          >
-            {t("filterBulkReplayHidden")}
-          </span>
-        )}
+
+          {showBulkReplay && (
+            <Button
+              type="button"
+              variant="destructive"
+              data-testid="webhook-bulk-replay-button"
+              onClick={() => setBulkReplayOpen(true)}
+              disabled={bulkInFlight}
+            >
+              {t("filterBulkReplayButton", { count: outboundFailedCount })}
+            </Button>
+          )}
+          {showBulkReplayHiddenHelper && (
+            <span
+              data-testid="webhook-bulk-replay-hidden-helper"
+              className="text-xs text-muted-foreground"
+            >
+              {t("filterBulkReplayHidden")}
+            </span>
+          )}
+        </div>
       </div>
     );
   }

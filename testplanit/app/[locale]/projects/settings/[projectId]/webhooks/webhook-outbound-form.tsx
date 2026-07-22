@@ -31,7 +31,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { WebhookAdapterIcon } from "@/components/webhooks/webhook-adapter-icon";
-import { formatDistanceToNow } from "date-fns";
+import { RelativeTimeTooltip } from "@/components/RelativeTimeTooltip";
 import {
   AlertTriangle,
   Archive,
@@ -859,14 +859,15 @@ export function WebhookOutboundForm({
   ) => (
     <div>
       <span className="font-medium">{t(labelKey)}:</span>{" "}
-      <span>
-        {value
-          ? formatDistanceToNow(new Date(value), {
-              addSuffix: true,
-              locale: dateLocale,
-            })
-          : t("activityNever")}
-      </span>
+      {value ? (
+        <RelativeTimeTooltip
+          date={new Date(value)}
+          dateFnsLocale={dateLocale}
+          className="inline"
+        />
+      ) : (
+        <span>{t("activityNever")}</span>
+      )}
     </div>
   );
 
@@ -939,9 +940,6 @@ export function WebhookOutboundForm({
             </div>
             <div className="flex shrink-0 flex-col items-end gap-2">
               <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">
-                  {t("outboundActiveToggle")}
-                </span>
                 <Switch
                   checked={config.isActive}
                   onCheckedChange={(next: boolean) =>
@@ -950,6 +948,9 @@ export function WebhookOutboundForm({
                   aria-label={t("outboundActiveToggle")}
                   data-testid={`webhook-outbound-active-toggle-${config.id}`}
                 />
+                <span className="text-sm text-muted-foreground">
+                  {t("outboundActiveToggle")}
+                </span>
               </div>
               <Tooltip>
                 <TooltipTrigger asChild>

@@ -3,13 +3,9 @@
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { Button } from "@/components/ui/button";
-import { PageTitle } from "@/components/ui/typography";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardTitle,
-} from "@/components/ui/card";
+import { PageTitle, SectionHeader } from "@/components/ui/typography";
+import { HelpPopover } from "@/components/ui/help-popover";
+import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -220,88 +216,58 @@ export default function SecurityAdminPage() {
     <div className="space-y-6">
       {/* Page Header */}
       <div className="pt-4">
-        <PageTitle as="h1" className="flex items-center text-primary">
+        <PageTitle as="h1" className="flex items-center gap-2 text-primary">
           <span>{t("title")}</span>
+          <HelpPopover helpKey="security" />
         </PageTitle>
-        <p className="text-muted-foreground mt-1">{t("description")}</p>
       </div>
 
       <Card>
         <CardContent className="space-y-8 pt-6">
           {/* Section 1: Sign-in Enforcement */}
           <div className="space-y-4">
-            <div>
-              <CardTitle className="text-lg">
-                {t("signInEnforcementTitle")}
-              </CardTitle>
-              <CardDescription className="mt-1">
-                {t("signInEnforcementDescription")}
-              </CardDescription>
+            <SectionHeader className="flex items-center gap-2">
+              <CardTitle>{t("signInEnforcementTitle")}</CardTitle>
+              <HelpPopover helpKey="securitySignInEnforcement" />
+            </SectionHeader>
+            <div className="flex items-center gap-2">
+              <Switch
+                id="forceSso"
+                checked={forceSso}
+                onCheckedChange={handleToggleForceSso}
+              />
+              <Label htmlFor="forceSso">{t("forceSsoTitle")}</Label>
+              <HelpPopover helpKey="securityForceSso" />
             </div>
-            <div>
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id="forceSso"
-                  checked={forceSso}
-                  onCheckedChange={handleToggleForceSso}
-                />
-                <Label htmlFor="forceSso" className="text-base font-medium">
-                  {t("forceSsoTitle")}
-                </Label>
-              </div>
-              <p className="text-sm text-muted-foreground mt-1">
-                {t("forceSsoDescription")}
-              </p>
+            <div className="flex items-center gap-2">
+              <Switch
+                id="force2FANonSSO"
+                checked={force2FANonSSO}
+                onCheckedChange={handleToggleForce2FANonSSO}
+                disabled={force2FAAllLogins}
+              />
+              <Label htmlFor="force2FANonSSO">{t("force2FANonSSOTitle")}</Label>
+              <HelpPopover helpKey="securityForce2FANonSSO" />
             </div>
-            <div>
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id="force2FANonSSO"
-                  checked={force2FANonSSO}
-                  onCheckedChange={handleToggleForce2FANonSSO}
-                  disabled={force2FAAllLogins}
-                />
-                <Label
-                  htmlFor="force2FANonSSO"
-                  className="text-base font-medium"
-                >
-                  {t("force2FANonSSOTitle")}
-                </Label>
-              </div>
-              <p className="text-sm text-muted-foreground mt-1">
-                {t("force2FANonSSODescription")}
-              </p>
-            </div>
-            <div>
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id="force2FAAllLogins"
-                  checked={force2FAAllLogins}
-                  onCheckedChange={handleToggleForce2FAAllLogins}
-                />
-                <Label
-                  htmlFor="force2FAAllLogins"
-                  className="text-base font-medium"
-                >
-                  {t("force2FAAllLoginsTitle")}
-                </Label>
-              </div>
-              <p className="text-sm text-muted-foreground mt-1">
-                {t("force2FAAllLoginsDescription")}
-              </p>
+            <div className="flex items-center gap-2">
+              <Switch
+                id="force2FAAllLogins"
+                checked={force2FAAllLogins}
+                onCheckedChange={handleToggleForce2FAAllLogins}
+              />
+              <Label htmlFor="force2FAAllLogins">
+                {t("force2FAAllLoginsTitle")}
+              </Label>
+              <HelpPopover helpKey="securityForce2FAAllLogins" />
             </div>
           </div>
           <Separator />
           {/* Section 2: Password Policy */}
           <div className="space-y-4">
-            <div>
-              <CardTitle className="text-lg">
-                {t("passwordPolicyTitle")}
-              </CardTitle>
-              <CardDescription className="mt-1">
-                {t("passwordPolicyDescription")}
-              </CardDescription>
-            </div>
+            <SectionHeader className="flex items-center gap-2">
+              <CardTitle>{t("passwordPolicyTitle")}</CardTitle>
+              <HelpPopover helpKey="securityPasswordPolicy" />
+            </SectionHeader>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
               {/* Left column: sliders */}
@@ -433,14 +399,10 @@ export default function SecurityAdminPage() {
           <Separator />
           {/* Section 3: Lockout Policy */}
           <div className="space-y-4">
-            <div>
-              <CardTitle className="text-lg">
-                {t("lockoutPolicyTitle")}
-              </CardTitle>
-              <CardDescription className="mt-1">
-                {t("lockoutPolicyDescription")}
-              </CardDescription>
-            </div>
+            <SectionHeader className="flex items-center gap-2">
+              <CardTitle>{t("lockoutPolicyTitle")}</CardTitle>
+              <HelpPopover helpKey="securityLockoutPolicy" />
+            </SectionHeader>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
               {/* Lockout Threshold */}
@@ -495,12 +457,10 @@ export default function SecurityAdminPage() {
           <Separator />
           {/* Section 4: Enforcement Actions */}
           <div className="space-y-4">
-            <div>
-              <CardTitle className="text-lg">{t("enforcementTitle")}</CardTitle>
-              <CardDescription className="mt-1">
-                {t("enforcementDescription")}
-              </CardDescription>
-            </div>
+            <SectionHeader className="flex items-center gap-2">
+              <CardTitle>{t("enforcementTitle")}</CardTitle>
+              <HelpPopover helpKey="securityEnforcement" />
+            </SectionHeader>
 
             <Button
               variant="destructive"

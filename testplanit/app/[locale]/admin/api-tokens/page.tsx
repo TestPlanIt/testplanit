@@ -26,13 +26,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { SectionHeader } from "@/components/ui/typography";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { HelpPopover } from "@/components/ui/help-popover";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -249,28 +244,27 @@ function ApiTokensList() {
     <main>
       <Card>
         <CardHeader className="w-full">
-          <SectionHeader className="flex items-center justify-between">
-            <div>
+          <div className="flex items-center justify-between gap-2">
+            <SectionHeader className="flex items-center gap-2">
               <CardTitle data-testid="api-tokens-page-title">
                 {tGlobal("admin.menu.apiTokens")}
               </CardTitle>
-              <CardDescription className="mt-2">
-                {t("description")}
-              </CardDescription>
-            </div>
-            <div>
-              {activeTokenCount > 0 && (
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => setRevokeAllDialogOpen(true)}
-                >
-                  <Ban className="h-4 w-4" />
+              <HelpPopover helpKey="apiTokens" />
+            </SectionHeader>
+            {activeTokenCount > 0 && (
+              <Button
+                variant="destructive"
+                onClick={() => setRevokeAllDialogOpen(true)}
+                aria-label={t("revokeAllTokens")}
+                className="group gap-0 transition-all duration-200 hover:gap-2"
+              >
+                <Ban className="h-4 w-4" />
+                <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
                   {t("revokeAllTokens")}
-                </Button>
-              )}
-            </div>
-          </SectionHeader>
+                </span>
+              </Button>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
           <div className="flex flex-row items-start justify-between gap-4">

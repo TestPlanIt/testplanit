@@ -1,4 +1,12 @@
 import { ShareLinkList } from "@/components/share/ShareLinkList";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { SectionHeader } from "@/components/ui/typography";
 import { getServerSession } from "next-auth/next";
 import { getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
@@ -28,13 +36,18 @@ export default async function AdminSharesPage({ params: _params }: PageProps) {
   const t = await getTranslations("reports.shareDialog.manageShares");
 
   return (
-    <div className="container mx-auto p-6 max-w-7xl">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold mb-2">{t("adminTitle")}</h1>
-        <p className="text-muted-foreground">{t("adminDescription")}</p>
-      </div>
-
-      <ShareLinkList showProjectColumn={true} />
-    </div>
+    <main>
+      <Card>
+        <CardHeader className="w-full">
+          <SectionHeader className="flex items-center gap-2 pb-2 pt-1">
+            <CardTitle>{t("adminTitle")}</CardTitle>
+          </SectionHeader>
+          <CardDescription>{t("adminDescription")}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ShareLinkList showProjectColumn={true} />
+        </CardContent>
+      </Card>
+    </main>
   );
 }

@@ -37,6 +37,9 @@ import {
 } from "@/components/ui/dialog";
 import { HelpPopover } from "@/components/ui/help-popover";
 import { Switch } from "@/components/ui/switch";
+import { AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { WarningAlert } from "@/components/ui/warning-alert";
+import { TriangleAlert } from "lucide-react";
 import { Label } from "@radix-ui/react-label";
 import { isUniqueConstraintError } from "~/lib/utils/errors";
 
@@ -266,17 +269,30 @@ export function AddRole({ open, onClose }: AddRoleProps) {
               control={control}
               name="isDefault"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-                  <FormLabel className="flex items-center">
-                    {t("common.fields.default")}
-                    <HelpPopover helpKey="role.isDefault" />
-                  </FormLabel>
-                  <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
+                <FormItem>
+                  <div className="flex flex-row items-center space-x-3 space-y-0">
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <FormLabel className="flex items-center mt-0!">
+                      {t("common.fields.default")}
+                      <HelpPopover helpKey="role.isDefault" />
+                    </FormLabel>
+                  </div>
+                  {field.value && (
+                    <WarningAlert data-testid="role-set-default-warning">
+                      <TriangleAlert className="h-4 w-4" />
+                      <AlertTitle>
+                        {t("admin.roles.confirmDefaultDescription")}
+                      </AlertTitle>
+                      <AlertDescription>
+                        {t("admin.roles.defaultWarning")}
+                      </AlertDescription>
+                    </WarningAlert>
+                  )}
                   <FormMessage />
                 </FormItem>
               )}

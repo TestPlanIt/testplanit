@@ -27,13 +27,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { SectionHeader } from "@/components/ui/typography";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { HelpPopover } from "@/components/ui/help-popover";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -43,7 +38,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Loader2, Plus } from "lucide-react";
+import { CirclePlus, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { revokeScimTokenAction } from "~/app/actions/scimTokenActions";
@@ -111,8 +106,10 @@ function FallbackDefaultCard() {
   return (
     <Card className="mt-6" data-testid="scim-fallback-default-card">
       <CardHeader>
-        <CardTitle>{t("fallbackDefaultTitle")}</CardTitle>
-        <CardDescription>{t("fallbackDefaultDescription")}</CardDescription>
+        <SectionHeader className="flex items-center gap-2">
+          <CardTitle>{t("fallbackDefaultTitle")}</CardTitle>
+          <HelpPopover helpKey="scimFallbackDefault" />
+        </SectionHeader>
       </CardHeader>
       <CardContent>
         <div className="space-y-3 max-w-md">
@@ -356,26 +353,25 @@ function ScimTokensList() {
     <main data-testid="scim-admin-page">
       <Card>
         <CardHeader className="w-full">
-          <SectionHeader className="flex items-center justify-between">
-            <div>
+          <div className="flex items-center justify-between gap-2">
+            <SectionHeader className="flex items-center gap-2">
               <CardTitle data-testid="scim-page-title">
                 {tGlobal("admin.menu.scim")}
               </CardTitle>
-              <CardDescription className="mt-2">
-                {t("description")}
-              </CardDescription>
-            </div>
-            <div>
-              <Button
-                variant="default"
-                onClick={() => setMintDialogOpen(true)}
-                data-testid="scim-mint-button"
-              >
-                <Plus className="h-4 w-4" />
+              <HelpPopover helpKey="scim" />
+            </SectionHeader>
+            <Button
+              onClick={() => setMintDialogOpen(true)}
+              data-testid="scim-mint-button"
+              aria-label={t("mintCta")}
+              className="group gap-0 transition-all duration-200 hover:gap-2"
+            >
+              <CirclePlus className="h-4 w-4" />
+              <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-xs">
                 {t("mintCta")}
-              </Button>
-            </div>
-          </SectionHeader>
+              </span>
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="flex flex-row items-start justify-between gap-4">
@@ -445,8 +441,10 @@ function ScimTokensList() {
 
       <Card className="mt-6">
         <CardHeader>
-          <CardTitle>{t("conflicts.title")}</CardTitle>
-          <CardDescription>{t("conflicts.description")}</CardDescription>
+          <SectionHeader className="flex items-center gap-2">
+            <CardTitle>{t("conflicts.title")}</CardTitle>
+            <HelpPopover helpKey="scimConflicts" />
+          </SectionHeader>
         </CardHeader>
         <CardContent>
           <ConflictLogTable />

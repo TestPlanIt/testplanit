@@ -7,19 +7,14 @@ import { VirtualizedDataTable } from "@/components/tables/VirtualizedDataTable";
 import TipTapEditor from "@/components/tiptap/TipTapEditor";
 import { Button } from "@/components/ui/button";
 import { SectionHeader } from "@/components/ui/typography";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { HelpPopover } from "@/components/ui/help-popover";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
 import { NotificationMode } from "~/zenstack/models";
-import { Send } from "lucide-react";
+import { Save, Send } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -283,18 +278,11 @@ function NotificationSettingsContent() {
     <div className="space-y-6">
       <Card>
         <CardHeader className="w-full">
-          <SectionHeader className="flex items-center justify-between">
-            <div>
-              <CardTitle
-                data-testid="notifications-page-title"
-                className="items-center flex"
-              >
-                {t("title")}
-              </CardTitle>
-              <CardDescription data-testid="notifications-page-description">
-                {t("description")}
-              </CardDescription>
-            </div>
+          <SectionHeader className="flex items-center gap-2">
+            <CardTitle data-testid="notifications-page-title">
+              {t("title")}
+            </CardTitle>
+            <HelpPopover helpKey="notifications" />
           </SectionHeader>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -347,6 +335,7 @@ function NotificationSettingsContent() {
 
           <div className="flex justify-end">
             <Button onClick={handleSave} disabled={isCreating || isUpdating}>
+              <Save className="h-4 w-4" />
               {isCreating || isUpdating
                 ? tGlobal("common.actions.saving")
                 : t("save")}
@@ -357,18 +346,11 @@ function NotificationSettingsContent() {
 
       <Card>
         <CardHeader className="w-full">
-          <SectionHeader className="flex items-center justify-between">
-            <div>
-              <CardTitle
-                data-testid="system-notifications-section"
-                className="items-center flex"
-              >
-                {t("systemNotification.title")}
-              </CardTitle>
-              <CardDescription data-testid="system-notifications-description">
-                {t("systemNotification.description")}
-              </CardDescription>
-            </div>
+          <SectionHeader className="flex items-center gap-2">
+            <CardTitle data-testid="system-notifications-section">
+              {t("systemNotification.title")}
+            </CardTitle>
+            <HelpPopover helpKey="notificationsSystem" />
           </SectionHeader>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -430,12 +412,12 @@ function NotificationSettingsContent() {
 
           <div>
             <div className="flex items-center justify-between mb-4">
-              <h3
-                className="text-lg font-semibold"
-                data-testid="notification-history-title"
-              >
-                {t("systemNotification.history.title")}
-              </h3>
+              <SectionHeader className="flex items-center gap-2">
+                <CardTitle data-testid="notification-history-title">
+                  {t("systemNotification.history.title")}
+                </CardTitle>
+                <HelpPopover helpKey="notificationsHistory" />
+              </SectionHeader>
               {tableData.length > 0 && (
                 <p className="text-sm text-muted-foreground shrink-0">
                   {tGlobal("admin.auditLogs.showing", {

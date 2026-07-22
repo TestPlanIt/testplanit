@@ -51,7 +51,7 @@ export const useColumns = (
         header: tCommon("fields.token"),
         enableSorting: false,
         enableResizing: true,
-        size: 150,
+        size: 130,
         cell: ({ row }) => (
           <code className="bg-muted px-2 py-1 rounded text-xs">
             {row.original.tokenPrefix}
@@ -65,7 +65,7 @@ export const useColumns = (
         header: tCommon("fields.created"),
         enableSorting: true,
         enableResizing: true,
-        size: 150,
+        size: 120,
         cell: ({ getValue }) => (
           <div className="whitespace-nowrap text-sm text-muted-foreground">
             <DateFormatter
@@ -82,7 +82,7 @@ export const useColumns = (
         header: t("columns.lastUsed"),
         enableSorting: true,
         enableResizing: true,
-        size: 150,
+        size: 120,
         cell: ({ row }) => (
           <div className="whitespace-nowrap text-sm text-muted-foreground">
             {row.original.lastUsedAt ? (
@@ -105,7 +105,7 @@ export const useColumns = (
         header: t("columns.expires"),
         enableSorting: true,
         enableResizing: true,
-        size: 150,
+        size: 130,
         cell: ({ row }) => {
           const expiresAt = row.original.expiresAt;
           if (!expiresAt) {
@@ -129,7 +129,7 @@ export const useColumns = (
         header: tCommon("actions.status"),
         enableSorting: true,
         enableResizing: true,
-        size: 100,
+        size: 120,
         cell: ({ row }) => {
           const isActive = row.original.isActive;
           const expiresAt = row.original.expiresAt;
@@ -158,14 +158,16 @@ export const useColumns = (
             return null;
           }
           return (
-            <Button
-              variant="destructive"
-              onClick={() => onRevoke(token)}
-              className="px-2 py-1 h-auto"
-              title={t("revokeToken")}
-            >
-              <Ban className="h-4 w-4" />
-            </Button>
+            <div className="flex justify-end">
+              <Button
+                variant="destructive"
+                onClick={() => onRevoke(token)}
+                className="px-2 py-1 h-auto"
+                title={t("revokeToken")}
+              >
+                <Ban className="h-4 w-4" />
+              </Button>
+            </div>
           );
         },
       },
