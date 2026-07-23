@@ -23,6 +23,21 @@ services:
         SELF_HOSTED: ${SELF_HOSTED:-true}
     env_file:
       - .env.production
+    environment:
+      # Per-service pool size (overrides any DATABASE_POOL_MAX in the shared
+      # .env.production env_file). See lib/db/poolConfig.ts.
+      #
+      # Budget against postgres max_connections=300 (297 usable after the 3
+      # superuser-reserved): prod 100 + workers 60 = 160 peak, leaving ~137 for
+      # psql sessions, `migrate deploy`, and one-off containers. Raising either
+      # value past that budget trades an app-side queue for postgres refusing
+      # connections outright (FATAL 53300), which is strictly worse.
+      #
+      # Note the host has 4 vCPUs, so concurrency beyond ~4x that mostly queues
+      # inside postgres rather than adding throughput. The pool is sized for
+      # burst absorption, not parallelism: it exists so a handful of slow
+      # queries can't occupy every slot and stall unrelated routes.
+      DATABASE_POOL_MAX: ${PROD_DATABASE_POOL_MAX:-100}
     ports:
       - "${DOCKER_PROD_APP_PORT:-30000}:3000"
     networks:
@@ -38,6 +53,13 @@ services:
       target: workers
     env_file:
       - .env.production
+    environment:
+      # Worker-side pool. Smaller than prod's because the fleet's summed BullMQ
+      # concurrency (~30 across sync/audit/email/copy-move/... queues) is the
+      # real upper bound on simultaneous queries here; 60 leaves room for the
+      # bursty ones without eating into prod's share of the 297-connection
+      # budget. See the note on the prod service above.
+      DATABASE_POOL_MAX: ${WORKERS_DATABASE_POOL_MAX:-60}
     networks:
       testplanit-net:
         ipv4_address: 172.19.0.11
