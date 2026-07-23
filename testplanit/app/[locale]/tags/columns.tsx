@@ -57,7 +57,7 @@ export const useTagColumns = (
         enableSorting: true,
         enableResizing: true,
         sortingFn: "basic",
-        size: 75,
+        size: 130,
         cell: ({ row }) => {
           const count = row.original.repositoryCasesCount;
           return (
@@ -87,7 +87,7 @@ export const useTagColumns = (
         enableSorting: true,
         enableResizing: true,
         sortingFn: "basic",
-        size: 75,
+        size: 130,
         cell: ({ row }) => {
           const count = row.original.testRunsCount;
           return (
@@ -115,7 +115,7 @@ export const useTagColumns = (
         enableSorting: true,
         enableResizing: true,
         sortingFn: "basic",
-        size: 75,
+        size: 130,
         cell: ({ row }) => {
           const count = row.original.sessionsCount;
           return (
@@ -143,7 +143,7 @@ export const useTagColumns = (
         enableSorting: true,
         enableResizing: true,
         sortingFn: "basic",
-        size: 75,
+        size: 130,
         cell: ({ row }) => {
           const projects = row.original.projects || [];
           return (

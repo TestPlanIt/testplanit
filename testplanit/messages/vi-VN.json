@@ -13,6 +13,7 @@
     "file": "Tài liệu",
     "selectMultiple": "Chọn nhiều mục...",
     "searchUsers": "Tìm kiếm người dùng...",
+    "searchGroups": "Tìm kiếm nhóm...",
     "searchCases": "{count, plural, =0 {Tìm kiếm trường hợp} one {Tìm kiếm trường hợp số} other {Tìm kiếm trường hợp số}}",
     "searchProjects": "{count, plural, =0 {Tìm kiếm dự án} one {Tìm kiếm # dự án} other {Tìm kiếm # dự án}}",
     "searchTags": "Tìm kiếm thẻ...",
@@ -382,7 +383,8 @@
         "notificationSettings": "Thông báo Cài đặt toàn cầu",
         "elasticsearch_replicas": "Bản sao Elasticsearch",
         "review_feature_enabled": "Chức năng xem xét và phê duyệt đã được bật.",
-        "review_reminder_threshold_days": "Nhắc nhở người đánh giá về số ngày ngưỡng"
+        "review_reminder_threshold_days": "Nhắc nhở người đánh giá về số ngày ngưỡng",
+        "record_key_enabled": "Đã bật khóa bản ghi"
       },
       "options": {
         "label": "Nhãn",
@@ -800,7 +802,8 @@
     "table": {
       "columns": {
         "columns": "Cột",
-        "required": "(yêu cầu)"
+        "required": "(yêu cầu)",
+        "resetColumns": "Đặt lại cột về mặc định"
       },
       "filter": "Danh sách lọc...",
       "selectNone": "Không chọn",
@@ -3497,7 +3500,7 @@
       "sheetDescription": "Hãy gửi thực thể này để xem xét trước khi chuyển sang trạng thái mục tiêu.",
       "assigneeLabel": "Người được chỉ định",
       "assigneePlaceholder": "Chọn người dùng hoặc vai trò",
-      "usersHoldRole": "{count, plural, one {# người dùng giữ vai trò này} other {# người dùng giữ vai trò này}}",
+      "usersHoldRole": "{count, plural, other {# người dùng giữ vai trò này}}",
       "targetStateLabel": "Trạng thái mục tiêu",
       "targetStatePlaceholder": "Chọn tiểu bang mục tiêu",
       "commentLabel": "Bình luận",
@@ -3988,6 +3991,12 @@
           "actionMap": "Ánh xạ tới hệ thống hiện có",
           "actionCreate": "Tạo mới",
           "workflowTypePlaceholder": "Chọn loại",
+          "workflowScope": {
+            "default": "Khác",
+            "cases": "Các trường hợp thử nghiệm",
+            "runs": "Chạy thử nghiệm",
+            "sessions": "Phiên họp"
+          },
           "noWorkflowsAvailable": "Hiện không có quy trình làm việc nào.",
           "noStatusesAvailable": "Hiện không có thông tin trạng thái nào.",
           "noGroupsAvailable": "Hiện không có nhóm nào.",
@@ -4883,6 +4892,7 @@
     },
     "workflows": {
       "description": "Quản lý quy trình làm việc của trường hợp kiểm thử",
+      "reviewsTitle": "Quy trình xem xét",
       "systemFeatureCard": {
         "title": "Quy trình xem xét",
         "description": "Thực thi quy trình xem xét bằng cách kiểm soát các bước chuyển đổi trong quy trình làm việc cho đến khi được phê duyệt. Khi được bật, các dự án có thể chọn tham gia hoặc không tham gia riêng lẻ thông qua cài đặt Nâng cao của chúng. Tắt tính năng này để ngăn chặn việc kiểm soát phê duyệt quy trình làm việc.",
@@ -4891,10 +4901,10 @@
         "updateSuccessEnabled": "Quy trình xem xét đã được kích hoạt.",
         "updateSuccessDisabled": "Quy trình xem xét đã bị vô hiệu hóa.",
         "updateError": "Không thể cập nhật cài đặt quy trình xem xét. Vui lòng thử lại sau.",
-        "remindersToggleLabel": "Gửi thông báo nhắc nhở cho các đánh giá đang chờ xử lý",
+        "remindersToggleLabel": "Gửi thông báo nhắc nhở cho các đánh giá đang chờ xử lý sau",
         "remindersToggleAriaLabel": "Bật/tắt thông báo nhắc nhở đánh giá",
         "thresholdLabel": "Nhắc nhở người đánh giá sau",
-        "thresholdUnit": "ngày(s)",
+        "thresholdUnit": "{count, plural, other {# ngày}}",
         "thresholdSaveButton": "Cứu",
         "thresholdHelp": "Yêu cầu xem xét có thể chờ xử lý bao nhiêu ngày trước khi người đánh giá nhận được thông báo nhắc nhở? Yêu cầu mới bắt đầu tính thời gian từ khi gửi.",
         "thresholdUpdateSuccess": "Cài đặt nhắc nhở xem lại đã được cập nhật.",
@@ -4943,6 +4953,10 @@
     },
     "roles": {
       "description": "Xác định các hành động mà người dùng có thể thực hiện bằng cách bật/tắt quyền truy cập cho từng khu vực ứng dụng.",
+      "confirmDefaultDescription": "Bạn có chắc chắn muốn đặt Vai trò này làm Mặc định không?",
+      "defaultWarning": "Người dùng mới sẽ được gán Vai trò này theo mặc định.",
+      "defaultLockedTitle": "Vai trò mặc định",
+      "defaultLockedDescription": "Để thay đổi mặc định, hãy chỉnh sửa một Vai trò khác và đặt nó làm mặc định.",
       "filterPlaceholder": "Lọc theo vai trò...",
       "add": {
         "button": "Thêm vai trò",
@@ -5177,6 +5191,8 @@
       "confirmDefault": "Xác nhận mặc định",
       "confirmDefaultDescription": "Bạn có chắc chắn muốn đặt Loại Mốc quan trọng này làm Mặc định không?",
       "warning": "Loại mốc quan trọng này sẽ được thêm vào tất cả các dự án.",
+      "defaultLockedTitle": "Loại mốc mặc định",
+      "defaultLockedDescription": "Để thay đổi mặc định, hãy chỉnh sửa một Loại mốc khác và đặt nó làm mặc định.",
       "wizard": {
         "selectProjects": "Chọn dự án",
         "projectsSelected": "{count, plural, =0 {Chưa có dự án nào được chọn} one {# dự án đã được chọn} other {# dự án đã được chọn}}",
@@ -5274,7 +5290,8 @@
         "repositoryCaseVersions": "Các phiên bản trường hợp kho lưu trữ",
         "testRunStepResults": "Kết quả các bước chạy thử nghiệm",
         "issueConfigs": "Cấu hình sự cố",
-        "sharedStepGroups": "Nhóm bước chung"
+        "sharedStepGroups": "Nhóm bước chung",
+        "dataSets": "Bộ dữ liệu"
       },
       "table": {
         "title": "Đã xóa {itemType}",
@@ -5763,6 +5780,11 @@
     "elasticsearch": {
       "title": "Quản lý Elasticsearch",
       "description": "Quản lý việc lập chỉ mục và bảo trì công cụ tìm kiếm",
+      "health": {
+        "healthy": "Khỏe mạnh",
+        "warning": "Cảnh báo",
+        "unhealthy": "Không khỏe mạnh"
+      },
       "status": {
         "title": "Trạng thái Elasticsearch",
         "description": "Tình trạng kết nối và sức khỏe hiện tại của công cụ tìm kiếm",
@@ -5786,7 +5808,7 @@
         "error": "Lỗi khi lưu cài đặt",
         "errorDescription": "Không thể lưu cấu hình. Vui lòng thử lại.",
         "note": {
-          "description": "Các thay đổi sẽ được áp dụng ngay lập tức cho các chỉ mục mới. Các chỉ mục hiện có sẽ được cập nhật khi bạn lưu. Đặt số bản sao về 0 để giải quyết trạng thái VÀNG trên các cụm máy chủ đơn nút."
+          "description": "Các thay đổi sẽ được áp dụng ngay lập tức cho các chỉ mục mới. Các chỉ mục hiện có sẽ được cập nhật khi bạn lưu. Đặt số bản sao về 0 để giải quyết trạng thái Cảnh báo trên các cụm máy chủ đơn nút."
         }
       },
       "reindex": {
@@ -6322,6 +6344,60 @@
     "noTasks": "Không có nhiệm vụ nào để hiển thị trên biểu đồ Gantt."
   },
   "help": {
+    "auditLogs": "Xem nhật ký kiểm toán toàn hệ thống để theo dõi bảo mật và tuân thủ",
+    "statuses": "Quản lý trạng thái kiểm thử",
+    "configurations": "Cấu hình là sự kết hợp của các danh mục và biến thể được sử dụng để xác định môi trường thử nghiệm. Ví dụ: Hệ điều hành/Trình duyệt, Máy chủ thử nghiệm, Ngôn ngữ, v.v.",
+    "categories": "Danh mục nhóm các biến thể liên quan — như Trình duyệt hoặc Hệ điều hành — kết hợp lại để xác định môi trường thử nghiệm.",
+    "templates": "Quản lý các mẫu và trường kiểm thử",
+    "caseFields": "Các trường tùy chỉnh có sẵn trên các trường hợp thử nghiệm, được gán cho các mẫu để kiểm soát trường hợp nào sử dụng chúng.",
+    "resultFields": "Các trường tùy chỉnh được ghi lại khi ghi nhận kết quả thử nghiệm, được gán cho các mẫu để kiểm soát nơi chúng áp dụng.",
+    "milestoneTypes": "Loại mốc phân loại các mốc — như Sprint, Phát hành, hoặc Phiên bản — và có thể được sử dụng lại giữa các dự án.",
+    "tags": "Thẻ đánh dấu và tổ chức các trường hợp thử nghiệm và phiên họp để bạn có thể nhóm và tìm công việc liên quan giữa các dự án.",
+    "issues": "Vấn đề là các mục theo dõi bên ngoài — từ Jira, GitHub, Azure DevOps, và các tích hợp khác — được đồng bộ vào TestPlanIt để có thể liên kết với các trường hợp thử nghiệm, lần chạy, và phiên họp.",
+    "crossProjectReports": "Xây dựng, chạy và phân tích các báo cáo trải rộng trên nhiều dự án, chẳng hạn như xu hướng tự động hóa trên toàn bộ bộ kiểm thử của bạn.",
+    "users": "Danh mục người dùng trong TestPlanIt và các dự án mà mỗi người có thể truy cập.",
+    "groups": "Nhóm cho phép bạn gán quyền truy cập dự án và vai trò cho nhiều người dùng cùng một lúc. Thêm thành viên trực tiếp, hoặc ánh xạ một nhóm từ nhà cung cấp danh tính của bạn.",
+    "roles": "Vai trò kiểm soát những gì người dùng có thể làm — mỗi vai trò chuyển đổi quyền hạn theo từng khu vực ứng dụng. Gán vai trò cho người dùng trực tiếp hoặc làm mặc định cho dự án.",
+    "sso": "Quản lý cách người dùng đăng nhập và liệu tài khoản mới có thể đăng ký hay không.",
+    "ssoProviders": "Cấu hình cách người dùng có thể đăng nhập vào ứng dụng của bạn.",
+    "ssoRegistration": "Kiểm soát ai có thể đăng ký tài khoản mới.",
+    "ssoAllowRegistration": "Khi tính năng này bị vô hiệu hóa, người dùng mới không thể đăng ký trực tiếp hoặc tạo tài khoản thông qua SSO. Người dùng hiện tại vẫn có thể đăng nhập.",
+    "ssoDefaultAccess": "Mức độ truy cập hệ thống được chỉ định cho người dùng mới khi họ đăng ký.",
+    "ssoRequireEmailVerification": "Người dùng phải xác minh địa chỉ email của mình trước khi truy cập vào hệ thống.",
+    "ssoRestrictDomains": "Chỉ cho phép đăng ký từ các tên miền email cụ thể.",
+    "security": "Cấu hình việc bắt buộc đăng nhập, chính sách mật khẩu, cài đặt khóa tài khoản và các hành động thực thi.",
+    "securitySignInEnforcement": "Yêu cầu đăng nhập một lần SSO và bắt buộc xác thực hai yếu tố.",
+    "securityForceSso": "Vô hiệu hóa đăng nhập bằng email và yêu cầu người dùng sử dụng SSO.",
+    "securityForce2FANonSSO": "Người dùng đăng nhập bằng email/mật khẩu phải thiết lập và sử dụng xác thực hai yếu tố.",
+    "securityForce2FAAllLogins": "Tất cả người dùng phải xác thực bằng xác thực hai yếu tố 2FA sau khi đăng nhập, bao gồm cả người dùng SSO.",
+    "securityPasswordPolicy": "Đặt ra các yêu cầu đối với mật khẩu người dùng.",
+    "securityLockoutPolicy": "Cấu hình khóa tài khoản sau các lần đăng nhập không thành công.",
+    "securityEnforcement": "Buộc thay đổi mật khẩu đối với người dùng sử dụng thông tin đăng nhập.",
+    "apiTokens": "Xem và quản lý mã thông báo API cho tất cả người dùng. Thu hồi mã thông báo nếu có vấn đề về bảo mật.",
+    "scim": "Cấp phép người dùng từ nhà cung cấp danh tính của bạn vào TestPlanIt thông qua SCIM 2.0.",
+    "scimConflicts": "Các sự kiện nhận dạng SCIM yêu cầu sự can thiệp của hệ thống (liên kết, khôi phục, ghi đè displayName, bỏ qua thành viên).",
+    "scimFallbackDefault": "Cấp độ truy cập được gán cho người dùng không thuộc bất kỳ ánh xạ nhóm nào.",
+    "integrations": "Quản lý các tích hợp của bên thứ ba để theo dõi sự cố.",
+    "notifications": "Thiết lập tùy chọn thông báo mặc định (người dùng có thể thay đổi) và gửi Thông báo Hệ thống.",
+    "notificationsSystem": "Gửi thông báo quan trọng đến tất cả người dùng.",
+    "notificationsHistory": "Thông báo hệ thống đã được gửi trước đó đến tất cả người dùng.",
+    "aiModels": "Quản lý các nhà cung cấp mô hình AI và các kết nối được sử dụng cho các tính năng hỗ trợ bởi AI, bao gồm giới hạn sử dụng và ngân sách.",
+    "prompts": "Quản lý các cấu hình lời nhắc mà các tính năng AI sử dụng để tạo nội dung, và gán chúng cho các dự án.",
+    "quickscripts": "Quản lý các mẫu được QuickScript sử dụng để chuyển đổi các trường hợp kiểm thử thành kịch bản tự động hóa.",
+    "codeRepositories": "Quản lý các kết nối kho mã nguồn cho ngữ cảnh QuickScript.",
+    "recordKeys": "Cấu hình các định danh có tiền tố dự án dùng để hiển thị, chẳng hạn như PROJECT-TC-1234, giúp dễ dàng biết được một bản ghi thuộc dự án nào và loại bản ghi gì. ID số bên dưới không thay đổi và vẫn hoạt động ở mọi nơi.",
+    "recordKeysEnabled": "Khi được bật, các bản ghi hiển thị một khóa tùy chọn kết hợp mã dự án, mã loại, và ID số của bản ghi. Đặt mã của mỗi dự án trong Cài đặt Dự án → Nâng cao.",
+    "imports": "Đưa dữ liệu từ các công cụ quản lý kiểm thử bên ngoài vào TestPlanIt.",
+    "elasticsearchStatus": "Tình trạng kết nối và sức khỏe hiện tại của công cụ tìm kiếm.",
+    "elasticsearchConfig": "Cấu hình các thiết lập Elasticsearch cho quá trình triển khai của bạn.",
+    "elasticsearchReindex": "Xây dựng lại chỉ mục tìm kiếm để cải thiện hiệu suất tìm kiếm.",
+    "queues": "Theo dõi và quản lý hàng đợi xử lý tác vụ nền.",
+    "trash": "Khôi phục hoặc xóa vĩnh viễn các bản ghi đã xóa mềm trên toàn hệ thống.",
+    "systemWebhooks": "Các đích đến webhook gửi đi dành cho các sự kiện cấp hệ thống không gắn liền với một dự án cụ thể — hiện tại là các sự kiện vòng đời người dùng và nhóm SCIM 2.0. Thay vào đó, hãy cấu hình webhook đến và webhook gửi đi có phạm vi dự án từ trang cài đặt dự án.",
+    "workflows": "Quản lý các trạng thái quy trình làm việc cho các trường hợp thử nghiệm, lần chạy thử nghiệm, và phiên họp.",
+    "workflowReviews": "Thực thi quy trình xem xét bằng cách kiểm soát các bước chuyển đổi trong quy trình làm việc cho đến khi được phê duyệt. Khi được bật, các dự án có thể chọn tham gia hoặc không tham gia riêng lẻ thông qua cài đặt Nâng cao của chúng. Tắt tính năng này để ngăn chặn việc kiểm soát phê duyệt quy trình làm việc.",
+    "reviewReminders": "Yêu cầu xem xét có thể chờ xử lý bao nhiêu ngày trước khi người đánh giá nhận được thông báo nhắc nhở. Yêu cầu mới bắt đầu tính thời gian từ khi gửi.",
+    "resultEditingPolicy": "Kiểm soát khoảng thời gian sau khi kết quả được ghi lại mà vẫn có thể chỉnh sửa trực tiếp, trên tất cả các dự án. Các dự án có thể điều chỉnh thời gian này trong cài đặt Nâng cao nhưng không thể nới lỏng. Quản trị viên hệ thống luôn có thể chỉnh sửa.",
     "project": {
       "name": "## Tên Dự án\nMã định danh duy nhất cho dự án của bạn.\n\n- Phải là duy nhất trong tất cả các dự án\n- Được sử dụng trong điều hướng và báo cáo\n- Nên rõ ràng và mô tả\n- Giúp các thành viên nhóm xác định phạm vi dự án",
       "description": "## Mô tả dự án\nThông tin chi tiết bổ sung về mục đích và phạm vi của dự án.\n\n- Không bắt buộc nhưng được khuyến nghị\n- Giúp các thành viên nhóm hiểu rõ mục tiêu dự án\n- Có thể bao gồm các mục tiêu hoặc yêu cầu chính\n- Giới hạn 256 ký tự",
@@ -6332,6 +6408,7 @@
       "issueTracker": "## Cấu hình Trình theo dõi Sự cố\nChọn cấu hình trình theo dõi sự cố sẽ được sử dụng để quản lý các sự cố liên quan đến dự án này."
     },
     "projects": {
+      "overview": "Dự án là các thùng chứa cấp cao nhất cho các trường hợp thử nghiệm, lần chạy, phiên họp, và mốc của bạn. Tạo và quản lý mọi dự án từ đây.",
       "settings": {
         "integrations": {
           "externalProjectHelp": "## Dự án bên ngoài\nChọn dự án hoặc kho lưu trữ trong hệ thống bên ngoài để liên kết với dự án TestPlanIt này.\n\n- Các sự cố được tạo từ TestPlanIt sẽ được tạo trong dự án này\n- Cho phép tích hợp theo dõi sự cố giữa các hệ thống\n- Phải có quyền phù hợp trong hệ thống bên ngoài",

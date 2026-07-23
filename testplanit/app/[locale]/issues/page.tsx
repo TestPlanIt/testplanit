@@ -8,11 +8,11 @@ import { VirtualizedDataTable } from "@/components/tables/VirtualizedDataTable";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
 import { SectionHeader } from "@/components/ui/typography";
+import { HelpPopover } from "@/components/ui/help-popover";
 import {
   Select,
   SelectContent,
@@ -402,12 +402,10 @@ function Issues() {
     <main>
       <Card>
         <CardHeader className="w-full">
-          <SectionHeader className="flex items-center justify-between">
-            <div>
-              <CardTitle>{t("common.fields.issues")}</CardTitle>
-            </div>
+          <SectionHeader className="flex items-center gap-2">
+            <CardTitle>{t("common.fields.issues")}</CardTitle>
+            <HelpPopover helpKey="issues" />
           </SectionHeader>
-          <CardDescription>{t("Pages.Issues.description")}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex flex-row items-start justify-between gap-4">

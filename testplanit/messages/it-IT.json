@@ -13,6 +13,7 @@
     "file": "File",
     "selectMultiple": "Seleziona più...",
     "searchUsers": "Cerca utenti...",
+    "searchGroups": "Cerca gruppi...",
     "searchCases": "{count, plural, =0 {Cerca casi} one {Cerca # caso} other {Cerca # casi}}",
     "searchProjects": "{count, plural, =0 {Cerca progetti} one {Cerca # progetto} other {Cerca # progetti}}",
     "searchTags": "Cerca i tag...",
@@ -382,7 +383,8 @@
         "notificationSettings": "Impostazione globale di notifica",
         "elasticsearch_replicas": "Repliche di Elasticsearch",
         "review_feature_enabled": "Revisione e approvazioni abilitate",
-        "review_reminder_threshold_days": "Ricorda ai revisori i giorni limite"
+        "review_reminder_threshold_days": "Ricorda ai revisori i giorni limite",
+        "record_key_enabled": "Chiavi record abilitate"
       },
       "options": {
         "label": "Etichetta",
@@ -800,7 +802,8 @@
     "table": {
       "columns": {
         "columns": "Colonne",
-        "required": "(necessario)"
+        "required": "(necessario)",
+        "resetColumns": "Ripristina le colonne predefinite"
       },
       "filter": "Elenco filtri...",
       "selectNone": "Seleziona Nessuno",
@@ -3497,7 +3500,7 @@
       "sheetDescription": "Invia questa entità per la revisione prima di passare allo stato di destinazione.",
       "assigneeLabel": "Assegnatario",
       "assigneePlaceholder": "Seleziona un utente o un ruolo",
-      "usersHoldRole": "{count, plural, one {# l'utente detiene questo ruolo} other {# gli utenti detengono questo ruolo}}",
+      "usersHoldRole": "{count, plural, one {# utente detiene questo ruolo} other {# utenti detengono questo ruolo}}",
       "targetStateLabel": "Stato bersaglio",
       "targetStatePlaceholder": "Seleziona uno stato di destinazione",
       "commentLabel": "Commento",
@@ -3988,6 +3991,12 @@
           "actionMap": "Mappa esistente",
           "actionCreate": "Crea nuovo",
           "workflowTypePlaceholder": "Seleziona il tipo",
+          "workflowScope": {
+            "default": "Altro",
+            "cases": "Casi di test",
+            "runs": "Esecuzioni test",
+            "sessions": "Sessioni"
+          },
           "noWorkflowsAvailable": "Nessun flusso di lavoro disponibile.",
           "noStatusesAvailable": "Nessuno stato disponibile.",
           "noGroupsAvailable": "Nessun gruppo disponibile.",
@@ -4883,6 +4892,7 @@
     },
     "workflows": {
       "description": "Gestire i flussi di lavoro dei casi di prova",
+      "reviewsTitle": "Flusso di lavoro di revisione",
       "systemFeatureCard": {
         "title": "Revisione del flusso di lavoro",
         "description": "Applica le revisioni bloccando le transizioni del flusso di lavoro fino all'approvazione. Quando questa opzione è abilitata, i progetti possono attivarla o disattivarla singolarmente tramite le impostazioni avanzate. Disabilitala per impedire il blocco delle approvazioni del flusso di lavoro.",
@@ -4891,10 +4901,10 @@
         "updateSuccessEnabled": "Revisione del flusso di lavoro abilitata.",
         "updateSuccessDisabled": "Revisione del flusso di lavoro disabilitata.",
         "updateError": "Impossibile aggiornare le impostazioni del flusso di lavoro di revisione. Riprova tra un attimo.",
-        "remindersToggleLabel": "Invia notifiche di promemoria per le revisioni in sospeso",
+        "remindersToggleLabel": "Invia notifiche di promemoria per le revisioni in sospeso dopo",
         "remindersToggleAriaLabel": "Attiva/disattiva le notifiche di promemoria per la revisione",
         "thresholdLabel": "Ricorda ai revisori dopo",
-        "thresholdUnit": "giorno(i)",
+        "thresholdUnit": "{count, plural, one {giorno} other {giorni}}",
         "thresholdSaveButton": "Salva",
         "thresholdHelp": "Per quanti giorni una richiesta di revisione può rimanere in sospeso prima che i revisori ricevano una notifica di promemoria? Per le nuove richieste, il conteggio inizia al momento dell'invio.",
         "thresholdUpdateSuccess": "Le impostazioni del promemoria per la revisione sono state aggiornate.",
@@ -4943,6 +4953,10 @@
     },
     "roles": {
       "description": "Definisci quali azioni gli utenti possono eseguire attivando o disattivando le autorizzazioni per ciascuna area dell'applicazione.",
+      "confirmDefaultDescription": "Vuoi davvero impostare questo ruolo come predefinito?",
+      "defaultWarning": "Ai nuovi utenti verrà assegnato questo ruolo per impostazione predefinita.",
+      "defaultLockedTitle": "Ruolo predefinito",
+      "defaultLockedDescription": "Per modificare il ruolo predefinito, modifica un ruolo diverso e impostalo come predefinito.",
       "filterPlaceholder": "Filtra i ruoli...",
       "add": {
         "button": "Aggiungi ruolo",
@@ -5177,6 +5191,8 @@
       "confirmDefault": "Conferma predefinito",
       "confirmDefaultDescription": "Vuoi davvero impostare questo tipo di traguardo come predefinito?",
       "warning": "Questo tipo di traguardo verrà aggiunto a tutti i progetti.",
+      "defaultLockedTitle": "Tipo di traguardo predefinito",
+      "defaultLockedDescription": "Per modificare il tipo predefinito, modifica un tipo di traguardo diverso e impostalo come predefinito.",
       "wizard": {
         "selectProjects": "Seleziona progetti",
         "projectsSelected": "{count, plural, =0 {Nessun progetto selezionato} one {# progetto selezionato} other {# progetti selezionati}}",
@@ -5274,7 +5290,8 @@
         "repositoryCaseVersions": "Versioni del caso del repository",
         "testRunStepResults": "Risultati della fase di esecuzione del test",
         "issueConfigs": "Configurazioni dei problemi",
-        "sharedStepGroups": "Gruppi di passi condivisi"
+        "sharedStepGroups": "Gruppi di passi condivisi",
+        "dataSets": "Set di dati"
       },
       "table": {
         "title": "Eliminato {itemType}",
@@ -5763,6 +5780,11 @@
     "elasticsearch": {
       "title": "Gestione Elasticsearch",
       "description": "Gestire l'indicizzazione e la manutenzione dei motori di ricerca",
+      "health": {
+        "healthy": "Integro",
+        "warning": "Avviso",
+        "unhealthy": "Non integro"
+      },
       "status": {
         "title": "Stato di Elasticsearch",
         "description": "Connessione attuale e stato di salute del motore di ricerca",
@@ -5786,7 +5808,7 @@
         "error": "Errore durante il salvataggio delle impostazioni",
         "errorDescription": "Impossibile salvare la configurazione. Riprova.",
         "note": {
-          "description": "Le modifiche si applicano immediatamente ai nuovi indici. Gli indici esistenti vengono aggiornati al momento del salvataggio. Impostare le repliche su 0 per risolvere lo stato GIALLO nei cluster a nodo singolo."
+          "description": "Le modifiche si applicano immediatamente ai nuovi indici. Gli indici esistenti vengono aggiornati al momento del salvataggio. Impostare le repliche su 0 per risolvere lo stato di avviso nei cluster a nodo singolo."
         }
       },
       "reindex": {
@@ -6322,6 +6344,60 @@
     "noTasks": "Nessuna attività da visualizzare nel diagramma di Gantt."
   },
   "help": {
+    "auditLogs": "Visualizza il registro di controllo a livello di sistema per il monitoraggio della sicurezza e della conformità",
+    "statuses": "Gestisci gli stati dei test",
+    "configurations": "Le configurazioni sono una combinazione di categorie e varianti utilizzate per definire un ambiente di test. Ad esempio, sistema operativo/browser, server di test, lingua, ecc.",
+    "categories": "Le categorie raggruppano varianti correlate, come Browser o Sistema operativo, che si combinano per definire un ambiente di test.",
+    "templates": "Gestisci modelli e campi dei casi di test",
+    "caseFields": "Campi personalizzati disponibili nei casi di test, assegnati ai modelli per controllare quali casi li utilizzano.",
+    "resultFields": "Campi personalizzati acquisiti durante la registrazione di un risultato di test, assegnati ai modelli per controllare dove vengono applicati.",
+    "milestoneTypes": "I tipi di traguardo classificano i traguardi, come Sprint, Release o Versione, e possono essere riutilizzati tra i progetti.",
+    "tags": "I tag etichettano e organizzano i casi di test e le sessioni, permettendoti di raggruppare e trovare lavori correlati tra i progetti.",
+    "issues": "I problemi sono elementi di tracciamento esterni, provenienti da Jira, GitHub, Azure DevOps e altre integrazioni, sincronizzati in TestPlanIt in modo che possano essere collegati a casi di test, esecuzioni e sessioni.",
+    "crossProjectReports": "Crea, esegui e analizza report che coprono più progetti, come le tendenze di automazione nell'intera suite di test.",
+    "users": "Un elenco delle persone in TestPlanIt e dei progetti a cui ciascuna può accedere.",
+    "groups": "I gruppi consentono di assegnare l'accesso ai progetti e i ruoli a molti utenti contemporaneamente. Aggiungi membri direttamente oppure mappa un gruppo dal tuo provider di identità.",
+    "roles": "I ruoli controllano ciò che gli utenti possono fare: ciascuno attiva o disattiva le autorizzazioni per area applicativa. Assegna un ruolo agli utenti direttamente oppure come predefinito di progetto.",
+    "sso": "Gestisci le modalità di accesso degli utenti e se è possibile registrare nuovi account.",
+    "ssoProviders": "Configura le modalità di accesso degli utenti alla tua applicazione.",
+    "ssoRegistration": "Controlla chi può registrarsi per nuovi account.",
+    "ssoAllowRegistration": "Quando questa opzione è disabilitata, i nuovi utenti non possono registrarsi direttamente né creare un account tramite SSO. Gli utenti già registrati possono comunque accedere.",
+    "ssoDefaultAccess": "Il livello di accesso al sistema assegnato ai nuovi utenti al momento della registrazione.",
+    "ssoRequireEmailVerification": "Gli utenti devono verificare il proprio indirizzo email prima di accedere al sistema.",
+    "ssoRestrictDomains": "Consenti la registrazione solo da domini di posta elettronica specifici.",
+    "security": "Configura le impostazioni di controllo dell'accesso, i criteri per le password, le impostazioni di blocco e le azioni di applicazione.",
+    "securitySignInEnforcement": "Richiedere l'SSO e imporre l'autenticazione a due fattori.",
+    "securityForceSso": "Disabilitare l'accesso tramite email e richiedere agli utenti di utilizzare l'SSO.",
+    "securityForce2FANonSSO": "Gli utenti che accedono con email/password devono configurare e utilizzare l'autenticazione a due fattori.",
+    "securityForce2FAAllLogins": "Tutti gli utenti devono verificare l'identità tramite 2FA dopo aver effettuato l'accesso, inclusi gli utenti SSO.",
+    "securityPasswordPolicy": "Definisci i requisiti per le password degli utenti.",
+    "securityLockoutPolicy": "Configura il blocco dell'account dopo tentativi di accesso non riusciti.",
+    "securityEnforcement": "Forza la modifica della password per gli utenti basati su credenziali.",
+    "apiTokens": "Visualizza e gestisci i token API di tutti gli utenti. Revoca i token in caso di problemi di sicurezza.",
+    "scim": "Effettua il provisioning degli utenti dal tuo provider di identità in TestPlanIt tramite SCIM 2.0.",
+    "scimConflicts": "Eventi di identità SCIM che hanno richiesto l'intervento del sistema (collegamento, ripristino, sovrascrittura del nome visualizzato, membri ignorati).",
+    "scimFallbackDefault": "Livello di accesso assegnato agli utenti non coperti da alcuna mappatura di gruppo.",
+    "integrations": "Gestire le integrazioni di terze parti per il monitoraggio dei problemi.",
+    "notifications": "Imposta le preferenze di notifica predefinite (che gli utenti possono modificare) e invia notifiche di sistema.",
+    "notificationsSystem": "Invia annunci importanti a tutti gli utenti.",
+    "notificationsHistory": "Notifiche di sistema precedentemente inviate a tutti gli utenti.",
+    "aiModels": "Gestisci i provider e le connessioni dei modelli di IA utilizzati per le funzionalità basate sull'IA, inclusi i limiti di utilizzo e i budget.",
+    "prompts": "Gestisci le configurazioni dei prompt utilizzate dalle funzionalità di IA per generare contenuti e assegnale ai progetti.",
+    "quickscripts": "Gestisci i modelli utilizzati da QuickScript per convertire i casi di test in script di automazione.",
+    "codeRepositories": "Gestisci le connessioni al repository del codice per il contesto QuickScript.",
+    "recordKeys": "Configura identificatori estetici con prefisso di progetto, come PROJECT-TC-1234, che permettono di individuare facilmente a quale progetto appartiene un record e di che tipo si tratta. L'ID numerico sottostante rimane invariato e continua a funzionare ovunque.",
+    "recordKeysEnabled": "Quando questa opzione è abilitata, i record visualizzano una chiave opzionale che combina il codice del progetto, un token di tipo e l'ID numerico del record. Imposta il codice di ciascun progetto in Impostazioni progetto → Avanzate.",
+    "imports": "Importa i dati da strumenti esterni di gestione dei test in TestPlanIt.",
+    "elasticsearchStatus": "Connessione attuale e stato di salute del motore di ricerca.",
+    "elasticsearchConfig": "Configura le impostazioni di Elasticsearch per la tua distribuzione.",
+    "elasticsearchReindex": "Ricostruisci gli indici di ricerca per migliorare le prestazioni di ricerca.",
+    "queues": "Monitorare e gestire le code di elaborazione dei lavori in background.",
+    "trash": "Ripristina o elimina definitivamente i record eliminati temporaneamente in tutto il sistema.",
+    "systemWebhooks": "Destinazioni webhook in uscita per eventi a livello di sistema non legati a un singolo progetto, attualmente gli eventi del ciclo di vita di utenti e gruppi SCIM 2.0. Configura i webhook in entrata e in uscita a livello di progetto dalla pagina delle impostazioni del progetto.",
+    "workflows": "Gestisci gli stati del flusso di lavoro per casi di test, esecuzioni dei test e sessioni.",
+    "workflowReviews": "Applica le revisioni bloccando le transizioni del flusso di lavoro fino all'approvazione. Quando questa opzione è abilitata, i progetti possono attivarla o disattivarla singolarmente tramite le impostazioni avanzate. Disabilitala per impedire il blocco delle approvazioni del flusso di lavoro.",
+    "reviewReminders": "Per quanti giorni una richiesta di revisione può restare in sospeso prima che i revisori ricevano una notifica di promemoria. Le nuove richieste iniziano il conteggio al momento dell'invio.",
+    "resultEditingPolicy": "Controlla per quanto tempo dopo la registrazione di un risultato è ancora possibile modificarlo, in tutti i progetti. I progetti possono restringere questo limite nelle impostazioni avanzate, ma non possono mai allentarlo. Gli amministratori di sistema possono sempre apportare modifiche.",
     "project": {
       "name": "## Nome del progetto\nL'identificatore univoco per il tuo progetto.\n\n- Deve essere univoco in tutti i progetti\n- Utilizzato nella navigazione e nei report\n- Deve essere chiaro e descrittivo\n- Aiuta i membri del team a identificare l'ambito del progetto",
       "description": "## Descrizione del progetto\nDettagli aggiuntivi sullo scopo e l'ambito del progetto.\n\n- Facoltativo ma consigliato\n- Aiuta i membri del team a comprendere gli obiettivi del progetto\n- Può includere obiettivi o requisiti chiave\n- Limitato a 256 caratteri",
@@ -6332,6 +6408,7 @@
       "issueTracker": "## Configurazione del tracker dei problemi\nSeleziona la configurazione del tracker dei problemi da utilizzare per gestire i problemi relativi a questo progetto."
     },
     "projects": {
+      "overview": "I progetti sono i contenitori di primo livello per i tuoi casi di test, esecuzioni, sessioni e traguardi. Crea e gestisci ogni progetto da qui.",
       "settings": {
         "integrations": {
           "externalProjectHelp": "## Progetto esterno\nSeleziona il progetto o il repository nel sistema esterno da collegare a questo progetto TestPlanIt.\n\n- I problemi creati da TestPlanIt verranno creati in questo progetto\n- Abilita l'integrazione del tracciamento dei problemi tra i sistemi\n- Deve disporre delle autorizzazioni appropriate nel sistema esterno",

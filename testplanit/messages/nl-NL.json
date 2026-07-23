@@ -13,6 +13,7 @@
     "file": "Bestand",
     "selectMultiple": "Selecteer meerdere...",
     "searchUsers": "Zoeken naar gebruikers...",
+    "searchGroups": "Zoeken naar groepen...",
     "searchCases": "{count, plural, =0 {Zoek gevallen} one {Zoek # geval} other {Zoek # gevallen}}",
     "searchProjects": "{count, plural, =0 {Zoek projecten} one {Zoek # project} other {Zoek # projecten}}",
     "searchTags": "Zoeken naar tags...",
@@ -382,7 +383,8 @@
         "notificationSettings": "Globale instellingen voor meldingen",
         "elasticsearch_replicas": "Elasticsearch-replica's",
         "review_feature_enabled": "Beoordeling en goedkeuring ingeschakeld",
-        "review_reminder_threshold_days": "Herinner beoordelaars aan de drempeldagen"
+        "review_reminder_threshold_days": "Herinner beoordelaars aan de drempeldagen",
+        "record_key_enabled": "Recordsleutels ingeschakeld"
       },
       "options": {
         "label": "Label",
@@ -800,7 +802,8 @@
     "table": {
       "columns": {
         "columns": "Kolommen",
-        "required": "(vereist)"
+        "required": "(vereist)",
+        "resetColumns": "Kolommen terugzetten naar standaardinstelling"
       },
       "filter": "Filterlijst...",
       "selectNone": "Selecteer niets",
@@ -3988,6 +3991,12 @@
           "actionMap": "Kaart naar bestaande",
           "actionCreate": "Nieuw maken",
           "workflowTypePlaceholder": "Selecteer type",
+          "workflowScope": {
+            "default": "Overig",
+            "cases": "Testgevallen",
+            "runs": "Testruns",
+            "sessions": "Sessies"
+          },
           "noWorkflowsAvailable": "Geen workflows beschikbaar.",
           "noStatusesAvailable": "Geen statussen beschikbaar.",
           "noGroupsAvailable": "Geen groepen beschikbaar.",
@@ -4883,6 +4892,7 @@
     },
     "workflows": {
       "description": "Testcase-workflows beheren",
+      "reviewsTitle": "Werkstroom beoordelen",
       "systemFeatureCard": {
         "title": "Werkstroom beoordelen",
         "description": "Dwing beoordelingen af door workflowovergangen te blokkeren totdat goedkeuring is verleend. Indien ingeschakeld, kunnen projecten zich individueel aan- of afmelden via hun geavanceerde instellingen. Schakel deze optie uit om goedkeuringsblokkeringen in de workflow te voorkomen.",
@@ -4891,10 +4901,10 @@
         "updateSuccessEnabled": "Beoordelingsworkflow ingeschakeld.",
         "updateSuccessDisabled": "Beoordelingsworkflow uitgeschakeld.",
         "updateError": "Het bijwerken van de beoordelingsworkflow is mislukt. Probeer het over een moment opnieuw.",
-        "remindersToggleLabel": "Verstuur herinneringsmeldingen voor lopende beoordelingen",
+        "remindersToggleLabel": "Verstuur herinneringsmeldingen voor lopende beoordelingen na",
         "remindersToggleAriaLabel": "Meldingen voor beoordelingsherinneringen in- of uitschakelen",
         "thresholdLabel": "Herinner de beoordelaars eraan na",
-        "thresholdUnit": "dag(en)",
+        "thresholdUnit": "{count, plural, one {dag} other {dagen}}",
         "thresholdSaveButton": "Redden",
         "thresholdHelp": "Hoeveel dagen een beoordelingsverzoek in behandeling mag blijven voordat beoordelaars een herinneringsmelding ontvangen. Voor nieuwe verzoeken begint de teller te lopen vanaf het moment van indiening.",
         "thresholdUpdateSuccess": "Controleer of de herinneringsinstellingen zijn bijgewerkt.",
@@ -4943,6 +4953,10 @@
     },
     "roles": {
       "description": "Definieer welke acties gebruikers kunnen uitvoeren door de machtigingen voor elk toepassingsgebied in of uit te schakelen.",
+      "confirmDefaultDescription": "Weet u zeker dat u deze rol als standaard wilt instellen?",
+      "defaultWarning": "Nieuwe gebruikers krijgen deze rol standaard toegewezen.",
+      "defaultLockedTitle": "Standaardrol",
+      "defaultLockedDescription": "Om de standaard te wijzigen, bewerkt u een andere rol en stelt u deze in als standaard.",
       "filterPlaceholder": "Rollen filteren...",
       "add": {
         "button": "Rol toevoegen",
@@ -5177,6 +5191,8 @@
       "confirmDefault": "Bevestig standaard",
       "confirmDefaultDescription": "Weet u zeker dat u dit mijlpaaltype als standaard wilt instellen?",
       "warning": "Dit mijlpaaltype wordt aan alle projecten toegevoegd.",
+      "defaultLockedTitle": "Standaard mijlpaaltype",
+      "defaultLockedDescription": "Om de standaard te wijzigen, bewerkt u een ander mijlpaaltype en stelt u dit in als standaard.",
       "wizard": {
         "selectProjects": "Selecteer projecten",
         "projectsSelected": "{count, plural, =0 {Geen projecten geselecteerd} one {# project geselecteerd} other {# projecten geselecteerd}}",
@@ -5274,7 +5290,8 @@
         "repositoryCaseVersions": "Repository Case-versies",
         "testRunStepResults": "Resultaten van de testrunstap",
         "issueConfigs": "Probleemconfiguraties",
-        "sharedStepGroups": "Gedeelde stappengroepen"
+        "sharedStepGroups": "Gedeelde stappengroepen",
+        "dataSets": "Gegevenssets"
       },
       "table": {
         "title": "Verwijderd {itemType}",
@@ -5763,6 +5780,11 @@
     "elasticsearch": {
       "title": "Elasticsearch-beheer",
       "description": "Beheer zoekmachine-indexering en onderhoud",
+      "health": {
+        "healthy": "Gezond",
+        "warning": "Waarschuwing",
+        "unhealthy": "Ongezond"
+      },
       "status": {
         "title": "Elasticsearch-status",
         "description": "Huidige verbinding en gezondheidsstatus van de zoekmachine",
@@ -5786,7 +5808,7 @@
         "error": "Fout bij het opslaan van instellingen",
         "errorDescription": "Configuratie opslaan mislukt. Probeer het opnieuw.",
         "note": {
-          "description": "Wijzigingen worden direct toegepast op nieuwe indices. Bestaande indices worden bijgewerkt wanneer u opslaat. Stel replica's in op 0 om de GELE status op clusters met één knooppunt om te zetten."
+          "description": "Wijzigingen worden direct toegepast op nieuwe indices. Bestaande indices worden bijgewerkt wanneer u opslaat. Stel replica's in op 0 om de waarschuwingsstatus op clusters met één knooppunt op te lossen."
         }
       },
       "reindex": {
@@ -6322,6 +6344,60 @@
     "noTasks": "Er zijn geen taken om weer te geven in het Gantt-diagram."
   },
   "help": {
+    "auditLogs": "Bekijk het systeemwijde auditlogboek voor het bijhouden van beveiliging en naleving",
+    "statuses": "Teststatussen beheren",
+    "configurations": "Configuraties zijn een combinatie van categorieën en varianten die worden gebruikt om een testomgeving te definiëren. Bijvoorbeeld: besturingssysteem/browser, testserver, taal, enz.",
+    "categories": "Categorieën groeperen gerelateerde varianten — zoals Browser of Besturingssysteem — die samen een testomgeving definiëren.",
+    "templates": "Testcasesjablonen en velden beheren",
+    "caseFields": "Aangepaste velden die beschikbaar zijn voor testgevallen, toegewezen aan sjablonen om te bepalen welke testgevallen ze gebruiken.",
+    "resultFields": "Aangepaste velden die worden vastgelegd bij het registreren van een testresultaat, toegewezen aan sjablonen om te bepalen waar ze van toepassing zijn.",
+    "milestoneTypes": "Mijlpaaltypen categoriseren mijlpalen — zoals Sprint, Release of Versie — en kunnen worden herbruikt in meerdere projecten.",
+    "tags": "Tags labelen en organiseren testgevallen en sessies, zodat u gerelateerd werk in meerdere projecten kunt groeperen en vinden.",
+    "issues": "Issues zijn externe trackeritems — van Jira, GitHub, Azure DevOps en andere integraties — die worden gesynchroniseerd met TestPlanIt, zodat ze kunnen worden gekoppeld aan testgevallen, testruns en sessies.",
+    "crossProjectReports": "Bouw, voer uit en analyseer rapporten die meerdere projecten omvatten, zoals automatiseringstrends in uw volledige testsuite.",
+    "users": "Een overzicht van personen in TestPlanIt en de projecten waartoe elke persoon toegang heeft.",
+    "groups": "Met groepen kunt u projecttoegang en rollen tegelijk aan meerdere gebruikers toewijzen. Voeg leden direct toe, of koppel een groep van uw identiteitsprovider.",
+    "roles": "Rollen bepalen wat gebruikers kunnen doen — elke rol schakelt machtigingen per toepassingsgebied in of uit. Wijs een rol direct toe aan gebruikers of stel deze in als projectstandaard.",
+    "sso": "Beheer hoe gebruikers zich aanmelden en of nieuwe accounts zich kunnen registreren.",
+    "ssoProviders": "Configureer hoe gebruikers zich kunnen aanmelden bij uw applicatie.",
+    "ssoRegistration": "Bepaal wie zich kan registreren voor nieuwe accounts.",
+    "ssoAllowRegistration": "Wanneer deze functie is uitgeschakeld, kunnen nieuwe gebruikers zich niet rechtstreeks registreren of een account aanmaken via SSO. Bestaande gebruikers kunnen zich nog steeds aanmelden.",
+    "ssoDefaultAccess": "Het toegangsniveau tot het systeem dat aan nieuwe gebruikers wordt toegewezen bij hun registratie.",
+    "ssoRequireEmailVerification": "Gebruikers moeten hun e-mailadres verifiëren voordat ze toegang krijgen tot het systeem.",
+    "ssoRestrictDomains": "Alleen registratie toestaan vanaf specifieke e-maildomeinen.",
+    "security": "Configureer de handhaving van aanmeldingen, het wachtwoordbeleid, de vergrendelingsinstellingen en de handhavingsacties.",
+    "securitySignInEnforcement": "Vereis SSO en dwing tweefactorauthenticatie af.",
+    "securityForceSso": "Schakel inloggen via e-mail uit en vereis dat gebruikers SSO gebruiken.",
+    "securityForce2FANonSSO": "Gebruikers die inloggen met e-mail/wachtwoord moeten tweefactorauthenticatie instellen en gebruiken.",
+    "securityForce2FAAllLogins": "Alle gebruikers moeten zich na het inloggen verifiëren met tweefactorauthenticatie 2FA, inclusief gebruikers met single sign-on SSO.",
+    "securityPasswordPolicy": "Stel vereisten in voor gebruikerswachtwoorden.",
+    "securityLockoutPolicy": "Configureer accountvergrendeling na mislukte inlogpogingen.",
+    "securityEnforcement": "Wachtwoordwijzigingen afdwingen voor gebruikers met inloggegevens.",
+    "apiTokens": "API-tokens voor alle gebruikers bekijken en beheren. Tokens intrekken als er beveiligingsrisico's zijn.",
+    "scim": "Geef gebruikers van uw identiteitsprovider toegang tot TestPlanIt via SCIM 2.0.",
+    "scimConflicts": "SCIM-identiteitsgebeurtenissen die systeeminterventie vereisten (koppelen, herstellen, displayName overschrijven, overgeslagen leden).",
+    "scimFallbackDefault": "Toegangsniveau dat wordt toegewezen aan gebruikers die niet onder een groepskoppeling vallen.",
+    "integrations": "Beheer integraties met externe partijen voor het bijhouden van problemen.",
+    "notifications": "Stel de standaardvoorkeuren voor meldingen in (die gebruikers kunnen overschrijven) en verstuur systeemmeldingen.",
+    "notificationsSystem": "Stuur belangrijke aankondigingen naar alle gebruikers.",
+    "notificationsHistory": "Systeemmeldingen die eerder naar alle gebruikers zijn verzonden.",
+    "aiModels": "Beheer de AI-modelproviders en verbindingen die worden gebruikt voor AI-ondersteunde functies, inclusief gebruikslimieten en budgetten.",
+    "prompts": "Beheer de promptconfiguraties die AI-functies gebruiken om content te genereren, en wijs deze toe aan projecten.",
+    "quickscripts": "Beheer sjablonen die QuickScript gebruikt om testgevallen om te zetten in automatiseringsscripts.",
+    "codeRepositories": "Beheer de verbindingen met de codeopslagplaats voor de QuickScript-context.",
+    "recordKeys": "Configureer cosmetische, met het project voorafgegane id's, zoals PROJECT-TC-1234, waarmee u eenvoudig kunt zien tot welk project een record behoort en om welk type record het gaat. De onderliggende numerieke ID blijft ongewijzigd en werkt overal verder.",
+    "recordKeysEnabled": "Wanneer dit is ingeschakeld, tonen records een optionele sleutel die de projectcode, een typetoken en de numerieke ID van het record combineert. Stel de code van elk project in bij Projectinstellingen → Geavanceerd.",
+    "imports": "Importeer gegevens van externe testmanagementtools in TestPlanIt.",
+    "elasticsearchStatus": "Huidige verbinding en gezondheidsstatus van de zoekmachine.",
+    "elasticsearchConfig": "Configureer Elasticsearch-instellingen voor uw implementatie.",
+    "elasticsearchReindex": "Herbouw zoekindexen voor verbeterde zoekprestaties.",
+    "queues": "Achtergrondtaakverwerkingswachtrijen bewaken en beheren.",
+    "trash": "Herstel of verwijder permanent zachtverwijderde records in het hele systeem.",
+    "systemWebhooks": "Uitgaande webhookbestemmingen voor systeemgebeurtenissen die niet aan een specifiek project zijn gekoppeld — momenteel de SCIM 2.0-gebruikers- en groepslevenscyclusgebeurtenissen. Configureer in plaats daarvan inkomende en projectgebonden uitgaande webhooks via de projectinstellingenpagina.",
+    "workflows": "Beheer de workflowstatussen voor testgevallen, testruns en sessies.",
+    "workflowReviews": "Dwing beoordelingen af door workflowovergangen te blokkeren totdat goedkeuring is verleend. Indien ingeschakeld, kunnen projecten zich individueel aan- of afmelden via hun geavanceerde instellingen. Schakel deze optie uit om goedkeuringsblokkeringen in de workflow te voorkomen.",
+    "reviewReminders": "Hoeveel dagen een beoordelingsverzoek in behandeling mag blijven voordat beoordelaars een herinneringsmelding ontvangen. Voor nieuwe verzoeken begint de teller te lopen vanaf het moment van indiening.",
+    "resultEditingPolicy": "Bepaal hoe lang na het vastleggen van een resultaat dit nog ter plekke kan worden bewerkt, voor alle projecten. Projecten kunnen deze instelling in de geavanceerde instellingen aanscherpen, maar nooit versoepelen. Systeembeheerders kunnen de instelling altijd wijzigen.",
     "project": {
       "name": "## Projectnaam\nDe unieke identificatie voor uw project.\n\n- Moet uniek zijn voor alle projecten.\n- Wordt gebruikt in navigatie en rapporten.\n- Moet duidelijk en beschrijvend zijn.\n- Helpt teamleden de projectomvang te identificeren.",
       "description": "## Projectbeschrijving\nAanvullende details over het doel en de reikwijdte van het project.\n\n- Optioneel maar aanbevolen\n- Helpt teamleden de projectdoelen te begrijpen\n- Kan belangrijke doelstellingen of vereisten bevatten\n- Beperkt tot 256 tekens",
@@ -6332,6 +6408,7 @@
       "issueTracker": "## Issue Tracker-configuratie\nSelecteer de issue tracker-configuratie die moet worden gebruikt voor het beheren van problemen met betrekking tot dit project."
     },
     "projects": {
+      "overview": "Projecten zijn de containers op het hoogste niveau voor uw testgevallen, testruns, sessies en mijlpalen. Maak en beheer hier elk project.",
       "settings": {
         "integrations": {
           "externalProjectHelp": "## Extern project\nSelecteer het project of de repository in het externe systeem om te koppelen aan dit TestPlanIt-project.\n\n- Problemen die vanuit TestPlanIt worden aangemaakt, worden in dit project aangemaakt.\n- Maakt integratie van probleemregistratie tussen systemen mogelijk.\n- Vereist de juiste machtigingen in het externe systeem.",

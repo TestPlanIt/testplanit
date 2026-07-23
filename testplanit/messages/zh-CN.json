@@ -13,6 +13,7 @@
     "file": "文件",
     "selectMultiple": "选择多个...",
     "searchUsers": "搜索用户...",
+    "searchGroups": "查找组……",
     "searchCases": "{count, plural, =0 {搜索案例} one {搜索案例数} other {搜索案例数}}",
     "searchProjects": "{count, plural, =0 {搜索项目} one {搜索项目数量} other {搜索项目数量}}",
     "searchTags": "搜索标签...",
@@ -382,7 +383,8 @@
         "notificationSettings": "通知全局设置",
         "elasticsearch_replicas": "Elasticsearch 副本",
         "review_feature_enabled": "已启用审核和批准功能",
-        "review_reminder_threshold_days": "提醒审稿人阈值日"
+        "review_reminder_threshold_days": "提醒审稿人阈值日",
+        "record_key_enabled": "记录键已启用"
       },
       "options": {
         "label": "标签",
@@ -800,7 +802,8 @@
     "table": {
       "columns": {
         "columns": "列",
-        "required": "（必需的）"
+        "required": "（必需的）",
+        "resetColumns": "重置列为默认值"
       },
       "filter": "筛选列表...",
       "selectNone": "选择“无”",
@@ -3497,7 +3500,7 @@
       "sheetDescription": "在过渡到目标状态之前，请将此实体发送给我们进行审核。",
       "assigneeLabel": "受让人",
       "assigneePlaceholder": "选择用户或角色",
-      "usersHoldRole": "{count, plural, one {# 用户拥有此角色} other {# 用户拥有此角色}}",
+      "usersHoldRole": "{count, plural, other {# 位用户拥有此角色}}",
       "targetStateLabel": "目标状态",
       "targetStatePlaceholder": "选择目标状态",
       "commentLabel": "评论",
@@ -3988,6 +3991,12 @@
           "actionMap": "映射到现有",
           "actionCreate": "创建新的",
           "workflowTypePlaceholder": "选择类型",
+          "workflowScope": {
+            "default": "其他",
+            "cases": "测试用例",
+            "runs": "测试运行",
+            "sessions": "会话"
+          },
           "noWorkflowsAvailable": "暂无可用工作流程。",
           "noStatusesAvailable": "暂无状态信息。",
           "noGroupsAvailable": "暂无可用群组。",
@@ -4883,6 +4892,7 @@
     },
     "workflows": {
       "description": "管理测试用例工作流程",
+      "reviewsTitle": "审查工作流程",
       "systemFeatureCard": {
         "title": "审查工作流程",
         "description": "通过限制工作流程转换直至获得批准来强制执行审核。启用此功能后，项目可以通过其高级设置单独选择启用或禁用。禁用此功能可阻止工作流程审批限制。",
@@ -4891,10 +4901,10 @@
         "updateSuccessEnabled": "已启用审核工作流程。",
         "updateSuccessDisabled": "审核工作流程已禁用。",
         "updateError": "更新审核工作流程设置失败。请稍后再试。",
-        "remindersToggleLabel": "发送待审核提醒通知",
+        "remindersToggleLabel": "在以下时长后发送待审核提醒通知",
         "remindersToggleAriaLabel": "切换评论提醒通知",
         "thresholdLabel": "提醒审稿人",
-        "thresholdUnit": "天）",
+        "thresholdUnit": "{count, plural, other {天}}",
         "thresholdSaveButton": "节省",
         "thresholdHelp": "审核请求最多可以保留多少天才会向审核员发送提醒通知？新请求从提交之日起开始计时。",
         "thresholdUpdateSuccess": "查看提醒设置是否已更新。",
@@ -4943,6 +4953,10 @@
     },
     "roles": {
       "description": "通过切换每个应用程序区域的权限，定义用户可以执行的操作。",
+      "confirmDefaultDescription": "您确定要将此角色设置为默认角色吗？",
+      "defaultWarning": "新用户将默认分配此角色。",
+      "defaultLockedTitle": "默认角色",
+      "defaultLockedDescription": "要更改默认设置，请编辑其他角色并将其设置为默认角色。",
       "filterPlaceholder": "筛选角色...",
       "add": {
         "button": "添加角色",
@@ -5177,6 +5191,8 @@
       "confirmDefault": "确认默认设置",
       "confirmDefaultDescription": "您确定要将此里程碑类型设置为默认值吗？",
       "warning": "此里程碑类型将添加到所有项目中。",
+      "defaultLockedTitle": "默认里程碑类型",
+      "defaultLockedDescription": "要更改默认设置，请编辑其他里程碑类型并将其设置为默认类型。",
       "wizard": {
         "selectProjects": "选择项目",
         "projectsSelected": "{count, plural, =0 {未选择任何项目} one {已选择项目数} other {已选择项目数}}",
@@ -5274,7 +5290,8 @@
         "repositoryCaseVersions": "存储库案例版本",
         "testRunStepResults": "测试运行步骤结果",
         "issueConfigs": "问题配置",
-        "sharedStepGroups": "共同步骤小组"
+        "sharedStepGroups": "共同步骤小组",
+        "dataSets": "数据集"
       },
       "table": {
         "title": "已删除 {itemType}",
@@ -5763,6 +5780,11 @@
     "elasticsearch": {
       "title": "Elasticsearch 管理",
       "description": "管理搜索引擎索引和维护",
+      "health": {
+        "healthy": "健康",
+        "warning": "警告",
+        "unhealthy": "不健康"
+      },
       "status": {
         "title": "Elasticsearch 状态",
         "description": "搜索引擎的当前连接和运行状况",
@@ -5786,7 +5808,7 @@
         "error": "保存设置时出错",
         "errorDescription": "配置保存失败，请重试。",
         "note": {
-          "description": "更改会立即应用于新创建的索引。现有索引会在保存时更新。将副本数设置为 0 可以解决单节点集群上的黄色状态问题。"
+          "description": "更改会立即应用于新创建的索引。现有索引会在保存时更新。将副本数设置为 0 可以解决单节点集群上的警告状态问题。"
         }
       },
       "reindex": {
@@ -6322,6 +6344,60 @@
     "noTasks": "甘特图中没有要显示的任务。"
   },
   "help": {
+    "auditLogs": "查看系统范围内的审计跟踪，以进行安全性和合规性跟踪",
+    "statuses": "管理测试状态",
+    "configurations": "配置是用于定义测试环境的各种类别和变体的组合。例如，操作系统/浏览器、测试服务器、语言等。",
+    "categories": "类别将相关变体——例如浏览器或操作系统——分组，组合起来定义测试环境。",
+    "templates": "管理测试用例模板和字段",
+    "caseFields": "测试用例可用的自定义字段，分配给模板以控制哪些用例使用它们。",
+    "resultFields": "记录测试结果时捕获的自定义字段，分配给模板以控制其应用范围。",
+    "milestoneTypes": "里程碑类型对里程碑进行分类——例如迭代、发布或版本——可在多个项目中重复使用。",
+    "tags": "标签用于标记和整理测试用例与会话，方便您在各个项目中对相关工作进行分组和查找。",
+    "issues": "问题是来自 Jira、GitHub、Azure DevOps 等集成的外部跟踪项，同步到 TestPlanIt 后可关联到测试用例、运行和会话。",
+    "crossProjectReports": "构建、运行和分析跨多个项目的报告，例如整个测试套件的自动化趋势。",
+    "users": "TestPlanIt 中的人员目录及其可访问的项目。",
+    "groups": "组可让您一次性为多个用户分配项目访问权限和角色。您可以直接添加成员，也可以从身份提供商映射组。",
+    "roles": "角色控制用户可执行的操作——每个角色针对各个应用程序区域切换权限。您可以直接为用户分配角色，或将其设置为项目默认角色。",
+    "sso": "管理用户的登录方式以及是否允许注册新帐户。",
+    "ssoProviders": "配置用户如何登录您的应用程序。",
+    "ssoRegistration": "控制谁可以注册新帐户。",
+    "ssoAllowRegistration": "禁用此功能后，新用户无法直接注册或通过 SSO 创建帐户。现有用户仍然可以登录。",
+    "ssoDefaultAccess": "新用户注册时分配的系统访问级别。",
+    "ssoRequireEmailVerification": "用户必须先验证其电子邮件地址才能访问系统。",
+    "ssoRestrictDomains": "仅允许来自特定电子邮件域名的注册。",
+    "security": "配置登录强制执行、密码策略、锁定设置和强制执行措施。",
+    "securitySignInEnforcement": "要求单点登录并强制执行双因素身份验证。",
+    "securityForceSso": "禁用电子邮件登录，要求用户使用 SSO。",
+    "securityForce2FANonSSO": "使用邮箱/密码登录的用户必须设置并使用双因素身份验证。",
+    "securityForce2FAAllLogins": "所有用户，包括 SSO 用户，登录后都必须完成 2FA 验证。",
+    "securityPasswordPolicy": "设置用户密码要求。",
+    "securityLockoutPolicy": "配置登录失败后账户锁定。",
+    "securityEnforcement": "强制基于凭证的用户更改密码。",
+    "apiTokens": "查看和管理所有用户的 API 令牌。如有安全隐患，可撤销令牌。",
+    "scim": "通过 SCIM 2.0 将身份提供商的用户配置到 TestPlanIt 中。",
+    "scimConflicts": "SCIM 身份事件需要系统干预（链接、恢复、显示名称覆盖、跳过成员）。",
+    "scimFallbackDefault": "未被任何组映射覆盖的用户所分配的访问级别。",
+    "integrations": "管理用于问题跟踪的第三方集成。",
+    "notifications": "设置默认通知偏好设置（用户可以覆盖），并发送系统通知。",
+    "notificationsSystem": "向所有用户发送重要公告。",
+    "notificationsHistory": "此前发送给所有用户的系统通知。",
+    "aiModels": "管理用于 AI 辅助功能的 AI 模型提供商和连接，包括使用限制和预算。",
+    "prompts": "管理 AI 功能用于生成内容的提示配置，并将其分配给项目。",
+    "quickscripts": "管理 QuickScript 用于将测试用例转换为自动化脚本的模板。",
+    "codeRepositories": "管理 QuickScript 上下文的代码库连接。",
+    "recordKeys": "配置带项目前缀的显示标识符，例如 PROJECT-TC-1234，以便轻松识别记录所属的项目及记录类型。底层数字 ID 保持不变，并可在任何地方继续使用。",
+    "recordKeysEnabled": "启用后，记录将显示一个可选的键，该键结合了项目代码、类型标记和记录的数字 ID。请在项目设置 → 高级中设置每个项目的代码。",
+    "imports": "将外部测试管理工具中的数据导入 TestPlanIt。",
+    "elasticsearchStatus": "搜索引擎的当前连接和运行状况。",
+    "elasticsearchConfig": "配置 Elasticsearch 设置以进行部署。",
+    "elasticsearchReindex": "重建搜索索引以提高搜索性能。",
+    "queues": "监控和管理后台作业处理队列。",
+    "trash": "恢复或永久清除系统中已软删除的记录。",
+    "systemWebhooks": "用于处理不与单个项目关联的系统级事件的出站 Webhook 目标——目前是 SCIM 2.0 用户和组生命周期事件。请改用项目设置页面配置入站和项目范围的出站 Webhook。",
+    "workflows": "管理测试用例、测试运行和会话的工作流程状态。",
+    "workflowReviews": "通过限制工作流程转换直至获得批准来强制执行审核。启用此功能后，项目可以通过其高级设置单独选择启用或禁用。禁用此功能可阻止工作流程审批限制。",
+    "reviewReminders": "审核请求最多可以保留多少天才会向审核员发送提醒通知？新请求从提交之日起开始计时。",
+    "resultEditingPolicy": "控制结果记录后多长时间内仍可进行原地编辑，此限制适用于所有项目。项目可以在其高级设置中收紧此限制，但无法放宽。系统管理员始终可以进行编辑。",
     "project": {
       "name": "## 项目名称\n项目的唯一标识符。\n\n- 必须在所有项目中唯一\n- 用于导航和报告\n- 应清晰且具有描述性\n- 帮助团队成员识别项目范围",
       "description": "## 项目描述\n项目目的和范围的更多详细信息。\n\n- 可选，但建议填写\n- 帮助团队成员理解项目目标\n- 可包含关键目标或需求\n- 限 256 个字符",
@@ -6332,6 +6408,7 @@
       "issueTracker": "## 问题跟踪器配置\n选择用于管理与此项目相关的问题的跟踪器配置。"
     },
     "projects": {
+      "overview": "项目是测试用例、运行、会话和里程碑的顶级容器。您可以在此处创建和管理所有项目。",
       "settings": {
         "integrations": {
           "externalProjectHelp": "## 外部项目\n选择要与此 TestPlanIt 项目关联的外部系统中的项目或存储库。\n\n- 从 TestPlanIt 创建的问题将在此项目中创建。\n- 启用系统间的问题跟踪集成。\n- 必须在外部系统中拥有相应的权限。",

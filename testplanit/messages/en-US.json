@@ -6355,7 +6355,7 @@
     "tags": "Tags label and organize test cases and sessions so you can group and find related work across projects.",
     "issues": "Issues are external tracker items — from Jira, GitHub, Azure DevOps, and other integrations — synced into TestPlanIt so they can be linked to test cases, runs, and sessions.",
     "crossProjectReports": "Build, run, and analyze reports that span multiple projects, such as automation trends across your entire test suite.",
-    "users": "Users are the people with access to TestPlanIt. Manage their accounts, access level, role, and active status here.",
+    "users": "A directory of people in TestPlanIt and the projects each one can access.",
     "groups": "Groups let you assign project access and roles to many users at once. Add members directly, or map a group from your identity provider.",
     "roles": "Roles control what users can do — each one toggles permissions per application area. Assign a role to users directly or as a project default.",
     "sso": "Manage how users sign in and whether new accounts can register.",

@@ -15,6 +15,8 @@ import { ExtendedUser, useUserColumns } from "./columns";
 
 import { Filter } from "@/components/tables/Filter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { SectionHeader } from "@/components/ui/typography";
+import { HelpPopover } from "@/components/ui/help-popover";
 
 export default function UserList() {
   return <Users />;
@@ -141,12 +143,10 @@ function Users() {
       <main>
         <Card id="usersPage">
           <CardHeader className="w-full">
-            <div>
-              <div>
-                <CardTitle>{tCommon("fields.users")}</CardTitle>
-              </div>
-              <div></div>
-            </div>
+            <SectionHeader className="flex items-center gap-2">
+              <CardTitle>{tCommon("fields.users")}</CardTitle>
+              <HelpPopover helpKey="users" />
+            </SectionHeader>
           </CardHeader>
           <CardContent>
             <div className="flex flex-row items-start justify-between gap-4">

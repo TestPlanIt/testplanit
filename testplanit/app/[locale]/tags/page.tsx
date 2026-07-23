@@ -7,10 +7,10 @@ import { Filter } from "@/components/tables/Filter";
 import { VirtualizedDataTable } from "@/components/tables/VirtualizedDataTable";
 import { Button } from "@/components/ui/button";
 import { SectionHeader } from "@/components/ui/typography";
+import { HelpPopover } from "@/components/ui/help-popover";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -339,18 +339,23 @@ function Tags() {
     <main>
       <Card>
         <CardHeader className="w-full">
-          <SectionHeader className="flex items-center justify-between">
-            <CardTitle>{t("enums.ApplicationArea.Tags")}</CardTitle>
+          <div className="flex items-center justify-between gap-2">
+            <SectionHeader className="flex items-center gap-2">
+              <CardTitle>{t("enums.ApplicationArea.Tags")}</CardTitle>
+              <HelpPopover helpKey="tags" />
+            </SectionHeader>
             <Popover open={autoTagOpen} onOpenChange={setAutoTagOpen}>
               <PopoverTrigger asChild>
                 <Button
-                  variant="default"
-                  size="sm"
                   data-testid="ai-auto-tag-button"
+                  aria-label={t("autoTag.actions.aiAutoTag")}
                   disabled={!projects || projects.length === 0}
+                  className="group gap-0 transition-all duration-200 hover:gap-2"
                 >
                   <TagsIcon className="h-4 w-4" />
-                  {t("autoTag.actions.aiAutoTag")}
+                  <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-xs">
+                    {t("autoTag.actions.aiAutoTag")}
+                  </span>
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-[400px] px-0 py-2" align="end">
@@ -411,8 +416,7 @@ function Tags() {
                 </Command>
               </PopoverContent>
             </Popover>
-          </SectionHeader>
-          <CardDescription>{t("tags.description")}</CardDescription>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="flex flex-row items-start justify-between gap-4">

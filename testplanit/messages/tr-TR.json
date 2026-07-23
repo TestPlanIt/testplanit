@@ -13,6 +13,7 @@
     "file": "Dosya",
     "selectMultiple": "Birden fazla seçenek seçin...",
     "searchUsers": "Kullanıcıları ara...",
+    "searchGroups": "Grupları arayın...",
     "searchCases": "{count, plural, =0 {Vaka arama} one {Vaka arama} other {Vaka arama}}",
     "searchProjects": "{count, plural, =0 {Projeleri ara} one {Proje numarası ara} other {Proje numarası ara}}",
     "searchTags": "Etiketleri ara...",
@@ -382,7 +383,8 @@
         "notificationSettings": "Bildirim Genel Ayarı",
         "elasticsearch_replicas": "Elasticsearch Replikaları",
         "review_feature_enabled": "İnceleme ve Onaylar Etkinleştirildi",
-        "review_reminder_threshold_days": "Değerlendiricilere Eşik Günlerini Hatırlatın"
+        "review_reminder_threshold_days": "Değerlendiricilere Eşik Günlerini Hatırlatın",
+        "record_key_enabled": "Kayıt Anahtarları Etkin"
       },
       "options": {
         "label": "Etiket",
@@ -800,7 +802,8 @@
     "table": {
       "columns": {
         "columns": "Sütunlar",
-        "required": "(gerekli)"
+        "required": "(gerekli)",
+        "resetColumns": "Sütunları varsayılan değere sıfırla"
       },
       "filter": "Filtre listesi...",
       "selectNone": "Hiçbirini Seçin",
@@ -3497,7 +3500,7 @@
       "sheetDescription": "Hedef duruma geçmeden önce bu varlığı incelemeye gönderin.",
       "assigneeLabel": "Atanan kişi",
       "assigneePlaceholder": "Bir kullanıcı veya rol seçin",
-      "usersHoldRole": "{count, plural, one {# Bu role sahip kullanıcı sayısı} other {Bu role sahip kullanıcı sayısı}}",
+      "usersHoldRole": "{count, plural, one {# kullanıcı bu role sahip} other {# kullanıcı bu role sahip}}",
       "targetStateLabel": "Hedef durum",
       "targetStatePlaceholder": "Hedef bir eyalet seçin",
       "commentLabel": "Yorum",
@@ -3988,6 +3991,12 @@
           "actionMap": "Mevcut olana harita",
           "actionCreate": "Yeni oluştur",
           "workflowTypePlaceholder": "Tür seçin",
+          "workflowScope": {
+            "default": "Diğer",
+            "cases": "Test Senaryoları",
+            "runs": "Test Çalışmaları",
+            "sessions": "Oturumlar"
+          },
           "noWorkflowsAvailable": "Kullanılabilir iş akışı yok.",
           "noStatusesAvailable": "Mevcut durum bilgisi yok.",
           "noGroupsAvailable": "Hiçbir grup müsait değil.",
@@ -4883,6 +4892,7 @@
     },
     "workflows": {
       "description": "Test senaryosu iş akışlarını yönetin",
+      "reviewsTitle": "İnceleme İş Akışı",
       "systemFeatureCard": {
         "title": "İş Akışını Gözden Geçirin",
         "description": "Onay verilene kadar iş akışı geçişlerini kilitleyerek incelemeleri zorunlu hale getirin. Etkinleştirildiğinde, projeler Gelişmiş ayarları aracılığıyla ayrı ayrı bu özelliği etkinleştirebilir veya devre dışı bırakabilir. İş akışı onay kilitlerini önlemek için devre dışı bırakın.",
@@ -4891,10 +4901,10 @@
         "updateSuccessEnabled": "İnceleme iş akışı etkinleştirildi.",
         "updateSuccessDisabled": "İnceleme iş akışı devre dışı bırakıldı.",
         "updateError": "İnceleme iş akışı ayarı güncellenemedi. Lütfen birazdan tekrar deneyin.",
-        "remindersToggleLabel": "Bekleyen incelemeler için hatırlatma bildirimleri gönder",
+        "remindersToggleLabel": "Bekleyen incelemeler için hatırlatma bildirimlerini şu süre sonra gönder",
         "remindersToggleAriaLabel": "İnceleme hatırlatıcı bildirimlerini açıp kapat",
         "thresholdLabel": "Değerlendiricilere sonrasında hatırlatın.",
-        "thresholdUnit": "gün(ler)",
+        "thresholdUnit": "{count, plural, one {gün} other {gün}}",
         "thresholdSaveButton": "Kaydetmek",
         "thresholdHelp": "İnceleme taleplerinin inceleyicilere hatırlatma bildirimi gönderilmeden önce kaç gün beklemede kalabileceği. Yeni talepler, gönderim anından itibaren süreyi başlatır.",
         "thresholdUpdateSuccess": "Hatırlatma ayarlarının güncellendiğini gözden geçirin.",
@@ -4943,6 +4953,10 @@
     },
     "roles": {
       "description": "Her uygulama alanı için izinleri değiştirerek kullanıcıların hangi eylemleri gerçekleştirebileceğini tanımlayın.",
+      "confirmDefaultDescription": "Bu Rolü varsayılan olarak ayarlamak istediğinizden emin misiniz?",
+      "defaultWarning": "Yeni kullanıcılara varsayılan olarak bu Rol atanacaktır.",
+      "defaultLockedTitle": "Varsayılan Rol",
+      "defaultLockedDescription": "Varsayılanı değiştirmek için farklı bir Rolü düzenleyin ve onu varsayılan olarak ayarlayın.",
       "filterPlaceholder": "Filtreleme rolleri...",
       "add": {
         "button": "Rol Ekle",
@@ -5177,6 +5191,8 @@
       "confirmDefault": "Varsayılanı Onayla",
       "confirmDefaultDescription": "Bu kilometre taşı türünü varsayılan olarak ayarlamak istediğinizden emin misiniz?",
       "warning": "Bu kilometre taşı türü tüm projelere eklenecektir.",
+      "defaultLockedTitle": "Varsayılan Kilometre Taşı Türü",
+      "defaultLockedDescription": "Varsayılanı değiştirmek için farklı bir Kilometre Taşı Türünü düzenleyin ve onu varsayılan olarak ayarlayın.",
       "wizard": {
         "selectProjects": "Projeleri Seç",
         "projectsSelected": "{count, plural, =0 {Hiçbir proje seçilmedi} one {# Seçilen proje sayısı} other {# Seçilen proje sayısı}}",
@@ -5274,7 +5290,8 @@
         "repositoryCaseVersions": "Depo Vaka Sürümleri",
         "testRunStepResults": "Test Çalıştırma Adım Sonuçları",
         "issueConfigs": "Sorun Yapılandırmaları",
-        "sharedStepGroups": "Ortak Adım Grupları"
+        "sharedStepGroups": "Ortak Adım Grupları",
+        "dataSets": "Veri Kümeleri"
       },
       "table": {
         "title": "Silindi {itemType}",
@@ -5763,6 +5780,11 @@
     "elasticsearch": {
       "title": "Elasticsearch Yönetimi",
       "description": "Arama motoru indeksleme ve bakımını yönetin.",
+      "health": {
+        "healthy": "Sağlıklı",
+        "warning": "Uyarı",
+        "unhealthy": "Sağlıksız"
+      },
       "status": {
         "title": "Elasticsearch Durumu",
         "description": "Arama motorunun mevcut bağlantı ve sağlık durumu",
@@ -5786,7 +5808,7 @@
         "error": "Ayarlar Kaydedilirken Hata",
         "errorDescription": "Yapılandırma kaydedilemedi. Lütfen tekrar deneyin.",
         "note": {
-          "description": "Değişiklikler yeni indekslere hemen uygulanır. Mevcut indeksler kaydettiğinizde güncellenir. Tek düğümlü kümelerde SARI durumu çözmek için çoğaltma sayısını 0 olarak ayarlayın."
+          "description": "Değişiklikler yeni indekslere hemen uygulanır. Mevcut indeksler kaydettiğinizde güncellenir. Tek düğümlü kümelerde Uyarı durumunu çözmek için çoğaltma sayısını 0 olarak ayarlayın."
         }
       },
       "reindex": {
@@ -6322,6 +6344,60 @@
     "noTasks": "Gantt grafiğinde görüntülenecek görev yok."
   },
   "help": {
+    "auditLogs": "Güvenlik ve uyumluluk takibi için sistem genelindeki denetim kaydını görüntüleyin",
+    "statuses": "Test durumlarını yönetin",
+    "configurations": "Konfigürasyonlar, bir test ortamını tanımlamak için kullanılan kategori ve varyantların birleşimidir. Örneğin, İşletim Sistemi/Tarayıcı, Test Sunucusu, Dil vb.",
+    "categories": "Kategoriler, bir test ortamını tanımlamak için birleşen ilgili varyantları — Tarayıcı veya İşletim Sistemi gibi — gruplandırır.",
+    "templates": "Test senaryosu şablonlarını ve alanlarını yönetin",
+    "caseFields": "Test senaryolarında kullanılabilen özel alanlar, hangi senaryoların bunları kullanacağını kontrol etmek için şablonlara atanır.",
+    "resultFields": "Bir test sonucu kaydedilirken yakalanan özel alanlar, nerede uygulanacaklarını kontrol etmek için şablonlara atanır.",
+    "milestoneTypes": "Kilometre taşı türleri, kilometre taşlarını — Sprint, Sürüm veya Versiyon gibi — kategorize eder ve projeler arasında yeniden kullanılabilir.",
+    "tags": "Etiketler, test senaryolarını ve oturumları etiketleyip düzenler, böylece projeler arasında ilgili çalışmaları gruplandırabilir ve bulabilirsiniz.",
+    "issues": "Sorunlar, Jira, GitHub, Azure DevOps ve diğer entegrasyonlardan gelen harici izleyici öğeleridir — test senaryolarına, çalışmalara ve oturumlara bağlanabilmeleri için TestPlanIt'e senkronize edilirler.",
+    "crossProjectReports": "Birden fazla projeyi kapsayan raporlar oluşturun, çalıştırın ve analiz edin; örneğin tüm test paketiniz genelindeki otomasyon eğilimleri gibi.",
+    "users": "TestPlanIt'teki kişilerin ve her birinin erişebildiği projelerin bir dizini.",
+    "groups": "Gruplar, birden fazla kullanıcıya aynı anda proje erişimi ve roller atamanızı sağlar. Üyeleri doğrudan ekleyin veya kimlik sağlayıcınızdan bir grup eşleyin.",
+    "roles": "Roller, kullanıcıların ne yapabileceğini kontrol eder — her biri uygulama alanı başına izinleri açar/kapatır. Kullanıcılara doğrudan veya proje varsayılanı olarak bir rol atayın.",
+    "sso": "Kullanıcıların nasıl oturum açacağını ve yeni hesapların kayıt olup olamayacağını yönetin.",
+    "ssoProviders": "Kullanıcıların uygulamanıza nasıl giriş yapabileceğini yapılandırın.",
+    "ssoRegistration": "Yeni hesap açma yetkisini kimlere bırakabileceğinizi kontrol edin.",
+    "ssoAllowRegistration": "Devre dışı bırakıldığında, yeni kullanıcılar doğrudan kaydolamaz veya SSO aracılığıyla hesap oluşturamaz. Mevcut kullanıcılar yine de giriş yapabilir.",
+    "ssoDefaultAccess": "Yeni kullanıcılara kayıt olduklarında atanan sistem erişim düzeyi.",
+    "ssoRequireEmailVerification": "Kullanıcılar sisteme erişmeden önce e-posta adreslerini doğrulamalıdır.",
+    "ssoRestrictDomains": "Yalnızca belirli e-posta alan adlarından kayıt olmaya izin verin.",
+    "security": "Oturum açma zorunluluğunu, parola politikasını, kilitlenme ayarlarını ve uygulama eylemlerini yapılandırın.",
+    "securitySignInEnforcement": "Tekli oturum açmayı zorunlu kılın ve iki faktörlü kimlik doğrulamayı uygulayın.",
+    "securityForceSso": "E-posta ile giriş yapmayı devre dışı bırakın ve kullanıcıların SSO kullanmasını zorunlu kılın.",
+    "securityForce2FANonSSO": "E-posta/şifre ile giriş yapan kullanıcıların iki faktörlü kimlik doğrulamasını kurmaları ve kullanmaları gerekmektedir.",
+    "securityForce2FAAllLogins": "SSO kullanıcıları da dahil olmak üzere tüm kullanıcıların oturum açtıktan sonra 2FA ile doğrulama yapması gerekmektedir.",
+    "securityPasswordPolicy": "Kullanıcı şifreleri için gereksinimleri belirleyin.",
+    "securityLockoutPolicy": "Başarısız giriş denemelerinden sonra hesap kilitleme özelliğini yapılandırın.",
+    "securityEnforcement": "Kimlik doğrulama tabanlı kullanıcılar için parola değişikliklerini zorunlu kılma.",
+    "apiTokens": "Tüm kullanıcılar genelinde API token'larını görüntüleyin ve yönetin. Güvenlik endişeleri varsa token'ları iptal edin.",
+    "scim": "Kimlik sağlayıcınızdan gelen kullanıcıları SCIM 2.0 üzerinden TestPlanIt'e ekleyin.",
+    "scimConflicts": "Sistem müdahalesi gerektiren SCIM kimlik olayları (bağlantı kurma, yeniden canlandırma, displayName üzerine yazma, atlanan üyeler).",
+    "scimFallbackDefault": "Herhangi bir grup eşlemesi tarafından kapsanmayan kullanıcılara atanan erişim seviyesi.",
+    "integrations": "Sorun takibi için üçüncü taraf entegrasyonlarını yönetin.",
+    "notifications": "Varsayılan bildirim tercihlerini ayarlayın (kullanıcılar bunları değiştirebilir) ve sistem bildirimlerini gönderin.",
+    "notificationsSystem": "Önemli duyuruları tüm kullanıcılara gönderin.",
+    "notificationsHistory": "Daha önce tüm kullanıcılara gönderilen sistem bildirimleri.",
+    "aiModels": "AI destekli özellikler için kullanılan AI model sağlayıcılarını ve bağlantılarını, kullanım limitleri ve bütçeler dahil olmak üzere yönetin.",
+    "prompts": "AI özelliklerinin içerik oluşturmak için kullandığı prompt konfigürasyonlarını yönetin ve bunları projelere atayın.",
+    "quickscripts": "QuickScript'in test senaryolarını otomasyon komut dosyalarına dönüştürmek için kullandığı şablonları yönetin.",
+    "codeRepositories": "QuickScript bağlamı için kod deposu bağlantılarını yönetin.",
+    "recordKeys": "PROJECT-TC-1234 gibi, bir kaydın hangi projeye ait olduğunu ve ne tür bir kayıt olduğunu kolayca anlamanızı sağlayan kozmetik, proje önekli tanımlayıcıları yapılandırın. Alttaki sayısal ID değişmez ve her yerde çalışmaya devam eder.",
+    "recordKeysEnabled": "Etkinleştirildiğinde, kayıtlar proje kodunu, bir tür belirtecini ve kaydın sayısal ID'sini birleştiren isteğe bağlı bir anahtar görüntüler. Her projenin kodunu Proje Ayarları → Gelişmiş bölümünden ayarlayın.",
+    "imports": "Harici test yönetim araçlarından gelen verileri TestPlanIt'e aktarın.",
+    "elasticsearchStatus": "Arama motorunun mevcut bağlantı ve sağlık durumu.",
+    "elasticsearchConfig": "Dağıtımınız için Elasticsearch ayarlarını yapılandırın.",
+    "elasticsearchReindex": "Arama performansını iyileştirmek için arama dizinlerini yeniden oluşturun.",
+    "queues": "Arka plan işleme kuyruklarını izleyin ve yönetin.",
+    "trash": "Sistem genelinde yumuşak silinmiş kayıtları geri yükleyin veya kalıcı olarak temizleyin.",
+    "systemWebhooks": "Tek bir projeye bağlı olmayan sistem düzeyindeki olaylar için giden webhook hedefleri — şu anda SCIM 2.0 kullanıcı ve grup yaşam döngüsü olayları. Bunun yerine, proje ayarları sayfasından gelen ve proje kapsamlı giden webhook'ları yapılandırın.",
+    "workflows": "Test senaryoları, test çalışmaları ve oturumlar için iş akışı durumlarını yönetin.",
+    "workflowReviews": "Onay verilene kadar iş akışı geçişlerini kilitleyerek incelemeleri zorunlu hale getirin. Etkinleştirildiğinde, projeler Gelişmiş ayarları aracılığıyla ayrı ayrı bu özelliği etkinleştirebilir veya devre dışı bırakabilir. İş akışı onay kilitlerini önlemek için devre dışı bırakın.",
+    "reviewReminders": "İnceleme taleplerinin inceleyicilere hatırlatma bildirimi gönderilmeden önce kaç gün beklemede kalabileceği. Yeni talepler, gönderim anından itibaren süreyi başlatır.",
+    "resultEditingPolicy": "Sonuç kaydedildikten sonra ne kadar süre geçtiğini kontrol edin; sonuç tüm projelerde yerinde düzenlenebilir. Projeler bunu Gelişmiş ayarlarından sıkılaştırabilir ancak asla gevşetemezler. Sistem yöneticileri her zaman düzenleme yapabilir.",
     "project": {
       "name": "## Proje Adı\nProjenizin benzersiz tanımlayıcısı.\n\n- Tüm projelerde benzersiz olmalıdır\n- Gezinme ve raporlarda kullanılır\n- Açık ve açıklayıcı olmalıdır\n- Ekip üyelerinin proje kapsamını belirlemesine yardımcı olur",
       "description": "## Proje Açıklaması\nProjenin amacı ve kapsamı hakkında ek ayrıntılar.\n\n- İsteğe bağlı ancak önerilir\n- Ekip üyelerinin proje hedeflerini anlamalarına yardımcı olur\n- Temel hedefleri veya gereksinimleri içerebilir\n- 256 karakterle sınırlıdır",
@@ -6332,6 +6408,7 @@
       "issueTracker": "## Sorun Takip Sistemi Yapılandırması\nBu projeyle ilgili sorunları yönetmek için kullanılacak sorun takip sistemi yapılandırmasını seçin."
     },
     "projects": {
+      "overview": "Projeler, test senaryolarınız, çalışmalarınız, oturumlarınız ve kilometre taşlarınız için üst düzey kapsayıcılardır. Tüm projeleri buradan oluşturun ve yönetin.",
       "settings": {
         "integrations": {
           "externalProjectHelp": "## Harici Proje\nBu TestPlanIt projesiyle bağlantı kurmak için harici sistemdeki projeyi veya depoyu seçin.\n\n- TestPlanIt'ten oluşturulan sorunlar bu projede oluşturulacaktır\n- Sistemler arasında sorun izleme entegrasyonunu sağlar\n- Harici sistemde uygun izinlere sahip olmanız gerekir",

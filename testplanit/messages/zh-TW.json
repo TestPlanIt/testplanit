@@ -13,6 +13,7 @@
     "file": "文件",
     "selectMultiple": "選擇多個...",
     "searchUsers": "搜尋用戶...",
+    "searchGroups": "搜尋群組……",
     "searchCases": "{count, plural, =0 {搜尋案例} other {搜尋 # 個案例}}",
     "searchProjects": "{count, plural, =0 {搜尋專案} other {搜尋 # 個專案}}",
     "searchTags": "搜尋標籤...",
@@ -382,7 +383,8 @@
         "notificationSettings": "通知全域設定",
         "elasticsearch_replicas": "Elasticsearch 副本",
         "review_feature_enabled": "已啟用審核和批准功能",
-        "review_reminder_threshold_days": "提醒審稿者閾值日"
+        "review_reminder_threshold_days": "提醒審稿者閾值日",
+        "record_key_enabled": "記錄鍵已啟用"
       },
       "options": {
         "label": "標籤",
@@ -800,7 +802,8 @@
     "table": {
       "columns": {
         "columns": "列",
-        "required": "（必需的）"
+        "required": "（必需的）",
+        "resetColumns": "將欄位重設為預設值"
       },
       "filter": "篩選列表...",
       "selectNone": "選擇“無”",
@@ -3497,7 +3500,7 @@
       "sheetDescription": "在過渡到目標狀態之前，請將此實體傳送給我們進行審核。",
       "assigneeLabel": "受讓人",
       "assigneePlaceholder": "選擇使用者或角色",
-      "usersHoldRole": "{count, plural, one {# 使用者擁有此角色} other {# 使用者擁有此角色}}",
+      "usersHoldRole": "{count, plural, other {# 位使用者擁有此角色}}",
       "targetStateLabel": "目標狀態",
       "targetStatePlaceholder": "選擇目標狀態",
       "commentLabel": "評論",
@@ -3988,6 +3991,12 @@
           "actionMap": "映射到現有",
           "actionCreate": "創建新的",
           "workflowTypePlaceholder": "選擇類型",
+          "workflowScope": {
+            "default": "其他",
+            "cases": "測試用例",
+            "runs": "測試運行",
+            "sessions": "工作階段"
+          },
           "noWorkflowsAvailable": "暫無可用工作流程。",
           "noStatusesAvailable": "暫無狀態資訊。",
           "noGroupsAvailable": "暫無可用群組。",
@@ -4883,6 +4892,7 @@
     },
     "workflows": {
       "description": "管理測試用例工作流程",
+      "reviewsTitle": "審查工作流程",
       "systemFeatureCard": {
         "title": "審查工作流程",
         "description": "透過限制工作流程轉換直到獲得批准來強制執行審核。啟用此功能後，項目可以透過其進階設定單獨選擇啟用或停用。停用此功能可阻止工作流程核准限制。",
@@ -4891,10 +4901,10 @@
         "updateSuccessEnabled": "已啟用審核工作流程。",
         "updateSuccessDisabled": "審核工作流程已停用。",
         "updateError": "更新審核工作流程設定失敗。請稍後再試。",
-        "remindersToggleLabel": "發送待審核提醒通知",
+        "remindersToggleLabel": "在以下時間後傳送待審核提醒通知",
         "remindersToggleAriaLabel": "切換評論提醒通知",
         "thresholdLabel": "提醒審稿人",
-        "thresholdUnit": "天）",
+        "thresholdUnit": "{count, plural, other {天}}",
         "thresholdSaveButton": "節省",
         "thresholdHelp": "審核請求最多可以保留多少天才會向審核員發送提醒通知？新請求從提交之日起開始計時。",
         "thresholdUpdateSuccess": "查看提醒設定是否已更新。",
@@ -4943,6 +4953,10 @@
     },
     "roles": {
       "description": "透過切換每個應用程式區域的權限，定義使用者可以執行哪些操作。",
+      "confirmDefaultDescription": "您確定要將此角色設定為預設角色嗎？",
+      "defaultWarning": "新使用者將預設被指派此角色。",
+      "defaultLockedTitle": "預設角色",
+      "defaultLockedDescription": "若要變更預設值，請編輯其他角色並將其設為預設。",
       "filterPlaceholder": "篩選角色...",
       "add": {
         "button": "添加角色",
@@ -5177,6 +5191,8 @@
       "confirmDefault": "確認預設設定",
       "confirmDefaultDescription": "您確定要將此里程碑類型設為預設值嗎？",
       "warning": "此里程碑類型將會新增至所有項目。",
+      "defaultLockedTitle": "預設里程碑類型",
+      "defaultLockedDescription": "若要變更預設值，請編輯其他里程碑類型並將其設為預設。",
       "wizard": {
         "selectProjects": "選擇項目",
         "projectsSelected": "{count, plural, =0 {未選擇專案} other {已選擇 # 個專案}}",
@@ -5274,7 +5290,8 @@
         "repositoryCaseVersions": "儲存庫案例版本",
         "testRunStepResults": "測試運行步驟結果",
         "issueConfigs": "問題配置",
-        "sharedStepGroups": "共同步驟小組"
+        "sharedStepGroups": "共同步驟小組",
+        "dataSets": "資料集"
       },
       "table": {
         "title": "已刪除 {itemType}",
@@ -5763,6 +5780,11 @@
     "elasticsearch": {
       "title": "Elasticsearch 管理",
       "description": "管理搜尋引擎索引和維護",
+      "health": {
+        "healthy": "健康",
+        "warning": "警告",
+        "unhealthy": "不健康"
+      },
       "status": {
         "title": "Elasticsearch 狀態",
         "description": "搜尋引擎的當前連線和運作狀況",
@@ -5786,7 +5808,7 @@
         "error": "儲存設定時出錯",
         "errorDescription": "配置儲存失敗，請重試。",
         "note": {
-          "description": "變更會立即套用至新建立的索引。現有索引會在儲存時更新。將副本數設為 0 可以解決單節點叢集上的黃色狀態問題。"
+          "description": "變更會立即套用至新建立的索引。現有索引會在儲存時更新。將副本數設為 0 可以解決單節點叢集上的警告狀態問題。"
         }
       },
       "reindex": {
@@ -6322,6 +6344,60 @@
     "noTasks": "甘特圖中沒有要顯示的任務。"
   },
   "help": {
+    "auditLogs": "檢視全系統稽核記錄，以進行安全性與合規性追蹤",
+    "statuses": "管理測試狀態",
+    "configurations": "配置是用於定義測試環境的類別和變體的組合，例如作業系統/瀏覽器、測試伺服器、語言等。",
+    "categories": "類別會將相關變體——例如瀏覽器或作業系統——分組，並結合起來定義測試環境。",
+    "templates": "管理測試用例範本和欄位",
+    "caseFields": "可用於測試用例的自訂欄位，指派給範本以控制哪些用例使用這些欄位。",
+    "resultFields": "在記錄測試結果時擷取的自訂欄位，指派給範本以控制其套用範圍。",
+    "milestoneTypes": "里程碑類型可對里程碑進行分類——例如衝刺、發行版或版本——並可在各專案間重複使用。",
+    "tags": "標籤可標記並組織測試用例和工作階段，讓您能夠在各專案間分組並找到相關工作。",
+    "issues": "問題是來自 Jira、GitHub、Azure DevOps 及其他整合的外部追蹤項目，會同步至 TestPlanIt，以便與測試用例、測試運行和工作階段建立連結。",
+    "crossProjectReports": "建立、執行並分析跨多個專案的報告，例如整個測試套件的自動化趨勢。",
+    "users": "TestPlanIt 中的人員目錄，以及每個人可存取的專案。",
+    "groups": "群組讓您可以一次為多個使用者指派專案存取權和角色。您可以直接新增成員，或從您的身分提供者對應群組。",
+    "roles": "角色控制使用者可以執行的操作 — 每個角色會依應用程式區域切換權限。您可以直接為使用者指派角色，或將其設為專案預設值。",
+    "sso": "管理使用者的登入方式，以及是否可以註冊新帳戶。",
+    "ssoProviders": "配置使用者如何登入您的應用程式。",
+    "ssoRegistration": "控制誰可以註冊新帳戶。",
+    "ssoAllowRegistration": "停用此功能後，新使用者無法直接註冊或透過 SSO 建立帳戶。現有使用者仍然可以登入。",
+    "ssoDefaultAccess": "新使用者註冊時所指派的系統存取層級。",
+    "ssoRequireEmailVerification": "使用者必須先驗證其電子郵件地址才能存取系統。",
+    "ssoRestrictDomains": "僅允許來自特定電子郵件網域的註冊。",
+    "security": "設定登入強制執行、密碼策略、鎖定設定和強制執行措施。",
+    "securitySignInEnforcement": "要求單一登入並強制執行雙重認證。",
+    "securityForceSso": "停用電子郵件登入，並要求使用者使用 SSO。",
+    "securityForce2FANonSSO": "使用電子郵件/密碼登入的使用者必須設定並使用雙重認證。",
+    "securityForce2FAAllLogins": "所有使用者，包括 SSO 使用者，登入後都必須通過 2FA 驗證。",
+    "securityPasswordPolicy": "設定使用者密碼要求。",
+    "securityLockoutPolicy": "設定登入失敗後的帳戶鎖定。",
+    "securityEnforcement": "強制以憑證登入的使用者變更密碼。",
+    "apiTokens": "檢視並管理所有使用者的 API 權杖。如有安全考量，可撤銷權杖。",
+    "scim": "透過 SCIM 2.0 將身分提供者中的使用者佈建至 TestPlanIt。",
+    "scimConflicts": "需要系統介入的 SCIM 身分事件（連結、復原、顯示名稱覆寫、跳過成員）。",
+    "scimFallbackDefault": "未被任何群組對應涵蓋之使用者所指派的存取層級。",
+    "integrations": "管理用於問題追蹤的第三方整合。",
+    "notifications": "設定預設通知偏好設定（使用者可以覆蓋），並發送系統通知。",
+    "notificationsSystem": "向所有使用者傳送重要公告。",
+    "notificationsHistory": "先前傳送給所有使用者的系統通知。",
+    "aiModels": "管理用於 AI 輔助功能的 AI 模型供應商和連線，包括使用限制和預算。",
+    "prompts": "管理 AI 功能用於生成內容的提示詞配置，並將其指派給專案。",
+    "quickscripts": "管理 QuickScript 用於將測試案例轉換為自動化腳本的範本。",
+    "codeRepositories": "管理 QuickScript 上下文的程式碼庫連線。",
+    "recordKeys": "設定外觀用的專案前綴識別碼，例如 PROJECT-TC-1234，讓您輕鬆辨識記錄所屬的專案及其類型。底層的數字 ID 保持不變，並繼續在所有地方正常運作。",
+    "recordKeysEnabled": "啟用後，記錄會顯示一個選用的鍵，結合專案代碼、類型代號和記錄的數字 ID。請在專案設定 → 進階中設定每個專案的代碼。",
+    "imports": "將外部測試管理工具中的資料匯入 TestPlanIt。",
+    "elasticsearchStatus": "搜尋引擎目前的連線與運作狀態。",
+    "elasticsearchConfig": "為您的部署設定 Elasticsearch。",
+    "elasticsearchReindex": "重建搜尋索引以提升搜尋效能。",
+    "queues": "監控並管理背景作業處理佇列。",
+    "trash": "還原或永久清除系統中已軟刪除的記錄。",
+    "systemWebhooks": "用於系統層級事件的出站 Webhook 目標，這些事件不與單一專案關聯——目前為 SCIM 2.0 使用者與群組生命週期事件。請改用專案設定頁面來設定入站與專案範圍的出站 Webhook。",
+    "workflows": "管理測試用例、測試運行和工作階段的工作流程狀態。",
+    "workflowReviews": "透過限制工作流程轉換，直到獲得核准為止，來強制執行審查。啟用後，各專案可透過其進階設定個別選擇啟用或停用。停用則會取消工作流程核准限制。",
+    "reviewReminders": "審核請求在待處理狀態下可保留多少天，才會向審核者發送提醒通知。新請求會從提交時開始計時。",
+    "resultEditingPolicy": "控制結果記錄後多長時間內仍可原地編輯，此設定適用於所有專案。專案可在其進階設定中收緊此限制，但不能放寬。系統管理員永遠可以編輯。",
     "project": {
       "name": "## 專案名稱\n您專案的唯一識別碼。\n\n- 必須在所有專案中保持唯一\n- 用於導覽和報告\n- 應清晰且具描述性\n- 幫助團隊成員了解專案範圍",
       "description": "## 專案描述\n有關專案目的和範圍的額外詳細資訊。\n\n- 非必填但建議填寫\n- 幫助團隊成員了解專案目標\n- 可包含主要目標或需求\n- 限制為 256 個字元",
@@ -6332,6 +6408,7 @@
       "issueTracker": "## 問題追蹤器配置\n選擇用於管理與此項目相關的問題的追蹤器配置。"
     },
     "projects": {
+      "overview": "專案是您的測試用例、測試運行、工作階段和里程碑的最上層容器。您可以在此建立並管理每個專案。",
       "settings": {
         "integrations": {
           "externalProjectHelp": "## 外部項目\n選擇要與此 TestPlanIt 項目關聯的外部系統中的項目或儲存庫。\n\n- 從 TestPlanIt 建立的問題將在此專案中建立。\n- 啟用系統間的問題追蹤整合。\n- 必須在外部系統中擁有對應的權限。",

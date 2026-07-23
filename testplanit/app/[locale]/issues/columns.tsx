@@ -333,7 +333,7 @@ export function useIssueColumns({
         enableSorting: true,
         enableResizing: true,
         sortingFn: "basic",
-        size: 75,
+        size: 130,
         minSize: 60,
         maxSize: 150,
         cell: ({ row }) => {
@@ -365,7 +365,7 @@ export function useIssueColumns({
         enableSorting: true,
         enableResizing: true,
         sortingFn: "basic",
-        size: 75,
+        size: 130,
         minSize: 60,
         maxSize: 150,
         cell: ({ row }) => {
@@ -396,7 +396,7 @@ export function useIssueColumns({
         enableSorting: true,
         enableResizing: true,
         sortingFn: "basic",
-        size: 75,
+        size: 130,
         minSize: 60,
         maxSize: 150,
         cell: ({ row }) => {
@@ -426,7 +426,7 @@ export function useIssueColumns({
         enableSorting: true,
         enableResizing: true,
         sortingFn: "basic",
-        size: 75,
+        size: 130,
         minSize: 60,
         maxSize: 150,
         cell: ({ row }) => {
@@ -457,7 +457,7 @@ export function useIssueColumns({
         enableSorting: true,
         enableResizing: true,
         sortingFn: "basic",
-        size: 75,
+        size: 130,
         minSize: 60,
         maxSize: 150,
         cell: ({ row }) => {

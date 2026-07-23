@@ -46,7 +46,7 @@ export const useUserColumns = (tCommon: any): ColumnDef<ExtendedUser>[] =>
         header: tCommon("fields.projects"),
         enableSorting: false,
         enableResizing: true,
-        size: 75,
+        size: 130,
         cell: ({ row }) => (
           <div className="bg-primary-foreground text-center">
             <ProjectListDisplay
