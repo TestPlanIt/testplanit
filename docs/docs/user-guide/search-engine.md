@@ -22,7 +22,7 @@ Only system administrators can open this page.
 The status card shows the live connection and health of the cluster:
 
 - **Connection** — Connected or Disconnected.
-- **Cluster health** — a **GREEN**, **YELLOW**, or **RED** badge.
+- **Cluster health** — a **Healthy**, **Warning**, or **Unhealthy** badge.
 - **Nodes** — the number of nodes in the cluster.
 - **Indices** — a per-index list of the `testplanit-*` indices with each index's document count, store size, and health.
 
@@ -32,7 +32,7 @@ Use **Refresh** to re-check the status. If Elasticsearch is not configured or no
 
 The **Number of Replicas** setting controls index redundancy:
 
-- **0** — for single-node clusters. This is also the fix when health shows **YELLOW** on a single node (replicas can't be allocated with only one node).
+- **0** — for single-node clusters. This is also the fix when health shows **Warning** on a single node (replicas can't be allocated with only one node).
 - **1 or more** — for multi-node clusters that need redundancy.
 
 The value is validated to the range **0–10**. Saving persists the setting and applies it live to all existing `testplanit-*` indices.

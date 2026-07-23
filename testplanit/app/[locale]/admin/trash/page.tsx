@@ -8,6 +8,7 @@ import DynamicIcon from "~/components/DynamicIcon";
 import { Badge } from "~/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { SectionHeader } from "@/components/ui/typography";
+import { HelpPopover } from "@/components/ui/help-popover";
 import { cn } from "~/utils";
 import SoftDeletedDataTable from ".//SoftDeletedDataTable";
 
@@ -175,6 +176,11 @@ const softDeletedItemTypes: Array<{
     translationKey: "admin.menu.codeRepositories",
     iconName: "git-branch",
   },
+  {
+    name: "DataSet",
+    translationKey: "admin.trash.itemTypes.dataSets",
+    iconName: "database",
+  },
 ];
 
 export default function TrashPage() {
@@ -205,10 +211,12 @@ export default function TrashPage() {
   // Resolve the translated label once per type so we can both render and filter.
   const typesWithLabels = useMemo(
     () =>
-      softDeletedItemTypes.map((itemType) => ({
-        ...itemType,
-        label: tGlobal(itemType.translationKey as any),
-      })),
+      softDeletedItemTypes
+        .map((itemType) => ({
+          ...itemType,
+          label: tGlobal(itemType.translationKey as any),
+        }))
+        .sort((a, b) => a.label.localeCompare(b.label)),
     [tGlobal]
   );
 
@@ -235,8 +243,9 @@ export default function TrashPage() {
     <Card>
       <CardHeader className="w-full">
         <SectionHeader className="flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <CardTitle>{tGlobal("admin.menu.trash")}</CardTitle>
+            <HelpPopover helpKey="trash" />
           </div>
           {hasCounts && (
             <span className="text-sm font-normal text-muted-foreground">

@@ -6,13 +6,8 @@ import { useSession } from "next-auth/react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { HelpPopover } from "@/components/ui/help-popover";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "~/components/ui/label";
@@ -149,18 +144,20 @@ export function RecordKeysConfigCard() {
   return (
     <Card data-testid="record-keys-card">
       <CardHeader>
-        <Label className="flex items-center gap-3">
-          <Switch
-            id="record-keys-toggle"
-            data-testid="record-keys-toggle"
-            aria-label={t("toggleAriaLabel")}
-            checked={enabled}
-            onCheckedChange={handleToggle}
-            disabled={controlsDisabled}
-          />
-          <CardTitle>{t("title")}</CardTitle>
-        </Label>
-        <CardDescription>{t("description")}</CardDescription>
+        <div className="flex items-center gap-2">
+          <Label className="flex items-center gap-3">
+            <Switch
+              id="record-keys-toggle"
+              data-testid="record-keys-toggle"
+              aria-label={t("toggleAriaLabel")}
+              checked={enabled}
+              onCheckedChange={handleToggle}
+              disabled={controlsDisabled}
+            />
+            <CardTitle>{t("title")}</CardTitle>
+          </Label>
+          <HelpPopover helpKey="recordKeysEnabled" />
+        </div>
       </CardHeader>
 
       {!isAdmin && (

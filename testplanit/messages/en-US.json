@@ -5284,7 +5284,8 @@
         "repositoryCaseVersions": "Repository Case Versions",
         "testRunStepResults": "Test Run Step Results",
         "issueConfigs": "Issue Configs",
-        "sharedStepGroups": "Shared Step Groups"
+        "sharedStepGroups": "Shared Step Groups",
+        "dataSets": "Datasets"
       },
       "table": {
         "title": "Deleted {itemType}",
@@ -5773,6 +5774,11 @@
     "elasticsearch": {
       "title": "Elasticsearch Management",
       "description": "Manage search engine indexing and maintenance",
+      "health": {
+        "healthy": "Healthy",
+        "warning": "Warning",
+        "unhealthy": "Unhealthy"
+      },
       "status": {
         "title": "Elasticsearch Status",
         "description": "Current connection and health status of the search engine",
@@ -5796,7 +5802,7 @@
         "error": "Error Saving Settings",
         "errorDescription": "Failed to save configuration. Please try again.",
         "note": {
-          "description": "Changes apply to new indices immediately. Existing indices are updated when you save. Set replicas to 0 to resolve YELLOW status on single-node clusters."
+          "description": "Changes apply to new indices immediately. Existing indices are updated when you save. Set replicas to 0 to resolve Warning status on single-node clusters."
         }
       },
       "reindex": {
@@ -6373,6 +6379,14 @@
     "prompts": "Manage the prompt configurations AI features use to generate content, and assign them to projects.",
     "quickscripts": "Manage templates used by QuickScript to convert test cases into automation scripts.",
     "codeRepositories": "Manage code repository connections for QuickScript context.",
+    "recordKeys": "Configure cosmetic, project-prefixed identifiers such as PROJECT-TC-1234 that make it easy to tell which project a record belongs to and what kind of record it is. The underlying numeric ID is unchanged and continues to work everywhere.",
+    "recordKeysEnabled": "When enabled, records display an optional key combining the project code, a type token, and the record's numeric ID. Set each project's code in Project Settings → Advanced.",
+    "imports": "Bring data from external test management tools into TestPlanIt.",
+    "elasticsearchStatus": "Current connection and health status of the search engine.",
+    "elasticsearchConfig": "Configure Elasticsearch settings for your deployment.",
+    "elasticsearchReindex": "Rebuild search indices for improved search performance.",
+    "queues": "Monitor and manage background job processing queues.",
+    "trash": "Restore or permanently purge soft-deleted records across the system.",
     "systemWebhooks": "Outbound webhook destinations for system-level events that aren't tied to a single project — currently the SCIM 2.0 user and group lifecycle events. Configure inbound and project-scoped outbound webhooks from the project settings page instead.",
     "workflows": "Manage the workflow states for test cases, test runs, and sessions.",
     "workflowReviews": "Enforce reviews by gating workflow transitions until approval is granted. When enabled, projects may opt in or out individually via their Advanced settings. Disable to prevent workflow approval gates.",

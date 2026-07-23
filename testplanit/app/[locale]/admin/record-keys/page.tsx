@@ -3,16 +3,12 @@
 import { useTranslations } from "next-intl";
 import { useSession } from "next-auth/react";
 
-import {
-  Card,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardHeader, CardTitle } from "@/components/ui/card";
+import { SectionHeader } from "@/components/ui/typography";
+import { HelpPopover } from "@/components/ui/help-popover";
 import { RecordKeysConfigCard } from "./RecordKeysConfigCard";
 
 export default function RecordKeysAdminPage() {
-  const t = useTranslations("admin.recordKeys");
   const tMenu = useTranslations("admin.menu");
   const { data: session } = useSession();
 
@@ -24,8 +20,10 @@ export default function RecordKeysAdminPage() {
     <main>
       <Card>
         <CardHeader>
-          <CardTitle>{tMenu("recordKeys")}</CardTitle>
-          <CardDescription>{t("pageDescription")}</CardDescription>
+          <SectionHeader className="flex items-center gap-2">
+            <CardTitle>{tMenu("recordKeys")}</CardTitle>
+            <HelpPopover helpKey="recordKeys" />
+          </SectionHeader>
         </CardHeader>
       </Card>
       <div className="mt-4">

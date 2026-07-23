@@ -89,4 +89,5 @@ export const itemTypeToModelMap: Record<string, any> = {
   PromptConfig: db.promptConfig,
   CaseExportTemplate: db.caseExportTemplate,
   SharedStepGroup: db.sharedStepGroup,
+  DataSet: db.dataSet,
 };

@@ -155,6 +155,7 @@ const itemTypeToModelMap: Record<string, { model: any; modelName: string }> = {
     modelName: "CaseExportTemplate",
   },
   SharedStepGroup: { model: db.sharedStepGroup, modelName: "SharedStepGroup" },
+  DataSet: { model: db.dataSet, modelName: "DataSet" },
   // Ensure all models that can be soft-deleted and purged are in this map with the correct structure.
 };
 
@@ -227,6 +228,7 @@ export const PATCH = withAuditContext(
         "PromptConfig",
         "CaseExportTemplate",
         "SharedStepGroup",
+        "DataSet",
       ];
 
       if (intIdModels.includes(modelMapEntry.modelName)) {
@@ -352,6 +354,7 @@ export const DELETE = withAuditContext(
       "PromptConfig",
       "CaseExportTemplate",
       "SharedStepGroup",
+      "DataSet",
     ];
 
     if (intIdModels.includes(modelMapEntry.modelName)) {

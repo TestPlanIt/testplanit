@@ -1,15 +1,12 @@
 "use client";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { WarningAlert } from "@/components/ui/warning-alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { SectionHeader } from "@/components/ui/typography";
+import { HelpPopover } from "@/components/ui/help-popover";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
@@ -24,9 +21,9 @@ import {
   Activity,
   AlertCircle,
   CheckCircle,
-  Database,
   Loader2,
   RefreshCw,
+  TriangleAlert,
   XCircle,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -283,9 +280,15 @@ export function ElasticsearchAdmin({
       red: "destructive",
     };
 
+    const labels: Record<string, string> = {
+      green: t("health.healthy"),
+      yellow: t("health.warning"),
+      red: t("health.unhealthy"),
+    };
+
     return (
       <Badge variant={variants[health] || "outline"}>
-        {health.toUpperCase()}
+        {labels[health] || health.toUpperCase()}
       </Badge>
     );
   };
@@ -304,11 +307,11 @@ export function ElasticsearchAdmin({
       {/* Status Card */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <Database className="h-5 w-5" />
+          <div className="flex items-center justify-between gap-2">
+            <SectionHeader className="flex items-center gap-2">
               <CardTitle>{t("status.title")}</CardTitle>
-            </div>
+              <HelpPopover helpKey="elasticsearchStatus" />
+            </SectionHeader>
             <Button
               variant="outline"
               size="sm"
@@ -323,7 +326,6 @@ export function ElasticsearchAdmin({
               {tGlobal("common.actions.refresh")}
             </Button>
           </div>
-          <CardDescription>{t("status.description")}</CardDescription>
         </CardHeader>
         <CardContent>
           {loading && !status ? (
@@ -333,7 +335,7 @@ export function ElasticsearchAdmin({
             </div>
           ) : status ? (
             <div className="space-y-4">
-              <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2">
                 {getHealthIcon(status.available, status.health)}
                 <div>
                   <div className="font-medium">
@@ -406,8 +408,10 @@ export function ElasticsearchAdmin({
       {!isMultiTenantMode && (
         <Card>
           <CardHeader>
-            <CardTitle>{tGlobal("common.fields.configuration")}</CardTitle>
-            <CardDescription>{t("settings.description")}</CardDescription>
+            <SectionHeader className="flex items-center gap-2">
+              <CardTitle>{tGlobal("common.fields.configuration")}</CardTitle>
+              <HelpPopover helpKey="elasticsearchConfig" />
+            </SectionHeader>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -463,8 +467,10 @@ export function ElasticsearchAdmin({
       {/* Reindex Card */}
       <Card>
         <CardHeader>
-          <CardTitle>{t("reindex.title")}</CardTitle>
-          <CardDescription>{t("reindex.description")}</CardDescription>
+          <SectionHeader className="flex items-center gap-2">
+            <CardTitle>{t("reindex.title")}</CardTitle>
+            <HelpPopover helpKey="elasticsearchReindex" />
+          </SectionHeader>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center space-x-4">
@@ -569,13 +575,13 @@ export function ElasticsearchAdmin({
             </div>
           )}
 
-          <Alert>
-            <AlertCircle className="h-4 w-4" />
+          <WarningAlert>
+            <TriangleAlert className="h-4 w-4" />
             <AlertTitle>{t("reindex.warning.title")}</AlertTitle>
             <AlertDescription>
               {t("reindex.warning.description")}
             </AlertDescription>
-          </Alert>
+          </WarningAlert>
         </CardContent>
       </Card>
     </div>

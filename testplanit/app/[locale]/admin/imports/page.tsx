@@ -1,13 +1,9 @@
 "use client";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { SectionHeader } from "@/components/ui/typography";
+import { HelpPopover } from "@/components/ui/help-popover";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useTranslations } from "next-intl";
 import { TestmoImportPanel } from "./TestmoImportPanel";
@@ -19,8 +15,10 @@ export default function AdminImportsPage() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{tGlobal("admin.menu.imports")}</CardTitle>
-        <CardDescription>{t("description")}</CardDescription>
+        <SectionHeader className="flex items-center gap-2">
+          <CardTitle>{tGlobal("admin.menu.imports")}</CardTitle>
+          <HelpPopover helpKey="imports" />
+        </SectionHeader>
       </CardHeader>
       <CardContent className="space-y-6">
         <Tabs defaultValue="testmo">

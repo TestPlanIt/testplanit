@@ -3,13 +3,9 @@
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { SectionHeader } from "@/components/ui/typography";
+import { HelpPopover } from "@/components/ui/help-popover";
 import {
   Dialog,
   DialogContent,
@@ -237,29 +233,14 @@ export function QueueManagement() {
 
   return (
     <div className="space-y-6">
-      {/* Concurrency Info Alert */}
-      <Alert>
-        <Activity className="h-4 w-4" />
-        <AlertTitle>{t("concurrency.title")}</AlertTitle>
-        <AlertDescription>
-          <p className="mb-2">{t("concurrency.description")}</p>
-          <p className="text-sm font-medium">
-            {t("concurrency.configureTitle")}
-          </p>
-          <p className="text-sm text-muted-foreground">
-            {t("concurrency.configureDescription")}
-          </p>
-        </AlertDescription>
-      </Alert>
-
       {/* Overview Card */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
+          <div className="flex items-center justify-between gap-2">
+            <SectionHeader className="flex items-center gap-2">
               <CardTitle>{t("title")}</CardTitle>
-              <CardDescription>{t("description")}</CardDescription>
-            </div>
+              <HelpPopover helpKey="queues" />
+            </SectionHeader>
             <Button
               variant="outline"
               size="sm"
@@ -276,6 +257,14 @@ export function QueueManagement() {
           </div>
         </CardHeader>
         <CardContent>
+          <Alert className="mb-4">
+            <Activity className="h-4 w-4" />
+            <AlertTitle>{t("concurrency.title")}</AlertTitle>
+            <AlertDescription>
+              {t("concurrency.description")}{" "}
+              {t("concurrency.configureDescription")}
+            </AlertDescription>
+          </Alert>
           <Table>
             <TableHeader>
               <TableRow>
@@ -317,24 +306,39 @@ export function QueueManagement() {
                     </Badge>
                   </TableCell>
                   <TableCell className="text-end">
-                    {queue.counts?.waiting ?? "-"}
+                    {queue.counts?.waiting ? (
+                      <Badge className="border-warning bg-warning text-white hover:bg-warning/90">
+                        {queue.counts.waiting}
+                      </Badge>
+                    ) : (
+                      (queue.counts?.waiting ?? "-")
+                    )}
                   </TableCell>
                   <TableCell className="text-end">
-                    {queue.counts?.active ?? "-"}
+                    {queue.counts?.active ? (
+                      <Badge>{queue.counts.active}</Badge>
+                    ) : (
+                      (queue.counts?.active ?? "-")
+                    )}
                   </TableCell>
                   <TableCell className="text-end">
                     {queue.counts?.completed ?? "-"}
                   </TableCell>
                   <TableCell className="text-end">
-                    <div className="flex items-center justify-end gap-1">
-                      {queue.counts && queue.counts.failed > 0 && (
-                        <AlertTriangle className="h-3 w-3 text-destructive" />
-                      )}
-                      {queue.counts?.failed ?? "-"}
-                    </div>
+                    {queue.counts?.failed ? (
+                      <Badge variant="destructive">{queue.counts.failed}</Badge>
+                    ) : (
+                      (queue.counts?.failed ?? "-")
+                    )}
                   </TableCell>
                   <TableCell className="text-end">
-                    {queue.counts?.delayed ?? "-"}
+                    {queue.counts?.delayed ? (
+                      <Badge className="border-warning bg-warning text-white hover:bg-warning/90">
+                        {queue.counts.delayed}
+                      </Badge>
+                    ) : (
+                      (queue.counts?.delayed ?? "-")
+                    )}
                   </TableCell>
                   <TableCell className="text-end">
                     <div

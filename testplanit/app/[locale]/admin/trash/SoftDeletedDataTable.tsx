@@ -311,7 +311,7 @@ export default function SoftDeletedDataTable({
           // Add type to row
           const item = row.original;
           return (
-            <div className="flex space-x-2">
+            <div className="flex justify-end space-x-2">
               <Button
                 variant="outline"
                 className="px-2 py-1 h-auto"
