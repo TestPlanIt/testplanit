@@ -4,6 +4,7 @@
 import { ZenStackClient } from "@zenstackhq/orm";
 import * as fs from "fs";
 
+import { getPoolConfig } from "~/lib/db/poolConfig";
 import { createDialect } from "~/lib/db/readWriteDialect";
 import { type DbClient } from "~/lib/zenstack";
 import { schema } from "~/zenstack/schema";
@@ -234,7 +235,13 @@ export function getAllTenantIds(): string[] {
 function createTenantDbClient(config: TenantConfig): DbClient {
   const client = new ZenStackClient(schema, {
     // Per-tenant replicas only (never the process-wide app replica list).
-    dialect: createDialect(config.databaseUrl, config.replicaUrls ?? []),
+    // Pool sizing is process-wide (see lib/db/poolConfig.ts) and applies per
+    // tenant client, so DATABASE_POOL_MAX is multiplied by the tenant count.
+    dialect: createDialect(
+      config.databaseUrl,
+      config.replicaUrls ?? [],
+      getPoolConfig()
+    ),
   });
 
   return client;

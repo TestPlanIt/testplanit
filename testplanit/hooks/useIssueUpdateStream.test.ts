@@ -117,4 +117,19 @@ describe("scheduleIssueInvalidation", () => {
       predicate({ queryKey: ["zenstack", "Projects", "findMany", {}] })
     ).toBe(false);
   });
+
+  // Regression guard for the 2026-07-23 outage. TanStack's default
+  // (cancelRefetch: true) aborts the in-flight request on every invalidation
+  // pass, so a query slower than the issue-event interval is restarted forever
+  // and never resolves. A steady Jira sync stream then pins a case-detail page
+  // in permanent refetch, holding pg pool slots and starving every other route.
+  it("leaves an in-flight refetch alone instead of cancelling it", () => {
+    const invalidateQueries = vi.fn();
+    scheduleIssueInvalidation({ invalidateQueries } as any);
+    vi.advanceTimersByTime(250);
+
+    expect(invalidateQueries.mock.calls[0][1]).toEqual({
+      cancelRefetch: false,
+    });
+  });
 });
