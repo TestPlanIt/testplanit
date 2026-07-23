@@ -1988,7 +1988,7 @@
         },
         "reviewWorkflow": {
           "label": "Abilita il flusso di lavoro di revisione",
-          "description": "Quando abilitata, la transizione verso stati che richiedono una revisione è vincolata a una richiesta di revisione approvata. I tester visualizzano il pulsante Richiedi revisione; i revisori ricevono notifiche.",
+          "description": "Quando abilitata, la transizione verso stati che richiedono una revisione è vincolata a una richiesta di revisione approvata. I tester visualizzano il pulsante Richiedi revisione; i revisori ricevono notifiche e l'approvazione di una richiesta applica la transizione.",
           "enabledToast": "Revisione del flusso di lavoro abilitata per questo progetto",
           "disabledToast": "Revisione del flusso di lavoro disabilitata per questo progetto.",
           "saveError": "Impossibile aggiornare le impostazioni del flusso di lavoro di revisione.",
@@ -3458,7 +3458,7 @@
       "gatedStatesNotSelectable": "Gli stati che si trovano in prossimità o oltre un punto di controllo non possono essere selezionati durante la creazione. Scegli uno stato prima del primo punto di controllo, quindi utilizza la funzione Richiedi revisione per superarlo.",
       "saveBlockedByFormErrors": "Risolvi gli errori evidenziati nel modulo prima di salvare.",
       "bulkBlockedSummary": "{count, plural, one {# caso} other {# casi}} bloccati dal gate \"{gateName}\": {sampleNames}{more, plural, =0 {} other {, e # altro}}. Ogni caso bloccato necessita di una revisione approvata per \"{gateName}\" prima di questa transizione.",
-      "toastReviewRequired": "È necessaria l'approvazione prima di procedere con la transizione. Richiedi una revisione e riprova dopo l'approvazione.",
+      "toastReviewRequired": "È necessaria l'approvazione prima di questa transizione. Richiedi una revisione: la transizione verrà applicata automaticamente una volta approvata.",
       "toastPendingReviewExists": "È già in corso una valutazione per questa transizione. Attendi la decisione oppure annullala prima di riprovare."
     },
     "inbox": {
@@ -3497,7 +3497,7 @@
       "sheetDescription": "Invia questa entità per la revisione prima di passare allo stato di destinazione.",
       "assigneeLabel": "Assegnatario",
       "assigneePlaceholder": "Seleziona un utente o un ruolo",
-      "usersNotified": "{count, plural, =0 {Nessuno sarà notificato} one {# utente sarà notificato} other {# utenti saranno notificati}}",
+      "usersNotified": "{count, plural, =0 {Nessuno riceverà una notifica} one {# utente riceverà una notifica} other {# utenti riceveranno una notifica}}",
       "targetStateLabel": "Stato bersaglio",
       "targetStatePlaceholder": "Seleziona uno stato di destinazione",
       "commentLabel": "Commento",
@@ -3522,7 +3522,7 @@
       "requestChanges": "Richiesta di modifiche",
       "reject": "Rifiutare",
       "approveConfirmTitle": "Approvare questa richiesta di revisione?",
-      "approveConfirmDescription": "L'approvazione consentirà a <requester></requester> di passare da <name></name> a <state></state>.",
+      "approveConfirmDescription": "L'approvazione sposta <name></name> a <state></state> per <requester></requester>.",
       "approvalNoteLabel": "Nota di approvazione",
       "approvalNotePlaceholder": "Aggiungi una nota facoltativa per il richiedente (visibile accanto all'approvazione).",
       "requestChangesDescription": "Spiega al richiedente quali modifiche sono necessarie prima che tu possa approvare questa transizione.",
@@ -6540,7 +6540,7 @@
       "isDefault": "## Predefinito\nIndica se questo flusso di lavoro è quello predefinito per il tuo progetto.\n\n- Il flusso di lavoro predefinito è preselezionato per nuove esecuzioni di test, sessioni e automazioni.",
       "isEnabled": "## Abilitato\nIndica se questo flusso di lavoro è abilitato.",
       "isActive": "## Attivo\nIndica se questo stato del flusso di lavoro è attivo e disponibile per l'uso.\n\n- I flussi di lavoro attivi possono essere selezionati durante l'aggiornamento di esecuzioni di test, sessioni o automazioni.\n- I flussi di lavoro inattivi sono nascosti dalla selezione ma conservati negli elementi esistenti.",
-      "requiresReview": "## Richiede revisione\nQuando è ATTIVO, il passaggio di un caso, di un'esecuzione di test o di una sessione IN questo stato è vincolato da una richiesta di revisione approvata. Senza una richiesta approvata, la transizione è bloccata.\n\n- Le revisioni in sospeso esistenti vengono conservate silenziosamente quando la funzionalità a livello di sistema è DISATTIVATA e riappaiono quando viene riattivata.\n- Il revisore viene selezionato quando un tester fa clic su Richiedi revisione dalla pagina dei dettagli dell'entità.\n\nSe la funzionalità a livello di sistema è disabilitata, questo interruttore è bloccato. Riattivarlo dalla scheda Flusso di lavoro di revisione sopra per attivarlo.",
+      "requiresReview": "## Richiede revisione\nQuando è ATTIVO, il passaggio di un caso, di un'esecuzione di test o di una sessione IN questo stato è vincolato da una richiesta di revisione approvata. Senza una richiesta approvata, la transizione è bloccata.\n\n- L'approvazione di una richiesta esegue la transizione. L'approvazione del revisore sposta il caso, l'esecuzione o la sessione nello stato richiesto; il richiedente non deve ripetere manualmente il cambio di stato.\n- Le revisioni in sospeso esistenti vengono conservate silenziosamente quando la funzionalità a livello di sistema è DISATTIVATA e riappaiono quando viene riattivata.\n- Il revisore viene selezionato quando un tester fa clic su Richiedi revisione dalla pagina dei dettagli dell'entità.\n\nSe la funzionalità a livello di sistema è disabilitata, questo interruttore è bloccato. Riattivarlo dalla scheda Flusso di lavoro di revisione sopra per attivarlo.",
       "projects": "## Progetti\nIndica i progetti che possono utilizzare questo flusso di lavoro."
     },
     "testResult": {

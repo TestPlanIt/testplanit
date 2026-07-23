@@ -1988,7 +1988,7 @@
         },
         "reviewWorkflow": {
           "label": "Włącz przepływ pracy przeglądu",
-          "description": "Po włączeniu, przejścia do stanów wymagających przeglądu są blokowane przez zatwierdzoną prośbę o przegląd. Testerzy widzą przycisk „Poproś o przegląd”, a recenzenci otrzymują powiadomienia.",
+          "description": "Po włączeniu, przejścia do stanów wymagających przeglądu są blokowane przez zatwierdzoną prośbę o przegląd. Testerzy widzą przycisk „Poproś o przegląd”; recenzenci otrzymują powiadomienia, a zatwierdzenie prośby powoduje wykonanie przejścia.",
           "enabledToast": "Przepływ pracy przeglądu włączony dla tego projektu",
           "disabledToast": "Przebieg przeglądu wyłączony dla tego projektu",
           "saveError": "Nie udało się zaktualizować ustawień przepływu pracy przeglądu",
@@ -3458,7 +3458,7 @@
       "gatedStatesNotSelectable": "Podczas tworzenia nie można wybierać stanów znajdujących się na terenie stanu z bramą lub za nim. Wybierz stan przed pierwszą bramą, a następnie użyj opcji „Poproś o weryfikację”, aby go przekroczyć.",
       "saveBlockedByFormErrors": "Przed zapisaniem formularza popraw podświetlone błędy.",
       "bulkBlockedSummary": "{count, plural, one {# przypadek} other {# przypadków}} zablokowanych przez bramkę \"{gateName}\": {sampleNames}{more, plural, =0 {} other {i # więcej}}. Każdy zablokowany przypadek wymaga zatwierdzonej recenzji dla \"{gateName}\" przed tą zmianą.",
-      "toastReviewRequired": "Wymagana zgoda przed wprowadzeniem tej zmiany. Poproś o weryfikację i spróbuj ponownie po jej zatwierdzeniu.",
+      "toastReviewRequired": "Wymagane jest zatwierdzenie przed wykonaniem tego przejścia. Poproś o przegląd — przejście zostanie wykonane automatycznie po jego zatwierdzeniu.",
       "toastPendingReviewExists": "W związku z tą zmianą oczekuje już na weryfikację. Poczekaj na decyzję lub anuluj ją przed ponowną próbą."
     },
     "inbox": {
@@ -3497,7 +3497,7 @@
       "sheetDescription": "Prześlij tę jednostkę do przeglądu przed przejściem do stanu docelowego.",
       "assigneeLabel": "Mandatariusz",
       "assigneePlaceholder": "Wybierz użytkownika lub rolę",
-      "usersNotified": "{count, plural, =0 {Nikt nie zostanie powiadomiony} one {# użytkownik zostanie powiadomiony} few {# użytkownicy zostaną powiadomieni} many {# użytkowników zostanie powiadomionych} other {# użytkownika zostanie powiadomionego}}",
+      "usersNotified": "{count, plural, =0 {Nikt nie zostanie powiadomiony} one {# użytkownik zostanie powiadomiony} few {# użytkowników zostanie powiadomionych} many {# użytkowników zostanie powiadomionych} other {# użytkownika zostanie powiadomionych}}",
       "targetStateLabel": "Stan docelowy",
       "targetStatePlaceholder": "Wybierz stan docelowy",
       "commentLabel": "Komentarz",
@@ -3522,7 +3522,7 @@
       "requestChanges": "Poproś o zmiany",
       "reject": "Odrzucić",
       "approveConfirmTitle": "Zatwierdzić tę prośbę o recenzję?",
-      "approveConfirmDescription": "Zatwierdzenie umożliwi <requester></requester> przejście z <name></name> do <state></state>.",
+      "approveConfirmDescription": "Zatwierdzenie przenosi <name></name> do stanu <state></state> dla <requester></requester>.",
       "approvalNoteLabel": "Notatka zatwierdzająca",
       "approvalNotePlaceholder": "Dodaj opcjonalną notatkę dla wnioskodawcy (widoczną obok zatwierdzenia).",
       "requestChangesDescription": "Poinformuj wnioskodawcę, co należy zmienić, zanim zatwierdzisz tę zmianę.",
@@ -4894,7 +4894,7 @@
         "remindersToggleLabel": "Wyślij przypomnienia o oczekujących recenzjach",
         "remindersToggleAriaLabel": "Przełącz powiadomienia o przypomnieniu o recenzji",
         "thresholdLabel": "Przypomnij recenzentom po",
-        "thresholdUnit": "dni)",
+        "thresholdUnit": "dzień(dni)",
         "thresholdSaveButton": "Ratować",
         "thresholdHelp": "Ile dni prośba o recenzję może czekać, zanim recenzenci otrzymają przypomnienie? Czas na rozpatrzenie nowych próśb rozpoczyna się od momentu ich przesłania.",
         "thresholdUpdateSuccess": "Zaktualizowano ustawienia przypomnień.",
@@ -6540,7 +6540,7 @@
       "isDefault": "## Domyślny\nWskazuje, czy ten przepływ pracy jest domyślny dla Twojego projektu.\n\n— Domyślny przepływ pracy jest wstępnie wybierany dla nowych przebiegów testów, sesji i automatyzacji.",
       "isEnabled": "## Włączone\nWskazuje, czy ten przepływ pracy jest włączony.",
       "isActive": "## Aktywny\nWskazuje, czy ten stan przepływu pracy jest aktywny i dostępny do użycia.\n\n— Aktywne przepływy pracy można wybierać podczas aktualizowania przebiegów testów, sesji lub automatyzacji.\n— Nieaktywne przepływy pracy są ukryte przed wyborem, ale zachowywane w istniejących elementach.",
-      "requiresReview": "## Wymaga przeglądu\nPo włączeniu tej opcji, przejście sprawy, testu lub sesji DO tego stanu jest zablokowane przez zatwierdzoną prośbę o przegląd. Bez zatwierdzonej prośby przejście jest zablokowane.\n\n– Istniejące oczekujące recenzje są zachowywane w trybie cichym, gdy funkcja na poziomie systemu jest WYŁĄCZONA, i pojawiają się ponownie po ponownym włączeniu.\n– Recenzent jest wybierany, gdy tester kliknie opcję „Poproś o przegląd” na stronie szczegółów jednostki.\n\nJeśli funkcja na poziomie systemu jest wyłączona, ten przełącznik jest zablokowany. Aby włączyć tę opcję, należy go ponownie włączyć na karcie „Przepływ pracy przeglądu” powyżej.",
+      "requiresReview": "## Wymaga przeglądu\nPo włączeniu tej opcji, przejście sprawy, testu lub sesji DO tego stanu jest zablokowane przez zatwierdzoną prośbę o przegląd. Bez zatwierdzonej prośby przejście jest zablokowane.\n\n- Zatwierdzenie prośby powoduje wykonanie przejścia. Zatwierdzenie recenzenta przenosi sprawę, test lub sesję do żądanego stanu; osoba zgłaszająca nie musi ręcznie powtarzać zmiany stanu.\n- Istniejące oczekujące recenzje są zachowywane w trybie cichym, gdy funkcja na poziomie systemu jest WYŁĄCZONA, i pojawiają się ponownie po ponownym włączeniu.\n- Recenzent jest wybierany, gdy tester kliknie opcję „Poproś o przegląd” na stronie szczegółów jednostki.\n\nJeśli funkcja na poziomie systemu jest wyłączona, ten przełącznik jest zablokowany. Aby włączyć tę opcję, należy go ponownie włączyć na karcie „Przepływ pracy przeglądu” powyżej.",
       "projects": "## Projekty\nWskazuje projekty, które mogą korzystać z tego przepływu pracy."
     },
     "testResult": {

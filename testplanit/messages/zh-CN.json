@@ -1988,7 +1988,7 @@
         },
         "reviewWorkflow": {
           "label": "启用审核工作流程",
-          "description": "启用此功能后，需要审核的状态转换将由已批准的审核请求控制。测试人员会看到“请求审核”按钮；审核人员会收到通知。",
+          "description": "启用此功能后，需要审核的状态转换将由已批准的审核请求控制。测试人员会看到“请求审核”按钮；审核人员会收到通知，批准请求后将应用该转换。",
           "enabledToast": "此项目已启用审核工作流程",
           "disabledToast": "此项目的审核工作流程已禁用",
           "saveError": "更新审核工作流程设置失败",
@@ -3458,7 +3458,7 @@
       "gatedStatesNotSelectable": "创建时无法选择位于或超出限制状态的状态。请选择第一个限制状态之前的状态，然后使用“请求审核”功能跨越该限制。",
       "saveBlockedByFormErrors": "保存前请解决高亮显示的表单错误。",
       "bulkBlockedSummary": "{count, plural, one {# 案例} other {# 案例}} 被门禁“{gateName}”阻止： {sampleNames}{more, plural, =0 {} other {，以及 # 更多}}。每个被阻止的案例都需要经过“{gateName}”的批准审核才能进行此转换。",
-      "toastReviewRequired": "此变更需经批准后方可生效。请申请审核，待审核通过后再试。",
+      "toastReviewRequired": "此变更需经批准后方可生效。请申请审核 — 审核通过后系统将自动为您应用该转换。",
       "toastPendingReviewExists": "此次变更申请已进入审核阶段。请等待审核结果，或在重试前取消申请。"
     },
     "inbox": {
@@ -3497,7 +3497,7 @@
       "sheetDescription": "在过渡到目标状态之前，请将此实体发送给我们进行审核。",
       "assigneeLabel": "受让人",
       "assigneePlaceholder": "选择用户或角色",
-      "usersNotified": "{count, plural, =0 {No one will be notified} one {# user will be notified} other {# users will be notified}}",
+      "usersNotified": "{count, plural, =0 {不会通知任何人} other {将通知 # 位用户}}",
       "targetStateLabel": "目标状态",
       "targetStatePlaceholder": "选择目标状态",
       "commentLabel": "评论",
@@ -3522,7 +3522,7 @@
       "requestChanges": "请求更改",
       "reject": "拒绝",
       "approveConfirmTitle": "批准此审核请求？",
-      "approveConfirmDescription": "批准后，将允许 <requester></requester> 过渡到 <name></name> 到 <state></state>。",
+      "approveConfirmDescription": "批准将把 <name></name> 转换为 <state></state>，适用于 <requester></requester>。",
       "approvalNoteLabel": "批准说明",
       "approvalNotePlaceholder": "可为请求者添加可选备注（显示在批准信息旁边）。",
       "requestChangesDescription": "在您批准此次变更之前，请告知请求者需要更改哪些内容。",
@@ -4894,7 +4894,7 @@
         "remindersToggleLabel": "发送待审核提醒通知",
         "remindersToggleAriaLabel": "切换评论提醒通知",
         "thresholdLabel": "提醒审稿人",
-        "thresholdUnit": "天）",
+        "thresholdUnit": "天(s)",
         "thresholdSaveButton": "节省",
         "thresholdHelp": "审核请求最多可以保留多少天才会向审核员发送提醒通知？新请求从提交之日起开始计时。",
         "thresholdUpdateSuccess": "查看提醒设置是否已更新。",
@@ -6540,7 +6540,7 @@
       "isDefault": "## 默认值\n指示此工作流程是否为项目的默认工作流程。\n\n- 默认工作流程已预先选中，用于新的测试运行、会话和自动化。",
       "isEnabled": "## 已启用\n指示此工作流程是否已启用。",
       "isActive": "## 活动\n指示此工作流状态是否处于活动状态且可供使用。\n\n- 更新测试运行、会话或自动化时，可以选择活动工作流。\n- 非活动工作流将隐藏，但会保留在现有项中。",
-      "requiresReview": "## 需要审核\n启用后，案例、测试运行或会话进入此状态需要经过审核请求并获得批准。如果没有获得批准的请求，则转换将被阻止。\n\n- 当系统级功能关闭时，现有待审核的审核将静默保留，并在重新启用后重新出现。\n- 当测试人员从实体详情页面点击“请求审核”时，系统将选择审核人。\n\n如果系统级功能已禁用，则此开关将被锁定。要重新启用此功能，请从上方的“审核工作流”卡片中操作。",
+      "requiresReview": "## 需要审核\n启用后，案例、测试运行或会话进入此状态需要经过已批准的审核请求。如果没有获得批准的请求，则转换将被阻止。\n\n- 批准请求即执行该转换。审核人员批准后，案例、运行或会话将进入所请求的状态；请求人无需手动重复该状态更改。\n- 当系统级功能关闭时，现有待审核的审核将静默保留，并在重新启用后重新出现。\n- 当测试人员从实体详情页面点击“请求审核”时，系统将选择审核人。\n\n如果系统级功能已禁用，则此开关将被锁定。要启用此选项，请从上方的“审核工作流”卡片中重新启用该功能。",
       "projects": "## 项目\n指示可以使用此工作流程的项目。"
     },
     "testResult": {

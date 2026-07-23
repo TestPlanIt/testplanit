@@ -1988,7 +1988,7 @@
         },
         "reviewWorkflow": {
           "label": "Habilitar el flujo de trabajo de revisión",
-          "description": "Cuando está habilitada, la transición a estados que requieren revisión está sujeta a una solicitud de revisión aprobada. Los evaluadores ven el botón \"Solicitar revisión\"; los revisores reciben notificaciones.",
+          "description": "Cuando está habilitada, la transición a estados que requieren revisión está sujeta a una solicitud de revisión aprobada. Los evaluadores ven el botón \"Solicitar revisión\"; los revisores reciben notificaciones, y al aprobar una solicitud se aplica la transición.",
           "enabledToast": "Flujo de trabajo de revisión habilitado para este proyecto",
           "disabledToast": "El flujo de trabajo de revisión está deshabilitado para este proyecto.",
           "saveError": "No se pudo actualizar la configuración del flujo de trabajo de revisión.",
@@ -3458,7 +3458,7 @@
       "gatedStatesNotSelectable": "Al crear un estado, no se pueden seleccionar estados que estén en o más allá de un estado restringido. Elija un estado anterior al primer punto de restricción y, a continuación, utilice la opción de revisión de solicitud para superarlo.",
       "saveBlockedByFormErrors": "Corrija los errores del formulario resaltados antes de guardar.",
       "bulkBlockedSummary": "{count, plural, one {# caso} other {# casos}} bloqueados por la puerta \"{gateName}\": {sampleNames}{more, plural, =0 {} other {, y # más}}. Cada caso bloqueado necesita una revisión aprobada para \"{gateName}\" antes de esta transición.",
-      "toastReviewRequired": "Se requiere aprobación antes de esta transición. Solicite una revisión e inténtelo de nuevo una vez aprobada.",
+      "toastReviewRequired": "Se requiere aprobación antes de esta transición. Solicite una revisión; la transición se aplicará automáticamente una vez aprobada.",
       "toastPendingReviewExists": "Ya hay una revisión pendiente para esta transición. Espere la decisión o cancélela antes de volver a intentarlo."
     },
     "inbox": {
@@ -3522,7 +3522,7 @@
       "requestChanges": "Solicitar cambios",
       "reject": "Rechazar",
       "approveConfirmTitle": "¿Aprueba esta solicitud de revisión?",
-      "approveConfirmDescription": "La aprobación permitirá que <requester></requester> haga la transición de <name></name> a <state></state>.",
+      "approveConfirmDescription": "Al aprobar, se mueve <name></name> a <state></state> para <requester></requester>.",
       "approvalNoteLabel": "Nota de aprobación",
       "approvalNotePlaceholder": "Agregue una nota opcional para el solicitante (visible junto a la aprobación).",
       "requestChangesDescription": "Indíquele al solicitante qué cambios son necesarios antes de que pueda aprobar esta transición.",
@@ -4894,7 +4894,7 @@
         "remindersToggleLabel": "Enviar notificaciones de recordatorio para revisiones pendientes",
         "remindersToggleAriaLabel": "Activar/desactivar las notificaciones de recordatorio de revisión",
         "thresholdLabel": "Recordatorio para los revisores después",
-        "thresholdUnit": "días)",
+        "thresholdUnit": "día(s)",
         "thresholdSaveButton": "Ahorrar",
         "thresholdHelp": "¿Cuántos días puede permanecer pendiente una solicitud de revisión antes de que los revisores reciban una notificación recordatoria? Las nuevas solicitudes comienzan a contar desde el momento de su envío.",
         "thresholdUpdateSuccess": "Se han actualizado los ajustes de recordatorio de la revisión.",
@@ -6540,7 +6540,7 @@
       "isDefault": "## Por defecto\nIndica si este flujo de trabajo es el predeterminado para tu proyecto.\n\n- El flujo de trabajo predeterminado está preseleccionado para nuevas ejecuciones de pruebas, sesiones y automatización.",
       "isEnabled": "## Habilitado\\nIndica si este flujo de trabajo está activo.",
       "isActive": "## Activo\nIndica si este estado de flujo de trabajo está activo y disponible para su uso.\n\n- Los flujos de trabajo activos se pueden seleccionar al actualizar ejecuciones de pruebas, sesiones o automatización.\n- Los flujos de trabajo inactivos se ocultan de la selección, pero se conservan en los elementos existentes.",
-      "requiresReview": "## Requiere revisión\nCuando está ACTIVADO, la transición de un caso, ejecución de prueba o sesión A este estado está sujeta a una solicitud de revisión aprobada. Sin una solicitud aprobada, la transición está bloqueada.\n\n- Las revisiones pendientes existentes se conservan silenciosamente cuando la función a nivel de sistema está DESACTIVADA y reaparecen cuando se vuelve a habilitar.\n- El revisor se selecciona cuando un evaluador hace clic en Solicitar revisión desde la página de detalles de la entidad.\n\nSi la función a nivel de sistema está deshabilitada, este interruptor está bloqueado. Vuelva a habilitarlo desde la tarjeta Flujo de trabajo de revisión anterior para activarlo.",
+      "requiresReview": "## Requiere revisión\nCuando está ACTIVADO, la transición de un caso, ejecución de prueba o sesión A este estado está sujeta a una solicitud de revisión aprobada. Sin una solicitud aprobada, la transición está bloqueada.\n\n- Al aprobar una solicitud se realiza la transición. La aprobación del revisor mueve el caso, ejecución o sesión al estado solicitado; el solicitante no repite el cambio de estado manualmente.\n- Las revisiones pendientes existentes se conservan silenciosamente cuando la función a nivel de sistema está DESACTIVADA y reaparecen cuando se vuelve a habilitar.\n- El revisor se selecciona cuando un evaluador hace clic en Solicitar revisión desde la página de detalles de la entidad.\n\nSi la función a nivel de sistema está deshabilitada, este interruptor está bloqueado. Vuelva a habilitarlo desde la tarjeta Flujo de trabajo de revisión anterior para activarlo.",
       "projects": "## Proyecta\nIndica los proyectos que pueden usar este flujo de trabajo."
     },
     "testResult": {

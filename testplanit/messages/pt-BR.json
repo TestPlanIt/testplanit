@@ -1988,7 +1988,7 @@
         },
         "reviewWorkflow": {
           "label": "Ativar fluxo de trabalho de revisão",
-          "description": "Quando ativada, a transição para estados que exigem revisão é controlada por uma solicitação de revisão aprovada. Os testadores veem o botão \"Solicitar revisão\"; os revisores recebem notificações.",
+          "description": "Quando ativado, as transições para estados que exigem revisão são condicionadas a uma solicitação de revisão aprovada. Os testadores veem o botão Solicitar Revisão; os revisores recebem notificações, e aprovar uma solicitação aplica a transição.",
           "enabledToast": "Fluxo de trabalho de revisão ativado para este projeto",
           "disabledToast": "Fluxo de trabalho de revisão desativado para este projeto",
           "saveError": "Falha ao atualizar a configuração do fluxo de trabalho de revisão",
@@ -3458,7 +3458,7 @@
       "gatedStatesNotSelectable": "Não é possível selecionar estados que estejam no mesmo nível ou além de um estado bloqueado durante a criação. Escolha um estado anterior ao primeiro bloqueio e, em seguida, use a opção \"Solicitar revisão\" para ultrapassá-lo.",
       "saveBlockedByFormErrors": "Corrija os erros destacados no formulário antes de salvar.",
       "bulkBlockedSummary": "{count, plural, one {# caso} other {# casos}} bloqueados pelo portão \"{gateName}\": {sampleNames}{more, plural, =0 {} other {, e # mais}}. Cada caso bloqueado precisa de uma revisão aprovada para \"{gateName}\" antes desta transição.",
-      "toastReviewRequired": "É necessária aprovação antes desta transição. Solicite uma revisão e tente novamente após a aprovação.",
+      "toastReviewRequired": "Aprovação necessária antes desta transição. Solicite uma revisão — a transição será aplicada automaticamente após a aprovação.",
       "toastPendingReviewExists": "Já existe uma análise pendente para esta transição. Aguarde a decisão ou cancele-a antes de tentar novamente."
     },
     "inbox": {
@@ -3522,7 +3522,7 @@
       "requestChanges": "Solicitar alterações",
       "reject": "Rejeitar",
       "approveConfirmTitle": "Aprovar este pedido de revisão?",
-      "approveConfirmDescription": "A aprovação permitirá que <requester></requester> faça a transição de <name></name> para <state></state>.",
+      "approveConfirmDescription": "Aprovar move <name></name> para <state></state> em nome de <requester></requester>.",
       "approvalNoteLabel": "Nota de aprovação",
       "approvalNotePlaceholder": "Adicione uma nota opcional para o solicitante (visível junto com a aprovação).",
       "requestChangesDescription": "Informe ao solicitante o que precisa ser alterado antes que você possa aprovar essa transição.",
@@ -4891,7 +4891,7 @@
         "updateSuccessEnabled": "Fluxo de trabalho de revisão ativado.",
         "updateSuccessDisabled": "Fluxo de trabalho de revisão desativado.",
         "updateError": "Falha ao atualizar a configuração do fluxo de trabalho de revisão. Tente novamente em instantes.",
-        "remindersToggleLabel": "Enviar notificações de lembrete para revisões pendentes.",
+        "remindersToggleLabel": "Enviar notificações de lembrete para revisões pendentes",
         "remindersToggleAriaLabel": "Ativar/desativar notificações de lembrete de revisão",
         "thresholdLabel": "Lembre os avaliadores depois",
         "thresholdUnit": "dia(s)",
@@ -5786,7 +5786,7 @@
         "error": "Erro ao salvar as configurações",
         "errorDescription": "Falha ao salvar a configuração. Tente novamente.",
         "note": {
-          "description": "As alterações se aplicam imediatamente aos novos índices. Os índices existentes são atualizados ao salvar. Defina as réplicas como 0 para resolver o status AMARELO em clusters de nó único."
+          "description": "As alterações são aplicadas imediatamente a novos índices. Os índices existentes são atualizados quando você salva. Defina as réplicas para 0 para resolver o status AMARELO em clusters de nó único."
         }
       },
       "reindex": {
@@ -6540,7 +6540,7 @@
       "isDefault": "## Padrão\nIndica se este fluxo de trabalho é o padrão para o seu projeto.\n\n- O fluxo de trabalho padrão é pré-selecionado para novas execuções de teste, sessões e automação.",
       "isEnabled": "## Ativado\nIndica se este fluxo de trabalho está ativado.",
       "isActive": "## Ativo\nIndica se este estado de fluxo de trabalho está ativo e disponível para uso.\n\n- Fluxos de trabalho ativos podem ser selecionados ao atualizar execuções de teste, sessões ou automação.\n- Fluxos de trabalho inativos ficam ocultos para seleção, mas são preservados nos itens existentes.",
-      "requiresReview": "## Requer revisão\nQuando ATIVADO, a transição de um caso, execução de teste ou sessão PARA este estado é condicionada a uma solicitação de revisão aprovada. Sem uma solicitação aprovada, a transição é bloqueada.\n\n- As revisões pendentes existentes são preservadas silenciosamente quando o recurso de nível de sistema está DESATIVADO e reaparecem quando reativado.\n- O revisor é selecionado quando um testador clica em Solicitar Revisão na página de detalhes da entidade.\n\nSe o recurso de nível de sistema estiver desativado, esta opção é bloqueada. Reative-a no cartão Fluxo de Trabalho de Revisão acima para ativá-la.",
+      "requiresReview": "## Requer revisão\nQuando ATIVADO, a transição de um caso, execução de teste ou sessão PARA este estado é condicionada a uma solicitação de revisão aprovada. Sem uma solicitação aprovada, a transição é bloqueada.\n\n- Aprovar uma solicitação executa a transição. A aprovação do revisor move o caso, execução ou sessão para o estado solicitado; o solicitante não precisa repetir a alteração de estado manualmente.\n- Revisões pendentes existentes são preservadas silenciosamente quando o recurso em nível de sistema está DESATIVADO e reaparecem quando reativado.\n- O revisor é escolhido quando um testador clica em Solicitar Revisão na página de detalhes da entidade.\n\nSe o recurso em nível de sistema estiver desativado, esta opção fica bloqueada. Reative-o no card Fluxo de Revisão acima para ativar esta opção.",
       "projects": "## Projetos\nIndica os projetos que podem usar este fluxo de trabalho."
     },
     "testResult": {

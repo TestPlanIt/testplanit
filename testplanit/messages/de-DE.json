@@ -1988,7 +1988,7 @@
         },
         "reviewWorkflow": {
           "label": "Prüfworkflow aktivieren",
-          "description": "Wenn diese Option aktiviert ist, werden Übergänge in Zustände, die eine Überprüfung erfordern, durch eine genehmigte Überprüfungsanfrage blockiert. Tester sehen die Schaltfläche „Überprüfung anfordern“; Prüfer erhalten Benachrichtigungen.",
+          "description": "Wenn diese Option aktiviert ist, werden Übergänge in Zustände, die eine Überprüfung erfordern, durch eine genehmigte Überprüfungsanfrage blockiert. Tester sehen die Schaltfläche „Überprüfung anfordern“; Prüfer erhalten Benachrichtigungen, und die Genehmigung einer Anfrage wendet den Übergang an.",
           "enabledToast": "Prüfworkflow für dieses Projekt aktiviert",
           "disabledToast": "Prüf-Workflow für dieses Projekt deaktiviert",
           "saveError": "Fehler beim Aktualisieren der Einstellungen für den Überprüfungsworkflow",
@@ -3458,7 +3458,7 @@
       "gatedStatesNotSelectable": "Zustände, die sich an oder jenseits eines festgelegten Zustands befinden, können beim Erstellen nicht ausgewählt werden. Wählen Sie einen Zustand vor dem ersten festgelegten Zustand und verwenden Sie dann die Funktion „Überprüfung anfordern“, um diesen zu überschreiten.",
       "saveBlockedByFormErrors": "Beheben Sie die markierten Formularfehler vor dem Speichern.",
       "bulkBlockedSummary": "{count, plural, one {# Fall} other {# Fälle}} blockiert durch Gate \"{gateName}\": {sampleNames}{more, plural, =0 {} other {, und # weitere}}. Jeder blockierte Fall benötigt vor diesem Übergang eine genehmigte Überprüfung für \"{gateName}\".",
-      "toastReviewRequired": "Für diese Umstellung ist eine Genehmigung erforderlich. Bitte fordern Sie eine Überprüfung an und versuchen Sie es nach der Genehmigung erneut.",
+      "toastReviewRequired": "Für diesen Übergang ist eine Genehmigung erforderlich. Fordern Sie eine Überprüfung an — der Übergang wird nach der Genehmigung automatisch für Sie durchgeführt.",
       "toastPendingReviewExists": "Für diesen Übergang wird bereits eine Überprüfung durchgeführt. Warten Sie die Entscheidung ab oder brechen Sie den Vorgang ab, bevor Sie es erneut versuchen."
     },
     "inbox": {
@@ -3522,7 +3522,7 @@
       "requestChanges": "Änderungen anfordern",
       "reject": "Ablehnen",
       "approveConfirmTitle": "Soll diese Überprüfungsanfrage genehmigt werden?",
-      "approveConfirmDescription": "Durch die Genehmigung wird es <requester></requester> ermöglicht, in <name></name> zu <state></state> überzugehen.",
+      "approveConfirmDescription": "Approving moves <name></name> to <state></state> for <requester></requester>.",
       "approvalNoteLabel": "Genehmigungsvermerk",
       "approvalNotePlaceholder": "Fügen Sie optional eine Notiz für den Antragsteller hinzu (sichtbar neben der Genehmigung).",
       "requestChangesDescription": "Teilen Sie dem Antragsteller mit, was sich ändern muss, bevor Sie diesen Übergang genehmigen können.",
@@ -4891,7 +4891,7 @@
         "updateSuccessEnabled": "Prüf-Workflow aktiviert.",
         "updateSuccessDisabled": "Prüfworkflow deaktiviert.",
         "updateError": "Die Aktualisierung der Einstellungen für den Überprüfungsworkflow ist fehlgeschlagen. Bitte versuchen Sie es in Kürze erneut.",
-        "remindersToggleLabel": "Senden Sie Erinnerungsbenachrichtigungen für ausstehende Überprüfungen.",
+        "remindersToggleLabel": "Erinnerungsbenachrichtigungen für ausstehende Überprüfungen senden",
         "remindersToggleAriaLabel": "Erinnerungsbenachrichtigungen für Überprüfungen aktivieren/deaktivieren",
         "thresholdLabel": "Erinnern Sie die Rezensenten anschließend",
         "thresholdUnit": "Tag(e)",
@@ -6540,7 +6540,7 @@
       "isDefault": "## Standard\nGibt an, ob dieser Workflow der Standard-Workflow für Ihr Projekt ist.\n\n– Der Standard-Workflow ist für neue Testläufe, Sitzungen und Automatisierungen vorausgewählt.",
       "isEnabled": "## Aktiviert\nGibt an, ob dieser Workflow aktiviert ist.",
       "isActive": "## Aktiv\nZeigt an, ob dieser Workflow-Status aktiv und verfügbar ist.\n\n– Aktive Workflows können beim Aktualisieren von Testläufen, Sitzungen oder Automatisierungen ausgewählt werden.\n– Inaktive Workflows sind nicht auswählbar, bleiben aber in bestehenden Elementen erhalten.",
-      "requiresReview": "## Überprüfung erforderlich\nWenn diese Option aktiviert ist, wird der Übergang eines Falls, Testlaufs oder einer Sitzung in diesen Status durch eine genehmigte Überprüfungsanfrage blockiert. Ohne eine genehmigte Anfrage ist der Übergang nicht möglich.\n\n- Vorhandene ausstehende Überprüfungen bleiben im Hintergrund erhalten, wenn die Systemfunktion deaktiviert ist, und werden nach der Reaktivierung wieder angezeigt.\n- Der Prüfer wird ausgewählt, wenn ein Tester auf der Entitätsdetailseite auf „Überprüfung anfordern“ klickt.\n\nWenn die Systemfunktion deaktiviert ist, ist dieser Schalter gesperrt. Aktivieren Sie ihn über die Karte „Überprüfungs-Workflow“ oben, um ihn einzuschalten.",
+      "requiresReview": "## Überprüfung erforderlich\nWenn diese Option aktiviert ist, wird der Übergang eines Falls, Testlaufs oder einer Sitzung in diesen Status durch eine genehmigte Überprüfungsanfrage blockiert. Ohne eine genehmigte Anfrage ist der Übergang nicht möglich.\n\n- Die Genehmigung einer Anfrage führt den Übergang durch. Die Genehmigung des Prüfers versetzt den Fall, Testlauf oder die Sitzung in den angeforderten Status; der Antragsteller muss die Statusänderung nicht manuell wiederholen.\n- Vorhandene ausstehende Überprüfungen bleiben im Hintergrund erhalten, wenn die Systemfunktion deaktiviert ist, und werden nach der Reaktivierung wieder angezeigt.\n- Der Prüfer wird ausgewählt, wenn ein Tester auf der Entitätsdetailseite auf „Überprüfung anfordern“ klickt.\n\nWenn die Systemfunktion deaktiviert ist, ist dieser Schalter gesperrt. Aktivieren Sie ihn über die Karte „Überprüfungs-Workflow“ oben, um ihn einzuschalten.",
       "projects": "## Projekte\nZeigt die Projekte an, die diesen Workflow nutzen können."
     },
     "testResult": {

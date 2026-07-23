@@ -1988,7 +1988,7 @@
         },
         "reviewWorkflow": {
           "label": "啟用審核工作流程",
-          "description": "啟用此功能後，需要審核的狀態轉換將由已核准的審核請求控制。測試人員會看到「請求審核」按鈕；審核人員會收到通知。",
+          "description": "啟用此功能後，需要審核的狀態轉換將由已核准的審核請求控制。測試人員會看到「請求審核」按鈕；審核人員會收到通知，核准請求後即會套用該轉換。",
           "enabledToast": "此項目已啟用審核工作流程",
           "disabledToast": "此項目的審核工作流程已停用",
           "saveError": "更新審核工作流程設定失敗",
@@ -3458,7 +3458,7 @@
       "gatedStatesNotSelectable": "建立時無法選擇位於或超出限制狀態的狀態。請選擇第一個限制狀態之前的狀態，然後使用「請求審核」功能跨越該限制。",
       "saveBlockedByFormErrors": "儲存前請解決高亮顯示的表單錯誤。",
       "bulkBlockedSummary": "{count, plural, other {# 個案例}} 被關卡「{gateName}」阻擋：{sampleNames}{more, plural, =0 {} other {，以及另外 # 個}}。每個被阻擋的案例在此轉換前都需要通過「{gateName}」的已核准審核。",
-      "toastReviewRequired": "此變更需經批准後方可生效。請申請審核，待審核通過後再試。",
+      "toastReviewRequired": "此轉換需先獲得核准。請提出審核請求——一旦核准，系統將自動為您套用該轉換。",
       "toastPendingReviewExists": "此次變更申請已進入審核階段。請等待審核結果，或在重試前取消申請。"
     },
     "inbox": {
@@ -3497,7 +3497,7 @@
       "sheetDescription": "在過渡到目標狀態之前，請將此實體傳送給我們進行審核。",
       "assigneeLabel": "受讓人",
       "assigneePlaceholder": "選擇使用者或角色",
-      "usersNotified": "{count, plural, =0 {沒有人會收到通知} other {# 位使用者將收到通知}}",
+      "usersNotified": "{count, plural, =0 {不會通知任何人} other {將通知 # 位使用者}}",
       "targetStateLabel": "目標狀態",
       "targetStatePlaceholder": "選擇目標狀態",
       "commentLabel": "評論",
@@ -3522,7 +3522,7 @@
       "requestChanges": "請求更改",
       "reject": "拒絕",
       "approveConfirmTitle": "批准此審核請求？",
-      "approveConfirmDescription": "核准將允許 <requester></requester> 將 <name></name> 轉換為 <state></state>。",
+      "approveConfirmDescription": "核准後將把 <name></name> 移至 <state></state>，代表 <requester></requester>。",
       "approvalNoteLabel": "批准說明",
       "approvalNotePlaceholder": "可為請求者新增選用備註（顯示在核准資訊旁）。",
       "requestChangesDescription": "在您批准此變更之前，請告知請求者需要更改哪些內容。",
@@ -4894,7 +4894,7 @@
         "remindersToggleLabel": "發送待審核提醒通知",
         "remindersToggleAriaLabel": "切換評論提醒通知",
         "thresholdLabel": "提醒審稿人",
-        "thresholdUnit": "天）",
+        "thresholdUnit": "天(s)",
         "thresholdSaveButton": "節省",
         "thresholdHelp": "審核請求最多可以保留多少天才會向審核員發送提醒通知？新請求從提交之日起開始計時。",
         "thresholdUpdateSuccess": "查看提醒設定是否已更新。",
@@ -6540,7 +6540,7 @@
       "isDefault": "## 預設值\n指示此工作流程是否為專案的預設工作流程。\n\n- 預設工作流程已預先選中，用於新的測試運行、會話和自動化。",
       "isEnabled": "## 已啟用\n指示此工作流程是否已啟用。",
       "isActive": "## 活動\n指示此工作流程狀態是否處於作用中且可供使用。\n\n- 更新測試運行、會話或自動化時，可以選擇活動工作流程。\n- 非活動工作流程將會隱藏，但會保留在現有項目中。",
-      "requiresReview": "## 需要審核\n啟用後，案例、測試運行或會話進入此狀態需要經過審核請求並獲得批准。如果沒有獲得批准的請求，則轉換將被阻止。\n\n- 當系統級功能關閉時，現有待審核的請求將靜默保留，並在重新啟用後重新出現。\n- 當測試人員從實體詳情頁點選「要求審核」時，系統會選擇審核者。\n\n若係統級功能已停用，則此開關將被鎖定。若要重新啟用此功能，請從上方的「審核工作流程」卡片中操作。",
+      "requiresReview": "## 需要審核\n啟用後，將案例、測試執行或會話轉換至此狀態需要經過核准的審核請求。若無已核准的請求，該轉換將被阻止。\n\n- 核准請求即會執行該轉換。審核人員核准後，會將案例、執行或會話移至請求的狀態；要求者不需再手動重複進行狀態變更。\n- 當系統層級功能關閉時，現有待審核的請求會被靜默保留，並在重新啟用後重新出現。\n- 當測試人員從實體詳情頁點選「請求審核」時，系統會選擇審核人員。\n\n若系統層級功能已停用，此開關將被鎖定。請從上方的「審核工作流程」卡片重新啟用該功能，才能開啟此選項。",
       "projects": "## 項目\n指示可以使用此工作流程的項目。"
     },
     "testResult": {

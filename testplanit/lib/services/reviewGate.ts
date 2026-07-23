@@ -1,7 +1,7 @@
 import { ReviewEntityType, WorkflowScope } from "~/zenstack/models";
 import type { TxClient } from "~/lib/zenstack";
 
-import { ReviewGateError } from "~/lib/utils/errors";
+import { isReviewGateError, ReviewGateError } from "~/lib/utils/errors";
 import { isReviewFeatureSystemEnabled } from "~/lib/services/reviewFeatureFlag";
 
 /**
@@ -316,6 +316,154 @@ export async function assertBulkReviewGatePasses(
   }
 
   return approvedRequestIds.length > 0 ? { approvedRequestIds } : null;
+}
+
+/**
+ * Apply the transition an APPROVED ReviewRequest authorizes.
+ *
+ * Approval IS the transition: a reviewer who approves "move this case to
+ * Ready" means the case moves to Ready, so the requester never has to come
+ * back and repeat the state change by hand. This helper performs that move
+ * and consumes the approval(s) it spends, replacing the manual
+ * "approve, then edit the entity" two-step.
+ *
+ * Contract:
+ *
+ *   1. Called AFTER the ReviewRequest row has flipped to APPROVED, with a
+ *      `tx` whose reads observe that flip. The gate re-check below counts
+ *      the just-approved request as satisfying its own gate.
+ *
+ *   2. **Never throws for an expected "cannot move" condition** — it
+ *      returns `false` instead. The approval is the reviewer's decision and
+ *      must survive even when the entity can't move yet, so the caller
+ *      commits the decision either way. The three no-move conditions:
+ *
+ *        (a) The entity is missing, or the target state row is missing.
+ *        (b) The entity already sits at or beyond the target state — a
+ *            backward move would regress work someone else did.
+ *        (c) An EARLIER gate on the path is still unapproved (strict
+ *            transitive semantics — see `assertReviewGatePasses`). The
+ *            approval stays unconsumed and applies later, when the
+ *            blocking gate clears and the transition is retried.
+ *
+ *   3. On success the entity's `stateId` is set to `toStateId` and every
+ *      approval the crossing consumed — including this one — is stamped
+ *      `consumedAt` in a single `updateMany` scoped to `consumedAt: null`,
+ *      preserving the one-shot invariant (D-05). A short stamp count means
+ *      a concurrent transition spent one of those approvals first; the
+ *      helper throws `ReviewGateError` so the CALLER's transaction rolls
+ *      back rather than committing a half-consumed crossing. Callers run
+ *      this in a transaction of its own so that rollback costs only the
+ *      auto-transition, not the decision.
+ *
+ *   4. Writes go through the raw `TxClient` for the same documented reason
+ *      `assertReviewGatePasses` does: the gate runs as a system-context
+ *      operation on behalf of an approved request, not as the reviewer's
+ *      own edit of the entity. The `tx` MUST come from
+ *      the hooked client (`auditedTransaction`) so the entity update still
+ *      fires Elasticsearch sync, webhook emits, and the CDC audit trail
+ *      exactly as a manual state change would.
+ *
+ * @returns `true` when the entity moved, `false` for any of the expected
+ *          no-move conditions in (2).
+ */
+export async function applyApprovedReviewTransition(
+  tx: TxClient,
+  params: {
+    reviewRequestId: string;
+    entityType: ReviewEntityType;
+    entityId: number;
+    toStateId: number;
+  }
+): Promise<boolean> {
+  const { reviewRequestId, entityType, entityId, toStateId } = params;
+
+  const entityRow = await loadEntityForGate(tx, entityType, entityId);
+  if (!entityRow) {
+    return false;
+  }
+
+  const targetState = await tx.workflows.findUnique({
+    where: { id: toStateId },
+    select: { order: true },
+  });
+  if (!targetState) {
+    return false;
+  }
+
+  // (2b) Same-state / backward. Checked here rather than inferred from a
+  // null gate result because `assertReviewGatePasses` also returns null for
+  // "no gates in the path", which IS a move we want to perform.
+  const currentStateOrder = entityRow.state?.order ?? null;
+  if (currentStateOrder !== null && currentStateOrder >= targetState.order) {
+    return false;
+  }
+
+  let gateResult: { approvedRequestIds: string[] } | null;
+  try {
+    gateResult = await assertReviewGatePasses(
+      tx,
+      entityType,
+      entityId,
+      toStateId
+    );
+  } catch (err) {
+    // (2c) An earlier gate on the path has no approval yet.
+    if (isReviewGateError(err)) {
+      return false;
+    }
+    throw err;
+  }
+
+  // The gate returns every approval the crossing spends. It already
+  // includes this request whenever the target state is itself gated (the
+  // common case); the union covers a target whose `requiresReview` flag was
+  // turned off after the request was raised, where the gate matches nothing
+  // and this approval is still the one being redeemed.
+  const consumedRequestIds = Array.from(
+    new Set([...(gateResult?.approvedRequestIds ?? []), reviewRequestId])
+  );
+
+  switch (entityType) {
+    case ReviewEntityType.CASE:
+      await tx.repositoryCases.update({
+        where: { id: entityId },
+        data: { stateId: toStateId },
+      });
+      break;
+    case ReviewEntityType.RUN:
+      await tx.testRuns.update({
+        where: { id: entityId },
+        data: { stateId: toStateId },
+      });
+      break;
+    case ReviewEntityType.SESSION:
+      await tx.sessions.update({
+        where: { id: entityId },
+        data: { stateId: toStateId },
+      });
+      break;
+    default: {
+      const _exhaustive: never = entityType;
+      void _exhaustive;
+      return false;
+    }
+  }
+
+  const stamp = await tx.reviewRequest.updateMany({
+    where: { id: { in: consumedRequestIds }, consumedAt: null },
+    data: { consumedAt: new Date() },
+  });
+  if (stamp.count !== consumedRequestIds.length) {
+    throw new ReviewGateError(
+      "REVIEW_REQUIRED",
+      entityType,
+      entityId,
+      toStateId
+    );
+  }
+
+  return true;
 }
 
 /**

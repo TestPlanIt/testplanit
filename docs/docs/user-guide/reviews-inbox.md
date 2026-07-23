@@ -33,7 +33,7 @@ Each row shows the entity, its project, the requester, the workflow transition b
 
 From a pending request (in the inbox or on the entity's own page):
 
-- **Approve** — approve the request; an approval note is optional. This unblocks the gated transition.
+- **Approve** — approve the request; an approval note is optional. This performs the gated transition: the entity moves into the target state.
 - **Request changes** — send it back with required feedback explaining what to change.
 - **Reject** — decline the request with a required reason.
 
@@ -53,7 +53,7 @@ While a request is pending, the entity shows a banner. The requester (or an admi
 
 ## How it connects to workflows
 
-Workflow states can be marked as **requiring review**. A forward transition into such a state is blocked until an **approved** review request exists for that transition; the approval is then consumed (one-shot). Backward or same-state moves are never gated.
+Workflow states can be marked as **requiring review**. A forward transition into such a state is blocked until an **approved** review request exists for that transition. Approving a request performs that transition and consumes the approval (one-shot). Backward or same-state moves are never gated.
 
 The review feature has two switches: a **system-wide** toggle under [Administration → Workflows](workflows.md) and a **per-project** toggle under the project's [Advanced settings](projects/settings/advanced.md). When the feature is disabled, existing requests are preserved and reappear when it's re-enabled.
 

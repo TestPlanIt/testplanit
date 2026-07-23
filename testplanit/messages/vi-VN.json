@@ -1988,7 +1988,7 @@
         },
         "reviewWorkflow": {
           "label": "Kích hoạt quy trình xem xét",
-          "description": "Khi được kích hoạt, quá trình chuyển đổi sang các trạng thái yêu cầu xem xét sẽ được kiểm soát bằng yêu cầu xem xét đã được phê duyệt. Người kiểm thử sẽ thấy nút \"Yêu cầu xem xét\"; người xem xét sẽ nhận được thông báo.",
+          "description": "Khi được kích hoạt, quá trình chuyển đổi sang các trạng thái yêu cầu xem xét sẽ được kiểm soát bằng yêu cầu xem xét đã được phê duyệt. Người kiểm thử sẽ thấy nút \"Yêu cầu xem xét\"; người xem xét sẽ nhận được thông báo, và việc phê duyệt yêu cầu sẽ áp dụng quá trình chuyển đổi.",
           "enabledToast": "Quy trình xem xét đã được kích hoạt cho dự án này.",
           "disabledToast": "Quy trình xem xét đã bị vô hiệu hóa cho dự án này.",
           "saveError": "Không thể cập nhật cài đặt quy trình đánh giá.",
@@ -3458,7 +3458,7 @@
       "gatedStatesNotSelectable": "Không thể chọn các tiểu bang nằm ở hoặc vượt qua một tiểu bang bị chặn khi tạo. Hãy chọn một tiểu bang trước cửa kiểm soát đầu tiên, sau đó sử dụng Yêu cầu xem xét để vượt qua nó.",
       "saveBlockedByFormErrors": "Hãy khắc phục các lỗi được đánh dấu trong biểu mẫu trước khi lưu.",
       "bulkBlockedSummary": "{count, plural, one {# trường hợp} other {# trường hợp}} bị chặn bởi cổng \"{gateName}\": {sampleNames}{more, plural, =0 {} other {, và # nhiều hơn nữa}}. Mỗi trường hợp bị chặn cần được xem xét phê duyệt cho \"{gateName}\" trước khi chuyển đổi này.",
-      "toastReviewRequired": "Cần có sự chấp thuận trước khi thực hiện chuyển đổi này. Vui lòng yêu cầu xem xét lại và thử lại sau khi được chấp thuận.",
+      "toastReviewRequired": "Cần có sự chấp thuận trước khi thực hiện chuyển đổi này. Hãy yêu cầu xem xét — quá trình chuyển đổi sẽ được áp dụng tự động cho bạn khi được chấp thuận.",
       "toastPendingReviewExists": "Quá trình xem xét cho giao dịch này đang chờ xử lý. Hãy chờ quyết định hoặc hủy bỏ trước khi thử lại."
     },
     "inbox": {
@@ -3497,7 +3497,7 @@
       "sheetDescription": "Hãy gửi thực thể này để xem xét trước khi chuyển sang trạng thái mục tiêu.",
       "assigneeLabel": "Người được chỉ định",
       "assigneePlaceholder": "Chọn người dùng hoặc vai trò",
-      "usersNotified": "{count, plural, =0 {Không ai sẽ được thông báo} other {# người dùng sẽ được thông báo}}",
+      "usersNotified": "{count, plural, =0 {Sẽ không có ai được thông báo} other {# người dùng sẽ được thông báo}}",
       "targetStateLabel": "Trạng thái mục tiêu",
       "targetStatePlaceholder": "Chọn tiểu bang mục tiêu",
       "commentLabel": "Bình luận",
@@ -3522,7 +3522,7 @@
       "requestChanges": "Yêu cầu thay đổi",
       "reject": "Từ chối",
       "approveConfirmTitle": "Bạn có đồng ý yêu cầu xem xét này không?",
-      "approveConfirmDescription": "Phê duyệt sẽ cho phép <requester></requester> chuyển đổi <name></name> sang <state></state>.",
+      "approveConfirmDescription": "Phê duyệt sẽ chuyển <name></name> sang <state></state> cho <requester></requester>.",
       "approvalNoteLabel": "Ghi chú phê duyệt",
       "approvalNotePlaceholder": "Thêm ghi chú tùy chọn cho người yêu cầu (hiển thị bên cạnh phần phê duyệt).",
       "requestChangesDescription": "Hãy cho người yêu cầu biết những thay đổi cần thiết trước khi bạn có thể phê duyệt quá trình chuyển đổi này.",
@@ -4894,7 +4894,7 @@
         "remindersToggleLabel": "Gửi thông báo nhắc nhở cho các đánh giá đang chờ xử lý",
         "remindersToggleAriaLabel": "Bật/tắt thông báo nhắc nhở đánh giá",
         "thresholdLabel": "Nhắc nhở người đánh giá sau",
-        "thresholdUnit": "ngày(s)",
+        "thresholdUnit": "ngày",
         "thresholdSaveButton": "Cứu",
         "thresholdHelp": "Yêu cầu xem xét có thể chờ xử lý bao nhiêu ngày trước khi người đánh giá nhận được thông báo nhắc nhở? Yêu cầu mới bắt đầu tính thời gian từ khi gửi.",
         "thresholdUpdateSuccess": "Cài đặt nhắc nhở xem lại đã được cập nhật.",
@@ -6540,7 +6540,7 @@
       "isDefault": "## Mặc định\nCho biết liệu quy trình làm việc này có phải là mặc định cho dự án của bạn hay không.\n\n- Quy trình làm việc mặc định được chọn trước cho các lần chạy thử nghiệm, phiên và tự động hóa mới.",
       "isEnabled": "## Đã bật\nCho biết liệu quy trình làm việc này có được bật hay không.",
       "isActive": "## Hoạt động\nCho biết trạng thái quy trình công việc này có đang hoạt động và sẵn sàng sử dụng hay không.\n\n- Các quy trình công việc đang hoạt động có thể được chọn khi cập nhật các lần chạy thử nghiệm, phiên hoặc tự động hóa.\n- Các quy trình công việc không hoạt động sẽ bị ẩn khỏi lựa chọn nhưng vẫn được lưu giữ trong các mục hiện có.",
-      "requiresReview": "## Yêu cầu xem xét\nKhi BẬT, việc chuyển đổi một trường hợp, lần chạy thử nghiệm hoặc phiên sang trạng thái này sẽ bị chặn bởi yêu cầu xem xét đã được phê duyệt. Nếu không có yêu cầu được phê duyệt, quá trình chuyển đổi sẽ bị chặn.\n\n- Các yêu cầu xem xét đang chờ xử lý hiện có sẽ được giữ nguyên một cách im lặng khi tính năng cấp hệ thống TẮT và sẽ xuất hiện lại khi được bật lại.\n- Người xem xét được chọn khi người kiểm thử nhấp vào Yêu cầu xem xét từ trang chi tiết thực thể.\n\nNếu tính năng cấp hệ thống bị vô hiệu hóa, công tắc này sẽ bị khóa. Hãy bật lại công tắc này từ thẻ Quy trình xem xét ở trên để bật tính năng này.",
+      "requiresReview": "## Yêu cầu xem xét\nKhi BẬT, việc chuyển đổi một trường hợp, lần chạy thử nghiệm hoặc phiên sang trạng thái này sẽ bị chặn bởi yêu cầu xem xét đã được phê duyệt. Nếu không có yêu cầu được phê duyệt, quá trình chuyển đổi sẽ bị chặn.\n\n- Phê duyệt một yêu cầu sẽ thực hiện quá trình chuyển đổi. Sự phê duyệt của người xem xét sẽ chuyển trường hợp, lần chạy thử nghiệm hoặc phiên sang trạng thái được yêu cầu; người yêu cầu không cần thực hiện lại thay đổi trạng thái này bằng tay.\n- Các yêu cầu xem xét đang chờ xử lý hiện có sẽ được giữ nguyên một cách im lặng khi tính năng cấp hệ thống TẮT và sẽ xuất hiện lại khi được bật lại.\n- Người xem xét được chọn khi người kiểm thử nhấp vào Yêu cầu xem xét từ trang chi tiết thực thể.\n\nNếu tính năng cấp hệ thống bị vô hiệu hóa, công tắc này sẽ bị khóa. Hãy bật lại công tắc này từ thẻ Quy trình xem xét ở trên để bật tính năng này.",
       "projects": "## Dự án\nCho biết các dự án có thể sử dụng quy trình làm việc này."
     },
     "testResult": {
