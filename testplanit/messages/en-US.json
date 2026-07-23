@@ -3991,6 +3991,12 @@
           "actionMap": "Map to existing",
           "actionCreate": "Create new",
           "workflowTypePlaceholder": "Select type",
+          "workflowScope": {
+            "default": "Other",
+            "cases": "Test Cases",
+            "runs": "Test Runs",
+            "sessions": "Sessions"
+          },
           "noWorkflowsAvailable": "No workflows available.",
           "noStatusesAvailable": "No statuses available.",
           "noGroupsAvailable": "No groups available.",
