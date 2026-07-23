@@ -29,6 +29,8 @@ import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useMemo } from "react";
 import type { UserDashboardData } from "~/app/api/users/[userId]/dashboard/route";
 import { DateFormatter } from "~/components/DateFormatter";
+import { PendingReviewsSummary } from "~/components/reviews/PendingReviewsSummary";
+import { usePendingReviewRequests } from "~/hooks/usePendingReviewRequests";
 import { Link, useRouter } from "~/lib/navigation";
 import { toHumanReadable } from "~/utils/duration";
 import UserWorkGanttChart, {
@@ -631,6 +633,12 @@ export function UserDashboard() {
       { enabled: !!userId }
     );
 
+  // --- 6. Fetch PENDING review requests waiting on this user ---
+  // Same scope as the header's review-inbox badge, so the count the user sees
+  // in the global header and the queue rendered here can't disagree.
+  const { requests: pendingReviews, isLoading: isLoadingPendingReviews } =
+    usePendingReviewRequests(userId);
+
   // --- New: Transform scheduledWorkItems to PlotTasks for Gantt Chart ---
   const plotTasks: PlotTask[] = useMemo(() => {
     if (!scheduledWorkItems || scheduledWorkItems.length === 0) {
@@ -761,13 +769,20 @@ export function UserDashboard() {
   const hasRuns = runsRequiringAttention.length > 0;
   // userActiveSessions is already filtered, check its length directly
   const hasSessions = userActiveSessions && userActiveSessions.length > 0;
+  const hasPendingReviews = pendingReviews.length > 0;
 
   // Condition for showing the chart (now calendar)
   const showCalendar = scheduledWorkItems && scheduledWorkItems.length > 0;
 
   const showGanttChart = plotTasks && plotTasks.length > 0; // This is the correct one using plotTasks
 
-  if (!hasRuns && !hasSessions && !showGanttChart) {
+  if (!hasRuns && !hasSessions && !showGanttChart && !hasPendingReviews) {
+    // Reviews resolve on their own timeline (feature flag → role ids → rows),
+    // so they're deliberately outside the main loading gate — the card doesn't
+    // wait on them when it already has runs or sessions to show. Here they're
+    // the last thing that could produce content, so keep the spinner up rather
+    // than flashing "nothing needs attention" and then filling in.
+    if (isLoadingPendingReviews) return <LoadingSpinner className="h-20" />;
     return (
       <div
         data-testid="no-items-message"
@@ -830,6 +845,11 @@ export function UserDashboard() {
         )}
       </CardHeader>
       <CardContent className="space-y-6">
+        {/* --- Reviews waiting on this user --- */}
+        {/* Top of the card by design: a review request blocks someone else's
+            work until it's decided, so it outranks the user's own queue. */}
+        <PendingReviewsSummary requests={pendingReviews} />
+
         {/* --- User Work Chart/Calendar --- */}
         {showGanttChart && (
           <div className="mb-6 max-h-[500px] overflow-y-auto">

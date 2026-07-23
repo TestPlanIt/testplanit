@@ -16,6 +16,8 @@ The Reviews inbox is available to every signed-in user. The **inbox icon** in th
 
 Click the **inbox icon** in the top navigation, or go to **/reviews**.
 
+Pending requests also appear at the top of **Your Assignments** on the [Dashboard](dashboard.md), above your own test runs and sessions. That list shows the five oldest and links to the full inbox when there are more.
+
 ## The inbox
 
 The inbox has two tabs:

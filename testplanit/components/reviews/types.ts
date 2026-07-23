@@ -50,3 +50,33 @@ export const REVIEW_STATUS_BANNER_INCLUDE = {
 export type ReviewStatusBannerRequest = ReviewRequestGetPayload<{
   include: typeof REVIEW_STATUS_BANNER_INCLUDE;
 }>;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Pending-review summary — the compact queue rendered at the top of the home
+// page's "Your Assignments" card. Carries the project (row chrome), the
+// requester (attribution line), and both states with icon+color so the
+// transition renders with the same `WorkflowStateDisplay` pills the inbox and
+// the banner use. No assignee include: the query already filters to rows the
+// viewer is the assignee of, so repeating their own identity per row is noise.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const PENDING_REVIEW_SUMMARY_INCLUDE = {
+  project: { select: { id: true, name: true } },
+  requestedBy: { select: { id: true, name: true } },
+  fromState: {
+    include: {
+      icon: { select: { name: true } },
+      color: { select: { value: true } },
+    },
+  },
+  toState: {
+    include: {
+      icon: { select: { name: true } },
+      color: { select: { value: true } },
+    },
+  },
+} as const satisfies ReviewRequestInclude;
+
+export type PendingReviewSummaryRequest = ReviewRequestGetPayload<{
+  include: typeof PENDING_REVIEW_SUMMARY_INCLUDE;
+}>;
