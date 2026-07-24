@@ -23,6 +23,8 @@ on:
       - 'packages/**'
       - '.changeset/**'
       - '.github/workflows/packages-release.yml'
+      # The publish command lives here; a fix to it must be able to trigger a run.
+      - '.github/scripts/packages-publish.mjs'
   workflow_dispatch:
 
 concurrency: ${{ github.workflow }}-${{ github.ref }}
