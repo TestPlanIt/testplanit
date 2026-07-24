@@ -84,18 +84,14 @@ jobs:
         id: changesets
         uses: changesets/action@v1
         with:
-          # `changeset publish` publishes every non-private workspace package
-          # and ignores the changesets `ignore` list at publish time, so it also
-          # tries to (re)publish `@testplanit/cli` — which is released by its own
-          # `cli-semantic-release.yml` pipeline and is already on npm. That
-          # redundant attempt crashes the run. Hide cli from `changeset publish`
-          # by marking it private for the duration of this step only (the runner
-          # is ephemeral and this runs on the publish path, not the version-PR
-          # path, so it is never committed). cli/package.json stays non-private
-          # everywhere else, so `@semantic-release/npm` still publishes cli.
-          publish: |
-            node -e "const f='cli/package.json',fs=require('fs');const p=JSON.parse(fs.readFileSync(f));p.private=true;fs.writeFileSync(f,JSON.stringify(p,null,2)+'\n')"
-            pnpm changeset publish
+          # Wrapper for `pnpm changeset publish` that hides @testplanit/cli from
+          # the publish (cli is released by its own cli-semantic-release.yml
+          # pipeline; changeset publish ignores the changesets `ignore` list and
+          # would otherwise crash trying to republish it). See the script header.
+          # Must stay a single command: the changesets action tokenizes this
+          # input rather than running it through a shell, so a multi-line block
+          # or shell operators do NOT work here.
+          publish: node .github/scripts/packages-publish.mjs
           version: pnpm changeset version
           title: 'chore(packages): version packages'
           commit: 'chore(packages): version packages'
