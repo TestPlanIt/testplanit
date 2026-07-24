@@ -1670,22 +1670,27 @@ export default function TestRunPage() {
                 >
                   {testRunData?.isCompleted ? (
                     <div className="flex flex-col items-end gap-1">
-                      {/* Row 1: Completed On date */}
+                      {/* Row 1: completed badge — the "on <date>" part
+                          collapses to just the check + "Completed" when the
+                          header is narrow. */}
                       <Badge
                         variant="secondary"
-                        className="flex items-center text-md whitespace-nowrap text-sm gap-1 p-2 px-4"
+                        className="flex items-center whitespace-nowrap text-xs gap-1 p-2 px-4"
                       >
-                        <CircleCheckBig className="h-6 w-6 shrink-0" />
-                        <div>
-                          <span className="me-1">
-                            {t("common.fields.completedOn")}
+                        <CircleCheckBig className="h-4 w-4 shrink-0" />
+                        <span>{t("common.fields.completed")}</span>
+                        {!headerCompact && (
+                          <span>
+                            {t("common.on")}{" "}
+                            <DateFormatter
+                              date={testRunData?.completedAt}
+                              formatString={
+                                session?.user.preferences?.dateFormat
+                              }
+                              timezone={session?.user.preferences?.timezone}
+                            />
                           </span>
-                          <DateFormatter
-                            date={testRunData?.completedAt}
-                            formatString={session?.user.preferences?.dateFormat}
-                            timezone={session?.user.preferences?.timezone}
-                          />
-                        </div>
+                        )}
                       </Badge>
                       {/* Row 2: activity log + action buttons for COMPLETED runs */}
                       <div className="flex items-center gap-1">
