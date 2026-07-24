@@ -758,7 +758,7 @@ export function TestRunCaseDetails({
           </div>
         </div>
       )}
-      <div className="flex justify-between items-center gap-2 bg-primary p-4">
+      <div className="sticky top-0 z-20 flex justify-between items-center gap-2 bg-primary p-4">
         <div className="flex items-center gap-2 min-w-0 flex-1 overflow-hidden">
           {testRunId && canAddEditResults && (
             <>

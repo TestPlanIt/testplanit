@@ -744,6 +744,7 @@
       "noCases": "No test cases",
       "unknown": "Unknown",
       "selectedTestCases": "Selected Test Cases",
+      "selectedTestCasesCount": "{count, plural, one {# Selected Test Case} other {# Selected Test Cases}}",
       "editToModifyCasesTitle": "This list can not be modified.",
       "editToModifyCases": "Edit the Test Run and click Selected Test Cases to modify the list.",
       "noTestCasesSelected": "No test cases selected",
@@ -2683,8 +2684,8 @@
       "notFound": "Test case version not found.",
       "detailsRegion": "Test case details",
       "metadataRegion": "Test case metadata",
-      "versionCreated": "Version {version} Created",
-      "latestVersionUpdated": "Latest Version {version, number} Updated",
+      "versionCreated": "Version {version}",
+      "latestVersionUpdated": "Version {version, number} (Latest)",
       "historyView": "Test Case History View"
     },
     "auditLog": {

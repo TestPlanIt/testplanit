@@ -2263,7 +2263,9 @@ export default function TestRunPage() {
                 <div className="p-4 space-y-4">
                   {(testRunData?.forecastManual ?? 0) > 0 && (
                     <div className="flex flex-col gap-2">
-                      <FormLabel>{t("common.fields.forecast")}</FormLabel>
+                      <FormLabel className="text-base font-bold">
+                        {t("common.fields.forecast")}
+                      </FormLabel>
                       <ForecastDisplay seconds={testRunData.forecastManual!} />
                     </div>
                   )}
@@ -2414,7 +2416,12 @@ export default function TestRunPage() {
       </AlertDialog>
       {/* Sheet for Test Case Details */}
       <Sheet open={sheetOpen} onOpenChange={handleSheetOpenChange}>
-        <SheetContent className="sm:max-w-4xl w-full p-0 test-run-details-sheet">
+        {/* The sheet's built-in close (X) — the only direct button child —
+            sits over the sticky bg-primary header. It must layer above that
+            header (z-30 > the header's z-20) or the header hides it, and use
+            primary-foreground so it stays legible where primary is light
+            (e.g. dark mode). */}
+        <SheetContent className="sm:max-w-4xl w-full p-0 test-run-details-sheet [&>button]:z-30 [&>button]:text-primary-foreground [&>button]:opacity-100">
           <SheetHeader>
             <SheetTitle className="sr-only">
               {t("repository.version.detailsRegion")}

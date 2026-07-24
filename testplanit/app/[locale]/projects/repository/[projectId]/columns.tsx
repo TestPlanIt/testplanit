@@ -282,7 +282,6 @@ interface NameCellProps {
   projectId: number;
   isRunMode: boolean;
   isSelectionMode: boolean;
-  columnSize: number;
   onTestCaseClick?: (caseId: number) => void;
   folder?: {
     id: number;
@@ -305,7 +304,6 @@ const NameCell = React.memo(function NameCell({
   projectId,
   isRunMode,
   isSelectionMode,
-  columnSize,
   onTestCaseClick: _onTestCaseClick,
   folder,
   viewType,
@@ -372,16 +370,6 @@ const NameCell = React.memo(function NameCell({
     (showDescendants && folder)
   );
 
-  // When the folder chip is shown (e.g. "Show all descendants"), split the
-  // column between the case name and the chip so both fit within the column
-  // instead of overflowing when it is narrow. The name keeps priority; the
-  // chip shrinks — truncating the folder name — as the column narrows.
-  const folderChipReserve = 150;
-  const nameMaxWidth = showFolderInfo
-    ? Math.max(columnSize - folderChipReserve, 150)
-    : columnSize;
-  const folderChipMaxWidth = Math.max(columnSize - nameMaxWidth, 48);
-
   if (isRunMode && canAddEditResults) {
     const handleClick = () => {
       if (isSoftDeletedInRun) return;
@@ -391,7 +379,7 @@ const NameCell = React.memo(function NameCell({
     };
 
     return (
-      <div className="flex items-center">
+      <div className="flex items-center min-w-0">
         <TypeIconWithParamBadge
           isSoftDeletedInRun={isSoftDeletedInRun}
           automated={automated}
@@ -405,11 +393,10 @@ const NameCell = React.memo(function NameCell({
         />
         <div
           className={cn(
-            "truncate whitespace-nowrap overflow-hidden group",
+            "truncate whitespace-nowrap overflow-hidden group min-w-0 flex-1",
             isSoftDeletedInRun ? "cursor-default" : "cursor-pointer",
             isSoftDeletedInRun && "line-through text-muted-foreground"
           )}
-          style={{ maxWidth: nameMaxWidth }}
           onClick={handleClick}
         >
           {name}
@@ -422,8 +409,7 @@ const NameCell = React.memo(function NameCell({
               <TooltipTrigger asChild>
                 <button
                   type="button"
-                  className="ms-2 text-muted-foreground text-xs bg-muted px-2 py-0.5 rounded flex items-center min-w-0 hover:bg-muted/80 transition-colors cursor-pointer"
-                  style={{ maxWidth: folderChipMaxWidth }}
+                  className="ms-2 text-muted-foreground text-xs bg-muted px-2 py-0.5 rounded flex items-center shrink-0 max-w-[150px] hover:bg-muted/80 transition-colors cursor-pointer"
                   onClick={(e) => {
                     e.stopPropagation();
                     e.preventDefault();
@@ -448,7 +434,7 @@ const NameCell = React.memo(function NameCell({
   }
 
   return (
-    <div className="flex items-center">
+    <div className="flex items-center min-w-0">
       <TypeIconWithParamBadge
         isSoftDeletedInRun={isSoftDeletedInRun}
         automated={automated}
@@ -459,7 +445,7 @@ const NameCell = React.memo(function NameCell({
       <Link
         href={`/projects/repository/${projectId}/${id}`}
         className={cn(
-          "group",
+          "group min-w-0 flex-1",
           isSoftDeletedInRun && "line-through text-muted-foreground"
         )}
         target={isSelectionMode ? "_blank" : undefined}
@@ -484,10 +470,7 @@ const NameCell = React.memo(function NameCell({
           router.push(`${pathname}?${params.toString()}`);
         }}
       >
-        <div
-          className="truncate whitespace-nowrap overflow-hidden"
-          style={{ maxWidth: nameMaxWidth }}
-        >
+        <div className="truncate whitespace-nowrap overflow-hidden">
           {name}
           {/* The link icon signals "opens a new page" — only true when the
               click navigates (selection mode → new tab, run mode → case page).
@@ -505,8 +488,7 @@ const NameCell = React.memo(function NameCell({
             <TooltipTrigger asChild>
               <button
                 type="button"
-                className="ms-2 text-muted-foreground text-xs bg-muted px-2 py-0.5 rounded flex items-center min-w-0 hover:bg-muted/80 transition-colors cursor-pointer"
-                style={{ maxWidth: folderChipMaxWidth }}
+                className="ms-2 text-muted-foreground text-xs bg-muted px-2 py-0.5 rounded flex items-center shrink-0 max-w-[150px] hover:bg-muted/80 transition-colors cursor-pointer"
                 onClick={(e) => {
                   e.stopPropagation();
                   e.preventDefault();
@@ -1796,7 +1778,7 @@ export const getColumns = (
       size: 400,
       minSize: 100,
       maxSize: 1200,
-      cell: ({ row, column }) => {
+      cell: ({ row }) => {
         const isNew =
           row.original.createdAt &&
           Date.now() - new Date(row.original.createdAt).getTime() <
@@ -1820,7 +1802,6 @@ export const getColumns = (
                 projectId={row.original.projectId}
                 isRunMode={isRunMode}
                 isSelectionMode={isSelectionMode}
-                columnSize={column.getSize()}
                 onTestCaseClick={onTestCaseClick}
                 folder={
                   row.original.folder

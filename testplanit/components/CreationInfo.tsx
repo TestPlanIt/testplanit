@@ -65,7 +65,7 @@ export const CreationInfo: React.FC<CreationInfoProps> = ({
   return (
     <div ref={setRootRef} className={cn("space-y-2 w-full", className)}>
       {userId && user?.name && (
-        <div className="flex items-center gap-2 min-w-0 w-full">
+        <div className="flex items-center gap-2 text-sm min-w-0 w-full">
           {narrow && (
             <Tooltip>
               <TooltipTrigger asChild>
@@ -82,7 +82,7 @@ export const CreationInfo: React.FC<CreationInfoProps> = ({
             userName={user.name ?? undefined}
             userImage={user.image}
             prefix={narrow ? undefined : createdByLabel}
-            size="large"
+            size="small"
           />
         </div>
       )}

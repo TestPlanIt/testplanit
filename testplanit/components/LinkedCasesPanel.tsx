@@ -336,7 +336,7 @@ const LinkedCasesPanel: React.FC<LinkedCasesPanelProps> = ({
 
   return (
     <Card shadow="none">
-      <CardHeader className="flex flex-row items-center justify-between">
+      <CardHeader className="flex flex-row items-center justify-between p-4">
         <CardTitle className="flex items-center gap-2">
           <Link2 className="w-5 h-5" />
           {tLinkedCases("title")}
@@ -364,7 +364,7 @@ const LinkedCasesPanel: React.FC<LinkedCasesPanelProps> = ({
       </CardHeader>
       <CardContent className="p-0">
         {!links || links.length === 0 ? (
-          <div className="text-muted-foreground ms-6 -mt-8 mb-4 text-sm">
+          <div className="text-muted-foreground ms-4 -mt-6 mb-4 text-sm">
             {tLinkedCases("noLinkedCases")}
           </div>
         ) : (

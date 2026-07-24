@@ -1019,7 +1019,10 @@ export default function TestResultHistory({
     return (
       <Card shadow="none">
         <CardHeader>
-          <CardTitle>{tCases("testResultHistory")}</CardTitle>
+          <CardTitle className="flex items-center gap-1">
+            <History className="w-5 h-5" />
+            {tCases("testResultHistory")}
+          </CardTitle>
           <CardDescription>
             {tCases("testResultHistoryDescription")}
           </CardDescription>
@@ -1063,7 +1066,10 @@ export default function TestResultHistory({
     return (
       <Card shadow="none">
         <CardHeader>
-          <CardTitle>{tCases("testResultHistory")}</CardTitle>
+          <CardTitle className="flex items-center gap-1">
+            <History className="w-5 h-5" />
+            {tCases("testResultHistory")}
+          </CardTitle>
           <CardDescription>
             {tCases("testResultHistoryDescription")}
           </CardDescription>
@@ -1298,7 +1304,10 @@ export default function TestResultHistory({
     <Card shadow="none">
       <CardHeader className="flex flex-row items-center justify-between p-4">
         <div>
-          <CardTitle>{tCases("testResultHistory")}</CardTitle>
+          <CardTitle className="flex items-center gap-1">
+            <History className="w-5 h-5" />
+            {tCases("testResultHistory")}
+          </CardTitle>
           <CardDescription>
             {tCases("testResultHistoryDescription")}
           </CardDescription>

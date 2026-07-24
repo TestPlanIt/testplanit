@@ -198,7 +198,7 @@ function TestRunFormControls({
   if (!testRun) return null;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 [&_label]:text-base [&_label]:font-bold">
       {/* State */}
       <FormField
         control={control}
@@ -407,6 +407,7 @@ function TestRunFormControls({
             {testRun?.tags.map((tag) => (
               <TagsDisplay
                 key={tag.id}
+                size="small"
                 id={tag.id}
                 name={tag.name}
                 link={`/projects/tags/${projectId}/${tag.id}`}

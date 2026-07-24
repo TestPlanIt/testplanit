@@ -77,8 +77,11 @@ describe("ElasticsearchAdmin", () => {
       ).toBeInTheDocument();
     });
 
-    // Health badge shows GREEN (toUpperCase) — may appear multiple times (status + index)
-    expect(screen.getAllByText("GREEN").length).toBeGreaterThan(0);
+    // Health badge shows the localized "healthy" label — may appear multiple
+    // times (cluster status + index)
+    expect(
+      screen.getAllByText("admin.elasticsearch.health.healthy").length
+    ).toBeGreaterThan(0);
 
     // Number of nodes
     expect(screen.getByText("3")).toBeInTheDocument();
@@ -192,8 +195,12 @@ describe("ElasticsearchAdmin", () => {
     });
 
     expect(screen.getByText("runs-idx")).toBeInTheDocument();
-    expect(screen.getAllByText("GREEN").length).toBeGreaterThan(0);
-    expect(screen.getByText("YELLOW")).toBeInTheDocument();
+    expect(
+      screen.getAllByText("admin.elasticsearch.health.healthy").length
+    ).toBeGreaterThan(0);
+    expect(
+      screen.getByText("admin.elasticsearch.health.warning")
+    ).toBeInTheDocument();
   });
 
   test("renders reindex warning alert", async () => {

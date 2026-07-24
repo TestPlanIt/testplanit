@@ -307,7 +307,7 @@ function SessionFormControls({
   if (!testSession) return null;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 [&_label]:text-base [&_label]:font-bold">
       {/* Template */}
       <FormField
         control={control}
@@ -645,6 +645,7 @@ function SessionFormControls({
                 id={tag.id}
                 name={tag.name}
                 link={`/projects/tags/${projectId}/${tag.id}`}
+                size="small"
               />
             ))}
             {/* Display 'None' if no tags in view mode */}
@@ -688,6 +689,7 @@ function SessionFormControls({
                       title={issue.title}
                       status={issue.externalStatus}
                       projectIds={[Number(projectId)]}
+                      size="small"
                       data={issue.data}
                       integrationProvider={issue.integration?.provider}
                       integrationId={

@@ -6,7 +6,6 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
 import {
   Sheet,
   SheetContent,
@@ -23,6 +22,7 @@ import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { usePageSizeOptions } from "~/hooks/usePageSizeOptions";
 import { IconName } from "~/types/globals";
+import { cn } from "~/utils";
 import { toHumanReadable } from "~/utils/duration";
 
 interface SelectedTestCasesDrawerProps {
@@ -155,45 +155,51 @@ export function SelectedTestCasesDrawer({
       }
     };
 
+    const hasEstimates =
+      typeof testCase.estimate === "number" ||
+      typeof testCase.forecastManual === "number" ||
+      typeof testCase.forecastAutomated === "number";
+
     return (
       <div
         key={testCase.id}
-        className={`w-full rounded-md pb-2 ${
-          useCheckboxes && !isSelected ? "opacity-50" : ""
-        }`}
+        className={cn(
+          "px-3 py-1 border-b border-border/60 last:border-b-0 text-sm hover:bg-muted/40",
+          useCheckboxes && !isSelected && "opacity-50"
+        )}
       >
-        <div className="flex items-center w-full px-2 pt-1">
+        <div className="flex items-center gap-2 min-h-8 min-w-0">
           {/* Checkbox column (when using checkboxes) */}
-          {isEditMode && useCheckboxes && (
-            <div className="shrink-0 w-8 flex items-center justify-center pt-1">
+          {isEditMode && useCheckboxes ? (
+            <div className="shrink-0 w-6 flex items-center justify-center">
               <Checkbox
                 checked={isSelected}
                 onCheckedChange={handleToggle}
                 aria-label={`Select ${testCase.name}`}
               />
             </div>
-          )}
-          {/* Index column (when not using checkboxes) */}
-          {!useCheckboxes && (
-            <div className="shrink-0 w-8 text-end text-muted-foreground text-sm">
+          ) : (
+            /* Index column (when not using checkboxes) */
+            <div className="shrink-0 w-6 text-end text-muted-foreground text-xs">
               {globalIndex}
             </div>
           )}
           {/* Name column */}
-          <div className="flex-1 min-w-0 ms-2">
+          <div className="flex-1 min-w-0">
             <CaseDisplay
               id={testCase.id}
               name={testCase.name}
               source={testCase.source || RepositoryCaseSource.MANUAL}
               automated={testCase.automated}
               hasParameters={testCase.hasParameters}
-              size="large"
+              size="medium"
+              maxLines={1}
               link={`/projects/repository/${projectId}/${testCase.id}`}
               linkTarget="_blank"
             />
           </div>
           {/* Workflow state column */}
-          <div className="shrink-0 w-24 flex items-center justify-end ms-2">
+          <div className="shrink-0 w-24 flex items-center justify-end">
             {testCase.state.icon &&
             testCase.state.icon.name &&
             testCase.state.color &&
@@ -211,97 +217,59 @@ export function SelectedTestCasesDrawer({
                 }}
               />
             ) : (
-              <span className="text-sm text-muted-foreground truncate">
+              <span className="text-xs text-muted-foreground truncate">
                 {testCase.state.name}
               </span>
             )}
           </div>
           {/* Remove button column (when not using checkboxes) */}
           {isEditMode && !useCheckboxes && (
-            <div className="shrink-0 w-10 flex justify-end items-center ms-2">
-              <Button
-                type="button"
-                variant="destructive"
-                size="icon"
-                onClick={() => {
-                  onSelectionChange(
-                    selectedTestCases.filter((id) => id !== testCase.id)
-                  );
-                }}
-              >
-                <XIcon className="h-4 w-4" />
-              </Button>
-            </div>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive"
+              aria-label={t("common.actions.remove")}
+              onClick={() => {
+                onSelectionChange(
+                  selectedTestCases.filter((id) => id !== testCase.id)
+                );
+              }}
+            >
+              <XIcon className="h-4 w-4" />
+            </Button>
           )}
         </div>
-        <div className="text-end pe-12 mt-1">
-          {(typeof testCase.estimate === "number" ||
-            testCase.estimate === null ||
-            typeof testCase.forecastManual === "number" ||
-            testCase.forecastManual === null ||
-            typeof testCase.forecastAutomated === "number" ||
-            testCase.forecastAutomated === null) && (
-            <div className="w-full ps-10 pb-1 text-xs text-muted-foreground flex flex-row items-center justify-end divide-x divide-current">
-              {(() => {
-                const elements = [];
-                if (typeof testCase.estimate === "number") {
-                  elements.push(
-                    <span key="estimate" className="py-1">
-                      <Label className="me-1 text-xs">
-                        {t("common.fields.estimate")}:
-                      </Label>
-                      <span>
-                        {toHumanReadable(testCase.estimate, {
-                          isSeconds: true,
-                        })}
-                      </span>
-                    </span>
-                  );
-                }
-                if (typeof testCase.forecastManual === "number") {
-                  elements.push(
-                    <span key="forecastManual" className="py-1">
-                      <Label className="me-1 text-xs">
-                        {t("common.fields.forecastManual")}:
-                      </Label>
-                      <span>
-                        {toHumanReadable(testCase.forecastManual, {
-                          isSeconds: true,
-                        })}
-                      </span>
-                    </span>
-                  );
-                }
-                if (typeof testCase.forecastAutomated === "number") {
-                  elements.push(
-                    <span key="forecastAutomated" className="py-1">
-                      <Label className="me-1 text-xs">
-                        {t("common.fields.forecastAutomated")}:
-                      </Label>
-                      <span>
-                        {toHumanReadable(testCase.forecastAutomated, {
-                          isSeconds: true,
-                          maxDecimalPoints: 2,
-                        })}
-                      </span>
-                    </span>
-                  );
-                }
-                return elements.map((el, idx) => (
-                  <div
-                    key={idx}
-                    className={`
-                  ${idx === 0 ? "pe-2" : "px-2"}
-                  ${idx === elements.length - 1 ? "ps-2" : "px-2"}
-                  `}
-                  >
-                    {el}
-                  </div>
-                ));
-              })()}
-            </div>
-          )}
-        </div>
+        {/* Estimate / forecast sub-line, indented to align under the name */}
+        {hasEstimates && (
+          <div className="ps-8 pb-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
+            {typeof testCase.estimate === "number" && (
+              <span>
+                <span className="me-1">{t("common.fields.estimate")}:</span>
+                {toHumanReadable(testCase.estimate, { isSeconds: true })}
+              </span>
+            )}
+            {typeof testCase.forecastManual === "number" && (
+              <span>
+                <span className="me-1">
+                  {t("common.fields.forecastManual")}:
+                </span>
+                {toHumanReadable(testCase.forecastManual, { isSeconds: true })}
+              </span>
+            )}
+            {typeof testCase.forecastAutomated === "number" && (
+              <span>
+                <span className="me-1">
+                  {t("common.fields.forecastAutomated")}:
+                </span>
+                {toHumanReadable(testCase.forecastAutomated, {
+                  isSeconds: true,
+                  maxDecimalPoints: 2,
+                })}
+              </span>
+            )}
+          </div>
+        )}
       </div>
     );
   };
@@ -320,17 +288,20 @@ export function SelectedTestCasesDrawer({
       </SheetTrigger>
       <SheetContent className="h-full p-0 sm:max-w-4xl">
         <div className="flex h-full flex-col">
-          <SheetHeader className="border-b p-4">
+          <SheetHeader className="border-b p-3">
             <SheetDescription className="sr-only">
               {t("common.labels.selectedTestCases")}
             </SheetDescription>
             <SheetTitle className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span>{t("common.labels.selectedTestCases")}</span>
-                <Badge variant="secondary">{selectedTestCases.length}</Badge>
+                <span>
+                  {t("common.labels.selectedTestCasesCount", {
+                    count: selectedTestCases.length,
+                  })}
+                </span>
                 {isEditMode && selectedTestCases.length > 0 && (
                   <Button
-                    variant="ghost"
+                    variant="outline"
                     size="sm"
                     onClick={() => onSelectionChange([])}
                   >
@@ -356,7 +327,7 @@ export function SelectedTestCasesDrawer({
 
           {/* Pagination info */}
           {totalItems > 0 && (
-            <div className="border-b px-4 py-2">
+            <div className="border-b px-3 py-2">
               <PaginationInfo
                 startIndex={startIndex}
                 endIndex={endIndex}
@@ -370,7 +341,7 @@ export function SelectedTestCasesDrawer({
           )}
 
           {/* Test cases list */}
-          <div className="flex-1 overflow-y-auto p-4">
+          <div className="flex-1 overflow-y-auto">
             {casesToDisplay.length === 0 ? (
               <div className="text-center text-sm text-muted-foreground py-8">
                 {t("common.labels.noTestCasesSelected")}
@@ -380,7 +351,7 @@ export function SelectedTestCasesDrawer({
                 <LoadingSpinner />
               </div>
             ) : (
-              <div className="space-y-2">
+              <div>
                 {fetchedTestCases.map((testCase, index) => {
                   const globalIndex =
                     (currentPage - 1) * effectivePageSize + index + 1;
@@ -392,7 +363,7 @@ export function SelectedTestCasesDrawer({
 
           {/* Pagination controls */}
           {totalPages > 1 && (
-            <div className="border-t p-4 flex justify-center">
+            <div className="border-t p-3 flex justify-center">
               <PaginationComponent
                 currentPage={currentPage}
                 totalPages={totalPages}

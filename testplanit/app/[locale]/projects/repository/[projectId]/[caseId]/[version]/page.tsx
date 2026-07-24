@@ -3,13 +3,13 @@
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { AttachmentsDisplay } from "@/components/AttachmentsDisplay";
+import { CreationInfo } from "@/components/CreationInfo";
 import { DateFormatter } from "@/components/DateFormatter";
 import { formatSeconds } from "@/components/DurationDisplay";
 import { Loading } from "@/components/Loading";
 import { CaseDisplay } from "@/components/tables/CaseDisplay";
 import { IssuesDisplay } from "@/components/tables/IssuesDisplay";
 import { TagsDisplay } from "@/components/tables/TagDisplay";
-import { UserNameCell } from "@/components/tables/UserNameCell";
 import { TemplateNameDisplay } from "@/components/TemplateNameDisplay";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -1110,21 +1110,10 @@ export default function TestCaseVersions() {
                     })}
                   </div>
                   <li className="mb-2 me-6">
-                    <div className="flex space-x-1">
-                      <div>
-                        <DateFormatter
-                          date={testcase.createdAt}
-                          formatString={
-                            session?.user.preferences?.dateFormat +
-                            " " +
-                            session?.user.preferences?.timeFormat
-                          }
-                          timezone={session?.user.preferences?.timezone}
-                        />
-                      </div>
-                      <div>{t("common.by")}</div>
-                      <UserNameCell userId={testcase.creatorId} />
-                    </div>
+                    <CreationInfo
+                      userId={testcase.creatorId}
+                      createdAt={testcase.createdAt}
+                    />
                   </li>
                   <Separator
                     orientation="horizontal"
@@ -1145,21 +1134,10 @@ export default function TestCaseVersions() {
                         </Link>
                       </div>
                       <li className="mb-2 me-6">
-                        <div className="flex space-x-1">
-                          <div>
-                            <DateFormatter
-                              date={versions[0].createdAt}
-                              formatString={
-                                session?.user.preferences?.dateFormat +
-                                " " +
-                                session?.user.preferences?.timeFormat
-                              }
-                              timezone={session?.user.preferences?.timezone}
-                            />
-                          </div>
-                          <div>{t("common.by")}</div>
-                          <UserNameCell userId={versions[0].creatorId} />
-                        </div>
+                        <CreationInfo
+                          userId={versions[0].creatorId}
+                          createdAt={versions[0].createdAt}
+                        />
                       </li>
                       <Separator
                         orientation="horizontal"
