@@ -75,6 +75,7 @@
       "editResult": "Test Sonucunu Düzenle",
       "resultDetails": "Sonuç Detayları",
       "actionsLabel": "Eylemler",
+      "actionsWithAlerts": "İşlemler ({count, number} okunmamış)",
       "assign": "Atamak",
       "assignSelected": "Atama {count, plural, one {# durum} other {# durumlar}}",
       "refresh": "Yenile",
@@ -2722,7 +2723,8 @@
         "sharedStepGroupCreatedSuccess": "Paylaşılan adımlar başarıyla oluşturuldu!",
         "genericSharedStepCreationError": "Paylaşılan adımları oluştururken bilinmeyen bir hata oluştu. Lütfen tekrar deneyin.",
         "errorCreatingSharedGroup": "Paylaşılan adımlar oluşturulamadı. Lütfen tekrar deneyin.",
-        "sharedGroupCreatedSuccess": "Ortak adım grubu başarıyla oluşturuldu!"
+        "sharedGroupCreatedSuccess": "Ortak adım grubu başarıyla oluşturuldu!",
+        "failedToCreateSharedGroupError": "Paylaşılan grup oluşturulamadı. Lütfen tekrar deneyin."
       },
       "selectSharedStepsTitle": "Paylaşılan Adımları Seçin",
       "selectSharedStepsDescription": "Test senaryonuza eklemek için paylaşılan adımları seçin.",
@@ -2739,7 +2741,8 @@
       "reviewSelectedStepsTitle": "Seçilen Adımları Gözden Geçirin",
       "noStepsInSelectedGroup": "Seçilen grupta herhangi bir adım bulunmamaktadır.",
       "sharedGroupSuffix": "(Ortak Adımlar)",
-      "unnamedSharedGroup": "İsimsiz Paylaşılan Adımlar"
+      "unnamedSharedGroup": "İsimsiz Paylaşılan Adımlar",
+      "noStepsInSelectedSharedGroup": "Seçilen paylaşılan grupta herhangi bir adım bulunmamaktadır."
     },
     "testCase": {
       "toggleAutomated": "Otomatik test özelliğini etkinleştir",
@@ -3453,7 +3456,7 @@
   },
   "reviews": {
     "banner": {
-      "pendingMessage": "<assignee></assignee> adresinden <fromState></fromState> → <toState></toState> <ago></ago> geçişi için inceleme talep edildi.",
+      "pendingMessage": "<assignee></assignee> tarafından <fromState></fromState> → <toState></toState> geçişi için inceleme bekleniyor <ago></ago>",
       "changesRequestedTitle": "Talep edilen değişiklikler",
       "rejectedTitle": "İnceleme reddedildi",
       "requestAgain": "Tekrar inceleme talebinde bulunun",
@@ -3996,7 +3999,8 @@
           "namePlaceholder": "Bir iş akışı adı girin.",
           "scopePlaceholder": "Kapsamı seçin",
           "iconColorLabel": "Simge ve renk",
-          "typeLabel": "İş akışı türü"
+          "typeLabel": "İş akışı türü",
+          "scopeLabel": "İş akışı kapsamı"
         },
         "mappingDatasets": "İnceleme gerektiren veri kümeleri",
         "mappingImportConfiguration": "İçe aktarma yapılandırması",
@@ -4152,7 +4156,9 @@
           "templateFieldTemplateLabelPlural": "şablonlar",
           "templateFieldTargetGroupCase": "Vaka alanları",
           "templateFieldTargetGroupResult": "Sonuç alanları",
-          "columnAction": "Aksiyon"
+          "columnAction": "Aksiyon",
+          "configurationVariantSelectPlaceholder": "Yapılandırma varyantı seçin",
+          "configurationVariantCategoryPlaceholder": "Kategori seçin"
         },
         "nextSteps": "Arka plan içe aktarma işlemi tamamlandıktan sonra, hedef projelerden taşınan verileri inceleyebilirsiniz.",
         "nextStepsDescription": "Arka plan içe aktarma işlemleri eşzamansız olarak çalışır. Durumu yukarıdan takip edebilir veya güncellemeleri görmek için sayfayı yenileyebilirsiniz."

@@ -75,6 +75,7 @@
       "editResult": "Modifier le résultat du test",
       "resultDetails": "Détails des résultats",
       "actionsLabel": "Actes",
+      "actionsWithAlerts": "Actions ({count, number} non lues)",
       "assign": "Attribuer",
       "assignSelected": "Affecter {count, plural, one {# cas} other {# cas}}",
       "refresh": "Rafraîchir",
@@ -2722,7 +2723,8 @@
         "sharedStepGroupCreatedSuccess": "Étapes partagées créées avec succès !",
         "genericSharedStepCreationError": "Une erreur inconnue s'est produite lors de la création des étapes partagées. Veuillez réessayer.",
         "errorCreatingSharedGroup": "Impossible de créer les étapes partagées. Veuillez réessayer.",
-        "sharedGroupCreatedSuccess": "Groupe de partage de pas créé avec succès !"
+        "sharedGroupCreatedSuccess": "Groupe de partage de pas créé avec succès !",
+        "failedToCreateSharedGroupError": "Impossible de créer le groupe partagé. Veuillez réessayer."
       },
       "selectSharedStepsTitle": "Sélectionner les étapes partagées",
       "selectSharedStepsDescription": "Choisissez les étapes partagées à ajouter à votre cas de test.",
@@ -2739,7 +2741,8 @@
       "reviewSelectedStepsTitle": "Examiner les étapes sélectionnées",
       "noStepsInSelectedGroup": "Le groupe sélectionné ne comporte aucune étape.",
       "sharedGroupSuffix": "(Étapes partagées)",
-      "unnamedSharedGroup": "Étapes partagées non nommées"
+      "unnamedSharedGroup": "Étapes partagées non nommées",
+      "noStepsInSelectedSharedGroup": "Le groupe partagé sélectionné ne comporte aucune étape."
     },
     "testCase": {
       "toggleAutomated": "Activer/désactiver les tests automatisés",
@@ -3453,7 +3456,7 @@
   },
   "reviews": {
     "banner": {
-      "pendingMessage": "Demande d'examen de <assignee></assignee> pour la transition <fromState></fromState> → <toState></toState> <ago></ago>",
+      "pendingMessage": "En attente d'examen par <assignee></assignee> pour la transition <fromState></fromState> → <toState></toState> <ago></ago>",
       "changesRequestedTitle": "Modifications demandées",
       "rejectedTitle": "Avis rejeté",
       "requestAgain": "Demander une nouvelle évaluation",
@@ -3996,7 +3999,8 @@
           "namePlaceholder": "Saisissez le nom du flux de travail",
           "scopePlaceholder": "Sélectionner la portée",
           "iconColorLabel": "Icône et couleur",
-          "typeLabel": "Type de flux de travail"
+          "typeLabel": "Type de flux de travail",
+          "scopeLabel": "Périmètre du flux de travail"
         },
         "mappingDatasets": "Ensembles de données nécessitant une révision",
         "mappingImportConfiguration": "Configuration d'importation",
@@ -4152,7 +4156,9 @@
           "templateFieldTemplateLabelPlural": "modèles",
           "templateFieldTargetGroupCase": "Champs de cas",
           "templateFieldTargetGroupResult": "Champs de résultats",
-          "columnAction": "Action"
+          "columnAction": "Action",
+          "configurationVariantSelectPlaceholder": "Sélectionner la variante de configuration",
+          "configurationVariantCategoryPlaceholder": "Sélectionner une catégorie"
         },
         "nextSteps": "Une fois l'importation en arrière-plan terminée, vous pourrez consulter les données migrées des projets cibles.",
         "nextStepsDescription": "Les importations en arrière-plan s'exécutent de manière asynchrone. Vous pouvez suivre leur état ci-dessus ou actualiser la page pour afficher les mises à jour."

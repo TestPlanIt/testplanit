@@ -75,6 +75,7 @@
       "editResult": "تعديل نتيجة الاختبار",
       "resultDetails": "تفاصيل النتيجة",
       "actionsLabel": "الإجراءات",
+      "actionsWithAlerts": "الإجراءات ({count, number} غير مقروء)",
       "assign": "تعيين",
       "assignSelected": "تعيين {count, plural, zero {# حالة} one {حالة واحدة} two {حالتان} few {# حالات} many {# حالة} other {# حالة}}",
       "refresh": "تحديث",
@@ -2722,7 +2723,8 @@
         "sharedStepGroupCreatedSuccess": "تم إنشاء الخطوات المشتركة بنجاح!",
         "genericSharedStepCreationError": "حدث خطأ غير معروف أثناء إنشاء الخطوات المشتركة. يرجى المحاولة مرة أخرى.",
         "errorCreatingSharedGroup": "فشل إنشاء الخطوات المشتركة. يرجى المحاولة مرة أخرى.",
-        "sharedGroupCreatedSuccess": "تم إنشاء مجموعة الخطوات المشتركة بنجاح!"
+        "sharedGroupCreatedSuccess": "تم إنشاء مجموعة الخطوات المشتركة بنجاح!",
+        "failedToCreateSharedGroupError": "فشل إنشاء المجموعة المشتركة. يرجى المحاولة مرة أخرى."
       },
       "selectSharedStepsTitle": "حدد الخطوات المشتركة",
       "selectSharedStepsDescription": "اختر خطوات مشتركة لإضافتها إلى حالة الاختبار.",
@@ -2739,7 +2741,8 @@
       "reviewSelectedStepsTitle": "مراجعة الخطوات المحددة",
       "noStepsInSelectedGroup": "المجموعة المحددة لا تحتوي على خطوات.",
       "sharedGroupSuffix": "(خطوات مشتركة)",
-      "unnamedSharedGroup": "خطوات مشتركة غير مسماة"
+      "unnamedSharedGroup": "خطوات مشتركة غير مسماة",
+      "noStepsInSelectedSharedGroup": "المجموعة المشتركة المحددة لا تحتوي على خطوات."
     },
     "testCase": {
       "toggleAutomated": "تبديل الاختبار المؤتمت",
@@ -3453,7 +3456,7 @@
   },
   "reviews": {
     "banner": {
-      "pendingMessage": "طُلبت المراجعة من <assignee></assignee> للانتقال <fromState></fromState> → <toState></toState> <ago></ago>",
+      "pendingMessage": "في انتظار المراجعة من قبل <assignee></assignee> للانتقال من <fromState></fromState> ← <toState></toState> <ago></ago>",
       "changesRequestedTitle": "طُلبت تغييرات",
       "rejectedTitle": "رُفضت المراجعة",
       "requestAgain": "طلب المراجعة مرة أخرى",
@@ -3996,7 +3999,8 @@
           "namePlaceholder": "أدخل اسم سير العمل",
           "scopePlaceholder": "اختر النطاق",
           "iconColorLabel": "الأيقونة واللون",
-          "typeLabel": "نوع سير العمل"
+          "typeLabel": "نوع سير العمل",
+          "scopeLabel": "نطاق سير العمل"
         },
         "mappingDatasets": "مجموعات البيانات التي تتطلب مراجعة",
         "mappingImportConfiguration": "استيراد التكوين",
@@ -4152,7 +4156,9 @@
           "templateFieldTemplateLabelPlural": "قوالب",
           "templateFieldTargetGroupCase": "حقول الحالة",
           "templateFieldTargetGroupResult": "حقول النتيجة",
-          "columnAction": "الإجراء"
+          "columnAction": "الإجراء",
+          "configurationVariantSelectPlaceholder": "اختر متغير الإعداد",
+          "configurationVariantCategoryPlaceholder": "اختر الفئة"
         },
         "nextSteps": "بعد اكتمال الاستيراد في الخلفية، يمكنك مراجعة البيانات المُرحّلة من المشاريع الهدف.",
         "nextStepsDescription": "تعمل عمليات الاستيراد في الخلفية بشكل غير متزامن. يمكنك مراقبة الحالة أعلاه أو تحديث الصفحة لعرض التحديثات."

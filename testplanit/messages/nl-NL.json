@@ -75,6 +75,7 @@
       "editResult": "Testresultaat bewerken",
       "resultDetails": "Resultaatdetails",
       "actionsLabel": "Acties",
+      "actionsWithAlerts": "Acties ({count, number} ongelezen)",
       "assign": "Toewijzen",
       "assignSelected": "Wijs {count, plural, one {toe # geval} other {# gevallen}}",
       "refresh": "Vernieuwen",
@@ -2722,7 +2723,8 @@
         "sharedStepGroupCreatedSuccess": "Gedeelde stappen succesvol aangemaakt!",
         "genericSharedStepCreationError": "Er is een onbekende fout opgetreden bij het aanmaken van de gedeelde stappen. Probeer het opnieuw.",
         "errorCreatingSharedGroup": "Het aanmaken van gedeelde stappen is mislukt. Probeer het opnieuw.",
-        "sharedGroupCreatedSuccess": "Gedeelde stappengroep succesvol aangemaakt!"
+        "sharedGroupCreatedSuccess": "Gedeelde stappengroep succesvol aangemaakt!",
+        "failedToCreateSharedGroupError": "Het aanmaken van de gedeelde groep is mislukt. Probeer het opnieuw."
       },
       "selectSharedStepsTitle": "Selecteer gedeelde stappen",
       "selectSharedStepsDescription": "Kies gedeelde stappen die u aan uw testcase wilt toevoegen.",
@@ -2739,7 +2741,8 @@
       "reviewSelectedStepsTitle": "Bekijk geselecteerde stappen",
       "noStepsInSelectedGroup": "De geselecteerde groep heeft geen stappen.",
       "sharedGroupSuffix": "(Gedeelde stappen)",
-      "unnamedSharedGroup": "Naamloze gedeelde stappen"
+      "unnamedSharedGroup": "Naamloze gedeelde stappen",
+      "noStepsInSelectedSharedGroup": "De geselecteerde gedeelde groep heeft geen stappen."
     },
     "testCase": {
       "toggleAutomated": "Schakel geautomatiseerd testen in",
@@ -3453,7 +3456,7 @@
   },
   "reviews": {
     "banner": {
-      "pendingMessage": "Review aangevraagd van <assignee></assignee> voor overgang <fromState></fromState> → <toState></toState> <ago></ago>",
+      "pendingMessage": "In afwachting van review door <assignee></assignee> voor overgang <fromState></fromState> → <toState></toState> <ago></ago>",
       "changesRequestedTitle": "Gevraagde wijzigingen",
       "rejectedTitle": "Beoordeling afgewezen",
       "requestAgain": "Verzoek om opnieuw te beoordelen",
@@ -3996,7 +3999,8 @@
           "namePlaceholder": "Voer een workflownaam in",
           "scopePlaceholder": "Selecteer bereik",
           "iconColorLabel": "Icoon & kleur",
-          "typeLabel": "Workflowtype"
+          "typeLabel": "Workflowtype",
+          "scopeLabel": "Werkstroombereik"
         },
         "mappingDatasets": "Datasets die beoordeeld moeten worden",
         "mappingImportConfiguration": "Configuratie importeren",
@@ -4152,7 +4156,9 @@
           "templateFieldTemplateLabelPlural": "sjablonen",
           "templateFieldTargetGroupCase": "Zaakvelden",
           "templateFieldTargetGroupResult": "Resultaatvelden",
-          "columnAction": "Actie"
+          "columnAction": "Actie",
+          "configurationVariantSelectPlaceholder": "Selecteer configuratievariant",
+          "configurationVariantCategoryPlaceholder": "Selecteer categorie"
         },
         "nextSteps": "Nadat de achtergrondimport is voltooid, kunt u de gemigreerde gegevens uit de doelprojecten bekijken.",
         "nextStepsDescription": "Achtergrondimporten worden asynchroon uitgevoerd. U kunt de status hierboven controleren of de pagina vernieuwen om updates te bekijken."

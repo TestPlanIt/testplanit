@@ -75,6 +75,7 @@
       "editResult": "Editar resultado do teste",
       "resultDetails": "Detalhes do resultado",
       "actionsLabel": "Ações",
+      "actionsWithAlerts": "Ações ({count, number} não lidas)",
       "assign": "Atribuir",
       "assignSelected": "Atribuir {count, plural, one {# caso} other {# casos}}",
       "refresh": "Atualizar",
@@ -2722,7 +2723,8 @@
         "sharedStepGroupCreatedSuccess": "Etapas compartilhadas criadas com sucesso!",
         "genericSharedStepCreationError": "Ocorreu um erro desconhecido ao criar as etapas compartilhadas. Tente novamente.",
         "errorCreatingSharedGroup": "Não foi possível criar as etapas compartilhadas. Tente novamente.",
-        "sharedGroupCreatedSuccess": "Grupo de passos compartilhado criado com sucesso!"
+        "sharedGroupCreatedSuccess": "Grupo de passos compartilhado criado com sucesso!",
+        "failedToCreateSharedGroupError": "Falha ao criar o grupo compartilhado. Por favor, tente novamente."
       },
       "selectSharedStepsTitle": "Selecione Etapas Compartilhadas",
       "selectSharedStepsDescription": "Selecione etapas compartilhadas para adicionar ao seu caso de teste.",
@@ -2739,7 +2741,8 @@
       "reviewSelectedStepsTitle": "Revisar etapas selecionadas",
       "noStepsInSelectedGroup": "O grupo selecionado não possui degraus.",
       "sharedGroupSuffix": "(Etapas Compartilhadas)",
-      "unnamedSharedGroup": "Degraus compartilhados sem nome"
+      "unnamedSharedGroup": "Degraus compartilhados sem nome",
+      "noStepsInSelectedSharedGroup": "O grupo compartilhado selecionado não possui etapas."
     },
     "testCase": {
       "toggleAutomated": "Ativar/desativar testes automatizados",
@@ -3453,7 +3456,7 @@
   },
   "reviews": {
     "banner": {
-      "pendingMessage": "Revisão solicitada de <assignee></assignee> para a transição <fromState></fromState> → <toState></toState> <ago></ago>",
+      "pendingMessage": "Pendente de revisão por <assignee></assignee> para transição <fromState></fromState> → <toState></toState> <ago></ago>",
       "changesRequestedTitle": "Alterações solicitadas",
       "rejectedTitle": "Revisão rejeitada",
       "requestAgain": "Solicitar revisão novamente",
@@ -3996,7 +3999,8 @@
           "namePlaceholder": "Insira o nome do fluxo de trabalho.",
           "scopePlaceholder": "Selecione o escopo",
           "iconColorLabel": "Ícone e cor",
-          "typeLabel": "Tipo de fluxo de trabalho"
+          "typeLabel": "Tipo de fluxo de trabalho",
+          "scopeLabel": "Escopo do fluxo de trabalho"
         },
         "mappingDatasets": "Conjuntos de dados que requerem revisão",
         "mappingImportConfiguration": "Importar configuração",
@@ -4152,7 +4156,9 @@
           "templateFieldTemplateLabelPlural": "modelos",
           "templateFieldTargetGroupCase": "Campos do caso",
           "templateFieldTargetGroupResult": "Campos de resultado",
-          "columnAction": "Ação"
+          "columnAction": "Ação",
+          "configurationVariantSelectPlaceholder": "Selecionar variante de configuração",
+          "configurationVariantCategoryPlaceholder": "Selecionar categoria"
         },
         "nextSteps": "Após a conclusão da importação em segundo plano, você poderá revisar os dados migrados dos projetos de destino.",
         "nextStepsDescription": "As importações em segundo plano são executadas de forma assíncrona. Você pode monitorar o status acima ou atualizar a página para visualizar as atualizações."

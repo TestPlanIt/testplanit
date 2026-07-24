@@ -75,6 +75,7 @@
       "editResult": "Edytuj wynik testu",
       "resultDetails": "Szczegóły wyników",
       "actionsLabel": "Akcje",
+      "actionsWithAlerts": "Akcje ({count, number} nieprzeczytane)",
       "assign": "Przydzielać",
       "assignSelected": "Przypisz {count, plural, one {# przypadek} other {# przypadki}}",
       "refresh": "Odświeżać",
@@ -2722,7 +2723,8 @@
         "sharedStepGroupCreatedSuccess": "Udostępnione kroki zostały utworzone pomyślnie!",
         "genericSharedStepCreationError": "Wystąpił nieznany błąd podczas tworzenia udostępnionych kroków. Spróbuj ponownie.",
         "errorCreatingSharedGroup": "Nie udało się utworzyć współdzielonych kroków. Spróbuj ponownie.",
-        "sharedGroupCreatedSuccess": "Wspólna grupa kroków została utworzona pomyślnie!"
+        "sharedGroupCreatedSuccess": "Wspólna grupa kroków została utworzona pomyślnie!",
+        "failedToCreateSharedGroupError": "Nie udało się utworzyć udostępnionej grupy. Spróbuj ponownie."
       },
       "selectSharedStepsTitle": "Wybierz współdzielone kroki",
       "selectSharedStepsDescription": "Wybierz współdzielone kroki, które chcesz dodać do swojego przypadku testowego.",
@@ -2739,7 +2741,8 @@
       "reviewSelectedStepsTitle": "Przejrzyj wybrane kroki",
       "noStepsInSelectedGroup": "Wybrana grupa nie ma żadnych kroków.",
       "sharedGroupSuffix": "(Wspólne kroki)",
-      "unnamedSharedGroup": "Nienazwane współdzielone kroki"
+      "unnamedSharedGroup": "Nienazwane współdzielone kroki",
+      "noStepsInSelectedSharedGroup": "Wybrana udostępniona grupa nie ma żadnych kroków."
     },
     "testCase": {
       "toggleAutomated": "Przełącz automatyczne testowanie",
@@ -3453,7 +3456,7 @@
   },
   "reviews": {
     "banner": {
-      "pendingMessage": "Zażądano przeglądu od <assignee></assignee> w celu przejścia <fromState></fromState> → <toState></toState> <ago></ago>",
+      "pendingMessage": "Oczekuje na przegląd przez <assignee></assignee> w celu przejścia <fromState></fromState> → <toState></toState> <ago></ago>",
       "changesRequestedTitle": "Żądane zmiany",
       "rejectedTitle": "Recenzja odrzucona",
       "requestAgain": "Poproś ponownie o recenzję",
@@ -3996,7 +3999,8 @@
           "namePlaceholder": "Wprowadź nazwę przepływu pracy",
           "scopePlaceholder": "Wybierz zakres",
           "iconColorLabel": "Ikona i kolor",
-          "typeLabel": "Typ przepływu pracy"
+          "typeLabel": "Typ przepływu pracy",
+          "scopeLabel": "Zakres przepływu pracy"
         },
         "mappingDatasets": "Zestawy danych wymagające przeglądu",
         "mappingImportConfiguration": "Importuj konfigurację",
@@ -4152,7 +4156,9 @@
           "templateFieldTemplateLabelPlural": "szablony",
           "templateFieldTargetGroupCase": "Pola przypadku",
           "templateFieldTargetGroupResult": "Pola wyników",
-          "columnAction": "Działanie"
+          "columnAction": "Działanie",
+          "configurationVariantSelectPlaceholder": "Wybierz wariant konfiguracji",
+          "configurationVariantCategoryPlaceholder": "Wybierz kategorię"
         },
         "nextSteps": "Po zakończeniu importu w tle można przejrzeć zmigrowane dane z projektów docelowych.",
         "nextStepsDescription": "Importy w tle działają asynchronicznie. Możesz monitorować status powyżej lub odświeżyć stronę, aby zobaczyć aktualizacje."

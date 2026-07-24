@@ -75,6 +75,7 @@
       "editResult": "編輯測試結果",
       "resultDetails": "結果詳情",
       "actionsLabel": "行動",
+      "actionsWithAlerts": "操作（{count, number} 未讀）",
       "assign": "分配",
       "assignSelected": "分配 {count, plural, one {# 情況} other {# 情況}}",
       "refresh": "重新整理",
@@ -2722,7 +2723,8 @@
         "sharedStepGroupCreatedSuccess": "共享步驟創建成功！",
         "genericSharedStepCreationError": "建立共用步驟時發生未知錯誤。請重試。",
         "errorCreatingSharedGroup": "建立共用步驟失敗，請重試。",
-        "sharedGroupCreatedSuccess": "共享步驟組創建成功！"
+        "sharedGroupCreatedSuccess": "共享步驟組創建成功！",
+        "failedToCreateSharedGroupError": "建立共用群組失敗，請重試。"
       },
       "selectSharedStepsTitle": "選擇共享步驟",
       "selectSharedStepsDescription": "選擇要新增至測試案例中的共用步驟。",
@@ -2739,7 +2741,8 @@
       "reviewSelectedStepsTitle": "回顧選定步驟",
       "noStepsInSelectedGroup": "所選組沒有步驟。",
       "sharedGroupSuffix": "（共同步驟）",
-      "unnamedSharedGroup": "未命名的共享步驟"
+      "unnamedSharedGroup": "未命名的共享步驟",
+      "noStepsInSelectedSharedGroup": "所選共用群組沒有步驟。"
     },
     "testCase": {
       "toggleAutomated": "切換自動測試",
@@ -3453,7 +3456,7 @@
   },
   "reviews": {
     "banner": {
-      "pendingMessage": "已向 <assignee></assignee> 請求審核，用於轉換 <fromState></fromState> → <toState></toState> <ago></ago>",
+      "pendingMessage": "待 <assignee></assignee> 審核轉換 <fromState></fromState> → <toState></toState> <ago></ago>",
       "changesRequestedTitle": "請求更改",
       "rejectedTitle": "審查被拒絕",
       "requestAgain": "再次請求復審",
@@ -3996,7 +3999,8 @@
           "namePlaceholder": "輸入工作流程名稱",
           "scopePlaceholder": "選擇範圍",
           "iconColorLabel": "圖示和顏色",
-          "typeLabel": "工作流程類型"
+          "typeLabel": "工作流程類型",
+          "scopeLabel": "工作流程範圍"
         },
         "mappingDatasets": "需要審核的資料集",
         "mappingImportConfiguration": "導入配置",
@@ -4152,7 +4156,9 @@
           "templateFieldTemplateLabelPlural": "範本",
           "templateFieldTargetGroupCase": "案例字段",
           "templateFieldTargetGroupResult": "結果字段",
-          "columnAction": "行動"
+          "columnAction": "行動",
+          "configurationVariantSelectPlaceholder": "選擇配置變體",
+          "configurationVariantCategoryPlaceholder": "選擇類別"
         },
         "nextSteps": "後台匯入完成後，您可以查看從目標專案遷移的資料。",
         "nextStepsDescription": "後台導入是異步運行的。您可以監控上方的狀態或刷新頁面查看更新。"

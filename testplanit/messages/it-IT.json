@@ -75,6 +75,7 @@
       "editResult": "Modifica risultato test",
       "resultDetails": "Dettagli del risultato",
       "actionsLabel": "Azioni",
+      "actionsWithAlerts": "Azioni ({count, number} non lette)",
       "assign": "Assegnare",
       "assignSelected": "Assegna {count, plural, one {# caso} other {# casi}}",
       "refresh": "Aggiorna",
@@ -2722,7 +2723,8 @@
         "sharedStepGroupCreatedSuccess": "Passaggi condivisi creati con successo!",
         "genericSharedStepCreationError": "Si è verificato un errore sconosciuto durante la creazione dei passaggi condivisi. Riprova.",
         "errorCreatingSharedGroup": "Impossibile creare passaggi condivisi. Riprova.",
-        "sharedGroupCreatedSuccess": "Gruppo di passaggi condivisi creato con successo!"
+        "sharedGroupCreatedSuccess": "Gruppo di passaggi condivisi creato con successo!",
+        "failedToCreateSharedGroupError": "Impossibile creare il gruppo condiviso. Riprova."
       },
       "selectSharedStepsTitle": "Seleziona Passaggi condivisi",
       "selectSharedStepsDescription": "Scegli i passaggi condivisi da aggiungere al tuo caso di test.",
@@ -2739,7 +2741,8 @@
       "reviewSelectedStepsTitle": "Rivedi i passaggi selezionati",
       "noStepsInSelectedGroup": "Il gruppo selezionato non ha passaggi.",
       "sharedGroupSuffix": "(Passaggi condivisi)",
-      "unnamedSharedGroup": "Passaggi condivisi senza nome"
+      "unnamedSharedGroup": "Passaggi condivisi senza nome",
+      "noStepsInSelectedSharedGroup": "Il gruppo condiviso selezionato non ha passaggi."
     },
     "testCase": {
       "toggleAutomated": "Attiva/disattiva test automatizzati",
@@ -3453,7 +3456,7 @@
   },
   "reviews": {
     "banner": {
-      "pendingMessage": "Revisione richiesta da <assignee></assignee> per la transizione <fromState></fromState> → <toState></toState> <ago></ago>",
+      "pendingMessage": "In attesa di revisione da <assignee></assignee> per la transizione <fromState></fromState> → <toState></toState> <ago></ago>",
       "changesRequestedTitle": "Modifiche richieste",
       "rejectedTitle": "Revisione respinta",
       "requestAgain": "Richiedi nuovamente la revisione",
@@ -3996,7 +3999,8 @@
           "namePlaceholder": "Inserisci un nome per il flusso di lavoro",
           "scopePlaceholder": "Seleziona ambito",
           "iconColorLabel": "Icona e colore",
-          "typeLabel": "Tipo di flusso di lavoro"
+          "typeLabel": "Tipo di flusso di lavoro",
+          "scopeLabel": "Ambito del flusso di lavoro"
         },
         "mappingDatasets": "Set di dati che richiedono revisione",
         "mappingImportConfiguration": "Importa configurazione",
@@ -4152,7 +4156,9 @@
           "templateFieldTemplateLabelPlural": "modelli",
           "templateFieldTargetGroupCase": "Casi di studio",
           "templateFieldTargetGroupResult": "Campi di risultato",
-          "columnAction": "Azione"
+          "columnAction": "Azione",
+          "configurationVariantSelectPlaceholder": "Seleziona la variante di configurazione",
+          "configurationVariantCategoryPlaceholder": "Seleziona categoria"
         },
         "nextSteps": "Una volta completata l'importazione in background, è possibile rivedere i dati migrati dai progetti di destinazione.",
         "nextStepsDescription": "Le importazioni in background vengono eseguite in modo asincrono. Puoi monitorare lo stato qui sopra o aggiornare la pagina per visualizzare gli aggiornamenti."

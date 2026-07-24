@@ -75,6 +75,7 @@
       "editResult": "Ergebnis des Bearbeitungstests",
       "resultDetails": "Ergebnisdetails",
       "actionsLabel": "Aktionen",
+      "actionsWithAlerts": "Aktionen ({count, number} ungelesen)",
       "assign": "Zuordnen",
       "assignSelected": "Weisen Sie {count, plural, one {zu # Fall} other {# Fälle}} zu",
       "refresh": "Aktualisieren",
@@ -2722,7 +2723,8 @@
         "sharedStepGroupCreatedSuccess": "Gemeinsame Schritte erfolgreich erstellt!",
         "genericSharedStepCreationError": "Beim Erstellen der gemeinsamen Schritte ist ein unbekannter Fehler aufgetreten. Bitte versuchen Sie es erneut.",
         "errorCreatingSharedGroup": "Es ist fehlgeschlagen, gemeinsame Schritte zu erstellen. Bitte versuchen Sie es erneut.",
-        "sharedGroupCreatedSuccess": "Gemeinsame Schrittgruppe erfolgreich erstellt!"
+        "sharedGroupCreatedSuccess": "Gemeinsame Schrittgruppe erfolgreich erstellt!",
+        "failedToCreateSharedGroupError": "Die gemeinsame Gruppe konnte nicht erstellt werden. Bitte versuchen Sie es erneut."
       },
       "selectSharedStepsTitle": "Gemeinsame Schritte auswählen",
       "selectSharedStepsDescription": "Wählen Sie gemeinsame Schritte aus, die Sie Ihrem Testfall hinzufügen möchten.",
@@ -2739,7 +2741,8 @@
       "reviewSelectedStepsTitle": "Ausgewählte Schritte überprüfen",
       "noStepsInSelectedGroup": "Die ausgewählte Gruppe enthält keine Schritte.",
       "sharedGroupSuffix": "(Gemeinsame Schritte)",
-      "unnamedSharedGroup": "Unbenannte gemeinsame Schritte"
+      "unnamedSharedGroup": "Unbenannte gemeinsame Schritte",
+      "noStepsInSelectedSharedGroup": "Die ausgewählte gemeinsame Gruppe enthält keine Schritte."
     },
     "testCase": {
       "toggleAutomated": "Automatisierte Tests umschalten",
@@ -3453,7 +3456,7 @@
   },
   "reviews": {
     "banner": {
-      "pendingMessage": "Überprüfung angefordert von <assignee></assignee> für Übergang <fromState></fromState> → <toState></toState> <ago></ago>",
+      "pendingMessage": "Überprüfung ausstehend von <assignee></assignee> für Übergang <fromState></fromState> → <toState></toState> <ago></ago>",
       "changesRequestedTitle": "Änderungen angefordert",
       "rejectedTitle": "Überprüfung abgelehnt",
       "requestAgain": "Erneute Überprüfung anfordern",
@@ -3996,7 +3999,8 @@
           "namePlaceholder": "Geben Sie einen Workflow-Namen ein",
           "scopePlaceholder": "Bereich auswählen",
           "iconColorLabel": "Symbol & Farbe",
-          "typeLabel": "Workflow-Typ"
+          "typeLabel": "Workflow-Typ",
+          "scopeLabel": "Workflow-Umfang"
         },
         "mappingDatasets": "Datensätze, die einer Überprüfung bedürfen",
         "mappingImportConfiguration": "Importkonfiguration",
@@ -4152,7 +4156,9 @@
           "templateFieldTemplateLabelPlural": "Vorlagen",
           "templateFieldTargetGroupCase": "Großbuchstaben",
           "templateFieldTargetGroupResult": "Ergebnisfelder",
-          "columnAction": "Aktion"
+          "columnAction": "Aktion",
+          "configurationVariantSelectPlaceholder": "Konfigurationsvariante auswählen",
+          "configurationVariantCategoryPlaceholder": "Kategorie auswählen"
         },
         "nextSteps": "Nach Abschluss des Hintergrundimports können Sie die migrierten Daten aus den Zielprojekten überprüfen.",
         "nextStepsDescription": "Hintergrundimporte werden asynchron ausgeführt. Sie können den Status oben überwachen oder die Seite aktualisieren, um die Aktualisierungen anzuzeigen."

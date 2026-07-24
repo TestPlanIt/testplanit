@@ -75,6 +75,7 @@
       "editResult": "Редактировать результат теста",
       "resultDetails": "Подробности результатов",
       "actionsLabel": "Действия",
+      "actionsWithAlerts": "Действия ({count, number} непрочитаны)",
       "assign": "Назначать",
       "assignSelected": "Назначить {count, plural, one {# случай} few {# случая} many {# случаев} other {# случая}}",
       "refresh": "Обновить",
@@ -2722,7 +2723,8 @@
         "sharedStepGroupCreatedSuccess": "Общие шаги успешно созданы!",
         "genericSharedStepCreationError": "При создании общих шагов произошла неизвестная ошибка. Пожалуйста, попробуйте еще раз.",
         "errorCreatingSharedGroup": "Не удалось создать общие шаги. Пожалуйста, попробуйте еще раз.",
-        "sharedGroupCreatedSuccess": "Группа общих шагов успешно создана!"
+        "sharedGroupCreatedSuccess": "Группа общих шагов успешно создана!",
+        "failedToCreateSharedGroupError": "Не удалось создать общую группу. Пожалуйста, попробуйте еще раз."
       },
       "selectSharedStepsTitle": "Выберите общие шаги",
       "selectSharedStepsDescription": "Выберите общие шаги, которые следует добавить в ваш тестовый пример.",
@@ -2739,7 +2741,8 @@
       "reviewSelectedStepsTitle": "Просмотрите выбранные шаги.",
       "noStepsInSelectedGroup": "В выбранной группе нет ступеней.",
       "sharedGroupSuffix": "(Общие шаги)",
-      "unnamedSharedGroup": "Безымянные общие ступени"
+      "unnamedSharedGroup": "Безымянные общие ступени",
+      "noStepsInSelectedSharedGroup": "В выбранной общей группе нет шагов."
     },
     "testCase": {
       "toggleAutomated": "Включить автоматическое тестирование",
@@ -3453,7 +3456,7 @@
   },
   "reviews": {
     "banner": {
-      "pendingMessage": "Запрос на рецензирование от <assignee></assignee> для перехода <fromState></fromState> → <toState></toState> <ago></ago>",
+      "pendingMessage": "Ожидает рецензирования от <assignee></assignee> для перехода <fromState></fromState> → <toState></toState> <ago></ago>",
       "changesRequestedTitle": "Запрошены изменения",
       "rejectedTitle": "Отзыв отклонен",
       "requestAgain": "Прошу повторно провести проверку.",
@@ -3996,7 +3999,8 @@
           "namePlaceholder": "Введите название рабочего процесса",
           "scopePlaceholder": "Выберите область действия",
           "iconColorLabel": "Иконка и цвет",
-          "typeLabel": "Тип рабочего процесса"
+          "typeLabel": "Тип рабочего процесса",
+          "scopeLabel": "Область действия рабочего процесса"
         },
         "mappingDatasets": "Наборы данных, требующие проверки",
         "mappingImportConfiguration": "Импорт конфигурации",
@@ -4152,7 +4156,9 @@
           "templateFieldTemplateLabelPlural": "шаблоны",
           "templateFieldTargetGroupCase": "Поля дела",
           "templateFieldTargetGroupResult": "Поля результатов",
-          "columnAction": "Действие"
+          "columnAction": "Действие",
+          "configurationVariantSelectPlaceholder": "Выберите вариант конфигурации",
+          "configurationVariantCategoryPlaceholder": "Выберите категорию"
         },
         "nextSteps": "После завершения фонового импорта вы можете просмотреть перенесенные данные из целевых проектов.",
         "nextStepsDescription": "Импорт в фоновом режиме выполняется асинхронно. Вы можете отслеживать статус выше или обновить страницу, чтобы увидеть обновления."

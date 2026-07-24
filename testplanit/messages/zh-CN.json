@@ -75,6 +75,7 @@
       "editResult": "编辑测试结果",
       "resultDetails": "结果详情",
       "actionsLabel": "行动",
+      "actionsWithAlerts": "操作（{count, number} 未读）",
       "assign": "分配",
       "assignSelected": "分配 {count, plural, one {# 情况} other {# 情况}}",
       "refresh": "刷新",
@@ -2722,7 +2723,8 @@
         "sharedStepGroupCreatedSuccess": "共享步骤创建成功！",
         "genericSharedStepCreationError": "创建共享步骤时发生未知错误。请重试。",
         "errorCreatingSharedGroup": "创建共享步骤失败，请重试。",
-        "sharedGroupCreatedSuccess": "共享步骤组创建成功！"
+        "sharedGroupCreatedSuccess": "共享步骤组创建成功！",
+        "failedToCreateSharedGroupError": "创建共享组失败，请重试。"
       },
       "selectSharedStepsTitle": "选择共享步骤",
       "selectSharedStepsDescription": "选择要添加到测试用例中的共享步骤。",
@@ -2739,7 +2741,8 @@
       "reviewSelectedStepsTitle": "回顾选定步骤",
       "noStepsInSelectedGroup": "所选组没有步骤。",
       "sharedGroupSuffix": "（共同步骤）",
-      "unnamedSharedGroup": "未命名的共享步骤"
+      "unnamedSharedGroup": "未命名的共享步骤",
+      "noStepsInSelectedSharedGroup": "所选共享组没有步骤。"
     },
     "testCase": {
       "toggleAutomated": "切换自动测试",
@@ -3453,7 +3456,7 @@
   },
   "reviews": {
     "banner": {
-      "pendingMessage": "请求对 <assignee></assignee> 的过渡 <fromState></fromState> → <toState></toState> <ago></ago> 进行审核。",
+      "pendingMessage": "等待 <assignee></assignee> 审核过渡 <fromState></fromState> → <toState></toState> <ago></ago>",
       "changesRequestedTitle": "请求更改",
       "rejectedTitle": "审查被拒绝",
       "requestAgain": "再次请求复审",
@@ -3996,7 +3999,8 @@
           "namePlaceholder": "输入工作流名称",
           "scopePlaceholder": "选择范围",
           "iconColorLabel": "图标和颜色",
-          "typeLabel": "工作流程类型"
+          "typeLabel": "工作流程类型",
+          "scopeLabel": "工作流程范围"
         },
         "mappingDatasets": "需要审核的数据集",
         "mappingImportConfiguration": "导入配置",
@@ -4152,7 +4156,9 @@
           "templateFieldTemplateLabelPlural": "模板",
           "templateFieldTargetGroupCase": "案例字段",
           "templateFieldTargetGroupResult": "结果字段",
-          "columnAction": "行动"
+          "columnAction": "行动",
+          "configurationVariantSelectPlaceholder": "选择配置变体",
+          "configurationVariantCategoryPlaceholder": "选择类别"
         },
         "nextSteps": "后台导入完成后，您可以查看从目标项目迁移的数据。",
         "nextStepsDescription": "后台导入是异步运行的。您可以监控上方的状态或刷新页面查看更新。"

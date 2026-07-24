@@ -75,6 +75,7 @@
       "editResult": "Editar Resultado de Prueba",
       "resultDetails": "Detalles del resultado",
       "actionsLabel": "Acciones",
+      "actionsWithAlerts": "Acciones ({count, number} no leídas)",
       "assign": "Asignar",
       "assignSelected": "Asignar {count, plural, one {# caso} other {# casos}}",
       "refresh": "Refrescar",
@@ -2722,7 +2723,8 @@
         "sharedStepGroupCreatedSuccess": "¡Pasos compartidos creados con éxito!",
         "genericSharedStepCreationError": "Se ha producido un error desconocido al crear los pasos compartidos. Por favor, inténtalo de nuevo.",
         "errorCreatingSharedGroup": "Error al crear pasos compartidos. Por favor, inténtalo de nuevo.",
-        "sharedGroupCreatedSuccess": "Grupo de pasos compartidos creado con éxito!"
+        "sharedGroupCreatedSuccess": "Grupo de pasos compartidos creado con éxito!",
+        "failedToCreateSharedGroupError": "Error al crear el grupo compartido. Por favor, inténtalo de nuevo."
       },
       "selectSharedStepsTitle": "Seleccionar pasos compartidos",
       "selectSharedStepsDescription": "Elija pasos compartidos para añadir a su caso de prueba.",
@@ -2739,7 +2741,8 @@
       "reviewSelectedStepsTitle": "Revisar pasos seleccionados",
       "noStepsInSelectedGroup": "El grupo seleccionado no tiene pasos.",
       "sharedGroupSuffix": "(Pasos compartidos)",
-      "unnamedSharedGroup": "Pasos compartidos sin nombre"
+      "unnamedSharedGroup": "Pasos compartidos sin nombre",
+      "noStepsInSelectedSharedGroup": "El grupo compartido seleccionado no tiene pasos."
     },
     "testCase": {
       "toggleAutomated": "Cambiar pruebas automatizadas",
@@ -3453,7 +3456,7 @@
   },
   "reviews": {
     "banner": {
-      "pendingMessage": "Revisión solicitada de <assignee></assignee> para la transición <fromState></fromState> → <toState></toState> <ago></ago>",
+      "pendingMessage": "Pendiente de revisión por <assignee></assignee> para la transición <fromState></fromState> → <toState></toState> <ago></ago>",
       "changesRequestedTitle": "Cambios solicitados",
       "rejectedTitle": "Revisión rechazada",
       "requestAgain": "Solicitar revisión nuevamente",
@@ -3996,7 +3999,8 @@
           "namePlaceholder": "Introduzca un nombre para el flujo de trabajo",
           "scopePlaceholder": "Seleccionar alcance",
           "iconColorLabel": "Icono y color",
-          "typeLabel": "Tipo de flujo de trabajo"
+          "typeLabel": "Tipo de flujo de trabajo",
+          "scopeLabel": "Ámbito del flujo de trabajo"
         },
         "mappingDatasets": "Conjuntos de datos que requieren revisión",
         "mappingImportConfiguration": "Importar configuración",
@@ -4152,7 +4156,9 @@
           "templateFieldTemplateLabelPlural": "plantillas",
           "templateFieldTargetGroupCase": "Campos de casos",
           "templateFieldTargetGroupResult": "Campos de resultado",
-          "columnAction": "Acción"
+          "columnAction": "Acción",
+          "configurationVariantSelectPlaceholder": "Seleccionar variante de configuración",
+          "configurationVariantCategoryPlaceholder": "Seleccionar categoría"
         },
         "nextSteps": "Una vez completada la importación en segundo plano, puede revisar los datos migrados desde los proyectos de destino.",
         "nextStepsDescription": "Las importaciones en segundo plano se ejecutan de forma asíncrona. Puede supervisar el estado anterior o actualizar la página para ver las actualizaciones."

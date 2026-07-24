@@ -75,6 +75,7 @@
       "editResult": "Chỉnh sửa kết quả kiểm tra",
       "resultDetails": "Chi tiết kết quả",
       "actionsLabel": "Hành động",
+      "actionsWithAlerts": "Hành động ({count, number} chưa đọc)",
       "assign": "Giao phó",
       "assignSelected": "Gán {count, plural, one {# trường hợp} other {# trường hợp}}",
       "refresh": "Làm cho khỏe lại",
@@ -2722,7 +2723,8 @@
         "sharedStepGroupCreatedSuccess": "Các bước chia sẻ đã được tạo thành công!",
         "genericSharedStepCreationError": "Đã xảy ra lỗi không xác định trong quá trình tạo các bước chia sẻ. Vui lòng thử lại.",
         "errorCreatingSharedGroup": "Không thể tạo các bước chung. Vui lòng thử lại.",
-        "sharedGroupCreatedSuccess": "Nhóm bước chung đã được tạo thành công!"
+        "sharedGroupCreatedSuccess": "Nhóm bước chung đã được tạo thành công!",
+        "failedToCreateSharedGroupError": "Không thể tạo nhóm chia sẻ. Vui lòng thử lại."
       },
       "selectSharedStepsTitle": "Chọn các bước được chia sẻ",
       "selectSharedStepsDescription": "Chọn các bước chung để thêm vào trường hợp kiểm thử của bạn.",
@@ -2739,7 +2741,8 @@
       "reviewSelectedStepsTitle": "Xem lại các bước đã chọn",
       "noStepsInSelectedGroup": "Nhóm được chọn không có bước nào.",
       "sharedGroupSuffix": "(Các bước chung)",
-      "unnamedSharedGroup": "Các bước chung không tên"
+      "unnamedSharedGroup": "Các bước chung không tên",
+      "noStepsInSelectedSharedGroup": "Nhóm chia sẻ được chọn không có bước nào."
     },
     "testCase": {
       "toggleAutomated": "Bật/tắt kiểm thử tự động",
@@ -3453,7 +3456,7 @@
   },
   "reviews": {
     "banner": {
-      "pendingMessage": "Yêu cầu xem xét từ <assignee></assignee> cho quá trình chuyển đổi <fromState></fromState> → <toState></toState> <ago></ago>",
+      "pendingMessage": "Đang chờ xem xét bởi <assignee></assignee> cho quá trình chuyển đổi <fromState></fromState> → <toState></toState> <ago></ago>",
       "changesRequestedTitle": "Những thay đổi được yêu cầu",
       "rejectedTitle": "Đánh giá bị từ chối",
       "requestAgain": "Yêu cầu xem xét lại",
@@ -3996,7 +3999,8 @@
           "namePlaceholder": "Nhập tên quy trình làm việc",
           "scopePlaceholder": "Chọn phạm vi",
           "iconColorLabel": "Biểu tượng & màu sắc",
-          "typeLabel": "Loại quy trình làm việc"
+          "typeLabel": "Loại quy trình làm việc",
+          "scopeLabel": "Phạm vi quy trình làm việc"
         },
         "mappingDatasets": "Các bộ dữ liệu cần được xem xét",
         "mappingImportConfiguration": "Nhập cấu hình",
@@ -4152,7 +4156,9 @@
           "templateFieldTemplateLabelPlural": "mẫu",
           "templateFieldTargetGroupCase": "Trường hợp",
           "templateFieldTargetGroupResult": "Các trường kết quả",
-          "columnAction": "Hoạt động"
+          "columnAction": "Hoạt động",
+          "configurationVariantSelectPlaceholder": "Chọn biến thể cấu hình",
+          "configurationVariantCategoryPlaceholder": "Chọn danh mục"
         },
         "nextSteps": "Sau khi quá trình nhập dữ liệu nền hoàn tất, bạn có thể xem lại dữ liệu đã được di chuyển từ các dự án đích.",
         "nextStepsDescription": "Quá trình nhập dữ liệu nền diễn ra bất đồng bộ. Bạn có thể theo dõi trạng thái ở trên hoặc làm mới trang để xem cập nhật."

@@ -75,6 +75,7 @@
       "editResult": "테스트 결과 수정",
       "resultDetails": "결과 상세 정보",
       "actionsLabel": "행위",
+      "actionsWithAlerts": "작업 ({count, number}개 읽지 않음)",
       "assign": "양수인",
       "assignSelected": "할당 {count, plural, one {# 경우} other {# 경우}}",
       "refresh": "새로 고치다",
@@ -2722,7 +2723,8 @@
         "sharedStepGroupCreatedSuccess": "공유 단계가 성공적으로 생성되었습니다!",
         "genericSharedStepCreationError": "공유 단계를 생성하는 동안 알 수 없는 오류가 발생했습니다. 다시 시도해 주세요.",
         "errorCreatingSharedGroup": "공유 단계를 생성하는 데 실패했습니다. 다시 시도해 주세요.",
-        "sharedGroupCreatedSuccess": "공유 스텝 그룹이 성공적으로 생성되었습니다!"
+        "sharedGroupCreatedSuccess": "공유 스텝 그룹이 성공적으로 생성되었습니다!",
+        "failedToCreateSharedGroupError": "공유 그룹을 생성하는 데 실패했습니다. 다시 시도해 주세요."
       },
       "selectSharedStepsTitle": "공유 단계를 선택하세요",
       "selectSharedStepsDescription": "테스트 케이스에 추가할 공유 단계를 선택하세요.",
@@ -2739,7 +2741,8 @@
       "reviewSelectedStepsTitle": "선택한 단계 검토",
       "noStepsInSelectedGroup": "선택된 그룹에는 단계가 없습니다.",
       "sharedGroupSuffix": "(공통 단계)",
-      "unnamedSharedGroup": "이름 없는 공유 단계"
+      "unnamedSharedGroup": "이름 없는 공유 단계",
+      "noStepsInSelectedSharedGroup": "선택한 공유 그룹에는 단계가 없습니다."
     },
     "testCase": {
       "toggleAutomated": "자동 테스트 토글",
@@ -3453,7 +3456,7 @@
   },
   "reviews": {
     "banner": {
-      "pendingMessage": "<assignee></assignee> 에서 <fromState></fromState> → <toState></toState> <ago></ago>로의 전환에 대한 검토가 요청되었습니다.",
+      "pendingMessage": "<assignee></assignee>의 검토가 <fromState></fromState> → <toState></toState> 전환에 대해 <ago></ago> 대기 중입니다",
       "changesRequestedTitle": "요청된 변경 사항",
       "rejectedTitle": "검토가 거부되었습니다.",
       "requestAgain": "다시 검토를 요청합니다",
@@ -3996,7 +3999,8 @@
           "namePlaceholder": "워크플로 이름을 입력하세요",
           "scopePlaceholder": "범위를 선택하세요",
           "iconColorLabel": "아이콘 및 색상",
-          "typeLabel": "워크플로 유형"
+          "typeLabel": "워크플로 유형",
+          "scopeLabel": "워크플로 범위"
         },
         "mappingDatasets": "검토가 필요한 데이터 세트",
         "mappingImportConfiguration": "가져오기 구성",
@@ -4152,7 +4156,9 @@
           "templateFieldTemplateLabelPlural": "템플릿",
           "templateFieldTargetGroupCase": "케이스 필드",
           "templateFieldTargetGroupResult": "결과 필드",
-          "columnAction": "행동"
+          "columnAction": "행동",
+          "configurationVariantSelectPlaceholder": "구성 변형 선택",
+          "configurationVariantCategoryPlaceholder": "카테고리 선택"
         },
         "nextSteps": "백그라운드 가져오기가 완료되면 대상 프로젝트에서 마이그레이션된 데이터를 검토할 수 있습니다.",
         "nextStepsDescription": "백그라운드 가져오기는 비동기적으로 실행됩니다. 위에서 상태를 모니터링하거나 페이지를 새로 고침하여 업데이트를 확인할 수 있습니다."

@@ -3456,7 +3456,7 @@
   },
   "reviews": {
     "banner": {
-      "pendingMessage": "Review requested from <assignee></assignee> for transition <fromState></fromState> → <toState></toState> <ago></ago>",
+      "pendingMessage": "Pending review by <assignee></assignee> for transition <fromState></fromState> → <toState></toState> <ago></ago>",
       "changesRequestedTitle": "Changes requested",
       "rejectedTitle": "Review rejected",
       "requestAgain": "Request review again",

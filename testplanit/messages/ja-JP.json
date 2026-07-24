@@ -75,6 +75,7 @@
       "editResult": "テスト結果を編集",
       "resultDetails": "結果の詳細",
       "actionsLabel": "アクション",
+      "actionsWithAlerts": "アクション（{count, number} 未読）",
       "assign": "割り当てる",
       "assignSelected": "割り当て {count, plural, one {# ケース} other {# ケース}}",
       "refresh": "リフレッシュ",
@@ -2722,7 +2723,8 @@
         "sharedStepGroupCreatedSuccess": "共有手順が正常に作成されました。",
         "genericSharedStepCreationError": "共有ステップの作成中に不明なエラーが発生しました。もう一度お試しください。",
         "errorCreatingSharedGroup": "共有ステップの作成に失敗しました。もう一度お試しください。",
-        "sharedGroupCreatedSuccess": "共有ステップ グループが正常に作成されました。"
+        "sharedGroupCreatedSuccess": "共有ステップ グループが正常に作成されました。",
+        "failedToCreateSharedGroupError": "共有グループの作成に失敗しました。もう一度お試しください。"
       },
       "selectSharedStepsTitle": "共有ステップを選択",
       "selectSharedStepsDescription": "テスト ケースに追加する共有ステップを選択します。",
@@ -2739,7 +2741,8 @@
       "reviewSelectedStepsTitle": "選択した手順を確認する",
       "noStepsInSelectedGroup": "選択したグループにはステップがありません。",
       "sharedGroupSuffix": "（共有ステップ）",
-      "unnamedSharedGroup": "名前のない共有ステップ"
+      "unnamedSharedGroup": "名前のない共有ステップ",
+      "noStepsInSelectedSharedGroup": "選択した共有グループにはステップがありません。"
     },
     "testCase": {
       "toggleAutomated": "自動テストを切り替える",
@@ -3453,7 +3456,7 @@
   },
   "reviews": {
     "banner": {
-      "pendingMessage": "<assignee></assignee> から遷移 <fromState></fromState> → <toState></toState> <ago></ago> のレビュー依頼",
+      "pendingMessage": "<assignee></assignee> による遷移 <fromState></fromState> → <toState></toState> のレビューが <ago></ago> から保留中です",
       "changesRequestedTitle": "変更依頼",
       "rejectedTitle": "審査が却下されました",
       "requestAgain": "再度レビューを依頼する",
@@ -3996,7 +3999,8 @@
           "namePlaceholder": "ワークフロー名を入力してください",
           "scopePlaceholder": "範囲を選択",
           "iconColorLabel": "アイコンと色",
-          "typeLabel": "ワークフロータイプ"
+          "typeLabel": "ワークフロータイプ",
+          "scopeLabel": "ワークフロースコープ"
         },
         "mappingDatasets": "レビューが必要なデータセット",
         "mappingImportConfiguration": "インポート構成",
@@ -4152,7 +4156,9 @@
           "templateFieldTemplateLabelPlural": "テンプレート",
           "templateFieldTargetGroupCase": "ケースフィールド",
           "templateFieldTargetGroupResult": "結果フィールド",
-          "columnAction": "アクション"
+          "columnAction": "アクション",
+          "configurationVariantSelectPlaceholder": "構成バリアントを選択",
+          "configurationVariantCategoryPlaceholder": "カテゴリーを選択"
         },
         "nextSteps": "バックグラウンド インポートが完了したら、ターゲット プロジェクトから移行されたデータを確認できます。",
         "nextStepsDescription": "バックグラウンドインポートは非同期で実行されます。上記のステータスを監視するか、ページを更新して更新内容を確認できます。"
