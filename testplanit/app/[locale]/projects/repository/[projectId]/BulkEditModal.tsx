@@ -3,6 +3,7 @@
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { formatSeconds } from "@/components/DurationDisplay";
+import { TestCaseNameDisplay } from "~/components/TestCaseNameDisplay";
 import { WorkflowStateDisplay } from "~/components/WorkflowStateDisplay";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -44,9 +45,14 @@ import {
   Info,
   Loader2,
   LockIcon,
+  MessageSquareWarning,
   Trash2,
 } from "lucide-react";
-import { useBulkTransitionGateStatus } from "~/hooks/useTransitionGateStatus";
+import { BulkRequestReviewSheet } from "~/components/reviews/BulkRequestReviewSheet";
+import {
+  useBulkTransitionGateStatus,
+  type BlockingGate,
+} from "~/hooks/useTransitionGateStatus";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import parseDuration from "parse-duration";
@@ -154,6 +160,19 @@ interface BulkEditModalProps {
 
 const VARIOUS_PLACEHOLDER = "<various>";
 
+/**
+ * True when a bulk-edit body would actually change something. Stripping the
+ * gated `state` from a payload can leave an update that touches nothing, and
+ * POSTing that would burn a version snapshot per case for no change.
+ */
+function bulkEditPayloadHasChanges(payload: any): boolean {
+  return (
+    Object.keys(payload.updates ?? {}).length > 0 ||
+    (payload.customFieldUpdates?.length ?? 0) > 0 ||
+    payload.stepsUpdates != null
+  );
+}
+
 // --- Main Component ---
 
 export function BulkEditModal({
@@ -168,6 +187,7 @@ export function BulkEditModal({
   const tCommon = useTranslations("common");
   const tBulkEdit = useTranslations("repository.bulkEdit");
   const tReviews = useTranslations("reviews.transitionGate");
+  const tBulkRequester = useTranslations("reviews.bulkRequester");
   const { data: session } = useSession();
 
   const [editedFields, setEditedFields] = useState<Record<string, boolean>>({});
@@ -179,6 +199,7 @@ export function BulkEditModal({
   const [, setHasSteps] = useState(false);
   const [deletePopoverOpen, setDeletePopoverOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [requestReviewSheetOpen, setRequestReviewSheetOpen] = useState(false);
 
   // Search/Replace state
   const [fieldModes, setFieldModes] = useState<Record<string, FieldEditMode>>(
@@ -317,35 +338,162 @@ export function BulkEditModal({
     () => bulkTransitionGate.canBulkTransitionTo(targetStateId),
     [bulkTransitionGate, targetStateId]
   );
-  // Surface a per-case message under the State field when blocked. Build
-  // a short summary so the user can act on it without leaving the modal,
-  // naming the blocked cases (and the first blocking gate) by name —
-  // never numeric id — so the message is meaningful at a glance. Falls
-  // back to `#<id>` only when a row hasn't loaded yet.
-  const bulkGateInlineMessage = useMemo(() => {
+  // Surface a per-case message under the State field when blocked. The list
+  // can run to dozens of cases, so instead of one run-on sentence we render a
+  // heading, a few truncated bullet rows, and a "+N more" tail — naming each
+  // blocked case (and the first blocking gate) by name, never numeric id, so
+  // the message is meaningful at a glance. `#<id>` is the fallback only when a
+  // row hasn't loaded yet.
+  const BULK_BLOCKED_SAMPLE_LIMIT = 5;
+  const bulkGateBlockedInfo = useMemo(() => {
     if (bulkGateCheck.allowed || bulkGateCheck.blocked.length === 0) {
       return null;
     }
-    const firstGate = bulkGateCheck.blocked[0]!.blockingGate;
+    const caseById = new Map((casesData ?? []).map((c) => [c.id, c] as const));
+    // Carry the case rows (not just names) so each bullet can render the
+    // shared TestCaseNameDisplay — same manual/automated/parameterized/
+    // deleted glyph the repository grid uses.
+    const toSample = (entityId: number) => {
+      const c = caseById.get(entityId);
+      return {
+        id: entityId,
+        name: c?.name ?? `#${entityId}`,
+        automated: c?.automated ?? false,
+        source: c?.source,
+        hasParameters: (c as { hasParameters?: boolean } | undefined)
+          ?.hasParameters,
+      };
+    };
+
     const count = bulkGateCheck.blocked.length;
-    const namesById = new Map(
-      (casesData ?? []).map((c) => [c.id, c.name] as const)
+
+    // Group the blocked cases by the gate that blocks them, ordered by each
+    // gate's position in the workflow. A selection sitting at different
+    // current states can be blocked on DIFFERENT gates in one action (e.g.
+    // one case still needs "Under Review", another is past it and needs
+    // "Active"), so a single heading naming one gate would misrepresent the
+    // rest. When the set spans >1 gate the render switches to per-gate groups.
+    const groupMap = new Map<
+      number,
+      { gate: BlockingGate; entityIds: number[] }
+    >();
+    for (const b of bulkGateCheck.blocked) {
+      const existing = groupMap.get(b.blockingGate.id);
+      if (existing) {
+        existing.entityIds.push(b.entityId);
+      } else {
+        groupMap.set(b.blockingGate.id, {
+          gate: b.blockingGate,
+          entityIds: [b.entityId],
+        });
+      }
+    }
+    const orderedGroups = Array.from(groupMap.values()).sort(
+      (a, b) => a.gate.order - b.gate.order
     );
-    const sampleNames = bulkGateCheck.blocked
-      .slice(0, 3)
-      .map((b) => {
-        const name = namesById.get(b.entityId);
-        return name ? `"${name}"` : `#${b.entityId}`;
-      })
-      .join(", ");
-    const moreCount = Math.max(0, count - 3);
-    return tReviews("bulkBlockedSummary", {
-      count,
-      gateName: firstGate.name,
-      sampleNames,
-      more: moreCount,
+
+    // Cap the names shown across ALL groups at the sample limit; a single
+    // "+N more" tail covers the remainder. The budget fills groups in gate
+    // order so the earliest gate is represented first.
+    let budget = BULK_BLOCKED_SAMPLE_LIMIT;
+    const displayGroups = orderedGroups.map((g) => {
+      const take = Math.min(budget, g.entityIds.length);
+      budget -= take;
+      return {
+        gateId: g.gate.id,
+        gateName: g.gate.name,
+        cases: g.entityIds.slice(0, take).map(toSample),
+      };
     });
-  }, [bulkGateCheck, tReviews, casesData]);
+    const shown = displayGroups.reduce((sum, g) => sum + g.cases.length, 0);
+
+    return {
+      count,
+      isMixed: orderedGroups.length > 1,
+      singleGateName: orderedGroups[0]!.gate.name,
+      displayGroups,
+      moreCount: Math.max(0, count - shown),
+    };
+  }, [bulkGateCheck, casesData]);
+
+  // The Save button's tooltip. Just the headline — the full per-case list
+  // already renders inline under the State field, so repeating names + gates +
+  // footer here made the tooltip a wall of text. Trailing colon is dropped: it
+  // introduces the inline bullet list, but the tooltip is the headline alone.
+  const bulkGateTooltipMessage = useMemo(() => {
+    if (!bulkGateBlockedInfo) return null;
+    const { count, isMixed, singleGateName } = bulkGateBlockedInfo;
+    const heading = isMixed
+      ? tReviews("bulkBlockedHeadingMixed", { count })
+      : tReviews("bulkBlockedHeading", { count, gateName: singleGateName });
+    return heading.replace(/:\s*$/, "");
+  }, [bulkGateBlockedInfo, tReviews]);
+
+  // Cases in the blocked set that already carry a PENDING request. The server
+  // skips these (a second request would duplicate the first), so they're
+  // excluded from the breakdown and called out in the sheet rather than
+  // silently inflating the count the user is about to act on.
+  const blockedEntityIds = useMemo(
+    () => bulkGateCheck.blocked.map((b) => b.entityId),
+    [bulkGateCheck]
+  );
+  const { data: pendingReviewRows } = useClientQueries(
+    schema
+  ).reviewRequest.useFindMany(
+    {
+      where: {
+        entityType: "CASE",
+        entityId: { in: blockedEntityIds },
+        status: "PENDING",
+        isDeleted: false,
+      },
+      select: { entityId: true },
+    },
+    {
+      enabled:
+        isOpen && bulkTransitionGate.enabled && blockedEntityIds.length > 0,
+    } as any
+  );
+  const alreadyPendingIds = useMemo(
+    () =>
+      new Set(
+        ((pendingReviewRows ?? []) as Array<{ entityId: number }>).map(
+          (r) => r.entityId
+        )
+      ),
+    [pendingReviewRows]
+  );
+
+  // What a bulk request would actually raise, grouped by gate. Cases sitting
+  // at different current states resolve to different FIRST gates, so one
+  // action can span several — the sheet lists each with its own count.
+  const bulkGateBreakdown = useMemo(() => {
+    const byGate = new Map<
+      number,
+      { gateId: number; gateName: string; count: number }
+    >();
+    for (const blocked of bulkGateCheck.blocked) {
+      if (alreadyPendingIds.has(blocked.entityId)) continue;
+      const existing = byGate.get(blocked.blockingGate.id);
+      if (existing) {
+        existing.count += 1;
+      } else {
+        byGate.set(blocked.blockingGate.id, {
+          gateId: blocked.blockingGate.id,
+          gateName: blocked.blockingGate.name,
+          count: 1,
+        });
+      }
+    }
+    return Array.from(byGate.values()).map((row) => {
+      const wf = workflowsData?.find((w) => w.id === row.gateId);
+      return {
+        ...row,
+        gateIcon: wf?.icon?.name ?? "circle",
+        gateColor: wf?.color?.value ?? "",
+      };
+    });
+  }, [bulkGateCheck, alreadyPendingIds, workflowsData]);
 
   const { data: availableTagsData, isLoading: isLoadingTags } =
     useClientQueries(schema).tags.useFindMany(
@@ -1356,7 +1504,11 @@ export function BulkEditModal({
     setNewValues((prev) => ({ ...prev, [fieldKey]: value }));
   };
 
-  const handleSave = async () => {
+  /**
+   * Validation + data-loaded guard, shared by the plain Save path and the
+   * review-gated "Save & request review" path.
+   */
+  const validateBeforeSave = (): boolean => {
     // Reset inline errors
     setInlineErrors({});
 
@@ -1370,241 +1522,281 @@ export function BulkEditModal({
     if (Object.keys(validationErrors).length > 0) {
       setInlineErrors(validationErrors);
       toast.error(tBulkEdit("validationError"));
-      return; // Stop saving if validation fails
+      return false;
     }
 
     // Ensure casesData is loaded before proceeding
     if (!casesData) {
       toast.error(tCommon("errors.failedToLoadCaseData"));
-      return;
+      return false;
     }
 
+    return true;
+  };
+
+  /**
+   * Build the bulk-edit request body for a subset of the selection.
+   *
+   * `includeState` is false for the cases whose state change is waiting on a
+   * review approval. Only the state is gated, so every other edit the user
+   * made still applies to those cases immediately — the alternative is
+   * silently discarding edits the gate has no opinion about.
+   */
+  const buildBulkEditPayload = (
+    caseIdsToUpdate: number[],
+    includeState: boolean
+  ): any | null => {
+    if (!casesData) return null;
+    // Build the request payload for the bulk edit API
+    const payload: any = {
+      caseIds: caseIdsToUpdate,
+      updates: {},
+      createVersions: true,
+    };
+
+    // Process standard fields
+    for (const [fieldKey, isEditing] of Object.entries(editedFields)) {
+      if (!isEditing) continue;
+
+      const fieldDef = allFieldDefinitions.find((f) => f.key === fieldKey);
+      if (!fieldDef) continue;
+
+      // Skip custom fields and steps - handle them separately
+      if (
+        fieldKey.startsWith("dynamic_") ||
+        fieldDef.field?.type.type === "Steps"
+      ) {
+        continue;
+      }
+
+      let newValue = newValues[fieldKey];
+
+      // Handle search/replace mode for standard fields
+      if (fieldModes[fieldKey] === "search-replace") {
+        // Search/replace for standard fields is complex - skip for now
+        // The API doesn't support search/replace for standard fields yet
+        continue;
+      }
+
+      // Build updates based on field type
+      if (fieldKey === "state" && newValue) {
+        if (includeState) {
+          payload.updates.state = Number(newValue);
+        }
+      } else if (fieldKey === "name") {
+        payload.updates.name = newValue as string;
+      } else if (fieldKey === "automated") {
+        payload.updates.automated = !!newValue;
+      } else if (fieldKey === "estimate") {
+        const durationMs = parseDuration((newValue as string) ?? "");
+        const estimateInSeconds =
+          durationMs !== null ? Math.round(durationMs / 1000) : null;
+        payload.updates.estimate = estimateInSeconds;
+      } else if (fieldKey === "tags") {
+        // Get all unique tag IDs from all cases
+        const allCurrentTagIds = new Set<number>();
+        casesData.forEach((c) => {
+          (c.tags ?? []).forEach((t) => allCurrentTagIds.add(t.id));
+        });
+
+        const newTagIds = Array.isArray(newValue) ? newValue.map(Number) : [];
+
+        // Connect new tags that aren't currently on any case
+        const tagsToConnect = newTagIds
+          .filter((id) => !allCurrentTagIds.has(id))
+          .map((id) => ({ id }));
+
+        // Disconnect tags that were removed (were on cases but not in new selection)
+        const tagsToDisconnect = Array.from(allCurrentTagIds)
+          .filter((id) => !newTagIds.includes(id))
+          .map((id) => ({ id }));
+
+        // Only update tags if there are actual changes
+        if (tagsToConnect.length > 0 || tagsToDisconnect.length > 0) {
+          payload.updates.tags = {};
+          if (tagsToConnect.length > 0) {
+            payload.updates.tags.connect = tagsToConnect;
+          }
+          if (tagsToDisconnect.length > 0) {
+            payload.updates.tags.disconnect = tagsToDisconnect;
+          }
+        }
+      } else if (fieldKey === "issues") {
+        // Get all unique issue IDs from all cases
+        const allCurrentIssueIds = new Set<number>();
+        casesData.forEach((c) => {
+          (c.issues ?? []).forEach((i) => allCurrentIssueIds.add(i.id));
+        });
+
+        const newIssueIds = Array.isArray(newValue) ? newValue.map(Number) : [];
+
+        // Connect new issues that aren't currently on any case
+        const issuesToConnect = newIssueIds
+          .filter((id) => !allCurrentIssueIds.has(id))
+          .map((id) => ({ id }));
+
+        // Disconnect issues that were removed (were on cases but not in new selection)
+        const issuesToDisconnect = Array.from(allCurrentIssueIds)
+          .filter((id) => !newIssueIds.includes(id))
+          .map((id) => ({ id }));
+
+        // Only update issues if there are actual changes
+        if (issuesToConnect.length > 0 || issuesToDisconnect.length > 0) {
+          payload.updates.issues = {};
+          if (issuesToConnect.length > 0) {
+            payload.updates.issues.connect = issuesToConnect;
+          }
+          if (issuesToDisconnect.length > 0) {
+            payload.updates.issues.disconnect = issuesToDisconnect;
+          }
+        }
+      }
+    }
+
+    // Handle custom fields
+    const customFieldUpdates: any[] = [];
+    for (const [fieldKey, isEditing] of Object.entries(editedFields)) {
+      if (!isEditing || !fieldKey.startsWith("dynamic_")) continue;
+
+      const fieldId = parseInt(fieldKey.split("_")[1], 10);
+      const fieldDef = allFieldDefinitions.find((f) => f.key === fieldKey);
+      const fieldType = fieldDef?.field?.type.type;
+      let newValue = newValues[fieldKey];
+
+      // Skip search/replace for custom fields - handle differently per case
+      if (fieldModes[fieldKey] === "search-replace") {
+        continue;
+      }
+
+      // Determine the value to set
+      let valueToSet: any;
+      if (newValue === null || newValue === undefined) {
+        valueToSet = null;
+      } else if (fieldType === "Link") {
+        valueToSet = newValue === "" ? "" : newValue;
+      } else if (fieldType === "Multi-Select") {
+        valueToSet = Array.isArray(newValue) ? newValue : [];
+      } else if (newValue === "") {
+        valueToSet = null;
+      } else {
+        valueToSet = newValue;
+      }
+
+      // For bulk operations, we update or create for each case
+      // The API will handle checking existence
+      customFieldUpdates.push({
+        fieldId,
+        value: valueToSet,
+        operation: "update", // API will handle create vs update
+      });
+    }
+
+    if (customFieldUpdates.length > 0) {
+      payload.customFieldUpdates = customFieldUpdates;
+    }
+
+    // Handle steps
+    const stepsFieldKey = allFieldDefinitions.find(
+      (def) => def.field?.type.type === "Steps"
+    )?.key;
+
+    if (stepsFieldKey && editedFields[stepsFieldKey]) {
+      const isStepsSearchReplace =
+        fieldModes[stepsFieldKey] === "search-replace";
+
+      if (isStepsSearchReplace) {
+        payload.stepsUpdates = {
+          operation: "search-replace",
+          searchPattern: searchPatterns[stepsFieldKey] || "",
+          replacePattern: replacePatterns[stepsFieldKey] || "",
+          searchOptions: searchOptions[stepsFieldKey] || {
+            useRegex: false,
+            caseSensitive: false,
+          },
+        };
+      } else {
+        // Replace mode
+        const newStepsData = newValues[stepsFieldKey];
+        if (Array.isArray(newStepsData)) {
+          payload.stepsUpdates = {
+            operation: "replace",
+            newSteps: newStepsData.map((stepData: any, index: number) => ({
+              step: stepData.step || emptyEditorContent,
+              expectedResult: stepData.expectedResult || emptyEditorContent,
+              order: index,
+            })),
+          };
+        }
+      }
+    }
+
+    return payload;
+  };
+
+  /**
+   * POST one bulk-edit body. Review-gate error codes are re-thrown as tagged
+   * errors so callers can distinguish them from ordinary failures.
+   */
+  const postBulkEdit = async (payload: any): Promise<void> => {
+    // Call the bulk edit API
+    const response = await fetch(`/api/projects/${projectId}/cases/bulk-edit`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      const errBody = await response.json().catch(() => ({}));
+      const errCode =
+        typeof errBody?.error === "object" && errBody.error !== null
+          ? (errBody.error as { code?: unknown }).code
+          : undefined;
+      // Match the global ReviewGateMutationListener for ZenStack mutations:
+      // raw fetch endpoints surface REVIEW_REQUIRED / PENDING_REVIEW_EXISTS
+      // bodies that bypass mutationCache, so detect them inline.
+      if (errCode === "REVIEW_REQUIRED") {
+        throw Object.assign(new Error("REVIEW_REQUIRED"), {
+          reviewGateCode: "REVIEW_REQUIRED" as const,
+        });
+      }
+      if (errCode === "PENDING_REVIEW_EXISTS") {
+        throw Object.assign(new Error("PENDING_REVIEW_EXISTS"), {
+          reviewGateCode: "PENDING_REVIEW_EXISTS" as const,
+        });
+      }
+      throw new Error(
+        typeof errBody?.error === "string"
+          ? errBody.error
+          : "Failed to perform bulk edit"
+      );
+    }
+
+    await response.json(); // Parse response to ensure no errors
+  };
+
+  const reportBulkEditError = (error: any) => {
+    console.error("Failed to save bulk edits:", error);
+    if (error?.reviewGateCode === "REVIEW_REQUIRED") {
+      toast.error(tReviews("toastReviewRequired"));
+    } else if (error?.reviewGateCode === "PENDING_REVIEW_EXISTS") {
+      toast.error(tReviews("toastPendingReviewExists"));
+    } else {
+      toast.error(error.message || tCommon("errors.unknown"));
+    }
+  };
+
+  const handleSave = async () => {
+    if (!validateBeforeSave() || !casesData) return;
+
     const caseIdsToUpdate = casesData.map((c) => c.id);
+    const payload = buildBulkEditPayload(caseIdsToUpdate, true);
+    if (!payload) return;
 
     setIsSaving(true);
     try {
-      // Build the request payload for the bulk edit API
-      const payload: any = {
-        caseIds: caseIdsToUpdate,
-        updates: {},
-        createVersions: true,
-      };
-
-      // Process standard fields
-      for (const [fieldKey, isEditing] of Object.entries(editedFields)) {
-        if (!isEditing) continue;
-
-        const fieldDef = allFieldDefinitions.find((f) => f.key === fieldKey);
-        if (!fieldDef) continue;
-
-        // Skip custom fields and steps - handle them separately
-        if (
-          fieldKey.startsWith("dynamic_") ||
-          fieldDef.field?.type.type === "Steps"
-        ) {
-          continue;
-        }
-
-        let newValue = newValues[fieldKey];
-
-        // Handle search/replace mode for standard fields
-        if (fieldModes[fieldKey] === "search-replace") {
-          // Search/replace for standard fields is complex - skip for now
-          // The API doesn't support search/replace for standard fields yet
-          continue;
-        }
-
-        // Build updates based on field type
-        if (fieldKey === "state" && newValue) {
-          payload.updates.state = Number(newValue);
-        } else if (fieldKey === "name") {
-          payload.updates.name = newValue as string;
-        } else if (fieldKey === "automated") {
-          payload.updates.automated = !!newValue;
-        } else if (fieldKey === "estimate") {
-          const durationMs = parseDuration((newValue as string) ?? "");
-          const estimateInSeconds =
-            durationMs !== null ? Math.round(durationMs / 1000) : null;
-          payload.updates.estimate = estimateInSeconds;
-        } else if (fieldKey === "tags") {
-          // Get all unique tag IDs from all cases
-          const allCurrentTagIds = new Set<number>();
-          casesData.forEach((c) => {
-            (c.tags ?? []).forEach((t) => allCurrentTagIds.add(t.id));
-          });
-
-          const newTagIds = Array.isArray(newValue) ? newValue.map(Number) : [];
-
-          // Connect new tags that aren't currently on any case
-          const tagsToConnect = newTagIds
-            .filter((id) => !allCurrentTagIds.has(id))
-            .map((id) => ({ id }));
-
-          // Disconnect tags that were removed (were on cases but not in new selection)
-          const tagsToDisconnect = Array.from(allCurrentTagIds)
-            .filter((id) => !newTagIds.includes(id))
-            .map((id) => ({ id }));
-
-          // Only update tags if there are actual changes
-          if (tagsToConnect.length > 0 || tagsToDisconnect.length > 0) {
-            payload.updates.tags = {};
-            if (tagsToConnect.length > 0) {
-              payload.updates.tags.connect = tagsToConnect;
-            }
-            if (tagsToDisconnect.length > 0) {
-              payload.updates.tags.disconnect = tagsToDisconnect;
-            }
-          }
-        } else if (fieldKey === "issues") {
-          // Get all unique issue IDs from all cases
-          const allCurrentIssueIds = new Set<number>();
-          casesData.forEach((c) => {
-            (c.issues ?? []).forEach((i) => allCurrentIssueIds.add(i.id));
-          });
-
-          const newIssueIds = Array.isArray(newValue)
-            ? newValue.map(Number)
-            : [];
-
-          // Connect new issues that aren't currently on any case
-          const issuesToConnect = newIssueIds
-            .filter((id) => !allCurrentIssueIds.has(id))
-            .map((id) => ({ id }));
-
-          // Disconnect issues that were removed (were on cases but not in new selection)
-          const issuesToDisconnect = Array.from(allCurrentIssueIds)
-            .filter((id) => !newIssueIds.includes(id))
-            .map((id) => ({ id }));
-
-          // Only update issues if there are actual changes
-          if (issuesToConnect.length > 0 || issuesToDisconnect.length > 0) {
-            payload.updates.issues = {};
-            if (issuesToConnect.length > 0) {
-              payload.updates.issues.connect = issuesToConnect;
-            }
-            if (issuesToDisconnect.length > 0) {
-              payload.updates.issues.disconnect = issuesToDisconnect;
-            }
-          }
-        }
-      }
-
-      // Handle custom fields
-      const customFieldUpdates: any[] = [];
-      for (const [fieldKey, isEditing] of Object.entries(editedFields)) {
-        if (!isEditing || !fieldKey.startsWith("dynamic_")) continue;
-
-        const fieldId = parseInt(fieldKey.split("_")[1], 10);
-        const fieldDef = allFieldDefinitions.find((f) => f.key === fieldKey);
-        const fieldType = fieldDef?.field?.type.type;
-        let newValue = newValues[fieldKey];
-
-        // Skip search/replace for custom fields - handle differently per case
-        if (fieldModes[fieldKey] === "search-replace") {
-          continue;
-        }
-
-        // Determine the value to set
-        let valueToSet: any;
-        if (newValue === null || newValue === undefined) {
-          valueToSet = null;
-        } else if (fieldType === "Link") {
-          valueToSet = newValue === "" ? "" : newValue;
-        } else if (fieldType === "Multi-Select") {
-          valueToSet = Array.isArray(newValue) ? newValue : [];
-        } else if (newValue === "") {
-          valueToSet = null;
-        } else {
-          valueToSet = newValue;
-        }
-
-        // For bulk operations, we update or create for each case
-        // The API will handle checking existence
-        customFieldUpdates.push({
-          fieldId,
-          value: valueToSet,
-          operation: "update", // API will handle create vs update
-        });
-      }
-
-      if (customFieldUpdates.length > 0) {
-        payload.customFieldUpdates = customFieldUpdates;
-      }
-
-      // Handle steps
-      const stepsFieldKey = allFieldDefinitions.find(
-        (def) => def.field?.type.type === "Steps"
-      )?.key;
-
-      if (stepsFieldKey && editedFields[stepsFieldKey]) {
-        const isStepsSearchReplace =
-          fieldModes[stepsFieldKey] === "search-replace";
-
-        if (isStepsSearchReplace) {
-          payload.stepsUpdates = {
-            operation: "search-replace",
-            searchPattern: searchPatterns[stepsFieldKey] || "",
-            replacePattern: replacePatterns[stepsFieldKey] || "",
-            searchOptions: searchOptions[stepsFieldKey] || {
-              useRegex: false,
-              caseSensitive: false,
-            },
-          };
-        } else {
-          // Replace mode
-          const newStepsData = newValues[stepsFieldKey];
-          if (Array.isArray(newStepsData)) {
-            payload.stepsUpdates = {
-              operation: "replace",
-              newSteps: newStepsData.map((stepData: any, index: number) => ({
-                step: stepData.step || emptyEditorContent,
-                expectedResult: stepData.expectedResult || emptyEditorContent,
-                order: index,
-              })),
-            };
-          }
-        }
-      }
-
-      // Call the bulk edit API
-      const response = await fetch(
-        `/api/projects/${projectId}/cases/bulk-edit`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(payload),
-        }
-      );
-
-      if (!response.ok) {
-        const errBody = await response.json().catch(() => ({}));
-        const errCode =
-          typeof errBody?.error === "object" && errBody.error !== null
-            ? (errBody.error as { code?: unknown }).code
-            : undefined;
-        // Match the global ReviewGateMutationListener for ZenStack mutations:
-        // raw fetch endpoints surface REVIEW_REQUIRED / PENDING_REVIEW_EXISTS
-        // bodies that bypass mutationCache, so detect them inline.
-        if (errCode === "REVIEW_REQUIRED") {
-          throw Object.assign(new Error("REVIEW_REQUIRED"), {
-            reviewGateCode: "REVIEW_REQUIRED" as const,
-          });
-        }
-        if (errCode === "PENDING_REVIEW_EXISTS") {
-          throw Object.assign(new Error("PENDING_REVIEW_EXISTS"), {
-            reviewGateCode: "PENDING_REVIEW_EXISTS" as const,
-          });
-        }
-        throw new Error(
-          typeof errBody?.error === "string"
-            ? errBody.error
-            : "Failed to perform bulk edit"
-        );
-      }
-
-      await response.json(); // Parse response to ensure no errors
+      await postBulkEdit(payload);
 
       toast.success(
         tBulkEdit("success.casesUpdated", { count: caseIdsToUpdate.length })
@@ -1612,16 +1804,50 @@ export function BulkEditModal({
       onSaveSuccess(); // Trigger refetch in parent
       onClose();
     } catch (error: any) {
-      console.error("Failed to save bulk edits:", error);
-      if (error?.reviewGateCode === "REVIEW_REQUIRED") {
-        toast.error(tReviews("toastReviewRequired"));
-      } else if (error?.reviewGateCode === "PENDING_REVIEW_EXISTS") {
-        toast.error(tReviews("toastPendingReviewExists"));
-      } else {
-        toast.error(error.message || tCommon("errors.unknown"));
-      }
+      reportBulkEditError(error);
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  /**
+   * Apply the field edits when part of the selection is review-blocked.
+   *
+   * The selection splits in two: cases the gate clears get the full edit
+   * including the state change, and blocked cases get everything except the
+   * state. Two calls rather than one because the bulk-edit endpoint applies a
+   * single `updates` object to every id it's given — there's no per-case
+   * state in its contract, and inventing one to serve this path would widen a
+   * shared API for a UI concern.
+   *
+   * Returns false when a call fails, which aborts the review requests: raising
+   * approvals for edits that never landed is worse than raising none.
+   */
+  const applyEditsAroundGate = async (): Promise<boolean> => {
+    if (!casesData) return false;
+
+    const blockedIds = new Set(bulkGateCheck.blocked.map((b) => b.entityId));
+    const allIds = casesData.map((c) => c.id);
+    const unblockedIds = allIds.filter((id) => !blockedIds.has(id));
+    const gatedIds = allIds.filter((id) => blockedIds.has(id));
+
+    try {
+      if (unblockedIds.length > 0) {
+        const payload = buildBulkEditPayload(unblockedIds, true);
+        if (payload) await postBulkEdit(payload);
+      }
+      if (gatedIds.length > 0) {
+        const payload = buildBulkEditPayload(gatedIds, false);
+        // `state` is the only edit in play when the user changed nothing
+        // else; skip the round-trip rather than POST an empty update.
+        if (payload && bulkEditPayloadHasChanges(payload)) {
+          await postBulkEdit(payload);
+        }
+      }
+      return true;
+    } catch (error: any) {
+      reportBulkEditError(error);
+      return false;
     }
   };
 
@@ -2067,8 +2293,13 @@ export function BulkEditModal({
                       </Label>
                     </div>
 
-                    {/* Value Display or Input */}
-                    <div className="min-h-10">
+                    {/* Value Display or Input.
+                       min-w-0 caps this cell to its 1fr grid track: without
+                       it the track's default min-width:auto lets a long,
+                       nowrap test-case name in the blocked-cases list push the
+                       column wider than the dialog and scroll it sideways.
+                       Capped, the name truncates instead. */}
+                    <div className="min-h-10 min-w-0">
                       {isEditing ? (
                         <>
                           {renderFieldInput(field, fieldKey)}
@@ -2079,15 +2310,106 @@ export function BulkEditModal({
                               {/* Show first error */}
                             </p>
                           )}
-                          {/* Per-entity bulk gate summary on the state row
-                             — surfaces how many of the selected cases the
-                             chosen target would block, plus the FIRST
-                             missing gate's name + a sample of blocked
-                             case ids. */}
-                          {fieldKey === "state" && bulkGateInlineMessage && (
-                            <p className="text-sm font-medium text-destructive mt-1">
-                              {bulkGateInlineMessage}
-                            </p>
+                          {/* Per-entity bulk gate summary on the state row —
+                             how many selected cases the chosen target would
+                             block and which gate each is waiting on, as a
+                             truncated bullet list of case names. When the
+                             selection is blocked on a single gate the gate is
+                             named in the heading; when it spans several, the
+                             bullets are grouped under a sub-heading per gate so
+                             no case is misattributed. */}
+                          {fieldKey === "state" && bulkGateBlockedInfo && (
+                            <div
+                              className="mt-1 text-sm text-destructive"
+                              data-testid="bulk-gate-blocked-summary"
+                            >
+                              {bulkGateBlockedInfo.isMixed ? (
+                                <>
+                                  <p className="font-medium">
+                                    {tReviews("bulkBlockedHeadingMixed", {
+                                      count: bulkGateBlockedInfo.count,
+                                    })}
+                                  </p>
+                                  <div className="mt-1 space-y-1.5">
+                                    {bulkGateBlockedInfo.displayGroups.map(
+                                      (group) => (
+                                        <div key={group.gateId}>
+                                          <p className="font-medium text-foreground">
+                                            {group.gateName}
+                                          </p>
+                                          <ul className="mt-0.5 list-disc space-y-0.5 ps-5">
+                                            {group.cases.map((c) => (
+                                              <li
+                                                key={c.id}
+                                                className="min-w-0 text-foreground"
+                                              >
+                                                <TestCaseNameDisplay
+                                                  testCase={c}
+                                                  showIcon
+                                                  size="small"
+                                                  className="truncate"
+                                                />
+                                              </li>
+                                            ))}
+                                          </ul>
+                                        </div>
+                                      )
+                                    )}
+                                    {bulkGateBlockedInfo.moreCount > 0 && (
+                                      <p className="text-muted-foreground">
+                                        {tReviews("bulkBlockedMore", {
+                                          count: bulkGateBlockedInfo.moreCount,
+                                        })}
+                                      </p>
+                                    )}
+                                  </div>
+                                </>
+                              ) : (
+                                <>
+                                  <p className="font-medium">
+                                    {tReviews("bulkBlockedHeading", {
+                                      count: bulkGateBlockedInfo.count,
+                                      gateName:
+                                        bulkGateBlockedInfo.singleGateName,
+                                    })}
+                                  </p>
+                                  {/* Disc marker lives on the <li>; truncation
+                                     stays on the name span INSIDE
+                                     TestCaseNameDisplay — overflow-hidden on the
+                                     <li> itself would clip the outside marker.
+                                     No marker: override, so each disc inherits
+                                     its <li>'s text-foreground, matching the
+                                     case name beside it. */}
+                                  <ul className="mt-1 list-disc space-y-0.5 ps-5">
+                                    {bulkGateBlockedInfo.displayGroups[0]!.cases.map(
+                                      (c) => (
+                                        <li
+                                          key={c.id}
+                                          className="min-w-0 text-foreground"
+                                        >
+                                          <TestCaseNameDisplay
+                                            testCase={c}
+                                            showIcon
+                                            size="small"
+                                            className="truncate"
+                                          />
+                                        </li>
+                                      )
+                                    )}
+                                    {bulkGateBlockedInfo.moreCount > 0 && (
+                                      <li className="-ms-5 list-none text-muted-foreground">
+                                        {tReviews("bulkBlockedMore", {
+                                          count: bulkGateBlockedInfo.moreCount,
+                                        })}
+                                      </li>
+                                    )}
+                                  </ul>
+                                  <p className="mt-1">
+                                    {tReviews("bulkBlockedFooter")}
+                                  </p>
+                                </>
+                              )}
+                            </div>
                           )}
                         </>
                       ) : (
@@ -2189,23 +2511,54 @@ export function BulkEditModal({
             {(() => {
               const gateBlocks =
                 !bulkGateCheck.allowed && bulkGateCheck.blocked.length > 0;
-              const saveDisabled =
+              const baseDisabled =
                 isUpdating ||
                 isLoading ||
                 hasFetchError ||
                 !isAnyFieldEditing ||
-                isSaving ||
-                gateBlocks;
-              const button = (
+                isSaving;
+
+              // When the gate blocks part of the selection, Save turns into
+              // the way OUT of the block rather than a dead end: it opens the
+              // assignee picker, and confirming there applies the non-gated
+              // edits and raises one review request per blocked case.
+              if (gateBlocks) {
+                const canRequest = bulkGateBreakdown.length > 0;
+                const button = (
+                  <Button
+                    type="button"
+                    onClick={() => {
+                      if (validateBeforeSave()) {
+                        setRequestReviewSheetOpen(true);
+                      }
+                    }}
+                    disabled={baseDisabled || !canRequest}
+                    data-testid="bulk-edit-save-and-request-review"
+                  >
+                    {(isUpdating || isSaving) && (
+                      <Loader2 className="me-2 h-4 w-4 animate-spin" />
+                    )}
+                    <MessageSquareWarning className="h-4 w-4" />
+                    {tBulkRequester("saveAndRequestButton")}
+                  </Button>
+                );
+                return (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span tabIndex={0}>{button}</span>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      {bulkGateTooltipMessage ?? ""}
+                    </TooltipContent>
+                  </Tooltip>
+                );
+              }
+
+              return (
                 <Button
                   type="button"
                   onClick={handleSave}
-                  disabled={saveDisabled}
-                  className={
-                    gateBlocks
-                      ? "ring-2 ring-destructive ring-offset-2 ring-offset-background"
-                      : undefined
-                  }
+                  disabled={baseDisabled}
                 >
                   {(isUpdating || isSaving) && (
                     <Loader2 className="me-2 h-4 w-4 animate-spin" />
@@ -2213,19 +2566,34 @@ export function BulkEditModal({
                   {tCommon("actions.save")}
                 </Button>
               );
-              if (!gateBlocks) return button;
-              return (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span tabIndex={0}>{button}</span>
-                  </TooltipTrigger>
-                  <TooltipContent>{bulkGateInlineMessage ?? ""}</TooltipContent>
-                </Tooltip>
-              );
             })()}
           </div>
         </DialogFooter>
       </DialogContent>
+
+      {/* Mounted only while open — the sheet pulls a QueryClient and the
+          assignee picker's project-role lookup, none of which a bulk edit
+          that never hits the gate should pay for. */}
+      {requestReviewSheetOpen && (
+        <BulkRequestReviewSheet
+          open={requestReviewSheetOpen}
+          onOpenChange={setRequestReviewSheetOpen}
+          entityType="CASE"
+          projectId={projectId}
+          entityIds={bulkGateCheck.blocked.map((b) => b.entityId)}
+          toStateId={targetStateId ?? 0}
+          targetStateName={
+            workflowsData?.find((w) => w.id === targetStateId)?.name ?? ""
+          }
+          breakdown={bulkGateBreakdown}
+          alreadyPendingCount={alreadyPendingIds.size}
+          onBeforeSubmit={applyEditsAroundGate}
+          onSuccess={() => {
+            onSaveSuccess();
+            onClose();
+          }}
+        />
+      )}
     </Dialog>
   );
 }

@@ -142,6 +142,11 @@ vi.mock("@zenstackhq/tanstack-query/react", () => ({
       })),
     },
     issue: { useFindMany: useFindManyIssue },
+    // Backs the modal's "which blocked cases are already awaiting review?"
+    // lookup, which excludes them from the bulk request breakdown.
+    reviewRequest: {
+      useFindMany: () => ({ data: [], isLoading: false, error: null }),
+    },
     caseFieldValues: {
       useUpdate: useUpdateCaseFieldValues,
       useCreate: useCreateCaseFieldValues,
