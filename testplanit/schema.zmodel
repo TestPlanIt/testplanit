@@ -903,22 +903,13 @@ model MilestoneIssue {
 
     @@deny('all', auth() == null)
     @@deny('all', auth().access == 'NONE')
-    @@deny('read', milestone.project.userPermissions?[user.id == auth().id && accessType == 'NO_ACCESS'])
 
+    // Project membership resolved once per request via
+    // auth().accessibleProjectIds (see AuthCtx). Replaces the per-row
+    // milestone.project traversal; the id list already
+    // excludes NO_ACCESS-denied projects, so the paired @@deny is gone.
     @@allow('read',
-        milestone.project.creator.id == auth().id ||
-        milestone.project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE'] ||
-        milestone.project.userPermissions?[user.id == auth().id && accessType == 'GLOBAL_ROLE'] ||
-        milestone.project.groupPermissions?[
-            group.assignedUsers?[user.id == auth().id] &&
-            ((accessType == 'SPECIFIC_ROLE' && role != null) ||
-             (accessType == 'GLOBAL_ROLE' && auth().role != null))
-        ] ||
-        (milestone.project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE') ||
-        (milestone.project.assignedUsers?[user.id == auth().id] &&
-         milestone.project.defaultAccessType == 'SPECIFIC_ROLE' && milestone.project.defaultRole != null) ||
-        (milestone.project.defaultAccessType == 'SPECIFIC_ROLE' && milestone.project.defaultRole != null && auth().access != 'NONE') ||
-        (milestone.project.defaultAccessType == 'DEFAULT' && auth().access != 'NONE')
+        milestone.projectId in auth().accessibleProjectIds
     )
 
     @@allow('create,update,delete',
@@ -1532,25 +1523,13 @@ model RepositoryCaseLink {
     @@deny('all', auth() == null)
     @@deny('all', auth().access == 'NONE')
 
-    // Inherit access from case A's project
-    @@deny('read', caseA.project.userPermissions?[user.id == auth().id && accessType == 'NO_ACCESS'])
 
+    // Project membership resolved once per request via
+    // auth().accessibleProjectIds (see AuthCtx). Replaces the per-row
+    // caseA.project traversal; the id list already
+    // excludes NO_ACCESS-denied projects, so the paired @@deny is gone.
     @@allow('read',
-        caseA.project.creator.id == auth().id ||
-        caseA.project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE'] ||
-        caseA.project.userPermissions?[user.id == auth().id && accessType == 'GLOBAL_ROLE'] ||
-        caseA.project.groupPermissions?[
-            group.assignedUsers?[user.id == auth().id] &&
-            ((accessType == 'SPECIFIC_ROLE' && role != null) ||
-             (accessType == 'GLOBAL_ROLE' && auth().role != null))
-        ] ||
-    // Allow access if project uses GLOBAL_ROLE and user has a valid role
-        (caseA.project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE') ||
-        (caseA.project.assignedUsers?[user.id == auth().id] &&
-         caseA.project.defaultAccessType == 'SPECIFIC_ROLE' && caseA.project.defaultRole != null) ||
-    // Default access for all users (not just assigned)
-        (caseA.project.defaultAccessType == 'SPECIFIC_ROLE' && caseA.project.defaultRole != null && auth().access != 'NONE') ||
-        (caseA.project.defaultAccessType == 'DEFAULT' && auth().access != 'NONE')
+        caseA.projectId in auth().accessibleProjectIds
     )
 
     // Create/update/delete access based on repository permissions
@@ -1601,22 +1580,13 @@ model RepositoryCaseTag {
 
     @@deny('all', auth() == null)
     @@deny('all', auth().access == 'NONE')
-    @@deny('read', case.project.userPermissions?[user.id == auth().id && accessType == 'NO_ACCESS'])
 
+    // Project membership resolved once per request via
+    // auth().accessibleProjectIds (see AuthCtx). Replaces the per-row
+    // case.project traversal; the id list already
+    // excludes NO_ACCESS-denied projects, so the paired @@deny is gone.
     @@allow('read',
-        case.project.creator.id == auth().id ||
-        case.project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE'] ||
-        case.project.userPermissions?[user.id == auth().id && accessType == 'GLOBAL_ROLE'] ||
-        case.project.groupPermissions?[
-            group.assignedUsers?[user.id == auth().id] &&
-            ((accessType == 'SPECIFIC_ROLE' && role != null) ||
-             (accessType == 'GLOBAL_ROLE' && auth().role != null))
-        ] ||
-        (case.project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE') ||
-        (case.project.assignedUsers?[user.id == auth().id] &&
-         case.project.defaultAccessType == 'SPECIFIC_ROLE' && case.project.defaultRole != null) ||
-        (case.project.defaultAccessType == 'SPECIFIC_ROLE' && case.project.defaultRole != null && auth().access != 'NONE') ||
-        (case.project.defaultAccessType == 'DEFAULT' && auth().access != 'NONE')
+        case.projectId in auth().accessibleProjectIds
     )
 
     @@allow('create,update,delete',
@@ -1656,22 +1626,13 @@ model RepositoryCaseIssue {
 
     @@deny('all', auth() == null)
     @@deny('all', auth().access == 'NONE')
-    @@deny('read', case.project.userPermissions?[user.id == auth().id && accessType == 'NO_ACCESS'])
 
+    // Project membership resolved once per request via
+    // auth().accessibleProjectIds (see AuthCtx). Replaces the per-row
+    // case.project traversal; the id list already
+    // excludes NO_ACCESS-denied projects, so the paired @@deny is gone.
     @@allow('read',
-        case.project.creator.id == auth().id ||
-        case.project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE'] ||
-        case.project.userPermissions?[user.id == auth().id && accessType == 'GLOBAL_ROLE'] ||
-        case.project.groupPermissions?[
-            group.assignedUsers?[user.id == auth().id] &&
-            ((accessType == 'SPECIFIC_ROLE' && role != null) ||
-             (accessType == 'GLOBAL_ROLE' && auth().role != null))
-        ] ||
-        (case.project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE') ||
-        (case.project.assignedUsers?[user.id == auth().id] &&
-         case.project.defaultAccessType == 'SPECIFIC_ROLE' && case.project.defaultRole != null) ||
-        (case.project.defaultAccessType == 'SPECIFIC_ROLE' && case.project.defaultRole != null && auth().access != 'NONE') ||
-        (case.project.defaultAccessType == 'DEFAULT' && auth().access != 'NONE')
+        case.projectId in auth().accessibleProjectIds
     )
 
     @@allow('create,update,delete',
@@ -1730,23 +1691,13 @@ model DuplicateScanResult {
     @@deny('all', auth() == null)
     @@deny('all', auth().access == 'NONE')
 
-    @@deny('read', caseA.project.userPermissions?[user.id == auth().id && accessType == 'NO_ACCESS'])
 
+    // Project membership resolved once per request via
+    // auth().accessibleProjectIds (see AuthCtx). Replaces the per-row
+    // caseA.project traversal; the id list already
+    // excludes NO_ACCESS-denied projects, so the paired @@deny is gone.
     @@allow('read',
-        caseA.project.creator.id == auth().id ||
-        caseA.project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE'] ||
-        caseA.project.userPermissions?[user.id == auth().id && accessType == 'GLOBAL_ROLE'] ||
-        caseA.project.groupPermissions?[
-            group.assignedUsers?[user.id == auth().id] &&
-            ((accessType == 'SPECIFIC_ROLE' && role != null) ||
-             (accessType == 'GLOBAL_ROLE' && auth().role != null))
-        ] ||
-        (caseA.project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE') ||
-        (caseA.project.assignedUsers?[user.id == auth().id] &&
-         caseA.project.defaultAccessType == 'SPECIFIC_ROLE' && caseA.project.defaultRole != null) ||
-    // Default access for all users (not just assigned)
-        (caseA.project.defaultAccessType == 'SPECIFIC_ROLE' && caseA.project.defaultRole != null && auth().access != 'NONE') ||
-        (caseA.project.defaultAccessType == 'DEFAULT' && auth().access != 'NONE')
+        caseA.projectId in auth().accessibleProjectIds
     )
 
     @@allow('create,update,delete',
@@ -1850,23 +1801,13 @@ model StepSequenceMatchCase {
     @@deny('all', auth() == null)
     @@deny('all', auth().access == 'NONE')
 
-    @@deny('read', match.project.userPermissions?[user.id == auth().id && accessType == 'NO_ACCESS'])
 
+    // Project membership resolved once per request via
+    // auth().accessibleProjectIds (see AuthCtx). Replaces the per-row
+    // match.project traversal; the id list already
+    // excludes NO_ACCESS-denied projects, so the paired @@deny is gone.
     @@allow('read',
-        match.project.creator.id == auth().id ||
-        match.project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE'] ||
-        match.project.userPermissions?[user.id == auth().id && accessType == 'GLOBAL_ROLE'] ||
-        match.project.groupPermissions?[
-            group.assignedUsers?[user.id == auth().id] &&
-            ((accessType == 'SPECIFIC_ROLE' && role != null) ||
-             (accessType == 'GLOBAL_ROLE' && auth().role != null))
-        ] ||
-        (match.project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE') ||
-        (match.project.assignedUsers?[user.id == auth().id] &&
-         match.project.defaultAccessType == 'SPECIFIC_ROLE' && match.project.defaultRole != null) ||
-    // Default access for all users (not just assigned)
-        (match.project.defaultAccessType == 'SPECIFIC_ROLE' && match.project.defaultRole != null && auth().access != 'NONE') ||
-        (match.project.defaultAccessType == 'DEFAULT' && auth().access != 'NONE')
+        match.projectId in auth().accessibleProjectIds
     )
 
     @@allow('create,update,delete',
@@ -2112,25 +2053,13 @@ model CaseFieldValues {
     @@deny('all', auth() == null)
     @@deny('all', auth().access == 'NONE')
 
-    // Inherit read access from test case's project
-    @@deny('read', testCase.project.userPermissions?[user.id == auth().id && accessType == 'NO_ACCESS'])
 
+    // Project membership resolved once per request via
+    // auth().accessibleProjectIds (see AuthCtx). Replaces the per-row
+    // testCase.project traversal; the id list already
+    // excludes NO_ACCESS-denied projects, so the paired @@deny is gone.
     @@allow('read',
-        testCase.project.creator.id == auth().id ||
-        testCase.project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE'] ||
-        testCase.project.userPermissions?[user.id == auth().id && accessType == 'GLOBAL_ROLE'] ||
-        testCase.project.groupPermissions?[
-            group.assignedUsers?[user.id == auth().id] &&
-            ((accessType == 'SPECIFIC_ROLE' && role != null) ||
-             (accessType == 'GLOBAL_ROLE' && auth().role != null))
-        ] ||
-    // Allow access if project uses GLOBAL_ROLE and user has a valid role
-        (testCase.project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE') ||
-        (testCase.project.assignedUsers?[user.id == auth().id] &&
-         testCase.project.defaultAccessType == 'SPECIFIC_ROLE' && testCase.project.defaultRole != null) ||
-    // Default access for all users (not just assigned)
-        (testCase.project.defaultAccessType == 'SPECIFIC_ROLE' && testCase.project.defaultRole != null && auth().access != 'NONE') ||
-        (testCase.project.defaultAccessType == 'DEFAULT' && auth().access != 'NONE')
+        testCase.projectId in auth().accessibleProjectIds
     )
 
     // Create/update/delete access based on repository permissions
@@ -2176,25 +2105,13 @@ model CaseFieldVersionValues {
     @@deny('all', auth() == null)
     @@deny('all', auth().access == 'NONE')
 
-    // Inherit read access from version's project
-    @@deny('read', version.project.userPermissions?[user.id == auth().id && accessType == 'NO_ACCESS'])
 
+    // Project membership resolved once per request via
+    // auth().accessibleProjectIds (see AuthCtx). Replaces the per-row
+    // version.project traversal; the id list already
+    // excludes NO_ACCESS-denied projects, so the paired @@deny is gone.
     @@allow('read',
-        version.project.creator.id == auth().id ||
-        version.project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE'] ||
-        version.project.userPermissions?[user.id == auth().id && accessType == 'GLOBAL_ROLE'] ||
-        version.project.groupPermissions?[
-            group.assignedUsers?[user.id == auth().id] &&
-            ((accessType == 'SPECIFIC_ROLE' && role != null) ||
-             (accessType == 'GLOBAL_ROLE' && auth().role != null))
-        ] ||
-    // Allow access if project uses GLOBAL_ROLE and user has a valid role
-        (version.project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE') ||
-        (version.project.assignedUsers?[user.id == auth().id] &&
-         version.project.defaultAccessType == 'SPECIFIC_ROLE' && version.project.defaultRole != null) ||
-    // Default access for all users (not just assigned)
-        (version.project.defaultAccessType == 'SPECIFIC_ROLE' && version.project.defaultRole != null && auth().access != 'NONE') ||
-        (version.project.defaultAccessType == 'DEFAULT' && auth().access != 'NONE')
+        version.projectId in auth().accessibleProjectIds
     )
 
     // Create/update/delete access based on repository permissions
@@ -2311,25 +2228,13 @@ model Steps {
     @@deny('all', auth() == null)
     @@deny('all', auth().access == 'NONE')
 
-    // Inherit read access from test case's project
-    @@deny('read', testCase.project.userPermissions?[user.id == auth().id && accessType == 'NO_ACCESS'])
 
+    // Project membership resolved once per request via
+    // auth().accessibleProjectIds (see AuthCtx). Replaces the per-row
+    // testCase.project traversal; the id list already
+    // excludes NO_ACCESS-denied projects, so the paired @@deny is gone.
     @@allow('read',
-        testCase.project.creator.id == auth().id ||
-        testCase.project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE'] ||
-        testCase.project.userPermissions?[user.id == auth().id && accessType == 'GLOBAL_ROLE'] ||
-        testCase.project.groupPermissions?[
-            group.assignedUsers?[user.id == auth().id] &&
-            ((accessType == 'SPECIFIC_ROLE' && role != null) ||
-             (accessType == 'GLOBAL_ROLE' && auth().role != null))
-        ] ||
-    // Allow access if project uses GLOBAL_ROLE and user has a valid role
-        (testCase.project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE') ||
-        (testCase.project.assignedUsers?[user.id == auth().id] &&
-         testCase.project.defaultAccessType == 'SPECIFIC_ROLE' && testCase.project.defaultRole != null) ||
-    // Default access for all users (not just assigned)
-        (testCase.project.defaultAccessType == 'SPECIFIC_ROLE' && testCase.project.defaultRole != null && auth().access != 'NONE') ||
-        (testCase.project.defaultAccessType == 'DEFAULT' && auth().access != 'NONE')
+        testCase.projectId in auth().accessibleProjectIds
     )
 
     // Create/update/delete access based on repository permissions
@@ -2398,25 +2303,13 @@ model TestCaseParameter {
     @@deny('all', auth() == null)
     @@deny('all', auth().access == 'NONE')
 
-    // Inherit read access from test case's project
-    @@deny('read', testCase.project.userPermissions?[user.id == auth().id && accessType == 'NO_ACCESS'])
 
+    // Project membership resolved once per request via
+    // auth().accessibleProjectIds (see AuthCtx). Replaces the per-row
+    // testCase.project traversal; the id list already
+    // excludes NO_ACCESS-denied projects, so the paired @@deny is gone.
     @@allow('read',
-        testCase.project.creator.id == auth().id ||
-        testCase.project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE'] ||
-        testCase.project.userPermissions?[user.id == auth().id && accessType == 'GLOBAL_ROLE'] ||
-        testCase.project.groupPermissions?[
-            group.assignedUsers?[user.id == auth().id] &&
-            ((accessType == 'SPECIFIC_ROLE' && role != null) ||
-             (accessType == 'GLOBAL_ROLE' && auth().role != null))
-        ] ||
-    // Allow access if project uses GLOBAL_ROLE and user has a valid role
-        (testCase.project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE') ||
-        (testCase.project.assignedUsers?[user.id == auth().id] &&
-         testCase.project.defaultAccessType == 'SPECIFIC_ROLE' && testCase.project.defaultRole != null) ||
-    // Default access for all users (not just assigned)
-        (testCase.project.defaultAccessType == 'SPECIFIC_ROLE' && testCase.project.defaultRole != null && auth().access != 'NONE') ||
-        (testCase.project.defaultAccessType == 'DEFAULT' && auth().access != 'NONE')
+        testCase.projectId in auth().accessibleProjectIds
     )
 
     // Create/update/delete access based on repository permissions
@@ -2600,26 +2493,14 @@ model SessionResults {
     @@deny('all', auth() == null)
     @@deny('all', auth().access == 'NONE')
 
-    // Explicit NO_ACCESS denial
-    @@deny('read', session.project.userPermissions?[user.id == auth().id && accessType == 'NO_ACCESS'])
 
     // Inherit read access from session's project
+    // Project membership resolved once per request via
+    // auth().accessibleProjectIds (see AuthCtx). Replaces the per-row
+    // session.project traversal; the id list already
+    // excludes NO_ACCESS-denied projects, so the paired @@deny is gone.
     @@allow('read',
-        session.project.creator.id == auth().id ||
-        session.project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE'] ||
-        session.project.userPermissions?[user.id == auth().id && accessType == 'GLOBAL_ROLE'] ||
-        session.project.groupPermissions?[
-            group.assignedUsers?[user.id == auth().id] &&
-            ((accessType == 'SPECIFIC_ROLE' && role != null) ||
-             (accessType == 'GLOBAL_ROLE' && auth().role != null))
-        ] ||
-    // Allow access if project uses GLOBAL_ROLE and user has a valid role
-        (session.project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE') ||
-        (session.project.assignedUsers?[user.id == auth().id] &&
-         session.project.defaultAccessType == 'SPECIFIC_ROLE' && session.project.defaultRole != null) ||
-    // Default access for all users (not just assigned)
-        (session.project.defaultAccessType == 'SPECIFIC_ROLE' && session.project.defaultRole != null && auth().access != 'NONE') ||
-        (session.project.defaultAccessType == 'DEFAULT' && auth().access != 'NONE')
+        session.projectId in auth().accessibleProjectIds
     )
 
     // Create access for users with session result permissions
@@ -2787,25 +2668,13 @@ model SessionFieldValues {
     @@deny('all', auth() == null)
     @@deny('all', auth().access == 'NONE')
 
-    // Inherit read access from session's project
-    @@deny('read', session.project.userPermissions?[user.id == auth().id && accessType == 'NO_ACCESS'])
 
+    // Project membership resolved once per request via
+    // auth().accessibleProjectIds (see AuthCtx). Replaces the per-row
+    // session.project traversal; the id list already
+    // excludes NO_ACCESS-denied projects, so the paired @@deny is gone.
     @@allow('read',
-        session.project.creator.id == auth().id ||
-        session.project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE'] ||
-        session.project.userPermissions?[user.id == auth().id && accessType == 'GLOBAL_ROLE'] ||
-        session.project.groupPermissions?[
-            group.assignedUsers?[user.id == auth().id] &&
-            ((accessType == 'SPECIFIC_ROLE' && role != null) ||
-             (accessType == 'GLOBAL_ROLE' && auth().role != null))
-        ] ||
-    // Allow access if project uses GLOBAL_ROLE and user has a valid role
-        (session.project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE') ||
-        (session.project.assignedUsers?[user.id == auth().id] &&
-         session.project.defaultAccessType == 'SPECIFIC_ROLE' && session.project.defaultRole != null) ||
-    // Default access for all users (not just assigned)
-        (session.project.defaultAccessType == 'SPECIFIC_ROLE' && session.project.defaultRole != null && auth().access != 'NONE') ||
-        (session.project.defaultAccessType == 'DEFAULT' && auth().access != 'NONE')
+        session.projectId in auth().accessibleProjectIds
     )
 
     // Create/update/delete access inherits from session permissions
@@ -3039,26 +2908,14 @@ model TestRunCases {
     // DB-level backstop for the same rules.
     @@deny('create,delete', testRun.compositionLockedAt != null)
 
-    // Explicit NO_ACCESS denial
-    @@deny('read', testRun.project.userPermissions?[user.id == auth().id && accessType == 'NO_ACCESS'])
 
     // Inherit read access from test run's project
+    // Project membership resolved once per request via
+    // auth().accessibleProjectIds (see AuthCtx). Replaces the per-row
+    // testRun.project traversal; the id list already
+    // excludes NO_ACCESS-denied projects, so the paired @@deny is gone.
     @@allow('read',
-        testRun.project.creator.id == auth().id ||
-        testRun.project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE'] ||
-        testRun.project.userPermissions?[user.id == auth().id && accessType == 'GLOBAL_ROLE'] ||
-        testRun.project.groupPermissions?[
-            group.assignedUsers?[user.id == auth().id] &&
-            ((accessType == 'SPECIFIC_ROLE' && role != null) ||
-             (accessType == 'GLOBAL_ROLE' && auth().role != null))
-        ] ||
-    // Allow access if project uses GLOBAL_ROLE and user has a valid role
-        (testRun.project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE') ||
-        (testRun.project.assignedUsers?[user.id == auth().id] &&
-         testRun.project.defaultAccessType == 'SPECIFIC_ROLE' && testRun.project.defaultRole != null) ||
-    // Default access for all users (not just assigned)
-        (testRun.project.defaultAccessType == 'SPECIFIC_ROLE' && testRun.project.defaultRole != null && auth().access != 'NONE') ||
-        (testRun.project.defaultAccessType == 'DEFAULT' && auth().access != 'NONE')
+        testRun.projectId in auth().accessibleProjectIds
     )
 
     // Create access - creator or users with test run permissions
@@ -3172,26 +3029,14 @@ model TestRunResults {
     // (no recording or editing). Mirrors the case-level lock on TestRunCases.
     @@deny('create,update,delete', testRun.isCompleted)
 
-    // Explicit NO_ACCESS denial
-    @@deny('read', testRun.project.userPermissions?[user.id == auth().id && accessType == 'NO_ACCESS'])
 
     // Inherit read access from test run's project
+    // Project membership resolved once per request via
+    // auth().accessibleProjectIds (see AuthCtx). Replaces the per-row
+    // testRun.project traversal; the id list already
+    // excludes NO_ACCESS-denied projects, so the paired @@deny is gone.
     @@allow('read',
-        testRun.project.creator.id == auth().id ||
-        testRun.project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE'] ||
-        testRun.project.userPermissions?[user.id == auth().id && accessType == 'GLOBAL_ROLE'] ||
-        testRun.project.groupPermissions?[
-            group.assignedUsers?[user.id == auth().id] &&
-            ((accessType == 'SPECIFIC_ROLE' && role != null) ||
-             (accessType == 'GLOBAL_ROLE' && auth().role != null))
-        ] ||
-    // Allow access if project uses GLOBAL_ROLE and user has a valid role
-        (testRun.project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE') ||
-        (testRun.project.assignedUsers?[user.id == auth().id] &&
-         testRun.project.defaultAccessType == 'SPECIFIC_ROLE' && testRun.project.defaultRole != null) ||
-    // Default access for all users (not just assigned)
-        (testRun.project.defaultAccessType == 'SPECIFIC_ROLE' && testRun.project.defaultRole != null && auth().access != 'NONE') ||
-        (testRun.project.defaultAccessType == 'DEFAULT' && auth().access != 'NONE')
+        testRun.projectId in auth().accessibleProjectIds
     )
 
     // Create/update access - executor or users with result permissions
@@ -3258,26 +3103,14 @@ model TestRunStepResults {
     // Structural completion lock: step results on a completed run are frozen.
     @@deny('create,update,delete', testRunResult.testRun.isCompleted)
 
-    // Explicit NO_ACCESS denial
-    @@deny('read', testRunResult.testRun.project.userPermissions?[user.id == auth().id && accessType == 'NO_ACCESS'])
 
     // Inherit read access from test run result's project
+    // Project membership resolved once per request via
+    // auth().accessibleProjectIds (see AuthCtx). Replaces the per-row
+    // testRunResult.testRun.project traversal; the id list already
+    // excludes NO_ACCESS-denied projects, so the paired @@deny is gone.
     @@allow('read',
-        testRunResult.testRun.project.creator.id == auth().id ||
-        testRunResult.testRun.project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE'] ||
-        testRunResult.testRun.project.userPermissions?[user.id == auth().id && accessType == 'GLOBAL_ROLE'] ||
-        testRunResult.testRun.project.groupPermissions?[
-            group.assignedUsers?[user.id == auth().id] &&
-            ((accessType == 'SPECIFIC_ROLE' && role != null) ||
-             (accessType == 'GLOBAL_ROLE' && auth().role != null))
-        ] ||
-    // Allow access if project uses GLOBAL_ROLE and user has a valid role
-        (testRunResult.testRun.project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE') ||
-        (testRunResult.testRun.project.assignedUsers?[user.id == auth().id] &&
-         testRunResult.testRun.project.defaultAccessType == 'SPECIFIC_ROLE' && testRunResult.testRun.project.defaultRole != null) ||
-    // Default access for all users (not just assigned)
-        (testRunResult.testRun.project.defaultAccessType == 'SPECIFIC_ROLE' && testRunResult.testRun.project.defaultRole != null && auth().access != 'NONE') ||
-        (testRunResult.testRun.project.defaultAccessType == 'DEFAULT' && auth().access != 'NONE')
+        testRunResult.testRun.projectId in auth().accessibleProjectIds
     )
 
     // Create/update access - executor or users with result permissions
@@ -3347,26 +3180,14 @@ model TestRunCaseIteration {
     @@deny('all', auth() == null)
     @@deny('all', auth().access == 'NONE')
 
-    // Explicit NO_ACCESS denial
-    @@deny('read', testRunCase.testRun.project.userPermissions?[user.id == auth().id && accessType == 'NO_ACCESS'])
 
     // Inherit read access from test run case's project
+    // Project membership resolved once per request via
+    // auth().accessibleProjectIds (see AuthCtx). Replaces the per-row
+    // testRunCase.testRun.project traversal; the id list already
+    // excludes NO_ACCESS-denied projects, so the paired @@deny is gone.
     @@allow('read',
-        testRunCase.testRun.project.creator.id == auth().id ||
-        testRunCase.testRun.project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE'] ||
-        testRunCase.testRun.project.userPermissions?[user.id == auth().id && accessType == 'GLOBAL_ROLE'] ||
-        testRunCase.testRun.project.groupPermissions?[
-            group.assignedUsers?[user.id == auth().id] &&
-            ((accessType == 'SPECIFIC_ROLE' && role != null) ||
-             (accessType == 'GLOBAL_ROLE' && auth().role != null))
-        ] ||
-    // Allow access if project uses GLOBAL_ROLE and user has a valid role
-        (testRunCase.testRun.project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE') ||
-        (testRunCase.testRun.project.assignedUsers?[user.id == auth().id] &&
-         testRunCase.testRun.project.defaultAccessType == 'SPECIFIC_ROLE' && testRunCase.testRun.project.defaultRole != null) ||
-    // Default access for all users (not just assigned)
-        (testRunCase.testRun.project.defaultAccessType == 'SPECIFIC_ROLE' && testRunCase.testRun.project.defaultRole != null && auth().access != 'NONE') ||
-        (testRunCase.testRun.project.defaultAccessType == 'DEFAULT' && auth().access != 'NONE')
+        testRunCase.testRun.projectId in auth().accessibleProjectIds
     )
 
     // Create access - users with test run result permissions
@@ -3457,8 +3278,6 @@ model TestRunCaseDataSetSnapshot {
     @@deny('all', auth() == null)
     @@deny('all', auth().access == 'NONE')
 
-    // Explicit NO_ACCESS denial
-    @@deny('read', testRunCase.testRun.project.userPermissions?[user.id == auth().id && accessType == 'NO_ACCESS'])
 
     // Cross-project denial: a snapshot may not pin a version whose
     // parent dataset lives in a different project than the run.
@@ -3469,22 +3288,12 @@ model TestRunCaseDataSetSnapshot {
     )
 
     // Inherit read access from test run case's project
+    // Project membership resolved once per request via
+    // auth().accessibleProjectIds (see AuthCtx). Replaces the per-row
+    // testRunCase.testRun.project traversal; the id list already
+    // excludes NO_ACCESS-denied projects, so the paired @@deny is gone.
     @@allow('read',
-        testRunCase.testRun.project.creator.id == auth().id ||
-        testRunCase.testRun.project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE'] ||
-        testRunCase.testRun.project.userPermissions?[user.id == auth().id && accessType == 'GLOBAL_ROLE'] ||
-        testRunCase.testRun.project.groupPermissions?[
-            group.assignedUsers?[user.id == auth().id] &&
-            ((accessType == 'SPECIFIC_ROLE' && role != null) ||
-             (accessType == 'GLOBAL_ROLE' && auth().role != null))
-        ] ||
-    // Allow access if project uses GLOBAL_ROLE and user has a valid role
-        (testRunCase.testRun.project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE') ||
-        (testRunCase.testRun.project.assignedUsers?[user.id == auth().id] &&
-         testRunCase.testRun.project.defaultAccessType == 'SPECIFIC_ROLE' && testRunCase.testRun.project.defaultRole != null) ||
-    // Default access for all users (not just assigned)
-        (testRunCase.testRun.project.defaultAccessType == 'SPECIFIC_ROLE' && testRunCase.testRun.project.defaultRole != null && auth().access != 'NONE') ||
-        (testRunCase.testRun.project.defaultAccessType == 'DEFAULT' && auth().access != 'NONE')
+        testRunCase.testRun.projectId in auth().accessibleProjectIds
     )
 
     // Mutations are ADMIN-only via the enhanced client; Phase 3 server actions
@@ -3964,25 +3773,14 @@ model JUnitTestSuite {
     @@deny('all', auth() == null)
     @@deny('all', auth().access == 'NONE')
 
-    // Explicit NO_ACCESS denial
-    @@deny('read', testRun.project.userPermissions?[user.id == auth().id && accessType == 'NO_ACCESS'])
 
     // Allow read if user has access to the project through any means
+    // Project membership resolved once per request via
+    // auth().accessibleProjectIds (see AuthCtx). Replaces the per-row
+    // testRun.project traversal; the id list already
+    // excludes NO_ACCESS-denied projects, so the paired @@deny is gone.
     @@allow('read',
-        testRun.project.creator.id == auth().id ||
-        testRun.project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE'] ||
-        testRun.project.userPermissions?[user.id == auth().id && accessType == 'GLOBAL_ROLE'] ||
-        testRun.project.groupPermissions?[
-            group.assignedUsers?[user.id == auth().id] &&
-            ((accessType == 'SPECIFIC_ROLE' && role != null) ||
-             (accessType == 'GLOBAL_ROLE' && auth().role != null))
-        ] ||
-        (testRun.project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE') ||
-        (testRun.project.assignedUsers?[user.id == auth().id] &&
-         testRun.project.defaultAccessType == 'SPECIFIC_ROLE' && testRun.project.defaultRole != null) ||
-    // Default access for all users (not just assigned)
-        (testRun.project.defaultAccessType == 'SPECIFIC_ROLE' && testRun.project.defaultRole != null && auth().access != 'NONE') ||
-        (testRun.project.defaultAccessType == 'DEFAULT' && auth().access != 'NONE')
+        testRun.projectId in auth().accessibleProjectIds
     )
     @@allow('create,update', auth().id == createdById)
     @@allow('all', auth().access == 'PROJECTADMIN' || auth().access == 'ADMIN')
@@ -4017,25 +3815,14 @@ model JUnitTestResult {
     @@deny('all', auth() == null)
     @@deny('all', auth().access == 'NONE')
 
-    // Explicit NO_ACCESS denial (through test suite's test run)
-    @@deny('read', testSuite.testRun.project.userPermissions?[user.id == auth().id && accessType == 'NO_ACCESS'])
 
     // Inherit read access from test suite's project
+    // Project membership resolved once per request via
+    // auth().accessibleProjectIds (see AuthCtx). Replaces the per-row
+    // testSuite.testRun.project traversal; the id list already
+    // excludes NO_ACCESS-denied projects, so the paired @@deny is gone.
     @@allow('read',
-        testSuite.testRun.project.creator.id == auth().id ||
-        testSuite.testRun.project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE'] ||
-        testSuite.testRun.project.userPermissions?[user.id == auth().id && accessType == 'GLOBAL_ROLE'] ||
-        testSuite.testRun.project.groupPermissions?[
-            group.assignedUsers?[user.id == auth().id] &&
-            ((accessType == 'SPECIFIC_ROLE' && role != null) ||
-             (accessType == 'GLOBAL_ROLE' && auth().role != null))
-        ] ||
-        (testSuite.testRun.project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE') ||
-        (testSuite.testRun.project.assignedUsers?[user.id == auth().id] &&
-         testSuite.testRun.project.defaultAccessType == 'SPECIFIC_ROLE' && testSuite.testRun.project.defaultRole != null) ||
-    // Default access for all users (not just assigned)
-        (testSuite.testRun.project.defaultAccessType == 'SPECIFIC_ROLE' && testSuite.testRun.project.defaultRole != null && auth().access != 'NONE') ||
-        (testSuite.testRun.project.defaultAccessType == 'DEFAULT' && auth().access != 'NONE')
+        testSuite.testRun.projectId in auth().accessibleProjectIds
     )
 
     @@allow('create,update', auth().id == createdById)
@@ -4121,25 +3908,14 @@ model JUnitAttachment {
     @@deny('all', auth() == null)
     @@deny('all', auth().access == 'NONE')
 
-    // Explicit NO_ACCESS denial
-    @@deny('read', repositoryCase.project.userPermissions?[user.id == auth().id && accessType == 'NO_ACCESS'])
 
     // Inherit read access from repository case's project
+    // Project membership resolved once per request via
+    // auth().accessibleProjectIds (see AuthCtx). Replaces the per-row
+    // repositoryCase.project traversal; the id list already
+    // excludes NO_ACCESS-denied projects, so the paired @@deny is gone.
     @@allow('read',
-        repositoryCase.project.creator.id == auth().id ||
-        repositoryCase.project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE'] ||
-        repositoryCase.project.userPermissions?[user.id == auth().id && accessType == 'GLOBAL_ROLE'] ||
-        repositoryCase.project.groupPermissions?[
-            group.assignedUsers?[user.id == auth().id] &&
-            ((accessType == 'SPECIFIC_ROLE' && role != null) ||
-             (accessType == 'GLOBAL_ROLE' && auth().role != null))
-        ] ||
-        (repositoryCase.project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE') ||
-        (repositoryCase.project.assignedUsers?[user.id == auth().id] &&
-         repositoryCase.project.defaultAccessType == 'SPECIFIC_ROLE' && repositoryCase.project.defaultRole != null) ||
-    // Default access for all users (not just assigned)
-        (repositoryCase.project.defaultAccessType == 'SPECIFIC_ROLE' && repositoryCase.project.defaultRole != null && auth().access != 'NONE') ||
-        (repositoryCase.project.defaultAccessType == 'DEFAULT' && auth().access != 'NONE')
+        repositoryCase.projectId in auth().accessibleProjectIds
     )
 
     @@allow('create,update', auth().id == createdById)
@@ -4162,25 +3938,14 @@ model JUnitTestStep {
     @@deny('all', auth() == null)
     @@deny('all', auth().access == 'NONE')
 
-    // Explicit NO_ACCESS denial
-    @@deny('read', repositoryCase.project.userPermissions?[user.id == auth().id && accessType == 'NO_ACCESS'])
 
     // Inherit read access from repository case's project
+    // Project membership resolved once per request via
+    // auth().accessibleProjectIds (see AuthCtx). Replaces the per-row
+    // repositoryCase.project traversal; the id list already
+    // excludes NO_ACCESS-denied projects, so the paired @@deny is gone.
     @@allow('read',
-        repositoryCase.project.creator.id == auth().id ||
-        repositoryCase.project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE'] ||
-        repositoryCase.project.userPermissions?[user.id == auth().id && accessType == 'GLOBAL_ROLE'] ||
-        repositoryCase.project.groupPermissions?[
-            group.assignedUsers?[user.id == auth().id] &&
-            ((accessType == 'SPECIFIC_ROLE' && role != null) ||
-             (accessType == 'GLOBAL_ROLE' && auth().role != null))
-        ] ||
-        (repositoryCase.project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE') ||
-        (repositoryCase.project.assignedUsers?[user.id == auth().id] &&
-         repositoryCase.project.defaultAccessType == 'SPECIFIC_ROLE' && repositoryCase.project.defaultRole != null) ||
-    // Default access for all users (not just assigned)
-        (repositoryCase.project.defaultAccessType == 'SPECIFIC_ROLE' && repositoryCase.project.defaultRole != null && auth().access != 'NONE') ||
-        (repositoryCase.project.defaultAccessType == 'DEFAULT' && auth().access != 'NONE')
+        repositoryCase.projectId in auth().accessibleProjectIds
     )
 
     @@allow('create,update', auth().id == createdById)
@@ -4267,26 +4032,14 @@ model SharedStepItem {
     @@deny('all', auth() == null)
     @@deny('all', auth().access == 'NONE')
 
-    // Explicit NO_ACCESS denial
-    @@deny('read', sharedStepGroup.project.userPermissions?[user.id == auth().id && accessType == 'NO_ACCESS'])
 
     // Inherit read access from shared step group's project
+    // Project membership resolved once per request via
+    // auth().accessibleProjectIds (see AuthCtx). Replaces the per-row
+    // sharedStepGroup.project traversal; the id list already
+    // excludes NO_ACCESS-denied projects, so the paired @@deny is gone.
     @@allow('read',
-        sharedStepGroup.project.creator.id == auth().id ||
-        sharedStepGroup.project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE'] ||
-        sharedStepGroup.project.userPermissions?[user.id == auth().id && accessType == 'GLOBAL_ROLE'] ||
-        sharedStepGroup.project.groupPermissions?[
-            group.assignedUsers?[user.id == auth().id] &&
-            ((accessType == 'SPECIFIC_ROLE' && role != null) ||
-             (accessType == 'GLOBAL_ROLE' && auth().role != null))
-        ] ||
-    // Allow access if project uses GLOBAL_ROLE and user has a valid role
-        (sharedStepGroup.project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE') ||
-        (sharedStepGroup.project.assignedUsers?[user.id == auth().id] &&
-         sharedStepGroup.project.defaultAccessType == 'SPECIFIC_ROLE' && sharedStepGroup.project.defaultRole != null) ||
-    // Default access for all users (not just assigned)
-        (sharedStepGroup.project.defaultAccessType == 'SPECIFIC_ROLE' && sharedStepGroup.project.defaultRole != null && auth().access != 'NONE') ||
-        (sharedStepGroup.project.defaultAccessType == 'DEFAULT' && auth().access != 'NONE')
+        sharedStepGroup.projectId in auth().accessibleProjectIds
     )
 
     // Create/update/delete access based on shared steps permissions
@@ -4392,26 +4145,14 @@ model DataSetRow {
     @@deny('all', auth() == null)
     @@deny('all', auth().access == 'NONE')
 
-    // Explicit NO_ACCESS denial
-    @@deny('read', dataSet.project.userPermissions?[user.id == auth().id && accessType == 'NO_ACCESS'])
 
     // Inherit read access from data set's project
+    // Project membership resolved once per request via
+    // auth().accessibleProjectIds (see AuthCtx). Replaces the per-row
+    // dataSet.project traversal; the id list already
+    // excludes NO_ACCESS-denied projects, so the paired @@deny is gone.
     @@allow('read',
-        dataSet.project.creator.id == auth().id ||
-        dataSet.project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE'] ||
-        dataSet.project.userPermissions?[user.id == auth().id && accessType == 'GLOBAL_ROLE'] ||
-        dataSet.project.groupPermissions?[
-            group.assignedUsers?[user.id == auth().id] &&
-            ((accessType == 'SPECIFIC_ROLE' && role != null) ||
-             (accessType == 'GLOBAL_ROLE' && auth().role != null))
-        ] ||
-    // Allow access if project uses GLOBAL_ROLE and user has a valid role
-        (dataSet.project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE') ||
-        (dataSet.project.assignedUsers?[user.id == auth().id] &&
-         dataSet.project.defaultAccessType == 'SPECIFIC_ROLE' && dataSet.project.defaultRole != null) ||
-    // Default access for all users (not just assigned)
-        (dataSet.project.defaultAccessType == 'SPECIFIC_ROLE' && dataSet.project.defaultRole != null && auth().access != 'NONE') ||
-        (dataSet.project.defaultAccessType == 'DEFAULT' && auth().access != 'NONE')
+        dataSet.projectId in auth().accessibleProjectIds
     )
 
     // Create/update/delete access based on shared steps permissions
@@ -4454,25 +4195,13 @@ model DataSetVersion {
     @@deny('all', auth() == null)
     @@deny('all', auth().access == 'NONE')
 
-    // Inherit read access from parent DataSet's project (mirrors DataSetRow).
-    @@deny('read', dataSet.project.userPermissions?[user.id == auth().id && accessType == 'NO_ACCESS'])
 
+    // Project membership resolved once per request via
+    // auth().accessibleProjectIds (see AuthCtx). Replaces the per-row
+    // dataSet.project traversal; the id list already
+    // excludes NO_ACCESS-denied projects, so the paired @@deny is gone.
     @@allow('read',
-        dataSet.project.creator.id == auth().id ||
-        dataSet.project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE'] ||
-        dataSet.project.userPermissions?[user.id == auth().id && accessType == 'GLOBAL_ROLE'] ||
-        dataSet.project.groupPermissions?[
-            group.assignedUsers?[user.id == auth().id] &&
-            ((accessType == 'SPECIFIC_ROLE' && role != null) ||
-             (accessType == 'GLOBAL_ROLE' && auth().role != null))
-        ] ||
-    // Allow access if project uses GLOBAL_ROLE and user has a valid role
-        (dataSet.project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE') ||
-        (dataSet.project.assignedUsers?[user.id == auth().id] &&
-         dataSet.project.defaultAccessType == 'SPECIFIC_ROLE' && dataSet.project.defaultRole != null) ||
-    // Default access for all users (not just assigned)
-        (dataSet.project.defaultAccessType == 'SPECIFIC_ROLE' && dataSet.project.defaultRole != null && auth().access != 'NONE') ||
-        (dataSet.project.defaultAccessType == 'DEFAULT' && auth().access != 'NONE')
+        dataSet.projectId in auth().accessibleProjectIds
     )
 
     // Create/update/delete access based on shared steps permissions (mirrors DataSet).
@@ -4521,25 +4250,13 @@ model CaseSharedDataSetAssignment {
     // live in the same project as the case being assigned.
     @@deny('create,update', sharedDataSet.projectId != case.projectId)
 
-    // Inherit read access from the case's project (mirrors TestCaseParameter).
-    @@deny('read', case.project.userPermissions?[user.id == auth().id && accessType == 'NO_ACCESS'])
 
+    // Project membership resolved once per request via
+    // auth().accessibleProjectIds (see AuthCtx). Replaces the per-row
+    // case.project traversal; the id list already
+    // excludes NO_ACCESS-denied projects, so the paired @@deny is gone.
     @@allow('read',
-        case.project.creator.id == auth().id ||
-        case.project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE'] ||
-        case.project.userPermissions?[user.id == auth().id && accessType == 'GLOBAL_ROLE'] ||
-        case.project.groupPermissions?[
-            group.assignedUsers?[user.id == auth().id] &&
-            ((accessType == 'SPECIFIC_ROLE' && role != null) ||
-             (accessType == 'GLOBAL_ROLE' && auth().role != null))
-        ] ||
-    // Allow access if project uses GLOBAL_ROLE and user has a valid role
-        (case.project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE') ||
-        (case.project.assignedUsers?[user.id == auth().id] &&
-         case.project.defaultAccessType == 'SPECIFIC_ROLE' && case.project.defaultRole != null) ||
-    // Default access for all users (not just assigned)
-        (case.project.defaultAccessType == 'SPECIFIC_ROLE' && case.project.defaultRole != null && auth().access != 'NONE') ||
-        (case.project.defaultAccessType == 'DEFAULT' && auth().access != 'NONE')
+        case.projectId in auth().accessibleProjectIds
     )
 
     // Create/update/delete access based on TestCaseRepository permissions
@@ -4954,22 +4671,12 @@ model IntegrationProject {
 
     // Access control — mirrors ProjectIntegration pattern
     @@deny('all', auth() == null)
-    @@deny('read', projectIntegration.project.userPermissions?[user.id == auth().id && accessType == 'NO_ACCESS'])
+    // Project membership resolved once per request via
+    // auth().accessibleProjectIds (see AuthCtx). Replaces the per-row
+    // projectIntegration.project traversal; the id list already
+    // excludes NO_ACCESS-denied projects, so the paired @@deny is gone.
     @@allow('read',
-        projectIntegration.project.creator.id == auth().id ||
-        projectIntegration.project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE'] ||
-        projectIntegration.project.userPermissions?[user.id == auth().id && accessType == 'GLOBAL_ROLE'] ||
-        projectIntegration.project.groupPermissions?[
-            group.assignedUsers?[user.id == auth().id] &&
-            ((accessType == 'SPECIFIC_ROLE' && role != null) ||
-             (accessType == 'GLOBAL_ROLE' && auth().role != null))
-        ] ||
-        (projectIntegration.project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE') ||
-        (projectIntegration.project.assignedUsers?[user.id == auth().id] &&
-         projectIntegration.project.defaultAccessType == 'SPECIFIC_ROLE' && projectIntegration.project.defaultRole != null) ||
-    // Default access for all users (not just assigned)
-        (projectIntegration.project.defaultAccessType == 'SPECIFIC_ROLE' && projectIntegration.project.defaultRole != null && auth().access != 'NONE') ||
-        (projectIntegration.project.defaultAccessType == 'DEFAULT' && auth().access != 'NONE')
+        projectIntegration.projectId in auth().accessibleProjectIds
     )
     @@allow('create,update,delete',
         projectIntegration.project.creator.id == auth().id ||

@@ -37,6 +37,7 @@ async function fetchAuthUser(userId: string) {
 interface Fixture {
   projectId: number;
   runId: number;
+  suiteId: number; // JUnitTestSuite under the run — a one-hop child (testRun.projectId)
   creator: AuthUser;
   groupGlobalMember: AuthUser; // access purely via a group with GLOBAL_ROLE
   deniedMember: AuthUser; // in the same group, but per-user NO_ACCESS
@@ -124,9 +125,22 @@ async function setupFixture(): Promise<Fixture> {
     },
   });
 
+  // A one-hop child of the run. Its read rule is
+  // `testRun.projectId in auth().accessibleProjectIds` — it has no projectId of
+  // its own, so this proves the Phase 2 traversal rewrite inherits the parent
+  // project's access.
+  const suite = await db.jUnitTestSuite.create({
+    data: {
+      name: `${TAG}-suite`,
+      testRunId: run.id,
+      createdById: creatorRow.id,
+    },
+  });
+
   return {
     projectId: project.id,
     runId: run.id,
+    suiteId: suite.id,
     creator: await fetchAuthUser(creatorRow.id),
     groupGlobalMember: await fetchAuthUser(groupGlobalRow.id),
     deniedMember: await fetchAuthUser(deniedRow.id),
@@ -144,6 +158,11 @@ async function cleanupFixture(f: Fixture | null): Promise<void> {
       /* best-effort */
     }
   };
+  await safe(() =>
+    db.jUnitTestSuite.deleteMany({
+      where: { name: { startsWith: TAG } },
+    })
+  );
   await safe(() =>
     db.testRuns.updateMany({
       where: { name: { startsWith: TAG } },
@@ -241,3 +260,37 @@ describeIntegration("project read access via accessibleProjectIds", () => {
     expect(memberRows.map((r) => r.id)).toContain(fixture.runId);
   });
 });
+
+// Phase 2: child models with no projectId of their own inherit the parent
+// project's access via `<relation>.projectId in auth().accessibleProjectIds`.
+// A JUnitTestSuite (one-hop child of TestRuns) must be visible to exactly the
+// same users as its parent run.
+describeIntegration(
+  "child-model read access via parent-project traversal",
+  () => {
+    const canSeeSuite = async (user: AuthUser) => {
+      if (!fixture) throw new Error("fixture not initialized");
+      const enhanced = await getAuthDb(user);
+      const row = await enhanced.jUnitTestSuite.findUnique({
+        where: { id: fixture.suiteId },
+      });
+      return row !== null;
+    };
+
+    it("a group GLOBAL_ROLE member sees the child suite (inherits the run's project access)", async () => {
+      expect(await canSeeSuite(fixture!.groupGlobalMember)).toBe(true);
+    });
+
+    it("a per-user NO_ACCESS row hides the child suite too", async () => {
+      expect(await canSeeSuite(fixture!.deniedMember)).toBe(false);
+    });
+
+    it("an outsider cannot see the child suite", async () => {
+      expect(await canSeeSuite(fixture!.outsider)).toBe(false);
+    });
+
+    it("a system ADMIN sees the child suite", async () => {
+      expect(await canSeeSuite(fixture!.admin)).toBe(true);
+    });
+  }
+);
