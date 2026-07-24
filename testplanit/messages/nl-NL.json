@@ -3474,8 +3474,11 @@
       "gatedOptionBadge": "Vereist beoordeling",
       "gatedStatesNotSelectable": "Staten die zich op of voorbij een afgesloten staat bevinden, kunnen niet worden geselecteerd bij het aanmaken van een aanvraag. Kies een staat vóór de eerste afgesloten staat en gebruik vervolgens 'Beoordeling aanvragen' om deze te passeren.",
       "saveBlockedByFormErrors": "Los de gemarkeerde formulierfouten op voordat u opslaat.",
-      "bulkBlockedSummary": "{count, plural, one {# geval} other {# gevallen}} geblokkeerd door poort \"{gateName}\": {sampleNames}{more, plural, =0 {} other {, en # meer}}. Elk geblokkeerd geval heeft een goedgekeurde beoordeling nodig voor \"{gateName}\" voordat deze overgang plaatsvindt.",
-      "toastReviewRequired": "Goedkeuring is vereist vóór deze overgang. Vraag een beoordeling aan — de overgang wordt voor u toegepast zodra deze is goedgekeurd.",
+      "bulkBlockedHeading": "{count, plural, one {# testgeval} other {# testgevallen}} geblokkeerd door poort \"{gateName}\":",
+      "bulkBlockedHeadingMixed": "{count, plural, one {# testgeval heeft} other {# testgevallen hebben}} goedkeuring nodig vóór deze overgang:",
+      "bulkBlockedMore": "en {count, plural, one {# extra testgeval} other {# extra testgevallen}}",
+      "bulkBlockedFooter": "Elk geblokkeerd testgeval heeft een goedgekeurde beoordeling nodig vóór deze overgang.",
+      "toastReviewRequired": "Goedkeuring is vereist vóór deze overgang. Vraag een beoordeling aan — de overgang wordt automatisch toegepast zodra deze is goedgekeurd.",
       "toastPendingReviewExists": "Er loopt al een beoordeling voor deze overgang. Wacht op de beslissing of annuleer de overgang voordat u het opnieuw probeert."
     },
     "inbox": {
@@ -3530,6 +3533,20 @@
       "ineligibleAssigneeErrorUser": "{name} kan geen beoordelingen voor dit gebied goedkeuren. Kies een andere gebruiker of een rol.",
       "ineligibleAssigneeErrorRole": "De rol {roleName} kan geen beoordelingen voor dit gebied goedkeuren. Kies een andere rol of een gebruiker."
     },
+    "bulkRequester": {
+      "saveAndRequestButton": "Opslaan & beoordeling aanvragen",
+      "sheetDescription": "{count, plural, one {# geselecteerd testgeval heeft} other {# geselecteerde testgevallen hebben}} goedkeuring nodig voordat \"{targetStateName}\" wordt bereikt. Elk testgeval wordt ingediend voor de eerste poortstatus die het moet passeren.",
+      "breakdownLabel": "Aan te vragen beoordelingen",
+      "breakdownRow": "{count, plural, one {# testgeval} other {# testgevallen}}",
+      "autoCommentNote": "Elk testgeval krijgt een automatische opmerking met de naam van zijn eigen overgang, en de beoordelaar wordt eenmaal op de hoogte gebracht voor de hele batch.",
+      "otherEditsNote": "Uw overige veldwijzigingen worden toegepast wanneer u indient. De statuswijziging wacht op goedkeuring.",
+      "pendingSkipNote": "{count, plural, one {# testgeval wacht al op beoordeling en wordt overgeslagen.} other {# testgevallen wachten al op beoordeling en worden overgeslagen.}}",
+      "submitSuccess": "{count, plural, one {# beoordelingsverzoek aangemaakt} other {# beoordelingsverzoeken aangemaakt}}.",
+      "submitSuccessWithSkips": "{created, plural, one {# beoordelingsverzoek aangemaakt} other {# beoordelingsverzoeken aangemaakt}}, {skipped, plural, one {# overgeslagen} other {# overgeslagen}} (al in afwachting van beoordeling).",
+      "nothingToRequest": "Er waren geen beoordelingsverzoeken nodig voor de geselecteerde testgevallen.",
+      "editsAppliedNoRequests": "Uw wijzigingen zijn opgeslagen. Er waren geen beoordelingsverzoeken nodig.",
+      "selectionTooLarge": "Er zijn te veel testgevallen geselecteerd om in één keer een beoordeling aan te vragen. Selecteer er minder en probeer het opnieuw."
+    },
     "assigneeChip": {
       "emptyMembers": "Geen enkel projectlid bekleedt deze functie.",
       "unnamedUser": "(onbekende gebruiker)"
@@ -3539,7 +3556,7 @@
       "requestChanges": "Verzoek om wijzigingen",
       "reject": "Afwijzen",
       "approveConfirmTitle": "Wilt u dit beoordelingsverzoek goedkeuren?",
-      "approveConfirmDescription": "Goedkeuren verplaatst <name></name> naar <state></state> voor <requester></requester>.",
+      "approveConfirmDescription": "Goedkeuring verplaatst <name></name> naar <state></state> voor <requester></requester>.",
       "approvalNoteLabel": "Goedkeuringsnota",
       "approvalNotePlaceholder": "Voeg een optionele notitie voor de aanvrager toe (zichtbaar naast de goedkeuring).",
       "requestChangesDescription": "Vertel de aanvrager wat er moet veranderen voordat je deze overgang kunt goedkeuren.",
@@ -6090,6 +6107,13 @@
         "reviewEntityLabelCase": "testgeval",
         "reviewEntityLabelRun": "testrun",
         "reviewEntityLabelSession": "sessie",
+        "reviewBulkEntityLabelCase": "testgevallen",
+        "reviewBulkEntityLabelRun": "testruns",
+        "reviewBulkEntityLabelSession": "sessies",
+        "reviewBulkSummaryCase": "{count} testgevallen",
+        "reviewBulkSummaryRun": "{count} testruns",
+        "reviewBulkSummarySession": "{count} sessies",
+        "reviewBulkRequestedEmailMessage": "{actorName} heeft uw beoordeling van {count} {entityLabel} in project \"{projectName}\" aangevraagd.",
         "reviewTransition": "Overgang: {from} → {to}",
         "reviewCommentPreview": "Opmerking: {comment}",
         "reviewRequestedEmailMessage": "{actorName} heeft uw beoordeling van {entityLabel} \"{entityName}\" in project \"{projectName} \" aangevraagd.",
@@ -6649,7 +6673,7 @@
       "isDefault": "## Standaard\nGeeft aan of deze workflow de standaard is voor uw project.\n\n- De standaardworkflow is vooraf geselecteerd voor nieuwe testruns, sessies en automatisering.",
       "isEnabled": "## Ingeschakeld\nGeeft aan of deze workflow is ingeschakeld.",
       "isActive": "## Actief\nGeeft aan of deze workflowstatus actief en beschikbaar is voor gebruik.\n\n- Actieve workflows kunnen worden geselecteerd bij het bijwerken van testruns, sessies of automatisering.\n- Inactieve workflows zijn niet selecteerbaar, maar blijven behouden in bestaande items.",
-      "requiresReview": "## Vereist beoordeling\nWanneer AAN, is de overgang van een case, testrun of sessie NAAR deze status afhankelijk van een goedgekeurd beoordelingsverzoek. Zonder een goedgekeurd verzoek wordt de overgang geblokkeerd.\n\n- Het goedkeuren van een verzoek voert de overgang uit. De goedkeuring van de beoordelaar verplaatst de case, run of sessie naar de gevraagde status; de aanvrager hoeft de statuswijziging niet handmatig te herhalen.\n- Bestaande, nog niet uitgevoerde beoordelingen worden stilzwijgend bewaard wanneer de systeemfunctie UIT staat en verschijnen opnieuw wanneer deze weer wordt ingeschakeld.\n- De beoordelaar wordt geselecteerd wanneer een tester op 'Beoordeling aanvragen' klikt op de detailpagina van de entiteit.\n\nAls de systeemfunctie is uitgeschakeld, is deze schakelaar vergrendeld. Schakel deze opnieuw in via de kaart 'Beoordelingsworkflow' hierboven om deze in te schakelen.",
+      "requiresReview": "## Vereist beoordeling\nWanneer AAN, is de overgang van een testgeval, testrun of sessie NAAR deze status afhankelijk van een goedgekeurd beoordelingsverzoek. Zonder een goedgekeurd verzoek wordt de overgang geblokkeerd.\n\n- Het goedkeuren van een verzoek voert de overgang uit. De goedkeuring van de beoordelaar verplaatst het testgeval, de run of de sessie naar de gevraagde status; de aanvrager hoeft de statuswijziging niet handmatig te herhalen.\n- Bestaande, nog niet uitgevoerde beoordelingen worden stilzwijgend bewaard wanneer de systeemfunctie UIT staat en verschijnen opnieuw wanneer deze weer wordt ingeschakeld.\n- De beoordelaar wordt geselecteerd wanneer een tester op 'Beoordeling aanvragen' klikt op de detailpagina van de entiteit.\n\nAls de systeemfunctie is uitgeschakeld, is deze schakelaar vergrendeld. Schakel deze opnieuw in via de kaart 'Beoordelingsworkflow' hierboven om deze in te schakelen.",
       "projects": "## Projecten\nGeeft de projecten aan die deze workflow kunnen gebruiken."
     },
     "testResult": {

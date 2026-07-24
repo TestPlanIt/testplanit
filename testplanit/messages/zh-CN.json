@@ -13,6 +13,7 @@
     "file": "文件",
     "selectMultiple": "选择多个...",
     "searchUsers": "搜索用户...",
+    "searchGroups": "搜索组……",
     "searchCases": "{count, plural, =0 {搜索案例} one {搜索案例数} other {搜索案例数}}",
     "searchProjects": "{count, plural, =0 {搜索项目} one {搜索项目数量} other {搜索项目数量}}",
     "searchTags": "搜索标签...",
@@ -382,7 +383,8 @@
         "notificationSettings": "通知全局设置",
         "elasticsearch_replicas": "Elasticsearch 副本",
         "review_feature_enabled": "已启用审核和批准功能",
-        "review_reminder_threshold_days": "提醒审稿人阈值日"
+        "review_reminder_threshold_days": "提醒审稿人阈值日",
+        "record_key_enabled": "记录键已启用"
       },
       "options": {
         "label": "标签",
@@ -742,6 +744,7 @@
       "noCases": "没有测试用例",
       "unknown": "未知",
       "selectedTestCases": "选定的测试用例",
+      "selectedTestCasesCount": "{count, plural, other {# 个已选定的测试用例}}",
       "editToModifyCasesTitle": "此列表无法修改。",
       "editToModifyCases": "编辑测试运行，然后单击“选定的测试用例”来修改列表。",
       "noTestCasesSelected": "未选择任何测试用例",
@@ -800,7 +803,8 @@
     "table": {
       "columns": {
         "columns": "列",
-        "required": "（必需的）"
+        "required": "（必需的）",
+        "resetColumns": "将列重置为默认值"
       },
       "filter": "筛选列表...",
       "selectNone": "选择“无”",
@@ -1304,7 +1308,14 @@
         "saveButton": "节省",
         "saveSuccess": "迭代属性名称已保存。",
         "saveError": "无法保存迭代属性名称。",
-        "removeAria": "移除 {name}"
+        "removeAria": "移除 {name}",
+        "counter": "{count}/{max}",
+        "constraints": "最多 {max} 个属性，每个属性最多 {maxLength} 个字符，且不能包含空格。",
+        "limitReached": "您已达到最多 {max} 个属性的上限。请删除一个后再添加。",
+        "errorTooLong": "请将每个属性名称保持在 {maxLength} 个字符以内。",
+        "errorWhitespace": "属性名称不能包含空格。",
+        "errorReserved": "“{name}” 是保留字，无法使用。",
+        "errorDuplicate": "“{name}” 已在列表中。"
       },
       "integrations": {
         "description": "管理此项目的第三方问题集成",
@@ -1921,7 +1932,9 @@
           "description": "Valkey 会缓存文件，以便在 AI 生成过程中快速访问。",
           "enableLabel": "启用文件缓存",
           "disabledWarning": "文件缓存已禁用。导出时，代码库文件将直接从您的代码提供商处获取，不会存储在 TestPlanIt 中。AI 驱动的 QuickScript 仍将包含代码上下文，但每次导出都会向您的代码库发出实时请求。",
-          "ttlLabel": "缓存持续时间（天）",
+          "ttlBefore": "缓存",
+          "ttlDays": "{count, plural, other {天}}",
+          "ttlAriaLabel": "缓存持续天数",
           "statusTitle": "缓存状态",
           "refreshButton": "刷新缓存",
           "listingFiles": "文件列表…",
@@ -1988,7 +2001,7 @@
         },
         "reviewWorkflow": {
           "label": "启用审核工作流程",
-          "description": "启用此功能后，需要审核的状态转换将由已批准的审核请求控制。测试人员会看到“请求审核”按钮；审核人员会收到通知，批准请求后将应用该转换。",
+          "description": "启用此功能后，需要审核的状态转换将由已批准的审核请求控制。测试人员会看到“请求审核”按钮；审核人员会收到通知，批准请求后即会应用该转换。",
           "enabledToast": "此项目已启用审核工作流程",
           "disabledToast": "此项目的审核工作流程已禁用",
           "saveError": "更新审核工作流程设置失败",
@@ -2029,10 +2042,13 @@
         "editWindow": {
           "label": "结果编辑窗口",
           "description": "结果记录后，仍可在一段时间内进行编辑。窗口关闭后，修改需要重新尝试。系统管理员始终可以进行编辑。",
-          "modeInherit": "继承系统默认值",
+          "modeInheritMinutes": "继承系统默认值（{minutes, plural, other {# 分钟}}）",
+          "modeInheritNoLimit": "继承系统默认值（无限制）",
           "modeDisable": "禁用此项目的编辑功能",
           "modeCustom": "自定义窗口",
-          "minutesLabel": "可编辑时长（分钟）",
+          "minutesBefore": "可编辑",
+          "minutesUnit": "{minutes, plural, other {分钟}}",
+          "minutesAriaLabel": "编辑窗口分钟数",
           "systemMaxHint": "系统最大值： {minutes} 分钟",
           "systemLockedTitle": "系统范围内已禁用编辑功能",
           "systemLockedDescription": "系统管理员已禁用所有项目的就地结果编辑功能，因此本项目无法启用该功能。",
@@ -2668,8 +2684,8 @@
       "notFound": "未找到测试用例版本。",
       "detailsRegion": "测试用例详情",
       "metadataRegion": "测试用例元数据",
-      "versionCreated": "版本 {version} 创建",
-      "latestVersionUpdated": "最新版本 {version, number} 已更新",
+      "versionCreated": "版本 {version}",
+      "latestVersionUpdated": "版本 {version, number}（最新）",
       "historyView": "测试用例历史记录视图"
     },
     "auditLog": {
@@ -2766,6 +2782,7 @@
       "modifierHintMac": "按住 ⇧ 移动或按住 ⌥ 复制，拖动即可跳过此菜单。",
       "modifierHintWin": "按住Shift键移动或按住Ctrl键复制，拖动即可跳过此菜单。",
       "dropZoneReorder": "放置以重新排序",
+      "dropZoneFolder": "拖放到文件夹上以嵌套，或拖放到文件夹之间以重新排序",
       "dropZoneTreeMac": "放置到文件夹 — 按住 ⇧ 移动，⌥ 复制",
       "dropZoneTreeWin": "放置到文件夹 — 按住 Shift 移动，Ctrl 复制",
       "dropZoneTreeMove": "放置到文件夹以移动",
@@ -3457,8 +3474,11 @@
       "gatedOptionBadge": "需要审核",
       "gatedStatesNotSelectable": "创建时无法选择位于或超出限制状态的状态。请选择第一个限制状态之前的状态，然后使用“请求审核”功能跨越该限制。",
       "saveBlockedByFormErrors": "保存前请解决高亮显示的表单错误。",
-      "bulkBlockedSummary": "{count, plural, one {# 案例} other {# 案例}} 被门禁“{gateName}”阻止： {sampleNames}{more, plural, =0 {} other {，以及 # 更多}}。每个被阻止的案例都需要经过“{gateName}”的批准审核才能进行此转换。",
-      "toastReviewRequired": "此变更需经批准后方可生效。请申请审核 — 审核通过后系统将自动为您应用该转换。",
+      "bulkBlockedHeading": "{count, plural, other {# 个用例}}被网关“{gateName}”阻止：",
+      "bulkBlockedHeadingMixed": "{count, plural, other {# 个用例}}在此转换之前需要审批：",
+      "bulkBlockedMore": "以及另外 {count, plural, other {# 个用例}}",
+      "bulkBlockedFooter": "每个被阻止的用例在此转换之前都需要经过已批准的审核。",
+      "toastReviewRequired": "此转换需要先获得批准。请求审核——一旦获得批准，转换将自动为您应用。",
       "toastPendingReviewExists": "此次变更申请已进入审核阶段。请等待审核结果，或在重试前取消申请。"
     },
     "inbox": {
@@ -3497,7 +3517,7 @@
       "sheetDescription": "在过渡到目标状态之前，请将此实体发送给我们进行审核。",
       "assigneeLabel": "受让人",
       "assigneePlaceholder": "选择用户或角色",
-      "usersNotified": "{count, plural, =0 {不会通知任何人} other {将通知 # 位用户}}",
+      "usersNotified": "{count, plural, =0 {没有人会收到通知} other {# 位用户将收到通知}}",
       "targetStateLabel": "目标状态",
       "targetStatePlaceholder": "选择目标状态",
       "commentLabel": "评论",
@@ -3513,6 +3533,20 @@
       "ineligibleAssigneeErrorUser": "{name} 无法审核此区域的评论。请选择其他用户或角色。",
       "ineligibleAssigneeErrorRole": "{roleName} 角色无权审核此区域的评论。请选择其他角色或用户。"
     },
+    "bulkRequester": {
+      "saveAndRequestButton": "保存并请求审核",
+      "sheetDescription": "{count, plural, other {# 个所选用例}}在到达“{targetStateName}”之前需要审批。每个用例都会针对其必须经过的第一个受限状态提交审核。",
+      "breakdownLabel": "待请求的审核",
+      "breakdownRow": "{count, plural, other {# 个用例}}",
+      "autoCommentNote": "每个用例都会自动生成一条注明其转换的评论，审核人员将针对整批操作收到一次通知。",
+      "otherEditsNote": "提交后，您对其他字段的编辑将立即应用。状态更改将等待审批。",
+      "pendingSkipNote": "{count, plural, other {# 个用例}}已在等待审核，将被跳过。",
+      "submitSuccess": "{count, plural, other {已创建 # 个审核请求}}。",
+      "submitSuccessWithSkips": "{created, plural, other {已创建 # 个审核请求}}，{skipped, plural, other {已跳过 # 个}}（已在等待审核）。",
+      "nothingToRequest": "所选用例均不需要创建审核请求。",
+      "editsAppliedNoRequests": "您的编辑已保存。无需创建审核请求。",
+      "selectionTooLarge": "所选用例过多，无法一次性请求审核。请减少所选数量后重试。"
+    },
     "assigneeChip": {
       "emptyMembers": "目前没有符合项目资格的成员担任此职务。",
       "unnamedUser": "（匿名用户）"
@@ -3522,7 +3556,7 @@
       "requestChanges": "请求更改",
       "reject": "拒绝",
       "approveConfirmTitle": "批准此审核请求？",
-      "approveConfirmDescription": "批准将把 <name></name> 转换为 <state></state>，适用于 <requester></requester>。",
+      "approveConfirmDescription": "批准后，<name></name> 将被移动到 <state></state>，供 <requester></requester> 使用。",
       "approvalNoteLabel": "批准说明",
       "approvalNotePlaceholder": "可为请求者添加可选备注（显示在批准信息旁边）。",
       "requestChangesDescription": "在您批准此次变更之前，请告知请求者需要更改哪些内容。",
@@ -3544,6 +3578,7 @@
   "runs": {
     "composition": {
       "lock": "用例已锁定",
+      "unlocked": "已解锁的用例",
       "unlock": "解锁",
       "locked": "组成已锁定",
       "lockHint": "固定此运行中包含哪些用例。用户仍可以分配和执行测试用例。",
@@ -3732,7 +3767,6 @@
       "placeholder": "过滤器测试运行..."
     },
     "typeFilter": {
-      "label": "展示",
       "both": "手动和自动"
     },
     "empty": {
@@ -3988,6 +4022,12 @@
           "actionMap": "映射到现有",
           "actionCreate": "创建新的",
           "workflowTypePlaceholder": "选择类型",
+          "workflowScope": {
+            "default": "其他",
+            "cases": "测试用例",
+            "runs": "测试运行",
+            "sessions": "会话"
+          },
           "noWorkflowsAvailable": "暂无可用工作流程。",
           "noStatusesAvailable": "暂无状态信息。",
           "noGroupsAvailable": "暂无可用群组。",
@@ -4883,6 +4923,7 @@
     },
     "workflows": {
       "description": "管理测试用例工作流程",
+      "reviewsTitle": "审核工作流",
       "systemFeatureCard": {
         "title": "审查工作流程",
         "description": "通过限制工作流程转换直至获得批准来强制执行审核。启用此功能后，项目可以通过其高级设置单独选择启用或禁用。禁用此功能可阻止工作流程审批限制。",
@@ -4891,10 +4932,10 @@
         "updateSuccessEnabled": "已启用审核工作流程。",
         "updateSuccessDisabled": "审核工作流程已禁用。",
         "updateError": "更新审核工作流程设置失败。请稍后再试。",
-        "remindersToggleLabel": "发送待审核提醒通知",
+        "remindersToggleLabel": "在以下天数后，为待处理的审核发送提醒通知",
         "remindersToggleAriaLabel": "切换评论提醒通知",
         "thresholdLabel": "提醒审稿人",
-        "thresholdUnit": "天(s)",
+        "thresholdUnit": "{count, plural, other {天}}",
         "thresholdSaveButton": "节省",
         "thresholdHelp": "审核请求最多可以保留多少天才会向审核员发送提醒通知？新请求从提交之日起开始计时。",
         "thresholdUpdateSuccess": "查看提醒设置是否已更新。",
@@ -4943,6 +4984,10 @@
     },
     "roles": {
       "description": "通过切换每个应用程序区域的权限，定义用户可以执行的操作。",
+      "confirmDefaultDescription": "您确定要将此角色设置为默认角色吗？",
+      "defaultWarning": "新用户将默认分配此角色。",
+      "defaultLockedTitle": "默认角色",
+      "defaultLockedDescription": "要更改默认设置，请编辑其他角色并将其设置为默认。",
       "filterPlaceholder": "筛选角色...",
       "add": {
         "button": "添加角色",
@@ -4977,7 +5022,9 @@
         "modeNone": "无限制（项目决定）",
         "modeDisabled": "禁用所有编辑功能",
         "modeMax": "允许在最大窗口范围内编辑",
-        "minutesLabel": "最大窗口期（分钟）",
+        "minutesBefore": "最大窗口期：",
+        "minutesUnit": "{minutes, plural, other {分钟}}",
+        "minutesAriaLabel": "最大窗口分钟数",
         "invalidMinutes": "请输入大于零的分钟数。",
         "save": "保存策略",
         "savedToast": "结果编辑政策已更新",
@@ -5177,6 +5224,8 @@
       "confirmDefault": "确认默认设置",
       "confirmDefaultDescription": "您确定要将此里程碑类型设置为默认值吗？",
       "warning": "此里程碑类型将添加到所有项目中。",
+      "defaultLockedTitle": "默认里程碑类型",
+      "defaultLockedDescription": "要更改默认设置，请编辑其他里程碑类型并将其设置为默认。",
       "wizard": {
         "selectProjects": "选择项目",
         "projectsSelected": "{count, plural, =0 {未选择任何项目} one {已选择项目数} other {已选择项目数}}",
@@ -5274,7 +5323,8 @@
         "repositoryCaseVersions": "存储库案例版本",
         "testRunStepResults": "测试运行步骤结果",
         "issueConfigs": "问题配置",
-        "sharedStepGroups": "共同步骤小组"
+        "sharedStepGroups": "共同步骤小组",
+        "dataSets": "数据集"
       },
       "table": {
         "title": "已删除 {itemType}",
@@ -5763,6 +5813,11 @@
     "elasticsearch": {
       "title": "Elasticsearch 管理",
       "description": "管理搜索引擎索引和维护",
+      "health": {
+        "healthy": "健康",
+        "warning": "警告",
+        "unhealthy": "不健康"
+      },
       "status": {
         "title": "Elasticsearch 状态",
         "description": "搜索引擎的当前连接和运行状况",
@@ -5786,7 +5841,7 @@
         "error": "保存设置时出错",
         "errorDescription": "配置保存失败，请重试。",
         "note": {
-          "description": "更改会立即应用于新创建的索引。现有索引会在保存时更新。将副本数设置为 0 可以解决单节点集群上的黄色状态问题。"
+          "description": "更改会立即应用于新创建的索引。现有索引会在保存时更新。将副本数设置为 0 可以解决单节点集群上的警告状态问题。"
         }
       },
       "reindex": {
@@ -5933,7 +5988,6 @@
     },
     "auditLogs": {
       "description": "查看系统范围内的审计跟踪，以进行安全性和合规性跟踪",
-      "projectDescription": "查看此项目中执行操作的审计记录。",
       "filterPlaceholder": "按实体、用户或操作搜索……",
       "filterAction": "行动",
       "filterEntityType": "实体类型",
@@ -6053,6 +6107,13 @@
         "reviewEntityLabelCase": "测试用例",
         "reviewEntityLabelRun": "测试运行",
         "reviewEntityLabelSession": "会议",
+        "reviewBulkEntityLabelCase": "测试用例",
+        "reviewBulkEntityLabelRun": "测试运行",
+        "reviewBulkEntityLabelSession": "会话",
+        "reviewBulkSummaryCase": "{count} 个测试用例",
+        "reviewBulkSummaryRun": "{count} 个测试运行",
+        "reviewBulkSummarySession": "{count} 个会话",
+        "reviewBulkRequestedEmailMessage": "{actorName} 请求您审核项目“{projectName}”中的 {count} 个 {entityLabel}。",
         "reviewTransition": "过渡： {from} → {to}",
         "reviewCommentPreview": "评论： {comment}",
         "reviewRequestedEmailMessage": "{actorName} 请求您对项目“{projectName}”中的 {entityLabel} “{entityName}”进行审核。",
@@ -6322,6 +6383,77 @@
     "noTasks": "甘特图中没有要显示的任务。"
   },
   "help": {
+    "auditLogs": "查看系统范围内的审计跟踪，以进行安全性和合规性跟踪",
+    "statuses": "管理测试状态",
+    "configurations": "配置是用于定义测试环境的各种类别和变体的组合。例如，操作系统/浏览器、测试服务器、语言等。",
+    "categories": "类别将相关变体——例如浏览器或操作系统——分组，组合起来定义测试环境。",
+    "templates": "管理测试用例模板和字段",
+    "caseFields": "测试用例可用的自定义字段，分配给模板以控制哪些用例使用它们。",
+    "resultFields": "记录测试结果时捕获的自定义字段，分配给模板以控制其应用范围。",
+    "milestoneTypes": "里程碑类型对里程碑进行分类——例如迭代、发布或版本——可在多个项目中重复使用。",
+    "tags": "标签用于标记和整理测试用例及会话，方便您在各个项目中分组和查找相关工作。",
+    "issues": "问题是来自 Jira、GitHub、Azure DevOps 等集成的外部跟踪项，同步到 TestPlanIt 中，以便与测试用例、运行和会话关联。",
+    "crossProjectReports": "构建、运行和分析跨多个项目的报告，例如整个测试套件的自动化趋势。",
+    "users": "TestPlanIt 中的人员目录及其各自可访问的项目。",
+    "documentation": "此项目的自由格式文档——笔记、参考资料和入职详情。",
+    "projectMilestones": "里程碑按目标——发布、迭代或自定义类型——对此项目的工作进行分组和跟踪，涵盖进行中和已完成状态。",
+    "projectRepository": "此项目的测试用例库，按文件夹组织。",
+    "projectSharedSteps": "可供多个测试用例共享的可重用测试步骤组——更新一个组会更新所有引用它的用例。",
+    "projectRuns": "测试运行执行一组选定的测试用例并记录其结果，跟踪从开始到完成的进度。",
+    "projectSessions": "探索性测试会话——限时、无脚本的测试，以笔记和结果的形式记录，涵盖进行中和已完成状态。",
+    "projectTags": "标签用于标记和分组此项目的测试用例、会话和运行，方便查找相关工作。",
+    "projectIssues": "来自此项目所连接的跟踪系统的问题，与发现或引用它们的测试用例、运行和会话相关联。",
+    "projectReports": "报告以图表和表格的形式汇总此项目的测试情况——测试运行、会话和结果，您可以对其进行筛选和导出。",
+    "projectAuditLogs": "此项目中执行操作的审计跟踪——谁在何时更改了什么——用于安全性和合规性跟踪。",
+    "projectIntegrations": "将此项目连接到问题跟踪系统，以便其测试用例、运行和会话可以与外部问题和里程碑关联并同步。",
+    "projectWebhooks": "发送和接收此项目的事件通知——入站钩子引入外部更改，出站钩子推送测试事件，交付记录已发送的内容。",
+    "projectAiModels": "选择此项目用于其 AI 辅助功能——例如测试用例生成和自动标记——所使用的 AI 模型和提示配置。",
+    "projectQuickScript": "连接代码库，以便此项目可以根据您的自动化测试文件生成测试用例，并选择要包含的分支和路径。",
+    "projectParameters": "配置此项目的数据驱动测试——用于导入结果的 JUnit 迭代属性名称，以及用于参数化用例的可重用数据集。",
+    "projectAdvanced": "此项目的高级设置——记录 ID 前缀、结果审核工作流、失败时自动创建问题以及结果编辑窗口。",
+    "projectShares": "此项目报告的可共享链接，每个链接都有自己的访问级别——公开、需要登录或密码保护。撤销链接会切断其访问权限。",
+    "groups": "群组允许您一次性为多个用户分配项目访问权限和角色。您可以直接添加成员，或从身份提供商映射群组。",
+    "roles": "角色控制用户可以执行的操作——每个角色都会针对各应用领域切换权限。您可以直接为用户分配角色，或将其设为项目默认角色。",
+    "sso": "管理用户登录方式以及是否允许注册新帐户。",
+    "ssoProviders": "配置用户如何登录您的应用程序。",
+    "ssoRegistration": "控制谁可以注册新帐户。",
+    "ssoAllowRegistration": "禁用此功能后，新用户无法直接注册，也无法通过 SSO 创建帐户。现有用户仍可登录。",
+    "ssoDefaultAccess": "新用户注册时分配的系统访问级别。",
+    "ssoRequireEmailVerification": "用户必须先验证其电子邮件地址才能访问系统。",
+    "ssoRestrictDomains": "仅允许来自特定电子邮件域名的注册。",
+    "security": "配置登录强制执行、密码策略、锁定设置和强制执行措施。",
+    "securitySignInEnforcement": "要求单点登录并强制执行双因素身份验证。",
+    "securityForceSso": "禁用电子邮件登录，要求用户使用 SSO 登录。",
+    "securityForce2FANonSSO": "使用邮箱/密码登录的用户必须设置并使用双因素身份验证。",
+    "securityForce2FAAllLogins": "所有用户，包括 SSO 用户，登录后都必须通过 2FA 验证。",
+    "securityPasswordPolicy": "设置用户密码要求。",
+    "securityLockoutPolicy": "配置登录失败后账户锁定。",
+    "securityEnforcement": "强制基于凭证的用户更改密码。",
+    "apiTokens": "查看和管理所有用户的 API 令牌。如有安全隐患，可撤销令牌。",
+    "scim": "通过 SCIM 2.0 将身份提供商的用户配置到 TestPlanIt 中。",
+    "scimConflicts": "SCIM 身份事件需要系统干预（链接、恢复、显示名称覆盖、跳过成员）。",
+    "scimFallbackDefault": "分配给未被任何群组映射覆盖的用户的访问级别。",
+    "integrations": "管理用于问题跟踪的第三方集成。",
+    "notifications": "设置默认通知偏好设置（用户可以覆盖），并发送系统通知。",
+    "notificationsSystem": "向所有用户发送重要公告。",
+    "notificationsHistory": "先前发送给所有用户的系统通知。",
+    "aiModels": "管理用于 AI 辅助功能的 AI 模型提供商和连接，包括使用限制和预算。",
+    "prompts": "管理 AI 功能用于生成内容的提示配置，并将其分配给项目。",
+    "quickscripts": "管理 QuickScript 用于将测试用例转换为自动化脚本的模板。",
+    "codeRepositories": "管理 QuickScript 上下文的代码库连接。",
+    "recordKeys": "配置带有项目前缀的外观标识符，例如 PROJECT-TC-1234，方便识别记录所属的项目及记录类型。底层数字 ID 保持不变，并可在任何地方继续使用。",
+    "recordKeysEnabled": "启用后，记录将显示一个可选的键，该键结合了项目代码、类型标记和记录的数字 ID。请在项目设置 → 高级中设置每个项目的代码。",
+    "imports": "将外部测试管理工具中的数据导入TestPlanIt。",
+    "elasticsearchStatus": "搜索引擎的当前连接和运行状况。",
+    "elasticsearchConfig": "配置 Elasticsearch 设置以进行部署。",
+    "elasticsearchReindex": "重建搜索索引以提高搜索性能。",
+    "queues": "监控和管理后台作业处理队列。",
+    "trash": "恢复或永久清除系统中已软删除的记录。",
+    "systemWebhooks": "用于处理不与单个项目关联的系统级事件的出站 Webhook 目标——目前是 SCIM 2.0 用户和组生命周期事件。请改用项目设置页面配置入站和项目范围的出站 Webhook。",
+    "workflows": "管理测试用例、测试运行和会话的工作流状态。",
+    "workflowReviews": "通过限制工作流程转换直至获得批准来强制执行审核。启用此功能后，项目可以通过其高级设置单独选择启用或禁用。禁用此功能可阻止工作流程审批限制。",
+    "reviewReminders": "审核请求最多可以保留多少天才会向审核员发送提醒通知？新请求从提交之日起开始计时。",
+    "resultEditingPolicy": "控制结果记录后多长时间内仍可进行原地编辑，此限制适用于所有项目。项目可以在其高级设置中收紧此限制，但无法放宽。系统管理员始终可以进行编辑。",
     "project": {
       "name": "## 项目名称\n项目的唯一标识符。\n\n- 必须在所有项目中唯一\n- 用于导航和报告\n- 应清晰且具有描述性\n- 帮助团队成员识别项目范围",
       "description": "## 项目描述\n项目目的和范围的更多详细信息。\n\n- 可选，但建议填写\n- 帮助团队成员理解项目目标\n- 可包含关键目标或需求\n- 限 256 个字符",
@@ -6332,6 +6464,7 @@
       "issueTracker": "## 问题跟踪器配置\n选择用于管理与此项目相关的问题的跟踪器配置。"
     },
     "projects": {
+      "overview": "项目是测试用例、运行、会话和里程碑的顶级容器。您可以在此处创建和管理所有项目。",
       "settings": {
         "integrations": {
           "externalProjectHelp": "## 外部项目\n选择要与此 TestPlanIt 项目关联的外部系统中的项目或存储库。\n\n- 从 TestPlanIt 创建的问题将在此项目中创建。\n- 启用系统间的问题跟踪集成。\n- 必须在外部系统中拥有相应的权限。",
@@ -6540,7 +6673,7 @@
       "isDefault": "## 默认值\n指示此工作流程是否为项目的默认工作流程。\n\n- 默认工作流程已预先选中，用于新的测试运行、会话和自动化。",
       "isEnabled": "## 已启用\n指示此工作流程是否已启用。",
       "isActive": "## 活动\n指示此工作流状态是否处于活动状态且可供使用。\n\n- 更新测试运行、会话或自动化时，可以选择活动工作流。\n- 非活动工作流将隐藏，但会保留在现有项中。",
-      "requiresReview": "## 需要审核\n启用后，案例、测试运行或会话进入此状态需要经过已批准的审核请求。如果没有获得批准的请求，则转换将被阻止。\n\n- 批准请求即执行该转换。审核人员批准后，案例、运行或会话将进入所请求的状态；请求人无需手动重复该状态更改。\n- 当系统级功能关闭时，现有待审核的审核将静默保留，并在重新启用后重新出现。\n- 当测试人员从实体详情页面点击“请求审核”时，系统将选择审核人。\n\n如果系统级功能已禁用，则此开关将被锁定。要启用此选项，请从上方的“审核工作流”卡片中重新启用该功能。",
+      "requiresReview": "## 需要审核\n启用后，将用例、测试运行或会话转换为此状态需要经过已批准的审核请求。如果没有获得批准的请求，转换将被阻止。\n\n- 批准请求即会执行该转换。审核人员批准后，用例、运行或会话将进入所请求的状态；请求人无需再手动进行状态更改。\n- 当系统级功能关闭时，现有待处理的审核将被静默保留，并在重新启用后重新出现。\n- 当测试人员从实体详情页面点击“请求审核”时，将选定审核人员。\n\n如果系统级功能已禁用，则此开关将被锁定。要启用此选项，请从上方的“审核工作流”卡片中重新启用该功能。",
       "projects": "## 项目\n指示可以使用此工作流程的项目。"
     },
     "testResult": {

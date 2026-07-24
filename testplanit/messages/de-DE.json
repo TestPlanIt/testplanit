@@ -13,6 +13,7 @@
     "file": "Datei",
     "selectMultiple": "Mehrere auswählen...",
     "searchUsers": "Benutzer suchen...",
+    "searchGroups": "Nach Gruppen suchen...",
     "searchCases": "{count, plural, =0 {Fälle durchsuchen} one {Fall Nr. durchsuchen} other {Fälle Nr. durchsuchen}}",
     "searchProjects": "{count, plural, =0 {Projekte suchen} one {Projekt Nr. suchen} other {Projekte Nr. suchen}}",
     "searchTags": "Nach Schlagwörtern suchen...",
@@ -382,7 +383,8 @@
         "notificationSettings": "Globale Benachrichtigungseinstellungen",
         "elasticsearch_replicas": "Elasticsearch-Replikate",
         "review_feature_enabled": "Überprüfung und Genehmigung aktiviert",
-        "review_reminder_threshold_days": "Erinnern Sie die Prüfer an die Schwellenwerte"
+        "review_reminder_threshold_days": "Erinnern Sie die Prüfer an die Schwellenwerte",
+        "record_key_enabled": "Datensatzschlüssel aktiviert"
       },
       "options": {
         "label": "Etikett",
@@ -742,6 +744,7 @@
       "noCases": "Keine Testfälle",
       "unknown": "Unbekannt",
       "selectedTestCases": "Ausgewählte Testfälle",
+      "selectedTestCasesCount": "{count, plural, one {# Ausgewählter Testfall} other {# Ausgewählte Testfälle}}",
       "editToModifyCasesTitle": "Diese Liste kann nicht geändert werden.",
       "editToModifyCases": "Bearbeiten Sie den Testlauf und klicken Sie auf Ausgewählte Testfälle, um die Liste zu ändern.",
       "noTestCasesSelected": "Keine Testfälle ausgewählt",
@@ -800,7 +803,8 @@
     "table": {
       "columns": {
         "columns": "Spalten",
-        "required": "(erforderlich)"
+        "required": "(erforderlich)",
+        "resetColumns": "Spalten auf Standard zurücksetzen"
       },
       "filter": "Filterliste...",
       "selectNone": "Keine auswählen",
@@ -1304,7 +1308,14 @@
         "saveButton": "Speichern",
         "saveSuccess": "Iterationseigenschaftennamen gespeichert.",
         "saveError": "Die Namen der Iterationseigenschaften konnten nicht gespeichert werden.",
-        "removeAria": "Entferne {name}"
+        "removeAria": "Entferne {name}",
+        "counter": "{count}/{max}",
+        "constraints": "Bis zu {max} Eigenschaften, jeweils mit maximal {maxLength} Zeichen und ohne Leerzeichen.",
+        "limitReached": "Sie haben die maximale Anzahl von {max} Eigenschaften erreicht. Entfernen Sie eine, um eine weitere hinzuzufügen.",
+        "errorTooLong": "Beschränken Sie jeden Eigenschaftsnamen auf maximal {maxLength} Zeichen.",
+        "errorWhitespace": "Eigenschaftsnamen dürfen keine Leerzeichen enthalten.",
+        "errorReserved": "„{name}“ ist ein reserviertes Wort und kann nicht verwendet werden.",
+        "errorDuplicate": "„{name}“ ist bereits in der Liste enthalten."
       },
       "integrations": {
         "description": "Integration von Ticket-Trackern für dieses Projekt verwalten",
@@ -1921,7 +1932,9 @@
           "description": "Dateien werden in Valkey zwischengespeichert, um während der KI-Generierung einen schnellen Zugriff zu ermöglichen.",
           "enableLabel": "Dateizwischenspeicherung aktivieren",
           "disabledWarning": "Die Dateizwischenspeicherung ist deaktiviert. Repository-Dateien werden beim Export direkt von Ihrem Anbieter abgerufen und nicht in TestPlanIt gespeichert. KI-gestütztes QuickScript enthält weiterhin Codekontext, jedoch wird bei jedem Export eine Live-Anfrage an Ihr Repository gesendet.",
-          "ttlLabel": "Cache-Dauer (Tage)",
+          "ttlBefore": "Cache für",
+          "ttlDays": "{count, plural, one {Tag} other {Tage}}",
+          "ttlAriaLabel": "Cache-Dauer in Tagen",
           "statusTitle": "Cache-Status",
           "refreshButton": "Cache aktualisieren",
           "listingFiles": "Dateien auflisten…",
@@ -1988,7 +2001,7 @@
         },
         "reviewWorkflow": {
           "label": "Prüfworkflow aktivieren",
-          "description": "Wenn diese Option aktiviert ist, werden Übergänge in Zustände, die eine Überprüfung erfordern, durch eine genehmigte Überprüfungsanfrage blockiert. Tester sehen die Schaltfläche „Überprüfung anfordern“; Prüfer erhalten Benachrichtigungen, und die Genehmigung einer Anfrage wendet den Übergang an.",
+          "description": "Wenn diese Option aktiviert ist, werden Übergänge in Zustände, die eine Überprüfung erfordern, durch eine genehmigte Überprüfungsanfrage blockiert. Tester sehen die Schaltfläche „Überprüfung anfordern“; Prüfer erhalten Benachrichtigungen, und die Genehmigung einer Anfrage führt den Übergang aus.",
           "enabledToast": "Prüfworkflow für dieses Projekt aktiviert",
           "disabledToast": "Prüf-Workflow für dieses Projekt deaktiviert",
           "saveError": "Fehler beim Aktualisieren der Einstellungen für den Überprüfungsworkflow",
@@ -2029,10 +2042,13 @@
         "editWindow": {
           "label": "Ergebnisbearbeitungsfenster",
           "description": "Wie lange nach der Ergebnisspeicherung kann ein Ergebnis noch direkt bearbeitet werden? Nach Ablauf des Bearbeitungszeitraums ist für Korrekturen ein neuer Versuch erforderlich. Systemadministratoren können jederzeit Änderungen vornehmen.",
-          "modeInherit": "Systemstandard übernehmen",
+          "modeInheritMinutes": "Systemstandard übernehmen ({minutes, plural, one {# Minute} other {# Minuten}})",
+          "modeInheritNoLimit": "Systemstandard übernehmen (kein Limit)",
           "modeDisable": "Bearbeitung für dieses Projekt deaktivieren",
           "modeCustom": "Benutzerdefiniertes Fenster",
-          "minutesLabel": "Bearbeitbar für (Minuten)",
+          "minutesBefore": "Bearbeitbar für",
+          "minutesUnit": "{minutes, plural, one {Minute} other {Minuten}}",
+          "minutesAriaLabel": "Bearbeitungsfenster in Minuten",
           "systemMaxHint": "Systemmaximum: {minutes} Minuten",
           "systemLockedTitle": "Die Bearbeitung ist systemweit deaktiviert.",
           "systemLockedDescription": "Ein Systemadministrator hat die Bearbeitung von Ergebnissen direkt im Projekt für alle Projekte deaktiviert, daher kann diese Funktion in diesem Projekt nicht aktiviert werden.",
@@ -2668,8 +2684,8 @@
       "notFound": "Testfallversion nicht gefunden.",
       "detailsRegion": "Details zum Testfall",
       "metadataRegion": "Testfall-Metadaten",
-      "versionCreated": "Version {version} Erstellt",
-      "latestVersionUpdated": "Neueste Version {version, number} Aktualisiert",
+      "versionCreated": "Version {version}",
+      "latestVersionUpdated": "Version {version, number} (Neueste)",
       "historyView": "Testfallverlauf anzeigen"
     },
     "auditLog": {
@@ -2766,6 +2782,7 @@
       "modifierHintMac": "Halten Sie ⇧ gedrückt, um zu verschieben, oder ⌥, um zu kopieren, während Sie ziehen, um dieses Menü zu überspringen.",
       "modifierHintWin": "Halten Sie beim Ziehen die Umschalttaste gedrückt, um zu verschieben, oder die Strg-Taste, um zu kopieren, um dieses Menü zu überspringen.",
       "dropZoneReorder": "Zum Neuordnen ablegen",
+      "dropZoneFolder": "Auf einem Ordner ablegen, um zu verschachteln, oder zwischen Ordnern, um die Reihenfolge zu ändern",
       "dropZoneTreeMac": "Auf einem Ordner ablegen — ⇧ halten zum Verschieben, ⌥ zum Kopieren",
       "dropZoneTreeWin": "Auf einem Ordner ablegen — Umschalt halten zum Verschieben, Strg zum Kopieren",
       "dropZoneTreeMove": "Auf einem Ordner ablegen, um zu verschieben",
@@ -3457,8 +3474,11 @@
       "gatedOptionBadge": "Überprüfung erforderlich",
       "gatedStatesNotSelectable": "Zustände, die sich an oder jenseits eines festgelegten Zustands befinden, können beim Erstellen nicht ausgewählt werden. Wählen Sie einen Zustand vor dem ersten festgelegten Zustand und verwenden Sie dann die Funktion „Überprüfung anfordern“, um diesen zu überschreiten.",
       "saveBlockedByFormErrors": "Beheben Sie die markierten Formularfehler vor dem Speichern.",
-      "bulkBlockedSummary": "{count, plural, one {# Fall} other {# Fälle}} blockiert durch Gate \"{gateName}\": {sampleNames}{more, plural, =0 {} other {, und # weitere}}. Jeder blockierte Fall benötigt vor diesem Übergang eine genehmigte Überprüfung für \"{gateName}\".",
-      "toastReviewRequired": "Für diesen Übergang ist eine Genehmigung erforderlich. Fordern Sie eine Überprüfung an — der Übergang wird nach der Genehmigung automatisch für Sie durchgeführt.",
+      "bulkBlockedHeading": "{count, plural, one {# Fall} other {# Fälle}} durch Gate „{gateName}“ blockiert:",
+      "bulkBlockedHeadingMixed": "{count, plural, one {# Fall benötigt} other {# Fälle benötigen}} eine Genehmigung vor diesem Übergang:",
+      "bulkBlockedMore": "und {count, plural, one {# weiterer Fall} other {# weitere Fälle}}",
+      "bulkBlockedFooter": "Jeder blockierte Fall benötigt eine genehmigte Überprüfung vor diesem Übergang.",
+      "toastReviewRequired": "Vor diesem Übergang ist eine Genehmigung erforderlich. Fordern Sie eine Überprüfung an – der Übergang wird für Sie ausgeführt, sobald sie genehmigt wurde.",
       "toastPendingReviewExists": "Für diesen Übergang wird bereits eine Überprüfung durchgeführt. Warten Sie die Entscheidung ab oder brechen Sie den Vorgang ab, bevor Sie es erneut versuchen."
     },
     "inbox": {
@@ -3513,6 +3533,20 @@
       "ineligibleAssigneeErrorUser": "{name} kann Bewertungen für diesen Bereich nicht genehmigen. Wählen Sie einen anderen Benutzer oder eine andere Rolle.",
       "ineligibleAssigneeErrorRole": "Die Rolle {roleName} kann in diesem Bereich keine Bewertungen genehmigen. Wählen Sie eine andere Rolle oder einen anderen Benutzer."
     },
+    "bulkRequester": {
+      "saveAndRequestButton": "Speichern & Überprüfung anfordern",
+      "sheetDescription": "{count, plural, one {# ausgewählter Fall benötigt} other {# ausgewählte Fälle benötigen}} eine Genehmigung, bevor „{targetStateName}“ erreicht wird. Jeder wird für den ersten Gate-Status eingereicht, den er durchlaufen muss.",
+      "breakdownLabel": "Anzufordernde Überprüfungen",
+      "breakdownRow": "{count, plural, one {# Fall} other {# Fälle}}",
+      "autoCommentNote": "Jeder Fall erhält einen automatischen Kommentar, der seinen eigenen Übergang benennt, und der Prüfer wird einmal für den gesamten Stapel benachrichtigt.",
+      "otherEditsNote": "Ihre übrigen Feldänderungen werden beim Absenden übernommen. Die Statusänderung wartet auf Genehmigung.",
+      "pendingSkipNote": "{count, plural, one {# Fall wartet bereits auf eine Überprüfung und wird übersprungen} other {# Fälle warten bereits auf eine Überprüfung und werden übersprungen}}",
+      "submitSuccess": "{count, plural, one {# Überprüfungsanfrage erstellt} other {# Überprüfungsanfragen erstellt}}.",
+      "submitSuccessWithSkips": "{created, plural, one {# Überprüfungsanfrage erstellt} other {# Überprüfungsanfragen erstellt}}, {skipped, plural, one {# übersprungen} other {# übersprungen}} (bereits auf Überprüfung wartend).",
+      "nothingToRequest": "Für die ausgewählten Fälle waren keine Überprüfungsanfragen erforderlich.",
+      "editsAppliedNoRequests": "Ihre Änderungen wurden gespeichert. Es waren keine Überprüfungsanfragen erforderlich.",
+      "selectionTooLarge": "Es wurden zu viele Fälle ausgewählt, um gleichzeitig eine Überprüfung anzufordern. Wählen Sie weniger aus und versuchen Sie es erneut."
+    },
     "assigneeChip": {
       "emptyMembers": "Diese Position ist bei keinem projektberechtigten Mitglied inne.",
       "unnamedUser": "(unbenannter Benutzer)"
@@ -3522,7 +3556,7 @@
       "requestChanges": "Änderungen anfordern",
       "reject": "Ablehnen",
       "approveConfirmTitle": "Soll diese Überprüfungsanfrage genehmigt werden?",
-      "approveConfirmDescription": "Approving moves <name></name> to <state></state> for <requester></requester>.",
+      "approveConfirmDescription": "Die Genehmigung verschiebt <name></name> zu <state></state> für <requester></requester>.",
       "approvalNoteLabel": "Genehmigungsvermerk",
       "approvalNotePlaceholder": "Fügen Sie optional eine Notiz für den Antragsteller hinzu (sichtbar neben der Genehmigung).",
       "requestChangesDescription": "Teilen Sie dem Antragsteller mit, was sich ändern muss, bevor Sie diesen Übergang genehmigen können.",
@@ -3544,6 +3578,7 @@
   "runs": {
     "composition": {
       "lock": "Fälle gesperrt",
+      "unlocked": "Fälle entsperrt",
       "unlock": "Entsperren",
       "locked": "Zusammensetzung gesperrt",
       "lockHint": "Legt fest, welche Fälle in diesem Lauf enthalten sind. Benutzer können Testfälle weiterhin zuweisen und ausführen.",
@@ -3732,7 +3767,6 @@
       "placeholder": "Filtertestläufe..."
     },
     "typeFilter": {
-      "label": "Zeigen",
       "both": "Manuell & Automatisiert"
     },
     "empty": {
@@ -3988,6 +4022,12 @@
           "actionMap": "Zuordnung zu bestehenden",
           "actionCreate": "Neu erstellen",
           "workflowTypePlaceholder": "Typ auswählen",
+          "workflowScope": {
+            "default": "Andere",
+            "cases": "Testfälle",
+            "runs": "Testläufe",
+            "sessions": "Sitzungen"
+          },
           "noWorkflowsAvailable": "Es sind keine Workflows verfügbar.",
           "noStatusesAvailable": "Keine Statusinformationen verfügbar.",
           "noGroupsAvailable": "Es sind keine Gruppen verfügbar.",
@@ -4883,6 +4923,7 @@
     },
     "workflows": {
       "description": "Testfall-Workflows verwalten",
+      "reviewsTitle": "Überprüfungs-Workflow",
       "systemFeatureCard": {
         "title": "Arbeitsablauf prüfen",
         "description": "Erzwingen Sie Prüfungen, indem Sie Workflow-Übergänge bis zur Genehmigung blockieren. Ist diese Option aktiviert, können Projekte sie in ihren erweiterten Einstellungen einzeln aktivieren oder deaktivieren. Deaktivieren Sie diese Option, um Workflow-Genehmigungsbarrieren zu vermeiden.",
@@ -4891,10 +4932,10 @@
         "updateSuccessEnabled": "Prüf-Workflow aktiviert.",
         "updateSuccessDisabled": "Prüfworkflow deaktiviert.",
         "updateError": "Die Aktualisierung der Einstellungen für den Überprüfungsworkflow ist fehlgeschlagen. Bitte versuchen Sie es in Kürze erneut.",
-        "remindersToggleLabel": "Erinnerungsbenachrichtigungen für ausstehende Überprüfungen senden",
+        "remindersToggleLabel": "Erinnerungsbenachrichtigungen für ausstehende Überprüfungen senden nach",
         "remindersToggleAriaLabel": "Erinnerungsbenachrichtigungen für Überprüfungen aktivieren/deaktivieren",
         "thresholdLabel": "Erinnern Sie die Rezensenten anschließend",
-        "thresholdUnit": "Tag(e)",
+        "thresholdUnit": "{count, plural, one {Tag} other {Tage}}",
         "thresholdSaveButton": "Speichern",
         "thresholdHelp": "Wie viele Tage kann eine Überprüfungsanfrage ausstehen, bevor die Prüfer eine Erinnerungsbenachrichtigung erhalten? Die Frist für neue Anfragen beginnt mit der Einreichung.",
         "thresholdUpdateSuccess": "Überprüfungserinnerungseinstellungen aktualisiert.",
@@ -4943,6 +4984,10 @@
     },
     "roles": {
       "description": "Definieren Sie, welche Aktionen Benutzer ausführen können, indem Sie die Berechtigungen für jeden Anwendungsbereich umschalten.",
+      "confirmDefaultDescription": "Möchten Sie diese Rolle wirklich als Standard festlegen?",
+      "defaultWarning": "Neuen Benutzern wird diese Rolle standardmäßig zugewiesen.",
+      "defaultLockedTitle": "Standardrolle",
+      "defaultLockedDescription": "Um den Standard zu ändern, bearbeiten Sie eine andere Rolle und legen Sie diese als Standard fest.",
       "filterPlaceholder": "Filterrollen...",
       "add": {
         "button": "Rolle hinzufügen",
@@ -4977,7 +5022,9 @@
         "modeNone": "Keine Einschränkung (Projekte entscheiden)",
         "modeDisabled": "Bearbeitung überall deaktivieren",
         "modeMax": "Bearbeitung bis zu einem maximalen Fenster zulassen",
-        "minutesLabel": "Maximales Zeitfenster (Minuten)",
+        "minutesBefore": "Maximales Zeitfenster:",
+        "minutesUnit": "{minutes, plural, one {Minute} other {Minuten}}",
+        "minutesAriaLabel": "Maximales Zeitfenster in Minuten",
         "invalidMinutes": "Geben Sie eine Anzahl von Minuten größer als null ein.",
         "save": "Speicherrichtlinie",
         "savedToast": "Die Richtlinie zur Ergebnisbearbeitung wurde aktualisiert.",
@@ -5177,6 +5224,8 @@
       "confirmDefault": "Standardwert bestätigen",
       "confirmDefaultDescription": "Möchten Sie diesen Meilensteintyp wirklich als Standard festlegen?",
       "warning": "Dieser Meilensteintyp wird allen Projekten hinzugefügt.",
+      "defaultLockedTitle": "Standard-Meilensteintyp",
+      "defaultLockedDescription": "Um den Standard zu ändern, bearbeiten Sie einen anderen Meilensteintyp und legen Sie diesen als Standard fest.",
       "wizard": {
         "selectProjects": "Projekte auswählen",
         "projectsSelected": "{count, plural, =0 {Keine Projekte ausgewählt} one {# Projekte ausgewählt} other {# Projekte ausgewählt}}",
@@ -5274,7 +5323,8 @@
         "repositoryCaseVersions": "Repository-Fallversionen",
         "testRunStepResults": "Ergebnisse des Testlaufs",
         "issueConfigs": "Problemkonfigurationen",
-        "sharedStepGroups": "Gemeinsame Schrittgruppen"
+        "sharedStepGroups": "Gemeinsame Schrittgruppen",
+        "dataSets": "Datensätze"
       },
       "table": {
         "title": "Gelöscht {itemType}",
@@ -5763,6 +5813,11 @@
     "elasticsearch": {
       "title": "Elasticsearch-Verwaltung",
       "description": "Suchmaschinenindexierung und -wartung verwalten",
+      "health": {
+        "healthy": "Gesund",
+        "warning": "Warnung",
+        "unhealthy": "Ungesund"
+      },
       "status": {
         "title": "Elasticsearch-Status",
         "description": "Aktueller Verbindungs- und Gesundheitsstatus der Suchmaschine",
@@ -5786,7 +5841,7 @@
         "error": "Fehler beim Speichern der Einstellungen",
         "errorDescription": "Die Konfiguration konnte nicht gespeichert werden. Bitte versuchen Sie es erneut.",
         "note": {
-          "description": "Änderungen werden sofort auf neue Indizes angewendet. Bestehende Indizes werden beim Speichern aktualisiert. Setzen Sie die Anzahl der Replikate auf 0, um den gelben Status auf Einzelknotenclustern zu beheben."
+          "description": "Änderungen werden sofort auf neue Indizes angewendet. Bestehende Indizes werden beim Speichern aktualisiert. Setzen Sie die Anzahl der Replikate auf 0, um den Warnstatus auf Einzelknotenclustern zu beheben."
         }
       },
       "reindex": {
@@ -5933,7 +5988,6 @@
     },
     "auditLogs": {
       "description": "Systemweites Prüfprotokoll zur Überwachung von Sicherheit und Compliance anzeigen",
-      "projectDescription": "Zeigen Sie den Audit-Trail der in diesem Projekt durchgeführten Aktionen an.",
       "filterPlaceholder": "Suche nach Entität, Benutzer oder Aktion...",
       "filterAction": "Aktion",
       "filterEntityType": "Entitätstyp",
@@ -6053,6 +6107,13 @@
         "reviewEntityLabelCase": "Testfall",
         "reviewEntityLabelRun": "Probelauf",
         "reviewEntityLabelSession": "Sitzung",
+        "reviewBulkEntityLabelCase": "Testfälle",
+        "reviewBulkEntityLabelRun": "Testläufe",
+        "reviewBulkEntityLabelSession": "Sitzungen",
+        "reviewBulkSummaryCase": "{count} Testfälle",
+        "reviewBulkSummaryRun": "{count} Testläufe",
+        "reviewBulkSummarySession": "{count} Sitzungen",
+        "reviewBulkRequestedEmailMessage": "{actorName} hat Sie um eine Überprüfung von {count} {entityLabel} im Projekt „{projectName}“ gebeten.",
         "reviewTransition": "Übergang: {from} → {to}",
         "reviewCommentPreview": "Kommentar: {comment}",
         "reviewRequestedEmailMessage": "{actorName} hat um Ihre Bewertung von {entityLabel} \"{entityName}\" im Projekt \"{projectName} \" gebeten.",
@@ -6322,6 +6383,77 @@
     "noTasks": "Im Gantt-Diagramm sind keine Aufgaben anzuzeigen."
   },
   "help": {
+    "auditLogs": "Systemweites Prüfprotokoll zur Überwachung von Sicherheit und Compliance anzeigen",
+    "statuses": "Teststatus verwalten",
+    "configurations": "Konfigurationen sind eine Kombination aus Kategorien und Varianten, die zur Definition einer Testumgebung verwendet werden. Beispiele hierfür sind Betriebssystem/Browser, Testserver, Sprache usw.",
+    "categories": "Kategorien gruppieren verwandte Varianten – wie Browser oder Betriebssystem –, die zusammen eine Testumgebung definieren.",
+    "templates": "Testfallvorlagen und Felder verwalten",
+    "caseFields": "Benutzerdefinierte Felder, die für Testfälle verfügbar sind und Vorlagen zugewiesen werden, um zu steuern, welche Fälle sie verwenden.",
+    "resultFields": "Benutzerdefinierte Felder, die bei der Erfassung eines Testergebnisses erfasst werden und Vorlagen zugewiesen werden, um zu steuern, wo sie angewendet werden.",
+    "milestoneTypes": "Meilensteintypen kategorisieren Meilensteine – wie Sprint, Release oder Version – und können projektübergreifend wiederverwendet werden.",
+    "tags": "Tags kennzeichnen und organisieren Testfälle und Sitzungen, sodass Sie zusammengehörige Arbeiten projektübergreifend gruppieren und finden können.",
+    "issues": "Issues sind externe Tracker-Elemente – aus Jira, GitHub, Azure DevOps und anderen Integrationen –, die mit TestPlanIt synchronisiert werden, sodass sie mit Testfällen, Testläufen und Sitzungen verknüpft werden können.",
+    "crossProjectReports": "Erstellen, führen Sie aus und analysieren Sie Berichte, die mehrere Projekte umfassen, wie z. B. Automatisierungstrends über Ihre gesamte Testsuite hinweg.",
+    "users": "Ein Verzeichnis der Personen in TestPlanIt und der Projekte, auf die jede Person zugreifen kann.",
+    "documentation": "Freiformdokumentation für dieses Projekt – Notizen, Referenzen und Onboarding-Details.",
+    "projectMilestones": "Meilensteine gruppieren und verfolgen die Arbeit dieses Projekts nach Ziel – Releases, Sprints oder benutzerdefinierte Typen – über aktive und abgeschlossene Status hinweg.",
+    "projectRepository": "Die Bibliothek der Testfälle dieses Projekts, organisiert in Ordnern.",
+    "projectSharedSteps": "Wiederverwendbare Gruppen von Testschritten, die mehrere Testfälle gemeinsam nutzen können – die Aktualisierung einer Gruppe aktualisiert jeden Fall, der auf sie verweist.",
+    "projectRuns": "Testläufe führen eine ausgewählte Menge von Testfällen aus und erfassen deren Ergebnisse, wobei der Fortschritt vom Start bis zum Abschluss verfolgt wird.",
+    "projectSessions": "Explorative Testsitzungen – zeitlich begrenzte, unskriptierte Tests, die als Notizen und Ergebnisse über aktive und abgeschlossene Status hinweg erfasst werden.",
+    "projectTags": "Tags kennzeichnen und gruppieren die Testfälle, Sitzungen und Testläufe dieses Projekts, sodass zusammengehörige Arbeiten leicht zu finden sind.",
+    "projectIssues": "Issues aus den verbundenen Trackern dieses Projekts, verknüpft mit den Testfällen, Testläufen und Sitzungen, in denen sie gefunden oder referenziert wurden.",
+    "projectReports": "Berichte fassen die Tests dieses Projekts – Testläufe, Sitzungen und Ergebnisse – als Diagramme und Tabellen zusammen, die Sie filtern und exportieren können.",
+    "projectAuditLogs": "Das Prüfprotokoll der in diesem Projekt durchgeführten Aktionen – wer was wann geändert hat – zur Überwachung von Sicherheit und Compliance.",
+    "projectIntegrations": "Verbinden Sie dieses Projekt mit einem Issue-Tracker, damit seine Testfälle, Testläufe und Sitzungen mit externen Issues und Meilensteinen verknüpft und synchronisiert werden können.",
+    "projectWebhooks": "Senden und empfangen Sie Ereignisbenachrichtigungen für dieses Projekt – eingehende Hooks bringen externe Änderungen herein, ausgehende Hooks senden Testereignisse hinaus, und Zustellungen protokollieren, was gesendet wurde.",
+    "projectAiModels": "Wählen Sie das KI-Modell und die Prompt-Konfiguration, die dieses Projekt für seine KI-gestützten Funktionen verwendet, wie z. B. die Testfallgenerierung und das automatische Taggen.",
+    "projectQuickScript": "Verbinden Sie ein Code-Repository, damit dieses Projekt Testfälle aus Ihren automatisierten Testdateien generieren kann, wobei Sie auswählen können, welche Branches und Pfade einbezogen werden sollen.",
+    "projectParameters": "Konfigurieren Sie die datengesteuerten Tests dieses Projekts – JUnit-Iterationseigenschaftsnamen für importierte Ergebnisse und wiederverwendbare Datensätze für parametrisierte Fälle.",
+    "projectAdvanced": "Erweiterte Einstellungen für dieses Projekt – das Präfix der Datensatz-ID, der Ergebnisüberprüfungs-Workflow, die automatische Issue-Erstellung bei Fehlern und das Bearbeitungsfenster für Ergebnisse.",
+    "projectShares": "Freigebbare Links zu den Berichten dieses Projekts, jeweils mit eigener Zugriffsebene – öffentlich, Anmeldung erforderlich oder passwortgeschützt. Das Widerrufen eines Links beendet dessen Zugriff.",
+    "groups": "Mit Gruppen können Sie Projektzugriff und Rollen für viele Benutzer gleichzeitig zuweisen. Fügen Sie Mitglieder direkt hinzu oder ordnen Sie eine Gruppe Ihres Identitätsanbieters zu.",
+    "roles": "Rollen steuern, was Benutzer tun können – jede schaltet Berechtigungen pro Anwendungsbereich um. Weisen Sie Benutzern eine Rolle direkt oder als Projektstandard zu.",
+    "sso": "Verwalten Sie, wie sich Benutzer anmelden und ob neue Konten registriert werden können.",
+    "ssoProviders": "Konfigurieren Sie, wie sich Benutzer bei Ihrer Anwendung anmelden können.",
+    "ssoRegistration": "Legen Sie fest, wer sich für neue Konten registrieren kann.",
+    "ssoAllowRegistration": "Wenn diese Funktion deaktiviert ist, können sich neue Benutzer weder direkt registrieren noch ein Konto per SSO erstellen. Bestehende Benutzer können sich weiterhin anmelden.",
+    "ssoDefaultAccess": "Die Systemzugriffsebene, die neuen Benutzern bei der Registrierung zugewiesen wird.",
+    "ssoRequireEmailVerification": "Benutzer müssen ihre E-Mail-Adresse bestätigen, bevor sie auf das System zugreifen können.",
+    "ssoRestrictDomains": "Nur Registrierungen von bestimmten E-Mail-Domänen zulassen.",
+    "security": "Anmeldeerzwingung, Passwortrichtlinie, Sperreinstellungen und Durchsetzungsmaßnahmen konfigurieren.",
+    "securitySignInEnforcement": "SSO vorschreiben und Zwei-Faktor-Authentifizierung erzwingen.",
+    "securityForceSso": "Deaktivieren Sie die E-Mail-Anmeldung und verpflichten Sie die Benutzer zur Verwendung von SSO.",
+    "securityForce2FANonSSO": "Benutzer, die sich mit E-Mail/Passwort anmelden, müssen die Zwei-Faktor-Authentifizierung einrichten und verwenden.",
+    "securityForce2FAAllLogins": "Alle Benutzer müssen sich nach der Anmeldung per Zwei-Faktor-Authentifizierung verifizieren, dies gilt auch für SSO-Benutzer.",
+    "securityPasswordPolicy": "Anforderungen für Benutzerpasswörter festlegen.",
+    "securityLockoutPolicy": "Kontosperrung nach fehlgeschlagenen Anmeldeversuchen konfigurieren.",
+    "securityEnforcement": "Passwortänderungen für Benutzer mit Anmeldeinformationen erzwingen.",
+    "apiTokens": "API-Tokens für alle Benutzer anzeigen und verwalten. Tokens widerrufen, wenn Sicherheitsbedenken bestehen.",
+    "scim": "Benutzer Ihres Identitätsanbieters werden über SCIM 2.0 in TestPlanIt bereitgestellt.",
+    "scimConflicts": "SCIM-Identitätsereignisse, die einen Systemeingriff erforderten (Verknüpfung, Wiederherstellung, Überschreiben des Anzeigenamens, übersprungene Mitglieder).",
+    "scimFallbackDefault": "Zugriffsebene, die Benutzern zugewiesen wird, die von keiner Gruppenzuordnung erfasst werden.",
+    "integrations": "Verwaltung von Drittanbieterintegrationen für die Problemverfolgung.",
+    "notifications": "Legen Sie die Standardeinstellungen für Benachrichtigungen fest (Benutzer können diese überschreiben) und versenden Sie Systembenachrichtigungen.",
+    "notificationsSystem": "Wichtige Ankündigungen an alle Benutzer senden.",
+    "notificationsHistory": "Systembenachrichtigungen, die zuvor an alle Benutzer gesendet wurden.",
+    "aiModels": "Verwalten Sie die KI-Modellanbieter und -Verbindungen, die für KI-gestützte Funktionen verwendet werden, einschließlich Nutzungslimits und Budgets.",
+    "prompts": "Verwalten Sie die Prompt-Konfigurationen, die KI-Funktionen zur Inhaltserstellung verwenden, und weisen Sie diese Projekten zu.",
+    "quickscripts": "Verwalten Sie Vorlagen, die von QuickScript verwendet werden, um Testfälle in Automatisierungsskripte umzuwandeln.",
+    "codeRepositories": "Code-Repository-Verbindungen für den QuickScript-Kontext verwalten.",
+    "recordKeys": "Konfigurieren Sie kosmetische, projektbezogene Präfixkennungen wie PROJECT-TC-1234, mit denen Sie leicht erkennen können, zu welchem Projekt ein Datensatz gehört und um welche Art von Datensatz es sich handelt. Die zugrunde liegende numerische ID bleibt unverändert und funktioniert weiterhin überall.",
+    "recordKeysEnabled": "Wenn diese Option aktiviert ist, zeigen Datensätze einen optionalen Schlüssel an, der den Projektcode, ein Typ-Token und die numerische ID des Datensatzes kombiniert. Legen Sie den Code jedes Projekts unter Projekteinstellungen → Erweitert fest.",
+    "imports": "Daten aus externen Testmanagement-Tools in TestPlanIt importieren.",
+    "elasticsearchStatus": "Aktueller Verbindungs- und Gesundheitsstatus der Suchmaschine.",
+    "elasticsearchConfig": "Konfigurieren Sie die Elasticsearch-Einstellungen für Ihre Bereitstellung.",
+    "elasticsearchReindex": "Suchindizes neu erstellen, um die Suchleistung zu verbessern.",
+    "queues": "Überwachung und Verwaltung der Warteschlangen für die Hintergrundverarbeitung.",
+    "trash": "Stellen Sie soft-gelöschte Datensätze systemweit wieder her oder löschen Sie sie endgültig.",
+    "systemWebhooks": "Ausgehende Webhook-Ziele für Systemereignisse, die keinem einzelnen Projekt zugeordnet sind – aktuell die Lebenszyklusereignisse von SCIM 2.0-Benutzern und -Gruppen. Konfigurieren Sie eingehende und projektbezogene ausgehende Webhooks stattdessen auf der Projekteinstellungsseite.",
+    "workflows": "Verwalten Sie die Workflow-Status für Testfälle, Testläufe und Sitzungen.",
+    "workflowReviews": "Erzwingen Sie Prüfungen, indem Sie Workflow-Übergänge bis zur Genehmigung blockieren. Ist diese Option aktiviert, können Projekte sie in ihren erweiterten Einstellungen einzeln aktivieren oder deaktivieren. Deaktivieren Sie diese Option, um Workflow-Genehmigungsbarrieren zu vermeiden.",
+    "reviewReminders": "Wie viele Tage kann eine Überprüfungsanfrage ausstehen, bevor die Prüfer eine Erinnerungsbenachrichtigung erhalten? Die Frist für neue Anfragen beginnt mit der Einreichung.",
+    "resultEditingPolicy": "Legen Sie fest, wie lange nach der Ergebnisspeicherung ein Ergebnis projektübergreifend noch bearbeitet werden kann. Projekte können diese Frist in ihren erweiterten Einstellungen verkürzen, aber nicht verlängern. Systemadministratoren können die Frist jederzeit anpassen.",
     "project": {
       "name": "## Projektname\nDie eindeutige Kennung Ihres Projekts.\n\n- Muss projektübergreifend eindeutig sein.\n- Wird für Navigation und Berichte verwendet.\n- Sollte klar und aussagekräftig sein.\n- Hilft Teammitgliedern, den Projektumfang zu erkennen.",
       "description": "## Projektbeschreibung\nZusätzliche Details zu Zweck und Umfang des Projekts.\n\n- Optional, aber empfohlen\n- Hilft Teammitgliedern, die Projektziele zu verstehen\n- Kann wichtige Ziele oder Anforderungen enthalten\n- Maximal 256 Zeichen",
@@ -6332,6 +6464,7 @@
       "issueTracker": "## Issue-Tracker-Konfiguration\nWählen Sie die Issue-Tracker-Konfiguration aus, die für die Verwaltung von Problemen im Zusammenhang mit diesem Projekt verwendet werden soll."
     },
     "projects": {
+      "overview": "Projekte sind die übergeordneten Container für Ihre Testfälle, Testläufe, Sitzungen und Meilensteine. Erstellen und verwalten Sie hier jedes Projekt.",
       "settings": {
         "integrations": {
           "externalProjectHelp": "## Externes Projekt\nWählen Sie das Projekt oder Repository im externen System aus, das mit diesem TestPlanIt-Projekt verknüpft werden soll.\n\n- In TestPlanIt erstellte Tickets werden in diesem Projekt angelegt.\n- Aktiviert die Integration der Ticketverfolgung zwischen Systemen.\n- Erfordert entsprechende Berechtigungen im externen System.",
@@ -6540,7 +6673,7 @@
       "isDefault": "## Standard\nGibt an, ob dieser Workflow der Standard-Workflow für Ihr Projekt ist.\n\n– Der Standard-Workflow ist für neue Testläufe, Sitzungen und Automatisierungen vorausgewählt.",
       "isEnabled": "## Aktiviert\nGibt an, ob dieser Workflow aktiviert ist.",
       "isActive": "## Aktiv\nZeigt an, ob dieser Workflow-Status aktiv und verfügbar ist.\n\n– Aktive Workflows können beim Aktualisieren von Testläufen, Sitzungen oder Automatisierungen ausgewählt werden.\n– Inaktive Workflows sind nicht auswählbar, bleiben aber in bestehenden Elementen erhalten.",
-      "requiresReview": "## Überprüfung erforderlich\nWenn diese Option aktiviert ist, wird der Übergang eines Falls, Testlaufs oder einer Sitzung in diesen Status durch eine genehmigte Überprüfungsanfrage blockiert. Ohne eine genehmigte Anfrage ist der Übergang nicht möglich.\n\n- Die Genehmigung einer Anfrage führt den Übergang durch. Die Genehmigung des Prüfers versetzt den Fall, Testlauf oder die Sitzung in den angeforderten Status; der Antragsteller muss die Statusänderung nicht manuell wiederholen.\n- Vorhandene ausstehende Überprüfungen bleiben im Hintergrund erhalten, wenn die Systemfunktion deaktiviert ist, und werden nach der Reaktivierung wieder angezeigt.\n- Der Prüfer wird ausgewählt, wenn ein Tester auf der Entitätsdetailseite auf „Überprüfung anfordern“ klickt.\n\nWenn die Systemfunktion deaktiviert ist, ist dieser Schalter gesperrt. Aktivieren Sie ihn über die Karte „Überprüfungs-Workflow“ oben, um ihn einzuschalten.",
+      "requiresReview": "## Überprüfung erforderlich\nWenn diese Option aktiviert ist, wird der Übergang eines Falls, Testlaufs oder einer Sitzung in diesen Status durch eine genehmigte Überprüfungsanfrage blockiert. Ohne eine genehmigte Anfrage ist der Übergang nicht möglich.\n\n- Die Genehmigung einer Anfrage führt den Übergang aus. Die Genehmigung des Prüfers versetzt den Fall, Testlauf oder die Sitzung in den angeforderten Status; der Anfragende muss die Statusänderung nicht manuell wiederholen.\n- Vorhandene ausstehende Überprüfungen bleiben im Hintergrund erhalten, wenn die Systemfunktion deaktiviert ist, und werden nach der Reaktivierung wieder angezeigt.\n- Der Prüfer wird ausgewählt, wenn ein Tester auf der Entitätsdetailseite auf „Überprüfung anfordern“ klickt.\n\nWenn die Systemfunktion deaktiviert ist, ist dieser Schalter gesperrt. Aktivieren Sie ihn über die Karte „Überprüfungs-Workflow“ oben, um ihn einzuschalten.",
       "projects": "## Projekte\nZeigt die Projekte an, die diesen Workflow nutzen können."
     },
     "testResult": {
