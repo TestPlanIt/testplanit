@@ -524,6 +524,18 @@ export interface CreateTestCaseOptions {
 }
 
 /**
+ * Options for {@link TestPlanItClient.updateTestCase} — a minimal,
+ * forward-compatible partial update of an existing test case. Only the fields
+ * present here are written, so more fields can be added later without a
+ * breaking change. Relation fields (folder, template, state, …) are out of
+ * scope; use the dedicated helpers for those.
+ */
+export interface UpdateTestCaseOptions {
+  /** Whether the case is driven by automation (shown as "automated" in the UI). */
+  automated?: boolean;
+}
+
+/**
  * A single step on a case created via {@link TestPlanItClient.createTestCases}.
  * Plain-text `text`/`expectedResult` are stored as TipTap rich-text documents
  * server-side so they render in the in-app step editor.

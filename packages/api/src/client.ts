@@ -17,6 +17,7 @@ import type {
   CreateTestRunOptions,
   UpdateTestRunOptions,
   CreateTestCaseOptions,
+  UpdateTestCaseOptions,
   CreateTestCasesOptions,
   CreateTestCasesResult,
   CreateStepOptions,
@@ -1398,6 +1399,30 @@ export class TestPlanItClient {
   }
 
   /**
+   * Update mutable scalar fields on an existing test case.
+   *
+   * A minimal, forward-compatible partial update: only the fields present in
+   * `options` are written (currently just `automated`), so more fields can be
+   * added later without a breaking change. Relation fields (folder, template,
+   * state, …) are intentionally out of scope — use the dedicated helpers for
+   * those.
+   *
+   * Used to flip a manually-authored case to `automated: true` once it starts
+   * receiving automated results (see the WDIO reporter's `matchByCustomField`).
+   */
+  async updateTestCase(
+    caseId: number,
+    options: UpdateTestCaseOptions
+  ): Promise<RepositoryCase> {
+    const data: Record<string, unknown> = {};
+    if (options.automated !== undefined) data.automated = options.automated;
+    return this.zenstack<RepositoryCase>("repositoryCases", "update", {
+      where: { id: caseId },
+      data,
+    });
+  }
+
+  /**
    * Find or create a test case
    * First searches for an active (non-deleted) test case in an active folder, then creates if not found.
    * If a matching case exists in a deleted folder, it will be moved to the specified folder.
@@ -1435,7 +1460,18 @@ export class TestPlanItClient {
     );
 
     if (caseInActiveFolder) {
-      // Found an active test case in an active folder
+      // Found an active test case in an active folder. If the caller wants an
+      // automated case (the default) but this one isn't flagged automated yet
+      // — e.g. a manually-authored case now receiving automated results — flip
+      // it so it stops showing as "not automated". Skip the write when it is
+      // already automated to avoid a redundant update on every run.
+      const wantAutomated = options.automated ?? true;
+      if (wantAutomated && caseInActiveFolder.automated !== true) {
+        const updated = await this.updateTestCase(caseInActiveFolder.id, {
+          automated: true,
+        });
+        return { testCase: updated, action: 'found' };
+      }
       return { testCase: caseInActiveFolder, action: 'found' };
     }
 

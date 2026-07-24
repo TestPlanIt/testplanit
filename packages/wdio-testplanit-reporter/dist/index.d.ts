@@ -655,6 +655,14 @@ declare class TestPlanItReporter extends WDIOReporter {
      */
     private resolveCaseByCustomField;
     /**
+     * Flip a matched case to `automated: true` when it isn't already, so a case
+     * that started manual but now receives automated results reflects that in
+     * TestPlanIt. Skips the write when the case is already automated (no
+     * redundant API call per run) and never throws — a failed update logs and is
+     * swallowed so it can't abort reporting the result.
+     */
+    private ensureCaseAutomated;
+    /**
      * Get the full suite path as a string
      */
     private getFullSuiteName;
