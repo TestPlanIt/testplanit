@@ -44,9 +44,7 @@ export class RepositoryPage extends BasePage {
     this.folderCancelButton = page.getByTestId("folder-cancel-button");
 
     // Cases table
-    this.casesTable = page
-      .locator('[data-testid="cases-table"], table')
-      .first();
+    this.casesTable = page.locator('[data-testid="case-table"], table').first();
     this.addCaseButton = page
       .getByTestId("add-case-button")
       .or(page.locator('button:has-text("Add Case")').first());
