@@ -21,10 +21,16 @@ export function registerCasesUpdate(
     "testplanit_cases_update",
     {
       description:
-        "Update a test case (partial). Provide only the fields to change: name, steps (replaces all current steps), tags (replaces the tag set), customFields (upserts each), stateName, folderId. Returns the full denormalized case detail (CASE-02 shape). (per D-05 / CASE-04)",
+        "Update a test case (partial). Provide only the fields to change: name, automated, steps (replaces all current steps), tags (replaces the tag set), customFields (upserts each), stateName, folderId. Returns the full denormalized case detail (CASE-02 shape). (per D-05 / CASE-04)",
       inputSchema: {
         caseId: z.number().int().positive().describe("ID of the test case to update."),
         name: z.string().min(1).max(2000).optional().describe("New test case name."),
+        automated: z
+          .boolean()
+          .optional()
+          .describe(
+            "Whether the case is driven by automation. Set true to flip a manually-authored case that now receives automated results.",
+          ),
         stateName: z
           .string()
           .min(1)
@@ -92,6 +98,9 @@ export function registerCasesUpdate(
 
         if (input.name !== undefined) {
           data.name = input.name;
+        }
+        if (input.automated !== undefined) {
+          data.automated = input.automated;
         }
         if (input.folderId !== undefined) {
           data.folder = { connect: { id: input.folderId } };

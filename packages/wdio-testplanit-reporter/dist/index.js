@@ -788,6 +788,7 @@ ${error.stack}` : "";
       if (match) {
         this.state.customFieldCaseMap.set(cacheKey, match.id);
         this.log(`matchByCustomField: matched case ${match.id} via ${cfg.fieldName}=${value}`);
+        await this.ensureCaseAutomated(match.id, match.automated);
         return match.id;
       }
       this.state.customFieldCaseMap.set(cacheKey, null);
@@ -796,6 +797,22 @@ ${error.stack}` : "";
     } catch (error) {
       this.logError(`matchByCustomField lookup failed for ${cfg.fieldName}=${value}; falling through`, error);
       return void 0;
+    }
+  }
+  /**
+   * Flip a matched case to `automated: true` when it isn't already, so a case
+   * that started manual but now receives automated results reflects that in
+   * TestPlanIt. Skips the write when the case is already automated (no
+   * redundant API call per run) and never throws — a failed update logs and is
+   * swallowed so it can't abort reporting the result.
+   */
+  async ensureCaseAutomated(caseId, currentAutomated) {
+    if (currentAutomated === true) return;
+    try {
+      await this.client.updateTestCase(caseId, { automated: true });
+      this.log(`matchByCustomField: flipped case ${caseId} to automated`);
+    } catch (error) {
+      this.logError(`matchByCustomField: failed to set automated on case ${caseId}; continuing`, error);
     }
   }
   /**

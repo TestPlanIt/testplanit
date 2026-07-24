@@ -148,7 +148,7 @@ Given a test titled:
 it("89434 Verify 'Relevance' is the default sort order for search results", () => { /* ... */ });
 ```
 
-the reporter extracts `89434` with `idPattern`, looks up the case whose **External ID** custom field equals `89434`, and attaches the result **directly** to that case — regardless of its source (typically `MANUAL`). No new case, folder, or [case link](./wdio-test-cases.md) is created.
+the reporter extracts `89434` with `idPattern`, looks up the case whose **External ID** custom field equals `89434`, and attaches the result **directly** to that case — regardless of its source (typically `MANUAL`). No new case, folder, or [case link](./wdio-test-cases.md) is created. If the matched case isn't already flagged **automated**, the reporter flips it (so a case that started manual but now receives automated results reflects that); it skips the write when the case is already automated.
 
 ### Options
 
@@ -164,3 +164,4 @@ the reporter extracts `89434` with `idPattern`, looks up the case whose **Extern
 - **Independent of `caseIdPattern`.** `caseIdPattern` treats the number it captures as a literal TestPlanIt case ID; `matchByCustomField` treats it as a value to look up. An explicit `caseIdPattern` match in the title still takes precedence.
 - **Graceful fallthrough.** On no match — or if the named field doesn't exist on the project — the reporter falls through to the standard flow (name/create) without error. When `autoCreateTestCases` is off and nothing matches, the result is skipped, exactly as today.
 - **Value matching.** The value is compared against the stored field value in both its number and string forms, so it works whether the field is an Integer/Number (stored as a number) or Text (stored as a string).
+- **Marks the case automated.** A matched case that isn't already automated is flipped to `automated: true` (skipped when already automated, so there's no redundant write per run). This failing never aborts result reporting. The same flip now also applies when `autoCreateTestCases` *finds* an existing non-automated case by name.
