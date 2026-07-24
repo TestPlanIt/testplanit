@@ -1,6 +1,6 @@
 {
   "name": "@testplanit/playwright-reporter",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Playwright reporter for TestPlanIt - report test results directly to your TestPlanIt instance",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
