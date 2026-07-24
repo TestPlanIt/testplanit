@@ -32,7 +32,8 @@ export class IntegrationManager {
   // Valkey pub/sub channel used to broadcast adapter-cache invalidations to
   // every other process. Each process caches adapters in its own memory, so a
   // credential/settings change on one pod must tell the others to evict too.
-  private static readonly INVALIDATION_CHANNEL = "integration:adapter:invalidate";
+  private static readonly INVALIDATION_CHANNEL =
+    "integration:adapter:invalidate";
   // Dedicated subscriber connection (a subscribed client can't issue normal
   // commands). Null when Valkey isn't configured (dev / build / single-pod),
   // in which case invalidation degrades to local-only — today's behavior.

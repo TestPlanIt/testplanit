@@ -59,13 +59,16 @@ describe("integration write routes invalidate the adapter cache", () => {
   });
 
   it("PUT clears the cached adapter after updating OAuth credentials", async () => {
-    const request = new NextRequest("http://localhost:3000/api/integrations/3", {
-      method: "PUT",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        credentials: { clientId: "new-client", clientSecret: "new-secret" },
-      }),
-    });
+    const request = new NextRequest(
+      "http://localhost:3000/api/integrations/3",
+      {
+        method: "PUT",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          credentials: { clientId: "new-client", clientSecret: "new-secret" },
+        }),
+      }
+    );
 
     const response = await PUT(request, params);
 
@@ -80,9 +83,12 @@ describe("integration write routes invalidate the adapter cache", () => {
       id: 3,
       _count: { projectIntegrations: 0 },
     });
-    const request = new NextRequest("http://localhost:3000/api/integrations/3", {
-      method: "DELETE",
-    });
+    const request = new NextRequest(
+      "http://localhost:3000/api/integrations/3",
+      {
+        method: "DELETE",
+      }
+    );
 
     const response = await DELETE(request, params);
 
@@ -92,11 +98,14 @@ describe("integration write routes invalidate the adapter cache", () => {
 
   it("PUT does not touch the cache for a non-admin (403 before any write)", async () => {
     userFindUniqueMock.mockResolvedValue({ access: "MEMBER" });
-    const request = new NextRequest("http://localhost:3000/api/integrations/3", {
-      method: "PUT",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ name: "x" }),
-    });
+    const request = new NextRequest(
+      "http://localhost:3000/api/integrations/3",
+      {
+        method: "PUT",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ name: "x" }),
+      }
+    );
 
     const response = await PUT(request, params);
 

@@ -50,7 +50,10 @@ function readPositiveInt(
  * total. Default 20.
  */
 export function getPoolMax(): number {
-  return readPositiveInt(process.env.DATABASE_POOL_MAX, DEFAULT_MAX_CONNECTIONS);
+  return readPositiveInt(
+    process.env.DATABASE_POOL_MAX,
+    DEFAULT_MAX_CONNECTIONS
+  );
 }
 
 /**
