@@ -70,6 +70,12 @@ export class JiraAdapter extends BaseAdapter {
   private clientSecret: string;
   private redirectUri: string;
   private cloudId?: string;
+  // Canonical site base (e.g. https://acme.atlassian.net) captured from the
+  // OAuth accessible-resources response. OAuth requests go through the
+  // api.atlassian.com/ex/jira/{cloudId} gateway, so a Jira issue's `self`
+  // field echoes that gateway host — unusable for user-facing "open in Jira"
+  // links. This holds the real site host for building browse/version URLs.
+  private siteUrl?: string;
   private baseUrl?: string;
   private deployment: JiraDeploymentType = "cloud";
   private apiVersion: JiraApiVersion = "3";
@@ -315,6 +321,10 @@ export class JiraAdapter extends BaseAdapter {
           throw new Error("No accessible Jira resources found");
         }
         this.cloudId = resources[0].id;
+        // Keep the resource's canonical site URL so user-facing links point at
+        // https://{site}.atlassian.net rather than the api.atlassian.com
+        // gateway that all OAuth REST traffic is proxied through.
+        this.siteUrl = resources[0].url;
       }
     } else {
       throw new Error(
@@ -871,9 +881,15 @@ export class JiraAdapter extends BaseAdapter {
     return versions;
   }
 
-  /** Admin-entered baseUrl may carry a trailing slash — strip for link building. */
+  /**
+   * Canonical site base for building user-facing links (browse pages, version
+   * and sprint pages). Prefers the admin-entered baseUrl (API-key/Data Center);
+   * falls back to the site URL captured from OAuth accessible-resources, which
+   * is the only correct host for OAuth integrations since baseUrl is unset
+   * there. Trailing slashes are stripped for clean concatenation.
+   */
   private userFacingBaseUrl(): string {
-    return (this.baseUrl ?? "").replace(/\/+$/, "");
+    return (this.baseUrl ?? this.siteUrl ?? "").replace(/\/+$/, "");
   }
 
   private mapJiraVersion(
@@ -1564,7 +1580,14 @@ export class JiraAdapter extends BaseAdapter {
           : undefined,
       createdAt: new Date(fields.created),
       updatedAt: new Date(fields.updated),
-      url: `${jiraIssue.self.split("/rest/")[0]}/browse/${jiraIssue.key}`,
+      // Prefer the canonical site base. Under OAuth, jiraIssue.self points at
+      // the api.atlassian.com/ex/jira/{cloudId} gateway, so splitting it would
+      // yield a broken "open in Jira" link; userFacingBaseUrl() resolves to the
+      // real site host. Fall back to the self-derived host only when no base is
+      // known (defensive — should not happen for authenticated adapters).
+      url: this.userFacingBaseUrl()
+        ? `${this.userFacingBaseUrl()}/browse/${jiraIssue.key}`
+        : `${jiraIssue.self.split("/rest/")[0]}/browse/${jiraIssue.key}`,
     };
   }
 

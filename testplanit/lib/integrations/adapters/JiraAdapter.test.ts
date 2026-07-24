@@ -781,6 +781,60 @@ describe("JiraAdapter", () => {
       expect(result.labels).toEqual(["bug", "priority"]);
     });
 
+    it("builds the browse url from the admin-entered baseUrl (API key)", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockJiraIssue),
+      });
+
+      const result = await adapter.getIssue("TEST-123");
+
+      expect(result.url).toBe("https://test.atlassian.net/browse/TEST-123");
+    });
+
+    it("builds the browse url from the OAuth site host, not the api.atlassian.com gateway", async () => {
+      vi.stubEnv("JIRA_CLIENT_ID", "test-client-id");
+      vi.stubEnv("JIRA_CLIENT_SECRET", "test-client-secret");
+      vi.stubEnv("JIRA_REDIRECT_URI", "https://app.com/callback");
+
+      // OAuth adapter has no baseUrl — the site host is only knowable from the
+      // accessible-resources response captured during authentication.
+      const oauthAdapter = new JiraAdapter({ provider: "JIRA" });
+
+      mockFetch.mockReset();
+      // accessible-resources: cloud id + canonical site url.
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve([
+            { id: "cloud-123", url: "https://allego.atlassian.net" },
+          ]),
+      });
+      await oauthAdapter.authenticate({
+        type: "oauth",
+        accessToken: "test-access-token",
+      });
+
+      // The issue's `self` echoes the api.atlassian.com gateway (as Jira does
+      // for all OAuth REST traffic) — splitting it would yield a broken link.
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            ...mockJiraIssue,
+            key: "ABT-47646",
+            self: "https://api.atlassian.com/ex/jira/cloud-123/rest/api/3/issue/10001",
+          }),
+      });
+
+      const result = await oauthAdapter.getIssue("ABT-47646");
+
+      expect(result.url).toBe("https://allego.atlassian.net/browse/ABT-47646");
+      expect(result.url).not.toContain("api.atlassian.com");
+
+      vi.unstubAllEnvs();
+    });
+
     it("maps Jira fields.components[].name into IssueData.components", async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
