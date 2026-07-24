@@ -1,5 +1,12 @@
 # @testplanit/playwright-reporter
 
+## 0.2.2
+
+### Patch Changes
+
+- Updated dependencies [[`53f406b`](https://github.com/TestPlanIt/testplanit/commit/53f406b78f60766e07b6f2c4783b33aa020d32b2)]:
+  - @testplanit/api@0.6.0
+
 ## 0.2.1
 
 ### Patch Changes
