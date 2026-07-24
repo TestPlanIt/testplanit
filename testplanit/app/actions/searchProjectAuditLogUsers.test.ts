@@ -53,7 +53,7 @@ function mockQueryResults(
 
 // Collect bound values from a Kysely raw node in source order (ValueNodes),
 // recursing into nested sql`` fragments. Replaces the v2 Prisma `Sql.values`.
- 
+
 function boundValues(node: any, out: unknown[] = []): unknown[] {
   if (!node || typeof node !== "object") return out;
   if (node.kind === "ValueNode") out.push(node.value);

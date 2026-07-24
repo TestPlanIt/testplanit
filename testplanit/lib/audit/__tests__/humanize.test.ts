@@ -44,7 +44,7 @@ type HumanizeModule = {
     lookup: LookupFn,
     opts: { ttlMs: number }
   ) => HumanizeCache;
-   
+
   humanize: (
     cache: HumanizeCache,
     tableName: string,

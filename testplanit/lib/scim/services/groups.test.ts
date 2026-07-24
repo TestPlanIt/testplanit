@@ -1078,9 +1078,8 @@ describe("deleteScimGroup", () => {
 });
 
 describe("H — anti-pattern guards (raw-baseDb + emit-inside-tx + entityType + ScimValidationError type)", () => {
-   
   const fs = require("fs") as typeof import("fs");
-   
+
   const path = require("path") as typeof import("path");
   const source = fs.readFileSync(path.join(__dirname, "groups.ts"), "utf-8");
 

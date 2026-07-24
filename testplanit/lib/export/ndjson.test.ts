@@ -110,7 +110,7 @@ describe("ndjsonResponse", () => {
     });
     const reader = res.body!.getReader();
     const chunks: Uint8Array[] = [];
-     
+
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;

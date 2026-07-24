@@ -980,9 +980,9 @@ describe("deleteScimUser", () => {
 describe("J — raw-baseDb + tx invariants (anti-pattern guards)", () => {
   // These are static source assertions; they read the on-disk file and look
   // for forbidden tokens. They guard the planning-locked rules.
-   
+
   const fs = require("fs") as typeof import("fs");
-   
+
   const path = require("path") as typeof import("path");
   const source = fs.readFileSync(path.join(__dirname, "users.ts"), "utf-8");
 

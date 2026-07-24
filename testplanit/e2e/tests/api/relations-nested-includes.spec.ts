@@ -102,7 +102,6 @@ test.describe("Nested Includes Regression Tests", () => {
       await api.addTagToTestCase(caseId!, tagId);
     });
 
-     
     let result: any;
 
     await test.step("Query RepositoryCases with nested includes", async () => {
@@ -266,7 +265,6 @@ test.describe("Nested Includes Regression Tests", () => {
       await api.addTestCaseToTestRun(testRunId, caseId2!, { order: 2 });
     });
 
-     
     let result: any;
 
     await test.step("Query TestRuns with deeply nested includes", async () => {

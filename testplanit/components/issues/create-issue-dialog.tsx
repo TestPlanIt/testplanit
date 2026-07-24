@@ -1,4 +1,3 @@
- 
 "use client";
 
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";

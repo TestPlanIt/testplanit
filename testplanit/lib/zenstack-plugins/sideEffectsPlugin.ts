@@ -193,9 +193,9 @@ export const sideEffectsPlugin = definePlugin(schema, {
       beforeMutationEntities,
     }) => {
       const tx = client as unknown as TxClient;
-       
+
       const after = ((await loadAfterMutationEntities()) ?? []) as any[];
-       
+
       const before = (beforeMutationEntities ?? []) as any[];
 
       switch (model) {

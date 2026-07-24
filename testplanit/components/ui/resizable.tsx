@@ -139,7 +139,6 @@ const asPercentSize = (
 const ResizablePanel = forwardRef<PanelImperativeHandle, ResizablePanelProps>(
   (
     {
-       
       order: _order,
       onCollapse,
       onExpand,

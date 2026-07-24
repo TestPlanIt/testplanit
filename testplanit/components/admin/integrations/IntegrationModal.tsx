@@ -1,5 +1,4 @@
 "use client";
- 
 
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
