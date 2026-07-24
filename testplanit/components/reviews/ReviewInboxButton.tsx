@@ -4,6 +4,7 @@ import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { useQueryClient } from "@tanstack/react-query";
 import { Inbox } from "lucide-react";
 import { useSession } from "next-auth/react";
@@ -38,7 +39,13 @@ import { Link } from "~/lib/navigation";
  *     the assigned role on ANY project. Role membership is derived from the
  *     user's global roleId + every SPECIFIC_ROLE UserProjectPermission row.
  */
-export function ReviewInboxButton() {
+export function ReviewInboxButton({
+  variant = "icon",
+}: {
+  /** "icon" renders the standalone header button; "menu" renders as a row for
+   * the collapsed header kebab. Both share the same visibility gating + count. */
+  variant?: "icon" | "menu";
+} = {}) {
   const t = useTranslations();
   const { data: session, status } = useSession();
   const queryClient = useQueryClient();
@@ -120,6 +127,31 @@ export function ReviewInboxButton() {
     return null;
 
   const numericCount = typeof count === "number" ? count : 0;
+
+  if (variant === "menu") {
+    return (
+      <DropdownMenuItem asChild>
+        <Link
+          href="/reviews"
+          data-testid="review-inbox-button"
+          aria-label={t("reviews.inbox.iconAria", { count: numericCount })}
+          className="flex cursor-pointer items-center no-underline"
+        >
+          <Inbox className="me-2 h-4 w-4" />
+          <span>{t("common.pageTitles.reviews")}</span>
+          {numericCount > 0 && (
+            <Badge
+              variant="destructive"
+              className="ms-auto h-5 min-w-5 justify-center p-0 px-1 text-xs"
+              data-testid="review-inbox-count-badge"
+            >
+              {numericCount > 9 ? "9+" : numericCount}
+            </Badge>
+          )}
+        </Link>
+      </DropdownMenuItem>
+    );
+  }
 
   return (
     <Link

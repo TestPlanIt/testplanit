@@ -21,6 +21,9 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -168,7 +171,13 @@ function NotificationItem({
   );
 }
 
-export function NotificationBell() {
+export function NotificationBell({
+  variant = "icon",
+}: {
+  /** "icon" renders the standalone header bell; "menu" renders as a submenu row
+   * for the collapsed header kebab. Both reuse the same panel and handlers. */
+  variant?: "icon" | "menu";
+} = {}) {
   const t = useTranslations("components.notifications");
   const tCommon = useTranslations("common");
   const { data: session } = useSession();
@@ -304,6 +313,121 @@ export function NotificationBell() {
     }
   };
 
+  // Shared panel body — reused by the standalone popover and the kebab submenu.
+  const panel = (
+    <>
+      <div className="pt-4 px-4 pb-2 border-b-2">
+        <h3 className="font-semibold">
+          <Bell className="inline me-1 w-5 shrink-0" />
+          {tCommon("fields.notificationMode")}
+        </h3>
+        <div className="flex justify-between">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleMarkAllRead}
+            disabled={unreadCount === 0}
+            className={cn(unreadCount === 0 && "text-muted-foreground")}
+            data-testid="mark-all-read-button"
+          >
+            <EyeIcon className="w-4 h-4 shrink-0" />
+            {t("actions.markAllRead")}
+          </Button>
+          <Button
+            variant={
+              notifications && notifications.length > 0
+                ? "destructive"
+                : "ghost"
+            }
+            size="sm"
+            onClick={() => setDeleteAllDialogOpen(true)}
+            disabled={!notifications || notifications.length === 0}
+            className={cn(
+              (!notifications || notifications.length === 0) &&
+                "text-muted-foreground"
+            )}
+            data-testid="delete-all-notifications-button"
+          >
+            <Trash2 className="w-4 h-4 shrink-0" />
+            {t("actions.deleteAll")}
+          </Button>
+        </div>
+      </div>
+      <ScrollArea className="h-[400px]">
+        {notifications && notifications.length > 0 ? (
+          notifications.map((notification) => (
+            <NotificationItem
+              key={notification.id}
+              notification={notification}
+              onMarkRead={handleMarkRead}
+              onMarkUnread={handleMarkUnread}
+              onDelete={handleDelete}
+              userPreferences={session?.user?.preferences}
+            />
+          ))
+        ) : (
+          <div
+            className="p-8 text-center text-muted-foreground"
+            data-testid="empty-notifications"
+          >
+            {t("empty")}
+          </div>
+        )}
+      </ScrollArea>
+    </>
+  );
+
+  const deleteAllDialog = (
+    <AlertDialog
+      open={deleteAllDialogOpen}
+      onOpenChange={setDeleteAllDialogOpen}
+    >
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{t("deleteAllDialog.title")}</AlertDialogTitle>
+          <AlertDialogDescription>
+            {t("deleteAllDialog.description")}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>{tCommon("cancel")}</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={handleDeleteAll}
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+          >
+            {t("deleteAllDialog.confirm")}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+
+  if (variant === "menu") {
+    return (
+      <>
+        <DropdownMenuSub>
+          <DropdownMenuSubTrigger data-testid="notification-bell-button">
+            <Bell className="me-2 h-4 w-4" />
+            <span>{tCommon("fields.notificationMode")}</span>
+            {unreadCount > 0 && (
+              <Badge
+                variant="destructive"
+                className="ms-2 h-5 min-w-5 justify-center p-0 px-1 text-xs"
+                data-testid="notification-count-badge"
+              >
+                {unreadCount > 9 ? "9+" : unreadCount}
+              </Badge>
+            )}
+          </DropdownMenuSubTrigger>
+          <DropdownMenuSubContent className="w-[400px] p-0">
+            {panel}
+          </DropdownMenuSubContent>
+        </DropdownMenuSub>
+        {deleteAllDialog}
+      </>
+    );
+  }
+
   return (
     <>
       <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
@@ -331,89 +455,10 @@ export function NotificationBell() {
           align="end"
           className="w-[400px] p-0 drop-shadow-2xl"
         >
-          <div className="pt-4 px-4 pb-2 border-b-2">
-            <h3 className="font-semibold">
-              <Bell className="inline me-1 w-5 shrink-0" />
-              {tCommon("fields.notificationMode")}
-            </h3>
-            <div className="flex justify-between">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleMarkAllRead}
-                disabled={unreadCount === 0}
-                className={cn(unreadCount === 0 && "text-muted-foreground")}
-                data-testid="mark-all-read-button"
-              >
-                <EyeIcon className="w-4 h-4 shrink-0" />
-                {t("actions.markAllRead")}
-              </Button>
-              <Button
-                variant={
-                  notifications && notifications.length > 0
-                    ? "destructive"
-                    : "ghost"
-                }
-                size="sm"
-                onClick={() => setDeleteAllDialogOpen(true)}
-                disabled={!notifications || notifications.length === 0}
-                className={cn(
-                  (!notifications || notifications.length === 0) &&
-                    "text-muted-foreground"
-                )}
-                data-testid="delete-all-notifications-button"
-              >
-                <Trash2 className="w-4 h-4 shrink-0" />
-                {t("actions.deleteAll")}
-              </Button>
-            </div>
-          </div>
-          <ScrollArea className="h-[400px]">
-            {notifications && notifications.length > 0 ? (
-              notifications.map((notification) => (
-                <NotificationItem
-                  key={notification.id}
-                  notification={notification}
-                  onMarkRead={handleMarkRead}
-                  onMarkUnread={handleMarkUnread}
-                  onDelete={handleDelete}
-                  userPreferences={session?.user?.preferences}
-                />
-              ))
-            ) : (
-              <div
-                className="p-8 text-center text-muted-foreground"
-                data-testid="empty-notifications"
-              >
-                {t("empty")}
-              </div>
-            )}
-          </ScrollArea>
+          {panel}
         </DropdownMenuContent>
       </DropdownMenu>
-
-      <AlertDialog
-        open={deleteAllDialogOpen}
-        onOpenChange={setDeleteAllDialogOpen}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{t("deleteAllDialog.title")}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {t("deleteAllDialog.description")}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>{tCommon("cancel")}</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDeleteAll}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {t("deleteAllDialog.confirm")}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {deleteAllDialog}
     </>
   );
 }
