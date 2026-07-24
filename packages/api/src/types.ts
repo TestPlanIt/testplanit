@@ -856,6 +856,27 @@ export interface FindTestCaseOptions {
 }
 
 /**
+ * Options for {@link TestPlanItClient.findTestCaseByCustomField}.
+ *
+ * Resolves a case by a custom field value rather than by
+ * name/className/source, so an automated run can attach to a manually-authored
+ * case that carries a legacy external identifier (e.g. an ID backfilled onto
+ * migrated MANUAL cases as an Integer custom field).
+ */
+export interface FindTestCaseByCustomFieldOptions {
+  projectId: number;
+  /** Custom field display name to match on (e.g. `"External ID"`). */
+  fieldName: string;
+  /**
+   * Value to match against the field. Compared against the stored JSON value
+   * in both its number and string forms, so resolution does not depend on
+   * whether the field type persists as a JSON number (Integer/Number) or a
+   * JSON string (Text).
+   */
+  value: string | number;
+}
+
+/**
  * API client configuration
  */
 export interface TestPlanItClientConfig {

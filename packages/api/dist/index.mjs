@@ -982,6 +982,55 @@ var TestPlanItClient = class {
     });
   }
   /**
+   * Find an existing test case by a custom field value, matched by the field's
+   * display name.
+   *
+   * Unlike {@link findTestCases} / {@link findOrCreateTestCase} (which key off
+   * name + className + source), this resolves a case purely by a value stored
+   * in its `caseFieldValues`. That lets an automated run attach to a
+   * manually-authored case — regardless of the case's `source` — when the case
+   * carries a legacy external identifier as a custom field (e.g. an ID
+   * backfilled onto MANUAL cases after migrating from another test manager).
+   *
+   * The stored JSON `value` is matched in both its number and string forms:
+   * Integer/Number fields persist as a JSON number (`89434`) while Text fields
+   * persist as a JSON string (`"89434"`), so resolution never hinges on the
+   * field's underlying type.
+   *
+   * Returns the first active (non-deleted) matching case, or `undefined` when
+   * nothing matches — including when the named field does not exist on the
+   * project (the relation filter simply matches no rows; it does not throw).
+   */
+  async findTestCaseByCustomField(options) {
+    const { projectId, fieldName, value } = options;
+    const stringValue = String(value);
+    const valueVariants = [
+      { value: { equals: stringValue } }
+    ];
+    const numericValue = typeof value === "number" ? value : Number(stringValue);
+    if (Number.isFinite(numericValue) && stringValue !== "" && String(numericValue) === stringValue) {
+      valueVariants.push({ value: { equals: numericValue } });
+    }
+    const cases = await this.zenstack(
+      "repositoryCases",
+      "findMany",
+      {
+        where: {
+          projectId,
+          isDeleted: false,
+          caseFieldValues: {
+            some: {
+              field: { displayName: fieldName },
+              OR: valueVariants
+            }
+          }
+        },
+        take: 1
+      }
+    );
+    return cases?.[0];
+  }
+  /**
    * Find or create a test case
    * First searches for an active (non-deleted) test case in an active folder, then creates if not found.
    * If a matching case exists in a deleted folder, it will be moved to the specified folder.

@@ -258,6 +258,7 @@ var TestPlanItReporter = class _TestPlanItReporter extends WDIOReporter__default
       results: /* @__PURE__ */ new Map(),
       caseIdMap: /* @__PURE__ */ new Map(),
       testRunCaseMap: /* @__PURE__ */ new Map(),
+      customFieldCaseMap: /* @__PURE__ */ new Map(),
       folderPathMap: /* @__PURE__ */ new Map(),
       caseStepsMap: /* @__PURE__ */ new Map(),
       statusIds: {},
@@ -737,6 +738,67 @@ ${error.stack}` : "";
     return { caseIds, cleanTitle };
   }
   /**
+   * Extract the custom-field identifier from a test title using
+   * `matchByCustomField.idPattern` (default `/^(\d+)/`). Returns the first
+   * capturing group, or the whole match when the pattern has no group. The
+   * value is returned as a string; the API client matches it against both the
+   * numeric and string forms of the stored value. Returns undefined when the
+   * pattern doesn't match. Independent of `parseCaseIds`.
+   */
+  parseCustomFieldId(title) {
+    const cfg = this.reporterOptions.matchByCustomField;
+    if (!cfg) return void 0;
+    const pattern = cfg.idPattern ?? /^(\d+)/;
+    const source = typeof pattern === "string" ? pattern : pattern.source;
+    const flags = typeof pattern === "string" ? "" : pattern.flags.replace("g", "");
+    const regex = new RegExp(source, flags);
+    const match = regex.exec(title);
+    if (!match) return void 0;
+    const captured = match.slice(1).find((g) => g != null && g !== "") ?? match[0];
+    return captured != null && captured !== "" ? captured : void 0;
+  }
+  /**
+   * Opt-in resolution: find an existing case by a custom field value parsed
+   * from the test title (see `matchByCustomField`). Returns the matched case
+   * ID, or undefined to fall through to the name + className + source matching
+   * / `autoCreateTestCases` flow.
+   *
+   * Never throws: a title the pattern doesn't match, a field that doesn't
+   * exist, no matching case, or an API error all log and return undefined so
+   * the standard flow still runs.
+   */
+  async resolveCaseByCustomField(result) {
+    const cfg = this.reporterOptions.matchByCustomField;
+    if (!cfg) return void 0;
+    const value = this.parseCustomFieldId(result.originalTitle);
+    if (value === void 0) {
+      this.log("matchByCustomField: no id parsed from title:", result.originalTitle);
+      return void 0;
+    }
+    const cacheKey = `${cfg.fieldName}::${value}`;
+    if (this.state.customFieldCaseMap.has(cacheKey)) {
+      return this.state.customFieldCaseMap.get(cacheKey) ?? void 0;
+    }
+    try {
+      const match = await this.client.findTestCaseByCustomField({
+        projectId: this.reporterOptions.projectId,
+        fieldName: cfg.fieldName,
+        value
+      });
+      if (match) {
+        this.state.customFieldCaseMap.set(cacheKey, match.id);
+        this.log(`matchByCustomField: matched case ${match.id} via ${cfg.fieldName}=${value}`);
+        return match.id;
+      }
+      this.state.customFieldCaseMap.set(cacheKey, null);
+      this.log(`matchByCustomField: no case with ${cfg.fieldName}=${value}; falling through`);
+      return void 0;
+    } catch (error) {
+      this.logError(`matchByCustomField lookup failed for ${cfg.fieldName}=${value}; falling through`, error);
+      return void 0;
+    }
+  }
+  /**
    * Get the full suite path as a string
    */
   getFullSuiteName() {
@@ -986,7 +1048,7 @@ ${error.stack}` : "";
    */
   async reportResult(result, caseIds) {
     try {
-      if (caseIds.length === 0 && !this.reporterOptions.autoCreateTestCases) {
+      if (caseIds.length === 0 && !this.reporterOptions.autoCreateTestCases && !this.reporterOptions.matchByCustomField) {
         console.warn(`[TestPlanIt] WARNING: Skipping "${result.testName}" - no case ID found and autoCreateTestCases is disabled. Set autoCreateTestCases: true to automatically find or create test cases by name.`);
         return;
       }
@@ -1015,7 +1077,20 @@ ${error.stack}` : "";
           await this.writeScenarioSteps(caseIds[0], "found", result);
         }
         this.collectForLlmDerivation(caseIds[0], "found", result);
-      } else if (this.reporterOptions.autoCreateTestCases) {
+      }
+      if (repositoryCaseId === void 0 && this.reporterOptions.matchByCustomField) {
+        const matchedId = await this.resolveCaseByCustomField(result);
+        if (matchedId !== void 0) {
+          repositoryCaseId = matchedId;
+          this.state.stats.testCasesFound++;
+          this.log("DEBUG: Attaching to case matched by custom field:", repositoryCaseId);
+          if (this.reporterOptions.overwriteSteps) {
+            await this.writeScenarioSteps(matchedId, "found", result);
+          }
+          this.collectForLlmDerivation(matchedId, "found", result);
+        }
+      }
+      if (repositoryCaseId === void 0 && this.reporterOptions.autoCreateTestCases) {
         if (this.state.caseIdMap.has(caseKey)) {
           repositoryCaseId = this.state.caseIdMap.get(caseKey);
           this.log("DEBUG: Found in cache:", caseKey, "->", repositoryCaseId);
@@ -1073,8 +1148,6 @@ ${error.stack}` : "";
           await this.writeScenarioSteps(testCase.id, action, result);
           this.collectForLlmDerivation(testCase.id, action, result);
         }
-      } else {
-        this.log("DEBUG: autoCreateTestCases is false, not creating test case");
       }
       if (!repositoryCaseId) {
         this.log("No repository case ID, skipping result");

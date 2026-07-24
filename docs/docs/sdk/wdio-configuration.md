@@ -25,6 +25,7 @@ These options apply to the **reporter**. If you're using the [Launcher Service](
 | `milestoneId` | `number \| string` | - | Milestone for the test run (ID or name) |
 | `stateId` | `number \| string` | - | Workflow state for the test run (ID or name) |
 | `caseIdPattern` | `RegExp \| string` | `/\[(\d+)\]/g` | Regex pattern for extracting case IDs from test titles |
+| `matchByCustomField` | `object` | - | Resolve an existing case by a **custom field value** parsed from the title, before the name/create fallback. See [Matching by a Custom Field](#matching-by-a-custom-field) |
 | `autoCreateTestCases` | `boolean` | `false` | Auto-create test cases if they don't exist |
 | `captureSteps` | `boolean` | `true` | Populate a case's Steps. **Cucumber:** captures the scenario's Given/When/Then deterministically. **Mocha/Jasmine (and other low-structure frameworks):** requests opt-in **AI-derived** steps — but only when an LLM provider is [configured for the project](../user-guide/llm-step-derivation.md); otherwise it is a silent no-op. |
 | `overwriteSteps` | `boolean` | `false` | Re-sync steps on **every** run, replacing existing ones — **destructive** (discards manual edits). Applies to both paths: the Cucumber deterministic steps and the AI-derived steps for low-structure frameworks. |
@@ -113,3 +114,53 @@ export const config = {
   ],
 };
 ```
+
+## Matching by a Custom Field
+
+By default, the reporter resolves each test to a case by an **exact match** on name + suite (className) + source. Automated runs always create/match cases with `source: API`, so they can never attach to a manually-authored case (`source: MANUAL`) — even with an identical name.
+
+`matchByCustomField` solves this for suites migrated from another tool, where each test title carries a **legacy external identifier** (e.g. an ID from your previous test manager) that was backfilled onto the migrated manual cases as a custom field. It resolves an existing case by that custom field value **before** the standard name/create flow:
+
+```javascript
+// wdio.conf.js
+export const config = {
+  reporters: [
+    ['@testplanit/wdio-reporter', {
+      domain: 'https://testplanit.example.com',
+      apiToken: process.env.TESTPLANIT_API_TOKEN,
+      projectId: 1,
+      matchByCustomField: {
+        fieldName: 'External ID',   // custom field display name to match on
+        // idPattern: /^(\d+)/       // default: a bare leading number in the title
+      },
+      // Optional fallback: create cases for titles with no match.
+      autoCreateTestCases: true,
+      parentFolderId: 10,
+      templateId: 1,
+    }]
+  ],
+};
+```
+
+Given a test titled:
+
+```javascript
+it("89434 Verify 'Relevance' is the default sort order for search results", () => { /* ... */ });
+```
+
+the reporter extracts `89434` with `idPattern`, looks up the case whose **External ID** custom field equals `89434`, and attaches the result **directly** to that case — regardless of its source (typically `MANUAL`). No new case, folder, or [case link](./wdio-test-cases.md) is created.
+
+### Options
+
+| Key | Type | Default | Description |
+| --- | --- | --- | --- |
+| `fieldName` | `string` | *(required)* | Display name of the custom field to match on (e.g. `External ID`) |
+| `idPattern` | `RegExp \| string` | `/^(\d+)/` | Pattern to extract the identifier from the title. The first capturing group (or the whole match) is looked up against `fieldName` |
+
+### Behavior
+
+- **Opt-in.** Omit `matchByCustomField` and resolution behaves exactly as before.
+- **Runs first.** It is tried before name + className + source matching and before `autoCreateTestCases`.
+- **Independent of `caseIdPattern`.** `caseIdPattern` treats the number it captures as a literal TestPlanIt case ID; `matchByCustomField` treats it as a value to look up. An explicit `caseIdPattern` match in the title still takes precedence.
+- **Graceful fallthrough.** On no match — or if the named field doesn't exist on the project — the reporter falls through to the standard flow (name/create) without error. When `autoCreateTestCases` is off and nothing matches, the result is skipped, exactly as today.
+- **Value matching.** The value is compared against the stored field value in both its number and string forms, so it works whether the field is an Integer/Number (stored as a number) or Text (stored as a string).
