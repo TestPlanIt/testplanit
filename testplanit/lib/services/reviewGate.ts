@@ -318,6 +318,252 @@ export async function assertBulkReviewGatePasses(
   return approvedRequestIds.length > 0 ? { approvedRequestIds } : null;
 }
 
+export interface BulkReviewTarget {
+  entityId: number;
+  /** The entity's CURRENT state — becomes ReviewRequest.fromStateId. */
+  fromStateId: number;
+  /** First gate on the path with no approval — becomes ReviewRequest.toStateId. */
+  gateId: number;
+}
+
+export interface BulkReviewTargetResolution {
+  targets: BulkReviewTarget[];
+  /** Already carrying a PENDING request; a second one would duplicate it. */
+  skippedPending: number[];
+  /** Backward/same-state, or every gate on the path already approved. */
+  skippedNotBlocked: number[];
+}
+
+/**
+ * Resolve which entities in a bulk selection need a review request to reach
+ * `toStateId`, and which gate each one needs approved FIRST.
+ *
+ * This is the non-throwing planning counterpart to
+ * {@link assertBulkReviewGatePasses}: where that helper answers "may this
+ * bulk transition proceed?" (and rolls the caller's transaction back when it
+ * may not), this one answers "what approvals would make it proceed?" so the
+ * bulk-edit path can raise those requests instead of dead-ending on a
+ * disabled Save.
+ *
+ * Contract:
+ *
+ *   1. **One gate per entity — the FIRST missing one.** Under strict
+ *      transitive semantics a single entity may need to cross several gates
+ *      (Draft → Ready → Approved). Requesting all of them up front would put
+ *      multiple PENDING rows on one entity, which `RequestReviewButton`'s
+ *      hide-predicate and `ReviewStatusBanner` both assume cannot happen. So
+ *      each entity gets exactly one request, for the lowest-order gate it
+ *      lacks. Approving that request moves the entity to the gate (see
+ *      `applyApprovedReviewTransition`), after which the next bulk edit
+ *      resolves to the next gate.
+ *
+ *   2. **Entities with a PENDING request are skipped, not failed.** The
+ *      one-PENDING-per-entity invariant is enforced by UI affordances only —
+ *      there is no unique index and `reviewRequest.create` has no preflight —
+ *      so a bulk path that didn't check would silently mint duplicates.
+ *      They come back in `skippedPending` for the caller to report.
+ *
+ *   3. **Entities that aren't blocked are skipped.** Backward/same-state
+ *      moves and paths whose gates are all already approved need nothing.
+ *
+ *   4. **Gates are scoped to the project's assigned workflows.**
+ *      `requiresReview` is a global `Workflows` column, so an unscoped query
+ *      surfaces gated states belonging to OTHER projects as blockers. This
+ *      mirrors the project-assignment filter `useBulkTransitionGateStatus`
+ *      applies client-side, so the requests raised match the blocked list the
+ *      user was shown.
+ *
+ * Cost is constant in the number of entities: one findMany for the entities,
+ * one for the workflow states, one for approvals, one for pending requests.
+ */
+export async function resolveBulkReviewTargets(
+  tx: TxClient,
+  projectId: number,
+  entityType: ReviewEntityType,
+  entityIds: readonly number[],
+  toStateId: number
+): Promise<BulkReviewTargetResolution> {
+  const empty: BulkReviewTargetResolution = {
+    targets: [],
+    skippedPending: [],
+    skippedNotBlocked: [],
+  };
+  if (entityIds.length === 0) {
+    return empty;
+  }
+
+  const targetState = await tx.workflows.findUnique({
+    where: { id: toStateId },
+    select: { order: true },
+  });
+  if (!targetState) {
+    return empty;
+  }
+
+  const entities = await loadEntitiesForBulkGate(
+    tx,
+    projectId,
+    entityType,
+    entityIds
+  );
+  if (entities.length === 0) {
+    return empty;
+  }
+
+  const scope = SCOPE_BY_ENTITY_TYPE[entityType];
+  const gatedStates = await tx.workflows.findMany({
+    where: {
+      scope,
+      requiresReview: true,
+      isDeleted: false,
+      projects: { some: { projectId } },
+    },
+    select: { id: true, order: true },
+    orderBy: { order: "asc" },
+  });
+  if (gatedStates.length === 0) {
+    return { ...empty, skippedNotBlocked: entities.map((e) => e.id) };
+  }
+
+  const presentIds = entities.map((e) => e.id);
+
+  const [approvals, pending] = await Promise.all([
+    tx.reviewRequest.findMany({
+      where: {
+        entityType,
+        entityId: { in: presentIds },
+        toStateId: { in: gatedStates.map((g) => g.id) },
+        status: "APPROVED",
+        consumedAt: null,
+        isDeleted: false,
+      },
+      select: { entityId: true, toStateId: true },
+    }),
+    tx.reviewRequest.findMany({
+      where: {
+        entityType,
+        entityId: { in: presentIds },
+        status: "PENDING",
+        isDeleted: false,
+      },
+      select: { entityId: true },
+    }),
+  ]);
+
+  const approvalsByEntity = new Map<number, Set<number>>();
+  for (const a of approvals as Array<{ entityId: number; toStateId: number }>) {
+    const existing = approvalsByEntity.get(a.entityId);
+    if (existing) {
+      existing.add(a.toStateId);
+    } else {
+      approvalsByEntity.set(a.entityId, new Set([a.toStateId]));
+    }
+  }
+  const pendingEntityIds = new Set<number>(
+    (pending as Array<{ entityId: number }>).map((p) => p.entityId)
+  );
+
+  const targets: BulkReviewTarget[] = [];
+  const skippedPending: number[] = [];
+  const skippedNotBlocked: number[] = [];
+
+  for (const entity of entities) {
+    // A null current state means "before everything" — every gate applies
+    // (mirrors both gate helpers). It cannot supply a fromStateId though, so
+    // such a row can't carry a ReviewRequest; treat it as not-actionable.
+    if (entity.stateId === null || entity.stateOrder === null) {
+      skippedNotBlocked.push(entity.id);
+      continue;
+    }
+    // Backward / same-state transitions are never blocked.
+    if (entity.stateOrder >= targetState.order) {
+      skippedNotBlocked.push(entity.id);
+      continue;
+    }
+
+    const approved = approvalsByEntity.get(entity.id);
+    const firstMissingGate = gatedStates.find(
+      (g) =>
+        entity.stateOrder! < g.order &&
+        g.order <= targetState.order &&
+        !approved?.has(g.id)
+    );
+
+    if (!firstMissingGate) {
+      skippedNotBlocked.push(entity.id);
+      continue;
+    }
+    // Checked AFTER the blocked determination so an unblocked entity that
+    // happens to carry an unrelated PENDING request isn't miscounted as
+    // "skipped because pending".
+    if (pendingEntityIds.has(entity.id)) {
+      skippedPending.push(entity.id);
+      continue;
+    }
+
+    targets.push({
+      entityId: entity.id,
+      fromStateId: entity.stateId,
+      gateId: firstMissingGate.id,
+    });
+  }
+
+  return { targets, skippedPending, skippedNotBlocked };
+}
+
+/**
+ * Load the id / current state / current state order for every entity in a
+ * bulk selection, constrained to `projectId` so a caller can't smuggle ids
+ * from another project into the resolution.
+ */
+async function loadEntitiesForBulkGate(
+  tx: TxClient,
+  projectId: number,
+  entityType: ReviewEntityType,
+  entityIds: readonly number[]
+): Promise<
+  Array<{ id: number; stateId: number | null; stateOrder: number | null }>
+> {
+  // Each branch inlines its own findMany args. A shared args object can't be
+  // reused across the three models: `as const` makes the `in` array readonly
+  // (v3's NumberFilter wants a mutable `number[]`), and hoisting the args out
+  // of the call defeats the select-driven return-type inference, so the rows
+  // come back typed as full model records.
+  const ids = [...entityIds];
+  const where = { id: { in: ids }, projectId, isDeleted: false };
+  const select = {
+    id: true,
+    stateId: true,
+    state: { select: { order: true } },
+  } as const;
+
+  const toGateRow = (r: {
+    id: number;
+    stateId: number | null;
+    state: { order: number } | null;
+  }) => ({
+    id: r.id,
+    stateId: r.stateId ?? null,
+    stateOrder: r.state?.order ?? null,
+  });
+
+  switch (entityType) {
+    case ReviewEntityType.CASE:
+      return (await tx.repositoryCases.findMany({ where, select })).map(
+        toGateRow
+      );
+    case ReviewEntityType.SESSION:
+      return (await tx.sessions.findMany({ where, select })).map(toGateRow);
+    case ReviewEntityType.RUN:
+      return (await tx.testRuns.findMany({ where, select })).map(toGateRow);
+    default: {
+      const _exhaustive: never = entityType;
+      void _exhaustive;
+      return [];
+    }
+  }
+}
+
 /**
  * Apply the transition an APPROVED ReviewRequest authorizes.
  *

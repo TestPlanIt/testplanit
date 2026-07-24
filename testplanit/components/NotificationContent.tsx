@@ -575,6 +575,30 @@ export function NotificationContent({
             ? undefined
             : data.decisionComment;
 
+      // A bulk request collapses N requests into this one row, so neither the
+      // representative entity nor its transition is the right thing to show:
+      // the batch spans many entities and (under strict-transitive gating)
+      // potentially several different gates. Link to the review inbox and
+      // state the count instead.
+      const bulkCount =
+        notification.type === "REVIEW_REQUESTED" &&
+        typeof data.bulkCount === "number" &&
+        data.bulkCount > 1
+          ? data.bulkCount
+          : null;
+
+      const bulkSummary =
+        bulkCount === null
+          ? null
+          : t(
+              data.entityType === "CASE"
+                ? "reviewBulkSummaryCase"
+                : data.entityType === "RUN"
+                  ? "reviewBulkSummaryRun"
+                  : "reviewBulkSummarySession",
+              { count: bulkCount }
+            );
+
       return (
         <div className="space-y-2">
           <h4 className="font-medium text-sm">{title}</h4>
@@ -585,10 +609,10 @@ export function NotificationContent({
             </div>
             <div className="flex items-center gap-1">
               <Link
-                href={entityLink}
+                href={bulkCount !== null ? "/reviews" : entityLink}
                 className="font-medium text-primary hover:underline inline-flex items-center gap-1"
               >
-                {entityNameDisplay}
+                {bulkCount !== null ? bulkSummary : entityNameDisplay}
                 <ExternalLink className="h-3 w-3" />
               </Link>
             </div>
@@ -600,7 +624,7 @@ export function NotificationContent({
                 size="sm"
               />
             </div>
-            {data.fromStateName && data.toStateName && (
+            {bulkCount === null && data.fromStateName && data.toStateName && (
               <div className="text-xs">
                 {t("reviewTransition", {
                   from: data.fromStateName,

@@ -122,7 +122,15 @@ const processor = async (job: Job) => {
           notification.type === "REVIEW_CANCELLED" ||
           notification.type === "REVIEW_REMINDER"
         ) {
-          if (data.projectId && data.entityType && data.entityId) {
+          if (
+            typeof data.bulkCount === "number" &&
+            data.bulkCount > 1 &&
+            notification.type === "REVIEW_REQUESTED"
+          ) {
+            // The batch spans many entities; the representative one in the
+            // payload is not a meaningful destination. Send them to the inbox.
+            notificationUrl = `${baseUrl}/${urlLocale}/reviews`;
+          } else if (data.projectId && data.entityType && data.entityId) {
             const entityPath =
               data.entityType === "CASE"
                 ? `repository/${data.projectId}/${data.entityId}`
@@ -344,12 +352,29 @@ const processor = async (job: Job) => {
             REVIEW_CANCELLED: "reviewCancelledEmailMessage",
             REVIEW_REMINDER: "reviewReminderEmailMessage",
           } as const;
+          // A bulk review request covers many entities and potentially
+          // several different gates, so the single-entity copy ("your review
+          // of test case X") and the transition line are both wrong for it.
+          // Swap in count-based copy; count === 1 falls through to the
+          // single-entity wording, which is accurate for a batch of one.
+          const reviewBulkCount =
+            notification.type === "REVIEW_REQUESTED" &&
+            typeof data.bulkCount === "number" &&
+            data.bulkCount > 1
+              ? data.bulkCount
+              : null;
           const entityLabelKey =
             data.entityType === "CASE"
-              ? "reviewEntityLabelCase"
+              ? reviewBulkCount !== null
+                ? "reviewBulkEntityLabelCase"
+                : "reviewEntityLabelCase"
               : data.entityType === "RUN"
-                ? "reviewEntityLabelRun"
-                : "reviewEntityLabelSession";
+                ? reviewBulkCount !== null
+                  ? "reviewBulkEntityLabelRun"
+                  : "reviewEntityLabelRun"
+                : reviewBulkCount !== null
+                  ? "reviewBulkEntityLabelSession"
+                  : "reviewEntityLabelSession";
           const entityLabel = await getServerTranslation(
             userLocale,
             `components.notifications.content.${entityLabelKey}`
@@ -360,7 +385,9 @@ const processor = async (job: Job) => {
           );
           translatedMessage = await getServerTranslation(
             userLocale,
-            `components.notifications.content.${emailMessageKeyByType[notification.type as keyof typeof emailMessageKeyByType]}`,
+            reviewBulkCount !== null
+              ? "components.notifications.content.reviewBulkRequestedEmailMessage"
+              : `components.notifications.content.${emailMessageKeyByType[notification.type as keyof typeof emailMessageKeyByType]}`,
             {
               actorName:
                 (notification.type === "REVIEW_REQUESTED"
@@ -374,9 +401,14 @@ const processor = async (job: Job) => {
               entityName: data.entityName ?? "",
               projectName: data.projectName ?? "",
               hoursPending: data.hoursPending ?? 0,
+              count: reviewBulkCount ?? 0,
             }
           );
-          if (data.fromStateName && data.toStateName) {
+          if (
+            reviewBulkCount === null &&
+            data.fromStateName &&
+            data.toStateName
+          ) {
             const transitionLine = await getServerTranslation(
               userLocale,
               "components.notifications.content.reviewTransition",
@@ -540,7 +572,14 @@ const processor = async (job: Job) => {
               notification.type === "REVIEW_CANCELLED" ||
               notification.type === "REVIEW_REMINDER"
             ) {
-              if (data.projectId && data.entityType && data.entityId) {
+              if (
+                typeof data.bulkCount === "number" &&
+                data.bulkCount > 1 &&
+                notification.type === "REVIEW_REQUESTED"
+              ) {
+                // See the immediate-send branch — a batch has no single entity.
+                url = `${baseUrl}/${urlLocale}/reviews`;
+              } else if (data.projectId && data.entityType && data.entityId) {
                 const entityPath =
                   data.entityType === "CASE"
                     ? `repository/${data.projectId}/${data.entityId}`
@@ -654,12 +693,25 @@ const processor = async (job: Job) => {
                 REVIEW_CANCELLED: "reviewCancelledEmailMessage",
                 REVIEW_REMINDER: "reviewReminderEmailMessage",
               } as const;
+              // Bulk-request copy — see the immediate-send branch above.
+              const reviewBulkCount =
+                notification.type === "REVIEW_REQUESTED" &&
+                typeof data.bulkCount === "number" &&
+                data.bulkCount > 1
+                  ? data.bulkCount
+                  : null;
               const entityLabelKey =
                 data.entityType === "CASE"
-                  ? "reviewEntityLabelCase"
+                  ? reviewBulkCount !== null
+                    ? "reviewBulkEntityLabelCase"
+                    : "reviewEntityLabelCase"
                   : data.entityType === "RUN"
-                    ? "reviewEntityLabelRun"
-                    : "reviewEntityLabelSession";
+                    ? reviewBulkCount !== null
+                      ? "reviewBulkEntityLabelRun"
+                      : "reviewEntityLabelRun"
+                    : reviewBulkCount !== null
+                      ? "reviewBulkEntityLabelSession"
+                      : "reviewEntityLabelSession";
               const entityLabel = await getServerTranslation(
                 userLocale,
                 `components.notifications.content.${entityLabelKey}`
@@ -670,7 +722,9 @@ const processor = async (job: Job) => {
               );
               translatedMessage = await getServerTranslation(
                 userLocale,
-                `components.notifications.content.${emailMessageKeyByType[notification.type as keyof typeof emailMessageKeyByType]}`,
+                reviewBulkCount !== null
+                  ? "components.notifications.content.reviewBulkRequestedEmailMessage"
+                  : `components.notifications.content.${emailMessageKeyByType[notification.type as keyof typeof emailMessageKeyByType]}`,
                 {
                   actorName:
                     (notification.type === "REVIEW_REQUESTED"
@@ -684,6 +738,7 @@ const processor = async (job: Job) => {
                   entityName: data.entityName ?? "",
                   projectName: data.projectName ?? "",
                   hoursPending: data.hoursPending ?? 0,
+                  count: reviewBulkCount ?? 0,
                 }
               );
             }

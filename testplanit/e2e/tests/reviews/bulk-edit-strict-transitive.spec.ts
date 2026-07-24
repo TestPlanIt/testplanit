@@ -1,4 +1,7 @@
+import type { APIRequestContext } from "@playwright/test";
+
 import { expect, test } from "../../fixtures";
+import type { ApiHelper } from "../../fixtures/api.fixture";
 import {
   createGatedTestWorkflow,
   createReviewRequest,
@@ -10,14 +13,68 @@ import {
 } from "./helpers";
 
 /**
+ * Shared setup for the mixed-selection scenarios: a project with review
+ * enabled and two strictly-ordered gates (gateA.order < gateB.order) plus a
+ * NON-gated state parked between them. The mid state lets a case sit ABOVE
+ * gateA without having had to cross it (no seeded state ranks that high), so
+ * the specs can exercise "already past the gate" and "moving backward" cases.
+ */
+async function setupMixedGateProject(
+  request: APIRequestContext,
+  url: string,
+  api: ApiHelper,
+  gatedWorkflowIds: number[]
+) {
+  const projectId = await api.createProject(
+    `Reviews-BulkGateMix ${Date.now()}`
+  );
+  const ids = await getProjectWorkflowIds(request, url, projectId, "CASES", 5);
+  const currentStateId = ids[0]!;
+  await setProjectReviewWorkflowEnabled(request, url, projectId, true);
+
+  const gateA = await createGatedTestWorkflow(
+    request,
+    url,
+    projectId,
+    "CASES",
+    {
+      orderOffset: 1000,
+    }
+  );
+  const mid = await createGatedTestWorkflow(request, url, projectId, "CASES", {
+    requiresReview: false,
+    orderOffset: 1500,
+  });
+  const gateB = await createGatedTestWorkflow(
+    request,
+    url,
+    projectId,
+    "CASES",
+    {
+      orderOffset: 2000,
+    }
+  );
+  gatedWorkflowIds.push(gateA.id, mid.id, gateB.id);
+
+  const folderId = await api.createFolder(
+    projectId,
+    `BulkGateMix ${Date.now()}`
+  );
+  return { projectId, currentStateId, gateA, mid, gateB, folderId };
+}
+
+/**
  * Bulk-edit + strict transitive gating.
  *
  * Asserts:
  *  - With two gated states ordered current → A → B, attempting a bulk
- *    transition to B from current (skipping A) blocks Save and surfaces
- *    a list of case NAMES (not numeric ids) in the inline error.
- *  - An approval for state B alone does NOT satisfy gate A — Save stays
- *    disabled until BOTH gates are approved for the affected cases
+ *    transition to B from current (skipping A) withholds the plain Save and
+ *    surfaces a list of case NAMES (not numeric ids) in the inline error.
+ *  - While blocked, Save is replaced by "Save & request review", which opens
+ *    the bulk assignee sheet listing the FIRST blocking gate (A) — the way
+ *    out of the block rather than a dead end.
+ *  - An approval for state B alone does NOT satisfy gate A — the plain Save
+ *    stays withheld until BOTH gates are approved for the affected cases
  *    (strict transitive).
  */
 
@@ -185,20 +242,70 @@ test.describe("Bulk-edit strict transitive gating", () => {
         .first()
         .click();
 
-      // Inline error appears with both case names (quoted) and the FIRST
-      // blocking gate (gate A).
-      const inlineMsg = dialog.locator("p.text-destructive").filter({
-        hasText: new RegExp(gateAName!, "i"),
-      });
+      // Inline summary appears: a heading naming the FIRST blocking gate
+      // (gate A), then one truncated bullet per blocked case name. Truncation
+      // is CSS-only, so the full name stays in the DOM for these assertions.
+      const inlineMsg = dialog.getByTestId("bulk-gate-blocked-summary");
       await expect(inlineMsg).toBeVisible({ timeout: 5000 });
-      await expect(inlineMsg).toContainText(caseName1!);
-      await expect(inlineMsg).toContainText(caseName2!);
+      await expect(inlineMsg).toContainText(new RegExp(gateAName!, "i"));
+      const bullets = inlineMsg.getByRole("listitem");
+      await expect(bullets.filter({ hasText: caseName1! })).toHaveCount(1);
+      await expect(bullets.filter({ hasText: caseName2! })).toHaveCount(1);
 
-      // Save is disabled.
-      const saveBtn = dialog.getByRole("button", { name: /save/i });
-      await expect(saveBtn).toBeDisabled();
+      // The plain Save is withheld while the gate blocks the transition —
+      // it is replaced by the request-review affordance, not merely disabled.
+      await expect(dialog.getByRole("button", { name: /^save$/i })).toHaveCount(
+        0
+      );
+      const requestBtn = dialog.getByTestId(
+        "bulk-edit-save-and-request-review"
+      );
+      await expect(requestBtn).toBeEnabled();
 
       await dialog.getByRole("button", { name: /cancel/i }).click();
+    });
+
+    await test.step("Save & request review opens the sheet listing the first blocking gate", async () => {
+      // Re-open and repeat the state pick, then check the request path is
+      // reachable and describes gate A (the FIRST blocker), not gate B.
+      await page.reload();
+      await page.waitForLoadState("networkidle");
+      await page
+        .getByRole("row", { name: new RegExp(caseName1!) })
+        .first()
+        .getByRole("checkbox")
+        .first()
+        .click();
+      await page.getByRole("button", { name: /bulk edit/i }).click();
+      const dialog = page.locator('[role="dialog"]').first();
+      await expect(dialog).toBeVisible({ timeout: 5000 });
+      await dialog.locator("#edit-state").click();
+      await dialog.locator('[role="combobox"]').first().click();
+      await page
+        .getByRole("option")
+        .filter({ hasText: new RegExp(`^${gateBName}$`, "i") })
+        .first()
+        .click();
+
+      await dialog.getByTestId("bulk-edit-save-and-request-review").click();
+
+      const sheet = page.getByTestId("bulk-request-review-sheet");
+      await expect(sheet).toBeVisible({ timeout: 5000 });
+      // One breakdown row, naming gate A — the transition crosses A before B,
+      // so A is what the request must target.
+      await expect(
+        sheet.getByTestId(`bulk-request-review-breakdown-${gateAId}`)
+      ).toBeVisible();
+      await expect(
+        sheet.getByTestId(`bulk-request-review-breakdown-${gateBId}`)
+      ).toHaveCount(0);
+
+      await sheet.getByRole("button", { name: /cancel/i }).click();
+      await page
+        .locator('[role="dialog"]')
+        .first()
+        .getByRole("button", { name: /cancel/i })
+        .click();
     });
 
     await test.step("Approve only gate B for both cases", async () => {
@@ -222,7 +329,7 @@ test.describe("Bulk-edit strict transitive gating", () => {
 
     let dialog2: ReturnType<typeof page.locator> | undefined;
 
-    await test.step("Re-open bulk edit and confirm Save stays disabled with only gate B approved", async () => {
+    await test.step("Re-open bulk edit and confirm Save stays withheld with only gate B approved", async () => {
       // Re-open bulk edit, repeat the state pick — still blocked.
       await page.reload();
       await page.waitForLoadState("networkidle");
@@ -248,9 +355,14 @@ test.describe("Bulk-edit strict transitive gating", () => {
         .filter({ hasText: new RegExp(`^${gateBName}$`, "i") })
         .first()
         .click();
+      // Gate A is still unapproved, so the plain Save is still withheld in
+      // favour of the request-review affordance.
       await expect(
-        dialog2.getByRole("button", { name: /save/i })
-      ).toBeDisabled();
+        dialog2.getByRole("button", { name: /^save$/i })
+      ).toHaveCount(0);
+      await expect(
+        dialog2.getByTestId("bulk-edit-save-and-request-review")
+      ).toBeVisible();
     });
 
     await test.step("Approve gate A for both cases", async () => {
@@ -296,9 +408,157 @@ test.describe("Bulk-edit strict transitive gating", () => {
         .filter({ hasText: new RegExp(`^${gateBName}$`, "i") })
         .first()
         .click();
-      await expect(dialog3.getByRole("button", { name: /save/i })).toBeEnabled({
+      // Both gates approved — the plain Save returns and is actionable.
+      await expect(
+        dialog3.getByRole("button", { name: /^save$/i })
+      ).toBeEnabled({
         timeout: 5000,
       });
+      await expect(
+        dialog3.getByTestId("bulk-edit-save-and-request-review")
+      ).toHaveCount(0);
     });
+  });
+
+  test("mixed-gate selection groups the blocked cases under each gate", async ({
+    page,
+    request,
+    baseURL,
+    api,
+  }) => {
+    const url = baseURL!;
+    const { projectId, currentStateId, gateA, mid, gateB, folderId } =
+      await setupMixedGateProject(request, url, api, gatedWorkflowIds);
+
+    // Two cases sitting at different heights, both aimed at gateB:
+    //   - low  (before gateA) is blocked on gateA — its FIRST gate.
+    //   - mid  (past gateA, at the non-gated mid state) is blocked on gateB.
+    // So one bulk action is blocked across two different gates.
+    const nameLow = `Mix-Low ${Date.now()}`;
+    const nameMid = `Mix-Mid ${Date.now()}`;
+    await api.createTestCaseWithState(
+      projectId,
+      folderId,
+      nameLow,
+      currentStateId
+    );
+    await api.createTestCaseWithState(projectId, folderId, nameMid, mid.id);
+
+    await page.goto(
+      `/en-US/projects/repository/${projectId}/?node=${folderId}`
+    );
+    await page.waitForLoadState("networkidle");
+    for (const nm of [nameLow, nameMid]) {
+      await page
+        .getByRole("row", { name: new RegExp(nm) })
+        .first()
+        .getByRole("checkbox")
+        .first()
+        .click();
+    }
+    await page.getByRole("button", { name: /bulk edit/i }).click();
+
+    const dialog = page.locator('[role="dialog"]').first();
+    await expect(dialog).toBeVisible({ timeout: 5000 });
+    await dialog.locator("#edit-state").click();
+    await dialog.locator('[role="combobox"]').first().click();
+    await page
+      .getByRole("option")
+      .filter({ hasText: new RegExp(`^${gateB.name}$`, "i") })
+      .first()
+      .click();
+
+    // Blocked across two gates → gate-agnostic heading, one sub-group per gate,
+    // each case bulleted under the gate it actually needs.
+    const summary = dialog.getByTestId("bulk-gate-blocked-summary");
+    await expect(summary).toBeVisible({ timeout: 5000 });
+    await expect(summary).toContainText(
+      /need approval before this transition/i
+    );
+    await expect(summary).toContainText(new RegExp(gateA.name, "i"));
+    await expect(summary).toContainText(new RegExp(gateB.name, "i"));
+    const bullets = summary.getByRole("listitem");
+    await expect(bullets.filter({ hasText: nameLow })).toHaveCount(1);
+    await expect(bullets.filter({ hasText: nameMid })).toHaveCount(1);
+
+    // Save gives way to the request affordance, and the sheet breaks the
+    // selection down into the same two gates.
+    await expect(dialog.getByRole("button", { name: /^save$/i })).toHaveCount(
+      0
+    );
+    await dialog.getByTestId("bulk-edit-save-and-request-review").click();
+    const sheet = page.getByTestId("bulk-request-review-sheet");
+    await expect(sheet).toBeVisible({ timeout: 5000 });
+    await expect(
+      sheet.getByTestId(`bulk-request-review-breakdown-${gateA.id}`)
+    ).toBeVisible();
+    await expect(
+      sheet.getByTestId(`bulk-request-review-breakdown-${gateB.id}`)
+    ).toBeVisible();
+  });
+
+  test("a backward-moving case is excluded from the blocked set", async ({
+    page,
+    request,
+    baseURL,
+    api,
+  }) => {
+    const url = baseURL!;
+    const { projectId, currentStateId, gateA, mid, folderId } =
+      await setupMixedGateProject(request, url, api, gatedWorkflowIds);
+
+    // Target gateA — a middle gate. The two cases straddle it:
+    //   - fwd  (below gateA) crosses it going forward → blocked.
+    //   - back (at the mid state, above gateA) moves backward into it → allowed,
+    //     so it must NOT appear among the blocked cases.
+    const nameFwd = `Dir-Fwd ${Date.now()}`;
+    const nameBack = `Dir-Back ${Date.now()}`;
+    await api.createTestCaseWithState(
+      projectId,
+      folderId,
+      nameFwd,
+      currentStateId
+    );
+    await api.createTestCaseWithState(projectId, folderId, nameBack, mid.id);
+
+    await page.goto(
+      `/en-US/projects/repository/${projectId}/?node=${folderId}`
+    );
+    await page.waitForLoadState("networkidle");
+    for (const nm of [nameFwd, nameBack]) {
+      await page
+        .getByRole("row", { name: new RegExp(nm) })
+        .first()
+        .getByRole("checkbox")
+        .first()
+        .click();
+    }
+    await page.getByRole("button", { name: /bulk edit/i }).click();
+
+    const dialog = page.locator('[role="dialog"]').first();
+    await expect(dialog).toBeVisible({ timeout: 5000 });
+    await dialog.locator("#edit-state").click();
+    await dialog.locator('[role="combobox"]').first().click();
+    await page
+      .getByRole("option")
+      .filter({ hasText: new RegExp(`^${gateA.name}$`, "i") })
+      .first()
+      .click();
+
+    // Single gate, single blocked case: only the forward one. The backward
+    // case is never named, and the heading counts 1 — not 2.
+    const summary = dialog.getByTestId("bulk-gate-blocked-summary");
+    await expect(summary).toBeVisible({ timeout: 5000 });
+    await expect(summary).toContainText(/1 case blocked by gate/i);
+    const bullets = summary.getByRole("listitem");
+    await expect(bullets.filter({ hasText: nameFwd })).toHaveCount(1);
+    await expect(bullets.filter({ hasText: nameBack })).toHaveCount(0);
+
+    await expect(dialog.getByRole("button", { name: /^save$/i })).toHaveCount(
+      0
+    );
+    await expect(
+      dialog.getByTestId("bulk-edit-save-and-request-review")
+    ).toBeVisible();
   });
 });

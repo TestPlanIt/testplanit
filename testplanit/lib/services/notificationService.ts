@@ -380,6 +380,78 @@ export class NotificationService {
   }
 
   /**
+   * Dispatch ONE REVIEW_REQUESTED notification covering a whole bulk batch.
+   *
+   * A fifty-case bulk request would otherwise fire fifty of these at a single
+   * reviewer (plus fifty @mention notifications), burying every other
+   * notification in their bell and mailbox. The batch collapses to one row
+   * whose `data.bulkCount` drives alternate copy in the renderers, and whose
+   * link points at the review inbox rather than any one entity — no single
+   * case is the right destination for a request covering forty.
+   *
+   * The payload keeps the same shape as the single-request notification (a
+   * representative `entityId` / `entityName` are still carried) so the bell
+   * and email renderers reuse their existing REVIEW_REQUESTED branch and
+   * switch only the copy and the href on `bulkCount`.
+   */
+  static async createBulkReviewRequestNotification(params: {
+    targetUserIds: string[];
+    requesterUserId: string;
+    requesterName: string;
+    projectId: number;
+    projectName: string;
+    entityType: "CASE" | "RUN" | "SESSION";
+    count: number;
+    sampleEntityId: number;
+    sampleEntityName: string;
+    sampleReviewRequestId: string;
+  }) {
+    if (params.targetUserIds.length === 0 || params.count === 0) return;
+
+    const entityLabel =
+      params.entityType === "CASE"
+        ? params.count === 1
+          ? "test case"
+          : "test cases"
+        : params.entityType === "RUN"
+          ? params.count === 1
+            ? "test run"
+            : "test runs"
+          : params.count === 1
+            ? "session"
+            : "sessions";
+
+    const title = "Review requested";
+    const message = `${params.requesterName} requested your review of ${params.count} ${entityLabel} in project "${params.projectName}"`;
+
+    await Promise.all(
+      params.targetUserIds.map((userId) =>
+        this.createNotification({
+          userId,
+          type: NotificationType.REVIEW_REQUESTED,
+          title,
+          message,
+          relatedEntityId: params.sampleReviewRequestId,
+          relatedEntityType: "ReviewRequest",
+          data: {
+            reviewRequestId: params.sampleReviewRequestId,
+            requesterUserId: params.requesterUserId,
+            requesterName: params.requesterName,
+            projectId: params.projectId,
+            projectName: params.projectName,
+            entityType: params.entityType,
+            entityId: params.sampleEntityId,
+            entityName: params.sampleEntityName,
+            // Presence of a count > 1 is what flips the renderers to bulk
+            // copy; a single-entity request never sets it.
+            bulkCount: params.count,
+          },
+        })
+      )
+    );
+  }
+
+  /**
    * Dispatch a REVIEW_APPROVED / REVIEW_CHANGES_REQUESTED / REVIEW_REJECTED
    * notification to the original requester after a decision lands. Decision
    * outcomes share a single dispatch surface because they all target the
