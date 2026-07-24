@@ -313,7 +313,7 @@ function MenuLink({
           : "hover:bg-primary/10 hover:text-primary"
       )}
     >
-      <IconComponent className="min-w-6 min-h-6" />
+      <IconComponent className="size-5 shrink-0" />
       <span className={`hidden md:inline ${isActive ? "font-bold" : ""}`}>
         {t(option.translationKey as any)}
       </span>

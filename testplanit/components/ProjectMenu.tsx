@@ -111,7 +111,7 @@ function MenuLink({
               : "hover:bg-primary/10 hover:text-primary"
           )}
         >
-          <IconComponent className="min-w-6 min-h-6" />
+          <IconComponent className="size-5 shrink-0" />
           <span
             className={`hidden md:inline-block ${isActive ? "font-bold" : ""} ${
               isCollapsed
