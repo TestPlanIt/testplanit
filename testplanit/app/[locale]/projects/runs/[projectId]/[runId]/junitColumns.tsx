@@ -35,7 +35,7 @@ export function getJunitColumns({
       cell: ({ row }: { row: { original: any } }) => {
         const isDeleted = row.original.isDeleted;
         return (
-          <span className="flex items-center group">
+          <span className="flex items-center group min-w-0">
             <TestCaseNameDisplay
               testCase={{
                 id: row.original.id,
@@ -45,6 +45,7 @@ export function getJunitColumns({
                 hasParameters: row.original.hasParameters,
               }}
               projectId={isDeleted ? undefined : projectId}
+              className="truncate"
             />
             {!isDeleted && (
               <LinkIcon className="w-4 h-4 inline ms-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
