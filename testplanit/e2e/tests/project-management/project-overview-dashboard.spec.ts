@@ -16,9 +16,11 @@ import { expect, test } from "../../fixtures";
 
 test.describe("Project Overview Dashboard", () => {
   let testProjectId: number;
+  let testProjectName: string;
 
   test.beforeEach(async ({ api }) => {
-    testProjectId = await api.createProject(`E2E Overview ${Date.now()}`);
+    testProjectName = `E2E Overview ${Date.now()}`;
+    testProjectId = await api.createProject(testProjectName);
   });
 
   test("loads the project overview page with project header", async ({
@@ -43,16 +45,12 @@ test.describe("Project Overview Dashboard", () => {
       await page.waitForLoadState("networkidle");
     });
 
-    await test.step("Verify the project ID is shown in the header", async () => {
-      // ProjectHeader renders the project ID via next-intl's `{id, number}`
-      // ICU formatter, which inserts thousand separators (e.g. "57,996").
-      // Build a regex that splits each digit with an optional non-digit
-      // (matches "57996", "57,996", "57 996", etc.).
-      const idPattern = String(testProjectId).split("").join("\\D?");
-      const projectIdText = page.getByText(
-        new RegExp(`id[:\\s#]*${idPattern}`, "i")
-      );
-      await expect(projectIdText).toBeVisible({ timeout: 15000 });
+    await test.step("Verify the project name is shown in the header", async () => {
+      // The header shows the project name only; the numeric ID chip was
+      // removed from the overview header.
+      await expect(page.getByText(testProjectName).first()).toBeVisible({
+        timeout: 15000,
+      });
     });
   });
 
