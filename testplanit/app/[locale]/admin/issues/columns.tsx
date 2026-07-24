@@ -499,6 +499,6 @@ export function useIssueColumns({
         ),
       },
     ],
-    [tCommon, onEditIssue, onDeleteIssue]
+    [tCommon, onEditIssue, onDeleteIssue, isLoadingCounts]
   );
 }

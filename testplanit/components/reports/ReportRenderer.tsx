@@ -364,6 +364,7 @@ export function ReportRenderer({
     isFlakyTests,
     isTestCaseHealth,
     isIssueTestCoverage,
+    isExecutionLog,
   ]);
 
   // Iteration Matrix preset bypasses the chart/table pipeline entirely.

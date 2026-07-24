@@ -102,7 +102,7 @@ test.describe("Nested Includes Regression Tests", () => {
       await api.addTagToTestCase(caseId!, tagId);
     });
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     let result: any;
 
     await test.step("Query RepositoryCases with nested includes", async () => {
@@ -266,7 +266,7 @@ test.describe("Nested Includes Regression Tests", () => {
       await api.addTestCaseToTestRun(testRunId, caseId2!, { order: 2 });
     });
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     let result: any;
 
     await test.step("Query TestRuns with deeply nested includes", async () => {

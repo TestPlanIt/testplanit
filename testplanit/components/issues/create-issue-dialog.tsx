@@ -1,4 +1,4 @@
-/* eslint-disable react-hooks/refs */
+ 
 "use client";
 
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";

@@ -32,7 +32,7 @@ const { SelectTriggerSentinel, SelectItemSentinel } = vi.hoisted(() => ({
 }));
 
 vi.mock("@/components/ui/select", () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
+   
   const React = require("react");
   function Select({ children, value, onValueChange }: any) {
     const items: Array<{ value: string; label: React.ReactNode }> = [];

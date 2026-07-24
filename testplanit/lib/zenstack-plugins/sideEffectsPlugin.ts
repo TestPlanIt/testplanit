@@ -193,9 +193,9 @@ export const sideEffectsPlugin = definePlugin(schema, {
       beforeMutationEntities,
     }) => {
       const tx = client as unknown as TxClient;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       const after = ((await loadAfterMutationEntities()) ?? []) as any[];
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       const before = (beforeMutationEntities ?? []) as any[];
 
       switch (model) {

@@ -44,7 +44,7 @@ type HumanizeModule = {
     lookup: LookupFn,
     opts: { ttlMs: number }
   ) => HumanizeCache;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   humanize: (
     cache: HumanizeCache,
     tableName: string,

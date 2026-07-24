@@ -104,7 +104,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
     const updatedJob = await db.testmoImportJob.update({
       where: { id: jobId },
       data: updateData,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
     } as any);
 
     const payload = serializeImportJob(updatedJob);

@@ -9,7 +9,7 @@ import { afterAll, beforeAll, vi } from "vitest";
 // renders mount. Tests that assert on hook-driven data still vi.mock the module
 // locally (per-file mocks override this global stub).
 vi.mock("@zenstackhq/tanstack-query/react", async (importOriginal) => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const actual = await importOriginal<any>();
   const queryResult = () => ({
     data: undefined,

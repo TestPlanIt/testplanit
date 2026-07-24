@@ -1625,6 +1625,7 @@ function ReportBuilderContent({
       tReports,
       dateGrouping,
       selectedFilterValues,
+      folderIncludeDescendants,
       consecutiveRuns,
       flipThreshold,
       flakyAutomatedFilter,

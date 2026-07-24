@@ -172,5 +172,5 @@ export const useColumns = (
         ),
       },
     ],
-    [tCommon, onEditTag, onDeleteTag]
+    [tCommon, onEditTag, onDeleteTag, isLoadingCounts]
   );

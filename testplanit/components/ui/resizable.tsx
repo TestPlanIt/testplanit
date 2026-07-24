@@ -139,7 +139,7 @@ const asPercentSize = (
 const ResizablePanel = forwardRef<PanelImperativeHandle, ResizablePanelProps>(
   (
     {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+       
       order: _order,
       onCollapse,
       onExpand,
