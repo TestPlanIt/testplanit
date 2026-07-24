@@ -29,7 +29,7 @@ export default function ProjectsLayout(props: any) {
     <div className="flex" id="project-menu">
       <div className="relative">
         <div
-          className={`sticky w-[57px] ${!isCollapsed ? "md:w-[225px]" : ""} top-0 z-10 h-screen transition-all duration-300`}
+          className={`sticky w-[53px] ${!isCollapsed ? "md:w-[221px]" : ""} top-0 z-10 h-screen transition-all duration-300`}
         >
           <ProjectMenu
             isCollapsed={isCollapsed}

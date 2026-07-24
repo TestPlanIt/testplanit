@@ -29,7 +29,7 @@ export default function AdminLayout(props: any) {
 
   return (
     <div className="flex" id="admin-menu">
-      <div className="sticky w-[57px] md:w-[225px] top-0 z-10 h-screen">
+      <div className="sticky w-[53px] md:w-[221px] top-0 z-10 h-screen">
         <AdminMenu />
       </div>
       <div className="ms-4 w-full overflow-x-hidden">{props.children}</div>
