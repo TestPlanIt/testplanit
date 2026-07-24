@@ -32,7 +32,7 @@ import { ProjectQuickSelector } from "@/components/ProjectQuickSelector";
 import { ReviewInboxButton } from "@/components/reviews/ReviewInboxButton";
 import { useContainerCompact } from "@/components/ui/action-bar";
 import { Badge } from "@/components/ui/badge";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -45,7 +45,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
 import { UserDropdownMenu } from "@/components/UserDropdownMenu";
+import { useHeaderAlertCounts } from "~/hooks/useHeaderAlertCounts";
 import { getVersionString } from "~/lib/version";
+import { cn } from "~/utils";
 
 export const Header = () => {
   const router = useRouter();
@@ -72,9 +74,26 @@ export const Header = () => {
   // into a single kebab menu once the header row gets too narrow to show them.
   const { ref: headerRef, compact: isHeaderCompact } =
     useContainerCompact(1024);
+  // When collapsed, the notification + review-inbox icons hide inside the
+  // kebab; surface their combined unread total on the kebab so it isn't missed.
+  // Gated on `isHeaderCompact` so it only fetches while those icons are hidden.
+  const { total: alertCount } = useHeaderAlertCounts(isHeaderCompact);
   const params = useParams();
   const projectId = params?.projectId as string | undefined;
   const isOnProjectPage = path.includes("/projects/") && !!projectId;
+
+  // Primary top-bar sections read as quiet tabs: muted by default, brightening
+  // on hover, with a --primary underline marking the active section.
+  const isNavActive = (prefix: string) =>
+    path === prefix || path.startsWith(`${prefix}/`);
+  const navLinkClass = (active: boolean) =>
+    cn(
+      "relative inline-flex items-center rounded-md px-3 py-1.5 text-sm font-medium no-underline transition-colors",
+      "after:pointer-events-none after:absolute after:inset-x-2 after:bottom-1 after:h-[3px] after:rounded-full after:transition-colors",
+      active
+        ? "text-foreground font-semibold after:bg-primary"
+        : "text-muted-foreground hover:text-foreground after:bg-transparent hover:after:bg-primary/40"
+    );
 
   // Minimal query to check if current project is the Demo Project
   const { data: currentProject } = useClientQueries(
@@ -275,7 +294,7 @@ export const Header = () => {
           className={`items-center p-2 rounded-sm ${path.includes("admin") ? "bg-linear-to-b from-transparent from-60% to-red-500" : ""}`}
         >
           <div className="flex items-center justify-between">
-            <div className="flex">
+            <div className="flex items-center">
               <span id="header-logo" className="px-1 inline-block">
                 <Link
                   href="/"
@@ -299,7 +318,7 @@ export const Header = () => {
                   </div>
                 </Link>
               </span>
-              <Separator orientation="vertical" className="px-4" />
+              <Separator orientation="vertical" className="mx-4 h-8" />
 
               {session?.user?.access !== "NONE" && (
                 <div className="whitespace-nowrap">
@@ -308,25 +327,25 @@ export const Header = () => {
                   </span>
                   <span
                     id="global-features"
-                    className="py-2 px-1 inline-flex gap-1"
+                    className="py-2 px-1 inline-flex items-center gap-1"
                   >
                     <Link
                       id="tags-link"
-                      className={`${buttonVariants({ variant: "link" })}`}
+                      className={navLinkClass(isNavActive("/tags"))}
                       href="/tags"
                     >
                       {tCommon("fields.tags")}
                     </Link>
                     <Link
                       id="issues-link"
-                      className={`${buttonVariants({ variant: "link" })}`}
+                      className={navLinkClass(isNavActive("/issues"))}
                       href="/issues"
                     >
                       {t("common.fields.issues")}
                     </Link>
                     <Link
                       id="users-link"
-                      className={`${buttonVariants({ variant: "link" })}`}
+                      className={navLinkClass(isNavActive("/users"))}
                       href="/users"
                     >
                       {tCommon("fields.users")}
@@ -336,9 +355,9 @@ export const Header = () => {
               )}
 
               {session?.user?.access === "ADMIN" && (
-                <span className="py-2 px-1 inline-block">
+                <span className="py-2 px-1 inline-flex items-center">
                   <Link
-                    className={`${buttonVariants({ variant: "link" })}`}
+                    className={navLinkClass(isNavActive("/admin"))}
                     href="/admin"
                   >
                     {t("common.access.admin")}
@@ -430,10 +449,26 @@ export const Header = () => {
                     <Button
                       variant="ghost"
                       size="icon"
-                      aria-label={tCommon("actions.actionsLabel")}
+                      className="relative"
+                      aria-label={
+                        alertCount > 0
+                          ? tCommon("actions.actionsWithAlerts", {
+                              count: alertCount,
+                            })
+                          : tCommon("actions.actionsLabel")
+                      }
                       data-testid="header-actions-menu"
                     >
                       <MoreVertical className="h-5 w-5" />
+                      {alertCount > 0 && (
+                        <Badge
+                          variant="destructive"
+                          className="absolute -top-1 -end-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
+                          data-testid="header-actions-count-badge"
+                        >
+                          {alertCount > 9 ? "9+" : alertCount}
+                        </Badge>
+                      )}
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-56">

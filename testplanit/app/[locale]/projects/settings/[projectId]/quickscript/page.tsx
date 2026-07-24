@@ -558,7 +558,7 @@ export default function QuickScriptPage() {
             <HelpPopover helpKey="projectQuickScript" />
           </SectionHeader>
           <CardDescription>
-            <span className="flex items-center gap-2 uppercase">
+            <span className="flex items-center gap-2">
               <ProjectIcon iconUrl={project?.iconUrl} />
               {project?.name}
             </span>

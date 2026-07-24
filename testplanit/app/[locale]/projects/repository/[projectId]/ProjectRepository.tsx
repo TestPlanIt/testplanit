@@ -1619,7 +1619,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                   <HelpPopover helpKey="projectRepository" />
                 </SectionHeader>
                 <CardDescription>
-                  <span className="flex items-center gap-2 uppercase">
+                  <span className="flex items-center gap-2">
                     <ProjectIcon iconUrl={project?.iconUrl} />
                     {project?.name}
                   </span>

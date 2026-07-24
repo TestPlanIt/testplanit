@@ -142,7 +142,7 @@ export function ReviewInboxButton({
           {numericCount > 0 && (
             <Badge
               variant="destructive"
-              className="ms-auto h-5 min-w-5 justify-center p-0 px-1 text-xs"
+              className="ms-2 h-5 min-w-5 justify-center p-0 px-1 text-xs"
               data-testid="review-inbox-count-badge"
             >
               {numericCount > 9 ? "9+" : numericCount}

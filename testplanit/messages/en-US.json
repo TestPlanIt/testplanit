@@ -75,6 +75,7 @@
       "editResult": "Edit Test Result",
       "resultDetails": "Result Details",
       "actionsLabel": "Actions",
+      "actionsWithAlerts": "Actions ({count, number} unread)",
       "assign": "Assign",
       "assignSelected": "Assign {count, plural, one {# case} other {# cases}}",
       "refresh": "Refresh",

@@ -60,9 +60,13 @@ export const ProjectQuickSelector = () => {
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button variant="link" className="underline" aria-expanded={open}>
+        <Button
+          variant="ghost"
+          aria-expanded={open}
+          className="h-auto rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground data-[state=open]:bg-accent data-[state=open]:text-accent-foreground"
+        >
           {tGlobal("common.fields.projects")}
-          <ChevronDown className="h-3 w-3" />
+          <ChevronDown className="size-3.5! opacity-60" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[400px] px-0 py-2" align="start">

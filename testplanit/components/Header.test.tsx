@@ -72,6 +72,14 @@ vi.mock("@/components/reviews/ReviewInboxButton", () => ({
   ReviewInboxButton: () => <div data-testid="review-inbox-button-mock" />,
 }));
 
+vi.mock("~/hooks/useHeaderAlertCounts", () => ({
+  useHeaderAlertCounts: () => ({
+    notificationCount: 0,
+    reviewCount: 0,
+    total: 0,
+  }),
+}));
+
 vi.mock("@/components/UserDropdownMenu", () => ({
   UserDropdownMenu: () => <div data-testid="user-dropdown-menu-mock" />,
 }));
