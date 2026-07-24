@@ -26,6 +26,26 @@ export function getTenantContext(): TenantContext | undefined {
   return storage.getStore();
 }
 
+/**
+ * Best-effort tenant identifier for scoping PROCESS-LOCAL caches (e.g. the
+ * IntegrationManager adapter cache) and the cross-process invalidation
+ * messages that keep them coherent.
+ *
+ * Resolution deliberately mirrors getMasterKey's tenant domain so a cached
+ * entry is always scoped to the same tenant whose encryption key built it:
+ *   1. per-job tenant context — the shared multi-tenant worker serves many
+ *      tenants from ONE process (set by withTenantContext).
+ *   2. INSTANCE_TENANT_ID — an app pod is pinned to a single tenant.
+ *   3. "default" — single-tenant deployments and dev.
+ *
+ * Kept Prisma-free (plain env read) so this module keeps its light dep set.
+ */
+export function currentTenantScope(): string {
+  return (
+    getTenantContext()?.tenantId ?? process.env.INSTANCE_TENANT_ID ?? "default"
+  );
+}
+
 export async function runWithTenantContext<T>(
   tenantId: string | undefined,
   fn: () => Promise<T>

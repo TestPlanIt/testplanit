@@ -1,4 +1,6 @@
 import { rawDb } from "@/lib/rawDb";
+import { currentTenantScope } from "@/lib/tenantContext";
+import valkeyConnection, { createSubscriberClient } from "@/lib/valkey";
 import { EncryptionService, getMasterKey } from "@/utils/encryption";
 import type { Integration, IntegrationProvider } from "~/zenstack/models";
 import { AuthenticationService } from "./AuthenticationService";
@@ -27,9 +29,20 @@ export class IntegrationManager {
   // than served stale — otherwise reads start failing one hour after connect.
   private adapterCacheExpiry: Map<string, number> = new Map();
 
+  // Valkey pub/sub channel used to broadcast adapter-cache invalidations to
+  // every other process. Each process caches adapters in its own memory, so a
+  // credential/settings change on one pod must tell the others to evict too.
+  private static readonly INVALIDATION_CHANNEL = "integration:adapter:invalidate";
+  // Dedicated subscriber connection (a subscribed client can't issue normal
+  // commands). Null when Valkey isn't configured (dev / build / single-pod),
+  // in which case invalidation degrades to local-only — today's behavior.
+  private subscriber: ReturnType<typeof createSubscriberClient> = null;
+
   private constructor() {
     // Initialize with built-in adapters
     this.registerAdapters();
+    // Listen for cross-process cache invalidations.
+    this.initInvalidationSubscriber();
   }
 
   /**
@@ -75,8 +88,19 @@ export class IntegrationManager {
     userId?: string,
     options?: { allowInactive?: boolean }
   ): Promise<IssueAdapter | null> {
-    // OAuth adapters carry a per-user token, so they must be cached per user
-    const cacheKey = userId ? `${integrationId}:${userId}` : integrationId;
+    // Scope the cache key by tenant. A shared multi-tenant worker serves many
+    // tenants from ONE IntegrationManager singleton, so without the tenant
+    // prefix integration id 3 from tenant A and tenant B collide — and one
+    // tenant could be served the other's adapter, complete with its decrypted
+    // OAuth credentials and access token. App pods are single-tenant, so the
+    // prefix is a constant there and costs nothing. The scope mirrors
+    // getMasterKey's tenant domain, so an entry is scoped to the same tenant
+    // whose key built it.
+    // OAuth adapters also carry a per-user token, so they cache per user too.
+    const scope = currentTenantScope();
+    const cacheKey = userId
+      ? `${scope}:${integrationId}:${userId}`
+      : `${scope}:${integrationId}`;
 
     // Check cache first — but never serve an OAuth adapter whose access token
     // has expired. Evict it so the rebuild below refreshes the token; otherwise
@@ -297,16 +321,109 @@ export class IntegrationManager {
   }
 
   /**
-   * Clear adapter from cache
+   * Clear adapter from cache — locally AND on every other process.
+   *
+   * Evicting only the local cache is not enough: each pod (and the shared
+   * worker) holds its own in-memory adapters, so a credential/settings change
+   * handled by one pod would leave the others serving the stale adapter — the
+   * old OAuth client_id in the authorize URL, stale tokens on reads — until
+   * their token-expiry eviction or a restart. We evict locally, then broadcast
+   * the eviction over Valkey so the other processes drop it too.
+   *
+   * The eviction is scoped to the CURRENT tenant (see getAdapter's cache key),
+   * so a change for one tenant never disturbs another's cache.
    */
   clearAdapter(integrationId: string): void {
-    // Remove the shared entry plus any per-user OAuth variants (`<id>:<userId>`)
+    const scope = currentTenantScope();
+    this.evictLocal(scope, integrationId);
+    this.publishInvalidation(scope, integrationId);
+  }
+
+  /**
+   * Evict a tenant's cached adapters for one integration from THIS process
+   * only. Used by clearAdapter and by the pub/sub handler — the handler must
+   * never re-publish, or an invalidation would loop between processes forever.
+   */
+  private evictLocal(scope: string, integrationId: string): void {
+    const exact = `${scope}:${integrationId}`;
+    // Trailing colon so integration 3 doesn't match 30's per-user variants.
+    const userPrefix = `${exact}:`;
     for (const key of this.adapterCache.keys()) {
-      if (key === integrationId || key.startsWith(`${integrationId}:`)) {
+      if (key === exact || key.startsWith(userPrefix)) {
         this.adapterCache.delete(key);
         this.adapterCacheExpiry.delete(key);
       }
     }
+  }
+
+  /**
+   * Subscribe to cross-process cache invalidations. Best-effort: when Valkey
+   * isn't configured (dev / build / single-pod) the subscriber is null and
+   * invalidation stays local-only, exactly as before this existed.
+   */
+  private initInvalidationSubscriber(): void {
+    try {
+      // Construction must never throw — this singleton is imported everywhere,
+      // and some tests mock lib/valkey with only its default export. A missing
+      // or unbuildable subscriber just means invalidation stays local-only.
+      if (typeof createSubscriberClient !== "function") return;
+      const sub = createSubscriberClient();
+      if (!sub) return;
+      this.subscriber = sub;
+      sub.on("error", (err: unknown) =>
+        console.warn("[IntegrationManager] invalidation subscriber error", err)
+      );
+      sub
+        .subscribe(IntegrationManager.INVALIDATION_CHANNEL)
+        .catch((err: unknown) =>
+          console.warn(
+            "[IntegrationManager] failed to subscribe to invalidation channel",
+            err
+          )
+        );
+      sub.on("message", (channel: string, message: string) => {
+        if (channel !== IntegrationManager.INVALIDATION_CHANNEL) return;
+        try {
+          const { tenantId, integrationId } = JSON.parse(message);
+          if (
+            typeof tenantId === "string" &&
+            typeof integrationId === "string"
+          ) {
+            // Local-only: this eviction IS the broadcast being applied.
+            this.evictLocal(tenantId, integrationId);
+          }
+        } catch (err) {
+          console.warn("[IntegrationManager] bad invalidation message", {
+            message,
+            err,
+          });
+        }
+      });
+    } catch (err) {
+      console.warn(
+        "[IntegrationManager] invalidation subscriber setup failed",
+        err
+      );
+    }
+  }
+
+  /**
+   * Broadcast an adapter-cache invalidation to every process. Best-effort and
+   * fire-and-forget: a dropped message just means a remote process keeps a
+   * stale adapter until its token expiry or restart (the pre-broadcast
+   * behavior), so failures are logged and swallowed rather than surfaced.
+   */
+  private publishInvalidation(scope: string, integrationId: string): void {
+    if (!valkeyConnection) return;
+    const body = JSON.stringify({ tenantId: scope, integrationId });
+    valkeyConnection
+      .publish(IntegrationManager.INVALIDATION_CHANNEL, body)
+      .catch((err: unknown) =>
+        console.warn(
+          "[IntegrationManager] failed to publish adapter invalidation",
+          { integrationId, scope, err }
+        )
+      );
   }
 
   /**
