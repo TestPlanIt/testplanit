@@ -100,6 +100,7 @@ export type {
   ListTestRunsOptions,
   PaginatedResponse,
   FindTestCaseOptions,
+  FindTestCaseByCustomFieldOptions,
   FindOrCreateTestCaseResult,
   ImportTestResultsOptions,
   ImportProgressEvent,

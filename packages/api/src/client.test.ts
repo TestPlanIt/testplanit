@@ -328,6 +328,85 @@ describe('TestPlanItClient', () => {
     });
   });
 
+  describe('findTestCaseByCustomField', () => {
+    // Decode the ZenStack `?q=` payload back into the query object so tests can
+    // assert on the generated `where` clause.
+    const decodeQuery = (url: string) =>
+      JSON.parse(decodeURIComponent(url.split('q=')[1]));
+
+    it('matches by field display name and both value forms, returning the first case', async () => {
+      const mockCase = { id: 30715, name: "Verify 'Relevance' is the default sort order", source: 'MANUAL' };
+      mockFetch.mockResolvedValueOnce(zenStackResponse([mockCase]));
+
+      const result = await client.findTestCaseByCustomField({
+        projectId: 1,
+        fieldName: 'External ID',
+        value: 89434,
+      });
+
+      expect(result).toEqual(mockCase);
+      // findMany uses GET with the query param per ZenStack REST API spec
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringMatching(/api\/model\/repositoryCases\/findMany\?q=/),
+        expect.objectContaining({ method: 'GET' })
+      );
+
+      const query = decodeQuery(mockFetch.mock.calls[0][0]);
+      expect(query.where.projectId).toBe(1);
+      expect(query.where.isDeleted).toBe(false);
+      expect(query.where.caseFieldValues.some.field).toEqual({ displayName: 'External ID' });
+      // Numeric input matches both the JSON number and string forms.
+      expect(query.where.caseFieldValues.some.OR).toEqual([
+        { value: { equals: '89434' } },
+        { value: { equals: 89434 } },
+      ]);
+      expect(query.take).toBe(1);
+    });
+
+    it('adds the numeric variant for a numeric string value', async () => {
+      mockFetch.mockResolvedValueOnce(zenStackResponse([]));
+
+      await client.findTestCaseByCustomField({
+        projectId: 2,
+        fieldName: 'External ID',
+        value: '89434',
+      });
+
+      const query = decodeQuery(mockFetch.mock.calls[0][0]);
+      expect(query.where.caseFieldValues.some.OR).toEqual([
+        { value: { equals: '89434' } },
+        { value: { equals: 89434 } },
+      ]);
+    });
+
+    it('uses only the string variant for a non-numeric value', async () => {
+      mockFetch.mockResolvedValueOnce(zenStackResponse([]));
+
+      await client.findTestCaseByCustomField({
+        projectId: 3,
+        fieldName: 'Legacy Key',
+        value: 'TM-89434',
+      });
+
+      const query = decodeQuery(mockFetch.mock.calls[0][0]);
+      expect(query.where.caseFieldValues.some.OR).toEqual([
+        { value: { equals: 'TM-89434' } },
+      ]);
+    });
+
+    it('returns undefined when no case matches (e.g. the field does not exist)', async () => {
+      mockFetch.mockResolvedValueOnce(zenStackResponse([]));
+
+      const result = await client.findTestCaseByCustomField({
+        projectId: 1,
+        fieldName: 'Nonexistent Field',
+        value: 89434,
+      });
+
+      expect(result).toBeUndefined();
+    });
+  });
+
   describe('createStep', () => {
     it('wraps the step text in a TipTap doc and posts to the steps model', async () => {
       mockFetch.mockResolvedValueOnce(zenStackResponse({ id: 7, testCaseId: 42, order: 0 }));

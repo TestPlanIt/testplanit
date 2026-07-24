@@ -107,6 +107,32 @@ caseIdPattern: /TC-(\d+)/g
 caseIdPattern: /TEST-(\d+)/g
 ```
 
+### Matching Cases by a Custom Field
+
+`caseIdPattern` treats the number it captures as a **literal TestPlanIt case ID**. If your titles instead carry a **legacy external identifier** — e.g. an ID left over from a previous test manager — that was backfilled onto your migrated cases as a custom field, use `matchByCustomField` to resolve the existing case by that field's value:
+
+```javascript
+reporters: [
+  ['@testplanit/wdio-reporter', {
+    domain: 'https://testplanit.example.com',
+    apiToken: process.env.TESTPLANIT_API_TOKEN,
+    projectId: 1,
+    matchByCustomField: {
+      fieldName: 'External ID',   // custom field display name
+      // idPattern: /^(\d+)/       // default: bare leading number in the title
+    },
+    // Optional fallback for titles with no match:
+    autoCreateTestCases: true,
+    parentFolderId: 10,
+    templateId: 1,
+  }]
+]
+```
+
+For a test titled `"89434 Verify 'Relevance' is the default sort order"`, the reporter extracts `89434`, finds the case whose **External ID** field equals `89434`, and attaches the result **directly** to that case — regardless of its source (typically `MANUAL`). No new case or link is created.
+
+This strategy is opt-in and runs **before** name/create resolution. On no match — or if the field doesn't exist on the project — it falls through to the standard flow without error. It is independent of `caseIdPattern`; an explicit `caseIdPattern` match still takes precedence.
+
 ## Reporter Options
 
 | Option | Type | Required | Default | Description |
@@ -122,6 +148,7 @@ caseIdPattern: /TEST-(\d+)/g
 | `stateId` | `number \| string` | No | - | Workflow state ID or name for the test run |
 | `tagIds` | `(number \| string)[]` | No | - | Tags to apply (IDs or names). Non-existent tags are created automatically |
 | `caseIdPattern` | `RegExp \| string` | No | `/\[(\d+)\]/g` | Regex to extract case IDs from test titles. Must include a capturing group |
+| `matchByCustomField` | `{ fieldName: string; idPattern?: RegExp \| string }` | No | - | Resolve an existing case by a custom field value parsed from the title (default `idPattern`: `/^(\d+)/`), before the name/create fallback. See [Matching Cases by a Custom Field](#matching-cases-by-a-custom-field) |
 | `autoCreateTestCases` | `boolean` | No | `false` | Auto-create test cases matched by suite name + test title |
 | `captureSteps` | `boolean` | No | `true` | Capture a Cucumber scenario's Given/When/Then as the case's Steps. Cucumber only; silent no-op for Mocha/Jasmine |
 | `overwriteSteps` | `boolean` | No | `false` | Replace an existing Cucumber case's steps on each run (destructive: discards manual edits). Cucumber only |
