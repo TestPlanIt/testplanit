@@ -1031,6 +1031,26 @@ var TestPlanItClient = class {
     return cases?.[0];
   }
   /**
+   * Update mutable scalar fields on an existing test case.
+   *
+   * A minimal, forward-compatible partial update: only the fields present in
+   * `options` are written (currently just `automated`), so more fields can be
+   * added later without a breaking change. Relation fields (folder, template,
+   * state, …) are intentionally out of scope — use the dedicated helpers for
+   * those.
+   *
+   * Used to flip a manually-authored case to `automated: true` once it starts
+   * receiving automated results (see the WDIO reporter's `matchByCustomField`).
+   */
+  async updateTestCase(caseId, options) {
+    const data = {};
+    if (options.automated !== void 0) data.automated = options.automated;
+    return this.zenstack("repositoryCases", "update", {
+      where: { id: caseId },
+      data
+    });
+  }
+  /**
    * Find or create a test case
    * First searches for an active (non-deleted) test case in an active folder, then creates if not found.
    * If a matching case exists in a deleted folder, it will be moved to the specified folder.
@@ -1061,6 +1081,13 @@ var TestPlanItClient = class {
       (c) => c.folder && !c.folder.isDeleted
     );
     if (caseInActiveFolder) {
+      const wantAutomated = options.automated ?? true;
+      if (wantAutomated && caseInActiveFolder.automated !== true) {
+        const updated = await this.updateTestCase(caseInActiveFolder.id, {
+          automated: true
+        });
+        return { testCase: updated, action: "found" };
+      }
       return { testCase: caseInActiveFolder, action: "found" };
     }
     const caseInDeletedFolder = existingCases.find(

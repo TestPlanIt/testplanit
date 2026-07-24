@@ -122,6 +122,17 @@ describe("testplanit_cases_update", () => {
     expect(resolveCustomFieldsMock).not.toHaveBeenCalled();
   });
 
+  it("partial update: automated flag writes only automated in data", async () => {
+    await callTool({ caseId: 99, automated: true });
+
+    const updateCall = zenstackMock.mock.calls.find(
+      (c) => c[0] === "repositoryCases" && c[1] === "update",
+    );
+    expect(updateCall).toBeDefined();
+    const data = (updateCall![2] as { data: Record<string, unknown> }).data;
+    expect(data).toEqual({ automated: true });
+  });
+
   it("updates tags via the caseTags join (replace-all = deleteMany + create)", async () => {
     await callTool({ caseId: 99, tags: [4, 5] });
 

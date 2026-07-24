@@ -129,7 +129,7 @@ reporters: [
 ]
 ```
 
-For a test titled `"89434 Verify 'Relevance' is the default sort order"`, the reporter extracts `89434`, finds the case whose **External ID** field equals `89434`, and attaches the result **directly** to that case — regardless of its source (typically `MANUAL`). No new case or link is created.
+For a test titled `"89434 Verify 'Relevance' is the default sort order"`, the reporter extracts `89434`, finds the case whose **External ID** field equals `89434`, and attaches the result **directly** to that case — regardless of its source (typically `MANUAL`). No new case or link is created. If that case isn't already flagged automated, the reporter flips it to automated (skipping the write when it already is).
 
 This strategy is opt-in and runs **before** name/create resolution. On no match — or if the field doesn't exist on the project — it falls through to the standard flow without error. It is independent of `caseIdPattern`; an explicit `caseIdPattern` match still takes precedence.
 

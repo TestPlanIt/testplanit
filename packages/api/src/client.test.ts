@@ -407,6 +407,85 @@ describe('TestPlanItClient', () => {
     });
   });
 
+  describe('updateTestCase', () => {
+    it('PATCHes only the provided scalar fields', async () => {
+      const updated = { id: 30715, automated: true };
+      mockFetch.mockResolvedValueOnce(zenStackResponse(updated));
+
+      const result = await client.updateTestCase(30715, { automated: true });
+
+      expect(result).toEqual(updated);
+      expect(mockFetch).toHaveBeenCalledWith(
+        'https://testplanit.example.com/api/model/repositoryCases/update',
+        expect.objectContaining({ method: 'PATCH' })
+      );
+      const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+      expect(body).toEqual({ where: { id: 30715 }, data: { automated: true } });
+    });
+
+    it('omits undefined fields from the update payload', async () => {
+      mockFetch.mockResolvedValueOnce(zenStackResponse({ id: 5 }));
+
+      await client.updateTestCase(5, { automated: undefined });
+
+      const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+      expect(body.data).toEqual({});
+    });
+  });
+
+  describe('findOrCreateTestCase found-flip', () => {
+    // findOrCreateTestCase first does a findMany; the returned rows carry a
+    // `folder.isDeleted` flag and the case's `automated` value.
+    const foundRows = (automated: boolean) =>
+      zenStackResponse([
+        { id: 42, name: 'T', className: '', source: 'API', automated, folder: { isDeleted: false } },
+      ]);
+    const baseOpts = {
+      projectId: 1,
+      folderId: 10,
+      templateId: 1,
+      name: 'T',
+      automated: true,
+    };
+
+    it('flips an existing non-automated case to automated on found', async () => {
+      mockFetch.mockResolvedValueOnce(foundRows(false)); // findMany
+      mockFetch.mockResolvedValueOnce(zenStackResponse({ id: 42, automated: true })); // update
+
+      const { testCase, action } = await client.findOrCreateTestCase(baseOpts);
+
+      expect(action).toBe('found');
+      expect(testCase.automated).toBe(true);
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+      // Second call is the automated flip.
+      expect(mockFetch).toHaveBeenNthCalledWith(
+        2,
+        'https://testplanit.example.com/api/model/repositoryCases/update',
+        expect.objectContaining({ method: 'PATCH' })
+      );
+      const body = JSON.parse(mockFetch.mock.calls[1][1].body);
+      expect(body).toEqual({ where: { id: 42 }, data: { automated: true } });
+    });
+
+    it('does not write when the found case is already automated', async () => {
+      mockFetch.mockResolvedValueOnce(foundRows(true)); // findMany only
+
+      const { action } = await client.findOrCreateTestCase(baseOpts);
+
+      expect(action).toBe('found');
+      // Only the findMany ran — no update call.
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not flip when automated is explicitly false', async () => {
+      mockFetch.mockResolvedValueOnce(foundRows(false));
+
+      await client.findOrCreateTestCase({ ...baseOpts, automated: false });
+
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+    });
+  });
+
   describe('createStep', () => {
     it('wraps the step text in a TipTap doc and posts to the steps model', async () => {
       mockFetch.mockResolvedValueOnce(zenStackResponse({ id: 7, testCaseId: 42, order: 0 }));
