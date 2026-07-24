@@ -135,7 +135,8 @@ import DuplicateTestRunDialog, {
 import CompleteTestRunDialog from "./CompleteTestRunDialog";
 import { DistributeAssignmentsModal } from "./DistributeAssignmentsModal";
 import { DeleteTestRunModal } from "./DeleteTestRun";
-import JunitTableSection from "./JunitTableSection";
+import JunitChartsPanel from "./JunitChartsPanel";
+import JunitResultsPanel from "./JunitResultsPanel";
 import {
   SelectedConfigurationInfo,
   TestCasesSection,
@@ -1577,47 +1578,6 @@ export default function TestRunPage() {
     return <Loading />;
   }
 
-  if (isAutomatedTestRunType(testRunData.testRunType)) {
-    // --- JUNIT TABLE STATE ---
-    return (
-      <PaginationProvider>
-        <JunitTableSection
-          form={form}
-          handleSubmit={handleSubmit}
-          onSubmit={onSubmit}
-          isDeleteDialogOpen={isDeleteDialogOpen}
-          setIsDeleteDialogOpen={setIsDeleteDialogOpen}
-          runId={runId ? String(runId) : ""}
-          projectId={projectId ? String(projectId) : ""}
-          refetchTestRun={refetchTestRun}
-          t={t}
-          jUnitSuites={jUnitSuites}
-          sortedJunitTestCases={sortedJunitTestCases}
-          junitSortConfig={junitSortConfig}
-          handleJunitSortChange={handleJunitSortChange}
-          effectiveCanDelete={effectiveCanDelete}
-          canAddEditRun={canAddEditRun}
-          canCloseRun={canCloseRun}
-          isEditMode={isEditMode}
-          isSubmitting={isSubmitting}
-          testRunData={testRunData}
-          isJUnitLoading={isJUnitLoading}
-          handleEditClick={handleEditClick}
-          noteContent={noteContent}
-          setNoteContent={setNoteContent}
-          contentLoaded={contentLoaded}
-          handleCancel={handleCancel}
-          workflows={workflows}
-          milestones={milestoneOptions}
-          statusScope={statusScope}
-          selectedTestCaseId={selectedTestCaseId}
-          handleExportPdf={handleExportPdf}
-          isExportingPdf={isExportingPdf}
-        />
-      </PaginationProvider>
-    );
-  }
-
   return (
     <Card
       className={`group-hover:bg-accent/50 transition-colors ${testRunData?.isCompleted ? "bg-muted-foreground/20 border-muted-foreground" : ""}`}
@@ -1633,16 +1593,18 @@ export default function TestRunPage() {
             void handleSubmit(onSubmit)(e);
           }}
         >
-          <div className="px-6 pt-6">
-            <ReviewStatusBanner
-              entityType="RUN"
-              entityId={testRunData.id}
-              projectId={Number(projectId)}
-              entityName={testRunData.name || ""}
-              reachableGatedStates={reachableGatedStates}
-              currentStateId={testRunData.stateId}
-            />
-          </div>
+          {!isJUnitRun && (
+            <div className="px-6 pt-6">
+              <ReviewStatusBanner
+                entityType="RUN"
+                entityId={testRunData.id}
+                projectId={Number(projectId)}
+                entityName={testRunData.name || ""}
+                reachableGatedStates={reachableGatedStates}
+                currentStateId={testRunData.stateId}
+              />
+            </div>
+          )}
           <CardHeader>
             <div
               ref={headerRef}
@@ -1794,13 +1756,15 @@ export default function TestRunPage() {
                                 onOpenChange={setAuditOpen}
                               />
                             )}
-                            <RequestReviewButton
-                              entityType="RUN"
-                              entityId={testRunData.id}
-                              projectId={Number(projectId)}
-                              currentStateId={testRunData.stateId}
-                              reachableGatedStates={reachableGatedStates}
-                            />
+                            {!isJUnitRun && (
+                              <RequestReviewButton
+                                entityType="RUN"
+                                entityId={testRunData.id}
+                                projectId={Number(projectId)}
+                                currentStateId={testRunData.stateId}
+                                reachableGatedStates={reachableGatedStates}
+                              />
+                            )}
                             <ActionOverflow
                               compact={headerCompact}
                               menuLabel={t("common.actions.actionsLabel")}
@@ -1881,73 +1845,74 @@ export default function TestRunPage() {
                                 unlocking is gated to creator/admin, so the
                                 switch is disabled (but still shown, for
                                 context) when a locked run can't be unlocked. */}
-                            {(compositionLocked ||
-                              (canAddEditRun && !isMultiConfigSelected)) && (
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <div className="flex h-9 items-center gap-2 rounded-md border bg-secondary px-3 text-secondary-foreground">
-                                    <Switch
-                                      id="composition-lock-switch"
-                                      checked={compositionLocked}
-                                      onCheckedChange={(v) =>
-                                        setCompositionLock(v)
-                                      }
-                                      disabled={
-                                        isTogglingCompositionLock ||
-                                        (compositionLocked
-                                          ? !canUnlockComposition
-                                          : !canAddEditRun ||
-                                            isMultiConfigSelected)
-                                      }
-                                      aria-label={
-                                        compositionLocked
-                                          ? t("runs.composition.lock")
-                                          : t("runs.composition.unlocked")
-                                      }
-                                      // The chip is bg-secondary; the switch's
-                                      // default track colors (bg-input off,
-                                      // bg-primary on) don't reliably contrast
-                                      // with it across themes. Deriving both the
-                                      // border and the unchecked track from
-                                      // secondary-foreground — which contrasts
-                                      // the chip by definition — keeps the
-                                      // switch legible on/off in every theme.
-                                      className="border-secondary-foreground data-[state=unchecked]:bg-secondary-foreground/50"
-                                    />
-                                    <label
-                                      htmlFor="composition-lock-switch"
-                                      className="flex cursor-pointer items-center gap-2 peer-disabled:cursor-not-allowed peer-disabled:opacity-50"
-                                    >
-                                      {isTogglingCompositionLock ? (
-                                        <Loader2 className="h-4 w-4 shrink-0 animate-spin" />
-                                      ) : compositionLocked ? (
-                                        <Lock className="h-4 w-4 shrink-0" />
-                                      ) : (
-                                        <LockOpen className="h-4 w-4 shrink-0" />
-                                      )}
-                                      {!headerCompact && (
-                                        <span className="whitespace-nowrap text-sm">
-                                          {compositionLocked
+                            {!isJUnitRun &&
+                              (compositionLocked ||
+                                (canAddEditRun && !isMultiConfigSelected)) && (
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <div className="flex h-9 items-center gap-2 rounded-md border bg-secondary px-3 text-secondary-foreground">
+                                      <Switch
+                                        id="composition-lock-switch"
+                                        checked={compositionLocked}
+                                        onCheckedChange={(v) =>
+                                          setCompositionLock(v)
+                                        }
+                                        disabled={
+                                          isTogglingCompositionLock ||
+                                          (compositionLocked
+                                            ? !canUnlockComposition
+                                            : !canAddEditRun ||
+                                              isMultiConfigSelected)
+                                        }
+                                        aria-label={
+                                          compositionLocked
                                             ? t("runs.composition.lock")
-                                            : t("runs.composition.unlocked")}
-                                        </span>
-                                      )}
-                                    </label>
-                                  </div>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  {compositionLocked
-                                    ? testRunData.compositionLockedBy?.name?.trim()
-                                      ? t("runs.composition.lockedBy", {
-                                          name: testRunData.compositionLockedBy.name.trim(),
-                                        })
-                                      : t(
-                                          "runs.composition.lockedAutomatically"
-                                        )
-                                    : t("runs.composition.lockHint")}
-                                </TooltipContent>
-                              </Tooltip>
-                            )}
+                                            : t("runs.composition.unlocked")
+                                        }
+                                        // The chip is bg-secondary; the switch's
+                                        // default track colors (bg-input off,
+                                        // bg-primary on) don't reliably contrast
+                                        // with it across themes. Deriving both the
+                                        // border and the unchecked track from
+                                        // secondary-foreground — which contrasts
+                                        // the chip by definition — keeps the
+                                        // switch legible on/off in every theme.
+                                        className="border-secondary-foreground data-[state=unchecked]:bg-secondary-foreground/50"
+                                      />
+                                      <label
+                                        htmlFor="composition-lock-switch"
+                                        className="flex cursor-pointer items-center gap-2 peer-disabled:cursor-not-allowed peer-disabled:opacity-50"
+                                      >
+                                        {isTogglingCompositionLock ? (
+                                          <Loader2 className="h-4 w-4 shrink-0 animate-spin" />
+                                        ) : compositionLocked ? (
+                                          <Lock className="h-4 w-4 shrink-0" />
+                                        ) : (
+                                          <LockOpen className="h-4 w-4 shrink-0" />
+                                        )}
+                                        {!headerCompact && (
+                                          <span className="whitespace-nowrap text-sm">
+                                            {compositionLocked
+                                              ? t("runs.composition.lock")
+                                              : t("runs.composition.unlocked")}
+                                          </span>
+                                        )}
+                                      </label>
+                                    </div>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    {compositionLocked
+                                      ? testRunData.compositionLockedBy?.name?.trim()
+                                        ? t("runs.composition.lockedBy", {
+                                            name: testRunData.compositionLockedBy.name.trim(),
+                                          })
+                                        : t(
+                                            "runs.composition.lockedAutomatically"
+                                          )
+                                      : t("runs.composition.lockHint")}
+                                  </TooltipContent>
+                                </Tooltip>
+                              )}
                           </div>
                         </div>
                       ) : (
@@ -1956,6 +1921,7 @@ export default function TestRunPage() {
                           <div className="flex gap-2">
                             {(() => {
                               const gateBlocked =
+                                !isJUnitRun &&
                                 !transitionCheck.allowed &&
                                 transitionCheck.blockingGate;
                               const formHasErrors =
@@ -2090,20 +2056,20 @@ export default function TestRunPage() {
               >
                 <div className="flex flex-col h-full p-4">
                   <div className="space-y-4">
-                    {isAutomatedTestRunType(testRunData?.testRunType) ? (
-                      isJUnitLoading ? (
-                        <Loading />
-                      ) : (
-                        <div className="space-y-8">
-                          {jUnitSuites && jUnitSuites.length > 0 ? (
-                            <></>
-                          ) : (
-                            <div className="text-muted-foreground">
-                              {tCommon("ui.noAutomatedTestResults")}
-                            </div>
-                          )}
-                        </div>
-                      )
+                    {isJUnitRun ? (
+                      <PaginationProvider>
+                        <JunitResultsPanel
+                          t={t}
+                          projectId={projectId ? String(projectId) : ""}
+                          runId={runId ? String(runId) : ""}
+                          jUnitSuites={jUnitSuites}
+                          sortedJunitTestCases={sortedJunitTestCases}
+                          junitSortConfig={junitSortConfig}
+                          handleJunitSortChange={handleJunitSortChange}
+                          isJUnitLoading={isJUnitLoading}
+                          selectedTestCaseId={selectedTestCaseId}
+                        />
+                      </PaginationProvider>
                     ) : (
                       <>
                         {isEditMode ||
@@ -2261,71 +2227,85 @@ export default function TestRunPage() {
                 }
               >
                 <div className="p-4 space-y-4">
-                  {(testRunData?.forecastManual ?? 0) > 0 && (
-                    <div className="flex flex-col gap-2">
-                      <FormLabel className="text-base font-bold">
-                        {t("common.fields.forecast")}
-                      </FormLabel>
-                      <ForecastDisplay seconds={testRunData.forecastManual!} />
-                    </div>
-                  )}
-                  {/* Donut Chart for all results in this test run */}
-                  {donutChartData.length > 0 && (
-                    <Card shadow="none">
-                      <CardHeader className="flex flex-row items-center justify-between p-2">
-                        <CardTitle className="text-base font-medium">
-                          {tCommon("ui.charts.resultsDistribution")}
-                        </CardTitle>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6"
-                          onClick={() => setZoomedChart("donut")}
-                        >
-                          <Maximize2 className="h-4 w-4" />
-                          <span className="sr-only">
-                            {tCommon("ui.charts.zoomDonutChart")}
-                          </span>
-                        </Button>
-                      </CardHeader>
-                      <CardContent>
-                        <TestRunResultsDonut
-                          data={donutChartData}
-                          height={220}
-                        />
-                      </CardContent>
-                    </Card>
-                  )}
-                  {/* Zoom Dialog for Donut Chart */}
-                  <Dialog
-                    open={zoomedChart === "donut"}
-                    onOpenChange={(open) => {
-                      if (!open) setZoomedChart(null);
-                    }}
-                  >
-                    <DialogContent className="max-w-[80vw] h-[80vh] flex flex-col p-0 sm:p-6">
-                      <DialogHeader className="px-4 pt-4 sm:px-0 sm:pt-0">
-                        <DialogTitle>
-                          {tCommon("ui.charts.resultsDistribution")}
-                        </DialogTitle>
-                      </DialogHeader>
-                      <div className="flex-1 overflow-auto p-4 sm:p-0">
-                        <div
-                          className="flex-1 w-full h-full"
-                          style={{ minHeight: 600 }}
-                        >
-                          <div className="w-full h-full flex items-center justify-center">
+                  {isJUnitRun ? (
+                    <JunitChartsPanel
+                      t={t}
+                      jUnitSuites={jUnitSuites}
+                      sortedJunitTestCases={sortedJunitTestCases}
+                      statusScope={statusScope}
+                      forecastSeconds={testRunData?.forecastManual}
+                    />
+                  ) : (
+                    <>
+                      {(testRunData?.forecastManual ?? 0) > 0 && (
+                        <div className="flex flex-col gap-2">
+                          <FormLabel className="text-base font-bold">
+                            {t("common.fields.forecast")}
+                          </FormLabel>
+                          <ForecastDisplay
+                            seconds={testRunData.forecastManual!}
+                          />
+                        </div>
+                      )}
+                      {/* Donut Chart for all results in this test run */}
+                      {donutChartData.length > 0 && (
+                        <Card shadow="none">
+                          <CardHeader className="flex flex-row items-center justify-between p-2">
+                            <CardTitle className="text-base font-medium">
+                              {tCommon("ui.charts.resultsDistribution")}
+                            </CardTitle>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6"
+                              onClick={() => setZoomedChart("donut")}
+                            >
+                              <Maximize2 className="h-4 w-4" />
+                              <span className="sr-only">
+                                {tCommon("ui.charts.zoomDonutChart")}
+                              </span>
+                            </Button>
+                          </CardHeader>
+                          <CardContent>
                             <TestRunResultsDonut
                               data={donutChartData}
-                              isZoomed
-                              height={600}
+                              height={220}
                             />
+                          </CardContent>
+                        </Card>
+                      )}
+                      {/* Zoom Dialog for Donut Chart */}
+                      <Dialog
+                        open={zoomedChart === "donut"}
+                        onOpenChange={(open) => {
+                          if (!open) setZoomedChart(null);
+                        }}
+                      >
+                        <DialogContent className="max-w-[80vw] h-[80vh] flex flex-col p-0 sm:p-6">
+                          <DialogHeader className="px-4 pt-4 sm:px-0 sm:pt-0">
+                            <DialogTitle>
+                              {tCommon("ui.charts.resultsDistribution")}
+                            </DialogTitle>
+                          </DialogHeader>
+                          <div className="flex-1 overflow-auto p-4 sm:p-0">
+                            <div
+                              className="flex-1 w-full h-full"
+                              style={{ minHeight: 600 }}
+                            >
+                              <div className="w-full h-full flex items-center justify-center">
+                                <TestRunResultsDonut
+                                  data={donutChartData}
+                                  isZoomed
+                                  height={600}
+                                />
+                              </div>
+                            </div>
                           </div>
-                        </div>
-                      </div>
-                    </DialogContent>
-                  </Dialog>
+                        </DialogContent>
+                      </Dialog>
+                    </>
+                  )}
                   <TestRunFormControls
                     isEditMode={isEditMode}
                     isSubmitting={isSubmitting}
@@ -2346,7 +2326,7 @@ export default function TestRunPage() {
                     canCreateTags={showAddEditTagsPerm}
                     selectedConfigurationsForDisplay={selectedConfigurations}
                     onAttachmentPendingChanges={setPendingAttachmentChanges}
-                    transitionCheck={transitionCheck}
+                    transitionCheck={isJUnitRun ? undefined : transitionCheck}
                   />
                   {selectedAttachmentIndex !== null && (
                     <AttachmentsCarousel
