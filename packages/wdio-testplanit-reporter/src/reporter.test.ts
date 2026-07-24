@@ -29,6 +29,12 @@ const apiMocks = vi.hoisted(() => ({
     testCase: { id: 456, name: "Test Case" },
     action: "found" as "found" | "created" | "moved",
   })),
+  findTestCaseByCustomField: vi.fn(
+    async (_opts: { projectId: number; fieldName: string; value: string | number }) =>
+      undefined as { id: number; name: string; source: string } | undefined,
+  ),
+  findOrAddTestCaseToRun: vi.fn(async (_opts: { repositoryCaseId: number }) => ({ id: 456 })),
+  createJUnitTestResult: vi.fn(async (_opts: { repositoryCaseId: number }) => ({ id: 789 })),
   createSteps: vi.fn(async (opts: { testCaseId: number; steps: unknown[] }) => ({
     count: opts.steps.length,
   })),
@@ -48,6 +54,9 @@ vi.mock("@testplanit/api", () => {
     automationStepsToCaseSteps: apiMocks.automationStepsToCaseSteps,
     TestPlanItClient: class MockTestPlanItClient {
       findOrCreateTestCase = apiMocks.findOrCreateTestCase;
+      findTestCaseByCustomField = apiMocks.findTestCaseByCustomField;
+      findOrAddTestCaseToRun = apiMocks.findOrAddTestCaseToRun;
+      createJUnitTestResult = apiMocks.createJUnitTestResult;
       createSteps = apiMocks.createSteps;
       softDeleteCaseSteps = apiMocks.softDeleteCaseSteps;
       requestStepDerivation = apiMocks.requestStepDerivation;
@@ -93,9 +102,6 @@ vi.mock("@testplanit/api", () => {
       async completeTestRun() {
         return { id: 123, isCompleted: true };
       }
-      async findOrAddTestCaseToRun() {
-        return { id: 456 };
-      }
       async createTestResult() {
         return { id: 789 };
       }
@@ -104,9 +110,6 @@ vi.mock("@testplanit/api", () => {
       }
       async createJUnitTestSuite() {
         return { id: 1, name: "Test Suite" };
-      }
-      async createJUnitTestResult() {
-        return { id: 789 };
       }
       async uploadJUnitAttachment() {
         return { id: 1, path: "/attachments/1" };
@@ -183,6 +186,9 @@ describe("TestPlanItReporter", () => {
     apiMocks.createSteps.mockImplementation(async (opts) => ({ count: opts.steps.length }));
     apiMocks.softDeleteCaseSteps.mockResolvedValue(3);
     apiMocks.requestStepDerivation.mockResolvedValue({ enqueued: true });
+    apiMocks.findTestCaseByCustomField.mockResolvedValue(undefined);
+    apiMocks.findOrAddTestCaseToRun.mockResolvedValue({ id: 456 });
+    apiMocks.createJUnitTestResult.mockResolvedValue({ id: 789 });
     reporter = new TestPlanItReporter(defaultOptions);
   });
 
@@ -838,6 +844,236 @@ describe("service-managed mode", () => {
       await flush(r);
 
       expect(apiMocks.createSteps).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("matchByCustomField", () => {
+    const runner = (framework = "mocha") =>
+      ({
+        cid: "0-0",
+        config: { framework },
+        capabilities: { browserName: "chrome" },
+        specs: ["/test/specs/search.spec.ts"],
+      }) as unknown as RunnerStats;
+    const mochaTest = (title: string, uid = title) =>
+      ({
+        type: "test",
+        title,
+        fullTitle: title,
+        uid,
+        cid: "0-0",
+        state: "passed",
+        duration: 5,
+        start: new Date(),
+        end: new Date(),
+        retries: 0,
+      }) as unknown as TestStats;
+    const flush = async (r: TestPlanItReporter) => {
+      const ops = (r as unknown as { pendingOperations: Set<Promise<void>> }).pendingOperations;
+      for (let i = 0; i < 10 && ops.size > 0; i++) {
+        await Promise.allSettled([...ops]);
+      }
+    };
+    // A migrated MANUAL case carrying a backfilled external ID.
+    const manualCase = { id: 30715, name: "Verify 'Relevance' is the default sort order", source: "MANUAL" };
+    const legacyTitle = "89434 Verify 'Relevance' is the default sort order for search results";
+
+    // ─── Title → identifier parsing (parseCustomFieldId) ───────────────────
+    it("parses a bare leading number by default", () => {
+      const r = new TestPlanItReporter({ ...defaultOptions, matchByCustomField: { fieldName: "External ID" } });
+      expect((r as any).parseCustomFieldId(legacyTitle)).toBe("89434");
+    });
+
+    it("honors a custom idPattern (string or RegExp)", () => {
+      const r = new TestPlanItReporter({
+        ...defaultOptions,
+        matchByCustomField: { fieldName: "External ID", idPattern: /TM-(\d+)/ },
+      });
+      expect((r as any).parseCustomFieldId("TM-4321 does a thing")).toBe("4321");
+
+      const r2 = new TestPlanItReporter({
+        ...defaultOptions,
+        matchByCustomField: { fieldName: "External ID", idPattern: "TM-(\\d+)" },
+      });
+      expect((r2 as any).parseCustomFieldId("TM-4321 does a thing")).toBe("4321");
+    });
+
+    it("returns undefined when the title has no identifier", () => {
+      const r = new TestPlanItReporter({ ...defaultOptions, matchByCustomField: { fieldName: "External ID" } });
+      expect((r as any).parseCustomFieldId("no leading number here")).toBeUndefined();
+    });
+
+    // ─── Match found → attach directly to the existing case ────────────────
+    it("attaches the result directly to a case matched by custom field, skipping auto-create", async () => {
+      apiMocks.findTestCaseByCustomField.mockResolvedValue(manualCase);
+      // Deliberately WITHOUT autoCreateTestCases / parentFolderId / templateId:
+      // the direct-attach path must not need them.
+      const r = new TestPlanItReporter({
+        ...defaultOptions,
+        matchByCustomField: { fieldName: "External ID" },
+      });
+      r.onRunnerStart(runner());
+      r.onSuiteStart({ title: "Search", uid: "s1" } as unknown as SuiteStats);
+      r.onTestPass(mochaTest(legacyTitle));
+      await flush(r);
+
+      // Looked up by the parsed identifier against the named field.
+      expect(apiMocks.findTestCaseByCustomField).toHaveBeenCalledTimes(1);
+      expect(apiMocks.findTestCaseByCustomField).toHaveBeenCalledWith({
+        projectId: 1,
+        fieldName: "External ID",
+        value: "89434",
+      });
+      // Attached to the matched case id (regardless of its MANUAL source)...
+      expect(apiMocks.findOrAddTestCaseToRun).toHaveBeenCalledWith(
+        expect.objectContaining({ repositoryCaseId: 30715 }),
+      );
+      expect(apiMocks.createJUnitTestResult).toHaveBeenCalledWith(
+        expect.objectContaining({ repositoryCaseId: 30715 }),
+      );
+      // ...and NO new case was created.
+      expect(apiMocks.findOrCreateTestCase).not.toHaveBeenCalled();
+      expect(r.getState().stats.testCasesFound).toBe(1);
+      expect(r.getState().stats.apiErrors).toBe(0);
+    });
+
+    it("caches the resolution so a retried test does not re-query", async () => {
+      apiMocks.findTestCaseByCustomField.mockResolvedValue(manualCase);
+      const r = new TestPlanItReporter({
+        ...defaultOptions,
+        matchByCustomField: { fieldName: "External ID" },
+      });
+      r.onRunnerStart(runner());
+      r.onSuiteStart({ title: "Search", uid: "s1" } as unknown as SuiteStats);
+      // Retries run sequentially: the second pass resolves after the first has
+      // populated the cache, so it must not hit the API again.
+      r.onTestPass(mochaTest(legacyTitle, "uid-a"));
+      await flush(r);
+      r.onTestPass(mochaTest(legacyTitle, "uid-b"));
+      await flush(r);
+
+      expect(apiMocks.findTestCaseByCustomField).toHaveBeenCalledTimes(1);
+    });
+
+    // ─── No match → fall through to existing behavior ──────────────────────
+    it("falls through to auto-create when no case matches the custom field", async () => {
+      apiMocks.findTestCaseByCustomField.mockResolvedValue(undefined);
+      apiMocks.findOrCreateTestCase.mockResolvedValue({ testCase: { id: 999, name: "x" }, action: "created" });
+      const r = new TestPlanItReporter({
+        ...defaultOptions,
+        matchByCustomField: { fieldName: "External ID" },
+        autoCreateTestCases: true,
+        parentFolderId: 10,
+        templateId: 1,
+      });
+      r.onRunnerStart(runner());
+      r.onSuiteStart({ title: "Search", uid: "s1" } as unknown as SuiteStats);
+      r.onTestPass(mochaTest(legacyTitle));
+      await flush(r);
+
+      expect(apiMocks.findTestCaseByCustomField).toHaveBeenCalledTimes(1);
+      // Fell through to the standard name+className+source create path.
+      expect(apiMocks.findOrCreateTestCase).toHaveBeenCalledTimes(1);
+      expect(apiMocks.findOrAddTestCaseToRun).toHaveBeenCalledWith(
+        expect.objectContaining({ repositoryCaseId: 999 }),
+      );
+      expect(r.getState().stats.apiErrors).toBe(0);
+    });
+
+    // ─── Field doesn't exist → graceful fall-through, never throws ─────────
+    it("falls through without throwing when the named field does not exist (client returns undefined)", async () => {
+      // A missing field yields no matching rows -> undefined, same as no match.
+      apiMocks.findTestCaseByCustomField.mockResolvedValue(undefined);
+      apiMocks.findOrCreateTestCase.mockResolvedValue({ testCase: { id: 42, name: "x" }, action: "created" });
+      const r = new TestPlanItReporter({
+        ...defaultOptions,
+        matchByCustomField: { fieldName: "Nonexistent Field" },
+        autoCreateTestCases: true,
+        parentFolderId: 10,
+        templateId: 1,
+      });
+      r.onRunnerStart(runner());
+      r.onSuiteStart({ title: "Search", uid: "s1" } as unknown as SuiteStats);
+      r.onTestPass(mochaTest(legacyTitle));
+      await flush(r);
+
+      expect(apiMocks.findOrCreateTestCase).toHaveBeenCalledTimes(1);
+      expect(r.getState().stats.apiErrors).toBe(0);
+    });
+
+    it("swallows a lookup error and falls through to the standard flow", async () => {
+      apiMocks.findTestCaseByCustomField.mockRejectedValue(new Error("boom"));
+      apiMocks.findOrCreateTestCase.mockResolvedValue({ testCase: { id: 77, name: "x" }, action: "created" });
+      const r = new TestPlanItReporter({
+        ...defaultOptions,
+        matchByCustomField: { fieldName: "External ID" },
+        autoCreateTestCases: true,
+        parentFolderId: 10,
+        templateId: 1,
+      });
+      r.onRunnerStart(runner());
+      r.onSuiteStart({ title: "Search", uid: "s1" } as unknown as SuiteStats);
+      r.onTestPass(mochaTest(legacyTitle));
+      await flush(r);
+
+      // The lookup error did not abort reporting — the create fallback ran and
+      // the result was attached. The error is handled inside resolution, so the
+      // reporter's own error counter is not bumped.
+      expect(apiMocks.findOrCreateTestCase).toHaveBeenCalledTimes(1);
+      expect(apiMocks.createJUnitTestResult).toHaveBeenCalledWith(
+        expect.objectContaining({ repositoryCaseId: 77 }),
+      );
+    });
+
+    it("skips the test (no create) when no match and auto-create is off", async () => {
+      apiMocks.findTestCaseByCustomField.mockResolvedValue(undefined);
+      const r = new TestPlanItReporter({
+        ...defaultOptions,
+        matchByCustomField: { fieldName: "External ID" },
+      });
+      r.onRunnerStart(runner());
+      r.onSuiteStart({ title: "Search", uid: "s1" } as unknown as SuiteStats);
+      r.onTestPass(mochaTest(legacyTitle));
+      await flush(r);
+
+      expect(apiMocks.findTestCaseByCustomField).toHaveBeenCalledTimes(1);
+      expect(apiMocks.findOrCreateTestCase).not.toHaveBeenCalled();
+      expect(apiMocks.findOrAddTestCaseToRun).not.toHaveBeenCalled();
+    });
+
+    // ─── Precedence + backward compatibility ───────────────────────────────
+    it("an explicit case id in the title takes precedence over custom-field matching", async () => {
+      apiMocks.findTestCaseByCustomField.mockResolvedValue(manualCase);
+      const r = new TestPlanItReporter({
+        ...defaultOptions,
+        matchByCustomField: { fieldName: "External ID" },
+      });
+      r.onRunnerStart(runner());
+      r.onSuiteStart({ title: "Search", uid: "s1" } as unknown as SuiteStats);
+      r.onTestPass(mochaTest("[555] some explicitly linked test"));
+      await flush(r);
+
+      expect(apiMocks.findTestCaseByCustomField).not.toHaveBeenCalled();
+      expect(apiMocks.findOrAddTestCaseToRun).toHaveBeenCalledWith(
+        expect.objectContaining({ repositoryCaseId: 555 }),
+      );
+    });
+
+    it("never queries the custom field when the option is not configured (backward compatible)", async () => {
+      apiMocks.findOrCreateTestCase.mockResolvedValue({ testCase: { id: 456, name: "x" }, action: "created" });
+      const r = new TestPlanItReporter({
+        ...defaultOptions,
+        autoCreateTestCases: true,
+        parentFolderId: 10,
+        templateId: 1,
+      });
+      r.onRunnerStart(runner());
+      r.onSuiteStart({ title: "Search", uid: "s1" } as unknown as SuiteStats);
+      r.onTestPass(mochaTest(legacyTitle));
+      await flush(r);
+
+      expect(apiMocks.findTestCaseByCustomField).not.toHaveBeenCalled();
+      expect(apiMocks.findOrCreateTestCase).toHaveBeenCalledTimes(1);
     });
   });
 });

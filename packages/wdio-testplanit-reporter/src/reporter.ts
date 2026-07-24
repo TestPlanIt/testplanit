@@ -127,6 +127,7 @@ export default class TestPlanItReporter extends WDIOReporter {
       results: new Map(),
       caseIdMap: new Map(),
       testRunCaseMap: new Map(),
+      customFieldCaseMap: new Map(),
       folderPathMap: new Map(),
       caseStepsMap: new Map(),
       statusIds: {},
@@ -722,6 +723,83 @@ export default class TestPlanItReporter extends WDIOReporter {
   }
 
   /**
+   * Extract the custom-field identifier from a test title using
+   * `matchByCustomField.idPattern` (default `/^(\d+)/`). Returns the first
+   * capturing group, or the whole match when the pattern has no group. The
+   * value is returned as a string; the API client matches it against both the
+   * numeric and string forms of the stored value. Returns undefined when the
+   * pattern doesn't match. Independent of `parseCaseIds`.
+   */
+  private parseCustomFieldId(title: string): string | undefined {
+    const cfg = this.reporterOptions.matchByCustomField;
+    if (!cfg) return undefined;
+
+    const pattern = cfg.idPattern ?? /^(\d+)/;
+    // Build a fresh, non-global RegExp so we never inherit `lastIndex` state
+    // from a shared global-flagged pattern across calls.
+    const source = typeof pattern === 'string' ? pattern : pattern.source;
+    const flags = typeof pattern === 'string' ? '' : pattern.flags.replace('g', '');
+    const regex = new RegExp(source, flags);
+
+    const match = regex.exec(title);
+    if (!match) return undefined;
+
+    // First non-empty capturing group, else the whole match.
+    const captured = match.slice(1).find((g) => g != null && g !== '') ?? match[0];
+    return captured != null && captured !== '' ? captured : undefined;
+  }
+
+  /**
+   * Opt-in resolution: find an existing case by a custom field value parsed
+   * from the test title (see `matchByCustomField`). Returns the matched case
+   * ID, or undefined to fall through to the name + className + source matching
+   * / `autoCreateTestCases` flow.
+   *
+   * Never throws: a title the pattern doesn't match, a field that doesn't
+   * exist, no matching case, or an API error all log and return undefined so
+   * the standard flow still runs.
+   */
+  private async resolveCaseByCustomField(result: TrackedTestResult): Promise<number | undefined> {
+    const cfg = this.reporterOptions.matchByCustomField;
+    if (!cfg) return undefined;
+
+    const value = this.parseCustomFieldId(result.originalTitle);
+    if (value === undefined) {
+      this.log('matchByCustomField: no id parsed from title:', result.originalTitle);
+      return undefined;
+    }
+
+    // Cache hits AND misses so a retried test (same title) doesn't re-query.
+    const cacheKey = `${cfg.fieldName}::${value}`;
+    if (this.state.customFieldCaseMap.has(cacheKey)) {
+      return this.state.customFieldCaseMap.get(cacheKey) ?? undefined;
+    }
+
+    try {
+      const match = await this.client.findTestCaseByCustomField({
+        projectId: this.reporterOptions.projectId,
+        fieldName: cfg.fieldName,
+        value,
+      });
+
+      if (match) {
+        this.state.customFieldCaseMap.set(cacheKey, match.id);
+        this.log(`matchByCustomField: matched case ${match.id} via ${cfg.fieldName}=${value}`);
+        return match.id;
+      }
+
+      this.state.customFieldCaseMap.set(cacheKey, null);
+      this.log(`matchByCustomField: no case with ${cfg.fieldName}=${value}; falling through`);
+      return undefined;
+    } catch (error) {
+      // Do not cache errors (they may be transient). Log and fall through so a
+      // lookup failure never aborts reporting the result.
+      this.logError(`matchByCustomField lookup failed for ${cfg.fieldName}=${value}; falling through`, error);
+      return undefined;
+    }
+  }
+
+  /**
    * Get the full suite path as a string
    */
   private getFullSuiteName(): string {
@@ -1055,8 +1133,14 @@ export default class TestPlanItReporter extends WDIOReporter {
   private async reportResult(result: TrackedTestResult, caseIds: number[]): Promise<void> {
     try {
       // Check if this result can be reported BEFORE initializing
-      // This prevents creating empty test runs for tests without case IDs
-      if (caseIds.length === 0 && !this.reporterOptions.autoCreateTestCases) {
+      // This prevents creating empty test runs for tests without case IDs.
+      // matchByCustomField is also a resolution path, so its presence keeps the
+      // result eligible even when autoCreateTestCases is disabled.
+      if (
+        caseIds.length === 0 &&
+        !this.reporterOptions.autoCreateTestCases &&
+        !this.reporterOptions.matchByCustomField
+      ) {
         console.warn(`[TestPlanIt] WARNING: Skipping "${result.testName}" - no case ID found and autoCreateTestCases is disabled. Set autoCreateTestCases: true to automatically find or create test cases by name.`);
         return;
       }
@@ -1101,7 +1185,30 @@ export default class TestPlanItReporter extends WDIOReporter {
         // Non-Cucumber: collect this matched case for opt-in LLM derivation
         // (self-gated — only with overwriteSteps, since the case pre-exists).
         this.collectForLlmDerivation(caseIds[0], 'found', result);
-      } else if (this.reporterOptions.autoCreateTestCases) {
+      }
+
+      // Opt-in: resolve an existing case by a custom field value (e.g. a legacy
+      // external ID) BEFORE the name/className/source matching + auto-create flow.
+      // On a match, attach the result directly to that case regardless of its
+      // source (typically MANUAL) — no create, no folder, no link — the same
+      // direct-attach treatment as an explicit case ID in the title.
+      if (repositoryCaseId === undefined && this.reporterOptions.matchByCustomField) {
+        const matchedId = await this.resolveCaseByCustomField(result);
+        if (matchedId !== undefined) {
+          repositoryCaseId = matchedId;
+          this.state.stats.testCasesFound++;
+          this.log('DEBUG: Attaching to case matched by custom field:', repositoryCaseId);
+          // The matched case pre-exists, so only overwriteSteps replaces its
+          // steps (mirrors the explicit case-ID 'found' path — D-05).
+          if (this.reporterOptions.overwriteSteps) {
+            await this.writeScenarioSteps(matchedId, 'found', result);
+          }
+          this.collectForLlmDerivation(matchedId, 'found', result);
+        }
+      }
+
+      // Fall back to name + className + source matching / auto-create.
+      if (repositoryCaseId === undefined && this.reporterOptions.autoCreateTestCases) {
         // Check cache first
         if (this.state.caseIdMap.has(caseKey)) {
           repositoryCaseId = this.state.caseIdMap.get(caseKey);
@@ -1177,8 +1284,6 @@ export default class TestPlanItReporter extends WDIOReporter {
           // Non-Cucumber: collect for opt-in LLM derivation (self-gated).
           this.collectForLlmDerivation(testCase.id, action, result);
         }
-      } else {
-        this.log('DEBUG: autoCreateTestCases is false, not creating test case');
       }
 
       if (!repositoryCaseId) {

@@ -708,6 +708,26 @@ interface FindTestCaseOptions {
     isDeleted?: boolean;
 }
 /**
+ * Options for {@link TestPlanItClient.findTestCaseByCustomField}.
+ *
+ * Resolves a case by a custom field value rather than by
+ * name/className/source, so an automated run can attach to a manually-authored
+ * case that carries a legacy external identifier (e.g. an ID backfilled onto
+ * migrated MANUAL cases as an Integer custom field).
+ */
+interface FindTestCaseByCustomFieldOptions {
+    projectId: number;
+    /** Custom field display name to match on (e.g. `"External ID"`). */
+    fieldName: string;
+    /**
+     * Value to match against the field. Compared against the stored JSON value
+     * in both its number and string forms, so resolution does not depend on
+     * whether the field type persists as a JSON number (Integer/Number) or a
+     * JSON string (Text).
+     */
+    value: string | number;
+}
+/**
  * API client configuration
  */
 interface TestPlanItClientConfig {
@@ -1067,6 +1087,27 @@ declare class TestPlanItClient {
      */
     findTestCases(options: FindTestCaseOptions): Promise<RepositoryCase[]>;
     /**
+     * Find an existing test case by a custom field value, matched by the field's
+     * display name.
+     *
+     * Unlike {@link findTestCases} / {@link findOrCreateTestCase} (which key off
+     * name + className + source), this resolves a case purely by a value stored
+     * in its `caseFieldValues`. That lets an automated run attach to a
+     * manually-authored case — regardless of the case's `source` — when the case
+     * carries a legacy external identifier as a custom field (e.g. an ID
+     * backfilled onto MANUAL cases after migrating from another test manager).
+     *
+     * The stored JSON `value` is matched in both its number and string forms:
+     * Integer/Number fields persist as a JSON number (`89434`) while Text fields
+     * persist as a JSON string (`"89434"`), so resolution never hinges on the
+     * field's underlying type.
+     *
+     * Returns the first active (non-deleted) matching case, or `undefined` when
+     * nothing matches — including when the named field does not exist on the
+     * project (the relation filter simply matches no rows; it does not throw).
+     */
+    findTestCaseByCustomField(options: FindTestCaseByCustomFieldOptions): Promise<RepositoryCase | undefined>;
+    /**
      * Find or create a test case
      * First searches for an active (non-deleted) test case in an active folder, then creates if not found.
      * If a matching case exists in a deleted folder, it will be moved to the specified folder.
@@ -1248,4 +1289,4 @@ declare function automationStepsToCaseSteps(steps: AutomationStep[]): CaseStepRo
  */
 declare function deriveCaseStepsIfFresh(steps: AutomationStep[], existingStepCount: number): CaseStepRow[];
 
-export { type AddTestCaseToRunOptions, type ApiError, type Attachment, type AutomationStep, type BulkTestCaseInput, type BulkTestCaseResult, type BulkTestCaseStep, type CaseStepRow, type Comment, type Configuration, type CreateFolderOptions, type CreateJUnitPropertyOptions, type CreateJUnitTestResultOptions, type CreateJUnitTestStepOptions, type CreateJUnitTestSuiteOptions, type CreateStepOptions, type CreateStepsOptions, type CreateTagOptions, type CreateTestCaseOptions, type CreateTestCasesOptions, type CreateTestCasesResult, type CreateTestResultOptions, type CreateTestRunOptions, type FindOrCreateTestCaseResult, type FindTestCaseOptions, type ImportProgressEvent, type ImportTestResultsOptions, type Issue, type JUnitProperty, type JUnitResultType, type JUnitTestResult, type JUnitTestStep, type JUnitTestSuite, type ListTestRunsOptions, type Milestone, type NormalizedStatus, type PaginatedResponse, type Project, type RepositoryCase, type RepositoryCaseSource, type RepositoryFolder, type RequestStepDerivationCase, type RequestStepDerivationOptions, type Status, type Step, type Tag, type Template, TestPlanItClient, type TestPlanItClientConfig, TestPlanItError, type TestRun, type TestRunCase, type TestRunResult, type TestRunStepResult, type TestRunType, type UpdateJUnitTestSuiteOptions, type UpdateTestRunOptions, type UploadAttachmentOptions, type User, type WorkflowState, automationStepsToCaseSteps, deriveCaseStepsIfFresh, tipTapDoc };
+export { type AddTestCaseToRunOptions, type ApiError, type Attachment, type AutomationStep, type BulkTestCaseInput, type BulkTestCaseResult, type BulkTestCaseStep, type CaseStepRow, type Comment, type Configuration, type CreateFolderOptions, type CreateJUnitPropertyOptions, type CreateJUnitTestResultOptions, type CreateJUnitTestStepOptions, type CreateJUnitTestSuiteOptions, type CreateStepOptions, type CreateStepsOptions, type CreateTagOptions, type CreateTestCaseOptions, type CreateTestCasesOptions, type CreateTestCasesResult, type CreateTestResultOptions, type CreateTestRunOptions, type FindOrCreateTestCaseResult, type FindTestCaseByCustomFieldOptions, type FindTestCaseOptions, type ImportProgressEvent, type ImportTestResultsOptions, type Issue, type JUnitProperty, type JUnitResultType, type JUnitTestResult, type JUnitTestStep, type JUnitTestSuite, type ListTestRunsOptions, type Milestone, type NormalizedStatus, type PaginatedResponse, type Project, type RepositoryCase, type RepositoryCaseSource, type RepositoryFolder, type RequestStepDerivationCase, type RequestStepDerivationOptions, type Status, type Step, type Tag, type Template, TestPlanItClient, type TestPlanItClientConfig, TestPlanItError, type TestRun, type TestRunCase, type TestRunResult, type TestRunStepResult, type TestRunType, type UpdateJUnitTestSuiteOptions, type UpdateTestRunOptions, type UploadAttachmentOptions, type User, type WorkflowState, automationStepsToCaseSteps, deriveCaseStepsIfFresh, tipTapDoc };

@@ -30,6 +30,7 @@ import type {
   ListTestRunsOptions,
   PaginatedResponse,
   FindTestCaseOptions,
+  FindTestCaseByCustomFieldOptions,
   FindOrCreateTestCaseResult,
   ImportTestResultsOptions,
   ImportProgressEvent,
@@ -1329,6 +1330,71 @@ export class TestPlanItClient {
         isDeleted: false,
       },
     });
+  }
+
+  /**
+   * Find an existing test case by a custom field value, matched by the field's
+   * display name.
+   *
+   * Unlike {@link findTestCases} / {@link findOrCreateTestCase} (which key off
+   * name + className + source), this resolves a case purely by a value stored
+   * in its `caseFieldValues`. That lets an automated run attach to a
+   * manually-authored case — regardless of the case's `source` — when the case
+   * carries a legacy external identifier as a custom field (e.g. an ID
+   * backfilled onto MANUAL cases after migrating from another test manager).
+   *
+   * The stored JSON `value` is matched in both its number and string forms:
+   * Integer/Number fields persist as a JSON number (`89434`) while Text fields
+   * persist as a JSON string (`"89434"`), so resolution never hinges on the
+   * field's underlying type.
+   *
+   * Returns the first active (non-deleted) matching case, or `undefined` when
+   * nothing matches — including when the named field does not exist on the
+   * project (the relation filter simply matches no rows; it does not throw).
+   */
+  async findTestCaseByCustomField(
+    options: FindTestCaseByCustomFieldOptions
+  ): Promise<RepositoryCase | undefined> {
+    const { projectId, fieldName, value } = options;
+
+    // Match the value in both its JSON string and number forms. The equality
+    // check on the JSONB `value` column is type-sensitive, so a numeric field
+    // (stored as 89434) would never match the string "89434" and vice versa.
+    const stringValue = String(value);
+    const valueVariants: Array<{ value: { equals: unknown } }> = [
+      { value: { equals: stringValue } },
+    ];
+    const numericValue =
+      typeof value === "number" ? value : Number(stringValue);
+    // Only add the numeric variant for a clean round-trippable integer/decimal
+    // (avoids "" -> 0 and "1e3" -> 1000 style surprises from Number()).
+    if (
+      Number.isFinite(numericValue) &&
+      stringValue !== "" &&
+      String(numericValue) === stringValue
+    ) {
+      valueVariants.push({ value: { equals: numericValue } });
+    }
+
+    const cases = await this.zenstack<RepositoryCase[]>(
+      "repositoryCases",
+      "findMany",
+      {
+        where: {
+          projectId,
+          isDeleted: false,
+          caseFieldValues: {
+            some: {
+              field: { displayName: fieldName },
+              OR: valueVariants,
+            },
+          },
+        },
+        take: 1,
+      }
+    );
+
+    return cases?.[0];
   }
 
   /**

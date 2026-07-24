@@ -107,6 +107,41 @@ interface TestPlanItReporterOptions extends Reporters.Options {
      */
     caseIdPattern?: RegExp | string;
     /**
+     * Opt-in strategy to resolve an existing case by a **custom field value**
+     * parsed from the test title, tried BEFORE the name + className + source
+     * matching / `autoCreateTestCases` fallback.
+     *
+     * Use this when your titles carry a legacy external identifier — e.g. an ID
+     * left over from a previous test manager — that was backfilled onto migrated
+     * cases as a custom field, rather than a TestPlanIt case ID. This is distinct
+     * from `caseIdPattern`, which treats the number it captures as a literal
+     * TestPlanIt case ID.
+     *
+     * On a match, the result is attached **directly** to that case regardless of
+     * its `source` (typically `MANUAL`); no new case, folder, or link is created.
+     * On no match — or if the named field doesn't exist on the project's template
+     * — it falls through to the standard flow without error.
+     *
+     * @default undefined (disabled)
+     *
+     * @example
+     * // Attach to a migrated manual case by its backfilled external ID.
+     * // Title: "89434 Verify 'Relevance' is the default sort order"
+     * matchByCustomField: { fieldName: 'External ID' }
+     */
+    matchByCustomField?: {
+        /** Custom field display name to match on (e.g. `'External ID'`). */
+        fieldName: string;
+        /**
+         * Pattern to extract the identifier from the test title. The first
+         * capturing group (or, if the pattern has none, the whole match) is looked
+         * up against `fieldName`. A leading `g` flag is ignored (a single match is
+         * taken). Independent of `caseIdPattern`.
+         * @default /^(\d+)/ - a bare leading number, e.g. "89434 Verify ..."
+         */
+        idPattern?: RegExp | string;
+    };
+    /**
      * Whether to automatically create test cases in TestPlanIt if they don't exist
      * Test cases are matched by className (suite name) + name (test title)
      * @default false
@@ -426,6 +461,12 @@ interface ReporterState {
     caseIdMap: Map<string, number>;
     /** Map of test run case keys to IDs */
     testRunCaseMap: Map<string, number>;
+    /**
+     * Cache of custom-field resolutions ("fieldName::value" → matched case ID, or
+     * null for a confirmed miss) so a repeated title (e.g. a retried test) does
+     * not re-query. Only used when `matchByCustomField` is configured.
+     */
+    customFieldCaseMap: Map<string, number | null>;
     /** Map of folder paths (joined by >) to folder IDs for caching */
     folderPathMap: Map<string, number>;
     /** Dedup of in-flight step writes per case id (write steps at most once per case per run) */
@@ -593,6 +634,26 @@ declare class TestPlanItReporter extends WDIOReporter {
      * @example With C-prefix pattern: "C12345 C67890 should load the page" -> [12345, 67890]
      */
     private parseCaseIds;
+    /**
+     * Extract the custom-field identifier from a test title using
+     * `matchByCustomField.idPattern` (default `/^(\d+)/`). Returns the first
+     * capturing group, or the whole match when the pattern has no group. The
+     * value is returned as a string; the API client matches it against both the
+     * numeric and string forms of the stored value. Returns undefined when the
+     * pattern doesn't match. Independent of `parseCaseIds`.
+     */
+    private parseCustomFieldId;
+    /**
+     * Opt-in resolution: find an existing case by a custom field value parsed
+     * from the test title (see `matchByCustomField`). Returns the matched case
+     * ID, or undefined to fall through to the name + className + source matching
+     * / `autoCreateTestCases` flow.
+     *
+     * Never throws: a title the pattern doesn't match, a field that doesn't
+     * exist, no matching case, or an API error all log and return undefined so
+     * the standard flow still runs.
+     */
+    private resolveCaseByCustomField;
     /**
      * Get the full suite path as a string
      */
