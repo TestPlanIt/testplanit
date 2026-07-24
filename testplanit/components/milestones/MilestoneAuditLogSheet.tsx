@@ -5,6 +5,10 @@ import { useTranslations } from "next-intl";
 
 interface MilestoneAuditLogSheetProps {
   milestoneId: number;
+  /** Hide the built-in trigger and drive the sheet from external `open` state. */
+  hideTrigger?: boolean;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 /**
@@ -14,6 +18,9 @@ interface MilestoneAuditLogSheetProps {
  */
 export function MilestoneAuditLogSheet({
   milestoneId,
+  hideTrigger,
+  open,
+  onOpenChange,
 }: MilestoneAuditLogSheetProps) {
   const t = useTranslations("milestones.auditLog");
   const tCommon = useTranslations("common");
@@ -28,6 +35,9 @@ export function MilestoneAuditLogSheet({
       triggerTestId="milestone-history-trigger"
       tableTestIdPrefix="milestone-audit-log-table"
       rowTestIdPrefix="milestone-audit-log-row"
+      hideTrigger={hideTrigger}
+      open={open}
+      onOpenChange={onOpenChange}
     />
   );
 }

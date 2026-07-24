@@ -47,6 +47,13 @@ import { IssuesDisplay } from "@/components/tables/IssuesDisplay";
 import { TagsDisplay } from "@/components/tables/TagDisplay";
 import { UserNameCell } from "@/components/tables/UserNameCell";
 import TipTapEditor from "@/components/tiptap/TipTapEditor";
+import {
+  ActionBar,
+  ActionButtonContent,
+  ActionOverflow,
+  collapsibleActionClass,
+  useContainerCompact,
+} from "@/components/ui/action-bar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -93,6 +100,7 @@ import {
   Combine,
   Compass,
   FileDown,
+  History,
   Save,
   SquarePen,
   Trash2,
@@ -832,6 +840,10 @@ export default function SessionPage() {
   const [isCompleteDialogOpen, setIsCompleteDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeletingSession, setIsDeletingSession] = useState(false);
+  // Action bar collapses into a kebab when the header is narrow (mirrors the
+  // repository case details bar).
+  const { ref: headerRef, compact: headerCompact } = useContainerCompact();
+  const [auditOpen, setAuditOpen] = useState(false);
   const t = useTranslations("sessions");
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
@@ -1789,7 +1801,10 @@ export default function SessionPage() {
             />
           </div>
           <CardHeader>
-            <div className="flex justify-between items-center gap-2">
+            <div
+              ref={headerRef}
+              className="flex justify-between items-center gap-2"
+            >
               {!isEditMode && (
                 <div className="me-2">
                   <Link href={`/projects/sessions/${projectId}`}>
@@ -1839,9 +1854,17 @@ export default function SessionPage() {
                     className="shrink-0 whitespace-nowrap"
                   />
                 )}
-                <div className="flex items-start gap-2">
+                <ActionBar
+                  compact={headerCompact}
+                  className="items-start gap-2"
+                >
                   {sessionData && (
-                    <SessionAuditLogSheet sessionId={sessionData.id} />
+                    <SessionAuditLogSheet
+                      sessionId={sessionData.id}
+                      hideTrigger
+                      open={auditOpen}
+                      onOpenChange={setAuditOpen}
+                    />
                   )}
                   {sessionData?.isCompleted ? (
                     <div className="flex items-center gap-1">
@@ -1861,33 +1884,35 @@ export default function SessionPage() {
                           />
                         </div>
                       </Badge>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={handleExportPdf}
-                        disabled={isExportingPdf}
-                        className="group px-3 hover:px-3 transition-all duration-200 gap-0 hover:gap-2"
-                      >
-                        <FileDown className="h-4 w-4 shrink-0" />
-                        <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-                          {isExportingPdf
-                            ? tCommon("actions.exportingPdf")
-                            : tCommon("actions.exportPdf")}
-                        </span>
-                      </Button>
-                      {(canDeleteClosedSession || isSuperAdmin) && (
-                        <Button
-                          type="button"
-                          variant="destructive"
-                          onClick={() => setIsDeleteDialogOpen(true)}
-                          className="group px-3 hover:px-3 transition-all duration-200 gap-0 hover:gap-2"
-                        >
-                          <Trash2 className="h-4 w-4 shrink-0" />
-                          <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-                            {t("actions.delete")}
-                          </span>
-                        </Button>
-                      )}
+                      <ActionOverflow
+                        compact={headerCompact}
+                        menuLabel={tCommon("actions.actionsLabel")}
+                        actions={[
+                          {
+                            key: "activity",
+                            icon: History,
+                            label: tCommon("fields.activityLog"),
+                            onClick: () => setAuditOpen(true),
+                          },
+                          {
+                            key: "export",
+                            icon: FileDown,
+                            label: isExportingPdf
+                              ? tCommon("actions.exportingPdf")
+                              : tCommon("actions.exportPdf"),
+                            onClick: handleExportPdf,
+                            disabled: isExportingPdf,
+                          },
+                          {
+                            key: "delete",
+                            icon: Trash2,
+                            label: t("actions.delete"),
+                            onClick: () => setIsDeleteDialogOpen(true),
+                            destructive: true,
+                            hidden: !(canDeleteClosedSession || isSuperAdmin),
+                          },
+                        ]}
+                      />
                     </div>
                   ) : (
                     <>
@@ -1911,47 +1936,47 @@ export default function SessionPage() {
                             currentStateId={sessionData.stateId}
                             reachableGatedStates={reachableGatedStates}
                           />
-                          {showEditButtonPerm && !sessionData?.isCompleted && (
-                            <Button
-                              type="button"
-                              variant="secondary"
-                              onClick={handleEditClick}
-                              className="group px-3 hover:px-3 transition-all duration-200 gap-0 hover:gap-2"
-                            >
-                              <SquarePen className="h-4 w-4 shrink-0" />
-                              <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-                                {tCommon("actions.edit")}
-                              </span>
-                            </Button>
-                          )}
-                          <Button
-                            type="button"
-                            variant="outline"
-                            onClick={handleExportPdf}
-                            disabled={isExportingPdf}
-                            className="group px-3 hover:px-3 transition-all duration-200 gap-0 hover:gap-2"
-                          >
-                            <FileDown className="h-4 w-4 shrink-0" />
-                            <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-                              {isExportingPdf
-                                ? tCommon("actions.exportingPdf")
-                                : tCommon("actions.exportPdf")}
-                            </span>
-                          </Button>
-                          {showCompleteButtonPerm &&
-                            !sessionData?.isCompleted && (
-                              <Button
-                                type="button"
-                                variant="secondary"
-                                onClick={() => setIsCompleteDialogOpen(true)}
-                                className="group px-3 hover:px-3 transition-all duration-200 gap-0 hover:gap-2"
-                              >
-                                <CircleCheckBig className="h-4 w-4 shrink-0" />
-                                <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-                                  {tCommon("actions.complete")}
-                                </span>
-                              </Button>
-                            )}
+                          <ActionOverflow
+                            compact={headerCompact}
+                            menuLabel={tCommon("actions.actionsLabel")}
+                            actions={[
+                              {
+                                key: "activity",
+                                icon: History,
+                                label: tCommon("fields.activityLog"),
+                                onClick: () => setAuditOpen(true),
+                              },
+                              {
+                                key: "edit",
+                                icon: SquarePen,
+                                label: tCommon("actions.edit"),
+                                onClick: handleEditClick,
+                                hidden: !(
+                                  showEditButtonPerm &&
+                                  !sessionData?.isCompleted
+                                ),
+                              },
+                              {
+                                key: "export",
+                                icon: FileDown,
+                                label: isExportingPdf
+                                  ? tCommon("actions.exportingPdf")
+                                  : tCommon("actions.exportPdf"),
+                                onClick: handleExportPdf,
+                                disabled: isExportingPdf,
+                              },
+                              {
+                                key: "complete",
+                                icon: CircleCheckBig,
+                                label: tCommon("actions.complete"),
+                                onClick: () => setIsCompleteDialogOpen(true),
+                                hidden: !(
+                                  showCompleteButtonPerm &&
+                                  !sessionData?.isCompleted
+                                ),
+                              },
+                            ]}
+                          />
                         </div>
                       ) : (
                         <div className="flex flex-col gap-2">
@@ -1979,11 +2004,16 @@ export default function SessionPage() {
                                 return (
                                   <Button
                                     type="submit"
-                                    variant="default"
+                                    variant="outline"
                                     disabled={isSubmitting}
+                                    className={collapsibleActionClass(
+                                      headerCompact
+                                    )}
                                   >
-                                    <Save className="h-4 w-4" />
-                                    {tCommon("actions.save")}
+                                    <ActionButtonContent
+                                      icon={Save}
+                                      label={tCommon("actions.save")}
+                                    />
                                   </Button>
                                 );
                               }
@@ -1994,12 +2024,17 @@ export default function SessionPage() {
                                     <span tabIndex={0}>
                                       <Button
                                         type="submit"
-                                        variant="default"
+                                        variant="outline"
                                         disabled
-                                        className="ring-2 ring-destructive ring-offset-2 ring-offset-background"
+                                        className={collapsibleActionClass(
+                                          headerCompact,
+                                          "ring-2 ring-destructive ring-offset-2 ring-offset-background"
+                                        )}
                                       >
-                                        <Save className="h-4 w-4" />
-                                        {tCommon("actions.save")}
+                                        <ActionButtonContent
+                                          icon={Save}
+                                          label={tCommon("actions.save")}
+                                        />
                                       </Button>
                                     </span>
                                   </TooltipTrigger>
@@ -2014,9 +2049,12 @@ export default function SessionPage() {
                               variant="outline"
                               onClick={handleCancel}
                               disabled={isSubmitting}
+                              className={collapsibleActionClass(headerCompact)}
                             >
-                              <CircleSlash2 className="h-4 w-4" />
-                              {tCommon("cancel")}
+                              <ActionButtonContent
+                                icon={CircleSlash2}
+                                label={tCommon("cancel")}
+                              />
                             </Button>
                           </div>
                           {(sessionData?.isCompleted
@@ -2024,19 +2062,25 @@ export default function SessionPage() {
                             : canDeleteSession || isSuperAdmin) && (
                             <Button
                               type="button"
-                              variant="destructive"
+                              variant="outline"
                               onClick={() => setIsDeleteDialogOpen(true)}
                               disabled={isSubmitting}
+                              className={collapsibleActionClass(
+                                headerCompact,
+                                "text-destructive"
+                              )}
                             >
-                              <Trash2 className="h-4 w-4" />
-                              {tCommon("actions.delete")}
+                              <ActionButtonContent
+                                icon={Trash2}
+                                label={tCommon("actions.delete")}
+                              />
                             </Button>
                           )}
                         </div>
                       )}
                     </>
                   )}
-                </div>
+                </ActionBar>
               </div>
             </div>
           </CardHeader>

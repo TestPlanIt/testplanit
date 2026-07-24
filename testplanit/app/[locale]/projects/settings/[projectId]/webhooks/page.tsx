@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PageTitle, SectionHeader } from "@/components/ui/typography";
+import { HelpPopover } from "@/components/ui/help-popover";
 import { Activity, Inbox, Send } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { notFound, useParams, useSearchParams } from "next/navigation";
@@ -118,13 +119,12 @@ export default function ProjectWebhooksPage() {
     <main>
       <Card>
         <CardHeader className="w-full">
-          <SectionHeader className="flex items-center justify-between pb-2 pt-1">
-            <CardTitle>
-              <span>{tGlobal("admin.menu.webhooks")}</span>
-            </CardTitle>
+          <SectionHeader className="flex items-center gap-2">
+            <CardTitle>{tGlobal("admin.menu.webhooks")}</CardTitle>
+            <HelpPopover helpKey="projectWebhooks" />
           </SectionHeader>
-          <CardDescription className="uppercase">
-            <span className="flex items-center gap-2">
+          <CardDescription>
+            <span className="flex items-center gap-2 uppercase">
               <ProjectIcon iconUrl={project.iconUrl} />
               {project.name}
             </span>

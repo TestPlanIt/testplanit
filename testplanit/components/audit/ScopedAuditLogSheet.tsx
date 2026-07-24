@@ -3,6 +3,11 @@
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { VirtualizedDataTable } from "@/components/tables/VirtualizedDataTable";
+import {
+  ActionButtonContent,
+  collapsibleActionClass,
+  useActionBarCompact,
+} from "@/components/ui/action-bar";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { Label } from "@/components/ui/label";
@@ -90,6 +95,9 @@ export function ScopedAuditLogSheet({
 }: ScopedAuditLogSheetProps) {
   const [internalOpen, setInternalOpen] = useState(false);
   const open = openProp ?? internalOpen;
+  // Inside an ActionBar, follow its responsive collapse; outside one, keep the
+  // legacy always-collapsed look.
+  const collapsed = useActionBarCompact() ?? true;
   const setOpen = onOpenChange ?? setInternalOpen;
 
   return (
@@ -99,13 +107,15 @@ export function ScopedAuditLogSheet({
           <Button
             type="button"
             variant="outline"
-            className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2"
+            className={collapsibleActionClass(collapsed)}
             data-testid={triggerTestId}
           >
-            <History className="text-foreground h-4 w-4 shrink-0" />
-            <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-              {triggerLabel}
-            </span>
+            <ActionButtonContent
+              icon={History}
+              label={triggerLabel}
+              compact={collapsed}
+              iconClassName="text-foreground h-4 w-4 shrink-0"
+            />
           </Button>
         </SheetTrigger>
       )}

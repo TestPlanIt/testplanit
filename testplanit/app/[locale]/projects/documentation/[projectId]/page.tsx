@@ -19,6 +19,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { SectionHeader } from "@/components/ui/typography";
+import { HelpPopover } from "@/components/ui/help-popover";
 import { CircleSlash2, Save, SquarePen } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
@@ -192,28 +193,27 @@ export default function ProjectDocumentation({
       <Card id="documentation-content" className="flex w-full min-w-[400px]">
         <div className="flex-1 w-3/4">
           <CardHeader>
-            <CardTitle>
-              <SectionHeader className="flex items-center justify-between">
-                <div>
-                  <CardTitle>{t("common.fields.documentation")}</CardTitle>
-                </div>
-                {canEdit && !isEditing && (
-                  <Button onClick={() => setIsEditing(!isEditing)}>
-                    <div className="flex items-center">
-                      <div>
-                        <SquarePen className="h-5 w-5 me-2" />
-                      </div>
-                      <div>
-                        {t("common.actions.edit")}{" "}
-                        {t("common.fields.documentation")}
-                      </div>
-                    </div>
-                  </Button>
-                )}
+            <div className="flex items-center justify-between gap-2">
+              <SectionHeader className="flex items-center gap-2">
+                <CardTitle>{t("common.fields.documentation")}</CardTitle>
+                <HelpPopover helpKey="documentation" />
               </SectionHeader>
-            </CardTitle>
-            <CardDescription className="uppercase flex w-full items-top items-center gap-2">
-              <span className="flex items-center gap-2 uppercase shrink-0">
+              {canEdit && !isEditing && (
+                <Button
+                  onClick={() => setIsEditing(!isEditing)}
+                  aria-label={`${t("common.actions.edit")} ${t("common.fields.documentation")}`}
+                  className="group gap-0 transition-all duration-200 hover:gap-2"
+                >
+                  <SquarePen className="h-4 w-4" />
+                  <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-xs">
+                    {t("common.actions.edit")}{" "}
+                    {t("common.fields.documentation")}
+                  </span>
+                </Button>
+              )}
+            </div>
+            <CardDescription>
+              <span className="flex items-center gap-2 uppercase">
                 <ProjectIcon iconUrl={project?.iconUrl} />
                 {project?.name}
               </span>

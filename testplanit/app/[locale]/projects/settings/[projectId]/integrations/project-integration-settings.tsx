@@ -3,6 +3,7 @@
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { WarningAlert } from "@/components/ui/warning-alert";
 import { AsyncCombobox } from "@/components/ui/async-combobox";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -23,12 +24,12 @@ import {
 import type { Integration, ProjectIntegration } from "~/zenstack/models";
 import { useQueryClient } from "@tanstack/react-query";
 import {
-  AlertCircle,
   Download,
   Loader2,
   Save,
   Star,
   Trash2,
+  TriangleAlert,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -332,12 +333,12 @@ export function ProjectIntegrationSettings({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Alert>
-            <AlertCircle className="h-4 w-4" />
+          <WarningAlert>
+            <TriangleAlert className="h-4 w-4" />
             <AlertDescription>
               {t("integration.authorizationMessage")}
             </AlertDescription>
-          </Alert>
+          </WarningAlert>
           <Button onClick={handleAuthorize} className="mt-4">
             {t("integration.authorizeIntegration", { name: integration.name })}
           </Button>
@@ -739,13 +740,17 @@ export function ProjectIntegrationSettings({
             <Button
               onClick={handleSaveSettings}
               disabled={isSaving || !canSave}
+              aria-label={tGlobal("admin.notifications.save")}
+              className="group gap-0 transition-all duration-200 hover:gap-2"
             >
               {isSaving ? (
-                <Loader2 className=" h-4 w-4 animate-spin" />
+                <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
-                <Save className=" h-4 w-4" />
+                <Save className="h-4 w-4" />
               )}
-              {tGlobal("admin.notifications.save")}
+              <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
+                {tGlobal("admin.notifications.save")}
+              </span>
             </Button>
           </div>
         )}

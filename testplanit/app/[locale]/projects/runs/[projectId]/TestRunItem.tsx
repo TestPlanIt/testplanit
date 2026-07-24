@@ -269,7 +269,7 @@ const TestRunItem: React.FC<TestRunItemProps> = ({
                 href={`/projects/runs/${projectId}/${testRun.id}`}
                 className="group inline-flex items-center gap-1 max-w-full"
               >
-                <h3 className="text-md font-semibold flex items-center gap-1 hover:text-primary min-w-0">
+                <h3 className="text-sm font-semibold flex items-center gap-1 hover:text-primary min-w-0">
                   {isRecentlyCreated && (
                     <Tooltip>
                       <TooltipTrigger asChild>
@@ -279,11 +279,11 @@ const TestRunItem: React.FC<TestRunItemProps> = ({
                     </Tooltip>
                   )}
                   {isAutomatedRun ? (
-                    <Bot className="w-6 h-6 inline me-1 shrink-0 border-2 text-primary border-primary rounded-full p-0.5" />
+                    <Bot className="w-5 h-5 inline me-1 shrink-0 border-2 text-primary border-primary rounded-full p-0.5" />
                   ) : (
                     <DynamicIcon
                       name="play-circle"
-                      className="min-w-6 min-h-6 text-primary"
+                      className="h-5 w-5 shrink-0 text-primary"
                     />
                   )}
                   <Tooltip>
@@ -364,9 +364,7 @@ const TestRunItem: React.FC<TestRunItemProps> = ({
                 </p>
               </TooltipContent>
             </Tooltip>
-          ) : (
-            <span className="text-sm text-muted-foreground">{"—"}</span>
-          )}
+          ) : null}
         </div>
 
         {/* Middle Column 1 - Status */}
@@ -374,15 +372,20 @@ const TestRunItem: React.FC<TestRunItemProps> = ({
             outer `shrink-0` span so it shrinks within the cell and its inner
             `truncate` on the name engages (ellipsis instead of a hard clip). */}
         <div className="flex min-w-0 justify-start overflow-hidden [&>span]:!shrink [&>span]:!min-w-0">
-          <WorkflowStateDisplay {...workflowState} />
+          <WorkflowStateDisplay {...workflowState} size="sm" />
         </div>
 
         {/* Middle Column 2 - Forecast */}
         <div className="flex flex-col min-w-0 overflow-hidden">
-          <ForecastDisplay seconds={testRun.forecastManual} type="manual" />
+          <ForecastDisplay
+            seconds={testRun.forecastManual}
+            type="manual"
+            className="text-xs"
+          />
           <ForecastDisplay
             seconds={testRun.forecastAutomated}
             type="automated"
+            className="text-xs"
           />
         </div>
 

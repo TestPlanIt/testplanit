@@ -195,7 +195,11 @@ const getCommonPinningStyles = (column: Column<any>): CSSProperties => {
     width: column.getSize(),
     maxWidth: column.columnDef.maxSize,
     minWidth: column.columnDef.minSize,
-    zIndex: isPinned ? 1 : 0,
+    // A pinned column sits above the resize separators (`z-20`), which otherwise
+    // paint on top of it: reorderable non-pinned headers drop their stacking
+    // context when idle, so their handles compete globally and would bleed over
+    // the pinned column as it stays put while other columns scroll under it.
+    zIndex: isPinned ? 21 : 0,
   };
 };
 

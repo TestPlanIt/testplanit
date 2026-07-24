@@ -7,7 +7,6 @@ import { ColumnSelection } from "@/components/tables/ColumnSelection";
 import { Filter } from "@/components/tables/Filter";
 import { VirtualizedDataTable } from "@/components/tables/VirtualizedDataTable";
 import { AsyncCombobox } from "@/components/ui/async-combobox";
-import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { Label } from "@/components/ui/label";
 import {
@@ -20,10 +19,10 @@ import {
 import { AuditAction } from "~/zenstack/models";
 import type { VisibilityState } from "@tanstack/react-table";
 import { endOfDay, format, startOfDay } from "date-fns";
-import { Download, Users } from "lucide-react";
+import { Users } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { DateRange } from "react-day-picker";
 import { useForm, useWatch } from "react-hook-form";
 import { AuditLogDetailModal } from "~/app/[locale]/admin/audit-logs/AuditLogDetailModal";
@@ -45,9 +44,22 @@ const PAGE_SIZE = 1000;
 
 interface ProjectAuditLogProps {
   projectId: number;
+  /**
+   * Reports the CSV-export handler and its enabled/busy state up to the page so
+   * the Export button can live in the card header (matching the admin audit-log
+   * layout) while the export logic stays with the filter state here.
+   */
+  onExportStateChange?: (state: {
+    canExport: boolean;
+    isExporting: boolean;
+    exportCsv: () => void;
+  }) => void;
 }
 
-export function ProjectAuditLog({ projectId }: ProjectAuditLogProps) {
+export function ProjectAuditLog({
+  projectId,
+  onExportStateChange,
+}: ProjectAuditLogProps) {
   const { data: session } = useSession();
   const t = useTranslations("admin.auditLogs");
   const tGlobal = useTranslations();
@@ -383,41 +395,37 @@ export function ProjectAuditLog({ projectId }: ProjectAuditLogProps) {
     setSortConfig({ column, direction });
   };
 
+  // Surface the export handler + its state to the page so the Export button can
+  // render in the card header alongside the title (matching the admin layout).
+  useEffect(() => {
+    onExportStateChange?.({
+      canExport: (totalCount ?? 0) > 0,
+      isExporting,
+      exportCsv: handleExportCsv,
+    });
+  }, [onExportStateChange, totalCount, isExporting, handleExportCsv]);
+
   return (
     <div className="flex flex-col gap-4">
-      {/* Search + Export Row */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="min-w-[350px] flex-1">
-          <Filter
-            key="project-audit-logs-filter"
-            placeholder={t("filterPlaceholder")}
-            initialSearchString={searchString}
-            onSearchChange={setSearchString}
-          />
-        </div>
+      {/* Search */}
+      <Filter
+        key="project-audit-logs-filter"
+        className="max-w-none"
+        placeholder={t("filterPlaceholder")}
+        initialSearchString={searchString}
+        onSearchChange={setSearchString}
+      />
 
-        <Button
-          variant="outline"
-          onClick={handleExportCsv}
-          disabled={isExporting || !totalCount}
-        >
-          <Download className="h-4 w-4" />
-          {isExporting
-            ? tGlobal("repository.exportModal.exporting")
-            : t("exportCsv")}
-        </Button>
-      </div>
-
-      {/* Filters Row */}
-      <div className="flex flex-wrap items-center gap-4">
-        <div className="w-[260px]">
+      {/* Filters */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+        <div>
           <Label className="sr-only">{t("timeRange")}</Label>
           <Form {...dateForm}>
             <DateRangePickerField control={dateForm.control} name="dateRange" />
           </Form>
         </div>
 
-        <div className="w-[180px]">
+        <div>
           <Label className="sr-only">{t("filterAction")}</Label>
           <Select
             value={actionFilter}
@@ -439,7 +447,7 @@ export function ProjectAuditLog({ projectId }: ProjectAuditLogProps) {
           </Select>
         </div>
 
-        <div className="w-[180px]">
+        <div>
           <Label className="sr-only">{t("filterEntityType")}</Label>
           <Select value={entityTypeFilter} onValueChange={setEntityTypeFilter}>
             <SelectTrigger>
@@ -456,7 +464,7 @@ export function ProjectAuditLog({ projectId }: ProjectAuditLogProps) {
           </Select>
         </div>
 
-        <div className="w-[260px]">
+        <div>
           <Label className="sr-only">{tCommon("access.user")}</Label>
           <AsyncCombobox<AuditLogUserOption>
             className="w-full"
@@ -512,8 +520,10 @@ export function ProjectAuditLog({ projectId }: ProjectAuditLogProps) {
         )}
       </div>
 
-      {/* Data Table — virtualized, infinite scroll. */}
-      <div className="mt-4 h-[calc(100vh-22rem)] min-h-[400px] w-full">
+      {/* Data Table — virtualized, infinite scroll. The table sits inside the
+          gap-4 column, so its own top margin is dropped to avoid doubling the
+          space above it (matches the admin audit-log toolbar→table gap). */}
+      <div className="h-[calc(100vh-22rem)] min-h-[400px] w-full">
         <VirtualizedDataTable
           columns={columns as any}
           data={groupedData as any}

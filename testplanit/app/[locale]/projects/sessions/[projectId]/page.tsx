@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ApplicationArea } from "~/zenstack/models";
-import { CirclePlus, Maximize2 } from "lucide-react";
+import { CircleCheck, CircleDot, CirclePlus, Maximize2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import * as React from "react";
 import { use, useCallback, useEffect, useMemo, useState } from "react";
@@ -56,6 +56,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { PageTitle, SectionHeader } from "@/components/ui/typography";
+import { HelpPopover } from "@/components/ui/help-popover";
 
 interface ProjectSessionsProps {
   params: Promise<{ projectId: string }>;
@@ -702,37 +703,36 @@ const ProjectSessions: React.FC<ProjectSessionsProps> = ({ params }) => {
         <Card className="flex w-full min-w-[400px]">
           <div className="flex-1 w-full">
             <CardHeader id="sessions-page-header">
-              <CardTitle>
-                <SectionHeader className="flex items-center justify-between">
-                  <div>
-                    <CardTitle>{t("sessions.title", { count: 2 })}</CardTitle>
-                  </div>
-                  <div>
-                    {canAddEditSession && (
-                      <>
-                        <Button
-                          variant="default"
-                          data-testid="new-session-button"
-                          onClick={() => setIsAddSessionOpen(true)}
-                        >
-                          <CirclePlus className="h-4 w-4" />
-                          <span className="hidden md:inline">
-                            {t("sessions.actions.add")}
-                          </span>
-                        </Button>
-                        {isAddSessionOpen && (
-                          <AddSessionModal
-                            open={isAddSessionOpen}
-                            onClose={() => setIsAddSessionOpen(false)}
-                          />
-                        )}
-                      </>
-                    )}
-                  </div>
+              <div className="flex items-center justify-between gap-2">
+                <SectionHeader className="flex items-center gap-2">
+                  <CardTitle>{t("sessions.title", { count: 2 })}</CardTitle>
+                  <HelpPopover helpKey="projectSessions" />
                 </SectionHeader>
-              </CardTitle>
-              <CardDescription className="uppercase">
-                <span className="flex items-center gap-2 uppercase shrink-0">
+                {canAddEditSession && (
+                  <>
+                    <Button
+                      variant="default"
+                      data-testid="new-session-button"
+                      onClick={() => setIsAddSessionOpen(true)}
+                      aria-label={t("sessions.actions.add")}
+                      className="group gap-0 transition-all duration-200 hover:gap-2"
+                    >
+                      <CirclePlus className="h-4 w-4" />
+                      <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-xs">
+                        {t("sessions.actions.add")}
+                      </span>
+                    </Button>
+                    {isAddSessionOpen && (
+                      <AddSessionModal
+                        open={isAddSessionOpen}
+                        onClose={() => setIsAddSessionOpen(false)}
+                      />
+                    )}
+                  </>
+                )}
+              </div>
+              <CardDescription>
+                <span className="flex items-center gap-2 uppercase">
                   <ProjectIcon iconUrl={project?.iconUrl} />
                   {project?.name}
                 </span>
@@ -948,9 +948,11 @@ const ProjectSessions: React.FC<ProjectSessionsProps> = ({ params }) => {
               <Tabs value={activeTab} onValueChange={handleTabChange}>
                 <TabsList className="w-full">
                   <TabsTrigger value="active" className="w-1/2">
+                    <CircleDot className="h-4 w-4 me-2" />
                     {t("common.fields.isActive")}
                   </TabsTrigger>
                   <TabsTrigger value="completed" className="w-1/2">
+                    <CircleCheck className="h-4 w-4 me-2" />
                     {t("common.fields.completed")}
                   </TabsTrigger>
                 </TabsList>

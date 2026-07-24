@@ -257,8 +257,9 @@ export function ShareLinkList({
         header: tCommon("fields.project"),
         enableSorting: false,
         size: 140,
+        meta: { isPinned: "left" },
         cell: ({ row }) => (
-          <span className="text-sm">
+          <span className="block truncate text-sm">
             {row.original.project?.name || t("noProject")}
           </span>
         ),
@@ -273,13 +274,16 @@ export function ShareLinkList({
         enableSorting: true,
         enableHiding: false,
         size: 260,
+        // Pin the title left only when it is the first column. When the project
+        // column is shown it takes the pinned-first slot instead.
+        meta: showProjectColumn ? undefined : { isPinned: "left" },
         cell: ({ row }) => {
           const share = row.original;
           return (
-            <div>
+            <div className="min-w-0">
               <Link
                 href={`/share/${share.shareKey}`}
-                className="font-medium hover:underline"
+                className="block truncate font-medium hover:underline"
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -287,7 +291,7 @@ export function ShareLinkList({
                   t("defaultTitle", { entityType: share.entityType })}
               </Link>
               {share.description && (
-                <p className="text-sm text-muted-foreground line-clamp-1">
+                <p className="truncate text-sm text-muted-foreground">
                   {share.description}
                 </p>
               )}

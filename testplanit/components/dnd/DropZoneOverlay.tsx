@@ -39,12 +39,15 @@ export function DropZoneOverlay({
   testId,
 }: DropZoneOverlayProps) {
   const t = useTranslations("repository.dragDrop");
-  const { isDraggingCase } = useDragTargetKind();
+  const { isDraggingCase, isDraggingFolder } = useDragTargetKind();
   // A held modifier decides whether dropping on the tree prompts or acts
   // directly, so the wording follows it.
   const { copyHeld, moveHeld } = useDragModifier(isDraggingCase);
 
-  const active = isDraggingCase && enabled;
+  // A dragged folder can only land in the tree (reorder/nest), never the case
+  // list, so it lights up the tree zone only.
+  const draggingFolderHere = kind === "tree" && isDraggingFolder;
+  const active = enabled && (isDraggingCase || draggingFolderHere);
   if (!active) {
     return <div className={cn("relative h-full", className)}>{children}</div>;
   }
@@ -52,8 +55,9 @@ export function DropZoneOverlay({
   // With a modifier held the outcome is already decided, so name it. Otherwise
   // spell out the keys that decide it, rather than leaving the user to discover
   // the prompt.
-  const label =
-    kind === "reorder"
+  const label = draggingFolderHere
+    ? t("dropZoneFolder")
+    : kind === "reorder"
       ? t("dropZoneReorder")
       : copyHeld
         ? t("dropZoneTreeCopy")

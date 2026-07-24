@@ -599,11 +599,12 @@ const SessionDisplay: React.FC<SessionDisplayProps> = ({
                   {canAddEdit && (
                     <Button
                       variant="default"
-                      size="sm"
                       onClick={() => handleOpenAddModal()}
+                      aria-label={t("actions.add")}
+                      className="group gap-0 transition-all duration-200 hover:gap-2"
                     >
                       <CirclePlus className="h-4 w-4" />
-                      <span className="hidden md:inline">
+                      <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-xs">
                         {t("actions.add")}
                       </span>
                     </Button>

@@ -152,7 +152,7 @@ const SessionItem: React.FC<SessionItemProps> = ({
               href={`/projects/sessions/${projectId}/${testSession.id}`}
               className="group inline-flex items-center gap-1 max-w-full"
             >
-              <h3 className="text-md font-semibold flex items-center gap-1 hover:text-primary min-w-0">
+              <h3 className="text-sm font-semibold flex items-center gap-1 hover:text-primary min-w-0">
                 {isRecentlyCreated && (
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -161,7 +161,7 @@ const SessionItem: React.FC<SessionItemProps> = ({
                     <TooltipContent>{t("common.labels.new")}</TooltipContent>
                   </Tooltip>
                 )}
-                <DynamicIcon name="compass" className="min-w-6 min-h-6" />
+                <DynamicIcon name="compass" className="h-5 w-5 shrink-0" />
                 <span className="truncate inline-block">
                   {testSession.name}
                 </span>
@@ -223,14 +223,12 @@ const SessionItem: React.FC<SessionItemProps> = ({
               </p>
             </TooltipContent>
           </Tooltip>
-        ) : (
-          <span className="text-sm text-muted-foreground">{"—"}</span>
-        )}
+        ) : null}
       </div>
 
       {/* Status */}
       <div className="flex min-w-28 whitespace-nowrap justify-start">
-        <WorkflowStateDisplay {...workflowState} />
+        <WorkflowStateDisplay {...workflowState} size="sm" />
       </div>
 
       {/* Middle Column 2 - Results Summary */}

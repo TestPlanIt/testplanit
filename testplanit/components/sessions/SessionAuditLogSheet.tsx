@@ -5,6 +5,10 @@ import { useTranslations } from "next-intl";
 
 interface SessionAuditLogSheetProps {
   sessionId: number;
+  /** Hide the built-in trigger and drive the sheet from external `open` state. */
+  hideTrigger?: boolean;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 /**
@@ -13,7 +17,12 @@ interface SessionAuditLogSheetProps {
  * policy, which grants session audit access to anyone who can read the session's
  * project.
  */
-export function SessionAuditLogSheet({ sessionId }: SessionAuditLogSheetProps) {
+export function SessionAuditLogSheet({
+  sessionId,
+  hideTrigger,
+  open,
+  onOpenChange,
+}: SessionAuditLogSheetProps) {
   const t = useTranslations("sessions.auditLog");
   const tCommon = useTranslations("common");
 
@@ -27,6 +36,9 @@ export function SessionAuditLogSheet({ sessionId }: SessionAuditLogSheetProps) {
       triggerTestId="session-history-trigger"
       tableTestIdPrefix="session-audit-log-table"
       rowTestIdPrefix="session-audit-log-row"
+      hideTrigger={hideTrigger}
+      open={open}
+      onOpenChange={onOpenChange}
     />
   );
 }

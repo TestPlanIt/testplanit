@@ -2,25 +2,19 @@ import { CasesListDisplay } from "@/components/tables/CaseListDisplay";
 import { SessionsListDisplay } from "@/components/tables/SessionListDisplay";
 import { TagsDisplay } from "@/components/tables/TagDisplay";
 import { TestRunsListDisplay } from "@/components/tables/TestRunsListDisplay";
-import type { Tags } from "~/zenstack/models";
 import { ColumnDef } from "@tanstack/react-table";
 import { useMemo } from "react";
 
-export interface ExtendedTags extends Tags {
-  repositoryCases: { id: number; name: string }[];
-  sessions: {
-    isCompleted: any;
-    id: number;
-    name: string;
-  }[];
-  testRuns: { id: number; name: string; isCompleted?: boolean }[];
+export interface ExtendedTags {
+  id: number;
+  name: string;
+  casesCount: number;
+  sessionsCount: number;
+  runsCount: number;
 }
 
 export const useColumns = (
   projectId: string,
-  activeCaseMap: Record<number, string>,
-  activeSessionMap: Record<number, string>,
-  activeRunMap: Record<number, string>,
   t: any,
   isLoadingCounts: boolean = false
 ): ColumnDef<ExtendedTags>[] => {
@@ -49,146 +43,87 @@ export const useColumns = (
       },
       {
         id: "cases",
-        accessorKey: "repositoryCases",
-        accessorFn: (row) => {
-          // Return the filtered count for sorting
-          return row.repositoryCases.filter((c) =>
-            Object.prototype.hasOwnProperty.call(activeCaseMap, c.id)
-          ).length;
-        },
+        accessorKey: "casesCount",
+        accessorFn: (row) => row.casesCount,
         header: t("common.fields.testCases"),
         enableSorting: true,
         enableResizing: true,
         sortingFn: "basic",
-        size: 75,
-        cell: ({ row }) => {
-          const repositoryCaseIds = row.original.repositoryCases
-            .filter((c) =>
-              Object.prototype.hasOwnProperty.call(activeCaseMap, c.id)
-            )
-            .map((c) => c.id);
-
-          return (
-            <div className="text-center">
-              <CasesListDisplay
-                caseIds={repositoryCaseIds}
-                count={repositoryCaseIds.length}
-                filter={{
-                  ...(isNaN(projectIdNumber)
-                    ? {}
-                    : { projectId: projectIdNumber }),
-                  caseTags: {
-                    some: {
-                      tag: {
-                        id: row.original.id,
-                      },
+        size: 130,
+        cell: ({ row }) => (
+          <div className="text-center">
+            <CasesListDisplay
+              count={row.original.casesCount}
+              filter={{
+                ...(isNaN(projectIdNumber)
+                  ? {}
+                  : { projectId: projectIdNumber }),
+                caseTags: {
+                  some: {
+                    tag: {
+                      id: row.original.id,
                     },
                   },
-                }}
-                isLoading={isLoadingCounts}
-              />
-            </div>
-          );
-        },
+                },
+              }}
+              isLoading={isLoadingCounts}
+            />
+          </div>
+        ),
       },
       {
         id: "sessions",
-        accessorKey: "sessions",
-        accessorFn: (row) => {
-          // Return the filtered count for sorting
-          return row.sessions.filter((s) =>
-            Object.prototype.hasOwnProperty.call(activeSessionMap, s.id)
-          ).length;
-        },
+        accessorKey: "sessionsCount",
+        accessorFn: (row) => row.sessionsCount,
         header: t("common.fields.sessions"),
         enableSorting: true,
         enableResizing: true,
         sortingFn: "basic",
-        size: 75,
-        cell: ({ row }) => {
-          const filteredSessions = row.original.sessions.filter((s) =>
-            Object.prototype.hasOwnProperty.call(activeSessionMap, s.id)
-          );
-          const sessionCount = filteredSessions.length;
-
-          return (
-            <div className="text-center">
-              <SessionsListDisplay
-                sessions={filteredSessions.map((session) => ({
-                  id: session.id,
-                  name: session.name,
-                  projectId: Number(projectId),
-                  isCompleted: !!session.isCompleted,
-                }))}
-                count={sessionCount}
-                filter={{
-                  projectId: Number(projectId),
-                  tags: {
-                    some: {
-                      id: row.original.id,
-                    },
+        size: 130,
+        cell: ({ row }) => (
+          <div className="text-center">
+            <SessionsListDisplay
+              count={row.original.sessionsCount}
+              filter={{
+                projectId: projectIdNumber,
+                tags: {
+                  some: {
+                    id: row.original.id,
                   },
-                }}
-                isLoading={isLoadingCounts}
-              />
-            </div>
-          );
-        },
+                },
+              }}
+              isLoading={isLoadingCounts}
+            />
+          </div>
+        ),
       },
       {
         id: "runs",
-        accessorKey: "testRuns",
-        accessorFn: (row) => {
-          // Return the filtered count for sorting
-          return row.testRuns.filter((r) =>
-            Object.prototype.hasOwnProperty.call(activeRunMap, r.id)
-          ).length;
-        },
+        accessorKey: "runsCount",
+        accessorFn: (row) => row.runsCount,
         header: t("common.fields.testRuns"),
         enableSorting: true,
         enableResizing: true,
         sortingFn: "basic",
-        size: 75,
-        cell: ({ row }) => {
-          const filteredRuns = row.original.testRuns.filter((r) =>
-            Object.prototype.hasOwnProperty.call(activeRunMap, r.id)
-          );
-          const runCount = filteredRuns.length;
-
-          return (
-            <div className="text-center">
-              <TestRunsListDisplay
-                testRuns={filteredRuns.map((run) => ({
-                  id: run.id,
-                  name: run.name,
-                  projectId: Number(projectId),
-                  isCompleted: !!run.isCompleted,
-                }))}
-                count={runCount}
-                filter={{
-                  projectId: Number(projectId),
-                  tags: {
-                    some: {
-                      id: row.original.id,
-                    },
+        size: 130,
+        cell: ({ row }) => (
+          <div className="text-center">
+            <TestRunsListDisplay
+              count={row.original.runsCount}
+              filter={{
+                projectId: projectIdNumber,
+                tags: {
+                  some: {
+                    id: row.original.id,
                   },
-                }}
-                isLoading={isLoadingCounts}
-              />
-            </div>
-          );
-        },
+                },
+              }}
+              isLoading={isLoadingCounts}
+            />
+          </div>
+        ),
       },
     ],
-    // isLoadingCounts intentionally excluded — stale closure is fine for skeleton display
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [
-      projectId,
-      projectIdNumber,
-      activeCaseMap,
-      activeSessionMap,
-      activeRunMap,
-      t,
-    ]
+    [projectId, projectIdNumber, t, isLoadingCounts]
   );
 };

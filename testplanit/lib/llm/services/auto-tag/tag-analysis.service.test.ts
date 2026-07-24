@@ -415,7 +415,7 @@ describe("TagAnalysisService", () => {
         name: "Login test",
         steps: [],
         caseFieldValues: [],
-        tags: [{ name: "regression" }],
+        caseTags: [{ tag: { name: "regression" } }],
         folder: null,
       },
     ]);

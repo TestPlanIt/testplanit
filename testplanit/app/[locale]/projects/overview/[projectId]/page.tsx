@@ -10,7 +10,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   ResizableHandle,
   ResizablePanel,
@@ -21,7 +21,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { PageTitle } from "@/components/ui/typography";
+import { PageTitle, SectionHeader } from "@/components/ui/typography";
 import {
   ChevronLeft,
   Compass,
@@ -241,10 +241,10 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({ params }) => {
                   className="border rounded-lg bg-card text-card-foreground shadow-sm"
                 >
                   <AccordionTrigger className="px-6 py-4 hover:no-underline cursor-pointer">
-                    <div className="flex items-center text-2xl font-semibold text-primary">
-                      <ListTree className="me-2 h-6 w-6" />
-                      {t("repository.title")}
-                    </div>
+                    <SectionHeader className="flex items-center gap-2">
+                      <ListTree className="h-6 w-6 shrink-0" />
+                      <CardTitle>{t("repository.title")}</CardTitle>
+                    </SectionHeader>
                   </AccordionTrigger>
                   <AccordionContent className="px-6 pb-6">
                     <RepositoryCasesSection projectId={project.id} />
@@ -256,10 +256,12 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({ params }) => {
                   className="border rounded-lg bg-card text-card-foreground shadow-sm"
                 >
                   <AccordionTrigger className="px-6 py-4 hover:no-underline cursor-pointer">
-                    <div className="flex items-center text-2xl font-semibold text-primary">
-                      <PlayCircle className="me-2 h-6 w-6" />
-                      {t("projects.overview.activeTestRuns")}
-                    </div>
+                    <SectionHeader className="flex items-center gap-2">
+                      <PlayCircle className="h-6 w-6 shrink-0" />
+                      <CardTitle>
+                        {t("projects.overview.activeTestRuns")}
+                      </CardTitle>
+                    </SectionHeader>
                   </AccordionTrigger>
                   <AccordionContent className="px-6 pb-6">
                     <TestRunsSection projectId={project.id} />
@@ -271,10 +273,12 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({ params }) => {
                   className="border rounded-lg bg-card text-card-foreground shadow-sm"
                 >
                   <AccordionTrigger className="px-6 py-4 hover:no-underline cursor-pointer">
-                    <div className="flex items-center text-2xl font-semibold text-primary">
-                      <Compass className="me-2 h-6 w-6" />
-                      {t("home.dashboard.activeSessions")}
-                    </div>
+                    <SectionHeader className="flex items-center gap-2">
+                      <Compass className="h-6 w-6 shrink-0" />
+                      <CardTitle>
+                        {t("home.dashboard.activeSessions")}
+                      </CardTitle>
+                    </SectionHeader>
                   </AccordionTrigger>
                   <AccordionContent className="px-6 pb-6">
                     <SessionsSection projectId={project.id} />
@@ -286,10 +290,10 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({ params }) => {
                   className="border rounded-lg bg-card text-card-foreground shadow-sm"
                 >
                   <AccordionTrigger className="px-6 py-4 hover:no-underline cursor-pointer">
-                    <div className="flex items-center text-2xl font-semibold text-primary">
-                      <TagsIcon className="me-2 h-6 w-6" />
-                      {t("common.fields.tags")}
-                    </div>
+                    <SectionHeader className="flex items-center gap-2">
+                      <TagsIcon className="h-6 w-6 shrink-0" />
+                      <CardTitle>{t("common.fields.tags")}</CardTitle>
+                    </SectionHeader>
                   </AccordionTrigger>
                   <AccordionContent className="px-6 pb-6 h-[400px]">
                     <TagsSection projectId={project.id} />

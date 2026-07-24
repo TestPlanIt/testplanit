@@ -20,7 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2 } from "lucide-react";
+import { Loader2, Save } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -263,11 +263,22 @@ export function ExportTemplateAssignmentSection({
             </div>
 
             <div className="flex justify-end">
-              <Button onClick={handleSave} disabled={!isDirty || isSaving}>
-                {isSaving && <Loader2 className="h-4 w-4 animate-spin" />}
-                {isSaving
-                  ? tCommon("actions.saving")
-                  : t("exportTemplates.save")}
+              <Button
+                onClick={handleSave}
+                disabled={!isDirty || isSaving}
+                aria-label={t("exportTemplates.save")}
+                className="group gap-0 transition-all duration-200 hover:gap-2"
+              >
+                {isSaving ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Save className="h-4 w-4" />
+                )}
+                <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-xs">
+                  {isSaving
+                    ? tCommon("actions.saving")
+                    : t("exportTemplates.save")}
+                </span>
               </Button>
             </div>
           </>

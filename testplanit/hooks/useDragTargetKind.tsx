@@ -18,6 +18,13 @@ interface DragTargetContextValue {
    */
   isDraggingCase: boolean;
   setIsDraggingCase: (dragging: boolean) => void;
+  /**
+   * A folder is being dragged within the tree (react-arborist "NODE" item).
+   * Lets the tree drop zone advertise itself during folder reorder/move the
+   * same way it does for a case drag.
+   */
+  isDraggingFolder: boolean;
+  setIsDraggingFolder: (dragging: boolean) => void;
 }
 
 const DragTargetContext = createContext<DragTargetContextValue>({
@@ -25,6 +32,8 @@ const DragTargetContext = createContext<DragTargetContextValue>({
   setIsOverReorderZone: () => {},
   isDraggingCase: false,
   setIsDraggingCase: () => {},
+  isDraggingFolder: false,
+  setIsDraggingFolder: () => {},
 });
 
 export function DragTargetProvider({ children }: { children: ReactNode }) {
@@ -36,6 +45,7 @@ export function DragTargetProvider({ children }: { children: ReactNode }) {
   const [hoverCount, setHoverCount] = useState(0);
 
   const [isDraggingCase, setIsDraggingCase] = useState(false);
+  const [isDraggingFolder, setIsDraggingFolder] = useState(false);
 
   const setIsOverReorderZone = useCallback((entering: boolean) => {
     setHoverCount((prev) => Math.max(0, prev + (entering ? 1 : -1)));
@@ -48,6 +58,8 @@ export function DragTargetProvider({ children }: { children: ReactNode }) {
         setIsOverReorderZone,
         isDraggingCase,
         setIsDraggingCase,
+        isDraggingFolder,
+        setIsDraggingFolder,
       }}
     >
       {children}

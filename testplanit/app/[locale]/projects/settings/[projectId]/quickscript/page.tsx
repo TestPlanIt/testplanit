@@ -46,6 +46,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { PageTitle, SectionHeader } from "@/components/ui/typography";
+import { HelpPopover } from "@/components/ui/help-popover";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import {
   AlertTriangle,
@@ -55,6 +56,7 @@ import {
   Loader2,
   Plus,
   RefreshCw,
+  Save,
   Trash2,
   Unlink,
   XCircle,
@@ -551,13 +553,12 @@ export default function QuickScriptPage() {
     <main>
       <Card>
         <CardHeader className="w-full">
-          <SectionHeader className="flex items-center justify-between pb-2 pt-1">
-            <CardTitle>
-              <span>{t("title")}</span>
-            </CardTitle>
+          <SectionHeader className="flex items-center gap-2">
+            <CardTitle>{t("title")}</CardTitle>
+            <HelpPopover helpKey="projectQuickScript" />
           </SectionHeader>
-          <CardDescription className="uppercase">
-            <span className="flex items-center gap-2">
+          <CardDescription>
+            <span className="flex items-center gap-2 uppercase">
               <ProjectIcon iconUrl={project?.iconUrl} />
               {project?.name}
             </span>
@@ -898,218 +899,262 @@ export default function QuickScriptPage() {
                       )}
                     />
 
-                    {!cacheEnabled && (
-                      <Alert>
-                        <AlertDescription>
-                          {t("cache.disabledWarning")}
-                        </AlertDescription>
-                      </Alert>
-                    )}
+                    <div>
+                      {/* Caching off: warning collapses in/out */}
+                      <div
+                        aria-hidden={cacheEnabled}
+                        className={`grid transition-[grid-template-rows] duration-300 ease-in-out ${
+                          !cacheEnabled ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
+                        }`}
+                      >
+                        <div className="overflow-hidden">
+                          <Alert>
+                            <AlertDescription>
+                              {t("cache.disabledWarning")}
+                            </AlertDescription>
+                          </Alert>
+                        </div>
+                      </div>
 
-                    {cacheEnabled && (
-                      <>
-                        <FormField
-                          control={form.control as any}
-                          name="cacheTtlDays"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>{t("cache.ttlLabel")}</FormLabel>
-                              <FormControl>
-                                <Input
-                                  {...field}
-                                  type="number"
-                                  min={1}
-                                  max={30}
-                                  onChange={(e) =>
-                                    field.onChange(
-                                      parseInt(e.target.value) || 7
-                                    )
-                                  }
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        {/* Cache Status Panel */}
-                        {configData && (
-                          <>
-                            <Separator />
-                            <div className="space-y-3">
-                              <div className="flex items-center justify-between">
-                                <h4 className="text-sm font-medium">
-                                  {t("cache.statusTitle")}
-                                </h4>
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={handleRefreshCache}
-                                  disabled={isRefreshing}
-                                >
-                                  {isRefreshing ? (
-                                    <Loader2 className="h-4 w-4 animate-spin" />
-                                  ) : (
-                                    <RefreshCw className="h-4 w-4" />
-                                  )}
-                                  {isRefreshing && refreshStep
-                                    ? refreshStep
-                                    : t("cache.refreshButton")}
-                                </Button>
-                              </div>
-
-                              <div className="grid grid-cols-2 gap-3 text-sm">
-                                <div>
-                                  <span className="text-muted-foreground">
-                                    {tCommon("actions.status")}
-                                  </span>
-                                  <div className="mt-1 flex items-center gap-2">
-                                    {!configData.cacheStatus && (
-                                      <Badge variant="secondary">
-                                        {t("cache.statusNeverFetched")}
-                                      </Badge>
-                                    )}
-                                    {configData.cacheStatus === "success" && (
-                                      <>
-                                        <CheckCircle className="h-4 w-4 text-success" />
-                                        <Badge variant="default">
-                                          {tCommon("fields.success")}
-                                        </Badge>
-                                      </>
-                                    )}
-                                    {configData.cacheStatus === "error" && (
-                                      <>
-                                        <XCircle className="h-4 w-4 text-destructive" />
-                                        <Badge variant="destructive">
-                                          {tCommon("errors.error")}
-                                        </Badge>
-                                      </>
-                                    )}
-                                    {configData.cacheStatus === "pending" && (
-                                      <>
-                                        <Loader2 className="h-4 w-4 animate-spin" />
-                                        <Badge variant="secondary">
-                                          {t("cache.statusPending")}
-                                        </Badge>
-                                      </>
-                                    )}
-                                  </div>
-                                </div>
-
-                                <div>
-                                  <span className="text-muted-foreground">
-                                    {t("cache.lastFetched")}
-                                  </span>
-                                  <div className="mt-1">
-                                    {configData.cacheLastFetchedAt ? (
-                                      <DateFormatter
-                                        date={
-                                          new Date(
-                                            configData.cacheLastFetchedAt
+                      {/* Caching on: TTL + status collapse in/out */}
+                      <div
+                        aria-hidden={!cacheEnabled}
+                        className={`grid transition-[grid-template-rows] duration-300 ease-in-out ${
+                          cacheEnabled ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
+                        }`}
+                      >
+                        <div className="overflow-hidden">
+                          <div className="space-y-4">
+                            <FormField
+                              control={form.control as any}
+                              name="cacheTtlDays"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <div className="flex items-center gap-2 text-sm">
+                                    <FormLabel className="font-normal">
+                                      {t("cache.ttlBefore")}
+                                    </FormLabel>
+                                    <FormControl>
+                                      <Input
+                                        {...field}
+                                        type="number"
+                                        min={1}
+                                        max={30}
+                                        className="w-16"
+                                        aria-label={t("cache.ttlAriaLabel")}
+                                        onChange={(e) =>
+                                          field.onChange(
+                                            parseInt(e.target.value) || 7
                                           )
                                         }
-                                        formatString={
-                                          session?.user.preferences
-                                            ?.dateFormat &&
-                                          session?.user.preferences?.timeFormat
-                                            ? `${session.user.preferences.dateFormat} ${session.user.preferences.timeFormat}`
-                                            : session?.user.preferences
-                                                ?.dateFormat
-                                        }
-                                        timezone={
-                                          session?.user.preferences?.timezone
-                                        }
                                       />
-                                    ) : (
-                                      "\u2014"
-                                    )}
-                                  </div>
-                                </div>
-
-                                <div>
-                                  <span className="text-muted-foreground">
-                                    {t("cache.filesCached")}
-                                  </span>
-                                  <div className="mt-1">
-                                    {configData.cacheFileCount ?? "\u2014"}
-                                  </div>
-                                </div>
-
-                                <div>
-                                  <span className="text-muted-foreground">
-                                    {t("cache.contentsCached")}
-                                  </span>
-                                  <div className="mt-1">
-                                    {configData.cacheContentFileCount ??
-                                      "\u2014"}
-                                  </div>
-                                </div>
-
-                                <div>
-                                  <span className="text-muted-foreground">
-                                    {t("cache.totalSize")}
-                                  </span>
-                                  <div className="mt-1">
-                                    {configData.cacheTotalSize != null
-                                      ? formatBytes(
-                                          Number(configData.cacheTotalSize)
-                                        )
-                                      : "\u2014"}
-                                  </div>
-                                </div>
-                              </div>
-
-                              {configData.cacheStatus === "error" &&
-                                configData.cacheError && (
-                                  <Alert variant="destructive">
-                                    <XCircle className="h-4 w-4" />
-                                    <AlertDescription>
-                                      {configData.cacheError}
-                                    </AlertDescription>
-                                  </Alert>
-                                )}
-
-                              {configData.cacheStatus === "success" &&
-                                configData.cacheContentFileCount != null &&
-                                configData.cacheFileCount != null &&
-                                configData.cacheContentFileCount <
-                                  configData.cacheFileCount && (
-                                  <Alert>
-                                    <AlertTriangle className="h-4 w-4" />
-                                    <AlertDescription>
-                                      {t("cache.contentsIncomplete", {
-                                        cached: String(
-                                          configData.cacheContentFileCount
-                                        ),
-                                        total: String(
-                                          configData.cacheFileCount
-                                        ),
+                                    </FormControl>
+                                    <span>
+                                      {t("cache.ttlDays", {
+                                        count: field.value,
                                       })}
-                                    </AlertDescription>
-                                  </Alert>
-                                )}
-
-                              {refreshError && (
-                                <Alert variant="destructive">
-                                  <AlertDescription className="flex items-center gap-2 font-mono text-xs break-all select-all">
-                                    <XCircle className="h-4 w-4 shrink-0" />
-                                    {refreshError}
-                                  </AlertDescription>
-                                </Alert>
+                                    </span>
+                                  </div>
+                                  <FormMessage />
+                                </FormItem>
                               )}
-                            </div>
-                          </>
-                        )}
-                      </>
-                    )}
+                            />
+
+                            {/* Cache Status Panel */}
+                            {configData && (
+                              <>
+                                <Separator />
+                                <div className="space-y-3">
+                                  <div className="flex items-center justify-between">
+                                    <h4 className="text-sm font-medium">
+                                      {t("cache.statusTitle")}
+                                    </h4>
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={handleRefreshCache}
+                                      disabled={isRefreshing}
+                                    >
+                                      {isRefreshing ? (
+                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                      ) : (
+                                        <RefreshCw className="h-4 w-4" />
+                                      )}
+                                      {isRefreshing && refreshStep
+                                        ? refreshStep
+                                        : t("cache.refreshButton")}
+                                    </Button>
+                                  </div>
+
+                                  <div className="grid grid-cols-2 gap-3 text-sm">
+                                    <div>
+                                      <span className="text-muted-foreground">
+                                        {tCommon("actions.status")}
+                                      </span>
+                                      <div className="mt-1 flex items-center gap-2">
+                                        {!configData.cacheStatus && (
+                                          <Badge variant="secondary">
+                                            {t("cache.statusNeverFetched")}
+                                          </Badge>
+                                        )}
+                                        {configData.cacheStatus ===
+                                          "success" && (
+                                          <>
+                                            <CheckCircle className="h-4 w-4 text-success" />
+                                            <Badge variant="default">
+                                              {tCommon("fields.success")}
+                                            </Badge>
+                                          </>
+                                        )}
+                                        {configData.cacheStatus === "error" && (
+                                          <>
+                                            <XCircle className="h-4 w-4 text-destructive" />
+                                            <Badge variant="destructive">
+                                              {tCommon("errors.error")}
+                                            </Badge>
+                                          </>
+                                        )}
+                                        {configData.cacheStatus ===
+                                          "pending" && (
+                                          <>
+                                            <Loader2 className="h-4 w-4 animate-spin" />
+                                            <Badge variant="secondary">
+                                              {t("cache.statusPending")}
+                                            </Badge>
+                                          </>
+                                        )}
+                                      </div>
+                                    </div>
+
+                                    <div>
+                                      <span className="text-muted-foreground">
+                                        {t("cache.lastFetched")}
+                                      </span>
+                                      <div className="mt-1">
+                                        {configData.cacheLastFetchedAt ? (
+                                          <DateFormatter
+                                            date={
+                                              new Date(
+                                                configData.cacheLastFetchedAt
+                                              )
+                                            }
+                                            formatString={
+                                              session?.user.preferences
+                                                ?.dateFormat &&
+                                              session?.user.preferences
+                                                ?.timeFormat
+                                                ? `${session.user.preferences.dateFormat} ${session.user.preferences.timeFormat}`
+                                                : session?.user.preferences
+                                                    ?.dateFormat
+                                            }
+                                            timezone={
+                                              session?.user.preferences
+                                                ?.timezone
+                                            }
+                                          />
+                                        ) : (
+                                          "\u2014"
+                                        )}
+                                      </div>
+                                    </div>
+
+                                    <div>
+                                      <span className="text-muted-foreground">
+                                        {t("cache.filesCached")}
+                                      </span>
+                                      <div className="mt-1">
+                                        {configData.cacheFileCount ?? "\u2014"}
+                                      </div>
+                                    </div>
+
+                                    <div>
+                                      <span className="text-muted-foreground">
+                                        {t("cache.contentsCached")}
+                                      </span>
+                                      <div className="mt-1">
+                                        {configData.cacheContentFileCount ??
+                                          "\u2014"}
+                                      </div>
+                                    </div>
+
+                                    <div>
+                                      <span className="text-muted-foreground">
+                                        {t("cache.totalSize")}
+                                      </span>
+                                      <div className="mt-1">
+                                        {configData.cacheTotalSize != null
+                                          ? formatBytes(
+                                              Number(configData.cacheTotalSize)
+                                            )
+                                          : "\u2014"}
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  {configData.cacheStatus === "error" &&
+                                    configData.cacheError && (
+                                      <Alert variant="destructive">
+                                        <XCircle className="h-4 w-4" />
+                                        <AlertDescription>
+                                          {configData.cacheError}
+                                        </AlertDescription>
+                                      </Alert>
+                                    )}
+
+                                  {configData.cacheStatus === "success" &&
+                                    configData.cacheContentFileCount != null &&
+                                    configData.cacheFileCount != null &&
+                                    configData.cacheContentFileCount <
+                                      configData.cacheFileCount && (
+                                      <Alert>
+                                        <AlertTriangle className="h-4 w-4" />
+                                        <AlertDescription>
+                                          {t("cache.contentsIncomplete", {
+                                            cached: String(
+                                              configData.cacheContentFileCount
+                                            ),
+                                            total: String(
+                                              configData.cacheFileCount
+                                            ),
+                                          })}
+                                        </AlertDescription>
+                                      </Alert>
+                                    )}
+
+                                  {refreshError && (
+                                    <Alert variant="destructive">
+                                      <AlertDescription className="flex items-center gap-2 font-mono text-xs break-all select-all">
+                                        <XCircle className="h-4 w-4 shrink-0" />
+                                        {refreshError}
+                                      </AlertDescription>
+                                    </Alert>
+                                  )}
+                                </div>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </CardContent>
                 </Card>
 
                 <div className="flex justify-end">
-                  <Button type="submit" disabled={isSaving}>
-                    {isSaving && <Loader2 className="h-4 w-4 animate-spin" />}
-                    {t("save")}
+                  <Button
+                    type="submit"
+                    disabled={isSaving}
+                    aria-label={t("save")}
+                    className="group gap-0 transition-all duration-200 hover:gap-2"
+                  >
+                    {isSaving ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Save className="h-4 w-4" />
+                    )}
+                    <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
+                      {t("save")}
+                    </span>
                   </Button>
                 </div>
               </form>

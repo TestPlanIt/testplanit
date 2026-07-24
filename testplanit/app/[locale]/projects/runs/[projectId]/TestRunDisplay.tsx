@@ -328,7 +328,6 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
   onDuplicateTestRun,
 }) => {
   const t = useTranslations("runs");
-  const tCommon = useTranslations("common");
   const tMilestones = useTranslations("milestones");
   const tSessions = useTranslations("sessions");
   const { projectId } = useParams();
@@ -897,9 +896,15 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
                 <div className="milestone-dates flex justify-end">
                   {canAddEditRun && (
                     <>
-                      <Button size="lg" onClick={() => handleAddTestRun(null)}>
-                        <CirclePlus className="h-5 w-5" />
-                        {tCommon("actions.create")}
+                      <Button
+                        onClick={() => handleAddTestRun(null)}
+                        aria-label={t("add.title")}
+                        className="group gap-0 transition-all duration-200 hover:gap-2"
+                      >
+                        <CirclePlus className="h-4 w-4" />
+                        <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-xs">
+                          {t("add.title")}
+                        </span>
                       </Button>
                       {isAddTestRunModalOpen &&
                         selectedMilestoneId === null && (

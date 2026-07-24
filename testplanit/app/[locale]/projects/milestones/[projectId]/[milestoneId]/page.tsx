@@ -8,6 +8,13 @@ import { ForecastDisplay } from "@/components/ForecastDisplay";
 import LoadingSpinnerPage from "@/components/LoadingSpinnerAlert";
 import { MilestoneSummary } from "@/components/MilestoneSummary";
 import TipTapEditor from "@/components/tiptap/TipTapEditor";
+import {
+  ActionBar,
+  ActionButtonContent,
+  ActionOverflow,
+  collapsibleActionClass,
+  useContainerCompact,
+} from "@/components/ui/action-bar";
 import { Button } from "@/components/ui/button";
 import { MilestoneAuditLogSheet } from "@/components/milestones/MilestoneAuditLogSheet";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -42,6 +49,7 @@ import {
   CircleSlash2,
   Compass,
   FileDown,
+  History,
   PlayCircle,
   Save,
   SquarePen,
@@ -115,6 +123,10 @@ export default function MilestoneDetailsPage() {
     useState<MilestoneForecastData | null>(null);
   const [isLoadingForecast, setIsLoadingForecast] = useState(false);
   const [isCompleteDialogOpen, setIsCompleteDialogOpen] = useState(false);
+  // Action bar collapses into a kebab when the header is narrow (mirrors the
+  // repository case details bar).
+  const { ref: headerRef, compact: headerCompact } = useContainerCompact();
+  const [auditOpen, setAuditOpen] = useState(false);
   const issuesCardRef = useRef<IssuesCardHandle>(null);
   const router = useRouter();
   const { resolvedTheme } = useTheme();
@@ -680,7 +692,10 @@ export default function MilestoneDetailsPage() {
         >
           {isSubmitting && <LoadingSpinnerPage />}
           <CardHeader>
-            <div className="flex justify-between items-center gap-2">
+            <div
+              ref={headerRef}
+              className="flex justify-between items-center gap-2"
+            >
               <div className="flex items-start gap-2 grow">
                 {!isEditMode && (
                   <Link href={`/projects/milestones/${projectId}`}>
@@ -729,7 +744,10 @@ export default function MilestoneDetailsPage() {
                   )}
                 </CardTitle>
               </div>
-              <div className="flex flex-col gap-2 ms-4">
+              <ActionBar
+                compact={headerCompact}
+                className="flex-col items-stretch gap-2 ms-4"
+              >
                 {!isEditMode && milestone && (
                   <RecordId
                     type="MILESTONE"
@@ -743,94 +761,108 @@ export default function MilestoneDetailsPage() {
                     <div className="flex gap-2">
                       <Button
                         type="submit"
-                        variant="default"
+                        variant="outline"
                         disabled={isSubmitting}
                         data-testid="milestone-save"
+                        className={collapsibleActionClass(headerCompact)}
                       >
-                        <Save className="h-4 w-4" />
-                        {isSubmitting
-                          ? tCommon("actions.saving")
-                          : tCommon("actions.save")}
+                        <ActionButtonContent
+                          icon={Save}
+                          label={
+                            isSubmitting
+                              ? tCommon("actions.saving")
+                              : tCommon("actions.save")
+                          }
+                        />
                       </Button>
                       <Button
                         type="button"
                         variant="outline"
                         onClick={handleCancel}
                         disabled={isSubmitting}
+                        className={collapsibleActionClass(headerCompact)}
                       >
-                        <CircleSlash2 className="h-4 w-4" />
-                        {tCommon("cancel")}
+                        <ActionButtonContent
+                          icon={CircleSlash2}
+                          label={tCommon("cancel")}
+                        />
                       </Button>
                     </div>
                     {showDeleteButtonPerm && (
                       <Button
                         type="button"
                         onClick={handleDelete}
-                        variant="secondary"
+                        variant="outline"
                         disabled={isSubmitting}
-                        className="text-destructive"
+                        className={collapsibleActionClass(
+                          headerCompact,
+                          "text-destructive"
+                        )}
                       >
-                        <Trash2 className="h-4 w-4" />
-                        {tCommon("actions.delete")}
+                        <ActionButtonContent
+                          icon={Trash2}
+                          label={tCommon("actions.delete")}
+                        />
                       </Button>
                     )}
                   </>
                 ) : (
                   <div className="flex items-center gap-1">
                     {milestone && (
-                      <MilestoneAuditLogSheet milestoneId={milestone.id} />
+                      <MilestoneAuditLogSheet
+                        milestoneId={milestone.id}
+                        hideTrigger
+                        open={auditOpen}
+                        onOpenChange={setAuditOpen}
+                      />
                     )}
-                    {showEditButtonPerm && (
-                      <Button
-                        type="button"
-                        onClick={handleEditClick}
-                        variant="secondary"
-                        data-testid="milestone-edit"
-                        className="group px-3 hover:px-3 transition-all duration-200 gap-0 hover:gap-2"
-                      >
-                        <SquarePen className="h-4 w-4 shrink-0" />
-                        <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-                          {tCommon("actions.edit")}
-                        </span>
-                      </Button>
-                    )}
-                    {milestone && (
-                      <Button
-                        type="button"
-                        onClick={handleExportPdf}
-                        variant="secondary"
-                        disabled={isExportingPdf}
-                        data-testid="milestone-export-pdf"
-                        className={`group px-3 hover:px-3 transition-all duration-200 gap-0 hover:gap-2 ${
-                          isExportingPdf ? "animate-pulse" : ""
-                        }`}
-                      >
-                        <FileDown className="h-4 w-4 shrink-0" />
-                        <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-                          {isExportingPdf
+                    <ActionOverflow
+                      compact={headerCompact}
+                      menuLabel={tCommon("actions.actionsLabel")}
+                      actions={[
+                        {
+                          key: "activity",
+                          icon: History,
+                          label: tCommon("fields.activityLog"),
+                          onClick: () => setAuditOpen(true),
+                          hidden: !milestone,
+                        },
+                        {
+                          key: "edit",
+                          icon: SquarePen,
+                          label: tCommon("actions.edit"),
+                          onClick: handleEditClick,
+                          testId: "milestone-edit",
+                          hidden: !showEditButtonPerm,
+                        },
+                        {
+                          key: "export",
+                          icon: FileDown,
+                          label: isExportingPdf
                             ? tCommon("actions.exportingPdf")
-                            : tCommon("actions.exportPdf")}
-                        </span>
-                      </Button>
-                    )}
-                    {milestone &&
-                      !milestone.isCompleted &&
-                      canCompleteMilestonePerm && (
-                        <Button
-                          type="button"
-                          onClick={() => setIsCompleteDialogOpen(true)}
-                          variant="secondary"
-                          className="group px-3 hover:px-3 transition-all duration-200 gap-0 hover:gap-2"
-                        >
-                          <CircleCheckBig className="h-4 w-4 shrink-0" />
-                          <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-                            {tCommon("actions.complete")}
-                          </span>
-                        </Button>
-                      )}
+                            : tCommon("actions.exportPdf"),
+                          onClick: handleExportPdf,
+                          disabled: isExportingPdf,
+                          testId: "milestone-export-pdf",
+                          hidden: !milestone,
+                          className: isExportingPdf ? "animate-pulse" : "",
+                        },
+                        {
+                          key: "complete",
+                          icon: CircleCheckBig,
+                          label: tCommon("actions.complete"),
+                          onClick: () => setIsCompleteDialogOpen(true),
+                          hidden: !(
+                            milestone &&
+                            !milestone.isCompleted &&
+                            canCompleteMilestonePerm
+                          ),
+                        },
+                      ]}
+                    />
                   </div>
                 )}
-              </div>
+              </ActionBar>
             </div>
           </CardHeader>
 

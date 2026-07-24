@@ -13,6 +13,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { PageTitle, SectionHeader } from "@/components/ui/typography";
+import { HelpPopover } from "@/components/ui/help-popover";
 import { useTranslations } from "next-intl";
 import { notFound, useParams } from "next/navigation";
 import { useEffect } from "react";
@@ -165,13 +166,12 @@ export default function ProjectIntegrationsPage() {
     <main>
       <Card>
         <CardHeader className="w-full">
-          <SectionHeader className="flex items-center justify-between pb-2 pt-1">
-            <CardTitle>
-              <span>{tGlobal("admin.menu.integrations")}</span>
-            </CardTitle>
+          <SectionHeader className="flex items-center gap-2">
+            <CardTitle>{tGlobal("admin.menu.integrations")}</CardTitle>
+            <HelpPopover helpKey="projectIntegrations" />
           </SectionHeader>
-          <CardDescription className="uppercase">
-            <span className="flex items-center gap-2">
+          <CardDescription>
+            <span className="flex items-center gap-2 uppercase">
               <ProjectIcon iconUrl={project.iconUrl} />
               {project.name}
             </span>

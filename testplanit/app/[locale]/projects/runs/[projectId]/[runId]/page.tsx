@@ -33,6 +33,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  ActionBar,
+  ActionButtonContent,
+  ActionOverflow,
+  collapsibleActionClass,
+  useContainerCompact,
+} from "@/components/ui/action-bar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -88,6 +95,7 @@ import {
   CircleSlash2,
   CopyPlus,
   FileDown,
+  History,
   Loader2,
   Lock,
   LockOpen,
@@ -320,6 +328,10 @@ export default function TestRunPage() {
     useClientQueries(schema).attachments.useUpdate();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeletingTestRun, setIsDeletingTestRun] = useState(false);
+  // Action bar collapses into a kebab when the header is narrow (mirrors the
+  // repository case details bar).
+  const { ref: headerRef, compact: headerCompact } = useContainerCompact();
+  const [auditOpen, setAuditOpen] = useState(false);
   const t = useTranslations();
   const tCommon = useTranslations("common");
   const [isTransitioning, setIsTransitioning] = useState(false);
@@ -1632,7 +1644,10 @@ export default function TestRunPage() {
             />
           </div>
           <CardHeader>
-            <div className="flex justify-between items-center gap-2">
+            <div
+              ref={headerRef}
+              className="flex justify-between items-center gap-2"
+            >
               {!isEditMode && (
                 <div className="me-2">
                   <Link href={`/projects/runs/${projectId}`}>
@@ -1687,7 +1702,10 @@ export default function TestRunPage() {
                     className="shrink-0 whitespace-nowrap"
                   />
                 )}
-                <div className="flex items-end gap-2 flex-wrap">
+                <ActionBar
+                  compact={headerCompact}
+                  className="items-end gap-2 flex-wrap"
+                >
                   {testRunData?.isCompleted ? (
                     <div className="flex flex-col items-end gap-1">
                       {/* Row 1: Completed On date */}
@@ -1710,49 +1728,54 @@ export default function TestRunPage() {
                       {/* Row 2: activity log + action buttons for COMPLETED runs */}
                       <div className="flex items-center gap-1">
                         {testRunData && (
-                          <RunAuditLogSheet runId={testRunData.id} />
+                          <RunAuditLogSheet
+                            runId={testRunData.id}
+                            hideTrigger
+                            open={auditOpen}
+                            onOpenChange={setAuditOpen}
+                          />
                         )}
-                        {canAddEditRun &&
-                          !isAutomatedTestRunType(testRunData?.testRunType) && (
-                            <Button
-                              type="button"
-                              variant="secondary"
-                              onClick={() => setIsDuplicateDialogOpen(true)}
-                              className="group px-3 hover:px-3 transition-all duration-200 gap-0 hover:gap-2"
-                            >
-                              <CopyPlus className="h-4 w-4 shrink-0" />
-                              <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-                                {t("common.actions.duplicate")}
-                              </span>
-                            </Button>
-                          )}
-                        <Button
-                          type="button"
-                          variant="secondary"
-                          onClick={handleExportPdf}
-                          disabled={isExportingPdf}
-                          className="group px-3 hover:px-3 transition-all duration-200 gap-0 hover:gap-2"
-                        >
-                          <FileDown className="h-4 w-4 shrink-0" />
-                          <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-                            {isExportingPdf
-                              ? t("common.actions.exportingPdf")
-                              : t("common.actions.exportPdf")}
-                          </span>
-                        </Button>
-                        {effectiveCanDelete && (
-                          <Button
-                            type="button"
-                            variant="secondary"
-                            onClick={() => setIsDeleteDialogOpen(true)}
-                            className="group px-3 hover:px-3 transition-all duration-200 gap-0 hover:gap-2 text-destructive"
-                          >
-                            <Trash2 className="h-4 w-4 shrink-0" />
-                            <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-                              {t("common.actions.delete")}
-                            </span>
-                          </Button>
-                        )}
+                        <ActionOverflow
+                          compact={headerCompact}
+                          menuLabel={t("common.actions.actionsLabel")}
+                          actions={[
+                            {
+                              key: "activity",
+                              icon: History,
+                              label: t("common.fields.activityLog"),
+                              onClick: () => setAuditOpen(true),
+                            },
+                            {
+                              key: "duplicate",
+                              icon: CopyPlus,
+                              label: t("common.actions.duplicate"),
+                              onClick: () => setIsDuplicateDialogOpen(true),
+                              hidden: !(
+                                canAddEditRun &&
+                                !isAutomatedTestRunType(
+                                  testRunData?.testRunType
+                                )
+                              ),
+                            },
+                            {
+                              key: "export",
+                              icon: FileDown,
+                              label: isExportingPdf
+                                ? t("common.actions.exportingPdf")
+                                : t("common.actions.exportPdf"),
+                              onClick: handleExportPdf,
+                              disabled: isExportingPdf,
+                            },
+                            {
+                              key: "delete",
+                              icon: Trash2,
+                              label: t("common.actions.delete"),
+                              onClick: () => setIsDeleteDialogOpen(true),
+                              destructive: true,
+                              hidden: !effectiveCanDelete,
+                            },
+                          ]}
+                        />
                       </div>
                     </div>
                   ) : (
@@ -1764,7 +1787,12 @@ export default function TestRunPage() {
                           {/* Row 1: activity log + primary run actions */}
                           <div className="flex items-center gap-1">
                             {testRunData && (
-                              <RunAuditLogSheet runId={testRunData.id} />
+                              <RunAuditLogSheet
+                                runId={testRunData.id}
+                                hideTrigger
+                                open={auditOpen}
+                                onOpenChange={setAuditOpen}
+                              />
                             )}
                             <RequestReviewButton
                               entityType="RUN"
@@ -1773,97 +1801,81 @@ export default function TestRunPage() {
                               currentStateId={testRunData.stateId}
                               reachableGatedStates={reachableGatedStates}
                             />
-                            {canAddEditRun && !isMultiConfigSelected && (
-                              <Button
-                                type="button"
-                                variant="secondary"
-                                onClick={handleEditClick}
-                                className="group px-3 hover:px-3 transition-all duration-200 gap-0 hover:gap-2"
-                              >
-                                <SquarePen className="h-4 w-4 shrink-0" />
-                                <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-                                  {t("common.actions.edit")}
-                                </span>
-                              </Button>
-                            )}
-                            {canAddEditRun &&
-                              !isAutomatedTestRunType(
-                                testRunData?.testRunType
-                              ) && (
-                                <Button
-                                  type="button"
-                                  variant="secondary"
-                                  onClick={() => setIsDuplicateDialogOpen(true)}
-                                  className="group px-3 hover:px-3 transition-all duration-200 gap-0 hover:gap-2"
-                                >
-                                  <CopyPlus className="h-4 w-4 shrink-0" />
-                                  <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-                                    {t("common.actions.duplicate")}
-                                  </span>
-                                </Button>
-                              )}
-                            <Button
-                              type="button"
-                              variant="secondary"
-                              onClick={handleExportPdf}
-                              disabled={isExportingPdf}
-                              className="group px-3 hover:px-3 transition-all duration-200 gap-0 hover:gap-2"
-                            >
-                              <FileDown className="h-4 w-4 shrink-0" />
-                              <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-                                {isExportingPdf
-                                  ? t("common.actions.exportingPdf")
-                                  : t("common.actions.exportPdf")}
-                              </span>
-                            </Button>
-                            {canCloseRun && (
-                              <>
-                                <Button
-                                  type="button"
-                                  variant="secondary"
-                                  className="group px-3 hover:px-3 transition-all duration-200 gap-0 hover:gap-2"
-                                  onClick={() => setIsCompleteDialogOpen(true)}
-                                >
-                                  <CircleCheckBig className="h-4 w-4 shrink-0" />
-                                  <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-                                    {t("common.actions.complete")}
-                                  </span>
-                                </Button>
-                                {isCompleteDialogOpen && (
-                                  <CompleteTestRunDialog
-                                    open={isCompleteDialogOpen}
-                                    onClose={() =>
-                                      setIsCompleteDialogOpen(false)
-                                    }
-                                    testRunId={Number(runId)}
-                                    projectId={Number(projectId)}
-                                    stateId={testRunData?.stateId || 0}
-                                    stateName={testRunData?.state?.name || ""}
-                                  />
-                                )}
-                              </>
+                            <ActionOverflow
+                              compact={headerCompact}
+                              menuLabel={t("common.actions.actionsLabel")}
+                              actions={[
+                                {
+                                  key: "activity",
+                                  icon: History,
+                                  label: t("common.fields.activityLog"),
+                                  onClick: () => setAuditOpen(true),
+                                },
+                                {
+                                  key: "edit",
+                                  icon: SquarePen,
+                                  label: t("common.actions.edit"),
+                                  onClick: handleEditClick,
+                                  hidden: !(
+                                    canAddEditRun && !isMultiConfigSelected
+                                  ),
+                                },
+                                {
+                                  key: "duplicate",
+                                  icon: CopyPlus,
+                                  label: t("common.actions.duplicate"),
+                                  onClick: () => setIsDuplicateDialogOpen(true),
+                                  hidden: !(
+                                    canAddEditRun &&
+                                    !isAutomatedTestRunType(
+                                      testRunData?.testRunType
+                                    )
+                                  ),
+                                },
+                                {
+                                  key: "export",
+                                  icon: FileDown,
+                                  label: isExportingPdf
+                                    ? t("common.actions.exportingPdf")
+                                    : t("common.actions.exportPdf"),
+                                  onClick: handleExportPdf,
+                                  disabled: isExportingPdf,
+                                },
+                                {
+                                  key: "complete",
+                                  icon: CircleCheckBig,
+                                  label: t("common.actions.complete"),
+                                  onClick: () => setIsCompleteDialogOpen(true),
+                                  hidden: !canCloseRun,
+                                },
+                                {
+                                  key: "assign",
+                                  icon: UsersRound,
+                                  label: t("common.actions.assign"),
+                                  onClick: () =>
+                                    setIsDistributeDialogOpen(true),
+                                  hidden: !(
+                                    canAddEditRun &&
+                                    !isAutomatedTestRunType(
+                                      testRunData?.testRunType
+                                    )
+                                  ),
+                                },
+                              ]}
+                            />
+                            {isCompleteDialogOpen && (
+                              <CompleteTestRunDialog
+                                open={isCompleteDialogOpen}
+                                onClose={() => setIsCompleteDialogOpen(false)}
+                                testRunId={Number(runId)}
+                                projectId={Number(projectId)}
+                                stateId={testRunData?.stateId || 0}
+                                stateName={testRunData?.state?.name || ""}
+                              />
                             )}
                           </div>
-                          {/* Row 2: assign + composition lock/unlock */}
+                          {/* Row 2: composition lock/unlock */}
                           <div className="flex items-center gap-1">
-                            {canAddEditRun &&
-                              !isAutomatedTestRunType(
-                                testRunData?.testRunType
-                              ) && (
-                                <Button
-                                  type="button"
-                                  variant="secondary"
-                                  onClick={() =>
-                                    setIsDistributeDialogOpen(true)
-                                  }
-                                  className="group px-3 hover:px-3 transition-all duration-200 gap-0 hover:gap-2"
-                                >
-                                  <UsersRound className="h-4 w-4 shrink-0" />
-                                  <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-                                    {t("common.actions.assign")}
-                                  </span>
-                                </Button>
-                              )}
                             {/* Execution-start composition lock (BOR-1) —
                                 single toggle. Locking needs run-edit rights;
                                 unlocking is gated to creator/admin, so the
@@ -1875,6 +1887,7 @@ export default function TestRunPage() {
                                 <TooltipTrigger asChild>
                                   <div className="flex h-9 items-center gap-2 rounded-md border bg-secondary px-3 text-secondary-foreground">
                                     <Switch
+                                      id="composition-lock-switch"
                                       checked={compositionLocked}
                                       onCheckedChange={(v) =>
                                         setCompositionLock(v)
@@ -1886,18 +1899,40 @@ export default function TestRunPage() {
                                           : !canAddEditRun ||
                                             isMultiConfigSelected)
                                       }
-                                      aria-label={t("runs.composition.lock")}
+                                      aria-label={
+                                        compositionLocked
+                                          ? t("runs.composition.lock")
+                                          : t("runs.composition.unlocked")
+                                      }
+                                      // The chip is bg-secondary; the switch's
+                                      // default track colors (bg-input off,
+                                      // bg-primary on) don't reliably contrast
+                                      // with it across themes. Deriving both the
+                                      // border and the unchecked track from
+                                      // secondary-foreground — which contrasts
+                                      // the chip by definition — keeps the
+                                      // switch legible on/off in every theme.
+                                      className="border-secondary-foreground data-[state=unchecked]:bg-secondary-foreground/50"
                                     />
-                                    {isTogglingCompositionLock ? (
-                                      <Loader2 className="h-4 w-4 shrink-0 animate-spin" />
-                                    ) : compositionLocked ? (
-                                      <Lock className="h-4 w-4 shrink-0" />
-                                    ) : (
-                                      <LockOpen className="h-4 w-4 shrink-0" />
-                                    )}
-                                    <span className="whitespace-nowrap text-sm">
-                                      {t("runs.composition.lock")}
-                                    </span>
+                                    <label
+                                      htmlFor="composition-lock-switch"
+                                      className="flex cursor-pointer items-center gap-2 peer-disabled:cursor-not-allowed peer-disabled:opacity-50"
+                                    >
+                                      {isTogglingCompositionLock ? (
+                                        <Loader2 className="h-4 w-4 shrink-0 animate-spin" />
+                                      ) : compositionLocked ? (
+                                        <Lock className="h-4 w-4 shrink-0" />
+                                      ) : (
+                                        <LockOpen className="h-4 w-4 shrink-0" />
+                                      )}
+                                      {!headerCompact && (
+                                        <span className="whitespace-nowrap text-sm">
+                                          {compositionLocked
+                                            ? t("runs.composition.lock")
+                                            : t("runs.composition.unlocked")}
+                                        </span>
+                                      )}
+                                    </label>
                                   </div>
                                 </TooltipTrigger>
                                 <TooltipContent>
@@ -1939,11 +1974,16 @@ export default function TestRunPage() {
                                 return (
                                   <Button
                                     type="submit"
-                                    variant="default"
+                                    variant="outline"
                                     disabled={isSubmitting || !canAddEditRun}
+                                    className={collapsibleActionClass(
+                                      headerCompact
+                                    )}
                                   >
-                                    <Save className="h-4 w-4" />
-                                    {t("common.actions.save")}
+                                    <ActionButtonContent
+                                      icon={Save}
+                                      label={t("common.actions.save")}
+                                    />
                                   </Button>
                                 );
                               }
@@ -1954,12 +1994,17 @@ export default function TestRunPage() {
                                     <span tabIndex={0}>
                                       <Button
                                         type="submit"
-                                        variant="default"
+                                        variant="outline"
                                         disabled
-                                        className="ring-2 ring-destructive ring-offset-2 ring-offset-background"
+                                        className={collapsibleActionClass(
+                                          headerCompact,
+                                          "ring-2 ring-destructive ring-offset-2 ring-offset-background"
+                                        )}
                                       >
-                                        <Save className="h-4 w-4" />
-                                        {t("common.actions.save")}
+                                        <ActionButtonContent
+                                          icon={Save}
+                                          label={t("common.actions.save")}
+                                        />
                                       </Button>
                                     </span>
                                   </TooltipTrigger>
@@ -1974,29 +2019,37 @@ export default function TestRunPage() {
                               variant="outline"
                               onClick={handleCancel}
                               disabled={isSubmitting}
+                              className={collapsibleActionClass(headerCompact)}
                             >
-                              <CircleSlash2 className="h-4 w-4" />
-                              {t("common.cancel")}
+                              <ActionButtonContent
+                                icon={CircleSlash2}
+                                label={t("common.cancel")}
+                              />
                             </Button>
                           </div>
                           {/* Delete button in edit mode for non-completed runs */}
                           {effectiveCanDelete && (
                             <Button
                               type="button"
-                              variant="secondary"
+                              variant="outline"
                               onClick={() => setIsDeleteDialogOpen(true)}
                               disabled={isSubmitting}
-                              className="text-destructive"
+                              className={collapsibleActionClass(
+                                headerCompact,
+                                "text-destructive"
+                              )}
                             >
-                              <Trash2 className="h-4 w-4 " />
-                              {t("common.actions.delete")}
+                              <ActionButtonContent
+                                icon={Trash2}
+                                label={t("common.actions.delete")}
+                              />
                             </Button>
                           )}
                         </div>
                       )}
                     </>
                   )}
-                </div>
+                </ActionBar>
               </div>
             </div>
             <CardDescription>

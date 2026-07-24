@@ -117,12 +117,12 @@ export function ResultEditingPolicyCard() {
             </SelectContent>
           </Select>
           {mode === "max" && (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 text-sm">
               <Label
                 htmlFor="edit-policy-minutes"
-                className="whitespace-nowrap"
+                className="whitespace-nowrap font-normal"
               >
-                {t("minutesLabel")}
+                {t("minutesBefore")}
               </Label>
               <Input
                 id="edit-policy-minutes"
@@ -132,7 +132,11 @@ export function ResultEditingPolicyCard() {
                 value={maxMinutes}
                 onChange={(event) => setMaxMinutes(event.target.value)}
                 className="w-24"
+                aria-label={t("minutesAriaLabel")}
               />
+              <span>
+                {t("minutesUnit", { minutes: Number(maxMinutes) || 0 })}
+              </span>
             </div>
           )}
           <Button

@@ -12,10 +12,12 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { PageTitle, SectionHeader } from "@/components/ui/typography";
-import { ShieldCheck } from "lucide-react";
+import { HelpPopover } from "@/components/ui/help-popover";
+import { Button } from "@/components/ui/button";
+import { Download } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { notFound, useParams } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { ProjectAuditLog } from "~/components/projects/ProjectAuditLog";
 import { useRequireAuth } from "~/hooks/useRequireAuth";
 
@@ -25,7 +27,16 @@ export default function ProjectAuditLogsPage() {
   const { session, status, isLoading: isAuthLoading } = useRequireAuth();
   const t = useTranslations("admin.menu");
   const tAudit = useTranslations("admin.auditLogs");
+  const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
+
+  // Export lives in ProjectAuditLog (owns the filter state); it reports its
+  // handler + state up so the button can render in the header, like admin.
+  const [exportState, setExportState] = useState<{
+    canExport: boolean;
+    isExporting: boolean;
+    exportCsv: () => void;
+  } | null>(null);
 
   // Fetch project data (allow global admin access or project assignment)
   const { data: project, isLoading: projectLoading } = useClientQueries(
@@ -102,24 +113,38 @@ export default function ProjectAuditLogsPage() {
     <main>
       <Card>
         <CardHeader className="w-full">
-          <SectionHeader className="flex items-center justify-between pb-2 pt-1">
-            <CardTitle className="flex items-center gap-3">
-              <ShieldCheck className="h-7 w-7" />
-              {t("auditLogs")}
-            </CardTitle>
-          </SectionHeader>
-          <CardDescription className="uppercase">
-            <span className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center justify-between gap-2">
+            <SectionHeader className="flex items-center gap-2">
+              <CardTitle>{t("auditLogs")}</CardTitle>
+              <HelpPopover helpKey="projectAuditLogs" />
+            </SectionHeader>
+            <Button
+              variant="outline"
+              onClick={() => exportState?.exportCsv()}
+              disabled={!exportState?.canExport || exportState?.isExporting}
+              aria-label={tAudit("exportCsv")}
+              className="group gap-0 transition-all duration-200 hover:gap-2"
+            >
+              <Download className="h-4 w-4" />
+              <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
+                {exportState?.isExporting
+                  ? tGlobal("repository.exportModal.exporting")
+                  : tAudit("exportCsv")}
+              </span>
+            </Button>
+          </div>
+          <CardDescription>
+            <span className="flex items-center gap-2 uppercase">
               <ProjectIcon iconUrl={project.iconUrl} />
               {project.name}
             </span>
           </CardDescription>
-          <p className="text-muted-foreground text-sm mt-2 normal-case">
-            {tAudit("projectDescription")}
-          </p>
         </CardHeader>
         <CardContent>
-          <ProjectAuditLog projectId={projectId} />
+          <ProjectAuditLog
+            projectId={projectId}
+            onExportStateChange={setExportState}
+          />
         </CardContent>
       </Card>
     </main>

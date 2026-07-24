@@ -917,9 +917,6 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
             </div>
             <div className="flex shrink-0 flex-col items-end gap-2">
               <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">
-                  {t("isActive")}
-                </span>
                 <Switch
                   checked={config.isActive}
                   onCheckedChange={(next: boolean) =>
@@ -927,6 +924,9 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
                   }
                   aria-label={t("isActive")}
                 />
+                <span className="text-sm text-muted-foreground">
+                  {t("isActive")}
+                </span>
               </div>
               <Tooltip>
                 <TooltipTrigger asChild>

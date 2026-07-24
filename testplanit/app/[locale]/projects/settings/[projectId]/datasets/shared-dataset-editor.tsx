@@ -391,19 +391,21 @@ export function SharedDatasetEditor({
       <Card>
         <CardHeader className="w-full">
           <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-2 min-w-0">
-              <Button
-                asChild
-                variant="ghost"
-                size="sm"
-                data-testid="shared-dataset-editor-back"
-              >
-                <Link href={`/projects/settings/${projectId}/datasets`}>
+            <div className="flex items-center gap-2 min-w-0 grow">
+              <Link href={`/projects/settings/${projectId}/datasets`}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  aria-label={tEditor("back")}
+                  data-testid="shared-dataset-editor-back"
+                >
                   <ArrowLeft className="h-4 w-4" />
-                  {tEditor("back")}
-                </Link>
-              </Button>
-              <CardTitle className="truncate">{dataset.name}</CardTitle>
+                </Button>
+              </Link>
+              <CardTitle className="grow min-w-0 truncate text-xl md:text-2xl">
+                {dataset.name}
+              </CardTitle>
             </div>
             <div className="flex items-center gap-2">
               <SharedDatasetVersionPicker

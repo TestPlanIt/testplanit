@@ -33,19 +33,25 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { SimpleDndProvider } from "@/components/ui/SimpleDndProvider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PageTitle, SectionHeader } from "@/components/ui/typography";
+import { HelpPopover } from "@/components/ui/help-popover";
 import { ApplicationArea } from "~/zenstack/models";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { CirclePlus, Maximize2, Upload } from "lucide-react";
+import {
+  CircleCheck,
+  CircleDot,
+  CirclePlus,
+  Maximize2,
+  Upload,
+} from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
 import * as React from "react";
@@ -1029,58 +1035,61 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
         <Card className="flex w-full min-w-[400px]">
           <div className="flex-1 w-full">
             <CardHeader id="test-runs-page-header">
-              <CardTitle>
-                <SectionHeader className="flex items-center justify-between">
-                  <div>
-                    <CardTitle>
-                      {tGlobal("enums.ApplicationArea.TestRuns")}
-                    </CardTitle>
-                  </div>
-                  <div>
-                    {canAddEdit && (
-                      <div className="flex flex-row gap-2">
-                        <Button
-                          variant="outline"
-                          onClick={() => setImportDialogOpen(true)}
-                        >
-                          <Upload className="h-4 w-4" />
-                          {tCommon("actions.junit.import.title")}
-                        </Button>
-                        {importDialogOpen && (
-                          <TestResultsImportDialog
-                            projectId={parseInt(projectId)}
-                            onSuccess={() => {
-                              router.refresh();
-                              void refetchIncompleteTestRuns();
-                            }}
-                            open={importDialogOpen}
-                            onClose={() => {
-                              setImportDialogOpen(false);
-                              setDroppedFiles([]);
-                            }}
-                            initialFiles={
-                              droppedFiles.length > 0 ? droppedFiles : undefined
-                            }
-                          />
-                        )}
-                        <Button
-                          type="button"
-                          variant="default"
-                          data-testid="new-run-button"
-                          onClick={() => setIsAddTestRunModalOpen(true)}
-                        >
-                          <CirclePlus className="h-4 w-4" />
-                          <span className="hidden md:inline">
-                            {t("add.title")}
-                          </span>
-                        </Button>
-                      </div>
-                    )}
-                  </div>
+              <div className="flex items-center justify-between gap-2">
+                <SectionHeader className="flex items-center gap-2">
+                  <CardTitle>
+                    {tGlobal("enums.ApplicationArea.TestRuns")}
+                  </CardTitle>
+                  <HelpPopover helpKey="projectRuns" />
                 </SectionHeader>
-              </CardTitle>
-              <CardDescription className="uppercase">
-                <span className="flex items-center gap-2 uppercase shrink-0">
+                {canAddEdit && (
+                  <div className="flex flex-row gap-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => setImportDialogOpen(true)}
+                      aria-label={tCommon("actions.junit.import.title")}
+                      className="group gap-0 transition-all duration-200 hover:gap-2"
+                    >
+                      <Upload className="h-4 w-4" />
+                      <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-xs">
+                        {tCommon("actions.junit.import.title")}
+                      </span>
+                    </Button>
+                    {importDialogOpen && (
+                      <TestResultsImportDialog
+                        projectId={parseInt(projectId)}
+                        onSuccess={() => {
+                          router.refresh();
+                          void refetchIncompleteTestRuns();
+                        }}
+                        open={importDialogOpen}
+                        onClose={() => {
+                          setImportDialogOpen(false);
+                          setDroppedFiles([]);
+                        }}
+                        initialFiles={
+                          droppedFiles.length > 0 ? droppedFiles : undefined
+                        }
+                      />
+                    )}
+                    <Button
+                      type="button"
+                      variant="default"
+                      data-testid="new-run-button"
+                      onClick={() => setIsAddTestRunModalOpen(true)}
+                      aria-label={t("add.title")}
+                      className="group gap-0 transition-all duration-200 hover:gap-2"
+                    >
+                      <CirclePlus className="h-4 w-4" />
+                      <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-xs">
+                        {t("add.title")}
+                      </span>
+                    </Button>
+                  </div>
+                )}
+              </div>
+              <CardDescription>
+                <span className="flex items-center gap-2 uppercase">
                   <ProjectIcon iconUrl={project?.iconUrl} />
                   {project?.name}
                 </span>
@@ -1362,57 +1371,46 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
                 )}
               </div>
 
+              {/* Test Run Type Filter */}
+              <div className="mb-4 flex flex-row items-center gap-2">
+                <Select
+                  value={runTypeFilter}
+                  onValueChange={(value) =>
+                    setRunTypeFilter(value as RunTypeFilter)
+                  }
+                >
+                  <SelectTrigger
+                    className="w-[200px]"
+                    data-testid="run-type-filter"
+                  >
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="both">{t("typeFilter.both")}</SelectItem>
+                    <SelectItem value="manual">
+                      {tCommon("fields.manual")}
+                    </SelectItem>
+                    <SelectItem value="automated">
+                      {tCommon("fields.automated")}
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
               <Tabs value={activeTab} onValueChange={handleTabChange}>
                 <TabsList className="w-full">
                   <TabsTrigger value="active" className="w-1/2">
+                    <CircleDot className="h-4 w-4 me-2" />
                     {tCommon("fields.isActive")}
                   </TabsTrigger>
                   <TabsTrigger value="completed" className="w-1/2">
+                    <CircleCheck className="h-4 w-4 me-2" />
                     {tCommon("fields.completed")}
                   </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="active">
                   <div className="flex flex-col">
-                    {/* Test Run Type Filter */}
-                    <div className="mb-4 flex flex-row items-center gap-2">
-                      <span className="text-sm text-muted-foreground">
-                        {t("typeFilter.label")}:
-                      </span>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="outline" size="sm">
-                            {runTypeFilter === "both"
-                              ? t("typeFilter.both")
-                              : runTypeFilter === "manual"
-                                ? tCommon("fields.manual")
-                                : tCommon("fields.automated")}
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="start">
-                          <DropdownMenuLabel>
-                            {t("typeFilter.label")}
-                          </DropdownMenuLabel>
-                          <DropdownMenuGroup>
-                            <DropdownMenuItem
-                              onClick={() => setRunTypeFilter("both")}
-                            >
-                              {t("typeFilter.both")}
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => setRunTypeFilter("manual")}
-                            >
-                              {tCommon("fields.manual")}
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => setRunTypeFilter("automated")}
-                            >
-                              {tCommon("fields.automated")}
-                            </DropdownMenuItem>
-                          </DropdownMenuGroup>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
                     {incompleteTestRuns?.length === 0 ? (
                       <div className="mt-4 flex flex-col items-center justify-center gap-4">
                         <p className="text-center text-muted-foreground">
@@ -1444,45 +1442,6 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
                 </TabsContent>
                 <TabsContent value="completed">
                   <div className="flex flex-col">
-                    {/* Test Run Type Filter */}
-                    <div className="mb-4 flex flex-row items-center gap-2">
-                      <span className="text-sm text-muted-foreground">
-                        {t("typeFilter.label")}:
-                      </span>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="outline" size="sm">
-                            {runTypeFilter === "both"
-                              ? t("typeFilter.both")
-                              : runTypeFilter === "manual"
-                                ? tCommon("fields.manual")
-                                : tCommon("fields.automated")}
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="start">
-                          <DropdownMenuLabel>
-                            {t("typeFilter.label")}
-                          </DropdownMenuLabel>
-                          <DropdownMenuGroup>
-                            <DropdownMenuItem
-                              onClick={() => setRunTypeFilter("both")}
-                            >
-                              {t("typeFilter.both")}
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => setRunTypeFilter("manual")}
-                            >
-                              {tCommon("fields.manual")}
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => setRunTypeFilter("automated")}
-                            >
-                              {tCommon("fields.automated")}
-                            </DropdownMenuItem>
-                          </DropdownMenuGroup>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
                     {/* Filter and Pagination Controls */}
                     <div className="flex flex-row items-start mb-4">
                       <div className="flex flex-col grow w-full sm:w-1/3 min-w-[150px]">

@@ -12,6 +12,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { SectionHeader } from "@/components/ui/typography";
+import { HelpPopover } from "@/components/ui/help-popover";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,7 +25,7 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { WarningAlert } from "@/components/ui/warning-alert";
-import { TriangleAlert } from "lucide-react";
+import { Loader2, Save, TriangleAlert } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useSession } from "next-auth/react";
 import { notFound, useParams } from "next/navigation";
@@ -221,6 +222,8 @@ export default function AdvancedPage() {
     "inherit" | "disable" | "custom"
   >("inherit");
   const [customMinutes, setCustomMinutes] = useState("");
+  const [savingKey, setSavingKey] = useState(false);
+  const [savingEditWindow, setSavingEditWindow] = useState(false);
 
   useEffect(() => {
     const seconds = project?.editResultsDurationSeconds;
@@ -255,6 +258,7 @@ export default function AdvancedPage() {
           : minutes;
       nextSeconds = Math.round(capped * 60);
     }
+    setSavingEditWindow(true);
     try {
       await updateProject.mutateAsync({
         where: { id: projectId },
@@ -263,6 +267,8 @@ export default function AdvancedPage() {
       toast.success(t("editWindow.savedToast"));
     } catch {
       toast.error(t("editWindow.saveError"));
+    } finally {
+      setSavingEditWindow(false);
     }
   };
 
@@ -333,6 +339,7 @@ export default function AdvancedPage() {
       toast.error(t("recordKey.taken"));
       return;
     }
+    setSavingKey(true);
     try {
       await updateProject.mutateAsync({
         where: { id: projectId },
@@ -343,6 +350,8 @@ export default function AdvancedPage() {
       // Backstop for the DB unique index (e.g. a conflicting project the user
       // can't see, or a race with a concurrent save).
       toast.error(t("recordKey.saveError"));
+    } finally {
+      setSavingKey(false);
     }
   };
 
@@ -350,13 +359,12 @@ export default function AdvancedPage() {
     <main data-testid="advanced-settings-page">
       <Card>
         <CardHeader className="w-full">
-          <SectionHeader className="flex items-center justify-between pb-2 pt-1">
-            <CardTitle>
-              <span>{t("title")}</span>
-            </CardTitle>
+          <SectionHeader className="flex items-center gap-2">
+            <CardTitle>{t("title")}</CardTitle>
+            <HelpPopover helpKey="projectAdvanced" />
           </SectionHeader>
-          <CardDescription className="uppercase">
-            <span className="flex items-center gap-2">
+          <CardDescription>
+            <span className="flex items-center gap-2 uppercase">
               <ProjectIcon iconUrl={project?.iconUrl} />
               {project?.name}
             </span>
@@ -407,8 +415,17 @@ export default function AdvancedPage() {
                       data-testid="project-record-key-save"
                       onClick={handleSaveProjectKey}
                       disabled={!canSaveProjectKey}
+                      aria-label={tActions("save")}
+                      className="group gap-0 transition-all duration-200 hover:gap-2"
                     >
-                      {tActions("save")}
+                      {savingKey ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Save className="h-4 w-4" />
+                      )}
+                      <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
+                        {tActions("save")}
+                      </span>
                     </Button>
                   </div>
                   {suggestedProjectKey &&
@@ -629,7 +646,11 @@ export default function AdvancedPage() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="inherit">
-                          {t("editWindow.modeInherit")}
+                          {systemMaxMinutes !== null
+                            ? t("editWindow.modeInheritMinutes", {
+                                minutes: systemMaxMinutes,
+                              })
+                            : t("editWindow.modeInheritNoLimit")}
                         </SelectItem>
                         <SelectItem value="disable">
                           {t("editWindow.modeDisable")}
@@ -641,21 +662,32 @@ export default function AdvancedPage() {
                     </Select>
                     {editWindowMode === "custom" && (
                       <div className="space-y-1">
-                        <Label htmlFor="edit-window-minutes">
-                          {t("editWindow.minutesLabel")}
-                        </Label>
-                        <Input
-                          id="edit-window-minutes"
-                          data-testid="edit-window-minutes-input"
-                          type="number"
-                          min={1}
-                          max={systemMaxMinutes ?? undefined}
-                          value={customMinutes}
-                          onChange={(event) =>
-                            setCustomMinutes(event.target.value)
-                          }
-                          className="max-w-xs"
-                        />
+                        <div className="flex items-center gap-2 text-sm">
+                          <Label
+                            htmlFor="edit-window-minutes"
+                            className="font-normal"
+                          >
+                            {t("editWindow.minutesBefore")}
+                          </Label>
+                          <Input
+                            id="edit-window-minutes"
+                            data-testid="edit-window-minutes-input"
+                            type="number"
+                            min={1}
+                            max={systemMaxMinutes ?? undefined}
+                            value={customMinutes}
+                            onChange={(event) =>
+                              setCustomMinutes(event.target.value)
+                            }
+                            className="w-24"
+                            aria-label={t("editWindow.minutesAriaLabel")}
+                          />
+                          <span>
+                            {t("editWindow.minutesUnit", {
+                              minutes: Number(customMinutes) || 0,
+                            })}
+                          </span>
+                        </div>
                         {systemMaxMinutes !== null && (
                           <p className="text-xs text-muted-foreground">
                             {t("editWindow.systemMaxHint", {
@@ -667,12 +699,20 @@ export default function AdvancedPage() {
                     )}
                     <Button
                       type="button"
-                      size="sm"
                       onClick={handleSaveEditWindow}
                       disabled={projectLoading || updateProject.isPending}
                       data-testid="edit-window-save"
+                      aria-label={t("editWindow.save")}
+                      className="group gap-0 transition-all duration-200 hover:gap-2"
                     >
-                      {t("editWindow.save")}
+                      {savingEditWindow ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Save className="h-4 w-4" />
+                      )}
+                      <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
+                        {t("editWindow.save")}
+                      </span>
                     </Button>
                   </div>
                 )}

@@ -23,13 +23,20 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { PageTitle, SectionHeader } from "@/components/ui/typography";
+import { HelpPopover } from "@/components/ui/help-popover";
 import DynamicIcon from "@/components/DynamicIcon";
 import type { IconName } from "~/types/globals";
 import { AddMilestone } from "@/projects/milestones/[projectId]/AddMilestoneModal";
 import { ImportMilestonesDialog } from "@/projects/milestones/[projectId]/ImportMilestonesDialog";
 import MilestoneDisplay from "@/projects/milestones/[projectId]/MilestoneDisplay";
 import { ApplicationArea } from "~/zenstack/models";
-import { CirclePlus, Download, Loader2 } from "lucide-react";
+import {
+  CircleCheck,
+  CircleDot,
+  CirclePlus,
+  Download,
+  Loader2,
+} from "lucide-react";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
 import * as React from "react";
@@ -480,72 +487,75 @@ const ProjectMilestones: React.FC<ProjectMilestonesProps> = ({ params }) => {
       <Card className="flex w-full min-w-[400px]">
         <div className="flex-1 w-full">
           <CardHeader id="milestones-page-header">
-            <CardTitle>
-              <SectionHeader className="flex items-center justify-between">
-                <div>
-                  <CardTitle>{t("common.fields.milestones")}</CardTitle>
-                </div>
-                {canAddEdit && (
-                  <div className="flex items-center gap-2">
-                    {isImportPolling && (
-                      <Badge
-                        variant="outline"
-                        className="flex items-center gap-1 text-muted-foreground"
-                        data-testid="import-milestones-progress"
-                      >
-                        <Loader2 className="h-3 w-3 animate-spin" />
-                        {t("milestones.import.importing", {
-                          count: pendingImportIds?.size ?? 0,
-                        })}
-                      </Badge>
-                    )}
-                    {canImportFromJira && (
-                      <Button
-                        data-testid="import-milestones-button"
-                        variant="outline"
-                        onClick={() => setImportMilestonesOpen(true)}
-                      >
-                        <Download className="w-4" />
-                        <span className="hidden md:inline">
-                          {t("milestones.import.importTitle")}
-                        </span>
-                      </Button>
-                    )}
-                    <Button
-                      data-testid="new-milestone-button"
-                      onClick={() => setAddMilestoneOpen(true)}
+            <div className="flex items-center justify-between gap-2">
+              <SectionHeader className="flex items-center gap-2">
+                <CardTitle>{t("common.fields.milestones")}</CardTitle>
+                <HelpPopover helpKey="projectMilestones" />
+              </SectionHeader>
+              {canAddEdit && (
+                <div className="flex items-center gap-2">
+                  {isImportPolling && (
+                    <Badge
+                      variant="outline"
+                      className="flex items-center gap-1 text-muted-foreground"
+                      data-testid="import-milestones-progress"
                     >
-                      <CirclePlus className="w-4" />
-                      <span className="hidden md:inline">
-                        {t("milestones.actions.add")}
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                      {t("milestones.import.importing", {
+                        count: pendingImportIds?.size ?? 0,
+                      })}
+                    </Badge>
+                  )}
+                  {canImportFromJira && (
+                    <Button
+                      data-testid="import-milestones-button"
+                      variant="outline"
+                      onClick={() => setImportMilestonesOpen(true)}
+                      aria-label={t("milestones.import.importTitle")}
+                      className="group gap-0 transition-all duration-200 hover:gap-2"
+                    >
+                      <Download className="h-4 w-4" />
+                      <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-xs">
+                        {t("milestones.import.importTitle")}
                       </span>
                     </Button>
-                    {addMilestoneOpen && (
-                      <AddMilestone
-                        open={addMilestoneOpen}
-                        onClose={() => setAddMilestoneOpen(false)}
+                  )}
+                  <Button
+                    data-testid="new-milestone-button"
+                    onClick={() => setAddMilestoneOpen(true)}
+                    aria-label={t("milestones.actions.add")}
+                    className="group gap-0 transition-all duration-200 hover:gap-2"
+                  >
+                    <CirclePlus className="h-4 w-4" />
+                    <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-xs">
+                      {t("milestones.actions.add")}
+                    </span>
+                  </Button>
+                  {addMilestoneOpen && (
+                    <AddMilestone
+                      open={addMilestoneOpen}
+                      onClose={() => setAddMilestoneOpen(false)}
+                    />
+                  )}
+                  {canImportFromJira &&
+                    importCapableProjectIntegration &&
+                    importProjectMappingId && (
+                      <ImportMilestonesDialog
+                        integrationId={
+                          importCapableProjectIntegration.integrationId
+                        }
+                        projectId={Number(projectId)}
+                        projectMappingId={importProjectMappingId}
+                        open={importMilestonesOpen}
+                        onOpenChange={setImportMilestonesOpen}
+                        onStarted={startImportPolling}
                       />
                     )}
-                    {canImportFromJira &&
-                      importCapableProjectIntegration &&
-                      importProjectMappingId && (
-                        <ImportMilestonesDialog
-                          integrationId={
-                            importCapableProjectIntegration.integrationId
-                          }
-                          projectId={Number(projectId)}
-                          projectMappingId={importProjectMappingId}
-                          open={importMilestonesOpen}
-                          onOpenChange={setImportMilestonesOpen}
-                          onStarted={startImportPolling}
-                        />
-                      )}
-                  </div>
-                )}
-              </SectionHeader>
-            </CardTitle>
-            <CardDescription className="uppercase">
-              <span className="flex items-center gap-2 uppercase shrink-0">
+                </div>
+              )}
+            </div>
+            <CardDescription>
+              <span className="flex items-center gap-2 uppercase">
                 <ProjectIcon iconUrl={project?.iconUrl} />
                 {project?.name}
               </span>
@@ -553,7 +563,7 @@ const ProjectMilestones: React.FC<ProjectMilestonesProps> = ({ params }) => {
           </CardHeader>
           <CardContent className="flex flex-col">
             {showKindFilter && (
-              <div className="flex items-center justify-end pb-3">
+              <div className="mb-4 flex flex-row items-center gap-2">
                 <Select value={kindFilter} onValueChange={setKindFilter}>
                   <SelectTrigger
                     className="w-[200px]"
@@ -585,9 +595,11 @@ const ProjectMilestones: React.FC<ProjectMilestonesProps> = ({ params }) => {
             <Tabs value={activeTab} onValueChange={setActiveTab}>
               <TabsList className="w-full">
                 <TabsTrigger value="active" className="w-1/2">
+                  <CircleDot className="h-4 w-4 me-2" />
                   {t("common.fields.isActive")}
                 </TabsTrigger>
                 <TabsTrigger value="completed" className="w-1/2">
+                  <CircleCheck className="h-4 w-4 me-2" />
                   {t("common.fields.completed")}
                 </TabsTrigger>
               </TabsList>

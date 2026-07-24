@@ -2340,7 +2340,7 @@ export function TestCaseDetailsView({
                       {canAddEdit && (
                         <Button
                           type="button"
-                          variant="secondary"
+                          variant="outline"
                           onClick={handleEditModeToggle}
                           disabled={isLoadingSharedStepGroups}
                           data-testid="edit-test-case-button"

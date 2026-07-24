@@ -16,7 +16,16 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { ProjectIcon } from "@/components/ProjectIcon";
+import { SectionHeader } from "@/components/ui/typography";
+import { HelpPopover } from "@/components/ui/help-popover";
 import { Input } from "@/components/ui/input";
 import {
   Popover,
@@ -30,12 +39,12 @@ import {
 } from "@/components/ui/resizable";
 import { ApplicationArea } from "~/zenstack/models";
 import {
+  CirclePlus,
   CircleSlash2,
-  Edit,
   Layers,
-  PlusCircle,
   Save,
   Search,
+  SquarePen,
   Trash2,
   Upload,
 } from "lucide-react";
@@ -123,6 +132,7 @@ export default function SharedStepsPage() {
   const projectId = params.projectId as string;
   const t = useTranslations("sharedSteps");
   const tCommon = useTranslations("common");
+  const tGlobal = useTranslations();
   const [search, setSearch] = useState("");
   const [selectedGroupId, setSelectedGroupId] = useState<number | null>(null);
   const [editMode, setEditMode] = useState(false);
@@ -148,6 +158,11 @@ export default function SharedStepsPage() {
   );
   const canEdit = perms?.canAddEdit;
   const canDelete = perms?.canDelete;
+
+  // Project (for the header's name/icon), mirroring the other project pages.
+  const { data: project } = useClientQueries(schema).projects.useFindFirst({
+    where: { AND: [{ id: Number(projectId) }, { isDeleted: false }] },
+  });
 
   // Fetch groups
   const { data: groups = [], isLoading: groupsLoading } = useClientQueries(
@@ -343,256 +358,279 @@ export default function SharedStepsPage() {
   }, [urlGroupId, groups, selectedGroupId]);
 
   return (
-    <div className="flex h-full w-full" data-testid="shared-steps-page">
-      <ResizablePanelGroup
-        direction="horizontal"
-        autoSaveId="shared-steps-panels"
-      >
-        {/* Left Pane: Group List & Filter */}
-        <ResizablePanel
-          id="shared-steps-left"
-          defaultSize={30}
-          minSize={15}
-          maxSize={50}
-        >
-          <div className="h-full bg-primary-foreground p-4 flex flex-col">
-            {canEdit && (
-              <div className="mb-4 flex gap-2 justify-between w-fill">
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  data-testid="manual-shared-steps-btn"
-                  onClick={() => setManualDialogOpen(true)}
-                >
-                  <PlusCircle className="h-4 w-4" />
-                  {t("manualEntry.buttonLabel")}
-                </Button>
-                {manualDialogOpen && (
-                  <ManualSharedStepsDialog
-                    open={manualDialogOpen}
-                    onClose={() => setManualDialogOpen(false)}
-                    onComplete={() => {
-                      // Refetch groups when manual entry completes
-                      window.location.reload();
-                    }}
-                  />
-                )}
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  data-testid="import-shared-steps-btn"
-                  onClick={() => setImportWizardOpen(true)}
-                >
-                  <Upload className="h-4 w-4" />
-                  {t("importWizard.title")}
-                </Button>
-                {importWizardOpen && (
-                  <ImportSharedStepsWizard
-                    open={importWizardOpen}
-                    onClose={() => setImportWizardOpen(false)}
-                    onImportComplete={() => {
-                      // Refetch groups when import completes
-                      window.location.reload();
-                    }}
-                  />
-                )}
-              </div>
-            )}
-            <div className="mb-2">
-              <Button variant="ghost" asChild className="w-full">
-                <Link
-                  href={`/projects/shared-steps/${projectId}/step-duplicates`}
-                >
-                  <Search className="w-4 h-4" />
-                  {t("findStepDuplicates")}
-                </Link>
-              </Button>
-            </div>
-            <div className="mb-4">
-              <Filter
-                placeholder={t("filterPlaceholder")}
-                onSearchChange={setSearch}
-                dataTestId="shared-steps-filter"
-              />
-            </div>
-            <div className="flex-1 overflow-y-auto">
-              {groupsLoading ? (
-                <div>
-                  <LoadingSpinner />
-                </div>
-              ) : filteredGroups.length === 0 ? (
-                <div>{t("noGroups")}</div>
-              ) : (
-                <ul className="space-y-2">
-                  {filteredGroups.map((group: any) => (
-                    <li
-                      key={group.id}
-                      id={`shared-step-group-${group.id}`}
-                      className={`flex items-center gap-2 p-2 rounded cursor-pointer transition-colors min-h-10 h-10 ${selectedGroupId === group.id ? "bg-primary/10" : "hover:bg-muted"}`}
-                      style={{ boxSizing: "border-box" }}
-                      onClick={() => {
-                        setSelectedGroupId(group.id);
-                        setEditMode(false);
-                        setEditGroupName(group.name);
-                      }}
-                      data-testid={`shared-step-group-${group.id}`}
+    <div className="h-full w-full" data-testid="shared-steps-page">
+      <Card className="flex h-full w-full min-w-[400px] flex-col">
+        <CardHeader>
+          <SectionHeader className="flex items-center gap-2">
+            <CardTitle>
+              {tGlobal("enums.ApplicationArea.SharedSteps")}
+            </CardTitle>
+            <HelpPopover helpKey="projectSharedSteps" />
+          </SectionHeader>
+          <CardDescription>
+            <span className="flex items-center gap-2 uppercase">
+              <ProjectIcon iconUrl={project?.iconUrl} />
+              {project?.name}
+            </span>
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="h-full p-0">
+          <ResizablePanelGroup
+            direction="horizontal"
+            autoSaveId="shared-steps-panels"
+            className="h-full"
+          >
+            {/* Left Pane: Group List & Filter */}
+            <ResizablePanel
+              id="shared-steps-left"
+              defaultSize={30}
+              minSize={15}
+              maxSize={50}
+            >
+              <div className="h-full bg-primary-foreground p-4 flex flex-col">
+                {canEdit && (
+                  <div className="mb-4 flex gap-2 @container">
+                    <Button
+                      variant="outline"
+                      data-testid="manual-shared-steps-btn"
+                      onClick={() => setManualDialogOpen(true)}
+                      aria-label={t("manualEntry.buttonLabel")}
+                      className="group gap-0 transition-all duration-200 @sm:gap-2 hover:gap-2"
                     >
-                      <Layers className="w-5 h-5 text-primary" />
-                      <span
-                        className="flex-1 truncate"
-                        data-testid="group-name"
-                      >
-                        {group.name}
+                      <CirclePlus className="h-4 w-4 shrink-0" />
+                      <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 @sm:max-w-xs group-hover:max-w-xs">
+                        {t("manualEntry.buttonLabel")}
                       </span>
-                      <span
-                        className="text-xs text-muted-foreground ms-2"
-                        data-testid="group-steps-count"
-                      >
-                        {t("stepsCount", { count: group.items?.length || 0 })} |
-                        <TestCaseCount groupId={group.id} t={t} />
+                    </Button>
+                    {manualDialogOpen && (
+                      <ManualSharedStepsDialog
+                        open={manualDialogOpen}
+                        onClose={() => setManualDialogOpen(false)}
+                        onComplete={() => {
+                          // Refetch groups when manual entry completes
+                          window.location.reload();
+                        }}
+                      />
+                    )}
+                    <Button
+                      variant="outline"
+                      data-testid="import-shared-steps-btn"
+                      onClick={() => setImportWizardOpen(true)}
+                      aria-label={t("importWizard.title")}
+                      className="group gap-0 transition-all duration-200 @sm:gap-2 hover:gap-2"
+                    >
+                      <Upload className="h-4 w-4 shrink-0" />
+                      <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 @sm:max-w-xs group-hover:max-w-xs">
+                        {t("importWizard.title")}
                       </span>
-                      {canDelete &&
-                        selectedGroupId === group.id &&
-                        !editMode && (
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setShowDeleteDialog(true);
-                            }}
-                            data-testid="delete-group-btn"
-                          >
-                            <Trash2 className="w-4 h-4 text-destructive" />
-                          </Button>
-                        )}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          </div>
-        </ResizablePanel>
-        <ResizableHandle withHandle />
-        {/* Right Pane: Steps Display/Edit */}
-        <ResizablePanel id="shared-steps-right" defaultSize={70}>
-          <div className="h-full p-6 overflow-y-auto">
-            {!selectedGroup ? (
-              <div className="text-muted-foreground text-center mt-20">
-                {t("selectGroupPrompt")}
-              </div>
-            ) : (
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-2 mb-4">
-                    <Layers className="w-6 h-6 text-primary" />
-                    {editMode ? (
-                      <>
-                        <Input
-                          className="border rounded px-2 py-1 text-lg flex-1"
-                          value={editGroupName}
-                          onChange={(e) => setEditGroupName(e.target.value)}
-                          data-testid="edit-group-name-input-main"
-                          readOnly={false}
-                        />
-                        {canEdit && (
-                          <>
-                            <Button
-                              onClick={() => {
-                                setEditMode(false);
-                                setEditGroupName(selectedGroup?.name || "");
-                              }}
-                              disabled={saving}
-                              variant="outline"
-                              data-testid="cancel-edit-group-btn"
-                              className="ms-2"
-                            >
-                              <CircleSlash2 className="w-4 h-4" />
-                              {tCommon("cancel")}
-                            </Button>
-                            <Button
-                              onClick={handleSaveSteps}
-                              disabled={saving}
-                              variant="default"
-                              data-testid="save-group-btn"
-                              className="ms-2"
-                            >
-                              <Save className="w-4 h-4" />
-                              {saving
-                                ? tCommon("actions.saving")
-                                : tCommon("actions.save")}
-                            </Button>
-                          </>
-                        )}
-                        {canDelete && (
-                          <Button
-                            onClick={() => setShowDeleteDialog(true)}
-                            disabled={saving}
-                            variant="destructive"
-                            data-testid="delete-group-btn-main"
-                            className="ms-2"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                            {tCommon("actions.delete")}
-                          </Button>
-                        )}
-                      </>
-                    ) : (
-                      <>
-                        <span
-                          className="font-bold text-lg flex-1"
-                          data-testid="selected-group-name"
-                        >
-                          {selectedGroup.name}
-                        </span>
-                        {canEdit && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => setEditMode(true)}
-                            data-testid="edit-group-name-btn-main"
-                            className="ms-2"
-                          >
-                            <Edit className="w-4 h-4" />
-                            {tCommon("actions.edit")}
-                          </Button>
-                        )}
-                      </>
+                    </Button>
+                    {importWizardOpen && (
+                      <ImportSharedStepsWizard
+                        open={importWizardOpen}
+                        onClose={() => setImportWizardOpen(false)}
+                        onImportComplete={() => {
+                          // Refetch groups when import completes
+                          window.location.reload();
+                        }}
+                      />
                     )}
                   </div>
-                  {/* Steps display or edit */}
-                  {canEdit && editMode ? (
-                    <FormProvider {...form}>
-                      <StepsForm
-                        control={form.control}
-                        name="steps"
-                        steps={form.getValues("steps")}
-                        readOnly={false}
-                        projectId={Number(projectId)}
-                        onSharedStepCreated={undefined}
-                        hideSharedStepsButtons={true}
-                      />
-                    </FormProvider>
+                )}
+                <div className="mb-2">
+                  <Button variant="ghost" asChild className="w-full">
+                    <Link
+                      href={`/projects/shared-steps/${projectId}/step-duplicates`}
+                    >
+                      <Search className="w-4 h-4" />
+                      {t("findStepDuplicates")}
+                    </Link>
+                  </Button>
+                </div>
+                <div className="mb-4">
+                  <Filter
+                    placeholder={t("filterPlaceholder")}
+                    onSearchChange={setSearch}
+                    dataTestId="shared-steps-filter"
+                  />
+                </div>
+                <div className="flex-1 overflow-y-auto">
+                  {groupsLoading ? (
+                    <div>
+                      <LoadingSpinner />
+                    </div>
+                  ) : filteredGroups.length === 0 ? (
+                    <div>{t("noGroups")}</div>
                   ) : (
-                    <>
-                      {items && items.length > 0 ? (
-                        <StepsDisplay
-                          steps={items.map(
-                            ({ sharedStepGroupId, ...rest }) => ({
-                              ...rest,
-                              sharedStepGroupId: null,
-                            })
-                          )}
-                        />
-                      ) : null}
-                    </>
+                    <ul className="space-y-2">
+                      {filteredGroups.map((group: any) => (
+                        <li
+                          key={group.id}
+                          id={`shared-step-group-${group.id}`}
+                          className={`flex items-center gap-2 p-2 rounded cursor-pointer transition-colors min-h-10 h-10 ${selectedGroupId === group.id ? "bg-primary/10" : "hover:bg-muted"}`}
+                          style={{ boxSizing: "border-box" }}
+                          onClick={() => {
+                            setSelectedGroupId(group.id);
+                            setEditMode(false);
+                            setEditGroupName(group.name);
+                          }}
+                          data-testid={`shared-step-group-${group.id}`}
+                        >
+                          <Layers className="w-5 h-5 text-primary" />
+                          <span
+                            className="flex-1 truncate"
+                            data-testid="group-name"
+                          >
+                            {group.name}
+                          </span>
+                          <span
+                            className="text-xs text-muted-foreground ms-2"
+                            data-testid="group-steps-count"
+                          >
+                            {t("stepsCount", {
+                              count: group.items?.length || 0,
+                            })}{" "}
+                            |
+                            <TestCaseCount groupId={group.id} t={t} />
+                          </span>
+                          {canDelete &&
+                            selectedGroupId === group.id &&
+                            !editMode && (
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setShowDeleteDialog(true);
+                                }}
+                                data-testid="delete-group-btn"
+                              >
+                                <Trash2 className="w-4 h-4 text-destructive" />
+                              </Button>
+                            )}
+                        </li>
+                      ))}
+                    </ul>
                   )}
-                </CardContent>
-              </Card>
-            )}
-          </div>
-        </ResizablePanel>
-      </ResizablePanelGroup>
+                </div>
+              </div>
+            </ResizablePanel>
+            <ResizableHandle withHandle />
+            {/* Right Pane: Steps Display/Edit */}
+            <ResizablePanel id="shared-steps-right" defaultSize={70}>
+              <div className="h-full p-6 overflow-y-auto">
+                {!selectedGroup ? (
+                  <div className="text-muted-foreground text-center mt-20">
+                    {t("selectGroupPrompt")}
+                  </div>
+                ) : (
+                  <Card>
+                    <CardContent className="p-6">
+                      <div className="flex items-center gap-2 mb-4">
+                        <Layers className="w-6 h-6 text-primary" />
+                        {editMode ? (
+                          <>
+                            <Input
+                              className="border rounded px-2 py-1 text-lg flex-1"
+                              value={editGroupName}
+                              onChange={(e) => setEditGroupName(e.target.value)}
+                              data-testid="edit-group-name-input-main"
+                              readOnly={false}
+                            />
+                            {canEdit && (
+                              <>
+                                <Button
+                                  onClick={() => {
+                                    setEditMode(false);
+                                    setEditGroupName(selectedGroup?.name || "");
+                                  }}
+                                  disabled={saving}
+                                  variant="outline"
+                                  data-testid="cancel-edit-group-btn"
+                                >
+                                  <CircleSlash2 className="w-4 h-4" />
+                                  {tCommon("cancel")}
+                                </Button>
+                                <Button
+                                  onClick={handleSaveSteps}
+                                  disabled={saving}
+                                  variant="default"
+                                  data-testid="save-group-btn"
+                                >
+                                  <Save className="w-4 h-4" />
+                                  {saving
+                                    ? tCommon("actions.saving")
+                                    : tCommon("actions.save")}
+                                </Button>
+                              </>
+                            )}
+                            {canDelete && (
+                              <Button
+                                onClick={() => setShowDeleteDialog(true)}
+                                disabled={saving}
+                                variant="destructive"
+                                data-testid="delete-group-btn-main"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                                {tCommon("actions.delete")}
+                              </Button>
+                            )}
+                          </>
+                        ) : (
+                          <>
+                            <span
+                              className="font-bold text-lg flex-1"
+                              data-testid="selected-group-name"
+                            >
+                              {selectedGroup.name}
+                            </span>
+                            {canEdit && (
+                              <Button
+                                variant="outline"
+                                onClick={() => setEditMode(true)}
+                                data-testid="edit-group-name-btn-main"
+                              >
+                                <SquarePen className="w-4 h-4" />
+                                {tCommon("actions.edit")}
+                              </Button>
+                            )}
+                          </>
+                        )}
+                      </div>
+                      {/* Steps display or edit */}
+                      {canEdit && editMode ? (
+                        <FormProvider {...form}>
+                          <StepsForm
+                            control={form.control}
+                            name="steps"
+                            steps={form.getValues("steps")}
+                            readOnly={false}
+                            projectId={Number(projectId)}
+                            onSharedStepCreated={undefined}
+                            hideSharedStepsButtons={true}
+                          />
+                        </FormProvider>
+                      ) : (
+                        <>
+                          {items && items.length > 0 ? (
+                            <StepsDisplay
+                              steps={items.map(
+                                ({ sharedStepGroupId, ...rest }) => ({
+                                  ...rest,
+                                  sharedStepGroupId: null,
+                                })
+                              )}
+                            />
+                          ) : null}
+                        </>
+                      )}
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+            </ResizablePanel>
+          </ResizablePanelGroup>
+        </CardContent>
+      </Card>
       {/* Delete confirmation dialog */}
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>

@@ -13,6 +13,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { PageTitle, SectionHeader } from "@/components/ui/typography";
+import { HelpPopover } from "@/components/ui/help-popover";
 import { CirclePlus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { notFound, useParams } from "next/navigation";
@@ -93,13 +94,12 @@ export default function ProjectParametersSettingsPage() {
     <main className="space-y-6">
       <Card>
         <CardHeader className="w-full">
-          <SectionHeader className="flex items-center justify-between pb-2 pt-1">
-            <CardTitle>
-              <span>{tParameters("title")}</span>
-            </CardTitle>
+          <SectionHeader className="flex items-center gap-2">
+            <CardTitle>{tParameters("title")}</CardTitle>
+            <HelpPopover helpKey="projectParameters" />
           </SectionHeader>
-          <CardDescription className="uppercase">
-            <span className="flex items-center gap-2">
+          <CardDescription>
+            <span className="flex items-center gap-2 uppercase">
               <ProjectIcon iconUrl={project.iconUrl} />
               {project.name}
             </span>
@@ -107,15 +107,9 @@ export default function ProjectParametersSettingsPage() {
         </CardHeader>
         <CardContent className="space-y-6">
           <Card id="junit">
-            <CardHeader className="w-full">
-              <SectionHeader className="flex items-center justify-between pb-2 pt-1">
-                <CardTitle>
-                  <span>{tParameters("tabJunit")}</span>
-                </CardTitle>
-              </SectionHeader>
-              <p className="text-sm text-muted-foreground pt-2">
-                {tJunit("description")}
-              </p>
+            <CardHeader>
+              <CardTitle>{tParameters("tabJunit")}</CardTitle>
+              <CardDescription>{tJunit("description")}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <JunitIterationPropertyForm
@@ -129,24 +123,22 @@ export default function ProjectParametersSettingsPage() {
           </Card>
 
           <Card id="datasets">
-            <CardHeader className="w-full">
-              <SectionHeader className="flex items-center justify-between pb-2 pt-1">
-                <CardTitle>
-                  <span>{tDatasets("title")}</span>
-                </CardTitle>
+            <CardHeader>
+              <div className="flex items-center justify-between gap-2">
+                <CardTitle>{tDatasets("title")}</CardTitle>
                 <Button
                   onClick={() => setCreateOpen(true)}
                   data-testid="dataset-create-button"
+                  aria-label={tDatasets("newButton")}
+                  className="group gap-0 transition-all duration-200 hover:gap-2"
                 >
-                  <CirclePlus className="w-4" />
-                  <span className="hidden md:inline">
+                  <CirclePlus className="h-4 w-4" />
+                  <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-xs">
                     {tDatasets("newButton")}
                   </span>
                 </Button>
-              </SectionHeader>
-              <p className="text-sm text-muted-foreground pt-2">
-                {tDatasets("description")}
-              </p>
+              </div>
+              <CardDescription>{tDatasets("description")}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <DatasetsList projectId={projectId} />

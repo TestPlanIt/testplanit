@@ -16,13 +16,22 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { PageTitle, SectionHeader } from "@/components/ui/typography";
+import { HelpPopover } from "@/components/ui/help-popover";
 import { Tags } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useParams, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { useRequireAuth } from "~/hooks/useRequireAuth";
 import { useRouter } from "~/lib/navigation";
-import { useColumns } from "./columns";
+import { ExtendedTags, useColumns } from "./columns";
+
+const PAGE_SIZE = 50;
+
+// Count columns are derived from filtered `_count` and can't be ordered across
+// pages by the database (Prisma can't sort on a filtered relation count).
+// Sorting by one fetches the full project-scoped set once and renders it through
+// the same virtualized table; "name" drives a genuine server-side infinite fetch.
+const COUNT_SORT_COLUMNS = ["cases", "sessions", "runs"];
 
 export default function ProjectTagListPage() {
   return <TagList />;
@@ -36,6 +45,7 @@ function TagList() {
   } = useRequireAuth();
   const router = useRouter();
   const { projectId } = useParams<{ projectId: string }>();
+  const projectIdNumber = Number(projectId);
   const t = useTranslations();
   const [sortConfig, setSortConfig] = useState<{
     column: string;
@@ -73,7 +83,7 @@ function TagList() {
           {
             isDeleted: false,
           },
-          { id: Number(projectId) },
+          { id: projectIdNumber },
         ],
       },
     },
@@ -84,171 +94,160 @@ function TagList() {
     }
   );
 
-  const { data: repositoryCases, isLoading: isLoadingCases } = useClientQueries(
-    schema
-  ).repositoryCases.useFindMany(
-    {
-      where: {
-        projectId: Number(projectId),
-        isDeleted: false,
+  // Only tags with at least one active (non-deleted, in-project) case, session,
+  // or run are shown — mirrors the project overview's tag scoping.
+  const tagsWhere = useMemo(() => {
+    const conditions: Array<Record<string, unknown>> = [
+      { isDeleted: false },
+      {
+        OR: [
+          {
+            caseTags: {
+              some: { case: { projectId: projectIdNumber, isDeleted: false } },
+            },
+          },
+          {
+            testRuns: {
+              some: { projectId: projectIdNumber, isDeleted: false },
+            },
+          },
+          {
+            sessions: {
+              some: { projectId: projectIdNumber, isDeleted: false },
+            },
+          },
+        ],
       },
-      select: {
+    ];
+
+    const trimmed = debouncedSearchString.trim();
+    if (trimmed) {
+      conditions.push({
+        name: { contains: trimmed, mode: "insensitive" as const },
+      });
+    }
+
+    return { AND: conditions };
+  }, [projectIdNumber, debouncedSearchString]);
+
+  // Per-tag counts scoped to this project. Filtered `_count` keeps the counts
+  // accurate without loading every case/session/run into the client.
+  const tagsSelect = useMemo(
+    () =>
+      ({
         id: true,
         name: true,
-        caseTags: {
+        _count: {
           select: {
-            tag: {
-              select: {
-                id: true,
-              },
+            caseTags: {
+              where: { case: { projectId: projectIdNumber, isDeleted: false } },
+            },
+            testRuns: {
+              where: { projectId: projectIdNumber, isDeleted: false },
+            },
+            sessions: {
+              where: { projectId: projectIdNumber, isDeleted: false },
             },
           },
         },
-      },
-    },
-    {
-      enabled: !!projectId,
-    }
+      }) as const,
+    [projectIdNumber]
   );
 
-  const { data: sessions, isLoading: isLoadingSessions } = useClientQueries(
-    schema
-  ).sessions.useFindMany(
-    {
-      where: {
-        projectId: Number(projectId),
-        isDeleted: false,
-      },
-      select: {
-        id: true,
-        name: true,
-        tags: {
-          select: {
-            id: true,
-          },
-        },
-      },
-    },
-    {
-      enabled: !!projectId,
+  const isCountSort = COUNT_SORT_COLUMNS.includes(sortConfig.column);
+
+  const orderBy = useMemo(() => {
+    // Only "name" is a real DB column; count columns sort client-side over the
+    // full set (see COUNT_SORT_COLUMNS).
+    if (sortConfig.column === "name") {
+      return { name: sortConfig.direction } as const;
     }
+    return { name: "asc" as const };
+  }, [sortConfig]);
+
+  const infiniteBaseArgs = useMemo(
+    () => ({
+      where: tagsWhere,
+      select: tagsSelect,
+      orderBy,
+      take: PAGE_SIZE,
+    }),
+    [tagsWhere, tagsSelect, orderBy]
   );
 
-  const { data: testRuns, isLoading: isLoadingRuns } = useClientQueries(
-    schema
-  ).testRuns.useFindMany(
-    {
-      where: {
-        projectId: Number(projectId),
-        isDeleted: false,
-      },
-      select: {
-        id: true,
-        name: true,
-        tags: {
-          select: {
-            id: true,
-          },
-        },
-      },
-    },
-    {
-      enabled: !!projectId,
-    }
-  );
+  const queryEnabled = isAuthenticated && Number.isFinite(projectIdNumber);
 
-  // Fetch ONLY basic tag data - no includes to avoid bind variable explosion
-  const { data: tags, isLoading: isLoadingTags } = useClientQueries(
+  const {
+    data: infinitePages,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading: isLoadingInfinite,
+  } = useClientQueries(schema).tags.useInfiniteFindMany(infiniteBaseArgs, {
+    getNextPageParam: (lastPage, allPages) => {
+      if (!lastPage || lastPage.length < PAGE_SIZE) return undefined;
+      return { ...infiniteBaseArgs, skip: allPages.flat().length };
+    },
+    enabled: queryEnabled && !isCountSort,
+  });
+
+  const { data: allTags, isLoading: isLoadingAll } = useClientQueries(
     schema
   ).tags.useFindMany(
-    {
-      where: {
-        isDeleted: false,
-      },
-      select: {
-        id: true,
-        name: true,
-      },
-    },
-    {
-      enabled: !!projectId,
+    { where: tagsWhere, select: tagsSelect, orderBy },
+    { enabled: queryEnabled && isCountSort }
+  );
+
+  const { data: tagsCount } = useClientQueries(schema).tags.useCount(
+    { where: tagsWhere },
+    { enabled: queryEnabled }
+  );
+
+  const rawTags = useMemo(
+    () =>
+      isCountSort
+        ? (allTags ?? [])
+        : ((infinitePages?.pages.flat() as unknown[]) ?? []),
+    [isCountSort, allTags, infinitePages]
+  );
+
+  const isLoadingTags = isCountSort ? isLoadingAll : isLoadingInfinite;
+
+  const mappedTags = useMemo<ExtendedTags[]>(() => {
+    const mapped = (rawTags as any[]).map((tag) => ({
+      id: tag.id,
+      name: tag.name,
+      casesCount: tag._count?.caseTags ?? 0,
+      sessionsCount: tag._count?.sessions ?? 0,
+      runsCount: tag._count?.testRuns ?? 0,
+    }));
+
+    if (isCountSort) {
+      return [...mapped].sort((a, b) => {
+        let aValue = 0;
+        let bValue = 0;
+        switch (sortConfig.column) {
+          case "cases":
+            aValue = a.casesCount;
+            bValue = b.casesCount;
+            break;
+          case "sessions":
+            aValue = a.sessionsCount;
+            bValue = b.sessionsCount;
+            break;
+          case "runs":
+            aValue = a.runsCount;
+            bValue = b.runsCount;
+            break;
+        }
+        return sortConfig.direction === "asc"
+          ? aValue - bValue
+          : bValue - aValue;
+      });
     }
-  );
 
-  const activeCaseMap = useMemo(() => {
-    return (
-      repositoryCases?.reduce(
-        (acc, curr) => {
-          acc[curr.id] = curr.name;
-          return acc;
-        },
-        {} as Record<number, string>
-      ) || {}
-    );
-  }, [repositoryCases]);
-
-  const activeCaseIds = useMemo(
-    () => repositoryCases?.map((c) => c.id) || [],
-    [repositoryCases]
-  );
-
-  const untaggedCaseIds = useMemo(
-    () =>
-      repositoryCases
-        ?.filter((c) => !c.caseTags || c.caseTags.length === 0)
-        .map((c) => c.id) || [],
-    [repositoryCases]
-  );
-
-  const activeSessionMap = useMemo(() => {
-    return (
-      sessions?.reduce(
-        (acc, curr) => {
-          acc[curr.id] = curr.name;
-          return acc;
-        },
-        {} as Record<number, string>
-      ) || {}
-    );
-  }, [sessions]);
-
-  const activeSessionIds = useMemo(
-    () => sessions?.map((s) => s.id) || [],
-    [sessions]
-  );
-
-  const untaggedSessionIds = useMemo(
-    () =>
-      sessions
-        ?.filter((s) => !s.tags || s.tags.length === 0)
-        .map((s) => s.id) || [],
-    [sessions]
-  );
-
-  const activeRunMap = useMemo(() => {
-    return (
-      testRuns?.reduce(
-        (acc, curr) => {
-          acc[curr.id] = curr.name;
-          return acc;
-        },
-        {} as Record<number, string>
-      ) || {}
-    );
-  }, [testRuns]);
-
-  const activeRunIds = useMemo(
-    () => testRuns?.map((r) => r.id) || [],
-    [testRuns]
-  );
-
-  const untaggedRunIds = useMemo(
-    () =>
-      testRuns
-        ?.filter((r) => !r.tags || r.tags.length === 0)
-        .map((r) => r.id) || [],
-    [testRuns]
-  );
+    return mapped;
+  }, [rawTags, isCountSort, sortConfig]);
 
   // ── AI Auto-Tag ──────────────────────────────────────────────────────
   const searchParams = useSearchParams();
@@ -266,161 +265,91 @@ function TagList() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const filteredTags = useMemo(() => {
-    if (!tags) return [];
+  // The button's enabled state only needs to know whether the project has any
+  // taggable entities — cheap COUNT queries instead of loading every row.
+  const { data: caseTaggableCount } = useClientQueries(
+    schema
+  ).repositoryCases.useCount(
+    { where: { projectId: projectIdNumber, isDeleted: false } },
+    { enabled: queryEnabled }
+  );
+  const { data: sessionTaggableCount } = useClientQueries(
+    schema
+  ).sessions.useCount(
+    { where: { projectId: projectIdNumber, isDeleted: false } },
+    { enabled: queryEnabled }
+  );
+  const { data: runTaggableCount } = useClientQueries(schema).testRuns.useCount(
+    { where: { projectId: projectIdNumber, isDeleted: false } },
+    { enabled: queryEnabled }
+  );
+  const hasTaggableEntities =
+    (caseTaggableCount ?? 0) +
+      (sessionTaggableCount ?? 0) +
+      (runTaggableCount ?? 0) >
+    0;
 
-    // Build tag items from the existing data
-    const tagItems = new Map<
-      number,
-      {
-        repositoryCases: Array<{ id: number; name: string }>;
-        sessions: Array<{ id: number; name: string; isCompleted: any }>;
-        testRuns: Array<{ id: number; name: string; isCompleted?: boolean }>;
-      }
-    >();
+  // The wizard needs the full id lists (all + untagged) per entity type. These
+  // are only fetched once the wizard opens so the page itself stays light.
+  const { data: wizardCases } = useClientQueries(
+    schema
+  ).repositoryCases.useFindMany(
+    {
+      where: { projectId: projectIdNumber, isDeleted: false },
+      select: { id: true, caseTags: { select: { tagId: true } } },
+    },
+    { enabled: queryEnabled && showAutoTagWizard }
+  );
+  const { data: wizardSessions } = useClientQueries(
+    schema
+  ).sessions.useFindMany(
+    {
+      where: { projectId: projectIdNumber, isDeleted: false },
+      select: { id: true, tags: { select: { id: true } } },
+    },
+    { enabled: queryEnabled && showAutoTagWizard }
+  );
+  const { data: wizardRuns } = useClientQueries(schema).testRuns.useFindMany(
+    {
+      where: { projectId: projectIdNumber, isDeleted: false },
+      select: { id: true, tags: { select: { id: true } } },
+    },
+    { enabled: queryEnabled && showAutoTagWizard }
+  );
 
-    // Collect cases per tag
-    repositoryCases?.forEach((repositoryCase) => {
-      repositoryCase.caseTags?.forEach((ct) => {
-        const tag = ct.tag;
-        const current = tagItems.get(tag.id) || {
-          repositoryCases: [],
-          sessions: [],
-          testRuns: [],
-        };
-        current.repositoryCases.push({
-          id: repositoryCase.id,
-          name: repositoryCase.name,
-        });
-        tagItems.set(tag.id, current);
-      });
-    });
-
-    // Collect sessions per tag
-    sessions?.forEach((session) => {
-      session.tags?.forEach((tag) => {
-        const current = tagItems.get(tag.id) || {
-          repositoryCases: [],
-          sessions: [],
-          testRuns: [],
-        };
-        current.sessions.push({
-          id: session.id,
-          name: session.name,
-          isCompleted: false,
-        });
-        tagItems.set(tag.id, current);
-      });
-    });
-
-    // Collect runs per tag
-    testRuns?.forEach((testRun) => {
-      testRun.tags?.forEach((tag) => {
-        const current = tagItems.get(tag.id) || {
-          repositoryCases: [],
-          sessions: [],
-          testRuns: [],
-        };
-        current.testRuns.push({
-          id: testRun.id,
-          name: testRun.name,
-          isCompleted: false,
-        });
-        tagItems.set(tag.id, current);
-      });
-    });
-
-    const filtered = tags
-      .filter((tag) => {
-        const items = tagItems.get(tag.id);
-        const hasItems =
-          items &&
-          (items.repositoryCases.length > 0 ||
-            items.sessions.length > 0 ||
-            items.testRuns.length > 0);
-        const matchesSearch = tag.name
-          .toLowerCase()
-          .includes(debouncedSearchString.toLowerCase());
-        return hasItems && matchesSearch;
-      })
-      .map((tag) => {
-        const items = tagItems.get(tag.id) || {
-          repositoryCases: [],
-          sessions: [],
-          testRuns: [],
-        };
-        return {
-          ...tag,
-          repositoryCases: items.repositoryCases,
-          sessions: items.sessions,
-          testRuns: items.testRuns,
-        };
-      });
-
-    // Apply sorting based on sortConfig
-    return filtered.sort((a, b) => {
-      let aValue: any;
-      let bValue: any;
-
-      switch (sortConfig.column) {
-        case "name":
-          aValue = a.name.toLowerCase();
-          bValue = b.name.toLowerCase();
-          break;
-        case "cases":
-          aValue = a.repositoryCases.filter((c) =>
-            Object.prototype.hasOwnProperty.call(activeCaseMap, c.id)
-          ).length;
-          bValue = b.repositoryCases.filter((c) =>
-            Object.prototype.hasOwnProperty.call(activeCaseMap, c.id)
-          ).length;
-          break;
-        case "sessions":
-          aValue = a.sessions.filter((s) =>
-            Object.prototype.hasOwnProperty.call(activeSessionMap, s.id)
-          ).length;
-          bValue = b.sessions.filter((s) =>
-            Object.prototype.hasOwnProperty.call(activeSessionMap, s.id)
-          ).length;
-          break;
-        case "runs":
-          aValue = a.testRuns.filter((r) =>
-            Object.prototype.hasOwnProperty.call(activeRunMap, r.id)
-          ).length;
-          bValue = b.testRuns.filter((r) =>
-            Object.prototype.hasOwnProperty.call(activeRunMap, r.id)
-          ).length;
-          break;
-        default:
-          aValue = a.name.toLowerCase();
-          bValue = b.name.toLowerCase();
-      }
-
-      // Handle string comparison
-      if (typeof aValue === "string" && typeof bValue === "string") {
-        return sortConfig.direction === "asc"
-          ? aValue.localeCompare(bValue)
-          : bValue.localeCompare(aValue);
-      }
-
-      // Handle numeric comparison
-      if (sortConfig.direction === "asc") {
-        return aValue - bValue;
-      } else {
-        return bValue - aValue;
-      }
-    });
-  }, [
-    tags,
-    repositoryCases,
-    sessions,
-    testRuns,
-    debouncedSearchString,
-    sortConfig,
-    activeCaseMap,
-    activeSessionMap,
-    activeRunMap,
-  ]);
+  const activeCaseIds = useMemo(
+    () => wizardCases?.map((c: any) => c.id) ?? [],
+    [wizardCases]
+  );
+  const untaggedCaseIds = useMemo(
+    () =>
+      wizardCases
+        ?.filter((c: any) => !c.caseTags || c.caseTags.length === 0)
+        .map((c: any) => c.id) ?? [],
+    [wizardCases]
+  );
+  const activeSessionIds = useMemo(
+    () => wizardSessions?.map((s: any) => s.id) ?? [],
+    [wizardSessions]
+  );
+  const untaggedSessionIds = useMemo(
+    () =>
+      wizardSessions
+        ?.filter((s: any) => !s.tags || s.tags.length === 0)
+        .map((s: any) => s.id) ?? [],
+    [wizardSessions]
+  );
+  const activeRunIds = useMemo(
+    () => wizardRuns?.map((r: any) => r.id) ?? [],
+    [wizardRuns]
+  );
+  const untaggedRunIds = useMemo(
+    () =>
+      wizardRuns
+        ?.filter((r: any) => !r.tags || r.tags.length === 0)
+        .map((r: any) => r.id) ?? [],
+    [wizardRuns]
+  );
 
   useEffect(() => {
     if (!isAuthLoading && !session) {
@@ -438,25 +367,13 @@ function TagList() {
     setSortConfig({ column, direction });
   };
 
-  const isLoadingCounts = isLoadingCases || isLoadingSessions || isLoadingRuns;
+  const columns = useColumns(projectId as string, t, false);
 
-  const columns = useColumns(
-    projectId as string,
-    activeCaseMap,
-    activeSessionMap,
-    activeRunMap,
-    t,
-    isLoadingCounts
-  );
-
-  // Wait for all data to load - this prevents the flash
-  if (
-    isAuthLoading ||
-    isLoadingTags ||
-    isLoadingCases ||
-    isLoadingSessions ||
-    isLoadingRuns
-  ) {
+  // Wait only for auth + the project query to resolve. `project === undefined`
+  // means the project query hasn't resolved yet; a resolved `null` below means
+  // it genuinely doesn't exist. The tags table renders its own loading state so
+  // rows stream in progressively instead of blocking the whole page.
+  if (isAuthLoading || project === undefined) {
     return null;
   }
 
@@ -480,27 +397,27 @@ function TagList() {
     <main>
       <Card>
         <CardHeader id="tags-page-header">
-          <CardTitle>
-            <SectionHeader className="flex items-center justify-between pb-2 pt-1">
+          <div className="flex items-center justify-between gap-2">
+            <SectionHeader className="flex items-center gap-2">
               <CardTitle>{t("common.fields.tags")}</CardTitle>
-              <Button
-                variant="default"
-                onClick={() => setShowAutoTagWizard(true)}
-                disabled={
-                  activeCaseIds.length +
-                    activeSessionIds.length +
-                    activeRunIds.length ===
-                  0
-                }
-                data-testid="ai-auto-tag-button"
-              >
-                <Tags className="h-4 w-4" />
-                {t("autoTag.actions.aiAutoTag")}
-              </Button>
+              <HelpPopover helpKey="projectTags" />
             </SectionHeader>
-          </CardTitle>
-          <CardDescription className="uppercase">
-            <span className="flex items-center gap-2 uppercase shrink-0">
+            <Button
+              variant="default"
+              onClick={() => setShowAutoTagWizard(true)}
+              disabled={!hasTaggableEntities}
+              data-testid="ai-auto-tag-button"
+              aria-label={t("autoTag.actions.aiAutoTag")}
+              className="group gap-0 transition-all duration-200 hover:gap-2"
+            >
+              <Tags className="h-4 w-4" />
+              <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-xs">
+                {t("autoTag.actions.aiAutoTag")}
+              </span>
+            </Button>
+          </div>
+          <CardDescription>
+            <span className="flex items-center gap-2 uppercase">
               <ProjectIcon iconUrl={project?.iconUrl} />
               {project?.name}
             </span>
@@ -519,11 +436,11 @@ function TagList() {
               </div>
             </div>
 
-            {filteredTags.length > 0 && (
+            {mappedTags.length > 0 && (
               <p className="text-sm text-muted-foreground shrink-0">
                 {t("admin.auditLogs.showing", {
-                  loaded: filteredTags.length.toLocaleString(),
-                  total: filteredTags.length.toLocaleString(),
+                  loaded: mappedTags.length.toLocaleString(),
+                  total: (tagsCount ?? mappedTags.length).toLocaleString(),
                 })}
               </p>
             )}
@@ -531,11 +448,14 @@ function TagList() {
           <div className="mt-4 w-full">
             <VirtualizedDataTable
               columns={columns as any}
-              data={filteredTags as any}
+              data={mappedTags as any}
               onSortChange={handleSortChange}
               sortConfig={sortConfig}
+              isLoading={isLoadingTags || isFetchingNextPage}
               columnVisibility={columnVisibility}
               onColumnVisibilityChange={setColumnVisibility}
+              hasMore={isCountSort ? false : !!hasNextPage}
+              onLoadMore={fetchNextPage}
               fillViewport
               resetKey={`${debouncedSearchString}|${sortConfig.column}|${sortConfig.direction}`}
               testIdPrefix="project-tags-table"

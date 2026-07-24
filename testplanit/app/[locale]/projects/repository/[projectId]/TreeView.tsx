@@ -1083,7 +1083,7 @@ const TreeView: React.FC<{
       <div
         ref={setCombinedRef}
         style={style}
-        className={`group flex items-center rounded-md ${backgroundColor} ${textColor} hover:bg-secondary/80 hover:text-secondary-foreground [&:hover_.text-muted-foreground]:text-secondary-foreground cursor-pointer px-2 py-1`}
+        className={`group flex items-center rounded-md ${backgroundColor} ${textColor} hover:bg-secondary/80 hover:text-secondary-foreground [&:hover_.text-muted-foreground]:text-secondary-foreground cursor-pointer ps-2 pe-0 py-1`}
         onClick={async () => {
           node.select();
           // Toggle expand/collapse when clicking anywhere on the folder row
@@ -1162,7 +1162,7 @@ const TreeView: React.FC<{
           }`}
         />
         <span
-          className="ms-2 truncate flex-1 min-w-0"
+          className="ms-2 truncate flex-1 min-w-0 text-sm"
           title={
             data && (data.directCaseCount > 0 || data.totalCaseCount > 0)
               ? `${node.data.name} (${data.directCaseCount}/${data.totalCaseCount})`
@@ -1180,6 +1180,14 @@ const TreeView: React.FC<{
           />
         )}
 
+        {data && (data.directCaseCount > 0 || data.totalCaseCount > 0) && (
+          <span
+            className={`ms-2 text-xs shrink-0 ${isSelected ? "text-secondary-foreground" : "text-muted-foreground"}`}
+          >
+            {`(${data.directCaseCount}/${data.totalCaseCount})`}
+          </span>
+        )}
+
         {canAddEdit && !filteredFolders && data?.folderId !== 0 && (
           <div className="ms-1 flex items-center h-7 invisible group-hover:visible shrink-0">
             <DropdownMenu>
@@ -1187,7 +1195,7 @@ const TreeView: React.FC<{
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-7 w-7 p-0"
+                  className="h-7 w-6 p-0"
                   data-testid={`folder-actions-trigger-${data?.folderId ?? 0}`}
                   aria-label={t("common.actions.actionsLabel")}
                 >
@@ -1246,14 +1254,6 @@ const TreeView: React.FC<{
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
-        )}
-
-        {data && (data.directCaseCount > 0 || data.totalCaseCount > 0) && (
-          <span
-            className={`ms-2 text-xs shrink-0 ${isSelected ? "text-secondary-foreground" : "text-muted-foreground"}`}
-          >
-            {`(${data.directCaseCount}/${data.totalCaseCount})`}
-          </span>
         )}
       </div>
     );

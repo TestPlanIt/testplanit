@@ -341,8 +341,12 @@ export class TagAnalysisService {
     } as const;
 
     switch (entityType) {
-      case "repositoryCase":
-        return (this.db as any).repositoryCases.findMany({
+      case "repositoryCase": {
+        // RepositoryCases links tags/issues through join tables (caseTags ->
+        // tag, caseIssues -> issue), unlike testRuns/sessions which relate to
+        // them directly. Fetch the joins, then flatten to the uniform
+        // `tags`/`issues` shape the content-extractor reads.
+        const cases = await (this.db as any).repositoryCases.findMany({
           where: { id: { in: entityIds }, isDeleted: false },
           include: {
             steps: {
@@ -350,11 +354,20 @@ export class TagAnalysisService {
               orderBy: { order: "asc" },
             },
             caseFieldValues: { include: { field: true } },
-            tags: true,
+            caseTags: { select: { tag: { select: { name: true } } } },
             folder: true,
-            issues: { where: { isDeleted: false }, select: linkedIssueSelect },
+            caseIssues: {
+              where: { issue: { isDeleted: false } },
+              select: { issue: { select: linkedIssueSelect } },
+            },
           },
         });
+        return cases.map((c: any) => ({
+          ...c,
+          tags: (c.caseTags ?? []).map((ct: any) => ct.tag),
+          issues: (c.caseIssues ?? []).map((ci: any) => ci.issue),
+        }));
+      }
 
       case "testRun":
         return (this.db as any).testRuns.findMany({

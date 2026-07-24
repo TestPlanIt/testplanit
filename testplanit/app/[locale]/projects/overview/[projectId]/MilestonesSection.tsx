@@ -2,6 +2,8 @@ import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import MilestoneDisplay from "@/projects/milestones/[projectId]/MilestoneDisplay";
+import { CardTitle } from "@/components/ui/card";
+import { SectionHeader } from "@/components/ui/typography";
 import { LinkIcon, Milestone } from "lucide-react";
 import { useTranslations } from "next-intl";
 import React from "react";
@@ -45,10 +47,10 @@ const MilestonesSection: React.FC<MilestonesSectionProps> = ({ projectId }) => {
     return (
       <div className="h-full flex flex-col border rounded-lg bg-card text-card-foreground shadow-sm">
         <div className="p-6 pb-4 border-b">
-          <h3 className="text-2xl font-semibold leading-none tracking-tight text-primary flex items-center">
-            <Milestone className="me-1" />
-            <div>{t("projects.overview.currentMilestones")}</div>
-          </h3>
+          <SectionHeader className="flex items-center gap-2">
+            <Milestone className="h-6 w-6 shrink-0" />
+            <CardTitle>{t("projects.overview.currentMilestones")}</CardTitle>
+          </SectionHeader>
         </div>
         <div className="p-6 flex-1 flex justify-center items-center">
           <LoadingSpinner />
@@ -60,10 +62,10 @@ const MilestonesSection: React.FC<MilestonesSectionProps> = ({ projectId }) => {
   return (
     <div className="h-full flex flex-col border rounded-lg bg-card text-card-foreground shadow-sm">
       <div className="p-6 pb-4 border-b">
-        <h3 className="text-2xl font-semibold leading-none tracking-tight text-primary flex items-center">
-          <Milestone className="me-1" />
-          <div>{t("projects.overview.currentMilestones")}</div>
-        </h3>
+        <SectionHeader className="flex items-center gap-2">
+          <Milestone className="h-6 w-6 shrink-0" />
+          <CardTitle>{t("projects.overview.currentMilestones")}</CardTitle>
+        </SectionHeader>
         {milestones?.length ? (
           <p className="text-sm text-muted-foreground mt-1.5">
             <Link

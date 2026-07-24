@@ -19,6 +19,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { SectionHeader } from "@/components/ui/typography";
+import { HelpPopover } from "@/components/ui/help-popover";
 import {
   ResizableHandle,
   ResizablePanel,
@@ -1613,13 +1614,12 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
           <div className="flex-1 w-full">
             {!hideHeader ? (
               <CardHeader>
-                <CardTitle>
-                  <SectionHeader className="flex items-center justify-between">
-                    <CardTitle>{t("repository.title")}</CardTitle>
-                  </SectionHeader>
-                </CardTitle>
-                <CardDescription className="uppercase">
-                  <span className="flex items-center gap-2 uppercase shrink-0">
+                <SectionHeader className="flex items-center gap-2">
+                  <CardTitle>{t("repository.title")}</CardTitle>
+                  <HelpPopover helpKey="projectRepository" />
+                </SectionHeader>
+                <CardDescription>
+                  <span className="flex items-center gap-2 uppercase">
                     <ProjectIcon iconUrl={project?.iconUrl} />
                     {project?.name}
                   </span>
