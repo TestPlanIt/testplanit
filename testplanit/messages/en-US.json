@@ -2722,7 +2722,8 @@
         "sharedStepGroupCreatedSuccess": "Shared steps created successfully!",
         "genericSharedStepCreationError": "An unknown error occurred while creating the shared steps. Please try again.",
         "errorCreatingSharedGroup": "Failed to create shared steps. Please try again.",
-        "sharedGroupCreatedSuccess": "Shared step group created successfully!"
+        "sharedGroupCreatedSuccess": "Shared step group created successfully!",
+        "failedToCreateSharedGroupError": "Failed to create the shared group. Please try again."
       },
       "selectSharedStepsTitle": "Select Shared Steps",
       "selectSharedStepsDescription": "Choose shared steps to add to your test case.",
@@ -2739,7 +2740,8 @@
       "reviewSelectedStepsTitle": "Review Selected Steps",
       "noStepsInSelectedGroup": "The selected group has no steps.",
       "sharedGroupSuffix": "(Shared Steps)",
-      "unnamedSharedGroup": "Unnamed Shared Steps"
+      "unnamedSharedGroup": "Unnamed Shared Steps",
+      "noStepsInSelectedSharedGroup": "The selected shared group has no steps."
     },
     "testCase": {
       "toggleAutomated": "Toggle automated testing",
@@ -3996,7 +3998,8 @@
           "namePlaceholder": "Enter a workflow name",
           "scopePlaceholder": "Select scope",
           "iconColorLabel": "Icon & color",
-          "typeLabel": "Workflow type"
+          "typeLabel": "Workflow type",
+          "scopeLabel": "Workflow scope"
         },
         "mappingDatasets": "Datasets requiring review",
         "mappingImportConfiguration": "Import configuration",
@@ -4152,7 +4155,9 @@
           "templateFieldTemplateLabelPlural": "templates",
           "templateFieldTargetGroupCase": "Case fields",
           "templateFieldTargetGroupResult": "Result fields",
-          "columnAction": "Action"
+          "columnAction": "Action",
+          "configurationVariantSelectPlaceholder": "Select configuration variant",
+          "configurationVariantCategoryPlaceholder": "Select category"
         },
         "nextSteps": "After the background import completes you can review the migrated data from the target projects.",
         "nextStepsDescription": "Background imports run asynchronously. You can monitor the status above or refresh the page to view updates."

@@ -776,9 +776,7 @@ function StepsForm<T extends FieldValues = FieldValues>({
       });
 
       if (!newSharedGroup || !newSharedGroup.id) {
-        toast.error(
-          tRepoSteps("notifications.failedToCreateSharedGroupError" as any)
-        );
+        toast.error(tRepoSteps("notifications.failedToCreateSharedGroupError"));
         return;
       }
 
@@ -1128,7 +1126,7 @@ function StepsForm<T extends FieldValues = FieldValues>({
               {itemsOfSelectedSharedGroup &&
                 itemsOfSelectedSharedGroup.length === 0 && (
                   <p className="text-sm text-muted-foreground">
-                    {tRepoSteps("noStepsInSelectedSharedGroup" as any)}
+                    {tRepoSteps("noStepsInSelectedSharedGroup")}
                   </p>
                 )}
             </div>
