@@ -8,8 +8,9 @@
  * writes here. Kept as a named seam so the RPC route + bulk import/copy-move
  * routes don't change; it is a thin alias for getAuthDb.
  */
-import { getAuthDb, type AppAuthUser } from "~/lib/zenstack";
+import { type UserForAuth } from "~/lib/authContext";
+import { getAuthDb } from "~/lib/zenstack";
 
-export function enhanceWithAudit(user: AppAuthUser | null | undefined) {
-  return getAuthDb(user ?? undefined);
+export async function enhanceWithAudit(user: UserForAuth | null | undefined) {
+  return await getAuthDb(user ?? undefined);
 }

@@ -50,7 +50,7 @@ export async function POST(request: Request) {
     });
 
     getCurrentTenantId();
-    const enhancedDb = getAuthDb(user ?? undefined);
+    const enhancedDb = await getAuthDb(user ?? undefined);
 
     // 4. Load match via enhanced DB (ZenStack policy enforces read access)
     const match = await enhancedDb.stepSequenceMatch.findUnique({

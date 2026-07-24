@@ -26,17 +26,19 @@ describe("enhanceWithAudit", () => {
     getAuthDbMock.mockReturnValue(authedClient);
   });
 
-  it("delegates to getAuthDb with the acting user and returns its client", () => {
+  it("delegates to getAuthDb with the acting user and returns its client", async () => {
     const user = { id: "u1", name: "User One", email: "u1@example.com" };
 
-    const result = enhanceWithAudit(user as never);
+    // Async since getAuthDb resolves the auth context (accessibleProjectIds)
+    // before handing back a client.
+    const result = await enhanceWithAudit(user as never);
 
     expect(getAuthDbMock).toHaveBeenCalledWith(user);
     expect(result).toBe(authedClient);
   });
 
-  it("maps a null/undefined user to an anonymous (undefined) auth context", () => {
-    enhanceWithAudit(null as never);
+  it("maps a null/undefined user to an anonymous (undefined) auth context", async () => {
+    await enhanceWithAudit(null as never);
     expect(getAuthDbMock).toHaveBeenCalledWith(undefined);
   });
 });

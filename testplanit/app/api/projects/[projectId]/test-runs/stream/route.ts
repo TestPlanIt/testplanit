@@ -68,7 +68,7 @@ export async function GET(
   const reader =
     userRecord.access === "ADMIN"
       ? (baseDb as unknown as typeof baseDb)
-      : (getAuthDb(userRecord) as unknown as typeof baseDb);
+      : ((await getAuthDb(userRecord)) as unknown as typeof baseDb);
   const accessibleProject = await reader.projects.findFirst({
     where: { id: projectId, isDeleted: false },
     select: { id: true },

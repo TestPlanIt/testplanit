@@ -53,7 +53,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
       include: { role: { include: { rolePermissions: true } } },
     });
 
-    const enhancedDb = enhanceWithAudit(user ?? undefined);
+    const enhancedDb = await enhanceWithAudit(user ?? undefined);
 
     // 5. Source access check
     const sourceProject = await enhancedDb.projects.findFirst({

@@ -19,6 +19,8 @@
 import { ZenStackClient, type AuthType } from "@zenstackhq/orm";
 import { PolicyPlugin } from "@zenstackhq/plugin-policy";
 
+import { buildAuthContext, type UserForAuth } from "./authContext";
+
 import { schema } from "~/zenstack/schema";
 
 import { getPoolConfig } from "./db/poolConfig";
@@ -76,9 +78,18 @@ export type AppAuthUser = AuthType<typeof schema>;
 /**
  * Per-request access-policy-enforced client bound to the given user.
  * Pass `undefined` for an anonymous (unauthenticated) client.
+ *
+ * Async because the policies are evaluated against `AuthCtx`, whose
+ * `accessibleProjectIds` has to be resolved before any query runs. Building the
+ * context here rather than at the call sites makes it impossible to obtain a
+ * policy client with an unresolved (and therefore empty) project list, which
+ * would silently deny every project-scoped read.
  */
-export function getAuthDb(user: AppAuthUser | undefined) {
-  return policyClient.$setAuth(user);
+export async function getAuthDb(user: UserForAuth | undefined) {
+  if (!user) return policyClient.$setAuth(undefined);
+  return policyClient.$setAuth(
+    (await buildAuthContext(user)) as unknown as AppAuthUser
+  );
 }
 
 /** Raw ORM client type — the v3 equivalent of Prisma's `DbClient` type. */

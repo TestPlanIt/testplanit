@@ -342,7 +342,7 @@ async function expectPolicyDenial(
 describeIntegration("Phase 1 @@validate SELECT XOR runtime smoke-test", () => {
   it("smoke 1.1: SELECT with both allowedValuesJson AND lookupDataSetId set should be rejected", async () => {
     if (!fixture) throw new Error("Fixture not initialised");
-    const enhancedDb = getAuthDb(fixture.userInA);
+    const enhancedDb = await getAuthDb(fixture.userInA);
     const lookupDs = await db.dataSet.create({
       data: {
         projectId: fixture.projectA.id,
@@ -382,7 +382,7 @@ describeIntegration("Phase 1 @@validate SELECT XOR runtime smoke-test", () => {
 
   it("smoke 1.2: SELECT with both allowedValuesJson AND lookupDataSetId NULL should be rejected", async () => {
     if (!fixture) throw new Error("Fixture not initialised");
-    const enhancedDb = getAuthDb(fixture.userInA);
+    const enhancedDb = await getAuthDb(fixture.userInA);
     const { denied, result } = await expectPolicyDenial(() =>
       enhancedDb.testCaseParameter.create({
         data: {
@@ -409,7 +409,7 @@ describeIntegration("Phase 1 @@validate SELECT XOR runtime smoke-test", () => {
 
   it("smoke 1.3: SELECT with only allowedValuesJson set succeeds (positive control)", async () => {
     if (!fixture) throw new Error("Fixture not initialised");
-    const enhancedDb = getAuthDb(fixture.userInA);
+    const enhancedDb = await getAuthDb(fixture.userInA);
     const created = await enhancedDb.testCaseParameter.create({
       data: {
         testCaseId: fixture.caseInA.id,
@@ -424,7 +424,7 @@ describeIntegration("Phase 1 @@validate SELECT XOR runtime smoke-test", () => {
 
   it("smoke 1.4: STRING with allowedValuesJson set should be rejected", async () => {
     if (!fixture) throw new Error("Fixture not initialised");
-    const enhancedDb = getAuthDb(fixture.userInA);
+    const enhancedDb = await getAuthDb(fixture.userInA);
     const { denied, result } = await expectPolicyDenial(() =>
       enhancedDb.testCaseParameter.create({
         data: {
@@ -453,7 +453,7 @@ describeIntegration("Phase 1 @@validate SELECT XOR runtime smoke-test", () => {
 
   it("smoke 1.5: INTEGER with both NULL succeeds (positive control)", async () => {
     if (!fixture) throw new Error("Fixture not initialised");
-    const enhancedDb = getAuthDb(fixture.userInA);
+    const enhancedDb = await getAuthDb(fixture.userInA);
     const created = await enhancedDb.testCaseParameter.create({
       data: {
         testCaseId: fixture.caseInA.id,
@@ -593,7 +593,7 @@ describeIntegration("Phase 1 cross-tenant unauthenticated-read denial", () => {
 
   it("(adaptive) outsider user (access=NONE) read across the 5 new models — record per-model denial outcomes", async () => {
     if (!outsiderUser) throw new Error("outsider user not seeded");
-    const denyDb = getAuthDb(outsiderUser) as unknown as EnhancedReader;
+    const denyDb = (await getAuthDb(outsiderUser)) as unknown as EnhancedReader;
 
     const probes = [
       {
@@ -645,7 +645,7 @@ describeIntegration("Phase 1 cross-tenant unauthenticated-read denial", () => {
 
   it("project-A user CAN read TestCaseParameter planted in project A (positive control)", async () => {
     if (!fixture) throw new Error("Fixture not initialised");
-    const okDb = getAuthDb(fixture.userInA);
+    const okDb = await getAuthDb(fixture.userInA);
     const rows = await okDb.testCaseParameter.findMany({
       where: { id: plantedParameterId },
     });
@@ -664,7 +664,7 @@ describeIntegration("Phase 1 cross-tenant unauthenticated-read denial", () => {
       },
     });
     try {
-      const okDb = getAuthDb(fixture.userInA);
+      const okDb = await getAuthDb(fixture.userInA);
       const rows = await okDb.dataSet.findMany({ where: { id: dsB.id } });
       const denied = Array.isArray(rows) && rows.length === 0;
       record(
@@ -685,14 +685,14 @@ describeIntegration("Phase 1 cross-tenant unauthenticated-read denial", () => {
 
   it("(adaptive) a fully unauthenticated probe (no session at all) — record outcome", async () => {
     // Adaptive smoke test: in a v2 ZenStack environment without the route-
-    // level wiring, getAuthDb(undefined) may not fire @@deny
+    // level wiring, await getAuthDb(undefined) may not fire @@deny
     // policies as expected. The application's production paths use
     // getEnhancedDb(session) which always passes a fully-resolved user, so
     // the user: undefined case is academic — the boundary that matters is
     // route-level auth (Plan 01-02 boundary helpers + getEnhancedDb).
     //
     // We record the outcome for SUMMARY.md without failing the suite.
-    const emptyDb = getAuthDb(undefined);
+    const emptyDb = await getAuthDb(undefined);
     let crashed = false;
     let leaked = false;
     try {
@@ -733,7 +733,7 @@ describeIntegration(
       // userInB is the creator of projectB. Use userInB so they have create
       // rights on a projectB-owned DataSet, making the cross-project field
       // (ownerCaseId pointing at caseInA in projectA) the load-bearing mistake.
-      const enhancedDb = getAuthDb(fixture.userInB);
+      const enhancedDb = await getAuthDb(fixture.userInB);
       const { denied, result } = await expectPolicyDenial(() =>
         enhancedDb.dataSet.create({
           data: {
@@ -797,7 +797,7 @@ describeIntegration(
 
     it("accepts DataSet create with same-project ownerCaseId (positive control)", async () => {
       if (!fixture) throw new Error("Fixture not initialised");
-      const enhancedDb = getAuthDb(fixture.userInA);
+      const enhancedDb = await getAuthDb(fixture.userInA);
       const ds = await enhancedDb.dataSet.create({
         data: {
           projectId: fixture.projectA.id,
