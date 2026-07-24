@@ -44,11 +44,11 @@ test.describe("Project Audit Log", () => {
     await test.step("The ADMIN-gated page opens and identifies the project surface", async () => {
       await page.goto(`/en-US/projects/audit-logs/${projectId}`);
       await page.waitForLoadState("networkidle");
-      await expect(
-        page.getByText(
-          "View the audit trail of actions performed in this project."
-        )
-      ).toBeVisible({ timeout: 15000 });
+      // The prose description moved into the help popover; the card title
+      // identifies the surface now.
+      await expect(page.getByText("Audit Logs").first()).toBeVisible({
+        timeout: 15000,
+      });
     });
 
     await test.step("The virtualized table and column headers render", async () => {
