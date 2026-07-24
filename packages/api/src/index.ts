@@ -76,6 +76,7 @@ export type {
   CreateTestRunOptions,
   UpdateTestRunOptions,
   CreateTestCaseOptions,
+  UpdateTestCaseOptions,
   CreateTestCasesOptions,
   CreateTestCasesResult,
   BulkTestCaseInput,

@@ -462,6 +462,17 @@ interface CreateTestCaseOptions {
     estimate?: number;
 }
 /**
+ * Options for {@link TestPlanItClient.updateTestCase} — a minimal,
+ * forward-compatible partial update of an existing test case. Only the fields
+ * present here are written, so more fields can be added later without a
+ * breaking change. Relation fields (folder, template, state, …) are out of
+ * scope; use the dedicated helpers for those.
+ */
+interface UpdateTestCaseOptions {
+    /** Whether the case is driven by automation (shown as "automated" in the UI). */
+    automated?: boolean;
+}
+/**
  * A single step on a case created via {@link TestPlanItClient.createTestCases}.
  * Plain-text `text`/`expectedResult` are stored as TipTap rich-text documents
  * server-side so they render in the in-app step editor.
@@ -1166,6 +1177,19 @@ declare class TestPlanItClient {
      */
     findTestCaseByCustomField(options: FindTestCaseByCustomFieldOptions): Promise<RepositoryCase | undefined>;
     /**
+     * Update mutable scalar fields on an existing test case.
+     *
+     * A minimal, forward-compatible partial update: only the fields present in
+     * `options` are written (currently just `automated`), so more fields can be
+     * added later without a breaking change. Relation fields (folder, template,
+     * state, …) are intentionally out of scope — use the dedicated helpers for
+     * those.
+     *
+     * Used to flip a manually-authored case to `automated: true` once it starts
+     * receiving automated results (see the WDIO reporter's `matchByCustomField`).
+     */
+    updateTestCase(caseId: number, options: UpdateTestCaseOptions): Promise<RepositoryCase>;
+    /**
      * Find or create a test case
      * First searches for an active (non-deleted) test case in an active folder, then creates if not found.
      * If a matching case exists in a deleted folder, it will be moved to the specified folder.
@@ -1356,4 +1380,4 @@ declare function automationStepsToCaseSteps(steps: AutomationStep[]): CaseStepRo
  */
 declare function deriveCaseStepsIfFresh(steps: AutomationStep[], existingStepCount: number): CaseStepRow[];
 
-export { type AddTestCaseToRunOptions, type ApiError, type Attachment, type AutomationStep, type BulkTestCaseInput, type BulkTestCaseResult, type BulkTestCaseStep, type CaseStepRow, type Comment, type Configuration, type CreateFolderOptions, type CreateJUnitPropertyOptions, type CreateJUnitTestResultOptions, type CreateJUnitTestStepOptions, type CreateJUnitTestSuiteOptions, type CreateStepOptions, type CreateStepsOptions, type CreateTagOptions, type CreateTestCaseOptions, type CreateTestCasesOptions, type CreateTestCasesResult, type CreateTestResultOptions, type CreateTestRunOptions, type FindOrCreateTestCaseResult, type FindTestCaseByCustomFieldOptions, type FindTestCaseOptions, type GenerateQuickScriptOptions, type GenerateQuickScriptResult, type ImportProgressEvent, type ImportTestResultsOptions, type Issue, type JUnitProperty, type JUnitResultType, type JUnitTestResult, type JUnitTestStep, type JUnitTestSuite, type ListTestRunsOptions, type Milestone, type NormalizedStatus, type PaginatedResponse, type Project, type QuickScriptFile, type QuickScriptOutputMode, type RepositoryCase, type RepositoryCaseSource, type RepositoryFolder, type RequestStepDerivationCase, type RequestStepDerivationOptions, type Status, type Step, type Tag, type Template, TestPlanItClient, type TestPlanItClientConfig, TestPlanItError, type TestRun, type TestRunCase, type TestRunResult, type TestRunStepResult, type TestRunType, type UpdateJUnitTestSuiteOptions, type UpdateTestRunOptions, type UploadAttachmentOptions, type User, type WorkflowState, automationStepsToCaseSteps, deriveCaseStepsIfFresh, tipTapDoc };
+export { type AddTestCaseToRunOptions, type ApiError, type Attachment, type AutomationStep, type BulkTestCaseInput, type BulkTestCaseResult, type BulkTestCaseStep, type CaseStepRow, type Comment, type Configuration, type CreateFolderOptions, type CreateJUnitPropertyOptions, type CreateJUnitTestResultOptions, type CreateJUnitTestStepOptions, type CreateJUnitTestSuiteOptions, type CreateStepOptions, type CreateStepsOptions, type CreateTagOptions, type CreateTestCaseOptions, type CreateTestCasesOptions, type CreateTestCasesResult, type CreateTestResultOptions, type CreateTestRunOptions, type FindOrCreateTestCaseResult, type FindTestCaseByCustomFieldOptions, type FindTestCaseOptions, type GenerateQuickScriptOptions, type GenerateQuickScriptResult, type ImportProgressEvent, type ImportTestResultsOptions, type Issue, type JUnitProperty, type JUnitResultType, type JUnitTestResult, type JUnitTestStep, type JUnitTestSuite, type ListTestRunsOptions, type Milestone, type NormalizedStatus, type PaginatedResponse, type Project, type QuickScriptFile, type QuickScriptOutputMode, type RepositoryCase, type RepositoryCaseSource, type RepositoryFolder, type RequestStepDerivationCase, type RequestStepDerivationOptions, type Status, type Step, type Tag, type Template, TestPlanItClient, type TestPlanItClientConfig, TestPlanItError, type TestRun, type TestRunCase, type TestRunResult, type TestRunStepResult, type TestRunType, type UpdateJUnitTestSuiteOptions, type UpdateTestCaseOptions, type UpdateTestRunOptions, type UploadAttachmentOptions, type User, type WorkflowState, automationStepsToCaseSteps, deriveCaseStepsIfFresh, tipTapDoc };

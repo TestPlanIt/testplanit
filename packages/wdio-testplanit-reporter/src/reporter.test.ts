@@ -31,8 +31,12 @@ const apiMocks = vi.hoisted(() => ({
   })),
   findTestCaseByCustomField: vi.fn(
     async (_opts: { projectId: number; fieldName: string; value: string | number }) =>
-      undefined as { id: number; name: string; source: string } | undefined,
+      undefined as { id: number; name: string; source: string; automated?: boolean } | undefined,
   ),
+  updateTestCase: vi.fn(async (caseId: number, data: { automated?: boolean }) => ({
+    id: caseId,
+    automated: data.automated,
+  })),
   findOrAddTestCaseToRun: vi.fn(async (_opts: { repositoryCaseId: number }) => ({ id: 456 })),
   createJUnitTestResult: vi.fn(async (_opts: { repositoryCaseId: number }) => ({ id: 789 })),
   createSteps: vi.fn(async (opts: { testCaseId: number; steps: unknown[] }) => ({
@@ -55,6 +59,7 @@ vi.mock("@testplanit/api", () => {
     TestPlanItClient: class MockTestPlanItClient {
       findOrCreateTestCase = apiMocks.findOrCreateTestCase;
       findTestCaseByCustomField = apiMocks.findTestCaseByCustomField;
+      updateTestCase = apiMocks.updateTestCase;
       findOrAddTestCaseToRun = apiMocks.findOrAddTestCaseToRun;
       createJUnitTestResult = apiMocks.createJUnitTestResult;
       createSteps = apiMocks.createSteps;
@@ -187,6 +192,10 @@ describe("TestPlanItReporter", () => {
     apiMocks.softDeleteCaseSteps.mockResolvedValue(3);
     apiMocks.requestStepDerivation.mockResolvedValue({ enqueued: true });
     apiMocks.findTestCaseByCustomField.mockResolvedValue(undefined);
+    apiMocks.updateTestCase.mockImplementation(async (caseId: number, data: { automated?: boolean }) => ({
+      id: caseId,
+      automated: data.automated,
+    }));
     apiMocks.findOrAddTestCaseToRun.mockResolvedValue({ id: 456 });
     apiMocks.createJUnitTestResult.mockResolvedValue({ id: 789 });
     reporter = new TestPlanItReporter(defaultOptions);
@@ -874,8 +883,8 @@ describe("service-managed mode", () => {
         await Promise.allSettled([...ops]);
       }
     };
-    // A migrated MANUAL case carrying a backfilled external ID.
-    const manualCase = { id: 30715, name: "Verify 'Relevance' is the default sort order", source: "MANUAL" };
+    // A migrated MANUAL case carrying a backfilled external ID (not yet automated).
+    const manualCase = { id: 30715, name: "Verify 'Relevance' is the default sort order", source: "MANUAL", automated: false };
     const legacyTitle = "89434 Verify 'Relevance' is the default sort order for search results";
 
     // ─── Title → identifier parsing (parseCustomFieldId) ───────────────────
@@ -934,6 +943,69 @@ describe("service-managed mode", () => {
       // ...and NO new case was created.
       expect(apiMocks.findOrCreateTestCase).not.toHaveBeenCalled();
       expect(r.getState().stats.testCasesFound).toBe(1);
+      expect(r.getState().stats.apiErrors).toBe(0);
+    });
+
+    // ─── Flip the matched case to automated ────────────────────────────────
+    it("flips the matched case to automated when it is not already automated", async () => {
+      apiMocks.findTestCaseByCustomField.mockResolvedValue(manualCase); // automated: false
+      const r = new TestPlanItReporter({
+        ...defaultOptions,
+        matchByCustomField: { fieldName: "External ID" },
+      });
+      r.onRunnerStart(runner());
+      r.onSuiteStart({ title: "Search", uid: "s1" } as unknown as SuiteStats);
+      r.onTestPass(mochaTest(legacyTitle));
+      await flush(r);
+
+      expect(apiMocks.updateTestCase).toHaveBeenCalledTimes(1);
+      expect(apiMocks.updateTestCase).toHaveBeenCalledWith(30715, { automated: true });
+      // The result is still attached to the matched case.
+      expect(apiMocks.findOrAddTestCaseToRun).toHaveBeenCalledWith(
+        expect.objectContaining({ repositoryCaseId: 30715 }),
+      );
+      expect(r.getState().stats.apiErrors).toBe(0);
+    });
+
+    it("does not write when the matched case is already automated", async () => {
+      apiMocks.findTestCaseByCustomField.mockResolvedValue({ ...manualCase, automated: true });
+      const r = new TestPlanItReporter({
+        ...defaultOptions,
+        matchByCustomField: { fieldName: "External ID" },
+      });
+      r.onRunnerStart(runner());
+      r.onSuiteStart({ title: "Search", uid: "s1" } as unknown as SuiteStats);
+      r.onTestPass(mochaTest(legacyTitle));
+      await flush(r);
+
+      // Already automated → no redundant update, but still attaches.
+      expect(apiMocks.updateTestCase).not.toHaveBeenCalled();
+      expect(apiMocks.findOrAddTestCaseToRun).toHaveBeenCalledWith(
+        expect.objectContaining({ repositoryCaseId: 30715 }),
+      );
+    });
+
+    it("swallows an updateTestCase failure and still reports the result", async () => {
+      apiMocks.findTestCaseByCustomField.mockResolvedValue(manualCase); // automated: false
+      apiMocks.updateTestCase.mockRejectedValue(new Error("boom"));
+      const r = new TestPlanItReporter({
+        ...defaultOptions,
+        matchByCustomField: { fieldName: "External ID" },
+      });
+      r.onRunnerStart(runner());
+      r.onSuiteStart({ title: "Search", uid: "s1" } as unknown as SuiteStats);
+      r.onTestPass(mochaTest(legacyTitle));
+      await flush(r);
+
+      // The flip was attempted but failed — reporting continued regardless.
+      expect(apiMocks.updateTestCase).toHaveBeenCalledTimes(1);
+      expect(apiMocks.findOrAddTestCaseToRun).toHaveBeenCalledWith(
+        expect.objectContaining({ repositoryCaseId: 30715 }),
+      );
+      expect(apiMocks.createJUnitTestResult).toHaveBeenCalledWith(
+        expect.objectContaining({ repositoryCaseId: 30715 }),
+      );
+      // A failed flip does not count as a reporting API error.
       expect(r.getState().stats.apiErrors).toBe(0);
     });
 
