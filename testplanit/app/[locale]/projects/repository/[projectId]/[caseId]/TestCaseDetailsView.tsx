@@ -2540,7 +2540,9 @@ export function TestCaseDetailsView({
                         let fieldValue = testcase.caseFieldValues.find(
                           (value) => value.fieldId === field.caseField.id
                         )?.value;
-                        if (field.caseField.type.type === "Steps") {
+                        const isStepsField =
+                          field.caseField.type.type === "Steps";
+                        if (isStepsField) {
                           fieldValue = testcase.steps || [];
                         }
                         // Skip empty fields in view mode — except Steps when
@@ -2549,11 +2551,20 @@ export function TestCaseDetailsView({
                         // collapsing an empty Steps row in view mode would
                         // leave a fresh case with no path to author
                         // parameters without first clicking Edit.
-                        const isEditableStepsField =
-                          field.caseField.type.type === "Steps" && canAddEdit;
+                        //
+                        // Steps carry a row array, not a Tiptap doc, so
+                        // emptiness is a row count. isTiptapEmpty reports every
+                        // array as empty, which collapses the row for every
+                        // viewer who lacks canAddEdit no matter how many steps
+                        // the case actually has.
+                        const isFieldEmpty = isStepsField
+                          ? ((fieldValue as unknown[] | undefined)?.length ??
+                              0) === 0
+                          : isTiptapEmpty(fieldValue);
+                        const isEditableStepsField = isStepsField && canAddEdit;
                         if (
                           !isEditMode &&
-                          isTiptapEmpty(fieldValue) &&
+                          isFieldEmpty &&
                           !isEditableStepsField
                         )
                           return null;

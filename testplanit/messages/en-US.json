@@ -2001,7 +2001,7 @@
         },
         "reviewWorkflow": {
           "label": "Enable review workflow",
-          "description": "When enabled, transitions into states that require review are gated by an approved review request. Testers see the Request Review button; reviewers receive notifications.",
+          "description": "When enabled, transitions into states that require review are gated by an approved review request. Testers see the Request Review button; reviewers receive notifications, and approving a request applies the transition.",
           "enabledToast": "Review workflow enabled for this project",
           "disabledToast": "Review workflow disabled for this project",
           "saveError": "Failed to update review workflow setting",
@@ -3475,7 +3475,7 @@
       "gatedStatesNotSelectable": "States at or beyond a gated state can't be selected when creating. Pick a state before the first gate, then use Request review to cross it.",
       "saveBlockedByFormErrors": "Resolve the highlighted form errors before saving.",
       "bulkBlockedSummary": "{count, plural, one {# case} other {# cases}} blocked by gate \"{gateName}\": {sampleNames}{more, plural, =0 {} other {, and # more}}. Each blocked case needs an approved review for \"{gateName}\" before this transition.",
-      "toastReviewRequired": "Approval required before this transition. Request a review and try again after it's approved.",
+      "toastReviewRequired": "Approval required before this transition. Request a review — the transition is applied for you once it's approved.",
       "toastPendingReviewExists": "A review is already pending for this transition. Wait for the decision or cancel it before retrying."
     },
     "inbox": {
@@ -3514,7 +3514,7 @@
       "sheetDescription": "Send this entity for review before transitioning to the target state.",
       "assigneeLabel": "Assignee",
       "assigneePlaceholder": "Select a user or role",
-      "usersHoldRole": "{count, plural, one {# user holds this role} other {# users hold this role}}",
+      "usersNotified": "{count, plural, =0 {No one will be notified} one {# user will be notified} other {# users will be notified}}",
       "targetStateLabel": "Target state",
       "targetStatePlaceholder": "Select a target state",
       "commentLabel": "Comment",
@@ -3539,7 +3539,7 @@
       "requestChanges": "Request changes",
       "reject": "Reject",
       "approveConfirmTitle": "Approve this review request?",
-      "approveConfirmDescription": "Approving will permit <requester></requester> to transition <name></name> to <state></state>.",
+      "approveConfirmDescription": "Approving moves <name></name> to <state></state> for <requester></requester>.",
       "approvalNoteLabel": "Approval note",
       "approvalNotePlaceholder": "Add an optional note for the requester (visible alongside the approval).",
       "requestChangesDescription": "Tell the requester what needs to change before you can approve this transition.",
@@ -6649,7 +6649,7 @@
       "isDefault": "## Default\nIndicates whether this workflow is the default for your project.\n\n- Default workflow is pre-selected for new test runs, sessions and automation.",
       "isEnabled": "## Enabled\nIndicates whether this workflow is enabled.",
       "isActive": "## Active\nIndicates whether this workflow state is active and available for use.\n\n- Active workflows can be selected when updating test runs, sessions, or automation\n- Inactive workflows are hidden from selection but preserved in existing items",
-      "requiresReview": "## Requires review\nWhen ON, transitioning a case, test run, or session INTO this state is gated by an approved review request. Without an approved request, the transition is blocked.\n\n- Existing pending reviews are preserved silently when the system-level feature is OFF and reappear when re-enabled.\n- Reviewer is picked when a tester clicks Request Review from the entity detail page.\n\nIf the system-level feature is disabled, this switch is locked. Re-enable it from the Review Workflow card above to toggle this on.",
+      "requiresReview": "## Requires review\nWhen ON, transitioning a case, test run, or session INTO this state is gated by an approved review request. Without an approved request, the transition is blocked.\n\n- Approving a request performs the transition. The reviewer's approval moves the case, run, or session into the requested state; the requester does not repeat the state change by hand.\n- Existing pending reviews are preserved silently when the system-level feature is OFF and reappear when re-enabled.\n- Reviewer is picked when a tester clicks Request Review from the entity detail page.\n\nIf the system-level feature is disabled, this switch is locked. Re-enable it from the Review Workflow card above to toggle this on.",
       "projects": "## Projects\nIndicates the projects that can use this workflow."
     },
     "testResult": {

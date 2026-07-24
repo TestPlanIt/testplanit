@@ -13,7 +13,6 @@
     "file": "파일",
     "selectMultiple": "여러 개를 선택하세요...",
     "searchUsers": "사용자를 검색하세요...",
-    "searchGroups": "그룹을 검색하세요...",
     "searchCases": "{count, plural, =0 {검색 사례} one {검색 사례 수} other {검색 사례 수}}",
     "searchProjects": "{count, plural, =0 {프로젝트 검색} one {프로젝트 수 검색} other {프로젝트 수 검색}}",
     "searchTags": "태그를 검색하세요...",
@@ -383,8 +382,7 @@
         "notificationSettings": "알림 전역 설정",
         "elasticsearch_replicas": "엘라스틱서치 복제본",
         "review_feature_enabled": "검토 및 승인 기능 활성화됨",
-        "review_reminder_threshold_days": "검토자에게 마감일을 다시 알림",
-        "record_key_enabled": "레코드 키 활성화"
+        "review_reminder_threshold_days": "검토자에게 마감일을 다시 알림"
       },
       "options": {
         "label": "상표",
@@ -744,7 +742,6 @@
       "noCases": "테스트 케이스 없음",
       "unknown": "알려지지 않은",
       "selectedTestCases": "선택된 테스트 케이스",
-      "selectedTestCasesCount": "{count, plural, other {# 선택된 테스트 케이스}}",
       "editToModifyCasesTitle": "이 목록은 수정할 수 없습니다.",
       "editToModifyCases": "테스트 실행을 편집하고 선택한 테스트 케이스를 클릭하여 목록을 수정하세요.",
       "noTestCasesSelected": "선택된 테스트 케이스가 없습니다.",
@@ -803,8 +800,7 @@
     "table": {
       "columns": {
         "columns": "컬럼",
-        "required": "(필수의)",
-        "resetColumns": "열을 기본값으로 재설정"
+        "required": "(필수의)"
       },
       "filter": "필터 목록...",
       "selectNone": "없음을 선택하세요",
@@ -1308,14 +1304,7 @@
         "saveButton": "구하다",
         "saveSuccess": "반복 속성 이름이 저장되었습니다.",
         "saveError": "반복 속성 이름을 저장할 수 없습니다.",
-        "removeAria": "{name}를 제거하세요",
-        "counter": "{count}/{max}",
-        "constraints": "최대 {max}개의 속성을 사용할 수 있으며, 각 속성은 {maxLength}자 이하이어야 하고 공백을 포함할 수 없습니다.",
-        "limitReached": "최대 {max}개의 속성에 도달했습니다. 다른 속성을 추가하려면 하나를 제거하세요.",
-        "errorTooLong": "각 속성 이름은 {maxLength}자 이하로 입력하세요.",
-        "errorWhitespace": "속성 이름에는 공백을 포함할 수 없습니다.",
-        "errorReserved": "“{name}”는 예약어이므로 사용할 수 없습니다.",
-        "errorDuplicate": "“{name}”는 이미 목록에 있습니다."
+        "removeAria": "{name}를 제거하세요"
       },
       "integrations": {
         "description": "이 프로젝트에 대한 타사 이슈 통합을 관리합니다.",
@@ -1932,9 +1921,7 @@
           "description": "AI 생성 중 빠른 접근을 위해 파일이 Valkey에 캐시됩니다.",
           "enableLabel": "파일 캐싱을 활성화합니다.",
           "disabledWarning": "파일 캐싱이 비활성화되었습니다. 저장소 파일은 내보내기 시점에 공급자로부터 직접 가져오며 TestPlanIt에 저장되지 않습니다. AI 기반 QuickScript는 코드 컨텍스트를 계속 포함하지만, 각 내보내기 시 저장소에 실시간 요청을 보냅니다.",
-          "ttlBefore": "캐시 유지 기간",
-          "ttlDays": "{count, plural, other {일}}",
-          "ttlAriaLabel": "일 단위 캐시 지속 시간",
+          "ttlLabel": "캐시 지속 시간(일)",
           "statusTitle": "캐시 상태",
           "refreshButton": "캐시 새로 고침",
           "listingFiles": "파일 목록…",
@@ -2001,7 +1988,7 @@
         },
         "reviewWorkflow": {
           "label": "검토 워크플로 활성화",
-          "description": "이 기능을 활성화하면 검토가 필요한 상태로의 전환은 승인된 검토 요청에 따라 제한됩니다. 테스터는 '검토 요청' 버튼을 볼 수 있으며, 검토자는 알림을 받습니다.",
+          "description": "이 기능을 활성화하면 검토가 필요한 상태로의 전환은 승인된 검토 요청에 따라 제한됩니다. 테스터는 '검토 요청' 버튼을 볼 수 있으며, 검토자는 알림을 받고, 요청을 승인하면 전환이 적용됩니다.",
           "enabledToast": "이 프로젝트에 대해 검토 워크플로가 활성화되었습니다.",
           "disabledToast": "이 프로젝트에 대한 검토 워크플로가 비활성화되었습니다.",
           "saveError": "검토 워크플로 설정 업데이트에 실패했습니다.",
@@ -2042,13 +2029,10 @@
         "editWindow": {
           "label": "결과 편집 창",
           "description": "결과가 기록된 후에도 수정이 가능한 시간은 얼마나 됩니까? 수정 가능 시간이 지나면 수정하려면 다시 시도해야 합니다. 시스템 관리자는 언제든지 수정할 수 있습니다.",
-          "modeInheritMinutes": "시스템 기본값 상속 ({minutes, plural, other {#분}})",
-          "modeInheritNoLimit": "시스템 기본값 상속(제한 없음)",
+          "modeInherit": "시스템 기본값을 상속합니다",
           "modeDisable": "이 프로젝트의 편집 기능을 비활성화합니다.",
           "modeCustom": "사용자 정의 창",
-          "minutesBefore": "편집 가능 기간",
-          "minutesUnit": "{minutes, plural, other {분}}",
-          "minutesAriaLabel": "분 단위 편집 가능 시간",
+          "minutesLabel": "편집 가능 시간(분)",
           "systemMaxHint": "시스템 최대값: {minutes} 분",
           "systemLockedTitle": "시스템 전체적으로 편집 기능이 비활성화되었습니다.",
           "systemLockedDescription": "시스템 관리자가 모든 프로젝트에 대해 결과 편집 기능을 비활성화했으므로 이 프로젝트에서는 해당 기능을 활성화할 수 없습니다.",
@@ -2684,8 +2668,8 @@
       "notFound": "테스트 케이스 버전을 찾을 수 없습니다.",
       "detailsRegion": "테스트 케이스 세부 정보",
       "metadataRegion": "테스트 케이스 메타데이터",
-      "versionCreated": "버전 {version}",
-      "latestVersionUpdated": "버전 {version, number} (최신)",
+      "versionCreated": "버전 {version} 생성됨",
+      "latestVersionUpdated": "최신 버전 {version, number} 업데이트됨",
       "historyView": "테스트 케이스 기록 보기"
     },
     "auditLog": {
@@ -2782,7 +2766,6 @@
       "modifierHintMac": "드래그하는 동안 ⇧ 키를 누른 상태로 이동하거나 ⌥ 키를 누른 상태로 복사하면 이 메뉴를 건너뛸 수 있습니다.",
       "modifierHintWin": "드래그하는 동안 Shift 키를 누른 상태로 이동하거나 Ctrl 키를 누른 상태로 복사하면 이 메뉴를 건너뛸 수 있습니다.",
       "dropZoneReorder": "놓아서 순서 변경",
-      "dropZoneFolder": "폴더에 놓으면 중첩되고, 폴더 사이에 놓으면 순서가 변경됩니다",
       "dropZoneTreeMac": "폴더에 놓기 — ⇧를 누르면 이동, ⌥를 누르면 복사",
       "dropZoneTreeWin": "폴더에 놓기 — Shift를 누르면 이동, Ctrl을 누르면 복사",
       "dropZoneTreeMove": "폴더에 놓아서 이동",
@@ -3475,7 +3458,7 @@
       "gatedStatesNotSelectable": "생성 시 제한 구역에 도달했거나 그 이후의 상태는 선택할 수 없습니다. 첫 번째 제한 구역 이전의 상태를 선택한 다음, 검토 요청을 사용하여 해당 구역을 통과하세요.",
       "saveBlockedByFormErrors": "저장하기 전에 강조 표시된 양식 오류를 해결하세요.",
       "bulkBlockedSummary": "{count, plural, one {# 사례} other {# 사례}} 게이트 \"{gateName}\"에 의해 차단됨: {sampleNames}{more, plural, =0 {} other {, 그리고 # 더 많은}}. 각 차단된 사례는 이 전환 전에 \"{gateName}\"에 대한 승인된 검토가 필요합니다.",
-      "toastReviewRequired": "이 전환을 진행하기 전에 승인이 필요합니다. 검토를 요청하고 승인된 후 다시 시도해 주세요.",
+      "toastReviewRequired": "이 전환을 진행하기 전에 승인이 필요합니다. 검토를 요청하면 승인된 후 전환이 자동으로 적용됩니다.",
       "toastPendingReviewExists": "이 전환에 대한 검토가 이미 진행 중입니다. 결정이 나올 때까지 기다리시거나, 다시 시도하기 전에 전환을 취소하십시오."
     },
     "inbox": {
@@ -3514,7 +3497,7 @@
       "sheetDescription": "목표 상태로 전환하기 전에 이 엔티티를 검토를 위해 보내십시오.",
       "assigneeLabel": "양수인",
       "assigneePlaceholder": "사용자 또는 역할을 선택하세요",
-      "usersHoldRole": "{count, plural, other {# 사용자가 이 역할을 맡고 있습니다}}",
+      "usersNotified": "{count, plural, =0 {알림을 받을 사용자가 없습니다} other {#명의 사용자에게 알림이 전송됩니다}}",
       "targetStateLabel": "목표 상태",
       "targetStatePlaceholder": "목표 상태를 선택하세요",
       "commentLabel": "논평",
@@ -3539,7 +3522,7 @@
       "requestChanges": "변경 요청",
       "reject": "거부하다",
       "approveConfirmTitle": "이 검토 요청을 승인하시겠습니까?",
-      "approveConfirmDescription": "승인하면 <requester></requester> 이 <name></name> 에서 <state></state>으로 전환할 수 있습니다.",
+      "approveConfirmDescription": "승인하면 <name></name>이 <state></state>로 <requester></requester>를 위해 이동합니다.",
       "approvalNoteLabel": "승인 메모",
       "approvalNotePlaceholder": "요청자에게 남길 메모를 선택적으로 추가할 수 있습니다(승인 내용과 함께 표시됨).",
       "requestChangesDescription": "요청자에게 이 전환을 승인하기 전에 변경해야 할 사항을 알려주세요.",
@@ -3561,7 +3544,6 @@
   "runs": {
     "composition": {
       "lock": "케이스 잠김",
-      "unlocked": "케이스 잠금 해제됨",
       "unlock": "잠금 해제",
       "locked": "구성 잠김",
       "lockHint": "이 실행에 포함된 케이스를 고정합니다. 사용자는 여전히 테스트 케이스를 할당하고 실행할 수 있습니다.",
@@ -3750,6 +3732,7 @@
       "placeholder": "필터 테스트 실행..."
     },
     "typeFilter": {
+      "label": "보여주다",
       "both": "수동 및 자동"
     },
     "empty": {
@@ -4005,12 +3988,6 @@
           "actionMap": "기존 지도에 매핑",
           "actionCreate": "새 항목 생성",
           "workflowTypePlaceholder": "유형을 선택하세요",
-          "workflowScope": {
-            "default": "기타",
-            "cases": "테스트 케이스",
-            "runs": "테스트 실행",
-            "sessions": "세션"
-          },
           "noWorkflowsAvailable": "사용 가능한 워크플로가 없습니다.",
           "noStatusesAvailable": "사용 가능한 상태가 없습니다.",
           "noGroupsAvailable": "이용 가능한 그룹이 없습니다.",
@@ -4906,7 +4883,6 @@
     },
     "workflows": {
       "description": "테스트 케이스 워크플로우 관리",
-      "reviewsTitle": "검토 워크플로",
       "systemFeatureCard": {
         "title": "검토 워크플로",
         "description": "승인이 부여될 때까지 워크플로 전환을 차단하여 검토 절차를 시행합니다. 이 기능을 활성화하면 각 프로젝트는 고급 설정에서 개별적으로 활성화 또는 비활성화할 수 있습니다. 워크플로 승인 차단을 비활성화하려면 이 기능을 비활성화하십시오.",
@@ -4915,10 +4891,10 @@
         "updateSuccessEnabled": "검토 워크플로가 활성화되었습니다.",
         "updateSuccessDisabled": "검토 워크플로가 비활성화되었습니다.",
         "updateError": "검토 워크플로 설정 업데이트에 실패했습니다. 잠시 후 다시 시도해 주세요.",
-        "remindersToggleLabel": "보류 중인 검토에 대해 다음 기간이 지나면 알림 전송",
+        "remindersToggleLabel": "검토 대기 중인 항목에 대한 알림 메시지를 보냅니다",
         "remindersToggleAriaLabel": "리뷰 알림 토글",
         "thresholdLabel": "리뷰어에게 알림",
-        "thresholdUnit": "{count, plural, other {일}}",
+        "thresholdUnit": "일(들)",
         "thresholdSaveButton": "구하다",
         "thresholdHelp": "검토 요청이 접수된 후 검토자에게 알림 메시지가 전송되기까지 며칠이 걸릴 수 있나요? 새 요청은 제출 시점부터 기한이 계산됩니다.",
         "thresholdUpdateSuccess": "리뷰 알림 설정이 업데이트되었습니다.",
@@ -4967,10 +4943,6 @@
     },
     "roles": {
       "description": "각 애플리케이션 영역에 대한 권한을 설정하여 사용자가 수행할 수 있는 작업을 정의하십시오.",
-      "confirmDefaultDescription": "이 역할을 기본값으로 설정하시겠습니까?",
-      "defaultWarning": "새 사용자에게는 기본적으로 이 역할이 할당됩니다.",
-      "defaultLockedTitle": "기본 역할",
-      "defaultLockedDescription": "기본값을 변경하려면 다른 역할을 편집하고 기본값으로 설정하세요.",
       "filterPlaceholder": "역할 필터링...",
       "add": {
         "button": "역할 추가",
@@ -5005,9 +4977,7 @@
         "modeNone": "제한 없음 (프로젝트에서 결정)",
         "modeDisabled": "모든 곳에서 편집 기능을 비활성화합니다.",
         "modeMax": "최대 창 범위까지 편집을 허용합니다.",
-        "minutesBefore": "최대 대기 시간:",
-        "minutesUnit": "{minutes, plural, other {분}}",
-        "minutesAriaLabel": "분 단위 최대 대기 시간",
+        "minutesLabel": "최대 대기 시간(분)",
         "invalidMinutes": "0보다 큰 분 단위 숫자를 입력하세요.",
         "save": "정책 저장",
         "savedToast": "결과 편집 정책이 업데이트되었습니다.",
@@ -5207,8 +5177,6 @@
       "confirmDefault": "기본값 확인",
       "confirmDefaultDescription": "이 마일스톤 유형을 기본값으로 설정하시겠습니까?",
       "warning": "이 마일스톤 유형은 모든 프로젝트에 추가됩니다.",
-      "defaultLockedTitle": "기본 마일스톤 유형",
-      "defaultLockedDescription": "기본값을 변경하려면 다른 마일스톤 유형을 편집하고 기본값으로 설정하세요.",
       "wizard": {
         "selectProjects": "프로젝트 선택",
         "projectsSelected": "{count, plural, =0 {선택된 프로젝트 없음} one {선택된 프로젝트 수} other {선택된 프로젝트 수}}",
@@ -5306,8 +5274,7 @@
         "repositoryCaseVersions": "저장소 케이스 버전",
         "testRunStepResults": "테스트 실행 단계 결과",
         "issueConfigs": "문제 구성",
-        "sharedStepGroups": "공유 스텝 그룹",
-        "dataSets": "데이터 세트"
+        "sharedStepGroups": "공유 스텝 그룹"
       },
       "table": {
         "title": "삭제됨 {itemType}",
@@ -5796,11 +5763,6 @@
     "elasticsearch": {
       "title": "엘라스틱서치 관리",
       "description": "검색 엔진 색인 생성 및 유지 관리를 담당합니다.",
-      "health": {
-        "healthy": "정상",
-        "warning": "경고",
-        "unhealthy": "비정상"
-      },
       "status": {
         "title": "Elasticsearch 상태",
         "description": "검색 엔진의 현재 연결 상태 및 건강 상태",
@@ -5824,7 +5786,7 @@
         "error": "설정 저장 오류",
         "errorDescription": "설정을 저장하는 데 실패했습니다. 다시 시도해 주세요.",
         "note": {
-          "description": "새 인덱스에는 변경 사항이 즉시 적용됩니다. 기존 인덱스는 저장할 때 업데이트됩니다. 단일 노드 클러스터에서 경고 상태를 해결하려면 복제본 수를 0으로 설정하십시오."
+          "description": "새 인덱스에는 변경 사항이 즉시 적용됩니다. 기존 인덱스는 저장할 때 업데이트됩니다. 단일 노드 클러스터에서 YELLOW 상태가 발생하는 경우 복제본 수를 0으로 설정하십시오."
         }
       },
       "reindex": {
@@ -5971,6 +5933,7 @@
     },
     "auditLogs": {
       "description": "보안 및 규정 준수 추적을 위한 시스템 전반의 감사 기록을 확인하세요.",
+      "projectDescription": "이 프로젝트에서 수행된 작업의 감사 추적을 확인하세요.",
       "filterPlaceholder": "개체, 사용자 또는 작업으로 검색...",
       "filterAction": "행동",
       "filterEntityType": "엔티티 유형",
@@ -6359,77 +6322,6 @@
     "noTasks": "간트 차트에 표시할 작업이 없습니다."
   },
   "help": {
-    "auditLogs": "보안 및 규정 준수 추적을 위한 시스템 전반의 감사 기록을 확인하세요",
-    "statuses": "테스트 상태 관리",
-    "configurations": "구성은 테스트 환경을 정의하는 데 사용되는 범주와 변형의 조합입니다. 예를 들어 운영 체제/브라우저, 테스트 서버, 언어 등이 있습니다.",
-    "categories": "카테고리는 브라우저나 운영 체제와 같은 관련 변형들을 그룹화하여 테스트 환경을 정의하는 데 사용됩니다.",
-    "templates": "테스트 케이스 템플릿 및 필드 관리",
-    "caseFields": "테스트 케이스에서 사용할 수 있는 사용자 지정 필드로, 템플릿에 할당하여 어떤 케이스가 이를 사용할지 제어합니다.",
-    "resultFields": "테스트 결과를 기록할 때 수집되는 사용자 지정 필드로, 템플릿에 할당하여 적용 범위를 제어합니다.",
-    "milestoneTypes": "마일스톤 유형은 스프린트, 릴리스, 버전과 같이 마일스톤을 분류하며 여러 프로젝트에서 재사용할 수 있습니다.",
-    "tags": "태그는 테스트 케이스와 세션에 라벨을 지정하고 정리하여 여러 프로젝트에서 관련 작업을 그룹화하고 찾을 수 있게 합니다.",
-    "issues": "이슈는 Jira, GitHub, Azure DevOps 등 여러 통합 도구에서 가져온 외부 트래커 항목으로, TestPlanIt과 동기화되어 테스트 케이스, 실행, 세션에 연결될 수 있습니다.",
-    "crossProjectReports": "전체 테스트 스위트의 자동화 추세와 같이 여러 프로젝트에 걸친 보고서를 작성, 실행, 분석합니다.",
-    "users": "TestPlanIt 사용자 목록과 각 사용자가 접근할 수 있는 프로젝트를 확인할 수 있습니다.",
-    "documentation": "이 프로젝트에 대한 자유 형식 문서로, 메모, 참고 자료, 온보딩 세부 정보를 포함합니다.",
-    "projectMilestones": "마일스톤은 릴리스, 스프린트 또는 사용자 지정 유형과 같은 목표별로 이 프로젝트의 작업을 그룹화하고 추적하며, 진행 중 및 완료 상태를 모두 포함합니다.",
-    "projectRepository": "폴더로 정리된 이 프로젝트의 테스트 케이스 라이브러리입니다.",
-    "projectSharedSteps": "여러 테스트 케이스가 공유할 수 있는 재사용 가능한 테스트 단계 그룹으로, 그룹을 업데이트하면 이를 참조하는 모든 케이스가 함께 업데이트됩니다.",
-    "projectRuns": "테스트 실행은 선택한 테스트 케이스 세트를 실행하고 결과를 기록하며, 시작부터 완료까지 진행 상황을 추적합니다.",
-    "projectSessions": "탐색적 테스트 세션은 시간 제한이 있는 비정형 테스트로, 진행 중 및 완료 상태에서 메모와 결과로 기록됩니다.",
-    "projectTags": "태그는 이 프로젝트의 테스트 케이스, 세션, 실행에 라벨을 지정하고 그룹화하여 관련 작업을 쉽게 찾을 수 있게 합니다.",
-    "projectIssues": "이 프로젝트에 연결된 트래커의 이슈로, 발견되거나 참조된 테스트 케이스, 실행, 세션에 연결됩니다.",
-    "projectReports": "보고서는 이 프로젝트의 테스트 실행, 세션, 결과를 차트와 표로 요약하며 필터링 및 내보내기가 가능합니다.",
-    "projectAuditLogs": "이 프로젝트에서 수행된 작업의 감사 기록으로, 누가 무엇을 언제 변경했는지 보안 및 규정 준수 추적을 위해 확인할 수 있습니다.",
-    "projectIntegrations": "이 프로젝트를 이슈 트래커에 연결하여 테스트 케이스, 실행, 세션이 외부 이슈 및 마일스톤과 연결되고 동기화될 수 있도록 합니다.",
-    "projectWebhooks": "이 프로젝트의 이벤트 알림을 주고받습니다. 인바운드 훅은 외부 변경 사항을 가져오고, 아웃바운드 훅은 테스트 이벤트를 내보내며, 전송 기록에는 전송된 내용이 기록됩니다.",
-    "projectAiModels": "테스트 케이스 생성 및 자동 태깅과 같은 AI 지원 기능에 이 프로젝트가 사용할 AI 모델 및 프롬프트 구성을 선택합니다.",
-    "projectQuickScript": "코드 저장소를 연결하여 이 프로젝트가 자동화된 테스트 파일로부터 테스트 케이스를 생성할 수 있도록 하며, 포함할 브랜치와 경로를 선택할 수 있습니다.",
-    "projectParameters": "이 프로젝트의 데이터 기반 테스트를 구성합니다. 가져온 결과에 대한 JUnit 반복 속성 이름과 매개변수화된 케이스를 위한 재사용 가능한 데이터 세트를 설정할 수 있습니다.",
-    "projectAdvanced": "이 프로젝트의 고급 설정으로, 레코드 ID 접두사, 결과 검토 워크플로, 실패 시 자동 이슈 생성, 결과 편집 기간을 포함합니다.",
-    "projectShares": "이 프로젝트의 보고서에 대한 공유 링크로, 각각 공개, 로그인 필요, 비밀번호 보호 중 하나의 접근 수준을 가집니다. 링크를 취소하면 접근이 차단됩니다.",
-    "groups": "그룹을 사용하면 여러 사용자에게 프로젝트 접근 권한과 역할을 한 번에 할당할 수 있습니다. 구성원을 직접 추가하거나 ID 공급자의 그룹을 매핑할 수 있습니다.",
-    "roles": "역할은 사용자가 수행할 수 있는 작업을 제어하며, 각 역할은 애플리케이션 영역별 권한을 전환합니다. 역할을 사용자에게 직접 할당하거나 프로젝트 기본값으로 설정할 수 있습니다.",
-    "sso": "사용자의 로그인 방식과 신규 계정 등록 가능 여부를 관리합니다.",
-    "ssoProviders": "사용자가 애플리케이션에 로그인하는 방법을 구성하세요.",
-    "ssoRegistration": "새 계정 등록 권한을 관리하세요.",
-    "ssoAllowRegistration": "이 기능이 비활성화되면 신규 사용자는 직접 가입하거나 SSO를 통해 계정을 생성할 수 없습니다. 기존 사용자는 계속 로그인할 수 있습니다.",
-    "ssoDefaultAccess": "신규 사용자가 등록할 때 할당되는 시스템 접근 수준.",
-    "ssoRequireEmailVerification": "사용자는 시스템에 접속하기 전에 이메일 주소를 인증해야 합니다.",
-    "ssoRestrictDomains": "특정 이메일 도메인에서만 가입을 허용합니다.",
-    "security": "로그인 강제 적용, 암호 정책, 잠금 설정 및 강제 조치를 구성합니다.",
-    "securitySignInEnforcement": "SSO를 필수로 요구하고 이중 인증을 시행하십시오.",
-    "securityForceSso": "이메일 로그인을 비활성화하고 사용자에게 SSO 사용을 요구합니다.",
-    "securityForce2FANonSSO": "이메일/비밀번호로 로그인하는 사용자는 이중 인증을 설정하고 사용해야 합니다.",
-    "securityForce2FAAllLogins": "SSO 사용자를 포함한 모든 사용자는 로그인 후 이중 인증으로 본인 확인을 해야 합니다.",
-    "securityPasswordPolicy": "사용자 암호에 대한 요구 사항을 설정하세요.",
-    "securityLockoutPolicy": "로그인 시도 실패 후 계정 잠금 설정을 구성합니다.",
-    "securityEnforcement": "자격 증명 기반 사용자의 암호 변경을 강제합니다.",
-    "apiTokens": "모든 사용자의 API 토큰을 확인하고 관리할 수 있습니다. 보안상의 문제가 있는 경우 토큰을 취소할 수 있습니다.",
-    "scim": "SCIM 2.0을 통해 ID 공급자로부터 TestPlanIt에 사용자를 프로비저닝하세요.",
-    "scimConflicts": "시스템 개입이 필요한 SCIM ID 이벤트(연결, 복구, displayName 덮어쓰기, 멤버 건너뛰기).",
-    "scimFallbackDefault": "그룹 매핑에 포함되지 않은 사용자에게 할당되는 접근 등급입니다.",
-    "integrations": "이슈 추적을 위한 타사 통합 관리.",
-    "notifications": "기본 알림 설정을 지정하고(사용자가 재정의할 수 있음) 시스템 알림을 전송합니다.",
-    "notificationsSystem": "모든 사용자에게 중요 공지사항을 전송합니다.",
-    "notificationsHistory": "이전에 모든 사용자에게 전송된 시스템 알림입니다.",
-    "aiModels": "AI 지원 기능에 사용되는 AI 모델 제공업체와 연결을 관리하며, 사용량 제한 및 예산도 포함됩니다.",
-    "prompts": "AI 기능이 콘텐츠 생성에 사용하는 프롬프트 구성을 관리하고 프로젝트에 할당합니다.",
-    "quickscripts": "QuickScript에서 테스트 케이스를 자동화 스크립트로 변환하는 데 사용되는 템플릿을 관리합니다.",
-    "codeRepositories": "QuickScript 컨텍스트에 대한 코드 저장소 연결을 관리합니다.",
-    "recordKeys": "PROJECT-TC-1234와 같이 프로젝트 접두사가 붙은 표시용 식별자를 구성하여 레코드가 속한 프로젝트와 레코드 유형을 쉽게 파악할 수 있도록 합니다. 기본 숫자 ID는 변경되지 않으며 모든 곳에서 계속 작동합니다.",
-    "recordKeysEnabled": "이 기능을 활성화하면 레코드는 프로젝트 코드, 유형 토큰, 레코드의 숫자 ID를 조합한 선택적 키를 표시합니다. 각 프로젝트의 코드는 프로젝트 설정 → 고급에서 설정할 수 있습니다.",
-    "imports": "외부 테스트 관리 도구의 데이터를 TestPlanIt으로 가져옵니다.",
-    "elasticsearchStatus": "검색 엔진의 현재 연결 상태 및 건강 상태.",
-    "elasticsearchConfig": "배포 환경에 맞게 Elasticsearch 설정을 구성하세요.",
-    "elasticsearchReindex": "검색 성능 향상을 위해 검색 인덱스를 재구축합니다.",
-    "queues": "백그라운드 작업 처리 대기열을 모니터링하고 관리합니다.",
-    "trash": "시스템 전체에서 소프트 삭제된 레코드를 복원하거나 영구적으로 삭제합니다.",
-    "systemWebhooks": "단일 프로젝트에 연결되지 않은 시스템 수준 이벤트용 아웃바운드 웹훅 대상입니다. 현재는 SCIM 2.0 사용자 및 그룹 수명 주기 이벤트가 해당됩니다. 인바운드 웹훅과 프로젝트 범위 아웃바운드 웹훅은 프로젝트 설정 페이지에서 구성하십시오.",
-    "workflows": "테스트 케이스, 테스트 실행, 세션의 워크플로 상태를 관리합니다.",
-    "workflowReviews": "승인이 부여될 때까지 워크플로 전환을 차단하여 검토 절차를 시행합니다. 이 기능을 활성화하면 각 프로젝트는 고급 설정에서 개별적으로 활성화 또는 비활성화할 수 있습니다. 워크플로 승인 차단을 비활성화하려면 이 기능을 비활성화하십시오.",
-    "reviewReminders": "검토 요청이 접수된 후 검토자에게 알림 메시지가 전송되기까지 며칠이 걸릴 수 있나요? 새 요청은 제출 시점부터 기한이 계산됩니다.",
-    "resultEditingPolicy": "프로젝트 전체에 걸쳐 결과가 기록된 후 해당 결과를 제자리에서 편집할 수 있는 시간을 제어합니다. 프로젝트는 고급 설정에서 이 시간을 단축할 수 있지만, 단축할 수는 없습니다. 시스템 관리자는 언제든지 이 설정을 편집할 수 있습니다.",
     "project": {
       "name": "## 프로젝트 이름\n프로젝트의 고유 식별자입니다.\n\n- 모든 프로젝트에서 고유해야 합니다.\n- 탐색 및 보고서에 사용됩니다.\n- 명확하고 설명적이어야 합니다.\n- 팀 구성원이 프로젝트 범위를 파악하는 데 도움이 됩니다.",
       "description": "## 프로젝트 설명\n프로젝트의 목적과 범위에 대한 추가 정보입니다.\n\n- 선택 사항이지만 권장합니다.\n- 팀 구성원이 프로젝트 목표를 이해하는 데 도움이 됩니다.\n- 주요 목표 또는 요구 사항을 포함할 수 있습니다.\n- 256자 이내로 제한됩니다.",
@@ -6440,7 +6332,6 @@
       "issueTracker": "## 이슈 트래커 구성\n이 프로젝트와 관련된 이슈 관리에 사용할 이슈 트래커 구성을 선택하세요."
     },
     "projects": {
-      "overview": "프로젝트는 테스트 케이스, 실행, 세션, 마일스톤을 담는 최상위 컨테이너입니다. 여기에서 모든 프로젝트를 생성하고 관리할 수 있습니다.",
       "settings": {
         "integrations": {
           "externalProjectHelp": "## 외부 프로젝트\n이 TestPlanIt 프로젝트와 연결할 외부 시스템의 프로젝트 또는 저장소를 선택하세요.\n\n- TestPlanIt에서 생성된 이슈는 이 프로젝트에 생성됩니다.\n- 시스템 간 이슈 추적 통합을 활성화합니다.\n- 외부 시스템에서 적절한 권한이 있어야 합니다.",
@@ -6649,7 +6540,7 @@
       "isDefault": "## 기본값\n이 워크플로가 프로젝트의 기본값인지 여부를 나타냅니다.\n\n- 새 테스트 실행, 세션 및 자동화에 대해 기본 워크플로가 미리 선택됩니다.",
       "isEnabled": "## 활성화됨\n이 워크플로가 활성화되었는지 여부를 나타냅니다.",
       "isActive": "## 활성\n이 워크플로 상태가 활성화되어 사용 가능한지 여부를 나타냅니다.\n\n- 활성 워크플로는 테스트 실행, 세션 또는 자동화를 업데이트할 때 선택할 수 있습니다.\n- 비활성 워크플로는 선택 항목에서 숨겨지지만 기존 항목에는 유지됩니다.",
-      "requiresReview": "## 검토 필요\n이 기능이 켜져 있으면 케이스, 테스트 실행 또는 세션을 이 상태로 전환하려면 승인된 검토 요청이 있어야 합니다. 승인된 요청이 없으면 전환이 차단됩니다.\n\n- 시스템 수준 기능이 꺼져 있을 때 기존의 보류 중인 검토는 자동으로 유지되며 다시 활성화하면 다시 나타납니다.\n- 테스터가 엔티티 세부 정보 페이지에서 검토 요청을 클릭하면 검토자가 선택됩니다.\n\n시스템 수준 기능이 비활성화된 경우 이 스위치는 잠깁니다. 위의 검토 워크플로 카드에서 다시 활성화하여 이 기능을 켜십시오.",
+      "requiresReview": "## 검토 필요\n이 기능이 켜져 있으면 케이스, 테스트 실행 또는 세션을 이 상태로 전환하려면 승인된 검토 요청이 있어야 합니다. 승인된 요청이 없으면 전환이 차단됩니다.\n\n- 요청을 승인하면 전환이 수행됩니다. 검토자의 승인은 케이스, 실행 또는 세션을 요청된 상태로 이동시키며, 요청자는 상태 변경을 직접 반복할 필요가 없습니다.\n- 시스템 수준 기능이 꺼져 있을 때 기존의 보류 중인 검토는 자동으로 유지되며 다시 활성화하면 다시 나타납니다.\n- 테스터가 엔티티 세부 정보 페이지에서 검토 요청을 클릭하면 검토자가 선택됩니다.\n\n시스템 수준 기능이 비활성화된 경우 이 스위치는 잠깁니다. 위의 검토 워크플로 카드에서 다시 활성화하여 이 기능을 켜십시오.",
       "projects": "## 프로젝트\n이 워크플로를 사용할 수 있는 프로젝트를 나타냅니다."
     },
     "testResult": {

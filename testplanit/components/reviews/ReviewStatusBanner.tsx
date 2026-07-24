@@ -76,6 +76,17 @@ export interface ReviewStatusBannerProps {
 type BannerRequest = ReviewStatusBannerRequest;
 
 /**
+ * ZenStack query keys are `["zenstack", <Model>, ...]`, so invalidating the
+ * entity after a decision needs the generated model name — not the
+ * polymorphic ReviewEntityType the banner is parameterized on.
+ */
+const ENTITY_QUERY_MODEL: Record<ReviewableEntityType, string> = {
+  CASE: "RepositoryCases",
+  RUN: "TestRuns",
+  SESSION: "Sessions",
+};
+
+/**
  * Status banner rendered directly above the entity's `WorkflowStateDisplay`
  * (per D-05). Three variant branches:
  *
@@ -150,7 +161,7 @@ export function ReviewStatusBanner({
             kind: "role",
             id: latest.assigneeRole.id,
             name: latest.assigneeRole.name,
-            userCount: 0,
+            notifyCount: 0,
           }
         : undefined;
 
@@ -201,6 +212,13 @@ export function ReviewStatusBanner({
         reviewableEntityTypeToCommentEntityType(entityType),
         entityId
       ),
+    });
+    // Approving applies the transition server-side, so the entity's own
+    // workflow state is stale the moment the decision lands. Invalidate the
+    // entity model too or the page keeps rendering the pre-approval state
+    // pill until the next unrelated refetch.
+    void queryClient.invalidateQueries({
+      queryKey: ["zenstack", ENTITY_QUERY_MODEL[entityType]],
     });
   };
 

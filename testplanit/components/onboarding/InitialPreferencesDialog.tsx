@@ -348,9 +348,6 @@ export function InitialPreferencesDialog() {
         data: updateData,
       });
 
-      await refetchPreferences();
-      await update?.();
-
       // Mark theme as saved so we don't revert it
       originalThemeRef.current = undefined;
 
@@ -363,8 +360,17 @@ export function InitialPreferencesDialog() {
         return;
       }
 
-      toast.success(t("success"));
+      // Close BEFORE refetching. The refetch flips
+      // hasCompletedInitialPreferencesSetup, which drops this component to
+      // null — and a modal that stops rendering never transitions from open
+      // to closed, so Radix's close sequence (focus restore, scroll unlock,
+      // body pointer-events) is skipped entirely. Closing first lets that run
+      // normally; the unmount then lands on an already-closed dialog.
       setIsOpen(false);
+      toast.success(t("success"));
+
+      await refetchPreferences();
+      await update?.();
     } catch (error) {
       console.error("Failed to update initial preferences:", error);
       toast.error(t("error"));
@@ -374,13 +380,24 @@ export function InitialPreferencesDialog() {
   });
 
   const handleOpenChange = (open: boolean) => {
-    // Don't allow manually closing the dialog since this is initial setup
-    // User must either save or skip
-    // However, we allow programmatic closing via save/skip buttons
-    if (!open && isOpen) {
+    if (open) {
+      setIsOpen(true);
       return;
     }
-    setIsOpen(open);
+    // Accidental dismissal is refused on DialogContent (outside-click), so a
+    // close request here is a deliberate one: the X that DialogContent always
+    // renders in its corner, or Escape. Route both through the same path as
+    // "Keep defaults" rather than dropping them.
+    //
+    // Dropping them is what made this dialog feel broken: the X rendered,
+    // absorbed clicks, and did nothing, while Escape and outside-click were
+    // dead too. With the footer below the fold on a short viewport, the only
+    // visible way out did nothing and a reload was the only escape — and
+    // since nothing was persisted, the dialog came straight back.
+    if (isSubmitting) {
+      return;
+    }
+    void handleSkip();
   };
 
   const handleSkip = async () => {
@@ -424,10 +441,13 @@ export function InitialPreferencesDialog() {
           hasCompletedInitialPreferencesSetup: true,
         },
       });
+      originalThemeRef.current = undefined;
+
+      // Close before the refetch — same reasoning as the save path above.
+      setIsOpen(false);
+
       await refetchPreferences();
       await update?.();
-      originalThemeRef.current = undefined;
-      setIsOpen(false);
     } catch (error) {
       console.error("Failed to skip initial preferences:", error);
       toast.error(t("error"));
@@ -449,7 +469,18 @@ export function InitialPreferencesDialog() {
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-3xl">
+      {/*
+        Outside-click stays refused so a stray click on the page behind can't
+        drop someone out of first-run setup. The corner X and Escape are
+        deliberate gestures and do close (see handleOpenChange) — Escape
+        matters most, since it is the one exit that still works if the page
+        ever ends up with a pointer-events lock.
+      */}
+      <DialogContent
+        className="max-w-3xl"
+        onPointerDownOutside={(event) => event.preventDefault()}
+        onInteractOutside={(event) => event.preventDefault()}
+      >
         <DialogHeader>
           <DialogTitle>{t("title")}</DialogTitle>
           <DialogDescription>{t("description")}</DialogDescription>

@@ -377,7 +377,7 @@ describe("RequestReviewSheet", () => {
       kind: "role",
       id: 7,
       name: "Tester",
-      userCount: 3,
+      notifyCount: 3,
     };
     render(
       <RequestReviewSheet

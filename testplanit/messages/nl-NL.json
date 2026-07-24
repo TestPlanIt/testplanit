@@ -2001,7 +2001,7 @@
         },
         "reviewWorkflow": {
           "label": "Schakel de beoordelingsworkflow in",
-          "description": "Wanneer deze functie is ingeschakeld, worden overgangen naar statussen die beoordeling vereisen, geblokkeerd door een goedgekeurd beoordelingsverzoek. Testers zien de knop 'Beoordeling aanvragen'; beoordelaars ontvangen meldingen.",
+          "description": "Wanneer deze functie is ingeschakeld, worden overgangen naar statussen die beoordeling vereisen, geblokkeerd door een goedgekeurd beoordelingsverzoek. Testers zien de knop 'Beoordeling aanvragen'; beoordelaars ontvangen meldingen, en het goedkeuren van een verzoek past de overgang toe.",
           "enabledToast": "De beoordelingsworkflow is voor dit project ingeschakeld.",
           "disabledToast": "De beoordelingsworkflow is voor dit project uitgeschakeld.",
           "saveError": "Het bijwerken van de beoordelingsworkflow is mislukt.",
@@ -3475,7 +3475,7 @@
       "gatedStatesNotSelectable": "Staten die zich op of voorbij een afgesloten staat bevinden, kunnen niet worden geselecteerd bij het aanmaken van een aanvraag. Kies een staat vóór de eerste afgesloten staat en gebruik vervolgens 'Beoordeling aanvragen' om deze te passeren.",
       "saveBlockedByFormErrors": "Los de gemarkeerde formulierfouten op voordat u opslaat.",
       "bulkBlockedSummary": "{count, plural, one {# geval} other {# gevallen}} geblokkeerd door poort \"{gateName}\": {sampleNames}{more, plural, =0 {} other {, en # meer}}. Elk geblokkeerd geval heeft een goedgekeurde beoordeling nodig voor \"{gateName}\" voordat deze overgang plaatsvindt.",
-      "toastReviewRequired": "Goedkeuring is vereist vóór deze overgang. Vraag een beoordeling aan en probeer het opnieuw nadat deze is goedgekeurd.",
+      "toastReviewRequired": "Goedkeuring is vereist vóór deze overgang. Vraag een beoordeling aan — de overgang wordt voor u toegepast zodra deze is goedgekeurd.",
       "toastPendingReviewExists": "Er loopt al een beoordeling voor deze overgang. Wacht op de beslissing of annuleer de overgang voordat u het opnieuw probeert."
     },
     "inbox": {
@@ -3514,7 +3514,7 @@
       "sheetDescription": "Stuur deze entiteit ter beoordeling door voordat u overgaat naar de doelstatus.",
       "assigneeLabel": "Cessionaris",
       "assigneePlaceholder": "Selecteer een gebruiker of rol",
-      "usersHoldRole": "{count, plural, one {# gebruiker heeft deze rol} other {# gebruikers hebben deze rol}}",
+      "usersNotified": "{count, plural, =0 {Niemand wordt op de hoogte gebracht} one {# gebruiker wordt op de hoogte gebracht} other {# gebruikers worden op de hoogte gebracht}}",
       "targetStateLabel": "Doelstaat",
       "targetStatePlaceholder": "Selecteer een doeltoestand",
       "commentLabel": "Opmerking",
@@ -3539,7 +3539,7 @@
       "requestChanges": "Verzoek om wijzigingen",
       "reject": "Afwijzen",
       "approveConfirmTitle": "Wilt u dit beoordelingsverzoek goedkeuren?",
-      "approveConfirmDescription": "Goedkeuring zal toestaan dat <requester></requester> overgaat van <name></name> naar <state></state>.",
+      "approveConfirmDescription": "Goedkeuren verplaatst <name></name> naar <state></state> voor <requester></requester>.",
       "approvalNoteLabel": "Goedkeuringsnota",
       "approvalNotePlaceholder": "Voeg een optionele notitie voor de aanvrager toe (zichtbaar naast de goedkeuring).",
       "requestChangesDescription": "Vertel de aanvrager wat er moet veranderen voordat je deze overgang kunt goedkeuren.",
@@ -6649,7 +6649,7 @@
       "isDefault": "## Standaard\nGeeft aan of deze workflow de standaard is voor uw project.\n\n- De standaardworkflow is vooraf geselecteerd voor nieuwe testruns, sessies en automatisering.",
       "isEnabled": "## Ingeschakeld\nGeeft aan of deze workflow is ingeschakeld.",
       "isActive": "## Actief\nGeeft aan of deze workflowstatus actief en beschikbaar is voor gebruik.\n\n- Actieve workflows kunnen worden geselecteerd bij het bijwerken van testruns, sessies of automatisering.\n- Inactieve workflows zijn niet selecteerbaar, maar blijven behouden in bestaande items.",
-      "requiresReview": "## Vereist beoordeling\nWanneer AAN, is de overgang van een case, testrun of sessie NAAR deze status afhankelijk van een goedgekeurd beoordelingsverzoek. Zonder een goedgekeurd verzoek wordt de overgang geblokkeerd.\n\n- Bestaande, nog niet uitgevoerde beoordelingen worden stilzwijgend bewaard wanneer de systeemfunctie UIT staat en verschijnen opnieuw wanneer deze weer wordt ingeschakeld.\n- De beoordelaar wordt geselecteerd wanneer een tester op 'Beoordeling aanvragen' klikt op de detailpagina van de entiteit.\n\nAls de systeemfunctie is uitgeschakeld, is deze schakelaar vergrendeld. Schakel deze opnieuw in via de kaart 'Beoordelingsworkflow' hierboven om deze in te schakelen.",
+      "requiresReview": "## Vereist beoordeling\nWanneer AAN, is de overgang van een case, testrun of sessie NAAR deze status afhankelijk van een goedgekeurd beoordelingsverzoek. Zonder een goedgekeurd verzoek wordt de overgang geblokkeerd.\n\n- Het goedkeuren van een verzoek voert de overgang uit. De goedkeuring van de beoordelaar verplaatst de case, run of sessie naar de gevraagde status; de aanvrager hoeft de statuswijziging niet handmatig te herhalen.\n- Bestaande, nog niet uitgevoerde beoordelingen worden stilzwijgend bewaard wanneer de systeemfunctie UIT staat en verschijnen opnieuw wanneer deze weer wordt ingeschakeld.\n- De beoordelaar wordt geselecteerd wanneer een tester op 'Beoordeling aanvragen' klikt op de detailpagina van de entiteit.\n\nAls de systeemfunctie is uitgeschakeld, is deze schakelaar vergrendeld. Schakel deze opnieuw in via de kaart 'Beoordelingsworkflow' hierboven om deze in te schakelen.",
       "projects": "## Projecten\nGeeft de projecten aan die deze workflow kunnen gebruiken."
     },
     "testResult": {

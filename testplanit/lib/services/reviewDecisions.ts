@@ -10,6 +10,7 @@ import { CommentService } from "~/lib/services/commentService";
 import { resolveEffectiveProjectRoleId } from "~/lib/services/effectiveRole";
 import { NotificationService } from "~/lib/services/notificationService";
 import { isReviewFeatureSystemEnabled } from "~/lib/services/reviewFeatureFlag";
+import { applyApprovedReviewTransition } from "~/lib/services/reviewGate";
 import {
   FeatureDisabledError,
   IneligibleReviewerError,
@@ -330,6 +331,42 @@ export async function decideReviewRequest(
 
     return { commentId: created.id };
   });
+
+  // Approval IS the transition. The requester asked to move the entity from
+  // `fromState` to `toState`; approving that request performs the move
+  // instead of handing the requester a token they have to redeem by editing
+  // the entity themselves.
+  //
+  // Deliberately a SECOND transaction, not part of the decision tx above.
+  // The reviewer's decision is the durable act and must never be lost to a
+  // problem with the entity write — a concurrent transition that consumed a
+  // shared approval, an FK violation, a failing side-effect hook. Those
+  // roll back only the move; the decision stands and the entity can still be
+  // transitioned by hand, which is exactly the pre-auto-apply behavior.
+  // `applyApprovedReviewTransition` returns false (no throw) for the
+  // expected no-move cases: an earlier unapproved gate on the path, or an
+  // entity already at/past the target.
+  //
+  // The window between the two commits is invisible to the caller: this
+  // await completes before the decide response returns, so the client's
+  // post-decision refetch always observes the moved state.
+  if (decision === "APPROVED") {
+    try {
+      await auditedTransaction((tx) =>
+        applyApprovedReviewTransition(tx, {
+          reviewRequestId,
+          entityType: req.entityType as "CASE" | "RUN" | "SESSION",
+          entityId: req.entityId,
+          toStateId: req.toStateId,
+        })
+      );
+    } catch (transitionErr) {
+      console.error(
+        "decideReviewRequest: approved-transition application failed",
+        transitionErr
+      );
+    }
+  }
 
   // Persist mention rows (so the decision comment renders its in-thread
   // @mention highlight) and dispatch the dedicated REVIEW_APPROVED /

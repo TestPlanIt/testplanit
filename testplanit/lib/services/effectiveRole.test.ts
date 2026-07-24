@@ -98,6 +98,45 @@ describe("resolveEffectiveProjectRoleId", () => {
     expect(result).toBe(99);
   });
 
+  it("group GLOBAL_ROLE returns the user's global roleId on a NO_ACCESS project", async () => {
+    stub.userProjectPermission.findUnique.mockResolvedValue(null);
+    stub.user.findUnique.mockResolvedValue({
+      id: "u-1",
+      roleId: 7,
+      groups: [{ groupId: 10 }],
+    });
+    stub.groupProjectPermission.findMany.mockResolvedValue([
+      { accessType: ProjectAccessType.GLOBAL_ROLE, roleId: null },
+    ]);
+    stub.projects.findUnique.mockResolvedValue({
+      defaultAccessType: ProjectAccessType.NO_ACCESS,
+      defaultRoleId: null,
+    });
+
+    const result = await resolveEffectiveProjectRoleId("u-1", 100, stub as any);
+    expect(result).toBe(7);
+  });
+
+  it("group SPECIFIC_ROLE outranks a group GLOBAL_ROLE grant", async () => {
+    stub.userProjectPermission.findUnique.mockResolvedValue(null);
+    stub.user.findUnique.mockResolvedValue({
+      id: "u-1",
+      roleId: 7,
+      groups: [{ groupId: 10 }, { groupId: 11 }],
+    });
+    stub.groupProjectPermission.findMany.mockResolvedValue([
+      { accessType: ProjectAccessType.GLOBAL_ROLE, roleId: null },
+      { accessType: ProjectAccessType.SPECIFIC_ROLE, roleId: 99 },
+    ]);
+    stub.projects.findUnique.mockResolvedValue({
+      defaultAccessType: ProjectAccessType.NO_ACCESS,
+      defaultRoleId: null,
+    });
+
+    const result = await resolveEffectiveProjectRoleId("u-1", 100, stub as any);
+    expect(result).toBe(99);
+  });
+
   it("project DEFAULT GLOBAL_ROLE fallback", async () => {
     stub.userProjectPermission.findUnique.mockResolvedValue(null);
     stub.user.findUnique.mockResolvedValue({
@@ -220,6 +259,34 @@ describe("resolveEffectiveProjectRolesForUsers", () => {
       stub as any
     );
     expect(result.get("u-X")).toBeNull();
+  });
+
+  it("resolves group GLOBAL_ROLE members to their own global role", async () => {
+    const stub = makeStub();
+    // u-A reaches the project only through a group holding GLOBAL_ROLE, and
+    // u-B through a group holding SPECIFIC_ROLE. The project itself grants
+    // nothing, so neither user may fall through to the project default.
+    stub.userProjectPermission.findMany.mockResolvedValue([]);
+    stub.user.findMany.mockResolvedValue([
+      { id: "u-A", roleId: 44, groups: [{ groupId: 10 }] },
+      { id: "u-B", roleId: 44, groups: [{ groupId: 11 }] },
+    ]);
+    stub.groupProjectPermission.findMany.mockResolvedValue([
+      { groupId: 10, accessType: ProjectAccessType.GLOBAL_ROLE, roleId: null },
+      { groupId: 11, accessType: ProjectAccessType.SPECIFIC_ROLE, roleId: 66 },
+    ]);
+    stub.projects.findUnique.mockResolvedValue({
+      defaultAccessType: ProjectAccessType.NO_ACCESS,
+      defaultRoleId: null,
+    });
+
+    const result = await resolveEffectiveProjectRolesForUsers(
+      ["u-A", "u-B"],
+      100,
+      stub as any
+    );
+    expect(result.get("u-A")).toBe(44);
+    expect(result.get("u-B")).toBe(66);
   });
 
   it("empty input returns an empty Map without querying", async () => {

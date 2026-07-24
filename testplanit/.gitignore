@@ -78,3 +78,9 @@ app/api/.audit-route-inventory.txt
 app/api/.bearer-token-audit-inventory.txt
 app/actions/.audit-action-inventory.txt
 lib/.queue-add-inventory.md
+
+# Local nginx overrides (custom error pages, etc.): keep the README + *.example
+# tracked; the operator's real *.conf and pages stay local and untracked.
+/nginx-local/*
+!/nginx-local/README.md
+!/nginx-local/*.example

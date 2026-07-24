@@ -21,6 +21,7 @@ import { PolicyPlugin } from "@zenstackhq/plugin-policy";
 
 import { schema } from "~/zenstack/schema";
 
+import { getPoolConfig } from "./db/poolConfig";
 import { createDialect } from "./db/readWriteDialect";
 import { getReplicaUrls } from "./db/replicaConfig";
 import { sideEffectsPlugin } from "./zenstack-plugins/sideEffectsPlugin";
@@ -30,7 +31,14 @@ function createClients() {
   // spread across replicas and writes/transactions stay on the primary; when it
   // is unset this is a plain single-pool Postgres dialect (unchanged behaviour).
   const rawClient = new ZenStackClient(schema, {
-    dialect: createDialect(process.env.DATABASE_URL ?? "", getReplicaUrls()),
+    // getPoolConfig(): explicit pool sizing + a bounded wait for a free slot.
+    // Without it pg defaults to max:10 and an UNBOUNDED connect wait, so a
+    // burst of slow queries queues every other request forever (2026-07-23).
+    dialect: createDialect(
+      process.env.DATABASE_URL ?? "",
+      getReplicaUrls(),
+      getPoolConfig()
+    ),
   });
   const baseClient = rawClient.$use(sideEffectsPlugin);
   // dangerouslyAllowRawSql: the sideEffectsPlugin's beforeEntityMutation hook

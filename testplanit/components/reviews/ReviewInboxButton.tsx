@@ -4,10 +4,15 @@ import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { useQueryClient } from "@tanstack/react-query";
 import { Inbox } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 
+import { useEffect } from "react";
+
+import { createDeferredEventSource } from "~/hooks/deferredEventSource";
+import { useReviewAssigneeRoleIds } from "~/hooks/useReviewAssigneeRoleIds";
 import { useReviewFeatureEnabled } from "~/hooks/useReviewFeatureEnabled";
 import { Link } from "~/lib/navigation";
 
@@ -36,52 +41,12 @@ import { Link } from "~/lib/navigation";
 export function ReviewInboxButton() {
   const t = useTranslations();
   const { data: session, status } = useSession();
+  const queryClient = useQueryClient();
   const { enabled, isLoading: featureLoading } = useReviewFeatureEnabled();
 
-  // Load the user's role memberships once per session — feeds the role-holder
-  // branch of the count query's OR clause.
-  const { data: userWithRoles } = useClientQueries(schema).user.useFindUnique(
-    {
-      where: { id: session?.user?.id ?? "" },
-      select: {
-        roleId: true,
-        projectPermissions: {
-          select: {
-            roleId: true,
-            accessType: true,
-          },
-        },
-      },
-    },
-    { enabled: !!session?.user?.id }
-  );
-
-  // Flatten the user's role IDs across global + SPECIFIC_ROLE assignments.
-  // Deduped via Set; null/undefined entries dropped.
-  const currentUserRoleIds: number[] = (() => {
-    if (!userWithRoles) return [];
-    const ids = new Set<number>();
-    const globalRoleId = (userWithRoles as { roleId?: number | null }).roleId;
-    if (typeof globalRoleId === "number") ids.add(globalRoleId);
-    const projectPerms =
-      (
-        userWithRoles as {
-          projectPermissions?: Array<{
-            roleId: number | null;
-            accessType: string;
-          }>;
-        }
-      ).projectPermissions ?? [];
-    for (const perm of projectPerms) {
-      if (
-        perm.accessType === "SPECIFIC_ROLE" &&
-        typeof perm.roleId === "number"
-      ) {
-        ids.add(perm.roleId);
-      }
-    }
-    return Array.from(ids);
-  })();
+  // Role memberships (global + SPECIFIC_ROLE) — feeds the role-holder branch
+  // of the count query's OR clause.
+  const currentUserRoleIds = useReviewAssigneeRoleIds(session?.user?.id);
 
   const { data: count } = useClientQueries(schema).reviewRequest.useCount(
     {
@@ -97,6 +62,40 @@ export function ReviewInboxButton() {
     },
     { enabled: !!session?.user?.id && enabled === true }
   );
+
+  // The Header mounts once and never unmounts across client-side navigation,
+  // and the app's QueryClient defaults to refetchOnWindowFocus: false — so
+  // without an external signal this count is fetched at app load and never
+  // again, leaving the badge permanently stale. Requesting a review already
+  // dispatches a REVIEW_REQUESTED notification to the assignee, so the
+  // notification stream NotificationBell listens on doubles as the wake-up
+  // for the badge. Reconnect emits {event:"sync"}, which refetches and
+  // catches anything missed while disconnected.
+  //
+  // The handler invalidates the whole ReviewRequest cache rather than
+  // refetching this one count: ZenStack keys generated queries under
+  // ["zenstack", "<Model>", …], so the prefix also refreshes the home
+  // dashboard's pending-review queue and any open entity's status banner. One
+  // stream connection serves every review surface — each opening its own
+  // EventSource would burn scarce HTTP/1.1 connection slots.
+  useEffect(() => {
+    if (!session?.user?.id || enabled !== true) return;
+    if (typeof window === "undefined" || typeof EventSource === "undefined") {
+      return;
+    }
+    const eventSource = createDeferredEventSource("/api/notifications/stream");
+    eventSource.onmessage = () => {
+      void queryClient.invalidateQueries({
+        queryKey: ["zenstack", "ReviewRequest"],
+      });
+    };
+    eventSource.onerror = (err) => {
+      console.warn("[ReviewInboxButton] SSE transport error", err);
+    };
+    return () => {
+      eventSource.close();
+    };
+  }, [session?.user?.id, enabled, queryClient]);
 
   // Count of access-visible projects with the per-project toggle on. The
   // enhanced auto-API enforces project access policies, so this naturally

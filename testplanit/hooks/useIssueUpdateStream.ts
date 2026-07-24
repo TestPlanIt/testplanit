@@ -58,9 +58,33 @@ export function scheduleIssueInvalidation(queryClient: QueryClient): void {
     invalidateTimer = null;
     const client = pendingQueryClient;
     pendingQueryClient = null;
-    void client?.invalidateQueries({
-      predicate: (query) => isIssueBearingQueryKey(query.queryKey),
-    });
+    void client?.invalidateQueries(
+      {
+        predicate: (query) => isIssueBearingQueryKey(query.queryKey),
+      },
+      // cancelRefetch:false is load-bearing, not a tweak. TanStack's default
+      // (true) ABORTS the in-flight request and restarts it on every
+      // invalidation pass. When a matched query is slower than the interval
+      // between issue events, it is cancelled and restarted forever and never
+      // resolves — a livelock, not just churn.
+      //
+      // That is exactly what took prod down on 2026-07-23: a Jira sync burst
+      // published issue events continuously while a browser sat on
+      // /projects/repository/:projectId/:caseId. Both heavy findFirst queries
+      // on that page are issue-bearing (they pull `caseIssues` / `issues`) and
+      // take 17-25s server-side, so each 200ms pass killed the in-flight
+      // request and issued a new one: 677 requests for a single case in three
+      // minutes, every one of them aborted (nginx 499), each still holding a
+      // pg pool slot until the server noticed the abort. The pool (10) stayed
+      // saturated and every other route queued behind it.
+      //
+      // With cancelRefetch:false an in-flight fetch is left alone to finish;
+      // the invalidation still marks the query stale, so it refetches once the
+      // current attempt settles. Slow queries make progress instead of
+      // starving, and the request rate is bounded by completion rather than by
+      // the event rate.
+      { cancelRefetch: false }
+    );
   }, INVALIDATE_COALESCE_MS);
 }
 

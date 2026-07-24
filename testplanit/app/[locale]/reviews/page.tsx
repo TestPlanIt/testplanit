@@ -23,6 +23,7 @@ import {
   RequestChangesDialog,
   type ReviewableEntityType,
 } from "~/components/reviews/ReviewDecisionDialogs";
+import { useReviewAssigneeRoleIds } from "~/hooks/useReviewAssigneeRoleIds";
 import { useReviewFeatureEnabled } from "~/hooks/useReviewFeatureEnabled";
 import { useRouter } from "~/lib/navigation";
 
@@ -141,47 +142,9 @@ function ReviewsInboxContent({ userId }: { userId: string }) {
     );
   };
 
-  // Flatten the user's role IDs across global + SPECIFIC_ROLE assignments.
-  const { data: userWithRoles } = useClientQueries(schema).user.useFindUnique(
-    {
-      where: { id: userId },
-      select: {
-        roleId: true,
-        projectPermissions: {
-          select: {
-            roleId: true,
-            accessType: true,
-          },
-        },
-      },
-    },
-    { enabled: !!userId }
-  );
-
-  const currentUserRoleIds: number[] = useMemo(() => {
-    if (!userWithRoles) return [];
-    const ids = new Set<number>();
-    const globalRoleId = (userWithRoles as { roleId?: number | null }).roleId;
-    if (typeof globalRoleId === "number") ids.add(globalRoleId);
-    const projectPerms =
-      (
-        userWithRoles as {
-          projectPermissions?: Array<{
-            roleId: number | null;
-            accessType: string;
-          }>;
-        }
-      ).projectPermissions ?? [];
-    for (const perm of projectPerms) {
-      if (
-        perm.accessType === "SPECIFIC_ROLE" &&
-        typeof perm.roleId === "number"
-      ) {
-        ids.add(perm.roleId);
-      }
-    }
-    return Array.from(ids);
-  }, [userWithRoles]);
+  // Role IDs the viewer can be reached through as an assignee (global +
+  // SPECIFIC_ROLE), flattened by the shared hook the header badge also uses.
+  const currentUserRoleIds = useReviewAssigneeRoleIds(userId);
 
   const { data: projects } = useClientQueries(schema).projects.useFindMany({
     where: { isDeleted: false },

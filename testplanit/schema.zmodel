@@ -2651,7 +2651,8 @@ model SessionResults {
         session.project.userPermissions?[user == auth() && accessType == 'GLOBAL_ROLE'] ||
         session.project.groupPermissions?[
             group.assignedUsers?[user == auth()] &&
-            accessType == 'SPECIFIC_ROLE' && role != null
+            ((accessType == 'SPECIFIC_ROLE' && role != null) ||
+             (accessType == 'GLOBAL_ROLE' && auth().role != null))
         ] ||
     // Allow access if project uses GLOBAL_ROLE and user has a valid role
         (session.project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE') ||
@@ -2848,7 +2849,8 @@ model SessionFieldValues {
         session.project.userPermissions?[user == auth() && accessType == 'GLOBAL_ROLE'] ||
         session.project.groupPermissions?[
             group.assignedUsers?[user == auth()] &&
-            accessType == 'SPECIFIC_ROLE' && role != null
+            ((accessType == 'SPECIFIC_ROLE' && role != null) ||
+             (accessType == 'GLOBAL_ROLE' && auth().role != null))
         ] ||
     // Allow access if project uses GLOBAL_ROLE and user has a valid role
         (session.project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE') ||
@@ -3112,7 +3114,8 @@ model TestRunCases {
         testRun.project.userPermissions?[user == auth() && accessType == 'GLOBAL_ROLE'] ||
         testRun.project.groupPermissions?[
             group.assignedUsers?[user == auth()] &&
-            accessType == 'SPECIFIC_ROLE' && role != null
+            ((accessType == 'SPECIFIC_ROLE' && role != null) ||
+             (accessType == 'GLOBAL_ROLE' && auth().role != null))
         ] ||
     // Allow access if project uses GLOBAL_ROLE and user has a valid role
         (testRun.project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE') ||
@@ -3244,7 +3247,8 @@ model TestRunResults {
         testRun.project.userPermissions?[user == auth() && accessType == 'GLOBAL_ROLE'] ||
         testRun.project.groupPermissions?[
             group.assignedUsers?[user == auth()] &&
-            accessType == 'SPECIFIC_ROLE' && role != null
+            ((accessType == 'SPECIFIC_ROLE' && role != null) ||
+             (accessType == 'GLOBAL_ROLE' && auth().role != null))
         ] ||
     // Allow access if project uses GLOBAL_ROLE and user has a valid role
         (testRun.project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE') ||
@@ -3329,7 +3333,8 @@ model TestRunStepResults {
         testRunResult.testRun.project.userPermissions?[user == auth() && accessType == 'GLOBAL_ROLE'] ||
         testRunResult.testRun.project.groupPermissions?[
             group.assignedUsers?[user == auth()] &&
-            accessType == 'SPECIFIC_ROLE' && role != null
+            ((accessType == 'SPECIFIC_ROLE' && role != null) ||
+             (accessType == 'GLOBAL_ROLE' && auth().role != null))
         ] ||
     // Allow access if project uses GLOBAL_ROLE and user has a valid role
         (testRunResult.testRun.project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE') ||
@@ -3417,7 +3422,8 @@ model TestRunCaseIteration {
         testRunCase.testRun.project.userPermissions?[user == auth() && accessType == 'GLOBAL_ROLE'] ||
         testRunCase.testRun.project.groupPermissions?[
             group.assignedUsers?[user == auth()] &&
-            accessType == 'SPECIFIC_ROLE' && role != null
+            ((accessType == 'SPECIFIC_ROLE' && role != null) ||
+             (accessType == 'GLOBAL_ROLE' && auth().role != null))
         ] ||
     // Allow access if project uses GLOBAL_ROLE and user has a valid role
         (testRunCase.testRun.project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE') ||
@@ -3534,7 +3540,8 @@ model TestRunCaseDataSetSnapshot {
         testRunCase.testRun.project.userPermissions?[user == auth() && accessType == 'GLOBAL_ROLE'] ||
         testRunCase.testRun.project.groupPermissions?[
             group.assignedUsers?[user == auth()] &&
-            accessType == 'SPECIFIC_ROLE' && role != null
+            ((accessType == 'SPECIFIC_ROLE' && role != null) ||
+             (accessType == 'GLOBAL_ROLE' && auth().role != null))
         ] ||
     // Allow access if project uses GLOBAL_ROLE and user has a valid role
         (testRunCase.testRun.project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE') ||
@@ -4032,7 +4039,8 @@ model JUnitTestSuite {
         testRun.project.userPermissions?[user == auth() && accessType == 'GLOBAL_ROLE'] ||
         testRun.project.groupPermissions?[
             group.assignedUsers?[user == auth()] &&
-            accessType == 'SPECIFIC_ROLE' && role != null
+            ((accessType == 'SPECIFIC_ROLE' && role != null) ||
+             (accessType == 'GLOBAL_ROLE' && auth().role != null))
         ] ||
         (testRun.project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE') ||
         (testRun.project.assignedUsers?[user == auth()] &&
@@ -4084,7 +4092,8 @@ model JUnitTestResult {
         testSuite.testRun.project.userPermissions?[user == auth() && accessType == 'GLOBAL_ROLE'] ||
         testSuite.testRun.project.groupPermissions?[
             group.assignedUsers?[user == auth()] &&
-            accessType == 'SPECIFIC_ROLE' && role != null
+            ((accessType == 'SPECIFIC_ROLE' && role != null) ||
+             (accessType == 'GLOBAL_ROLE' && auth().role != null))
         ] ||
         (testSuite.testRun.project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE') ||
         (testSuite.testRun.project.assignedUsers?[user == auth()] &&
@@ -4128,7 +4137,8 @@ model JUnitProperty {
             testSuite.testRun.project.userPermissions?[user == auth() && accessType == 'GLOBAL_ROLE'] ||
             testSuite.testRun.project.groupPermissions?[
                 group.assignedUsers?[user == auth()] &&
-                accessType == 'SPECIFIC_ROLE' && role != null
+                ((accessType == 'SPECIFIC_ROLE' && role != null) ||
+             (accessType == 'GLOBAL_ROLE' && auth().role != null))
             ] ||
             (testSuite.testRun.project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE') ||
             (testSuite.testRun.project.assignedUsers?[user == auth()] &&
@@ -4144,7 +4154,8 @@ model JUnitProperty {
             repositoryCase.project.userPermissions?[user == auth() && accessType == 'GLOBAL_ROLE'] ||
             repositoryCase.project.groupPermissions?[
                 group.assignedUsers?[user == auth()] &&
-                accessType == 'SPECIFIC_ROLE' && role != null
+                ((accessType == 'SPECIFIC_ROLE' && role != null) ||
+             (accessType == 'GLOBAL_ROLE' && auth().role != null))
             ] ||
             (repositoryCase.project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE') ||
             (repositoryCase.project.assignedUsers?[user == auth()] &&
@@ -4185,7 +4196,8 @@ model JUnitAttachment {
         repositoryCase.project.userPermissions?[user == auth() && accessType == 'GLOBAL_ROLE'] ||
         repositoryCase.project.groupPermissions?[
             group.assignedUsers?[user == auth()] &&
-            accessType == 'SPECIFIC_ROLE' && role != null
+            ((accessType == 'SPECIFIC_ROLE' && role != null) ||
+             (accessType == 'GLOBAL_ROLE' && auth().role != null))
         ] ||
         (repositoryCase.project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE') ||
         (repositoryCase.project.assignedUsers?[user == auth()] &&
@@ -4225,7 +4237,8 @@ model JUnitTestStep {
         repositoryCase.project.userPermissions?[user == auth() && accessType == 'GLOBAL_ROLE'] ||
         repositoryCase.project.groupPermissions?[
             group.assignedUsers?[user == auth()] &&
-            accessType == 'SPECIFIC_ROLE' && role != null
+            ((accessType == 'SPECIFIC_ROLE' && role != null) ||
+             (accessType == 'GLOBAL_ROLE' && auth().role != null))
         ] ||
         (repositoryCase.project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE') ||
         (repositoryCase.project.assignedUsers?[user == auth()] &&
@@ -4341,7 +4354,8 @@ model SharedStepItem {
         sharedStepGroup.project.userPermissions?[user == auth() && accessType == 'GLOBAL_ROLE'] ||
         sharedStepGroup.project.groupPermissions?[
             group.assignedUsers?[user == auth()] &&
-            accessType == 'SPECIFIC_ROLE' && role != null
+            ((accessType == 'SPECIFIC_ROLE' && role != null) ||
+             (accessType == 'GLOBAL_ROLE' && auth().role != null))
         ] ||
     // Allow access if project uses GLOBAL_ROLE and user has a valid role
         (sharedStepGroup.project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE') ||
@@ -4477,7 +4491,8 @@ model DataSetRow {
         dataSet.project.userPermissions?[user == auth() && accessType == 'GLOBAL_ROLE'] ||
         dataSet.project.groupPermissions?[
             group.assignedUsers?[user == auth()] &&
-            accessType == 'SPECIFIC_ROLE' && role != null
+            ((accessType == 'SPECIFIC_ROLE' && role != null) ||
+             (accessType == 'GLOBAL_ROLE' && auth().role != null))
         ] ||
     // Allow access if project uses GLOBAL_ROLE and user has a valid role
         (dataSet.project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE') ||
@@ -4788,9 +4803,20 @@ model ReviewRequest {
     // Access policies (SCHEMA-08, T-1-06/07/08).
     @@deny('all', auth() == null)
 
+    // Read must cover everyone the request is *about*, not just users holding
+    // an explicit UserProjectPermission row. The assignee reaches the project
+    // through any of the membership paths the picker offers (direct grant,
+    // group, or project default), so without the self-referential branches a
+    // named reviewer is notified about a row their inbox cannot load. Group
+    // members are first-class here for the same reason they are in the
+    // update rule below.
     @@allow('read',
         project.creator == auth() ||
+        assigneeUser == auth() ||
+        requestedBy == auth() ||
+        decidedBy == auth() ||
         project.userPermissions?[user == auth() && accessType != 'NO_ACCESS'] ||
+        project.groupPermissions?[group.assignedUsers?[user == auth()] && accessType != 'NO_ACCESS'] ||
         auth().access == 'ADMIN'
     )
 

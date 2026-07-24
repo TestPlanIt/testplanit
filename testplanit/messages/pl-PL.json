@@ -13,7 +13,6 @@
     "file": "Plik",
     "selectMultiple": "Wybierz wiele...",
     "searchUsers": "Wyszukaj użytkowników...",
-    "searchGroups": "Wyszukaj grupy...",
     "searchCases": "{count, plural, =0 {Wyszukaj przypadki} one {Wyszukaj # przypadków} other {Wyszukaj # przypadków}}",
     "searchProjects": "{count, plural, =0 {Wyszukaj projekty} one {Wyszukaj # projekt} other {Wyszukaj # projekty}}",
     "searchTags": "Wyszukaj tagi...",
@@ -383,8 +382,7 @@
         "notificationSettings": "Globalne ustawienie powiadomień",
         "elasticsearch_replicas": "Repliki Elasticsearch",
         "review_feature_enabled": "Włączono przegląd i zatwierdzenia",
-        "review_reminder_threshold_days": "Przypomnij recenzentom o dniach progowych",
-        "record_key_enabled": "Klucze rekordów włączone"
+        "review_reminder_threshold_days": "Przypomnij recenzentom o dniach progowych"
       },
       "options": {
         "label": "Etykieta",
@@ -744,7 +742,6 @@
       "noCases": "Brak przypadków testowych",
       "unknown": "Nieznany",
       "selectedTestCases": "Wybrane przypadki testowe",
-      "selectedTestCasesCount": "{count, plural, one {# Wybrany przypadek testowy} few {# Wybrane przypadki testowe} many {# Wybranych przypadków testowych} other {# Wybranego przypadku testowego}}",
       "editToModifyCasesTitle": "Tej listy nie można modyfikować.",
       "editToModifyCases": "Edytuj przebieg testu i kliknij Wybrane przypadki testowe, aby zmodyfikować listę.",
       "noTestCasesSelected": "Nie wybrano przypadków testowych",
@@ -803,8 +800,7 @@
     "table": {
       "columns": {
         "columns": "Kolumny",
-        "required": "(wymagany)",
-        "resetColumns": "Przywróć kolumny do domyślnych"
+        "required": "(wymagany)"
       },
       "filter": "Lista filtrów...",
       "selectNone": "Wybierz Brak",
@@ -1308,14 +1304,7 @@
         "saveButton": "Ratować",
         "saveSuccess": "Zapisano nazwy właściwości iteracji.",
         "saveError": "Nie można zapisać nazw właściwości iteracji.",
-        "removeAria": "Usuń {name}",
-        "counter": "{count}/{max}",
-        "constraints": "Maksymalnie {max} właściwości, każda o długości do {maxLength} znaków, bez spacji.",
-        "limitReached": "Osiągnięto maksymalną liczbę {max} właściwości. Usuń jedną, aby dodać kolejną.",
-        "errorTooLong": "Nazwa każdej właściwości powinna mieć maksymalnie {maxLength} znaków.",
-        "errorWhitespace": "Nazwy właściwości nie mogą zawierać spacji.",
-        "errorReserved": "„{name}” jest słowem zarezerwowanym i nie można go użyć.",
-        "errorDuplicate": "„{name}” znajduje się już na liście."
+        "removeAria": "Usuń {name}"
       },
       "integrations": {
         "description": "Zarządzaj integracją problemów stron trzecich dla tego projektu",
@@ -1932,9 +1921,7 @@
           "description": "Pliki są buforowane w Valkey, co umożliwia szybki dostęp do nich podczas generowania sztucznej inteligencji.",
           "enableLabel": "Włącz buforowanie plików",
           "disabledWarning": "Buforowanie plików jest wyłączone. Pliki repozytorium zostaną pobrane bezpośrednio od dostawcy w momencie eksportu i nie będą przechowywane w TestPlanIt. Oparty na sztucznej inteligencji skrypt QuickScript nadal będzie zawierał kontekst kodu, ale każdy eksport będzie wysyłał żądanie do repozytorium na żywo.",
-          "ttlBefore": "Buforuj przez",
-          "ttlDays": "{count, plural, one {dzień} few {dni} many {dni} other {dnia}}",
-          "ttlAriaLabel": "Czas trwania pamięci podręcznej w dniach",
+          "ttlLabel": "Czas trwania pamięci podręcznej (dni)",
           "statusTitle": "Status pamięci podręcznej",
           "refreshButton": "Odśwież pamięć podręczną",
           "listingFiles": "Wyświetlanie plików…",
@@ -2001,7 +1988,7 @@
         },
         "reviewWorkflow": {
           "label": "Włącz przepływ pracy przeglądu",
-          "description": "Po włączeniu, przejścia do stanów wymagających przeglądu są blokowane przez zatwierdzoną prośbę o przegląd. Testerzy widzą przycisk „Poproś o przegląd”, a recenzenci otrzymują powiadomienia.",
+          "description": "Po włączeniu, przejścia do stanów wymagających przeglądu są blokowane przez zatwierdzoną prośbę o przegląd. Testerzy widzą przycisk „Poproś o przegląd”; recenzenci otrzymują powiadomienia, a zatwierdzenie prośby powoduje wykonanie przejścia.",
           "enabledToast": "Przepływ pracy przeglądu włączony dla tego projektu",
           "disabledToast": "Przebieg przeglądu wyłączony dla tego projektu",
           "saveError": "Nie udało się zaktualizować ustawień przepływu pracy przeglądu",
@@ -2042,13 +2029,10 @@
         "editWindow": {
           "label": "Okno edycji wyników",
           "description": "Jak długo po zarejestrowaniu wyniku można go nadal edytować. Po zamknięciu okna poprawki wymagają ponownej próby. Administratorzy systemu zawsze mogą edytować.",
-          "modeInheritMinutes": "Dziedzicz domyślne ustawienia systemu ({minutes, plural, one {# minuta} few {# minuty} many {# minut} other {# minuty}})",
-          "modeInheritNoLimit": "Dziedzicz domyślne ustawienia systemu (bez limitu)",
+          "modeInherit": "Dziedzicz domyślne ustawienia systemu",
           "modeDisable": "Wyłącz edycję tego projektu",
           "modeCustom": "Okno niestandardowe",
-          "minutesBefore": "Edytowalne przez",
-          "minutesUnit": "{minutes, plural, one {minuta} few {minuty} many {minut} other {minuty}}",
-          "minutesAriaLabel": "Okno edycji w minutach",
+          "minutesLabel": "Można edytować przez (minuty)",
           "systemMaxHint": "Maksymalnie w systemie: {minutes} minut",
           "systemLockedTitle": "Edycja jest wyłączona w całym systemie",
           "systemLockedDescription": "Administrator systemu wyłączył możliwość edycji wyników na miejscu dla wszystkich projektów, dlatego ten projekt nie może jej włączyć.",
@@ -2684,8 +2668,8 @@
       "notFound": "Nie znaleziono wersji przypadku testowego.",
       "detailsRegion": "Szczegóły przypadku testowego",
       "metadataRegion": "Metadane przypadku testowego",
-      "versionCreated": "Wersja {version}",
-      "latestVersionUpdated": "Wersja {version, number} (Najnowsza)",
+      "versionCreated": "Wersja {version} Utworzono",
+      "latestVersionUpdated": "Najnowsza wersja {version, number} Zaktualizowano",
       "historyView": "Widok historii przypadków testowych"
     },
     "auditLog": {
@@ -2782,7 +2766,6 @@
       "modifierHintMac": "Przytrzymaj ⇧, aby przesunąć lub ⌥, aby skopiować, a przeciągając, aby pominąć to menu.",
       "modifierHintWin": "Aby pominąć to menu, przytrzymaj klawisz Shift, aby przesunąć, lub klawisz Ctrl, aby skopiować, podczas przeciągania.",
       "dropZoneReorder": "Upuść, aby zmienić kolejność",
-      "dropZoneFolder": "Upuść na folder, aby zagnieździć, lub między folderami, aby zmienić kolejność",
       "dropZoneTreeMac": "Upuść na folder — przytrzymaj ⇧, aby przenieść, ⌥, aby skopiować",
       "dropZoneTreeWin": "Upuść na folder — przytrzymaj Shift, aby przenieść, Ctrl, aby skopiować",
       "dropZoneTreeMove": "Upuść na folder, aby przenieść",
@@ -3475,7 +3458,7 @@
       "gatedStatesNotSelectable": "Podczas tworzenia nie można wybierać stanów znajdujących się na terenie stanu z bramą lub za nim. Wybierz stan przed pierwszą bramą, a następnie użyj opcji „Poproś o weryfikację”, aby go przekroczyć.",
       "saveBlockedByFormErrors": "Przed zapisaniem formularza popraw podświetlone błędy.",
       "bulkBlockedSummary": "{count, plural, one {# przypadek} other {# przypadków}} zablokowanych przez bramkę \"{gateName}\": {sampleNames}{more, plural, =0 {} other {i # więcej}}. Każdy zablokowany przypadek wymaga zatwierdzonej recenzji dla \"{gateName}\" przed tą zmianą.",
-      "toastReviewRequired": "Wymagana zgoda przed wprowadzeniem tej zmiany. Poproś o weryfikację i spróbuj ponownie po jej zatwierdzeniu.",
+      "toastReviewRequired": "Wymagane jest zatwierdzenie przed wykonaniem tego przejścia. Poproś o przegląd — przejście zostanie wykonane automatycznie po jego zatwierdzeniu.",
       "toastPendingReviewExists": "W związku z tą zmianą oczekuje już na weryfikację. Poczekaj na decyzję lub anuluj ją przed ponowną próbą."
     },
     "inbox": {
@@ -3514,7 +3497,7 @@
       "sheetDescription": "Prześlij tę jednostkę do przeglądu przed przejściem do stanu docelowego.",
       "assigneeLabel": "Mandatariusz",
       "assigneePlaceholder": "Wybierz użytkownika lub rolę",
-      "usersHoldRole": "{count, plural, one {# użytkownik ma tę rolę} few {# użytkownicy mają tę rolę} many {# użytkowników ma tę rolę} other {# użytkownika ma tę rolę}}",
+      "usersNotified": "{count, plural, =0 {Nikt nie zostanie powiadomiony} one {# użytkownik zostanie powiadomiony} few {# użytkowników zostanie powiadomionych} many {# użytkowników zostanie powiadomionych} other {# użytkownika zostanie powiadomionych}}",
       "targetStateLabel": "Stan docelowy",
       "targetStatePlaceholder": "Wybierz stan docelowy",
       "commentLabel": "Komentarz",
@@ -3539,7 +3522,7 @@
       "requestChanges": "Poproś o zmiany",
       "reject": "Odrzucić",
       "approveConfirmTitle": "Zatwierdzić tę prośbę o recenzję?",
-      "approveConfirmDescription": "Zatwierdzenie umożliwi <requester></requester> przejście z <name></name> do <state></state>.",
+      "approveConfirmDescription": "Zatwierdzenie przenosi <name></name> do stanu <state></state> dla <requester></requester>.",
       "approvalNoteLabel": "Notatka zatwierdzająca",
       "approvalNotePlaceholder": "Dodaj opcjonalną notatkę dla wnioskodawcy (widoczną obok zatwierdzenia).",
       "requestChangesDescription": "Poinformuj wnioskodawcę, co należy zmienić, zanim zatwierdzisz tę zmianę.",
@@ -3561,7 +3544,6 @@
   "runs": {
     "composition": {
       "lock": "Przypadki zablokowane",
-      "unlocked": "Przypadki odblokowane",
       "unlock": "Odblokuj",
       "locked": "Kompozycja zablokowana",
       "lockHint": "Zamroź, które przypadki znajdują się w tym przebiegu. Użytkownicy mogą wciąż przypisywać i wykonywać przypadki testowe.",
@@ -3750,6 +3732,7 @@
       "placeholder": "Przeprowadź testy filtrów..."
     },
     "typeFilter": {
+      "label": "Pokazywać",
       "both": "Manualne i automatyczne"
     },
     "empty": {
@@ -4005,12 +3988,6 @@
           "actionMap": "Mapa do istniejącego",
           "actionCreate": "Utwórz nowy",
           "workflowTypePlaceholder": "Wybierz typ",
-          "workflowScope": {
-            "default": "Inny",
-            "cases": "Przypadki testowe",
-            "runs": "Testy biegowe",
-            "sessions": "Sesje"
-          },
           "noWorkflowsAvailable": "Brak dostępnych przepływów pracy.",
           "noStatusesAvailable": "Brak dostępnych statusów.",
           "noGroupsAvailable": "Brak dostępnych grup.",
@@ -4906,7 +4883,6 @@
     },
     "workflows": {
       "description": "Zarządzaj przepływami pracy przypadków testowych",
-      "reviewsTitle": "Przepływ pracy przeglądu",
       "systemFeatureCard": {
         "title": "Przejrzyj przepływ pracy",
         "description": "Wymuszaj przeglądy, blokując przejścia w przepływie pracy do momentu uzyskania zatwierdzenia. Po włączeniu tej opcji projekty mogą indywidualnie włączać się lub wyłączać w ustawieniach zaawansowanych. Wyłącz tę opcję, aby zapobiec blokowaniu przejść w przepływie pracy.",
@@ -4915,10 +4891,10 @@
         "updateSuccessEnabled": "Przegląd przepływu pracy włączony.",
         "updateSuccessDisabled": "Przegląd przepływu pracy wyłączony.",
         "updateError": "Nie udało się zaktualizować ustawień przepływu pracy recenzji. Spróbuj ponownie za chwilę.",
-        "remindersToggleLabel": "Wysyłaj powiadomienia z przypomnieniem o oczekujących recenzjach po",
+        "remindersToggleLabel": "Wyślij przypomnienia o oczekujących recenzjach",
         "remindersToggleAriaLabel": "Przełącz powiadomienia o przypomnieniu o recenzji",
         "thresholdLabel": "Przypomnij recenzentom po",
-        "thresholdUnit": "{count, plural, one {dzień} few {dni} many {dni} other {dnia}}",
+        "thresholdUnit": "dzień(dni)",
         "thresholdSaveButton": "Ratować",
         "thresholdHelp": "Ile dni prośba o recenzję może czekać, zanim recenzenci otrzymają przypomnienie? Czas na rozpatrzenie nowych próśb rozpoczyna się od momentu ich przesłania.",
         "thresholdUpdateSuccess": "Zaktualizowano ustawienia przypomnień.",
@@ -4967,10 +4943,6 @@
     },
     "roles": {
       "description": "Zdefiniuj, jakie działania mogą wykonywać użytkownicy, przełączając uprawnienia dla każdego obszaru aplikacji.",
-      "confirmDefaultDescription": "Czy na pewno chcesz ustawić tę rolę jako domyślną?",
-      "defaultWarning": "Nowi użytkownicy będą domyślnie przypisywani do tej roli.",
-      "defaultLockedTitle": "Domyślna rola",
-      "defaultLockedDescription": "Aby zmienić wartość domyślną, edytuj inną rolę i ustaw ją jako domyślną.",
       "filterPlaceholder": "Filtruj role...",
       "add": {
         "button": "Dodaj rolę",
@@ -5005,9 +4977,7 @@
         "modeNone": "Brak ograniczeń (decydują projekty)",
         "modeDisabled": "Wyłącz edycję wszędzie",
         "modeMax": "Zezwalaj na edycję do maksymalnego okna",
-        "minutesBefore": "Maksymalne okno:",
-        "minutesUnit": "{minutes, plural, one {minuta} few {minuty} many {minut} other {minuty}}",
-        "minutesAriaLabel": "Maksymalne okno w minutach",
+        "minutesLabel": "Maksymalne okno (minuty)",
         "invalidMinutes": "Wprowadź liczbę minut większą od zera",
         "save": "Zapisz zasady",
         "savedToast": "Zaktualizowano zasady edycji wyników",
@@ -5207,8 +5177,6 @@
       "confirmDefault": "Potwierdź domyślne",
       "confirmDefaultDescription": "Czy na pewno chcesz ustawić ten typ kamienia milowego jako domyślny?",
       "warning": "Ten typ kamienia milowego zostanie dodany do wszystkich projektów.",
-      "defaultLockedTitle": "Domyślny typ kamienia milowego",
-      "defaultLockedDescription": "Aby zmienić wartość domyślną, edytuj inny typ kamienia milowego i ustaw go jako domyślny.",
       "wizard": {
         "selectProjects": "Wybierz projekty",
         "projectsSelected": "{count, plural, =0 {Nie wybrano żadnych projektów} one {# wybrano projekt} other {# wybrano projekty}}",
@@ -5306,8 +5274,7 @@
         "repositoryCaseVersions": "Wersje przypadków repozytorium",
         "testRunStepResults": "Wyniki testu krok po kroku",
         "issueConfigs": "Konfiguracje problemów",
-        "sharedStepGroups": "Wspólne grupy kroków",
-        "dataSets": "Zestawy danych"
+        "sharedStepGroups": "Wspólne grupy kroków"
       },
       "table": {
         "title": "Usunięto {itemType}",
@@ -5796,11 +5763,6 @@
     "elasticsearch": {
       "title": "Zarządzanie Elasticsearch",
       "description": "Zarządzanie indeksowaniem i konserwacją wyszukiwarek",
-      "health": {
-        "healthy": "Zdrowy",
-        "warning": "Ostrzeżenie",
-        "unhealthy": "Niezdrowy"
-      },
       "status": {
         "title": "Status Elasticsearch",
         "description": "Aktualne połączenie i stan zdrowia wyszukiwarki",
@@ -5824,7 +5786,7 @@
         "error": "Błąd zapisywania ustawień",
         "errorDescription": "Nie udało się zapisać konfiguracji. Spróbuj ponownie.",
         "note": {
-          "description": "Zmiany są stosowane do nowych indeksów natychmiast. Istniejące indeksy są aktualizowane po zapisaniu. Ustaw liczbę replik na 0, aby rozwiązać problem ze statusem Ostrzeżenie w klastrach jednowęzłowych."
+          "description": "Zmiany zostaną zastosowane do nowych indeksów natychmiast. Istniejące indeksy zostaną zaktualizowane po zapisaniu. Ustaw repliki na 0, aby rozwiązać problem ze statusem ŻÓŁTYM w klastrach jednowęzłowych."
         }
       },
       "reindex": {
@@ -5971,6 +5933,7 @@
     },
     "auditLogs": {
       "description": "Przeglądaj ścieżkę audytu w całym systemie, aby śledzić bezpieczeństwo i zgodność",
+      "projectDescription": "Zobacz ścieżkę audytu działań wykonanych w tym projekcie.",
       "filterPlaceholder": "Wyszukaj według jednostki, użytkownika lub akcji...",
       "filterAction": "Działanie",
       "filterEntityType": "Typ jednostki",
@@ -6359,77 +6322,6 @@
     "noTasks": "Brak zadań do wyświetlenia na wykresie Gantta."
   },
   "help": {
-    "auditLogs": "Przeglądaj ścieżkę audytu w całym systemie, aby śledzić bezpieczeństwo i zgodność",
-    "statuses": "Zarządzaj statusami testów",
-    "configurations": "Konfiguracje to kombinacja kategorii i wariantów używanych do definiowania środowiska testowego. Na przykład system operacyjny/przeglądarka, serwer testowy, język itp.",
-    "categories": "Kategorie grupują powiązane warianty — takie jak Przeglądarka lub System operacyjny — które łączą się, tworząc środowisko testowe.",
-    "templates": "Zarządzaj szablonami i polami przypadków testowych",
-    "caseFields": "Pola niestandardowe dostępne w przypadkach testowych, przypisane do szablonów, aby kontrolować, które przypadki z nich korzystają.",
-    "resultFields": "Pola niestandardowe rejestrowane podczas zapisywania wyniku testu, przypisane do szablonów, aby kontrolować, gdzie mają zastosowanie.",
-    "milestoneTypes": "Typy kamieni milowych kategoryzują kamienie milowe — takie jak Sprint, Wydanie lub Wersja — i mogą być używane w wielu projektach.",
-    "tags": "Tagi etykietują i porządkują przypadki testowe oraz sesje, dzięki czemu możesz grupować i znajdować powiązane zadania w różnych projektach.",
-    "issues": "Problemy to elementy zewnętrznych systemów śledzenia — z Jira, GitHub, Azure DevOps i innych integracji — synchronizowane z TestPlanIt, aby można je było powiązać z przypadkami testowymi, przebiegami i sesjami.",
-    "crossProjectReports": "Twórz, uruchamiaj i analizuj raporty obejmujące wiele projektów, takie jak trendy automatyzacji w całym zestawie testów.",
-    "users": "Katalog osób w TestPlanIt oraz projektów, do których każda z nich ma dostęp.",
-    "documentation": "Dowolna dokumentacja tego projektu — notatki, odniesienia i szczegóły wdrożeniowe.",
-    "projectMilestones": "Kamienie milowe grupują i śledzą pracę nad tym projektem według celu — wydań, sprintów lub niestandardowych typów — w stanach aktywnych i zakończonych.",
-    "projectRepository": "Biblioteka przypadków testowych tego projektu, uporządkowana w foldery.",
-    "projectSharedSteps": "Wielokrotnego użytku grupy kroków testowych, które mogą być współdzielone przez wiele przypadków testowych — aktualizacja grupy aktualizuje każdy przypadek, który się do niej odwołuje.",
-    "projectRuns": "Przebiegi testowe wykonują wybrany zestaw przypadków testowych i rejestrują ich wyniki, śledząc postęp od rozpoczęcia do zakończenia.",
-    "projectSessions": "Sesje testów eksploracyjnych — testowanie ograniczone czasowo i niescenariuszowe, rejestrowane jako notatki i wyniki w stanach aktywnych i zakończonych.",
-    "projectTags": "Tagi etykietują i grupują przypadki testowe, sesje oraz przebiegi tego projektu, dzięki czemu łatwo znaleźć powiązane zadania.",
-    "projectIssues": "Problemy z połączonych systemów śledzenia tego projektu, powiązane z przypadkami testowymi, przebiegami i sesjami, w których zostały znalezione lub do których się odnoszą.",
-    "projectReports": "Raporty podsumowują testowanie tego projektu — przebiegi testowe, sesje i wyniki — w postaci wykresów i tabel, które można filtrować i eksportować.",
-    "projectAuditLogs": "Ścieżka audytu działań wykonanych w tym projekcie — kto, co i kiedy zmienił — do celów śledzenia bezpieczeństwa i zgodności.",
-    "projectIntegrations": "Połącz ten projekt z systemem śledzenia problemów, aby jego przypadki testowe, przebiegi i sesje mogły łączyć się i synchronizować z zewnętrznymi problemami i kamieniami milowymi.",
-    "projectWebhooks": "Wysyłaj i odbieraj powiadomienia o zdarzeniach dla tego projektu — webhooki przychodzące wprowadzają zmiany zewnętrzne, webhooki wychodzące wysyłają zdarzenia testowe, a dostawy rejestrują, co zostało wysłane.",
-    "projectAiModels": "Wybierz model AI i konfigurację promptów, których ten projekt używa do funkcji wspomaganych przez AI, takich jak generowanie przypadków testowych i automatyczne tagowanie.",
-    "projectQuickScript": "Połącz repozytorium kodu, aby ten projekt mógł generować przypadki testowe na podstawie plików testów automatycznych, wybierając, która gałąź i ścieżki mają zostać uwzględnione.",
-    "projectParameters": "Skonfiguruj testowanie sterowane danymi dla tego projektu — nazwy właściwości iteracji JUnit dla importowanych wyników oraz wielokrotnego użytku zestawy danych dla przypadków parametryzowanych.",
-    "projectAdvanced": "Ustawienia zaawansowane tego projektu — prefiks identyfikatora rekordu, przepływ pracy przeglądu wyników, automatyczne tworzenie problemów w przypadku niepowodzenia oraz okno edycji wyników.",
-    "projectShares": "Udostępnialne łącza do raportów tego projektu, z których każde ma własny poziom dostępu — publiczny, wymagający logowania lub chroniony hasłem. Cofnięcie łącza odcina do niego dostęp.",
-    "groups": "Grupy umożliwiają przypisywanie dostępu do projektów i ról wielu użytkownikom jednocześnie. Dodawaj członków bezpośrednio lub mapuj grupę od dostawcy tożsamości.",
-    "roles": "Role kontrolują, co użytkownicy mogą robić — każda z nich przełącza uprawnienia dla poszczególnych obszarów aplikacji. Przypisz rolę użytkownikom bezpośrednio lub jako domyślną dla projektu.",
-    "sso": "Zarządzaj sposobem logowania użytkowników oraz możliwością rejestracji nowych kont.",
-    "ssoProviders": "Skonfiguruj sposób, w jaki użytkownicy mogą logować się do Twojej aplikacji.",
-    "ssoRegistration": "Kontroluj, kto może rejestrować nowe konta.",
-    "ssoAllowRegistration": "Po wyłączeniu tej opcji nowi użytkownicy nie mogą rejestrować się bezpośrednio ani tworzyć kont za pomocą logowania jednokrotnego SSO. Istniejący użytkownicy nadal mogą się logować.",
-    "ssoDefaultAccess": "Poziom dostępu do systemu przypisywany nowym użytkownikom podczas rejestracji.",
-    "ssoRequireEmailVerification": "Użytkownicy muszą zweryfikować swój adres e-mail przed uzyskaniem dostępu do systemu.",
-    "ssoRestrictDomains": "Zezwalaj na rejestrację tylko z określonych domen e-mail.",
-    "security": "Konfiguruj wymuszanie logowania, zasady dotyczące haseł, ustawienia blokady i działania wymuszające.",
-    "securitySignInEnforcement": "Wymagaj logowania jednokrotnego i wymuszaj uwierzytelnianie dwuskładnikowe.",
-    "securityForceSso": "Wyłącz logowanie za pomocą poczty e-mail i wymagaj od użytkowników korzystania z logowania jednokrotnego SSO.",
-    "securityForce2FANonSSO": "Użytkownicy logujący się za pomocą adresu e-mail i hasła muszą skonfigurować i używać uwierzytelniania dwuskładnikowego.",
-    "securityForce2FAAllLogins": "Wszyscy użytkownicy muszą dokonać weryfikacji za pomocą uwierzytelniania dwuskładnikowego (2FA) po zalogowaniu, w tym użytkownicy korzystający z logowania jednokrotnego.",
-    "securityPasswordPolicy": "Ustaw wymagania dotyczące haseł użytkowników.",
-    "securityLockoutPolicy": "Skonfiguruj blokadę konta po nieudanych próbach logowania.",
-    "securityEnforcement": "Wymuś zmianę hasła dla użytkowników opartych na poświadczeniach.",
-    "apiTokens": "Przeglądaj i zarządzaj tokenami API dla wszystkich użytkowników. Unieważniaj tokeny w przypadku problemów z bezpieczeństwem.",
-    "scim": "Dostarcz użytkowników do TestPlanIt od swojego dostawcy tożsamości przez SCIM 2.0.",
-    "scimConflicts": "Wydarzenia tożsamościowe SCIM wymagające interwencji systemu (łączenie, wskrzeszanie, nadpisywanie nazwy wyświetlanej, pomijanie członków).",
-    "scimFallbackDefault": "Poziom dostępu przypisany użytkownikom nieobjętym żadnym mapowaniem grup.",
-    "integrations": "Zarządzaj integracjami stron trzecich w celu śledzenia problemów.",
-    "notifications": "Ustaw domyślne preferencje powiadomień (użytkownicy mogą je zmienić) i wysyłaj powiadomienia systemowe.",
-    "notificationsSystem": "Wysyłaj ważne ogłoszenia do wszystkich użytkowników.",
-    "notificationsHistory": "Powiadomienia systemowe wcześniej wysłane do wszystkich użytkowników.",
-    "aiModels": "Zarządzaj dostawcami modeli AI i połączeniami używanymi w funkcjach wspomaganych przez AI, w tym limitami użycia i budżetami.",
-    "prompts": "Zarządzaj konfiguracjami promptów, których funkcje AI używają do generowania treści, i przypisuj je do projektów.",
-    "quickscripts": "Zarządzaj szablonami używanymi przez QuickScript do konwersji przypadków testowych na skrypty automatyzacji.",
-    "codeRepositories": "Zarządzaj połączeniami z repozytorium kodu dla kontekstu QuickScript.",
-    "recordKeys": "Skonfiguruj kosmetyczne identyfikatory z prefiksem projektu, takie jak PROJECT-TC-1234, które ułatwiają rozpoznanie, do którego projektu należy rekord i jakiego jest rodzaju. Bazowy identyfikator numeryczny pozostaje niezmieniony i nadal działa wszędzie.",
-    "recordKeysEnabled": "Po włączeniu tej opcji rekordy wyświetlają opcjonalny klucz łączący kod projektu, token typu oraz numeryczny identyfikator rekordu. Ustaw kod każdego projektu w Ustawieniach projektu → Zaawansowane.",
-    "imports": "Przenieś dane z zewnętrznych narzędzi do zarządzania testami do TestPlanIt.",
-    "elasticsearchStatus": "Aktualne połączenie i stan zdrowia wyszukiwarki.",
-    "elasticsearchConfig": "Skonfiguruj ustawienia Elasticsearch dla swojego wdrożenia.",
-    "elasticsearchReindex": "Przebudowa indeksów wyszukiwania w celu poprawy wydajności wyszukiwania.",
-    "queues": "Monitoruj i zarządzaj kolejkami przetwarzania zadań w tle.",
-    "trash": "Przywracaj lub trwale usuwaj miękko usunięte rekordy w całym systemie.",
-    "systemWebhooks": "Miejsca docelowe webhooków wychodzących dla zdarzeń na poziomie systemu, które nie są powiązane z pojedynczym projektem — obecnie są to zdarzenia cyklu życia użytkowników i grup SCIM 2.0. Zamiast tego skonfiguruj webhooki przychodzące i wychodzące o zasięgu projektu na stronie ustawień projektu.",
-    "workflows": "Zarządzaj stanami przepływu pracy dla przypadków testowych, przebiegów testowych i sesji.",
-    "workflowReviews": "Wymuszaj przeglądy, blokując przejścia w przepływie pracy do momentu uzyskania zatwierdzenia. Po włączeniu tej opcji projekty mogą indywidualnie włączać się lub wyłączać w ustawieniach zaawansowanych. Wyłącz tę opcję, aby zapobiec blokowaniu przejść w przepływie pracy.",
-    "reviewReminders": "Ile dni prośba o recenzję może czekać, zanim recenzenci otrzymają przypomnienie? Czas na rozpatrzenie nowych próśb rozpoczyna się od momentu ich przesłania.",
-    "resultEditingPolicy": "Kontroluj, jak długo po zarejestrowaniu wyniku można go nadal edytować na miejscu, we wszystkich projektach. Projekty mogą zaostrzyć to ustawienie w ustawieniach zaawansowanych, ale nigdy go nie poluzować. Administratorzy systemu zawsze mogą je edytować.",
     "project": {
       "name": "## Nazwa projektu\nUnikalny identyfikator Twojego projektu.\n\n– Musi być unikatowy we wszystkich projektach\n– Używany w nawigacji i raportach\n– Powinien być jasny i opisowy\n– Pomaga członkom zespołu określić zakres projektu",
       "description": "## Opis projektu\nDodatkowe szczegóły dotyczące celu i zakresu projektu.\n\n– Opcjonalne, ale zalecane\n– Pomaga członkom zespołu zrozumieć cele projektu\n– Może zawierać kluczowe cele lub wymagania\n– Ograniczone do 256 znaków",
@@ -6440,7 +6332,6 @@
       "issueTracker": "## Konfiguracja modułu śledzenia problemów\nWybierz konfigurację modułu śledzenia problemów, która będzie używana do zarządzania problemami związanymi z tym projektem."
     },
     "projects": {
-      "overview": "Projekty to kontenery najwyższego poziomu dla przypadków testowych, przebiegów, sesji i kamieni milowych. Twórz i zarządzaj każdym projektem stąd.",
       "settings": {
         "integrations": {
           "externalProjectHelp": "## Projekt zewnętrzny\nWybierz projekt lub repozytorium w systemie zewnętrznym, które ma zostać połączone z tym projektem TestPlanIt.\n\n— Zgłoszenia utworzone z TestPlanIt zostaną utworzone w tym projekcie\n— Włącza integrację śledzenia zgłoszeń między systemami\n— Wymagane są odpowiednie uprawnienia w systemie zewnętrznym",
@@ -6649,7 +6540,7 @@
       "isDefault": "## Domyślny\nWskazuje, czy ten przepływ pracy jest domyślny dla Twojego projektu.\n\n— Domyślny przepływ pracy jest wstępnie wybierany dla nowych przebiegów testów, sesji i automatyzacji.",
       "isEnabled": "## Włączone\nWskazuje, czy ten przepływ pracy jest włączony.",
       "isActive": "## Aktywny\nWskazuje, czy ten stan przepływu pracy jest aktywny i dostępny do użycia.\n\n— Aktywne przepływy pracy można wybierać podczas aktualizowania przebiegów testów, sesji lub automatyzacji.\n— Nieaktywne przepływy pracy są ukryte przed wyborem, ale zachowywane w istniejących elementach.",
-      "requiresReview": "## Wymaga przeglądu\nPo włączeniu tej opcji, przejście sprawy, testu lub sesji DO tego stanu jest zablokowane przez zatwierdzoną prośbę o przegląd. Bez zatwierdzonej prośby przejście jest zablokowane.\n\n– Istniejące oczekujące recenzje są zachowywane w trybie cichym, gdy funkcja na poziomie systemu jest WYŁĄCZONA, i pojawiają się ponownie po ponownym włączeniu.\n– Recenzent jest wybierany, gdy tester kliknie opcję „Poproś o przegląd” na stronie szczegółów jednostki.\n\nJeśli funkcja na poziomie systemu jest wyłączona, ten przełącznik jest zablokowany. Aby włączyć tę opcję, należy go ponownie włączyć na karcie „Przepływ pracy przeglądu” powyżej.",
+      "requiresReview": "## Wymaga przeglądu\nPo włączeniu tej opcji, przejście sprawy, testu lub sesji DO tego stanu jest zablokowane przez zatwierdzoną prośbę o przegląd. Bez zatwierdzonej prośby przejście jest zablokowane.\n\n- Zatwierdzenie prośby powoduje wykonanie przejścia. Zatwierdzenie recenzenta przenosi sprawę, test lub sesję do żądanego stanu; osoba zgłaszająca nie musi ręcznie powtarzać zmiany stanu.\n- Istniejące oczekujące recenzje są zachowywane w trybie cichym, gdy funkcja na poziomie systemu jest WYŁĄCZONA, i pojawiają się ponownie po ponownym włączeniu.\n- Recenzent jest wybierany, gdy tester kliknie opcję „Poproś o przegląd” na stronie szczegółów jednostki.\n\nJeśli funkcja na poziomie systemu jest wyłączona, ten przełącznik jest zablokowany. Aby włączyć tę opcję, należy go ponownie włączyć na karcie „Przepływ pracy przeglądu” powyżej.",
       "projects": "## Projekty\nWskazuje projekty, które mogą korzystać z tego przepływu pracy."
     },
     "testResult": {

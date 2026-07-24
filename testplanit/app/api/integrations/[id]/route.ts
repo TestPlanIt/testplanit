@@ -3,6 +3,7 @@ import { decrypt, encrypt } from "@/utils/encryption";
 import { getServerSession } from "next-auth/next";
 import { NextRequest, NextResponse } from "next/server";
 import { withAuditContext } from "~/lib/auditContextWrappers";
+import { IntegrationManager } from "~/lib/integrations/IntegrationManager";
 import { authOptions } from "~/server/auth";
 
 export const GET = withAuditContext(
@@ -127,6 +128,13 @@ export const PUT = withAuditContext(
         data: updateData,
       });
 
+      // Drop any cached adapter for this integration. IntegrationManager caches
+      // adapters (with their decrypted OAuth client credentials) in memory, and
+      // getAdapter serves that cached instance even to the OAuth authorize route
+      // — so without this, editing clientId/clientSecret/settings keeps emitting
+      // the old client_id in the authorize URL until the process restarts.
+      IntegrationManager.getInstance().clearAdapter(id);
+
       return NextResponse.json(integration);
     } catch (error) {
       console.error("Error updating integration:", error);
@@ -196,6 +204,10 @@ export const DELETE = withAuditContext(
         where: { id: parseInt(id) },
         data: { isDeleted: true },
       });
+
+      // Evict the cached adapter so a deleted integration can't keep serving
+      // requests from memory until the process restarts.
+      IntegrationManager.getInstance().clearAdapter(id);
 
       return NextResponse.json({ success: true });
     } catch (error) {

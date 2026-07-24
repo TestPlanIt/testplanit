@@ -5,6 +5,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const mockRolesFindMany = vi.fn();
 const mockUserProjectPermissionFindMany = vi.fn();
 const mockGroupProjectPermissionFindMany = vi.fn();
+const mockUserPreferencesFindMany = vi.fn();
+const mockAppConfigFindUnique = vi.fn();
+const mockGetServerAuthSession = vi.fn();
 
 vi.mock("~/lib/db", () => ({
   baseDb: {
@@ -19,7 +22,17 @@ vi.mock("~/lib/db", () => ({
       findMany: (...args: unknown[]) =>
         mockGroupProjectPermissionFindMany(...args),
     },
+    userPreferences: {
+      findMany: (...args: unknown[]) => mockUserPreferencesFindMany(...args),
+    },
+    appConfig: {
+      findUnique: (...args: unknown[]) => mockAppConfigFindUnique(...args),
+    },
   },
+}));
+
+vi.mock("~/server/auth", () => ({
+  getServerAuthSession: () => mockGetServerAuthSession(),
 }));
 
 // Import after mocks are set up so the action wires up the spies.
@@ -39,6 +52,12 @@ function setupNoPermissions() {
 describe("getProjectEligibleRoles — union of four eligibility paths", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Default recipient context: a requester who holds none of the roles,
+    // no per-user notification preferences, global default IN_APP. Cases
+    // that exercise the recipient projection override these.
+    mockGetServerAuthSession.mockResolvedValue({ user: { id: "requester" } });
+    mockUserPreferencesFindMany.mockResolvedValue([]);
+    mockAppConfigFindUnique.mockResolvedValue(null);
   });
 
   afterEach(() => {
@@ -81,8 +100,8 @@ describe("getProjectEligibleRoles — union of four eligibility paths", () => {
     const result = await getProjectEligibleRoles(1);
 
     expect(result).toEqual([
-      { id: 10, name: "QA Lead", userCount: 2 },
-      { id: 11, name: "Dev", userCount: 1 },
+      { id: 10, name: "QA Lead", userCount: 2, notifyCount: 2 },
+      { id: 11, name: "Dev", userCount: 1, notifyCount: 1 },
     ]);
   });
 
@@ -102,8 +121,8 @@ describe("getProjectEligibleRoles — union of four eligibility paths", () => {
     const result = await getProjectEligibleRoles(1);
 
     expect(result).toEqual([
-      { id: 10, name: "QA Lead", userCount: 1 },
-      { id: 11, name: "Dev", userCount: 1 },
+      { id: 10, name: "QA Lead", userCount: 1, notifyCount: 1 },
+      { id: 11, name: "Dev", userCount: 1, notifyCount: 1 },
     ]);
   });
 
@@ -126,7 +145,9 @@ describe("getProjectEligibleRoles — union of four eligibility paths", () => {
 
     const result = await getProjectEligibleRoles(1);
 
-    expect(result).toEqual([{ id: 10, name: "QA Lead", userCount: 2 }]);
+    expect(result).toEqual([
+      { id: 10, name: "QA Lead", userCount: 2, notifyCount: 2 },
+    ]);
   });
 
   it("path 4 — Group GLOBAL_ROLE keys on each member's global User.roleId", async () => {
@@ -152,8 +173,8 @@ describe("getProjectEligibleRoles — union of four eligibility paths", () => {
     const result = await getProjectEligibleRoles(1);
 
     expect(result).toEqual([
-      { id: 10, name: "QA Lead", userCount: 2 },
-      { id: 11, name: "Dev", userCount: 1 },
+      { id: 10, name: "QA Lead", userCount: 2, notifyCount: 2 },
+      { id: 11, name: "Dev", userCount: 1, notifyCount: 1 },
     ]);
   });
 
@@ -181,7 +202,84 @@ describe("getProjectEligibleRoles — union of four eligibility paths", () => {
 
     const result = await getProjectEligibleRoles(1);
 
-    expect(result).toEqual([{ id: 10, name: "QA Lead", userCount: 1 }]);
+    expect(result).toEqual([
+      { id: 10, name: "QA Lead", userCount: 1, notifyCount: 1 },
+    ]);
+  });
+
+  it("notifyCount excludes the requester while userCount still counts them", async () => {
+    mockGetServerAuthSession.mockResolvedValue({ user: { id: "alice" } });
+    mockRolesFindMany.mockResolvedValue(ROLES);
+    mockUserProjectPermissionFindMany.mockImplementation((args: any) => {
+      if (args.where.accessType === "SPECIFIC_ROLE") {
+        return Promise.resolve([
+          { roleId: 10, userId: "alice" },
+          { roleId: 10, userId: "bob" },
+          { roleId: 11, userId: "alice" },
+        ]);
+      }
+      return Promise.resolve([]);
+    });
+    mockGroupProjectPermissionFindMany.mockResolvedValue([]);
+
+    const result = await getProjectEligibleRoles(1);
+
+    expect(result).toEqual([
+      { id: 10, name: "QA Lead", userCount: 2, notifyCount: 1 },
+      // Alice is the sole holder of Dev: still selectable, notifies no one.
+      { id: 11, name: "Dev", userCount: 1, notifyCount: 0 },
+    ]);
+  });
+
+  it("notifyCount excludes holders whose notifications are turned off", async () => {
+    mockRolesFindMany.mockResolvedValue(ROLES);
+    mockUserProjectPermissionFindMany.mockImplementation((args: any) => {
+      if (args.where.accessType === "SPECIFIC_ROLE") {
+        return Promise.resolve([
+          { roleId: 10, userId: "alice" },
+          { roleId: 10, userId: "bob" },
+        ]);
+      }
+      return Promise.resolve([]);
+    });
+    mockGroupProjectPermissionFindMany.mockResolvedValue([]);
+    mockUserPreferencesFindMany.mockResolvedValue([
+      { userId: "alice", notificationMode: "NONE" },
+      { userId: "bob", notificationMode: "IN_APP" },
+    ]);
+
+    const result = await getProjectEligibleRoles(1);
+
+    expect(result).toEqual([
+      { id: 10, name: "QA Lead", userCount: 2, notifyCount: 1 },
+    ]);
+  });
+
+  it("USE_GLOBAL holders inherit a global default of NONE", async () => {
+    mockRolesFindMany.mockResolvedValue(ROLES);
+    mockUserProjectPermissionFindMany.mockImplementation((args: any) => {
+      if (args.where.accessType === "SPECIFIC_ROLE") {
+        return Promise.resolve([
+          { roleId: 10, userId: "alice" },
+          { roleId: 10, userId: "bob" },
+        ]);
+      }
+      return Promise.resolve([]);
+    });
+    mockGroupProjectPermissionFindMany.mockResolvedValue([]);
+    // Alice has no preferences row at all, Bob defers explicitly.
+    mockUserPreferencesFindMany.mockResolvedValue([
+      { userId: "bob", notificationMode: "USE_GLOBAL" },
+    ]);
+    mockAppConfigFindUnique.mockResolvedValue({
+      value: { defaultMode: "NONE" },
+    });
+
+    const result = await getProjectEligibleRoles(1);
+
+    expect(result).toEqual([
+      { id: 10, name: "QA Lead", userCount: 2, notifyCount: 0 },
+    ]);
   });
 
   it("returns an empty array on error rather than throwing (callers fall back to the users-only picker)", async () => {

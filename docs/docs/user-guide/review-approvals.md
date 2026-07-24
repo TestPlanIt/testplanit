@@ -21,7 +21,9 @@ Gates apply per workflow scope (Test Cases, Test Runs, Sessions) independently. 
 
 A request asks a reviewer (a specific user, or any holder of a chosen role) to approve a transition for a specific entity to a specific target state. The request includes an optional comment from the requester, and the reviewer leaves a comment with their decision.
 
-A request is one-shot: once it has been approved AND consumed by an actual transition, it can't be reused. Requesters can also cancel a request before a reviewer has decided.
+Approving a request performs the transition it asked for. The reviewer's decision moves the entity into the target state and consumes the approval in the same act, so the requester never has to go back and repeat the state change by hand.
+
+A request is one-shot: once it has been approved AND consumed by a transition, it can't be reused. Requesters can also cancel a request before a reviewer has decided.
 
 ### Strict transitive gates
 
@@ -114,6 +116,8 @@ When the reviewer is a role, the banner renders a role chip with a small role ic
 
 ![The role chip on a pending review banner expanded to its hover tooltip, listing every project-eligible holder of the role](/img/screenshots/user-guide/review-approvals/role-assignee-chip-tooltip.png)
 
+There is nothing left for the requester to do once the request is in. An approval moves the entity into the target state on its own; the requester is notified and the banner clears.
+
 ### Cancelling a request
 
 If the requester changes their mind before a decision lands, they can cancel:
@@ -141,7 +145,7 @@ Reviewers find pending requests in their inbox:
 
 To decide:
 
-- **Approve** — the request flips to APPROVED. The next time the entity is transitioned to the target state (by the requester saving the form, by a bulk edit, or by milestone completion), the approval is consumed.
+- **Approve** — the request flips to APPROVED and the entity moves into the target state, consuming the approval. When an earlier gate in the entity's path is still unapproved, the entity stays put and the approval waits, unconsumed, until that gate clears and the transition is retried (by the requester saving the form, by a bulk edit, or by milestone completion).
 - **Reject** — the request flips to REJECTED. The transition is not allowed; the requester can submit a new request after addressing feedback.
 - **Comment** — leave a note without deciding (useful for asking the requester for clarification). The request stays in PENDING.
 
