@@ -4431,22 +4431,13 @@ model ReviewRequest {
     // Access policies (SCHEMA-08, T-1-06/07/08).
     @@deny('all', auth() == null)
 
-    // Read must cover everyone the request is *about*, not just users holding
-    // an explicit UserProjectPermission row. The assignee reaches the project
-    // through any of the membership paths the picker offers (direct grant,
-    // group, or project default), so without the self-referential branches a
-    // named reviewer is notified about a row their inbox cannot load. Group
-    // members are first-class here for the same reason they are in the
-    // update rule below.
-    // Project membership resolves through the precomputed id list; the
-    // self-referential branches stay because a review's assignee, requester,
-    // or decider must be able to load it even when their project access comes
-    // from a path the id list would not cover.
     @@allow('read',
-        projectId in auth().accessibleProjectIds ||
+        project.creator.id == auth().id ||
         assigneeUser.id == auth().id ||
         requestedBy.id == auth().id ||
         decidedBy.id == auth().id ||
+        project.userPermissions?[user.id == auth().id && accessType != 'NO_ACCESS'] ||
+        project.groupPermissions?[group.assignedUsers?[user.id == auth().id] && accessType != 'NO_ACCESS'] ||
         auth().access == 'ADMIN'
     )
 
@@ -4570,17 +4561,17 @@ model ShareLink {
             (project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE')
         )
     )
-    // Read access is inherited from the project, resolved once per request
-    // into auth().accessibleProjectIds instead of re-derived per row. The id
-    // list encodes the same precedence ladder the previous predicate spelled
-    // out - creator, per-user SPECIFIC_ROLE/GLOBAL_ROLE, group grants, and the
-    // project-default branches - and already excludes any project denied by a
-    // per-user NO_ACCESS row, which is why the paired @@deny is gone.
-    @@allow('read', projectId in auth().accessibleProjectIds)
+    @@allow('read',
+        projectId != null && (
+            project.creator.id == auth().id ||
+            project.userPermissions?[user.id == auth().id && accessType != 'NO_ACCESS'] ||
+            project.assignedUsers?[user.id == auth().id]
+        )
+    )
+    @@allow('read', projectId == null && createdBy.id == auth().id)
 
     // Cross-project shares (projectId == null) - only creator or admin can manage
     @@allow('create', projectId == null && auth().access != 'NONE')
-    @@allow('read', projectId == null && createdBy.id == auth().id)
 }
 
 model ShareLinkAccessLog {
@@ -4717,15 +4708,14 @@ model WebhookConfig {
     @@deny('all', auth() == null)
 
     @@deny('read', project.userPermissions?[user.id == auth().id && accessType == 'NO_ACCESS'])
-
-    // Read access is inherited from the project, resolved once per request
-    // into auth().accessibleProjectIds instead of re-derived per row. The id
-    // list encodes the same precedence ladder the previous predicate spelled
-    // out - creator, per-user SPECIFIC_ROLE/GLOBAL_ROLE, group grants, and the
-    // project-default branches - and already excludes any project denied by a
-    // per-user NO_ACCESS row, which is why the paired @@deny is gone.
-    @@allow('read', projectId in auth().accessibleProjectIds)
+    @@allow('read',
+        project.creator.id == auth().id ||
+        project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE' && role.name == 'Project Admin'] ||
+        project.assignedUsers?[user.id == auth().id && auth().access == 'PROJECTADMIN']
+    )
     @@allow('read', auth().access == 'ADMIN')
+
+
     @@deny('create, update, delete', true)
 }
 
@@ -4823,13 +4813,7 @@ model WebhookOutboxEvent {
 
     @@deny('all', auth() == null)
     @@deny('create, update, delete', true)
-    // Read access is inherited from the project, resolved once per request
-    // into auth().accessibleProjectIds instead of re-derived per row. The id
-    // list encodes the same precedence ladder the previous predicate spelled
-    // out - creator, per-user SPECIFIC_ROLE/GLOBAL_ROLE, group grants, and the
-    // project-default branches - and already excludes any project denied by a
-    // per-user NO_ACCESS row, which is why the paired @@deny is gone.
-    @@allow('read', projectId in auth().accessibleProjectIds)
+    @@allow('read', auth().access == 'ADMIN')
     @@allow('read',
         project.creator.id == auth().id ||
         project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE' && role.name == 'Project Admin'] ||
@@ -5640,27 +5624,11 @@ model AuditLog {
     @@deny('all', auth() == null)
     @@deny('update, delete', true)
 
-    // Case / run / session / milestone audit entries inherit the underlying
-    // entity's own read restrictions, so audit visibility tracks exactly who can
-    // view that entity (mirrors the project NONE / NO_ACCESS denies, scoped
-    // through the project).
     @@deny('read', (entityType == 'RepositoryCases' || entityType == 'TestRuns' || entityType == 'Sessions' || entityType == 'Milestones') && auth().access == 'NONE')
     @@deny('read', (entityType == 'RepositoryCases' || entityType == 'TestRuns' || entityType == 'Sessions' || entityType == 'Milestones') && project.userPermissions?[user.id == auth().id && accessType == 'NO_ACCESS'])
-
-    // Read access is inherited from the project, resolved once per request
-    // into auth().accessibleProjectIds instead of re-derived per row. The id
-    // list encodes the same precedence ladder the previous predicate spelled
-    // out - creator, per-user SPECIFIC_ROLE/GLOBAL_ROLE, group grants, and the
-    // project-default branches - and already excludes any project denied by a
-    // per-user NO_ACCESS row, which is why the paired @@deny is gone.
-    @@allow('read', projectId in auth().accessibleProjectIds)
+    @@allow('read', auth().access == 'ADMIN')
     @@allow('read', auth().id == userId)
     @@allow('read', project.assignedUsers?[user.id == auth().id && auth().access == 'PROJECTADMIN'])
-
-    // Anyone who can read a case / run / session / milestone can read that
-    // entity's audit trail. These entities share one project-membership read
-    // model, so the same predicate (resolved through the audit log's
-    // denormalized project relation) grants audit visibility for all of them.
     @@allow('read',
         (entityType == 'RepositoryCases' || entityType == 'TestRuns' || entityType == 'Sessions' || entityType == 'Milestones') && (
             project.creator.id == auth().id ||
