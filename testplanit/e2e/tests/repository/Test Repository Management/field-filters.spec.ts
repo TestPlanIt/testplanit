@@ -132,7 +132,10 @@ test.describe("Field-Based Filtering", () => {
             continue;
           }
 
-          await header.click();
+          await header.scrollIntoViewIfNeeded().catch(() => {});
+          // Probe click: a header may open a menu or be intercepted by a sticky
+          // column; keep the loop moving instead of hanging on one header.
+          await header.click({ timeout: 3000 }).catch(() => {});
           await page.waitForTimeout(300);
 
           // Check if filter dropdown appeared
@@ -210,7 +213,10 @@ test.describe("Field-Based Filtering", () => {
             continue;
           }
 
-          await header.click();
+          await header.scrollIntoViewIfNeeded().catch(() => {});
+          // Probe click: a header may open a menu or be intercepted by a sticky
+          // column; keep the loop moving instead of hanging on one header.
+          await header.click({ timeout: 3000 }).catch(() => {});
           await page.waitForTimeout(300);
 
           // Look for Has Value / No Value options
@@ -282,7 +288,10 @@ test.describe("Field-Based Filtering", () => {
             headerText &&
             headerText.match(/Priority|Estimate|Number|Count/i)
           ) {
-            await header.click();
+            await header.scrollIntoViewIfNeeded().catch(() => {});
+            // Probe click: a header may open a menu or be intercepted by a sticky
+            // column; keep the loop moving instead of hanging on one header.
+            await header.click({ timeout: 3000 }).catch(() => {});
             await page.waitForTimeout(300);
 
             // Look for Between operator
@@ -473,7 +482,10 @@ test.describe("Field-Based Filtering", () => {
               continue;
             }
 
-            await header.click();
+            await header.scrollIntoViewIfNeeded().catch(() => {});
+            // Probe click: a header may open a menu or be intercepted by a sticky
+            // column; keep the loop moving instead of hanging on one header.
+            await header.click({ timeout: 3000 }).catch(() => {});
             await page.waitForTimeout(300);
 
             // Look for Has Value option

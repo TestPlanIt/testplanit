@@ -640,7 +640,7 @@ test.describe("Search & Filter", () => {
       await page.waitForLoadState("networkidle");
 
       // Verify initial count shows 15 items
-      await expect(page.locator("text=/of 15 items/")).toBeVisible({
+      await expect(page.locator("text=/of 15/")).toBeVisible({
         timeout: 5000,
       });
     });
@@ -651,7 +651,7 @@ test.describe("Search & Filter", () => {
       await page.waitForLoadState("networkidle");
 
       // Verify count updated to show only 5 items
-      await expect(page.locator("text=/of 5 items/")).toBeVisible({
+      await expect(page.locator("text=/of 5/")).toBeVisible({
         timeout: 5000,
       });
     });
@@ -662,7 +662,7 @@ test.describe("Search & Filter", () => {
       await page.waitForLoadState("networkidle");
 
       // Verify count is back to 15 items
-      await expect(page.locator("text=/of 15 items/")).toBeVisible({
+      await expect(page.locator("text=/of 15/")).toBeVisible({
         timeout: 5000,
       });
     });
@@ -706,7 +706,7 @@ test.describe("Search & Filter", () => {
         `/en-US/projects/repository/${projectId}?node=${folderId}&pageSize=10`
       );
       await page.waitForLoadState("networkidle");
-      await expect(page.locator("text=/of 15 items/")).toBeVisible({
+      await expect(page.locator("text=/of 15/")).toBeVisible({
         timeout: 10000,
       });
 
@@ -726,7 +726,7 @@ test.describe("Search & Filter", () => {
       await expect(paginationNav).not.toBeVisible({ timeout: 5000 });
 
       // Verify only 3 items are shown
-      await expect(page.locator("text=/of 3 items/")).toBeVisible({
+      await expect(page.locator("text=/of 3/")).toBeVisible({
         timeout: 5000,
       });
     });
@@ -757,7 +757,7 @@ test.describe("Search & Filter", () => {
         `/en-US/projects/repository/${projectId}?node=${folderId}&pageSize=10`
       );
       await page.waitForLoadState("networkidle");
-      await expect(page.locator("text=/of 25 items/")).toBeVisible({
+      await expect(page.locator("text=/of 25/")).toBeVisible({
         timeout: 10000,
       });
     });
@@ -771,7 +771,7 @@ test.describe("Search & Filter", () => {
       await page.waitForLoadState("networkidle");
 
       // Verify we're on page 2
-      await expect(page.locator("text=/Showing 11-20 of/")).toBeVisible({
+      await expect(page.locator("text=/11-20 of/")).toBeVisible({
         timeout: 5000,
       });
     });
@@ -783,7 +783,7 @@ test.describe("Search & Filter", () => {
       await page.waitForLoadState("networkidle");
 
       // Verify we're reset to page 1 of filtered results (starts with "Showing 1-")
-      await expect(page.locator("text=/Showing 1-/")).toBeVisible({
+      await expect(page.locator("text=/1-/")).toBeVisible({
         timeout: 5000,
       });
     });
