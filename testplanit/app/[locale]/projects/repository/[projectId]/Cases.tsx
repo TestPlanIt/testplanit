@@ -230,6 +230,25 @@ const CASE_ISSUES_SELECT = {
   },
 } as const;
 
+// UI sort columns that map 1:1 to a RepositoryCases scalar column. The
+// remembered sort (localStorage, per project) can hold ANY column id from
+// either the repository or the run view — including UI-computed ones like
+// latestResults/forecast and numeric custom-field ids. Both orderBy builders
+// pass through only these names; anything else falls back to the default
+// order, because one unknown field in orderBy makes the server reject the
+// whole findMany and the table renders empty.
+const REPOSITORY_CASE_SORTABLE_SCALARS = new Set([
+  "id",
+  "name",
+  "estimate",
+  "stateId",
+  "automated",
+  "currentVersion",
+  "createdAt",
+  "order",
+  "source",
+]);
+
 // Shared select shape for repository case list queries. Used by both the
 // ZenStack useFindManyRepositoryCases hook (default GET path) and the
 // by-folder-descendants POST endpoint (used when "Show all descendants" is
@@ -1823,10 +1842,14 @@ export default function Cases({
         return { repositoryCase: { caseTags: { _count: direction } } };
       } else if (column === "issues") {
         return { repositoryCase: { caseIssues: { _count: direction } } };
-      } else {
-        // For any other column, try to order by the repositoryCase field
+      } else if (REPOSITORY_CASE_SORTABLE_SCALARS.has(column)) {
         return { repositoryCase: { [column]: direction } };
       }
+      // UI-only sorts (latestResults, forecast, custom-field columns) have no
+      // TestRunCases counterpart. The sort is remembered per project and shared
+      // with the repository view, so an orderBy the server rejects would empty
+      // the whole table — fall back to run order instead.
+      return { order: "asc" };
     }, [sortConfig, isDefaultSort]);
 
   // Determine which run IDs to query - use selectedRunIds if provided (multi-config), otherwise use single runId
@@ -2092,8 +2115,14 @@ export default function Cases({
         return { order: "asc" };
       }
 
-      // Direct field sorting (existing behavior)
-      return { [column]: direction };
+      if (REPOSITORY_CASE_SORTABLE_SCALARS.has(column)) {
+        return { [column]: direction };
+      }
+      // UI-only sorts (forecast, custom-field columns) and run-view sorts
+      // remembered under the shared per-project key (status, assignedTo) have
+      // no RepositoryCases column — an orderBy the server rejects would empty
+      // the whole table, so fall back to the default order instead.
+      return { order: "asc" };
     }, [sortConfig, isDefaultSort]);
 
   // Add filtered count query for accurate pagination
