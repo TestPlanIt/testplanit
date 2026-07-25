@@ -30,9 +30,7 @@ interface JunitChartsPanelProps {
   jUnitSuites: any[] | undefined;
   sortedJunitTestCases: any[];
   statusScope:
-    | { name?: string | null; icon?: string | null }
-    | null
-    | undefined;
+    { name?: string | null; icon?: string | null } | null | undefined;
   forecastSeconds: number | null | undefined;
 }
 
