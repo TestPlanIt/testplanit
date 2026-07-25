@@ -28,7 +28,11 @@ vi.mock("../lib/multiTenantDb", () => ({
   disconnectAllTenantClients: vi.fn(),
 }));
 
-import { pollAllTenantsOnce, pollOnce } from "./webhookOutboxWorker";
+import {
+  pollAllTenantsOnce,
+  pollOnce,
+  resetTenantBackoffForTests,
+} from "./webhookOutboxWorker";
 
 const sampleRow = {
   id: "outbox-1",
@@ -215,9 +219,11 @@ describe("webhookOutboxWorker.pollAllTenantsOnce", () => {
     mockIsMultiTenantMode.mockReset();
     mockGetAllTenantIds.mockReset();
     mockGetTenantDbClient.mockReset();
+    resetTenantBackoffForTests();
   });
 
   afterEach(() => {
+    vi.useRealTimers();
     vi.restoreAllMocks();
   });
 
@@ -305,5 +311,80 @@ describe("webhookOutboxWorker.pollAllTenantsOnce", () => {
 
     expect(n).toBe(0);
     expect(mockClaim).not.toHaveBeenCalled();
+  });
+
+  it("multi-tenant mode: an idle tenant is skipped until its backoff interval elapses, then re-polled", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-07-25T00:00:00Z"));
+    mockIsMultiTenantMode.mockReturnValue(true);
+    mockGetAllTenantIds.mockReturnValue(["tenant-a", "tenant-b"]);
+    mockGetTenantDbClient.mockReturnValue({ __mock: "tenantDb" });
+    mockClaim.mockResolvedValue([]);
+    mockGetQueue.mockReturnValue({ add: vi.fn() });
+
+    // Pass 1: both tenants polled, both come back empty.
+    await pollAllTenantsOnce();
+    expect(mockClaim).toHaveBeenCalledTimes(2);
+
+    // Pass 2 immediately after: both are backed off — no polls at all.
+    await pollAllTenantsOnce();
+    expect(mockClaim).toHaveBeenCalledTimes(2);
+
+    // After the first backoff interval (base 2s × 2 = 4s) both are due again.
+    vi.advanceTimersByTime(4_000);
+    await pollAllTenantsOnce();
+    expect(mockClaim).toHaveBeenCalledTimes(4);
+  });
+
+  it("multi-tenant mode: a poll that claims rows snaps the tenant back to every-cycle polling", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-07-25T00:00:00Z"));
+    mockIsMultiTenantMode.mockReturnValue(true);
+    mockGetAllTenantIds.mockReturnValue(["tenant-a"]);
+    mockGetTenantDbClient.mockReturnValue({ __mock: "tenantDb" });
+    mockFanout.mockResolvedValue(["c1"]);
+    mockGetQueue.mockReturnValue({ add: vi.fn() });
+
+    // Empty poll → tenant backs off.
+    mockClaim.mockResolvedValueOnce([]);
+    await pollAllTenantsOnce();
+    expect(mockClaim).toHaveBeenCalledTimes(1);
+
+    // Due again after the interval; this time the poll finds work.
+    vi.advanceTimersByTime(4_000);
+    mockClaim.mockResolvedValueOnce([sampleRow]);
+    const n = await pollAllTenantsOnce();
+    expect(n).toBe(1);
+    expect(mockClaim).toHaveBeenCalledTimes(2);
+
+    // Snap-back: the very next pass polls again with no waiting.
+    mockClaim.mockResolvedValueOnce([]);
+    await pollAllTenantsOnce();
+    expect(mockClaim).toHaveBeenCalledTimes(3);
+  });
+
+  it("multi-tenant mode: a tenant-level error backs off like an empty poll", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-07-25T00:00:00Z"));
+    mockIsMultiTenantMode.mockReturnValue(true);
+    mockGetAllTenantIds.mockReturnValue(["tenant-a"]);
+    mockGetTenantDbClient.mockImplementation(() => {
+      throw new Error("tenant db unreachable");
+    });
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    await pollAllTenantsOnce();
+    expect(mockGetTenantDbClient).toHaveBeenCalledTimes(1);
+
+    // Immediately after the failure the tenant is backed off — not re-tried.
+    await pollAllTenantsOnce();
+    expect(mockGetTenantDbClient).toHaveBeenCalledTimes(1);
+
+    // Due again once the interval elapses.
+    vi.advanceTimersByTime(4_000);
+    await pollAllTenantsOnce();
+    expect(mockGetTenantDbClient).toHaveBeenCalledTimes(2);
+    expect(errorSpy).toHaveBeenCalled();
+    errorSpy.mockRestore();
   });
 });

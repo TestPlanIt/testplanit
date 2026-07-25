@@ -127,6 +127,39 @@ describe("pollDataChangeLogsAcrossTenants (multi-tenant Loop B supervisor)", () 
     errSpy.mockRestore();
   });
 
+  it("backs off an idle multi-tenant client while the single-tenant client keeps the fixed cadence", async () => {
+    vi.useFakeTimers();
+    try {
+      const idleTenant = makeEmptyClient();
+      const singleTenant = makeEmptyClient();
+      const runningRef = { running: true };
+      const listClients = (): TenantPollClient[] => [
+        { tenantId: "idle", client: idleTenant.client },
+        // tenantId undefined = the single-tenant client — exempt from backoff.
+        { tenantId: undefined, client: singleTenant.client },
+      ];
+
+      const loop = pollDataChangeLogsAcrossTenants(listClients, runningRef, {
+        pollIntervalMs: 100,
+        maxIdlePollIntervalMs: 10_000,
+      });
+
+      // 1s of cycles at 100ms cadence. The idle tenant's empty polls double
+      // its interval (200, 400, 800…), so it is polled at ~t=0/200/600 only,
+      // while the exempt client is polled every cycle.
+      await vi.advanceTimersByTimeAsync(1_000);
+      runningRef.running = false;
+      await vi.advanceTimersByTimeAsync(200);
+      await loop;
+
+      expect(singleTenant.calls()).toBeGreaterThanOrEqual(8);
+      expect(idleTenant.calls()).toBeLessThanOrEqual(4);
+      expect(idleTenant.calls()).toBeGreaterThanOrEqual(2);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("stops cycling once runningRef flips false", async () => {
     const a = makeEmptyClient();
     const runningRef = { running: true };
