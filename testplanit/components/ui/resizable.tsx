@@ -171,6 +171,10 @@ const ResizablePanel = forwardRef<PanelImperativeHandle, ResizablePanelProps>(
         const isCollapsed = pct <= collapsedThreshold;
         if (collapsedRef.current === null) {
           collapsedRef.current = isCollapsed;
+          // Callers assume panels start expanded, so an expanded mount fires
+          // nothing — but a panel restored collapsed (autoSaveId) must fire
+          // onCollapse or the caller's state starts out of sync.
+          if (isCollapsed) onCollapse?.();
           return;
         }
         if (isCollapsed !== collapsedRef.current) {
