@@ -27,10 +27,19 @@ export function useCaseIdsByLatestStatus(args: {
         skip,
         take,
       });
-      return result.success ? result.ids : [];
+      // Throw rather than return [] — the caller reads an empty array as "the
+      // sorted page is genuinely empty" and skips its fetch entirely, so an
+      // error surfaced as [] would stick the table on "No test cases".
+      if (!result.success) throw new Error(result.error);
+      return result.ids;
     },
     enabled,
-    placeholderData: (previous) => previous,
+    // No placeholderData: the caller merges these ids INTO its where clause,
+    // so ids must never outlive the where they were computed for. Serving the
+    // previous filter's page while a folder switch is in flight intersects the
+    // new folder with the old folder's ids and rows silently vanish. A null
+    // during the fetch makes the caller fall back to an unsorted fetch of the
+    // correct rows instead.
   });
 
   return { pageIds: enabled ? (data ?? null) : null, isFetching };
