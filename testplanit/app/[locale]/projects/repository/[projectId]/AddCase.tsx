@@ -379,6 +379,7 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
     {
       where: {
         isDeleted: false,
+        isEnabled: true,
         projects: {
           some: {
             projectId: Number(projectId),
@@ -387,10 +388,12 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
       },
       include: {
         caseFields: {
+          where: { caseField: { isEnabled: true, isDeleted: false } },
           include: {
             caseField: {
               include: {
                 fieldOptions: {
+                  where: { fieldOption: { isEnabled: true, isDeleted: false } },
                   include: {
                     fieldOption: { include: { icon: true, iconColor: true } },
                   },
@@ -416,6 +419,7 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
   const { data: workflows } = useClientQueries(schema).workflows.useFindMany({
     where: {
       isDeleted: false,
+      isEnabled: true,
       scope: "CASES",
       projects: {
         some: {

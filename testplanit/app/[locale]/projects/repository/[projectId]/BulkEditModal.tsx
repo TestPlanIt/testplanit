@@ -295,6 +295,7 @@ export function BulkEditModal({
         where: {
           scope: "CASES",
           isDeleted: false,
+          isEnabled: true,
           projects: { some: { projectId } },
         },
         orderBy: { order: "asc" },

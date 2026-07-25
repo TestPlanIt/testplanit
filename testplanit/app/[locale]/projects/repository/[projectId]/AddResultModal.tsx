@@ -420,6 +420,7 @@ export function AddResultModal({
     useClientQueries(schema).templateResultAssignment.useFindMany({
       where: {
         templateId: repositoryCase?.templateId || 0,
+        resultField: { isEnabled: true, isDeleted: false },
       },
       include: {
         resultField: {
@@ -430,6 +431,7 @@ export function AddResultModal({
               },
             },
             fieldOptions: {
+              where: { fieldOption: { isEnabled: true, isDeleted: false } },
               select: {
                 fieldOption: {
                   select: {

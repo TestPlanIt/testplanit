@@ -852,6 +852,7 @@ export function TestCaseDetailsView({
     return workflows
       .filter(
         (w) =>
+          w.isEnabled &&
           w.requiresReview === true &&
           w.id !== currentStateId &&
           w.order > currentStateOrder
@@ -864,29 +865,39 @@ export function TestCaseDetailsView({
       }));
   }, [workflows, testcase]);
 
+  // Disabled states are hidden from the picker, but the case's CURRENT state
+  // stays listed so an existing selection still renders. The unfiltered list
+  // keeps feeding the gate-order math above — dropping the current state there
+  // would resolve its order to -Infinity and mark every gate reachable.
   const workflowOptions =
-    workflows?.map((workflow) => ({
-      value: workflow.id.toString(),
-      label: (
-        // Use the shared WorkflowStateDisplay so the gated-state warning
-        // glyph stays consistent everywhere a workflow state renders.
-        <WorkflowStateDisplay
-          state={{
-            name: workflow.name,
-            icon: { name: workflow.icon.name as IconName },
-            color: { value: workflow.color.value },
-            requiresReview: workflow.requiresReview,
-          }}
-          size="sm"
-        />
-      ),
-    })) || [];
+    workflows
+      ?.filter((w) => w.isEnabled || w.id === testcase?.state.id)
+      .map((workflow) => ({
+        value: workflow.id.toString(),
+        label: (
+          // Use the shared WorkflowStateDisplay so the gated-state warning
+          // glyph stays consistent everywhere a workflow state renders.
+          <WorkflowStateDisplay
+            state={{
+              name: workflow.name,
+              icon: { name: workflow.icon.name as IconName },
+              color: { value: workflow.color.value },
+              requiresReview: workflow.requiresReview,
+            }}
+            size="sm"
+          />
+        ),
+      })) || [];
 
+  // Same keep-current rule as workflowOptions: disabled templates are hidden
+  // from the picker unless one is the case's current template.
   const templateOptions =
-    templates?.map((template) => ({
-      value: template.id.toString(),
-      label: template.templateName,
-    })) || [];
+    templates
+      ?.filter((t) => t.isEnabled || t.id === testcase?.template?.id)
+      .map((template) => ({
+        value: template.id.toString(),
+        label: template.templateName,
+      })) || [];
 
   const [selectedAttachmentIndex, setSelectedAttachmentIndex] = useState<
     number | null

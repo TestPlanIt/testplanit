@@ -1585,6 +1585,7 @@ export function GenerateTestCasesWizard({
   const { data: templates } = useClientQueries(schema).templates.useFindMany({
     where: {
       isDeleted: false,
+      isEnabled: true,
       projects: {
         some: {
           projectId,
@@ -1604,6 +1605,7 @@ export function GenerateTestCasesWizard({
           caseField: {
             include: {
               fieldOptions: {
+                where: { fieldOption: { isEnabled: true, isDeleted: false } },
                 include: {
                   fieldOption: { include: { icon: true, iconColor: true } },
                 },

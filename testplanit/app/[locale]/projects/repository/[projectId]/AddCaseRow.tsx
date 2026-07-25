@@ -108,6 +108,7 @@ export function AddCaseRow({ folderId }: AddCaseRowProps) {
     {
       where: {
         isDeleted: false,
+        isEnabled: true,
         projects: {
           some: {
             projectId: Number(projectId),
@@ -124,6 +125,7 @@ export function AddCaseRow({ folderId }: AddCaseRowProps) {
   const { data: workflows } = useClientQueries(schema).workflows.useFindMany({
     where: {
       isDeleted: false,
+      isEnabled: true,
       scope: "CASES",
       projects: {
         some: {

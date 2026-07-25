@@ -157,6 +157,7 @@ export default function TestResultsImportDialog({
   const { data: templates } = useClientQueries(schema).templates.useFindMany({
     where: {
       isDeleted: false,
+      isEnabled: true,
       projects: {
         some: {
           projectId: projectId,

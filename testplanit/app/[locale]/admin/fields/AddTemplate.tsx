@@ -107,14 +107,14 @@ export function AddTemplate({ open, onClose }: AddTemplateProps) {
   );
 
   const { data: caseFields } = useClientQueries(schema).caseFields.useFindMany({
-    where: { isDeleted: false },
+    where: { isDeleted: false, isEnabled: true },
     orderBy: { displayName: "asc" },
   });
 
   const { data: resultFields } = useClientQueries(
     schema
   ).resultFields.useFindMany({
-    where: { isDeleted: false },
+    where: { isDeleted: false, isEnabled: true },
     orderBy: { displayName: "asc" },
   });
 

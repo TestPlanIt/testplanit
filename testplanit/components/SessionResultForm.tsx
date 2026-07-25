@@ -260,6 +260,7 @@ export function SessionResultForm({
     useClientQueries(schema).templateResultAssignment.useFindMany({
       where: {
         templateId: sessionData?.templateId || 0,
+        resultField: { isEnabled: true, isDeleted: false },
       },
       include: {
         resultField: {
@@ -270,6 +271,7 @@ export function SessionResultForm({
               },
             },
             fieldOptions: {
+              where: { fieldOption: { isEnabled: true, isDeleted: false } },
               select: {
                 fieldOption: {
                   select: {
