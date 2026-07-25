@@ -512,7 +512,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
         }
         if (!template) {
           template = await baseDb.templates.findFirst({
-            where: { isDefault: true },
+            where: { isDefault: true, isDeleted: false, isEnabled: true },
           });
         }
 

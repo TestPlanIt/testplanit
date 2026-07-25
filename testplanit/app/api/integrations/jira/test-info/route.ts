@@ -70,6 +70,7 @@ export async function GET(request: NextRequest) {
     const firstStatus = await db.status.findFirst({
       where: {
         isDeleted: false,
+        isEnabled: true,
       },
       orderBy: {
         order: "asc",
