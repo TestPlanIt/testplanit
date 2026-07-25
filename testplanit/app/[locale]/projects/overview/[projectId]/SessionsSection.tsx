@@ -5,7 +5,9 @@ import LoadingSpinner from "@/components/LoadingSpinner";
 import { Compass, LinkIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import React from "react";
+import { PendingReviewBadge } from "~/components/reviews/PendingReviewBadge";
 import SessionResultsSummary from "~/components/SessionResultsSummary";
+import { usePendingReviewsByEntity } from "~/hooks/usePendingReviewsByEntity";
 import { Link } from "~/lib/navigation";
 
 interface SessionsSectionProps {
@@ -43,6 +45,15 @@ const SessionsSection: React.FC<SessionsSectionProps> = ({ projectId }) => {
       id: true,
     },
   });
+
+  const sessionIds = React.useMemo(
+    () => sessions?.map((s) => s.id) ?? [],
+    [sessions]
+  );
+  const pendingReviewsBySessionId = usePendingReviewsByEntity(
+    "SESSION",
+    sessionIds
+  );
 
   if (isLoadingSessions || isLoadingCount) {
     return (
@@ -83,6 +94,13 @@ const SessionsSection: React.FC<SessionsSectionProps> = ({ projectId }) => {
                       <Compass className="h-5 w-5 shrink-0 me-2" />
                       <span className="font-medium truncate pe-1">
                         {testSession.name}
+                      </span>
+                      <span className="shrink-0 me-1">
+                        <PendingReviewBadge
+                          pendingRequest={pendingReviewsBySessionId.get(
+                            testSession.id
+                          )}
+                        />
                       </span>
                       <LinkIcon className="w-4 h-4 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
                     </div>

@@ -4,9 +4,11 @@ import { fireEvent, render, screen, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { UserAssignments } from "./UserAssignments";
 
-const { mockUsePendingReviewRequests } = vi.hoisted(() => ({
-  mockUsePendingReviewRequests: vi.fn(),
-}));
+const { mockUsePendingReviewRequests, mockUsePendingReviewsByEntity } =
+  vi.hoisted(() => ({
+    mockUsePendingReviewRequests: vi.fn(),
+    mockUsePendingReviewsByEntity: vi.fn(),
+  }));
 
 // The `t` function must be identity-stable across renders (real next-intl
 // memoizes it): the column defs depend on it, and a fresh identity per render
@@ -24,6 +26,11 @@ vi.mock("next-intl", () => ({
 vi.mock("~/hooks/usePendingReviewRequests", () => ({
   usePendingReviewRequests: (...args: any[]) =>
     mockUsePendingReviewRequests(...args),
+}));
+
+vi.mock("~/hooks/usePendingReviewsByEntity", () => ({
+  usePendingReviewsByEntity: (...args: any[]) =>
+    mockUsePendingReviewsByEntity(...args),
 }));
 
 // Entity side-fetches behind usePendingReviewEntityMaps. Empty results keep
@@ -192,6 +199,7 @@ describe("UserAssignments", () => {
       isLoading: false,
       enabled: true,
     });
+    mockUsePendingReviewsByEntity.mockImplementation(() => new Map());
   });
 
   it("groups pending cases per open run and lists active sessions", async () => {
@@ -244,6 +252,36 @@ describe("UserAssignments", () => {
       "href",
       "/projects/sessions/2/7"
     );
+  });
+
+  it("shows the pending-review badge on rows whose entity has a pending review", async () => {
+    mockFetchWith(dashboardData);
+    mockUsePendingReviewsByEntity.mockImplementation((entityType: string) =>
+      entityType === "RUN"
+        ? new Map([
+            [
+              100,
+              {
+                id: "review-1",
+                status: "PENDING",
+                assigneeUser: { name: "Reviewer" },
+              },
+            ],
+          ])
+        : new Map()
+    );
+
+    renderComponent();
+
+    const runRow = await screen.findByTestId("profile-assignments-run-100");
+    expect(
+      within(runRow).getByTestId("pending-review-badge")
+    ).toBeInTheDocument();
+    // No SESSION review staged — the session row stays badge-free.
+    const sessionRow = screen.getByTestId("profile-assignments-session-7");
+    expect(
+      within(sessionRow).queryByTestId("pending-review-badge")
+    ).not.toBeInTheDocument();
   });
 
   it("lists pending reviews with a count-first heading", async () => {

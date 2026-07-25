@@ -10,6 +10,7 @@ import { useCallback, useMemo, useState } from "react";
 import type { UserDashboardData } from "~/app/api/users/[userId]/dashboard/route";
 import LoadingSpinner from "~/components/LoadingSpinner";
 import { ProjectIcon } from "~/components/ProjectIcon";
+import { PendingReviewBadge } from "~/components/reviews/PendingReviewBadge";
 import {
   PendingReviewEntity,
   usePendingReviewEntityMaps,
@@ -19,6 +20,7 @@ import { SessionNameDisplay } from "~/components/SessionNameDisplay";
 import { ProjectNameCell } from "~/components/tables/ProjectNameCell";
 import { TestRunNameDisplay } from "~/components/TestRunNameDisplay";
 import { usePendingReviewRequests } from "~/hooks/usePendingReviewRequests";
+import { usePendingReviewsByEntity } from "~/hooks/usePendingReviewsByEntity";
 import { Link } from "~/lib/navigation";
 import { toHumanReadable } from "~/utils/duration";
 
@@ -213,6 +215,23 @@ export function UserAssignments({ userId }: UserAssignmentsProps) {
     }));
   }, [data]);
 
+  // Pending-review badges on the run/session name cells — entity-scoped (ANY
+  // pending review on the run/session), matching the list pages, unlike the
+  // viewer-scoped `pendingReviews` queue above.
+  const pendingRunIds = useMemo(
+    () => pendingRuns.map((run) => run.runId),
+    [pendingRuns]
+  );
+  const activeSessionIds = useMemo(
+    () => activeSessions.map((s) => s.id),
+    [activeSessions]
+  );
+  const pendingReviewsByRunId = usePendingReviewsByEntity("RUN", pendingRunIds);
+  const pendingReviewsBySessionId = usePendingReviewsByEntity(
+    "SESSION",
+    activeSessionIds
+  );
+
   const totalWorkSeconds = useMemo(
     () =>
       pendingRuns.reduce((sum, run) => sum + run.totalSeconds, 0) +
@@ -320,11 +339,16 @@ export function UserAssignments({ userId }: UserAssignmentsProps) {
         header: tGlobal("common.name"),
         size: 400,
         cell: ({ row }) => (
-          <TestRunNameDisplay
-            testRun={{ id: row.original.runId, name: row.original.runName }}
-            projectId={row.original.projectId}
-            className="truncate"
-          />
+          <div className="flex items-center gap-1 min-w-0">
+            <TestRunNameDisplay
+              testRun={{ id: row.original.runId, name: row.original.runName }}
+              projectId={row.original.projectId}
+              className="truncate"
+            />
+            <PendingReviewBadge
+              pendingRequest={pendingReviewsByRunId.get(row.original.runId)}
+            />
+          </div>
         ),
       },
       {
@@ -365,7 +389,7 @@ export function UserAssignments({ userId }: UserAssignmentsProps) {
             : null,
       },
     ],
-    [tGlobal, formatDuration]
+    [tGlobal, formatDuration, pendingReviewsByRunId]
   );
 
   const sessionColumns = useMemo<ColumnDef<ActiveSessionRow, unknown>[]>(
@@ -377,12 +401,17 @@ export function UserAssignments({ userId }: UserAssignmentsProps) {
         header: tGlobal("common.name"),
         size: 400,
         cell: ({ row }) => (
-          <Link
-            href={`/projects/sessions/${row.original.projectId}/${row.original.id}`}
-            className="flex items-center gap-1 min-w-0 hover:underline"
-          >
-            <SessionNameDisplay session={row.original} className="truncate" />
-          </Link>
+          <div className="flex items-center gap-1 min-w-0">
+            <Link
+              href={`/projects/sessions/${row.original.projectId}/${row.original.id}`}
+              className="flex items-center gap-1 min-w-0 hover:underline"
+            >
+              <SessionNameDisplay session={row.original} className="truncate" />
+            </Link>
+            <PendingReviewBadge
+              pendingRequest={pendingReviewsBySessionId.get(row.original.id)}
+            />
+          </div>
         ),
       },
       {
@@ -411,7 +440,7 @@ export function UserAssignments({ userId }: UserAssignmentsProps) {
             : null,
       },
     ],
-    [tGlobal, t, formatDuration]
+    [tGlobal, t, formatDuration, pendingReviewsBySessionId]
   );
 
   if (isLoading) return <LoadingSpinner className="h-12" />;

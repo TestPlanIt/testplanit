@@ -30,8 +30,10 @@ import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useMemo } from "react";
 import type { UserDashboardData } from "~/app/api/users/[userId]/dashboard/route";
 import { DateFormatter } from "~/components/DateFormatter";
+import { PendingReviewBadge } from "~/components/reviews/PendingReviewBadge";
 import { PendingReviewsSummary } from "~/components/reviews/PendingReviewsSummary";
 import { usePendingReviewRequests } from "~/hooks/usePendingReviewRequests";
+import { usePendingReviewsByEntity } from "~/hooks/usePendingReviewsByEntity";
 import { Link, useRouter } from "~/lib/navigation";
 import { toHumanReadable } from "~/utils/duration";
 import UserWorkGanttChart, {
@@ -640,6 +642,25 @@ export function UserDashboard() {
   const { requests: pendingReviews, isLoading: isLoadingPendingReviews } =
     usePendingReviewRequests(userId);
 
+  // Pending-review badges on the run/session cards below — entity-scoped
+  // (ANY pending review on the run/session), matching the list pages.
+  const attentionRunIds = useMemo(
+    () => runsRequiringAttention.map((run) => run.id),
+    [runsRequiringAttention]
+  );
+  const activeSessionIds = useMemo(
+    () => userActiveSessions?.map((s) => s.id) ?? [],
+    [userActiveSessions]
+  );
+  const pendingReviewsByRunId = usePendingReviewsByEntity(
+    "RUN",
+    attentionRunIds
+  );
+  const pendingReviewsBySessionId = usePendingReviewsByEntity(
+    "SESSION",
+    activeSessionIds
+  );
+
   // --- New: Transform scheduledWorkItems to PlotTasks for Gantt Chart ---
   const plotTasks: PlotTask[] = useMemo(() => {
     if (!scheduledWorkItems || scheduledWorkItems.length === 0) {
@@ -894,6 +915,9 @@ export function UserDashboard() {
                       )}
                       <LinkIcon className="w-4 h-4 inline ms-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
                     </Link>
+                    <PendingReviewBadge
+                      pendingRequest={pendingReviewsByRunId.get(run.id)}
+                    />
                     <span className="text-xs text-muted-foreground ms-2 max-w-[25%] truncate">
                       {run.project.name}
                     </span>
@@ -929,6 +953,9 @@ export function UserDashboard() {
                       <span className="truncate">{session.name}</span>
                       <LinkIcon className="w-4 h-4 inline ms-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
                     </Link>
+                    <PendingReviewBadge
+                      pendingRequest={pendingReviewsBySessionId.get(session.id)}
+                    />
                     <span className="text-xs text-muted-foreground ms-2 max-w-[25%] truncate">
                       {session.project.name}
                     </span>

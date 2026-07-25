@@ -75,6 +75,7 @@ import LoadingSpinner from "~/components/LoadingSpinner";
 import { VirtualizedCardList } from "~/components/VirtualizedCardList";
 import { useExportMilestonePdf } from "~/hooks/pdf/useExportMilestonePdf";
 import { useMilestoneBurndown } from "~/hooks/useMilestoneBurndown";
+import { usePendingReviewsByEntity } from "~/hooks/usePendingReviewsByEntity";
 import { useMilestoneLiveStream } from "~/hooks/useMilestoneLiveStream";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { Link, useRouter } from "~/lib/navigation";
@@ -407,6 +408,19 @@ export default function MilestoneDetailsPage() {
   const testRunIds = useMemo(
     () => milestoneTestRuns?.map((run) => run.id) ?? [],
     [milestoneTestRuns]
+  );
+
+  const sessionIds = useMemo(
+    () => milestoneSessions?.map((s) => s.id) ?? [],
+    [milestoneSessions]
+  );
+
+  // Pending-review badges on the run/session rows, matching the runs and
+  // sessions list pages.
+  const pendingReviewsByRunId = usePendingReviewsByEntity("RUN", testRunIds);
+  const pendingReviewsBySessionId = usePendingReviewsByEntity(
+    "SESSION",
+    sessionIds
   );
 
   // Batch-fetch test run summaries for all test runs. The route caps a
@@ -1136,6 +1150,9 @@ export default function MilestoneDetailsPage() {
                                 summaryData={
                                   batchSummaries?.summaries[testRun.id]
                                 }
+                                pendingRequest={pendingReviewsByRunId.get(
+                                  testRun.id
+                                )}
                               />
                             );
                           }}
@@ -1172,6 +1189,9 @@ export default function MilestoneDetailsPage() {
                               showMilestone={
                                 testSession.milestoneId !== Number(milestoneId)
                               }
+                              pendingRequest={pendingReviewsBySessionId.get(
+                                testSession.id
+                              )}
                             />
                           )}
                         />

@@ -10,7 +10,9 @@ import {
 import { Combine, LinkIcon, Lock, PlayCircle } from "lucide-react";
 import { useTranslations } from "next-intl";
 import React from "react";
+import { PendingReviewBadge } from "~/components/reviews/PendingReviewBadge";
 import { TestRunCasesSummary } from "~/components/TestRunCasesSummary";
+import { usePendingReviewsByEntity } from "~/hooks/usePendingReviewsByEntity";
 import { Link } from "~/lib/navigation";
 
 interface TestRunsSectionProps {
@@ -57,6 +59,12 @@ const TestRunsSection: React.FC<TestRunsSectionProps> = ({ projectId }) => {
     },
   });
 
+  const testRunIds = React.useMemo(
+    () => testRuns?.map((run) => run.id) ?? [],
+    [testRuns]
+  );
+  const pendingReviewsByRunId = usePendingReviewsByEntity("RUN", testRunIds);
+
   if (isLoadingTestRuns || isLoadingCount) {
     return (
       <div className="flex justify-center items-center py-8">
@@ -96,6 +104,11 @@ const TestRunsSection: React.FC<TestRunsSectionProps> = ({ projectId }) => {
                       <PlayCircle className="h-5 w-5 shrink-0 me-2" />
                       <span className="font-medium truncate pe-1">
                         {testRun.name}
+                      </span>
+                      <span className="shrink-0 me-1">
+                        <PendingReviewBadge
+                          pendingRequest={pendingReviewsByRunId.get(testRun.id)}
+                        />
                       </span>
                       {(testRun as any).configurationGroupId && (
                         <Tooltip>
