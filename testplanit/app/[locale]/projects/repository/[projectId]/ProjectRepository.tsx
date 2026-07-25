@@ -9,6 +9,10 @@ import { DragStateBridge } from "@/components/dnd/DragStateBridge";
 import { DropZoneOverlay } from "@/components/dnd/DropZoneOverlay";
 import { PageFileDropOverlay } from "@/components/PageFileDropOverlay";
 import TipTapEditor from "@/components/tiptap/TipTapEditor";
+import {
+  ActionOverflow,
+  useContainerCompact,
+} from "@/components/ui/action-bar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -425,6 +429,11 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
   const [addFolderOpen, setAddFolderOpen] = useState(false);
   const [addCaseOpen, setAddCaseOpen] = useState(false);
   const [generateWizardOpen, setGenerateWizardOpen] = useState(false);
+
+  // Collapse the list-pane header actions (Import / Generate / Add Case) into
+  // a kebab menu when the pane is narrow, mirroring the other action bars.
+  const { ref: listHeaderRef, compact: listHeaderCompact } =
+    useContainerCompact();
 
   const [, setPanelWidth] = useState<number>(100);
   const [folderHierarchy, setFolderHierarchy] = useState<FolderNode[]>([]);
@@ -1797,7 +1806,10 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                         className="min-w-0"
                         data-testid="repository-list-pane"
                       >
-                        <div data-testid="repository-right-panel-header">
+                        <div
+                          ref={listHeaderRef}
+                          data-testid="repository-right-panel-header"
+                        >
                           <div className="flex items-center justify-between mx-2 pt-0.5 gap-2">
                             <div className="text-primary text-lg md:text-xl font-extrabold shrink-0">
                               <div className="flex items-center space-x-1">
@@ -1834,16 +1846,6 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                             )}
                             {!isSelectionMode && !isRunMode && canAddEdit && (
                               <div className="flex gap-2 items-center">
-                                <Button
-                                  variant="outline"
-                                  className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2"
-                                  onClick={() => setImportDialogOpen(true)}
-                                >
-                                  <Download className="h-4 w-4 shrink-0" />
-                                  <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-                                    {t("repository.cases.importWizard.title")}
-                                  </span>
-                                </Button>
                                 {importDialogOpen && (
                                   <ImportCasesWizard
                                     onImportComplete={refetchFolderStats}
@@ -1855,38 +1857,17 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                                     initialFile={droppedFile}
                                   />
                                 )}
-                                {/* The wizard requires an active AI model
-                                    integration; without one it renders nothing,
-                                    so the button is gated on the same condition
-                                    to avoid a button that does nothing. */}
-                                {hasActiveLlm && (
-                                  <>
-                                    {generateWizardOpen && (
-                                      <GenerateTestCasesWizard
-                                        folderId={selectedFolderId ?? 0}
-                                        folderName={selectedFolderName}
-                                        onImportComplete={refetchFolderStats}
-                                        open={generateWizardOpen}
-                                        onOpenChange={setGenerateWizardOpen}
-                                      />
-                                    )}
-                                    <Button
-                                      variant="outline"
-                                      disabled={folderHierarchy.length === 0}
-                                      onClick={() =>
-                                        setGenerateWizardOpen(true)
-                                      }
-                                      className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2"
-                                    >
-                                      <Sparkles className="w-4 h-4 shrink-0" />
-                                      <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-                                        {t(
-                                          "repository.generateTestCases.buttonText"
-                                        )}
-                                      </span>
-                                    </Button>
-                                  </>
+                                {hasActiveLlm && generateWizardOpen && (
+                                  <GenerateTestCasesWizard
+                                    folderId={selectedFolderId ?? 0}
+                                    folderName={selectedFolderName}
+                                    onImportComplete={refetchFolderStats}
+                                    open={generateWizardOpen}
+                                    onOpenChange={setGenerateWizardOpen}
+                                  />
                                 )}
+                                {/* Stateful control (progress bar / results
+                                    link) — stays outside the overflow menu. */}
                                 <FindDuplicatesButton
                                   projectId={projectIdParam}
                                   disabled={
@@ -1897,18 +1878,46 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                                     ) === 0
                                   }
                                 />
-                                <Button
-                                  variant="default"
-                                  disabled={!selectedFolderId}
-                                  data-testid="add-case-button"
-                                  className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2"
-                                  onClick={() => setAddCaseOpen(true)}
-                                >
-                                  <CirclePlus className="w-4 shrink-0" />
-                                  <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40 select-none">
-                                    {t("repository.cases.addCase")}
-                                  </span>
-                                </Button>
+                                <ActionOverflow
+                                  compact={listHeaderCompact}
+                                  menuLabel={t("common.actions.actionsLabel")}
+                                  menuTestId="repository-actions-menu"
+                                  actions={[
+                                    {
+                                      key: "import",
+                                      icon: Download,
+                                      label: t(
+                                        "repository.cases.importWizard.title"
+                                      ),
+                                      onClick: () => setImportDialogOpen(true),
+                                    },
+                                    {
+                                      // The wizard requires an active AI model
+                                      // integration; without one it renders
+                                      // nothing, so the action is gated on the
+                                      // same condition to avoid an action that
+                                      // does nothing.
+                                      key: "generate",
+                                      icon: Sparkles,
+                                      label: t(
+                                        "repository.generateTestCases.buttonText"
+                                      ),
+                                      onClick: () =>
+                                        setGenerateWizardOpen(true),
+                                      disabled: folderHierarchy.length === 0,
+                                      hidden: !hasActiveLlm,
+                                    },
+                                    {
+                                      key: "addCase",
+                                      icon: CirclePlus,
+                                      label: t("repository.cases.addCase"),
+                                      onClick: () => setAddCaseOpen(true),
+                                      disabled: !selectedFolderId,
+                                      variant: "default",
+                                      testId: "add-case-button",
+                                    },
+                                  ]}
+                                />
                                 {addCaseOpen && (
                                   <AddCase
                                     folderId={selectedFolderId ?? 0}

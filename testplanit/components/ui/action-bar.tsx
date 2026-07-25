@@ -144,6 +144,8 @@ export interface OverflowAction {
   testId?: string;
   /** Extra classes for the wide-mode button (e.g. a busy pulse). */
   className?: string;
+  /** Wide-mode button variant; lets a primary CTA keep its filled look. */
+  variant?: "default" | "outline";
 }
 
 /**
@@ -176,7 +178,7 @@ export function ActionOverflow({
           <Button
             key={a.key}
             type="button"
-            variant="outline"
+            variant={a.variant ?? "outline"}
             onClick={a.onClick}
             disabled={a.disabled}
             data-testid={a.testId}

@@ -20,7 +20,10 @@ import { DataTable } from "@/components/tables/DataTable";
 import { Filter } from "@/components/tables/Filter";
 import { PaginationComponent } from "@/components/tables/Pagination";
 import { PaginationInfo } from "@/components/tables/PaginationControls";
-import { Button } from "@/components/ui/button";
+import {
+  ActionOverflow,
+  useContainerCompact,
+} from "@/components/ui/action-bar";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import type {
   RepositoryCasesFindManyArgs,
@@ -437,6 +440,11 @@ export default function Cases({
       paginationResizeObserverRef.current = ro;
     }
   }, []);
+
+  // Collapse the bulk-action buttons into a single kebab menu when the list
+  // pane is narrow, mirroring the run/session/milestone header action bars.
+  const { ref: casesHeaderRef, compact: casesToolbarCompact } =
+    useContainerCompact();
 
   // Use override pagination if provided (for modal), otherwise use context (for normal page)
   const contextPagination = usePagination();
@@ -3955,7 +3963,7 @@ export default function Cases({
   return (
     <Card className="border-0">
       <CardHeader>
-        <div className="flex flex-row items-start">
+        <div ref={casesHeaderRef} className="flex flex-row items-start">
           <div className="flex flex-col grow w-full sm:w-1/2 min-w-[250px]">
             {/* filterComponent should always be rendered if we've reached this point */}
             {filterComponent}
@@ -4006,115 +4014,92 @@ export default function Cases({
               />
             </div>
             <div className="flex gap-2 pt-2 items-center -mb-2">
-              {canAddEdit &&
-                !isSelectionMode &&
-                !isRunMode &&
-                selectedCaseIdsForBulkEdit.length > 0 && (
-                  <Button
-                    onClick={() => setIsBulkEditModalOpen(true)}
-                    disabled={selectedCaseIdsForBulkEdit.length === 0}
-                    variant="outline"
-                    data-testid="bulk-edit-button"
-                    className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2"
-                  >
-                    <PenSquare className="w-4 h-4 shrink-0" />
-                    <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-                      {t("repository.cases.bulkEdit")} {"("}
-                      {selectedCaseIdsForBulkEdit.length}
-                      {")"}
-                    </span>
-                  </Button>
-                )}
-              {canAddEdit &&
-                hasLlmIntegration &&
-                !isSelectionMode &&
-                !isRunMode &&
-                selectedCaseIdsForBulkEdit.length > 0 && (
-                  <Button
-                    onClick={() => setIsAutoTagOpen(true)}
-                    variant="outline"
-                    data-testid="auto-tag-cases-button"
-                    className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2"
-                  >
-                    <Tags className="w-4 h-4 shrink-0" />
-                    <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-                      {t("autoTag.actions.aiAutoTag")} {"("}
-                      {selectedCaseIdsForBulkEdit.length}
-                      {")"}
-                    </span>
-                  </Button>
-                )}
-              {!isRunMode &&
-                !isSelectionMode &&
-                canAddEditRun &&
-                selectedCaseIdsForBulkEdit.length > 0 && (
-                  <Button
-                    onClick={handleCreateTestRun}
-                    disabled={selectedCaseIdsForBulkEdit.length === 0}
-                    variant="outline"
-                    data-testid="create-test-run-button"
-                    className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2"
-                  >
-                    <PlayCircle className="w-4 h-4 shrink-0" />
-                    <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-                      {t("repository.cases.createTestRun")} {"("}
-                      {selectedCaseIdsForBulkEdit.length}
-                      {")"}
-                    </span>
-                  </Button>
-                )}
-              {showCopyMove &&
-                !isSelectionMode &&
-                !isRunMode &&
-                selectedCaseIdsForBulkEdit.length > 0 && (
-                  <Button
-                    onClick={() => setIsCopyMoveOpen(true)}
-                    variant="outline"
-                    data-testid="copy-move-button"
-                    className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2"
-                  >
-                    <ArrowRightLeft className="w-4 h-4 shrink-0" />
-                    <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-                      {t("repository.cases.copyMoveToProject")} {"("}
-                      {selectedCaseIdsForBulkEdit.length}
-                      {")"}
-                    </span>
-                  </Button>
-                )}
-              {canAddEdit && !isSelectionMode && !isRunMode && (
-                <Button
-                  onClick={() => setIsExportModalOpen(true)}
-                  disabled={totalItems === 0}
-                  variant="outline"
-                  data-testid="export-cases-button"
-                  className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2"
-                >
-                  <Upload className="w-4 h-4 shrink-0" />
-                  <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-                    {t("repository.cases.export")}
-                  </span>
-                </Button>
-              )}
-              {canAddEdit &&
-                quickScriptEnabled &&
-                !isSelectionMode &&
-                !isRunMode &&
-                selectedCaseIdsForBulkEdit.length > 0 && (
-                  <Button
-                    onClick={() => {
+              <ActionOverflow
+                compact={casesToolbarCompact}
+                menuLabel={t("common.actions.actionsLabel")}
+                menuTestId="cases-actions-menu"
+                actions={[
+                  {
+                    key: "bulkEdit",
+                    icon: PenSquare,
+                    label: `${t("repository.cases.bulkEdit")} (${selectedCaseIdsForBulkEdit.length})`,
+                    onClick: () => setIsBulkEditModalOpen(true),
+                    hidden: !(
+                      canAddEdit &&
+                      !isSelectionMode &&
+                      !isRunMode &&
+                      selectedCaseIdsForBulkEdit.length > 0
+                    ),
+                    testId: "bulk-edit-button",
+                  },
+                  {
+                    key: "autoTag",
+                    icon: Tags,
+                    label: `${t("autoTag.actions.aiAutoTag")} (${selectedCaseIdsForBulkEdit.length})`,
+                    onClick: () => setIsAutoTagOpen(true),
+                    hidden: !(
+                      canAddEdit &&
+                      hasLlmIntegration &&
+                      !isSelectionMode &&
+                      !isRunMode &&
+                      selectedCaseIdsForBulkEdit.length > 0
+                    ),
+                    testId: "auto-tag-cases-button",
+                  },
+                  {
+                    key: "createRun",
+                    icon: PlayCircle,
+                    label: `${t("repository.cases.createTestRun")} (${selectedCaseIdsForBulkEdit.length})`,
+                    onClick: handleCreateTestRun,
+                    hidden: !(
+                      !isRunMode &&
+                      !isSelectionMode &&
+                      canAddEditRun &&
+                      selectedCaseIdsForBulkEdit.length > 0
+                    ),
+                    testId: "create-test-run-button",
+                  },
+                  {
+                    key: "copyMove",
+                    icon: ArrowRightLeft,
+                    label: `${t("repository.cases.copyMoveToProject")} (${selectedCaseIdsForBulkEdit.length})`,
+                    onClick: () => setIsCopyMoveOpen(true),
+                    hidden: !(
+                      showCopyMove &&
+                      !isSelectionMode &&
+                      !isRunMode &&
+                      selectedCaseIdsForBulkEdit.length > 0
+                    ),
+                    testId: "copy-move-button",
+                  },
+                  {
+                    key: "export",
+                    icon: Upload,
+                    label: t("repository.cases.export"),
+                    onClick: () => setIsExportModalOpen(true),
+                    disabled: totalItems === 0,
+                    hidden: !(canAddEdit && !isSelectionMode && !isRunMode),
+                    testId: "export-cases-button",
+                  },
+                  {
+                    key: "quickScript",
+                    icon: ScrollText,
+                    label: t("repository.cases.quickScript"),
+                    onClick: () => {
                       setQuickScriptCaseIds(null);
                       setIsQuickScriptModalOpen(true);
-                    }}
-                    variant="outline"
-                    data-testid="quickscript-cases-button"
-                    className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2"
-                  >
-                    <ScrollText className="w-4 h-4 shrink-0" />
-                    <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-                      {t("repository.cases.quickScript")}
-                    </span>
-                  </Button>
-                )}
+                    },
+                    hidden: !(
+                      canAddEdit &&
+                      quickScriptEnabled &&
+                      !isSelectionMode &&
+                      !isRunMode &&
+                      selectedCaseIdsForBulkEdit.length > 0
+                    ),
+                    testId: "quickscript-cases-button",
+                  },
+                ]}
+              />
             </div>
           </div>
         </div>
