@@ -2526,6 +2526,12 @@
       "access": {
         "title": "Dostęp"
       },
+      "assignments": {
+        "title": "Zadania",
+        "empty": "Brak otwartych zadań.",
+        "reviews": "{count, plural, =1 {# Review} other {# Reviews}}",
+        "remaining": "Pozostało"
+      },
       "directory": {
         "title": "Profil katalogu",
         "subtitle": "Pola tylko do odczytu synchronizowane od dostawcy tożsamości za pośrednictwem SCIM.",

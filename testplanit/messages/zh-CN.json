@@ -2526,6 +2526,12 @@
       "access": {
         "title": "使用权"
       },
+      "assignments": {
+        "title": "作业",
+        "empty": "没有待处理的作业。",
+        "reviews": "{count, plural, =1 {# Review} other {# Reviews}}",
+        "remaining": "剩余"
+      },
       "directory": {
         "title": "目录配置文件",
         "subtitle": "通过 SCIM 从您的身份提供商同步的只读字段。",

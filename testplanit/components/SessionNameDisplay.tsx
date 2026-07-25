@@ -1,5 +1,6 @@
 import { Compass, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { cn } from "~/utils";
 
 interface SessionNameDisplayProps {
   session:
@@ -12,12 +13,14 @@ interface SessionNameDisplayProps {
     | undefined;
   showIcon?: boolean;
   fallbackPrefix?: string;
+  className?: string;
 }
 
 export function SessionNameDisplay({
   session,
   showIcon = true,
   fallbackPrefix = "Session",
+  className,
 }: SessionNameDisplayProps) {
   const t = useTranslations("common.labels");
 
@@ -44,9 +47,9 @@ export function SessionNameDisplay({
   const displayName = name || (id ? `${fallbackPrefix} ${id}` : t("unknown"));
 
   return (
-    <span className="flex items-start gap-1">
+    <span className="flex items-start gap-1 min-w-0">
       {icon}
-      {displayName}
+      <span className={cn("min-w-0", className)}>{displayName}</span>
     </span>
   );
 }

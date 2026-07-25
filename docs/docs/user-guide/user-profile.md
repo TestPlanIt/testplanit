@@ -32,7 +32,7 @@ The header features a gradient background and contains:
 
 ## Information Sections
 
-The following collapsible sections are displayed when viewing your own profile or as an admin. They appear in this order:
+The following collapsible sections are displayed when viewing your own profile or as an admin (project admins viewing another user's profile see only the Assignments section). They appear in this order:
 
 ### Account Information
 
@@ -49,6 +49,21 @@ If your organization has enforced 2FA, you will not be able to disable it. A not
 :::
 
 For detailed 2FA setup instructions, see [Two-Factor Authentication](./two-factor-authentication.md).
+
+### Assignments
+
+A compact view of the same information the [dashboard's](./dashboard.md) "Your Assignments" card shows, rendered as sortable tables:
+
+- **Reviews**: pending review requests waiting on the user, with a count-first heading (e.g. "3 Reviews"). Each row shows the entity under review (test case, test run, or session) and its project, linking to the entity page where the review can be decided.
+- **Active Test Runs**: open test runs with cases assigned to the user that still need attention. The heading totals the workload (e.g. "2 Active Test Runs include 14 test cases"), and each row shows the run, its project, the number of pending cases, and the estimated effort.
+- **Active Sessions**: incomplete sessions assigned to the user, with the project and the remaining time (estimate minus time already recorded).
+
+A **Total Work Effort** line above the tables sums the estimated time across pending run cases and session remainders. Column headers sort each table; entity and project names use the same linked displays as the rest of the app.
+
+Assignments are private to the user, with two exceptions:
+
+- **Administrators** see any user's assignments in full.
+- **Project admins** see another user's assignments only within the projects they can access; the reviews list follows the same access policy.
 
 ### Directory Profile
 
@@ -147,4 +162,5 @@ If your account was provisioned through [SCIM 2.0](./scim.md), the **name** and 
 
 - Users can only edit their own profiles
 - Admins can view additional private information for all users
+- Project admins viewing another user's profile see only the [Assignments](#assignments) section, scoped to the projects they can access
 - Regular users viewing other profiles see limited public information

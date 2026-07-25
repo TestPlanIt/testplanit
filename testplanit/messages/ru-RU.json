@@ -2526,6 +2526,12 @@
       "access": {
         "title": "Доступ"
       },
+      "assignments": {
+        "title": "Задания",
+        "empty": "Нет открытых заданий.",
+        "reviews": "{count, plural, =1 {# Review} other {# Reviews}}",
+        "remaining": "Осталось"
+      },
       "directory": {
         "title": "Профиль каталога",
         "subtitle": "Поля, доступные только для чтения, синхронизируются с вашим поставщиком идентификации через SCIM.",

@@ -2526,6 +2526,12 @@
       "access": {
         "title": "Accesso"
       },
+      "assignments": {
+        "title": "Incarichi",
+        "empty": "Nessun incarico aperto.",
+        "reviews": "{count, plural, =1 {# Revisione} other {# Revisioni}}",
+        "remaining": "Rimanenti"
+      },
       "directory": {
         "title": "Profilo della directory",
         "subtitle": "Campi di sola lettura sincronizzati dal provider di identità tramite SCIM.",

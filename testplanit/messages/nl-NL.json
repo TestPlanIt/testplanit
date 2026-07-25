@@ -2526,6 +2526,12 @@
       "access": {
         "title": "Toegang"
       },
+      "assignments": {
+        "title": "Opdrachten",
+        "empty": "Geen openstaande opdrachten.",
+        "reviews": "{count, plural, =1 {# Beoordeling} other {# Beoordelingen}}",
+        "remaining": "Resterend"
+      },
       "directory": {
         "title": "Directoryprofiel",
         "subtitle": "Alleen-lezen velden die via SCIM vanuit uw identiteitsprovider worden gesynchroniseerd.",

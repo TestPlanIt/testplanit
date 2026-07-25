@@ -2526,6 +2526,12 @@
       "access": {
         "title": "Acesso"
       },
+      "assignments": {
+        "title": "Atribuições",
+        "empty": "Nenhuma atribuição em aberto.",
+        "reviews": "{count, plural, =1 {# Review} other {# Reviews}}",
+        "remaining": "Restantes"
+      },
       "directory": {
         "title": "Perfil do diretório",
         "subtitle": "Campos somente leitura sincronizados do seu provedor de identidade via SCIM.",

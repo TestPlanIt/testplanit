@@ -2526,6 +2526,12 @@
       "access": {
         "title": "Zugang"
       },
+      "assignments": {
+        "title": "Aufgaben",
+        "empty": "Keine offenen Aufgaben.",
+        "reviews": "{count, plural, =1 {# Überprüfung} other {# Überprüfungen}}",
+        "remaining": "Verbleibend"
+      },
       "directory": {
         "title": "Verzeichnisprofil",
         "subtitle": "Schreibgeschützte Felder, die über SCIM von Ihrem Identitätsanbieter synchronisiert werden.",

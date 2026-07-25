@@ -175,6 +175,17 @@ interface CustomColumnMeta {
   wrap?: boolean;
 }
 
+function shallowEqualRecord(
+  a: Record<string, boolean>,
+  b: Record<string, boolean>
+): boolean {
+  const aKeys = Object.keys(a);
+  const bKeys = Object.keys(b);
+  return (
+    aKeys.length === bKeys.length && bKeys.every((key) => a[key] === b[key])
+  );
+}
+
 // Define this OUTSIDE the component function
 const getCommonPinningStyles = (column: Column<any>): CSSProperties => {
   const isPinned = column.getIsPinned();
@@ -625,10 +636,19 @@ export function DataTable<TData extends DataRow, TValue>({
           mergedVisibility[columnId] = metaVisible ?? false;
         }
       });
-      setEffectiveColumnVisibility(mergedVisibility);
+      setEffectiveColumnVisibility((prev) =>
+        shallowEqualRecord(prev, mergedVisibility) ? prev : mergedVisibility
+      );
     } else {
-      // Only use getInitialVisibility as fallback when columnVisibility is empty
-      setEffectiveColumnVisibility(getInitialVisibility);
+      // Only use getInitialVisibility as fallback when columnVisibility is empty.
+      // Bail out when the recomputed map is content-equal: this effect's deps
+      // include `getInitialVisibility`, whose identity follows `searchParams`,
+      // so setting a fresh-but-equal object here would re-render and refire the
+      // effect forever whenever that identity churns.
+      setEffectiveColumnVisibility((prev) => {
+        const next = getInitialVisibility();
+        return shallowEqualRecord(prev, next) ? prev : next;
+      });
     }
   }, [columnVisibility, getInitialVisibility, columns]);
 
@@ -1339,19 +1359,16 @@ export function DataTable<TData extends DataRow, TValue>({
                             {/* Cells truncate to a single line by default so long
                                 raw text doesn't wrap and grow the row — the user
                                 widens the column to see more. A column opts out
-                                with `meta: { wrap: true }`. maxWidth pins the
-                                truncation to the column's width under the table's
-                                auto layout. */}
+                                with `meta: { wrap: true }`. The fixed table
+                                layout gives the cell its rendered width, so the
+                                wrapper carries no width of its own — content may
+                                use all the space a stretched column actually
+                                has, not just the configured `size`. */}
                             {(column.columnDef.meta as CustomColumnMeta)
                               ?.wrap ? (
                               cellContent
                             ) : (
-                              <div
-                                className="truncate"
-                                style={{ maxWidth: column.getSize() }}
-                              >
-                                {cellContent}
-                              </div>
+                              <div className="truncate">{cellContent}</div>
                             )}
                           </TableCell>
                         );

@@ -2526,6 +2526,13 @@
       "access": {
         "title": "Access"
       },
+      "assignments": {
+        "title": "Assignments",
+        "empty": "No open assignments.",
+        "reviews": "{count, plural, =1 {# Review} other {# Reviews}}",
+        "remaining": "Remaining",
+        "pendingRuns": "{count, plural, =1 {# Active Test Run includes} other {# Active Test Runs include}} {cases, plural, =1 {# test case} other {# test cases}}"
+      },
       "directory": {
         "title": "Directory Profile",
         "subtitle": "Read-only fields synced from your identity provider via SCIM.",

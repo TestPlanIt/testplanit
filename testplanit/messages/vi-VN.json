@@ -2526,6 +2526,12 @@
       "access": {
         "title": "Truy cập"
       },
+      "assignments": {
+        "title": "Nhiệm vụ được giao",
+        "empty": "Không có nhiệm vụ nào đang mở.",
+        "reviews": "{count, plural, =1 {# Review} other {# Reviews}}",
+        "remaining": "Còn lại"
+      },
       "directory": {
         "title": "Hồ sơ thư mục",
         "subtitle": "Các trường chỉ đọc được đồng bộ từ nhà cung cấp danh tính của bạn thông qua SCIM.",

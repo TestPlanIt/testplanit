@@ -127,6 +127,7 @@ try {
 }
 
 // Mock next/navigation hooks often used alongside next-intl
+const stableSearchParams = new URLSearchParams();
 vi.mock("next/navigation", () => ({
   useRouter: () => ({
     push: vi.fn(),
@@ -137,7 +138,10 @@ vi.mock("next/navigation", () => ({
     forward: vi.fn(),
   }),
   usePathname: () => "/", // Default pathname
-  useSearchParams: () => new URLSearchParams(), // Default search params
+  // Referentially stable like the real hook — a fresh object per call makes
+  // any consumer that uses it as a dependency (e.g. DataTable's initial
+  // column-visibility callback) churn on every render.
+  useSearchParams: () => stableSearchParams,
   useParams: () => ({}), // Default route params
   // next-intl's `createNavigation` internally calls `getRedirectFn(redirect)`
   // and `getRedirectFn(permanentRedirect)` at import time — they must be

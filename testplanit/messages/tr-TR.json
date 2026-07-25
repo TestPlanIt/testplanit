@@ -2526,6 +2526,12 @@
       "access": {
         "title": "Erişim"
       },
+      "assignments": {
+        "title": "Atamalar",
+        "empty": "Açık atama yok.",
+        "reviews": "{count, plural, =1 {# İnceleme} other {# İnceleme}}",
+        "remaining": "Kalan"
+      },
       "directory": {
         "title": "Dizin Profili",
         "subtitle": "Kimlik sağlayıcınızdan SCIM aracılığıyla senkronize edilen salt okunur alanlar.",

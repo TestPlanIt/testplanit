@@ -2,7 +2,6 @@
 
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
-import { Badge } from "@/components/ui/badge";
 import { ArrowRight, Inbox } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useMemo } from "react";
@@ -29,48 +28,31 @@ interface PendingReviewsSummaryProps {
 }
 
 /**
- * Compact "reviews waiting on you" queue for the home dashboard.
+ * Resolves the polymorphic entities behind a list of review requests.
  *
- * The ReviewRequest row is polymorphic — it carries `entityType` + `entityId`
- * but no relation to the entity itself — so entity names are side-fetched per
- * type and joined client-side, the same shape `/reviews` uses. Each fetch is
- * `enabled` only when the current rows reference that type.
- *
- * Rows link to the entity, not to the inbox: the entity page hosts the
- * `ReviewStatusBanner` with the Approve / Request changes / Reject cluster,
- * plus the comment thread explaining what the requester wants looked at.
+ * The ReviewRequest row carries `entityType` + `entityId` but no relation to
+ * the entity itself — so entity names are side-fetched per type and joined
+ * client-side, the same shape `/reviews` uses. Each fetch is `enabled` only
+ * when the current rows reference that type. Shared by the dashboard card and
+ * the profile page's compact Assignments section, feeding
+ * {@link PendingReviewEntity}.
  */
-export function PendingReviewsSummary({
-  requests,
-}: PendingReviewsSummaryProps) {
-  const t = useTranslations();
-
-  const visibleRequests = useMemo(
-    () => requests.slice(0, MAX_VISIBLE_ROWS),
-    [requests]
-  );
-  const hiddenCount = requests.length - visibleRequests.length;
-
+export function usePendingReviewEntityMaps(
+  requests: PendingReviewSummaryRequest[]
+) {
   const caseIds = useMemo(
     () =>
-      visibleRequests
-        .filter((r) => r.entityType === "CASE")
-        .map((r) => r.entityId),
-    [visibleRequests]
+      requests.filter((r) => r.entityType === "CASE").map((r) => r.entityId),
+    [requests]
   );
   const runIds = useMemo(
-    () =>
-      visibleRequests
-        .filter((r) => r.entityType === "RUN")
-        .map((r) => r.entityId),
-    [visibleRequests]
+    () => requests.filter((r) => r.entityType === "RUN").map((r) => r.entityId),
+    [requests]
   );
   const sessionIds = useMemo(
     () =>
-      visibleRequests
-        .filter((r) => r.entityType === "SESSION")
-        .map((r) => r.entityId),
-    [visibleRequests]
+      requests.filter((r) => r.entityType === "SESSION").map((r) => r.entityId),
+    [requests]
   );
 
   const { data: caseRows } = useClientQueries(
@@ -125,22 +107,42 @@ export function PendingReviewsSummary({
     return m;
   }, [sessionRows]);
 
+  return { caseById, runById, sessionById };
+}
+
+/**
+ * Compact "reviews waiting on you" queue for the home dashboard.
+ *
+ * Rows link to the entity, not to the inbox: the entity page hosts the
+ * `ReviewStatusBanner` with the Approve / Request changes / Reject cluster,
+ * plus the comment thread explaining what the requester wants looked at.
+ */
+export function PendingReviewsSummary({
+  requests,
+}: PendingReviewsSummaryProps) {
+  const t = useTranslations();
+
+  const visibleRequests = useMemo(
+    () => requests.slice(0, MAX_VISIBLE_ROWS),
+    [requests]
+  );
+  const hiddenCount = requests.length - visibleRequests.length;
+
+  const { caseById, runById, sessionById } =
+    usePendingReviewEntityMaps(visibleRequests);
+
   if (requests.length === 0) return null;
 
   return (
     <div className="space-y-2" data-testid="dashboard-pending-reviews">
-      {/* Heading borrows the inbox's own title + a count badge rather than a
-          dashboard-specific plural string — one label for the surface, and the
-          count stays a number instead of prose to translate. */}
-      <h3 className="flex items-center gap-1 font-semibold">
+      {/* Count-first plural heading, shared with the profile page's compact
+          Assignments section. */}
+      <h3
+        className="flex items-center gap-1 font-semibold"
+        data-testid="dashboard-pending-reviews-count"
+      >
         <Inbox className="w-5 h-5 text-muted-foreground" />
-        {t("reviews.inbox.pageTitle")}
-        <Badge
-          variant="secondary"
-          data-testid="dashboard-pending-reviews-count"
-        >
-          {requests.length}
-        </Badge>
+        {t("users.profile.assignments.reviews", { count: requests.length })}
       </h3>
       <div className="space-y-4 ps-6">
         {visibleRequests.map((request) => (
@@ -204,7 +206,7 @@ export function PendingReviewsSummary({
  * hasn't landed yet, or when the entity is soft-deleted and therefore filtered
  * out of the lookup.
  */
-function PendingReviewEntity({
+export function PendingReviewEntity({
   request,
   caseById,
   runById,

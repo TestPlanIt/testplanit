@@ -2526,6 +2526,12 @@
       "access": {
         "title": "Acceso"
       },
+      "assignments": {
+        "title": "Tareas",
+        "empty": "No hay tareas pendientes.",
+        "reviews": "{count, plural, =1 {# Revisión} other {# Revisiones}}",
+        "remaining": "Restante"
+      },
       "directory": {
         "title": "Perfil de directorio",
         "subtitle": "Campos de solo lectura sincronizados desde su proveedor de identidad a través de SCIM.",

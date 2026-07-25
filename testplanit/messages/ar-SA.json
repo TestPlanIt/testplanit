@@ -2526,6 +2526,12 @@
       "access": {
         "title": "الوصول"
       },
+      "assignments": {
+        "title": "المهام",
+        "empty": "لا توجد مهام مفتوحة.",
+        "reviews": "{count, plural, =1 {# Review} other {# Reviews}}",
+        "remaining": "المتبقي"
+      },
       "directory": {
         "title": "الملف الشخصي في الدليل",
         "subtitle": "حقول للقراءة فقط تتم مزامنتها من مزوّد الهوية الخاص بك عبر SCIM.",

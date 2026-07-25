@@ -75,6 +75,7 @@ import * as React from "react";
 import { use, useCallback, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod/v4";
+import { UserAssignments } from "~/components/users/UserAssignments";
 import { UserAuditLog } from "~/components/users/UserAuditLog";
 import { SCIM_SCHEMAS } from "~/lib/scim/constants";
 import { languageNames } from "~/i18n/navigation";
@@ -127,6 +128,7 @@ const UserProfile: React.FC<UserProfileProps> = ({
   const ACCORDION_STORAGE_KEY = `user-profile-accordion-${userId}`;
   const DEFAULT_OPEN = [
     "account",
+    "assignments",
     "access",
     "preferences",
     "api-tokens",
@@ -206,6 +208,11 @@ const UserProfile: React.FC<UserProfileProps> = ({
 
   const isOwnProfile = user?.id === session?.user?.id;
   const isAdmin = session?.user?.access === "ADMIN";
+  const isProjectAdmin = session?.user?.access === "PROJECTADMIN";
+  // Everything in the private accordion is own-profile/ADMIN only, except the
+  // Assignments section, which project admins may also see.
+  const canViewPrivateInfo = isOwnProfile || isAdmin;
+  const canViewAssignments = canViewPrivateInfo || isProjectAdmin;
 
   // SCIM-provisioned users have their name + email + active state managed by
   // the IdP. ZenStack denies writes to those columns when scimGivenName is
@@ -760,9 +767,9 @@ const UserProfile: React.FC<UserProfileProps> = ({
               </div>
             </CardHeader>
 
-            {/* Private Information Section - Only for own profile */}
-            {(user?.id === session?.user?.id ||
-              session.user.access === "ADMIN") && (
+            {/* Private Information Section - own profile or ADMIN; project
+                admins get in solely for the Assignments section */}
+            {canViewAssignments && (
               <CardContent>
                 <div>
                   <Separator className="mb-6" />
@@ -773,327 +780,992 @@ const UserProfile: React.FC<UserProfileProps> = ({
                     className="w-full"
                   >
                     {/* Account Information */}
-                    <AccordionItem value="account">
-                      <AccordionTrigger className="text-sm font-medium text-muted-foreground uppercase tracking-wide hover:no-underline">
-                        {tCommon("fields.account")}
-                      </AccordionTrigger>
-                      <AccordionContent>
-                        <div className="px-4">
-                          <div className="space-y-3">
-                            <div className="flex items-center justify-between">
-                              <span className="text-sm">
-                                {tCommon("fields.systemAccess")}
-                              </span>
-                              <AccessLevelDisplay accessLevel={user.access} />
-                            </div>
-
-                            <Separator className="opacity-50" />
-
-                            <div className="flex items-center justify-between">
-                              <span className="text-sm">
-                                {tCommon("fields.authMethod")}
-                              </span>
-                              <Badge
-                                variant={
-                                  user.authMethod === "SSO"
-                                    ? "default"
-                                    : user.authMethod === "BOTH"
-                                      ? "outline"
-                                      : "secondary"
-                                }
-                              >
-                                {user.authMethod === "INTERNAL" &&
-                                  tCommon("auth.internal")}
-                                {user.authMethod === "SSO" &&
-                                  tCommon("auth.sso")}
-                                {user.authMethod === "BOTH" &&
-                                  tCommon("auth.both")}
-                                {user.authMethod === "SCIM" &&
-                                  tCommon("auth.scim")}
-                              </Badge>
-                            </div>
-
-                            <Separator className="opacity-50" />
-
-                            <div className="flex items-center justify-between">
-                              <span className="text-sm">
-                                {tCommon("fields.defaultRole")}
-                              </span>
-                              <Badge variant="secondary">
-                                {user.role.name}
-                              </Badge>
-                            </div>
-
-                            <Separator className="opacity-50" />
-
-                            <div className="flex items-center justify-between">
-                              <span className="text-sm">
-                                {tCommon("fields.apiUser")}
-                              </span>
-                              <Switch disabled checked={user.isApi} />
-                            </div>
-
-                            <Separator className="opacity-50" />
-
-                            {/* Two-Factor Authentication Settings */}
-                            <TwoFactorSettings
-                              userId={user.id}
-                              twoFactorEnabled={user.twoFactorEnabled || false}
-                              isOwnProfile={user?.id === session?.user?.id}
-                              onUpdate={() => refetchUser()}
-                            />
-                          </div>
-                        </div>
-                      </AccordionContent>
-                    </AccordionItem>
-
-                    {/* Directory Profile — read-only SCIM identity attrs */}
-                    {isScimManaged && (
-                      <AccordionItem value="directory">
+                    {canViewPrivateInfo && (
+                      <AccordionItem value="account">
                         <AccordionTrigger className="text-sm font-medium text-muted-foreground uppercase tracking-wide hover:no-underline">
-                          {tDirectory("title")}
+                          {tCommon("fields.account")}
                         </AccordionTrigger>
                         <AccordionContent>
-                          <div className="px-4 space-y-3">
-                            <p className="text-sm text-muted-foreground">
-                              {tDirectory("subtitle")}
-                            </p>
+                          <div className="px-4">
+                            <div className="space-y-3">
+                              <div className="flex items-center justify-between">
+                                <span className="text-sm">
+                                  {tCommon("fields.systemAccess")}
+                                </span>
+                                <AccessLevelDisplay accessLevel={user.access} />
+                              </div>
 
-                            {(() => {
-                              // Render rows only when the IdP actually sent
-                              // a value — empty buckets stay quiet rather
-                              // than show "—" everywhere.
-                              const rows: Array<{
-                                label: string;
-                                value: string;
-                              }> = [];
-                              const pushString = (
-                                label: string,
-                                v: unknown
-                              ): void => {
-                                if (typeof v === "string" && v.length > 0) {
-                                  rows.push({ label, value: v });
+                              <Separator className="opacity-50" />
+
+                              <div className="flex items-center justify-between">
+                                <span className="text-sm">
+                                  {tCommon("fields.authMethod")}
+                                </span>
+                                <Badge
+                                  variant={
+                                    user.authMethod === "SSO"
+                                      ? "default"
+                                      : user.authMethod === "BOTH"
+                                        ? "outline"
+                                        : "secondary"
+                                  }
+                                >
+                                  {user.authMethod === "INTERNAL" &&
+                                    tCommon("auth.internal")}
+                                  {user.authMethod === "SSO" &&
+                                    tCommon("auth.sso")}
+                                  {user.authMethod === "BOTH" &&
+                                    tCommon("auth.both")}
+                                  {user.authMethod === "SCIM" &&
+                                    tCommon("auth.scim")}
+                                </Badge>
+                              </div>
+
+                              <Separator className="opacity-50" />
+
+                              <div className="flex items-center justify-between">
+                                <span className="text-sm">
+                                  {tCommon("fields.defaultRole")}
+                                </span>
+                                <Badge variant="secondary">
+                                  {user.role.name}
+                                </Badge>
+                              </div>
+
+                              <Separator className="opacity-50" />
+
+                              <div className="flex items-center justify-between">
+                                <span className="text-sm">
+                                  {tCommon("fields.apiUser")}
+                                </span>
+                                <Switch disabled checked={user.isApi} />
+                              </div>
+
+                              <Separator className="opacity-50" />
+
+                              {/* Two-Factor Authentication Settings */}
+                              <TwoFactorSettings
+                                userId={user.id}
+                                twoFactorEnabled={
+                                  user.twoFactorEnabled || false
                                 }
-                              };
-                              pushString(
-                                tDirectory("givenName"),
-                                user.scimGivenName
-                              );
-                              pushString(
-                                tDirectory("familyName"),
-                                user.scimFamilyName
-                              );
-                              pushString(
-                                tDirectory("userName"),
-                                user.scimUserName
-                              );
-                              pushString(
-                                tDirectory("externalId"),
-                                user.scimExternalId
-                              );
-                              pushString(
-                                tDirectory("jobTitle"),
-                                scimCore?.title
-                              );
-                              pushString(
-                                tDirectory("userType"),
-                                scimCore?.userType
-                              );
-                              pushString(
-                                tDirectory("employeeNumber"),
-                                scimEnterprise?.employeeNumber
-                              );
-                              pushString(
-                                tDirectory("department"),
-                                scimEnterprise?.department
-                              );
-                              pushString(
-                                tDirectory("division"),
-                                scimEnterprise?.division
-                              );
-                              pushString(
-                                tDirectory("organization"),
-                                scimEnterprise?.organization
-                              );
-                              pushString(
-                                tDirectory("costCenter"),
-                                scimEnterprise?.costCenter
-                              );
-                              if (scimManagerDisplay) {
-                                rows.push({
-                                  label: tDirectory("manager"),
-                                  value: scimManagerDisplay,
-                                });
-                              }
-
-                              if (rows.length === 0) {
-                                return (
-                                  <p className="text-sm text-muted-foreground italic">
-                                    {tDirectory("noEnterpriseFields")}
-                                  </p>
-                                );
-                              }
-
-                              return rows.map((row, idx) => (
-                                <React.Fragment key={row.label}>
-                                  {idx > 0 && (
-                                    <Separator className="opacity-50" />
-                                  )}
-                                  <div className="flex items-start justify-between gap-4">
-                                    <span className="text-sm">{row.label}</span>
-                                    <span className="text-sm text-end break-all">
-                                      {row.value}
-                                    </span>
-                                  </div>
-                                </React.Fragment>
-                              ));
-                            })()}
+                                isOwnProfile={user?.id === session?.user?.id}
+                                onUpdate={() => refetchUser()}
+                              />
+                            </div>
                           </div>
                         </AccordionContent>
                       </AccordionItem>
                     )}
 
-                    {/* Access — Projects + Groups */}
-                    <AccordionItem value="access">
+                    {/* Assignments — same data as the home page's "Your
+                        Assignments" card, compact; visible to the user,
+                        project admins, and admins */}
+                    <AccordionItem value="assignments">
                       <AccordionTrigger className="text-sm font-medium text-muted-foreground uppercase tracking-wide hover:no-underline">
-                        {t("access.title")}
+                        {t("assignments.title")}
                       </AccordionTrigger>
                       <AccordionContent>
-                        <div className="px-4 space-y-6">
-                          <div>
-                            <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide mb-2">
-                              {tCommon("fields.projects")}
-                            </h4>
-                            <ProjectListDisplay
-                              usePopover={false}
-                              projects={accessibleProjects ?? []}
-                              isLoading={accessibleProjectsLoading}
-                            />
-                          </div>
-                          <div>
-                            <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide mb-2">
-                              {tCommon("fields.groups")}
-                            </h4>
-                            <GroupListDisplay
-                              groups={user.groups}
-                              usePopover={false}
-                            />
-                          </div>
+                        <div className="px-4">
+                          <UserAssignments userId={userId} />
                         </div>
                       </AccordionContent>
                     </AccordionItem>
 
-                    {/* User Preferences - if viewing own profile */}
-                    {user.userPreferences && (
-                      <AccordionItem value="preferences">
-                        <AccordionTrigger className="text-sm font-medium text-muted-foreground uppercase tracking-wide hover:no-underline">
-                          {t("preferences.title")}
-                        </AccordionTrigger>
-                        <AccordionContent>
-                          {!isEditing ? (
+                    {canViewPrivateInfo && (
+                      <>
+                        {/* Directory Profile — read-only SCIM identity attrs */}
+                        {isScimManaged && (
+                          <AccordionItem value="directory">
+                            <AccordionTrigger className="text-sm font-medium text-muted-foreground uppercase tracking-wide hover:no-underline">
+                              {tDirectory("title")}
+                            </AccordionTrigger>
+                            <AccordionContent>
+                              <div className="px-4 space-y-3">
+                                <p className="text-sm text-muted-foreground">
+                                  {tDirectory("subtitle")}
+                                </p>
+
+                                {(() => {
+                                  // Render rows only when the IdP actually sent
+                                  // a value — empty buckets stay quiet rather
+                                  // than show "—" everywhere.
+                                  const rows: Array<{
+                                    label: string;
+                                    value: string;
+                                  }> = [];
+                                  const pushString = (
+                                    label: string,
+                                    v: unknown
+                                  ): void => {
+                                    if (typeof v === "string" && v.length > 0) {
+                                      rows.push({ label, value: v });
+                                    }
+                                  };
+                                  pushString(
+                                    tDirectory("givenName"),
+                                    user.scimGivenName
+                                  );
+                                  pushString(
+                                    tDirectory("familyName"),
+                                    user.scimFamilyName
+                                  );
+                                  pushString(
+                                    tDirectory("userName"),
+                                    user.scimUserName
+                                  );
+                                  pushString(
+                                    tDirectory("externalId"),
+                                    user.scimExternalId
+                                  );
+                                  pushString(
+                                    tDirectory("jobTitle"),
+                                    scimCore?.title
+                                  );
+                                  pushString(
+                                    tDirectory("userType"),
+                                    scimCore?.userType
+                                  );
+                                  pushString(
+                                    tDirectory("employeeNumber"),
+                                    scimEnterprise?.employeeNumber
+                                  );
+                                  pushString(
+                                    tDirectory("department"),
+                                    scimEnterprise?.department
+                                  );
+                                  pushString(
+                                    tDirectory("division"),
+                                    scimEnterprise?.division
+                                  );
+                                  pushString(
+                                    tDirectory("organization"),
+                                    scimEnterprise?.organization
+                                  );
+                                  pushString(
+                                    tDirectory("costCenter"),
+                                    scimEnterprise?.costCenter
+                                  );
+                                  if (scimManagerDisplay) {
+                                    rows.push({
+                                      label: tDirectory("manager"),
+                                      value: scimManagerDisplay,
+                                    });
+                                  }
+
+                                  if (rows.length === 0) {
+                                    return (
+                                      <p className="text-sm text-muted-foreground italic">
+                                        {tDirectory("noEnterpriseFields")}
+                                      </p>
+                                    );
+                                  }
+
+                                  return rows.map((row, idx) => (
+                                    <React.Fragment key={row.label}>
+                                      {idx > 0 && (
+                                        <Separator className="opacity-50" />
+                                      )}
+                                      <div className="flex items-start justify-between gap-4">
+                                        <span className="text-sm">
+                                          {row.label}
+                                        </span>
+                                        <span className="text-sm text-end break-all">
+                                          {row.value}
+                                        </span>
+                                      </div>
+                                    </React.Fragment>
+                                  ));
+                                })()}
+                              </div>
+                            </AccordionContent>
+                          </AccordionItem>
+                        )}
+
+                        {/* Access — Projects + Groups */}
+                        <AccordionItem value="access">
+                          <AccordionTrigger className="text-sm font-medium text-muted-foreground uppercase tracking-wide hover:no-underline">
+                            {t("access.title")}
+                          </AccordionTrigger>
+                          <AccordionContent>
+                            <div className="px-4 space-y-6">
+                              <div>
+                                <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide mb-2">
+                                  {tCommon("fields.projects")}
+                                </h4>
+                                <ProjectListDisplay
+                                  usePopover={false}
+                                  projects={accessibleProjects ?? []}
+                                  isLoading={accessibleProjectsLoading}
+                                />
+                              </div>
+                              <div>
+                                <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide mb-2">
+                                  {tCommon("fields.groups")}
+                                </h4>
+                                <GroupListDisplay
+                                  groups={user.groups}
+                                  usePopover={false}
+                                />
+                              </div>
+                            </div>
+                          </AccordionContent>
+                        </AccordionItem>
+
+                        {/* User Preferences - if viewing own profile */}
+                        {user.userPreferences && (
+                          <AccordionItem value="preferences">
+                            <AccordionTrigger className="text-sm font-medium text-muted-foreground uppercase tracking-wide hover:no-underline">
+                              {t("preferences.title")}
+                            </AccordionTrigger>
+                            <AccordionContent>
+                              {!isEditing ? (
+                                <div className="px-4">
+                                  <div className="grid gap-4 sm:grid-cols-2">
+                                    <div className="space-y-3">
+                                      <div className="flex items-center justify-between">
+                                        <span className="text-sm">
+                                          {tCommon("fields.theme")}
+                                        </span>
+                                        <div className="flex items-center gap-2">
+                                          <span
+                                            className={getThemeColor(
+                                              user.userPreferences.theme
+                                            )}
+                                          >
+                                            {getThemeIcon(
+                                              user.userPreferences.theme
+                                            )}
+                                          </span>
+                                          <Badge variant="secondary">
+                                            {getThemeLabel(
+                                              user.userPreferences.theme
+                                            )}
+                                          </Badge>
+                                        </div>
+                                      </div>
+
+                                      <Separator className="opacity-50" />
+
+                                      <div
+                                        className="flex items-center justify-between"
+                                        data-testid="user-locale-display"
+                                      >
+                                        <span className="text-sm">
+                                          {tCommon("fields.locale")}
+                                        </span>
+                                        <Badge variant="secondary">
+                                          {getLocaleLabel(
+                                            user.userPreferences.locale
+                                          )}
+                                        </Badge>
+                                      </div>
+
+                                      <Separator className="opacity-50" />
+
+                                      <div className="flex items-center justify-between">
+                                        <span className="text-sm">
+                                          {tCommon("fields.itemsPerPage")}
+                                        </span>
+                                        <Badge variant="outline">
+                                          {user.userPreferences.itemsPerPage.replace(
+                                            "P",
+                                            ""
+                                          )}
+                                        </Badge>
+                                      </div>
+                                    </div>
+
+                                    <div className="space-y-3">
+                                      <div className="flex items-center justify-between">
+                                        <span className="text-sm">
+                                          {tGlobal(
+                                            "home.initialPreferences.dateFormat"
+                                          )}
+                                        </span>
+                                        <Badge variant="secondary">
+                                          <DateFormatter
+                                            date={sampleDate}
+                                            formatString={
+                                              user.userPreferences.dateFormat
+                                            }
+                                            timezone={
+                                              user.userPreferences.timezone
+                                            }
+                                            tooltip={false}
+                                          />
+                                        </Badge>
+                                      </div>
+
+                                      <Separator className="opacity-50" />
+
+                                      <div className="flex items-center justify-between">
+                                        <span className="text-sm">
+                                          {tGlobal(
+                                            "home.initialPreferences.timeFormat"
+                                          )}
+                                        </span>
+                                        <Badge variant="secondary">
+                                          <DateFormatter
+                                            date={sampleDate}
+                                            formatString={
+                                              user.userPreferences.timeFormat
+                                            }
+                                            timezone={
+                                              user.userPreferences.timezone
+                                            }
+                                            tooltip={false}
+                                          />
+                                        </Badge>
+                                      </div>
+
+                                      <Separator className="opacity-50" />
+
+                                      <div className="flex items-center justify-between">
+                                        <span className="text-sm">
+                                          {tCommon("fields.timezone")}
+                                        </span>
+                                        <span className="text-sm text-muted-foreground">
+                                          {user.userPreferences.timezone}
+                                        </span>
+                                      </div>
+
+                                      <Separator className="opacity-50" />
+
+                                      <div className="flex items-center justify-between">
+                                        <span className="text-sm">
+                                          {tCommon("fields.notificationMode")}
+                                        </span>
+                                        <div className="flex items-center gap-1">
+                                          <Badge variant="secondary">
+                                            {getNotificationModeLabel(
+                                              user.userPreferences
+                                                .notificationMode
+                                            )}
+                                          </Badge>
+                                          {user.userPreferences
+                                            .notificationMode ===
+                                            "USE_GLOBAL" &&
+                                            globalSettings?.value && (
+                                              <span className="text-xs text-primary/60 font-semibold">
+                                                {`(${getGlobalModeLabel(
+                                                  (globalSettings.value as any)
+                                                    .defaultMode
+                                                )})`}
+                                              </span>
+                                            )}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              ) : (
+                                <Form {...form}>
+                                  <div className="grid gap-4 sm:grid-cols-2 px-4">
+                                    <FormField
+                                      control={form.control}
+                                      name="theme"
+                                      render={({ field }) => (
+                                        <FormItem>
+                                          <FormLabel className="flex items-center">
+                                            {tCommon("fields.theme")}
+                                            <HelpPopover helpKey="user.theme" />
+                                          </FormLabel>
+                                          <FormControl>
+                                            <Select
+                                              onValueChange={(value) => {
+                                                form.setValue(
+                                                  "theme",
+                                                  value as Theme
+                                                );
+                                                field.onChange(value);
+                                              }}
+                                              value={field.value}
+                                            >
+                                              <SelectTrigger data-testid="profile-theme-select">
+                                                <SelectValue
+                                                  placeholder={tCommon(
+                                                    "fields.theme"
+                                                  )}
+                                                />
+                                              </SelectTrigger>
+                                              <SelectContent>
+                                                {Object.values(Theme).map(
+                                                  (theme) => (
+                                                    <SelectItem
+                                                      key={theme}
+                                                      value={theme}
+                                                    >
+                                                      <div className="flex items-center gap-2">
+                                                        <span
+                                                          className={getThemeColor(
+                                                            theme
+                                                          )}
+                                                        >
+                                                          {getThemeIcon(theme)}
+                                                        </span>
+                                                        {getThemeLabel(theme)}
+                                                      </div>
+                                                    </SelectItem>
+                                                  )
+                                                )}
+                                              </SelectContent>
+                                            </Select>
+                                          </FormControl>
+                                          <FormMessage />
+                                        </FormItem>
+                                      )}
+                                    />
+
+                                    <FormField
+                                      control={form.control}
+                                      name="locale"
+                                      render={({ field }) => (
+                                        <FormItem data-testid="user-locale-edit">
+                                          <FormLabel className="flex items-center">
+                                            {tCommon("fields.locale")}
+                                            <HelpPopover helpKey="user.locale" />
+                                          </FormLabel>
+                                          <FormControl>
+                                            <Select
+                                              onValueChange={(value) => {
+                                                form.setValue(
+                                                  "locale",
+                                                  value as Locale
+                                                );
+                                                field.onChange(value);
+                                              }}
+                                              value={field.value}
+                                            >
+                                              <SelectTrigger data-testid="user-locale-select">
+                                                <SelectValue
+                                                  placeholder={tCommon(
+                                                    "fields.locale"
+                                                  )}
+                                                />
+                                              </SelectTrigger>
+                                              <SelectContent>
+                                                {Object.values(Locale).map(
+                                                  (locale) => (
+                                                    <SelectItem
+                                                      key={locale}
+                                                      value={locale}
+                                                    >
+                                                      {getLocaleLabel(locale)}
+                                                    </SelectItem>
+                                                  )
+                                                )}
+                                              </SelectContent>
+                                            </Select>
+                                          </FormControl>
+                                          <FormMessage />
+                                        </FormItem>
+                                      )}
+                                    />
+
+                                    <FormField
+                                      control={form.control}
+                                      name="itemsPerPage"
+                                      render={({ field }) => (
+                                        <FormItem>
+                                          <FormLabel className="flex items-center">
+                                            {tGlobal(
+                                              "common.fields.itemsPerPage"
+                                            )}
+                                            <HelpPopover helpKey="user.itemsPerPage" />
+                                          </FormLabel>
+                                          <FormControl>
+                                            <Select
+                                              onValueChange={(value) => {
+                                                form.setValue(
+                                                  "itemsPerPage",
+                                                  value as ItemsPerPage
+                                                );
+                                                field.onChange(value);
+                                              }}
+                                              value={field.value}
+                                            >
+                                              <SelectTrigger>
+                                                <SelectValue
+                                                  placeholder={tGlobal(
+                                                    "common.fields.itemsPerPage"
+                                                  )}
+                                                />
+                                              </SelectTrigger>
+                                              <SelectContent>
+                                                {Object.values(
+                                                  ItemsPerPage
+                                                ).map((value) => (
+                                                  <SelectItem
+                                                    key={value}
+                                                    value={value}
+                                                  >
+                                                    {value.replace("P", "")}
+                                                  </SelectItem>
+                                                ))}
+                                              </SelectContent>
+                                            </Select>
+                                          </FormControl>
+                                          <FormMessage />
+                                        </FormItem>
+                                      )}
+                                    />
+
+                                    <FormField
+                                      control={form.control}
+                                      name="dateFormat"
+                                      render={({ field }) => (
+                                        <FormItem>
+                                          <FormLabel className="flex items-center">
+                                            {tGlobal(
+                                              "home.initialPreferences.dateFormat"
+                                            )}
+                                            <HelpPopover helpKey="user.dateFormat" />
+                                          </FormLabel>
+                                          <FormControl>
+                                            <Select
+                                              onValueChange={(value) => {
+                                                form.setValue(
+                                                  "dateFormat",
+                                                  value as DateFormat
+                                                );
+                                                field.onChange(value);
+                                              }}
+                                              value={field.value}
+                                            >
+                                              <SelectTrigger>
+                                                <SelectValue
+                                                  placeholder={tGlobal(
+                                                    "home.initialPreferences.dateFormat"
+                                                  )}
+                                                />
+                                              </SelectTrigger>
+                                              <SelectContent>
+                                                {Object.values(DateFormat).map(
+                                                  (value) => (
+                                                    <SelectItem
+                                                      key={value}
+                                                      value={value}
+                                                    >
+                                                      <DateFormatter
+                                                        date={sampleDate}
+                                                        formatString={value}
+                                                        timezone={
+                                                          session?.user
+                                                            ?.preferences
+                                                            ?.timezone
+                                                        }
+                                                        tooltip={false}
+                                                      />
+                                                    </SelectItem>
+                                                  )
+                                                )}
+                                              </SelectContent>
+                                            </Select>
+                                          </FormControl>
+                                          <FormMessage />
+                                        </FormItem>
+                                      )}
+                                    />
+
+                                    <FormField
+                                      control={form.control}
+                                      name="timeFormat"
+                                      render={({ field }) => (
+                                        <FormItem>
+                                          <FormLabel className="flex items-center">
+                                            {tGlobal(
+                                              "home.initialPreferences.timeFormat"
+                                            )}
+                                            <HelpPopover helpKey="user.timeFormat" />
+                                          </FormLabel>
+                                          <FormControl>
+                                            <Select
+                                              onValueChange={(value) => {
+                                                form.setValue(
+                                                  "timeFormat",
+                                                  value as TimeFormat
+                                                );
+                                                field.onChange(value);
+                                              }}
+                                              value={field.value}
+                                            >
+                                              <SelectTrigger>
+                                                <SelectValue
+                                                  placeholder={tGlobal(
+                                                    "home.initialPreferences.timeFormat"
+                                                  )}
+                                                />
+                                              </SelectTrigger>
+                                              <SelectContent>
+                                                {Object.values(TimeFormat).map(
+                                                  (format) => (
+                                                    <SelectItem
+                                                      key={format}
+                                                      value={format}
+                                                    >
+                                                      <DateFormatter
+                                                        date={sampleDate}
+                                                        formatString={format}
+                                                        timezone={
+                                                          session?.user
+                                                            ?.preferences
+                                                            ?.timezone
+                                                        }
+                                                        tooltip={false}
+                                                      />
+                                                    </SelectItem>
+                                                  )
+                                                )}
+                                              </SelectContent>
+                                            </Select>
+                                          </FormControl>
+                                          <FormMessage />
+                                        </FormItem>
+                                      )}
+                                    />
+
+                                    <FormField
+                                      control={form.control}
+                                      name="timezone"
+                                      render={({ field }) => (
+                                        <FormItem>
+                                          <FormLabel className="flex items-center">
+                                            {tGlobal("common.fields.timezone")}
+                                            <HelpPopover helpKey="user.timezone" />
+                                          </FormLabel>
+                                          <FormControl>
+                                            <AsyncCombobox<TimezoneOption>
+                                              value={
+                                                allTimezoneOptions.find(
+                                                  (opt) =>
+                                                    opt.id === field.value
+                                                ) || null
+                                              }
+                                              onValueChange={(
+                                                selectedOption: TimezoneOption | null
+                                              ) => {
+                                                const newValue = selectedOption
+                                                  ? selectedOption.id
+                                                  : "Etc/UTC";
+                                                form.setValue(
+                                                  "timezone",
+                                                  newValue
+                                                );
+                                                field.onChange(newValue);
+                                              }}
+                                              fetchOptions={
+                                                fetchTimezoneOptions
+                                              }
+                                              renderOption={
+                                                renderTimezoneOption
+                                              }
+                                              getOptionValue={
+                                                getTimezoneOptionValue
+                                              }
+                                              placeholder={tEdit(
+                                                "timezonePlaceholder"
+                                              )}
+                                              showTotal={true}
+                                            />
+                                          </FormControl>
+                                          <FormMessage />
+                                        </FormItem>
+                                      )}
+                                    />
+
+                                    {/* Notification Preferences - Full Width */}
+                                    <FormField
+                                      control={form.control}
+                                      name="notificationMode"
+                                      render={({ field }) => (
+                                        <FormItem className="space-y-3 sm:col-span-2">
+                                          <FormLabel className="flex items-center">
+                                            {tNotifications("mode.label")}
+                                            <HelpPopover helpKey="user.notificationMode" />
+                                          </FormLabel>
+                                          <FormControl>
+                                            <RadioGroup
+                                              onValueChange={field.onChange}
+                                              value={field.value}
+                                              className="grid grid-cols-1 md:grid-cols-2 gap-3"
+                                            >
+                                              <div className="flex items-center space-x-3">
+                                                <RadioGroupItem
+                                                  value="USE_GLOBAL"
+                                                  id="use-global"
+                                                />
+                                                <Label
+                                                  htmlFor="use-global"
+                                                  className="font-normal"
+                                                >
+                                                  {tNotifications(
+                                                    "mode.useGlobal"
+                                                  )}
+                                                  {globalSettings?.value && (
+                                                    <span className="text-sm text-primary/60 font-semibold ms-1">
+                                                      {`(${getGlobalModeLabel(
+                                                        (
+                                                          globalSettings.value as any
+                                                        ).defaultMode
+                                                      )})`}
+                                                    </span>
+                                                  )}
+                                                </Label>
+                                              </div>
+                                              <div className="flex items-center space-x-3">
+                                                <RadioGroupItem
+                                                  value="NONE"
+                                                  id="none"
+                                                />
+                                                <Label
+                                                  htmlFor="none"
+                                                  className="font-normal"
+                                                >
+                                                  {tCommon("access.none")}
+                                                </Label>
+                                              </div>
+                                              <div className="flex items-center space-x-3">
+                                                <RadioGroupItem
+                                                  value="IN_APP"
+                                                  id="in-app"
+                                                />
+                                                <Label
+                                                  htmlFor="in-app"
+                                                  className="font-normal"
+                                                >
+                                                  {tNotificationModes("inApp")}
+                                                </Label>
+                                              </div>
+                                              <div className="flex items-center space-x-3">
+                                                <RadioGroupItem
+                                                  value="IN_APP_EMAIL_IMMEDIATE"
+                                                  id="in-app-email-immediate"
+                                                />
+                                                <Label
+                                                  htmlFor="in-app-email-immediate"
+                                                  className="font-normal"
+                                                >
+                                                  {tNotificationModes(
+                                                    "inAppEmailImmediate"
+                                                  )}
+                                                </Label>
+                                              </div>
+                                              <div className="flex items-center space-x-3 md:col-start-1">
+                                                <RadioGroupItem
+                                                  value="IN_APP_EMAIL_DAILY"
+                                                  id="in-app-email-daily"
+                                                />
+                                                <Label
+                                                  htmlFor="in-app-email-daily"
+                                                  className="font-normal"
+                                                >
+                                                  {tNotificationModes(
+                                                    "inAppEmailDaily"
+                                                  )}
+                                                </Label>
+                                              </div>
+                                            </RadioGroup>
+                                          </FormControl>
+                                          <FormMessage />
+                                        </FormItem>
+                                      )}
+                                    />
+                                  </div>
+                                </Form>
+                              )}
+                            </AccordionContent>
+                          </AccordionItem>
+                        )}
+
+                        {/* API Tokens - Only for own profile and if user has API access */}
+                        {user?.id === session?.user?.id && user.isApi && (
+                          <AccordionItem value="api-tokens">
+                            <AccordionTrigger className="text-sm font-medium text-muted-foreground uppercase tracking-wide hover:no-underline">
+                              {tGlobal("admin.menu.apiTokens")}
+                            </AccordionTrigger>
+                            <AccordionContent>
+                              <div className="px-4">
+                                <ApiTokenSettings
+                                  userId={user.id}
+                                  isOwnProfile={user?.id === session?.user?.id}
+                                  isAdmin={session.user.access === "ADMIN"}
+                                />
+                              </div>
+                            </AccordionContent>
+                          </AccordionItem>
+                        )}
+
+                        {/* User Activity Statistics */}
+                        <AccordionItem value="activity">
+                          <AccordionTrigger className="text-sm font-medium text-muted-foreground uppercase tracking-wide hover:no-underline">
+                            {tCommon("fields.activity")}
+                          </AccordionTrigger>
+                          <AccordionContent>
+                            <div className="px-4">
+                              <div className="grid gap-3 sm:grid-cols-3">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-sm">
+                                    {tCommon("fields.projects")}{" "}
+                                    {tCommon("fields.created")}
+                                  </span>
+                                  <Badge variant="outline">
+                                    {user._count?.createdProjects || 0}
+                                  </Badge>
+                                </div>
+
+                                <div className="flex items-center justify-between">
+                                  <span className="text-sm">
+                                    {tCommon("fields.testCases")}{" "}
+                                    {tCommon("fields.created")}
+                                  </span>
+                                  <Badge variant="outline">
+                                    {user._count?.repositoryCases || 0}
+                                  </Badge>
+                                </div>
+
+                                <div className="flex items-center justify-between">
+                                  <span className="text-sm">
+                                    {tCommon("fields.sessions")}{" "}
+                                    {tCommon("fields.created")}
+                                  </span>
+                                  <Badge variant="outline">
+                                    {user._count?.createdSessions || 0}
+                                  </Badge>
+                                </div>
+
+                                <div className="flex items-center justify-between">
+                                  <span className="text-sm">
+                                    {tCommon("fields.testRuns")}{" "}
+                                    {tCommon("fields.created")}
+                                  </span>
+                                  <Badge variant="outline">
+                                    {user._count?.testRunCreatedBy || 0}
+                                  </Badge>
+                                </div>
+
+                                <div className="flex items-center justify-between">
+                                  <span className="text-sm">
+                                    {tCommon("fields.milestones")}{" "}
+                                    {tCommon("fields.created")}
+                                  </span>
+                                  <Badge variant="outline">
+                                    {user._count?.createdMilestones || 0}
+                                  </Badge>
+                                </div>
+
+                                {user.lastActiveAt && (
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-sm">
+                                      {tCommon("fields.lastActive")}
+                                    </span>
+                                    <span className="text-sm text-muted-foreground">
+                                      <DateFormatter
+                                        date={user.lastActiveAt}
+                                        formatString={
+                                          session?.user.preferences
+                                            ?.dateFormat &&
+                                          session?.user.preferences?.timeFormat
+                                            ? `${session.user.preferences.dateFormat} ${session.user.preferences.timeFormat}`
+                                            : session?.user.preferences
+                                                ?.dateFormat
+                                        }
+                                        timezone={
+                                          session?.user.preferences?.timezone
+                                        }
+                                      />
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </AccordionContent>
+                        </AccordionItem>
+
+                        {/* Audit Log — own profile or admin only */}
+                        {(isOwnProfile || isAdmin) && (
+                          <AccordionItem value="auditLog">
+                            <AccordionTrigger className="text-sm font-medium text-muted-foreground uppercase tracking-wide hover:no-underline">
+                              {t("auditLog.title")}
+                            </AccordionTrigger>
+                            <AccordionContent>
+                              <div className="px-4">
+                                <UserAuditLog userId={userId} />
+                              </div>
+                            </AccordionContent>
+                          </AccordionItem>
+                        )}
+
+                        {/* Account History */}
+                        <AccordionItem value="history">
+                          <AccordionTrigger className="text-sm font-medium text-muted-foreground uppercase tracking-wide hover:no-underline">
+                            {tCommon("fields.accountHistory")}
+                          </AccordionTrigger>
+                          <AccordionContent>
                             <div className="px-4">
                               <div className="grid gap-4 sm:grid-cols-2">
                                 <div className="space-y-3">
                                   <div className="flex items-center justify-between">
                                     <span className="text-sm">
-                                      {tCommon("fields.theme")}
+                                      {tCommon("fields.dateCreated")}
                                     </span>
-                                    <div className="flex items-center gap-2">
-                                      <span
-                                        className={getThemeColor(
-                                          user.userPreferences.theme
-                                        )}
-                                      >
-                                        {getThemeIcon(
-                                          user.userPreferences.theme
-                                        )}
-                                      </span>
-                                      <Badge variant="secondary">
-                                        {getThemeLabel(
-                                          user.userPreferences.theme
-                                        )}
-                                      </Badge>
-                                    </div>
-                                  </div>
-
-                                  <Separator className="opacity-50" />
-
-                                  <div
-                                    className="flex items-center justify-between"
-                                    data-testid="user-locale-display"
-                                  >
-                                    <span className="text-sm">
-                                      {tCommon("fields.locale")}
+                                    <span className="text-sm text-muted-foreground">
+                                      <DateFormatter
+                                        date={user.createdAt}
+                                        formatString={
+                                          session?.user.preferences
+                                            ?.dateFormat &&
+                                          session?.user.preferences?.timeFormat
+                                            ? `${session.user.preferences.dateFormat} ${session.user.preferences.timeFormat}`
+                                            : session?.user.preferences
+                                                ?.dateFormat
+                                        }
+                                        timezone={
+                                          session?.user.preferences?.timezone
+                                        }
+                                      />
                                     </span>
-                                    <Badge variant="secondary">
-                                      {getLocaleLabel(
-                                        user.userPreferences.locale
-                                      )}
-                                    </Badge>
                                   </div>
 
                                   <Separator className="opacity-50" />
 
                                   <div className="flex items-center justify-between">
                                     <span className="text-sm">
-                                      {tCommon("fields.itemsPerPage")}
+                                      {tCommon("fields.createdBy")}
                                     </span>
-                                    <Badge variant="outline">
-                                      {user.userPreferences.itemsPerPage.replace(
-                                        "P",
-                                        ""
-                                      )}
-                                    </Badge>
+                                    <span className="text-sm text-muted-foreground">
+                                      {user.createdBy
+                                        ? user.createdBy.name
+                                        : tCommon("fields.selfRegistered")}
+                                    </span>
                                   </div>
                                 </div>
 
                                 <div className="space-y-3">
                                   <div className="flex items-center justify-between">
                                     <span className="text-sm">
-                                      {tGlobal(
-                                        "home.initialPreferences.dateFormat"
-                                      )}
-                                    </span>
-                                    <Badge variant="secondary">
-                                      <DateFormatter
-                                        date={sampleDate}
-                                        formatString={
-                                          user.userPreferences.dateFormat
-                                        }
-                                        timezone={user.userPreferences.timezone}
-                                        tooltip={false}
-                                      />
-                                    </Badge>
-                                  </div>
-
-                                  <Separator className="opacity-50" />
-
-                                  <div className="flex items-center justify-between">
-                                    <span className="text-sm">
-                                      {tGlobal(
-                                        "home.initialPreferences.timeFormat"
-                                      )}
-                                    </span>
-                                    <Badge variant="secondary">
-                                      <DateFormatter
-                                        date={sampleDate}
-                                        formatString={
-                                          user.userPreferences.timeFormat
-                                        }
-                                        timezone={user.userPreferences.timezone}
-                                        tooltip={false}
-                                      />
-                                    </Badge>
-                                  </div>
-
-                                  <Separator className="opacity-50" />
-
-                                  <div className="flex items-center justify-between">
-                                    <span className="text-sm">
-                                      {tCommon("fields.timezone")}
+                                      {tCommon("fields.emailVerified")}
                                     </span>
                                     <span className="text-sm text-muted-foreground">
-                                      {user.userPreferences.timezone}
+                                      {user.emailVerified ? (
+                                        <DateFormatter
+                                          date={user.emailVerified}
+                                          formatString={
+                                            session?.user.preferences
+                                              ?.dateFormat &&
+                                            session?.user.preferences
+                                              ?.timeFormat
+                                              ? `${session.user.preferences.dateFormat} ${session.user.preferences.timeFormat}`
+                                              : session?.user.preferences
+                                                  ?.dateFormat
+                                          }
+                                          timezone={
+                                            session?.user.preferences?.timezone
+                                          }
+                                        />
+                                      ) : (
+                                        tCommon("fields.unverified")
+                                      )}
                                     </span>
                                   </div>
 
@@ -1101,647 +1773,32 @@ const UserProfile: React.FC<UserProfileProps> = ({
 
                                   <div className="flex items-center justify-between">
                                     <span className="text-sm">
-                                      {tCommon("fields.notificationMode")}
+                                      {tCommon("fields.usersCreated")}
                                     </span>
-                                    <div className="flex items-center gap-1">
-                                      <Badge variant="secondary">
-                                        {getNotificationModeLabel(
-                                          user.userPreferences.notificationMode
-                                        )}
-                                      </Badge>
-                                      {user.userPreferences.notificationMode ===
-                                        "USE_GLOBAL" &&
-                                        globalSettings?.value && (
-                                          <span className="text-xs text-primary/60 font-semibold">
-                                            {`(${getGlobalModeLabel(
-                                              (globalSettings.value as any)
-                                                .defaultMode
-                                            )})`}
-                                          </span>
-                                        )}
-                                    </div>
+                                    <UserListDisplay
+                                      filter={{ createdById: userId }}
+                                    />
                                   </div>
                                 </div>
                               </div>
                             </div>
-                          ) : (
-                            <Form {...form}>
-                              <div className="grid gap-4 sm:grid-cols-2 px-4">
-                                <FormField
-                                  control={form.control}
-                                  name="theme"
-                                  render={({ field }) => (
-                                    <FormItem>
-                                      <FormLabel className="flex items-center">
-                                        {tCommon("fields.theme")}
-                                        <HelpPopover helpKey="user.theme" />
-                                      </FormLabel>
-                                      <FormControl>
-                                        <Select
-                                          onValueChange={(value) => {
-                                            form.setValue(
-                                              "theme",
-                                              value as Theme
-                                            );
-                                            field.onChange(value);
-                                          }}
-                                          value={field.value}
-                                        >
-                                          <SelectTrigger data-testid="profile-theme-select">
-                                            <SelectValue
-                                              placeholder={tCommon(
-                                                "fields.theme"
-                                              )}
-                                            />
-                                          </SelectTrigger>
-                                          <SelectContent>
-                                            {Object.values(Theme).map(
-                                              (theme) => (
-                                                <SelectItem
-                                                  key={theme}
-                                                  value={theme}
-                                                >
-                                                  <div className="flex items-center gap-2">
-                                                    <span
-                                                      className={getThemeColor(
-                                                        theme
-                                                      )}
-                                                    >
-                                                      {getThemeIcon(theme)}
-                                                    </span>
-                                                    {getThemeLabel(theme)}
-                                                  </div>
-                                                </SelectItem>
-                                              )
-                                            )}
-                                          </SelectContent>
-                                        </Select>
-                                      </FormControl>
-                                      <FormMessage />
-                                    </FormItem>
-                                  )}
-                                />
+                          </AccordionContent>
+                        </AccordionItem>
 
-                                <FormField
-                                  control={form.control}
-                                  name="locale"
-                                  render={({ field }) => (
-                                    <FormItem data-testid="user-locale-edit">
-                                      <FormLabel className="flex items-center">
-                                        {tCommon("fields.locale")}
-                                        <HelpPopover helpKey="user.locale" />
-                                      </FormLabel>
-                                      <FormControl>
-                                        <Select
-                                          onValueChange={(value) => {
-                                            form.setValue(
-                                              "locale",
-                                              value as Locale
-                                            );
-                                            field.onChange(value);
-                                          }}
-                                          value={field.value}
-                                        >
-                                          <SelectTrigger data-testid="user-locale-select">
-                                            <SelectValue
-                                              placeholder={tCommon(
-                                                "fields.locale"
-                                              )}
-                                            />
-                                          </SelectTrigger>
-                                          <SelectContent>
-                                            {Object.values(Locale).map(
-                                              (locale) => (
-                                                <SelectItem
-                                                  key={locale}
-                                                  value={locale}
-                                                >
-                                                  {getLocaleLabel(locale)}
-                                                </SelectItem>
-                                              )
-                                            )}
-                                          </SelectContent>
-                                        </Select>
-                                      </FormControl>
-                                      <FormMessage />
-                                    </FormItem>
-                                  )}
-                                />
-
-                                <FormField
-                                  control={form.control}
-                                  name="itemsPerPage"
-                                  render={({ field }) => (
-                                    <FormItem>
-                                      <FormLabel className="flex items-center">
-                                        {tGlobal("common.fields.itemsPerPage")}
-                                        <HelpPopover helpKey="user.itemsPerPage" />
-                                      </FormLabel>
-                                      <FormControl>
-                                        <Select
-                                          onValueChange={(value) => {
-                                            form.setValue(
-                                              "itemsPerPage",
-                                              value as ItemsPerPage
-                                            );
-                                            field.onChange(value);
-                                          }}
-                                          value={field.value}
-                                        >
-                                          <SelectTrigger>
-                                            <SelectValue
-                                              placeholder={tGlobal(
-                                                "common.fields.itemsPerPage"
-                                              )}
-                                            />
-                                          </SelectTrigger>
-                                          <SelectContent>
-                                            {Object.values(ItemsPerPage).map(
-                                              (value) => (
-                                                <SelectItem
-                                                  key={value}
-                                                  value={value}
-                                                >
-                                                  {value.replace("P", "")}
-                                                </SelectItem>
-                                              )
-                                            )}
-                                          </SelectContent>
-                                        </Select>
-                                      </FormControl>
-                                      <FormMessage />
-                                    </FormItem>
-                                  )}
-                                />
-
-                                <FormField
-                                  control={form.control}
-                                  name="dateFormat"
-                                  render={({ field }) => (
-                                    <FormItem>
-                                      <FormLabel className="flex items-center">
-                                        {tGlobal(
-                                          "home.initialPreferences.dateFormat"
-                                        )}
-                                        <HelpPopover helpKey="user.dateFormat" />
-                                      </FormLabel>
-                                      <FormControl>
-                                        <Select
-                                          onValueChange={(value) => {
-                                            form.setValue(
-                                              "dateFormat",
-                                              value as DateFormat
-                                            );
-                                            field.onChange(value);
-                                          }}
-                                          value={field.value}
-                                        >
-                                          <SelectTrigger>
-                                            <SelectValue
-                                              placeholder={tGlobal(
-                                                "home.initialPreferences.dateFormat"
-                                              )}
-                                            />
-                                          </SelectTrigger>
-                                          <SelectContent>
-                                            {Object.values(DateFormat).map(
-                                              (value) => (
-                                                <SelectItem
-                                                  key={value}
-                                                  value={value}
-                                                >
-                                                  <DateFormatter
-                                                    date={sampleDate}
-                                                    formatString={value}
-                                                    timezone={
-                                                      session?.user?.preferences
-                                                        ?.timezone
-                                                    }
-                                                    tooltip={false}
-                                                  />
-                                                </SelectItem>
-                                              )
-                                            )}
-                                          </SelectContent>
-                                        </Select>
-                                      </FormControl>
-                                      <FormMessage />
-                                    </FormItem>
-                                  )}
-                                />
-
-                                <FormField
-                                  control={form.control}
-                                  name="timeFormat"
-                                  render={({ field }) => (
-                                    <FormItem>
-                                      <FormLabel className="flex items-center">
-                                        {tGlobal(
-                                          "home.initialPreferences.timeFormat"
-                                        )}
-                                        <HelpPopover helpKey="user.timeFormat" />
-                                      </FormLabel>
-                                      <FormControl>
-                                        <Select
-                                          onValueChange={(value) => {
-                                            form.setValue(
-                                              "timeFormat",
-                                              value as TimeFormat
-                                            );
-                                            field.onChange(value);
-                                          }}
-                                          value={field.value}
-                                        >
-                                          <SelectTrigger>
-                                            <SelectValue
-                                              placeholder={tGlobal(
-                                                "home.initialPreferences.timeFormat"
-                                              )}
-                                            />
-                                          </SelectTrigger>
-                                          <SelectContent>
-                                            {Object.values(TimeFormat).map(
-                                              (format) => (
-                                                <SelectItem
-                                                  key={format}
-                                                  value={format}
-                                                >
-                                                  <DateFormatter
-                                                    date={sampleDate}
-                                                    formatString={format}
-                                                    timezone={
-                                                      session?.user?.preferences
-                                                        ?.timezone
-                                                    }
-                                                    tooltip={false}
-                                                  />
-                                                </SelectItem>
-                                              )
-                                            )}
-                                          </SelectContent>
-                                        </Select>
-                                      </FormControl>
-                                      <FormMessage />
-                                    </FormItem>
-                                  )}
-                                />
-
-                                <FormField
-                                  control={form.control}
-                                  name="timezone"
-                                  render={({ field }) => (
-                                    <FormItem>
-                                      <FormLabel className="flex items-center">
-                                        {tGlobal("common.fields.timezone")}
-                                        <HelpPopover helpKey="user.timezone" />
-                                      </FormLabel>
-                                      <FormControl>
-                                        <AsyncCombobox<TimezoneOption>
-                                          value={
-                                            allTimezoneOptions.find(
-                                              (opt) => opt.id === field.value
-                                            ) || null
-                                          }
-                                          onValueChange={(
-                                            selectedOption: TimezoneOption | null
-                                          ) => {
-                                            const newValue = selectedOption
-                                              ? selectedOption.id
-                                              : "Etc/UTC";
-                                            form.setValue("timezone", newValue);
-                                            field.onChange(newValue);
-                                          }}
-                                          fetchOptions={fetchTimezoneOptions}
-                                          renderOption={renderTimezoneOption}
-                                          getOptionValue={
-                                            getTimezoneOptionValue
-                                          }
-                                          placeholder={tEdit(
-                                            "timezonePlaceholder"
-                                          )}
-                                          showTotal={true}
-                                        />
-                                      </FormControl>
-                                      <FormMessage />
-                                    </FormItem>
-                                  )}
-                                />
-
-                                {/* Notification Preferences - Full Width */}
-                                <FormField
-                                  control={form.control}
-                                  name="notificationMode"
-                                  render={({ field }) => (
-                                    <FormItem className="space-y-3 sm:col-span-2">
-                                      <FormLabel className="flex items-center">
-                                        {tNotifications("mode.label")}
-                                        <HelpPopover helpKey="user.notificationMode" />
-                                      </FormLabel>
-                                      <FormControl>
-                                        <RadioGroup
-                                          onValueChange={field.onChange}
-                                          value={field.value}
-                                          className="grid grid-cols-1 md:grid-cols-2 gap-3"
-                                        >
-                                          <div className="flex items-center space-x-3">
-                                            <RadioGroupItem
-                                              value="USE_GLOBAL"
-                                              id="use-global"
-                                            />
-                                            <Label
-                                              htmlFor="use-global"
-                                              className="font-normal"
-                                            >
-                                              {tNotifications("mode.useGlobal")}
-                                              {globalSettings?.value && (
-                                                <span className="text-sm text-primary/60 font-semibold ms-1">
-                                                  {`(${getGlobalModeLabel(
-                                                    (
-                                                      globalSettings.value as any
-                                                    ).defaultMode
-                                                  )})`}
-                                                </span>
-                                              )}
-                                            </Label>
-                                          </div>
-                                          <div className="flex items-center space-x-3">
-                                            <RadioGroupItem
-                                              value="NONE"
-                                              id="none"
-                                            />
-                                            <Label
-                                              htmlFor="none"
-                                              className="font-normal"
-                                            >
-                                              {tCommon("access.none")}
-                                            </Label>
-                                          </div>
-                                          <div className="flex items-center space-x-3">
-                                            <RadioGroupItem
-                                              value="IN_APP"
-                                              id="in-app"
-                                            />
-                                            <Label
-                                              htmlFor="in-app"
-                                              className="font-normal"
-                                            >
-                                              {tNotificationModes("inApp")}
-                                            </Label>
-                                          </div>
-                                          <div className="flex items-center space-x-3">
-                                            <RadioGroupItem
-                                              value="IN_APP_EMAIL_IMMEDIATE"
-                                              id="in-app-email-immediate"
-                                            />
-                                            <Label
-                                              htmlFor="in-app-email-immediate"
-                                              className="font-normal"
-                                            >
-                                              {tNotificationModes(
-                                                "inAppEmailImmediate"
-                                              )}
-                                            </Label>
-                                          </div>
-                                          <div className="flex items-center space-x-3 md:col-start-1">
-                                            <RadioGroupItem
-                                              value="IN_APP_EMAIL_DAILY"
-                                              id="in-app-email-daily"
-                                            />
-                                            <Label
-                                              htmlFor="in-app-email-daily"
-                                              className="font-normal"
-                                            >
-                                              {tNotificationModes(
-                                                "inAppEmailDaily"
-                                              )}
-                                            </Label>
-                                          </div>
-                                        </RadioGroup>
-                                      </FormControl>
-                                      <FormMessage />
-                                    </FormItem>
-                                  )}
-                                />
+                        {/* Mentioned Comments - Only for own profile */}
+                        {user?.id === session?.user?.id && (
+                          <AccordionItem value="mentions">
+                            <AccordionTrigger className="text-sm font-medium text-muted-foreground uppercase tracking-wide hover:no-underline">
+                              {t("mentionedComments.title")}
+                            </AccordionTrigger>
+                            <AccordionContent>
+                              <div className="px-4">
+                                <UserMentionedComments userId={userId} />
                               </div>
-                            </Form>
-                          )}
-                        </AccordionContent>
-                      </AccordionItem>
-                    )}
-
-                    {/* API Tokens - Only for own profile and if user has API access */}
-                    {user?.id === session?.user?.id && user.isApi && (
-                      <AccordionItem value="api-tokens">
-                        <AccordionTrigger className="text-sm font-medium text-muted-foreground uppercase tracking-wide hover:no-underline">
-                          {tGlobal("admin.menu.apiTokens")}
-                        </AccordionTrigger>
-                        <AccordionContent>
-                          <div className="px-4">
-                            <ApiTokenSettings
-                              userId={user.id}
-                              isOwnProfile={user?.id === session?.user?.id}
-                              isAdmin={session.user.access === "ADMIN"}
-                            />
-                          </div>
-                        </AccordionContent>
-                      </AccordionItem>
-                    )}
-
-                    {/* User Activity Statistics */}
-                    <AccordionItem value="activity">
-                      <AccordionTrigger className="text-sm font-medium text-muted-foreground uppercase tracking-wide hover:no-underline">
-                        {tCommon("fields.activity")}
-                      </AccordionTrigger>
-                      <AccordionContent>
-                        <div className="px-4">
-                          <div className="grid gap-3 sm:grid-cols-3">
-                            <div className="flex items-center justify-between">
-                              <span className="text-sm">
-                                {tCommon("fields.projects")}{" "}
-                                {tCommon("fields.created")}
-                              </span>
-                              <Badge variant="outline">
-                                {user._count?.createdProjects || 0}
-                              </Badge>
-                            </div>
-
-                            <div className="flex items-center justify-between">
-                              <span className="text-sm">
-                                {tCommon("fields.testCases")}{" "}
-                                {tCommon("fields.created")}
-                              </span>
-                              <Badge variant="outline">
-                                {user._count?.repositoryCases || 0}
-                              </Badge>
-                            </div>
-
-                            <div className="flex items-center justify-between">
-                              <span className="text-sm">
-                                {tCommon("fields.sessions")}{" "}
-                                {tCommon("fields.created")}
-                              </span>
-                              <Badge variant="outline">
-                                {user._count?.createdSessions || 0}
-                              </Badge>
-                            </div>
-
-                            <div className="flex items-center justify-between">
-                              <span className="text-sm">
-                                {tCommon("fields.testRuns")}{" "}
-                                {tCommon("fields.created")}
-                              </span>
-                              <Badge variant="outline">
-                                {user._count?.testRunCreatedBy || 0}
-                              </Badge>
-                            </div>
-
-                            <div className="flex items-center justify-between">
-                              <span className="text-sm">
-                                {tCommon("fields.milestones")}{" "}
-                                {tCommon("fields.created")}
-                              </span>
-                              <Badge variant="outline">
-                                {user._count?.createdMilestones || 0}
-                              </Badge>
-                            </div>
-
-                            {user.lastActiveAt && (
-                              <div className="flex items-center justify-between">
-                                <span className="text-sm">
-                                  {tCommon("fields.lastActive")}
-                                </span>
-                                <span className="text-sm text-muted-foreground">
-                                  <DateFormatter
-                                    date={user.lastActiveAt}
-                                    formatString={
-                                      session?.user.preferences?.dateFormat &&
-                                      session?.user.preferences?.timeFormat
-                                        ? `${session.user.preferences.dateFormat} ${session.user.preferences.timeFormat}`
-                                        : session?.user.preferences?.dateFormat
-                                    }
-                                    timezone={
-                                      session?.user.preferences?.timezone
-                                    }
-                                  />
-                                </span>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </AccordionContent>
-                    </AccordionItem>
-
-                    {/* Audit Log — own profile or admin only */}
-                    {(isOwnProfile || isAdmin) && (
-                      <AccordionItem value="auditLog">
-                        <AccordionTrigger className="text-sm font-medium text-muted-foreground uppercase tracking-wide hover:no-underline">
-                          {t("auditLog.title")}
-                        </AccordionTrigger>
-                        <AccordionContent>
-                          <div className="px-4">
-                            <UserAuditLog userId={userId} />
-                          </div>
-                        </AccordionContent>
-                      </AccordionItem>
-                    )}
-
-                    {/* Account History */}
-                    <AccordionItem value="history">
-                      <AccordionTrigger className="text-sm font-medium text-muted-foreground uppercase tracking-wide hover:no-underline">
-                        {tCommon("fields.accountHistory")}
-                      </AccordionTrigger>
-                      <AccordionContent>
-                        <div className="px-4">
-                          <div className="grid gap-4 sm:grid-cols-2">
-                            <div className="space-y-3">
-                              <div className="flex items-center justify-between">
-                                <span className="text-sm">
-                                  {tCommon("fields.dateCreated")}
-                                </span>
-                                <span className="text-sm text-muted-foreground">
-                                  <DateFormatter
-                                    date={user.createdAt}
-                                    formatString={
-                                      session?.user.preferences?.dateFormat &&
-                                      session?.user.preferences?.timeFormat
-                                        ? `${session.user.preferences.dateFormat} ${session.user.preferences.timeFormat}`
-                                        : session?.user.preferences?.dateFormat
-                                    }
-                                    timezone={
-                                      session?.user.preferences?.timezone
-                                    }
-                                  />
-                                </span>
-                              </div>
-
-                              <Separator className="opacity-50" />
-
-                              <div className="flex items-center justify-between">
-                                <span className="text-sm">
-                                  {tCommon("fields.createdBy")}
-                                </span>
-                                <span className="text-sm text-muted-foreground">
-                                  {user.createdBy
-                                    ? user.createdBy.name
-                                    : tCommon("fields.selfRegistered")}
-                                </span>
-                              </div>
-                            </div>
-
-                            <div className="space-y-3">
-                              <div className="flex items-center justify-between">
-                                <span className="text-sm">
-                                  {tCommon("fields.emailVerified")}
-                                </span>
-                                <span className="text-sm text-muted-foreground">
-                                  {user.emailVerified ? (
-                                    <DateFormatter
-                                      date={user.emailVerified}
-                                      formatString={
-                                        session?.user.preferences?.dateFormat &&
-                                        session?.user.preferences?.timeFormat
-                                          ? `${session.user.preferences.dateFormat} ${session.user.preferences.timeFormat}`
-                                          : session?.user.preferences
-                                              ?.dateFormat
-                                      }
-                                      timezone={
-                                        session?.user.preferences?.timezone
-                                      }
-                                    />
-                                  ) : (
-                                    tCommon("fields.unverified")
-                                  )}
-                                </span>
-                              </div>
-
-                              <Separator className="opacity-50" />
-
-                              <div className="flex items-center justify-between">
-                                <span className="text-sm">
-                                  {tCommon("fields.usersCreated")}
-                                </span>
-                                <UserListDisplay
-                                  filter={{ createdById: userId }}
-                                />
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </AccordionContent>
-                    </AccordionItem>
-
-                    {/* Mentioned Comments - Only for own profile */}
-                    {user?.id === session?.user?.id && (
-                      <AccordionItem value="mentions">
-                        <AccordionTrigger className="text-sm font-medium text-muted-foreground uppercase tracking-wide hover:no-underline">
-                          {t("mentionedComments.title")}
-                        </AccordionTrigger>
-                        <AccordionContent>
-                          <div className="px-4">
-                            <UserMentionedComments userId={userId} />
-                          </div>
-                        </AccordionContent>
-                      </AccordionItem>
+                            </AccordionContent>
+                          </AccordionItem>
+                        )}
+                      </>
                     )}
                   </Accordion>
                 </div>

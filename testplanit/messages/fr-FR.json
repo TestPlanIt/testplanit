@@ -2526,6 +2526,12 @@
       "access": {
         "title": "Accéder"
       },
+      "assignments": {
+        "title": "Affectations",
+        "empty": "Aucune affectation ouverte.",
+        "reviews": "{count, plural, =1 {1 évaluation} other {# évaluations}}",
+        "remaining": "Restant"
+      },
       "directory": {
         "title": "Profil de l'annuaire",
         "subtitle": "Champs en lecture seule synchronisés depuis votre fournisseur d'identité via SCIM.",

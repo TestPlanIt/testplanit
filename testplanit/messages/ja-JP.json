@@ -2526,6 +2526,12 @@
       "access": {
         "title": "アクセス"
       },
+      "assignments": {
+        "title": "割り当て",
+        "empty": "未処理の割り当てはありません。",
+        "reviews": "{count, plural, =1 {# Review} other {# Reviews}}",
+        "remaining": "残り"
+      },
       "directory": {
         "title": "ディレクトリプロファイル",
         "subtitle": "SCIM経由でIDプロバイダーから同期される読み取り専用フィールド。",

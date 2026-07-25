@@ -2526,6 +2526,12 @@
       "access": {
         "title": "입장"
       },
+      "assignments": {
+        "title": "과제",
+        "empty": "진행 중인 과제가 없습니다.",
+        "reviews": "{count, plural, =1 {# Review} other {# Reviews}}",
+        "remaining": "남음"
+      },
       "directory": {
         "title": "디렉터리 프로필",
         "subtitle": "읽기 전용 필드는 SCIM을 통해 ID 공급자로부터 동기화됩니다.",

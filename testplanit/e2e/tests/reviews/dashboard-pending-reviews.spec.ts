@@ -237,7 +237,7 @@ test.describe("Dashboard pending reviews", () => {
       await expect(page.getByTestId("no-items-message")).toHaveCount(0);
       await expect(
         page.getByTestId("dashboard-pending-reviews-count")
-      ).toHaveText("1");
+      ).toHaveText("1 Review");
 
       const row = page.getByTestId(`dashboard-pending-review-${reviewId}`);
       await expect(row).toBeVisible();
@@ -335,7 +335,7 @@ test.describe("Dashboard pending reviews", () => {
     const page = await ctx!.newPage();
     await stubLiveStreams(page);
 
-    await test.step("Five rows render, the badge counts all seven, and View All points at the inbox", async () => {
+    await test.step("Five rows render, the heading counts all seven, and View All points at the inbox", async () => {
       await page.goto(`${url}/en-US`);
       await page.waitForLoadState("networkidle");
 
@@ -344,7 +344,7 @@ test.describe("Dashboard pending reviews", () => {
       });
       await expect(
         page.getByTestId("dashboard-pending-reviews-count")
-      ).toHaveText("7");
+      ).toHaveText("7 Reviews");
       await expect(
         page.locator('[data-testid^="dashboard-pending-review-"]')
       ).toHaveCount(5);

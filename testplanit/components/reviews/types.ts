@@ -61,7 +61,7 @@ export type ReviewStatusBannerRequest = ReviewRequestGetPayload<{
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const PENDING_REVIEW_SUMMARY_INCLUDE = {
-  project: { select: { id: true, name: true } },
+  project: { select: { id: true, name: true, iconUrl: true } },
   requestedBy: { select: { id: true, name: true } },
   fromState: {
     include: {

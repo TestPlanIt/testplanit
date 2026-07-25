@@ -2526,6 +2526,12 @@
       "access": {
         "title": "使用權"
       },
+      "assignments": {
+        "title": "作業",
+        "empty": "沒有未完成的作業。",
+        "reviews": "{count, plural, =1 {# Review} other {# Reviews}}",
+        "remaining": "剩餘"
+      },
       "directory": {
         "title": "目錄設定檔",
         "subtitle": "透過 SCIM 從您的身分提供者同步的唯讀欄位。",
