@@ -488,7 +488,7 @@ const NameCell = React.memo(function NameCell({
             <TooltipTrigger asChild>
               <button
                 type="button"
-                className="ms-2 text-muted-foreground text-xs bg-muted px-2 py-0.5 rounded flex items-center shrink-0 max-w-[150px] hover:bg-muted/80 transition-colors cursor-pointer"
+                className="ms-2 text-muted-foreground text-xs bg-muted px-2 py-0.5 rounded flex items-center min-w-0 shrink-[9999] max-w-[150px] hover:bg-muted/80 transition-colors cursor-pointer"
                 onClick={(e) => {
                   e.stopPropagation();
                   e.preventDefault();
@@ -499,7 +499,7 @@ const NameCell = React.memo(function NameCell({
                 }}
               >
                 <Folder className="w-3 h-3 me-1 shrink-0" />
-                <span className="truncate">{folder.name}</span>
+                <span className="truncate min-w-0">{folder.name}</span>
               </button>
             </TooltipTrigger>
             <TooltipContent side="top" className="max-w-md">
