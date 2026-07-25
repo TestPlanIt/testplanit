@@ -2,17 +2,12 @@
 
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
-import { ProjectIcon } from "@/components/ProjectIcon";
 import { AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Card, CardContent } from "@/components/ui/card";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { SectionHeader } from "@/components/ui/typography";
-import { HelpPopover } from "@/components/ui/help-popover";
+  PageCardHeader,
+  ProjectHeaderInfo,
+} from "@/components/ui/page-card-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -358,18 +353,12 @@ export default function AdvancedPage() {
   return (
     <main data-testid="advanced-settings-page">
       <Card>
-        <CardHeader className="w-full">
-          <SectionHeader className="flex items-center gap-2">
-            <CardTitle>{t("title")}</CardTitle>
-            <HelpPopover helpKey="projectAdvanced" />
-          </SectionHeader>
-          <CardDescription>
-            <span className="flex items-center gap-2">
-              <ProjectIcon iconUrl={project?.iconUrl} />
-              {project?.name}
-            </span>
-          </CardDescription>
-        </CardHeader>
+        <PageCardHeader
+          className="w-full"
+          title={t("title")}
+          helpKey="projectAdvanced"
+          description={<ProjectHeaderInfo project={project} />}
+        />
         <CardContent className="space-y-6">
           {/* Project record-key code. Only shown when the system-wide
               record-key feature is enabled — the code becomes the prefix in

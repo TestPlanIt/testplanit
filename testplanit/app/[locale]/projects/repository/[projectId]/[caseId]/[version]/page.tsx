@@ -13,15 +13,8 @@ import { TagsDisplay } from "@/components/tables/TagDisplay";
 import { TemplateNameDisplay } from "@/components/TemplateNameDisplay";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { SectionHeader } from "@/components/ui/typography";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { PageCardHeader } from "@/components/ui/page-card-header";
 import {
   ResizableHandle,
   ResizablePanel,
@@ -653,144 +646,145 @@ export default function TestCaseVersions() {
   return (
     <Card>
       <div className="bg-linear-to-b from-primary/0 to-primary/10  rounded-xl">
-        <CardHeader>
-          <CardTitle>
-            <SectionHeader className="flex items-start justify-between max-w-full">
-              <div className="flex items-center space-x-2 w-fit">
-                {renderFieldValue(
-                  "name",
+        <PageCardHeader
+          title={
+            <div className="flex items-center space-x-2 w-fit">
+              {renderFieldValue(
+                "name",
+                <CaseDisplay
+                  id={testcase.id}
+                  name={testcase.name}
+                  size="large"
+                  source={testcase.source}
+                  automated={testcase.automated}
+                  hasParameters={testcase.hasParameters}
+                />,
+                previousTestcase ? (
                   <CaseDisplay
-                    id={testcase.id}
-                    name={testcase.name}
+                    id={previousTestcase.id}
+                    name={previousTestcase.name}
                     size="large"
-                    source={testcase.source}
-                    automated={testcase.automated}
-                    hasParameters={testcase.hasParameters}
-                  />,
-                  previousTestcase ? (
-                    <CaseDisplay
-                      id={previousTestcase.id}
-                      name={previousTestcase.name}
-                      size="large"
-                      source={previousTestcase.source}
-                      automated={previousTestcase.automated}
-                      hasParameters={previousTestcase.hasParameters}
+                    source={previousTestcase.source}
+                    automated={previousTestcase.automated}
+                    hasParameters={previousTestcase.hasParameters}
+                  />
+                ) : null
+              )}
+            </div>
+          }
+          actions={
+            versions &&
+            versions.length > 1 && (
+              <>
+                <Select
+                  value={
+                    currentVersionIndex !== undefined &&
+                    currentVersionIndex >= 0
+                      ? currentVersionIndex.toString()
+                      : "0"
+                  }
+                  onValueChange={(indexStr) => {
+                    const idx = parseInt(indexStr, 10);
+                    if (versions && idx >= 0 && idx < versions.length) {
+                      viewVersion(versions[idx].version.toString());
+                    }
+                  }}
+                >
+                  <SelectTrigger className="w-fit">
+                    <SelectValue
+                      placeholder={t("common.placeholders.selectVersion")}
                     />
-                  ) : null
-                )}
-              </div>
-              <div className="flex items-center space-x-2 w-fit">
-                {versions?.length && versions.length > 1 && (
-                  <>
-                    <Select
-                      value={
-                        currentVersionIndex !== undefined &&
-                        currentVersionIndex >= 0
-                          ? currentVersionIndex.toString()
-                          : "0"
-                      }
-                      onValueChange={(indexStr) => {
-                        const idx = parseInt(indexStr, 10);
-                        if (versions && idx >= 0 && idx < versions.length) {
-                          viewVersion(versions[idx].version.toString());
-                        }
+                  </SelectTrigger>
+                  <SelectContent>
+                    {versions?.map((v, index) => (
+                      <SelectItem
+                        key={`version-select-${index}`}
+                        value={index.toString()}
+                      >
+                        <div className="flex items-center space-x-1 whitespace-nowrap">
+                          <Badge className="text-primary-foreground text-xs">
+                            {t("common.version.prefix")}
+                            {v.version.toString()}{" "}
+                          </Badge>
+                          <div className="text-xs flex">
+                            <DateFormatter
+                              date={v.createdAt}
+                              formatString={
+                                session?.user.preferences?.dateFormat +
+                                " " +
+                                session?.user.preferences?.timeFormat
+                              }
+                              timezone={session?.user.preferences?.timezone}
+                            />
+                          </div>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <VersionNavigation
+                  versions={versions}
+                  currentVersion={version?.toString() || ""}
+                  currentVersionIndex={currentVersionIndex}
+                  onPrevVersion={goToPreviousVersion}
+                  onNextVersion={goToNextVersion}
+                  backHref={`/projects/repository/${projectId}/${caseId}`}
+                  backTitle={t("common.aria.backToTestCase")}
+                />
+              </>
+            )
+          }
+          description={
+            <div className="flex items-center justify-between">
+              {workflowState &&
+              previousWorkflowState &&
+              testcase &&
+              previousTestcase
+                ? renderFieldValue(
+                    "workflowState",
+                    <WorkflowStateDisplay
+                      state={{
+                        name: workflowState.name,
+                        icon: {
+                          name: workflowState.icon.name as IconName,
+                        },
+                        color: workflowState.color,
                       }}
-                    >
-                      <SelectTrigger className="w-fit">
-                        <SelectValue
-                          placeholder={t("common.placeholders.selectVersion")}
-                        />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {versions?.map((v, index) => (
-                          <SelectItem
-                            key={`version-select-${index}`}
-                            value={index.toString()}
-                          >
-                            <div className="flex items-center space-x-1 whitespace-nowrap">
-                              <Badge className="text-primary-foreground text-xs">
-                                {t("common.version.prefix")}
-                                {v.version.toString()}{" "}
-                              </Badge>
-                              <div className="text-xs flex">
-                                <DateFormatter
-                                  date={v.createdAt}
-                                  formatString={
-                                    session?.user.preferences?.dateFormat +
-                                    " " +
-                                    session?.user.preferences?.timeFormat
-                                  }
-                                  timezone={session?.user.preferences?.timezone}
-                                />
-                              </div>
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <VersionNavigation
-                      versions={versions}
-                      currentVersion={version?.toString() || ""}
-                      currentVersionIndex={currentVersionIndex}
-                      onPrevVersion={goToPreviousVersion}
-                      onNextVersion={goToNextVersion}
-                      backHref={`/projects/repository/${projectId}/${caseId}`}
-                      backTitle={t("common.aria.backToTestCase")}
+                    />,
+                    <WorkflowStateDisplay
+                      state={{
+                        name: previousTestcase?.stateName ?? "",
+                        icon: {
+                          name: previousWorkflowState?.icon?.name as IconName,
+                        },
+                        color: previousWorkflowState?.color,
+                      }}
                     />
-                  </>
-                )}
-              </div>
-            </SectionHeader>
-          </CardTitle>
-          <CardDescription className="flex items-center justify-between">
-            {workflowState &&
-            previousWorkflowState &&
-            testcase &&
-            previousTestcase
-              ? renderFieldValue(
-                  "workflowState",
-                  <WorkflowStateDisplay
-                    state={{
-                      name: workflowState.name,
-                      icon: {
-                        name: workflowState.icon.name as IconName,
-                      },
-                      color: workflowState.color,
-                    }}
-                  />,
-                  <WorkflowStateDisplay
-                    state={{
-                      name: previousTestcase?.stateName ?? "",
-                      icon: {
-                        name: previousWorkflowState?.icon?.name as IconName,
-                      },
-                      color: previousWorkflowState?.color,
-                    }}
-                  />
-                )
-              : workflowState &&
-                testcase && (
-                  <WorkflowStateDisplay
-                    state={{
-                      name: workflowState.name,
-                      icon: {
-                        name: workflowState.icon.name as IconName,
-                      },
-                      color: workflowState.color,
-                    }}
-                  />
-                )}
-            {testcase && previousTestcase
-              ? renderFieldValue(
-                  "templateName",
-                  <TemplateNameDisplay name={testcase.templateName} />,
-                  <TemplateNameDisplay name={previousTestcase.templateName} />
-                )
-              : testcase && (
-                  <TemplateNameDisplay name={testcase.templateName} />
-                )}
-          </CardDescription>
-        </CardHeader>
+                  )
+                : workflowState &&
+                  testcase && (
+                    <WorkflowStateDisplay
+                      state={{
+                        name: workflowState.name,
+                        icon: {
+                          name: workflowState.icon.name as IconName,
+                        },
+                        color: workflowState.color,
+                      }}
+                    />
+                  )}
+              {testcase && previousTestcase
+                ? renderFieldValue(
+                    "templateName",
+                    <TemplateNameDisplay name={testcase.templateName} />,
+                    <TemplateNameDisplay name={previousTestcase.templateName} />
+                  )
+                : testcase && (
+                    <TemplateNameDisplay name={testcase.templateName} />
+                  )}
+            </div>
+          }
+        />
         <CardContent>
           <ResizablePanelGroup
             direction="horizontal"

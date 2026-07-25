@@ -1,16 +1,30 @@
 "use client";
 
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
+import {
+  ActionButtonContent,
+  collapsibleActionClass,
+} from "@/components/ui/action-bar";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  PageCardHeader,
+  ProjectHeaderInfo,
+} from "@/components/ui/page-card-header";
 import { Progress } from "@/components/ui/progress";
-import { PageTitle } from "@/components/ui/typography";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { DuplicateResultsTable } from "@/components/duplicates/DuplicateResultsTable";
-import { ArrowLeft, CopyCheck, Loader2, RefreshCw, X } from "lucide-react";
+import { Loader2, RefreshCw, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { Link } from "~/lib/navigation";
 
 const STORAGE_KEY_PREFIX = "duplicate-scan-job:";
 
@@ -19,6 +33,12 @@ export default function DuplicatesPage() {
   const { projectId } = useParams<{ projectId: string }>();
   const queryClient = useQueryClient();
   const storageKey = `${STORAGE_KEY_PREFIX}${projectId}`;
+
+  // `name` + `iconUrl` feed the standard project line under the page title.
+  const { data: project } = useClientQueries(schema).projects.useFindUnique({
+    where: { id: parseInt(projectId) },
+    select: { name: true, iconUrl: true },
+  });
 
   const [isScanning, setIsScanning] = useState(false);
   const [scanProgress, setScanProgress] = useState<{
@@ -140,74 +160,82 @@ export default function DuplicatesPage() {
   };
 
   return (
-    <div className="py-6 px-2">
-      <div className="mb-6 flex items-center gap-2">
-        <Link href={`/projects/repository/${projectId}`}>
-          <Button variant="outline" size="icon" className="me-2">
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-        </Link>
-        <div className="flex-1">
-          <PageTitle as="h1" className="flex gap-1">
-            <CopyCheck className="w-6 h-6 shrink-0" />
-            {t("pageTitle")}
-          </PageTitle>
-          <p className="text-muted-foreground">{t("pageDescription")}</p>
-        </div>
-        <div className="flex items-center gap-3">
-          {isScanning && (
-            <div className="flex items-center gap-2">
-              {scanProgress &&
-                scanProgress.total > 0 &&
-                ((scanProgress as any).phase === "ai" ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                    <span className="text-xs text-muted-foreground whitespace-nowrap">
-                      {t("aiAnalyzing")}
-                    </span>
-                  </>
-                ) : (
-                  <>
-                    <Progress
-                      value={Math.round(
-                        (scanProgress.analyzed / scanProgress.total) * 100
-                      )}
-                      className="w-32 h-2"
-                    />
-                    <span className="text-xs text-muted-foreground whitespace-nowrap">
-                      {t("analyzing", {
-                        analyzed: scanProgress.analyzed,
-                        total: scanProgress.total,
-                      })}
-                    </span>
-                  </>
-                ))}
+    <main data-testid="duplicates-page">
+      <Card>
+        <PageCardHeader
+          className="w-full"
+          title={t("pageTitle")}
+          helpKey="repositoryDuplicates"
+          backHref={`/projects/repository/${projectId}`}
+          description={<ProjectHeaderInfo project={project} />}
+          actions={
+            <>
+              {isScanning && (
+                <div className="flex items-center gap-2">
+                  {scanProgress &&
+                    scanProgress.total > 0 &&
+                    ((scanProgress as any).phase === "ai" ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                        <span className="text-xs text-muted-foreground whitespace-nowrap">
+                          {t("aiAnalyzing")}
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <Progress
+                          value={Math.round(
+                            (scanProgress.analyzed / scanProgress.total) * 100
+                          )}
+                          className="w-32 h-2"
+                        />
+                        <span className="text-xs text-muted-foreground whitespace-nowrap">
+                          {t("analyzing", {
+                            analyzed: scanProgress.analyzed,
+                            total: scanProgress.total,
+                          })}
+                        </span>
+                      </>
+                    ))}
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6"
+                        onClick={handleCancel}
+                        aria-label={t("cancelScan")}
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>{t("cancelScan")}</TooltipContent>
+                  </Tooltip>
+                </div>
+              )}
               <Button
-                variant="ghost"
-                size="icon"
-                className="h-6 w-6"
-                onClick={handleCancel}
-                title={t("cancelScan")}
+                variant="outline"
+                onClick={handleRescan}
+                disabled={isScanning}
+                className={collapsibleActionClass()}
               >
-                <X className="h-3.5 w-3.5" />
+                <ActionButtonContent
+                  icon={isScanning ? Loader2 : RefreshCw}
+                  iconClassName={
+                    isScanning
+                      ? "h-4 w-4 shrink-0 animate-spin"
+                      : "h-4 w-4 shrink-0"
+                  }
+                  label={t("rescan")}
+                />
               </Button>
-            </div>
-          )}
-          <Button
-            variant="outline"
-            onClick={handleRescan}
-            disabled={isScanning}
-          >
-            {isScanning ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <RefreshCw className="h-4 w-4" />
-            )}
-            {t("rescan")}
-          </Button>
-        </div>
-      </div>
-      <DuplicateResultsTable projectId={projectId} />
-    </div>
+            </>
+          }
+        />
+        <CardContent>
+          <DuplicateResultsTable projectId={projectId} />
+        </CardContent>
+      </Card>
+    </main>
   );
 }
