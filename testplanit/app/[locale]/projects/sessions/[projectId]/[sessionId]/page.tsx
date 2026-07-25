@@ -770,6 +770,13 @@ function SessionFormControls({
                     deferredMode={isEditMode}
                     onPendingChanges={onAttachmentPendingChanges}
                   />
+                  {!isEditMode &&
+                    (!testSession.attachments ||
+                      testSession.attachments.length === 0) && (
+                      <span className="text-sm text-muted-foreground">
+                        {tCommon("access.none")}
+                      </span>
+                    )}
                 </div>
               </FormControl>
               <FormMessage />

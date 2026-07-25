@@ -404,15 +404,21 @@ function TestRunFormControls({
           />
         ) : (
           <div className="flex flex-wrap gap-2">
-            {testRun?.tags.map((tag) => (
-              <TagsDisplay
-                key={tag.id}
-                size="small"
-                id={tag.id}
-                name={tag.name}
-                link={`/projects/tags/${projectId}/${tag.id}`}
-              />
-            ))}
+            {testRun?.tags && testRun.tags.length > 0 ? (
+              testRun.tags.map((tag) => (
+                <TagsDisplay
+                  key={tag.id}
+                  size="small"
+                  id={tag.id}
+                  name={tag.name}
+                  link={`/projects/tags/${projectId}/${tag.id}`}
+                />
+              ))
+            ) : (
+              <span className="text-muted-foreground text-sm">
+                {t("common.access.none")}
+              </span>
+            )}
           </div>
         )}
       </div>
@@ -447,6 +453,13 @@ function TestRunFormControls({
                     deferredMode={isEditMode}
                     onPendingChanges={onAttachmentPendingChanges}
                   />
+                  {!isEditMode &&
+                    (!testRun.attachments ||
+                      testRun.attachments.length === 0) && (
+                      <span className="text-muted-foreground text-sm">
+                        {t("common.access.none")}
+                      </span>
+                    )}
                 </div>
               </FormControl>
               <FormMessage />
