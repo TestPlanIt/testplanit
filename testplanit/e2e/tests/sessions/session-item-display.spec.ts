@@ -59,14 +59,13 @@ test.describe("Session Item Display", () => {
       await page.waitForLoadState("load");
     });
 
-    await test.step("Verify the config column shows a dash", async () => {
+    await test.step("Verify the config column is empty", async () => {
       const sessionItem = page.locator(`#session-${sessionId}`);
       await expect(sessionItem).toBeVisible({ timeout: 15000 });
 
-      // Should show a dash (—) for no configuration
-      await expect(sessionItem.locator('text="—"')).toBeVisible({
-        timeout: 5000,
-      });
+      // A session with no configuration renders an empty configuration cell
+      // (no Combine icon / config name; the old dash placeholder is gone).
+      await expect(sessionItem.locator("svg.lucide-combine")).toHaveCount(0);
     });
 
     // Cleanup

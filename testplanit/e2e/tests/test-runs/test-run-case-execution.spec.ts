@@ -330,8 +330,10 @@ test.describe("Test Case Execution", () => {
 
     await test.step("Navigate to the next case and verify it is displayed", async () => {
       // There should be a Next button (chevron right) in the panel header
+      // Match the exact nav control: the "Pass & Next" action also carries
+      // "Next" in its accessible name and sits earlier in the DOM.
       const nextCaseButton = sheet
-        .locator('button[aria-label*="next" i], button[aria-label*="Next" i]')
+        .getByRole("button", { name: "Next Case" })
         .first();
 
       if (
