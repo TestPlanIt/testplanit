@@ -6,54 +6,40 @@ installs. You build it yourself from the source attached below.
 
 > ⚠️ This is pre-release software. **Back up your database before trying it.**
 
-### What's new since beta.7
+### What's new since beta.8
 
-#### Reviews
+#### Performance
 
-- **Bulk review requests** — request approvals for many cases at once from the
-  case bulk-edit panel, with a breakdown of what will be requested and what's
-  skipped.
-- **Approving applies the transition** — approving a review request now performs
-  the workflow state change it was gating, so the work moves forward
-  automatically.
-- **Pending reviews up front** — reviews awaiting you surface at the top of Your
-  Assignments on the dashboard, and the inbox badge count updates live.
-- The assignee picker now includes group GLOBAL_ROLE holders, and an assigned
-  reviewer can always open their own request.
+- **Much faster page loads on large projects** — access control was overhauled
+  so your project access is resolved once per request instead of being
+  re-checked row by row inside every database query. On the largest test
+  project, rendering the repository list dropped from ~36 seconds of database
+  time to a flat indexed lookup. Access rules themselves are unchanged: the
+  rewrite ships with a differential test that checks every permission
+  combination against the previous policy, plus live-database read and write
+  tests.
 
-#### Test case repository
+#### Fixes
 
-- **Customizable columns** — reorder and resize the case-list columns and your
-  layout is remembered; a new column-header menu adds quick sort and hide, with
-  your sort remembered too.
-- **"Show all descendants" polish** — prev/next in the details panel now spans
-  every case in the view, and you can sort by latest-result status there too.
-- Steps are visible again for read-only and group-role users; the Generate Test
-  Cases button is hidden when no AI model is configured (it did nothing without
-  one); and sorted column headers get a lighter, less-heavy look.
+- **Run auto-lock works again** — moving a run to In Progress with the
+  project's auto-lock composition option enabled failed with an error; the
+  lock is now applied correctly.
+- **One Back click to leave the repository** — opening the repository no
+  longer adds an extra browser-history entry, so the Back button behaves as
+  expected.
+- Resizable table columns now honor their widths reliably, long case names
+  ellipsize instead of clipping, and in narrow columns the folder chip
+  collapses before the case name does.
 
-#### Automated test integration
+#### Interface
 
-- The WebdriverIO reporter can now match cases by a custom field value (e.g. an
-  external ID) and mark matched cases as automated.
-
-#### Consistency & polish
-
-- A broad UI-consistency pass across the admin area (Users, Roles, Tags, Issues,
-  System, Authentication, Tools & Integrations, AI Tools) and project pages —
-  unified page headers, action bars, and controls.
-
-#### Reliability & self-hosting
-
-- Live updates no longer livelock behind slow queries when issues change.
-- Integration credential caching is now tenant-scoped and invalidates across
-  processes when credentials change; Jira OAuth issue links use the canonical
-  site host.
-- Self-hosting: nginx supports local overrides and custom error pages, the
-  container healthcheck no longer reports a false "unhealthy", `SELF_HOSTED` is
-  wired into the production build args, a generic production compose file is
-  back, and database connection pools are sized per service.
-- The first-run preferences dialog can now be closed.
+- **Modernized top navigation** — on narrow screens the header action icons
+  collapse into a kebab menu, with alerts surfaced on the collapsed menu;
+  project and admin menus got smaller, tidier icons.
+- **One run details page** — manual and JUnit run details now share a single
+  unified page, and the completed-run badge is more compact, collapsing its
+  date when space is tight.
+- Clearer wording on the pending-review banner.
 
 ### Try it
 
