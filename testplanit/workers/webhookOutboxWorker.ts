@@ -8,6 +8,7 @@ import {
 } from "../lib/multiTenantPrisma";
 import { prisma } from "../lib/prisma";
 import { getWebhookDispatchQueue } from "../lib/queues";
+import { createTenantPollBackoff } from "../lib/tenantPollBackoff";
 import { claimOutboxBatch, fanoutToConfigs } from "../lib/webhooks/outbox";
 
 /**
@@ -18,7 +19,8 @@ import { claimOutboxBatch, fanoutToConfigs } from "../lib/webhooks/outbox";
  * can run concurrently without double-claiming.
  *
  * Multi-tenant mode: iterates getAllTenantIds() once per cadence and
- * polls each tenant's database via getTenantPrismaClient(tenantId). The
+ * polls each due tenant's database via getTenantPrismaClient(tenantId) —
+ * idle tenants back off adaptively (see tenantBackoff below). The
  * per-tenant tenantId is stamped onto every enqueued dispatch job so the
  * dispatch worker routes to the correct tenant DB.
  *
@@ -30,6 +32,26 @@ import { claimOutboxBatch, fanoutToConfigs } from "../lib/webhooks/outbox";
 
 const POLL_INTERVAL_MS = 2_000;
 const BATCH_SIZE = 100;
+
+/**
+ * Multi-tenant only: an idle tenant's poll interval doubles per consecutive
+ * empty poll up to this ceiling (~150x fewer polls than the base cadence), and
+ * snaps back to POLL_INTERVAL_MS on the first poll that claims rows. Bounds
+ * the idle Postgres fan-out across a mostly-hibernated fleet; the latency cost
+ * is paid only on the first outbox event after a tenant's quiet period.
+ * Single-tenant mode keeps the fixed cadence.
+ */
+const MAX_IDLE_POLL_INTERVAL_MS = 300_000;
+
+const tenantBackoff = createTenantPollBackoff({
+  baseIntervalMs: POLL_INTERVAL_MS,
+  maxIntervalMs: MAX_IDLE_POLL_INTERVAL_MS,
+});
+
+/** Test hook: clears per-tenant backoff state between test cases. */
+export function resetTenantBackoffForTests(): void {
+  tenantBackoff.reset();
+}
 
 let stopRequested = false;
 let inflight: Promise<number> | null = null;
@@ -111,13 +133,26 @@ export async function pollAllTenantsOnce(): Promise<number> {
     return 0;
   }
 
+  tenantBackoff.prune(tenantIds);
+
   let total = 0;
   for (const tenantId of tenantIds) {
+    if (!tenantBackoff.shouldPoll(tenantId)) {
+      continue;
+    }
     try {
       const client = getTenantPrismaClient(tenantId);
       const claimed = await pollOnce(client, tenantId);
       total += claimed;
+      if (claimed > 0) {
+        tenantBackoff.recordWork(tenantId);
+      } else {
+        tenantBackoff.recordEmpty(tenantId);
+      }
     } catch (err) {
+      // An unreachable tenant backs off like an idle one so a down database
+      // is not hammered every cycle; it self-heals on the next successful poll.
+      tenantBackoff.recordEmpty(tenantId);
       console.error(
         `[WebhookOutboxWorker] Poll error for tenant ${tenantId}:`,
         err
