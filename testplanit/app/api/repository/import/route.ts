@@ -196,7 +196,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
           },
         });
 
-        const enhancedDb = enhanceWithAudit(user ?? undefined);
+        const enhancedDb = await enhanceWithAudit(user ?? undefined);
 
         // Validate project access
         const project = await enhancedDb.projects.findFirst({

@@ -53,7 +53,7 @@ export async function POST(request: Request) {
       include: { role: { include: { rolePermissions: true } } },
     });
 
-    const enhancedDb = getAuthDb(user ?? undefined);
+    const enhancedDb = await getAuthDb(user ?? undefined);
 
     // 5. Project access check (ZenStack policy handles permission)
     const project = await enhancedDb.projects.findFirst({

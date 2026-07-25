@@ -67,7 +67,7 @@ export async function auditedEnhancedTransaction<T>(
   if (!user) {
     throw new Error("User not found");
   }
-  return getAuthDb(user).$transaction(
+  return (await getAuthDb(user)).$transaction(
     (tx) => auditTxStore.run(tx as TxClient, () => fn(tx as TxClient)),
     { isolationLevel: options?.isolationLevel }
   );

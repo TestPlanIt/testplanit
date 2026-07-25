@@ -9,8 +9,8 @@ import { parseRecordId } from "~/lib/recordKey";
  */
 
 // Get enhanced Prisma client for anonymous access (public metadata only)
-function getAnonymousDb() {
-  return getAuthDb(undefined);
+async function getAnonymousDb() {
+  return await getAuthDb(undefined);
 }
 
 export async function GET(req: NextRequest) {
@@ -31,7 +31,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Invalid id" }, { status: 400 });
   }
 
-  const db = getAnonymousDb();
+  const db = await getAnonymousDb();
 
   try {
     switch (type) {

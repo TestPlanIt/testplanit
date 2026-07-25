@@ -128,7 +128,7 @@ export async function loadReadableDataset(
 ): Promise<{ id: number; projectId: number } | null> {
   const user = await getUserWithRole(userId);
   if (!user) return null;
-  const db = getAuthDb(user);
+  const db = await getAuthDb(user);
   const dataset = await db.dataSet.findFirst({
     where: { id: dataSetId, isDeleted: false },
     select: { id: true, projectId: true },

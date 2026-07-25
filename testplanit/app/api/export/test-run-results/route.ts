@@ -98,7 +98,7 @@ export async function GET(request: NextRequest) {
     if (!userRecord) {
       return NextResponse.json({ error: "User not found" }, { status: 401 });
     }
-    reader = getAuthDb(userRecord) as unknown as typeof baseDb;
+    reader = (await getAuthDb(userRecord)) as unknown as typeof baseDb;
 
     const accessible = await reader.projects.findFirst({
       where: { id: projectId!, isDeleted: false },

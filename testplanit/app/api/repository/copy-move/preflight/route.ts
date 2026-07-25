@@ -44,7 +44,7 @@ export async function POST(request: Request) {
     // project-level policy alone) are enforced.
     const reader = isAdmin
       ? baseDb
-      : (getAuthDb(user ?? undefined) as unknown as typeof baseDb);
+      : ((await getAuthDb(user ?? undefined)) as unknown as typeof baseDb);
 
     // Project access checks
     const sourceProject = await reader.projects.findFirst({

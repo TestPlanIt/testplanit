@@ -334,6 +334,7 @@ async function getDb() {
             role: {
               select: {
                 id: true,
+                name: true, // referenced by auth().role.name in the policies
                 rolePermissions: true,
               },
             },
@@ -357,7 +358,7 @@ async function getDb() {
 
   // enhanceWithAudit wraps writes in a GUC-carrying transaction so trigger CDC
   // records the actor (plain enhance() bypasses the lib/baseDb $extends hook).
-  return enhanceWithAudit(user ?? undefined);
+  return await enhanceWithAudit(user ?? undefined);
 }
 
 const baseHandler = NextRequestHandler({

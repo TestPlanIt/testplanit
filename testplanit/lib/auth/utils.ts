@@ -35,5 +35,5 @@ export async function getEnhancedDb(session: Session | null) {
     throw new Error("User not found");
   }
 
-  return getAuthDb(user);
+  return await getAuthDb(user);
 }
