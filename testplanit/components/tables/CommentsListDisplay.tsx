@@ -18,6 +18,7 @@ import { MessageCircle } from "lucide-react";
 import { useTranslations } from "next-intl";
 import React, { useState } from "react";
 import { Link } from "~/lib/navigation";
+import { createMentionExtension } from "~/lib/tiptap/mentionExtension";
 import { cn } from "~/utils";
 
 interface CommentsListDisplayProps {
@@ -37,9 +38,10 @@ interface CommentItemProps {
       name: string;
     };
   };
+  projectId: number;
 }
 
-const CommentItem: React.FC<CommentItemProps> = ({ comment }) => {
+const CommentItem: React.FC<CommentItemProps> = ({ comment, projectId }) => {
   const displayEditor = useEditor({
     immediatelyRender: false,
     extensions: [
@@ -47,6 +49,7 @@ const CommentItem: React.FC<CommentItemProps> = ({ comment }) => {
         heading: false,
         codeBlock: false,
       }),
+      createMentionExtension(projectId),
     ],
     content: comment.content,
     editable: false,
@@ -164,7 +167,11 @@ export const CommentsListDisplay: React.FC<CommentsListDisplayProps> = ({
               onWheel={(e) => e.stopPropagation()}
             >
               {comments.map((comment) => (
-                <CommentItem key={comment.id} comment={comment} />
+                <CommentItem
+                  key={comment.id}
+                  comment={comment}
+                  projectId={projectId}
+                />
               ))}
             </div>
           ) : (
