@@ -519,7 +519,10 @@ export function ColumnSelection<TData>({
 
     query.set("columns", newColumns);
     const url = `${pathname}?${query.toString()}`;
-    router.push(url, { scroll: false });
+    // replace, not push: this effect mirrors column-visibility state into the
+    // URL (including the initial default set on load). A push adds a history
+    // entry per sync, so leaving the page takes two Back clicks.
+    router.replace(url, { scroll: false });
   }, [
     columnVisibility,
     onVisibilityChange,

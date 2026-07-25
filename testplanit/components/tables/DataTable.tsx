@@ -1069,7 +1069,14 @@ export function DataTable<TData extends DataRow, TValue>({
       onMouseLeave={handleMouseUp}
     >
       <Table
-        className="caption-bottom text-sm w-full border-separate border-spacing-y-0"
+        // table-fixed (not auto): a resizable/pinned/column-selectable table
+        // must honor each column's configured width. Under table-layout:auto the
+        // browser sizes a column to its max-content and treats the width as a
+        // mere minimum, so a wide-content column (e.g. long case names) ignores
+        // getSize() and can't be dragged narrower — intermittently, since it
+        // depends on reflow timing. Fixed layout makes widths deterministic and
+        // lets the cell overflow-hidden wrappers truncate.
+        className="caption-bottom text-sm w-full table-fixed border-separate border-spacing-y-0"
         data-testid="case-table"
       >
         <TableHeader className="[&_tr]:border-b">

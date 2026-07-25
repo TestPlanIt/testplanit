@@ -242,8 +242,16 @@ export class TemplatesFieldsPage extends BasePage {
    * Click the Select All projects link
    */
   async selectAllProjects(): Promise<void> {
-    const selectAllLink = this.page.getByTestId("select-all-projects");
-    await selectAllLink.click();
+    // The project assignment is a MultiAsyncCombobox: open the dropdown and
+    // use its built-in "Select All (n)" action.
+    const dialog = this.page.locator('[role="dialog"]').first();
+    await dialog.locator('[role="combobox"]').last().click();
+    await this.page
+      .getByText(/Select All \(\d+\)/i)
+      .first()
+      .click();
+    // Close the dropdown so the submit button is clickable.
+    await this.page.keyboard.press("Escape");
   }
 
   /**
@@ -252,8 +260,12 @@ export class TemplatesFieldsPage extends BasePage {
   async submitTemplate(): Promise<void> {
     const submitButton = this.page.getByTestId("template-submit-button");
     await submitButton.click();
-    // Wait for dialog to close
-    await expect(this.dialog).not.toBeVisible({ timeout: 10000 });
+    // Wait for the template dialog specifically to close — a closed combobox
+    // popover can linger in the DOM with role="dialog" and make the generic
+    // dialog locator ambiguous.
+    await expect(this.page.getByTestId("template-dialog")).not.toBeVisible({
+      timeout: 10000,
+    });
     await this.page.waitForLoadState("networkidle");
   }
 

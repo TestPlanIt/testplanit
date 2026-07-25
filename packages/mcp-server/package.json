@@ -24,7 +24,6 @@
     "dev": "tsup --watch",
     "test": "vitest",
     "test:cov": "vitest --coverage",
-    "prepublishOnly": "pnpm build",
     "typecheck": "tsc --noEmit"
   },
   "keywords": [

@@ -6,33 +6,54 @@ installs. You build it yourself from the source attached below.
 
 > ⚠️ This is pre-release software. **Back up your database before trying it.**
 
-### What's new since beta.6
+### What's new since beta.7
+
+#### Reviews
+
+- **Bulk review requests** — request approvals for many cases at once from the
+  case bulk-edit panel, with a breakdown of what will be requested and what's
+  skipped.
+- **Approving applies the transition** — approving a review request now performs
+  the workflow state change it was gating, so the work moves forward
+  automatically.
+- **Pending reviews up front** — reviews awaiting you surface at the top of Your
+  Assignments on the dashboard, and the inbox badge count updates live.
+- The assignee picker now includes group GLOBAL_ROLE holders, and an assigned
+  reviewer can always open their own request.
 
 #### Test case repository
 
-- **Docked test case details** — clicking a case now opens its full details in a
-  panel beside the list instead of navigating away, so you keep your place. The
-  divider is draggable (with a full-width toggle), and prev/next steps through
-  the whole filtered result set — across page boundaries — while the open case's
-  row stays highlighted in the list. On narrow screens the panel takes over the
-  full width automatically.
-- **Refreshed data table** — case-list rows now sit on a neutral surface with a
-  matching grid on both axes, with higher contrast in the Accessible and
-  Accessible Dark themes and a row hue tuned per theme.
-- **Latest results at a glance** — the list shows a case's most recent results
-  rather than only the single last one, and you can sort the list by the status
-  of that latest result.
-- **Clearer drag-to-reorder** — dragging a case now outlines where it can be
-  dropped and what dropping there will do.
+- **Customizable columns** — reorder and resize the case-list columns and your
+  layout is remembered; a new column-header menu adds quick sort and hide, with
+  your sort remembered too.
+- **"Show all descendants" polish** — prev/next in the details panel now spans
+  every case in the view, and you can sort by latest-result status there too.
+- Steps are visible again for read-only and group-role users; the Generate Test
+  Cases button is hidden when no AI model is configured (it did nothing without
+  one); and sorted column headers get a lighter, less-heavy look.
 
-#### Fixes
+#### Automated test integration
 
-- Long text-field values size to their content and honor a configured initial
-  height in the editor, instead of being clipped or over-tall.
-- Block drag-and-drop no longer misbehaves on pages that provide their own
-  react-dnd backend.
-- Attachment names that are too long to fit now truncate with an ellipsis in the
-  details view.
+- The WebdriverIO reporter can now match cases by a custom field value (e.g. an
+  external ID) and mark matched cases as automated.
+
+#### Consistency & polish
+
+- A broad UI-consistency pass across the admin area (Users, Roles, Tags, Issues,
+  System, Authentication, Tools & Integrations, AI Tools) and project pages —
+  unified page headers, action bars, and controls.
+
+#### Reliability & self-hosting
+
+- Live updates no longer livelock behind slow queries when issues change.
+- Integration credential caching is now tenant-scoped and invalidates across
+  processes when credentials change; Jira OAuth issue links use the canonical
+  site host.
+- Self-hosting: nginx supports local overrides and custom error pages, the
+  container healthcheck no longer reports a false "unhealthy", `SELF_HOSTED` is
+  wired into the production build args, a generic production compose file is
+  back, and database connection pools are sized per service.
+- The first-run preferences dialog can now be closed.
 
 ### Try it
 

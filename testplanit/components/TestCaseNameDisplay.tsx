@@ -124,7 +124,7 @@ export function TestCaseNameDisplay({
   const displayName = name || (id ? `${fallbackPrefix} ${id}` : t("unknown"));
 
   const content = (
-    <div className="flex items-start gap-1">
+    <div className="flex items-start gap-1 min-w-0">
       {icon}
       <span
         className={cn(
