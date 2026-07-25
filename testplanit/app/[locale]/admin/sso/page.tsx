@@ -969,6 +969,7 @@ export default function SSOAdminPage() {
       header: t("common.fields.provider"),
       enableSorting: false,
       enableHiding: false,
+      meta: { isPinned: "left" },
       size: 260,
       cell: ({ row }) => (
         <span className="font-medium">{row.original.name}</span>

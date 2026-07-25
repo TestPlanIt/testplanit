@@ -35,6 +35,7 @@ export const useColumns = (
         enableSorting: true,
         enableResizing: true,
         enableHiding: false,
+        meta: { isPinned: "left" },
         size: 200,
         cell: ({ row }) => (
           <div className="font-medium">{row.original.name}</div>
