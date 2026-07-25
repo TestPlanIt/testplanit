@@ -1,3 +1,14 @@
+## [0.42.0](https://github.com/TestPlanIt/testplanit/compare/v0.41.6...v0.42.0) (2026-07-25)
+
+### Features
+
+* **wdio-reporter:** mark matched cases automated ([#526](https://github.com/TestPlanIt/testplanit/issues/526)) ([9c2fc5c](https://github.com/TestPlanIt/testplanit/commit/9c2fc5c5df41393cb29996d4233b5a86d14f3128))
+* **wdio-reporter:** resolve cases by a custom field value ([#521](https://github.com/TestPlanIt/testplanit/issues/521)) ([53f406b](https://github.com/TestPlanIt/testplanit/commit/53f406b78f60766e07b6f2c4783b33aa020d32b2))
+
+### Enhancements
+
+* **workers:** cache tenant configs and back off idle multi-tenant polling ([#542](https://github.com/TestPlanIt/testplanit/issues/542)) ([843c86b](https://github.com/TestPlanIt/testplanit/commit/843c86bbab6dc85dce146c6c114d9752e6cb456d))
+
 ## [0.41.6](https://github.com/TestPlanIt/testplanit/compare/v0.41.5...v0.41.6) (2026-07-10)
 
 ### Bug Fixes
