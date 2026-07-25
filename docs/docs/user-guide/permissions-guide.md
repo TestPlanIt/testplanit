@@ -137,22 +137,6 @@ Projects can be configured with different access models to control who can view 
 
 ### Project Access Types
 
-#### DEFAULT
-
-**Behavior**: Basic access for all system users
-
-**When to Use**:
-
-- Open projects accessible to all users
-- Company-wide test repositories
-- Shared resources
-
-**Access Rules**:
-
-- All users with access level USER or higher can access
-- Uses user's global role for permissions
-- Simplest access model
-
 #### GLOBAL_ROLE (Recommended)
 
 **Behavior**: Access based on user's global role
@@ -172,36 +156,37 @@ Projects can be configured with different access models to control who can view 
 
 #### SPECIFIC_ROLE
 
-**Behavior**: Only explicitly assigned users can access
+**Behavior**: Every user works with the project's configured default role
 
 **When to Use**:
 
-- Confidential or restricted projects
-- Department-specific projects
-- Projects requiring explicit approval
+- Projects where everyone should have the same, project-defined capabilities regardless of their global role
+- Standardizing a project's permissions (e.g. a read-only-by-default reference project)
 
 **Access Rules**:
 
-- Must be explicitly assigned to access
-- Uses assigned project-specific role
-- Must have default role configured
-- More restrictive than GLOBAL_ROLE
+- All users with access level USER or higher can access
+- Permissions come from the project's **Default Role**, not each user's global role
+- Must have a default role configured
+- Explicitly assigned users and groups can still be given different roles, which take precedence for them
+
+:::warning SPECIFIC_ROLE does not make a project private
+Every user except those with access level `NONE` (or an explicit NO_ACCESS permission) can access the project with the default role's permissions. To restrict a project to specific people, set the default access type to **NO_ACCESS** and add explicit user or group grants.
+:::
 
 #### NO_ACCESS
 
-**Behavior**: Explicitly deny access to specific users
+**Behavior**: As a project's default access type, makes the project private; as a per-user permission, explicitly denies that user
 
 **When to Use**:
 
-- Revoke access for specific individuals
-- Temporary access removal
-- Override inherited permissions
+- **As the project default**: confidential or restricted projects — only the project creator, explicitly assigned users and groups, and administrators can access
+- **As a per-user permission**: revoke access for specific individuals, temporary access removal, overriding inherited permissions
 
 **Access Rules**:
 
-- User cannot access the project
-- Overrides all other permissions
-- Overrides group and default access
+- A per-user NO_ACCESS permission denies that user regardless of every other grant — including being the project's creator, group access, and default access
+- A NO_ACCESS project default grants nothing implicitly; access requires an explicit user grant, group grant, or project assignment
 - System Administrators (access level `ADMIN`) are **not** affected by NO_ACCESS — they always have full access
 
 ### Configuring Project Access
@@ -210,9 +195,9 @@ Projects can be configured with different access models to control who can view 
 
 1. Navigate to project settings
 2. Select **Default Access Type**:
-   - **GLOBAL_ROLE** (most common)
-   - **SPECIFIC_ROLE** (restrictive)
-   - **DEFAULT** (open)
+   - **GLOBAL_ROLE** (most common — everyone uses their own global role)
+   - **SPECIFIC_ROLE** (everyone uses the project's default role)
+   - **NO_ACCESS** (private — explicit grants only)
 3. If using SPECIFIC_ROLE, select a **Default Role**
 4. Save changes
 
@@ -276,10 +261,18 @@ For each application area, roles can have:
 - **canDelete** - Delete items
 - **canClose** - Mark items as complete/closed
 - **canReadSensitive** - View values otherwise masked as `••••••` or `[REDACTED]`. Honored by the **TestCaseRestrictedFields** and **TestRunResultRestrictedFields** areas; the other areas ignore it. Without this grant on the right area, a user sees `••••••` in dataset rows / iteration cells and `[REDACTED]` in the issue prefill body and matrix exports.
+- **canApprove** - Eligible to be assigned as a reviewer and to decide review requests in the Review & Approval feature. Honored on the **TestCaseRepository**, **TestRuns**, and **Sessions** areas; the other areas ignore it.
 
-### Default Roles
+### Managing Roles
 
-TestPlanIt includes several pre-configured roles:
+TestPlanIt does not ship with pre-configured roles — administrators create them in **Administration** > **Roles**. Two role concepts carry special behavior:
+
+- **The default role** - one role can be marked as the default. Newly provisioned users (including SCIM-provisioned accounts) receive it automatically, and it cannot be deleted while it is the default.
+- **The role named `Project Admin`** - this exact name is special-cased. A user whose project permission is `SPECIFIC_ROLE` with a role named **Project Admin** counts as a *project admin* — alongside the project creator and `PROJECTADMIN`/`ADMIN` system access — for admin-gated project actions such as milestone sync, unlocking a run's composition, and managing project members.
+
+### Example Role Patterns
+
+Roles you may want to create:
 
 #### Project Admin
 
@@ -338,13 +331,19 @@ Roles can be assigned at multiple levels:
 
 **Effective Role Resolution** (highest to lowest priority):
 
-1. System `ADMIN` or `PROJECTADMIN` access level → full permissions, role is irrelevant
-2. Explicit user-project permission with `SPECIFIC_ROLE` → uses the assigned project role
-3. Explicit user-project permission with `GLOBAL_ROLE` → uses the user's global role
-4. Group-project permission with `SPECIFIC_ROLE` → uses the group's assigned project role
-5. Project default access with `SPECIFIC_ROLE` → uses the project's default role
-6. Project default access with `GLOBAL_ROLE` → uses the user's global role
-7. No match → access denied
+1. System `ADMIN` access level → full permissions everywhere, role is irrelevant
+2. System `PROJECTADMIN` access level → full permissions on every project they can access through any path below (an explicit NO_ACCESS permission still denies them)
+3. Explicit user-project permission with `SPECIFIC_ROLE` → uses the assigned project role
+4. Explicit user-project permission with `GLOBAL_ROLE` → uses the user's global role
+5. Group-project permission with `SPECIFIC_ROLE` → uses the group's assigned project role
+6. Group-project permission with `GLOBAL_ROLE` → uses the user's own global role
+7. Project default access with `SPECIFIC_ROLE` → uses the project's default role
+8. Project default access with `GLOBAL_ROLE` → uses the user's global role
+9. No match → access denied
+
+:::note Access grants are additive
+The order above determines **which role** applies when several grants exist. Access itself is additive across paths — holding an explicit grant with a weaker role does not remove capabilities available through a group grant. The only way to take access away from a specific user is an explicit **NO_ACCESS** permission; a weaker role grant is not a denial.
+:::
 
 ## Group-Based Permissions
 
@@ -373,11 +372,11 @@ Groups provide an efficient way to manage permissions for teams.
 ### Group Permission Behavior
 
 - **All group members inherit** the group's project permissions
-- **Individual user permissions override** group permissions (if a user has an explicit project permission, it takes precedence)
+- **Individual user permissions decide the role first** - if a user has an explicit project permission, it determines their effective role before any group grant is considered. Grants remain additive: an explicit grant with a weaker role is not a denial (use NO_ACCESS to deny)
 - **Multiple groups** - If a user belongs to multiple groups with access to the same project, the first group with a `SPECIFIC_ROLE` assignment is used
 - **NO_ACCESS denial** on a user overrides group permissions
 - **Groups with GLOBAL_ROLE** - Each group member uses their own global role for permissions in that project
-- **Groups with SPECIFIC_ROLE** - All group members share the same assigned role for that project
+- **Groups with SPECIFIC_ROLE** - All group members share the same assigned role for that project; if a member also belongs to a GLOBAL_ROLE-granted group, the SPECIFIC_ROLE grant decides their role
 
 :::note
 The project permissions described here are assigned **per project** in **Project Settings > Members**. The **Admin > Groups** page manages group membership and, separately, an optional **Mapped Access Tier** that drives members' global access level (see [Role mapping](./scim.md#role-mapping)) — it does not assign per-project roles.
@@ -420,29 +419,32 @@ Understanding how TestPlanIt resolves permissions when multiple rules apply:
 
 1. **System Admin Check**
    - If user has ADMIN access level → Full access to everything
-   - Overrides all other rules
+   - Overrides all other rules, including NO_ACCESS
 
-2. **Project Creator Check**
+2. **Explicit NO_ACCESS Denial**
+   - If user has a NO_ACCESS permission for the project → Access denied
+   - Overrides the project creator, group, and default access
+
+3. **System Project Admin Check**
+   - If user has PROJECTADMIN access level and any check below grants access → Full permissions on that project
+
+4. **Project Creator Check**
    - If user created the project → Full project access
-   - Overrides project-level permissions
 
-3. **Explicit NO_ACCESS Denial**
-   - If user has NO_ACCESS for project → Access denied
-   - Overrides group and default access
-
-4. **Explicit User Permission**
+5. **Explicit User Permission**
    - Check user-specific project permission
-   - Takes precedence over group and defaults
+   - Decides the effective role before group and defaults
 
-5. **Group Permission**
+6. **Group Permission**
    - Check if user is in groups with project access
+   - A `SPECIFIC_ROLE` grant applies the group's assigned role; a `GLOBAL_ROLE` grant applies each member's own global role
    - If multiple groups have access, the first group with a `SPECIFIC_ROLE` assignment is used
 
-6. **Project Default Access**
+7. **Project Default Access**
    - Apply project's default access type
    - Use default role if configured
 
-7. **System Default**
+8. **System Default**
    - If no other rules match → Deny access
 
 ### Permission Examples
@@ -525,12 +527,11 @@ To ensure predictable results, avoid assigning a user to multiple groups with di
 **Steps**:
 
 1. Create project
-2. Set default access type: SPECIFIC_ROLE
-3. Set default role: Contributor
-4. Explicitly assign team members
-5. Or create dedicated group
+2. Set default access type: NO_ACCESS
+3. Explicitly assign team members with the appropriate role
+4. Or assign a dedicated group
 
-**Result**: Only assigned users can access
+**Result**: Only the project creator, assigned users and groups, and administrators can access
 
 ### Scenario 3: Temporary Contractor
 
@@ -733,8 +734,17 @@ Permission information is accessible via API:
 **Get User Permissions for a Project**:
 
 ```http
-GET /api/get-user-permissions?userId={userId}&projectId={projectId}
+POST /api/get-user-permissions
+Content-Type: application/json
+
+{
+  "userId": "abc",
+  "projectId": 123,
+  "area": "TestCaseRepository"
+}
 ```
+
+Requires an authenticated session. Non-admin callers can only query their own `userId`; system `ADMIN` callers may query any user. `area` is optional — omit it to receive permissions for every application area. Pass `"checkAccessOnly": true` to receive just the access flag and effective role without the permission grid.
 
 **Update User Project Permission** (via ZenStack REST API):
 

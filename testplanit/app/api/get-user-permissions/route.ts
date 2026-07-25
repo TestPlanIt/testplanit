@@ -126,6 +126,9 @@ export async function POST(request: Request) {
 
     let effectiveRole: RoleWithPermissions | null | undefined = null;
     let accessDenied = false;
+    // Set when the effective role came from a group grant, so the reported
+    // accessType reflects the deciding path instead of the project default.
+    let groupAccessType: ProjectAccessType | null = null;
 
     // Check if user is a System ADMIN or PROJECTADMIN
     // System ADMINs have full permissions on all projects
@@ -178,6 +181,9 @@ export async function POST(request: Request) {
       const specificRolePermission = groupPermissions.find(
         (p) => p.accessType === ProjectAccessType.SPECIFIC_ROLE
       );
+      const globalRolePermission = groupPermissions.find(
+        (p) => p.accessType === ProjectAccessType.GLOBAL_ROLE
+      );
       const noAccessPermission = groupPermissions.find(
         (p) => p.accessType === ProjectAccessType.NO_ACCESS
       );
@@ -191,6 +197,15 @@ export async function POST(request: Request) {
       if (specificRolePermission) {
         effectiveRole =
           specificRolePermission.role as RoleWithPermissions | null;
+        groupAccessType = ProjectAccessType.SPECIFIC_ROLE;
+      } else if (globalRolePermission) {
+        // Group grant that defers to each member's own global role — the
+        // schema policies' "group with GLOBAL_ROLE access type" branch and
+        // the AuthCtx read resolver both honor this path.
+        effectiveRole = user.role as RoleWithPermissions | null;
+        if (effectiveRole) {
+          groupAccessType = ProjectAccessType.GLOBAL_ROLE;
+        }
       }
       // If only DEFAULT permissions found in groups, we defer to project default anyway.
     }
@@ -299,6 +314,7 @@ export async function POST(request: Request) {
           : isSystemProjectAdmin
             ? "SYSTEM_PROJECTADMIN"
             : userProjectPermission?.accessType ||
+              groupAccessType ||
               (project.defaultAccessType === ProjectAccessType.GLOBAL_ROLE
                 ? "GLOBAL_ROLE"
                 : project.defaultAccessType === ProjectAccessType.SPECIFIC_ROLE
