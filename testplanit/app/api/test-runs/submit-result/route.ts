@@ -63,7 +63,10 @@ const submitResultSchema = z.object({
     .array(
       z.object({
         fieldId: z.number().int().positive(),
-        value: z.unknown(),
+        // `.optional()` is load-bearing on z.unknown(): JSON.stringify drops
+        // undefined-valued keys, and zod 4.4+ rejects a MISSING key on a
+        // bare z.unknown() property.
+        value: z.unknown().optional(),
       })
     )
     .optional(),

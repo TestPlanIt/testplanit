@@ -178,7 +178,7 @@ export function hasResultMutationPermission({
 export async function hasMissingRequiredResultField(
   client: DbClient | TxClient,
   templateId: number | null,
-  fieldValues: Array<{ fieldId: number; value: unknown }> | undefined
+  fieldValues: Array<{ fieldId: number; value?: unknown }> | undefined
 ): Promise<boolean> {
   if (templateId == null) {
     return false;

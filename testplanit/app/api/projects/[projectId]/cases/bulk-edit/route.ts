@@ -41,7 +41,10 @@ const bulkEditSchema = z.object({
     .array(
       z.object({
         fieldId: z.number(),
-        value: z.any(),
+        // `.optional()` is load-bearing on z.any(): JSON.stringify drops
+        // undefined-valued keys, and zod 4.4+ rejects a MISSING key on a
+        // bare z.any() property.
+        value: z.any().optional(),
         operation: z.enum(["create", "update", "delete"]),
       })
     )
@@ -60,8 +63,8 @@ const bulkEditSchema = z.object({
       newSteps: z
         .array(
           z.object({
-            step: z.any(),
-            expectedResult: z.any(),
+            step: z.any().optional(),
+            expectedResult: z.any().optional(),
             order: z.number(),
           })
         )

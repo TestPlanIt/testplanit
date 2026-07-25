@@ -40,7 +40,7 @@ const searchSchema = z.object({
         .array(
           z.strictObject({
             fieldId: z.number(),
-            value: z.any(),
+            value: z.any().optional(),
           })
         )
         .optional(),

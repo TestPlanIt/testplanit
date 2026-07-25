@@ -40,7 +40,10 @@ const customFieldSchema = z
     fieldName: z.string().optional(),
     fieldType: z.string().optional(),
     operator: z.string().optional(),
-    value: z.any(),
+    // `.optional()` is load-bearing on z.any(): JSON.stringify drops
+    // undefined-valued keys, and zod 4.4+ rejects a MISSING key on a bare
+    // z.any() property.
+    value: z.any().optional(),
     value2: z.any().optional(),
   })
   .loose();

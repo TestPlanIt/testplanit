@@ -9,9 +9,13 @@ import { resolveCreateStateRemap } from "~/lib/services/reviewGate";
 import { emptyEditorContent } from "~/app/constants/backend";
 import { ensureTipTapJSON } from "~/utils/tiptapConversion";
 
+// `z.any()` object properties must stay `.optional()`: server actions
+// serialize `undefined` as "$undefined" and the deserializing JSON.parse
+// reviver deletes those keys, so an unset value arrives as a MISSING key —
+// which zod 4.4+ rejects on a bare `z.any()` property.
 const StepSchema = z.object({
-  step: z.any(),
-  expectedResult: z.any(),
+  step: z.any().optional(),
+  expectedResult: z.any().optional(),
   sharedStepGroupId: z.number().optional(),
 });
 
@@ -25,7 +29,7 @@ const AttachmentInputSchema = z.object({
 
 const VersionFieldValueSchema = z.object({
   field: z.string(),
-  value: z.any(),
+  value: z.any().optional(),
 });
 
 const VersionIssueSchema = z.object({
@@ -289,7 +293,9 @@ export async function persistGeneratedTestCases(
       message: "Invalid input data",
       importedCount: 0,
       importedIds: [],
-      errors: parseResult.error.issues.map((i) => i.message),
+      errors: parseResult.error.issues.map(
+        (i) => `${i.path.join(".")}: ${i.message}`
+      ),
       results: [],
     };
   }

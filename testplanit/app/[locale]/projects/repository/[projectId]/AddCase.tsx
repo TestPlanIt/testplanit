@@ -1106,7 +1106,7 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
 
         if (result.status === "error" || result.importedIds.length === 0) {
           throw new Error(
-            result.message || result.errors[0] || "Import failed"
+            result.errors[0] || result.message || "Import failed"
           );
         }
 
