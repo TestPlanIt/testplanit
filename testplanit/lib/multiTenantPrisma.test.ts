@@ -1,3 +1,6 @@
+import * as fs from "fs";
+import * as os from "os";
+import * as path from "path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // Store original env values
@@ -156,6 +159,163 @@ describe("multiTenantPrisma", () => {
       expect(configs.size).toBe(0);
 
       consoleWarnSpy.mockRestore();
+    });
+  });
+
+  describe("config file caching", () => {
+    // The "Loaded N tenant configurations from <file>" log line fires exactly
+    // once per actual file read+parse, so counting it observes cache behaviour
+    // without reaching into module internals.
+    let tmpDir: string;
+    let configFile: string;
+    let logSpy: ReturnType<typeof vi.spyOn>;
+
+    const fileLoadCount = () =>
+      logSpy.mock.calls.filter(
+        (args: unknown[]) =>
+          typeof args[0] === "string" &&
+          args[0].includes(`tenant configurations from ${configFile}`)
+      ).length;
+
+    beforeEach(() => {
+      tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "tenant-configs-"));
+      configFile = path.join(tmpDir, "tenants.json");
+      process.env.MULTI_TENANT_MODE = "true";
+      process.env.TENANT_CONFIG_FILE = configFile;
+      logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+      logSpy.mockRestore();
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+      delete process.env.TENANT_CONFIG_FILE;
+    });
+
+    it("reads and parses the config file only once within the recheck window", async () => {
+      fs.writeFileSync(
+        configFile,
+        JSON.stringify({
+          "tenant-a": { databaseUrl: "postgresql://localhost/a" },
+        })
+      );
+      const { loadTenantConfigs, getAllTenantIds, getTenantConfig } =
+        await resetModule();
+
+      expect(loadTenantConfigs().size).toBe(1);
+      expect(fileLoadCount()).toBe(1);
+
+      // Hot path: repeated resolutions hit the cache, no re-read, no log spam.
+      for (let i = 0; i < 50; i++) {
+        loadTenantConfigs();
+        getAllTenantIds();
+        getTenantConfig("tenant-a");
+      }
+      expect(fileLoadCount()).toBe(1);
+    });
+
+    it("re-stats after the recheck window but does not re-parse an unchanged file", async () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date("2026-07-25T00:00:00Z"));
+      fs.writeFileSync(
+        configFile,
+        JSON.stringify({
+          "tenant-a": { databaseUrl: "postgresql://localhost/a" },
+        })
+      );
+      const { loadTenantConfigs } = await resetModule();
+
+      loadTenantConfigs();
+      expect(fileLoadCount()).toBe(1);
+
+      vi.advanceTimersByTime(31_000);
+      expect(loadTenantConfigs().size).toBe(1);
+      expect(fileLoadCount()).toBe(1); // stat matched — no re-read
+    });
+
+    it("picks up a changed config file after the recheck window", async () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date("2026-07-25T00:00:00Z"));
+      fs.writeFileSync(
+        configFile,
+        JSON.stringify({
+          "tenant-a": { databaseUrl: "postgresql://localhost/a" },
+        })
+      );
+      const { loadTenantConfigs } = await resetModule();
+
+      expect(loadTenantConfigs().size).toBe(1);
+
+      fs.writeFileSync(
+        configFile,
+        JSON.stringify({
+          "tenant-a": { databaseUrl: "postgresql://localhost/a" },
+          "tenant-b": { databaseUrl: "postgresql://localhost/b" },
+        })
+      );
+
+      // Within the window the cache is served stale by design.
+      expect(loadTenantConfigs().size).toBe(1);
+
+      vi.advanceTimersByTime(31_000);
+      const configs = loadTenantConfigs();
+      expect(configs.size).toBe(2);
+      expect(configs.get("tenant-b")?.databaseUrl).toBe(
+        "postgresql://localhost/b"
+      );
+      expect(fileLoadCount()).toBe(2);
+    });
+
+    it("reloadTenantConfigs forces an immediate re-read", async () => {
+      fs.writeFileSync(
+        configFile,
+        JSON.stringify({
+          "tenant-a": { databaseUrl: "postgresql://localhost/a" },
+        })
+      );
+      const { loadTenantConfigs, reloadTenantConfigs } = await resetModule();
+
+      loadTenantConfigs();
+      fs.writeFileSync(
+        configFile,
+        JSON.stringify({
+          "tenant-a": { databaseUrl: "postgresql://localhost/a" },
+          "tenant-b": { databaseUrl: "postgresql://localhost/b" },
+        })
+      );
+
+      expect(reloadTenantConfigs().size).toBe(2);
+      expect(fileLoadCount()).toBe(2);
+    });
+
+    it("getTenantPrismaClient force-reloads once for a tenant missing from the cache", async () => {
+      fs.writeFileSync(
+        configFile,
+        JSON.stringify({
+          "tenant-a": { databaseUrl: "postgresql://localhost/a" },
+        })
+      );
+      const { loadTenantConfigs, getTenantPrismaClient } = await resetModule();
+
+      expect(loadTenantConfigs().size).toBe(1);
+
+      // Tenant provisioned at runtime: the file gains tenant-b while the
+      // cache is still fresh. Resolving its client must not wait out the
+      // recheck window.
+      fs.writeFileSync(
+        configFile,
+        JSON.stringify({
+          "tenant-a": { databaseUrl: "postgresql://localhost/a" },
+          "tenant-b": { databaseUrl: "postgresql://localhost/b" },
+        })
+      );
+
+      expect(getTenantPrismaClient("tenant-b")).toBeTruthy();
+
+      // A genuinely unknown tenant still throws after the forced reload.
+      expect(() => getTenantPrismaClient("tenant-nope")).toThrow(
+        "No configuration found for tenant: tenant-nope"
+      );
     });
   });
 

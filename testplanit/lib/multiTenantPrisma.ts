@@ -61,6 +61,36 @@ const TENANT_CONFIG_FILE =
   process.env.TENANT_CONFIG_FILE || "/config/tenants.json";
 
 /**
+ * How often the cached configs re-stat the config file for changes. The file is
+ * the only config source that can change at runtime (env vars are fixed at
+ * process start), so a cheap stat bounds staleness without re-reading and
+ * re-parsing the JSON on every resolution — the worker poll loops resolve a
+ * tenant client once per tenant per cycle, and an unconditional re-read there
+ * costs hundreds of milli-cores per pod at idle. A config change (tenant
+ * provisioned, credentials rotated) is picked up within this window.
+ */
+const CONFIG_RECHECK_INTERVAL_MS = 30_000;
+
+/**
+ * Stat signature (inode:mtime:size) of the file backing the current cache;
+ * null when the file was absent. Kubernetes updates a projected ConfigMap by
+ * atomically swapping a symlinked data directory, so a plain fs.watch on the
+ * path silently detaches — statSync follows the symlink chain to the live
+ * target, and the inode+mtime+size triple changes on every swap.
+ */
+let cachedConfigFileSignature: string | null = null;
+let configLastCheckedAt = 0;
+
+function statConfigFileSignature(): string | null {
+  try {
+    const stat = fs.statSync(TENANT_CONFIG_FILE);
+    return `${stat.ino}:${stat.mtimeMs}:${stat.size}`;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Load tenant configurations from file
  */
 function loadTenantsFromFile(filePath: string): Map<string, TenantConfig> {
@@ -109,12 +139,27 @@ export function reloadTenantConfigs(): Map<string, TenantConfig> {
  * 1. Config file (TENANT_CONFIG_FILE env var or /config/tenants.json)
  * 2. TENANT_CONFIGS environment variable (JSON string)
  * 3. Individual environment variables: TENANT_<ID>_DATABASE_URL, etc.
+ *
+ * The result is cached; every CONFIG_RECHECK_INTERVAL_MS the config file is
+ * re-statted and the cache is rebuilt only when the file actually changed.
  */
 export function loadTenantConfigs(): Map<string, TenantConfig> {
   if (tenantConfigs) {
-    return tenantConfigs;
+    const now = Date.now();
+    if (now - configLastCheckedAt < CONFIG_RECHECK_INTERVAL_MS) {
+      return tenantConfigs;
+    }
+    configLastCheckedAt = now;
+    if (statConfigFileSignature() === cachedConfigFileSignature) {
+      return tenantConfigs;
+    }
+    // File changed (ConfigMap symlink swap / credential rotation) — rebuild.
   }
 
+  // Stat BEFORE reading so a swap that lands mid-rebuild produces a signature
+  // mismatch on the next recheck instead of being silently absorbed.
+  configLastCheckedAt = Date.now();
+  cachedConfigFileSignature = statConfigFileSignature();
   tenantConfigs = new Map();
 
   // Priority 1: Load from config file
@@ -216,9 +261,18 @@ function createTenantPrismaClient(config: TenantConfig): PrismaClient {
  * Automatically invalidates cached clients when credentials change
  */
 export function getTenantPrismaClient(tenantId: string): PrismaClient {
-  // Always reload config from file to get latest credentials
-  reloadTenantConfigs();
-  const config = getTenantConfig(tenantId);
+  // Resolve through the cached loader (a Map hit on the hot path; the file is
+  // re-statted at most every CONFIG_RECHECK_INTERVAL_MS, so rotated credentials
+  // are still picked up within that window and invalidate the client below).
+  let config = getTenantConfig(tenantId);
+
+  if (!config) {
+    // A tenant missing from the cache may have just been provisioned — force
+    // one reload before giving up so new tenants are usable without waiting
+    // out the recheck window.
+    reloadTenantConfigs();
+    config = getTenantConfig(tenantId);
+  }
 
   if (!config) {
     throw new Error(`No configuration found for tenant: ${tenantId}`);

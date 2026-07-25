@@ -55,11 +55,14 @@ import {
   type HumanizedColEntry,
   type HumanizedCols,
 } from "~/lib/audit/humanize";
+import { createTenantPollBackoff } from "~/lib/tenantPollBackoff";
 
 /** Batch cap — keeps the FOR UPDATE SKIP LOCKED transaction small (research: ≤ 500). */
 const DEFAULT_BATCH_SIZE = 500;
 /** Idle sleep between empty polls. */
 const DEFAULT_POLL_INTERVAL_MS = 500;
+/** Per-tenant backoff ceiling for idle multi-tenant clients (see pollDataChangeLogsAcrossTenants). */
+const DEFAULT_MAX_IDLE_POLL_MS = 300_000;
 /** Humanization cache TTL (catalog data is infrequently updated). */
 const HUMANIZE_TTL_MS = 60_000;
 
@@ -1003,14 +1006,29 @@ export async function pollDataChangeLogsOnce(
  * Per-client failures are isolated (logged; the cycle continues with the next tenant). It sleeps
  * `pollIntervalMs` only when NO client had work this cycle, so a backlog on any tenant drains fast.
  * Single-tenant callers pass a `listClients` returning exactly one entry with `tenantId: undefined`.
+ *
+ * Multi-tenant clients (tenantId defined) back off adaptively: a tenant whose polls keep coming
+ * back empty doubles its own interval up to `maxIdlePollIntervalMs`, and snaps back to every-cycle
+ * polling on the first poll that finds rows — a tenant with a backlog drains at full cadence until
+ * empty. This bounds the idle Postgres fan-out across a mostly-hibernated fleet. The single-tenant
+ * client (tenantId undefined) is exempt and keeps the fixed cadence: its database is local to the
+ * deployment and prompt audit visibility matters more than one idle poll per interval.
  */
 export async function pollDataChangeLogsAcrossTenants(
   listClients: () => TenantPollClient[],
   runningRef: { running: boolean },
-  opts: { batchSize?: number; pollIntervalMs?: number } = {}
+  opts: {
+    batchSize?: number;
+    pollIntervalMs?: number;
+    maxIdlePollIntervalMs?: number;
+  } = {}
 ): Promise<void> {
   const batchSize = opts.batchSize ?? DEFAULT_BATCH_SIZE;
   const pollIntervalMs = opts.pollIntervalMs ?? DEFAULT_POLL_INTERVAL_MS;
+  const backoff = createTenantPollBackoff({
+    baseIntervalMs: pollIntervalMs,
+    maxIntervalMs: opts.maxIdlePollIntervalMs ?? DEFAULT_MAX_IDLE_POLL_MS,
+  });
 
   while (runningRef.running) {
     let clients: TenantPollClient[];
@@ -1026,16 +1044,30 @@ export async function pollDataChangeLogsAcrossTenants(
       continue;
     }
 
+    backoff.prune(
+      clients.flatMap(({ tenantId }) =>
+        tenantId !== undefined ? [tenantId] : []
+      )
+    );
+
     let anyProcessed = false;
     for (const { tenantId, client } of clients) {
       if (!runningRef.running) break;
+      if (tenantId !== undefined && !backoff.shouldPoll(tenantId)) continue;
       try {
         const { processed } = await pollDataChangeLogsOnce(client, {
           batchSize,
         });
         if (processed > 0) anyProcessed = true;
+        if (tenantId !== undefined) {
+          if (processed > 0) backoff.recordWork(tenantId);
+          else backoff.recordEmpty(tenantId);
+        }
       } catch (err) {
         // Per-tenant isolation: one tenant's poll failure must not starve the others.
+        // A failing tenant backs off like an idle one so an unreachable database
+        // is not hammered every cycle.
+        if (tenantId !== undefined) backoff.recordEmpty(tenantId);
         console.error(
           `[correlation] Loop B poll failed${tenantId ? ` for tenant ${tenantId}` : ""}, continuing:`,
           err
