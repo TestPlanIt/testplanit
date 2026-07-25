@@ -1,4 +1,5 @@
 import { expect, test } from "../../fixtures";
+import { clickOverflowAction } from "../../utils/action-overflow";
 
 /**
  * AI Test Case Generation Wizard E2E tests - AI-01
@@ -45,14 +46,13 @@ test.describe("AI Test Case Generation Wizard", () => {
     let dialog: ReturnType<typeof page.locator> | undefined;
 
     await test.step("Open the AI generation wizard", async () => {
-      // With LLM integration configured, the Sparkles wizard trigger must be visible
-      const wizardTrigger = page
-        .locator("button:has(svg.lucide-sparkles)")
-        .first();
-      await expect(wizardTrigger).toBeVisible({ timeout: 10000 });
-
-      // Click to open the wizard
-      await wizardTrigger.click();
+      // With LLM integration configured the generate action is offered; open
+      // it via the wide button or the kebab menu, whichever is rendered
+      await clickOverflowAction(
+        page,
+        "generate-cases-button",
+        "repository-actions-menu"
+      );
 
       dialog = page.locator('[role="dialog"]').first();
       await expect(dialog).toBeVisible({ timeout: 10000 });
@@ -97,11 +97,11 @@ test.describe("AI Test Case Generation Wizard", () => {
     let dialog: ReturnType<typeof page.locator> | undefined;
 
     await test.step("Open the AI generation wizard", async () => {
-      const wizardTrigger = page
-        .locator("button:has(svg.lucide-sparkles)")
-        .first();
-      await expect(wizardTrigger).toBeVisible({ timeout: 10000 });
-      await wizardTrigger.click();
+      await clickOverflowAction(
+        page,
+        "generate-cases-button",
+        "repository-actions-menu"
+      );
 
       dialog = page.locator('[role="dialog"]').first();
       await expect(dialog).toBeVisible({ timeout: 10000 });
@@ -189,11 +189,11 @@ test.describe("AI Test Case Generation Wizard", () => {
     let dialog: ReturnType<typeof page.locator> | undefined;
 
     await test.step("Open the AI generation wizard", async () => {
-      const wizardTrigger = page
-        .locator("button:has(svg.lucide-sparkles)")
-        .first();
-      await expect(wizardTrigger).toBeVisible({ timeout: 10000 });
-      await wizardTrigger.click();
+      await clickOverflowAction(
+        page,
+        "generate-cases-button",
+        "repository-actions-menu"
+      );
 
       dialog = page.locator('[role="dialog"]').first();
       await expect(dialog).toBeVisible({ timeout: 10000 });
@@ -251,11 +251,11 @@ test.describe("AI Test Case Generation Wizard", () => {
     let dialog: ReturnType<typeof page.locator> | undefined;
 
     await test.step("Open the AI generation wizard", async () => {
-      const wizardTrigger = page
-        .locator("button:has(svg.lucide-sparkles)")
-        .first();
-      await expect(wizardTrigger).toBeVisible({ timeout: 10000 });
-      await wizardTrigger.click();
+      await clickOverflowAction(
+        page,
+        "generate-cases-button",
+        "repository-actions-menu"
+      );
 
       dialog = page.locator('[role="dialog"]').first();
       await expect(dialog).toBeVisible({ timeout: 10000 });

@@ -112,6 +112,35 @@ describe("parseSavedSearchConfig", () => {
     );
   });
 
+  it("accepts a custom field whose value key was dropped by JSON serialization", () => {
+    // An unset value serializes to `undefined`, and JSON.stringify removes the
+    // key entirely — the schema must treat the absent key as valid, not reject
+    // the whole config.
+    const config = buildSavedSearchConfig(
+      buildCriteria({
+        filters: {
+          repositoryCase: {
+            customFields: [
+              {
+                fieldId: 42,
+                fieldName: "Priority",
+                fieldType: "Select",
+                operator: "equals",
+                value: undefined,
+              },
+            ],
+          },
+        },
+      })
+    );
+    const wire = JSON.parse(JSON.stringify(config));
+    expect("value" in wire.filters.repositoryCase.customFields[0]).toBe(false);
+
+    const parsed = parseSavedSearchConfig(wire);
+    expect(parsed).not.toBeNull();
+    expect(parsed!.filters.repositoryCase?.customFields?.[0]?.fieldId).toBe(42);
+  });
+
   it("returns null for an unrecognized version", () => {
     const config = buildSavedSearchConfig(buildCriteria()) as Record<
       string,

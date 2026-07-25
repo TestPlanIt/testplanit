@@ -474,8 +474,11 @@ test.describe("Admin Status Management", () => {
             await successSwitch.getAttribute("data-state");
           expect(initialSuccessState).toBe("unchecked"); // Created with isSuccess=false
 
-          // Toggle success flag on
-          await successSwitch.click();
+          // Toggle via keyboard: the pinned name/actions columns are sticky
+          // and can overlay mid-table cells after horizontal auto-scroll,
+          // which makes pointer clicks land on the overlay instead.
+          await successSwitch.focus();
+          await page.keyboard.press(" ");
           await page.waitForTimeout(1000);
 
           const newSuccessState =
@@ -483,7 +486,8 @@ test.describe("Admin Status Management", () => {
           expect(newSuccessState).toBe("checked");
 
           // Toggle back off
-          await successSwitch.click();
+          await successSwitch.focus();
+          await page.keyboard.press(" ");
           await page.waitForTimeout(1000);
 
           const finalSuccessState =

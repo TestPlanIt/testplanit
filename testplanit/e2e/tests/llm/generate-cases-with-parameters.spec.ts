@@ -1,4 +1,5 @@
 import { expect, test } from "../../fixtures";
+import { clickOverflowAction } from "../../utils/action-overflow";
 
 /**
  * INT-06: Generate Test Cases — parameters + starter dataset E2E smoke
@@ -124,11 +125,11 @@ test.describe("INT-06: LLM parameter + dataset generation", () => {
 
     const dialog = page.locator('[role="dialog"]').first();
     await test.step("Launch the generate-cases wizard", async () => {
-      const wizardTrigger = page
-        .locator("button:has(svg.lucide-sparkles)")
-        .first();
-      await expect(wizardTrigger).toBeVisible({ timeout: 10000 });
-      await wizardTrigger.click();
+      await clickOverflowAction(
+        page,
+        "generate-cases-button",
+        "repository-actions-menu"
+      );
 
       await expect(dialog).toBeVisible({ timeout: 10000 });
     });
@@ -239,11 +240,11 @@ test.describe("INT-06: LLM parameter + dataset generation", () => {
 
     const dialog = page.locator('[role="dialog"]').first();
     await test.step("Launch the generate-cases wizard", async () => {
-      const wizardTrigger = page
-        .locator("button:has(svg.lucide-sparkles)")
-        .first();
-      await expect(wizardTrigger).toBeVisible({ timeout: 10000 });
-      await wizardTrigger.click();
+      await clickOverflowAction(
+        page,
+        "generate-cases-button",
+        "repository-actions-menu"
+      );
 
       await expect(dialog).toBeVisible({ timeout: 10000 });
     });
@@ -310,11 +311,11 @@ test.describe("INT-06: LLM parameter + dataset generation", () => {
 
     const dialog = page.locator('[role="dialog"]').first();
     await test.step("Launch the generate-cases wizard", async () => {
-      const wizardTrigger = page
-        .locator("button:has(svg.lucide-sparkles)")
-        .first();
-      await expect(wizardTrigger).toBeVisible({ timeout: 10000 });
-      await wizardTrigger.click();
+      await clickOverflowAction(
+        page,
+        "generate-cases-button",
+        "repository-actions-menu"
+      );
 
       await expect(dialog).toBeVisible({ timeout: 10000 });
     });

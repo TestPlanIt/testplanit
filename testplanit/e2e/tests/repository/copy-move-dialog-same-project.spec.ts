@@ -1,4 +1,28 @@
+import type { Page } from "@playwright/test";
+
 import { expect, test } from "../../fixtures/index";
+import { clickOverflowAction } from "../../utils/action-overflow";
+
+/**
+ * The repository page auto-selects a folder on load, but which one is not
+ * deterministic (tree order vs. remembered state) — and the async auto-select
+ * can even override an explicit click that lands first. Click the folder and
+ * re-click until the expected case row is actually rendered.
+ */
+async function openFolderWithCase(
+  page: Page,
+  folderId: number,
+  caseId: number
+): Promise<void> {
+  const folderNode = page.getByTestId(`folder-node-${folderId}`).first();
+  await folderNode.waitFor({ state: "visible", timeout: 15_000 });
+  await expect(async () => {
+    await folderNode.click();
+    await expect(
+      page.locator(`[data-testid="case-row-${caseId}"]`).first()
+    ).toBeVisible({ timeout: 3000 });
+  }).toPass({ timeout: 30_000 });
+}
 
 /**
  * Same-project copy/move via the wizard dialog. Pure DOM clicks — no HTML5
@@ -156,15 +180,12 @@ test.describe("Copy/Move dialog same-project", () => {
   }) => {
     await test.step("Open repository and select source case A", async () => {
       await page.goto(`/en-US/projects/repository/${projectId}`);
-      await page
-        .locator(`[data-testid="case-row-${sourceCaseAId}"]`)
-        .first()
-        .waitFor({ state: "visible", timeout: 15_000 });
+      await openFolderWithCase(page, rootFolderId, sourceCaseAId);
 
       await page
         .locator(`[data-testid="case-checkbox-${sourceCaseAId}"]`)
         .click();
-      await page.getByTestId("copy-move-button").click();
+      await clickOverflowAction(page, "copy-move-button", "cases-actions-menu");
 
       await expect(page.getByTestId("copy-move-dialog")).toBeVisible();
     });
@@ -260,15 +281,12 @@ test.describe("Copy/Move dialog same-project", () => {
   }) => {
     await test.step("Open repository and select source case B", async () => {
       await page.goto(`/en-US/projects/repository/${projectId}`);
-      await page
-        .locator(`[data-testid="case-row-${sourceCaseBId}"]`)
-        .first()
-        .waitFor({ state: "visible", timeout: 15_000 });
+      await openFolderWithCase(page, rootFolderId, sourceCaseBId);
 
       await page
         .locator(`[data-testid="case-checkbox-${sourceCaseBId}"]`)
         .click();
-      await page.getByTestId("copy-move-button").click();
+      await clickOverflowAction(page, "copy-move-button", "cases-actions-menu");
 
       await expect(page.getByTestId("copy-move-dialog")).toBeVisible();
     });
@@ -365,10 +383,7 @@ test.describe("Copy/Move dialog same-project", () => {
 
     await test.step("Open repository and capture pre-test sibling-folder case ids", async () => {
       await page.goto(`/en-US/projects/repository/${projectId}`);
-      await page
-        .locator(`[data-testid="case-row-${sourceCaseCId}"]`)
-        .first()
-        .waitFor({ state: "visible", timeout: 15_000 });
+      await openFolderWithCase(page, rootFolderId, sourceCaseCId);
 
       // Capture the pre-test sibling-folder case count so we can assert the
       // delta (the previous test left at least 1 new case there; this test
@@ -403,7 +418,7 @@ test.describe("Copy/Move dialog same-project", () => {
       await page
         .locator(`[data-testid="case-checkbox-${sourceCaseCId}"]`)
         .click();
-      await page.getByTestId("copy-move-button").click();
+      await clickOverflowAction(page, "copy-move-button", "cases-actions-menu");
 
       await expect(page.getByTestId("copy-move-dialog")).toBeVisible();
 

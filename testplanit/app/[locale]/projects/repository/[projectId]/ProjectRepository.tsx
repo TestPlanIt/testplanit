@@ -1890,6 +1890,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                                         "repository.cases.importWizard.title"
                                       ),
                                       onClick: () => setImportDialogOpen(true),
+                                      testId: "import-cases-button",
                                     },
                                     {
                                       // The wizard requires an active AI model
@@ -1906,6 +1907,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                                         setGenerateWizardOpen(true),
                                       disabled: folderHierarchy.length === 0,
                                       hidden: !hasActiveLlm,
+                                      testId: "generate-cases-button",
                                     },
                                     {
                                       key: "addCase",

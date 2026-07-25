@@ -2,6 +2,7 @@ import type { APIRequestContext } from "@playwright/test";
 
 import { expect, test } from "../../fixtures";
 import type { ApiHelper } from "../../fixtures/api.fixture";
+import { clickOverflowAction } from "../../utils/action-overflow";
 import {
   createGatedTestWorkflow,
   createReviewRequest,
@@ -220,9 +221,8 @@ test.describe("Bulk-edit strict transitive gating", () => {
       await row1.getByRole("checkbox").first().click();
       await row2.getByRole("checkbox").first().click();
 
-      // Trigger Bulk Edit from the selection bar.
-      const bulkEditButton = page.getByRole("button", { name: /bulk edit/i });
-      await bulkEditButton.click();
+      // Trigger Bulk Edit from the selection bar (kebab-aware).
+      await clickOverflowAction(page, "bulk-edit-button", "cases-actions-menu");
     });
 
     await test.step("Pick gate B as the target state, skipping gate A", async () => {
@@ -276,7 +276,7 @@ test.describe("Bulk-edit strict transitive gating", () => {
         .getByRole("checkbox")
         .first()
         .click();
-      await page.getByRole("button", { name: /bulk edit/i }).click();
+      await clickOverflowAction(page, "bulk-edit-button", "cases-actions-menu");
       const dialog = page.locator('[role="dialog"]').first();
       await expect(dialog).toBeVisible({ timeout: 5000 });
       await dialog.locator("#edit-state").click();
@@ -345,7 +345,7 @@ test.describe("Bulk-edit strict transitive gating", () => {
         .getByRole("checkbox")
         .first()
         .click();
-      await page.getByRole("button", { name: /bulk edit/i }).click();
+      await clickOverflowAction(page, "bulk-edit-button", "cases-actions-menu");
       dialog2 = page.locator('[role="dialog"]').first();
       await expect(dialog2).toBeVisible();
       await dialog2.locator("#edit-state").click();
@@ -399,7 +399,7 @@ test.describe("Bulk-edit strict transitive gating", () => {
         .getByRole("checkbox")
         .first()
         .click();
-      await page.getByRole("button", { name: /bulk edit/i }).click();
+      await clickOverflowAction(page, "bulk-edit-button", "cases-actions-menu");
       const dialog3 = page.locator('[role="dialog"]').first();
       await dialog3.locator("#edit-state").click();
       await dialog3.locator('[role="combobox"]').first().click();
@@ -461,7 +461,7 @@ test.describe("Bulk-edit strict transitive gating", () => {
         .first()
         .click();
     }
-    await page.getByRole("button", { name: /bulk edit/i }).click();
+    await clickOverflowAction(page, "bulk-edit-button", "cases-actions-menu");
 
     const dialog = page.locator('[role="dialog"]').first();
     await expect(dialog).toBeVisible({ timeout: 5000 });
@@ -542,7 +542,7 @@ test.describe("Bulk-edit strict transitive gating", () => {
         .first()
         .click();
     }
-    await page.getByRole("button", { name: /bulk edit/i }).click();
+    await clickOverflowAction(page, "bulk-edit-button", "cases-actions-menu");
 
     const dialog = page.locator('[role="dialog"]').first();
     await expect(dialog).toBeVisible({ timeout: 5000 });
