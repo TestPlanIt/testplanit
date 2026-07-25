@@ -6,40 +6,55 @@ installs. You build it yourself from the source attached below.
 
 > ⚠️ This is pre-release software. **Back up your database before trying it.**
 
-### What's new since beta.8
+### What's new since beta.9
 
-#### Performance
+#### Access control
 
-- **Much faster page loads on large projects** — access control was overhauled
-  so your project access is resolved once per request instead of being
-  re-checked row by row inside every database query. On the largest test
-  project, rendering the repository list dropped from ~36 seconds of database
-  time to a flat indexed lookup. Access rules themselves are unchanged: the
-  rewrite ships with a differential test that checks every permission
-  combination against the previous policy, plus live-database read and write
-  tests.
+- **Default-access members can edit again** — users whose only path into a
+  project is its default access setting could read everything but were denied
+  edits on most models (folders were the visible symptom). Write rules now
+  honor default access the same way reads do, across all fifteen affected
+  models.
+- **Group access through global roles resolves correctly** — the permissions
+  endpoint mishandled groups granted access via a global role, so members of
+  those groups could see wrong project permissions.
 
 #### Fixes
 
-- **Run auto-lock works again** — moving a run to In Progress with the
-  project's auto-lock composition option enabled failed with an error; the
-  lock is now applied correctly.
-- **One Back click to leave the repository** — opening the repository no
-  longer adds an extra browser-history entry, so the Back button behaves as
-  expected.
-- Resizable table columns now honor their widths reliably, long case names
-  ellipsize instead of clipping, and in narrow columns the folder chip
-  collapses before the case name does.
+- **Creating a test case works with fields left empty** — saving a case with
+  an unset optional field (a dropdown with no default, for instance) failed
+  with "Invalid input data". The same latent issue was closed in result
+  submission, bulk edit, saved searches, and case search.
+- **No more vanishing test cases** — a remembered "Latest Results" sort could
+  render run pages and folder switches with an empty (or partially missing)
+  case list. Sort state that a view can't serve now falls back to the default
+  order, and the sorted page always matches the selected folder.
+- **Disabled items stay out of pickers** — disabled workflow states,
+  templates, fields, and dropdown options no longer appear when creating or
+  editing cases and results (an edited item's current value still displays,
+  even if since disabled). Admin management pages still show everything so
+  disabled items can be re-enabled.
+- Comment editors now support @-mentions consistently.
+- The session form shows a clear message when a session has no attachments.
+
+#### Reviews
+
+- **Pending-review badges wherever runs and sessions appear** — milestone
+  pages, the home dashboard, profile assignments, and the project overview now
+  mark runs and sessions that have a review waiting, matching the badge test
+  cases already show. Runs not scheduled to a milestone were missing the badge
+  on the runs list; fixed, and the badge now aligns cleanly with the name.
 
 #### Interface
 
-- **Modernized top navigation** — on narrow screens the header action icons
-  collapse into a kebab menu, with alerts surfaced on the collapsed menu;
-  project and admin menus got smaller, tidier icons.
-- **One run details page** — manual and JUnit run details now share a single
-  unified page, and the completed-run badge is more compact, collapsing its
-  date when space is tight.
-- Clearer wording on the pending-review banner.
+- Case action bars collapse into a kebab menu when space is tight, and folder
+  chips give way to case names consistently in every view.
+- Your Assignments on user profiles: pending reviews, open runs, and active
+  sessions in one place, scoped to what the viewer may see.
+- Cleaner admin tables — SSO, SCIM, and queue management share the standard
+  table with a pinned first column.
+- Idle self-hosted and multi-tenant installs use noticeably less CPU thanks to
+  adaptive background polling.
 
 ### Try it
 
