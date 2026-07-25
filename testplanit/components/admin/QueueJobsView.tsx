@@ -24,14 +24,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { DataTable } from "@/components/tables/DataTable";
+import { ColumnDef } from "@tanstack/react-table";
 import {
   AlertCircle,
   CheckCircle2,
@@ -90,6 +84,9 @@ export function QueueJobsView({
   const [page, setPage] = useState(0);
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [actionInProgress, setActionInProgress] = useState<string | null>(null);
+  const [columnVisibility, setColumnVisibility] = useState<
+    Record<string, boolean>
+  >({});
   const [forceRemoveDialog, setForceRemoveDialog] = useState<{
     show: boolean;
     jobId: string | null;
@@ -251,6 +248,121 @@ export function QueueJobsView({
     return `${minutes}m ${seconds % 60}s`;
   };
 
+  const jobColumns: ColumnDef<Job>[] = [
+    {
+      id: "id",
+      accessorKey: "id",
+      header: t("table.id"),
+      enableSorting: false,
+      enableResizing: true,
+      enableHiding: false,
+      meta: { isPinned: "left" },
+      size: 110,
+      cell: ({ row }) => (
+        <div className="font-mono text-sm">{row.original.id}</div>
+      ),
+    },
+    {
+      id: "name",
+      accessorKey: "name",
+      header: t("table.name"),
+      enableSorting: false,
+      enableResizing: true,
+      size: 220,
+      cell: ({ row }) => row.original.name,
+    },
+    {
+      id: "state",
+      accessorKey: "state",
+      header: tGlobal("common.fields.state"),
+      enableSorting: false,
+      enableResizing: true,
+      size: 130,
+      cell: ({ row }) => getStateBadge(row.original.state),
+    },
+    {
+      id: "attempts",
+      header: t("table.attempts"),
+      enableSorting: false,
+      enableResizing: true,
+      size: 100,
+      cell: ({ row }) =>
+        `${row.original.attemptsMade}/${row.original.opts?.attempts || 1}`,
+    },
+    {
+      id: "created",
+      accessorKey: "timestamp",
+      header: tGlobal("common.fields.created"),
+      enableSorting: false,
+      enableResizing: true,
+      size: 180,
+      cell: ({ row }) => (
+        <div className="text-sm">{formatTimestamp(row.original.timestamp)}</div>
+      ),
+    },
+    {
+      id: "duration",
+      header: tGlobal("common.fields.duration"),
+      enableSorting: false,
+      enableResizing: true,
+      size: 110,
+      cell: ({ row }) =>
+        formatDuration(row.original.processedOn, row.original.finishedOn),
+    },
+    {
+      id: "actions",
+      header: tGlobal("common.actions.actionsLabel"),
+      enableSorting: false,
+      enableResizing: true,
+      enableHiding: false,
+      meta: { isPinned: "right" },
+      size: 140,
+      cell: ({ row }) => {
+        const job = row.original;
+        return (
+          <div className="flex justify-end gap-2">
+            <Button
+              variant="ghost"
+              className="px-2 py-1 h-auto"
+              onClick={() => setSelectedJob(job)}
+              disabled={actionInProgress === job.id}
+            >
+              <Eye className="h-4 w-4" />
+            </Button>
+            {job.state === "failed" && (
+              <Button
+                variant="ghost"
+                className="px-2 py-1 h-auto"
+                onClick={() => performJobAction(job.id, "retry")}
+                disabled={actionInProgress === job.id}
+              >
+                <RotateCcw className="h-4 w-4" />
+              </Button>
+            )}
+            {job.state === "delayed" && (
+              <Button
+                variant="ghost"
+                className="px-2 py-1 h-auto"
+                onClick={() => performJobAction(job.id, "promote")}
+                disabled={actionInProgress === job.id}
+              >
+                <ChevronUp className="h-4 w-4" />
+              </Button>
+            )}
+            <Button
+              variant="destructive"
+              className="px-2 py-1 h-auto"
+              onClick={() => performJobAction(job.id, "remove")}
+              disabled={actionInProgress === job.id}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
+        );
+      },
+    },
+  ];
+
   return (
     <>
       <Card>
@@ -313,84 +425,13 @@ export function QueueJobsView({
             </div>
           ) : (
             <>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>{t("table.id")}</TableHead>
-                    <TableHead>{t("table.name")}</TableHead>
-                    <TableHead>{tGlobal("common.fields.state")}</TableHead>
-                    <TableHead>{t("table.attempts")}</TableHead>
-                    <TableHead>{tGlobal("common.fields.created")}</TableHead>
-                    <TableHead>{tGlobal("common.fields.duration")}</TableHead>
-                    <TableHead className="text-end">
-                      {tGlobal("common.actions.actionsLabel")}
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {jobs.map((job) => (
-                    <TableRow key={job.id}>
-                      <TableCell className="font-mono text-sm">
-                        {job.id?.substring(0, 8)}
-                        {"..."}
-                      </TableCell>
-                      <TableCell>{job.name}</TableCell>
-                      <TableCell>{getStateBadge(job.state)}</TableCell>
-                      <TableCell>
-                        {job.attemptsMade}/{job.opts?.attempts || 1}
-                      </TableCell>
-                      <TableCell className="text-sm">
-                        {formatTimestamp(job.timestamp)}
-                      </TableCell>
-                      <TableCell>
-                        {formatDuration(job.processedOn, job.finishedOn)}
-                      </TableCell>
-                      <TableCell className="text-end">
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            variant="ghost"
-                            className="px-2 py-1 h-auto"
-                            onClick={() => setSelectedJob(job)}
-                            disabled={actionInProgress === job.id}
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          {job.state === "failed" && (
-                            <Button
-                              variant="ghost"
-                              className="px-2 py-1 h-auto"
-                              onClick={() => performJobAction(job.id, "retry")}
-                              disabled={actionInProgress === job.id}
-                            >
-                              <RotateCcw className="h-4 w-4" />
-                            </Button>
-                          )}
-                          {job.state === "delayed" && (
-                            <Button
-                              variant="ghost"
-                              className="px-2 py-1 h-auto"
-                              onClick={() =>
-                                performJobAction(job.id, "promote")
-                              }
-                              disabled={actionInProgress === job.id}
-                            >
-                              <ChevronUp className="h-4 w-4" />
-                            </Button>
-                          )}
-                          <Button
-                            variant="destructive"
-                            className="px-2 py-1 h-auto"
-                            onClick={() => performJobAction(job.id, "remove")}
-                            disabled={actionInProgress === job.id}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+              <DataTable
+                columns={jobColumns}
+                data={jobs}
+                columnVisibility={columnVisibility}
+                onColumnVisibilityChange={setColumnVisibility}
+                isLoading={loading && jobs.length === 0}
+              />
 
               {/* Pagination */}
               {total > PAGE_SIZE && (

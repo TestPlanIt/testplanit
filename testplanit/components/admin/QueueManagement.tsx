@@ -14,14 +14,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { DataTable } from "@/components/tables/DataTable";
+import { ColumnDef } from "@tanstack/react-table";
 import {
   Activity,
   AlertTriangle,
@@ -55,6 +49,9 @@ interface QueueInfo {
   concurrency: number;
 }
 
+// DataTable rows need an `id`; the queue name is the natural key.
+type QueueRow = QueueInfo & { id: string };
+
 export function QueueManagement() {
   const t = useTranslations("admin.queues");
   const tGlobal = useTranslations();
@@ -63,6 +60,9 @@ export function QueueManagement() {
   const [loading, setLoading] = useState(true);
   const [selectedQueue, setSelectedQueue] = useState<string | null>(null);
   const [actionInProgress, setActionInProgress] = useState<string | null>(null);
+  const [columnVisibility, setColumnVisibility] = useState<
+    Record<string, boolean>
+  >({});
   const [confirmDialog, setConfirmDialog] = useState<{
     open: boolean;
     queueName: string;
@@ -231,6 +231,177 @@ export function QueueManagement() {
     );
   };
 
+  const queueRows: QueueRow[] = queues.map((queue) => ({
+    ...queue,
+    id: queue.name,
+  }));
+
+  const queueColumns: ColumnDef<QueueRow>[] = [
+    {
+      id: "queue",
+      accessorKey: "name",
+      header: t("table.queue"),
+      enableSorting: false,
+      enableResizing: true,
+      enableHiding: false,
+      meta: { isPinned: "left" },
+      size: 220,
+      cell: ({ row }) => (
+        <div className="font-medium">
+          {getQueueDisplayName(row.original.name)}
+        </div>
+      ),
+    },
+    {
+      id: "status",
+      accessorKey: "isPaused",
+      header: tGlobal("common.actions.status"),
+      enableSorting: false,
+      enableResizing: true,
+      size: 130,
+      cell: ({ row }) => getStatusBadge(row.original),
+    },
+    {
+      id: "concurrency",
+      accessorKey: "concurrency",
+      header: t("table.concurrency"),
+      enableSorting: false,
+      enableResizing: true,
+      size: 120,
+      cell: ({ row }) => (
+        <div className="text-end">
+          <Badge variant="secondary" className="font-mono">
+            {row.original.concurrency}
+          </Badge>
+        </div>
+      ),
+    },
+    {
+      id: "waiting",
+      header: t("table.waiting"),
+      enableSorting: false,
+      enableResizing: true,
+      size: 100,
+      cell: ({ row }) => (
+        <div className="text-end">
+          {row.original.counts?.waiting ? (
+            <Badge className="border-warning bg-warning text-white hover:bg-warning/90">
+              {row.original.counts.waiting}
+            </Badge>
+          ) : (
+            (row.original.counts?.waiting ?? "-")
+          )}
+        </div>
+      ),
+    },
+    {
+      id: "active",
+      header: tGlobal("common.fields.isActive"),
+      enableSorting: false,
+      enableResizing: true,
+      size: 100,
+      cell: ({ row }) => (
+        <div className="text-end">
+          {row.original.counts?.active ? (
+            <Badge>{row.original.counts.active}</Badge>
+          ) : (
+            (row.original.counts?.active ?? "-")
+          )}
+        </div>
+      ),
+    },
+    {
+      id: "completed",
+      header: tGlobal("common.fields.completed"),
+      enableSorting: false,
+      enableResizing: true,
+      size: 110,
+      cell: ({ row }) => (
+        <div className="text-end">{row.original.counts?.completed ?? "-"}</div>
+      ),
+    },
+    {
+      id: "failed",
+      header: t("table.failed"),
+      enableSorting: false,
+      enableResizing: true,
+      size: 100,
+      cell: ({ row }) => (
+        <div className="text-end">
+          {row.original.counts?.failed ? (
+            <Badge variant="destructive">{row.original.counts.failed}</Badge>
+          ) : (
+            (row.original.counts?.failed ?? "-")
+          )}
+        </div>
+      ),
+    },
+    {
+      id: "delayed",
+      header: tGlobal("milestones.statusLabels.delayed"),
+      enableSorting: false,
+      enableResizing: true,
+      size: 100,
+      cell: ({ row }) => (
+        <div className="text-end">
+          {row.original.counts?.delayed ? (
+            <Badge className="border-warning bg-warning text-white hover:bg-warning/90">
+              {row.original.counts.delayed}
+            </Badge>
+          ) : (
+            (row.original.counts?.delayed ?? "-")
+          )}
+        </div>
+      ),
+    },
+    {
+      id: "actions",
+      header: tGlobal("common.actions.actionsLabel"),
+      enableSorting: false,
+      enableResizing: true,
+      enableHiding: false,
+      meta: { isPinned: "right" },
+      size: 110,
+      cell: ({ row }) => {
+        const queue = row.original;
+        return (
+          <div
+            className="flex justify-end gap-2"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {queue.isPaused ? (
+              <Button
+                variant="ghost"
+                className="px-2 py-1 h-auto"
+                onClick={() => performQueueAction(queue.name, "resume")}
+                disabled={actionInProgress === queue.name}
+              >
+                <Play className="h-4 w-4" />
+              </Button>
+            ) : (
+              <Button
+                variant="ghost"
+                className="px-2 py-1 h-auto"
+                onClick={() => performQueueAction(queue.name, "pause")}
+                disabled={actionInProgress === queue.name}
+              >
+                <Pause className="h-4 w-4" />
+              </Button>
+            )}
+            <Button
+              variant="destructive"
+              className="px-2 py-1 h-auto"
+              onClick={() => performQueueAction(queue.name, "clean", true)}
+              disabled={actionInProgress === queue.name}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
+        );
+      },
+    },
+  ];
+
   return (
     <div className="space-y-6">
       {/* Overview Card */}
@@ -265,125 +436,14 @@ export function QueueManagement() {
               {t("concurrency.configureDescription")}
             </AlertDescription>
           </Alert>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>{t("table.queue")}</TableHead>
-                <TableHead>{tGlobal("common.actions.status")}</TableHead>
-                <TableHead className="text-end">
-                  {t("table.concurrency")}
-                </TableHead>
-                <TableHead className="text-end">{t("table.waiting")}</TableHead>
-                <TableHead className="text-end">
-                  {tGlobal("common.fields.isActive")}
-                </TableHead>
-                <TableHead className="text-end">
-                  {tGlobal("common.fields.completed")}
-                </TableHead>
-                <TableHead className="text-end">{t("table.failed")}</TableHead>
-                <TableHead className="text-end">
-                  {tGlobal("milestones.statusLabels.delayed")}
-                </TableHead>
-                <TableHead className="text-end">
-                  {tGlobal("common.actions.actionsLabel")}
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {queues.map((queue) => (
-                <TableRow
-                  key={queue.name}
-                  className="cursor-pointer hover:bg-muted/50"
-                  onClick={() => setSelectedQueue(queue.name)}
-                >
-                  <TableCell className="font-medium">
-                    {getQueueDisplayName(queue.name)}
-                  </TableCell>
-                  <TableCell>{getStatusBadge(queue)}</TableCell>
-                  <TableCell className="text-end">
-                    <Badge variant="secondary" className="font-mono">
-                      {queue.concurrency}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-end">
-                    {queue.counts?.waiting ? (
-                      <Badge className="border-warning bg-warning text-white hover:bg-warning/90">
-                        {queue.counts.waiting}
-                      </Badge>
-                    ) : (
-                      (queue.counts?.waiting ?? "-")
-                    )}
-                  </TableCell>
-                  <TableCell className="text-end">
-                    {queue.counts?.active ? (
-                      <Badge>{queue.counts.active}</Badge>
-                    ) : (
-                      (queue.counts?.active ?? "-")
-                    )}
-                  </TableCell>
-                  <TableCell className="text-end">
-                    {queue.counts?.completed ?? "-"}
-                  </TableCell>
-                  <TableCell className="text-end">
-                    {queue.counts?.failed ? (
-                      <Badge variant="destructive">{queue.counts.failed}</Badge>
-                    ) : (
-                      (queue.counts?.failed ?? "-")
-                    )}
-                  </TableCell>
-                  <TableCell className="text-end">
-                    {queue.counts?.delayed ? (
-                      <Badge className="border-warning bg-warning text-white hover:bg-warning/90">
-                        {queue.counts.delayed}
-                      </Badge>
-                    ) : (
-                      (queue.counts?.delayed ?? "-")
-                    )}
-                  </TableCell>
-                  <TableCell className="text-end">
-                    <div
-                      className="flex justify-end gap-2"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      {queue.isPaused ? (
-                        <Button
-                          variant="ghost"
-                          className="px-2 py-1 h-auto"
-                          onClick={() =>
-                            performQueueAction(queue.name, "resume")
-                          }
-                          disabled={actionInProgress === queue.name}
-                        >
-                          <Play className="h-4 w-4" />
-                        </Button>
-                      ) : (
-                        <Button
-                          variant="ghost"
-                          className="px-2 py-1 h-auto"
-                          onClick={() =>
-                            performQueueAction(queue.name, "pause")
-                          }
-                          disabled={actionInProgress === queue.name}
-                        >
-                          <Pause className="h-4 w-4" />
-                        </Button>
-                      )}
-                      <Button
-                        variant="destructive"
-                        className="px-2 py-1 h-auto"
-                        onClick={() =>
-                          performQueueAction(queue.name, "clean", true)
-                        }
-                        disabled={actionInProgress === queue.name}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          <DataTable
+            columns={queueColumns}
+            data={queueRows}
+            columnVisibility={columnVisibility}
+            onColumnVisibilityChange={setColumnVisibility}
+            onTestCaseClick={(id) => setSelectedQueue(String(id))}
+            isLoading={loading && queues.length === 0}
+          />
         </CardContent>
       </Card>
 

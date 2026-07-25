@@ -24,6 +24,29 @@ vi.mock("./QueueJobsView", () => ({
   ),
 }));
 
+// Stub DataTable (rendering the real one OOMs in jsdom) but run the real
+// column cell renderers so badges, counts, and action buttons are asserted
+// against the actual cell markup.
+vi.mock("@/components/tables/DataTable", () => ({
+  DataTable: ({ columns, data, onTestCaseClick }: any) => (
+    <table>
+      <tbody>
+        {data.map((row: any) => (
+          <tr key={row.id} onClick={() => onTestCaseClick?.(row.id)}>
+            {columns.map((col: any) => (
+              <td key={col.id}>
+                {typeof col.cell === "function"
+                  ? col.cell({ row: { original: row } })
+                  : String(row[col.accessorKey] ?? "")}
+              </td>
+            ))}
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  ),
+}));
+
 const mockQueues = [
   {
     name: "emails",
