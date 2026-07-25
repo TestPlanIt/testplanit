@@ -397,24 +397,29 @@ export function AddSessionModal({
     if (!initialTemplateId || !initialWorkflowId) return;
     formInitRef.current = true;
 
-    reset({
-      name: duplicationPreset
-        ? `${duplicationPreset.originalName} - ${t("common.actions.duplicate")}`
-        : "",
-      templateId: initialTemplateId,
-      configIds: duplicationPreset?.originalConfigId
-        ? [duplicationPreset.originalConfigId]
-        : [],
-      stateId: initialWorkflowId,
-      assignedToId: duplicationPreset?.originalAssignedToId || "",
-      estimate: "",
-      note: null,
-      mission: null,
-      milestoneId:
-        duplicationPreset?.originalMilestoneId ?? defaultMilestoneId ?? null,
-      attachments: [],
-      issueIds: duplicationPreset?.originalIssueIds || [],
-    });
+    // keepDirtyValues: this init can land after the user has already started
+    // typing (templates/workflows arrive async) — never wipe their input.
+    reset(
+      {
+        name: duplicationPreset
+          ? `${duplicationPreset.originalName} - ${t("common.actions.duplicate")}`
+          : "",
+        templateId: initialTemplateId,
+        configIds: duplicationPreset?.originalConfigId
+          ? [duplicationPreset.originalConfigId]
+          : [],
+        stateId: initialWorkflowId,
+        assignedToId: duplicationPreset?.originalAssignedToId || "",
+        estimate: "",
+        note: null,
+        mission: null,
+        milestoneId:
+          duplicationPreset?.originalMilestoneId ?? defaultMilestoneId ?? null,
+        attachments: [],
+        issueIds: duplicationPreset?.originalIssueIds || [],
+      },
+      { keepDirtyValues: true }
+    );
     setLinkedIssueIds(duplicationPreset?.originalIssueIds || []);
     if (duplicationPreset?.originalNote) {
       try {
