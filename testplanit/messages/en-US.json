@@ -6392,6 +6392,7 @@
     "statuses": "Manage test statuses",
     "configurations": "Configurations are a combination of categories and variants used to define a test environment. For example, OS/Browser, Test Server, Language, etc.",
     "categories": "Categories group related variants — like Browser or Operating System — that combine to define a test environment.",
+    "stepDuplicates": "Review matched step sequences across test cases. Convert matches to Shared Step groups or dismiss false positives.",
     "templates": "Manage test case templates and fields",
     "caseFields": "Custom fields available on test cases, assigned to templates to control which cases use them.",
     "resultFields": "Custom fields captured when recording a test result, assigned to templates to control where they apply.",
@@ -7884,7 +7885,6 @@
     },
     "stepDuplicates": {
       "pageTitle": "Step Sequence Duplicates",
-      "pageDescription": "Review matched step sequences across test cases. Convert matches to Shared Step groups or dismiss false positives.",
       "noResultsFound": "No step sequence duplicates found",
       "noResultsDescription": "Run a scan to detect repeated step sequences across your test cases.",
       "filterPlaceholder": "Filter by case name...",

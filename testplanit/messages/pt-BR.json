@@ -6392,6 +6392,7 @@
     "statuses": "Gerencie os status de teste",
     "configurations": "Configurações são uma combinação de categorias e variantes usadas para definir um ambiente de teste. Por exemplo, SO/Navegador, Servidor de Teste, Idioma, etc.",
     "categories": "Categorias agrupam variantes relacionadas — como Navegador ou Sistema Operacional — que se combinam para definir um ambiente de teste.",
+    "stepDuplicates": "Revise sequências de passos correspondentes entre casos de teste. Converta as correspondências em grupos de Passos Compartilhados ou descarte falsos positivos.",
     "templates": "Gerencie modelos e campos de casos de teste",
     "caseFields": "Campos personalizados disponíveis em casos de teste, atribuídos a modelos para controlar quais casos os utilizam.",
     "resultFields": "Campos personalizados capturados ao registrar um resultado de teste, atribuídos a modelos para controlar onde se aplicam.",
@@ -7884,7 +7885,6 @@
     },
     "stepDuplicates": {
       "pageTitle": "Duplicatas da sequência de etapas",
-      "pageDescription": "Analise as sequências de etapas correspondentes em todos os casos de teste. Converta as correspondências em grupos de etapas compartilhadas ou descarte os falsos positivos.",
       "noResultsFound": "Nenhuma sequência de etapas duplicada foi encontrada.",
       "noResultsDescription": "Execute uma varredura para detectar sequências de etapas repetidas em seus casos de teste.",
       "filterPlaceholder": "Filtrar por nome do caso...",

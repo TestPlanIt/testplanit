@@ -6392,6 +6392,7 @@
     "statuses": "Gérer les statuts des tests",
     "configurations": "Les configurations sont une combinaison de catégories et de variantes utilisées pour définir un environnement de test. Par exemple : système d'exploitation/navigateur, serveur de test, langage, etc.",
     "categories": "Les catégories regroupent des variantes associées — comme Navigateur ou Système d'exploitation — qui se combinent pour définir un environnement de test.",
+    "stepDuplicates": "Examinez les séquences d'étapes correspondantes dans les différents cas de test. Convertissez les correspondances en groupes d'étapes partagées ou éliminez les faux positifs.",
     "templates": "Gérer les modèles et les champs des cas de test",
     "caseFields": "Champs personnalisés disponibles sur les cas de test, attribués à des modèles pour contrôler quels cas les utilisent.",
     "resultFields": "Champs personnalisés saisis lors de l'enregistrement d'un résultat de test, attribués à des modèles pour contrôler où ils s'appliquent.",
@@ -7884,7 +7885,6 @@
     },
     "stepDuplicates": {
       "pageTitle": "Duplicata de séquence d'étapes",
-      "pageDescription": "Examinez les séquences d'étapes correspondantes dans les différents cas de test. Convertissez les correspondances en groupes d'étapes partagées ou éliminez les faux positifs.",
       "noResultsFound": "Aucune séquence d'étapes en double n'a été trouvée.",
       "noResultsDescription": "Effectuez une analyse pour détecter les séquences d'étapes répétées dans vos cas de test.",
       "filterPlaceholder": "Filtrer par nom de dossier...",

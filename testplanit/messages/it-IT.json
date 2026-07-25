@@ -6392,6 +6392,7 @@
     "statuses": "Gestire gli stati dei test",
     "configurations": "Le configurazioni sono una combinazione di categorie e varianti utilizzate per definire un ambiente di test. Ad esempio, sistema operativo/browser, server di test, lingua, ecc.",
     "categories": "Le categorie raggruppano varianti correlate, come Browser o Sistema Operativo, che si combinano per definire un ambiente di test.",
+    "stepDuplicates": "Esamina le sequenze di passaggi corrispondenti nei vari casi di test. Converti le corrispondenze in gruppi di passaggi condivisi o scarta i falsi positivi.",
     "templates": "Gestisci modelli e campi dei casi di test",
     "caseFields": "Campi personalizzati disponibili nei casi di test, assegnati ai modelli per controllare quali casi li utilizzano.",
     "resultFields": "Campi personalizzati raccolti al momento della registrazione di un risultato del test, assegnati ai modelli per controllare dove vengono applicati.",
@@ -7884,7 +7885,6 @@
     },
     "stepDuplicates": {
       "pageTitle": "Sequenza dei passaggi Duplicati",
-      "pageDescription": "Esamina le sequenze di passaggi corrispondenti nei vari casi di test. Converti le corrispondenze in gruppi di passaggi condivisi o scarta i falsi positivi.",
       "noResultsFound": "Non sono state trovate sequenze di passaggi duplicate.",
       "noResultsDescription": "Esegui una scansione per rilevare sequenze di passaggi ripetute nei tuoi casi di test.",
       "filterPlaceholder": "Filtra per nome del caso...",

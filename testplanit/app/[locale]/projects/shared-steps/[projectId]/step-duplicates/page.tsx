@@ -1,18 +1,28 @@
 "use client";
 
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
+import {
+  ActionButtonContent,
+  collapsibleActionClass,
+} from "@/components/ui/action-bar";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  PageCardHeader,
+  ProjectHeaderInfo,
+} from "@/components/ui/page-card-header";
 import { Progress } from "@/components/ui/progress";
-import { PageTitle } from "@/components/ui/typography";
 import { StepDuplicateResultsTable } from "@/components/step-duplicates/StepDuplicateResultsTable";
 import { ApplicationArea } from "~/zenstack/models";
-import { ArrowLeft, GitCompare, Loader2, RefreshCw, X } from "lucide-react";
+import { Loader2, RefreshCw, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
-import { Link, useRouter } from "~/lib/navigation";
+import { useRouter } from "~/lib/navigation";
 
 const STORAGE_KEY_PREFIX = "step-scan-job:";
 
@@ -28,6 +38,11 @@ export default function StepDuplicatesPage() {
     ApplicationArea.SharedSteps
   );
   const canEdit = permissions?.canAddEdit;
+
+  // Project (for the header's name/icon), mirroring the other project pages.
+  const { data: project } = useClientQueries(schema).projects.useFindFirst({
+    where: { AND: [{ id: Number(projectId) }, { isDeleted: false }] },
+  });
 
   const [isScanning, setIsScanning] = useState(false);
   const [scanProgress, setScanProgress] = useState<{
@@ -168,63 +183,65 @@ export default function StepDuplicatesPage() {
   }
 
   return (
-    <div className="py-6 px-2">
-      <div className="mb-6 flex items-center gap-2">
-        <Link href={`/projects/shared-steps/${projectId}`}>
-          <Button variant="outline" size="icon" className="me-2">
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-        </Link>
-        <div className="flex-1">
-          <PageTitle as="h1" className="flex gap-1 items-center">
-            <GitCompare className="w-6 h-6 shrink-0" />
-            {t("pageTitle")}
-          </PageTitle>
-          <p className="text-muted-foreground">{t("pageDescription")}</p>
-        </div>
-        <div className="flex items-center gap-3">
-          {isScanning && (
-            <div className="flex items-center gap-2">
-              {scanProgress && scanProgress.total > 0 ? (
-                <>
-                  <Progress
-                    value={Math.round(
-                      (scanProgress.analyzed / scanProgress.total) * 100
-                    )}
-                    className="w-32 h-2"
-                  />
-                  <span className="text-xs text-muted-foreground whitespace-nowrap">
-                    {`${Math.round((scanProgress.analyzed / scanProgress.total) * 100)}%`}
-                  </span>
-                </>
-              ) : (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                  <span className="text-xs text-muted-foreground whitespace-nowrap">
-                    {t("scanning")}
-                  </span>
-                </>
+    <div className="h-full w-full">
+      <Card className="flex h-full w-full flex-col">
+        <PageCardHeader
+          title={t("pageTitle")}
+          helpKey="stepDuplicates"
+          backHref={`/projects/shared-steps/${projectId}`}
+          description={<ProjectHeaderInfo project={project} />}
+          actions={
+            <>
+              {isScanning && (
+                <div className="flex items-center gap-2">
+                  {scanProgress && scanProgress.total > 0 ? (
+                    <>
+                      <Progress
+                        value={Math.round(
+                          (scanProgress.analyzed / scanProgress.total) * 100
+                        )}
+                        className="w-32 h-2"
+                      />
+                      <span className="text-xs text-muted-foreground whitespace-nowrap">
+                        {`${Math.round((scanProgress.analyzed / scanProgress.total) * 100)}%`}
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                      <span className="text-xs text-muted-foreground whitespace-nowrap">
+                        {t("scanning")}
+                      </span>
+                    </>
+                  )}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6"
+                    onClick={handleCancel}
+                    title={t("cancelScan")}
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
               )}
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-6 w-6"
-                onClick={handleCancel}
-                title={t("cancelScan")}
-              >
-                <X className="h-3.5 w-3.5" />
-              </Button>
-            </div>
-          )}
-          {!isScanning && (
-            <Button variant="outline" onClick={handleRescan}>
-              <RefreshCw className="h-4 w-4" />
-              {t("rescan")}
-            </Button>
-          )}
-        </div>
-      </div>
-      <StepDuplicateResultsTable projectId={projectId} />
+              {!isScanning && (
+                <Button
+                  variant="outline"
+                  onClick={handleRescan}
+                  aria-label={t("rescan")}
+                  className={collapsibleActionClass()}
+                >
+                  <ActionButtonContent icon={RefreshCw} label={t("rescan")} />
+                </Button>
+              )}
+            </>
+          }
+        />
+        <CardContent>
+          <StepDuplicateResultsTable projectId={projectId} />
+        </CardContent>
+      </Card>
     </div>
   );
 }

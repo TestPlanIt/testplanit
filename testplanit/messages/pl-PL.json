@@ -6392,6 +6392,7 @@
     "statuses": "Zarządzaj statusami testów",
     "configurations": "Konfiguracje to kombinacja kategorii i wariantów używanych do definiowania środowiska testowego. Na przykład system operacyjny/przeglądarka, serwer testowy, język itp.",
     "categories": "Kategorie grupują powiązane warianty — takie jak Przeglądarka lub System operacyjny — które łączą się, tworząc środowisko testowe.",
+    "stepDuplicates": "Przejrzyj dopasowane sekwencje kroków w różnych przypadkach testowych. Przekształć dopasowania w grupy kroków współdzielonych lub odrzuć fałszywe alarmy.",
     "templates": "Zarządzaj szablonami i polami przypadków testowych",
     "caseFields": "Pola niestandardowe dostępne w przypadkach testowych, przypisane do szablonów, aby kontrolować, które przypadki z nich korzystają.",
     "resultFields": "Pola niestandardowe rejestrowane podczas zapisywania wyniku testu, przypisane do szablonów, aby kontrolować, gdzie mają zastosowanie.",
@@ -7884,7 +7885,6 @@
     },
     "stepDuplicates": {
       "pageTitle": "Duplikaty sekwencji kroków",
-      "pageDescription": "Przejrzyj dopasowane sekwencje kroków w różnych przypadkach testowych. Przekształć dopasowania w grupy kroków współdzielonych lub odrzuć fałszywe alarmy.",
       "noResultsFound": "Nie znaleziono duplikatów sekwencji kroków",
       "noResultsDescription": "Uruchom skanowanie w celu wykrycia powtarzających się sekwencji kroków w przypadkach testowych.",
       "filterPlaceholder": "Filtruj według nazwy sprawy...",

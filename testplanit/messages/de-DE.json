@@ -6392,6 +6392,7 @@
     "statuses": "Teststatus verwalten",
     "configurations": "Konfigurationen sind eine Kombination aus Kategorien und Varianten, die zur Definition einer Testumgebung verwendet werden. Beispiele hierfür sind Betriebssystem/Browser, Testserver, Sprache usw.",
     "categories": "Kategorien gruppieren verwandte Varianten – wie Browser oder Betriebssystem –, die zusammen eine Testumgebung definieren.",
+    "stepDuplicates": "Überprüfen Sie übereinstimmende Schrittsequenzen in den Testfällen. Konvertieren Sie Übereinstimmungen in gemeinsame Schrittgruppen oder verwerfen Sie falsch positive Ergebnisse.",
     "templates": "Testfallvorlagen und Felder verwalten",
     "caseFields": "Benutzerdefinierte Felder, die für Testfälle verfügbar sind und Vorlagen zugewiesen werden, um zu steuern, welche Fälle sie verwenden.",
     "resultFields": "Benutzerdefinierte Felder, die bei der Erfassung eines Testergebnisses erfasst werden und Vorlagen zugewiesen werden, um zu steuern, wo sie angewendet werden.",
@@ -7884,7 +7885,6 @@
     },
     "stepDuplicates": {
       "pageTitle": "Schrittsequenz-Duplikate",
-      "pageDescription": "Überprüfen Sie übereinstimmende Schrittsequenzen in den Testfällen. Konvertieren Sie Übereinstimmungen in gemeinsame Schrittgruppen oder verwerfen Sie falsch positive Ergebnisse.",
       "noResultsFound": "Es wurden keine doppelten Schrittsequenzen gefunden.",
       "noResultsDescription": "Führen Sie einen Scan durch, um wiederkehrende Schrittsequenzen in Ihren Testfällen zu erkennen.",
       "filterPlaceholder": "Nach Fallnamen filtern...",

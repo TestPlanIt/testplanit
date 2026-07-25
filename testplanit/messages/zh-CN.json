@@ -6392,6 +6392,7 @@
     "statuses": "管理测试状态",
     "configurations": "配置是用于定义测试环境的各种类别和变体的组合。例如，操作系统/浏览器、测试服务器、语言等。",
     "categories": "类别将相关变体——例如浏览器或操作系统——分组，组合起来定义测试环境。",
+    "stepDuplicates": "检查测试用例中匹配的步骤序列。将匹配项转换为共享步骤组，或排除误报。",
     "templates": "管理测试用例模板和字段",
     "caseFields": "测试用例可用的自定义字段，分配给模板以控制哪些用例使用它们。",
     "resultFields": "记录测试结果时捕获的自定义字段，分配给模板以控制其应用范围。",
@@ -7884,7 +7885,6 @@
     },
     "stepDuplicates": {
       "pageTitle": "步骤序列重复",
-      "pageDescription": "检查测试用例中匹配的步骤序列。将匹配项转换为共享步骤组，或排除误报。",
       "noResultsFound": "未发现重复步骤。",
       "noResultsDescription": "运行扫描以检测测试用例中重复的步骤序列。",
       "filterPlaceholder": "按案例名称筛选...",

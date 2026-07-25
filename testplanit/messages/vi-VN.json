@@ -6392,6 +6392,7 @@
     "statuses": "Quản lý trạng thái kiểm thử",
     "configurations": "Cấu hình là sự kết hợp của các danh mục và biến thể được sử dụng để xác định môi trường thử nghiệm. Ví dụ: Hệ điều hành/Trình duyệt, Máy chủ thử nghiệm, Ngôn ngữ, v.v.",
     "categories": "Danh mục nhóm các biến thể liên quan — như Trình duyệt hoặc Hệ điều hành — kết hợp lại để xác định môi trường thử nghiệm.",
+    "stepDuplicates": "Xem xét các chuỗi bước trùng khớp giữa các trường hợp thử nghiệm. Chuyển đổi các kết quả trùng khớp thành các nhóm Bước chung hoặc loại bỏ các kết quả dương tính giả.",
     "templates": "Quản lý các mẫu và trường kiểm thử",
     "caseFields": "Các trường tùy chỉnh có sẵn trên trường hợp kiểm thử, được gán cho mẫu để kiểm soát trường hợp nào sử dụng chúng.",
     "resultFields": "Các trường tùy chỉnh được ghi lại khi ghi nhận kết quả kiểm thử, được gán cho mẫu để kiểm soát nơi chúng áp dụng.",
@@ -7884,7 +7885,6 @@
     },
     "stepDuplicates": {
       "pageTitle": "Trình tự các bước trùng lặp",
-      "pageDescription": "Xem xét các chuỗi bước trùng khớp giữa các trường hợp thử nghiệm. Chuyển đổi các kết quả trùng khớp thành các nhóm Bước chung hoặc loại bỏ các kết quả dương tính giả.",
       "noResultsFound": "Không tìm thấy trình tự bước trùng lặp nào.",
       "noResultsDescription": "Chạy quét để phát hiện các chuỗi bước lặp lại trong các trường hợp thử nghiệm của bạn.",
       "filterPlaceholder": "Lọc theo tên vụ việc...",

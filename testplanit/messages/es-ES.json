@@ -6392,6 +6392,7 @@
     "statuses": "Administrar estados de prueba",
     "configurations": "Las configuraciones son una combinación de categorías y variantes utilizadas para definir un entorno de prueba. Por ejemplo, OS/Browser, Servidor de pruebas, Idioma, etc.",
     "categories": "Las categorías agrupan variantes relacionadas, como Navegador o Sistema operativo, que se combinan para definir un entorno de prueba.",
+    "stepDuplicates": "Revise las secuencias de pasos coincidentes en todos los casos de prueba. Convierta las coincidencias en grupos de pasos compartidos o descarte los falsos positivos.",
     "templates": "Administrar plantillas de caso de prueba y campos",
     "caseFields": "Campos personalizados disponibles en los casos de prueba, asignados a plantillas para controlar qué casos los utilizan.",
     "resultFields": "Campos personalizados capturados al registrar un resultado de prueba, asignados a plantillas para controlar dónde se aplican.",
@@ -7884,7 +7885,6 @@
     },
     "stepDuplicates": {
       "pageTitle": "Duplicados de secuencia de pasos",
-      "pageDescription": "Revise las secuencias de pasos coincidentes en todos los casos de prueba. Convierta las coincidencias en grupos de pasos compartidos o descarte los falsos positivos.",
       "noResultsFound": "No se encontraron duplicados en la secuencia de pasos.",
       "noResultsDescription": "Ejecuta un escaneo para detectar secuencias de pasos repetidas en tus casos de prueba.",
       "filterPlaceholder": "Filtrar por nombre del caso...",

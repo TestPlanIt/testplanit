@@ -6392,6 +6392,7 @@
     "statuses": "Teststatussen beheren",
     "configurations": "Configuraties zijn een combinatie van categorieën en varianten die worden gebruikt om een testomgeving te definiëren. Bijvoorbeeld: besturingssysteem/browser, testserver, taal, enz.",
     "categories": "Categorieën groeperen verwante varianten — zoals Browser of Besturingssysteem — die samen een testomgeving definiëren.",
+    "stepDuplicates": "Bekijk overeenkomende stappenreeksen in alle testgevallen. Converteer overeenkomsten naar gedeelde stappengroepen of verwijder valse positieven.",
     "templates": "Testcasesjablonen en velden beheren",
     "caseFields": "Aangepaste velden die beschikbaar zijn voor testgevallen, toegewezen aan sjablonen om te bepalen welke gevallen ze gebruiken.",
     "resultFields": "Aangepaste velden die worden vastgelegd bij het registreren van een testresultaat, toegewezen aan sjablonen om te bepalen waar ze van toepassing zijn.",
@@ -7884,7 +7885,6 @@
     },
     "stepDuplicates": {
       "pageTitle": "Stapvolgorde duplicaten",
-      "pageDescription": "Bekijk overeenkomende stappenreeksen in alle testgevallen. Converteer overeenkomsten naar gedeelde stappengroepen of verwijder valse positieven.",
       "noResultsFound": "Geen dubbele stappen gevonden",
       "noResultsDescription": "Voer een scan uit om herhaalde stappenreeksen in uw testgevallen te detecteren.",
       "filterPlaceholder": "Filteren op zaaknaam...",

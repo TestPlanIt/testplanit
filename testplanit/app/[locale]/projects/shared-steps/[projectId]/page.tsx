@@ -389,7 +389,7 @@ export default function SharedStepsPage() {
             >
               <div className="h-full bg-primary-foreground p-4 flex flex-col">
                 {canEdit && (
-                  <div className="mb-4 flex gap-2 @container">
+                  <div className="mb-4 flex justify-center gap-2 @container">
                     <Button
                       variant="outline"
                       data-testid="manual-shared-steps-btn"

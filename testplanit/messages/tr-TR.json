@@ -6392,6 +6392,7 @@
     "statuses": "Test durumlarını yönetin",
     "configurations": "Konfigürasyonlar, bir test ortamını tanımlamak için kullanılan kategori ve varyantların birleşimidir. Örneğin, İşletim Sistemi/Tarayıcı, Test Sunucusu, Dil vb.",
     "categories": "Kategoriler, bir test ortamını tanımlamak için birleşen ilgili varyantları — Tarayıcı veya İşletim Sistemi gibi — gruplandırır.",
+    "stepDuplicates": "Test senaryoları genelinde eşleşen adım dizilerini inceleyin. Eşleşenleri Paylaşılan Adım gruplarına dönüştürün veya yanlış pozitifleri göz ardı edin.",
     "templates": "Test senaryosu şablonlarını ve alanlarını yönetin",
     "caseFields": "Test senaryolarında kullanılabilen özel alanlar; hangi senaryoların bunları kullanacağını kontrol etmek için şablonlara atanır.",
     "resultFields": "Bir test sonucu kaydedilirken toplanan özel alanlar; nerede uygulanacaklarını kontrol etmek için şablonlara atanır.",
@@ -7884,7 +7885,6 @@
     },
     "stepDuplicates": {
       "pageTitle": "Adım Sırası Tekrarları",
-      "pageDescription": "Test senaryoları genelinde eşleşen adım dizilerini inceleyin. Eşleşenleri Paylaşılan Adım gruplarına dönüştürün veya yanlış pozitifleri göz ardı edin.",
       "noResultsFound": "Hiçbir adım dizisi tekrarı bulunamadı.",
       "noResultsDescription": "Test senaryolarınızda tekrarlanan adım dizilerini tespit etmek için bir tarama çalıştırın.",
       "filterPlaceholder": "Vaka adına göre filtrele...",
