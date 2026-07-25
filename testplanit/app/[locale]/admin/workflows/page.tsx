@@ -240,24 +240,22 @@ function WorkflowComponent() {
           columns={columns}
           onVisibilityChange={setColumnVisibility}
         /> */}
-        <div className="w-fit">
-          <DataTable
-            columns={columns}
-            data={workflows}
-            enableReorder
-            onReorder={(dragIndex: number, hoverIndex: number) =>
-              handleReorder(dragIndex, hoverIndex, workflows, scope)
-            }
-            columnVisibility={columnVisibility}
-            onColumnVisibilityChange={setColumnVisibility}
-            isLoading={isLoading}
-            pageSize={pageSize}
-            itemType={ItemTypes.WORKFLOW}
-            storageKey="admin-workflows"
-            enableColumnReorder={false}
-            enableColumnMenu={false}
-          />
-        </div>
+        <DataTable
+          columns={columns}
+          data={workflows}
+          enableReorder
+          onReorder={(dragIndex: number, hoverIndex: number) =>
+            handleReorder(dragIndex, hoverIndex, workflows, scope)
+          }
+          columnVisibility={columnVisibility}
+          onColumnVisibilityChange={setColumnVisibility}
+          isLoading={isLoading}
+          pageSize={pageSize}
+          itemType={ItemTypes.WORKFLOW}
+          storageKey="admin-workflows"
+          enableColumnReorder={false}
+          enableColumnMenu={false}
+        />
       </CardContent>
     </Card>
   );

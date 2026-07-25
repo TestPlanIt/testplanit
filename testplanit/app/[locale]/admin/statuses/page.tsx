@@ -204,7 +204,7 @@ function Status() {
             columns={columns}
             onVisibilityChange={setColumnVisibility}
           />
-          <div className="mt-4 w-fit">
+          <div className="mt-4">
             <DataTable
               columns={columns}
               data={statuses as any}

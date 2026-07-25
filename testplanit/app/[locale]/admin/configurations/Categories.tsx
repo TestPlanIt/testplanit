@@ -423,7 +423,7 @@ function ConfigCategoriesList() {
   });
 
   const renderCategories = () => (
-    <div className="flex flex-col gap-4 w-fit">
+    <div className="flex flex-col gap-4">
       <Filter
         key="category-filter"
         className="max-w-sm min-w-[250px]"
