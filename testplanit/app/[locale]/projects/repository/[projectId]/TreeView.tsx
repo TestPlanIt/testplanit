@@ -1182,7 +1182,7 @@ const TreeView: React.FC<{
 
         {data && (data.directCaseCount > 0 || data.totalCaseCount > 0) && (
           <span
-            className={`ms-2 text-xs shrink-0 ${isSelected ? "text-secondary-foreground" : "text-muted-foreground"}`}
+            className={`ms-2 pe-px text-xs shrink-0 ${isSelected ? "text-secondary-foreground" : "text-muted-foreground"}`}
           >
             {`(${data.directCaseCount}/${data.totalCaseCount})`}
           </span>
