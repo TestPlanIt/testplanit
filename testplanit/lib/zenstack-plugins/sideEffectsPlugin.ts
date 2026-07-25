@@ -297,10 +297,17 @@ export const sideEffectsPlugin = definePlugin(schema, {
                   select: { autoLockCompositionOnInProgress: true },
                 });
                 if (project?.autoLockCompositionOnInProgress) {
-                  await tx.testRuns.update({
-                    where: { id: row.id },
-                    data: { compositionLockedAt: new Date() },
-                  });
+                  // Raw UPDATE, not tx.testRuns.update: when the triggering
+                  // mutation arrived through the policy client (every
+                  // /api/model call), `tx` carries the policy layer and the
+                  // field-level @deny('update', true) on compositionLockedAt
+                  // rejects the nested write — failing the user's own state
+                  // change with a 422. Raw SQL is the same sanctioned bypass
+                  // the audit-context GUC uses (PolicyPlugin is constructed
+                  // with dangerouslyAllowRawSql for exactly these internal,
+                  // parameterized statements), stays inside the transaction,
+                  // and still fires the DB-level CDC triggers.
+                  await tx.$executeRaw`UPDATE "TestRuns" SET "compositionLockedAt" = NOW() WHERE "id" = ${row.id}`;
                 }
               }
             }

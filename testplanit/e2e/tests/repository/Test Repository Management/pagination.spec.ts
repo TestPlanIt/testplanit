@@ -31,7 +31,7 @@ test.describe("Pagination", () => {
     );
     await page.waitForLoadState("networkidle");
     // Wait for cases table to render
-    await expect(page.locator("text=/of \\d+ items/")).toBeVisible({
+    await expect(page.locator("text=/of \\d+/")).toBeVisible({
       timeout: 10000,
     });
   }
@@ -63,7 +63,7 @@ test.describe("Pagination", () => {
       await expect(paginationNav).toBeVisible({ timeout: 5000 });
 
       // Verify we're on page 1 with 10 items showing
-      const paginationInfo = page.locator("text=/Showing 1-10 of/");
+      const paginationInfo = page.locator("text=/1-10 of/");
       await expect(paginationInfo).toBeVisible({ timeout: 3000 });
     });
 
@@ -77,7 +77,7 @@ test.describe("Pagination", () => {
       await page.waitForLoadState("networkidle");
 
       // Verify page changed - should now show items 11-20
-      const pageInfo = page.locator("text=/Showing 11-20 of/");
+      const pageInfo = page.locator("text=/11-20 of/");
       await expect(pageInfo).toBeVisible({ timeout: 5000 });
     });
   });
@@ -115,7 +115,7 @@ test.describe("Pagination", () => {
       await page.waitForLoadState("networkidle");
 
       // Verify we're on page 2
-      await expect(page.locator("text=/Showing 11-20 of/")).toBeVisible({
+      await expect(page.locator("text=/11-20 of/")).toBeVisible({
         timeout: 5000,
       });
     });
@@ -130,7 +130,7 @@ test.describe("Pagination", () => {
       await page.waitForLoadState("networkidle");
 
       // Verify we're back on page 1
-      await expect(page.locator("text=/Showing 1-10 of/")).toBeVisible({
+      await expect(page.locator("text=/1-10 of/")).toBeVisible({
         timeout: 5000,
       });
     });
@@ -170,7 +170,7 @@ test.describe("Pagination", () => {
       await page.waitForLoadState("networkidle");
 
       // Verify we're on page 3 - should show items 21-30
-      await expect(page.locator("text=/Showing 21-30 of/")).toBeVisible({
+      await expect(page.locator("text=/21-30 of/")).toBeVisible({
         timeout: 5000,
       });
     });
@@ -217,7 +217,7 @@ test.describe("Pagination", () => {
 
     await test.step("Verify 25 items are shown and the button reflects the new size", async () => {
       // Verify more items are shown - should show 1-25
-      await expect(page.locator("text=/Showing 1-25 of/")).toBeVisible({
+      await expect(page.locator("text=/1-25 of/")).toBeVisible({
         timeout: 5000,
       });
 
@@ -252,7 +252,7 @@ test.describe("Pagination", () => {
       await gotoFolder(page, projectId, folderId!);
 
       // Verify we're viewing the correct folder with 25 items
-      await expect(page.locator("text=/of 25 items/")).toBeVisible({
+      await expect(page.locator("text=/of 25/")).toBeVisible({
         timeout: 5000,
       });
 
@@ -261,9 +261,11 @@ test.describe("Pagination", () => {
     });
 
     await test.step("Select the All page-size option", async () => {
-      // Find and click the page size button - use the specific button with Page Size text
+      // The page-size button shows the current size as "<n> items"; match the
+      // number-prefixed form so it can't collide with another "items" button.
       const pageSizeButton = page
-        .locator('button:has-text("Page Size")')
+        .locator("button")
+        .filter({ hasText: /\d+ items/ })
         .first();
       await expect(pageSizeButton).toBeVisible({ timeout: 5000 });
       // Ensure button is enabled before clicking
@@ -283,7 +285,7 @@ test.describe("Pagination", () => {
 
     await test.step("Verify all 25 items show and pagination is hidden", async () => {
       // Verify all items are shown - should show 1-25 of 25
-      await expect(page.locator("text=/Showing 1-25 of 25/")).toBeVisible({
+      await expect(page.locator("text=/1-25 of 25/")).toBeVisible({
         timeout: 5000,
       });
 
@@ -410,7 +412,7 @@ test.describe("Pagination", () => {
       await gotoFolder(page, projectId, folderId!);
 
       // Verify pagination info shows correct total
-      const paginationInfo = page.locator("text=/Showing 1-10 of 23/");
+      const paginationInfo = page.locator("text=/1-10 of 23/");
       await expect(paginationInfo).toBeVisible({ timeout: 5000 });
     });
   });
@@ -494,7 +496,7 @@ test.describe("Pagination", () => {
       await expect(paginationNav).toBeVisible({ timeout: 5000 });
 
       // Verify we're on page 1
-      await expect(page.locator("text=/Showing 1-10 of 70/")).toBeVisible({
+      await expect(page.locator("text=/1-10 of 70/")).toBeVisible({
         timeout: 3000,
       });
     });
@@ -526,7 +528,7 @@ test.describe("Pagination", () => {
         await page.waitForLoadState("networkidle");
 
         // Verify we jumped to page 5 - should show items 41-50
-        await expect(page.locator("text=/Showing 41-50 of/")).toBeVisible({
+        await expect(page.locator("text=/41-50 of/")).toBeVisible({
           timeout: 5000,
         });
       } else {
@@ -539,7 +541,7 @@ test.describe("Pagination", () => {
         if (await page5Link.isVisible()) {
           await page5Link.click();
           await page.waitForLoadState("networkidle");
-          await expect(page.locator("text=/Showing 41-50 of/")).toBeVisible({
+          await expect(page.locator("text=/41-50 of/")).toBeVisible({
             timeout: 5000,
           });
         }
@@ -571,7 +573,7 @@ test.describe("Pagination", () => {
       await gotoFolder(page, projectId, folderId!);
 
       // Verify we're on the correct folder
-      await expect(page.locator("text=/of 50 items/")).toBeVisible({
+      await expect(page.locator("text=/of 50/")).toBeVisible({
         timeout: 5000,
       });
 
@@ -589,7 +591,7 @@ test.describe("Pagination", () => {
       await page.waitForLoadState("networkidle");
 
       // Verify we're on page 5 - should show items 41-50
-      await expect(page.locator("text=/Showing 41-50 of 50/")).toBeVisible({
+      await expect(page.locator("text=/41-50 of 50/")).toBeVisible({
         timeout: 5000,
       });
     });
@@ -620,7 +622,7 @@ test.describe("Pagination", () => {
       await gotoFolder(page, projectId, folderId!);
 
       // Verify we're on the correct folder
-      await expect(page.locator("text=/of 30 items/")).toBeVisible({
+      await expect(page.locator("text=/of 30/")).toBeVisible({
         timeout: 5000,
       });
 
@@ -634,7 +636,7 @@ test.describe("Pagination", () => {
       await page.waitForLoadState("networkidle");
 
       // Verify we're on page 2
-      await expect(page.locator("text=/Showing 11-20 of/")).toBeVisible({
+      await expect(page.locator("text=/11-20 of/")).toBeVisible({
         timeout: 5000,
       });
     });
@@ -645,10 +647,11 @@ test.describe("Pagination", () => {
       await filterInput.fill("Alpha");
       await page.waitForLoadState("networkidle");
 
-      // After filtering, results should start from the beginning
-      // The filtered set should show fewer items starting from 1
-      const filteredInfo = page.locator("text=/Showing 1-/");
-      await expect(filteredInfo).toBeVisible({ timeout: 5000 });
+      // After filtering, results should start from the beginning: the
+      // pagination info reads "1-<end> of <total>". Match that shape
+      // specifically so it can't collide with other "1-" text on the page.
+      const filteredInfo = page.locator("text=/1-\\d+ of \\d+/");
+      await expect(filteredInfo.first()).toBeVisible({ timeout: 5000 });
     });
   });
 });

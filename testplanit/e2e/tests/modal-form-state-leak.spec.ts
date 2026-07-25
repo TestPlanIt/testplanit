@@ -356,7 +356,10 @@ const adminCases: AdminModalTestCase[] = [
   {
     label: "Milestone Types",
     url: "/en-US/admin/milestones",
-    addButton: (page) => page.getByRole("button", { name: /add/i }).first(),
+    // "Bulk Add Milestones" (the wizard) precedes the type-add button in the
+    // DOM, so a generic /add/i .first() opens the wrong dialog.
+    addButton: (page) =>
+      page.getByRole("button", { name: "Add Milestone Type" }).first(),
     // Both Add and Edit dialogs start with an icon picker that renders a
     // react-select combobox. The default filter drops comboboxes, so the
     // name Input is reached as the first matching input.

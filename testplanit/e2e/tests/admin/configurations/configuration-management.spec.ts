@@ -367,9 +367,10 @@ test.describe("Configuration Management - Variant CRUD", () => {
         const categoryRow = getCategoryRow(page, categoryName);
         await expect(categoryRow).toBeVisible({ timeout: 10000 });
 
-        const expandButton = categoryRow.getByRole("button", {
-          name: "Expand",
-        });
+        // Expansion toggles by clicking the category name (no Expand button).
+        const expandButton = categoryRow
+          .getByText(categoryName, { exact: true })
+          .first();
         await expandButton.click();
 
         // The expanded content is rendered in the TR immediately following our category TR.
@@ -408,9 +409,10 @@ test.describe("Configuration Management - Variant CRUD", () => {
 
         const refreshedCategoryRow = getCategoryRow(page, categoryName);
         await expect(refreshedCategoryRow).toBeVisible({ timeout: 10000 });
-        const refreshedExpandButton = refreshedCategoryRow.getByRole("button", {
-          name: "Expand",
-        });
+        // Expansion toggles by clicking the category name (no Expand button).
+        const refreshedExpandButton = refreshedCategoryRow
+          .getByText(categoryName, { exact: true })
+          .first();
         await refreshedExpandButton.click();
 
         // The expanded row after reload
@@ -452,9 +454,10 @@ test.describe("Configuration Management - Variant CRUD", () => {
         const categoryRow = getCategoryRow(page, categoryName);
         await expect(categoryRow).toBeVisible({ timeout: 10000 });
 
-        const expandButton = categoryRow.getByRole("button", {
-          name: "Expand",
-        });
+        // Expansion toggles by clicking the category name (no Expand button).
+        const expandButton = categoryRow
+          .getByText(categoryName, { exact: true })
+          .first();
         await expandButton.click();
 
         // The expanded content is in the TR immediately following our category TR
@@ -468,17 +471,16 @@ test.describe("Configuration Management - Variant CRUD", () => {
           expandedRow.getByText(variantName, { exact: true }).first()
         ).toBeVisible({ timeout: 10000 });
 
-        // Find the variant list item (li) containing our variant name within the expanded row
-        const variantItem = expandedRow
-          .locator("li")
+        // Each variant renders as its own sub-row <tr> with aria-labelled
+        // Edit/Delete buttons in the actions cell.
+        const variantItem = page
+          .locator("tr")
           .filter({ hasText: variantName })
           .first();
 
-        // Edit button is the first button in the actions div at the end of the variant item
-        // The variant item structure: [Switch][Label] | [EditVariantModal][DeleteVariantModal]
-        // EditVariantModal renders a link Button with SquarePen icon (p-0)
-        const variantActionsDiv = variantItem.locator("div").last();
-        const editVariantButton = variantActionsDiv.getByRole("button").first();
+        const editVariantButton = variantItem
+          .getByRole("button", { name: "Edit" })
+          .first();
         await expect(editVariantButton).toBeVisible({ timeout: 5000 });
         await editVariantButton.click();
       });
@@ -507,9 +509,10 @@ test.describe("Configuration Management - Variant CRUD", () => {
         // Re-expand the category row to see updated variant
         const refreshedCategoryRow = getCategoryRow(page, categoryName);
         await expect(refreshedCategoryRow).toBeVisible({ timeout: 10000 });
-        const refreshedExpandButton = refreshedCategoryRow.getByRole("button", {
-          name: "Expand",
-        });
+        // Expansion toggles by clicking the category name (no Expand button).
+        const refreshedExpandButton = refreshedCategoryRow
+          .getByText(categoryName, { exact: true })
+          .first();
         await refreshedExpandButton.click();
 
         // Verify updated variant name appears in the expanded section
@@ -549,9 +552,10 @@ test.describe("Configuration Management - Variant CRUD", () => {
         const categoryRow = getCategoryRow(page, categoryName);
         await expect(categoryRow).toBeVisible({ timeout: 10000 });
 
-        const expandButton = categoryRow.getByRole("button", {
-          name: "Expand",
-        });
+        // Expansion toggles by clicking the category name (no Expand button).
+        const expandButton = categoryRow
+          .getByText(categoryName, { exact: true })
+          .first();
         await expandButton.click();
 
         // The expanded content is in the TR immediately following our category TR
@@ -566,16 +570,16 @@ test.describe("Configuration Management - Variant CRUD", () => {
         ).toBeVisible({ timeout: 10000 });
 
         // Find the variant list item within the expanded row
-        const variantItem = expandedRow
-          .locator("li")
+        // Each variant renders as its own sub-row <tr> with aria-labelled
+        // Edit/Delete buttons in the actions cell.
+        const variantItem = page
+          .locator("tr")
           .filter({ hasText: variantName })
           .first();
 
-        // Delete button is the last button in the variant item actions div
-        const variantActionsDiv = variantItem.locator("div").last();
-        const deleteVariantButton = variantActionsDiv
-          .getByRole("button")
-          .last();
+        const deleteVariantButton = variantItem
+          .getByRole("button", { name: "Delete" })
+          .first();
         await expect(deleteVariantButton).toBeVisible({ timeout: 5000 });
         await deleteVariantButton.click();
       });
@@ -595,10 +599,9 @@ test.describe("Configuration Management - Variant CRUD", () => {
       });
 
       await test.step("Verify the variant is gone", async () => {
-        // Verify variant text is gone from the expanded section
-        // Use the li element to scope — after deletion the li should disappear
+        // After deletion the variant's sub-row disappears
         await expect(
-          page.locator("li").filter({ hasText: variantName })
+          page.locator("tr").filter({ hasText: variantName })
         ).toHaveCount(0, { timeout: 10000 });
       });
     } finally {

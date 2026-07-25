@@ -382,7 +382,7 @@ test.describe("User Profile Management", () => {
       await themeButton.click();
 
       // Select Dark theme from dropdown
-      await page.getByRole("option", { name: /dark/i }).click();
+      await page.getByRole("option", { name: "Dark", exact: true }).click();
 
       // Wait for selection
       await page.waitForTimeout(300);
@@ -616,7 +616,7 @@ test.describe("User Profile Management", () => {
         const themeSelect = page.getByTestId("profile-theme-select");
         await expect(themeSelect).toBeVisible({ timeout: 5000 });
         await themeSelect.click();
-        await page.getByRole("option", { name: /dark/i }).click();
+        await page.getByRole("option", { name: "Dark", exact: true }).click();
 
         // Wait for the form to update and verify the theme selection changed
         await expect(themeSelect).toContainText("Dark");

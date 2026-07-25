@@ -243,7 +243,7 @@ test.describe("Admin Share Management", () => {
       await page.waitForLoadState("networkidle");
 
       // Verify page title
-      const pageTitle = page.locator('h1:has-text("Manage All Shares")');
+      const pageTitle = page.getByText("Manage All Shares").first();
       await expect(pageTitle).toBeVisible({ timeout: 5000 });
 
       // Verify both shares are listed

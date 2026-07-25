@@ -138,7 +138,7 @@ test.describe("Repository — navigation & history", () => {
       }, projectId);
 
       await page.waitForURL(/\/projects\/repository\/\d+/);
-      await page.waitForURL(/[?&]view=folders/, { timeout: 10000 });
+      await page.waitForURL(/[?&]node=\d+/, { timeout: 10000 });
       await page.waitForLoadState("networkidle");
       await page.waitForTimeout(300); // settle popstate + retry effects
     });
@@ -146,7 +146,8 @@ test.describe("Repository — navigation & history", () => {
     await test.step("Verify the auto-populated URL params", async () => {
       // Functional: URL has the auto-populated params we expect.
       const url = new URL(page.url());
-      expect(url.searchParams.get("view")).toBe("folders");
+      // The default view is no longer written to the URL on load; auto-select
+      // records the landing folder (plus page/pageSize) only.
       expect(url.searchParams.get("node")).toMatch(/^\d+$/);
       expect(url.searchParams.get("page")).toBe("1");
       expect(url.searchParams.get("pageSize")).toMatch(/^\d+$/);
@@ -194,7 +195,7 @@ test.describe("Repository — navigation & history", () => {
         window.location.href = `/en-US/projects/repository/${id}`;
       }, projectId);
       await page.waitForURL(/\/projects\/repository\/\d+/);
-      await page.waitForURL(/[?&]view=folders/, { timeout: 10000 });
+      await page.waitForURL(/[?&]node=\d+/, { timeout: 10000 });
       await page.waitForLoadState("networkidle");
       await page.waitForTimeout(300);
     });
@@ -229,7 +230,7 @@ test.describe("Repository — navigation & history", () => {
       await installHistoryTracker(page);
       await repositoryPage.goto(projectId);
       // Wait for auto-select to land on first folder.
-      await page.waitForURL(/[?&]view=folders/, { timeout: 10000 });
+      await page.waitForURL(/[?&]node=\d+/, { timeout: 10000 });
       await page.waitForTimeout(300);
 
       await resetHistoryLog(page);
@@ -281,7 +282,7 @@ test.describe("Repository — navigation & history", () => {
     await test.step("Open the repository, wait for auto-select, and reset the log", async () => {
       await installHistoryTracker(page);
       await repositoryPage.goto(projectId);
-      await page.waitForURL(/[?&]view=folders/, { timeout: 10000 });
+      await page.waitForURL(/[?&]node=\d+/, { timeout: 10000 });
       await page.waitForTimeout(300);
 
       await resetHistoryLog(page);

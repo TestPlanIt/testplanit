@@ -49,7 +49,7 @@ test.describe("Admin SSO Provider Management", () => {
     await test.step("Open the Google config dialog, verify inputs, then close it", async () => {
       // Find the Setup/Edit button for Google — button with "Setup" or "Edit" text
       const googleSetupBtn = page
-        .getByRole("button", { name: /setup|edit/i })
+        .getByRole("button", { name: /setup|edit|configure/i })
         .first();
       const isSetupVisible = await googleSetupBtn
         .isVisible()
@@ -113,7 +113,7 @@ test.describe("Admin SSO Provider Management", () => {
 
         // Find the Setup/Edit button for Google OAuth
         const setupBtn = page
-          .getByRole("button", { name: /setup|edit/i })
+          .getByRole("button", { name: /setup|edit|configure/i })
           .first();
         await expect(setupBtn).toBeVisible({ timeout: 10000 });
         await setupBtn.click();

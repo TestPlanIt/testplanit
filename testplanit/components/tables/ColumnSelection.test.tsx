@@ -465,6 +465,7 @@ describe("restore vs. URL", () => {
 
     expect(onVisibilityChange).toHaveBeenCalled(); // mounted + computed state
     expect(navMocks.push).not.toHaveBeenCalled(); // but no URL written
+    expect(navMocks.replace).not.toHaveBeenCalled();
   });
 
   it("updates the ?columns= URL on an explicit change when column memory is OFF", async () => {
@@ -482,8 +483,8 @@ describe("restore vs. URL", () => {
     await user.click(screen.getByTestId("column-selection-trigger"));
     await user.click(await screen.findByRole("checkbox", { name: /Col B/ }));
 
-    await waitFor(() => expect(navMocks.push).toHaveBeenCalled());
-    const url = navMocks.push.mock.calls.at(-1)?.[0] as string;
+    await waitFor(() => expect(navMocks.replace).toHaveBeenCalled());
+    const url = navMocks.replace.mock.calls.at(-1)?.[0] as string;
     expect(url).toContain("columns=");
   });
 
@@ -510,8 +511,8 @@ describe("restore vs. URL", () => {
       expect(readStoredColumnVisibility("mem-view")?.colB).toBe(false)
     );
     // ...and the shareable URL is kept in sync.
-    await waitFor(() => expect(navMocks.push).toHaveBeenCalled());
-    expect(navMocks.push.mock.calls.at(-1)?.[0] as string).toContain(
+    await waitFor(() => expect(navMocks.replace).toHaveBeenCalled());
+    expect(navMocks.replace.mock.calls.at(-1)?.[0] as string).toContain(
       "columns="
     );
   });

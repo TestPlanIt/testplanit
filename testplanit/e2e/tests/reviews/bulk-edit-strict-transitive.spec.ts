@@ -436,6 +436,10 @@ test.describe("Bulk-edit strict transitive gating", () => {
     // So one bulk action is blocked across two different gates.
     const nameLow = `Mix-Low ${Date.now()}`;
     const nameMid = `Mix-Mid ${Date.now()}`;
+    // The create-time remap rewrites any state at-or-beyond a gate down to
+    // the project default while gating is active, so park the flag off while
+    // positioning the fixture cases past the gates, then re-enable it.
+    await setProjectReviewWorkflowEnabled(request, url, projectId, false);
     await api.createTestCaseWithState(
       projectId,
       folderId,
@@ -443,6 +447,7 @@ test.describe("Bulk-edit strict transitive gating", () => {
       currentStateId
     );
     await api.createTestCaseWithState(projectId, folderId, nameMid, mid.id);
+    await setProjectReviewWorkflowEnabled(request, url, projectId, true);
 
     await page.goto(
       `/en-US/projects/repository/${projectId}/?node=${folderId}`
@@ -513,6 +518,9 @@ test.describe("Bulk-edit strict transitive gating", () => {
     //     so it must NOT appear among the blocked cases.
     const nameFwd = `Dir-Fwd ${Date.now()}`;
     const nameBack = `Dir-Back ${Date.now()}`;
+    // See above: position the cases with gating off so the create-time remap
+    // does not pull nameBack down to the default state.
+    await setProjectReviewWorkflowEnabled(request, url, projectId, false);
     await api.createTestCaseWithState(
       projectId,
       folderId,
@@ -520,6 +528,7 @@ test.describe("Bulk-edit strict transitive gating", () => {
       currentStateId
     );
     await api.createTestCaseWithState(projectId, folderId, nameBack, mid.id);
+    await setProjectReviewWorkflowEnabled(request, url, projectId, true);
 
     await page.goto(
       `/en-US/projects/repository/${projectId}/?node=${folderId}`

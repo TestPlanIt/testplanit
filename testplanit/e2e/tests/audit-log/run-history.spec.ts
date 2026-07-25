@@ -24,7 +24,7 @@ async function waitForRunRows(page: Page): Promise<boolean> {
     const row = page.locator('[data-testid^="run-audit-log-row-"]').first();
     if (await row.isVisible({ timeout: 3000 }).catch(() => false)) return true;
     await page.keyboard.press("Escape");
-    await page.getByTestId("run-history-trigger").click();
+    await page.getByRole("button", { name: "Activity Log" }).first().click();
     await expect(page.getByTestId("run-audit-log-table")).toBeVisible({
       timeout: 5000,
     });
@@ -50,14 +50,18 @@ test.describe("Test Run — Activity (audit history)", () => {
     await test.step("Open the run detail page", async () => {
       await page.goto(`/en-US/projects/runs/${projectId}/${runId}`);
       await page.waitForLoadState("networkidle");
-      await expect(page.getByTestId("run-history-trigger")).toBeVisible({
+      await expect(
+        page.getByRole("button", { name: "Activity Log" }).first()
+      ).toBeVisible({
         timeout: 15000,
       });
     });
 
     await test.step("Open the Activity (history) sheet — title, table, and headers render", async () => {
-      await page.getByTestId("run-history-trigger").click();
-      await expect(page.getByText("Activity Log")).toBeVisible({
+      await page.getByRole("button", { name: "Activity Log" }).first().click();
+      await expect(
+        page.getByRole("heading", { name: "Activity Log" })
+      ).toBeVisible({
         timeout: 10000,
       });
       const table = page.getByTestId("run-audit-log-table");
