@@ -976,6 +976,7 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
                     isNew={false}
                     onDuplicate={onDuplicateTestRunParam}
                     summaryData={summariesData?.summaries[testRun.id]}
+                    pendingRequest={pendingByTestRunId.get(testRun.id)}
                   />
                 </DraggableTestRunWrapper>
               </div>

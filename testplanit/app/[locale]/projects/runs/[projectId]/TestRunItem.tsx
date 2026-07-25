@@ -264,10 +264,10 @@ const TestRunItem: React.FC<TestRunItemProps> = ({
         {/* Left Column - Name & Note */}
         <div className="flex items-center min-w-0">
           <div className="flex-1 min-w-0">
-            <div className="min-w-0 w-full">
+            <div className="flex items-center min-w-0 w-full">
               <Link
                 href={`/projects/runs/${projectId}/${testRun.id}`}
-                className="group inline-flex items-center gap-1 max-w-full"
+                className="group inline-flex items-center gap-1 min-w-0 max-w-full"
               >
                 <h3 className="text-sm font-semibold flex items-center gap-1 hover:text-primary min-w-0">
                   {isRecentlyCreated && (
@@ -331,7 +331,7 @@ const TestRunItem: React.FC<TestRunItemProps> = ({
                   <LinkIcon className="w-4 h-4 inline ms-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
                 </h3>
               </Link>
-              <div className="inline-flex items-center ms-1 align-middle">
+              <div className="flex items-center ms-1 shrink-0">
                 <PendingReviewBadge pendingRequest={pendingRequest} />
               </div>
             </div>
