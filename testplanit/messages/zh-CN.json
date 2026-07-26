@@ -2529,9 +2529,9 @@
       "assignments": {
         "title": "作业",
         "empty": "没有待处理的作业。",
-        "reviews": "{count, plural, =1 {# Review} other {# Reviews}}",
+        "reviews": "{count, plural, =1 {# 条评审} other {# 条评审}}",
         "remaining": "剩余",
-        "pendingRuns": "{count, plural, =1 {# Active Test Run includes} other {# Active Test Runs include}} {cases, plural, =1 {# test case} other {# test cases}}"
+        "pendingRuns": "{count, plural, =1 {# 个活跃测试运行包含} other {# 个活跃测试运行包含}} {cases, plural, =1 {# 个测试用例} other {# 个测试用例}}"
       },
       "directory": {
         "title": "目录配置文件",
@@ -6388,7 +6388,8 @@
     "starts": "开始：",
     "scheduledCompletion": "预计完工日期：",
     "estWorkEffort": "预计工作量：",
-    "noTasks": "甘特图中没有要显示的任务。"
+    "noTasks": "甘特图中没有要显示的任务。",
+    "businessHours": "{hours, number, ::.0} 个工作小时"
   },
   "help": {
     "auditLogs": "查看系统范围内的审计跟踪，以进行安全性和合规性跟踪",
@@ -8120,7 +8121,7 @@
   },
   "comments": {
     "title": "评论",
-    "titleWithCount": "{count, plural, =0 {No Comments} =1 {# Comment} other {# Comments}}",
+    "titleWithCount": "{count, plural, =0 {无评论} =1 {# 条评论} other {# 条评论}}",
     "placeholder": "请留言……（使用@提及用户）",
     "editPlaceholder": "编辑您的评论……",
     "postComment": "发表评论",

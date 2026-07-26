@@ -6388,7 +6388,8 @@
     "starts": "Başlangıç:",
     "scheduledCompletion": "Planlanan Tamamlanma Tarihi:",
     "estWorkEffort": "Tahmini Çalışma Yükü:",
-    "noTasks": "Gantt grafiğinde görüntülenecek görev yok."
+    "noTasks": "Gantt grafiğinde görüntülenecek görev yok.",
+    "businessHours": "{hours, number, ::.0} iş saati"
   },
   "help": {
     "auditLogs": "Güvenlik ve uyumluluk takibi için sistem genelindeki denetim kaydını görüntüleyin",

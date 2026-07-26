@@ -6388,7 +6388,8 @@
     "starts": "Starts:",
     "scheduledCompletion": "Geplante Fertigstellung:",
     "estWorkEffort": "Geschätzter Arbeitsaufwand:",
-    "noTasks": "Im Gantt-Diagramm sind keine Aufgaben anzuzeigen."
+    "noTasks": "Im Gantt-Diagramm sind keine Aufgaben anzuzeigen.",
+    "businessHours": "{hours, number, ::.0} Geschäftsstunden"
   },
   "help": {
     "auditLogs": "Systemweites Prüfprotokoll zur Überwachung von Sicherheit und Compliance anzeigen",

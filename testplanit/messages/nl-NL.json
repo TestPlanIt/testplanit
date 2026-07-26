@@ -6388,7 +6388,8 @@
     "starts": "Begint:",
     "scheduledCompletion": "Geplande voltooiing:",
     "estWorkEffort": "Geschatte werkinspanning:",
-    "noTasks": "Er zijn geen taken om weer te geven in het Gantt-diagram."
+    "noTasks": "Er zijn geen taken om weer te geven in het Gantt-diagram.",
+    "businessHours": "{hours, number, ::.0} werkuren"
   },
   "help": {
     "auditLogs": "Bekijk het systeemwijde auditlogboek voor het bijhouden van beveiliging en naleving",

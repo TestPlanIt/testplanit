@@ -6388,7 +6388,8 @@
     "starts": "開始:",
     "scheduledCompletion": "完了予定日:",
     "estWorkEffort": "推定作業量:",
-    "noTasks": "ガントチャートに表示するタスクがありません。"
+    "noTasks": "ガントチャートに表示するタスクがありません。",
+    "businessHours": "{hours, number, ::.0}営業時間"
   },
   "help": {
     "auditLogs": "セキュリティとコンプライアンスの追跡のためのシステム全体の監査証跡を表示する",

@@ -6388,7 +6388,8 @@
     "starts": "Początek:",
     "scheduledCompletion": "Planowane zakończenie:",
     "estWorkEffort": "Szacowany nakład pracy:",
-    "noTasks": "Brak zadań do wyświetlenia na wykresie Gantta."
+    "noTasks": "Brak zadań do wyświetlenia na wykresie Gantta.",
+    "businessHours": "{hours, number, ::.0} godziny roboczej"
   },
   "help": {
     "auditLogs": "Przeglądaj ścieżkę audytu w całym systemie, aby śledzić bezpieczeństwo i zgodność",

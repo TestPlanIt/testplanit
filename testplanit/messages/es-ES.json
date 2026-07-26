@@ -6388,7 +6388,8 @@
     "starts": "Empeza:",
     "scheduledCompletion": "Finalización programada:",
     "estWorkEffort": "Est. Effort:",
-    "noTasks": "No hay tareas que mostrar en el gráfico de Gantt."
+    "noTasks": "No hay tareas que mostrar en el gráfico de Gantt.",
+    "businessHours": "{hours, number, ::.0} horas laborables"
   },
   "help": {
     "auditLogs": "Visualizar el registro de auditoría de todo el sistema para el seguimiento de la seguridad y el cumplimiento",

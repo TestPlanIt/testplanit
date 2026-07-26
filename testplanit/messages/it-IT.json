@@ -6388,7 +6388,8 @@
     "starts": "Inizio:",
     "scheduledCompletion": "Completamento programmato:",
     "estWorkEffort": "Sforzo lavorativo stimato:",
-    "noTasks": "Nessuna attività da visualizzare nel diagramma di Gantt."
+    "noTasks": "Nessuna attività da visualizzare nel diagramma di Gantt.",
+    "businessHours": "{hours, number, ::.0} ore lavorative"
   },
   "help": {
     "auditLogs": "Visualizza il registro di controllo a livello di sistema per il monitoraggio della sicurezza e della conformità",

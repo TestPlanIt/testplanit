@@ -2529,7 +2529,7 @@
       "assignments": {
         "title": "과제",
         "empty": "진행 중인 과제가 없습니다.",
-        "reviews": "{count, plural, =1 {# Review} other {# Reviews}}",
+        "reviews": "{count, plural, =1 {리뷰 #개} other {리뷰 #개}}",
         "remaining": "남음",
         "pendingRuns": "{count, plural, =1 {# Active Test Run includes} other {# Active Test Runs include}} {cases, plural, =1 {# test case} other {# test cases}}"
       },
@@ -6388,7 +6388,8 @@
     "starts": "시작:",
     "scheduledCompletion": "예정 완료일:",
     "estWorkEffort": "예상 작업량:",
-    "noTasks": "간트 차트에 표시할 작업이 없습니다."
+    "noTasks": "간트 차트에 표시할 작업이 없습니다.",
+    "businessHours": "업무 시간 {hours, number, ::.0}시간"
   },
   "help": {
     "auditLogs": "보안 및 규정 준수 추적을 위한 시스템 전반의 감사 기록을 확인하세요",
@@ -8120,7 +8121,7 @@
   },
   "comments": {
     "title": "댓글",
-    "titleWithCount": "{count, plural, =0 {No Comments} =1 {# Comment} other {# Comments}}",
+    "titleWithCount": "{count, plural, =0 {댓글 없음} =1 {댓글 #개} other {댓글 #개}}",
     "placeholder": "댓글을 남겨주세요... (댓글을 달려면 @를 사용하세요)",
     "editPlaceholder": "댓글을 수정하세요...",
     "postComment": "댓글을 남겨주세요",

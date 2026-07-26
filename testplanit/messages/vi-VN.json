@@ -6388,7 +6388,8 @@
     "starts": "Bắt đầu:",
     "scheduledCompletion": "Dự kiến hoàn thành:",
     "estWorkEffort": "Ước tính khối lượng công việc:",
-    "noTasks": "Không có nhiệm vụ nào để hiển thị trên biểu đồ Gantt."
+    "noTasks": "Không có nhiệm vụ nào để hiển thị trên biểu đồ Gantt.",
+    "businessHours": "{hours, number, ::.0} giờ làm việc"
   },
   "help": {
     "auditLogs": "Xem nhật ký kiểm toán toàn hệ thống để theo dõi bảo mật và tuân thủ",
