@@ -112,6 +112,13 @@ jobs:
       - name: Production build
         run: pnpm build
 
+      # playwright.config.ts sets `webServer: undefined` on CI and expects an
+      # externally started server (same contract as a11y-smoke.yml).
+      - name: Start app server
+        run: |
+          pnpm start --port 3002 &
+          pnpm exec wait-on -t 120000 http://localhost:3002
+
       - name: Seed the E2E database
         run: pnpm exec tsx e2e/setup-db.ts
 
