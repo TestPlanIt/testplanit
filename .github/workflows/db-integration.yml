@@ -75,7 +75,10 @@ jobs:
         run: pnpm generate
 
       - name: Push schema
-        run: pnpm exec prisma db push --skip-generate
+        # ZenStack v3 pushes directly from schema.zmodel (there is no prisma
+        # binary in this workspace); the CI database is ephemeral, so accept
+        # destructive changes without prompting.
+        run: pnpm exec zenstack db push --schema schema.zmodel --accept-data-loss --no-version-check
 
       - name: Seed baseline data (roles, workflows, admin)
         run: pnpm exec tsx db/seed.ts
