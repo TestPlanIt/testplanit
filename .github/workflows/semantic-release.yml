@@ -22,7 +22,9 @@ permissions:
 jobs:
   release:
     name: Release
-    runs-on: [self-hosted]
+    # GitHub-hosted: pure GitHub/registry operations, nothing machine-local.
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
     # Skip release commits on push; manual dispatch always runs.
     if: ${{ github.event_name == 'workflow_dispatch' || !contains(github.event.head_commit.message, '[skip ci]') }}
     env:

@@ -27,7 +27,9 @@ permissions:
 jobs:
   prerelease:
     name: Create GitHub pre-release
-    runs-on: [self-hosted]
+    # GitHub-hosted: just `gh release create`, nothing machine-local.
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Checkout
         uses: actions/checkout@v7

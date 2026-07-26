@@ -12,7 +12,11 @@ permissions:
 jobs:
   test:
     name: Test
-    runs-on: [self-hosted]
+    # GitHub-hosted: free for this public repo, and it keeps fork-PR code off
+    # the self-hosted boxes (this is the only runner-sensitive workflow that
+    # triggers on pull_request).
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
     # Skip CI on release commits from semantic-release
     if: "!contains(github.event.head_commit.message, '[skip ci]')"
     env:
@@ -39,6 +43,8 @@ jobs:
         uses: actions/setup-node@v5
         with:
           node-version: '24'
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
 
       - name: Install dependencies
         # --frozen-lockfile is the pre-merge lockfile-integrity gate: it fails
