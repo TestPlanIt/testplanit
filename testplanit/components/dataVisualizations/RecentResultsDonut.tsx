@@ -1,7 +1,7 @@
 "use client";
 
 import * as d3 from "d3";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import React, { useEffect, useRef } from "react";
 import useResponsiveSVG from "~/hooks/useResponsiveSVG";
 
@@ -33,6 +33,7 @@ const RecentResultsDonut: React.FC<RecentResultsDonutProps> = ({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const { width, height } = useResponsiveSVG(containerRef);
   const t = useTranslations();
+  const locale = useLocale();
 
   // Effect to manage tooltip DIV in document.body
   useEffect(() => {
@@ -209,7 +210,7 @@ const RecentResultsDonut: React.FC<RecentResultsDonutProps> = ({
         .style("font-size", `${segmentLabelFontSize * 0.9}px`)
         .style("font-weight", "normal")
         .style("opacity", "0")
-        .text(d.data.formattedValue ?? d.data.value.toString());
+        .text(d.data.formattedValue ?? d.data.value.toLocaleString(locale));
 
       // Get bounding boxes
       const nameBBox = (nameText.node() as SVGTextElement).getBBox();
@@ -277,7 +278,7 @@ const RecentResultsDonut: React.FC<RecentResultsDonutProps> = ({
       .style("font-size", `${centerTextFontSize}px`)
       .style("font-weight", "bold")
       .style("opacity", "0")
-      .text(formattedTotal ?? totalCount);
+      .text(formattedTotal ?? totalCount.toLocaleString(locale));
 
     // Get combined bounding box
     const labelBBox = (centerLabelText.node() as SVGTextElement).getBBox();
@@ -319,7 +320,7 @@ const RecentResultsDonut: React.FC<RecentResultsDonutProps> = ({
       .duration(600)
       .ease(d3.easeQuadOut)
       .style("opacity", 1);
-  }, [data, width, height, isZoomed, t, formattedTotal, centerLabel]);
+  }, [data, width, height, isZoomed, t, formattedTotal, centerLabel, locale]);
 
   return (
     <div

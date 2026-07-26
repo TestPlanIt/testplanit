@@ -6,7 +6,7 @@ import { badgeVariants } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { SessionsWhereInput } from "~/zenstack/input";
 import { Compass } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import React, { useCallback, useMemo } from "react";
 import { cn } from "~/utils";
 
@@ -37,6 +37,7 @@ export const SessionsListDisplay: React.FC<SessionsListProps> = ({
   pageSize = DEFAULT_PAGE_SIZE,
   isLoading = false,
 }) => {
+  const locale = useLocale();
   const t = useTranslations("common");
 
   const prefetchedSessions = useMemo(() => sessions ?? [], [sessions]);
@@ -177,7 +178,7 @@ export const SessionsListDisplay: React.FC<SessionsListProps> = ({
 
   const triggerLabel =
     computedCount !== undefined && computedCount > 0
-      ? computedCount.toLocaleString()
+      ? computedCount.toLocaleString(locale)
       : "";
 
   const searchPlaceholder = t("searchSessions", {

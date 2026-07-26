@@ -5,6 +5,7 @@ import { ElasticsearchAdmin } from "./ElasticsearchAdmin";
 
 // Mock next-intl
 vi.mock("next-intl", () => ({
+  useLocale: () => "en-US",
   useTranslations: (namespace?: string) => (key: string) =>
     namespace ? `${namespace}.${key}` : key,
 }));

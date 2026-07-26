@@ -1,7 +1,9 @@
 "use client";
 import * as d3 from "d3";
+import { useLocale } from "next-intl";
 import React, { useEffect, useRef } from "react";
 import useResponsiveSVG from "~/hooks/useResponsiveSVG";
+import { localeTickFormat } from "~/utils/formatNumber";
 
 export interface MultiLineSeries {
   name: string;
@@ -20,6 +22,7 @@ interface ReportMultiLineChartProps {
 export const ReportMultiLineChart: React.FC<ReportMultiLineChartProps> = ({
   data,
 }) => {
+  const locale = useLocale();
   const svgRef = useRef<SVGSVGElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const tooltipRef = useRef<HTMLDivElement | null>(null);
@@ -104,7 +107,9 @@ export const ReportMultiLineChart: React.FC<ReportMultiLineChartProps> = ({
       .attr("transform", "rotate(-45)")
       .style("text-anchor", "end");
 
-    g.append("g").call(d3.axisLeft(yScale));
+    g.append("g").call(
+      d3.axisLeft(yScale).tickFormat(localeTickFormat(locale))
+    );
 
     const line = d3
       .line<{ date: Date; value: number }>()
@@ -198,7 +203,7 @@ export const ReportMultiLineChart: React.FC<ReportMultiLineChartProps> = ({
       .style("opacity", 1);
 
     // Legend will be rendered in a separate HTML container below
-  }, [data, width, height]);
+  }, [data, width, height, locale]);
 
   return (
     <div

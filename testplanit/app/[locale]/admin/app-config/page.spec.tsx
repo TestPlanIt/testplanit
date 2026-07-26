@@ -22,6 +22,7 @@ const mockSetTotalItems = vi.fn();
 
 // Translations
 vi.mock("next-intl", () => ({
+  useLocale: () => "en-US",
   useTranslations: (namespace?: string) => (key: string) =>
     namespace ? `${namespace}.${key}` : key,
 }));

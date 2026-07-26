@@ -1,15 +1,17 @@
 "use client";
 import * as d3 from "d3";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import React, { useEffect, useRef } from "react";
 import useResponsiveSVG from "~/hooks/useResponsiveSVG";
 import { SimpleChartDataPoint } from "./ReportChart";
+import { localeTickFormat } from "~/utils/formatNumber";
 
 interface ReportLineChartProps {
   data: SimpleChartDataPoint[];
 }
 
 export const ReportLineChart: React.FC<ReportLineChartProps> = ({ data }) => {
+  const locale = useLocale();
   const svgRef = useRef<SVGSVGElement | null>(null);
   const tooltipRef = useRef<HTMLDivElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -83,7 +85,9 @@ export const ReportLineChart: React.FC<ReportLineChartProps> = ({ data }) => {
       .attr("transform", "rotate(-45)")
       .style("text-anchor", "end");
 
-    g.append("g").attr("class", "y-axis").call(d3.axisLeft(yScale));
+    g.append("g")
+      .attr("class", "y-axis")
+      .call(d3.axisLeft(yScale).tickFormat(localeTickFormat(locale)));
 
     const line = d3
       .line<SimpleChartDataPoint>()
@@ -160,7 +164,7 @@ export const ReportLineChart: React.FC<ReportLineChartProps> = ({ data }) => {
       .ease(d3.easeBackOut.overshoot(1.3))
       .attr("r", 5)
       .style("opacity", 1);
-  }, [data, width, height, t]);
+  }, [data, width, height, t, locale]);
 
   return (
     <div

@@ -18,7 +18,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { CardContent } from "@/components/ui/card";
 import { ColumnDef, VisibilityState } from "@tanstack/react-table";
 import { AlertTriangle, UndoDot } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { cn } from "~/utils";
 
@@ -45,6 +45,7 @@ export default function SoftDeletedDataTable({
   translationKey,
   onMutate,
 }: SoftDeletedDataTableProps) {
+  const locale = useLocale();
   const t = useTranslations("admin.trash.table");
   const tActions = useTranslations("common.actions");
   const tGlobal = useTranslations();
@@ -355,8 +356,8 @@ export default function SoftDeletedDataTable({
         {totalItems > 0 && (
           <p className="text-sm text-muted-foreground">
             {tGlobal("admin.auditLogs.showing", {
-              loaded: data.length.toLocaleString(),
-              total: totalItems.toLocaleString(),
+              loaded: data.length.toLocaleString(locale),
+              total: totalItems.toLocaleString(locale),
             })}
           </p>
         )}

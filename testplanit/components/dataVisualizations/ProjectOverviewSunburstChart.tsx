@@ -1,7 +1,7 @@
 "use client";
 
 import * as d3 from "d3";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import React, { useEffect, useRef } from "react";
 import useResponsiveSVG from "~/hooks/useResponsiveSVG"; // Assuming this hook is available and works as in SummarySunburstChart
 
@@ -35,6 +35,7 @@ const ProjectOverviewSunburstChart: React.FC<
   ProjectOverviewSunburstChartProps
 > = ({ data }) => {
   const t = useTranslations();
+  const locale = useLocale();
   const svgRef = useRef<SVGSVGElement | null>(null);
   const tooltipRef = useRef<HTMLDivElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -232,7 +233,7 @@ const ProjectOverviewSunburstChart: React.FC<
       .attr("dy", "-0.3em") // Adjust dy to position the number slightly up
       .style("font-size", `${Math.max(14, holeRadius * 0.5)}px`) // Larger font for the number
       .style("font-weight", "bold")
-      .text(rootNode.value || 0);
+      .text((rootNode.value || 0).toLocaleString(locale));
 
     centerText
       .append("tspan")
@@ -272,7 +273,7 @@ const ProjectOverviewSunburstChart: React.FC<
           : d.data.name
       )
       .style("pointer-events", "none");
-  }, [data, width, height, t]); // Removed transformDataForSunburst from dependency array
+  }, [data, width, height, t, locale]); // Removed transformDataForSunburst from dependency array
 
   return (
     <div ref={containerRef} className="w-full h-64 relative">

@@ -24,7 +24,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useQueryClient } from "@tanstack/react-query";
 import { CirclePlus, GitBranch, Trash2 } from "lucide-react";
 import { useSession } from "next-auth/react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useRouter } from "~/lib/navigation";
@@ -38,6 +38,7 @@ function CodeRepositoryList() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const queryClient = useQueryClient();
+  const locale = useLocale();
   const tCommon = useTranslations("common");
   const t = useTranslations("admin.codeRepositories");
   const tGlobal = useTranslations();
@@ -272,8 +273,8 @@ function CodeRepositoryList() {
             {repoRows.length > 0 && (
               <p className="text-sm text-muted-foreground shrink-0">
                 {tGlobal("admin.auditLogs.showing", {
-                  loaded: repoRows.length.toLocaleString(),
-                  total: repoRows.length.toLocaleString(),
+                  loaded: repoRows.length.toLocaleString(locale),
+                  total: repoRows.length.toLocaleString(locale),
                 })}
               </p>
             )}

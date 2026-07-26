@@ -30,7 +30,7 @@ import {
 } from "@/components/ui/select";
 import { Eye, Inbox, Send } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -195,6 +195,7 @@ export function WebhookDeliveriesTab({ projectId }: WebhookDeliveriesTabProps) {
 }
 
 function WebhookDeliveriesTabContent({ projectId }: WebhookDeliveriesTabProps) {
+  const locale = useLocale();
   const t = useTranslations("projects.settings.webhooks");
   const tCommon = useTranslations("common");
   const tGlobal = useTranslations();
@@ -750,8 +751,8 @@ function WebhookDeliveriesTabContent({ projectId }: WebhookDeliveriesTabProps) {
         {deliveries.length > 0 && (
           <p className="text-sm text-muted-foreground shrink-0">
             {tGlobal("admin.auditLogs.showing", {
-              loaded: deliveries.length.toLocaleString(),
-              total: (totalCount ?? deliveries.length).toLocaleString(),
+              loaded: deliveries.length.toLocaleString(locale),
+              total: (totalCount ?? deliveries.length).toLocaleString(locale),
             })}
           </p>
         )}

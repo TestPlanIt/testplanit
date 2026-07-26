@@ -26,7 +26,7 @@ import {
   TriangleAlert,
   XCircle,
 } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -65,6 +65,7 @@ interface ElasticsearchAdminProps {
 export function ElasticsearchAdmin({
   isMultiTenantMode = false,
 }: ElasticsearchAdminProps) {
+  const locale = useLocale();
   const t = useTranslations("admin.elasticsearch");
   const tGlobal = useTranslations();
 
@@ -378,7 +379,7 @@ export function ElasticsearchAdmin({
                         </div>
                         <div className="flex items-center space-x-4 text-sm">
                           <span className="text-muted-foreground">
-                            {index.docs.toLocaleString()}{" "}
+                            {index.docs.toLocaleString(locale)}{" "}
                             {t("status.documents")}
                           </span>
                           <span className="text-muted-foreground">
@@ -565,7 +566,9 @@ export function ElasticsearchAdmin({
                       {Object.entries(progress.details).map(([key, value]) => (
                         <div key={key} className="text-sm">
                           <span className="font-medium">{key}:</span>{" "}
-                          <span>{(value as number).toLocaleString()}</span>
+                          <span>
+                            {(value as number).toLocaleString(locale)}
+                          </span>
                         </div>
                       ))}
                     </div>

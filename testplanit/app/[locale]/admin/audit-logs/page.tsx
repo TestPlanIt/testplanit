@@ -3,7 +3,7 @@
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { useSession } from "next-auth/react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { DateRange } from "react-day-picker";
 import { useForm, useWatch } from "react-hook-form";
@@ -85,6 +85,7 @@ function AuditLogsGuard() {
  * Only rendered after auth checks pass, so session is guaranteed to be valid.
  */
 function AuditLogsContent({ session }: { session: Session }) {
+  const locale = useLocale();
   const t = useTranslations("admin.auditLogs");
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
@@ -651,8 +652,8 @@ function AuditLogsContent({ session }: { session: Session }) {
               {rows.length > 0 && (
                 <p className="text-sm text-muted-foreground">
                   {t("showing", {
-                    loaded: rows.length.toLocaleString(),
-                    total: (totalCount ?? rows.length).toLocaleString(),
+                    loaded: rows.length.toLocaleString(locale),
+                    total: (totalCount ?? rows.length).toLocaleString(locale),
                   })}
                 </p>
               )}

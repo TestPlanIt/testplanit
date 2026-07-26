@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/popover";
 import { Boxes, TagsIcon } from "lucide-react";
 import { useSession } from "next-auth/react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "~/lib/navigation";
@@ -43,6 +43,7 @@ export default function TagList() {
 }
 
 function Tags() {
+  const locale = useLocale();
   const t = useTranslations();
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -429,8 +430,10 @@ function Tags() {
             {mappedTags.length > 0 && (
               <p className="text-sm text-muted-foreground shrink-0">
                 {t("admin.auditLogs.showing", {
-                  loaded: mappedTags.length.toLocaleString(),
-                  total: (tagsCount ?? mappedTags.length).toLocaleString(),
+                  loaded: mappedTags.length.toLocaleString(locale),
+                  total: (tagsCount ?? mappedTags.length).toLocaleString(
+                    locale
+                  ),
                 })}
               </p>
             )}

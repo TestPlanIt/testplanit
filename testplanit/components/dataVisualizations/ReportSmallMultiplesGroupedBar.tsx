@@ -8,6 +8,7 @@ import React, { useEffect, useRef } from "react";
 import { toHumanReadable } from "~/utils/duration";
 import { getDateFnsLocale } from "~/utils/locales";
 import { mapDateTimeFormatString } from "~/utils/mapDateTimeFormat";
+import { localeTickFormat } from "~/utils/formatNumber";
 
 // Data structure for a single small multiple
 export interface SmallMultipleData {
@@ -88,7 +89,7 @@ export const ReportSmallMultiplesGroupedBar: React.FC<
       if (metric && isPercentageMetric(metric)) {
         return `${value.toFixed(2)}%`;
       }
-      return value.toLocaleString();
+      return value.toLocaleString(locale);
     };
 
     const formatGroupName = (groupName: string) => {
@@ -247,7 +248,7 @@ export const ReportSmallMultiplesGroupedBar: React.FC<
         .attr("transform", `translate(0,${height})`)
         .call(d3.axisBottom(x0));
 
-      svg.append("g").call(d3.axisLeft(y));
+      svg.append("g").call(d3.axisLeft(y).tickFormat(localeTickFormat(locale)));
 
       svg
         .append("text")

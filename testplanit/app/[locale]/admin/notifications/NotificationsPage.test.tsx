@@ -75,6 +75,7 @@ vi.mock("sonner", () => ({
   },
 }));
 vi.mock("next-intl", () => ({
+  useLocale: () => "en-US",
   useTranslations: () => (key: string, _values?: any) => {
     const translations: Record<string, string> = {
       title: "Notification Settings",

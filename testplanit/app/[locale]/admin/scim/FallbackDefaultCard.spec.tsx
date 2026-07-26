@@ -8,6 +8,7 @@ import type { AppConfig } from "~/zenstack/models";
 
 // Mock next-intl
 vi.mock("next-intl", () => ({
+  useLocale: () => "en-US",
   useTranslations: (namespace?: string) => (key: string, params?: any) => {
     if (!namespace) return key;
     if (params && typeof params === "object") {

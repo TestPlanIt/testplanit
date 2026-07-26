@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { SectionHeader } from "@/components/ui/typography";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CirclePlus } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import { AddAppConfig } from "./AddAppConfig";
 import { getColumns } from "./columns";
@@ -22,6 +22,7 @@ export default function AppConfigsPage() {
 }
 
 function AppConfigs() {
+  const locale = useLocale();
   const t = useTranslations("admin.appConfig");
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
@@ -151,8 +152,8 @@ function AppConfigs() {
           {tableData.length > 0 && (
             <p className="text-end text-sm text-muted-foreground">
               {tGlobal("admin.auditLogs.showing", {
-                loaded: tableData.length.toLocaleString(),
-                total: tableData.length.toLocaleString(),
+                loaded: tableData.length.toLocaleString(locale),
+                total: tableData.length.toLocaleString(locale),
               })}
             </p>
           )}

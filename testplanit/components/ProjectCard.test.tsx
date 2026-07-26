@@ -12,6 +12,7 @@ vi.mock("next-auth/react", () => ({
 }));
 
 vi.mock("next-intl", () => ({
+  useLocale: () => "en-US",
   useTranslations: mockUseTranslations,
 }));
 

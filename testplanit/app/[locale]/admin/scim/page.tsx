@@ -3,7 +3,7 @@
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { useSession } from "next-auth/react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "~/lib/navigation";
 
@@ -192,6 +192,7 @@ function FallbackDefaultCard() {
 }
 
 function ScimTokensList() {
+  const locale = useLocale();
   const t = useTranslations("admin.scim");
   const tApiTokens = useTranslations("admin.apiTokens");
   const tGlobal = useTranslations();
@@ -414,8 +415,8 @@ function ScimTokensList() {
             {tokens && tokens.length > 0 && (
               <p className="text-sm text-muted-foreground shrink-0">
                 {tGlobal("admin.auditLogs.showing", {
-                  loaded: tokens.length.toLocaleString(),
-                  total: tokens.length.toLocaleString(),
+                  loaded: tokens.length.toLocaleString(locale),
+                  total: tokens.length.toLocaleString(locale),
                 })}
               </p>
             )}

@@ -18,7 +18,7 @@ import {
 import { PageTitle, SectionHeader } from "@/components/ui/typography";
 import { HelpPopover } from "@/components/ui/help-popover";
 import { Tags } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useParams, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { useRequireAuth } from "~/hooks/useRequireAuth";
@@ -46,6 +46,7 @@ function TagList() {
   const router = useRouter();
   const { projectId } = useParams<{ projectId: string }>();
   const projectIdNumber = Number(projectId);
+  const locale = useLocale();
   const t = useTranslations();
   const [sortConfig, setSortConfig] = useState<{
     column: string;
@@ -439,8 +440,10 @@ function TagList() {
             {mappedTags.length > 0 && (
               <p className="text-sm text-muted-foreground shrink-0">
                 {t("admin.auditLogs.showing", {
-                  loaded: mappedTags.length.toLocaleString(),
-                  total: (tagsCount ?? mappedTags.length).toLocaleString(),
+                  loaded: mappedTags.length.toLocaleString(locale),
+                  total: (tagsCount ?? mappedTags.length).toLocaleString(
+                    locale
+                  ),
                 })}
               </p>
             )}

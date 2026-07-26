@@ -103,6 +103,7 @@ const KEY_TEMPLATES: Record<string, string> = {
 };
 
 vi.mock("next-intl", () => ({
+  useLocale: () => "en-US",
   useTranslations:
     (_namespace?: string) =>
     (key: string, params?: Record<string, unknown>) => {

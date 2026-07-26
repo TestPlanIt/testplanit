@@ -28,6 +28,7 @@ const {
 
 // Mock next-intl
 vi.mock("next-intl", () => ({
+  useLocale: () => "en-US",
   useTranslations: () => (key: string) => key.split(".").pop() ?? key,
 }));
 

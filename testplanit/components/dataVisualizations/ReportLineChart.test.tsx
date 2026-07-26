@@ -5,6 +5,7 @@ import type { SimpleChartDataPoint } from "./ReportChart";
 
 // Mock next-intl
 vi.mock("next-intl", () => ({
+  useLocale: () => "en-US",
   useTranslations: () => (key: string) => key,
 }));
 
@@ -14,57 +15,68 @@ vi.mock("~/hooks/useResponsiveSVG", () => ({
 }));
 
 // Mock D3 to avoid complex SVG rendering in tests
-vi.mock("d3", () => ({
-  select: vi.fn(() => ({
-    selectAll: vi.fn().mockReturnThis(),
-    remove: vi.fn().mockReturnThis(),
-    append: vi.fn().mockReturnThis(),
-    attr: vi.fn().mockReturnThis(),
-    style: vi.fn().mockReturnThis(),
-    data: vi.fn().mockReturnThis(),
-    datum: vi.fn().mockReturnThis(),
-    enter: vi.fn().mockReturnThis(),
-    each: vi.fn().mockReturnThis(),
-    on: vi.fn().mockReturnThis(),
-    transition: vi.fn().mockReturnThis(),
-    duration: vi.fn().mockReturnThis(),
-    delay: vi.fn().mockReturnThis(),
-    ease: vi.fn().mockReturnThis(),
-    call: vi.fn().mockReturnThis(),
-    html: vi.fn().mockReturnThis(),
-    text: vi.fn().mockReturnThis(),
-    insert: vi.fn().mockReturnThis(),
-    node: vi.fn(() => ({
-      getBBox: () => ({ x: 0, y: 0, width: 50, height: 20 }),
-      getTotalLength: () => 100,
+vi.mock("d3", () => {
+  // d3 axis generators are chainable: .ticks()/.tickFormat() return the axis.
+  const makeAxisMock = () => {
+    const axis: any = vi.fn();
+    axis.ticks = vi.fn(() => axis);
+    axis.tickFormat = vi.fn(() => axis);
+    axis.tickSize = vi.fn(() => axis);
+    axis.tickSizeOuter = vi.fn(() => axis);
+    return axis;
+  };
+  return {
+    select: vi.fn(() => ({
+      selectAll: vi.fn().mockReturnThis(),
+      remove: vi.fn().mockReturnThis(),
+      append: vi.fn().mockReturnThis(),
+      attr: vi.fn().mockReturnThis(),
+      style: vi.fn().mockReturnThis(),
+      data: vi.fn().mockReturnThis(),
+      datum: vi.fn().mockReturnThis(),
+      enter: vi.fn().mockReturnThis(),
+      each: vi.fn().mockReturnThis(),
+      on: vi.fn().mockReturnThis(),
+      transition: vi.fn().mockReturnThis(),
+      duration: vi.fn().mockReturnThis(),
+      delay: vi.fn().mockReturnThis(),
+      ease: vi.fn().mockReturnThis(),
+      call: vi.fn().mockReturnThis(),
+      html: vi.fn().mockReturnThis(),
+      text: vi.fn().mockReturnThis(),
+      insert: vi.fn().mockReturnThis(),
+      node: vi.fn(() => ({
+        getBBox: () => ({ x: 0, y: 0, width: 50, height: 20 }),
+        getTotalLength: () => 100,
+      })),
     })),
-  })),
-  scaleTime: vi.fn(() => {
-    const fn = vi.fn((_val: any) => 0) as any;
-    fn.domain = vi.fn().mockReturnThis();
-    fn.range = vi.fn().mockReturnThis();
-    return fn;
-  }),
-  scaleLinear: vi.fn(() => {
-    const fn = vi.fn((val: any) => val) as any;
-    fn.domain = vi.fn().mockReturnThis();
-    fn.range = vi.fn().mockReturnThis();
-    fn.nice = vi.fn().mockReturnThis();
-    return fn;
-  }),
-  extent: vi.fn(() => [new Date("2024-01-01"), new Date("2024-12-31")]),
-  max: vi.fn(() => 100),
-  line: vi.fn(() => {
-    const fn = vi.fn(() => "M0,0L100,100") as any;
-    fn.x = vi.fn().mockReturnThis();
-    fn.y = vi.fn().mockReturnThis();
-    return fn;
-  }),
-  axisBottom: vi.fn(() => vi.fn().mockReturnThis()),
-  axisLeft: vi.fn(() => vi.fn().mockReturnThis()),
-  easeBackOut: { overshoot: vi.fn(() => (t: number) => t) },
-  easeQuadOut: vi.fn((t: number) => t),
-}));
+    scaleTime: vi.fn(() => {
+      const fn = vi.fn((_val: any) => 0) as any;
+      fn.domain = vi.fn().mockReturnThis();
+      fn.range = vi.fn().mockReturnThis();
+      return fn;
+    }),
+    scaleLinear: vi.fn(() => {
+      const fn = vi.fn((val: any) => val) as any;
+      fn.domain = vi.fn().mockReturnThis();
+      fn.range = vi.fn().mockReturnThis();
+      fn.nice = vi.fn().mockReturnThis();
+      return fn;
+    }),
+    extent: vi.fn(() => [new Date("2024-01-01"), new Date("2024-12-31")]),
+    max: vi.fn(() => 100),
+    line: vi.fn(() => {
+      const fn = vi.fn(() => "M0,0L100,100") as any;
+      fn.x = vi.fn().mockReturnThis();
+      fn.y = vi.fn().mockReturnThis();
+      return fn;
+    }),
+    axisBottom: vi.fn(() => makeAxisMock()),
+    axisLeft: vi.fn(() => makeAxisMock()),
+    easeBackOut: { overshoot: vi.fn(() => (t: number) => t) },
+    easeQuadOut: vi.fn((t: number) => t),
+  };
+});
 
 describe("ReportLineChart", () => {
   const mockData: SimpleChartDataPoint[] = [

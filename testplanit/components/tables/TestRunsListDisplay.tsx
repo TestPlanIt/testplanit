@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/tooltip";
 import type { TestRunsWhereInput } from "~/zenstack/input";
 import { Combine, Lock, PlayCircle, Trash2 } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import React, { useCallback, useMemo } from "react";
 import { Link } from "~/lib/navigation";
 import { cn } from "~/utils";
@@ -217,6 +217,7 @@ export const TestRunsListDisplay: React.FC<TestRunsListDisplayProps> = ({
   pageSize = DEFAULT_PAGE_SIZE,
   isLoading = false,
 }) => {
+  const locale = useLocale();
   const t = useTranslations("common");
 
   const prefetchedRuns = useMemo(() => testRuns ?? [], [testRuns]);
@@ -358,7 +359,7 @@ export const TestRunsListDisplay: React.FC<TestRunsListDisplayProps> = ({
 
   const triggerLabel =
     computedCount !== undefined && computedCount > 0
-      ? computedCount.toLocaleString()
+      ? computedCount.toLocaleString(locale)
       : "";
 
   const searchPlaceholder = t("searchRuns", {

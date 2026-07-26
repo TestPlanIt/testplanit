@@ -5,7 +5,7 @@ import { badgeVariants } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { ProjectsWhereInput } from "~/zenstack/input";
 import { BoxesIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import React, { useCallback, useMemo } from "react";
 import { Link } from "~/lib/navigation";
 import { cn } from "~/utils";
@@ -42,6 +42,7 @@ export const ProjectListDisplay: React.FC<ProjectListProps> = ({
   pageSize = DEFAULT_PAGE_SIZE,
   isLoading = false,
 }) => {
+  const locale = useLocale();
   const t = useTranslations("common");
 
   const { projectIds, prefetchedProjects } = useMemo(() => {
@@ -205,7 +206,7 @@ export const ProjectListDisplay: React.FC<ProjectListProps> = ({
 
   const triggerLabel =
     computedCount !== undefined && computedCount > 0
-      ? computedCount.toLocaleString()
+      ? computedCount.toLocaleString(locale)
       : "";
 
   const searchPlaceholder = t("searchProjects", {

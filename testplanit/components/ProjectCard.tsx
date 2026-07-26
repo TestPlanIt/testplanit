@@ -1,5 +1,5 @@
 import { useSession } from "next-auth/react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import React from "react";
 
 import { DateFormatter } from "@/components/DateFormatter";
@@ -48,6 +48,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
   isLoadingIssueCounts = false,
 }) => {
   const { data: session } = useSession();
+  const locale = useLocale();
   const t = useTranslations();
   const router = useRouter();
 
@@ -100,7 +101,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
               })}
             >
               <ListChecks className="w-4 h-4 text-muted-foreground mt-1" />
-              <span>{testCaseCount.toLocaleString()}</span>
+              <span>{testCaseCount.toLocaleString(locale)}</span>
             </Link>
           )}
           {milestoneCount > 0 && (
@@ -112,7 +113,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
               })}
             >
               <Milestone className="w-4 h-4 text-muted-foreground mt-1" />
-              <span>{milestoneCount.toLocaleString()}</span>
+              <span>{milestoneCount.toLocaleString(locale)}</span>
             </Link>
           )}
           {runCount > 0 && (
@@ -124,7 +125,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
               })}
             >
               <CirclePlay className="w-4 h-4 text-muted-foreground mt-1" />
-              <span>{runCount.toLocaleString()}</span>
+              <span>{runCount.toLocaleString(locale)}</span>
             </Link>
           )}
           {sessionCount > 0 && (
@@ -136,7 +137,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
               })}
             >
               <Compass className="w-4 h-4 text-muted-foreground mt-1" />
-              <span>{sessionCount.toLocaleString()}</span>
+              <span>{sessionCount.toLocaleString(locale)}</span>
             </Link>
           )}
           {isLoadingIssueCounts ? (
@@ -154,7 +155,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
                 })}
               >
                 <Bug className="w-4 h-4 text-muted-foreground mt-1" />
-                <span>{issueCount.toLocaleString()}</span>
+                <span>{issueCount.toLocaleString(locale)}</span>
               </Link>
             )
           )}

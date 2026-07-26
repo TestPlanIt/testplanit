@@ -21,7 +21,7 @@ import type { VisibilityState } from "@tanstack/react-table";
 import { endOfDay, format, startOfDay } from "date-fns";
 import { Users } from "lucide-react";
 import { useSession } from "next-auth/react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { DateRange } from "react-day-picker";
 import { useForm, useWatch } from "react-hook-form";
@@ -61,6 +61,7 @@ export function ProjectAuditLog({
   onExportStateChange,
 }: ProjectAuditLogProps) {
   const { data: session } = useSession();
+  const locale = useLocale();
   const t = useTranslations("admin.auditLogs");
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
@@ -513,8 +514,8 @@ export function ProjectAuditLog({
         {rows.length > 0 && (
           <p className="text-sm text-muted-foreground">
             {t("showing", {
-              loaded: rows.length.toLocaleString(),
-              total: (totalCount ?? rows.length).toLocaleString(),
+              loaded: rows.length.toLocaleString(locale),
+              total: (totalCount ?? rows.length).toLocaleString(locale),
             })}
           </p>
         )}

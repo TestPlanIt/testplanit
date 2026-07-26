@@ -3,7 +3,7 @@
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { useSession } from "next-auth/react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import { useRouter } from "~/lib/navigation";
 
@@ -26,6 +26,7 @@ const PAGE_SIZE = 50;
 
 function Users() {
   const { data: session, status } = useSession();
+  const locale = useLocale();
   const t = useTranslations("users");
   const tCommon = useTranslations("common");
   const tGlobal = useTranslations();
@@ -170,8 +171,8 @@ function Users() {
               {users.length > 0 && (
                 <p className="text-sm text-muted-foreground shrink-0">
                   {tGlobal("admin.auditLogs.showing", {
-                    loaded: users.length.toLocaleString(),
-                    total: (totalCount ?? users.length).toLocaleString(),
+                    loaded: users.length.toLocaleString(locale),
+                    total: (totalCount ?? users.length).toLocaleString(locale),
                   })}
                 </p>
               )}

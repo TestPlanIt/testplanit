@@ -12,7 +12,7 @@ import { HelpPopover } from "@/components/ui/help-popover";
 import { SectionHeader } from "@/components/ui/typography";
 import type { RowSelectionState } from "@tanstack/react-table";
 import { Boxes, PenSquare } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { searchProjects } from "~/app/actions/searchProjects";
 import { useRequireAuth } from "~/hooks/useRequireAuth";
@@ -32,6 +32,7 @@ function Configurations(): React.ReactElement | null {
     isLoading: isAuthLoading,
     isAuthenticated,
   } = useRequireAuth();
+  const locale = useLocale();
   const t = useTranslations("admin.configurations");
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
@@ -325,8 +326,9 @@ function Configurations(): React.ReactElement | null {
               {filteredConfigurations.length > 0 && (
                 <p className="text-end text-sm text-muted-foreground">
                   {tGlobal("admin.auditLogs.showing", {
-                    loaded: filteredConfigurations.length.toLocaleString(),
-                    total: filteredConfigurations.length.toLocaleString(),
+                    loaded:
+                      filteredConfigurations.length.toLocaleString(locale),
+                    total: filteredConfigurations.length.toLocaleString(locale),
                   })}
                 </p>
               )}

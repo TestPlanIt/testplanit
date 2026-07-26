@@ -3,7 +3,7 @@
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { useSession } from "next-auth/react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "~/lib/navigation";
 
@@ -36,6 +36,7 @@ function IssueList() {
   });
   const [searchString, setSearchString] = useState("");
   const debouncedSearchString = useDebounce(searchString, 500);
+  const locale = useLocale();
   const t = useTranslations("admin.issues");
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
@@ -354,8 +355,10 @@ function IssueList() {
             {mappedIssues.length > 0 && (
               <p className="text-sm text-muted-foreground shrink-0">
                 {tGlobal("admin.auditLogs.showing", {
-                  loaded: mappedIssues.length.toLocaleString(),
-                  total: (issuesCount ?? mappedIssues.length).toLocaleString(),
+                  loaded: mappedIssues.length.toLocaleString(locale),
+                  total: (issuesCount ?? mappedIssues.length).toLocaleString(
+                    locale
+                  ),
                 })}
               </p>
             )}

@@ -9,7 +9,7 @@ import { Filter } from "@/components/tables/Filter";
 import { ProjectNameCell } from "@/components/tables/ProjectNameCell";
 import { Switch } from "@/components/ui/switch";
 import { ColumnDef } from "@tanstack/react-table";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useReviewFeatureEnabled } from "~/hooks/useReviewFeatureEnabled";
@@ -24,6 +24,7 @@ type ProjectRow = {
 };
 
 export function ProjectReviewToggleList() {
+  const locale = useLocale();
   const t = useTranslations("admin.workflows.projectReviewToggleList");
   const tCommon = useTranslations("common");
   const tGlobal = useTranslations();
@@ -191,8 +192,8 @@ export function ProjectReviewToggleList() {
         {projects.length > 0 && (
           <p className="text-sm text-muted-foreground shrink-0">
             {tGlobal("admin.auditLogs.showing", {
-              loaded: projects.length.toLocaleString(),
-              total: (count ?? projects.length).toLocaleString(),
+              loaded: projects.length.toLocaleString(locale),
+              total: (count ?? projects.length).toLocaleString(locale),
             })}
           </p>
         )}

@@ -7,7 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useQuery } from "@tanstack/react-query";
 import type { UserWhereInput } from "~/zenstack/input";
 import { UserRoundIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import React, { useCallback } from "react";
 import { cn } from "~/utils";
 
@@ -40,6 +40,7 @@ export const UserListDisplay: React.FC<UserListProps> = ({
   pageSize = DEFAULT_PAGE_SIZE,
   isLoading = false,
 }) => {
+  const locale = useLocale();
   const t = useTranslations("common");
 
   // Build a soft-delete-aware where clause. Callers' member includes are not
@@ -131,7 +132,7 @@ export const UserListDisplay: React.FC<UserListProps> = ({
     return null;
   }
 
-  const triggerLabel = memberCount.toLocaleString();
+  const triggerLabel = memberCount.toLocaleString(locale);
   const searchPlaceholder = t("searchUsers");
 
   return (

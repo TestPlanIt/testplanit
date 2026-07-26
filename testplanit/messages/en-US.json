@@ -6388,7 +6388,8 @@
     "starts": "Starts:",
     "scheduledCompletion": "Scheduled Completion:",
     "estWorkEffort": "Est. Work Effort:",
-    "noTasks": "No tasks to display in the Gantt chart."
+    "noTasks": "No tasks to display in the Gantt chart.",
+    "businessHours": "{hours, number, ::.0} business hours"
   },
   "help": {
     "auditLogs": "View system-wide audit trail for security and compliance tracking",

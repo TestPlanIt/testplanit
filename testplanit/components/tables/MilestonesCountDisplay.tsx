@@ -6,7 +6,7 @@ import { badgeVariants } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { MilestonesWhereInput } from "~/zenstack/input";
 import { Milestone } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import React, { useCallback } from "react";
 import { cn } from "~/utils";
 
@@ -55,6 +55,7 @@ export const MilestonesCountDisplay: React.FC<MilestonesCountDisplayProps> = ({
   pageSize = DEFAULT_PAGE_SIZE,
   isLoading = false,
 }) => {
+  const locale = useLocale();
   const t = useTranslations("common");
 
   const fetchMilestones = useCallback(
@@ -132,7 +133,7 @@ export const MilestonesCountDisplay: React.FC<MilestonesCountDisplayProps> = ({
   }
 
   const triggerLabel =
-    count !== undefined && count > 0 ? count.toLocaleString() : "";
+    count !== undefined && count > 0 ? count.toLocaleString(locale) : "";
   const searchPlaceholder = t("searchMilestones", { count: count ?? 0 });
 
   return (

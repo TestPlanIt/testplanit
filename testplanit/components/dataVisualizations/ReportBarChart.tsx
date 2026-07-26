@@ -1,15 +1,17 @@
 "use client";
 import * as d3 from "d3";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import React, { useEffect, useRef } from "react";
 import useResponsiveSVG from "~/hooks/useResponsiveSVG";
 import { SimpleChartDataPoint } from "./ReportChart";
+import { localeTickFormat } from "~/utils/formatNumber";
 
 interface ReportBarChartProps {
   data: SimpleChartDataPoint[];
 }
 
 export const ReportBarChart: React.FC<ReportBarChartProps> = ({ data }) => {
+  const locale = useLocale();
   const svgRef = useRef<SVGSVGElement | null>(null);
   const tooltipRef = useRef<HTMLDivElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -84,7 +86,9 @@ export const ReportBarChart: React.FC<ReportBarChartProps> = ({ data }) => {
       .attr("transform", "rotate(-45)")
       .style("text-anchor", "end");
 
-    g.append("g").attr("class", "y-axis").call(d3.axisLeft(yScale));
+    g.append("g")
+      .attr("class", "y-axis")
+      .call(d3.axisLeft(yScale).tickFormat(localeTickFormat(locale)));
 
     // Create bars with animations
     const bars = g
@@ -131,7 +135,7 @@ export const ReportBarChart: React.FC<ReportBarChartProps> = ({ data }) => {
       .attr("y", (d) => yScale(yAccessor(d)))
       .attr("height", (d) => chartHeight - yScale(yAccessor(d)))
       .style("opacity", 1);
-  }, [data, width, height, t]);
+  }, [data, width, height, t, locale]);
 
   return (
     <div

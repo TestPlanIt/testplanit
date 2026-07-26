@@ -3,7 +3,7 @@
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { useSession } from "next-auth/react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "~/lib/navigation";
 
@@ -42,6 +42,7 @@ function TagList() {
   const [addTagOpen, setAddTagOpen] = useState(false);
   const [editingTag, setEditingTag] = useState<ExtendedTags | null>(null);
   const [deletingTag, setDeletingTag] = useState<ExtendedTags | null>(null);
+  const locale = useLocale();
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
 
@@ -301,8 +302,10 @@ function TagList() {
             {mappedTags.length > 0 && (
               <p className="text-sm text-muted-foreground shrink-0">
                 {tGlobal("admin.auditLogs.showing", {
-                  loaded: mappedTags.length.toLocaleString(),
-                  total: (tagsCount ?? mappedTags.length).toLocaleString(),
+                  loaded: mappedTags.length.toLocaleString(locale),
+                  total: (tagsCount ?? mappedTags.length).toLocaleString(
+                    locale
+                  ),
                 })}
               </p>
             )}

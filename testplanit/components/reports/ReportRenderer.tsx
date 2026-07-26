@@ -25,7 +25,7 @@ import {
   VisibilityState,
 } from "@tanstack/react-table";
 import { Download } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useMemo } from "react";
 import { useAutomationTrendsColumns } from "~/hooks/useAutomationTrendsColumns";
 import { useExecutionLogColumns } from "~/hooks/useExecutionLogColumns";
@@ -187,6 +187,7 @@ export function ReportRenderer({
   readOnly = false,
   headerActions,
 }: ReportRendererProps) {
+  const locale = useLocale();
   const tCommon = useTranslations("common");
   const tReports = useTranslations("reports.ui");
 
@@ -464,8 +465,9 @@ export function ReportRenderer({
                 {memoizedChart.isTruncated && (
                   <p className="text-xs text-muted-foreground mt-1">
                     {tReports("chartDataTruncated.message", {
-                      shown: MAX_CHART_DATA_POINTS.toLocaleString(),
-                      total: memoizedChart.totalDataPoints.toLocaleString(),
+                      shown: MAX_CHART_DATA_POINTS.toLocaleString(locale),
+                      total:
+                        memoizedChart.totalDataPoints.toLocaleString(locale),
                     })}
                   </p>
                 )}

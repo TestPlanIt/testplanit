@@ -474,7 +474,7 @@ export const ReportChart: React.FC<ReportChartProps> = ({
     return (
       <RecentResultsDonut
         data={donutData}
-        formattedTotal={total.toLocaleString()}
+        formattedTotal={total.toLocaleString(locale)}
       />
     );
   }
@@ -573,7 +573,7 @@ export const ReportChart: React.FC<ReportChartProps> = ({
     if (isPercentageMetric(metric)) {
       return `${value.toFixed(2)}%`;
     }
-    return value.toLocaleString();
+    return value.toLocaleString(locale);
   };
 
   switch (chartType) {

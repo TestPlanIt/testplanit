@@ -6,7 +6,7 @@ import { AsyncCombobox } from "@/components/ui/async-combobox";
 import { badgeVariants } from "@/components/ui/badge";
 import type { Groups } from "~/zenstack/models";
 import { UserRoundCog, UsersRound, UsersRoundIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import React, { useCallback } from "react";
 import { cn } from "~/utils";
 
@@ -21,6 +21,7 @@ export const GroupListDisplay: React.FC<GroupListProps> = ({
   groups,
   usePopover = true,
 }) => {
+  const locale = useLocale();
   const tGroups = useTranslations("admin.groups");
   const tCommon = useTranslations("common");
 
@@ -84,7 +85,7 @@ export const GroupListDisplay: React.FC<GroupListProps> = ({
     );
   }
 
-  const triggerLabel = allGroups.length.toLocaleString();
+  const triggerLabel = allGroups.length.toLocaleString(locale);
 
   return (
     <AsyncCombobox<Groups>

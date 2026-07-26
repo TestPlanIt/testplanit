@@ -1,6 +1,7 @@
 import * as d3 from "d3";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import React, { useEffect, useRef } from "react";
+import { localeTickFormat } from "~/utils/formatNumber";
 
 interface JUnitDurationHistogramProps {
   jUnitSuites: Array<{
@@ -21,6 +22,7 @@ const JUnitDurationHistogram: React.FC<JUnitDurationHistogramProps> = ({
   binCount = 20,
   isZoomed = false,
 }) => {
+  const locale = useLocale();
   const svgRef = useRef<SVGSVGElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [containerWidth, setContainerWidth] = React.useState<number>(0);
@@ -105,7 +107,12 @@ const JUnitDurationHistogram: React.FC<JUnitDurationHistogramProps> = ({
       .style("font-size", isZoomed ? "16px" : "11px");
     // Y axis
     g.append("g")
-      .call(d3.axisLeft(y).ticks(isZoomed ? 10 : 5))
+      .call(
+        d3
+          .axisLeft(y)
+          .ticks(isZoomed ? 10 : 5)
+          .tickFormat(localeTickFormat(locale))
+      )
       .selectAll("text")
       .style("font-size", isZoomed ? "16px" : "11px");
 
@@ -175,7 +182,7 @@ const JUnitDurationHistogram: React.FC<JUnitDurationHistogramProps> = ({
     return () => {
       tooltip.remove();
     };
-  }, [jUnitSuites, height, containerWidth, binCount, isZoomed, t]);
+  }, [jUnitSuites, height, containerWidth, binCount, isZoomed, t, locale]);
 
   return (
     <div

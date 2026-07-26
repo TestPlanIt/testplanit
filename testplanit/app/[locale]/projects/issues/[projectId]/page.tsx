@@ -23,7 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { VisibilityState } from "@tanstack/react-table";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useParams, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Loading } from "~/components/Loading";
@@ -44,6 +44,7 @@ export default function ProjectIssueList() {
 }
 
 function ProjectIssues() {
+  const locale = useLocale();
   const t = useTranslations();
   const { session, isLoading: isAuthLoading } = useRequireAuth();
   const router = useRouter();
@@ -601,8 +602,10 @@ function ProjectIssues() {
             {mappedIssues.length > 0 && (
               <p className="text-sm text-muted-foreground shrink-0">
                 {t("admin.auditLogs.showing", {
-                  loaded: mappedIssues.length.toLocaleString(),
-                  total: (issuesCount ?? mappedIssues.length).toLocaleString(),
+                  loaded: mappedIssues.length.toLocaleString(locale),
+                  total: (issuesCount ?? mappedIssues.length).toLocaleString(
+                    locale
+                  ),
                 })}
               </p>
             )}

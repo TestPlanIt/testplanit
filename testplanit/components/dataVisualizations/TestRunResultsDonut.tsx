@@ -1,7 +1,7 @@
 "use client";
 
 import * as d3 from "d3";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import React, { useEffect, useRef } from "react";
 import useResponsiveSVG from "~/hooks/useResponsiveSVG";
 
@@ -30,6 +30,7 @@ const TestRunResultsDonut: React.FC<TestRunResultsDonutProps> = ({
   const effectiveHeight = height ?? (isZoomed ? 600 : 180);
   const { width, height: svgHeight } = useResponsiveSVG(containerRef);
   const t = useTranslations();
+  const locale = useLocale();
 
   useEffect(() => {
     const tooltipElement = document.createElement("div");
@@ -258,7 +259,7 @@ const TestRunResultsDonut: React.FC<TestRunResultsDonutProps> = ({
       .style("font-size", `${centerTextFontSize}px`)
       .style("font-weight", "bold")
       .style("opacity", "0")
-      .text(totalCount);
+      .text(totalCount.toLocaleString(locale));
 
     // Get combined bounding box
     const labelBBox = (centerLabelText.node() as SVGTextElement).getBBox();
@@ -300,7 +301,7 @@ const TestRunResultsDonut: React.FC<TestRunResultsDonutProps> = ({
       .duration(600)
       .ease(d3.easeQuadOut)
       .style("opacity", 1);
-  }, [data, width, svgHeight, isZoomed, t]);
+  }, [data, width, svgHeight, isZoomed, t, locale]);
 
   return (
     <div

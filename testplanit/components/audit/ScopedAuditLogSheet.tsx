@@ -31,7 +31,7 @@ import type { VisibilityState } from "@tanstack/react-table";
 import { endOfDay, startOfDay } from "date-fns";
 import { History } from "lucide-react";
 import { useSession } from "next-auth/react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useMemo, useState } from "react";
 import { DateRange } from "react-day-picker";
 import { useForm, useWatch } from "react-hook-form";
@@ -150,6 +150,7 @@ function ScopedAuditLogContent({
   rowTestIdPrefix: string;
 }) {
   const { data: session } = useSession();
+  const locale = useLocale();
   const t = useTranslations("admin.auditLogs");
   const tCommon = useTranslations("common");
   const tUserMenu = useTranslations("userMenu");
@@ -359,8 +360,8 @@ function ScopedAuditLogContent({
       {rows.length > 0 && (
         <p className="text-end text-xs text-muted-foreground">
           {tProfile("showing", {
-            loaded: rows.length.toLocaleString(),
-            total: (totalCount ?? rows.length).toLocaleString(),
+            loaded: rows.length.toLocaleString(locale),
+            total: (totalCount ?? rows.length).toLocaleString(locale),
           })}
         </p>
       )}

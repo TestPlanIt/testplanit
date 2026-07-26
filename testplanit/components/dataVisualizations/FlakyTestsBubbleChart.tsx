@@ -481,7 +481,7 @@ export const FlakyTestsBubbleChart: React.FC<FlakyTestsBubbleChartProps> = ({
         .style("font-size", "12px")
         .style("font-weight", "600")
         .style("opacity", 0)
-        .text(`+${notShownCount}`)
+        .text(`+${notShownCount.toLocaleString(locale)}`)
         .transition()
         .duration(400)
         .delay(bubbleData.length * 30 + 300)

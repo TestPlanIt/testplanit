@@ -113,7 +113,7 @@ export function useAutomationTrendsColumns(
             const value = info.getValue();
             return (
               <span className="font-mono text-sm">
-                {typeof value === "number" ? value.toLocaleString() : "-"}
+                {typeof value === "number" ? value.toLocaleString(locale) : "-"}
               </span>
             );
           },
@@ -136,7 +136,7 @@ export function useAutomationTrendsColumns(
             const value = info.getValue();
             return (
               <span className="font-mono text-sm">
-                {typeof value === "number" ? value.toLocaleString() : "-"}
+                {typeof value === "number" ? value.toLocaleString(locale) : "-"}
               </span>
             );
           },
@@ -159,7 +159,7 @@ export function useAutomationTrendsColumns(
             const value = info.getValue();
             return (
               <span className="font-mono text-sm font-semibold">
-                {typeof value === "number" ? value.toLocaleString() : "-"}
+                {typeof value === "number" ? value.toLocaleString(locale) : "-"}
               </span>
             );
           },
@@ -275,5 +275,5 @@ export function useAutomationTrendsColumns(
     });
 
     return columns;
-  }, [projects, columnHelper, t, dateFnsLocale, dateGrouping]);
+  }, [projects, columnHelper, t, dateFnsLocale, dateGrouping, locale]);
 }

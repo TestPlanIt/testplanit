@@ -21,7 +21,7 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Filter as FilterIcon, X } from "lucide-react";
 import { useSession } from "next-auth/react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "~/lib/navigation";
@@ -76,6 +76,7 @@ export default function TagDetailPage() {
 }
 
 function TagDetail() {
+  const locale = useLocale();
   const t = useTranslations();
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -630,8 +631,10 @@ function TagDetail() {
               {(casesCount ?? 0) > 0 && (
                 <p className="mb-2 text-end text-sm text-muted-foreground">
                   {t("admin.auditLogs.showing", {
-                    loaded: mappedCases.length.toLocaleString(),
-                    total: (casesCount ?? mappedCases.length).toLocaleString(),
+                    loaded: mappedCases.length.toLocaleString(locale),
+                    total: (casesCount ?? mappedCases.length).toLocaleString(
+                      locale
+                    ),
                   })}
                 </p>
               )}
@@ -660,10 +663,10 @@ function TagDetail() {
               {(testRunsCount ?? 0) > 0 && (
                 <p className="mb-2 text-end text-sm text-muted-foreground">
                   {t("admin.auditLogs.showing", {
-                    loaded: mappedTestRuns.length.toLocaleString(),
+                    loaded: mappedTestRuns.length.toLocaleString(locale),
                     total: (
                       testRunsCount ?? mappedTestRuns.length
-                    ).toLocaleString(),
+                    ).toLocaleString(locale),
                   })}
                 </p>
               )}
@@ -692,10 +695,10 @@ function TagDetail() {
               {(sessionsCount ?? 0) > 0 && (
                 <p className="mb-2 text-end text-sm text-muted-foreground">
                   {t("admin.auditLogs.showing", {
-                    loaded: mappedSessions.length.toLocaleString(),
+                    loaded: mappedSessions.length.toLocaleString(locale),
                     total: (
                       sessionsCount ?? mappedSessions.length
-                    ).toLocaleString(),
+                    ).toLocaleString(locale),
                   })}
                 </p>
               )}

@@ -12,9 +12,10 @@ import {
   HelpCircle,
   XCircle,
 } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import React, { useEffect, useMemo, useRef } from "react";
 import useResponsiveSVG from "~/hooks/useResponsiveSVG";
+import { localeTickFormat } from "~/utils/formatNumber";
 
 interface IssueTestCoverageData {
   issueId: number;
@@ -52,6 +53,7 @@ const statusColors = {
 export const IssueTestCoverageChart: React.FC<IssueTestCoverageChartProps> = ({
   data,
 }) => {
+  const locale = useLocale();
   const svgRef = useRef<SVGSVGElement | null>(null);
   const tooltipRef = useRef<HTMLDivElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -363,7 +365,7 @@ export const IssueTestCoverageChart: React.FC<IssueTestCoverageChartProps> = ({
     // X-axis
     g.append("g")
       .attr("transform", `translate(0,${chartHeight})`)
-      .call(d3.axisBottom(xScale).ticks(8))
+      .call(d3.axisBottom(xScale).ticks(8).tickFormat(localeTickFormat(locale)))
       .call((g) => {
         g.selectAll(".tick text")
           .style("fill", "hsl(var(--muted-foreground))")
@@ -383,7 +385,7 @@ export const IssueTestCoverageChart: React.FC<IssueTestCoverageChartProps> = ({
 
     // Y-axis
     g.append("g")
-      .call(d3.axisLeft(yScale).ticks(10))
+      .call(d3.axisLeft(yScale).ticks(10).tickFormat(localeTickFormat(locale)))
       .call((g) => {
         g.selectAll(".tick text")
           .style("fill", "hsl(var(--muted-foreground))")
@@ -412,7 +414,7 @@ export const IssueTestCoverageChart: React.FC<IssueTestCoverageChartProps> = ({
       .style("font-size", "14px")
       .style("font-weight", "600")
       .text(t("charts.testCoverageVsExecution"));
-  }, [aggregatedData, width, height, t]);
+  }, [aggregatedData, width, height, t, locale]);
 
   if (data.length === 0) {
     return (

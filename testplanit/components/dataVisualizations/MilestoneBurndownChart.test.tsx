@@ -4,6 +4,7 @@ import type { MilestoneBurndownData } from "~/lib/services/milestoneBurndown";
 import MilestoneBurndownChart from "./MilestoneBurndownChart";
 
 vi.mock("next-intl", () => ({
+  useLocale: () => "en-US",
   useTranslations: () => (key: string) => key,
 }));
 

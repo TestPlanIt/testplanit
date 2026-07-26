@@ -3,7 +3,7 @@
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { useSession } from "next-auth/react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "~/lib/navigation";
 
@@ -40,6 +40,7 @@ export default function MilestoneTypesListPage() {
 }
 
 function MilestoneTypes() {
+  const locale = useLocale();
   const t = useTranslations("admin.milestones");
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
@@ -234,8 +235,8 @@ function MilestoneTypes() {
             {milestoneTypes.length > 0 && (
               <p className="text-sm text-muted-foreground shrink-0">
                 {tGlobal("admin.auditLogs.showing", {
-                  loaded: milestoneTypes.length.toLocaleString(),
-                  total: milestoneTypes.length.toLocaleString(),
+                  loaded: milestoneTypes.length.toLocaleString(locale),
+                  total: milestoneTypes.length.toLocaleString(locale),
                 })}
               </p>
             )}

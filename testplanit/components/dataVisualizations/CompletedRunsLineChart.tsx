@@ -1,9 +1,10 @@
 "use client";
 
 import * as d3 from "d3";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import React, { useEffect, useRef } from "react";
 import useResponsiveSVG from "~/hooks/useResponsiveSVG";
+import { localeTickFormat } from "~/utils/formatNumber";
 
 export interface MonthlyCount {
   month: string; // Format: YYYY-MM
@@ -21,6 +22,7 @@ const CompletedRunsLineChart: React.FC<CompletedRunsLineChartProps> = ({
   data,
   isZoomed = false, // Default to false
 }) => {
+  const locale = useLocale();
   const svgRef = useRef<SVGSVGElement | null>(null);
   const tooltipRef = useRef<HTMLDivElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -104,7 +106,8 @@ const CompletedRunsLineChart: React.FC<CompletedRunsLineChartProps> = ({
 
     const yAxis = d3
       .axisLeft(yScale)
-      .ticks(Math.min(5, d3.max(data, (d) => d.count) || 1)); // Max 5 ticks, or fewer if max count is low
+      .ticks(Math.min(5, d3.max(data, (d) => d.count) || 1)) // Max 5 ticks, or fewer if max count is low
+      .tickFormat(localeTickFormat(locale));
 
     // Calculate responsive font sizes based on zoom level
     const baseFontSize = Math.max(
@@ -286,7 +289,7 @@ const CompletedRunsLineChart: React.FC<CompletedRunsLineChartProps> = ({
         .style("fill", "currentColor")
         .text(item.label);
     });
-  }, [data, width, height, isZoomed, t]);
+  }, [data, width, height, isZoomed, t, locale]);
 
   return (
     <div

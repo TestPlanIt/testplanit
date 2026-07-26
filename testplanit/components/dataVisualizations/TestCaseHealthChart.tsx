@@ -12,7 +12,7 @@ import {
   Clock,
   HelpCircle,
 } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import React, { useCallback, useEffect, useMemo, useRef } from "react";
 import useResponsiveSVG from "~/hooks/useResponsiveSVG";
 import type { HealthStatus } from "~/utils/testCaseHealthUtils";
@@ -67,6 +67,7 @@ export const TestCaseHealthChart: React.FC<TestCaseHealthChartProps> = ({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const { width, height } = useResponsiveSVG(containerRef);
   const t = useTranslations("reports.ui.testCaseHealth");
+  const locale = useLocale();
 
   // Helper to get translated health status label
   const getHealthStatusLabel = useCallback(
@@ -230,7 +231,7 @@ export const TestCaseHealthChart: React.FC<TestCaseHealthChartProps> = ({
       .style("fill", "hsl(var(--foreground))")
       .style("font-size", `${Math.min(32, radius * 0.4)}px`)
       .style("font-weight", "700")
-      .text(data.length);
+      .text(data.length.toLocaleString(locale));
 
     donutG
       .append("text")
@@ -311,9 +312,9 @@ export const TestCaseHealthChart: React.FC<TestCaseHealthChartProps> = ({
         .style("fill", "hsl(var(--foreground))")
         .style("font-size", "13px")
         .style("font-weight", "600")
-        .text(count);
+        .text(count.toLocaleString(locale));
     });
-  }, [summaryStats, data, width, height, getHealthStatusLabel, t]);
+  }, [summaryStats, data, width, height, getHealthStatusLabel, t, locale]);
 
   // Calculate additional summary metrics
   const summaryMetrics = useMemo(() => {

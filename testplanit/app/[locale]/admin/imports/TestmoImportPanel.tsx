@@ -10,7 +10,7 @@ import {
   useState,
 } from "react";
 import { filesize } from "filesize";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import type { LucideIcon } from "lucide-react";
 import {
   Activity,
@@ -139,6 +139,7 @@ interface WizardStepDefinition {
 }
 
 export function TestmoImportPanel() {
+  const locale = useLocale();
   const t = useTranslations("admin.imports");
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
@@ -2281,11 +2282,11 @@ export function TestmoImportPanel() {
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <SummaryTile
           label={t("testmo.summary.datasets")}
-          value={analysis.meta.totalDatasets.toLocaleString()}
+          value={analysis.meta.totalDatasets.toLocaleString(locale)}
         />
         <SummaryTile
           label={tGlobal("admin.imports.testmo.datasetTable.rows")}
-          value={analysis.meta.totalRows.toLocaleString()}
+          value={analysis.meta.totalRows.toLocaleString(locale)}
         />
         <SummaryTile
           label={t("testmo.summary.fileName")}
@@ -2344,7 +2345,7 @@ export function TestmoImportPanel() {
                         {dataset.name}
                       </TableCell>
                       <TableCell className="text-end">
-                        {dataset.rowCount.toLocaleString()}
+                        {dataset.rowCount.toLocaleString(locale)}
                       </TableCell>
                     </TableRow>
                   );
@@ -2511,10 +2512,12 @@ export function TestmoImportPanel() {
                     className="flex items-center gap-2 border"
                   >
                     <span className="truncate">{datasetLabelFor(key)}</span>
-                    <Badge variant="secondary">{count.toLocaleString()}</Badge>
+                    <Badge variant="secondary">
+                      {count.toLocaleString(locale)}
+                    </Badge>
                     {outstanding > 0 && (
                       <Badge variant="destructive">
-                        {outstanding.toLocaleString()}
+                        {outstanding.toLocaleString(locale)}
                       </Badge>
                     )}
                   </TabsTrigger>
@@ -3023,7 +3026,9 @@ export function TestmoImportPanel() {
                         <span className="font-medium">
                           {t("testmo.job.rowsProcessedLabel")}
                         </span>
-                        <span>{currentJob.processedRows.toLocaleString()}</span>
+                        <span>
+                          {currentJob.processedRows.toLocaleString(locale)}
+                        </span>
                       </div>
                     )}
                 </div>

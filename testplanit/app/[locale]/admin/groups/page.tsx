@@ -3,7 +3,7 @@
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { useSession } from "next-auth/react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "~/lib/navigation";
 
@@ -29,6 +29,7 @@ export default function GroupListPage() {
 function GroupList() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const locale = useLocale();
   const t = useTranslations("admin.groups");
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
@@ -178,8 +179,8 @@ function GroupList() {
               {groups.length > 0 && (
                 <p className="text-sm text-muted-foreground shrink-0">
                   {tGlobal("admin.auditLogs.showing", {
-                    loaded: groups.length.toLocaleString(),
-                    total: groups.length.toLocaleString(),
+                    loaded: groups.length.toLocaleString(locale),
+                    total: groups.length.toLocaleString(locale),
                   })}
                 </p>
               )}

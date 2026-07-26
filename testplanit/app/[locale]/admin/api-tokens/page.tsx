@@ -3,7 +3,7 @@
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { useSession } from "next-auth/react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "~/lib/navigation";
 
@@ -39,6 +39,7 @@ export default function ApiTokensPage() {
 }
 
 function ApiTokensList() {
+  const locale = useLocale();
   const t = useTranslations("admin.apiTokens");
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
@@ -307,8 +308,8 @@ function ApiTokensList() {
             {tokenRows.length > 0 && (
               <p className="text-sm text-muted-foreground shrink-0">
                 {tGlobal("admin.auditLogs.showing", {
-                  loaded: tokenRows.length.toLocaleString(),
-                  total: tokenRows.length.toLocaleString(),
+                  loaded: tokenRows.length.toLocaleString(locale),
+                  total: tokenRows.length.toLocaleString(locale),
                 })}
               </p>
             )}

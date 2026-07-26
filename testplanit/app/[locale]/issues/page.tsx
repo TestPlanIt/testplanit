@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/select";
 import type { VisibilityState } from "@tanstack/react-table";
 import { useSession } from "next-auth/react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "~/lib/navigation";
 import { ExtendedIssues, useIssueColumns } from "./columns";
@@ -41,6 +41,7 @@ export default function IssueList() {
 }
 
 function Issues() {
+  const locale = useLocale();
   const t = useTranslations();
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -458,8 +459,10 @@ function Issues() {
             {mappedIssues.length > 0 && (
               <p className="text-sm text-muted-foreground shrink-0">
                 {t("admin.auditLogs.showing", {
-                  loaded: mappedIssues.length.toLocaleString(),
-                  total: (issuesCount ?? mappedIssues.length).toLocaleString(),
+                  loaded: mappedIssues.length.toLocaleString(locale),
+                  total: (issuesCount ?? mappedIssues.length).toLocaleString(
+                    locale
+                  ),
                 })}
               </p>
             )}

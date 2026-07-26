@@ -6,7 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import type { RepositoryCaseSource } from "~/zenstack/models";
 import type { RepositoryCasesWhereInput } from "~/zenstack/input";
 import { ListChecks } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import React, { useCallback, useMemo } from "react";
 import { cn } from "~/utils";
 import { CaseDisplay } from "./CaseDisplay";
@@ -36,6 +36,7 @@ export const CasesListDisplay: React.FC<CasesListProps> = ({
   pageSize = DEFAULT_PAGE_SIZE,
   isLoading = false,
 }) => {
+  const locale = useLocale();
   const t = useTranslations("common");
 
   const computedCount =
@@ -158,7 +159,7 @@ export const CasesListDisplay: React.FC<CasesListProps> = ({
 
   const triggerLabel =
     computedCount !== undefined && computedCount > 0
-      ? computedCount.toLocaleString()
+      ? computedCount.toLocaleString(locale)
       : "";
   const searchPlaceholder = t("searchCases", {
     count: computedCount ?? 0,

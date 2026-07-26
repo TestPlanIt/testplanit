@@ -24,7 +24,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { Integration } from "~/zenstack/models";
 import { CirclePlus, Trash2 } from "lucide-react";
 import { useSession } from "next-auth/react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useRouter } from "~/lib/navigation";
@@ -35,6 +35,7 @@ export default function IntegrationsPage() {
 }
 
 function IntegrationList() {
+  const locale = useLocale();
   const t = useTranslations("admin.integrations");
   const tCommon = useTranslations("common");
   const tApiTokens = useTranslations("admin.apiTokens");
@@ -275,8 +276,8 @@ function IntegrationList() {
             {integrationRows.length > 0 && (
               <p className="text-sm text-muted-foreground shrink-0">
                 {tGlobal("admin.auditLogs.showing", {
-                  loaded: integrationRows.length.toLocaleString(),
-                  total: integrationRows.length.toLocaleString(),
+                  loaded: integrationRows.length.toLocaleString(locale),
+                  total: integrationRows.length.toLocaleString(locale),
                 })}
               </p>
             )}

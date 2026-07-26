@@ -16,7 +16,7 @@ import { Separator } from "@/components/ui/separator";
 import { NotificationMode } from "~/zenstack/models";
 import { Save, Send } from "lucide-react";
 import { useSession } from "next-auth/react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner"; // cspell:ignore sonner
 import {
@@ -38,6 +38,7 @@ export default function NotificationSettingsPage() {
 }
 
 function NotificationSettingsContent() {
+  const locale = useLocale();
   const t = useTranslations("admin.notifications");
   const tCommon = useTranslations("common");
   const tGlobal = useTranslations();
@@ -421,8 +422,10 @@ function NotificationSettingsContent() {
               {tableData.length > 0 && (
                 <p className="text-sm text-muted-foreground shrink-0">
                   {tGlobal("admin.auditLogs.showing", {
-                    loaded: tableData.length.toLocaleString(),
-                    total: (totalCount || tableData.length).toLocaleString(),
+                    loaded: tableData.length.toLocaleString(locale),
+                    total: (totalCount || tableData.length).toLocaleString(
+                      locale
+                    ),
                   })}
                 </p>
               )}

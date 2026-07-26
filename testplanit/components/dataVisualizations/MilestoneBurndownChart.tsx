@@ -1,10 +1,11 @@
 "use client";
 
 import * as d3 from "d3";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import React, { useEffect, useRef } from "react";
 import useResponsiveSVG from "~/hooks/useResponsiveSVG";
 import type { MilestoneBurndownData } from "~/lib/services/milestoneBurndown";
+import { localeTickFormat } from "~/utils/formatNumber";
 
 interface MilestoneBurndownChartProps {
   data: MilestoneBurndownData;
@@ -45,6 +46,7 @@ const parseDay = (day: string) => new Date(`${day}T00:00:00.000Z`);
 const MilestoneBurndownChart: React.FC<MilestoneBurndownChartProps> = ({
   data,
 }) => {
+  const locale = useLocale();
   const svgRef = useRef<SVGSVGElement | null>(null);
   const tooltipRef = useRef<HTMLDivElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -141,7 +143,10 @@ const MilestoneBurndownChart: React.FC<MilestoneBurndownChartProps> = ({
       .ticks(tickCount)
       .tickFormat((d) => d3.timeFormat("%b %d")(d as Date))
       .tickSizeOuter(0);
-    const yAxis = d3.axisLeft(yScale).ticks(Math.min(5, yMax));
+    const yAxis = d3
+      .axisLeft(yScale)
+      .ticks(Math.min(5, yMax))
+      .tickFormat(localeTickFormat(locale));
 
     g.append("g")
       .attr("transform", `translate(0, ${chartHeight})`)
@@ -417,7 +422,7 @@ const MilestoneBurndownChart: React.FC<MilestoneBurndownChartProps> = ({
         item.label.length * 6;
       legendX += swatchW + textWidth + 16;
     });
-  }, [data, width, height, t]);
+  }, [data, width, height, t, locale]);
 
   return (
     <div

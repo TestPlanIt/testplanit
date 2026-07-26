@@ -3,7 +3,7 @@
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { useSession } from "next-auth/react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "~/lib/navigation";
 
@@ -28,6 +28,7 @@ export default function LlmAdminPage() {
 }
 
 function LlmIntegrationList() {
+  const locale = useLocale();
   const t = useTranslations("admin.llm");
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
@@ -344,8 +345,8 @@ function LlmIntegrationList() {
             {(integrations?.length ?? 0) > 0 && (
               <p className="text-sm text-muted-foreground shrink-0">
                 {tGlobal("admin.auditLogs.showing", {
-                  loaded: (integrations?.length ?? 0).toLocaleString(),
-                  total: (integrations?.length ?? 0).toLocaleString(),
+                  loaded: (integrations?.length ?? 0).toLocaleString(locale),
+                  total: (integrations?.length ?? 0).toLocaleString(locale),
                 })}
               </p>
             )}
