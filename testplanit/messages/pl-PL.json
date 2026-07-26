@@ -3970,7 +3970,7 @@
         "mappingDatasetEmptyDescription": "Analiza nie zachowała żadnych zestawów danych do konfiguracji. Prześlij inny eksport, jeśli oczekujesz dodatkowych danych.",
         "importProgressTitle": "Postęp importu",
         "importProgressDescription": "{count, plural, =0 {Wszystkie rekordy zaimportowane między śledzonymi jednostkami.} =1 {Pozostało 1 rekord między śledzonymi jednostkami.} other {Pozostało # rekordów między śledzonymi jednostkami.}}",
-        "importProgressTotalRemaining": "{count, plural, =0 {Brak pozostałych rekordów} =1 {Pozostał 1 rekord} other {Pozostała liczba rekordów}}",
+        "importProgressTotalRemaining": "{count, plural, =0 {Brak pozostałych rekordów} =1 {Pozostał 1 rekord} other {Pozostało # rekordów}}",
         "importProgressProcessed": "{processed, number}/{total, number} zaimportowano rekordy",
         "importProgressAria": "{percent, number}% ukończonego importu",
         "importProgressPercentLabel": "{percent, number}%",

@@ -81,7 +81,7 @@
       "refresh": "Atualizar",
       "addResultSelected": "Adicionar resultado a {count, plural, one {# caso} other {# casos}}",
       "resultsAdded": "{count, plural, one {# Resultado} other {# Resultados}} Adicionado",
-      "resultsAddedDescription": "{count, plural, one {Resultado adicionado ao caso de teste nº} other {Resultados adicionados aos casos de teste nº}} com sucesso",
+      "resultsAddedDescription": "{count, plural, one {Resultado adicionado a # caso de teste} other {Resultados adicionados a # casos de teste}} com sucesso",
       "addingResultsToMultiple": "Adicionando resultados a {count, plural, one {# caso de teste} other {# casos de teste}}",
       "addedToTestRun": "Adicionado ao Teste de Rotina",
       "addedToTestRunDescription": "O caso de teste foi adicionado à Execução de Teste.",
@@ -751,7 +751,7 @@
       "noTestCasesSelected": "Nenhum caso de teste selecionado",
       "editToSelectTestCases": "Edite a Execução de Teste para selecionar os casos de teste.",
       "casesInRun": "{count, plural, =0 {Nenhum caso de teste na execução do teste} =1 {1 caso de teste na execução do teste} other {# casos de teste na execução do teste}}",
-      "casesInRunMultiConfig": "{uniqueCount, plural, =1 {1 Caso Único} other {Nº de Casos Únicos}} em {configCount, plural, =1 {1 Configuração} other {Nº de Configurações}} ({totalCount, number} casos totais)",
+      "casesInRunMultiConfig": "{uniqueCount, plural, =1 {1 Caso Único} other {# Casos Únicos}} em {configCount, plural, =1 {1 Configuração} other {# Configurações}} ({totalCount, number} casos totais)",
       "viewTestRunDetails": "Veja os detalhes da execução do teste.",
       "sortByStatus": "Agrupar por status",
       "sortByDate": "Ordenar por data",
@@ -840,7 +840,7 @@
       "attachments": {
         "title": "Carregar anexos",
         "description": "Arraste e solte seus arquivos ou clique no botão abaixo para selecionar os arquivos.",
-        "selectFiles": "{count, plural, =0 {Selecionar Arquivos} one {1 Arquivo Selecionado} other {Nº de Arquivos Selecionados}}",
+        "selectFiles": "{count, plural, =0 {Selecionar Arquivos} one {1 Arquivo Selecionado} other {# Arquivos Selecionados}}",
         "selectFile": "{count, plural, =0 {Selecionar Arquivo} other {1 Arquivo Selecionado}}",
         "filesSelected": "{count, plural, one {1 arquivo selecionado} other {# arquivos selecionados}}",
         "addMoreFiles": "Adicionar mais arquivos...",
@@ -2451,7 +2451,7 @@
   "home": {
     "dashboard": {
       "title": "Seu painel de controle",
-      "users": "Há {count, plural, =1 {usuários} other {usuários}}",
+      "users": "Há {count, plural, =1 {# usuário} other {# usuários}}",
       "yourProjects": "Seus projetos",
       "projects": "Você tem acesso a {count, plural, =1 {# Projeto} other {# Projetos}}",
       "loading": "Carregando painel...",
@@ -3230,7 +3230,7 @@
         "followLinksHint": "Somente as páginas do mesmo domínio que o URL inserido serão rastreadas.",
         "maxDepth": "Profundidade máxima",
         "maxPages": "Número máximo de páginas",
-        "crawlProgress": "{current, plural, one {Páginas buscadas até o momento...} other {Páginas buscadas até o momento...}}",
+        "crawlProgress": "{current, plural, one {# página buscada até o momento...} other {# páginas buscadas até o momento...}}",
         "generatingSinglePage": "Gerando casos de teste...",
         "generatingSetup": "Preparando para gerar casos de teste...",
         "robotsSkipped": "{count, plural, one {# página pulada} other {# páginas puladas}} (robots.txt)"
@@ -8305,7 +8305,7 @@
     "selectSourceConfirm": "Alterar fonte",
     "datasetRowSelectAria": "Selecione a linha",
     "datasetSelectAllPageTooltip": "Clique para selecionar todas as linhas desta página. Pressione Shift e clique para selecionar todas as linhas em todas as páginas.",
-    "datasetSelectAllAcrossPagesTooltip": "Selecione todas as {count, plural, =1 {número de linhas} other {número de linhas}} em todas as páginas",
+    "datasetSelectAllAcrossPagesTooltip": "Selecione todas as {count, plural, =1 {# linha} other {# linhas}} em todas as páginas",
     "datasetDeselectAllAcrossPagesTooltip": "Desmarque todas as linhas em todas as páginas.",
     "datasetLabelColumn": "Rótulo",
     "datasetAddRow": "Adicionar linha",

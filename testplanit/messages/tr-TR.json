@@ -14,7 +14,7 @@
     "selectMultiple": "Birden fazla seçenek seçin...",
     "searchUsers": "Kullanıcıları ara...",
     "searchGroups": "Grupları arayın...",
-    "searchCases": "{count, plural, =0 {Vaka arama} one {Vaka arama} other {Vaka arama}}",
+    "searchCases": "{count, plural, =0 {Vaka arama} one {# vaka ara} other {# vaka ara}}",
     "searchProjects": "{count, plural, =0 {Projeleri ara} one {Proje # ara} other {Proje # ara}}",
     "searchTags": "Etiketleri ara...",
     "searchRuns": "{count, plural, =0 {Arama test çalıştırmaları} one {Arama # test çalıştırmaları} other {Arama # test çalıştırmaları}}",
@@ -765,7 +765,7 @@
       "selected": "Seçilen: {count}",
       "defaultProjectAccess": "Varsayılan Proje Erişimi",
       "defaultAccessType": "Varsayılan Erişim Türü",
-      "assignedUsersCount": "{count, plural, =0 {Atanan Kullanıcı Yok} =1 {Atanan Kullanıcı Sayısı} other {Atanan Kullanıcı Sayısı}}",
+      "assignedUsersCount": "{count, plural, =0 {Atanan Kullanıcı Yok} =1 {# Kullanıcı Atandı} other {# Kullanıcı Atandı}}",
       "successRate": "Başarı Oranı",
       "unassigned": "Atanmamış",
       "testRunName": "Test Çalıştırma Adı",
@@ -1270,15 +1270,15 @@
     "overview": {
       "title": "Genel Bakış",
       "currentMilestones": "Güncel Dönüm Noktaları",
-      "seeAllMilestones": "{count, plural, =1 {Kilometre Taşı #'yı Gör} other {Tüm Kilometre Taşlarını Gör}}",
+      "seeAllMilestones": "{count, plural, =1 {# Kilometre Taşını Gör} other {Tüm # Kilometre Taşını Gör}}",
       "seeAllTestCases": "{count, plural, =1 {Test Durumu #'na bakın} other {Tüm Test Durumları #'na bakın}}",
       "latestTestCases": "En Son Test Örnekleri",
       "createdOn": "Oluşturulma tarihi",
       "seeAllTags": "Tüm Etiketleri Gör",
-      "seeAllActiveSessions": "{count, plural, =1 {Aktif Oturum Sayısına Bakın} other {Tüm Aktif Oturumları Görün}}",
+      "seeAllActiveSessions": "{count, plural, =1 {# Aktif Oturumu Görün} other {Tüm # Aktif Oturumu Görün}}",
       "latestSessions": "Son Oturumlar",
       "activeTestRuns": "Aktif Test Çalıştırmaları",
-      "seeAllActiveTestRuns": "{count, plural, =1 {Aktif Test Çalıştırma Sayısına Bakın} other {Tüm Aktif Test Çalıştırma Sayılarına Bakın}}",
+      "seeAllActiveTestRuns": "{count, plural, =1 {# Aktif Test Çalıştırmasını Görün} other {Tüm # Aktif Test Çalıştırmasını Görün}}",
       "latestTestRuns": "Son Test Çalıştırmaları",
       "testCaseBreakdown": "Test Durumu Analizi",
       "noTestCases": "Proje deposu boş. Depoyu kullanarak test senaryoları ekleyin.",
@@ -2451,7 +2451,7 @@
   "home": {
     "dashboard": {
       "title": "Kontrol Paneliniz",
-      "users": "Burada {count, plural, =1 {# Kullanıcı} other {var.}} # Kullanıcı var.",
+      "users": "{count, plural, =1 {# Kullanıcı var} other {# Kullanıcı var}}",
       "yourProjects": "Projeleriniz",
       "projects": "Şu projelere erişiminiz var: {count, plural, =1 {# Proje} other {# Projeler}}",
       "loading": "Kontrol paneli yükleniyor...",
@@ -3638,7 +3638,7 @@
       "success": {
         "title": "Test çalıştırması başarıyla eklendi.",
         "description": "{name} projeye eklendi",
-        "descriptionMultiple": "{count, plural, one {# test çalıştırması} other {için oluşturuldu}} {name}"
+        "descriptionMultiple": "{name} için {count, plural, one {# test çalıştırması} other {# test çalıştırması}} oluşturuldu"
       },
       "estimates": {
         "manual": "Tahmini Manuel Süre",
@@ -6132,7 +6132,7 @@
         "reviewReminderTitle": "İnceleme henüz sonuçlanmadı.",
         "reviewReminderAction": "Hâlâ sizin değerlendirmenizi bekliyor.",
         "reviewReminderEmailMessage": "Hatırlatma: {actorName}'ın {entityLabel} \"{entityName}\" hakkındaki inceleme isteği, \"{projectName}\" projesinde {hoursPending} saattir beklemede.",
-        "reviewReminderHoursPending": "Beklemede {hoursPending, plural, one {saat} other {saat}}",
+        "reviewReminderHoursPending": "Beklemede {hoursPending, plural, one {# saat} other {# saat}}",
         "aiStepsDerivedTitle": "Yapay Zeka ile Türetilen Test Adımları Hazır",
         "aiStepsDerivedMessage": "{count, plural, one {# test durumuna} other {# test durumuna}} yapay zeka tarafından türetilmiş adımlar verildi — doğruluğunu inceleyin.",
         "aiStepsDerivedReviewLink": "Test çalıştırmasını incele"
@@ -8301,7 +8301,7 @@
     "renameConfirm": "Yeniden isimlendirmek",
     "renameNoRefsToast": "Parametre yeniden adlandırıldı (mevcut referans yok)",
     "selectSourceWarningTitle": "\"@{name} \" için SELECT kaynağını değiştir?",
-    "selectSourceWarningDescription": "Bu parametreye ait mevcut veri kümesi değerleri yeni listede bulunmayabilir. {invalidCount, plural, =1 {# satır} other {bu değişiklikten sonra}} dikkat gerektirecek. Devam edilsin mi?",
+    "selectSourceWarningDescription": "Bu parametreye ait mevcut veri kümesi değerleri yeni listede bulunmayabilir. Bu değişiklikten sonra {invalidCount, plural, =1 {# satır} other {# satır}} dikkat gerektirecek. Devam edilsin mi?",
     "selectSourceConfirm": "Kaynak değiştir",
     "datasetRowSelectAria": "Satırı seçin",
     "datasetSelectAllPageTooltip": "Bu sayfadaki tüm satırları seçmek için tıklayın. Tüm sayfalardaki tüm satırları seçmek için Shift tuşuna basılı tutarak tıklayın.",

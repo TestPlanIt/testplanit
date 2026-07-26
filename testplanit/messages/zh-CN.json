@@ -3969,7 +3969,7 @@
         "mappingDatasetEmptyTitle": "未保存任何数据集",
         "mappingDatasetEmptyDescription": "分析过程中未保留任何用于配置的数据集。如果您需要其他数据，请上传其他导出文件。",
         "importProgressTitle": "导入进度",
-        "importProgressDescription": "{count, plural, =0 {所有已导入的记录（涵盖所有跟踪实体）。} =1 {已导入的记录（涵盖所有跟踪实体）。} other {已导入的记录（涵盖所有跟踪实体）。}}",
+        "importProgressDescription": "{count, plural, =0 {所有记录均已导入（涵盖所有跟踪实体）。} =1 {还剩 1 条记录（涵盖所有跟踪实体）。} other {还剩 # 条记录（涵盖所有跟踪实体）。}}",
         "importProgressTotalRemaining": "{count, plural, =0 {无剩余记录} =1 {剩余 1 条记录} other {剩余记录#}}",
         "importProgressProcessed": "{processed, number}/{total, number} 记录已导入",
         "importProgressAria": "导入完成 {percent, number}%",
@@ -6132,7 +6132,7 @@
         "reviewReminderTitle": "审核仍在进行中",
         "reviewReminderAction": "仍在等待您的评论",
         "reviewReminderEmailMessage": "提醒： {actorName}对 {entityLabel} \"{entityName}\" 在项目 \"{projectName}\" 中的审核请求已等待 {hoursPending} 小时。",
-        "reviewReminderHoursPending": "等待 {hoursPending, plural, one {小时} other {小时}}",
+        "reviewReminderHoursPending": "等待 {hoursPending, plural, one {# 小时} other {# 小时}}",
         "aiStepsDerivedTitle": "AI 生成的测试步骤已就绪",
         "aiStepsDerivedMessage": "{count, plural, other {# 个测试用例已}}获得 AI 生成的步骤 — 请检查其准确性。",
         "aiStepsDerivedReviewLink": "查看测试运行"

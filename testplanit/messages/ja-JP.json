@@ -2723,7 +2723,7 @@
       "confirmDelete": "削除手順の確認 {number, number}?",
       "createSharedSteps": "共有を作成 {number, plural, one {ステップ} other {ステップ}}",
       "sharedStepsName": "共有ステップ名",
-      "sharedStepsDescription": "新しい共有ステップ {number, plural, one {ステップ} other {ステップ}}の名前を入力します。これには、選択したステップ {number, plural, one {個、選択したステップ} other {個、選択したステップ}}が含まれます。",
+      "sharedStepsDescription": "新しい共有{number, plural, one {ステップ} other {ステップ}}の名前を入力します。これには、{number, plural, one {選択した # 件のステップ} other {選択した # 件のステップ}}が含まれます。",
       "notifications": {
         "noStepsSelectedOrNameEmptyWarning": "共有ステップを作成するには、ステップを選択して名前を入力してください。",
         "failedToCreateSharedStepGroupError": "共有ステップの作成に失敗しました。もう一度お試しください。",
@@ -2764,7 +2764,7 @@
     "showDescendants": "すべての子孫を表示",
     "addFolder": "フォルダを追加",
     "emptyFolders": "最初のフォルダーを追加するには、上の「フォルダーの追加」ボタンをクリックします。",
-    "selectedAllCases": "{count, plural, =0 {すべてのケースを選択しました} one {すべてのページでケースを選択しました} other {すべてのページでケースを選択しました}}",
+    "selectedAllCases": "{count, plural, =0 {すべてのケースを選択しました} one {すべてのページで # 件のケースを選択しました} other {すべてのページで # 件のケースを選択しました}}",
     "deselectedAllCases": "すべてのページのすべてのケースの選択を解除しました",
     "selectAllTooltip": "このページのすべてのケースを選択/選択解除",
     "selectAllShiftTooltip": "{count, plural, =0 {すべてのページのすべてのケースを選択/選択解除します} one {すべてのページのケースを # 件選択/選択解除します} other {すべてのページのケースを # 件選択/選択解除します}}",
@@ -5236,7 +5236,7 @@
       "defaultLockedDescription": "デフォルトを変更するには、別のマイルストーンの種類を編集してデフォルトとして設定してください。",
       "wizard": {
         "selectProjects": "プロジェクトを選択",
-        "projectsSelected": "{count, plural, =0 {プロジェクトが選択されていません} one {プロジェクトが選択されました} other {プロジェクトが選択されました}}",
+        "projectsSelected": "{count, plural, =0 {プロジェクトが選択されていません} one {# 件のプロジェクトが選択されました} other {# 件のプロジェクトが選択されました}}",
         "createMilestone": "マイルストーンを作成",
         "noCommonTypesTitle": "共通のマイルストーンタイプはありません",
         "noCommonTypesDescription": "選択したプロジェクトには共通のマイルストーンタイプがありません。選択したすべてのプロジェクトに少なくとも1つの共通のマイルストーンタイプがあることを確認するか、別のプロジェクトを選択してください。"
@@ -8493,7 +8493,7 @@
     "iterationBulkConfirmDescription": "選択された各反復処理は、ステータス「{statusName}」の新しい結果を受け取ります。",
     "iterationBulkConfirm": "マーク {action}",
     "iterationBulkConfirmReplace": "{action} に置き換えてください。",
-    "iterationBulkOverwriteWarning": "{count, plural, =1 {選択された反復のうち、} other {のうち、}} の結果が既に得られています。新しい結果が記録され、最新の結果が現在の結果を置き換えます。",
+    "iterationBulkOverwriteWarning": "{count, plural, =1 {選択された反復のうち # 件} other {選択された反復のうち # 件}} の結果が既に得られています。新しい結果が記録され、最新の結果が現在の結果を置き換えます。",
     "iterationBulkReasonLabel": "理由（任意）",
     "iterationBulkReasonHelp": "各結果に記録されます。",
     "iterationBulkSuccess": "{count, plural, =1 {# 反復} other {# 反復}} マーク {action}",

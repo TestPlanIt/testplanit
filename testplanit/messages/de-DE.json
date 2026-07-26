@@ -1275,7 +1275,7 @@
       "latestTestCases": "Neueste Testfälle",
       "createdOn": "Erstellt am",
       "seeAllTags": "Alle Schlagwörter anzeigen",
-      "seeAllActiveSessions": "{count, plural, =1 {Aktuelle Sitzung anzeigen} other {Alle aktiven Sitzungen anzeigen}}",
+      "seeAllActiveSessions": "{count, plural, =1 {# aktive Sitzung anzeigen} other {Alle # aktiven Sitzungen anzeigen}}",
       "latestSessions": "Neueste Sitzungen",
       "activeTestRuns": "Aktive Testläufe",
       "seeAllActiveTestRuns": "{count, plural, =1 {Siehe # Aktive Testläufe} other {Alle # Aktiven Testläufe anzeigen}}",

@@ -765,7 +765,7 @@
       "selected": "Đã chọn: {count}",
       "defaultProjectAccess": "Quyền truy cập dự án mặc định",
       "defaultAccessType": "Loại truy cập mặc định",
-      "assignedUsersCount": "{count, plural, =0 {Chưa có người dùng nào được chỉ định} =1 {Đã chỉ định người dùng} other {Đã chỉ định người dùng}}",
+      "assignedUsersCount": "{count, plural, =0 {Chưa có người dùng nào được chỉ định} =1 {Đã chỉ định # người dùng} other {Đã chỉ định # người dùng}}",
       "successRate": "Tỷ lệ thành công",
       "unassigned": "Chưa được chỉ định",
       "testRunName": "Tên lần chạy thử nghiệm",

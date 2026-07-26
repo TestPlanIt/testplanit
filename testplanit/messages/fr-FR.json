@@ -17,7 +17,7 @@
     "searchCases": "{count, plural, =0 {Rechercher des cas} one {Rechercher # cas} other {Rechercher # cas}}",
     "searchProjects": "{count, plural, =0 {Rechercher des projets} one {Rechercher # de projet} other {Rechercher # de projets}}",
     "searchTags": "Rechercher des étiquettes...",
-    "searchRuns": "{count, plural, =0 {Rechercher les exécutions de test} one {Rechercher le numéro de l'exécution de test} other {Rechercher le nombre d'exécutions de test}}",
+    "searchRuns": "{count, plural, =0 {Rechercher les exécutions de test} one {Rechercher # exécution de test} other {Rechercher # exécutions de test}}",
     "searchSessions": "{count, plural, =0 {Recherche de sessions} one {Recherche de session #} other {Recherche de sessions #}}",
     "searchMilestones": "{count, plural, =0 {Rechercher des étapes} one {Rechercher # étape} other {Rechercher # étapes}}",
     "search": "Recherche...",
