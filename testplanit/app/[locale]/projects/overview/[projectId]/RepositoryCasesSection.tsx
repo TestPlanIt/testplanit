@@ -260,7 +260,27 @@ const RepositoryCasesSection: React.FC<RepositoryCasesSectionProps> = ({
     // below that, so a narrow panel still leaves the case names room to read.
     <div className="@container flex flex-col">
       <div className="flex flex-col @2xl:flex-row">
-        <div className="flex flex-col w-full @2xl:w-1/2 @2xl:pe-6 @2xl:me-2 overflow-hidden">
+        <div className="w-full @2xl:w-1/2 @2xl:pe-6 @2xl:me-2 overflow-hidden">
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <h2 className="text-primary">{t("testCaseBreakdown")}</h2>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6"
+              onClick={() => setIsChartZoomed(true)}
+            >
+              <Maximize2 className="h-4 w-4" />
+              <span className="sr-only">{tCommon("expand")}</span>
+            </Button>
+          </div>
+          <ProjectOverviewSunburstChart data={repositoryCasesBreakdownData} />
+        </div>
+        <Separator className="my-4 @2xl:hidden" orientation="horizontal" />
+        <Separator
+          className="h-auto hidden @2xl:block"
+          orientation="vertical"
+        />
+        <div className="flex flex-col w-full @2xl:w-1/2 @2xl:ps-6 overflow-hidden">
           <h2 className="text-primary mb-2">{t("latestTestCases")}</h2>
           <ul className="flex flex-col space-y-1">
             {repositoryCasesLatestFive.map((caseItem) => {
@@ -305,26 +325,6 @@ const RepositoryCasesSection: React.FC<RepositoryCasesSectionProps> = ({
               );
             })}
           </ul>
-        </div>
-        <Separator className="my-4 @2xl:hidden" orientation="horizontal" />
-        <Separator
-          className="h-auto hidden @2xl:block"
-          orientation="vertical"
-        />
-        <div className="w-full @2xl:w-1/2 @2xl:ps-6 overflow-hidden">
-          <div className="mb-2 flex items-center justify-between gap-2">
-            <h2 className="text-primary">{t("testCaseBreakdown")}</h2>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-6 w-6"
-              onClick={() => setIsChartZoomed(true)}
-            >
-              <Maximize2 className="h-4 w-4" />
-              <span className="sr-only">{tCommon("expand")}</span>
-            </Button>
-          </div>
-          <ProjectOverviewSunburstChart data={repositoryCasesBreakdownData} />
         </div>
       </div>
       <Dialog open={isChartZoomed} onOpenChange={setIsChartZoomed}>

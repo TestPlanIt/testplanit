@@ -256,17 +256,52 @@ const ProjectOverviewSunburstChart: React.FC<
       .ease(d3.easeQuadOut)
       .style("opacity", 1);
 
+    const labelNodes = rootNode
+      .descendants()
+      .filter((d) => d.depth && (d.y1 - d.y0) * (d.x1 - d.x0) > 0.015);
+
+    // A segment that covers nearly all of its parent puts both labels on the
+    // same ray, where the radial text overlaps. Swing them apart along the arc,
+    // each staying well inside its own slice.
+    const midAngle = (d: d3.HierarchyRectangularNode<SunburstNode>) =>
+      (d.x0 + d.x1) / 2;
+    // The inner ring is drawn from the centre hole outwards, so its label sits
+    // at the middle of that band — closer to the centre than the area midpoint
+    // the partition reports.
+    const labelRadius = (d: d3.HierarchyRectangularNode<SunburstNode>) =>
+      d.depth === 1
+        ? (holeRadius + Math.sqrt(d.y1)) / 2
+        : Math.sqrt(d.y0 + (d.y1 - d.y0) / 2);
+    const maxSwing = (d: d3.HierarchyRectangularNode<SunburstNode>) =>
+      (d.x1 - d.x0) * 0.3;
+
+    const labelAngles = new Map(labelNodes.map((d) => [d, midAngle(d)]));
+
+    labelNodes
+      .filter((d) => d.depth > 1 && d.parent && labelAngles.has(d.parent))
+      .forEach((child) => {
+        const parent = child.parent!;
+        const childAngle = labelAngles.get(child)!;
+        const parentAngle = labelAngles.get(parent)!;
+        // Angular room the two labels need before they stop sharing a ray.
+        const needed = (labelFontSize * 1.6) / labelRadius(parent);
+        const deficit = needed - Math.abs(childAngle - parentAngle);
+        if (deficit <= 0) return;
+
+        const direction = childAngle >= parentAngle ? 1 : -1;
+        const childSwing = Math.min(deficit / 2, maxSwing(child));
+        const parentSwing = Math.min(deficit - childSwing, maxSwing(parent));
+        labelAngles.set(child, childAngle + direction * childSwing);
+        labelAngles.set(parent, parentAngle - direction * parentSwing);
+      });
+
     g.selectAll("text.label")
-      .data(
-        rootNode
-          .descendants()
-          .filter((d) => d.depth && (d.y1 - d.y0) * (d.x1 - d.x0) > 0.015)
-      )
+      .data(labelNodes)
       .join("text")
       .attr("class", "label") // Added class here
       .attr("transform", (d) => {
-        const x = (((d.x0 + d.x1) / 2) * 180) / Math.PI;
-        const y = Math.sqrt(d.y0 + (d.y1 - d.y0) / 2);
+        const x = ((labelAngles.get(d) ?? midAngle(d)) * 180) / Math.PI;
+        const y = labelRadius(d);
         return `rotate(${x - 90}) translate(${y},0) rotate(${x < 180 ? 0 : 180})`;
       })
       .attr("dy", "0.35em")
