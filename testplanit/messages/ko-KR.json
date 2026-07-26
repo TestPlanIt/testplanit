@@ -2530,7 +2530,8 @@
         "title": "과제",
         "empty": "진행 중인 과제가 없습니다.",
         "reviews": "{count, plural, =1 {# Review} other {# Reviews}}",
-        "remaining": "남음"
+        "remaining": "남음",
+        "pendingRuns": "{count, plural, =1 {# Active Test Run includes} other {# Active Test Runs include}} {cases, plural, =1 {# test case} other {# test cases}}"
       },
       "directory": {
         "title": "디렉터리 프로필",
@@ -3492,8 +3493,6 @@
     "inbox": {
       "iconAria": "{count, plural, =0 {리뷰 받은 편지함} one {리뷰 받은 편지함, 대기 중인 리뷰 수} other {리뷰 받은 편지함, 대기 중인 리뷰 수}}",
       "pageTitle": "리뷰",
-      "pageDescription": "귀하에게 배정된 (직접 또는 귀하가 맡은 역할을 통해) 보류 중인 검토 요청 목록입니다.",
-      "pageDescriptionDecided": "이미 결정하신 검토 요청입니다.",
       "tabPending": "보류 중",
       "tabDecided": "결정했다",
       "emptyDecided": "아직 리뷰를 선택하지 않으셨습니다.",
@@ -3503,8 +3502,6 @@
       "columnProject": "프로젝트",
       "columnRequester": "요청자",
       "columnTransition": "이행",
-      "columnTransitionFrom": "에서",
-      "columnTransitionTo": "에게",
       "columnRequestedAt": "요청됨",
       "columnDecidedAt": "결정됨",
       "columnStatus": "상태",
@@ -6466,6 +6463,7 @@
     "workflows": "테스트 케이스, 테스트 실행, 세션의 워크플로 상태를 관리합니다.",
     "workflowReviews": "승인이 부여될 때까지 워크플로 전환을 차단하여 검토 절차를 시행합니다. 이 기능을 활성화하면 각 프로젝트는 고급 설정에서 개별적으로 활성화 또는 비활성화할 수 있습니다. 워크플로 승인 차단을 비활성화하려면 이 기능을 비활성화하십시오.",
     "reviewReminders": "검토 요청이 접수된 후 검토자에게 알림 메시지가 전송되기까지 며칠이 걸릴 수 있나요? 새 요청은 제출 시점부터 기한이 계산됩니다.",
+    "reviews": "자신에게 직접 할당되었거나 보유한 역할을 통해 할당된 리뷰 요청입니다. 대기 중은 아직 결정을 기다리고 있는 요청 대기열이며, 결정됨은 이미 승인, 거부 또는 변경을 요청한 항목을 나열합니다.",
     "resultEditingPolicy": "프로젝트 전체에 걸쳐 결과가 기록된 후 해당 결과를 제자리에서 편집할 수 있는 시간을 제어합니다. 프로젝트는 고급 설정에서 이 시간을 단축할 수 있지만, 단축할 수는 없습니다. 시스템 관리자는 언제든지 이 설정을 편집할 수 있습니다.",
     "project": {
       "name": "## 프로젝트 이름\n프로젝트의 고유 식별자입니다.\n\n- 모든 프로젝트에서 고유해야 합니다.\n- 탐색 및 보고서에 사용됩니다.\n- 명확하고 설명적이어야 합니다.\n- 팀 구성원이 프로젝트 범위를 파악하는 데 도움이 됩니다.",
@@ -8122,6 +8120,7 @@
   },
   "comments": {
     "title": "댓글",
+    "titleWithCount": "{count, plural, =0 {No Comments} =1 {# Comment} other {# Comments}}",
     "placeholder": "댓글을 남겨주세요... (댓글을 달려면 @를 사용하세요)",
     "editPlaceholder": "댓글을 수정하세요...",
     "postComment": "댓글을 남겨주세요",

@@ -2530,7 +2530,8 @@
         "title": "Affectations",
         "empty": "Aucune affectation ouverte.",
         "reviews": "{count, plural, =1 {1 évaluation} other {# évaluations}}",
-        "remaining": "Restant"
+        "remaining": "Restant",
+        "pendingRuns": "{count, plural, =1 {# cycle de test actif inclut} other {# cycles de test actifs incluent}} {cases, plural, =1 {# cas de test} other {# cas de test}}"
       },
       "directory": {
         "title": "Profil de l'annuaire",
@@ -3492,8 +3493,6 @@
     "inbox": {
       "iconAria": "{count, plural, =0 {Boîte de réception à consulter} one {Boîte de réception à consulter, # en attente} other {Boîte de réception à consulter, # en attente}}",
       "pageTitle": "Avis",
-      "pageDescription": "Demandes de révision en attente qui vous sont attribuées (directement ou via un rôle que vous occupez).",
-      "pageDescriptionDecided": "Examiner les demandes auxquelles vous avez déjà donné votre décision.",
       "tabPending": "En attente",
       "tabDecided": "Décidé",
       "emptyDecided": "Vous n'avez pas encore décidé de rédiger d'avis.",
@@ -3503,8 +3502,6 @@
       "columnProject": "Projet",
       "columnRequester": "Demandeur",
       "columnTransition": "Transition",
-      "columnTransitionFrom": "Depuis",
-      "columnTransitionTo": "À",
       "columnRequestedAt": "Demandé à",
       "columnDecidedAt": "Décidé à",
       "columnStatus": "Statut",
@@ -6466,6 +6463,7 @@
     "workflows": "Gérez les états de workflow pour les cas de test, les exécutions de tests et les sessions.",
     "workflowReviews": "Imposer des révisions en bloquant les transitions du flux de travail jusqu'à approbation. Une fois activée, cette option permet aux projets de l'activer ou de la désactiver individuellement via leurs paramètres avancés. Désactivez-la pour empêcher le blocage des validations dans le flux de travail.",
     "reviewReminders": "Combien de jours une demande d'évaluation peut-elle rester en attente avant que les évaluateurs ne reçoivent une notification de rappel ? Le délai commence à courir dès la soumission des nouvelles demandes.",
+    "reviews": "Passez en revue les demandes qui vous sont assignées, directement ou via un rôle que vous détenez. En attente correspond à votre file de demandes en attente de décision ; Décidées répertorie celles que vous avez déjà approuvées, rejetées ou pour lesquelles vous avez demandé des modifications.",
     "resultEditingPolicy": "Contrôlez la durée pendant laquelle un résultat peut encore être modifié après son enregistrement, pour tous les projets. Les projets peuvent restreindre ce délai dans leurs paramètres avancés, mais ne peuvent jamais l'assouplir. Les administrateurs système peuvent toujours le modifier.",
     "project": {
       "name": "## Nom du projet\nL'identifiant unique de votre projet.\n\n- Doit être unique pour tous les projets.\n- Utilisé pour la navigation et les rapports.\n- Doit être clair et descriptif.\n- Aide les membres de l'équipe à identifier le périmètre du projet.",
@@ -8122,6 +8120,7 @@
   },
   "comments": {
     "title": "Commentaires",
+    "titleWithCount": "{count, plural, =0 {Aucun commentaire} =1 {# commentaire} other {# commentaires}}",
     "placeholder": "Écrivez un commentaire… (utilisez @ pour mentionner des utilisateurs)",
     "editPlaceholder": "Modifiez votre commentaire...",
     "postComment": "Publier un commentaire",

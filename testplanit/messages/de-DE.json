@@ -2530,7 +2530,8 @@
         "title": "Aufgaben",
         "empty": "Keine offenen Aufgaben.",
         "reviews": "{count, plural, =1 {# Überprüfung} other {# Überprüfungen}}",
-        "remaining": "Verbleibend"
+        "remaining": "Verbleibend",
+        "pendingRuns": "{count, plural, =1 {# aktiver Testlauf enthält} other {# aktive Testläufe enthalten}} {cases, plural, =1 {# Testfall} other {# Testfälle}}"
       },
       "directory": {
         "title": "Verzeichnisprofil",
@@ -3492,8 +3493,6 @@
     "inbox": {
       "iconAria": "{count, plural, =0 {Posteingang für Überprüfungen} one {Posteingang für Überprüfungen, # ausstehend} other {Posteingang für Überprüfungen, # ausstehend}}",
       "pageTitle": "Rezensionen",
-      "pageDescription": "Offene Überprüfungsanfragen, die Ihnen (direkt oder über eine von Ihnen bekleidete Rolle) zugewiesen wurden.",
-      "pageDescriptionDecided": "Überprüfen Sie Anfragen, über die Sie bereits entschieden haben.",
       "tabPending": "Ausstehend",
       "tabDecided": "Entschieden",
       "emptyDecided": "Sie haben noch keine Bewertungen abgegeben.",
@@ -3503,8 +3502,6 @@
       "columnProject": "Projekt",
       "columnRequester": "Anforderer",
       "columnTransition": "Übergang",
-      "columnTransitionFrom": "Aus",
-      "columnTransitionTo": "Zu",
       "columnRequestedAt": "Angefordert bei",
       "columnDecidedAt": "Beschlossen am",
       "columnStatus": "Status",
@@ -6466,6 +6463,7 @@
     "workflows": "Verwalten Sie die Workflow-Status für Testfälle, Testläufe und Sitzungen.",
     "workflowReviews": "Erzwingen Sie Prüfungen, indem Sie Workflow-Übergänge bis zur Genehmigung blockieren. Ist diese Option aktiviert, können Projekte sie in ihren erweiterten Einstellungen einzeln aktivieren oder deaktivieren. Deaktivieren Sie diese Option, um Workflow-Genehmigungsbarrieren zu vermeiden.",
     "reviewReminders": "Wie viele Tage kann eine Überprüfungsanfrage ausstehen, bevor die Prüfer eine Erinnerungsbenachrichtigung erhalten? Die Frist für neue Anfragen beginnt mit der Einreichung.",
+    "reviews": "Überprüfungsanfragen, die Ihnen zugewiesen sind, entweder direkt oder über eine Rolle, die Sie innehaben. „Ausstehend“ ist Ihre Warteschlange für Anfragen, die noch auf eine Entscheidung warten; „Entschieden“ listet diejenigen auf, die Sie bereits genehmigt, abgelehnt oder für die Sie Änderungen angefordert haben.",
     "resultEditingPolicy": "Legen Sie fest, wie lange nach der Ergebnisspeicherung ein Ergebnis projektübergreifend noch bearbeitet werden kann. Projekte können diese Frist in ihren erweiterten Einstellungen verkürzen, aber nicht verlängern. Systemadministratoren können die Frist jederzeit anpassen.",
     "project": {
       "name": "## Projektname\nDie eindeutige Kennung Ihres Projekts.\n\n- Muss projektübergreifend eindeutig sein.\n- Wird für Navigation und Berichte verwendet.\n- Sollte klar und aussagekräftig sein.\n- Hilft Teammitgliedern, den Projektumfang zu erkennen.",
@@ -8122,6 +8120,7 @@
   },
   "comments": {
     "title": "Kommentare",
+    "titleWithCount": "{count, plural, =0 {Keine Kommentare} =1 {# Kommentar} other {# Kommentare}}",
     "placeholder": "Schreibe einen Kommentar... (Verwende @, um Nutzer zu erwähnen)",
     "editPlaceholder": "Bearbeiten Sie Ihren Kommentar...",
     "postComment": "Kommentar veröffentlichen",

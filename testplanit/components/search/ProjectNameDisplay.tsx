@@ -14,6 +14,13 @@ interface ProjectNameDisplayProps {
   iconUrl?: string | null;
   className?: ClassValue;
   showLink?: boolean;
+  /**
+   * Truncate against the container instead of the default 200px cap. For table
+   * cells, where the column width is the only correct bound. Off elsewhere: in
+   * a flex row of search metadata the name has no width of its own and would
+   * collapse to a few characters.
+   */
+  fitContainer?: boolean;
 }
 
 export const ProjectNameDisplay: React.FC<ProjectNameDisplayProps> = ({
@@ -22,14 +29,21 @@ export const ProjectNameDisplay: React.FC<ProjectNameDisplayProps> = ({
   iconUrl,
   className = "text-sm",
   showLink = false,
+  fitContainer = false,
 }) => {
+  const shrink = fitContainer ? "min-w-0 max-w-full" : "";
+
   const content = (
-    <span className="flex items-center gap-1">
-      <ProjectIcon iconUrl={iconUrl} width={16} height={16} />
+    <span className={`flex items-center gap-1 ${shrink}`}>
+      <span className="shrink-0">
+        <ProjectIcon iconUrl={iconUrl} width={16} height={16} />
+      </span>
       <Tooltip>
         <TooltipTrigger
           type="button"
-          className="text-start truncate max-w-[200px] inline-block"
+          className={`text-start truncate inline-block ${
+            fitContainer ? "min-w-0 max-w-full" : "max-w-[200px]"
+          }`}
         >
           {projectName}
         </TooltipTrigger>
@@ -43,7 +57,7 @@ export const ProjectNameDisplay: React.FC<ProjectNameDisplayProps> = ({
   if (showLink) {
     return (
       <Link
-        className={`hover:underline inline-flex items-center ${className}`}
+        className={`hover:underline inline-flex items-center ${shrink} ${className}`}
         href={`/projects/overview/${projectId}`}
       >
         {content}
@@ -52,6 +66,8 @@ export const ProjectNameDisplay: React.FC<ProjectNameDisplayProps> = ({
   }
 
   return (
-    <span className={`inline-flex items-center ${className}`}>{content}</span>
+    <span className={`inline-flex items-center ${shrink} ${className}`}>
+      {content}
+    </span>
   );
 };

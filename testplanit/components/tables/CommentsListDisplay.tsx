@@ -151,7 +151,7 @@ export const CommentsListDisplay: React.FC<CommentsListDisplayProps> = ({
         <div className="p-4 space-y-3">
           <div className="flex items-center justify-between">
             <h4 className="font-medium text-sm">
-              {tCommon("plural.comment", { count })}
+              {tComments("titleWithCount", { count })}
             </h4>
           </div>
 

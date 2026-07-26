@@ -2,8 +2,8 @@
 
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { SectionHeader } from "@/components/ui/typography";
+import { Card, CardContent } from "@/components/ui/card";
+import { PageCardHeader } from "@/components/ui/page-card-header";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { History, Inbox } from "lucide-react";
@@ -209,9 +209,7 @@ function ReviewsInboxContent({ userId }: { userId: string }) {
         return { projectId: dir };
       case "requester":
         return { requestedByUserId: dir };
-      case "transitionFrom":
-        return { fromStateId: dir };
-      case "transitionTo":
+      case "transition":
         return { toStateId: dir };
       case "status":
         return { status: dir };
@@ -294,7 +292,9 @@ function ReviewsInboxContent({ userId }: { userId: string }) {
     schema
   ).repositoryCases.useFindMany(
     {
-      where: { id: { in: caseIds }, isDeleted: false },
+      // Deleted entities stay in scope: a request can outlive its subject,
+      // and the display components render a soft-deleted one properly.
+      where: { id: { in: caseIds } },
       select: {
         id: true,
         name: true,
@@ -308,7 +308,7 @@ function ReviewsInboxContent({ userId }: { userId: string }) {
   );
   const { data: runRows } = useClientQueries(schema).testRuns.useFindMany(
     {
-      where: { id: { in: runIds }, isDeleted: false },
+      where: { id: { in: runIds } },
       select: {
         id: true,
         name: true,
@@ -320,7 +320,7 @@ function ReviewsInboxContent({ userId }: { userId: string }) {
   );
   const { data: sessionRows } = useClientQueries(schema).sessions.useFindMany(
     {
-      where: { id: { in: sessionIds }, isDeleted: false },
+      where: { id: { in: sessionIds } },
       select: { id: true, name: true, isDeleted: true },
     } as any,
     { enabled: sessionIds.length > 0 } as any
@@ -379,11 +379,24 @@ function ReviewsInboxContent({ userId }: { userId: string }) {
   // drag/scroll plumbing, not by anything we render.
   const tableData: InboxTableRow[] = useMemo(
     () =>
-      inboxRows.map((r) => ({
-        ...r,
-        name: `${r.entityType} #${r.entityId}`,
-      })),
-    [inboxRows]
+      inboxRows
+        .filter((r) => {
+          const entity =
+            r.entityType === "CASE"
+              ? caseById.get(r.entityId)
+              : r.entityType === "RUN"
+                ? testRunById.get(r.entityId)
+                : sessionById.get(r.entityId);
+          // Hide only once the entity has loaded and reports deleted. Treating
+          // an unresolved id as deleted would blank the table while the
+          // side-fetches are still in flight.
+          return entity?.isDeleted !== true;
+        })
+        .map((r) => ({
+          ...r,
+          name: `${r.entityType} #${r.entityId}`,
+        })),
+    [inboxRows, caseById, testRunById, sessionById]
   );
 
   const handleDecisionSuccess = (row: ExtendedReviewRequest) => {
@@ -403,20 +416,15 @@ function ReviewsInboxContent({ userId }: { userId: string }) {
   return (
     <main data-testid="reviews-inbox-page">
       <Card>
-        <CardHeader className="w-full">
-          <SectionHeader className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <CardTitle data-testid="reviews-inbox-page-title">
-                {t("reviews.inbox.pageTitle")}
-              </CardTitle>
-            </div>
-          </SectionHeader>
-          <p className="text-muted-foreground text-sm mt-2">
-            {view === "pending"
-              ? t("reviews.inbox.pageDescription")
-              : t("reviews.inbox.pageDescriptionDecided")}
-          </p>
-        </CardHeader>
+        <PageCardHeader
+          className="w-full"
+          title={
+            <span data-testid="reviews-inbox-page-title">
+              {t("reviews.inbox.pageTitle")}
+            </span>
+          }
+          helpKey="reviews"
+        />
         <CardContent>
           <div className="flex flex-col gap-4">
             {/* Tab strip — Pending (queue) vs Decided (history). Each
@@ -535,32 +543,27 @@ function ReviewsInboxContent({ userId }: { userId: string }) {
             )}
 
             {!featureDisabled && tableData.length > 0 && (
-              // Three CSS layers on this wrapper — all opt-in via Tailwind
+              // Two CSS layers on this wrapper — both opt-in via Tailwind
               // arbitrary variants so the shared `DataTable` component
               // stays untouched:
               //
-              //   1. `[&_table]:table-fixed` — force `table-layout: fixed`
-              //      so each `<td>`'s inline `width` (set from the column
-              //      `size`) is treated as the actual rendered width. With
-              //      the default `table-layout: auto`, long content (a
-              //      verbose workflow-state name) would silently expand
-              //      the column and break the truncation we've set up on
-              //      the cell.
-              //   2. `[&_td:has([data-transition-inner])]:border-e-transparent`
-              //      hides the vertical column-divider on the From and
-              //      Arrow cells so the From → Arrow → To sequence reads
-              //      as a single transition expression instead of three
-              //      split columns.
-              //   3. `[&_tbody_tr]:h-12` pins every row at 48px so the
+              //   1. `[&_tbody_tr]:h-12` pins every row at 48px so the
               //      Pending tab (taller — 32px decision icon-buttons in
               //      the Actions cell) and the Decided tab (shorter —
               //      just a Status badge) render at identical heights.
-              //   4. `[&_table]:!w-auto` overrides DataTable's baked-in
-              //      `w-full` on the inner `<Table>` so the table
-              //      collapses to the sum of its column widths instead
-              //      of stretching to the full browser viewport.
-              <div className="[&_table]:table-fixed [&_table]:!w-auto [&_td:has([data-transition-inner])]:border-e-transparent [&_tbody_tr]:h-12">
+              //   2. `[&_table]:!w-px` overrides DataTable's `w-full`. Under
+              //      `table-layout: fixed` the used width is the greater of
+              //      the specified width and the sum of the column widths, so
+              //      a tiny width resolves to exactly that sum. Without it the
+              //      table stretches and fixed layout shares the surplus out
+              //      across the columns, so none honors its `size`.
+              <div className="[&_table]:!w-px [&_tbody_tr]:h-12">
                 <DataTable
+                  // DataTable reads `meta.isPinned` once per mount, and the
+                  // tabs pin a different trailing column (Actions vs Status).
+                  // Returning to a tab with cached rows never unmounts it, so
+                  // without this key it keeps the other tab's pin.
+                  key={view}
                   columns={columns as any}
                   data={tableData as any}
                   sortConfig={sortConfig}

@@ -2,13 +2,12 @@
 
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
+import {
+  ActionButtonContent,
+  collapsibleActionClass,
+} from "@/components/ui/action-bar";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { WarningAlert } from "@/components/ui/warning-alert";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -246,7 +245,10 @@ export function ReviewStatusBanner({
               {t.rich("reviews.banner.pendingMessage", {
                 assignee: () =>
                   latest.assigneeUser ? (
-                    <UserMention userId={latest.assigneeUser.id} />
+                    <UserMention
+                      userId={latest.assigneeUser.id}
+                      className="px-1 py-0 text-xs"
+                    />
                   ) : latest.assigneeRole ? (
                     <RoleAssigneeChip
                       projectId={projectId}
@@ -281,71 +283,49 @@ export function ReviewStatusBanner({
             <div className="flex items-center gap-2 shrink-0">
               {canDecide && (
                 <>
-                  {/*
-                    Default to icon+text; below `md` (768px viewport) the
-                    label hides and the button collapses to icon-only with
-                    a Tooltip on hover for discoverability. `md:hidden` on
-                    TooltipContent suppresses the hover label on wider
-                    viewports where the text is already visible.
-                  */}
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        type="button"
-                        onClick={() => setApproveOpen(true)}
-                        data-testid="review-approve-button"
-                        aria-label={tReviewer("approve")}
-                        className="bg-success text-success-foreground hover:bg-success/90 max-md:px-2"
-                      >
-                        <CheckCircle2 className="h-4 w-4" />
-                        <span className="hidden md:inline">
-                          {tReviewer("approve")}
-                        </span>
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent className="md:hidden">
-                      {tReviewer("approve")}
-                    </TooltipContent>
-                  </Tooltip>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        type="button"
-                        onClick={() => setRequestChangesOpen(true)}
-                        data-testid="review-request-changes-button"
-                        aria-label={tReviewer("requestChanges")}
-                        className="bg-warning text-warning-foreground hover:bg-warning/90 max-md:px-2"
-                      >
-                        <MessageCircleWarning className="h-4 w-4" />
-                        <span className="hidden md:inline">
-                          {tReviewer("requestChanges")}
-                        </span>
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent className="md:hidden">
-                      {tReviewer("requestChanges")}
-                    </TooltipContent>
-                  </Tooltip>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        onClick={() => setRejectOpen(true)}
-                        data-testid="review-reject-button"
-                        aria-label={tReviewer("reject")}
-                        className="max-md:px-2"
-                      >
-                        <XCircle className="h-4 w-4" />
-                        <span className="hidden md:inline">
-                          {tReviewer("reject")}
-                        </span>
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent className="md:hidden">
-                      {tReviewer("reject")}
-                    </TooltipContent>
-                  </Tooltip>
+                  <Button
+                    type="button"
+                    onClick={() => setApproveOpen(true)}
+                    data-testid="review-approve-button"
+                    aria-label={tReviewer("approve")}
+                    className={collapsibleActionClass(
+                      undefined,
+                      "bg-success text-success-foreground hover:bg-success/90"
+                    )}
+                  >
+                    <ActionButtonContent
+                      icon={CheckCircle2}
+                      label={tReviewer("approve")}
+                    />
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={() => setRequestChangesOpen(true)}
+                    data-testid="review-request-changes-button"
+                    aria-label={tReviewer("requestChanges")}
+                    className={collapsibleActionClass(
+                      undefined,
+                      "bg-warning text-warning-foreground hover:bg-warning/90"
+                    )}
+                  >
+                    <ActionButtonContent
+                      icon={MessageCircleWarning}
+                      label={tReviewer("requestChanges")}
+                    />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    onClick={() => setRejectOpen(true)}
+                    data-testid="review-reject-button"
+                    aria-label={tReviewer("reject")}
+                    className={collapsibleActionClass()}
+                  >
+                    <ActionButtonContent
+                      icon={XCircle}
+                      label={tReviewer("reject")}
+                    />
+                  </Button>
                 </>
               )}
               <CancelRequestButton
@@ -439,7 +419,7 @@ export function ReviewStatusBanner({
               data-testid="review-status-banner-attribution"
             >
               <span>{t("reviews.banner.decidedBy")}</span>
-              <UserMention userId={decider.id} />
+              <UserMention userId={decider.id} className="px-1 py-0 text-xs" />
               <RelativeTimeTooltip date={decidedAt} className="ms-1" />
             </div>
           )}

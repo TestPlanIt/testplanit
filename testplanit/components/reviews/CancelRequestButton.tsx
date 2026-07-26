@@ -10,7 +10,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  ActionButtonContent,
+  collapsibleActionClass,
+} from "@/components/ui/action-bar";
 import { Button } from "@/components/ui/button";
+import { Ban } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useState, useTransition } from "react";
@@ -77,8 +82,10 @@ export function CancelRequestButton({
         size="sm"
         onClick={() => setOpen(true)}
         data-testid="cancel-request-button"
+        aria-label={t("common.cancel")}
+        className={collapsibleActionClass()}
       >
-        {t("common.cancel")}
+        <ActionButtonContent icon={Ban} label={t("common.cancel")} />
       </Button>
       <AlertDialog open={open} onOpenChange={setOpen}>
         <AlertDialogContent data-testid="cancel-request-dialog">

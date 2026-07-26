@@ -22,9 +22,10 @@ import { useMemo } from "react";
 
 import { RelativeTimeTooltip } from "~/components/RelativeTimeTooltip";
 import { ProjectNameDisplay } from "~/components/search/ProjectNameDisplay";
-import { SessionNameDisplay } from "~/components/SessionNameDisplay";
 import { TestRunNameDisplay } from "~/components/TestRunNameDisplay";
 import { CaseDisplay } from "~/components/tables/CaseDisplay";
+import { SessionTableDisplay } from "~/components/tables/SessionTableDisplay";
+import type { CustomColumnMeta } from "~/components/tables/ColumnSelection";
 import { UserNameCell } from "~/components/tables/UserNameCell";
 import { WorkflowStateDisplay } from "~/components/WorkflowStateDisplay";
 import type { IconName } from "~/types/globals";
@@ -245,7 +246,8 @@ export const useColumns = ({
         header: t("reviews.inbox.columnEntity"),
         enableSorting: true,
         size: 440,
-        minSize: 320,
+        minSize: 100,
+        meta: { isPinned: "left" } satisfies CustomColumnMeta,
         cell: ({ row }) => {
           const entityType = row.original.entityType as
             "CASE" | "RUN" | "SESSION";
@@ -266,9 +268,13 @@ export const useColumns = ({
                 automated={c.automated}
                 hasParameters={c.hasParameters}
                 isDeleted={c.isDeleted}
-                link={`/projects/repository/${projectId}/${c.id}`}
+                link={
+                  c.isDeleted
+                    ? undefined
+                    : `/projects/repository/${projectId}/${c.id}`
+                }
                 size="medium"
-                maxLines={2}
+                maxLines={1}
               />
             );
           }
@@ -279,12 +285,18 @@ export const useColumns = ({
                 testRun={r ?? { id: entityId }}
                 projectId={projectId}
                 showIcon
+                className="truncate"
               />
             );
           }
           const s = sessionById.get(entityId);
           return (
-            <SessionNameDisplay session={s ?? { id: entityId }} showIcon />
+            <SessionTableDisplay
+              id={entityId}
+              name={s?.name ?? `Session ${entityId}`}
+              link={`/projects/sessions/${projectId}/${entityId}`}
+              maxLines={1}
+            />
           );
         },
       },
@@ -293,6 +305,7 @@ export const useColumns = ({
         accessorKey: "projectId",
         header: t("reviews.inbox.columnProject"),
         enableSorting: true,
+        minSize: 110,
         size: 220,
         cell: ({ row }) => {
           const project = row.original.project;
@@ -305,6 +318,7 @@ export const useColumns = ({
               projectId={project.id}
               iconUrl={project.iconUrl}
               showLink
+              fitContainer
             />
           );
         },
@@ -314,6 +328,7 @@ export const useColumns = ({
         accessorKey: "requestedByUserId",
         header: t("reviews.inbox.columnRequester"),
         enableSorting: true,
+        minSize: 125,
         size: 220,
         cell: ({ row }) => {
           const requester = row.original.requestedBy;
@@ -321,65 +336,34 @@ export const useColumns = ({
             return <span className="text-muted-foreground">-</span>;
           }
           return (
-            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-secondary text-secondary-foreground border border-muted-foreground/50 cursor-pointer hover:bg-secondary/80 transition-colors [&_*]:cursor-pointer [&_a]:no-underline">
+            <span className="inline-flex min-w-0 max-w-full items-center gap-1 rounded-md border border-muted-foreground/50 bg-secondary px-1 py-0 text-xs text-secondary-foreground transition-colors hover:bg-secondary/80 cursor-pointer [&_*]:cursor-pointer [&_a]:no-underline">
               <UserNameCell userId={requester.id} shrinkLink />
             </span>
           );
         },
       },
       {
-        id: "transitionFrom",
-        accessorKey: "fromStateId",
-        header: t("reviews.inbox.columnTransitionFrom"),
+        id: "transition",
+        // Sorts by destination — the state a reviewer is being asked to
+        // approve into is the one worth grouping the queue by.
+        accessorKey: "toStateId",
+        header: t("reviews.inbox.columnTransition"),
         enableSorting: true,
-        size: 100,
-        maxSize: 140,
+        minSize: 180,
+        size: 260,
         cell: ({ row }) => (
-          // `data-transition-inner` is the sentinel the page-level wrapper
-          // keys on to hide the vertical column-divider lines that flank
-          // the arrow column.
-          //
-          // The `[&>span]:!shrink [&>span]:!min-w-0` overrides are how we
-          // force WorkflowStateDisplay's outer `shrink-0` span to actually
-          // shrink within the cell so the inner `truncate` on the name
-          // span engages — without forking that shared component.
-          <div
-            data-transition-inner
-            className="flex min-w-0 max-w-full overflow-hidden [&>span]:!shrink [&>span]:!min-w-0"
-          >
+          // `[&>span]:!shrink [&>span]:!min-w-0` forces WorkflowStateDisplay's
+          // outer `shrink-0` span to shrink so its inner `truncate` engages,
+          // without forking that shared component.
+          <div className="flex min-w-0 max-w-full items-center gap-1 overflow-hidden [&>span]:!shrink [&>span]:!min-w-0">
             <WorkflowStateDisplay
               state={row.original.fromState as any}
               size="sm"
             />
-          </div>
-        ),
-      },
-      {
-        id: "transitionArrow",
-        // No header — purely visual separator between from/to columns.
-        header: () => null,
-        enableSorting: false,
-        enableHiding: false,
-        size: 40,
-        maxSize: 40,
-        cell: () => (
-          <div data-transition-inner>
             <ArrowRight
-              className="h-4 w-4 text-muted-foreground"
+              className="h-4 w-4 shrink-0 text-muted-foreground"
               aria-hidden="true"
             />
-          </div>
-        ),
-      },
-      {
-        id: "transitionTo",
-        accessorKey: "toStateId",
-        header: t("reviews.inbox.columnTransitionTo"),
-        enableSorting: true,
-        size: 100,
-        maxSize: 140,
-        cell: ({ row }) => (
-          <div className="flex min-w-0 max-w-full overflow-hidden [&>span]:!shrink [&>span]:!min-w-0">
             <WorkflowStateDisplay
               state={row.original.toState as any}
               size="sm"
@@ -399,6 +383,8 @@ export const useColumns = ({
             header: t("reviews.inbox.columnRequestedAt"),
             enableSorting: true,
             size: 160,
+            minSize: 150,
+
             cell: ({ getValue }) => {
               const value = getValue() as Date | string | null;
               if (!value) {
@@ -424,6 +410,7 @@ export const useColumns = ({
             header: t("reviews.inbox.columnDecidedAt"),
             enableSorting: true,
             size: 160,
+            minSize: 150,
             cell: ({ getValue }) => {
               const value = getValue() as Date | string | null;
               if (!value) {
@@ -448,6 +435,7 @@ export const useColumns = ({
             enableSorting: false,
             enableHiding: false,
             size: 122,
+            meta: { isPinned: "right" } satisfies CustomColumnMeta,
             cell: ({ row }) => (
               <div
                 className="flex items-center gap-1"
@@ -483,6 +471,7 @@ export const useColumns = ({
             header: t("reviews.inbox.columnStatus"),
             enableSorting: true,
             size: 180,
+            meta: { isPinned: "right" } satisfies CustomColumnMeta,
             cell: ({ row }) => (
               <DecisionStatusBadge status={row.original.status} t={t} />
             ),

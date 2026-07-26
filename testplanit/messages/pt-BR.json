@@ -2529,8 +2529,9 @@
       "assignments": {
         "title": "Atribuições",
         "empty": "Nenhuma atribuição em aberto.",
-        "reviews": "{count, plural, =1 {# Review} other {# Reviews}}",
-        "remaining": "Restantes"
+        "reviews": "{count, plural, =1 {# Revisão} other {# Revisões}}",
+        "remaining": "Restantes",
+        "pendingRuns": "{count, plural, =1 {# Execução de Teste Ativa inclui} other {# Execuções de Teste Ativas incluem}} {cases, plural, =1 {# caso de teste} other {# casos de teste}}"
       },
       "directory": {
         "title": "Perfil do diretório",
@@ -3492,8 +3493,6 @@
     "inbox": {
       "iconAria": "{count, plural, =0 {Revisar caixa de entrada} one {Revisar caixa de entrada, # pendentes} other {Revisar caixa de entrada, # pendentes}}",
       "pageTitle": "Avaliações",
-      "pageDescription": "Solicitações de revisão pendentes que lhe foram atribuídas (diretamente ou por meio de uma função que você desempenha).",
-      "pageDescriptionDecided": "Analise os pedidos que você já decidiu.",
       "tabPending": "Pendente",
       "tabDecided": "Decidido",
       "emptyDecided": "Você ainda não decidiu fazer nenhuma avaliação.",
@@ -3503,8 +3502,6 @@
       "columnProject": "Projeto",
       "columnRequester": "Solicitante",
       "columnTransition": "Transição",
-      "columnTransitionFrom": "De",
-      "columnTransitionTo": "Para",
       "columnRequestedAt": "Solicitado em",
       "columnDecidedAt": "Decidido em",
       "columnStatus": "Status",
@@ -6466,6 +6463,7 @@
     "workflows": "Gerencie os estados de fluxo de trabalho para casos de teste, execuções de teste e sessões.",
     "workflowReviews": "Imponha revisões bloqueando transições de fluxo de trabalho até que a aprovação seja concedida. Quando habilitado, os projetos podem optar por participar ou não individualmente através de suas configurações Avançadas. Desative para impedir bloqueios de aprovação de fluxo de trabalho.",
     "reviewReminders": "Quantos dias uma solicitação de revisão pode permanecer pendente antes que os revisores recebam uma notificação de lembrete. Novas solicitações iniciam a contagem no envio.",
+    "reviews": "Solicitações de revisão atribuídas a você, seja diretamente ou por meio de uma função que você possui. Pendente é sua fila de solicitações que ainda aguardam uma decisão; Decidido lista aquelas que você já aprovou, rejeitou ou solicitou alterações.",
     "resultEditingPolicy": "Controle por quanto tempo após um resultado ser registrado ele ainda pode ser editado no local, em todos os projetos. Os projetos podem restringir isso em suas configurações Avançadas, mas nunca ampliá-lo. Os administradores do sistema podem sempre editar.",
     "project": {
       "name": "## Nome do Projeto\nO identificador único do seu projeto.\n\n- Deve ser único em todos os projetos\n- Usado na navegação e em relatórios\n- Deve ser claro e descritivo\n- Ajuda os membros da equipe a identificar o escopo do projeto",
@@ -8122,6 +8120,7 @@
   },
   "comments": {
     "title": "Comentários",
+    "titleWithCount": "{count, plural, =0 {No Comments} =1 {# Comment} other {# Comments}}",
     "placeholder": "Escreva um comentário... (use @ para mencionar usuários)",
     "editPlaceholder": "Edite seu comentário...",
     "postComment": "Postar comentário",

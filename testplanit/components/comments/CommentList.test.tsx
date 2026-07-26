@@ -11,7 +11,14 @@ vi.mock("~/app/actions/comments", () => ({
 
 // Mock next-intl
 vi.mock("next-intl", () => ({
-  useTranslations: vi.fn(() => (key: string) => key.split(".").pop() ?? key),
+  // Echoes the leaf key, plus the ICU `count` when one is passed, so tests can
+  // assert the header renders a count without reproducing the plural rules.
+  useTranslations: vi.fn(
+    () => (key: string, params?: Record<string, unknown>) => {
+      const leaf = key.split(".").pop() ?? key;
+      return params?.count === undefined ? leaf : `${leaf}:${params.count}`;
+    }
+  ),
 }));
 
 // Mock CommentEditor
@@ -137,9 +144,8 @@ describe("CommentList", () => {
   it("shows comment count in header", () => {
     const comments = [makeMockComment("c1", "user-1", "Alice")];
     render(<CommentList {...defaultProps} initialComments={comments} />);
-    // The h3 contains the title + count as sibling text nodes, so check the element
     const heading = screen.getByRole("heading");
-    expect(heading.textContent).toContain("(1)");
+    expect(heading.textContent).toBe("titleWithCount:1");
   });
 
   it("shows edit button for current user's comments", () => {
@@ -280,7 +286,7 @@ describe("CommentList", () => {
   it("renders comment count as 0 initially with empty list", () => {
     render(<CommentList {...defaultProps} initialComments={[]} />);
     const heading = screen.getByRole("heading");
-    expect(heading.textContent).toContain("(0)");
+    expect(heading.textContent).toBe("titleWithCount:0");
   });
 
   it("passes entityType-specific ID to createComment for testRun", async () => {

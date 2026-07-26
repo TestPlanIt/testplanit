@@ -223,7 +223,12 @@ export function ApproveDialog({
                     />
                   </span>
                 ),
-                requester: () => <UserMention userId={requesterUserId} />,
+                requester: () => (
+                  <UserMention
+                    userId={requesterUserId}
+                    className="px-1 py-0 text-xs"
+                  />
+                ),
               })}
             </div>
           </DialogDescription>
@@ -451,7 +456,12 @@ export function RejectDialog({
                     />
                   </span>
                 ),
-                requester: () => <UserMention userId={requesterUserId} />,
+                requester: () => (
+                  <UserMention
+                    userId={requesterUserId}
+                    className="px-1 py-0 text-xs"
+                  />
+                ),
               })}
             </div>
           </DialogDescription>

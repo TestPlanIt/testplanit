@@ -62,6 +62,7 @@ export function useExecutionLogColumns(
                   projectId={project.id}
                   iconUrl={project.iconUrl}
                   showLink
+                  fitContainer
                 />
               );
             },

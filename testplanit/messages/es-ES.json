@@ -2530,7 +2530,8 @@
         "title": "Tareas",
         "empty": "No hay tareas pendientes.",
         "reviews": "{count, plural, =1 {# Revisión} other {# Revisiones}}",
-        "remaining": "Restante"
+        "remaining": "Restante",
+        "pendingRuns": "{count, plural, =1 {# Ejecución de prueba activa incluye} other {# Ejecuciones de prueba activas incluyen}} {cases, plural, =1 {# caso de prueba} other {# casos de prueba}}"
       },
       "directory": {
         "title": "Perfil de directorio",
@@ -3492,8 +3493,6 @@
     "inbox": {
       "iconAria": "{count, plural, =0 {Bandeja de entrada de revisiones} one {Bandeja de entrada de revisiones, # pendiente} other {Bandeja de entrada de revisiones, # pendiente}}",
       "pageTitle": "Reseñas",
-      "pageDescription": "Solicitudes de revisión pendientes que se le hayan asignado (directamente o a través de un cargo que ocupe).",
-      "pageDescriptionDecided": "Revisa las solicitudes que ya has decidido.",
       "tabPending": "Pendiente",
       "tabDecided": "Decidido",
       "emptyDecided": "Todavía no has decidido escribir ninguna reseña.",
@@ -3503,8 +3502,6 @@
       "columnProject": "Proyecto",
       "columnRequester": "Solicitante",
       "columnTransition": "Transición",
-      "columnTransitionFrom": "De",
-      "columnTransitionTo": "A",
       "columnRequestedAt": "Solicitado en",
       "columnDecidedAt": "Decidido en",
       "columnStatus": "Estado",
@@ -6466,6 +6463,7 @@
     "workflows": "Administrar los estados del flujo de trabajo para casos de prueba, ejecuciones de prueba y sesiones.",
     "workflowReviews": "Aplique revisiones restringiendo las transiciones del flujo de trabajo hasta que se otorgue la aprobación. Cuando está habilitada, los proyectos pueden activarla o desactivarla individualmente a través de su configuración avanzada. Desactive esta opción para evitar las restricciones de aprobación del flujo de trabajo.",
     "reviewReminders": "¿Cuántos días puede permanecer pendiente una solicitud de revisión antes de que los revisores reciban una notificación recordatoria? Las nuevas solicitudes comienzan a contar desde el momento de su envío.",
+    "reviews": "Solicitudes de revisión asignadas a ti, ya sea directamente o mediante un rol que ocupas. Pendiente es tu cola de solicitudes que aún esperan una decisión; Decidido enumera las que ya has aprobado, rechazado o para las que has solicitado cambios.",
     "resultEditingPolicy": "Controla cuánto tiempo después de registrar un resultado se puede editar directamente en todos los proyectos. Los proyectos pueden ajustar este límite en su configuración avanzada, pero nunca modificarlo. Los administradores del sistema siempre pueden editarlo.",
     "project": {
       "name": "## Nombre del proyecto\nEl identificador único para tu proyecto.\n\n- Debe ser único en todos los proyectos\n- Utilizado en la navegación y en los informes\n- Debe ser claro y descriptivo\n- Ayuda a los miembros del equipo a identificar el alcance del proyecto",
@@ -8122,6 +8120,7 @@
   },
   "comments": {
     "title": "Comentarios",
+    "titleWithCount": "{count, plural, =0 {Sin comentarios} =1 {# comentario} other {# comentarios}}",
     "placeholder": "Escribe un comentario... (usa @ para mencionar a los usuarios)",
     "editPlaceholder": "Edita tu comentario...",
     "postComment": "Publicar comentario",

@@ -3493,8 +3493,6 @@
     "inbox": {
       "iconAria": "{count, plural, =0 {Review inbox} one {Review inbox, # pending} other {Review inbox, # pending}}",
       "pageTitle": "Reviews",
-      "pageDescription": "Pending review requests assigned to you (directly or via a role you hold).",
-      "pageDescriptionDecided": "Review requests you've already decided.",
       "tabPending": "Pending",
       "tabDecided": "Decided",
       "emptyDecided": "You haven't decided any reviews yet.",
@@ -3504,8 +3502,6 @@
       "columnProject": "Project",
       "columnRequester": "Requester",
       "columnTransition": "Transition",
-      "columnTransitionFrom": "From",
-      "columnTransitionTo": "To",
       "columnRequestedAt": "Requested at",
       "columnDecidedAt": "Decided at",
       "columnStatus": "Status",
@@ -6467,6 +6463,7 @@
     "workflows": "Manage the workflow states for test cases, test runs, and sessions.",
     "workflowReviews": "Enforce reviews by gating workflow transitions until approval is granted. When enabled, projects may opt in or out individually via their Advanced settings. Disable to prevent workflow approval gates.",
     "reviewReminders": "How many days a review request can sit pending before reviewers get a reminder notification. New requests start the clock at submission.",
+    "reviews": "Review requests assigned to you, either directly or through a role you hold. Pending is your queue of requests still waiting on a decision; Decided lists the ones you have already approved, rejected, or asked for changes on.",
     "resultEditingPolicy": "Control how long after a result is recorded it can still be edited in place, across all projects. Projects can tighten this in their Advanced settings but never loosen it. System administrators can always edit.",
     "project": {
       "name": "## Project Name\nThe unique identifier for your project.\n\n- Must be unique across all projects\n- Used in navigation and reports\n- Should be clear and descriptive\n- Helps team members identify the project scope",
@@ -8123,6 +8120,7 @@
   },
   "comments": {
     "title": "Comments",
+    "titleWithCount": "{count, plural, =0 {No Comments} =1 {# Comment} other {# Comments}}",
     "placeholder": "Write a comment... (use @ to mention users)",
     "editPlaceholder": "Edit your comment...",
     "postComment": "Post Comment",

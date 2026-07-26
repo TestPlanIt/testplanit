@@ -2529,8 +2529,9 @@
       "assignments": {
         "title": "Nhiệm vụ được giao",
         "empty": "Không có nhiệm vụ nào đang mở.",
-        "reviews": "{count, plural, =1 {# Review} other {# Reviews}}",
-        "remaining": "Còn lại"
+        "reviews": "{count, plural, =1 {# Đánh giá} other {# Đánh giá}}",
+        "remaining": "Còn lại",
+        "pendingRuns": "{count, plural, =1 {# Lượt chạy thử nghiệm đang hoạt động bao gồm} other {# Lượt chạy thử nghiệm đang hoạt động bao gồm}} {cases, plural, =1 {# trường hợp thử nghiệm} other {# trường hợp thử nghiệm}}"
       },
       "directory": {
         "title": "Hồ sơ thư mục",
@@ -3492,8 +3493,6 @@
     "inbox": {
       "iconAria": "{count, plural, =0 {Hộp thư đến đánh giá} one {Hộp thư đến đánh giá, # đang chờ xử lý} other {Hộp thư đến đánh giá, # đang chờ xử lý}}",
       "pageTitle": "Đánh giá",
-      "pageDescription": "Các yêu cầu xem xét đang chờ xử lý được giao cho bạn (trực tiếp hoặc thông qua vai trò bạn nắm giữ).",
-      "pageDescriptionDecided": "Xem lại các yêu cầu mà bạn đã quyết định.",
       "tabPending": "Chưa giải quyết",
       "tabDecided": "Quyết định",
       "emptyDecided": "Bạn vẫn chưa quyết định viết bài đánh giá nào.",
@@ -3503,8 +3502,6 @@
       "columnProject": "Dự án",
       "columnRequester": "Người yêu cầu",
       "columnTransition": "Chuyển đổi",
-      "columnTransitionFrom": "Từ",
-      "columnTransitionTo": "ĐẾN",
       "columnRequestedAt": "Yêu cầu tại",
       "columnDecidedAt": "Quyết định tại",
       "columnStatus": "Trạng thái",
@@ -6466,6 +6463,7 @@
     "workflows": "Quản lý các trạng thái quy trình làm việc cho trường hợp kiểm thử, lần chạy kiểm thử và phiên.",
     "workflowReviews": "Thực thi quy trình xem xét bằng cách kiểm soát các bước chuyển đổi trong quy trình làm việc cho đến khi được phê duyệt. Khi được bật, các dự án có thể chọn tham gia hoặc không tham gia riêng lẻ thông qua cài đặt Nâng cao của chúng. Tắt tính năng này để ngăn chặn việc kiểm soát phê duyệt quy trình làm việc.",
     "reviewReminders": "Yêu cầu xem xét có thể chờ xử lý bao nhiêu ngày trước khi người đánh giá nhận được thông báo nhắc nhở? Yêu cầu mới bắt đầu tính thời gian từ khi gửi.",
+    "reviews": "Các yêu cầu đánh giá được giao cho bạn, trực tiếp hoặc thông qua vai trò bạn đảm nhiệm. Đang chờ xử lý là hàng đợi các yêu cầu vẫn đang chờ quyết định của bạn; Đã quyết định liệt kê những yêu cầu bạn đã phê duyệt, từ chối hoặc yêu cầu chỉnh sửa.",
     "resultEditingPolicy": "Kiểm soát khoảng thời gian sau khi kết quả được ghi lại mà vẫn có thể chỉnh sửa trực tiếp, trên tất cả các dự án. Các dự án có thể điều chỉnh thời gian này trong cài đặt Nâng cao nhưng không thể nới lỏng. Quản trị viên hệ thống luôn có thể chỉnh sửa.",
     "project": {
       "name": "## Tên Dự án\nMã định danh duy nhất cho dự án của bạn.\n\n- Phải là duy nhất trong tất cả các dự án\n- Được sử dụng trong điều hướng và báo cáo\n- Nên rõ ràng và mô tả\n- Giúp các thành viên nhóm xác định phạm vi dự án",
@@ -8122,6 +8120,7 @@
   },
   "comments": {
     "title": "Bình luận",
+    "titleWithCount": "{count, plural, =0 {Không có bình luận} =1 {# Bình luận} other {# Bình luận}}",
     "placeholder": "Hãy viết bình luận... (sử dụng @ để nhắc đến người dùng)",
     "editPlaceholder": "Chỉnh sửa bình luận của bạn...",
     "postComment": "Đăng bình luận",

@@ -2530,7 +2530,8 @@
         "title": "Atamalar",
         "empty": "Açık atama yok.",
         "reviews": "{count, plural, =1 {# İnceleme} other {# İnceleme}}",
-        "remaining": "Kalan"
+        "remaining": "Kalan",
+        "pendingRuns": "{count, plural, =1 {# Aktif Test Çalıştırması} other {# Aktif Test Çalıştırması}} {cases, plural, =1 {# test senaryosu içerir} other {# test senaryosu içerir}}"
       },
       "directory": {
         "title": "Dizin Profili",
@@ -3492,8 +3493,6 @@
     "inbox": {
       "iconAria": "{count, plural, =0 {İnceleme gelen kutusu} one {İnceleme gelen kutusu, # beklemede} other {İnceleme gelen kutusu, # beklemede}}",
       "pageTitle": "Yorumlar",
-      "pageDescription": "Size atanmış (doğrudan veya sahip olduğunuz bir rol aracılığıyla) bekleyen inceleme talepleri.",
-      "pageDescriptionDecided": "Daha önce karar verdiğiniz inceleme taleplerini gözden geçirin.",
       "tabPending": "Askıda olması",
       "tabDecided": "Karar verilmiş",
       "emptyDecided": "Henüz herhangi bir değerlendirme yapmaya karar vermediniz.",
@@ -3503,8 +3502,6 @@
       "columnProject": "Proje",
       "columnRequester": "Talep Eden",
       "columnTransition": "Geçiş",
-      "columnTransitionFrom": "İtibaren",
-      "columnTransitionTo": "İle",
       "columnRequestedAt": "Talep edildiği yer",
       "columnDecidedAt": "Karar verildi",
       "columnStatus": "Durum",
@@ -6466,6 +6463,7 @@
     "workflows": "Test senaryoları, test çalıştırmaları ve oturumlar için iş akışı durumlarını yönetin.",
     "workflowReviews": "Onay verilene kadar iş akışı geçişlerini kilitleyerek incelemeleri zorunlu hale getirin. Etkinleştirildiğinde, projeler Gelişmiş ayarları aracılığıyla ayrı ayrı bu özelliği etkinleştirebilir veya devre dışı bırakabilir. İş akışı onay kilitlerini önlemek için devre dışı bırakın.",
     "reviewReminders": "İnceleme taleplerinin inceleyicilere hatırlatma bildirimi gönderilmeden önce kaç gün beklemede kalabileceği. Yeni talepler, gönderim anından itibaren süreyi başlatır.",
+    "reviews": "Size doğrudan veya sahip olduğunuz bir rol aracılığıyla atanan inceleme taleplerini gösterir. Beklemede, henüz bir karara bağlanmamış taleplerin bulunduğu kuyruğunuzdur; Karar Verildi ise onayladığınız, reddettiğiniz veya değişiklik talep ettiğiniz talepleri listeler.",
     "resultEditingPolicy": "Sonuç kaydedildikten sonra ne kadar süre geçtiğini kontrol edin; sonuç tüm projelerde yerinde düzenlenebilir. Projeler bunu Gelişmiş ayarlarından sıkılaştırabilir ancak asla gevşetemezler. Sistem yöneticileri her zaman düzenleme yapabilir.",
     "project": {
       "name": "## Proje Adı\nProjenizin benzersiz tanımlayıcısı.\n\n- Tüm projelerde benzersiz olmalıdır\n- Gezinme ve raporlarda kullanılır\n- Açık ve açıklayıcı olmalıdır\n- Ekip üyelerinin proje kapsamını belirlemesine yardımcı olur",
@@ -8122,6 +8120,7 @@
   },
   "comments": {
     "title": "Yorumlar",
+    "titleWithCount": "{count, plural, =0 {Yorum Yok} =1 {# Yorum} other {# Yorum}}",
     "placeholder": "Yorum yazın... (kullanıcıları etiketlemek için @ işaretini kullanın)",
     "editPlaceholder": "Yorumunuzu düzenleyin...",
     "postComment": "Yorum Gönder",

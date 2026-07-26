@@ -2529,8 +2529,9 @@
       "assignments": {
         "title": "作業",
         "empty": "沒有未完成的作業。",
-        "reviews": "{count, plural, =1 {# Review} other {# Reviews}}",
-        "remaining": "剩餘"
+        "reviews": "{count, plural, =1 {# 項審核} other {# 項審核}}",
+        "remaining": "剩餘",
+        "pendingRuns": "{count, plural, =1 {# 個進行中的測試執行包含} other {# 個進行中的測試執行包含}} {cases, plural, =1 {# 個測試案例} other {# 個測試案例}}"
       },
       "directory": {
         "title": "目錄設定檔",
@@ -3492,8 +3493,6 @@
     "inbox": {
       "iconAria": "{count, plural, =0 {審核收件箱} other {審核收件箱，# 個待處理}}",
       "pageTitle": "評論",
-      "pageDescription": "指派給您的待審核請求（直接指派給您或透過您所擔任的角色指派給您）。",
-      "pageDescriptionDecided": "審核您已決定的請求。",
       "tabPending": "待辦的",
       "tabDecided": "已決定",
       "emptyDecided": "您尚未決定撰寫任何評論。",
@@ -3503,8 +3502,6 @@
       "columnProject": "專案",
       "columnRequester": "請求者",
       "columnTransition": "過渡",
-      "columnTransitionFrom": "從",
-      "columnTransitionTo": "到",
       "columnRequestedAt": "已請求",
       "columnDecidedAt": "決定於",
       "columnStatus": "地位",
@@ -6466,6 +6463,7 @@
     "workflows": "管理測試案例、測試運行及會話的工作流程狀態。",
     "workflowReviews": "透過限制工作流程轉換直到獲得批准來強制執行審核。啟用此功能後，項目可以透過其進階設定單獨選擇啟用或停用。停用此功能可阻止工作流程核准限制。",
     "reviewReminders": "審核請求最多可以保留多少天才會向審核員發送提醒通知？新請求從提交之日起開始計時。",
+    "reviews": "指派給您的審核請求，無論是直接指派還是透過您所擔任的角色指派。「待處理」是您仍在等待決定的請求佇列；「已決定」則列出您已核准、拒絕或要求修改的請求。",
     "resultEditingPolicy": "控制結果記錄後多長時間內仍可進行原地編輯，此限制適用於所有項目。項目可以在其高級設定中收緊此限制，但無法放寬。系統管理員始終可以進行編輯。",
     "project": {
       "name": "## 專案名稱\n您專案的唯一識別碼。\n\n- 必須在所有專案中保持唯一\n- 用於導覽和報告\n- 應清晰且具描述性\n- 幫助團隊成員了解專案範圍",
@@ -8122,6 +8120,7 @@
   },
   "comments": {
     "title": "評論",
+    "titleWithCount": "{count, plural, =0 {No Comments} =1 {# Comment} other {# Comments}}",
     "placeholder": "請留言…（使用@提及用戶）",
     "editPlaceholder": "編輯您的評論…",
     "postComment": "發表評論",

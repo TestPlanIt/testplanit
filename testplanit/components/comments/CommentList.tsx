@@ -178,8 +178,8 @@ export function CommentList({
         <MessageSquare className="h-5 w-5 shrink-0" />
         <h3 className="text-md font-semibold">
           {narrow
-            ? `(${comments.length})`
-            : `${t("comments.title")} (${comments.length})`}
+            ? comments.length
+            : t("comments.titleWithCount", { count: comments.length })}
         </h3>
       </div>
 
