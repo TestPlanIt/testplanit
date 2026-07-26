@@ -1082,9 +1082,29 @@ export function DataTable<TData extends DataRow, TValue>({
     </TableRow>
   ));
 
+  // Sticky pinned columns overlay the scrollport edges, so a bare
+  // scrollIntoView (keyboard focus, find-in-page, test runners) can land a
+  // mid-table cell underneath them where it cannot receive pointer events.
+  // scroll-padding sized to the pinned widths makes the browser scroll such
+  // targets into the UNCOVERED region instead.
+  const leftPinnedWidth = table
+    .getLeftVisibleLeafColumns()
+    .reduce((sum, column) => sum + column.getSize(), 0);
+  const rightPinnedWidth = table
+    .getRightVisibleLeafColumns()
+    .reduce((sum, column) => sum + column.getSize(), 0);
+
   const tableElement = (
     <div
       className="flex flex-col overflow-x-auto rounded-lg border-2 border-primary/10 w-fit max-w-full"
+      style={{
+        scrollPaddingInlineStart: leftPinnedWidth
+          ? `${leftPinnedWidth}px`
+          : undefined,
+        scrollPaddingInlineEnd: rightPinnedWidth
+          ? `${rightPinnedWidth}px`
+          : undefined,
+      }}
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
     >
