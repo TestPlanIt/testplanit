@@ -1,0 +1,84 @@
+# Live-DB integration gate.
+#
+# The __tests__/integration suite proves the ACL policy layer (AuthCtx /
+# accessibleProjectIds, project write parity, restrictive read rules, dataset
+# atomicity) against real SQL. Those files gate themselves on
+# RUN_DB_INTEGRATION=1, so the regular unit-test job silently skips them —
+# this workflow is the only place they actually run in CI.
+
+name: DB Integration Tests
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, beta]
+    paths:
+      - "testplanit/__tests__/integration/**"
+      - "testplanit/lib/**"
+      - "testplanit/schema.zmodel"
+      - "testplanit/db/**"
+      - ".github/workflows/db-integration.yml"
+  pull_request:
+    paths:
+      - "testplanit/__tests__/integration/**"
+      - "testplanit/lib/**"
+      - "testplanit/schema.zmodel"
+      - "testplanit/db/**"
+      - ".github/workflows/db-integration.yml"
+
+defaults:
+  run:
+    working-directory: testplanit
+
+jobs:
+  db-integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: user
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: tpi_test
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd "pg_isready -U user"
+          --health-interval 10s --health-timeout 5s --health-retries 5
+
+    env:
+      DATABASE_URL: "postgresql://user:password@localhost:5433/tpi_test?schema=public"
+      NEXTAUTH_URL: "http://localhost:3002"
+      NEXTAUTH_SECRET: "ci-integration-secret-not-for-production"
+      ENCRYPTION_KEY: "ci-integration-encryption-32chars"
+      ADMIN_EMAIL: "admin@example.com"
+      ADMIN_NAME: "Administrator Account"
+      ADMIN_PASSWORD: "admin"
+      NODE_OPTIONS: "--max-old-space-size=8192"
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate ZenStack/Prisma client
+        run: pnpm generate
+
+      - name: Push schema
+        run: pnpm exec prisma db push --skip-generate
+
+      - name: Seed baseline data (roles, workflows, admin)
+        run: pnpm exec tsx db/seed.ts
+
+      - name: Run live-DB integration tests
+        run: RUN_DB_INTEGRATION=1 pnpm exec vitest run __tests__/integration

@@ -1,0 +1,137 @@
+# E2E smoke gate.
+#
+# The full Playwright suite (~1,300 tests) runs locally before releases; CI had
+# no E2E at all, so selector-level breakage from UI refactors accumulated
+# silently between local runs. This job runs a small, stable, critical-path
+# subset against a production build with real services so PRs catch that class
+# of regression the day it ships.
+#
+# The smoke set is the SMOKE_SPECS list below — deliberately a file list (not
+# tags) so the set is visible and reviewable in one place. Keep it small
+# (<15 min) and free of external dependencies: no SMTP/signup-email specs, no
+# live-IdP (Okta/SCIM) specs.
+
+name: E2E Smoke
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, beta]
+    paths:
+      - "testplanit/app/**"
+      - "testplanit/components/**"
+      - "testplanit/lib/**"
+      - "testplanit/hooks/**"
+      - "testplanit/e2e/**"
+      - "testplanit/schema.zmodel"
+      - ".github/workflows/e2e-smoke.yml"
+  pull_request:
+    paths:
+      - "testplanit/app/**"
+      - "testplanit/components/**"
+      - "testplanit/lib/**"
+      - "testplanit/hooks/**"
+      - "testplanit/e2e/**"
+      - "testplanit/schema.zmodel"
+      - ".github/workflows/e2e-smoke.yml"
+
+defaults:
+  run:
+    working-directory: testplanit
+
+jobs:
+  e2e-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: user
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: tpi_test
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd "pg_isready -U user"
+          --health-interval 10s --health-timeout 5s --health-retries 5
+      valkey:
+        image: valkey/valkey:8-alpine
+        ports:
+          - 6377:6379
+        options: >-
+          --health-cmd "valkey-cli ping"
+          --health-interval 10s --health-timeout 5s --health-retries 5
+      elasticsearch:
+        image: elasticsearch:9.0.3
+        env:
+          discovery.type: single-node
+          xpack.security.enabled: "false"
+          ES_JAVA_OPTS: "-Xms512m -Xmx512m"
+        ports:
+          - 9221:9200
+        options: >-
+          --health-cmd "curl -f http://localhost:9200/_cluster/health || exit 1"
+          --health-interval 15s --health-timeout 10s --health-retries 8
+
+    env:
+      DATABASE_URL: "postgresql://user:password@localhost:5433/tpi_test?schema=public"
+      VALKEY_URL: "redis://localhost:6377"
+      ELASTICSEARCH_NODE: "http://localhost:9221"
+      NEXTAUTH_URL: "http://localhost:3002"
+      NEXTAUTH_SECRET: "ci-e2e-secret-not-for-production"
+      ENCRYPTION_KEY: "ci-e2e-encryption-key-32-chars---"
+      ADMIN_EMAIL: "admin@example.com"
+      ADMIN_NAME: "Administrator Account"
+      ADMIN_PASSWORD: "admin"
+      TEST_REGULAR_USER_PASSWORD: "password123"
+      E2E_PROD: "on"
+      E2E_PORT: "3002"
+      NODE_OPTIONS: "--max-old-space-size=8192"
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate ZenStack/Prisma client
+        run: pnpm generate
+
+      - name: Install Playwright browser
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Production build
+        run: pnpm build
+
+      - name: Seed the E2E database
+        run: pnpm exec tsx e2e/setup-db.ts
+
+      - name: Run E2E smoke subset
+        run: >
+          pnpm exec playwright test --config e2e/playwright.config.ts
+          e2e/tests/page-titles.spec.ts
+          e2e/tests/auth/signin-signout.spec.ts
+          e2e/tests/api/access-control.spec.ts
+          "e2e/tests/repository/Test Repository Management/add-case.spec.ts"
+          "e2e/tests/repository/Test Repository Management/bulk-operations.spec.ts"
+          e2e/tests/repository/action-overflow-compact.spec.ts
+          e2e/tests/admin/statuses/status-management.spec.ts
+          e2e/tests/test-runs/test-run-creation-wizard.spec.ts
+          e2e/tests/sessions/session-lifecycle.spec.ts
+
+      - name: Upload Playwright artifacts
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: e2e-smoke-results
+          path: testplanit/e2e/test-results/
+          retention-days: 7
