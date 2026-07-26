@@ -16,9 +16,10 @@ import { authOptions } from "~/server/auth";
 import {
   buildOutlineSystemPrompt,
   buildOutlineUserPrompt,
-  fetchHierarchyContext,
+  fetchExistingCasesContext,
   fetchLinkedIssuesContext,
   type GenerationContext,
+  type IssueCaseLinkRef,
   type IssueData,
   type LinkedIssueContext,
   type TestCaseOutline,
@@ -49,6 +50,7 @@ export async function POST(request: NextRequest) {
       quantity,
       enrichFromIssue,
       integrationId: sourceIntegrationId,
+      issueRef,
     } = body as {
       projectId: number;
       issue: IssueData;
@@ -65,6 +67,7 @@ export async function POST(request: NextRequest) {
       // passes the issue's own integration; the repository wizard omits it and
       // falls back to the project's first active integration.
       integrationId?: number;
+      issueRef?: IssueCaseLinkRef;
     };
 
     if (!projectId || !issue) {
@@ -236,26 +239,25 @@ export async function POST(request: NextRequest) {
     ): Promise<{ response: LlmResponse; finalBudget: number }> => {
       const effectiveBudget = budget < OUTLINE_CTX_MIN_USEFUL ? 0 : budget;
 
-      // Linked issues (fetched once above) get first claim on the budget;
-      // folder hierarchy cases get the remainder.
-      const hierarchyBudget = Math.max(
+      // Linked issues (fetched once above) get first claim on the budget.
+      const caseContextBudget = Math.max(
         0,
         effectiveBudget - linkedResult.tokensUsed
       );
-      const hierarchyContext =
-        hierarchyBudget > 0 && typeof context.folderContext === "number"
-          ? await fetchHierarchyContext(
+      const existingCases =
+        caseContextBudget > 0
+          ? await fetchExistingCasesContext(
               baseDb,
               projectId,
-              context.folderContext,
-              hierarchyBudget,
+              { folderId: context.folderContext, issueRef },
+              caseContextBudget,
               "names"
             )
           : [];
 
       const enrichedContext: GenerationContext = {
         ...context,
-        existingTestCases: hierarchyContext,
+        existingTestCases: existingCases,
         linkedIssues: linkedResult.included,
       };
       const userPrompt = buildOutlineUserPrompt(

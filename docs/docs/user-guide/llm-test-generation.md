@@ -59,8 +59,10 @@ Choose your test generation source:
 - Choose the test case template to use for generated cases
 - All template fields are displayed for review
 - Select which fields to populate with AI-generated content
-- Required fields are automatically included
+- Required fields are always included and cannot be deselected
 - Optional fields can be included or excluded based on your needs
+- Deselected fields are named in the AI request as fields it must not return, and any value it returns for one is discarded — so an excluded field is never populated, never shown in the review step, and never written on import
+- Your selection persists for the rest of the wizard. Changing the template resets it to all fields.
 
 ### Step 3: Configure Generation
 
@@ -154,7 +156,9 @@ The **Generate Test Cases** button only appears when all of the above are met. I
 
 ### Context and parity
 
-Generation from the panel assembles the same LLM context as the in-app wizard's streaming generation: the issue's title, description, and comments; **linked Jira issues** (one hop) with their own titles, bodies, and comments; and existing test cases in the destination folder (when you generate into an existing folder). The same token-budgeting and trimming rules apply.
+Generation from the panel assembles the same LLM context as the in-app wizard's streaming generation: the issue's title, description, and comments; **linked Jira issues** (one hop) with their own titles, bodies, and comments; the test cases already linked to the issue, wherever they live in the repository; and existing test cases in the destination folder (when you generate into an existing folder). The same token-budgeting and trimming rules apply.
+
+Because linked cases do not depend on a folder, the panel has meaningful existing-case context even on the first generation for an issue that has no destination folder picked yet.
 
 :::note
 Parameter and starter-dataset generation is not offered from the Jira panel.
@@ -166,7 +170,7 @@ When you click "Generate":
 
 **For Issue/Document sources:**
 
-1. **Context Analysis**: The AI analyzes the source material and existing test cases in the folder
+1. **Context Analysis**: The AI analyzes the source material, the test cases already linked to the source issue, and existing test cases in the folder
 2. **Streaming Generation**: Test cases appear in real-time as the AI generates them, with partial field previews as data arrives
 3. **Field Population**: Custom fields are populated with relevant content
 4. **Quality Validation**: Generated content is validated for completeness
@@ -182,7 +186,7 @@ When you click "Generate":
 
 ### Test Case Fields
 
-The AI populates fields based on your selected template. Only template-defined fields are included in the output.
+The AI populates the fields you selected in Step 2. Fields outside that selection — including template fields you deselected — are never populated.
 
 **Common Fields:**
 
@@ -215,6 +219,7 @@ Expected Result: User is redirected to the dashboard
 The AI considers:
 
 - **Existing Test Cases**: Avoids duplication of current test scenarios in the folder
+- **Cases Already Linked to the Source Issue**: Test cases anywhere in the repository that are already linked to the issue you are generating from are included first, ahead of folder cases, so regenerating for an issue extends its coverage instead of repeating it. This applies to any connected issue source — Jira, GitHub, Azure DevOps, or a manual issue — and does not depend on a folder, so it is the context that carries surfaces where no folder is involved, such as the milestone issue list or the Jira panel. A case that is both linked to the issue and in the folder is only sent once.
 - **Project Domain**: Understands your application type and testing needs
 - **Template Structure**: Adapts content to fit your specific template fields
 - **Source Issue Comments**: The full comment thread on the selected issue is included alongside its title and description.
@@ -225,6 +230,7 @@ The AI considers:
 
 - **Required Fields**: Always populated with essential content
 - **Optional Fields**: Can be selectively included based on your workflow
+- **Deselected Fields**: Named in the request as fields the AI must not return, which also keeps them from consuming output tokens
 - **Field Types**: Content is formatted appropriately for each field type:
   - **Text String**: Short text values relevant to the test case
   - **Text Long**: Rich text with detailed, multi-sentence content

@@ -63,6 +63,11 @@ export const PROMPT_FEATURE_VARIABLES: Record<LlmFeature, PromptVariable[]> = {
       description: "List of optional template fields",
     },
     {
+      name: "EXCLUDED_FIELDS_LIST",
+      description:
+        "List of template fields the user deselected — instruct the model never to emit these",
+    },
+    {
       name: "QUANTITY_GUIDANCE",
       description:
         "Quantity of test cases to generate (e.g. '4-6 test cases' or 'as many test cases as needed for comprehensive coverage')",

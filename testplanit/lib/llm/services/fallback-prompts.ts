@@ -79,13 +79,13 @@ REQUIREMENTS:
 {{STEPS_INSTRUCTION}}
 {{PRIORITY_INSTRUCTION}}
 - CRITICAL: ALL REQUIRED FIELDS must be included in fieldValues with meaningful content
-- IMPORTANT: Include ALL optional fields in fieldValues, especially text fields like Description, Preconditions, and Post Conditions
-- For text/textarea fields (Description, Preconditions, Post Conditions, etc.):
+- IMPORTANT: Include ALL optional fields listed above in fieldValues, especially text fields
+- For every text/textarea field listed above (and ONLY those):
   * Always provide substantial, detailed content (minimum 2-3 sentences)
   * Include specific details relevant to the issue being tested
-  * Description should explain what the test validates and why it's important
-  * Preconditions should list all prerequisites needed before testing
-  * Post Conditions should describe the expected system state after the test
+  * A description field should explain what the test validates and why it's important
+  * A preconditions field should list all prerequisites needed before testing
+  * A post-conditions field should describe the expected system state after the test
 - For single-select fields with options, use exactly one of the provided options
 - For multiselect fields, provide an array of 1-3 relevant options from the list
 - CRITICAL: Never create new option values for dropdown/select fields - always use provided options exactly

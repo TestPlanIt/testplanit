@@ -127,6 +127,12 @@ export interface TemplateData {
     required: boolean;
     options?: string[];
   }>;
+  /**
+   * Display names of fields the caller left out of `fields`, named in the
+   * prompt as forbidden keys. Advisory — `stripUnknownFieldValues` is the
+   * enforcement.
+   */
+  excludedFields?: string[];
 }
 
 export interface GenerationContext {
@@ -278,6 +284,161 @@ function estimateNameOnlyTokens(c: ExistingTestCaseContext): number {
 
 export type HierarchyContextMode = "full" | "names";
 
+/** Shared `select` shape for the existing-case context queries. */
+function buildCaseSelect(namesOnly: boolean): Record<string, any> {
+  const caseSelect: Record<string, any> = {
+    id: true,
+    name: true,
+    template: { select: { templateName: true } },
+  };
+  if (!namesOnly) {
+    caseSelect.caseFieldValues = {
+      select: {
+        value: true,
+        field: {
+          select: { displayName: true, type: { select: { type: true } } },
+        },
+      },
+    };
+    caseSelect.steps = {
+      select: { step: true, expectedResult: true, order: true },
+      orderBy: { order: "asc" as const },
+    };
+  }
+  return caseSelect;
+}
+
+/** Identifies the Issue whose linked cases to use as context. */
+export interface IssueCaseLinkRef {
+  /** Internal `Issue.id` — exact, preferred when the caller knows it. */
+  issueId?: number | null;
+  issueKey?: string | null;
+  externalId?: string | null;
+  integrationId?: number | null;
+}
+
+/** Null when the ref carries no usable identity. */
+function buildIssueMatchWhere(
+  ref: IssueCaseLinkRef
+): Record<string, any> | null {
+  if (ref.issueId != null) return { id: ref.issueId };
+
+  const or: Record<string, any>[] = [];
+  if (ref.externalId) or.push({ externalId: ref.externalId });
+  if (ref.issueKey) {
+    // A synced issue carries the key in `externalKey`; a manual one carries it
+    // in `name`. Match both — the caller doesn't know which it has.
+    or.push({ externalKey: ref.issueKey }, { name: ref.issueKey });
+  }
+  if (or.length === 0) return null;
+
+  return {
+    OR: or,
+    ...(ref.integrationId != null ? { integrationId: ref.integrationId } : {}),
+  };
+}
+
+/**
+ * Fetch the test cases already linked to `ref`'s issue as generation context.
+ * The folder hierarchy comes up empty when generation starts without a folder
+ * (the Jira panel and the milestone issue list both pass folderId 0), where
+ * these are the only existing cases available — and the ones not to duplicate.
+ *
+ * Returned case ids let the caller skip them in the hierarchy pass. `db` must
+ * be the *raw* client — the caller has already verified project access.
+ */
+export async function fetchIssueLinkedCasesContext(
+  db: any,
+  projectId: number,
+  ref: IssueCaseLinkRef,
+  tokenBudget: number,
+  mode: HierarchyContextMode = "full"
+): Promise<{
+  cases: ExistingTestCaseContext[];
+  caseIds: Set<number>;
+  tokensUsed: number;
+}> {
+  const empty = { cases: [], caseIds: new Set<number>(), tokensUsed: 0 };
+  if (tokenBudget <= 0) return empty;
+
+  const issueWhere = buildIssueMatchWhere(ref);
+  if (!issueWhere) return empty;
+
+  const namesOnly = mode === "names";
+  const rows = await db.repositoryCases.findMany({
+    where: {
+      projectId,
+      isDeleted: false,
+      isArchived: false,
+      caseIssues: { some: { issue: issueWhere } },
+    },
+    select: buildCaseSelect(namesOnly),
+    orderBy: { order: "asc" },
+    take: 100, // generous upper bound; the token budget trims
+  });
+
+  const cases: ExistingTestCaseContext[] = [];
+  const caseIds = new Set<number>();
+  let tokensUsed = 0;
+
+  for (const row of rows) {
+    const ctx = namesOnly ? toNameOnlyCaseContext(row) : toCaseContext(row);
+    const tokens = namesOnly
+      ? estimateNameOnlyTokens(ctx)
+      : estimateCaseTokens(ctx);
+    if (tokensUsed + tokens > tokenBudget) break;
+    cases.push(ctx);
+    caseIds.add(row.id);
+    tokensUsed += tokens;
+  }
+
+  return { cases, caseIds, tokensUsed };
+}
+
+/**
+ * Existing-case context: issue-linked cases first, then the folder hierarchy
+ * with the remaining budget. Both feed the same "do not duplicate" prompt
+ * section, so a case is emitted at most once across the two.
+ */
+export async function fetchExistingCasesContext(
+  db: any,
+  projectId: number,
+  source: {
+    folderId?: number | null;
+    issueRef?: IssueCaseLinkRef | null;
+  },
+  tokenBudget: number,
+  mode: HierarchyContextMode = "full"
+): Promise<ExistingTestCaseContext[]> {
+  if (tokenBudget <= 0) return [];
+
+  const linked = source.issueRef
+    ? await fetchIssueLinkedCasesContext(
+        db,
+        projectId,
+        source.issueRef,
+        tokenBudget,
+        mode
+      )
+    : { cases: [], caseIds: new Set<number>(), tokensUsed: 0 };
+
+  const hierarchyBudget = tokenBudget - linked.tokensUsed;
+  if (typeof source.folderId !== "number" || hierarchyBudget <= 0) {
+    return linked.cases;
+  }
+
+  const hierarchy = await fetchHierarchyContext(
+    db,
+    projectId,
+    source.folderId,
+    hierarchyBudget,
+    mode,
+    linked.caseIds
+  );
+
+  return [...linked.cases, ...hierarchy];
+}
+
 /**
  * Fetch existing test cases from the folder hierarchy as context for LLM
  * generation, prioritised: current folder → ancestors → descendants.
@@ -299,29 +460,12 @@ export async function fetchHierarchyContext(
   projectId: number,
   folderId: number,
   tokenBudget: number,
-  mode: HierarchyContextMode = "full"
+  mode: HierarchyContextMode = "full",
+  excludeCaseIds?: Set<number>
 ): Promise<ExistingTestCaseContext[]> {
   const namesOnly = mode === "names";
 
-  // Shared select shape for case queries
-  const caseSelect: Record<string, any> = {
-    name: true,
-    template: { select: { templateName: true } },
-  };
-  if (!namesOnly) {
-    caseSelect.caseFieldValues = {
-      select: {
-        value: true,
-        field: {
-          select: { displayName: true, type: { select: { type: true } } },
-        },
-      },
-    };
-    caseSelect.steps = {
-      select: { step: true, expectedResult: true, order: true },
-      orderBy: { order: "asc" as const },
-    };
-  }
+  const caseSelect = buildCaseSelect(namesOnly);
 
   const caseWhere = {
     projectId,
@@ -395,6 +539,8 @@ export async function fetchHierarchyContext(
     }
 
     for (const row of rows) {
+      // Already emitted by the issue-linked pass — don't list it twice.
+      if (excludeCaseIds?.has(row.id)) continue;
       const ctx = namesOnly ? toNameOnlyCaseContext(row) : toCaseContext(row);
       const tokens = namesOnly
         ? estimateNameOnlyTokens(ctx)
@@ -743,6 +889,24 @@ export function buildSystemPrompt(
     ? buildParameterInstructionBlock(STARTER_DATASET_ROW_CAP)
     : "";
 
+  // Listing only the wanted fields is not enough: a model that sees
+  // "Preconditions" on the folder's existing cases will add it back.
+  const excludedFieldNames = Array.from(
+    new Set(
+      (template.excludedFields ?? [])
+        .map((name) => name?.trim())
+        .filter((name): name is string => Boolean(name))
+    )
+  ).filter((name) => !template.fields.some((f) => f.name === name));
+  const exclusionInstruction =
+    excludedFieldNames.length > 0
+      ? `EXCLUDED FIELDS (the user deselected these — NEVER emit them):
+${excludedFieldNames.map((name) => `- ${name}`).join("\n")}
+
+- CRITICAL: fieldValues must contain ONLY the field names listed under REQUIRED FIELDS and ADDITIONAL FIELDS. Never add a key for an excluded field — not as text, not as an empty string, not as null, not as a placeholder.
+- Do not mention excluded fields anywhere else in the JSON either. Any excluded key is discarded before the response is shown, so emitting one only wastes output.`
+      : "";
+
   // Keep each test case's top-level `name` in the same language as its
   // fieldValues. Injected for every prompt source (the marker check below
   // avoids duplicating it when a customized prompt already carries the line).
@@ -750,10 +914,18 @@ export function buildSystemPrompt(
     "- LANGUAGE CONSISTENCY: Write the top-level `name` of every test case in the SAME language you use for the values inside `fieldValues`. The `name` is human-readable content — never leave it in English (or reuse the English wording from this prompt) when the field values are generated in another language.";
 
   if (baseTemplate) {
+    // A prompt that renders the variable itself owns the wording.
+    const usesExclusionVariable = baseTemplate.includes(
+      "{{EXCLUDED_FIELDS_LIST}}"
+    );
     const rendered = baseTemplate
       .replace("{{EXAMPLE_STRUCTURE}}", exampleStructure)
       .replace("{{REQUIRED_FIELDS_LIST}}", requiredFieldsList)
       .replace("{{OPTIONAL_FIELDS_LIST}}", optionalFieldsList)
+      .replace(
+        "{{EXCLUDED_FIELDS_LIST}}",
+        excludedFieldNames.map((name) => `- ${name}`).join("\n") || "- (none)"
+      )
       .replace("{{QUANTITY_GUIDANCE}}", quantityGuidance)
       .replace("{{STEPS_INSTRUCTION}}", stepsInstruction)
       .replace("{{PRIORITY_INSTRUCTION}}", priorityInstruction)
@@ -761,7 +933,12 @@ export function buildSystemPrompt(
     const languageTail = rendered.includes("LANGUAGE CONSISTENCY")
       ? ""
       : languageConsistencyInstruction;
-    return [rendered, parameterInstructions, languageTail]
+    return [
+      rendered,
+      usesExclusionVariable ? "" : exclusionInstruction,
+      parameterInstructions,
+      languageTail,
+    ]
       .filter(Boolean)
       .join("\n\n");
   }
@@ -782,7 +959,7 @@ ${requiredFieldsList}
 
 ADDITIONAL FIELDS (include ALL of these in fieldValues):
 ${optionalFieldsList}
-
+${exclusionInstruction ? `\n${exclusionInstruction}\n` : ""}
 REQUIREMENTS:
 - Generate ${quantityGuidance} that are SPECIFIC to the provided issue
 - Each test case object must contain ONLY: id, name, fieldValues${autoGenerateTags ? ", tags" : ""}. Do NOT include priority, automated, steps, or any other top-level keys.
@@ -791,12 +968,12 @@ REQUIREMENTS:
 ${languageConsistencyInstruction}
 - CRITICAL: ALL REQUIRED FIELDS must be included in fieldValues with meaningful content
 - IMPORTANT: Include ALL optional fields in fieldValues
-- For text/textarea fields (Description, Preconditions, Post Conditions, etc.):
+- For every text/textarea field listed above (and ONLY those):
   * Always provide substantial, detailed content (minimum 2-3 sentences)
   * Include specific details relevant to the issue being tested
-  * Description should explain what the test validates and why it's important
-  * Preconditions should list all prerequisites needed before testing
-  * Post Conditions should describe the expected system state after the test
+  * A description field should explain what the test validates and why it's important
+  * A preconditions field should list all prerequisites needed before testing
+  * A post-conditions field should describe the expected system state after the test
 - For single-select fields with options, use exactly one of the provided options
 - For multiselect fields, provide an array of 1-3 relevant options from the list
 - CRITICAL: Never create new option values for dropdown/select fields - always use provided options exactly
@@ -1379,7 +1556,10 @@ export function parseAndValidateTestCases(
   const warnings: ParseWarning[] = [];
   const testCases =
     parsedResponse.testCases?.map((tc, index) => {
-      const validatedFieldValues = { ...tc.fieldValues };
+      const validatedFieldValues = stripUnknownFieldValues(
+        tc.fieldValues,
+        template
+      );
 
       template.fields.forEach((field) => {
         if (field.options && validatedFieldValues[field.name]) {
@@ -1650,6 +1830,23 @@ function extractRawTestCaseStrings(text: string): string[] {
 }
 
 /**
+ * Keep only the fieldValues keys naming a field in `template.fields` (already
+ * narrowed to the user's selection), so a deselected field cannot reach the
+ * preview or the import. Exact match by display name — what the import does.
+ */
+function stripUnknownFieldValues(
+  fieldValues: Record<string, any> | undefined,
+  template: TemplateData
+): Record<string, any> {
+  const allowedNames = new Set(template.fields.map((f) => f.name));
+  const kept: Record<string, any> = {};
+  for (const [name, value] of Object.entries(fieldValues ?? {})) {
+    if (allowedNames.has(name)) kept[name] = value;
+  }
+  return kept;
+}
+
+/**
  * Validate and sanitize a single raw test case object against the template.
  */
 export function validateTestCase(
@@ -1657,7 +1854,10 @@ export function validateTestCase(
   index: number,
   template: TemplateData
 ): GeneratedTestCase {
-  const validatedFieldValues = { ...tc.fieldValues };
+  const validatedFieldValues = stripUnknownFieldValues(
+    tc.fieldValues,
+    template
+  );
   template.fields.forEach((field) => {
     if (field.options && validatedFieldValues[field.name]) {
       const fieldValue = validatedFieldValues[field.name];

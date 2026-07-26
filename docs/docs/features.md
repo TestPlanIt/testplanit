@@ -144,7 +144,8 @@ TestPlanIt is a comprehensive test management platform designed to help teams pl
 
 ### LLM Integration
 
-- **Test case generation** - Generate test cases from requirements using AI; optional `includeParameters` toggle (admin-gated) for parameterized output
+- **Test case generation** - Generate test cases from requirements using AI; pick which template fields the AI populates, with the rest excluded from the request and discarded if returned; optional `includeParameters` toggle (admin-gated) for parameterized output
+- **Issue-aware generation context** - Generation reads the test cases already linked to the source issue, wherever they live in the repository, so regenerating extends an issue's coverage instead of repeating it. Applies to every connected issue source — Jira, GitHub, Azure DevOps, and manual issues — and works with no folder involved at all
 - **Generate from URL** - Crawl a webpage or sitemap and generate test cases targeting it
 - **Generate from the Jira panel** - Create test cases from a Jira issue inside the TestPlanIt for Jira app, streamed live and linked back to the issue
 - **Markdown Parsing** - Pasted Markdown is parsed by an LLM into structured cases (name, steps, expected results, custom field values) on the Import Markdown surface

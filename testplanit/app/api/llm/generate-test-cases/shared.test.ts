@@ -13,6 +13,8 @@ import {
   buildOutlineSystemPrompt,
   buildOutlineUserPrompt,
   buildSystemPrompt,
+  fetchExistingCasesContext,
+  fetchIssueLinkedCasesContext,
   fetchLinkedIssuesContext,
   parseAndValidateTestCases,
   type GenerationContext,
@@ -479,6 +481,331 @@ describe("buildSystemPrompt — INT-06 includeParameters extension", () => {
         lookupDataSetId: 2,
       })
     ).toThrow();
+  });
+});
+
+describe("existing-case context — issue-linked cases", () => {
+  /**
+   * Minimal stand-in for the raw client: `repositoryCases.findMany` records the
+   * where-clause it was called with and returns the rows the test queued for
+   * that call, `repositoryFolders.findMany` backs the hierarchy walk.
+   */
+  function makeContextDb(opts: {
+    caseRowsPerCall?: any[][];
+    folders?: { id: number; parentId: number | null }[];
+  }) {
+    const calls: any[] = [];
+    const queue = [...(opts.caseRowsPerCall ?? [])];
+    return {
+      calls,
+      db: {
+        repositoryCases: {
+          findMany: vi.fn(async (args: any) => {
+            calls.push(args);
+            return queue.shift() ?? [];
+          }),
+        },
+        repositoryFolders: {
+          findMany: vi.fn(async () => opts.folders ?? []),
+        },
+      },
+    };
+  }
+
+  const caseRow = (id: number, name: string) => ({
+    id,
+    name,
+    template: { templateName: "Functional" },
+    caseFieldValues: [],
+    steps: [],
+  });
+
+  it("matches on the internal Issue.id when the caller knows it", async () => {
+    const { db, calls } = makeContextDb({
+      caseRowsPerCall: [[caseRow(1, "Existing linked case")]],
+    });
+
+    const result = await fetchIssueLinkedCasesContext(
+      db,
+      7,
+      { issueId: 42, issueKey: "PROJ-1" },
+      1000
+    );
+
+    expect(result.cases.map((c) => c.name)).toEqual(["Existing linked case"]);
+    expect(result.caseIds).toEqual(new Set([1]));
+    expect(calls[0].where).toMatchObject({
+      projectId: 7,
+      isDeleted: false,
+      isArchived: false,
+      caseIssues: { some: { issue: { id: 42 } } },
+    });
+  });
+
+  it("falls back to tracker identity, scoped by integration when known", async () => {
+    const { db, calls } = makeContextDb({
+      caseRowsPerCall: [[caseRow(1, "Linked by key")]],
+    });
+
+    await fetchIssueLinkedCasesContext(
+      db,
+      7,
+      { issueKey: "PROJ-1", externalId: "10042", integrationId: 3 },
+      1000
+    );
+
+    const issueWhere = calls[0].where.caseIssues.some.issue;
+    expect(issueWhere.integrationId).toBe(3);
+    // A synced issue carries the key in externalKey, a manual one in name.
+    expect(issueWhere.OR).toEqual([
+      { externalId: "10042" },
+      { externalKey: "PROJ-1" },
+      { name: "PROJ-1" },
+    ]);
+  });
+
+  it("queries nothing when the ref carries no usable identity", async () => {
+    const { db } = makeContextDb({});
+
+    const result = await fetchIssueLinkedCasesContext(db, 7, {}, 1000);
+
+    expect(result.cases).toEqual([]);
+    expect(db.repositoryCases.findMany).not.toHaveBeenCalled();
+  });
+
+  it("still returns context when there is no folder (Jira panel / milestone)", async () => {
+    // folderId 0 is what both no-folder flows pass — the hierarchy walk finds
+    // nothing, so issue-linked cases are the only context available.
+    const { db } = makeContextDb({
+      caseRowsPerCall: [[caseRow(1, "Only linked case")], []],
+      folders: [],
+    });
+
+    const cases = await fetchExistingCasesContext(
+      db,
+      7,
+      { folderId: 0, issueRef: { issueId: 42 } },
+      1000,
+      "names"
+    );
+
+    expect(cases.map((c) => c.name)).toEqual(["Only linked case"]);
+  });
+
+  it("puts issue-linked cases first and never lists a case twice", async () => {
+    const { db } = makeContextDb({
+      // Call 1: issue-linked. Call 2: the folder, which also contains case 1.
+      caseRowsPerCall: [
+        [caseRow(1, "Linked and in folder")],
+        [
+          { ...caseRow(1, "Linked and in folder"), folderId: 5 },
+          { ...caseRow(2, "Folder sibling"), folderId: 5 },
+        ],
+      ],
+      folders: [{ id: 5, parentId: null }],
+    });
+
+    const cases = await fetchExistingCasesContext(
+      db,
+      7,
+      { folderId: 5, issueRef: { issueId: 42 } },
+      1000,
+      "names"
+    );
+
+    expect(cases.map((c) => c.name)).toEqual([
+      "Linked and in folder",
+      "Folder sibling",
+    ]);
+  });
+
+  it("bills the shared budget — linked cases claim it first", async () => {
+    const { db, calls } = makeContextDb({
+      caseRowsPerCall: [
+        [caseRow(1, "A".repeat(200))],
+        [{ ...caseRow(2, "Folder case"), folderId: 5 }],
+      ],
+      folders: [{ id: 5, parentId: null }],
+    });
+
+    const linkedOnly = await fetchIssueLinkedCasesContext(
+      db,
+      7,
+      { issueId: 42 },
+      1000,
+      "names"
+    );
+    expect(linkedOnly.tokensUsed).toBeGreaterThan(0);
+    expect(calls).toHaveLength(1);
+
+    // A budget too small for even the first linked case yields nothing, and the
+    // hierarchy pass is still reached with what's left.
+    const { db: tightDb } = makeContextDb({
+      caseRowsPerCall: [[caseRow(1, "A".repeat(400))], []],
+      folders: [{ id: 5, parentId: null }],
+    });
+    const tight = await fetchExistingCasesContext(
+      tightDb,
+      7,
+      { folderId: 5, issueRef: { issueId: 42 } },
+      5,
+      "names"
+    );
+    expect(tight).toEqual([]);
+  });
+});
+
+describe("deselected fields — prompt exclusion + response strip", () => {
+  const templateWithExclusions: TemplateData = {
+    ...sampleTemplate,
+    excludedFields: ["Preconditions", "Post Conditions"],
+  };
+
+  it("names every excluded field as a forbidden key in the fallback prompt", () => {
+    const prompt = buildSystemPrompt(
+      templateWithExclusions,
+      { folderContext: 0 },
+      "few",
+      false,
+      undefined,
+      false
+    );
+
+    expect(prompt).toContain("EXCLUDED FIELDS");
+    expect(prompt).toContain("- Preconditions");
+    expect(prompt).toContain("- Post Conditions");
+    // The exclusion list must land after the field lists it refers back to.
+    expect(prompt.indexOf("EXCLUDED FIELDS")).toBeGreaterThan(
+      prompt.indexOf("ADDITIONAL FIELDS")
+    );
+  });
+
+  it("omits the exclusion section entirely when nothing was deselected", () => {
+    const prompt = buildSystemPrompt(
+      sampleTemplate,
+      { folderContext: 0 },
+      "few",
+      false,
+      undefined,
+      false
+    );
+
+    expect(prompt).not.toContain("EXCLUDED FIELDS");
+  });
+
+  it("never lists a field as both included and excluded", () => {
+    const prompt = buildSystemPrompt(
+      { ...sampleTemplate, excludedFields: ["Priority", "Preconditions"] },
+      { folderContext: 0 },
+      "few",
+      false,
+      undefined,
+      false
+    );
+
+    // "Priority" is a real template field — a caller that also lists it as
+    // excluded must not produce contradictory instructions.
+    expect(prompt).toContain("- Preconditions");
+    expect(prompt).not.toMatch(/EXCLUDED FIELDS[\s\S]*^- Priority$/m);
+  });
+
+  it("appends the exclusion block to custom prompts that lack the variable", () => {
+    const customTemplate =
+      "{{EXAMPLE_STRUCTURE}}\n\nREQUIRED:\n{{REQUIRED_FIELDS_LIST}}\n\nADDITIONAL FIELDS:\n{{OPTIONAL_FIELDS_LIST}}\n\nReturn ONLY the JSON.";
+
+    const prompt = buildSystemPrompt(
+      templateWithExclusions,
+      { folderContext: 0 },
+      "few",
+      false,
+      customTemplate,
+      false
+    );
+
+    expect(prompt).toContain("EXCLUDED FIELDS");
+    expect(prompt).toContain("- Preconditions");
+  });
+
+  it("lets a custom prompt own the wording via {{EXCLUDED_FIELDS_LIST}}", () => {
+    const customTemplate =
+      "{{EXAMPLE_STRUCTURE}}\n\nSKIP THESE:\n{{EXCLUDED_FIELDS_LIST}}\n\nReturn ONLY the JSON.";
+
+    const prompt = buildSystemPrompt(
+      templateWithExclusions,
+      { folderContext: 0 },
+      "few",
+      false,
+      customTemplate,
+      false
+    );
+
+    expect(prompt).toContain("SKIP THESE:\n- Preconditions\n- Post Conditions");
+    // No appended block — the custom prompt already rendered the list.
+    expect(prompt).not.toContain("EXCLUDED FIELDS (");
+  });
+
+  it("renders the variable as (none) when nothing was deselected", () => {
+    const prompt = buildSystemPrompt(
+      sampleTemplate,
+      { folderContext: 0 },
+      "few",
+      false,
+      "{{EXAMPLE_STRUCTURE}}\n\nSKIP THESE:\n{{EXCLUDED_FIELDS_LIST}}",
+      false
+    );
+
+    expect(prompt).toContain("SKIP THESE:\n- (none)");
+  });
+
+  it("drops fieldValues keys outside the template, whatever the model emits", () => {
+    const { testCases } = parseAndValidateTestCases(
+      JSON.stringify({
+        testCases: [
+          {
+            id: "tc_1",
+            name: "Login succeeds",
+            fieldValues: {
+              Description: "Validates login",
+              Steps: [{ step: "Open login", expectedResult: "Form shows" }],
+              Priority: "High",
+              // Deselected by the user — the model volunteered them anyway.
+              Preconditions: "User exists",
+              "Post Conditions": "Session created",
+            },
+          },
+        ],
+      }),
+      templateWithExclusions,
+      sampleIssue
+    );
+
+    expect(Object.keys(testCases[0].fieldValues).sort()).toEqual([
+      "Description",
+      "Priority",
+      "Steps",
+    ]);
+  });
+
+  it("keeps the top-level steps/priority migration working after the strip", () => {
+    const { testCases } = parseAndValidateTestCases(
+      JSON.stringify({
+        testCases: [
+          {
+            id: "tc_1",
+            name: "Login succeeds",
+            fieldValues: { Description: "Validates login", Notes: "ignore me" },
+            steps: [{ step: "Open login", expectedResult: "Form shows" }],
+            priority: "High",
+          },
+        ],
+      }),
+      sampleTemplate,
+      sampleIssue
+    );
+
+    expect(testCases[0].fieldValues.Steps).toHaveLength(1);
+    expect(testCases[0].fieldValues.Priority).toBe("High");
+    expect(testCases[0].fieldValues).not.toHaveProperty("Notes");
   });
 });
 

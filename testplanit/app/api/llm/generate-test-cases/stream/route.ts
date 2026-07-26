@@ -16,9 +16,10 @@ import { authOptions } from "~/server/auth";
 import {
   buildSystemPrompt,
   buildUserPrompt,
-  fetchHierarchyContext,
+  fetchExistingCasesContext,
   fetchLinkedIssuesContext,
   type GenerationContext,
+  type IssueCaseLinkRef,
   type IssueData,
   type TemplateData,
 } from "../shared";
@@ -61,6 +62,7 @@ export async function POST(req: NextRequest) {
     autoGenerateTags,
     includeParameters,
     feature: featureOverride,
+    issueRef,
   } = body as {
     projectId: number;
     issue: IssueData;
@@ -71,6 +73,7 @@ export async function POST(req: NextRequest) {
     includeParameters?: boolean;
     /** Optional LLM feature override (e.g., "generate_from_url" or "generate_from_url_app") */
     feature?: string;
+    issueRef?: IssueCaseLinkRef;
   };
 
   if (!projectId || !issue || !template) {
@@ -341,26 +344,26 @@ export async function POST(req: NextRequest) {
               )
             : { included: [], dropped: [], tokensUsed: 0 };
 
-        // Folder cases get whatever budget linked issues didn't consume.
-        // Use linkedResult.tokensUsed directly — do NOT recompute char counts.
-        const hierarchyBudget = Math.max(
+        // Existing cases get whatever budget linked issues didn't consume. Use
+        // linkedResult.tokensUsed directly — do NOT recompute char counts.
+        const caseContextBudget = Math.max(
           0,
           remainingBudget - linkedResult.tokensUsed
         );
-        const hierarchyContext =
-          hierarchyBudget > 0
-            ? await fetchHierarchyContext(
+        const existingCases =
+          caseContextBudget > 0
+            ? await fetchExistingCasesContext(
                 baseDb,
                 projectId,
-                context.folderContext,
-                hierarchyBudget
+                { folderId: context.folderContext, issueRef },
+                caseContextBudget
               )
             : [];
 
         // Build the final context with server-fetched cases + linked issues.
         const enrichedContext: GenerationContext = {
           ...context,
-          existingTestCases: hierarchyContext,
+          existingTestCases: existingCases,
           linkedIssues: linkedResult.included,
         };
 

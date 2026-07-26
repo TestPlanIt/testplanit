@@ -109,13 +109,29 @@ This allows different projects to use different AI behaviors — for example, a 
 
 User prompts can include `{{variable}}` placeholders that are replaced at runtime with actual values. The available variables depend on the feature:
 
-| Feature | Common Variables |
-| --------- | ----------------- |
-| Test Case Generation | `{{sourceContent}}`, `{{fields}}`, `{{numberOfCases}}` |
-| Markdown Parsing | `{{markdownContent}}`, `{{fields}}` |
-| Smart Test Case Selection | `{{testCases}}`, `{{context}}` |
-| Editor Writing Assistant | `{{content}}`, `{{instruction}}` |
-| Automation Candidates | `{{PROJECT_NAME}}`, `{{CASE_COUNT}}`, `{{CASES_JSON}}` |
+| Feature                                                                                                                                      | Common Variables                                                                                                                                                                                                                                                                                                                                                                                         |
+| -------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Test Case Generation                                                                                                                         | `{{EXAMPLE_STRUCTURE}}`, `{{REQUIRED_FIELDS_LIST}}`, `{{OPTIONAL_FIELDS_LIST}}`, `{{EXCLUDED_FIELDS_LIST}}`, `{{QUANTITY_GUIDANCE}}`, `{{STEPS_INSTRUCTION}}`, `{{PRIORITY_INSTRUCTION}}`, `{{TAG_INSTRUCTIONS}}`, `{{ISSUE_KEY}}`, `{{ISSUE_TITLE}}`, `{{ISSUE_DESCRIPTION}}`, `{{ISSUE_STATUS}}`, `{{ISSUE_PRIORITY}}`, `{{COMMENTS_SECTION}}`, `{{USER_NOTES_SECTION}}`, `{{EXISTING_CASES_SECTION}}` |
+| Automation Candidates                                                                                                                        | `{{PROJECT_NAME}}`, `{{CASE_COUNT}}`, `{{CASES_JSON}}`                                                                                                                                                                                                                                                                                                                                                   |
+| Markdown Parsing, Smart Test Case Selection, Editor Writing Assistant, Auto Tag, Duplicate Detection, Generate from URL, LLM Connection Test | None — the content being worked on is sent as the user message                                                                                                                                                                                                                                                                                                                                           |
+
+The editor's **Insert variable** picker lists every variable available for the
+feature you are editing — use it rather than typing placeholders by hand.
+
+### Excluded fields
+
+`{{EXCLUDED_FIELDS_LIST}}` renders the template fields the user deselected in
+the generation wizard, as a bulleted list (or `- (none)`). Use it when you want
+to control where and how the exclusion appears in your prompt:
+
+```text
+Never populate these fields:
+{{EXCLUDED_FIELDS_LIST}}
+```
+
+If your prompt does not include the variable, an exclusion section is appended
+automatically, so deselected fields are honored either way. Values for
+deselected fields are discarded regardless of what the model returns.
 
 ## Best Practices
 

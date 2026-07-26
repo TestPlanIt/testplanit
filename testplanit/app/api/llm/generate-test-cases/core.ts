@@ -18,10 +18,11 @@ import { baseDb } from "@/lib/db";
 import {
   buildSystemPrompt,
   buildUserPrompt,
-  fetchHierarchyContext,
+  fetchExistingCasesContext,
   parseAndValidateTestCases,
   type GeneratedTestCase,
   type GenerationContext,
+  type IssueCaseLinkRef,
   type IssueData,
   type ParseWarning,
   type TemplateData,
@@ -35,6 +36,8 @@ export interface GenerateTestCasesParams {
   quantity?: string;
   autoGenerateTags?: boolean;
   includeParameters?: boolean;
+  /** Omit for document/URL sources. */
+  issueRef?: IssueCaseLinkRef;
   /** Used for LLM usage attribution (LlmRequest.userId). */
   userId: string;
 }
@@ -73,6 +76,7 @@ export async function generateTestCasesForProject(
     quantity,
     autoGenerateTags,
     includeParameters,
+    issueRef,
     userId,
   } = params;
 
@@ -152,20 +156,19 @@ export async function generateTestCasesForProject(
   // Allocate remaining token budget to existing test case context
   const contextTokenBudget = Math.max(0, contentBudget - basePromptTokens);
 
-  // Fetch prioritised context from folder hierarchy (server-side)
-  const hierarchyContext =
+  const existingCases =
     contextTokenBudget > 0
-      ? await fetchHierarchyContext(
+      ? await fetchExistingCasesContext(
           baseDb,
           projectId,
-          context.folderContext,
+          { folderId: context.folderContext, issueRef },
           contextTokenBudget
         )
       : [];
 
   const enrichedContext: GenerationContext = {
     ...context,
-    existingTestCases: hierarchyContext,
+    existingTestCases: existingCases,
   };
   let userPrompt = buildUserPrompt(issue, enrichedContext, userPromptBase);
   let wasTruncated = false;

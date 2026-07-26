@@ -1547,6 +1547,10 @@ export function GenerateTestCasesWizard({
   const [selectedFieldIds, setSelectedFieldIds] = useState<Set<number>>(
     new Set()
   );
+  // Template whose field selection has been seeded. Without this, unrelated
+  // re-runs of the auto-select-all effect (step navigation, a templates
+  // refetch) wipe out the user's deselections.
+  const seededFieldsTemplateIdRef = useRef<number | null>(null);
   const [llmError, setLlmError] = useState<LlmErrorState | null>(null);
   const [showErrorDetails, setShowErrorDetails] = useState(false);
   const [editingTestCaseIds, setEditingTestCaseIds] = useState<Set<string>>(
@@ -1698,6 +1702,17 @@ export function GenerateTestCasesWizard({
     [canEditRestrictedFields]
   );
 
+  // Fields hidden from the user (disabled, deleted, restricted) are omitted, so
+  // the model never learns those names.
+  const excludedFieldNamesFor = useCallback(
+    (template: any, fieldIds: Set<number>): string[] =>
+      (template?.caseFields ?? [])
+        .filter(isTemplateFieldVisible)
+        .filter((cf: any) => !fieldIds.has(cf.caseFieldId))
+        .map((cf: any) => cf.caseField.displayName),
+    [isTemplateFieldVisible]
+  );
+
   useEffect(() => {
     if (project) {
       const hasIntegrations = project.projectIntegrations.length > 0;
@@ -1726,7 +1741,8 @@ export function GenerateTestCasesWizard({
     if (
       selectedTemplateId &&
       templates &&
-      currentStep !== WizardStep.REVIEW_GENERATED
+      currentStep !== WizardStep.REVIEW_GENERATED &&
+      seededFieldsTemplateIdRef.current !== selectedTemplateId
     ) {
       const template = templates.find((t) => t.id === selectedTemplateId);
       if (template) {
@@ -1735,6 +1751,11 @@ export function GenerateTestCasesWizard({
             .filter(isTemplateFieldVisible)
             .map((cf) => cf.caseFieldId)
         );
+        // An empty caseFields array (still loading) must not lock the
+        // selection at zero fields.
+        if (allFieldIds.size > 0) {
+          seededFieldsTemplateIdRef.current = selectedTemplateId;
+        }
         setSelectedFieldIds(allFieldIds);
       }
     }
@@ -1804,6 +1825,7 @@ export function GenerateTestCasesWizard({
     (resultTemplateId?: number, resultFieldIds?: number[]) => {
       if (!resultTemplateId || !templates) return;
       setSelectedTemplateId(resultTemplateId);
+      seededFieldsTemplateIdRef.current = resultTemplateId;
       const tmpl = templates.find((t) => t.id === resultTemplateId);
       // Only restore fields the user is still allowed to select — a prior job
       // may have included fields that are now disabled/deleted or restricted
@@ -2309,6 +2331,9 @@ export function GenerateTestCasesWizard({
     setSelectedTemplateId(
       templates?.find((t) => t.isDefault)?.id || templates?.[0]?.id || null
     );
+    // Released, not set to the default id — that id is usually unchanged, and
+    // the auto-select-all effect must repopulate the cleared selection.
+    seededFieldsTemplateIdRef.current = null;
     setSelectedFieldIds(new Set());
     setUserNotes("");
     setQuantity("several");
@@ -2401,6 +2426,7 @@ export function GenerateTestCasesWizard({
       id: template.id,
       name: template.templateName,
       fields: templateFields,
+      excludedFields: excludedFieldNamesFor(template, fieldIds),
     };
 
     const llmFeature =
@@ -2821,6 +2847,20 @@ export function GenerateTestCasesWizard({
         throw new Error(t("generateTestCases.errors.invalidSourceConfig"));
       }
 
+      // The milestone flow knows the internal Issue.id (exact match); the
+      // repository search flow only has tracker identity.
+      const issueRefPayload =
+        sourceType === "issue" && selectedIssue
+          ? {
+              ...(seedIssue?.issueId ? { issueId: seedIssue.issueId } : {}),
+              issueKey: selectedIssue.key || selectedIssue.externalKey,
+              ...(selectedIssue.id ? { externalId: selectedIssue.id } : {}),
+              ...(seedIssue?.integrationId
+                ? { integrationId: seedIssue.integrationId }
+                : {}),
+            }
+          : undefined;
+
       // Helper: convert option names → IDs for a single test case
       const convertFieldOptionIds = (
         tc: GeneratedTestCase
@@ -2854,6 +2894,7 @@ export function GenerateTestCasesWizard({
       const templatePayload = {
         id: template?.id,
         name: template?.templateName,
+        excludedFields: excludedFieldNamesFor(template, selectedFieldIds),
         fields: template?.caseFields
           .filter((cf) => selectedFieldIds.has(cf.caseFieldId))
           .sort((a, b) => a.order - b.order)
@@ -2894,6 +2935,7 @@ export function GenerateTestCasesWizard({
           ...(seedIssue?.integrationId
             ? { integrationId: seedIssue.integrationId }
             : {}),
+          ...(issueRefPayload ? { issueRef: issueRefPayload } : {}),
           // outline endpoint accepts-but-ignores includeParameters — kept for
           // uniform wizard plumbing.
           includeParameters,
@@ -3426,8 +3468,11 @@ export function GenerateTestCasesWizard({
         maxOrder = maxOrderData[0].order || 0;
       }
 
-      // Build field mappings from the template for the server action
+      // Scoped to the user's selection: the import writes a value for every
+      // fieldValues key that has a mapping, so leaving a field unmapped is what
+      // keeps a volunteered value from being persisted.
       const fieldMappings = selectedTemplate.caseFields
+        .filter((cf) => selectedFieldIds.has(cf.caseFieldId))
         .filter(
           (cf) =>
             cf.caseField.displayName !== "Steps" &&

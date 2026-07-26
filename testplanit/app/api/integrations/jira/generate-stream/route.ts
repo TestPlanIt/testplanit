@@ -17,7 +17,7 @@ import {
   buildSystemPrompt,
   buildUserPrompt,
   extractStreamedTestCases,
-  fetchHierarchyContext,
+  fetchExistingCasesContext,
   fetchLinkedIssuesContext,
   type GenerationContext,
   type IssueData,
@@ -253,23 +253,26 @@ export async function POST(req: NextRequest) {
                 tokensUsed: 0,
               };
 
-        const hierarchyBudget = Math.max(
+        const caseContextBudget = Math.max(
           0,
           remainingBudget - linkedResult.tokensUsed
         );
-        const hierarchyContext =
-          hierarchyBudget > 0
-            ? await fetchHierarchyContext(
+        const existingCases =
+          caseContextBudget > 0
+            ? await fetchExistingCasesContext(
                 baseDb,
                 projectId,
-                folderId ?? 0,
-                hierarchyBudget
+                {
+                  folderId: folderId ?? 0,
+                  issueRef: { issueKey, externalId: issueId, integrationId },
+                },
+                caseContextBudget
               )
             : [];
 
         const enrichedContext: GenerationContext = {
           ...baseContext,
-          existingTestCases: hierarchyContext,
+          existingTestCases: existingCases,
           linkedIssues: linkedResult.included,
         };
         let userPrompt = buildUserPrompt(

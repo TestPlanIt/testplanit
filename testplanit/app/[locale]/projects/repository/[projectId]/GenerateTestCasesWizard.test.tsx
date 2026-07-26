@@ -93,6 +93,25 @@ describe("GenerateTestCasesWizard — INT-06 plumbing", () => {
     );
   });
 
+  it("threads issueRef into the outline POST body so linked cases become context", () => {
+    const src = readWizard();
+    // Built only for issue sources; the milestone flow adds the internal
+    // Issue.id, which matches exactly even for manual (un-synced) issues.
+    expect(src).toMatch(
+      /const issueRefPayload =\s*\n\s*sourceType === "issue" && selectedIssue/
+    );
+    expect(src).toMatch(
+      /\.\.\.\(seedIssue\?\.issueId \? \{ issueId: seedIssue\.issueId \} : \{\}\)/
+    );
+    const outlineFetchIdx = src.indexOf(
+      '"/api/llm/generate-test-cases/outline"'
+    );
+    expect(outlineFetchIdx).toBeGreaterThan(-1);
+    expect(src.slice(outlineFetchIdx, outlineFetchIdx + 1500)).toMatch(
+      /\.\.\.\(issueRefPayload \? \{ issueRef: issueRefPayload \} : \{\}\)/
+    );
+  });
+
   it("captures parser warnings from parseAndValidateTestCases and resets between generations", () => {
     const src = readWizard();
     // The parser callsite destructures `warnings` alongside `testCases`.
@@ -149,6 +168,50 @@ describe("GenerateTestCasesWizard — case-field eligibility", () => {
     // user lacks permission to edit.
     expect(src).toMatch(
       /const isTemplateFieldVisible = useCallback\([\s\S]*?isRestricted \|\| canEditRestrictedFields/
+    );
+  });
+
+  it("seeds the field selection once per template so deselections survive step changes", () => {
+    const src = readWizard();
+    // The auto-select-all effect re-runs on every `currentStep` change and on
+    // every `templates` identity change. Without the per-template seed guard it
+    // re-checks every field after the user advances past the template step, so
+    // generation silently includes fields the user unselected.
+    expect(src).toMatch(
+      /const seededFieldsTemplateIdRef = useRef<number \| null>\(null\)/
+    );
+    expect(src).toMatch(
+      /seededFieldsTemplateIdRef\.current !== selectedTemplateId\s*\)\s*\{/
+    );
+    // resetWizard must release the seed — it re-selects the same default
+    // template id, which would otherwise leave the selection empty.
+    const resetIdx = src.indexOf("const resetWizard = () => {");
+    expect(resetIdx).toBeGreaterThan(-1);
+    expect(src.slice(resetIdx, resetIdx + 2500)).toMatch(
+      /seededFieldsTemplateIdRef\.current = null/
+    );
+    // The restore path sets selectedFieldIds explicitly, so it must claim the
+    // seed to keep the effect from overwriting it.
+    const restoreIdx = src.indexOf("const restoreTemplateFromResult =");
+    expect(restoreIdx).toBeGreaterThan(-1);
+    expect(src.slice(restoreIdx, restoreIdx + 1500)).toMatch(
+      /seededFieldsTemplateIdRef\.current = resultTemplateId/
+    );
+  });
+
+  it("sends the deselected field names so the prompt can forbid them", () => {
+    const src = readWizard();
+    // Only visible-but-unchecked fields are named — hidden fields must not leak
+    // into the prompt.
+    expect(src).toMatch(
+      /const excludedFieldNamesFor = useCallback\([\s\S]*?\.filter\(isTemplateFieldVisible\)[\s\S]*?!fieldIds\.has\(cf\.caseFieldId\)/
+    );
+    // Both template payloads (expand path and URL-stream path) must carry it.
+    expect(src).toMatch(
+      /excludedFields: excludedFieldNamesFor\(template, selectedFieldIds\)/
+    );
+    expect(src).toMatch(
+      /excludedFields: excludedFieldNamesFor\(template, fieldIds\)/
     );
   });
 
