@@ -29,6 +29,7 @@ async function fetchCaseDetails(caseId: number) {
       template: {
         select: {
           caseFields: {
+            where: { caseField: { isEnabled: true, isDeleted: false } },
             orderBy: { order: "asc" },
             select: {
               caseFieldId: true,

@@ -545,11 +545,16 @@ export function BulkEditModal({
         hasMultipleTemplates: true,
       };
     }
-    // Ensure template and caseFields exist before accessing
+    // Ensure template and caseFields exist before accessing. Disabled fields
+    // are dropped here rather than in the shared fetch-many route, which also
+    // feeds surfaces that need the full template (run creation, the selection
+    // drawer) — bulk edit is a write surface and must not offer them.
     const fields =
       casesData[0].template?.caseFields
         ?.map((tf) => tf.caseField)
-        .filter((cf): cf is NonNullable<typeof cf> => !!cf)
+        .filter(
+          (cf): cf is NonNullable<typeof cf> => !!cf && cf.isEnabled !== false
+        )
         .sort((a, b) => {
           // Sort based on the order defined in TemplateCaseAssignment
           const orderA =

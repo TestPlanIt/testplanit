@@ -231,6 +231,18 @@ const mapFieldToZodType = (field: any, t: (key: any) => string) => {
   }
 };
 
+/**
+ * A disabled CaseField must not reach the edit form — not its schema, defaults,
+ * required-field validation, or inputs. View mode needs no guard: the
+ * `caseFieldValues` query already filters to enabled fields, so a disabled one
+ * reads as empty and the empty-field skip drops it. Edit mode has no such skip,
+ * which is how disabled fields were still drawing inputs.
+ *
+ * Any recorded value survives: the submit path only writes the fields the form
+ * hands it, so one it never rendered is left alone.
+ */
+const isEnabledField = (field: any) => field?.caseField?.isEnabled !== false;
+
 const createFormSchema = (fields: any[], t: (key: any) => string) => {
   const baseSchema = {
     name: z.string().min(2, {
@@ -531,6 +543,7 @@ export function TestCaseDetailsView({
                       id: true,
                       defaultValue: true,
                       displayName: true,
+                      isEnabled: true,
                       isRequired: true,
                       isRestricted: true,
                       type: { select: { type: true } },
@@ -819,7 +832,10 @@ export function TestCaseDetailsView({
   }, [folders]);
 
   const [, setFormSchema] = useState(() =>
-    createFormSchema(testcase?.template?.caseFields || [], t)
+    createFormSchema(
+      (testcase?.template?.caseFields || []).filter(isEnabledField),
+      t
+    )
   );
 
   const { data: workflows } = useClientQueries(schema).workflows.useFindMany({
@@ -974,8 +990,9 @@ export function TestCaseDetailsView({
     const selectedTemplate = templates.find(
       (template) => template.id === selectedTemplateId
     );
-    const caseFieldsForSchema =
-      selectedTemplate?.caseFields || (selectedTemplateId === null ? [] : []);
+    const caseFieldsForSchema = (
+      selectedTemplate?.caseFields || (selectedTemplateId === null ? [] : [])
+    ).filter(isEnabledField);
     const newSchema = createFormSchema(caseFieldsForSchema, t);
     setFormSchema(newSchema);
 
@@ -1220,7 +1237,7 @@ export function TestCaseDetailsView({
     // Validate custom fields
     const template = templates?.find((t) => t.id === selectedTemplateId);
     if (template) {
-      for (const fieldMeta of template.caseFields) {
+      for (const fieldMeta of template.caseFields.filter(isEnabledField)) {
         const fieldIdStr = fieldMeta.caseField.id.toString();
         const value = data[fieldIdStr];
         const fieldType = fieldMeta.caseField.type.type;
@@ -2573,6 +2590,7 @@ export function TestCaseDetailsView({
                               0) === 0
                           : isTiptapEmpty(fieldValue);
                         const isEditableStepsField = isStepsField && canAddEdit;
+                        if (isEditMode && !isEnabledField(field)) return null;
                         if (
                           !isEditMode &&
                           isFieldEmpty &&
