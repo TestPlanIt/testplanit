@@ -3403,6 +3403,7 @@ model Issue {
 
     @@unique([externalId, integrationId])
     @@index([externalId])
+    @@index([externalKey, integrationId])
     @@index([createdById])
     @@index([projectId])
     @@index([integrationId])
