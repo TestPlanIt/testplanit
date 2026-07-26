@@ -14,11 +14,11 @@
     "selectMultiple": "Chọn nhiều mục...",
     "searchUsers": "Tìm kiếm người dùng...",
     "searchGroups": "Tìm kiếm nhóm...",
-    "searchCases": "{count, plural, =0 {Tìm kiếm trường hợp} one {Tìm kiếm trường hợp số} other {Tìm kiếm trường hợp số}}",
+    "searchCases": "{count, plural, =0 {Tìm kiếm trường hợp} one {Tìm kiếm trường hợp #} other {Tìm kiếm trường hợp #}}",
     "searchProjects": "{count, plural, =0 {Tìm kiếm dự án} one {Tìm kiếm # dự án} other {Tìm kiếm # dự án}}",
     "searchTags": "Tìm kiếm thẻ...",
     "searchRuns": "{count, plural, =0 {Chạy thử tìm kiếm} one {Chạy thử tìm kiếm #} other {Chạy thử tìm kiếm #}}",
-    "searchSessions": "{count, plural, =0 {Phiên tìm kiếm} one {Số phiên tìm kiếm} other {Số phiên tìm kiếm}}",
+    "searchSessions": "{count, plural, =0 {Phiên tìm kiếm} one {# phiên tìm kiếm} other {# phiên tìm kiếm}}",
     "searchMilestones": "{count, plural, =0 {Tìm kiếm cột mốc} other {Tìm kiếm # cột mốc}}",
     "search": "Tìm kiếm...",
     "defaultOption": "Tùy chọn mặc định",
@@ -751,7 +751,7 @@
       "noTestCasesSelected": "Không có trường hợp thử nghiệm nào được chọn.",
       "editToSelectTestCases": "Chỉnh sửa Lần chạy thử nghiệm để chọn các trường hợp thử nghiệm.",
       "casesInRun": "{count, plural, =0 {Không có trường hợp kiểm thử nào trong lần chạy thử nghiệm} =1 {1 trường hợp kiểm thử trong lần chạy thử nghiệm} other {# trường hợp kiểm thử trong lần chạy thử nghiệm}}",
-      "casesInRunMultiConfig": "{uniqueCount, plural, =1 {1 Trường hợp duy nhất} other {Số trường hợp duy nhất}} trên {configCount, plural, =1 {1 Cấu hình} other {Số cấu hình}} ({totalCount, number} tổng số trường hợp)",
+      "casesInRunMultiConfig": "{uniqueCount, plural, =1 {1 Trường hợp duy nhất} other {# trường hợp duy nhất}} trên {configCount, plural, =1 {1 Cấu hình} other {# cấu hình}} ({totalCount, number} tổng số trường hợp)",
       "viewTestRunDetails": "Xem chi tiết kết quả chạy thử nghiệm",
       "sortByStatus": "Phân nhóm theo trạng thái",
       "sortByDate": "Sắp xếp theo ngày",
@@ -3969,7 +3969,7 @@
         "mappingDatasetEmptyTitle": "Không có bộ dữ liệu nào được lưu giữ.",
         "mappingDatasetEmptyDescription": "Quá trình phân tích không lưu giữ bất kỳ tập dữ liệu nào để cấu hình. Vui lòng tải lên một bản xuất khác nếu bạn cần thêm dữ liệu.",
         "importProgressTitle": "Tiến độ nhập khẩu",
-        "importProgressDescription": "{count, plural, =0 {Tất cả bản ghi đã được nhập từ các thực thể được theo dõi.} =1 {Còn lại 1 bản ghi từ các thực thể được theo dõi.} other {Số bản ghi còn lại từ các thực thể được theo dõi.}}",
+        "importProgressDescription": "{count, plural, =0 {Tất cả bản ghi đã được nhập từ các thực thể được theo dõi.} =1 {Còn lại 1 bản ghi từ các thực thể được theo dõi.} other {# bản ghi còn lại từ các thực thể được theo dõi.}}",
         "importProgressTotalRemaining": "{count, plural, =0 {Không còn bản ghi nào} =1 {Còn lại 1 bản ghi} other {Còn lại # bản ghi}}",
         "importProgressProcessed": "{processed, number}/{total, number} bản ghi được nhập",
         "importProgressAria": "{percent, number}% nhập khẩu hoàn tất",
@@ -7790,7 +7790,7 @@
       },
       "attempts": {
         "noAttemptsRemaining": "Không còn lượt thử nào nữa. Vui lòng thử lại sau.",
-        "attemptsRemaining": "{count, plural, =1 {1 lần thử} other {Số lần thử còn lại}}"
+        "attemptsRemaining": "{count, plural, =1 {1 lần thử} other {# lần thử còn lại}}"
       }
     },
     "sharedReport": {
@@ -8492,7 +8492,7 @@
     "iterationBulkConfirmDescription": "Mỗi lần lặp được chọn sẽ nhận được một kết quả mới với trạng thái \"{statusName}\".",
     "iterationBulkConfirm": "Đánh dấu {action}",
     "iterationBulkConfirmReplace": "Thay thế bằng {action}",
-    "iterationBulkOverwriteWarning": "{count, plural, =1 {Số lần lặp đã chọn đã có} other {Số lần lặp đã chọn đã có}} kết quả. Một kết quả mới sẽ được ghi lại và kết quả mới nhất sẽ thay thế kết quả hiện tại.",
+    "iterationBulkOverwriteWarning": "{count, plural, =1 {# lần lặp đã chọn đã có} other {# lần lặp đã chọn đã có}} kết quả. Một kết quả mới sẽ được ghi lại và kết quả mới nhất sẽ thay thế kết quả hiện tại.",
     "iterationBulkReasonLabel": "Lý do (tùy chọn)",
     "iterationBulkReasonHelp": "Được ghi lại trên mỗi kết quả.",
     "iterationBulkSuccess": "{count, plural, =1 {# lần lặp} other {# lần lặp}} được đánh dấu {action}",

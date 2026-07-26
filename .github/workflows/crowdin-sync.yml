@@ -40,9 +40,26 @@ jobs:
         working-directory: testplanit
         run: crowdin upload sources
 
+      # Push the repo's locale files back into Crowdin as approved translations
+      # before pre-translating. Hand-corrected strings in messages/*.json are
+      # otherwise invisible to Crowdin, so the next `crowdin download` would
+      # overwrite them with whatever the MT engine produced.
+      - name: Upload corrected translations
+        working-directory: testplanit
+        run: crowdin upload translations --auto-approve-imported
+
+      # --translate-untranslated-only keeps MT off strings that already have a
+      # translation. Without it the engine re-translates approved strings and
+      # re-introduces defects like localizing the ICU `#` count placeholder
+      # ("See # Test Cases" -> "Voir tous les cas de test n°"), which silently
+      # drops the number from the rendered message.
       - name: Pre-translate via machine translation
         working-directory: testplanit
-        run: crowdin pre-translate --method=mt --engine-id=609928
+        run: |
+          crowdin pre-translate \
+            --method=mt \
+            --engine-id=609928 \
+            --translate-untranslated-only
 
       - name: Download translations
         working-directory: testplanit

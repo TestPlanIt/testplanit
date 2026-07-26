@@ -2764,7 +2764,7 @@
     "showDescendants": "Toon alle afstammelingen",
     "addFolder": "Map toevoegen",
     "emptyFolders": "Klik hierboven op de knop Map toevoegen om de eerste map toe te voegen.",
-    "selectedAllCases": "{count, plural, =0 {Alle gevallen geselecteerd} one {Aantal gevallen geselecteerd op alle pagina's} other {Aantal gevallen geselecteerd op alle pagina's}}",
+    "selectedAllCases": "{count, plural, =0 {Alle gevallen geselecteerd} one {# gevallen geselecteerd op alle pagina's} other {# gevallen geselecteerd op alle pagina's}}",
     "deselectedAllCases": "Alle cases op alle pagina's zijn gedeselecteerd.",
     "selectAllTooltip": "Selecteer/deselecteer alle cases op deze pagina",
     "selectAllShiftTooltip": "{count, plural, =0 {Selecteer/deselecteer alle gevallen op alle pagina's} one {Selecteer/deselecteer # gevallen op alle pagina's} other {Selecteer/deselecteer # gevallen op alle pagina's}}",

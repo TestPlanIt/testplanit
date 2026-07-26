@@ -3277,7 +3277,7 @@
         "moreSteps": "... i {count, plural, one {# więcej kroków} other {# więcej kroków}}",
         "templateFields": "Pola szablonu:",
         "moreFields": "... i {count, plural, one {# więcej pól} other {# więcej pól}}",
-        "crawledUrls": "{count, plural, one {Liczba przeszukanych stron} other {Liczba przeszukanych stron}}",
+        "crawledUrls": "{count, plural, one {# przeszukanych stron} other {# przeszukanych stron}}",
         "spaWarning": "Ta strona może wymagać renderowania JavaScript. Wyniki mogą być niekompletne.",
         "filterByPage": "Filtruj według strony",
         "allPages": "Wszystkie strony ({pages, plural, one {# strona} other {# strony}}, {cases, plural, one {# przypadek} other {# przypadki}})"
@@ -8492,7 +8492,7 @@
     "iterationBulkConfirmDescription": "Każda wybrana iteracja otrzyma nowy wynik ze statusem „{statusName}”.",
     "iterationBulkConfirm": "Zaznacz {action}",
     "iterationBulkConfirmReplace": "Zastąp przez {action}",
-    "iterationBulkOverwriteWarning": "{count, plural, =1 {Liczba wybranych iteracji ma już} other {Liczba wybranych iteracji ma już}} wynik. Zostanie zapisany nowy wynik, a najnowszy zastąpi bieżący.",
+    "iterationBulkOverwriteWarning": "{count, plural, =1 {# wybranych iteracji ma już} other {# wybranych iteracji ma już}} wynik. Zostanie zapisany nowy wynik, a najnowszy zastąpi bieżący.",
     "iterationBulkReasonLabel": "Powód (opcjonalnie)",
     "iterationBulkReasonHelp": "Zapisywane przy każdym wyniku.",
     "iterationBulkSuccess": "{count, plural, =1 {# iteracja} other {# iteracje}} oznaczone {action}",
