@@ -40,7 +40,6 @@ import UserWorkGanttChart, {
   type PlotTask,
 } from "./dataVisualizations/UserWorkGanttChart";
 import LoadingSpinner from "./LoadingSpinner";
-// import UserWorkChart from "./dataVisualizations/UserWorkChart"; // Will be replaced
 
 // Updated Helper type for TestRunCases
 type TestCaseWithResults = TestRunCases & {
