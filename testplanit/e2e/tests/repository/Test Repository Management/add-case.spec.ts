@@ -1,5 +1,6 @@
 import { expect, test } from "../../../fixtures";
 import { RepositoryPage } from "../../../page-objects/repository/repository.page";
+import { clickOverflowAction } from "../../../utils/action-overflow";
 
 /**
  * Add Case Tests — Inline Row and Modal
@@ -196,9 +197,11 @@ test.describe("Add Case — Modal", () => {
       await repositoryPage.selectFolder(folderId);
 
       // Open the Add Case modal via the toolbar button
-      const addCaseButton = page.getByTestId("add-case-button");
-      await expect(addCaseButton).toBeEnabled({ timeout: 10000 });
-      await addCaseButton.click();
+      await clickOverflowAction(
+        page,
+        "add-case-button",
+        "repository-actions-menu"
+      );
 
       await expect(dialog).toBeVisible({ timeout: 10000 });
     });
@@ -240,9 +243,11 @@ test.describe("Add Case — Modal", () => {
       await repositoryPage.goto(projectId);
       await repositoryPage.selectFolder(folderId);
 
-      const addCaseButton = page.getByTestId("add-case-button");
-      await expect(addCaseButton).toBeEnabled({ timeout: 10000 });
-      await addCaseButton.click();
+      await clickOverflowAction(
+        page,
+        "add-case-button",
+        "repository-actions-menu"
+      );
 
       await expect(dialog).toBeVisible({ timeout: 10000 });
     });
@@ -282,9 +287,11 @@ test.describe("Add Case — Modal", () => {
       await repositoryPage.goto(projectId);
       await repositoryPage.selectFolder(folderId);
 
-      const addCaseButton = page.getByTestId("add-case-button");
-      await expect(addCaseButton).toBeEnabled({ timeout: 10000 });
-      await addCaseButton.click();
+      await clickOverflowAction(
+        page,
+        "add-case-button",
+        "repository-actions-menu"
+      );
 
       await expect(dialog).toBeVisible({ timeout: 10000 });
     });

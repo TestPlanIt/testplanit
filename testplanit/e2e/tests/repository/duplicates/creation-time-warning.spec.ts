@@ -1,5 +1,6 @@
 import { expect, test } from "../../../fixtures";
 import { RepositoryPage } from "../../../page-objects/repository/repository.page";
+import { clickOverflowAction } from "../../../utils/action-overflow";
 
 /**
  * Creation-Time Duplicate Warning Tests
@@ -65,9 +66,11 @@ test.describe("Creation-Time Duplicate Warning", () => {
 
     await test.step("Open the Add Case dialog", async () => {
       // Click the Add Case button
-      const addCaseButton = page.getByTestId("add-case-button");
-      await expect(addCaseButton).toBeVisible({ timeout: 10000 });
-      await addCaseButton.click();
+      await clickOverflowAction(
+        page,
+        "add-case-button",
+        "repository-actions-menu"
+      );
 
       // Wait for the dialog to open
       await expect(addCaseDialog).toBeVisible({ timeout: 8000 });
@@ -155,9 +158,11 @@ test.describe("Creation-Time Duplicate Warning", () => {
 
     await test.step("Open the Add Case dialog", async () => {
       // Create a new test case
-      const addCaseButton = page.getByTestId("add-case-button");
-      await expect(addCaseButton).toBeVisible({ timeout: 10000 });
-      await addCaseButton.click();
+      await clickOverflowAction(
+        page,
+        "add-case-button",
+        "repository-actions-menu"
+      );
 
       await expect(addCaseDialog).toBeVisible({ timeout: 8000 });
     });
@@ -235,9 +240,11 @@ test.describe("Creation-Time Duplicate Warning", () => {
 
     await test.step("Open the Add Case dialog", async () => {
       // Click the Add Case button
-      const addCaseButton = page.getByTestId("add-case-button");
-      await expect(addCaseButton).toBeVisible({ timeout: 10000 });
-      await addCaseButton.click();
+      await clickOverflowAction(
+        page,
+        "add-case-button",
+        "repository-actions-menu"
+      );
 
       // Wait for the dialog to open
       await expect(addCaseDialog).toBeVisible({ timeout: 8000 });

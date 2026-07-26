@@ -1,5 +1,6 @@
 import { expect, test } from "../../fixtures";
 import { RepositoryPage } from "../../page-objects/repository/repository.page";
+import { clickOverflowAction } from "../../utils/action-overflow";
 
 /**
  * Add Case — Inline Parameters & Dataset
@@ -171,9 +172,11 @@ test.describe("Add Case — Inline Parameters & Dataset", () => {
       await repositoryPage.goto(projectId);
       await repositoryPage.selectFolder(folderId);
 
-      const addCaseButton = page.getByTestId("add-case-button");
-      await expect(addCaseButton).toBeEnabled({ timeout: 10000 });
-      await addCaseButton.click();
+      await clickOverflowAction(
+        page,
+        "add-case-button",
+        "repository-actions-menu"
+      );
 
       await expect(dialog).toBeVisible({ timeout: 10000 });
     });
@@ -214,7 +217,11 @@ test.describe("Add Case — Inline Parameters & Dataset", () => {
       await repositoryPage.goto(projectId);
       await repositoryPage.selectFolder(folderId);
 
-      await page.getByTestId("add-case-button").click();
+      await clickOverflowAction(
+        page,
+        "add-case-button",
+        "repository-actions-menu"
+      );
       await expect(dialog).toBeVisible({ timeout: 10000 });
 
       await dialog.getByTestId("case-name-input").fill(caseName);
@@ -299,7 +306,11 @@ test.describe("Add Case — Inline Parameters & Dataset", () => {
       await repositoryPage.goto(projectId);
       await repositoryPage.selectFolder(folderId);
 
-      await page.getByTestId("add-case-button").click();
+      await clickOverflowAction(
+        page,
+        "add-case-button",
+        "repository-actions-menu"
+      );
       await expect(dialog).toBeVisible({ timeout: 10000 });
       await dialog.getByTestId("case-name-input").fill(caseName);
     });
@@ -365,7 +376,11 @@ test.describe("Add Case — Inline Parameters & Dataset", () => {
       await repositoryPage.goto(projectId);
       await repositoryPage.selectFolder(folderId);
 
-      await page.getByTestId("add-case-button").click();
+      await clickOverflowAction(
+        page,
+        "add-case-button",
+        "repository-actions-menu"
+      );
       await expect(dialog).toBeVisible({ timeout: 10000 });
 
       // Default Template has Steps → button is visible. Author a parameter.
@@ -462,7 +477,11 @@ test.describe("Add Case — Inline Parameters & Dataset", () => {
       await repositoryPage.goto(projectId);
       await repositoryPage.selectFolder(folderId);
 
-      await page.getByTestId("add-case-button").click();
+      await clickOverflowAction(
+        page,
+        "add-case-button",
+        "repository-actions-menu"
+      );
       await expect(dialog).toBeVisible({ timeout: 10000 });
 
       await expect(configureBtn).toBeVisible({ timeout: 10000 });

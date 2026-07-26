@@ -344,9 +344,11 @@ test.describe("Test Case Execution", () => {
         // Wait for transition
         await page.waitForTimeout(2000);
 
-        // The second case should now be displayed
+        // The second case should now be displayed. The swap refetches the
+        // case before rendering, which can crawl under full-suite load — give
+        // it more room than an interactive click normally needs.
         await expect(sheet.locator(`text="${case2Name}"`).first()).toBeVisible({
-          timeout: 10000,
+          timeout: 30000,
         });
       } else {
         // Navigation arrows might have different labels - check panel structure

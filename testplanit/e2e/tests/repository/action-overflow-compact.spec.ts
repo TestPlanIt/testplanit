@@ -35,12 +35,17 @@ test.describe("Repository action bars — compact mode", () => {
       await page.goto(`/en-US/projects/repository/${projectId}`);
       await page.waitForLoadState("networkidle");
 
-      const folderNode = page.getByTestId(`folder-node-${folderId}`);
+      const folderNode = page.getByTestId(`folder-node-${folderId}`).first();
       await expect(folderNode).toBeVisible({ timeout: 15000 });
-      await folderNode.click();
-      await expect(
-        page.locator(`[data-testid="case-checkbox-${caseId}"]`)
-      ).toBeVisible({ timeout: 15000 });
+
+      // The page's async folder auto-select can override an explicit click
+      // that lands first — re-click until the case row sticks.
+      await expect(async () => {
+        await folderNode.click();
+        await expect(
+          page.locator(`[data-testid="case-checkbox-${caseId}"]`)
+        ).toBeVisible({ timeout: 3000 });
+      }).toPass({ timeout: 30_000 });
     });
 
     await test.step("Both bars render kebab triggers instead of buttons", async () => {

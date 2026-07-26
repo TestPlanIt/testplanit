@@ -17,10 +17,12 @@ import { expect, Locator, Page } from "@playwright/test";
  *  - "cases-actions-menu"       — cases toolbar
  *    (bulk-edit-button, auto-tag-cases-button, create-test-run-button,
  *     copy-move-button, export-cases-button, quickscript-cases-button)
+ *  - "case-actions-menu"        — test-case details header
+ *    (edit-test-case-button, …)
  */
 
 export type ActionOverflowMenuId =
-  "repository-actions-menu" | "cases-actions-menu";
+  "repository-actions-menu" | "cases-actions-menu" | "case-actions-menu";
 
 /**
  * Resolve an ActionOverflow action to a clickable, visible locator regardless

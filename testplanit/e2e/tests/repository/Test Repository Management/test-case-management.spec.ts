@@ -1,5 +1,6 @@
 import { expect, test } from "../../../fixtures";
 import { RepositoryPage } from "../../../page-objects/repository/repository.page";
+import { clickOverflowAction } from "../../../utils/action-overflow";
 
 /**
  * Test Case Management Tests
@@ -127,12 +128,11 @@ test.describe("Test Case Management", () => {
 
     await test.step("Click Add Case and verify the modal opens", async () => {
       // Click the Add Case button
-      const addCaseButton = page
-        .getByTestId("add-case-button")
-        .or(page.locator('button:has-text("Add Case")'))
-        .first();
-      await expect(addCaseButton).toBeVisible({ timeout: 5000 });
-      await addCaseButton.click();
+      await clickOverflowAction(
+        page,
+        "add-case-button",
+        "repository-actions-menu"
+      );
 
       // Verify modal opens with name input (it's a textarea with data-testid="case-name-input")
       nameInput = page.getByTestId("case-name-input");

@@ -1,5 +1,9 @@
 import { expect, test } from "../../../fixtures";
 import { RepositoryPage } from "../../../page-objects/repository/repository.page";
+import {
+  clickOverflowAction,
+  expectOverflowActionAvailable,
+} from "../../../utils/action-overflow";
 
 /**
  * Bulk Operations Tests
@@ -70,11 +74,7 @@ test.describe("Bulk Operations", () => {
 
     await test.step("Open the bulk edit modal", async () => {
       // Open bulk edit modal
-      const bulkEditButton = page
-        .locator('[data-testid="bulk-edit-button"]')
-        .first();
-      await expect(bulkEditButton).toBeVisible({ timeout: 5000 });
-      await bulkEditButton.click();
+      await clickOverflowAction(page, "bulk-edit-button", "cases-actions-menu");
     });
 
     await test.step("Verify modal opens and shows selected count", async () => {
@@ -131,11 +131,7 @@ test.describe("Bulk Operations", () => {
 
     await test.step("Open the bulk edit modal", async () => {
       // Open bulk edit modal
-      const bulkEditButton = page
-        .locator('[data-testid="bulk-edit-button"]')
-        .first();
-      await expect(bulkEditButton).toBeVisible({ timeout: 5000 });
-      await bulkEditButton.click();
+      await clickOverflowAction(page, "bulk-edit-button", "cases-actions-menu");
 
       // Wait for modal to open
       bulkEditModal = page.getByRole("dialog", { name: /Bulk Edit/i });
@@ -218,11 +214,7 @@ test.describe("Bulk Operations", () => {
 
     await test.step("Open the bulk edit modal", async () => {
       // Open bulk edit modal (delete is inside the modal)
-      const bulkEditButton = page
-        .locator('[data-testid="bulk-edit-button"]')
-        .first();
-      await expect(bulkEditButton).toBeVisible({ timeout: 5000 });
-      await bulkEditButton.click();
+      await clickOverflowAction(page, "bulk-edit-button", "cases-actions-menu");
 
       // Wait for modal to open - use a more specific selector for the bulk edit modal
       bulkEditModal = page.getByRole("dialog", { name: /Bulk Edit/i });
@@ -319,11 +311,7 @@ test.describe("Bulk Operations", () => {
 
     await test.step("Open the bulk edit modal", async () => {
       // Open bulk edit modal
-      const bulkEditButton = page
-        .locator('[data-testid="bulk-edit-button"]')
-        .first();
-      await expect(bulkEditButton).toBeVisible({ timeout: 5000 });
-      await bulkEditButton.click();
+      await clickOverflowAction(page, "bulk-edit-button", "cases-actions-menu");
 
       // Wait for modal to open
       bulkEditModal = page.getByRole("dialog", { name: /Bulk Edit/i });
@@ -396,11 +384,7 @@ test.describe("Bulk Operations", () => {
 
     await test.step("Open the bulk edit modal", async () => {
       // Open bulk edit modal
-      const bulkEditButton = page
-        .locator('[data-testid="bulk-edit-button"]')
-        .first();
-      await expect(bulkEditButton).toBeVisible({ timeout: 5000 });
-      await bulkEditButton.click();
+      await clickOverflowAction(page, "bulk-edit-button", "cases-actions-menu");
 
       // Wait for modal to open
       bulkEditModal = page.getByRole("dialog", { name: /Bulk Edit/i });
@@ -612,17 +596,11 @@ test.describe("Bulk Operations", () => {
       }).toPass({ timeout: 10000 });
 
       // Verify bulk action button appears (indicates items are selected)
-      // Either bulk-edit-button or create-test-run-button should appear when items are selected
-      await expect(async () => {
-        const bulkEditButton = page.locator('[data-testid="bulk-edit-button"]');
-        const createRunButton = page.locator(
-          '[data-testid="create-test-run-button"]'
-        );
-        const eitherButtonVisible =
-          (await bulkEditButton.isVisible()) ||
-          (await createRunButton.isVisible());
-        expect(eitherButtonVisible).toBe(true);
-      }).toPass({ timeout: 10000 });
+      await expectOverflowActionAvailable(
+        page,
+        "bulk-edit-button",
+        "cases-actions-menu"
+      );
     });
   });
 });

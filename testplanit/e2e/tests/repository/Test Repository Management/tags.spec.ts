@@ -1,5 +1,6 @@
 import { expect, test } from "../../../fixtures";
 import { RepositoryPage } from "../../../page-objects/repository/repository.page";
+import { clickOverflowAction } from "../../../utils/action-overflow";
 
 /**
  * Tags Tests
@@ -584,13 +585,7 @@ test.describe("Tags", () => {
 
     await test.step("Open the bulk edit modal and enable the Tags field", async () => {
       // Wait for and click bulk edit button
-      const bulkEditButton = page
-        .locator('[data-testid="bulk-edit-button"]')
-        .first();
-      await expect(async () => {
-        await expect(bulkEditButton).toBeVisible({ timeout: 3000 });
-      }).toPass({ timeout: 10000 });
-      await bulkEditButton.click();
+      await clickOverflowAction(page, "bulk-edit-button", "cases-actions-menu");
 
       // Wait for the bulk edit modal to open
       const bulkEditModal = page.locator('[role="dialog"]');
@@ -702,11 +697,7 @@ test.describe("Tags", () => {
 
     await test.step("Open the bulk edit modal and enable the Tags field", async () => {
       // Click bulk edit button
-      const bulkEditButton = page
-        .locator('[data-testid="bulk-edit-button"]')
-        .first();
-      await expect(bulkEditButton).toBeVisible({ timeout: 5000 });
-      await bulkEditButton.click();
+      await clickOverflowAction(page, "bulk-edit-button", "cases-actions-menu");
 
       // Wait for the bulk edit modal
       const bulkEditModal = page.locator('[role="dialog"]');

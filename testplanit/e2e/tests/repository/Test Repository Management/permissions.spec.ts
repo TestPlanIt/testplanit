@@ -1,5 +1,6 @@
 import { expect, test } from "../../../fixtures";
 import { RepositoryPage } from "../../../page-objects/repository/repository.page";
+import { expectOverflowActionAvailable } from "../../../utils/action-overflow";
 
 /**
  * Permissions Tests
@@ -55,12 +56,11 @@ test.describe("Permissions", () => {
 
     await test.step("Verify the Add Case button is visible", async () => {
       // Admin user should see the Add Case button
-      const addCaseButton = page
-        .locator(
-          '[data-testid="add-case-button"], button:has-text("Add Test Case"), button:has-text("New Case")'
-        )
-        .first();
-      await expect(addCaseButton).toBeVisible({ timeout: 10000 });
+      await expectOverflowActionAvailable(
+        page,
+        "add-case-button",
+        "repository-actions-menu"
+      );
     });
   });
 
@@ -126,10 +126,11 @@ test.describe("Permissions", () => {
 
     await test.step("Verify the Bulk Edit button is visible", async () => {
       // Admin user should see the Bulk Edit button when items are selected
-      const bulkEditButton = page
-        .locator('[data-testid="bulk-edit-button"]')
-        .first();
-      await expect(bulkEditButton).toBeVisible({ timeout: 5000 });
+      await expectOverflowActionAvailable(
+        page,
+        "bulk-edit-button",
+        "cases-actions-menu"
+      );
     });
   });
 

@@ -1,5 +1,6 @@
 import { expect, test } from "../../../fixtures";
 import { RepositoryPage } from "../../../page-objects/repository/repository.page";
+import { clickOverflowAction } from "../../../utils/action-overflow";
 
 /**
  * Markdown Export & Import Tests
@@ -154,12 +155,11 @@ test.describe("Markdown Export & Import", () => {
     });
 
     await test.step("Open export modal", async () => {
-      const exportButton = page
-        .locator('[data-testid="export-cases-button"]')
-        .first();
-      await expect(exportButton).toBeVisible({ timeout: 10000 });
-      await expect(exportButton).toBeEnabled({ timeout: 5000 });
-      await exportButton.click();
+      await clickOverflowAction(
+        page,
+        "export-cases-button",
+        "cases-actions-menu"
+      );
 
       await expect(exportDialog.first()).toBeVisible({ timeout: 5000 });
     });
@@ -292,11 +292,11 @@ test.describe("Markdown Export & Import", () => {
     });
 
     await test.step("Open export modal", async () => {
-      const exportButton = page
-        .locator('[data-testid="export-cases-button"]')
-        .first();
-      await expect(exportButton).toBeEnabled({ timeout: 5000 });
-      await exportButton.click();
+      await clickOverflowAction(
+        page,
+        "export-cases-button",
+        "cases-actions-menu"
+      );
 
       await expect(exportDialog.first()).toBeVisible({ timeout: 5000 });
     });
@@ -392,11 +392,11 @@ test.describe("Markdown Export & Import", () => {
 
     await test.step("Open export modal and export with default JSON format", async () => {
       // Open export modal - JSON is the default Text Long format
-      const exportButton = page
-        .locator('[data-testid="export-cases-button"]')
-        .first();
-      await expect(exportButton).toBeEnabled({ timeout: 5000 });
-      await exportButton.click();
+      await clickOverflowAction(
+        page,
+        "export-cases-button",
+        "cases-actions-menu"
+      );
 
       await expect(exportDialog.first()).toBeVisible({ timeout: 5000 });
 
@@ -834,11 +834,11 @@ test.describe("Markdown Export & Import", () => {
     });
 
     await test.step("Export source folder as Markdown CSV", async () => {
-      const exportButton = page
-        .locator('[data-testid="export-cases-button"]')
-        .first();
-      await expect(exportButton).toBeEnabled({ timeout: 5000 });
-      await exportButton.click();
+      await clickOverflowAction(
+        page,
+        "export-cases-button",
+        "cases-actions-menu"
+      );
 
       await expect(exportDialog.first()).toBeVisible({ timeout: 5000 });
 
