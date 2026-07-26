@@ -33,6 +33,11 @@ import { schema } from "~/zenstack/schema";
 import type { TxClient } from "~/lib/zenstack";
 import { injectAuditGuc } from "~/lib/audit/gucContext";
 import { auditTxStore } from "~/lib/audit/auditTxStore";
+import { getAuditContext } from "~/lib/auditContext";
+import {
+  announceDeletionCancelledReviews,
+  cancelReviewsForDeletedEntities,
+} from "~/lib/services/reviewCancellation";
 import { WorkflowType } from "~/zenstack/models";
 
 import { syncRepositoryCaseToElasticsearch } from "~/services/repositoryCaseSync";
@@ -136,6 +141,55 @@ const BEFORE_IMAGE_MODELS = new Set<string>([
   "AppConfig",
   "SsoProvider",
 ]);
+
+/** Soft-deletable models mapped to the `ReviewRequest.entityType` discriminator. */
+const REVIEWABLE_ENTITY_TYPE = {
+  RepositoryCases: "CASE",
+  TestRuns: "RUN",
+  Sessions: "SESSION",
+} as const;
+
+/**
+ * Cancel the review requests a soft-delete leaves in flight. Fires on the
+ * false → true `isDeleted` edge only, so a re-save can't re-cancel or
+ * re-notify. Names come off the before-image for the notification copy.
+ */
+async function cancelReviewsForSoftDeleted(
+  tx: TxClient,
+  model: keyof typeof REVIEWABLE_ENTITY_TYPE,
+  before: any[],
+  after: any[]
+): Promise<void> {
+  const names = new Map<number, string>();
+  for (let i = 0; i < after.length; i++) {
+    const row = after[i];
+    const old = before[i] ?? null;
+    if (!row?.id) continue;
+    if (row.isDeleted !== true || old?.isDeleted !== false) continue;
+    names.set(row.id, old.name ?? row.name ?? "");
+  }
+  if (names.size === 0) return;
+
+  const cancelled = await cancelReviewsForDeletedEntities(
+    tx,
+    REVIEWABLE_ENTITY_TYPE[model],
+    [...names.keys()]
+  );
+  if (cancelled.length === 0) return;
+
+  // Snapshot the actor before detaching — the AsyncLocalStorage frame may not
+  // still be current when the promise runs.
+  const ctx = getAuditContext();
+  void announceDeletionCancelledReviews(cancelled, names, {
+    userId: ctx?.userId ?? null,
+    userName: ctx?.userName ?? null,
+  }).catch((error) =>
+    console.error(
+      `Failed to announce reviews cancelled by ${model} soft-delete:`,
+      error
+    )
+  );
+}
 
 function logEsError(kind: string, id: unknown) {
   return (error: unknown) =>
@@ -249,6 +303,12 @@ export const sideEffectsPlugin = definePlugin(schema, {
               }
             }
           }
+          await cancelReviewsForSoftDeleted(
+            tx,
+            "RepositoryCases",
+            before,
+            after
+          );
           break;
         }
 
@@ -312,6 +372,7 @@ export const sideEffectsPlugin = definePlugin(schema, {
               }
             }
           }
+          await cancelReviewsForSoftDeleted(tx, "TestRuns", before, after);
           break;
         }
 
@@ -343,6 +404,7 @@ export const sideEffectsPlugin = definePlugin(schema, {
               else await emitSessionCreated(row, tx);
             }
           }
+          await cancelReviewsForSoftDeleted(tx, "Sessions", before, after);
           break;
         }
 
