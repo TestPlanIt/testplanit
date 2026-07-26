@@ -108,9 +108,15 @@ jobs:
         run: pnpm build
 
       - name: Start app server
+        # curl-based wait: wait-on is not a dependency of this workspace.
         run: |
           pnpm start --port 3002 &
-          pnpm exec wait-on -t 120000 http://localhost:3002
+          for i in $(seq 1 60); do
+            curl -sf -o /dev/null http://localhost:3002 && exit 0
+            sleep 2
+          done
+          echo "Server did not become ready on :3002" >&2
+          exit 1
 
       # globalSetup reseeds the DB, logs in (storageState), and spawns workers;
       # the scan then seeds fixture data and runs axe across the smoke routes,

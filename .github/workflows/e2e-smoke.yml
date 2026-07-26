@@ -112,15 +112,23 @@ jobs:
       - name: Production build
         run: pnpm build
 
+      # Seed BEFORE the server starts: the app installs its audit triggers at
+      # boot and needs the schema to exist.
+      - name: Seed the E2E database
+        run: pnpm exec tsx e2e/setup-db.ts
+
       # playwright.config.ts sets `webServer: undefined` on CI and expects an
-      # externally started server (same contract as a11y-smoke.yml).
+      # externally started server. curl-based wait: wait-on is not a
+      # dependency of this workspace.
       - name: Start app server
         run: |
           pnpm start --port 3002 &
-          pnpm exec wait-on -t 120000 http://localhost:3002
-
-      - name: Seed the E2E database
-        run: pnpm exec tsx e2e/setup-db.ts
+          for i in $(seq 1 60); do
+            curl -sf -o /dev/null http://localhost:3002 && exit 0
+            sleep 2
+          done
+          echo "Server did not become ready on :3002" >&2
+          exit 1
 
       - name: Run E2E smoke subset
         run: >
