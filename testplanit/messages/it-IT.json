@@ -1274,7 +1274,7 @@
       "seeAllTestCases": "{count, plural, =1 {Vedi # Caso di prova} other {Vedi tutti i # Casi di prova}}",
       "latestTestCases": "Ultimi casi di prova",
       "createdOn": "Creato il",
-      "seeAllTags": "Vedi tutti i tag",
+      "seeAllTagsCount": "{count, plural, =1 {Vedi # Tag} other {Vedi tutti i # Tag}}",
       "seeAllActiveSessions": "{count, plural, =1 {Vedi # Sessione attiva} other {Vedi tutte le # Sessioni attive}}",
       "latestSessions": "Ultime sessioni",
       "activeTestRuns": "Esecuzioni di test attive",

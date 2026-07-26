@@ -1,11 +1,9 @@
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import LoadingSpinner from "@/components/LoadingSpinner";
-import { LinkIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import React, { useCallback } from "react";
 import { BubbleChart } from "~/components/dataVisualizations/BubbleChart";
-import { Link, useRouter } from "~/lib/navigation";
+import { useRouter } from "~/lib/navigation";
 
 interface TagsSectionProps {
   projectId: number;
@@ -22,7 +20,6 @@ type TagWithCounts = {
 };
 
 const TagsSection: React.FC<TagsSectionProps> = ({ projectId }) => {
-  const t = useTranslations();
   const router = useRouter();
   // const currentLocale = useLocale(); // Removed as per user's previous change, assuming router handles it
 
@@ -146,12 +143,6 @@ const TagsSection: React.FC<TagsSectionProps> = ({ projectId }) => {
 
   return (
     <div className="flex flex-col h-full">
-      <p className="text-sm text-muted-foreground mb-4">
-        <Link href={`/projects/tags/${projectId}`} className="group">
-          {t("projects.overview.seeAllTags")}
-          <LinkIcon className="w-4 h-4 inline ms-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
-        </Link>
-      </p>
       <div className="flex-1 min-h-[300px]">
         <BubbleChart
           tags={filteredTags}

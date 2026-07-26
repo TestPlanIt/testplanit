@@ -47,8 +47,8 @@ const MilestonesSection: React.FC<MilestonesSectionProps> = ({ projectId }) => {
     return (
       <div className="h-full flex flex-col border rounded-lg bg-card text-card-foreground shadow-sm">
         <div className="p-6 pb-4 border-b">
-          <SectionHeader className="flex items-center gap-2">
-            <Milestone className="h-6 w-6 shrink-0" />
+          <SectionHeader className="flex items-center gap-2 text-lg md:text-lg">
+            <Milestone className="h-5 w-5 shrink-0" />
             <CardTitle>{t("projects.overview.currentMilestones")}</CardTitle>
           </SectionHeader>
         </div>
@@ -61,24 +61,23 @@ const MilestonesSection: React.FC<MilestonesSectionProps> = ({ projectId }) => {
 
   return (
     <div className="h-full flex flex-col border rounded-lg bg-card text-card-foreground shadow-sm">
-      <div className="p-6 pb-4 border-b">
-        <SectionHeader className="flex items-center gap-2">
-          <Milestone className="h-6 w-6 shrink-0" />
+      {/* Wraps to its own line — left-justified under the title — when narrow. */}
+      <div className="p-6 pb-0 border-b flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+        <SectionHeader className="flex items-center gap-2 text-lg md:text-lg">
+          <Milestone className="h-5 w-5 shrink-0" />
           <CardTitle>{t("projects.overview.currentMilestones")}</CardTitle>
         </SectionHeader>
         {milestones?.length ? (
-          <p className="text-sm text-muted-foreground mt-1.5">
-            <Link
-              className="group"
-              scroll={false}
-              href={`/projects/milestones/${projectId}`}
-            >
-              {t("projects.overview.seeAllMilestones", {
-                count: milestonesCountResult?.length ?? 0,
-              })}
-              <LinkIcon className="w-4 h-4 inline ms-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
-            </Link>
-          </p>
+          <Link
+            className="group text-sm text-muted-foreground"
+            scroll={false}
+            href={`/projects/milestones/${projectId}`}
+          >
+            {t("projects.overview.seeAllMilestones", {
+              count: milestonesCountResult?.length ?? 0,
+            })}
+            <LinkIcon className="w-4 h-4 inline ms-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+          </Link>
         ) : null}
       </div>
       <div className="p-6 flex-1 overflow-auto">

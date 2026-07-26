@@ -1274,7 +1274,7 @@
       "seeAllTestCases": "{count, plural, =1 {Zie # Test Case} other {Zie alle # Test Cases}}",
       "latestTestCases": "Laatste testgevallen",
       "createdOn": "Gemaakt op",
-      "seeAllTags": "Bekijk alle tags",
+      "seeAllTagsCount": "{count, plural, =1 {Zie # Tag} other {Zie alle # Tags}}",
       "seeAllActiveSessions": "{count, plural, =1 {Zie # Actieve sessie} other {Zie alle # Actieve sessies}}",
       "latestSessions": "Laatste sessies",
       "activeTestRuns": "Actieve testruns",

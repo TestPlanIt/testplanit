@@ -4,6 +4,7 @@ import * as d3 from "d3";
 import { useLocale, useTranslations } from "next-intl";
 import React, { useEffect, useRef } from "react";
 import useResponsiveSVG from "~/hooks/useResponsiveSVG"; // Assuming this hook is available and works as in SummarySunburstChart
+import { cn } from "~/utils";
 
 // Define the structure for a sunburst chart node
 export interface SunburstNode {
@@ -29,11 +30,13 @@ interface RepositoryCaseAggregate {
 
 interface ProjectOverviewSunburstChartProps {
   data: RepositoryCaseAggregate[];
+  /** Container sizing override — pass `h-full` to fill a zoom dialog. */
+  className?: string;
 }
 
 const ProjectOverviewSunburstChart: React.FC<
   ProjectOverviewSunburstChartProps
-> = ({ data }) => {
+> = ({ data, className }) => {
   const t = useTranslations();
   const locale = useLocale();
   const svgRef = useRef<SVGSVGElement | null>(null);
@@ -133,6 +136,9 @@ const ProjectOverviewSunburstChart: React.FC<
 
     const radius = Math.min(width, height) / 2 - 10;
     const holeRadius = radius * 0.3; // Define a 10% hole in the center
+    // Segment labels track the radius so they scale up with the chart when it
+    // is zoomed into a dialog; the inline chart stays at the 10px floor.
+    const labelFontSize = Math.max(10, Math.min(18, radius * 0.075));
 
     const d3ColorScale = d3.scaleOrdinal(["#1f77b4", "#ff7f0e"]); // Colors for Automated/Not Automated
 
@@ -265,7 +271,7 @@ const ProjectOverviewSunburstChart: React.FC<
       })
       .attr("dy", "0.35em")
       .attr("fill", "currentColor")
-      .style("font-size", "10px")
+      .style("font-size", `${labelFontSize}px`)
       .attr("text-anchor", "middle")
       .text((d) =>
         d.data.name.length > 15
@@ -276,7 +282,7 @@ const ProjectOverviewSunburstChart: React.FC<
   }, [data, width, height, t, locale]); // Removed transformDataForSunburst from dependency array
 
   return (
-    <div ref={containerRef} className="w-full h-64 relative">
+    <div ref={containerRef} className={cn("w-full h-64 relative", className)}>
       {" "}
       {/* Ensure container has dimensions */}
       <svg ref={svgRef} width={width} height={height}></svg>

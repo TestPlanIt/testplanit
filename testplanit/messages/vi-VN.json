@@ -1274,7 +1274,7 @@
       "seeAllTestCases": "{count, plural, =1 {Xem trường hợp thử nghiệm #} other {Xem tất cả các trường hợp thử nghiệm #}}",
       "latestTestCases": "Các trường hợp thử nghiệm mới nhất",
       "createdOn": "Được tạo vào ngày",
-      "seeAllTags": "Xem tất cả thẻ",
+      "seeAllTagsCount": "{count, plural, =1 {Xem # Thẻ} other {Xem tất cả # Thẻ}}",
       "seeAllActiveSessions": "{count, plural, =1 {Xem # Phiên đang hoạt động} other {Xem tất cả # Phiên đang hoạt động}}",
       "latestSessions": "Các phiên gần đây nhất",
       "activeTestRuns": "Các đợt chạy thử nghiệm đang hoạt động",

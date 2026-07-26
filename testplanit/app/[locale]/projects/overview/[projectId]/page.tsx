@@ -25,14 +25,18 @@ import { PageTitle, SectionHeader } from "@/components/ui/typography";
 import {
   ChevronLeft,
   Compass,
+  LinkIcon,
   ListTree,
   PlayCircle,
   TagsIcon,
+  type LucideIcon,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import React, { use, useRef, useState } from "react";
+import React, { use, useEffect, useRef, useState } from "react";
 import { PanelImperativeHandle } from "react-resizable-panels";
 import { useRequireAuth } from "~/hooks/useRequireAuth";
+import { Link } from "~/lib/navigation";
+import { cn } from "~/utils";
 import MilestonesSection from "./MilestonesSection";
 import ProjectHeader from "./ProjectHeader";
 import RepositoryCasesSection from "./RepositoryCasesSection";
@@ -45,6 +49,61 @@ interface ProjectOverviewProps {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
+/** Open sections persist here so the accordion survives a reload. */
+const OPEN_SECTIONS_STORAGE_KEY = "tpi.projectOverview.openSections";
+
+const DEFAULT_OPEN_SECTIONS = [
+  "repository-cases",
+  "test-runs",
+  "sessions",
+  "tags",
+];
+
+interface OverviewSectionProps {
+  value: string;
+  icon: LucideIcon;
+  title: string;
+  /** Right-justified "see all" link rendered on the header row. */
+  seeAllHref?: string;
+  seeAllLabel?: string;
+  contentClassName?: string;
+  children: React.ReactNode;
+}
+
+const OverviewSection: React.FC<OverviewSectionProps> = ({
+  value,
+  icon: Icon,
+  title,
+  seeAllHref,
+  seeAllLabel,
+  contentClassName,
+  children,
+}) => (
+  <AccordionItem
+    value={value}
+    className="border rounded-lg bg-card text-card-foreground shadow-sm"
+  >
+    {/* Wraps to its own line — left-justified under the title — when narrow. */}
+    <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 px-6 py-4 bg-foreground/5 transition-colors hover:bg-foreground/10">
+      <AccordionTrigger className="flex-none gap-2 p-0 bg-transparent hover:bg-transparent hover:no-underline cursor-pointer">
+        <SectionHeader className="flex items-center gap-2 text-lg md:text-lg">
+          <Icon className="h-5 w-5 shrink-0" />
+          <CardTitle>{title}</CardTitle>
+        </SectionHeader>
+      </AccordionTrigger>
+      {seeAllHref && seeAllLabel ? (
+        <Link className="group text-sm text-muted-foreground" href={seeAllHref}>
+          {seeAllLabel}
+          <LinkIcon className="w-4 h-4 inline ms-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+        </Link>
+      ) : null}
+    </div>
+    <AccordionContent className={cn("px-6 pb-6", contentClassName)}>
+      {children}
+    </AccordionContent>
+  </AccordionItem>
+);
+
 const ProjectOverview: React.FC<ProjectOverviewProps> = ({ params }) => {
   const { projectId } = use(params);
   const { session, isLoading, isAuthenticated } = useRequireAuth();
@@ -53,8 +112,40 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({ params }) => {
   const [isLeftCollapsed, setIsLeftCollapsed] = useState<boolean>(false);
   const [isRightCollapsed, setIsRightCollapsed] = useState<boolean>(false);
   const [isTransitioning, setIsTransitioning] = useState<boolean>(false);
+  const [openSections, setOpenSections] = useState<string[]>(
+    DEFAULT_OPEN_SECTIONS
+  );
   const leftPanelRef = useRef<PanelImperativeHandle>(null);
   const rightPanelRef = useRef<PanelImperativeHandle>(null);
+
+  // Read after mount (not during render) so server and first client render agree.
+  useEffect(() => {
+    try {
+      const stored = window.localStorage.getItem(OPEN_SECTIONS_STORAGE_KEY);
+      if (!stored) return;
+
+      const parsed: unknown = JSON.parse(stored);
+      if (Array.isArray(parsed)) {
+        setOpenSections(
+          parsed.filter((v): v is string => typeof v === "string")
+        );
+      }
+    } catch {
+      // localStorage unavailable or malformed — keep the defaults.
+    }
+  }, []);
+
+  const handleOpenSectionsChange = (values: string[]) => {
+    setOpenSections(values);
+    try {
+      window.localStorage.setItem(
+        OPEN_SECTIONS_STORAGE_KEY,
+        JSON.stringify(values)
+      );
+    } catch {
+      // Persistence is best-effort.
+    }
+  };
 
   const toggleLeftCollapse = () => {
     setIsTransitioning(true);
@@ -93,6 +184,71 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({ params }) => {
     {
       enabled: isAuthenticated,
     }
+  );
+
+  const { data: repositoryCasesCount } = useClientQueries(
+    schema
+  ).repositoryCases.useCount(
+    {
+      where: {
+        projectId: parseInt(projectId),
+        isDeleted: false,
+        isArchived: false,
+      },
+    },
+    { enabled: isAuthenticated }
+  );
+
+  const { data: testRunsCount } = useClientQueries(schema).testRuns.useCount(
+    {
+      where: {
+        projectId: parseInt(projectId),
+        isDeleted: false,
+        isCompleted: false,
+      },
+    },
+    { enabled: isAuthenticated }
+  );
+
+  const { data: sessionsCount } = useClientQueries(schema).sessions.useCount(
+    {
+      where: {
+        projectId: parseInt(projectId),
+        isDeleted: false,
+        isCompleted: false,
+      },
+    },
+    { enabled: isAuthenticated }
+  );
+
+  // Scoped the same way the project tags page scopes its list, so the count
+  // here matches what that page shows.
+  const { data: tagsCount } = useClientQueries(schema).tags.useCount(
+    {
+      where: {
+        isDeleted: false,
+        OR: [
+          {
+            caseTags: {
+              some: {
+                case: { projectId: parseInt(projectId), isDeleted: false },
+              },
+            },
+          },
+          {
+            testRuns: {
+              some: { projectId: parseInt(projectId), isDeleted: false },
+            },
+          },
+          {
+            sessions: {
+              some: { projectId: parseInt(projectId), isDeleted: false },
+            },
+          },
+        ],
+      },
+    },
+    { enabled: isAuthenticated }
   );
 
   // Wait for session to load
@@ -228,77 +384,74 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({ params }) => {
             <div className="h-full overflow-auto pe-4">
               <Accordion
                 type="multiple"
-                defaultValue={[
-                  "repository-cases",
-                  "test-runs",
-                  "sessions",
-                  "tags",
-                ]}
+                value={openSections}
+                onValueChange={handleOpenSectionsChange}
                 className="space-y-2"
               >
-                <AccordionItem
+                <OverviewSection
                   value="repository-cases"
-                  className="border rounded-lg bg-card text-card-foreground shadow-sm"
+                  icon={ListTree}
+                  title={t("repository.title")}
+                  seeAllHref={`/projects/repository/${project.id}`}
+                  seeAllLabel={
+                    repositoryCasesCount
+                      ? t("projects.overview.seeAllTestCases", {
+                          count: repositoryCasesCount,
+                        })
+                      : undefined
+                  }
                 >
-                  <AccordionTrigger className="px-6 py-4 hover:no-underline cursor-pointer">
-                    <SectionHeader className="flex items-center gap-2">
-                      <ListTree className="h-6 w-6 shrink-0" />
-                      <CardTitle>{t("repository.title")}</CardTitle>
-                    </SectionHeader>
-                  </AccordionTrigger>
-                  <AccordionContent className="px-6 pb-6">
-                    <RepositoryCasesSection projectId={project.id} />
-                  </AccordionContent>
-                </AccordionItem>
+                  <RepositoryCasesSection projectId={project.id} />
+                </OverviewSection>
 
-                <AccordionItem
+                <OverviewSection
                   value="test-runs"
-                  className="border rounded-lg bg-card text-card-foreground shadow-sm"
+                  icon={PlayCircle}
+                  title={t("projects.overview.activeTestRuns")}
+                  seeAllHref={`/projects/runs/${project.id}`}
+                  seeAllLabel={
+                    testRunsCount
+                      ? t("projects.overview.seeAllActiveTestRuns", {
+                          count: testRunsCount,
+                        })
+                      : undefined
+                  }
                 >
-                  <AccordionTrigger className="px-6 py-4 hover:no-underline cursor-pointer">
-                    <SectionHeader className="flex items-center gap-2">
-                      <PlayCircle className="h-6 w-6 shrink-0" />
-                      <CardTitle>
-                        {t("projects.overview.activeTestRuns")}
-                      </CardTitle>
-                    </SectionHeader>
-                  </AccordionTrigger>
-                  <AccordionContent className="px-6 pb-6">
-                    <TestRunsSection projectId={project.id} />
-                  </AccordionContent>
-                </AccordionItem>
+                  <TestRunsSection projectId={project.id} />
+                </OverviewSection>
 
-                <AccordionItem
+                <OverviewSection
                   value="sessions"
-                  className="border rounded-lg bg-card text-card-foreground shadow-sm"
+                  icon={Compass}
+                  title={t("home.dashboard.activeSessions")}
+                  seeAllHref={`/projects/sessions/${project.id}`}
+                  seeAllLabel={
+                    sessionsCount
+                      ? t("projects.overview.seeAllActiveSessions", {
+                          count: sessionsCount,
+                        })
+                      : undefined
+                  }
                 >
-                  <AccordionTrigger className="px-6 py-4 hover:no-underline cursor-pointer">
-                    <SectionHeader className="flex items-center gap-2">
-                      <Compass className="h-6 w-6 shrink-0" />
-                      <CardTitle>
-                        {t("home.dashboard.activeSessions")}
-                      </CardTitle>
-                    </SectionHeader>
-                  </AccordionTrigger>
-                  <AccordionContent className="px-6 pb-6">
-                    <SessionsSection projectId={project.id} />
-                  </AccordionContent>
-                </AccordionItem>
+                  <SessionsSection projectId={project.id} />
+                </OverviewSection>
 
-                <AccordionItem
+                <OverviewSection
                   value="tags"
-                  className="border rounded-lg bg-card text-card-foreground shadow-sm"
+                  icon={TagsIcon}
+                  title={t("common.fields.tags")}
+                  seeAllHref={`/projects/tags/${project.id}`}
+                  seeAllLabel={
+                    tagsCount
+                      ? t("projects.overview.seeAllTagsCount", {
+                          count: tagsCount,
+                        })
+                      : undefined
+                  }
+                  contentClassName="h-[400px]"
                 >
-                  <AccordionTrigger className="px-6 py-4 hover:no-underline cursor-pointer">
-                    <SectionHeader className="flex items-center gap-2">
-                      <TagsIcon className="h-6 w-6 shrink-0" />
-                      <CardTitle>{t("common.fields.tags")}</CardTitle>
-                    </SectionHeader>
-                  </AccordionTrigger>
-                  <AccordionContent className="px-6 pb-6 h-[400px]">
-                    <TagsSection projectId={project.id} />
-                  </AccordionContent>
-                </AccordionItem>
+                  <TagsSection projectId={project.id} />
+                </OverviewSection>
               </Accordion>
             </div>
           </ResizablePanel>

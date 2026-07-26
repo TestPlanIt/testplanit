@@ -121,7 +121,9 @@ export const CaseDisplay: React.FC<Case> = ({
   return shouldShowTooltip ? (
     <Tooltip>
       <TooltipTrigger asChild>
-        <div className="text-start">{content}</div>
+        {/* min-w-0 so the trigger can shrink inside a flex parent — without it
+            the name overflows its column and runs into whatever sits beside it. */}
+        <div className="text-start min-w-0">{content}</div>
       </TooltipTrigger>
       <TooltipContent>
         <div>{name}</div>

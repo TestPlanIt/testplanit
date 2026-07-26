@@ -44,28 +44,13 @@ const TestRunsSection: React.FC<TestRunsSectionProps> = ({ projectId }) => {
     take: 5,
   });
 
-  const { data: testRunsCount, isLoading: isLoadingCount } = useClientQueries(
-    schema
-  ).testRuns.useFindMany({
-    where: {
-      AND: [
-        { projectId: Number(projectId) },
-        { isDeleted: false },
-        { isCompleted: false },
-      ],
-    },
-    select: {
-      id: true,
-    },
-  });
-
   const testRunIds = React.useMemo(
     () => testRuns?.map((run) => run.id) ?? [],
     [testRuns]
   );
   const pendingReviewsByRunId = usePendingReviewsByEntity("RUN", testRunIds);
 
-  if (isLoadingTestRuns || isLoadingCount) {
+  if (isLoadingTestRuns) {
     return (
       <div className="flex justify-center items-center py-8">
         <LoadingSpinner />
@@ -77,14 +62,6 @@ const TestRunsSection: React.FC<TestRunsSectionProps> = ({ projectId }) => {
 
   return (
     <div className="flex flex-col">
-      <p className="text-sm text-muted-foreground mb-4">
-        <Link className="group" href={`/projects/runs/${projectId}`}>
-          {t("projects.overview.seeAllActiveTestRuns", {
-            count: testRunsCount?.length ?? 0,
-          })}
-          <LinkIcon className="w-4 h-4 inline ms-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
-        </Link>
-      </p>
       <div className="flex flex-col">
         <h2 className="text-primary mb-2">
           {t("projects.overview.latestTestRuns")}

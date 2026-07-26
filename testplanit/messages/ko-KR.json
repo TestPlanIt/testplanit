@@ -1274,7 +1274,7 @@
       "seeAllTestCases": "{count, plural, =1 {테스트 케이스 #개 보기} other {모든 테스트 케이스 #개 보기}}",
       "latestTestCases": "최신 테스트 사례",
       "createdOn": "생성일:",
-      "seeAllTags": "모든 태그 보기",
+      "seeAllTagsCount": "{count, plural, =1 {See # Tag} other {See all # Tags}}",
       "seeAllActiveSessions": "{count, plural, =1 {활성 세션 #개 보기} other {모든 활성 세션 #개 보기}}",
       "latestSessions": "최신 세션",
       "activeTestRuns": "활성 테스트 실행",

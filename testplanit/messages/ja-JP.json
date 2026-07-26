@@ -1274,7 +1274,7 @@
       "seeAllTestCases": "{count, plural, =1 {# テストケースを参照} other {すべての # テストケースを参照}}",
       "latestTestCases": "最新のテストケース",
       "createdOn": "作成日",
-      "seeAllTags": "すべてのタグを見る",
+      "seeAllTagsCount": "{count, plural, =1 {#件のタグを表示} other {すべての#件のタグを表示}}",
       "seeAllActiveSessions": "{count, plural, =1 {アクティブセッション#を表示} other {すべてのアクティブセッション#を表示}}",
       "latestSessions": "最新のセッション",
       "activeTestRuns": "アクティブテスト実行",
@@ -8121,7 +8121,7 @@
   },
   "comments": {
     "title": "コメント",
-    "titleWithCount": "{count, plural, =0 {No Comments} =1 {# Comment} other {# Comments}}",
+    "titleWithCount": "{count, plural, =0 {コメントなし} =1 {#件のコメント} other {#件のコメント}}",
     "placeholder": "コメントを書く... (ユーザーをメンションするには @ を使用します)",
     "editPlaceholder": "コメントを編集...",
     "postComment": "コメントを投稿",

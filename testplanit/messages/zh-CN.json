@@ -1274,7 +1274,7 @@
       "seeAllTestCases": "{count, plural, =1 {查看 # 测试用例} other {查看所有 # 测试用例}}",
       "latestTestCases": "最新测试用例",
       "createdOn": "创建于",
-      "seeAllTags": "查看所有标签",
+      "seeAllTagsCount": "{count, plural, =1 {查看 # 个标签} other {查看所有 # 个标签}}",
       "seeAllActiveSessions": "{count, plural, =1 {查看当前会话#} other {查看所有当前会话#}}",
       "latestSessions": "最新会话",
       "activeTestRuns": "正在进行的测试运行",

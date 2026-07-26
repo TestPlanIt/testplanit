@@ -1274,7 +1274,7 @@
       "seeAllTestCases": "{count, plural, =1 {Test Durumu #'na bakın} other {Tüm Test Durumları #'na bakın}}",
       "latestTestCases": "En Son Test Örnekleri",
       "createdOn": "Oluşturulma tarihi",
-      "seeAllTags": "Tüm Etiketleri Gör",
+      "seeAllTagsCount": "{count, plural, =1 {# Etikete bakın} other {Tüm # Etikete bakın}}",
       "seeAllActiveSessions": "{count, plural, =1 {# Aktif Oturumu Görün} other {Tüm # Aktif Oturumu Görün}}",
       "latestSessions": "Son Oturumlar",
       "activeTestRuns": "Aktif Test Çalıştırmaları",

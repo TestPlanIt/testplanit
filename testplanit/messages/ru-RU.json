@@ -1274,7 +1274,7 @@
       "seeAllTestCases": "{count, plural, =1 {См. # Тестовый пример} other {См. все # Тестовые примеры}}",
       "latestTestCases": "Последние тестовые примеры",
       "createdOn": "Создано",
-      "seeAllTags": "Посмотреть все теги",
+      "seeAllTagsCount": "{count, plural, =1 {См. # Тег} other {См. все # Тегов}}",
       "seeAllActiveSessions": "{count, plural, =1 {Показать # активную сессию} other {Показать все # активных сессий}}",
       "latestSessions": "Последние сессии",
       "activeTestRuns": "Активные тестовые запуски",

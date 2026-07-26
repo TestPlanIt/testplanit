@@ -31,21 +31,6 @@ const SessionsSection: React.FC<SessionsSectionProps> = ({ projectId }) => {
     take: 5,
   });
 
-  const { data: sessionsCount, isLoading: isLoadingCount } = useClientQueries(
-    schema
-  ).sessions.useFindMany({
-    where: {
-      AND: [
-        { projectId: Number(projectId) },
-        { isDeleted: false },
-        { isCompleted: false },
-      ],
-    },
-    select: {
-      id: true,
-    },
-  });
-
   const sessionIds = React.useMemo(
     () => sessions?.map((s) => s.id) ?? [],
     [sessions]
@@ -55,7 +40,7 @@ const SessionsSection: React.FC<SessionsSectionProps> = ({ projectId }) => {
     sessionIds
   );
 
-  if (isLoadingSessions || isLoadingCount) {
+  if (isLoadingSessions) {
     return (
       <div className="flex justify-center items-center py-8">
         <LoadingSpinner />
@@ -67,14 +52,6 @@ const SessionsSection: React.FC<SessionsSectionProps> = ({ projectId }) => {
 
   return (
     <div className="flex flex-col">
-      <p className="text-sm text-muted-foreground mb-4">
-        <Link className="group" href={`/projects/sessions/${projectId}`}>
-          {t("projects.overview.seeAllActiveSessions", {
-            count: sessionsCount?.length ?? 0,
-          })}
-          <LinkIcon className="w-4 h-4 inline ms-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
-        </Link>
-      </p>
       <div className="flex flex-col">
         <h2 className="text-primary mb-2">
           {t("projects.overview.latestSessions")}
