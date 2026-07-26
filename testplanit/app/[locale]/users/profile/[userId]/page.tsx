@@ -781,7 +781,10 @@ const UserProfile: React.FC<UserProfileProps> = ({
                   >
                     {/* Account Information */}
                     {canViewPrivateInfo && (
-                      <AccordionItem value="account">
+                      <AccordionItem
+                        value="account"
+                        data-testid="profile-section-account"
+                      >
                         <AccordionTrigger className="text-sm font-medium text-muted-foreground uppercase tracking-wide hover:no-underline">
                           {tCommon("fields.account")}
                         </AccordionTrigger>
@@ -861,7 +864,10 @@ const UserProfile: React.FC<UserProfileProps> = ({
                     {/* Assignments — same data as the home page's "Your
                         Assignments" card, compact; visible to the user,
                         project admins, and admins */}
-                    <AccordionItem value="assignments">
+                    <AccordionItem
+                      value="assignments"
+                      data-testid="profile-section-assignments"
+                    >
                       <AccordionTrigger className="text-sm font-medium text-muted-foreground uppercase tracking-wide hover:no-underline">
                         {t("assignments.title")}
                       </AccordionTrigger>
@@ -876,7 +882,10 @@ const UserProfile: React.FC<UserProfileProps> = ({
                       <>
                         {/* Directory Profile — read-only SCIM identity attrs */}
                         {isScimManaged && (
-                          <AccordionItem value="directory">
+                          <AccordionItem
+                            value="directory"
+                            data-testid="profile-section-directory"
+                          >
                             <AccordionTrigger className="text-sm font-medium text-muted-foreground uppercase tracking-wide hover:no-underline">
                               {tDirectory("title")}
                             </AccordionTrigger>
