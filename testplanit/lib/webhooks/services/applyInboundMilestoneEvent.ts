@@ -72,6 +72,12 @@ function isCreatedEvent(eventType: string): boolean {
   return eventType === "jira:version_created" || eventType === "sprint_created";
 }
 
+const REASON_MAX_LEN = 500;
+
+function truncate(s: string): string {
+  return s.length > REASON_MAX_LEN ? s.slice(0, REASON_MAX_LEN) : s;
+}
+
 /**
  * Every dispatch target an inbound milestone event fans out to. External
  * identity is per-project ([externalId, integrationId, projectId]): the

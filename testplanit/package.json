@@ -21,7 +21,7 @@
     "dev:testdb": "dotenv -e .env.test -- pnpm dev",
     "postinstall": "zenstack format --schema schema.zmodel && zenstack generate --schema schema.zmodel -o zenstack",
     "lint": "eslint . && pnpm type-check",
-    "type-check": "NODE_OPTIONS='--max-old-space-size=8192' tsc --noEmit",
+    "type-check": "NODE_OPTIONS='--max-old-space-size=8192' tsc --noEmit --incremental false",
     "format": "prettier --write --ignore-path .gitignore --ignore-path .prettierignore .",
     "format:check": "prettier --check --ignore-path .gitignore --ignore-path .prettierignore .",
     "precommit": "zenstack format && pnpm lint && pnpm format:check && pnpm test run && pnpm build:docs",

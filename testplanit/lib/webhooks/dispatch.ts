@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import type { WebhookConfigUncheckedUpdateInput } from "~/zenstack/input";
-import type { DbClient, TxClient } from "~/lib/zenstack";
+import type { TxClient } from "~/lib/zenstack";
 
 import { SYSTEM_ACTOR_ID } from "~/lib/auditContext";
 import { SYSTEM_PROJECT_ID } from "~/lib/scim/constants";
@@ -80,7 +80,7 @@ const DIAGNOSTIC_EVENT_NAME = "webhook.test" as const;
 
 export async function dispatchWebhook(
   jobData: DispatchJobData,
-  db: DbClient | TxClient
+  db: TxClient
 ): Promise<DispatchOutcome> {
   // 1. Load outbox event + webhook config + active/retiring secrets concurrently.
   const [outboxEvent, config] = await Promise.all([
