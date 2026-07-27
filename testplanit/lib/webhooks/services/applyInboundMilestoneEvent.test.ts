@@ -55,6 +55,13 @@ const mocks = vi.hoisted(() => {
   const boardAdapter = {
     resolveBoardProject: vi.fn(async (..._args: any[]): Promise<any> => null),
   };
+  // Drives the webhook burst allowance: `incr` returns the running count of
+  // events for this milestone inside the window. 1..5 => refetch (window 0),
+  // 6+ => a genuine storm, fall back to the 15s window.
+  const valkey = {
+    incr: vi.fn(async (..._args: any[]): Promise<number> => 1),
+    expire: vi.fn(async (..._args: any[]): Promise<number> => 1),
+  };
   const integrationManagerGetAdapter = vi.fn(
     async (..._args: any[]): Promise<any> => boardAdapter
   );
@@ -82,6 +89,7 @@ const mocks = vi.hoisted(() => {
     integrationManager: { getAdapter: integrationManagerGetAdapter },
     integrationManagerGetAdapter,
     boardAdapter,
+    valkey,
     integrationProjectFindMany,
     projectIntegrationFindUnique,
     milestonesFindMany,
@@ -106,6 +114,10 @@ vi.mock("~/lib/integrations/services/MilestoneSyncService", () => ({
 
 vi.mock("~/lib/integrations/IntegrationManager", () => ({
   integrationManager: mocks.integrationManager,
+}));
+
+vi.mock("~/lib/valkey", () => ({
+  default: mocks.valkey,
 }));
 
 const importSut = async () =>
@@ -177,6 +189,10 @@ const resetMocks = () => {
   mocks.integrationManagerGetAdapter.mockResolvedValue(mocks.boardAdapter);
   mocks.boardAdapter.resolveBoardProject.mockReset();
   mocks.boardAdapter.resolveBoardProject.mockResolvedValue(null);
+  mocks.valkey.incr.mockReset();
+  mocks.valkey.incr.mockResolvedValue(1);
+  mocks.valkey.expire.mockReset();
+  mocks.valkey.expire.mockResolvedValue(1);
 
   (mocks.adapter.extractMilestoneEventRef as Mock).mockReset();
   mocks.getAdapter.mockClear();
@@ -194,7 +210,7 @@ describe("applyInboundMilestoneEvent", () => {
     resetMocks();
   });
 
-  it("HOOK-01: jira:version_updated for a linked milestone calls performMilestoneRefresh with minFreshnessSeconds:15", async () => {
+  it("HOOK-01: jira:version_updated for a linked milestone refetches — one event is inside the burst allowance, not a storm", async () => {
     const applyInboundMilestoneEvent = await importSut();
     (mocks.adapter.extractMilestoneEventRef as Mock).mockReturnValue({
       kind: "RELEASE",
@@ -216,7 +232,7 @@ describe("applyInboundMilestoneEvent", () => {
       "__system__",
       42,
       "10100",
-      { minFreshnessSeconds: 15, projectId: 7 }
+      { minFreshnessSeconds: 0, projectId: 7 }
     );
   });
 
@@ -273,7 +289,7 @@ describe("applyInboundMilestoneEvent", () => {
     }
   );
 
-  it("keeps the 15s window for jira:version_moved — a reorder is not a transition", async () => {
+  it("jira:version_moved refetches too while inside the burst allowance", async () => {
     const applyInboundMilestoneEvent = await importSut();
     (mocks.adapter.extractMilestoneEventRef as Mock).mockReturnValue({
       kind: "RELEASE",
@@ -296,8 +312,93 @@ describe("applyInboundMilestoneEvent", () => {
       "__system__",
       42,
       "10100",
+      { minFreshnessSeconds: 0, projectId: 7 }
+    );
+  });
+
+  it("falls back to the 15s window once the burst allowance is exhausted — a real storm still coalesces", async () => {
+    const applyInboundMilestoneEvent = await importSut();
+    // 6th event for this milestone inside the window.
+    mocks.valkey.incr.mockResolvedValue(6);
+    (mocks.adapter.extractMilestoneEventRef as Mock).mockReturnValue({
+      kind: "RELEASE",
+      externalId: "10100",
+      externalProjectId: "10050",
+      merge: false,
+    });
+    mocks.integrationProjectFindMany.mockResolvedValue([
+      activeIntegrationProject(),
+    ]);
+    mocks.milestonesFindMany.mockResolvedValue([
+      { id: 555, projectId: 7, integrationId: 42 },
+    ]);
+
+    await applyInboundMilestoneEvent(baseInput());
+
+    expect(mocks.performMilestoneRefresh).toHaveBeenCalledWith(
+      "__system__",
+      42,
+      "10100",
       { minFreshnessSeconds: 15, projectId: 7 }
     );
+  });
+
+  it("a lifecycle transition ignores the burst allowance entirely — never coalesced, even mid-storm", async () => {
+    const applyInboundMilestoneEvent = await importSut();
+    mocks.valkey.incr.mockResolvedValue(500);
+    (mocks.adapter.extractMilestoneEventRef as Mock).mockReturnValue({
+      kind: "RELEASE",
+      externalId: "10100",
+      externalProjectId: "10050",
+      merge: false,
+    });
+    mocks.integrationProjectFindMany.mockResolvedValue([
+      activeIntegrationProject(),
+    ]);
+    mocks.milestonesFindMany.mockResolvedValue([
+      { id: 555, projectId: 7, integrationId: 42 },
+    ]);
+
+    await applyInboundMilestoneEvent(
+      baseInput({ eventType: "jira:version_released" })
+    );
+
+    expect(mocks.performMilestoneRefresh).toHaveBeenCalledWith(
+      "__system__",
+      42,
+      "10100",
+      { minFreshnessSeconds: 0, projectId: 7 }
+    );
+    // The transition short-circuits before the counter is even touched.
+    expect(mocks.valkey.incr).not.toHaveBeenCalled();
+  });
+
+  it("opens the burst window on the first event only, so the allowance is per-window", async () => {
+    const applyInboundMilestoneEvent = await importSut();
+    (mocks.adapter.extractMilestoneEventRef as Mock).mockReturnValue({
+      kind: "RELEASE",
+      externalId: "10100",
+      externalProjectId: "10050",
+      merge: false,
+    });
+    mocks.integrationProjectFindMany.mockResolvedValue([
+      activeIntegrationProject(),
+    ]);
+    mocks.milestonesFindMany.mockResolvedValue([
+      { id: 555, projectId: 7, integrationId: 42 },
+    ]);
+
+    mocks.valkey.incr.mockResolvedValue(1);
+    await applyInboundMilestoneEvent(baseInput());
+    expect(mocks.valkey.expire).toHaveBeenCalledWith(
+      "sync-burst:milestone:42:7:10100",
+      15
+    );
+
+    mocks.valkey.expire.mockClear();
+    mocks.valkey.incr.mockResolvedValue(2);
+    await applyInboundMilestoneEvent(baseInput());
+    expect(mocks.valkey.expire).not.toHaveBeenCalled();
   });
 
   it("HOOK-01: jira:version_created is a no-op when the project's auto-track setting is OFF (D-02)", async () => {
@@ -469,7 +570,7 @@ describe("applyInboundMilestoneEvent", () => {
       "__system__",
       42,
       "55",
-      { minFreshnessSeconds: 15, projectId: 7 }
+      { minFreshnessSeconds: 0, projectId: 7 }
     );
   });
 
@@ -523,7 +624,7 @@ describe("applyInboundMilestoneEvent", () => {
       "__system__",
       42,
       "55",
-      { minFreshnessSeconds: 15, projectId: 7 }
+      { minFreshnessSeconds: 0, projectId: 7 }
     );
   });
 
@@ -602,7 +703,7 @@ describe("applyInboundMilestoneEvent", () => {
       "__system__",
       42,
       "10100",
-      { minFreshnessSeconds: 15, projectId: 8 }
+      { minFreshnessSeconds: 0, projectId: 8 }
     );
   });
 
@@ -652,7 +753,7 @@ describe("applyInboundMilestoneEvent", () => {
       "__system__",
       42,
       "10100",
-      { minFreshnessSeconds: 15, projectId: 99 }
+      { minFreshnessSeconds: 0, projectId: 99 }
     );
   });
 
@@ -787,13 +888,13 @@ describe("applyInboundMilestoneEvent", () => {
       "__system__",
       42,
       "10100",
-      { minFreshnessSeconds: 15, projectId: 7 }
+      { minFreshnessSeconds: 0, projectId: 7 }
     );
     expect(mocks.performMilestoneRefresh).toHaveBeenCalledWith(
       "__system__",
       42,
       "10100",
-      { minFreshnessSeconds: 15, projectId: 8 }
+      { minFreshnessSeconds: 0, projectId: 8 }
     );
   });
 

@@ -5,6 +5,7 @@ import { baseDb } from "~/lib/db";
 import { integrationManager } from "~/lib/integrations/IntegrationManager";
 import { milestoneSyncService } from "~/lib/integrations/services/MilestoneSyncService";
 import { captureAuditEvent } from "~/lib/services/auditLog";
+import valkeyConnection from "~/lib/valkey";
 import { getAdapter } from "~/lib/webhooks/adapters";
 import type { MilestoneEventRef } from "~/lib/webhooks/adapters/types";
 
@@ -51,13 +52,84 @@ const STATE_TRANSITION_EVENTS = new Set([
 ]);
 
 /**
- * Coalescing window for this event: none for a lifecycle transition, the
- * shared 15s otherwise.
+ * How many webhook-triggered refreshes of the SAME milestone are allowed to
+ * refetch before coalescing starts, per rolling window.
+ *
+ * The window on its own is too blunt: it suppresses the SECOND event, which
+ * is not a storm — it is the normal shape of ordinary Jira activity (a
+ * release emits version_updated + version_released in the same second), and
+ * it also fires when any unrelated sync happens to land in the preceding
+ * window. Storm protection should engage on sustained volume, not on a
+ * handful of successive events.
+ *
+ * So the first few events always refetch and only a genuine burst falls back
+ * to the time window.
  */
-function freshnessWindowFor(eventType: string): number {
-  return STATE_TRANSITION_EVENTS.has(eventType)
-    ? 0
-    : WEBHOOK_SYNC_FRESHNESS_SECONDS;
+const WEBHOOK_BURST_ALLOWANCE = 5;
+
+function burstCounterKey(
+  integrationId: number,
+  externalId: string,
+  projectId: number
+): string {
+  return `sync-burst:milestone:${integrationId}:${projectId}:${externalId}`;
+}
+
+/**
+ * Count this event against the milestone's burst allowance. Returns true
+ * while the allowance has room — the caller then bypasses the freshness
+ * window entirely.
+ *
+ * Fail-open without Valkey (and on any Valkey error), matching
+ * acquireMilestoneSyncLock: freshness is a cost optimization, not
+ * correctness, so a cache outage should cost extra upstream calls rather
+ * than silently drop state changes. The per-milestone sync lock still
+ * serializes concurrent refreshes, and payload-digest dedup still drops
+ * repeats of an identical event before this point.
+ */
+async function withinBurstAllowance(
+  integrationId: number,
+  externalId: string,
+  projectId: number
+): Promise<boolean> {
+  if (!valkeyConnection) return true;
+  const key = burstCounterKey(integrationId, externalId, projectId);
+  try {
+    const count = await valkeyConnection.incr(key);
+    // Start the window on the first event of a burst; subsequent INCRs ride
+    // the same TTL so the allowance is per-window, not per-event.
+    if (count === 1) {
+      await valkeyConnection.expire(key, WEBHOOK_SYNC_FRESHNESS_SECONDS);
+    }
+    return count <= WEBHOOK_BURST_ALLOWANCE;
+  } catch {
+    return true;
+  }
+}
+
+/**
+ * Freshness window to refresh this event with. Zero means "always refetch".
+ *
+ * Two independent reasons to bypass coalescing:
+ *   - a lifecycle transition (released/unreleased/started/closed), which
+ *     must never be swallowed, storm or not — the event exists precisely
+ *     because the artifact's state moved; and
+ *   - the burst allowance above, which keeps ordinary low-volume activity
+ *     from being mistaken for a storm.
+ */
+async function freshnessWindowFor(
+  eventType: string,
+  integrationId: number,
+  externalId: string,
+  projectId: number
+): Promise<number> {
+  if (STATE_TRANSITION_EVENTS.has(eventType)) return 0;
+  const hasRoom = await withinBurstAllowance(
+    integrationId,
+    externalId,
+    projectId
+  );
+  return hasRoom ? 0 : WEBHOOK_SYNC_FRESHNESS_SECONDS;
 }
 
 const REASON_MAX_LEN = 500;
@@ -645,7 +717,12 @@ export async function applyInboundMilestoneEvent(
                 row.integrationId,
                 ref.externalId,
                 {
-                  minFreshnessSeconds: freshnessWindowFor(eventType),
+                  minFreshnessSeconds: await freshnessWindowFor(
+                    eventType,
+                    row.integrationId,
+                    ref.externalId,
+                    row.projectId
+                  ),
                   projectId: row.projectId,
                 }
               );
