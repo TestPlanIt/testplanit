@@ -918,6 +918,57 @@ interface CreateJUnitTestStepOptions {
 }
 
 /**
+ * Run-level metadata helpers.
+ *
+ * TestPlanIt test runs have no dedicated key/value metadata table, so run
+ * metadata is stored as human-readable content in the run's `docs` field
+ * (a TipTap/ProseMirror rich-text document rendered on the run detail page).
+ *
+ * Each metadata entry is one paragraph of the exact shape:
+ *
+ * ```json
+ * {
+ *   "type": "paragraph",
+ *   "content": [
+ *     { "type": "text", "marks": [{ "type": "bold" }], "text": "version: " },
+ *     { "type": "text", "text": "1.2.3" }
+ *   ]
+ * }
+ * ```
+ *
+ * i.e. a bold `key: ` prefix followed by the plain-text value. That shape is
+ * both what a person would author by hand AND precise enough to round-trip:
+ * merging only rewrites paragraphs whose first text node is bold and ends in
+ * `: `, so surrounding hand-written documentation is preserved.
+ *
+ * Pure functions, no I/O — shared by {@link TestPlanItClient.setTestRunMetadata}
+ * and exported for consumers that read/write run docs directly. For wrapping
+ * PLAIN text in a TipTap doc use the existing {@link tipTapDoc} helper; this
+ * module exists for the bold key/value shape and for merging without
+ * clobbering surrounding content.
+ */
+/** A single metadata value. Numbers and booleans are stringified on write. */
+type RunMetadataValue = string | number | boolean;
+/** Key/value metadata attached to a test run. */
+type RunMetadata = Record<string, RunMetadataValue>;
+/**
+ * Merge key/value metadata into a run's `docs` document.
+ *
+ * Existing metadata paragraphs with a matching key are updated in place;
+ * new keys are appended at the end. All other document content is left
+ * untouched. Keys that are empty after trimming are skipped. Returns a new
+ * TipTap doc object (the input is not mutated) suitable for
+ * `updateTestRun(id, { docs })`.
+ */
+declare function mergeRunMetadataIntoDoc(existingDocs: unknown, metadata: RunMetadata): Record<string, unknown>;
+/**
+ * Extract the key/value metadata pairs from a run's `docs` document.
+ * Values always come back as strings (numbers/booleans are stringified on
+ * write). Non-metadata content is ignored.
+ */
+declare function parseRunMetadataFromDoc(docs: unknown): Record<string, string>;
+
+/**
  * Custom error class for TestPlanIt API errors
  */
 declare class TestPlanItError extends Error {
@@ -1288,6 +1339,58 @@ declare class TestPlanItClient {
      */
     uploadJUnitAttachment(junitTestResultId: number, file: Blob | Buffer, fileName: string, mimeType?: string, note?: string): Promise<Attachment>;
     /**
+     * Attach an external link to a test run (run-level, not tied to a result).
+     *
+     * Creates an attachment record with `mimeType: "text/uri-list"` pointing at
+     * the given URL — the run detail page renders it as a clickable link. Use
+     * this for CI build URLs, dashboards, or any external resource for the run.
+     *
+     * The attachment's creator is resolved server-side from the API token, so
+     * no user ID needs to be supplied.
+     *
+     * @param testRunId - The test run to attach the link to
+     * @param url - The external URL
+     * @param name - Display name for the link (defaults to the URL)
+     * @param note - Optional note shown with the attachment
+     */
+    addTestRunLink(testRunId: number, url: string, name?: string, note?: string): Promise<Attachment>;
+    /**
+     * Upload a file attachment to a test run (run-level, not tied to a result).
+     *
+     * Uploads the file to storage and creates an attachment record connected to
+     * the run itself, so it shows on the run detail page. For per-result
+     * attachments use {@link uploadAttachment} / {@link uploadJUnitAttachment}.
+     *
+     * @param testRunId - The test run to attach the file to
+     * @param file - File content as a Blob or Buffer
+     * @param fileName - Name for the attachment
+     * @param mimeType - MIME type (defaults to application/octet-stream)
+     */
+    uploadTestRunAttachment(testRunId: number, file: Blob | Buffer, fileName: string, mimeType?: string): Promise<Attachment>;
+    /**
+     * Set key/value metadata on a test run.
+     *
+     * Metadata is rendered into the run's `docs` rich-text field (shown on the
+     * run detail page) as one `**key:** value` line per entry. Repeated calls
+     * merge: existing keys are updated in place, new keys are appended, and any
+     * hand-written documentation content is preserved. See
+     * {@link mergeRunMetadataIntoDoc} for the exact document shape.
+     *
+     * Note: the merge is read-modify-write on the run's docs; concurrent calls
+     * against the same run may race (last write wins).
+     *
+     * @param testRunId - The test run to set metadata on
+     * @param metadata - Key/value pairs (numbers/booleans are stringified)
+     * @returns The updated test run
+     */
+    setTestRunMetadata(testRunId: number, metadata: RunMetadata): Promise<TestRun>;
+    /**
+     * Read the key/value metadata previously written to a test run's `docs`
+     * field (by {@link setTestRunMetadata} or hand-authored in the same
+     * `**key:** value` shape). Values are always strings.
+     */
+    getTestRunMetadata(testRunId: number): Promise<Record<string, string>>;
+    /**
      * Create a JUnit test suite
      * Used for storing test results from automated test frameworks (Mocha, JUnit, etc.)
      */
@@ -1380,4 +1483,4 @@ declare function automationStepsToCaseSteps(steps: AutomationStep[]): CaseStepRo
  */
 declare function deriveCaseStepsIfFresh(steps: AutomationStep[], existingStepCount: number): CaseStepRow[];
 
-export { type AddTestCaseToRunOptions, type ApiError, type Attachment, type AutomationStep, type BulkTestCaseInput, type BulkTestCaseResult, type BulkTestCaseStep, type CaseStepRow, type Comment, type Configuration, type CreateFolderOptions, type CreateJUnitPropertyOptions, type CreateJUnitTestResultOptions, type CreateJUnitTestStepOptions, type CreateJUnitTestSuiteOptions, type CreateStepOptions, type CreateStepsOptions, type CreateTagOptions, type CreateTestCaseOptions, type CreateTestCasesOptions, type CreateTestCasesResult, type CreateTestResultOptions, type CreateTestRunOptions, type FindOrCreateTestCaseResult, type FindTestCaseByCustomFieldOptions, type FindTestCaseOptions, type GenerateQuickScriptOptions, type GenerateQuickScriptResult, type ImportProgressEvent, type ImportTestResultsOptions, type Issue, type JUnitProperty, type JUnitResultType, type JUnitTestResult, type JUnitTestStep, type JUnitTestSuite, type ListTestRunsOptions, type Milestone, type NormalizedStatus, type PaginatedResponse, type Project, type QuickScriptFile, type QuickScriptOutputMode, type RepositoryCase, type RepositoryCaseSource, type RepositoryFolder, type RequestStepDerivationCase, type RequestStepDerivationOptions, type Status, type Step, type Tag, type Template, TestPlanItClient, type TestPlanItClientConfig, TestPlanItError, type TestRun, type TestRunCase, type TestRunResult, type TestRunStepResult, type TestRunType, type UpdateJUnitTestSuiteOptions, type UpdateTestCaseOptions, type UpdateTestRunOptions, type UploadAttachmentOptions, type User, type WorkflowState, automationStepsToCaseSteps, deriveCaseStepsIfFresh, tipTapDoc };
+export { type AddTestCaseToRunOptions, type ApiError, type Attachment, type AutomationStep, type BulkTestCaseInput, type BulkTestCaseResult, type BulkTestCaseStep, type CaseStepRow, type Comment, type Configuration, type CreateFolderOptions, type CreateJUnitPropertyOptions, type CreateJUnitTestResultOptions, type CreateJUnitTestStepOptions, type CreateJUnitTestSuiteOptions, type CreateStepOptions, type CreateStepsOptions, type CreateTagOptions, type CreateTestCaseOptions, type CreateTestCasesOptions, type CreateTestCasesResult, type CreateTestResultOptions, type CreateTestRunOptions, type FindOrCreateTestCaseResult, type FindTestCaseByCustomFieldOptions, type FindTestCaseOptions, type GenerateQuickScriptOptions, type GenerateQuickScriptResult, type ImportProgressEvent, type ImportTestResultsOptions, type Issue, type JUnitProperty, type JUnitResultType, type JUnitTestResult, type JUnitTestStep, type JUnitTestSuite, type ListTestRunsOptions, type Milestone, type NormalizedStatus, type PaginatedResponse, type Project, type QuickScriptFile, type QuickScriptOutputMode, type RepositoryCase, type RepositoryCaseSource, type RepositoryFolder, type RequestStepDerivationCase, type RequestStepDerivationOptions, type RunMetadata, type RunMetadataValue, type Status, type Step, type Tag, type Template, TestPlanItClient, type TestPlanItClientConfig, TestPlanItError, type TestRun, type TestRunCase, type TestRunResult, type TestRunStepResult, type TestRunType, type UpdateJUnitTestSuiteOptions, type UpdateTestCaseOptions, type UpdateTestRunOptions, type UploadAttachmentOptions, type User, type WorkflowState, automationStepsToCaseSteps, deriveCaseStepsIfFresh, mergeRunMetadataIntoDoc, parseRunMetadataFromDoc, tipTapDoc };

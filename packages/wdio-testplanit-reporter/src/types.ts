@@ -1,4 +1,72 @@
 import type { Reporters } from '@wdio/types';
+import type { Attachment, RunMetadata } from '@testplanit/api';
+
+/**
+ * A link attached at the test-run level (e.g. a CI build URL).
+ * All string values support `{env:VAR}` placeholders when used in
+ * {@link TestPlanItServiceOptions.runLinks}.
+ */
+export interface RunLinkInput {
+  /** External URL the link points at. */
+  url: string;
+  /** Display name shown on the run detail page. Defaults to the URL. */
+  name?: string;
+  /** Optional note shown with the attachment. */
+  note?: string;
+}
+
+/**
+ * A file attached at the test-run level. Provide either `path` (read from
+ * disk) or `buffer` (in-memory content). String values support `{env:VAR}`
+ * placeholders when used in {@link TestPlanItServiceOptions.runAttachments}.
+ */
+export interface RunAttachmentInput {
+  /** Path to a file on disk. */
+  path?: string;
+  /** In-memory file content. Takes precedence over `path` when both are set. */
+  buffer?: Buffer;
+  /**
+   * Attachment name. Required with `buffer`; defaults to the file's basename
+   * with `path`.
+   */
+  name?: string;
+  /** MIME type. Guessed from the file extension when omitted. */
+  mimeType?: string;
+}
+
+/**
+ * Runtime API installed on the WebdriverIO `browser` object (as
+ * `browser.testplanit`) by the TestPlanItService in every worker process.
+ * All methods resolve to the single service-managed test run regardless of
+ * which worker calls them, and never throw — failures are logged and
+ * swallowed so they can't fail the test run.
+ */
+export interface TestPlanItRuntimeApi {
+  /**
+   * Attach a link (`{ url, name? }`) or a file (`{ path | buffer, name?,
+   * mimeType? }`) to the current test run. Returns the created attachment,
+   * or null if the run could not be resolved or the call failed.
+   */
+  attachToRun(input: RunLinkInput | RunAttachmentInput): Promise<Attachment | null>;
+  /**
+   * Merge key/value metadata into the current run's documentation (rendered
+   * as `**key:** value` lines on the run detail page). Existing keys are
+   * updated, new keys appended. Returns false if the call failed.
+   */
+  setRunMetadata(metadata: RunMetadata): Promise<boolean>;
+  /** The managed test run's ID, or undefined if no run is active. */
+  getRunId(): number | undefined;
+}
+
+declare global {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
+  namespace WebdriverIO {
+    interface Browser {
+      /** Installed by TestPlanItService in each worker (see {@link TestPlanItRuntimeApi}). */
+      testplanit?: TestPlanItRuntimeApi;
+    }
+  }
+}
 
 /**
  * Configuration options for the TestPlanIt WebdriverIO reporter
@@ -344,6 +412,48 @@ export interface TestPlanItServiceOptions {
    * Tags that don't exist will be created automatically.
    */
   tagIds?: (number | string)[];
+
+  /**
+   * Links to attach to the test run right after it is created (e.g. a CI
+   * build URL). Applied exactly once, in the launcher process. Rendered as
+   * clickable link attachments on the run detail page.
+   *
+   * All string values support `{env:VAR}` placeholders resolved from
+   * `process.env`. A link whose `url` references an unset environment
+   * variable is skipped (with a logged warning) instead of producing a
+   * broken link. Failures are logged and never fail the test run.
+   *
+   * @example
+   * runLinks: [{ url: '{env:BUILD_URL}', name: '{env:JOB_NAME} #{env:BUILD_NUMBER}' }]
+   */
+  runLinks?: RunLinkInput[];
+
+  /**
+   * Files to attach to the test run (e.g. logs, HTML reports, videos).
+   * Applied exactly once, in the launcher process. `path` values support
+   * `{env:VAR}` placeholders.
+   *
+   * A `path` that does not exist yet when the run is created (typical for
+   * artifacts produced by the tests themselves) is retried once after all
+   * workers finish, just before the run is completed. Failures are logged
+   * and never fail the test run.
+   *
+   * @example
+   * runAttachments: [{ path: './logs/wdio.log', name: 'wdio.log' }]
+   */
+  runAttachments?: RunAttachmentInput[];
+
+  /**
+   * Key/value metadata written to the run's documentation right after the
+   * run is created, rendered as `**key:** value` lines on the run detail
+   * page. String values support `{env:VAR}` placeholders; an entry whose
+   * value only references unset environment variables is skipped. Failures
+   * are logged and never fail the test run.
+   *
+   * @example
+   * runMetadata: { version: '{env:APP_VERSION}', triggeredBy: 'jenkins' }
+   */
+  runMetadata?: RunMetadata;
 
   /**
    * Whether to mark the test run as completed when all workers finish

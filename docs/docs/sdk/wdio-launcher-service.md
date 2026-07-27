@@ -58,6 +58,9 @@ The service requires the same `domain`, `apiToken`, and `projectId` as the repor
 | `tagIds` | `(number \| string)[]` | - | Tags to apply to the test run (IDs or names) |
 | `completeRunOnFinish` | `boolean` | `true` | Mark run as completed when all workers finish |
 | `captureScreenshots` | `boolean` | `false` | Automatically capture a screenshot when a test fails (uploaded by the reporter — see [Screenshot Uploads](./wdio-screenshots.md)) |
+| `runLinks` | `RunLinkInput[]` | - | Links to attach to the run, e.g. a CI build URL (see [Run Attachments & Metadata](./wdio-run-attachments.md)) |
+| `runAttachments` | `RunAttachmentInput[]` | - | Files to attach to the run — logs, reports, videos (see [Run Attachments & Metadata](./wdio-run-attachments.md)) |
+| `runMetadata` | `Record<string, string \| number \| boolean>` | - | Key/value metadata rendered into the run's documentation (see [Run Attachments & Metadata](./wdio-run-attachments.md)) |
 | `timeout` | `number` | `30000` | API request timeout in ms |
 | `maxRetries` | `number` | `3` | Retry attempts for failed requests |
 | `verbose` | `boolean` | `false` | Enable debug logging |

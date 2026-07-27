@@ -35,6 +35,13 @@ export { TestPlanItClient, TestPlanItError } from './client.js';
 export { tipTapDoc } from './tipTapDoc.js';
 export { automationStepsToCaseSteps, deriveCaseStepsIfFresh } from './mapper.js';
 
+// Run-level metadata helpers (TipTap docs field rendering/parsing).
+export {
+  mergeRunMetadataIntoDoc,
+  parseRunMetadataFromDoc,
+} from './runMetadata.js';
+export type { RunMetadata, RunMetadataValue } from './runMetadata.js';
+
 export type {
   // Config
   TestPlanItClientConfig,

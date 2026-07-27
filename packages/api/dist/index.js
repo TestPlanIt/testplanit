@@ -14,6 +14,96 @@ function tipTapDoc(text) {
   });
 }
 
+// src/runMetadata.ts
+var KEY_SUFFIX = ": ";
+function metadataParagraph(key, value) {
+  const valueText = String(value);
+  const content = [
+    { type: "text", marks: [{ type: "bold" }], text: `${key}${KEY_SUFFIX}` }
+  ];
+  if (valueText) {
+    content.push({ type: "text", text: valueText });
+  }
+  return { type: "paragraph", content };
+}
+function metadataKeyOf(node) {
+  const paragraph = node;
+  if (!paragraph || paragraph.type !== "paragraph") return null;
+  const content = paragraph.content;
+  if (!Array.isArray(content) || content.length === 0) return null;
+  const first = content[0];
+  if (!first || first.type !== "text" || typeof first.text !== "string") {
+    return null;
+  }
+  const marks = first.marks;
+  const isBold = Array.isArray(marks) && marks.some((mark) => mark?.type === "bold");
+  if (!isBold || !first.text.endsWith(KEY_SUFFIX)) return null;
+  const key = first.text.slice(0, -KEY_SUFFIX.length);
+  return key.length > 0 ? key : null;
+}
+function metadataValueOf(node) {
+  const content = node.content;
+  return content.slice(1).map((child) => typeof child.text === "string" ? child.text : "").join("");
+}
+function isEmptyParagraph(node) {
+  const paragraph = node;
+  if (!paragraph || paragraph.type !== "paragraph") return false;
+  const content = paragraph.content;
+  return !Array.isArray(content) || content.length === 0;
+}
+function normalizeDoc(existing) {
+  if (existing === null || existing === void 0) {
+    return { type: "doc", content: [] };
+  }
+  if (typeof existing === "string") {
+    if (!existing.trim()) return { type: "doc", content: [] };
+    try {
+      return normalizeDoc(JSON.parse(existing));
+    } catch {
+      return JSON.parse(tipTapDoc(existing));
+    }
+  }
+  if (typeof existing === "object") {
+    const doc = existing;
+    const content = Array.isArray(doc.content) ? [...doc.content] : [];
+    if (content.length === 1 && isEmptyParagraph(content[0])) {
+      return { ...doc, type: "doc", content: [] };
+    }
+    return { ...doc, type: "doc", content };
+  }
+  return { type: "doc", content: [] };
+}
+function mergeRunMetadataIntoDoc(existingDocs, metadata) {
+  const doc = normalizeDoc(existingDocs);
+  const content = doc.content;
+  const remaining = /* @__PURE__ */ new Map();
+  for (const [key, value] of Object.entries(metadata)) {
+    if (key.trim()) remaining.set(key, value);
+  }
+  for (let i = 0; i < content.length; i++) {
+    const key = metadataKeyOf(content[i]);
+    if (key !== null && remaining.has(key)) {
+      content[i] = metadataParagraph(key, remaining.get(key));
+      remaining.delete(key);
+    }
+  }
+  for (const [key, value] of remaining) {
+    content.push(metadataParagraph(key, value));
+  }
+  return doc;
+}
+function parseRunMetadataFromDoc(docs) {
+  const doc = normalizeDoc(docs);
+  const result = {};
+  for (const node of doc.content) {
+    const key = metadataKeyOf(node);
+    if (key !== null) {
+      result[key] = metadataValueOf(node);
+    }
+  }
+  return result;
+}
+
 // src/client.ts
 var TestPlanItError = class extends Error {
   statusCode;
@@ -424,6 +514,12 @@ var TestPlanItClient = class {
     }
     if (options.tagIds?.length) {
       data.tags = { connect: options.tagIds.map((id) => ({ id })) };
+    }
+    if (options.note) {
+      data.note = options.note;
+    }
+    if (options.docs) {
+      data.docs = options.docs;
     }
     return this.zenstack("testRuns", "create", { data });
   }
@@ -1558,6 +1654,99 @@ var TestPlanItClient = class {
     );
     return response.data;
   }
+  /**
+   * Attach an external link to a test run (run-level, not tied to a result).
+   *
+   * Creates an attachment record with `mimeType: "text/uri-list"` pointing at
+   * the given URL — the run detail page renders it as a clickable link. Use
+   * this for CI build URLs, dashboards, or any external resource for the run.
+   *
+   * The attachment's creator is resolved server-side from the API token, so
+   * no user ID needs to be supplied.
+   *
+   * @param testRunId - The test run to attach the link to
+   * @param url - The external URL
+   * @param name - Display name for the link (defaults to the URL)
+   * @param note - Optional note shown with the attachment
+   */
+  async addTestRunLink(testRunId, url, name, note) {
+    if (!url || !url.trim()) {
+      throw new TestPlanItError("addTestRunLink: url is required");
+    }
+    const data = {
+      url,
+      name: name && name.trim() ? name : url,
+      mimeType: "text/uri-list",
+      size: 0,
+      testRuns: { connect: { id: testRunId } }
+    };
+    if (note) {
+      data.note = note;
+    }
+    return this.zenstack("attachments", "create", { data });
+  }
+  /**
+   * Upload a file attachment to a test run (run-level, not tied to a result).
+   *
+   * Uploads the file to storage and creates an attachment record connected to
+   * the run itself, so it shows on the run detail page. For per-result
+   * attachments use {@link uploadAttachment} / {@link uploadJUnitAttachment}.
+   *
+   * @param testRunId - The test run to attach the file to
+   * @param file - File content as a Blob or Buffer
+   * @param fileName - Name for the attachment
+   * @param mimeType - MIME type (defaults to application/octet-stream)
+   */
+  async uploadTestRunAttachment(testRunId, file, fileName, mimeType) {
+    const { url } = await this.uploadFile(
+      file,
+      fileName,
+      mimeType,
+      `run_${testRunId}`
+    );
+    const size = Buffer.isBuffer(file) ? file.length : file.size;
+    const data = {
+      url,
+      name: fileName,
+      mimeType: mimeType || "application/octet-stream",
+      size,
+      testRuns: { connect: { id: testRunId } }
+    };
+    return this.zenstack("attachments", "create", { data });
+  }
+  /**
+   * Set key/value metadata on a test run.
+   *
+   * Metadata is rendered into the run's `docs` rich-text field (shown on the
+   * run detail page) as one `**key:** value` line per entry. Repeated calls
+   * merge: existing keys are updated in place, new keys are appended, and any
+   * hand-written documentation content is preserved. See
+   * {@link mergeRunMetadataIntoDoc} for the exact document shape.
+   *
+   * Note: the merge is read-modify-write on the run's docs; concurrent calls
+   * against the same run may race (last write wins).
+   *
+   * @param testRunId - The test run to set metadata on
+   * @param metadata - Key/value pairs (numbers/booleans are stringified)
+   * @returns The updated test run
+   */
+  async setTestRunMetadata(testRunId, metadata) {
+    const run = await this.getTestRun(testRunId);
+    if (!run) {
+      throw new TestPlanItError(`Test run ${testRunId} not found`);
+    }
+    const docs = mergeRunMetadataIntoDoc(run.docs, metadata);
+    return this.updateTestRun(testRunId, { docs });
+  }
+  /**
+   * Read the key/value metadata previously written to a test run's `docs`
+   * field (by {@link setTestRunMetadata} or hand-authored in the same
+   * `**key:** value` shape). Values are always strings.
+   */
+  async getTestRunMetadata(testRunId) {
+    const run = await this.getTestRun(testRunId);
+    return parseRunMetadataFromDoc(run?.docs);
+  }
   // ============================================================================
   // JUnit Test Results (for automated test runs)
   // ============================================================================
@@ -1701,6 +1890,8 @@ exports.TestPlanItClient = TestPlanItClient;
 exports.TestPlanItError = TestPlanItError;
 exports.automationStepsToCaseSteps = automationStepsToCaseSteps;
 exports.deriveCaseStepsIfFresh = deriveCaseStepsIfFresh;
+exports.mergeRunMetadataIntoDoc = mergeRunMetadataIntoDoc;
+exports.parseRunMetadataFromDoc = parseRunMetadataFromDoc;
 exports.tipTapDoc = tipTapDoc;
 //# sourceMappingURL=index.js.map
 //# sourceMappingURL=index.js.map

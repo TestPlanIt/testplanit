@@ -17,7 +17,16 @@ import type {
   TrackedTestResult,
   PendingAttachment,
   ReporterState,
+  RunAttachmentInput,
 } from './types.js';
+import {
+  applyEnvTemplate,
+  guessMimeType,
+  isRunLevelAttachment,
+  parseRunLevelAttachment,
+  runLevelOpKey,
+  type RunLevelOp,
+} from './runLevel.js';
 
 // Matches ANSI escape sequences (CSI ... final byte). Built from \u001b
 // string escapes so the source file stays free of literal control characters.
@@ -72,6 +81,19 @@ export default class TestPlanItReporter implements Reporter {
   private currentSpec?: string;
   private currentProject?: string;
   private rootSuiteName?: string;
+
+  /**
+   * `runAttachments` entries whose file couldn't be read at initialization
+   * (typically artifacts produced by the tests themselves). Retried once in
+   * onEnd, before the run is completed.
+   */
+  private deferredRunAttachments: RunAttachmentInput[] = [];
+  /**
+   * Keys of runtime run-level ops already applied this session, so retried
+   * tests (which re-run their attachToRun/setRunMetadata calls) don't create
+   * duplicate run attachments.
+   */
+  private appliedRunOps = new Set<string>();
 
   constructor(options: TestPlanItReporterOptions) {
     this.options = {
@@ -239,12 +261,34 @@ export default class TestPlanItReporter implements Reporter {
       caseIds.length > 0 ? `(Case IDs: ${caseIds.join(', ')})` : '',
     );
 
-    const attachments: PendingAttachment[] = (result.attachments ?? []).map((a) => ({
-      name: a.name,
-      contentType: a.contentType,
-      path: a.path,
-      body: a.body,
-    }));
+    // Partition off reserved `testplanit:run-*` attachments (produced by the
+    // attachToRun/setRunMetadata helpers) — they are run-level operations,
+    // never uploaded to the result.
+    const attachments: PendingAttachment[] = [];
+    for (const a of result.attachments ?? []) {
+      const pending: PendingAttachment = {
+        name: a.name,
+        contentType: a.contentType,
+        path: a.path,
+        body: a.body,
+      };
+      if (isRunLevelAttachment(a.name)) {
+        const op = parseRunLevelAttachment(pending);
+        if (!op) {
+          this.logError(`Ignoring malformed run-level attachment "${a.name}"`);
+          continue;
+        }
+        const key = runLevelOpKey(op);
+        if (this.appliedRunOps.has(key)) {
+          this.log(`Skipping duplicate run-level operation: ${key}`);
+          continue;
+        }
+        this.appliedRunOps.add(key);
+        this.trackOperation(this.applyRunLevelOp(op));
+        continue;
+      }
+      attachments.push(pending);
+    }
 
     const reportPromise = this.reportResult(tracked, caseIds, attachments);
     this.trackOperation(reportPromise);
@@ -287,6 +331,10 @@ export default class TestPlanItReporter implements Reporter {
       this.log('No test run created, skipping summary');
       return;
     }
+
+    // Attach run files that weren't readable at initialization (e.g. reports
+    // produced by the tests), before the run is completed.
+    await this.applyDeferredRunAttachments();
 
     if (this.reportedResultCount === 0) {
       this.log('No results were reported to TestPlanIt, skipping summary');
@@ -609,6 +657,203 @@ export default class TestPlanItReporter implements Reporter {
   }
 
   // ============================================================================
+  // Run-level attachments (links, files, metadata on the run itself)
+  // ============================================================================
+
+  /**
+   * Apply one runtime run-level operation (from an attachToRun /
+   * setRunMetadata call in a test). Initializes the reporter if needed —
+   * an explicit run-level call is a reason to create the run. Failures are
+   * logged and swallowed; they never fail the test run.
+   */
+  private async applyRunLevelOp(op: RunLevelOp): Promise<void> {
+    try {
+      await this.initialize();
+      const testRunId = this.state.testRunId;
+      if (!testRunId) return;
+
+      switch (op.kind) {
+        case 'link': {
+          await this.client.addTestRunLink(testRunId, op.url, op.name, op.note);
+          this.log(`Attached link to run: ${op.url}`);
+          break;
+        }
+        case 'file': {
+          const buffer = op.body ?? (op.path ? await fs.readFile(op.path) : undefined);
+          if (!buffer || buffer.length === 0) {
+            this.log(`Skipping empty run attachment "${op.name}"`);
+            return;
+          }
+          await this.client.uploadTestRunAttachment(
+            testRunId,
+            buffer,
+            op.name,
+            op.contentType || guessMimeType(op.name),
+          );
+          this.log(`Attached file to run: ${op.name}`);
+          break;
+        }
+        case 'metadata': {
+          await this.client.setTestRunMetadata(testRunId, op.metadata);
+          this.log(`Set run metadata: ${Object.keys(op.metadata).join(', ')}`);
+          break;
+        }
+      }
+    } catch (error) {
+      this.logError(`Failed to apply run-level ${op.kind}:`, error);
+    }
+  }
+
+  /**
+   * Apply the declarative run-level options (`runLinks`, `runMetadata`,
+   * `runAttachments`) to the just-created test run. Called once from
+   * initialization, and only when the reporter created the run itself —
+   * appending to an existing run (`testRunId`) skips this so re-runs don't
+   * attach duplicates. Every failure is logged and swallowed.
+   */
+  private async applyRunLevelConfig(): Promise<void> {
+    const testRunId = this.state.testRunId;
+    if (!testRunId) return;
+
+    // Links (e.g. CI build URL)
+    for (const link of this.options.runLinks ?? []) {
+      try {
+        const url = applyEnvTemplate(link.url ?? '');
+        if (url.missing.length > 0 || !url.value.trim()) {
+          this.logError(
+            `Skipping run link "${link.url}": unresolved environment variable(s) ${url.missing.join(', ') || '(empty url)'}`,
+          );
+          continue;
+        }
+        const name = link.name ? applyEnvTemplate(link.name).value.trim() : '';
+        const note = link.note ? applyEnvTemplate(link.note).value : undefined;
+        await this.client.addTestRunLink(testRunId, url.value, name || undefined, note);
+        this.log(`Attached link to run: ${url.value}`);
+      } catch (error) {
+        this.logError(`Failed to attach run link "${link.url}":`, error);
+      }
+    }
+
+    // Metadata (rendered into the run's docs)
+    const metadata: Record<string, string | number | boolean> = {};
+    for (const [rawKey, rawValue] of Object.entries(this.options.runMetadata ?? {})) {
+      const key = applyEnvTemplate(rawKey).value.trim();
+      if (!key) continue;
+      if (typeof rawValue === 'string') {
+        const value = applyEnvTemplate(rawValue);
+        if (value.missing.length > 0 && !value.value.trim()) {
+          this.logError(
+            `Skipping run metadata "${rawKey}": unresolved environment variable(s) ${value.missing.join(', ')}`,
+          );
+          continue;
+        }
+        metadata[key] = value.value;
+      } else {
+        metadata[key] = rawValue;
+      }
+    }
+    if (Object.keys(metadata).length > 0) {
+      try {
+        await this.client.setTestRunMetadata(testRunId, metadata);
+        this.log(`Set run metadata: ${Object.keys(metadata).join(', ')}`);
+      } catch (error) {
+        this.logError('Failed to set run metadata:', error);
+      }
+    }
+
+    // File attachments — defer paths that can't be read yet to onEnd
+    for (const attachment of this.options.runAttachments ?? []) {
+      try {
+        const resolved: RunAttachmentInput = { ...attachment };
+        if (resolved.name) {
+          resolved.name = applyEnvTemplate(resolved.name).value;
+        }
+        if (!resolved.buffer && resolved.path) {
+          const templatedPath = applyEnvTemplate(resolved.path);
+          if (templatedPath.missing.length > 0) {
+            this.logError(
+              `Skipping run attachment "${attachment.path}": unresolved environment variable(s) ${templatedPath.missing.join(', ')}`,
+            );
+            continue;
+          }
+          resolved.path = templatedPath.value;
+        }
+        const uploaded = await this.uploadRunFile(testRunId, resolved);
+        if (!uploaded && resolved.path && !resolved.buffer) {
+          // Not readable yet — likely produced by the tests. Retry in onEnd.
+          this.log(
+            `Run attachment not readable yet, will retry after tests finish: ${resolved.path}`,
+          );
+          this.deferredRunAttachments.push(resolved);
+        }
+      } catch (error) {
+        this.logError(
+          `Failed to attach run file "${attachment.name ?? attachment.path}":`,
+          error,
+        );
+      }
+    }
+  }
+
+  /**
+   * Read and upload one declarative run attachment. Returns false when a
+   * path-based entry can't be read (so the caller can defer it); invalid
+   * entries are logged and count as handled (true).
+   */
+  private async uploadRunFile(testRunId: number, input: RunAttachmentInput): Promise<boolean> {
+    let buffer: Buffer;
+    let name: string;
+
+    if (input.buffer) {
+      if (!input.name) {
+        this.logError('runAttachments: "name" is required when attaching a buffer');
+        return true;
+      }
+      buffer = input.buffer;
+      name = input.name;
+    } else if (input.path) {
+      try {
+        buffer = await fs.readFile(input.path);
+      } catch {
+        return false;
+      }
+      name = input.name && input.name.trim() ? input.name : path.basename(input.path);
+    } else {
+      this.logError('runAttachments: provide a "path" or "buffer"');
+      return true;
+    }
+
+    const mimeType = input.mimeType ?? guessMimeType(name);
+    await this.client.uploadTestRunAttachment(testRunId, buffer, name, mimeType);
+    this.log(`Attached file to run: ${name}`);
+    return true;
+  }
+
+  /**
+   * Retry `runAttachments` entries whose file wasn't readable at
+   * initialization. Called from onEnd before the run is completed.
+   */
+  private async applyDeferredRunAttachments(): Promise<void> {
+    const testRunId = this.state.testRunId;
+    if (!testRunId || this.deferredRunAttachments.length === 0) return;
+
+    for (const attachment of this.deferredRunAttachments) {
+      try {
+        const uploaded = await this.uploadRunFile(testRunId, attachment);
+        if (!uploaded) {
+          this.logError(`Run attachment still not readable, skipping: ${attachment.path}`);
+        }
+      } catch (error) {
+        this.logError(
+          `Failed to attach run file "${attachment.name ?? attachment.path}":`,
+          error,
+        );
+      }
+    }
+    this.deferredRunAttachments = [];
+  }
+
+  // ============================================================================
   // Initialization
   // ============================================================================
 
@@ -638,8 +883,14 @@ export default class TestPlanItReporter implements Reporter {
       if (!this.state.testRunId) {
         await this.createTestRun();
         this.log(`Created test run with ID: ${this.state.testRunId}`);
+        // Apply run-level links, metadata, and file attachments exactly once
+        // on the freshly created run. Internally logs and swallows every
+        // failure — run-level attachments must never fail the run.
+        await this.applyRunLevelConfig();
       } else {
-        // Validate the existing/looked-up run.
+        // Validate the existing/looked-up run. Declarative run-level options
+        // are intentionally NOT applied to an existing run — re-runs
+        // appending to it would attach duplicates.
         const testRun = await this.client.getTestRun(this.state.testRunId);
         this.log(`Using existing test run: ${testRun.name} (ID: ${testRun.id})`);
       }
