@@ -1904,6 +1904,41 @@ describe("JiraAdapter", () => {
 
       vi.unstubAllEnvs();
     });
+
+    it("requests granular Jira Software scopes alongside the classic platform scopes", () => {
+      // The Agile API (board discovery + sprints, i.e. ITERATION milestone
+      // import and sprint webhook routing) does not honour classic scopes —
+      // omitting the granular trio makes every /rest/agile/1.0 call fail with
+      // 401 "Unauthorized; scope does not match" while the platform endpoints
+      // keep working. Locked in so the scope list can't silently regress.
+      const adapter = new JiraAdapter({
+        provider: "JIRA",
+        baseUrl: "https://test.atlassian.net",
+        clientId: "test-client-id",
+        redirectUri: "https://app.com/callback",
+      });
+
+      const scope =
+        new URL(adapter.getAuthorizationUrl("test-state")).searchParams.get(
+          "scope"
+        ) ?? "";
+      const scopes = scope.split(" ");
+
+      expect(scopes).toEqual(
+        expect.arrayContaining([
+          // Jira platform (classic)
+          "read:jira-work",
+          "write:jira-work",
+          "read:jira-user",
+          // Jira Software / Agile (granular)
+          "read:board-scope:jira-software",
+          "read:sprint:jira-software",
+          "read:project:jira",
+          // Refresh tokens
+          "offline_access",
+        ])
+      );
+    });
   });
 
   describe("exchangeCodeForTokens", () => {

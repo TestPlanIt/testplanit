@@ -379,13 +379,47 @@ export class JiraAdapter extends BaseAdapter {
   }
 
   /**
-   * Get OAuth authorization URL
+   * Get OAuth authorization URL.
+   *
+   * Scopes span both of Atlassian's scope systems, because the two REST APIs
+   * we call are governed separately:
+   *
+   *   - Jira platform (`/rest/api/{2,3}/...` — issues, JQL search, project
+   *     versions, comments) is covered by the CLASSIC scopes, which Atlassian
+   *     still recommends for the platform API.
+   *   - Jira Software / Agile (`/rest/agile/1.0/board`, `.../board/{id}/sprint`
+   *     — ITERATION milestone import and sprint webhook routing) does NOT
+   *     support classic scopes at all ("Jira Software doesn't support classic
+   *     scopes. Use granular scopes instead."). Without the granular trio
+   *     below, every agile call fails with
+   *     `401 {"code":401,"message":"Unauthorized; scope does not match"}`
+   *     even though `read:jira-work` is present — the versions endpoint keeps
+   *     working, so the failure looks selective. `read:project:jira` is
+   *     required alongside the board scope for board discovery.
+   *
+   * These scopes must ALSO be enabled on the app in the Atlassian developer
+   * console (Permissions → Jira Software API → Granular scopes); requesting a
+   * scope the app doesn't hold fails at the authorize step. And because
+   * Atlassian binds the granted scope set to the token at consent time and
+   * carries it through every refresh, existing connections keep their old
+   * scopes — admins must disconnect and re-authorize after this change.
    */
   getAuthorizationUrl(state: string): string {
     const params = new URLSearchParams({
       audience: "api.atlassian.com",
       client_id: this.clientId,
-      scope: "read:jira-work write:jira-work read:jira-user offline_access",
+      scope: [
+        // Jira platform (classic)
+        "read:jira-work",
+        "write:jira-work",
+        "read:jira-user",
+        // Jira Software / Agile (granular — no classic equivalent exists)
+        "read:board-scope:jira-software",
+        "read:sprint:jira-software",
+        "read:project:jira",
+        // Refresh-token grant
+        "offline_access",
+      ].join(" "),
       redirect_uri: this.redirectUri,
       state: state,
       response_type: "code",
