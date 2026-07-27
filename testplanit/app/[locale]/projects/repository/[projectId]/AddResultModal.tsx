@@ -2332,10 +2332,7 @@ export function AddResultModal({
 }
 
 // Define a type for statuses to be passed to SharedStepGroupInputs
-type StatusForSelect = Pick<
-  DbStatus,
-  "id" | "name" | "isFailure" | "order"
-> & {
+type StatusForSelect = Pick<DbStatus, "id" | "name" | "isFailure" | "order"> & {
   color?: Pick<DbColor, "value"> | null;
 };
 

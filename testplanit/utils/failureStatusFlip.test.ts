@@ -51,7 +51,9 @@ describe("failureFlipStatusId", () => {
   });
 
   it("picks the lowest-order failure status regardless of array order", () => {
-    expect(failureFlipStatusId(null, [BLOCKED, PASSED, FAILED])).toBe(FAILED.id);
+    expect(failureFlipStatusId(null, [BLOCKED, PASSED, FAILED])).toBe(
+      FAILED.id
+    );
   });
 
   it("leaves an already-failing status alone", () => {
