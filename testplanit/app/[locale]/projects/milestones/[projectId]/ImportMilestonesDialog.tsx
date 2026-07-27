@@ -104,6 +104,13 @@ export function ImportMilestonesDialog({
   const [isImporting, setIsImporting] = useState(false);
   const [searchText, setSearchText] = useState("");
   const [projectFilter, setProjectFilter] = useState<string | null>(null);
+  // null = both kinds. Applied SERVER-side via the preview route's `kind`
+  // param rather than by filtering the fetched rows: sprints cost board
+  // discovery plus a paginated fetch per board, so narrowing to Releases
+  // skips the expensive half of the request instead of throwing it away.
+  const [kindFilter, setKindFilter] = useState<"RELEASE" | "ITERATION" | null>(
+    null
+  );
   const [warnings, setWarnings] = useState<string[]>([]);
 
   // Already-linked external ids for this integration in this project, so
@@ -136,13 +143,16 @@ export function ImportMilestonesDialog({
   );
 
   const fetchPreview = useCallback(
-    async (closed: boolean) => {
+    async (closed: boolean, kind: "RELEASE" | "ITERATION" | null) => {
       setIsLoading(true);
       setError(null);
       try {
         const params = new URLSearchParams({
           projectMappingId,
           includeClosed: String(closed),
+          // Omitted entirely for "both" — the route then falls back to the
+          // kinds the project has enabled in its milestone-sync settings.
+          ...(kind ? { kind } : {}),
         });
         const res = await fetch(
           `/api/integrations/${integrationId}/milestone-sync/preview?${params.toString()}`
@@ -154,7 +164,16 @@ export function ImportMilestonesDialog({
         if (!data) {
           throw new Error(t("unexpectedResponse", { status: res.status }));
         }
-        setItems(data.items ?? []);
+        const nextItems: ExternalMilestone[] = data.items ?? [];
+        setItems(nextItems);
+        // Drop selections that the new result set no longer contains. Without
+        // this, narrowing the filter would keep invisible rows selected and
+        // silently import them — e.g. select a sprint, switch to Releases,
+        // click Import.
+        const visibleIds = new Set(nextItems.map((item) => item.id));
+        setSelectedIds(
+          (prev) => new Set([...prev].filter((id) => visibleIds.has(id)))
+        );
         setWarnings(Array.isArray(data.warnings) ? data.warnings : []);
       } catch (e: any) {
         setError(e?.message || t("previewFailed"));
@@ -174,15 +193,22 @@ export function ImportMilestonesDialog({
       setError(null);
       setSearchText("");
       setProjectFilter(null);
+      setKindFilter(null);
       setWarnings([]);
-      void fetchPreview(false);
+      void fetchPreview(false, null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, projectMappingId]);
 
   const handleShowClosedToggle = (checked: boolean) => {
     setIncludeClosed(checked);
-    void fetchPreview(checked);
+    void fetchPreview(checked, kindFilter);
+  };
+
+  const handleKindFilterChange = (kind: "RELEASE" | "ITERATION" | null) => {
+    if (kind === kindFilter) return;
+    setKindFilter(kind);
+    void fetchPreview(includeClosed, kind);
   };
 
   // Distinct source Jira projects present in the result set — drives the
@@ -291,6 +317,35 @@ export function ImportMilestonesDialog({
             onChange={(e) => setSearchText(e.target.value)}
             className="ps-10"
           />
+        </div>
+
+        {/* Kind filter — Releases and Sprints are fetched from different Jira
+            APIs, so this narrows the request rather than the rendered list. */}
+        <div className="flex flex-wrap gap-1">
+          <Badge
+            variant={kindFilter === null ? "default" : "outline"}
+            className="cursor-pointer"
+            data-testid="import-milestones-kind-all"
+            onClick={() => handleKindFilterChange(null)}
+          >
+            {tIssues("filterAll")}
+          </Badge>
+          <Badge
+            variant={kindFilter === "RELEASE" ? "default" : "outline"}
+            className="cursor-pointer"
+            data-testid="import-milestones-kind-release"
+            onClick={() => handleKindFilterChange("RELEASE")}
+          >
+            {t("kindRelease")}
+          </Badge>
+          <Badge
+            variant={kindFilter === "ITERATION" ? "default" : "outline"}
+            className="cursor-pointer"
+            data-testid="import-milestones-kind-sprint"
+            onClick={() => handleKindFilterChange("ITERATION")}
+          >
+            {t("kindSprint")}
+          </Badge>
         </div>
 
         {showProjectMeta && (
@@ -460,7 +515,7 @@ export function ImportMilestonesDialog({
               disabled={isImporting}
             >
               {isImporting && <Loader2 className="h-4 w-4 animate-spin" />}
-              {t("confirmSelection")}
+              {t("confirmSelectionCount", { count: selectedIds.size })}
             </Button>
           </div>
         )}

@@ -40,7 +40,11 @@ vi.mock("next-intl", () => ({
     let result = key;
     if (params) {
       Object.entries(params).forEach(([k, v]) => {
-        result = result.replace(`{${k}}`, String(v));
+        const substituted = result.replace(`{${k}}`, String(v));
+        // ICU forms this stub can't render (plurals like
+        // "{count, plural, ...}") leave the key untouched — append the value
+        // so tests can still assert on what was passed in.
+        result = substituted === result ? `${result} ${v}` : substituted;
       });
     }
     return result;
@@ -329,7 +333,9 @@ describe("ImportMilestonesDialog", () => {
     const row = rows.find((r) => within(r).queryByText("v1.0"))!;
     fireEvent.click(within(row).getByRole("checkbox"));
 
-    const confirmButton = await screen.findByText("confirmSelection");
+    // The next-intl mock renders the key with params substituted, so the
+    // count-bearing label surfaces as "confirmSelectionCount".
+    const confirmButton = await screen.findByText(/confirmSelectionCount/);
     fireEvent.click(confirmButton);
 
     await waitFor(() =>
@@ -506,5 +512,180 @@ describe("ImportMilestonesDialog — multi-project picker", () => {
 
     const alert = await screen.findByTestId("import-milestones-error");
     expect(alert.textContent).toContain("scope does not match");
+  });
+
+  describe("kind filter", () => {
+    const mixedItems = [
+      {
+        id: "v-1",
+        kind: "RELEASE",
+        name: "v1.0",
+        state: "ACTIVE",
+        rawState: "unreleased",
+      },
+      {
+        id: "s-1",
+        kind: "ITERATION",
+        name: "Sprint 9",
+        state: "ACTIVE",
+        rawState: "active",
+      },
+    ];
+
+    it("requests both kinds by default — no kind param is sent", async () => {
+      mockFetch.mockResolvedValue(makePreviewResponse(mixedItems));
+      render(<ImportMilestonesDialog {...baseProps} />);
+
+      await waitFor(() => expect(mockFetch).toHaveBeenCalled());
+      expect(mockFetch.mock.calls[0][0]).not.toContain("kind=");
+    });
+
+    it("narrows the REQUEST, not just the list, when a single kind is picked", async () => {
+      // Sprints cost board discovery plus a paginated fetch per board, so the
+      // filter has to reach the server to be worth anything.
+      mockFetch.mockResolvedValue(makePreviewResponse(mixedItems));
+      render(<ImportMilestonesDialog {...baseProps} />);
+      await screen.findByText("v1.0");
+
+      fireEvent.click(screen.getByTestId("import-milestones-kind-release"));
+
+      await waitFor(() =>
+        expect(mockFetch).toHaveBeenCalledWith(
+          expect.stringContaining("kind=RELEASE")
+        )
+      );
+    });
+
+    it("sends kind=ITERATION for the sprint chip", async () => {
+      mockFetch.mockResolvedValue(makePreviewResponse(mixedItems));
+      render(<ImportMilestonesDialog {...baseProps} />);
+      await screen.findByText("v1.0");
+
+      fireEvent.click(screen.getByTestId("import-milestones-kind-sprint"));
+
+      await waitFor(() =>
+        expect(mockFetch).toHaveBeenCalledWith(
+          expect.stringContaining("kind=ITERATION")
+        )
+      );
+    });
+
+    it("returning to All drops the kind param again", async () => {
+      mockFetch.mockResolvedValue(makePreviewResponse(mixedItems));
+      render(<ImportMilestonesDialog {...baseProps} />);
+      await screen.findByText("v1.0");
+
+      fireEvent.click(screen.getByTestId("import-milestones-kind-release"));
+      await waitFor(() =>
+        expect(mockFetch).toHaveBeenCalledWith(
+          expect.stringContaining("kind=RELEASE")
+        )
+      );
+
+      fireEvent.click(screen.getByTestId("import-milestones-kind-all"));
+
+      await waitFor(() => {
+        const lastUrl = String(
+          mockFetch.mock.calls[mockFetch.mock.calls.length - 1][0]
+        );
+        expect(lastUrl).toContain("milestone-sync/preview");
+        expect(lastUrl).not.toContain("kind=");
+      });
+    });
+
+    it("re-clicking the active chip does not refetch", async () => {
+      mockFetch.mockResolvedValue(makePreviewResponse(mixedItems));
+      render(<ImportMilestonesDialog {...baseProps} />);
+      await screen.findByText("v1.0");
+      const callsBefore = mockFetch.mock.calls.length;
+
+      fireEvent.click(screen.getByTestId("import-milestones-kind-all"));
+
+      expect(mockFetch.mock.calls.length).toBe(callsBefore);
+    });
+
+    it("preserves the show-closed setting across a kind change", async () => {
+      mockFetch.mockResolvedValue(makePreviewResponse(mixedItems));
+      render(<ImportMilestonesDialog {...baseProps} />);
+      await screen.findByText("v1.0");
+
+      fireEvent.click(screen.getByRole("switch"));
+      await waitFor(() =>
+        expect(mockFetch).toHaveBeenCalledWith(
+          expect.stringContaining("includeClosed=true")
+        )
+      );
+
+      fireEvent.click(screen.getByTestId("import-milestones-kind-sprint"));
+
+      await waitFor(() => {
+        const lastUrl = String(
+          mockFetch.mock.calls[mockFetch.mock.calls.length - 1][0]
+        );
+        expect(lastUrl).toContain("includeClosed=true");
+        expect(lastUrl).toContain("kind=ITERATION");
+      });
+    });
+
+    it("drops selections the narrowed result no longer contains", async () => {
+      // Otherwise a sprint selected under All stays selected after switching
+      // to Releases and gets imported without ever being visible.
+      mockFetch.mockResolvedValue(makePreviewResponse(mixedItems));
+      render(<ImportMilestonesDialog {...baseProps} />);
+      await screen.findByText("Sprint 9");
+
+      const rows = screen.getAllByTestId("import-milestone-row");
+      const sprintRow = rows.find((r) => within(r).queryByText("Sprint 9"))!;
+      fireEvent.click(within(sprintRow).getByRole("checkbox"));
+      expect(
+        await screen.findByText(/confirmSelectionCount/)
+      ).toBeInTheDocument();
+
+      mockFetch.mockResolvedValue(
+        makePreviewResponse(mixedItems.filter((i) => i.kind === "RELEASE"))
+      );
+      fireEvent.click(screen.getByTestId("import-milestones-kind-release"));
+
+      // Selection bar disappears entirely once the orphaned id is pruned.
+      await waitFor(() =>
+        expect(screen.queryByText(/confirmSelectionCount/)).toBeNull()
+      );
+    });
+  });
+
+  it("labels the import button with the selected count", async () => {
+    mockFetch.mockResolvedValue(
+      makePreviewResponse([
+        {
+          id: "10001",
+          kind: "RELEASE",
+          name: "v1.0",
+          state: "ACTIVE",
+          rawState: "unreleased",
+        },
+        {
+          id: "10002",
+          kind: "RELEASE",
+          name: "v2.0",
+          state: "ACTIVE",
+          rawState: "unreleased",
+        },
+      ])
+    );
+    render(<ImportMilestonesDialog {...baseProps} />);
+    await screen.findByText("v1.0");
+
+    const rows = screen.getAllByTestId("import-milestone-row");
+    fireEvent.click(within(rows[0]).getByRole("checkbox"));
+    // The next-intl mock substitutes ICU params, so the count is visible in
+    // the rendered key.
+    expect(
+      await screen.findByText(/confirmSelectionCount.*1/)
+    ).toBeInTheDocument();
+
+    fireEvent.click(within(rows[1]).getByRole("checkbox"));
+    expect(
+      await screen.findByText(/confirmSelectionCount.*2/)
+    ).toBeInTheDocument();
   });
 });

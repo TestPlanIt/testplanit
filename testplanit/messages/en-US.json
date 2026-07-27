@@ -2217,6 +2217,7 @@
       "alreadyLinked": "Already linked",
       "selectedCount": "{count, plural, one {# selected} other {# selected}}",
       "confirmSelection": "Import Selected",
+      "confirmSelectionCount": "{count, plural, one {Import # Milestone} other {Import # Milestones}}",
       "empty": "No milestones found",
       "previewFailed": "Failed to load milestones from Jira",
       "importFailed": "Failed to import selected milestones",
