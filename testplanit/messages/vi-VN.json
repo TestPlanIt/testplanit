@@ -4572,6 +4572,8 @@
           "warning": "Trường Case Field sẽ bị xóa khỏi mọi mẫu. Thao tác này không thể hoàn tác."
         }
       },
+      "generateDefaultOn": "Được bao gồm theo mặc định trong trình hướng dẫn Tạo Trường hợp kiểm thử. Nhấp để loại trừ theo mặc định.",
+      "generateDefaultOff": "Bị loại trừ theo mặc định trong trình hướng dẫn Tạo Trường hợp kiểm thử. Nhấp để bao gồm theo mặc định.",
       "resultFields": {
         "description": "Quản lý các trường kết quả",
         "add": {
@@ -6582,7 +6584,7 @@
       "name": "## Tên mẫu\nMột tên duy nhất và mô tả cho mẫu này (ví dụ: 'Trường hợp kiểm thử tiêu chuẩn', 'Kết quả kiểm thử API').",
       "isEnabled": "## Đã bật\nNếu được chọn, mẫu này sẽ có sẵn để lựa chọn khi tạo trường hợp kiểm thử mới hoặc xác định cấu trúc chạy kiểm thử. Nếu một mẫu được đặt là 'Mặc định', nó cũng phải được 'Bật'.",
       "isDefault": "## Mặc định\nNếu được chọn, mẫu này sẽ tự động được chọn cho các dự án mới hoặc làm mặc định cho tất cả các dự án nếu không có mẫu mặc định cụ thể nào được thiết lập cho dự án. Chỉ có một mẫu có thể là mặc định cho tất cả các dự án. Việc bật tùy chọn này sẽ vô hiệu hóa bất kỳ mẫu nào khác hiện đang được đặt làm mặc định.",
-      "caseFields": "## Trường dữ liệu kiểm thử\nChọn và sắp xếp các trường tùy chỉnh sẽ có sẵn khi tạo hoặc chỉnh sửa trường hợp kiểm thử bằng mẫu này.\n\n- Thêm các trường từ menu thả xuống để đưa chúng vào mẫu\n- Kéo và thả để sắp xếp lại thứ tự các trường\n- Thứ tự xác định cách các trường hiển thị trong biểu mẫu\n- Chỉ các trường dữ liệu kiểm thử đã được kích hoạt mới có thể được chọn\n- Các trường dữ liệu kiểm thử xác định cấu trúc và dữ liệu được thu thập cho các trường hợp kiểm thử",
+      "caseFields": "## Trường dữ liệu kiểm thử\nChọn và sắp xếp các trường tùy chỉnh sẽ có sẵn khi tạo hoặc chỉnh sửa trường hợp kiểm thử bằng mẫu này.\n\n- Thêm các trường từ menu thả xuống để đưa chúng vào mẫu\n- Kéo và thả để sắp xếp lại thứ tự các trường\n- Thứ tự xác định cách các trường hiển thị trong biểu mẫu\n- Chỉ các trường dữ liệu kiểm thử đã được kích hoạt mới có thể được chọn\n- Các trường dữ liệu kiểm thử xác định cấu trúc và dữ liệu được thu thập cho các trường hợp kiểm thử\n- Công cụ chuyển đổi hình ngôi sao kiểm soát việc một trường có được chọn sẵn trong trình hướng dẫn Tạo Trường hợp kiểm thử hay không; người dùng vẫn có thể thay đổi lựa chọn đó ở đó",
       "resultFields": "## Các trường kết quả\nChọn và sắp xếp các trường tùy chỉnh sẽ hiển thị khi thêm kết quả kiểm thử bằng mẫu này.\n\n- Thêm các trường từ menu thả xuống để đưa chúng vào mẫu\n- Kéo và thả để sắp xếp lại các trường\n- Thứ tự sẽ xác định cách các trường hiển thị khi nhập kết quả kiểm thử\n- Chỉ các trường kết quả được kích hoạt mới có thể được chọn\n- Các trường kết quả ghi lại dữ liệu bổ sung cụ thể cho kết quả thực thi kiểm thử",
       "projects": "## Các Dự Án Liên Kết\nChọn các dự án mà mẫu này sẽ khả dụng. Nếu không có dự án nào được chọn, mẫu sẽ khả dụng trên toàn cầu. Việc gán mẫu cho các dự án cụ thể sẽ giới hạn việc sử dụng mẫu chỉ trong các dự án đó."
     },

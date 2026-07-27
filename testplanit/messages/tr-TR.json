@@ -4572,6 +4572,8 @@
           "warning": "Vaka alanı tüm şablonlardan kaldırılacaktır. Bu işlem geri alınamaz."
         }
       },
+      "generateDefaultOn": "Test Durumları Oluştur sihirbazında varsayılan olarak dahil edilir. Varsayılan olarak hariç tutmak için tıklayın.",
+      "generateDefaultOff": "Test Durumları Oluştur sihirbazında varsayılan olarak hariç tutulur. Varsayılan olarak dahil etmek için tıklayın.",
       "resultFields": {
         "description": "Sonuç alanlarını yönetin",
         "add": {
@@ -6582,7 +6584,7 @@
       "name": "## Şablon Adı\nBu şablon için benzersiz ve açıklayıcı bir ad (örneğin, 'Standart Test Durumu', 'API Test Sonuçları').",
       "isEnabled": "## Etkinleştirildi\nİşaretlenirse, bu şablon yeni test senaryoları oluştururken veya test çalıştırma yapılarını tanımlarken seçilebilir olacaktır. Bir şablon 'Varsayılan' olarak ayarlanmışsa, aynı zamanda 'Etkin' de olmalıdır.",
       "isDefault": "## Varsayılan\nİşaretlenirse, bu şablon yeni projeler için otomatik olarak seçilir veya projeye özgü bir varsayılan ayarlanmamışsa tüm projeler için varsayılan olarak seçilir. Tüm projelerde yalnızca bir şablon varsayılan olabilir. Bunu etkinleştirmek, şu anda varsayılan olarak ayarlanmış diğer tüm şablonları devre dışı bırakacaktır.",
-      "caseFields": "## Durum Alanları\nBu şablonu kullanarak test durumları oluştururken veya düzenlerken kullanılabilir olacak özel alanları seçin ve sıralayın.\n\n- Şablona dahil etmek için açılır menüden alanlar ekleyin\n- Alanların sırasını değiştirmek için sürükleyip bırakın\n- Sıra, alanların formlarda nasıl görüneceğini belirler\n- Yalnızca etkinleştirilmiş durum alanları seçilebilir\n- Durum alanları, test durumları için yakalanan yapıyı ve verileri tanımlar",
+      "caseFields": "## Durum Alanları\nBu şablonu kullanarak test durumları oluştururken veya düzenlerken kullanılabilir olacak özel alanları seçin ve sıralayın.\n\n- Şablona dahil etmek için açılır menüden alanlar ekleyin\n- Alanların sırasını değiştirmek için sürükleyip bırakın\n- Sıra, alanların formlarda nasıl görüneceğini belirler\n- Yalnızca etkinleştirilmiş durum alanları seçilebilir\n- Durum alanları, test durumları için yakalanan yapıyı ve verileri tanımlar\n- Işıltı düğmesi, bir alanın Test Durumları Oluştur sihirbazında başlangıçta seçili olup olmadığını kontrol eder; kullanıcılar seçimi orada yine de değiştirebilir",
       "resultFields": "## Sonuç Alanları\nBu şablonu kullanarak test sonuçları eklerken kullanılabilir olacak özel alanları seçin ve sıralayın.\n\n- Şablona dahil etmek için açılır menüden alanlar ekleyin\n- Alanların sırasını değiştirmek için sürükleyip bırakın\n- Sıra, test sonuçları girilirken alanların nasıl görüneceğini belirler\n- Yalnızca etkinleştirilmiş sonuç alanları seçilebilir\n- Sonuç alanları, test yürütme sonuçlarına özgü ek verileri yakalar",
       "projects": "## İlişkili Projeler\nBu şablonun hangi projelerde kullanılabileceğini seçin. Hiçbir proje seçilmezse, şablon global olarak kullanılabilir. Bir şablonu belirli projelere atamak, kullanımını yalnızca bu projelerle sınırlandırır."
     },

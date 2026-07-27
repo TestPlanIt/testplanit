@@ -4572,6 +4572,8 @@
           "warning": "Il campo Caso verrà rimosso da tutti i modelli. Questa azione non può essere annullata."
         }
       },
+      "generateDefaultOn": "Incluso per impostazione predefinita nella procedura guidata Genera casi di test. Fai clic per escluderlo per impostazione predefinita.",
+      "generateDefaultOff": "Escluso per impostazione predefinita nella procedura guidata Genera casi di test. Fai clic per includerlo per impostazione predefinita.",
       "resultFields": {
         "description": "Gestisci i campi dei risultati",
         "add": {
@@ -6582,7 +6584,7 @@
       "name": "## Nome modello\nUn nome univoco e descrittivo per questo modello (ad esempio, 'Caso di test standard', 'Risultati del test API').",
       "isEnabled": "## Abilitato\nSe selezionato, questo modello sarà disponibile per la selezione durante la creazione di nuovi casi di test o la definizione di strutture di esecuzione dei test. Se un modello è impostato come \"Predefinito\", deve essere anche \"Abilitato\".",
       "isDefault": "## Predefinito\nSe selezionato, questo modello verrà selezionato automaticamente per i nuovi progetti o come predefinito per tutti i progetti se non è impostato alcun valore predefinito specifico per il progetto. Solo un modello può essere predefinito per tutti i progetti. Abilitando questa opzione, verranno disabilitati tutti gli altri modelli attualmente impostati come predefiniti.",
-      "caseFields": "## Campi del caso\nSeleziona e ordina i campi personalizzati che saranno disponibili durante la creazione o la modifica dei casi di test utilizzando questo modello.\n\n- Aggiungi campi dal menu a tendina per includerli nel modello\n- Trascina e rilascia per riordinare i campi\n- L'ordine determina come i campi vengono visualizzati nei moduli\n- Solo i campi del caso abilitati sono disponibili per la selezione\n- I campi del caso definiscono la struttura e i dati acquisiti per i casi di test",
+      "caseFields": "## Campi del caso\nSeleziona e ordina i campi personalizzati che saranno disponibili durante la creazione o la modifica dei casi di test utilizzando questo modello.\n\n- Aggiungi campi dal menu a tendina per includerli nel modello\n- Trascina e rilascia per riordinare i campi\n- L'ordine determina come i campi vengono visualizzati nei moduli\n- Solo i campi del caso abilitati sono disponibili per la selezione\n- I campi del caso definiscono la struttura e i dati acquisiti per i casi di test\n- L'interruttore a forma di scintille controlla se un campo inizia selezionato nella procedura guidata Genera casi di test; gli utenti possono comunque modificare la selezione lì",
       "resultFields": "## Campi dei risultati\nSeleziona e ordina i campi personalizzati che saranno disponibili quando aggiungi i risultati dei test utilizzando questo modello.\n\n- Aggiungi i campi dal menu a tendina per includerli nel modello\n- Trascina e rilascia per riordinare i campi\n- L'ordine determina come appaiono i campi quando inserisci i risultati dei test\n- Solo i campi dei risultati abilitati sono disponibili per la selezione\n- I campi dei risultati acquisiscono dati aggiuntivi specifici per gli esiti dell'esecuzione dei test",
       "projects": "## Progetti associati\nSeleziona per quali progetti sarà disponibile questo modello. Se non viene selezionato alcun progetto, il modello sarà disponibile a livello globale. L'assegnazione di un modello a progetti specifici ne limita l'utilizzo solo a tali progetti."
     },

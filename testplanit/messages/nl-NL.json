@@ -4572,6 +4572,8 @@
           "warning": "Het veld 'Case' wordt uit alle sjablonen verwijderd. Deze actie kan niet ongedaan worden gemaakt."
         }
       },
+      "generateDefaultOn": "Standaard opgenomen in de wizard Testcases genereren. Klik om het standaard uit te sluiten.",
+      "generateDefaultOff": "Standaard uitgesloten in de wizard Testcases genereren. Klik om het standaard op te nemen.",
       "resultFields": {
         "description": "Resultaatvelden beheren",
         "add": {
@@ -6582,7 +6584,7 @@
       "name": "## Sjabloonnaam\nEen unieke en beschrijvende naam voor deze sjabloon (bijv. 'Standaardtestgeval', 'API-testresultaten').",
       "isEnabled": "## Ingeschakeld\nIndien aangevinkt, is deze sjabloon beschikbaar voor selectie bij het aanmaken van nieuwe testcases of het definiëren van testrunstructuren. Als een sjabloon is ingesteld als 'Standaard', moet deze ook 'Ingeschakeld' zijn.",
       "isDefault": "## Standaard\nIndien aangevinkt, wordt deze sjabloon automatisch geselecteerd voor nieuwe projecten of als standaard voor alle projecten als er geen projectspecifieke standaard is ingesteld. Slechts één sjabloon kan de standaard zijn voor alle projecten. Als u deze optie inschakelt, worden alle andere sjablonen die momenteel als standaard zijn ingesteld, uitgeschakeld.",
-      "caseFields": "## Testcasevelden\nSelecteer en rangschik de aangepaste velden die beschikbaar zullen zijn bij het maken of bewerken van testcases met behulp van deze sjabloon.\n\n- Voeg velden toe vanuit de dropdown om ze in de sjabloon op te nemen\n- Versleep velden om de volgorde te wijzigen\n- De volgorde bepaalt hoe velden in formulieren worden weergegeven\n- Alleen ingeschakelde testcasevelden zijn beschikbaar voor selectie\n- Testcasevelden definiëren de structuur en de vastgelegde gegevens voor testcases",
+      "caseFields": "## Testcasevelden\nSelecteer en rangschik de aangepaste velden die beschikbaar zullen zijn bij het maken of bewerken van testcases met behulp van deze sjabloon.\n\n- Voeg velden toe vanuit de dropdown om ze in de sjabloon op te nemen\n- Versleep velden om de volgorde te wijzigen\n- De volgorde bepaalt hoe velden in formulieren worden weergegeven\n- Alleen ingeschakelde testcasevelden zijn beschikbaar voor selectie\n- Testcasevelden definiëren de structuur en de vastgelegde gegevens voor testcases\n- De sparkles-schakelaar bepaalt of een veld standaard geselecteerd is in de wizard Testcases genereren; gebruikers kunnen de selectie daar nog steeds wijzigen",
       "resultFields": "## Resultaatvelden\nSelecteer en rangschik de aangepaste velden die beschikbaar zullen zijn bij het toevoegen van testresultaten met behulp van deze sjabloon.\n\n- Voeg velden toe vanuit de dropdown om ze in de sjabloon op te nemen\n- Versleep de velden om de volgorde te wijzigen\n- De volgorde bepaalt hoe de velden worden weergegeven bij het invoeren van testresultaten\n- Alleen ingeschakelde resultaatvelden zijn beschikbaar voor selectie\n- Resultaatvelden leggen aanvullende gegevens vast die specifiek zijn voor de uitkomsten van de testuitvoering",
       "projects": "## Gekoppelde projecten\nSelecteer voor welke projecten deze sjabloon beschikbaar zal zijn. Als er geen projecten zijn geselecteerd, is de sjabloon wereldwijd beschikbaar. Door een sjabloon aan specifieke projecten toe te wijzen, wordt het gebruik ervan beperkt tot alleen die projecten."
     },

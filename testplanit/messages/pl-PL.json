@@ -4572,6 +4572,8 @@
           "warning": "Pole „Sprawa” zostanie usunięte ze wszystkich szablonów. Tej czynności nie można cofnąć."
         }
       },
+      "generateDefaultOn": "Domyślnie uwzględnione w kreatorze generowania przypadków testowych. Kliknij, aby domyślnie je wykluczyć.",
+      "generateDefaultOff": "Domyślnie wykluczone z kreatora generowania przypadków testowych. Kliknij, aby domyślnie je uwzględnić.",
       "resultFields": {
         "description": "Zarządzaj polami wyników",
         "add": {
@@ -6582,7 +6584,7 @@
       "name": "## Nazwa szablonu\nUnikalna i opisowa nazwa tego szablonu (np. „Standardowy przypadek testowy”, „Wyniki testów API”).",
       "isEnabled": "## Włączone\nJeśli zaznaczone, ten szablon będzie dostępny do wyboru podczas tworzenia nowych przypadków testowych lub definiowania struktur przebiegów testów. Jeśli szablon jest ustawiony jako „Domyślny”, musi być również „Włączony”.",
       "isDefault": "## Domyślny\nJeśli zaznaczysz tę opcję, ten szablon będzie automatycznie wybierany dla nowych projektów lub jako domyślny dla wszystkich projektów, jeśli nie zostanie ustawiony żaden szablon domyślny dla danego projektu. Tylko jeden szablon może być domyślny we wszystkich projektach. Włączenie tej opcji wyłączy wszystkie inne szablony ustawione jako domyślne.",
-      "caseFields": "## Pola przypadków\nWybierz i uporządkuj pola niestandardowe, które będą dostępne podczas tworzenia lub edytowania przypadków testowych przy użyciu tego szablonu.\n\n— Dodaj pola z listy rozwijanej, aby uwzględnić je w szablonie\n— Przeciągnij i upuść, aby zmienić kolejność pól\n— Kolejność określa sposób wyświetlania pól w formularzach\n— Dostępne są do wyboru tylko włączone pola przypadków\n— Pola przypadków definiują strukturę i dane przechwytywane dla przypadków testowych",
+      "caseFields": "## Pola przypadków\nWybierz i uporządkuj pola niestandardowe, które będą dostępne podczas tworzenia lub edytowania przypadków testowych przy użyciu tego szablonu.\n\n— Dodaj pola z listy rozwijanej, aby uwzględnić je w szablonie\n— Przeciągnij i upuść, aby zmienić kolejność pól\n— Kolejność określa sposób wyświetlania pól w formularzach\n— Dostępne są do wyboru tylko włączone pola przypadków\n— Pola przypadków definiują strukturę i dane przechwytywane dla przypadków testowych\n— Przełącznik z ikoną iskierek określa, czy pole jest domyślnie zaznaczone w kreatorze generowania przypadków testowych; użytkownicy mogą nadal zmienić ten wybór w kreatorze",
       "resultFields": "## Pola wyników\nWybierz i uporządkuj pola niestandardowe, które będą dostępne podczas dodawania wyników testów za pomocą tego szablonu.\n\n— Dodaj pola z listy rozwijanej, aby uwzględnić je w szablonie\n— Przeciągnij i upuść, aby zmienić kolejność pól\n— Kolejność określa sposób wyświetlania pól podczas wprowadzania wyników testów\n— Dostępne do wyboru są tylko włączone pola wyników\n— Pola wyników przechwytują dodatkowe dane specyficzne dla wyników wykonania testu",
       "projects": "## Powiązane projekty\nWybierz projekty, dla których ten szablon będzie dostępny. Jeśli nie wybrano żadnych projektów, szablon będzie dostępny globalnie. Przypisanie szablonu do konkretnych projektów ogranicza jego użycie tylko do tych projektów."
     },

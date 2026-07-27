@@ -4572,6 +4572,8 @@
           "warning": "O campo \"Case\" será removido de todos os modelos. Esta ação é irreversível."
         }
       },
+      "generateDefaultOn": "Incluído por padrão no assistente de Geração de Casos de Teste. Clique para excluí-lo por padrão.",
+      "generateDefaultOff": "Excluído por padrão no assistente de Geração de Casos de Teste. Clique para incluí-lo por padrão.",
       "resultFields": {
         "description": "Gerenciar campos de resultado",
         "add": {
@@ -6582,7 +6584,7 @@
       "name": "## Nome do modelo\nUm nome único e descritivo para este modelo (por exemplo, 'Caso de teste padrão', 'Resultados do teste de API').",
       "isEnabled": "## Ativado\nSe marcado, este modelo estará disponível para seleção ao criar novos casos de teste ou definir estruturas de execução de testes. Se um modelo estiver definido como 'Padrão', ele também deverá estar 'Ativado'.",
       "isDefault": "## Padrão\nSe marcado, este modelo será selecionado automaticamente para novos projetos ou como padrão para todos os projetos, caso nenhum padrão específico do projeto esteja definido. Apenas um modelo pode ser o padrão para todos os projetos. Habilitar esta opção desabilitará qualquer outro modelo atualmente definido como padrão.",
-      "caseFields": "## Campos de Caso\nSelecione e ordene os campos personalizados que estarão disponíveis ao criar ou editar casos de teste usando este modelo.\n\n- Adicione campos da lista suspensa para incluí-los no modelo\n- Arraste e solte para reordenar os campos\n- A ordem determina como os campos aparecem nos formulários\n- Somente os campos de caso habilitados estão disponíveis para seleção\n- Os campos de caso definem a estrutura e os dados capturados para os casos de teste",
+      "caseFields": "## Campos de Caso\nSelecione e ordene os campos personalizados que estarão disponíveis ao criar ou editar casos de teste usando este modelo.\n\n- Adicione campos da lista suspensa para incluí-los no modelo\n- Arraste e solte para reordenar os campos\n- A ordem determina como os campos aparecem nos formulários\n- Somente os campos de caso habilitados estão disponíveis para seleção\n- Os campos de caso definem a estrutura e os dados capturados para os casos de teste\n- O alternador de brilhos controla se um campo começa selecionado no assistente de Geração de Casos de Teste; os usuários ainda podem alterar a seleção lá",
       "resultFields": "## Campos de Resultado\nSelecione e ordene os campos personalizados que estarão disponíveis ao adicionar resultados de teste usando este modelo.\n\n- Adicione campos da lista suspensa para incluí-los no modelo\n- Arraste e solte para reordenar os campos\n- A ordem determina como os campos aparecem ao inserir resultados de teste\n- Somente os campos de resultado habilitados estão disponíveis para seleção\n- Os campos de resultado capturam dados adicionais específicos dos resultados da execução do teste",
       "projects": "## Projetos Associados\nSelecione para quais projetos este modelo estará disponível. Se nenhum projeto for selecionado, o modelo estará disponível globalmente. Atribuir um modelo a projetos específicos restringe seu uso apenas a esses projetos."
     },

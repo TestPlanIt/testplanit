@@ -4572,6 +4572,8 @@
           "warning": "Le champ « Cas » sera supprimé de tous les modèles. Cette action est irréversible."
         }
       },
+      "generateDefaultOn": "Inclus par défaut dans l'assistant de génération de cas de test. Cliquez pour l'exclure par défaut.",
+      "generateDefaultOff": "Exclu par défaut dans l'assistant de génération de cas de test. Cliquez pour l'inclure par défaut.",
       "resultFields": {
         "description": "Gérer les champs de résultats",
         "add": {
@@ -6582,7 +6584,7 @@
       "name": "## Nom du modèle\nUn nom unique et descriptif pour ce modèle (par exemple, 'Cas de test standard', 'Résultats des tests d'API').",
       "isEnabled": "## Activé\nSi cette option est cochée, ce modèle sera disponible pour la sélection lors de la création de nouveaux cas de test ou de la définition de structures d'exécution de tests. Si un modèle est défini comme « Par défaut », il doit également être « Activé ».",
       "isDefault": "## Modèle par défaut\nSi cette option est cochée, ce modèle sera automatiquement sélectionné pour les nouveaux projets ou comme modèle par défaut pour tous les projets si aucun modèle par défaut spécifique à un projet n'est défini. Un seul modèle peut être défini par défaut pour tous les projets. Activer cette option désactivera tout autre modèle actuellement défini par défaut.",
-      "caseFields": "## Champs de cas\nSélectionnez et organisez les champs personnalisés qui seront disponibles lors de la création ou de la modification de cas de test à l'aide de ce modèle.\n\n- Ajoutez des champs depuis la liste déroulante pour les inclure dans le modèle.\n- Réorganisez les champs par glisser-déposer.\n- L'ordre détermine l'affichage des champs dans les formulaires.\n- Seuls les champs de cas activés sont disponibles.\n- Les champs de cas définissent la structure et les données capturées pour les cas de test.",
+      "caseFields": "## Champs de cas\nSélectionnez et organisez les champs personnalisés qui seront disponibles lors de la création ou de la modification de cas de test à l'aide de ce modèle.\n\n- Ajoutez des champs depuis la liste déroulante pour les inclure dans le modèle\n- Réorganisez les champs par glisser-déposer\n- L'ordre détermine l'affichage des champs dans les formulaires\n- Seuls les champs de cas activés sont disponibles\n- Les champs de cas définissent la structure et les données capturées pour les cas de test\n- Le bouton étincelles contrôle si un champ est sélectionné par défaut dans l'assistant de génération de cas de test ; les utilisateurs peuvent toujours modifier la sélection à cet endroit",
       "resultFields": "## Champs de résultat\nSélectionnez et organisez les champs personnalisés qui seront disponibles lors de l'ajout de résultats de test à l'aide de ce modèle.\n\n- Ajoutez des champs depuis la liste déroulante pour les inclure dans le modèle.\n- Réorganisez les champs par glisser-déposer.\n- L'ordre détermine l'affichage des champs lors de la saisie des résultats de test.\n- Seuls les champs de résultat activés sont disponibles.\n- Les champs de résultat capturent des données supplémentaires spécifiques aux résultats d'exécution des tests.",
       "projects": "## Projets associés\nSélectionnez les projets pour lesquels ce modèle sera disponible. Si aucun projet n'est sélectionné, le modèle sera disponible pour tous les projets. L'attribution d'un modèle à des projets spécifiques limite son utilisation à ces seuls projets."
     },

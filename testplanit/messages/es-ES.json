@@ -4572,6 +4572,8 @@
           "warning": "Campo de Caso se eliminará de cualquier Plantilla. Esta acción no se puede deshacer."
         }
       },
+      "generateDefaultOn": "Incluido de forma predeterminada en el asistente de generación de casos de prueba. Haga clic para excluirlo de forma predeterminada.",
+      "generateDefaultOff": "Excluido de forma predeterminada en el asistente de generación de casos de prueba. Haga clic para incluirlo de forma predeterminada.",
       "resultFields": {
         "description": "Administrar campos de resultados",
         "add": {
@@ -6582,7 +6584,7 @@
       "name": "## Nombre de la plantilla\nUn nombre único y descriptivo para esta plantilla (por ejemplo, 'Caso Estándar de Prueba', 'Resultados de prueba API').",
       "isEnabled": "## Habilitada\nSi está marcada, esta plantilla estará disponible para su selección al crear nuevos casos de prueba o definir estructuras de ejecución de pruebas. Si una plantilla se establece como 'Predeterminado', también debe ser 'Activado'.",
       "isDefault": "## Predeterminado\nSi está marcado, esta plantilla se seleccionará automáticamente para nuevos proyectos o como valor predeterminado para todos los proyectos si no se establece ningún valor predeterminado específico del proyecto. Sólo una plantilla puede ser la predeterminada en todos los proyectos. Habilitar esto deshabilitará cualquier otra plantilla configurada como predeterminada.",
-      "caseFields": "## Campos de caso\nSeleccione y ordene los campos personalizados que estarán disponibles al crear o editar casos de prueba con esta plantilla.\n\n- Agregue campos del menú desplegable para incluirlos en la plantilla.\n- Arrastre y suelte para reordenar los campos.\n- El orden determina cómo aparecen los campos en los formularios.\n- Solo los campos de caso habilitados están disponibles para su selección.\n- Los campos de caso definen la estructura y los datos que se capturan para los casos de prueba.",
+      "caseFields": "## Campos de caso\nSeleccione y ordene los campos personalizados que estarán disponibles al crear o editar casos de prueba con esta plantilla.\n\n- Agregue campos del menú desplegable para incluirlos en la plantilla\n- Arrastre y suelte para reordenar los campos\n- El orden determina cómo aparecen los campos en los formularios\n- Solo los campos de caso habilitados están disponibles para su selección\n- Los campos de caso definen la estructura y los datos que se capturan para los casos de prueba\n- El interruptor de destellos controla si un campo comienza seleccionado en el asistente de generación de casos de prueba; los usuarios aún pueden cambiar la selección allí",
       "resultFields": "## Campos de resultados\nSeleccione y ordene los campos personalizados que estarán disponibles al agregar resultados de pruebas con esta plantilla.\n\n- Agregue campos del menú desplegable para incluirlos en la plantilla.\n- Arrastre y suelte para reordenar los campos.\n- El orden determina cómo aparecen los campos al ingresar los resultados de las pruebas.\n- Solo los campos de resultados habilitados están disponibles para su selección.\n- Los campos de resultados capturan datos adicionales específicos de los resultados de la ejecución de las pruebas.",
       "projects": "## Proyectos asociados\nSeleccione para qué proyectos estará disponible esta plantilla. Si no hay proyectos seleccionados, la plantilla estará disponible globalmente. Asignando una plantilla a proyectos específicos restringe su uso a sólo esos proyectos."
     },

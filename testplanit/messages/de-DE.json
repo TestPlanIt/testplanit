@@ -4572,6 +4572,8 @@
           "warning": "Das Feld „Fall“ wird aus allen Vorlagen entfernt. Diese Aktion kann nicht rückgängig gemacht werden."
         }
       },
+      "generateDefaultOn": "Standardmäßig im Assistenten „Testfälle generieren“ enthalten. Klicken Sie, um es standardmäßig auszuschließen.",
+      "generateDefaultOff": "Standardmäßig im Assistenten „Testfälle generieren“ ausgeschlossen. Klicken Sie, um es standardmäßig einzuschließen.",
       "resultFields": {
         "description": "Ergebnisfelder verwalten",
         "add": {
@@ -6582,7 +6584,7 @@
       "name": "## Template Name\nEin eindeutiger und beschreibender Name für diese Vorlage (z. B. 'Standard Test Case', 'API Test Results').",
       "isEnabled": "## Aktiviert\nWenn diese Option aktiviert ist, steht diese Vorlage beim Erstellen neuer Testfälle oder beim Definieren von Testablaufstrukturen zur Auswahl. Wenn eine Vorlage als „Standard“ festgelegt ist, muss sie auch auf „Aktiviert“ gesetzt sein.",
       "isDefault": "## Standard\nWenn diese Option aktiviert ist, wird diese Vorlage automatisch für neue Projekte ausgewählt oder als Standard für alle Projekte festgelegt, falls keine projektspezifische Standardvorlage definiert ist. Nur eine Vorlage kann projektübergreifend als Standard festgelegt sein. Durch Aktivieren dieser Option werden alle anderen aktuell als Standard festgelegten Vorlagen deaktiviert.",
-      "caseFields": "## Testfallfelder\nWählen Sie die benutzerdefinierten Felder aus, die beim Erstellen oder Bearbeiten von Testfällen mit dieser Vorlage verfügbar sein sollen, und ordnen Sie sie an.\n\n- Fügen Sie Felder aus der Dropdown-Liste hinzu, um sie in die Vorlage aufzunehmen.\n- Felder per Drag & Drop neu anordnen.\n- Die Reihenfolge bestimmt, wie die Felder in Formularen angezeigt werden.\n- Nur aktivierte Testfallfelder sind auswählbar.\n- Testfallfelder definieren die Struktur und die für Testfälle erfassten Daten.",
+      "caseFields": "## Testfallfelder\nWählen Sie die benutzerdefinierten Felder aus, die beim Erstellen oder Bearbeiten von Testfällen mit dieser Vorlage verfügbar sein sollen, und ordnen Sie sie an.\n\n- Fügen Sie Felder aus der Dropdown-Liste hinzu, um sie in die Vorlage aufzunehmen\n- Felder per Drag & Drop neu anordnen\n- Die Reihenfolge bestimmt, wie die Felder in Formularen angezeigt werden\n- Nur aktivierte Testfallfelder sind auswählbar\n- Testfallfelder definieren die Struktur und die für Testfälle erfassten Daten\n- Der Sparkles-Schalter legt fest, ob ein Feld im Assistenten „Testfälle generieren“ standardmäßig ausgewählt ist; Benutzer können die Auswahl dort weiterhin ändern",
       "resultFields": "## Ergebnisfelder\nWählen Sie die benutzerdefinierten Felder aus, die beim Hinzufügen von Testergebnissen mit dieser Vorlage verfügbar sein sollen, und ordnen Sie sie an.\n\n- Fügen Sie Felder aus der Dropdown-Liste hinzu, um sie in die Vorlage aufzunehmen.\n- Felder per Drag & Drop neu anordnen.\n- Die Reihenfolge bestimmt, wie die Felder bei der Eingabe von Testergebnissen angezeigt werden.\n- Nur aktivierte Ergebnisfelder stehen zur Auswahl.\n- Ergebnisfelder erfassen zusätzliche Daten, die spezifisch für die Ergebnisse der Testausführung sind.",
       "projects": "## Zugeordnete Projekte\nWählen Sie aus, für welche Projekte diese Vorlage verfügbar sein soll. Wenn keine Projekte ausgewählt sind, ist die Vorlage global verfügbar. Durch die Zuweisung einer Vorlage zu bestimmten Projekten wird deren Verwendung auf diese Projekte beschränkt."
     },
