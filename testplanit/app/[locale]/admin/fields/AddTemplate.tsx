@@ -163,6 +163,17 @@ export function AddTemplate({ open, onClose }: AddTemplateProps) {
     }
   };
 
+  // Flip whether the field starts selected in the Generate Test Cases wizard.
+  const handleToggleGenerateDefault = (id: string | number) => {
+    setSelectedCaseFields((prev) =>
+      prev.map((f) =>
+        f.id === id
+          ? { ...f, generateDefaultEnabled: f.generateDefaultEnabled === false }
+          : f
+      )
+    );
+  };
+
   const handleRemoveField = (id: number, type: string) => {
     // console.log(`removing ID: ${id} from ${type} fields`);
 
@@ -226,6 +237,7 @@ export function AddTemplate({ open, onClose }: AddTemplateProps) {
             caseFieldId: Number(field.id),
             templateId: newTemplate!.id,
             order: index + 1,
+            generateDefaultEnabled: field.generateDefaultEnabled !== false,
           })),
         });
       }
@@ -391,6 +403,7 @@ export function AddTemplate({ open, onClose }: AddTemplateProps) {
                         onRemove={(item) =>
                           handleRemoveField(Number(item), "case")
                         }
+                        onToggleGenerateDefault={handleToggleGenerateDefault}
                       />
                     </div>
                   </FormControl>

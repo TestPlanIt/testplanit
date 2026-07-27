@@ -1606,6 +1606,7 @@ export function GenerateTestCasesWizard({
           caseFieldId: true,
           templateId: true,
           order: true,
+          generateDefaultEnabled: true,
           caseField: {
             include: {
               fieldOptions: {
@@ -1734,9 +1735,11 @@ export function GenerateTestCasesWizard({
     }
   }, [templates]);
 
-  // Auto-select all fields when the user changes template in the wizard flow.
-  // Skip when currentStep is REVIEW_GENERATED — that means we restored from a
-  // job result and selectedFieldIds was already set explicitly.
+  // Auto-select the template's default fields when the user changes template
+  // in the wizard flow: fields the admin marked generateDefaultEnabled, plus
+  // required fields (which can never be deselected). Skip when currentStep is
+  // REVIEW_GENERATED — that means we restored from a job result and
+  // selectedFieldIds was already set explicitly.
   useEffect(() => {
     if (
       selectedTemplateId &&
@@ -1746,17 +1749,23 @@ export function GenerateTestCasesWizard({
     ) {
       const template = templates.find((t) => t.id === selectedTemplateId);
       if (template) {
-        const allFieldIds = new Set(
-          template.caseFields
-            .filter(isTemplateFieldVisible)
+        const visibleFields = template.caseFields.filter(
+          isTemplateFieldVisible
+        );
+        const defaultFieldIds = new Set(
+          visibleFields
+            .filter(
+              (cf) =>
+                cf.generateDefaultEnabled !== false || cf.caseField.isRequired
+            )
             .map((cf) => cf.caseFieldId)
         );
         // An empty caseFields array (still loading) must not lock the
         // selection at zero fields.
-        if (allFieldIds.size > 0) {
+        if (visibleFields.length > 0) {
           seededFieldsTemplateIdRef.current = selectedTemplateId;
         }
-        setSelectedFieldIds(allFieldIds);
+        setSelectedFieldIds(defaultFieldIds);
       }
     }
   }, [selectedTemplateId, templates, currentStep, isTemplateFieldVisible]);

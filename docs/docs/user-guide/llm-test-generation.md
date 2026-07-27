@@ -59,10 +59,11 @@ Choose your test generation source:
 - Choose the test case template to use for generated cases
 - All template fields are displayed for review
 - Select which fields to populate with AI-generated content
+- Fields start selected or deselected according to the template's per-field generation default, configured by an administrator in Templates & Fields (fields are included by default unless excluded there)
 - Required fields are always included and cannot be deselected
-- Optional fields can be included or excluded based on your needs
+- Optional fields can be included or excluded based on your needs, regardless of the template default
 - Deselected fields are named in the AI request as fields it must not return, and any value it returns for one is discarded — so an excluded field is never populated, never shown in the review step, and never written on import
-- Your selection persists for the rest of the wizard. Changing the template resets it to all fields.
+- Your selection persists for the rest of the wizard. Changing the template resets it to that template's defaults.
 
 ### Step 3: Configure Generation
 

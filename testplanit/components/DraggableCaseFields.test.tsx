@@ -57,18 +57,28 @@ vi.mock("@dnd-kit/utilities", () => ({
 // Mock lucide-react icons
 vi.mock("lucide-react", () => ({
   GripVertical: () => <svg data-testid="grip-vertical-icon" />,
+  Sparkles: () => <svg data-testid="sparkles-icon" />,
   Trash2: () => <svg data-testid="trash2-icon" />,
 }));
 
 // Mock UI button
 vi.mock("@/components/ui/button", () => ({
-  Button: ({ children, onClick, type, variant, className, disabled }: any) => (
+  Button: ({
+    children,
+    onClick,
+    type,
+    variant,
+    className,
+    disabled,
+    ...rest
+  }: any) => (
     <button
       type={type || "button"}
       onClick={onClick}
       className={className}
       disabled={disabled}
       data-variant={variant}
+      {...rest}
     >
       {children}
     </button>
@@ -222,6 +232,77 @@ describe("DraggableCaseFields", () => {
       expect(screen.getByText("Field Alpha")).toBeInTheDocument();
       expect(screen.getByText("Field Beta")).toBeInTheDocument();
       expect(screen.getByText("Field Gamma")).toBeInTheDocument();
+    });
+  });
+
+  describe("Generate-default toggle", () => {
+    it("does not render the toggle when onToggleGenerateDefault is not provided", () => {
+      render(
+        <DraggableList
+          items={createItems()}
+          setItems={vi.fn()}
+          onRemove={vi.fn()}
+        />
+      );
+
+      expect(screen.queryByTestId("sparkles-icon")).not.toBeInTheDocument();
+    });
+
+    it("renders one toggle per item, pressed by default", () => {
+      render(
+        <DraggableList
+          items={createItems()}
+          setItems={vi.fn()}
+          onRemove={vi.fn()}
+          onToggleGenerateDefault={vi.fn()}
+        />
+      );
+
+      expect(screen.getAllByTestId("sparkles-icon")).toHaveLength(3);
+      // Fields default to included in the Generate Test Cases wizard.
+      expect(screen.getByTestId("generate-default-toggle-1")).toHaveAttribute(
+        "aria-pressed",
+        "true"
+      );
+    });
+
+    it("shows an unpressed toggle when generateDefaultEnabled is false", () => {
+      const items: DraggableField[] = [
+        { id: "1", label: "Field Alpha", generateDefaultEnabled: false },
+      ];
+
+      render(
+        <DraggableList
+          items={items}
+          setItems={vi.fn()}
+          onRemove={vi.fn()}
+          onToggleGenerateDefault={vi.fn()}
+        />
+      );
+
+      expect(screen.getByTestId("generate-default-toggle-1")).toHaveAttribute(
+        "aria-pressed",
+        "false"
+      );
+    });
+
+    it("calls onToggleGenerateDefault with the item id, not onRemove", () => {
+      const onRemove = vi.fn();
+      const onToggleGenerateDefault = vi.fn();
+
+      render(
+        <DraggableList
+          items={createItems()}
+          setItems={vi.fn()}
+          onRemove={onRemove}
+          onToggleGenerateDefault={onToggleGenerateDefault}
+        />
+      );
+
+      fireEvent.click(screen.getByTestId("generate-default-toggle-2"));
+
+      expect(onToggleGenerateDefault).toHaveBeenCalledWith("2");
+      expect(onRemove).not.toHaveBeenCalled();
     });
   });
 

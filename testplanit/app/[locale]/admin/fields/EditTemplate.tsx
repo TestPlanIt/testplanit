@@ -61,6 +61,7 @@ type FormValues = z.infer<ReturnType<typeof buildFormSchema>>;
 interface ExtendedTemplateCaseField {
   caseFieldId: number;
   order: number;
+  generateDefaultEnabled?: boolean;
 }
 
 interface ExtendedTemplateResultField {
@@ -203,6 +204,7 @@ export function EditTemplate({ template, open, onClose }: EditTemplateProps) {
           caseFields.find((field) => field.id === cf.caseFieldId)
             ?.displayName || "Unknown Field",
         order: cf.order,
+        generateDefaultEnabled: cf.generateDefaultEnabled ?? true,
       }))
       .sort((a, b) => a.order - b.order);
 
@@ -255,6 +257,17 @@ export function EditTemplate({ template, open, onClose }: EditTemplateProps) {
       setSelectedResultFields((prev) => [...prev, field]);
       setAvailableResultFields((prev) => prev.filter((f) => f.id !== field.id));
     }
+  };
+
+  // Flip whether the field starts selected in the Generate Test Cases wizard.
+  const handleToggleGenerateDefault = (id: string | number) => {
+    setSelectedCaseFields((prev) =>
+      prev.map((f) =>
+        f.id === id
+          ? { ...f, generateDefaultEnabled: f.generateDefaultEnabled === false }
+          : f
+      )
+    );
   };
 
   const handleRemoveField = (id: string | number, type: string) => {
@@ -320,6 +333,7 @@ export function EditTemplate({ template, open, onClose }: EditTemplateProps) {
               typeof field.id === "string" ? parseInt(field.id, 10) : field.id,
             templateId: template.id,
             order: index + 1,
+            generateDefaultEnabled: field.generateDefaultEnabled !== false,
           })),
         });
       }
@@ -454,6 +468,7 @@ export function EditTemplate({ template, open, onClose }: EditTemplateProps) {
                         items={selectedCaseFields}
                         setItems={setSelectedCaseFields}
                         onRemove={(item) => handleRemoveField(item, "case")}
+                        onToggleGenerateDefault={handleToggleGenerateDefault}
                       />
                     </div>
                   </FormControl>
