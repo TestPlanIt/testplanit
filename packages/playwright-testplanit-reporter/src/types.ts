@@ -1,3 +1,38 @@
+import type { RunMetadata } from '@testplanit/api';
+
+/**
+ * A link attached at the test-run level (e.g. a CI build URL).
+ * All string values support `{env:VAR}` placeholders when used in
+ * {@link TestPlanItReporterOptions.runLinks}.
+ */
+export interface RunLinkInput {
+  /** External URL the link points at. */
+  url: string;
+  /** Display name shown on the run detail page. Defaults to the URL. */
+  name?: string;
+  /** Optional note shown with the attachment. */
+  note?: string;
+}
+
+/**
+ * A file attached at the test-run level. Provide either `path` (read from
+ * disk) or `buffer` (in-memory content). String values support `{env:VAR}`
+ * placeholders when used in {@link TestPlanItReporterOptions.runAttachments}.
+ */
+export interface RunAttachmentInput {
+  /** Path to a file on disk. */
+  path?: string;
+  /** In-memory file content. Takes precedence over `path` when both are set. */
+  buffer?: Buffer;
+  /**
+   * Attachment name. Required with `buffer`; defaults to the file's basename
+   * with `path`.
+   */
+  name?: string;
+  /** MIME type. Guessed from the file extension when omitted. */
+  mimeType?: string;
+}
+
 /**
  * Configuration options for the TestPlanIt Playwright reporter.
  *
@@ -201,6 +236,53 @@ export interface TestPlanItReporterOptions {
    * @default true
    */
   includeStackTrace?: boolean;
+
+  /**
+   * Links to attach to the test run right after the reporter creates it
+   * (e.g. a CI build URL). Rendered as clickable link attachments on the run
+   * detail page.
+   *
+   * All string values support `{env:VAR}` placeholders resolved from
+   * `process.env`. A link whose `url` references an unset environment
+   * variable is skipped (with a logged warning) instead of producing a
+   * broken link. Failures are logged and never fail the test run.
+   *
+   * Only applied when the reporter creates the run itself — skipped when
+   * appending to an existing run via `testRunId`, so re-runs don't attach
+   * duplicates.
+   *
+   * @example
+   * runLinks: [{ url: '{env:BUILD_URL}', name: '{env:JOB_NAME} #{env:BUILD_NUMBER}' }]
+   */
+  runLinks?: RunLinkInput[];
+
+  /**
+   * Files to attach to the test run (e.g. logs, HTML reports, videos).
+   * `path` values support `{env:VAR}` placeholders.
+   *
+   * A `path` that cannot be read when the run is created (typical for
+   * artifacts produced by the tests themselves) is retried once after all
+   * tests finish, just before the run is completed. Failures are logged and
+   * never fail the test run. Like `runLinks`, only applied when the reporter
+   * creates the run itself.
+   *
+   * @example
+   * runAttachments: [{ path: './playwright-report/index.html', name: 'HTML Report' }]
+   */
+  runAttachments?: RunAttachmentInput[];
+
+  /**
+   * Key/value metadata written to the run's documentation right after the
+   * run is created, rendered as `**key:** value` lines on the run detail
+   * page. String values support `{env:VAR}` placeholders; an entry whose
+   * value only references unset environment variables is skipped. Failures
+   * are logged and never fail the test run. Like `runLinks`, only applied
+   * when the reporter creates the run itself.
+   *
+   * @example
+   * runMetadata: { version: '{env:APP_VERSION}', triggeredBy: 'jenkins' }
+   */
+  runMetadata?: RunMetadata;
 
   /**
    * Whether to mark the test run as completed when all tests finish

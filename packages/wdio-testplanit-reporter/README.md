@@ -216,12 +216,94 @@ export const config = {
 | `stateId` | `number \| string` | No | - | Workflow state ID or name |
 | `tagIds` | `(number \| string)[]` | No | - | Tags to apply (IDs or names) |
 | `captureScreenshots` | `boolean` | No | `false` | Auto-capture screenshots on test failure via `afterTest` hook |
+| `runLinks` | `RunLinkInput[]` | No | - | Links to attach to the run (e.g. CI build URL). Supports `{env:VAR}` |
+| `runAttachments` | `RunAttachmentInput[]` | No | - | Files to attach to the run (logs, reports, videos). Supports `{env:VAR}` |
+| `runMetadata` | `Record<string, string \| number \| boolean>` | No | - | Key/value metadata rendered into the run's documentation. Supports `{env:VAR}` |
 | `completeRunOnFinish` | `boolean` | No | `true` | Mark test run as completed when all workers finish |
 | `timeout` | `number` | No | `30000` | API request timeout in ms |
 | `maxRetries` | `number` | No | `3` | Number of retries for failed requests |
 | `verbose` | `boolean` | No | `false` | Enable verbose logging |
 
 > **Note:** The service's `runName` does not support `{browser}`, `{spec}`, or `{suite}` placeholders since it runs before any workers start.
+
+## Run-Level Attachments and Metadata
+
+Attach links, files, and metadata to the **test run itself** (not to individual
+results) — they show up on the run detail page in TestPlanIt. Both a declarative
+config surface and a runtime API are available; neither requires importing
+`@testplanit/api`.
+
+### Declarative (wdio.conf)
+
+Applied exactly once by the service right after the run is created. Every string
+value supports `{env:VAR}` placeholders resolved from `process.env`:
+
+```javascript
+services: [
+  [TestPlanItService, {
+    domain: 'https://testplanit.example.com',
+    apiToken: process.env.TESTPLANIT_API_TOKEN,
+    projectId: 1,
+
+    // Clickable link attachments (e.g. the CI build that ran the tests)
+    runLinks: [
+      { url: '{env:BUILD_URL}', name: '{env:JOB_NAME} #{env:BUILD_NUMBER}' },
+    ],
+
+    // File attachments. A path that doesn't exist yet (an artifact produced
+    // by the tests) is retried once after all workers finish.
+    runAttachments: [
+      { path: './logs/wdio.log' },
+      { path: './reports/report.html', name: 'HTML Report' },
+    ],
+
+    // Key/value metadata, rendered as "**key:** value" lines in the run's
+    // documentation field
+    runMetadata: {
+      version: '{env:APP_VERSION}',
+      triggeredBy: 'jenkins',
+    },
+  }]
+],
+```
+
+Skip rules: a link whose `url` references an unset environment variable is
+skipped (no broken links), as is a metadata entry whose value resolves to
+nothing. All failures are logged and swallowed — run-level attachments never
+fail the test run.
+
+### Runtime API (`browser.testplanit`)
+
+For values that aren't known until the tests run. The service installs a
+`testplanit` object on the WebdriverIO `browser` in every worker; all calls
+resolve to the single service-managed run no matter which worker makes them:
+
+```javascript
+// In a test or hook (e.g. wdio.conf onPrepare is NOT needed — any worker works)
+await browser.testplanit.attachToRun({ url: deployUrl, name: 'Deployed build' });
+
+// Attach a file by path (name + MIME type derived from the file)…
+await browser.testplanit.attachToRun({ path: './output/diff.png' });
+
+// …or from an in-memory buffer (name required)
+await browser.testplanit.attachToRun({ buffer: pdfBuffer, name: 'summary.pdf' });
+
+// Merge metadata into the run's documentation
+await browser.testplanit.setRunMetadata({ seed: usedSeed, shard: shardIndex });
+
+// The managed run's ID, if you need it
+const runId = browser.testplanit.getRunId();
+```
+
+Runtime calls never throw — failures are logged and the call resolves to
+`null`/`false`, so an attachment problem can't fail your tests. The runtime API
+requires the `TestPlanItService` (it resolves the run from the service's shared
+state).
+
+Repeated `setRunMetadata` calls merge: existing keys are updated in place, new
+keys are appended, and hand-written content in the run's documentation is
+preserved. Note the merge is read-modify-write, so simultaneous calls from
+different workers can race — set unrelated keys or serialize the calls.
 
 ## Examples
 
@@ -411,13 +493,21 @@ Full TypeScript support is included:
 
 ```typescript
 import { TestPlanItService } from '@testplanit/wdio-reporter';
-import type { TestPlanItReporterOptions, TestPlanItServiceOptions } from '@testplanit/wdio-reporter';
+import type {
+  TestPlanItReporterOptions,
+  TestPlanItServiceOptions,
+  RunLinkInput,
+  RunAttachmentInput,
+  TestPlanItRuntimeApi, // shape of browser.testplanit
+} from '@testplanit/wdio-reporter';
 
 const serviceOptions: TestPlanItServiceOptions = {
   domain: 'https://testplanit.example.com',
   apiToken: process.env.TESTPLANIT_API_TOKEN!,
   projectId: 1,
   captureScreenshots: true,
+  runLinks: [{ url: '{env:BUILD_URL}', name: 'CI Build' }],
+  runMetadata: { version: '{env:APP_VERSION}' },
 };
 
 const reporterOptions: TestPlanItReporterOptions = {

@@ -300,6 +300,46 @@ const attachment = await client.uploadAttachment(
 );
 ```
 
+### Run-Level Attachments & Metadata
+
+Attach links, files, and key/value metadata to the **test run itself** (not to an individual result) — they render on the run detail page:
+
+```typescript
+// Attach an external link (e.g. the CI build that produced the run).
+// Rendered as a clickable link attachment.
+await client.addTestRunLink(
+  testRunId,
+  'https://ci.example.com/job/42',   // URL
+  'CI Build #42',                    // Display name (optional, defaults to URL)
+);
+
+// Attach a file to the run
+await client.uploadTestRunAttachment(
+  testRunId,
+  reportBuffer,        // Buffer or Blob
+  'report.html',       // File name
+  'text/html'          // MIME type (optional)
+);
+
+// Set key/value metadata — rendered as "**key:** value" lines in the
+// run's documentation field. Repeated calls merge: existing keys are
+// updated, new keys appended, other documentation content is preserved.
+await client.setTestRunMetadata(testRunId, {
+  version: '1.2.3',
+  triggeredBy: 'jenkins',
+  retries: 2,
+});
+
+// Read the metadata back (values are always strings)
+const metadata = await client.getTestRunMetadata(testRunId);
+```
+
+The attachment's creator is resolved server-side from the API token — no user ID needs to be supplied.
+
+:::tip
+Using a test framework reporter? Both expose all of this without importing the client — WebdriverIO declaratively and via `browser.testplanit` ([Run Attachments & Metadata](./wdio-run-attachments.md)), Playwright declaratively and via `attachToRun`/`setRunMetadata` helpers ([Run Attachments & Metadata](./playwright-run-attachments.md)).
+:::
+
 ### Bulk Import
 
 Import test results from JUnit, TestNG, xUnit, NUnit, MSTest, Mocha, or Cucumber format:

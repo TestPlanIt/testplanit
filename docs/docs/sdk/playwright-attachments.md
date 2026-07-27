@@ -6,6 +6,10 @@ title: Attachment Uploads
 
 The reporter uploads Playwright attachments to TestPlanIt when `uploadAttachments` is enabled (the default). Unlike the WebdriverIO reporter — which only intercepts screenshots — the Playwright reporter uploads **every attachment** on a test result, including screenshots, videos, traces, and anything you add yourself with `testInfo.attach()`.
 
+:::info Attaching to the run itself
+This page covers attachments on each test's **result**. To attach links, files, or metadata to the **run** (a CI build URL, a consolidated report), see [Run Attachments & Metadata](./playwright-run-attachments.md).
+:::
+
 ## How Playwright Produces Attachments
 
 Playwright collects attachments automatically based on your `use` settings. No reporter-specific hook is required:

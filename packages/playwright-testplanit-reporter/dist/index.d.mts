@@ -1,6 +1,38 @@
 import { Reporter, FullConfig, Suite, TestCase, TestResult, TestError, FullResult } from '@playwright/test/reporter';
-export { RepositoryCase, Status, TestPlanItClient, TestPlanItError, TestRun, TestRunResult } from '@testplanit/api';
+import { RunMetadata } from '@testplanit/api';
+export { Attachment, RepositoryCase, RunMetadata, Status, TestPlanItClient, TestPlanItError, TestRun, TestRunResult } from '@testplanit/api';
 
+/**
+ * A link attached at the test-run level (e.g. a CI build URL).
+ * All string values support `{env:VAR}` placeholders when used in
+ * {@link TestPlanItReporterOptions.runLinks}.
+ */
+interface RunLinkInput {
+    /** External URL the link points at. */
+    url: string;
+    /** Display name shown on the run detail page. Defaults to the URL. */
+    name?: string;
+    /** Optional note shown with the attachment. */
+    note?: string;
+}
+/**
+ * A file attached at the test-run level. Provide either `path` (read from
+ * disk) or `buffer` (in-memory content). String values support `{env:VAR}`
+ * placeholders when used in {@link TestPlanItReporterOptions.runAttachments}.
+ */
+interface RunAttachmentInput {
+    /** Path to a file on disk. */
+    path?: string;
+    /** In-memory file content. Takes precedence over `path` when both are set. */
+    buffer?: Buffer;
+    /**
+     * Attachment name. Required with `buffer`; defaults to the file's basename
+     * with `path`.
+     */
+    name?: string;
+    /** MIME type. Guessed from the file extension when omitted. */
+    mimeType?: string;
+}
 /**
  * Configuration options for the TestPlanIt Playwright reporter.
  *
@@ -184,6 +216,50 @@ interface TestPlanItReporterOptions {
      * @default true
      */
     includeStackTrace?: boolean;
+    /**
+     * Links to attach to the test run right after the reporter creates it
+     * (e.g. a CI build URL). Rendered as clickable link attachments on the run
+     * detail page.
+     *
+     * All string values support `{env:VAR}` placeholders resolved from
+     * `process.env`. A link whose `url` references an unset environment
+     * variable is skipped (with a logged warning) instead of producing a
+     * broken link. Failures are logged and never fail the test run.
+     *
+     * Only applied when the reporter creates the run itself — skipped when
+     * appending to an existing run via `testRunId`, so re-runs don't attach
+     * duplicates.
+     *
+     * @example
+     * runLinks: [{ url: '{env:BUILD_URL}', name: '{env:JOB_NAME} #{env:BUILD_NUMBER}' }]
+     */
+    runLinks?: RunLinkInput[];
+    /**
+     * Files to attach to the test run (e.g. logs, HTML reports, videos).
+     * `path` values support `{env:VAR}` placeholders.
+     *
+     * A `path` that cannot be read when the run is created (typical for
+     * artifacts produced by the tests themselves) is retried once after all
+     * tests finish, just before the run is completed. Failures are logged and
+     * never fail the test run. Like `runLinks`, only applied when the reporter
+     * creates the run itself.
+     *
+     * @example
+     * runAttachments: [{ path: './playwright-report/index.html', name: 'HTML Report' }]
+     */
+    runAttachments?: RunAttachmentInput[];
+    /**
+     * Key/value metadata written to the run's documentation right after the
+     * run is created, rendered as `**key:** value` lines on the run detail
+     * page. String values support `{env:VAR}` placeholders; an entry whose
+     * value only references unset environment variables is skipped. Failures
+     * are logged and never fail the test run. Like `runLinks`, only applied
+     * when the reporter creates the run itself.
+     *
+     * @example
+     * runMetadata: { version: '{env:APP_VERSION}', triggeredBy: 'jenkins' }
+     */
+    runMetadata?: RunMetadata;
     /**
      * Whether to mark the test run as completed when all tests finish
      * @default true
@@ -370,6 +446,18 @@ declare class TestPlanItReporter implements Reporter {
     private currentSpec?;
     private currentProject?;
     private rootSuiteName?;
+    /**
+     * `runAttachments` entries whose file couldn't be read at initialization
+     * (typically artifacts produced by the tests themselves). Retried once in
+     * onEnd, before the run is completed.
+     */
+    private deferredRunAttachments;
+    /**
+     * Keys of runtime run-level ops already applied this session, so retried
+     * tests (which re-run their attachToRun/setRunMetadata calls) don't create
+     * duplicate run attachments.
+     */
+    private appliedRunOps;
     constructor(options: TestPlanItReporterOptions);
     /** Tell Playwright this reporter writes to stdout (summary + warnings). */
     printsToStdio(): boolean;
@@ -406,6 +494,32 @@ declare class TestPlanItReporter implements Reporter {
     private uploadAttachments;
     private attachmentMatches;
     private buildAttachmentNote;
+    /**
+     * Apply one runtime run-level operation (from an attachToRun /
+     * setRunMetadata call in a test). Initializes the reporter if needed —
+     * an explicit run-level call is a reason to create the run. Failures are
+     * logged and swallowed; they never fail the test run.
+     */
+    private applyRunLevelOp;
+    /**
+     * Apply the declarative run-level options (`runLinks`, `runMetadata`,
+     * `runAttachments`) to the just-created test run. Called once from
+     * initialization, and only when the reporter created the run itself —
+     * appending to an existing run (`testRunId`) skips this so re-runs don't
+     * attach duplicates. Every failure is logged and swallowed.
+     */
+    private applyRunLevelConfig;
+    /**
+     * Read and upload one declarative run attachment. Returns false when a
+     * path-based entry can't be read (so the caller can defer it); invalid
+     * entries are logged and count as handled (true).
+     */
+    private uploadRunFile;
+    /**
+     * Retry `runAttachments` entries whose file wasn't readable at
+     * initialization. Called from onEnd before the run is completed.
+     */
+    private applyDeferredRunAttachments;
     private initialize;
     private doInitialize;
     private resolveOptionIds;
@@ -450,4 +564,59 @@ declare class TestPlanItReporter implements Reporter {
     getState(): ReporterState;
 }
 
-export { type ReporterState, TestPlanItReporter, type TestPlanItReporterOptions, type TrackedTestResult, TestPlanItReporter as default };
+/**
+ * Run-level attachment support: links, files, and key/value metadata attached
+ * to the TEST RUN itself (not to an individual result).
+ *
+ * Two surfaces:
+ *
+ * - Declarative reporter options (`runLinks` / `runAttachments` /
+ *   `runMetadata`), applied by the reporter once, right after it creates the
+ *   run.
+ * - Runtime helpers ({@link attachToRun} / {@link setRunMetadata}) callable
+ *   from tests and hooks. Playwright runs the reporter in the main process
+ *   while tests run in workers, so the helpers ship the request through
+ *   Playwright's own attachment transport: they call `testInfo.attach()` with
+ *   a reserved `testplanit:run-*` name, and the reporter intercepts those
+ *   attachments in `onTestEnd`, routing them to run-level API calls instead
+ *   of uploading them to the result.
+ */
+
+/**
+ * The slice of Playwright's `TestInfo` the runtime helpers need. Pass the
+ * `testInfo` object your test or fixture receives.
+ */
+interface RunAttachTarget {
+    attach(name: string, options: {
+        body?: string | Buffer;
+        path?: string;
+        contentType?: string;
+    }): Promise<void>;
+}
+/**
+ * Attach a link or file to the test run itself (not to this test's result)
+ * from inside a test or hook.
+ *
+ * ```typescript
+ * test('deploys', async ({ page }, testInfo) => {
+ *   await attachToRun(testInfo, { url: deployUrl, name: 'Deployed build' });
+ *   await attachToRun(testInfo, { path: './output/report.html' });
+ *   await attachToRun(testInfo, { buffer: pdf, name: 'summary.pdf' });
+ * });
+ * ```
+ *
+ * The request rides Playwright's attachment transport and is applied by the
+ * reporter in the main process, exactly once per distinct link/file name —
+ * retried tests don't create duplicates. Invalid input is logged and
+ * ignored; it never fails the test.
+ */
+declare function attachToRun(testInfo: RunAttachTarget, input: RunLinkInput | RunAttachmentInput): Promise<void>;
+/**
+ * Merge key/value metadata into the test run's documentation from inside a
+ * test or hook (rendered as `**key:** value` lines on the run detail page).
+ * Existing keys are updated in place, new keys appended. Applied by the
+ * reporter in the main process; identical payloads are applied only once.
+ */
+declare function setRunMetadata(testInfo: RunAttachTarget, metadata: RunMetadata): Promise<void>;
+
+export { type ReporterState, type RunAttachTarget, type RunAttachmentInput, type RunLinkInput, TestPlanItReporter, type TestPlanItReporterOptions, type TrackedTestResult, attachToRun, TestPlanItReporter as default, setRunMetadata };

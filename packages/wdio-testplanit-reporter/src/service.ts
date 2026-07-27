@@ -38,13 +38,20 @@
  * @packageDocumentation
  */
 
+import * as fs from 'fs';
 import { TestPlanItClient } from '@testplanit/api';
-import type { TestPlanItServiceOptions } from './types.js';
+import type { RunAttachmentInput, TestPlanItServiceOptions } from './types.js';
 import {
   writeSharedState,
   deleteSharedState,
   type SharedState,
 } from './shared.js';
+import {
+  applyEnvTemplate,
+  attachFileToRun,
+  createRuntimeApi,
+  type RuntimeApiContext,
+} from './runLevel.js';
 
 /**
  * WebdriverIO Launcher Service for TestPlanIt.
@@ -59,6 +66,12 @@ export default class TestPlanItService {
   private verbose: boolean;
   private testRunId?: number;
   private testSuiteId?: number;
+  /**
+   * `runAttachments` entries whose file didn't exist yet at onPrepare
+   * (typically artifacts produced by the tests themselves). Retried once in
+   * onComplete, before the run is completed.
+   */
+  private deferredRunAttachments: RunAttachmentInput[] = [];
 
   constructor(serviceOptions: TestPlanItServiceOptions) {
     // Validate required options
@@ -187,6 +200,141 @@ export default class TestPlanItService {
     return resolved;
   }
 
+  /** Context object for the shared run-level attachment helpers. */
+  private runtimeContext(): RuntimeApiContext {
+    return {
+      client: this.client,
+      projectId: this.options.projectId,
+      log: (message, ...args) => this.log(message, ...args),
+      logError: (message, error) => this.logError(message, error),
+    };
+  }
+
+  /**
+   * Apply the declarative run-level options (`runLinks`, `runMetadata`,
+   * `runAttachments`) to the just-created test run. Runs once in the
+   * launcher process. Every failure is logged and swallowed — run-level
+   * attachments must never fail the test run.
+   */
+  private async applyRunLevelConfig(): Promise<void> {
+    if (!this.testRunId) return;
+    const ctx = this.runtimeContext();
+
+    // Links (e.g. CI build URL)
+    for (const link of this.options.runLinks ?? []) {
+      try {
+        const url = applyEnvTemplate(link.url ?? '');
+        if (url.missing.length > 0 || !url.value.trim()) {
+          this.logError(
+            `Skipping run link "${link.url}": unresolved environment variable(s) ${url.missing.join(', ') || '(empty url)'}`
+          );
+          continue;
+        }
+        const name = link.name ? applyEnvTemplate(link.name).value.trim() : '';
+        const note = link.note ? applyEnvTemplate(link.note).value : undefined;
+        await this.client.addTestRunLink(
+          this.testRunId,
+          url.value,
+          name || undefined,
+          note
+        );
+        this.log(`Attached link to run: ${url.value}`);
+      } catch (error) {
+        this.logError(`Failed to attach run link "${link.url}":`, error);
+      }
+    }
+
+    // Metadata (rendered into the run's docs)
+    const metadata: Record<string, string | number | boolean> = {};
+    for (const [rawKey, rawValue] of Object.entries(this.options.runMetadata ?? {})) {
+      const key = applyEnvTemplate(rawKey).value.trim();
+      if (!key) continue;
+      if (typeof rawValue === 'string') {
+        const value = applyEnvTemplate(rawValue);
+        if (value.missing.length > 0 && !value.value.trim()) {
+          this.logError(
+            `Skipping run metadata "${rawKey}": unresolved environment variable(s) ${value.missing.join(', ')}`
+          );
+          continue;
+        }
+        metadata[key] = value.value;
+      } else {
+        metadata[key] = rawValue;
+      }
+    }
+    if (Object.keys(metadata).length > 0) {
+      try {
+        await this.client.setTestRunMetadata(this.testRunId, metadata);
+        this.log(`Set run metadata: ${Object.keys(metadata).join(', ')}`);
+      } catch (error) {
+        this.logError('Failed to set run metadata:', error);
+      }
+    }
+
+    // File attachments — defer paths that don't exist yet to onComplete
+    for (const attachment of this.options.runAttachments ?? []) {
+      try {
+        const resolved: RunAttachmentInput = { ...attachment };
+        if (resolved.name) {
+          resolved.name = applyEnvTemplate(resolved.name).value;
+        }
+        if (!resolved.buffer && resolved.path) {
+          const templatedPath = applyEnvTemplate(resolved.path);
+          if (templatedPath.missing.length > 0) {
+            this.logError(
+              `Skipping run attachment "${attachment.path}": unresolved environment variable(s) ${templatedPath.missing.join(', ')}`
+            );
+            continue;
+          }
+          resolved.path = templatedPath.value;
+          if (!fs.existsSync(resolved.path)) {
+            this.log(
+              `Run attachment not found yet, will retry after tests finish: ${resolved.path}`
+            );
+            this.deferredRunAttachments.push(resolved);
+            continue;
+          }
+        }
+        await attachFileToRun(ctx, this.testRunId, resolved);
+        this.log(`Attached file to run: ${resolved.name ?? resolved.path}`);
+      } catch (error) {
+        this.logError(
+          `Failed to attach run file "${attachment.name ?? attachment.path}":`,
+          error
+        );
+      }
+    }
+  }
+
+  /**
+   * Attach `runAttachments` entries that were deferred in onPrepare because
+   * their file didn't exist yet. Called from onComplete before the run is
+   * completed. Failures are logged and swallowed.
+   */
+  private async applyDeferredRunAttachments(): Promise<void> {
+    if (!this.testRunId || this.deferredRunAttachments.length === 0) return;
+    const ctx = this.runtimeContext();
+
+    for (const attachment of this.deferredRunAttachments) {
+      try {
+        if (attachment.path && !fs.existsSync(attachment.path)) {
+          this.logError(
+            `Run attachment still not found, skipping: ${attachment.path}`
+          );
+          continue;
+        }
+        await attachFileToRun(ctx, this.testRunId, attachment);
+        this.log(`Attached file to run: ${attachment.name ?? attachment.path}`);
+      } catch (error) {
+        this.logError(
+          `Failed to attach run file "${attachment.name ?? attachment.path}":`,
+          error
+        );
+      }
+    }
+    this.deferredRunAttachments = [];
+  }
+
   /**
    * onPrepare - Runs once in the main process before any workers start.
    *
@@ -247,6 +395,10 @@ export default class TestPlanItService {
       writeSharedState(this.options.projectId, sharedState);
       this.log('Wrote shared state file for workers');
 
+      // Apply run-level links, metadata, and file attachments exactly once.
+      // Internally logs and swallows every failure — the run must not fail.
+      await this.applyRunLevelConfig();
+
       // Always print this so users can see the run was created
       console.log(`[TestPlanIt Service] Test run created: "${runName}" (ID: ${this.testRunId})`);
     } catch (error) {
@@ -255,6 +407,35 @@ export default class TestPlanItService {
       deleteSharedState(this.options.projectId);
       throw error;
     }
+  }
+
+  /**
+   * before - Runs in each worker process once the browser session is ready.
+   *
+   * Installs the `browser.testplanit` runtime API so tests and hooks can
+   * attach links/files or set metadata on the managed run without importing
+   * `@testplanit/api`:
+   *
+   * ```javascript
+   * await browser.testplanit.attachToRun({ url: buildUrl, name: 'CI Build' });
+   * await browser.testplanit.attachToRun({ path: './report.html' });
+   * await browser.testplanit.setRunMetadata({ version: '1.2.3' });
+   * ```
+   *
+   * The run ID is resolved from the shared state file on every call, so all
+   * workers reach the same service-managed run.
+   */
+  before(_capabilities: unknown, _specs: unknown, browser?: unknown): void {
+    const target = (browser ??
+      (globalThis as Record<string, any>).browser) as
+      | Record<string, unknown>
+      | undefined;
+    if (!target) {
+      this.log('No browser object available; skipping runtime API install');
+      return;
+    }
+    target.testplanit = createRuntimeApi(this.runtimeContext());
+    this.log('Installed browser.testplanit runtime API');
   }
 
   /**
@@ -289,6 +470,10 @@ export default class TestPlanItService {
     this.log(`All workers finished (exit code: ${exitCode})`);
 
     try {
+      // Attach run files that didn't exist yet at onPrepare (e.g. logs or
+      // reports produced by the tests), before the run is completed.
+      await this.applyDeferredRunAttachments();
+
       if (this.testRunId && this.options.completeRunOnFinish) {
         this.log(`Completing test run ${this.testRunId}...`);
         await this.client.completeTestRun(this.testRunId, this.options.projectId);
