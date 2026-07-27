@@ -37,6 +37,26 @@ interface ExternalMilestone {
   sourceProjects?: { id: string; key: string; name: string }[];
 }
 
+/**
+ * Read a JSON API response without assuming the body IS JSON.
+ *
+ * These routes talk to Jira synchronously and can outlive a reverse proxy's
+ * request timeout, in which case the proxy — not the app — answers, with an
+ * HTML error page. `res.json()` then throws a SyntaxError whose message
+ * ("Unexpected token '<', \"<html> <h\"... is not valid JSON") is what the
+ * user ends up reading, hiding the actual failure. Returning null for a
+ * non-JSON body lets the caller report the HTTP status instead.
+ */
+async function readJsonBody(res: Response): Promise<any> {
+  const text = await res.text();
+  if (!text) return null;
+  try {
+    return JSON.parse(text);
+  } catch {
+    return null;
+  }
+}
+
 interface ImportMilestonesDialogProps {
   integrationId: number;
   projectId: number;
@@ -60,6 +80,21 @@ export function ImportMilestonesDialog({
   const t = useTranslations("milestones.import");
   const tCommon = useTranslations("common");
   const tIssues = useTranslations("issues");
+
+  // Turn a failed response into something a user can act on. A JSON `error`
+  // from our own route is always the best message; without one we're looking
+  // at a proxy/gateway failure, where the status is the only real signal.
+  const describeHttpFailure = useCallback(
+    (res: Response, data: any): string => {
+      if (data?.error) return data.error;
+      if (res.status === 504 || res.status === 502 || res.status === 408) {
+        return t("requestTimedOut");
+      }
+      if (res.status === 503) return t("serviceUnavailable");
+      return t("unexpectedResponse", { status: res.status });
+    },
+    [t]
+  );
 
   const [items, setItems] = useState<ExternalMilestone[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -112,9 +147,12 @@ export function ImportMilestonesDialog({
         const res = await fetch(
           `/api/integrations/${integrationId}/milestone-sync/preview?${params.toString()}`
         );
-        const data = await res.json();
+        const data = await readJsonBody(res);
         if (!res.ok) {
-          throw new Error(data?.error || t("previewFailed"));
+          throw new Error(describeHttpFailure(res, data));
+        }
+        if (!data) {
+          throw new Error(t("unexpectedResponse", { status: res.status }));
         }
         setItems(data.items ?? []);
         setWarnings(Array.isArray(data.warnings) ? data.warnings : []);
@@ -125,7 +163,7 @@ export function ImportMilestonesDialog({
         setIsLoading(false);
       }
     },
-    [integrationId, projectMappingId, t]
+    [integrationId, projectMappingId, t, describeHttpFailure]
   );
 
   // Reset + fetch each time the dialog opens.
@@ -220,9 +258,9 @@ export function ImportMilestonesDialog({
           }),
         }
       );
-      const data = await res.json().catch(() => ({}));
+      const data = await readJsonBody(res);
       if (!res.ok) {
-        throw new Error(data?.error || t("importFailed"));
+        throw new Error(describeHttpFailure(res, data));
       }
       toast.success(t("importStarted"));
       const queuedIds = Array.from(selectedIds);
@@ -313,7 +351,7 @@ export function ImportMilestonesDialog({
         </div>
 
         {error && (
-          <Alert variant="destructive">
+          <Alert variant="destructive" data-testid="import-milestones-error">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>{error}</AlertDescription>
           </Alert>

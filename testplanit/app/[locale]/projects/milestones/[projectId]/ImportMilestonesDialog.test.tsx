@@ -130,11 +130,37 @@ vi.mock("@/components/ui/label", () => ({
 
 import { ImportMilestonesDialog } from "./ImportMilestonesDialog";
 
-function makePreviewResponse(items: any[]) {
+/**
+ * Model a real Response: the dialog reads bodies via text() and parses them
+ * itself (a proxy timeout answers with HTML, not JSON), so a mock that only
+ * implements json() would not exercise the code path the component takes.
+ */
+function makeJsonResponse(
+  body: any,
+  init: { ok?: boolean; status?: number } = {}
+) {
+  const text = JSON.stringify(body);
   return {
-    ok: true,
-    json: async () => ({ items, hasMore: false }),
+    ok: init.ok ?? true,
+    status: init.status ?? (init.ok === false ? 500 : 200),
+    json: async () => JSON.parse(text),
+    text: async () => text,
   };
+}
+
+/** Non-JSON body, as a reverse proxy returns on a gateway timeout. */
+function makeHtmlResponse(status: number) {
+  const text = `<html> <head><title>${status} Gateway Time-out</title></head> </html>`;
+  return {
+    ok: false,
+    status,
+    json: async () => JSON.parse(text), // throws, exactly like a real Response
+    text: async () => text,
+  };
+}
+
+function makePreviewResponse(items: any[]) {
+  return makeJsonResponse({ items, hasMore: false });
 }
 
 describe("ImportMilestonesDialog", () => {
@@ -291,12 +317,9 @@ describe("ImportMilestonesDialog", () => {
         );
       }
       if (typeof url === "string" && url.includes("milestone-sync/import")) {
-        return Promise.resolve({
-          ok: true,
-          json: async () => ({ queued: true }),
-        });
+        return Promise.resolve(makeJsonResponse({ queued: true }));
       }
-      return Promise.resolve({ ok: true, json: async () => ({}) });
+      return Promise.resolve(makeJsonResponse({}));
     });
 
     render(<ImportMilestonesDialog {...baseProps} />);
@@ -434,18 +457,54 @@ describe("ImportMilestonesDialog — multi-project picker", () => {
   });
 
   it("surfaces partial mapping-fetch warnings without blocking the list", async () => {
-    mockFetch.mockResolvedValue({
-      ok: true,
-      json: async () => ({
+    mockFetch.mockResolvedValue(
+      makeJsonResponse({
         items: multiItems.slice(1),
         hasMore: false,
         warnings: ["ABT: HTTP 400: boom"],
-      }),
-    });
+      })
+    );
     render(<ImportMilestonesDialog {...baseProps} />);
     await screen.findByText("Admin 9.2 S1");
     expect(
       screen.getByTestId("import-milestones-warnings").textContent
     ).toContain("ABT: HTTP 400: boom");
+  });
+
+  it("reports a gateway timeout as a timeout, not a JSON parse error", async () => {
+    // A proxy that gives up before the route finishes answers with an HTML
+    // error page. Parsing it as JSON throws "Unexpected token '<'", which used
+    // to reach the user verbatim in place of the real problem.
+    mockFetch.mockResolvedValue(makeHtmlResponse(504));
+
+    render(<ImportMilestonesDialog {...baseProps} />);
+
+    const alert = await screen.findByTestId("import-milestones-error");
+    expect(alert.textContent).toContain("requestTimedOut");
+    expect(alert.textContent).not.toContain("JSON");
+    expect(alert.textContent).not.toContain("<");
+  });
+
+  it("falls back to the HTTP status when a failure body carries no error field", async () => {
+    mockFetch.mockResolvedValue(makeHtmlResponse(418));
+
+    render(<ImportMilestonesDialog {...baseProps} />);
+
+    const alert = await screen.findByTestId("import-milestones-error");
+    expect(alert.textContent).toContain("unexpectedResponse");
+  });
+
+  it("still prefers the route's own JSON error message when there is one", async () => {
+    mockFetch.mockResolvedValue(
+      makeJsonResponse(
+        { error: "ABT: HTTP 401: scope does not match" },
+        { ok: false, status: 500 }
+      )
+    );
+
+    render(<ImportMilestonesDialog {...baseProps} />);
+
+    const alert = await screen.findByTestId("import-milestones-error");
+    expect(alert.textContent).toContain("scope does not match");
   });
 });

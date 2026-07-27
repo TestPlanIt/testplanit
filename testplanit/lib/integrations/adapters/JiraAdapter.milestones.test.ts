@@ -702,4 +702,104 @@ describe("JiraAdapter.getExternalMilestones", () => {
       expect(result.items[0].id).toBe("301");
     });
   });
+
+  describe("upstream filtering when closed artifacts aren't wanted", () => {
+    /** URLs passed to fetch, in call order. */
+    function requestedUrls(): string[] {
+      return mockFetch.mock.calls.map((call) => String(call[0]));
+    }
+
+    it("asks Jira for unreleased versions only, instead of filtering locally", async () => {
+      mockFetch.mockResolvedValueOnce(
+        jsonResponse({ values: [], isLast: true })
+      );
+
+      await adapter.getExternalMilestones({
+        projectKey: "TEST",
+        kind: "RELEASE",
+        includeClosed: false,
+      });
+
+      const url = requestedUrls()[0];
+      expect(url).toContain("/project/TEST/version");
+      expect(url).toContain("status=unreleased");
+    });
+
+    it("requests the full version history when closed artifacts ARE wanted", async () => {
+      mockFetch.mockResolvedValueOnce(
+        jsonResponse({ values: [], isLast: true })
+      );
+
+      await adapter.getExternalMilestones({
+        projectKey: "TEST",
+        kind: "RELEASE",
+        includeClosed: true,
+      });
+
+      expect(requestedUrls()[0]).not.toContain("status=");
+    });
+
+    it("asks each board for active and future sprints only", async () => {
+      // Board discovery, then the single board's sprint page.
+      mockFetch.mockResolvedValueOnce(
+        jsonResponse({ values: [{ id: 7 }], isLast: true })
+      );
+      mockFetch.mockResolvedValueOnce(
+        jsonResponse({ values: [], isLast: true })
+      );
+
+      await adapter.getExternalMilestones({
+        projectKey: "TEST",
+        kind: "ITERATION",
+        includeClosed: false,
+      });
+
+      const sprintUrl = requestedUrls().find((url) =>
+        url.includes("/board/7/sprint")
+      );
+      expect(sprintUrl).toContain("state=active%2Cfuture");
+    });
+
+    it("requests every sprint state when closed artifacts ARE wanted", async () => {
+      mockFetch.mockResolvedValueOnce(
+        jsonResponse({ values: [{ id: 7 }], isLast: true })
+      );
+      mockFetch.mockResolvedValueOnce(
+        jsonResponse({ values: [], isLast: true })
+      );
+
+      await adapter.getExternalMilestones({
+        projectKey: "TEST",
+        kind: "ITERATION",
+        includeClosed: true,
+      });
+
+      const sprintUrl = requestedUrls().find((url) =>
+        url.includes("/board/7/sprint")
+      );
+      expect(sprintUrl).not.toContain("state=");
+    });
+
+    it("still drops a CLOSED artifact locally if the upstream filter is ignored", async () => {
+      // Server/DC deployments that don't honour `status` return everything;
+      // the local filter has to remain the backstop.
+      mockFetch.mockResolvedValueOnce(
+        jsonResponse({
+          values: [
+            { id: "10000", name: "v1.0", released: true, archived: false },
+            { id: "10001", name: "v2.0", released: false, archived: false },
+          ],
+          isLast: true,
+        })
+      );
+
+      const result = await adapter.getExternalMilestones({
+        projectKey: "TEST",
+        kind: "RELEASE",
+        includeClosed: false,
+      });
+
+      expect(result.items.map((item) => item.id)).toEqual(["10001"]);
+    });
+  });
 });

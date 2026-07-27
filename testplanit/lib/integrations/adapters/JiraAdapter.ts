@@ -66,6 +66,20 @@ function sanitizeUpstreamErrorBody(body: string): string {
 export class JiraAdapter extends BaseAdapter {
   public supportsOAuth = true;
 
+  /**
+   * BaseAdapter's default is 1000ms between every upstream request, which is
+   * far more conservative than Jira's own limits and turns request COUNT into
+   * the dominant cost of any fan-out. Milestone preview is the worst case: it
+   * walks versions plus every board's sprints for every mapped Jira project,
+   * so on a large site the throttle alone accounted for ~83s of a request that
+   * a front-end proxy kills at 60s.
+   *
+   * 200ms (5 req/s) still paces us well under Atlassian's cost-based limits
+   * for a single user's interactive request, while leaving real headroom.
+   * Scoped to Jira deliberately — other providers keep the 1s default.
+   */
+  protected rateLimitDelay = 200;
+
   private clientId: string;
   private clientSecret: string;
   private redirectUri: string;
@@ -830,13 +844,18 @@ export class JiraAdapter extends BaseAdapter {
     const items: ExternalMilestone[] = [];
 
     if (!kind || kind === "RELEASE") {
-      items.push(...(await this.fetchJiraVersions(projectKey)));
+      items.push(...(await this.fetchJiraVersions(projectKey, includeClosed)));
     }
 
     if (!kind || kind === "ITERATION") {
-      items.push(...(await this.fetchJiraSprints(projectKey)));
+      items.push(...(await this.fetchJiraSprints(projectKey, includeClosed)));
     }
 
+    // Both fetches already ask Jira to exclude closed artifacts when
+    // includeClosed is false, so this is a safety net rather than the primary
+    // filter — it still catches anything an upstream filter classifies
+    // differently than mapJiraVersion/mapJiraSprint do (and Server/DC
+    // deployments that ignore the query parameters entirely).
     const filtered = includeClosed
       ? items
       : items.filter((item) => item.state !== "CLOSED");
@@ -854,19 +873,36 @@ export class JiraAdapter extends BaseAdapter {
    * RELEASE milestones: page through the project-versions endpoint
    * (offset-based startAt/maxResults/total per research Open Question 3)
    * and map each version to an ExternalMilestone.
+   *
+   * When closed artifacts aren't wanted, the filtering is pushed upstream via
+   * `status=unreleased` rather than fetching everything and discarding it
+   * locally. On a mature project that is the difference between a couple of
+   * dozen pages and one: a real project here holds 1198 versions of which 10
+   * are unreleased. Every page costs a full second of the BaseAdapter rate
+   * limiter, so page count — not row count — is what decides whether the
+   * preview beats the proxy's request timeout.
+   *
+   * `status` mirrors mapJiraVersion's CLOSED rule (archived or released), so
+   * the two agree on which versions are omitted. Server/DC deployments that
+   * don't honour the parameter simply return everything and fall back to the
+   * caller's local filter.
    */
   private async fetchJiraVersions(
-    projectKey: string
+    projectKey: string,
+    includeClosed: boolean
   ): Promise<ExternalMilestone[]> {
     const versions: ExternalMilestone[] = [];
     let startAt = 0;
-    const maxResults = 50;
+    // Verified against Jira Cloud: the versions endpoint honours 100 per page,
+    // halving the page count when the full history IS wanted.
+    const maxResults = 100;
 
     try {
       while (true) {
         const params = new URLSearchParams({
           startAt: startAt.toString(),
           maxResults: maxResults.toString(),
+          ...(includeClosed ? {} : { status: "unreleased" }),
         });
         const response = await this.makeRequest<any>(
           this.buildUrl(
@@ -970,7 +1006,8 @@ export class JiraAdapter extends BaseAdapter {
    * can have multiple boards whose sprint lists overlap.
    */
   private async fetchJiraSprints(
-    projectKey: string
+    projectKey: string,
+    includeClosed: boolean
   ): Promise<ExternalMilestone[]> {
     const boardIds = await this.discoverJiraBoards(projectKey);
     const bySprintId = new Map<string, ExternalMilestone>();
@@ -999,6 +1036,11 @@ export class JiraAdapter extends BaseAdapter {
           const params = new URLSearchParams({
             startAt: startAt.toString(),
             maxResults: maxResults.toString(),
+            // Same upstream-filtering rationale as fetchJiraVersions, and it
+            // matters more here because the cost is per BOARD: one board on a
+            // long-running project carries 192 sprints (4 pages) of which 3
+            // are active or future (1 page).
+            ...(includeClosed ? {} : { state: "active,future" }),
           });
           const response = await this.makeRequest<any>(
             this.buildUrl(
