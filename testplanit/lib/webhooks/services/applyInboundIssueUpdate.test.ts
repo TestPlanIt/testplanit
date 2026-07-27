@@ -53,8 +53,16 @@ const mocks = vi.hoisted(() => {
   // when an active matching integration exists. Stub returns success;
   // tests that care about the trigger override per-test.
   const performIssueRefreshSystem = vi.fn(async () => ({ success: true }));
+  // Drives the webhook burst allowance (webhookFreshness.ts): `incr` returns
+  // the running event count for this issue inside the window. 1..5 => refetch
+  // (window 0), 6+ => a genuine storm, fall back to the 15s window.
+  const valkey = {
+    incr: vi.fn(async (..._args: any[]): Promise<number> => 1),
+    expire: vi.fn(async (..._args: any[]): Promise<number> => 1),
+  };
   return {
     tx,
+    valkey,
     baseDb: {
       $transaction,
       projectIntegration: { findFirst: projectIntegrationFindFirst },
@@ -85,6 +93,10 @@ vi.mock("~/lib/utils/errors", () => ({
 
 vi.mock("~/lib/webhooks/adapters", () => ({
   getAdapter: mocks.getAdapter,
+}));
+
+vi.mock("~/lib/valkey", () => ({
+  default: mocks.valkey,
 }));
 
 vi.mock("~/lib/integrations/services/SyncService", () => ({
@@ -145,6 +157,10 @@ const resetTxMocks = () => {
   mocks.projectIntegrationFindFirst.mockReset();
   mocks.projectIntegrationFindFirst.mockResolvedValue(null);
   mocks.performIssueRefreshSystem.mockReset();
+  mocks.valkey.incr.mockReset();
+  mocks.valkey.incr.mockResolvedValue(1);
+  mocks.valkey.expire.mockReset();
+  mocks.valkey.expire.mockResolvedValue(1);
   mocks.performIssueRefreshSystem.mockResolvedValue({ success: true });
   mocks.isUniqueConstraintError.mockImplementation((err: unknown) => {
     return err instanceof ORMError && err.dbErrorCode === "23505";
@@ -359,7 +375,7 @@ describe("applyInboundIssueUpdate", () => {
       42,
       "DEMO-42",
       expect.objectContaining({
-        minFreshnessSeconds: 15,
+        minFreshnessSeconds: 0,
         createIfMissing: { projectId: input.projectId },
       })
     );
@@ -475,7 +491,32 @@ describe("applyInboundIssueUpdate", () => {
     expect(mocks.performIssueRefreshSystem).toHaveBeenCalledWith(
       42, // integration.id from the resolved ProjectIntegration
       "DEMO-42", // linkedRef.externalKey
-      { minFreshnessSeconds: 15 } // WEBHOOK_SYNC_FRESHNESS_SECONDS
+      { minFreshnessSeconds: 0 } // inside the burst allowance
+    );
+    // Counted per ISSUE, not per webhook config or project — a storm against
+    // one issue must not suppress a quiet neighbour's first event.
+    expect(mocks.valkey.incr).toHaveBeenCalledWith(
+      "sync-burst:issue:42:7:DEMO-42"
+    );
+  });
+
+  it("Test 6b: a sustained burst against the same issue falls back to the 15s coalescing window", async () => {
+    // The window is storm protection, and it should still engage on real
+    // volume — just not on the second event of an ordinary multi-event edit.
+    const applyInboundIssueUpdate = await importSut();
+    mocks.valkey.incr.mockResolvedValue(6);
+    mocks.tx.issue.findFirst.mockResolvedValue({ id: 100 });
+    mocks.projectIntegrationFindFirst.mockResolvedValueOnce({
+      integrationId: 42,
+      integration: { id: 42 },
+    } as any);
+
+    await applyInboundIssueUpdate(baseInput());
+
+    expect(mocks.performIssueRefreshSystem).toHaveBeenCalledWith(
+      42,
+      "DEMO-42",
+      { minFreshnessSeconds: 15 }
     );
   });
 
