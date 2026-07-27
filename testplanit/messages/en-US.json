@@ -6693,11 +6693,11 @@
       "elapsedTime": "## Elapsed Time\nEnter the total time taken to execute this test case. You can use units like **s** for seconds, **m** for minutes, **h** for hours (e.g., 30s, 5m, 1h 20m).",
       "resultData": "## Result Details\nProvide detailed notes, observations, or any other relevant data about the overall test execution. This can include setup details, steps followed if deviating from the plan, or general comments.",
       "evidence": "## Evidence/Attachments\nUpload any files (e.g., screenshots, logs, data files) that serve as evidence for this test result. These attachments will be linked to this specific result.",
-      "issues": "## Linked Issues\nLink any issues from your integrated issue tracker that are related to this test result. This helps in tracking defects or tasks associated with the outcome of this test.",
+      "issues": "## Linked Issues\nLink any issues from your integrated issue tracker that are related to this test result. This helps in tracking defects or tasks associated with the outcome of this test.\n\nLinking an issue sets the overall status to the first failure status unless you have already chosen one. You can still change it before saving.",
       "stepStatus": "## Step Status\nSelect the status for this specific test step. This allows for granular tracking of progress within a single test case.",
       "stepElapsedTime": "## Step Elapsed Time\nEnter the time taken to execute this specific step. Use units like **s**, **m**, **h** (e.g., 10s, 2m). This is optional.",
       "stepNotes": "## Step Notes\nAdd any notes, observations, or data specific to the execution of this test step.",
-      "stepIssues": "## Step Linked Issues\nLink issues from your issue tracker that are specifically related to the outcome or observations of this test step."
+      "stepIssues": "## Step Linked Issues\nLink issues from your issue tracker that are specifically related to the outcome or observations of this test step.\n\nLinking an issue sets this step, and the overall result, to the first failure status unless one is already chosen. You can still change either before saving."
     },
     "case": {
       "name": "## Test Case Name\nA clear, descriptive name for the test case.",

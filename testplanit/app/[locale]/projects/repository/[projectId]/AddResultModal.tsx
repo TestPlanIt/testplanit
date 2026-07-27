@@ -47,6 +47,10 @@ import {
 } from "~/lib/test-run-result-submit";
 import { useOperationId } from "~/hooks/useOperationId";
 import { toHumanReadable } from "~/utils/duration";
+import {
+  failureFlipStatusId,
+  hasNewlyLinkedIssue,
+} from "~/utils/failureStatusFlip";
 import { fetchSignedUrl } from "~/utils/fetchSignedUrl";
 import { editorMinHeightStyle } from "~/utils/editorHeight";
 import { ExtendedCases } from "./columns";
@@ -677,6 +681,39 @@ export function AddResultModal({
     );
     if (selectedStatus?.color?.value) {
       setSelectedStatusColor(selectedStatus.color.value);
+    }
+  };
+
+  // Linking an issue means the tester found a defect, so whatever the issue was
+  // attached to flips to the project's first failure status. A step-level link
+  // also flips the overall result, the same escalation selecting a failure
+  // status on a step already performs.
+  const flipToFailureOnIssueLink = (
+    previousIssueIds: number[],
+    nextIssueIds: number[],
+    stepStatusField?: string
+  ) => {
+    if (!hasNewlyLinkedIssue(previousIssueIds, nextIssueIds)) return;
+
+    if (stepStatusField) {
+      const stepFlipId = failureFlipStatusId(
+        Number(form.getValues(stepStatusField)) || null,
+        statuses
+      );
+      if (stepFlipId !== null) {
+        form.setValue(stepStatusField, stepFlipId.toString(), {
+          shouldValidate: true,
+          shouldDirty: true,
+        });
+      }
+    }
+
+    const overallFlipId = failureFlipStatusId(
+      Number(form.getValues("statusId")) || null,
+      statuses
+    );
+    if (overallFlipId !== null) {
+      handleStatusChange(overallFlipId.toString());
     }
   };
 
@@ -1937,7 +1974,10 @@ export function AddResultModal({
                 <UnifiedIssueManager
                   projectId={Number(projectId)}
                   linkedIssueIds={selectedMainIssues}
-                  setLinkedIssueIds={setSelectedMainIssues}
+                  setLinkedIssueIds={(ids) => {
+                    flipToFailureOnIssueLink(selectedMainIssues, ids);
+                    setSelectedMainIssues(ids);
+                  }}
                   entityType="testRunResult"
                   iterationContext={
                     iterationId && testRunCaseId
@@ -2229,6 +2269,11 @@ export function AddResultModal({
                               projectId={Number(projectId)}
                               linkedIssueIds={selectedStepIssues[step.id] || []}
                               setLinkedIssueIds={(ids) => {
+                                flipToFailureOnIssueLink(
+                                  selectedStepIssues[step.id] || [],
+                                  ids,
+                                  `step_${step.id}_statusId`
+                                );
                                 setSelectedStepIssues((prev) => ({
                                   ...prev,
                                   [step.id]: ids,
@@ -2287,7 +2332,10 @@ export function AddResultModal({
 }
 
 // Define a type for statuses to be passed to SharedStepGroupInputs
-type StatusForSelect = Pick<DbStatus, "id" | "name" | "isFailure"> & {
+type StatusForSelect = Pick<
+  DbStatus,
+  "id" | "name" | "isFailure" | "order"
+> & {
   color?: Pick<DbColor, "value"> | null;
 };
 
@@ -2372,6 +2420,39 @@ const SharedStepGroupInputs: React.FC<SharedStepGroupInputsProps> = ({
       });
     }
   }, [items, setValue, getValues, queryClient, sharedStepGroupId]);
+
+  // Mirrors the parent modal's flip: an issue linked to a shared step item
+  // fails that item and escalates the overall result.
+  const flipToFailureOnIssueLink = (
+    previousIssueIds: number[],
+    nextIssueIds: number[],
+    itemStatusField: string
+  ) => {
+    if (!hasNewlyLinkedIssue(previousIssueIds, nextIssueIds)) return;
+
+    const itemFlipId = failureFlipStatusId(
+      Number(getValues(itemStatusField)) || null,
+      statuses
+    );
+    if (itemFlipId !== null) {
+      setValue(itemStatusField, itemFlipId.toString(), {
+        shouldValidate: true,
+        shouldDirty: true,
+      });
+    }
+
+    const overallFlipId = failureFlipStatusId(
+      Number(getValues("statusId")) || null,
+      statuses
+    );
+    if (overallFlipId !== null) {
+      setValue("statusId", overallFlipId.toString(), {
+        shouldValidate: true,
+        shouldDirty: true,
+      });
+      onMainStatusChange?.();
+    }
+  };
 
   if (isLoading) {
     return <LoadingSpinner />;
@@ -2556,6 +2637,11 @@ const SharedStepGroupInputs: React.FC<SharedStepGroupInputsProps> = ({
                   projectId={projectId}
                   linkedIssueIds={selectedIssues[item.id] || []}
                   setLinkedIssueIds={(ids) => {
+                    flipToFailureOnIssueLink(
+                      selectedIssues[item.id] || [],
+                      ids,
+                      `shared_item_${itemIdStr}_statusId`
+                    );
                     setSelectedIssues((prev) => ({
                       ...prev,
                       [item.id]: ids,

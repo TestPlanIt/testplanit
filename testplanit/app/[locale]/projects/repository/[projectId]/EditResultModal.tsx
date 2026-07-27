@@ -37,6 +37,10 @@ import { useOperationId } from "~/hooks/useOperationId";
 import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
 import type { ParameterChipMeta } from "~/lib/tiptap/parameterMentionExtension";
 import { toHumanReadable } from "~/utils/duration";
+import {
+  failureFlipStatusId,
+  hasNewlyLinkedIssue,
+} from "~/utils/failureStatusFlip";
 import { fetchSignedUrl } from "~/utils/fetchSignedUrl";
 import { editorMinHeightStyle } from "~/utils/editorHeight";
 
@@ -750,6 +754,47 @@ export function EditResultModal({
     }
   };
 
+  // Linking an issue means the tester found a defect, so whatever the issue was
+  // attached to flips to the project's first failure status. A step-level link
+  // also flips the overall result, the same escalation a failing step status
+  // already performs.
+  const flipToFailureOnIssueLink = (
+    previousIssueIds: number[],
+    nextIssueIds: number[],
+    stepStatusField?: string
+  ) => {
+    if (!hasNewlyLinkedIssue(previousIssueIds, nextIssueIds)) return;
+
+    if (stepStatusField) {
+      const stepFlipId = failureFlipStatusId(
+        Number(form.getValues(stepStatusField)) || null,
+        statuses
+      );
+      if (stepFlipId !== null) {
+        form.setValue(stepStatusField, stepFlipId, {
+          shouldValidate: true,
+          shouldDirty: true,
+        });
+      }
+    }
+
+    const overallFlipId = failureFlipStatusId(
+      Number(form.getValues("statusId")) || null,
+      statuses
+    );
+    if (overallFlipId !== null) {
+      form.setValue("statusId", overallFlipId, {
+        shouldValidate: true,
+        shouldDirty: true,
+      });
+      const flippedStatus = statuses?.find((s) => s.id === overallFlipId);
+      if (flippedStatus?.color?.value) {
+        setSelectedStatusColor(flippedStatus.color.value);
+      }
+      setAnimateBackground(true);
+    }
+  };
+
   const handleTimeUpdate = (seconds: number) => {
     setTrackedSeconds(seconds);
     if (seconds > 0) {
@@ -1219,9 +1264,14 @@ export function EditResultModal({
               <UnifiedIssueManager
                 projectId={Number(projectId)}
                 linkedIssueIds={selectedStepIssues[stepId] || []}
-                setLinkedIssueIds={(ids) =>
-                  setSelectedStepIssues((prev) => ({ ...prev, [stepId]: ids }))
-                }
+                setLinkedIssueIds={(ids) => {
+                  flipToFailureOnIssueLink(
+                    selectedStepIssues[stepId] || [],
+                    ids,
+                    `step_${stepId}_statusId`
+                  );
+                  setSelectedStepIssues((prev) => ({ ...prev, [stepId]: ids }));
+                }}
                 entityType="testRunResult"
               />
             </FormControl>
@@ -1845,6 +1895,7 @@ export function EditResultModal({
                     projectId={Number(projectId)}
                     linkedIssueIds={selectedMainIssues}
                     setLinkedIssueIds={(ids) => {
+                      flipToFailureOnIssueLink(selectedMainIssues, ids);
                       setSelectedMainIssues(ids);
                       if (ids.length > 0) setShowIssueRequiredError(false);
                     }}
