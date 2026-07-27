@@ -40,10 +40,17 @@ interface JiraWebhookPayload {
     fields?: { status?: { name?: string } };
   };
   // Version/sprint payloads (jira:version_* / sprint_*) — no `issue` field
-  // at all. `project.id` is only present on version events; sprint events
-  // carry no project reference (Pitfall 2), only `originBoardId`.
+  // at all. Sprint events carry no project reference (Pitfall 2), only
+  // `originBoardId`.
+  //
+  // Version events identify their project in ONE of two shapes depending on
+  // the deployment, so both are modeled and the extractor accepts either:
+  // a top-level `project.id`, or `projectId` nested inside `version`.
+  // Atlassian documents neither payload, and Jira Cloud was observed sending
+  // the nested form — every real jira:version_updated / jira:version_released
+  // delivery logged `no-ref` while only the top-level shape was accepted.
   project?: { id?: string | number };
-  version?: { id?: string | number };
+  version?: { id?: string | number; projectId?: string | number };
   sprint?: { id?: string | number; originBoardId?: string | number };
   // Present on `jira:version_deleted` ONLY when the version was merged into
   // another rather than truly deleted — Atlassian's docs confirm merges are
@@ -64,6 +71,33 @@ interface JiraWebhookPayload {
  * external caller cannot legitimately forge.
  */
 export const SYNTHETIC_ISSUE_KEY = "__synthetic__";
+
+/**
+ * A milestone event we can't pull a ref out of becomes a `no-ref` delivery
+ * whose row records only a payload DIGEST — leaving nothing to diagnose from
+ * when a deployment's payload shape turns out to differ from what we accept.
+ *
+ * Log the STRUCTURE only: top-level keys plus the keys of the version/sprint
+ * object. Never the values — webhook payloads carry version names,
+ * descriptions and other customer content that does not belong in logs.
+ */
+function logUnextractableMilestoneEvent(
+  eventType: string,
+  p: JiraWebhookPayload
+): void {
+  const shape: Record<string, string[]> = { payload: Object.keys(p ?? {}) };
+  if (p?.version && typeof p.version === "object") {
+    shape.version = Object.keys(p.version);
+  }
+  if (p?.sprint && typeof p.sprint === "object") {
+    shape.sprint = Object.keys(p.sprint);
+  }
+  console.warn(
+    `[jira webhook] could not extract a milestone ref from %s — payload shape: %s`,
+    eventType,
+    JSON.stringify(shape)
+  );
+}
 
 function parsePayload(rawBody: Buffer): JiraWebhookPayload | null {
   try {
@@ -195,6 +229,7 @@ export const jiraAdapter: WebhookAdapter = {
         (typeof externalId !== "string" && typeof externalId !== "number") ||
         (typeof originBoardId !== "string" && typeof originBoardId !== "number")
       ) {
+        logUnextractableMilestoneEvent(eventType, p);
         return null;
       }
       // Jira board ids are integers. `originBoardId` is attacker-influenced
@@ -215,14 +250,19 @@ export const jiraAdapter: WebhookAdapter = {
 
     if (eventType.startsWith("jira:version_")) {
       const externalId = p.version?.id;
-      const externalProjectId = p.project?.id;
+      // Accept either project shape — see JiraWebhookPayload. Top-level
+      // `project.id` is preferred when present; `version.projectId` is what
+      // Jira Cloud actually sends.
+      const externalProjectId = p.project?.id ?? p.version?.projectId;
       if (typeof externalId !== "string" && typeof externalId !== "number") {
+        logUnextractableMilestoneEvent(eventType, p);
         return null;
       }
       if (
         typeof externalProjectId !== "string" &&
         typeof externalProjectId !== "number"
       ) {
+        logUnextractableMilestoneEvent(eventType, p);
         return null;
       }
       // Merge discriminator: `jira:version_deleted` with `mergedTo` present

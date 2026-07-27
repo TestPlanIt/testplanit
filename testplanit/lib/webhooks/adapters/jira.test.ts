@@ -319,6 +319,83 @@ describe("jiraAdapter — version/sprint milestone events (Pitfall 1 fix)", () =
     }
   });
 
+  it("REGRESSION: resolves the project from version.projectId when there is no top-level project object", () => {
+    // The shape Jira Cloud actually sends. Only a top-level `project.id` was
+    // accepted, so every real jira:version_updated / jira:version_released
+    // delivery was logged as `no-ref` and silently dropped.
+    const versionPayload = {
+      webhookEvent: "jira:version_updated",
+      version: {
+        self: "https://site.atlassian.net/rest/api/2/version/10100",
+        id: "10100",
+        name: "v1.0",
+        archived: false,
+        released: false,
+        projectId: 10050,
+      },
+    };
+    const body = bodyOf(versionPayload);
+    const headers = new Headers({
+      "x-hub-signature-256": signBody(body, SECRET),
+    });
+    const result = jiraAdapter.verify(body, headers, SECRET);
+    expect(result.valid).toBe(true);
+    if (!result.valid) return;
+
+    const ref = jiraAdapter.extractMilestoneEventRef!(
+      result.payload,
+      result.payload.eventType
+    );
+    expect(ref).toEqual({
+      kind: "RELEASE",
+      externalId: "10100",
+      externalProjectId: "10050",
+      merge: false,
+    });
+  });
+
+  it("prefers a top-level project.id when BOTH shapes are present", () => {
+    const versionPayload = {
+      webhookEvent: "jira:version_released",
+      version: { id: "10100", name: "v1.0", projectId: 999 },
+      project: { id: "10050", key: "DEMO" },
+    };
+    const body = bodyOf(versionPayload);
+    const headers = new Headers({
+      "x-hub-signature-256": signBody(body, SECRET),
+    });
+    const result = jiraAdapter.verify(body, headers, SECRET);
+    expect(result.valid).toBe(true);
+    if (!result.valid) return;
+
+    const ref = jiraAdapter.extractMilestoneEventRef!(
+      result.payload,
+      result.payload.eventType
+    );
+    expect(ref).toMatchObject({ externalProjectId: "10050" });
+  });
+
+  it("still returns null when NEITHER project shape is present", () => {
+    const versionPayload = {
+      webhookEvent: "jira:version_updated",
+      version: { id: "10100", name: "v1.0" },
+    };
+    const body = bodyOf(versionPayload);
+    const headers = new Headers({
+      "x-hub-signature-256": signBody(body, SECRET),
+    });
+    const result = jiraAdapter.verify(body, headers, SECRET);
+    expect(result.valid).toBe(true);
+    if (!result.valid) return;
+
+    expect(
+      jiraAdapter.extractMilestoneEventRef!(
+        result.payload,
+        result.payload.eventType
+      )
+    ).toBeNull();
+  });
+
   it("a sprint_updated payload parses and carries originBoardId via extractMilestoneEventRef", () => {
     const sprintPayload = {
       webhookEvent: "sprint_updated",
