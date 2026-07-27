@@ -1657,6 +1657,7 @@
         "setupStepsGiteaStep5": "Kliknij „Dodaj webhook”. Użyj poniższej opcji „Wyślij testowy webhook”, aby zweryfikować potok.",
         "deliveriesTab": "Dostawy",
         "filterConfigPlaceholder": "Wszystkie webhooki",
+        "filterEventPlaceholder": "Wszystkie zdarzenia",
         "filterStatusAll": "Wszystko",
         "filterStatusFailed": "Przegrany",
         "filterStatusSuccess": "Sukces",

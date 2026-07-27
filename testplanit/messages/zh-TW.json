@@ -1657,6 +1657,7 @@
         "setupStepsGiteaStep5": "點擊“新增 Webhook”。使用下面的「發送測試 Webhook」來驗證管道。",
         "deliveriesTab": "送貨",
         "filterConfigPlaceholder": "所有 webhook",
+        "filterEventPlaceholder": "所有事件",
         "filterStatusAll": "全部",
         "filterStatusFailed": "失敗的",
         "filterStatusSuccess": "成功",

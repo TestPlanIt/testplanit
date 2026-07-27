@@ -1657,6 +1657,7 @@
         "setupStepsGiteaStep5": "\"Webhook Ekle\"ye tıklayın. İşlem hattını doğrulamak için aşağıdaki \"Test webhook gönder\" seçeneğini kullanın.",
         "deliveriesTab": "Teslimatlar",
         "filterConfigPlaceholder": "Tüm web kancaları",
+        "filterEventPlaceholder": "Tüm etkinlikler",
         "filterStatusAll": "Tüm",
         "filterStatusFailed": "Arızalı",
         "filterStatusSuccess": "Başarı",

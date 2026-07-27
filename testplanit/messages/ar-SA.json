@@ -1657,6 +1657,7 @@
         "setupStepsGiteaStep5": "انقر على \"إضافة خطاف شبكي\". استخدم \"إرسال خطاف شبكي تجريبي\" أدناه للتحقق من خط الأنابيب.",
         "deliveriesTab": "عمليات التسليم",
         "filterConfigPlaceholder": "جميع الخطاطيف الشبكية",
+        "filterEventPlaceholder": "جميع الأحداث",
         "filterStatusAll": "الكل",
         "filterStatusFailed": "فاشل",
         "filterStatusSuccess": "ناجح",

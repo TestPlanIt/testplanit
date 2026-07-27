@@ -1657,6 +1657,7 @@
         "setupStepsGiteaStep5": "Click \"Add Webhook\". Use \"Send test webhook\" below to verify the pipeline.",
         "deliveriesTab": "Deliveries",
         "filterConfigPlaceholder": "All webhooks",
+        "filterEventPlaceholder": "All events",
         "filterStatusAll": "All",
         "filterStatusFailed": "Failed",
         "filterStatusSuccess": "Success",

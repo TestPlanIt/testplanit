@@ -595,11 +595,14 @@ describe("WebhookDeliveriesTab", () => {
     });
   });
 
-  it("Test 9: filter bar surfaces config + status + date-range controls", () => {
+  it("Test 9: filter bar surfaces config + event + status + date-range controls", () => {
     setDeliveries([]);
     render(<WebhookDeliveriesTab projectId={42} />);
     expect(
       screen.getByTestId("webhook-deliveries-filter-config")
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId("webhook-deliveries-filter-event")
     ).toBeInTheDocument();
     expect(
       screen.getByTestId("webhook-deliveries-filter-status")
@@ -731,6 +734,56 @@ describe("WebhookDeliveriesTab", () => {
       "webhook-deliveries-filter-status"
     ) as HTMLSelectElement;
     expect(statusSelect.value).toBe("failed");
+  });
+
+  it("Test 18: event filter lists distinct event types from deliveries", () => {
+    setDeliveries([outboundFailedDelivery, inboundDelivery]);
+    render(<WebhookDeliveriesTab projectId={42} />);
+    const eventSelect = screen.getByTestId(
+      "webhook-deliveries-filter-event"
+    ) as HTMLSelectElement;
+    const values = Array.from(eventSelect.options).map((o) => o.value);
+    expect(values).toContain("__all__");
+    expect(values).toContain("test_run.completed");
+    expect(values).toContain("jira:issue_updated");
+  });
+
+  it("Test 19: selecting an event writes eventType to the URL, preserving the tab", () => {
+    setDeliveries([outboundFailedDelivery, inboundDelivery]);
+    render(<WebhookDeliveriesTab projectId={42} />);
+    fireEvent.change(screen.getByTestId("webhook-deliveries-filter-event"), {
+      target: { value: "test_run.completed" },
+    });
+    expect(mockRouterReplace).toHaveBeenCalled();
+    const url = mockRouterReplace.mock.calls.at(-1)?.[0] as string;
+    const params = new URLSearchParams(url.split("?")[1]);
+    expect(params.get("eventType")).toBe("test_run.completed");
+    expect(params.get("tab")).toBe("deliveries");
+  });
+
+  it("Test 20: eventType URL state pre-selects the event filter and scopes the query", () => {
+    mockSearchParams.current = "eventType=jira%3Aissue_updated";
+    setDeliveries([inboundDelivery]);
+    render(<WebhookDeliveriesTab projectId={42} />);
+    const eventSelect = screen.getByTestId(
+      "webhook-deliveries-filter-event"
+    ) as HTMLSelectElement;
+    expect(eventSelect.value).toBe("jira:issue_updated");
+    // The deliveries query itself is filtered by the selected event.
+    const infiniteArgs = mockInfiniteWebhookDelivery.mock.calls.at(-1)?.[0];
+    expect(infiniteArgs.where.eventType).toBe("jira:issue_updated");
+  });
+
+  it("Test 21: choosing 'All events' clears eventType from the URL", () => {
+    mockSearchParams.current = "eventType=test_run.completed";
+    setDeliveries([outboundFailedDelivery]);
+    render(<WebhookDeliveriesTab projectId={42} />);
+    fireEvent.change(screen.getByTestId("webhook-deliveries-filter-event"), {
+      target: { value: "__all__" },
+    });
+    const url = mockRouterReplace.mock.calls.at(-1)?.[0] as string;
+    const params = new URLSearchParams(url.split("?")[1]);
+    expect(params.get("eventType")).toBeNull();
   });
 
   it("Test 17: defensive — inbound replay rejection toast surfaces when action returns reason", async () => {

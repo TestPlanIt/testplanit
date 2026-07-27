@@ -146,6 +146,7 @@ function eventLabelKey(eventType: string | null | undefined): string | null {
 interface FilterState {
   configIds: string[];
   status: StatusFilter;
+  eventType: string | null;
   since: Date | null;
   until: Date | null;
 }
@@ -166,11 +167,12 @@ function parseFilterFromSearchParams(
   const statusRaw = (searchParams?.get("status") ?? "all") as StatusFilter;
   const status: StatusFilter =
     statusRaw === "failed" || statusRaw === "success" ? statusRaw : "all";
+  const eventType = searchParams?.get("eventType") || null;
   const sinceParam = searchParams?.get("since");
   const untilParam = searchParams?.get("until");
   const since = sinceParam ? new Date(sinceParam) : null;
   const until = untilParam ? new Date(untilParam) : null;
-  return { configIds, status, since, until };
+  return { configIds, status, eventType, since, until };
 }
 
 /**
@@ -243,6 +245,35 @@ function WebhookDeliveriesTabContent({ projectId }: WebhookDeliveriesTabProps) {
     direction: string;
   }>;
 
+  // ─── Distinct event types seen in this project's deliveries ─────────
+  // Sourced from the deliveries themselves (like the audit-log entity-type
+  // filter) so the dropdown only lists events that actually occurred.
+  const { data: eventTypeRows } = useClientQueries(
+    schema
+  ).webhookDelivery.useFindMany({
+    where: { webhookConfig: { projectId }, eventType: { not: null } },
+    select: { eventType: true },
+    distinct: ["eventType"],
+    orderBy: { eventType: "asc" },
+  });
+
+  const eventOptions = useMemo(() => {
+    const rows = (eventTypeRows ?? []) as Array<{ eventType: string | null }>;
+    const seen = new Set<string>();
+    const options: Array<{ value: string; label: string }> = [];
+    for (const row of rows) {
+      if (!row.eventType || seen.has(row.eventType)) continue;
+      seen.add(row.eventType);
+      const k = eventLabelKey(row.eventType);
+      options.push({
+        value: row.eventType,
+        label: k ? (t as unknown as (key: string) => string)(k) : row.eventType,
+      });
+    }
+    options.sort((a, b) => a.label.localeCompare(b.label));
+    return options;
+  }, [eventTypeRows, t]);
+
   // ─── Fetch deliveries with filter applied ───────────────────────────
   const where = useMemo(() => {
     const w: Record<string, unknown> = {
@@ -256,6 +287,7 @@ function WebhookDeliveriesTabContent({ projectId }: WebhookDeliveriesTabProps) {
     }
     if (filter.status === "failed") w.error = { not: null };
     if (filter.status === "success") w.error = null;
+    if (filter.eventType) w.eventType = filter.eventType;
     if (filter.configIds.length > 0) {
       w.webhookConfigId = { in: filter.configIds };
     }
@@ -417,7 +449,7 @@ function WebhookDeliveriesTabContent({ projectId }: WebhookDeliveriesTabProps) {
   function renderFilterBar() {
     return (
       <div className="space-y-3">
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <DateRangePicker
             className="w-full"
             buttonTestId="webhook-deliveries-filter-date-range-trigger"
@@ -471,6 +503,30 @@ function WebhookDeliveriesTabContent({ projectId }: WebhookDeliveriesTabProps) {
                   </SelectItem>
                 );
               })}
+            </SelectContent>
+          </Select>
+
+          <Select
+            value={filter.eventType ?? ""}
+            onValueChange={(v: string) =>
+              updateFilter({ eventType: v === "__all__" ? null : v })
+            }
+          >
+            <SelectTrigger
+              data-testid="webhook-deliveries-filter-event"
+              className="w-full"
+            >
+              <SelectValue placeholder={t("filterEventPlaceholder")} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__all__">
+                {t("filterEventPlaceholder")}
+              </SelectItem>
+              {eventOptions.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
 
@@ -718,7 +774,7 @@ function WebhookDeliveriesTabContent({ projectId }: WebhookDeliveriesTabProps) {
           isLoading={isLoadingDeliveries || isFetchingNextPage}
           hasMore={!!hasNextPage}
           onLoadMore={fetchNextPage}
-          resetKey={`${filter.configIds.join(",")}|${filter.status}|${filter.since?.toISOString() ?? ""}|${filter.until?.toISOString() ?? ""}|${sortConfig.column}|${sortConfig.direction}`}
+          resetKey={`${filter.configIds.join(",")}|${filter.status}|${filter.eventType ?? ""}|${filter.since?.toISOString() ?? ""}|${filter.until?.toISOString() ?? ""}|${sortConfig.column}|${sortConfig.direction}`}
           testIdPrefix="webhook-deliveries-vtable"
           rowTestIdPrefix="webhook-delivery-row"
         />

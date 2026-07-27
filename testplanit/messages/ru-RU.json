@@ -1657,6 +1657,7 @@
         "setupStepsGiteaStep5": "Нажмите «Добавить веб-перехватчик». Используйте кнопку «Отправить тестовый веб-перехватчик» ниже, чтобы проверить работу конвейера.",
         "deliveriesTab": "Доставка",
         "filterConfigPlaceholder": "Все веб-хуки",
+        "filterEventPlaceholder": "Все события",
         "filterStatusAll": "Все",
         "filterStatusFailed": "Неуспешный",
         "filterStatusSuccess": "Успех",

@@ -1657,6 +1657,7 @@
         "setupStepsGiteaStep5": "Klik op \"Webhook toevoegen\". Gebruik \"Testwebhook verzenden\" hieronder om de pipeline te controleren.",
         "deliveriesTab": "Leveringen",
         "filterConfigPlaceholder": "Alle webhooks",
+        "filterEventPlaceholder": "Alle gebeurtenissen",
         "filterStatusAll": "Alle",
         "filterStatusFailed": "Mislukt",
         "filterStatusSuccess": "Succes",

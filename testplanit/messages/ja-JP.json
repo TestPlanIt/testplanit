@@ -1657,6 +1657,7 @@
         "setupStepsGiteaStep5": "「Webhookを追加」をクリックしてください。パイプラインを確認するには、下の「テストWebhookを送信」を使用してください。",
         "deliveriesTab": "配達",
         "filterConfigPlaceholder": "すべてのウェブフック",
+        "filterEventPlaceholder": "すべてのイベント",
         "filterStatusAll": "全て",
         "filterStatusFailed": "失敗した",
         "filterStatusSuccess": "成功",

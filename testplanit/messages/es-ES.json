@@ -1657,6 +1657,7 @@
         "setupStepsGiteaStep5": "Haz clic en \"Agregar webhook\". Usa \"Enviar webhook de prueba\" a continuación para verificar la canalización.",
         "deliveriesTab": "Entregas",
         "filterConfigPlaceholder": "Todos los webhooks",
+        "filterEventPlaceholder": "Todos los eventos",
         "filterStatusAll": "Todo",
         "filterStatusFailed": "Fallido",
         "filterStatusSuccess": "Éxito",

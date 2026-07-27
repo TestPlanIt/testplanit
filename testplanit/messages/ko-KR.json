@@ -1657,6 +1657,7 @@
         "setupStepsGiteaStep5": "\"웹훅 추가\"를 클릭하세요. 아래의 \"테스트 웹훅 보내기\"를 사용하여 파이프라인을 확인하세요.",
         "deliveriesTab": "배송",
         "filterConfigPlaceholder": "모든 웹훅",
+        "filterEventPlaceholder": "모든 이벤트",
         "filterStatusAll": "모두",
         "filterStatusFailed": "실패한",
         "filterStatusSuccess": "성공",

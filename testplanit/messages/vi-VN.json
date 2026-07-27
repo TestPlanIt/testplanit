@@ -1657,6 +1657,7 @@
         "setupStepsGiteaStep5": "Nhấp vào \"Thêm Webhook\". Sử dụng chức năng \"Gửi webhook thử nghiệm\" bên dưới để xác minh pipeline.",
         "deliveriesTab": "Giao hàng",
         "filterConfigPlaceholder": "Tất cả webhook",
+        "filterEventPlaceholder": "Tất cả sự kiện",
         "filterStatusAll": "Tất cả",
         "filterStatusFailed": "Thất bại",
         "filterStatusSuccess": "Thành công",
