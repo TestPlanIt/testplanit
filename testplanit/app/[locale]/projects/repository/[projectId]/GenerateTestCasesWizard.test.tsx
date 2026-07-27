@@ -199,6 +199,22 @@ describe("GenerateTestCasesWizard — case-field eligibility", () => {
     );
   });
 
+  it("seeds the selection from the per-template generation defaults", () => {
+    const src = readWizard();
+    // The templates query must fetch the admin-configured default flag.
+    expect(src).toMatch(/generateDefaultEnabled:\s*true,/);
+    // Seeding selects default-enabled fields plus required fields — required
+    // fields can never be deselected, so a default-off required field must
+    // still start checked.
+    expect(src).toMatch(
+      /cf\.generateDefaultEnabled !== false \|\| cf\.caseField\.isRequired/
+    );
+    // A loaded template whose fields are all default-off must still claim the
+    // seed; keying the guard on the selection size would let a templates
+    // refetch wipe the user's manual selections.
+    expect(src).toMatch(/if \(visibleFields\.length > 0\)/);
+  });
+
   it("sends the deselected field names so the prompt can forbid them", () => {
     const src = readWizard();
     // Only visible-but-unchecked fields are named — hidden fields must not leak

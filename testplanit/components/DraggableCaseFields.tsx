@@ -14,22 +14,37 @@ import {
   useSortable,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
+import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
-import { GripVertical, Trash2 } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { GripVertical, Sparkles, Trash2 } from "lucide-react";
 
 import { CSS } from "@dnd-kit/utilities";
 
 export interface DraggableField {
   id: string | number;
   label: string;
+  // Per-template default for the Generate Test Cases wizard. Only meaningful
+  // when the list is rendered with onToggleGenerateDefault.
+  generateDefaultEnabled?: boolean;
 }
 
 const DraggableItem = ({
   id,
   label,
+  generateDefaultEnabled,
   onRemove,
-}: DraggableField & { onRemove: (id: string | number) => void }) => {
+  onToggleGenerateDefault,
+}: DraggableField & {
+  onRemove: (id: string | number) => void;
+  onToggleGenerateDefault?: (id: string | number) => void;
+}) => {
+  const t = useTranslations("admin.templates");
   const { attributes, listeners, setNodeRef, transform, transition } =
     useSortable({ id });
 
@@ -42,6 +57,14 @@ const DraggableItem = ({
     e.preventDefault();
     e.stopPropagation();
     onRemove(id);
+  };
+
+  const generateOn = generateDefaultEnabled !== false;
+
+  const handleToggleGenerate = (e: any) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onToggleGenerateDefault?.(id);
   };
 
   return (
@@ -57,14 +80,37 @@ const DraggableItem = ({
           <GripVertical size={20} />
           {label}
         </div>
-        <Button
-          type="button"
-          variant="link"
-          onClick={handleClick}
-          className="text-destructive p-0 -my-1"
-        >
-          <Trash2 size={20} />
-        </Button>
+        <div className="flex items-center">
+          {onToggleGenerateDefault && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  variant="link"
+                  onClick={handleToggleGenerate}
+                  aria-pressed={generateOn}
+                  className={`p-0 -my-1 mr-2 ${
+                    generateOn ? "text-primary" : "text-muted-foreground/40"
+                  }`}
+                  data-testid={`generate-default-toggle-${id}`}
+                >
+                  <Sparkles size={20} />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                {generateOn ? t("generateDefaultOn") : t("generateDefaultOff")}
+              </TooltipContent>
+            </Tooltip>
+          )}
+          <Button
+            type="button"
+            variant="link"
+            onClick={handleClick}
+            className="text-destructive p-0 -my-1"
+          >
+            <Trash2 size={20} />
+          </Button>
+        </div>
       </div>
     </div>
   );
@@ -74,10 +120,12 @@ const DraggableList = ({
   items,
   setItems,
   onRemove,
+  onToggleGenerateDefault,
 }: {
   items: DraggableField[];
   setItems: (items: DraggableField[]) => void;
   onRemove: (id: string | number) => void;
+  onToggleGenerateDefault?: (id: string | number) => void;
 }) => {
   const activationConstraint: PointerActivationConstraint = {
     distance: 5, // Requires the pointer to move 5 pixels before activating
@@ -113,7 +161,9 @@ const DraggableList = ({
             key={item.id}
             id={item.id}
             label={item.label}
+            generateDefaultEnabled={item.generateDefaultEnabled}
             onRemove={onRemove}
+            onToggleGenerateDefault={onToggleGenerateDefault}
           />
         ))}
       </SortableContext>

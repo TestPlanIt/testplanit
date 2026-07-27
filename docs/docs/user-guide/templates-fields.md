@@ -35,7 +35,7 @@ The Templates table lists all defined templates with columns for:
 2. Enter a unique **Name** for the template.
 3. Use the **Enabled** switch to activate the template.
 4. Use the **Default** switch if this should be the default template. (Setting a new default will unset the previous one and apply this template to all projects).
-5. **Select Case Fields:** Choose available Case Fields from the dropdown and add them to the selected list. You can reorder the selected fields using drag-and-drop.
+5. **Select Case Fields:** Choose available Case Fields from the dropdown and add them to the selected list. You can reorder the selected fields using drag-and-drop. The sparkles toggle on each selected field controls whether it starts selected in the Generate Test Cases wizard — turn it off for fields the AI cannot meaningfully fill in (internal IDs, tester notes, etc.). Users can still select or deselect any non-required field in the wizard.
 6. **Select Result Fields:** Similarly, choose and order the Result Fields for this template.
 7. **Assign Projects:** Use the multi-select dropdown to assign this template to specific projects. If this template is marked as **Default**, it will automatically apply to all projects, and this selection might be disabled or ignored.
 8. Click "Submit".

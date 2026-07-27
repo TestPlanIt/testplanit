@@ -1114,11 +1114,12 @@ model TemplateProjectAssignment {
 }
 
 model TemplateCaseAssignment {
-    caseFieldId Int
-    caseField   CaseFields @relation(fields: [caseFieldId], references: [id], onDelete: Cascade)
-    templateId  Int
-    template    Templates  @relation(fields: [templateId], references: [id], onDelete: Cascade)
-    order       Int        @default(0)
+    caseFieldId            Int
+    caseField              CaseFields @relation(fields: [caseFieldId], references: [id], onDelete: Cascade)
+    templateId             Int
+    template               Templates  @relation(fields: [templateId], references: [id], onDelete: Cascade)
+    order                  Int        @default(0)
+    generateDefaultEnabled Boolean    @default(true)
 
     @@id([caseFieldId, templateId])
     @@deny('all', auth() == null)

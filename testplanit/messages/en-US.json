@@ -4572,6 +4572,8 @@
           "warning": "Case Field will be removed from any Templates. This action cannot be undone."
         }
       },
+      "generateDefaultOn": "Included by default in the Generate Test Cases wizard. Click to exclude it by default.",
+      "generateDefaultOff": "Excluded by default in the Generate Test Cases wizard. Click to include it by default.",
       "resultFields": {
         "description": "Manage result fields",
         "add": {
@@ -6582,7 +6584,7 @@
       "name": "## Template Name\nA unique and descriptive name for this template (e.g., 'Standard Test Case', 'API Test Results').",
       "isEnabled": "## Enabled\nIf checked, this template will be available for selection when creating new test cases or defining test run structures. If a template is set as 'Default', it must also be 'Enabled'.",
       "isDefault": "## Default\nIf checked, this template will be automatically selected for new projects or as the default for all projects if no project-specific default is set. Only one template can be the default across all projects. Enabling this will disable any other template currently set as default.",
-      "caseFields": "## Case Fields\nSelect and order the custom fields that will be available when creating or editing test cases using this template.\n\n- Add fields from the dropdown to include them in the template\n- Drag and drop to reorder fields\n- The order determines how fields appear in forms\n- Only enabled case fields are available for selection\n- Case fields define the structure and data captured for test cases",
+      "caseFields": "## Case Fields\nSelect and order the custom fields that will be available when creating or editing test cases using this template.\n\n- Add fields from the dropdown to include them in the template\n- Drag and drop to reorder fields\n- The order determines how fields appear in forms\n- Only enabled case fields are available for selection\n- Case fields define the structure and data captured for test cases\n- The sparkles toggle controls whether a field starts selected in the Generate Test Cases wizard; users can still change the selection there",
       "resultFields": "## Result Fields\nSelect and order the custom fields that will be available when adding test results using this template.\n\n- Add fields from the dropdown to include them in the template\n- Drag and drop to reorder fields\n- The order determines how fields appear when entering test results\n- Only enabled result fields are available for selection\n- Result fields capture additional data specific to test execution outcomes",
       "projects": "## Associated Projects\nSelect which projects this template will be available for. If no projects are selected, the template will be available globally. Assigning a template to specific projects restricts its use to only those projects."
     },
