@@ -7,6 +7,7 @@ import {
   withAuditContext,
 } from "~/lib/auditContextWrappers";
 import { captureAuditEvent } from "~/lib/services/auditLog";
+import { syncRunCaseStatusAfterResultRemoval } from "~/lib/services/runCaseStatusSync";
 import { isForeignKeyError, isNotFoundError } from "~/lib/utils/errors";
 import { getServerAuthSession } from "~/server/auth";
 import { db } from "~/server/db";
@@ -248,6 +249,27 @@ export const PATCH = withAuditContext(
         where: { id: idForQuery as any }, // Cast as any for now
         data: { isDeleted: false },
       });
+
+      // Restoring a result can make it the newest one for its run-case again,
+      // so re-derive the case's denormalized status. Without this the run keeps
+      // showing the outcome it fell back to when the result was deleted. Same
+      // helper the delete path uses, so both directions agree.
+      //
+      // The purge (DELETE) handler needs no equivalent: it only ever removes
+      // rows that are already soft-deleted, which the status was already
+      // re-derived without.
+      if (modelMapEntry.modelName === "TestRunResults") {
+        const restored = restoredItem as {
+          testRunCaseId?: number;
+          iterationId?: number | null;
+        };
+        if (restored.testRunCaseId != null) {
+          await syncRunCaseStatusAfterResultRemoval(db as any, {
+            testRunCaseId: restored.testRunCaseId,
+            iterationId: restored.iterationId ?? null,
+          });
+        }
+      }
 
       // Audit the restore operation
       await captureAuditEvent({

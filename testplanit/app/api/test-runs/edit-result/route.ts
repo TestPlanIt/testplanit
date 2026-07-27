@@ -19,6 +19,7 @@ import {
   hasResultMutationPermission,
   isOutcomeFlip,
 } from "~/lib/services/resultGuards";
+import { syncRunCaseStatusAfterResultEdit } from "~/lib/services/runCaseStatusSync";
 import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
 import { isNotFoundError } from "~/lib/utils/errors";
 import { authOptions } from "~/server/auth";
@@ -34,6 +35,10 @@ import { authOptions } from "~/server/auth";
  * the flip. Step results and attachments are handled by the caller via their
  * own writes; this endpoint owns the result row, its field values, and the
  * gates so API/MCP/UI edits can't bypass them.
+ *
+ * It also owns the resulting run-case status: `TestRunCases.statusId` is
+ * denormalized (see `lib/services/runCaseStatusSync.ts`) and every run-level
+ * view reads it, so the edit re-derives it in the same transaction.
  */
 const editResultSchema = z.object({
   resultId: z.number().int().positive(),
@@ -119,6 +124,9 @@ export const POST = withAuditContext(async (req: NextRequest) => {
         id: true,
         statusId: true,
         testRunCaseId: true,
+        // Drives the run-case status sync below: an iteration-scoped result
+        // rolls up through its iteration, a null one is the legacy path.
+        iterationId: true,
         resultFieldValues: { select: { id: true, fieldId: true } },
         issues: { select: { id: true } },
         stepResults: { select: { _count: { select: { issues: true } } } },
@@ -406,6 +414,19 @@ export const POST = withAuditContext(async (req: NextRequest) => {
           });
         }
       }
+
+      // Re-derive the owning run-case's denormalized status from the edited
+      // result. Everything run-level (donut counts, the per-case status chip,
+      // exports) reads `TestRunCases.statusId`, which `submit-result` writes on
+      // every submission; without this an edit updated only the result row, so
+      // the Test Result History showed the new outcome while the run kept
+      // reporting the old one. In-tx so status and result commit together.
+      await syncRunCaseStatusAfterResultEdit(tx, {
+        testRunCaseId: existing.testRunCaseId,
+        resultId: input.resultId,
+        iterationId: existing.iterationId,
+        statusId: input.statusId,
+      });
 
       return updated;
     });
