@@ -171,6 +171,39 @@ export async function editTestRunResult(
   return payload.result;
 }
 
+/**
+ * Soft-deletes a result through the guarded server endpoint, which re-derives
+ * the owning run-case's status from the results that remain. Going through the
+ * ZenStack model API instead would flip `isDeleted` and leave the run showing
+ * the removed result's outcome.
+ */
+export async function deleteTestRunResult(resultId: number): Promise<void> {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+  if (operationIdRef.current) {
+    headers["X-Operation-Id"] = operationIdRef.current;
+  }
+  const response = await fetch("/api/test-runs/delete-result", {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ resultId }),
+  });
+
+  if (!response.ok) {
+    const payload = (await response.json().catch(() => null)) as {
+      error?: string;
+      code?: string;
+    } | null;
+    const error = new Error(
+      payload?.error || "Failed to delete test run result"
+    ) as SubmitResultError;
+    error.status = response.status;
+    error.code = payload?.code;
+    throw error;
+  }
+}
+
 export async function submitTestRunResult(
   input: SubmitTestRunResultInput
 ): Promise<SubmitTestRunResultResponse["result"]> {

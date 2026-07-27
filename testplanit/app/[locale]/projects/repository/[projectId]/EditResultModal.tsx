@@ -25,6 +25,7 @@ import * as z from "zod/v4";
 import { emptyEditorContent } from "~/app/constants";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import {
+  deleteTestRunResult,
   editTestRunResult,
   isEditWindowExpiredResultError,
   isIssueRequiredOnFailureSubmitResultError,
@@ -731,8 +732,9 @@ export function EditResultModal({
     }
   }, [statuses, form]);
 
-  const { mutateAsync: updateTestRunResults } =
-    useClientQueries(schema).testRunResults.useUpdate();
+  // The result row itself is mutated only through the guarded endpoints
+  // (`editTestRunResult` / `deleteTestRunResult`), which own the run-case
+  // status sync — hence no `testRunResults.useUpdate()` here.
   const { mutateAsync: createAttachments } =
     useClientQueries(schema).attachments.useCreate();
   const { mutateAsync: updateTestRunStepResults } =
@@ -1051,28 +1053,31 @@ export function EditResultModal({
 
     setIsDeleting(true);
     try {
-      // Soft delete the test run result by setting isDeleted to true
-      await updateTestRunResults({
-        where: {
-          id: Number(resultId),
-        },
-        data: {
-          isDeleted: true,
-        },
-      });
+      // Soft-delete through the guarded endpoint: it re-derives the run-case
+      // status from the results that survive, so the run stops reporting the
+      // outcome of a result that is no longer in the history. A direct
+      // `isDeleted: true` model write skips that.
+      await deleteTestRunResult(Number(resultId));
 
-      // Invalidate queries to refresh the data
-      void queryClient.invalidateQueries({
-        queryKey: ["testRunResults", testRunId, testRunCaseId],
-      });
+      // Refresh caches in the background. Like the edit path, this is a raw
+      // fetch rather than a ZenStack mutation hook, so nothing auto-
+      // invalidates the ZenStack query keys the run view and result history
+      // read from — a keyless invalidate covers them.
+      void queryClient.invalidateQueries();
 
       toast.success(tCommon("actions.resultDeleted"));
       onClose();
     } catch (error) {
       console.error("Error deleting result:", error);
-      toast.error(tCommon("errors.error"), {
-        description: tCommon("errors.somethingWentWrong"),
-      });
+      if (isPermissionDeniedSubmitResultError(error)) {
+        toast.error(tCommon("errors.accessDenied"), {
+          description: tCommon("errors.resultSubmitPermissionDenied"),
+        });
+      } else {
+        toast.error(tCommon("errors.error"), {
+          description: tCommon("errors.somethingWentWrong"),
+        });
+      }
     } finally {
       setIsDeleting(false);
     }
