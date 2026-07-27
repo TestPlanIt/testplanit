@@ -36,17 +36,26 @@ jobs:
       - name: Install Crowdin CLI
         run: npm install -g @crowdin/cli@4
 
+      # Push the repo's locale files back into Crowdin as approved translations.
+      # Hand-corrected strings in messages/*.json are otherwise invisible to
+      # Crowdin, so the next `crowdin download` would overwrite them with
+      # whatever the translation engine produced.
+      #
+      # This runs BEFORE the source upload. The repo's translations correspond
+      # to the English currently in Crowdin, so they must land while that is
+      # still the old source. Uploading sources first clears the translations
+      # of every changed string, and this step would immediately restore the
+      # stale text and approve it -- leaving pre-translate nothing to do and
+      # freezing edits to existing keys in every locale.
+      - name: Upload corrected translations
+        working-directory: testplanit
+        run: crowdin upload translations
+
+      # Clears translations for strings whose English changed, leaving the rest
+      # (including the corrections uploaded above) intact.
       - name: Upload sources
         working-directory: testplanit
         run: crowdin upload sources
-
-      # Push the repo's locale files back into Crowdin as approved translations
-      # before pre-translating. Hand-corrected strings in messages/*.json are
-      # otherwise invisible to Crowdin, so the next `crowdin download` would
-      # overwrite them with whatever the translation engine produced.
-      - name: Upload corrected translations
-        working-directory: testplanit
-        run: crowdin upload translations --auto-approve-imported
 
       # Uses the AI method, matching `crowdin:sync` in testplanit/package.json.
       # The MT engine (609928) rendered ICU's `#` count placeholder as a literal
