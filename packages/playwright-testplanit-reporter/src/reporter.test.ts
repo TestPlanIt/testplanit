@@ -27,6 +27,9 @@ const clientMock = vi.hoisted(() => ({
   createFolder: vi.fn(),
   findTemplateByName: vi.fn(),
   resolveTagIds: vi.fn(),
+  addTestRunLink: vi.fn(),
+  uploadTestRunAttachment: vi.fn(),
+  setTestRunMetadata: vi.fn(),
 }));
 
 vi.mock('@testplanit/api', () => ({
@@ -68,6 +71,9 @@ function applyBaseImpls() {
   clientMock.createFolder.mockImplementation(async () => ({ id: 88, name: 'Created Parent' }));
   clientMock.findTemplateByName.mockImplementation(async () => ({ id: 55, name: 'Template' }));
   clientMock.resolveTagIds.mockImplementation(async () => [7, 8, 9]);
+  clientMock.addTestRunLink.mockImplementation(async () => ({ id: 900, name: 'link' }));
+  clientMock.uploadTestRunAttachment.mockImplementation(async () => ({ id: 901, name: 'file' }));
+  clientMock.setTestRunMetadata.mockImplementation(async () => ({ id: 123 }));
   readFileMock.mockImplementation(async () => Buffer.from('FILEDATA'));
 }
 
@@ -932,6 +938,265 @@ describe('TestPlanItReporter (Playwright)', () => {
       await run(r, makeTest('[1] x', buildParent({ project: 'chromium' })), makeResult());
       expect(clientMock.createTestRun).toHaveBeenCalled();
       expect(logSpy.mock.calls.flat().join(' ')).toContain('[TestPlanIt]');
+    });
+  });
+
+  describe('run-level declarative options', () => {
+    beforeEach(() => {
+      vi.spyOn(console, 'error').mockImplementation(() => {});
+    });
+
+    afterEach(() => {
+      delete process.env.TPI_PWTEST_BUILD_URL;
+      delete process.env.TPI_PWTEST_VERSION;
+    });
+
+    it('attaches runLinks with resolved env placeholders after run creation', async () => {
+      process.env.TPI_PWTEST_BUILD_URL = 'https://ci.example.com/job/42';
+      const r = new TestPlanItReporter({
+        ...defaultOptions,
+        runLinks: [{ url: '{env:TPI_PWTEST_BUILD_URL}', name: 'CI Build' }],
+      });
+      await run(r, makeTest('[1] x', buildParent()), makeResult());
+
+      expect(clientMock.addTestRunLink).toHaveBeenCalledWith(
+        123,
+        'https://ci.example.com/job/42',
+        'CI Build',
+        undefined,
+      );
+    });
+
+    it('skips links whose url references unset env vars', async () => {
+      const r = new TestPlanItReporter({
+        ...defaultOptions,
+        runLinks: [{ url: '{env:TPI_PWTEST_BUILD_URL}' }],
+      });
+      await run(r, makeTest('[1] x', buildParent()), makeResult());
+
+      expect(clientMock.addTestRunLink).not.toHaveBeenCalled();
+    });
+
+    it('sets run metadata, resolving env values and skipping unresolved ones', async () => {
+      process.env.TPI_PWTEST_VERSION = '1.2.3';
+      const r = new TestPlanItReporter({
+        ...defaultOptions,
+        runMetadata: {
+          version: '{env:TPI_PWTEST_VERSION}',
+          missing: '{env:TPI_PWTEST_BUILD_URL}',
+          retries: 2,
+        },
+      });
+      await run(r, makeTest('[1] x', buildParent()), makeResult());
+
+      expect(clientMock.setTestRunMetadata).toHaveBeenCalledWith(123, {
+        version: '1.2.3',
+        retries: 2,
+      });
+    });
+
+    it('uploads readable runAttachments during initialization', async () => {
+      const r = new TestPlanItReporter({
+        ...defaultOptions,
+        runAttachments: [{ path: '/artifacts/report.html' }],
+      });
+      await run(r, makeTest('[1] x', buildParent()), makeResult());
+
+      expect(clientMock.uploadTestRunAttachment).toHaveBeenCalledWith(
+        123,
+        Buffer.from('FILEDATA'),
+        'report.html',
+        'text/html',
+      );
+    });
+
+    it('defers unreadable runAttachments and retries them in onEnd before completing', async () => {
+      // First read (during init) fails — the artifact doesn't exist yet.
+      readFileMock.mockRejectedValueOnce(Object.assign(new Error('ENOENT'), { code: 'ENOENT' }));
+
+      const r = new TestPlanItReporter({
+        ...defaultOptions,
+        runAttachments: [{ path: '/artifacts/produced-later.log' }],
+      });
+      await run(r, makeTest('[1] x', buildParent()), makeResult());
+
+      expect(clientMock.uploadTestRunAttachment).toHaveBeenCalledWith(
+        123,
+        Buffer.from('FILEDATA'),
+        'produced-later.log',
+        'text/plain',
+      );
+      const uploadOrder = clientMock.uploadTestRunAttachment.mock.invocationCallOrder[0];
+      const completeOrder = clientMock.completeTestRun.mock.invocationCallOrder[0];
+      expect(uploadOrder).toBeLessThan(completeOrder);
+    });
+
+    it('does not apply declarative run-level options to an existing run', async () => {
+      const r = new TestPlanItReporter({
+        ...defaultOptions,
+        testRunId: 999,
+        runLinks: [{ url: 'https://example.com' }],
+        runMetadata: { version: '1.0.0' },
+      });
+      await run(r, makeTest('[1] x', buildParent()), makeResult());
+
+      expect(clientMock.addTestRunLink).not.toHaveBeenCalled();
+      expect(clientMock.setTestRunMetadata).not.toHaveBeenCalled();
+    });
+
+    it('swallows run-level failures without breaking the run', async () => {
+      clientMock.addTestRunLink.mockRejectedValueOnce(new Error('link boom'));
+      const r = new TestPlanItReporter({
+        ...defaultOptions,
+        runLinks: [{ url: 'https://example.com' }],
+      });
+      await run(r, makeTest('[1] x', buildParent()), makeResult());
+
+      expect(clientMock.createJUnitTestResult).toHaveBeenCalled();
+      expect(clientMock.completeTestRun).toHaveBeenCalled();
+    });
+  });
+
+  describe('run-level runtime operations (attachToRun / setRunMetadata attachments)', () => {
+    beforeEach(() => {
+      vi.spyOn(console, 'error').mockImplementation(() => {});
+    });
+
+    const linkAttachment = (url = 'https://ci.example.com/42', name = 'CI') => ({
+      name: 'testplanit:run-link',
+      contentType: 'application/json',
+      body: Buffer.from(JSON.stringify({ url, name })),
+    });
+
+    it('routes a run-link attachment to addTestRunLink instead of uploading it', async () => {
+      const r = new TestPlanItReporter({ ...defaultOptions });
+      await run(
+        r,
+        makeTest('[1] x', buildParent()),
+        makeResult({ attachments: [linkAttachment()] as any }),
+      );
+
+      expect(clientMock.addTestRunLink).toHaveBeenCalledWith(
+        123,
+        'https://ci.example.com/42',
+        'CI',
+        undefined,
+      );
+      expect(clientMock.uploadJUnitAttachment).not.toHaveBeenCalled();
+    });
+
+    it('routes a run-file attachment to uploadTestRunAttachment', async () => {
+      const r = new TestPlanItReporter({ ...defaultOptions });
+      await run(
+        r,
+        makeTest('[1] x', buildParent()),
+        makeResult({
+          attachments: [
+            {
+              name: 'testplanit:run-file:report.html',
+              contentType: 'text/html',
+              path: '/tmp/attach/report.html',
+            },
+          ] as any,
+        }),
+      );
+
+      expect(clientMock.uploadTestRunAttachment).toHaveBeenCalledWith(
+        123,
+        Buffer.from('FILEDATA'),
+        'report.html',
+        'text/html',
+      );
+      expect(clientMock.uploadJUnitAttachment).not.toHaveBeenCalled();
+    });
+
+    it('routes a run-metadata attachment to setTestRunMetadata', async () => {
+      const r = new TestPlanItReporter({ ...defaultOptions });
+      await run(
+        r,
+        makeTest('[1] x', buildParent()),
+        makeResult({
+          attachments: [
+            {
+              name: 'testplanit:run-metadata',
+              contentType: 'application/json',
+              body: Buffer.from(JSON.stringify({ version: '1.2.3' })),
+            },
+          ] as any,
+        }),
+      );
+
+      expect(clientMock.setTestRunMetadata).toHaveBeenCalledWith(123, { version: '1.2.3' });
+    });
+
+    it('dedupes identical run-level operations across retries', async () => {
+      const r = new TestPlanItReporter({ ...defaultOptions });
+      const parent = buildParent();
+      r.onTestEnd(makeTest('[1] x', parent), makeResult({ attachments: [linkAttachment()] as any }));
+      r.onTestEnd(
+        makeTest('[1] x', parent),
+        makeResult({ retry: 1, attachments: [linkAttachment()] as any }),
+      );
+      await r.onEnd(FULL_RESULT);
+
+      expect(clientMock.addTestRunLink).toHaveBeenCalledTimes(1);
+    });
+
+    it('applies run-level ops even for tests that are skipped for linking', async () => {
+      // No case ID + autoCreate off → the result itself is skipped, but the
+      // explicit run-level op still initializes the run and applies.
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const r = new TestPlanItReporter({ ...defaultOptions });
+      await run(
+        r,
+        makeTest('unlinked test', buildParent()),
+        makeResult({ attachments: [linkAttachment()] as any }),
+      );
+
+      expect(clientMock.addTestRunLink).toHaveBeenCalled();
+      expect(warnSpy).toHaveBeenCalled();
+    });
+
+    it('drops malformed run-level attachments without uploading them to the result', async () => {
+      const r = new TestPlanItReporter({ ...defaultOptions });
+      await run(
+        r,
+        makeTest('[1] x', buildParent()),
+        makeResult({
+          attachments: [
+            { name: 'testplanit:run-link', contentType: 'application/json', body: Buffer.from('nope') },
+          ] as any,
+        }),
+      );
+
+      expect(clientMock.addTestRunLink).not.toHaveBeenCalled();
+      expect(clientMock.uploadJUnitAttachment).not.toHaveBeenCalled();
+      expect(console.error).toHaveBeenCalledWith(
+        expect.stringContaining('malformed run-level attachment'),
+        '',
+        '',
+      );
+    });
+
+    it('swallows runtime op failures without affecting results', async () => {
+      clientMock.setTestRunMetadata.mockRejectedValueOnce(new Error('meta boom'));
+      const r = new TestPlanItReporter({ ...defaultOptions });
+      await run(
+        r,
+        makeTest('[1] x', buildParent()),
+        makeResult({
+          attachments: [
+            {
+              name: 'testplanit:run-metadata',
+              contentType: 'application/json',
+              body: Buffer.from(JSON.stringify({ v: 1 })),
+            },
+          ] as any,
+        }),
+      );
+
+      expect(clientMock.createJUnitTestResult).toHaveBeenCalled();
+      expect(clientMock.completeTestRun).toHaveBeenCalled();
     });
   });
 });

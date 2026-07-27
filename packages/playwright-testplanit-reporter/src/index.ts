@@ -24,8 +24,20 @@
  */
 
 export { default, default as TestPlanItReporter } from './reporter.js';
-export type { TestPlanItReporterOptions, TrackedTestResult, ReporterState } from './types.js';
+export type {
+  TestPlanItReporterOptions,
+  TrackedTestResult,
+  ReporterState,
+  RunLinkInput,
+  RunAttachmentInput,
+} from './types.js';
+
+// Runtime helpers: attach links/files or set metadata on the RUN itself from
+// inside a test or hook (delivered to the reporter via reserved
+// `testplanit:run-*` attachments).
+export { attachToRun, setRunMetadata } from './runLevel.js';
+export type { RunAttachTarget } from './runLevel.js';
 
 // Re-export useful types from the API package
 export { TestPlanItClient, TestPlanItError } from '@testplanit/api';
-export type { TestRun, RepositoryCase, TestRunResult, Status } from '@testplanit/api';
+export type { TestRun, RepositoryCase, TestRunResult, Status, Attachment, RunMetadata } from '@testplanit/api';

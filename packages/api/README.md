@@ -208,6 +208,44 @@ const attachment = await client.uploadAttachment(
 );
 ```
 
+### Run-Level Attachments and Metadata
+
+Attach links, files, and key/value metadata to the **test run itself** (not to
+an individual result) — they render on the run detail page:
+
+```typescript
+// Attach an external link (e.g. the CI build that produced the run).
+// Rendered as a clickable link attachment.
+await client.addTestRunLink(testRunId, 'https://ci.example.com/job/42', 'CI Build #42');
+
+// Attach a file to the run (uploads to storage, then links it to the run)
+await client.uploadTestRunAttachment(
+  testRunId,
+  reportBuffer,    // Buffer or Blob
+  'report.html',
+  'text/html'
+);
+
+// Set key/value metadata — rendered as "**key:** value" lines in the run's
+// documentation field. Repeated calls merge: existing keys are updated,
+// new keys appended, other documentation content is preserved.
+await client.setTestRunMetadata(testRunId, {
+  version: '1.2.3',
+  triggeredBy: 'jenkins',
+  retries: 2,
+});
+
+// Read the metadata back (values are always strings)
+const metadata = await client.getTestRunMetadata(testRunId);
+```
+
+The attachment's creator is resolved server-side from the API token, so no
+user ID needs to be supplied.
+
+> Using WebdriverIO? The `@testplanit/wdio-reporter` service exposes all of
+> this declaratively (`runLinks`, `runAttachments`, `runMetadata` options) and
+> at runtime via `browser.testplanit` — no direct use of this client needed.
+
 ### Bulk Import
 
 Import test results from JUnit, TestNG, xUnit, NUnit, MSTest, Mocha, or Cucumber format:

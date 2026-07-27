@@ -2,7 +2,7 @@ import WDIOReporter from '@wdio/reporter';
 import { TestPlanItClient, automationStepsToCaseSteps } from '@testplanit/api';
 export { TestPlanItClient, TestPlanItError } from '@testplanit/api';
 import * as fs from 'fs';
-import * as path from 'path';
+import * as path2 from 'path';
 import * as os from 'os';
 
 // src/reporter.ts
@@ -48,7 +48,7 @@ function adaptCucumberStepTitles(stepTitles) {
 var STALE_THRESHOLD_MS = 4 * 60 * 60 * 1e3;
 function getSharedStateFilePath(projectId) {
   const fileName = `.testplanit-reporter-${projectId}.json`;
-  return path.join(os.tmpdir(), fileName);
+  return path2.join(os.tmpdir(), fileName);
 }
 function acquireLock(lockPath, maxAttempts = 10) {
   for (let i = 0; i < maxAttempts; i++) {
@@ -1359,12 +1359,131 @@ ${error.stack}` : "";
     return this.state;
   }
 };
+var ENV_PLACEHOLDER = /\{env:([A-Za-z_][A-Za-z0-9_]*)\}/g;
+function applyEnvTemplate(template) {
+  const missing = [];
+  const value = template.replace(ENV_PLACEHOLDER, (_match, name) => {
+    const envValue = process.env[name];
+    if (envValue === void 0 || envValue === "") {
+      missing.push(name);
+      return "";
+    }
+    return envValue;
+  });
+  return { value, missing };
+}
+var MIME_TYPES = {
+  ".png": "image/png",
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
+  ".gif": "image/gif",
+  ".webp": "image/webp",
+  ".svg": "image/svg+xml",
+  ".mp4": "video/mp4",
+  ".webm": "video/webm",
+  ".html": "text/html",
+  ".htm": "text/html",
+  ".txt": "text/plain",
+  ".log": "text/plain",
+  ".json": "application/json",
+  ".xml": "application/xml",
+  ".csv": "text/csv",
+  ".pdf": "application/pdf",
+  ".zip": "application/zip"
+};
+function guessMimeType(fileName) {
+  return MIME_TYPES[path2.extname(fileName).toLowerCase()] ?? "application/octet-stream";
+}
+async function attachFileToRun(ctx, runId, input) {
+  let buffer;
+  let name;
+  if (input.buffer) {
+    if (!input.name) {
+      ctx.logError('attachToRun: "name" is required when attaching a buffer');
+      return null;
+    }
+    buffer = input.buffer;
+    name = input.name;
+  } else if (input.path) {
+    buffer = fs.readFileSync(input.path);
+    name = input.name && input.name.trim() ? input.name : path2.basename(input.path);
+  } else {
+    ctx.logError('attachToRun: provide a "url", "path", or "buffer"');
+    return null;
+  }
+  const mimeType = input.mimeType ?? guessMimeType(name);
+  return ctx.client.uploadTestRunAttachment(runId, buffer, name, mimeType);
+}
+function createRuntimeApi(ctx) {
+  const resolveRunId = () => readSharedState(ctx.projectId)?.testRunId;
+  const noRunError = (method) => ctx.logError(
+    `${method}: no active TestPlanIt run found \u2014 is the TestPlanItService configured?`
+  );
+  return {
+    getRunId: resolveRunId,
+    async attachToRun(input) {
+      try {
+        const runId = resolveRunId();
+        if (!runId) {
+          noRunError("attachToRun");
+          return null;
+        }
+        if ("url" in input && input.url) {
+          const link = input;
+          const attachment2 = await ctx.client.addTestRunLink(
+            runId,
+            link.url,
+            link.name,
+            link.note
+          );
+          ctx.log(`Attached link to run ${runId}: ${link.url}`);
+          return attachment2;
+        }
+        const attachment = await attachFileToRun(
+          ctx,
+          runId,
+          input
+        );
+        if (attachment) {
+          ctx.log(`Attached file to run ${runId}: ${attachment.name}`);
+        }
+        return attachment;
+      } catch (error) {
+        ctx.logError("attachToRun failed:", error);
+        return null;
+      }
+    },
+    async setRunMetadata(metadata) {
+      try {
+        const runId = resolveRunId();
+        if (!runId) {
+          noRunError("setRunMetadata");
+          return false;
+        }
+        await ctx.client.setTestRunMetadata(runId, metadata);
+        ctx.log(`Set run metadata on run ${runId}:`, Object.keys(metadata).join(", "));
+        return true;
+      } catch (error) {
+        ctx.logError("setRunMetadata failed:", error);
+        return false;
+      }
+    }
+  };
+}
+
+// src/service.ts
 var TestPlanItService = class {
   options;
   client;
   verbose;
   testRunId;
   testSuiteId;
+  /**
+   * `runAttachments` entries whose file didn't exist yet at onPrepare
+   * (typically artifacts produced by the tests themselves). Retried once in
+   * onComplete, before the run is completed.
+   */
+  deferredRunAttachments = [];
   constructor(serviceOptions) {
     if (!serviceOptions.domain) {
       throw new Error("TestPlanIt service: domain is required");
@@ -1461,6 +1580,131 @@ var TestPlanItService = class {
     }
     return resolved;
   }
+  /** Context object for the shared run-level attachment helpers. */
+  runtimeContext() {
+    return {
+      client: this.client,
+      projectId: this.options.projectId,
+      log: (message, ...args) => this.log(message, ...args),
+      logError: (message, error) => this.logError(message, error)
+    };
+  }
+  /**
+   * Apply the declarative run-level options (`runLinks`, `runMetadata`,
+   * `runAttachments`) to the just-created test run. Runs once in the
+   * launcher process. Every failure is logged and swallowed — run-level
+   * attachments must never fail the test run.
+   */
+  async applyRunLevelConfig() {
+    if (!this.testRunId) return;
+    const ctx = this.runtimeContext();
+    for (const link of this.options.runLinks ?? []) {
+      try {
+        const url = applyEnvTemplate(link.url ?? "");
+        if (url.missing.length > 0 || !url.value.trim()) {
+          this.logError(
+            `Skipping run link "${link.url}": unresolved environment variable(s) ${url.missing.join(", ") || "(empty url)"}`
+          );
+          continue;
+        }
+        const name = link.name ? applyEnvTemplate(link.name).value.trim() : "";
+        const note = link.note ? applyEnvTemplate(link.note).value : void 0;
+        await this.client.addTestRunLink(
+          this.testRunId,
+          url.value,
+          name || void 0,
+          note
+        );
+        this.log(`Attached link to run: ${url.value}`);
+      } catch (error) {
+        this.logError(`Failed to attach run link "${link.url}":`, error);
+      }
+    }
+    const metadata = {};
+    for (const [rawKey, rawValue] of Object.entries(this.options.runMetadata ?? {})) {
+      const key = applyEnvTemplate(rawKey).value.trim();
+      if (!key) continue;
+      if (typeof rawValue === "string") {
+        const value = applyEnvTemplate(rawValue);
+        if (value.missing.length > 0 && !value.value.trim()) {
+          this.logError(
+            `Skipping run metadata "${rawKey}": unresolved environment variable(s) ${value.missing.join(", ")}`
+          );
+          continue;
+        }
+        metadata[key] = value.value;
+      } else {
+        metadata[key] = rawValue;
+      }
+    }
+    if (Object.keys(metadata).length > 0) {
+      try {
+        await this.client.setTestRunMetadata(this.testRunId, metadata);
+        this.log(`Set run metadata: ${Object.keys(metadata).join(", ")}`);
+      } catch (error) {
+        this.logError("Failed to set run metadata:", error);
+      }
+    }
+    for (const attachment of this.options.runAttachments ?? []) {
+      try {
+        const resolved = { ...attachment };
+        if (resolved.name) {
+          resolved.name = applyEnvTemplate(resolved.name).value;
+        }
+        if (!resolved.buffer && resolved.path) {
+          const templatedPath = applyEnvTemplate(resolved.path);
+          if (templatedPath.missing.length > 0) {
+            this.logError(
+              `Skipping run attachment "${attachment.path}": unresolved environment variable(s) ${templatedPath.missing.join(", ")}`
+            );
+            continue;
+          }
+          resolved.path = templatedPath.value;
+          if (!fs.existsSync(resolved.path)) {
+            this.log(
+              `Run attachment not found yet, will retry after tests finish: ${resolved.path}`
+            );
+            this.deferredRunAttachments.push(resolved);
+            continue;
+          }
+        }
+        await attachFileToRun(ctx, this.testRunId, resolved);
+        this.log(`Attached file to run: ${resolved.name ?? resolved.path}`);
+      } catch (error) {
+        this.logError(
+          `Failed to attach run file "${attachment.name ?? attachment.path}":`,
+          error
+        );
+      }
+    }
+  }
+  /**
+   * Attach `runAttachments` entries that were deferred in onPrepare because
+   * their file didn't exist yet. Called from onComplete before the run is
+   * completed. Failures are logged and swallowed.
+   */
+  async applyDeferredRunAttachments() {
+    if (!this.testRunId || this.deferredRunAttachments.length === 0) return;
+    const ctx = this.runtimeContext();
+    for (const attachment of this.deferredRunAttachments) {
+      try {
+        if (attachment.path && !fs.existsSync(attachment.path)) {
+          this.logError(
+            `Run attachment still not found, skipping: ${attachment.path}`
+          );
+          continue;
+        }
+        await attachFileToRun(ctx, this.testRunId, attachment);
+        this.log(`Attached file to run: ${attachment.name ?? attachment.path}`);
+      } catch (error) {
+        this.logError(
+          `Failed to attach run file "${attachment.name ?? attachment.path}":`,
+          error
+        );
+      }
+    }
+    this.deferredRunAttachments = [];
+  }
   /**
    * onPrepare - Runs once in the main process before any workers start.
    *
@@ -1509,12 +1753,38 @@ var TestPlanItService = class {
       };
       writeSharedState(this.options.projectId, sharedState);
       this.log("Wrote shared state file for workers");
+      await this.applyRunLevelConfig();
       console.log(`[TestPlanIt Service] Test run created: "${runName}" (ID: ${this.testRunId})`);
     } catch (error) {
       this.logError("Failed to prepare test run:", error);
       deleteSharedState(this.options.projectId);
       throw error;
     }
+  }
+  /**
+   * before - Runs in each worker process once the browser session is ready.
+   *
+   * Installs the `browser.testplanit` runtime API so tests and hooks can
+   * attach links/files or set metadata on the managed run without importing
+   * `@testplanit/api`:
+   *
+   * ```javascript
+   * await browser.testplanit.attachToRun({ url: buildUrl, name: 'CI Build' });
+   * await browser.testplanit.attachToRun({ path: './report.html' });
+   * await browser.testplanit.setRunMetadata({ version: '1.2.3' });
+   * ```
+   *
+   * The run ID is resolved from the shared state file on every call, so all
+   * workers reach the same service-managed run.
+   */
+  before(_capabilities, _specs, browser) {
+    const target = browser ?? globalThis.browser;
+    if (!target) {
+      this.log("No browser object available; skipping runtime API install");
+      return;
+    }
+    target.testplanit = createRuntimeApi(this.runtimeContext());
+    this.log("Installed browser.testplanit runtime API");
   }
   /**
    * afterTest - Runs in each worker process after each test.
@@ -1540,6 +1810,7 @@ var TestPlanItService = class {
   async onComplete(exitCode) {
     this.log(`All workers finished (exit code: ${exitCode})`);
     try {
+      await this.applyDeferredRunAttachments();
       if (this.testRunId && this.options.completeRunOnFinish) {
         this.log(`Completing test run ${this.testRunId}...`);
         await this.client.completeTestRun(this.testRunId, this.options.projectId);

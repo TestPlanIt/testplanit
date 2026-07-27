@@ -5,7 +5,7 @@ title: WebdriverIO Reporter (@testplanit/wdio-reporter)
 
 # WebdriverIO Reporter
 
-`@testplanit/wdio-reporter` is an official WebdriverIO reporter that automatically sends test results to your TestPlanIt instance. It supports linking tests to existing test cases, automatic test case creation, screenshot uploads, and more.
+`@testplanit/wdio-reporter` is an official WebdriverIO reporter that automatically sends test results to your TestPlanIt instance. It supports linking tests to existing test cases, automatic test case creation, screenshot uploads, run-level attachments and metadata, and more.
 
 ## Installation
 
@@ -161,5 +161,6 @@ When using the service, set run-level options (`runName`, `configId`, `milestone
 - [Configuration Options](./wdio-configuration.md) — Full reference for reporter options
 - [Linking & Auto-Creating Test Cases](./wdio-test-cases.md) — Case ID patterns and auto-creation
 - [Launcher Service](./wdio-launcher-service.md) — Single test run across all spec files
+- [Run Attachments & Metadata](./wdio-run-attachments.md) — Attach CI links, files, and metadata to the run itself
 - [Screenshot Uploads](./wdio-screenshots.md) — Capturing and uploading screenshots
 - [CI/CD & Advanced Usage](./wdio-ci-cd.md) — CI integration, retries, debugging, complete examples

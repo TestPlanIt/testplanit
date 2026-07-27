@@ -43,6 +43,11 @@ import type {
   UpdateJUnitTestSuiteOptions,
 } from "./types.js";
 import { tipTapDoc } from "./tipTapDoc.js";
+import {
+  mergeRunMetadataIntoDoc,
+  parseRunMetadataFromDoc,
+  type RunMetadata,
+} from "./runMetadata.js";
 
 /**
  * Custom error class for TestPlanIt API errors
@@ -651,6 +656,12 @@ export class TestPlanItClient {
     }
     if (options.tagIds?.length) {
       data.tags = { connect: options.tagIds.map((id) => ({ id })) };
+    }
+    if (options.note) {
+      data.note = options.note;
+    }
+    if (options.docs) {
+      data.docs = options.docs;
     }
 
     return this.zenstack<TestRun>("testRuns", "create", { data });
@@ -2018,6 +2029,124 @@ export class TestPlanItClient {
     );
 
     return response.data;
+  }
+
+  /**
+   * Attach an external link to a test run (run-level, not tied to a result).
+   *
+   * Creates an attachment record with `mimeType: "text/uri-list"` pointing at
+   * the given URL — the run detail page renders it as a clickable link. Use
+   * this for CI build URLs, dashboards, or any external resource for the run.
+   *
+   * The attachment's creator is resolved server-side from the API token, so
+   * no user ID needs to be supplied.
+   *
+   * @param testRunId - The test run to attach the link to
+   * @param url - The external URL
+   * @param name - Display name for the link (defaults to the URL)
+   * @param note - Optional note shown with the attachment
+   */
+  async addTestRunLink(
+    testRunId: number,
+    url: string,
+    name?: string,
+    note?: string
+  ): Promise<Attachment> {
+    if (!url || !url.trim()) {
+      throw new TestPlanItError("addTestRunLink: url is required");
+    }
+
+    const data: Record<string, unknown> = {
+      url,
+      name: name && name.trim() ? name : url,
+      mimeType: "text/uri-list",
+      size: 0,
+      testRuns: { connect: { id: testRunId } },
+    };
+    if (note) {
+      data.note = note;
+    }
+
+    return this.zenstack<Attachment>("attachments", "create", { data });
+  }
+
+  /**
+   * Upload a file attachment to a test run (run-level, not tied to a result).
+   *
+   * Uploads the file to storage and creates an attachment record connected to
+   * the run itself, so it shows on the run detail page. For per-result
+   * attachments use {@link uploadAttachment} / {@link uploadJUnitAttachment}.
+   *
+   * @param testRunId - The test run to attach the file to
+   * @param file - File content as a Blob or Buffer
+   * @param fileName - Name for the attachment
+   * @param mimeType - MIME type (defaults to application/octet-stream)
+   */
+  async uploadTestRunAttachment(
+    testRunId: number,
+    file: Blob | Buffer,
+    fileName: string,
+    mimeType?: string
+  ): Promise<Attachment> {
+    // Step 1: Upload file to storage
+    const { url } = await this.uploadFile(
+      file,
+      fileName,
+      mimeType,
+      `run_${testRunId}`
+    );
+
+    // Step 2: Create attachment record connected to the run
+    const size = Buffer.isBuffer(file) ? file.length : file.size;
+    const data: Record<string, unknown> = {
+      url,
+      name: fileName,
+      mimeType: mimeType || "application/octet-stream",
+      size,
+      testRuns: { connect: { id: testRunId } },
+    };
+
+    return this.zenstack<Attachment>("attachments", "create", { data });
+  }
+
+  /**
+   * Set key/value metadata on a test run.
+   *
+   * Metadata is rendered into the run's `docs` rich-text field (shown on the
+   * run detail page) as one `**key:** value` line per entry. Repeated calls
+   * merge: existing keys are updated in place, new keys are appended, and any
+   * hand-written documentation content is preserved. See
+   * {@link mergeRunMetadataIntoDoc} for the exact document shape.
+   *
+   * Note: the merge is read-modify-write on the run's docs; concurrent calls
+   * against the same run may race (last write wins).
+   *
+   * @param testRunId - The test run to set metadata on
+   * @param metadata - Key/value pairs (numbers/booleans are stringified)
+   * @returns The updated test run
+   */
+  async setTestRunMetadata(
+    testRunId: number,
+    metadata: RunMetadata
+  ): Promise<TestRun> {
+    const run = await this.getTestRun(testRunId);
+    if (!run) {
+      throw new TestPlanItError(`Test run ${testRunId} not found`);
+    }
+    const docs = mergeRunMetadataIntoDoc(run.docs, metadata);
+    return this.updateTestRun(testRunId, { docs });
+  }
+
+  /**
+   * Read the key/value metadata previously written to a test run's `docs`
+   * field (by {@link setTestRunMetadata} or hand-authored in the same
+   * `**key:** value` shape). Values are always strings.
+   */
+  async getTestRunMetadata(
+    testRunId: number
+  ): Promise<Record<string, string>> {
+    const run = await this.getTestRun(testRunId);
+    return parseRunMetadataFromDoc(run?.docs);
   }
 
   // ============================================================================

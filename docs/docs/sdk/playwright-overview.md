@@ -5,7 +5,7 @@ title: Playwright Reporter (@testplanit/playwright-reporter)
 
 # Playwright Reporter
 
-`@testplanit/playwright-reporter` is an official [Playwright](https://playwright.dev/) reporter that automatically sends test results to your TestPlanIt instance. It supports linking tests to existing test cases, automatic test case creation, capturing `test.step()` calls as case steps, attachment uploads (screenshots, videos, traces), and more.
+`@testplanit/playwright-reporter` is an official [Playwright](https://playwright.dev/) reporter that automatically sends test results to your TestPlanIt instance. It supports linking tests to existing test cases, automatic test case creation, capturing `test.step()` calls as case steps, attachment uploads (screenshots, videos, traces), run-level attachments and metadata, and more.
 
 It's the Playwright counterpart to the [WebdriverIO Reporter](./wdio-overview.md). Because Playwright runs reporters in a single main process — and forwards events from every worker to it — there is **no separate launcher service** to configure and no worker-coordination option. One reporter instance sees every result and reports it to a single test run.
 
@@ -100,4 +100,5 @@ Because there's a single reporter instance and a single test run by default, no 
 - [Configuration Options](./playwright-configuration.md) — Full reference for reporter options
 - [Linking & Auto-Creating Test Cases](./playwright-test-cases.md) — Case ID patterns and auto-creation
 - [Attachment Uploads](./playwright-attachments.md) — Screenshots, videos, traces, and filtering
+- [Run Attachments & Metadata](./playwright-run-attachments.md) — Attach CI links, files, and metadata to the run itself
 - [CI/CD & Advanced Usage](./playwright-ci-cd.md) — CI integration, retries, debugging, complete examples

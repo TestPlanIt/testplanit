@@ -1073,3 +1073,176 @@ describe('TestPlanItError', () => {
     expect(error.details).toEqual({ resource: 'test-run' });
   });
 });
+
+describe('run-level attachments and metadata', () => {
+  let client: TestPlanItClient;
+  const mockFetchRef = global.fetch as ReturnType<typeof vi.fn>;
+
+  const zenResponse = (data: unknown) => ({
+    ok: true,
+    text: async () => JSON.stringify({ data }),
+  });
+
+  beforeEach(() => {
+    mockFetchRef.mockReset();
+    client = new TestPlanItClient({
+      baseUrl: 'https://testplanit.example.com',
+      apiToken: 'tpi_test_token',
+    });
+  });
+
+  describe('addTestRunLink', () => {
+    it('creates a text/uri-list attachment connected to the run', async () => {
+      const mockAttachment = { id: 1, name: 'CI Build', url: 'https://ci.example.com/42' };
+      mockFetchRef.mockResolvedValueOnce(zenResponse(mockAttachment));
+
+      const result = await client.addTestRunLink(7, 'https://ci.example.com/42', 'CI Build');
+
+      expect(result).toEqual(mockAttachment);
+      expect(mockFetchRef).toHaveBeenCalledTimes(1);
+      const [url, options] = mockFetchRef.mock.calls[0];
+      expect(url).toBe('https://testplanit.example.com/api/model/attachments/create');
+      expect(JSON.parse(options.body)).toEqual({
+        data: {
+          url: 'https://ci.example.com/42',
+          name: 'CI Build',
+          mimeType: 'text/uri-list',
+          size: 0,
+          testRuns: { connect: { id: 7 } },
+        },
+      });
+    });
+
+    it('defaults the name to the url and passes a note through', async () => {
+      mockFetchRef.mockResolvedValueOnce(zenResponse({ id: 2 }));
+
+      await client.addTestRunLink(7, 'https://ci.example.com/42', undefined, 'nightly');
+
+      const body = JSON.parse(mockFetchRef.mock.calls[0][1].body);
+      expect(body.data.name).toBe('https://ci.example.com/42');
+      expect(body.data.note).toBe('nightly');
+    });
+
+    it('rejects an empty url', async () => {
+      await expect(client.addTestRunLink(7, '  ')).rejects.toThrow('url is required');
+      expect(mockFetchRef).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('uploadTestRunAttachment', () => {
+    it('uploads the file then creates an attachment connected to the run', async () => {
+      // Upload endpoint response
+      mockFetchRef.mockResolvedValueOnce({
+        ok: true,
+        text: async () =>
+          JSON.stringify({ success: { url: '/api/storage/run_7/report.html', key: 'k' } }),
+      });
+      const mockAttachment = { id: 3, name: 'report.html' };
+      mockFetchRef.mockResolvedValueOnce(zenResponse(mockAttachment));
+
+      const buffer = Buffer.from('<html></html>');
+      const result = await client.uploadTestRunAttachment(7, buffer, 'report.html', 'text/html');
+
+      expect(result).toEqual(mockAttachment);
+      expect(mockFetchRef.mock.calls[0][0]).toBe(
+        'https://testplanit.example.com/api/upload-attachment'
+      );
+      const createBody = JSON.parse(mockFetchRef.mock.calls[1][1].body);
+      expect(createBody).toEqual({
+        data: {
+          url: '/api/storage/run_7/report.html',
+          name: 'report.html',
+          mimeType: 'text/html',
+          size: buffer.length,
+          testRuns: { connect: { id: 7 } },
+        },
+      });
+    });
+  });
+
+  describe('setTestRunMetadata', () => {
+    it('merges metadata into the run docs and updates the run', async () => {
+      // getTestRun
+      mockFetchRef.mockResolvedValueOnce(zenResponse({ id: 7, docs: null }));
+      // updateTestRun
+      mockFetchRef.mockResolvedValueOnce(zenResponse({ id: 7 }));
+
+      await client.setTestRunMetadata(7, { version: '1.2.3', ci: true });
+
+      const [updateUrl, updateOptions] = mockFetchRef.mock.calls[1];
+      expect(updateUrl).toBe('https://testplanit.example.com/api/model/testRuns/update');
+      expect(updateOptions.method).toBe('PATCH');
+      const body = JSON.parse(updateOptions.body);
+      expect(body.where).toEqual({ id: 7 });
+      expect(body.data.docs).toEqual({
+        type: 'doc',
+        content: [
+          {
+            type: 'paragraph',
+            content: [
+              { type: 'text', marks: [{ type: 'bold' }], text: 'version: ' },
+              { type: 'text', text: '1.2.3' },
+            ],
+          },
+          {
+            type: 'paragraph',
+            content: [
+              { type: 'text', marks: [{ type: 'bold' }], text: 'ci: ' },
+              { type: 'text', text: 'true' },
+            ],
+          },
+        ],
+      });
+    });
+
+    it('updates existing keys without duplicating them', async () => {
+      const existingDocs = {
+        type: 'doc',
+        content: [
+          {
+            type: 'paragraph',
+            content: [
+              { type: 'text', marks: [{ type: 'bold' }], text: 'version: ' },
+              { type: 'text', text: '1.0.0' },
+            ],
+          },
+        ],
+      };
+      mockFetchRef.mockResolvedValueOnce(zenResponse({ id: 7, docs: existingDocs }));
+      mockFetchRef.mockResolvedValueOnce(zenResponse({ id: 7 }));
+
+      await client.setTestRunMetadata(7, { version: '2.0.0' });
+
+      const body = JSON.parse(mockFetchRef.mock.calls[1][1].body);
+      expect(body.data.docs.content).toHaveLength(1);
+      expect(body.data.docs.content[0].content[1].text).toBe('2.0.0');
+    });
+
+    it('throws when the run does not exist', async () => {
+      mockFetchRef.mockResolvedValueOnce(zenResponse(null));
+      await expect(client.setTestRunMetadata(999, { a: 'b' })).rejects.toThrow(
+        'Test run 999 not found'
+      );
+    });
+  });
+
+  describe('getTestRunMetadata', () => {
+    it('parses metadata written by setTestRunMetadata', async () => {
+      const docs = {
+        type: 'doc',
+        content: [
+          {
+            type: 'paragraph',
+            content: [
+              { type: 'text', marks: [{ type: 'bold' }], text: 'version: ' },
+              { type: 'text', text: '1.2.3' },
+            ],
+          },
+        ],
+      };
+      mockFetchRef.mockResolvedValueOnce(zenResponse({ id: 7, docs }));
+
+      await expect(client.getTestRunMetadata(7)).resolves.toEqual({ version: '1.2.3' });
+    });
+  });
+});

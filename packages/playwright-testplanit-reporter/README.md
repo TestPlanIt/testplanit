@@ -100,6 +100,9 @@ caseIdPattern: /TEST-(\d+)/g  // JIRA-style:         "TEST-12345 should work"
 | `templateId` | `number \| string` | No | - | Template for auto-created cases (ID or name) |
 | `uploadAttachments` | `boolean` | No | `true` | Upload Playwright attachments (screenshots, videos, traces) to the result |
 | `attachmentTypes` | `string[]` | No | all | Restrict which attachments upload. Matches the attachment `name` or a `contentType` prefix, e.g. `['image/']` for screenshots only |
+| `runLinks` | `RunLinkInput[]` | No | - | Links to attach to the run (e.g. CI build URL). Supports `{env:VAR}` — see [Run-Level Attachments](#run-level-attachments-and-metadata) |
+| `runAttachments` | `RunAttachmentInput[]` | No | - | Files to attach to the run (logs, reports, videos). Supports `{env:VAR}` |
+| `runMetadata` | `Record<string, string \| number \| boolean>` | No | - | Key/value metadata rendered into the run's documentation. Supports `{env:VAR}` |
 | `includeStackTrace` | `boolean` | No | `true` | Include stack traces in results |
 | `completeRunOnFinish` | `boolean` | No | `true` | Mark the test run as completed when the run finishes |
 | `timeout` | `number` | No | `30000` | API request timeout in ms |
@@ -131,6 +134,87 @@ attachmentTypes: ['image/']
 // Screenshots and videos, but not traces
 attachmentTypes: ['image/', 'video/']
 ```
+
+## Run-Level Attachments and Metadata
+
+Attach links, files, and metadata to the **test run itself** (not to individual
+results) — they show up on the run detail page. No `@testplanit/api` import
+needed.
+
+### Declarative (playwright.config)
+
+Applied exactly once, right after the reporter creates the run. Every string
+value supports `{env:VAR}` placeholders resolved from `process.env`:
+
+```typescript
+reporter: [
+  ['@testplanit/playwright-reporter', {
+    domain: 'https://testplanit.example.com',
+    apiToken: process.env.TESTPLANIT_API_TOKEN,
+    projectId: 1,
+
+    // Clickable link attachments (e.g. the CI build that ran the tests)
+    runLinks: [
+      { url: '{env:BUILD_URL}', name: '{env:JOB_NAME} #{env:BUILD_NUMBER}' },
+    ],
+
+    // File attachments. A path that can't be read yet (an artifact produced
+    // by the tests) is retried once after all tests finish.
+    runAttachments: [
+      { path: './playwright-report/index.html', name: 'HTML Report' },
+    ],
+
+    // Key/value metadata, rendered as "**key:** value" lines in the run's
+    // documentation field
+    runMetadata: {
+      version: '{env:APP_VERSION}',
+      triggeredBy: 'jenkins',
+    },
+  }],
+],
+```
+
+Skip rules: a link whose `url` references an unset environment variable is
+skipped (no broken links), as is a metadata entry whose value resolves to
+nothing. All failures are logged and swallowed — run-level attachments never
+fail the test run. Declarative options only apply when the reporter **creates**
+the run; when appending to an existing run via `testRunId` they are skipped so
+re-runs don't attach duplicates.
+
+### Runtime helpers (`attachToRun` / `setRunMetadata`)
+
+For values that aren't known until the tests run. The helpers ride Playwright's
+attachment transport (reserved `testplanit:run-*` attachment names) from the
+test worker to the reporter, which applies them to the run — they are never
+uploaded to the test's own result:
+
+```typescript
+import { test } from '@playwright/test';
+import { attachToRun, setRunMetadata } from '@testplanit/playwright-reporter';
+
+test('deploys the build', async ({ page }, testInfo) => {
+  // Attach a link
+  await attachToRun(testInfo, { url: deployUrl, name: 'Deployed build' });
+
+  // Attach a file by path (name + MIME type derived from the file)…
+  await attachToRun(testInfo, { path: './output/diff.png' });
+
+  // …or from an in-memory buffer (name required)
+  await attachToRun(testInfo, { buffer: pdfBuffer, name: 'summary.pdf' });
+
+  // Merge metadata into the run's documentation
+  await setRunMetadata(testInfo, { seed: usedSeed, shard: shardIndex });
+});
+```
+
+Identical operations are deduped per session (links by URL + name, files by
+display name, metadata by content), so retried tests don't create duplicate
+run attachments. Failures are logged and swallowed — they never fail your
+tests.
+
+Repeated `setRunMetadata` calls merge: existing keys are updated in place, new
+keys are appended, and hand-written content in the run's documentation is
+preserved.
 
 ## Retries
 
