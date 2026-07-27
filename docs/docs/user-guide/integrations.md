@@ -257,7 +257,28 @@ The Atlassian 3LO OAuth flow used here routes through the `api.atlassian.com` ga
 :::
 
 1. Create an OAuth 2.0 (3LO) integration in the [Atlassian Developer Console](https://developer.atlassian.com/console).
-2. Under **Permissions**, add the **Jira API** and select these scopes: `read:jira-work`, `write:jira-work`, and `read:jira-user`. (TestPlanIt also requests `offline_access` during authorization so it can refresh tokens — you don't add that one in the console.)
+2. Under **Permissions**, add scopes from **two** separate APIs — TestPlanIt calls both the Jira platform REST API and the Jira Software (Agile) REST API, and Atlassian governs them independently:
+
+   | Console permission    | Tab                 | Scopes                                                        | Needed for                                                     |
+   | --------------------- | ------------------- | ------------------------------------------------------------- | -------------------------------------------------------------- |
+   | **Jira API**          | **Classic scopes**  | `read:jira-work`, `write:jira-work`, `read:jira-user`          | Issues, search, comments, and Fix Version (release) milestones |
+   | **Jira API**          | **Granular scopes** | `read:project:jira`                                            | Board discovery for sprint import                              |
+   | **Jira Software API** | **Granular scopes** | `read:board-scope:jira-software`, `read:sprint:jira-software`  | Sprint (iteration) milestones and sprint webhook routing       |
+
+   Note that `read:project:jira` sits on the **Jira API** permission alongside the classic scopes, not with the Jira Software ones — mixing classic and granular scopes on the same permission is expected here. TestPlanIt also requests `offline_access` during authorization so it can refresh tokens; you don't add that one in the console.
+
+   :::caution Sprint import fails without the Jira Software scopes
+
+   Atlassian does not accept classic scopes for the Jira Software REST API, so `read:jira-work` alone never authorizes `/rest/agile/1.0/`. If the three granular scopes are missing, [milestone import](./projects/milestones.md#import-from-jira) fails with:
+
+   ```text
+   <PROJECT>: HTTP 401: {"code":401,"message":"Unauthorized; scope does not match"}
+   ```
+
+   The failure looks selective — Fix Versions keep working because they come from the platform API, while sprints do not. If the app is missing a scope entirely, authorization stops earlier with a message naming the scope to add.
+
+   :::
+
 3. Under **Authorization**, set the **Callback URL** to:
 
    ```text
@@ -525,8 +546,17 @@ Re-authorization is only required when there is no usable refresh token — for 
 
 - When creating an issue, the dialog shows an **Authenticate** button that opens the consent window in place.
 - At any time, a user can re-authorize from **Project → Integrations** using the **Authorize** button.
+- An administrator can re-authorize their own connection from **Admin → Integrations**, by editing the integration and using the **Reauthorize** button. This replaces the existing token in place — there is no need to delete and re-add the integration.
 
 Each user authorizes and refreshes independently, so re-authorizing only affects the user who does it.
+
+:::caution Adding scopes requires everyone to re-authorize
+
+Providers bind the granted scope set to the connection at consent time and carry it unchanged through every refresh. So when an OAuth app gains new scopes — for example, adding the [Jira Software scopes](#jira-with-oauth-20) for sprint import — existing connections keep their old, narrower permissions indefinitely. Refreshing does not widen them, and neither does revoking the app in the provider's account settings: TestPlanIt has no re-authorization prompt, so a revoked connection simply starts failing.
+
+Every user who has authorized the integration must re-authorize before the new scopes take effect for them. This matters even for features that aren't user-specific: milestone import borrows whichever authorized token was refreshed most recently, so a single teammate still holding an old-scope token can make the import fail again after it appeared to be fixed.
+
+:::
 
 ## Creating External Issues
 

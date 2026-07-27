@@ -53,6 +53,12 @@ Import runs in the background: the dialog closes as soon as the import is queued
 Importing from Jira requires **project admin** status — the project creator, a user with the **Project Admin** role on the project, or a user with `PROJECTADMIN`/`ADMIN` system access. See the [Permissions Guide](../permissions-guide.md).
 :::
 
+:::caution Sprints need extra OAuth scopes
+
+On a Jira integration using **OAuth 2.0**, Sprints come from Atlassian's separate Jira Software API, which requires its own scopes on the OAuth app. Without them the preview fails with `HTTP 401: {"code":401,"message":"Unauthorized; scope does not match"}` — and because the two artifact types are fetched together, Fix Versions disappear from the preview too even though they would otherwise load. See [Jira with OAuth 2.0](../integrations.md#jira-with-oauth-20) for the scope list; after adding them, every user of the integration must re-authorize. Jira integrations using an API key are unaffected.
+
+:::
+
 ## Navigation
 
 Clicking on a milestone name will navigate you to the [Milestone Details](./milestone-details.md) page for that specific milestone.
