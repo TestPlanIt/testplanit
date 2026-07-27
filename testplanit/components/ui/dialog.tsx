@@ -26,15 +26,25 @@ DialogOverlay.displayName = DialogPrimitive.Overlay.displayName;
 
 const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
->(({ className, children, ...props }, ref) => {
-  const [isFullScreen, setIsFullScreen] = useState(false);
+  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> & {
+    // Optional controlled mode for the full-screen toggle, so callers (e.g.
+    // the attachments carousel) can react to it or drive it themselves.
+    // Uncontrolled callers keep the internal-state behavior unchanged.
+    fullScreen?: boolean;
+    onFullScreenChange?: (fullScreen: boolean) => void;
+  }
+>(({ className, children, fullScreen, onFullScreenChange, ...props }, ref) => {
+  const [internalFullScreen, setInternalFullScreen] = useState(false);
+  const isFullScreen = fullScreen ?? internalFullScreen;
   const t = useTranslations("common.ui.dialog");
   const tGlobal = useTranslations();
 
   const toggleFullScreen = (e: any) => {
     e.stopPropagation();
-    setIsFullScreen(!isFullScreen);
+    if (fullScreen === undefined) {
+      setInternalFullScreen(!isFullScreen);
+    }
+    onFullScreenChange?.(!isFullScreen);
   };
 
   return (

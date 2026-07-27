@@ -22,7 +22,9 @@ function codeToText(children: unknown): string {
 
 interface AttachmentPreviewProps {
   attachment: Attachments;
-  size?: "small" | "medium" | "large";
+  /** "full" scales the preview to fill its parent, which must have a definite
+   *  height (used by the carousel's expanded mode). */
+  size?: "small" | "medium" | "large" | "full";
 }
 
 export const AttachmentPreview: React.FC<AttachmentPreviewProps> = ({
@@ -80,11 +82,15 @@ export const AttachmentPreview: React.FC<AttachmentPreviewProps> = ({
     );
   }
 
+  const isFull = size === "full";
+
   const getSizeClasses = (baseSize: number) => {
     const sizeMap = {
       small: baseSize,
       medium: baseSize * 2,
       large: baseSize * 3,
+      // Types without dedicated full-size handling fall back to "large".
+      full: baseSize * 3,
     };
 
     return {
@@ -94,7 +100,6 @@ export const AttachmentPreview: React.FC<AttachmentPreviewProps> = ({
   };
 
   if (fileType.startsWith("image/")) {
-    const { height, width } = getSizeClasses(100);
     // SVGs bypass next/image: the built-in optimizer refuses SVG unless
     // `images.dangerouslyAllowSVG` is enabled, and we don't want to opt into
     // that (SVG can carry inline <script>). Browsers don't execute scripts in
@@ -102,6 +107,29 @@ export const AttachmentPreview: React.FC<AttachmentPreviewProps> = ({
     const isSvg =
       fileType === "image/svg+xml" ||
       attachment.name.toLowerCase().endsWith(".svg");
+    if (isFull) {
+      return (
+        <div className="relative w-full h-full">
+          {isSvg ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={fileURL}
+              alt={attachment.name}
+              className="absolute inset-0 h-full w-full object-contain"
+            />
+          ) : (
+            <Image
+              src={fileURL}
+              alt={attachment.name}
+              fill
+              sizes="100vw"
+              className="object-contain"
+            />
+          )}
+        </div>
+      );
+    }
+    const { height, width } = getSizeClasses(100);
     return (
       <div
         className="flex justify-center items-center max-h-[350px]"
@@ -134,8 +162,9 @@ export const AttachmentPreview: React.FC<AttachmentPreviewProps> = ({
     // a tall height that their containers clamp via overflow-hidden: the details
     // page caps at max-h-96, the carousel at max-h-[80vh]. Compact list badges
     // (small/medium) stay proportionally sized.
-    const pdfHeight =
-      size === "large"
+    const pdfHeight = isFull
+      ? "h-full"
+      : size === "large"
         ? "h-[70vh] min-h-[384px]"
         : size === "medium"
           ? "h-48"
@@ -156,7 +185,7 @@ export const AttachmentPreview: React.FC<AttachmentPreviewProps> = ({
     // we don't inherit `text-primary` / `bg-accent` from wrappers like the
     // compact badge in AttachmentsListDisplay (which produced a low-contrast
     // violet pill across themes).
-    const isLarge = size === "large";
+    const isLarge = size === "large" || isFull;
     return (
       <Link
         href={fileURL}
@@ -296,8 +325,10 @@ export const AttachmentPreview: React.FC<AttachmentPreviewProps> = ({
 
       return (
         <div
-          className="w-fit border-2 border-primary/50 rounded-lg p-4 max-h-[650px] overflow-auto prose prose-sm dark:prose-invert bg-background"
-          style={{ maxWidth: `${width}px` }}
+          className={`border-2 border-primary/50 rounded-lg p-4 overflow-auto prose prose-sm dark:prose-invert bg-background ${
+            isFull ? "w-full h-full" : "w-fit max-h-[650px]"
+          }`}
+          style={isFull ? undefined : { maxWidth: `${width}px` }}
         >
           <Markdown components={markdownComponents}>{textContent}</Markdown>
         </div>
@@ -306,13 +337,24 @@ export const AttachmentPreview: React.FC<AttachmentPreviewProps> = ({
 
     return (
       <pre
-        className="w-fit border-2 border-primary/50 rounded-lg p-2 max-h-[650px] overflow-auto"
-        style={{ maxWidth: `${width}px` }}
+        className={`border-2 border-primary/50 rounded-lg p-2 overflow-auto ${
+          isFull ? "w-full h-full" : "w-fit max-h-[650px]"
+        }`}
+        style={isFull ? undefined : { maxWidth: `${width}px` }}
       >
         {textContent || attachment.name}
       </pre>
     );
   } else if (fileType.startsWith("video/")) {
+    if (isFull) {
+      return (
+        <video
+          src={fileURL}
+          controls
+          className="w-full h-full object-contain rounded-lg"
+        />
+      );
+    }
     const { height } = getSizeClasses(32);
     return (
       <video
@@ -338,7 +380,7 @@ export const AttachmentPreview: React.FC<AttachmentPreviewProps> = ({
         fileURL={fileURL}
         name={attachment.name}
         kind={officeKind}
-        size={size}
+        size={isFull ? "large" : size}
         sizeBytes={attachment.size}
       />
     );

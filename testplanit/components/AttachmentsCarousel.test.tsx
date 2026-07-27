@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AttachmentsCarousel } from "./AttachmentsCarousel";
 
 const mockUpdateAttachments = vi.fn();
+const mockEscapePreventDefault = vi.fn();
 
 vi.mock("next-auth/react", () => ({
   useSession: vi.fn(() => ({
@@ -108,8 +109,29 @@ vi.mock("@/components/ui/dialog", () => ({
         {children}
       </div>
     ) : null,
-  DialogContent: ({ children }: any) => (
-    <div data-testid="dialog-content">{children}</div>
+  DialogContent: ({
+    children,
+    fullScreen,
+    onFullScreenChange,
+    onEscapeKeyDown,
+  }: any) => (
+    <div data-testid="dialog-content" data-fullscreen={String(!!fullScreen)}>
+      <button
+        data-testid="mock-fullscreen-toggle"
+        onClick={() => onFullScreenChange?.(!fullScreen)}
+      >
+        toggle-full-screen
+      </button>
+      <button
+        data-testid="mock-escape-key"
+        onClick={() =>
+          onEscapeKeyDown?.({ preventDefault: mockEscapePreventDefault })
+        }
+      >
+        escape
+      </button>
+      {children}
+    </div>
   ),
   DialogDescription: ({ children }: any) => (
     <div data-testid="dialog-description">{children}</div>
@@ -384,6 +406,142 @@ describe("AttachmentsCarousel", () => {
 
     expect(screen.getByTestId("popover")).toBeDefined();
     expect(screen.getByText("delete")).toBeDefined();
+  });
+
+  it("expand toggle hides chrome and scales the attachment to full", () => {
+    const attachments = [makeAttachment({ id: "a1", mimeType: "image/png" })];
+    render(
+      <AttachmentsCarousel
+        attachments={attachments}
+        initialIndex={0}
+        onClose={mockOnClose}
+        canEdit={false}
+      />
+    );
+
+    expect(screen.getByText("download")).toBeDefined();
+    fireEvent.click(screen.getByTestId("mock-fullscreen-toggle"));
+
+    expect(
+      screen.getByTestId("dialog-content").getAttribute("data-fullscreen")
+    ).toBe("true");
+    expect(screen.queryByText("download")).toBeNull();
+    expect(screen.queryByTestId("date-formatter")).toBeNull();
+    expect(
+      screen.getByTestId("attachment-preview-a1").getAttribute("data-size")
+    ).toBe("full");
+
+    fireEvent.click(screen.getByTestId("mock-fullscreen-toggle"));
+
+    expect(
+      screen.getByTestId("dialog-content").getAttribute("data-fullscreen")
+    ).toBe("false");
+    expect(screen.getByText("download")).toBeDefined();
+    expect(screen.getByTestId("date-formatter")).toBeDefined();
+    expect(
+      screen.getByTestId("attachment-preview-a1").getAttribute("data-size")
+    ).toBe("large");
+  });
+
+  it("clicking an image preview toggles expanded mode", () => {
+    const attachments = [makeAttachment({ id: "a1", mimeType: "image/png" })];
+    render(
+      <AttachmentsCarousel
+        attachments={attachments}
+        initialIndex={0}
+        onClose={mockOnClose}
+        canEdit={false}
+      />
+    );
+
+    fireEvent.click(screen.getByTestId("carousel-expand-preview"));
+    expect(
+      screen.getByTestId("dialog-content").getAttribute("data-fullscreen")
+    ).toBe("true");
+
+    fireEvent.click(screen.getByTestId("carousel-fullscreen-preview"));
+    expect(
+      screen.getByTestId("dialog-content").getAttribute("data-fullscreen")
+    ).toBe("false");
+    expect(screen.getByText("download")).toBeDefined();
+  });
+
+  it("non-image attachments get no click-to-expand wrapper but still scale", () => {
+    const attachments = [
+      makeAttachment({ id: "a1", mimeType: "application/pdf" }),
+    ];
+    render(
+      <AttachmentsCarousel
+        attachments={attachments}
+        initialIndex={0}
+        onClose={mockOnClose}
+        canEdit={false}
+      />
+    );
+
+    expect(screen.queryByTestId("carousel-expand-preview")).toBeNull();
+    fireEvent.click(screen.getByTestId("mock-fullscreen-toggle"));
+    expect(screen.queryByTestId("carousel-fullscreen-preview")).toBeNull();
+    expect(
+      screen.getByTestId("attachment-preview-a1").getAttribute("data-size")
+    ).toBe("full");
+  });
+
+  it("Escape exits expanded mode instead of closing the dialog", () => {
+    const attachments = [makeAttachment({ id: "a1", mimeType: "image/png" })];
+    render(
+      <AttachmentsCarousel
+        attachments={attachments}
+        initialIndex={0}
+        onClose={mockOnClose}
+        canEdit={false}
+      />
+    );
+
+    fireEvent.click(screen.getByTestId("mock-fullscreen-toggle"));
+    fireEvent.click(screen.getByTestId("mock-escape-key"));
+
+    expect(mockEscapePreventDefault).toHaveBeenCalled();
+    expect(
+      screen.getByTestId("dialog-content").getAttribute("data-fullscreen")
+    ).toBe("false");
+  });
+
+  it("Escape is not intercepted outside expanded mode", () => {
+    const attachments = [makeAttachment({ id: "a1", mimeType: "image/png" })];
+    render(
+      <AttachmentsCarousel
+        attachments={attachments}
+        initialIndex={0}
+        onClose={mockOnClose}
+        canEdit={false}
+      />
+    );
+
+    fireEvent.click(screen.getByTestId("mock-escape-key"));
+    expect(mockEscapePreventDefault).not.toHaveBeenCalled();
+  });
+
+  it("entering expanded mode exits edit mode", () => {
+    const attachments = [makeAttachment({ id: "a1", mimeType: "image/png" })];
+    render(
+      <AttachmentsCarousel
+        attachments={attachments}
+        initialIndex={0}
+        onClose={mockOnClose}
+        canEdit={true}
+      />
+    );
+
+    fireEvent.click(screen.getByText("edit"));
+    expect(screen.getByTestId("edit-name-input")).toBeDefined();
+
+    fireEvent.click(screen.getByTestId("mock-fullscreen-toggle"));
+    expect(screen.queryByTestId("edit-name-input")).toBeNull();
+
+    fireEvent.click(screen.getByTestId("mock-fullscreen-toggle"));
+    expect(screen.queryByTestId("edit-name-input")).toBeNull();
+    expect(screen.getByText("edit")).toBeDefined();
   });
 
   it("renders AttachmentPreview for each attachment", () => {
