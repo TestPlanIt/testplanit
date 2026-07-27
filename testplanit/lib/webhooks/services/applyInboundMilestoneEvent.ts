@@ -21,6 +21,45 @@ import type {
  */
 const WEBHOOK_SYNC_FRESHNESS_SECONDS = 15;
 
+/**
+ * Events that carry a LIFECYCLE TRANSITION rather than a field edit. These
+ * bypass the coalescing window above and always refetch.
+ *
+ * The window exists to absorb edit storms, and for `updated`/`moved` that is
+ * exactly right. But a transition is the one thing the window must not
+ * swallow, because the whole point of the event is that the artifact's state
+ * changed — and the gate does not check whether the cached row already
+ * reflects it, it just returns `cached: true` on age alone.
+ *
+ * Observed in production: a passive sync at 17:48:13 opened the window, then
+ * a release fired `jira:version_updated` and `jira:version_released` 7.5s
+ * later. Both landed inside the 15s window, both no-opped, and the milestone
+ * sat at `externalState: "active"` / `isCompleted: false` with an unmoved
+ * `lastSyncedAt` while Jira had the version released. Delivery rows logged
+ * 200 with no error the whole time, because the event WAS accepted and
+ * dispatched — only the refresh underneath was skipped.
+ *
+ * Note that Jira emits `version_updated` alongside `version_released` within
+ * the same second, so even without a preceding sync the first event would
+ * open a window that swallows the second.
+ */
+const STATE_TRANSITION_EVENTS = new Set([
+  "jira:version_released",
+  "jira:version_unreleased",
+  "sprint_started",
+  "sprint_closed",
+]);
+
+/**
+ * Coalescing window for this event: none for a lifecycle transition, the
+ * shared 15s otherwise.
+ */
+function freshnessWindowFor(eventType: string): number {
+  return STATE_TRANSITION_EVENTS.has(eventType)
+    ? 0
+    : WEBHOOK_SYNC_FRESHNESS_SECONDS;
+}
+
 const REASON_MAX_LEN = 500;
 
 function truncate(s: string): string {
@@ -606,7 +645,7 @@ export async function applyInboundMilestoneEvent(
                 row.integrationId,
                 ref.externalId,
                 {
-                  minFreshnessSeconds: WEBHOOK_SYNC_FRESHNESS_SECONDS,
+                  minFreshnessSeconds: freshnessWindowFor(eventType),
                   projectId: row.projectId,
                 }
               );

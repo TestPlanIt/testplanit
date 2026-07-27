@@ -220,6 +220,86 @@ describe("applyInboundMilestoneEvent", () => {
     );
   });
 
+  it.each([
+    ["jira:version_released"],
+    ["jira:version_unreleased"],
+    ["sprint_started"],
+    ["sprint_closed"],
+  ])(
+    "REGRESSION: %s bypasses the 15s coalescing window so a lifecycle transition is never swallowed",
+    async (eventType) => {
+      // A release fires version_updated + version_released within the same
+      // second, and any passive sync in the preceding 15s opens the window
+      // too. Coalescing the transition left milestones stuck at
+      // externalState 'active' / isCompleted false while Jira had the
+      // version released — with the delivery logged 200/no-error, because
+      // only the refresh underneath was skipped.
+      const applyInboundMilestoneEvent = await importSut();
+      const isSprint = eventType.startsWith("sprint_");
+      (mocks.adapter.extractMilestoneEventRef as Mock).mockReturnValue(
+        isSprint
+          ? { kind: "ITERATION", externalId: "10100", originBoardId: "3" }
+          : {
+              kind: "RELEASE",
+              externalId: "10100",
+              externalProjectId: "10050",
+              merge: false,
+            }
+      );
+      mocks.integrationProjectFindMany.mockResolvedValue([
+        activeIntegrationProject(),
+      ]);
+      mocks.milestonesFindMany.mockResolvedValue([
+        { id: 555, projectId: 7, integrationId: 42 },
+      ]);
+      if (isSprint) {
+        // Sprint events carry no project reference — the target project is
+        // resolved from the origin board.
+        mocks.boardAdapter.resolveBoardProject.mockResolvedValue({
+          projectId: "10050",
+          projectKey: "DEMO",
+        });
+      }
+
+      const result = await applyInboundMilestoneEvent(baseInput({ eventType }));
+
+      expect(result.outcome).toBe("refreshed");
+      expect(mocks.performMilestoneRefresh).toHaveBeenCalledWith(
+        "__system__",
+        42,
+        "10100",
+        { minFreshnessSeconds: 0, projectId: 7 }
+      );
+    }
+  );
+
+  it("keeps the 15s window for jira:version_moved — a reorder is not a transition", async () => {
+    const applyInboundMilestoneEvent = await importSut();
+    (mocks.adapter.extractMilestoneEventRef as Mock).mockReturnValue({
+      kind: "RELEASE",
+      externalId: "10100",
+      externalProjectId: "10050",
+      merge: false,
+    });
+    mocks.integrationProjectFindMany.mockResolvedValue([
+      activeIntegrationProject(),
+    ]);
+    mocks.milestonesFindMany.mockResolvedValue([
+      { id: 555, projectId: 7, integrationId: 42 },
+    ]);
+
+    await applyInboundMilestoneEvent(
+      baseInput({ eventType: "jira:version_moved" })
+    );
+
+    expect(mocks.performMilestoneRefresh).toHaveBeenCalledWith(
+      "__system__",
+      42,
+      "10100",
+      { minFreshnessSeconds: 15, projectId: 7 }
+    );
+  });
+
   it("HOOK-01: jira:version_created is a no-op when the project's auto-track setting is OFF (D-02)", async () => {
     const applyInboundMilestoneEvent = await importSut();
     (mocks.adapter.extractMilestoneEventRef as Mock).mockReturnValue({
