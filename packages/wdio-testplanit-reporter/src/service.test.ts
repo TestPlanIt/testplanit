@@ -1,4 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import * as fs from 'fs';
+import * as os from 'os';
+import * as path from 'path';
 
 // Mock the API client - must use class syntax for `new` to work
 const mockClientInstance = {
@@ -9,6 +12,9 @@ const mockClientInstance = {
   findMilestoneByName: vi.fn().mockResolvedValue({ id: 20, name: 'Milestone' }),
   findWorkflowStateByName: vi.fn().mockResolvedValue({ id: 30, name: 'State' }),
   resolveTagIds: vi.fn().mockResolvedValue([1, 2, 3]),
+  addTestRunLink: vi.fn().mockResolvedValue({ id: 300, name: 'link' }),
+  uploadTestRunAttachment: vi.fn().mockResolvedValue({ id: 301, name: 'file' }),
+  setTestRunMetadata: vi.fn().mockResolvedValue({ id: 100 }),
 };
 
 vi.mock('@testplanit/api', () => {
@@ -29,10 +35,11 @@ vi.mock('./shared.js', () => ({
 }));
 
 import TestPlanItService from './service.js';
-import { writeSharedState, deleteSharedState } from './shared.js';
+import { writeSharedState, deleteSharedState, readSharedState } from './shared.js';
 
 const mockedWriteSharedState = vi.mocked(writeSharedState);
 const mockedDeleteSharedState = vi.mocked(deleteSharedState);
+const mockedReadSharedState = vi.mocked(readSharedState);
 
 describe('TestPlanItService', () => {
   const defaultOptions = {
@@ -394,6 +401,241 @@ describe('TestPlanItService', () => {
       mockTakeScreenshot.mockRejectedValueOnce(new Error('No browser'));
       const service = new TestPlanItService({ ...defaultOptions, captureScreenshots: true });
       await expect(service.afterTest({}, {}, { passed: false })).resolves.toBeUndefined();
+    });
+  });
+
+  describe('run-level declarative options', () => {
+    const ENV_KEYS = ['TPI_SVC_BUILD_URL', 'TPI_SVC_JOB', 'TPI_SVC_VERSION'];
+
+    beforeEach(() => {
+      vi.spyOn(console, 'error').mockImplementation(() => {});
+    });
+
+    afterEach(() => {
+      for (const key of ENV_KEYS) delete process.env[key];
+    });
+
+    it('attaches runLinks with resolved env placeholders after run creation', async () => {
+      process.env.TPI_SVC_BUILD_URL = 'https://ci.example.com/job/42';
+      process.env.TPI_SVC_JOB = 'nightly';
+
+      const service = new TestPlanItService({
+        ...defaultOptions,
+        runLinks: [{ url: '{env:TPI_SVC_BUILD_URL}', name: '{env:TPI_SVC_JOB} build' }],
+      });
+      await service.onPrepare();
+
+      expect(mockClientInstance.addTestRunLink).toHaveBeenCalledWith(
+        100,
+        'https://ci.example.com/job/42',
+        'nightly build',
+        undefined
+      );
+    });
+
+    it('skips links whose url references unset env vars', async () => {
+      const service = new TestPlanItService({
+        ...defaultOptions,
+        runLinks: [{ url: '{env:TPI_SVC_BUILD_URL}', name: 'CI Build' }],
+      });
+      await service.onPrepare();
+
+      expect(mockClientInstance.addTestRunLink).not.toHaveBeenCalled();
+    });
+
+    it('passes name as undefined when it resolves to empty', async () => {
+      const service = new TestPlanItService({
+        ...defaultOptions,
+        runLinks: [{ url: 'https://example.com', name: '{env:TPI_SVC_JOB}' }],
+      });
+      await service.onPrepare();
+
+      expect(mockClientInstance.addTestRunLink).toHaveBeenCalledWith(
+        100,
+        'https://example.com',
+        undefined,
+        undefined
+      );
+    });
+
+    it('sets run metadata, resolving env values and skipping unresolved ones', async () => {
+      process.env.TPI_SVC_VERSION = '1.2.3';
+
+      const service = new TestPlanItService({
+        ...defaultOptions,
+        runMetadata: {
+          version: '{env:TPI_SVC_VERSION}',
+          missing: '{env:TPI_SVC_JOB}',
+          retries: 2,
+          ci: true,
+        },
+      });
+      await service.onPrepare();
+
+      expect(mockClientInstance.setTestRunMetadata).toHaveBeenCalledWith(100, {
+        version: '1.2.3',
+        retries: 2,
+        ci: true,
+      });
+    });
+
+    it('does not call setTestRunMetadata when no metadata survives', async () => {
+      const service = new TestPlanItService({
+        ...defaultOptions,
+        runMetadata: { missing: '{env:TPI_SVC_JOB}' },
+      });
+      await service.onPrepare();
+
+      expect(mockClientInstance.setTestRunMetadata).not.toHaveBeenCalled();
+    });
+
+    it('uploads buffer runAttachments during onPrepare', async () => {
+      const buffer = Buffer.from('log content');
+      const service = new TestPlanItService({
+        ...defaultOptions,
+        runAttachments: [{ buffer, name: 'startup.log' }],
+      });
+      await service.onPrepare();
+
+      expect(mockClientInstance.uploadTestRunAttachment).toHaveBeenCalledWith(
+        100,
+        buffer,
+        'startup.log',
+        'text/plain'
+      );
+    });
+
+    it('uploads existing path attachments with a guessed mime type', async () => {
+      const filePath = path.join(os.tmpdir(), `tpi-service-${process.pid}.html`);
+      fs.writeFileSync(filePath, '<html></html>');
+      try {
+        const service = new TestPlanItService({
+          ...defaultOptions,
+          runAttachments: [{ path: filePath }],
+        });
+        await service.onPrepare();
+
+        expect(mockClientInstance.uploadTestRunAttachment).toHaveBeenCalledWith(
+          100,
+          Buffer.from('<html></html>'),
+          path.basename(filePath),
+          'text/html'
+        );
+      } finally {
+        fs.unlinkSync(filePath);
+      }
+    });
+
+    it('defers missing path attachments and uploads them in onComplete before completing', async () => {
+      const filePath = path.join(os.tmpdir(), `tpi-service-deferred-${process.pid}.log`);
+      const service = new TestPlanItService({
+        ...defaultOptions,
+        runAttachments: [{ path: filePath }],
+      });
+      await service.onPrepare();
+      expect(mockClientInstance.uploadTestRunAttachment).not.toHaveBeenCalled();
+
+      // The tests "produce" the artifact between onPrepare and onComplete
+      fs.writeFileSync(filePath, 'produced during the run');
+      try {
+        await service.onComplete(0);
+
+        expect(mockClientInstance.uploadTestRunAttachment).toHaveBeenCalledWith(
+          100,
+          Buffer.from('produced during the run'),
+          path.basename(filePath),
+          'text/plain'
+        );
+        // Attachment must land before the run is completed
+        const uploadOrder =
+          mockClientInstance.uploadTestRunAttachment.mock.invocationCallOrder[0];
+        const completeOrder =
+          mockClientInstance.completeTestRun.mock.invocationCallOrder[0];
+        expect(uploadOrder).toBeLessThan(completeOrder);
+      } finally {
+        fs.unlinkSync(filePath);
+      }
+    });
+
+    it('skips deferred attachments still missing at onComplete', async () => {
+      const service = new TestPlanItService({
+        ...defaultOptions,
+        runAttachments: [{ path: '/nonexistent/never-created.log' }],
+      });
+      await service.onPrepare();
+      await service.onComplete(0);
+
+      expect(mockClientInstance.uploadTestRunAttachment).not.toHaveBeenCalled();
+      expect(mockClientInstance.completeTestRun).toHaveBeenCalled();
+    });
+
+    it('swallows run-level failures without failing onPrepare', async () => {
+      mockClientInstance.addTestRunLink.mockRejectedValueOnce(new Error('link boom'));
+      mockClientInstance.setTestRunMetadata.mockRejectedValueOnce(new Error('meta boom'));
+
+      const service = new TestPlanItService({
+        ...defaultOptions,
+        runLinks: [{ url: 'https://example.com' }],
+        runMetadata: { version: '1.0.0' },
+      });
+
+      await expect(service.onPrepare()).resolves.toBeUndefined();
+      expect(mockedWriteSharedState).toHaveBeenCalled();
+    });
+  });
+
+  describe('before (runtime API install)', () => {
+    beforeEach(() => {
+      mockedReadSharedState.mockReturnValue({
+        testRunId: 100,
+        createdAt: new Date().toISOString(),
+        activeWorkers: 0,
+        managedByService: true,
+      });
+    });
+
+    afterEach(() => {
+      mockedReadSharedState.mockReturnValue(null);
+    });
+
+    it('installs browser.testplanit on the provided browser object', async () => {
+      const browser: Record<string, any> = {};
+      const service = new TestPlanItService(defaultOptions);
+      service.before(undefined, undefined, browser);
+
+      expect(browser.testplanit).toBeDefined();
+      expect(browser.testplanit.getRunId()).toBe(100);
+    });
+
+    it('runtime attachToRun resolves the shared run', async () => {
+      const browser: Record<string, any> = {};
+      const service = new TestPlanItService(defaultOptions);
+      service.before(undefined, undefined, browser);
+
+      await browser.testplanit.attachToRun({ url: 'https://example.com', name: 'CI' });
+      expect(mockClientInstance.addTestRunLink).toHaveBeenCalledWith(
+        100,
+        'https://example.com',
+        'CI',
+        undefined
+      );
+    });
+
+    it('falls back to the global browser object', () => {
+      const globalBrowser: Record<string, any> = {};
+      (globalThis as Record<string, any>).browser = globalBrowser;
+      try {
+        const service = new TestPlanItService(defaultOptions);
+        service.before(undefined, undefined, undefined);
+        expect(globalBrowser.testplanit).toBeDefined();
+      } finally {
+        delete (globalThis as Record<string, any>).browser;
+      }
+    });
+
+    it('does nothing when no browser object exists', () => {
+      const service = new TestPlanItService(defaultOptions);
+      expect(() => service.before(undefined, undefined, undefined)).not.toThrow();
     });
   });
 });

@@ -380,6 +380,7 @@ const sidebars: SidebarsConfig = {
             'sdk/wdio-configuration', // Configuration options reference
             'sdk/wdio-test-cases', // Linking & auto-creating test cases
             'sdk/wdio-launcher-service', // Launcher service for single test run
+            'sdk/wdio-run-attachments', // Run-level links, files, and metadata
             'sdk/wdio-screenshots', // Screenshot uploads
             'sdk/wdio-ci-cd', // CI/CD, retries, debugging, complete example
           ],
@@ -395,6 +396,7 @@ const sidebars: SidebarsConfig = {
             'sdk/playwright-configuration', // Configuration options reference
             'sdk/playwright-test-cases', // Linking & auto-creating test cases
             'sdk/playwright-attachments', // Attachment uploads (screenshots, video, trace)
+            'sdk/playwright-run-attachments', // Run-level links, files, and metadata
             'sdk/playwright-ci-cd', // CI/CD, retries, debugging, complete example
           ],
         },
