@@ -2058,6 +2058,23 @@
           "save": "Salvar janela de edição",
           "savedToast": "A janela de edição foi atualizada para este projeto.",
           "saveError": "Falha ao atualizar as configurações da janela de edição"
+        },
+        "abandonedRuns": {
+          "label": "Limpeza de automações abandonadas",
+          "description": "Quanto tempo esperar pelo próximo resultado antes que uma execução automatizada seja encerrada como abandonada. Execuções manuais nunca são afetadas.",
+          "modeInheritMinutes": "Herdar padrão do sistema ({minutes, plural, one {# minuto} other {# minutos}})",
+          "modeInheritOff": "Herdar padrão do sistema (desativado)",
+          "modeDisable": "Desativar para este projeto",
+          "modeCustom": "Limite de inatividade personalizado",
+          "minutesBefore": "Encerrar quando ocioso por",
+          "minutesUnit": "{minutes, plural, one {minuto} other {minutos}}",
+          "minutesAriaLabel": "Limite de inatividade em minutos",
+          "invalidMinutes": "Digite pelo menos {min} minutos",
+          "targetStateLabel": "Mover execuções encerradas para",
+          "targetStateAria": "Estado de destino para execuções abandonadas",
+          "save": "Salvar configurações de limpeza",
+          "savedToast": "Limpeza de automações abandonadas atualizada para este projeto",
+          "saveError": "Falha ao atualizar a limpeza de automações abandonadas"
         }
       }
     },
@@ -5047,6 +5064,19 @@
         "savedToast": "Política de edição de resultados atualizada",
         "saveError": "Falha ao atualizar a política de edição de resultados"
       },
+      "abandonedRunPolicy": {
+        "title": "Limpeza de automação abandonada",
+        "modeAria": "Modo de limpeza de automação abandonada",
+        "modeOff": "Desativado (execuções abandonadas permanecem abertas)",
+        "modeOn": "Fechar execuções automatizadas abandonadas automaticamente",
+        "minutesBefore": "Inativo por pelo menos:",
+        "minutesUnit": "{minutes, plural, one {minuto} other {minutos}}",
+        "minutesAriaLabel": "Limite de inatividade em minutos",
+        "invalidMinutes": "Digite pelo menos {min} minutos",
+        "save": "Salvar política",
+        "savedToast": "Limpeza de automação abandonada atualizada",
+        "saveError": "Falha ao atualizar a política de limpeza de automação abandonada"
+      },
       "add": {
         "button": "Adicionar status",
         "title": "Adicionar novo status",
@@ -6475,6 +6505,7 @@
     "reviewReminders": "## Lembretes de Revisão\nQuantos dias uma solicitação de revisão pode permanecer pendente antes que os revisores recebam uma notificação de lembrete. Novas solicitações iniciam a contagem no envio.",
     "reviews": "## Revisões\nSolicitações de revisão atribuídas a você, seja diretamente ou por meio de uma função que você possui. Pendente é sua fila de solicitações que ainda aguardam uma decisão; Decidido lista aquelas que você já aprovou, rejeitou ou solicitou alterações.",
     "resultEditingPolicy": "## Política de Edição de Resultados\nControle por quanto tempo após um resultado ser registrado ele ainda pode ser editado no local, em todos os projetos. Os projetos podem restringir isso em suas configurações Avançadas, mas nunca ampliá-lo. Os administradores do sistema podem sempre editar.",
+    "abandonedRunPolicy": "## Limpeza de Automação Abandonada\nQuando um job de CI é interrompido ou seu agente falha, a execução de teste automatizada que ele criou nunca recebe sua chamada de conclusão e permanece Em Andamento para sempre. Com essa política ativada, uma varredura em segundo plano é executada a cada 15 minutos e encerra qualquer execução automatizada incompleta que não tenha recebido resultados durante o tempo ocioso configurado (mínimo de 15 minutos). Execuções manuais nunca são afetadas. Cada projeto pode substituir o limite — ou optar por não usá-lo — em suas configurações Avançadas, e pode escolher para qual estado de execução as execuções varridas serão movidas. Escolha um tempo ocioso confortavelmente maior do que o período de silêncio mais longo de uma execução saudável; um dia completo é um padrão seguro.",
     "project": {
       "name": "## Nome do Projeto\nO identificador único do seu projeto.\n\n- Deve ser único em todos os projetos\n- Usado na navegação e em relatórios\n- Deve ser claro e descritivo\n- Ajuda os membros da equipe a identificar o escopo do projeto",
       "description": "## Descrição do Projeto\nDetalhes adicionais sobre o propósito e o escopo do projeto.\n\n- Opcional, mas recomendado\n- Ajuda os membros da equipe a entenderem os objetivos do projeto\n- Pode incluir objetivos ou requisitos principais\n- Limitado a 256 caracteres",

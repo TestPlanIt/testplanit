@@ -2058,6 +2058,23 @@
           "save": "Bearbeitungsfenster speichern",
           "savedToast": "Bearbeitungsfenster für dieses Projekt aktualisiert",
           "saveError": "Die Aktualisierung der Bearbeitungsfenstereinstellung ist fehlgeschlagen."
+        },
+        "abandonedRuns": {
+          "label": "Bereinigung verwaister Automatisierungen",
+          "description": "Wie lange auf das nächste Ergebnis gewartet wird, bevor ein automatisierter Lauf als verwaist geschlossen wird. Manuelle Läufe sind davon nie betroffen.",
+          "modeInheritMinutes": "Systemstandard übernehmen ({minutes, plural, one {# Minute} other {# Minuten}})",
+          "modeInheritOff": "Systemstandard übernehmen (aus)",
+          "modeDisable": "Für dieses Projekt deaktivieren",
+          "modeCustom": "Benutzerdefinierter Inaktivitätsschwellenwert",
+          "minutesBefore": "Schließen bei Inaktivität für",
+          "minutesUnit": "{minutes, plural, one {Minute} other {Minuten}}",
+          "minutesAriaLabel": "Inaktivitätsschwellenwert in Minuten",
+          "invalidMinutes": "Geben Sie mindestens {min} Minuten ein",
+          "targetStateLabel": "Geschlossene Läufe verschieben nach",
+          "targetStateAria": "Zielstatus für verwaiste Läufe",
+          "save": "Bereinigungseinstellungen speichern",
+          "savedToast": "Bereinigung verwaister Automatisierungen für dieses Projekt aktualisiert",
+          "saveError": "Bereinigung verwaister Automatisierungen konnte nicht aktualisiert werden"
         }
       }
     },
@@ -5047,6 +5064,19 @@
         "savedToast": "Die Richtlinie zur Ergebnisbearbeitung wurde aktualisiert.",
         "saveError": "Die Aktualisierung der Ergebnisbearbeitungsrichtlinie ist fehlgeschlagen."
       },
+      "abandonedRunPolicy": {
+        "title": "Bereinigung verwaister Automatisierungen",
+        "modeAria": "Modus für die Bereinigung verwaister Automatisierungen",
+        "modeOff": "Aus (verwaiste Durchläufe bleiben offen)",
+        "modeOn": "Verwaiste automatisierte Durchläufe automatisch schließen",
+        "minutesBefore": "Inaktiv für mindestens:",
+        "minutesUnit": "{minutes, plural, one {Minute} other {Minuten}}",
+        "minutesAriaLabel": "Schwellenwert für Inaktivität in Minuten",
+        "invalidMinutes": "Geben Sie mindestens {min} Minuten ein",
+        "save": "Richtlinie speichern",
+        "savedToast": "Bereinigung verwaister Automatisierungen aktualisiert",
+        "saveError": "Die Richtlinie zur Bereinigung verwaister Automatisierungen konnte nicht aktualisiert werden"
+      },
       "add": {
         "button": "Status hinzufügen",
         "title": "Neuen Status hinzufügen",
@@ -6475,6 +6505,7 @@
     "reviewReminders": "## Prüfungserinnerungen\nWie viele Tage kann eine Überprüfungsanfrage ausstehen, bevor die Prüfer eine Erinnerungsbenachrichtigung erhalten? Die Frist für neue Anfragen beginnt mit der Einreichung.",
     "reviews": "## Prüfungen\nÜberprüfungsanfragen, die Ihnen zugewiesen sind, entweder direkt oder über eine Rolle, die Sie innehaben. „Ausstehend“ ist Ihre Warteschlange für Anfragen, die noch auf eine Entscheidung warten; „Entschieden“ listet diejenigen auf, die Sie bereits genehmigt, abgelehnt oder für die Sie Änderungen angefordert haben.",
     "resultEditingPolicy": "## Richtlinie zur Ergebnisbearbeitung\nLegen Sie fest, wie lange nach der Ergebnisspeicherung ein Ergebnis projektübergreifend noch bearbeitet werden kann. Projekte können diese Frist in ihren erweiterten Einstellungen verkürzen, aber nicht verlängern. Systemadministratoren können die Frist jederzeit anpassen.",
+    "abandonedRunPolicy": "## Bereinigung verwaister Automatisierungsläufe\nWenn ein CI-Job abgebrochen wird oder sein Agent ausfällt, erhält der dadurch erstellte automatisierte Testlauf nie seinen Abschlussaufruf und bleibt dauerhaft „In Bearbeitung“. Ist diese Richtlinie aktiviert, führt ein Hintergrundprozess alle 15 Minuten einen Durchlauf aus und schließt jeden unvollständigen automatisierten Testlauf, der für die konfigurierte Leerlaufzeit (mindestens 15 Minuten) keine Ergebnisse erhalten hat. Manuelle Testläufe sind davon nie betroffen. Jedes Projekt kann den Schwellenwert in seinen erweiterten Einstellungen überschreiben – oder sich davon abmelden – und festlegen, in welchen Laufstatus bereinigte Testläufe verschoben werden. Wählen Sie eine Leerlaufzeit, die deutlich länger ist als die längste ruhige Phase eines gesunden Testlaufs; ein voller Tag ist ein sicherer Standardwert.",
     "project": {
       "name": "## Projektname\nDie eindeutige Kennung Ihres Projekts.\n\n- Muss projektübergreifend eindeutig sein.\n- Wird für Navigation und Berichte verwendet.\n- Sollte klar und aussagekräftig sein.\n- Hilft Teammitgliedern, den Projektumfang zu erkennen.",
       "description": "## Projektbeschreibung\nZusätzliche Details zu Zweck und Umfang des Projekts.\n\n- Optional, aber empfohlen\n- Hilft Teammitgliedern, die Projektziele zu verstehen\n- Kann wichtige Ziele oder Anforderungen enthalten\n- Maximal 256 Zeichen",

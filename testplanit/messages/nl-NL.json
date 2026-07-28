@@ -2058,6 +2058,23 @@
           "save": "Bewerkingsvenster opslaan",
           "savedToast": "Het bewerkingsvenster is bijgewerkt voor dit project.",
           "saveError": "Het bijwerken van de instellingen van het bewerkingsvenster is mislukt."
+        },
+        "abandonedRuns": {
+          "label": "Opschonen van verlaten automatisering",
+          "description": "Hoe lang gewacht moet worden op het volgende resultaat voordat een geautomatiseerde run als verlaten wordt gesloten. Handmatige runs worden nooit beïnvloed.",
+          "modeInheritMinutes": "Systeemstandaard overnemen ({minutes, plural, one {# minuut} other {# minuten}})",
+          "modeInheritOff": "Systeemstandaard overnemen (uit)",
+          "modeDisable": "Uitschakelen voor dit project",
+          "modeCustom": "Aangepaste inactiviteitsdrempel",
+          "minutesBefore": "Sluiten bij inactiviteit van",
+          "minutesUnit": "{minutes, plural, one {minuut} other {minuten}}",
+          "minutesAriaLabel": "Inactiviteitsdrempel in minuten",
+          "invalidMinutes": "Voer ten minste {min} minuten in",
+          "targetStateLabel": "Gesloten runs verplaatsen naar",
+          "targetStateAria": "Doelstatus voor verlaten runs",
+          "save": "Opschooninstellingen opslaan",
+          "savedToast": "Opschonen van verlaten automatisering bijgewerkt voor dit project",
+          "saveError": "Bijwerken van opschonen van verlaten automatisering mislukt"
         }
       }
     },
@@ -3736,7 +3753,7 @@
       "recentResultsDescription": "Bekijk de recente resultaten van de testrun",
       "recentAutomatedResultsTitle": "Recente geautomatiseerde resultaten",
       "noRecentAutomatedResults": "Geen recente geautomatiseerde resultaten gevonden.",
-      "automationRunsInProgress": "{count, plural, =1 {# Automation Run in Progress} other {# Automation Runs in Progress}}",
+      "automationRunsInProgress": "{count, plural, =1 {# Automatiseringsrun in uitvoering} other {# Automatiseringsruns in uitvoering}}",
       "automationRunsInProgressDescription": "Livestatus van lopende geautomatiseerde testruns.",
       "recentResultsDateRange": "Datumbereik",
       "recentResultsElapsed": "Verstreken",
@@ -5046,6 +5063,19 @@
         "save": "Beleid opslaan",
         "savedToast": "Beleid voor het bewerken van resultaten bijgewerkt",
         "saveError": "Het bijwerken van het beleid voor het bewerken van resultaten is mislukt."
+      },
+      "abandonedRunPolicy": {
+        "title": "Opruimen van verlaten automatisering",
+        "modeAria": "Modus voor opruimen van verlaten automatisering",
+        "modeOff": "Uit (verlaten testruns blijven open)",
+        "modeOn": "Verlaten geautomatiseerde testruns automatisch sluiten",
+        "minutesBefore": "Inactief gedurende ten minste:",
+        "minutesUnit": "{minutes, plural, one {minuut} other {minuten}}",
+        "minutesAriaLabel": "Inactiviteitsdrempel in minuten",
+        "invalidMinutes": "Voer ten minste {min} minuten in",
+        "save": "Beleid opslaan",
+        "savedToast": "Opruimen van verlaten automatisering bijgewerkt",
+        "saveError": "Het bijwerken van het beleid voor het opruimen van verlaten automatisering is mislukt"
       },
       "add": {
         "button": "Status toevoegen",
@@ -6475,6 +6505,7 @@
     "reviewReminders": "## Herinneringen voor beoordelingen\nHoeveel dagen een beoordelingsverzoek in behandeling mag blijven voordat beoordelaars een herinneringsmelding ontvangen. Voor nieuwe verzoeken begint de teller te lopen vanaf het moment van indiening.",
     "reviews": "## Beoordelingen\nBeoordelingsverzoeken die aan jou zijn toegewezen, hetzij rechtstreeks, hetzij via een rol die je hebt. In behandeling is je wachtrij met verzoeken die nog op een beslissing wachten; Beslist toont de verzoeken die je al hebt goedgekeurd, afgewezen of waarvoor je wijzigingen hebt gevraagd.",
     "resultEditingPolicy": "## Beleid voor het bewerken van resultaten\nBepaal hoe lang na het vastleggen van een resultaat dit nog ter plekke kan worden bewerkt, voor alle projecten. Projecten kunnen deze instelling in de geavanceerde instellingen aanscherpen, maar nooit versoepelen. Systeembeheerders kunnen de instelling altijd wijzigen.",
+    "abandonedRunPolicy": "## Opruimen van verweesde geautomatiseerde runs\nWanneer een CI-taak wordt afgebroken of de agent ervan uitvalt, ontvangt de geautomatiseerde testrun die daardoor is aangemaakt nooit de voltooiingsmelding en blijft deze voor altijd op 'In uitvoering' staan. Als dit beleid is ingeschakeld, wordt er elke 15 minuten een achtergrondcontrole uitgevoerd die elke onvolledige geautomatiseerde run sluit die tijdens de ingestelde inactiviteitsduur (minimaal 15 minuten) geen resultaten heeft ontvangen. Handmatige runs worden hier nooit door beïnvloed. Elk project kan de drempelwaarde overschrijven — of dit uitschakelen — in de Geavanceerde instellingen, en kan kiezen naar welke runstatus opgeruimde runs worden verplaatst. Kies een inactiviteitsduur die ruim langer is dan de langste stille periode van een gezonde run; een volledige dag is een veilige standaardwaarde.",
     "project": {
       "name": "## Projectnaam\nDe unieke identificatie voor uw project.\n\n- Moet uniek zijn voor alle projecten.\n- Wordt gebruikt in navigatie en rapporten.\n- Moet duidelijk en beschrijvend zijn.\n- Helpt teamleden de projectomvang te identificeren.",
       "description": "## Projectbeschrijving\nAanvullende details over het doel en de reikwijdte van het project.\n\n- Optioneel maar aanbevolen\n- Helpt teamleden de projectdoelen te begrijpen\n- Kan belangrijke doelstellingen of vereisten bevatten\n- Beperkt tot 256 tekens",

@@ -150,6 +150,8 @@ const testProject: ExtendedProjects = {
   requireIssueOnFailure: false,
   excludeNotStartedFromRuns: false,
   autoLockCompositionOnInProgress: false,
+  abandonedRunIdleMinutes: null,
+  abandonedRunStateId: null,
   creator: {
     id: "user-1",
     name: "Test User",

@@ -9,6 +9,7 @@ import { useRouter } from "~/lib/navigation";
 
 import { ColumnSelection } from "@/components/tables/ColumnSelection";
 import { DataTable } from "@/components/tables/DataTable";
+import { AbandonedRunPolicyCard } from "./AbandonedRunPolicyCard";
 import { getColumns } from "./columns";
 import { ResultEditingPolicyCard } from "./ResultEditingPolicyCard";
 
@@ -217,6 +218,7 @@ function Status() {
         </CardContent>
       </Card>
       <ResultEditingPolicyCard />
+      <AbandonedRunPolicyCard />
       {editingStatus && (
         <EditStatus
           status={editingStatus}

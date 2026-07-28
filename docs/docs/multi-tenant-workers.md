@@ -141,6 +141,8 @@ This creates separate scheduled jobs per tenant:
 - `send-daily-digest-tenant-b`
 - `refresh-expired-repo-caches-tenant-a`
 - `refresh-expired-repo-caches-tenant-b`
+- `sweep-abandoned-runs-tenant-a`
+- `sweep-abandoned-runs-tenant-b`
 
 ## Job Queue Admin UI
 
@@ -160,7 +162,7 @@ All workers support multi-tenant mode:
 | -------- | -------------- | ------- |
 | Notification Worker | Yes | Creates tenant-specific notifications |
 | Email Worker | Yes | Sends emails for correct tenant |
-| Forecast Worker | Yes | Updates forecasts per tenant database |
+| Forecast Worker | Yes | Updates forecasts per tenant database; also sweeps abandoned automated runs per tenant |
 | Sync Worker | Yes | Syncs issues to correct tenant database |
 | Elasticsearch Reindex Worker | Yes | Indexes to tenant-specific ES index |
 | Auto Tag Worker | Yes | Runs AI tagging against correct tenant database |

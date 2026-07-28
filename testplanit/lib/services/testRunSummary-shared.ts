@@ -11,6 +11,11 @@
 export type TestRunSummaryData = {
   testRunType: string;
   workflowType?: "NOT_STARTED" | "IN_PROGRESS" | "DONE" | null;
+  /** For automated runs: newest imported suite/result write, falling back to
+   *  the run's creation (ISO string). The runs-page Automation card uses it
+   *  to stop the "importing" spinner on runs that have gone quiet. Only the
+   *  batch summaries endpoint populates it. */
+  lastActivityAt?: string | null;
   totalCases: number;
   statusCounts: Array<{
     statusId: number | null;

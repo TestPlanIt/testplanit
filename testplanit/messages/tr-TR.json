@@ -2058,6 +2058,23 @@
           "save": "Kaydet düzenleme penceresi",
           "savedToast": "Bu proje için düzenleme penceresi güncellendi.",
           "saveError": "Düzenleme penceresi ayarlarını güncelleme başarısız oldu."
+        },
+        "abandonedRuns": {
+          "label": "Terk edilmiş otomasyon temizliği",
+          "description": "Otomatik bir çalıştırmanın terk edilmiş olarak kapatılmasından önce bir sonraki sonucun beklenme süresi. Manuel çalıştırmalar bundan hiçbir zaman etkilenmez.",
+          "modeInheritMinutes": "Sistem varsayılanını devral ({minutes, plural, one {# dakika} other {# dakika}})",
+          "modeInheritOff": "Sistem varsayılanını devral (kapalı)",
+          "modeDisable": "Bu proje için devre dışı bırak",
+          "modeCustom": "Özel boşta kalma eşiği",
+          "minutesBefore": "Şu süre boşta kaldığında kapat",
+          "minutesUnit": "{minutes, plural, one {dakika} other {dakika}}",
+          "minutesAriaLabel": "Boşta kalma eşiği dakika cinsinden",
+          "invalidMinutes": "En az {min} dakika girin",
+          "targetStateLabel": "Kapatılan çalıştırmaları şuraya taşı",
+          "targetStateAria": "Terk edilmiş çalıştırmalar için hedef durum",
+          "save": "Temizlik ayarlarını kaydet",
+          "savedToast": "Bu proje için terk edilmiş otomasyon temizliği güncellendi",
+          "saveError": "Terk edilmiş otomasyon temizliği güncellenemedi"
         }
       }
     },
@@ -3736,7 +3753,7 @@
       "recentResultsDescription": "Test çalışmasının son sonuçlarını görüntüleyin.",
       "recentAutomatedResultsTitle": "Son Otomatik Sonuçlar",
       "noRecentAutomatedResults": "Son otomatik arama sonuçlarına rastlanmadı.",
-      "automationRunsInProgress": "{count, plural, =1 {# Automation Run in Progress} other {# Automation Runs in Progress}}",
+      "automationRunsInProgress": "{count, plural, =1 {# Otomasyon Çalıştırması Devam Ediyor} other {# Otomasyon Çalıştırması Devam Ediyor}}",
       "automationRunsInProgressDescription": "Çalışan otomatik test çalıştırmalarının canlı durumu.",
       "recentResultsDateRange": "Tarih Aralığı",
       "recentResultsElapsed": "Geçen süre",
@@ -5046,6 +5063,19 @@
         "save": "Kaydetme politikası",
         "savedToast": "Sonuç düzenleme politikası güncellendi",
         "saveError": "Sonuç düzenleme politikası güncellenemedi."
+      },
+      "abandonedRunPolicy": {
+        "title": "Terk edilmiş otomasyon temizliği",
+        "modeAria": "Terk edilmiş otomasyon temizliği modu",
+        "modeOff": "Kapalı (terk edilmiş koşumlar açık kalır)",
+        "modeOn": "Terk edilmiş otomatik koşumları otomatik olarak kapat",
+        "minutesBefore": "En az şu süre boyunca boşta:",
+        "minutesUnit": "{minutes, plural, one {dakika} other {dakika}}",
+        "minutesAriaLabel": "Dakika cinsinden boşta kalma eşiği",
+        "invalidMinutes": "En az {min} dakika girin",
+        "save": "Politikayı kaydet",
+        "savedToast": "Terk edilmiş otomasyon temizliği güncellendi",
+        "saveError": "Terk edilmiş otomasyon temizliği politikası güncellenemedi"
       },
       "add": {
         "button": "Durum Ekle",
@@ -6475,6 +6505,7 @@
     "reviewReminders": "## İnceleme Hatırlatmaları\nİnceleme taleplerinin inceleyicilere hatırlatma bildirimi gönderilmeden önce kaç gün beklemede kalabileceği. Yeni talepler, gönderim anından itibaren süreyi başlatır.",
     "reviews": "## İncelemeler\nSize doğrudan veya sahip olduğunuz bir rol aracılığıyla atanan inceleme taleplerini gösterir. Beklemede, henüz bir karara bağlanmamış taleplerin bulunduğu kuyruğunuzdur; Karar Verildi ise onayladığınız, reddettiğiniz veya değişiklik talep ettiğiniz talepleri listeler.",
     "resultEditingPolicy": "## Sonuç Düzenleme Politikası\nSonuç kaydedildikten sonra ne kadar süre geçtiğini kontrol edin; sonuç tüm projelerde yerinde düzenlenebilir. Projeler bunu Gelişmiş ayarlarından sıkılaştırabilir ancak asla gevşetemezler. Sistem yöneticileri her zaman düzenleme yapabilir.",
+    "abandonedRunPolicy": "## Terk Edilmiş Otomasyon Temizliği\nBir CI işi durdurulduğunda veya aracısı (agent) devre dışı kaldığında, oluşturduğu otomatik test çalıştırması hiçbir zaman tamamlanma çağrısı almaz ve sonsuza kadar Devam Ediyor durumunda kalır. Bu politika etkinleştirildiğinde, arka planda çalışan bir tarama işlemi her 15 dakikada bir çalışır ve yapılandırılan boşta kalma süresi (en az 15 dakika) boyunca hiçbir sonuç almamış tamamlanmamış otomatik çalıştırmaları kapatır. Manuel çalıştırmalar bu işlemden asla etkilenmez. Her proje, Gelişmiş ayarlarında bu eşik değerini geçersiz kılabilir ya da devre dışı bırakabilir ve taranan çalıştırmaların hangi çalıştırma durumuna taşınacağını seçebilir. Sağlıklı bir çalıştırmanın en uzun sessiz süresinden rahatlıkla daha uzun bir boşta kalma süresi seçin; tam bir gün güvenli bir varsayılan değerdir.",
     "project": {
       "name": "## Proje Adı\nProjenizin benzersiz tanımlayıcısı.\n\n- Tüm projelerde benzersiz olmalıdır\n- Gezinme ve raporlarda kullanılır\n- Açık ve açıklayıcı olmalıdır\n- Ekip üyelerinin proje kapsamını belirlemesine yardımcı olur",
       "description": "## Proje Açıklaması\nProjenin amacı ve kapsamı hakkında ek ayrıntılar.\n\n- İsteğe bağlı ancak önerilir\n- Ekip üyelerinin proje hedeflerini anlamalarına yardımcı olur\n- Temel hedefleri veya gereksinimleri içerebilir\n- 256 karakterle sınırlıdır",

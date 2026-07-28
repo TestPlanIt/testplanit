@@ -7,19 +7,7 @@ plugin policy {
     provider = '@zenstackhq/plugin-policy'
 }
 
-// Auth context supplied per request by getAuthDb(). This is the @@auth source
-// instead of the User model so that project access can be answered from a
-// precomputed id list rather than a relation traversal inside every read rule.
-//
-// ZenStack compiles a relation-traversing predicate (project.userPermissions?[…])
-// into a correlated scalar subquery, which Postgres re-executes once per
-// candidate row and re-expands once per included relation. Resolving access up
-// front turns those rules into `projectId = ANY(ARRAY[…])` — one flat filter,
-// no subquery, no correlation.
-//
-// MUST be rebuilt on every request (see buildAuthContext). Caching it in the
-// session would leave a revoked permission in force until the user signs in
-// again.
+
 type AuthRolePermission {
     area             ApplicationArea
     canAddEdit       Boolean
@@ -101,12 +89,6 @@ enum PendingAuthStatus {
 }
 
 // Backs the device-bound magic-link + OTP sign-in flow (PASSWORDLESS_DEVICE_BOUND).
-// Stores only HMAC-SHA256 hashes of the three per-request secrets (browser verifier,
-// email link token, human-relay code) — never plaintext. Rows are consumed exactly
-// once via a conditional status transition at final completion; a GET of the emailed
-// link never mutates this table, which is what defeats mail-scanner link prefetch.
-// Server-only table: no @@allow rules, so the enhanced client denies all access and
-// every read/write goes through the raw db client in lib/passwordless.ts.
 model PendingAuth {
     id               String            @id @default(cuid())
     email            String
@@ -226,8 +208,6 @@ model User {
     @@allow('update', (auth().access == 'ADMIN' || auth().id == this.id))
     @@allow('read', auth().access != null)
     // SCIM contract: IdP owns the lifecycle of SCIM-provisioned users.
-    // Block enhanced-client delete; the SCIM service uses raw prisma and
-    // bypasses these policies (see lib/scim/services/users.ts).
     @@deny('delete', scimGivenName != null)
 }
 
@@ -240,8 +220,6 @@ model PasswordHistory {
     createdAt DateTime @default(now()) @db.Timestamptz(6)
 
     @@index([userId, createdAt])
-
-    // Admin can read history (for support); system writes via direct db client
     @@deny('all', auth() == null)
     @@allow('read', auth().access == 'ADMIN')
     // No allow for create/update/delete via ZenStack REST API
@@ -531,11 +509,6 @@ model Roles {
 model Projects {
     id                              Int                                   @id @default(autoincrement())
     name                            String                                @unique @length(1)
-    /// Optional, admin-defined short prefix (e.g. `PROJECT`) used to render
-    /// cosmetic project-prefixed record keys like `PROJECT-TC-1234`.
-    /// Purely additive: the numeric `id` stays canonical. Stored normalized to
-    /// uppercase; format is validated in the app layer (lib/recordKey.ts) since
-    /// a schema @@validate re-fires on unrelated partial updates in v3.
     key                             String?                               @unique
     iconUrl                         String?
     note                            String?
@@ -589,43 +562,15 @@ model Projects {
     quickScriptEnabled              Boolean                               @default(false)
     /// Empty = default ['iteration']. Lookup is case-insensitive at read time.
     junitIterationPropertyNames     String[]                              @default([])
-    /// Per-project opt-in for Review & Approval. Defaults to false so the
-    /// feature stays dormant on upgrade — admins flip the system kill switch
-    /// AND each project's toggle explicitly. New projects start opted out.
     reviewWorkflowEnabled           Boolean                               @default(false)
-    /// Per-project opt-in for mandatory result-flip justification. When true,
-    /// recording a result that flips a completed outcome must carry notes.
-    /// Defaults to false so existing projects are unaffected on upgrade.
     requireResultFlipJustification  Boolean                               @default(false)
-    /// Per-project override for the in-place result edit window, in seconds.
-    /// Resolved against the system `edit_results_duration` ceiling: null =
-    /// inherit system; 0 = editing disabled for this project; N = editable for
-    /// N seconds, capped at the system max when one is set.
     editResultsDurationSeconds      Int?
-    /// Per-project opt-in: when true, recording or editing a failure-class
-    /// result (a status with isFailure set) requires at least one linked Issue.
-    /// Defaults to false so existing projects are unaffected on upgrade.
     requireIssueOnFailure           Boolean                               @default(false)
-    /// Per-project opt-in: when true, RepositoryCases whose current Workflow
-    /// state has workflowType=NOT_STARTED are excluded from every "add to run"
-    /// entry point (picker tree, server actions, importers, Testmo workers).
-    /// When a RepositoryCase's state is transitioned BACK to a NOT_STARTED
-    /// workflow type (e.g. Review & Approval rejection), the post-update hook
-    /// soft-deletes the case's UNEXECUTED entries from any open run; executed
-    /// run-cases are left in place but become read-only (result-governance
-    /// path already locks them via the existing edit-window machinery).
-    /// Independent of the system-wide Review & Approval kill switch — projects
-    /// without R&A can still use this flag for draft-quality hygiene.
-    /// Defaults to false so existing projects are unaffected on upgrade.
     excludeNotStartedFromRuns       Boolean                               @default(false)
-    /// Per-project opt-in: when true, a TestRun's case composition is
-    /// automatically locked (compositionLockedAt stamped, lockedBy left null =
-    /// automatic) the moment the run transitions into a workflow state whose
-    /// workflowType is IN_PROGRESS. The lock freezes which cases are in the run
-    /// (add/remove/reorder) while execution and assignment continue; it can be
-    /// reversed in-app by the run creator or a Project Admin. Defaults to false
-    /// so existing projects are unaffected on upgrade.
     autoLockCompositionOnInProgress Boolean                               @default(false)
+    abandonedRunIdleMinutes         Int?
+    abandonedRunStateId             Int?
+    abandonedRunState               Workflows?                            @relation("ProjectAbandonedRunState", fields: [abandonedRunStateId], references: [id], onDelete: SetNull)
     duplicateScanResults            DuplicateScanResult[]
     stepSequenceMatches             StepSequenceMatch[]
     reviewRequests                  ReviewRequest[]
@@ -1279,6 +1224,7 @@ model Workflows {
     repositoryCases         RepositoryCases[]
     sessions                Sessions[]
     testRuns                TestRuns[]
+    abandonedRunProjects    Projects[]                  @relation("ProjectAbandonedRunState")
     reviewRequestsFromState ReviewRequest[]             @relation("ReviewFromState")
     reviewRequestsToState   ReviewRequest[]             @relation("ReviewToState")
 

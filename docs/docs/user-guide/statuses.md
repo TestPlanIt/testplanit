@@ -82,3 +82,18 @@ After choosing a mode (and a window, where applicable), click **Save policy**.
 :::info System administrators
 System administrators can always edit a recorded result, regardless of the policy. The editing window applies to project administrators and other users. All edits are recorded in the [Audit Log](./audit-logs.md) with the before and after values.
 :::
+
+## Abandoned Automation Cleanup
+
+The **Abandoned automation cleanup** card on the Statuses page controls whether automated test runs that stopped receiving results are closed automatically, across all projects.
+
+When a CI job is aborted or its agent dies, the run it created never receives its completion call and stays **In Progress** indefinitely — it lingers in the Active tab and on the runs page's [Automation Runs card](./projects/runs.md#automation-runs-in-progress). With cleanup enabled, a background sweep runs every 15 minutes and closes any incomplete automated run that has received no results for the configured idle time, so a run is closed at most ~15 minutes after crossing its threshold. Manual runs are never touched — they may legitimately stay open for months.
+
+Choose one of two modes:
+
+- **Off (abandoned runs stay open)**: No system-wide cleanup. Individual projects can still opt in through their [Advanced settings](./projects.md#abandoned-automation-cleanup). This is the default, so existing installations are unaffected on upgrade.
+- **Close abandoned automated runs automatically**: Set the idle threshold in minutes (minimum 15, matching the sweep cadence). A run is considered abandoned only when _nothing_ has been imported for that long — an in-flight run with a quiet stretch is left alone, so pick a threshold comfortably longer than the longest pause a healthy run can have. A full day (1440 minutes) is a safe default.
+
+After choosing a mode (and a threshold, where applicable), click **Save policy**.
+
+A swept run is marked completed and moved to the project's first **Done** run state, unless the project configured a different target state in its Advanced settings. Each closure is recorded in the [Audit Log](./audit-logs.md) and emits the usual `test_run.state_changed` and `test_run.completed` [webhook events](./webhooks.md).

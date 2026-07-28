@@ -2058,6 +2058,23 @@
           "save": "Salva finestra di modifica",
           "savedToast": "Finestra di modifica aggiornata per questo progetto",
           "saveError": "Impossibile aggiornare le impostazioni della finestra di modifica."
+        },
+        "abandonedRuns": {
+          "label": "Pulizia automazione abbandonata",
+          "description": "Quanto tempo attendere per il risultato successivo prima che un'esecuzione automatizzata venga chiusa come abbandonata. Le esecuzioni manuali non vengono mai influenzate.",
+          "modeInheritMinutes": "Eredita l'impostazione predefinita del sistema ({minutes, plural, one {# minuto} other {# minuti}})",
+          "modeInheritOff": "Eredita l'impostazione predefinita del sistema (disattivata)",
+          "modeDisable": "Disabilita per questo progetto",
+          "modeCustom": "Soglia di inattività personalizzata",
+          "minutesBefore": "Chiudi quando inattivo per",
+          "minutesUnit": "{minutes, plural, one {minuto} other {minuti}}",
+          "minutesAriaLabel": "Soglia di inattività in minuti",
+          "invalidMinutes": "Inserisci almeno {min} minuti",
+          "targetStateLabel": "Sposta le esecuzioni chiuse in",
+          "targetStateAria": "Stato di destinazione per le esecuzioni abbandonate",
+          "save": "Salva impostazioni di pulizia",
+          "savedToast": "Pulizia automazione abbandonata aggiornata per questo progetto",
+          "saveError": "Impossibile aggiornare la pulizia automazione abbandonata"
         }
       }
     },
@@ -3736,7 +3753,7 @@
       "recentResultsDescription": "Visualizza i risultati recenti del test eseguito",
       "recentAutomatedResultsTitle": "Risultati automatizzati recenti",
       "noRecentAutomatedResults": "Nessun risultato automatico recente trovato.",
-      "automationRunsInProgress": "{count, plural, =1 {# Automation Run in Progress} other {# Automation Runs in Progress}}",
+      "automationRunsInProgress": "{count, plural, =1 {# Esecuzione Automatizzata in Corso} other {# Esecuzioni Automatizzate in Corso}}",
       "automationRunsInProgressDescription": "Stato in tempo reale delle run di test automatizzate in esecuzione.",
       "recentResultsDateRange": "Intervallo di date",
       "recentResultsElapsed": "Trascorso",
@@ -5046,6 +5063,19 @@
         "save": "Salva le politiche",
         "savedToast": "Politica di modifica dei risultati aggiornata",
         "saveError": "Impossibile aggiornare la politica di modifica dei risultati"
+      },
+      "abandonedRunPolicy": {
+        "title": "Pulizia automazione abbandonata",
+        "modeAria": "Modalità di pulizia automazione abbandonata",
+        "modeOff": "Disattivata (le esecuzioni abbandonate restano aperte)",
+        "modeOn": "Chiudi automaticamente le esecuzioni automatizzate abbandonate",
+        "minutesBefore": "Inattiva per almeno:",
+        "minutesUnit": "{minutes, plural, one {minuto} other {minuti}}",
+        "minutesAriaLabel": "Soglia di inattività in minuti",
+        "invalidMinutes": "Inserisci almeno {min} minuti",
+        "save": "Salva politica",
+        "savedToast": "Pulizia automazione abbandonata aggiornata",
+        "saveError": "Impossibile aggiornare la politica di pulizia automazione abbandonata"
       },
       "add": {
         "button": "Aggiungi stato",
@@ -6475,6 +6505,7 @@
     "reviewReminders": "## Promemoria di revisione\nNumero di giorni durante i quali una richiesta di revisione può rimanere in sospeso prima che i revisori ricevano una notifica di promemoria. Per le nuove richieste, il conteggio inizia al momento dell'invio.",
     "reviews": "## Revisioni\nLe richieste di revisione assegnate a te, direttamente o tramite un ruolo che ricopri. In sospeso è la tua coda di richieste ancora in attesa di una decisione; Decise elenca quelle che hai già approvato, rifiutato o per cui hai richiesto modifiche.",
     "resultEditingPolicy": "## Criteri di modifica dei risultati\nControlla per quanto tempo dopo la registrazione di un risultato è ancora possibile modificarlo, in tutti i progetti. I progetti possono restringere questo limite nelle impostazioni avanzate, ma non possono mai allentarlo. Gli amministratori di sistema possono sempre apportare modifiche.",
+    "abandonedRunPolicy": "## Pulizia delle Automazioni Abbandonate\nQuando un job CI viene interrotto o il suo agente si arresta, l'esecuzione di test automatizzata che ha creato non riceve mai la chiamata di completamento e rimane In Corso per sempre. Con questa politica attiva, una scansione in background viene eseguita ogni 15 minuti e chiude qualsiasi esecuzione automatizzata incompleta che non ha ricevuto risultati per il tempo di inattività configurato (minimo 15 minuti). Le esecuzioni manuali non vengono mai interessate. Ogni progetto può sovrascrivere la soglia — o disattivarla — nelle proprie impostazioni Avanzate, e può scegliere in quale stato vengono spostate le esecuzioni ripulite. Scegli un tempo di inattività comodamente più lungo del periodo di inattività più lungo di un'esecuzione sana; un giorno intero è un valore predefinito sicuro.",
     "project": {
       "name": "## Nome del progetto\nL'identificatore univoco per il tuo progetto.\n\n- Deve essere univoco in tutti i progetti\n- Utilizzato nella navigazione e nei report\n- Deve essere chiaro e descrittivo\n- Aiuta i membri del team a identificare l'ambito del progetto",
       "description": "## Descrizione del progetto\nDettagli aggiuntivi sullo scopo e l'ambito del progetto.\n\n- Facoltativo ma consigliato\n- Aiuta i membri del team a comprendere gli obiettivi del progetto\n- Può includere obiettivi o requisiti chiave\n- Limitato a 256 caratteri",

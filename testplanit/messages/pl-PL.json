@@ -2058,6 +2058,23 @@
           "save": "Zapisz okno edycji",
           "savedToast": "Okno edycji zostało zaktualizowane dla tego projektu",
           "saveError": "Nie udało się zaktualizować ustawień okna edycji"
+        },
+        "abandonedRuns": {
+          "label": "Czyszczenie porzuconej automatyzacji",
+          "description": "Jak długo czekać na kolejny wynik, zanim automatyczne uruchomienie zostanie zamknięte jako porzucone. Uruchomienia ręczne nigdy nie są objęte tą regułą.",
+          "modeInheritMinutes": "Dziedzicz domyślne ustawienia systemu ({minutes, plural, one {# minuta} few {# minuty} many {# minut} other {# minuty}})",
+          "modeInheritOff": "Dziedzicz domyślne ustawienia systemu (wyłączone)",
+          "modeDisable": "Wyłącz dla tego projektu",
+          "modeCustom": "Niestandardowy próg bezczynności",
+          "minutesBefore": "Zamknij po bezczynności trwającej",
+          "minutesUnit": "{minutes, plural, one {minuta} few {minuty} many {minut} other {minuty}}",
+          "minutesAriaLabel": "Próg bezczynności w minutach",
+          "invalidMinutes": "Wprowadź co najmniej {min} minut",
+          "targetStateLabel": "Przenieś zamknięte uruchomienia do",
+          "targetStateAria": "Stan docelowy dla porzuconych uruchomień",
+          "save": "Zapisz ustawienia czyszczenia",
+          "savedToast": "Zaktualizowano czyszczenie porzuconej automatyzacji dla tego projektu",
+          "saveError": "Nie udało się zaktualizować czyszczenia porzuconej automatyzacji"
         }
       }
     },
@@ -3736,7 +3753,7 @@
       "recentResultsDescription": "Zobacz najnowsze wyniki testu",
       "recentAutomatedResultsTitle": "Ostatnie zautomatyzowane wyniki",
       "noRecentAutomatedResults": "Nie znaleziono ostatnio wyników automatycznych.",
-      "automationRunsInProgress": "{count, plural, =1 {# Automation Run in Progress} other {# Automation Runs in Progress}}",
+      "automationRunsInProgress": "{count, plural, =1 {# przebieg automatyzacji w toku} other {# przebiegów automatyzacji w toku}}",
       "automationRunsInProgressDescription": "Stan na żywo uruchomionych automatycznych przebiegów testów.",
       "recentResultsDateRange": "Zakres dat",
       "recentResultsElapsed": "Upłynął",
@@ -5046,6 +5063,19 @@
         "save": "Zapisz zasady",
         "savedToast": "Zaktualizowano zasady edycji wyników",
         "saveError": "Nie udało się zaktualizować zasad edycji wyników"
+      },
+      "abandonedRunPolicy": {
+        "title": "Czyszczenie porzuconej automatyzacji",
+        "modeAria": "Tryb czyszczenia porzuconej automatyzacji",
+        "modeOff": "Wyłączone (porzucone przebiegi pozostają otwarte)",
+        "modeOn": "Automatycznie zamykaj porzucone automatyczne przebiegi",
+        "minutesBefore": "Bezczynność przez co najmniej:",
+        "minutesUnit": "{minutes, plural, one {minuta} few {minuty} many {minut} other {minuty}}",
+        "minutesAriaLabel": "Próg bezczynności w minutach",
+        "invalidMinutes": "Wprowadź co najmniej {min} minut",
+        "save": "Zapisz zasady",
+        "savedToast": "Zaktualizowano czyszczenie porzuconej automatyzacji",
+        "saveError": "Nie udało się zaktualizować zasad czyszczenia porzuconej automatyzacji"
       },
       "add": {
         "button": "Dodaj status",
@@ -6475,6 +6505,7 @@
     "reviewReminders": "## Przypomnienia o recenzjach\nIle dni prośba o recenzję może czekać, zanim recenzenci otrzymają przypomnienie? Czas na rozpatrzenie nowych próśb rozpoczyna się od momentu ich przesłania.",
     "reviews": "## Recenzje\nProśby o recenzję przypisane do Ciebie, bezpośrednio lub poprzez rolę, którą posiadasz. Oczekujące to Twoja kolejka prośb, które wciąż czekają na decyzję; Zdecydowane zawiera te, które już zatwierdziłeś, odrzuciłeś lub w przypadku których poprosiłeś o zmiany.",
     "resultEditingPolicy": "## Zasady edycji wyników\nKontroluj, jak długo po zarejestrowaniu wyniku można go nadal edytować na miejscu, we wszystkich projektach. Projekty mogą zaostrzyć to ustawienie w ustawieniach zaawansowanych, ale nigdy go nie poluzować. Administratorzy systemu zawsze mogą je edytować.",
+    "abandonedRunPolicy": "## Czyszczenie porzuconych automatyzacji\nGdy zadanie CI zostanie przerwane lub jego agent ulegnie awarii, utworzony przez nie automatyczny przebieg testowy nigdy nie otrzymuje wywołania zakończenia i pozostaje w stanie „W trakcie” na zawsze. Gdy ta zasada jest włączona, w tle co 15 minut uruchamiane jest zadanie porządkujące, które zamyka każdy niekompletny automatyczny przebieg, dla którego nie odnotowano żadnych wyników przez skonfigurowany czas bezczynności (minimum 15 minut). Przebiegi ręczne nigdy nie są objęte tą zasadą. Każdy projekt może zmienić ten próg — lub zrezygnować z tej funkcji — w swoich ustawieniach zaawansowanych oraz wybrać, do jakiego stanu przebiegu mają być przenoszone wyczyszczone przebiegi. Wybierz czas bezczynności wyraźnie dłuższy niż najdłuższa cisza w prawidłowo działającym przebiegu; pełna doba jest bezpieczną wartością domyślną.",
     "project": {
       "name": "## Nazwa projektu\nUnikalny identyfikator Twojego projektu.\n\n– Musi być unikatowy we wszystkich projektach\n– Używany w nawigacji i raportach\n– Powinien być jasny i opisowy\n– Pomaga członkom zespołu określić zakres projektu",
       "description": "## Opis projektu\nDodatkowe szczegóły dotyczące celu i zakresu projektu.\n\n– Opcjonalne, ale zalecane\n– Pomaga członkom zespołu zrozumieć cele projektu\n– Może zawierać kluczowe cele lub wymagania\n– Ograniczone do 256 znaków",

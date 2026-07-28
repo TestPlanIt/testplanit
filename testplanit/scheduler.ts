@@ -13,6 +13,7 @@ import {
   JOB_AUTO_COMPLETE_MILESTONES,
   JOB_MILESTONE_DUE_NOTIFICATIONS,
   JOB_REVIEW_REMINDERS,
+  JOB_SWEEP_ABANDONED_RUNS,
   JOB_UPDATE_ALL_CASES,
 } from "./workers/forecastWorker";
 import { JOB_SEND_DAILY_DIGEST } from "./workers/notificationWorker";
@@ -26,6 +27,7 @@ const CRON_SCHEDULE_DAILY_8AM = "0 8 * * *"; // For daily digest emails
 const CRON_SCHEDULE_DAILY_4AM = "0 4 * * *"; // For code repository cache refresh
 const CRON_SCHEDULE_DAILY_2AM = "0 2 * * *"; // Plan 02-06 / D-04 — auto-retire expired WebhookConfigSecret rows
 const CRON_SCHEDULE_HOURLY = "0 * * * *"; // Top of every hour — review-reminder scan
+const CRON_SCHEDULE_EVERY_15_MIN = "*/15 * * * *"; // Abandoned automated-run sweep
 const JOB_RETIRE_EXPIRED_SECRETS = "retire-expired-secrets";
 
 /**
@@ -216,6 +218,30 @@ async function scheduleJobs() {
       console.log(
         `Upserted job scheduler "${JOB_REVIEW_REMINDERS}"${tenantId ? ` for tenant ${tenantId}` : ""} with pattern "${CRON_SCHEDULE_HOURLY}" on queue "${FORECAST_QUEUE_NAME}".`
       );
+
+      // Abandoned automated-run sweep — incomplete imported runs (JUnit et
+      // al.) idle past the configurable threshold (system
+      // AppConfig.abandoned_run_idle_minutes, per-project override on
+      // Projects.abandonedRunIdleMinutes; 0/absent disables). Every 15
+      // minutes to match the smallest threshold the UI accepts
+      // (ABANDONED_RUN_MIN_IDLE_MINUTES), bounding worst-case close latency
+      // at threshold + cadence.
+      const abandonedRunsId = tenantId
+        ? `${JOB_SWEEP_ABANDONED_RUNS}-${tenantId}`
+        : JOB_SWEEP_ABANDONED_RUNS;
+
+      await forecastQueue.upsertJobScheduler(
+        abandonedRunsId,
+        { pattern: CRON_SCHEDULE_EVERY_15_MIN },
+        {
+          name: JOB_SWEEP_ABANDONED_RUNS,
+          data: { tenantId },
+        }
+      );
+
+      console.log(
+        `Upserted job scheduler "${JOB_SWEEP_ABANDONED_RUNS}"${tenantId ? ` for tenant ${tenantId}` : ""} with pattern "${CRON_SCHEDULE_EVERY_15_MIN}" on queue "${FORECAST_QUEUE_NAME}".`
+      );
     }
 
     // Upsert notification digest job schedulers for each tenant
@@ -301,6 +327,7 @@ async function scheduleJobs() {
                 JOB_AUTO_COMPLETE_MILESTONES,
                 JOB_MILESTONE_DUE_NOTIFICATIONS,
                 JOB_REVIEW_REMINDERS,
+                JOB_SWEEP_ABANDONED_RUNS,
               ],
             },
             { queue: notificationQueue, jobNames: [JOB_SEND_DAILY_DIGEST] },

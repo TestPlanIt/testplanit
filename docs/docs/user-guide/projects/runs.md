@@ -34,9 +34,13 @@ Shows the automated test runs currently executing in the project, so you can mon
 - The run name, linking to the [run's detail page](./run-details.md). Hovering a truncated name reveals the full name.
 - A miniature status bar showing the proportion of results by status (passed, failed, skipped, etc.).
 - The number of results received so far.
-- A spinner while the run is still actively receiving results.
+- A spinner while the run is still actively receiving results. The spinner stops once the run has been idle past the project's [Abandoned automation cleanup](../projects.md#abandoned-automation-cleanup) threshold (or after an hour of silence when the policy is off), so a run whose CI job died does not appear to be importing forever.
 
 The card updates live as results arrive and disappears when no automated runs are in progress. It always reflects every in-progress automated run, regardless of the [Type Filter](#filtering) selection.
+
+:::info Abandoned automated runs
+If a CI job is aborted or its agent is lost, the run it created never receives its completion call and stays in progress indefinitely. A system administrator can enable [Abandoned automation cleanup](../statuses.md#abandoned-automation-cleanup) to close such runs automatically after a configurable idle time; each project can override the threshold and the target state in its [Advanced settings](../projects.md#abandoned-automation-cleanup). Until then, an abandoned run can always be closed by hand with the **Complete** action in the run's menu.
+:::
 
 ### Recent Manual Results
 

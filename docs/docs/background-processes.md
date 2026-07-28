@@ -49,6 +49,7 @@ The application uses the following background processes:
 
 - Updates forecasting data for test cases
 - Runs scheduled updates (3 AM daily)
+- Runs the abandoned automated-run sweep every 15 minutes: closes incomplete automated runs that have been idle past the configured threshold (see [Abandoned automation cleanup](./user-guide/statuses.md#abandoned-automation-cleanup)); off by default
 - Default concurrency: 5 (CPU-intensive but parallelizable)
 - Location: `workers/forecastWorker.ts`
 
@@ -164,6 +165,7 @@ The application uses the following background processes:
 - Configures daily digest emails (8 AM)
 - Configures forecast updates (3 AM)
 - Configures code repository cache refresh (4 AM)
+- Configures the abandoned automated-run sweep (every 15 minutes)
 - Location: `scheduler.ts`
 
 ## Running Workers

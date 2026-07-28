@@ -1,10 +1,16 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useMemo, type ComponentProps } from "react";
 import type { BatchTestRunSummaryResponse } from "~/app/api/test-runs/summaries/route";
+import {
+  ABANDONED_RUN_IDLE_MINUTES_KEY,
+  resolveEffectiveIdleMinutes,
+} from "~/lib/services/abandonedRuns";
 import { TestRunNameDisplay } from "@/components/TestRunNameDisplay";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -27,6 +33,15 @@ interface AutomationRunsCardProps {
 }
 
 /**
+ * UI-only fallback for when the abandoned-run cleanup policy is off: stop
+ * the "importing" spinner after an hour of silence so a run whose CI job
+ * died doesn't appear to import forever. When the policy IS configured
+ * (system default or project override), the spinner follows that
+ * threshold instead — see the resolution below.
+ */
+const SPINNER_STALE_FALLBACK_MINUTES = 60;
+
+/**
  * Summary-grid card on the project runs page: one compact row per
  * in-progress automated run — name, a mini result-status bar, test
  * count, and a spinner while results are still arriving. Sized and
@@ -45,6 +60,33 @@ export function AutomationRunsCard({
   const t = useTranslations();
 
   const runIds = useMemo(() => runs.map((run) => run.id), [runs]);
+
+  // The spinner goes stale at the same idle threshold the abandoned-run
+  // sweeper uses (project override, else the system policy), so the UI and
+  // the cleanup job agree on what "abandoned" means. With the policy off the
+  // sweeper never runs, so a fixed fallback keeps dead runs from spinning
+  // forever. Re-evaluated by the summaries query's 30s refetch.
+  const { data: sweepConfig } = useClientQueries(
+    schema
+  ).appConfig.useFindUnique({ where: { key: ABANDONED_RUN_IDLE_MINUTES_KEY } });
+  const { data: projectSweep } = useClientQueries(
+    schema
+  ).projects.useFindUnique({
+    where: { id: projectId },
+    select: { abandonedRunIdleMinutes: true },
+  });
+  const systemMinutes =
+    typeof sweepConfig?.value === "number" && sweepConfig.value > 0
+      ? Math.floor(sweepConfig.value as number)
+      : 0;
+  const effectiveMinutes = resolveEffectiveIdleMinutes(
+    systemMinutes,
+    projectSweep?.abandonedRunIdleMinutes ?? null
+  );
+  const spinnerStaleMs =
+    (effectiveMinutes > 0 ? effectiveMinutes : SPINNER_STALE_FALLBACK_MINUTES) *
+    60 *
+    1000;
 
   const { data: batchSummaries } = useQuery<BatchTestRunSummaryResponse>({
     queryKey: ["batchTestRunSummaries", runIds],
@@ -82,6 +124,12 @@ export function AutomationRunsCard({
         <div className="flex flex-col gap-2 max-h-[300px] overflow-y-auto px-2 pb-2">
           {runs.map((run) => {
             const summary = batchSummaries?.summaries[run.id];
+            const lastActivityMs = summary?.lastActivityAt
+              ? new Date(summary.lastActivityAt).getTime()
+              : null;
+            const isStale =
+              lastActivityMs !== null &&
+              Date.now() - lastActivityMs > spinnerStaleMs;
             return (
               <div
                 key={run.id}
@@ -120,7 +168,7 @@ export function AutomationRunsCard({
                     <span className="text-xs text-muted-foreground tabular-nums min-w-8 text-end">
                       {summary.totalCases}
                     </span>
-                    {summary.workflowType === "IN_PROGRESS" && (
+                    {summary.workflowType === "IN_PROGRESS" && !isStale && (
                       <Loader2 className="w-3 h-3 animate-spin text-muted-foreground shrink-0" />
                     )}
                   </>

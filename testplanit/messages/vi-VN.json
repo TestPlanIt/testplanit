@@ -2058,6 +2058,23 @@
           "save": "Lưu cửa sổ chỉnh sửa",
           "savedToast": "Cửa sổ chỉnh sửa đã được cập nhật cho dự án này.",
           "saveError": "Không thể cập nhật cài đặt cửa sổ chỉnh sửa."
+        },
+        "abandonedRuns": {
+          "label": "Dọn dẹp tự động hóa bị bỏ dở",
+          "description": "Thời gian chờ kết quả tiếp theo trước khi một lượt chạy tự động bị đóng do bỏ dở. Các lượt chạy thủ công không bao giờ bị ảnh hưởng.",
+          "modeInheritMinutes": "Kế thừa mặc định hệ thống ({minutes, plural, other {# phút}})",
+          "modeInheritOff": "Kế thừa mặc định hệ thống (tắt)",
+          "modeDisable": "Tắt cho dự án này",
+          "modeCustom": "Ngưỡng thời gian nhàn rỗi tùy chỉnh",
+          "minutesBefore": "Đóng khi nhàn rỗi trong",
+          "minutesUnit": "{minutes, plural, other {phút}}",
+          "minutesAriaLabel": "Ngưỡng thời gian nhàn rỗi tính bằng phút",
+          "invalidMinutes": "Nhập ít nhất {min} phút",
+          "targetStateLabel": "Chuyển lượt chạy đã đóng đến",
+          "targetStateAria": "Trạng thái đích cho các lượt chạy bị bỏ dở",
+          "save": "Lưu cài đặt dọn dẹp",
+          "savedToast": "Đã cập nhật dọn dẹp tự động hóa bị bỏ dở cho dự án này",
+          "saveError": "Không thể cập nhật dọn dẹp tự động hóa bị bỏ dở"
         }
       }
     },
@@ -5047,6 +5064,19 @@
         "savedToast": "Chính sách chỉnh sửa kết quả đã được cập nhật",
         "saveError": "Không thể cập nhật chính sách chỉnh sửa kết quả."
       },
+      "abandonedRunPolicy": {
+        "title": "Dọn dẹp tự động hóa bị bỏ dở",
+        "modeAria": "Chế độ dọn dẹp tự động hóa bị bỏ dở",
+        "modeOff": "Tắt (các lượt chạy bị bỏ dở vẫn mở)",
+        "modeOn": "Tự động đóng các lượt chạy tự động hóa bị bỏ dở",
+        "minutesBefore": "Không hoạt động ít nhất:",
+        "minutesUnit": "{minutes, plural, other {phút}}",
+        "minutesAriaLabel": "Ngưỡng không hoạt động tính bằng phút",
+        "invalidMinutes": "Nhập ít nhất {min} phút",
+        "save": "Lưu chính sách",
+        "savedToast": "Đã cập nhật dọn dẹp tự động hóa bị bỏ dở",
+        "saveError": "Không thể cập nhật chính sách dọn dẹp tự động hóa bị bỏ dở"
+      },
       "add": {
         "button": "Thêm trạng thái",
         "title": "Thêm trạng thái mới",
@@ -6475,6 +6505,7 @@
     "reviewReminders": "## Nhắc nhở xem xét\nSố ngày một yêu cầu xem xét có thể ở trạng thái chờ xử lý trước khi người đánh giá nhận được thông báo nhắc nhở. Yêu cầu mới bắt đầu tính thời gian từ khi gửi.",
     "reviews": "## Xem xét\nCác yêu cầu đánh giá được giao cho bạn, trực tiếp hoặc thông qua vai trò bạn đảm nhiệm. Đang chờ xử lý là hàng đợi các yêu cầu vẫn đang chờ quyết định của bạn; Đã quyết định liệt kê những yêu cầu bạn đã phê duyệt, từ chối hoặc yêu cầu chỉnh sửa.",
     "resultEditingPolicy": "## Chính sách chỉnh sửa kết quả\nKiểm soát khoảng thời gian sau khi kết quả được ghi lại mà vẫn có thể chỉnh sửa trực tiếp, trên tất cả các dự án. Các dự án có thể điều chỉnh thời gian này trong cài đặt Nâng cao nhưng không thể nới lỏng. Quản trị viên hệ thống luôn có thể chỉnh sửa.",
+    "abandonedRunPolicy": "## Dọn dẹp tự động hóa bị bỏ dở\nKhi một job CI bị hủy bỏ hoặc agent của nó bị chết, lượt chạy kiểm thử tự động mà nó tạo ra sẽ không bao giờ nhận được lệnh gọi hoàn tất và duy trì trạng thái Đang tiến hành mãi mãi. Khi chính sách này được bật, một tiến trình quét nền sẽ chạy mỗi 15 phút và đóng bất kỳ lượt chạy tự động chưa hoàn tất nào không nhận được kết quả trong khoảng thời gian không hoạt động đã cấu hình (tối thiểu 15 phút). Các lượt chạy thủ công không bao giờ bị ảnh hưởng. Mỗi dự án có thể ghi đè ngưỡng này — hoặc chọn không áp dụng — trong phần cài đặt Nâng cao, và có thể chọn trạng thái lượt chạy mà các lượt chạy bị quét sẽ được chuyển vào. Hãy chọn khoảng thời gian không hoạt động dài hơn đáng kể so với khoảng thời gian im ắng dài nhất của một lượt chạy khỏe mạnh; một ngày đầy đủ là giá trị mặc định an toàn.",
     "project": {
       "name": "## Tên Dự án\nMã định danh duy nhất cho dự án của bạn.\n\n- Phải là duy nhất trong tất cả các dự án\n- Được sử dụng trong điều hướng và báo cáo\n- Nên rõ ràng và mô tả\n- Giúp các thành viên nhóm xác định phạm vi dự án",
       "description": "## Mô tả dự án\nThông tin chi tiết bổ sung về mục đích và phạm vi của dự án.\n\n- Không bắt buộc nhưng được khuyến nghị\n- Giúp các thành viên nhóm hiểu rõ mục tiêu dự án\n- Có thể bao gồm các mục tiêu hoặc yêu cầu chính\n- Giới hạn 256 ký tự",

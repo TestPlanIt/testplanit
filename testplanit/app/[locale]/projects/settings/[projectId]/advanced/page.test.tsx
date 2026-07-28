@@ -52,6 +52,8 @@ let mockProjectData:
       reviewWorkflowEnabled: boolean;
       requireResultFlipJustification?: boolean;
       editResultsDurationSeconds?: number | null;
+      abandonedRunIdleMinutes?: number | null;
+      abandonedRunStateId?: number | null;
     }
   | undefined = {
   id: 42,
@@ -61,6 +63,11 @@ let mockProjectLoading = false;
 // System edit-window AppConfig row (`edit_results_duration`). undefined => no
 // system policy.
 let mockEditWindowConfig: { value: number } | undefined;
+// System abandoned-run AppConfig row (`abandoned_run_idle_minutes`).
+// undefined => sweeping off by default.
+let mockAbandonedRunConfig: { value: number } | undefined;
+// RUNS workflow states assigned to the project (abandoned-run target picker).
+let mockRunWorkflows: Array<{ id: number; name: string }> = [];
 
 vi.mock("@zenstackhq/tanstack-query/react", () => ({
   useClientQueries: () => ({
@@ -80,8 +87,19 @@ vi.mock("@zenstackhq/tanstack-query/react", () => ({
       }),
     },
     appConfig: {
-      useFindUnique: () => ({
-        data: mockEditWindowConfig,
+      // Both the edit-window and abandoned-run system rows resolve through
+      // this hook; return the row matching the queried key.
+      useFindUnique: (args: { where: { key: string } }) => ({
+        data:
+          args?.where?.key === "abandoned_run_idle_minutes"
+            ? mockAbandonedRunConfig
+            : mockEditWindowConfig,
+      }),
+    },
+    workflows: {
+      // RUNS-state picker for the abandoned-run target state.
+      useFindMany: () => ({
+        data: mockRunWorkflows,
       }),
     },
   }),
@@ -114,6 +132,8 @@ describe("AdvancedPage (per-project advanced settings)", () => {
     mockProjectLoading = false;
     mockSystemEnabled = true;
     mockEditWindowConfig = undefined;
+    mockAbandonedRunConfig = undefined;
+    mockRunWorkflows = [];
   });
 
   it("(a) ADMIN sees the Advanced page", () => {
@@ -282,5 +302,88 @@ describe("AdvancedPage (per-project advanced settings)", () => {
     expect(
       screen.queryByTestId("edit-window-mode-select")
     ).not.toBeInTheDocument();
+  });
+
+  it("(ar1) saves an inherited abandoned-run threshold as null with automatic state", async () => {
+    mockProjectData = {
+      id: 42,
+      reviewWorkflowEnabled: true,
+      abandonedRunIdleMinutes: null,
+      abandonedRunStateId: null,
+    };
+    render(<AdvancedPage />);
+
+    fireEvent.click(screen.getByTestId("abandoned-runs-save"));
+
+    await waitFor(() => {
+      expect(mockMutateAsync).toHaveBeenCalledWith({
+        where: { id: 42 },
+        data: { abandonedRunIdleMinutes: null, abandonedRunStateId: null },
+      });
+    });
+  });
+
+  it("(ar2) seeds custom mode from the project override and keeps the configured target state", async () => {
+    mockProjectData = {
+      id: 42,
+      reviewWorkflowEnabled: true,
+      abandonedRunIdleMinutes: 720,
+      abandonedRunStateId: 7,
+    };
+    mockRunWorkflows = [{ id: 7, name: "Aborted" }];
+    render(<AdvancedPage />);
+
+    expect(screen.getByTestId("abandoned-runs-minutes-input")).toHaveValue(720);
+
+    fireEvent.click(screen.getByTestId("abandoned-runs-save"));
+
+    await waitFor(() => {
+      expect(mockMutateAsync).toHaveBeenCalledWith({
+        where: { id: 42 },
+        data: { abandonedRunIdleMinutes: 720, abandonedRunStateId: 7 },
+      });
+    });
+  });
+
+  it("(ar4) rejects a custom threshold below the 15-minute minimum", async () => {
+    mockProjectData = {
+      id: 42,
+      reviewWorkflowEnabled: true,
+      abandonedRunIdleMinutes: 720,
+      abandonedRunStateId: null,
+    };
+    render(<AdvancedPage />);
+
+    fireEvent.change(screen.getByTestId("abandoned-runs-minutes-input"), {
+      target: { value: "5" },
+    });
+    fireEvent.click(screen.getByTestId("abandoned-runs-save"));
+
+    await waitFor(() => {
+      expect(mockMutateAsync).not.toHaveBeenCalled();
+    });
+  });
+
+  it("(ar3) saves a project opt-out as 0 and hides the state picker", async () => {
+    mockProjectData = {
+      id: 42,
+      reviewWorkflowEnabled: true,
+      abandonedRunIdleMinutes: 0,
+      abandonedRunStateId: null,
+    };
+    render(<AdvancedPage />);
+
+    expect(
+      screen.queryByTestId("abandoned-runs-state-select")
+    ).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId("abandoned-runs-save"));
+
+    await waitFor(() => {
+      expect(mockMutateAsync).toHaveBeenCalledWith({
+        where: { id: 42 },
+        data: { abandonedRunIdleMinutes: 0, abandonedRunStateId: null },
+      });
+    });
   });
 });

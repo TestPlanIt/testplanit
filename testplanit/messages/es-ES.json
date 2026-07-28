@@ -2058,6 +2058,23 @@
           "save": "Guardar ventana de edición",
           "savedToast": "Se ha actualizado la ventana de edición para este proyecto.",
           "saveError": "No se pudo actualizar la configuración de la ventana de edición."
+        },
+        "abandonedRuns": {
+          "label": "Limpieza de automatización abandonada",
+          "description": "Cuánto tiempo esperar por el siguiente resultado antes de que una ejecución automatizada se cierre como abandonada. Las ejecuciones manuales nunca se ven afectadas.",
+          "modeInheritMinutes": "Heredar la configuración predeterminada del sistema ({minutes, plural, one {# minuto} other {# minutos}})",
+          "modeInheritOff": "Heredar la configuración predeterminada del sistema (desactivado)",
+          "modeDisable": "Deshabilitar para este proyecto",
+          "modeCustom": "Umbral de inactividad personalizado",
+          "minutesBefore": "Cerrar cuando esté inactivo durante",
+          "minutesUnit": "{minutes, plural, one {minuto} other {minutos}}",
+          "minutesAriaLabel": "Umbral de inactividad en minutos",
+          "invalidMinutes": "Introduzca al menos {min} minutos",
+          "targetStateLabel": "Mover ejecuciones cerradas a",
+          "targetStateAria": "Estado de destino para ejecuciones abandonadas",
+          "save": "Guardar configuración de limpieza",
+          "savedToast": "Limpieza de automatización abandonada actualizada para este proyecto",
+          "saveError": "Error al actualizar la limpieza de automatización abandonada"
         }
       }
     },
@@ -5047,6 +5064,19 @@
         "savedToast": "Se ha actualizado la política de edición de resultados.",
         "saveError": "No se pudo actualizar la política de edición de resultados."
       },
+      "abandonedRunPolicy": {
+        "title": "Limpieza de automatización abandonada",
+        "modeAria": "Modo de limpieza de automatización abandonada",
+        "modeOff": "Desactivado (las ejecuciones abandonadas permanecen abiertas)",
+        "modeOn": "Cerrar automáticamente las ejecuciones automatizadas abandonadas",
+        "minutesBefore": "Inactivo durante al menos:",
+        "minutesUnit": "{minutes, plural, one {minuto} other {minutos}}",
+        "minutesAriaLabel": "Umbral de inactividad en minutos",
+        "invalidMinutes": "Introduzca al menos {min} minutos",
+        "save": "Guardar política",
+        "savedToast": "Limpieza de automatización abandonada actualizada",
+        "saveError": "Error al actualizar la política de limpieza de automatización abandonada"
+      },
       "add": {
         "button": "Añadir estado",
         "title": "Añadir nuevo estado",
@@ -6475,6 +6505,7 @@
     "reviewReminders": "## Recordatorios de revisión\n¿Cuántos días puede permanecer pendiente una solicitud de revisión antes de que los revisores reciban una notificación recordatoria? Las nuevas solicitudes comienzan a contar desde el momento de su envío.",
     "reviews": "## Revisiones\nSolicitudes de revisión asignadas a ti, ya sea directamente o mediante un rol que ocupas. Pendiente es tu cola de solicitudes que aún esperan una decisión; Decidido enumera las que ya has aprobado, rechazado o para las que has solicitado cambios.",
     "resultEditingPolicy": "## Política de edición de resultados\nControla cuánto tiempo después de registrar un resultado se puede editar directamente en todos los proyectos. Los proyectos pueden ajustar este límite en su configuración avanzada, pero nunca modificarlo. Los administradores del sistema siempre pueden editarlo.",
+    "abandonedRunPolicy": "## Limpieza de automatización abandonada\nCuando un trabajo de CI se aborta o su agente falla, la ejecución de pruebas automatizada que creó nunca recibe su llamada de finalización y permanece En progreso para siempre. Con esta política activada, un barrido en segundo plano se ejecuta cada 15 minutos y cierra cualquier ejecución automatizada incompleta que no haya recibido resultados durante el tiempo de inactividad configurado (mínimo 15 minutos). Las ejecuciones manuales nunca se ven afectadas. Cada proyecto puede anular el umbral, o desactivar esta opción, en su configuración avanzada, y puede elegir a qué estado de ejecución se trasladan las ejecuciones barridas. Elija un tiempo de inactividad considerablemente mayor que el periodo de silencio más largo de una ejecución saludable; un día completo es un valor predeterminado seguro.",
     "project": {
       "name": "## Nombre del proyecto\nEl identificador único para tu proyecto.\n\n- Debe ser único en todos los proyectos\n- Utilizado en la navegación y en los informes\n- Debe ser claro y descriptivo\n- Ayuda a los miembros del equipo a identificar el alcance del proyecto",
       "description": "## Descripción del proyecto\nDetalles adicionales sobre el propósito y el alcance del proyecto.\n\n- Opcional pero recomendado\n- Ayuda a los miembros del equipo a entender los objetivos del proyecto\n- Puede incluir objetivos o requisitos clave\n- Limitado a 256 caracteres",

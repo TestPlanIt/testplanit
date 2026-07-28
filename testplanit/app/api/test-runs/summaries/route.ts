@@ -58,6 +58,7 @@ export async function GET(req: NextRequest) {
         testRunType: true,
         forecastManual: true,
         projectId: true,
+        createdAt: true,
         state: {
           select: {
             workflowType: true,
@@ -126,6 +127,29 @@ export async function GET(req: NextRequest) {
     // Fetch summaries for JUnit runs
     const junitSummaries = await getBatchJUnitRunSummaries(junitRunIds);
 
+    // Last imported write per automated run — the Automation Runs card stops
+    // its "importing" spinner when this goes stale (an aborted CI job never
+    // closes its run, so the workflow state alone can spin forever).
+    const junitActivity = new Map<number, Date>();
+    if (junitRunIds.length > 0) {
+      const activityRows = await baseDb.$queryRaw<
+        Array<{ testRunId: number; lastActivity: Date | null }>
+      >`
+        SELECT
+          jts."testRunId",
+          GREATEST(MAX(jts."createdAt"), MAX(jtr."createdAt")) as "lastActivity"
+        FROM "JUnitTestSuite" jts
+        LEFT JOIN "JUnitTestResult" jtr ON jtr."testSuiteId" = jts.id
+        WHERE jts."testRunId" = ANY(${junitRunIds})
+        GROUP BY jts."testRunId"
+      `;
+      activityRows.forEach((row) => {
+        if (row.lastActivity) {
+          junitActivity.set(row.testRunId, new Date(row.lastActivity));
+        }
+      });
+    }
+
     // Combine all summaries
     const summaries: Record<number, TestRunSummaryData> = {};
 
@@ -136,10 +160,18 @@ export async function GET(req: NextRequest) {
         : regularSummaries.get(tr.id);
 
       if (summary) {
+        const importActivity = junitActivity.get(tr.id);
+        const lastActivityAt = isJUnit
+          ? (importActivity && importActivity > tr.createdAt
+              ? importActivity
+              : tr.createdAt
+            ).toISOString()
+          : undefined;
         summaries[tr.id] = {
           ...summary,
           testRunType: tr.testRunType,
           workflowType: tr.state?.workflowType,
+          lastActivityAt,
           commentsCount: commentsCounts.get(tr.id) || 0,
           issues: tr.issues.map((issue) => ({
             ...issue,

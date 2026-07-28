@@ -2058,6 +2058,23 @@
           "save": "Save edit window",
           "savedToast": "Edit window updated for this project",
           "saveError": "Failed to update the edit window setting"
+        },
+        "abandonedRuns": {
+          "label": "Abandoned automation cleanup",
+          "description": "How long to wait for the next result before an automated run is closed as abandoned. Manual runs are never affected.",
+          "modeInheritMinutes": "Inherit system default ({minutes, plural, one {# minute} other {# minutes}})",
+          "modeInheritOff": "Inherit system default (off)",
+          "modeDisable": "Disable for this project",
+          "modeCustom": "Custom idle threshold",
+          "minutesBefore": "Close when idle for",
+          "minutesUnit": "{minutes, plural, one {minute} other {minutes}}",
+          "minutesAriaLabel": "Idle threshold in minutes",
+          "invalidMinutes": "Enter at least {min} minutes",
+          "targetStateLabel": "Move closed runs to",
+          "targetStateAria": "Target state for abandoned runs",
+          "save": "Save cleanup settings",
+          "savedToast": "Abandoned automation cleanup updated for this project",
+          "saveError": "Failed to update abandoned automation cleanup"
         }
       }
     },
@@ -5047,6 +5064,19 @@
         "savedToast": "Result editing policy updated",
         "saveError": "Failed to update the result editing policy"
       },
+      "abandonedRunPolicy": {
+        "title": "Abandoned automation cleanup",
+        "modeAria": "Abandoned automation cleanup mode",
+        "modeOff": "Off (abandoned runs stay open)",
+        "modeOn": "Close abandoned automated runs automatically",
+        "minutesBefore": "Idle for at least:",
+        "minutesUnit": "{minutes, plural, one {minute} other {minutes}}",
+        "minutesAriaLabel": "Idle threshold in minutes",
+        "invalidMinutes": "Enter at least {min} minutes",
+        "save": "Save policy",
+        "savedToast": "Abandoned automation cleanup updated",
+        "saveError": "Failed to update the abandoned automation cleanup policy"
+      },
       "add": {
         "button": "Add Status",
         "title": "Add New Status",
@@ -6475,6 +6505,7 @@
     "reviewReminders": "## Review Reminders\nHow many days a review request can sit pending before reviewers get a reminder notification. New requests start the clock at submission.",
     "reviews": "## Reviews\nReview requests assigned to you, either directly or through a role you hold. Pending is your queue of requests still waiting on a decision; Decided lists the ones you have already approved, rejected, or asked for changes on.",
     "resultEditingPolicy": "## Result Editing Policy\nControl how long after a result is recorded it can still be edited in place, across all projects. Projects can tighten this in their Advanced settings but never loosen it. System administrators can always edit.",
+    "abandonedRunPolicy": "## Abandoned Automation Cleanup\nWhen a CI job is aborted or its agent dies, the automated test run it created never receives its completion call and stays In Progress forever. With this policy on, a background sweep runs every 15 minutes and closes any incomplete automated run that has received no results for the configured idle time (minimum 15 minutes). Manual runs are never affected. Each project can override the threshold — or opt out — in its Advanced settings, and can choose which run state swept runs are moved into. Pick an idle time comfortably longer than the longest quiet stretch of a healthy run; a full day is a safe default.",
     "project": {
       "name": "## Project Name\nThe unique identifier for your project.\n\n- Must be unique across all projects\n- Used in navigation and reports\n- Should be clear and descriptive\n- Helps team members identify the project scope",
       "description": "## Project Description\nAdditional details about the project's purpose and scope.\n\n- Optional but recommended\n- Helps team members understand project goals\n- Can include key objectives or requirements\n- Limited to 256 characters",

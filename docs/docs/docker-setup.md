@@ -13,7 +13,7 @@ The Docker Compose setup starts these containerized services:
 1. **TestPlanIt Application** (`dev`/`prod`) - Next.js web application
 2. **Background Workers** (`workers-dev`/`workers`) - Process asynchronous jobs:
    - Email sending and notifications
-   - Scheduled tasks (daily digests at 8 AM, forecast updates at 3 AM)
+   - Scheduled tasks (daily digests at 8 AM, forecast updates at 3 AM, abandoned automated-run sweep every 15 minutes)
    - Search indexing and file processing
 3. **PostgreSQL** (`postgres`) - Main database with automatic schema initialization
 4. **Valkey** (`valkey`) - Job queue and caching (Redis-compatible in-memory data store)

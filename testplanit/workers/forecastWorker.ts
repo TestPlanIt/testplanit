@@ -9,11 +9,19 @@ import {
   validateMultiTenantJobData,
 } from "../lib/multiTenantDb";
 import { FORECAST_QUEUE_NAME } from "../lib/queueNames";
+import {
+  readSystemAbandonedRunIdleMinutes,
+  resolveAbandonedRunTargetStateId,
+  resolveEffectiveIdleMinutes,
+} from "../lib/services/abandonedRuns";
 import { captureAuditEvent } from "../lib/services/auditLog";
 import { NotificationService } from "../lib/services/notificationService";
 import { getReviewReminderThresholdDays } from "../lib/services/reviewReminderConfig";
 import { withTenantContext } from "../lib/tenantContext";
 import { emitReviewReminderEvent } from "../lib/webhooks/event-emitters/reviewEvents";
+import { emitTestRunUpdateEvents } from "../lib/webhooks/event-emitters/testRunEvents";
+import { syncTestRunToElasticsearch } from "../services/testRunSearch";
+import { AUTOMATED_TEST_RUN_TYPES } from "../utils/testResultTypes";
 import valkeyConnection from "../lib/valkey";
 import { BULLMQ_PREFIX } from "../lib/bullPrefix";
 import {
@@ -47,6 +55,7 @@ export const JOB_UPDATE_ALL_CASES = "update-all-cases-forecast";
 export const JOB_AUTO_COMPLETE_MILESTONES = "auto-complete-milestones";
 export const JOB_MILESTONE_DUE_NOTIFICATIONS = "milestone-due-notifications";
 export const JOB_REVIEW_REMINDERS = "review-reminders";
+export const JOB_SWEEP_ABANDONED_RUNS = "sweep-abandoned-runs";
 
 /**
  * Load the context required to compose a REVIEW_REMINDER notification for a
@@ -723,6 +732,196 @@ export const processor = async (job: Job<ForecastJobDataBase>) =>
           );
         } catch (error) {
           console.error(`Job ${job.id}: review-reminder scan failed`, error);
+          throw error;
+        }
+        break;
+
+      case JOB_SWEEP_ABANDONED_RUNS:
+        console.log(`Job ${job.id}: Starting abandoned automated-run sweep.`);
+        try {
+          const systemIdleMinutes = await readSystemAbandonedRunIdleMinutes(db);
+          const sweepNow = new Date();
+
+          // Incomplete automated runs plus each project's override knobs.
+          // REGULAR (manual) runs are never swept — they legitimately stay
+          // open for months.
+          const candidates = await db.testRuns.findMany({
+            where: {
+              isCompleted: false,
+              isDeleted: false,
+              testRunType: { in: AUTOMATED_TEST_RUN_TYPES },
+              project: { isDeleted: false },
+            },
+            select: {
+              id: true,
+              name: true,
+              projectId: true,
+              stateId: true,
+              createdAt: true,
+              project: {
+                select: {
+                  abandonedRunIdleMinutes: true,
+                  abandonedRunStateId: true,
+                },
+              },
+            },
+          });
+
+          // Per-project target-state cache — resolution costs up to two
+          // workflow lookups, and a backlog is typically many runs across few
+          // projects.
+          const targetStateByProject = new Map<number, number | null>();
+
+          for (const run of candidates) {
+            const effectiveMinutes = resolveEffectiveIdleMinutes(
+              systemIdleMinutes,
+              run.project?.abandonedRunIdleMinutes ?? null
+            );
+            if (effectiveMinutes <= 0) continue; // sweeping disabled here
+
+            // Last-activity signal: the newest imported suite/result write,
+            // falling back to the run's creation when the reporter died
+            // before importing anything (TestRuns has no updatedAt column).
+            // "Incomplete" alone must never trigger the sweep — a live run
+            // that is still streaming results looks identical except for
+            // this timestamp.
+            const [resultMax, suiteMax] = await Promise.all([
+              db.jUnitTestResult.aggregate({
+                _max: { createdAt: true },
+                where: { testSuite: { testRunId: run.id } },
+              }),
+              db.jUnitTestSuite.aggregate({
+                _max: { createdAt: true },
+                where: { testRunId: run.id },
+              }),
+            ]);
+            const lastActivityMs = Math.max(
+              new Date(run.createdAt).getTime(),
+              resultMax._max.createdAt
+                ? new Date(resultMax._max.createdAt).getTime()
+                : 0,
+              suiteMax._max.createdAt
+                ? new Date(suiteMax._max.createdAt).getTime()
+                : 0
+            );
+            const idleMinutes =
+              (sweepNow.getTime() - lastActivityMs) / (60 * 1000);
+            if (idleMinutes < effectiveMinutes) continue;
+
+            try {
+              if (!targetStateByProject.has(run.projectId)) {
+                targetStateByProject.set(
+                  run.projectId,
+                  await resolveAbandonedRunTargetStateId(
+                    db,
+                    run.projectId,
+                    run.project?.abandonedRunStateId ?? null
+                  )
+                );
+              }
+              const targetStateId =
+                targetStateByProject.get(run.projectId) ?? null;
+              if (targetStateId === null) {
+                console.warn(
+                  `Job ${job.id}: No eligible RUNS workflow for project ${run.projectId}; completing run ${run.id} without a state change.`
+                );
+              }
+
+              // The worker's client is the RAW ZenStack client (no
+              // sideEffectsPlugin), so the side effects the app write path
+              // gets for free are done by hand: completedAt stamp, webhook
+              // emission (in-tx with the update so the outbox row commits
+              // with it), audit capture, and the Elasticsearch sync. The
+              // Review & Approval gate is deliberately bypassed — it is
+              // enforced at the user-facing chokepoints, and a system sweep
+              // has no human actor to route an approval to.
+              const updatedRun = await db.$transaction(async (tx: any) => {
+                // Re-check inside the tx: a very late completeTestRun could
+                // land between the scan and this write — completing an
+                // already-completed run again would clobber its state and
+                // double-emit lifecycle webhooks.
+                const current = await tx.testRuns.findUnique({
+                  where: { id: run.id },
+                  select: { isCompleted: true, stateId: true },
+                });
+                if (!current || current.isCompleted) return null;
+                const oldRow = {
+                  id: run.id,
+                  projectId: run.projectId,
+                  name: run.name,
+                  stateId: current.stateId,
+                  isCompleted: false,
+                };
+                const row = await tx.testRuns.update({
+                  where: { id: run.id },
+                  data: {
+                    isCompleted: true,
+                    completedAt: sweepNow,
+                    ...(targetStateId !== null
+                      ? { stateId: targetStateId }
+                      : {}),
+                  },
+                  select: {
+                    id: true,
+                    projectId: true,
+                    name: true,
+                    stateId: true,
+                    isCompleted: true,
+                  },
+                });
+                await emitTestRunUpdateEvents(oldRow, row, tx, {
+                  actorUserId: null,
+                });
+                return row;
+              });
+              if (!updatedRun) continue; // completed while we were scanning
+
+              captureAuditEvent({
+                action: "UPDATE",
+                entityType: "TestRuns",
+                entityId: String(run.id),
+                entityName: run.name,
+                projectId: run.projectId,
+                tenantId: job.data.tenantId,
+                metadata: {
+                  source: "forecast-worker:abandoned-run-sweep",
+                  jobId: job.id,
+                  idleMinutes: Math.round(idleMinutes),
+                  thresholdMinutes: effectiveMinutes,
+                },
+                changes: {
+                  isCompleted: { old: false, new: true },
+                  ...(updatedRun.stateId !== run.stateId
+                    ? { stateId: { old: run.stateId, new: updatedRun.stateId } }
+                    : {}),
+                },
+              }).catch(() => {});
+
+              syncTestRunToElasticsearch(run.id).catch((error) =>
+                console.error(
+                  `Job ${job.id}: Failed to sync test run ${run.id} to Elasticsearch:`,
+                  error
+                )
+              );
+
+              successCount++;
+              console.log(
+                `Job ${job.id}: Closed abandoned run "${run.name}" (ID: ${run.id}, idle ${Math.round(idleMinutes)}m >= ${effectiveMinutes}m).`
+              );
+            } catch (error) {
+              failCount++;
+              console.error(
+                `Job ${job.id}: Failed to close abandoned run ${run.id}`,
+                error
+              );
+            }
+          }
+
+          console.log(
+            `Job ${job.id} completed: Closed ${successCount} abandoned runs (${candidates.length} incomplete automated runs scanned). Failed: ${failCount}`
+          );
+        } catch (error) {
+          console.error(`Job ${job.id}: Error in abandoned-run sweep`, error);
           throw error;
         }
         break;

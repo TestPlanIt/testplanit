@@ -2058,6 +2058,23 @@
           "save": "Enregistrer la fenêtre d'édition",
           "savedToast": "La fenêtre d'édition a été mise à jour pour ce projet.",
           "saveError": "Échec de la mise à jour des paramètres de la fenêtre d'édition"
+        },
+        "abandonedRuns": {
+          "label": "Nettoyage de l'automatisation abandonnée",
+          "description": "Délai d'attente avant qu'une exécution automatisée soit fermée comme abandonnée. Les exécutions manuelles ne sont jamais affectées.",
+          "modeInheritMinutes": "Hériter du paramètre par défaut du système ({minutes, plural, one {# minute} other {# minutes}})",
+          "modeInheritOff": "Hériter du paramètre par défaut du système (désactivé)",
+          "modeDisable": "Désactiver pour ce projet",
+          "modeCustom": "Seuil d'inactivité personnalisé",
+          "minutesBefore": "Fermer après une inactivité de",
+          "minutesUnit": "{minutes, plural, one {minute} other {minutes}}",
+          "minutesAriaLabel": "Seuil d'inactivité en minutes",
+          "invalidMinutes": "Saisissez au moins {min} minutes",
+          "targetStateLabel": "Déplacer les exécutions fermées vers",
+          "targetStateAria": "État cible pour les exécutions abandonnées",
+          "save": "Enregistrer les paramètres de nettoyage",
+          "savedToast": "Nettoyage de l'automatisation abandonnée mis à jour pour ce projet",
+          "saveError": "Échec de la mise à jour du nettoyage de l'automatisation abandonnée"
         }
       }
     },
@@ -5047,6 +5064,19 @@
         "savedToast": "Politique de modification des résultats mise à jour",
         "saveError": "Échec de la mise à jour de la politique de modification des résultats"
       },
+      "abandonedRunPolicy": {
+        "title": "Nettoyage des automatisations abandonnées",
+        "modeAria": "Mode de nettoyage des automatisations abandonnées",
+        "modeOff": "Désactivé (les exécutions abandonnées restent ouvertes)",
+        "modeOn": "Fermer automatiquement les exécutions automatisées abandonnées",
+        "minutesBefore": "Inactif pendant au moins :",
+        "minutesUnit": "{minutes, plural, one {minute} other {minutes}}",
+        "minutesAriaLabel": "Seuil d'inactivité en minutes",
+        "invalidMinutes": "Saisissez au moins {min} minutes",
+        "save": "Enregistrer la politique",
+        "savedToast": "Nettoyage des automatisations abandonnées mis à jour",
+        "saveError": "Échec de la mise à jour de la politique de nettoyage des automatisations abandonnées"
+      },
       "add": {
         "button": "Ajouter un statut",
         "title": "Ajouter un nouveau statut",
@@ -6475,6 +6505,7 @@
     "reviewReminders": "## Rappels de révision\nCombien de jours une demande d'évaluation peut-elle rester en attente avant que les évaluateurs ne reçoivent une notification de rappel ? Le délai commence à courir dès la soumission des nouvelles demandes.",
     "reviews": "## Révisions\nPassez en revue les demandes qui vous sont assignées, directement ou via un rôle que vous détenez. En attente correspond à votre file de demandes en attente de décision ; Décidées répertorie celles que vous avez déjà approuvées, rejetées ou pour lesquelles vous avez demandé des modifications.",
     "resultEditingPolicy": "## Politique de modification des résultats\nContrôlez la durée pendant laquelle un résultat peut encore être modifié après son enregistrement, pour tous les projets. Les projets peuvent restreindre ce délai dans leurs paramètres avancés, mais ne peuvent jamais l'assouplir. Les administrateurs système peuvent toujours le modifier.",
+    "abandonedRunPolicy": "## Nettoyage automatique des exécutions abandonnées\nLorsqu'un job CI est interrompu ou que son agent tombe en panne, l'exécution de test automatisée qu'il a créée ne reçoit jamais son appel de complétion et reste indéfiniment « En cours ». Lorsque cette politique est activée, une vérification en arrière-plan s'exécute toutes les 15 minutes et clôture toute exécution automatisée incomplète n'ayant reçu aucun résultat pendant la durée d'inactivité configurée (minimum 15 minutes). Les exécutions manuelles ne sont jamais concernées. Chaque projet peut remplacer ce seuil — ou le désactiver — dans ses paramètres avancés, et peut choisir vers quel état d'exécution les exécutions nettoyées sont déplacées. Choisissez une durée d'inactivité nettement supérieure à la plus longue période d'inactivité normale d'une exécution saine ; une journée complète constitue une valeur par défaut sûre.",
     "project": {
       "name": "## Nom du projet\nL'identifiant unique de votre projet.\n\n- Doit être unique pour tous les projets.\n- Utilisé pour la navigation et les rapports.\n- Doit être clair et descriptif.\n- Aide les membres de l'équipe à identifier le périmètre du projet.",
       "description": "## Description du projet\nDétails supplémentaires sur l'objectif et la portée du projet.\n\n- Facultatif, mais recommandé\n- Aide les membres de l'équipe à comprendre les objectifs du projet\n- Peut inclure les objectifs ou exigences clés\n- Limité à 256 caractères",

@@ -355,3 +355,13 @@ While the setting is on:
 - **Reverting a case to Not Started** — when a case already attached to one or more open runs is moved back into a Not Started state (typically by a [Review & Approval](./review-approvals.md) rejection, but any state change qualifies), TestPlanIt automatically removes the case from any open run where it has **not yet been executed**. Run-cases that already have a recorded result are kept in place so the historical outcome remains visible; the result becomes read-only and cannot be edited further.
 - **Restoring a removed case** — moving a case back out of Not Started (e.g. Draft → Active) **does not** automatically re-add it to the runs it was removed from. The removal is treated as a deliberate cleanup, not a reversible side-effect: silently resurrecting the case could undo a manual remove the tester did on purpose. To put the case back in a run, add it again through the Add Cases picker — the case is now eligible, so it appears there for selection.
 - **Completed runs are untouched** — only open runs are reconciled. Once a run is completed its case set is frozen.
+
+### Abandoned Automation Cleanup
+
+Controls whether automated runs in this project that stopped receiving results are closed automatically. See the system-wide [Abandoned automation cleanup](./statuses.md#abandoned-automation-cleanup) policy for how the sweep works; manual runs are never affected.
+
+- **Inherit system default**: Follow the system-wide policy (the current system threshold — or *off* — is shown in the option label). This is the default.
+- **Disable for this project**: Never sweep this project's runs, even when the system policy is on.
+- **Custom idle threshold**: Set a project-specific idle time in minutes. A project can opt in this way even when the system policy is off.
+
+Below the threshold, **Move closed runs to** picks the run state a swept run is moved into. It defaults to the project's first enabled **Done**-type run workflow state, marked with a star in the list. Choose a different state if the project distinguishes, say, an *Aborted* state from *Done*; only run states assigned to this project are offered.
