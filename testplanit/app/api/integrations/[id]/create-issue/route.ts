@@ -1,4 +1,5 @@
 import { IntegrationManager } from "@/lib/integrations/IntegrationManager";
+import { resolveEditorMediaAttachments } from "@/lib/integrations/editorMediaAttachments";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth/next";
 import { NextRequest, NextResponse } from "next/server";
@@ -350,6 +351,27 @@ export async function POST(
 
     // console.log(`[CREATE-ISSUE] Final issue data being sent:`, JSON.stringify(issueData, null, 2));
     const createdIssue = await adapter.createIssue(issueData);
+
+    // Media embedded in the description editor (images/videos) lives in
+    // TestPlanIt storage — the tracker only receives the converted description
+    // text. Transfer it as attachments on the created issue. Failures are
+    // non-fatal: the issue itself was created and linked.
+    if (adapter.uploadAttachment && adapter.getCapabilities().attachments) {
+      const externalIssueId = createdIssue.key || createdIssue.id;
+      const embeddedMedia = await resolveEditorMediaAttachments(
+        validatedData.description
+      );
+      for (const { filename, buffer } of embeddedMedia) {
+        try {
+          await adapter.uploadAttachment(externalIssueId, buffer, filename);
+        } catch (error) {
+          console.error(
+            `[CREATE-ISSUE] Failed to attach "${filename}" to ${externalIssueId}:`,
+            error
+          );
+        }
+      }
+    }
 
     // If linked to TestPlanit entities, create the link in our database
     if (

@@ -220,6 +220,12 @@ export abstract class BaseAdapter implements IssueAdapter {
       ...((options.headers as Record<string, string>) || {}),
     };
 
+    // A FormData body must let fetch set the multipart boundary itself — a
+    // preset JSON Content-Type would corrupt the upload.
+    if (options.body instanceof FormData) {
+      delete headers["Content-Type"];
+    }
+
     // Add authentication headers based on auth type
     switch (this.authData.type) {
       case "oauth":
