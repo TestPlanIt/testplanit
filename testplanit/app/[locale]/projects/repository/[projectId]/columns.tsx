@@ -738,11 +738,11 @@ const TestRunStatusCell = React.memo(function TestRunStatusCell({
 
   return (
     <>
-      <div className="flex items-center justify-between w-fit">
+      <div className="flex items-center justify-between w-full">
         {isParameterized ? (
           <Button
             variant="outline"
-            className="w-[120px] h-8 bg-transparent hover:bg-muted hover:text-foreground justify-between gap-1 overflow-hidden"
+            className="flex-1 min-w-0 h-8 bg-transparent hover:bg-muted hover:text-foreground justify-between gap-1 overflow-hidden"
             disabled={isSoftDeletedInRun}
             onClick={handleOpenParameterizedSheet}
             data-testid={`testrun-status-cell-parameterized-${caseId}`}
@@ -763,19 +763,19 @@ const TestRunStatusCell = React.memo(function TestRunStatusCell({
             <DropdownMenuTrigger asChild>
               <Button
                 variant="outline"
-                className="w-[120px] h-8 bg-transparent hover:bg-muted hover:text-foreground justify-start"
+                className="flex-1 min-w-0 h-8 bg-transparent hover:bg-muted hover:text-foreground justify-start overflow-hidden"
                 disabled={isDisabled}
               >
-                <div className="flex items-center space-x-1 whitespace-nowrap">
-                  <StatusDotDisplay
-                    name={displayStatus.name}
-                    color={
-                      hasColor(displayStatus)
-                        ? displayStatus.color.value
-                        : undefined
-                    }
-                  />
-                </div>
+                <StatusDotDisplay
+                  name={displayStatus.name}
+                  color={
+                    hasColor(displayStatus)
+                      ? displayStatus.color.value
+                      : undefined
+                  }
+                  className="flex items-center space-x-1 min-w-0 overflow-hidden"
+                  nameClassName="truncate"
+                />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="w-[140px]">
@@ -1246,7 +1246,7 @@ const AssigneeCell = React.memo(function AssigneeCell({
       getOptionValue={(user) => user.id}
       placeholder={t("sessions.placeholders.selectUser")}
       disabled={isDisabled}
-      className="h-8 w-[200px]"
+      className="h-8 w-full overflow-hidden"
       pageSize={20}
       showTotal={true}
       showUnassigned={true}

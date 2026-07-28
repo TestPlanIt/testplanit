@@ -184,7 +184,7 @@ export const useColumns = (
         enableSorting: false,
         enableHiding: false,
         meta: { isPinned: "right" },
-        size: 80,
+        size: 100,
         cell: ({ row }) => {
           const workflow = row.original;
           const canDelete =
