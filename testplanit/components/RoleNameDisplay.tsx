@@ -29,7 +29,7 @@ export function RoleNameDisplay({
 
   return (
     <span className="flex items-center gap-1">
-      {showIcon && <Drama className="h-4 w-4" />}
+      {showIcon && <Drama className="h-4 w-4 shrink-0" />}
       {displayName}
     </span>
   );
