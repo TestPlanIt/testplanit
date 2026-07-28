@@ -1,5 +1,7 @@
 import type {
+  JUnitTestResultGroupByArgs,
   JUnitTestResultInclude,
+  JUnitTestSuiteFindManyArgs,
   StatusFindManyArgs,
   TestRunCasesGroupByArgs,
   TestRunCasesInclude,
@@ -226,7 +228,28 @@ export const RUN_RESULT_DETAIL_INCLUDE = {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Status rollup (D7-04 statusCounts shape; R3 — total computed FROM groups)
+//
+// TWO rollup sources, keyed on TestRuns.testRunType:
+//   REGULAR   → groupBy TestRunCases.statusId (manual execution state).
+//   automated → groupBy JUnitTestResult.statusId via testSuite.testRunId.
+//     Matches the web UI (lib/services/testRunSummary.ts getJUnitRunSummary +
+//     /api/test-runs/summaries): COUNT(*) over result ROWS — attempts, NOT
+//     unique cases — so a retried case counts once per imported row. Automated
+//     imports create TestRunCases junction rows but never set their statusId,
+//     which is why the TestRunCases groupBy reports automated runs as 100%
+//     untested; the UI ignores TestRunCases entirely for these runs and so do
+//     we. `untested` for an automated run counts only null-status result rows
+//     (the UI has no untested bucket at all — its total is the row count).
 // ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Mirrors AUTOMATED_TEST_RUN_TYPES in testplanit/utils/testResultTypes.ts:
+ * every TestRunType except REGULAR (JUNIT/TESTNG/XUNIT/NUNIT/MSTEST/MOCHA/
+ * CUCUMBER) stores results in the JUnit suite tables.
+ */
+export function isAutomatedRunType(testRunType: string): boolean {
+  return testRunType !== "REGULAR";
+}
 
 export interface StatusGroup {
   statusId: number | null;
@@ -285,25 +308,128 @@ export async function extractStatusNames(
     env,
   );
   const safeGroups = groups ?? [];
-  const statusIds = safeGroups
-    .map((g) => g.statusId)
-    .filter((id): id is number => id !== null);
-  if (statusIds.length === 0) {
-    return { groups: safeGroups, nameById: new Map() };
-  }
+  const nameById = await resolveStatusNames(
+    safeGroups.map((g) => g.statusId),
+    env,
+  );
+  return { groups: safeGroups, nameById };
+}
+
+/**
+ * Shared tail of every rollup: resolve names for the non-null statusIds.
+ * R6 efficiency — skips the findMany entirely when there is nothing to
+ * resolve (all-null groups, or an empty group set).
+ */
+export async function resolveStatusNames(
+  statusIds: Array<number | null>,
+  env: EnvConfig,
+): Promise<Map<number, string>> {
+  const ids = Array.from(
+    new Set(statusIds.filter((id): id is number => id !== null)),
+  );
+  if (ids.length === 0) return new Map();
   const statuses = await zenstack<Array<{ id: number; name: string }>>(
     "status",
     "findMany",
     {
-      where: { id: { in: statusIds } },
+      where: { id: { in: ids } },
       select: { id: true, name: true },
     } satisfies StatusFindManyArgs,
     env,
   );
-  const nameById = new Map<number, string>(
-    (statuses ?? []).map((s) => [s.id, s.name]),
+  return new Map<number, string>((statuses ?? []).map((s) => [s.id, s.name]));
+}
+
+/**
+ * Automated-run twin of `extractStatusNames`: groupBy on
+ * JUnitTestResult.statusId scoped to the run via testSuite.testRunId. Counts
+ * result ROWS (attempts) to match the web UI's COUNT(*) rollup. NOTE:
+ * JUnitTestResult has NO isDeleted (Cascade deletes only) — never add a
+ * soft-delete filter here.
+ */
+export async function extractJunitStatusNames(
+  runId: number,
+  env: EnvConfig,
+): Promise<{ groups: StatusGroup[]; nameById: Map<number, string> }> {
+  const groups = await zenstack<StatusGroup[]>(
+    "jUnitTestResult",
+    "groupBy",
+    {
+      by: ["statusId"],
+      where: { testSuite: { testRunId: runId } },
+      _count: { id: true },
+    } satisfies JUnitTestResultGroupByArgs,
+    env,
+  );
+  const safeGroups = groups ?? [];
+  const nameById = await resolveStatusNames(
+    safeGroups.map((g) => g.statusId),
+    env,
   );
   return { groups: safeGroups, nameById };
+}
+
+/**
+ * Batched JUnit rollup for the runs LIST page: one JUnitTestSuite.findMany
+ * (suite id → run id) + one JUnitTestResult.groupBy across every suite —
+ * never a per-run call (D7-06 stays two calls per source, not N).
+ * groupBy can only key on JUnitTestResult's own scalars and the run id lives
+ * on the suite, so the suite lookup is what re-attaches groups to runs.
+ * Returns per-run StatusGroups with per-status counts summed across suites.
+ * Name resolution is left to the caller so both sources share ONE
+ * status.findMany.
+ */
+export async function extractJunitStatusGroupsByRun(
+  runIds: number[],
+  env: EnvConfig,
+): Promise<Map<number, StatusGroup[]>> {
+  const byRun = new Map<number, StatusGroup[]>();
+  if (runIds.length === 0) return byRun;
+  const suites =
+    (await zenstack<Array<{ id: number; testRunId: number }>>(
+      "jUnitTestSuite",
+      "findMany",
+      {
+        where: { testRunId: { in: runIds } },
+        select: { id: true, testRunId: true },
+      } satisfies JUnitTestSuiteFindManyArgs,
+      env,
+    )) ?? [];
+  if (suites.length === 0) return byRun;
+  const runBySuite = new Map<number, number>(
+    suites.map((s) => [s.id, s.testRunId]),
+  );
+  const suiteGroups =
+    (await zenstack<Array<StatusGroup & { testSuiteId: number }>>(
+      "jUnitTestResult",
+      "groupBy",
+      {
+        by: ["testSuiteId", "statusId"],
+        where: { testSuiteId: { in: suites.map((s) => s.id) } },
+        _count: { id: true },
+      } satisfies JUnitTestResultGroupByArgs,
+      env,
+    )) ?? [];
+  // Sum across suites: a run's Passed count is the total Passed rows over
+  // ALL of its suites, so fold (suite,status) groups down to (run,status).
+  const countByRunStatus = new Map<number, Map<number | null, number>>();
+  for (const g of suiteGroups) {
+    const runId = runBySuite.get(g.testSuiteId);
+    if (runId === undefined) continue;
+    const perStatus = countByRunStatus.get(runId) ?? new Map();
+    perStatus.set(g.statusId, (perStatus.get(g.statusId) ?? 0) + g._count.id);
+    countByRunStatus.set(runId, perStatus);
+  }
+  for (const [runId, perStatus] of countByRunStatus) {
+    byRun.set(
+      runId,
+      Array.from(perStatus, ([statusId, count]) => ({
+        statusId,
+        _count: { id: count },
+      })),
+    );
+  }
+  return byRun;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

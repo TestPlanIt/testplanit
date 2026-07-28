@@ -192,6 +192,72 @@ describe("registerRunsGet", () => {
     expect(data.testCasesNextCursor).toBeNull();
   });
 
+  it("automated run: rollup from jUnitTestResult attempts, not testRunCases", async () => {
+    mockZenstack.mockResolvedValueOnce(
+      makeRawRun({ testRunType: "MOCHA", testCases: [] }),
+    );
+    mockZenstack.mockResolvedValueOnce([
+      { statusId: 1, _count: { id: 87 } },
+      { statusId: 2, _count: { id: 44 } },
+      { statusId: 3, _count: { id: 6 } },
+    ]);
+    mockZenstack.mockResolvedValueOnce([
+      { id: 1, name: "Passed" },
+      { id: 2, name: "Failed" },
+      { id: 3, name: "Skipped" },
+    ]);
+
+    const { client } = await setupClient();
+    const result = await client.callTool({
+      name: "testplanit_test_runs_get",
+      arguments: { runId: 50 },
+    });
+
+    expect(result.isError).toBeFalsy();
+    // The rollup call goes to JUnitTestResult, scoped via testSuite.testRunId.
+    const rollupCall = mockZenstack.mock.calls[1];
+    expect(rollupCall[0]).toBe("jUnitTestResult");
+    expect(rollupCall[1]).toBe("groupBy");
+    expect((rollupCall[2] as Record<string, unknown>).where).toEqual({
+      testSuite: { testRunId: 50 },
+    });
+    expect(
+      mockZenstack.mock.calls.filter((c) => c[0] === "testRunCases").length,
+    ).toBe(0);
+
+    const data = structured(result);
+    expect(data.statusCounts).toEqual(
+      expect.arrayContaining([
+        { id: 1, name: "Passed", count: 87 },
+        { id: 2, name: "Failed", count: 44 },
+        { id: 3, name: "Skipped", count: 6 },
+      ]),
+    );
+    expect(data.untested).toBe(0);
+    // Attempt count (result rows incl. retries), matching the web UI.
+    expect(data.total).toBe(137);
+  });
+
+  it("automated run: full inline page sets cursor even when attempt total < 50", async () => {
+    // 50 junction cases inline but only 3 imported results so far — the
+    // attempt total can't gate case pagination for automated runs.
+    const cases = Array.from({ length: 50 }, (_, i) => makeTestCase(i + 1));
+    mockZenstack.mockResolvedValueOnce(
+      makeRawRun({ testRunType: "JUNIT", testCases: cases }),
+    );
+    mockZenstack.mockResolvedValueOnce([{ statusId: 1, _count: { id: 3 } }]);
+    mockZenstack.mockResolvedValueOnce([{ id: 1, name: "Passed" }]);
+
+    const { client } = await setupClient();
+    const result = await client.callTool({
+      name: "testplanit_test_runs_get",
+      arguments: { runId: 50 },
+    });
+    const data = structured(result);
+    expect(data.total).toBe(3);
+    expect(data.testCasesNextCursor).toBe(50);
+  });
+
   it("testCases ordering inline: [{order:'asc'},{id:'asc'}]", async () => {
     mockZenstack.mockResolvedValueOnce(makeRawRun({ testCases: [] }));
     mockZenstack.mockResolvedValueOnce([]);

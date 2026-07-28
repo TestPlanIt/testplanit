@@ -17,7 +17,10 @@ import {
   parseResultsCursor,
   formatResultsCursor,
   computeStatusRollup,
+  extractJunitStatusGroupsByRun,
+  extractJunitStatusNames,
   extractStatusNames,
+  isAutomatedRunType,
 } from "./shared.js";
 
 const mockZenstack = vi.mocked(zenstack);
@@ -131,6 +134,151 @@ describe("extractStatusNames", () => {
     expect(mockZenstack.mock.calls.length).toBe(1);
     expect(result.groups).toEqual([{ statusId: null, _count: { id: 3 } }]);
     expect(result.nameById.size).toBe(0);
+  });
+});
+
+// ── isAutomatedRunType ─────────────────────────────────────────────────────
+
+describe("isAutomatedRunType", () => {
+  it("REGULAR is not automated; every JUnit-family type is", () => {
+    expect(isAutomatedRunType("REGULAR")).toBe(false);
+    for (const t of [
+      "JUNIT",
+      "TESTNG",
+      "XUNIT",
+      "NUNIT",
+      "MSTEST",
+      "MOCHA",
+      "CUCUMBER",
+    ]) {
+      expect(isAutomatedRunType(t)).toBe(true);
+    }
+  });
+});
+
+// ── extractJunitStatusNames ────────────────────────────────────────────────
+
+describe("extractJunitStatusNames", () => {
+  it("groupBy on jUnitTestResult scoped via testSuite.testRunId, then status findMany", async () => {
+    mockZenstack
+      .mockResolvedValueOnce([
+        { statusId: 1, _count: { id: 87 } },
+        { statusId: 2, _count: { id: 44 } },
+        { statusId: 3, _count: { id: 6 } },
+      ])
+      .mockResolvedValueOnce([
+        { id: 1, name: "Passed" },
+        { id: 2, name: "Failed" },
+        { id: 3, name: "Skipped" },
+      ]);
+
+    const result = await extractJunitStatusNames(92016, ENV);
+
+    expect(mockZenstack.mock.calls.length).toBe(2);
+
+    const firstCall = mockZenstack.mock.calls[0];
+    expect(firstCall[0]).toBe("jUnitTestResult");
+    expect(firstCall[1]).toBe("groupBy");
+    const firstBody = firstCall[2] as Record<string, unknown>;
+    expect(firstBody.by).toEqual(["statusId"]);
+    expect(firstBody.where).toEqual({ testSuite: { testRunId: 92016 } });
+    expect(firstBody._count).toEqual({ id: true });
+    // JUnitTestResult has NO isDeleted — the where must never grow one.
+    expect(firstBody.where).not.toHaveProperty("isDeleted");
+
+    expect(mockZenstack.mock.calls[1][0]).toBe("status");
+
+    // Attempt semantics: rollup totals the ROWS (87+44+6), not unique cases.
+    const rollup = computeStatusRollup(result.groups, result.nameById);
+    expect(rollup.total).toBe(137);
+    expect(rollup.untested).toBe(0);
+    expect(rollup.statusCounts).toEqual(
+      expect.arrayContaining([
+        { id: 1, name: "Passed", count: 87 },
+        { id: 2, name: "Failed", count: 44 },
+        { id: 3, name: "Skipped", count: 6 },
+      ]),
+    );
+  });
+
+  it("R6: skips status findMany when the run has no JUnit results", async () => {
+    mockZenstack.mockResolvedValueOnce([]);
+
+    const result = await extractJunitStatusNames(7, ENV);
+
+    expect(mockZenstack.mock.calls.length).toBe(1);
+    expect(result.groups).toEqual([]);
+    expect(result.nameById.size).toBe(0);
+  });
+});
+
+// ── extractJunitStatusGroupsByRun ──────────────────────────────────────────
+
+describe("extractJunitStatusGroupsByRun", () => {
+  it("empty runIds: no zenstack calls at all", async () => {
+    const byRun = await extractJunitStatusGroupsByRun([], ENV);
+    expect(byRun.size).toBe(0);
+    expect(mockZenstack).not.toHaveBeenCalled();
+  });
+
+  it("no suites for the runs: skips the groupBy call", async () => {
+    mockZenstack.mockResolvedValueOnce([]);
+    const byRun = await extractJunitStatusGroupsByRun([10, 20], ENV);
+    expect(byRun.size).toBe(0);
+    expect(mockZenstack.mock.calls.length).toBe(1);
+    const call = mockZenstack.mock.calls[0];
+    expect(call[0]).toBe("jUnitTestSuite");
+    expect(call[1]).toBe("findMany");
+    const body = call[2] as Record<string, unknown>;
+    expect(body.where).toEqual({ testRunId: { in: [10, 20] } });
+    expect(body.select).toEqual({ id: true, testRunId: true });
+  });
+
+  it("folds (suite,status) groups down to (run,status) — counts sum across a run's suites", async () => {
+    mockZenstack
+      .mockResolvedValueOnce([
+        { id: 100, testRunId: 10 },
+        { id: 101, testRunId: 10 },
+        { id: 200, testRunId: 20 },
+      ])
+      .mockResolvedValueOnce([
+        { testSuiteId: 100, statusId: 1, _count: { id: 5 } },
+        { testSuiteId: 101, statusId: 1, _count: { id: 3 } },
+        { testSuiteId: 101, statusId: 2, _count: { id: 2 } },
+        { testSuiteId: 200, statusId: null, _count: { id: 4 } },
+      ]);
+
+    const byRun = await extractJunitStatusGroupsByRun([10, 20], ENV);
+
+    const groupByCall = mockZenstack.mock.calls[1];
+    expect(groupByCall[0]).toBe("jUnitTestResult");
+    expect(groupByCall[1]).toBe("groupBy");
+    const body = groupByCall[2] as Record<string, unknown>;
+    expect(body.by).toEqual(["testSuiteId", "statusId"]);
+    expect(body.where).toEqual({ testSuiteId: { in: [100, 101, 200] } });
+
+    expect(byRun.get(10)).toEqual(
+      expect.arrayContaining([
+        { statusId: 1, _count: { id: 8 } },
+        { statusId: 2, _count: { id: 2 } },
+      ]),
+    );
+    expect(byRun.get(10)!.length).toBe(2);
+    // Null statusId survives the fold (flows into `untested` downstream).
+    expect(byRun.get(20)).toEqual([{ statusId: null, _count: { id: 4 } }]);
+  });
+
+  it("tolerates a group for an unknown suite id (dropped, not crashed)", async () => {
+    mockZenstack
+      .mockResolvedValueOnce([{ id: 100, testRunId: 10 }])
+      .mockResolvedValueOnce([
+        { testSuiteId: 100, statusId: 1, _count: { id: 5 } },
+        { testSuiteId: 999, statusId: 1, _count: { id: 3 } },
+      ]);
+
+    const byRun = await extractJunitStatusGroupsByRun([10], ENV);
+    expect(byRun.get(10)).toEqual([{ statusId: 1, _count: { id: 5 } }]);
+    expect(byRun.size).toBe(1);
   });
 });
 

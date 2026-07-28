@@ -13,7 +13,9 @@ import {
 } from "./get.js";
 import {
   computeStatusRollup,
+  extractJunitStatusNames,
   extractStatusNames,
+  isAutomatedRunType,
   mapRunRow,
   mapRunDetailTestCase,
   type RawRunRow,
@@ -185,16 +187,19 @@ export function registerRunsUpdate(
           };
         }
 
-        const { groups, nameById } = await extractStatusNames(
-          input.runId,
-          deps.env,
-        );
+        // Same source split as testplanit_test_runs_get: automated runs
+        // (testRunType != REGULAR) roll up JUnitTestResult attempts; REGULAR
+        // runs roll up TestRunCases.statusId.
+        const isAutomated = isAutomatedRunType(raw.testRunType);
+        const { groups, nameById } = isAutomated
+          ? await extractJunitStatusNames(input.runId, deps.env)
+          : await extractStatusNames(input.runId, deps.env);
         const rollup = computeStatusRollup(groups, nameById);
 
         const testCases = (raw.testCases ?? []).map(mapRunDetailTestCase);
+        const inlinePageFull = testCases.length === TESTCASES_INLINE_LIMIT;
         const testCasesNextCursor =
-          rollup.total > TESTCASES_INLINE_LIMIT &&
-          testCases.length === TESTCASES_INLINE_LIMIT
+          inlinePageFull && (isAutomated || rollup.total > TESTCASES_INLINE_LIMIT)
             ? testCases[testCases.length - 1].id
             : null;
 

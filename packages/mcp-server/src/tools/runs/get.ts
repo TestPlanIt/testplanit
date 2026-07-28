@@ -10,7 +10,9 @@ import {
   RUN_ROW_INCLUDE,
   runDetailTestCaseInclude,
   computeStatusRollup,
+  extractJunitStatusNames,
   extractStatusNames,
+  isAutomatedRunType,
   mapRunRow,
   mapRunDetailTestCase,
   type RawRunRow,
@@ -53,7 +55,7 @@ export function registerRunsGet(
     "testplanit_test_runs_get",
     {
       description:
-        "Fetch a single test run with denormalized header (state/createdBy/configuration/milestone/tags/issues/testRunType), status-count rollup (groupBy on testRunCases.statusId — counts SUM to total per R3), and the first 50 test cases inline (each with latestResult, a union of manual TestRunResults and automated JUnit results discriminated by `source`). Automated runs (testRunType != REGULAR: JUNIT/TESTNG/XUNIT/NUNIT/MSTEST/MOCHA/CUCUMBER) store their results in JUnit suite tables — list them via testplanit_test_run_results_list({runId}); rows come back with source \"JUnit\". When the run has more than 50 cases, `testCasesNextCursor` is set; call testplanit_test_runs_cases_list with that cursor to fetch the rest. (per EXEC-02 / D7-04 / D7-05)",
+        "Fetch a single test run with denormalized header (state/createdBy/configuration/milestone/tags/issues/testRunType), status-count rollup (counts SUM to total per R3), and the first 50 test cases inline (each with latestResult, a union of manual TestRunResults and automated JUnit results discriminated by `source`). Rollup source depends on testRunType: REGULAR runs count TestRunCases by execution status (`untested` = cases with no result, `total` = case count); automated runs (testRunType != REGULAR: JUNIT/TESTNG/XUNIT/NUNIT/MSTEST/MOCHA/CUCUMBER) count imported JUnit result ROWS by status — attempts, so retries count once per row and `total` is the attempt count, matching the web UI. Automated results live in JUnit suite tables — list them via testplanit_test_run_results_list({runId}); rows come back with source \"JUnit\"; inline testCases[].status stays null for automated runs (the junction row carries no status) — use latestResult / the rollup instead. When the run has more than 50 cases, `testCasesNextCursor` is set; call testplanit_test_runs_cases_list with that cursor to fetch the rest. (per EXEC-02 / D7-04 / D7-05)",
       inputSchema: {
         runId: z.number().int().positive(),
       },
@@ -86,21 +88,26 @@ export function registerRunsGet(
         }
 
         // R3 — total summed from groupBy results in computeStatusRollup;
-        // never derived from a separate count call. The two-call sequence
-        // (groupBy + status findMany) is encapsulated in extractStatusNames.
-        const { groups, nameById } = await extractStatusNames(
-          input.runId,
-          deps.env,
-        );
+        // never derived from a separate count call. Source splits on
+        // testRunType: REGULAR counts TestRunCases.statusId; automated runs
+        // count JUnitTestResult rows (attempts — web-UI semantics; their
+        // TestRunCases junction rows never carry a statusId).
+        const isAutomated = isAutomatedRunType(raw.testRunType);
+        const { groups, nameById } = isAutomated
+          ? await extractJunitStatusNames(input.runId, deps.env)
+          : await extractStatusNames(input.runId, deps.env);
         const rollup = computeStatusRollup(groups, nameById);
 
         const testCases = (raw.testCases ?? []).map(mapRunDetailTestCase);
         // D7-05: if the run has more cases than fit inline AND the inline
         // page hit its cap, surface the last inline id as the cursor for
-        // testplanit_test_runs_cases_list.
+        // testplanit_test_runs_cases_list. For automated runs rollup.total
+        // counts result attempts, not cases, so the cap check stands alone —
+        // an exactly-full page yields a cursor whose next page may be empty
+        // (harmless; the alternative is an extra count call per get).
+        const inlinePageFull = testCases.length === TESTCASES_INLINE_LIMIT;
         const testCasesNextCursor =
-          rollup.total > TESTCASES_INLINE_LIMIT &&
-          testCases.length === TESTCASES_INLINE_LIMIT
+          inlinePageFull && (isAutomated || rollup.total > TESTCASES_INLINE_LIMIT)
             ? testCases[testCases.length - 1].id
             : null;
 
