@@ -33,6 +33,7 @@ export class JiraAdapter extends BaseAdapter {
   private clientSecret: string;
   private redirectUri: string;
   private cloudId?: string;
+  private siteUrl?: string;
   private baseUrl?: string;
   private deployment: JiraDeploymentType = "cloud";
   private apiVersion: JiraApiVersion = "3";
@@ -277,6 +278,7 @@ export class JiraAdapter extends BaseAdapter {
           throw new Error("No accessible Jira resources found");
         }
         this.cloudId = resources[0].id;
+        this.siteUrl = resources[0].url;
       }
     } else {
       throw new Error(
@@ -892,6 +894,10 @@ export class JiraAdapter extends BaseAdapter {
     );
   }
 
+  private userFacingBaseUrl(): string {
+    return (this.baseUrl ?? this.siteUrl ?? "").replace(/\/+$/, "");
+  }
+
   private mapJiraIssue(jiraIssue: any): IssueData {
     // Validate that we have the required data structure
     if (!jiraIssue) {
@@ -960,7 +966,14 @@ export class JiraAdapter extends BaseAdapter {
       customFields: this.extractCustomFields(fields),
       createdAt: new Date(fields.created),
       updatedAt: new Date(fields.updated),
-      url: `${jiraIssue.self.split("/rest/")[0]}/browse/${jiraIssue.key}`,
+      // Prefer the canonical site base. Under OAuth, jiraIssue.self points at
+      // the api.atlassian.com/ex/jira/{cloudId} gateway, so splitting it would
+      // yield a broken "open in Jira" link; userFacingBaseUrl() resolves to the
+      // real site host. Fall back to the self-derived host only when no base is
+      // known (defensive — should not happen for authenticated adapters).
+      url: this.userFacingBaseUrl()
+        ? `${this.userFacingBaseUrl()}/browse/${jiraIssue.key}`
+        : `${jiraIssue.self.split("/rest/")[0]}/browse/${jiraIssue.key}`,
     };
   }
 
