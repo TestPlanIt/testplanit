@@ -90,6 +90,7 @@ import { usePathname, useRouter } from "~/lib/navigation";
 import { LatestResultsCell } from "@/components/tables/LatestResultsCell";
 import { useLatestTestResults } from "~/hooks/useLatestTestResults";
 import { useCaseIdsByLatestStatus } from "~/hooks/useCaseIdsByLatestStatus";
+import { useCaseIdsByFieldOption } from "~/hooks/useCaseIdsByFieldOption";
 import { LATEST_RESULTS_COUNT } from "~/lib/types/latestTestResults";
 import { AddCaseRow } from "./AddCaseRow";
 import { AddResultModal } from "./AddResultModal";
@@ -236,7 +237,9 @@ const CASE_ISSUES_SELECT = {
 // latestResults/forecast and numeric custom-field ids. Both orderBy builders
 // pass through only these names; anything else falls back to the default
 // order, because one unknown field in orderBy makes the server reject the
-// whole findMany and the table renders empty.
+// whole findMany and the table renders empty. Columns that can't be an
+// orderBy but ARE sortable (latestResults, Dropdown custom fields) order via
+// server-resolved page ids instead — see sortedPageIds.
 const REPOSITORY_CASE_SORTABLE_SCALARS = new Set([
   "id",
   "name",
@@ -675,6 +678,16 @@ export default function Cases({
         ),
       }
     );
+
+  const uniqueCaseFieldList = useMemo(() => {
+    const caseFieldMap = new Map();
+    projectTemplates?.forEach((template) => {
+      template.caseFields.forEach((field) => {
+        caseFieldMap.set(field.caseField.id, field.caseField);
+      });
+    });
+    return Array.from(caseFieldMap.values());
+  }, [projectTemplates]);
 
   // Fetch folders to auto-select first folder when needed
   const { data: projectFolders, isLoading: isFoldersLoading } =
@@ -2118,10 +2131,13 @@ export default function Cases({
       if (REPOSITORY_CASE_SORTABLE_SCALARS.has(column)) {
         return { [column]: direction };
       }
-      // UI-only sorts (forecast, custom-field columns) and run-view sorts
-      // remembered under the shared per-project key (status, assignedTo) have
-      // no RepositoryCases column — an orderBy the server rejects would empty
-      // the whole table, so fall back to the default order instead.
+      // Dropdown custom-field sorts order via resolved page ids (see
+      // fieldOptionPageIds below), so the query keeps its default order here.
+      // Remaining UI-only sorts (forecast, non-dropdown custom-field columns)
+      // and run-view sorts remembered under the shared per-project key
+      // (status, assignedTo) have no RepositoryCases column — an orderBy the
+      // server rejects would empty the whole table, so fall back to the
+      // default order instead.
       return { order: "asc" };
     }, [sortConfig, isDefaultSort]);
 
@@ -2274,35 +2290,67 @@ export default function Cases({
     ),
   });
 
-  // A latest-results sort that resolved to an empty page: the ordered page-id
+  // A custom-field column stores its numeric field id as the sort column id.
+  // Only Dropdown fields sort this way — their options carry an admin-defined
+  // order — so resolve the id back to a field and keep it only when that field
+  // is a Dropdown. Like latest results, the option order lives behind a Json
+  // value no ZenStack orderBy can reach, so the ordered page ids are resolved
+  // by a server action and handed to the query below as the whole filter.
+  const fieldOptionSortFieldId = useMemo(() => {
+    if (isDefaultSort || !sortConfig) return null;
+    if (!/^\d+$/.test(sortConfig.column)) return null;
+    const fieldId = Number(sortConfig.column);
+    const field = uniqueCaseFieldList.find((f) => f.id === fieldId);
+    return field?.type?.type === "Dropdown" ? fieldId : null;
+  }, [isDefaultSort, sortConfig, uniqueCaseFieldList]);
+  const isFieldOptionSort = fieldOptionSortFieldId !== null;
+  const { pageIds: fieldOptionPageIds } = useCaseIdsByFieldOption({
+    where: repositoryCaseWhereClause,
+    fieldId: fieldOptionSortFieldId ?? 0,
+    direction: sortConfig?.direction ?? "asc",
+    skip: (currentPage - 1) * (pageSize === "All" ? 0 : pageSize),
+    take: pageSize === "All" ? undefined : pageSize,
+    enabled: Boolean(
+      isFieldOptionSort &&
+      !isRunMode &&
+      !searchResultIds &&
+      postFetchFilters.length === 0
+    ),
+  });
+
+  // Whichever id-resolved sort is active (they are mutually exclusive: one
+  // sort column at a time).
+  const sortedPageIds = latestStatusPageIds ?? fieldOptionPageIds;
+
+  // An id-resolved sort that resolved to an empty page: the ordered page-id
   // list came back empty (no matching cases, or a transient during the sort).
   // The list derives empty from this anyway, so skip the id-filtered fetch that
   // would otherwise query `id: { in: [] }`.
-  const latestStatusEmpty =
-    isLatestResultsSort &&
-    Array.isArray(latestStatusPageIds) &&
-    latestStatusPageIds.length === 0;
+  const sortedPageEmpty =
+    (isLatestResultsSort || isFieldOptionSort) &&
+    Array.isArray(sortedPageIds) &&
+    sortedPageIds.length === 0;
 
   const result = useFindManyRepositoryCasesFiltered(
     {
       orderBy: orderBy,
-      where: latestStatusPageIds
+      where: sortedPageIds
         ? isDescendantsMode
           ? // A folder subtree can be too large to serialize into the GET query
             // string; the page ids already encode the descendants scope (they
             // came from the same where), so filter by them alone.
-            { id: { in: latestStatusPageIds } }
-          : { ...repositoryCaseWhereClause, id: { in: latestStatusPageIds } }
+            { id: { in: sortedPageIds } }
+          : { ...repositoryCaseWhereClause, id: { in: sortedPageIds } }
         : repositoryCaseWhereClause,
       select: REPOSITORY_CASE_LIST_SELECT,
       // When post-fetch filtering is active, fetch all data (no pagination)
       // Otherwise apply server-side pagination for repository mode
       skip:
-        postFetchFilters.length > 0 || latestStatusPageIds
+        postFetchFilters.length > 0 || sortedPageIds
           ? undefined
           : (currentPage - 1) * (pageSize === "All" ? 0 : pageSize),
       take:
-        postFetchFilters.length > 0 || latestStatusPageIds
+        postFetchFilters.length > 0 || sortedPageIds
           ? undefined
           : pageSize === "All"
             ? undefined
@@ -2311,15 +2359,15 @@ export default function Cases({
     postFetchFilters.length > 0 ? postFetchFilters : undefined,
     {
       enabled: Boolean(
-        // Skip the fetch when a latest-results sort resolved to an empty page
+        // Skip the fetch when an id-resolved sort resolved to an empty page
         // (its where would be `id: { in: [] }`), or when ES search is active
         // (data comes from the POST fetch instead).
-        latestStatusEmpty || searchResultIds
+        sortedPageEmpty || searchResultIds
           ? false
           : // Disable in descendants mode (data comes from the POST endpoint) —
-            // except when sorting by latest result, where the ordered page is
-            // fetched here by id (a short list, safe for GET).
-            isDescendantsMode && !latestStatusPageIds
+            // except when an id-resolved sort is active, where the ordered page
+            // is fetched here by id (a short list, safe for GET).
+            isDescendantsMode && !sortedPageIds
             ? false
             : // Skip query if we know the selected folder has 0 cases
               viewType === "folders" && selectedFolderCaseCount === 0
@@ -2547,10 +2595,11 @@ export default function Cases({
       : undefined
   );
 
-  // When sorting by latest result under "show all descendants", the ordered
-  // page comes from the id-filtered GET query, not the descendants POST — but
-  // the total count still comes from the POST endpoint.
-  const useDescendantsData = isDescendantsMode && !latestStatusPageIds;
+  // When an id-resolved sort (latest results, dropdown field option) is active
+  // under "show all descendants", the ordered page comes from the id-filtered
+  // GET query, not the descendants POST — but the total count still comes from
+  // the POST endpoint.
+  const useDescendantsData = isDescendantsMode && !sortedPageIds;
   const data = useDescendantsData ? descendantsResult.data : zenStackData;
   const isLoading = useDescendantsData
     ? descendantsResult.isLoading
@@ -2757,9 +2806,9 @@ export default function Cases({
 
       // The query was filtered by the ordered page ids but returns them in its
       // own order, so re-impose the one they were resolved in.
-      if (latestStatusPageIds) {
+      if (sortedPageIds) {
         const byId = new Map(mapped.map((c) => [c.id, c]));
-        return latestStatusPageIds
+        return sortedPageIds
           .map((id) => byId.get(id))
           .filter((c): c is (typeof mapped)[number] => c !== undefined);
       }
@@ -2773,18 +2822,8 @@ export default function Cases({
     optimisticReorder,
     searchResultIds,
     searchData,
-    latestStatusPageIds,
+    sortedPageIds,
   ]);
-
-  const uniqueCaseFieldList = useMemo(() => {
-    const caseFieldMap = new Map();
-    projectTemplates?.forEach((template) => {
-      template.caseFields.forEach((field) => {
-        caseFieldMap.set(field.caseField.id, field.caseField);
-      });
-    });
-    return Array.from(caseFieldMap.values());
-  }, [projectTemplates]);
 
   // Bulk-fetch PENDING ReviewRequests for the visible page (D-06; one round
   // trip per page render — never per-row, per RESEARCH §"Pitfall 6").
@@ -2841,11 +2880,29 @@ export default function Cases({
     ),
   });
 
+  // Dropdown-field sort's counterpart to `latestStatusAllIds`: same option
+  // ordering the list applies through `fieldOptionPageIds`, but unpaginated so
+  // prev/next steps across the whole filtered set.
+  const { pageIds: fieldOptionAllIds } = useCaseIdsByFieldOption({
+    where: repositoryCaseWhereClause,
+    fieldId: fieldOptionSortFieldId ?? 0,
+    direction: sortConfig?.direction ?? "asc",
+    enabled: Boolean(
+      isFieldOptionSort &&
+      !isRunMode &&
+      !isSelectionMode &&
+      !!selectedCaseIdParam &&
+      !searchResultIds &&
+      postFetchFilters.length === 0 &&
+      !!session?.user
+    ),
+  });
+
   // Descendants mode: the paginated list comes from the by-descendants POST (a
   // deep tree would 414 a ZenStack GET). Fetch that same subtree's ids-only and
   // unpaginated so the details panel's prev/next steps across every page, not
-  // just the visible one. Latest-results sort is handled by `latestStatusAllIds`
-  // above; this covers the ordinary `orderBy` case.
+  // just the visible one. Id-resolved sorts are handled by `latestStatusAllIds`
+  // and `fieldOptionAllIds` above; this covers the ordinary `orderBy` case.
   const { data: descendantsAllIdRows } =
     useFindManyRepositoryCasesByDescendants({
       projectId,
@@ -2860,6 +2917,7 @@ export default function Cases({
         !!selectedCaseIdParam &&
         !searchResultIds &&
         !isLatestResultsSort &&
+        !isFieldOptionSort &&
         postFetchFilters.length === 0 &&
         !!session?.user &&
         isValidProjectId
@@ -2868,11 +2926,12 @@ export default function Cases({
 
   const allCaseIds = useMemo<number[]>(() => {
     if (searchResultIds) return searchResultIds;
-    // Latest-results sort is ordered via a window function (through
-    // `latestStatusPageIds` for the list), not via `orderBy`, so `allCaseIdRows`
-    // is in default order. Walk the full window-function ordering instead to
-    // keep prev/next in step with the sorted list.
+    // Id-resolved sorts (latest results, dropdown field option) order through
+    // `sortedPageIds` for the list, not via `orderBy`, so `allCaseIdRows` is in
+    // default order. Walk the full id-resolved ordering instead to keep
+    // prev/next in step with the sorted list.
     if (latestStatusAllIds) return latestStatusAllIds;
+    if (fieldOptionAllIds) return fieldOptionAllIds;
     // Descendants mode: the full ordered id list comes from the by-descendants
     // POST (the GET can't reproduce the subtree), so prev/next spans every page.
     if (isDescendantsMode) {
@@ -2896,6 +2955,7 @@ export default function Cases({
   }, [
     searchResultIds,
     latestStatusAllIds,
+    fieldOptionAllIds,
     isDescendantsMode,
     descendantsAllIdRows,
     allCaseIdRows,

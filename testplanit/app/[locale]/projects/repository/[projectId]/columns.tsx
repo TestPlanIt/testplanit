@@ -1365,7 +1365,9 @@ export const getColumns = (
       };
     };
   },
-  uniqueCaseFieldList: CaseFields[],
+  uniqueCaseFieldList: (CaseFields & {
+    type?: { type?: string } | null;
+  })[],
   handleSelect: (attachments: Attachments[], index: number) => void,
   columnTranslations: {
     name: string;
@@ -1556,7 +1558,14 @@ export const getColumns = (
       accessorFn: (row) =>
         row.caseFieldValues.find((cf: any) => cf.fieldId === field.id)?.value,
       header: field.displayName,
-      enableSorting: false,
+      // Dropdown fields sort by their admin-defined option order, resolved
+      // server-side (Cases.tsx sortedPageIds); repository view only — the run
+      // view has no ordering source for custom fields.
+      enableSorting:
+        !isRunMode &&
+        !isSelectionMode &&
+        !isCompleted &&
+        field.type?.type === "Dropdown",
       enableResizing: true,
       enableHiding: true,
       meta: {

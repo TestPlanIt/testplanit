@@ -133,6 +133,10 @@ vi.mock("~/hooks/useCaseIdsByLatestStatus", () => ({
   useCaseIdsByLatestStatus: () => ({ pageIds: null, isFetching: false }),
 }));
 
+vi.mock("~/hooks/useCaseIdsByFieldOption", () => ({
+  useCaseIdsByFieldOption: () => ({ pageIds: null, isFetching: false }),
+}));
+
 vi.mock("~/hooks/useReviewFeatureEnabled", () => ({
   useReviewFeatureEnabled: vi.fn(() => ({
     enabled: false,
