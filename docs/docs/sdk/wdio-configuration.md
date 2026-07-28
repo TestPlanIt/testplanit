@@ -35,6 +35,7 @@ These options apply to the **reporter**. If you're using the [Launcher Service](
 | `tagIds` | `(number \| string)[]` | - | Tags to apply to the test run (IDs or names). Tags that don't exist are created automatically |
 | `uploadScreenshots` | `boolean` | `true` | Upload intercepted screenshots to TestPlanIt (requires screenshot capture — see [Screenshot Uploads](./wdio-screenshots.md)) |
 | `includeStackTrace` | `boolean` | `true` | Include stack traces for failures |
+| `excludeSkipped` | `boolean` | `false` | Don't report skipped tests — they won't appear on the run or count toward its totals. Also covers pending results and Cucumber scenarios whose steps were skipped |
 | `completeRunOnFinish` | `boolean` | `true` | Mark run as complete when tests finish |
 | `oneReport` | `boolean` | `true` | Combine parallel workers from the same spec file into a single test run. Does not persist across spec file batches — use the [Launcher Service](./wdio-launcher-service.md) for that |
 | `timeout` | `number` | `30000` | API request timeout in ms |

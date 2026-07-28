@@ -275,6 +275,15 @@ export interface TestPlanItReporterOptions extends Reporters.Options {
   includeStackTrace?: boolean;
 
   /**
+   * Whether to exclude skipped tests from the report. When enabled, skipped
+   * (and pending) results — including Cucumber scenarios whose steps were
+   * skipped — are not sent to TestPlanIt at all: they don't appear on the run
+   * and don't count toward its totals.
+   * @default false
+   */
+  excludeSkipped?: boolean;
+
+  /**
    * Whether to mark the test run as completed when all tests finish
    * @default true
    */

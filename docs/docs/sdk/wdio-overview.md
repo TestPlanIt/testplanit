@@ -150,6 +150,7 @@ The following reporter options **still apply** when using the service:
 | `caseIdPattern` | Parse case IDs from test titles |
 | `uploadScreenshots` | Upload intercepted screenshots |
 | `includeStackTrace` | Include stack traces for failures |
+| `excludeSkipped` | Don't report skipped tests |
 | `timeout`, `maxRetries`, `verbose` | API and logging behavior per worker |
 
 :::tip

@@ -105,6 +105,7 @@ export default class TestPlanItReporter implements Reporter {
       createFolderHierarchy: false,
       uploadAttachments: true,
       includeStackTrace: true,
+      excludeSkipped: false,
       completeRunOnFinish: true,
       timeout: 30000,
       maxRetries: 3,
@@ -363,6 +364,12 @@ export default class TestPlanItReporter implements Reporter {
     attachments: PendingAttachment[],
   ): Promise<void> {
     try {
+      // Checked before any API work so an all-skipped spec never creates a run.
+      if (this.options.excludeSkipped && result.status === 'skipped') {
+        this.log(`Excluding skipped test (excludeSkipped): ${result.testName}`);
+        return;
+      }
+
       // Skip results we can't link before doing any work (avoids empty runs).
       if (caseIds.length === 0 && !this.options.autoCreateTestCases) {
         console.warn(

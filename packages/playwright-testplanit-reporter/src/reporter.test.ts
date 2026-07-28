@@ -316,6 +316,36 @@ describe('TestPlanItReporter (Playwright)', () => {
   });
 
   // -------------------------------------------------------------------------
+  describe('excludeSkipped', () => {
+    it('reports skipped results by default', async () => {
+      await run(reporter, makeTest('[100] is skipped', buildParent({ project: 'chromium' })), makeResult({ status: 'skipped' }));
+      const arg = lastArg(clientMock.createJUnitTestResult);
+      expect(arg.type).toBe('SKIPPED');
+      expect(arg.statusId).toBe(STATUS_IDS.skipped);
+    });
+
+    it('does not report skipped results when excludeSkipped is enabled', async () => {
+      reporter = new TestPlanItReporter({ ...defaultOptions, excludeSkipped: true });
+      await run(reporter, makeTest('[100] is skipped', buildParent({ project: 'chromium' })), makeResult({ status: 'skipped' }));
+      expect(clientMock.createJUnitTestResult).not.toHaveBeenCalled();
+      // An all-skipped spec never creates a run.
+      expect(clientMock.createTestRun).not.toHaveBeenCalled();
+      expect(clientMock.completeTestRun).not.toHaveBeenCalled();
+    });
+
+    it('still reports non-skipped results when excludeSkipped is enabled', async () => {
+      reporter = new TestPlanItReporter({ ...defaultOptions, excludeSkipped: true });
+      reporter.onTestEnd(makeTest('[1] skipped one', buildParent({ project: 'chromium' })), makeResult({ status: 'skipped' }));
+      reporter.onTestEnd(makeTest('[2] passed one', buildParent({ project: 'chromium' })), makeResult({ status: 'passed' }));
+      await reporter.onEnd(FULL_RESULT);
+      expect(calls(clientMock.createJUnitTestResult)).toHaveLength(1);
+      const arg = lastArg(clientMock.createJUnitTestResult);
+      expect(arg.repositoryCaseId).toBe(2);
+      expect(arg.type).toBe('PASSED');
+    });
+  });
+
+  // -------------------------------------------------------------------------
   describe('reporting flow', () => {
     it('creates the run, suite, and JUnit result for a linked test', async () => {
       reporter.onBegin({} as any, {} as any);

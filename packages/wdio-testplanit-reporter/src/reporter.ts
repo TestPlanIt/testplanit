@@ -93,6 +93,7 @@ export default class TestPlanItReporter extends WDIOReporter {
       createFolderHierarchy: false,
       uploadScreenshots: true,
       includeStackTrace: true,
+      excludeSkipped: false,
       completeRunOnFinish: true,
       oneReport: true,
       timeout: 30000,
@@ -1153,6 +1154,17 @@ export default class TestPlanItReporter extends WDIOReporter {
    */
   private async reportResult(result: TrackedTestResult, caseIds: number[]): Promise<void> {
     try {
+      // Checked before any API work so an all-skipped spec never creates a
+      // run. Catches both the Mocha/Jasmine per-test path and the Cucumber
+      // per-scenario path, which both funnel through here.
+      if (
+        this.reporterOptions.excludeSkipped &&
+        (result.status === 'skipped' || result.status === 'pending')
+      ) {
+        this.log(`Excluding skipped test (excludeSkipped): ${result.testName}`);
+        return;
+      }
+
       // Check if this result can be reported BEFORE initializing
       // This prevents creating empty test runs for tests without case IDs.
       // matchByCustomField is also a resolution path, so its presence keeps the
