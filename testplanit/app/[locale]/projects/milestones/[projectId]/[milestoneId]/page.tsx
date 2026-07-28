@@ -45,6 +45,8 @@ import { ApplicationArea } from "~/zenstack/models";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
+  ChevronLeft,
+  ChevronRight,
   CircleCheckBig,
   CircleSlash2,
   Compass,
@@ -62,6 +64,7 @@ import { useTheme } from "next-themes";
 import { useParams, useSearchParams } from "next/navigation";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
+import { PanelImperativeHandle } from "react-resizable-panels";
 import { toast } from "sonner";
 import { z } from "zod/v4";
 import type { BatchTestRunSummaryResponse } from "~/app/api/test-runs/summaries/route";
@@ -128,6 +131,12 @@ export default function MilestoneDetailsPage() {
   // repository case details bar).
   const { ref: headerRef, compact: headerCompact } = useContainerCompact();
   const [auditOpen, setAuditOpen] = useState(false);
+  const [isCollapsedLeft, setIsCollapsedLeft] = useState(false);
+  const [isCollapsedRight, setIsCollapsedRight] = useState(false);
+  const [isTransitioningLeft, setIsTransitioningLeft] = useState(false);
+  const [isTransitioningRight, setIsTransitioningRight] = useState(false);
+  const panelLeftRef = useRef<PanelImperativeHandle>(null);
+  const panelRightRef = useRef<PanelImperativeHandle>(null);
   const issuesCardRef = useRef<IssuesCardHandle>(null);
   const router = useRouter();
   const { resolvedTheme } = useTheme();
@@ -677,6 +686,32 @@ export default function MilestoneDetailsPage() {
     router.refresh();
   };
 
+  const toggleCollapseLeft = () => {
+    setIsTransitioningLeft(true);
+    if (panelLeftRef.current) {
+      if (isCollapsedLeft) {
+        panelLeftRef.current.expand();
+      } else {
+        panelLeftRef.current.collapse();
+      }
+      setIsCollapsedLeft(!isCollapsedLeft);
+    }
+    setTimeout(() => setIsTransitioningLeft(false), 300);
+  };
+
+  const toggleCollapseRight = () => {
+    setIsTransitioningRight(true);
+    if (panelRightRef.current) {
+      if (isCollapsedRight) {
+        panelRightRef.current.expand();
+      } else {
+        panelRightRef.current.collapse();
+      }
+      setIsCollapsedRight(!isCollapsedRight);
+    }
+    setTimeout(() => setIsTransitioningRight(false), 300);
+  };
+
   if (!isFormReady || isLoading) return <Loading />;
 
   // Completed milestones tint the outer card (below); the nested Issues, Test
@@ -905,8 +940,18 @@ export default function MilestoneDetailsPage() {
               <ResizablePanel
                 id="milestone-left"
                 order={1}
+                ref={panelLeftRef}
                 defaultSize={80}
+                collapsible
                 minSize={20}
+                collapsedSize={0}
+                onCollapse={() => setIsCollapsedLeft(true)}
+                onExpand={() => setIsCollapsedLeft(false)}
+                className={
+                  isTransitioningLeft
+                    ? "transition-all duration-300 ease-in-out"
+                    : ""
+                }
               >
                 <div className="px-4 h-full space-y-4 pb-8">
                   <FormField
@@ -1205,13 +1250,45 @@ export default function MilestoneDetailsPage() {
                 </div>
               </ResizablePanel>
 
-              <ResizableHandle withHandle />
+              <div>
+                <Button
+                  type="button"
+                  onClick={toggleCollapseLeft}
+                  variant="secondary"
+                  className="p-0 rounded-e-none"
+                >
+                  {isCollapsedLeft ? <ChevronRight /> : <ChevronLeft />}
+                </Button>
+              </div>
+
+              <ResizableHandle withHandle className="w-1" />
+
+              <div>
+                <Button
+                  type="button"
+                  onClick={toggleCollapseRight}
+                  variant="secondary"
+                  className={`p-0 transform ${isCollapsedRight ? "rounded-s-none" : "rounded-e-none rotate-180"}`}
+                >
+                  <ChevronLeft />
+                </Button>
+              </div>
 
               <ResizablePanel
                 id="milestone-right"
                 order={2}
+                ref={panelRightRef}
                 defaultSize={20}
+                collapsedSize={0}
                 minSize={10}
+                collapsible
+                onCollapse={() => setIsCollapsedRight(true)}
+                onExpand={() => setIsCollapsedRight(false)}
+                className={
+                  isTransitioningRight
+                    ? "transition-all duration-300 ease-in-out"
+                    : ""
+                }
               >
                 <div className="ps-4 pe-1 pb-1 h-full">
                   <div className="space-y-4">
