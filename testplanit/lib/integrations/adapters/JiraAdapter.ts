@@ -581,6 +581,12 @@ export class JiraAdapter extends BaseAdapter {
         this.authScheme
       );
 
+      // A FormData body must let fetch set the multipart boundary itself — a
+      // preset JSON Content-Type would corrupt the upload.
+      if (options.body instanceof FormData) {
+        delete headers["Content-Type"];
+      }
+
       const response = await fetch(url, {
         ...options,
         headers,
@@ -736,6 +742,34 @@ export class JiraAdapter extends BaseAdapter {
     }
 
     return this.getIssue(issueId);
+  }
+
+  async uploadAttachment(
+    issueId: string,
+    file: Buffer,
+    filename: string
+  ): Promise<{ id: string; url: string }> {
+    const form = new FormData();
+    form.append("file", new Blob([new Uint8Array(file)]), filename);
+
+    // Jira answers with an array of metadata for the uploaded files.
+    const response = await this.makeRequest<any>(
+      this.buildUrl(
+        `/rest/api/${this.apiVersion}/issue/${issueId}/attachments`
+      ),
+      {
+        method: "POST",
+        body: form,
+        // Jira rejects attachment uploads without this CSRF-bypass header.
+        headers: { "X-Atlassian-Token": "no-check" },
+      }
+    );
+
+    const attachment = Array.isArray(response) ? response[0] : response;
+    if (!attachment?.id) {
+      throw new Error("Failed to upload attachment - no id returned");
+    }
+    return { id: String(attachment.id), url: attachment.content ?? "" };
   }
 
   async getIssue(issueId: string): Promise<IssueData> {
