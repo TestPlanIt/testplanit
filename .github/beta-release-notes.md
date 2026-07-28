@@ -6,55 +6,80 @@ installs. You build it yourself from the source attached below.
 
 > ⚠️ This is pre-release software. **Back up your database before trying it.**
 
-### What's new since beta.9
+### What's new since beta.10
 
-#### Access control
+#### Test automation reporters
 
-- **Default-access members can edit again** — users whose only path into a
-  project is its default access setting could read everything but were denied
-  edits on most models (folders were the visible symptom). Write rules now
-  honor default access the same way reads do, across all fifteen affected
-  models.
-- **Group access through global roles resolves correctly** — the permissions
-  endpoint mishandled groups granted access via a global role, so members of
-  those groups could see wrong project permissions.
+- **Attach links, files, and metadata to the run itself** — the WebdriverIO
+  and Playwright reporters accept declarative `runLinks`, `runAttachments`,
+  and `runMetadata` options (with `{env:VAR}` templating), and tests can add
+  to the run at runtime via `browser.testplanit` (WebdriverIO) or
+  `attachToRun` (Playwright). Files produced during the run are picked up at
+  completion.
+- **Automated runs show Description and Documentation** — the run page
+  rendered the JUnit results panel instead of the two editors, so run-level
+  content — including metadata written by the reporters — was invisible.
+  Both now render and edit on automated runs just like manual ones.
 
-#### Fixes
+#### Generate Test Cases
 
-- **Creating a test case works with fields left empty** — saving a case with
-  an unset optional field (a dropdown with no default, for instance) failed
-  with "Invalid input data". The same latent issue was closed in result
-  submission, bulk edit, saved searches, and case search.
-- **No more vanishing test cases** — a remembered "Latest Results" sort could
-  render run pages and folder switches with an empty (or partially missing)
-  case list. Sort state that a view can't serve now falls back to the default
-  order, and the sorted page always matches the selected folder.
-- **Disabled items stay out of pickers** — disabled workflow states,
-  templates, fields, and dropdown options no longer appear when creating or
-  editing cases and results (an edited item's current value still displays,
-  even if since disabled). Admin management pages still show everything so
-  disabled items can be re-enabled.
-- Comment editors now support @-mentions consistently.
-- The session form shows a clear message when a session has no attachments.
+- **Per-template default fields** — admins can exclude template fields from
+  AI generation by default (sparkles toggle in Add/Edit Template). The wizard
+  seeds its selection from those defaults; required fields stay on, and any
+  optional field can still be toggled per run.
+- **Deselecting a field now sticks** — the wizard silently re-selected every
+  field when moving between steps, and the model could volunteer a deselected
+  field anyway; deselected fields are now excluded end to end. Cases linked
+  to the selected issues are also fed to the model as context.
+
+#### Jira milestone sync
+
+- The import picker filters by Release / Sprint, and the import button counts
+  what's selected.
+- Milestone preview filters in Jira instead of client-side — faster with many
+  versions — and gateway errors surface properly instead of an empty list.
+- Sprint import requests the granular Jira Software scopes it needs; the
+  required OAuth 2.0 scopes are now documented.
+- Webhook handling tuned: version/sprint lifecycle transitions (release,
+  close, start, complete) always apply immediately, refreshes coalesce only
+  during a real event storm, and inbound issue syncs get the same burst
+  allowance as other webhooks. The Deliveries tab gained an event filter.
+- Version events resolve to the correct project, and issue tracker-key
+  lookups are indexed.
+
+#### Results & runs
+
+- **Run status follows edited and deleted results** — editing a result from
+  Passed to Failed (or deleting one) updated the history but left the run's
+  donut and the case's status chip showing the old outcome. The case status
+  is now re-derived whenever a result changes.
+- **Linking an issue marks the result failed** — attaching an issue in the
+  Add/Edit Result dialog flips the status to the project's first failure
+  status automatically; a failure status you already picked is kept.
+- Expanding an attachment now shows just the attachment, scaled to fit the
+  viewer.
 
 #### Reviews
 
-- **Pending-review badges wherever runs and sessions appear** — milestone
-  pages, the home dashboard, profile assignments, and the project overview now
-  mark runs and sessions that have a review waiting, matching the badge test
-  cases already show. Runs not scheduled to a milestone were missing the badge
-  on the runs list; fixed, and the badge now aligns cleanly with the name.
+- **Deleting a case, run, or session cancels its pending reviews** —
+  reviewers no longer keep inbox entries pointing at work that no longer
+  exists.
+- Reviews inbox table: column widths and resizing are honored, long names
+  truncate with an ellipsis, and links and status chips render at the right
+  scale.
 
-#### Interface
+#### Fixes & interface
 
-- Case action bars collapse into a kebab menu when space is tight, and folder
-  chips give way to case names consistently in every view.
-- Your Assignments on user profiles: pending reviews, open runs, and active
-  sessions in one place, scoped to what the viewer may see.
-- Cleaner admin tables — SSO, SCIM, and queue management share the standard
-  table with a pinned first column.
-- Idle self-hosted and multi-tenant installs use noticeably less CPU thanks to
-  adaptive background polling.
+- Disabled fields no longer appear in bulk edit or the case details view.
+- Numbers format with the app's locale instead of the browser's.
+- Translated strings no longer drop counts (machine translation was mangling
+  the ICU `#` placeholder).
+- The Add Session form no longer discards values you typed while it finished
+  loading.
+- Tables with pinned columns keep scrolled-to cells reachable instead of
+  hiding them under the pinned edge.
+- Milestone page side panels collapse to give the middle section more room,
+  and the project overview leads with the test case breakdown chart.
 
 ### Try it
 
