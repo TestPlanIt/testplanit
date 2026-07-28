@@ -238,6 +238,14 @@ export interface TestPlanItReporterOptions {
   includeStackTrace?: boolean;
 
   /**
+   * Whether to exclude skipped tests from the report. When enabled, skipped
+   * results are not sent to TestPlanIt at all — they don't appear on the run
+   * and don't count toward its totals.
+   * @default false
+   */
+  excludeSkipped?: boolean;
+
+  /**
    * Links to attach to the test run right after the reporter creates it
    * (e.g. a CI build URL). Rendered as clickable link attachments on the run
    * detail page.
