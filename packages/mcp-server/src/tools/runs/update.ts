@@ -9,7 +9,7 @@ import { mapHttpErrorToToolResult } from "../../errors.js";
 import { resolveTagIds } from "../cases/shared.js";
 import { resolveRunState } from "./create.js";
 import {
-  RUN_DETAIL_INCLUDE,
+  runDetailInclude,
 } from "./get.js";
 import {
   computeStatusRollup,
@@ -168,7 +168,7 @@ export function registerRunsUpdate(
           "findUnique",
           {
             where: { id: input.runId },
-            include: RUN_DETAIL_INCLUDE,
+            include: runDetailInclude(input.runId),
           },
           deps.env,
         );

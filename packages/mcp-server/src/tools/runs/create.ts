@@ -6,7 +6,7 @@ import type { EnvConfig } from "../../env.js";
 import { mapHttpErrorToToolResult } from "../../errors.js";
 import { TestPlanItHttpError } from "../../http.js";
 import { resolveTagIds } from "../cases/shared.js";
-import { RUN_DETAIL_INCLUDE } from "./get.js";
+import { runDetailInclude } from "./get.js";
 
 type WorkflowsOrderByWithRelationInput = NonNullable<
   WorkflowsFindManyArgs["orderBy"]
@@ -163,7 +163,7 @@ export function registerRunsCreate(
           "findUnique",
           {
             where: { id: created.id },
-            include: RUN_DETAIL_INCLUDE,
+            include: runDetailInclude(created.id),
           },
           deps.env,
         );

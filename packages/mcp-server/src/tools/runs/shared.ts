@@ -1,4 +1,5 @@
 import type {
+  JUnitTestResultInclude,
   StatusFindManyArgs,
   TestRunCasesGroupByArgs,
   TestRunCasesInclude,
@@ -45,26 +46,53 @@ export const RUN_ROW_INCLUDE = {
   },
 } as const satisfies TestRunsInclude;
 
-// EXEC-02 / EXEC-03 inline test-case shape (latest result via take:1 nested include)
-export const RUN_DETAIL_TESTCASE_INCLUDE = {
-  repositoryCase: { select: { id: true, name: true, source: true } },
-  assignedTo: { select: { id: true, name: true, email: true } },
-  // CRITICAL: TestRunCases relation IS named `status` (not stepStatus — that's
-  // TestRunStepResults). Verified against Prisma TestRunCasesInclude.
-  status: { select: { id: true, name: true } },
-  results: {
-    where: { isDeleted: false },
-    orderBy: { executedAt: "desc" }, // D7-02 — matches @@index([testRunCaseId, executedAt(sort: Desc)])
-    take: 1,
-    select: {
-      id: true,
-      statusId: true,
-      status: { select: { id: true, name: true } },
-      executedBy: { select: { id: true, name: true, email: true } },
-      executedAt: true,
+// EXEC-02 / EXEC-03 inline test-case shape (latest result via take:1 nested include).
+// A function (not a constant) because the JUnit half of the latestResult union
+// must be scoped to THIS run: JUnitTestResult has no testRunCaseId — it hangs
+// off repositoryCaseId and reaches the run only via testSuite.testRunId, so the
+// nested include needs the runId at build time.
+export function runDetailTestCaseInclude(runId: number) {
+  return {
+    repositoryCase: {
+      select: {
+        id: true,
+        name: true,
+        source: true,
+        // Automated (JUNIT/TESTNG/…) runs write results to JUnitTestResult,
+        // never TestRunResults. Latest JUnit result for this case WITHIN this
+        // run; mapRunDetailTestCase unions it with results[0].
+        // NOTE: JUnitTestResult has NO isDeleted column (Cascade deletes only).
+        junitResults: {
+          where: { testSuite: { testRunId: runId } },
+          orderBy: [{ executedAt: "desc" }, { id: "desc" }],
+          take: 1,
+          select: {
+            id: true,
+            executedAt: true,
+            status: { select: { id: true, name: true } },
+            createdBy: { select: { id: true, name: true, email: true } },
+          },
+        },
+      },
     },
-  },
-} as const satisfies TestRunCasesInclude;
+    assignedTo: { select: { id: true, name: true, email: true } },
+    // CRITICAL: TestRunCases relation IS named `status` (not stepStatus — that's
+    // TestRunStepResults). Verified against Prisma TestRunCasesInclude.
+    status: { select: { id: true, name: true } },
+    results: {
+      where: { isDeleted: false },
+      orderBy: { executedAt: "desc" }, // D7-02 — matches @@index([testRunCaseId, executedAt(sort: Desc)])
+      take: 1,
+      select: {
+        id: true,
+        statusId: true,
+        status: { select: { id: true, name: true } },
+        executedBy: { select: { id: true, name: true, email: true } },
+        executedAt: true,
+      },
+    },
+  } as const satisfies TestRunCasesInclude;
+}
 
 // EXEC-04 list rows
 export const RUN_RESULT_LIST_INCLUDE = {
@@ -79,6 +107,37 @@ export const RUN_RESULT_LIST_INCLUDE = {
     },
   },
 } as const satisfies TestRunResultsInclude;
+
+// Automated-run results (testRunType JUNIT/TESTNG/XUNIT/NUNIT/MSTEST/MOCHA/
+// CUCUMBER) live in JUnitTestResult — keyed by repositoryCaseId + testSuiteId,
+// NOT testRunCaseId; the run is reachable only via testSuite.testRunId.
+// `executedBy` for a JUnit row is the importer (createdBy) — CI results have
+// no per-case executor. NOTE: neither JUnitTestResult nor JUnitTestSuite has
+// isDeleted (Cascade deletes only) — never add a soft-delete filter here.
+export const JUNIT_RESULT_LIST_INCLUDE = {
+  status: { select: { id: true, name: true } },
+  createdBy: { select: { id: true, name: true, email: true } },
+  repositoryCase: { select: { id: true, name: true, source: true } },
+  testSuite: {
+    select: {
+      id: true,
+      name: true,
+      testRunId: true,
+      testRun: { select: { id: true, name: true } },
+    },
+  },
+} as const satisfies JUnitTestResultInclude;
+
+export const JUNIT_RESULT_DETAIL_INCLUDE = {
+  ...JUNIT_RESULT_LIST_INCLUDE,
+  // Attachments on JUnitTestResult use the shared Attachments model (which
+  // DOES have isDeleted). JUnitTestStep / JUnitAttachment are per-CASE rows
+  // with no result FK, so they cannot be inlined per-result.
+  attachments: {
+    where: { isDeleted: false },
+    select: { id: true, name: true, url: true },
+  },
+} as const satisfies JUnitTestResultInclude;
 
 // EXEC-05 step-result shape — R2: relation field on TestRunStepResults is
 // `stepStatus` NOT `status` (schema.zmodel:2437). Reintroducing `status` here
@@ -337,18 +396,76 @@ export interface RawRunCaseLatestResult {
   executedAt: string | Date;
 }
 
+export interface RawRunCaseLatestJunit {
+  id: number;
+  executedAt: string | Date | null;
+  status: { id: number; name: string } | null;
+  createdBy: { id: string; name: string | null; email: string } | null;
+}
+
 export interface RawRunDetailTestCase {
   id: number;
   order: number;
   isCompleted: boolean;
-  repositoryCase: { id: number; name: string; source: string } | null;
+  repositoryCase: {
+    id: number;
+    name: string;
+    source: string;
+    // Optional: rows fetched without runDetailTestCaseInclude (older include
+    // shapes in tests) read undefined and fall back to the TestRun half.
+    junitResults?: RawRunCaseLatestJunit[];
+  } | null;
   assignedTo: { id: string; name: string | null; email: string } | null;
   status: { id: number; name: string } | null;
   results: RawRunCaseLatestResult[];
 }
 
 export function mapRunDetailTestCase(raw: RawRunDetailTestCase) {
-  const latest = raw.results?.[0] ?? null;
+  const manual = raw.results?.[0] ?? null;
+  const junit = raw.repositoryCase?.junitResults?.[0] ?? null;
+  // Union: whichever executed later wins; `source` disambiguates so agents
+  // know which table (and which results_get source param) the id refers to.
+  // A null executedAt on the junit row loses to any manual result (manual
+  // executedAt is @default(now()) — never null).
+  const junitWins =
+    junit !== null &&
+    (manual === null ||
+      (junit.executedAt !== null &&
+        new Date(junit.executedAt).getTime() >=
+          new Date(manual.executedAt).getTime()));
+  const latestResult = junitWins
+    ? {
+        id: junit.id,
+        source: "JUnit" as const,
+        status: junit.status
+          ? { id: junit.status.id, name: junit.status.name }
+          : null,
+        executedBy: junit.createdBy
+          ? {
+              id: junit.createdBy.id,
+              name: junit.createdBy.name,
+              email: junit.createdBy.email,
+            }
+          : null,
+        executedAt: junit.executedAt,
+      }
+    : manual
+      ? {
+          id: manual.id,
+          source: "TestRun" as const,
+          status: manual.status
+            ? { id: manual.status.id, name: manual.status.name }
+            : null,
+          executedBy: manual.executedBy
+            ? {
+                id: manual.executedBy.id,
+                name: manual.executedBy.name,
+                email: manual.executedBy.email,
+              }
+            : null,
+          executedAt: manual.executedAt,
+        }
+      : null;
   return {
     id: raw.id,
     order: raw.order,
@@ -368,22 +485,7 @@ export function mapRunDetailTestCase(raw: RawRunDetailTestCase) {
         }
       : null,
     status: raw.status ? { id: raw.status.id, name: raw.status.name } : null,
-    latestResult: latest
-      ? {
-          id: latest.id,
-          status: latest.status
-            ? { id: latest.status.id, name: latest.status.name }
-            : null,
-          executedBy: latest.executedBy
-            ? {
-                id: latest.executedBy.id,
-                name: latest.executedBy.name,
-                email: latest.executedBy.email,
-              }
-            : null,
-          executedAt: latest.executedAt,
-        }
-      : null,
+    latestResult,
   };
 }
 
@@ -405,6 +507,9 @@ export interface RawRunResultRow {
 export function mapRunResultRow(raw: RawRunResultRow) {
   return {
     id: raw.id,
+    // Discriminator for the manual/automated union: this id lives in
+    // TestRunResults — pass source:"TestRun" (the default) to results_get.
+    source: "TestRun" as const,
     attempt: raw.attempt,
     executedAt: raw.executedAt,
     status: raw.status ? { id: raw.status.id, name: raw.status.name } : null,
@@ -413,6 +518,22 @@ export function mapRunResultRow(raw: RawRunResultRow) {
           id: raw.executedBy.id,
           name: raw.executedBy.name,
           email: raw.executedBy.email,
+        }
+      : null,
+    // Normalized top-level case/run identity — same position on both row
+    // sources so agents don't need per-source traversal (JUnit rows have no
+    // testRunCase to nest under).
+    repositoryCase: raw.testRunCase?.repositoryCase
+      ? {
+          id: raw.testRunCase.repositoryCase.id,
+          name: raw.testRunCase.repositoryCase.name,
+          source: raw.testRunCase.repositoryCase.source,
+        }
+      : null,
+    testRun: raw.testRunCase?.testRun
+      ? {
+          id: raw.testRunCase.testRun.id,
+          name: raw.testRunCase.testRun.name,
         }
       : null,
     testRunCase: raw.testRunCase
@@ -434,6 +555,198 @@ export function mapRunResultRow(raw: RawRunResultRow) {
             : null,
         }
       : null,
+  };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// JUnit (automated-run) result rows — the second half of the results union.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface RawJunitResultRow {
+  id: number;
+  type: string;
+  message: string | null;
+  time: number | null;
+  executedAt: string | Date | null;
+  status: { id: number; name: string } | null;
+  createdBy: { id: string; name: string | null; email: string } | null;
+  repositoryCase: { id: number; name: string; source: string } | null;
+  testSuite: {
+    id: number;
+    name: string;
+    testRunId: number;
+    testRun: { id: number; name: string } | null;
+  } | null;
+}
+
+export function mapJunitResultRow(raw: RawJunitResultRow) {
+  return {
+    id: raw.id,
+    // This id lives in JUnitTestResult — pass source:"JUnit" to results_get.
+    source: "JUnit" as const,
+    junitType: raw.type,
+    message: raw.message,
+    time: raw.time,
+    executedAt: raw.executedAt,
+    status: raw.status ? { id: raw.status.id, name: raw.status.name } : null,
+    executedBy: raw.createdBy
+      ? {
+          id: raw.createdBy.id,
+          name: raw.createdBy.name,
+          email: raw.createdBy.email,
+        }
+      : null,
+    repositoryCase: raw.repositoryCase
+      ? {
+          id: raw.repositoryCase.id,
+          name: raw.repositoryCase.name,
+          source: raw.repositoryCase.source,
+        }
+      : null,
+    testRun: raw.testSuite?.testRun
+      ? { id: raw.testSuite.testRun.id, name: raw.testSuite.testRun.name }
+      : null,
+    suite: raw.testSuite
+      ? { id: raw.testSuite.id, name: raw.testSuite.name }
+      : null,
+    // JUnit results have no TestRunCases junction row of their own.
+    testRunCase: null,
+  };
+}
+
+export interface RawJunitResultDetail extends RawJunitResultRow {
+  content: string | null;
+  systemOut: string | null;
+  systemErr: string | null;
+  assertions: number | null;
+  file: string | null;
+  line: number | null;
+  createdAt: string | Date;
+  attachments: RawAttachment[];
+}
+
+export function mapJunitResultDetail(raw: RawJunitResultDetail) {
+  return {
+    ...mapJunitResultRow(raw),
+    content: raw.content,
+    systemOut: raw.systemOut,
+    systemErr: raw.systemErr,
+    assertions: raw.assertions,
+    file: raw.file,
+    line: raw.line,
+    createdAt: raw.createdAt,
+    attachments: (raw.attachments ?? []).map(mapAttachment),
+  };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Two-source merge for results_list — TestRunResults ∪ JUnitTestResult.
+//
+// Each source is fetched pre-sorted by (executedAt desc, id desc) with its own
+// keyset cursor, then k-way merged here. The compound cursor keeps BOTH
+// per-source positions (`tr:<id>|ju:<id>`) so pagination stays stateless:
+// rows fetched but not consumed this page are simply re-fetched next page via
+// their source's (unadvanced) cursor — no dupes, no gaps.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export type ResultSource = "TestRun" | "JUnit";
+
+export interface ResultsCursor {
+  tr?: number;
+  ju?: number;
+}
+
+/**
+ * Cursor forms accepted: a bare number (legacy — a TestRunResults id, from
+ * before the union existed) or the compound string `tr:<id>`, `ju:<id>`,
+ * `tr:<id>|ju:<id>`. Returns null for a malformed string so the caller can
+ * reject it as an input error rather than silently restarting from page 1.
+ */
+export function parseResultsCursor(
+  cursor: number | string | undefined,
+): ResultsCursor | null {
+  if (cursor === undefined) return {};
+  if (typeof cursor === "number") return { tr: cursor };
+  const out: ResultsCursor = {};
+  for (const part of cursor.split("|")) {
+    const m = /^(tr|ju):([1-9]\d*)$/.exec(part);
+    if (!m) return null;
+    if (m[1] === "tr") out.tr = Number(m[2]);
+    else out.ju = Number(m[2]);
+  }
+  return out;
+}
+
+export function formatResultsCursor(cursor: ResultsCursor): string | null {
+  const parts: string[] = [];
+  if (cursor.tr !== undefined) parts.push(`tr:${cursor.tr}`);
+  if (cursor.ju !== undefined) parts.push(`ju:${cursor.ju}`);
+  return parts.length > 0 ? parts.join("|") : null;
+}
+
+interface MergeEntry {
+  source: ResultSource;
+  id: number;
+  executedAt: string | Date | null;
+}
+
+/**
+ * Comparator matching the per-source DB order: executedAt DESC with nulls
+ * first (Postgres DESC default — ZenStack emits no NULLS LAST), then a fixed
+ * cross-source rank (TestRun before JUnit — arbitrary but deterministic; the
+ * DB can't order across tables anyway), then id DESC.
+ */
+function resultRowBefore(a: MergeEntry, b: MergeEntry): boolean {
+  const at = a.executedAt === null ? Infinity : new Date(a.executedAt).getTime();
+  const bt = b.executedAt === null ? Infinity : new Date(b.executedAt).getTime();
+  if (at !== bt) return at > bt;
+  if (a.source !== b.source) return a.source === "TestRun";
+  return a.id > b.id;
+}
+
+export interface MergedResultsPage<TR extends MergeEntry, JU extends MergeEntry> {
+  items: Array<TR | JU>;
+  hasNextPage: boolean;
+  nextCursor: string | null;
+}
+
+/**
+ * Merge two pre-sorted (executedAt desc, id desc) source pages into one page
+ * of `limit` rows. Both inputs must have been fetched with take=limit+1 so
+ * `hasNextPage` is simply "more rows were fetched than fit" — leftovers get
+ * re-fetched next page via the per-source cursor positions in `nextCursor`
+ * (a source with no row consumed this page carries its incoming position
+ * forward unchanged).
+ */
+export function mergeResultsPage<TR extends MergeEntry, JU extends MergeEntry>(
+  trRows: TR[],
+  juRows: JU[],
+  limit: number,
+  incoming: ResultsCursor,
+): MergedResultsPage<TR, JU> {
+  const items: Array<TR | JU> = [];
+  let ti = 0;
+  let ji = 0;
+  const next: ResultsCursor = { ...incoming };
+  while (items.length < limit && (ti < trRows.length || ji < juRows.length)) {
+    const takeTr =
+      ji >= juRows.length ||
+      (ti < trRows.length && resultRowBefore(trRows[ti], juRows[ji]));
+    if (takeTr) {
+      next.tr = trRows[ti].id;
+      items.push(trRows[ti]);
+      ti++;
+    } else {
+      next.ju = juRows[ji].id;
+      items.push(juRows[ji]);
+      ji++;
+    }
+  }
+  const hasNextPage = trRows.length + juRows.length > limit;
+  return {
+    items,
+    hasNextPage,
+    nextCursor: hasNextPage ? formatResultsCursor(next) : null,
   };
 }
 
@@ -501,6 +814,7 @@ export interface RawRunResultDetail extends Omit<RawRunResultRow, "executedBy"> 
 export function mapRunResultDetail(raw: RawRunResultDetail) {
   return {
     id: raw.id,
+    source: "TestRun" as const,
     attempt: raw.attempt,
     executedAt: raw.executedAt,
     editedAt: raw.editedAt,

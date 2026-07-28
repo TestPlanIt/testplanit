@@ -9,8 +9,8 @@ vi.mock("../../api.js", () => ({
 }));
 
 import { zenstack } from "../../api.js";
-import { registerRunsGet, RUN_DETAIL_INCLUDE } from "./get.js";
-import { RUN_DETAIL_TESTCASE_INCLUDE } from "./shared.js";
+import { registerRunsGet, runDetailInclude } from "./get.js";
+import { runDetailTestCaseInclude } from "./shared.js";
 
 const mockZenstack = vi.mocked(zenstack);
 
@@ -208,7 +208,7 @@ describe("registerRunsGet", () => {
     expect(tc.take).toBe(50);
   });
 
-  it("testCases inline include uses RUN_DETAIL_TESTCASE_INCLUDE constant", async () => {
+  it("testCases inline include uses runDetailTestCaseInclude(runId)", async () => {
     mockZenstack.mockResolvedValueOnce(makeRawRun({ testCases: [] }));
     mockZenstack.mockResolvedValueOnce([]);
 
@@ -220,21 +220,29 @@ describe("registerRunsGet", () => {
     const body = getCallBody(0);
     const include = body?.include as Record<string, unknown>;
     const tc = include?.testCases as Record<string, unknown>;
-    expect(tc.include).toBe(RUN_DETAIL_TESTCASE_INCLUDE);
+    expect(tc.include).toEqual(runDetailTestCaseInclude(50));
     // Defense-in-depth: verify the include shape carries the agent-facing keys.
     const tcInclude = tc.include as Record<string, unknown>;
     expect(tcInclude).toHaveProperty("repositoryCase");
     expect(tcInclude).toHaveProperty("assignedTo");
     expect(tcInclude).toHaveProperty("status");
     expect(tcInclude).toHaveProperty("results");
+    // JUnit half of latestResult is scoped to the requested run.
+    const rc = tcInclude.repositoryCase as {
+      select: { junitResults: { where: unknown } };
+    };
+    expect(rc.select.junitResults.where).toEqual({
+      testSuite: { testRunId: 50 },
+    });
   });
 
-  it("RUN_DETAIL_INCLUDE exposes the full inline-cases shape (defense-in-depth)", () => {
-    expect(RUN_DETAIL_INCLUDE).toHaveProperty("project");
-    expect(RUN_DETAIL_INCLUDE).toHaveProperty("state");
-    expect(RUN_DETAIL_INCLUDE).toHaveProperty("createdBy");
-    expect(RUN_DETAIL_INCLUDE).toHaveProperty("testCases");
-    const tc = (RUN_DETAIL_INCLUDE as { testCases: Record<string, unknown> }).testCases;
+  it("runDetailInclude exposes the full inline-cases shape (defense-in-depth)", () => {
+    const detailInclude = runDetailInclude(50);
+    expect(detailInclude).toHaveProperty("project");
+    expect(detailInclude).toHaveProperty("state");
+    expect(detailInclude).toHaveProperty("createdBy");
+    expect(detailInclude).toHaveProperty("testCases");
+    const tc = (detailInclude as { testCases: Record<string, unknown> }).testCases;
     expect(tc.take).toBe(50);
     expect(tc.orderBy).toEqual([{ order: "asc" }, { id: "asc" }]);
   });

@@ -130,8 +130,8 @@ Your MCP client discovers each tool's full parameters automatically, so the list
 | `testplanit_runs_create` | Create a test run. |
 | `testplanit_runs_update` | Update a test run. |
 | `testplanit_runs_cases_add` | Add test cases to a run. |
-| `testplanit_test_run_results_list` | List execution results (status, who ran it, when). |
-| `testplanit_test_run_results_get` | Get a single result with step-level detail. |
+| `testplanit_test_run_results_list` | List execution results — manual and automated (JUnit-family) rows, discriminated by `source`. |
+| `testplanit_test_run_results_get` | Get a single result with detail (step-level for manual results; stack trace / stdout / stderr for automated). |
 | `testplanit_test_run_results_create` | Record a result for a case in a run. |
 
 ### Sessions
