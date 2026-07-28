@@ -1578,6 +1578,97 @@ export default function TestRunPage() {
     return <Loading />;
   }
 
+  // Description (note) + Documentation (docs) editors — rendered for BOTH
+  // manual and automated runs (automated runs receive docs content from the
+  // reporters' run-level metadata, so they must display and stay editable).
+  const narrativeFields = (
+    <>
+      {isEditMode || (contentLoaded && !isTiptapEmpty(noteContent)) ? (
+        <FormField
+          control={form.control}
+          name="note"
+          render={({ field: _field }) => (
+            <FormItem>
+              <FormLabel>{t("common.fields.description")}</FormLabel>
+              <FormControl>
+                {contentLoaded ? (
+                  <div className="min-h-[50px] max-h-[125px] overflow-y-auto border rounded-md">
+                    <TipTapEditor
+                      key={`editing-note-${isEditMode}`}
+                      content={noteContent}
+                      onUpdate={(newContent) => {
+                        if (isEditMode) {
+                          setNoteContent(newContent);
+                          setValue("note", newContent, {
+                            shouldValidate: true,
+                          });
+                        }
+                      }}
+                      readOnly={!isEditMode || !canAddEditRun}
+                      className="h-auto"
+                      placeholder={t("common.fields.description_placeholder")}
+                      projectId={safeProjectId}
+                    />
+                  </div>
+                ) : (
+                  <div className="h-[150px] flex items-center justify-center bg-muted rounded-md">
+                    <Loading />
+                  </div>
+                )}
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      ) : null}
+      {/* Documentation */}
+      {isEditMode || (contentLoaded && !isTiptapEmpty(docsContent)) ? (
+        <FormField
+          control={form.control}
+          name="docs"
+          render={({ field: _field }) => (
+            <FormItem>
+              <FormLabel>{t("common.fields.documentation")}</FormLabel>
+              <FormControl>
+                {contentLoaded ? (
+                  <div className="min-h-[50px] max-h-[250px] overflow-y-auto border rounded-md">
+                    <TipTapEditor
+                      key={`editing-docs-${isEditMode}`}
+                      content={docsContent}
+                      onUpdate={(newContent) => {
+                        if (isEditMode) {
+                          setDocsContent(newContent);
+                          setValue("docs", newContent, {
+                            shouldValidate: true,
+                          });
+                        }
+                      }}
+                      readOnly={!isEditMode || !canAddEditRun}
+                      className="h-auto"
+                      placeholder={t("common.placeholders.docs")}
+                      projectId={safeProjectId}
+                    />
+                  </div>
+                ) : (
+                  <div className="h-[250px] flex items-center justify-center bg-muted rounded-md">
+                    <Loading />
+                  </div>
+                )}
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      ) : null}
+      {/* Add separator after notes/docs if they exist */}
+      {!isEditMode &&
+        contentLoaded &&
+        (!isTiptapEmpty(noteContent) || !isTiptapEmpty(docsContent)) && (
+          <Separator className="my-4" />
+        )}
+    </>
+  );
+
   return (
     <Card
       className={`group-hover:bg-accent/50 transition-colors ${testRunData?.isCompleted ? "bg-muted-foreground/20 border-muted-foreground" : ""}`}
@@ -2062,115 +2153,25 @@ export default function TestRunPage() {
                 <div className="flex flex-col h-full p-4">
                   <div className="space-y-4">
                     {isJUnitRun ? (
-                      <PaginationProvider>
-                        <JunitResultsPanel
-                          t={t}
-                          projectId={projectId ? String(projectId) : ""}
-                          runId={runId ? String(runId) : ""}
-                          jUnitSuites={jUnitSuites}
-                          sortedJunitTestCases={sortedJunitTestCases}
-                          junitSortConfig={junitSortConfig}
-                          handleJunitSortChange={handleJunitSortChange}
-                          isJUnitLoading={isJUnitLoading}
-                          selectedTestCaseId={selectedTestCaseId}
-                        />
-                      </PaginationProvider>
+                      <>
+                        {narrativeFields}
+                        <PaginationProvider>
+                          <JunitResultsPanel
+                            t={t}
+                            projectId={projectId ? String(projectId) : ""}
+                            runId={runId ? String(runId) : ""}
+                            jUnitSuites={jUnitSuites}
+                            sortedJunitTestCases={sortedJunitTestCases}
+                            junitSortConfig={junitSortConfig}
+                            handleJunitSortChange={handleJunitSortChange}
+                            isJUnitLoading={isJUnitLoading}
+                            selectedTestCaseId={selectedTestCaseId}
+                          />
+                        </PaginationProvider>
+                      </>
                     ) : (
                       <>
-                        {isEditMode ||
-                        (contentLoaded && !isTiptapEmpty(noteContent)) ? (
-                          <FormField
-                            control={form.control}
-                            name="note"
-                            render={({ field: _field }) => (
-                              <FormItem>
-                                <FormLabel>
-                                  {t("common.fields.description")}
-                                </FormLabel>
-                                <FormControl>
-                                  {contentLoaded ? (
-                                    <div className="min-h-[50px] max-h-[125px] overflow-y-auto border rounded-md">
-                                      <TipTapEditor
-                                        key={`editing-note-${isEditMode}`}
-                                        content={noteContent}
-                                        onUpdate={(newContent) => {
-                                          if (isEditMode) {
-                                            setNoteContent(newContent);
-                                            setValue("note", newContent, {
-                                              shouldValidate: true,
-                                            });
-                                          }
-                                        }}
-                                        readOnly={!isEditMode || !canAddEditRun}
-                                        className="h-auto"
-                                        placeholder={t(
-                                          "common.fields.description_placeholder"
-                                        )}
-                                        projectId={safeProjectId}
-                                      />
-                                    </div>
-                                  ) : (
-                                    <div className="h-[150px] flex items-center justify-center bg-muted rounded-md">
-                                      <Loading />
-                                    </div>
-                                  )}
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        ) : null}
-                        {/* Documentation */}
-                        {isEditMode ||
-                        (contentLoaded && !isTiptapEmpty(docsContent)) ? (
-                          <FormField
-                            control={form.control}
-                            name="docs"
-                            render={({ field: _field }) => (
-                              <FormItem>
-                                <FormLabel>
-                                  {t("common.fields.documentation")}
-                                </FormLabel>
-                                <FormControl>
-                                  {contentLoaded ? (
-                                    <div className="min-h-[50px] max-h-[250px] overflow-y-auto border rounded-md">
-                                      <TipTapEditor
-                                        key={`editing-docs-${isEditMode}`}
-                                        content={docsContent}
-                                        onUpdate={(newContent) => {
-                                          if (isEditMode) {
-                                            setDocsContent(newContent);
-                                            setValue("docs", newContent, {
-                                              shouldValidate: true,
-                                            });
-                                          }
-                                        }}
-                                        readOnly={!isEditMode || !canAddEditRun}
-                                        className="h-auto"
-                                        placeholder={t(
-                                          "common.placeholders.docs"
-                                        )}
-                                        projectId={safeProjectId}
-                                      />
-                                    </div>
-                                  ) : (
-                                    <div className="h-[250px] flex items-center justify-center bg-muted rounded-md">
-                                      <Loading />
-                                    </div>
-                                  )}
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        ) : null}
-                        {/* Add separator after notes/docs if they exist */}
-                        {!isEditMode &&
-                          contentLoaded &&
-                          (!isTiptapEmpty(noteContent) ||
-                            !isTiptapEmpty(docsContent)) && (
-                            <Separator className="my-4" />
-                          )}
+                        {narrativeFields}
 
                         {/* Test Cases Section */}
                         <TestCasesSection
