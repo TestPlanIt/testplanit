@@ -9,6 +9,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import DOMPurify from "dompurify";
+import { stripHtmlTags } from "~/utils/stripHtmlTags";
 import { Activity } from "lucide-react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { useMemo, type CSSProperties } from "react";
@@ -77,19 +78,6 @@ export interface ExtendedMemberIssue extends MilestoneIssueRow {
    * which counts cases linked to the issue across all projects.
    */
   caseCount?: number;
-}
-
-// Same helper the project Issues page keeps file-local for its
-// description column: plain-text preview of possibly-HTML content.
-function stripHtmlTags(html: string | null | undefined): string {
-  if (!html) return "";
-  return html
-    .replace(/<[^>]*>/g, "")
-    .replace(/&nbsp;/g, " ")
-    .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .trim();
 }
 
 /**
@@ -319,7 +307,7 @@ export function useMemberIssueColumns({
                       }}
                     />
                   ) : (
-                    <p className="text-sm whitespace-pre-wrap">{description}</p>
+                    <p className="text-sm whitespace-pre-wrap">{plainText}</p>
                   )}
                 </div>
               </PopoverContent>

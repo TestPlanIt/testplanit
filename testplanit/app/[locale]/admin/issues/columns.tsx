@@ -1,4 +1,5 @@
 import { DateFormatter } from "@/components/DateFormatter";
+import { stripHtmlTags } from "~/utils/stripHtmlTags";
 import { IssuePriorityDisplay } from "@/components/IssuePriorityDisplay";
 import { IssueStatusDisplay } from "@/components/IssueStatusDisplay";
 import { CasesListDisplay } from "@/components/tables/CaseListDisplay";
@@ -20,21 +21,6 @@ import DOMPurify from "dompurify";
 import { Plug, SquarePen, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { SyncIssue } from "./SyncIssue";
-
-// Helper function to strip HTML tags and get plain text
-function stripHtmlTags(html: string | null): string {
-  if (!html) return "";
-  // Remove HTML tags and decode HTML entities
-  return html
-    .replace(/<[^>]*>/g, "") // Remove HTML tags
-    .replace(/&nbsp;/g, " ") // Replace &nbsp; with space
-    .replace(/&amp;/g, "&") // Replace &amp; with &
-    .replace(/&lt;/g, "<") // Replace &lt; with <
-    .replace(/&gt;/g, ">") // Replace &gt; with >
-    .replace(/&quot;/g, '"') // Replace &quot; with "
-    .replace(/&#39;/g, "'") // Replace &#39; with '
-    .trim();
-}
 
 export interface ExtendedIssue extends Issue {
   repositoryCases: { id: number }[];
@@ -168,7 +154,7 @@ export function useIssueColumns({
                       }}
                     />
                   ) : (
-                    <p className="text-sm whitespace-pre-wrap">{title}</p>
+                    <p className="text-sm whitespace-pre-wrap">{plainText}</p>
                   )}
                 </div>
               </PopoverContent>
@@ -241,7 +227,7 @@ export function useIssueColumns({
                       }}
                     />
                   ) : (
-                    <p className="text-sm whitespace-pre-wrap">{description}</p>
+                    <p className="text-sm whitespace-pre-wrap">{plainText}</p>
                   )}
                 </div>
               </PopoverContent>

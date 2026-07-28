@@ -1,6 +1,7 @@
 "use client";
 
 import DOMPurify from "dompurify";
+import { stripHtmlTags } from "~/utils/stripHtmlTags";
 import { IssueStatusDisplay } from "@/components/IssueStatusDisplay";
 import { IssuesDisplay } from "@/components/tables/IssuesDisplay";
 import { VirtualizedDataTable } from "@/components/tables/VirtualizedDataTable";
@@ -30,18 +31,6 @@ import {
 } from "./MemberIssuesColumns";
 
 const FOUND_IN_TESTING_COLLAPSED_KEY = "tpi.milestone.foundInTesting.collapsed";
-
-/** Plain-text preview of an issue's (possibly HTML) description. */
-function stripHtmlTags(html: string | null | undefined): string {
-  if (!html) return "";
-  return html
-    .replace(/<[^>]*>/g, "")
-    .replace(/&nbsp;/g, " ")
-    .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .trim();
-}
 
 interface FoundInTestingIssuesProps {
   milestoneId: number;
@@ -226,7 +215,7 @@ export function FoundInTestingIssues({
                       }}
                     />
                   ) : (
-                    <p className="text-sm whitespace-pre-wrap">{description}</p>
+                    <p className="text-sm whitespace-pre-wrap">{plainText}</p>
                   )}
                 </div>
               </PopoverContent>

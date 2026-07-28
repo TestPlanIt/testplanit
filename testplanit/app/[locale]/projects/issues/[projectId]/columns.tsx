@@ -1,4 +1,5 @@
 import { DateFormatter } from "@/components/DateFormatter";
+import { stripHtmlTags } from "~/utils/stripHtmlTags";
 import { IssuePriorityDisplay } from "@/components/IssuePriorityDisplay";
 import { IssueStatusDisplay } from "@/components/IssueStatusDisplay";
 import { CasesListDisplay } from "@/components/tables/CaseListDisplay";
@@ -28,21 +29,6 @@ function resolveIssueUrl(row: ExtendedIssues): string | null {
     return buildSimpleUrlLink(baseUrl, row.externalId);
   }
   return row.externalUrl ?? null;
-}
-
-// Helper function to strip HTML tags and get plain text
-function stripHtmlTags(html: string | null): string {
-  if (!html) return "";
-  // Remove HTML tags and decode HTML entities
-  return html
-    .replace(/<[^>]*>/g, "") // Remove HTML tags
-    .replace(/&nbsp;/g, " ") // Replace &nbsp; with space
-    .replace(/&amp;/g, "&") // Replace &amp; with &
-    .replace(/&lt;/g, "<") // Replace &lt; with <
-    .replace(/&gt;/g, ">") // Replace &gt; with >
-    .replace(/&quot;/g, '"') // Replace &quot; with "
-    .replace(/&#39;/g, "'") // Replace &#39; with '
-    .trim();
 }
 
 export interface ExtendedIssues extends Issue {
@@ -224,7 +210,7 @@ export function useIssueColumns({
                       }}
                     />
                   ) : (
-                    <p className="text-sm whitespace-pre-wrap">{title}</p>
+                    <p className="text-sm whitespace-pre-wrap">{plainText}</p>
                   )}
                 </div>
               </PopoverContent>
@@ -295,7 +281,7 @@ export function useIssueColumns({
                       }}
                     />
                   ) : (
-                    <p className="text-sm whitespace-pre-wrap">{description}</p>
+                    <p className="text-sm whitespace-pre-wrap">{plainText}</p>
                   )}
                 </div>
               </PopoverContent>

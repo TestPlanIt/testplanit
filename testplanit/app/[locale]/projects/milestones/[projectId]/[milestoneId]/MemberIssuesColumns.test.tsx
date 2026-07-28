@@ -107,6 +107,25 @@ describe("useMemberIssueColumns", () => {
     expect(accessorFn(baseRow)).toBe("In Review");
   });
 
+  it("description column decodes HTML entities in the plain-text preview", () => {
+    const { result } = renderHook(() =>
+      useMemberIssueColumns({ translations, projectId: 5 })
+    );
+    const descriptionCol = result.current.find(
+      (col) => col.id === "description"
+    );
+    const accessorFn = (descriptionCol as any).accessorFn;
+    const row = {
+      ...baseRow,
+      issue: {
+        ...baseRow.issue,
+        description:
+          "&#39;Up&#39; control doesn&#39;t close &quot;LEP&quot; &amp; more",
+      },
+    };
+    expect(accessorFn(row)).toBe("'Up' control doesn't close \"LEP\" & more");
+  });
+
   it("source column exposes SYNCED vs MANUAL via accessorFn", () => {
     const { result } = renderHook(() =>
       useMemberIssueColumns({ translations, projectId: 5 })

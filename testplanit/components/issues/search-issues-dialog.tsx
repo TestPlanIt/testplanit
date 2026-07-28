@@ -2,6 +2,7 @@
 
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
+import { stripHtmlTags } from "~/utils/stripHtmlTags";
 import { useDebounce } from "@/components/Debounce";
 import { IssuePriorityDisplay } from "@/components/IssuePriorityDisplay";
 import { IssueStatusDisplay } from "@/components/IssueStatusDisplay";
@@ -88,22 +89,6 @@ interface SearchIssuesDialogProps {
     testRunId: number;
     testRunCaseId: number;
   };
-}
-
-// Helper function to strip HTML tags and get plain text for search preview
-function stripHtmlTags(html: string): string {
-  if (!html) return "";
-  // Remove HTML tags and decode HTML entities
-  return html
-    .replace(/<[^>]*>/g, "") // Remove HTML tags
-    .replace(/&nbsp;/g, " ") // Replace &nbsp; with space
-    .replace(/&amp;/g, "&") // Replace &amp; with &
-    .replace(/&lt;/g, "<") // Replace &lt; with <
-    .replace(/&gt;/g, ">") // Replace &gt; with >
-    .replace(/&quot;/g, '"') // Replace &quot; with "
-    .replace(/&#39;/g, "'") // Replace &#39; with '
-    .replace(/\s+/g, " ") // Replace multiple whitespace with single space
-    .trim();
 }
 
 export function SearchIssuesDialog({
@@ -856,7 +841,10 @@ export function SearchIssuesDialog({
                               </div>
                               {issue.description && (
                                 <p className="text-sm text-muted-foreground line-clamp-4 wrap-break-word">
-                                  {stripHtmlTags(issue.description)}
+                                  {stripHtmlTags(issue.description).replace(
+                                    /\s+/g,
+                                    " "
+                                  )}
                                 </p>
                               )}
                               <div className="flex items-center gap-2 text-xs flex-wrap">
