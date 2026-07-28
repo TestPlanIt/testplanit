@@ -239,10 +239,17 @@ export async function POST(request: NextRequest) {
       name = email.split("@")[0];
     }
 
-    // Check if user exists
+    // Check if user exists. Emails are matched case-insensitively (IdPs may
+    // assert a different casing than the one stored), but an exact match wins
+    // when accounts differing only by case both exist.
     let user = await db.user.findUnique({
       where: { email },
     });
+    if (!user) {
+      user = await db.user.findFirst({
+        where: { email: { equals: email, mode: "insensitive" } },
+      });
+    }
 
     if (!user && samlConfig.autoProvisionUsers) {
       // Check domain restrictions for new users

@@ -236,15 +236,28 @@ async function getDynamicProviders() {
                   // Check if user exists and is active. Pull
                   // `userPreferences.locale` so the email is rendered
                   // in the recipient's language; fall back to en_US.
+                  // Emails match case-insensitively; an exact-cased row
+                  // wins when case-variant duplicates exist.
+                  const magicLinkUserSelect = {
+                    id: true,
+                    isActive: true,
+                    userPreferences: { select: { locale: true } },
+                  } as const;
                   const user = await db.user
                     .findUnique({
                       where: { email },
-                      select: {
-                        id: true,
-                        isActive: true,
-                        userPreferences: { select: { locale: true } },
-                      },
+                      select: magicLinkUserSelect,
                     })
+                    .then(
+                      (found) =>
+                        found ??
+                        db.user.findFirst({
+                          where: {
+                            email: { equals: email, mode: "insensitive" },
+                          },
+                          select: magicLinkUserSelect,
+                        })
+                    )
                     .catch((err) => {
                       console.error("Database error checking user:", err);
                       return null;
@@ -392,18 +405,27 @@ export async function getAuthOptions(): Promise<NextAuthOptions> {
       async signIn({ user, account }) {
         // For OAuth/SSO sign-ins
         if (account?.provider !== "credentials") {
-          // First check if user exists by email (not by ID, since ID might not exist yet)
+          // First check if user exists by email (not by ID, since ID might not
+          // exist yet). Emails match case-insensitively; an exact-cased row
+          // wins when case-variant duplicates exist.
+          const signInUserSelect = {
+            id: true,
+            authMethod: true,
+            isActive: true,
+            email: true,
+            name: true,
+          } as const;
           const dbUser = user.email
-            ? await db.user.findUnique({
+            ? ((await db.user.findUnique({
                 where: { email: user.email },
-                select: {
-                  id: true,
-                  authMethod: true,
-                  isActive: true,
-                  email: true,
-                  name: true,
+                select: signInUserSelect,
+              })) ??
+              (await db.user.findFirst({
+                where: {
+                  email: { equals: user.email, mode: "insensitive" },
                 },
-              })
+                select: signInUserSelect,
+              })))
             : null;
 
           // Prevent inactive users from signing in
@@ -782,18 +804,27 @@ export const authOptions: NextAuthOptions = {
     async signIn({ user, account }) {
       // For OAuth/SSO sign-ins
       if (account?.provider !== "credentials") {
-        // First check if user exists by email (not by ID, since ID might not exist yet)
+        // First check if user exists by email (not by ID, since ID might not
+        // exist yet). Emails match case-insensitively; an exact-cased row
+        // wins when case-variant duplicates exist.
+        const signInUserSelect = {
+          id: true,
+          authMethod: true,
+          isActive: true,
+          email: true,
+          twoFactorEnabled: true,
+        } as const;
         const dbUser = user.email
-          ? await db.user.findUnique({
+          ? ((await db.user.findUnique({
               where: { email: user.email },
-              select: {
-                id: true,
-                authMethod: true,
-                isActive: true,
-                email: true,
-                twoFactorEnabled: true,
+              select: signInUserSelect,
+            })) ??
+            (await db.user.findFirst({
+              where: {
+                email: { equals: user.email, mode: "insensitive" },
               },
-            })
+              select: signInUserSelect,
+            })))
           : null;
 
         // Prevent inactive users from signing in
@@ -1131,21 +1162,29 @@ function authorize(db: DbClient) {
       throw new Error('"email" is required in credentials');
     if (!credentials.password)
       throw new Error('"password" is required in credentials');
-    const maybeUser = await db.user.findFirst({
-      where: { email: credentials.email },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        password: true,
-        isActive: true,
-        twoFactorEnabled: true,
-        authMethod: true,
-        failedLoginAttempts: true,
-        lockedUntil: true,
-        passwordChangedAt: true,
-      },
-    });
+    // Emails match case-insensitively; an exact-cased row wins when
+    // case-variant duplicates exist (so each keeps its own password).
+    const credentialsUserSelect = {
+      id: true,
+      email: true,
+      name: true,
+      password: true,
+      isActive: true,
+      twoFactorEnabled: true,
+      authMethod: true,
+      failedLoginAttempts: true,
+      lockedUntil: true,
+      passwordChangedAt: true,
+    } as const;
+    const maybeUser =
+      (await db.user.findFirst({
+        where: { email: credentials.email },
+        select: credentialsUserSelect,
+      })) ??
+      (await db.user.findFirst({
+        where: { email: { equals: credentials.email, mode: "insensitive" } },
+        select: credentialsUserSelect,
+      }));
 
     if (!maybeUser?.password) {
       // SECURITY-02: Run dummy bcrypt compare to prevent timing-based account enumeration.

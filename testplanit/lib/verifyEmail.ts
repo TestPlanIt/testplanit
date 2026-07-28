@@ -7,9 +7,9 @@ export async function verifyEmail(email: any, token: any) {
     return new Error("Missing email or token");
   }
   try {
-    await baseDb.user.findFirstOrThrow({
+    const user = await baseDb.user.findFirstOrThrow({
       where: {
-        email: email,
+        email: { equals: email, mode: "insensitive" },
         emailVerifToken: token,
         emailTokenExpires: {
           gte: new Date(),
@@ -17,7 +17,7 @@ export async function verifyEmail(email: any, token: any) {
       },
     });
     return await baseDb.user.update({
-      where: { emailVerifToken: token, email: email },
+      where: { id: user.id, emailVerifToken: token },
       data: {
         emailVerified: new Date(),
         emailVerifToken: null,

@@ -97,7 +97,11 @@ export async function resolveForgeUser(identity: {
 
   if (email) {
     user = await db.user.findFirst({
-      where: { email, isActive: true, isDeleted: false },
+      where: {
+        email: { equals: email, mode: "insensitive" },
+        isActive: true,
+        isDeleted: false,
+      },
       select: { id: true, name: true, email: true, access: true },
     });
   }

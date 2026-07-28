@@ -38,9 +38,10 @@ export async function POST(req: NextRequest) {
     // Hash password
     const hashedPassword = await hash(validatedData.password, 10);
 
-    // Check if user already exists
-    const existingUser = await db.user.findUnique({
-      where: { email: validatedData.email },
+    // Check if user already exists (case-insensitive — an address differing
+    // only by case is the same account).
+    const existingUser = await db.user.findFirst({
+      where: { email: { equals: validatedData.email, mode: "insensitive" } },
     });
 
     if (existingUser) {

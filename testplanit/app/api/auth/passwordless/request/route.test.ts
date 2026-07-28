@@ -34,7 +34,18 @@ const { fakeDb, rows, resetFakeDb, userFindUnique } = vi.hoisted(() => {
   let seq = 0;
   const matches = (row: any, where: any): boolean => {
     if (where.id !== undefined && row.id !== where.id) return false;
-    if (where.email !== undefined && row.email !== where.email) return false;
+    if (where.email !== undefined) {
+      // Supports both the scalar shorthand and the { equals, mode } filter.
+      const filter =
+        typeof where.email === "object" && where.email !== null
+          ? where.email
+          : { equals: where.email };
+      const ok =
+        filter.mode === "insensitive"
+          ? row.email?.toLowerCase() === filter.equals?.toLowerCase()
+          : row.email === filter.equals;
+      if (!ok) return false;
+    }
     if (where.status !== undefined && row.status !== where.status) return false;
     if (
       where.expiresAt?.lt !== undefined &&
@@ -82,7 +93,10 @@ const { fakeDb, rows, resetFakeDb, userFindUnique } = vi.hoisted(() => {
         return { count };
       },
     },
-    user: { findUnique: (args: any) => userFindUnique.fn(args) },
+    user: {
+      findUnique: (args: any) => userFindUnique.fn(args),
+      findFirst: async (): Promise<any> => null,
+    },
   };
   return { fakeDb, rows, resetFakeDb: () => rows.clear(), userFindUnique };
 });

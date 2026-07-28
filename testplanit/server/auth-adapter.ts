@@ -145,20 +145,25 @@ export function createCustomDbAdapter(db: DbClient): Adapter {
       return baseAdapter.createVerificationToken!(data);
     },
     useVerificationToken: baseAdapter.useVerificationToken,
-    // Override getUserByEmail to ensure Magic Link can find existing users
+    // Override getUserByEmail to ensure Magic Link can find existing users.
+    // Emails match case-insensitively; an exact-cased row wins when
+    // case-variant duplicates exist.
     async getUserByEmail(email: string) {
       if (!email) return null;
 
-      const user = await db.user.findUnique({
-        where: { email },
-        select: {
-          id: true,
-          email: true,
-          name: true,
-          image: true,
-          emailVerified: true,
-        },
-      });
+      const select = {
+        id: true,
+        email: true,
+        name: true,
+        image: true,
+        emailVerified: true,
+      } as const;
+      const user =
+        (await db.user.findUnique({ where: { email }, select })) ??
+        (await db.user.findFirst({
+          where: { email: { equals: email, mode: "insensitive" } },
+          select,
+        }));
 
       return user;
     },

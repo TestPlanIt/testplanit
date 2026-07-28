@@ -321,7 +321,10 @@ export async function createPendingAuth(
   const expiresAt = new Date(Date.now() + PASSWORDLESS_TTL_MINUTES * 60_000);
 
   await db.pendingAuth.updateMany({
-    where: { email: args.email, status: "PENDING" },
+    where: {
+      email: { equals: args.email, mode: "insensitive" },
+      status: "PENDING",
+    },
     data: { status: "SUPERSEDED" },
   });
 
@@ -560,10 +563,17 @@ export function authorizePasswordlessComplete(prisma: PendingAuthDb) {
       );
     }
 
-    const user = await prisma.user.findUnique({
-      where: { email: result.email },
-      select: { id: true, email: true, name: true, isActive: true },
-    });
+    // Emails match case-insensitively; an exact-cased row wins when
+    // case-variant duplicates exist.
+    const user =
+      (await prisma.user.findUnique({
+        where: { email: result.email },
+        select: { id: true, email: true, name: true, isActive: true },
+      })) ??
+      (await prisma.user.findFirst({
+        where: { email: { equals: result.email, mode: "insensitive" } },
+        select: { id: true, email: true, name: true, isActive: true },
+      }));
     if (!user || !user.isActive) {
       // Row was created for an unknown address (anti-enumeration) or the
       // account was deactivated since the request. Generic failure.

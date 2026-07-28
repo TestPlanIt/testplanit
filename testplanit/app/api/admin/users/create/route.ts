@@ -74,9 +74,11 @@ export const POST = withAuditContext(async (req: NextRequest) => {
   // Detection step: is there already a user (active or soft-deleted) with
   // this email? Doing this *before* the create avoids relying on a P2002
   // round-trip and lets us return RESTORE_REQUIRED with the user info the
-  // client needs to populate its restore dialog in one shot.
-  const existing = await baseDb.user.findUnique({
-    where: { email: body.email },
+  // client needs to populate its restore dialog in one shot. Matched
+  // case-insensitively — an address differing only by case is the same
+  // account.
+  const existing = await baseDb.user.findFirst({
+    where: { email: { equals: body.email, mode: "insensitive" } },
     select: { id: true, name: true, email: true, isDeleted: true },
   });
 
@@ -154,8 +156,8 @@ export const POST = withAuditContext(async (req: NextRequest) => {
     // create. Fall back to the same detection logic so the client still
     // gets a structured RESTORE_REQUIRED / EXISTS_ACTIVE response.
     if (isUniqueConstraintError(err)) {
-      const racing = await baseDb.user.findUnique({
-        where: { email: body.email },
+      const racing = await baseDb.user.findFirst({
+        where: { email: { equals: body.email, mode: "insensitive" } },
         select: { id: true, name: true, email: true, isDeleted: true },
       });
       if (racing?.isDeleted) {

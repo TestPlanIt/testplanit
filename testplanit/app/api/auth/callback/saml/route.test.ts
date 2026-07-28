@@ -14,7 +14,12 @@ vi.mock("~/lib/valkey", () => ({ default: null })); // RelayState via signed tok
 vi.mock("~/server/db", () => ({
   db: {
     samlConfiguration: { findUnique: vi.fn(), findMany: vi.fn() },
-    user: { findUnique: vi.fn(), update: vi.fn(), create: vi.fn() },
+    user: {
+      findUnique: vi.fn(),
+      findFirst: vi.fn(),
+      update: vi.fn(),
+      create: vi.fn(),
+    },
     account: { upsert: vi.fn() },
     roles: { findFirst: vi.fn() },
   },
@@ -69,6 +74,7 @@ describe("POST /api/auth/callback/saml — ACS validator", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     (db.samlConfiguration.findMany as any).mockResolvedValue([]);
+    (db.user.findFirst as any).mockResolvedValue(null);
   });
 
   it("returns 400 when there is no RelayState and no enabled config validates it", async () => {
@@ -283,6 +289,39 @@ describe("POST /api/auth/callback/saml — email resolution & guard ordering", (
   beforeEach(() => {
     vi.clearAllMocks();
     (db.samlConfiguration.findMany as any).mockResolvedValue([]);
+    (db.user.findFirst as any).mockResolvedValue(null);
+  });
+
+  it("matches an existing user case-insensitively when the IdP asserts a different casing", async () => {
+    (db.samlConfiguration.findUnique as any).mockResolvedValue(cfg({}, true));
+    // IdP asserts TestAccount@example.com; the stored user is all-lowercase.
+    validateSAMLResponse.mockResolvedValue({
+      nameID: "TestAccount@example.com",
+    });
+    (db.user.findUnique as any).mockResolvedValue(null); // exact match misses
+    (db.user.findFirst as any).mockResolvedValue({
+      id: "user_t",
+      email: "testaccount@example.com",
+      name: "Test Account",
+      authMethod: "SSO",
+      externalId: "TestAccount@example.com",
+      emailVerified: new Date(),
+    });
+    (db.account.upsert as any).mockResolvedValue({});
+
+    const res = await POST(makeReq(relayFor("ssoprovider_t")));
+
+    expect(db.user.findFirst).toHaveBeenCalledWith({
+      where: {
+        email: { equals: "TestAccount@example.com", mode: "insensitive" },
+      },
+    });
+    // Matched the existing account: no re-provisioning, session handoff issued.
+    expect(db.user.create).not.toHaveBeenCalled();
+    expect(res.status).toBe(303);
+    expect(res.headers.get("location")).toContain(
+      "/api/auth/saml/complete?token="
+    );
   });
 
   it("resolves the email from the NameID when there is no email attribute (empty mapping)", async () => {

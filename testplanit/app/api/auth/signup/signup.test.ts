@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const { mockDb, mockHash, mockIsEmailServerConfigured } = vi.hoisted(() => ({
   mockDb: {
     user: {
-      findUnique: vi.fn(),
+      findFirst: vi.fn(),
       create: vi.fn(),
     },
     registrationSettings: {
@@ -80,7 +80,7 @@ describe("POST /api/auth/signup", () => {
     });
 
     it("should create user with emailVerified as null when verification is required", async () => {
-      mockDb.user.findUnique.mockResolvedValue(null);
+      mockDb.user.findFirst.mockResolvedValue(null);
       mockDb.$transaction.mockImplementation(async (callback) => {
         const tx = {
           user: {
@@ -117,7 +117,7 @@ describe("POST /api/auth/signup", () => {
     });
 
     it("should store emailVerifToken when verification is required", async () => {
-      mockDb.user.findUnique.mockResolvedValue(null);
+      mockDb.user.findFirst.mockResolvedValue(null);
       mockDb.$transaction.mockImplementation(async (callback) => {
         const tx = {
           user: {
@@ -154,7 +154,7 @@ describe("POST /api/auth/signup", () => {
     });
 
     it("should create user with emailVerified set to current timestamp when verification is not required", async () => {
-      mockDb.user.findUnique.mockResolvedValue(null);
+      mockDb.user.findFirst.mockResolvedValue(null);
       mockDb.$transaction.mockImplementation(async (callback) => {
         const tx = {
           user: {
@@ -185,7 +185,7 @@ describe("POST /api/auth/signup", () => {
     });
 
     it("should not store emailVerifToken when verification is not required", async () => {
-      mockDb.user.findUnique.mockResolvedValue(null);
+      mockDb.user.findFirst.mockResolvedValue(null);
       mockDb.$transaction.mockImplementation(async (callback) => {
         const tx = {
           user: {
@@ -213,7 +213,7 @@ describe("POST /api/auth/signup", () => {
     });
 
     it("should require email verification by default when no settings exist", async () => {
-      mockDb.user.findUnique.mockResolvedValue(null);
+      mockDb.user.findFirst.mockResolvedValue(null);
       mockDb.$transaction.mockImplementation(async (callback) => {
         const tx = {
           user: {
@@ -244,7 +244,7 @@ describe("POST /api/auth/signup", () => {
     });
 
     it("should return 403 when open registration is disabled", async () => {
-      mockDb.user.findUnique.mockResolvedValue(null);
+      mockDb.user.findFirst.mockResolvedValue(null);
       mockDb.registrationSettings.findFirst.mockResolvedValue({
         allowOpenRegistration: false,
         requireEmailVerification: true,
@@ -259,7 +259,7 @@ describe("POST /api/auth/signup", () => {
     });
 
     it("should return 400 when user already exists", async () => {
-      mockDb.user.findUnique.mockResolvedValue({
+      mockDb.user.findFirst.mockResolvedValue({
         id: "existing-user",
         email: "test@example.com",
       });
@@ -311,7 +311,7 @@ describe("POST /api/auth/signup", () => {
     });
 
     it("should handle a unique constraint violation on email", async () => {
-      mockDb.user.findUnique.mockResolvedValue(null);
+      mockDb.user.findFirst.mockResolvedValue(null);
       // v3 surfaces the Postgres unique violation as the driver error text;
       // isUniqueConstraintError matches on "unique constraint" / "duplicate key".
       mockDb.$transaction.mockRejectedValue(
@@ -328,7 +328,7 @@ describe("POST /api/auth/signup", () => {
     });
 
     it("should return 500 on unexpected database error", async () => {
-      mockDb.user.findUnique.mockResolvedValue(null);
+      mockDb.user.findFirst.mockResolvedValue(null);
       mockDb.$transaction.mockRejectedValue(
         new Error("Database connection failed")
       );
@@ -346,7 +346,7 @@ describe("POST /api/auth/signup", () => {
       mockDb.registrationSettings.findFirst.mockResolvedValue({
         requireEmailVerification: true,
       });
-      mockDb.user.findUnique.mockResolvedValue(null);
+      mockDb.user.findFirst.mockResolvedValue(null);
     });
 
     it("should create default user preferences during signup", async () => {
@@ -385,7 +385,7 @@ describe("POST /api/auth/signup", () => {
       mockDb.registrationSettings.findFirst.mockResolvedValue({
         requireEmailVerification: true,
       });
-      mockDb.user.findUnique.mockResolvedValue(null);
+      mockDb.user.findFirst.mockResolvedValue(null);
     });
 
     it("should hash password with bcrypt (10 rounds)", async () => {
@@ -431,7 +431,7 @@ describe("POST /api/auth/signup", () => {
       mockDb.registrationSettings.findFirst.mockResolvedValue({
         requireEmailVerification: true,
       });
-      mockDb.user.findUnique.mockResolvedValue(null);
+      mockDb.user.findFirst.mockResolvedValue(null);
       mockDb.$transaction.mockImplementation(async (callback) => {
         const tx = {
           user: {
@@ -471,7 +471,7 @@ describe("POST /api/auth/signup", () => {
     describe("When email server is NOT configured", () => {
       beforeEach(() => {
         mockIsEmailServerConfigured.mockReturnValue(false);
-        mockDb.user.findUnique.mockResolvedValue(null);
+        mockDb.user.findFirst.mockResolvedValue(null);
         mockDb.$transaction.mockImplementation(async (callback) => {
           const tx = {
             user: {
@@ -565,7 +565,7 @@ describe("POST /api/auth/signup", () => {
     describe("When email server IS configured", () => {
       beforeEach(() => {
         mockIsEmailServerConfigured.mockReturnValue(true);
-        mockDb.user.findUnique.mockResolvedValue(null);
+        mockDb.user.findFirst.mockResolvedValue(null);
         mockDb.$transaction.mockImplementation(async (callback) => {
           const tx = {
             user: {

@@ -26,15 +26,19 @@ export const POST = withAuditContext(async (req: NextRequest) => {
 
     // Check if user exists and is active. Pull `userPreferences.locale`
     // so the email is rendered in the recipient's language; falls back
-    // to en_US.
-    const user = await baseDb.user.findUnique({
-      where: { email },
-      select: {
-        id: true,
-        isActive: true,
-        userPreferences: { select: { locale: true } },
-      },
-    });
+    // to en_US. Emails match case-insensitively; an exact-cased row wins
+    // when case-variant duplicates exist.
+    const select = {
+      id: true,
+      isActive: true,
+      userPreferences: { select: { locale: true } },
+    } as const;
+    const user =
+      (await baseDb.user.findUnique({ where: { email }, select })) ??
+      (await baseDb.user.findFirst({
+        where: { email: { equals: email, mode: "insensitive" } },
+        select,
+      }));
 
     if (!user || !user.isActive) {
       // Still return success to prevent enumeration

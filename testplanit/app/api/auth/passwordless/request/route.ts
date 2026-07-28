@@ -53,8 +53,8 @@ export const POST = withAuditContext(async (req: NextRequest) => {
     return NextResponse.json({ error: "Invalid CSRF token" }, { status: 403 });
   }
 
-  // Exact-match semantics (trim only) — the same lookup behavior as the
-  // stock EmailProvider flow and /api/auth/send-magic-link.
+  // Trimmed, then matched case-insensitively — the same lookup behavior as
+  // the stock EmailProvider flow and /api/auth/send-magic-link.
   const email = body.email.trim();
   const auditCtx = extractAuditContextFromRequest(req);
   const ip = auditCtx.ipAddress ?? "unknown";
@@ -94,14 +94,17 @@ export const POST = withAuditContext(async (req: NextRequest) => {
   // respond than unknown ones.
   void (async () => {
     try {
-      const user = await db.user.findUnique({
-        where: { email },
-        select: {
-          id: true,
-          isActive: true,
-          userPreferences: { select: { locale: true } },
-        },
-      });
+      const select = {
+        id: true,
+        isActive: true,
+        userPreferences: { select: { locale: true } },
+      } as const;
+      const user =
+        (await db.user.findUnique({ where: { email }, select })) ??
+        (await db.user.findFirst({
+          where: { email: { equals: email, mode: "insensitive" } },
+          select,
+        }));
       if (!user || !user.isActive) return;
 
       const baseUrl = getAppBaseUrl(req);

@@ -73,7 +73,7 @@ describe("forge-jira-auth", () => {
   });
 
   describe("resolveForgeUser", () => {
-    it("matches by lowercased email", async () => {
+    it("matches by email case-insensitively", async () => {
       mockDb.user.findFirst.mockResolvedValue({
         id: "u1",
         name: "Ada",
@@ -88,7 +88,7 @@ describe("forge-jira-auth", () => {
       expect(mockDb.user.findFirst).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
-            email: "ada@example.com",
+            email: { equals: "ada@example.com", mode: "insensitive" },
             isActive: true,
             isDeleted: false,
           }),

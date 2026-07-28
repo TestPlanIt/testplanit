@@ -1550,7 +1550,9 @@ async function importUsers(
       );
     }
 
-    const existingByEmail = await tx.user.findUnique({ where: { email } });
+    const existingByEmail = await tx.user.findFirst({
+      where: { email: { equals: email, mode: "insensitive" } },
+    });
     if (existingByEmail) {
       config.action = "map";
       config.mappedTo = existingByEmail.id;
