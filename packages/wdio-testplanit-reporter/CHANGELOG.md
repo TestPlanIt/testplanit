@@ -1,5 +1,11 @@
 # @testplanit/wdio-reporter
 
+## 0.7.0
+
+### Minor Changes
+
+- [#550](https://github.com/TestPlanIt/testplanit/pull/550) [`5145332`](https://github.com/TestPlanIt/testplanit/commit/51453327f9750da7bee8eea4c7a663936f2e8474) Thanks [@therealbrad](https://github.com/therealbrad)! - Add an `excludeSkipped` option to both reporters. When enabled, skipped results are not reported to TestPlanIt at all — they don't appear on the run and don't count toward its totals. The check runs before any API work, so a spec whose tests were all skipped never creates a test run. For the WebdriverIO reporter this also covers `pending` results and Cucumber scenarios whose steps were skipped. Default is disabled: skipped results keep being reported exactly as before.
+
 ## 0.6.0
 
 ### Minor Changes
