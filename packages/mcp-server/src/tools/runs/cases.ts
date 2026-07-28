@@ -27,7 +27,7 @@ export function registerRunsCasesList(
     "testplanit_test_runs_cases_list",
     {
       description:
-        "List the test cases assigned to a specific run. Filters: isCompleted, statusId, assignedToId (user id, string). Cursor pagination ordered by `order` then `id`. NOTE: TestRunCases does not have a soft-delete field — case removal from a run is via direct deletion (cascading from the run), not isDeleted. Each row carries `latestResult` (most recent executedAt) inline — a union of manual TestRunResults and run-scoped automated JUnit results, discriminated by `source` (\"TestRun\" | \"JUnit\"); pass both the id and source to testplanit_test_run_results_get. (per EXEC-03 / D7-05)",
+        "List the test cases assigned to a specific run. Filters: isCompleted, statusId, assignedToId (user id, string). Cursor pagination ordered by `order` then `id`. NOTE: TestRunCases does not have a soft-delete field — case removal from a run is via direct deletion (cascading from the run), not isDeleted. Each row carries `latestResult` (most recent executedAt) inline — a union of manual TestRunResults and run-scoped automated JUnit results, discriminated by `source` (\"TestRun\" | \"JUnit\"); pass both the id and source to testplanit_test_run_results_get. Row `status` is the junction row's status when set, falling back to latestResult.status; the statusId FILTER matches only the junction column, which automated runs (testRunType != REGULAR) never set — filter automated results by status via testplanit_test_run_results_list({runId, statusId}) instead. (per EXEC-03 / D7-05)",
       inputSchema: {
         runId: z.number().int().positive(),
         isCompleted: z.boolean().optional(),

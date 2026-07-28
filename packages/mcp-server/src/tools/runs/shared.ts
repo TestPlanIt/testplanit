@@ -610,7 +610,13 @@ export function mapRunDetailTestCase(raw: RawRunDetailTestCase) {
           email: raw.assignedTo.email,
         }
       : null,
-    status: raw.status ? { id: raw.status.id, name: raw.status.name } : null,
+    // Junction status when set (REGULAR runs write it atomically with each
+    // result); otherwise fall back to the latest result's status. Automated
+    // runs NEVER set the junction status, so without the fallback every case
+    // on a JUNIT/MOCHA run reads status:null despite having results.
+    status: raw.status
+      ? { id: raw.status.id, name: raw.status.name }
+      : (latestResult?.status ?? null),
     latestResult,
   };
 }

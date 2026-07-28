@@ -857,6 +857,48 @@ describe("mapRunDetailTestCase latestResult union", () => {
     expect(result.latestResult?.source).toBe("TestRun");
     expect(result.latestResult?.id).toBe(99);
   });
+
+  it("status fallback: null junction status takes latestResult.status (automated runs)", () => {
+    const result = mapRunDetailTestCase({
+      ...base,
+      status: null,
+      repositoryCase: {
+        id: 50,
+        name: "spec",
+        source: "JUNIT",
+        junitResults: [junitResult],
+      },
+      results: [],
+    });
+    expect(result.status).toEqual({ id: 2, name: "Failed" });
+    expect(result.latestResult?.source).toBe("JUnit");
+  });
+
+  it("status fallback: junction status wins over latestResult.status when set", () => {
+    const result = mapRunDetailTestCase({
+      ...base,
+      // Junction says Failed (base.status); latest junit result says Passed.
+      repositoryCase: {
+        id: 50,
+        name: "spec",
+        source: "JUNIT",
+        junitResults: [{ ...junitResult, status: { id: 1, name: "Passed" } }],
+      },
+      results: [],
+    });
+    expect(result.status).toEqual({ id: 2, name: "Failed" });
+  });
+
+  it("status fallback: no junction status and no results at all -> null", () => {
+    const result = mapRunDetailTestCase({
+      ...base,
+      status: null,
+      repositoryCase: { id: 50, name: "spec", source: "JUNIT", junitResults: [] },
+      results: [],
+    });
+    expect(result.status).toBeNull();
+    expect(result.latestResult).toBeNull();
+  });
 });
 
 // ── Results cursor + merge (two-source union pagination) ────────────────────

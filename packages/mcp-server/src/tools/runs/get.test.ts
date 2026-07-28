@@ -193,8 +193,31 @@ describe("registerRunsGet", () => {
   });
 
   it("automated run: rollup from jUnitTestResult attempts, not testRunCases", async () => {
+    // One inline case shaped like real automated-run data: junction status
+    // null, result reachable only through repositoryCase.junitResults.
+    const automatedCase = {
+      id: 1,
+      order: 1,
+      isCompleted: false,
+      repositoryCase: {
+        id: 999111,
+        name: "login.spec",
+        source: "JUNIT",
+        junitResults: [
+          {
+            id: 70001,
+            executedAt: "2026-07-28T10:00:00.000Z",
+            status: { id: 2, name: "Failed" },
+            createdBy: { id: "ci", name: "CI Bot", email: "ci@b" },
+          },
+        ],
+      },
+      assignedTo: null,
+      status: null,
+      results: [],
+    };
     mockZenstack.mockResolvedValueOnce(
-      makeRawRun({ testRunType: "MOCHA", testCases: [] }),
+      makeRawRun({ testRunType: "MOCHA", testCases: [automatedCase] }),
     );
     mockZenstack.mockResolvedValueOnce([
       { statusId: 1, _count: { id: 87 } },
@@ -236,6 +259,14 @@ describe("registerRunsGet", () => {
     expect(data.untested).toBe(0);
     // Attempt count (result rows incl. retries), matching the web UI.
     expect(data.total).toBe(137);
+
+    // Per-case status falls back to the JUnit latestResult's status — the
+    // junction row is null on automated runs.
+    const tc = (data.testCases as Array<Record<string, unknown>>)[0];
+    expect(tc.status).toEqual({ id: 2, name: "Failed" });
+    const latest = tc.latestResult as Record<string, unknown>;
+    expect(latest.source).toBe("JUnit");
+    expect((latest.status as { name: string }).name).toBe("Failed");
   });
 
   it("automated run: full inline page sets cursor even when attempt total < 50", async () => {
