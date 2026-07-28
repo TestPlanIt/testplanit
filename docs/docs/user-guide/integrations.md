@@ -72,6 +72,7 @@ Full bi-directional integration with Atlassian Jira, supporting both Cloud and S
 
 - Create Jira issues directly from TestPlanIt
 - Rich text formatting preserved using Atlassian Document Format (ADF)
+- Images and videos embedded in the issue description are uploaded to the created Jira issue as attachments
 - Automatic user matching between TestPlanIt and Jira
 - Support for custom fields and issue types
 - Real-time status synchronization
@@ -125,6 +126,7 @@ Connect to Azure DevOps Boards for work item tracking.
 - Support for all work item types defined in your Azure DevOps process
 - Search work items by text or by exact ID (e.g., `42`)
 - Priority field supported (maps to work item priority)
+- Images and videos embedded in the description are uploaded to the created work item as attachments
 - Personal Access Token authentication
 - Inbound webhook support for real-time status sync
 - Works with both Azure DevOps Services (cloud) and Azure DevOps Server (on-premises)

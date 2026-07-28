@@ -73,6 +73,115 @@ describe("JiraAdapter", () => {
     });
   });
 
+  describe("uploadAttachment", () => {
+    beforeEach(async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ accountId: "test-user" }),
+      });
+      await adapter.authenticate({
+        type: "api_key",
+        email: "test@example.com",
+        apiToken: "test-token",
+        baseUrl: "https://test.atlassian.net",
+      });
+    });
+
+    it("posts multipart form data with the CSRF-bypass header (API key)", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: () =>
+          Promise.resolve([
+            {
+              id: 10500,
+              content:
+                "https://test.atlassian.net/secure/attachment/10500/screenshot.png",
+            },
+          ]),
+      });
+
+      const result = await adapter.uploadAttachment(
+        "TEST-123",
+        Buffer.from("png-bytes"),
+        "screenshot.png"
+      );
+
+      const [url, options] = mockFetch.mock.calls.at(-1)!;
+      expect(url).toBe(
+        "https://test.atlassian.net/rest/api/3/issue/TEST-123/attachments"
+      );
+      expect(options.method).toBe("POST");
+      expect(options.headers["X-Atlassian-Token"]).toBe("no-check");
+      // fetch must set the multipart boundary itself — a preset JSON
+      // Content-Type would corrupt the upload.
+      expect(options.headers["Content-Type"]).toBeUndefined();
+      expect(options.body).toBeInstanceOf(FormData);
+      expect((options.body.get("file") as File).name).toBe("screenshot.png");
+      expect(result).toEqual({
+        id: "10500",
+        url: "https://test.atlassian.net/secure/attachment/10500/screenshot.png",
+      });
+    });
+
+    it("posts through the OAuth gateway without a JSON content type", async () => {
+      vi.stubEnv("JIRA_CLIENT_ID", "test-client-id");
+      vi.stubEnv("JIRA_CLIENT_SECRET", "test-client-secret");
+      vi.stubEnv("JIRA_REDIRECT_URI", "https://app.com/callback");
+
+      const oauthAdapter = new JiraAdapter({ provider: "JIRA" });
+
+      mockFetch.mockReset();
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve([
+            { id: "cloud-123", url: "https://allego.atlassian.net" },
+          ]),
+      });
+      await oauthAdapter.authenticate({
+        type: "oauth",
+        accessToken: "test-access-token",
+      });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve([{ id: 42, content: "https://x/42" }]),
+      });
+
+      const result = await oauthAdapter.uploadAttachment(
+        "ABT-1",
+        Buffer.from("png-bytes"),
+        "screenshot.png"
+      );
+
+      const [url, options] = mockFetch.mock.calls.at(-1)!;
+      expect(url).toBe(
+        "https://api.atlassian.com/ex/jira/cloud-123/rest/api/3/issue/ABT-1/attachments"
+      );
+      expect(options.headers["Authorization"]).toBe("Bearer test-access-token");
+      expect(options.headers["X-Atlassian-Token"]).toBe("no-check");
+      expect(options.headers["Content-Type"]).toBeUndefined();
+      expect(options.body).toBeInstanceOf(FormData);
+      expect(result).toEqual({ id: "42", url: "https://x/42" });
+
+      vi.unstubAllEnvs();
+    });
+
+    it("throws when Jira returns no attachment metadata", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve([]),
+      });
+
+      await expect(
+        adapter.uploadAttachment("TEST-123", Buffer.from("x"), "a.png")
+      ).rejects.toThrow("Failed to upload attachment - no id returned");
+    });
+  });
+
   describe("authenticate", () => {
     it("should authenticate successfully with API key", async () => {
       mockFetch.mockResolvedValueOnce({
@@ -768,6 +877,60 @@ describe("JiraAdapter", () => {
       expect(result.assignee?.id).toBe("user-123");
       expect(result.reporter?.id).toBe("reporter-123");
       expect(result.labels).toEqual(["bug", "priority"]);
+    });
+
+    it("builds the browse url from the admin-entered baseUrl (API key)", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockJiraIssue),
+      });
+
+      const result = await adapter.getIssue("TEST-123");
+
+      expect(result.url).toBe("https://test.atlassian.net/browse/TEST-123");
+    });
+
+    it("builds the browse url from the OAuth site host, not the api.atlassian.com gateway", async () => {
+      vi.stubEnv("JIRA_CLIENT_ID", "test-client-id");
+      vi.stubEnv("JIRA_CLIENT_SECRET", "test-client-secret");
+      vi.stubEnv("JIRA_REDIRECT_URI", "https://app.com/callback");
+
+      // OAuth adapter has no baseUrl — the site host is only knowable from the
+      // accessible-resources response captured during authentication.
+      const oauthAdapter = new JiraAdapter({ provider: "JIRA" });
+
+      mockFetch.mockReset();
+      // accessible-resources: cloud id + canonical site url.
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve([
+            { id: "cloud-123", url: "https://allego.atlassian.net" },
+          ]),
+      });
+      await oauthAdapter.authenticate({
+        type: "oauth",
+        accessToken: "test-access-token",
+      });
+
+      // The issue's `self` echoes the api.atlassian.com gateway (as Jira does
+      // for all OAuth REST traffic) — splitting it would yield a broken link.
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            ...mockJiraIssue,
+            key: "ABT-47646",
+            self: "https://api.atlassian.com/ex/jira/cloud-123/rest/api/3/issue/10001",
+          }),
+      });
+
+      const result = await oauthAdapter.getIssue("ABT-47646");
+
+      expect(result.url).toBe("https://allego.atlassian.net/browse/ABT-47646");
+      expect(result.url).not.toContain("api.atlassian.com");
+
+      vi.unstubAllEnvs();
     });
 
     it("maps Jira fields.components[].name into IssueData.components", async () => {

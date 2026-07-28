@@ -42,6 +42,11 @@ vi.mock("@/lib/integrations/IntegrationManager", () => ({
   },
 }));
 
+vi.mock("@/lib/integrations/editorMediaAttachments", () => ({
+  resolveEditorMediaAttachments: vi.fn(),
+}));
+
+import { resolveEditorMediaAttachments } from "@/lib/integrations/editorMediaAttachments";
 import { IntegrationManager } from "@/lib/integrations/IntegrationManager";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth/next";
@@ -253,6 +258,123 @@ describe("POST /api/integrations/[id]/create-issue", () => {
       );
 
       expect(mockGetAdapter).toHaveBeenCalledWith("1", undefined, "user-1");
+    });
+  });
+
+  describe("Embedded description media", () => {
+    const descriptionDoc = {
+      type: "doc",
+      content: [
+        {
+          type: "image",
+          attrs: { src: "/api/storage/uploads/document-images/1/shot.png" },
+        },
+      ],
+    };
+
+    const attachmentAdapter: any = {
+      createIssue: vi.fn(),
+      uploadAttachment: vi.fn(),
+      getCapabilities: vi.fn(),
+    };
+
+    beforeEach(() => {
+      (getServerSession as any).mockResolvedValue(mockSession);
+      (prisma.userIntegrationAuth.findFirst as any).mockResolvedValue(null);
+      (prisma.integration.findUnique as any).mockResolvedValue({
+        id: 1,
+        authType: "API_KEY",
+        status: "ACTIVE",
+        provider: "JIRA",
+      });
+      (IntegrationManager.getInstance as any).mockReturnValue({
+        getAdapter: vi.fn().mockResolvedValue(attachmentAdapter),
+      });
+      attachmentAdapter.createIssue.mockResolvedValue({
+        id: "ext-123",
+        key: "PROJ-1",
+        title: "Test Issue",
+        url: "https://example.com/issues/PROJ-1",
+        status: "Open",
+      });
+      attachmentAdapter.uploadAttachment.mockResolvedValue({
+        id: "att-1",
+        url: "https://example.com/attachments/att-1",
+      });
+      attachmentAdapter.getCapabilities.mockReturnValue({ attachments: true });
+      (resolveEditorMediaAttachments as any).mockResolvedValue([]);
+    });
+
+    it("uploads media resolved from the description to the created issue", async () => {
+      (resolveEditorMediaAttachments as any).mockResolvedValue([
+        { filename: "shot.png", buffer: Buffer.from("png-bytes") },
+      ]);
+
+      const response = await POST(
+        createRequest({
+          title: "With image",
+          projectId: "PROJ",
+          description: descriptionDoc,
+        }),
+        params
+      );
+
+      expect(response.status).toBe(200);
+      expect(resolveEditorMediaAttachments).toHaveBeenCalledWith(
+        descriptionDoc
+      );
+      expect(attachmentAdapter.uploadAttachment).toHaveBeenCalledWith(
+        "PROJ-1",
+        expect.any(Buffer),
+        "shot.png"
+      );
+    });
+
+    it("an attachment upload failure does not fail issue creation", async () => {
+      const consoleError = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
+      (resolveEditorMediaAttachments as any).mockResolvedValue([
+        { filename: "a.png", buffer: Buffer.from("a") },
+        { filename: "b.png", buffer: Buffer.from("b") },
+      ]);
+      attachmentAdapter.uploadAttachment.mockRejectedValueOnce(
+        new Error("HTTP 413: attachment too large")
+      );
+
+      const response = await POST(
+        createRequest({
+          title: "With images",
+          projectId: "PROJ",
+          description: descriptionDoc,
+        }),
+        params
+      );
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(data.key).toBe("PROJ-1");
+      expect(attachmentAdapter.uploadAttachment).toHaveBeenCalledTimes(2);
+      consoleError.mockRestore();
+    });
+
+    it("skips media transfer when the adapter does not support attachments", async () => {
+      attachmentAdapter.getCapabilities.mockReturnValue({
+        attachments: false,
+      });
+
+      const response = await POST(
+        createRequest({
+          title: "No attachments",
+          projectId: "PROJ",
+          description: descriptionDoc,
+        }),
+        params
+      );
+
+      expect(response.status).toBe(200);
+      expect(resolveEditorMediaAttachments).not.toHaveBeenCalled();
+      expect(attachmentAdapter.uploadAttachment).not.toHaveBeenCalled();
     });
   });
 

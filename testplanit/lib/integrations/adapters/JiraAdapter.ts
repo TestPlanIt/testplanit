@@ -33,6 +33,7 @@ export class JiraAdapter extends BaseAdapter {
   private clientSecret: string;
   private redirectUri: string;
   private cloudId?: string;
+  private siteUrl?: string;
   private baseUrl?: string;
   private deployment: JiraDeploymentType = "cloud";
   private apiVersion: JiraApiVersion = "3";
@@ -277,6 +278,7 @@ export class JiraAdapter extends BaseAdapter {
           throw new Error("No accessible Jira resources found");
         }
         this.cloudId = resources[0].id;
+        this.siteUrl = resources[0].url;
       }
     } else {
       throw new Error(
@@ -485,6 +487,12 @@ export class JiraAdapter extends BaseAdapter {
         this.authScheme
       );
 
+      // A FormData body must let fetch set the multipart boundary itself — a
+      // preset JSON Content-Type would corrupt the upload.
+      if (options.body instanceof FormData) {
+        delete headers["Content-Type"];
+      }
+
       const response = await fetch(url, {
         ...options,
         headers,
@@ -638,6 +646,34 @@ export class JiraAdapter extends BaseAdapter {
     }
 
     return this.getIssue(issueId);
+  }
+
+  async uploadAttachment(
+    issueId: string,
+    file: Buffer,
+    filename: string
+  ): Promise<{ id: string; url: string }> {
+    const form = new FormData();
+    form.append("file", new Blob([new Uint8Array(file)]), filename);
+
+    // Jira answers with an array of metadata for the uploaded files.
+    const response = await this.makeRequest<any>(
+      this.buildUrl(
+        `/rest/api/${this.apiVersion}/issue/${issueId}/attachments`
+      ),
+      {
+        method: "POST",
+        body: form,
+        // Jira rejects attachment uploads without this CSRF-bypass header.
+        headers: { "X-Atlassian-Token": "no-check" },
+      }
+    );
+
+    const attachment = Array.isArray(response) ? response[0] : response;
+    if (!attachment?.id) {
+      throw new Error("Failed to upload attachment - no id returned");
+    }
+    return { id: String(attachment.id), url: attachment.content ?? "" };
   }
 
   async getIssue(issueId: string): Promise<IssueData> {
@@ -892,6 +928,10 @@ export class JiraAdapter extends BaseAdapter {
     );
   }
 
+  private userFacingBaseUrl(): string {
+    return (this.baseUrl ?? this.siteUrl ?? "").replace(/\/+$/, "");
+  }
+
   private mapJiraIssue(jiraIssue: any): IssueData {
     // Validate that we have the required data structure
     if (!jiraIssue) {
@@ -960,7 +1000,14 @@ export class JiraAdapter extends BaseAdapter {
       customFields: this.extractCustomFields(fields),
       createdAt: new Date(fields.created),
       updatedAt: new Date(fields.updated),
-      url: `${jiraIssue.self.split("/rest/")[0]}/browse/${jiraIssue.key}`,
+      // Prefer the canonical site base. Under OAuth, jiraIssue.self points at
+      // the api.atlassian.com/ex/jira/{cloudId} gateway, so splitting it would
+      // yield a broken "open in Jira" link; userFacingBaseUrl() resolves to the
+      // real site host. Fall back to the self-derived host only when no base is
+      // known (defensive — should not happen for authenticated adapters).
+      url: this.userFacingBaseUrl()
+        ? `${this.userFacingBaseUrl()}/browse/${jiraIssue.key}`
+        : `${jiraIssue.self.split("/rest/")[0]}/browse/${jiraIssue.key}`,
     };
   }
 
