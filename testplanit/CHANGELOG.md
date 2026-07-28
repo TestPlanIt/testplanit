@@ -1,3 +1,14 @@
+## [0.43.0](https://github.com/TestPlanIt/testplanit/compare/v0.42.0...v0.43.0) (2026-07-28)
+
+### Features
+
+* **reporters:** add excludeSkipped option to omit skipped results from runs ([#550](https://github.com/TestPlanIt/testplanit/issues/550)) ([5145332](https://github.com/TestPlanIt/testplanit/commit/51453327f9750da7bee8eea4c7a663936f2e8474))
+* **reporters:** attach links, files, and metadata to the test run itself ([#548](https://github.com/TestPlanIt/testplanit/issues/548)) ([65a5452](https://github.com/TestPlanIt/testplanit/commit/65a545262b02a39bf31b73cfcd9439b4d5c258f7))
+
+### Bug Fixes
+
+* **integrations:** transfer description images to created issues as attachments ([#554](https://github.com/TestPlanIt/testplanit/issues/554)) ([1e0f60f](https://github.com/TestPlanIt/testplanit/commit/1e0f60f7e3ada757b9cc81448c9b6d29201df269)), closes [#553](https://github.com/TestPlanIt/testplanit/issues/553)
+
 ## [0.42.0](https://github.com/TestPlanIt/testplanit/compare/v0.41.6...v0.42.0) (2026-07-25)
 
 ### Features
