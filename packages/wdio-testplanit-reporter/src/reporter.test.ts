@@ -489,6 +489,64 @@ describe("TestPlanItReporter", () => {
     });
   });
 
+  describe("excludeSkipped", () => {
+    const testStats = (overrides: Partial<TestStats> = {}): TestStats =>
+      ({
+        type: "test",
+        title: "[123] should pass",
+        fullTitle: "Suite > [123] should pass",
+        uid: "test-uid",
+        cid: "0-0",
+        state: "passed",
+        duration: 1500,
+        start: new Date("2024-01-01T00:00:00Z"),
+        end: new Date("2024-01-01T00:00:01.5Z"),
+        retries: 0,
+        ...overrides,
+      }) as TestStats;
+
+    // Await the async reportResult operations tracked on the reporter.
+    const flush = async (r: TestPlanItReporter) => {
+      const ops = (r as unknown as { pendingOperations: Set<Promise<void>> }).pendingOperations;
+      for (let i = 0; i < 10 && ops.size > 0; i++) {
+        await Promise.allSettled([...ops]);
+      }
+    };
+
+    it("reports skipped results by default", async () => {
+      reporter.onTestSkip(testStats({ title: "[789] is skipped", state: "skipped" }));
+      await flush(reporter);
+
+      expect(apiMocks.createJUnitTestResult).toHaveBeenCalledTimes(1);
+      expect(apiMocks.createJUnitTestResult).toHaveBeenCalledWith(
+        expect.objectContaining({ type: "SKIPPED", statusId: 3 })
+      );
+    });
+
+    it("does not report skipped results when excludeSkipped is enabled", async () => {
+      const r = new TestPlanItReporter({ ...defaultOptions, excludeSkipped: true });
+      r.onTestSkip(testStats({ title: "[789] is skipped", state: "skipped" }));
+      await flush(r);
+
+      expect(apiMocks.createJUnitTestResult).not.toHaveBeenCalled();
+      // An all-skipped spec never initializes or creates a run.
+      expect(r.getState().initialized).toBe(false);
+      expect(r.getState().testRunId).toBeUndefined();
+    });
+
+    it("still reports non-skipped results when excludeSkipped is enabled", async () => {
+      const r = new TestPlanItReporter({ ...defaultOptions, excludeSkipped: true });
+      r.onTestSkip(testStats({ title: "[789] is skipped", state: "skipped" }));
+      r.onTestPass(testStats({ title: "[123] passes" }));
+      await flush(r);
+
+      expect(apiMocks.createJUnitTestResult).toHaveBeenCalledTimes(1);
+      expect(apiMocks.createJUnitTestResult).toHaveBeenCalledWith(
+        expect.objectContaining({ repositoryCaseId: 123, type: "PASSED" })
+      );
+    });
+  });
+
   describe("getState", () => {
     it("should return current state", () => {
       const state = reporter.getState();

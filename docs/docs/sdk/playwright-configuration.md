@@ -42,6 +42,7 @@ reporter: [
 | `uploadAttachments` | `boolean` | `true` | Upload Playwright attachments (screenshots, videos, traces) to the result — see [Attachment Uploads](./playwright-attachments.md) |
 | `attachmentTypes` | `string[]` | all | Restrict which attachments upload, by attachment name or content-type prefix (e.g. `['image/']`) |
 | `includeStackTrace` | `boolean` | `true` | Include stack traces for failures |
+| `excludeSkipped` | `boolean` | `false` | Don't report skipped tests — they won't appear on the run or count toward its totals |
 | `completeRunOnFinish` | `boolean` | `true` | Mark run as complete when tests finish |
 | `timeout` | `number` | `30000` | API request timeout in ms |
 | `maxRetries` | `number` | `3` | Retry attempts for failed requests |

@@ -157,6 +157,7 @@ This strategy is opt-in and runs **before** name/create resolution. On no match 
 | `templateId` | `number \| string` | No | - | Template for auto-created cases (ID or name) |
 | `uploadScreenshots` | `boolean` | No | `true` | Upload intercepted screenshots |
 | `includeStackTrace` | `boolean` | No | `true` | Include stack traces in results |
+| `excludeSkipped` | `boolean` | No | `false` | Don't report skipped tests to TestPlanIt |
 | `completeRunOnFinish` | `boolean` | No | `true` | Mark test run as completed when done |
 | `oneReport` | `boolean` | No | `true` | Combine parallel workers from the same spec file into a single test run. Does not persist across spec file batches — use the service for that |
 | `timeout` | `number` | No | `30000` | API request timeout in ms |

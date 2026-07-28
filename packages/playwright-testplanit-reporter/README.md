@@ -104,6 +104,7 @@ caseIdPattern: /TEST-(\d+)/g  // JIRA-style:         "TEST-12345 should work"
 | `runAttachments` | `RunAttachmentInput[]` | No | - | Files to attach to the run (logs, reports, videos). Supports `{env:VAR}` |
 | `runMetadata` | `Record<string, string \| number \| boolean>` | No | - | Key/value metadata rendered into the run's documentation. Supports `{env:VAR}` |
 | `includeStackTrace` | `boolean` | No | `true` | Include stack traces in results |
+| `excludeSkipped` | `boolean` | No | `false` | Don't report skipped tests to TestPlanIt |
 | `completeRunOnFinish` | `boolean` | No | `true` | Mark the test run as completed when the run finishes |
 | `timeout` | `number` | No | `30000` | API request timeout in ms |
 | `maxRetries` | `number` | No | `3` | Number of retries for failed API requests |
