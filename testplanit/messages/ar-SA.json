@@ -3736,6 +3736,8 @@
       "recentResultsDescription": "عرض النتائج الأخيرة لتشغيل الاختبار",
       "recentAutomatedResultsTitle": "النتائج الآلية الأخيرة",
       "noRecentAutomatedResults": "لم يتم العثور على نتائج آلية حديثة.",
+      "automationRunsInProgress": "{count, plural, =1 {# Automation Run in Progress} other {# Automation Runs in Progress}}",
+      "automationRunsInProgressDescription": "حالة مباشرة لتشغيلات الاختبار الآلي الجارية.",
       "recentResultsDateRange": "نطاق التاريخ",
       "recentResultsElapsed": "الوقت المنقضي",
       "noRecentResults": "لم يتم العثور على نتائج حديثة.",

@@ -2,6 +2,7 @@
 
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
+import { AutomationRunsCard } from "@/components/AutomationRunsCard";
 import CompletedRunsLineChart from "@/components/dataVisualizations/CompletedRunsLineChart";
 import RecentResultsDonut from "@/components/dataVisualizations/RecentResultsDonut";
 import SummarySunburstChart, {
@@ -390,6 +391,17 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
       refetchInterval: activeTab === "active" ? 30000 : false, // Refetch every 30s when on active tab
     }
   ) ?? { data: [], isLoading: false, refetch: () => {} };
+
+  // In-progress automated runs for the summary card — unaffected by the
+  // list's manual/automated filter; the card always reflects what CI is
+  // doing right now.
+  const activeAutomatedRuns = useMemo(
+    () =>
+      (allIncompleteTestRuns ?? []).filter((run) =>
+        isAutomatedTestRunType(run.testRunType)
+      ),
+    [allIncompleteTestRuns]
+  );
 
   // Apply type filter to incomplete (active) runs
   const incompleteTestRuns = useMemo(() => {
@@ -1097,7 +1109,13 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
             </CardHeader>
             <CardContent className="flex flex-col">
               {/* Summary Metrics Display */}
-              <div className="mb-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="mb-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {numericProjectId != null && (
+                  <AutomationRunsCard
+                    projectId={numericProjectId}
+                    runs={activeAutomatedRuns}
+                  />
+                )}
                 {/* Card 1: Work Distribution - Conditional Render */}
                 {(isLoadingIncompleteRuns ||
                   (sunburstChartData.children &&
@@ -1327,7 +1345,7 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
                   completedRunsMonthlyData.some(
                     (monthData) => monthData.count > 0
                   )) && (
-                  <Card>
+                  <Card className="flex flex-col">
                     <CardHeader className="pb-2 flex flex-row items-start justify-between">
                       <div>
                         <CardTitle className="font-medium">
@@ -1352,7 +1370,7 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
                         </span>
                       </Button>
                     </CardHeader>
-                    <CardContent className="p-2">
+                    <CardContent className="p-2 flex-1">
                       {isLoadingCompletedRunsData ? (
                         <LoadingSpinner />
                       ) : completedRunsMonthlyData.some(

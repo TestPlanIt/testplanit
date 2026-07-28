@@ -3736,6 +3736,8 @@
       "recentResultsDescription": "查看测试运行的最新结果",
       "recentAutomatedResultsTitle": "近期自动结果",
       "noRecentAutomatedResults": "未找到最近的自动搜索结果。",
+      "automationRunsInProgress": "{count, plural, =1 {# Automation Run in Progress} other {# Automation Runs in Progress}}",
+      "automationRunsInProgressDescription": "正在运行的自动化测试运行的实时状态。",
       "recentResultsDateRange": "日期范围",
       "recentResultsElapsed": "过去",
       "noRecentResults": "未找到近期结果。",

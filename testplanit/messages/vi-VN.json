@@ -3736,6 +3736,8 @@
       "recentResultsDescription": "Xem kết quả gần đây của đợt chạy thử nghiệm",
       "recentAutomatedResultsTitle": "Kết quả tự động gần đây",
       "noRecentAutomatedResults": "Không tìm thấy kết quả tự động gần đây nào.",
+      "automationRunsInProgress": "{count, plural, =1 {# Automation Run in Progress} other {# Automation Runs in Progress}}",
+      "automationRunsInProgressDescription": "Trạng thái trực tiếp của các lượt chạy kiểm thử tự động đang thực hiện.",
       "recentResultsDateRange": "Khoảng thời gian",
       "recentResultsElapsed": "Đã trôi qua",
       "noRecentResults": "Không tìm thấy kết quả gần đây nào.",

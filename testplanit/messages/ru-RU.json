@@ -3736,6 +3736,8 @@
       "recentResultsDescription": "Ознакомьтесь с последними результатами тестового запуска.",
       "recentAutomatedResultsTitle": "Последние автоматизированные результаты",
       "noRecentAutomatedResults": "Не найдено ни одного недавнего автоматизированного результата.",
+      "automationRunsInProgress": "{count, plural, =1 {# Automation Run in Progress} other {# Automation Runs in Progress}}",
+      "automationRunsInProgressDescription": "Статус выполняемых автоматизированных тестовых прогонов в режиме реального времени.",
       "recentResultsDateRange": "Диапазон дат",
       "recentResultsElapsed": "Прошло",
       "noRecentResults": "Не найдено ни одного недавнего результата.",

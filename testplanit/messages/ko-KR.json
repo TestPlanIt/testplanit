@@ -3736,6 +3736,8 @@
       "recentResultsDescription": "최근 테스트 실행 결과를 확인하세요",
       "recentAutomatedResultsTitle": "최근 자동 검색 결과",
       "noRecentAutomatedResults": "최근 자동화된 검색 결과가 없습니다.",
+      "automationRunsInProgress": "{count, plural, =1 {진행 중인 자동화 실행 1개} other {진행 중인 자동화 실행 #개}}",
+      "automationRunsInProgressDescription": "실행 중인 자동화 테스트 실행의 실시간 상태입니다.",
       "recentResultsDateRange": "날짜 범위",
       "recentResultsElapsed": "경과 시간",
       "noRecentResults": "최근 검색 결과가 없습니다.",

@@ -3736,6 +3736,8 @@
       "recentResultsDescription": "Consultez les résultats récents de l'essai.",
       "recentAutomatedResultsTitle": "Résultats automatisés récents",
       "noRecentAutomatedResults": "Aucun résultat automatisé récent trouvé.",
+      "automationRunsInProgress": "{count, plural, =1 {# Automation Run in Progress} other {# Automation Runs in Progress}}",
+      "automationRunsInProgressDescription": "État en direct des exécutions de tests automatisées en cours.",
       "recentResultsDateRange": "Période couverte",
       "recentResultsElapsed": "Échéance",
       "noRecentResults": "Aucun résultat récent trouvé.",

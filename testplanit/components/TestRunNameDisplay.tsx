@@ -1,3 +1,5 @@
+"use client";
+
 import {
   Tooltip,
   TooltipContent,
@@ -5,6 +7,7 @@ import {
 } from "@/components/ui/tooltip";
 import { CirclePlay, Combine, Lock, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "~/lib/navigation";
 import { cn } from "~/utils";
 
@@ -14,7 +17,7 @@ interface TestRunNameDisplayProps {
         id?: number | string;
         name?: string;
         isDeleted?: boolean;
-        configurationGroupId?: number | null;
+        configurationGroupId?: number | string | null;
         configuration?: { id: number; name: string } | null;
         compositionLockedAt?: Date | string | null;
       }
@@ -36,6 +39,20 @@ export function TestRunNameDisplay({
   linkSuffix = "",
 }: TestRunNameDisplayProps) {
   const t = useTranslations("common.labels");
+
+  // Show the full name in a tooltip only when the rendered span is
+  // actually clipped (e.g. a `truncate` className in a narrow layout).
+  const nameRef = useRef<HTMLSpanElement>(null);
+  const [isTruncated, setIsTruncated] = useState(false);
+  useEffect(() => {
+    const el = nameRef.current;
+    if (!el) return;
+    const measure = () => setIsTruncated(el.scrollWidth > el.clientWidth);
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [testRun?.name]);
 
   if (!testRun) {
     return <span>{t("unknown")}</span>;
@@ -97,7 +114,14 @@ export function TestRunNameDisplay({
   const content = (
     <>
       {icon}
-      <span className={cn("min-w-0", className)}>{displayName}</span>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span ref={nameRef} className={cn("min-w-0", className)}>
+            {displayName}
+          </span>
+        </TooltipTrigger>
+        {isTruncated && <TooltipContent>{displayName}</TooltipContent>}
+      </Tooltip>
       {configIndicator}
       {lockIndicator}
     </>

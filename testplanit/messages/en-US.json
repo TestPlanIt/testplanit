@@ -3736,6 +3736,8 @@
       "recentResultsDescription": "View the recent results of the test run",
       "recentAutomatedResultsTitle": "Recent Automated Results",
       "noRecentAutomatedResults": "No recent automated results found.",
+      "automationRunsInProgress": "{count, plural, =1 {# Automation Run in Progress} other {# Automation Runs in Progress}}",
+      "automationRunsInProgressDescription": "Live status of running automated test runs.",
       "recentResultsDateRange": "Date Range",
       "recentResultsElapsed": "Elapsed",
       "noRecentResults": "No recent results found.",

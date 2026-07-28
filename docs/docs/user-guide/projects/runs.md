@@ -17,9 +17,42 @@ The page is structured within a card layout and features:
     - Shows the current Project Name and Icon.
     - Includes an **Add Test Run** button (visible to users with appropriate permissions - Admin or Project Admin) to open the [Add Test Run Modal](./add-test-run-modal.md).
 
-2. **Tabs**:
+2. **Summary Cards**: A row of at-a-glance cards above the run list (see [Summary Cards](#summary-cards)).
+
+3. **Tabs**:
     - **Active**: Shows test runs that are currently in progress (not marked as completed).
     - **Completed**: Shows test runs that have been marked as completed.
+
+## Summary Cards
+
+The top of the page shows a row of summary cards. Each card appears only when it has data to show, so the row adapts to the project's activity.
+
+### Automation Runs in Progress
+
+Shows the automated test runs currently executing in the project, so you can monitor CI activity without leaving the page. Each row displays:
+
+- The run name, linking to the [run's detail page](./run-details.md). Hovering a truncated name reveals the full name.
+- A miniature status bar showing the proportion of results by status (passed, failed, skipped, etc.).
+- The number of results received so far.
+- A spinner while the run is still actively receiving results.
+
+The card updates live as results arrive and disappears when no automated runs are in progress. It always reflects every in-progress automated run, regardless of the [Type Filter](#filtering) selection.
+
+### Recent Manual Results
+
+A donut chart summarizing manual test results recorded in the seven days leading up to the most recent result, grouped by status, with the overall success rate.
+
+### Recent Automated Results
+
+The same seven-day summary for automated (imported) results. Results are grouped by the status they were mapped to during import.
+
+### Completion Trend
+
+A line chart of test runs completed per month over the previous six months, split into manual, automated, and total series.
+
+:::tip Expanding Charts
+The chart cards include an expand button that opens the chart in a larger overlay for easier reading.
+:::
 
 ## Filtering
 

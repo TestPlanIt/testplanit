@@ -3736,6 +3736,8 @@
       "recentResultsDescription": "Bekijk de recente resultaten van de testrun",
       "recentAutomatedResultsTitle": "Recente geautomatiseerde resultaten",
       "noRecentAutomatedResults": "Geen recente geautomatiseerde resultaten gevonden.",
+      "automationRunsInProgress": "{count, plural, =1 {# Automation Run in Progress} other {# Automation Runs in Progress}}",
+      "automationRunsInProgressDescription": "Livestatus van lopende geautomatiseerde testruns.",
       "recentResultsDateRange": "Datumbereik",
       "recentResultsElapsed": "Verstreken",
       "noRecentResults": "Er zijn geen recente resultaten gevonden.",

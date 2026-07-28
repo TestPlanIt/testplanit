@@ -509,8 +509,11 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
       // Ignore the `sync` checkpoint (fires on every reconnect) so routine
       // EventSource reconnects don't storm the four project-wide invalidations.
       if (event.event === "sync") return;
+      // Bare prefix on purpose: the page's AutomationRunsCard keys its
+      // summaries query on its own id subset, so invalidating only this
+      // list's exact key would leave the card stale.
       void queryClient.invalidateQueries({
-        queryKey: ["batchTestRunSummaries", testRunIds],
+        queryKey: ["batchTestRunSummaries"],
       });
       void queryClient.invalidateQueries({
         queryKey: ["zenstack", "TestRuns"],
@@ -522,7 +525,7 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
         queryKey: ["zenstack", "ReviewRequest"],
       });
     },
-    [queryClient, testRunIds]
+    [queryClient]
   );
   useProjectTestRunStream({
     projectId: !isNaN(numericProjectId) ? numericProjectId : null,

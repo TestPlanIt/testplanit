@@ -3736,6 +3736,8 @@
       "recentResultsDescription": "テスト実行の最新の結果を表示する",
       "recentAutomatedResultsTitle": "最近の自動結果",
       "noRecentAutomatedResults": "最近の自動結果が見つかりません。",
+      "automationRunsInProgress": "{count, plural, =1 {# Automation Run in Progress} other {# Automation Runs in Progress}}",
+      "automationRunsInProgressDescription": "実行中の自動テスト実行のライブステータス。",
       "recentResultsDateRange": "日付範囲",
       "recentResultsElapsed": "経過",
       "noRecentResults": "最近の結果は見つかりませんでした。",

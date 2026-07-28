@@ -3736,6 +3736,8 @@
       "recentResultsDescription": "Test çalışmasının son sonuçlarını görüntüleyin.",
       "recentAutomatedResultsTitle": "Son Otomatik Sonuçlar",
       "noRecentAutomatedResults": "Son otomatik arama sonuçlarına rastlanmadı.",
+      "automationRunsInProgress": "{count, plural, =1 {# Automation Run in Progress} other {# Automation Runs in Progress}}",
+      "automationRunsInProgressDescription": "Çalışan otomatik test çalıştırmalarının canlı durumu.",
       "recentResultsDateRange": "Tarih Aralığı",
       "recentResultsElapsed": "Geçen süre",
       "noRecentResults": "Son sonuçlara rastlanmadı.",
