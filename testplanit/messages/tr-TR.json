@@ -6056,7 +6056,8 @@
         "entityName": "Varlık Adı",
         "userId": "Kullanıcı kimliği",
         "ipAddress": "IP Adresi",
-        "userAgent": "Kullanıcı Aracısı"
+        "userAgent": "Kullanıcı Aracısı",
+        "source": "Kaynak"
       },
       "exportCsv": "CSV olarak dışa aktar",
       "timeRange": "Zaman aralığı",

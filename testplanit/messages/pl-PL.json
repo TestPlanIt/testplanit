@@ -6056,7 +6056,8 @@
         "entityName": "Nazwa jednostki",
         "userId": "Identyfikator użytkownika",
         "ipAddress": "Adres IP",
-        "userAgent": "Agent użytkownika"
+        "userAgent": "Agent użytkownika",
+        "source": "Źródło"
       },
       "exportCsv": "Eksportuj CSV",
       "timeRange": "Zakres czasu",

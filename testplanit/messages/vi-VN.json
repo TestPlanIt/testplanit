@@ -6056,7 +6056,8 @@
         "entityName": "Tên thực thể",
         "userId": "ID người dùng",
         "ipAddress": "Địa chỉ IP",
-        "userAgent": "Tác nhân người dùng"
+        "userAgent": "Tác nhân người dùng",
+        "source": "Nguồn"
       },
       "exportCsv": "Xuất CSV",
       "timeRange": "Khoảng thời gian",

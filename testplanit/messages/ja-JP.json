@@ -6056,7 +6056,8 @@
         "entityName": "エンティティ名",
         "userId": "ユーザーID",
         "ipAddress": "IPアドレス",
-        "userAgent": "ユーザーエージェント"
+        "userAgent": "ユーザーエージェント",
+        "source": "ソース"
       },
       "exportCsv": "CSVエクスポート",
       "timeRange": "期間",

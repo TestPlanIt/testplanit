@@ -98,7 +98,10 @@ test.describe("Audit Log Management - Filtering", () => {
     });
 
     // Removing the badge clears the filter back to "All Actions".
-    await actionFilter.locator('[role="button"]').first().click({ force: true });
+    await actionFilter
+      .locator('[role="button"]')
+      .first()
+      .click({ force: true });
     await expect(actionFilter).toContainText(/all actions/i, { timeout: 5000 });
   });
 

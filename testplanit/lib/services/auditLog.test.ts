@@ -491,6 +491,84 @@ describe("AuditLog Service", () => {
       });
     });
 
+    it("resolves an attachment through whichever of its parents is set", async () => {
+      // An attachment hangs off exactly one of seven possible parents, each a
+      // different number of hops from the project; the include asks for all of
+      // them and the first populated path wins.
+      const { client, findUnique } = clientFor("attachments", {
+        id: 900,
+        name: "failure.png",
+        testCase: null,
+        session: null,
+        sessionResults: null,
+        testRuns: null,
+        testRunResults: null,
+        testRunStepResult: { testRunResult: { testRun: { projectId: 77 } } },
+        junitTestResult: null,
+      });
+      const scope = await resolveAuditEntityScope(
+        client,
+        "Attachments",
+        "900",
+        {
+          needName: false,
+          needProjectId: true,
+        }
+      );
+      expect(scope).toEqual({ projectId: 77 });
+      expect(findUnique).toHaveBeenCalledWith({
+        where: { id: 900 },
+        include: expect.objectContaining({
+          testRunStepResult: {
+            select: {
+              testRunResult: {
+                select: { testRun: { select: { projectId: true } } },
+              },
+            },
+          },
+        }),
+      });
+    });
+
+    it("resolves an attachment hung off a JUnit result", async () => {
+      const { client } = clientFor("attachments", {
+        id: 901,
+        testRunStepResult: null,
+        junitTestResult: { testSuite: { testRun: { projectId: 12 } } },
+      });
+      const scope = await resolveAuditEntityScope(
+        client,
+        "Attachments",
+        "901",
+        {
+          needName: false,
+          needProjectId: true,
+        }
+      );
+      expect(scope).toEqual({ projectId: 12 });
+    });
+
+    it("scopes a Projects row from its own id without querying", async () => {
+      const { client, findUnique } = clientFor("projects", {});
+      const scope = await resolveAuditEntityScope(client, "Projects", "31", {
+        needName: false,
+        needProjectId: true,
+      });
+      expect(scope).toEqual({ projectId: 31 });
+      expect(findUnique).not.toHaveBeenCalled();
+    });
+
+    it("keeps a Projects row's own scope even when the project is gone", async () => {
+      // findUnique returns null (hard-deleted), but the id alone answers the
+      // project question, so the scope must not regress to empty.
+      const { client } = clientFor("projects", null);
+      const scope = await resolveAuditEntityScope(client, "Projects", "31", {
+        needName: true,
+        needProjectId: true,
+      });
+      expect(scope).toEqual({ projectId: 31 });
+    });
+
     it("passes a cuid primary key through as a string", async () => {
       const { client, findUnique } = clientFor("issue", {
         id: "cmqffq5ij0005",

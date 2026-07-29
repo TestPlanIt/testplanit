@@ -6056,7 +6056,8 @@
         "entityName": "實體名稱",
         "userId": "使用者身分",
         "ipAddress": "IP位址",
-        "userAgent": "使用者代理"
+        "userAgent": "使用者代理",
+        "source": "來源"
       },
       "exportCsv": "匯出 CSV 文件",
       "timeRange": "時間範圍",

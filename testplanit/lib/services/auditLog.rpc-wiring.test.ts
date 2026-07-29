@@ -245,6 +245,10 @@ describe("project-scope completeness for generically-audited types", () => {
       // Parent-relation-scoped types reach projectId through an ancestor and
       // legitimately lack a scalar column.
       if (PROJECT_SCOPE_PARENTS[entityType]) continue;
+      // Projects is self-scoped: its own id IS the project, so
+      // resolveAuditEntityScope answers from the entityId with no column and no
+      // re-read. It is neither scalar- nor parent-scoped.
+      if (entityType === "Projects") continue;
       expect(
         modelsWithScalarProjectId.has(entityType),
         `${entityType} is in PROJECT_SCOPED_ENTITY_TYPES but has no scalar projectId column and no PROJECT_SCOPE_PARENTS entry`

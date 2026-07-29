@@ -520,6 +520,180 @@ async function resolveExistingProjectIds(
 }
 
 /**
+ * Audited root tables carrying a scalar `projectId`, mapped to their primary-key
+ * type. A row attributed to one of these — either because it IS such a row or
+ * because a child rolled up to it — can always be scoped by reading the owner's
+ * project.
+ *
+ * Every entry must be a table in scripts/trigger-registry.ts (an unaudited table
+ * never appears as an entityType) AND declare `projectId Int` in schema.zmodel.
+ * The pk type selects the array cast for the batched lookup: casting `id` itself
+ * would work for both but defeats the primary-key index on tables large enough
+ * for this to matter.
+ */
+const PROJECT_SCOPED_ROOT_TABLES: Record<string, "int" | "text"> = {
+  RepositoryCases: "int",
+  RepositoryCaseVersions: "int",
+  TestRuns: "int",
+  Sessions: "int",
+  Milestones: "int",
+  SharedStepGroup: "int",
+  Repositories: "int",
+  RepositoryFolders: "int",
+  DataSet: "int",
+  Issue: "int",
+  DuplicateScanResult: "int",
+  StepSequenceMatch: "int",
+  ReviewRequest: "text",
+  ProjectIntegration: "text",
+  WebhookConfig: "text",
+  Comment: "text",
+};
+
+/**
+ * Ids that cannot address a single row: empty, composite ("5:390"), or the
+ * synthetic placeholders bulk operations mint.
+ */
+function isAddressableId(entityId: string): boolean {
+  return (
+    entityId !== "" &&
+    !entityId.includes(":") &&
+    !/^(bulk|createMany|deleteMany|create|update|delete)-/.test(entityId)
+  );
+}
+
+/**
+ * Resolve every attachment's project in ONE query. Attachments has no `projectId`
+ * column and no single owner: it hangs off a case, a session, a session result, a
+ * run, a run result, a run step result, or a JUnit result. Each parent reaches a
+ * project by a different number of hops, so they are resolved together as
+ * LEFT JOINs and COALESCEd in FK-declaration order (only one is ever non-null).
+ */
+async function resolveAttachmentProjectIds(
+  tx: RawTxClient,
+  attachmentIds: number[]
+): Promise<Map<string, number>> {
+  const rows = await tx.$queryRawUnsafe<
+    Array<{ id: number | string; projectId: number | string | null }>
+  >(
+    `SELECT a.id,
+            COALESCE(rc."projectId", s1."projectId", s2."projectId",
+                     tr1."projectId", tr2."projectId", tr3."projectId", tr4."projectId") AS "projectId"
+       FROM "Attachments" a
+       LEFT JOIN "RepositoryCases"    rc   ON rc.id   = a."testCaseId"
+       LEFT JOIN "Sessions"           s1   ON s1.id   = a."sessionId"
+       LEFT JOIN "SessionResults"     sr   ON sr.id   = a."sessionResultsId"
+       LEFT JOIN "Sessions"           s2   ON s2.id   = sr."sessionId"
+       LEFT JOIN "TestRuns"           tr1  ON tr1.id  = a."testRunsId"
+       LEFT JOIN "TestRunResults"     trr  ON trr.id  = a."testRunResultsId"
+       LEFT JOIN "TestRuns"           tr2  ON tr2.id  = trr."testRunId"
+       LEFT JOIN "TestRunStepResults" tsr  ON tsr.id  = a."testRunStepResultId"
+       LEFT JOIN "TestRunResults"     trr2 ON trr2.id = tsr."testRunResultId"
+       LEFT JOIN "TestRuns"           tr3  ON tr3.id  = trr2."testRunId"
+       LEFT JOIN "JUnitTestResult"    jr   ON jr.id   = a."junitTestResultId"
+       LEFT JOIN "JUnitTestSuite"     js   ON js.id   = jr."testSuiteId"
+       LEFT JOIN "TestRuns"           tr4  ON tr4.id  = js."testRunId"
+      WHERE a.id = ANY($1::int[])`,
+    attachmentIds
+  );
+  const out = new Map<string, number>();
+  for (const r of rows) {
+    if (r.projectId != null) out.set(String(r.id), Number(r.projectId));
+  }
+  return out;
+}
+
+/**
+ * Last-resort project scoping for rows the capture substrate could not scope.
+ *
+ * `project_id` is written by the trigger from the row's own `projectCol` or the
+ * GUC subject (db/audit_row_change.sql). Child, value and join tables declare
+ * neither, so they rely on the owning root row's snapshot being present in the
+ * SAME operation (ownerSnapshot passes 1-3 above). When the owner was written by
+ * an EARLIER request — a reporter adding cases to a run it created minutes ago, a
+ * tag applied to an existing case — no snapshot exists and the row lands with no
+ * project, which drops it out of the project audit log entirely.
+ *
+ * Reading the owner's project live is sound in a way a live `entityName` read
+ * would NOT be: an entity never moves between projects, so the value cannot drift
+ * from what it was at write time. `entityName` therefore keeps its write-time
+ * snapshot and is deliberately left alone here.
+ *
+ * Batched: one query per owning table for the whole poll batch, plus one for
+ * attachments — never per row.
+ */
+export async function backfillProjectIds(
+  tx: RawTxClient,
+  materialized: MaterializedRow[]
+): Promise<void> {
+  const gaps = materialized.filter((m) => toProjectId(m.projectId) == null);
+  if (gaps.length === 0) return;
+
+  // A Projects row IS its own scope — the entityId is the project id.
+  for (const m of gaps) {
+    if (m.entityType === "Projects" && /^\d+$/.test(m.entityId)) {
+      m.projectId = m.entityId;
+    }
+  }
+
+  // Group the remaining gaps by owning table, one batched lookup each.
+  const idsByTable = new Map<string, Set<string>>();
+  for (const m of gaps) {
+    if (toProjectId(m.projectId) != null) continue;
+    const pkType = PROJECT_SCOPED_ROOT_TABLES[m.entityType];
+    if (pkType == null) continue;
+    if (!isAddressableId(m.entityId)) continue;
+    if (pkType === "int" && !/^\d+$/.test(m.entityId)) continue;
+    const ids = idsByTable.get(m.entityType);
+    if (ids) ids.add(m.entityId);
+    else idsByTable.set(m.entityType, new Set([m.entityId]));
+  }
+
+  for (const [table, ids] of idsByTable) {
+    // `table` and its pk cast come only from the static PROJECT_SCOPED_ROOT_TABLES
+    // registry (never row data), so interpolating them is safe; ids are bound as $1.
+    const pkType = PROJECT_SCOPED_ROOT_TABLES[table];
+    const rows = await tx.$queryRawUnsafe<
+      Array<{ id: number | string; projectId: number | string | null }>
+    >(
+      `SELECT id, "projectId" FROM "${table}" WHERE id = ANY($1::${pkType}[])`,
+      pkType === "int" ? [...ids].map(Number) : [...ids]
+    );
+    const found = new Map<string, number>();
+    for (const r of rows) {
+      if (r.projectId != null) found.set(String(r.id), Number(r.projectId));
+    }
+    for (const m of gaps) {
+      if (m.entityType !== table) continue;
+      const pid = found.get(m.entityId);
+      if (pid != null) m.projectId = String(pid);
+    }
+  }
+
+  // Attachments self-attribute (they carry their own filename, which is what the
+  // auditor wants to read) but have no owning column, so they resolve separately.
+  const attachmentIds = gaps
+    .filter(
+      (m) =>
+        m.entityType === "Attachments" &&
+        toProjectId(m.projectId) == null &&
+        /^\d+$/.test(m.entityId)
+    )
+    .map((m) => Number(m.entityId));
+  // (Attachments.id is an autoincrement int — the numeric guard is the pk check.)
+  if (attachmentIds.length > 0) {
+    const found = await resolveAttachmentProjectIds(tx, [
+      ...new Set(attachmentIds),
+    ]);
+    for (const m of gaps) {
+      if (m.entityType !== "Attachments") continue;
+      const pid = found.get(m.entityId);
+      if (pid != null) m.projectId = String(pid);
+    }
+  }
+}
+
+/**
  * Insert ONE materialized row into AuditLog, idempotently. Carries `ON CONFLICT (operationId,
  * sourceTable, entityId, action) WHERE operationId IS NOT NULL DO NOTHING` — a partial unique index —
  * so a re-poll over already-materialized non-null-operationId rows inserts nothing. Returns the count
@@ -974,6 +1148,12 @@ export async function pollDataChangeLogsOnce(
         );
       }
     }
+
+    // Scope any row the capture substrate could not: rolled-up children whose
+    // owner was written by an earlier request, and attachments (no project
+    // column of their own). Runs before the merge so every row of a merged
+    // identity carries the same project.
+    await backfillProjectIds(tx, materialized);
 
     // Merge same-identity rows so multiple children of one owner in one operation
     // are all preserved instead of being dropped by the idempotency index.

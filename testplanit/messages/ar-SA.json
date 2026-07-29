@@ -3753,7 +3753,7 @@
       "recentResultsDescription": "عرض النتائج الأخيرة لتشغيل الاختبار",
       "recentAutomatedResultsTitle": "النتائج الآلية الأخيرة",
       "noRecentAutomatedResults": "لم يتم العثور على نتائج آلية حديثة.",
-      "automationRunsInProgress": "{count, plural, =1 {# Automation Run in Progress} other {# Automation Runs in Progress}}",
+      "automationRunsInProgress": "{count, plural, =1 {# عملية تشغيل تلقائي قيد التنفيذ} other {# عمليات تشغيل تلقائي قيد التنفيذ}}",
       "automationRunsInProgressDescription": "حالة مباشرة لتشغيلات الاختبار الآلي الجارية.",
       "recentResultsDateRange": "نطاق التاريخ",
       "recentResultsElapsed": "الوقت المنقضي",
@@ -6056,7 +6056,8 @@
         "entityName": "اسم الكيان",
         "userId": "معرّف المستخدم",
         "ipAddress": "عنوان IP",
-        "userAgent": "وكيل المستخدم"
+        "userAgent": "وكيل المستخدم",
+        "source": "المصدر"
       },
       "exportCsv": "تصدير CSV",
       "timeRange": "النطاق الزمني",

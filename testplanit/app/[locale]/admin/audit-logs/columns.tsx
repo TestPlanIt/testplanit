@@ -286,6 +286,29 @@ export const useColumns = (
         },
       },
       {
+        id: "sourceTable",
+        accessorFn: (row) => row.sourceTable ?? "",
+        header: t("columns.source"),
+        enableSorting: true,
+        size: 150,
+        // Diagnostic detail — off unless an admin opts in via ColumnSelection.
+        meta: { isVisible: false },
+        cell: ({ row }) => {
+          // The Postgres table the change was captured from. Names the exact
+          // capture path behind a row — a child table here (e.g. TestRunCases
+          // under a TestRuns entity) means the row is a rolled-up child, not a
+          // write to the entity itself. Null for app-emitted semantic events.
+          const sourceTable = row.original.sourceTable;
+          return sourceTable ? (
+            <span className="font-mono text-xs truncate block">
+              {sourceTable}
+            </span>
+          ) : (
+            <span className="text-muted-foreground">-</span>
+          );
+        },
+      },
+      {
         id: "actions",
         header: "",
         enableSorting: false,

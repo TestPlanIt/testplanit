@@ -110,12 +110,31 @@ export const ENTITY_NAME_FIELDS: Record<string, string | string[]> = {
  * scalar `projectId` column. Maps the audit entityType to the dotted relation
  * path that reaches the project-bearing ancestor. Consumed by
  * `resolveAuditEntityScope` to backfill `projectId` from a committed re-read.
+ *
+ * A type with several possible parents lists them all; the first path that
+ * resolves wins. `Attachments` is the case that needs it — one attachment hangs
+ * off exactly one of a case, a session, a session result, a run, a run result, a
+ * run step result, or a JUnit result, and each reaches the project by a
+ * different number of hops.
  */
-export const PROJECT_SCOPE_PARENTS: Record<string, string> = {
+export const PROJECT_SCOPE_PARENTS: Record<string, string | string[]> = {
   TestRunCases: "testRun",
   TestRunResults: "testRun",
   TestRunCaseIteration: "testRunCase.testRun",
   CaseFieldValues: "testCase",
+  TestRunStepResults: "testRunResult.testRun",
+  SessionResults: "session",
+  Attachments: [
+    "testCase",
+    "session",
+    "sessionResults.session",
+    "testRuns",
+    "testRunResults.testRun",
+    "testRunStepResult.testRunResult.testRun",
+    "junitTestResult.testSuite.testRun",
+  ],
+  JUnitTestResult: "testSuite.testRun",
+  JUnitTestSuite: "testRun",
 };
 
 /**
@@ -146,11 +165,22 @@ export const PROJECT_SCOPED_ENTITY_TYPES: ReadonlySet<string> = new Set([
   "LlmFeatureConfig",
   "UserProjectPermission",
   "GroupProjectPermission",
+  "Repositories",
+  "RepositoryFolders",
+  "DataSet",
+  "WebhookConfig",
+  // A Projects row is its own scope — resolved from the entityId, no re-read.
+  "Projects",
   // Project-scoped through a parent relation (see PROJECT_SCOPE_PARENTS)
   "TestRunCases",
   "TestRunResults",
   "TestRunCaseIteration",
   "CaseFieldValues",
+  "TestRunStepResults",
+  "SessionResults",
+  "Attachments",
+  "JUnitTestResult",
+  "JUnitTestSuite",
 ]);
 
 /**
@@ -602,13 +632,30 @@ export async function resolveAuditEntityScope(
   if (!needName && !needProjectId) return {};
 
   const nameConfig = ENTITY_NAME_FIELDS[entityType];
-  const parentPath = PROJECT_SCOPE_PARENTS[entityType];
+  const parentConfig = PROJECT_SCOPE_PARENTS[entityType];
+  const parentPaths =
+    parentConfig == null
+      ? []
+      : Array.isArray(parentConfig)
+        ? parentConfig
+        : [parentConfig];
   const projectScoped = PROJECT_SCOPED_ENTITY_TYPES.has(entityType);
+
+  // A Projects row IS its own scope — read straight off the id, so it resolves
+  // without a query and survives the project having since been deleted.
+  const ownProjectId =
+    needProjectId && entityType === "Projects" && /^\d+$/.test(entityId)
+      ? Number(entityId)
+      : undefined;
+  /** What to return when the re-read can't run or comes back empty. */
+  const fallback: { projectId?: number } =
+    ownProjectId !== undefined ? { projectId: ownProjectId } : {};
 
   // Decide whether a re-read can possibly help before paying for the query.
   const canResolveName = needName && nameConfig != null;
-  const canResolveProjectId = needProjectId && projectScoped;
-  if (!canResolveName && !canResolveProjectId) return {};
+  const canResolveProjectId =
+    needProjectId && projectScoped && ownProjectId === undefined;
+  if (!canResolveName && !canResolveProjectId) return fallback;
 
   // Synthetic ids (bulk ops), composite-key strings ("5:390"), and empty ids
   // cannot be re-read by a single-column primary key.
@@ -617,11 +664,11 @@ export async function resolveAuditEntityScope(
     entityId.includes(":") ||
     /^(bulk|createMany|deleteMany|create|update|delete)-/.test(entityId)
   ) {
-    return {};
+    return fallback;
   }
 
   const delegate = client[accessorForEntityType(entityType)];
-  if (!delegate?.findUnique) return {};
+  if (!delegate?.findUnique) return fallback;
 
   // Compose the include: relation-derived name (dot-notation config) and/or a
   // parent-derived projectId. Scalar fields (own `name`, own `projectId`) are
@@ -635,11 +682,10 @@ export async function resolveAuditEntityScope(
     const [rel, field] = nameConfig.split(".", 2);
     include[rel] = { select: { [field]: true } };
   }
-  if (canResolveProjectId && parentPath) {
-    Object.assign(
-      include,
-      nestedSelectInclude(parentPath.split("."), "projectId")
-    );
+  if (canResolveProjectId) {
+    for (const path of parentPaths) {
+      Object.assign(include, nestedSelectInclude(path.split("."), "projectId"));
+    }
   }
 
   // Numeric PKs must be passed as numbers; cuid/string PKs pass through.
@@ -655,11 +701,11 @@ export async function resolveAuditEntityScope(
         : { where: { id: idValue } }
     );
   } catch {
-    return {};
+    return fallback;
   }
-  if (!row) return {};
+  if (!row) return fallback;
 
-  const resolved: { entityName?: string; projectId?: number } = {};
+  const resolved: { entityName?: string; projectId?: number } = { ...fallback };
   if (canResolveName) {
     const name = extractEntityName(entityType, row);
     if (name) resolved.entityName = name;
@@ -667,9 +713,15 @@ export async function resolveAuditEntityScope(
   if (canResolveProjectId) {
     if (typeof row.projectId === "number") {
       resolved.projectId = row.projectId;
-    } else if (parentPath) {
-      const pid = nestedValue(row, parentPath.split("."), "projectId");
-      if (typeof pid === "number") resolved.projectId = pid;
+    } else {
+      // First parent path that resolves wins — only one is ever populated.
+      for (const path of parentPaths) {
+        const pid = nestedValue(row, path.split("."), "projectId");
+        if (typeof pid === "number") {
+          resolved.projectId = pid;
+          break;
+        }
+      }
     }
   }
   return resolved;

@@ -6056,7 +6056,8 @@
         "entityName": "Entiteitsnaam",
         "userId": "Gebruikers-ID",
         "ipAddress": "IP-adres",
-        "userAgent": "Gebruikersagent"
+        "userAgent": "Gebruikersagent",
+        "source": "Bron"
       },
       "exportCsv": "Exporteer naar CSV",
       "timeRange": "Tijdsbereik",
