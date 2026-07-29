@@ -157,21 +157,31 @@ vi.mock("@testplanit/api", () => {
 });
 
 // Mock shared state utilities
-vi.mock("./shared.js", () => ({
-  readSharedState: vi.fn().mockReturnValue(null),
-  writeSharedState: vi.fn(),
-  writeSharedStateIfAbsent: vi.fn(),
-  deleteSharedState: vi.fn(),
-  incrementWorkerCount: vi.fn(),
-  decrementWorkerCount: vi.fn().mockReturnValue(false),
-}));
+vi.mock("./shared.js", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("./shared.js")>();
+  return {
+    RUN_ID_ENV_VAR: actual.RUN_ID_ENV_VAR,
+    parseEnvTestRunId: actual.parseEnvTestRunId,
+    readSharedState: vi.fn().mockReturnValue(null),
+    writeSharedState: vi.fn(),
+    writeSharedStateIfAbsent: vi.fn(),
+    writeSharedStateForRun: vi.fn(),
+    deleteSharedState: vi.fn(),
+    incrementWorkerCount: vi.fn(),
+    decrementWorkerCount: vi.fn().mockReturnValue(false),
+  };
+});
 
 // Import after mocks are set up
 import TestPlanItReporter from "./reporter.js";
 import {
   readSharedState,
+  writeSharedStateIfAbsent,
+  writeSharedStateForRun,
+  deleteSharedState,
   incrementWorkerCount,
   decrementWorkerCount,
+  RUN_ID_ENV_VAR,
 } from "./shared.js";
 
 describe("TestPlanItReporter", () => {
@@ -1204,6 +1214,475 @@ describe("service-managed mode", () => {
 
       expect(apiMocks.findTestCaseByCustomField).not.toHaveBeenCalled();
       expect(apiMocks.findOrCreateTestCase).toHaveBeenCalledTimes(1);
+    });
+  });
+});
+
+describe("externally managed test run", () => {
+  const defaultOptions = {
+    domain: "https://testplanit.example.com",
+    apiToken: "tpi_test_token",
+    projectId: 1,
+  };
+
+  const mockedReadSharedState = vi.mocked(readSharedState);
+  const mockedWriteSharedStateIfAbsent = vi.mocked(writeSharedStateIfAbsent);
+  const mockedWriteSharedStateForRun = vi.mocked(writeSharedStateForRun);
+  const mockedDeleteSharedState = vi.mocked(deleteSharedState);
+  const mockedDecrementWorkerCount = vi.mocked(decrementWorkerCount);
+
+  const runner = () =>
+    ({
+      cid: "0-0",
+      config: { framework: "mocha" },
+      capabilities: { browserName: "chrome", platformName: "macOS" },
+      specs: ["/test/specs/login.spec.js"],
+    }) as unknown as RunnerStats;
+
+  const passingTest = (title = "[555] logs in") =>
+    ({
+      type: "test",
+      title,
+      fullTitle: `Login > ${title}`,
+      uid: `uid-${title}`,
+      cid: "0-0",
+      state: "passed",
+      duration: 100,
+      start: new Date(),
+      end: new Date(),
+      retries: 0,
+    }) as unknown as TestStats;
+
+  const flush = async (r: TestPlanItReporter) => {
+    const ops = (r as unknown as { pendingOperations: Set<Promise<void>> }).pendingOperations;
+    for (let i = 0; i < 10 && ops.size > 0; i++) {
+      await Promise.allSettled([...ops]);
+    }
+  };
+
+  // Report one result, the way a real invocation would. `currentSpec` is set by
+  // the WDIOReporter base class during onSuiteStart; the mocked base class in
+  // this file does not, so it is assigned here.
+  const driveResults = async (r: TestPlanItReporter) => {
+    r.onRunnerStart(runner());
+    r.onSuiteStart({ title: "Login", uid: "s1" } as unknown as SuiteStats);
+    (r as any).currentSpec = "/test/specs/login.spec.js";
+    r.onTestPass(passingTest());
+    await flush(r);
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockedReadSharedState.mockReturnValue(null);
+    delete process.env[RUN_ID_ENV_VAR];
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    delete process.env[RUN_ID_ENV_VAR];
+  });
+
+  describe("resolution precedence", () => {
+    it("pins the run from TESTPLANIT_RUN_ID", () => {
+      process.env[RUN_ID_ENV_VAR] = "984";
+      const reporter = new TestPlanItReporter(defaultOptions);
+
+      expect(reporter.getState().testRunId).toBe(984);
+      expect((reporter as any).externallyManaged).toBe(true);
+    });
+
+    it("prefers a numeric testRunId option over the environment variable", () => {
+      process.env[RUN_ID_ENV_VAR] = "984";
+      const reporter = new TestPlanItReporter({ ...defaultOptions, testRunId: 42 });
+
+      expect(reporter.getState().testRunId).toBe(42);
+    });
+
+    it("prefers the environment variable over a run name lookup", async () => {
+      process.env[RUN_ID_ENV_VAR] = "984";
+      const reporter = new TestPlanItReporter({
+        ...defaultOptions,
+        testRunId: "Web Regression Tests - DEV #984",
+      });
+      const findByName = vi.spyOn((reporter as any).client, "findTestRunByName");
+
+      await (reporter as any).initialize();
+
+      expect(reporter.getState().testRunId).toBe(984);
+      expect(findByName).not.toHaveBeenCalled();
+    });
+
+    it("falls back to a run name lookup and marks the run externally managed", async () => {
+      const reporter = new TestPlanItReporter({
+        ...defaultOptions,
+        testRunId: "Web Regression Tests - DEV #984",
+      });
+      const createTestRun = vi.spyOn((reporter as any).client, "createTestRun");
+
+      await (reporter as any).initialize();
+
+      expect(reporter.getState().testRunId).toBe(123);
+      expect((reporter as any).externallyManaged).toBe(true);
+      expect(createTestRun).not.toHaveBeenCalled();
+    });
+
+    it("ignores a non-numeric environment variable", () => {
+      process.env[RUN_ID_ENV_VAR] = "${RUN_ID}";
+      const reporter = new TestPlanItReporter(defaultOptions);
+
+      expect(reporter.getState().testRunId).toBeUndefined();
+      expect((reporter as any).externallyManaged).toBe(false);
+    });
+
+    it("ignores an empty environment variable", () => {
+      process.env[RUN_ID_ENV_VAR] = "   ";
+      const reporter = new TestPlanItReporter(defaultOptions);
+
+      expect(reporter.getState().testRunId).toBeUndefined();
+      expect((reporter as any).externallyManaged).toBe(false);
+    });
+
+    it("takes precedence over the oneReport shared state", async () => {
+      process.env[RUN_ID_ENV_VAR] = "984";
+      mockedReadSharedState.mockReturnValue({
+        testRunId: 500,
+        testSuiteId: 600,
+        createdAt: new Date().toISOString(),
+        activeWorkers: 1,
+      });
+
+      const reporter = new TestPlanItReporter(defaultOptions);
+      await (reporter as any).initialize();
+
+      expect(reporter.getState().testRunId).toBe(984);
+      expect(reporter.getState().testSuiteId).toBeUndefined();
+    });
+  });
+
+  describe("run lifecycle", () => {
+    it("never creates a run", async () => {
+      process.env[RUN_ID_ENV_VAR] = "984";
+      const reporter = new TestPlanItReporter(defaultOptions);
+      const createTestRun = vi.spyOn((reporter as any).client, "createTestRun");
+
+      await (reporter as any).initialize();
+
+      expect(createTestRun).not.toHaveBeenCalled();
+      expect(reporter.getState().testRunId).toBe(984);
+    });
+
+    it("never completes the run, even with completeRunOnFinish enabled", async () => {
+      process.env[RUN_ID_ENV_VAR] = "984";
+      const reporter = new TestPlanItReporter({
+        ...defaultOptions,
+        completeRunOnFinish: true,
+        oneReport: false,
+      });
+      const completeTestRun = vi.spyOn((reporter as any).client, "completeTestRun");
+
+      await (reporter as any).initialize();
+      await driveResults(reporter);
+      await (reporter as any).onRunnerEnd(runner());
+
+      expect(completeTestRun).not.toHaveBeenCalled();
+      expect((reporter as any).reporterOptions.completeRunOnFinish).toBe(false);
+    });
+
+    it("does not complete the run when it is the last worker of an invocation", async () => {
+      process.env[RUN_ID_ENV_VAR] = "984";
+      mockedDecrementWorkerCount.mockReturnValue(true);
+
+      const reporter = new TestPlanItReporter({ ...defaultOptions, completeRunOnFinish: true });
+      const completeTestRun = vi.spyOn((reporter as any).client, "completeTestRun");
+
+      await (reporter as any).initialize();
+      await driveResults(reporter);
+      await (reporter as any).onRunnerEnd(runner());
+
+      expect(completeTestRun).not.toHaveBeenCalled();
+      expect(mockedDecrementWorkerCount).toHaveBeenCalledWith(1);
+    });
+
+    it("stays on the pinned run across two invocations reporting into it", async () => {
+      process.env[RUN_ID_ENV_VAR] = "984";
+
+      const first = new TestPlanItReporter({ ...defaultOptions, completeRunOnFinish: true });
+      const firstComplete = vi.spyOn((first as any).client, "completeTestRun");
+      await (first as any).initialize();
+      await driveResults(first);
+      await (first as any).onRunnerEnd(runner());
+
+      // The second invocation starts after the first finished — the state file
+      // now reports zero active workers.
+      mockedReadSharedState.mockReturnValue({
+        testRunId: 984,
+        testSuiteId: 600,
+        createdAt: new Date().toISOString(),
+        activeWorkers: 0,
+      });
+
+      const second = new TestPlanItReporter({ ...defaultOptions, completeRunOnFinish: true });
+      const secondComplete = vi.spyOn((second as any).client, "completeTestRun");
+      const secondCreate = vi.spyOn((second as any).client, "createTestRun");
+      await (second as any).initialize();
+      await driveResults(second);
+      await (second as any).onRunnerEnd(runner());
+
+      expect(first.getState().testRunId).toBe(984);
+      expect(second.getState().testRunId).toBe(984);
+      expect(secondCreate).not.toHaveBeenCalled();
+      expect(firstComplete).not.toHaveBeenCalled();
+      expect(secondComplete).not.toHaveBeenCalled();
+    });
+
+    it("keeps the pinned run when the shared state reports no active workers", async () => {
+      process.env[RUN_ID_ENV_VAR] = "984";
+      mockedReadSharedState.mockReturnValue({
+        testRunId: 984,
+        testSuiteId: 600,
+        createdAt: new Date().toISOString(),
+        activeWorkers: 0,
+      });
+
+      const reporter = new TestPlanItReporter(defaultOptions);
+      await (reporter as any).initialize();
+
+      expect(reporter.getState().testRunId).toBe(984);
+      expect(mockedDeleteSharedState).not.toHaveBeenCalled();
+    });
+
+    it("keeps the pinned run when it is already completed", async () => {
+      process.env[RUN_ID_ENV_VAR] = "984";
+      const reporter = new TestPlanItReporter(defaultOptions);
+      vi.spyOn((reporter as any).client, "getTestRun").mockResolvedValue({
+        id: 984,
+        name: "Web Regression Tests - DEV #984",
+        isCompleted: true,
+        isDeleted: false,
+      });
+
+      await (reporter as any).initialize();
+
+      expect(reporter.getState().testRunId).toBe(984);
+      expect(mockedDeleteSharedState).not.toHaveBeenCalled();
+    });
+
+    it("keeps attaching when the pinned run cannot be read", async () => {
+      process.env[RUN_ID_ENV_VAR] = "984";
+      const reporter = new TestPlanItReporter(defaultOptions);
+      vi.spyOn((reporter as any).client, "getTestRun").mockRejectedValue(new Error("404"));
+      const createTestRun = vi.spyOn((reporter as any).client, "createTestRun");
+      vi.spyOn(console, "error").mockImplementation(() => {});
+
+      await (reporter as any).initialize();
+
+      expect(reporter.getState().testRunId).toBe(984);
+      expect(reporter.getState().initialized).toBe(true);
+      expect(createTestRun).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("run field resolution", () => {
+    it("does not resolve configuration, milestone, state or tags for a pinned run", async () => {
+      process.env[RUN_ID_ENV_VAR] = "984";
+      const reporter = new TestPlanItReporter({
+        ...defaultOptions,
+        configId: "Chrome / macOS",
+        milestoneId: "Release 2.0",
+        stateId: "In Progress",
+        tagIds: ["regression"],
+      });
+      const client = (reporter as any).client;
+      const findConfig = vi.spyOn(client, "findConfigurationByName");
+      const findMilestone = vi.spyOn(client, "findMilestoneByName");
+      const findState = vi.spyOn(client, "findWorkflowStateByName");
+      const resolveTags = vi.spyOn(client, "resolveTagIds");
+
+      await (reporter as any).initialize();
+
+      expect(findConfig).not.toHaveBeenCalled();
+      expect(findMilestone).not.toHaveBeenCalled();
+      expect(findState).not.toHaveBeenCalled();
+      expect(resolveTags).not.toHaveBeenCalled();
+      expect(reporter.getState().resolvedIds.configId).toBeUndefined();
+    });
+
+    it("still resolves folder and template, which test case creation needs", async () => {
+      process.env[RUN_ID_ENV_VAR] = "984";
+      const reporter = new TestPlanItReporter({
+        ...defaultOptions,
+        autoCreateTestCases: true,
+        parentFolderId: "Automated",
+        templateId: "Automation",
+      });
+      const client = (reporter as any).client;
+      const findFolder = vi.spyOn(client, "findFolderByName");
+      const findTemplate = vi.spyOn(client, "findTemplateByName");
+
+      await (reporter as any).initialize();
+
+      expect(findFolder).toHaveBeenCalled();
+      expect(findTemplate).toHaveBeenCalled();
+      expect(reporter.getState().resolvedIds.parentFolderId).toBe(1);
+      expect(reporter.getState().resolvedIds.templateId).toBe(1);
+    });
+
+    it("resolves run fields normally when no run is pinned", async () => {
+      const reporter = new TestPlanItReporter({
+        ...defaultOptions,
+        configId: "Chrome / macOS",
+        tagIds: ["regression"],
+      });
+      const client = (reporter as any).client;
+      const findConfig = vi.spyOn(client, "findConfigurationByName");
+      const resolveTags = vi.spyOn(client, "resolveTagIds");
+
+      await (reporter as any).initialize();
+
+      expect(findConfig).toHaveBeenCalled();
+      expect(resolveTags).toHaveBeenCalled();
+      expect(reporter.getState().resolvedIds.configId).toBe(1);
+    });
+  });
+
+  describe("JUnit suite naming", () => {
+    it("names the suite by capability and spec for a pinned run", async () => {
+      process.env[RUN_ID_ENV_VAR] = "984";
+      const reporter = new TestPlanItReporter(defaultOptions);
+      const createSuite = vi.spyOn((reporter as any).client, "createJUnitTestSuite");
+
+      await (reporter as any).initialize();
+      await driveResults(reporter);
+
+      expect(createSuite).toHaveBeenCalledWith(
+        expect.objectContaining({
+          testRunId: 984,
+          name: "Login - chrome/macOS - login",
+        }),
+      );
+    });
+
+    it("honours an explicit testSuiteName template", async () => {
+      process.env[RUN_ID_ENV_VAR] = "984";
+      const reporter = new TestPlanItReporter({
+        ...defaultOptions,
+        testSuiteName: "Shard {spec} on {browser}",
+      });
+      const createSuite = vi.spyOn((reporter as any).client, "createJUnitTestSuite");
+
+      await (reporter as any).initialize();
+      await driveResults(reporter);
+
+      expect(createSuite).toHaveBeenCalledWith(
+        expect.objectContaining({ name: "Shard login on chrome" }),
+      );
+    });
+
+    it("keeps naming the suite after the run when no run is pinned", async () => {
+      const reporter = new TestPlanItReporter({
+        ...defaultOptions,
+        runName: "Nightly Regression",
+      });
+      const createSuite = vi.spyOn((reporter as any).client, "createJUnitTestSuite");
+
+      await (reporter as any).initialize();
+      await driveResults(reporter);
+
+      expect(createSuite).toHaveBeenCalledWith(
+        expect.objectContaining({ name: "Nightly Regression" }),
+      );
+    });
+
+    it("ignores a shared suite recorded for a different run", async () => {
+      process.env[RUN_ID_ENV_VAR] = "984";
+      mockedReadSharedState.mockReturnValue({
+        testRunId: 500,
+        testSuiteId: 600,
+        createdAt: new Date().toISOString(),
+        activeWorkers: 1,
+      });
+      const reporter = new TestPlanItReporter(defaultOptions);
+      const createSuite = vi.spyOn((reporter as any).client, "createJUnitTestSuite");
+
+      await (reporter as any).initialize();
+      await driveResults(reporter);
+
+      expect(createSuite).toHaveBeenCalledWith(expect.objectContaining({ testRunId: 984 }));
+      expect(reporter.getState().testSuiteId).not.toBe(600);
+    });
+
+    it("reuses a shared suite recorded for the pinned run", async () => {
+      process.env[RUN_ID_ENV_VAR] = "984";
+      mockedReadSharedState.mockReturnValue({
+        testRunId: 984,
+        testSuiteId: 600,
+        createdAt: new Date().toISOString(),
+        activeWorkers: 1,
+      });
+      const reporter = new TestPlanItReporter(defaultOptions);
+      const createSuite = vi.spyOn((reporter as any).client, "createJUnitTestSuite");
+
+      await (reporter as any).initialize();
+      await driveResults(reporter);
+
+      expect(createSuite).not.toHaveBeenCalled();
+      expect(reporter.getState().testSuiteId).toBe(600);
+    });
+
+    it("records the suite against the pinned run rather than joining stale state", async () => {
+      process.env[RUN_ID_ENV_VAR] = "984";
+      const reporter = new TestPlanItReporter(defaultOptions);
+
+      await (reporter as any).initialize();
+      await driveResults(reporter);
+
+      expect(mockedWriteSharedStateForRun).toHaveBeenCalledWith(
+        1,
+        expect.objectContaining({ testRunId: 984 }),
+      );
+      expect(mockedWriteSharedStateIfAbsent).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("backward compatibility", () => {
+    it("creates and completes a run when nothing pins one", async () => {
+      const reporter = new TestPlanItReporter({
+        ...defaultOptions,
+        completeRunOnFinish: true,
+        oneReport: false,
+      });
+      const createTestRun = vi.spyOn((reporter as any).client, "createTestRun");
+      const completeTestRun = vi.spyOn((reporter as any).client, "completeTestRun");
+
+      await (reporter as any).initialize();
+      await driveResults(reporter);
+      await (reporter as any).onRunnerEnd(runner());
+
+      expect((reporter as any).externallyManaged).toBe(false);
+      expect(createTestRun).toHaveBeenCalled();
+      expect(completeTestRun).toHaveBeenCalled();
+    });
+
+    it("still discards a completed shared run when nothing pins one", async () => {
+      mockedReadSharedState.mockReturnValue({
+        testRunId: 500,
+        testSuiteId: 600,
+        createdAt: new Date().toISOString(),
+        activeWorkers: 1,
+      });
+      const reporter = new TestPlanItReporter(defaultOptions);
+      vi.spyOn((reporter as any).client, "getTestRun").mockResolvedValue({
+        id: 500,
+        name: "Old Run",
+        isCompleted: true,
+        isDeleted: false,
+      });
+      const createTestRun = vi.spyOn((reporter as any).client, "createTestRun");
+
+      await (reporter as any).initialize();
+
+      expect(mockedDeleteSharedState).toHaveBeenCalled();
+      expect(createTestRun).toHaveBeenCalled();
     });
   });
 });

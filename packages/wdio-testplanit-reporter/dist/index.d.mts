@@ -88,6 +88,17 @@ interface TestPlanItReporterOptions extends Reporters.Options {
      * Existing test run to add results to (ID or name).
      * If a string is provided, the system will look up the test run by exact name match.
      * If not provided, a new test run will be created.
+     *
+     * A run supplied here (or via the `TESTPLANIT_RUN_ID` environment variable) is
+     * externally managed: the reporter attaches results to it but never creates or
+     * completes it, so any number of shards, agents or retry waves can report into
+     * the same run. Resolution order is:
+     *
+     * 1. `testRunId` as a number
+     * 2. `TESTPLANIT_RUN_ID` (numeric)
+     * 3. `testRunId` as a name to look up
+     * 4. the `oneReport` shared-state file
+     * 5. create a new run
      */
     testRunId?: number | string;
     /**
@@ -252,10 +263,33 @@ interface TestPlanItReporterOptions extends Reporters.Options {
      */
     includeStackTrace?: boolean;
     /**
-     * Whether to mark the test run as completed when all tests finish
+     * Whether to exclude skipped tests from the report. When enabled, skipped
+     * (and pending) results — including Cucumber scenarios whose steps were
+     * skipped — are not sent to TestPlanIt at all: they don't appear on the run
+     * and don't count toward its totals.
+     * @default false
+     */
+    excludeSkipped?: boolean;
+    /**
+     * Whether to mark the test run as completed when all tests finish.
+     *
+     * Forced to false for an externally managed run (see {@link testRunId}), so a
+     * single shard cannot close a run other invocations are still reporting into.
      * @default true
      */
     completeRunOnFinish?: boolean;
+    /**
+     * Name of the JUnit test suite created for this invocation's results.
+     * Supports the same placeholders as {@link runName}.
+     *
+     * Each invocation creates its own suite under the run, so with an externally
+     * managed run the default distinguishes shards by capability and spec.
+     * Results roll up at the run level regardless of how many suites it holds.
+     *
+     * @default runName, or '{suite} - {browser}/{platform} - {spec}' for an
+     * externally managed run
+     */
+    testSuiteName?: string;
     /**
      * Request timeout in milliseconds
      * @default 30000
@@ -338,6 +372,16 @@ interface TestPlanItServiceOptions {
      */
     projectId: number;
     /**
+     * Existing test run to report into, instead of creating one in `onPrepare`.
+     * Also read from the `TESTPLANIT_RUN_ID` environment variable, which the
+     * numeric option takes precedence over.
+     *
+     * The service never creates or completes a run given this way, so several
+     * executions — shards, agents, retry waves — can share it. The pipeline owns
+     * its lifecycle.
+     */
+    testRunId?: number;
+    /**
      * Name for the test run.
      * Supports placeholders:
      * - {date} - Current date (YYYY-MM-DD)
@@ -350,6 +394,19 @@ interface TestPlanItServiceOptions {
      * @default 'Automated Tests - {date} {time}'
      */
     runName?: string;
+    /**
+     * Name of the JUnit test suite created for this execution's results.
+     * Supports the same placeholders as {@link runName}, plus `{env:VAR}` — the
+     * launcher process runs before any browser exists, so a value from the
+     * pipeline is what distinguishes one shard from another.
+     *
+     * Each execution creates its own suite, so on a run shared by several
+     * executions this is how shards are told apart. Results roll up at the run
+     * level regardless of how many suites it holds.
+     *
+     * @default runName
+     */
+    testSuiteName?: string;
     /**
      * Test run type to indicate the test framework being used.
      * @default 'MOCHA'
@@ -646,11 +703,24 @@ declare class TestPlanItReporter extends WDIOReporter {
     /** When true, the TestPlanItService manages the test run lifecycle */
     private managedByService;
     /**
+     * When true, the run was created outside this reporter — pinned by the
+     * `testRunId` option or the `TESTPLANIT_RUN_ID` environment variable. The
+     * reporter attaches results to it but never creates, mutates or completes it,
+     * and never falls back to a different run.
+     */
+    private externallyManaged;
+    /**
      * WebdriverIO uses this getter to determine if the reporter has finished async operations.
      * The test runner will wait for this to return true before terminating.
      */
     get isSynchronised(): boolean;
     constructor(options: TestPlanItReporterOptions);
+    /**
+     * Record that the run belongs to the pipeline rather than this invocation.
+     * Completion is disabled so one shard cannot close a run that other shards,
+     * agents or retry waves are still reporting into.
+     */
+    private markExternallyManaged;
     /**
      * Log a message if verbose mode is enabled
      */
@@ -703,9 +773,19 @@ declare class TestPlanItReporter extends WDIOReporter {
     private initialize;
     private doInitialize;
     /**
+     * Confirm a pinned run is reachable. A failure here is reported but not fatal:
+     * the reporter keeps attaching results to the pinned ID rather than creating a
+     * replacement run, which would reintroduce the duplicates pinning prevents.
+     */
+    private validateExternallyManagedTestRun;
+    /**
      * Resolve option names to numeric IDs
      */
     private resolveOptionIds;
+    /**
+     * Resolve the option names that are only read when creating a test run.
+     */
+    private resolveRunFieldIds;
     /**
      * Fetch status ID mappings from TestPlanIt
      */
@@ -726,6 +806,14 @@ declare class TestPlanItReporter extends WDIOReporter {
      * Create a new test run
      */
     private createTestRun;
+    /**
+     * Template for this invocation's JUnit suite name.
+     *
+     * A pinned run collects a suite per invocation, so its default names them by
+     * capability and spec to tell shards apart. A run this reporter created holds
+     * one suite, named after the run.
+     */
+    private resolveTestSuiteNameTemplate;
     /**
      * Format the run name with placeholders
      */
@@ -814,6 +902,14 @@ declare class TestPlanItReporter extends WDIOReporter {
 }
 
 /**
+ * Environment variable holding the ID of a test run created by the pipeline.
+ * Every invocation that sees it attaches to that run instead of creating one,
+ * which is how a suite split across shards, agents or retry waves lands in a
+ * single run.
+ */
+declare const RUN_ID_ENV_VAR = "TESTPLANIT_RUN_ID";
+
+/**
  * WebdriverIO Launcher Service for TestPlanIt.
  *
  * Manages the test run lifecycle in the main WDIO process:
@@ -872,6 +968,12 @@ declare class TestPlanItService {
      * onComplete, before the run is completed.
      */
     private deferredRunAttachments;
+    /**
+     * When true, the run was created by the pipeline rather than this service —
+     * pinned by the `testRunId` option or `TESTPLANIT_RUN_ID`. The service reports
+     * into it but never creates or completes it.
+     */
+    private externallyManaged;
     constructor(serviceOptions: TestPlanItServiceOptions);
     /**
      * Log a message if verbose mode is enabled
@@ -895,11 +997,16 @@ declare class TestPlanItService {
     private runtimeContext;
     /**
      * Apply the declarative run-level options (`runLinks`, `runMetadata`,
-     * `runAttachments`) to the just-created test run. Runs once in the
-     * launcher process. Every failure is logged and swallowed — run-level
-     * attachments must never fail the test run.
+     * `runAttachments`) to the test run. Runs once in the launcher process.
+     * Every failure is logged and swallowed — run-level attachments must never
+     * fail the test run.
      */
     private applyRunLevelConfig;
+    /**
+     * Apply the run-identity options (`runLinks`, `runMetadata`) to a run this
+     * service created.
+     */
+    private applyRunIdentity;
     /**
      * Attach `runAttachments` entries that were deferred in onPrepare because
      * their file didn't exist yet. Called from onComplete before the run is
@@ -948,4 +1055,4 @@ declare class TestPlanItService {
     onComplete(exitCode: number): Promise<void>;
 }
 
-export { type ReporterState, type RunAttachmentInput, type RunLinkInput, TestPlanItReporter, type TestPlanItReporterOptions, type TestPlanItRuntimeApi, TestPlanItService, type TestPlanItServiceOptions, type TrackedTestResult, TestPlanItReporter as default };
+export { RUN_ID_ENV_VAR, type ReporterState, type RunAttachmentInput, type RunLinkInput, TestPlanItReporter, type TestPlanItReporterOptions, type TestPlanItRuntimeApi, TestPlanItService, type TestPlanItServiceOptions, type TrackedTestResult, TestPlanItReporter as default };

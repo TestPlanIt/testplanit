@@ -94,6 +94,17 @@ export interface TestPlanItReporterOptions extends Reporters.Options {
    * Existing test run to add results to (ID or name).
    * If a string is provided, the system will look up the test run by exact name match.
    * If not provided, a new test run will be created.
+   *
+   * A run supplied here (or via the `TESTPLANIT_RUN_ID` environment variable) is
+   * externally managed: the reporter attaches results to it but never creates or
+   * completes it, so any number of shards, agents or retry waves can report into
+   * the same run. Resolution order is:
+   *
+   * 1. `testRunId` as a number
+   * 2. `TESTPLANIT_RUN_ID` (numeric)
+   * 3. `testRunId` as a name to look up
+   * 4. the `oneReport` shared-state file
+   * 5. create a new run
    */
   testRunId?: number | string;
 
@@ -284,10 +295,26 @@ export interface TestPlanItReporterOptions extends Reporters.Options {
   excludeSkipped?: boolean;
 
   /**
-   * Whether to mark the test run as completed when all tests finish
+   * Whether to mark the test run as completed when all tests finish.
+   *
+   * Forced to false for an externally managed run (see {@link testRunId}), so a
+   * single shard cannot close a run other invocations are still reporting into.
    * @default true
    */
   completeRunOnFinish?: boolean;
+
+  /**
+   * Name of the JUnit test suite created for this invocation's results.
+   * Supports the same placeholders as {@link runName}.
+   *
+   * Each invocation creates its own suite under the run, so with an externally
+   * managed run the default distinguishes shards by capability and spec.
+   * Results roll up at the run level regardless of how many suites it holds.
+   *
+   * @default runName, or '{suite} - {browser}/{platform} - {spec}' for an
+   * externally managed run
+   */
+  testSuiteName?: string;
 
   /**
    * Request timeout in milliseconds
@@ -378,6 +405,17 @@ export interface TestPlanItServiceOptions {
   projectId: number;
 
   /**
+   * Existing test run to report into, instead of creating one in `onPrepare`.
+   * Also read from the `TESTPLANIT_RUN_ID` environment variable, which the
+   * numeric option takes precedence over.
+   *
+   * The service never creates or completes a run given this way, so several
+   * executions — shards, agents, retry waves — can share it. The pipeline owns
+   * its lifecycle.
+   */
+  testRunId?: number;
+
+  /**
    * Name for the test run.
    * Supports placeholders:
    * - {date} - Current date (YYYY-MM-DD)
@@ -390,6 +428,20 @@ export interface TestPlanItServiceOptions {
    * @default 'Automated Tests - {date} {time}'
    */
   runName?: string;
+
+  /**
+   * Name of the JUnit test suite created for this execution's results.
+   * Supports the same placeholders as {@link runName}, plus `{env:VAR}` — the
+   * launcher process runs before any browser exists, so a value from the
+   * pipeline is what distinguishes one shard from another.
+   *
+   * Each execution creates its own suite, so on a run shared by several
+   * executions this is how shards are told apart. Results roll up at the run
+   * level regardless of how many suites it holds.
+   *
+   * @default runName
+   */
+  testSuiteName?: string;
 
   /**
    * Test run type to indicate the test framework being used.

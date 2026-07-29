@@ -69,6 +69,86 @@ export const config = {
 | **Screenshot upload** | - | Uploads in `onRunnerEnd` |
 | **Run completion** | Completes in `onComplete` | Skips if service-managed |
 
+## Sharing One Run Across Sharded, Parallel or Retried Executions
+
+The service and `oneReport` both collapse a single WebdriverIO execution into one
+test run. Neither spans separate executions: their shared state lives in a file
+in the OS temp directory, so it cannot reach a second CI agent, and it is reset
+once a run's workers have all finished. A suite split into shards, spread across
+agents, or rerun in retry waves therefore produces one run per invocation — often
+several runs with the same name.
+
+To collect all of them in a single run, create the run in the pipeline and let
+every invocation attach to it:
+
+```bash
+RUN_ID=$(testplanit create-run --project 9 --name "Web Regression Tests - DEV #984" --type MOCHA)
+export TESTPLANIT_RUN_ID="$RUN_ID"
+
+# Every shard, agent and retry wave attaches to $TESTPLANIT_RUN_ID
+pnpm web:bs --spec ./test/specs/shard-1/**
+pnpm web:bs --spec ./test/specs/shard-2/**
+# ...deferred retries, other agents...
+
+testplanit complete-run --id "$RUN_ID"
+```
+
+`testplanit` ships with [`@testplanit/api`](https://www.npmjs.com/package/@testplanit/api).
+Both commands read `TESTPLANIT_URL` and `TESTPLANIT_API_TOKEN`; run
+`testplanit --help` for the full list.
+
+Nothing else in the config has to change. Both the service and the reporter read
+`TESTPLANIT_RUN_ID`, so the recommended service + reporter setup works as-is —
+the service reports into the pinned run instead of creating one in `onPrepare`,
+and leaves it open in `onComplete`.
+
+### What Changes When a Run Is Externally Managed
+
+A run supplied through `TESTPLANIT_RUN_ID` or the `testRunId` option is
+externally managed. For such a run the reporter:
+
+- **Never creates a run.** If the run cannot be read, the failure is logged and
+  results are still attached to the given ID rather than to a replacement run.
+- **Never completes it**, regardless of `completeRunOnFinish` — the pipeline
+  closes it with `complete-run` once every invocation has finished. A shard that
+  completed the run would push the ones behind it onto a new run.
+- **Never discards it.** The recovery paths that start a fresh run when the
+  shared state is exhausted, completed or deleted do not apply.
+- **Never changes its settings.** `configId`, `milestoneId`, `stateId` and
+  `tagIds` are ignored, since those belong to whoever created the run. Case
+  creation options (`parentFolderId`, `templateId`, and the rest) still apply.
+
+The service behaves the same way, with one addition: `runLinks` and `runMetadata`
+describe the run as a whole, so it applies them only to runs it created —
+otherwise every shard would duplicate the links and the last one would overwrite
+the metadata. `runAttachments` are per-execution artifacts and still upload from
+each shard.
+
+### Suites Within the Run
+
+Each execution creates its own JUnit suite under the shared run, named
+`{suite} - {browser}/{platform} - {spec}` by default so shards are
+distinguishable. Results roll up at the run level across every suite. Override
+the naming with `testSuiteName`, which accepts the same placeholders as
+`runName`. The service's launcher process runs before any browser exists, so its
+`testSuiteName` also resolves `{env:VAR}` — name shards from the pipeline, for
+example `testSuiteName: 'Shard {env:SHARD_ID}'`.
+
+### Resolution Order
+
+The first of these that yields a run wins:
+
+1. `testRunId` given as a number
+2. `TESTPLANIT_RUN_ID` (ignored unless it is a positive integer, so an
+   unresolved shell variable falls through instead of failing)
+3. `testRunId` given as a name, looked up by exact match
+4. the `oneReport` shared-state file
+5. a new run
+
+Options 1–3 are externally managed. With none of them set, behaviour is
+unchanged: `oneReport` still dedupes workers within one execution, and the run is
+created and completed as before.
+
 ## Linking Test Cases
 
 Embed TestPlanIt case IDs in your test titles using brackets (configurable via `caseIdPattern`):
@@ -140,8 +220,9 @@ This strategy is opt-in and runs **before** name/create resolution. On no match 
 | `domain` | `string` | Yes | - | Base URL of your TestPlanIt instance |
 | `apiToken` | `string` | Yes | - | API token for authentication |
 | `projectId` | `number` | Yes | - | Project ID to report results to |
-| `testRunId` | `number \| string` | No | - | Existing test run ID or name to append results to |
+| `testRunId` | `number \| string` | No | `$TESTPLANIT_RUN_ID` | Existing test run ID or name to append results to. A run supplied here is never created or completed by the reporter — see [Sharing One Run Across Sharded, Parallel or Retried Executions](#sharing-one-run-across-sharded-parallel-or-retried-executions) |
 | `runName` | `string` | No | `'{suite} - {date} {time}'` | Name for new test runs. Supports placeholders: `{date}`, `{time}`, `{browser}`, `{platform}`, `{spec}`, `{suite}` |
+| `testSuiteName` | `string` | No | `runName` | Name of the JUnit suite created for this invocation. Same placeholders as `runName`. Defaults to `'{suite} - {browser}/{platform} - {spec}'` when the run is externally managed |
 | `testRunType` | `string` | No | Auto-detected | Test framework type: `'REGULAR'`, `'MOCHA'`, `'CUCUMBER'`, etc. Auto-detected from WDIO config |
 | `configId` | `number \| string` | No | - | Configuration ID or name for the test run |
 | `milestoneId` | `number \| string` | No | - | Milestone ID or name for the test run |
@@ -210,7 +291,9 @@ export const config = {
 | `domain` | `string` | Yes | - | Base URL of your TestPlanIt instance |
 | `apiToken` | `string` | Yes | - | API token for authentication |
 | `projectId` | `number` | Yes | - | Project ID to report results to |
+| `testRunId` | `number` | No | `$TESTPLANIT_RUN_ID` | Existing test run to report into. Never created or completed by the service — see [Sharing One Run Across Sharded, Parallel or Retried Executions](#sharing-one-run-across-sharded-parallel-or-retried-executions) |
 | `runName` | `string` | No | `'Automated Tests - {date} {time}'` | Name for the test run. Supports `{date}`, `{time}`, `{platform}` |
+| `testSuiteName` | `string` | No | `runName` | Name of the JUnit suite created for this execution. Same placeholders as `runName`, plus `{env:VAR}` |
 | `testRunType` | `string` | No | `'MOCHA'` | Test framework type |
 | `configId` | `number \| string` | No | - | Configuration ID or name |
 | `milestoneId` | `number \| string` | No | - | Milestone ID or name |
@@ -382,6 +465,11 @@ reporters: [
   }]
 ]
 ```
+
+Or leave it out of the config entirely and set `TESTPLANIT_RUN_ID` in the
+environment, which is what lets several invocations share one run. Either way
+the reporter appends to the run without completing it — see
+[Sharing One Run Across Sharded, Parallel or Retried Executions](#sharing-one-run-across-sharded-parallel-or-retried-executions).
 
 ### Auto-Create Test Cases with Folder Hierarchy
 

@@ -74,6 +74,14 @@ function adaptCucumberStepTitles(stepTitles) {
   return result;
 }
 var STALE_THRESHOLD_MS = 4 * 60 * 60 * 1e3;
+var RUN_ID_ENV_VAR = "TESTPLANIT_RUN_ID";
+function parseEnvTestRunId(raw) {
+  if (!raw) return void 0;
+  const trimmed = raw.trim();
+  if (!/^\d+$/.test(trimmed)) return void 0;
+  const parsed = Number(trimmed);
+  return parsed > 0 ? parsed : void 0;
+}
 function getSharedStateFilePath(projectId) {
   const fileName = `.testplanit-reporter-${projectId}.json`;
   return path2__namespace.join(os__namespace.tmpdir(), fileName);
@@ -145,6 +153,26 @@ function writeSharedStateIfAbsent(projectId, state) {
     return state;
   });
 }
+function writeSharedStateForRun(projectId, state) {
+  return withLock(projectId, (filePath) => {
+    if (fs__namespace.existsSync(filePath)) {
+      try {
+        const content = fs__namespace.readFileSync(filePath, "utf-8");
+        const existingState = JSON.parse(content);
+        if (existingState.testRunId === state.testRunId) {
+          if (!existingState.testSuiteId && state.testSuiteId) {
+            existingState.testSuiteId = state.testSuiteId;
+            fs__namespace.writeFileSync(filePath, JSON.stringify(existingState, null, 2));
+          }
+          return existingState;
+        }
+      } catch {
+      }
+    }
+    fs__namespace.writeFileSync(filePath, JSON.stringify(state, null, 2));
+    return state;
+  });
+}
 function deleteSharedState(projectId) {
   const filePath = getSharedStateFilePath(projectId);
   try {
@@ -179,6 +207,7 @@ function decrementWorkerCount(projectId) {
 }
 
 // src/reporter.ts
+var EXTERNALLY_MANAGED_SUITE_NAME = "{suite} - {browser}/{platform} - {spec}";
 var TestPlanItReporter = class _TestPlanItReporter extends WDIOReporter__default.default {
   client;
   reporterOptions;
@@ -214,6 +243,13 @@ var TestPlanItReporter = class _TestPlanItReporter extends WDIOReporter__default
   /** When true, the TestPlanItService manages the test run lifecycle */
   managedByService = false;
   /**
+   * When true, the run was created outside this reporter — pinned by the
+   * `testRunId` option or the `TESTPLANIT_RUN_ID` environment variable. The
+   * reporter attaches results to it but never creates, mutates or completes it,
+   * and never falls back to a different run.
+   */
+  externallyManaged = false;
+  /**
    * WebdriverIO uses this getter to determine if the reporter has finished async operations.
    * The test runner will wait for this to return true before terminating.
    */
@@ -230,6 +266,7 @@ var TestPlanItReporter = class _TestPlanItReporter extends WDIOReporter__default
       createFolderHierarchy: false,
       uploadScreenshots: true,
       includeStackTrace: true,
+      excludeSkipped: false,
       completeRunOnFinish: true,
       oneReport: true,
       timeout: 3e4,
@@ -252,8 +289,19 @@ var TestPlanItReporter = class _TestPlanItReporter extends WDIOReporter__default
       timeout: this.reporterOptions.timeout,
       maxRetries: this.reporterOptions.maxRetries
     });
+    let pinnedTestRunId;
+    if (typeof this.reporterOptions.testRunId === "number") {
+      pinnedTestRunId = this.reporterOptions.testRunId;
+      this.markExternallyManaged(`the testRunId option (${pinnedTestRunId})`);
+    } else {
+      const envTestRunId = parseEnvTestRunId(process.env[RUN_ID_ENV_VAR]);
+      if (envTestRunId !== void 0) {
+        pinnedTestRunId = envTestRunId;
+        this.markExternallyManaged(`${RUN_ID_ENV_VAR}=${pinnedTestRunId}`);
+      }
+    }
     this.state = {
-      testRunId: typeof this.reporterOptions.testRunId === "number" ? this.reporterOptions.testRunId : void 0,
+      testRunId: pinnedTestRunId,
       resolvedIds: {},
       results: /* @__PURE__ */ new Map(),
       caseIdMap: /* @__PURE__ */ new Map(),
@@ -279,6 +327,20 @@ var TestPlanItReporter = class _TestPlanItReporter extends WDIOReporter__default
         startTime: /* @__PURE__ */ new Date()
       }
     };
+  }
+  /**
+   * Record that the run belongs to the pipeline rather than this invocation.
+   * Completion is disabled so one shard cannot close a run that other shards,
+   * agents or retry waves are still reporting into.
+   */
+  markExternallyManaged(source) {
+    this.externallyManaged = true;
+    if (this.reporterOptions.completeRunOnFinish) {
+      this.reporterOptions.completeRunOnFinish = false;
+      this.log(
+        `Test run pinned by ${source} \u2014 completeRunOnFinish disabled; the pipeline completes the run`
+      );
+    }
   }
   /**
    * Log a message if verbose mode is enabled
@@ -430,7 +492,7 @@ ${error.stack}` : "";
       await this.resolveOptionIds();
       this.log("Fetching status mappings...");
       await this.fetchStatusMappings();
-      if (this.reporterOptions.oneReport && !this.state.testRunId) {
+      if (this.reporterOptions.oneReport && !this.state.testRunId && !this.externallyManaged) {
         const sharedState = readSharedState(this.reporterOptions.projectId);
         if (sharedState) {
           if (sharedState.managedByService) {
@@ -474,7 +536,9 @@ ${error.stack}` : "";
           }
         }
       }
-      if (!this.state.testRunId && !this.managedByService) {
+      if (this.externallyManaged) {
+        await this.validateExternallyManagedTestRun();
+      } else if (!this.state.testRunId && !this.managedByService) {
         if (this.reporterOptions.oneReport) {
           await this.createTestRun();
           this.log(`Created test run with ID: ${this.state.testRunId}`);
@@ -510,11 +574,32 @@ ${error.stack}` : "";
     }
   }
   /**
+   * Confirm a pinned run is reachable. A failure here is reported but not fatal:
+   * the reporter keeps attaching results to the pinned ID rather than creating a
+   * replacement run, which would reintroduce the duplicates pinning prevents.
+   */
+  async validateExternallyManagedTestRun() {
+    try {
+      const testRun = await this.client.getTestRun(this.state.testRunId);
+      this.log(`Using externally managed test run: ${testRun.name} (ID: ${testRun.id})`);
+      if (testRun.isDeleted) {
+        this.logError(`Externally managed test run ${testRun.id} is deleted; results may not be visible`);
+      } else if (testRun.isCompleted) {
+        this.log(`Externally managed test run ${testRun.id} is already completed; still attaching results`);
+      }
+    } catch (error) {
+      this.logError(
+        `Could not read externally managed test run ${this.state.testRunId}; still attaching results to it`,
+        error
+      );
+    }
+  }
+  /**
    * Resolve option names to numeric IDs
    */
   async resolveOptionIds() {
     const projectId = this.reporterOptions.projectId;
-    if (typeof this.reporterOptions.testRunId === "string") {
+    if (typeof this.reporterOptions.testRunId === "string" && !this.state.testRunId) {
       const testRun = await this.client.findTestRunByName(projectId, this.reporterOptions.testRunId);
       if (!testRun) {
         throw new Error(`Test run not found: "${this.reporterOptions.testRunId}"`);
@@ -522,36 +607,12 @@ ${error.stack}` : "";
       this.state.testRunId = testRun.id;
       this.state.resolvedIds.testRunId = testRun.id;
       this.log(`Resolved test run "${this.reporterOptions.testRunId}" -> ${testRun.id}`);
+      this.markExternallyManaged(`the testRunId option ("${this.reporterOptions.testRunId}")`);
     }
-    if (typeof this.reporterOptions.configId === "string") {
-      const config = await this.client.findConfigurationByName(projectId, this.reporterOptions.configId);
-      if (!config) {
-        throw new Error(`Configuration not found: "${this.reporterOptions.configId}"`);
-      }
-      this.state.resolvedIds.configId = config.id;
-      this.log(`Resolved configuration "${this.reporterOptions.configId}" -> ${config.id}`);
-    } else if (typeof this.reporterOptions.configId === "number") {
-      this.state.resolvedIds.configId = this.reporterOptions.configId;
-    }
-    if (typeof this.reporterOptions.milestoneId === "string") {
-      const milestone = await this.client.findMilestoneByName(projectId, this.reporterOptions.milestoneId);
-      if (!milestone) {
-        throw new Error(`Milestone not found: "${this.reporterOptions.milestoneId}"`);
-      }
-      this.state.resolvedIds.milestoneId = milestone.id;
-      this.log(`Resolved milestone "${this.reporterOptions.milestoneId}" -> ${milestone.id}`);
-    } else if (typeof this.reporterOptions.milestoneId === "number") {
-      this.state.resolvedIds.milestoneId = this.reporterOptions.milestoneId;
-    }
-    if (typeof this.reporterOptions.stateId === "string") {
-      const state = await this.client.findWorkflowStateByName(projectId, this.reporterOptions.stateId);
-      if (!state) {
-        throw new Error(`Workflow state not found: "${this.reporterOptions.stateId}"`);
-      }
-      this.state.resolvedIds.stateId = state.id;
-      this.log(`Resolved workflow state "${this.reporterOptions.stateId}" -> ${state.id}`);
-    } else if (typeof this.reporterOptions.stateId === "number") {
-      this.state.resolvedIds.stateId = this.reporterOptions.stateId;
+    if (this.externallyManaged) {
+      this.log("Skipping configuration/milestone/state/tag resolution for externally managed test run");
+    } else {
+      await this.resolveRunFieldIds();
     }
     if (typeof this.reporterOptions.parentFolderId === "string") {
       let folder = await this.client.findFolderByName(projectId, this.reporterOptions.parentFolderId);
@@ -581,6 +642,42 @@ ${error.stack}` : "";
       this.log(`Resolved template "${this.reporterOptions.templateId}" -> ${template.id}`);
     } else if (typeof this.reporterOptions.templateId === "number") {
       this.state.resolvedIds.templateId = this.reporterOptions.templateId;
+    }
+  }
+  /**
+   * Resolve the option names that are only read when creating a test run.
+   */
+  async resolveRunFieldIds() {
+    const projectId = this.reporterOptions.projectId;
+    if (typeof this.reporterOptions.configId === "string") {
+      const config = await this.client.findConfigurationByName(projectId, this.reporterOptions.configId);
+      if (!config) {
+        throw new Error(`Configuration not found: "${this.reporterOptions.configId}"`);
+      }
+      this.state.resolvedIds.configId = config.id;
+      this.log(`Resolved configuration "${this.reporterOptions.configId}" -> ${config.id}`);
+    } else if (typeof this.reporterOptions.configId === "number") {
+      this.state.resolvedIds.configId = this.reporterOptions.configId;
+    }
+    if (typeof this.reporterOptions.milestoneId === "string") {
+      const milestone = await this.client.findMilestoneByName(projectId, this.reporterOptions.milestoneId);
+      if (!milestone) {
+        throw new Error(`Milestone not found: "${this.reporterOptions.milestoneId}"`);
+      }
+      this.state.resolvedIds.milestoneId = milestone.id;
+      this.log(`Resolved milestone "${this.reporterOptions.milestoneId}" -> ${milestone.id}`);
+    } else if (typeof this.reporterOptions.milestoneId === "number") {
+      this.state.resolvedIds.milestoneId = this.reporterOptions.milestoneId;
+    }
+    if (typeof this.reporterOptions.stateId === "string") {
+      const state = await this.client.findWorkflowStateByName(projectId, this.reporterOptions.stateId);
+      if (!state) {
+        throw new Error(`Workflow state not found: "${this.reporterOptions.stateId}"`);
+      }
+      this.state.resolvedIds.stateId = state.id;
+      this.log(`Resolved workflow state "${this.reporterOptions.stateId}" -> ${state.id}`);
+    } else if (typeof this.reporterOptions.stateId === "number") {
+      this.state.resolvedIds.stateId = this.reporterOptions.stateId;
     }
     if (this.reporterOptions.tagIds && this.reporterOptions.tagIds.length > 0) {
       this.state.resolvedIds.tagIds = await this.client.resolveTagIds(projectId, this.reporterOptions.tagIds);
@@ -631,17 +728,17 @@ ${error.stack}` : "";
     }
     if (this.reporterOptions.oneReport) {
       const sharedState = readSharedState(this.reporterOptions.projectId);
-      if (sharedState?.testSuiteId) {
+      if (sharedState?.testSuiteId && sharedState.testRunId === this.state.testRunId) {
         this.state.testSuiteId = sharedState.testSuiteId;
         this.log("Using shared JUnit test suite from file:", sharedState.testSuiteId);
         return;
       }
     }
-    const runName = this.formatRunName(this.reporterOptions.runName || "{suite} - {date} {time}");
+    const suiteName = this.formatRunName(this.resolveTestSuiteNameTemplate());
     this.log("Creating JUnit test suite...");
     const testSuite = await this.client.createJUnitTestSuite({
       testRunId: this.state.testRunId,
-      name: runName,
+      name: suiteName,
       time: 0,
       // Will be updated incrementally
       tests: 0,
@@ -652,12 +749,13 @@ ${error.stack}` : "";
     this.state.testSuiteId = testSuite.id;
     this.log("Created JUnit test suite with ID:", testSuite.id);
     if (this.reporterOptions.oneReport) {
-      const finalState = writeSharedStateIfAbsent(this.reporterOptions.projectId, {
+      const nextState = {
         testRunId: this.state.testRunId,
         testSuiteId: this.state.testSuiteId,
         createdAt: (/* @__PURE__ */ new Date()).toISOString(),
         activeWorkers: 1
-      });
+      };
+      const finalState = this.externallyManaged ? writeSharedStateForRun(this.reporterOptions.projectId, nextState) : writeSharedStateIfAbsent(this.reporterOptions.projectId, nextState);
       if (finalState && finalState.testSuiteId !== this.state.testSuiteId) {
         this.log(`Another worker created test suite first, switching from ${this.state.testSuiteId} to ${finalState.testSuiteId}`);
         this.state.testSuiteId = finalState.testSuiteId;
@@ -697,6 +795,22 @@ ${error.stack}` : "";
     });
     this.state.testRunId = testRun.id;
     this.log("Created test run with ID:", testRun.id);
+  }
+  /**
+   * Template for this invocation's JUnit suite name.
+   *
+   * A pinned run collects a suite per invocation, so its default names them by
+   * capability and spec to tell shards apart. A run this reporter created holds
+   * one suite, named after the run.
+   */
+  resolveTestSuiteNameTemplate() {
+    if (this.reporterOptions.testSuiteName) {
+      return this.reporterOptions.testSuiteName;
+    }
+    if (this.externallyManaged) {
+      return EXTERNALLY_MANAGED_SUITE_NAME;
+    }
+    return this.reporterOptions.runName || "{suite} - {date} {time}";
   }
   /**
    * Format the run name with placeholders
@@ -1065,6 +1179,10 @@ ${error.stack}` : "";
    */
   async reportResult(result, caseIds) {
     try {
+      if (this.reporterOptions.excludeSkipped && (result.status === "skipped" || result.status === "pending")) {
+        this.log(`Excluding skipped test (excludeSkipped): ${result.testName}`);
+        return;
+      }
       if (caseIds.length === 0 && !this.reporterOptions.autoCreateTestCases && !this.reporterOptions.matchByCustomField) {
         console.warn(`[TestPlanIt] WARNING: Skipping "${result.testName}" - no case ID found and autoCreateTestCases is disabled. Set autoCreateTestCases: true to automatically find or create test cases by name.`);
         return;
@@ -1307,6 +1425,11 @@ ${error.stack}` : "";
     }
     if (this.managedByService) {
       this.log("Skipping test run completion (managed by TestPlanItService)");
+    } else if (this.externallyManaged) {
+      this.log(`Skipping test run completion (test run ${this.state.testRunId} is managed externally)`);
+      if (this.reporterOptions.oneReport) {
+        decrementWorkerCount(this.reporterOptions.projectId);
+      }
     } else if (this.reporterOptions.completeRunOnFinish) {
       if (this.reporterOptions.oneReport) {
         const isLastWorker = decrementWorkerCount(this.reporterOptions.projectId);
@@ -1512,6 +1635,12 @@ var TestPlanItService = class {
    * onComplete, before the run is completed.
    */
   deferredRunAttachments = [];
+  /**
+   * When true, the run was created by the pipeline rather than this service —
+   * pinned by the `testRunId` option or `TESTPLANIT_RUN_ID`. The service reports
+   * into it but never creates or completes it.
+   */
+  externallyManaged = false;
   constructor(serviceOptions) {
     if (!serviceOptions.domain) {
       throw new Error("TestPlanIt service: domain is required");
@@ -1532,6 +1661,17 @@ var TestPlanItService = class {
       ...serviceOptions
     };
     this.verbose = this.options.verbose ?? false;
+    const pinnedTestRunId = this.options.testRunId ?? parseEnvTestRunId(process.env[RUN_ID_ENV_VAR]);
+    if (pinnedTestRunId !== void 0) {
+      this.testRunId = pinnedTestRunId;
+      this.externallyManaged = true;
+      if (this.options.completeRunOnFinish) {
+        this.options.completeRunOnFinish = false;
+        this.log(
+          `Test run ${pinnedTestRunId} pinned externally \u2014 completeRunOnFinish disabled; the pipeline completes the run`
+        );
+      }
+    }
     this.client = new api.TestPlanItClient({
       baseUrl: this.options.domain,
       apiToken: this.options.apiToken,
@@ -1619,13 +1759,59 @@ var TestPlanItService = class {
   }
   /**
    * Apply the declarative run-level options (`runLinks`, `runMetadata`,
-   * `runAttachments`) to the just-created test run. Runs once in the
-   * launcher process. Every failure is logged and swallowed — run-level
-   * attachments must never fail the test run.
+   * `runAttachments`) to the test run. Runs once in the launcher process.
+   * Every failure is logged and swallowed — run-level attachments must never
+   * fail the test run.
    */
   async applyRunLevelConfig() {
     if (!this.testRunId) return;
     const ctx = this.runtimeContext();
+    if (this.externallyManaged) {
+      if (this.options.runLinks?.length || this.options.runMetadata) {
+        this.log("Skipping run links and metadata for externally managed test run");
+      }
+    } else {
+      await this.applyRunIdentity();
+    }
+    for (const attachment of this.options.runAttachments ?? []) {
+      try {
+        const resolved = { ...attachment };
+        if (resolved.name) {
+          resolved.name = applyEnvTemplate(resolved.name).value;
+        }
+        if (!resolved.buffer && resolved.path) {
+          const templatedPath = applyEnvTemplate(resolved.path);
+          if (templatedPath.missing.length > 0) {
+            this.logError(
+              `Skipping run attachment "${attachment.path}": unresolved environment variable(s) ${templatedPath.missing.join(", ")}`
+            );
+            continue;
+          }
+          resolved.path = templatedPath.value;
+          if (!fs__namespace.existsSync(resolved.path)) {
+            this.log(
+              `Run attachment not found yet, will retry after tests finish: ${resolved.path}`
+            );
+            this.deferredRunAttachments.push(resolved);
+            continue;
+          }
+        }
+        await attachFileToRun(ctx, this.testRunId, resolved);
+        this.log(`Attached file to run: ${resolved.name ?? resolved.path}`);
+      } catch (error) {
+        this.logError(
+          `Failed to attach run file "${attachment.name ?? attachment.path}":`,
+          error
+        );
+      }
+    }
+  }
+  /**
+   * Apply the run-identity options (`runLinks`, `runMetadata`) to a run this
+   * service created.
+   */
+  async applyRunIdentity() {
+    if (!this.testRunId) return;
     for (const link of this.options.runLinks ?? []) {
       try {
         const url = applyEnvTemplate(link.url ?? "");
@@ -1673,38 +1859,6 @@ var TestPlanItService = class {
         this.logError("Failed to set run metadata:", error);
       }
     }
-    for (const attachment of this.options.runAttachments ?? []) {
-      try {
-        const resolved = { ...attachment };
-        if (resolved.name) {
-          resolved.name = applyEnvTemplate(resolved.name).value;
-        }
-        if (!resolved.buffer && resolved.path) {
-          const templatedPath = applyEnvTemplate(resolved.path);
-          if (templatedPath.missing.length > 0) {
-            this.logError(
-              `Skipping run attachment "${attachment.path}": unresolved environment variable(s) ${templatedPath.missing.join(", ")}`
-            );
-            continue;
-          }
-          resolved.path = templatedPath.value;
-          if (!fs__namespace.existsSync(resolved.path)) {
-            this.log(
-              `Run attachment not found yet, will retry after tests finish: ${resolved.path}`
-            );
-            this.deferredRunAttachments.push(resolved);
-            continue;
-          }
-        }
-        await attachFileToRun(ctx, this.testRunId, resolved);
-        this.log(`Attached file to run: ${resolved.name ?? resolved.path}`);
-      } catch (error) {
-        this.logError(
-          `Failed to attach run file "${attachment.name ?? attachment.path}":`,
-          error
-        );
-      }
-    }
   }
   /**
    * Attach `runAttachments` entries that were deferred in onPrepare because
@@ -1745,24 +1899,33 @@ var TestPlanItService = class {
     this.log(`  Project ID: ${this.options.projectId}`);
     try {
       deleteSharedState(this.options.projectId);
-      const resolved = await this.resolveIds();
       const runName = this.formatRunName(this.options.runName ?? "Automated Tests - {date} {time}");
-      this.log(`Creating test run: "${runName}" (type: ${this.options.testRunType})`);
-      const testRun = await this.client.createTestRun({
-        projectId: this.options.projectId,
-        name: runName,
-        testRunType: this.options.testRunType,
-        configId: resolved.configId,
-        milestoneId: resolved.milestoneId,
-        stateId: resolved.stateId,
-        tagIds: resolved.tagIds
-      });
-      this.testRunId = testRun.id;
-      this.log(`Created test run with ID: ${this.testRunId}`);
+      if (this.externallyManaged) {
+        this.log(`Using externally managed test run: ${this.testRunId}`);
+      } else {
+        const resolved = await this.resolveIds();
+        this.log(`Creating test run: "${runName}" (type: ${this.options.testRunType})`);
+        const testRun = await this.client.createTestRun({
+          projectId: this.options.projectId,
+          name: runName,
+          testRunType: this.options.testRunType,
+          configId: resolved.configId,
+          milestoneId: resolved.milestoneId,
+          stateId: resolved.stateId,
+          tagIds: resolved.tagIds
+        });
+        this.testRunId = testRun.id;
+        this.log(`Created test run with ID: ${this.testRunId}`);
+      }
+      const testRunId = this.testRunId;
+      if (!testRunId) {
+        throw new Error("No test run available to report into");
+      }
+      const suiteName = this.options.testSuiteName ? this.formatRunName(applyEnvTemplate(this.options.testSuiteName).value) : runName;
       this.log("Creating JUnit test suite...");
       const testSuite = await this.client.createJUnitTestSuite({
-        testRunId: this.testRunId,
-        name: runName,
+        testRunId,
+        name: suiteName,
         time: 0,
         tests: 0,
         failures: 0,
@@ -1772,7 +1935,7 @@ var TestPlanItService = class {
       this.testSuiteId = testSuite.id;
       this.log(`Created JUnit test suite with ID: ${this.testSuiteId}`);
       const sharedState = {
-        testRunId: this.testRunId,
+        testRunId,
         testSuiteId: this.testSuiteId,
         createdAt: (/* @__PURE__ */ new Date()).toISOString(),
         activeWorkers: 0,
@@ -1782,7 +1945,11 @@ var TestPlanItService = class {
       writeSharedState(this.options.projectId, sharedState);
       this.log("Wrote shared state file for workers");
       await this.applyRunLevelConfig();
-      console.log(`[TestPlanIt Service] Test run created: "${runName}" (ID: ${this.testRunId})`);
+      if (this.externallyManaged) {
+        console.log(`[TestPlanIt Service] Reporting into test run ${this.testRunId}`);
+      } else {
+        console.log(`[TestPlanIt Service] Test run created: "${runName}" (ID: ${this.testRunId})`);
+      }
     } catch (error) {
       this.logError("Failed to prepare test run:", error);
       deleteSharedState(this.options.projectId);
@@ -1839,7 +2006,9 @@ var TestPlanItService = class {
     this.log(`All workers finished (exit code: ${exitCode})`);
     try {
       await this.applyDeferredRunAttachments();
-      if (this.testRunId && this.options.completeRunOnFinish) {
+      if (this.externallyManaged) {
+        this.log(`Skipping test run completion (test run ${this.testRunId} is managed externally)`);
+      } else if (this.testRunId && this.options.completeRunOnFinish) {
         this.log(`Completing test run ${this.testRunId}...`);
         await this.client.completeTestRun(this.testRunId, this.options.projectId);
         this.log("Test run completed successfully");
@@ -1847,7 +2016,9 @@ var TestPlanItService = class {
       if (this.testRunId) {
         console.log("\n[TestPlanIt Service] \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550");
         console.log(`[TestPlanIt Service]   Test Run ID: ${this.testRunId}`);
-        if (this.options.completeRunOnFinish) {
+        if (this.externallyManaged) {
+          console.log("[TestPlanIt Service]   Status: Left open (completed by the pipeline)");
+        } else if (this.options.completeRunOnFinish) {
           console.log("[TestPlanIt Service]   Status: Completed");
         }
         console.log(`[TestPlanIt Service]   View: ${this.options.domain}/projects/runs/${this.options.projectId}/${this.testRunId}`);
@@ -1870,6 +2041,7 @@ Object.defineProperty(exports, "TestPlanItError", {
   enumerable: true,
   get: function () { return api.TestPlanItError; }
 });
+exports.RUN_ID_ENV_VAR = RUN_ID_ENV_VAR;
 exports.TestPlanItReporter = TestPlanItReporter;
 exports.TestPlanItService = TestPlanItService;
 exports.default = TestPlanItReporter;
