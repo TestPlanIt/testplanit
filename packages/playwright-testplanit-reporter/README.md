@@ -84,8 +84,9 @@ caseIdPattern: /TEST-(\d+)/g  // JIRA-style:         "TEST-12345 should work"
 | `domain` | `string` | Yes | - | Base URL of your TestPlanIt instance |
 | `apiToken` | `string` | Yes | - | API token for authentication |
 | `projectId` | `number` | Yes | - | Project ID to report results to |
-| `testRunId` | `number \| string` | No | - | Existing test run ID or name to append results to |
-| `runName` | `string` | No | `'{suite} - {date} {time}'` | Name for new test runs. Placeholders: `{date}`, `{time}`, `{browser}` (project name), `{platform}`, `{spec}`, `{suite}` |
+| `testRunId` | `number \| string` | No | `$TESTPLANIT_RUN_ID` | Existing test run ID or name to append results to. Never created or completed by the reporter — see [Sharing One Run Across Shards, Machines or Retries](#sharing-one-run-across-shards-machines-or-retries) |
+| `runName` | `string` | No | `'{suite} - {date} {time}'` | Name for new test runs. Placeholders: `{date}`, `{time}`, `{browser}` (project name), `{platform}`, `{spec}`, `{shard}`, `{suite}` |
+| `testSuiteName` | `string` | No | `runName` | Name of the JUnit suite created for this execution. Same placeholders as `runName`. Defaults to `'{suite} - {browser}/{platform} - {spec}'` when the run is externally managed |
 | `testRunType` | `string` | No | `'JUNIT'` | Test framework type stored on the run |
 | `configId` | `number \| string` | No | - | Configuration ID or name for the test run |
 | `milestoneId` | `number \| string` | No | - | Milestone ID or name for the test run |
@@ -216,6 +217,77 @@ tests.
 Repeated `setRunMetadata` calls merge: existing keys are updated in place, new
 keys are appended, and hand-written content in the run's documentation is
 preserved.
+
+## Sharing One Run Across Shards, Machines or Retries
+
+Each Playwright execution runs its own reporter process, so `--shard=1/5` across
+five machines — or a rerun of the failures afterwards — creates five or six
+separate test runs, all named the same thing.
+
+To collect them in one run, create the run in the pipeline and let every
+execution attach to it:
+
+```bash
+RUN_ID=$(testplanit create-run --project 9 --name "E2E - DEV #984" --type JUNIT)
+export TESTPLANIT_RUN_ID="$RUN_ID"
+
+# Every shard, machine and retry wave attaches to $TESTPLANIT_RUN_ID
+npx playwright test --shard=1/5
+npx playwright test --shard=2/5
+# ...on other machines, plus any reruns...
+
+testplanit complete-run --id "$RUN_ID"
+```
+
+`testplanit` ships with [`@testplanit/api`](https://www.npmjs.com/package/@testplanit/api).
+Both commands read `TESTPLANIT_URL` and `TESTPLANIT_API_TOKEN`; run
+`testplanit --help` for the full list. No reporter config has to change — the
+env var is enough.
+
+### What Changes When a Run Is Externally Managed
+
+A run supplied through `TESTPLANIT_RUN_ID` or the `testRunId` option is
+externally managed. For such a run the reporter:
+
+- **Never creates a run.** If the run cannot be read, the failure is logged and
+  results are still attached to the given ID rather than to a replacement run.
+- **Never completes it**, regardless of `completeRunOnFinish` — the pipeline
+  closes it with `complete-run` once every execution has finished. A shard that
+  completed the run would push the ones behind it onto a new run.
+- **Never changes its settings.** `configId`, `milestoneId`, `stateId` and
+  `tagIds` are ignored, since those belong to whoever created the run. Case
+  creation options (`parentFolderId`, `templateId`, and the rest) still apply.
+- **Never applies `runLinks` or `runMetadata`**, which describe the run as a
+  whole — every shard would otherwise attach duplicates.
+
+### Suites Within the Run
+
+Each execution creates its own JUnit suite under the shared run, named
+`{suite} - {browser}/{platform} - {spec}` by default. Results roll up at the run
+level across every suite. When sharding, `{shard}` is the precise label —
+it resolves to Playwright's own `--shard` value:
+
+```typescript
+['@testplanit/playwright-reporter', {
+  // ...
+  testSuiteName: 'Shard {shard} - {browser}',   // "Shard 2/5 - chromium"
+}]
+```
+
+`{shard}` resolves to `1/1` when running without `--shard`.
+
+### Resolution Order
+
+The first of these that yields a run wins:
+
+1. `testRunId` given as a number
+2. `TESTPLANIT_RUN_ID` (ignored unless it is a positive integer, so an
+   unresolved shell variable falls through instead of failing)
+3. `testRunId` given as a name, looked up by exact match
+4. a new run
+
+Options 1–3 are externally managed. With none of them set, behaviour is
+unchanged: the run is created and completed as before.
 
 ## Retries
 

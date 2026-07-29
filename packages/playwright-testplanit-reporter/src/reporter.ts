@@ -42,6 +42,30 @@ function stripAnsi(input: string | undefined): string | undefined {
 }
 
 /**
+ * Environment variable holding the ID of a test run created by the pipeline.
+ * Every execution that sees it attaches to that run instead of creating one,
+ * which is how a suite split across shards, machines or retry waves lands in a
+ * single run.
+ */
+export const RUN_ID_ENV_VAR = 'TESTPLANIT_RUN_ID';
+
+/** Suite name used per execution when the run is pinned by the pipeline. */
+const EXTERNALLY_MANAGED_SUITE_NAME = '{suite} - {browser}/{platform} - {spec}';
+
+/**
+ * Parse a test run ID from an environment variable. Anything that isn't a
+ * positive integer is ignored, so an unset or templated-but-unresolved variable
+ * falls through to the reporter's normal run resolution.
+ */
+function parseEnvTestRunId(raw: string | undefined): number | undefined {
+  if (!raw) return undefined;
+  const trimmed = raw.trim();
+  if (!/^\d+$/.test(trimmed)) return undefined;
+  const parsed = Number(trimmed);
+  return parsed > 0 ? parsed : undefined;
+}
+
+/**
  * Playwright reporter for TestPlanIt.
  *
  * Reports test results directly to your TestPlanIt instance. Mirrors the
@@ -81,6 +105,15 @@ export default class TestPlanItReporter implements Reporter {
   private currentSpec?: string;
   private currentProject?: string;
   private rootSuiteName?: string;
+  /** Shard this process is running, from Playwright's `--shard` (onBegin). */
+  private shard?: { current: number; total: number };
+
+  /**
+   * When true, the run was created outside this reporter — pinned by the
+   * `testRunId` option or the `TESTPLANIT_RUN_ID` environment variable. The
+   * reporter attaches results to it but never creates, mutates or completes it.
+   */
+  private externallyManaged = false;
 
   /**
    * `runAttachments` entries whose file couldn't be read at initialization
@@ -130,8 +163,22 @@ export default class TestPlanItReporter implements Reporter {
       maxRetries: this.options.maxRetries,
     });
 
+    // Pin the run when its ID is known up front. A name given as `testRunId` is
+    // resolved later, during initialization, since it needs an API call.
+    let pinnedTestRunId: number | undefined;
+    if (typeof this.options.testRunId === 'number') {
+      pinnedTestRunId = this.options.testRunId;
+      this.markExternallyManaged(`the testRunId option (${pinnedTestRunId})`);
+    } else {
+      const envTestRunId = parseEnvTestRunId(process.env[RUN_ID_ENV_VAR]);
+      if (envTestRunId !== undefined) {
+        pinnedTestRunId = envTestRunId;
+        this.markExternallyManaged(`${RUN_ID_ENV_VAR}=${pinnedTestRunId}`);
+      }
+    }
+
     this.state = {
-      testRunId: typeof this.options.testRunId === 'number' ? this.options.testRunId : undefined,
+      testRunId: pinnedTestRunId,
       resolvedIds: {},
       results: new Map(),
       caseIdMap: new Map(),
@@ -162,6 +209,21 @@ export default class TestPlanItReporter implements Reporter {
     return true;
   }
 
+  /**
+   * Record that the run belongs to the pipeline rather than this execution.
+   * Completion is disabled so one shard cannot close a run that other shards,
+   * machines or retry waves are still reporting into.
+   */
+  private markExternallyManaged(source: string): void {
+    this.externallyManaged = true;
+    if (this.options.completeRunOnFinish) {
+      this.options.completeRunOnFinish = false;
+      this.log(
+        `Test run pinned by ${source} — completeRunOnFinish disabled; the pipeline completes the run`,
+      );
+    }
+  }
+
   private log(message: string, ...args: unknown[]): void {
     if (this.options.verbose) {
       console.log(`[TestPlanIt] ${message}`, ...args);
@@ -188,10 +250,14 @@ export default class TestPlanItReporter implements Reporter {
   // Playwright Reporter hooks
   // ============================================================================
 
-  onBegin(_config: FullConfig, _suite: Suite): void {
+  onBegin(config: FullConfig, _suite: Suite): void {
     this.log('Reporter started');
     this.log(`  Domain: ${this.options.domain}`);
     this.log(`  Project ID: ${this.options.projectId}`);
+    if (config.shard) {
+      this.shard = config.shard;
+      this.log(`  Shard: ${config.shard.current}/${config.shard.total}`);
+    }
     // Initialization is deferred until the first reportable result so specs
     // with no matching tests don't create empty test runs.
   }
@@ -342,7 +408,9 @@ export default class TestPlanItReporter implements Reporter {
       return;
     }
 
-    if (this.options.completeRunOnFinish) {
+    if (this.externallyManaged) {
+      this.log(`Skipping test run completion (test run ${this.state.testRunId} is managed externally)`);
+    } else if (this.options.completeRunOnFinish) {
       try {
         await this.client.completeTestRun(this.state.testRunId, this.options.projectId);
         this.log('Test run completed:', this.state.testRunId);
@@ -887,19 +955,17 @@ export default class TestPlanItReporter implements Reporter {
 
       await this.fetchStatusMappings();
 
-      if (!this.state.testRunId) {
+      if (this.externallyManaged) {
+        // Declarative run-level options are intentionally NOT applied to a run
+        // the pipeline owns — every shard would attach duplicates.
+        await this.validateExternallyManagedTestRun();
+      } else if (!this.state.testRunId) {
         await this.createTestRun();
         this.log(`Created test run with ID: ${this.state.testRunId}`);
         // Apply run-level links, metadata, and file attachments exactly once
         // on the freshly created run. Internally logs and swallows every
         // failure — run-level attachments must never fail the run.
         await this.applyRunLevelConfig();
-      } else {
-        // Validate the existing/looked-up run. Declarative run-level options
-        // are intentionally NOT applied to an existing run — re-runs
-        // appending to it would attach duplicates.
-        const testRun = await this.client.getTestRun(this.state.testRunId);
-        this.log(`Using existing test run: ${testRun.name} (ID: ${testRun.id})`);
       }
 
       this.state.initialized = true;
@@ -911,10 +977,35 @@ export default class TestPlanItReporter implements Reporter {
     }
   }
 
+  /**
+   * Confirm a pinned run is reachable. A failure here is reported but not fatal:
+   * the reporter keeps attaching results to the pinned ID rather than creating a
+   * replacement run, which would reintroduce the duplicates pinning prevents.
+   */
+  private async validateExternallyManagedTestRun(): Promise<void> {
+    try {
+      const testRun = await this.client.getTestRun(this.state.testRunId!);
+      this.log(`Using externally managed test run: ${testRun.name} (ID: ${testRun.id})`);
+
+      if (testRun.isDeleted) {
+        this.logError(`Externally managed test run ${testRun.id} is deleted; results may not be visible`);
+      } else if (testRun.isCompleted) {
+        this.log(`Externally managed test run ${testRun.id} is already completed; still attaching results`);
+      }
+    } catch (error) {
+      this.logError(
+        `Could not read externally managed test run ${this.state.testRunId}; still attaching results to it`,
+        error,
+      );
+    }
+  }
+
   private async resolveOptionIds(): Promise<void> {
     const projectId = this.options.projectId;
 
-    if (typeof this.options.testRunId === 'string') {
+    // A numeric ID from the option or the environment already pinned the run,
+    // so the name lookup is skipped.
+    if (typeof this.options.testRunId === 'string' && !this.state.testRunId) {
       const testRun = await this.client.findTestRunByName(projectId, this.options.testRunId);
       if (!testRun) {
         throw new Error(`Test run not found: "${this.options.testRunId}"`);
@@ -922,30 +1013,17 @@ export default class TestPlanItReporter implements Reporter {
       this.state.testRunId = testRun.id;
       this.state.resolvedIds.testRunId = testRun.id;
       this.log(`Resolved test run "${this.options.testRunId}" -> ${testRun.id}`);
+      this.markExternallyManaged(`the testRunId option ("${this.options.testRunId}")`);
     }
 
-    if (typeof this.options.configId === 'string') {
-      const config = await this.client.findConfigurationByName(projectId, this.options.configId);
-      if (!config) throw new Error(`Configuration not found: "${this.options.configId}"`);
-      this.state.resolvedIds.configId = config.id;
-    } else if (typeof this.options.configId === 'number') {
-      this.state.resolvedIds.configId = this.options.configId;
-    }
-
-    if (typeof this.options.milestoneId === 'string') {
-      const milestone = await this.client.findMilestoneByName(projectId, this.options.milestoneId);
-      if (!milestone) throw new Error(`Milestone not found: "${this.options.milestoneId}"`);
-      this.state.resolvedIds.milestoneId = milestone.id;
-    } else if (typeof this.options.milestoneId === 'number') {
-      this.state.resolvedIds.milestoneId = this.options.milestoneId;
-    }
-
-    if (typeof this.options.stateId === 'string') {
-      const state = await this.client.findWorkflowStateByName(projectId, this.options.stateId);
-      if (!state) throw new Error(`Workflow state not found: "${this.options.stateId}"`);
-      this.state.resolvedIds.stateId = state.id;
-    } else if (typeof this.options.stateId === 'number') {
-      this.state.resolvedIds.stateId = this.options.stateId;
+    // Configuration, milestone, workflow state and tags are only read when this
+    // reporter creates the run; on a pinned run those values are already set and
+    // belong to whoever created it. Folder and template resolution still runs —
+    // those drive test case creation, not the run.
+    if (this.externallyManaged) {
+      this.log('Skipping configuration/milestone/state/tag resolution for externally managed test run');
+    } else {
+      await this.resolveRunFieldIds();
     }
 
     if (typeof this.options.parentFolderId === 'string') {
@@ -969,6 +1047,36 @@ export default class TestPlanItReporter implements Reporter {
       this.state.resolvedIds.templateId = template.id;
     } else if (typeof this.options.templateId === 'number') {
       this.state.resolvedIds.templateId = this.options.templateId;
+    }
+
+  }
+
+  /** Resolve the option names that are only read when creating a test run. */
+  private async resolveRunFieldIds(): Promise<void> {
+    const projectId = this.options.projectId;
+
+    if (typeof this.options.configId === 'string') {
+      const config = await this.client.findConfigurationByName(projectId, this.options.configId);
+      if (!config) throw new Error(`Configuration not found: "${this.options.configId}"`);
+      this.state.resolvedIds.configId = config.id;
+    } else if (typeof this.options.configId === 'number') {
+      this.state.resolvedIds.configId = this.options.configId;
+    }
+
+    if (typeof this.options.milestoneId === 'string') {
+      const milestone = await this.client.findMilestoneByName(projectId, this.options.milestoneId);
+      if (!milestone) throw new Error(`Milestone not found: "${this.options.milestoneId}"`);
+      this.state.resolvedIds.milestoneId = milestone.id;
+    } else if (typeof this.options.milestoneId === 'number') {
+      this.state.resolvedIds.milestoneId = this.options.milestoneId;
+    }
+
+    if (typeof this.options.stateId === 'string') {
+      const state = await this.client.findWorkflowStateByName(projectId, this.options.stateId);
+      if (!state) throw new Error(`Workflow state not found: "${this.options.stateId}"`);
+      this.state.resolvedIds.stateId = state.id;
+    } else if (typeof this.options.stateId === 'number') {
+      this.state.resolvedIds.stateId = this.options.stateId;
     }
 
     if (this.options.tagIds && this.options.tagIds.length > 0) {
@@ -1019,12 +1127,12 @@ export default class TestPlanItReporter implements Reporter {
     if (!this.state.testRunId) {
       throw new Error('Cannot create JUnit test suite without a test run ID');
     }
-    const runName = this.formatRunName(this.options.runName || '{suite} - {date} {time}');
+    const suiteName = this.formatRunName(this.resolveTestSuiteNameTemplate());
     this.log('Creating JUnit test suite...');
 
     const testSuite = await this.client.createJUnitTestSuite({
       testRunId: this.state.testRunId,
-      name: runName,
+      name: suiteName,
       // Suite totals are computed by the backend from JUnitTestResult rows.
       time: 0,
       tests: 0,
@@ -1181,12 +1289,32 @@ export default class TestPlanItReporter implements Reporter {
     return titles;
   }
 
+  /**
+   * Template for this execution's JUnit suite name.
+   *
+   * A pinned run collects a suite per execution, so its default names them by
+   * project and spec to tell shards apart. A run this reporter created holds one
+   * suite, named after the run.
+   */
+  private resolveTestSuiteNameTemplate(): string {
+    if (this.options.testSuiteName) {
+      return this.options.testSuiteName;
+    }
+    if (this.externallyManaged) {
+      return EXTERNALLY_MANAGED_SUITE_NAME;
+    }
+    return this.options.runName || '{suite} - {date} {time}';
+  }
+
   private formatRunName(template: string): string {
     const now = new Date();
     const date = now.toISOString().split('T')[0];
     const time = now.toTimeString().split(' ')[0];
     const browser = this.currentProject || 'unknown';
     const platform = process.platform;
+    // Playwright's own --shard, the natural label when one run collects the
+    // results of several shards. An unsharded execution ran everything.
+    const shard = this.shard ? `${this.shard.current}/${this.shard.total}` : '1/1';
 
     let spec = 'unknown';
     if (this.currentSpec) {
@@ -1203,6 +1331,7 @@ export default class TestPlanItReporter implements Reporter {
       .replace('{browser}', browser)
       .replace('{platform}', platform)
       .replace('{spec}', spec)
+      .replace('{shard}', shard)
       .replace('{suite}', suite);
   }
 

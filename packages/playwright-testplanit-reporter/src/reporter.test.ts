@@ -1230,3 +1230,301 @@ describe('TestPlanItReporter (Playwright)', () => {
     });
   });
 });
+
+// ---------------------------------------------------------------------------
+describe('externally managed test run (Playwright)', () => {
+  const RUN_ID_ENV_VAR = 'TESTPLANIT_RUN_ID';
+
+  const begin = (reporter: TestPlanItReporter, shard?: { current: number; total: number }) =>
+    reporter.onBegin({ shard } as any, {} as Suite);
+
+  const passingTest = () => makeTest('[555] logs in', buildParent({ project: 'chromium', describes: ['Login'] }));
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    applyBaseImpls();
+    delete process.env[RUN_ID_ENV_VAR];
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    delete process.env[RUN_ID_ENV_VAR];
+  });
+
+  describe('resolution precedence', () => {
+    it('pins the run from TESTPLANIT_RUN_ID', () => {
+      process.env[RUN_ID_ENV_VAR] = '984';
+      const reporter = new TestPlanItReporter({ ...defaultOptions });
+
+      expect(reporter.getState().testRunId).toBe(984);
+      expect((reporter as any).externallyManaged).toBe(true);
+    });
+
+    it('prefers a numeric testRunId option over the environment variable', () => {
+      process.env[RUN_ID_ENV_VAR] = '984';
+      const reporter = new TestPlanItReporter({ ...defaultOptions, testRunId: 42 });
+
+      expect(reporter.getState().testRunId).toBe(42);
+    });
+
+    it('prefers the environment variable over a run name lookup', async () => {
+      process.env[RUN_ID_ENV_VAR] = '984';
+      const reporter = new TestPlanItReporter({ ...defaultOptions, testRunId: 'Nightly Regression' });
+
+      await run(reporter, passingTest(), makeResult());
+
+      expect(reporter.getState().testRunId).toBe(984);
+      expect(clientMock.findTestRunByName).not.toHaveBeenCalled();
+    });
+
+    it('falls back to a run name lookup and marks the run externally managed', async () => {
+      const reporter = new TestPlanItReporter({ ...defaultOptions, testRunId: 'Nightly Regression' });
+
+      await run(reporter, passingTest(), makeResult());
+
+      expect(reporter.getState().testRunId).toBe(555);
+      expect((reporter as any).externallyManaged).toBe(true);
+      expect(clientMock.createTestRun).not.toHaveBeenCalled();
+    });
+
+    it('ignores a non-numeric environment variable', () => {
+      process.env[RUN_ID_ENV_VAR] = '${RUN_ID}';
+      const reporter = new TestPlanItReporter({ ...defaultOptions });
+
+      expect(reporter.getState().testRunId).toBeUndefined();
+      expect((reporter as any).externallyManaged).toBe(false);
+    });
+
+    it('ignores an empty environment variable', () => {
+      process.env[RUN_ID_ENV_VAR] = '   ';
+      const reporter = new TestPlanItReporter({ ...defaultOptions });
+
+      expect(reporter.getState().testRunId).toBeUndefined();
+    });
+  });
+
+  describe('run lifecycle', () => {
+    it('never creates a run', async () => {
+      process.env[RUN_ID_ENV_VAR] = '984';
+      const reporter = new TestPlanItReporter({ ...defaultOptions });
+
+      await run(reporter, passingTest(), makeResult());
+
+      expect(clientMock.createTestRun).not.toHaveBeenCalled();
+      expect(reporter.getState().testRunId).toBe(984);
+    });
+
+    it('never completes the run, even with completeRunOnFinish enabled', async () => {
+      process.env[RUN_ID_ENV_VAR] = '984';
+      const reporter = new TestPlanItReporter({ ...defaultOptions, completeRunOnFinish: true });
+
+      await run(reporter, passingTest(), makeResult());
+
+      expect(clientMock.completeTestRun).not.toHaveBeenCalled();
+      expect((reporter as any).options.completeRunOnFinish).toBe(false);
+    });
+
+    it('attaches results to the pinned run', async () => {
+      process.env[RUN_ID_ENV_VAR] = '984';
+      const reporter = new TestPlanItReporter({ ...defaultOptions });
+
+      await run(reporter, passingTest(), makeResult());
+
+      expect(clientMock.findOrAddTestCaseToRun).toHaveBeenCalledWith(
+        expect.objectContaining({ testRunId: 984 }),
+      );
+    });
+
+    it('keeps the pinned run across two shards, completing neither', async () => {
+      process.env[RUN_ID_ENV_VAR] = '984';
+
+      const first = new TestPlanItReporter({ ...defaultOptions, completeRunOnFinish: true });
+      begin(first, { current: 1, total: 2 });
+      await run(first, passingTest(), makeResult());
+
+      const second = new TestPlanItReporter({ ...defaultOptions, completeRunOnFinish: true });
+      begin(second, { current: 2, total: 2 });
+      await run(second, passingTest(), makeResult());
+
+      expect(first.getState().testRunId).toBe(984);
+      expect(second.getState().testRunId).toBe(984);
+      expect(clientMock.createTestRun).not.toHaveBeenCalled();
+      expect(clientMock.completeTestRun).not.toHaveBeenCalled();
+      expect(clientMock.createJUnitTestSuite).toHaveBeenCalledTimes(2);
+    });
+
+    it('keeps the pinned run when it is already completed', async () => {
+      process.env[RUN_ID_ENV_VAR] = '984';
+      clientMock.getTestRun.mockImplementation(async () => ({
+        id: 984,
+        name: 'Web Regression',
+        isCompleted: true,
+        isDeleted: false,
+      }));
+      const reporter = new TestPlanItReporter({ ...defaultOptions });
+
+      await run(reporter, passingTest(), makeResult());
+
+      expect(reporter.getState().testRunId).toBe(984);
+      expect(clientMock.createTestRun).not.toHaveBeenCalled();
+    });
+
+    it('keeps attaching when the pinned run cannot be read', async () => {
+      process.env[RUN_ID_ENV_VAR] = '984';
+      clientMock.getTestRun.mockImplementation(async () => {
+        throw new Error('404');
+      });
+      vi.spyOn(console, 'error').mockImplementation(() => {});
+      const reporter = new TestPlanItReporter({ ...defaultOptions });
+
+      await run(reporter, passingTest(), makeResult());
+
+      expect(reporter.getState().testRunId).toBe(984);
+      expect(reporter.getState().initialized).toBe(true);
+      expect(clientMock.createTestRun).not.toHaveBeenCalled();
+      expect(clientMock.findOrAddTestCaseToRun).toHaveBeenCalledWith(
+        expect.objectContaining({ testRunId: 984 }),
+      );
+    });
+  });
+
+  describe('run field resolution', () => {
+    it('does not resolve configuration, milestone, state or tags', async () => {
+      process.env[RUN_ID_ENV_VAR] = '984';
+      const reporter = new TestPlanItReporter({
+        ...defaultOptions,
+        configId: 'Chrome / macOS',
+        milestoneId: 'Release 2.0',
+        stateId: 'In Progress',
+        tagIds: ['regression'],
+      });
+
+      await run(reporter, passingTest(), makeResult());
+
+      expect(clientMock.findConfigurationByName).not.toHaveBeenCalled();
+      expect(clientMock.findMilestoneByName).not.toHaveBeenCalled();
+      expect(clientMock.findWorkflowStateByName).not.toHaveBeenCalled();
+      expect(clientMock.resolveTagIds).not.toHaveBeenCalled();
+    });
+
+    it('still resolves folder and template, which case creation needs', async () => {
+      process.env[RUN_ID_ENV_VAR] = '984';
+      const reporter = new TestPlanItReporter({
+        ...defaultOptions,
+        autoCreateTestCases: true,
+        parentFolderId: 'Automated',
+        templateId: 'Automation',
+      });
+
+      await run(reporter, passingTest(), makeResult());
+
+      expect(clientMock.findFolderByName).toHaveBeenCalled();
+      expect(clientMock.findTemplateByName).toHaveBeenCalled();
+    });
+
+    it('does not apply run links or metadata, which belong to the pipeline', async () => {
+      process.env[RUN_ID_ENV_VAR] = '984';
+      const reporter = new TestPlanItReporter({
+        ...defaultOptions,
+        runLinks: [{ url: 'https://ci.example.com/job/42', name: 'Build' }],
+        runMetadata: { branch: 'main' },
+      });
+
+      await run(reporter, passingTest(), makeResult());
+
+      expect(clientMock.addTestRunLink).not.toHaveBeenCalled();
+      expect(clientMock.setTestRunMetadata).not.toHaveBeenCalled();
+    });
+
+    it('resolves run fields normally when no run is pinned', async () => {
+      const reporter = new TestPlanItReporter({
+        ...defaultOptions,
+        configId: 'Chrome / macOS',
+        tagIds: ['regression'],
+      });
+
+      await run(reporter, passingTest(), makeResult());
+
+      expect(clientMock.findConfigurationByName).toHaveBeenCalled();
+      expect(clientMock.resolveTagIds).toHaveBeenCalled();
+      expect(lastArg(clientMock.createTestRun)).toEqual(
+        expect.objectContaining({ configId: 11, tagIds: [7, 8, 9] }),
+      );
+    });
+  });
+
+  describe('suite naming', () => {
+    it('names the suite by project and spec for a pinned run', async () => {
+      process.env[RUN_ID_ENV_VAR] = '984';
+      const reporter = new TestPlanItReporter({ ...defaultOptions });
+
+      await run(reporter, passingTest(), makeResult());
+
+      expect(lastArg(clientMock.createJUnitTestSuite)).toEqual(
+        expect.objectContaining({ testRunId: 984, name: `Login - chromium/${process.platform} - login` }),
+      );
+    });
+
+    it('resolves {shard} from Playwright --shard', async () => {
+      process.env[RUN_ID_ENV_VAR] = '984';
+      const reporter = new TestPlanItReporter({
+        ...defaultOptions,
+        testSuiteName: 'Shard {shard} - {browser}',
+      });
+      begin(reporter, { current: 2, total: 5 });
+
+      await run(reporter, passingTest(), makeResult());
+
+      expect(lastArg(clientMock.createJUnitTestSuite)).toEqual(
+        expect.objectContaining({ name: 'Shard 2/5 - chromium' }),
+      );
+    });
+
+    it('resolves {shard} to 1/1 when not sharded', async () => {
+      process.env[RUN_ID_ENV_VAR] = '984';
+      const reporter = new TestPlanItReporter({ ...defaultOptions, testSuiteName: 'Shard {shard}' });
+      begin(reporter);
+
+      await run(reporter, passingTest(), makeResult());
+
+      expect(lastArg(clientMock.createJUnitTestSuite)).toEqual(
+        expect.objectContaining({ name: 'Shard 1/1' }),
+      );
+    });
+
+    it('keeps naming the suite after the run when no run is pinned', async () => {
+      const reporter = new TestPlanItReporter({ ...defaultOptions, runName: 'Nightly Regression' });
+
+      await run(reporter, passingTest(), makeResult());
+
+      expect(lastArg(clientMock.createJUnitTestSuite)).toEqual(
+        expect.objectContaining({ name: 'Nightly Regression' }),
+      );
+    });
+  });
+
+  describe('backward compatibility', () => {
+    it('creates and completes a run when nothing pins one', async () => {
+      const reporter = new TestPlanItReporter({ ...defaultOptions, completeRunOnFinish: true });
+
+      await run(reporter, passingTest(), makeResult());
+
+      expect((reporter as any).externallyManaged).toBe(false);
+      expect(clientMock.createTestRun).toHaveBeenCalled();
+      expect(clientMock.completeTestRun).toHaveBeenCalledWith(123, 1);
+    });
+
+    it('still applies run links and metadata to a run it created', async () => {
+      const reporter = new TestPlanItReporter({
+        ...defaultOptions,
+        runLinks: [{ url: 'https://ci.example.com/job/42', name: 'Build' }],
+        runMetadata: { branch: 'main' },
+      });
+
+      await run(reporter, passingTest(), makeResult());
+
+      expect(clientMock.addTestRunLink).toHaveBeenCalled();
+      expect(clientMock.setTestRunMetadata).toHaveBeenCalled();
+    });
+  });
+});

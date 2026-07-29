@@ -62,6 +62,16 @@ interface TestPlanItReporterOptions {
      * Existing test run to add results to (ID or name).
      * If a string is provided, the system looks up the test run by exact name match.
      * If not provided, a new test run is created.
+     *
+     * A run supplied here (or via the `TESTPLANIT_RUN_ID` environment variable) is
+     * externally managed: the reporter attaches results to it but never creates or
+     * completes it, so any number of shards, machines or retry waves can report
+     * into the same run. Resolution order is:
+     *
+     * 1. `testRunId` as a number
+     * 2. `TESTPLANIT_RUN_ID` (numeric)
+     * 3. `testRunId` as a name to look up
+     * 4. create a new run
      */
     testRunId?: number | string;
     /**
@@ -72,10 +82,24 @@ interface TestPlanItReporterOptions {
      * - {browser} - Playwright project name of the first reported test (e.g. 'chromium')
      * - {platform} - Platform/OS name
      * - {spec} - Spec file name (without .spec.ts extension) of the first reported test
+     * - {shard} - Playwright's `--shard` as 'current/total' (e.g. '2/5'), '1/1' when unsharded
      * - {suite} - Root describe title of the first reported test
      * @default '{suite} - {date} {time}'
      */
     runName?: string;
+    /**
+     * Name of the JUnit test suite created for this execution's results.
+     * Supports the same placeholders as {@link runName}.
+     *
+     * Each execution creates its own suite, so with an externally managed run the
+     * default distinguishes shards by project and spec — use `{shard}` for a
+     * precise label when running `--shard`. Results roll up at the run level
+     * regardless of how many suites it holds.
+     *
+     * @default runName, or '{suite} - {browser}/{platform} - {spec}' for an
+     * externally managed run
+     */
+    testSuiteName?: string;
     /**
      * Test run type to indicate the test framework being used.
      * Playwright results are stored as JUnit-style results, so this defaults to
@@ -217,6 +241,13 @@ interface TestPlanItReporterOptions {
      */
     includeStackTrace?: boolean;
     /**
+     * Whether to exclude skipped tests from the report. When enabled, skipped
+     * results are not sent to TestPlanIt at all — they don't appear on the run
+     * and don't count toward its totals.
+     * @default false
+     */
+    excludeSkipped?: boolean;
+    /**
      * Links to attach to the test run right after the reporter creates it
      * (e.g. a CI build URL). Rendered as clickable link attachments on the run
      * detail page.
@@ -261,7 +292,10 @@ interface TestPlanItReporterOptions {
      */
     runMetadata?: RunMetadata;
     /**
-     * Whether to mark the test run as completed when all tests finish
+     * Whether to mark the test run as completed when all tests finish.
+     *
+     * Forced to false for an externally managed run (see {@link testRunId}), so a
+     * single shard cannot close a run other executions are still reporting into.
      * @default true
      */
     completeRunOnFinish?: boolean;
@@ -409,6 +443,13 @@ interface ReporterState {
 }
 
 /**
+ * Environment variable holding the ID of a test run created by the pipeline.
+ * Every execution that sees it attaches to that run instead of creating one,
+ * which is how a suite split across shards, machines or retry waves lands in a
+ * single run.
+ */
+declare const RUN_ID_ENV_VAR = "TESTPLANIT_RUN_ID";
+/**
  * Playwright reporter for TestPlanIt.
  *
  * Reports test results directly to your TestPlanIt instance. Mirrors the
@@ -446,6 +487,14 @@ declare class TestPlanItReporter implements Reporter {
     private currentSpec?;
     private currentProject?;
     private rootSuiteName?;
+    /** Shard this process is running, from Playwright's `--shard` (onBegin). */
+    private shard?;
+    /**
+     * When true, the run was created outside this reporter — pinned by the
+     * `testRunId` option or the `TESTPLANIT_RUN_ID` environment variable. The
+     * reporter attaches results to it but never creates, mutates or completes it.
+     */
+    private externallyManaged;
     /**
      * `runAttachments` entries whose file couldn't be read at initialization
      * (typically artifacts produced by the tests themselves). Retried once in
@@ -461,13 +510,19 @@ declare class TestPlanItReporter implements Reporter {
     constructor(options: TestPlanItReporterOptions);
     /** Tell Playwright this reporter writes to stdout (summary + warnings). */
     printsToStdio(): boolean;
+    /**
+     * Record that the run belongs to the pipeline rather than this execution.
+     * Completion is disabled so one shard cannot close a run that other shards,
+     * machines or retry waves are still reporting into.
+     */
+    private markExternallyManaged;
     private log;
     private logError;
     /**
      * Track an async operation so onEnd waits for it to complete.
      */
     private trackOperation;
-    onBegin(_config: FullConfig, _suite: Suite): void;
+    onBegin(config: FullConfig, _suite: Suite): void;
     onTestEnd(test: TestCase, result: TestResult): void;
     onError(error: TestError): void;
     onEnd(_result: FullResult): Promise<void>;
@@ -522,7 +577,15 @@ declare class TestPlanItReporter implements Reporter {
     private applyDeferredRunAttachments;
     private initialize;
     private doInitialize;
+    /**
+     * Confirm a pinned run is reachable. A failure here is reported but not fatal:
+     * the reporter keeps attaching results to the pinned ID rather than creating a
+     * replacement run, which would reintroduce the duplicates pinning prevents.
+     */
+    private validateExternallyManagedTestRun;
     private resolveOptionIds;
+    /** Resolve the option names that are only read when creating a test run. */
+    private resolveRunFieldIds;
     private fetchStatusMappings;
     private createTestRun;
     private ensureJUnitTestSuite;
@@ -557,6 +620,14 @@ declare class TestPlanItReporter implements Reporter {
      * depth marker so the hierarchy survives as plain text.
      */
     private extractStepTitles;
+    /**
+     * Template for this execution's JUnit suite name.
+     *
+     * A pinned run collects a suite per execution, so its default names them by
+     * project and spec to tell shards apart. A run this reporter created holds one
+     * suite, named after the run.
+     */
+    private resolveTestSuiteNameTemplate;
     private formatRunName;
     private extForContentType;
     private printSummary;
@@ -619,4 +690,4 @@ declare function attachToRun(testInfo: RunAttachTarget, input: RunLinkInput | Ru
  */
 declare function setRunMetadata(testInfo: RunAttachTarget, metadata: RunMetadata): Promise<void>;
 
-export { type ReporterState, type RunAttachTarget, type RunAttachmentInput, type RunLinkInput, TestPlanItReporter, type TestPlanItReporterOptions, type TrackedTestResult, attachToRun, TestPlanItReporter as default, setRunMetadata };
+export { RUN_ID_ENV_VAR, type ReporterState, type RunAttachTarget, type RunAttachmentInput, type RunLinkInput, TestPlanItReporter, type TestPlanItReporterOptions, type TrackedTestResult, attachToRun, TestPlanItReporter as default, setRunMetadata };
