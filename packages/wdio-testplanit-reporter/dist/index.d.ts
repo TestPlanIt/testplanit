@@ -974,6 +974,13 @@ declare class TestPlanItService {
      * into it but never creates or completes it.
      */
     private externallyManaged;
+    /**
+     * Whether onPrepare exported the created run's ID into the environment, and
+     * what was there before. Restored in onComplete so a second launcher in the
+     * same process doesn't inherit a finished run and treat it as pinned.
+     */
+    private exportedRunIdEnv;
+    private previousRunIdEnv?;
     constructor(serviceOptions: TestPlanItServiceOptions);
     /**
      * Log a message if verbose mode is enabled
@@ -1053,6 +1060,13 @@ declare class TestPlanItService {
      * Completes the test run and cleans up the shared state file.
      */
     onComplete(exitCode: number): Promise<void>;
+    /**
+     * Undo the onPrepare export. All workers have finished by the time
+     * onComplete runs, so nothing still needs to read it — and leaving a
+     * completed run's ID in the environment would make the next launcher in
+     * this process treat that run as its own pinned one.
+     */
+    private restoreRunIdEnv;
 }
 
 export { RUN_ID_ENV_VAR, type ReporterState, type RunAttachmentInput, type RunLinkInput, TestPlanItReporter, type TestPlanItReporterOptions, type TestPlanItRuntimeApi, TestPlanItService, type TestPlanItServiceOptions, type TrackedTestResult, TestPlanItReporter as default };

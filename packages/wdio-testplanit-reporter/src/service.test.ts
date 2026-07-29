@@ -60,10 +60,14 @@ describe('TestPlanItService', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    // onPrepare exports the created run's ID for workers; clear it so one
+    // test's run does not leave the next service looking externally pinned.
+    delete process.env[RUN_ID_ENV_VAR];
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
+    delete process.env[RUN_ID_ENV_VAR];
   });
 
   describe('constructor', () => {
@@ -666,6 +670,57 @@ describe('externally managed test run (service)', () => {
   afterEach(() => {
     vi.restoreAllMocks();
     delete process.env[RUN_ID_ENV_VAR];
+  });
+
+  it('exports the created run id so forked workers inherit it', async () => {
+    const service = new TestPlanItService(defaultOptions);
+
+    await service.onPrepare();
+
+    // Workers are forked after onPrepare, so they inherit this value and their
+    // reporters take the externally managed path — attach only.
+    expect(process.env[RUN_ID_ENV_VAR]).toBe('100');
+  });
+
+  it('still completes the run it created, despite exporting the id', async () => {
+    const service = new TestPlanItService({ ...defaultOptions, completeRunOnFinish: true });
+
+    await service.onPrepare();
+    await service.onComplete(0);
+
+    // Exporting must not make the service treat its own run as external.
+    expect(mockClientInstance.completeTestRun).toHaveBeenCalledWith(100, 1);
+  });
+
+  it('unsets the exported id in onComplete when nothing was set before', async () => {
+    const service = new TestPlanItService(defaultOptions);
+
+    await service.onPrepare();
+    await service.onComplete(0);
+
+    expect(process.env[RUN_ID_ENV_VAR]).toBeUndefined();
+  });
+
+  it('restores a pre-existing value in onComplete', async () => {
+    process.env[RUN_ID_ENV_VAR] = '555';
+    // Pinned externally, so the service reports into 555 and creates nothing —
+    // there is no id of its own to export, and the value must survive.
+    const service = new TestPlanItService(defaultOptions);
+
+    await service.onPrepare();
+    await service.onComplete(0);
+
+    expect(process.env[RUN_ID_ENV_VAR]).toBe('555');
+    expect(mockClientInstance.createTestRun).not.toHaveBeenCalled();
+  });
+
+  it('does not leave a pinned id behind when onPrepare fails', async () => {
+    mockClientInstance.createJUnitTestSuite.mockRejectedValueOnce(new Error('boom'));
+    const service = new TestPlanItService(defaultOptions);
+
+    await expect(service.onPrepare()).rejects.toThrow('boom');
+
+    expect(process.env[RUN_ID_ENV_VAR]).toBeUndefined();
   });
 
   it('pins the run from TESTPLANIT_RUN_ID and never creates one', async () => {
