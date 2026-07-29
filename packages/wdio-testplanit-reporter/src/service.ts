@@ -44,6 +44,8 @@ import type { RunAttachmentInput, TestPlanItServiceOptions } from './types.js';
 import {
   writeSharedState,
   deleteSharedState,
+  parseEnvTestRunId,
+  RUN_ID_ENV_VAR,
   type SharedState,
 } from './shared.js';
 import {
@@ -72,6 +74,12 @@ export default class TestPlanItService {
    * onComplete, before the run is completed.
    */
   private deferredRunAttachments: RunAttachmentInput[] = [];
+  /**
+   * When true, the run was created by the pipeline rather than this service —
+   * pinned by the `testRunId` option or `TESTPLANIT_RUN_ID`. The service reports
+   * into it but never creates or completes it.
+   */
+  private externallyManaged = false;
 
   constructor(serviceOptions: TestPlanItServiceOptions) {
     // Validate required options
@@ -96,6 +104,19 @@ export default class TestPlanItService {
     };
 
     this.verbose = this.options.verbose ?? false;
+
+    const pinnedTestRunId =
+      this.options.testRunId ?? parseEnvTestRunId(process.env[RUN_ID_ENV_VAR]);
+    if (pinnedTestRunId !== undefined) {
+      this.testRunId = pinnedTestRunId;
+      this.externallyManaged = true;
+      if (this.options.completeRunOnFinish) {
+        this.options.completeRunOnFinish = false;
+        this.log(
+          `Test run ${pinnedTestRunId} pinned externally — completeRunOnFinish disabled; the pipeline completes the run`
+        );
+      }
+    }
 
     this.client = new TestPlanItClient({
       baseUrl: this.options.domain,
@@ -212,13 +233,67 @@ export default class TestPlanItService {
 
   /**
    * Apply the declarative run-level options (`runLinks`, `runMetadata`,
-   * `runAttachments`) to the just-created test run. Runs once in the
-   * launcher process. Every failure is logged and swallowed — run-level
-   * attachments must never fail the test run.
+   * `runAttachments`) to the test run. Runs once in the launcher process.
+   * Every failure is logged and swallowed — run-level attachments must never
+   * fail the test run.
    */
   private async applyRunLevelConfig(): Promise<void> {
     if (!this.testRunId) return;
     const ctx = this.runtimeContext();
+
+    // Links and metadata describe the run as a whole. On a run shared by several
+    // executions they belong to the pipeline that created it — applying them per
+    // execution would duplicate every link and let the last shard overwrite the
+    // metadata. Attachments are per-execution artifacts, so they still apply.
+    if (this.externallyManaged) {
+      if (this.options.runLinks?.length || this.options.runMetadata) {
+        this.log('Skipping run links and metadata for externally managed test run');
+      }
+    } else {
+      await this.applyRunIdentity();
+    }
+
+    // File attachments — defer paths that don't exist yet to onComplete
+    for (const attachment of this.options.runAttachments ?? []) {
+      try {
+        const resolved: RunAttachmentInput = { ...attachment };
+        if (resolved.name) {
+          resolved.name = applyEnvTemplate(resolved.name).value;
+        }
+        if (!resolved.buffer && resolved.path) {
+          const templatedPath = applyEnvTemplate(resolved.path);
+          if (templatedPath.missing.length > 0) {
+            this.logError(
+              `Skipping run attachment "${attachment.path}": unresolved environment variable(s) ${templatedPath.missing.join(', ')}`
+            );
+            continue;
+          }
+          resolved.path = templatedPath.value;
+          if (!fs.existsSync(resolved.path)) {
+            this.log(
+              `Run attachment not found yet, will retry after tests finish: ${resolved.path}`
+            );
+            this.deferredRunAttachments.push(resolved);
+            continue;
+          }
+        }
+        await attachFileToRun(ctx, this.testRunId, resolved);
+        this.log(`Attached file to run: ${resolved.name ?? resolved.path}`);
+      } catch (error) {
+        this.logError(
+          `Failed to attach run file "${attachment.name ?? attachment.path}":`,
+          error
+        );
+      }
+    }
+  }
+
+  /**
+   * Apply the run-identity options (`runLinks`, `runMetadata`) to a run this
+   * service created.
+   */
+  private async applyRunIdentity(): Promise<void> {
+    if (!this.testRunId) return;
 
     // Links (e.g. CI build URL)
     for (const link of this.options.runLinks ?? []) {
@@ -270,40 +345,6 @@ export default class TestPlanItService {
         this.logError('Failed to set run metadata:', error);
       }
     }
-
-    // File attachments — defer paths that don't exist yet to onComplete
-    for (const attachment of this.options.runAttachments ?? []) {
-      try {
-        const resolved: RunAttachmentInput = { ...attachment };
-        if (resolved.name) {
-          resolved.name = applyEnvTemplate(resolved.name).value;
-        }
-        if (!resolved.buffer && resolved.path) {
-          const templatedPath = applyEnvTemplate(resolved.path);
-          if (templatedPath.missing.length > 0) {
-            this.logError(
-              `Skipping run attachment "${attachment.path}": unresolved environment variable(s) ${templatedPath.missing.join(', ')}`
-            );
-            continue;
-          }
-          resolved.path = templatedPath.value;
-          if (!fs.existsSync(resolved.path)) {
-            this.log(
-              `Run attachment not found yet, will retry after tests finish: ${resolved.path}`
-            );
-            this.deferredRunAttachments.push(resolved);
-            continue;
-          }
-        }
-        await attachFileToRun(ctx, this.testRunId, resolved);
-        this.log(`Attached file to run: ${resolved.name ?? resolved.path}`);
-      } catch (error) {
-        this.logError(
-          `Failed to attach run file "${attachment.name ?? attachment.path}":`,
-          error
-        );
-      }
-    }
   }
 
   /**
@@ -350,31 +391,48 @@ export default class TestPlanItService {
       // Clean up any stale shared state from a previous run
       deleteSharedState(this.options.projectId);
 
-      // Resolve string IDs to numeric IDs
-      const resolved = await this.resolveIds();
-
       // Format the run name
       const runName = this.formatRunName(this.options.runName ?? 'Automated Tests - {date} {time}');
 
-      // Create the test run
-      this.log(`Creating test run: "${runName}" (type: ${this.options.testRunType})`);
-      const testRun = await this.client.createTestRun({
-        projectId: this.options.projectId,
-        name: runName,
-        testRunType: this.options.testRunType,
-        configId: resolved.configId,
-        milestoneId: resolved.milestoneId,
-        stateId: resolved.stateId,
-        tagIds: resolved.tagIds,
-      });
-      this.testRunId = testRun.id;
-      this.log(`Created test run with ID: ${this.testRunId}`);
+      if (this.externallyManaged) {
+        // Configuration, milestone, state and tags belong to whoever created
+        // the run, so they are neither resolved nor applied here.
+        this.log(`Using externally managed test run: ${this.testRunId}`);
+      } else {
+        // Resolve string IDs to numeric IDs
+        const resolved = await this.resolveIds();
 
-      // Create the JUnit test suite
+        // Create the test run
+        this.log(`Creating test run: "${runName}" (type: ${this.options.testRunType})`);
+        const testRun = await this.client.createTestRun({
+          projectId: this.options.projectId,
+          name: runName,
+          testRunType: this.options.testRunType,
+          configId: resolved.configId,
+          milestoneId: resolved.milestoneId,
+          stateId: resolved.stateId,
+          tagIds: resolved.tagIds,
+        });
+        this.testRunId = testRun.id;
+        this.log(`Created test run with ID: ${this.testRunId}`);
+      }
+
+      const testRunId = this.testRunId;
+      if (!testRunId) {
+        throw new Error('No test run available to report into');
+      }
+
+      // Create the JUnit test suite. A pinned run collects one suite per
+      // execution, so `testSuiteName` is how shards are told apart. The
+      // launcher process has no browser or spec to name them by, so it also
+      // resolves {env:VAR} — a shard ID from the pipeline is the usable handle.
+      const suiteName = this.options.testSuiteName
+        ? this.formatRunName(applyEnvTemplate(this.options.testSuiteName).value)
+        : runName;
       this.log('Creating JUnit test suite...');
       const testSuite = await this.client.createJUnitTestSuite({
-        testRunId: this.testRunId,
-        name: runName,
+        testRunId,
+        name: suiteName,
         time: 0,
         tests: 0,
         failures: 0,
@@ -386,7 +444,7 @@ export default class TestPlanItService {
 
       // Write shared state file for workers to read
       const sharedState: SharedState = {
-        testRunId: this.testRunId,
+        testRunId,
         testSuiteId: this.testSuiteId,
         createdAt: new Date().toISOString(),
         activeWorkers: 0, // Not used in service-managed mode
@@ -399,8 +457,12 @@ export default class TestPlanItService {
       // Internally logs and swallows every failure — the run must not fail.
       await this.applyRunLevelConfig();
 
-      // Always print this so users can see the run was created
-      console.log(`[TestPlanIt Service] Test run created: "${runName}" (ID: ${this.testRunId})`);
+      // Always print this so users can see which run results land in
+      if (this.externallyManaged) {
+        console.log(`[TestPlanIt Service] Reporting into test run ${this.testRunId}`);
+      } else {
+        console.log(`[TestPlanIt Service] Test run created: "${runName}" (ID: ${this.testRunId})`);
+      }
     } catch (error) {
       this.logError('Failed to prepare test run:', error);
       // Clean up shared state on failure so reporters fall back to self-managed mode
@@ -474,7 +536,9 @@ export default class TestPlanItService {
       // reports produced by the tests), before the run is completed.
       await this.applyDeferredRunAttachments();
 
-      if (this.testRunId && this.options.completeRunOnFinish) {
+      if (this.externallyManaged) {
+        this.log(`Skipping test run completion (test run ${this.testRunId} is managed externally)`);
+      } else if (this.testRunId && this.options.completeRunOnFinish) {
         this.log(`Completing test run ${this.testRunId}...`);
         await this.client.completeTestRun(this.testRunId, this.options.projectId);
         this.log('Test run completed successfully');
@@ -484,7 +548,9 @@ export default class TestPlanItService {
       if (this.testRunId) {
         console.log('\n[TestPlanIt Service] ══════════════════════════════════════════');
         console.log(`[TestPlanIt Service]   Test Run ID: ${this.testRunId}`);
-        if (this.options.completeRunOnFinish) {
+        if (this.externallyManaged) {
+          console.log('[TestPlanIt Service]   Status: Left open (completed by the pipeline)');
+        } else if (this.options.completeRunOnFinish) {
           console.log('[TestPlanIt Service]   Status: Completed');
         }
         console.log(`[TestPlanIt Service]   View: ${this.options.domain}/projects/runs/${this.options.projectId}/${this.testRunId}`);

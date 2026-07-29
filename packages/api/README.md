@@ -265,6 +265,34 @@ const { testRunId } = await client.importTestResults(
 );
 ```
 
+## CLI
+
+The package installs a `testplanit` command for owning a test run's lifecycle
+from a pipeline. A suite executed as several separate reporter invocations —
+shards across agents, or retry waves — would otherwise create one run per
+invocation. Create the run up front and export its ID so every invocation
+attaches to it:
+
+```bash
+export TESTPLANIT_URL="https://testplanit.example.com"
+export TESTPLANIT_API_TOKEN="tpi_your_token_here"
+
+RUN_ID=$(testplanit create-run --project 9 --name "Web Regression - DEV #984" --type MOCHA)
+export TESTPLANIT_RUN_ID="$RUN_ID"
+
+# ...run every shard, agent and retry wave...
+
+testplanit complete-run --id "$RUN_ID"
+```
+
+`create-run` prints only the new run ID to stdout, so it is safe to capture in a
+shell variable; diagnostics go to stderr. `complete-run` reads the project from
+the run when `--project` is omitted. Run `testplanit --help` for all options.
+
+The [WebdriverIO reporter](https://www.npmjs.com/package/@testplanit/wdio-reporter)
+honours `TESTPLANIT_RUN_ID`, and never creates or completes a run it did not
+make.
+
 ## Error Handling
 
 ```typescript
