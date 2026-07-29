@@ -65,6 +65,16 @@ export interface TestPlanItReporterOptions {
    * Existing test run to add results to (ID or name).
    * If a string is provided, the system looks up the test run by exact name match.
    * If not provided, a new test run is created.
+   *
+   * A run supplied here (or via the `TESTPLANIT_RUN_ID` environment variable) is
+   * externally managed: the reporter attaches results to it but never creates or
+   * completes it, so any number of shards, machines or retry waves can report
+   * into the same run. Resolution order is:
+   *
+   * 1. `testRunId` as a number
+   * 2. `TESTPLANIT_RUN_ID` (numeric)
+   * 3. `testRunId` as a name to look up
+   * 4. create a new run
    */
   testRunId?: number | string;
 
@@ -76,10 +86,25 @@ export interface TestPlanItReporterOptions {
    * - {browser} - Playwright project name of the first reported test (e.g. 'chromium')
    * - {platform} - Platform/OS name
    * - {spec} - Spec file name (without .spec.ts extension) of the first reported test
+   * - {shard} - Playwright's `--shard` as 'current/total' (e.g. '2/5'), '1/1' when unsharded
    * - {suite} - Root describe title of the first reported test
    * @default '{suite} - {date} {time}'
    */
   runName?: string;
+
+  /**
+   * Name of the JUnit test suite created for this execution's results.
+   * Supports the same placeholders as {@link runName}.
+   *
+   * Each execution creates its own suite, so with an externally managed run the
+   * default distinguishes shards by project and spec — use `{shard}` for a
+   * precise label when running `--shard`. Results roll up at the run level
+   * regardless of how many suites it holds.
+   *
+   * @default runName, or '{suite} - {browser}/{platform} - {spec}' for an
+   * externally managed run
+   */
+  testSuiteName?: string;
 
   /**
    * Test run type to indicate the test framework being used.
@@ -293,7 +318,10 @@ export interface TestPlanItReporterOptions {
   runMetadata?: RunMetadata;
 
   /**
-   * Whether to mark the test run as completed when all tests finish
+   * Whether to mark the test run as completed when all tests finish.
+   *
+   * Forced to false for an externally managed run (see {@link testRunId}), so a
+   * single shard cannot close a run other executions are still reporting into.
    * @default true
    */
   completeRunOnFinish?: boolean;
