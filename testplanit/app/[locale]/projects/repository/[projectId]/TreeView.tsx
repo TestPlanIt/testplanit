@@ -8,11 +8,18 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
 import {
   Popover,
   PopoverAnchor,
   PopoverContent,
 } from "@/components/ui/popover";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import type { RepositoryFolders } from "~/zenstack/models";
 import {
   ArrowRightLeft,
@@ -22,8 +29,10 @@ import {
   FolderOpen,
   Loader2,
   MoreVertical,
+  Search,
   SquarePenIcon,
   Trash2Icon,
+  X,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
@@ -38,7 +47,7 @@ import { NodeApi, Tree, TreeApi } from "react-arborist";
 import { useDragLayer, useDrop } from "react-dnd";
 import { toast } from "sonner";
 import { useCopyMoveJob } from "~/components/copy-move/useCopyMoveJob";
-import { useDragModifier } from "~/hooks/useDragModifier";
+import { isMacPlatform, useDragModifier } from "~/hooks/useDragModifier";
 import { ItemTypes } from "~/types/dndTypes";
 import { DeleteFolderModal } from "./DeleteFolderModal";
 import { EditFolderModal } from "./EditFolder";
@@ -69,6 +78,153 @@ export interface FolderNode {
   directCaseCount: number;
   totalCaseCount: number;
 }
+
+/** Below this many folders the tree is short enough to scan, so the filter
+ *  input stays hidden and the panel keeps a single control. */
+export const FOLDER_FILTER_MIN_COUNT = 15;
+
+/** Floor for the tree's scroll viewport, and the space kept below it for the
+ *  root drop zone. react-arborist virtualizes against the height it is handed,
+ *  so it has to be the visible height and never the height of all rows. */
+const MIN_TREE_VIEWPORT = 320;
+const TREE_VIEWPORT_GUTTER = 96;
+
+/** Far longer than the app-wide tooltip delay: the chevron is a click target
+ *  first, and working down through subfolders must not summon a hint over the
+ *  next row. Only someone who stops on the chevron gets it. */
+const CHEVRON_HINT_DELAY_MS = 2500;
+
+/**
+ * Expand/collapse control for a folder row.
+ *
+ * Alt-clicking it reaches the whole subtree instead of the one folder, which is
+ * invisible until someone happens to try it, so the hover hint names both the
+ * plain click and the modifier — the disclosure the case list's select-all
+ * checkbox gives its Shift behaviour.
+ *
+ * On a root folder the modifier reaches every folder in the tree rather than
+ * just this row's descendants, so the wording follows that split.
+ */
+export const FolderChevron = React.memo(function FolderChevron({
+  folderId,
+  isOpen,
+  isRootFolder,
+  hasChildren,
+  onClick,
+}: {
+  folderId?: number;
+  isOpen: boolean;
+  isRootFolder: boolean;
+  hasChildren: boolean;
+  onClick: (event: React.MouseEvent<HTMLButtonElement>) => void;
+}) {
+  const t = useTranslations("repository.treeView");
+  const [isHovering, setIsHovering] = useState(false);
+  const [altHeld, setAltHeld] = useState(false);
+
+  // Subscribed only while the pointer is on this chevron, so one row listens at
+  // a time rather than every row the tree has rendered.
+  useEffect(() => {
+    if (!isHovering) {
+      setAltHeld(false);
+      return;
+    }
+
+    const sync = (event: KeyboardEvent) => setAltHeld(event.altKey);
+    const clear = () => setAltHeld(false);
+
+    window.addEventListener("keydown", sync);
+    window.addEventListener("keyup", sync);
+    // Alt-Tabbing away releases the key without a keyup reaching the page.
+    window.addEventListener("blur", clear);
+    return () => {
+      window.removeEventListener("keydown", sync);
+      window.removeEventListener("keyup", sync);
+      window.removeEventListener("blur", clear);
+    };
+  }, [isHovering]);
+
+  const chevron = (
+    <Button
+      variant="ghost"
+      size="sm"
+      className={`p-0 h-6 w-6 ${hasChildren ? "" : "invisible"}`}
+      aria-label={
+        hasChildren
+          ? isOpen
+            ? t("collapseFolder")
+            : t("expandFolder")
+          : undefined
+      }
+      data-testid={
+        folderId === undefined ? undefined : `folder-chevron-${folderId}`
+      }
+      // The pointer arriving with the key already down never fires a keydown.
+      onMouseEnter={(event) => {
+        setAltHeld(event.altKey);
+        setIsHovering(true);
+      }}
+      onMouseLeave={() => setIsHovering(false)}
+      onClick={onClick}
+    >
+      <ChevronRight
+        className={`w-4 h-4 transition-transform ${isOpen ? "rotate-90" : ""}`}
+      />
+    </Button>
+  );
+
+  // A childless folder keeps the chevron only as spacing, so there is nothing
+  // to describe.
+  if (!hasChildren) {
+    return chevron;
+  }
+
+  const action = altHeld
+    ? isRootFolder
+      ? isOpen
+        ? t("collapseAll")
+        : t("expandAll")
+      : isOpen
+        ? t("collapseSubfolders")
+        : t("expandSubfolders")
+    : isOpen
+      ? t("collapseFolder")
+      : t("expandFolder");
+
+  const isMac = isMacPlatform();
+  const hint = isRootFolder
+    ? isMac
+      ? t("altHintAllMac")
+      : t("altHintAllWin")
+    : isMac
+      ? t("altHintMac")
+      : t("altHintWin");
+
+  return (
+    <TooltipProvider
+      delayDuration={CHEVRON_HINT_DELAY_MS}
+      // Radix otherwise reopens with no delay at all for a while after the
+      // first hint, which is exactly the click-through case.
+      skipDelayDuration={0}
+      disableHoverableContent
+    >
+      <Tooltip>
+        <TooltipTrigger asChild>{chevron}</TooltipTrigger>
+        <TooltipContent
+          side="right"
+          sideOffset={8}
+          className="max-w-xs"
+          style={{ zIndex: 9999 }}
+        >
+          <p className="text-xs">{action}</p>
+          {!altHeld && (
+            <p className="text-xs text-primary-foreground/65 mt-1">{hint}</p>
+          )}
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+});
 
 const TreeView: React.FC<{
   onSelectFolder: (folderId: number | null) => void;
@@ -121,6 +277,25 @@ const TreeView: React.FC<{
   // State to store all folders
   const [folders, setFolders] = useState<RepositoryFolders[]>([]);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
+
+  const [filterQuery, setFilterQuery] = useState("");
+  const normalizedFilter = filterQuery.trim().toLowerCase();
+  const isFiltering = normalizedFilter.length > 0;
+  const showFilterInput = folders.length > FOLDER_FILTER_MIN_COUNT;
+  // Which folders were open before the current filter session started, so
+  // clearing the filter leaves the tree how the user had it.
+  const preFilterOpenIdsRef = useRef<Set<string> | null>(null);
+
+  // Called from the input's change handler rather than an effect: at that point
+  // the tree still holds the unfiltered nodes, so their open state is readable.
+  const captureOpenStateBeforeFiltering = () => {
+    if (isFiltering || preFilterOpenIdsRef.current !== null) return;
+    const openIds = new Set<string>();
+    treeRef.current?.visibleNodes.forEach((node) => {
+      if (node.isOpen) openIds.add(node.id);
+    });
+    preFilterOpenIdsRef.current = openIds;
+  };
 
   // Build a map of which folders have children (computed from main folders data)
   // This ensures hasChildren is always in sync with the folder list
@@ -189,7 +364,13 @@ const TreeView: React.FC<{
     () => new Set()
   );
   const [showSpinner, setShowSpinner] = useState(false);
-  const [visibleNodeCount, setVisibleNodeCount] = useState(0);
+  const treeViewportRef = useRef<HTMLDivElement>(null);
+  const [treeViewportHeight, setTreeViewportHeight] =
+    useState(MIN_TREE_VIEWPORT);
+  const [isExpandingAll, setIsExpandingAll] = useState(false);
+  const [pendingExpandIds, setPendingExpandIds] = useState<number[] | null>(
+    null
+  );
 
   // Delay showing spinner to prevent flashing on fast loads
   const isLoading = foldersLoading;
@@ -311,7 +492,7 @@ const TreeView: React.FC<{
     [folderMap, addLoadedFolderIds]
   );
 
-  const visibleFolderIds = useMemo(() => {
+  const runVisibleFolderIds = useMemo(() => {
     if (!filteredFolders || filteredFolders.length === 0) {
       return null;
     }
@@ -329,6 +510,57 @@ const TreeView: React.FC<{
     filteredFolders.forEach((folderId) => addWithAncestors(folderId));
     return visible;
   }, [filteredFolders, folderMap]);
+
+  // Folders whose own name matches the filter box.
+  const filterMatchIds = useMemo(() => {
+    if (!normalizedFilter) return null;
+    const matches = new Set<number>();
+    folders.forEach((folder) => {
+      if (folder.name.toLowerCase().includes(normalizedFilter)) {
+        matches.add(folder.id);
+      }
+    });
+    return matches;
+  }, [folders, normalizedFilter]);
+
+  // A match is only reachable with its ancestors present, and only browsable
+  // with its descendants present, so both join the matches in the visible set.
+  const filterVisibleFolderIds = useMemo(() => {
+    if (!filterMatchIds) return null;
+
+    const visible = new Set<number>(filterMatchIds);
+
+    filterMatchIds.forEach((folderId) => {
+      let current = folderMap.get(folderId)?.parentId ?? null;
+      while (current !== null && !visible.has(current)) {
+        visible.add(current);
+        current = folderMap.get(current)?.parentId ?? null;
+      }
+    });
+
+    const queue = [...filterMatchIds];
+    while (queue.length > 0) {
+      const parentId = queue.shift()!;
+      for (const child of childrenMap.get(parentId) ?? []) {
+        if (!visible.has(child.id)) {
+          visible.add(child.id);
+          queue.push(child.id);
+        }
+      }
+    }
+
+    return visible;
+  }, [filterMatchIds, folderMap, childrenMap]);
+
+  const visibleFolderIds = useMemo(() => {
+    if (!runVisibleFolderIds) return filterVisibleFolderIds;
+    if (!filterVisibleFolderIds) return runVisibleFolderIds;
+    const combined = new Set<number>();
+    filterVisibleFolderIds.forEach((folderId) => {
+      if (runVisibleFolderIds.has(folderId)) combined.add(folderId);
+    });
+    return combined;
+  }, [runVisibleFolderIds, filterVisibleFolderIds]);
 
   const selectedAncestorIds = useMemo(() => {
     const ancestors = new Set<number>();
@@ -722,16 +954,6 @@ const TreeView: React.FC<{
     ensureFolderPathLoaded,
   ]);
 
-  // Initialize visible node count when tree data changes
-  useEffect(() => {
-    if (treeRef.current) {
-      setVisibleNodeCount(treeRef.current.visibleNodes.length);
-    } else if (treeData.length > 0) {
-      // Fallback to treeData length if ref not ready
-      setVisibleNodeCount(treeData.length);
-    }
-  }, [treeData]);
-
   // Set initial selection after tree is rendered
   // Only run when selectedFolderId actually changes from the parent, not on treeData changes
   useEffect(() => {
@@ -895,6 +1117,91 @@ const TreeView: React.FC<{
     return () => clearTimeout(timeout);
   }, [filteredFolders, folderMap, addLoadedFolderIds]);
 
+  // Reveal filter matches by opening every ancestor on their paths.
+  useEffect(() => {
+    if (!filterMatchIds || filterMatchIds.size === 0) {
+      return;
+    }
+
+    const ancestorsToOpen = new Set<number>();
+    filterMatchIds.forEach((folderId) => {
+      let currentParent = folderMap.get(folderId)?.parentId ?? null;
+      while (currentParent !== null && !ancestorsToOpen.has(currentParent)) {
+        ancestorsToOpen.add(currentParent);
+        currentParent = folderMap.get(currentParent)?.parentId ?? null;
+      }
+    });
+    if (ancestorsToOpen.size === 0) {
+      return;
+    }
+    addLoadedFolderIds(ancestorsToOpen);
+
+    const timeout = setTimeout(() => {
+      ancestorsToOpen.forEach((folderId) => {
+        treeRef.current?.get(folderId.toString())?.open();
+      });
+    }, 0);
+
+    return () => clearTimeout(timeout);
+  }, [filterMatchIds, folderMap, addLoadedFolderIds]);
+
+  // Clearing the filter puts the open state back; without this the ancestors
+  // opened to reveal matches stay expanded for the rest of the session.
+  useEffect(() => {
+    if (isFiltering) return;
+    const snapshot = preFilterOpenIdsRef.current;
+    if (!snapshot) return;
+    preFilterOpenIdsRef.current = null;
+
+    const timeout = setTimeout(() => {
+      const tree = treeRef.current;
+      if (!tree) return;
+      tree.closeAll();
+      snapshot.forEach((nodeId) => tree.get(nodeId)?.open());
+      // A folder picked out of the filtered results has to stay reachable even
+      // though it was not open before filtering started.
+      selectedAncestorIds.forEach((folderId) =>
+        tree.get(folderId.toString())?.open()
+      );
+    }, 0);
+
+    return () => clearTimeout(timeout);
+  }, [isFiltering, selectedAncestorIds]);
+
+  // Size the tree to the space it actually occupies on screen. Handing it the
+  // combined height of every row instead makes react-window fill a viewport as
+  // tall as the content, which renders all rows and defeats virtualization.
+  useEffect(() => {
+    let frame = 0;
+
+    const measure = () => {
+      const element = treeViewportRef.current;
+      if (!element) return;
+      const { top } = element.getBoundingClientRect();
+      // Once the page is scrolled past the tree, top goes negative; cap at the
+      // window so the viewport never grows beyond what can be seen.
+      const available = Math.min(
+        window.innerHeight - TREE_VIEWPORT_GUTTER,
+        window.innerHeight - top - TREE_VIEWPORT_GUTTER
+      );
+      setTreeViewportHeight(Math.max(MIN_TREE_VIEWPORT, Math.round(available)));
+    };
+
+    const schedule = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(measure);
+    };
+
+    measure();
+    window.addEventListener("resize", schedule);
+    window.addEventListener("scroll", schedule, { passive: true });
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("resize", schedule);
+      window.removeEventListener("scroll", schedule);
+    };
+  }, [showFilterInput]);
+
   // Update hierarchy when tree changes
   useEffect(() => {
     if (folders) {
@@ -913,26 +1220,59 @@ const TreeView: React.FC<{
     }
   }, [folders, onHierarchyChange]);
 
-  // Recursively expand a node and all its descendants
-  const expandAllDescendants = useCallback(
-    async (node: NodeApi<ArboristNode>) => {
-      const folderId = node.data?.data?.folderId;
-      if (folderId) {
-        await ensureFolderChildrenLoaded(folderId);
-      }
-      node.open();
-
-      // Expand all children recursively
-      if (node.children) {
-        for (const child of node.children) {
-          if (child.data?.data?.hasChildren) {
-            await expandAllDescendants(child);
+  // Every folder in the given subtrees, read from the folder data rather than
+  // the rendered nodes so the whole set is known without waiting on re-renders.
+  const collectSubtreeFolderIds = useCallback(
+    (rootFolderIds: number[]) => {
+      const ids: number[] = [];
+      const seen = new Set<number>(rootFolderIds);
+      const queue = [...rootFolderIds];
+      while (queue.length > 0) {
+        const folderId = queue.shift()!;
+        ids.push(folderId);
+        for (const child of childrenMap.get(folderId) ?? []) {
+          if (!seen.has(child.id)) {
+            seen.add(child.id);
+            queue.push(child.id);
           }
         }
       }
+      return ids;
     },
-    [ensureFolderChildrenLoaded]
+    [childrenMap]
   );
+
+  // Expand-all marks the whole subtree loaded in one state update; doing it per
+  // node re-rendered the tree thousands of times and froze the tab.
+  const expandSubtrees = useCallback(
+    async (rootFolderIds: number[]) => {
+      const ids = collectSubtreeFolderIds(rootFolderIds);
+      if (ids.length === 0) return;
+
+      setIsExpandingAll(true);
+      // Give the browser a frame to paint the busy state before the rebuild.
+      await new Promise<void>((resolve) =>
+        requestAnimationFrame(() => resolve())
+      );
+
+      addLoadedFolderIds(ids);
+      setPendingExpandIds(ids);
+    },
+    [collectSubtreeFolderIds, addLoadedFolderIds]
+  );
+
+  // Opening happens once the rebuilt tree contains the newly loaded folders.
+  useEffect(() => {
+    if (!pendingExpandIds) return;
+    const tree = treeRef.current;
+    if (tree) {
+      pendingExpandIds.forEach((folderId) =>
+        tree.get(folderId.toString())?.open()
+      );
+    }
+    setPendingExpandIds(null);
+    setIsExpandingAll(false);
+  }, [pendingExpandIds, treeData]);
 
   // Recursively collapse a node and all its descendants
   const collapseAllDescendants = useCallback((node: NodeApi<ArboristNode>) => {
@@ -946,6 +1286,27 @@ const TreeView: React.FC<{
     }
     node.close();
   }, []);
+
+  const renderFolderName = (name: string): React.ReactNode => {
+    if (!normalizedFilter) return name;
+    const matchStart = name.toLowerCase().indexOf(normalizedFilter);
+    if (matchStart === -1) return name;
+    const matchEnd = matchStart + normalizedFilter.length;
+    // A <span> rather than <mark>: the global mark rule adds horizontal padding
+    // that pulls the surrounding letters apart mid-word.
+    return (
+      <>
+        {name.slice(0, matchStart)}
+        <span
+          className="bg-warning/30 dark:bg-warning/45 rounded-sm"
+          data-testid="folder-filter-match"
+        >
+          {name.slice(matchStart, matchEnd)}
+        </span>
+        {name.slice(matchEnd)}
+      </>
+    );
+  };
 
   // Custom node renderer with inline editing and context menu
   const Node = ({
@@ -1099,10 +1460,11 @@ const TreeView: React.FC<{
         data-drop-target={isOver && canDrop ? "true" : undefined}
         data-drop-invalid={isOver && !canDrop ? "true" : undefined}
       >
-        <Button
-          variant="ghost"
-          size="sm"
-          className={`p-0 h-6 w-6 ${hasChildren ? "" : "invisible"}`}
+        <FolderChevron
+          folderId={data?.folderId}
+          isOpen={node.isOpen}
+          isRootFolder={data?.parentId === null}
+          hasChildren={hasChildren}
           onClick={async (e) => {
             e.stopPropagation();
             if (hasChildren) {
@@ -1122,19 +1484,22 @@ const TreeView: React.FC<{
                       collapseAllDescendants(rootNode);
                     }
                   } else {
-                    // Expand all root folders
-                    for (const rootNode of rootNodes) {
-                      await expandAllDescendants(rootNode);
-                    }
                     node.select();
+                    await expandSubtrees(
+                      treeData
+                        .map((n) => Number(n.id))
+                        .filter((id) => !Number.isNaN(id))
+                    );
                   }
                 } else {
                   // Non-root folder: expand/collapse only descendants
                   if (wasOpen) {
                     collapseAllDescendants(node);
                   } else {
-                    await expandAllDescendants(node);
                     node.select();
+                    if (data?.folderId) {
+                      await expandSubtrees([data.folderId]);
+                    }
                   }
                 }
               } else {
@@ -1149,13 +1514,7 @@ const TreeView: React.FC<{
               }
             }
           }}
-        >
-          <ChevronRight
-            className={`w-4 h-4 transition-transform ${
-              node.isOpen ? "rotate-90" : ""
-            }`}
-          />
-        </Button>
+        />
         <IconComponent
           className={`w-4 h-4 ms-1 shrink-0 ${
             isSelected ? "text-secondary-foreground" : "text-muted-foreground"
@@ -1169,7 +1528,7 @@ const TreeView: React.FC<{
               : node.data.name
           }
         >
-          {node.data.name}
+          {renderFolderName(node.data.name)}
         </span>
 
         {pendingCopyTargets.has(data?.folderId ?? -1) && (
@@ -1316,38 +1675,73 @@ const TreeView: React.FC<{
     );
   }
 
-  // Calculate tree height based on visible nodes - add 7px to prevent scrollbar
-  // Use treeData.length as fallback when visibleNodeCount hasn't been set yet
-  const effectiveNodeCount = visibleNodeCount || treeData.length;
-  const treeHeight = effectiveNodeCount * 32 + 4;
-
   return (
     <>
+      {showFilterInput && (
+        <div className="relative mb-2 ms-1 me-2">
+          <Search className="absolute start-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+          <Input
+            type="text"
+            value={filterQuery}
+            onChange={(e) => {
+              captureOpenStateBeforeFiltering();
+              setFilterQuery(e.target.value);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Escape") {
+                e.preventDefault();
+                setFilterQuery("");
+              }
+            }}
+            placeholder={t("search.filter")}
+            aria-label={t("search.filter")}
+            className="h-7 ps-7 pe-7 text-xs"
+            data-testid="folder-filter-input"
+          />
+          {isFiltering && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute end-0.5 top-1/2 -translate-y-1/2 h-6 w-6"
+              aria-label={t("common.aria.clearFilter")}
+              data-testid="folder-filter-clear"
+              onClick={() => setFilterQuery("")}
+            >
+              <X className="h-3.5 w-3.5" />
+            </Button>
+          )}
+        </div>
+      )}
       <div
+        ref={treeViewportRef}
         onDragLeave={handleDragLeave}
-        className="flex flex-col"
-        style={{ minHeight: 700 }}
+        className="relative flex flex-col"
+        aria-busy={isExpandingAll || undefined}
       >
+        {isExpandingAll && (
+          <div
+            className="absolute inset-0 z-10 flex items-start justify-center bg-background/70 pt-8"
+            data-testid="folder-tree-busy"
+            role="status"
+            aria-live="polite"
+          >
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              {t("common.loading")}
+            </div>
+          </div>
+        )}
         <Tree
           ref={treeRef}
           data={treeData}
           openByDefault={false}
           initialOpenState={initialOpenState}
           width="100%"
-          height={treeHeight}
+          height={treeViewportHeight}
           indent={24}
           rowHeight={32}
-          overscanCount={0}
+          overscanCount={8}
           rowClassName="min-w-0!"
-          onScroll={() => {
-            // Update visible node count when tree scrolls/renders
-            if (treeRef.current) {
-              const count = treeRef.current.visibleNodes.length;
-              if (count !== visibleNodeCount) {
-                setVisibleNodeCount(count);
-              }
-            }
-          }}
           selection={selectedId || selectedFolderId?.toString() || undefined}
           onSelect={handleSelect}
           onToggle={async (id) => {
@@ -1355,27 +1749,33 @@ const TreeView: React.FC<{
             if (!Number.isNaN(folderId) && treeRef.current?.isOpen(id)) {
               await ensureFolderChildrenLoaded(folderId);
             }
-            // Update visible node count after toggle
-            setTimeout(() => {
-              if (treeRef.current) {
-                setVisibleNodeCount(treeRef.current.visibleNodes.length);
-              }
-            }, 0);
           }}
-          onMove={canAddEdit && !filteredFolders ? handleMove : undefined}
-          disableDrag={!canAddEdit || !!filteredFolders}
-          disableDrop={!canAddEdit || !!filteredFolders}
+          onMove={
+            canAddEdit && !filteredFolders && !isFiltering
+              ? handleMove
+              : undefined
+          }
+          disableDrag={!canAddEdit || !!filteredFolders || isFiltering}
+          disableDrop={!canAddEdit || !!filteredFolders || isFiltering}
           dndRootElement={dndRootElement || undefined}
         >
           {Node}
         </Tree>
+        {isFiltering && treeData.length === 0 && (
+          <div
+            className="px-2 py-4 text-center text-xs text-muted-foreground"
+            data-testid="folder-filter-no-matches"
+          >
+            {t("common.ui.search.noResultsFound")}
+          </div>
+        )}
         {/* Bottom drop zone for moving folders to end of root level - fills remaining space */}
-        {canAddEdit && !filteredFolders && (
+        {canAddEdit && !filteredFolders && !isFiltering && (
           <div
             ref={(el) => {
               bottomDropRef(el);
             }}
-            className="flex-1 min-h-16 w-full relative"
+            className="h-16 w-full relative shrink-0"
             data-testid="folder-tree-end"
           >
             {/* Drop indicator line with circle - matches react-arborist cursor style */}

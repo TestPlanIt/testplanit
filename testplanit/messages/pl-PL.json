@@ -2793,9 +2793,16 @@
     "deselectAllShiftTooltip": "Odznacz/Zaznacz wszystkie przypadki na wszystkich stronach",
     "shiftClickHint": "Przytrzymaj klawisz Shift, aby zaznaczyć/odznaczyć wszystkie strony",
     "treeView": {
-      "expandAll": "Rozwiń wszystko",
-      "collapseAll": "Zwiń wszystko",
-      "altKey": "Przytrzymaj klawisz Alt, aby rozwinąć/zwinąć wszystkie elementy podrzędne"
+      "expandFolder": "Rozwiń folder",
+      "collapseFolder": "Zwiń folder",
+      "expandSubfolders": "Rozwiń wszystkie podfoldery",
+      "collapseSubfolders": "Zwiń wszystkie podfoldery",
+      "expandAll": "Rozwiń wszystkie foldery",
+      "collapseAll": "Zwiń wszystkie foldery",
+      "altHintMac": "Przytrzymaj ⌥, aby rozwinąć lub zwinąć wszystkie podfoldery",
+      "altHintWin": "Przytrzymaj Alt, aby rozwinąć lub zwinąć wszystkie podfoldery",
+      "altHintAllMac": "Przytrzymaj ⌥, aby rozwinąć lub zwinąć każdy folder",
+      "altHintAllWin": "Przytrzymaj Alt, aby rozwinąć lub zwinąć każdy folder"
     },
     "dragDrop": {
       "move": "Przenosić",

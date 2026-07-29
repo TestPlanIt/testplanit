@@ -2793,9 +2793,16 @@
     "deselectAllShiftTooltip": "Deseleccionar/Seleccionar todos los casos en todas las páginas",
     "shiftClickHint": "Mantenga presionada la tecla Mayús para seleccionar o deseleccionar todas las páginas",
     "treeView": {
-      "expandAll": "Expandir todo",
-      "collapseAll": "Colapsar todos",
-      "altKey": "Mantenga la tecla Alt para expandir/contraer todos los niños"
+      "expandFolder": "Expandir carpeta",
+      "collapseFolder": "Colapsar carpeta",
+      "expandSubfolders": "Expandir todas las subcarpetas",
+      "collapseSubfolders": "Colapsar todas las subcarpetas",
+      "expandAll": "Expandir todas las carpetas",
+      "collapseAll": "Colapsar todas las carpetas",
+      "altHintMac": "Mantenga presionada ⌥ para expandir o colapsar todas las subcarpetas",
+      "altHintWin": "Mantenga presionada Alt para expandir o colapsar todas las subcarpetas",
+      "altHintAllMac": "Mantenga presionada ⌥ para expandir o colapsar todas las carpetas",
+      "altHintAllWin": "Mantenga presionada Alt para expandir o colapsar todas las carpetas"
     },
     "dragDrop": {
       "move": "Mover",

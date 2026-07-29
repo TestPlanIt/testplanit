@@ -2793,9 +2793,16 @@
     "deselectAllShiftTooltip": "Bỏ chọn/Chọn tất cả các trường hợp trên tất cả các trang.",
     "shiftClickHint": "Giữ phím Shift để chọn/bỏ chọn tất cả các trang.",
     "treeView": {
-      "expandAll": "Mở rộng tất cả",
-      "collapseAll": "Thu gọn tất cả",
-      "altKey": "Giữ phím Alt để mở rộng/thu gọn tất cả các phần tử con."
+      "expandFolder": "Mở rộng thư mục",
+      "collapseFolder": "Thu gọn thư mục",
+      "expandSubfolders": "Mở rộng tất cả thư mục con",
+      "collapseSubfolders": "Thu gọn tất cả thư mục con",
+      "expandAll": "Mở rộng tất cả thư mục",
+      "collapseAll": "Thu gọn tất cả thư mục",
+      "altHintMac": "Giữ ⌥ để mở rộng hoặc thu gọn tất cả thư mục con",
+      "altHintWin": "Giữ Alt để mở rộng hoặc thu gọn tất cả thư mục con",
+      "altHintAllMac": "Giữ ⌥ để mở rộng hoặc thu gọn mọi thư mục",
+      "altHintAllWin": "Giữ Alt để mở rộng hoặc thu gọn mọi thư mục"
     },
     "dragDrop": {
       "move": "Di chuyển",

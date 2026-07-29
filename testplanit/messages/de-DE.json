@@ -2793,9 +2793,16 @@
     "deselectAllShiftTooltip": "Alle Fälle auf allen Seiten auswählen/abwählen",
     "shiftClickHint": "Halten Sie die Umschalttaste gedrückt, um alle Seiten auszuwählen/die Auswahl aufzuheben",
     "treeView": {
-      "expandAll": "Alle erweitern",
-      "collapseAll": "Alle ausblenden",
-      "altKey": "Halten Sie die Alt-Taste gedrückt, um alle untergeordneten Elemente zu erweitern/auszuklappen."
+      "expandFolder": "Ordner erweitern",
+      "collapseFolder": "Ordner einklappen",
+      "expandSubfolders": "Alle Unterordner erweitern",
+      "collapseSubfolders": "Alle Unterordner einklappen",
+      "expandAll": "Alle Ordner erweitern",
+      "collapseAll": "Alle Ordner einklappen",
+      "altHintMac": "⌥ gedrückt halten, um alle Unterordner zu erweitern oder einzuklappen",
+      "altHintWin": "Alt gedrückt halten, um alle Unterordner zu erweitern oder einzuklappen",
+      "altHintAllMac": "⌥ gedrückt halten, um jeden Ordner zu erweitern oder einzuklappen",
+      "altHintAllWin": "Alt gedrückt halten, um jeden Ordner zu erweitern oder einzuklappen"
     },
     "dragDrop": {
       "move": "Bewegen",

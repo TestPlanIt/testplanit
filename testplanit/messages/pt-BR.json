@@ -2793,9 +2793,16 @@
     "deselectAllShiftTooltip": "Desmarcar/Selecionar todos os casos em todas as páginas",
     "shiftClickHint": "Mantenha a tecla Shift pressionada para selecionar/desmarcar todas as páginas.",
     "treeView": {
-      "expandAll": "Expandir tudo",
-      "collapseAll": "Recolher tudo",
-      "altKey": "Mantenha pressionada a tecla Alt para expandir/recolher todos os filhos."
+      "expandFolder": "Expandir pasta",
+      "collapseFolder": "Recolher pasta",
+      "expandSubfolders": "Expandir todas as subpastas",
+      "collapseSubfolders": "Recolher todas as subpastas",
+      "expandAll": "Expandir todas as pastas",
+      "collapseAll": "Recolher todas as pastas",
+      "altHintMac": "Mantenha pressionada a tecla ⌥ para expandir ou recolher todas as subpastas",
+      "altHintWin": "Mantenha pressionada a tecla Alt para expandir ou recolher todas as subpastas",
+      "altHintAllMac": "Mantenha pressionada a tecla ⌥ para expandir ou recolher todas as pastas",
+      "altHintAllWin": "Mantenha pressionada a tecla Alt para expandir ou recolher todas as pastas"
     },
     "dragDrop": {
       "move": "Mover",

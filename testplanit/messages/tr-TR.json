@@ -2793,9 +2793,16 @@
     "deselectAllShiftTooltip": "Tüm sayfalardaki tüm seçeneklerin seçimini kaldır/seçimi kaldır",
     "shiftClickHint": "Tüm sayfaları seçmek/seçimi kaldırmak için Shift tuşunu basılı tutun.",
     "treeView": {
-      "expandAll": "Tümünü genişlet",
-      "collapseAll": "Tümünü daralt",
-      "altKey": "Alt tuşunu basılı tutarak tüm alt öğeleri genişletebilir/daraltabilirsiniz."
+      "expandFolder": "Klasörü genişlet",
+      "collapseFolder": "Klasörü daralt",
+      "expandSubfolders": "Tüm alt klasörleri genişlet",
+      "collapseSubfolders": "Tüm alt klasörleri daralt",
+      "expandAll": "Tüm klasörleri genişlet",
+      "collapseAll": "Tüm klasörleri daralt",
+      "altHintMac": "Tüm alt klasörleri genişletmek veya daraltmak için ⌥ tuşunu basılı tutun",
+      "altHintWin": "Tüm alt klasörleri genişletmek veya daraltmak için Alt tuşunu basılı tutun",
+      "altHintAllMac": "Her klasörü genişletmek veya daraltmak için ⌥ tuşunu basılı tutun",
+      "altHintAllWin": "Her klasörü genişletmek veya daraltmak için Alt tuşunu basılı tutun"
     },
     "dragDrop": {
       "move": "Taşınmak",

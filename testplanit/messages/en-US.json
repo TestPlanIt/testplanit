@@ -2793,9 +2793,16 @@
     "deselectAllShiftTooltip": "Deselect/Select all cases across all pages",
     "shiftClickHint": "Hold Shift to select/deselect all pages",
     "treeView": {
-      "expandAll": "Expand all",
-      "collapseAll": "Collapse all",
-      "altKey": "Hold Alt key to expand/collapse all children"
+      "expandFolder": "Expand folder",
+      "collapseFolder": "Collapse folder",
+      "expandSubfolders": "Expand all subfolders",
+      "collapseSubfolders": "Collapse all subfolders",
+      "expandAll": "Expand all folders",
+      "collapseAll": "Collapse all folders",
+      "altHintMac": "Hold ⌥ to expand or collapse all subfolders",
+      "altHintWin": "Hold Alt to expand or collapse all subfolders",
+      "altHintAllMac": "Hold ⌥ to expand or collapse every folder",
+      "altHintAllWin": "Hold Alt to expand or collapse every folder"
     },
     "dragDrop": {
       "move": "Move",

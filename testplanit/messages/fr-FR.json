@@ -2793,9 +2793,16 @@
     "deselectAllShiftTooltip": "Désélectionner/Sélectionner tous les cas sur toutes les pages",
     "shiftClickHint": "Maintenez la touche Maj enfoncée pour sélectionner/désélectionner toutes les pages.",
     "treeView": {
-      "expandAll": "Développer tout",
-      "collapseAll": "Réduire tout",
-      "altKey": "Maintenez la touche Alt enfoncée pour développer/réduire tous les enfants"
+      "expandFolder": "Développer le dossier",
+      "collapseFolder": "Réduire le dossier",
+      "expandSubfolders": "Développer tous les sous-dossiers",
+      "collapseSubfolders": "Réduire tous les sous-dossiers",
+      "expandAll": "Développer tous les dossiers",
+      "collapseAll": "Réduire tous les dossiers",
+      "altHintMac": "Maintenez ⌥ enfoncée pour développer ou réduire tous les sous-dossiers",
+      "altHintWin": "Maintenez la touche Alt enfoncée pour développer ou réduire tous les sous-dossiers",
+      "altHintAllMac": "Maintenez ⌥ enfoncée pour développer ou réduire tous les dossiers",
+      "altHintAllWin": "Maintenez la touche Alt enfoncée pour développer ou réduire tous les dossiers"
     },
     "dragDrop": {
       "move": "Se déplacer",

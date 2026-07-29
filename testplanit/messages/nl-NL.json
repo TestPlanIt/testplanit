@@ -2793,9 +2793,16 @@
     "deselectAllShiftTooltip": "Alle gevallen op alle pagina's deselecteren/selecteren",
     "shiftClickHint": "Houd Shift ingedrukt om alle pagina's te selecteren/deselecteren.",
     "treeView": {
-      "expandAll": "Alles uitvouwen",
-      "collapseAll": "Alles samenvouwen",
-      "altKey": "Houd de Alt-toets ingedrukt om alle onderliggende items uit te vouwen/samen te vouwen"
+      "expandFolder": "Map uitvouwen",
+      "collapseFolder": "Map samenvouwen",
+      "expandSubfolders": "Alle submappen uitvouwen",
+      "collapseSubfolders": "Alle submappen samenvouwen",
+      "expandAll": "Alle mappen uitvouwen",
+      "collapseAll": "Alle mappen samenvouwen",
+      "altHintMac": "Houd ⌥ ingedrukt om alle submappen uit te vouwen of samen te vouwen",
+      "altHintWin": "Houd Alt ingedrukt om alle submappen uit te vouwen of samen te vouwen",
+      "altHintAllMac": "Houd ⌥ ingedrukt om elke map uit te vouwen of samen te vouwen",
+      "altHintAllWin": "Houd Alt ingedrukt om elke map uit te vouwen of samen te vouwen"
     },
     "dragDrop": {
       "move": "Beweging",

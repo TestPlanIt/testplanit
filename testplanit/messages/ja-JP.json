@@ -2793,9 +2793,16 @@
     "deselectAllShiftTooltip": "すべてのページのすべてのケースを選択/選択解除",
     "shiftClickHint": "Shift キーを押しながらすべてのページを選択/選択解除します",
     "treeView": {
-      "expandAll": "すべて展開",
-      "collapseAll": "すべて折りたたむ",
-      "altKey": "Altキーを押すとすべての子を展開/折りたたむことができます"
+      "expandFolder": "フォルダーを展開",
+      "collapseFolder": "フォルダーを折りたたむ",
+      "expandSubfolders": "すべてのサブフォルダーを展開",
+      "collapseSubfolders": "すべてのサブフォルダーを折りたたむ",
+      "expandAll": "すべてのフォルダーを展開",
+      "collapseAll": "すべてのフォルダーを折りたたむ",
+      "altHintMac": "⌥キーを押しながらクリックすると、すべてのサブフォルダーを展開または折りたたみます",
+      "altHintWin": "Altキーを押しながらクリックすると、すべてのサブフォルダーを展開または折りたたみます",
+      "altHintAllMac": "⌥キーを押しながらクリックすると、すべてのフォルダーを展開または折りたたみます",
+      "altHintAllWin": "Altキーを押しながらクリックすると、すべてのフォルダーを展開または折りたたみます"
     },
     "dragDrop": {
       "move": "動く",

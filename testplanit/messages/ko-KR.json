@@ -2793,9 +2793,16 @@
     "deselectAllShiftTooltip": "모든 페이지에서 모든 사례를 선택/선택 해제합니다.",
     "shiftClickHint": "Shift 키를 누른 상태로 모든 페이지를 선택/선택 해제하세요.",
     "treeView": {
-      "expandAll": "모두 펼치기",
-      "collapseAll": "모두 접기",
-      "altKey": "Alt 키를 누른 상태로 하위 자식 노드를 모두 펼치거나 접으세요."
+      "expandFolder": "폴더 펼치기",
+      "collapseFolder": "폴더 접기",
+      "expandSubfolders": "모든 하위 폴더 펼치기",
+      "collapseSubfolders": "모든 하위 폴더 접기",
+      "expandAll": "모든 폴더 펼치기",
+      "collapseAll": "모든 폴더 접기",
+      "altHintMac": "⌥ 키를 누른 상태로 모든 하위 폴더를 펼치거나 접으세요",
+      "altHintWin": "Alt 키를 누른 상태로 모든 하위 폴더를 펼치거나 접으세요",
+      "altHintAllMac": "⌥ 키를 누른 상태로 모든 폴더를 펼치거나 접으세요",
+      "altHintAllWin": "Alt 키를 누른 상태로 모든 폴더를 펼치거나 접으세요"
     },
     "dragDrop": {
       "move": "이동하다",

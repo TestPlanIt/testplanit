@@ -2793,9 +2793,16 @@
     "deselectAllShiftTooltip": "取消选择/选择所有页面上的所有案例",
     "shiftClickHint": "按住 Shift 键可选择/取消选择所有页面",
     "treeView": {
-      "expandAll": "全部展开",
-      "collapseAll": "全部收起",
-      "altKey": "按住 Alt 键展开/折叠所有子项"
+      "expandFolder": "展开文件夹",
+      "collapseFolder": "收起文件夹",
+      "expandSubfolders": "展开所有子文件夹",
+      "collapseSubfolders": "收起所有子文件夹",
+      "expandAll": "展开所有文件夹",
+      "collapseAll": "收起所有文件夹",
+      "altHintMac": "按住 ⌥ 键展开或收起所有子文件夹",
+      "altHintWin": "按住 Alt 键展开或收起所有子文件夹",
+      "altHintAllMac": "按住 ⌥ 键展开或收起每个文件夹",
+      "altHintAllWin": "按住 Alt 键展开或收起每个文件夹"
     },
     "dragDrop": {
       "move": "移动",
