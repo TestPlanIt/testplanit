@@ -1,5 +1,16 @@
 # @testplanit/mcp-server
 
+## 0.3.1
+
+### Patch Changes
+
+- [#559](https://github.com/TestPlanIt/testplanit/pull/559) [`44a46c5`](https://github.com/TestPlanIt/testplanit/commit/44a46c5d0b404420ceb05c044aed37c50694dad1) Thanks [@therealbrad](https://github.com/therealbrad)! - Stop the build racing its own CLI bundle
+
+  The package builds through two concurrent tsup configs, and the library config's
+  `clean: true` could wipe `dist/cli.js` after the CLI config had written it —
+  publishing a package whose `bin` pointed at a file that did not exist. The clean
+  now preserves the CLI output.
+
 ## 0.3.0
 
 ### Minor Changes
