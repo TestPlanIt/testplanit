@@ -32,6 +32,27 @@ export interface SharedState {
 const STALE_THRESHOLD_MS = 4 * 60 * 60 * 1000;
 
 /**
+ * Environment variable holding the ID of a test run created by the pipeline.
+ * Every invocation that sees it attaches to that run instead of creating one,
+ * which is how a suite split across shards, agents or retry waves lands in a
+ * single run.
+ */
+export const RUN_ID_ENV_VAR = 'TESTPLANIT_RUN_ID';
+
+/**
+ * Parse a test run ID from an environment variable. Anything that isn't a
+ * positive integer is ignored, so an unset or templated-but-unresolved variable
+ * falls through to normal run resolution.
+ */
+export function parseEnvTestRunId(raw: string | undefined): number | undefined {
+  if (!raw) return undefined;
+  const trimmed = raw.trim();
+  if (!/^\d+$/.test(trimmed)) return undefined;
+  const parsed = Number(trimmed);
+  return parsed > 0 ? parsed : undefined;
+}
+
+/**
  * Get the path to the shared state file for a given project.
  * Uses the OS temp directory with a project-specific filename.
  */
@@ -150,6 +171,41 @@ export function writeSharedStateIfAbsent(projectId: number, state: SharedState):
     }
 
     // First writer — write the full state
+    fs.writeFileSync(filePath, JSON.stringify(state, null, 2));
+    return state;
+  });
+}
+
+/**
+ * Write shared state for a run whose ID was fixed before the run started
+ * (externally pinned or service-managed).
+ *
+ * The state file is keyed by project, not by run, so a file left behind by an
+ * earlier invocation can describe a different run. Such a file is replaced
+ * rather than joined — unlike {@link writeSharedStateIfAbsent}, which resolves
+ * a create race between workers that each minted their own run.
+ *
+ * Returns the final state for the run.
+ */
+export function writeSharedStateForRun(projectId: number, state: SharedState): SharedState | undefined {
+  return withLock(projectId, (filePath) => {
+    if (fs.existsSync(filePath)) {
+      try {
+        const content = fs.readFileSync(filePath, 'utf-8');
+        const existingState: SharedState = JSON.parse(content);
+
+        if (existingState.testRunId === state.testRunId) {
+          if (!existingState.testSuiteId && state.testSuiteId) {
+            existingState.testSuiteId = state.testSuiteId;
+            fs.writeFileSync(filePath, JSON.stringify(existingState, null, 2));
+          }
+          return existingState;
+        }
+      } catch {
+        // Unreadable state is replaced below
+      }
+    }
+
     fs.writeFileSync(filePath, JSON.stringify(state, null, 2));
     return state;
   });

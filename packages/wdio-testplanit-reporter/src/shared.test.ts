@@ -16,6 +16,7 @@ import {
   readSharedState,
   writeSharedState,
   writeSharedStateIfAbsent,
+  writeSharedStateForRun,
   deleteSharedState,
   incrementWorkerCount,
   decrementWorkerCount,
@@ -199,6 +200,104 @@ describe('shared utilities', () => {
 
       const result = writeSharedStateIfAbsent(1, newState);
       expect(result?.testSuiteId).toBe(456);
+    });
+  });
+
+  describe('writeSharedStateForRun', () => {
+    it('should write state when file does not exist', () => {
+      mockedFs.writeFileSync.mockImplementation(() => {});
+      mockedFs.existsSync.mockReturnValue(false);
+
+      const state: SharedState = {
+        testRunId: 984,
+        testSuiteId: 10,
+        createdAt: new Date().toISOString(),
+        activeWorkers: 1,
+      };
+
+      const result = writeSharedStateForRun(1, state);
+      expect(result).toEqual(state);
+    });
+
+    it('should join existing state for the same run', () => {
+      const existingState: SharedState = {
+        testRunId: 984,
+        testSuiteId: 200,
+        createdAt: new Date().toISOString(),
+        activeWorkers: 1,
+      };
+
+      mockedFs.writeFileSync.mockImplementation(() => {});
+      mockedFs.existsSync.mockReturnValue(true);
+      mockedFs.readFileSync.mockReturnValue(JSON.stringify(existingState));
+
+      const result = writeSharedStateForRun(1, {
+        testRunId: 984,
+        testSuiteId: 999,
+        createdAt: new Date().toISOString(),
+        activeWorkers: 1,
+      });
+
+      expect(result?.testSuiteId).toBe(200);
+    });
+
+    it('should adopt the incoming suite when the same run has none recorded', () => {
+      const existingState: SharedState = {
+        testRunId: 984,
+        createdAt: new Date().toISOString(),
+        activeWorkers: 1,
+      };
+
+      mockedFs.writeFileSync.mockImplementation(() => {});
+      mockedFs.existsSync.mockReturnValue(true);
+      mockedFs.readFileSync.mockReturnValue(JSON.stringify(existingState));
+
+      const result = writeSharedStateForRun(1, {
+        testRunId: 984,
+        testSuiteId: 999,
+        createdAt: new Date().toISOString(),
+        activeWorkers: 1,
+      });
+
+      expect(result?.testSuiteId).toBe(999);
+    });
+
+    it('should replace state left behind by a different run', () => {
+      const existingState: SharedState = {
+        testRunId: 500,
+        testSuiteId: 200,
+        createdAt: new Date().toISOString(),
+        activeWorkers: 1,
+      };
+
+      mockedFs.writeFileSync.mockImplementation(() => {});
+      mockedFs.existsSync.mockReturnValue(true);
+      mockedFs.readFileSync.mockReturnValue(JSON.stringify(existingState));
+
+      const newState: SharedState = {
+        testRunId: 984,
+        testSuiteId: 999,
+        createdAt: new Date().toISOString(),
+        activeWorkers: 1,
+      };
+
+      const result = writeSharedStateForRun(1, newState);
+      expect(result).toEqual(newState);
+    });
+
+    it('should replace unreadable state', () => {
+      mockedFs.writeFileSync.mockImplementation(() => {});
+      mockedFs.existsSync.mockReturnValue(true);
+      mockedFs.readFileSync.mockReturnValue('not json');
+
+      const newState: SharedState = {
+        testRunId: 984,
+        createdAt: new Date().toISOString(),
+        activeWorkers: 1,
+      };
+
+      const result = writeSharedStateForRun(1, newState);
+      expect(result).toEqual(newState);
     });
   });
 

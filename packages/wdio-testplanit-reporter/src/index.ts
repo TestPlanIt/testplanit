@@ -22,6 +22,7 @@
  */
 
 export { default, default as TestPlanItReporter } from './reporter.js';
+export { RUN_ID_ENV_VAR } from './shared.js';
 export { default as TestPlanItService } from './service.js';
 export type {
   TestPlanItReporterOptions,

@@ -28,14 +28,24 @@ vi.mock('@testplanit/api', () => {
 });
 
 // Mock shared state utilities
-vi.mock('./shared.js', () => ({
-  writeSharedState: vi.fn(),
-  deleteSharedState: vi.fn(),
-  readSharedState: vi.fn().mockReturnValue(null),
-}));
+vi.mock('./shared.js', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('./shared.js')>();
+  return {
+    RUN_ID_ENV_VAR: actual.RUN_ID_ENV_VAR,
+    parseEnvTestRunId: actual.parseEnvTestRunId,
+    writeSharedState: vi.fn(),
+    deleteSharedState: vi.fn(),
+    readSharedState: vi.fn().mockReturnValue(null),
+  };
+});
 
 import TestPlanItService from './service.js';
-import { writeSharedState, deleteSharedState, readSharedState } from './shared.js';
+import {
+  writeSharedState,
+  deleteSharedState,
+  readSharedState,
+  RUN_ID_ENV_VAR,
+} from './shared.js';
 
 const mockedWriteSharedState = vi.mocked(writeSharedState);
 const mockedDeleteSharedState = vi.mocked(deleteSharedState);
@@ -637,5 +647,167 @@ describe('TestPlanItService', () => {
       const service = new TestPlanItService(defaultOptions);
       expect(() => service.before(undefined, undefined, undefined)).not.toThrow();
     });
+  });
+});
+
+describe('externally managed test run (service)', () => {
+  const defaultOptions = {
+    domain: 'https://testplanit.example.com',
+    apiToken: 'tpi_test_token',
+    projectId: 1,
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockedReadSharedState.mockReturnValue(null);
+    delete process.env[RUN_ID_ENV_VAR];
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    delete process.env[RUN_ID_ENV_VAR];
+  });
+
+  it('pins the run from TESTPLANIT_RUN_ID and never creates one', async () => {
+    process.env[RUN_ID_ENV_VAR] = '984';
+    const service = new TestPlanItService(defaultOptions);
+
+    await service.onPrepare();
+
+    expect(mockClientInstance.createTestRun).not.toHaveBeenCalled();
+    expect(mockClientInstance.createJUnitTestSuite).toHaveBeenCalledWith(
+      expect.objectContaining({ testRunId: 984 }),
+    );
+  });
+
+  it('prefers the testRunId option over the environment variable', async () => {
+    process.env[RUN_ID_ENV_VAR] = '984';
+    const service = new TestPlanItService({ ...defaultOptions, testRunId: 42 });
+
+    await service.onPrepare();
+
+    expect(mockClientInstance.createJUnitTestSuite).toHaveBeenCalledWith(
+      expect.objectContaining({ testRunId: 42 }),
+    );
+  });
+
+  it('ignores a non-numeric environment variable', async () => {
+    process.env[RUN_ID_ENV_VAR] = 'not-a-run';
+    const service = new TestPlanItService(defaultOptions);
+
+    await service.onPrepare();
+
+    expect(mockClientInstance.createTestRun).toHaveBeenCalled();
+  });
+
+  it('tells workers the pinned run is service-managed', async () => {
+    process.env[RUN_ID_ENV_VAR] = '984';
+    const service = new TestPlanItService(defaultOptions);
+
+    await service.onPrepare();
+
+    expect(mockedWriteSharedState).toHaveBeenCalledWith(
+      1,
+      expect.objectContaining({ testRunId: 984, testSuiteId: 200, managedByService: true }),
+    );
+  });
+
+  it('does not resolve configuration, milestone, state or tags', async () => {
+    process.env[RUN_ID_ENV_VAR] = '984';
+    const service = new TestPlanItService({
+      ...defaultOptions,
+      configId: 'Chrome / macOS',
+      milestoneId: 'Release 2.0',
+      stateId: 'In Progress',
+      tagIds: ['regression'],
+    });
+
+    await service.onPrepare();
+
+    expect(mockClientInstance.findConfigurationByName).not.toHaveBeenCalled();
+    expect(mockClientInstance.findMilestoneByName).not.toHaveBeenCalled();
+    expect(mockClientInstance.findWorkflowStateByName).not.toHaveBeenCalled();
+    expect(mockClientInstance.resolveTagIds).not.toHaveBeenCalled();
+  });
+
+  it('does not complete the run, even with completeRunOnFinish enabled', async () => {
+    process.env[RUN_ID_ENV_VAR] = '984';
+    const service = new TestPlanItService({ ...defaultOptions, completeRunOnFinish: true });
+
+    await service.onPrepare();
+    await service.onComplete(0);
+
+    expect(mockClientInstance.completeTestRun).not.toHaveBeenCalled();
+  });
+
+  it('names the suite from testSuiteName so shards are distinguishable', async () => {
+    process.env[RUN_ID_ENV_VAR] = '984';
+    const service = new TestPlanItService({
+      ...defaultOptions,
+      runName: 'Web Regression',
+      testSuiteName: 'Shard A - {platform}',
+    });
+
+    await service.onPrepare();
+
+    expect(mockClientInstance.createJUnitTestSuite).toHaveBeenCalledWith(
+      expect.objectContaining({ name: `Shard A - ${process.platform}` }),
+    );
+  });
+
+  it('resolves {env:VAR} in the suite name, which is how shards are labelled', async () => {
+    process.env[RUN_ID_ENV_VAR] = '984';
+    process.env.TPI_SVC_SHARD = 'shard-3';
+    try {
+      const service = new TestPlanItService({
+        ...defaultOptions,
+        testSuiteName: 'Shard {env:TPI_SVC_SHARD}',
+      });
+
+      await service.onPrepare();
+
+      expect(mockClientInstance.createJUnitTestSuite).toHaveBeenCalledWith(
+        expect.objectContaining({ name: 'Shard shard-3' }),
+      );
+    } finally {
+      delete process.env.TPI_SVC_SHARD;
+    }
+  });
+
+  it('skips run links and metadata, which belong to the pipeline', async () => {
+    process.env[RUN_ID_ENV_VAR] = '984';
+    const service = new TestPlanItService({
+      ...defaultOptions,
+      runLinks: [{ url: 'https://ci.example.com/job/42', name: 'Build' }],
+      runMetadata: { branch: 'main' },
+    });
+
+    await service.onPrepare();
+
+    expect(mockClientInstance.addTestRunLink).not.toHaveBeenCalled();
+    expect(mockClientInstance.setTestRunMetadata).not.toHaveBeenCalled();
+  });
+
+  it('still applies run links and metadata to a run it created', async () => {
+    const service = new TestPlanItService({
+      ...defaultOptions,
+      runLinks: [{ url: 'https://ci.example.com/job/42', name: 'Build' }],
+      runMetadata: { branch: 'main' },
+    });
+
+    await service.onPrepare();
+
+    expect(mockClientInstance.addTestRunLink).toHaveBeenCalled();
+    expect(mockClientInstance.setTestRunMetadata).toHaveBeenCalled();
+  });
+
+  it('creates and completes a run when nothing pins one', async () => {
+    const service = new TestPlanItService({ ...defaultOptions, completeRunOnFinish: true });
+
+    await service.onPrepare();
+    await service.onComplete(0);
+
+    expect(mockClientInstance.createTestRun).toHaveBeenCalled();
+    expect(mockClientInstance.completeTestRun).toHaveBeenCalledWith(100, 1);
   });
 });

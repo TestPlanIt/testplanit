@@ -6,10 +6,16 @@ import { adaptCucumberStepTitles } from './cucumberAdapter.js';
 import {
   readSharedState,
   writeSharedStateIfAbsent,
+  writeSharedStateForRun,
   deleteSharedState,
   incrementWorkerCount,
   decrementWorkerCount,
+  parseEnvTestRunId,
+  RUN_ID_ENV_VAR,
 } from './shared.js';
+
+/** Suite name used per invocation when the run is pinned by the pipeline. */
+const EXTERNALLY_MANAGED_SUITE_NAME = '{suite} - {browser}/{platform} - {spec}';
 
 /**
  * WebdriverIO Reporter for TestPlanIt
@@ -73,6 +79,13 @@ export default class TestPlanItReporter extends WDIOReporter {
   private cucumberStepNoticeLogged = false;
   /** When true, the TestPlanItService manages the test run lifecycle */
   private managedByService = false;
+  /**
+   * When true, the run was created outside this reporter — pinned by the
+   * `testRunId` option or the `TESTPLANIT_RUN_ID` environment variable. The
+   * reporter attaches results to it but never creates, mutates or completes it,
+   * and never falls back to a different run.
+   */
+  private externallyManaged = false;
 
   /**
    * WebdriverIO uses this getter to determine if the reporter has finished async operations.
@@ -121,9 +134,23 @@ export default class TestPlanItReporter extends WDIOReporter {
       maxRetries: this.reporterOptions.maxRetries,
     });
 
+    // Pin the run when its ID is known up front. A name given as `testRunId` is
+    // resolved later, during initialization, since it needs an API call.
+    let pinnedTestRunId: number | undefined;
+    if (typeof this.reporterOptions.testRunId === 'number') {
+      pinnedTestRunId = this.reporterOptions.testRunId;
+      this.markExternallyManaged(`the testRunId option (${pinnedTestRunId})`);
+    } else {
+      const envTestRunId = parseEnvTestRunId(process.env[RUN_ID_ENV_VAR]);
+      if (envTestRunId !== undefined) {
+        pinnedTestRunId = envTestRunId;
+        this.markExternallyManaged(`${RUN_ID_ENV_VAR}=${pinnedTestRunId}`);
+      }
+    }
+
     // Initialize state - testRunId will be resolved during initialization
     this.state = {
-      testRunId: typeof this.reporterOptions.testRunId === 'number' ? this.reporterOptions.testRunId : undefined,
+      testRunId: pinnedTestRunId,
       resolvedIds: {},
       results: new Map(),
       caseIdMap: new Map(),
@@ -149,6 +176,21 @@ export default class TestPlanItReporter extends WDIOReporter {
         startTime: new Date(),
       },
     };
+  }
+
+  /**
+   * Record that the run belongs to the pipeline rather than this invocation.
+   * Completion is disabled so one shard cannot close a run that other shards,
+   * agents or retry waves are still reporting into.
+   */
+  private markExternallyManaged(source: string): void {
+    this.externallyManaged = true;
+    if (this.reporterOptions.completeRunOnFinish) {
+      this.reporterOptions.completeRunOnFinish = false;
+      this.log(
+        `Test run pinned by ${source} — completeRunOnFinish disabled; the pipeline completes the run`
+      );
+    }
   }
 
   /**
@@ -338,8 +380,10 @@ export default class TestPlanItReporter extends WDIOReporter {
       this.log('Fetching status mappings...');
       await this.fetchStatusMappings();
 
-      // Handle oneReport mode - check for existing shared state
-      if (this.reporterOptions.oneReport && !this.state.testRunId) {
+      // Handle oneReport mode - check for existing shared state.
+      // An externally managed run is never replaced by shared state, and never
+      // discarded by the "start fresh" recovery paths below.
+      if (this.reporterOptions.oneReport && !this.state.testRunId && !this.externallyManaged) {
         const sharedState = readSharedState(this.reporterOptions.projectId);
         if (sharedState) {
           if (sharedState.managedByService) {
@@ -390,7 +434,9 @@ export default class TestPlanItReporter extends WDIOReporter {
       }
 
       // Create or validate test run (skip if service-managed)
-      if (!this.state.testRunId && !this.managedByService) {
+      if (this.externallyManaged) {
+        await this.validateExternallyManagedTestRun();
+      } else if (!this.state.testRunId && !this.managedByService) {
         // In oneReport mode, use atomic write to prevent race conditions
         if (this.reporterOptions.oneReport) {
           // Create the test run first
@@ -435,13 +481,37 @@ export default class TestPlanItReporter extends WDIOReporter {
   }
 
   /**
+   * Confirm a pinned run is reachable. A failure here is reported but not fatal:
+   * the reporter keeps attaching results to the pinned ID rather than creating a
+   * replacement run, which would reintroduce the duplicates pinning prevents.
+   */
+  private async validateExternallyManagedTestRun(): Promise<void> {
+    try {
+      const testRun = await this.client.getTestRun(this.state.testRunId!);
+      this.log(`Using externally managed test run: ${testRun.name} (ID: ${testRun.id})`);
+
+      if (testRun.isDeleted) {
+        this.logError(`Externally managed test run ${testRun.id} is deleted; results may not be visible`);
+      } else if (testRun.isCompleted) {
+        this.log(`Externally managed test run ${testRun.id} is already completed; still attaching results`);
+      }
+    } catch (error) {
+      this.logError(
+        `Could not read externally managed test run ${this.state.testRunId}; still attaching results to it`,
+        error
+      );
+    }
+  }
+
+  /**
    * Resolve option names to numeric IDs
    */
   private async resolveOptionIds(): Promise<void> {
     const projectId = this.reporterOptions.projectId;
 
-    // Resolve testRunId if it's a string
-    if (typeof this.reporterOptions.testRunId === 'string') {
+    // Resolve testRunId if it's a string. A numeric ID from the option or the
+    // environment already pinned the run, so the name lookup is skipped.
+    if (typeof this.reporterOptions.testRunId === 'string' && !this.state.testRunId) {
       const testRun = await this.client.findTestRunByName(projectId, this.reporterOptions.testRunId);
       if (!testRun) {
         throw new Error(`Test run not found: "${this.reporterOptions.testRunId}"`);
@@ -449,7 +519,60 @@ export default class TestPlanItReporter extends WDIOReporter {
       this.state.testRunId = testRun.id;
       this.state.resolvedIds.testRunId = testRun.id;
       this.log(`Resolved test run "${this.reporterOptions.testRunId}" -> ${testRun.id}`);
+      this.markExternallyManaged(`the testRunId option ("${this.reporterOptions.testRunId}")`);
     }
+
+    // Configuration, milestone, workflow state and tags are only read when this
+    // reporter creates the run; on a pinned run those values are already set and
+    // belong to whoever created it. Folder and template resolution still runs —
+    // those drive test case creation, not the run.
+    if (this.externallyManaged) {
+      this.log('Skipping configuration/milestone/state/tag resolution for externally managed test run');
+    } else {
+      await this.resolveRunFieldIds();
+    }
+
+    // Resolve parentFolderId if it's a string
+    if (typeof this.reporterOptions.parentFolderId === 'string') {
+      let folder = await this.client.findFolderByName(projectId, this.reporterOptions.parentFolderId);
+      if (!folder) {
+        // If createFolderHierarchy is enabled, create the parent folder
+        if (this.reporterOptions.createFolderHierarchy) {
+          this.log(`Parent folder "${this.reporterOptions.parentFolderId}" not found, creating it...`);
+          folder = await this.client.createFolder({
+            projectId,
+            name: this.reporterOptions.parentFolderId,
+          });
+          this.log(`Created parent folder "${this.reporterOptions.parentFolderId}" -> ${folder.id}`);
+        } else {
+          throw new Error(`Folder not found: "${this.reporterOptions.parentFolderId}"`);
+        }
+      }
+      this.state.resolvedIds.parentFolderId = folder.id;
+      this.log(`Resolved folder "${this.reporterOptions.parentFolderId}" -> ${folder.id}`);
+    } else if (typeof this.reporterOptions.parentFolderId === 'number') {
+      this.state.resolvedIds.parentFolderId = this.reporterOptions.parentFolderId;
+    }
+
+    // Resolve templateId if it's a string
+    if (typeof this.reporterOptions.templateId === 'string') {
+      const template = await this.client.findTemplateByName(projectId, this.reporterOptions.templateId);
+      if (!template) {
+        throw new Error(`Template not found: "${this.reporterOptions.templateId}"`);
+      }
+      this.state.resolvedIds.templateId = template.id;
+      this.log(`Resolved template "${this.reporterOptions.templateId}" -> ${template.id}`);
+    } else if (typeof this.reporterOptions.templateId === 'number') {
+      this.state.resolvedIds.templateId = this.reporterOptions.templateId;
+    }
+
+  }
+
+  /**
+   * Resolve the option names that are only read when creating a test run.
+   */
+  private async resolveRunFieldIds(): Promise<void> {
+    const projectId = this.reporterOptions.projectId;
 
     // Resolve configId if it's a string
     if (typeof this.reporterOptions.configId === 'string') {
@@ -485,40 +608,6 @@ export default class TestPlanItReporter extends WDIOReporter {
       this.log(`Resolved workflow state "${this.reporterOptions.stateId}" -> ${state.id}`);
     } else if (typeof this.reporterOptions.stateId === 'number') {
       this.state.resolvedIds.stateId = this.reporterOptions.stateId;
-    }
-
-    // Resolve parentFolderId if it's a string
-    if (typeof this.reporterOptions.parentFolderId === 'string') {
-      let folder = await this.client.findFolderByName(projectId, this.reporterOptions.parentFolderId);
-      if (!folder) {
-        // If createFolderHierarchy is enabled, create the parent folder
-        if (this.reporterOptions.createFolderHierarchy) {
-          this.log(`Parent folder "${this.reporterOptions.parentFolderId}" not found, creating it...`);
-          folder = await this.client.createFolder({
-            projectId,
-            name: this.reporterOptions.parentFolderId,
-          });
-          this.log(`Created parent folder "${this.reporterOptions.parentFolderId}" -> ${folder.id}`);
-        } else {
-          throw new Error(`Folder not found: "${this.reporterOptions.parentFolderId}"`);
-        }
-      }
-      this.state.resolvedIds.parentFolderId = folder.id;
-      this.log(`Resolved folder "${this.reporterOptions.parentFolderId}" -> ${folder.id}`);
-    } else if (typeof this.reporterOptions.parentFolderId === 'number') {
-      this.state.resolvedIds.parentFolderId = this.reporterOptions.parentFolderId;
-    }
-
-    // Resolve templateId if it's a string
-    if (typeof this.reporterOptions.templateId === 'string') {
-      const template = await this.client.findTemplateByName(projectId, this.reporterOptions.templateId);
-      if (!template) {
-        throw new Error(`Template not found: "${this.reporterOptions.templateId}"`);
-      }
-      this.state.resolvedIds.templateId = template.id;
-      this.log(`Resolved template "${this.reporterOptions.templateId}" -> ${template.id}`);
-    } else if (typeof this.reporterOptions.templateId === 'number') {
-      this.state.resolvedIds.templateId = this.reporterOptions.templateId;
     }
 
     // Resolve tagIds if they contain strings
@@ -576,23 +665,25 @@ export default class TestPlanItReporter extends WDIOReporter {
       throw new Error('Cannot create JUnit test suite without a test run ID');
     }
 
-    // In oneReport mode, check if another worker has already created a suite
+    // In oneReport mode, check if another worker has already created a suite.
+    // The state file is keyed by project, so a suite recorded by an earlier
+    // invocation can belong to a different run — only adopt a matching one.
     if (this.reporterOptions.oneReport) {
       const sharedState = readSharedState(this.reporterOptions.projectId);
-      if (sharedState?.testSuiteId) {
+      if (sharedState?.testSuiteId && sharedState.testRunId === this.state.testRunId) {
         this.state.testSuiteId = sharedState.testSuiteId;
         this.log('Using shared JUnit test suite from file:', sharedState.testSuiteId);
         return;
       }
     }
 
-    const runName = this.formatRunName(this.reporterOptions.runName || '{suite} - {date} {time}');
+    const suiteName = this.formatRunName(this.resolveTestSuiteNameTemplate());
 
     this.log('Creating JUnit test suite...');
 
     const testSuite = await this.client.createJUnitTestSuite({
       testRunId: this.state.testRunId,
-      name: runName,
+      name: suiteName,
       time: 0, // Will be updated incrementally
       tests: 0,
       failures: 0,
@@ -603,14 +694,18 @@ export default class TestPlanItReporter extends WDIOReporter {
     this.state.testSuiteId = testSuite.id;
     this.log('Created JUnit test suite with ID:', testSuite.id);
 
-    // Update shared state with suite ID if in oneReport mode
+    // Update shared state with suite ID if in oneReport mode, so the other
+    // workers of this invocation report into the same suite
     if (this.reporterOptions.oneReport) {
-      const finalState = writeSharedStateIfAbsent(this.reporterOptions.projectId, {
+      const nextState = {
         testRunId: this.state.testRunId,
         testSuiteId: this.state.testSuiteId,
         createdAt: new Date().toISOString(),
         activeWorkers: 1,
-      });
+      };
+      const finalState = this.externallyManaged
+        ? writeSharedStateForRun(this.reporterOptions.projectId, nextState)
+        : writeSharedStateIfAbsent(this.reporterOptions.projectId, nextState);
 
       // Check if another worker wrote first — use their suite
       if (finalState && finalState.testSuiteId !== this.state.testSuiteId) {
@@ -663,6 +758,23 @@ export default class TestPlanItReporter extends WDIOReporter {
 
     this.state.testRunId = testRun.id;
     this.log('Created test run with ID:', testRun.id);
+  }
+
+  /**
+   * Template for this invocation's JUnit suite name.
+   *
+   * A pinned run collects a suite per invocation, so its default names them by
+   * capability and spec to tell shards apart. A run this reporter created holds
+   * one suite, named after the run.
+   */
+  private resolveTestSuiteNameTemplate(): string {
+    if (this.reporterOptions.testSuiteName) {
+      return this.reporterOptions.testSuiteName;
+    }
+    if (this.externallyManaged) {
+      return EXTERNALLY_MANAGED_SUITE_NAME;
+    }
+    return this.reporterOptions.runName || '{suite} - {date} {time}';
   }
 
   /**
@@ -1532,6 +1644,11 @@ export default class TestPlanItReporter extends WDIOReporter {
     // In legacy oneReport mode, decrement worker count and only complete when last worker finishes
     if (this.managedByService) {
       this.log('Skipping test run completion (managed by TestPlanItService)');
+    } else if (this.externallyManaged) {
+      this.log(`Skipping test run completion (test run ${this.state.testRunId} is managed externally)`);
+      if (this.reporterOptions.oneReport) {
+        decrementWorkerCount(this.reporterOptions.projectId);
+      }
     } else if (this.reporterOptions.completeRunOnFinish) {
       if (this.reporterOptions.oneReport) {
         // Decrement worker count and check if we're the last worker
