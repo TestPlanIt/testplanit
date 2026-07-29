@@ -6,20 +6,12 @@ import { useDebounce } from "@/components/Debounce";
 import { ColumnSelection } from "@/components/tables/ColumnSelection";
 import { Filter } from "@/components/tables/Filter";
 import { VirtualizedDataTable } from "@/components/tables/VirtualizedDataTable";
-import { AsyncCombobox } from "@/components/ui/async-combobox";
 import { Form } from "@/components/ui/form";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { MultiAsyncCombobox } from "@/components/ui/multi-async-combobox";
 import { AuditAction } from "~/zenstack/models";
 import type { VisibilityState } from "@tanstack/react-table";
 import { endOfDay, format, startOfDay } from "date-fns";
-import { Users } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -33,6 +25,7 @@ import {
 import type { AuditLogUserOption } from "~/app/actions/searchAuditLogUsers";
 import { searchProjectAuditLogUsers } from "~/app/actions/searchProjectAuditLogUsers";
 import { DateRangePickerField } from "~/components/forms/DateRangePickerField";
+import { AUDIT_ACTIONS, formatAuditAction } from "~/lib/audit/auditActions";
 import { groupAuditRows } from "~/lib/audit/groupAuditRows";
 import { SYSTEM_ACTOR_ID } from "~/lib/auditContextConstants";
 import { logDataExport } from "~/lib/services/auditClient";
@@ -41,6 +34,9 @@ import { logDataExport } from "~/lib/services/auditClient";
 // rows are cheap (heavy Json columns excluded) and operationId grouping can
 // collapse a whole page into one visible row, so batch large.
 const PAGE_SIZE = 1000;
+
+// Options shown per page inside the filter pickers.
+const FILTER_PAGE_SIZE = 25;
 
 interface ProjectAuditLogProps {
   projectId: number;
@@ -73,12 +69,11 @@ export function ProjectAuditLog({
   }>({ column: "timestamp", direction: "desc" });
   const [searchString, setSearchString] = useState("");
   const debouncedSearchString = useDebounce(searchString, 500);
-  const [actionFilter, setActionFilter] = useState<AuditAction | "all">("all");
-  const [entityTypeFilter, setEntityTypeFilter] = useState<string>("all");
-  const [selectedUser, setSelectedUser] = useState<AuditLogUserOption | null>(
-    null
-  );
-  const userFilter = selectedUser?.userId ?? "all";
+  // Every filter below is additive: an empty selection means "no filter", so
+  // the picker placeholder reads "All …".
+  const [actionFilter, setActionFilter] = useState<AuditAction[]>([]);
+  const [entityTypeFilter, setEntityTypeFilter] = useState<string[]>([]);
+  const [selectedUsers, setSelectedUsers] = useState<AuditLogUserOption[]>([]);
   const dateForm = useForm<{ dateRange: DateRange | undefined }>({
     defaultValues: { dateRange: undefined },
   });
@@ -120,16 +115,18 @@ export function ProjectAuditLog({
       });
     }
 
-    if (actionFilter !== "all") {
-      conditions.push({ action: actionFilter });
+    if (actionFilter.length > 0) {
+      conditions.push({ action: { in: actionFilter } });
     }
 
-    if (entityTypeFilter !== "all") {
-      conditions.push({ entityType: entityTypeFilter });
+    if (entityTypeFilter.length > 0) {
+      conditions.push({ entityType: { in: entityTypeFilter } });
     }
 
-    if (userFilter !== "all") {
-      conditions.push({ userId: userFilter });
+    if (selectedUsers.length > 0) {
+      conditions.push({
+        userId: { in: selectedUsers.map((user) => user.userId) },
+      });
     }
 
     if (dateRange?.from) {
@@ -147,7 +144,7 @@ export function ProjectAuditLog({
     debouncedSearchString,
     actionFilter,
     entityTypeFilter,
-    userFilter,
+    selectedUsers,
     dateRange,
   ]);
 
@@ -227,6 +224,45 @@ export function ProjectAuditLog({
     (query: string, page: number, pageSize: number) =>
       searchProjectAuditLogUsers(projectId, query, page, pageSize),
     [projectId]
+  );
+
+  // Action / entity-type options are already in memory, so their pickers filter
+  // and page locally.
+  const fetchActionOptions = useCallback(
+    (query: string, page: number, pageSize: number) => {
+      const q = query.trim().toLowerCase();
+      const filtered = q
+        ? AUDIT_ACTIONS.filter((action) =>
+            formatAuditAction(action).toLowerCase().includes(q)
+          )
+        : AUDIT_ACTIONS;
+      return Promise.resolve({
+        results: filtered.slice(page * pageSize, page * pageSize + pageSize),
+        total: filtered.length,
+      });
+    },
+    []
+  );
+
+  const entityTypeOptions = useMemo(
+    () => (entityTypes ?? []).map((et) => et.entityType),
+    [entityTypes]
+  );
+
+  const fetchEntityTypeOptions = useCallback(
+    (query: string, page: number, pageSize: number) => {
+      const q = query.trim().toLowerCase();
+      const filtered = q
+        ? entityTypeOptions.filter((entityType) =>
+            entityType.toLowerCase().includes(q)
+          )
+        : entityTypeOptions;
+      return Promise.resolve({
+        results: filtered.slice(page * pageSize, page * pageSize + pageSize),
+        total: filtered.length,
+      });
+    },
+    [entityTypeOptions]
   );
 
   const handleViewDetails = useCallback((log: { id: string }) => {
@@ -333,9 +369,13 @@ export function ProjectAuditLog({
         filters: {
           projectId,
           search: debouncedSearchString || undefined,
-          action: actionFilter !== "all" ? actionFilter : undefined,
-          entityType: entityTypeFilter !== "all" ? entityTypeFilter : undefined,
-          user: userFilter !== "all" ? userFilter : undefined,
+          action: actionFilter.length > 0 ? actionFilter : undefined,
+          entityType:
+            entityTypeFilter.length > 0 ? entityTypeFilter : undefined,
+          user:
+            selectedUsers.length > 0
+              ? selectedUsers.map((user) => user.userId)
+              : undefined,
           dateFrom: dateRange?.from?.toISOString(),
           dateTo: dateRange?.to?.toISOString(),
         },
@@ -353,7 +393,7 @@ export function ProjectAuditLog({
     debouncedSearchString,
     actionFilter,
     entityTypeFilter,
-    userFilter,
+    selectedUsers,
     dateRange,
   ]);
 
@@ -377,16 +417,6 @@ export function ProjectAuditLog({
     () => allColumns.filter((c) => c.id !== "project"),
     [allColumns]
   );
-
-  const auditActions: AuditAction[] = [
-    "CREATE",
-    "UPDATE",
-    "DELETE",
-    "BULK_CREATE",
-    "BULK_UPDATE",
-    "BULK_DELETE",
-    "DATA_EXPORTED",
-  ];
 
   const handleSortChange = (column: string) => {
     const direction =
@@ -428,56 +458,50 @@ export function ProjectAuditLog({
 
         <div>
           <Label className="sr-only">{t("filterAction")}</Label>
-          <Select
+          <MultiAsyncCombobox<AuditAction>
             value={actionFilter}
-            onValueChange={(value) =>
-              setActionFilter(value as AuditAction | "all")
-            }
-          >
-            <SelectTrigger>
-              <SelectValue placeholder={t("allActions")} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{t("allActions")}</SelectItem>
-              {auditActions.map((action) => (
-                <SelectItem key={action} value={action}>
-                  {action.replace(/_/g, " ")}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            onValueChange={setActionFilter}
+            fetchOptions={fetchActionOptions}
+            getOptionValue={(action) => action}
+            getOptionLabel={formatAuditAction}
+            renderOption={(action) => (
+              <span className="truncate">{formatAuditAction(action)}</span>
+            )}
+            placeholder={t("allActions")}
+            pageSize={FILTER_PAGE_SIZE}
+          />
         </div>
 
         <div>
           <Label className="sr-only">{t("filterEntityType")}</Label>
-          <Select value={entityTypeFilter} onValueChange={setEntityTypeFilter}>
-            <SelectTrigger>
-              <SelectValue placeholder={t("allEntityTypes")} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{t("allEntityTypes")}</SelectItem>
-              {entityTypes?.map((et) => (
-                <SelectItem key={et.entityType} value={et.entityType}>
-                  {et.entityType}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <MultiAsyncCombobox<string>
+            value={entityTypeFilter}
+            onValueChange={setEntityTypeFilter}
+            fetchOptions={fetchEntityTypeOptions}
+            getOptionValue={(entityType) => entityType}
+            getOptionLabel={(entityType) => entityType}
+            renderOption={(entityType) => (
+              <span className="truncate">{entityType}</span>
+            )}
+            placeholder={t("allEntityTypes")}
+            pageSize={FILTER_PAGE_SIZE}
+          />
         </div>
 
         <div>
           <Label className="sr-only">{tCommon("access.user")}</Label>
-          <AsyncCombobox<AuditLogUserOption>
-            className="w-full"
-            value={selectedUser}
-            onValueChange={setSelectedUser}
+          <MultiAsyncCombobox<AuditLogUserOption>
+            value={selectedUsers}
+            onValueChange={setSelectedUsers}
             fetchOptions={fetchUserOptions}
             getOptionValue={(u) => u.userId}
-            placeholder={tCommon("searchUsers")}
-            showTotal
-            showUnassigned
-            unassignedLabel={t("allUsers")}
-            unassignedIcon={<Users className="me-2 h-4 w-4" />}
+            getOptionLabel={(u) =>
+              u.userId === SYSTEM_ACTOR_ID
+                ? t("systemActor")
+                : u.userName || u.userEmail || u.userId
+            }
+            placeholder={t("allUsers")}
+            pageSize={FILTER_PAGE_SIZE}
             renderOption={(u) => {
               const isSystem = u.userId === SYSTEM_ACTOR_ID;
               const primary = isSystem
@@ -539,7 +563,7 @@ export function ProjectAuditLog({
           hasMore={!!hasNextPage}
           isLoading={isLoading || isFetchingNextPage}
           onLoadMore={fetchNextPage}
-          resetKey={`${debouncedSearchString}|${actionFilter}|${entityTypeFilter}|${userFilter}|${dateRange?.from?.toISOString() ?? ""}|${dateRange?.to?.toISOString() ?? ""}`}
+          resetKey={`${debouncedSearchString}|${actionFilter.join(",")}|${entityTypeFilter.join(",")}|${selectedUsers.map((u) => u.userId).join(",")}|${dateRange?.from?.toISOString() ?? ""}|${dateRange?.to?.toISOString() ?? ""}`}
           testIdPrefix="project-audit-logs-table"
           rowTestIdPrefix="project-audit-log-row"
         />

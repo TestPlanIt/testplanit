@@ -13,23 +13,16 @@ import { useDebounce } from "@/components/Debounce";
 import { ColumnSelection } from "@/components/tables/ColumnSelection";
 import { Filter } from "@/components/tables/Filter";
 import { VirtualizedDataTable } from "@/components/tables/VirtualizedDataTable";
-import { AsyncCombobox } from "@/components/ui/async-combobox";
 import { Button } from "@/components/ui/button";
 import { SectionHeader } from "@/components/ui/typography";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { HelpPopover } from "@/components/ui/help-popover";
 import { Form } from "@/components/ui/form";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { MultiAsyncCombobox } from "@/components/ui/multi-async-combobox";
 import { AuditAction } from "~/zenstack/models";
 import { endOfDay, format, startOfDay } from "date-fns";
-import { Download, Users } from "lucide-react";
+import { Download } from "lucide-react";
 import type { Session } from "next-auth";
 import {
   AuditLogUserOption,
@@ -37,6 +30,7 @@ import {
 } from "~/app/actions/searchAuditLogUsers";
 import { DateRangePickerField } from "~/components/forms/DateRangePickerField";
 import { SYSTEM_ACTOR_ID } from "~/lib/auditContextConstants";
+import { AUDIT_ACTIONS, formatAuditAction } from "~/lib/audit/auditActions";
 import { groupAuditRows } from "~/lib/audit/groupAuditRows";
 import { logDataExport } from "~/lib/services/auditClient";
 import { AuditLogDetailModal } from "./AuditLogDetailModal";
@@ -47,6 +41,14 @@ import { buildAuditLogOrderBy, ExtendedAuditLog, useColumns } from "./columns";
 // grouping can collapse an entire page into one visible row, so a large batch
 // keeps scrolling responsive without a burst of round trips.
 const PAGE_SIZE = 1000;
+
+// Options shown per page inside the filter pickers.
+const FILTER_PAGE_SIZE = 25;
+
+interface ProjectFilterOption {
+  id: number;
+  name: string;
+}
 
 export default function AuditLogsPage() {
   return <AuditLogsGuard />;
@@ -100,13 +102,12 @@ function AuditLogsContent({ session }: { session: Session }) {
   });
   const [searchString, setSearchString] = useState("");
   const debouncedSearchString = useDebounce(searchString, 500);
-  const [actionFilter, setActionFilter] = useState<AuditAction | "all">("all");
-  const [entityTypeFilter, setEntityTypeFilter] = useState<string>("all");
-  const [projectFilter, setProjectFilter] = useState<string>("all");
-  const [selectedUser, setSelectedUser] = useState<AuditLogUserOption | null>(
-    null
-  );
-  const userFilter = selectedUser?.userId ?? "all";
+  // Every filter below is additive: an empty selection means "no filter", so
+  // the picker placeholder reads "All …".
+  const [actionFilter, setActionFilter] = useState<AuditAction[]>([]);
+  const [entityTypeFilter, setEntityTypeFilter] = useState<string[]>([]);
+  const [projectFilter, setProjectFilter] = useState<ProjectFilterOption[]>([]);
+  const [selectedUsers, setSelectedUsers] = useState<AuditLogUserOption[]>([]);
   const dateForm = useForm<{ dateRange: DateRange | undefined }>({
     defaultValues: { dateRange: undefined },
   });
@@ -149,20 +150,24 @@ function AuditLogsContent({ session }: { session: Session }) {
       });
     }
 
-    if (actionFilter !== "all") {
-      conditions.push({ action: actionFilter });
+    if (actionFilter.length > 0) {
+      conditions.push({ action: { in: actionFilter } });
     }
 
-    if (entityTypeFilter !== "all") {
-      conditions.push({ entityType: entityTypeFilter });
+    if (entityTypeFilter.length > 0) {
+      conditions.push({ entityType: { in: entityTypeFilter } });
     }
 
-    if (projectFilter !== "all") {
-      conditions.push({ projectId: parseInt(projectFilter, 10) });
+    if (projectFilter.length > 0) {
+      conditions.push({
+        projectId: { in: projectFilter.map((project) => project.id) },
+      });
     }
 
-    if (userFilter !== "all") {
-      conditions.push({ userId: userFilter });
+    if (selectedUsers.length > 0) {
+      conditions.push({
+        userId: { in: selectedUsers.map((user) => user.userId) },
+      });
     }
 
     if (dateRange?.from) {
@@ -180,7 +185,7 @@ function AuditLogsContent({ session }: { session: Session }) {
     actionFilter,
     entityTypeFilter,
     projectFilter,
-    userFilter,
+    selectedUsers,
     dateRange,
   ]);
 
@@ -272,7 +277,7 @@ function AuditLogsContent({ session }: { session: Session }) {
     orderBy: { projectId: "asc" },
   });
 
-  const projectOptions = useMemo(() => {
+  const projectOptions = useMemo<ProjectFilterOption[]>(() => {
     const options = (projectRows ?? [])
       .filter(
         (row): row is { projectId: number; project: { name: string } } =>
@@ -289,6 +294,61 @@ function AuditLogsContent({ session }: { session: Session }) {
     (query: string, page: number, pageSize: number) =>
       searchAuditLogUsers(query, page, pageSize),
     []
+  );
+
+  // Action / entity-type / project options are already in memory, so their
+  // pickers filter and page locally.
+  const fetchActionOptions = useCallback(
+    (query: string, page: number, pageSize: number) => {
+      const q = query.trim().toLowerCase();
+      const filtered = q
+        ? AUDIT_ACTIONS.filter((action) =>
+            formatAuditAction(action).toLowerCase().includes(q)
+          )
+        : AUDIT_ACTIONS;
+      return Promise.resolve({
+        results: filtered.slice(page * pageSize, page * pageSize + pageSize),
+        total: filtered.length,
+      });
+    },
+    []
+  );
+
+  const entityTypeOptions = useMemo(
+    () => (entityTypes ?? []).map((et) => et.entityType),
+    [entityTypes]
+  );
+
+  const fetchEntityTypeOptions = useCallback(
+    (query: string, page: number, pageSize: number) => {
+      const q = query.trim().toLowerCase();
+      const filtered = q
+        ? entityTypeOptions.filter((entityType) =>
+            entityType.toLowerCase().includes(q)
+          )
+        : entityTypeOptions;
+      return Promise.resolve({
+        results: filtered.slice(page * pageSize, page * pageSize + pageSize),
+        total: filtered.length,
+      });
+    },
+    [entityTypeOptions]
+  );
+
+  const fetchProjectOptions = useCallback(
+    (query: string, page: number, pageSize: number) => {
+      const q = query.trim().toLowerCase();
+      const filtered = q
+        ? projectOptions.filter((project) =>
+            project.name.toLowerCase().includes(q)
+          )
+        : projectOptions;
+      return Promise.resolve({
+        results: filtered.slice(page * pageSize, page * pageSize + pageSize),
+        total: filtered.length,
+      });
+    },
+    [projectOptions]
   );
 
   const handleViewDetails = useCallback((log: { id: string }) => {
@@ -406,10 +466,17 @@ function AuditLogsContent({ session }: { session: Session }) {
         recordCount: logs.length,
         filters: {
           search: debouncedSearchString || undefined,
-          action: actionFilter !== "all" ? actionFilter : undefined,
-          entityType: entityTypeFilter !== "all" ? entityTypeFilter : undefined,
-          project: projectFilter !== "all" ? projectFilter : undefined,
-          user: userFilter !== "all" ? userFilter : undefined,
+          action: actionFilter.length > 0 ? actionFilter : undefined,
+          entityType:
+            entityTypeFilter.length > 0 ? entityTypeFilter : undefined,
+          project:
+            projectFilter.length > 0
+              ? projectFilter.map((project) => project.id)
+              : undefined,
+          user:
+            selectedUsers.length > 0
+              ? selectedUsers.map((user) => user.userId)
+              : undefined,
           dateFrom: dateRange?.from?.toISOString(),
           dateTo: dateRange?.to?.toISOString(),
         },
@@ -427,7 +494,7 @@ function AuditLogsContent({ session }: { session: Session }) {
     actionFilter,
     entityTypeFilter,
     projectFilter,
-    userFilter,
+    selectedUsers,
     dateRange,
   ]);
 
@@ -462,32 +529,6 @@ function AuditLogsContent({ session }: { session: Session }) {
         : "asc";
     setSortConfig({ column, direction });
   };
-
-  // All audit actions for filter
-  const auditActions: AuditAction[] = [
-    "CREATE",
-    "UPDATE",
-    "DELETE",
-    "BULK_CREATE",
-    "BULK_UPDATE",
-    "BULK_DELETE",
-    "LOGIN",
-    "LOGOUT",
-    "LOGIN_FAILED",
-    "SESSION_INVALIDATED",
-    "PASSWORD_CHANGED",
-    "PASSWORD_RESET",
-    "PERMISSION_GRANT",
-    "PERMISSION_REVOKE",
-    "ROLE_CHANGED",
-    "API_KEY_CREATED",
-    "API_KEY_REGENERATED",
-    "API_KEY_DELETED",
-    "API_KEY_REVOKED",
-    "DATA_EXPORTED",
-    "SSO_CONFIG_CHANGED",
-    "SYSTEM_CONFIG_CHANGED",
-  ];
 
   return (
     <main>
@@ -541,79 +582,68 @@ function AuditLogsContent({ session }: { session: Session }) {
 
               <div>
                 <Label className="sr-only">{t("filterAction")}</Label>
-                <Select
+                <MultiAsyncCombobox<AuditAction>
                   value={actionFilter}
-                  onValueChange={(value) =>
-                    setActionFilter(value as AuditAction | "all")
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder={t("allActions")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">{t("allActions")}</SelectItem>
-                    {auditActions.map((action) => (
-                      <SelectItem key={action} value={action}>
-                        {action.replace(/_/g, " ")}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  onValueChange={setActionFilter}
+                  fetchOptions={fetchActionOptions}
+                  getOptionValue={(action) => action}
+                  getOptionLabel={formatAuditAction}
+                  renderOption={(action) => (
+                    <span className="truncate">
+                      {formatAuditAction(action)}
+                    </span>
+                  )}
+                  placeholder={t("allActions")}
+                  pageSize={FILTER_PAGE_SIZE}
+                />
               </div>
 
               <div>
                 <Label className="sr-only">{t("filterEntityType")}</Label>
-                <Select
+                <MultiAsyncCombobox<string>
                   value={entityTypeFilter}
                   onValueChange={setEntityTypeFilter}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder={t("allEntityTypes")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">{t("allEntityTypes")}</SelectItem>
-                    {entityTypes?.map((et) => (
-                      <SelectItem key={et.entityType} value={et.entityType}>
-                        {et.entityType}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  fetchOptions={fetchEntityTypeOptions}
+                  getOptionValue={(entityType) => entityType}
+                  getOptionLabel={(entityType) => entityType}
+                  renderOption={(entityType) => (
+                    <span className="truncate">{entityType}</span>
+                  )}
+                  placeholder={t("allEntityTypes")}
+                  pageSize={FILTER_PAGE_SIZE}
+                />
               </div>
 
               <div>
                 <Label className="sr-only">{tCommon("fields.project")}</Label>
-                <Select value={projectFilter} onValueChange={setProjectFilter}>
-                  <SelectTrigger>
-                    <SelectValue placeholder={t("allProjects")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">{t("allProjects")}</SelectItem>
-                    {projectOptions.map((project) => (
-                      <SelectItem
-                        key={project.id}
-                        value={project.id.toString()}
-                      >
-                        {project.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <MultiAsyncCombobox<ProjectFilterOption>
+                  value={projectFilter}
+                  onValueChange={setProjectFilter}
+                  fetchOptions={fetchProjectOptions}
+                  getOptionValue={(project) => project.id}
+                  getOptionLabel={(project) => project.name}
+                  renderOption={(project) => (
+                    <span className="truncate">{project.name}</span>
+                  )}
+                  placeholder={t("allProjects")}
+                  pageSize={FILTER_PAGE_SIZE}
+                />
               </div>
 
               <div>
                 <Label className="sr-only">{tCommon("access.user")}</Label>
-                <AsyncCombobox<AuditLogUserOption>
-                  className="w-full"
-                  value={selectedUser}
-                  onValueChange={setSelectedUser}
+                <MultiAsyncCombobox<AuditLogUserOption>
+                  value={selectedUsers}
+                  onValueChange={setSelectedUsers}
                   fetchOptions={fetchUserOptions}
                   getOptionValue={(u) => u.userId}
-                  placeholder={tCommon("searchUsers")}
-                  showTotal
-                  showUnassigned
-                  unassignedLabel={t("allUsers")}
-                  unassignedIcon={<Users className="me-2 h-4 w-4" />}
+                  getOptionLabel={(u) =>
+                    u.userId === SYSTEM_ACTOR_ID
+                      ? t("systemActor")
+                      : u.userName || u.userEmail || u.userId
+                  }
+                  placeholder={t("allUsers")}
+                  pageSize={FILTER_PAGE_SIZE}
                   renderOption={(u) => {
                     const isSystem = u.userId === SYSTEM_ACTOR_ID;
                     const primary = isSystem
@@ -677,7 +707,7 @@ function AuditLogsContent({ session }: { session: Session }) {
               hasMore={!!hasNextPage}
               isLoading={isLoading || isFetchingNextPage}
               onLoadMore={fetchNextPage}
-              resetKey={`${debouncedSearchString}|${actionFilter}|${entityTypeFilter}|${projectFilter}|${userFilter}|${dateRange?.from?.toISOString() ?? ""}|${dateRange?.to?.toISOString() ?? ""}`}
+              resetKey={`${debouncedSearchString}|${actionFilter.join(",")}|${entityTypeFilter.join(",")}|${projectFilter.map((p) => p.id).join(",")}|${selectedUsers.map((u) => u.userId).join(",")}|${dateRange?.from?.toISOString() ?? ""}|${dateRange?.to?.toISOString() ?? ""}`}
               testIdPrefix="audit-logs-table"
               rowTestIdPrefix="audit-log-row"
             />

@@ -16,6 +16,7 @@ import { Cog, Eye } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useMemo } from "react";
 import { SYSTEM_ACTOR_ID } from "~/lib/auditContextConstants";
+import { formatAuditAction } from "~/lib/audit/auditActions";
 
 /**
  * Audit `entityType` values (the CDC source-table names) that carry a cosmetic
@@ -106,7 +107,7 @@ function getActionBadgeVariant(
  * Format action name for display
  */
 function formatAction(action: AuditAction): string {
-  return action.replace(/_/g, " ");
+  return formatAuditAction(action);
 }
 
 export const useColumns = (

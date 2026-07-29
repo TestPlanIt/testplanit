@@ -79,18 +79,29 @@ test.describe("Project Audit Log", () => {
     });
 
     await test.step("Filtering by action keeps the table rendered", async () => {
-      // Action filter is the first combobox (the DateRangePicker before it is a button).
-      const actionFilter = page.locator('[role="combobox"]').first();
+      // Action filter is the first MultiAsyncCombobox trigger (the
+      // DateRangePicker before it is a plain button). Scoped to `button` so the
+      // cmdk search input (also role="combobox") can't match once open.
+      const actionFilter = page.locator('button[role="combobox"]').first();
       await expect(actionFilter).toBeVisible({ timeout: 10000 });
       await actionFilter.click();
-      const createOption = page.getByRole("option", { name: "CREATE" });
-      if (await createOption.isVisible({ timeout: 3000 }).catch(() => false)) {
-        await createOption.click();
-        await page.waitForLoadState("networkidle");
-        await expect(page.getByTestId("project-audit-logs-table")).toBeVisible({
-          timeout: 10000,
-        });
-      }
+
+      // The action list is paginated, so narrow it by search before selecting.
+      await page.locator("[cmdk-input]").first().fill("BULK CREATE");
+      const bulkCreateOption = page.locator(
+        '[role="option"]:has-text("BULK CREATE")'
+      );
+      await expect(bulkCreateOption).toBeVisible({ timeout: 5000 });
+      await bulkCreateOption.click();
+      await page.keyboard.press("Escape");
+
+      await expect(actionFilter).toContainText("BULK CREATE", {
+        timeout: 5000,
+      });
+      await page.waitForLoadState("networkidle");
+      await expect(page.getByTestId("project-audit-logs-table")).toBeVisible({
+        timeout: 10000,
+      });
     });
   });
 });
