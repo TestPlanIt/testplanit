@@ -5,6 +5,7 @@ import { NumericFilterInput } from "@/components/NumericFilterInput";
 import { StepsFilterInput } from "@/components/StepsFilterInput";
 import { UserNameCell } from "@/components/tables/UserNameCell";
 import { TextFilterInput } from "@/components/TextFilterInput";
+import { MultiAsyncCombobox } from "@/components/ui/multi-async-combobox";
 import {
   Select,
   SelectContent,
@@ -29,7 +30,7 @@ import {
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { IconName } from "~/types/globals";
 import { cn } from "~/utils";
 
@@ -106,6 +107,184 @@ interface ViewSelectorProps {
 }
 
 const _ALL_VALUES_FILTER = "__ALL__";
+
+// Above this many options the flat row list becomes unusable, so the axis
+// switches to the searchable multi-select used elsewhere in the app.
+const SEARCHABLE_OPTION_THRESHOLD = 10;
+
+const COMBOBOX_PAGE_SIZE = 20;
+
+interface FilterListOption {
+  id: string | number;
+  name: string;
+  count?: number;
+  icon?: { name: string } | null;
+  iconColor?: { value: string } | null;
+  color?: { value: string } | null;
+}
+
+function FilterRow({
+  selected,
+  onClick,
+  count,
+  children,
+}: {
+  selected: boolean;
+  onClick: (event: React.MouseEvent) => void;
+  count?: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <div
+      role="button"
+      tabIndex={0}
+      className={cn(
+        "w-full flex items-center justify-between text-start text-sm font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
+        selected && "bg-primary/20 hover:bg-primary/30"
+      )}
+      onClick={onClick}
+    >
+      <div className="flex items-center gap-2 min-w-0 flex-1">{children}</div>
+      {count !== undefined && (
+        <span className="text-xs text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
+          {count}
+        </span>
+      )}
+    </div>
+  );
+}
+
+interface FilterOptionListProps {
+  options: FilterListOption[];
+  selectedFilter: Array<string | number> | null;
+  onFilterChange: (value: Array<string | number> | null) => void;
+  isValueSelected: (value: string | number | null) => boolean;
+  onOptionClick: (
+    value: string | number | null,
+    event?: React.MouseEvent
+  ) => void;
+  renderOptionLabel?: (option: FilterListOption) => React.ReactNode;
+  placeholder: string;
+}
+
+/**
+ * Renders the filter options for the selected view axis. Short lists stay as
+ * clickable rows; long lists render the shared MultiAsyncCombobox so they can
+ * be searched and paged through.
+ */
+function FilterOptionList({
+  options,
+  selectedFilter,
+  onFilterChange,
+  isValueSelected,
+  onOptionClick,
+  renderOptionLabel,
+  placeholder,
+}: FilterOptionListProps) {
+  const renderLabel = useCallback(
+    (option: FilterListOption) =>
+      renderOptionLabel ? (
+        renderOptionLabel(option)
+      ) : (
+        <>
+          {option.icon && (
+            <DynamicIcon
+              name={option.icon.name as IconName}
+              className="w-4 h-4 shrink-0"
+              color={option.iconColor?.value}
+            />
+          )}
+          <span className="truncate">{option.name}</span>
+        </>
+      ),
+    [renderOptionLabel]
+  );
+
+  const optionIds = useMemo(
+    () => new Set(options.map((option) => option.id)),
+    [options]
+  );
+
+  const selectedOptions = useMemo(
+    () =>
+      Array.isArray(selectedFilter)
+        ? options.filter((option) => selectedFilter.includes(option.id))
+        : [],
+    [options, selectedFilter]
+  );
+
+  const fetchOptions = useCallback(
+    (query: string, page: number, pageSize: number) => {
+      const search = query.trim().toLowerCase();
+      const matches = search
+        ? options.filter((option) => option.name.toLowerCase().includes(search))
+        : options;
+      return Promise.resolve({
+        results: matches.slice(page * pageSize, page * pageSize + pageSize),
+        total: matches.length,
+      });
+    },
+    [options]
+  );
+
+  const handleComboboxChange = useCallback(
+    (selected: FilterListOption[]) => {
+      // Values that aren't part of this list (e.g. the pinned "Any"/"None"
+      // rows rendered above it) stay selected.
+      const preserved = Array.isArray(selectedFilter)
+        ? selectedFilter.filter((value) => !optionIds.has(value))
+        : [];
+      const next = [...preserved, ...selected.map((option) => option.id)];
+      onFilterChange(next.length > 0 ? next : null);
+    },
+    [onFilterChange, optionIds, selectedFilter]
+  );
+
+  if (options.length <= SEARCHABLE_OPTION_THRESHOLD) {
+    return (
+      <>
+        {options.map((option) => (
+          <FilterRow
+            key={option.id}
+            selected={isValueSelected(option.id)}
+            onClick={(e) => onOptionClick(option.id, e)}
+            count={option.count ?? 0}
+          >
+            {renderLabel(option)}
+          </FilterRow>
+        ))}
+      </>
+    );
+  }
+
+  return (
+    <div className="py-1" data-testid="view-filter-combobox">
+      <MultiAsyncCombobox<FilterListOption>
+        value={selectedOptions}
+        onValueChange={handleComboboxChange}
+        fetchOptions={fetchOptions}
+        renderOption={(option) => (
+          <div className="flex items-center justify-between w-full min-w-0 gap-2">
+            <div className="flex items-center gap-2 min-w-0 flex-1">
+              {renderLabel(option)}
+            </div>
+            <span className="text-xs text-muted-foreground shrink-0 whitespace-nowrap">
+              {option.count ?? 0}
+            </span>
+          </div>
+        )}
+        renderSelectedOption={(option) => (
+          <span className="truncate">{option.name}</span>
+        )}
+        getOptionValue={(option) => option.id}
+        getOptionLabel={(option) => option.name}
+        placeholder={placeholder}
+        pageSize={COMBOBOX_PAGE_SIZE}
+        hideSelectAll
+      />
+    </div>
+  );
+}
 
 export function ViewSelector({
   selectedItem,
@@ -198,10 +377,94 @@ export function ViewSelector({
     [selectedFilter, onFilterChange]
   );
 
+  const listProps = {
+    selectedFilter,
+    onFilterChange,
+    isValueSelected,
+    onOptionClick: handleFilterClick,
+    placeholder: tCommon("search"),
+  };
+
+  const templateOptions = useMemo<FilterListOption[]>(
+    () => viewOptions?.templates ?? [],
+    [viewOptions?.templates]
+  );
+
+  const stateOptions = useMemo<FilterListOption[]>(
+    () => viewOptions?.states ?? [],
+    [viewOptions?.states]
+  );
+
+  const creatorOptions = useMemo<FilterListOption[]>(
+    () => viewOptions?.creators ?? [],
+    [viewOptions?.creators]
+  );
+
+  const statusOptions = useMemo<FilterListOption[]>(
+    () =>
+      (
+        (viewItems.find((item) => item.id === "status")?.options ??
+          []) as FilterListOption[]
+      ).filter((option) => option.id != null && option.id !== "untested"),
+    [viewItems]
+  );
+
+  const assignedToOptions = useMemo<FilterListOption[]>(
+    () =>
+      (
+        (viewItems.find((item) => item.id === "assignedTo")?.options ??
+          []) as FilterListOption[]
+      ).filter(
+        (option) => option.id !== "unassigned" && typeof option.id === "string"
+      ),
+    [viewItems]
+  );
+
+  // Tag/issue axes ship "Any"/"None" sentinels alongside the real values; keep
+  // those pinned as rows so they stay one click away.
+  const [pinnedTagOptions, tagOptions] = useMemo(() => {
+    const all = (
+      (viewItems.find((item) => item.id === "tags")?.options ??
+        []) as FilterListOption[]
+    ).filter((option) => option.id != null);
+    return [
+      all.filter((option) => option.id === "any" || option.id === "none"),
+      all.filter((option) => option.id !== "any" && option.id !== "none"),
+    ] as const;
+  }, [viewItems]);
+
+  const [pinnedIssueOptions, issueOptions] = useMemo(() => {
+    const all = (
+      (viewItems.find((item) => item.id === "issues")?.options ??
+        []) as FilterListOption[]
+    ).filter((option) => option.id != null);
+    return [
+      all.filter((option) => option.id === "any" || option.id === "none"),
+      all.filter((option) => option.id !== "any" && option.id !== "none"),
+    ] as const;
+  }, [viewItems]);
+
+  // Parse the dynamic field ID format: "dynamic_{fieldId}_{fieldType}"
+  const dynamicField = useMemo(() => {
+    if (!selectedItem.startsWith("dynamic_")) return undefined;
+    const numericFieldId = parseInt(selectedItem.split("_")[1]);
+    return Object.values(viewOptions?.dynamicFields || {}).find(
+      (field) => field.fieldId === numericFieldId
+    );
+  }, [selectedItem, viewOptions?.dynamicFields]);
+
+  const dynamicFieldOptions = useMemo<FilterListOption[]>(
+    () => dynamicField?.options ?? [],
+    [dynamicField]
+  );
+
   return (
     <div className="flex flex-col pt-0.5     w-full">
       <Select value={selectedItem} onValueChange={onValueChange}>
-        <SelectTrigger className="me-6 ms-1 text-primary text-lg md:text-xl font-extrabold">
+        <SelectTrigger
+          className="me-6 ms-1 text-primary text-lg md:text-xl font-extrabold"
+          data-testid="view-selector-trigger"
+        >
           <SelectValue placeholder={tCommon("placeholders.selectOption")} />
         </SelectTrigger>
         <SelectContent className="text-primary text-lg md:text-xl font-extrabold">
@@ -221,599 +484,305 @@ export function ViewSelector({
       <div className="px-4 space-y-1 pt-2">
         {selectedItem === "templates" && (
           <>
-            <div
-              role="button"
-              tabIndex={0}
-              className={cn(
-                "w-full flex items-center justify-between text-start text-sm font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
-                selectedFilter === null && "bg-primary/20 hover:bg-primary/30"
-              )}
+            <FilterRow
+              selected={selectedFilter === null}
               onClick={(e) => handleFilterClick(null, e)}
+              count={templateOptions.reduce(
+                (sum, template) => sum + (template.count || 0),
+                0
+              )}
             >
-              <div className="flex items-center gap-2 min-w-0 flex-1">
-                <span className="truncate">{t("views.allTemplates")}</span>
-              </div>
-              <span className="text-xs text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
-                {viewOptions?.templates.reduce(
-                  (sum, template) => sum + (template.count || 0),
-                  0
-                )}
-              </span>
-            </div>
-            {viewOptions?.templates.map((template) => (
-              <div
-                role="button"
-                tabIndex={0}
-                key={template.id}
-                className={cn(
-                  "w-full flex items-center justify-between text-start text-sm font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
-                  isValueSelected(template.id) &&
-                    "bg-primary/20 hover:bg-primary/30"
-                )}
-                onClick={(e) => handleFilterClick(template.id, e)}
-              >
-                <div className="flex items-center gap-2 min-w-0 flex-1">
+              <span className="truncate">{t("views.allTemplates")}</span>
+            </FilterRow>
+            <FilterOptionList
+              {...listProps}
+              options={templateOptions}
+              renderOptionLabel={(option) => (
+                <>
                   <LayoutTemplate className="w-4 h-4 shrink-0" />
-                  <span className="truncate">{template.name}</span>
-                </div>
-                <span className="text-xs text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
-                  {template.count || 0}
-                </span>
-              </div>
-            ))}
+                  <span className="truncate">{option.name}</span>
+                </>
+              )}
+            />
           </>
         )}
 
         {selectedItem === "states" && (
           <>
-            <div
-              role="button"
-              tabIndex={0}
-              className={cn(
-                "w-full flex items-center justify-between text-start text-sm font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
-                selectedFilter === null && "bg-primary/20 hover:bg-primary/30"
-              )}
+            <FilterRow
+              selected={selectedFilter === null}
               onClick={(e) => handleFilterClick(null, e)}
+              count={stateOptions.reduce(
+                (sum, state) => sum + (state.count || 0),
+                0
+              )}
             >
-              <div className="flex items-center gap-2 min-w-0 flex-1">
-                <span className="truncate">{t("views.allStates")}</span>
-              </div>
-              <span className="text-xs text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
-                {viewOptions?.states.reduce(
-                  (sum, state) => sum + (state.count || 0),
-                  0
-                )}
-              </span>
-            </div>
-            {viewOptions?.states.map((state) => (
-              <div
-                role="button"
-                tabIndex={0}
-                key={state.id}
-                className={cn(
-                  "w-full flex items-center justify-between text-start text-sm font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
-                  isValueSelected(state.id) &&
-                    "bg-primary/20 hover:bg-primary/30"
-                )}
-                onClick={(e) => handleFilterClick(state.id, e)}
-              >
-                <div className="flex items-center gap-2 min-w-0 flex-1">
-                  <DynamicIcon
-                    name={state.icon?.name as IconName}
-                    className="w-4 h-4 shrink-0"
-                    color={state.iconColor?.value}
-                  />
-                  <span className="truncate">{state.name}</span>
-                </div>
-                <span className="text-xs text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
-                  {state.count || 0}
-                </span>
-              </div>
-            ))}
+              <span className="truncate">{t("views.allStates")}</span>
+            </FilterRow>
+            <FilterOptionList {...listProps} options={stateOptions} />
           </>
         )}
 
         {selectedItem === "creators" && (
           <>
-            <div
-              role="button"
-              tabIndex={0}
-              className={cn(
-                "w-full flex items-center justify-between text-start text-sm font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
-                selectedFilter === null && "bg-primary/20 hover:bg-primary/30"
-              )}
+            <FilterRow
+              selected={selectedFilter === null}
               onClick={(e) => handleFilterClick(null, e)}
+              count={creatorOptions.reduce(
+                (sum, creator) => sum + (creator.count || 0),
+                0
+              )}
             >
-              <div className="flex items-center gap-2 min-w-0 flex-1">
-                <Users className="w-4 h-4 shrink-0" />
-                <span className="truncate">{t("views.allCreators")}</span>
-              </div>
-              <span className="text-xs text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
-                {viewOptions?.creators.reduce(
-                  (sum, creator) => sum + (creator.count || 0),
-                  0
-                )}
-              </span>
-            </div>
-            {viewOptions?.creators.map((creator) => (
-              <div
-                role="button"
-                tabIndex={0}
-                key={creator.id}
-                className={cn(
-                  "w-full flex items-center justify-between text-start text-sm font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
-                  isValueSelected(creator.id) &&
-                    "bg-primary/20 hover:bg-primary/30"
-                )}
-                onClick={(e) => handleFilterClick(creator.id, e)}
-              >
-                <div className="flex items-center gap-2 min-w-0 flex-1">
-                  <UserNameCell userId={creator.id} hideLink={true} />
-                </div>
-                <span className="text-xs text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
-                  {creator.count || 0}
-                </span>
-              </div>
-            ))}
+              <Users className="w-4 h-4 shrink-0" />
+              <span className="truncate">{t("views.allCreators")}</span>
+            </FilterRow>
+            <FilterOptionList
+              {...listProps}
+              options={creatorOptions}
+              renderOptionLabel={(option) => (
+                <UserNameCell userId={String(option.id)} hideLink={true} />
+              )}
+            />
           </>
         )}
 
         {selectedItem === "automated" && (
           <>
-            <div
-              role="button"
-              tabIndex={0}
-              className={cn(
-                "w-full flex items-center justify-between text-start text-sm font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
-                selectedFilter === null && "bg-primary/20 hover:bg-primary/30"
-              )}
+            <FilterRow
+              selected={selectedFilter === null}
               onClick={(e) => handleFilterClick(null, e)}
+              count={totalCount}
             >
-              <div className="flex items-center gap-2 min-w-0 flex-1">
-                <span className="truncate">{t("views.allCases")}</span>
-              </div>
-              <span className="text-xs text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
-                {totalCount}
-              </span>
-            </div>
+              <span className="truncate">{t("views.allCases")}</span>
+            </FilterRow>
             {viewOptions?.automated.map(
-              (item: { value: boolean; count: number }) => {
-                return (
-                  <div
-                    role="button"
-                    tabIndex={0}
-                    key={item.value.toString()}
-                    className={cn(
-                      "w-full flex items-center justify-between text-start text-sm font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
-                      isValueSelected(item.value ? 1 : 0) &&
-                        "bg-primary/20 hover:bg-primary/30"
-                    )}
-                    onClick={(e) => handleFilterClick(item.value ? 1 : 0, e)}
-                  >
-                    <div className="flex items-center gap-2 min-w-0 flex-1">
-                      {item.value ? (
-                        <Bot className="w-4 h-4 shrink-0" />
-                      ) : (
-                        <User className="w-4 h-4 shrink-0" />
-                      )}
-                      <span className="truncate">
-                        {item.value
-                          ? tCommon("fields.automated")
-                          : tCommon("fields.notAutomated")}
-                      </span>
-                    </div>
-                    <span className="text-xs text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
-                      {item.count}
-                    </span>
-                  </div>
-                );
-              }
+              (item: { value: boolean; count: number }) => (
+                <FilterRow
+                  key={item.value.toString()}
+                  selected={isValueSelected(item.value ? 1 : 0)}
+                  onClick={(e) => handleFilterClick(item.value ? 1 : 0, e)}
+                  count={item.count}
+                >
+                  {item.value ? (
+                    <Bot className="w-4 h-4 shrink-0" />
+                  ) : (
+                    <User className="w-4 h-4 shrink-0" />
+                  )}
+                  <span className="truncate">
+                    {item.value
+                      ? tCommon("fields.automated")
+                      : tCommon("fields.notAutomated")}
+                  </span>
+                </FilterRow>
+              )
             )}
           </>
         )}
 
         {selectedItem === "parameterized" && (
           <>
-            <div
-              role="button"
-              tabIndex={0}
-              className={cn(
-                "w-full flex items-center justify-between text-start text-sm font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
-                selectedFilter === null && "bg-primary/20 hover:bg-primary/30"
-              )}
+            <FilterRow
+              selected={selectedFilter === null}
               onClick={(e) => handleFilterClick(null, e)}
+              count={totalCount}
             >
-              <div className="flex items-center gap-2 min-w-0 flex-1">
-                <span className="truncate">{t("views.allCases")}</span>
-              </div>
-              <span className="text-xs text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
-                {totalCount}
-              </span>
-            </div>
+              <span className="truncate">{t("views.allCases")}</span>
+            </FilterRow>
             {viewOptions?.parameterized?.map(
-              (item: { value: boolean; count: number }) => {
-                return (
-                  <div
-                    role="button"
-                    tabIndex={0}
-                    key={item.value.toString()}
-                    className={cn(
-                      "w-full flex items-center justify-between text-start text-sm font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
-                      isValueSelected(item.value ? 1 : 0) &&
-                        "bg-primary/20 hover:bg-primary/30"
-                    )}
-                    onClick={(e) => handleFilterClick(item.value ? 1 : 0, e)}
-                  >
-                    <div className="flex items-center gap-2 min-w-0 flex-1">
-                      {item.value ? (
-                        <SquareStack className="w-4 h-4 shrink-0 text-primary" />
-                      ) : (
-                        <Square className="w-4 h-4 shrink-0" />
-                      )}
-                      <span className="truncate">
-                        {item.value
-                          ? tCommon("fields.parameterized")
-                          : tCommon("fields.notParameterized")}
-                      </span>
-                    </div>
-                    <span className="text-xs text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
-                      {item.count}
-                    </span>
-                  </div>
-                );
-              }
+              (item: { value: boolean; count: number }) => (
+                <FilterRow
+                  key={item.value.toString()}
+                  selected={isValueSelected(item.value ? 1 : 0)}
+                  onClick={(e) => handleFilterClick(item.value ? 1 : 0, e)}
+                  count={item.count}
+                >
+                  {item.value ? (
+                    <SquareStack className="w-4 h-4 shrink-0 text-primary" />
+                  ) : (
+                    <Square className="w-4 h-4 shrink-0" />
+                  )}
+                  <span className="truncate">
+                    {item.value
+                      ? tCommon("fields.parameterized")
+                      : tCommon("fields.notParameterized")}
+                  </span>
+                </FilterRow>
+              )
             )}
           </>
         )}
 
         {selectedItem === "attachments" && (
           <>
-            <div
-              role="button"
-              tabIndex={0}
-              className={cn(
-                "w-full flex items-center justify-between text-start text-sm font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
-                selectedFilter === null && "bg-primary/20 hover:bg-primary/30"
-              )}
+            <FilterRow
+              selected={selectedFilter === null}
               onClick={(e) => handleFilterClick(null, e)}
+              count={totalCount}
             >
-              <div className="flex items-center gap-2 min-w-0 flex-1">
-                <span className="truncate">{t("views.allCases")}</span>
-              </div>
-              <span className="text-xs text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
-                {totalCount}
-              </span>
-            </div>
+              <span className="truncate">{t("views.allCases")}</span>
+            </FilterRow>
             {viewOptions?.attachments?.map(
-              (item: { value: boolean; count: number }) => {
-                return (
-                  <div
-                    role="button"
-                    tabIndex={0}
-                    key={item.value.toString()}
-                    className={cn(
-                      "w-full flex items-center justify-between text-start text-sm font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
-                      isValueSelected(item.value ? 1 : 0) &&
-                        "bg-primary/20 hover:bg-primary/30"
-                    )}
-                    onClick={(e) => handleFilterClick(item.value ? 1 : 0, e)}
-                  >
-                    <div className="flex items-center gap-2 min-w-0 flex-1">
-                      {item.value ? (
-                        <Paperclip className="w-4 h-4 shrink-0 text-primary" />
-                      ) : (
-                        <FileX className="w-4 h-4 shrink-0 opacity-60" />
-                      )}
-                      <span className="truncate">
-                        {item.value
-                          ? tCommon("fields.hasAttachments")
-                          : tCommon("fields.noAttachments")}
-                      </span>
-                    </div>
-                    <span className="text-xs text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
-                      {item.count}
-                    </span>
-                  </div>
-                );
-              }
+              (item: { value: boolean; count: number }) => (
+                <FilterRow
+                  key={item.value.toString()}
+                  selected={isValueSelected(item.value ? 1 : 0)}
+                  onClick={(e) => handleFilterClick(item.value ? 1 : 0, e)}
+                  count={item.count}
+                >
+                  {item.value ? (
+                    <Paperclip className="w-4 h-4 shrink-0 text-primary" />
+                  ) : (
+                    <FileX className="w-4 h-4 shrink-0 opacity-60" />
+                  )}
+                  <span className="truncate">
+                    {item.value
+                      ? tCommon("fields.hasAttachments")
+                      : tCommon("fields.noAttachments")}
+                  </span>
+                </FilterRow>
+              )
             )}
           </>
         )}
 
-        {selectedItem === "status" &&
-          (() => {
-            const statusView = viewItems.find((item) => item.id === "status");
-            const untestedCount =
-              (viewOptions as any)?.testRunOptions?.untestedCount || 0;
-            const statusOptions = statusView?.options || [];
+        {selectedItem === "status" && (
+          <>
+            <FilterRow
+              selected={selectedFilter === null}
+              onClick={(e) => handleFilterClick(null, e)}
+              count={
+                (viewOptions as any)?.testRunOptions?.totalCount || totalCount
+              }
+            >
+              <CircleCheckBig className="w-4 h-4 shrink-0" />
+              <span className="truncate">{tCommon("filters.allStatuses")}</span>
+            </FilterRow>
+            <FilterRow
+              selected={isValueSelected("untested")}
+              onClick={(e) => handleFilterClick("untested", e)}
+              count={(viewOptions as any)?.testRunOptions?.untestedCount || 0}
+            >
+              <div
+                className="w-3 h-3 rounded-full shrink-0"
+                style={{ backgroundColor: "#B1B2B3" }}
+              />
+              <span className="truncate">{tCommon("labels.untested")}</span>
+            </FilterRow>
+            <FilterOptionList
+              {...listProps}
+              options={statusOptions}
+              renderOptionLabel={(option) => (
+                <>
+                  <div
+                    className="w-3 h-3 rounded-full shrink-0"
+                    style={{
+                      backgroundColor: option.color?.value || "#B1B2B3",
+                    }}
+                  />
+                  <span className="truncate">{option.name}</span>
+                </>
+              )}
+            />
+          </>
+        )}
 
-            return (
-              <>
-                <div
-                  role="button"
-                  tabIndex={0}
-                  className={cn(
-                    "w-full flex items-center justify-between text-start text-sm font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
-                    selectedFilter === null &&
-                      "bg-primary/20 hover:bg-primary/30"
-                  )}
-                  onClick={(e) => handleFilterClick(null, e)}
-                >
-                  <div className="flex items-center gap-2 min-w-0 flex-1">
-                    <CircleCheckBig className="w-4 h-4 shrink-0" />
-                    <span className="truncate">
-                      {tCommon("filters.allStatuses")}
-                    </span>
-                  </div>
-                  <span className="text-xs text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
-                    {(viewOptions as any)?.testRunOptions?.totalCount ||
-                      totalCount}
-                  </span>
-                </div>
-                <div
-                  role="button"
-                  tabIndex={0}
-                  className={cn(
-                    "w-full flex items-center justify-between text-start text-sm font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
-                    isValueSelected("untested") &&
-                      "bg-primary/20 hover:bg-primary/30"
-                  )}
-                  onClick={(e) => handleFilterClick("untested", e)}
-                >
-                  <div className="flex items-center gap-2 min-w-0 flex-1">
-                    <div
-                      className="w-3 h-3 rounded-full shrink-0"
-                      style={{ backgroundColor: "#B1B2B3" }}
-                    />
-                    <span className="truncate">
-                      {tCommon("labels.untested")}
-                    </span>
-                  </div>
-                  <span className="text-xs text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
-                    {untestedCount}
-                  </span>
-                </div>
-                {statusOptions
-                  .filter((opt: any) => opt.id !== "untested")
-                  .map((status: any) => (
-                    <div
-                      role="button"
-                      tabIndex={0}
-                      key={status.id}
-                      className={cn(
-                        "w-full flex items-center justify-between text-start text-sm font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
-                        isValueSelected(status.id) &&
-                          "bg-primary/20 hover:bg-primary/30"
-                      )}
-                      onClick={(e) => handleFilterClick(status.id, e)}
-                    >
-                      <div className="flex items-center gap-2 min-w-0 flex-1">
-                        <div
-                          className="w-3 h-3 rounded-full shrink-0"
-                          style={{
-                            backgroundColor: status.color?.value || "#B1B2B3",
-                          }}
-                        />
-                        <span className="truncate">{status.name}</span>
-                      </div>
-                      <span className="text-xs text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
-                        {status.count || 0}
-                      </span>
-                    </div>
-                  ))}
-              </>
-            );
-          })()}
-
-        {selectedItem === "assignedTo" &&
-          (() => {
-            const assignedToView = viewItems.find(
-              (item) => item.id === "assignedTo"
-            );
-            const unassignedCount =
-              (viewOptions as any)?.testRunOptions?.unassignedCount || 0;
-            const assignedOptions = assignedToView?.options || [];
-
-            return (
-              <>
-                <div
-                  role="button"
-                  tabIndex={0}
-                  className={cn(
-                    "w-full flex items-center justify-between text-start text-sm font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
-                    selectedFilter === null &&
-                      "bg-primary/20 hover:bg-primary/30"
-                  )}
-                  onClick={(e) => handleFilterClick(null, e)}
-                >
-                  <div className="flex items-center gap-2 min-w-0 flex-1">
-                    <Users className="w-4 h-4 shrink-0" />
-                    <span className="truncate">{t("views.allAssignees")}</span>
-                  </div>
-                  <span className="text-xs text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
-                    {(viewOptions as any)?.testRunOptions?.totalCount ||
-                      totalCount}
-                  </span>
-                </div>
-                <div
-                  role="button"
-                  tabIndex={0}
-                  className={cn(
-                    "w-full flex items-center justify-between text-start text-sm font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
-                    isValueSelected("unassigned") &&
-                      "bg-primary/20 hover:bg-primary/30"
-                  )}
-                  onClick={(e) => handleFilterClick("unassigned", e)}
-                >
-                  <div className="flex items-center gap-2 min-w-0 flex-1">
-                    <UserX className="w-4 h-4 shrink-0" />
-                    <span className="truncate">
-                      {tCommon("labels.unassigned")}
-                    </span>
-                  </div>
-                  <span className="text-xs text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
-                    {unassignedCount}
-                  </span>
-                </div>
-                {assignedOptions
-                  .filter(
-                    (opt: any) =>
-                      opt.id !== "unassigned" && typeof opt.id === "string"
-                  )
-                  .map((user: any) => (
-                    <div
-                      role="button"
-                      tabIndex={0}
-                      key={user.id}
-                      className={cn(
-                        "w-full flex items-center justify-between text-start text-sm font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
-                        isValueSelected(user.id) &&
-                          "bg-primary/20 hover:bg-primary/30"
-                      )}
-                      onClick={(e) => handleFilterClick(user.id, e)}
-                    >
-                      <div className="flex items-center gap-2 min-w-0 flex-1">
-                        <UserNameCell
-                          userId={user.id as string}
-                          hideLink={true}
-                        />
-                      </div>
-                      <span className="text-xs text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
-                        {user.count || 0}
-                      </span>
-                    </div>
-                  ))}
-              </>
-            );
-          })()}
+        {selectedItem === "assignedTo" && (
+          <>
+            <FilterRow
+              selected={selectedFilter === null}
+              onClick={(e) => handleFilterClick(null, e)}
+              count={
+                (viewOptions as any)?.testRunOptions?.totalCount || totalCount
+              }
+            >
+              <Users className="w-4 h-4 shrink-0" />
+              <span className="truncate">{t("views.allAssignees")}</span>
+            </FilterRow>
+            <FilterRow
+              selected={isValueSelected("unassigned")}
+              onClick={(e) => handleFilterClick("unassigned", e)}
+              count={(viewOptions as any)?.testRunOptions?.unassignedCount || 0}
+            >
+              <UserX className="w-4 h-4 shrink-0" />
+              <span className="truncate">{tCommon("labels.unassigned")}</span>
+            </FilterRow>
+            <FilterOptionList
+              {...listProps}
+              options={assignedToOptions}
+              renderOptionLabel={(option) => (
+                <UserNameCell userId={String(option.id)} hideLink={true} />
+              )}
+            />
+          </>
+        )}
 
         {selectedItem === "tags" && (
           <>
-            {viewItems
-              .find((item) => item.id === "tags")
-              ?.options?.map((tagOption) => (
-                <div
-                  key={tagOption.id}
-                  role="button"
-                  tabIndex={0}
-                  className={cn(
-                    "w-full flex items-center justify-between text-start text-sm font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
-                    isValueSelected(tagOption.id) &&
-                      "bg-primary/20 hover:bg-primary/30"
-                  )}
-                  onClick={(e) => handleFilterClick(tagOption.id, e)}
-                >
-                  <div className="flex items-center gap-2 min-w-0 flex-1">
-                    <span className="truncate">{tagOption.name}</span>
-                  </div>
-                  {tagOption.count !== undefined && (
-                    <span className="text-xs text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
-                      {tagOption.count}
-                    </span>
-                  )}
-                </div>
-              ))}
+            {pinnedTagOptions.map((option) => (
+              <FilterRow
+                key={option.id}
+                selected={isValueSelected(option.id)}
+                onClick={(e) => handleFilterClick(option.id, e)}
+                count={option.count}
+              >
+                <span className="truncate">{option.name}</span>
+              </FilterRow>
+            ))}
+            <FilterOptionList {...listProps} options={tagOptions} />
           </>
         )}
 
         {selectedItem === "issues" && (
           <>
-            {viewItems
-              .find((item) => item.id === "issues")
-              ?.options?.map((issueOption) => (
-                <div
-                  key={issueOption.id}
-                  role="button"
-                  tabIndex={0}
-                  className={cn(
-                    "w-full flex items-center justify-between text-start text-sm font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
-                    isValueSelected(issueOption.id) &&
-                      "bg-primary/20 hover:bg-primary/30"
-                  )}
-                  onClick={(e) => handleFilterClick(issueOption.id, e)}
-                >
-                  <div className="flex items-center gap-2 min-w-0 flex-1">
-                    <span className="truncate">{issueOption.name}</span>
-                  </div>
-                  {issueOption.count !== undefined && (
-                    <span className="text-xs text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
-                      {issueOption.count}
-                    </span>
-                  )}
-                </div>
-              ))}
+            {pinnedIssueOptions.map((option) => (
+              <FilterRow
+                key={option.id}
+                selected={isValueSelected(option.id)}
+                onClick={(e) => handleFilterClick(option.id, e)}
+                count={option.count}
+              >
+                <span className="truncate">{option.name}</span>
+              </FilterRow>
+            ))}
+            <FilterOptionList {...listProps} options={issueOptions} />
           </>
         )}
 
         {selectedItem.startsWith("dynamic_") && (
           <>
-            <div
-              role="button"
-              tabIndex={0}
-              className={cn(
-                "w-full flex items-center justify-between text-start text-sm font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
-                selectedFilter === null && "bg-primary/20 hover:bg-primary/30"
-              )}
+            <FilterRow
+              selected={selectedFilter === null}
               onClick={(e) => handleFilterClick(null, e)}
+              count={totalCount}
             >
-              <div className="flex items-center gap-2 min-w-0 flex-1">
-                <span className="truncate">{tCommon("fields.mixed")}</span>
-              </div>
-              <span className="text-xs text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
-                {totalCount}
-              </span>
-            </div>
+              <span className="truncate">{tCommon("fields.mixed")}</span>
+            </FilterRow>
             {(() => {
-              // Parse the dynamic field ID format: "dynamic_{fieldId}_{fieldType}"
-              const parts = selectedItem.split("_");
-              const fieldId = parts[1]; // Get the field ID part
-              const _fieldType = parts.slice(2).join("_"); // Get the field type (handles types with underscores like "Text Long")
-              const numericFieldId = parseInt(fieldId);
-              const field = Object.values(
-                viewOptions?.dynamicFields || {}
-              ).find((f) => f.fieldId === numericFieldId);
+              const field = dynamicField;
 
               if (field?.type === "Checkbox") {
                 const checkedCount = (field as any).counts?.hasValue || 0;
                 const uncheckedCount = (field as any).counts?.noValue || 0;
-                return [
-                  <div
-                    role="button"
-                    tabIndex={0}
-                    key="checked"
-                    className={cn(
-                      "w-full flex items-center justify-between text-start text-sm font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
-                      isValueSelected(1) && "bg-primary/20 hover:bg-primary/30"
-                    )}
-                    onClick={(e) => handleFilterClick(1, e)}
-                  >
-                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                return (
+                  <>
+                    <FilterRow
+                      selected={isValueSelected(1)}
+                      onClick={(e) => handleFilterClick(1, e)}
+                      count={checkedCount}
+                    >
                       <span className="truncate">
                         {tCommon("fields.checked")}
                       </span>
-                    </div>
-                    <span className="text-xs text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
-                      {checkedCount}
-                    </span>
-                  </div>,
-                  <div
-                    role="button"
-                    tabIndex={0}
-                    key="unchecked"
-                    className={cn(
-                      "w-full flex items-center justify-between text-start text-sm font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
-                      isValueSelected(2) && "bg-primary/20 hover:bg-primary/30"
-                    )}
-                    onClick={(e) => handleFilterClick(2, e)}
-                  >
-                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                    </FilterRow>
+                    <FilterRow
+                      selected={isValueSelected(2)}
+                      onClick={(e) => handleFilterClick(2, e)}
+                      count={uncheckedCount}
+                    >
                       <span className="truncate">{t("fields.unchecked")}</span>
-                    </div>
-                    <span className="text-xs text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
-                      {uncheckedCount}
-                    </span>
-                  </div>,
-                ];
+                    </FilterRow>
+                  </>
+                );
               }
 
               // Handle Integer, Number fields with operator-based filtering
@@ -821,71 +790,46 @@ export function ViewSelector({
                 const noValueCount = (field as any).counts?.noValue || 0;
                 const hasValueCount = (field as any).counts?.hasValue || 0;
 
-                return [
-                  // Add "No Value" option first
-                  <div
-                    role="button"
-                    tabIndex={0}
-                    key="no-value"
-                    className={cn(
-                      "w-full flex items-center justify-between text-start text-sm font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
-                      isValueSelected("none") &&
-                        "bg-primary/20 hover:bg-primary/30"
-                    )}
-                    onClick={(e) => handleFilterClick("none", e)}
-                  >
-                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                return (
+                  <>
+                    <FilterRow
+                      selected={isValueSelected("none")}
+                      onClick={(e) => handleFilterClick("none", e)}
+                      count={noValueCount}
+                    >
                       <span className="truncate opacity-40">
                         {t("fields.noValue")}
                       </span>
-                    </div>
-                    <span className="text-xs text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
-                      {noValueCount}
-                    </span>
-                  </div>,
-                  // Add "Has Value" option
-                  <div
-                    role="button"
-                    tabIndex={0}
-                    key="has-value"
-                    className={cn(
-                      "w-full flex items-center justify-between text-start text-sm font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
-                      isValueSelected("hasValue") &&
-                        "bg-primary/20 hover:bg-primary/30"
-                    )}
-                    onClick={(e) => handleFilterClick("hasValue", e)}
-                  >
-                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                    </FilterRow>
+                    <FilterRow
+                      selected={isValueSelected("hasValue")}
+                      onClick={(e) => handleFilterClick("hasValue", e)}
+                      count={hasValueCount}
+                    >
                       <span className="truncate">{t("fields.hasValue")}</span>
-                    </div>
-                    <span className="text-xs text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
-                      {hasValueCount}
-                    </span>
-                  </div>,
-                  // Divider
-                  <div key="divider-1" className="h-px bg-border my-1" />,
-                  // Operator-based filter options with input
-                  <NumericFilterInput
-                    key="filter-input"
-                    fieldId={field.fieldId}
-                    fieldType={field.type}
-                    onFilterApply={(operator, value1, value2) => {
-                      const filterValue =
-                        value2 !== undefined
-                          ? `${operator}:${value1}:${value2}`
-                          : `${operator}:${value1}`;
-                      handleFilterClick(filterValue, undefined);
-                    }}
-                    onClearFilter={() => handleFilterClick(null, undefined)}
-                    currentFilter={
-                      selectedFilter &&
-                      Array.isArray(selectedFilter) &&
-                      selectedFilter.length > 0
-                        ? String(selectedFilter[0])
-                        : null
-                    }
-                  />,
-                ];
+                    </FilterRow>
+                    <div className="h-px bg-border my-1" />
+                    <NumericFilterInput
+                      fieldId={field.fieldId}
+                      fieldType={field.type}
+                      onFilterApply={(operator, value1, value2) => {
+                        const filterValue =
+                          value2 !== undefined
+                            ? `${operator}:${value1}:${value2}`
+                            : `${operator}:${value1}`;
+                        handleFilterClick(filterValue, undefined);
+                      }}
+                      onClearFilter={() => handleFilterClick(null, undefined)}
+                      currentFilter={
+                        selectedFilter &&
+                        Array.isArray(selectedFilter) &&
+                        selectedFilter.length > 0
+                          ? String(selectedFilter[0])
+                          : null
+                      }
+                    />
+                  </>
+                );
               }
 
               // Handle Date fields with operator-based filtering
@@ -893,83 +837,58 @@ export function ViewSelector({
                 const noValueCount = (field as any).counts?.noValue || 0;
                 const hasValueCount = (field as any).counts?.hasValue || 0;
 
-                return [
-                  // Add "No Date" option first
-                  <div
-                    role="button"
-                    tabIndex={0}
-                    key="no-value"
-                    className={cn(
-                      "w-full flex items-center justify-between text-start text-sm font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
-                      isValueSelected("none") &&
-                        "bg-primary/20 hover:bg-primary/30"
-                    )}
-                    onClick={(e) => handleFilterClick("none", e)}
-                  >
-                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                return (
+                  <>
+                    <FilterRow
+                      selected={isValueSelected("none")}
+                      onClick={(e) => handleFilterClick("none", e)}
+                      count={noValueCount}
+                    >
                       <span className="truncate opacity-40">
                         {t("fields.noDate")}
                       </span>
-                    </div>
-                    <span className="text-xs text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
-                      {noValueCount}
-                    </span>
-                  </div>,
-                  // Add "Has Date" option
-                  <div
-                    role="button"
-                    tabIndex={0}
-                    key="has-value"
-                    className={cn(
-                      "w-full flex items-center justify-between text-start text-sm font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
-                      isValueSelected("hasValue") &&
-                        "bg-primary/20 hover:bg-primary/30"
-                    )}
-                    onClick={(e) => handleFilterClick("hasValue", e)}
-                  >
-                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                    </FilterRow>
+                    <FilterRow
+                      selected={isValueSelected("hasValue")}
+                      onClick={(e) => handleFilterClick("hasValue", e)}
+                      count={hasValueCount}
+                    >
                       <span className="truncate">{t("fields.hasDate")}</span>
-                    </div>
-                    <span className="text-xs text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
-                      {hasValueCount}
-                    </span>
-                  </div>,
-                  // Divider
-                  <div key="divider-1" className="h-px bg-border my-1" />,
-                  // Operator-based filter options with date picker
-                  <DateFilterInput
-                    key="filter-input"
-                    fieldId={field.fieldId}
-                    onFilterApply={(operator, value1, value2) => {
-                      let filterValue: string;
-                      if (value1 && value2) {
-                        // Between operator with two dates - use pipe separator
-                        filterValue = `${operator}|${value1.toISOString()}|${value2.toISOString()}`;
-                      } else if (value1) {
-                        // Single date operator (on, before, after) - use pipe separator
-                        filterValue = `${operator}|${value1.toISOString()}`;
-                      } else {
-                        // Relative date operators (last7, last30, last90, thisYear)
-                        filterValue = operator;
+                    </FilterRow>
+                    <div className="h-px bg-border my-1" />
+                    <DateFilterInput
+                      fieldId={field.fieldId}
+                      onFilterApply={(operator, value1, value2) => {
+                        let filterValue: string;
+                        if (value1 && value2) {
+                          // Between operator with two dates - use pipe separator
+                          filterValue = `${operator}|${value1.toISOString()}|${value2.toISOString()}`;
+                        } else if (value1) {
+                          // Single date operator (on, before, after) - use pipe separator
+                          filterValue = `${operator}|${value1.toISOString()}`;
+                        } else {
+                          // Relative date operators (last7, last30, last90, thisYear)
+                          filterValue = operator;
+                        }
+                        handleFilterClick(filterValue, undefined);
+                      }}
+                      onClearFilter={() => handleFilterClick(null, undefined)}
+                      currentFilter={
+                        selectedFilter &&
+                        Array.isArray(selectedFilter) &&
+                        selectedFilter.length > 0
+                          ? (() => {
+                              const filter = String(selectedFilter[0]);
+                              // Only pass date operator filters, not hasValue/none
+                              return filter === "hasValue" || filter === "none"
+                                ? null
+                                : filter;
+                            })()
+                          : null
                       }
-                      handleFilterClick(filterValue, undefined);
-                    }}
-                    onClearFilter={() => handleFilterClick(null, undefined)}
-                    currentFilter={
-                      selectedFilter &&
-                      Array.isArray(selectedFilter) &&
-                      selectedFilter.length > 0
-                        ? (() => {
-                            const filter = String(selectedFilter[0]);
-                            // Only pass date operator filters, not hasValue/none
-                            return filter === "hasValue" || filter === "none"
-                              ? null
-                              : filter;
-                          })()
-                        : null
-                    }
-                  />,
-                ];
+                    />
+                  </>
+                );
               }
 
               // Handle Text Long, Text String fields with operator-based filtering
@@ -980,71 +899,48 @@ export function ViewSelector({
                 const hasValueCount = (field as any).counts?.hasValue || 0;
                 const noValueCount = (field as any).counts?.noValue || 0;
 
-                return [
-                  <div
-                    role="button"
-                    tabIndex={0}
-                    key="has-value"
-                    className={cn(
-                      "w-full flex items-center justify-between text-start text-sm font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
-                      isValueSelected("hasValue") &&
-                        "bg-primary/20 hover:bg-primary/30"
-                    )}
-                    onClick={(e) => handleFilterClick("hasValue", e)}
-                  >
-                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                return (
+                  <>
+                    <FilterRow
+                      selected={isValueSelected("hasValue")}
+                      onClick={(e) => handleFilterClick("hasValue", e)}
+                      count={hasValueCount}
+                    >
                       <span className="truncate">{t("fields.hasText")}</span>
-                    </div>
-                    <span className="text-xs text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
-                      {hasValueCount}
-                    </span>
-                  </div>,
-                  <div
-                    role="button"
-                    tabIndex={0}
-                    key="no-value"
-                    className={cn(
-                      "w-full flex items-center justify-between text-start text-sm font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
-                      isValueSelected("none") &&
-                        "bg-primary/20 hover:bg-primary/30"
-                    )}
-                    onClick={(e) => handleFilterClick("none", e)}
-                  >
-                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                    </FilterRow>
+                    <FilterRow
+                      selected={isValueSelected("none")}
+                      onClick={(e) => handleFilterClick("none", e)}
+                      count={noValueCount}
+                    >
                       <span className="truncate opacity-40">
                         {t("fields.noText")}
                       </span>
-                    </div>
-                    <span className="text-xs text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
-                      {noValueCount}
-                    </span>
-                  </div>,
-                  // Divider
-                  <div key="divider-1" className="h-px bg-border my-1" />,
-                  // Operator-based text filter
-                  <TextFilterInput
-                    key="filter-input"
-                    fieldId={field.fieldId}
-                    onFilterApply={(operator, value) => {
-                      const filterValue = `${operator}|${value}`;
-                      handleFilterClick(filterValue, undefined);
-                    }}
-                    onClearFilter={() => handleFilterClick(null, undefined)}
-                    currentFilter={
-                      selectedFilter &&
-                      Array.isArray(selectedFilter) &&
-                      selectedFilter.length > 0
-                        ? (() => {
-                            const filter = String(selectedFilter[0]);
-                            // Only pass text operator filters, not hasValue/none
-                            return filter === "hasValue" || filter === "none"
-                              ? null
-                              : filter;
-                          })()
-                        : null
-                    }
-                  />,
-                ];
+                    </FilterRow>
+                    <div className="h-px bg-border my-1" />
+                    <TextFilterInput
+                      fieldId={field.fieldId}
+                      onFilterApply={(operator, value) => {
+                        const filterValue = `${operator}|${value}`;
+                        handleFilterClick(filterValue, undefined);
+                      }}
+                      onClearFilter={() => handleFilterClick(null, undefined)}
+                      currentFilter={
+                        selectedFilter &&
+                        Array.isArray(selectedFilter) &&
+                        selectedFilter.length > 0
+                          ? (() => {
+                              const filter = String(selectedFilter[0]);
+                              // Only pass text operator filters, not hasValue/none
+                              return filter === "hasValue" || filter === "none"
+                                ? null
+                                : filter;
+                            })()
+                          : null
+                      }
+                    />
+                  </>
+                );
               }
 
               // Handle Link fields with operator-based filtering
@@ -1052,71 +948,48 @@ export function ViewSelector({
                 const hasValueCount = (field as any).counts?.hasValue || 0;
                 const noValueCount = (field as any).counts?.noValue || 0;
 
-                return [
-                  <div
-                    role="button"
-                    tabIndex={0}
-                    key="has-value"
-                    className={cn(
-                      "w-full flex items-center justify-between text-start text-sm font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
-                      isValueSelected("hasValue") &&
-                        "bg-primary/20 hover:bg-primary/30"
-                    )}
-                    onClick={(e) => handleFilterClick("hasValue", e)}
-                  >
-                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                return (
+                  <>
+                    <FilterRow
+                      selected={isValueSelected("hasValue")}
+                      onClick={(e) => handleFilterClick("hasValue", e)}
+                      count={hasValueCount}
+                    >
                       <span className="truncate">{t("fields.hasLink")}</span>
-                    </div>
-                    <span className="text-xs text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
-                      {hasValueCount}
-                    </span>
-                  </div>,
-                  <div
-                    role="button"
-                    tabIndex={0}
-                    key="no-value"
-                    className={cn(
-                      "w-full flex items-center justify-between text-start text-sm font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
-                      isValueSelected("none") &&
-                        "bg-primary/20 hover:bg-primary/30"
-                    )}
-                    onClick={(e) => handleFilterClick("none", e)}
-                  >
-                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                    </FilterRow>
+                    <FilterRow
+                      selected={isValueSelected("none")}
+                      onClick={(e) => handleFilterClick("none", e)}
+                      count={noValueCount}
+                    >
                       <span className="truncate opacity-40">
                         {t("fields.noLink")}
                       </span>
-                    </div>
-                    <span className="text-xs text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
-                      {noValueCount}
-                    </span>
-                  </div>,
-                  // Divider
-                  <div key="divider-1" className="h-px bg-border my-1" />,
-                  // Operator-based link filter
-                  <LinkFilterInput
-                    key="filter-input"
-                    fieldId={field.fieldId}
-                    onFilterApply={(operator, value) => {
-                      const filterValue = `${operator}|${value}`;
-                      handleFilterClick(filterValue, undefined);
-                    }}
-                    onClearFilter={() => handleFilterClick(null, undefined)}
-                    currentFilter={
-                      selectedFilter &&
-                      Array.isArray(selectedFilter) &&
-                      selectedFilter.length > 0
-                        ? (() => {
-                            const filter = String(selectedFilter[0]);
-                            // Only pass link operator filters, not hasValue/none
-                            return filter === "hasValue" || filter === "none"
-                              ? null
-                              : filter;
-                          })()
-                        : null
-                    }
-                  />,
-                ];
+                    </FilterRow>
+                    <div className="h-px bg-border my-1" />
+                    <LinkFilterInput
+                      fieldId={field.fieldId}
+                      onFilterApply={(operator, value) => {
+                        const filterValue = `${operator}|${value}`;
+                        handleFilterClick(filterValue, undefined);
+                      }}
+                      onClearFilter={() => handleFilterClick(null, undefined)}
+                      currentFilter={
+                        selectedFilter &&
+                        Array.isArray(selectedFilter) &&
+                        selectedFilter.length > 0
+                          ? (() => {
+                              const filter = String(selectedFilter[0]);
+                              // Only pass link operator filters, not hasValue/none
+                              return filter === "hasValue" || filter === "none"
+                                ? null
+                                : filter;
+                            })()
+                          : null
+                      }
+                    />
+                  </>
+                );
               }
 
               // Handle Steps fields with operator-based filtering
@@ -1124,151 +997,85 @@ export function ViewSelector({
                 const hasValueCount = (field as any).counts?.hasValue || 0;
                 const noValueCount = (field as any).counts?.noValue || 0;
 
-                return [
-                  <div
-                    role="button"
-                    tabIndex={0}
-                    key="has-value"
-                    className={cn(
-                      "w-full flex items-center justify-between text-start text-sm font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
-                      isValueSelected("hasValue") &&
-                        "bg-primary/20 hover:bg-primary/30"
-                    )}
-                    onClick={(e) => handleFilterClick("hasValue", e)}
-                  >
-                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                return (
+                  <>
+                    <FilterRow
+                      selected={isValueSelected("hasValue")}
+                      onClick={(e) => handleFilterClick("hasValue", e)}
+                      count={hasValueCount}
+                    >
                       <span className="truncate">{t("fields.hasSteps")}</span>
-                    </div>
-                    <span className="text-xs text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
-                      {hasValueCount}
-                    </span>
-                  </div>,
-                  <div
-                    role="button"
-                    tabIndex={0}
-                    key="no-value"
-                    className={cn(
-                      "w-full flex items-center justify-between text-start text-sm font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
-                      isValueSelected("none") &&
-                        "bg-primary/20 hover:bg-primary/30"
-                    )}
-                    onClick={(e) => handleFilterClick("none", e)}
-                  >
-                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                    </FilterRow>
+                    <FilterRow
+                      selected={isValueSelected("none")}
+                      onClick={(e) => handleFilterClick("none", e)}
+                      count={noValueCount}
+                    >
                       <span className="truncate opacity-40">
                         {t("fields.noSteps")}
                       </span>
-                    </div>
-                    <span className="text-xs text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
-                      {noValueCount}
-                    </span>
-                  </div>,
-                  // Divider
-                  <div key="divider-1" className="h-px bg-border my-1" />,
-                  // Operator-based steps filter
-                  <StepsFilterInput
-                    key="filter-input"
-                    fieldId={field.fieldId}
-                    onFilterApply={(operator, value1, value2) => {
-                      let filterValue: string;
-                      if (value2 !== undefined) {
-                        // Between operator with two values
-                        filterValue = `${operator}|${value1}|${value2}`;
-                      } else {
-                        // Single value operator
-                        filterValue = `${operator}|${value1}`;
+                    </FilterRow>
+                    <div className="h-px bg-border my-1" />
+                    <StepsFilterInput
+                      fieldId={field.fieldId}
+                      onFilterApply={(operator, value1, value2) => {
+                        let filterValue: string;
+                        if (value2 !== undefined) {
+                          // Between operator with two values
+                          filterValue = `${operator}|${value1}|${value2}`;
+                        } else {
+                          // Single value operator
+                          filterValue = `${operator}|${value1}`;
+                        }
+                        handleFilterClick(filterValue, undefined);
+                      }}
+                      onClearFilter={() => handleFilterClick(null, undefined)}
+                      currentFilter={
+                        selectedFilter &&
+                        Array.isArray(selectedFilter) &&
+                        selectedFilter.length > 0
+                          ? (() => {
+                              const filter = String(selectedFilter[0]);
+                              // Only pass steps operator filters, not hasValue/none
+                              return filter === "hasValue" || filter === "none"
+                                ? null
+                                : filter;
+                            })()
+                          : null
                       }
-                      handleFilterClick(filterValue, undefined);
-                    }}
-                    onClearFilter={() => handleFilterClick(null, undefined)}
-                    currentFilter={
-                      selectedFilter &&
-                      Array.isArray(selectedFilter) &&
-                      selectedFilter.length > 0
-                        ? (() => {
-                            const filter = String(selectedFilter[0]);
-                            // Only pass steps operator filters, not hasValue/none
-                            return filter === "hasValue" || filter === "none"
-                              ? null
-                              : filter;
-                          })()
-                        : null
-                    }
-                  />,
-                ];
+                    />
+                  </>
+                );
               }
 
               if (field?.options) {
-                const options = field.options;
                 // Counts are already provided by the API
-                const totalWithValues = options.reduce(
-                  (sum: number, opt: any) => sum + (opt.count || 0),
+                const totalWithValues = dynamicFieldOptions.reduce(
+                  (sum: number, opt) => sum + (opt.count || 0),
                   0
                 );
                 const noneCount = totalCount - totalWithValues;
 
-                return [
-                  // Add None option if the field is not required
-                  !field.required && (
-                    <div
-                      role="button"
-                      tabIndex={0}
-                      key="none-option"
-                      className={cn(
-                        "w-full flex items-center justify-between text-start text-sm font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
-                        isValueSelected("none") &&
-                          "bg-primary/20 hover:bg-primary/30"
-                      )}
-                      onClick={(e) => handleFilterClick("none", e)}
-                    >
-                      <div className="flex items-center gap-2 min-w-0 flex-1">
+                return (
+                  <>
+                    {!field.required && (
+                      <FilterRow
+                        selected={isValueSelected("none")}
+                        onClick={(e) => handleFilterClick("none", e)}
+                        count={noneCount}
+                      >
                         <CircleDashed className="w-4 h-4 shrink-0 opacity-40" />
                         <span className="truncate">
                           {tCommon("access.none")}
                         </span>
-                      </div>
-                      <span className="text-xs text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
-                        {noneCount}
-                      </span>
-                    </div>
-                  ),
-                  // Map through the options
-                  ...options.map(
-                    (option: {
-                      id: number;
-                      name: string;
-                      icon?: { name: string } | null;
-                      iconColor?: { value: string } | null;
-                      count?: number;
-                    }) => (
-                      <div
-                        role="button"
-                        tabIndex={0}
-                        key={`option-${option.id}`}
-                        className={cn(
-                          "w-full flex items-center justify-between text-start text-sm font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
-                          isValueSelected(option.id) &&
-                            "bg-primary/20 hover:bg-primary/30"
-                        )}
-                        onClick={(e) => handleFilterClick(option.id, e)}
-                      >
-                        <div className="flex items-center gap-2 min-w-0 flex-1">
-                          {option.icon && (
-                            <DynamicIcon
-                              name={option.icon.name as IconName}
-                              className="w-4 h-4 shrink-0"
-                              color={option.iconColor?.value}
-                            />
-                          )}
-                          <span className="truncate">{option.name}</span>
-                        </div>
-                        <span className="text-xs text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
-                          {option.count || 0}
-                        </span>
-                      </div>
-                    )
-                  ),
-                ].filter(Boolean);
+                      </FilterRow>
+                    )}
+                    <FilterOptionList
+                      {...listProps}
+                      options={dynamicFieldOptions}
+                    />
+                  </>
+                );
               }
               return null;
             })()}

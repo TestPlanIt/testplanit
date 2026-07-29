@@ -43,6 +43,7 @@ interface MultiAsyncComboboxProps<T> {
   pageSize?: number;
   showTotal?: boolean;
   hideSelected?: boolean;
+  hideSelectAll?: boolean;
 }
 
 export function MultiAsyncCombobox<T>({
@@ -60,6 +61,7 @@ export function MultiAsyncCombobox<T>({
   pageSize = 10,
   showTotal: _showTotal = false,
   hideSelected = false,
+  hideSelectAll = false,
 }: MultiAsyncComboboxProps<T>) {
   const tCommon = useTranslations("common");
   const [open, setOpen] = useState(false);
@@ -245,61 +247,64 @@ export function MultiAsyncCombobox<T>({
 
                   return (
                     <>
-                      {selectAllCount > 0 && visibleOptions.length > 0 && (
-                        <CommandItem
-                          value="__select_all__"
-                          onSelect={async () => {
-                            // Fetch all matching items (use large page size to get all)
-                            const allItemsResult = await fetchOptions(
-                              search,
-                              0,
-                              10000
-                            );
-                            let allItems: T[] = [];
-                            if (Array.isArray(allItemsResult)) {
-                              allItems = allItemsResult;
-                            } else if (
-                              allItemsResult &&
-                              "results" in allItemsResult
-                            ) {
-                              allItems = allItemsResult.results;
-                            }
-
-                            // Filter out already selected when hideSelected is true
-                            const itemsToAdd = hideSelected
-                              ? allItems.filter(
-                                  (option) =>
-                                    !value.some(
-                                      (v) =>
-                                        getOptionValue(v) ===
-                                        getOptionValue(option)
-                                    )
-                                )
-                              : allItems;
-
-                            const newSelections = [...value];
-                            itemsToAdd.forEach((option) => {
-                              if (
-                                !value.some(
-                                  (v) =>
-                                    getOptionValue(v) === getOptionValue(option)
-                                )
+                      {!hideSelectAll &&
+                        selectAllCount > 0 &&
+                        visibleOptions.length > 0 && (
+                          <CommandItem
+                            value="__select_all__"
+                            onSelect={async () => {
+                              // Fetch all matching items (use large page size to get all)
+                              const allItemsResult = await fetchOptions(
+                                search,
+                                0,
+                                10000
+                              );
+                              let allItems: T[] = [];
+                              if (Array.isArray(allItemsResult)) {
+                                allItems = allItemsResult;
+                              } else if (
+                                allItemsResult &&
+                                "results" in allItemsResult
                               ) {
-                                newSelections.push(option);
+                                allItems = allItemsResult.results;
                               }
-                            });
-                            onValueChange(newSelections);
-                          }}
-                          className="border-b mb-1"
-                        >
-                          <div className="flex items-center w-full text-foreground-background font-medium gap-2">
-                            <PackagePlus className="h-3 w-3 shrink-0" />
-                            {tCommon("actions.selectAll")} {"("}
-                            {selectAllCount}
-                            {")"}
-                          </div>
-                        </CommandItem>
-                      )}
+
+                              // Filter out already selected when hideSelected is true
+                              const itemsToAdd = hideSelected
+                                ? allItems.filter(
+                                    (option) =>
+                                      !value.some(
+                                        (v) =>
+                                          getOptionValue(v) ===
+                                          getOptionValue(option)
+                                      )
+                                  )
+                                : allItems;
+
+                              const newSelections = [...value];
+                              itemsToAdd.forEach((option) => {
+                                if (
+                                  !value.some(
+                                    (v) =>
+                                      getOptionValue(v) ===
+                                      getOptionValue(option)
+                                  )
+                                ) {
+                                  newSelections.push(option);
+                                }
+                              });
+                              onValueChange(newSelections);
+                            }}
+                            className="border-b mb-1"
+                          >
+                            <div className="flex items-center w-full text-foreground-background font-medium gap-2">
+                              <PackagePlus className="h-3 w-3 shrink-0" />
+                              {tCommon("actions.selectAll")} {"("}
+                              {selectAllCount}
+                              {")"}
+                            </div>
+                          </CommandItem>
+                        )}
                       {visibleOptions.map((option) => (
                         <CommandItem
                           key={getOptionValue(option)}

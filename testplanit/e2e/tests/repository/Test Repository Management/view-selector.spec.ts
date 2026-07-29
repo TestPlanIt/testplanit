@@ -38,7 +38,7 @@ test.describe("View Selector - Repository Views", () => {
    */
   async function openViewSelector(page: import("@playwright/test").Page) {
     const viewSelector = page.locator(
-      '[data-testid="repository-left-panel-header"] [role="combobox"]'
+      '[data-testid="view-selector-trigger"]'
     );
     await expect(viewSelector).toBeVisible({ timeout: 10000 });
     await viewSelector.click();
@@ -74,7 +74,7 @@ test.describe("View Selector - Repository Views", () => {
 
     await test.step("Verify the view selector defaults to Folders", async () => {
       const viewSelector = page.locator(
-        '[data-testid="repository-left-panel-header"] [role="combobox"]'
+        '[data-testid="view-selector-trigger"]'
       );
       await expect(viewSelector).toBeVisible({ timeout: 10000 });
       await expect(viewSelector).toContainText(/Folders/i);
@@ -102,7 +102,7 @@ test.describe("View Selector - Repository Views", () => {
 
     await test.step("Verify the view selector shows Template", async () => {
       const viewSelector = page.locator(
-        '[data-testid="repository-left-panel-header"] [role="combobox"]'
+        '[data-testid="view-selector-trigger"]'
       );
       await expect(viewSelector).toContainText(/Template/i);
     });
@@ -168,7 +168,7 @@ test.describe("View Selector - Repository Views", () => {
 
     await test.step("Verify the view selector shows Automation", async () => {
       const viewSelector = page.locator(
-        '[data-testid="repository-left-panel-header"] [role="combobox"]'
+        '[data-testid="view-selector-trigger"]'
       );
       await expect(viewSelector).toContainText(/Automation/i);
     });
@@ -732,7 +732,7 @@ test.describe("View Selector - Repository Views", () => {
       // Folders is the default view, so it may or may not have view=folders in URL
       // Just verify the view selector shows Folders
       const viewSelector = page.locator(
-        '[data-testid="repository-left-panel-header"] [role="combobox"]'
+        '[data-testid="view-selector-trigger"]'
       );
       await expect(viewSelector).toContainText(/Folders/i);
     });
@@ -748,7 +748,7 @@ test.describe("View Selector - Repository Views", () => {
 
     await test.step("Verify the view selector shows Template", async () => {
       const viewSelector = page.locator(
-        '[data-testid="repository-left-panel-header"] [role="combobox"]'
+        '[data-testid="view-selector-trigger"]'
       );
       await expect(viewSelector).toBeVisible({ timeout: 10000 });
       await expect(viewSelector).toContainText(/Template/i);
@@ -1008,7 +1008,7 @@ test.describe("View Selector - Filter Persistence", () => {
       await repositoryPage.goto(projectId);
 
       const viewSelector = page.locator(
-        '[data-testid="repository-left-panel-header"] [role="combobox"]'
+        '[data-testid="view-selector-trigger"]'
       );
       await expect(viewSelector).toBeVisible({ timeout: 10000 });
       await viewSelector.click();
@@ -1071,7 +1071,7 @@ test.describe("View Selector - Filter Persistence", () => {
       await repositoryPage.goto(projectId);
 
       const viewSelector = page.locator(
-        '[data-testid="repository-left-panel-header"] [role="combobox"]'
+        '[data-testid="view-selector-trigger"]'
       );
       await expect(viewSelector).toBeVisible({ timeout: 10000 });
       await viewSelector.click();

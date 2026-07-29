@@ -55,7 +55,7 @@ The page features a resizable two-panel layout:
         * Drag and drop folders to reorder them or change their parent (except in Run Mode).
         * Add a new folder using the **Add Folder** button (icon: CirclePlus) at the top.
         * Edit an existing folder's name/docs using the **Edit** button (icon: SquarePen) that appears on hover.
-    * **Filter Panel (Other Views)**: When a view other than "By Folder" is selected, this panel typically shows a list of available filters for that view (e.g., list of templates, states, creators). Selecting an item filters the cases shown in the right panel.
+    * **Filter Panel (Other Views)**: When a view other than "By Folder" is selected, this panel shows the available filters for that view (e.g., list of templates, states, creators), each with a count of matching cases. Selecting an item filters the cases shown in the right panel. See [Selecting filter values](#selecting-filter-values) for how short and long lists differ.
     * **Collapse Button**: A chevron button (`<`/`>`) on the handle between panels allows collapsing or expanding this left panel.
 
 * **Right Panel (Test Case List)**:
@@ -92,6 +92,15 @@ When you open the repository as part of a **test run** (Run Mode), two additiona
 
 * **By Assigned To**: Filters the run's cases by their assignee (Unassigned, or a specific team member).
 * **By Status**: Filters by the result status within this run (Untested, or any of the configured result statuses such as Passed, Failed, Blocked).
+
+### Selecting filter values
+
+Every view is multi-select: you can filter by several templates, tags, issues, or field values at once, and the table shows the cases matching any of them.
+
+* **Short lists (10 or fewer values)** appear as rows with a live count next to each one. Click a row to filter by that value on its own, or Cmd-click (Ctrl-click on Windows/Linux) to add and remove values from the current selection.
+* **Long lists (more than 10 values)** appear as a searchable picker instead, so views like By Issue or By Tag stay usable when a project has thousands of values. Type to narrow the list, page through the results, and click values to toggle them. Each selected value becomes a chip on the picker, and the **x** on a chip removes it. Counts are shown next to each value in the dropdown.
+
+Summary options stay directly above the picker in every view — **All Templates**, **Any Tag** / **No Tags**, **Any Issue** / **No Issues**, **Untested**, **Unassigned**, and **None** — so the broad filters remain one click away. These combine with picked values: selecting **No Tags** and then a specific tag shows the cases that have no tags plus the cases carrying that tag.
 
 ## Test Case Table Columns
 

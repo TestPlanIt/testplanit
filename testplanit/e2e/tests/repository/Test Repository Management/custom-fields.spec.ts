@@ -42,7 +42,7 @@ test.describe("Custom Fields - Repository View and Filter", () => {
     // The view selector is within the repository-left-panel-header container
     // We need to scope it to avoid clicking the project selector
     const viewSelector = page.locator(
-      '[data-testid="repository-left-panel-header"] [role="combobox"]'
+      '[data-testid="view-selector-trigger"]'
     );
 
     await test.step("Open repository and the view selector", async () => {
@@ -102,7 +102,7 @@ test.describe("Custom Fields - Repository View and Filter", () => {
 
       // Open view selector (scoped to repository-left-panel-header to avoid project selector)
       const viewSelector = page.locator(
-        '[data-testid="repository-left-panel-header"] [role="combobox"]'
+        '[data-testid="view-selector-trigger"]'
       );
       await expect(viewSelector).toBeVisible({ timeout: 10000 });
       await viewSelector.click();
@@ -138,7 +138,7 @@ test.describe("Custom Fields - Repository View and Filter", () => {
 
       // Open view selector (scoped to repository-left-panel-header to avoid project selector)
       const viewSelector = page.locator(
-        '[data-testid="repository-left-panel-header"] [role="combobox"]'
+        '[data-testid="view-selector-trigger"]'
       );
       await expect(viewSelector).toBeVisible({ timeout: 10000 });
       await viewSelector.click();
@@ -170,7 +170,7 @@ test.describe("Custom Fields - Repository View and Filter", () => {
 
     // Open view selector (scoped to repository-left-panel-header to avoid project selector)
     const viewSelector = page.locator(
-      '[data-testid="repository-left-panel-header"] [role="combobox"]'
+      '[data-testid="view-selector-trigger"]'
     );
 
     await test.step("Open repository and the view selector", async () => {
@@ -213,7 +213,7 @@ test.describe("Custom Fields - Repository View and Filter", () => {
 
       // Open view selector (scoped to repository-left-panel-header to avoid project selector)
       const viewSelector = page.locator(
-        '[data-testid="repository-left-panel-header"] [role="combobox"]'
+        '[data-testid="view-selector-trigger"]'
       );
       await expect(viewSelector).toBeVisible({ timeout: 10000 });
       await viewSelector.click();
@@ -255,7 +255,7 @@ test.describe("Custom Fields - Repository View and Filter", () => {
 
       // Open view selector (scoped to repository-left-panel-header to avoid project selector)
       const viewSelector = page.locator(
-        '[data-testid="repository-left-panel-header"] [role="combobox"]'
+        '[data-testid="view-selector-trigger"]'
       );
       await expect(viewSelector).toBeVisible({ timeout: 10000 });
       await viewSelector.click();
@@ -290,7 +290,7 @@ test.describe("Custom Fields - Repository View and Filter", () => {
 
       // Open view selector (scoped to repository-left-panel-header to avoid project selector)
       const viewSelector = page.locator(
-        '[data-testid="repository-left-panel-header"] [role="combobox"]'
+        '[data-testid="view-selector-trigger"]'
       );
       await expect(viewSelector).toBeVisible({ timeout: 10000 });
       await viewSelector.click();
@@ -316,7 +316,7 @@ test.describe("Custom Fields - Repository View and Filter", () => {
 
     // Start in Template view (scoped to repository-left-panel-header to avoid project selector)
     const viewSelector = page.locator(
-      '[data-testid="repository-left-panel-header"] [role="combobox"]'
+      '[data-testid="view-selector-trigger"]'
     );
 
     await test.step("Open repository and the view selector", async () => {
@@ -391,7 +391,7 @@ test.describe("Custom Fields - Repository View and Filter", () => {
 
       // Start in State view (scoped to repository-left-panel-header to avoid project selector)
       const viewSelector = page.locator(
-        '[data-testid="repository-left-panel-header"] [role="combobox"]'
+        '[data-testid="view-selector-trigger"]'
       );
       await expect(viewSelector).toBeVisible({ timeout: 10000 });
       await viewSelector.click();
@@ -467,7 +467,7 @@ test.describe("Custom Fields - Repository View and Filter", () => {
     await test.step("Verify the view selector shows Template", async () => {
       // Verify view selector shows Template (scoped to repository-left-panel-header)
       const viewSelector = page.locator(
-        '[data-testid="repository-left-panel-header"] [role="combobox"]'
+        '[data-testid="view-selector-trigger"]'
       );
       await expect(viewSelector).toBeVisible({ timeout: 10000 });
       await expect(viewSelector).toContainText(/Template/i);
@@ -486,7 +486,7 @@ test.describe("Custom Fields - Repository View and Filter", () => {
     await test.step("Verify the view selector defaults to Folders", async () => {
       // View selector should show Folders by default (scoped to repository-left-panel-header)
       const viewSelector = page.locator(
-        '[data-testid="repository-left-panel-header"] [role="combobox"]'
+        '[data-testid="view-selector-trigger"]'
       );
       await expect(viewSelector).toBeVisible({ timeout: 10000 });
       await expect(viewSelector).toContainText(/Folders/i);
@@ -550,7 +550,7 @@ test.describe("Custom Fields - Advanced Search Filters", () => {
 
     // Define the view selector
     const viewSelector = page.locator(
-      '[data-testid="repository-left-panel-header"] [role="combobox"]'
+      '[data-testid="view-selector-trigger"]'
     );
 
     await test.step("Assign the Priority field to the template and seed a test case", async () => {
@@ -703,7 +703,7 @@ test.describe("Custom Fields - Advanced Search Filters", () => {
     await test.step("Switch to the Template view", async () => {
       // Switch to a view with filters (scoped to repository-left-panel-header)
       const viewSelector = page.locator(
-        '[data-testid="repository-left-panel-header"] [role="combobox"]'
+        '[data-testid="view-selector-trigger"]'
       );
       await expect(viewSelector).toBeVisible({ timeout: 10000 });
       await viewSelector.click();
@@ -785,7 +785,7 @@ test.describe("Custom Fields - Filter Count Display", () => {
 
       // Switch to Template view (scoped to repository-left-panel-header)
       const viewSelector = page.locator(
-        '[data-testid="repository-left-panel-header"] [role="combobox"]'
+        '[data-testid="view-selector-trigger"]'
       );
       await expect(viewSelector).toBeVisible({ timeout: 10000 });
       await viewSelector.click();
@@ -829,7 +829,7 @@ test.describe("Custom Fields - Filter Count Display", () => {
 
       // Switch to State view (scoped to repository-left-panel-header)
       const viewSelector = page.locator(
-        '[data-testid="repository-left-panel-header"] [role="combobox"]'
+        '[data-testid="view-selector-trigger"]'
       );
       await expect(viewSelector).toBeVisible({ timeout: 10000 });
       await viewSelector.click();
