@@ -13,18 +13,41 @@
 # 2. Commit and merge to main
 # 3. Review and merge the auto-created "Version Packages" PR
 #
+# Beta pre-releases (the `beta` branch):
+# Package changes that depend on the unreleased 1.0 app can't ship to `latest`,
+# so `beta` publishes under the `beta` dist-tag instead — testers opt in with
+# `npm i @testplanit/mcp-server@beta` while `@latest` stays on the main release.
+# Versions track the app's 1.0 beta line: `1.0.0-beta.N`.
+#
+# That path is NOT Changesets-managed (Changesets versions from `main` only):
+# set an explicit pre-release version on `beta` and push.
+#
+#   # on the beta branch
+#   # packages/mcp-server/package.json: "version": "1.0.0-beta.1"
+#   git commit -am 'chore(mcp-server): 1.0.0-beta.1' && git push origin beta
+#
+# Only packages/* carrying a pre-release version publish from `beta`; see
+# .github/scripts/packages-publish-beta.mjs. @testplanit/cli lives outside
+# packages/ and is released by cli-semantic-release.yml — it is not part of this
+# channel.
+#
+# Both paths live in THIS file on purpose: npm trusted publishing (OIDC)
+# authorizes a single workflow filename per package, and it is this one. A
+# separate beta workflow file would fall back to anonymous auth and E404.
 name: Package Release
 
 on:
   push:
     branches:
       - main
+      - beta
     paths:
       - 'packages/**'
       - '.changeset/**'
       - '.github/workflows/packages-release.yml'
-      # The publish command lives here; a fix to it must be able to trigger a run.
+      # The publish commands live here; a fix to one must be able to trigger a run.
       - '.github/scripts/packages-publish.mjs'
+      - '.github/scripts/packages-publish-beta.mjs'
   workflow_dispatch:
 
 concurrency: ${{ github.workflow }}-${{ github.ref }}
@@ -84,6 +107,7 @@ jobs:
 
       - name: Create Release Pull Request or Publish
         id: changesets
+        if: github.ref_name == 'main'
         uses: changesets/action@v1
         with:
           # Wrapper for `pnpm changeset publish` that hides @testplanit/cli from
@@ -102,6 +126,13 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # No NPM_TOKEN — publishing authenticates via OIDC trusted publishing
           # (id-token: write above + the trusted publisher configured on npm).
+
+      # Beta has no "Version Packages" PR step: versions are set by hand on the
+      # branch, and only pre-release versions are eligible. Writes its own job
+      # summary.
+      - name: Publish beta pre-releases
+        if: github.ref_name == 'beta'
+        run: node .github/scripts/packages-publish-beta.mjs
 
       - name: Summary
         if: steps.changesets.outputs.published == 'true'

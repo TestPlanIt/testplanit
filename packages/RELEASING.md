@@ -4,12 +4,12 @@ This document describes how to release new versions of the TestPlanIt npm packag
 
 ## Packages
 
-| Package | Description | npm |
-| ------- | ----------- | --- |
-| `@testplanit/api` | Official API client for TestPlanIt | [![npm](https://img.shields.io/npm/v/@testplanit/api)](https://www.npmjs.com/package/@testplanit/api) |
-| `@testplanit/wdio-reporter` | WebdriverIO reporter for TestPlanIt | [![npm](https://img.shields.io/npm/v/@testplanit/wdio-reporter)](https://www.npmjs.com/package/@testplanit/wdio-reporter) |
-| `@testplanit/playwright-reporter` | Playwright reporter for TestPlanIt | [![npm](https://img.shields.io/npm/v/@testplanit/playwright-reporter)](https://www.npmjs.com/package/@testplanit/playwright-reporter) |
-| `@testplanit/mcp-server` | MCP server for TestPlanIt — exposes test data to AI agents | [![npm](https://img.shields.io/npm/v/@testplanit/mcp-server)](https://www.npmjs.com/package/@testplanit/mcp-server) |
+| Package                           | Description                                                | npm                                                                                                                                   |
+| --------------------------------- | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `@testplanit/api`                 | Official API client for TestPlanIt                         | [![npm](https://img.shields.io/npm/v/@testplanit/api)](https://www.npmjs.com/package/@testplanit/api)                                 |
+| `@testplanit/wdio-reporter`       | WebdriverIO reporter for TestPlanIt                        | [![npm](https://img.shields.io/npm/v/@testplanit/wdio-reporter)](https://www.npmjs.com/package/@testplanit/wdio-reporter)             |
+| `@testplanit/playwright-reporter` | Playwright reporter for TestPlanIt                         | [![npm](https://img.shields.io/npm/v/@testplanit/playwright-reporter)](https://www.npmjs.com/package/@testplanit/playwright-reporter) |
+| `@testplanit/mcp-server`          | MCP server for TestPlanIt — exposes test data to AI agents | [![npm](https://img.shields.io/npm/v/@testplanit/mcp-server)](https://www.npmjs.com/package/@testplanit/mcp-server)                   |
 
 ## Versioning
 
@@ -74,16 +74,61 @@ When you're ready to release, merge the "Version Packages" PR. This will:
 2. Publish packages to npm
 3. Create GitHub releases with release notes
 
+## Beta Pre-releases (the `beta` branch)
+
+Package changes that depend on the unreleased 1.0 app cannot ship to `latest` — a
+user on the released app would install them and hit endpoints that do not exist
+yet. They publish from the `beta` branch under the `beta` npm dist-tag instead,
+so the default install is unaffected and testers opt in explicitly:
+
+```bash
+npm install @testplanit/mcp-server@beta
+```
+
+Beta versions track the app's 1.0 line: `1.0.0-beta.N`.
+
+This path is **not** Changesets-managed — Changesets versions from `main` only,
+which is why `packages/*` versions on `beta` trail npm. Cutting a beta is a
+deliberate manual step:
+
+1. On the `beta` branch, set the package's `version` to the next pre-release
+   (e.g. `1.0.0-beta.1`) in its `package.json`.
+2. Commit and push to `beta`.
+
+`packages-release.yml` then publishes it via
+`.github/scripts/packages-publish-beta.mjs`. Two rules govern what goes out:
+
+- **Only pre-release versions publish.** A package whose version has no `-`
+  suffix is skipped, so the packages you did not bump can never be republished.
+- **Already-published versions are skipped**, so pushing to `beta` without a
+  version bump is a no-op.
+
+Packages publish dependencies-first, so `@testplanit/api` reaches the registry
+before the reporters that declare it as `workspace:^`.
+
+Keep writing changesets for beta work as normal. They are consumed on `main` when
+the change lands there, and produce the real changelog entry then; the beta
+version number is deliberately outside that flow.
+
+`@testplanit/cli` is separate: it lives outside `packages/` and is released by
+`cli-semantic-release.yml`, where `beta` is configured as a semantic-release
+prerelease branch. Its version is computed from conventional commits rather than
+set by hand, and a push with no releasable commits publishes nothing.
+
+> Both branches release from their existing workflow file on purpose. npm trusted
+> publishing (OIDC) authorizes a single workflow filename per package, so adding a
+> separate beta workflow would fall back to anonymous auth and fail with E404.
+
 ## Version Bump Guidelines
 
 Choose the appropriate version bump based on your changes:
 
-| Change Type | Version Bump | Example |
-|-------------|--------------|---------|
-| Breaking API changes | `major` | Removing a method, changing return types |
-| New features | `minor` | Adding new methods, new options |
-| Bug fixes | `patch` | Fixing a bug, updating dependencies |
-| Documentation | `patch` | README updates, JSDoc improvements |
+| Change Type          | Version Bump | Example                                  |
+| -------------------- | ------------ | ---------------------------------------- |
+| Breaking API changes | `major`      | Removing a method, changing return types |
+| New features         | `minor`      | Adding new methods, new options          |
+| Bug fixes            | `patch`      | Fixing a bug, updating dependencies      |
+| Documentation        | `patch`      | README updates, JSDoc improvements       |
 
 ## Manual Commands
 
@@ -108,9 +153,13 @@ pnpm --filter "@testplanit/*" test
 
 The release process is automated via GitHub Actions:
 
-- **Trigger**: Push to `main` branch with changes in `packages/` or `.changeset/`
-- **Workflow**: `.github/workflows/packages-release.yml`
-- **Required Secrets**: `NPM_TOKEN` for npm publishing
+- **Trigger**: Push to `main` (Changesets release) or `beta` (pre-release) with
+  changes in `packages/` or `.changeset/`
+- **Workflow**: `.github/workflows/packages-release.yml` for both branches
+- **Authentication**: npm trusted publishing (OIDC) — the job's `id-token: write`
+  permission plus the trusted publisher configured on npm. There is no
+  `NPM_TOKEN` secret, and the trusted publisher is bound to this one workflow
+  filename.
 
 ## Troubleshooting
 
@@ -121,6 +170,7 @@ If the workflow runs but doesn't find any changesets, make sure you created a ch
 ### Build Failures
 
 If the build fails, check that:
+
 1. All TypeScript errors are resolved
 2. Dependencies are correctly specified in `package.json`
 3. `@testplanit/api` must build before `@testplanit/wdio-reporter` and `@testplanit/playwright-reporter` (both depend on it); `@testplanit/mcp-server` is independent
@@ -128,6 +178,7 @@ If the build fails, check that:
 ### npm Publish Errors
 
 If publishing fails:
+
 1. Verify `NPM_TOKEN` secret is set in GitHub repository settings
 2. Check that package names are available on npm
 3. Ensure version numbers haven't already been published

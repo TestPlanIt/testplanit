@@ -1,9 +1,24 @@
+# Releases @testplanit/cli via semantic-release.
+#
+# `main` cuts normal releases to the `latest` npm tag. `beta` is configured in
+# cli/.releaserc.json as a prerelease branch, so pushes there cut `1.x.y-beta.N`
+# under the `beta` npm tag instead — matching the beta channel the packages/*
+# workspace publishes through packages-release.yml. Testers opt in with
+# `npm i @testplanit/cli@beta`; `@latest` is untouched.
+#
+# Versions are computed by semantic-release from conventional commits, NOT set
+# by hand: a `feat` on beta over the 1.3.0 baseline yields 1.4.0-beta.1 (its
+# prerelease counter starts at 1). A push with no releasable commits publishes
+# nothing.
+#
+# Both branches release from THIS workflow file on purpose — npm trusted
+# publishing (OIDC) authorizes a single workflow filename per package.
 name: CLI Semantic Release
 
 on:
   workflow_dispatch:
   push:
-    branches: [main]
+    branches: [main, beta]
     paths:
       - 'cli/**'
       - '.github/workflows/cli-semantic-release.yml'
@@ -69,9 +84,12 @@ jobs:
           npx semantic-release 2>&1 | tee release-output.txt
           # Extract the version if a release was made (portable across Linux/macOS)
           if grep -q "Published release" release-output.txt; then
-            # Use sed instead of grep -oP for cross-platform compatibility
-            VERSION=$(grep "Published release" release-output.txt | sed -E 's/.*Published release ([0-9]+\.[0-9]+\.[0-9]+).*/\1/' | head -1)
-            if [ -n "$VERSION" ] && [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            # Use sed instead of grep -oP for cross-platform compatibility.
+            # The pre-release suffix must be part of the capture: beta releases
+            # are tagged cli-v1.4.0-beta.1, so truncating to 1.4.0 would point
+            # the binary build at a tag that was never created.
+            VERSION=$(grep "Published release" release-output.txt | sed -E 's/.*Published release ([0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?).*/\1/' | head -1)
+            if [ -n "$VERSION" ] && [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
               echo "version=cli-v${VERSION}" >> $GITHUB_OUTPUT
               echo "released=true" >> $GITHUB_OUTPUT
             else
