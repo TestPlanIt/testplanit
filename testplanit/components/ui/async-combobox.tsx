@@ -1,3 +1,5 @@
+/* eslint-disable react-hooks/incompatible-library -- TanStack Virtual's useVirtualizer() returns unstable function references by design; React Compiler auto-skips memoization here and the lint rule reports it (same as hooks/useVirtualizedInfiniteList.ts). */
+
 import { Button } from "@/components/ui/button";
 import {
   Command,
@@ -12,10 +14,17 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import { Check, UserX } from "lucide-react";
 import { useTranslations } from "next-intl";
 import React, { useEffect, useRef, useState } from "react";
 import { cn, type ClassValue } from "~/utils";
+
+/** Above this many options the list virtualizes. Smaller lists keep rendering
+ *  in full so existing comboboxes are untouched, and cmdk keeps arrow-key
+ *  navigation over every row — virtualized rows only exist while scrolled to. */
+const VIRTUALIZE_THRESHOLD = 100;
+const ESTIMATED_OPTION_HEIGHT = 36;
 
 // Minimal spinner (replace with your Spinner if you have one)
 function Spinner() {
@@ -93,6 +102,16 @@ export function AsyncCombobox<T>({
   const _inputRef = useRef<HTMLInputElement>(null);
   const [_focusedIndex, _setFocusedIndex] = useState<number | null>(null);
   const [total, setTotal] = useState<number | null>(null);
+  const listRef = useRef<HTMLDivElement>(null);
+
+  // Mounting thousands of CommandItems is what makes a large list slow to open.
+  const shouldVirtualize = options.length > VIRTUALIZE_THRESHOLD;
+  const virtualizer = useVirtualizer<HTMLDivElement, HTMLDivElement>({
+    count: shouldVirtualize ? options.length : 0,
+    getScrollElement: () => listRef.current,
+    estimateSize: () => ESTIMATED_OPTION_HEIGHT,
+    overscan: 12,
+  });
 
   // Update width when trigger element changes size
   useEffect(() => {
@@ -169,6 +188,29 @@ export function AsyncCombobox<T>({
   useEffect(() => {
     setPage(0);
   }, [search]);
+
+  const renderCommandItem = (option: T) => {
+    const optionDisabled = isOptionDisabled?.(option) ?? false;
+    return (
+      <CommandItem
+        key={getOptionValue(option)}
+        value={String(getOptionValue(option))}
+        disabled={optionDisabled}
+        onSelect={() => {
+          if (optionDisabled) return;
+          onValueChange(option);
+          setOpen(false);
+        }}
+      >
+        <div className="flex items-center w-full [&_a]:no-underline [&_a]:text-inherit [&_a:hover]:text-inherit">
+          {renderOption(option)}
+          {value && getOptionValue(option) === getOptionValue(value) && (
+            <Check className="ms-auto h-4 w-4 text-muted-foreground" />
+          )}
+        </div>
+      </CommandItem>
+    );
+  };
 
   const fallbackPlaceholder = placeholder ?? "";
   const resolvedTriggerLabel =
@@ -285,7 +327,7 @@ export function AsyncCombobox<T>({
                 <Spinner />
               </div>
             )}
-            <CommandList className="max-h-[70vh]">
+            <CommandList ref={listRef} className="max-h-[70vh]">
               <CommandEmpty>{tCommon("labels.noResults")}</CommandEmpty>
               <CommandGroup
                 className={cn(loading ? "opacity-50 pointer-events-none" : "")}
@@ -310,29 +352,33 @@ export function AsyncCombobox<T>({
                     </div>
                   </CommandItem>
                 )}
-                {options.map((option) => {
-                  const optionDisabled = isOptionDisabled?.(option) ?? false;
-                  return (
-                    <CommandItem
-                      key={getOptionValue(option)}
-                      value={String(getOptionValue(option))}
-                      disabled={optionDisabled}
-                      onSelect={() => {
-                        if (optionDisabled) return;
-                        onValueChange(option);
-                        setOpen(false);
-                      }}
-                    >
-                      <div className="flex items-center w-full [&_a]:no-underline [&_a]:text-inherit [&_a:hover]:text-inherit">
-                        {renderOption(option)}
-                        {value &&
-                          getOptionValue(option) === getOptionValue(value) && (
-                            <Check className="ms-auto h-4 w-4 text-muted-foreground" />
-                          )}
-                      </div>
-                    </CommandItem>
-                  );
-                })}
+                {shouldVirtualize ? (
+                  <div
+                    className="relative w-full"
+                    style={{ height: virtualizer.getTotalSize() }}
+                    data-testid="async-combobox-virtual-list"
+                  >
+                    {virtualizer.getVirtualItems().map((virtualRow) => {
+                      const option = options[virtualRow.index];
+                      if (!option) return null;
+                      return (
+                        <div
+                          key={getOptionValue(option)}
+                          ref={virtualizer.measureElement}
+                          data-index={virtualRow.index}
+                          className="absolute top-0 start-0 w-full"
+                          style={{
+                            transform: `translateY(${virtualRow.start}px)`,
+                          }}
+                        >
+                          {renderCommandItem(option)}
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  options.map(renderCommandItem)
+                )}
               </CommandGroup>
             </CommandList>
             {showPagination && (
