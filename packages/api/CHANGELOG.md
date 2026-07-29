@@ -1,5 +1,21 @@
 # @testplanit/api
 
+## 0.9.0
+
+### Minor Changes
+
+- [#555](https://github.com/TestPlanIt/testplanit/pull/555) [`9f838ab`](https://github.com/TestPlanIt/testplanit/commit/9f838ab3ff546166b25d96db6d944da2c9d3465d) Thanks [@therealbrad](https://github.com/therealbrad)! - Add a `testplanit` CLI for pipeline-owned test runs
+
+  `testplanit create-run` creates a run and prints its ID to stdout (diagnostics
+  go to stderr, so the ID is safe to capture in a shell variable). Export it as
+  `TESTPLANIT_RUN_ID` and every reporter invocation attaches to that run instead
+  of creating its own. `testplanit complete-run --id <id>` closes it once all
+  invocations have finished, reading the project from the run when `--project` is
+  omitted.
+
+  Both commands read `TESTPLANIT_URL` (or `TESTPLANIT_API_URL`) and
+  `TESTPLANIT_API_TOKEN`.
+
 ## 0.8.0
 
 ### Minor Changes
