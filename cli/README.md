@@ -66,7 +66,9 @@ testplanit config clear
 You can also use environment variables (they take precedence over stored config):
 
 - `TESTPLANIT_URL` - TestPlanIt instance URL
-- `TESTPLANIT_TOKEN` - API token
+- `TESTPLANIT_TOKEN` - API token (`TESTPLANIT_API_TOKEN`, the name the reporters
+  use, is accepted as a fallback so a pipeline sets the token once)
+- `TESTPLANIT_PROJECT_ID` - Default project for `run create`
 
 ```bash
 TESTPLANIT_URL=https://testplanit.example.com TESTPLANIT_TOKEN=tpi_xxx testplanit import ...
@@ -157,6 +159,41 @@ testplanit import results.xml -p 1 -n "Build 123" \
   --state "Completed" \
   --tags '1,"new tag",smoke'
 ```
+
+### Pipeline-Owned Test Runs
+
+A suite executed as several separate reporter invocations — shards across
+agents or machines, or retry waves — creates one test run per invocation,
+because each invocation only knows about itself. Create the run up front
+instead, and every invocation attaches to it:
+
+```bash
+RUN_ID=$(testplanit run create --project "My Project" --name "Web Regression #984" --type MOCHA)
+export TESTPLANIT_RUN_ID="$RUN_ID"
+
+# Every shard, agent and retry wave reports into $TESTPLANIT_RUN_ID
+npx playwright test --shard=1/5
+npx playwright test --shard=2/5
+# ...on other machines, plus any reruns...
+
+testplanit run complete --id "$RUN_ID"
+```
+
+`run create` prints only the new run ID to stdout, so it is safe to capture in a
+shell variable; progress messages go to stderr.
+
+```bash
+# Create with configuration, milestone and tags
+testplanit run create -p 9 -n "Nightly" -T MOCHA -c "Chrome" -m "Sprint 1" -t "regression,ci"
+
+# Complete it; the project is read from the run when --project is omitted
+testplanit run complete --id 984
+```
+
+The [WebdriverIO](https://www.npmjs.com/package/@testplanit/wdio-reporter) and
+[Playwright](https://www.npmjs.com/package/@testplanit/playwright-reporter)
+reporters read `TESTPLANIT_RUN_ID` and attach to that run without creating or
+completing it, so the pipeline owns the run's lifecycle end to end.
 
 ## CI/CD Integration
 
