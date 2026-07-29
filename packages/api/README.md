@@ -289,9 +289,10 @@ testplanit complete-run --id "$RUN_ID"
 shell variable; diagnostics go to stderr. `complete-run` reads the project from
 the run when `--project` is omitted. Run `testplanit --help` for all options.
 
-The [WebdriverIO reporter](https://www.npmjs.com/package/@testplanit/wdio-reporter)
-honours `TESTPLANIT_RUN_ID`, and never creates or completes a run it did not
-make.
+Both the [WebdriverIO](https://www.npmjs.com/package/@testplanit/wdio-reporter)
+and [Playwright](https://www.npmjs.com/package/@testplanit/playwright-reporter)
+reporters honour `TESTPLANIT_RUN_ID`, and never create or complete a run they
+did not make.
 
 ## Error Handling
 

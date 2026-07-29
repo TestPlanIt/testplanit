@@ -23,7 +23,7 @@
  * @packageDocumentation
  */
 
-export { default, default as TestPlanItReporter } from './reporter.js';
+export { default, default as TestPlanItReporter, RUN_ID_ENV_VAR } from './reporter.js';
 export type {
   TestPlanItReporterOptions,
   TrackedTestResult,
