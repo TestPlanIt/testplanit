@@ -37,9 +37,7 @@ test.describe("View Selector - Repository Views", () => {
    * Helper to open the view selector dropdown
    */
   async function openViewSelector(page: import("@playwright/test").Page) {
-    const viewSelector = page.locator(
-      '[data-testid="view-selector-trigger"]'
-    );
+    const viewSelector = page.locator('[data-testid="view-selector-trigger"]');
     await expect(viewSelector).toBeVisible({ timeout: 10000 });
     await viewSelector.click();
     return viewSelector;

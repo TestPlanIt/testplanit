@@ -41,9 +41,7 @@ test.describe("Custom Fields - Repository View and Filter", () => {
 
     // The view selector is within the repository-left-panel-header container
     // We need to scope it to avoid clicking the project selector
-    const viewSelector = page.locator(
-      '[data-testid="view-selector-trigger"]'
-    );
+    const viewSelector = page.locator('[data-testid="view-selector-trigger"]');
 
     await test.step("Open repository and the view selector", async () => {
       await repositoryPage.goto(projectId);
@@ -169,9 +167,7 @@ test.describe("Custom Fields - Repository View and Filter", () => {
     const projectId = await getTestProjectId(api);
 
     // Open view selector (scoped to repository-left-panel-header to avoid project selector)
-    const viewSelector = page.locator(
-      '[data-testid="view-selector-trigger"]'
-    );
+    const viewSelector = page.locator('[data-testid="view-selector-trigger"]');
 
     await test.step("Open repository and the view selector", async () => {
       await repositoryPage.goto(projectId);
@@ -315,9 +311,7 @@ test.describe("Custom Fields - Repository View and Filter", () => {
     const projectId = await getTestProjectId(api);
 
     // Start in Template view (scoped to repository-left-panel-header to avoid project selector)
-    const viewSelector = page.locator(
-      '[data-testid="view-selector-trigger"]'
-    );
+    const viewSelector = page.locator('[data-testid="view-selector-trigger"]');
 
     await test.step("Open repository and the view selector", async () => {
       await repositoryPage.goto(projectId);
@@ -549,9 +543,7 @@ test.describe("Custom Fields - Advanced Search Filters", () => {
     const projectId = await getTestProjectId(api);
 
     // Define the view selector
-    const viewSelector = page.locator(
-      '[data-testid="view-selector-trigger"]'
-    );
+    const viewSelector = page.locator('[data-testid="view-selector-trigger"]');
 
     await test.step("Assign the Priority field to the template and seed a test case", async () => {
       // Ensure Priority field is assigned to the project's template
