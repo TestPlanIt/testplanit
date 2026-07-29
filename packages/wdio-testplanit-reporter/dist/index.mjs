@@ -1613,6 +1613,13 @@ var TestPlanItService = class {
    * into it but never creates or completes it.
    */
   externallyManaged = false;
+  /**
+   * Whether onPrepare exported the created run's ID into the environment, and
+   * what was there before. Restored in onComplete so a second launcher in the
+   * same process doesn't inherit a finished run and treat it as pinned.
+   */
+  exportedRunIdEnv = false;
+  previousRunIdEnv;
   constructor(serviceOptions) {
     if (!serviceOptions.domain) {
       throw new Error("TestPlanIt service: domain is required");
@@ -1888,6 +1895,10 @@ var TestPlanItService = class {
         });
         this.testRunId = testRun.id;
         this.log(`Created test run with ID: ${this.testRunId}`);
+        this.previousRunIdEnv = process.env[RUN_ID_ENV_VAR];
+        this.exportedRunIdEnv = true;
+        process.env[RUN_ID_ENV_VAR] = String(this.testRunId);
+        this.log(`Exported ${RUN_ID_ENV_VAR}=${this.testRunId} for workers`);
       }
       const testRunId = this.testRunId;
       if (!testRunId) {
@@ -1925,6 +1936,7 @@ var TestPlanItService = class {
     } catch (error) {
       this.logError("Failed to prepare test run:", error);
       deleteSharedState(this.options.projectId);
+      this.restoreRunIdEnv();
       throw error;
     }
   }
@@ -2001,7 +2013,24 @@ var TestPlanItService = class {
     } finally {
       deleteSharedState(this.options.projectId);
       this.log("Cleaned up shared state file");
+      this.restoreRunIdEnv();
     }
+  }
+  /**
+   * Undo the onPrepare export. All workers have finished by the time
+   * onComplete runs, so nothing still needs to read it — and leaving a
+   * completed run's ID in the environment would make the next launcher in
+   * this process treat that run as its own pinned one.
+   */
+  restoreRunIdEnv() {
+    if (!this.exportedRunIdEnv) return;
+    if (this.previousRunIdEnv === void 0) {
+      delete process.env[RUN_ID_ENV_VAR];
+    } else {
+      process.env[RUN_ID_ENV_VAR] = this.previousRunIdEnv;
+    }
+    this.exportedRunIdEnv = false;
+    this.previousRunIdEnv = void 0;
   }
 };
 

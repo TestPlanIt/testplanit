@@ -80,6 +80,13 @@ export default class TestPlanItService {
    * into it but never creates or completes it.
    */
   private externallyManaged = false;
+  /**
+   * Whether onPrepare exported the created run's ID into the environment, and
+   * what was there before. Restored in onComplete so a second launcher in the
+   * same process doesn't inherit a finished run and treat it as pinned.
+   */
+  private exportedRunIdEnv = false;
+  private previousRunIdEnv?: string;
 
   constructor(serviceOptions: TestPlanItServiceOptions) {
     // Validate required options
@@ -415,6 +422,17 @@ export default class TestPlanItService {
         });
         this.testRunId = testRun.id;
         this.log(`Created test run with ID: ${this.testRunId}`);
+
+        // Workers are forked from this process, so exporting the ID here is
+        // what makes them inherit it. Each worker's reporter then sees a
+        // pinned run and takes the externally managed path: it attaches
+        // results only, and never creates a run, joins one through the
+        // shared-state file, or completes one. This service still owns
+        // completion, in onComplete.
+        this.previousRunIdEnv = process.env[RUN_ID_ENV_VAR];
+        this.exportedRunIdEnv = true;
+        process.env[RUN_ID_ENV_VAR] = String(this.testRunId);
+        this.log(`Exported ${RUN_ID_ENV_VAR}=${this.testRunId} for workers`);
       }
 
       const testRunId = this.testRunId;
@@ -467,6 +485,9 @@ export default class TestPlanItService {
       this.logError('Failed to prepare test run:', error);
       // Clean up shared state on failure so reporters fall back to self-managed mode
       deleteSharedState(this.options.projectId);
+      // Same reason: don't leave workers pinned to a run this service could
+      // not finish setting up.
+      this.restoreRunIdEnv();
       throw error;
     }
   }
@@ -563,6 +584,24 @@ export default class TestPlanItService {
       // Always clean up shared state
       deleteSharedState(this.options.projectId);
       this.log('Cleaned up shared state file');
+      this.restoreRunIdEnv();
     }
+  }
+
+  /**
+   * Undo the onPrepare export. All workers have finished by the time
+   * onComplete runs, so nothing still needs to read it — and leaving a
+   * completed run's ID in the environment would make the next launcher in
+   * this process treat that run as its own pinned one.
+   */
+  private restoreRunIdEnv(): void {
+    if (!this.exportedRunIdEnv) return;
+    if (this.previousRunIdEnv === undefined) {
+      delete process.env[RUN_ID_ENV_VAR];
+    } else {
+      process.env[RUN_ID_ENV_VAR] = this.previousRunIdEnv;
+    }
+    this.exportedRunIdEnv = false;
+    this.previousRunIdEnv = undefined;
   }
 }
