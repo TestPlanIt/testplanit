@@ -82,7 +82,7 @@ To collect all of them in a single run, create the run in the pipeline and let
 every invocation attach to it:
 
 ```bash
-RUN_ID=$(testplanit create-run --project 9 --name "Web Regression Tests - DEV #984" --type MOCHA)
+RUN_ID=$(testplanit run create --project 9 --name "Web Regression Tests - DEV #984" --type MOCHA)
 export TESTPLANIT_RUN_ID="$RUN_ID"
 
 # Every shard, agent and retry wave attaches to $TESTPLANIT_RUN_ID
@@ -90,12 +90,14 @@ pnpm web:bs --spec ./test/specs/shard-1/**
 pnpm web:bs --spec ./test/specs/shard-2/**
 # ...deferred retries, other agents...
 
-testplanit complete-run --id "$RUN_ID"
+testplanit run complete --id "$RUN_ID"
 ```
 
-`testplanit` ships with [`@testplanit/api`](https://www.npmjs.com/package/@testplanit/api).
-Both commands read `TESTPLANIT_URL` and `TESTPLANIT_API_TOKEN`; run
-`testplanit --help` for the full list.
+`testplanit` is the [`@testplanit/cli`](https://www.npmjs.com/package/@testplanit/cli)
+package (`npm i -g @testplanit/cli`). It reads `TESTPLANIT_URL` and
+`TESTPLANIT_API_TOKEN`, or credentials stored once with
+`testplanit config set --url ... --token ...`; run `testplanit run --help` for
+the full list of options.
 
 Nothing else in the config has to change. Both the service and the reporter read
 `TESTPLANIT_RUN_ID`, so the recommended service + reporter setup works as-is —
@@ -110,7 +112,7 @@ externally managed. For such a run the reporter:
 - **Never creates a run.** If the run cannot be read, the failure is logged and
   results are still attached to the given ID rather than to a replacement run.
 - **Never completes it**, regardless of `completeRunOnFinish` — the pipeline
-  closes it with `complete-run` once every invocation has finished. A shard that
+  closes it with `testplanit run complete` once every invocation has finished. A shard that
   completed the run would push the ones behind it onto a new run.
 - **Never discards it.** The recovery paths that start a fresh run when the
   shared state is exhausted, completed or deleted do not apply.

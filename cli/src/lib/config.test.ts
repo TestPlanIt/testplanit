@@ -46,6 +46,7 @@ describe("Config Module", () => {
     // Clear env vars
     delete process.env.TESTPLANIT_URL;
     delete process.env.TESTPLANIT_TOKEN;
+    delete process.env.TESTPLANIT_API_TOKEN;
     // Clear the stored config
     clearConfig();
   });
@@ -87,7 +88,21 @@ describe("Config Module", () => {
       expect(getToken()).toBe("tpi_stored_token");
     });
 
-    it("returns undefined when neither is set", () => {
+    it("falls back to TESTPLANIT_API_TOKEN, the name the reporters document", () => {
+      process.env.TESTPLANIT_API_TOKEN = "tpi_reporter_token";
+      setToken("tpi_stored_token");
+
+      expect(getToken()).toBe("tpi_reporter_token");
+    });
+
+    it("prefers TESTPLANIT_TOKEN over TESTPLANIT_API_TOKEN", () => {
+      process.env.TESTPLANIT_TOKEN = "tpi_cli_token";
+      process.env.TESTPLANIT_API_TOKEN = "tpi_reporter_token";
+
+      expect(getToken()).toBe("tpi_cli_token");
+    });
+
+    it("returns undefined when none is set", () => {
       expect(getToken()).toBeUndefined();
     });
   });

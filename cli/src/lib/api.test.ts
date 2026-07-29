@@ -10,6 +10,9 @@ import {
   importTestResults,
   uploadAttachmentsBulk,
   uploadTestRunAttachments,
+  createTestRun,
+  getTestRun,
+  completeTestRun,
 } from "./api.js";
 import type { ResolvedAttachment, TestRunAttachmentFile } from "../types.js";
 
@@ -797,6 +800,196 @@ describe("API Module", () => {
       await expect(uploadTestRunAttachments(123, attachments)).rejects.toThrow(
         "HTTP 502: Bad Gateway"
       );
+    });
+  });
+});
+
+describe("test run lifecycle", () => {
+  const mockFetch = vi.fn();
+
+  // ZenStack model endpoints wrap payloads in { data }.
+  const zen = (data: unknown) => ({ ok: true, json: () => Promise.resolve({ data }) });
+  const runRow = (over: Record<string, unknown> = {}) => ({
+    id: 984,
+    name: "Web Regression #984",
+    projectId: 9,
+    isCompleted: false,
+    isDeleted: false,
+    ...over,
+  });
+
+  beforeEach(() => {
+    vi.stubGlobal("fetch", mockFetch);
+    (getUrl as any).mockReturnValue("https://testplanit.example.com");
+    (getToken as any).mockReturnValue("tpi_test_token");
+    mockFetch.mockReset();
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  describe("createTestRun", () => {
+    it("resolves the IN_PROGRESS state then creates the run", async () => {
+      mockFetch
+        .mockResolvedValueOnce(zen([{ id: 3 }]))
+        .mockResolvedValueOnce(zen(runRow()));
+
+      const result = await createTestRun({ projectId: 9, name: "Web Regression #984" });
+
+      expect(result.id).toBe(984);
+
+      const [stateUrl, stateInit] = mockFetch.mock.calls[0];
+      expect(stateUrl).toContain("/api/model/workflows/findMany");
+      expect(stateInit.method).toBe("GET");
+      expect(decodeURIComponent(stateUrl)).toContain('"workflowType":"IN_PROGRESS"');
+
+      const [createUrl, createInit] = mockFetch.mock.calls[1];
+      expect(createUrl).toContain("/api/model/testRuns/create");
+      expect(createInit.method).toBe("POST");
+      expect(JSON.parse(createInit.body)).toEqual({
+        data: {
+          name: "Web Regression #984",
+          testRunType: "REGULAR",
+          project: { connect: { id: 9 } },
+          state: { connect: { id: 3 } },
+        },
+      });
+    });
+
+    it("falls back to any RUNS state when none is IN_PROGRESS", async () => {
+      mockFetch
+        .mockResolvedValueOnce(zen([]))
+        .mockResolvedValueOnce(zen([{ id: 7 }]))
+        .mockResolvedValueOnce(zen(runRow()));
+
+      await createTestRun({ projectId: 9, name: "R" });
+
+      const body = JSON.parse(mockFetch.mock.calls[2][1].body);
+      expect(body.data.state).toEqual({ connect: { id: 7 } });
+    });
+
+    it("throws when the project has no run workflow state", async () => {
+      mockFetch.mockResolvedValueOnce(zen([])).mockResolvedValueOnce(zen([]));
+
+      await expect(createTestRun({ projectId: 9, name: "R" })).rejects.toThrow(
+        "No workflow state found for test runs"
+      );
+    });
+
+    it("connects config, milestone and tags when given", async () => {
+      mockFetch.mockResolvedValueOnce(zen([{ id: 3 }])).mockResolvedValueOnce(zen(runRow()));
+
+      await createTestRun({
+        projectId: 9,
+        name: "R",
+        testRunType: "MOCHA",
+        configId: 11,
+        milestoneId: 22,
+        tagIds: [7, 8],
+      });
+
+      const body = JSON.parse(mockFetch.mock.calls[1][1].body);
+      expect(body.data).toEqual(
+        expect.objectContaining({
+          testRunType: "MOCHA",
+          config: { connect: { id: 11 } },
+          milestone: { connect: { id: 22 } },
+          tags: { connect: [{ id: 7 }, { id: 8 }] },
+        }),
+      );
+    });
+
+    it("skips the state lookup when an explicit state is given", async () => {
+      mockFetch.mockResolvedValueOnce(zen(runRow()));
+
+      await createTestRun({ projectId: 9, name: "R", stateId: 42 });
+
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+      expect(mockFetch.mock.calls[0][0]).toContain("/api/model/testRuns/create");
+    });
+
+    it("surfaces a ZenStack error body", async () => {
+      mockFetch.mockResolvedValueOnce(zen([{ id: 3 }])).mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ error: { message: "denied" } }),
+      });
+
+      await expect(createTestRun({ projectId: 9, name: "R" })).rejects.toThrow("denied");
+    });
+
+    it("surfaces an HTTP error", async () => {
+      mockFetch.mockResolvedValueOnce(zen([{ id: 3 }])).mockResolvedValueOnce({
+        ok: false,
+        status: 403,
+        statusText: "Forbidden",
+        json: () => Promise.resolve({ error: "No access to project" }),
+      });
+
+      await expect(createTestRun({ projectId: 9, name: "R" })).rejects.toThrow(
+        "No access to project",
+      );
+    });
+  });
+
+  describe("getTestRun", () => {
+    it("reads the run over GET", async () => {
+      mockFetch.mockResolvedValueOnce(zen(runRow()));
+
+      const result = await getTestRun(984);
+
+      expect(result.projectId).toBe(9);
+      const [url, init] = mockFetch.mock.calls[0];
+      expect(url).toContain("/api/model/testRuns/findUnique");
+      expect(init.method).toBe("GET");
+      expect(init.body).toBeUndefined();
+    });
+  });
+
+  describe("completeTestRun", () => {
+    it("moves the run to the DONE state over PATCH", async () => {
+      mockFetch
+        .mockResolvedValueOnce(zen([{ id: 5 }]))
+        .mockResolvedValueOnce(zen(runRow({ isCompleted: true })));
+
+      const result = await completeTestRun(984, 9);
+
+      expect(result.isCompleted).toBe(true);
+
+      const [stateUrl] = mockFetch.mock.calls[0];
+      expect(decodeURIComponent(stateUrl)).toContain('"workflowType":"DONE"');
+
+      const [updateUrl, updateInit] = mockFetch.mock.calls[1];
+      expect(updateUrl).toContain("/api/model/testRuns/update");
+      expect(updateInit.method).toBe("PATCH");
+      expect(JSON.parse(updateInit.body)).toEqual({
+        where: { id: 984 },
+        data: { isCompleted: true, state: { connect: { id: 5 } } },
+      });
+    });
+
+    it("still completes when the project has no DONE state", async () => {
+      mockFetch
+        .mockResolvedValueOnce(zen([]))
+        .mockResolvedValueOnce(zen([]))
+        .mockResolvedValueOnce(zen(runRow({ isCompleted: true })));
+
+      await completeTestRun(984, 9);
+
+      const body = JSON.parse(mockFetch.mock.calls[2][1].body);
+      expect(body.data).toEqual({ isCompleted: true });
+    });
+  });
+
+  describe("configuration", () => {
+    it("requires a configured URL", async () => {
+      (getUrl as any).mockReturnValue(undefined);
+      await expect(getTestRun(1)).rejects.toThrow("TestPlanIt URL is not configured");
+    });
+
+    it("requires a configured token", async () => {
+      (getToken as any).mockReturnValue(undefined);
+      await expect(getTestRun(1)).rejects.toThrow("API token is not configured");
     });
   });
 });

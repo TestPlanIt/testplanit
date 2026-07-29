@@ -228,7 +228,7 @@ To collect them in one run, create the run in the pipeline and let every
 execution attach to it:
 
 ```bash
-RUN_ID=$(testplanit create-run --project 9 --name "E2E - DEV #984" --type JUNIT)
+RUN_ID=$(testplanit run create --project 9 --name "E2E - DEV #984" --type JUNIT)
 export TESTPLANIT_RUN_ID="$RUN_ID"
 
 # Every shard, machine and retry wave attaches to $TESTPLANIT_RUN_ID
@@ -236,13 +236,15 @@ npx playwright test --shard=1/5
 npx playwright test --shard=2/5
 # ...on other machines, plus any reruns...
 
-testplanit complete-run --id "$RUN_ID"
+testplanit run complete --id "$RUN_ID"
 ```
 
-`testplanit` ships with [`@testplanit/api`](https://www.npmjs.com/package/@testplanit/api).
-Both commands read `TESTPLANIT_URL` and `TESTPLANIT_API_TOKEN`; run
-`testplanit --help` for the full list. No reporter config has to change — the
-env var is enough.
+`testplanit` is the [`@testplanit/cli`](https://www.npmjs.com/package/@testplanit/cli)
+package (`npm i -g @testplanit/cli`). It reads `TESTPLANIT_URL` and
+`TESTPLANIT_API_TOKEN`, or credentials stored once with
+`testplanit config set --url ... --token ...`; run `testplanit run --help` for
+the full list of options. No reporter config has to change — the env var is
+enough.
 
 ### What Changes When a Run Is Externally Managed
 
@@ -252,7 +254,7 @@ externally managed. For such a run the reporter:
 - **Never creates a run.** If the run cannot be read, the failure is logged and
   results are still attached to the given ID rather than to a replacement run.
 - **Never completes it**, regardless of `completeRunOnFinish` — the pipeline
-  closes it with `complete-run` once every execution has finished. A shard that
+  closes it with `testplanit run complete` once every execution has finished. A shard that
   completed the run would push the ones behind it onto a new run.
 - **Never changes its settings.** `configId`, `milestoneId`, `stateId` and
   `tagIds` are ignored, since those belong to whoever created the run. Case

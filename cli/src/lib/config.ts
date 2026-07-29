@@ -30,10 +30,13 @@ export function getUrl(): string | undefined {
 
 /**
  * Get the API token
- * Priority: TESTPLANIT_TOKEN env var > stored config
+ * Priority: TESTPLANIT_TOKEN env var > TESTPLANIT_API_TOKEN > stored config
+ *
+ * TESTPLANIT_API_TOKEN is the name the reporters document, and a pipeline that
+ * runs both the CLI and a reporter should only have to set the token once.
  */
 export function getToken(): string | undefined {
-  return process.env.TESTPLANIT_TOKEN || config.get("token");
+  return process.env.TESTPLANIT_TOKEN || process.env.TESTPLANIT_API_TOKEN || config.get("token");
 }
 
 /**

@@ -21,6 +21,8 @@ import type {
   BulkAttachmentUploadResponse,
   TestRunAttachmentFile,
   TestRunAttachmentUploadResponse,
+  CreateRunOptions,
+  TestRunSummary,
 } from "../types.js";
 
 /**
@@ -617,4 +619,179 @@ export async function uploadTestRunAttachments(
   }
 
   return (await response.json()) as TestRunAttachmentUploadResponse;
+}
+
+// ---------------------------------------------------------------------------
+// Test run lifecycle
+//
+// A pipeline that fans a suite out across shards, agents or retry waves creates
+// the run once up front and completes it once at the end, so every reporter
+// invocation in between attaches to a single run.
+// ---------------------------------------------------------------------------
+
+/**
+ * Call a ZenStack model endpoint (`/api/model/{model}/{operation}`).
+ *
+ * Reads go over GET with the query in `?q=`; writes take a JSON body. Mirrors
+ * the transport in `@testplanit/api`, which the reporters use — the CLI cannot
+ * depend on that package because it publishes through semantic-release, which
+ * runs `npm publish` and would not resolve a `workspace:` range.
+ */
+async function zenstackRequest<T>(
+  model: string,
+  operation: string,
+  payload: unknown,
+  description: string
+): Promise<T> {
+  const url = getUrl();
+  const token = getToken();
+
+  if (!url) throw new Error("TestPlanIt URL is not configured");
+  if (!token) throw new Error("API token is not configured");
+
+  const isRead = operation.startsWith("find");
+  const isUpdate = operation === "update";
+  const method = isRead ? "GET" : isUpdate ? "PATCH" : "POST";
+
+  let apiUrl = new URL(`/api/model/${model}/${operation}`, url).toString();
+  if (isRead) {
+    apiUrl += `?q=${encodeURIComponent(JSON.stringify(payload))}`;
+  }
+
+  let response: Response;
+  try {
+    response = await fetch(apiUrl, {
+      method,
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: isRead ? undefined : JSON.stringify(payload),
+    });
+  } catch (error) {
+    throw formatNetworkError(error, apiUrl, description);
+  }
+
+  if (!response.ok) {
+    let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+    try {
+      const errorBody = (await response.json()) as APIError;
+      if (errorBody.error) errorMessage = errorBody.error;
+    } catch {
+      // Ignore JSON parse errors
+    }
+    throw new Error(`Failed ${description}: ${errorMessage}`);
+  }
+
+  const body = (await response.json()) as { data?: T; error?: { message: string } };
+  if (body.error) {
+    throw new Error(`Failed ${description}: ${body.error.message}`);
+  }
+  return body.data as T;
+}
+
+/**
+ * Find the first enabled RUNS workflow state, preferring the given type.
+ * Returns undefined when the project has no matching state.
+ */
+async function findRunWorkflowStateId(
+  projectId: number,
+  workflowType: "IN_PROGRESS" | "DONE"
+): Promise<number | undefined> {
+  const query = (withType: boolean) => ({
+    where: {
+      isEnabled: true,
+      isDeleted: false,
+      scope: "RUNS",
+      ...(withType ? { workflowType } : {}),
+      projects: { some: { projectId } },
+    },
+    orderBy: { order: "asc" },
+    take: 1,
+  });
+
+  const typed = await zenstackRequest<WorkflowStateRow[]>(
+    "workflows",
+    "findMany",
+    query(true),
+    `looking up the ${workflowType} workflow state`
+  );
+  if (typed[0]) return typed[0].id;
+
+  // Fall back to any RUNS state, matching how the reporters create runs.
+  const any = await zenstackRequest<WorkflowStateRow[]>(
+    "workflows",
+    "findMany",
+    query(false),
+    "looking up a run workflow state"
+  );
+  return any[0]?.id;
+}
+
+interface WorkflowStateRow {
+  id: number;
+}
+
+/**
+ * Create a test run and return it.
+ */
+export async function createTestRun(options: CreateRunOptions): Promise<TestRunSummary> {
+  const stateId =
+    options.stateId ?? (await findRunWorkflowStateId(options.projectId, "IN_PROGRESS"));
+
+  if (!stateId) {
+    throw new Error("No workflow state found for test runs in this project");
+  }
+
+  const data: Record<string, unknown> = {
+    name: options.name,
+    testRunType: options.testRunType ?? "REGULAR",
+    project: { connect: { id: options.projectId } },
+    state: { connect: { id: stateId } },
+  };
+
+  if (options.configId) data.config = { connect: { id: options.configId } };
+  if (options.milestoneId) data.milestone = { connect: { id: options.milestoneId } };
+  if (options.tagIds?.length) {
+    data.tags = { connect: options.tagIds.map((id: number) => ({ id })) };
+  }
+
+  return zenstackRequest<TestRunSummary>(
+    "testRuns",
+    "create",
+    { data },
+    `creating test run "${options.name}"`
+  );
+}
+
+/**
+ * Read a test run.
+ */
+export async function getTestRun(testRunId: number): Promise<TestRunSummary> {
+  return zenstackRequest<TestRunSummary>(
+    "testRuns",
+    "findUnique",
+    { where: { id: testRunId } },
+    `reading test run ${testRunId}`
+  );
+}
+
+/**
+ * Mark a test run complete, moving it to the project's DONE workflow state.
+ */
+export async function completeTestRun(
+  testRunId: number,
+  projectId: number
+): Promise<TestRunSummary> {
+  const doneStateId = await findRunWorkflowStateId(projectId, "DONE");
+
+  const data: Record<string, unknown> = { isCompleted: true };
+  if (doneStateId) data.state = { connect: { id: doneStateId } };
+
+  return zenstackRequest<TestRunSummary>(
+    "testRuns",
+    "update",
+    { where: { id: testRunId }, data },
+    `completing test run ${testRunId}`
+  );
 }

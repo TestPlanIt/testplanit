@@ -213,3 +213,43 @@ export interface TestRunAttachmentFile {
  * Test run attachment upload response (same structure as bulk response)
  */
 export type TestRunAttachmentUploadResponse = BulkAttachmentUploadResponse;
+
+/**
+ * Test run types accepted when creating a run.
+ */
+export const TEST_RUN_TYPES = [
+  "REGULAR",
+  "JUNIT",
+  "TESTNG",
+  "XUNIT",
+  "NUNIT",
+  "MSTEST",
+  "MOCHA",
+  "CUCUMBER",
+] as const;
+
+export type TestRunType = (typeof TEST_RUN_TYPES)[number];
+
+/**
+ * Options for creating a test run from the pipeline.
+ */
+export interface CreateRunOptions {
+  projectId: number;
+  name: string;
+  testRunType?: TestRunType;
+  configId?: number;
+  milestoneId?: number;
+  stateId?: number;
+  tagIds?: number[];
+}
+
+/**
+ * The subset of a test run the CLI reads back.
+ */
+export interface TestRunSummary {
+  id: number;
+  name: string;
+  projectId: number;
+  isCompleted: boolean;
+  isDeleted: boolean;
+}

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 // src/index.ts
-import { Command as Command3 } from "commander";
+import { Command as Command4 } from "commander";
 import { createRequire } from "module";
 
 // src/commands/config.ts
@@ -177,7 +177,7 @@ over stored configuration.
   });
   cmd.command("show").description("Show current configuration").action(() => {
     const storedConfig = getStoredConfig();
-    const effectiveConfig = getConfig();
+    const _effectiveConfig = getConfig();
     console.log();
     console.log("Configuration file:", getConfigPath());
     console.log();
@@ -309,6 +309,12 @@ async function importTestResults(files, options, onProgress) {
       form.append("tagIds", tagId.toString());
     }
   }
+  if (options.caseMatcher) {
+    form.append("caseMatcher", options.caseMatcher);
+  }
+  if (options.caseIdFormat) {
+    form.append("caseIdFormat", options.caseIdFormat);
+  }
   for (const filePath of files) {
     const absolutePath = path.resolve(filePath);
     const fileName = path.basename(absolutePath);
@@ -371,7 +377,8 @@ async function importTestResults(files, options, onProgress) {
           if (data.complete && data.testRunId !== void 0) {
             result = {
               testRunId: data.testRunId,
-              attachmentMappings: data.attachmentMappings
+              attachmentMappings: data.attachmentMappings,
+              caseIdWarnings: data.caseIdWarnings
             };
           }
         } catch (e) {
@@ -613,6 +620,115 @@ async function uploadTestRunAttachments(testRunId, attachments) {
   }
   return await response.json();
 }
+async function zenstackRequest(model, operation, payload, description) {
+  const url = getUrl();
+  const token = getToken();
+  if (!url) throw new Error("TestPlanIt URL is not configured");
+  if (!token) throw new Error("API token is not configured");
+  const isRead = operation.startsWith("find");
+  const isUpdate = operation === "update";
+  const method = isRead ? "GET" : isUpdate ? "PATCH" : "POST";
+  let apiUrl = new URL(`/api/model/${model}/${operation}`, url).toString();
+  if (isRead) {
+    apiUrl += `?q=${encodeURIComponent(JSON.stringify(payload))}`;
+  }
+  let response;
+  try {
+    response = await fetch(apiUrl, {
+      method,
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json"
+      },
+      body: isRead ? void 0 : JSON.stringify(payload)
+    });
+  } catch (error2) {
+    throw formatNetworkError(error2, apiUrl, description);
+  }
+  if (!response.ok) {
+    let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+    try {
+      const errorBody = await response.json();
+      if (errorBody.error) errorMessage = errorBody.error;
+    } catch {
+    }
+    throw new Error(`Failed ${description}: ${errorMessage}`);
+  }
+  const body = await response.json();
+  if (body.error) {
+    throw new Error(`Failed ${description}: ${body.error.message}`);
+  }
+  return body.data;
+}
+async function findRunWorkflowStateId(projectId, workflowType) {
+  const query = (withType) => ({
+    where: {
+      isEnabled: true,
+      isDeleted: false,
+      scope: "RUNS",
+      ...withType ? { workflowType } : {},
+      projects: { some: { projectId } }
+    },
+    orderBy: { order: "asc" },
+    take: 1
+  });
+  const typed = await zenstackRequest(
+    "workflows",
+    "findMany",
+    query(true),
+    `looking up the ${workflowType} workflow state`
+  );
+  if (typed[0]) return typed[0].id;
+  const any = await zenstackRequest(
+    "workflows",
+    "findMany",
+    query(false),
+    "looking up a run workflow state"
+  );
+  return any[0]?.id;
+}
+async function createTestRun(options) {
+  const stateId = options.stateId ?? await findRunWorkflowStateId(options.projectId, "IN_PROGRESS");
+  if (!stateId) {
+    throw new Error("No workflow state found for test runs in this project");
+  }
+  const data = {
+    name: options.name,
+    testRunType: options.testRunType ?? "REGULAR",
+    project: { connect: { id: options.projectId } },
+    state: { connect: { id: stateId } }
+  };
+  if (options.configId) data.config = { connect: { id: options.configId } };
+  if (options.milestoneId) data.milestone = { connect: { id: options.milestoneId } };
+  if (options.tagIds?.length) {
+    data.tags = { connect: options.tagIds.map((id) => ({ id })) };
+  }
+  return zenstackRequest(
+    "testRuns",
+    "create",
+    { data },
+    `creating test run "${options.name}"`
+  );
+}
+async function getTestRun(testRunId) {
+  return zenstackRequest(
+    "testRuns",
+    "findUnique",
+    { where: { id: testRunId } },
+    `reading test run ${testRunId}`
+  );
+}
+async function completeTestRun(testRunId, projectId) {
+  const doneStateId = await findRunWorkflowStateId(projectId, "DONE");
+  const data = { isCompleted: true };
+  if (doneStateId) data.state = { connect: { id: doneStateId } };
+  return zenstackRequest(
+    "testRuns",
+    "update",
+    { where: { id: testRunId }, data },
+    `completing test run ${testRunId}`
+  );
+}
 
 // src/lib/attachments.ts
 import * as fs2 from "fs";
@@ -772,6 +888,27 @@ var TEST_RESULT_FORMATS = {
   mocha: { label: "Mocha JSON", extensions: [".json"] },
   cucumber: { label: "Cucumber JSON", extensions: [".json"] }
 };
+var CASE_MATCHERS = [
+  "off",
+  "name",
+  "property",
+  "auto"
+];
+var CASE_ID_FORMATS = [
+  "brackets",
+  "c",
+  "tc"
+];
+var TEST_RUN_TYPES = [
+  "REGULAR",
+  "JUNIT",
+  "TESTNG",
+  "XUNIT",
+  "NUNIT",
+  "MSTEST",
+  "MOCHA",
+  "CUCUMBER"
+];
 
 // src/commands/import.ts
 var VALID_FORMATS = ["auto", ...Object.keys(TEST_RESULT_FORMATS)];
@@ -780,7 +917,15 @@ function createImportCommand() {
     "-F, --format <format>",
     `File format: ${VALID_FORMATS.join(", ")} (default: auto-detect)`,
     "auto"
-  ).option("-s, --state <value>", "Workflow state (ID or exact name)").option("-c, --config <value>", "Configuration (ID or exact name)").option("-m, --milestone <value>", "Milestone (ID or exact name)").option("-f, --folder <value>", "Parent folder for test cases (ID or exact name)").option("-t, --tags <values>", "Tags (comma-separated IDs or names, use quotes for names with commas)").option("-r, --test-run <value>", "Existing test run to append results (ID or exact name)").option("-d, --attachments-dir <path>", "Base directory for resolving attachment paths (default: directory of test result file)").option("--no-attachments", "Skip uploading attachments").option("-a, --run-attachments <files...>", "Files to attach to the test run (e.g., test plans, reports)").addHelpText("after", `
+  ).option("-s, --state <value>", "Workflow state (ID or exact name)").option("-c, --config <value>", "Configuration (ID or exact name)").option("-m, --milestone <value>", "Milestone (ID or exact name)").option("-f, --folder <value>", "Parent folder for test cases (ID or exact name)").option("-t, --tags <values>", "Tags (comma-separated IDs or names, use quotes for names with commas)").option("-r, --test-run <value>", "Existing test run to append results (ID or exact name)").option("-d, --attachments-dir <path>", "Base directory for resolving attachment paths (default: directory of test result file)").option("--no-attachments", "Skip uploading attachments").option("-a, --run-attachments <files...>", "Files to attach to the test run (e.g., test plans, reports)").option(
+    "--case-matcher <mode>",
+    `Link results to existing cases by ID: ${CASE_MATCHERS.join(", ")} (default: off)`,
+    "off"
+  ).option(
+    "--case-id-format <preset>",
+    `Case-ID pattern in the test name when matching by name: ${CASE_ID_FORMATS.join(", ")} (default: brackets, e.g. [123])`,
+    "brackets"
+  ).addHelpText("after", `
 Examples:
 
   Minimal example (required options only):
@@ -820,6 +965,15 @@ Examples:
   Import without uploading attachments:
     $ testplanit import ./results.xml -p "My Project" -n "Build" --no-attachments
 
+  Link results to existing cases by an ID in the test name (e.g. "[123] login"):
+    $ testplanit import ./results.xml -p "My Project" -n "Build" --case-matcher name
+
+  Link by a test_id property in the XML, falling back to the name pattern:
+    $ testplanit import ./results.xml -p "My Project" -n "Build" --case-matcher auto
+
+  Use the TestRail-style C-prefix pattern (e.g. "C123 login"):
+    $ testplanit import ./results.xml -p "My Project" -n "Build" --case-matcher name --case-id-format c
+
   Attach files to the test run (test plans, reports, etc.):
     $ testplanit import ./results.xml -p "My Project" -n "Build" -a ./test-plan.pdf ./coverage-report.html
 `).action(async (filePatterns, options) => {
@@ -837,6 +991,18 @@ Examples:
     if (!VALID_FORMATS.includes(format)) {
       error(`Invalid format: ${options.format}`);
       info(`Valid formats: ${VALID_FORMATS.join(", ")}`);
+      process.exit(1);
+    }
+    const caseMatcher = options.caseMatcher.toLowerCase();
+    if (!CASE_MATCHERS.includes(caseMatcher)) {
+      error(`Invalid case matcher: ${options.caseMatcher}`);
+      info(`Valid matchers: ${CASE_MATCHERS.join(", ")}`);
+      process.exit(1);
+    }
+    const caseIdFormat = options.caseIdFormat.toLowerCase();
+    if (!CASE_ID_FORMATS.includes(caseIdFormat)) {
+      error(`Invalid case ID format: ${options.caseIdFormat}`);
+      info(`Valid formats: ${CASE_ID_FORMATS.join(", ")}`);
       process.exit(1);
     }
     const files = [];
@@ -887,6 +1053,10 @@ Examples:
         name: options.name,
         format
       };
+      if (caseMatcher !== "off") {
+        importOptions.caseMatcher = caseMatcher;
+        importOptions.caseIdFormat = caseIdFormat;
+      }
       if (options.state) {
         updateSpinner("Resolving workflow state...");
         importOptions.stateId = await resolveToId(projectId, "state", options.state);
@@ -925,6 +1095,18 @@ Examples:
       const url = getUrl();
       console.log();
       success(`Test run created with ID: ${formatNumber(result.testRunId)}`);
+      if (result.caseIdWarnings && result.caseIdWarnings.length > 0) {
+        console.log();
+        warn(
+          `Skipped ${formatNumber(result.caseIdWarnings.length)} result(s) referencing a case ID not found in this project:`
+        );
+        for (const warning of result.caseIdWarnings.slice(0, 10)) {
+          dim(`    - C${warning.requestedCaseId} (${warning.testName})`);
+        }
+        if (result.caseIdWarnings.length > 10) {
+          dim(`    ... and ${result.caseIdWarnings.length - 10} more`);
+        }
+      }
       if (options.attachments !== false && result.attachmentMappings && result.attachmentMappings.length > 0) {
         console.log();
         info("Processing attachments...");
@@ -1051,15 +1233,107 @@ Examples:
   return cmd;
 }
 
+// src/commands/run.ts
+import { Command as Command3 } from "commander";
+async function resolveProject(value) {
+  const raw = value ?? process.env.TESTPLANIT_PROJECT_ID;
+  if (!raw) {
+    throw new Error(
+      "No project. Pass --project or set TESTPLANIT_PROJECT_ID."
+    );
+  }
+  return resolveProjectId(raw);
+}
+function parseRunType(value) {
+  if (!value) return void 0;
+  const upper = value.toUpperCase();
+  if (!TEST_RUN_TYPES.includes(upper)) {
+    throw new Error(
+      `Unknown run type "${value}". Expected one of: ${TEST_RUN_TYPES.join(", ")}`
+    );
+  }
+  return upper;
+}
+function parseRunId(value) {
+  const trimmed = value.trim();
+  if (!/^\d+$/.test(trimmed) || Number(trimmed) <= 0) {
+    throw new Error(`Test run ID must be a positive integer, got "${value}"`);
+  }
+  return Number(trimmed);
+}
+function createRunCommand() {
+  const cmd = new Command3("run").description("Create and complete test runs from a pipeline").addHelpText(
+    "after",
+    `
+Examples:
+
+  Create a run and capture its ID:
+    $ RUN_ID=$(testplanit run create -p "My Project" -n "Web Regression #984")
+    $ export TESTPLANIT_RUN_ID="$RUN_ID"
+
+  Create with type, configuration, milestone and tags:
+    $ testplanit run create -p 9 -n "Nightly" -T MOCHA -c "Chrome" -m "Sprint 1" -t "regression,ci"
+
+  Complete the run once every shard and retry wave has finished:
+    $ testplanit run complete --id "$RUN_ID"
+
+The reporters (@testplanit/wdio-reporter, @testplanit/playwright-reporter) read
+TESTPLANIT_RUN_ID and attach to that run without creating or completing it, so
+any number of shards, agents or retry waves land in a single run.
+`
+  );
+  cmd.command("create").description("Create a test run and print its ID to stdout").option("-p, --project <value>", "Project (ID or exact name). Defaults to $TESTPLANIT_PROJECT_ID").requiredOption("-n, --name <name>", "Test run name").option("-T, --type <type>", `Run type: ${TEST_RUN_TYPES.join(", ")}`, "REGULAR").option("-c, --config <value>", "Configuration (ID or exact name)").option("-m, --milestone <value>", "Milestone (ID or exact name)").option("-s, --state <value>", "Workflow state (ID or exact name)").option("-t, --tags <values>", "Tags (comma-separated IDs or names)").action(async (options) => {
+    try {
+      const projectId = await resolveProject(options.project);
+      const testRunType = parseRunType(options.type);
+      const configId = options.config ? await resolveToId(projectId, "config", options.config) : void 0;
+      const milestoneId = options.milestone ? await resolveToId(projectId, "milestone", options.milestone) : void 0;
+      const stateId = options.state ? await resolveToId(projectId, "state", options.state) : void 0;
+      const tagIds = options.tags ? await resolveTags(projectId, options.tags) : void 0;
+      const testRun = await createTestRun({
+        projectId,
+        name: options.name,
+        testRunType,
+        configId,
+        milestoneId,
+        stateId,
+        tagIds
+      });
+      info(`Created test run ${testRun.id}: ${testRun.name}`);
+      console.log(String(testRun.id));
+    } catch (error2) {
+      error(error2 instanceof Error ? error2.message : String(error2));
+      process.exitCode = 1;
+    }
+  });
+  cmd.command("complete").description("Mark a test run done, after every invocation has finished").requiredOption("-r, --id <id>", "Test run ID").option("-p, --project <value>", "Project (ID or exact name). Read from the run when omitted").action(async (options) => {
+    try {
+      const testRunId = parseRunId(options.id);
+      const projectId = options.project ? await resolveProject(options.project) : (await getTestRun(testRunId)).projectId;
+      const testRun = await completeTestRun(testRunId, projectId);
+      success(`Completed test run ${testRun.id}: ${testRun.name}`);
+    } catch (error2) {
+      error(error2 instanceof Error ? error2.message : String(error2));
+      process.exitCode = 1;
+    }
+  });
+  return cmd;
+}
+
 // src/index.ts
 var require2 = createRequire(import.meta.url);
 var packageJson = require2("../package.json");
-var program = new Command3();
+var program = new Command4();
 program.name("testplanit").description("CLI tool for TestPlanIt - import test results and manage test data").version(packageJson.version).addHelpText("after", `
 Examples:
 
   Configure the CLI:
     $ testplanit config set --url https://testplanit.example.com --token tpi_xxx
+
+  Create a run for a sharded pipeline, then complete it:
+    $ RUN_ID=$(testplanit run create -p "My Project" -n "Build #123")
+    $ export TESTPLANIT_RUN_ID="$RUN_ID"   # every shard attaches to this run
+    $ testplanit run complete --id "$RUN_ID"
 
   Import test results (minimal):
     $ testplanit import ./results.xml -p "My Project" -n "Build #123"
@@ -1072,4 +1346,5 @@ Run 'testplanit <command> --help' for more information on a command.
 `);
 program.addCommand(createConfigCommand());
 program.addCommand(createImportCommand());
+program.addCommand(createRunCommand());
 program.parse();
