@@ -15,6 +15,18 @@ interface TestCaseFixtureOverrides {
     allowedValuesJson: unknown | null;
     lookupDataSetId: number | null;
   }>;
+  attachments?: Array<{
+    id: number;
+    testCaseId: number | null;
+    url: string;
+    name: string;
+    note: string | null;
+    isDeleted: boolean;
+    mimeType: string;
+    size: bigint;
+    createdAt: Date;
+    createdById: string;
+  }>;
 }
 
 function buildTestCaseFixture(overrides: TestCaseFixtureOverrides = {}) {
@@ -43,6 +55,7 @@ function buildTestCaseFixture(overrides: TestCaseFixtureOverrides = {}) {
     caseIssues: [{ issue: { id: 7, name: "ISSUE-7", externalId: "EXT-7" } }],
     steps: [{ step: "step-text", expectedResult: "expected" }],
     parameters: overrides.parameters ?? [],
+    attachments: overrides.attachments ?? [],
   };
 }
 
@@ -218,5 +231,80 @@ describe("createTestCaseVersionInTransaction", () => {
     );
     // And the new field is also there.
     expect(data).toHaveProperty("parameters");
+  });
+
+  // Regression: attachments used to be hardcoded to `[]` and the relation was
+  // never loaded, so every version claimed the case had none and the history
+  // diff rendered them as deleted at that version.
+  it("snapshots the case's attachments in the stored JSON shape", async () => {
+    const fixture = buildTestCaseFixture({
+      attachments: [
+        {
+          id: 130838,
+          testCaseId: 1,
+          url: "https://example.test/uploads/a",
+          name: "totals.csv",
+          note: "",
+          isDeleted: false,
+          mimeType: "text/csv",
+          size: BigInt(34723),
+          createdAt: new Date("2026-07-14T16:12:56.553Z"),
+          createdById: "user-9",
+        },
+      ],
+    });
+    const { tx, create, findUnique } = buildTx(fixture);
+
+    await createTestCaseVersionInTransaction(tx, 1, {});
+
+    // Soft-deleted attachments must not leak into the snapshot.
+    const include = findUnique.mock.calls[0]![0]!.include as {
+      attachments: { where: { isDeleted: boolean } };
+    };
+    expect(include.attachments.where).toEqual({ isDeleted: false });
+
+    const data = create.mock.calls[0]![0]!.data as Record<string, unknown>;
+    expect(data.attachments).toEqual([
+      {
+        id: 130838,
+        testCaseId: 1,
+        url: "https://example.test/uploads/a",
+        name: "totals.csv",
+        note: "",
+        isDeleted: false,
+        mimeType: "text/csv",
+        // BigInt column, stored as a string — JSON cannot carry a BigInt.
+        size: "34723",
+        createdAt: "2026-07-14T16:12:56.553Z",
+        createdById: "user-9",
+      },
+    ]);
+  });
+
+  it("still honours an explicit attachments override", async () => {
+    const fixture = buildTestCaseFixture({
+      attachments: [
+        {
+          id: 1,
+          testCaseId: 1,
+          url: "https://example.test/uploads/ignored",
+          name: "ignored.csv",
+          note: null,
+          isDeleted: false,
+          mimeType: "text/csv",
+          size: BigInt(1),
+          createdAt: new Date("2026-07-14T00:00:00.000Z"),
+          createdById: "user-9",
+        },
+      ],
+    });
+    const { tx, create } = buildTx(fixture);
+
+    await createTestCaseVersionInTransaction(tx, 1, {
+      overrides: { attachments: [] },
+    });
+
+    const data = create.mock.calls[0]![0]!.data as Record<string, unknown>;
+    expect(data.attachments).toEqual([]);
   });
 });

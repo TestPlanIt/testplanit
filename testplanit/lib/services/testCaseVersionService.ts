@@ -182,6 +182,22 @@ export async function createTestCaseVersionInTransaction(
           lookupDataSetId: true,
         },
       },
+      attachments: {
+        where: { isDeleted: false },
+        orderBy: { id: "asc" },
+        select: {
+          id: true,
+          testCaseId: true,
+          url: true,
+          name: true,
+          note: true,
+          isDeleted: true,
+          mimeType: true,
+          size: true,
+          createdAt: true,
+          createdById: true,
+        },
+      },
     },
   });
 
@@ -228,6 +244,38 @@ export async function createTestCaseVersionInTransaction(
       (ci: { issue: { id: number; name: string; externalId?: string } }) =>
         ci.issue
     );
+
+  // Attachments the case carries right now. This used to be hardcoded to `[]`
+  // — the relation was never even loaded — so every snapshot recorded "no
+  // attachments" and the version-history diff showed them as deleted at that
+  // version. Shape must match what the UI save path and the importers write:
+  // `size` is a BigInt column serialized as a string, `createdAt` as ISO.
+  const attachmentsJson = (testCase.attachments ?? []).map(
+    (a: {
+      id: number;
+      testCaseId: number | null;
+      url: string;
+      name: string;
+      note: string | null;
+      isDeleted: boolean;
+      mimeType: string;
+      size: bigint;
+      createdAt: Date;
+      createdById: string;
+    }) => ({
+      id: a.id,
+      testCaseId: a.testCaseId,
+      url: a.url,
+      name: a.name,
+      note: a.note,
+      isDeleted: a.isDeleted,
+      mimeType: a.mimeType,
+      size: a.size.toString(),
+      createdAt:
+        a.createdAt instanceof Date ? a.createdAt.toISOString() : a.createdAt,
+      createdById: a.createdById,
+    })
+  );
 
   const parametersJson = (testCase.parameters ?? []).map(
     (p: {
@@ -292,8 +340,12 @@ export async function createTestCaseVersionInTransaction(
     steps: stepsJson ?? DbNull,
     tags: tagsArray,
     issues: issuesArray ?? DbNull,
+    // `links` is vestigial: nothing reads this column, no caller passes the
+    // override, and link-type items are stored as ATTACHMENTS (with a url and
+    // mimeType) rather than here. Left empty deliberately — populating it from
+    // RepositoryCaseLink would invent a shape no reader understands.
     links: overrides.links ?? [],
-    attachments: overrides.attachments ?? [],
+    attachments: overrides.attachments ?? attachmentsJson,
     parameters: parametersJson,
   };
 
