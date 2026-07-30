@@ -29,7 +29,7 @@ The system-wide viewer is available only to users with administrative privileges
 
 ### Viewing your own activity
 
-You don't need administrator access to review your own audit history. Open your profile (**user menu → View Profile**) and expand the **Audit Log** section. This view is automatically scoped to your own actions, so the user filter is omitted; the search box and the action, entity-type, project, and date-range filters work just like the system-wide viewer.
+You don't need administrator access to review your own audit history. Open your profile (**user menu → View Profile**) and expand the **Audit Log** section. This view is automatically scoped to your own actions, so the user filter is omitted; the search box and the action, entity-type, project, and date-range filters work just like the system-wide viewer, except that it opens on all time rather than the current week.
 
 Administrators can review any user's activity the same way by opening that user's profile.
 
@@ -37,7 +37,7 @@ Administrators can review any user's activity the same way by opening that user'
 
 Project administrators don't need system-wide access to audit a single project. Open the project and choose **Audit Logs** from the project menu to see the audit trail scoped to that project.
 
-This view is available to system administrators and to Project Administrators assigned to the project. It works like the system-wide viewer — the search box and the action, entity-type, user, and date-range filters all behave the same — but every entry belongs to the current project, so the Project column and Project filter are omitted. The menu entry appears for any Project Administrator, but it shows entries only for the projects they are assigned to.
+This view is available to system administrators and to Project Administrators assigned to the project. It works like the system-wide viewer — the search box and the action, entity-type, user, and date-range filters all behave the same, though it opens on all time rather than the current week — but every entry belongs to the current project, so the Project column and Project filter are omitted. The menu entry appears for any Project Administrator, but it shows entries only for the projects they are assigned to.
 
 ### Viewing an item's activity
 
@@ -156,6 +156,20 @@ The audit log viewer supports filtering by:
 - **User**: Search for actions by a specific user
 - **Project**: View logs for a specific project
 
+### Default time range
+
+The system-wide viewer opens on the **current week** (Monday through Sunday). The audit log is the largest table in a mature workspace, and reading it end to end is a slow, expensive query that most visits don't need — so the view starts narrow and you widen it when you want history.
+
+Open the date-range picker to change it:
+
+- Pick a preset — **Today**, **Last 7 days**, **This month**, **Last quarter**, and so on.
+- Drag out any custom range on the two-month calendar.
+- Choose **All time** to drop the date bound entirely and read the full history.
+
+The selected range governs everything the page derives from it: the rows listed, the "showing X of Y" count, and the [CSV export](#exporting-audit-logs).
+
+The already-scoped views — your profile's Audit Log, a project's Audit Logs, and an item's Activity Log — open on **all time**, because each is bounded to a single user, project, or item.
+
 ## Audit Log Details
 
 Each audit log entry contains:
@@ -206,9 +220,13 @@ Changes driven by [group role mapping](./scim.md#role-mapping) are fully audited
 
 Administrators can export audit logs to CSV for compliance reporting or external analysis:
 
-1. Apply your desired filters (search, action type, entity type)
+1. Apply your desired filters (search, action type, entity type, date range)
 2. Click the **Export CSV** button
 3. The CSV file will be downloaded to your device
+
+:::warning
+The export covers exactly what the filters currently select, [date range included](#default-time-range). Since the viewer opens on the current week, widen the range — or choose **All time** — before exporting a compliance archive, or the CSV will contain only this week's entries.
+:::
 
 The exported CSV includes all filtered audit log entries with the following columns:
 
@@ -250,7 +268,9 @@ In multi-tenant deployments, audit logs are isolated by tenant. Each tenant can 
 
 ### Audit Logs Not Appearing
 
-If audit logs are not being recorded:
+First check the date range — the system-wide viewer opens on the [current week](#default-time-range), so anything older is filtered out rather than missing. Choose **All time** in the date-range picker to confirm.
+
+If entries genuinely are not being recorded:
 
 1. Verify that the background worker is running (`pnpm workers`)
 2. Check that Valkey/Redis is connected and healthy

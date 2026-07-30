@@ -21,7 +21,13 @@ import { Form } from "@/components/ui/form";
 import { Label } from "@/components/ui/label";
 import { MultiAsyncCombobox } from "@/components/ui/multi-async-combobox";
 import { AuditAction } from "~/zenstack/models";
-import { endOfDay, format, startOfDay } from "date-fns";
+import {
+  endOfDay,
+  endOfWeek,
+  format,
+  startOfDay,
+  startOfWeek,
+} from "date-fns";
 import { Download } from "lucide-react";
 import type { Session } from "next-auth";
 import {
@@ -44,6 +50,21 @@ const PAGE_SIZE = 1000;
 
 // Options shown per page inside the filter pickers.
 const FILTER_PAGE_SIZE = 25;
+
+// The view opens on the current week. An unbounded read spans the whole audit
+// table — the most expensive query the page can issue and rarely the one an
+// admin wants first — so the range starts narrow and the picker widens it
+// (up to "All time") on demand. Monday start matches the picker's "This week".
+const DEFAULT_DATE_PRESET = "thisWeek";
+const WEEK_STARTS_ON = 1;
+
+function currentWeekRange(): DateRange {
+  const now = new Date();
+  return {
+    from: startOfWeek(now, { weekStartsOn: WEEK_STARTS_ON }),
+    to: endOfWeek(now, { weekStartsOn: WEEK_STARTS_ON }),
+  };
+}
 
 interface ProjectFilterOption {
   id: number;
@@ -108,8 +129,9 @@ function AuditLogsContent({ session }: { session: Session }) {
   const [entityTypeFilter, setEntityTypeFilter] = useState<string[]>([]);
   const [projectFilter, setProjectFilter] = useState<ProjectFilterOption[]>([]);
   const [selectedUsers, setSelectedUsers] = useState<AuditLogUserOption[]>([]);
+  const defaultDateRange = useMemo(() => currentWeekRange(), []);
   const dateForm = useForm<{ dateRange: DateRange | undefined }>({
-    defaultValues: { dateRange: undefined },
+    defaultValues: { dateRange: defaultDateRange },
   });
   const dateRange = useWatch({
     control: dateForm.control,
@@ -576,6 +598,7 @@ function AuditLogsContent({ session }: { session: Session }) {
                   <DateRangePickerField
                     control={dateForm.control}
                     name="dateRange"
+                    defaultPreset={DEFAULT_DATE_PRESET}
                   />
                 </Form>
               </div>

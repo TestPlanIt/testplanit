@@ -56,6 +56,12 @@ interface DateRangePickerFieldProps<T extends FieldValues = FieldValues> {
   maxDate?: Date;
   className?: ClassValue;
   helpKey?: string;
+  /**
+   * Preset key the picker starts on, matching a key in `rangeCategories`
+   * (e.g. "thisWeek"). Set it alongside a pre-seeded form value so the preset
+   * dropdown names the range instead of reading "Custom".
+   */
+  defaultPreset?: string;
 }
 
 interface PredefinedRange {
@@ -78,12 +84,13 @@ export function DateRangePickerField<T extends FieldValues = FieldValues>({
   maxDate = new Date("2099-12-31"),
   className,
   helpKey,
+  defaultPreset = "custom",
 }: DateRangePickerFieldProps<T>) {
   const locale = useLocale();
   const t = useTranslations("common.actions");
   const tReports = useTranslations("reports.ui");
   const [popoverOpen, setPopoverOpen] = useState(false);
-  const [selectedPreset, setSelectedPreset] = useState<string>("custom");
+  const [selectedPreset, setSelectedPreset] = useState<string>(defaultPreset);
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
