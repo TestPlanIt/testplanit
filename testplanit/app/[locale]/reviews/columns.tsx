@@ -133,6 +133,12 @@ interface UseColumnsArgs {
   caseById: Map<number, InboxCaseRow>;
   testRunById: Map<number, InboxTestRunRow>;
   sessionById: Map<number, InboxSessionRow>;
+  /**
+   * When set, a plain click on a CASE row's name opens the docked details
+   * panel instead of navigating to the full case page. Modified and middle
+   * clicks still follow the link, so "open in a new tab" keeps working.
+   */
+  onOpenCase?: (caseId: number, projectId: number) => void;
 }
 
 /**
@@ -237,6 +243,7 @@ export const useColumns = ({
   caseById,
   testRunById,
   sessionById,
+  onOpenCase,
 }: UseColumnsArgs): ColumnDef<InboxTableRow>[] => {
   return useMemo(() => {
     const baseColumns: ColumnDef<InboxTableRow>[] = [
@@ -260,7 +267,7 @@ export const useColumns = ({
                 <span className="font-mono text-xs text-muted-foreground">{`CASE #${entityId}`}</span>
               );
             }
-            return (
+            const display = (
               <CaseDisplay
                 id={c.id}
                 name={c.name}
@@ -276,6 +283,33 @@ export const useColumns = ({
                 size="medium"
                 maxLines={1}
               />
+            );
+            if (!onOpenCase || c.isDeleted) return display;
+            // Capture phase so this runs before the `next-intl` Link's own
+            // click handler — stopping propagation there is what keeps the
+            // reviewer on the inbox and opens the docked panel instead.
+            // Modified / non-primary clicks fall through untouched so the
+            // full case page still opens in a new tab.
+            return (
+              <div
+                className="min-w-0"
+                onClickCapture={(e) => {
+                  if (
+                    e.metaKey ||
+                    e.ctrlKey ||
+                    e.shiftKey ||
+                    e.altKey ||
+                    e.button !== 0
+                  ) {
+                    return;
+                  }
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onOpenCase(c.id, projectId);
+                }}
+              >
+                {display}
+              </div>
             );
           }
           if (entityType === "RUN") {
@@ -478,5 +512,5 @@ export const useColumns = ({
           };
 
     return [...baseColumns, timestampColumn, tailColumn];
-  }, [t, view, actions, caseById, testRunById, sessionById]);
+  }, [t, view, actions, caseById, testRunById, sessionById, onOpenCase]);
 };

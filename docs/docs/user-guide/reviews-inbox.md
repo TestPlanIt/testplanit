@@ -29,6 +29,17 @@ Two filters narrow the list: **Entity type** (test cases, test runs, sessions) a
 
 Each row shows the entity, its project, the requester, the workflow transition being reviewed (**From → To**), and when it was requested or decided. On the Decided tab, a status badge shows the outcome: **Approved**, **Changes requested**, **Rejected**, or **Cancelled**.
 
+## Test Case Details Panel
+
+Clicking a test case name on either tab opens its [Test Case Details](projects/repository-case-details.mdx) in a docked panel beside the inbox, without leaving the queue — your tab, filters, and place in the list are all still there when you close it. The panel carries the same review banner and **Approve** / **Request changes** / **Reject** controls the case's own page has, so you can read the case and decide in one place. The selected request's row stays highlighted in the list.
+
+- **Resizable split**: Drag the divider between the list and the panel to set how much space each takes. Your split is remembered.
+- **Full-width toggle**: The expand control in the panel header hides the list so the details fill the whole content area; collapse it to return to the split view. On narrow viewports the panel automatically takes over the full width.
+- **Prev/next navigation**: The header shows the case's position as "N of total" and steps through the test cases in the current tab, skipping test run and session rows. When focus is not in a field or editor, the left/right arrow keys step to the previous/next case. A case that has left the list — for example once you've decided it — stays open in the panel without a position.
+- **Open full page and close**: The header also links to the standalone full-page view (opens in a new tab) and provides a close control. The browser Back button closes the panel as well. Ctrl/Cmd-clicking a case name in the list opens the full page in a new tab instead of the panel.
+
+Test run and session rows have no panel — their names still link to the run or session page.
+
 ## Acting on a request
 
 From a pending request (in the inbox or on the entity's own page):

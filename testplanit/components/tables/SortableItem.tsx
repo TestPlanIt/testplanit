@@ -53,7 +53,7 @@ function SortableItem<
   cellPinningStyleFn: (column: Column<any>) => CSSProperties;
   selectedItemsForDrag?: DraggedCaseInfo[];
   itemType?: string;
-  selectedRowId?: number | null;
+  selectedRowId?: number | string | null;
   scrollToSelectedRow?: boolean;
 }) {
   const [hoverPosition, setHoverPosition] = useState<"top" | "bottom" | null>(

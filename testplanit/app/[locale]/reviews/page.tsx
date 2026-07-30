@@ -5,14 +5,23 @@ import { schema } from "~/zenstack/schema";
 import { Card, CardContent } from "@/components/ui/card";
 import { PageCardHeader } from "@/components/ui/page-card-header";
 import { Label } from "@/components/ui/label";
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from "@/components/ui/resizable";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { History, Inbox } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
-import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { PanelImperativeHandle } from "react-resizable-panels";
 
 import { DataTable } from "@/components/tables/DataTable";
+import { CaseDetailsPanel } from "@/components/repositories/CaseDetailsPanel";
 import { useQueryClient } from "@tanstack/react-query";
+import { cn } from "~/utils";
 import {
   commentsQueryKey,
   reviewableEntityTypeToCommentEntityType,
@@ -25,7 +34,7 @@ import {
 } from "~/components/reviews/ReviewDecisionDialogs";
 import { useReviewAssigneeRoleIds } from "~/hooks/useReviewAssigneeRoleIds";
 import { useReviewFeatureEnabled } from "~/hooks/useReviewFeatureEnabled";
-import { useRouter } from "~/lib/navigation";
+import { usePathname, useRouter } from "~/lib/navigation";
 
 import {
   useColumns,
@@ -365,6 +374,60 @@ function ReviewsInboxContent({ userId }: { userId: string }) {
     []
   );
 
+  // --- Docked case-details panel ------------------------------------------
+  // Clicking a CASE row's name opens the case in a panel beside the queue —
+  // the same affordance the repository list has — instead of navigating away,
+  // so a reviewer never loses the inbox (or its tab, filters and scroll
+  // position) to look at what they're being asked to approve. The selection
+  // lives in the URL (`case` + `caseProject`; the inbox spans projects, so the
+  // case id alone isn't enough) so the panel survives a reload, is linkable,
+  // and closes on Back.
+  const router = useRouter();
+  const pathName = usePathname();
+  const searchParams = useSearchParams();
+  const caseParam = searchParams.get("case");
+  const caseProjectParam = searchParams.get("caseProject");
+  const selectedCaseId = caseParam && caseProjectParam ? caseParam : null;
+  const selectedCaseProjectId = selectedCaseId ? caseProjectParam : null;
+
+  const setCaseParams = useCallback(
+    (
+      next: { caseId: number; projectId: number } | null,
+      mode: "push" | "replace"
+    ) => {
+      const p = new URLSearchParams(searchParams.toString());
+      if (next) {
+        p.set("case", String(next.caseId));
+        p.set("caseProject", String(next.projectId));
+      } else {
+        p.delete("case");
+        p.delete("caseProject");
+      }
+      const query = p.toString();
+      const url = query ? `${pathName}?${query}` : pathName;
+      if (mode === "push") router.push(url, { scroll: false });
+      else router.replace(url, { scroll: false });
+    },
+    [searchParams, pathName, router]
+  );
+
+  // push on open so Back closes the panel; replace on close / step so the
+  // history doesn't fill up with one entry per case looked at.
+  const openCase = useCallback(
+    (caseId: number, projectId: number) =>
+      setCaseParams({ caseId, projectId }, "push"),
+    [setCaseParams]
+  );
+  const goToCase = useCallback(
+    (caseId: number, projectId: number) =>
+      setCaseParams({ caseId, projectId }, "replace"),
+    [setCaseParams]
+  );
+  const closeDetails = useCallback(
+    () => setCaseParams(null, "replace"),
+    [setCaseParams]
+  );
+
   const columns = useColumns({
     t,
     view,
@@ -372,6 +435,7 @@ function ReviewsInboxContent({ userId }: { userId: string }) {
     caseById,
     testRunById,
     sessionById,
+    onOpenCase: openCase,
   });
 
   // DataTable's `DataRow` shape requires every row to carry `id` + `name`.
@@ -398,6 +462,87 @@ function ReviewsInboxContent({ userId }: { userId: string }) {
         })),
     [inboxRows, caseById, testRunById, sessionById]
   );
+
+  // Prev/next steps through the CASE rows of the current tab in the order
+  // they're listed, skipping RUN/SESSION rows (no panel exists for those).
+  const caseNavItems = useMemo(
+    () =>
+      tableData
+        .filter((r) => r.entityType === "CASE")
+        .map((r) => ({
+          reviewId: r.id,
+          caseId: r.entityId,
+          projectId: r.projectId,
+        })),
+    [tableData]
+  );
+  const selectedNavIndex = selectedCaseId
+    ? caseNavItems.findIndex(
+        (i) =>
+          String(i.caseId) === selectedCaseId &&
+          String(i.projectId) === selectedCaseProjectId
+      )
+    : -1;
+  // The open case isn't always in the list (its row can leave the queue once
+  // decided, or on a tab/filter change) — a null position hides the stepper
+  // rather than showing a bogus "3 of 7".
+  const navPosition = selectedNavIndex >= 0 ? selectedNavIndex + 1 : null;
+  const prevNavItem =
+    selectedNavIndex > 0 ? caseNavItems[selectedNavIndex - 1] : null;
+  const nextNavItem =
+    selectedNavIndex >= 0 ? (caseNavItems[selectedNavIndex + 1] ?? null) : null;
+  // Highlight the row the panel is showing. DataTable matches on the row id,
+  // which here is the ReviewRequest id, not the case id.
+  const selectedRowId =
+    selectedNavIndex >= 0 ? caseNavItems[selectedNavIndex].reviewId : null;
+
+  // Full-width takeover — the panel can swallow the list (toggle in its
+  // header), and does so automatically on narrow viewports where a split
+  // leaves neither side usable. Mirrors the repository details panel.
+  const listPanelRef = useRef<PanelImperativeHandle>(null);
+  const [detailsFullWidth, setDetailsFullWidth] = useState(false);
+  const [isNarrowForDetails, setIsNarrowForDetails] = useState(false);
+  const effectiveFullWidth =
+    !!selectedCaseId && (detailsFullWidth || isNarrowForDetails);
+
+  useEffect(() => {
+    try {
+      setDetailsFullWidth(
+        window.localStorage.getItem("reviews-details-fullwidth") === "1"
+      );
+    } catch {
+      /* ignore private-mode / quota */
+    }
+  }, []);
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(
+        "reviews-details-fullwidth",
+        detailsFullWidth ? "1" : "0"
+      );
+    } catch {
+      /* ignore */
+    }
+  }, [detailsFullWidth]);
+
+  useEffect(() => {
+    const check = () => setIsNarrowForDetails(window.innerWidth < 1200);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
+  // collapse()/expand() rather than unmounting the list panel so a
+  // user-dragged split ratio survives the round trip.
+  useEffect(() => {
+    const panel = listPanelRef.current;
+    if (!panel) return;
+    if (effectiveFullWidth) {
+      if (!panel.isCollapsed()) panel.collapse();
+    } else if (panel.isCollapsed()) {
+      panel.expand();
+    }
+  }, [effectiveFullWidth]);
 
   const handleDecisionSuccess = (row: ExtendedReviewRequest) => {
     void queryClient.invalidateQueries({
@@ -530,51 +675,111 @@ function ReviewsInboxContent({ userId }: { userId: string }) {
               </div>
             )}
 
-            {/* Empty state when no rows match (and feature is enabled). */}
-            {!featureDisabled && tableData.length === 0 && (
-              <div
-                data-testid="reviews-inbox-empty"
-                className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground"
+            {/* Queue on the left, docked case details on the right. The group
+                renders whether or not a case is open so opening one doesn't
+                remount the table (and lose its column sizing / scroll). */}
+            {!featureDisabled && (
+              <ResizablePanelGroup
+                direction="horizontal"
+                autoSaveId="reviews-details-split"
+                className="w-full min-w-0"
+                data-testid="reviews-inbox-layout"
               >
-                {view === "pending"
-                  ? t("reviews.inbox.empty")
-                  : t("reviews.inbox.emptyDecided")}
-              </div>
-            )}
+                <ResizablePanel
+                  order={1}
+                  ref={listPanelRef}
+                  collapsible
+                  collapsedSize={0}
+                  defaultSize={56}
+                  minSize={30}
+                  className="min-w-0"
+                  data-testid="reviews-list-pane"
+                >
+                  {/* Empty state when no rows match (and feature is enabled). */}
+                  {tableData.length === 0 ? (
+                    <div
+                      data-testid="reviews-inbox-empty"
+                      className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground"
+                    >
+                      {view === "pending"
+                        ? t("reviews.inbox.empty")
+                        : t("reviews.inbox.emptyDecided")}
+                    </div>
+                  ) : (
+                    // Two CSS layers on this wrapper — both opt-in via Tailwind
+                    // arbitrary variants so the shared `DataTable` component
+                    // stays untouched:
+                    //
+                    //   1. `[&_tbody_tr]:h-12` pins every row at 48px so the
+                    //      Pending tab (taller — 32px decision icon-buttons in
+                    //      the Actions cell) and the Decided tab (shorter —
+                    //      just a Status badge) render at identical heights.
+                    //   2. `[&_table]:!w-px` overrides DataTable's `w-full`. Under
+                    //      `table-layout: fixed` the used width is the greater of
+                    //      the specified width and the sum of the column widths, so
+                    //      a tiny width resolves to exactly that sum. Without it the
+                    //      table stretches and fixed layout shares the surplus out
+                    //      across the columns, so none honors its `size`.
+                    <div className="[&_table]:!w-px [&_tbody_tr]:h-12">
+                      <DataTable
+                        // DataTable reads `meta.isPinned` once per mount, and the
+                        // tabs pin a different trailing column (Actions vs Status).
+                        // Returning to a tab with cached rows never unmounts it, so
+                        // without this key it keeps the other tab's pin.
+                        key={view}
+                        columns={columns as any}
+                        data={tableData as any}
+                        sortConfig={sortConfig}
+                        onSortChange={handleSortChange}
+                        columnVisibility={columnVisibility}
+                        onColumnVisibilityChange={setColumnVisibility}
+                        rowTestIdPrefix="reviews-inbox-row"
+                        storageKey="reviews-inbox"
+                        enableColumnMenu={false}
+                        selectedRowId={selectedRowId}
+                        scrollToSelectedRow={false}
+                      />
+                    </div>
+                  )}
+                </ResizablePanel>
 
-            {!featureDisabled && tableData.length > 0 && (
-              // Two CSS layers on this wrapper — both opt-in via Tailwind
-              // arbitrary variants so the shared `DataTable` component
-              // stays untouched:
-              //
-              //   1. `[&_tbody_tr]:h-12` pins every row at 48px so the
-              //      Pending tab (taller — 32px decision icon-buttons in
-              //      the Actions cell) and the Decided tab (shorter —
-              //      just a Status badge) render at identical heights.
-              //   2. `[&_table]:!w-px` overrides DataTable's `w-full`. Under
-              //      `table-layout: fixed` the used width is the greater of
-              //      the specified width and the sum of the column widths, so
-              //      a tiny width resolves to exactly that sum. Without it the
-              //      table stretches and fixed layout shares the surplus out
-              //      across the columns, so none honors its `size`.
-              <div className="[&_table]:!w-px [&_tbody_tr]:h-12">
-                <DataTable
-                  // DataTable reads `meta.isPinned` once per mount, and the
-                  // tabs pin a different trailing column (Actions vs Status).
-                  // Returning to a tab with cached rows never unmounts it, so
-                  // without this key it keeps the other tab's pin.
-                  key={view}
-                  columns={columns as any}
-                  data={tableData as any}
-                  sortConfig={sortConfig}
-                  onSortChange={handleSortChange}
-                  columnVisibility={columnVisibility}
-                  onColumnVisibilityChange={setColumnVisibility}
-                  rowTestIdPrefix="reviews-inbox-row"
-                  storageKey="reviews-inbox"
-                  enableColumnMenu={false}
-                />
-              </div>
+                {selectedCaseId && selectedCaseProjectId && (
+                  <>
+                    <ResizableHandle
+                      withHandle
+                      id="reviews-details-resize-handle"
+                      className={cn("mx-1", effectiveFullWidth && "hidden")}
+                    />
+                    <ResizablePanel
+                      order={2}
+                      defaultSize={44}
+                      minSize={28}
+                      className="h-full min-w-0"
+                      data-testid="reviews-details-pane"
+                    >
+                      <CaseDetailsPanel
+                        caseId={selectedCaseId}
+                        projectId={selectedCaseProjectId}
+                        fullWidth={effectiveFullWidth}
+                        onToggleFullWidth={() => setDetailsFullWidth((v) => !v)}
+                        onClose={closeDetails}
+                        onPrev={() =>
+                          prevNavItem &&
+                          goToCase(prevNavItem.caseId, prevNavItem.projectId)
+                        }
+                        onNext={() =>
+                          nextNavItem &&
+                          goToCase(nextNavItem.caseId, nextNavItem.projectId)
+                        }
+                        hasPrev={!!prevNavItem}
+                        hasNext={!!nextNavItem}
+                        position={navPosition}
+                        total={caseNavItems.length}
+                      />
+                    </ResizablePanel>
+                  </>
+                )}
+              </ResizablePanelGroup>
             )}
           </div>
         </CardContent>

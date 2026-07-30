@@ -149,8 +149,9 @@ interface DataTableProps<TData extends DataRow, TValue> {
   rowTestIdPrefix?: string;
   /** Explicit id of the row to highlight and scroll to. Falls back to the
    * `selectedCase` search param when not provided (e.g. the run page), so the
-   * repository details panel can drive it from its own `case` param. */
-  selectedRowId?: number | null;
+   * repository details panel can drive it from its own `case` param. String
+   * ids are accepted for tables keyed by a cuid (e.g. the reviews inbox). */
+  selectedRowId?: number | string | null;
   /** Whether to scroll the selected row into view. Defaults to true (the run
    * page); the repository details panel disables it so opening/stepping through
    * a case highlights the row without jumping the list. */

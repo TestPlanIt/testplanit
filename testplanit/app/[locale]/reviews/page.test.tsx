@@ -7,8 +7,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 // ─────────────────────────────────────────────────────────────────────────────
 
 const mockRouterPush = vi.fn();
+const mockRouterReplace = vi.fn();
 vi.mock("~/lib/navigation", () => ({
-  useRouter: () => ({ push: mockRouterPush }),
+  useRouter: () => ({ push: mockRouterPush, replace: mockRouterReplace }),
+  usePathname: () => "/reviews",
   Link: ({
     href,
     children,
@@ -21,6 +23,57 @@ vi.mock("~/lib/navigation", () => ({
     <a href={href} data-mock-link="true" {...rest}>
       {children}
     </a>
+  ),
+}));
+
+// The docked details panel is driven by `case` + `caseProject` search params.
+let currentSearchParams = "";
+vi.mock("next/navigation", async (importOriginal) => {
+  const original = await importOriginal<typeof import("next/navigation")>();
+  return {
+    ...original,
+    useSearchParams: () => new URLSearchParams(currentSearchParams),
+  };
+});
+
+// Stub the panel — it pulls the whole TestCaseDetailsView tree, which is far
+// heavier than anything these page-level tests assert on. The stub records the
+// props the page hands it and exposes its callbacks as buttons.
+vi.mock("@/components/repositories/CaseDetailsPanel", () => ({
+  CaseDetailsPanel: ({
+    caseId,
+    projectId,
+    position,
+    total,
+    hasPrev,
+    hasNext,
+    onPrev,
+    onNext,
+    onClose,
+  }: {
+    caseId: string;
+    projectId: string;
+    position: number | null;
+    total: number;
+    hasPrev: boolean;
+    hasNext: boolean;
+    onPrev: () => void;
+    onNext: () => void;
+    onClose: () => void;
+  }) => (
+    <div
+      data-testid="case-details-panel-stub"
+      data-case-id={caseId}
+      data-project-id={projectId}
+      data-position={String(position)}
+      data-total={String(total)}
+      data-has-prev={String(hasPrev)}
+      data-has-next={String(hasNext)}
+    >
+      <button data-testid="stub-prev" onClick={onPrev} />
+      <button data-testid="stub-next" onClick={onNext} />
+      <button data-testid="stub-close" onClick={onClose} />
+    </div>
   ),
 }));
 
@@ -189,8 +242,15 @@ vi.mock("@/components/tables/DataTable", () => ({
 // switching, filters) rather than column internals, so a noop columns
 // factory keeps the surface minimal.
 vi.mock("./columns", () => ({
-  useColumns: () => [],
+  useColumns: (args: unknown) => {
+    mockUseColumns(args);
+    return [];
+  },
 }));
+
+// Captures the `useColumns` args so tests can drive `onOpenCase` — the hook the
+// entity cell calls when a reviewer clicks a case name.
+const mockUseColumns = vi.fn((_args: unknown) => {});
 
 // Same reason — entity-row side-fetches.
 vi.mock("~/components/reviews/ReviewDecisionDialogs", () => ({
@@ -242,6 +302,9 @@ import ReviewsInboxPage from "./page";
 describe("ReviewsInboxPage (/reviews)", () => {
   beforeEach(() => {
     mockRouterPush.mockReset();
+    mockRouterReplace.mockReset();
+    mockUseColumns.mockClear();
+    currentSearchParams = "";
     mockUseReviewFeatureEnabled.mockReset();
     mockUseFindManyReviewRequest.mockReset();
     mockUseCountReviewRequest.mockReset();
@@ -429,5 +492,93 @@ describe("ReviewsInboxPage (/reviews)", () => {
       ]!;
     const args = lastCall[0] as { orderBy?: { decidedAt?: string } };
     expect(args.orderBy?.decidedAt).toBe("desc");
+  });
+
+  // ───────────────────────────────────────────────────────────────────────
+  // Docked case-details panel
+  // ───────────────────────────────────────────────────────────────────────
+
+  /** Two CASE rows in the same project so prev/next has somewhere to step. */
+  const twoCaseRows = () =>
+    mockUseFindManyReviewRequest.mockImplementation(() => ({
+      data: [
+        { ...allRows[0]!, id: "r1", entityId: 101 },
+        { ...allRows[0]!, id: "r1b", entityId: 102 },
+      ],
+      isLoading: false,
+    }));
+
+  it("(k) no panel until a case is selected", () => {
+    render(<ReviewsInboxPage />);
+    expect(
+      screen.queryByTestId("case-details-panel-stub")
+    ).not.toBeInTheDocument();
+  });
+
+  it("(k2) clicking a case name pushes the case + project params instead of navigating to the case page", () => {
+    render(<ReviewsInboxPage />);
+    const args = mockUseColumns.mock.calls[0]![0] as {
+      onOpenCase: (caseId: number, projectId: number) => void;
+    };
+    args.onOpenCase(101, 7);
+    expect(mockRouterPush).toHaveBeenCalledWith(
+      "/reviews?case=101&caseProject=7",
+      { scroll: false }
+    );
+  });
+
+  it("(k3) the `case` + `caseProject` params render the panel for that case", () => {
+    currentSearchParams = "case=101&caseProject=7";
+    render(<ReviewsInboxPage />);
+    const panel = screen.getByTestId("case-details-panel-stub");
+    expect(panel).toHaveAttribute("data-case-id", "101");
+    expect(panel).toHaveAttribute("data-project-id", "7");
+  });
+
+  it("(k4) the case id alone doesn't open the panel — the inbox spans projects, so both params are required", () => {
+    currentSearchParams = "case=101";
+    render(<ReviewsInboxPage />);
+    expect(
+      screen.queryByTestId("case-details-panel-stub")
+    ).not.toBeInTheDocument();
+  });
+
+  it("(k5) prev/next step through the CASE rows only, skipping RUN and SESSION rows", async () => {
+    const user = userEvent.setup();
+    twoCaseRows();
+    currentSearchParams = "case=101&caseProject=7";
+    render(<ReviewsInboxPage />);
+
+    const panel = screen.getByTestId("case-details-panel-stub");
+    expect(panel).toHaveAttribute("data-position", "1");
+    expect(panel).toHaveAttribute("data-total", "2");
+    expect(panel).toHaveAttribute("data-has-prev", "false");
+    expect(panel).toHaveAttribute("data-has-next", "true");
+
+    // replace, not push, so stepping doesn't stack history entries.
+    await user.click(screen.getByTestId("stub-next"));
+    expect(mockRouterReplace).toHaveBeenCalledWith(
+      "/reviews?case=102&caseProject=7",
+      { scroll: false }
+    );
+  });
+
+  it("(k6) a case that isn't in the current list still opens, but without a position", () => {
+    currentSearchParams = "case=999&caseProject=7";
+    render(<ReviewsInboxPage />);
+    const panel = screen.getByTestId("case-details-panel-stub");
+    expect(panel).toHaveAttribute("data-position", "null");
+    expect(panel).toHaveAttribute("data-has-prev", "false");
+    expect(panel).toHaveAttribute("data-has-next", "false");
+  });
+
+  it("(k7) closing clears both params", async () => {
+    const user = userEvent.setup();
+    currentSearchParams = "case=101&caseProject=7";
+    render(<ReviewsInboxPage />);
+    await user.click(screen.getByTestId("stub-close"));
+    expect(mockRouterReplace).toHaveBeenCalledWith("/reviews", {
+      scroll: false,
+    });
   });
 });
