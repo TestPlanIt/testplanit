@@ -2519,6 +2519,7 @@
       "testCases": "{count, plural, =0 {# 테스트 케이스} =1 {# 테스트 케이스} other {# 테스트 케이스}}",
       "activeMilestones": "{count, plural, =0 {# 활성 마일스톤} =1 {# 활성 마일스톤} other {# 활성 마일스톤}}",
       "activeRuns": "{count, plural, =0 {# 활성 실행} =1 {# 활성 실행} other {# 활성 실행}}",
+      "automationRunsInProgress": "{count, plural, =0 {진행 중인 자동화 실행 #개} =1 {진행 중인 자동화 실행 #개} other {진행 중인 자동화 실행 #개}}",
       "activeSessions": "{count, plural, =0 {# 활성 세션} =1 {# 활성 세션} other {# 활성 세션}}",
       "issues": "{count, plural, =0 {# 문제} =1 {# 문제} other {# 문제}}"
     }

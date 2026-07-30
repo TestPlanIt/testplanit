@@ -2519,6 +2519,7 @@
       "testCases": "{count, plural, =0 {# Trường hợp kiểm thử} =1 {# Trường hợp kiểm thử} other {# Trường hợp kiểm thử}}",
       "activeMilestones": "{count, plural, =0 {# Các mốc quan trọng đang hoạt động} =1 {# Mốc quan trọng đang hoạt động} other {# Các mốc quan trọng đang hoạt động}}",
       "activeRuns": "{count, plural, =0 {# Các lượt chạy đang hoạt động} =1 {# Lượt chạy đang hoạt động} other {# Các lượt chạy đang hoạt động}}",
+      "automationRunsInProgress": "{count, plural, =0 {# Automation Runs in Progress} =1 {# Automation Run in Progress} other {# Automation Runs in Progress}}",
       "activeSessions": "{count, plural, =0 {# Phiên đang hoạt động} =1 {# Phiên đang hoạt động} other {# Phiên đang hoạt động}}",
       "issues": "{count, plural, =0 {# Vấn đề} =1 {# Vấn đề} other {# Vấn đề}}"
     }

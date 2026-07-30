@@ -2519,6 +2519,7 @@
       "testCases": "{count, plural, =0 {# Test Durumları} =1 {# Test Durumu} other {# Test Durumları}}",
       "activeMilestones": "{count, plural, =0 {# Aktif Kilometre Taşları} =1 {# Aktif Kilometre Taşı} other {# Aktif Kilometre Taşları}}",
       "activeRuns": "{count, plural, =0 {# Aktif Koşular} =1 {# Aktif Koşu} other {# Aktif Koşular}}",
+      "automationRunsInProgress": "{count, plural, =0 {# Otomasyon Çalıştırması Devam Ediyor} =1 {# Otomasyon Çalıştırması Devam Ediyor} other {# Otomasyon Çalıştırması Devam Ediyor}}",
       "activeSessions": "{count, plural, =0 {# Aktif Oturumlar} =1 {# Aktif Oturum} other {# Aktif Oturumlar}}",
       "issues": "{count, plural, =0 {# Sorunlar} =1 {# Sorun} other {# Sorunlar}}"
     }

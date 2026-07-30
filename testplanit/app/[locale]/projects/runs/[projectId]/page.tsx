@@ -1108,8 +1108,12 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
               </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col">
-              {/* Summary Metrics Display */}
-              <div className="mb-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* Summary Metrics Display — column count follows the space the
+                  grid actually has (the project menu makes the viewport a poor
+                  proxy), and a card never drops below 340px: the width its
+                  chart and date-range subtitle need. auto-fill over auto-fit so
+                  a lone card keeps that width instead of stretching. */}
+              <div className="mb-6 grid grid-cols-[repeat(auto-fill,minmax(340px,1fr))] gap-4">
                 {numericProjectId != null && (
                   <AutomationRunsCard
                     projectId={numericProjectId}

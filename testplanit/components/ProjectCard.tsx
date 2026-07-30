@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/card";
 import { Link, useRouter } from "@/lib/navigation";
 import {
+  Bot,
   Bug,
   CirclePlay,
   Compass,
@@ -40,12 +41,16 @@ interface ProjectCardProps {
   project: Projects & { _count?: ProjectCounts | null };
   users: { userId: string }[];
   isLoadingIssueCounts?: boolean;
+  /** In-progress automated runs — the same set the project runs page shows
+   *  in its "Automation Runs in Progress" card. */
+  automationRunCount?: number;
 }
 
 export const ProjectCard: React.FC<ProjectCardProps> = ({
   project,
   users,
   isLoadingIssueCounts = false,
+  automationRunCount = 0,
 }) => {
   const { data: session } = useSession();
   const locale = useLocale();
@@ -126,6 +131,18 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
             >
               <CirclePlay className="w-4 h-4 text-muted-foreground mt-1" />
               <span>{runCount.toLocaleString(locale)}</span>
+            </Link>
+          )}
+          {automationRunCount > 0 && (
+            <Link
+              href={`/projects/runs/${project.id}?runType=automated`}
+              className="flex items-center gap-1"
+              title={t("home.counts.automationRunsInProgress", {
+                count: automationRunCount,
+              })}
+            >
+              <Bot className="w-4 h-4 text-muted-foreground mt-1" />
+              <span>{automationRunCount.toLocaleString(locale)}</span>
             </Link>
           )}
           {sessionCount > 0 && (

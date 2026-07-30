@@ -6,6 +6,7 @@ import { type NextPage } from "next";
 import { useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useAutomationRunCounts } from "~/hooks/useAutomationRunCounts";
 import { redirect } from "~/lib/navigation";
 import {
   ProcessedProject,
@@ -112,6 +113,10 @@ const Welcome = ({ user: _user }: { user: AuthUser }) => {
   const processedProjectsData: ProcessedProject[] = useMemo(
     () => processProjectsWithEffectiveMembers(projectsRaw as any, allUsers),
     [projectsRaw, allUsers]
+  );
+
+  const { counts: automationRunCounts } = useAutomationRunCounts(
+    !!session?.user
   );
 
   // Fetch accurate issue counts for all projects
@@ -256,6 +261,9 @@ const Welcome = ({ user: _user }: { user: AuthUser }) => {
                           project={project}
                           users={project.users}
                           isLoadingIssueCounts={isLoadingIssueCounts}
+                          automationRunCount={
+                            automationRunCounts[project.id] ?? 0
+                          }
                         />
                       ))}
                     </>

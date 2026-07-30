@@ -2519,6 +2519,7 @@
       "testCases": "{count, plural, =0 {# Testgevallen} =1 {# Testgeval} other {# Testgevallen}}",
       "activeMilestones": "{count, plural, =0 {# Actieve mijlpalen} =1 {# Actieve mijlpaal} other {# Actieve mijlpalen}}",
       "activeRuns": "{count, plural, =0 {# Actieve uitvoeringen} =1 {# Actieve uitvoeringen} other {# Actieve uitvoeringen}}",
+      "automationRunsInProgress": "{count, plural, =0 {# Automatiseringsruns in uitvoering} =1 {# Automatiseringsrun in uitvoering} other {# Automatiseringsruns in uitvoering}}",
       "activeSessions": "{count, plural, =0 {# Actieve sessies} =1 {# Actieve sessie} other {# Actieve sessies}}",
       "issues": "{count, plural, =0 {# Problemen} =1 {# Problemen} other {# Problemen}}"
     }

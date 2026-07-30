@@ -2519,6 +2519,7 @@
       "testCases": "{count, plural, =0 {# حالات اختبار} =1 {# حالة اختبار} other {# حالات اختبار}}",
       "activeMilestones": "{count, plural, =0 {# معالم رئيسية نشطة} =1 {# معلم رئيسي نشط} other {# معالم رئيسية نشطة}}",
       "activeRuns": "{count, plural, =0 {# تشغيلات نشطة} =1 {# تشغيل نشط} other {# تشغيلات نشطة}}",
+      "automationRunsInProgress": "{count, plural, =0 {# Automation Runs in Progress} =1 {# Automation Run in Progress} other {# Automation Runs in Progress}}",
       "activeSessions": "{count, plural, =0 {# جلسات نشطة} =1 {# جلسة نشطة} other {# جلسات نشطة}}",
       "issues": "{count, plural, =0 {# مشكلات} =1 {# مشكلة} other {# مشكلات}}"
     }

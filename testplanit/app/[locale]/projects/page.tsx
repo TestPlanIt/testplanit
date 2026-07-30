@@ -5,6 +5,7 @@ import { schema } from "~/zenstack/schema";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
+import { useAutomationRunCounts } from "~/hooks/useAutomationRunCounts";
 import { useRouter } from "~/lib/navigation";
 import {
   ProcessedProject,
@@ -30,6 +31,10 @@ const Projects = () => {
     where: { isActive: true, isDeleted: false },
     select: { id: true, access: true },
   });
+
+  const { counts: automationRunCounts } = useAutomationRunCounts(
+    !!session?.user
+  );
 
   const { data: projectsRaw, isFetched } = useClientQueries(
     schema
@@ -177,6 +182,7 @@ const Projects = () => {
                 project={project}
                 users={project.users}
                 isLoadingIssueCounts={isLoadingIssueCounts}
+                automationRunCount={automationRunCounts[project.id] ?? 0}
               />
             ))}
           </CardContent>

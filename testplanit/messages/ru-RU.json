@@ -2519,6 +2519,7 @@
       "testCases": "{count, plural, =0 {# Тестовые примеры} =1 {# Тестовый пример} other {# Тестовые примеры}}",
       "activeMilestones": "{count, plural, =0 {# Активные этапы} =1 {# Активный этап} other {# Активные этапы}}",
       "activeRuns": "{count, plural, =0 {# Активные забеги} =1 {# Активный забег} other {# Активные забеги}}",
+      "automationRunsInProgress": "{count, plural, =0 {# автоматических прогонов выполняется} =1 {# автоматический прогон выполняется} other {# автоматических прогонов выполняется}}",
       "activeSessions": "{count, plural, =0 {# Активные сессии} =1 {# Активная сессия} other {# Активные сессии}}",
       "issues": "{count, plural, =0 {# Выпуски} =1 {# Выпуск} other {# Выпуски}}"
     }
@@ -3760,7 +3761,7 @@
       "recentResultsDescription": "Ознакомьтесь с последними результатами тестового запуска.",
       "recentAutomatedResultsTitle": "Последние автоматизированные результаты",
       "noRecentAutomatedResults": "Не найдено ни одного недавнего автоматизированного результата.",
-      "automationRunsInProgress": "{count, plural, =1 {# Automation Run in Progress} other {# Automation Runs in Progress}}",
+      "automationRunsInProgress": "{count, plural, =1 {# автоматический прогон выполняется} other {# автоматических прогонов выполняется}}",
       "automationRunsInProgressDescription": "Статус выполняемых автоматизированных тестовых прогонов в режиме реального времени.",
       "recentResultsDateRange": "Диапазон дат",
       "recentResultsElapsed": "Прошло",

@@ -2519,6 +2519,7 @@
       "testCases": "{count, plural, =0 {# Casi di test} =1 {# Caso di test} other {# Casi di test}}",
       "activeMilestones": "{count, plural, =0 {# Traguardi attivi} =1 {# Traguardo attivo} other {# Traguardi attivi}}",
       "activeRuns": "{count, plural, =0 {# Corse attive} =1 {# Corse attive} other {# Corse attive}}",
+      "automationRunsInProgress": "{count, plural, =0 {# Esecuzioni Automatiche in Corso} =1 {# Esecuzione Automatica in Corso} other {# Esecuzioni Automatiche in Corso}}",
       "activeSessions": "{count, plural, =0 {# Sessioni attive} =1 {# Sessione attiva} other {# Sessioni attive}}",
       "issues": "{count, plural, =0 {# Problemi} =1 {# Problema} other {# Problemi}}"
     }

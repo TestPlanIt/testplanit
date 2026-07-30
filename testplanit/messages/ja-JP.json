@@ -2519,6 +2519,7 @@
       "testCases": "{count, plural, =0 {# テストケース} =1 {# テストケース} other {# テストケース}}",
       "activeMilestones": "{count, plural, =0 {# アクティブなマイルストーン} =1 {# アクティブなマイルストーン} other {# アクティブなマイルストーン}}",
       "activeRuns": "{count, plural, =0 {アクティブな実行#} =1 {アクティブな実行#} other {アクティブな実行#}}",
+      "automationRunsInProgress": "{count, plural, =0 {# Automation Runs in Progress} =1 {# Automation Run in Progress} other {# Automation Runs in Progress}}",
       "activeSessions": "{count, plural, =0 {アクティブセッション#} =1 {アクティブセッション#} other {アクティブセッション#}}",
       "issues": "{count, plural, =0 {# 問題} =1 {# 問題} other {# 問題}}"
     }

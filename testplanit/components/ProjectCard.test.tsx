@@ -261,6 +261,73 @@ describe("ProjectCard", () => {
     expect(screen.getByText("7")).toBeDefined();
   });
 
+  it("renders the automation run count after the test run count", () => {
+    const project = {
+      ...baseProject,
+      _count: {
+        milestones: 0,
+        testRuns: 5,
+        sessions: 0,
+        repositoryCases: 0,
+        issues: 0,
+      },
+    };
+    render(
+      <ProjectCard project={project} users={mockUsers} automationRunCount={3} />
+    );
+
+    const automationLink = screen.getByRole("link", {
+      name: (_name, el) =>
+        (el as HTMLAnchorElement).href?.includes(
+          "/projects/runs/1?runType=automated"
+        ),
+    });
+    expect(automationLink.textContent).toContain("3");
+
+    // Ordering: the plain run count link comes before the automation link
+    const links = screen.queryAllByRole("link");
+    const runIndex = links.findIndex(
+      (el) =>
+        (el as HTMLAnchorElement).href?.endsWith("/projects/runs/1") ?? false
+    );
+    expect(runIndex).toBeGreaterThan(-1);
+    expect(links.indexOf(automationLink)).toBe(runIndex + 1);
+  });
+
+  it("does not render the automation run count when it is zero or omitted", () => {
+    const project = {
+      ...baseProject,
+      _count: {
+        milestones: 0,
+        testRuns: 5,
+        sessions: 0,
+        repositoryCases: 0,
+        issues: 0,
+      },
+    };
+    const { rerender } = render(
+      <ProjectCard project={project} users={mockUsers} />
+    );
+    expect(
+      screen
+        .queryAllByRole("link")
+        .filter((el) =>
+          (el as HTMLAnchorElement).href?.includes("runType=automated")
+        )
+    ).toHaveLength(0);
+
+    rerender(
+      <ProjectCard project={project} users={mockUsers} automationRunCount={0} />
+    );
+    expect(
+      screen
+        .queryAllByRole("link")
+        .filter((el) =>
+          (el as HTMLAnchorElement).href?.includes("runType=automated")
+        )
+    ).toHaveLength(0);
+  });
+
   it("renders project note in card description", () => {
     const project = { ...baseProject, note: "My important note" };
     render(<ProjectCard project={project} users={mockUsers} />);
