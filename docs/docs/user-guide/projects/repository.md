@@ -50,9 +50,10 @@ The page features a resizable two-panel layout:
 
     * **View Selector**: Allows switching between different ways to organize and filter test cases (e.g., By Folder, By Template, By State, By Tag, By Custom Fields, etc.).
     * **Folder Tree (Default View)**: Displays a hierarchical structure of folders. You can:
-        * Expand/Collapse folders using the chevron icons.
+        * Expand/Collapse folders using the chevron icons. Hold ⌥ (Alt on Windows and Linux) while clicking a chevron to expand or collapse all of that folder's subfolders at once; on a top-level folder the same click applies to every folder in the tree.
+        * Filter the tree by name. Projects with more than 15 folders show a filter box above the tree; matching folders stay in place under their parents so you can still see where each one sits, and clearing the filter restores whatever you had expanded.
         * Select a folder to view its contained test cases in the right panel.
-        * Drag and drop folders to reorder them or change their parent (except in Run Mode).
+        * Drag and drop folders to reorder them or change their parent (except in Run Mode, or while the tree is filtered).
         * Add a new folder using the **Add Folder** button (icon: CirclePlus) at the top.
         * Edit an existing folder's name/docs using the **Edit** button (icon: SquarePen) that appears on hover.
     * **Filter Panel (Other Views)**: When a view other than "By Folder" is selected, this panel shows the available filters for that view (e.g., list of templates, states, creators), each with a count of matching cases. Selecting an item filters the cases shown in the right panel. See [Selecting filter values](#selecting-filter-values) for how short and long lists differ.
