@@ -654,7 +654,7 @@ export default function TestCaseVersions() {
                 <CaseDisplay
                   id={testcase.id}
                   name={testcase.name}
-                  size="large"
+                  size="xl"
                   source={testcase.source}
                   automated={testcase.automated}
                   hasParameters={testcase.hasParameters}
@@ -663,7 +663,7 @@ export default function TestCaseVersions() {
                   <CaseDisplay
                     id={previousTestcase.id}
                     name={previousTestcase.name}
-                    size="large"
+                    size="xl"
                     source={previousTestcase.source}
                     automated={previousTestcase.automated}
                     hasParameters={previousTestcase.hasParameters}
