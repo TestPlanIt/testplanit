@@ -72,9 +72,9 @@ function fmtDuration(
   return toHumanReadable(value, { isSeconds, locale, largest: 2, round: true });
 }
 
-function fmtPercent(value: number | null | undefined): string {
+function fmtPercent(value: number | null | undefined, decimals = 0): string {
   if (typeof value !== "number" || isNaN(value)) return "";
-  return `${Math.round(value)}%`;
+  return `${value.toFixed(decimals)}%`;
 }
 
 const HEALTH_STATUS_KEY: Record<string, string> = {
@@ -211,8 +211,13 @@ function buildAutomationTrends(p: BuildReportCsvParams): CsvRow[] {
         r[`${prefix}_manual`] ?? 0;
       row[`${tag}${t("reports.metrics.totalCount")}`] =
         r[`${prefix}_total`] ?? 0;
+      // One decimal, matching the on-screen column (useAutomationTrendsColumns
+      // renders `value.toFixed(1)`). Rounding to a whole number here collapsed
+      // every sub-1% automation rate to "0%", which reads as "no automation at
+      // all" on a project that has some.
       row[`${tag}% ${t("common.fields.automated")}`] = fmtPercent(
-        r[`${prefix}_percentAutomated`]
+        r[`${prefix}_percentAutomated`],
+        1
       );
     }
     return row;

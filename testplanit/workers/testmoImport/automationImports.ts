@@ -464,6 +464,9 @@ export const importAutomationCases = async (
         });
 
         if (repositoryCase) {
+          // Only a real manual→automated transition earns a version snapshot;
+          // re-importing an already-automated case must not churn versions.
+          const flipsToAutomated = !repositoryCase.automated;
           repositoryCase = await tx.repositoryCases.update({
             where: { id: repositoryCase.id },
             data: {
@@ -474,8 +477,17 @@ export const importAutomationCases = async (
               templateId: resolvedTemplateId,
               folderId,
               repositoryId,
+              // Automation Trends reads the version timeline, not this flag, so
+              // the flip has to leave a snapshot behind or the case reads as
+              // manual for every period. Matches the create branch below.
+              ...(flipsToAutomated ? { currentVersion: { increment: 1 } } : {}),
             },
           });
+          if (flipsToAutomated) {
+            await createTestCaseVersionInTransaction(tx, repositoryCase.id, {
+              copyFieldValues: true,
+            });
+          }
           for (const testmoCaseId of testmoCaseIds) {
             automationCaseIdMap.set(testmoCaseId, repositoryCase.id);
             let projectMap = automationCaseProjectMap.get(projectId);

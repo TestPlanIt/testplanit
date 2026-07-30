@@ -39,6 +39,13 @@ vi.mock("~/services/repositoryCaseSync", () => ({
   syncRepositoryCaseToElasticsearch: vi.fn().mockResolvedValue(true),
 }));
 
+// The automated flip snapshots the case so Automation Trends can see the
+// manual→automated transition on the version timeline. The real service reads
+// the case back with its full relation graph, which the tx mock does not model.
+vi.mock("~/lib/services/testCaseVersionService", () => ({
+  createTestCaseVersionInTransaction: vi.fn().mockResolvedValue({ id: 4242 }),
+}));
+
 // Spy on updateAuditContext while keeping the rest of the module real so the
 // withAuditContext wrapper (runWithAuditContext / extractAuditContextFromHeaders)
 // still works. Lets us assert the acting user is stamped onto the audit-context
@@ -55,6 +62,7 @@ import { getServerSession } from "next-auth";
 import { authenticateRequest } from "~/lib/api-token-auth";
 import { baseDb } from "~/lib/db";
 import { syncRepositoryCaseToElasticsearch } from "~/services/repositoryCaseSync";
+import { createTestCaseVersionInTransaction } from "~/lib/services/testCaseVersionService";
 
 describe("Submit Result API Route", () => {
   const validBody = {
@@ -358,8 +366,38 @@ describe("Submit Result API Route", () => {
       expect(response.status).toBe(200);
       expect(txMocks.repositoryCases.update).toHaveBeenCalledWith({
         where: { id: 55 },
-        data: { automated: true },
+        data: { automated: true, currentVersion: { increment: 1 } },
       });
+    });
+
+    // Regression: the flip used to update the flag only. Automation Trends
+    // reconstructs automated state from the version timeline, so a flag-only
+    // update left the case reading as manual in the report forever.
+    it("snapshots a new version so the flip is visible to Automation Trends", async () => {
+      (baseDb.testRunCases.findFirst as any).mockResolvedValue(
+        automatedRunCase
+      );
+
+      const response = await POST(createRequest(validBody));
+
+      expect(response.status).toBe(200);
+      expect(createTestCaseVersionInTransaction).toHaveBeenCalledWith(
+        expect.anything(),
+        55,
+        { copyFieldValues: true }
+      );
+    });
+
+    it("does not snapshot a version when no flip occurs", async () => {
+      (baseDb.testRunCases.findFirst as any).mockResolvedValue({
+        ...automatedRunCase,
+        repositoryCase: { automated: true, templateId: 3 },
+      });
+
+      const response = await POST(createRequest(validBody));
+
+      expect(response.status).toBe(200);
+      expect(createTestCaseVersionInTransaction).not.toHaveBeenCalled();
     });
 
     it("triggers ES re-sync after flipping the automated flag", async () => {
@@ -413,8 +451,13 @@ describe("Submit Result API Route", () => {
 
       expect(txMocks.repositoryCases.update).toHaveBeenCalledWith({
         where: { id: 55 },
-        data: { automated: true },
+        data: { automated: true, currentVersion: { increment: 1 } },
       });
+      expect(createTestCaseVersionInTransaction).toHaveBeenCalledWith(
+        expect.anything(),
+        55,
+        { copyFieldValues: true }
+      );
     });
   });
 

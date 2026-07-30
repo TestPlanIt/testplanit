@@ -216,13 +216,18 @@ export async function handleAutomationTrendsPOST(
     // createdAt would drop cases created before the window that still exist during
     // it, understating the cumulative counts. All field filters read the CURRENT
     // RepositoryCases record; only the automation timing comes from versions.
+    //
+    // `isDeleted` is deliberately NOT filtered either, for the same reason in the
+    // other direction: a case deleted today genuinely existed during every earlier
+    // period, so excluding it by current state retroactively rewrites the whole
+    // trend line every time someone deletes a case. Deleted cases are dropped
+    // per-period below, from the point they were actually deleted.
     const baseWhere: any = {
       ...(isCrossProject
         ? projectIds.length > 0
           ? { projectId: { in: projectIds.map(Number) } } // Filtered projects for cross-project
           : {} // All projects for cross-project
         : { projectId: Number(projectId) }), // Single project
-      isDeleted: false,
     };
 
     // Add templateIds filter if provided
@@ -262,6 +267,7 @@ export async function handleAutomationTrendsPOST(
           id: true,
           createdAt: true,
           isDeleted: true,
+          deletedAt: true,
           automated: true,
           projectId: true,
           project: {
@@ -324,6 +330,7 @@ export async function handleAutomationTrendsPOST(
           id: true,
           createdAt: true,
           isDeleted: true,
+          deletedAt: true,
           automated: true,
           projectId: true,
           project: {
@@ -345,6 +352,51 @@ export async function handleAutomationTrendsPOST(
     // before grouping — otherwise reading `project.name` below throws and the
     // endpoint 500s.
     allCases = allCases.filter((testCase) => testCase.project !== null);
+
+    // Resolve WHEN each deleted case was deleted, so it can be counted for the
+    // periods it was alive and dropped afterwards. `deletedAt` is the intended
+    // source but was added late — most soft-deleted rows still have it NULL —
+    // so fall back to the audit trail, which recorded a DELETE for every one.
+    // A deleted case we cannot date is excluded outright (deletion time
+    // -Infinity): better to omit it than to have it linger in every period.
+    const deletionTimeByCase = new Map<number, number>();
+    const undatedDeletedIds: number[] = [];
+    for (const testCase of allCases) {
+      if (!testCase.isDeleted) continue;
+      if (testCase.deletedAt) {
+        deletionTimeByCase.set(
+          testCase.id,
+          new Date(testCase.deletedAt).getTime()
+        );
+      } else {
+        deletionTimeByCase.set(testCase.id, -Infinity);
+        undatedDeletedIds.push(testCase.id);
+      }
+    }
+    // Same id-chunking rationale as the version fetch below: `IN (...)` on a
+    // large id list overflows Postgres's 16-bit bind-parameter count.
+    const AUDIT_ID_CHUNK = 10_000;
+    for (let i = 0; i < undatedDeletedIds.length; i += AUDIT_ID_CHUNK) {
+      const chunk = undatedDeletedIds.slice(i, i + AUDIT_ID_CHUNK);
+      const rows = await baseDb.auditLog.findMany({
+        where: {
+          entityType: "RepositoryCases",
+          action: "DELETE",
+          entityId: { in: chunk.map(String) },
+        },
+        select: { entityId: true, timestamp: true },
+      });
+      for (const row of rows) {
+        const caseId = Number(row.entityId);
+        const at = new Date(row.timestamp).getTime();
+        // A case can be deleted, restored, and deleted again; the latest DELETE
+        // is the one that reflects its current state.
+        const known = deletionTimeByCase.get(caseId);
+        if (known === undefined || at > known) {
+          deletionTimeByCase.set(caseId, at);
+        }
+      }
+    }
 
     if (allCases.length === 0) {
       return Response.json({
@@ -427,9 +479,16 @@ export async function handleAutomationTrendsPOST(
     const lo = startDate
       ? new Date(startDate)
       : new Date(arrayMin(creationTimes));
-    const hi = endDate
+    const requestedHi = endDate
       ? new Date(endDate)
       : new Date(Math.max(arrayMax(creationTimes), arrayMax(versionTimes)));
+    // Never project past today. Every period is evaluated by asking "what was
+    // the state as of this period's end", which for a future date just returns
+    // the state right now — so an end date months out used to emit a long run
+    // of identical rows that read as real, flat data. Clamping ends the series
+    // at the current period instead. A range entirely in the future correctly
+    // yields no periods at all.
+    const hi = new Date(Math.min(requestedHi.getTime(), Date.now()));
 
     const sortedPeriods = generatePeriods(lo, hi, dateGrouping as DateGrouping);
 
@@ -446,6 +505,17 @@ export async function handleAutomationTrendsPOST(
       name,
     }));
 
+    // Bucket cases by project once. The counting loop below is already
+    // periods × projects × cases; re-scanning the full case list for every
+    // project multiplied that by the project count for no reason, which the
+    // cross-project report feels most (it now also carries deleted cases).
+    const casesByProject = new Map<number, typeof allCases>();
+    for (const testCase of allCases) {
+      const bucket = casesByProject.get(testCase.projectId);
+      if (bucket) bucket.push(testCase);
+      else casesByProject.set(testCase.projectId, [testCase]);
+    }
+
     // Build data structure: one row per period with pivoted columns per project
     const periodData: PeriodData[] = sortedPeriods.map((period) => {
       const row: PeriodData = {
@@ -457,16 +527,22 @@ export async function handleAutomationTrendsPOST(
       projects.forEach((project) => {
         let automatedCount = 0;
         let manualCount = 0;
+        const periodEndTime = period.end.getTime();
 
         // Count cases by their automated state AS OF this period end, using the
         // version timeline rather than the current flag. A case created manual
         // and later flipped counts as manual until the period of its flip.
-        allCases.forEach((testCase) => {
-          if (testCase.projectId !== project.id) return;
+        (casesByProject.get(project.id) ?? []).forEach((testCase) => {
+          // Already deleted by the close of this period — it counted for the
+          // earlier periods it was alive, but not from here on.
+          const deletedAtTime = deletionTimeByCase.get(testCase.id);
+          if (deletedAtTime !== undefined && deletedAtTime <= periodEndTime) {
+            return;
+          }
 
           const { existed, automated } = automatedStateAt(
             historyByCase.get(testCase.id),
-            period.end.getTime()
+            periodEndTime
           );
 
           if (existed) {

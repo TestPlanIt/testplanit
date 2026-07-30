@@ -1,6 +1,6 @@
 import type { User } from "next-auth";
 
-import { DbNull } from "@zenstackhq/orm";
+import { DbNull, JsonNull } from "@zenstackhq/orm";
 
 import { isUniqueConstraintError } from "~/lib/utils/errors";
 
@@ -27,6 +27,18 @@ export interface CreateVersionOptions {
   creatorId?: string;
   creatorName?: string;
   createdAt?: Date;
+
+  /**
+   * Copy the case's current CaseFieldValues onto the new version as
+   * CaseFieldVersionValues.
+   *
+   * Off by default: this service has never written those rows, and the import
+   * paths (`testCaseImport`, `automationImports`, the wizard worker) create
+   * them themselves right after calling it — enabling this there would
+   * double-write. Any NEW caller should set it, otherwise the version renders
+   * in the history UI as though every custom field was deleted at that version.
+   */
+  copyFieldValues?: boolean;
 
   /**
    * Optional: data to override in the version
@@ -332,6 +344,29 @@ export async function createTestCaseVersionInTransaction(
     throw new Error(
       `Failed to create version for case ${caseId} after retries`
     );
+  }
+
+  if (options.copyFieldValues) {
+    const fieldValues = await tx.caseFieldValues.findMany({
+      where: { testCaseId: caseId },
+      include: {
+        field: { select: { displayName: true, systemName: true } },
+      },
+    });
+    if (fieldValues.length > 0) {
+      await tx.caseFieldVersionValues.createMany({
+        data: fieldValues.map(
+          (fieldValue: {
+            value: unknown;
+            field: { displayName: string | null; systemName: string };
+          }) => ({
+            versionId: newVersion.id,
+            field: fieldValue.field.displayName || fieldValue.field.systemName,
+            value: fieldValue.value ?? JsonNull,
+          })
+        ),
+      });
+    }
   }
 
   return newVersion;

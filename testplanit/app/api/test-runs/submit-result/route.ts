@@ -26,6 +26,7 @@ import {
   type RollupStatus,
 } from "~/lib/services/iterationRollup";
 import { assertReviewGatePasses } from "~/lib/services/reviewGate";
+import { createTestCaseVersionInTransaction } from "~/lib/services/testCaseVersionService";
 import { emitIterationResultRecorded } from "~/lib/webhooks/event-emitters/iterationEvents";
 import {
   isAlreadyPendingError,
@@ -707,9 +708,21 @@ export const POST = withAuditContext(async (req: NextRequest) => {
       }
 
       if (needsAutomatedFlip) {
+        // Snapshot the flip, don't just set the flag. Automation Trends
+        // reconstructs each case's automated state from its version timeline,
+        // so a flag-only update leaves the manual→automated transition
+        // invisible to the report — the case reads as manual forever.
+        // Bump currentVersion first; the version service snapshots the row as
+        // it stands inside this transaction and matches that version number.
         await tx.repositoryCases.update({
           where: { id: runCase.repositoryCaseId },
-          data: { automated: true },
+          data: { automated: true, currentVersion: { increment: 1 } },
+        });
+        // copyFieldValues: without it the snapshot carries no
+        // CaseFieldVersionValues and the history UI shows every custom field
+        // as deleted at the flip.
+        await createTestCaseVersionInTransaction(tx, runCase.repositoryCaseId, {
+          copyFieldValues: true,
         });
       }
 
