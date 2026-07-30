@@ -507,8 +507,8 @@ describe("TagAnalysisService", () => {
 
   it("caps entities per LLM request even when the token budget allows more", async () => {
     setupDefaults();
-    // Budgets generous enough that nothing but the hard cap limits batch size:
-    // 128k context, and 16384 output tokens is room for ~190 entities.
+    // Budgets generous enough that nothing but the ceiling limits batch size:
+    // 128k context, and 16384 output tokens is room for 409 entities.
     mockDb.llmProviderConfig.findFirst.mockResolvedValue({
       maxTokensPerRequest: 128_000,
     });
@@ -520,7 +520,7 @@ describe("TagAnalysisService", () => {
       source: "fallback",
     });
 
-    mockDb.repositoryCases.findMany.mockResolvedValue(makeCases(60));
+    mockDb.repositoryCases.findMany.mockResolvedValue(makeCases(200));
 
     const batchSizes: number[] = [];
     mockLlmManager.chat.mockImplementation(async (_id: number, req: any) => {
@@ -537,15 +537,15 @@ describe("TagAnalysisService", () => {
     });
 
     await service.analyzeTags({
-      entityIds: Array.from({ length: 60 }, (_, i) => i + 1),
+      entityIds: Array.from({ length: 200 }, (_, i) => i + 1),
       entityType: "repositoryCase",
       projectId: 5,
       userId: "u1",
     });
 
     expect(batchSizes.length).toBeGreaterThan(1);
-    expect(Math.max(...batchSizes)).toBeLessThanOrEqual(50);
-    expect(batchSizes.reduce((a, b) => a + b, 0)).toBe(60);
+    expect(Math.max(...batchSizes)).toBe(150);
+    expect(batchSizes.reduce((a, b) => a + b, 0)).toBe(200);
   });
 
   it("clamps an over-large prompt-config maxOutputTokens to the provider ceiling", async () => {
@@ -584,7 +584,7 @@ describe("TagAnalysisService", () => {
 
   it("lets the output-token budget bind before the entity cap", async () => {
     setupDefaults();
-    // Default 4096 output tokens leaves room for fewer than the 50 cap, so the
+    // 4096 output tokens leaves room for fewer than the 150 ceiling, so the
     // token math — not the ceiling — decides the batch size.
     mockDb.llmProviderConfig.findFirst.mockResolvedValue({
       maxTokensPerRequest: 128_000,
@@ -597,7 +597,7 @@ describe("TagAnalysisService", () => {
       source: "fallback",
     });
 
-    mockDb.repositoryCases.findMany.mockResolvedValue(makeCases(100));
+    mockDb.repositoryCases.findMany.mockResolvedValue(makeCases(250));
 
     const batchSizes: number[] = [];
     mockLlmManager.chat.mockImplementation(async (_id: number, req: any) => {
@@ -614,15 +614,15 @@ describe("TagAnalysisService", () => {
     });
 
     await service.analyzeTags({
-      entityIds: Array.from({ length: 100 }, (_, i) => i + 1),
+      entityIds: Array.from({ length: 250 }, (_, i) => i + 1),
       entityType: "repositoryCase",
       projectId: 5,
       userId: "u1",
     });
 
-    // floor(4096 * 0.7 / 60) = 47
-    expect(Math.max(...batchSizes)).toBe(47);
-    expect(batchSizes.reduce((a, b) => a + b, 0)).toBe(100);
+    // floor(4096 / 40) = 102 — the batch size this feature shipped with
+    expect(Math.max(...batchSizes)).toBe(102);
+    expect(batchSizes.reduce((a, b) => a + b, 0)).toBe(250);
   });
 
   it("caps the existing-tag list sent in the prompt but still matches against all tags", async () => {

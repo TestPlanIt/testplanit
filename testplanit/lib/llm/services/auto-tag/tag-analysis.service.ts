@@ -30,30 +30,22 @@ interface AnalyzeTagsParams {
 
 /**
  * Ceiling on entities per LLM request, applied on top of the output-token
- * budget below. At the default 4096 output tokens the token budget is the
- * tighter of the two, so this only binds when an integration is configured with
- * a large `maxOutputTokens` — where the context window would otherwise permit
- * batches of 100+ that models answer unreliably and that blow past the input
- * content budget anyway.
+ * budget below. It exists only to stop an integration configured with a very
+ * large `maxOutputTokens` from producing batches of several hundred, which
+ * exceed the input content budget anyway and lose accuracy. At the output
+ * budgets in normal use the token math below is the tighter of the two, so this
+ * does not bind.
  */
-const MAX_ENTITIES_PER_REQUEST = 50;
+const MAX_ENTITIES_PER_REQUEST = 150;
 
 /**
- * Output tokens one entity's answer costs. The widest answer the prompt allows
- * — five multi-word tags on a seven-digit id — is
- * `{"entityId":1234567,"tags":["regression testing","api integration","login flow","smoke test","authentication"]}`
- * at ~28 tokens by the repo's chars/4 estimate; the allowance is set well above
- * that because JSON punctuation tokenizes worse than prose and an overshoot
- * costs a whole wasted request.
+ * Output tokens one entity's answer costs, e.g.
+ * `{"entityId":123456,"tags":["regression","api","login"]}`. The prompt caps
+ * answers at five short tags, and the repo's chars/4 estimate puts the widest
+ * allowed answer near 28 tokens, so this carries headroom without shrinking
+ * batches below what models answer in one pass.
  */
-const OUTPUT_TOKENS_PER_ENTITY = 60;
-
-/**
- * Share of `maxOutputTokens` a batch is sized against. Sizing a batch to fill
- * the entire budget leaves no room for reasoning tokens or a wordier-than-
- * estimated answer, so the response truncates.
- */
-const OUTPUT_BUDGET_RATIO = 0.7;
+const OUTPUT_TOKENS_PER_ENTITY = 40;
 
 /**
  * Cap on how many existing tag names are listed in the prompt. Tags are global,
@@ -165,12 +157,7 @@ export class TagAnalysisService {
 
     const maxEntitiesPerBatch = Math.min(
       MAX_ENTITIES_PER_REQUEST,
-      Math.max(
-        1,
-        Math.floor(
-          (maxOutputTokens * OUTPUT_BUDGET_RATIO) / OUTPUT_TOKENS_PER_ENTITY
-        )
-      )
+      Math.max(1, Math.floor(maxOutputTokens / OUTPUT_TOKENS_PER_ENTITY))
     );
 
     console.log(
