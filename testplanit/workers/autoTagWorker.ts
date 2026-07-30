@@ -55,6 +55,9 @@ export interface AutoTagJobResult {
   errors: string[];
 }
 
+/** Max ids per `IN (...)` when loading entity display metadata. */
+const META_FETCH_CHUNK = 500;
+
 // ─── Redis cancellation key helper ──────────────────────────────────────────
 
 function cancelKey(jobId: string | undefined): string {
@@ -155,11 +158,13 @@ const processor = async (
     }
   >();
 
-  if (allRelevantIds.length > 0) {
+  // Fetch in id-chunks so a large selection doesn't become one giant `IN (...)`
+  for (let i = 0; i < allRelevantIds.length; i += META_FETCH_CHUNK) {
+    const ids = allRelevantIds.slice(i, i + META_FETCH_CHUNK);
     switch (job.data.entityType) {
       case "repositoryCase": {
         const entities = await db.repositoryCases.findMany({
-          where: { id: { in: allRelevantIds } },
+          where: { id: { in: ids } },
           select: {
             id: true,
             name: true,
@@ -180,7 +185,7 @@ const processor = async (
       }
       case "testRun": {
         const entities = await db.testRuns.findMany({
-          where: { id: { in: allRelevantIds } },
+          where: { id: { in: ids } },
           select: {
             id: true,
             name: true,
@@ -199,7 +204,7 @@ const processor = async (
       }
       case "session": {
         const entities = await db.sessions.findMany({
-          where: { id: { in: allRelevantIds } },
+          where: { id: { in: ids } },
           select: { id: true, name: true, tags: { select: { name: true } } },
         });
         for (const e of entities) {

@@ -35,6 +35,15 @@ export interface BatchConfig {
 const DEFAULT_CONTENT_BUDGET_RATIO = 0.65;
 
 /**
+ * Floor for the per-batch content budget. A system prompt larger than the
+ * content share of the context window yields a negative budget, which turns the
+ * truncation `maxChars` negative and makes `slice` trim from the end of the
+ * content instead of capping its length. Kept at 1 so genuinely small budgets
+ * still batch as configured.
+ */
+const MIN_CONTENT_BUDGET = 1;
+
+/**
  * Split items into batches that fit within the token budget.
  *
  * - Items that fit are grouped respecting both token budget and item count limit.
@@ -50,8 +59,9 @@ export function createBatches<T extends BatchableItem>(
   if (items.length === 0) return [];
 
   const ratio = config.contentBudgetRatio ?? DEFAULT_CONTENT_BUDGET_RATIO;
-  const contentBudget = Math.floor(
-    config.maxTokensPerRequest * ratio - config.systemPromptTokens
+  const contentBudget = Math.max(
+    MIN_CONTENT_BUDGET,
+    Math.floor(config.maxTokensPerRequest * ratio - config.systemPromptTokens)
   );
 
   const batches: T[][] = [];
