@@ -454,6 +454,66 @@ afterEach(() => {
 
 // ---- Tests ----
 
+// The select-all ids query is the call that asks for `id` without an orderBy;
+// the list query alongside it carries the full row select.
+const selectAllIdsSelect = () => {
+  const call = (useFindManyRepositoryCasesFiltered as any).mock.calls.find(
+    ([args]: any[]) => args?.select?.id === true && !args?.orderBy
+  );
+  return call?.[0]?.select;
+};
+
+describe("Select all ids query", () => {
+  it("asks only for ids when no post-fetch filter is active", async () => {
+    setupMocks({ data: [mockCase] });
+
+    render(<Cases {...defaultProps} viewType="folders" folderId={1} />);
+    await screen.findByTestId("data-table");
+
+    expect(selectAllIdsSelect()).toEqual({ id: true, isDeleted: true });
+  });
+
+  it("includes the field values a text filter is applied to", async () => {
+    setupMocks({ data: [mockCase] });
+
+    render(
+      <Cases
+        {...defaultProps}
+        viewType="dynamic_15_Text Long"
+        filterId={["contains|hello"]}
+      />
+    );
+    await screen.findByTestId("data-table");
+
+    const select = selectAllIdsSelect();
+    expect(select.caseFieldValues.where.fieldId).toEqual({ in: [15] });
+    expect(select.caseFieldValues.select).toEqual({
+      fieldId: true,
+      value: true,
+    });
+    // Orphaned values are stripped against the template before filtering.
+    expect(select.template).toBeDefined();
+    expect(select.steps).toBeUndefined();
+  });
+
+  it("includes steps when a steps filter is applied", async () => {
+    setupMocks({ data: [mockCase] });
+
+    render(
+      <Cases
+        {...defaultProps}
+        viewType="dynamic_3_Steps"
+        filterId={["gte|1"]}
+      />
+    );
+    await screen.findByTestId("data-table");
+
+    const select = selectAllIdsSelect();
+    expect(select.steps.where.isDeleted).toBe(false);
+    expect(select.caseFieldValues).toBeUndefined();
+  });
+});
+
 describe("Cases component", () => {
   it("renders loading state when data is loading", async () => {
     setupMocks({ isLoading: true, data: [] });

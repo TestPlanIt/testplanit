@@ -2198,14 +2198,48 @@ export default function Cases({
     }
   );
 
+  // Text/link/steps filters are applied in JS to the fetched rows, so the
+  // select-all ids query has to carry the relations those filters read — with
+  // the same visibility rules as the list query, or select-all would resolve to
+  // a different set of cases than the one on screen.
+  const selectAllIdsSelect = useMemo<RepositoryCasesSelect>(() => {
+    const select: RepositoryCasesSelect = { id: true, isDeleted: true };
+    if (postFetchFilters.length === 0) return select;
+
+    const valueFieldIds = postFetchFilters
+      .filter((filter) => filter.type === "text" || filter.type === "link")
+      .map((filter) => filter.fieldId);
+
+    if (valueFieldIds.length > 0) {
+      select.template = {
+        select: {
+          caseFields: { select: { caseField: { select: { id: true } } } },
+        },
+      };
+      select.caseFieldValues = {
+        where: {
+          ...CASE_FIELD_VALUES_SELECT.where,
+          fieldId: { in: valueFieldIds },
+        },
+        select: { fieldId: true, value: true },
+      };
+    }
+
+    if (postFetchFilters.some((filter) => filter.type === "steps")) {
+      select.steps = {
+        where: { isDeleted: false, OR: STEP_VISIBILITY_OR },
+        select: { id: true },
+      };
+    }
+
+    return select;
+  }, [postFetchFilters]);
+
   // Query to fetch all case IDs when Shift+click Select All is used
   const { data: allCaseIdsDataZenStack } = useFindManyRepositoryCasesFiltered(
     {
       where: repositoryCaseWhereClause,
-      select: {
-        id: true,
-        isDeleted: true,
-      },
+      select: selectAllIdsSelect,
     },
     postFetchFilters.length > 0 ? postFetchFilters : undefined,
     {
@@ -2214,15 +2248,18 @@ export default function Cases({
     }
   );
 
-  // Parallel select-all-IDs fetch for descendants mode (POST to avoid 414)
+  // Parallel select-all-IDs fetch for descendants mode (POST to avoid 414).
+  // The ids are consumed as soon as they arrive, so this query must never carry
+  // the previous folder's rows over into the new one.
   const { data: allCaseIdsDataDescendants } =
     useFindManyRepositoryCasesByDescendants(
       {
         projectId,
         folderId: folderId ?? 0,
         where: repositoryCaseWhereClauseWithoutFolderFilter,
-        select: { id: true, isDeleted: true },
+        select: selectAllIdsSelect,
         enabled: fetchAllIdsForSelection && !isRunMode && isDescendantsMode,
+        keepPreviousData: false,
       },
       postFetchFilters.length > 0 ? postFetchFilters : undefined
     );
@@ -3083,6 +3120,14 @@ export default function Cases({
     }
     previousViewKeyRef.current = viewKey;
   }, [folderId, viewType, filterId, isSelectionMode]);
+
+  // A Shift+click select-all belongs to the view it was started from. Changing
+  // the view abandons the in-flight ids fetch so its result can't be applied to
+  // the cases the user is now looking at.
+  useEffect(() => {
+    setFetchAllIdsForSelection(false);
+    setSelectAllAction(null);
+  }, [folderId, viewType, filterId]);
 
   // Check if we're in multi-config mode (multiple test runs selected)
   const isMultiConfigMode =

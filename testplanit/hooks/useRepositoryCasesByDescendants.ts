@@ -17,6 +17,7 @@ interface Params {
   skip?: number;
   take?: number;
   enabled?: boolean;
+  keepPreviousData?: boolean;
 }
 
 // Parallel to useFindManyRepositoryCasesFiltered but fetches via POST so a deep
@@ -36,6 +37,7 @@ export function useFindManyRepositoryCasesByDescendants(
     skip,
     take,
     enabled = true,
+    keepPreviousData = true,
   } = params;
 
   const query = useQuery({
@@ -76,7 +78,9 @@ export function useFindManyRepositoryCasesByDescendants(
         totalCount: number;
       }>;
     },
-    placeholderData: (previousData) => previousData,
+    placeholderData: keepPreviousData
+      ? (previousData) => previousData
+      : undefined,
     refetchOnWindowFocus: false,
   });
 
