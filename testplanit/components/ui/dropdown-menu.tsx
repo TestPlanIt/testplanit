@@ -8,7 +8,26 @@ import * as React from "react";
 
 import { cn } from "~/utils";
 
-const DropdownMenu = DropdownMenuPrimitive.Root;
+/**
+ * Menus are non-modal by default. A modal menu wraps its content in
+ * `RemoveScroll`, which locks body scroll while the menu is open — on a page
+ * that scrolls horizontally (the repository tables, any wide grid) that drops
+ * the horizontal scrollbar and shifts the layout out from under the cursor, so
+ * the menu is dismissed before it can be used. Non-modal also lets menus nested
+ * inside dialogs/sheets work.
+ *
+ * The trade-off: a click that dismisses the menu also reaches whatever is under
+ * it, focus is not trapped, and the rest of the page is not `aria-hidden`. That
+ * is the correct default for a menu (only dialogs need to hide the page), but
+ * pass `modal` explicitly to opt back in where the lock is genuinely wanted.
+ */
+const DropdownMenu = ({
+  modal = false,
+  ...props
+}: React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Root>) => (
+  <DropdownMenuPrimitive.Root modal={modal} {...props} />
+);
+DropdownMenu.displayName = "DropdownMenu";
 
 const DropdownMenuTrigger = DropdownMenuPrimitive.Trigger;
 
