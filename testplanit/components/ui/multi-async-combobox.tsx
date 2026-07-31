@@ -23,9 +23,15 @@ import { cn, type ClassValue } from "~/utils";
  *  doesn't fire a query per character. */
 const SEARCH_DEBOUNCE_MS = 300;
 
-function Spinner() {
+function Spinner({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return (
-    <div className="animate-spin h-4 w-4 border-2 border-gray-300 border-t-primary rounded-full" />
+    <div
+      className={cn(
+        "animate-spin h-4 w-4 border-2 border-gray-300 border-t-primary rounded-full",
+        className
+      )}
+      {...props}
+    />
   );
 }
 
@@ -215,7 +221,14 @@ export function MultiAsyncCombobox<T>({
               ))
             )}
           </div>
-          <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
+          {loading ? (
+            <Spinner
+              className="shrink-0"
+              data-testid="multi-async-combobox-trigger-spinner"
+            />
+          ) : (
+            <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
+          )}
         </Button>
       </PopoverTrigger>
       <PopoverContent

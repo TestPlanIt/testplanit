@@ -32,9 +32,15 @@ const ESTIMATED_OPTION_HEIGHT = 36;
 const SEARCH_DEBOUNCE_MS = 300;
 
 // Minimal spinner (replace with your Spinner if you have one)
-function Spinner() {
+function Spinner({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return (
-    <div className="animate-spin h-4 w-4 border-2 border-gray-300 border-t-primary rounded-full" />
+    <div
+      className={cn(
+        "animate-spin h-4 w-4 border-2 border-gray-300 border-t-primary rounded-full",
+        className
+      )}
+      {...props}
+    />
   );
 }
 
@@ -68,6 +74,8 @@ interface AsyncComboboxProps<T> {
   renderTrigger?: (args: {
     value: T | null;
     open: boolean;
+    /** True while an option fetch is in flight — render a busy indicator. */
+    loading: boolean;
     placeholder?: string;
     triggerLabel?: React.ReactNode;
     defaultContent: React.ReactNode;
@@ -237,6 +245,7 @@ export function AsyncCombobox<T>({
             const customTrigger = renderTrigger({
               value,
               open,
+              loading,
               placeholder: fallbackPlaceholder,
               triggerLabel: resolvedTriggerLabel,
               defaultContent,
@@ -281,6 +290,12 @@ export function AsyncCombobox<T>({
               disabled={disabled}
             >
               {defaultContent}
+              {loading && (
+                <Spinner
+                  className="ms-auto shrink-0"
+                  data-testid="async-combobox-trigger-spinner"
+                />
+              )}
             </Button>
           );
         })()}

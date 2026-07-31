@@ -111,6 +111,41 @@ describe("AsyncCombobox virtualization", () => {
     expect(screen.getAllByRole("option")).toHaveLength(100);
   });
 
+  it("shows a spinner on the trigger while options load, then removes it", async () => {
+    let resolveFetch!: (options: Option[]) => void;
+    const pending = new Promise<Option[]>((resolve) => {
+      resolveFetch = resolve;
+    });
+    render(
+      <AsyncCombobox<Option>
+        value={null}
+        onValueChange={vi.fn()}
+        fetchOptions={() => pending}
+        getOptionValue={(option) => option.id}
+        renderOption={(option) => <span>{option.label}</span>}
+        placeholder="Search"
+        showPagination={false}
+      />
+    );
+
+    fireEvent.click(screen.getByRole("combobox"));
+
+    await waitFor(() => {
+      expect(
+        screen.getByTestId("async-combobox-trigger-spinner")
+      ).toBeInTheDocument();
+    });
+
+    resolveFetch(makeOptions(3));
+
+    await waitFor(() => {
+      expect(
+        screen.queryByTestId("async-combobox-trigger-spinner")
+      ).not.toBeInTheDocument();
+    });
+    expect(screen.getByText("Item 1")).toBeInTheDocument();
+  });
+
   it("selecting a virtualized option reports that option", async () => {
     const onValueChange = vi.fn();
     render(
