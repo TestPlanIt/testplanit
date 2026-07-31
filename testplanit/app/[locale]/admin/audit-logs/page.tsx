@@ -4,7 +4,7 @@ import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DateRange } from "react-day-picker";
 import { useForm, useWatch } from "react-hook-form";
 import { useRouter } from "~/lib/navigation";
@@ -29,8 +29,9 @@ import {
   searchAuditLogUsers,
 } from "~/app/actions/searchAuditLogUsers";
 import { DateRangePickerField } from "~/components/forms/DateRangePickerField";
+import { getAuditLogActions } from "~/app/actions/getAuditLogActions";
 import { SYSTEM_ACTOR_ID } from "~/lib/auditContextConstants";
-import { AUDIT_ACTIONS, formatAuditAction } from "~/lib/audit/auditActions";
+import { formatAuditAction } from "~/lib/audit/auditActions";
 import { groupAuditRows } from "~/lib/audit/groupAuditRows";
 import { logDataExport } from "~/lib/services/auditClient";
 import { AuditLogDetailModal } from "./AuditLogDetailModal";
@@ -312,24 +313,31 @@ function AuditLogsContent({ session }: { session: Session }) {
     []
   );
 
-  // Action / entity-type / project options are already in memory, so their
-  // pickers filter and page locally.
+  // Distinct actions present in the log, fetched once when the picker first
+  // opens and filtered/paged locally afterwards.
+  const actionsPromiseRef = useRef<Promise<AuditAction[]> | null>(null);
   const fetchActionOptions = useCallback(
-    (query: string, page: number, pageSize: number) => {
+    async (query: string, page: number, pageSize: number) => {
+      actionsPromiseRef.current ??= getAuditLogActions();
+      const actions = await actionsPromiseRef.current;
+      // An empty list may be a failed fetch — let the next call retry.
+      if (actions.length === 0) actionsPromiseRef.current = null;
       const q = query.trim().toLowerCase();
       const filtered = q
-        ? AUDIT_ACTIONS.filter((action) =>
+        ? actions.filter((action) =>
             formatAuditAction(action).toLowerCase().includes(q)
           )
-        : AUDIT_ACTIONS;
-      return Promise.resolve({
+        : actions;
+      return {
         results: filtered.slice(page * pageSize, page * pageSize + pageSize),
         total: filtered.length,
-      });
+      };
     },
     []
   );
 
+  // Entity-type / project options are already in memory, so their pickers
+  // filter and page locally.
   const entityTypeOptions = useMemo(
     () => (entityTypes ?? []).map((et) => et.entityType),
     [entityTypes]

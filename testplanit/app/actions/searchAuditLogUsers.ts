@@ -20,6 +20,15 @@ export interface AuditLogUserOption {
  * write time, so the same id can carry many historical snapshots). Search
  * matches any snapshot's name or email so renamed users stay findable.
  *
+ * Postgres has no loose index scan, so `DISTINCT ON ("userId")` and
+ * `COUNT(DISTINCT "userId")` both read every row regardless of indexes. The
+ * recursive CTE emulates one instead: each step seeks the next distinct
+ * `userId` through the `(userId, timestamp)` index, and a lateral per actor
+ * seeks that actor's newest matching snapshot backward through the same
+ * index, so cost scales with the number of distinct actors rather than the
+ * size of the table. The windowed count returns the total in the same pass,
+ * replacing the separate `COUNT(DISTINCT ...)` scan.
+ *
  * Reads cross-user audit data, so it bypasses ZenStack and is therefore
  * gated to ADMIN to match the model's `@@allow('read', access == 'ADMIN')`.
  *
@@ -46,29 +55,55 @@ export async function searchAuditLogUsers(
     : sql``;
 
   try {
-    const results = (
-      await sql<AuditLogUserOption>`
-      SELECT "userId", "userName", "userEmail"
-      FROM (
-        SELECT DISTINCT ON ("userId") "userId", "userName", "userEmail"
-        FROM "AuditLog"
-        WHERE "userId" IS NOT NULL ${searchClause}
-        ORDER BY "userId", "timestamp" DESC
-      ) s
+    const rows = (
+      await sql<AuditLogUserOption & { total: number }>`
+      WITH RECURSIVE distinct_actor AS (
+        (
+          SELECT "userId"
+          FROM "AuditLog"
+          WHERE "userId" IS NOT NULL
+          ORDER BY "userId"
+          LIMIT 1
+        )
+        UNION ALL
+        SELECT (
+          SELECT a."userId"
+          FROM "AuditLog" a
+          WHERE a."userId" > d."userId"
+          ORDER BY a."userId"
+          LIMIT 1
+        )
+        FROM distinct_actor d
+        WHERE d."userId" IS NOT NULL
+      ),
+      actors AS (
+        SELECT d."userId", snap."userName", snap."userEmail"
+        FROM distinct_actor d
+        CROSS JOIN LATERAL (
+          SELECT "userName", "userEmail"
+          FROM "AuditLog" a
+          WHERE a."userId" = d."userId" ${searchClause}
+          ORDER BY a."timestamp" DESC
+          LIMIT 1
+        ) snap
+        WHERE d."userId" IS NOT NULL
+      )
+      SELECT "userId", "userName", "userEmail",
+        (COUNT(*) OVER ())::int AS total
+      FROM actors
       ORDER BY "userName" ASC NULLS LAST, "userEmail" ASC NULLS LAST
       LIMIT ${take} OFFSET ${skip}
     `.execute(baseDb.$qb)
     ).rows;
 
-    const countRows = (
-      await sql<{ count: number }>`
-      SELECT COUNT(DISTINCT "userId")::int AS count
-      FROM "AuditLog"
-      WHERE "userId" IS NOT NULL ${searchClause}
-    `.execute(baseDb.$qb)
-    ).rows;
-
-    return { results, total: countRows[0]?.count ?? 0 };
+    return {
+      results: rows.map(({ userId, userName, userEmail }) => ({
+        userId,
+        userName,
+        userEmail,
+      })),
+      total: rows[0]?.total ?? 0,
+    };
   } catch (error) {
     console.error("Error searching audit log users:", error);
     return { results: [], total: 0 };
