@@ -280,10 +280,27 @@ function AuditLogsContent({ session }: { session: Session }) {
   );
 
   // Distinct actors in the audit log, paginated and searched server-side —
-  // the table can hold far more users than a plain select can list.
+  // the table can hold far more users than a plain select can list. Results
+  // are cached for the page's lifetime keyed by query+page: the actor list
+  // changes rarely, so reopening the picker or repeating a search serves
+  // from memory instead of re-running the query.
+  const userOptionsCacheRef = useRef(
+    new Map<string, ReturnType<typeof searchAuditLogUsers>>()
+  );
   const fetchUserOptions = useCallback(
-    (query: string, page: number, pageSize: number) =>
-      searchAuditLogUsers(query, page, pageSize),
+    (query: string, page: number, pageSize: number) => {
+      const key = `${query.trim().toLowerCase()}|${page}|${pageSize}`;
+      const cache = userOptionsCacheRef.current;
+      const cached = cache.get(key);
+      if (cached) return cached;
+      const promise = searchAuditLogUsers(query, page, pageSize);
+      cache.set(key, promise);
+      // An empty result may be a failed fetch — let the next call retry.
+      void promise.then((result) => {
+        if (result.results.length === 0) cache.delete(key);
+      });
+      return promise;
+    },
     []
   );
 

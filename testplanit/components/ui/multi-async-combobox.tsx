@@ -23,7 +23,10 @@ import { cn, type ClassValue } from "~/utils";
  *  doesn't fire a query per character. */
 const SEARCH_DEBOUNCE_MS = 300;
 
-function Spinner({ className, ...props }: React.ComponentProps<typeof Loader2>) {
+function Spinner({
+  className,
+  ...props
+}: React.ComponentProps<typeof Loader2>) {
   return (
     <Loader2
       className={cn("h-4 w-4 animate-spin text-primary", className)}
