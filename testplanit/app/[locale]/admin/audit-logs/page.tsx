@@ -30,6 +30,8 @@ import {
 } from "~/app/actions/searchAuditLogUsers";
 import { DateRangePickerField } from "~/components/forms/DateRangePickerField";
 import { getAuditLogActions } from "~/app/actions/getAuditLogActions";
+import { getAuditLogEntityTypes } from "~/app/actions/getAuditLogEntityTypes";
+import { getAuditLogProjects } from "~/app/actions/getAuditLogProjects";
 import { SYSTEM_ACTOR_ID } from "~/lib/auditContextConstants";
 import { formatAuditAction } from "~/lib/audit/auditActions";
 import { groupAuditRows } from "~/lib/audit/groupAuditRows";
@@ -277,34 +279,6 @@ function AuditLogsContent({ session }: { session: Session }) {
     [rows]
   );
 
-  // Get unique entity types for filter
-  const { data: entityTypes } = useClientQueries(schema).auditLog.useFindMany({
-    select: { entityType: true },
-    distinct: ["entityType"],
-    orderBy: { entityType: "asc" },
-  });
-
-  // Distinct projects that appear in the audit log, for the project filter.
-  // Sourced from the log itself (policy-enforced) so the dropdown never lists a
-  // project with no audit rows and never leaks projects outside the viewer's reach.
-  const { data: projectRows } = useClientQueries(schema).auditLog.useFindMany({
-    where: { projectId: { not: null } },
-    select: { projectId: true, project: { select: { name: true } } },
-    distinct: ["projectId"],
-    orderBy: { projectId: "asc" },
-  });
-
-  const projectOptions = useMemo<ProjectFilterOption[]>(() => {
-    const options = (projectRows ?? [])
-      .filter(
-        (row): row is { projectId: number; project: { name: string } } =>
-          row.projectId != null && !!row.project?.name
-      )
-      .map((row) => ({ id: row.projectId, name: row.project.name }));
-    options.sort((a, b) => a.name.localeCompare(b.name));
-    return options;
-  }, [projectRows]);
-
   // Distinct actors in the audit log, paginated and searched server-side —
   // the table can hold far more users than a plain select can list.
   const fetchUserOptions = useCallback(
@@ -336,43 +310,49 @@ function AuditLogsContent({ session }: { session: Session }) {
     []
   );
 
-  // Entity-type / project options are already in memory, so their pickers
-  // filter and page locally.
-  const entityTypeOptions = useMemo(
-    () => (entityTypes ?? []).map((et) => et.entityType),
-    [entityTypes]
-  );
-
+  // Distinct entity types present in the log, fetched once when the picker
+  // first opens and filtered/paged locally afterwards.
+  const entityTypesPromiseRef = useRef<Promise<string[]> | null>(null);
   const fetchEntityTypeOptions = useCallback(
-    (query: string, page: number, pageSize: number) => {
+    async (query: string, page: number, pageSize: number) => {
+      entityTypesPromiseRef.current ??= getAuditLogEntityTypes();
+      const entityTypes = await entityTypesPromiseRef.current;
+      // An empty list may be a failed fetch — let the next call retry.
+      if (entityTypes.length === 0) entityTypesPromiseRef.current = null;
       const q = query.trim().toLowerCase();
       const filtered = q
-        ? entityTypeOptions.filter((entityType) =>
+        ? entityTypes.filter((entityType) =>
             entityType.toLowerCase().includes(q)
           )
-        : entityTypeOptions;
-      return Promise.resolve({
+        : entityTypes;
+      return {
         results: filtered.slice(page * pageSize, page * pageSize + pageSize),
         total: filtered.length,
-      });
+      };
     },
-    [entityTypeOptions]
+    []
   );
 
+  // Same lazy pattern for the distinct projects present in the log.
+  const projectsPromiseRef = useRef<Promise<ProjectFilterOption[]> | null>(
+    null
+  );
   const fetchProjectOptions = useCallback(
-    (query: string, page: number, pageSize: number) => {
+    async (query: string, page: number, pageSize: number) => {
+      projectsPromiseRef.current ??= getAuditLogProjects();
+      const projects = await projectsPromiseRef.current;
+      // An empty list may be a failed fetch — let the next call retry.
+      if (projects.length === 0) projectsPromiseRef.current = null;
       const q = query.trim().toLowerCase();
       const filtered = q
-        ? projectOptions.filter((project) =>
-            project.name.toLowerCase().includes(q)
-          )
-        : projectOptions;
-      return Promise.resolve({
+        ? projects.filter((project) => project.name.toLowerCase().includes(q))
+        : projects;
+      return {
         results: filtered.slice(page * pageSize, page * pageSize + pageSize),
         total: filtered.length,
-      });
+      };
     },
-    [projectOptions]
+    []
   );
 
   const handleViewDetails = useCallback((log: { id: string }) => {
