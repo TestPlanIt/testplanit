@@ -13,10 +13,15 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { useDebounce } from "@/components/Debounce";
 import { Check, ChevronsUpDown, PackagePlus, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import React, { useEffect, useRef, useState } from "react";
 import { cn, type ClassValue } from "~/utils";
+
+/** How long typing pauses before options are fetched, so a keystroke burst
+ *  doesn't fire a query per character. */
+const SEARCH_DEBOUNCE_MS = 300;
 
 function Spinner() {
   return (
@@ -68,6 +73,7 @@ export function MultiAsyncCombobox<T>({
   const [search, setSearch] = useState("");
   const [options, setOptions] = useState<T[]>([]);
   const [loading, setLoading] = useState(false);
+  const debouncedSearch = useDebounce(search, SEARCH_DEBOUNCE_MS);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const [width, setWidth] = useState<number>(200);
   const [page, setPage] = useState(0);
@@ -85,12 +91,13 @@ export function MultiAsyncCombobox<T>({
     return () => resizeObserver.disconnect();
   }, []);
 
-  // Debounce search
+  // Fetch when opened, then refetch as the page or the debounced search moves —
+  // debouncing keeps a keystroke burst from firing a query per character.
   useEffect(() => {
     if (!open) return;
     let ignore = false;
     setLoading(true);
-    void fetchOptions(search, page, pageSize)
+    void fetchOptions(debouncedSearch, page, pageSize)
       .then((result) => {
         if (ignore) return;
         if (Array.isArray(result)) {
@@ -115,7 +122,7 @@ export function MultiAsyncCombobox<T>({
     return () => {
       ignore = true;
     };
-  }, [search, page, pageSize, open, fetchOptions]);
+  }, [debouncedSearch, page, pageSize, open, fetchOptions]);
 
   // Reset page when search changes
   useEffect(() => {
