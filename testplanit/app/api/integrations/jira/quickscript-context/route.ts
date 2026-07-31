@@ -34,9 +34,16 @@ async function accessibleProjects(
 
 /**
  * Bootstrap context for the Jira panel's "Generate QuickScript" flow: the
- * projects this integration connects to (that the mapped user can access), the
- * selected project's export templates + QuickScript readiness, and the test
- * cases already linked to the issue (the source set the panel generates from).
+ * projects this integration connects to (that the mapped user can access, each
+ * with its count of cases linked to this issue), the selected project's export
+ * templates + QuickScript readiness, and the test cases already linked to the
+ * issue (the source set the panel generates from).
+ *
+ * A Jira project maps to many TestPlanIt projects by design, but a case belongs
+ * to exactly one — so the project holding the issue's cases is what the flow
+ * needs, and the Jira-key mapping alone can't identify it. Selection therefore
+ * looks at where the linked cases actually are before falling back to the
+ * mapping.
  */
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -73,28 +80,56 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Selected project: explicit param (if accessible) → the issue's mapped
-    // project → first accessible project.
+    // One lookup across every accessible project — the issue's cases can live
+    // in any of them, and the Jira-key mapping doesn't say which.
+    const allLinkedCases = await listIssueLinkedCases(
+      projects.map((p) => p.id),
+      { issueKey, issueId }
+    );
+
+    const countByProject = new Map<number, number>();
+    for (const c of allLinkedCases) {
+      countByProject.set(c.projectId, (countByProject.get(c.projectId) ?? 0) + 1);
+    }
+    const withCounts = projects.map((p) => ({
+      ...p,
+      linkedCaseCount: countByProject.get(p.id) ?? 0,
+    }));
+
+    // Selected project: explicit param (if accessible) → the project holding
+    // the most cases linked to this issue, preferring the Jira-key-mapped one
+    // on a tie → the issue's mapped project → first accessible project.
+    // `projects` is already sorted mapped-first then by name, so a stable
+    // max-by-count keeps that as the tiebreak.
     const requestedId = projectIdParam ? Number(projectIdParam) : NaN;
+    const bestByLinkedCases = withCounts.reduce<
+      (typeof withCounts)[number] | null
+    >(
+      (best, p) =>
+        p.linkedCaseCount > 0 && (!best || p.linkedCaseCount > best.linkedCaseCount)
+          ? p
+          : best,
+      null
+    );
     const selected =
       (Number.isFinite(requestedId) &&
-        projects.find((p) => p.id === requestedId)) ||
-      projects.find((p) => p.isDefaultForIssue) ||
-      projects[0];
+        withCounts.find((p) => p.id === requestedId)) ||
+      bestByLinkedCases ||
+      withCounts.find((p) => p.isDefaultForIssue) ||
+      withCounts[0];
 
-    const [templates, readiness, linkedCases] = await Promise.all([
+    const [templates, readiness] = await Promise.all([
       listProjectExportTemplates(selected.id),
       getQuickScriptReadiness(selected.id),
-      listIssueLinkedCases(selected.id, { issueKey, issueId }),
     ]);
 
     return NextResponse.json(
       {
-        projects,
+        projects: withCounts,
         selectedProjectId: selected.id,
         templates,
         readiness,
-        linkedCases,
+        linkedCases: allLinkedCases.filter((c) => c.projectId === selected.id),
         issueKey,
       },
       { headers: FORGE_CORS_HEADERS }

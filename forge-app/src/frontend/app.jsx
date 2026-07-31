@@ -1620,6 +1620,11 @@ const GenerateQuickScriptFlow = ({ onClose, initialContext }) => {
                 {projects.map((p) => (
                   <option key={p.id} value={p.id}>
                     {p.name}
+                    {typeof p.linkedCaseCount !== 'number'
+                      ? ''
+                      : p.linkedCaseCount > 0
+                        ? ` (${p.linkedCaseCount} linked)`
+                        : ' (no linked cases)'}
                   </option>
                 ))}
               </select>

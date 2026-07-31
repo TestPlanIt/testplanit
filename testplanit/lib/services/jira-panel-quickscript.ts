@@ -77,25 +77,33 @@ export interface LinkedCaseOption {
   name: string;
   displayKey: string | null;
   folder: string;
+  /** The project the case belongs to — a case lives in exactly one. */
+  projectId: number;
 }
 
 /**
- * Test cases in `projectId` linked to the given Jira issue — the source set the
- * panel offers for QuickScript generation. Matches on the issue's external id,
- * key, or name (mirrors `suggestFolderForIssue`). Returns an empty list when
- * the issue has no linked cases in the project.
+ * Test cases linked to the given Jira issue across `projectIds` — the source
+ * set the panel offers for QuickScript generation. Matches on the issue's
+ * external id, key, or name (mirrors `suggestFolderForIssue`).
+ *
+ * Takes a list of projects rather than one because a Jira project maps to many
+ * TestPlanIt projects by design, so the caller can't know up front which one
+ * holds the issue's cases — each returned case carries its `projectId` so the
+ * caller can group. Returns an empty list when the issue has no linked cases in
+ * any of them.
  */
 export async function listIssueLinkedCases(
-  projectId: number,
+  projectIds: number[],
   issue: { issueKey?: string | null; issueId?: string | null }
 ): Promise<LinkedCaseOption[]> {
   const issueKey = issue.issueKey || undefined;
   const issueId = issue.issueId || undefined;
   if (!issueKey && !issueId) return [];
+  if (projectIds.length === 0) return [];
 
   const cases = await db.repositoryCases.findMany({
     where: {
-      projectId,
+      projectId: { in: projectIds },
       isDeleted: false,
       isArchived: false,
       caseIssues: {
@@ -116,6 +124,7 @@ export async function listIssueLinkedCases(
     select: {
       id: true,
       name: true,
+      projectId: true,
       folder: { select: { name: true } },
       project: { select: { key: true } },
     },
@@ -136,6 +145,7 @@ export async function listIssueLinkedCases(
         })
       : null,
     folder: c.folder?.name || "",
+    projectId: c.projectId,
   }));
 }
 
