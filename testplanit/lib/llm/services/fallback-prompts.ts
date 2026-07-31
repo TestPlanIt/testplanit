@@ -171,6 +171,7 @@ CRITICAL RULES:
 - Use the actual imports, page objects, fixtures, helpers, and utilities visible in the provided repository context files
 - Follow the coding patterns, naming conventions, and style visible in the context files
 - The code must be syntactically valid and runnable within the test framework
+- Name each test with its TestPlanIt case ID in square brackets before the case name (e.g. "[123] Verify login succeeds") — results imported from automated runs match back to the existing test case by that bracketed ID
 - Output ONLY the raw code — no explanations, no markdown code fences, no comments about what the code does
 
 GUIDELINES:
@@ -178,7 +179,7 @@ GUIDELINES:
 - Use assertions that match the expected results for each step
 - Prefer existing helper methods and page objects from the repository over raw browser/API calls
 - Keep the code concise but complete — every test step should be covered`,
-    userPrompt: `TEST CASE: {{CASE_NAME}}
+    userPrompt: `TEST CASE [{{CASE_ID}}]: {{CASE_NAME}}
 
 TEST STEPS:
 {{STEPS_TEXT}}

@@ -176,6 +176,7 @@ function buildPrompts(args: {
   let userPrompt: string;
   if (mode === "single") {
     userPrompt = args.resolvedUserPrompt
+      .replace(/\{\{CASE_ID\}\}/g, String(cases[0].id))
       .replace(/\{\{CASE_NAME\}\}/g, cases[0].name)
       .replace(/\{\{STEPS_TEXT\}\}/g, stepsText(cases[0]))
       .replace(
@@ -186,9 +187,9 @@ function buildPrompts(args: {
     const casesText = cases
       .map(
         (caseData, idx) =>
-          `--- Test Case ${idx + 1}: ${caseData.name} ---\n${stepsText(
-            caseData
-          )}`
+          `--- Test Case ${idx + 1} [${caseData.id}]: ${
+            caseData.name
+          } ---\n${stepsText(caseData)}`
       )
       .join("\n\n");
     const contextSection = context
@@ -198,7 +199,7 @@ function buildPrompts(args: {
       template.language || ""
     } test file that contains ALL ${
       cases.length
-    } test cases below. Use a single set of imports at the top of the file — do not repeat imports between tests.\n\n${casesText}\n\n${contextSection}`;
+    } test cases below. Use a single set of imports at the top of the file — do not repeat imports between tests. Name each test with its TestPlanIt case ID in square brackets before the case name (e.g. "[123] Verify login succeeds") so imported results match back to the existing test case.\n\n${casesText}\n\n${contextSection}`;
   }
 
   if (rendered.header) {

@@ -52,3 +52,34 @@ describe("test-case-generation prompt — excluded-field compatibility", () => {
     expect(names).toContain("EXCLUDED_FIELDS_LIST");
   });
 });
+
+/**
+ * The QuickScript (export-code-generation) prompt exists in two copies: the
+ * fallback here and the seeded "Default" promptConfig, which the seed rewrites
+ * on every upgrade. Generated tests must title themselves with the case ID in
+ * square brackets — the automated-results importer's default matching resolves
+ * bracketed IDs back to existing cases.
+ */
+describe("quickscript prompt — bracketed case ids for importer matching", () => {
+  const fallback = FALLBACK_PROMPTS[LLM_FEATURES.EXPORT_CODE_GENERATION];
+  const NAMING_RULE = "case ID in square brackets before the case name";
+  const USER_HEADER = "TEST CASE [{{CASE_ID}}]: {{CASE_NAME}}";
+
+  it("titles tests with the bracketed case id in the fallback", () => {
+    expect(fallback.systemPrompt).toContain(NAMING_RULE);
+    expect(fallback.userPrompt).toContain(USER_HEADER);
+  });
+
+  it("keeps the seeded Default config in step with the fallback", () => {
+    const seed = readSource("db/seedPromptConfig.ts");
+    expect(seed).toContain(NAMING_RULE);
+    expect(seed).toContain(USER_HEADER);
+  });
+
+  it("offers CASE_ID in the prompt editor's variable picker", () => {
+    const names = PROMPT_FEATURE_VARIABLES[
+      LLM_FEATURES.EXPORT_CODE_GENERATION
+    ].map((v) => v.name);
+    expect(names).toContain("CASE_ID");
+  });
+});

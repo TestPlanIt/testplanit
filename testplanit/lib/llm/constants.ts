@@ -110,6 +110,11 @@ export const PROMPT_FEATURE_VARIABLES: Record<LlmFeature, PromptVariable[]> = {
     },
     { name: "CASE_NAME", description: "Name of the test case being generated" },
     {
+      name: "CASE_ID",
+      description:
+        "TestPlanIt ID of the test case being generated — put it in square brackets in test names so imported results match the existing case",
+    },
+    {
       name: "STEPS_TEXT",
       description: "Formatted test steps with expected results",
     },

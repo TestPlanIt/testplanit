@@ -251,6 +251,52 @@ describe("generateQuickScript", () => {
     expect(result.code).toBe("test('Login', async () => {});");
   });
 
+  it("substitutes {{CASE_ID}} so single-mode prompts can bracket the case id", async () => {
+    mockResolve.mockResolvedValue({
+      systemPrompt: "System",
+      userPrompt: "TEST CASE [{{CASE_ID}}]: {{CASE_NAME}}\n{{STEPS_TEXT}}",
+      temperature: 0.2,
+      maxOutputTokens: 4096,
+      source: "default",
+    });
+
+    await generateQuickScript({
+      projectId: 1,
+      templateId: 3,
+      cases: [caseData],
+      userId: "u1",
+      mode: "single",
+    });
+
+    const request = mockChat.mock.calls[0][1];
+    const userMessage = request.messages.find(
+      (m: { role: string }) => m.role === "user"
+    );
+    // The importer's default matching resolves bracketed ids in test names
+    // back to existing cases, so the id must reach the prompt.
+    expect(userMessage.content).toContain("TEST CASE [456]: Login");
+  });
+
+  it("brackets each case id in combined mode and instructs bracketed test names", async () => {
+    await generateQuickScript({
+      projectId: 1,
+      templateId: 3,
+      cases: [caseData, { ...caseData, id: 457, name: "Logout" }],
+      userId: "u1",
+      mode: "batch",
+    });
+
+    const request = mockChat.mock.calls[0][1];
+    const userMessage = request.messages.find(
+      (m: { role: string }) => m.role === "user"
+    );
+    expect(userMessage.content).toContain("Test Case 1 [456]: Login");
+    expect(userMessage.content).toContain("Test Case 2 [457]: Logout");
+    expect(userMessage.content).toContain(
+      "case ID in square brackets before the case name"
+    );
+  });
+
   it("names a combined batch result and caps output at the provider ceiling", async () => {
     mockDb.llmProviderConfig.findFirst.mockResolvedValue({
       defaultMaxTokens: 8000,
