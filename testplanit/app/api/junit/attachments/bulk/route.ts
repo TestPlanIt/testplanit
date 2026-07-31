@@ -14,7 +14,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
 import { authenticateApiToken, extractBearerToken } from "~/lib/api-token-auth";
 import { updateAuditContext } from "~/lib/auditContext";
-import { withAuditContext } from "~/lib/auditContextWrappers";
+import {
+  enrichFromApiAuth,
+  withAuditContext,
+} from "~/lib/auditContextWrappers";
 import { baseDb } from "~/lib/db";
 import { getServerAuthSession } from "~/server/auth";
 
@@ -49,6 +52,10 @@ export const POST = withAuditContext(async (request: NextRequest) => {
         );
       }
       userId = apiAuth.userId;
+      if (apiAuth.userId) {
+        // Attribute the attachments' audit rows (CDC GUC actor) to the token owner.
+        enrichFromApiAuth({ userId: apiAuth.userId, scopes: apiAuth.scopes });
+      }
     }
   }
 

@@ -1,6 +1,7 @@
 import { baseDb } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 import { authenticateApiToken } from "~/lib/api-token-auth";
+import { enrichFromApiAuth } from "~/lib/auditContextWrappers";
 import { getServerAuthSession } from "~/server/auth";
 import { db } from "~/server/db";
 
@@ -24,6 +25,10 @@ export async function checkAdminAuth(
     }
     userId = apiAuth.userId;
     userAccess = apiAuth.access;
+    if (apiAuth.userId) {
+      // Attribute restore/purge audit rows (CDC GUC actor) to the token owner.
+      enrichFromApiAuth({ userId: apiAuth.userId, scopes: apiAuth.scopes });
+    }
   }
 
   if (!userId) {

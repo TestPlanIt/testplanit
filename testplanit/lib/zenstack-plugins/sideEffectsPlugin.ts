@@ -129,6 +129,42 @@ export const GUC_MODELS = new Set<string>([
   "OllamaModelRegistry",
   "PromptConfig",
   "AllowedEmailDomain",
+  // Child/value/link tables mutated as TOP-LEVEL operations (a case save issues
+  // standalone caseFieldValues/tag/issue-link writes; run execution writes step
+  // results directly). Their CDC rows roll up to the owning root entity, but the
+  // rollup only groups rows that share an operationId — which, like the actor,
+  // comes from the GUC. Without these entries a case save materializes attributed
+  // RepositoryCases rows plus orphaned __system__ child rows (ew, 2026-07-31).
+  "CaseFieldValues",
+  "Steps",
+  "TestCaseParameter",
+  "RepositoryCaseTag",
+  "RepositoryCaseIssue",
+  "Attachments",
+  "TestRunCases",
+  "TestRunCaseIteration",
+  "TestRunStepResults",
+  "ResultFieldValues",
+  "SessionFieldValues",
+  // Project-setup/config assignment tables — bulk-written on project create and
+  // edited standalone from the admin pages.
+  "ProjectAssignment",
+  "ProjectWorkflowAssignment",
+  "ProjectStatusAssignment",
+  "ProjectConfigurationAssignment",
+  "MilestoneTypesAssignment",
+  "IntegrationProject",
+  "ProjectIntegration",
+  "ProjectLlmIntegration",
+  "ProjectCodeRepositoryConfig",
+  "PromptConfigPrompt",
+  // Access/permission tables: their semantic audit events are decommissioned —
+  // the CDC row is the SOLE record of an access change (see lib/audit/
+  // correlation.ts ACCESS_LABEL_COLS), so it must carry the acting user.
+  "UserProjectPermission",
+  "GroupProjectPermission",
+  "GroupAssignment",
+  "RolePermission",
 ]);
 
 // Models that need their before-image for an update/delete diff or emit.
