@@ -6,80 +6,94 @@ installs. You build it yourself from the source attached below.
 
 > ⚠️ This is pre-release software. **Back up your database before trying it.**
 
-### What's new since beta.10
+### What's new since beta.11
 
-#### Test automation reporters
+#### Reporter packages — beta channel on npm
 
-- **Attach links, files, and metadata to the run itself** — the WebdriverIO
-  and Playwright reporters accept declarative `runLinks`, `runAttachments`,
-  and `runMetadata` options (with `{env:VAR}` templating), and tests can add
-  to the run at runtime via `browser.testplanit` (WebdriverIO) or
-  `attachToRun` (Playwright). Files produced during the run are picked up at
-  completion.
-- **Automated runs show Description and Documentation** — the run page
-  rendered the JUnit results panel instead of the two editors, so run-level
-  content — including metadata written by the reporters — was invisible.
-  Both now render and edit on automated runs just like manual ones.
+- **The integration packages now ship betas on npm** under the `beta`
+  dist-tag: `npm i @testplanit/wdio-reporter@beta` (likewise
+  `playwright-reporter`, `api`, and `mcp-server`). These track the 1.0 app;
+  the default `latest` install is unaffected.
+- **One run across sharded CI** — set `TESTPLANIT_RUN_ID` (or `testRunId`)
+  and every WebdriverIO or Playwright invocation attaches to that run instead
+  of creating its own. The pipeline owns the lifecycle through the new
+  `testplanit create-run` / `complete-run` CLI in `@testplanit/api`. Each
+  execution records its own suite, named by capability/project and spec
+  (`testSuiteName` overrides it; Playwright adds a `{shard}` placeholder).
+- The WebdriverIO service now hands its run id to forked workers, so workers
+  on separate agents or containers attach to the service's run instead of
+  creating runs of their own.
+- New `excludeSkipped` reporter option omits skipped results from runs.
 
-#### Generate Test Cases
+#### Automation runs
 
-- **Per-template default fields** — admins can exclude template fields from
-  AI generation by default (sparkles toggle in Add/Edit Template). The wizard
-  seeds its selection from those defaults; required fields stay on, and any
-  optional field can still be toggled per run.
-- **Deselecting a field now sticks** — the wizard silently re-selected every
-  field when moving between steps, and the model could volunteer a deselected
-  field anyway; deselected fields are now excluded end to end. Cases linked
-  to the selected issues are also fed to the model as context.
+- **Automation Runs card** — project cards show automated-run activity with
+  live updates.
+- **Abandoned runs can auto-close** — an aborted CI job used to leave its run
+  In Progress forever. An opt-in sweep now closes automated runs idle past a
+  threshold (system default plus per-project override). Off by default.
+- **The MCP server understands automated runs** — run results tools return
+  JUnit results (with stack trace, stdout/stderr, and timing detail), status
+  rollups count those results instead of reporting automated runs as 100%
+  untested, and per-case status falls back to the latest result.
+- **Automation Trends counts reality** — flipping a case to automated never
+  recorded a version snapshot, so trends undercounted automated cases (one
+  project reported 33 instead of 2,316). Flips are snapshotted now and
+  history is backfilled; deleted cases count in the periods they existed, the
+  chart no longer pads future periods, and CSV percentages keep a decimal.
 
-#### Jira milestone sync
+#### Repository & folders
 
-- The import picker filters by Release / Sprint, and the import button counts
-  what's selected.
-- Milestone preview filters in Jira instead of client-side — faster with many
-  versions — and gateway errors surface properly instead of an empty list.
-- Sprint import requests the granular Jira Software scopes it needs; the
-  required OAuth 2.0 scopes are now documented.
-- Webhook handling tuned: version/sprint lifecycle transitions (release,
-  close, start, complete) always apply immediately, refreshes coalesce only
-  during a real event storm, and inbound issue syncs get the same burst
-  allowance as other webhooks. The Deliveries tab gained an event filter.
-- Version events resolve to the correct project, and issue tracker-key
-  lookups are indexed.
+- **Folders are findable in large trees** — a type-to-filter box above the
+  folder tree (appears past 15 folders) keeps each match's ancestors and
+  subtree reachable; expand-all no longer freezes the tab, and big trees are
+  actually virtualized.
+- **Folder pickers are searchable** — the case-edit, import-wizard, and
+  results-import folder dropdowns search by name and virtualize long lists,
+  keeping the hierarchy indentation.
+- Shift+click select-all is scoped to the folder and view you're looking at,
+  and respects active text, link, and steps filters.
+- Sorting on a Dropdown custom field orders cases by the field's option
+  order.
 
-#### Results & runs
+#### Jira issue panel
 
-- **Run status follows edited and deleted results** — editing a result from
-  Passed to Failed (or deleting one) updated the history but left the run's
-  donut and the case's status chip showing the old outcome. The case status
-  is now re-derived whenever a result changes.
-- **Linking an issue marks the result failed** — attaching an issue in the
-  Add/Edit Result dialog flips the status to the project's first failure
-  status automatically; a failure status you already picked is kept.
-- Expanding an attachment now shows just the attachment, scaled to fit the
-  viewer.
+- **Case fields in the panel** — templates gain a per-field Jira toggle (off
+  by default); opted-in fields render as chips under each linked case, with
+  dropdown values in their option colors.
+- Steps fields show a step-count chip that opens a numbered step list in a
+  popover, with shared step groups expanded inline.
+- **The Generate QuickScript button appears where it should** — the panel now
+  finds linked cases across every accessible project instead of one guessed
+  from the Jira-key mapping, and the project picker shows each project's
+  linked-case count.
+- Generated test names include the case ID in brackets, so imported results
+  attach to the case the script was generated from instead of creating
+  duplicates.
 
-#### Reviews
+#### Audit logs
 
-- **Deleting a case, run, or session cancels its pending reviews** —
-  reviewers no longer keep inbox entries pointing at work that no longer
-  exists.
-- Reviews inbox table: column widths and resizing are honored, long names
-  truncate with an ellipsis, and links and status chips render at the right
-  scale.
+- A new Source column captures the originating table, and project attribution
+  reaches attachments and rolled-up child entities.
+- Filter pickers no longer scan the whole log: actor, action, entity-type,
+  and project options load lazily via index seeks, the Actions filter shows
+  only actions actually present, search is debounced, and the date range
+  defaults to the current week.
 
 #### Fixes & interface
 
-- Disabled fields no longer appear in bulk edit or the case details view.
-- Numbers format with the app's locale instead of the browser's.
-- Translated strings no longer drop counts (machine translation was mangling
-  the ICU `#` placeholder).
-- The Add Session form no longer discards values you typed while it finished
-  loading.
-- Tables with pinned columns keep scrolled-to cells reachable instead of
-  hiding them under the pinned edge.
-- Milestone page side panels collapse to give the middle section more room,
-  and the project overview leads with the test case breakdown chart.
+- **Sign-in matches emails case-insensitively** — SAML and other identity
+  flows no longer miss an existing account (or auto-provision a duplicate)
+  over letter case.
+- Case version history no longer shows a case's attachments as deleted —
+  versions now snapshot the attachments that actually exist.
+- Kebab menus on horizontally-scrolling pages open reliably — opening one no
+  longer locks scroll and shifts the layout out from under the cursor.
+- Creating an issue in Jira carries images and videos embedded in the
+  description over as attachments.
+- Issue tables show clean plain-text previews of rich-text descriptions.
+- The reviews inbox gains the docked case details panel.
+- AI tag analysis batches more entities per request.
 
 ### Try it
 
