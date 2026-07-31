@@ -162,9 +162,15 @@ const formatElapsedTime = (totalSeconds) => {
 // Fields without a value are hidden entirely.
 
 const fieldHasValue = (field) => {
+  if (field.type === 'Steps') return (field.steps || []).length > 0;
   if (field.options) return field.options.length > 0;
   if (field.type === 'Checkbox') return true; // a checkbox always has a state
   return field.value !== null && field.value !== undefined && field.value !== '';
+};
+
+const stepsCountLabel = (field) => {
+  const count = (field.steps || []).length;
+  return count + ' Step' + (count === 1 ? '' : 's');
 };
 
 // Option list (icon in its configured colour + name), separated by dividers.
@@ -186,8 +192,53 @@ const FieldOptionList = ({ options, inverse }) => (
   </span>
 );
 
+// Numbered step list shown in the Steps popover, mirroring the repository
+// table's StepsListDisplay: step text bold, expected result beneath it,
+// shared groups nested under their group name.
+const StepsList = ({ steps }) => (
+  <ol className="tpi-steps-ol">
+    {steps.map((row, index) => (
+      <li key={index} className="tpi-steps-li">
+        {row.group ? (
+          <>
+            <div className="tpi-steps-step">
+              <DynamicIcon name="Layers" className="h-3.5 w-3.5 shrink-0" />
+              <span>{row.group}</span>
+              <span className="tpi-steps-shared">(shared)</span>
+            </div>
+            <ol className="tpi-steps-ol tpi-steps-ol-nested">
+              {(row.items || []).map((item, itemIndex) => (
+                <li key={itemIndex} className="tpi-steps-li">
+                  <div className="tpi-steps-step">{item.step}</div>
+                  {item.expected && (
+                    <div className="tpi-steps-expected">
+                      <DynamicIcon name="SearchCheck" className="h-3.5 w-3.5 shrink-0" />
+                      <span>{item.expected}</span>
+                    </div>
+                  )}
+                </li>
+              ))}
+            </ol>
+          </>
+        ) : (
+          <>
+            <div className="tpi-steps-step">{row.step}</div>
+            {row.expected && (
+              <div className="tpi-steps-expected">
+                <DynamicIcon name="SearchCheck" className="h-3.5 w-3.5 shrink-0" />
+                <span>{row.expected}</span>
+              </div>
+            )}
+          </>
+        )}
+      </li>
+    ))}
+  </ol>
+);
+
 // A field's value, used inside revealed chips and the kebab overflow menu.
 const FieldValue = ({ field }) => {
+  if (field.type === 'Steps') return <span>{stepsCountLabel(field)}</span>;
   if (field.options) return <FieldOptionList options={field.options} />;
 
   if (field.type === 'Checkbox') {
@@ -233,7 +284,18 @@ const FieldValue = ({ field }) => {
   );
 };
 
-const FieldChip = ({ field, revealed, onClick }) => {
+const FieldChip = ({ field, revealed, onClick, onSteps }) => {
+  if (field.type === 'Steps') {
+    // Count chip like the repository table's badge; clicking opens the
+    // numbered list in a popover instead of expanding the case.
+    return (
+      <button data-chip="true" className="tpi-chip" title={field.label} onClick={onSteps}>
+        <DynamicIcon name="ListOrdered" className="h-3 w-3 shrink-0" />
+        <span className="tpi-chip-label">{stepsCountLabel(field)}</span>
+      </button>
+    );
+  }
+
   const isDropdown = field.type === 'Dropdown' && field.options && field.options.length > 0;
 
   if (isDropdown) {
@@ -268,6 +330,8 @@ const FieldChipsRow = ({ fields, expanded, onToggle }) => {
   const rowRef = useRef(null);
   const [hiddenCount, setHiddenCount] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [stepsOpen, setStepsOpen] = useState(false);
+  const stepsField = fields.find((field) => field.type === 'Steps');
 
   // Action Bar-style fitting: show every chip that fits on one line and fold
   // the rest behind the kebab. Runs pre-paint, so no visible reflow.
@@ -299,11 +363,14 @@ const FieldChipsRow = ({ fields, expanded, onToggle }) => {
   }, [fit]);
 
   useEffect(() => {
-    if (!menuOpen) return;
-    const close = () => setMenuOpen(false);
+    if (!menuOpen && !stepsOpen) return;
+    const close = () => {
+      setMenuOpen(false);
+      setStepsOpen(false);
+    };
     document.addEventListener('click', close);
     return () => document.removeEventListener('click', close);
-  }, [menuOpen]);
+  }, [menuOpen, stepsOpen]);
 
   const hiddenFields = hiddenCount > 0 ? fields.slice(fields.length - hiddenCount) : [];
 
@@ -311,7 +378,17 @@ const FieldChipsRow = ({ fields, expanded, onToggle }) => {
     <div className="tpi-field-area">
       <div ref={rowRef} className={`tpi-field-row ${expanded ? 'tpi-field-row-wrap' : ''}`}>
         {fields.map((field) => (
-          <FieldChip key={field.id} field={field} revealed={expanded} onClick={onToggle} />
+          <FieldChip
+            key={field.id}
+            field={field}
+            revealed={expanded}
+            onClick={onToggle}
+            onSteps={(e) => {
+              e.stopPropagation();
+              setStepsOpen((open) => !open);
+              setMenuOpen(false);
+            }}
+          />
         ))}
         <button
           data-kebab="true"
@@ -334,6 +411,11 @@ const FieldChipsRow = ({ fields, expanded, onToggle }) => {
               <span className="tpi-field-menu-value"><FieldValue field={field} /></span>
             </div>
           ))}
+        </div>
+      )}
+      {stepsOpen && stepsField && (
+        <div className="tpi-steps-menu" onClick={(e) => e.stopPropagation()}>
+          <StepsList steps={stepsField.steps} />
         </div>
       )}
     </div>

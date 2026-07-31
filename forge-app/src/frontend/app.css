@@ -231,6 +231,61 @@ body {
   color: var(--testplanit-text);
 }
 
+/* Steps popover (opened from the Steps count chip) */
+.tpi-steps-menu {
+  position: absolute;
+  left: 34px;
+  top: calc(100% - 4px);
+  z-index: 30;
+  width: 360px;
+  max-width: calc(100% - 42px);
+  max-height: 300px;
+  overflow-y: auto;
+  background-color: var(--testplanit-card-bg);
+  border: 1px solid var(--testplanit-border);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+  padding: 8px 10px;
+}
+
+.tpi-steps-ol {
+  margin: 0;
+  padding-left: 20px;
+  font-size: 12px;
+  list-style: decimal;
+  color: var(--testplanit-text);
+}
+
+.tpi-steps-ol-nested {
+  padding-left: 16px;
+  margin-top: 2px;
+}
+
+.tpi-steps-li {
+  margin-bottom: 7px;
+}
+
+.tpi-steps-step {
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.tpi-steps-shared {
+  color: var(--testplanit-text-muted);
+  font-weight: 400;
+  font-size: 11px;
+}
+
+.tpi-steps-expected {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--testplanit-text-muted);
+  margin-top: 1px;
+}
+
 /* Ensure the app takes only the space it needs for iframe auto-sizing */
 html, body, #root {
   height: auto !important;

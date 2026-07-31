@@ -216,6 +216,88 @@ describe("jira test-info fields resolution", () => {
     ]);
   });
 
+  it("resolves Steps from the steps relation, expanding shared groups and dropping deleted ones", async () => {
+    const doc = (text: string) => ({
+      type: "doc",
+      content: [{ type: "paragraph", content: [{ type: "text", text }] }],
+    });
+    const testCase = buildCase({
+      template: {
+        caseFields: [
+          {
+            caseField: {
+              id: 301,
+              displayName: "Steps",
+              type: { type: "Steps" },
+              fieldOptions: [],
+            },
+          },
+        ],
+      },
+      steps: [
+        {
+          id: 1,
+          order: 1,
+          step: doc("Open the page"),
+          expectedResult: doc("Page loads"),
+          sharedStepGroupId: null,
+          sharedStepGroup: null,
+        },
+        {
+          id: 2,
+          order: 2,
+          step: null,
+          expectedResult: null,
+          sharedStepGroupId: 9,
+          sharedStepGroup: {
+            name: "Login preamble",
+            isDeleted: false,
+            items: [
+              {
+                step: doc("Open sign-in"),
+                expectedResult: doc("Form visible"),
+              },
+              { step: doc("Sign in"), expectedResult: doc("Dashboard loads") },
+            ],
+          },
+        },
+        {
+          id: 3,
+          order: 3,
+          step: null,
+          expectedResult: null,
+          sharedStepGroupId: 10,
+          sharedStepGroup: { name: "Gone", isDeleted: true, items: [] },
+        },
+      ],
+    });
+    vi.mocked(baseDb.issue.findMany).mockResolvedValue([
+      buildIssue(testCase),
+    ] as any);
+
+    const response = await GET(buildRequest());
+    const body = await response.json();
+
+    expect(body.testCases[0].fields).toEqual([
+      {
+        id: 301,
+        label: "Steps",
+        type: "Steps",
+        value: null,
+        steps: [
+          { step: "Open the page", expected: "Page loads" },
+          {
+            group: "Login preamble",
+            items: [
+              { step: "Open sign-in", expected: "Form visible" },
+              { step: "Sign in", expected: "Dashboard loads" },
+            ],
+          },
+        ],
+      },
+    ]);
+  });
+
   it("returns an empty fields array when the template has no panel-enabled fields", async () => {
     vi.mocked(baseDb.issue.findMany).mockResolvedValue([
       buildIssue(buildCase()),

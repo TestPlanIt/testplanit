@@ -23,8 +23,31 @@ function resolveJiraPanelFields(testCase: any) {
     let options:
       | { name: string; icon: string | null; iconColor: string | null }[]
       | undefined;
+    let steps: unknown[] | undefined;
 
-    if (fieldType === "Dropdown" || fieldType === "Multi-Select") {
+    if (fieldType === "Steps") {
+      // Steps come from the case's steps relation. Shared groups are resolved
+      // inline (group name + its items); placeholders whose group was deleted
+      // are dropped, matching the repository table.
+      steps = (testCase.steps || [])
+        .map((s: any) => {
+          if (s.sharedStepGroupId) {
+            if (!s.sharedStepGroup || s.sharedStepGroup.isDeleted) return null;
+            return {
+              group: s.sharedStepGroup.name,
+              items: (s.sharedStepGroup.items || []).map((item: any) => ({
+                step: extractTextFromNode(item.step),
+                expected: extractTextFromNode(item.expectedResult),
+              })),
+            };
+          }
+          return {
+            step: extractTextFromNode(s.step),
+            expected: extractTextFromNode(s.expectedResult),
+          };
+        })
+        .filter(Boolean);
+    } else if (fieldType === "Dropdown" || fieldType === "Multi-Select") {
       const selectedIds =
         rawValue === null || rawValue === undefined
           ? []
@@ -64,6 +87,7 @@ function resolveJiraPanelFields(testCase: any) {
       type: fieldType,
       value,
       ...(options ? { options } : {}),
+      ...(steps ? { steps } : {}),
     };
   });
 }
@@ -229,6 +253,32 @@ export async function GET(request: NextRequest) {
                     select: {
                       fieldId: true,
                       value: true,
+                    },
+                  },
+                  // Steps live in their own relation, not CaseFieldValues;
+                  // needed when the template's Steps field is panel-enabled.
+                  steps: {
+                    where: { isDeleted: false },
+                    orderBy: { order: "asc" },
+                    select: {
+                      id: true,
+                      step: true,
+                      expectedResult: true,
+                      order: true,
+                      sharedStepGroupId: true,
+                      sharedStepGroup: {
+                        select: {
+                          name: true,
+                          isDeleted: true,
+                          items: {
+                            orderBy: { order: "asc" },
+                            select: {
+                              step: true,
+                              expectedResult: true,
+                            },
+                          },
+                        },
+                      },
                     },
                   },
                   testRuns: {
