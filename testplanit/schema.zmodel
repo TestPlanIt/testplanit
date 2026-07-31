@@ -1065,6 +1065,7 @@ model TemplateCaseAssignment {
     template               Templates  @relation(fields: [templateId], references: [id], onDelete: Cascade)
     order                  Int        @default(0)
     generateDefaultEnabled Boolean    @default(true)
+    jiraPanelEnabled       Boolean    @default(false)
 
     @@id([caseFieldId, templateId])
     @@deny('all', auth() == null)

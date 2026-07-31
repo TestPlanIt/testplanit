@@ -1,7 +1,72 @@
 import { baseDb as db } from "@/lib/db";
 import { IntegrationProvider } from "~/zenstack/models";
+import { extractTextFromNode } from "~/utils/extractTextFromJson";
 import { timingSafeEqual } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
+
+// Resolve a case's Jira-panel-enabled template fields into display-ready
+// values, mirroring how the repository case table renders each field type:
+// Dropdown/Multi-Select resolve to their option names + icons, Checkbox to a
+// boolean, Text Long (TipTap JSON) to plain text, everything else passes
+// through as a string.
+function resolveJiraPanelFields(testCase: any) {
+  const assignments = testCase.template?.caseFields || [];
+
+  return assignments.map((assignment: any) => {
+    const caseField = assignment.caseField;
+    const fieldType = caseField.type?.type ?? null;
+    const rawValue = testCase.caseFieldValues?.find(
+      (v: any) => v.fieldId === caseField.id
+    )?.value;
+
+    let value: unknown = null;
+    let options:
+      | { name: string; icon: string | null; iconColor: string | null }[]
+      | undefined;
+
+    if (fieldType === "Dropdown" || fieldType === "Multi-Select") {
+      const selectedIds =
+        rawValue === null || rawValue === undefined
+          ? []
+          : (Array.isArray(rawValue) ? rawValue : [rawValue]).map((v: any) =>
+              Number(v)
+            );
+      options = selectedIds
+        .map(
+          (optionId) =>
+            caseField.fieldOptions.find(
+              (fo: any) => fo.fieldOption.id === optionId
+            )?.fieldOption
+        )
+        .filter(Boolean)
+        .map((fieldOption: any) => ({
+          name: fieldOption.name,
+          icon: fieldOption.icon?.name || null,
+          iconColor: fieldOption.iconColor?.value || null,
+        }));
+    } else if (fieldType === "Checkbox") {
+      value = Boolean(rawValue);
+    } else if (fieldType === "Text Long") {
+      value =
+        rawValue === null || rawValue === undefined
+          ? null
+          : extractTextFromNode(rawValue);
+    } else if (rawValue !== null && rawValue !== undefined) {
+      value =
+        typeof rawValue === "object"
+          ? JSON.stringify(rawValue)
+          : rawValue.toString();
+    }
+
+    return {
+      id: caseField.id,
+      label: caseField.displayName,
+      type: fieldType,
+      value,
+      ...(options ? { options } : {}),
+    };
+  });
+}
 
 function constantTimeCompare(a: string, b: string): boolean {
   try {
@@ -124,6 +189,46 @@ export async function GET(request: NextRequest) {
                   project: {
                     select: {
                       id: true,
+                    },
+                  },
+                  // Case fields the admin opted into the Jira panel
+                  // (per-template toggle in Templates & Fields).
+                  template: {
+                    select: {
+                      caseFields: {
+                        where: {
+                          jiraPanelEnabled: true,
+                          caseField: { isEnabled: true, isDeleted: false },
+                        },
+                        orderBy: { order: "asc" },
+                        select: {
+                          caseField: {
+                            select: {
+                              id: true,
+                              displayName: true,
+                              type: { select: { type: true } },
+                              fieldOptions: {
+                                select: {
+                                  fieldOption: {
+                                    select: {
+                                      id: true,
+                                      name: true,
+                                      icon: { select: { name: true } },
+                                      iconColor: { select: { value: true } },
+                                    },
+                                  },
+                                },
+                              },
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                  caseFieldValues: {
+                    select: {
+                      fieldId: true,
+                      value: true,
                     },
                   },
                   testRuns: {
@@ -558,6 +663,9 @@ export async function GET(request: NextRequest) {
         lastResultColor: latestResult
           ? latestResult.status.color?.value
           : firstStatus?.color?.value || null,
+        // Case fields opted into the Jira panel via the template's per-field
+        // toggle, resolved server-side so the panel just renders them.
+        fields: resolveJiraPanelFields(testCase),
         resultHistory: allResults.slice(0, 5).map((result: any) => {
           // Find the test run case that this result belongs to
           const testRunCase = testCase.testRuns?.find((trc: any) =>

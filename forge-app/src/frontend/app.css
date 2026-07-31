@@ -90,6 +90,147 @@ body {
   background-color: var(--testplanit-muted-bg);
 }
 
+/* Case-field chips (per-template Jira panel fields) */
+.tpi-field-area {
+  position: relative;
+}
+
+.tpi-field-row {
+  display: flex;
+  flex-wrap: nowrap;
+  overflow: hidden;
+  gap: 4px;
+  padding: 0 8px 8px 34px;
+}
+
+.tpi-field-row-wrap {
+  flex-wrap: wrap;
+  overflow: visible;
+}
+
+.tpi-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex: none;
+  max-width: 100%;
+  min-width: 0;
+  padding: 3px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--testplanit-border);
+  background-color: var(--testplanit-muted-bg);
+  color: var(--testplanit-text);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.tpi-chip:hover {
+  border-color: var(--testplanit-primary);
+}
+
+.tpi-chip-filled {
+  border-color: transparent;
+  color: #fff;
+  font-weight: 600;
+}
+
+.tpi-chip-label {
+  color: var(--testplanit-text-muted);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.tpi-chip-filled .tpi-chip-label {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.tpi-chip-count {
+  color: var(--testplanit-text-muted);
+  font-weight: 400;
+}
+
+/* Revealed (expanded) chips may wrap their text; clamp long values. */
+.tpi-field-row-wrap .tpi-chip {
+  white-space: normal;
+}
+
+.tpi-clamp {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-align: left;
+}
+
+.tpi-kebab {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  flex: none;
+  padding: 3px 7px;
+  border-radius: 6px;
+  border: 1px solid var(--testplanit-border);
+  background-color: var(--testplanit-muted-bg);
+  color: var(--testplanit-text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.tpi-kebab:hover {
+  border-color: var(--testplanit-primary);
+  color: var(--testplanit-text);
+}
+
+.tpi-field-menu {
+  position: absolute;
+  right: 8px;
+  top: calc(100% - 4px);
+  z-index: 30;
+  min-width: 240px;
+  max-width: 320px;
+  background-color: var(--testplanit-card-bg);
+  border: 1px solid var(--testplanit-border);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+  padding: 6px;
+}
+
+.tpi-field-menu-item {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  font-size: 12px;
+  padding: 5px 8px;
+  border-radius: 5px;
+  min-width: 0;
+}
+
+.tpi-field-menu-item:hover {
+  background-color: var(--testplanit-hover-bg);
+}
+
+.tpi-field-menu-label {
+  color: var(--testplanit-text-muted);
+  flex: 0 0 40%;
+  max-width: 40%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tpi-field-menu-value {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+  color: var(--testplanit-text);
+}
+
 /* Ensure the app takes only the space it needs for iframe auto-sizing */
 html, body, #root {
   height: auto !important;

@@ -118,6 +118,15 @@ export function AddTemplate({ open, onClose }: AddTemplateProps) {
     orderBy: { displayName: "asc" },
   });
 
+  // The Jira-panel toggle is only offered when the system has an active Jira
+  // integration — without one the panel can never show field data.
+  const { data: activeJiraIntegration } = useClientQueries(
+    schema
+  ).integration.useFindFirst({
+    where: { provider: "JIRA", status: "ACTIVE", isDeleted: false },
+    select: { id: true },
+  });
+
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: standardSchemaResolver(FormSchema),
     defaultValues: {
@@ -169,6 +178,17 @@ export function AddTemplate({ open, onClose }: AddTemplateProps) {
       prev.map((f) =>
         f.id === id
           ? { ...f, generateDefaultEnabled: f.generateDefaultEnabled === false }
+          : f
+      )
+    );
+  };
+
+  // Flip whether the field's value is shown in the Jira plugin panel.
+  const handleToggleJiraPanel = (id: string | number) => {
+    setSelectedCaseFields((prev) =>
+      prev.map((f) =>
+        f.id === id
+          ? { ...f, jiraPanelEnabled: f.jiraPanelEnabled !== true }
           : f
       )
     );
@@ -238,6 +258,7 @@ export function AddTemplate({ open, onClose }: AddTemplateProps) {
             templateId: newTemplate!.id,
             order: index + 1,
             generateDefaultEnabled: field.generateDefaultEnabled !== false,
+            jiraPanelEnabled: field.jiraPanelEnabled === true,
           })),
         });
       }
@@ -404,6 +425,11 @@ export function AddTemplate({ open, onClose }: AddTemplateProps) {
                           handleRemoveField(Number(item), "case")
                         }
                         onToggleGenerateDefault={handleToggleGenerateDefault}
+                        onToggleJiraPanel={
+                          activeJiraIntegration
+                            ? handleToggleJiraPanel
+                            : undefined
+                        }
                       />
                     </div>
                   </FormControl>

@@ -89,7 +89,10 @@ export async function GET(request: NextRequest) {
 
     const countByProject = new Map<number, number>();
     for (const c of allLinkedCases) {
-      countByProject.set(c.projectId, (countByProject.get(c.projectId) ?? 0) + 1);
+      countByProject.set(
+        c.projectId,
+        (countByProject.get(c.projectId) ?? 0) + 1
+      );
     }
     const withCounts = projects.map((p) => ({
       ...p,
@@ -106,7 +109,8 @@ export async function GET(request: NextRequest) {
       (typeof withCounts)[number] | null
     >(
       (best, p) =>
-        p.linkedCaseCount > 0 && (!best || p.linkedCaseCount > best.linkedCaseCount)
+        p.linkedCaseCount > 0 &&
+        (!best || p.linkedCaseCount > best.linkedCaseCount)
           ? p
           : best,
       null

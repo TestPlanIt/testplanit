@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react';
 import { createRoot } from 'react-dom/client';
 import { invoke, router, view } from '@forge/bridge';
 import * as LucideIcons from 'lucide-react';
@@ -153,9 +153,198 @@ const formatElapsedTime = (totalSeconds) => {
   return parts.join(', ');
 };
 
+// ---- Case-field chips (per-template Jira panel fields) ----
+// Approved design: fields render as a second row of buttons under the case
+// title. Dropdowns are filled with their option colour (like Workflow State)
+// and always show their value; other fields show their label until the case
+// is expanded, which reveals every value in place. The collapsed row stays on
+// one line — chips that don't fit fold into a kebab menu (Action Bar cue).
+// Fields without a value are hidden entirely.
+
+const fieldHasValue = (field) => {
+  if (field.options) return field.options.length > 0;
+  if (field.type === 'Checkbox') return true; // a checkbox always has a state
+  return field.value !== null && field.value !== undefined && field.value !== '';
+};
+
+// Option list (icon in its configured colour + name), separated by dividers.
+const FieldOptionList = ({ options, inverse }) => (
+  <span className="inline-flex items-center gap-1 min-w-0">
+    {options.map((option, index) => (
+      <span key={index} className="inline-flex items-center gap-1 min-w-0">
+        {index > 0 && <span className={inverse ? 'opacity-70' : 'testplanit-text-muted'}>|</span>}
+        {option.icon && (
+          <DynamicIcon
+            name={option.icon}
+            className="h-3 w-3 shrink-0"
+            style={inverse ? { color: 'white' } : (option.iconColor ? { color: option.iconColor } : undefined)}
+          />
+        )}
+        <span className="truncate">{option.name}</span>
+      </span>
+    ))}
+  </span>
+);
+
+// A field's value, used inside revealed chips and the kebab overflow menu.
+const FieldValue = ({ field }) => {
+  if (field.options) return <FieldOptionList options={field.options} />;
+
+  if (field.type === 'Checkbox') {
+    return field.value
+      ? <DynamicIcon name="SquareCheck" className="h-3.5 w-3.5 shrink-0" style={{ color: '#16A34A' }} />
+      : <DynamicIcon name="Square" className="h-3.5 w-3.5 shrink-0 testplanit-text-muted" />;
+  }
+
+  if (field.type === 'Date') {
+    const parsed = new Date(field.value);
+    return (
+      <span className="truncate">
+        {isNaN(parsed.getTime()) ? String(field.value) : parsed.toLocaleDateString()}
+      </span>
+    );
+  }
+
+  if (field.type === 'Link') {
+    const url = String(field.value);
+    return (
+      <button
+        className="truncate testplanit-primary hover:underline text-left min-w-0"
+        title={url}
+        onClick={async (e) => {
+          e.stopPropagation();
+          try {
+            await router.open(url);
+          } catch {
+            window.open(url, '_blank', 'noopener');
+          }
+        }}
+      >
+        {url}
+      </button>
+    );
+  }
+
+  const text = String(field.value);
+  return (
+    <span className="tpi-clamp" title={text}>
+      {text}
+    </span>
+  );
+};
+
+const FieldChip = ({ field, revealed, onClick }) => {
+  const isDropdown = field.type === 'Dropdown' && field.options && field.options.length > 0;
+
+  if (isDropdown) {
+    // Single value: shown in the button itself, like the Workflow State badge.
+    const option = field.options[0];
+    const color = option.iconColor || 'var(--ds-background-neutral, #6B7280)';
+    return (
+      <button
+        data-chip="true"
+        className="tpi-chip tpi-chip-filled"
+        style={{ backgroundColor: color, borderColor: color }}
+        title={field.label}
+        onClick={onClick}
+      >
+        {revealed && <span className="tpi-chip-label">{field.label}:</span>}
+        {option.icon && <DynamicIcon name={option.icon} className="h-3 w-3 shrink-0" style={{ color: 'white' }} />}
+        <span className="truncate">{option.name}</span>
+      </button>
+    );
+  }
+
+  return (
+    <button data-chip="true" className="tpi-chip" title={field.label} onClick={onClick}>
+      <span className="tpi-chip-label">{revealed ? `${field.label}:` : field.label}</span>
+      {revealed && <FieldValue field={field} />}
+      {!revealed && field.options && <span className="tpi-chip-count">{'·'}{field.options.length}</span>}
+    </button>
+  );
+};
+
+const FieldChipsRow = ({ fields, expanded, onToggle }) => {
+  const rowRef = useRef(null);
+  const [hiddenCount, setHiddenCount] = useState(0);
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  // Action Bar-style fitting: show every chip that fits on one line and fold
+  // the rest behind the kebab. Runs pre-paint, so no visible reflow.
+  const fit = useCallback(() => {
+    const row = rowRef.current;
+    if (!row) return;
+    const chips = Array.from(row.querySelectorAll('[data-chip]'));
+    const kebab = row.querySelector('[data-kebab]');
+    chips.forEach((chip) => { chip.style.display = ''; });
+    if (kebab) kebab.style.display = 'none';
+
+    let hidden = 0;
+    if (!expanded && row.scrollWidth > row.clientWidth + 1) {
+      if (kebab) kebab.style.display = '';
+      for (let i = chips.length - 1; i >= 0 && row.scrollWidth > row.clientWidth + 1; i--) {
+        chips[i].style.display = 'none';
+        hidden++;
+      }
+    }
+    setHiddenCount(hidden);
+    if (hidden === 0) setMenuOpen(false);
+  }, [expanded]);
+
+  useLayoutEffect(() => { fit(); }, [fit, fields]);
+
+  useEffect(() => {
+    window.addEventListener('resize', fit);
+    return () => window.removeEventListener('resize', fit);
+  }, [fit]);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const close = () => setMenuOpen(false);
+    document.addEventListener('click', close);
+    return () => document.removeEventListener('click', close);
+  }, [menuOpen]);
+
+  const hiddenFields = hiddenCount > 0 ? fields.slice(fields.length - hiddenCount) : [];
+
+  return (
+    <div className="tpi-field-area">
+      <div ref={rowRef} className={`tpi-field-row ${expanded ? 'tpi-field-row-wrap' : ''}`}>
+        {fields.map((field) => (
+          <FieldChip key={field.id} field={field} revealed={expanded} onClick={onToggle} />
+        ))}
+        <button
+          data-kebab="true"
+          className="tpi-kebab"
+          aria-label="More fields"
+          onClick={(e) => {
+            e.stopPropagation();
+            setMenuOpen((open) => !open);
+          }}
+        >
+          <DynamicIcon name="MoreVertical" className="h-3.5 w-3.5" />
+          {hiddenCount > 0 && <span>+{hiddenCount}</span>}
+        </button>
+      </div>
+      {menuOpen && hiddenFields.length > 0 && (
+        <div className="tpi-field-menu" onClick={(e) => e.stopPropagation()}>
+          {hiddenFields.map((field) => (
+            <div key={field.id} className="tpi-field-menu-item">
+              <span className="tpi-field-menu-label" title={field.label}>{field.label}</span>
+              <span className="tpi-field-menu-value"><FieldValue field={field} /></span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 // Test case row component
 const TestCaseRow = ({ testCase, onOpen }) => {
   const [expanded, setExpanded] = useState(false);
+  // Fields opted into the panel; valueless ones are hidden by design.
+  const visibleFields = (testCase.fields || []).filter(fieldHasValue);
 
   const getIcon = (source, isDeleted) => {
     if (isDeleted) return <DynamicIcon name="Trash2" className="h-4 w-4 shrink-0" />;
@@ -264,6 +453,10 @@ const TestCaseRow = ({ testCase, onOpen }) => {
           {expanded ? <DynamicIcon name="ChevronDown" className="h-4 w-4" /> : <DynamicIcon name="ChevronRight" className="h-4 w-4" />}
         </button>
       </div>
+      {/* Case fields the admin opted into the Jira panel (template toggle) */}
+      {visibleFields.length > 0 && (
+        <FieldChipsRow fields={visibleFields} expanded={expanded} onToggle={toggleExpanded} />
+      )}
       {expanded && (
         <div className="border-t border-border bg-muted/30">
           <div className="p-2">

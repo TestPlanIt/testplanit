@@ -306,6 +306,91 @@ describe("DraggableCaseFields", () => {
     });
   });
 
+  describe("Jira-panel toggle", () => {
+    it("does not render the toggle when onToggleJiraPanel is not provided", () => {
+      render(
+        <DraggableList
+          items={createItems()}
+          setItems={vi.fn()}
+          onRemove={vi.fn()}
+          onToggleGenerateDefault={vi.fn()}
+        />
+      );
+
+      expect(
+        screen.queryByTestId("jira-panel-toggle-1")
+      ).not.toBeInTheDocument();
+    });
+
+    it("renders one toggle per item, unpressed by default", () => {
+      render(
+        <DraggableList
+          items={createItems()}
+          setItems={vi.fn()}
+          onRemove={vi.fn()}
+          onToggleJiraPanel={vi.fn()}
+        />
+      );
+
+      // Opposite default from the generate toggle: fields stay out of the
+      // Jira panel until an admin opts them in.
+      expect(screen.getByTestId("jira-panel-toggle-1")).toHaveAttribute(
+        "aria-pressed",
+        "false"
+      );
+      expect(screen.getByTestId("jira-panel-toggle-2")).toHaveAttribute(
+        "aria-pressed",
+        "false"
+      );
+      expect(screen.getByTestId("jira-panel-toggle-3")).toHaveAttribute(
+        "aria-pressed",
+        "false"
+      );
+    });
+
+    it("shows a pressed toggle when jiraPanelEnabled is true", () => {
+      const items: DraggableField[] = [
+        { id: "1", label: "Field Alpha", jiraPanelEnabled: true },
+      ];
+
+      render(
+        <DraggableList
+          items={items}
+          setItems={vi.fn()}
+          onRemove={vi.fn()}
+          onToggleJiraPanel={vi.fn()}
+        />
+      );
+
+      expect(screen.getByTestId("jira-panel-toggle-1")).toHaveAttribute(
+        "aria-pressed",
+        "true"
+      );
+    });
+
+    it("calls onToggleJiraPanel with the item id, not the other handlers", () => {
+      const onRemove = vi.fn();
+      const onToggleGenerateDefault = vi.fn();
+      const onToggleJiraPanel = vi.fn();
+
+      render(
+        <DraggableList
+          items={createItems()}
+          setItems={vi.fn()}
+          onRemove={onRemove}
+          onToggleGenerateDefault={onToggleGenerateDefault}
+          onToggleJiraPanel={onToggleJiraPanel}
+        />
+      );
+
+      fireEvent.click(screen.getByTestId("jira-panel-toggle-2"));
+
+      expect(onToggleJiraPanel).toHaveBeenCalledWith("2");
+      expect(onToggleGenerateDefault).not.toHaveBeenCalled();
+      expect(onRemove).not.toHaveBeenCalled();
+    });
+  });
+
   describe("Field labels", () => {
     it("renders long field labels correctly", () => {
       const items: DraggableField[] = [

@@ -4606,6 +4606,8 @@
       },
       "generateDefaultOn": "Included by default in the Generate Test Cases wizard. Click to exclude it by default.",
       "generateDefaultOff": "Excluded by default in the Generate Test Cases wizard. Click to include it by default.",
+      "jiraPanelOn": "Shown in the Jira plugin panel for linked test cases. Click to hide it.",
+      "jiraPanelOff": "Hidden from the Jira plugin panel. Click to show it for linked test cases.",
       "resultFields": {
         "description": "Manage result fields",
         "add": {

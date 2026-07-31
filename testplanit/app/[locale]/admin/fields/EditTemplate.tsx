@@ -62,6 +62,7 @@ interface ExtendedTemplateCaseField {
   caseFieldId: number;
   order: number;
   generateDefaultEnabled?: boolean;
+  jiraPanelEnabled?: boolean;
 }
 
 interface ExtendedTemplateResultField {
@@ -153,6 +154,15 @@ export function EditTemplate({ template, open, onClose }: EditTemplateProps) {
     orderBy: { displayName: "asc" },
   });
 
+  // The Jira-panel toggle is only offered when the system has an active Jira
+  // integration — without one the panel can never show field data.
+  const { data: activeJiraIntegration } = useClientQueries(
+    schema
+  ).integration.useFindFirst({
+    where: { provider: "JIRA", status: "ACTIVE", isDeleted: false },
+    select: { id: true },
+  });
+
   const defaultFormValues = useMemo(
     () => ({
       name: template.templateName,
@@ -205,6 +215,7 @@ export function EditTemplate({ template, open, onClose }: EditTemplateProps) {
             ?.displayName || "Unknown Field",
         order: cf.order,
         generateDefaultEnabled: cf.generateDefaultEnabled ?? true,
+        jiraPanelEnabled: cf.jiraPanelEnabled ?? false,
       }))
       .sort((a, b) => a.order - b.order);
 
@@ -265,6 +276,17 @@ export function EditTemplate({ template, open, onClose }: EditTemplateProps) {
       prev.map((f) =>
         f.id === id
           ? { ...f, generateDefaultEnabled: f.generateDefaultEnabled === false }
+          : f
+      )
+    );
+  };
+
+  // Flip whether the field's value is shown in the Jira plugin panel.
+  const handleToggleJiraPanel = (id: string | number) => {
+    setSelectedCaseFields((prev) =>
+      prev.map((f) =>
+        f.id === id
+          ? { ...f, jiraPanelEnabled: f.jiraPanelEnabled !== true }
           : f
       )
     );
@@ -334,6 +356,7 @@ export function EditTemplate({ template, open, onClose }: EditTemplateProps) {
             templateId: template.id,
             order: index + 1,
             generateDefaultEnabled: field.generateDefaultEnabled !== false,
+            jiraPanelEnabled: field.jiraPanelEnabled === true,
           })),
         });
       }
@@ -469,6 +492,11 @@ export function EditTemplate({ template, open, onClose }: EditTemplateProps) {
                         setItems={setSelectedCaseFields}
                         onRemove={(item) => handleRemoveField(item, "case")}
                         onToggleGenerateDefault={handleToggleGenerateDefault}
+                        onToggleJiraPanel={
+                          activeJiraIntegration
+                            ? handleToggleJiraPanel
+                            : undefined
+                        }
                       />
                     </div>
                   </FormControl>

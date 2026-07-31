@@ -74,7 +74,7 @@ Select your Jira instance when prompted.
 
 Navigate to any Jira issue that has linked test cases in TestPlanIt. The **TestPlanIt panel** will appear on the right side showing:
 
-- **Test Cases** — Linked test cases with status
+- **Test Cases** — Linked test cases with status. Case fields whose Jira toggle is enabled on the case's template (Admin → Templates & Fields) are shown with each case.
 - **Test Runs** — Recent test runs referencing this issue
 - **Sessions** — Exploratory testing sessions linked to this issue
 
