@@ -14,7 +14,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { useDebounce } from "@/components/Debounce";
-import { Check, ChevronsUpDown, PackagePlus, X } from "lucide-react";
+import { Check, ChevronsUpDown, Loader2, PackagePlus, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import React, { useEffect, useRef, useState } from "react";
 import { cn, type ClassValue } from "~/utils";
@@ -23,13 +23,10 @@ import { cn, type ClassValue } from "~/utils";
  *  doesn't fire a query per character. */
 const SEARCH_DEBOUNCE_MS = 300;
 
-function Spinner({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+function Spinner({ className, ...props }: React.ComponentProps<typeof Loader2>) {
   return (
-    <div
-      className={cn(
-        "animate-spin h-4 w-4 border-2 border-gray-300 border-t-primary rounded-full",
-        className
-      )}
+    <Loader2
+      className={cn("h-4 w-4 animate-spin text-primary", className)}
       {...props}
     />
   );
