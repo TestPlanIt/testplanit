@@ -610,9 +610,20 @@ export function ColumnSelection<TData>({
     .filter((item) => item.id && item.label)
     .sort((a, b) => a.label.localeCompare(b.label));
 
-  const midpoint = Math.ceil(displayColumns.length / 2);
-  const leftColumns = displayColumns.slice(0, midpoint);
-  const rightColumns = displayColumns.slice(midpoint);
+  // ~12 rows fit under the list's 300px height cap, so grow from 2 up to 4
+  // grid columns as the list gets longer; only a list too long for 4 full
+  // columns scrolls.
+  const ROWS_PER_COLUMN = 12;
+  const columnCount = Math.min(
+    4,
+    Math.max(2, Math.ceil(displayColumns.length / ROWS_PER_COLUMN))
+  );
+  const gridColsClass =
+    columnCount === 4
+      ? "grid-cols-4"
+      : columnCount === 3
+        ? "grid-cols-3"
+        : "grid-cols-2";
 
   // Tri-state for the "Select All" checkbox, over the toggleable (non-required)
   // columns: checked when all are visible, unchecked when none are, and
@@ -641,7 +652,7 @@ export function ColumnSelection<TData>({
         <Columns3 className="w-4 h-4 me-1" />
         {t("table.columns.columns")}
       </PopoverTrigger>
-      <PopoverContent className="w-fit grid max-w-sm">
+      <PopoverContent className="w-fit grid max-w-[var(--radix-popover-content-available-width)]">
         <div className="space-y-1">
           <div className="flex flex-row items-center justify-between mb-2">
             <div className="flex flex-row items-center space-x-1 min-w-0">
@@ -675,69 +686,38 @@ export function ColumnSelection<TData>({
               <RotateCcw className="w-4 h-4" />
             </Button>
           </div>
-          <div className="max-h-[300px] flex gap-2 pe-4 overflow-y-auto">
-            <div className="flex flex-col space-y-1 flex-1">
-              {leftColumns.map((column) => {
-                const columnId = column.id;
-                const isChecked =
-                  column.isRequired || (columnVisibility[columnId] ?? false);
-                return (
-                  <div
-                    key={columnId}
-                    className="flex flex-row items-center space-x-1 min-w-0"
+          <div
+            className={`max-h-[300px] grid ${gridColsClass} gap-x-2 gap-y-1 pe-4 overflow-y-auto`}
+          >
+            {displayColumns.map((column) => {
+              const columnId = column.id;
+              const isChecked =
+                column.isRequired || (columnVisibility[columnId] ?? false);
+              return (
+                <div
+                  key={columnId}
+                  className="flex flex-row items-center space-x-1 min-w-0"
+                >
+                  <Checkbox
+                    id={columnId}
+                    checked={isChecked}
+                    disabled={column.isRequired}
+                    onCheckedChange={(checked) => {
+                      if (typeof checked === "boolean") {
+                        handleCheckboxChange(columnId, checked);
+                      }
+                    }}
+                  />
+                  <label
+                    htmlFor={columnId}
+                    className={`text-sm truncate cursor-pointer flex-1 max-w-[150px] overflow-hidden text-ellipsis${column.isRequired ? " text-muted-foreground" : ""}`}
                   >
-                    <Checkbox
-                      id={columnId}
-                      checked={isChecked}
-                      disabled={column.isRequired}
-                      onCheckedChange={(checked) => {
-                        if (typeof checked === "boolean") {
-                          handleCheckboxChange(columnId, checked);
-                        }
-                      }}
-                    />
-                    <label
-                      htmlFor={columnId}
-                      className={`text-sm truncate cursor-pointer flex-1 max-w-[150px] overflow-hidden text-ellipsis${column.isRequired ? " text-muted-foreground" : ""}`}
-                    >
-                      {column.label}{" "}
-                      {column.isRequired && t("table.columns.required")}
-                    </label>
-                  </div>
-                );
-              })}
-            </div>
-            <div className="flex flex-col space-y-1 flex-1">
-              {rightColumns.map((column) => {
-                const columnId = column.id;
-                const isChecked =
-                  column.isRequired || (columnVisibility[columnId] ?? false);
-                return (
-                  <div
-                    key={columnId}
-                    className="flex flex-row items-center space-x-1 min-w-0"
-                  >
-                    <Checkbox
-                      id={columnId}
-                      checked={isChecked}
-                      disabled={column.isRequired}
-                      onCheckedChange={(checked) => {
-                        if (typeof checked === "boolean") {
-                          handleCheckboxChange(columnId, checked);
-                        }
-                      }}
-                    />
-                    <label
-                      htmlFor={columnId}
-                      className={`text-sm truncate cursor-pointer flex-1 max-w-[150px] overflow-hidden text-ellipsis${column.isRequired ? " text-muted-foreground" : ""}`}
-                    >
-                      {column.label}{" "}
-                      {column.isRequired && t("table.columns.required")}
-                    </label>
-                  </div>
-                );
-              })}
-            </div>
+                    {column.label}{" "}
+                    {column.isRequired && t("table.columns.required")}
+                  </label>
+                </div>
+              );
+            })}
           </div>
         </div>
       </PopoverContent>
