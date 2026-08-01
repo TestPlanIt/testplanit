@@ -676,7 +676,7 @@ export function AutomationCandidatesReportPreset({
                 void onDeleteConfirm();
               }}
               disabled={deleting}
-              className="bg-destructive hover:bg-destructive/90"
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               {deleting ? (
                 <Loader2 className="h-4 w-4 animate-spin" />

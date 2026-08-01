@@ -538,7 +538,7 @@ function ProjectAdmin() {
               </AlertDialogCancel>
               <AlertDialogAction
                 type="submit"
-                className="bg-destructive"
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                 disabled={!isValid}
               >
                 {tCommon("actions.submit")}

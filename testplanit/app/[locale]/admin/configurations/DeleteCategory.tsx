@@ -157,7 +157,7 @@ export function DeleteConfigCategory({
                 type="button"
                 onClick={onSubmit}
                 disabled={isSubmitting}
-                className="bg-destructive hover:bg-destructive/90"
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >
                 {isSubmitting
                   ? tCommon("actions.deleting")

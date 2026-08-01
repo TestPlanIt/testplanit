@@ -447,7 +447,7 @@ export default function QuickScriptTemplates() {
               </AlertDialogCancel>
               <AlertDialogAction
                 onClick={() => handleConfirmToggleDefault()}
-                className="bg-destructive"
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >
                 {tCommon("actions.confirm")}
               </AlertDialogAction>

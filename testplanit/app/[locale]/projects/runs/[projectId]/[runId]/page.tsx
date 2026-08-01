@@ -2393,7 +2393,7 @@ export default function TestRunPage() {
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleRemoveCasesConfirm}
-              className="bg-destructive"
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               {t("common.actions.confirm")}
             </AlertDialogAction>

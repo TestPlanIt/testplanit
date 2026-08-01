@@ -90,7 +90,7 @@ export function DeleteTag({ tag, open, onClose }: DeleteTagProps) {
               <AlertDialogAction
                 onClick={form.handleSubmit(onSubmit)}
                 disabled={isSubmitting}
-                className="bg-destructive"
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >
                 {isSubmitting
                   ? tCommon("actions.deleting")
