@@ -1,6 +1,6 @@
 "use client";
 
-import { MoreHorizontal, Pencil, Plus, RotateCcw } from "lucide-react";
+import { MoreVertical, Pencil, Plus, RotateCcw } from "lucide-react";
 import { useTranslations } from "next-intl";
 import type { KeyboardEvent, MouseEvent } from "react";
 
@@ -187,7 +187,7 @@ export function IterationRow({
                   n: String(iteration.rowIndex + 1),
                 })}
               >
-                <MoreHorizontal className="h-4 w-4" />
+                <MoreVertical className="h-4 w-4" />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" data-testid="iteration-row-menu">

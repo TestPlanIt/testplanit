@@ -17,7 +17,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import type { User } from "~/zenstack/models";
 import { ColumnDef } from "@tanstack/react-table";
-import { Ban, KeyRound, MoreHorizontal, SquarePen, Trash2 } from "lucide-react";
+import { Ban, KeyRound, MoreVertical, SquarePen, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useMemo } from "react";
 import type { AccessibleProject } from "~/app/actions/getUserAccessibleProjects";
@@ -319,7 +319,7 @@ export const useColumns = (
                     className="px-2 py-1 h-auto"
                     aria-label={tCommon("actions.actionsLabel")}
                   >
-                    <MoreHorizontal className="h-5 w-5" />
+                    <MoreVertical className="h-5 w-5" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
