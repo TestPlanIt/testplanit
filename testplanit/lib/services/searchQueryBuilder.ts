@@ -31,6 +31,19 @@ export async function buildElasticsearchQuery(
     // Use bool query with should clauses to search both regular and nested fields
     const searchQueries: any[] = [];
 
+    // A bare numeric query (optionally "#"-prefixed) also matches entities by
+    // exact ID, boosted above text matches. The id mapping is a 32-bit
+    // integer, so out-of-range values are skipped to avoid a query error.
+    const idQueryMatch = filters.query.trim().match(/^#?(\d+)$/);
+    if (idQueryMatch) {
+      const idValue = parseInt(idQueryMatch[1], 10);
+      if (idValue <= 2147483647) {
+        searchQueries.push({
+          term: { id: { value: idValue, boost: 100 } },
+        });
+      }
+    }
+
     // Search regular (non-nested) fields
     searchQueries.push({
       query_string: {

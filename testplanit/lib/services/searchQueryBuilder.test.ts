@@ -908,6 +908,65 @@ describe("buildElasticsearchQuery", () => {
     vi.clearAllMocks();
   });
 
+  it("adds an exact id term clause for a bare numeric query", async () => {
+    const result = await buildElasticsearchQuery(
+      { query: "87778" },
+      { access: "ADMIN" }
+    );
+
+    const shouldClauses = result.bool.must[0].bool.should;
+    const idTerm = shouldClauses.find((s: any) => s.term?.id);
+    expect(idTerm).toBeDefined();
+    expect(idTerm.term.id.value).toBe(87778);
+    expect(idTerm.term.id.boost).toBeGreaterThan(1);
+
+    // Text search still runs alongside the id match
+    const queryString = shouldClauses.find((s: any) => s.query_string);
+    expect(queryString).toBeDefined();
+  });
+
+  it("adds an exact id term clause for a #-prefixed numeric query", async () => {
+    const result = await buildElasticsearchQuery(
+      { query: " #87778 " },
+      { access: "ADMIN" }
+    );
+
+    const shouldClauses = result.bool.must[0].bool.should;
+    const idTerm = shouldClauses.find((s: any) => s.term?.id);
+    expect(idTerm).toBeDefined();
+    expect(idTerm.term.id.value).toBe(87778);
+  });
+
+  it("does not add an id term clause for text queries", async () => {
+    const result = await buildElasticsearchQuery(
+      { query: "login bug" },
+      { access: "ADMIN" }
+    );
+
+    const shouldClauses = result.bool.must[0].bool.should;
+    expect(shouldClauses.find((s: any) => s.term?.id)).toBeUndefined();
+  });
+
+  it("does not add an id term clause for mixed numeric/text queries", async () => {
+    const result = await buildElasticsearchQuery(
+      { query: "87778 login" },
+      { access: "ADMIN" }
+    );
+
+    const shouldClauses = result.bool.must[0].bool.should;
+    expect(shouldClauses.find((s: any) => s.term?.id)).toBeUndefined();
+  });
+
+  it("does not add an id term clause for numbers beyond 32-bit integer range", async () => {
+    const result = await buildElasticsearchQuery(
+      { query: "99999999999" },
+      { access: "ADMIN" }
+    );
+
+    const shouldClauses = result.bool.must[0].bool.should;
+    expect(shouldClauses.find((s: any) => s.term?.id)).toBeUndefined();
+  });
+
   it("generates query_string for text query", async () => {
     const result = await buildElasticsearchQuery(
       { query: "login bug" },
