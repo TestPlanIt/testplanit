@@ -1,3 +1,16 @@
+## [0.44.0](https://github.com/TestPlanIt/testplanit/compare/v0.43.0...v0.44.0) (2026-08-01)
+
+### Features
+
+* **cli:** add run create and complete, resolving the duplicate testplanit bin ([#559](https://github.com/TestPlanIt/testplanit/issues/559)) ([44a46c5](https://github.com/TestPlanIt/testplanit/commit/44a46c5d0b404420ceb05c044aed37c50694dad1))
+* **reporters:** attach every Playwright execution to one externally managed run ([#557](https://github.com/TestPlanIt/testplanit/issues/557)) ([7fd2bcb](https://github.com/TestPlanIt/testplanit/commit/7fd2bcbafb2603e0b4f7fb3ce5931195827a70b8))
+* **reporters:** attach every wdio invocation to one externally managed run ([#555](https://github.com/TestPlanIt/testplanit/issues/555)) ([9f838ab](https://github.com/TestPlanIt/testplanit/commit/9f838ab3ff546166b25d96db6d944da2c9d3465d))
+
+### Bug Fixes
+
+* **deps:** resolve all 40 open Dependabot alerts ([#563](https://github.com/TestPlanIt/testplanit/issues/563)) ([194e35d](https://github.com/TestPlanIt/testplanit/commit/194e35d2c1c8c9d1e60eaaafbf10482f6f52867c))
+* **wdio-reporter:** export the service-created run id to forked workers ([#560](https://github.com/TestPlanIt/testplanit/issues/560)) ([34c8079](https://github.com/TestPlanIt/testplanit/commit/34c8079e00c325df6af7955babfbade8a5a064fb))
+
 ## [0.43.0](https://github.com/TestPlanIt/testplanit/compare/v0.42.0...v0.43.0) (2026-07-28)
 
 ### Features
