@@ -23,8 +23,14 @@
  *      INSERT/SELECT/UPDATE/DELETE (the worker advances the processed cursor and the retention job
  *      purges rows), UPDATE/DELETE are revoked from PUBLIC, and the enforcement triggers above
  *      remain the real guard,
- *   7. self-checks: count(DISTINCT trigger_name) over tpl_audit_% against the registry length, and
- *      asserts the connecting role holds INSERT/SELECT/UPDATE/DELETE on DataChangeLog.
+ *   7. self-checks: every registry entry's tpl_audit_% trigger is attached (strict lockstep with the
+ *      registry, unless a table was skipped — see below), and asserts the connecting role holds
+ *      INSERT/SELECT/UPDATE/DELETE on DataChangeLog.
+ *
+ * Cross-version boots: a registry entry whose table does not exist in the connected database (42P01)
+ * is skipped with a warning rather than aborting the bootstrap, and any skip suppresses the
+ * orphan-trigger cleanup and relaxes the drift check — the schema was migrated by a different release
+ * channel, and its own triggers must not be treated as orphans.
  *
  * Run as a CLI:  cd testplanit && tsx scripts/apply-triggers.ts
  * Or import applyAuditTriggers() to apply from the running app. Safe to run repeatedly — every
@@ -338,6 +344,13 @@ export async function applyAuditTriggers(
     await client.query(auditFnSql);
 
     // 2. One audit trigger per registry entry (DROP IF EXISTS + CREATE — idempotent).
+    //    A registry entry whose TABLE does not exist (42P01) is skipped with a warning
+    //    instead of aborting the whole bootstrap: this code may boot against a database
+    //    migrated by a different release channel (e.g. a main-era checkout on a DB whose
+    //    implicit m2m tables became explicit models), and one phantom entry must not cost
+    //    the remaining tables their re-attach. Skips flip the applier into a conservative
+    //    cross-version mode: see the orphan-drop and drift-check gates below.
+    const skippedMissingTables: string[] = [];
     for (const entry of TRIGGER_REGISTRY) {
       const triggerName = triggerNameFor(entry.table);
       const pkCol = entry.pkCol ?? "id";
@@ -359,39 +372,62 @@ export async function applyAuditTriggers(
       ].join(",");
 
       // Identifiers/args come ONLY from the static in-repo registry — no user input in this DDL.
-      await client.query(
-        `DROP TRIGGER IF EXISTS ${triggerName} ON "${entry.table}";`
-      );
-      await client.query(
-        `CREATE TRIGGER ${triggerName}
-           AFTER INSERT OR UPDATE OR DELETE ON "${entry.table}"
-           FOR EACH ROW EXECUTE FUNCTION audit_row_change('${pkCol}', '${denylistCsv}', '${nameCol}', '${projectCol}', '${captureCols}');`
-      );
+      try {
+        await client.query(
+          `DROP TRIGGER IF EXISTS ${triggerName} ON "${entry.table}";`
+        );
+        await client.query(
+          `CREATE TRIGGER ${triggerName}
+             AFTER INSERT OR UPDATE OR DELETE ON "${entry.table}"
+             FOR EACH ROW EXECUTE FUNCTION audit_row_change('${pkCol}', '${denylistCsv}', '${nameCol}', '${projectCol}', '${captureCols}');`
+        );
+      } catch (err) {
+        if ((err as { code?: string }).code === "42P01") {
+          skippedMissingTables.push(entry.table);
+          log(
+            `[apply-triggers] WARNING: table "${entry.table}" does not exist in this database — skipping its audit trigger (schema/registry version mismatch?)`
+          );
+          continue;
+        }
+        throw err;
+      }
     }
 
     // 2b. Drop orphaned audit triggers — tables removed from the registry. Without this a removed
     //     entry leaves its tpl_audit_* trigger live (still writing DataChangeLog) and fails the
     //     drift self-check below. This keeps the live trigger set in exact lockstep with the registry.
-    const expectedTriggerNames = new Set(
-      TRIGGER_REGISTRY.map((e) => triggerNameFor(e.table))
-    );
-    const { rows: liveAuditTriggers } = await client.query<{
-      trigger_name: string;
-      event_object_table: string;
-    }>(
-      `SELECT DISTINCT trigger_name, event_object_table
-         FROM information_schema.triggers
-        WHERE trigger_name LIKE 'tpl_audit_%'`
-    );
-    for (const t of liveAuditTriggers) {
-      if (!expectedTriggerNames.has(t.trigger_name)) {
-        await client.query(
-          `DROP TRIGGER IF EXISTS ${t.trigger_name} ON "${t.event_object_table}";`
-        );
-        log(
-          `[apply-triggers] dropped orphaned trigger ${t.trigger_name} on "${t.event_object_table}"`
-        );
+    //
+    //     GATED on zero skips above: a skipped entry means this code's registry does not match the
+    //     database's schema (cross-version boot), so a trigger this registry doesn't know is NOT an
+    //     orphan — it is live capture belonging to the schema's own release (e.g. beta's explicit
+    //     RepositoryCaseTag trigger, seen from a main-era registry). Dropping it would silently
+    //     lose capture until the matching release next boots. In mismatch mode only ADD, never remove.
+    if (skippedMissingTables.length === 0) {
+      const expectedTriggerNames = new Set(
+        TRIGGER_REGISTRY.map((e) => triggerNameFor(e.table))
+      );
+      const { rows: liveAuditTriggers } = await client.query<{
+        trigger_name: string;
+        event_object_table: string;
+      }>(
+        `SELECT DISTINCT trigger_name, event_object_table
+           FROM information_schema.triggers
+          WHERE trigger_name LIKE 'tpl_audit_%'`
+      );
+      for (const t of liveAuditTriggers) {
+        if (!expectedTriggerNames.has(t.trigger_name)) {
+          await client.query(
+            `DROP TRIGGER IF EXISTS ${t.trigger_name} ON "${t.event_object_table}";`
+          );
+          log(
+            `[apply-triggers] dropped orphaned trigger ${t.trigger_name} on "${t.event_object_table}"`
+          );
+        }
       }
+    } else {
+      log(
+        `[apply-triggers] WARNING: ${skippedMissingTables.length} registry table(s) missing from this database (${skippedMissingTables.join(", ")}) — skipping orphan-trigger cleanup (cross-version boot; leaving unrecognized triggers in place)`
+      );
     }
 
     // 2c. Single-default enforcement (business rule). CREATE OR REPLACE the shared
@@ -491,31 +527,46 @@ export async function applyAuditTriggers(
 
     // 6. Drift self-check: count DISTINCT tpl_audit_* triggers (the tpl_dcl_* enforcement
     //    triggers are intentionally excluded by the tpl_audit_% prefix) and assert == registry length.
-    const { rows } = await client.query<{ n: number }>(
-      `SELECT count(DISTINCT trigger_name)::int AS n
+    //    In cross-version mode (skips above) the strict count is meaningless — skipped entries have
+    //    no trigger and the schema's own release may hold triggers this registry doesn't know — so
+    //    assert only that every NON-skipped entry's trigger is attached, and warn instead of throw
+    //    on extras.
+    const skippedNames = new Set(
+      skippedMissingTables.map((t) => triggerNameFor(t))
+    );
+    const { rows: present } = await client.query<{ trigger_name: string }>(
+      `SELECT DISTINCT trigger_name
          FROM information_schema.triggers
         WHERE trigger_name LIKE 'tpl_audit_%'`
     );
-    const liveCount = rows[0]?.n ?? 0;
-    if (liveCount !== TRIGGER_REGISTRY.length) {
-      const { rows: present } = await client.query<{ trigger_name: string }>(
-        `SELECT DISTINCT trigger_name
-           FROM information_schema.triggers
-          WHERE trigger_name LIKE 'tpl_audit_%'`
-      );
-      const presentNames = new Set(present.map((r) => r.trigger_name));
-      const expectedNames = TRIGGER_REGISTRY.map((e) =>
-        triggerNameFor(e.table)
-      );
-      const missing = expectedNames.filter((n) => !presentNames.has(n));
-      const extra = [...presentNames].filter((n) => !expectedNames.includes(n));
+    const presentNames = new Set(present.map((r) => r.trigger_name));
+    const expectedNames = TRIGGER_REGISTRY.map((e) => triggerNameFor(e.table));
+    const missing = expectedNames.filter(
+      (n) => !presentNames.has(n) && !skippedNames.has(n)
+    );
+    const extra = [...presentNames].filter((n) => !expectedNames.includes(n));
+    if (missing.length) {
       console.error(
-        `[apply-triggers] DRIFT: live tpl_audit_* count ${liveCount} != registry ${TRIGGER_REGISTRY.length}.`
+        `[apply-triggers] DRIFT: live tpl_audit_* count ${presentNames.size} != registry ${TRIGGER_REGISTRY.length}.`
       );
-      if (missing.length) console.error(`  missing: ${missing.join(", ")}`);
+      console.error(`  missing: ${missing.join(", ")}`);
       if (extra.length) console.error(`  extra:   ${extra.join(", ")}`);
       throw new Error(
         "Trigger drift detected after apply (see missing/extra above)."
+      );
+    }
+    if (extra.length) {
+      if (skippedMissingTables.length === 0) {
+        console.error(
+          `[apply-triggers] DRIFT: live tpl_audit_* count ${presentNames.size} != registry ${TRIGGER_REGISTRY.length}.`
+        );
+        console.error(`  extra:   ${extra.join(", ")}`);
+        throw new Error(
+          "Trigger drift detected after apply (see missing/extra above)."
+        );
+      }
+      log(
+        `[apply-triggers] cross-version boot: leaving unrecognized trigger(s) in place: ${extra.join(", ")}`
       );
     }
 
@@ -554,7 +605,10 @@ export async function applyAuditTriggers(
     }
 
     log(
-      `[apply-triggers] applied audit_row_change() + ${TRIGGER_REGISTRY.length} tpl_audit_* triggers ` +
+      `[apply-triggers] applied audit_row_change() + ${TRIGGER_REGISTRY.length - skippedMissingTables.length} tpl_audit_* triggers` +
+        (skippedMissingTables.length
+          ? ` (${skippedMissingTables.length} skipped — tables missing in this database) `
+          : " ") +
         `+ tpl_enforce_single_default() + ${SINGLE_DEFAULT_REGISTRY.length} tpl_single_default_* triggers ` +
         `+ tpl_stamp_deleted_at() + ${SOFT_DELETE_REGISTRY.length} tpl_stamp_deleted_at_* triggers ` +
         `+ DataChangeLog append-only enforcement (tpl_dcl_no_delete/tpl_dcl_no_update) + GRANT/REVOKE defense-in-depth ` +
