@@ -313,6 +313,7 @@ export function AsyncCombobox<T>({
             value={search}
             onValueChange={setSearch}
             autoFocus
+            className="my-2"
           />
           <div className="relative">
             {loading && (

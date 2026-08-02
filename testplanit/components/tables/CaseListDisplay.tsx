@@ -209,9 +209,10 @@ export const CasesListDisplay: React.FC<CasesListProps> = ({
             maxLines={2}
           />
           {showProject && option.project?.name && (
-            // Capped tight so the case name keeps most of the row — the full
-            // project name stays reachable via the display's own tooltip.
-            <span className="min-w-0 max-w-[90px] shrink-0">
+            // Fixed-width column so project names line up row to row —
+            // left-aligned, truncating; the full name stays reachable via
+            // the display's own tooltip.
+            <span className="flex w-[90px] shrink-0 justify-start">
               <ProjectNameDisplay
                 projectName={option.project.name}
                 projectId={option.projectId}

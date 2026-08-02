@@ -242,6 +242,7 @@ export function MultiAsyncCombobox<T>({
             value={search}
             onValueChange={setSearch}
             autoFocus
+            className="my-2"
           />
           <div className="relative">
             {loading && (
