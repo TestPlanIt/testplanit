@@ -117,6 +117,14 @@ var TestPlanItError = class extends Error {
     this.details = options?.details;
   }
 };
+function isUniqueConstraintViolation(error) {
+  if (!(error instanceof TestPlanItError)) return false;
+  const detailsError = typeof error.details === "object" && error.details !== null ? error.details.error : void 0;
+  if (detailsError?.dbErrorCode === "23505") return true;
+  if (detailsError?.code === "P2002" || error.code === "P2002") return true;
+  const message = error.message ?? "";
+  return message.includes("Unique constraint failed") || message.includes("duplicate key value violates unique constraint");
+}
 var TestPlanItClient = class {
   baseUrl;
   apiToken;
@@ -784,6 +792,39 @@ var TestPlanItClient = class {
     });
   }
   /**
+   * In-flight and completed folder creations keyed by
+   * projectId + parentId + name, so concurrent path walks that share an
+   * ancestor (e.g. sibling describes) share a single create per folder.
+   */
+  folderCreates = /* @__PURE__ */ new Map();
+  /**
+   * Create a folder once per (projectId, parentId, name) for this client
+   * instance — concurrent callers get the same promise. If another process
+   * wins the race anyway, the unique-constraint violation is recovered by
+   * re-fetching the existing folder.
+   */
+  findOrCreateFolder(projectId, name, parentId) {
+    const key = `${projectId}:${parentId ?? "root"}:${name}`;
+    let pending = this.folderCreates.get(key);
+    if (pending) return pending;
+    pending = (async () => {
+      try {
+        return await this.createFolder({ projectId, name, parentId });
+      } catch (error) {
+        if (!isUniqueConstraintViolation(error)) throw error;
+        const folders = await this.listFolders(projectId);
+        const existing = folders.find(
+          (f) => f.name === name && (f.parentId ?? void 0) === parentId
+        );
+        if (!existing) throw error;
+        return existing;
+      }
+    })();
+    this.folderCreates.set(key, pending);
+    pending.catch(() => this.folderCreates.delete(key));
+    return pending;
+  }
+  /**
    * Find or create a folder hierarchy from a path
    * @param projectId - The project ID
    * @param folderPath - Array of folder names representing the path (e.g., ['Suite A', 'Suite B', 'Suite C'])
@@ -806,37 +847,8 @@ var TestPlanItClient = class {
         const folderParentId = f.parentId ?? void 0;
         return f.name === folderName && folderParentId === currentParentId;
       });
-      if (existingFolder) {
-        currentFolder = existingFolder;
-        currentParentId = existingFolder.id;
-      } else {
-        try {
-          currentFolder = await this.createFolder({
-            projectId,
-            name: folderName,
-            parentId: currentParentId
-          });
-          allFolders.push(currentFolder);
-        } catch (error) {
-          if (error instanceof TestPlanItError && error.message?.includes("Unique constraint failed")) {
-            const refreshedFolders = await this.listFolders(projectId);
-            const justCreatedFolder = refreshedFolders.find((f) => {
-              const folderParentId = f.parentId ?? void 0;
-              return f.name === folderName && folderParentId === currentParentId;
-            });
-            if (justCreatedFolder) {
-              currentFolder = justCreatedFolder;
-              allFolders.length = 0;
-              allFolders.push(...refreshedFolders);
-            } else {
-              throw error;
-            }
-          } else {
-            throw error;
-          }
-        }
-        currentParentId = currentFolder.id;
-      }
+      currentFolder = existingFolder ?? await this.findOrCreateFolder(projectId, folderName, currentParentId);
+      currentParentId = currentFolder.id;
     }
     return currentFolder;
   }
@@ -1862,6 +1874,7 @@ exports.TestPlanItClient = TestPlanItClient;
 exports.TestPlanItError = TestPlanItError;
 exports.automationStepsToCaseSteps = automationStepsToCaseSteps;
 exports.deriveCaseStepsIfFresh = deriveCaseStepsIfFresh;
+exports.isUniqueConstraintViolation = isUniqueConstraintViolation;
 exports.mergeRunMetadataIntoDoc = mergeRunMetadataIntoDoc;
 exports.parseRunMetadataFromDoc = parseRunMetadataFromDoc;
 exports.tipTapDoc = tipTapDoc;

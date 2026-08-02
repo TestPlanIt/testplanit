@@ -444,6 +444,20 @@ describe('TestPlanItReporter (Playwright)', () => {
       expect(lastArg(clientMock.findOrCreateTestCase).folderId).toBe(77);
     });
 
+    it('falls back to the parent folder when folder creation fails', async () => {
+      const err = vi.spyOn(console, 'error').mockImplementation(() => {});
+      clientMock.findOrCreateFolderPath.mockRejectedValueOnce(
+        new Error('duplicate key value violates unique constraint "RepositoryFolders_projectId_repositoryId_parentId_name_isDe_key"'),
+      );
+      const r = new TestPlanItReporter({ ...autoOptions, createFolderHierarchy: true });
+      await run(r, makeTest('auto', buildParent({ project: 'chromium', describes: ['Auth', 'Login'] })), makeResult());
+      // The result is not lost — the case lands in the configured parent folder.
+      expect(lastArg(clientMock.findOrCreateTestCase).folderId).toBe(10);
+      expect(clientMock.createJUnitTestResult).toHaveBeenCalledTimes(1);
+      expect(r.getState().stats.apiErrors).toBe(0);
+      err.mockRestore();
+    });
+
     it('caches the case across tests with the same suite + name', async () => {
       const r = new TestPlanItReporter({ ...autoOptions });
       const parent = buildParent({ project: 'chromium', describes: ['Auth'] });

@@ -1220,14 +1220,21 @@ ${error.stack}` : "";
             } else {
               this.log("Creating folder hierarchy:", result.suitePath.join(" > "));
               this.log("DEBUG: Calling findOrCreateFolderPath with projectId:", this.reporterOptions.projectId, "suitePath:", JSON.stringify(result.suitePath), "parentFolderId:", this.state.resolvedIds.parentFolderId);
-              const folder = await this.client.findOrCreateFolderPath(
-                this.reporterOptions.projectId,
-                result.suitePath,
-                this.state.resolvedIds.parentFolderId
-              );
-              folderId = folder.id;
-              this.state.folderPathMap.set(folderPathKey, folderId);
-              this.log("Created/found folder:", folder.name, "(ID:", folder.id + ")");
+              try {
+                const folder = await this.client.findOrCreateFolderPath(
+                  this.reporterOptions.projectId,
+                  result.suitePath,
+                  this.state.resolvedIds.parentFolderId
+                );
+                folderId = folder.id;
+                this.state.folderPathMap.set(folderPathKey, folderId);
+                this.log("Created/found folder:", folder.name, "(ID:", folder.id + ")");
+              } catch (error) {
+                this.logError(
+                  `Failed to create folder hierarchy "${folderPathKey}", using parent folder:`,
+                  error
+                );
+              }
             }
           } else {
             this.log("DEBUG: Skipping folder hierarchy - createFolderHierarchy:", this.reporterOptions.createFolderHierarchy, "suitePath.length:", result.suitePath.length);

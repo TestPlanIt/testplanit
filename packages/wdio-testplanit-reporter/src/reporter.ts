@@ -1385,14 +1385,24 @@ export default class TestPlanItReporter extends WDIOReporter {
               // Create the folder hierarchy
               this.log('Creating folder hierarchy:', result.suitePath.join(' > '));
               this.log('DEBUG: Calling findOrCreateFolderPath with projectId:', this.reporterOptions.projectId, 'suitePath:', JSON.stringify(result.suitePath), 'parentFolderId:', this.state.resolvedIds.parentFolderId);
-              const folder = await this.client.findOrCreateFolderPath(
-                this.reporterOptions.projectId,
-                result.suitePath,
-                this.state.resolvedIds.parentFolderId
-              );
-              folderId = folder.id;
-              this.state.folderPathMap.set(folderPathKey, folderId);
-              this.log('Created/found folder:', folder.name, '(ID:', folder.id + ')');
+              try {
+                const folder = await this.client.findOrCreateFolderPath(
+                  this.reporterOptions.projectId,
+                  result.suitePath,
+                  this.state.resolvedIds.parentFolderId
+                );
+                folderId = folder.id;
+                this.state.folderPathMap.set(folderPathKey, folderId);
+                this.log('Created/found folder:', folder.name, '(ID:', folder.id + ')');
+              } catch (error) {
+                // A folder failure must not cost the run a result — file the
+                // case under the configured parent folder instead. Not cached,
+                // so the next test with this path retries the hierarchy.
+                this.logError(
+                  `Failed to create folder hierarchy "${folderPathKey}", using parent folder:`,
+                  error
+                );
+              }
             }
           } else {
             this.log('DEBUG: Skipping folder hierarchy - createFolderHierarchy:', this.reporterOptions.createFolderHierarchy, 'suitePath.length:', result.suitePath.length);

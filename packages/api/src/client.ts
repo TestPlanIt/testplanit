@@ -67,6 +67,30 @@ export class TestPlanItError extends Error {
 }
 
 /**
+ * Detect a unique-constraint violation regardless of how the server phrases it.
+ * Prefers stable signals — Postgres SQLSTATE 23505 surfaced as `dbErrorCode`
+ * in the ZenStack error body, or a Prisma P2002 code — and falls back to the
+ * known message phrasings for servers that only send text.
+ */
+export function isUniqueConstraintViolation(error: unknown): boolean {
+  if (!(error instanceof TestPlanItError)) return false;
+
+  const detailsError =
+    typeof error.details === "object" && error.details !== null
+      ? (error.details as { error?: { dbErrorCode?: string; code?: string } })
+          .error
+      : undefined;
+  if (detailsError?.dbErrorCode === "23505") return true;
+  if (detailsError?.code === "P2002" || error.code === "P2002") return true;
+
+  const message = error.message ?? "";
+  return (
+    message.includes("Unique constraint failed") ||
+    message.includes("duplicate key value violates unique constraint")
+  );
+}
+
+/**
  * ZenStack response wrapper
  */
 interface ZenStackResponse<T> {
@@ -984,6 +1008,50 @@ export class TestPlanItClient {
   }
 
   /**
+   * In-flight and completed folder creations keyed by
+   * projectId + parentId + name, so concurrent path walks that share an
+   * ancestor (e.g. sibling describes) share a single create per folder.
+   */
+  private folderCreates = new Map<string, Promise<RepositoryFolder>>();
+
+  /**
+   * Create a folder once per (projectId, parentId, name) for this client
+   * instance — concurrent callers get the same promise. If another process
+   * wins the race anyway, the unique-constraint violation is recovered by
+   * re-fetching the existing folder.
+   */
+  private findOrCreateFolder(
+    projectId: number,
+    name: string,
+    parentId: number | undefined
+  ): Promise<RepositoryFolder> {
+    const key = `${projectId}:${parentId ?? "root"}:${name}`;
+    let pending = this.folderCreates.get(key);
+    if (pending) return pending;
+
+    pending = (async () => {
+      try {
+        return await this.createFolder({ projectId, name, parentId });
+      } catch (error) {
+        if (!isUniqueConstraintViolation(error)) throw error;
+        // The folder was created concurrently by another worker/process —
+        // fetch it instead of failing.
+        const folders = await this.listFolders(projectId);
+        const existing = folders.find(
+          (f) => f.name === name && (f.parentId ?? undefined) === parentId
+        );
+        if (!existing) throw error;
+        return existing;
+      }
+    })();
+
+    this.folderCreates.set(key, pending);
+    // A failed create must not poison later attempts (e.g. a transient 5xx).
+    pending.catch(() => this.folderCreates.delete(key));
+    return pending;
+  }
+
+  /**
    * Find or create a folder hierarchy from a path
    * @param projectId - The project ID
    * @param folderPath - Array of folder names representing the path (e.g., ['Suite A', 'Suite B', 'Suite C'])
@@ -1017,48 +1085,10 @@ export class TestPlanItClient {
         return f.name === folderName && folderParentId === currentParentId;
       });
 
-      if (existingFolder) {
-        currentFolder = existingFolder;
-        currentParentId = existingFolder.id;
-      } else {
-        // Create the folder - use try/catch to handle race conditions
-        // when multiple workers try to create the same folder simultaneously
-        try {
-          currentFolder = await this.createFolder({
-            projectId,
-            name: folderName,
-            parentId: currentParentId,
-          });
-          // Add to allFolders so subsequent iterations can find it
-          allFolders.push(currentFolder);
-        } catch (error) {
-          // If we get a unique constraint error, the folder was created by another worker
-          // Re-fetch folders and find the one that was just created
-          if (
-            error instanceof TestPlanItError &&
-            error.message?.includes("Unique constraint failed")
-          ) {
-            const refreshedFolders = await this.listFolders(projectId);
-            const justCreatedFolder = refreshedFolders.find((f) => {
-              const folderParentId = f.parentId ?? undefined;
-              return (
-                f.name === folderName && folderParentId === currentParentId
-              );
-            });
-            if (justCreatedFolder) {
-              currentFolder = justCreatedFolder;
-              // Update allFolders with refreshed data
-              allFolders.length = 0;
-              allFolders.push(...refreshedFolders);
-            } else {
-              throw error; // Re-throw if we still can't find it
-            }
-          } else {
-            throw error;
-          }
-        }
-        currentParentId = currentFolder.id;
-      }
+      currentFolder =
+        existingFolder ??
+        (await this.findOrCreateFolder(projectId, folderName, currentParentId));
+      currentParentId = currentFolder.id;
     }
 
     return currentFolder!;
