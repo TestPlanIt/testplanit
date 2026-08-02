@@ -537,7 +537,16 @@ export default class TestPlanItReporter implements Reporter {
 
       let folderId = this.state.resolvedIds.parentFolderId;
       if (this.options.createFolderHierarchy && result.suitePath.length > 0) {
-        folderId = await this.getFolderId(result.suitePath);
+        try {
+          folderId = await this.getFolderId(result.suitePath);
+        } catch (error) {
+          // A folder failure must not cost the run a result — file the case
+          // under the configured parent folder instead.
+          this.logError(
+            `Failed to create folder hierarchy "${result.suitePath.join(' > ')}", using parent folder:`,
+            error,
+          );
+        }
       }
 
       const { testCase, action } = await this.client.findOrCreateTestCase({

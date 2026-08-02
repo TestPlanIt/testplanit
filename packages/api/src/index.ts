@@ -29,7 +29,11 @@
  * @packageDocumentation
  */
 
-export { TestPlanItClient, TestPlanItError } from './client.js';
+export {
+  TestPlanItClient,
+  TestPlanItError,
+  isUniqueConstraintViolation,
+} from './client.js';
 
 // Shared plain-text → TipTap-JSON helper and the automation-step mapper.
 export { tipTapDoc } from './tipTapDoc.js';

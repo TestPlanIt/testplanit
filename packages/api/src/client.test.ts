@@ -1,5 +1,9 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { TestPlanItClient, TestPlanItError } from './client.js';
+import {
+  TestPlanItClient,
+  TestPlanItError,
+  isUniqueConstraintViolation,
+} from './client.js';
 
 // Mock fetch globally
 const mockFetch = vi.fn();
@@ -1306,5 +1310,201 @@ describe('run-level attachments and metadata', () => {
 
       await expect(client.getTestRunMetadata(7)).resolves.toEqual({ version: '1.2.3' });
     });
+  });
+});
+
+describe('isUniqueConstraintViolation', () => {
+  it('matches the Postgres phrasing', () => {
+    const error = new TestPlanItError(
+      'duplicate key value violates unique constraint "RepositoryFolders_projectId_repositoryId_parentId_name_isDe_key"',
+      { statusCode: 400 },
+    );
+    expect(isUniqueConstraintViolation(error)).toBe(true);
+  });
+
+  it('matches the Prisma phrasing', () => {
+    const error = new TestPlanItError(
+      'Unique constraint failed on the fields: (`projectId`,`repositoryId`,`parentId`,`name`,`isDeleted`)',
+    );
+    expect(isUniqueConstraintViolation(error)).toBe(true);
+  });
+
+  it('matches SQLSTATE 23505 in the error body regardless of message', () => {
+    const error = new TestPlanItError('Error occurred while executing the query', {
+      statusCode: 400,
+      details: {
+        error: { message: 'anything', reason: 'db-query-error', dbErrorCode: '23505' },
+      },
+    });
+    expect(isUniqueConstraintViolation(error)).toBe(true);
+  });
+
+  it('matches a Prisma P2002 code', () => {
+    const error = new TestPlanItError('some message', { code: 'P2002' });
+    expect(isUniqueConstraintViolation(error)).toBe(true);
+  });
+
+  it('rejects unrelated errors', () => {
+    expect(isUniqueConstraintViolation(new TestPlanItError('Not found', { statusCode: 404 }))).toBe(false);
+    expect(
+      isUniqueConstraintViolation(
+        new TestPlanItError('db error', {
+          statusCode: 400,
+          details: { error: { dbErrorCode: '23503' } },
+        }),
+      ),
+    ).toBe(false);
+    expect(isUniqueConstraintViolation(new Error('duplicate key value violates unique constraint'))).toBe(false);
+  });
+});
+
+describe('findOrCreateFolderPath concurrency', () => {
+  const mockFetchRef = global.fetch as ReturnType<typeof vi.fn>;
+
+  const makeClient = () =>
+    new TestPlanItClient({
+      baseUrl: 'https://testplanit.example.com',
+      apiToken: 'tpi_test_token',
+    });
+
+  /**
+   * In-memory folder store that enforces the (parentId, name) unique
+   * constraint the way the real API does, so tests can race real creates.
+   */
+  const makeFolderStub = (violationBody: () => string) => {
+    const folders: Array<{ id: number; name: string; parentId: number | null; projectId: number }> = [];
+    const createCalls: string[] = [];
+    let nextId = 1;
+    const key = (name: string, parentId: number | null) => `${name}:${parentId ?? 'root'}`;
+
+    mockFetchRef.mockImplementation(async (url: unknown, init?: RequestInit) => {
+      const u = String(url);
+      if (u.includes('/api/model/repositoryFolders/findMany')) {
+        return { ok: true, text: async () => JSON.stringify({ data: [...folders] }) };
+      }
+      if (u.includes('/api/model/repositories/findMany')) {
+        return { ok: true, text: async () => JSON.stringify({ data: [{ id: 7 }] }) };
+      }
+      if (u.includes('/api/model/repositoryFolders/create')) {
+        const body = JSON.parse(String(init?.body));
+        const name = body.data.name as string;
+        const parentId = (body.data.parent?.connect?.id as number | undefined) ?? null;
+        createCalls.push(key(name, parentId));
+        if (folders.some((f) => key(f.name, f.parentId) === key(name, parentId))) {
+          return {
+            ok: false,
+            status: 400,
+            statusText: 'Bad Request',
+            text: async () => violationBody(),
+          };
+        }
+        const folder = { id: nextId++, name, parentId, projectId: 1 };
+        folders.push(folder);
+        return { ok: true, text: async () => JSON.stringify({ data: folder }) };
+      }
+      throw new Error(`unexpected fetch: ${u}`);
+    });
+
+    return { folders, createCalls };
+  };
+
+  const postgresViolation = () =>
+    JSON.stringify({
+      error: {
+        message:
+          'duplicate key value violates unique constraint "RepositoryFolders_projectId_repositoryId_parentId_name_isDe_key"',
+        reason: 'db-query-error',
+        dbErrorCode: '23505',
+      },
+    });
+
+  const prismaViolation = () =>
+    JSON.stringify({
+      error: {
+        message:
+          'Unique constraint failed on the fields: (`projectId`,`repositoryId`,`parentId`,`name`,`isDeleted`)',
+      },
+    });
+
+  beforeEach(() => {
+    mockFetchRef.mockReset();
+  });
+
+  it.each([
+    ['Postgres', postgresViolation],
+    ['Prisma', prismaViolation],
+  ])('recovers when another process already created the folder (%s phrasing)', async (_label, violation) => {
+    const { folders } = makeFolderStub(violation);
+    // Simulate the losing side of a cross-process race: the folder appears in
+    // the store after this client listed folders (empty) but before it creates.
+    const client = makeClient();
+    folders.push({ id: 99, name: 'A', parentId: null, projectId: 1 });
+    mockFetchRef.mockImplementationOnce(async () =>
+      ({ ok: true, text: async () => JSON.stringify({ data: [] }) }));
+
+    const folder = await client.findOrCreateFolderPath(1, ['A']);
+    expect(folder.id).toBe(99);
+  });
+
+  it('shares one create per folder across concurrent sibling paths', async () => {
+    const { createCalls } = makeFolderStub(postgresViolation);
+    const client = makeClient();
+
+    const [b, c, d] = await Promise.all([
+      client.findOrCreateFolderPath(1, ['A', 'B']),
+      client.findOrCreateFolderPath(1, ['A', 'C']),
+      client.findOrCreateFolderPath(1, ['A', 'D']),
+    ]);
+
+    // One create for the shared ancestor, one per leaf, no rejections.
+    expect(createCalls.filter((k) => k === 'A:root')).toHaveLength(1);
+    expect(new Set([b.name, c.name, d.name])).toEqual(new Set(['B', 'C', 'D']));
+    const parentIds = new Set([b.parentId, c.parentId, d.parentId]);
+    expect(parentIds.size).toBe(1);
+  });
+
+  it('survives a cross-process race: two clients, same paths, no lost result', async () => {
+    const { createCalls, folders } = makeFolderStub(postgresViolation);
+    // Two separate client instances (e.g. wdio's one-reporter-per-worker) — no
+    // shared memoization, so both try to create "A" and one loses the race.
+    const clientA = makeClient();
+    const clientB = makeClient();
+
+    const [left, right] = await Promise.all([
+      clientA.findOrCreateFolderPath(1, ['A', 'B']),
+      clientB.findOrCreateFolderPath(1, ['A', 'C']),
+    ]);
+
+    expect(left.name).toBe('B');
+    expect(right.name).toBe('C');
+    // Both clients attempted "A" but only one row exists.
+    expect(createCalls.filter((k) => k === 'A:root').length).toBeGreaterThanOrEqual(1);
+    expect(folders.filter((f) => f.name === 'A')).toHaveLength(1);
+  });
+
+  it('does not poison the memo when a create fails transiently', async () => {
+    const client = new TestPlanItClient({
+      baseUrl: 'https://testplanit.example.com',
+      apiToken: 'tpi_test_token',
+      maxRetries: 0,
+    });
+    // listFolders → empty; create → 500; retries exhausted inside request()
+    mockFetchRef.mockImplementation(async (url: unknown) => {
+      const u = String(url);
+      if (u.includes('/repositoryFolders/findMany')) {
+        return { ok: true, text: async () => JSON.stringify({ data: [] }) };
+      }
+      if (u.includes('/repositories/findMany')) {
+        return { ok: true, text: async () => JSON.stringify({ data: [{ id: 7 }] }) };
+      }
+      return { ok: false, status: 500, statusText: 'Internal Server Error', text: async () => 'boom' };
+    });
+
+    await expect(client.findOrCreateFolderPath(1, ['A'])).rejects.toThrow();
+
+    // Second attempt succeeds once the server recovers.
+    const { folders } = makeFolderStub(postgresViolation);
+    void folders;
+    await expect(client.findOrCreateFolderPath(1, ['A'])).resolves.toMatchObject({ name: 'A' });
   });
 });

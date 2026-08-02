@@ -509,7 +509,14 @@ ${error.stack}` : "";
       }
       let folderId = this.state.resolvedIds.parentFolderId;
       if (this.options.createFolderHierarchy && result.suitePath.length > 0) {
-        folderId = await this.getFolderId(result.suitePath);
+        try {
+          folderId = await this.getFolderId(result.suitePath);
+        } catch (error) {
+          this.logError(
+            `Failed to create folder hierarchy "${result.suitePath.join(" > ")}", using parent folder:`,
+            error
+          );
+        }
       }
       const { testCase, action } = await this.client.findOrCreateTestCase({
         projectId: this.options.projectId,
