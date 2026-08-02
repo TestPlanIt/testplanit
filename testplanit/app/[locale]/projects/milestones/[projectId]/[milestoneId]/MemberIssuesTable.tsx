@@ -73,10 +73,6 @@ const MEMBER_ISSUES_COLLAPSED_KEY = "tpi.milestone.memberIssues.collapsed";
 interface MemberIssuesTableProps {
   milestoneId: number;
   projectId: number;
-  // Reports this milestone's member issueIds up to the enclosing IssuesCard
-  // so the sibling "Found in testing" section can compute its "In scope"
-  // cross-badge (an issue appearing in both sections).
-  onMemberIssueIdsChange?: (issueIds: number[]) => void;
 }
 
 /**
@@ -123,7 +119,6 @@ function matchesCoverageState(
 export function MemberIssuesTable({
   milestoneId,
   projectId,
-  onMemberIssueIdsChange,
 }: MemberIssuesTableProps) {
   const t = useTranslations("milestones.members");
   const tCommon = useTranslations("common");
@@ -280,25 +275,6 @@ export function MemberIssuesTable({
       ),
     [coverageData, rows]
   );
-
-  // Report member issueIds up for the sibling "Found in testing" section's
-  // cross-badge — content-keyed so this only fires when the actual id set
-  // changes, not on every unrelated re-render.
-  const memberIssueIdsKey = useMemo(
-    () =>
-      rows
-        .map((row) => row.issueId)
-        .sort((a, b) => a - b)
-        .join(","),
-    [rows]
-  );
-  useEffect(() => {
-    if (!onMemberIssueIdsChange) return;
-    const ids = memberIssueIdsKey
-      ? memberIssueIdsKey.split(",").map(Number)
-      : [];
-    onMemberIssueIdsChange(ids);
-  }, [memberIssueIdsKey, onMemberIssueIdsChange]);
 
   // Milestone-total coverage: aggregate every member issue's per-status
   // counts (matrix pips) + one Untested total + how many issues are

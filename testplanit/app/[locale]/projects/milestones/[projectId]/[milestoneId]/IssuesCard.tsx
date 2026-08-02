@@ -1,6 +1,8 @@
 "use client";
 
 import { CollapsibleSection } from "~/components/CollapsibleSection";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { Bug } from "lucide-react";
 import { useTranslations } from "next-intl";
 import {
@@ -53,7 +55,21 @@ export const IssuesCard = forwardRef<IssuesCardHandle, IssuesCardProps>(
     // below, keeping the scroll target stable across the remount.
     const inScopeRef = useRef<HTMLDivElement>(null);
     const foundInTestingRef = useRef<HTMLDivElement>(null);
-    const [memberIssueIds, setMemberIssueIds] = useState<number[]>([]);
+    // "In scope" member issueIds are fetched HERE, not reported up from
+    // MemberIssuesTable — a collapsed accordion unmounts its content, so the
+    // header total must not depend on the table being mounted. ZenStack's
+    // milestoneIssue mutation hooks (link/unlink) invalidate this query, so
+    // it stays in sync with the table while the card is open.
+    const { data: memberIssueRows } = useClientQueries(
+      schema
+    ).milestoneIssue.useFindMany({
+      where: { milestoneId },
+      select: { issueId: true },
+    });
+    const memberIssueIds = useMemo(
+      () => (memberIssueRows ?? []).map((row) => row.issueId),
+      [memberIssueRows]
+    );
     // Distinct issue total for the header — the union of "In scope" member
     // issues and "Found in testing" issues, deduped by id since a single issue
     // can appear in both sections. Reuses the shared milestone-summary query
@@ -132,7 +148,6 @@ export const IssuesCard = forwardRef<IssuesCardHandle, IssuesCardProps>(
               key={`in-scope-${forceOpen.inScope}`}
               milestoneId={milestoneId}
               projectId={projectId}
-              onMemberIssueIdsChange={setMemberIssueIds}
             />
           </div>
           <div ref={foundInTestingRef} className="scroll-mt-16">
