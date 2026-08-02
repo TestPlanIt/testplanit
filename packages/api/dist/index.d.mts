@@ -920,6 +920,13 @@ declare class TestPlanItError extends Error {
     constructor(message: string, options?: Partial<ApiError>);
 }
 /**
+ * Detect a unique-constraint violation regardless of how the server phrases it.
+ * Prefers stable signals — Postgres SQLSTATE 23505 surfaced as `dbErrorCode`
+ * in the ZenStack error body, or a Prisma P2002 code — and falls back to the
+ * known message phrasings for servers that only send text.
+ */
+declare function isUniqueConstraintViolation(error: unknown): boolean;
+/**
  * CLI Lookup request
  */
 interface LookupRequest {
@@ -1075,6 +1082,19 @@ declare class TestPlanItClient {
      * Create a new folder
      */
     createFolder(options: CreateFolderOptions): Promise<RepositoryFolder>;
+    /**
+     * In-flight and completed folder creations keyed by
+     * projectId + parentId + name, so concurrent path walks that share an
+     * ancestor (e.g. sibling describes) share a single create per folder.
+     */
+    private folderCreates;
+    /**
+     * Create a folder once per (projectId, parentId, name) for this client
+     * instance — concurrent callers get the same promise. If another process
+     * wins the race anyway, the unique-constraint violation is recovered by
+     * re-fetching the existing folder.
+     */
+    private findOrCreateFolder;
     /**
      * Find or create a folder hierarchy from a path
      * @param projectId - The project ID
@@ -1416,4 +1436,4 @@ declare function automationStepsToCaseSteps(steps: AutomationStep[]): CaseStepRo
  */
 declare function deriveCaseStepsIfFresh(steps: AutomationStep[], existingStepCount: number): CaseStepRow[];
 
-export { type AddTestCaseToRunOptions, type ApiError, type Attachment, type AutomationStep, type BulkTestCaseInput, type BulkTestCaseResult, type BulkTestCaseStep, type CaseStepRow, type Comment, type Configuration, type CreateFolderOptions, type CreateJUnitPropertyOptions, type CreateJUnitTestResultOptions, type CreateJUnitTestStepOptions, type CreateJUnitTestSuiteOptions, type CreateStepOptions, type CreateStepsOptions, type CreateTagOptions, type CreateTestCaseOptions, type CreateTestCasesOptions, type CreateTestCasesResult, type CreateTestResultOptions, type CreateTestRunOptions, type FindOrCreateTestCaseResult, type FindTestCaseByCustomFieldOptions, type FindTestCaseOptions, type ImportProgressEvent, type ImportTestResultsOptions, type Issue, type JUnitProperty, type JUnitResultType, type JUnitTestResult, type JUnitTestStep, type JUnitTestSuite, type ListTestRunsOptions, type Milestone, type NormalizedStatus, type PaginatedResponse, type Project, type RepositoryCase, type RepositoryCaseSource, type RepositoryFolder, type RequestStepDerivationCase, type RequestStepDerivationOptions, type RunMetadata, type RunMetadataValue, type Status, type Step, type Tag, type Template, TestPlanItClient, type TestPlanItClientConfig, TestPlanItError, type TestRun, type TestRunCase, type TestRunResult, type TestRunStepResult, type TestRunType, type UpdateJUnitTestSuiteOptions, type UpdateTestCaseOptions, type UpdateTestRunOptions, type UploadAttachmentOptions, type User, type WorkflowState, automationStepsToCaseSteps, deriveCaseStepsIfFresh, mergeRunMetadataIntoDoc, parseRunMetadataFromDoc, tipTapDoc };
+export { type AddTestCaseToRunOptions, type ApiError, type Attachment, type AutomationStep, type BulkTestCaseInput, type BulkTestCaseResult, type BulkTestCaseStep, type CaseStepRow, type Comment, type Configuration, type CreateFolderOptions, type CreateJUnitPropertyOptions, type CreateJUnitTestResultOptions, type CreateJUnitTestStepOptions, type CreateJUnitTestSuiteOptions, type CreateStepOptions, type CreateStepsOptions, type CreateTagOptions, type CreateTestCaseOptions, type CreateTestCasesOptions, type CreateTestCasesResult, type CreateTestResultOptions, type CreateTestRunOptions, type FindOrCreateTestCaseResult, type FindTestCaseByCustomFieldOptions, type FindTestCaseOptions, type ImportProgressEvent, type ImportTestResultsOptions, type Issue, type JUnitProperty, type JUnitResultType, type JUnitTestResult, type JUnitTestStep, type JUnitTestSuite, type ListTestRunsOptions, type Milestone, type NormalizedStatus, type PaginatedResponse, type Project, type RepositoryCase, type RepositoryCaseSource, type RepositoryFolder, type RequestStepDerivationCase, type RequestStepDerivationOptions, type RunMetadata, type RunMetadataValue, type Status, type Step, type Tag, type Template, TestPlanItClient, type TestPlanItClientConfig, TestPlanItError, type TestRun, type TestRunCase, type TestRunResult, type TestRunStepResult, type TestRunType, type UpdateJUnitTestSuiteOptions, type UpdateTestCaseOptions, type UpdateTestRunOptions, type UploadAttachmentOptions, type User, type WorkflowState, automationStepsToCaseSteps, deriveCaseStepsIfFresh, isUniqueConstraintViolation, mergeRunMetadataIntoDoc, parseRunMetadataFromDoc, tipTapDoc };

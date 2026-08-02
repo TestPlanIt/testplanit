@@ -38,6 +38,9 @@ const apiMocks = vi.hoisted(() => ({
     automated: data.automated,
   })),
   findOrAddTestCaseToRun: vi.fn(async (_opts: { repositoryCaseId: number }) => ({ id: 456 })),
+  findOrCreateFolderPath: vi.fn(
+    async (_projectId: number, _path: string[], _rootFolderId?: number) => ({ id: 1, name: "Folder" }),
+  ),
   createJUnitTestResult: vi.fn(async (_opts: { repositoryCaseId: number }) => ({ id: 789 })),
   createSteps: vi.fn(async (opts: { testCaseId: number; steps: unknown[] }) => ({
     count: opts.steps.length,
@@ -143,9 +146,7 @@ vi.mock("@testplanit/api", () => {
       async resolveTagIds() {
         return [1, 2, 3];
       }
-      async findOrCreateFolderPath() {
-        return { id: 1, name: "Folder" };
-      }
+      findOrCreateFolderPath = apiMocks.findOrCreateFolderPath;
     },
     TestPlanItError: class TestPlanItError extends Error {
       constructor(message: string) {
@@ -1214,6 +1215,34 @@ describe("service-managed mode", () => {
 
       expect(apiMocks.findTestCaseByCustomField).not.toHaveBeenCalled();
       expect(apiMocks.findOrCreateTestCase).toHaveBeenCalledTimes(1);
+    });
+
+    it("falls back to the parent folder when folder creation fails", async () => {
+      const err = vi.spyOn(console, "error").mockImplementation(() => {});
+      apiMocks.findOrCreateFolderPath.mockRejectedValueOnce(
+        new Error('duplicate key value violates unique constraint "RepositoryFolders_projectId_repositoryId_parentId_name_isDe_key"'),
+      );
+      apiMocks.findOrCreateTestCase.mockResolvedValue({ testCase: { id: 456, name: "x" }, action: "created" });
+      const r = new TestPlanItReporter({
+        ...defaultOptions,
+        autoCreateTestCases: true,
+        createFolderHierarchy: true,
+        parentFolderId: 10,
+        templateId: 1,
+      });
+      r.onRunnerStart(runner());
+      r.onSuiteStart({ title: "Search", uid: "s1" } as unknown as SuiteStats);
+      r.onTestPass(mochaTest(legacyTitle));
+      await flush(r);
+
+      // The result is not lost — the case lands in the configured parent folder.
+      expect(apiMocks.findOrCreateFolderPath).toHaveBeenCalledTimes(1);
+      expect(apiMocks.findOrCreateTestCase).toHaveBeenCalledTimes(1);
+      expect(apiMocks.findOrCreateTestCase).toHaveBeenCalledWith(
+        expect.objectContaining({ folderId: 10 }),
+      );
+      expect(apiMocks.createJUnitTestResult).toHaveBeenCalledTimes(1);
+      err.mockRestore();
     });
   });
 });
