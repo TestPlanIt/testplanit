@@ -95,6 +95,95 @@ async function folderGroupingOptions(
   return {};
 }
 
+/**
+ * Where-clause for automated durations. Automated results live in
+ * JUnitTestResult (duration in `time`, seconds) rather than TestRunResults,
+ * so the elapsed metrics read both tables.
+ */
+function junitElapsedWhere(
+  projectId: number | undefined,
+  isProjectSpecific: boolean,
+  filters?: { startDate?: string; endDate?: string }
+) {
+  return {
+    time: { gt: 0 },
+    testSuite: {
+      testRun: {
+        ...(isProjectSpecific && projectId
+          ? { projectId: Number(projectId) }
+          : {}),
+        isDeleted: false,
+      },
+    },
+    ...buildDateFilter(filters, "executedAt"),
+  };
+}
+
+/**
+ * Fetches JUnit results shaped like TestRunResults rows so `groupResults`
+ * folds them in unchanged. JUnit rows link straight to the repository case
+ * (the testCase dimension's group key), so no run-case indirection is
+ * needed.
+ */
+async function fetchJunitElapsedRows(
+  db: any,
+  projectId: number | undefined,
+  isProjectSpecific: boolean,
+  groupBy: string[],
+  filters?: { startDate?: string; endDate?: string }
+) {
+  const needsFolder = groupBy.includes("folderId");
+  const needsTag = groupBy.includes("tagId");
+  const junitResults = await db.jUnitTestResult.findMany({
+    where: junitElapsedWhere(projectId, isProjectSpecific, filters),
+    select: {
+      executedAt: true,
+      createdById: true,
+      statusId: true,
+      time: true,
+      repositoryCaseId: true,
+      ...(needsFolder || needsTag
+        ? {
+            repositoryCase: {
+              select: {
+                ...(needsFolder ? { folderId: true } : {}),
+                ...(needsTag
+                  ? {
+                      caseTags: {
+                        where: { tag: { isDeleted: false } },
+                        select: { tagId: true },
+                      },
+                    }
+                  : {}),
+              },
+            },
+          }
+        : {}),
+      testSuite: {
+        select: {
+          testRunId: true,
+          testRun: {
+            select: { projectId: true, configId: true, milestoneId: true },
+          },
+        },
+      },
+    },
+  });
+
+  return junitResults.map((r: any) => ({
+    executedAt: r.executedAt,
+    executedById: r.createdById,
+    statusId: r.statusId,
+    elapsed: r.time,
+    testRunId: r.testSuite.testRunId,
+    testRun: r.testSuite.testRun,
+    testRunCase: {
+      repositoryCaseId: r.repositoryCaseId,
+      ...(r.repositoryCase ? { repositoryCase: r.repositoryCase } : {}),
+    },
+  }));
+}
+
 // Helper to generate a human-readable summary
 export function getReportSummary(
   dimensions: any[],
@@ -262,18 +351,23 @@ export function createTestExecutionDimensionRegistry(
       id: "status",
       label: "Status",
       getValues: async (db: any, projectId?: number) => {
+        const runScope = {
+          ...(isProjectSpecific && projectId
+            ? { projectId: Number(projectId) }
+            : {}),
+          isDeleted: false,
+        };
         const statuses = await db.status.findMany({
           where: {
-            testRunResults: {
-              some: {
-                testRun: {
-                  ...(isProjectSpecific && projectId
-                    ? { projectId: Number(projectId) }
-                    : {}),
-                  isDeleted: false,
+            OR: [
+              { testRunResults: { some: { testRun: runScope } } },
+              // Statuses used only by automated (JUnit) results
+              {
+                junitTestResults: {
+                  some: { testSuite: { testRun: runScope } },
                 },
               },
-            },
+            ],
           },
           select: { id: true, name: true, color: { select: { value: true } } },
           orderBy: { name: "asc" },
@@ -292,19 +386,24 @@ export function createTestExecutionDimensionRegistry(
       id: "user",
       label: "Executor",
       getValues: async (db: any, projectId?: number) => {
+        const runScope = {
+          ...(isProjectSpecific && projectId
+            ? { projectId: Number(projectId) }
+            : {}),
+          isDeleted: false,
+        };
         const users = await db.user.findMany({
           where: {
             isDeleted: false,
-            testRunResults: {
-              some: {
-                testRun: {
-                  ...(isProjectSpecific && projectId
-                    ? { projectId: Number(projectId) }
-                    : {}),
-                  isDeleted: false,
+            OR: [
+              { testRunResults: { some: { testRun: runScope } } },
+              // Users who only submitted automated (JUnit) results
+              {
+                junitTestResults: {
+                  some: { testSuite: { testRun: runScope } },
                 },
               },
-            },
+            ],
           },
           select: { id: true, name: true, email: true },
           orderBy: { name: "asc" },
@@ -410,51 +509,87 @@ export function createTestExecutionDimensionRegistry(
     testCase: {
       id: "testCase",
       label: "Test Case",
+      // Grouped by REPOSITORY case, not run-case instance: one row/series
+      // per case across every run, and it covers JUnit results that were
+      // matched to a case without ever being added to a run's case list
+      // (those have no TestRunCases record at all).
       getValues: async (db: any, projectId?: number) => {
-        const testCases = await db.testRunCases.findMany({
+        const runScope = {
+          ...(isProjectSpecific && projectId
+            ? { projectId: Number(projectId) }
+            : {}),
+          isDeleted: false,
+        };
+        const cases = await db.repositoryCases.findMany({
           where: {
-            testRun: {
-              ...(isProjectSpecific && projectId
-                ? { projectId: Number(projectId) }
-                : {}),
-              isDeleted: false,
-            },
+            OR: [
+              { testRuns: { some: { testRun: runScope } } },
+              {
+                junitResults: {
+                  some: { testSuite: { testRun: runScope } },
+                },
+              },
+            ],
           },
           select: {
             id: true,
-            repositoryCase: {
-              select: {
-                name: true,
-                isDeleted: true,
-                source: true,
-                automated: true,
-                hasParameters: true,
-              },
-            },
+            name: true,
+            isDeleted: true,
+            source: true,
+            automated: true,
+            hasParameters: true,
           },
           orderBy: { id: "asc" },
         });
-        return testCases.map(
-          (tc: {
-            id: any;
-            repositoryCase: {
-              name: any;
-              isDeleted: boolean;
-              source: string;
-              automated: boolean;
-              hasParameters: boolean;
-            };
-          }) => ({
-            id: tc.id,
-            name: tc.repositoryCase?.name || `Case ${tc.id}`,
-            isDeleted: tc.repositoryCase?.isDeleted || false,
-            source: tc.repositoryCase?.source || "MANUAL",
-            automated: tc.repositoryCase?.automated || false,
-            hasParameters: tc.repositoryCase?.hasParameters || false,
-          })
-        );
+        return cases;
       },
-      groupBy: "testRunCaseId",
+      groupBy: "repositoryCaseId",
+      // Dedicated picker lookup with DB-side search and pagination (the
+      // full executed-case list is too large to ship per keystroke).
+      filterValues: async (
+        db: any,
+        projectId: number | undefined,
+        opts: { search?: string; ids?: string[]; skip: number; take: number }
+      ) => {
+        const runScope = {
+          ...(isProjectSpecific && projectId
+            ? { projectId: Number(projectId) }
+            : {}),
+          isDeleted: false,
+        };
+        const where = {
+          ...(opts.ids ? { id: { in: opts.ids.map(Number) } } : {}),
+          ...(opts.search
+            ? { name: { contains: opts.search, mode: "insensitive" } }
+            : {}),
+          OR: [
+            { testRuns: { some: { testRun: runScope } } },
+            {
+              junitResults: {
+                some: { testSuite: { testRun: runScope } },
+              },
+            },
+          ],
+        };
+        const [cases, total] = await Promise.all([
+          db.repositoryCases.findMany({
+            where,
+            select: {
+              id: true,
+              name: true,
+              source: true,
+              automated: true,
+              hasParameters: true,
+              isDeleted: true,
+            },
+            orderBy: { name: "asc" },
+            skip: opts.skip,
+            take: opts.take,
+          }),
+          db.repositoryCases.count({ where }),
+        ]);
+        return { results: cases, total };
+      },
       join: {
         testRunCase: {
           include: {
@@ -785,34 +920,48 @@ export function createTestExecutionMetricRegistry(
         };
 
         if (groupBy.length === 0) {
-          const result = await db.testRunResults.aggregate({
-            where,
-            _avg: { elapsed: true },
-          });
+          const [manual, manualCount, junit, junitCount] = await Promise.all([
+            db.testRunResults.aggregate({ where, _sum: { elapsed: true } }),
+            db.testRunResults.count({ where }),
+            db.jUnitTestResult.aggregate({
+              where: junitElapsedWhere(projectId, isProjectSpecific, filters),
+              _sum: { time: true },
+            }),
+            db.jUnitTestResult.count({
+              where: junitElapsedWhere(projectId, isProjectSpecific, filters),
+            }),
+          ]);
+          const total = (manual._sum.elapsed || 0) + (junit._sum.time || 0);
+          const count = manualCount + junitCount;
           return [
-            {
-              avgElapsedTime: result._avg.elapsed
-                ? Math.round(result._avg.elapsed)
-                : 0,
-            },
+            { avgElapsedTime: count > 0 ? Math.round(total / count) : 0 },
           ];
         }
 
-        const results = await db.testRunResults.findMany({
-          where,
-          select: {
-            executedAt: true,
-            executedById: true,
-            statusId: true,
-            elapsed: true,
-            testRunId: true,
-            testRunCaseId: true,
-            testRun: {
-              select: { projectId: true, configId: true, milestoneId: true },
+        const [results, junitRows] = await Promise.all([
+          db.testRunResults.findMany({
+            where,
+            select: {
+              executedAt: true,
+              executedById: true,
+              statusId: true,
+              elapsed: true,
+              testRunId: true,
+              testRunCaseId: true,
+              testRun: {
+                select: { projectId: true, configId: true, milestoneId: true },
+              },
+              ...caseSelectFor(groupBy),
             },
-            ...caseSelectFor(groupBy),
-          },
-        });
+          }),
+          fetchJunitElapsedRows(
+            db,
+            projectId,
+            isProjectSpecific,
+            groupBy,
+            filters
+          ),
+        ]);
 
         const options = await folderGroupingOptions(
           db,
@@ -823,7 +972,7 @@ export function createTestExecutionMetricRegistry(
         );
 
         return groupResults(
-          results,
+          [...results, ...junitRows],
           groupBy,
           {
             create: () => ({ total: 0, count: 0 }),
@@ -868,28 +1017,45 @@ export function createTestExecutionMetricRegistry(
         };
 
         if (groupBy.length === 0) {
-          const result = await db.testRunResults.aggregate({
-            where,
-            _sum: { elapsed: true },
-          });
-          return [{ totalElapsedTime: result._sum.elapsed || 0 }];
+          const [manual, junit] = await Promise.all([
+            db.testRunResults.aggregate({ where, _sum: { elapsed: true } }),
+            db.jUnitTestResult.aggregate({
+              where: junitElapsedWhere(projectId, isProjectSpecific, filters),
+              _sum: { time: true },
+            }),
+          ]);
+          return [
+            {
+              totalElapsedTime:
+                (manual._sum.elapsed || 0) + (junit._sum.time || 0),
+            },
+          ];
         }
 
-        const results = await db.testRunResults.findMany({
-          where,
-          select: {
-            executedAt: true,
-            executedById: true,
-            statusId: true,
-            elapsed: true,
-            testRunId: true,
-            testRunCaseId: true,
-            testRun: {
-              select: { projectId: true, configId: true, milestoneId: true },
+        const [results, junitRows] = await Promise.all([
+          db.testRunResults.findMany({
+            where,
+            select: {
+              executedAt: true,
+              executedById: true,
+              statusId: true,
+              elapsed: true,
+              testRunId: true,
+              testRunCaseId: true,
+              testRun: {
+                select: { projectId: true, configId: true, milestoneId: true },
+              },
+              ...caseSelectFor(groupBy),
             },
-            ...caseSelectFor(groupBy),
-          },
-        });
+          }),
+          fetchJunitElapsedRows(
+            db,
+            projectId,
+            isProjectSpecific,
+            groupBy,
+            filters
+          ),
+        ]);
 
         const options = await folderGroupingOptions(
           db,
@@ -900,7 +1066,7 @@ export function createTestExecutionMetricRegistry(
         );
 
         return groupResults(
-          results,
+          [...results, ...junitRows],
           groupBy,
           {
             create: () => ({ total: 0 }),

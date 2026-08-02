@@ -19,11 +19,20 @@ vi.mock("@/lib/db", () => ({
 vi.mock("~/utils/drillDownQueryBuilders", () => ({
   getModelForMetric: vi.fn(),
   getQueryBuilderForMetric: vi.fn(),
+  buildTestExecutionQuery: vi.fn(),
+  buildJunitElapsedQuery: vi.fn(),
+}));
+
+vi.mock("~/lib/auth/utils", () => ({
+  getEnhancedDb: vi.fn(),
 }));
 
 import { baseDb } from "@/lib/db";
+import { getEnhancedDb } from "~/lib/auth/utils";
 import { getServerSession } from "next-auth";
 import {
+  buildJunitElapsedQuery,
+  buildTestExecutionQuery,
   getModelForMetric,
   getQueryBuilderForMetric,
 } from "~/utils/drillDownQueryBuilders";
@@ -78,6 +87,11 @@ describe("POST /api/report-builder/drill-down", () => {
     (baseDb as any).testRunResults = mockModel;
 
     (baseDb.status.findMany as any).mockResolvedValue([]);
+
+    // Default: the caller can read the project (membership gate passes)
+    (getEnhancedDb as any).mockResolvedValue({
+      projects: { findFirst: vi.fn().mockResolvedValue({ id: 1 }) },
+    });
   });
 
   describe("Authentication", () => {
@@ -127,6 +141,21 @@ describe("POST /api/report-builder/drill-down", () => {
 
       expect(response.status).toBe(400);
       expect(data.error).toContain("drill-down context");
+    });
+
+    it("returns 403 when the user cannot read the requested project", async () => {
+      (getServerSession as any).mockResolvedValue(mockSession);
+      (getEnhancedDb as any).mockResolvedValue({
+        projects: { findFirst: vi.fn().mockResolvedValue(null) },
+      });
+
+      const response = await POST(
+        createRequest({ context: validDrillDownContext })
+      );
+      const data = await response.json();
+
+      expect(response.status).toBe(403);
+      expect(data.error).toBe("Forbidden");
     });
 
     it("returns 403 when cross-project mode and user is not admin", async () => {
@@ -268,6 +297,121 @@ describe("POST /api/report-builder/drill-down", () => {
       expect(data).toHaveProperty("aggregates");
       expect(data.aggregates).toHaveProperty("passRate");
       expect(data.aggregates).toHaveProperty("statusCounts");
+    });
+  });
+
+  describe("Elapsed metric drill-down (manual + JUnit)", () => {
+    const elapsedContext = {
+      metricId: "avgElapsedTime",
+      reportType: "test-execution",
+      projectId: 1,
+      dimensions: {},
+    };
+
+    const manualRecord = {
+      id: 10,
+      elapsed: 30,
+      executedAt: "2024-01-01T10:00:00Z",
+      testRunCase: { repositoryCase: { name: "Manual Case" } },
+    };
+
+    const junitRecord = {
+      id: 10, // Same numeric id as the manual record on purpose
+      time: 58.5,
+      executedAt: "2024-01-01T11:00:00Z",
+      createdById: "user-2",
+      createdBy: { id: "user-2", name: "Bot" },
+      statusId: 2,
+      status: { id: 2, name: "Passed", color: { value: "#22c55e" } },
+      repositoryCase: { id: 42, name: "Automated Case", hasParameters: false },
+      testSuite: { testRun: { id: 200, name: "CI Run", projectId: 1 } },
+    };
+
+    beforeEach(() => {
+      (getServerSession as any).mockResolvedValue(mockSession);
+      (buildTestExecutionQuery as any).mockReturnValue({
+        where: { testRun: { projectId: 1 } },
+        include: {},
+        skip: 0,
+        take: 50,
+      });
+      (buildJunitElapsedQuery as any).mockReturnValue({
+        where: { time: { gt: 0 } },
+        include: {},
+      });
+
+      (baseDb as any).testRunResults = {
+        findMany: vi.fn().mockResolvedValue([manualRecord]),
+        count: vi.fn().mockResolvedValue(1),
+      };
+      (baseDb as any).jUnitTestResult = {
+        findMany: vi.fn().mockResolvedValue([junitRecord]),
+        count: vi.fn().mockResolvedValue(1),
+      };
+    });
+
+    it("combines manual and JUnit rows with a shared total", async () => {
+      const response = await POST(createRequest({ context: elapsedContext }));
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(data.total).toBe(2);
+      expect(data.data).toHaveLength(2);
+      expect(data.data[0].name).toBe("Manual Case");
+      expect(data.data[1]).toMatchObject({
+        id: "junit-10",
+        name: "Automated Case",
+        elapsed: 58.5,
+        executedById: "user-2",
+        testRunId: 200,
+      });
+    });
+
+    it("filters the manual side to duration-bearing rows", async () => {
+      await POST(createRequest({ context: elapsedContext }));
+
+      const manualWhere = (baseDb as any).testRunResults.count.mock.calls[0][0]
+        .where;
+      expect(manualWhere.elapsed).toEqual({ not: null });
+    });
+
+    it("pages into the JUnit block once manual rows are exhausted", async () => {
+      (baseDb as any).testRunResults.count.mockResolvedValue(3);
+      (baseDb as any).jUnitTestResult.count.mockResolvedValue(10);
+
+      await POST(
+        createRequest({ context: elapsedContext, offset: 5, limit: 50 })
+      );
+
+      expect((baseDb as any).testRunResults.findMany).not.toHaveBeenCalled();
+      const junitArgs = (baseDb as any).jUnitTestResult.findMany.mock
+        .calls[0][0];
+      expect(junitArgs.skip).toBe(2); // offset 5 - 3 manual rows
+    });
+
+    it("passes the drill-down context straight to the JUnit builder", async () => {
+      const context = {
+        ...elapsedContext,
+        dimensions: { testCase: { id: 108205, name: "SCORM export case" } },
+      };
+      await POST(createRequest({ context }));
+
+      expect(buildJunitElapsedQuery).toHaveBeenCalledWith(
+        expect.objectContaining({
+          dimensions: { testCase: { id: 108205, name: "SCORM export case" } },
+        })
+      );
+    });
+
+    it("skips the JUnit side entirely when the builder returns null", async () => {
+      (buildJunitElapsedQuery as any).mockReturnValue(null);
+
+      const response = await POST(createRequest({ context: elapsedContext }));
+      const data = await response.json();
+
+      expect((baseDb as any).jUnitTestResult.findMany).not.toHaveBeenCalled();
+      expect(data.total).toBe(1);
+      expect(data.data).toHaveLength(1);
     });
   });
 });

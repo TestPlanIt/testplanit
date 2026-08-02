@@ -33,6 +33,7 @@ import type { LlmRequest } from "@/lib/llm/types";
 import { baseDb } from "@/lib/db";
 import type { JsonValue } from "@zenstackhq/orm";
 import { getServerSession } from "next-auth";
+import { isValidReportBypass } from "~/lib/internalReportBypass";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
 
@@ -163,8 +164,9 @@ export async function POST(req: NextRequest) {
   // the latest persisted snapshot to display. Mirrors how
   // `/api/report-builder/iteration-matrix` and others recognize the
   // bypass header.
-  const isSharedReportBypass =
-    req.headers.get("x-shared-report-bypass") === "true";
+  const isSharedReportBypass = isValidReportBypass(
+    req.headers.get("x-shared-report-bypass")
+  );
 
   if (isSharedReportBypass) {
     return handleSharedReportBypass(req);
@@ -500,7 +502,8 @@ export async function POST(req: NextRequest) {
         }
 
         // Hallucination guard: drop any caseId the LLM invented that wasn't
-        // in the input set, and re-sort by rank so the snapshot is canonical.
+        // in the input set, drop repeats of the same caseId (keeping the
+        // best-ranked one), and re-sort by rank so the snapshot is canonical.
         const metricsByCaseId = new Map<number, CandidateMetrics>(
           cappedCases.map((c) => [
             c.id,
@@ -515,9 +518,15 @@ export async function POST(req: NextRequest) {
         const nameByCaseId = new Map<number, string>(
           cappedCases.map((c) => [c.id, c.name])
         );
+        const seenCaseIds = new Set<number>();
         const filtered = parsedOutput.candidates
           .filter((c) => metricsByCaseId.has(c.caseId))
           .sort((a, b) => a.rank - b.rank)
+          .filter((c) => {
+            if (seenCaseIds.has(c.caseId)) return false;
+            seenCaseIds.add(c.caseId);
+            return true;
+          })
           .map((c) => ({
             ...c,
             // Persist the metrics that drove the ranking so a viewer can

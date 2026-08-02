@@ -136,12 +136,12 @@ export function buildTestExecutionQuery(
     where.statusId = Number(context.dimensions.status.id);
   }
 
+  // testCase (a repository case id), folder, and tag all filter on the
+  // executed case. Build a single testRunCase filter so they compose.
+  const runCaseFilter: any = {};
   if (context.dimensions.testCase) {
-    where.testRunCaseId = Number(context.dimensions.testCase.id);
+    runCaseFilter.repositoryCaseId = Number(context.dimensions.testCase.id);
   }
-
-  // Folder and tag both filter on the executed case. Build a single
-  // repositoryCase filter so they compose.
   const repositoryCaseFilter: any = {};
   if (context.dimensions.folder) {
     const folder = context.dimensions.folder;
@@ -164,7 +164,10 @@ export function buildTestExecutionQuery(
         : { some: { tag: { id: Number(tag.id) } } };
   }
   if (Object.keys(repositoryCaseFilter).length > 0) {
-    where.testRunCase = { repositoryCase: repositoryCaseFilter };
+    runCaseFilter.repositoryCase = repositoryCaseFilter;
+  }
+  if (Object.keys(runCaseFilter).length > 0) {
+    where.testRunCase = runCaseFilter;
   }
 
   // Apply date filter
@@ -240,6 +243,163 @@ export function buildTestExecutionQuery(
     orderBy: {
       executedAt: "desc",
     } as NonNullable<TestRunResultsFindManyArgs["orderBy"]>,
+  };
+}
+
+/**
+ * Build query for the automated half of an elapsed-metric drill-down.
+ * Automated durations live in JUnitTestResult (`time`, seconds), so elapsed
+ * cells drill into both tables; this mirrors buildTestExecutionQuery's
+ * dimension filters onto the JUnit shape. The testCase dimension carries a
+ * repository case id, which JUnit rows link to directly.
+ */
+export function buildJunitElapsedQuery(
+  context: DrillDownContext
+): Record<string, any> | null {
+  const testCaseId = context.dimensions.testCase?.id;
+  if (
+    context.dimensions.testCase &&
+    (testCaseId == null || testCaseId === "")
+  ) {
+    return null;
+  }
+
+  const where: Record<string, any> = {
+    time: { gt: 0 },
+  };
+
+  // Run-level filters travel through the suite's run.
+  const testRunFilter: any = {};
+
+  if (context.projectId) {
+    testRunFilter.projectId = context.projectId;
+  } else if (context.mode === "cross-project" && context.dimensions.project) {
+    testRunFilter.projectId = Number(context.dimensions.project.id);
+  }
+
+  if (context.dimensions.configuration) {
+    testRunFilter.configId =
+      context.dimensions.configuration.id === null
+        ? null
+        : Number(context.dimensions.configuration.id);
+  }
+
+  if (context.dimensions.milestone) {
+    testRunFilter.milestone = {
+      id: Number(context.dimensions.milestone.id),
+    };
+  }
+
+  if (context.dimensions.testRun) {
+    if (context.dimensions.testRun.id === null) {
+      testRunFilter.isDeleted = true;
+    } else {
+      testRunFilter.id = Number(context.dimensions.testRun.id);
+    }
+  }
+
+  if (testCaseId != null && testCaseId !== "") {
+    where.repositoryCaseId = Number(testCaseId);
+  }
+
+  if (Object.keys(testRunFilter).length > 0) {
+    where.testSuite = { testRun: testRunFilter };
+  }
+
+  if (context.dimensions.user) {
+    where.createdById = String(context.dimensions.user.id);
+  }
+
+  if (context.dimensions.status) {
+    where.statusId = Number(context.dimensions.status.id);
+  }
+
+  // Folder and tag filter on the linked repository case.
+  const repositoryCaseFilter: any = {};
+  if (context.dimensions.folder) {
+    const folder = context.dimensions.folder;
+    if (folder.id === null || folder.id === "") {
+      repositoryCaseFilter.folderId = null;
+    } else if (Array.isArray((folder as any).subtreeIds)) {
+      repositoryCaseFilter.folderId = {
+        in: (folder as any).subtreeIds.map(Number),
+      };
+    } else {
+      repositoryCaseFilter.folderId = Number(folder.id);
+    }
+  }
+  if (context.dimensions.tag) {
+    const tag = context.dimensions.tag;
+    repositoryCaseFilter.caseTags =
+      tag.id === null || tag.id === ""
+        ? { none: {} }
+        : { some: { tag: { id: Number(tag.id) } } };
+  }
+  if (Object.keys(repositoryCaseFilter).length > 0) {
+    where.repositoryCase = repositoryCaseFilter;
+  }
+
+  if (context.dimensions.date?.executedAt) {
+    const date = new Date(context.dimensions.date.executedAt);
+    where.executedAt = {
+      gte: startOfDayUTC(date),
+      lt: endOfDayUTC(date),
+    };
+  }
+
+  const dateRangeFilter = buildDateFilter(
+    context.startDate,
+    context.endDate,
+    "executedAt"
+  );
+  if (
+    dateRangeFilter.executedAt &&
+    typeof dateRangeFilter.executedAt === "object"
+  ) {
+    const existing = where.executedAt as any;
+    where.executedAt = existing
+      ? { ...existing, ...(dateRangeFilter.executedAt as any) }
+      : dateRangeFilter.executedAt;
+  }
+
+  return {
+    where,
+    include: {
+      status: {
+        include: {
+          color: true,
+        },
+      },
+      createdBy: true,
+      repositoryCase: {
+        select: {
+          id: true,
+          name: true,
+          hasParameters: true,
+        },
+      },
+      testSuite: {
+        select: {
+          testRun: {
+            select: {
+              id: true,
+              name: true,
+              projectId: true,
+              configId: true,
+              configuration: {
+                select: {
+                  id: true,
+                  name: true,
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    orderBy: {
+      executedAt: "desc",
+    },
   };
 }
 

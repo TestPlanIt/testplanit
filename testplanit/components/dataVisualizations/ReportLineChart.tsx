@@ -4,13 +4,18 @@ import { useLocale, useTranslations } from "next-intl";
 import React, { useEffect, useRef } from "react";
 import useResponsiveSVG from "~/hooks/useResponsiveSVG";
 import { SimpleChartDataPoint } from "./ReportChart";
-import { localeTickFormat } from "~/utils/formatNumber";
+import { durationTickFormat, localeTickFormat } from "~/utils/formatNumber";
 
 interface ReportLineChartProps {
   data: SimpleChartDataPoint[];
+  /** Format Y-axis ticks as durations (values are seconds). */
+  durationTicks?: boolean;
 }
 
-export const ReportLineChart: React.FC<ReportLineChartProps> = ({ data }) => {
+export const ReportLineChart: React.FC<ReportLineChartProps> = ({
+  data,
+  durationTicks = false,
+}) => {
   const locale = useLocale();
   const svgRef = useRef<SVGSVGElement | null>(null);
   const tooltipRef = useRef<HTMLDivElement | null>(null);
@@ -87,7 +92,13 @@ export const ReportLineChart: React.FC<ReportLineChartProps> = ({ data }) => {
 
     g.append("g")
       .attr("class", "y-axis")
-      .call(d3.axisLeft(yScale).tickFormat(localeTickFormat(locale)));
+      .call(
+        d3
+          .axisLeft(yScale)
+          .tickFormat(
+            durationTicks ? durationTickFormat() : localeTickFormat(locale)
+          )
+      );
 
     const line = d3
       .line<SimpleChartDataPoint>()
@@ -164,7 +175,7 @@ export const ReportLineChart: React.FC<ReportLineChartProps> = ({ data }) => {
       .ease(d3.easeBackOut.overshoot(1.3))
       .attr("r", 5)
       .style("opacity", 1);
-  }, [data, width, height, t, locale]);
+  }, [data, width, height, t, locale, durationTicks]);
 
   return (
     <div

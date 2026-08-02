@@ -1,6 +1,7 @@
 import { baseDb } from "@/lib/db";
 import { getProjectRelevantIssueIds } from "@/lib/projectIssueIds";
 import { NextRequest } from "next/server";
+import { authorizeReportRequest } from "~/utils/reportApiUtils";
 
 // Note: Project health uses custom milestone and issue-based logic
 // This doesn't fit the existing shared patterns but could be a candidate
@@ -663,6 +664,12 @@ export async function GET(req: NextRequest) {
     const url = new URL(req.url);
     const projectId = url.searchParams.get("projectId");
 
+    const authz = await authorizeReportRequest(req, {
+      requiresAdmin: false,
+      projectId: projectId ? Number(projectId) : undefined,
+    });
+    if (!authz.ok) return authz.response;
+
     if (!projectId) {
       return Response.json(
         { error: "Project ID is required" },
@@ -695,6 +702,12 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const { projectId, dimensions, metrics } = await req.json();
+
+    const authz = await authorizeReportRequest(req, {
+      requiresAdmin: false,
+      projectId: projectId ? Number(projectId) : undefined,
+    });
+    if (!authz.ok) return authz.response;
 
     if (!projectId || !dimensions || !metrics) {
       return Response.json(

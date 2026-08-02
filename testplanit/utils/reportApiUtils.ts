@@ -2,6 +2,8 @@ import { baseDb } from "@/lib/db";
 import { getServerSession } from "next-auth";
 import { NextRequest } from "next/server";
 import { authenticateRequest } from "~/lib/api-token-auth";
+import { getEnhancedDb } from "~/lib/auth/utils";
+import { isValidReportBypass } from "~/lib/internalReportBypass";
 import { reportRequestSchema } from "~/lib/schemas/reportRequestSchema";
 import { authOptions } from "~/server/auth";
 
@@ -35,6 +37,27 @@ interface DimensionConfig {
   groupBy: string;
   join: Record<string, unknown>;
   display: (val: unknown) => DimensionDisplayValue;
+  /**
+   * Optional dedicated lookup for the per-dimension value-filter picker,
+   * with DB-side search and pagination. Used when the picker's options
+   * should differ from the raw group values (e.g. the test-execution
+   * testCase dimension groups by run-case instance but users pick
+   * repository cases).
+   */
+  filterValues?: (
+    baseDb: Prisma,
+    projectId: number | undefined,
+    opts: { search?: string; ids?: string[]; skip: number; take: number }
+  ) => Promise<{ results: DimensionDisplayValue[]; total: number }>;
+  /**
+   * Translates picked filter-value ids into the dimension's group keys
+   * before rows are filtered (e.g. repository case ids -> run-case ids).
+   */
+  mapFilterValuesToGroupKeys?: (
+    baseDb: Prisma,
+    projectId: number | undefined,
+    selected: Array<string | number>
+  ) => Promise<Array<string | number>>;
 }
 
 // Metric configuration interface
@@ -67,6 +90,62 @@ interface ReportConfig {
   createMetricRegistry: (isProjectSpecific: boolean) => MetricRegistry;
 }
 
+/**
+ * Authorization for every report endpoint (shared handlers, custom report
+ * routes, drill-down). Order of precedence:
+ * 1. A valid internal share-replay token (x-shared-report-bypass) — the
+ *    share route has already validated the shareKey, so no user auth.
+ * 2. Session or API-token auth. Admin-only (cross-project) surfaces require
+ *    ADMIN; project-scoped surfaces require the caller to be able to read
+ *    the project (checked through the policy-enhanced client, so it follows
+ *    the same access rules as the rest of the app).
+ */
+export async function authorizeReportRequest(
+  req: NextRequest,
+  opts: { requiresAdmin: boolean; projectId?: number }
+): Promise<{ ok: true; bypass: boolean } | { ok: false; response: Response }> {
+  if (isValidReportBypass(req.headers.get("x-shared-report-bypass"))) {
+    return { ok: true, bypass: true };
+  }
+
+  const session = await getServerSession(authOptions);
+  const auth = await authenticateRequest(req, session);
+  if (!auth.authenticated) {
+    return {
+      ok: false,
+      response: Response.json({ error: auth.error }, { status: auth.status }),
+    };
+  }
+
+  if (opts.requiresAdmin) {
+    if (auth.user.access !== "ADMIN") {
+      return {
+        ok: false,
+        response: Response.json({ error: "Unauthorized" }, { status: 401 }),
+      };
+    }
+    return { ok: true, bypass: false };
+  }
+
+  if (opts.projectId && auth.user.access !== "ADMIN") {
+    const enhanced = await getEnhancedDb({
+      user: { id: auth.user.userId },
+    } as any);
+    const project = await enhanced.projects.findFirst({
+      where: { id: Number(opts.projectId) },
+      select: { id: true },
+    });
+    if (!project) {
+      return {
+        ok: false,
+        response: Response.json({ error: "Forbidden" }, { status: 403 }),
+      };
+    }
+  }
+
+  return { ok: true, bypass: false };
+}
+
 // Helper: cartesian product
 export function cartesianProduct<T>(arrays: T[][]): T[][] {
   return arrays.reduce(
@@ -75,26 +154,92 @@ export function cartesianProduct<T>(arrays: T[][]): T[][] {
   );
 }
 
+/**
+ * Drops aggregated rows whose group key for a filtered dimension is not in
+ * that dimension's selected-value list. Because report rows are grouped BY
+ * the selected dimensions, filtering on group keys after aggregation is
+ * equivalent to filtering the underlying records first — each group either
+ * matches wholly or not at all, so averages and sums are unaffected.
+ *
+ * `dimensionFilters` maps dimension id -> selected group-key ids. Dimension
+ * ids not present in `dimensionConfigs` are ignored; a present-but-empty
+ * list matches nothing (empty *selections* are stripped before this point —
+ * see resolveDimensionFilterGroupKeys). Date group keys are normalized to
+ * UTC-midnight ISO strings before comparison.
+ */
+export function filterRowsByDimensionValues(
+  rows: Record<string, unknown>[],
+  dimensionConfigs: DimensionConfig[],
+  dimensionFilters?: Record<string, Array<string | number>>
+): Record<string, unknown>[] {
+  if (!dimensionFilters) return rows;
+
+  const activeFilters = dimensionConfigs
+    .map((config) => {
+      const selected = dimensionFilters[config.id];
+      if (!selected) return null;
+      return {
+        groupBy: config.groupBy,
+        values: new Set(selected.map((v) => String(v))),
+      };
+    })
+    .filter((f): f is { groupBy: string; values: Set<string> } => f !== null);
+
+  if (activeFilters.length === 0) return rows;
+
+  const normalizeKey = (groupBy: string, value: unknown): string => {
+    if (value === null || value === undefined) return "null";
+    if (groupBy === "executedAt" || groupBy === "createdAt") {
+      const date = new Date(value as string);
+      date.setUTCHours(0, 0, 0, 0);
+      return date.toISOString();
+    }
+    return String(value);
+  };
+
+  return rows.filter((row) =>
+    activeFilters.every((filter) =>
+      filter.values.has(normalizeKey(filter.groupBy, row[filter.groupBy]))
+    )
+  );
+}
+
+/**
+ * Translates picked filter-value ids into group keys for dimensions whose
+ * picker options differ from their group values (mapFilterValuesToGroupKeys).
+ * Other dimensions pass through unchanged. An empty translation result is
+ * kept — it means "the selection matches nothing", not "no filter".
+ */
+async function resolveDimensionFilterGroupKeys(
+  dimensionConfigs: DimensionConfig[],
+  dimensionFilters: Record<string, Array<string | number>> | undefined,
+  projectId: number | undefined
+): Promise<Record<string, Array<string | number>> | undefined> {
+  if (!dimensionFilters) return undefined;
+
+  const resolved: Record<string, Array<string | number>> = {};
+  for (const [dimId, selected] of Object.entries(dimensionFilters)) {
+    if (!selected || selected.length === 0) continue;
+    const config = dimensionConfigs.find((c) => c.id === dimId);
+    if (!config) continue;
+    resolved[dimId] = config.mapFilterValuesToGroupKeys
+      ? await config.mapFilterValuesToGroupKeys(baseDb, projectId, selected)
+      : selected;
+  }
+  return resolved;
+}
+
 export async function handleReportGET(req: NextRequest, config: ReportConfig) {
   try {
-    // Check admin access if required
-    // Allow bypass for shared reports with special internal header
-    const isSharedReportBypass =
-      req.headers.get("x-shared-report-bypass") === "true";
-    if (config.requiresAdmin && !isSharedReportBypass) {
-      const session = await getServerSession(authOptions);
-      const auth = await authenticateRequest(req, session);
-      if (!auth.authenticated) {
-        return Response.json({ error: auth.error }, { status: auth.status });
-      }
-      if (auth.user.access !== "ADMIN") {
-        return Response.json({ error: "Unauthorized" }, { status: 401 });
-      }
-    }
-
     const { searchParams } = new URL(req.url);
     const projectIdParam = searchParams.get("projectId");
     const projectId = projectIdParam ? Number(projectIdParam) : undefined;
+
+    const authz = await authorizeReportRequest(req, {
+      requiresAdmin: !!config.requiresAdmin,
+      projectId,
+    });
+    if (!authz.ok) return authz.response;
 
     // Check project ID requirement
     if (config.requiresProjectId && !projectId) {
@@ -109,6 +254,84 @@ export async function handleReportGET(req: NextRequest, config: ReportConfig) {
       !config.requiresAdmin
     );
     const metricRegistry = config.createMetricRegistry(!config.requiresAdmin);
+
+    // Value-lookup mode: with ?dimensionId=… return that dimension's values,
+    // searched and paginated, for the per-dimension filter pickers.
+    const dimensionId = searchParams.get("dimensionId");
+    if (dimensionId) {
+      const dimension = dimensionRegistry[dimensionId];
+      if (!dimension) {
+        return Response.json(
+          { error: `Unsupported dimension: ${dimensionId}` },
+          { status: 400 }
+        );
+      }
+
+      const search = (searchParams.get("search") ?? "").trim().toLowerCase();
+      // Exact-id lookup, used to restore filter labels from URL-stored ids
+      const idsParam = searchParams.get("ids");
+      const ids = idsParam
+        ? idsParam
+            .split(",")
+            .map((v) => v.trim())
+            .filter(Boolean)
+        : undefined;
+      const pageParam = Number(searchParams.get("page") ?? 0);
+      const valuesPage = Number.isFinite(pageParam)
+        ? Math.max(0, pageParam)
+        : 0;
+      const pageSizeParam = Number(searchParams.get("pageSize") ?? 25);
+      const valuesPageSize = Number.isFinite(pageSizeParam)
+        ? Math.min(Math.max(1, pageSizeParam), 10000)
+        : 25;
+
+      // Dimensions with a dedicated filter-value lookup search and paginate
+      // in the database instead of materializing every group value.
+      if (dimension.filterValues) {
+        const lookup = await dimension.filterValues(baseDb, projectId, {
+          search: search || undefined,
+          ids,
+          skip: valuesPage * valuesPageSize,
+          take: valuesPageSize,
+        });
+        return Response.json(lookup);
+      }
+
+      const rawValues = await dimension.getValues(baseDb, projectId);
+      const displayValues = (rawValues as unknown[]).map((value) => {
+        const display = dimension.display(value);
+        // Value ids key the filter; date-style dimensions have no id and are
+        // excluded from the pickers, but fall back to the date string.
+        const id =
+          display.id ?? display.executedAt ?? display.createdAt ?? null;
+        const name =
+          display.name ??
+          (typeof display.executedAt === "string"
+            ? display.executedAt
+            : typeof display.createdAt === "string"
+              ? display.createdAt
+              : String(id));
+        return { ...display, id, name };
+      });
+
+      const idSet = ids ? new Set(ids) : null;
+      const idFiltered = idSet
+        ? displayValues.filter((v) => idSet.has(String(v.id)))
+        : displayValues;
+      const filtered = search
+        ? idFiltered.filter((v) =>
+            String(v.name).toLowerCase().includes(search)
+          )
+        : idFiltered;
+
+      return Response.json({
+        results: filtered.slice(
+          valuesPage * valuesPageSize,
+          (valuesPage + 1) * valuesPageSize
+        ),
+        total: filtered.length,
+      });
+    }
 
     // Filter out undefined entries
     const validDimensions = Object.values(dimensionRegistry).filter(
@@ -140,22 +363,13 @@ export async function handleReportGET(req: NextRequest, config: ReportConfig) {
 
 export async function handleReportPOST(req: NextRequest, config: ReportConfig) {
   try {
-    // Check admin access if required
-    // Allow bypass for shared reports with special internal header
-    const isSharedReportBypass =
-      req.headers.get("x-shared-report-bypass") === "true";
-    if (config.requiresAdmin && !isSharedReportBypass) {
-      const session = await getServerSession(authOptions);
-      const auth = await authenticateRequest(req, session);
-      if (!auth.authenticated) {
-        return Response.json({ error: auth.error }, { status: auth.status });
-      }
-      if (auth.user.access !== "ADMIN") {
-        return Response.json({ error: "Unauthorized" }, { status: 401 });
-      }
-    }
-
     const body = await req.json();
+
+    const authz = await authorizeReportRequest(req, {
+      requiresAdmin: !!config.requiresAdmin,
+      projectId: body?.projectId ? Number(body.projectId) : undefined,
+    });
+    if (!authz.ok) return authz.response;
     const {
       projectId,
       dimensions,
@@ -163,6 +377,7 @@ export async function handleReportPOST(req: NextRequest, config: ReportConfig) {
       startDate,
       endDate,
       folderIncludeDescendants,
+      dimensionFilters,
       page = 1,
       pageSize,
       sortColumn,
@@ -244,6 +459,7 @@ export async function handleReportPOST(req: NextRequest, config: ReportConfig) {
         startDate,
         endDate,
         folderIncludeDescendants,
+        dimensionFilters,
         page,
         pageSize,
         sortColumn,
@@ -261,6 +477,7 @@ export async function handleReportPOST(req: NextRequest, config: ReportConfig) {
       startDate,
       endDate,
       folderIncludeDescendants,
+      dimensionFilters,
       page,
       pageSize,
       sortColumn,
@@ -280,6 +497,7 @@ async function handleCrossProjectAggregation({
   startDate,
   endDate,
   folderIncludeDescendants,
+  dimensionFilters,
   page = 1,
   pageSize,
   sortColumn,
@@ -292,6 +510,7 @@ async function handleCrossProjectAggregation({
   startDate?: string;
   endDate?: string;
   folderIncludeDescendants?: boolean;
+  dimensionFilters?: Record<string, Array<string | number>>;
   page?: number;
   pageSize?: number | "All";
   sortColumn?: string;
@@ -317,7 +536,7 @@ async function handleCrossProjectAggregation({
   );
 
   // Aggregate all metrics using the same groupBy
-  const metricResults = await Promise.all(
+  const rawMetricResults = await Promise.all(
     metricConfigs.map((metricConfig: MetricConfig) =>
       metricConfig.aggregate(
         baseDb,
@@ -326,6 +545,20 @@ async function handleCrossProjectAggregation({
         { startDate, endDate, folderIncludeDescendants },
         dimensions
       )
+    )
+  );
+
+  // Apply per-dimension value filters on the group keys
+  const resolvedDimensionFilters = await resolveDimensionFilterGroupKeys(
+    dimensionConfigs,
+    dimensionFilters,
+    undefined
+  );
+  const metricResults = rawMetricResults.map((rows) =>
+    filterRowsByDimensionValues(
+      rows as Record<string, unknown>[],
+      dimensionConfigs,
+      resolvedDimensionFilters
     )
   );
 
@@ -607,6 +840,7 @@ async function handleProjectSpecificAggregation({
   startDate,
   endDate,
   folderIncludeDescendants,
+  dimensionFilters,
   page = 1,
   pageSize,
   sortColumn,
@@ -620,6 +854,7 @@ async function handleProjectSpecificAggregation({
   startDate?: string;
   endDate?: string;
   folderIncludeDescendants?: boolean;
+  dimensionFilters?: Record<string, Array<string | number>>;
   page?: number;
   pageSize?: number | "All";
   sortColumn?: string;
@@ -645,7 +880,7 @@ async function handleProjectSpecificAggregation({
   );
 
   // Aggregate all metrics using the same groupBy
-  const metricResults = await Promise.all(
+  const rawMetricResults = await Promise.all(
     metricConfigs.map((metricConfig: MetricConfig) =>
       metricConfig.aggregate(
         baseDb,
@@ -654,6 +889,20 @@ async function handleProjectSpecificAggregation({
         { startDate, endDate, folderIncludeDescendants },
         dimensions
       )
+    )
+  );
+
+  // Apply per-dimension value filters on the group keys
+  const resolvedDimensionFilters = await resolveDimensionFilterGroupKeys(
+    dimensionConfigs,
+    dimensionFilters,
+    projectId
+  );
+  const metricResults = rawMetricResults.map((rows) =>
+    filterRowsByDimensionValues(
+      rows as Record<string, unknown>[],
+      dimensionConfigs,
+      resolvedDimensionFilters
     )
   );
 

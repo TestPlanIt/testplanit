@@ -340,22 +340,23 @@ describe("External API Access Control", () => {
       expect(response.status).not.toBe(403);
     });
 
-    it("should bypass external API check for requests with x-shared-report-bypass header", async () => {
+    it("no longer exempts requests carrying x-shared-report-bypass (forgeable header)", async () => {
       mockGetToken.mockResolvedValue({
         sub: "user-123",
         access: "USER",
         isApi: false,
       });
 
-      // Internal server-to-server fetch from share report route
-      // forwards user cookies but has no browser headers
+      // The internal share-replay fetch carries no cookies, so it never
+      // reaches this branch; a cookie-bearing request with the header is a
+      // forgery attempt and gets the normal external-API treatment.
       const request = createMockRequest("/api/reports/automation-trends", {
         "x-shared-report-bypass": "true",
       });
 
       const response = await middlewareWithPreferences(request);
 
-      expect(response.status).not.toBe(403);
+      expect(response.status).toBe(403);
     });
 
     it("should still block non-share API routes without the bypass header", async () => {

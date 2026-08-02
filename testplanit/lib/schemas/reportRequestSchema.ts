@@ -47,6 +47,12 @@ export const reportRequestSchema = z
     // When the folder dimension is grouped, roll each result up into its
     // ancestor folders so a parent folder includes its whole subtree.
     folderIncludeDescendants: z.boolean().optional().default(false),
+    // Per-dimension value filters: dimension id -> selected value ids.
+    // Rows whose group key for that dimension is not in the list are
+    // dropped. Unknown dimension ids are ignored server-side.
+    dimensionFilters: z
+      .record(z.string(), z.array(z.union([z.string(), z.number()])))
+      .optional(),
   })
   .superRefine((data, ctx) => {
     // Rule: If endDate is provided, startDate must also be provided

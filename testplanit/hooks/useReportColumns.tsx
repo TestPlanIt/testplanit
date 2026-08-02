@@ -988,9 +988,15 @@ export function useReportColumns(
                 );
               }
 
-              // avgElapsedTime and totalElapsedTime metrics return values in milliseconds
+              // avgElapsedTime and totalElapsedTime metrics return values in seconds
+              const isSecondsFormat =
+                metricId === "avgElapsedTime" ||
+                metricId === "avgElapsed" ||
+                metricId === "totalElapsedTime" ||
+                metricId === "averageElapsed";
+
               const humanReadableDuration = toHumanReadable(timeValue, {
-                isSeconds: false,
+                isSeconds: isSecondsFormat,
                 locale: locale,
                 largest: 2,
                 round: true,

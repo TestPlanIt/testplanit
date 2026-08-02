@@ -1,5 +1,6 @@
 import { ApplicationArea } from "~/zenstack/models";
 import { getServerSession } from "next-auth";
+import { isValidReportBypass } from "~/lib/internalReportBypass";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
 
@@ -94,8 +95,9 @@ export async function POST(request: NextRequest) {
     // — the share link IS the read grant — and default sensitive-param
     // visibility to false so unauthenticated viewers can't see redacted
     // values. Mirrors `utils/reportApiUtils.ts`'s pattern.
-    const isSharedReportBypass =
-      request.headers.get("x-shared-report-bypass") === "true";
+    const isSharedReportBypass = isValidReportBypass(
+      request.headers.get("x-shared-report-bypass")
+    );
 
     const session = await getServerSession(authOptions);
     if (!session?.user && !isSharedReportBypass) {

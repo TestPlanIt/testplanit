@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { DrillDownContext } from "~/lib/types/reportDrillDown";
 import {
   buildIssuesQuery,
+  buildJunitElapsedQuery,
   buildMilestoneCompletionQuery,
   buildMilestonesQuery,
   buildRepositoryStatsQuery,
@@ -58,6 +59,17 @@ describe("drillDownQueryBuilders", () => {
       const result = buildTestExecutionQuery(context, 0, 10);
 
       expect(result.where?.statusId).toBe(2);
+    });
+
+    it("should filter the testCase dimension by repository case id", () => {
+      const context = createBaseContext({
+        dimensions: { testCase: { id: 108205, name: "SCORM export case" } },
+      });
+      const result = buildTestExecutionQuery(context, 0, 10);
+
+      expect(result.where?.testRunCase).toMatchObject({
+        repositoryCaseId: 108205,
+      });
     });
 
     it("should apply configuration dimension filter", () => {
@@ -168,6 +180,75 @@ describe("drillDownQueryBuilders", () => {
       expect(result.include?.executedBy).toBe(true);
       expect(result.include?.testRun).toBeDefined();
       expect(result.include?.testRunCase).toBeDefined();
+    });
+  });
+
+  describe("buildJunitElapsedQuery", () => {
+    it("should build basic query with project filter through the suite's run", () => {
+      const context = createBaseContext({ projectId: 5 });
+      const result = buildJunitElapsedQuery(context);
+
+      expect(result?.where).toMatchObject({
+        time: { gt: 0 },
+        testSuite: { testRun: { projectId: 5 } },
+      });
+      expect(result?.orderBy).toEqual({ executedAt: "desc" });
+    });
+
+    it("should map user dimension to createdById", () => {
+      const context = createBaseContext({
+        dimensions: { user: { id: "user-123", name: "Test User" } },
+      });
+      const result = buildJunitElapsedQuery(context);
+
+      expect(result?.where.createdById).toBe("user-123");
+    });
+
+    it("should apply status and date dimension filters", () => {
+      const context = createBaseContext({
+        dimensions: {
+          status: { id: 2, name: "Passed" },
+          date: { id: "2024-01-15", executedAt: "2024-01-15T00:00:00.000Z" },
+        },
+      });
+      const result = buildJunitElapsedQuery(context);
+
+      expect(result?.where.statusId).toBe(2);
+      expect(result?.where.executedAt.gte).toEqual(
+        new Date("2024-01-15T00:00:00.000Z")
+      );
+    });
+
+    it("should match the testCase dimension's repository case id directly", () => {
+      const context = createBaseContext({
+        dimensions: { testCase: { id: 42, name: "Login Test" } },
+      });
+      const result = buildJunitElapsedQuery(context);
+
+      expect(result?.where.repositoryCaseId).toBe(42);
+    });
+
+    it("should return null for a testCase dimension without an id", () => {
+      const context = createBaseContext({
+        dimensions: { testCase: { id: null as any, name: "None" } },
+      });
+
+      expect(buildJunitElapsedQuery(context)).toBeNull();
+    });
+
+    it("should apply folder and tag filters on the linked repository case", () => {
+      const context = createBaseContext({
+        dimensions: {
+          folder: { id: 7, name: "Smoke" },
+          tag: { id: 3, name: "regression" },
+        },
+      });
+      const result = buildJunitElapsedQuery(context);
+
+      expect(result?.where.repositoryCase).toEqual({
+        folderId: 7,
+        caseTags: { some: { tag: { id: 3 } } },
+      });
     });
   });
 

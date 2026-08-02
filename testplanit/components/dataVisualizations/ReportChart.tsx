@@ -567,8 +567,8 @@ export const ReportChart: React.FC<ReportChartProps> = ({
       if (value === 0) {
         return "-";
       }
-      // avgElapsedTime metric returns values in milliseconds
-      return toHumanReadable(value, { isSeconds: false, locale });
+      // Elapsed metrics return values in seconds
+      return toHumanReadable(value, { isSeconds: true, locale });
     }
     if (isPercentageMetric(metric)) {
       return `${value.toFixed(2)}%`;
@@ -582,12 +582,11 @@ export const ReportChart: React.FC<ReportChartProps> = ({
     case ChartType.Line: {
       const dimension = dimensions[0];
       const metric = chartMetrics[0];
-      const isElapsed = isElapsedTimeMetric(metric);
       const transformedData: SimpleChartDataPoint[] = results.map((row) => {
         const name = getDimensionValue(row, dimension);
-        const rawValue = getMetricValue(row, metric);
-        // Convert elapsed time from milliseconds to seconds for proper Y-axis scaling
-        const value = isElapsed ? rawValue / 1000 : rawValue;
+        // Elapsed metrics are already in seconds — plot as-is.
+        const value = getMetricValue(row, metric);
+        const rawValue = value;
         const color = getColor(row, dimension, issueColorFns);
         const formattedValue = formatMetricValue(rawValue, metric);
         // Keep the milestone name for the tooltip when its date is on the X axis.
@@ -641,16 +640,25 @@ export const ReportChart: React.FC<ReportChartProps> = ({
         );
       }
       if (chartType === ChartType.Bar) {
-        return <ReportBarChart data={transformedData} />;
+        return (
+          <ReportBarChart
+            data={transformedData}
+            durationTicks={isElapsedTimeMetric(metric)}
+          />
+        );
       }
       if (chartType === ChartType.Line) {
-        return <ReportLineChart data={transformedData} />;
+        return (
+          <ReportLineChart
+            data={transformedData}
+            durationTicks={isElapsedTimeMetric(metric)}
+          />
+        );
       }
       break;
     }
     case ChartType.Sunburst: {
       const metric = chartMetrics[0];
-      const isElapsed = isElapsedTimeMetric(metric);
 
       const root: SunburstHierarchyNode = {
         name: "root",
@@ -685,14 +693,10 @@ export const ReportChart: React.FC<ReportChartProps> = ({
           if (index < dimensions.length - 1) {
             currentLevelChildren = node.children!;
           } else {
-            // Leaf node
-            const rawValue = getMetricValue(row, metric);
-            // Convert elapsed time from milliseconds to seconds for proper scaling
-            const value = isElapsed ? rawValue / 1000 : rawValue;
+            // Leaf node — elapsed metrics are already in seconds
+            const value = getMetricValue(row, metric);
             node.value = (node.value || 0) + value;
-            // Use raw value for formatting to maintain milliseconds for humanize-duration
-            const totalRaw = isElapsed ? node.value * 1000 : node.value;
-            node.formattedValue = formatMetricValue(totalRaw, metric);
+            node.formattedValue = formatMetricValue(node.value, metric);
           }
         });
       });
@@ -716,7 +720,7 @@ export const ReportChart: React.FC<ReportChartProps> = ({
       return (
         <ReportSunburstChart
           data={root}
-          isTimeBased={isElapsed}
+          isTimeBased={isElapsedTimeMetric(metric)}
           totalValue={centerTotal}
           totalLabel={centerLabel}
         />
@@ -726,21 +730,19 @@ export const ReportChart: React.FC<ReportChartProps> = ({
       const mainDimension = dimensions[0];
       const subDimension = dimensions[1];
       const metric = chartMetrics[0];
-      const isElapsed = isElapsedTimeMetric(metric);
 
       const groupedData: GroupedChartDataPoint[] = results.map((row) => {
         const mainGroup = getDimensionValue(row, mainDimension);
         const subGroup = getDimensionValue(row, subDimension);
-        const rawValue = getMetricValue(row, metric);
-        // Convert elapsed time from milliseconds to seconds for proper Y-axis scaling
-        const value = isElapsed ? rawValue / 1000 : rawValue;
+        // Elapsed metrics are already in seconds — plot as-is.
+        const value = getMetricValue(row, metric);
         const color = getColor(row, subDimension, issueColorFns);
         return {
           mainGroup,
           subGroup,
           value,
           color,
-          formattedValue: formatMetricValue(rawValue, metric),
+          formattedValue: formatMetricValue(value, metric),
         };
       });
       return (
@@ -748,6 +750,7 @@ export const ReportChart: React.FC<ReportChartProps> = ({
           data={groupedData}
           dimensions={dimensions}
           metrics={chartMetrics}
+          durationTicks={isElapsedTimeMetric(metric)}
         />
       );
     }
@@ -805,11 +808,9 @@ export const ReportChart: React.FC<ReportChartProps> = ({
         const group = getDimensionValue(row, dimension);
         const color = getColor(row, dimension, issueColorFns);
         chartMetrics.forEach((metric) => {
-          const rawValue = getMetricValue(row, metric);
-          const isElapsed = isElapsedTimeMetric(metric);
-          // Convert elapsed time from milliseconds to seconds for proper Y-axis scaling
-          const value = isElapsed ? rawValue / 1000 : rawValue;
-          const formattedValue = formatMetricValue(rawValue, metric);
+          // Elapsed metrics are already in seconds — plot as-is.
+          const value = getMetricValue(row, metric);
+          const formattedValue = formatMetricValue(value, metric);
 
           transformedData.push({
             group,
@@ -845,10 +846,8 @@ export const ReportChart: React.FC<ReportChartProps> = ({
           const seriesName = otherDimensions
             .map((dim) => getDimensionValue(row, dim))
             .join(" - ");
-          const rawValue = getMetricValue(row, metric);
-          const isElapsed = isElapsedTimeMetric(metric);
-          // Convert elapsed time from milliseconds to seconds for proper Y-axis scaling
-          const value = isElapsed ? rawValue / 1000 : rawValue;
+          // Elapsed metrics are already in seconds — plot as-is.
+          const value = getMetricValue(row, metric);
 
           if (!seriesMap.has(seriesName)) {
             seriesMap.set(seriesName, { name: seriesName, values: [] });
@@ -856,16 +855,14 @@ export const ReportChart: React.FC<ReportChartProps> = ({
           seriesMap.get(seriesName)!.values.push({
             date,
             value,
-            formattedValue: formatMetricValue(rawValue, metric),
+            formattedValue: formatMetricValue(value, metric),
           });
         } else {
           // Group by metric name
           chartMetrics.forEach((metric) => {
             const seriesName = metric.label;
-            const rawValue = getMetricValue(row, metric);
-            const isElapsed = isElapsedTimeMetric(metric);
-            // Convert elapsed time from milliseconds to seconds for proper Y-axis scaling
-            const value = isElapsed ? rawValue / 1000 : rawValue;
+            // Elapsed metrics are already in seconds — plot as-is.
+            const value = getMetricValue(row, metric);
 
             if (!seriesMap.has(seriesName)) {
               seriesMap.set(seriesName, { name: seriesName, values: [] });
@@ -873,7 +870,7 @@ export const ReportChart: React.FC<ReportChartProps> = ({
             seriesMap.get(seriesName)!.values.push({
               date,
               value,
-              formattedValue: formatMetricValue(rawValue, metric),
+              formattedValue: formatMetricValue(value, metric),
             });
           });
         }
@@ -885,7 +882,14 @@ export const ReportChart: React.FC<ReportChartProps> = ({
       transformedData.forEach((series) =>
         series.values.sort((a, b) => a.date.getTime() - b.date.getTime())
       );
-      return <ReportMultiLineChart data={transformedData} />;
+      // The Y axis is shared across every plotted series, so duration ticks
+      // only apply when all plotted metrics are elapsed-time.
+      return (
+        <ReportMultiLineChart
+          data={transformedData}
+          durationTicks={chartMetrics.every(isElapsedTimeMetric)}
+        />
+      );
     }
     default:
       return null;

@@ -243,30 +243,34 @@ const TestCaseFormControls: React.FC<TestCaseFormControlsProps> = ({
               </li>
             )}
 
-            {testcase.forecastManual != null && testcase.forecastManual > 0 && (
+            {((testcase.forecastManual != null &&
+              testcase.forecastManual > 0) ||
+              (testcase.forecastAutomated != null &&
+                testcase.forecastAutomated > 0)) && (
               <li className="mb-2 me-6">
                 <div id="forecast-display" className="font-bold">
                   {t("common.fields.forecast")}
                 </div>
-                <div aria-labelledby="forecast-display">
-                  <ForecastDisplay seconds={testcase.forecastManual} />
-                </div>
+                {testcase.forecastManual != null &&
+                  testcase.forecastManual > 0 && (
+                    <div aria-labelledby="forecast-display">
+                      <ForecastDisplay seconds={testcase.forecastManual} />
+                    </div>
+                  )}
                 {testcase.forecastAutomated != null &&
                   testcase.forecastAutomated > 0 && (
-                    <>
-                      <div aria-labelledby="forecast-display">
-                        <ForecastDisplay
-                          seconds={testcase.forecastAutomated}
-                          round={false}
-                          type="automated"
-                        />
-                      </div>
-                      <Separator
-                        orientation="horizontal"
-                        className="mt-2 bg-primary/30"
+                    <div aria-labelledby="forecast-display">
+                      <ForecastDisplay
+                        seconds={testcase.forecastAutomated}
+                        round={false}
+                        type="automated"
                       />
-                    </>
+                    </div>
                   )}
+                <Separator
+                  orientation="horizontal"
+                  className="mt-2 bg-primary/30"
+                />
               </li>
             )}
 

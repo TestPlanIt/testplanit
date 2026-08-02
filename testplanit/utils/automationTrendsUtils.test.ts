@@ -9,6 +9,14 @@ vi.mock("@/lib/db", () => ({
 vi.mock("next-auth", () => ({ getServerSession: vi.fn() }));
 vi.mock("~/lib/api-token-auth", () => ({ authenticateRequest: vi.fn() }));
 vi.mock("~/server/auth", () => ({ authOptions: {} }));
+// These tests exercise the trends aggregation, not the auth gate — the gate
+// has its own unit tests in reportApiUtils.test.ts.
+vi.mock("~/utils/reportApiUtils", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("~/utils/reportApiUtils")>()),
+  authorizeReportRequest: vi
+    .fn()
+    .mockResolvedValue({ ok: true, bypass: false }),
+}));
 
 import type { NextRequest } from "next/server";
 

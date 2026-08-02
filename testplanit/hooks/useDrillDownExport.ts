@@ -90,7 +90,7 @@ export function useDrillDownExport({
             ? format(new Date(record.executedAt), "yyyy-MM-dd HH:mm:ss")
             : "",
           [t("common.fields.elapsed")]: record.elapsed
-            ? toHumanReadable(record.elapsed)
+            ? toHumanReadable(record.elapsed, { isSeconds: true })
             : "",
           [t("common.fields.configuration")]:
             record.testRun?.configuration?.name || "",
@@ -108,7 +108,7 @@ export function useDrillDownExport({
       ) {
         return records.map((record: any) => ({
           [t("common.fields.elapsed")]: record.elapsed
-            ? toHumanReadable(record.elapsed)
+            ? toHumanReadable(record.elapsed, { isSeconds: true })
             : "",
           [t("common.fields.testCases")]:
             record.testRunCase?.repositoryCase?.name || "",
@@ -124,7 +124,7 @@ export function useDrillDownExport({
       if (metricId === "sumElapsed" || metricId === "totalElapsedTime") {
         return records.map((record: any) => ({
           [t("common.fields.elapsed")]: record.elapsed
-            ? toHumanReadable(record.elapsed)
+            ? toHumanReadable(record.elapsed, { isSeconds: true })
             : "",
           [t("common.fields.testCases")]:
             record.testRunCase?.repositoryCase?.name || "",

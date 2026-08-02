@@ -3,7 +3,7 @@ import * as d3 from "d3";
 import { useLocale } from "next-intl";
 import React, { useEffect, useRef } from "react";
 import useResponsiveSVG from "~/hooks/useResponsiveSVG";
-import { localeTickFormat } from "~/utils/formatNumber";
+import { durationTickFormat, localeTickFormat } from "~/utils/formatNumber";
 
 export interface MultiLineSeries {
   name: string;
@@ -17,10 +17,13 @@ export interface MultiLineSeries {
 
 interface ReportMultiLineChartProps {
   data: MultiLineSeries[];
+  /** Format Y-axis ticks as durations (values are seconds). */
+  durationTicks?: boolean;
 }
 
 export const ReportMultiLineChart: React.FC<ReportMultiLineChartProps> = ({
   data,
+  durationTicks = false,
 }) => {
   const locale = useLocale();
   const svgRef = useRef<SVGSVGElement | null>(null);
@@ -108,7 +111,11 @@ export const ReportMultiLineChart: React.FC<ReportMultiLineChartProps> = ({
       .style("text-anchor", "end");
 
     g.append("g").call(
-      d3.axisLeft(yScale).tickFormat(localeTickFormat(locale))
+      d3
+        .axisLeft(yScale)
+        .tickFormat(
+          durationTicks ? durationTickFormat() : localeTickFormat(locale)
+        )
     );
 
     const line = d3
@@ -203,7 +210,7 @@ export const ReportMultiLineChart: React.FC<ReportMultiLineChartProps> = ({
       .style("opacity", 1);
 
     // Legend will be rendered in a separate HTML container below
-  }, [data, width, height, locale]);
+  }, [data, width, height, locale, durationTicks]);
 
   return (
     <div

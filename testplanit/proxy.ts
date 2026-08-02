@@ -221,10 +221,11 @@ export default async function middlewareWithPreferences(request: NextRequest) {
     }
 
     // Check if this is an external API request
-    // Share API routes and internal shared-report fetches are exempt
-    const isShareBypass =
-      pathname.startsWith("/api/share/") ||
-      request.headers.get("x-shared-report-bypass") === "true";
+    // Share API routes are exempt. (Internal shared-report fetches no longer
+    // need an exemption here: they carry no cookies, so they fall through the
+    // no-token branch above and are authorized by the report routes via the
+    // internal bypass token.)
+    const isShareBypass = pathname.startsWith("/api/share/");
     if (!isShareBypass && isExternalApiRequest(request)) {
       // For external API requests, user must have isApi enabled
       if (!token.isApi) {

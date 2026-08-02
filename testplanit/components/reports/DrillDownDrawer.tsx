@@ -160,14 +160,16 @@ export function DrillDownDrawer({
               <DrawerTitle className="text-2xl">
                 {context.metricLabel}
               </DrawerTitle>
+              {/* DrawerDescription renders a <p>, so children must be
+                  phrasing content (spans) to avoid a hydration error. */}
               <DrawerDescription className="mt-1 flex flex-col gap-1">
-                <div className="flex items-center">
+                <span className="flex items-center">
                   {dimensionSummary} <Dot className="h-4 w-4 shrink-0" />
                   {tReports("recordCount", { count: total })}
-                </div>
+                </span>
                 {aggregates?.statusCounts &&
                   aggregates.statusCounts.length > 0 && (
-                    <div className="flex items-center gap-3 text-sm">
+                    <span className="flex items-center gap-3 text-sm">
                       {aggregates.passRate !== undefined && (
                         <span className="font-medium">
                           {"Pass Rate: "}
@@ -178,7 +180,7 @@ export function DrillDownDrawer({
                       <span className="text-muted-foreground">
                         <Dot className="h-4 w-4" />
                       </span>
-                      <div className="flex items-center gap-6 flex-wrap">
+                      <span className="flex items-center gap-6 flex-wrap">
                         {aggregates.statusCounts.map((sc) => (
                           <span
                             key={sc.statusId}
@@ -198,8 +200,8 @@ export function DrillDownDrawer({
                             </span>
                           </span>
                         ))}
-                      </div>
-                    </div>
+                      </span>
+                    </span>
                   )}
               </DrawerDescription>
             </div>

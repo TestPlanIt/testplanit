@@ -6,16 +6,118 @@
 import { baseDb } from "@/lib/db";
 import { getServerSession } from "next-auth";
 import { NextRequest } from "next/server";
+import { getEnhancedDb } from "~/lib/auth/utils";
 import type {
   DrillDownRequest,
   DrillDownResponse,
 } from "~/lib/types/reportDrillDown";
 import { authOptions } from "~/server/auth";
 import {
+  buildJunitElapsedQuery,
+  buildTestExecutionQuery,
   getModelForMetric,
   getQueryBuilderForMetric,
 } from "~/utils/drillDownQueryBuilders";
 import { getFolderSubtreeIds } from "~/utils/reportGrouping";
+
+/**
+ * Elapsed metrics on the test-execution report read durations from BOTH
+ * sources — manual results (TestRunResults.elapsed) and automated results
+ * (JUnitTestResult.time) — so their drill-down must list both.
+ */
+const ELAPSED_TEST_EXECUTION_METRICS = new Set([
+  "avgElapsed",
+  "avgElapsedTime",
+  "sumElapsed",
+  "totalElapsedTime",
+]);
+
+function isElapsedTestExecutionDrillDown(context: {
+  metricId: string;
+  reportType: string;
+}) {
+  const baseReportType = context.reportType.replace(/^cross-project-/, "");
+  return (
+    baseReportType === "test-execution" &&
+    ELAPSED_TEST_EXECUTION_METRICS.has(context.metricId)
+  );
+}
+
+/**
+ * Combined manual + JUnit drill-down for elapsed metric cells. The two
+ * sources are paged as one sequential list (all manual rows, then all JUnit
+ * rows), each ordered by executedAt desc within its source.
+ */
+async function handleElapsedDrillDown(
+  context: DrillDownRequest["context"],
+  offset: number,
+  limit: number
+) {
+  const manualQuery = buildTestExecutionQuery(context, offset, limit);
+  // Only duration-bearing rows feed the elapsed metrics.
+  manualQuery.where = { ...manualQuery.where, elapsed: { not: null } };
+
+  const junitQuery = buildJunitElapsedQuery(context);
+
+  const [manualTotal, junitTotal] = await Promise.all([
+    baseDb.testRunResults.count({ where: manualQuery.where }),
+    junitQuery
+      ? baseDb.jUnitTestResult.count({ where: junitQuery.where })
+      : Promise.resolve(0),
+  ]);
+
+  const data: any[] = [];
+  if (offset < manualTotal) {
+    const manualRows = await baseDb.testRunResults.findMany({
+      ...manualQuery,
+      skip: offset,
+      take: limit,
+    });
+    data.push(
+      ...manualRows.map((record: any) => ({
+        ...record,
+        name: record.testRunCase?.repositoryCase?.name || "Unknown Test Case",
+      }))
+    );
+  }
+
+  const remaining = limit - data.length;
+  if (junitQuery && remaining > 0) {
+    const junitRows = await baseDb.jUnitTestResult.findMany({
+      ...junitQuery,
+      skip: Math.max(0, offset - manualTotal),
+      take: remaining,
+    });
+    data.push(
+      ...junitRows.map((record: any) => ({
+        // Manual and JUnit ids can collide numerically; prefix for row keys.
+        id: `junit-${record.id}`,
+        name: record.repositoryCase?.name || "Unknown Test Case",
+        elapsed: record.time,
+        executedAt: record.executedAt,
+        executedById: record.createdById,
+        executedBy: record.createdBy,
+        statusId: record.statusId,
+        status: record.status,
+        testRunId: record.testSuite?.testRun?.id,
+        testRun: record.testSuite?.testRun,
+        testRunCase: {
+          id: null,
+          repositoryCase: record.repositoryCase,
+        },
+      }))
+    );
+  }
+
+  const total = manualTotal + junitTotal;
+  const response: DrillDownResponse = {
+    data,
+    total,
+    hasMore: offset + data.length < total,
+    context,
+  };
+  return Response.json(response);
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -45,6 +147,25 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Project-scoped drill-downs require read access to the project — the
+    // queries below run on the policy-free client with a client-supplied
+    // projectId, so the gate lives here (checked through the enhanced
+    // client so it follows the app's access rules).
+    if (
+      context.mode !== "cross-project" &&
+      context.projectId &&
+      session.user.access !== "ADMIN"
+    ) {
+      const enhanced = await getEnhancedDb(session);
+      const project = await enhanced.projects.findFirst({
+        where: { id: Number(context.projectId) },
+        select: { id: true },
+      });
+      if (!project) {
+        return Response.json({ error: "Forbidden" }, { status: 403 });
+      }
+    }
+
     // When the folder dimension was rolled up (descendants included), resolve
     // the clicked folder's subtree so the drill-down matches the shown count.
     const folderDimension = context.dimensions?.folder;
@@ -57,6 +178,12 @@ export async function POST(req: NextRequest) {
         baseDb,
         Number(folderDimension.id)
       );
+    }
+
+    // Elapsed metric cells combine manual and automated durations, so their
+    // drill-down reads both tables.
+    if (isElapsedTestExecutionDrillDown(context)) {
+      return await handleElapsedDrillDown(context, offset, limit);
     }
 
     // Get the appropriate query builder for this metric

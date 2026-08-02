@@ -1,6 +1,7 @@
 import { baseDb } from "@/lib/db";
 import { buildDateFilter } from "@/utils/reportUtils";
 import { NextRequest } from "next/server";
+import { authorizeReportRequest } from "~/utils/reportApiUtils";
 
 // Note: Session analysis uses custom session-specific logic
 // This handles unique session dimensions like assignedTo, template, state, etc.
@@ -720,6 +721,12 @@ export async function GET(req: NextRequest) {
     const url = new URL(req.url);
     const projectId = url.searchParams.get("projectId");
 
+    const authz = await authorizeReportRequest(req, {
+      requiresAdmin: false,
+      projectId: projectId ? Number(projectId) : undefined,
+    });
+    if (!authz.ok) return authz.response;
+
     if (!projectId) {
       return Response.json(
         { error: "Project ID is required" },
@@ -751,6 +758,12 @@ export async function POST(req: NextRequest) {
   try {
     const { projectId, dimensions, metrics, startDate, endDate } =
       await req.json();
+
+    const authz = await authorizeReportRequest(req, {
+      requiresAdmin: false,
+      projectId: projectId ? Number(projectId) : undefined,
+    });
+    if (!authz.ok) return authz.response;
 
     if (!projectId) {
       return Response.json(

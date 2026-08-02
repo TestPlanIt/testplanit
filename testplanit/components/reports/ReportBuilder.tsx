@@ -3,6 +3,7 @@ import { DraggableList } from "@/components/DraggableCaseFields";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { HelpPopover } from "@/components/ui/help-popover";
+import { MultiAsyncCombobox } from "@/components/ui/multi-async-combobox";
 import {
   ResizableHandle,
   ResizablePanel,
@@ -312,6 +313,13 @@ function ReportBuilderContent({
   // folders so a parent folder includes its whole subtree.
   const [folderIncludeDescendants, setFolderIncludeDescendants] =
     useState(false);
+  // Per-dimension value filters: dimension id -> selected value objects
+  // ({ id, name, ... } from the dimension-values lookup). Empty/missing
+  // means "all values" for that dimension. The date dimension is excluded
+  // (the date-range picker already covers it).
+  const [dimensionValueFilters, setDimensionValueFilters] = useState<
+    Record<string, any[]>
+  >({});
   const [lastUsedDateRange, setLastUsedDateRange] = useState<
     DateRange | undefined
   >(undefined);
@@ -799,6 +807,38 @@ function ReportBuilderContent({
   // Get the current report configuration
   const currentReport = reportTypes.find((r) => r.id === reportType);
 
+  // One stable option-fetcher per selected dimension for the value-filter
+  // pickers. Stability matters: MultiAsyncCombobox refetches whenever its
+  // fetchOptions identity changes, so these are memoized per dimension.
+  const currentReportEndpoint = currentReport?.endpoint;
+  const dimensionFilterFetchers = useMemo(() => {
+    const fetchers: Record<
+      string,
+      (
+        query: string,
+        page: number,
+        pageSize: number
+      ) => Promise<{ results: any[]; total: number }>
+    > = {};
+    if (!currentReportEndpoint) return fetchers;
+    dimensions.forEach((dimension: any) => {
+      fetchers[dimension.value] = async (query, page, pageSize) => {
+        const url = new URL(currentReportEndpoint, window.location.origin);
+        if (mode === "project" && projectId) {
+          url.searchParams.set("projectId", projectId.toString());
+        }
+        url.searchParams.set("dimensionId", dimension.value);
+        if (query) url.searchParams.set("search", query);
+        url.searchParams.set("page", String(page));
+        url.searchParams.set("pageSize", String(pageSize));
+        const response = await fetch(url.toString());
+        if (!response.ok) return { results: [], total: 0 };
+        return (await response.json()) as { results: any[]; total: number };
+      };
+    });
+    return fetchers;
+  }, [currentReportEndpoint, dimensions, mode, projectId]);
+
   // Set isClient to true when component mounts (for SSR)
   useEffect(() => {
     setIsClient(true);
@@ -937,6 +977,8 @@ function ReportBuilderContent({
     // Clear stale results so old-typed rows don't render with new-typed columns
     setResults(null);
     setAllResults(null);
+    // Dimension value filters are report-specific
+    setDimensionValueFilters({});
 
     // Determine which tab this report belongs to
     const isPreBuilt = preBuiltReports.some((r) => r.id === safeReportType);
@@ -1104,6 +1146,70 @@ function ReportBuilderContent({
           form.setValue("dateRange", dateRange);
         }
 
+        // Load dimension value filters from URL if present. Stored as JSON
+        // ids only ({ dimId: [id, ...] }); the picker labels are resolved
+        // through the dimension-values lookup. Only replace state when the
+        // content actually differs — this effect re-runs on every
+        // searchParams change, and a fresh-but-equal object would retrigger
+        // the filter-change re-run.
+        const dimensionFiltersParam = searchParams.get("dimensionFilters");
+        if (dimensionFiltersParam) {
+          try {
+            const parsed = JSON.parse(dimensionFiltersParam);
+            const restored: Record<string, any[]> = {};
+            if (
+              parsed &&
+              typeof parsed === "object" &&
+              !Array.isArray(parsed)
+            ) {
+              for (const [dimId, values] of Object.entries(parsed)) {
+                if (!Array.isArray(values) || values.length === 0) continue;
+                const ids = values
+                  .map((v: any) =>
+                    typeof v === "object" && v !== null ? v.id : v
+                  )
+                  .filter((id: any) => id != null && id !== "");
+                if (ids.length === 0) continue;
+                // Resolve display labels for the picker badges
+                const lookupUrl = new URL(
+                  currentReport.endpoint,
+                  window.location.origin
+                );
+                if (mode === "project" && projectId) {
+                  lookupUrl.searchParams.set("projectId", projectId.toString());
+                }
+                lookupUrl.searchParams.set("dimensionId", dimId);
+                lookupUrl.searchParams.set("ids", ids.join(","));
+                lookupUrl.searchParams.set("pageSize", String(ids.length));
+                let byId = new Map<string, any>();
+                try {
+                  const lookupResponse = await fetch(lookupUrl.toString());
+                  if (lookupResponse.ok) {
+                    const lookup = await lookupResponse.json();
+                    byId = new Map(
+                      (lookup.results ?? []).map((r: any) => [String(r.id), r])
+                    );
+                  }
+                } catch {
+                  // Label lookup failed — fall back to id-as-name below
+                }
+                restored[dimId] = ids.map(
+                  (id: any) => byId.get(String(id)) ?? { id, name: String(id) }
+                );
+              }
+            }
+            if (Object.keys(restored).length > 0) {
+              setDimensionValueFilters((prev) =>
+                JSON.stringify(prev) === JSON.stringify(restored)
+                  ? prev
+                  : restored
+              );
+            }
+          } catch {
+            // Malformed param — ignore and leave filters as they are
+          }
+        }
+
         if (dimensionsParam) {
           const dimIds = dimensionsParam.split(",");
           // Preserve order from URL by mapping instead of filtering
@@ -1262,6 +1368,21 @@ function ReportBuilderContent({
         // folder can include its descendants.
         if (selectedDimensions.some((d) => d.value === "folder")) {
           body.folderIncludeDescendants = folderIncludeDescendants;
+        }
+
+        // Per-dimension value filters (only for dimensions still selected;
+        // empty selections mean "all values" and are omitted).
+        const activeDimensionFilters: Record<
+          string,
+          Array<string | number>
+        > = {};
+        Object.entries(dimensionValueFilters).forEach(([dimId, values]) => {
+          if (!values || values.length === 0) return;
+          if (!selectedDimensions.some((d) => d.value === dimId)) return;
+          activeDimensionFilters[dimId] = values.map((v: any) => v.id);
+        });
+        if (Object.keys(activeDimensionFilters).length > 0) {
+          body.dimensionFilters = activeDimensionFilters;
         }
 
         // For automation trends, add selected filter values and date grouping
@@ -1537,6 +1658,20 @@ function ReportBuilderContent({
           setTotalCount(data.total || data.totalCount || fullData.length);
         }
 
+        // Store the request body for sharing on every successful fetch —
+        // auto-runs (URL load, tab switch, filter re-run) must produce a
+        // shareable config too. Exclude paging/sorting: shares show all data.
+        {
+          const {
+            page: _page,
+            pageSize: _pageSize,
+            sortColumn: _sortColumn,
+            sortDirection: _sortDirection,
+            ...shareableBody
+          } = body;
+          setLastRequestBody(shareableBody);
+        }
+
         // Only update these when running a new report (not just sorting/paginating)
         if (updateUrl) {
           setLastUsedDimensions(selectedDimensions);
@@ -1554,16 +1689,6 @@ function ReportBuilderContent({
           }
           // Record when the report was generated
           setReportGeneratedAt(new Date());
-
-          // Store the request body for sharing (exclude page/pageSize as shares should show all data)
-          const {
-            page,
-            pageSize,
-            sortColumn,
-            sortDirection,
-            ...shareableBody
-          } = body;
-          setLastRequestBody(shareableBody);
 
           // Only persist selections to the URL on an explicit run (the Run
           // Report button). Auto-runs / sort / filter re-runs must NOT write the
@@ -1603,6 +1728,27 @@ function ReportBuilderContent({
               newParams.delete("endDate");
             }
 
+            // Persist dimension value filters as ids only (names are
+            // display-only and resolved on load via the values lookup) or
+            // drop the param when none.
+            const urlDimensionFilters: Record<
+              string,
+              Array<string | number>
+            > = {};
+            Object.entries(dimensionValueFilters).forEach(([dimId, values]) => {
+              if (!values || values.length === 0) return;
+              if (!selectedDimensions.some((d) => d.value === dimId)) return;
+              urlDimensionFilters[dimId] = values.map((v: any) => v.id);
+            });
+            if (Object.keys(urlDimensionFilters).length > 0) {
+              newParams.set(
+                "dimensionFilters",
+                JSON.stringify(urlDimensionFilters)
+              );
+            } else {
+              newParams.delete("dimensionFilters");
+            }
+
             router.replace(`${pathname}?${newParams.toString()}`);
           }
         }
@@ -1626,6 +1772,7 @@ function ReportBuilderContent({
       dateGrouping,
       selectedFilterValues,
       folderIncludeDescendants,
+      dimensionValueFilters,
       consecutiveRuns,
       flipThreshold,
       flakyAutomatedFilter,
@@ -1855,6 +2002,20 @@ function ReportBuilderContent({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedFilterValues, dateGrouping]);
 
+  // Re-run custom reports when dimension value filters change, once a report
+  // has been run (mirrors the automation-trends filter behavior above).
+  useEffect(() => {
+    if (
+      !isPreBuiltReport(reportType) &&
+      lastUsedDimensions.length > 0 &&
+      lastUsedMetrics.length > 0 &&
+      results
+    ) {
+      void runReport(lastUsedDimensions, lastUsedMetrics);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dimensionValueFilters]);
+
   // Filter options based on selections
   useEffect(() => {
     // For now, no compatibility rules - just use all options
@@ -1862,6 +2023,20 @@ function ReportBuilderContent({
     setFilteredMetricOptions(metricOptions);
     setCompatWarning(null);
   }, [dimensionOptions, metricOptions]);
+
+  // Drop value filters for dimensions that are no longer selected (covers
+  // both the multi-select and the draggable list's remove button).
+  useEffect(() => {
+    setDimensionValueFilters((prev) => {
+      const staleKeys = Object.keys(prev).filter(
+        (dimId) => !dimensions.some((d: any) => d.value === dimId)
+      );
+      if (staleKeys.length === 0) return prev;
+      const next = { ...prev };
+      staleKeys.forEach((key) => delete next[key]);
+      return next;
+    });
+  }, [dimensions]);
 
   // Automatically add "project" as first dimension for cross-project flaky tests
   useEffect(() => {
@@ -2848,6 +3023,61 @@ function ReportBuilderContent({
                           </span>
                         </label>
                       )}
+
+                      {/* Per-dimension value filters. The date dimension is
+                          covered by the date-range picker above. */}
+                      {!isPreBuiltReport(reportType) &&
+                        dimensions.some((d) => d.value !== "date") && (
+                          <div className="grid gap-2">
+                            <div className="flex items-center gap-2">
+                              <label className="text-sm font-medium">
+                                {tCommon("ui.search.filters")}
+                              </label>
+                              <HelpPopover helpKey="reportBuilder.dimensionFilters" />
+                            </div>
+                            {dimensions
+                              .filter((d: any) => d.value !== "date")
+                              .map((dimension: any) => (
+                                <div
+                                  key={dimension.value}
+                                  className="grid gap-1"
+                                >
+                                  <label className="text-xs text-muted-foreground">
+                                    {dimension.label}
+                                  </label>
+                                  <MultiAsyncCombobox
+                                    value={
+                                      dimensionValueFilters[dimension.value] ??
+                                      []
+                                    }
+                                    onValueChange={(values) =>
+                                      setDimensionValueFilters((prev) => ({
+                                        ...prev,
+                                        [dimension.value]: values,
+                                      }))
+                                    }
+                                    fetchOptions={
+                                      dimensionFilterFetchers[dimension.value]
+                                    }
+                                    renderOption={(option: any) => (
+                                      <span className="truncate">
+                                        {option.name}
+                                      </span>
+                                    )}
+                                    getOptionValue={(option: any) => option.id}
+                                    getOptionLabel={(option: any) =>
+                                      String(option.name ?? option.id)
+                                    }
+                                    placeholder={tReports(
+                                      "dimensionFilters.allValues"
+                                    )}
+                                    pageSize={25}
+                                    className="min-h-9"
+                                  />
+                                </div>
+                              ))}
+                          </div>
+                        )}
 
                       {/* Priority Filter for Automation Trends */}
                       {matchesReportType(reportType, "automation-trends") &&

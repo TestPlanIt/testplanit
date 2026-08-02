@@ -10,6 +10,7 @@
  */
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { internalReportBypassToken } from "~/lib/internalReportBypass";
 
 vi.mock("next-auth", () => ({ getServerSession: vi.fn() }));
 vi.mock("~/server/auth", () => ({ authOptions: {} }));
@@ -180,7 +181,10 @@ describe("POST /api/reports/automation-candidates (shared-report bypass)", () =>
       generatedBy: { id: "u1", name: "Alice", email: "a@example.com" },
     });
     const res = await POST(
-      reqWithBody({ projectId: 7 }, { "x-shared-report-bypass": "true" })
+      reqWithBody(
+        { projectId: 7 },
+        { "x-shared-report-bypass": internalReportBypassToken() }
+      )
     );
     expect(res.status).toBe(200);
     const body = await res.json();
@@ -191,7 +195,10 @@ describe("POST /api/reports/automation-candidates (shared-report bypass)", () =>
     vi.mocked(getServerSession).mockResolvedValue(null);
     findSnapshot.mockResolvedValue(null);
     const res = await POST(
-      reqWithBody({ projectId: 7 }, { "x-shared-report-bypass": "true" })
+      reqWithBody(
+        { projectId: 7 },
+        { "x-shared-report-bypass": internalReportBypassToken() }
+      )
     );
     expect(res.status).toBe(200);
     const body = await res.json();
@@ -201,7 +208,10 @@ describe("POST /api/reports/automation-candidates (shared-report bypass)", () =>
   it("400s when bypass is set but the body has no projectId (defends against config drift)", async () => {
     vi.mocked(getServerSession).mockResolvedValue(null);
     const res = await POST(
-      reqWithBody({ somethingElse: 1 }, { "x-shared-report-bypass": "true" })
+      reqWithBody(
+        { somethingElse: 1 },
+        { "x-shared-report-bypass": internalReportBypassToken() }
+      )
     );
     expect(res.status).toBe(400);
     expect(findSnapshot).not.toHaveBeenCalled();
@@ -211,7 +221,10 @@ describe("POST /api/reports/automation-candidates (shared-report bypass)", () =>
     vi.mocked(getServerSession).mockResolvedValue(null);
     findSnapshot.mockResolvedValue(null);
     await POST(
-      reqWithBody({ projectId: 7 }, { "x-shared-report-bypass": "true" })
+      reqWithBody(
+        { projectId: 7 },
+        { "x-shared-report-bypass": internalReportBypassToken() }
+      )
     );
     const args = findSnapshot.mock.calls[0]![0];
     expect(args.where).toMatchObject({
@@ -235,7 +248,7 @@ describe("POST /api/reports/automation-candidates (shared-report bypass)", () =>
     const res = await POST(
       reqWithBody(
         { projectId: 7, snapshotId: 42 },
-        { "x-shared-report-bypass": "true" }
+        { "x-shared-report-bypass": internalReportBypassToken() }
       )
     );
     expect(res.status).toBe(200);
@@ -259,7 +272,7 @@ describe("POST /api/reports/automation-candidates (shared-report bypass)", () =>
     const res = await POST(
       reqWithBody(
         { projectId: 7, snapshotId: 9999 },
-        { "x-shared-report-bypass": "true" }
+        { "x-shared-report-bypass": internalReportBypassToken() }
       )
     );
     expect(res.status).toBe(200);

@@ -96,6 +96,11 @@ export function ShareContent({
                   ? config.metrics.join(",")
                   : config.metrics
               );
+            if (config.dimensionFilters)
+              params.set(
+                "dimensionFilters",
+                JSON.stringify(config.dimensionFilters)
+              );
             if (config.page) params.set("page", config.page.toString());
             if (config.pageSize)
               params.set("pageSize", config.pageSize.toString());
@@ -207,6 +212,11 @@ export function ShareContent({
               Array.isArray(config.metrics)
                 ? config.metrics.join(",")
                 : config.metrics
+            );
+          if (config.dimensionFilters)
+            params.set(
+              "dimensionFilters",
+              JSON.stringify(config.dimensionFilters)
             );
           if (config.page) params.set("page", config.page.toString());
           if (config.pageSize)
@@ -340,6 +350,8 @@ export function ShareContent({
             ? config.metrics.join(",")
             : config.metrics
         );
+      if (config.dimensionFilters)
+        params.set("dimensionFilters", JSON.stringify(config.dimensionFilters));
       if (config.page) params.set("page", config.page.toString());
       if (config.pageSize) params.set("pageSize", config.pageSize.toString());
 

@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server";
+import { internalReportBypassToken } from "~/lib/internalReportBypass";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("next-auth/next", () => ({
@@ -413,7 +414,7 @@ describe("GET /api/share/[shareKey]/report", () => {
         expect.any(String),
         expect.objectContaining({
           headers: expect.objectContaining({
-            "x-shared-report-bypass": "true",
+            "x-shared-report-bypass": internalReportBypassToken(),
           }),
         })
       );

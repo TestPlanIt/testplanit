@@ -434,7 +434,7 @@ export function useDrillDownColumns({
           cell: (info) => {
             const value = info.getValue();
             if (value === null || value === undefined) return <span>-</span>;
-            return <span>{toHumanReadable(value)}</span>;
+            return <span>{toHumanReadable(value, { isSeconds: true })}</span>;
           },
           enableSorting: false,
           size: 120,
@@ -473,7 +473,7 @@ export function useDrillDownColumns({
           cell: (info) => {
             const value = info.getValue();
             if (value === null || value === undefined) return <span>-</span>;
-            return <span>{toHumanReadable(value)}</span>;
+            return <span>{toHumanReadable(value, { isSeconds: true })}</span>;
           },
           enableSorting: false,
           size: 150,
@@ -577,7 +577,7 @@ export function useDrillDownColumns({
           cell: (info) => {
             const value = info.getValue();
             if (value === null || value === undefined) return <span>-</span>;
-            return <span>{toHumanReadable(value)}</span>;
+            return <span>{toHumanReadable(value, { isSeconds: true })}</span>;
           },
           enableSorting: false,
           size: 150,

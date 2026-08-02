@@ -1,6 +1,7 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   buildDateFilter,
+  createTestExecutionMetricRegistry,
   dimensionToDraggableField,
   draggableFieldToDimension,
   getReportSummary,
@@ -315,6 +316,168 @@ describe("reportUtils", () => {
       const ltDate = result.executedAt.lt as Date;
       // Should be Jan 21, not Jan 20
       expect(ltDate.getUTCDate()).toBe(21);
+    });
+  });
+
+  // The elapsed metrics read durations from BOTH sources: manual results
+  // (TestRunResults.elapsed) and automated results (JUnitTestResult.time).
+  describe("elapsed metrics combine manual and JUnit durations", () => {
+    const DAY1 = new Date("2026-07-01T10:00:00.000Z");
+    const DAY2 = new Date("2026-07-02T10:00:00.000Z");
+
+    function makeDb({
+      manualRows = [] as any[],
+      junitRows = [] as any[],
+      manualSum = 0,
+      manualCount = 0,
+      junitSum = 0,
+      junitCount = 0,
+    } = {}) {
+      return {
+        testRunResults: {
+          findMany: vi.fn().mockResolvedValue(manualRows),
+          aggregate: vi
+            .fn()
+            .mockResolvedValue({ _sum: { elapsed: manualSum } }),
+          count: vi.fn().mockResolvedValue(manualCount),
+        },
+        jUnitTestResult: {
+          findMany: vi.fn().mockResolvedValue(junitRows),
+          aggregate: vi.fn().mockResolvedValue({ _sum: { time: junitSum } }),
+          count: vi.fn().mockResolvedValue(junitCount),
+        },
+      };
+    }
+
+    function manualRow(
+      elapsed: number,
+      executedAt: Date,
+      { testRunCaseId = 11, repositoryCaseId = 7 } = {}
+    ) {
+      return {
+        executedAt,
+        executedById: "user-1",
+        statusId: 1,
+        elapsed,
+        testRunId: 100,
+        testRunCaseId,
+        testRunCase: { repositoryCaseId },
+        testRun: { projectId: 370, configId: null, milestoneId: null },
+      };
+    }
+
+    function junitRow(
+      time: number,
+      executedAt: Date,
+      { testRunId = 200, repositoryCaseId = 42 } = {}
+    ) {
+      return {
+        executedAt,
+        createdById: "user-2",
+        statusId: 2,
+        time,
+        repositoryCaseId,
+        testSuite: {
+          testRunId,
+          testRun: { projectId: 370, configId: null, milestoneId: null },
+        },
+      };
+    }
+
+    const registry = createTestExecutionMetricRegistry(true);
+
+    it("avgElapsedTime averages both sources together per day", async () => {
+      const db = makeDb({
+        manualRows: [manualRow(10, DAY1), manualRow(20, DAY1)],
+        junitRows: [junitRow(60, DAY1), junitRow(30, DAY2)],
+      });
+
+      const rows = await registry.avgElapsedTime.aggregate(
+        db,
+        370,
+        ["executedAt"],
+        {}
+      );
+
+      const day1 = rows.find(
+        (r: any) => new Date(r.executedAt).getUTCDate() === 1
+      );
+      const day2 = rows.find(
+        (r: any) => new Date(r.executedAt).getUTCDate() === 2
+      );
+      expect(day1?.avgElapsedTime).toBe(30); // (10 + 20 + 60) / 3
+      expect(day2?.avgElapsedTime).toBe(30); // 30 / 1
+    });
+
+    it("avgElapsedTime groups both sources by repository case, including run-less JUnit results", async () => {
+      const db = makeDb({
+        manualRows: [manualRow(10, DAY1, { repositoryCaseId: 7 })],
+        junitRows: [
+          // Same repository case across two different runs -> one group
+          junitRow(50, DAY1, { testRunId: 200, repositoryCaseId: 42 }),
+          junitRow(70, DAY1, { testRunId: 201, repositoryCaseId: 42 }),
+          // A case never added to any run's case list (no TestRunCases row)
+          junitRow(30, DAY1, { testRunId: 202, repositoryCaseId: 108205 }),
+        ],
+      });
+
+      const rows = await registry.avgElapsedTime.aggregate(
+        db,
+        370,
+        ["repositoryCaseId"],
+        {}
+      );
+
+      const manualCase = rows.find((r: any) => r.repositoryCaseId === 7);
+      const junitCase = rows.find((r: any) => r.repositoryCaseId === 42);
+      const runlessCase = rows.find((r: any) => r.repositoryCaseId === 108205);
+      expect(manualCase?.avgElapsedTime).toBe(10);
+      expect(junitCase?.avgElapsedTime).toBe(60); // (50 + 70) / 2
+      expect(runlessCase?.avgElapsedTime).toBe(30);
+    });
+
+    it("avgElapsedTime combines both sources in the no-dimension totals path", async () => {
+      const db = makeDb({
+        manualSum: 100,
+        manualCount: 2,
+        junitSum: 200,
+        junitCount: 3,
+      });
+
+      const rows = await registry.avgElapsedTime.aggregate(db, 370, [], {});
+
+      expect(rows).toEqual([{ avgElapsedTime: 60 }]); // 300 / 5
+    });
+
+    it("totalElapsedTime sums both sources together per day", async () => {
+      const db = makeDb({
+        manualRows: [manualRow(10, DAY1)],
+        junitRows: [junitRow(60, DAY1), junitRow(30, DAY2)],
+      });
+
+      const rows = await registry.totalElapsedTime.aggregate(
+        db,
+        370,
+        ["executedAt"],
+        {}
+      );
+
+      const day1 = rows.find(
+        (r: any) => new Date(r.executedAt).getUTCDate() === 1
+      );
+      const day2 = rows.find(
+        (r: any) => new Date(r.executedAt).getUTCDate() === 2
+      );
+      expect(day1?.totalElapsedTime).toBe(70);
+      expect(day2?.totalElapsedTime).toBe(30);
+    });
+
+    it("totalElapsedTime combines both sources in the no-dimension totals path", async () => {
+      const db = makeDb({ manualSum: 100, junitSum: 200 });
+
+      const rows = await registry.totalElapsedTime.aggregate(db, 370, [], {});
+
+      expect(rows).toEqual([{ totalElapsedTime: 300 }]);
     });
   });
 });

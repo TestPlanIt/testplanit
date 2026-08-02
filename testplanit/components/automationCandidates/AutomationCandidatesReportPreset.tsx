@@ -37,6 +37,7 @@ import { usePathname, useRouter } from "~/lib/navigation";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 
 import {
+  dedupeCandidatesByCaseId,
   extractCandidatesFromBuffer,
   extractSummaryFromBuffer,
   type PartialCandidate,
@@ -485,11 +486,18 @@ export function AutomationCandidatesReportPreset({
 
   // --- Derived render data --------------------------------------------
 
-  const renderedCandidates = generating
-    ? liveCandidates
-    : selectedSnapshot?.status === "complete" && selectedSnapshot.output != null
-      ? (selectedSnapshot.output as unknown as SnapshotOutput).candidates
-      : [];
+  // Dedupe on render (not just at snapshot-write time) so live streams and
+  // snapshots persisted with a repeated caseId still render one row per case
+  // — RankedList keys rows by caseId.
+  const renderedCandidates = useMemo(() => {
+    const candidates = generating
+      ? liveCandidates
+      : selectedSnapshot?.status === "complete" &&
+          selectedSnapshot.output != null
+        ? (selectedSnapshot.output as unknown as SnapshotOutput).candidates
+        : [];
+    return dedupeCandidatesByCaseId(candidates);
+  }, [generating, liveCandidates, selectedSnapshot]);
 
   const renderedSummary = generating
     ? liveSummary

@@ -1,7 +1,5 @@
-import { getServerSession } from "next-auth";
 import { NextRequest } from "next/server";
-import { authenticateRequest } from "~/lib/api-token-auth";
-import { authOptions } from "~/server/auth";
+import { authorizeReportRequest } from "~/utils/reportApiUtils";
 import {
   queryLatestTestResults,
   type RawExecutionResult,
@@ -89,19 +87,13 @@ export async function handleFlakyTestsPOST(
   isCrossProject: boolean
 ) {
   try {
-    // Check admin access for cross-project
-    if (isCrossProject) {
-      const session = await getServerSession(authOptions);
-      const auth = await authenticateRequest(req, session);
-      if (!auth.authenticated) {
-        return Response.json({ error: auth.error }, { status: auth.status });
-      }
-      if (auth.user.access !== "ADMIN") {
-        return Response.json({ error: "Unauthorized" }, { status: 401 });
-      }
-    }
-
     const body = await req.json();
+
+    const authz = await authorizeReportRequest(req, {
+      requiresAdmin: isCrossProject,
+      projectId: body?.projectId ? Number(body.projectId) : undefined,
+    });
+    if (!authz.ok) return authz.response;
     const {
       projectId,
       consecutiveRuns = 10,

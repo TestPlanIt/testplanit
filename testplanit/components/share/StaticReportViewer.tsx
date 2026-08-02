@@ -64,6 +64,8 @@ export function StaticReportViewer({
           ? config.metrics.join(",")
           : config.metrics
       );
+    if (config.dimensionFilters)
+      params.set("dimensionFilters", JSON.stringify(config.dimensionFilters));
     return `/projects/reports/${shareData.projectId}?${params.toString()}`;
   }, [shareData.projectId, config]);
 

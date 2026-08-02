@@ -6865,7 +6865,8 @@
     "reportBuilder": {
       "dimensions": "## Dimensions\nSelect the dimensions you want to analyze in your report. Dimensions are attributes that categorize your data, such as Date, User, Status, etc. You can drag to reorder them.",
       "metrics": "## Metrics\nSelect the metrics you want to measure in your report. Metrics are quantitative measurements derived from your data, such as Test Results Count, Pass Rate, Average Elapsed Time, etc. You can drag to reorder them.",
-      "dateRange": "## Date Range\nFilter your report data by a specific time period. You can select from predefined ranges like 'Last 7 days' or 'Previous month', or define a custom date range. This filter applies to the relevant date field for each report type (e.g., execution date for test results, creation date for test cases)."
+      "dateRange": "## Date Range\nFilter your report data by a specific time period. You can select from predefined ranges like 'Last 7 days' or 'Previous month', or define a custom date range. This filter applies to the relevant date field for each report type (e.g., execution date for test results, creation date for test cases).",
+      "dimensionFilters": "## Filters\nNarrow the report to specific values of each selected dimension. Leave a filter empty to include all values for that dimension. Date dimensions are filtered with the date range picker instead."
     },
     "codeRepository": {
       "name": "## Repository Name\nA friendly display name for this repository connection.\n\n- Used to identify it in project code context settings.\n- Does not need to match the repository name on the provider.",
@@ -7574,6 +7575,9 @@
       "folderDescendants": {
         "label": "Include subfolders",
         "description": "Count results from subfolders toward each parent folder."
+      },
+      "dimensionFilters": {
+        "allValues": "All values"
       }
     },
     "errors": {

@@ -293,16 +293,16 @@ function buildCustom(p: BuildReportCsvParams): CsvRow[] {
       } else if (isRateMetric(metric)) {
         value = `${num.toFixed(1)}%`;
       } else if (isTimeMetric(metric)) {
-        // Custom-report elapsed metrics (avg/total) are in milliseconds, matching
-        // the on-screen leaf cell (`isSeconds: false`). Empty value → blank cell
-        // (the screen's "-" placeholder would get a leading apostrophe from
-        // papaparse's formula-injection escaping, and blank is the right CSV
+        // Custom-report elapsed metrics (avg/total) are in seconds, matching
+        // the on-screen leaf cell. Empty value → blank cell (the screen's "-"
+        // placeholder would get a leading apostrophe from papaparse's
+        // formula-injection escaping, and blank is the right CSV
         // representation of "no data" anyway).
         value =
           num === 0
             ? ""
             : toHumanReadable(num, {
-                isSeconds: false,
+                isSeconds: true,
                 locale,
                 largest: 2,
                 round: true,

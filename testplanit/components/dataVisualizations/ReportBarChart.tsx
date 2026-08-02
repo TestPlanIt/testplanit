@@ -4,13 +4,18 @@ import { useLocale, useTranslations } from "next-intl";
 import React, { useEffect, useRef } from "react";
 import useResponsiveSVG from "~/hooks/useResponsiveSVG";
 import { SimpleChartDataPoint } from "./ReportChart";
-import { localeTickFormat } from "~/utils/formatNumber";
+import { durationTickFormat, localeTickFormat } from "~/utils/formatNumber";
 
 interface ReportBarChartProps {
   data: SimpleChartDataPoint[];
+  /** Format Y-axis ticks as durations (values are seconds). */
+  durationTicks?: boolean;
 }
 
-export const ReportBarChart: React.FC<ReportBarChartProps> = ({ data }) => {
+export const ReportBarChart: React.FC<ReportBarChartProps> = ({
+  data,
+  durationTicks = false,
+}) => {
   const locale = useLocale();
   const svgRef = useRef<SVGSVGElement | null>(null);
   const tooltipRef = useRef<HTMLDivElement | null>(null);
@@ -88,7 +93,13 @@ export const ReportBarChart: React.FC<ReportBarChartProps> = ({ data }) => {
 
     g.append("g")
       .attr("class", "y-axis")
-      .call(d3.axisLeft(yScale).tickFormat(localeTickFormat(locale)));
+      .call(
+        d3
+          .axisLeft(yScale)
+          .tickFormat(
+            durationTicks ? durationTickFormat() : localeTickFormat(locale)
+          )
+      );
 
     // Create bars with animations
     const bars = g
@@ -135,7 +146,7 @@ export const ReportBarChart: React.FC<ReportBarChartProps> = ({ data }) => {
       .attr("y", (d) => yScale(yAccessor(d)))
       .attr("height", (d) => chartHeight - yScale(yAccessor(d)))
       .style("opacity", 1);
-  }, [data, width, height, t, locale]);
+  }, [data, width, height, t, locale, durationTicks]);
 
   return (
     <div
