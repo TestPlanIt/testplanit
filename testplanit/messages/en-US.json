@@ -2287,6 +2287,7 @@
     },
     "members": {
       "cardTitle": "Issues",
+      "casesOtherProjects": "{count, plural, one {# test case in another project} other {# test cases in other projects}}",
       "inScope": "In scope",
       "foundInTesting": "Found in testing",
       "foundInTestingEmpty": "No issues found in testing.",

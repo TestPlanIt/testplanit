@@ -1,5 +1,6 @@
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
+import { resolveViewerProjectScope } from "~/lib/authContext";
 import { getVisibleMilestone } from "~/lib/services/milestoneAccess";
 import { getMemberCoverage } from "~/lib/services/milestoneMemberCoverage";
 import { authOptions } from "~/server/auth";
@@ -29,6 +30,12 @@ import { authOptions } from "~/server/auth";
  * (D-06: this milestone + getAllDescendantMilestoneIds). Membership itself
  * (which issues count as "members" at all) is NOT descendant-scoped (D-15)
  * — only `MilestoneIssue` rows on the requested milestone qualify.
+ *
+ * Cross-project blend: linked cases in OTHER projects count toward the
+ * breakdown (and toward `otherProjectCaseCount`), classified by their
+ * latest result from any non-deleted run in their own project. The bleed is
+ * viewer-scoped — `resolveViewerProjectScope` limits it to projects this
+ * session can read, so per-viewer totals never reveal inaccessible projects.
  *
  * projectId is always re-derived server-side from the milestone row; a
  * client-supplied projectId is never trusted (T-18-05-01/V13). Access is
@@ -73,7 +80,13 @@ export async function GET(
       );
     }
 
-    const response = await getMemberCoverage(milestoneId);
+    const accessibleProjectIds = await resolveViewerProjectScope(
+      session.user.id
+    );
+    const response = await getMemberCoverage(milestoneId, {
+      projectId: milestone.projectId,
+      accessibleProjectIds,
+    });
     return NextResponse.json(response);
   } catch (error) {
     console.error("Milestone member coverage error:", error);

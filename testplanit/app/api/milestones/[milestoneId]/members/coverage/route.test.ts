@@ -48,6 +48,12 @@ vi.mock("~/lib/services/milestoneAccess", () => ({
   getVisibleMilestone: (...args: any[]) => mockGetVisibleMilestone(...args),
 }));
 
+const mockResolveViewerProjectScope = vi.fn();
+vi.mock("~/lib/authContext", () => ({
+  resolveViewerProjectScope: (...args: any[]) =>
+    mockResolveViewerProjectScope(...args),
+}));
+
 const mockMilestonesFindUnique = vi.fn();
 const mockMilestoneIssueFindMany = vi.fn();
 const mockQueryRaw = vi.fn();
@@ -86,6 +92,7 @@ beforeEach(() => {
   (getServerSession as any).mockResolvedValue(mockSession);
   (getAllDescendantMilestoneIds as any).mockResolvedValue([]);
   mockGetVisibleMilestone.mockResolvedValue({ id: 1, projectId: 100 });
+  mockResolveViewerProjectScope.mockResolvedValue(null);
   mockMilestonesFindUnique.mockResolvedValue({ id: 1, projectId: 100 });
   mockMilestoneIssueFindMany.mockResolvedValue([]);
   mockQueryRaw.mockResolvedValue([]);
@@ -252,7 +259,10 @@ describe("GET /api/milestones/[milestoneId]/members/coverage — descendant-incl
     const [req, ctx] = createRequest("1");
     await GET(req, ctx);
 
-    expect(getAllDescendantMilestoneIds).toHaveBeenCalledWith(1);
+    expect(getAllDescendantMilestoneIds).toHaveBeenCalledWith(
+      1,
+      expect.anything()
+    );
     // The descendant ids (plus the milestone's own id) must feed the
     // raw-SQL scope used to compute the breakdown.
     const rawCall = mockQueryRaw.mock.calls[0];
@@ -260,6 +270,50 @@ describe("GET /api/milestones/[milestoneId]/members/coverage — descendant-incl
     const rawCallText = JSON.stringify(rawCall);
     expect(rawCallText).toContain("2");
     expect(rawCallText).toContain("3");
+  });
+});
+
+describe("GET /api/milestones/[milestoneId]/members/coverage — cross-project blend is viewer-scoped", () => {
+  it("resolves the viewer's project scope and feeds it into the raw-SQL case filter", async () => {
+    mockResolveViewerProjectScope.mockResolvedValue([100, 200]);
+    mockMilestoneIssueFindMany.mockResolvedValue([
+      { issueId: 501, source: "SYNCED" },
+    ]);
+
+    const { GET } = await import("./route");
+    const [req, ctx] = createRequest("1");
+    await GET(req, ctx);
+
+    expect(mockResolveViewerProjectScope).toHaveBeenCalledWith("user-1");
+    // The accessible project ids must parameterize the linked-cases filter
+    // so no case (or result) from an unreadable project can bleed in.
+    const rawCallText = JSON.stringify(mockQueryRaw.mock.calls[0]);
+    expect(rawCallText).toContain("200");
+  });
+
+  it("returns otherProjectCaseCount per breakdown — the cross-project share of linkedCaseCount", async () => {
+    mockMilestoneIssueFindMany.mockResolvedValue([
+      { issueId: 501, source: "SYNCED" },
+    ]);
+    mockQueryRaw.mockResolvedValue([
+      {
+        issueId: 501,
+        linkedCaseCount: 3,
+        otherProjectCaseCount: 1,
+        passed: 2,
+        failed: 0,
+        inProgress: 0,
+        notRun: 1,
+      },
+    ]);
+
+    const { GET } = await import("./route");
+    const [req, ctx] = createRequest("1");
+    const response = await GET(req, ctx);
+    const body = await response.json();
+
+    expect(body[501].otherProjectCaseCount).toBe(1);
+    expect(body[501].linkedCaseCount).toBe(3);
   });
 });
 

@@ -17,6 +17,13 @@ export interface CoverageStatusCount {
 
 export interface CoverageBreakdown {
   linkedCaseCount: number;
+  /**
+   * How many of `linkedCaseCount` live in projects other than the
+   * milestone's (viewer-scoped cross-project blend). The chip renders the
+   * blended totals without distinction; the Test Cases column surfaces this
+   * separately.
+   */
+  otherProjectCaseCount?: number;
   passed: number;
   failed: number;
   inProgress: number;

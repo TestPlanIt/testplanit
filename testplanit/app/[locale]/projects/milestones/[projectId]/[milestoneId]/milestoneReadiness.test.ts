@@ -7,6 +7,7 @@ import {
 
 const bd = (partial: Partial<CoverageBreakdown>): CoverageBreakdown => ({
   linkedCaseCount: 0,
+  otherProjectCaseCount: 0,
   passed: 0,
   failed: 0,
   inProgress: 0,

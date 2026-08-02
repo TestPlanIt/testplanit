@@ -30,6 +30,12 @@ vi.mock("~/lib/services/milestoneMemberCoverage", () => ({
   getMemberCoverage: vi.fn().mockResolvedValue({}),
 }));
 
+// The viewer's cross-project scope for the member-coverage blend — null =
+// unrestricted, matching the ADMIN sessions most tests use.
+vi.mock("~/lib/authContext", () => ({
+  resolveViewerProjectScope: vi.fn().mockResolvedValue(null),
+}));
+
 vi.mock("~/lib/services/milestoneDescendants", () => ({
   getAllDescendantMilestoneIds: vi.fn(),
 }));

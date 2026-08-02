@@ -1,6 +1,7 @@
 import { getServerSession } from "next-auth";
 import { NextRequest } from "next/server";
 import { getEnhancedDb } from "~/lib/auth/utils";
+import { resolveViewerProjectScope } from "~/lib/authContext";
 import { baseDb } from "~/lib/db";
 import { getMemberCoverage } from "~/lib/services/milestoneMemberCoverage";
 import { aggregateMilestoneReadiness } from "~/app/[locale]/projects/milestones/[projectId]/[milestoneId]/milestoneReadiness";
@@ -176,13 +177,17 @@ export async function POST(req: NextRequest) {
   // Readiness is a per-milestone query (getMemberCoverage), so fan out in
   // bounded chunks — serial is slow on projects with many milestones, all-at-
   // once would exhaust the connection pool. Chunking preserves the name order.
+  const accessibleProjectIds = await resolveViewerProjectScope(session.user.id);
   const scoped = milestones.filter((m: any) => scopedIds.has(m.id));
   const CONCURRENCY = 8;
   const results: Record<string, unknown>[] = [];
   for (let i = 0; i < scoped.length; i += CONCURRENCY) {
     const rows = await Promise.all(
       scoped.slice(i, i + CONCURRENCY).map(async (milestone: any) => {
-        const coverage = await getMemberCoverage(milestone.id);
+        const coverage = await getMemberCoverage(milestone.id, {
+          projectId: Number(projectId),
+          accessibleProjectIds,
+        });
         const readiness = aggregateMilestoneReadiness(
           coverage,
           Object.keys(coverage).map(Number)

@@ -1,5 +1,6 @@
 "use client";
 
+import { ProjectNameDisplay } from "@/components/search/ProjectNameDisplay";
 import { AsyncCombobox } from "@/components/ui/async-combobox";
 import { badgeVariants } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -17,6 +18,18 @@ interface CasesListProps {
   count?: number;
   pageSize?: number;
   isLoading?: boolean;
+  /**
+   * Show each case's project name in the dropdown rows — for lists that span
+   * projects (e.g. the milestone Issues panel's cross-project total), so a
+   * row can't be mistaken for one of the current project's cases.
+   */
+  showProject?: boolean;
+  /** Open case links in a new tab (adds the external-link hover affordance). */
+  openInNewTab?: boolean;
+  /** Rendered before the count in the trigger badge (e.g. "+"). */
+  triggerPrefix?: string;
+  /** Badge variant for the trigger; the solid default reads as this-project. */
+  triggerVariant?: "default" | "secondary" | "destructive" | "outline";
 }
 
 interface CaseOption {
@@ -25,6 +38,8 @@ interface CaseOption {
   source: RepositoryCaseSource;
   automated?: boolean;
   hasParameters?: boolean;
+  projectId: number;
+  project?: { name: string; iconUrl?: string | null } | null;
 }
 
 const DEFAULT_PAGE_SIZE = 10;
@@ -35,6 +50,10 @@ export const CasesListDisplay: React.FC<CasesListProps> = ({
   count,
   pageSize = DEFAULT_PAGE_SIZE,
   isLoading = false,
+  showProject = false,
+  openInNewTab = false,
+  triggerPrefix,
+  triggerVariant = "default",
 }) => {
   const locale = useLocale();
   const t = useTranslations("common");
@@ -102,6 +121,10 @@ export const CasesListDisplay: React.FC<CasesListProps> = ({
           source: true,
           automated: true,
           hasParameters: true,
+          projectId: true,
+          ...(showProject
+            ? { project: { select: { name: true, iconUrl: true } } }
+            : {}),
         },
       };
 
@@ -138,7 +161,7 @@ export const CasesListDisplay: React.FC<CasesListProps> = ({
 
       return { results, total };
     },
-    [buildWhere, computedCount]
+    [buildWhere, computedCount, showProject]
   );
 
   const handleValueChange = useCallback((_option: CaseOption | null) => {
@@ -171,15 +194,34 @@ export const CasesListDisplay: React.FC<CasesListProps> = ({
       onValueChange={handleValueChange}
       fetchOptions={fetchCases}
       renderOption={(option) => (
-        <CaseDisplay
-          id={option.id}
-          name={option.name}
-          link={`/case/${option.id}`}
-          source={option.source}
-          automated={option.automated}
-          hasParameters={option.hasParameters}
-          maxLines={2}
-        />
+        <div className="flex w-full items-center justify-between gap-2">
+          <CaseDisplay
+            id={option.id}
+            name={option.name}
+            // Direct project-qualified URL — the bare /case/{id} resolver
+            // hop doesn't resolve reliably for cases in OTHER projects, and
+            // the fetch already knows each case's projectId.
+            link={`/projects/repository/${option.projectId}/${option.id}`}
+            linkTarget={openInNewTab ? "_blank" : undefined}
+            source={option.source}
+            automated={option.automated}
+            hasParameters={option.hasParameters}
+            maxLines={2}
+          />
+          {showProject && option.project?.name && (
+            // Capped tight so the case name keeps most of the row — the full
+            // project name stays reachable via the display's own tooltip.
+            <span className="min-w-0 max-w-[90px] shrink-0">
+              <ProjectNameDisplay
+                projectName={option.project.name}
+                projectId={option.projectId}
+                iconUrl={option.project.iconUrl}
+                className="text-xs text-muted-foreground"
+                fitContainer
+              />
+            </span>
+          )}
+        </div>
       )}
       getOptionValue={(option) => option.id}
       placeholder={searchPlaceholder}
@@ -196,12 +238,18 @@ export const CasesListDisplay: React.FC<CasesListProps> = ({
             type="button"
             aria-label={searchPlaceholder}
             className={cn(
-              badgeVariants({ variant: "default" }),
+              badgeVariants({ variant: triggerVariant }),
               "gap-1 whitespace-nowrap text-xs"
             )}
           >
             <ListChecks className="w-4 h-4" />
-            {displayLabel && <span>{displayLabel}</span>}
+            {displayLabel && (
+              <span>
+                {triggerPrefix
+                  ? `${triggerPrefix}${displayLabel}`
+                  : displayLabel}
+              </span>
+            )}
           </button>
         );
       }}

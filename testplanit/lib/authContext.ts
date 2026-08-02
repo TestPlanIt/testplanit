@@ -127,6 +127,30 @@ export async function resolveAccessibleProjectIds(
 }
 
 /**
+ * Resolve the project-visibility scope for a viewer by user id, for services
+ * that aggregate across projects with raw SQL (outside the policy layer).
+ * Returns `null` for ADMIN (unrestricted — no project filter applies),
+ * otherwise the viewer's accessible project ids. Access/roleId are re-read
+ * from the database rather than trusted from the session so a revoked
+ * permission takes effect immediately.
+ */
+export async function resolveViewerProjectScope(
+  userId: string
+): Promise<number[] | null> {
+  const viewer = await baseDb.user.findUnique({
+    where: { id: userId },
+    select: { access: true, roleId: true },
+  });
+  if (!viewer) return [];
+  if (viewer.access === "ADMIN") return null;
+  return resolveAccessibleProjectIds({
+    id: userId,
+    access: viewer.access,
+    roleId: viewer.roleId,
+  });
+}
+
+/**
  * Build the `AuthCtx` value the access policies are evaluated against.
  *
  * MUST be called per request. Caching the result in the session would leave a

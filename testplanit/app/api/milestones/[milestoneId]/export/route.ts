@@ -1,5 +1,6 @@
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
+import { resolveViewerProjectScope } from "~/lib/authContext";
 import { baseDb } from "~/lib/db";
 import {
   aggregateStatusCounts,
@@ -173,7 +174,14 @@ export async function GET(
       },
     });
     const memberCoverage =
-      memberRows.length > 0 ? await getMemberCoverage(milestoneId) : {};
+      memberRows.length > 0
+        ? await getMemberCoverage(milestoneId, {
+            projectId: visible.projectId,
+            accessibleProjectIds: await resolveViewerProjectScope(
+              session.user.id
+            ),
+          })
+        : {};
 
     const memberIssues = memberRows
       .map((row) => {

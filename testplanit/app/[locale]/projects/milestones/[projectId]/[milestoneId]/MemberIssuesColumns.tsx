@@ -8,10 +8,16 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import DOMPurify from "dompurify";
 import { stripHtmlTags } from "~/utils/stripHtmlTags";
 import { Activity } from "lucide-react";
 import type { ColumnDef } from "@tanstack/react-table";
+import { useTranslations } from "next-intl";
 import { useMemo, type CSSProperties } from "react";
 import type {
   Integration,
@@ -75,9 +81,53 @@ export interface ExtendedMemberIssue extends MilestoneIssueRow {
   /**
    * Project-scoped linked-case count from /api/issues/counts (the same source
    * the project Issues page uses). Distinct from `coverage.linkedCaseCount`,
-   * which counts cases linked to the issue across all projects.
+   * which blends in cases linked to the issue in other viewer-accessible
+   * projects — the cross-project share surfaces separately via
+   * `coverage.otherProjectCaseCount`.
    */
   caseCount?: number;
+}
+
+/**
+ * Outlined "+N" total for cases linked to the same issue in OTHER
+ * viewer-accessible projects — the explicit cross-project data bleed the
+ * Test Cases column surfaces separately so the actionable, project-scoped
+ * count stays unambiguous. Clicking it opens the same expandable case list
+ * the this-project badge uses (the ZenStack model API policy-scopes it to
+ * the viewer's projects, exactly matching the server-computed count); each
+ * row shows its project name and opens the case in a new tab.
+ */
+function OtherProjectCasesTotal({
+  issueId,
+  projectId,
+  count,
+}: {
+  issueId: number;
+  projectId: number;
+  count: number;
+}) {
+  const t = useTranslations("milestones.members");
+  if (count <= 0) return null;
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span data-testid="member-issue-other-project-case-count">
+          <CasesListDisplay
+            count={count}
+            filter={{
+              caseIssues: { some: { issueId } },
+              projectId: { not: projectId },
+            }}
+            showProject
+            openInNewTab
+            triggerPrefix="+"
+            triggerVariant="outline"
+          />
+        </span>
+      </TooltipTrigger>
+      <TooltipContent>{t("casesOtherProjects", { count })}</TooltipContent>
+    </Tooltip>
+  );
 }
 
 /**
@@ -347,10 +397,14 @@ export function useMemberIssueColumns({
           // Same linked-cases badge/list the project Issues page uses for its
           // Test Cases column. Count + list are BOTH project-scoped: the count
           // comes from /api/issues/counts (scoped to this project), and the
-          // expandable list filters cases to this project too — so a case
-          // linked to the same tracker issue in another project doesn't show
-          // up here or inflate the number.
-          <div className="text-center" data-testid="member-issue-case-count">
+          // expandable list filters cases to this project too. Cases linked to
+          // the same issue in OTHER viewer-accessible projects total into the
+          // separate outlined "+N" list so they never inflate this project's
+          // actionable count.
+          <div
+            className="flex items-center justify-center gap-1.5"
+            data-testid="member-issue-case-count"
+          >
             <CasesListDisplay
               count={row.original.caseCount}
               filter={{
@@ -358,6 +412,11 @@ export function useMemberIssueColumns({
                 projectId,
               }}
               isLoading={row.original.caseCount === undefined}
+            />
+            <OtherProjectCasesTotal
+              issueId={row.original.issueId}
+              projectId={projectId}
+              count={row.original.coverage?.otherProjectCaseCount ?? 0}
             />
           </div>
         ),
