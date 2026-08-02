@@ -42,6 +42,13 @@ interface TestRunCasesSummaryProps {
   testRunType?: string;
   // Support for pre-fetched data (batch mode)
   summaryData?: TestRunSummaryData;
+  /**
+   * True while the parent's BATCH summary fetch is still in flight. Suppresses
+   * this component's own per-run fallback fetch — without it, a list of N rows
+   * fans out N `/summary` requests during the window before the batch lands
+   * (a network storm on big milestones), all of which the batch then obsoletes.
+   */
+  summaryLoading?: boolean;
 }
 
 export function TestRunCasesSummary({
@@ -51,6 +58,7 @@ export function TestRunCasesSummary({
   className,
   testRunType: _testRunType,
   summaryData: preFetchedSummaryData,
+  summaryLoading = false,
 }: TestRunCasesSummaryProps) {
   const tCommon = useTranslations("common");
   const tGlobal = useTranslations();
@@ -104,6 +112,7 @@ export function TestRunCasesSummary({
     },
     enabled:
       !preFetchedSummaryData &&
+      !summaryLoading &&
       effectiveTestRunIds.length > 0 &&
       effectiveTestRunIds[0] > 0,
     // No refetchInterval — live updates come from the parent's SSE stream
@@ -234,7 +243,7 @@ export function TestRunCasesSummary({
     : undefined;
 
   // Only show loading skeleton if we're actually loading (not using pre-fetched data)
-  if (isLoading && !preFetchedSummaryData) {
+  if ((isLoading || summaryLoading) && !preFetchedSummaryData) {
     return (
       <div className={cn("flex flex-col space-y-1 w-full", className)}>
         <Skeleton className="h-2.5 w-full rounded-full" />

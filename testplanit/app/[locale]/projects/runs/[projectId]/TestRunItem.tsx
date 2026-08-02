@@ -103,6 +103,9 @@ export interface TestRunItemProps {
   onComplete?: (testRun: any) => void;
   isAdmin?: boolean;
   summaryData?: TestRunSummaryData;
+  /** True while the page's batch summary fetch is in flight — keeps each row
+   * from firing its own per-run summary fallback in the meantime. */
+  summaryLoading?: boolean;
   pendingRequest?: PendingReviewSummary;
 }
 
@@ -112,6 +115,7 @@ const TestRunItem: React.FC<TestRunItemProps> = ({
   showMilestone = true,
   onDuplicate,
   summaryData,
+  summaryLoading = false,
   pendingRequest,
 }) => {
   const tCommon = useTranslations("common");
@@ -145,34 +149,42 @@ const TestRunItem: React.FC<TestRunItemProps> = ({
     !!testRun.createdAt &&
     Date.now() - new Date(testRun.createdAt).getTime() < 5 * 60 * 1000;
 
-  // Fetch test run cases with their results and assigned users
+  // Contributor lookup for the MemberList: only assignee/executor ids+names.
+  // A narrow select, NOT include — full case + result rows per run made this
+  // per-row query megabytes on large runs and flooded the page with data it
+  // never renders.
   const { data: testRunCases } = useClientQueries(
     schema
-  ).testRunCases.useFindMany({
-    where: {
-      testRunId: testRun.id,
-      isDeleted: false,
-    },
-    include: {
-      assignedTo: {
-        select: {
-          id: true,
-          name: true,
-        },
+  ).testRunCases.useFindMany(
+    {
+      where: {
+        testRunId: testRun.id,
+        isDeleted: false,
       },
-      results: {
-        include: {
-          executedBy: {
-            select: {
-              id: true,
-              name: true,
+      select: {
+        id: true,
+        assignedTo: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        results: {
+          select: {
+            executedBy: {
+              select: {
+                id: true,
+                name: true,
+              },
             },
           },
         },
       },
     },
-    orderBy: { order: "asc" },
-  });
+    // Virtualized lists remount rows on scroll — without a stale window each
+    // remount refires this query (same 30s the batch summaries use).
+    { staleTime: 30000 }
+  );
 
   // Transform state data to match WorkflowStateDisplay expectations
   const workflowState = {
@@ -397,6 +409,7 @@ const TestRunItem: React.FC<TestRunItemProps> = ({
             testRunType={testRun.testRunType}
             className="w-full"
             summaryData={summaryData}
+            summaryLoading={summaryLoading}
           />
         </div>
 

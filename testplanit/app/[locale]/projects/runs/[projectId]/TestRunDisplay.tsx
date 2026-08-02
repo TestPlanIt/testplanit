@@ -419,23 +419,24 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
   }, [pendingReviewsForVisibleRuns]);
 
   // Batch-fetch test run summaries for all test runs
-  const { data: batchSummaries } = useQuery<BatchTestRunSummaryResponse>({
-    queryKey: ["batchTestRunSummaries", testRunIds],
-    queryFn: async () => {
-      if (testRunIds.length === 0) {
-        return { summaries: {} };
-      }
-      const response = await fetch(
-        `/api/test-runs/summaries?testRunIds=${testRunIds.join(",")}`
-      );
-      if (!response.ok) {
-        throw new Error("Failed to fetch batch test run summaries");
-      }
-      return response.json();
-    },
-    enabled: testRunIds.length > 0,
-    staleTime: 30000, // Cache for 30 seconds
-  });
+  const { data: batchSummaries, isLoading: isBatchSummariesLoading } =
+    useQuery<BatchTestRunSummaryResponse>({
+      queryKey: ["batchTestRunSummaries", testRunIds],
+      queryFn: async () => {
+        if (testRunIds.length === 0) {
+          return { summaries: {} };
+        }
+        const response = await fetch(
+          `/api/test-runs/summaries?testRunIds=${testRunIds.join(",")}`
+        );
+        if (!response.ok) {
+          throw new Error("Failed to fetch batch test run summaries");
+        }
+        return response.json();
+      },
+      enabled: testRunIds.length > 0,
+      staleTime: 30000, // Cache for 30 seconds
+    });
 
   const { data: testRunCases } = useClientQueries(
     schema
@@ -653,6 +654,7 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
               milestonePath={testRun.milestone?.name}
               onDuplicate={onDuplicateTestRun}
               summaryData={batchSummaries?.summaries[testRun.id]}
+              summaryLoading={isBatchSummariesLoading}
               pendingRequest={pendingByTestRunId.get(testRun.id)}
               // Completed runs render as a flat list (not grouped by
               // milestone), so the milestone is shown here — unlike the
@@ -857,6 +859,7 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
                         isNew={false}
                         onDuplicate={onDuplicateTestRunParam}
                         summaryData={summariesData?.summaries[testRun.id]}
+                        summaryLoading={isBatchSummariesLoading}
                         pendingRequest={pendingByTestRunId.get(testRun.id)}
                         showMilestone={false}
                       />
@@ -979,6 +982,7 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
                     isNew={false}
                     onDuplicate={onDuplicateTestRunParam}
                     summaryData={summariesData?.summaries[testRun.id]}
+                    summaryLoading={isBatchSummariesLoading}
                     pendingRequest={pendingByTestRunId.get(testRun.id)}
                   />
                 </DraggableTestRunWrapper>

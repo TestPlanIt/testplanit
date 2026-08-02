@@ -435,37 +435,38 @@ export default function MilestoneDetailsPage() {
   // Batch-fetch test run summaries for all test runs. The route caps a
   // batch at 100 ids — milestones with many runs (especially via nested
   // child milestones, D-06) exceed that, so chunk and merge.
-  const { data: batchSummaries } = useQuery<BatchTestRunSummaryResponse>({
-    queryKey: ["batchTestRunSummaries", testRunIds],
-    queryFn: async () => {
-      if (testRunIds.length === 0) {
-        return { summaries: {} };
-      }
-      const CHUNK_SIZE = 100;
-      const chunks: number[][] = [];
-      for (let i = 0; i < testRunIds.length; i += CHUNK_SIZE) {
-        chunks.push(testRunIds.slice(i, i + CHUNK_SIZE));
-      }
-      const responses = await Promise.all(
-        chunks.map(async (chunk) => {
-          const response = await fetch(
-            `/api/test-runs/summaries?testRunIds=${chunk.join(",")}`
-          );
-          if (!response.ok) {
-            throw new Error("Failed to fetch batch test run summaries");
-          }
-          return response.json() as Promise<BatchTestRunSummaryResponse>;
-        })
-      );
-      const merged: BatchTestRunSummaryResponse = { summaries: {} };
-      for (const part of responses) {
-        Object.assign(merged.summaries, part.summaries);
-      }
-      return merged;
-    },
-    enabled: testRunIds.length > 0,
-    staleTime: 30000, // Cache for 30 seconds
-  });
+  const { data: batchSummaries, isLoading: isBatchSummariesLoading } =
+    useQuery<BatchTestRunSummaryResponse>({
+      queryKey: ["batchTestRunSummaries", testRunIds],
+      queryFn: async () => {
+        if (testRunIds.length === 0) {
+          return { summaries: {} };
+        }
+        const CHUNK_SIZE = 100;
+        const chunks: number[][] = [];
+        for (let i = 0; i < testRunIds.length; i += CHUNK_SIZE) {
+          chunks.push(testRunIds.slice(i, i + CHUNK_SIZE));
+        }
+        const responses = await Promise.all(
+          chunks.map(async (chunk) => {
+            const response = await fetch(
+              `/api/test-runs/summaries?testRunIds=${chunk.join(",")}`
+            );
+            if (!response.ok) {
+              throw new Error("Failed to fetch batch test run summaries");
+            }
+            return response.json() as Promise<BatchTestRunSummaryResponse>;
+          })
+        );
+        const merged: BatchTestRunSummaryResponse = { summaries: {} };
+        for (const part of responses) {
+          Object.assign(merged.summaries, part.summaries);
+        }
+        return merged;
+      },
+      enabled: testRunIds.length > 0,
+      staleTime: 30000, // Cache for 30 seconds
+    });
 
   useEffect(() => {
     if (colors) {
@@ -1195,6 +1196,7 @@ export default function MilestoneDetailsPage() {
                                 summaryData={
                                   batchSummaries?.summaries[testRun.id]
                                 }
+                                summaryLoading={isBatchSummariesLoading}
                                 pendingRequest={pendingReviewsByRunId.get(
                                   testRun.id
                                 )}
