@@ -97,8 +97,18 @@ The **Issues** card gathers every issue related to the milestone into two indepe
 
 Issues that belong to this milestone: those synced automatically from the linked Jira sprint or version, plus any linked manually. Each row shows:
 
-- **Coverage** — a chip summarizing the latest completed outcome of every test case linked to that issue, as one colored pip per status plus an Untested pip, or an **Uncovered** chip when none of the linked cases has a completed result yet.
+- **Test Cases** — the number of test cases linked to that issue **in this project**, as a badge that expands into a searchable case list. When the same issue also has test cases in other projects, a separate outlined **+N** badge totals those — see [Test cases from other projects](#test-cases-from-other-projects).
+- **Coverage** — a chip summarizing the latest completed outcome of every test case linked to that issue, as one colored pip per status plus an Untested pip, or an **Uncovered** chip when none of the linked cases has a completed result yet. This project's cases are judged by their results from test runs on this milestone and its descendants; cases from other projects contribute the latest result from their own project's test runs.
 - **Source** — **Synced** or **Manual**.
+
+#### Test cases from other projects
+
+An issue in scope here can also have test cases linked to it in other projects. Those cases count toward the milestone's overall picture without blurring this project's actionable numbers:
+
+- The **Test Cases** column keeps the two totals separate: the solid badge counts this project's cases, and the outlined **+N** badge counts cases from other projects. Expanding **+N** lists those cases with each one's project alongside; clicking a case opens it in its own project in a new tab.
+- The **Coverage** chip, the **% ready** badge, and the milestone-wide coverage totals blend the other-project cases and their results in — an issue only reads as fully passing once every linked case passes, whichever project it lives in.
+
+You only ever see cases and results from projects you have access to: anything in a project you can't read is excluded from every count and list. Because of this, totals can legitimately differ between viewers with different project access.
 
 The section header carries a **% ready** badge — the share of member issues that are fully passing (every linked test case passed), rounded to a whole percent. Hovering it breaks the total down by state (passed, failed, in progress, not run, uncovered). Uncovered and not-run issues count against readiness, so a milestone reaches 100% only once every in-scope issue is fully covered and passing.
 
