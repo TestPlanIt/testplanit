@@ -1,5 +1,11 @@
 # @testplanit/api
 
+## 0.9.2
+
+### Patch Changes
+
+- [#564](https://github.com/TestPlanIt/testplanit/pull/564) [`ba7e7a5`](https://github.com/TestPlanIt/testplanit/commit/ba7e7a504e31ed723bf7fc72850173a6111f2cfa) Thanks [@therealbrad](https://github.com/therealbrad)! - Stop losing test results when parallel workers race to create the same folder. The API client now recognizes a unique-constraint violation in every form the server reports it (Postgres SQLSTATE 23505 and message, Prisma message, P2002 code) and recovers by fetching the folder the other worker created. Folder creation is also memoized per `projectId` + `parentId` + `name` within a client instance, so concurrent describe paths that share an ancestor issue a single create instead of racing. And if folder resolution still fails, both reporters now file the case under the configured parent folder instead of dropping the result.
+
 ## 0.9.1
 
 ### Patch Changes
