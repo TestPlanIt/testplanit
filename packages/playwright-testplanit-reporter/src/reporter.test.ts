@@ -15,6 +15,8 @@ const clientMock = vi.hoisted(() => ({
   findOrAddTestCaseToRun: vi.fn(),
   uploadJUnitAttachment: vi.fn(),
   findOrCreateTestCase: vi.fn(),
+  getTestCase: vi.fn(),
+  updateTestCase: vi.fn(),
   createStep: vi.fn(),
   createSteps: vi.fn(),
   softDeleteCaseSteps: vi.fn(),
@@ -59,6 +61,8 @@ function applyBaseImpls() {
   clientMock.findOrAddTestCaseToRun.mockImplementation(async () => ({ id: 456 }));
   clientMock.uploadJUnitAttachment.mockImplementation(async () => ({ id: 1 }));
   clientMock.findOrCreateTestCase.mockImplementation(async () => ({ testCase: { id: 4567, name: 'TC' }, action: 'created' }));
+  clientMock.getTestCase.mockImplementation(async (id: number) => ({ id, name: 'TC', automated: true }));
+  clientMock.updateTestCase.mockImplementation(async (id: number, data: Record<string, unknown>) => ({ id, ...data }));
   clientMock.createStep.mockImplementation(async () => ({ id: 1 }));
   clientMock.createSteps.mockImplementation(async (o: any) => ({ count: o?.steps?.length ?? 0 }));
   clientMock.softDeleteCaseSteps.mockImplementation(async () => 3);
@@ -421,6 +425,50 @@ describe('TestPlanItReporter (Playwright)', () => {
       await run(r, makeTest('[1] x', buildParent({ project: 'chromium' })), makeResult());
       expect(clientMock.createJUnitTestResult).toHaveBeenCalledTimes(1);
       expect(clientMock.completeTestRun).not.toHaveBeenCalled();
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  describe('flipping explicitly linked cases to automated', () => {
+    it('flips a not-automated case when a result reports against it', async () => {
+      clientMock.getTestCase.mockResolvedValueOnce({ id: 123, name: 'Manual case', automated: false });
+      await run(reporter, makeTest('[123] login works', buildParent({ project: 'chromium' })), makeResult());
+      expect(clientMock.getTestCase).toHaveBeenCalledWith(123);
+      expect(clientMock.updateTestCase).toHaveBeenCalledWith(123, { automated: true });
+      expect(lastArg(clientMock.createJUnitTestResult).repositoryCaseId).toBe(123);
+    });
+
+    it('skips the write when the case is already automated', async () => {
+      clientMock.getTestCase.mockResolvedValueOnce({ id: 123, name: 'Auto case', automated: true });
+      await run(reporter, makeTest('[123] login works', buildParent({ project: 'chromium' })), makeResult());
+      expect(clientMock.updateTestCase).not.toHaveBeenCalled();
+    });
+
+    it('checks each case once per run (memoized across retries)', async () => {
+      clientMock.getTestCase.mockResolvedValue({ id: 123, name: 'Manual case', automated: false });
+      const parent = buildParent({ project: 'chromium' });
+      reporter.onTestEnd(makeTest('[123] login works', parent), makeResult({ status: 'failed' }));
+      reporter.onTestEnd(makeTest('[123] login works', parent), makeResult({ status: 'passed', retry: 1 }));
+      await reporter.onEnd(FULL_RESULT);
+      expect(clientMock.getTestCase).toHaveBeenCalledTimes(1);
+      expect(clientMock.updateTestCase).toHaveBeenCalledTimes(1);
+    });
+
+    it('never loses the result when the flip fails', async () => {
+      const err = vi.spyOn(console, 'error').mockImplementation(() => {});
+      clientMock.getTestCase.mockRejectedValueOnce(new Error('boom'));
+      await run(reporter, makeTest('[123] login works', buildParent({ project: 'chromium' })), makeResult());
+      expect(clientMock.createJUnitTestResult).toHaveBeenCalledTimes(1);
+      expect(lastArg(clientMock.createJUnitTestResult).repositoryCaseId).toBe(123);
+      expect(reporter.getState().stats.apiErrors).toBe(0);
+      err.mockRestore();
+    });
+
+    it('does not run the check on the auto-create path (findOrCreateTestCase handles it)', async () => {
+      const r = new TestPlanItReporter({ ...autoOptions });
+      await run(r, makeTest('untagged', buildParent({ project: 'chromium', describes: ['Auth'] })), makeResult());
+      expect(clientMock.getTestCase).not.toHaveBeenCalled();
+      expect(clientMock.updateTestCase).not.toHaveBeenCalled();
     });
   });
 

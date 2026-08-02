@@ -185,6 +185,7 @@ export default class TestPlanItReporter implements Reporter {
       testRunCaseMap: new Map(),
       caseStepsMap: new Map(),
       folderPathMap: new Map(),
+      caseAutomatedMap: new Map(),
       statusIds: {},
       initialized: false,
       stats: {
@@ -465,6 +466,10 @@ export default class TestPlanItReporter implements Reporter {
       let repositoryCaseId: number | undefined;
       if (caseIds.length > 0) {
         repositoryCaseId = caseIds[0];
+        // An explicitly linked case may be manually authored — it is now
+        // receiving automated results, so flip it to automated. (The
+        // auto-create path handles this inside findOrCreateTestCase.)
+        await this.ensureCaseAutomated(repositoryCaseId);
         // Keep an explicitly linked case's steps in sync with the script.
         // (The auto-create path syncs inside resolveAutoCreatedCaseId.)
         if (this.options.overwriteSteps) {
@@ -634,6 +639,32 @@ export default class TestPlanItReporter implements Reporter {
 
     this.state.caseStepsMap.set(testCaseId, promise);
     promise.catch(() => this.state.caseStepsMap.delete(testCaseId));
+    return promise;
+  }
+
+  /**
+   * Flip an explicitly linked case to `automated: true` when it isn't
+   * already, so a case that started manual but now receives automated results
+   * reflects that in TestPlanIt. Checked once per case per run (memoized).
+   * Skips the write when the case is already automated and never throws — a
+   * failure logs and is swallowed so it can't abort reporting the result.
+   */
+  private ensureCaseAutomated(caseId: number): Promise<void> {
+    let promise = this.state.caseAutomatedMap.get(caseId);
+    if (promise) return promise;
+
+    promise = (async () => {
+      try {
+        const testCase = await this.client.getTestCase(caseId);
+        if (testCase?.automated === true) return;
+        await this.client.updateTestCase(caseId, { automated: true });
+        this.log('Flipped case to automated:', caseId);
+      } catch (error) {
+        this.logError(`Failed to set automated on case ${caseId}; continuing:`, error);
+      }
+    })();
+
+    this.state.caseAutomatedMap.set(caseId, promise);
     return promise;
   }
 

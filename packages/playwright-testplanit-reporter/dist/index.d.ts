@@ -427,6 +427,8 @@ interface ReporterState {
     caseStepsMap: Map<number, Promise<void>>;
     /** Map of folder paths (joined by >) to in-flight/resolved folder IDs */
     folderPathMap: Map<string, Promise<number>>;
+    /** Map of case IDs to an in-flight/settled automated-flip check, so each explicitly linked case is checked once per run */
+    caseAutomatedMap: Map<number, Promise<void>>;
     /** Status ID mappings */
     statusIds: {
         passed?: number;
@@ -542,6 +544,14 @@ declare class TestPlanItReporter implements Reporter {
      * is never blocked by step syncing.
      */
     private writeCaseSteps;
+    /**
+     * Flip an explicitly linked case to `automated: true` when it isn't
+     * already, so a case that started manual but now receives automated results
+     * reflects that in TestPlanIt. Checked once per case per run (memoized).
+     * Skips the write when the case is already automated and never throws — a
+     * failure logs and is swallowed so it can't abort reporting the result.
+     */
+    private ensureCaseAutomated;
     /** Resolve (and cache) the folder ID for a describe path. */
     private getFolderId;
     /** Add the case to the run once (memoized per case). */

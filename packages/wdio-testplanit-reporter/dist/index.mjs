@@ -281,6 +281,7 @@ var TestPlanItReporter = class _TestPlanItReporter extends WDIOReporter {
       customFieldCaseMap: /* @__PURE__ */ new Map(),
       folderPathMap: /* @__PURE__ */ new Map(),
       caseStepsMap: /* @__PURE__ */ new Map(),
+      caseAutomatedMap: /* @__PURE__ */ new Map(),
       statusIds: {},
       initialized: false,
       stats: {
@@ -902,6 +903,29 @@ ${error.stack}` : "";
     }
   }
   /**
+   * Explicit-ID variant of the automated flip: only the case id from the
+   * title is known, so fetch the case once per run (memoized) and flip it to
+   * `automated: true` when it isn't already. Skips the write when the case is
+   * already automated and never throws — a failure logs and is swallowed so
+   * it can't abort reporting the result.
+   */
+  ensureLinkedCaseAutomated(caseId) {
+    let promise = this.state.caseAutomatedMap.get(caseId);
+    if (promise) return promise;
+    promise = (async () => {
+      try {
+        const testCase = await this.client.getTestCase(caseId);
+        if (testCase?.automated === true) return;
+        await this.client.updateTestCase(caseId, { automated: true });
+        this.log("Flipped case to automated:", caseId);
+      } catch (error) {
+        this.logError(`Failed to set automated on case ${caseId}; continuing`, error);
+      }
+    })();
+    this.state.caseAutomatedMap.set(caseId, promise);
+    return promise;
+  }
+  /**
    * Get the full suite path as a string
    */
   getFullSuiteName() {
@@ -1180,6 +1204,7 @@ ${error.stack}` : "";
       if (caseIds.length > 0) {
         repositoryCaseId = caseIds[0];
         this.log("DEBUG: Using case ID from title:", repositoryCaseId);
+        await this.ensureLinkedCaseAutomated(repositoryCaseId);
         if (this.reporterOptions.overwriteSteps) {
           await this.writeScenarioSteps(caseIds[0], "found", result);
         }

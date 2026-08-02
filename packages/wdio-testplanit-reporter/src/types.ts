@@ -682,6 +682,8 @@ export interface ReporterState {
   folderPathMap: Map<string, number>;
   /** Dedup of in-flight step writes per case id (write steps at most once per case per run) */
   caseStepsMap: Map<number, Promise<void>>;
+  /** Map of case IDs to an in-flight/settled automated-flip check, so each explicitly linked case is checked once per run */
+  caseAutomatedMap: Map<number, Promise<void>>;
   /** Status ID mappings */
   statusIds: {
     passed?: number;

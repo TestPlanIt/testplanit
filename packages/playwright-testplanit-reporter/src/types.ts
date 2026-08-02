@@ -470,6 +470,8 @@ export interface ReporterState {
   caseStepsMap: Map<number, Promise<void>>;
   /** Map of folder paths (joined by >) to in-flight/resolved folder IDs */
   folderPathMap: Map<string, Promise<number>>;
+  /** Map of case IDs to an in-flight/settled automated-flip check, so each explicitly linked case is checked once per run */
+  caseAutomatedMap: Map<number, Promise<void>>;
   /** Status ID mappings */
   statusIds: {
     passed?: number;

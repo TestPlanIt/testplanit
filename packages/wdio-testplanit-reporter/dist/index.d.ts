@@ -630,6 +630,8 @@ interface ReporterState {
     folderPathMap: Map<string, number>;
     /** Dedup of in-flight step writes per case id (write steps at most once per case per run) */
     caseStepsMap: Map<number, Promise<void>>;
+    /** Map of case IDs to an in-flight/settled automated-flip check, so each explicitly linked case is checked once per run */
+    caseAutomatedMap: Map<number, Promise<void>>;
     /** Status ID mappings */
     statusIds: {
         passed?: number;
@@ -852,6 +854,14 @@ declare class TestPlanItReporter extends WDIOReporter {
      * swallowed so it can't abort reporting the result.
      */
     private ensureCaseAutomated;
+    /**
+     * Explicit-ID variant of the automated flip: only the case id from the
+     * title is known, so fetch the case once per run (memoized) and flip it to
+     * `automated: true` when it isn't already. Skips the write when the case is
+     * already automated and never throws — a failure logs and is swallowed so
+     * it can't abort reporting the result.
+     */
+    private ensureLinkedCaseAutomated;
     /**
      * Get the full suite path as a string
      */

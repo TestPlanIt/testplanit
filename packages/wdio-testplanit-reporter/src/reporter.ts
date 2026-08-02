@@ -158,6 +158,7 @@ export default class TestPlanItReporter extends WDIOReporter {
       customFieldCaseMap: new Map(),
       folderPathMap: new Map(),
       caseStepsMap: new Map(),
+      caseAutomatedMap: new Map(),
       statusIds: {},
       initialized: false,
       stats: {
@@ -934,6 +935,32 @@ export default class TestPlanItReporter extends WDIOReporter {
   }
 
   /**
+   * Explicit-ID variant of the automated flip: only the case id from the
+   * title is known, so fetch the case once per run (memoized) and flip it to
+   * `automated: true` when it isn't already. Skips the write when the case is
+   * already automated and never throws — a failure logs and is swallowed so
+   * it can't abort reporting the result.
+   */
+  private ensureLinkedCaseAutomated(caseId: number): Promise<void> {
+    let promise = this.state.caseAutomatedMap.get(caseId);
+    if (promise) return promise;
+
+    promise = (async () => {
+      try {
+        const testCase = await this.client.getTestCase(caseId);
+        if (testCase?.automated === true) return;
+        await this.client.updateTestCase(caseId, { automated: true });
+        this.log('Flipped case to automated:', caseId);
+      } catch (error) {
+        this.logError(`Failed to set automated on case ${caseId}; continuing`, error);
+      }
+    })();
+
+    this.state.caseAutomatedMap.set(caseId, promise);
+    return promise;
+  }
+
+  /**
    * Get the full suite path as a string
    */
   private getFullSuiteName(): string {
@@ -1322,6 +1349,10 @@ export default class TestPlanItReporter extends WDIOReporter {
         // Use the provided case ID directly as repository case ID
         repositoryCaseId = caseIds[0];
         this.log('DEBUG: Using case ID from title:', repositoryCaseId);
+        // An explicitly linked case may be manually authored — it is now
+        // receiving automated results, so flip it to automated (memoized,
+        // never throws).
+        await this.ensureLinkedCaseAutomated(repositoryCaseId);
         // Explicitly-linked Cucumber case ([123]): the case pre-exists, so only
         // overwriteSteps replaces its steps (never on a plain re-run — D-05).
         if (this.reporterOptions.overwriteSteps) {

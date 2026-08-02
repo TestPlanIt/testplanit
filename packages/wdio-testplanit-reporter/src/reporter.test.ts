@@ -37,6 +37,11 @@ const apiMocks = vi.hoisted(() => ({
     id: caseId,
     automated: data.automated,
   })),
+  getTestCase: vi.fn(async (caseId: number) => ({
+    id: caseId,
+    name: "Test Case",
+    automated: true,
+  })),
   findOrAddTestCaseToRun: vi.fn(async (_opts: { repositoryCaseId: number }) => ({ id: 456 })),
   findOrCreateFolderPath: vi.fn(
     async (_projectId: number, _path: string[], _rootFolderId?: number) => ({ id: 1, name: "Folder" }),
@@ -63,6 +68,7 @@ vi.mock("@testplanit/api", () => {
       findOrCreateTestCase = apiMocks.findOrCreateTestCase;
       findTestCaseByCustomField = apiMocks.findTestCaseByCustomField;
       updateTestCase = apiMocks.updateTestCase;
+      getTestCase = apiMocks.getTestCase;
       findOrAddTestCaseToRun = apiMocks.findOrAddTestCaseToRun;
       createJUnitTestResult = apiMocks.createJUnitTestResult;
       createSteps = apiMocks.createSteps;
@@ -206,6 +212,11 @@ describe("TestPlanItReporter", () => {
     apiMocks.updateTestCase.mockImplementation(async (caseId: number, data: { automated?: boolean }) => ({
       id: caseId,
       automated: data.automated,
+    }));
+    apiMocks.getTestCase.mockImplementation(async (caseId: number) => ({
+      id: caseId,
+      name: "Test Case",
+      automated: true,
     }));
     apiMocks.findOrAddTestCaseToRun.mockResolvedValue({ id: 456 });
     apiMocks.createJUnitTestResult.mockResolvedValue({ id: 789 });
@@ -1242,6 +1253,62 @@ describe("service-managed mode", () => {
         expect.objectContaining({ folderId: 10 }),
       );
       expect(apiMocks.createJUnitTestResult).toHaveBeenCalledTimes(1);
+      err.mockRestore();
+    });
+
+    // ─── Explicitly linked cases ([123] in the title) flip to automated ─────
+    it("flips a not-automated explicitly linked case when a result reports against it", async () => {
+      apiMocks.getTestCase.mockResolvedValueOnce({ id: 555, name: "Manual case", automated: false });
+      const r = new TestPlanItReporter({ ...defaultOptions });
+      r.onRunnerStart(runner());
+      r.onSuiteStart({ title: "Search", uid: "s1" } as unknown as SuiteStats);
+      r.onTestPass(mochaTest("[555] some explicitly linked test"));
+      await flush(r);
+
+      expect(apiMocks.getTestCase).toHaveBeenCalledWith(555);
+      expect(apiMocks.updateTestCase).toHaveBeenCalledWith(555, { automated: true });
+      expect(apiMocks.createJUnitTestResult).toHaveBeenCalledWith(
+        expect.objectContaining({ repositoryCaseId: 555 }),
+      );
+    });
+
+    it("skips the write when the explicitly linked case is already automated", async () => {
+      apiMocks.getTestCase.mockResolvedValueOnce({ id: 555, name: "Auto case", automated: true });
+      const r = new TestPlanItReporter({ ...defaultOptions });
+      r.onRunnerStart(runner());
+      r.onSuiteStart({ title: "Search", uid: "s1" } as unknown as SuiteStats);
+      r.onTestPass(mochaTest("[555] some explicitly linked test"));
+      await flush(r);
+
+      expect(apiMocks.updateTestCase).not.toHaveBeenCalled();
+    });
+
+    it("checks each explicitly linked case once per run (memoized)", async () => {
+      apiMocks.getTestCase.mockResolvedValue({ id: 555, name: "Manual case", automated: false });
+      const r = new TestPlanItReporter({ ...defaultOptions });
+      r.onRunnerStart(runner());
+      r.onSuiteStart({ title: "Search", uid: "s1" } as unknown as SuiteStats);
+      r.onTestPass(mochaTest("[555] first test", "t1"));
+      r.onTestPass(mochaTest("[555] second test", "t2"));
+      await flush(r);
+
+      expect(apiMocks.getTestCase).toHaveBeenCalledTimes(1);
+      expect(apiMocks.updateTestCase).toHaveBeenCalledTimes(1);
+    });
+
+    it("never loses the result when the explicit-link flip fails", async () => {
+      const err = vi.spyOn(console, "error").mockImplementation(() => {});
+      apiMocks.getTestCase.mockRejectedValueOnce(new Error("boom"));
+      const r = new TestPlanItReporter({ ...defaultOptions });
+      r.onRunnerStart(runner());
+      r.onSuiteStart({ title: "Search", uid: "s1" } as unknown as SuiteStats);
+      r.onTestPass(mochaTest("[555] some explicitly linked test"));
+      await flush(r);
+
+      expect(apiMocks.createJUnitTestResult).toHaveBeenCalledWith(
+        expect.objectContaining({ repositoryCaseId: 555 }),
+      );
+      expect(r.getState().stats.apiErrors).toBe(0);
       err.mockRestore();
     });
   });
