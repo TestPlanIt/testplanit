@@ -20,10 +20,16 @@ vi.mock("@zenstackhq/tanstack-query/react", () => ({
 
 vi.mock("~/lib/navigation", () => ({
   useRouter: mockUseRouter,
+  Link: ({ href, onClick, className, children }: any) => (
+    <a href={href} onClick={onClick} className={className}>
+      {children}
+    </a>
+  ),
 }));
 
 vi.mock("next-intl", () => ({
   useTranslations: mockUseTranslations,
+  useLocale: () => "en-US",
 }));
 
 // Mock next/image as a simple img tag
@@ -85,11 +91,18 @@ vi.mock("@/components/ui/command", () => ({
       {children}
     </div>
   ),
-  CommandItem: ({ children, onSelect, value, className }: any) => (
+  CommandItem: ({
+    children,
+    onSelect,
+    onClickCapture,
+    value,
+    className,
+  }: any) => (
     <div
       data-testid={`command-item-${value}`}
       data-value={value}
       className={className}
+      onClickCapture={onClickCapture}
       onClick={() => onSelect?.(value)}
       role="option"
     >
@@ -255,6 +268,47 @@ describe("ProjectQuickSelector", () => {
 
       fireEvent.click(screen.getByTestId("command-item-view-all-projects"));
       expect(mockRouterPush).toHaveBeenCalledWith("/projects");
+    });
+
+    it("renders every entry as a real link so native modifier clicks work", () => {
+      render(<ProjectQuickSelector />);
+      fireEvent.click(screen.getByTestId("popover-button"));
+
+      expect(
+        screen.getByTestId("command-item-Alpha Project").querySelector("a")
+      ).toHaveAttribute("href", "/projects/repository/1");
+      expect(
+        screen.getByTestId("command-item-view-all-projects").querySelector("a")
+      ).toHaveAttribute("href", "/projects");
+    });
+
+    it("plain click on the link defers to onSelect — one navigation, not two", () => {
+      render(<ProjectQuickSelector />);
+      fireEvent.click(screen.getByTestId("popover-button"));
+
+      const link = screen
+        .getByTestId("command-item-Alpha Project")
+        .querySelector("a")!;
+      // preventDefault → the anchor itself doesn't navigate; the click
+      // bubbles to the item and onSelect performs the single router push.
+      const notPrevented = fireEvent.click(link);
+      expect(notPrevented).toBe(false);
+      expect(mockRouterPush).toHaveBeenCalledTimes(1);
+      expect(mockRouterPush).toHaveBeenCalledWith("/projects/repository/1");
+    });
+
+    it("cmd/ctrl-click leaves the link to the browser and does not navigate this tab", () => {
+      render(<ProjectQuickSelector />);
+      fireEvent.click(screen.getByTestId("popover-button"));
+
+      const link = screen
+        .getByTestId("command-item-Alpha Project")
+        .querySelector("a")!;
+      // Default NOT prevented (browser opens the new tab natively) and the
+      // click never reaches cmdk's select.
+      expect(fireEvent.click(link, { metaKey: true })).toBe(true);
+      expect(fireEvent.click(link, { ctrlKey: true })).toBe(true);
+      expect(mockRouterPush).not.toHaveBeenCalled();
     });
 
     it("navigates to correct project when second project selected", () => {

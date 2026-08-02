@@ -18,8 +18,8 @@ import {
 import { Boxes, ChevronDown, ExternalLink } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
-import { useState } from "react";
-import { useRouter } from "~/lib/navigation";
+import { useState, type MouseEvent } from "react";
+import { Link, useRouter } from "~/lib/navigation";
 import { cn } from "~/utils";
 
 export const ProjectQuickSelector = () => {
@@ -46,15 +46,27 @@ export const ProjectQuickSelector = () => {
     },
   });
 
+  // -1 is the "view all projects" pseudo-entry.
+  const projectPath = (projectId: number) =>
+    projectId === -1 ? "/projects" : `/projects/repository/${projectId}`;
+
   const handleProjectSelect = (projectId: number) => {
-    if (projectId === -1) {
-      // Navigate to projects overview page
-      router.push("/projects");
-    } else {
-      // Navigate directly to the project repository
-      router.push(`/projects/repository/${projectId}`);
-    }
+    router.push(projectPath(projectId));
     setOpen(false);
+  };
+
+  // Each entry is a REAL link so modifier clicks get native browser behavior
+  // (cmd/ctrl → new tab, shift → new window, middle-click). Plain clicks are
+  // deferred to cmdk's onSelect instead — one navigation path shared with
+  // keyboard selection, which also closes the popover.
+  const handleLinkClick = (event: MouseEvent<HTMLAnchorElement>) => {
+    if (event.metaKey || event.ctrlKey || event.shiftKey) {
+      // Native handling — but keep cmdk from ALSO selecting (which would
+      // navigate this tab too).
+      event.stopPropagation();
+      return;
+    }
+    event.preventDefault();
   };
 
   return (
@@ -82,8 +94,14 @@ export const ProjectQuickSelector = () => {
               onSelect={() => handleProjectSelect(-1)}
               className="font-medium text-primary"
             >
-              <ExternalLink className="h-4 w-4 shrink-0" />
-              {t("viewAllProjects")}
+              <Link
+                href={projectPath(-1)}
+                onClick={handleLinkClick}
+                className="flex w-full min-w-0 items-center gap-2"
+              >
+                <ExternalLink className="h-4 w-4 shrink-0" />
+                {t("viewAllProjects")}
+              </Link>
             </CommandItem>
             {projects.map((project) => (
               <CommandItem
@@ -91,30 +109,36 @@ export const ProjectQuickSelector = () => {
                 value={project.name}
                 onSelect={() => handleProjectSelect(project.id)}
               >
-                {project.iconUrl ? (
-                  <Image
-                    src={project.iconUrl}
-                    alt={`${project.name} icon`}
-                    width={16}
-                    height={16}
-                    className="shrink-0 object-contain"
-                  />
-                ) : (
-                  <Boxes className="h-4 w-4 shrink-0" />
-                )}
-                <span
-                  className={cn(
-                    "truncate",
-                    project.isCompleted && "opacity-60"
-                  )}
+                <Link
+                  href={projectPath(project.id)}
+                  onClick={handleLinkClick}
+                  className="flex w-full min-w-0 items-center gap-2"
                 >
-                  {project.name}
-                </span>
-                {project.isCompleted && (
-                  <span className="ms-2 text-xs text-muted-foreground">
-                    {"(Complete)"}
+                  {project.iconUrl ? (
+                    <Image
+                      src={project.iconUrl}
+                      alt={`${project.name} icon`}
+                      width={16}
+                      height={16}
+                      className="shrink-0 object-contain"
+                    />
+                  ) : (
+                    <Boxes className="h-4 w-4 shrink-0" />
+                  )}
+                  <span
+                    className={cn(
+                      "truncate",
+                      project.isCompleted && "opacity-60"
+                    )}
+                  >
+                    {project.name}
                   </span>
-                )}
+                  {project.isCompleted && (
+                    <span className="ms-2 text-xs text-muted-foreground">
+                      {"(Complete)"}
+                    </span>
+                  )}
+                </Link>
               </CommandItem>
             ))}
           </CommandGroup>
