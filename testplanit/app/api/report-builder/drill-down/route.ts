@@ -13,7 +13,7 @@ import type {
 } from "~/lib/types/reportDrillDown";
 import { authOptions } from "~/server/auth";
 import {
-  buildJunitElapsedQuery,
+  buildJunitResultQuery,
   buildTestExecutionQuery,
   getModelForMetric,
   getQueryBuilderForMetric,
@@ -21,9 +21,10 @@ import {
 import { getFolderSubtreeIds } from "~/utils/reportGrouping";
 
 /**
- * Elapsed metrics on the test-execution report read durations from BOTH
- * sources — manual results (TestRunResults.elapsed) and automated results
- * (JUnitTestResult.time) — so their drill-down must list both.
+ * Result-level metrics on the test-execution report read BOTH sources —
+ * manual results (TestRunResults) and automated results (JUnitTestResult)
+ * — so their drill-downs must list both. Elapsed metrics additionally
+ * restrict to duration-bearing rows.
  */
 const ELAPSED_TEST_EXECUTION_METRICS = new Set([
   "avgElapsed",
@@ -31,33 +32,44 @@ const ELAPSED_TEST_EXECUTION_METRICS = new Set([
   "sumElapsed",
   "totalElapsedTime",
 ]);
+const COUNT_TEST_EXECUTION_METRICS = new Set([
+  "testResults",
+  "testResultCount",
+  "passRate",
+]);
 
-function isElapsedTestExecutionDrillDown(context: {
+function isDualSourceTestExecutionDrillDown(context: {
   metricId: string;
   reportType: string;
 }) {
   const baseReportType = context.reportType.replace(/^cross-project-/, "");
   return (
     baseReportType === "test-execution" &&
-    ELAPSED_TEST_EXECUTION_METRICS.has(context.metricId)
+    (ELAPSED_TEST_EXECUTION_METRICS.has(context.metricId) ||
+      COUNT_TEST_EXECUTION_METRICS.has(context.metricId))
   );
 }
 
 /**
- * Combined manual + JUnit drill-down for elapsed metric cells. The two
+ * Combined manual + JUnit drill-down for result-level metric cells. The two
  * sources are paged as one sequential list (all manual rows, then all JUnit
  * rows), each ordered by executedAt desc within its source.
  */
-async function handleElapsedDrillDown(
+async function handleDualSourceDrillDown(
   context: DrillDownRequest["context"],
   offset: number,
   limit: number
 ) {
+  const isElapsedMetric = ELAPSED_TEST_EXECUTION_METRICS.has(context.metricId);
   const manualQuery = buildTestExecutionQuery(context, offset, limit);
-  // Only duration-bearing rows feed the elapsed metrics.
-  manualQuery.where = { ...manualQuery.where, elapsed: { not: null } };
+  if (isElapsedMetric) {
+    // Only duration-bearing rows feed the elapsed metrics.
+    manualQuery.where = { ...manualQuery.where, elapsed: { not: null } };
+  }
 
-  const junitQuery = buildJunitElapsedQuery(context);
+  const junitQuery = buildJunitResultQuery(context, {
+    requireTime: isElapsedMetric,
+  });
 
   const [manualTotal, junitTotal] = await Promise.all([
     baseDb.testRunResults.count({ where: manualQuery.where }),
@@ -109,12 +121,64 @@ async function handleElapsedDrillDown(
     );
   }
 
+  // Pass-rate cells show a status breakdown; compute it across both
+  // sources and judge "passed" by Status.isSuccess (matching the metric).
+  let aggregates: DrillDownResponse["aggregates"];
+  if (context.metricId === "passRate") {
+    const [manualStatus, junitStatus] = await Promise.all([
+      baseDb.testRunResults.groupBy({
+        by: ["statusId"],
+        where: manualQuery.where,
+        _count: { id: true },
+      }),
+      junitQuery
+        ? baseDb.jUnitTestResult.groupBy({
+            by: ["statusId"],
+            where: junitQuery.where,
+            _count: { id: true },
+          })
+        : Promise.resolve([] as any[]),
+    ]);
+    const countByStatus = new Map<number, number>();
+    [...manualStatus, ...junitStatus].forEach((row: any) => {
+      if (row.statusId == null) return;
+      countByStatus.set(
+        row.statusId,
+        (countByStatus.get(row.statusId) ?? 0) + row._count.id
+      );
+    });
+    const statuses = await baseDb.status.findMany({
+      where: { id: { in: [...countByStatus.keys()] } },
+      include: { color: true },
+    });
+    const statusMap = new Map(statuses.map((st: any) => [st.id, st]));
+    const statusCounts = [...countByStatus.entries()].map(
+      ([statusId, count]) => ({
+        statusId,
+        statusName: statusMap.get(statusId)?.name || "Unknown",
+        statusColor: statusMap.get(statusId)?.color?.value,
+        count,
+      })
+    );
+    const passed = [...countByStatus.entries()].reduce(
+      (sum, [statusId, count]) =>
+        sum + (statusMap.get(statusId)?.isSuccess ? count : 0),
+      0
+    );
+    const grandTotal = manualTotal + junitTotal;
+    aggregates = {
+      statusCounts,
+      passRate: grandTotal > 0 ? (passed / grandTotal) * 100 : 0,
+    };
+  }
+
   const total = manualTotal + junitTotal;
   const response: DrillDownResponse = {
     data,
     total,
     hasMore: offset + data.length < total,
     context,
+    aggregates,
   };
   return Response.json(response);
 }
@@ -180,10 +244,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Elapsed metric cells combine manual and automated durations, so their
-    // drill-down reads both tables.
-    if (isElapsedTestExecutionDrillDown(context)) {
-      return await handleElapsedDrillDown(context, offset, limit);
+    // Result-level metric cells combine manual and automated results, so
+    // their drill-down reads both tables.
+    if (isDualSourceTestExecutionDrillDown(context)) {
+      return await handleDualSourceDrillDown(context, offset, limit);
     }
 
     // Get the appropriate query builder for this metric
@@ -211,51 +275,6 @@ export async function POST(req: NextRequest) {
       model.count({ where: query.where }),
     ]);
 
-    // Calculate aggregates for pass rate metrics
-    let aggregates: DrillDownResponse["aggregates"];
-    if (context.metricId === "passRate") {
-      // Group by status to get counts
-      const statusCounts = await model.groupBy({
-        by: ["statusId"],
-        where: query.where,
-        _count: {
-          id: true,
-        },
-      });
-
-      // Fetch status details for each group
-      const statusIds = statusCounts.map((sc: any) => sc.statusId);
-      const statuses = await baseDb.status.findMany({
-        where: { id: { in: statusIds } },
-        include: { color: true },
-      });
-
-      // Map status counts with details
-      const statusMap = new Map(statuses.map((s: any) => [s.id, s]));
-      const statusCountsWithDetails = statusCounts.map((sc: any) => {
-        const status = statusMap.get(sc.statusId);
-        return {
-          statusId: sc.statusId,
-          statusName: status?.name || "Unknown",
-          statusColor: status?.color?.value,
-          count: sc._count.id,
-        };
-      });
-
-      // Calculate pass rate
-      const passedCount =
-        statusCountsWithDetails.find(
-          (sc: { statusName: string; count: number }) =>
-            sc.statusName.toLowerCase() === "passed"
-        )?.count || 0;
-      const passRate = total > 0 ? (passedCount / total) * 100 : 0;
-
-      aggregates = {
-        statusCounts: statusCountsWithDetails,
-        passRate,
-      };
-    }
-
     // Transform data to ensure 'name' field is populated correctly
     const data = rawData.map((record: any) => {
       // For test execution records, use the test case name
@@ -282,7 +301,6 @@ export async function POST(req: NextRequest) {
       total,
       hasMore,
       context,
-      aggregates,
     };
 
     return Response.json(response);

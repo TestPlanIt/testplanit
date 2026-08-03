@@ -82,10 +82,10 @@ export function buildTestExecutionQuery(
   offset: number,
   limit: number
 ): TestRunResultsFindManyArgs {
-  const where: TestRunResultsWhereInput = {};
+  const where: TestRunResultsWhereInput = { isDeleted: false };
 
   // Build testRun filter with all conditions
-  const testRunFilter: any = {};
+  const testRunFilter: any = { isDeleted: false };
 
   // Apply project filter
   if (context.projectId) {
@@ -247,14 +247,17 @@ export function buildTestExecutionQuery(
 }
 
 /**
- * Build query for the automated half of an elapsed-metric drill-down.
- * Automated durations live in JUnitTestResult (`time`, seconds), so elapsed
- * cells drill into both tables; this mirrors buildTestExecutionQuery's
- * dimension filters onto the JUnit shape. The testCase dimension carries a
- * repository case id, which JUnit rows link to directly.
+ * Build query for the automated half of a result-level drill-down.
+ * Automated results live in JUnitTestResult, so result cells drill into
+ * both tables; this mirrors buildTestExecutionQuery's dimension filters
+ * onto the JUnit shape. The testCase dimension carries a repository case
+ * id, which JUnit rows link to directly. Untested rows (including null
+ * statusId, which is treated as Untested) are excluded per the reporting
+ * contract; elapsed metrics additionally require a duration.
  */
-export function buildJunitElapsedQuery(
-  context: DrillDownContext
+export function buildJunitResultQuery(
+  context: DrillDownContext,
+  opts: { requireTime?: boolean } = {}
 ): Record<string, any> | null {
   const testCaseId = context.dimensions.testCase?.id;
   if (
@@ -265,7 +268,9 @@ export function buildJunitElapsedQuery(
   }
 
   const where: Record<string, any> = {
-    time: { gt: 0 },
+    ...(opts.requireTime ? { time: { gt: 0 } } : {}),
+    statusId: { not: null },
+    status: { systemName: { not: "untested" } },
   };
 
   // Run-level filters travel through the suite's run.
@@ -312,6 +317,7 @@ export function buildJunitElapsedQuery(
 
   if (context.dimensions.status) {
     where.statusId = Number(context.dimensions.status.id);
+    delete where.status;
   }
 
   // Folder and tag filter on the linked repository case.
@@ -411,7 +417,11 @@ export function buildTestRunsQuery(
   offset: number,
   limit: number
 ): TestRunsFindManyArgs {
-  const where: TestRunsWhereInput = {};
+  // A "run" counts whether or not it has results (product ruling): the
+  // date dimension and report date range use the run's createdAt, and
+  // "by user" means the run's creator. Status/case groupings derive run
+  // membership from the union of manual and automated results.
+  const where: TestRunsWhereInput = { isDeleted: false };
 
   // Apply project filter
   if (context.projectId) {
@@ -420,51 +430,43 @@ export function buildTestRunsQuery(
     where.projectId = Number(context.dimensions.project.id);
   }
 
-  // Apply dimension filters
-  const resultsFilter: any = {};
-
   if (context.dimensions.user) {
-    // For test run count, we want test runs where the user executed tests, not created them
-    resultsFilter.executedById = String(context.dimensions.user.id);
+    where.createdById = String(context.dimensions.user.id);
   }
 
-  // Apply status filter to results
-  // Note: status is a property of TestRunResults, not TestRuns!
-  // We want test runs that have results with this status
   if (context.dimensions.status) {
-    resultsFilter.statusId = Number(context.dimensions.status.id);
+    const statusId = Number(context.dimensions.status.id);
+    where.OR = [
+      { results: { some: { isDeleted: false, statusId } } },
+      {
+        junitTestSuites: {
+          some: { results: { some: { statusId } } },
+        },
+      },
+    ];
   }
 
-  // Apply date filter to results
+  // Date dimension and report-level range apply to the run's creation day
   if (context.dimensions.date?.executedAt) {
     const date = new Date(context.dimensions.date.executedAt);
-    resultsFilter.executedAt = {
+    where.createdAt = {
       gte: startOfDayUTC(date),
       lt: endOfDayUTC(date),
     };
   }
-
-  // Apply report-level date range to results
   const dateRangeFilter = buildDateFilter(
     context.startDate,
     context.endDate,
-    "executedAt"
+    "createdAt"
   );
   if (
-    dateRangeFilter.executedAt &&
-    typeof dateRangeFilter.executedAt === "object"
+    dateRangeFilter.createdAt &&
+    typeof dateRangeFilter.createdAt === "object"
   ) {
-    const existing = resultsFilter.executedAt as any;
-    resultsFilter.executedAt = existing
-      ? { ...existing, ...(dateRangeFilter.executedAt as any) }
-      : dateRangeFilter.executedAt;
-  }
-
-  // Apply results filter if any criteria exist
-  if (Object.keys(resultsFilter).length > 0) {
-    where.results = {
-      some: resultsFilter,
-    };
+    const existing = where.createdAt as any;
+    where.createdAt = existing
+      ? { ...existing, ...(dateRangeFilter.createdAt as any) }
+      : dateRangeFilter.createdAt;
   }
 
   // Apply configuration filter
@@ -727,29 +729,27 @@ export function buildTestCasesQuery(
   offset: number,
   limit: number
 ): RepositoryCasesFindManyArgs {
+  // "Executed cases" are repository cases with at least one result — manual
+  // (TestRunResults) or automated (JUnitTestResult) — matching the cell's
+  // dimension filters. Untested placeholders don't count as executions.
   const where: RepositoryCasesWhereInput = {
     isDeleted: false,
   };
 
-  // DON'T filter by RepositoryCases.projectId directly!
-  // Test runs in one project can execute test cases from other projects.
-  // Instead, we filter by the test run's project through the results.testRun relation.
-
-  // Build testRun filter for all dimension filters
+  // Run-scope filter shared by both membership branches. Test runs in one
+  // project can execute cases from other projects, so the project filter
+  // applies to the RUN, not the repository case.
   const testRunFilter: any = {
     isDeleted: false,
   };
 
-  // Apply project filter to the TEST RUN, not the repository case
   if (context.projectId) {
     testRunFilter.projectId = context.projectId;
   } else if (context.dimensions.project) {
     testRunFilter.projectId = Number(context.dimensions.project.id);
   }
 
-  // Apply configuration filter to testRun
   if (context.dimensions.configuration) {
-    // Handle "None" case where configuration ID is null
     if (context.dimensions.configuration.id === null) {
       testRunFilter.configId = null;
     } else {
@@ -757,9 +757,7 @@ export function buildTestCasesQuery(
     }
   }
 
-  // Apply milestone filter to testRun
   if (context.dimensions.milestone) {
-    // Handle "None" case where milestone ID is null
     if (context.dimensions.milestone.id === null) {
       testRunFilter.milestoneId = null;
     } else {
@@ -767,64 +765,61 @@ export function buildTestCasesQuery(
     }
   }
 
-  // Apply testRun filter
   if (context.dimensions.testRun) {
     testRunFilter.id = Number(context.dimensions.testRun.id);
   }
 
-  // Build execution results filter
-  const resultsFilter: any = {};
+  // Manual-results membership branch
+  const resultsFilter: any = {
+    isDeleted: false,
+    status: { systemName: { not: "untested" } },
+    testRun: testRunFilter,
+  };
+  // Automated-results membership branch
+  const junitFilter: any = {
+    statusId: { not: null },
+    status: { systemName: { not: "untested" } },
+    testSuite: { testRun: testRunFilter },
+  };
 
-  // Apply user filter to execution results
   if (context.dimensions.user) {
     resultsFilter.executedById = String(context.dimensions.user.id);
+    junitFilter.createdById = String(context.dimensions.user.id);
   }
 
-  // Apply status filter only if a specific status dimension is selected
-  // For testCaseCount metric, exclude "untested" status to match aggregation behavior
   if (context.dimensions.status) {
-    resultsFilter.statusId = Number(context.dimensions.status.id);
-  } else if (context.metricId === "testCaseCount") {
-    // Exclude "untested" status to match testCaseCount aggregation
-    resultsFilter.status = {
-      systemName: { not: "untested" },
-    };
+    const statusId = Number(context.dimensions.status.id);
+    resultsFilter.statusId = statusId;
+    delete resultsFilter.status;
+    junitFilter.statusId = statusId;
+    delete junitFilter.status;
   }
 
-  // CRITICAL: Filter by the TestRunResults.testRun.projectId, not TestRunCases.testRun.projectId
-  // TestRunResults.testRunId can be different from TestRunCases.testRunId!
-  resultsFilter.testRun = testRunFilter;
-
-  // Apply date filter to EXECUTION date (not creation date!)
+  // Execution-date filters apply to both branches
+  const executedAtFilter: any = {};
   if (context.dimensions.date?.executedAt) {
     const date = new Date(context.dimensions.date.executedAt);
-    resultsFilter.executedAt = {
-      gte: startOfDayUTC(date),
-      lt: endOfDayUTC(date),
-    };
+    executedAtFilter.gte = startOfDayUTC(date);
+    executedAtFilter.lt = endOfDayUTC(date);
+  }
+  if (context.startDate) {
+    executedAtFilter.gte = executedAtFilter.gte ?? new Date(context.startDate);
+  }
+  if (context.endDate) {
+    executedAtFilter.lte = new Date(context.endDate);
+  }
+  if (Object.keys(executedAtFilter).length > 0) {
+    resultsFilter.executedAt = executedAtFilter;
+    junitFilter.executedAt = executedAtFilter;
   }
 
-  // Apply report-level date range to EXECUTION date
-  if (context.startDate || context.endDate) {
-    const existing = resultsFilter.executedAt as any;
-    resultsFilter.executedAt = {
-      ...(existing || {}),
-      ...(context.startDate && { gte: new Date(context.startDate) }),
-      ...(context.endDate && { lte: new Date(context.endDate) }),
-    };
-  }
-
-  // Filter test cases by their execution results
-  // The relationship is: RepositoryCases → TestRunCases ← TestRunResults (via testRunCaseId)
-  // CRITICAL: We filter at the TestRunResults level, not TestRunCases level
-  // because TestRunResults.testRunId ≠ TestRunCases.testRunId in some cases!
-  where.testRuns = {
-    some: {
-      results: {
-        some: resultsFilter,
-      },
-    },
-  };
+  where.OR = [
+    // The relationship is: RepositoryCases → TestRunCases ← TestRunResults.
+    // Filter at the TestRunResults level, not TestRunCases level, because
+    // TestRunResults.testRunId ≠ TestRunCases.testRunId in some cases.
+    { testRuns: { some: { results: { some: resultsFilter } } } },
+    { junitResults: { some: junitFilter } },
+  ];
 
   return {
     where,

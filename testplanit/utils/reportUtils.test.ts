@@ -480,4 +480,257 @@ describe("reportUtils", () => {
       expect(rows).toEqual([{ totalElapsedTime: 300 }]);
     });
   });
+
+  // Counting metrics operate on the same union: a result is a result
+  // regardless of source, and untested placeholders never count.
+  describe("counting metrics combine manual and JUnit results", () => {
+    const DAY1 = new Date("2026-07-01T10:00:00.000Z");
+
+    function makeCountDb({
+      manualRows = [] as any[],
+      junitRows = [] as any[],
+      manualCount = 0,
+      junitCount = 0,
+      runs = [] as any[],
+      runCount = 0,
+    } = {}) {
+      return {
+        testRunResults: {
+          findMany: vi.fn().mockResolvedValue(manualRows),
+          count: vi.fn().mockResolvedValue(manualCount),
+        },
+        jUnitTestResult: {
+          findMany: vi.fn().mockResolvedValue(junitRows),
+          count: vi.fn().mockResolvedValue(junitCount),
+        },
+        testRuns: {
+          findMany: vi.fn().mockResolvedValue(runs),
+          count: vi.fn().mockResolvedValue(runCount),
+        },
+      };
+    }
+
+    const registry = createTestExecutionMetricRegistry(true);
+
+    it("testResults sums both sources in the totals path", async () => {
+      const db = makeCountDb({ manualCount: 7, junitCount: 137 });
+
+      const rows = await registry.testResults.aggregate(db, 370, [], {});
+
+      expect(rows).toEqual([{ testResults: 144 }]);
+    });
+
+    it("testResults groups both sources by day", async () => {
+      const db = makeCountDb({
+        manualRows: [
+          {
+            executedAt: DAY1,
+            executedById: "u1",
+            statusId: 2,
+            testRunId: 100,
+            testRunCaseId: 11,
+            testRun: { projectId: 370, configId: null, milestoneId: null },
+          },
+        ],
+        junitRows: [
+          {
+            executedAt: DAY1,
+            createdById: "ci",
+            statusId: 2,
+            time: 3,
+            repositoryCaseId: 42,
+            testSuite: {
+              testRunId: 200,
+              testRun: { projectId: 370, configId: null, milestoneId: null },
+            },
+          },
+        ],
+      });
+
+      const rows: any[] = await registry.testResults.aggregate(
+        db,
+        370,
+        ["executedAt"],
+        {}
+      );
+
+      expect(rows).toHaveLength(1);
+      expect(rows[0].testResults).toBe(2);
+    });
+
+    it("passRate blends isSuccess across sources and is null when empty", async () => {
+      const db = makeCountDb({
+        manualRows: [
+          {
+            executedAt: DAY1,
+            executedById: "u1",
+            statusId: 3,
+            status: { isSuccess: false },
+            testRunId: 100,
+            testRunCaseId: 11,
+            testRun: { projectId: 370, configId: null, milestoneId: null },
+          },
+        ],
+        junitRows: [
+          {
+            executedAt: DAY1,
+            createdById: "ci",
+            statusId: 2,
+            status: { isSuccess: true },
+            time: 3,
+            repositoryCaseId: 42,
+            testSuite: {
+              testRunId: 200,
+              testRun: { projectId: 370, configId: null, milestoneId: null },
+            },
+          },
+        ],
+      });
+
+      const rows: any[] = await registry.passRate.aggregate(
+        db,
+        370,
+        ["executedAt"],
+        {}
+      );
+      expect(rows[0].passRate).toBe(50);
+
+      const emptyDb = makeCountDb();
+      const totals = await registry.passRate.aggregate(emptyDb, 370, [], {});
+      expect(totals).toEqual([{ passRate: null }]);
+    });
+
+    it("testRunCount counts every run in the totals path and groups by creation day", async () => {
+      const db = makeCountDb({
+        runCount: 5,
+        runs: [
+          {
+            id: 1,
+            createdAt: DAY1,
+            createdById: "creator-1",
+            projectId: 370,
+            configId: null,
+            milestoneId: null,
+          },
+          {
+            id: 2,
+            createdAt: DAY1,
+            createdById: "creator-1",
+            projectId: 370,
+            configId: null,
+            milestoneId: null,
+          },
+        ],
+      });
+
+      const totals = await registry.testRunCount.aggregate(db, 370, [], {});
+      expect(totals).toEqual([{ testRunCount: 5 }]);
+
+      const byDay: any[] = await registry.testRunCount.aggregate(
+        db,
+        370,
+        ["executedAt"],
+        {}
+      );
+      expect(byDay).toHaveLength(1);
+      expect(byDay[0].testRunCount).toBe(2);
+
+      const byCreator: any[] = await registry.testRunCount.aggregate(
+        db,
+        370,
+        ["executedById"],
+        {}
+      );
+      expect(byCreator[0].executedById).toBe("creator-1");
+      expect(byCreator[0].testRunCount).toBe(2);
+    });
+
+    it("testRunCount derives status groupings from both result sources", async () => {
+      const db = makeCountDb({
+        manualRows: [
+          {
+            executedAt: DAY1,
+            executedById: "u1",
+            statusId: 3,
+            testRunId: 100,
+            testRun: { projectId: 370, configId: null, milestoneId: null },
+          },
+        ],
+        junitRows: [
+          {
+            executedAt: DAY1,
+            createdById: "ci",
+            statusId: 3,
+            time: 3,
+            repositoryCaseId: 42,
+            testSuite: {
+              testRunId: 200,
+              testRun: { projectId: 370, configId: null, milestoneId: null },
+            },
+          },
+        ],
+      });
+
+      const rows: any[] = await registry.testRunCount.aggregate(
+        db,
+        370,
+        ["statusId"],
+        {}
+      );
+
+      expect(rows).toHaveLength(1);
+      expect(rows[0].statusId).toBe(3);
+      expect(rows[0].testRunCount).toBe(2); // two distinct runs
+    });
+
+    it("testCaseCount counts distinct repository cases across sources", async () => {
+      const db = makeCountDb({
+        manualRows: [
+          {
+            executedAt: DAY1,
+            executedById: "u1",
+            statusId: 2,
+            testRunId: 100,
+            testRunCase: { repositoryCaseId: 42 },
+            testRun: { projectId: 370, configId: null, milestoneId: null },
+          },
+        ],
+        junitRows: [
+          // Same case via automation plus a run-less automated case
+          {
+            executedAt: DAY1,
+            createdById: "ci",
+            statusId: 2,
+            time: 3,
+            repositoryCaseId: 42,
+            testSuite: {
+              testRunId: 200,
+              testRun: { projectId: 370, configId: null, milestoneId: null },
+            },
+          },
+          {
+            executedAt: DAY1,
+            createdById: "ci",
+            statusId: 2,
+            time: 3,
+            repositoryCaseId: 108205,
+            testSuite: {
+              testRunId: 201,
+              testRun: { projectId: 370, configId: null, milestoneId: null },
+            },
+          },
+        ],
+      });
+
+      const rows: any[] = await registry.testCaseCount.aggregate(
+        db,
+        370,
+        ["executedAt"],
+        {}
+      );
+
+      expect(rows).toHaveLength(1);
+      expect(rows[0].testCaseCount).toBe(2); // cases 42 and 108205
+    });
+  });
 });

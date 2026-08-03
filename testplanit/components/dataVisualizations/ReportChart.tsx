@@ -571,6 +571,7 @@ export const ReportChart: React.FC<ReportChartProps> = ({
       return toHumanReadable(value, { isSeconds: true, locale });
     }
     if (isPercentageMetric(metric)) {
+      if (value === null || value === undefined) return "—";
       return `${value.toFixed(2)}%`;
     }
     return value.toLocaleString(locale);

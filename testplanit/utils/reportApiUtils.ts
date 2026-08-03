@@ -676,10 +676,11 @@ async function handleCrossProjectAggregation({
           }
         );
 
-        // Initialize all metric values to 0 for this new row
-        // This ensures every row has all metrics, even if some metrics don't have results for this row
+        // Initialize all metric values for this new row so every row has
+        // every metric even when a metric has no data for it. Rates
+        // initialize to null ("—" on screen): an absent rate is not 0%.
         metricConfigs.forEach((mc: MetricConfig) => {
-          row[mc.label] = 0;
+          row[mc.label] = mc.id === "passRate" ? null : 0;
         });
 
         resultMap.set(resultKey, row);
@@ -1020,10 +1021,11 @@ async function handleProjectSpecificAggregation({
           }
         );
 
-        // Initialize all metric values to 0 for this new row
-        // This ensures every row has all metrics, even if some metrics don't have results for this row
+        // Initialize all metric values for this new row so every row has
+        // every metric even when a metric has no data for it. Rates
+        // initialize to null ("—" on screen): an absent rate is not 0%.
         metricConfigs.forEach((mc: MetricConfig) => {
-          row[mc.label] = 0;
+          row[mc.label] = mc.id === "passRate" ? null : 0;
         });
 
         resultMap.set(resultKey, row);

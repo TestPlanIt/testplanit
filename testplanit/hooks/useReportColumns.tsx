@@ -951,6 +951,15 @@ export function useReportColumns(
               metricLabel.includes("Rate") ||
               metricLabel.includes("%")
             ) {
+              // Null means "no population" (nothing ran) — render "—" so it
+              // can't be mistaken for an all-failed 0%.
+              if (value === null || value === undefined) {
+                return (
+                  <span className="inline-flex items-center px-2 py-1 text-xs font-medium rounded-full">
+                    {"\u2014"}
+                  </span>
+                );
+              }
               const percentage = typeof value === "number" ? value : 0;
               const isClickable = onMetricClick && percentage >= 0;
 

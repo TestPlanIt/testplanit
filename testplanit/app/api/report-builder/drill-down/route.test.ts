@@ -20,7 +20,7 @@ vi.mock("~/utils/drillDownQueryBuilders", () => ({
   getModelForMetric: vi.fn(),
   getQueryBuilderForMetric: vi.fn(),
   buildTestExecutionQuery: vi.fn(),
-  buildJunitElapsedQuery: vi.fn(),
+  buildJunitResultQuery: vi.fn(),
 }));
 
 vi.mock("~/lib/auth/utils", () => ({
@@ -31,7 +31,7 @@ import { baseDb } from "@/lib/db";
 import { getEnhancedDb } from "~/lib/auth/utils";
 import { getServerSession } from "next-auth";
 import {
-  buildJunitElapsedQuery,
+  buildJunitResultQuery,
   buildTestExecutionQuery,
   getModelForMetric,
   getQueryBuilderForMetric,
@@ -82,6 +82,18 @@ describe("POST /api/report-builder/drill-down", () => {
       where: { testRun: { projectId: 1 } },
       include: { testRunCase: true },
     }));
+    // Dual-source path defaults: manual query realistic, JUnit side skipped
+    // so single-source expectations keep holding.
+    (buildTestExecutionQuery as any).mockReturnValue({
+      where: { testRun: { projectId: 1 } },
+      include: { testRunCase: true },
+    });
+    (buildJunitResultQuery as any).mockReturnValue(null);
+    (baseDb as any).jUnitTestResult = {
+      findMany: vi.fn().mockResolvedValue([]),
+      count: vi.fn().mockResolvedValue(0),
+      groupBy: vi.fn().mockResolvedValue([]),
+    };
 
     // Inject mockModel by mocking baseDb as dynamic
     (baseDb as any).testRunResults = mockModel;
@@ -260,7 +272,9 @@ describe("POST /api/report-builder/drill-down", () => {
       (getModelForMetric as any).mockReturnValue("nonExistentModel");
 
       const response = await POST(
-        createRequest({ context: validDrillDownContext })
+        createRequest({
+          context: { ...validDrillDownContext, metricId: "testRuns" },
+        })
       );
       const data = await response.json();
 
@@ -268,18 +282,45 @@ describe("POST /api/report-builder/drill-down", () => {
       expect(data.error).toContain("Invalid model");
     });
 
-    it("includes passRate aggregates when metricId is passRate", async () => {
+    it("includes dual-source passRate aggregates judged by isSuccess", async () => {
       (getServerSession as any).mockResolvedValue(mockSession);
+      (buildTestExecutionQuery as any).mockReturnValue({
+        where: { testRun: { projectId: 1 } },
+        include: {},
+      });
+      (buildJunitResultQuery as any).mockReturnValue({
+        where: { statusId: { not: null } },
+        include: {},
+      });
 
-      const mockModel = (baseDb as any).testRunResults;
-      mockModel.groupBy = vi.fn().mockResolvedValue([
-        { statusId: 1, _count: { id: 3 } },
-        { statusId: 2, _count: { id: 1 } },
-      ]);
-
+      (baseDb as any).testRunResults = {
+        findMany: vi.fn().mockResolvedValue([]),
+        count: vi.fn().mockResolvedValue(4),
+        groupBy: vi.fn().mockResolvedValue([
+          { statusId: 1, _count: { id: 3 } },
+          { statusId: 2, _count: { id: 1 } },
+        ]),
+      };
+      (baseDb as any).jUnitTestResult = {
+        findMany: vi.fn().mockResolvedValue([]),
+        count: vi.fn().mockResolvedValue(6),
+        groupBy: vi
+          .fn()
+          .mockResolvedValue([{ statusId: 1, _count: { id: 6 } }]),
+      };
       (baseDb.status.findMany as any).mockResolvedValue([
-        { id: 1, name: "Passed", color: { value: "#22c55e" } },
-        { id: 2, name: "Failed", color: { value: "#ef4444" } },
+        {
+          id: 1,
+          name: "Passed",
+          isSuccess: true,
+          color: { value: "#22c55e" },
+        },
+        {
+          id: 2,
+          name: "Failed",
+          isSuccess: false,
+          color: { value: "#ef4444" },
+        },
       ]);
 
       const response = await POST(
@@ -288,15 +329,22 @@ describe("POST /api/report-builder/drill-down", () => {
             metricId: "passRate",
             reportType: "test-execution",
             projectId: 1,
+            dimensions: {},
           },
         })
       );
       const data = await response.json();
 
       expect(response.status).toBe(200);
-      expect(data).toHaveProperty("aggregates");
-      expect(data.aggregates).toHaveProperty("passRate");
-      expect(data.aggregates).toHaveProperty("statusCounts");
+      // 3 manual passed + 6 junit passed of 10 total (isSuccess-based)
+      expect(data.aggregates.passRate).toBe(90);
+      expect(data.aggregates.statusCounts).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ statusId: 1, count: 9 }),
+          expect.objectContaining({ statusId: 2, count: 1 }),
+        ])
+      );
+      expect(data.total).toBe(10);
     });
   });
 
@@ -335,7 +383,7 @@ describe("POST /api/report-builder/drill-down", () => {
         skip: 0,
         take: 50,
       });
-      (buildJunitElapsedQuery as any).mockReturnValue({
+      (buildJunitResultQuery as any).mockReturnValue({
         where: { time: { gt: 0 } },
         include: {},
       });
@@ -396,15 +444,16 @@ describe("POST /api/report-builder/drill-down", () => {
       };
       await POST(createRequest({ context }));
 
-      expect(buildJunitElapsedQuery).toHaveBeenCalledWith(
+      expect(buildJunitResultQuery).toHaveBeenCalledWith(
         expect.objectContaining({
           dimensions: { testCase: { id: 108205, name: "SCORM export case" } },
-        })
+        }),
+        { requireTime: true }
       );
     });
 
     it("skips the JUnit side entirely when the builder returns null", async () => {
-      (buildJunitElapsedQuery as any).mockReturnValue(null);
+      (buildJunitResultQuery as any).mockReturnValue(null);
 
       const response = await POST(createRequest({ context: elapsedContext }));
       const data = await response.json();

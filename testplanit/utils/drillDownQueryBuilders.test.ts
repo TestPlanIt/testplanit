@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { DrillDownContext } from "~/lib/types/reportDrillDown";
 import {
   buildIssuesQuery,
-  buildJunitElapsedQuery,
+  buildJunitResultQuery,
   buildMilestoneCompletionQuery,
   buildMilestonesQuery,
   buildRepositoryStatsQuery,
@@ -37,7 +37,11 @@ describe("drillDownQueryBuilders", () => {
       const context = createBaseContext({ projectId: 5 });
       const result = buildTestExecutionQuery(context, 0, 10);
 
-      expect(result.where?.testRun).toEqual({ projectId: 5 });
+      expect(result.where?.testRun).toEqual({
+        projectId: 5,
+        isDeleted: false,
+      });
+      expect(result.where?.isDeleted).toBe(false);
       expect(result.skip).toBe(0);
       expect(result.take).toBe(10);
       expect(result.orderBy).toEqual({ executedAt: "desc" });
@@ -183,23 +187,32 @@ describe("drillDownQueryBuilders", () => {
     });
   });
 
-  describe("buildJunitElapsedQuery", () => {
+  describe("buildJunitResultQuery", () => {
     it("should build basic query with project filter through the suite's run", () => {
       const context = createBaseContext({ projectId: 5 });
-      const result = buildJunitElapsedQuery(context);
+      const result = buildJunitResultQuery(context);
 
       expect(result?.where).toMatchObject({
-        time: { gt: 0 },
+        statusId: { not: null },
+        status: { systemName: { not: "untested" } },
         testSuite: { testRun: { projectId: 5 } },
       });
+      expect(result?.where.time).toBeUndefined();
       expect(result?.orderBy).toEqual({ executedAt: "desc" });
+    });
+
+    it("requires a duration only for elapsed metrics", () => {
+      const context = createBaseContext({ projectId: 5 });
+      const result = buildJunitResultQuery(context, { requireTime: true });
+
+      expect(result?.where.time).toEqual({ gt: 0 });
     });
 
     it("should map user dimension to createdById", () => {
       const context = createBaseContext({
         dimensions: { user: { id: "user-123", name: "Test User" } },
       });
-      const result = buildJunitElapsedQuery(context);
+      const result = buildJunitResultQuery(context);
 
       expect(result?.where.createdById).toBe("user-123");
     });
@@ -211,7 +224,7 @@ describe("drillDownQueryBuilders", () => {
           date: { id: "2024-01-15", executedAt: "2024-01-15T00:00:00.000Z" },
         },
       });
-      const result = buildJunitElapsedQuery(context);
+      const result = buildJunitResultQuery(context);
 
       expect(result?.where.statusId).toBe(2);
       expect(result?.where.executedAt.gte).toEqual(
@@ -223,7 +236,7 @@ describe("drillDownQueryBuilders", () => {
       const context = createBaseContext({
         dimensions: { testCase: { id: 42, name: "Login Test" } },
       });
-      const result = buildJunitElapsedQuery(context);
+      const result = buildJunitResultQuery(context);
 
       expect(result?.where.repositoryCaseId).toBe(42);
     });
@@ -233,7 +246,7 @@ describe("drillDownQueryBuilders", () => {
         dimensions: { testCase: { id: null as any, name: "None" } },
       });
 
-      expect(buildJunitElapsedQuery(context)).toBeNull();
+      expect(buildJunitResultQuery(context)).toBeNull();
     });
 
     it("should apply folder and tag filters on the linked repository case", () => {
@@ -243,7 +256,7 @@ describe("drillDownQueryBuilders", () => {
           tag: { id: 3, name: "regression" },
         },
       });
-      const result = buildJunitElapsedQuery(context);
+      const result = buildJunitResultQuery(context);
 
       expect(result?.where.repositoryCase).toEqual({
         folderId: 7,
@@ -263,26 +276,40 @@ describe("drillDownQueryBuilders", () => {
       expect(result.orderBy).toEqual({ createdAt: "desc" });
     });
 
-    it("should apply user dimension filter to results", () => {
+    it("maps the user dimension to the run creator", () => {
       const context = createBaseContext({
         dimensions: { user: { id: "user-456", name: "User" } },
       });
       const result = buildTestRunsQuery(context, 0, 10);
 
-      expect(result.where?.results).toEqual({
-        some: { executedById: "user-456" },
-      });
+      expect(result.where?.createdById).toBe("user-456");
     });
 
-    it("should apply status dimension filter to results", () => {
+    it("derives status membership from both result sources", () => {
       const context = createBaseContext({
         dimensions: { status: { id: 3, name: "Failed" } },
       });
       const result = buildTestRunsQuery(context, 0, 10);
 
-      expect(result.where?.results).toEqual({
-        some: { statusId: 3 },
+      expect(result.where?.OR).toEqual([
+        { results: { some: { isDeleted: false, statusId: 3 } } },
+        {
+          junitTestSuites: {
+            some: { results: { some: { statusId: 3 } } },
+          },
+        },
+      ]);
+    });
+
+    it("applies the date dimension and range to the run's createdAt", () => {
+      const context = createBaseContext({
+        dimensions: { date: { id: "2024-06-15", executedAt: "2024-06-15" } },
+        endDate: "2024-06-30",
       });
+      const result = buildTestRunsQuery(context, 0, 10);
+
+      expect(result.where?.createdAt).toBeDefined();
+      expect((result.where?.createdAt as any).gte).toBeInstanceOf(Date);
     });
 
     it("should apply configuration dimension filter", () => {
@@ -448,54 +475,70 @@ describe("drillDownQueryBuilders", () => {
       expect(result.where?.isDeleted).toBe(false);
     });
 
-    it("should filter by testRun project, not RepositoryCases project", () => {
+    it("should filter by testRun project through both membership branches", () => {
       const context = createBaseContext({ projectId: 10 });
       const result = buildTestCasesQuery(context, 0, 10);
 
-      // Should be filtered through results.testRun, not directly on projectId
+      // Filtered through the run scope in each OR branch, not directly on
+      // the repository case's own projectId
       expect(result.where?.projectId).toBeUndefined();
-      expect(result.where?.testRuns).toBeDefined();
+      const [manualBranch, junitBranch] = result.where?.OR as any[];
+      expect(manualBranch.testRuns.some.results.some.testRun.projectId).toBe(
+        10
+      );
+      expect(junitBranch.junitResults.some.testSuite.testRun.projectId).toBe(
+        10
+      );
     });
 
-    it("should apply user dimension filter to execution results", () => {
+    it("should apply user dimension filter to both sources", () => {
       const context = createBaseContext({
         dimensions: { user: { id: "exec-user", name: "Executor" } },
       });
       const result = buildTestCasesQuery(context, 0, 10);
 
-      expect(result.where?.testRuns?.some?.results?.some?.executedById).toBe(
+      const [manualBranch, junitBranch] = result.where?.OR as any[];
+      expect(manualBranch.testRuns.some.results.some.executedById).toBe(
         "exec-user"
       );
+      expect(junitBranch.junitResults.some.createdById).toBe("exec-user");
     });
 
-    it("should apply status dimension filter", () => {
+    it("should apply status dimension filter to both sources", () => {
       const context = createBaseContext({
         dimensions: { status: { id: 4, name: "Blocked" } },
       });
       const result = buildTestCasesQuery(context, 0, 10);
 
-      expect(result.where?.testRuns?.some?.results?.some?.statusId).toBe(4);
+      const [manualBranch, junitBranch] = result.where?.OR as any[];
+      expect(manualBranch.testRuns.some.results.some.statusId).toBe(4);
+      expect(junitBranch.junitResults.some.statusId).toBe(4);
     });
 
-    it("should exclude untested for testCaseCount metric", () => {
+    it("excludes untested placeholders from both membership branches", () => {
       const context = createBaseContext({ metricId: "testCaseCount" });
       const result = buildTestCasesQuery(context, 0, 10);
 
-      expect(result.where?.testRuns?.some?.results?.some?.status).toEqual({
+      const [manualBranch, junitBranch] = result.where?.OR as any[];
+      expect(manualBranch.testRuns.some.results.some.status).toEqual({
         systemName: { not: "untested" },
       });
+      expect(junitBranch.junitResults.some.status).toEqual({
+        systemName: { not: "untested" },
+      });
+      expect(junitBranch.junitResults.some.statusId).toEqual({ not: null });
     });
 
-    it("should apply date range filters to execution", () => {
+    it("should apply date range filters to both sources", () => {
       const context = createBaseContext({
         startDate: "2024-03-01",
         endDate: "2024-03-31",
       });
       const result = buildTestCasesQuery(context, 0, 10);
 
-      expect(
-        result.where?.testRuns?.some?.results?.some?.executedAt
-      ).toBeDefined();
+      const [manualBranch, junitBranch] = result.where?.OR as any[];
+      expect(manualBranch.testRuns.some.results.some.executedAt).toBeDefined();
+      expect(junitBranch.junitResults.some.executedAt).toBeDefined();
     });
   });
 
