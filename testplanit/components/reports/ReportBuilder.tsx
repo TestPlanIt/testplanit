@@ -1298,6 +1298,12 @@ function ReportBuilderContent({
                 to: endDateParam ? new Date(endDateParam) : undefined,
               });
             }
+          } else {
+            // The URL's dimension/metric ids don't resolve for this report
+            // type, so no auto-run will fire. Mark the run as completed-empty
+            // so the results panel drops its loading state and shows the
+            // no-results guidance instead of spinning forever.
+            setResults([]);
           }
         }
       } catch (err) {
@@ -1808,6 +1814,18 @@ function ReportBuilderContent({
   const isExecutionLog = matchesReportType(reportType, "execution-log");
   const loadedCount = results?.length ?? 0;
   const hasMore = isExecutionLog && loadedCount < totalCount;
+
+  // The first report run is in flight or guaranteed to fire (URL selections
+  // awaiting resolution, or a pre-built report's mount auto-run) and none has
+  // completed yet — `results` stays null until a run lands and is reset to
+  // null on report-type switches. While true, the results panel shows a
+  // loading state instead of a premature "No results found".
+  const awaitingFirstRun =
+    results === null &&
+    !error &&
+    (loading ||
+      Boolean(currentReport?.isPreBuilt) ||
+      Boolean(searchParams.get("dimensions") && searchParams.get("metrics")));
 
   const handleLoadMore = useCallback(() => {
     if (!isExecutionLog || loadingMore) return;
@@ -3234,6 +3252,7 @@ function ReportBuilderContent({
           {/* Results Display */}
           <ReportRenderer
             results={results || []}
+            awaitingFirstRun={awaitingFirstRun}
             chartData={allResults ?? undefined}
             reportType={reportType}
             dimensions={lastUsedDimensions}

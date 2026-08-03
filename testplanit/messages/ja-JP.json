@@ -2853,6 +2853,7 @@
       "selectFilter": "フィルターを選択",
       "testResultHistory": "テスト結果履歴",
       "testResultHistoryDescription": "このテストケースのテスト結果の履歴を表示する",
+      "viewElapsedTimeReport": "経過時間レポート",
       "noTestResults": "このテストケースのテスト結果は見つかりませんでした",
       "unknownRun": "不明な実行",
       "attempt": "試み",

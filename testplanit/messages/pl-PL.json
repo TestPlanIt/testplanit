@@ -2853,6 +2853,7 @@
       "selectFilter": "Wybierz filtr",
       "testResultHistory": "Historia wyników testów",
       "testResultHistoryDescription": "Wyświetl historię wyników testów dla tego przypadku testowego",
+      "viewElapsedTimeReport": "Raport czasu upłyniętego",
       "noTestResults": "Nie znaleziono wyników testów dla tego przypadku testowego",
       "unknownRun": "Nieznany bieg",
       "attempt": "Próba",

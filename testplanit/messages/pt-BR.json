@@ -2853,6 +2853,7 @@
       "selectFilter": "Selecione o filtro",
       "testResultHistory": "Histórico de resultados de testes",
       "testResultHistoryDescription": "Veja o histórico dos resultados dos testes para este caso de teste.",
+      "viewElapsedTimeReport": "Relatório de tempo decorrido",
       "noTestResults": "Nenhum resultado de teste encontrado para este caso de teste.",
       "unknownRun": "Execução desconhecida",
       "attempt": "Tentar",

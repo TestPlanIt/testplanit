@@ -2853,6 +2853,7 @@
       "selectFilter": "Filter selecteren",
       "testResultHistory": "Testresultaatgeschiedenis",
       "testResultHistoryDescription": "Bekijk de geschiedenis van de testresultaten voor deze testcase",
+      "viewElapsedTimeReport": "Verstreken tijd rapport",
       "noTestResults": "Er zijn geen testresultaten gevonden voor deze testcase",
       "unknownRun": "Onbekende run",
       "attempt": "Poging",

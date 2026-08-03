@@ -2853,6 +2853,7 @@
       "selectFilter": "選擇篩選器",
       "testResultHistory": "測試結果歷史記錄",
       "testResultHistoryDescription": "查看此測試案例的測試結果歷史記錄",
+      "viewElapsedTimeReport": "經過時間報表",
       "noTestResults": "未找到此測試案例的測試結果",
       "unknownRun": "未知運行",
       "attempt": "試圖",

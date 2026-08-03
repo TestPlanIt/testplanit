@@ -62,6 +62,7 @@ vi.mock("~/lib/navigation", () => ({
       {children}
     </a>
   ),
+  useRouter: () => ({ push: vi.fn() }),
 }));
 
 vi.mock("@tanstack/react-query", async (importOriginal) => {

@@ -2522,7 +2522,7 @@
       "testCases": "{count, plural, =0 {# Trường hợp kiểm thử} =1 {# Trường hợp kiểm thử} other {# Trường hợp kiểm thử}}",
       "activeMilestones": "{count, plural, =0 {# Các mốc quan trọng đang hoạt động} =1 {# Mốc quan trọng đang hoạt động} other {# Các mốc quan trọng đang hoạt động}}",
       "activeRuns": "{count, plural, =0 {# Các lượt chạy đang hoạt động} =1 {# Lượt chạy đang hoạt động} other {# Các lượt chạy đang hoạt động}}",
-      "automationRunsInProgress": "{count, plural, =0 {# Automation Runs in Progress} =1 {# Automation Run in Progress} other {# Automation Runs in Progress}}",
+      "automationRunsInProgress": "{count, plural, =0 {# Lượt chạy tự động đang tiến hành} =1 {# Lượt chạy tự động đang tiến hành} other {# Lượt chạy tự động đang tiến hành}}",
       "activeSessions": "{count, plural, =0 {# Phiên đang hoạt động} =1 {# Phiên đang hoạt động} other {# Phiên đang hoạt động}}",
       "issues": "{count, plural, =0 {# Vấn đề} =1 {# Vấn đề} other {# Vấn đề}}"
     }
@@ -2853,6 +2853,7 @@
       "selectFilter": "Chọn bộ lọc",
       "testResultHistory": "Lịch sử kết quả kiểm tra",
       "testResultHistoryDescription": "Xem lịch sử kết quả kiểm thử cho trường hợp kiểm thử này.",
+      "viewElapsedTimeReport": "Báo cáo thời gian đã trôi qua",
       "noTestResults": "Không tìm thấy kết quả kiểm thử nào cho trường hợp kiểm thử này.",
       "unknownRun": "Chạy không xác định",
       "attempt": "Nỗ lực",
@@ -3764,7 +3765,7 @@
       "recentResultsDescription": "Xem kết quả gần đây của đợt chạy thử nghiệm",
       "recentAutomatedResultsTitle": "Kết quả tự động gần đây",
       "noRecentAutomatedResults": "Không tìm thấy kết quả tự động gần đây nào.",
-      "automationRunsInProgress": "{count, plural, =1 {# Automation Run in Progress} other {# Automation Runs in Progress}}",
+      "automationRunsInProgress": "{count, plural, =1 {# Lượt chạy tự động đang tiến hành} other {# Lượt chạy tự động đang tiến hành}}",
       "automationRunsInProgressDescription": "Trạng thái trực tiếp của các lượt chạy kiểm thử tự động đang thực hiện.",
       "recentResultsDateRange": "Khoảng thời gian",
       "recentResultsElapsed": "Đã trôi qua",

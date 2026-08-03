@@ -3,6 +3,7 @@
 import { AutomationCandidatesReportPreset } from "@/components/automationCandidates/AutomationCandidatesReportPreset";
 import { ReportChart } from "@/components/dataVisualizations/ReportChart";
 import { DateFormatter } from "@/components/DateFormatter";
+import { Loading } from "@/components/Loading";
 import { MatrixReportPreset } from "@/components/matrix/MatrixReportPreset";
 import { VirtualizedDataTable } from "@/components/tables/VirtualizedDataTable";
 import { Button } from "@/components/ui/button";
@@ -142,6 +143,11 @@ interface ReportRendererProps {
   // Read-only mode (for shared links - hides share button, etc.)
   readOnly?: boolean;
 
+  // A report run is pending or in flight and no run has completed yet, so an
+  // empty `results` means "still loading", not "no data" — render the Loading
+  // indicator instead of the no-results card.
+  awaitingFirstRun?: boolean;
+
   // Children (for ShareButton in ReportBuilder, omitted in shared view)
   headerActions?: React.ReactNode;
 }
@@ -185,6 +191,7 @@ export function ReportRenderer({
   reportGeneratedAt,
   userTimezone,
   readOnly = false,
+  awaitingFirstRun = false,
   headerActions,
 }: ReportRendererProps) {
   const locale = useLocale();
@@ -405,6 +412,9 @@ export function ReportRenderer({
   }
 
   if (!results || results.length === 0) {
+    if (awaitingFirstRun) {
+      return <Loading />;
+    }
     return (
       <div className="flex items-center justify-center h-full">
         <Card className="max-w-md">

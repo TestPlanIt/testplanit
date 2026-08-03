@@ -10,6 +10,13 @@ import { IssuesListDisplay } from "@/components/tables/IssuesListDisplay";
 import { UserNameCell } from "@/components/tables/UserNameCell";
 import { TestRunNameDisplay } from "@/components/TestRunNameDisplay";
 import TextFromJson from "@/components/TextFromJson";
+import {
+  ActionBar,
+  ActionButtonContent,
+  ActionOverflow,
+  collapsibleActionClass,
+  useContainerCompact,
+} from "@/components/ui/action-bar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -25,6 +32,9 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -47,6 +57,7 @@ import type { JsonValue } from "@zenstackhq/orm";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   Bot,
+  ChartLine,
   ChevronDown,
   ChevronRight,
   Combine,
@@ -71,7 +82,7 @@ import { EditResultModal } from "~/app/[locale]/projects/repository/[projectId]/
 import FieldValueRenderer from "~/app/[locale]/projects/repository/[projectId]/[caseId]/FieldValueRenderer";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { resolveEffectiveWindowSeconds } from "~/lib/services/editWindow";
-import { Link } from "~/lib/navigation";
+import { Link, useRouter } from "~/lib/navigation";
 import { getDateFnsLocale } from "~/utils/locales";
 import { isAutomatedCaseSource } from "~/utils/testResultTypes";
 import TipTapEditor from "./tiptap/TipTapEditor";
@@ -736,7 +747,9 @@ export default function TestResultHistory({
   const tCases = useTranslations("repository.cases");
   const tParams = useTranslations("parameters");
   const locale = useLocale();
+  const router = useRouter();
   const dateFnsLocale = getDateFnsLocale(locale);
+  const { ref: headerRef, compact: headerCompact } = useContainerCompact();
   const [expandedResults, setExpandedResults] = useState<
     Set<string>
   > // Changed to Set<string>
@@ -1002,6 +1015,15 @@ export default function TestResultHistory({
   } = useProjectPermissions(activeProjectId ?? -1, "TestRunResults");
   const canAddEditResults = testRunResultPermissions?.canAddEdit ?? false;
 
+  // Same gate as the Reports entry in ProjectMenu
+  const { permissions: reportingPermissions } = useProjectPermissions(
+    activeProjectId ?? -1,
+    "Reporting"
+  );
+  const canSeeReports =
+    (reportingPermissions?.canAddEdit ?? false) ||
+    (reportingPermissions?.canDelete ?? false);
+
   const handleSelect = useCallback(
     (attachments: Attachments[], index: number) => {
       setSelectedAttachments(attachments);
@@ -1086,6 +1108,87 @@ export default function TestResultHistory({
   if (typeof activeProjectId !== "number") {
     return null;
   }
+
+  const canShowAddToRun =
+    !isLoadingTestRunPermissions && canAddEditRun && showAddToTestRun;
+
+  const elapsedTimeReportHref = `/projects/reports/${activeProjectId}?reportType=test-execution&tab=builder&page=1&pageSize=10&dimensions=${encodeURIComponent("date,testCase")}&metrics=avgElapsedTime&dimensionFilters=${encodeURIComponent(JSON.stringify({ testCase: [caseId] }))}`;
+
+  // Header actions get the shared action-bar treatment: labeled hover-expand
+  // buttons when the header is wide, one kebab menu when it's narrow. Add to
+  // Test Run is a picker, so in compact mode it folds into the kebab as a
+  // submenu instead of an ActionOverflow onClick action.
+  const renderHeaderActions = (showReport: boolean) => {
+    const canShowReport = showReport && canSeeReports;
+    if (!canShowReport && !canShowAddToRun) {
+      return null;
+    }
+    return (
+      <ActionBar compact={headerCompact} className="gap-2">
+        <ActionOverflow
+          compact={headerCompact}
+          menuLabel={tCommon("actions.actionsLabel")}
+          menuTestId="result-history-actions-menu"
+          actions={[
+            {
+              key: "report",
+              icon: ChartLine,
+              label: tCases("viewElapsedTimeReport"),
+              onClick: () => router.push(elapsedTimeReportHref),
+              hidden: !canShowReport,
+              testId: "result-history-report-link",
+            },
+          ]}
+          menuExtras={
+            headerCompact && canShowAddToRun ? (
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger
+                  className="flex items-center cursor-pointer"
+                  data-testid="result-history-add-to-run"
+                >
+                  <PlusSquare className="me-2 h-4 w-4" />
+                  <span>{tCommon("actions.addToTestRun")}</span>
+                </DropdownMenuSubTrigger>
+                <DropdownMenuSubContent>
+                  <ScrollArea className="max-h-96">
+                    <AddToTestRunDropdown
+                      caseId={caseId}
+                      projectId={activeProjectId}
+                    />
+                  </ScrollArea>
+                </DropdownMenuSubContent>
+              </DropdownMenuSub>
+            ) : undefined
+          }
+        />
+        {!headerCompact && canShowAddToRun && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                type="button"
+                variant="outline"
+                className={collapsibleActionClass()}
+                data-testid="result-history-add-to-run"
+              >
+                <ActionButtonContent
+                  icon={PlusSquare}
+                  label={tCommon("actions.addToTestRun")}
+                />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <ScrollArea className="max-h-96">
+                <AddToTestRunDropdown
+                  caseId={caseId}
+                  projectId={activeProjectId}
+                />
+              </ScrollArea>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
+      </ActionBar>
+    );
+  };
 
   const allUnifiedResults: UnifiedTestResult[] = [];
 
@@ -1254,7 +1357,10 @@ export default function TestResultHistory({
   if (!sortedResults.length) {
     return (
       <Card shadow="none">
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader
+          ref={headerRef}
+          className="flex flex-row items-center justify-between"
+        >
           <div>
             <CardTitle className="flex items-center gap-1">
               <History className="w-5 h-5" />
@@ -1262,34 +1368,7 @@ export default function TestResultHistory({
             </CardTitle>
             <CardDescription>{tCases("noTestResults")}</CardDescription>
           </div>
-          {!isLoadingTestRunPermissions &&
-            canAddEditRun &&
-            showAddToTestRun && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="gap-2"
-                    disabled={isLoadingTestRunPermissions}
-                  >
-                    <PlusSquare className="h-4 w-4" />
-                    {tCommon("actions.addToTestRun")}
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  {activeProjectId && (
-                    <ScrollArea className="max-h-96">
-                      <AddToTestRunDropdown
-                        caseId={caseId}
-                        projectId={activeProjectId}
-                      />
-                    </ScrollArea>
-                  )}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
+          {renderHeaderActions(false)}
         </CardHeader>
       </Card>
     );
@@ -1302,7 +1381,10 @@ export default function TestResultHistory({
 
   return (
     <Card shadow="none">
-      <CardHeader className="flex flex-row items-center justify-between p-4">
+      <CardHeader
+        ref={headerRef}
+        className="flex flex-row items-center justify-between p-4"
+      >
         <div>
           <CardTitle className="flex items-center gap-1">
             <History className="w-5 h-5" />
@@ -1312,32 +1394,7 @@ export default function TestResultHistory({
             {tCases("testResultHistoryDescription")}
           </CardDescription>
         </div>
-        {!isLoadingTestRunPermissions && canAddEditRun && showAddToTestRun && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="gap-2"
-                disabled={isLoadingTestRunPermissions}
-              >
-                <PlusSquare className="h-4 w-4" />
-                {tCommon("actions.addToTestRun")}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              {activeProjectId && (
-                <ScrollArea className="max-h-96">
-                  <AddToTestRunDropdown
-                    caseId={caseId}
-                    projectId={activeProjectId}
-                  />
-                </ScrollArea>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
+        {renderHeaderActions(true)}
       </CardHeader>
       <CardContent className="p-0">
         <Table>

@@ -2853,6 +2853,7 @@
       "selectFilter": "حدد المرشح",
       "testResultHistory": "سجل نتائج الاختبار",
       "testResultHistoryDescription": "عرض سجل نتائج الاختبار لهذه حالة الاختبار",
+      "viewElapsedTimeReport": "تقرير الوقت المنقضي",
       "noTestResults": "لم يتم العثور على نتائج اختبار لهذه حالة الاختبار",
       "unknownRun": "تشغيل غير معروف",
       "attempt": "المحاولة",

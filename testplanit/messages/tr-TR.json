@@ -2853,6 +2853,7 @@
       "selectFilter": "Filtre Seç",
       "testResultHistory": "Test Sonuç Geçmişi",
       "testResultHistoryDescription": "Bu test senaryosuna ait test sonuçlarının geçmişini görüntüleyin.",
+      "viewElapsedTimeReport": "Geçen süre raporu",
       "noTestResults": "Bu test durumu için herhangi bir test sonucu bulunamadı.",
       "unknownRun": "Bilinmeyen Koşu",
       "attempt": "Girişim",
