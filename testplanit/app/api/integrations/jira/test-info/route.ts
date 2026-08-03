@@ -429,6 +429,8 @@ export async function GET(request: NextRequest) {
                     orderBy: {
                       executedAt: "desc",
                     },
+                    // Only results[0] (the latest) is ever read below.
+                    take: 1,
                     where: {
                       isDeleted: false,
                     },
@@ -497,6 +499,8 @@ export async function GET(request: NextRequest) {
                         orderBy: {
                           executedAt: "desc",
                         },
+                        // Only results[0] (the latest) is ever read below.
+                        take: 1,
                         where: {
                           isDeleted: false,
                         },
@@ -569,6 +573,8 @@ export async function GET(request: NextRequest) {
                             orderBy: {
                               executedAt: "desc",
                             },
+                            // Only results[0] (the latest) is ever read below.
+                            take: 1,
                             where: {
                               isDeleted: false,
                             },
