@@ -2287,6 +2287,7 @@
     },
     "members": {
       "cardTitle": "Problemy",
+      "casesOtherProjects": "{count, plural, one {# przypadek testowy w innym projekcie} few {# przypadki testowe w innych projektach} many {# przypadków testowych w innych projektach} other {# przypadków testowych w innych projektach}}",
       "inScope": "W zakresie",
       "foundInTesting": "Znalezione podczas testowania",
       "foundInTestingEmpty": "Nie znaleziono problemów podczas testowania.",
@@ -4606,6 +4607,8 @@
       },
       "generateDefaultOn": "Domyślnie uwzględnione w kreatorze generowania przypadków testowych. Kliknij, aby domyślnie je wykluczyć.",
       "generateDefaultOff": "Domyślnie wykluczone z kreatora generowania przypadków testowych. Kliknij, aby domyślnie je uwzględnić.",
+      "jiraPanelOn": "Widoczny w panelu wtyczki Jira dla powiązanych przypadków testowych. Kliknij, aby go ukryć.",
+      "jiraPanelOff": "Ukryty w panelu wtyczki Jira. Kliknij, aby go pokazać dla powiązanych przypadków testowych.",
       "resultFields": {
         "description": "Zarządzaj polami wyników",
         "add": {
@@ -6361,7 +6364,13 @@
     "filterAll": "Wszystko",
     "fanOutPartialFailure": "Nie można nawiązać połączenia z projektami {count, number} . Wyświetlane są wyniki z projektów {successCount, number}.",
     "projectSelectorLabel": "Projekt",
-    "searchFailedTitle": "Wyszukiwanie nie powiodło się"
+    "searchFailedTitle": "Wyszukiwanie nie powiodło się",
+    "authComplete": {
+      "successTitle": "Autoryzacja zakończona",
+      "successDescription": "Twoje konto jest teraz połączone. Możesz zamknąć to okno i wrócić do wykonywanej czynności.",
+      "errorTitle": "Autoryzacja nie powiodła się",
+      "errorDescription": "Nie można było zakończyć autoryzacji. Zamknij to okno i spróbuj ponownie."
+    }
   },
   "Pages": {
     "Issues": {
@@ -6862,7 +6871,8 @@
     "reportBuilder": {
       "dimensions": "## Wymiary\nWybierz wymiary, które chcesz analizować w raporcie. Wymiary to atrybuty, które kategoryzują dane, takie jak Data, Użytkownik, Status itp. Możesz je przeciągać, aby zmienić ich kolejność.",
       "metrics": "## Metryki\nWybierz metryki, które chcesz mierzyć w raporcie. Metryki to ilościowe pomiary pochodzące z danych, takie jak liczba wyników testów, wskaźnik zdawalności, średni czas trwania testu itp. Możesz je przeciągać, aby zmienić ich kolejność.",
-      "dateRange": "## Zakres dat\nFiltruj dane raportu według określonego okresu. Możesz wybrać spośród predefiniowanych zakresów, takich jak „Ostatnie 7 dni” lub „Poprzedni miesiąc”, lub zdefiniować własny zakres dat. Ten filtr ma zastosowanie do odpowiedniego pola daty dla każdego typu raportu (np. daty wykonania dla wyników testów, daty utworzenia dla przypadków testowych)."
+      "dateRange": "## Zakres dat\nFiltruj dane raportu według określonego okresu. Możesz wybrać spośród predefiniowanych zakresów, takich jak „Ostatnie 7 dni” lub „Poprzedni miesiąc”, lub zdefiniować własny zakres dat. Ten filtr ma zastosowanie do odpowiedniego pola daty dla każdego typu raportu (np. daty wykonania dla wyników testów, daty utworzenia dla przypadków testowych).",
+      "dimensionFilters": "## Filtry\nOgranicz raport do konkretnych wartości dla każdego wybranego wymiaru. Pozostaw filtr pusty, aby uwzględnić wszystkie wartości danego wymiaru. Wymiary dat są filtrowane za pomocą selektora zakresu dat."
     },
     "codeRepository": {
       "name": "## Nazwa repozytorium\nPrzyjazna nazwa wyświetlana dla tego połączenia z repozytorium.\n\n— używana do identyfikacji w ustawieniach kontekstu kodu projektu.\n— nie musi być zgodna z nazwą repozytorium u dostawcy.",
@@ -7571,6 +7581,9 @@
       "folderDescendants": {
         "label": "Uwzględnij podfoldery",
         "description": "Zlicz wyniki z podfolderów w kierunku każdego folderu nadrzędnego."
+      },
+      "dimensionFilters": {
+        "allValues": "Wszystkie wartości"
       }
     },
     "errors": {

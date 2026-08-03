@@ -98,7 +98,7 @@ export async function POST(
             message:
               "This integration requires individual user authentication. Please authorize it in the integration settings.",
             authType: integration.authType,
-            authUrl: `/api/integrations/oauth/${integration.provider.toLowerCase()}/auth?integrationId=${integrationId}`,
+            authUrl: `/api/integrations/oauth/${integration.provider.toLowerCase()}/auth?integrationId=${integrationId}&returnUrl=${encodeURIComponent("/integrations/auth-complete")}`,
           },
           { status: 401 }
         );

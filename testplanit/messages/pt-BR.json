@@ -2287,6 +2287,7 @@
     },
     "members": {
       "cardTitle": "Problemas",
+      "casesOtherProjects": "{count, plural, one {# caso de teste em outro projeto} other {# casos de teste em outros projetos}}",
       "inScope": "No escopo",
       "foundInTesting": "Encontrado em teste",
       "foundInTestingEmpty": "Nenhuma issue encontrada em teste.",
@@ -4606,6 +4607,8 @@
       },
       "generateDefaultOn": "Incluído por padrão no assistente de Geração de Casos de Teste. Clique para excluí-lo por padrão.",
       "generateDefaultOff": "Excluído por padrão no assistente de Geração de Casos de Teste. Clique para incluí-lo por padrão.",
+      "jiraPanelOn": "Exibido no painel do plugin do Jira para casos de teste vinculados. Clique para ocultá-lo.",
+      "jiraPanelOff": "Oculto do painel do plugin do Jira. Clique para exibi-lo para casos de teste vinculados.",
       "resultFields": {
         "description": "Gerenciar campos de resultado",
         "add": {
@@ -6361,7 +6364,13 @@
     "filterAll": "Todos",
     "fanOutPartialFailure": "Não foi possível acessar o(s) projeto(s) {count, number} . Exibindo resultados do(s) projeto(s) {successCount, number}.",
     "projectSelectorLabel": "Projeto",
-    "searchFailedTitle": "A busca falhou"
+    "searchFailedTitle": "A busca falhou",
+    "authComplete": {
+      "successTitle": "Autorização concluída",
+      "successDescription": "Sua conta está conectada agora. Você pode fechar esta janela e voltar ao que estava fazendo.",
+      "errorTitle": "Falha na autorização",
+      "errorDescription": "Não foi possível concluir a autorização. Fecha esta janela e tente novamente."
+    }
   },
   "Pages": {
     "Issues": {
@@ -6862,7 +6871,8 @@
     "reportBuilder": {
       "dimensions": "## Dimensões\nSelecione as dimensões que deseja analisar no seu relatório. As dimensões são atributos que categorizam seus dados, como Data, Usuário, Status, etc. Você pode arrastar para reordená-las.",
       "metrics": "## Métricas\nSelecione as métricas que deseja medir em seu relatório. As métricas são medidas quantitativas derivadas de seus dados, como Contagem de Resultados de Testes, Taxa de Aprovação, Tempo Médio Decorrido, etc. Você pode arrastar para reordená-las.",
-      "dateRange": "## Intervalo de Datas\nFiltre os dados do seu relatório por um período específico. Você pode selecionar intervalos predefinidos, como \"Últimos 7 dias\" ou \"Mês anterior\", ou definir um intervalo de datas personalizado. Este filtro se aplica ao campo de data relevante para cada tipo de relatório (por exemplo, data de execução para resultados de testes, data de criação para casos de teste)."
+      "dateRange": "## Intervalo de Datas\nFiltre os dados do seu relatório por um período específico. Você pode selecionar intervalos predefinidos, como \"Últimos 7 dias\" ou \"Mês anterior\", ou definir um intervalo de datas personalizado. Este filtro se aplica ao campo de data relevante para cada tipo de relatório (por exemplo, data de execução para resultados de testes, data de criação para casos de teste).",
+      "dimensionFilters": "## Filtros\nRestrinja o relatório a valores específicos de cada dimensão selecionada. Deixe um filtro vazio para incluir todos os valores dessa dimensão. As dimensões de data são filtradas com o seletor de intervalo de datas."
     },
     "codeRepository": {
       "name": "## Nome do Repositório\nUm nome amigável para exibir esta conexão de repositório.\n\n- Usado para identificá-lo nas configurações de contexto do código do projeto.\n- Não precisa corresponder ao nome do repositório no provedor.",
@@ -7571,6 +7581,9 @@
       "folderDescendants": {
         "label": "Incluir subpastas",
         "description": "Contabilize os resultados das subpastas em relação a cada pasta principal."
+      },
+      "dimensionFilters": {
+        "allValues": "Todos os valores"
       }
     },
     "errors": {

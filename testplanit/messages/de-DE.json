@@ -2287,6 +2287,7 @@
     },
     "members": {
       "cardTitle": "Probleme",
+      "casesOtherProjects": "{count, plural, one {# Testfall in einem anderen Projekt} other {# Testfälle in anderen Projekten}}",
       "inScope": "Im Geltungsbereich",
       "foundInTesting": "Beim Testen gefunden",
       "foundInTestingEmpty": "Keine Probleme beim Testen gefunden.",
@@ -2519,7 +2520,7 @@
       "testCases": "{count, plural, =0 {# Testfälle} =1 {# Testfall} other {# Testfälle}}",
       "activeMilestones": "{count, plural, =0 {# Aktive Meilensteine} =1 {# Aktiver Meilenstein} other {# Aktive Meilensteine}}",
       "activeRuns": "{count, plural, =0 {# Aktive Läufe} =1 {# Aktiver Lauf} other {# Aktive Läufe}}",
-      "automationRunsInProgress": "{count, plural, =0 {# Automation Runs in Progress} =1 {# Automation Run in Progress} other {# Automation Runs in Progress}}",
+      "automationRunsInProgress": "{count, plural, =0 {# Automatisierungsläufe in Bearbeitung} =1 {# Automatisierungslauf in Bearbeitung} other {# Automatisierungsläufe in Bearbeitung}}",
       "activeSessions": "{count, plural, =0 {# Aktive Sitzungen} =1 {# Aktive Sitzung} other {# Aktive Sitzungen}}",
       "issues": "{count, plural, =0 {# Probleme} =1 {# Problem} other {# Probleme}}"
     }
@@ -3761,7 +3762,7 @@
       "recentResultsDescription": "Sehen Sie sich die aktuellen Ergebnisse des Testlaufs an.",
       "recentAutomatedResultsTitle": "Aktuelle automatisierte Ergebnisse",
       "noRecentAutomatedResults": "Es wurden keine aktuellen automatisierten Ergebnisse gefunden.",
-      "automationRunsInProgress": "{count, plural, =1 {# Automation Run in Progress} other {# Automation Runs in Progress}}",
+      "automationRunsInProgress": "{count, plural, =1 {# Automatisierungslauf in Bearbeitung} other {# Automatisierungsläufe in Bearbeitung}}",
       "automationRunsInProgressDescription": "Live-Status der laufenden automatisierten Testläufe.",
       "recentResultsDateRange": "Datumsbereich",
       "recentResultsElapsed": "Vergangen",
@@ -4606,6 +4607,8 @@
       },
       "generateDefaultOn": "Standardmäßig im Assistenten „Testfälle generieren“ enthalten. Klicken Sie, um es standardmäßig auszuschließen.",
       "generateDefaultOff": "Standardmäßig im Assistenten „Testfälle generieren“ ausgeschlossen. Klicken Sie, um es standardmäßig einzuschließen.",
+      "jiraPanelOn": "Wird im Jira-Plugin-Panel für verknüpfte Testfälle angezeigt. Klicken, um es auszublenden.",
+      "jiraPanelOff": "Im Jira-Plugin-Panel ausgeblendet. Klicken, um es für verknüpfte Testfälle anzuzeigen.",
       "resultFields": {
         "description": "Ergebnisfelder verwalten",
         "add": {
@@ -6361,7 +6364,13 @@
     "filterAll": "Alle",
     "fanOutPartialFailure": "Das/Die Projekt(e) {count, number} konnte/konnten nicht erreicht werden. Es werden Ergebnisse vom/von den Projekt(en) {successCount, number} angezeigt.",
     "projectSelectorLabel": "Projekt",
-    "searchFailedTitle": "Suche fehlgeschlagen"
+    "searchFailedTitle": "Suche fehlgeschlagen",
+    "authComplete": {
+      "successTitle": "Autorisierung abgeschlossen",
+      "successDescription": "Ihr Konto ist jetzt verbunden. Sie können dieses Fenster schließen und zu Ihrer vorherigen Tätigkeit zurückkehren.",
+      "errorTitle": "Autorisierung fehlgeschlagen",
+      "errorDescription": "Die Autorisierung konnte nicht abgeschlossen werden. Schließen Sie dieses Fenster und versuchen Sie es erneut."
+    }
   },
   "Pages": {
     "Issues": {
@@ -6862,7 +6871,8 @@
     "reportBuilder": {
       "dimensions": "## Dimensionen\nWählen Sie die Dimensionen aus, die Sie in Ihrem Bericht analysieren möchten. Dimensionen sind Attribute, die Ihre Daten kategorisieren, z. B. Datum, Benutzer, Status usw. Sie können sie per Drag & Drop neu anordnen.",
       "metrics": "## Kennzahlen\nWählen Sie die Kennzahlen aus, die Sie in Ihrem Bericht messen möchten. Kennzahlen sind quantitative Messwerte, die aus Ihren Daten abgeleitet werden, wie z. B. Anzahl der Testergebnisse, Erfolgsquote, durchschnittliche Bearbeitungszeit usw. Sie können die Reihenfolge per Drag & Drop ändern.",
-      "dateRange": "## Datumsbereich\nFiltern Sie Ihre Berichtsdaten nach einem bestimmten Zeitraum. Sie können aus vordefinierten Bereichen wie „Letzte 7 Tage“ oder „Vormonat“ auswählen oder einen benutzerdefinierten Datumsbereich definieren. Dieser Filter wird auf das jeweilige Datumsfeld für jeden Berichtstyp angewendet (z. B. Ausführungsdatum für Testergebnisse, Erstellungsdatum für Testfälle)."
+      "dateRange": "## Datumsbereich\nFiltern Sie Ihre Berichtsdaten nach einem bestimmten Zeitraum. Sie können aus vordefinierten Bereichen wie „Letzte 7 Tage“ oder „Vormonat“ auswählen oder einen benutzerdefinierten Datumsbereich definieren. Dieser Filter wird auf das jeweilige Datumsfeld für jeden Berichtstyp angewendet (z. B. Ausführungsdatum für Testergebnisse, Erstellungsdatum für Testfälle).",
+      "dimensionFilters": "## Filter\nSchränken Sie den Bericht auf bestimmte Werte jeder ausgewählten Dimension ein. Lassen Sie einen Filter leer, um alle Werte dieser Dimension einzuschließen. Datumsdimensionen werden stattdessen mit dem Datumsbereichs-Auswähler gefiltert."
     },
     "codeRepository": {
       "name": "## Repository-Name\nEin aussagekräftiger Name für diese Repository-Verbindung.\n\n- Wird zur Identifizierung in den Projektcode-Kontexteinstellungen verwendet.\n- Muss nicht mit dem Repository-Namen des Providers übereinstimmen.",
@@ -7571,6 +7581,9 @@
       "folderDescendants": {
         "label": "Unterordner einbeziehen",
         "description": "Ergebnisse aus Unterordnern werden den jeweiligen übergeordneten Ordnern zugeordnet."
+      },
+      "dimensionFilters": {
+        "allValues": "Alle Werte"
       }
     },
     "errors": {

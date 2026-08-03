@@ -2287,6 +2287,7 @@
     },
     "members": {
       "cardTitle": "Problemen",
+      "casesOtherProjects": "{count, plural, one {# testgeval in een ander project} other {# testgevallen in andere projecten}}",
       "inScope": "Binnen bereik",
       "foundInTesting": "Gevonden tijdens testen",
       "foundInTestingEmpty": "Geen problemen gevonden tijdens testen.",
@@ -4606,6 +4607,8 @@
       },
       "generateDefaultOn": "Standaard opgenomen in de wizard Testcases genereren. Klik om het standaard uit te sluiten.",
       "generateDefaultOff": "Standaard uitgesloten in de wizard Testcases genereren. Klik om het standaard op te nemen.",
+      "jiraPanelOn": "Weergegeven in het Jira-pluginpaneel voor gekoppelde testgevallen. Klik om te verbergen.",
+      "jiraPanelOff": "Verborgen in het Jira-pluginpaneel. Klik om het weer te geven voor gekoppelde testgevallen.",
       "resultFields": {
         "description": "Resultaatvelden beheren",
         "add": {
@@ -6361,7 +6364,13 @@
     "filterAll": "Alle",
     "fanOutPartialFailure": "Project(en) {count, number} konden niet worden bereikt. Resultaten van project(en) {successCount, number} worden weergegeven.",
     "projectSelectorLabel": "Project",
-    "searchFailedTitle": "Zoeken mislukt"
+    "searchFailedTitle": "Zoeken mislukt",
+    "authComplete": {
+      "successTitle": "Autorisatie voltooid",
+      "successDescription": "Uw account is nu verbonden. U kunt dit venster sluiten en teruggaan naar waar u mee bezig was.",
+      "errorTitle": "Autorisatie mislukt",
+      "errorDescription": "De autorisatie kon niet worden voltooid. Sluit dit venster en probeer het opnieuw."
+    }
   },
   "Pages": {
     "Issues": {
@@ -6862,7 +6871,8 @@
     "reportBuilder": {
       "dimensions": "## Dimensies\nSelecteer de dimensies die u in uw rapport wilt analyseren. Dimensies zijn kenmerken die uw gegevens categoriseren, zoals Datum, Gebruiker, Status, enz. U kunt ze slepen om de volgorde te wijzigen.",
       "metrics": "## Metrics\nSelecteer de metrics die u in uw rapport wilt meten. Metrics zijn kwantitatieve metingen die zijn afgeleid van uw gegevens, zoals het aantal testresultaten, het slagingspercentage, de gemiddelde verstreken tijd, enz. U kunt ze slepen om de volgorde te wijzigen.",
-      "dateRange": "## Datumbereik\nFilter uw rapportgegevens op een specifieke periode. U kunt kiezen uit vooraf gedefinieerde bereiken zoals 'Afgelopen 7 dagen' of 'Vorige maand', of een aangepast datumbereik definiëren. Dit filter is van toepassing op het relevante datumveld voor elk rapporttype (bijv. uitvoeringsdatum voor testresultaten, aanmaakdatum voor testcases)."
+      "dateRange": "## Datumbereik\nFilter uw rapportgegevens op een specifieke periode. U kunt kiezen uit vooraf gedefinieerde bereiken zoals 'Afgelopen 7 dagen' of 'Vorige maand', of een aangepast datumbereik definiëren. Dit filter is van toepassing op het relevante datumveld voor elk rapporttype (bijv. uitvoeringsdatum voor testresultaten, aanmaakdatum voor testcases).",
+      "dimensionFilters": "## Filters\nBeperk het rapport tot specifieke waarden van elke geselecteerde dimensie. Laat een filter leeg om alle waarden voor die dimensie op te nemen. Datumdimensies worden in plaats daarvan gefilterd met de datumbereikkiezer."
     },
     "codeRepository": {
       "name": "## Naam van de repository\nEen gebruiksvriendelijke weergavenaam voor deze repositoryverbinding.\n\n- Wordt gebruikt om deze te identificeren in de contextinstellingen van de projectcode.\n- Hoef niet overeen te komen met de repositorynaam op de provider.",
@@ -7571,6 +7581,9 @@
       "folderDescendants": {
         "label": "Submappen meenemen",
         "description": "Tel de resultaten van submappen naar elke bovenliggende map."
+      },
+      "dimensionFilters": {
+        "allValues": "Alle waarden"
       }
     },
     "errors": {

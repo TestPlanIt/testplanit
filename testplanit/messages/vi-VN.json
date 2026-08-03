@@ -2287,6 +2287,7 @@
     },
     "members": {
       "cardTitle": "Vấn đề",
+      "casesOtherProjects": "{count, plural, other {# trường hợp thử nghiệm trong các dự án khác}}",
       "inScope": "Trong phạm vi",
       "foundInTesting": "Được phát hiện trong quá trình kiểm thử",
       "foundInTestingEmpty": "Không có vấn đề nào được phát hiện trong quá trình kiểm thử.",
@@ -4606,6 +4607,8 @@
       },
       "generateDefaultOn": "Được bao gồm theo mặc định trong trình hướng dẫn Tạo Trường hợp kiểm thử. Nhấp để loại trừ theo mặc định.",
       "generateDefaultOff": "Bị loại trừ theo mặc định trong trình hướng dẫn Tạo Trường hợp kiểm thử. Nhấp để bao gồm theo mặc định.",
+      "jiraPanelOn": "Hiển thị trong bảng plugin Jira cho các trường hợp thử nghiệm được liên kết. Nhấp để ẩn.",
+      "jiraPanelOff": "Đã ẩn khỏi bảng plugin Jira. Nhấp để hiển thị cho các trường hợp thử nghiệm được liên kết.",
       "resultFields": {
         "description": "Quản lý các trường kết quả",
         "add": {
@@ -6361,7 +6364,13 @@
     "filterAll": "Tất cả",
     "fanOutPartialFailure": "Không thể truy cập {count, number} dự án. Hiển thị kết quả từ {successCount, number} dự án.",
     "projectSelectorLabel": "Dự án",
-    "searchFailedTitle": "Tìm kiếm thất bại"
+    "searchFailedTitle": "Tìm kiếm thất bại",
+    "authComplete": {
+      "successTitle": "Ủy quyền hoàn tất",
+      "successDescription": "Tài khoản của bạn đã được kết nối. Bạn có thể đóng cửa sổ này và tiếp tục công việc đang làm.",
+      "errorTitle": "Ủy quyền thất bại",
+      "errorDescription": "Không thể hoàn tất ủy quyền. Đóng cửa sổ này và thử lại."
+    }
   },
   "Pages": {
     "Issues": {
@@ -6862,7 +6871,8 @@
     "reportBuilder": {
       "dimensions": "## Kích thước\nChọn các kích thước bạn muốn phân tích trong báo cáo. Kích thước là các thuộc tính phân loại dữ liệu của bạn, chẳng hạn như Ngày, Người dùng, Trạng thái, v.v. Bạn có thể kéo để sắp xếp lại thứ tự chúng.",
       "metrics": "## Số liệu\nChọn các số liệu bạn muốn đo trong báo cáo. Số liệu là các phép đo định lượng được suy ra từ dữ liệu của bạn, chẳng hạn như Số kết quả kiểm tra, Tỷ lệ đạt, Thời gian trung bình, v.v. Bạn có thể kéo để sắp xếp lại thứ tự chúng.",
-      "dateRange": "## Phạm vi ngày\nLọc dữ liệu báo cáo của bạn theo một khoảng thời gian cụ thể. Bạn có thể chọn từ các phạm vi được xác định trước như '7 ngày gần đây' hoặc 'Tháng trước', hoặc xác định phạm vi ngày tùy chỉnh. Bộ lọc này áp dụng cho trường ngày liên quan cho từng loại báo cáo (ví dụ: ngày thực hiện cho kết quả kiểm thử, ngày tạo cho trường hợp kiểm thử)."
+      "dateRange": "## Phạm vi ngày\nLọc dữ liệu báo cáo của bạn theo một khoảng thời gian cụ thể. Bạn có thể chọn từ các phạm vi được xác định trước như '7 ngày gần đây' hoặc 'Tháng trước', hoặc xác định phạm vi ngày tùy chỉnh. Bộ lọc này áp dụng cho trường ngày liên quan cho từng loại báo cáo (ví dụ: ngày thực hiện cho kết quả kiểm thử, ngày tạo cho trường hợp kiểm thử).",
+      "dimensionFilters": "## Bộ lọc\nGiới hạn báo cáo theo các giá trị cụ thể của từng chiều đã chọn. Để trống một bộ lọc để bao gồm tất cả giá trị của chiều đó. Các chiều ngày được lọc bằng bộ chọn khoảng ngày thay thế."
     },
     "codeRepository": {
       "name": "## Tên kho lưu trữ\nTên hiển thị thân thiện cho kết nối kho lưu trữ này.\n\n- Được sử dụng để xác định nó trong cài đặt ngữ cảnh mã dự án.\n- Không cần phải trùng khớp với tên kho lưu trữ trên nhà cung cấp.",
@@ -7571,6 +7581,9 @@
       "folderDescendants": {
         "label": "Bao gồm các thư mục con",
         "description": "Đếm số kết quả từ các thư mục con cho mỗi thư mục cha."
+      },
+      "dimensionFilters": {
+        "allValues": "Tất cả giá trị"
       }
     },
     "errors": {

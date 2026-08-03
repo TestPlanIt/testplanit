@@ -2287,6 +2287,7 @@
     },
     "members": {
       "cardTitle": "Sorunlar",
+      "casesOtherProjects": "{count, plural, one {# başka projede test senaryosu} other {# başka projede test senaryosu}}",
       "inScope": "Kapsamda",
       "foundInTesting": "Testte bulundu",
       "foundInTestingEmpty": "Testte hiçbir sorun bulunamadı.",
@@ -4606,6 +4607,8 @@
       },
       "generateDefaultOn": "Test Durumları Oluştur sihirbazında varsayılan olarak dahil edilir. Varsayılan olarak hariç tutmak için tıklayın.",
       "generateDefaultOff": "Test Durumları Oluştur sihirbazında varsayılan olarak hariç tutulur. Varsayılan olarak dahil etmek için tıklayın.",
+      "jiraPanelOn": "Bağlantılı test senaryoları için Jira eklenti panelinde gösteriliyor. Gizlemek için tıklayın.",
+      "jiraPanelOff": "Jira eklenti panelinden gizlendi. Bağlantılı test senaryoları için göstermek üzere tıklayın.",
       "resultFields": {
         "description": "Sonuç alanlarını yönetin",
         "add": {
@@ -6361,7 +6364,13 @@
     "filterAll": "Tüm",
     "fanOutPartialFailure": "{count, number} projeye ulaşılamadı. {successCount, number} projeden sonuçlar gösteriliyor.",
     "projectSelectorLabel": "Proje",
-    "searchFailedTitle": "Arama başarısız oldu"
+    "searchFailedTitle": "Arama başarısız oldu",
+    "authComplete": {
+      "successTitle": "Yetkilendirme tamamlandı",
+      "successDescription": "Hesabınız artık bağlandı. Bu pencereyi kapatıp yapmakta olduğunuz işe geri dönebilirsiniz.",
+      "errorTitle": "Yetkilendirme başarısız oldu",
+      "errorDescription": "Yetkilendirme tamamlanamadı. Bu pencereyi kapatıp tekrar deneyin."
+    }
   },
   "Pages": {
     "Issues": {
@@ -6862,7 +6871,8 @@
     "reportBuilder": {
       "dimensions": "## Boyutlar\nRaporunuzda analiz etmek istediğiniz boyutları seçin. Boyutlar, verilerinizi kategorize eden özelliklerdir; örneğin Tarih, Kullanıcı, Durum vb. Bunları sürükleyerek yeniden sıralayabilirsiniz.",
       "metrics": "## Ölçümler\nRaporunuzda ölçmek istediğiniz ölçümleri seçin. Ölçümler, Test Sonuç Sayısı, Başarı Oranı, Ortalama Geçen Süre vb. gibi verilerinizden türetilen nicel ölçümlerdir. Bunları sürükleyerek yeniden sıralayabilirsiniz.",
-      "dateRange": "## Tarih Aralığı\nRapor verilerinizi belirli bir zaman dilimine göre filtreleyin. 'Son 7 gün' veya 'Önceki ay' gibi önceden tanımlanmış aralıklardan seçim yapabilir veya özel bir tarih aralığı tanımlayabilirsiniz. Bu filtre, her rapor türü için ilgili tarih alanına uygulanır (örneğin, test sonuçları için yürütme tarihi, test senaryoları için oluşturma tarihi)."
+      "dateRange": "## Tarih Aralığı\nRapor verilerinizi belirli bir zaman dilimine göre filtreleyin. 'Son 7 gün' veya 'Önceki ay' gibi önceden tanımlanmış aralıklardan seçim yapabilir veya özel bir tarih aralığı tanımlayabilirsiniz. Bu filtre, her rapor türü için ilgili tarih alanına uygulanır (örneğin, test sonuçları için yürütme tarihi, test senaryoları için oluşturma tarihi).",
+      "dimensionFilters": "## Filtreler\nRaporu, seçilen her boyutun belirli değerlerine göre daraltın. Bir boyuta ait tüm değerleri dahil etmek için filtreyi boş bırakın. Tarih boyutları ise bunun yerine tarih aralığı seçici ile filtrelenir."
     },
     "codeRepository": {
       "name": "## Depo Adı\nBu depo bağlantısı için kullanıcı dostu bir görünen ad.\n\n- Proje kod bağlamı ayarlarında tanımlamak için kullanılır.\n- Sağlayıcıdaki depo adıyla eşleşmesi gerekmez.",
@@ -7571,6 +7581,9 @@
       "folderDescendants": {
         "label": "Alt klasörleri dahil et",
         "description": "Alt klasörlerdeki sonuçları her bir üst klasöre doğru sayın."
+      },
+      "dimensionFilters": {
+        "allValues": "Tüm değerler"
       }
     },
     "errors": {

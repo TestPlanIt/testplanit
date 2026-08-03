@@ -2287,6 +2287,7 @@
     },
     "members": {
       "cardTitle": "Problèmes",
+      "casesOtherProjects": "{count, plural, one {# cas de test dans un autre projet} other {# cas de test dans d'autres projets}}",
       "inScope": "Dans le périmètre",
       "foundInTesting": "Trouvé en test",
       "foundInTestingEmpty": "Aucun problème trouvé en test.",
@@ -2519,7 +2520,7 @@
       "testCases": "{count, plural, =0 {# Cas de test} =1 {# Cas de test} other {# Cas de test}}",
       "activeMilestones": "{count, plural, =0 {# Étapes actives} =1 {# Étape active} other {# Étapes actives}}",
       "activeRuns": "{count, plural, =0 {# Courses actives} =1 {# Course active} other {# Courses actives}}",
-      "automationRunsInProgress": "{count, plural, =0 {# Automation Runs in Progress} =1 {# Automation Run in Progress} other {# Automation Runs in Progress}}",
+      "automationRunsInProgress": "{count, plural, =0 {# exécution automatisée en cours} =1 {# exécution automatisée en cours} other {# exécutions automatisées en cours}}",
       "activeSessions": "{count, plural, =0 {# Sessions actives} =1 {# Session active} other {# Sessions actives}}",
       "issues": "{count, plural, =0 {# Problèmes} =1 {# Problème} other {# Problèmes}}"
     }
@@ -3761,7 +3762,7 @@
       "recentResultsDescription": "Consultez les résultats récents de l'essai.",
       "recentAutomatedResultsTitle": "Résultats automatisés récents",
       "noRecentAutomatedResults": "Aucun résultat automatisé récent trouvé.",
-      "automationRunsInProgress": "{count, plural, =1 {# Automation Run in Progress} other {# Automation Runs in Progress}}",
+      "automationRunsInProgress": "{count, plural, =1 {# exécution automatisée en cours} other {# exécutions automatisées en cours}}",
       "automationRunsInProgressDescription": "État en direct des exécutions de tests automatisées en cours.",
       "recentResultsDateRange": "Période couverte",
       "recentResultsElapsed": "Échéance",
@@ -4606,6 +4607,8 @@
       },
       "generateDefaultOn": "Inclus par défaut dans l'assistant de génération de cas de test. Cliquez pour l'exclure par défaut.",
       "generateDefaultOff": "Exclu par défaut dans l'assistant de génération de cas de test. Cliquez pour l'inclure par défaut.",
+      "jiraPanelOn": "Affiché dans le panneau du plugin Jira pour les cas de test liés. Cliquez pour le masquer.",
+      "jiraPanelOff": "Masqué du panneau du plugin Jira. Cliquez pour l'afficher pour les cas de test liés.",
       "resultFields": {
         "description": "Gérer les champs de résultats",
         "add": {
@@ -6361,7 +6364,13 @@
     "filterAll": "Tous",
     "fanOutPartialFailure": "Impossible d'accéder au(x) projet(s) {count, number} . Affichage des résultats du/des projet(s) {successCount, number}.",
     "projectSelectorLabel": "Projet",
-    "searchFailedTitle": "La recherche a échoué."
+    "searchFailedTitle": "La recherche a échoué.",
+    "authComplete": {
+      "successTitle": "Autorisation terminée",
+      "successDescription": "Votre compte est maintenant connecté. Vous pouvez fermer cette fenêtre et reprendre ce que vous faisiez.",
+      "errorTitle": "L'autorisation a échoué",
+      "errorDescription": "L'autorisation n'a pas pu être terminée. Fermez cette fenêtre et réessayez."
+    }
   },
   "Pages": {
     "Issues": {
@@ -6862,7 +6871,8 @@
     "reportBuilder": {
       "dimensions": "## Dimensions\nSélectionnez les dimensions que vous souhaitez analyser dans votre rapport. Les dimensions sont des attributs qui catégorisent vos données, comme la date, l'utilisateur, le statut, etc. Vous pouvez les réorganiser par glisser-déposer.",
       "metrics": "## Métriques\nSélectionnez les métriques que vous souhaitez inclure dans votre rapport. Les métriques sont des mesures quantitatives issues de vos données, telles que le nombre de résultats de test, le taux de réussite, le temps moyen écoulé, etc. Vous pouvez les réorganiser par glisser-déposer.",
-      "dateRange": "## Plage de dates\nFiltrez les données de votre rapport selon une période spécifique. Vous pouvez choisir parmi des plages prédéfinies comme « 7 derniers jours » ou « Mois précédent », ou définir une plage de dates personnalisée. Ce filtre s'applique au champ de date correspondant à chaque type de rapport (par exemple, la date d'exécution pour les résultats de test, la date de création pour les cas de test)."
+      "dateRange": "## Plage de dates\nFiltrez les données de votre rapport selon une période spécifique. Vous pouvez choisir parmi des plages prédéfinies comme « 7 derniers jours » ou « Mois précédent », ou définir une plage de dates personnalisée. Ce filtre s'applique au champ de date correspondant à chaque type de rapport (par exemple, la date d'exécution pour les résultats de test, la date de création pour les cas de test).",
+      "dimensionFilters": "## Filtres\nRestreignez le rapport à des valeurs spécifiques pour chaque dimension sélectionnée. Laissez un filtre vide pour inclure toutes les valeurs de cette dimension. Les dimensions de date sont filtrées à l'aide du sélecteur de plage de dates."
     },
     "codeRepository": {
       "name": "## Nom du dépôt\nNom convivial pour cette connexion au dépôt.\n\n- Utilisé pour l'identifier dans les paramètres contextuels du code du projet.\n- Ne doit pas nécessairement correspondre au nom du dépôt chez le fournisseur.",
@@ -7571,6 +7581,9 @@
       "folderDescendants": {
         "label": "Inclure les sous-dossiers",
         "description": "Compter les résultats des sous-dossiers vers chaque dossier parent."
+      },
+      "dimensionFilters": {
+        "allValues": "Toutes les valeurs"
       }
     },
     "errors": {

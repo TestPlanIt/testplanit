@@ -2287,6 +2287,7 @@
     },
     "members": {
       "cardTitle": "Problemi",
+      "casesOtherProjects": "{count, plural, one {# caso di test in un altro progetto} other {# casi di test in altri progetti}}",
       "inScope": "Nell'ambito",
       "foundInTesting": "Trovato nei test",
       "foundInTestingEmpty": "Nessun problema trovato nei test.",
@@ -4606,6 +4607,8 @@
       },
       "generateDefaultOn": "Incluso per impostazione predefinita nella procedura guidata Genera casi di test. Fai clic per escluderlo per impostazione predefinita.",
       "generateDefaultOff": "Escluso per impostazione predefinita nella procedura guidata Genera casi di test. Fai clic per includerlo per impostazione predefinita.",
+      "jiraPanelOn": "Mostrato nel pannello del plugin Jira per i casi di test collegati. Fai clic per nasconderlo.",
+      "jiraPanelOff": "Nascosto dal pannello del plugin Jira. Fai clic per mostrarlo per i casi di test collegati.",
       "resultFields": {
         "description": "Gestisci i campi dei risultati",
         "add": {
@@ -6361,7 +6364,13 @@
     "filterAll": "Tutto",
     "fanOutPartialFailure": "Impossibile raggiungere il/i progetto/i {count, number} . Vengono mostrati i risultati del/i progetto/i {successCount, number}.",
     "projectSelectorLabel": "Progetto",
-    "searchFailedTitle": "Ricerca non riuscita"
+    "searchFailedTitle": "Ricerca non riuscita",
+    "authComplete": {
+      "successTitle": "Autorizzazione completata",
+      "successDescription": "Il tuo account è ora connesso. Puoi chiudere questa finestra e tornare a quello che stavi facendo.",
+      "errorTitle": "Autorizzazione non riuscita",
+      "errorDescription": "Non è stato possibile completare l'autorizzazione. Chiudi questa finestra e riprova."
+    }
   },
   "Pages": {
     "Issues": {
@@ -6862,7 +6871,8 @@
     "reportBuilder": {
       "dimensions": "## Dimensioni\nSeleziona le dimensioni che desideri analizzare nel tuo report. Le dimensioni sono attributi che categorizzano i dati, come Data, Utente, Stato, ecc. Puoi trascinarle per riordinarle.",
       "metrics": "## Metriche\nSeleziona le metriche che desideri misurare nel tuo report. Le metriche sono misurazioni quantitative derivate dai tuoi dati, come il conteggio dei risultati dei test, il tasso di superamento, il tempo medio trascorso, ecc. Puoi trascinarle per riordinarle.",
-      "dateRange": "## Intervallo di date\nFiltra i dati del report in base a un periodo di tempo specifico. Puoi selezionare intervalli predefiniti come \"Ultimi 7 giorni\" o \"Mese precedente\", oppure definire un intervallo di date personalizzato. Questo filtro si applica al campo data pertinente per ciascun tipo di report (ad esempio, data di esecuzione per i risultati dei test, data di creazione per i casi di test)."
+      "dateRange": "## Intervallo di date\nFiltra i dati del report in base a un periodo di tempo specifico. Puoi selezionare intervalli predefiniti come \"Ultimi 7 giorni\" o \"Mese precedente\", oppure definire un intervallo di date personalizzato. Questo filtro si applica al campo data pertinente per ciascun tipo di report (ad esempio, data di esecuzione per i risultati dei test, data di creazione per i casi di test).",
+      "dimensionFilters": "## Filtri\nRestringi il report a valori specifici di ciascuna dimensione selezionata. Lascia vuoto un filtro per includere tutti i valori di quella dimensione. Le dimensioni di data vengono invece filtrate con il selettore di intervallo di date."
     },
     "codeRepository": {
       "name": "## Nome del repository\nUn nome visualizzato descrittivo per questa connessione al repository.\n\n- Utilizzato per identificarlo nelle impostazioni del contesto del codice del progetto.\n- Non deve necessariamente corrispondere al nome del repository sul provider.",
@@ -7571,6 +7581,9 @@
       "folderDescendants": {
         "label": "Includi sottocartelle",
         "description": "Conta i risultati delle sottocartelle rispetto a ciascuna cartella principale."
+      },
+      "dimensionFilters": {
+        "allValues": "Tutti i valori"
       }
     },
     "errors": {

@@ -2287,6 +2287,7 @@
     },
     "members": {
       "cardTitle": "이슈",
+      "casesOtherProjects": "{count, plural, other {다른 프로젝트의 테스트 케이스 #개}}",
       "inScope": "범위 내",
       "foundInTesting": "테스트 중 발견",
       "foundInTestingEmpty": "테스트 중 발견된 이슈가 없습니다.",
@@ -4606,6 +4607,8 @@
       },
       "generateDefaultOn": "테스트 케이스 생성 마법사에서 기본적으로 포함됩니다. 클릭하면 기본적으로 제외됩니다.",
       "generateDefaultOff": "테스트 케이스 생성 마법사에서 기본적으로 제외됩니다. 클릭하면 기본적으로 포함됩니다.",
+      "jiraPanelOn": "연결된 테스트 케이스에 대해 Jira 플러그인 패널에 표시됨. 클릭하여 숨기기.",
+      "jiraPanelOff": "Jira 플러그인 패널에서 숨겨짐. 클릭하여 연결된 테스트 케이스에 대해 표시하기.",
       "resultFields": {
         "description": "결과 필드 관리",
         "add": {
@@ -6361,7 +6364,13 @@
     "filterAll": "모두",
     "fanOutPartialFailure": "{count, number} 프로젝트에 연결할 수 없습니다. {successCount, number} 프로젝트의 결과를 표시합니다.",
     "projectSelectorLabel": "프로젝트",
-    "searchFailedTitle": "검색 실패"
+    "searchFailedTitle": "검색 실패",
+    "authComplete": {
+      "successTitle": "인증 완료",
+      "successDescription": "계정이 연결되었습니다. 이 창을 닫고 하던 작업으로 돌아가셔도 됩니다.",
+      "errorTitle": "인증 실패",
+      "errorDescription": "인증을 완료할 수 없습니다. 이 창을 닫고 다시 시도해 주세요."
+    }
   },
   "Pages": {
     "Issues": {
@@ -6862,7 +6871,8 @@
     "reportBuilder": {
       "dimensions": "## 차원\n보고서에서 분석할 차원을 선택하세요. 차원은 날짜, 사용자, 상태 등과 같이 데이터를 분류하는 속성입니다. 드래그하여 순서를 변경할 수 있습니다.",
       "metrics": "## 측정항목\n보고서에서 측정할 측정항목을 선택하세요. 측정항목은 시험 결과 개수, 합격률, 평균 소요 시간 등과 같이 데이터에서 도출된 정량적 측정값입니다. 드래그하여 순서를 변경할 수 있습니다.",
-      "dateRange": "## 날짜 범위\n특정 기간으로 보고서 데이터를 필터링하세요. '지난 7일' 또는 '지난달'과 같은 미리 정의된 범위를 선택하거나 사용자 지정 날짜 범위를 정의할 수 있습니다. 이 필터는 각 보고서 유형의 관련 날짜 필드(예: 테스트 결과의 실행 날짜, 테스트 케이스의 생성 날짜)에 적용됩니다."
+      "dateRange": "## 날짜 범위\n특정 기간으로 보고서 데이터를 필터링하세요. '지난 7일' 또는 '지난달'과 같은 미리 정의된 범위를 선택하거나 사용자 지정 날짜 범위를 정의할 수 있습니다. 이 필터는 각 보고서 유형의 관련 날짜 필드(예: 테스트 결과의 실행 날짜, 테스트 케이스의 생성 날짜)에 적용됩니다.",
+      "dimensionFilters": "## 필터\n선택한 각 차원의 특정 값으로 보고서를 좁힙니다. 해당 차원의 모든 값을 포함하려면 필터를 비워 두세요. 날짜 차원은 대신 날짜 범위 선택기로 필터링됩니다."
     },
     "codeRepository": {
       "name": "## 저장소 이름\n이 저장소 연결에 대한 보기 쉬운 표시 이름입니다.\n\n- 프로젝트 코드 컨텍스트 설정에서 식별하는 데 사용됩니다.\n- 공급자의 저장소 이름과 일치할 필요는 없습니다.",
@@ -7571,6 +7581,9 @@
       "folderDescendants": {
         "label": "하위 폴더를 포함하세요",
         "description": "하위 폴더의 결과를 각 상위 폴더에 포함시킵니다."
+      },
+      "dimensionFilters": {
+        "allValues": "모든 값"
       }
     },
     "errors": {

@@ -2287,6 +2287,7 @@
     },
     "members": {
       "cardTitle": "Problemas",
+      "casesOtherProjects": "{count, plural, one {# caso de prueba en otro proyecto} other {# casos de prueba en otros proyectos}}",
       "inScope": "En alcance",
       "foundInTesting": "Encontrado en pruebas",
       "foundInTestingEmpty": "No se encontraron problemas en pruebas.",
@@ -4606,6 +4607,8 @@
       },
       "generateDefaultOn": "Incluido de forma predeterminada en el asistente de generación de casos de prueba. Haga clic para excluirlo de forma predeterminada.",
       "generateDefaultOff": "Excluido de forma predeterminada en el asistente de generación de casos de prueba. Haga clic para incluirlo de forma predeterminada.",
+      "jiraPanelOn": "Se muestra en el panel del plugin de Jira para casos de prueba vinculados. Haga clic para ocultarlo.",
+      "jiraPanelOff": "Oculto en el panel del plugin de Jira. Haga clic para mostrarlo en los casos de prueba vinculados.",
       "resultFields": {
         "description": "Administrar campos de resultados",
         "add": {
@@ -6361,7 +6364,13 @@
     "filterAll": "Todo",
     "fanOutPartialFailure": "No se pudo acceder al/los proyecto(s) {count, number} . Mostrando resultados del/de los proyecto(s) {successCount, number}.",
     "projectSelectorLabel": "Proyecto",
-    "searchFailedTitle": "La búsqueda falló."
+    "searchFailedTitle": "La búsqueda falló.",
+    "authComplete": {
+      "successTitle": "Autorización completada",
+      "successDescription": "Su cuenta ya está conectada. Puede cerrar esta ventana y volver a lo que estaba haciendo.",
+      "errorTitle": "Error de autorización",
+      "errorDescription": "No se pudo completar la autorización. Cierre esta ventana e inténtelo de nuevo."
+    }
   },
   "Pages": {
     "Issues": {
@@ -6862,7 +6871,8 @@
     "reportBuilder": {
       "dimensions": "## Dimensiones\nSeleccione las dimensiones que desea analizar en su informe. Las dimensiones son atributos que categorizan sus datos, como fecha, usuario, estado, etc. Puede arrastrarlos para reordenarlos.",
       "metrics": "## métricas\nSeleccione las métricas que desea medir en su informe. Las métricas son mediciones cuantitativas derivadas de sus datos, como el recuento de resultados de pruebas, la tasa de paso, el tiempo promedio transcurrido, etc. Puede arrastrar para reordenarlos.",
-      "dateRange": "## Rango de fecha\nFiltra los datos de tu informe por un período de tiempo específico. Puede seleccionar entre rangos predefinidos como 'Últimos 7 días' o 'Mes anteriores', o definir un rango de fechas personalizado. Este filtro se aplica al campo de fecha correspondiente para cada tipo de informe (por ejemplo, fecha de ejecución para los resultados de la prueba, fecha de creación para los casos de prueba)."
+      "dateRange": "## Rango de fecha\nFiltra los datos de tu informe por un período de tiempo específico. Puede seleccionar entre rangos predefinidos como 'Últimos 7 días' o 'Mes anteriores', o definir un rango de fechas personalizado. Este filtro se aplica al campo de fecha correspondiente para cada tipo de informe (por ejemplo, fecha de ejecución para los resultados de la prueba, fecha de creación para los casos de prueba).",
+      "dimensionFilters": "## Filtros\nRestrinja el informe a valores específicos de cada dimensión seleccionada. Deje un filtro vacío para incluir todos los valores de esa dimensión. Las dimensiones de fecha se filtran con el selector de rango de fechas en su lugar."
     },
     "codeRepository": {
       "name": "## Nombre del repositorio\nUn nombre para mostrar descriptivo para esta conexión de repositorio.\n\n- Se utiliza para identificarlo en la configuración del contexto del código del proyecto.\n- No necesita coincidir con el nombre del repositorio en el proveedor.",
@@ -7571,6 +7581,9 @@
       "folderDescendants": {
         "label": "Incluir subcarpetas",
         "description": "Contar los resultados de las subcarpetas hacia cada carpeta principal."
+      },
+      "dimensionFilters": {
+        "allValues": "Todos los valores"
       }
     },
     "errors": {

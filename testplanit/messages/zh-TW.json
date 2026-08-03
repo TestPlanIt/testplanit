@@ -2287,6 +2287,7 @@
     },
     "members": {
       "cardTitle": "問題",
+      "casesOtherProjects": "{count, plural, other {# 個測試案例在其他專案中}}",
       "inScope": "範圍內",
       "foundInTesting": "在測試中發現",
       "foundInTestingEmpty": "測試中未發現任何問題。",
@@ -4606,6 +4607,8 @@
       },
       "generateDefaultOn": "預設包含在產生測試案例精靈中。點擊以預設排除它。",
       "generateDefaultOff": "預設排除於產生測試案例精靈中。點擊以預設包含它。",
+      "jiraPanelOn": "顯示在已連結測試案例的 Jira 外掛面板中。點擊以隱藏。",
+      "jiraPanelOff": "已從 Jira 外掛面板中隱藏。點擊以顯示已連結測試案例。",
       "resultFields": {
         "description": "管理結果字段",
         "add": {
@@ -6361,7 +6364,13 @@
     "filterAll": "全部",
     "fanOutPartialFailure": "無法存取 {count, number} 個項目。顯示來自 {successCount, number} 個項目的結果。",
     "projectSelectorLabel": "專案",
-    "searchFailedTitle": "搜尋失敗"
+    "searchFailedTitle": "搜尋失敗",
+    "authComplete": {
+      "successTitle": "授權完成",
+      "successDescription": "您的帳戶已連接。您可以關閉此視窗並返回您先前的操作。",
+      "errorTitle": "授權失敗",
+      "errorDescription": "無法完成授權。請關閉此視窗並重試。"
+    }
   },
   "Pages": {
     "Issues": {
@@ -6862,7 +6871,8 @@
     "reportBuilder": {
       "dimensions": "## 維度\n選擇要在報告中分析的維度。維度是用於對資料進行分類的屬性，例如日期、使用者、狀態等。您可以拖曳來重新排序。",
       "metrics": "## 指標\n選擇您希望在報告中衡量的指標。指標是從您的數據中提取的定量測量值，例如測試結果計數、通過率、平均耗時等。您可以拖曳它們來重新排序。",
-      "dateRange": "## 日期範圍\n依特定時段篩選報告資料。您可以從預先定義的範圍中選擇，例如“最近 7 天”或“上個月”，也可以定義自訂日期範圍。此篩選器適用於每種報表類型的相關日期欄位（例如，測試結果的執行日期，測試案例的建立日期）。"
+      "dateRange": "## 日期範圍\n依特定時段篩選報告資料。您可以從預先定義的範圍中選擇，例如“最近 7 天”或“上個月”，也可以定義自訂日期範圍。此篩選器適用於每種報表類型的相關日期欄位（例如，測試結果的執行日期，測試案例的建立日期）。",
+      "dimensionFilters": "## 篩選器\n將報告縮小到每個所選維度的特定值。將篩選器留空以包含該維度的所有值。日期維度則改用日期範圍選擇器進行篩選。"
     },
     "codeRepository": {
       "name": "## 儲存庫名稱\n此儲存庫連接的友善顯示名稱。\n\n- 用於在項目代碼上下文設定中標識它。\n- 不需要與提供者上的儲存庫名稱相符。",
@@ -7571,6 +7581,9 @@
       "folderDescendants": {
         "label": "包含子資料夾",
         "description": "統計每個父資料夾中子資料夾的結果數量。"
+      },
+      "dimensionFilters": {
+        "allValues": "所有值"
       }
     },
     "errors": {

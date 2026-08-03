@@ -2287,6 +2287,7 @@
     },
     "members": {
       "cardTitle": "问题",
+      "casesOtherProjects": "{count, plural, other {# 个其他项目中的测试用例}}",
       "inScope": "范围内",
       "foundInTesting": "测试中发现",
       "foundInTestingEmpty": "测试中未发现问题。",
@@ -4606,6 +4607,8 @@
       },
       "generateDefaultOn": "在生成测试用例向导中默认包含。点击可将其默认排除。",
       "generateDefaultOff": "在生成测试用例向导中默认排除。点击可将其默认包含。",
+      "jiraPanelOn": "显示在链接测试用例的 Jira 插件面板中。点击以隐藏。",
+      "jiraPanelOff": "已从 Jira 插件面板中隐藏。点击以显示链接测试用例。",
       "resultFields": {
         "description": "管理结果字段",
         "add": {
@@ -6361,7 +6364,13 @@
     "filterAll": "全部",
     "fanOutPartialFailure": "无法访问 {count, number} 个项目。显示来自 {successCount, number} 个项目的结果。",
     "projectSelectorLabel": "项目",
-    "searchFailedTitle": "搜索失败"
+    "searchFailedTitle": "搜索失败",
+    "authComplete": {
+      "successTitle": "授权完成",
+      "successDescription": "您的账户已连接。您可以关闭此窗口，返回之前的操作。",
+      "errorTitle": "授权失败",
+      "errorDescription": "无法完成授权。请关闭此窗口并重试。"
+    }
   },
   "Pages": {
     "Issues": {
@@ -6862,7 +6871,8 @@
     "reportBuilder": {
       "dimensions": "## 维度\n选择要在报告中分析的维度。维度是用于对数据进行分类的属性，例如日期、用户、状态等。您可以拖动来重新排序。",
       "metrics": "## 指标\n选择您希望在报告中衡量的指标。指标是从您的数据中提取的定量测量值，例如测试结果计数、通过率、平均耗时等。您可以拖动它们来重新排序。",
-      "dateRange": "## 日期范围\n按特定时间段筛选报告数据。您可以从预定义的范围（例如“最近 7 天”或“上个月”）中选择，也可以定义自定义日期范围。此筛选器适用于每种报告类型的相关日期字段（例如，测试结果的执行日期，测试用例的创建日期）。"
+      "dateRange": "## 日期范围\n按特定时间段筛选报告数据。您可以从预定义的范围（例如“最近 7 天”或“上个月”）中选择，也可以定义自定义日期范围。此筛选器适用于每种报告类型的相关日期字段（例如，测试结果的执行日期，测试用例的创建日期）。",
+      "dimensionFilters": "## 筛选器\n将报告缩小到每个所选维度的特定值。将筛选器留空以包含该维度的所有值。日期维度则使用日期范围选择器进行筛选。"
     },
     "codeRepository": {
       "name": "## 存储库名称\n此存储库连接的友好显示名称。\n\n- 用于在项目代码上下文设置中标识它。\n- 不需要与提供程序上的存储库名称匹配。",
@@ -7571,6 +7581,9 @@
       "folderDescendants": {
         "label": "包含子文件夹",
         "description": "统计每个父文件夹中子文件夹的结果数量。"
+      },
+      "dimensionFilters": {
+        "allValues": "所有值"
       }
     },
     "errors": {
