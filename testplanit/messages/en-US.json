@@ -6364,7 +6364,13 @@
     "filterAll": "All",
     "fanOutPartialFailure": "{count, number} project(s) could not be reached. Showing results from {successCount, number} project(s).",
     "projectSelectorLabel": "Project",
-    "searchFailedTitle": "Search failed"
+    "searchFailedTitle": "Search failed",
+    "authComplete": {
+      "successTitle": "Authorization complete",
+      "successDescription": "Your account is now connected. You can close this window and return to what you were doing.",
+      "errorTitle": "Authorization failed",
+      "errorDescription": "The authorization could not be completed. Close this window and try again."
+    }
   },
   "Pages": {
     "Issues": {

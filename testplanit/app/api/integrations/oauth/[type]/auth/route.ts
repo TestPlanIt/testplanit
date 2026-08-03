@@ -78,12 +78,23 @@ export async function GET(
       );
     }
 
+    // Where to send the user after the callback finishes. Only same-origin
+    // relative paths are accepted — anything else would turn the OAuth
+    // callback into an open redirect.
+    const returnUrlParam = request.nextUrl.searchParams.get("returnUrl");
+    const returnUrl =
+      returnUrlParam && /^\/(?!\/)/.test(returnUrlParam)
+        ? returnUrlParam
+        : undefined;
+
     // Generate state token and store it
     const state = AuthenticationService.generateState();
     await AuthenticationService.storeOAuthState(
       session.user.id,
       integration.id,
-      state
+      state,
+      undefined,
+      returnUrl
     );
 
     // Get the authorization URL

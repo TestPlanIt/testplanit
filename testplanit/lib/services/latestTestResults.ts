@@ -50,6 +50,11 @@ export interface LatestTestResultsQueryOptions {
    */
   sources?: string[] | null;
   /**
+   * Restrict by the case's `automated` flag — the definitive automated
+   * marker (reporters flip it; source records where the case came from).
+   */
+  automatedFlag?: boolean | null;
+  /**
    * Select the project and rank per (case, project) rather than per case. Used
    * by the cross-project flaky report, where one case id can appear under
    * several projects.
@@ -70,6 +75,7 @@ export async function queryLatestTestResults({
   startDate,
   endDate,
   sources,
+  automatedFlag,
   includeProject = false,
 }: LatestTestResultsQueryOptions): Promise<RawExecutionResult[]> {
   // An empty id list means "no cases", which no WHERE clause can express —
@@ -94,6 +100,8 @@ export async function queryLatestTestResults({
   const sourceFilter = sources
     ? sql`AND rc.source::text = ANY(${sources})`
     : sql``;
+  const automatedFlagFilter =
+    automatedFlag == null ? sql`` : sql`AND rc."automated" = ${automatedFlag}`;
   const manualDateFilter = sql`${
     startDate ? sql`AND trr."executedAt" >= ${startDate}` : sql``
   } ${endDate ? sql`AND trr."executedAt" <= ${endDate}` : sql``}`;
@@ -129,6 +137,7 @@ export async function queryLatestTestResults({
           ${caseFilter}
           ${projectFilter}
           ${sourceFilter}
+          ${automatedFlagFilter}
           ${manualDateFilter}
 
         UNION ALL
@@ -165,6 +174,7 @@ export async function queryLatestTestResults({
           ${caseFilter}
           ${projectFilter}
           ${sourceFilter}
+          ${automatedFlagFilter}
           AND jr.type != 'SKIPPED'
           AND jr."executedAt" IS NOT NULL
           ${automatedDateFilter}

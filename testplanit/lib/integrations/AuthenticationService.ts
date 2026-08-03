@@ -21,7 +21,8 @@ export class AuthenticationService {
     userId: string,
     integrationId: number,
     state: string,
-    expiresIn: number = 600 // 10 minutes
+    expiresIn: number = 600, // 10 minutes
+    returnUrl?: string
   ): Promise<void> {
     const expiresAt = new Date(Date.now() + expiresIn * 1000);
 
@@ -41,6 +42,7 @@ export class AuthenticationService {
             [state]: {
               userId,
               expiresAt: expiresAt.toISOString(),
+              ...(returnUrl ? { returnUrl } : {}),
             },
           },
         },
@@ -54,7 +56,7 @@ export class AuthenticationService {
   static async verifyOAuthState(
     integrationId: number,
     state: string
-  ): Promise<{ valid: boolean; userId?: string }> {
+  ): Promise<{ valid: boolean; userId?: string; returnUrl?: string }> {
     const integration = await rawDb.integration.findUnique({
       where: { id: integrationId },
       select: { settings: true },
@@ -77,6 +79,10 @@ export class AuthenticationService {
     return {
       valid: true,
       userId: stateData.userId,
+      returnUrl:
+        typeof stateData.returnUrl === "string"
+          ? stateData.returnUrl
+          : undefined,
     };
   }
 

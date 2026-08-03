@@ -46,8 +46,10 @@ export async function GET(
       },
     });
 
-    // URL the client opens to (re)authorize this integration as the current user.
-    const authUrl = `/api/integrations/oauth/${integration.provider.toLowerCase()}/auth?integrationId=${integrationId}`;
+    // URL the client opens to (re)authorize this integration as the current
+    // user. Consumers open it in a popup, so the callback should land on the
+    // auth-complete page every signed-in user can view.
+    const authUrl = `/api/integrations/oauth/${integration.provider.toLowerCase()}/auth?integrationId=${integrationId}&returnUrl=${encodeURIComponent("/integrations/auth-complete")}`;
 
     if (!userAuth) {
       return NextResponse.json(

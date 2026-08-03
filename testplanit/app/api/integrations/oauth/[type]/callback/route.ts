@@ -31,7 +31,9 @@ export async function GET(
     const state = request.nextUrl.searchParams.get("state");
     const error = request.nextUrl.searchParams.get("error");
 
-    // Handle OAuth errors
+    // Handle OAuth errors. Errors land on the auth-complete page: it is the
+    // only destination every signed-in user can view — the settings pages the
+    // flow used to target 404 for anyone below PROJECTADMIN.
     if (error) {
       const errorDescription =
         request.nextUrl.searchParams.get("error_description") ||
@@ -39,12 +41,14 @@ export async function GET(
       const { type } = await params;
       console.error(`OAuth error for ${type}:`, error, errorDescription);
       return redirectTo(
-        `/projects/settings?error=${encodeURIComponent(errorDescription)}`
+        `/integrations/auth-complete?error=${encodeURIComponent(errorDescription)}`
       );
     }
 
     if (!code || !state) {
-      return redirectTo("/projects/settings?error=missing_oauth_params");
+      return redirectTo(
+        "/integrations/auth-complete?error=missing_oauth_params"
+      );
     }
 
     // Get enhanced Prisma client for the user
@@ -59,6 +63,7 @@ export async function GET(
 
     let validIntegration = null;
     let integrationId = null;
+    let returnUrl: string | undefined;
 
     // Check each integration for the matching state
     for (const integration of integrations) {
@@ -69,12 +74,13 @@ export async function GET(
       if (stateValidation.valid && stateValidation.userId === session.user.id) {
         validIntegration = integration;
         integrationId = integration.id;
+        returnUrl = stateValidation.returnUrl;
         break;
       }
     }
 
     if (!validIntegration) {
-      return redirectTo("/projects/settings?error=invalid_state");
+      return redirectTo("/integrations/auth-complete?error=invalid_state");
     }
 
     // Get the appropriate adapter
@@ -90,7 +96,9 @@ export async function GET(
     );
 
     if (!adapter || !adapter.exchangeCodeForTokens) {
-      return redirectTo("/projects/settings?error=adapter_init_failed");
+      return redirectTo(
+        "/integrations/auth-complete?error=adapter_init_failed"
+      );
     }
 
     // Exchange code for tokens
@@ -111,33 +119,53 @@ export async function GET(
     // Clean up the OAuth state
     await AuthenticationService.cleanupOAuthState(integrationId!, state);
 
-    // Update integration status to indicate it's connected
-    await db.integration.update({
-      where: { id: integrationId! },
-      data: {
-        lastSyncAt: new Date(),
-        status: "ACTIVE",
-        settings: {
-          ...((validIntegration.settings as object) || {}),
-          connected: true,
-          connectedAt: new Date().toISOString(),
-        },
-      },
-    });
-
-    // Redirect to success page
-    const projectId = (validIntegration as any).issueConfigs?.[0]?.projects?.[0]
-      ?.id;
-    if (projectId) {
-      return redirectTo(
-        `/projects/settings/${projectId}/integrations?success=connected`
-      );
-    } else {
-      return redirectTo("/admin/integrations?success=connected");
+    // Flip the integration to connected on its first successful
+    // authorization. Integration updates are ADMIN-only under the access
+    // policy, and any project member can (re)authorize an already-active
+    // integration — a denial here must never discard the token exchange that
+    // just succeeded, so the flip is skipped when already connected and
+    // policy failures are non-fatal.
+    const integrationSettings =
+      (validIntegration.settings as Record<string, unknown>) || {};
+    if (
+      validIntegration.status !== "ACTIVE" ||
+      !integrationSettings.connected
+    ) {
+      try {
+        await db.integration.update({
+          where: { id: integrationId! },
+          data: {
+            lastSyncAt: new Date(),
+            status: "ACTIVE",
+            settings: {
+              ...integrationSettings,
+              connected: true,
+              connectedAt: new Date().toISOString(),
+            },
+          },
+        });
+      } catch (updateError) {
+        console.error(
+          `Failed to mark integration ${integrationId} connected (user lacks Integration update rights?):`,
+          updateError
+        );
+      }
     }
+
+    // Redirect to success page: the page the flow started from when it told
+    // us (returnUrl stored with the OAuth state), else the admin integrations
+    // page the legacy flows launch from.
+    if (returnUrl) {
+      const target = new URL(returnUrl, baseUrl);
+      target.searchParams.set("success", "connected");
+      return NextResponse.redirect(target);
+    }
+    return redirectTo("/admin/integrations?success=connected");
   } catch (error) {
     const { type } = await params;
     console.error(`Error in OAuth callback endpoint for ${type}:`, error);
-    return redirectTo("/projects/settings?error=oauth_callback_failed");
+    return redirectTo(
+      "/integrations/auth-complete?error=oauth_callback_failed"
+    );
   }
 }

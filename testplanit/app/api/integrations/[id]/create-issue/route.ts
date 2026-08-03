@@ -71,7 +71,7 @@ export async function POST(
     });
 
     if (userIntegrationAuth) {
-      authUrl = `/api/integrations/oauth/${userIntegrationAuth.integration.provider.toLowerCase()}/auth?integrationId=${integrationId}`;
+      authUrl = `/api/integrations/oauth/${userIntegrationAuth.integration.provider.toLowerCase()}/auth?integrationId=${integrationId}&returnUrl=${encodeURIComponent("/integrations/auth-complete")}`;
     }
 
     // If no user auth, check if the integration supports API key auth

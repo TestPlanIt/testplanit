@@ -94,7 +94,43 @@ describe("GET /api/integrations/oauth/[type]/auth", () => {
       undefined,
       expect.objectContaining({ allowInactive: true })
     );
-    expect(storeOAuthStateMock).toHaveBeenCalledWith("user-1", 2, "state-123");
+    expect(storeOAuthStateMock).toHaveBeenCalledWith(
+      "user-1",
+      2,
+      "state-123",
+      undefined,
+      undefined
+    );
+  });
+
+  it("stores a relative returnUrl with the OAuth state", async () => {
+    await GET(
+      buildGet("?integrationId=2&returnUrl=%2Fintegrations%2Fauth-complete"),
+      params
+    );
+
+    expect(storeOAuthStateMock).toHaveBeenCalledWith(
+      "user-1",
+      2,
+      "state-123",
+      undefined,
+      "/integrations/auth-complete"
+    );
+  });
+
+  it("drops an absolute or protocol-relative returnUrl (open-redirect guard)", async () => {
+    await GET(
+      buildGet("?integrationId=2&returnUrl=https%3A%2F%2Fevil.example"),
+      params
+    );
+    await GET(
+      buildGet("?integrationId=2&returnUrl=%2F%2Fevil.example"),
+      params
+    );
+
+    for (const call of storeOAuthStateMock.mock.calls) {
+      expect(call[4]).toBeUndefined();
+    }
   });
 
   it("returns 400 when integrationId is missing", async () => {

@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { tiptapToMarkdown } from "~/lib/tiptap/tiptapToMarkdown";
+import { isIntegrationAuthCompleteMessage } from "~/lib/integrations/oauthPopup";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { AlertCircle, Asterisk, ExternalLink, Loader2 } from "lucide-react";
 import { useSession } from "next-auth/react";
@@ -351,6 +352,19 @@ export function CreateIssueDialog({
 
     void checkAuthStatus();
   }, [useIntegration, activeIntegration, checkAuth]);
+
+  // The Authenticate button opens the OAuth flow in a popup that lands on
+  // /integrations/auth-complete, which posts back here — clear the
+  // auth-required state so the user can continue without reopening the dialog.
+  useEffect(() => {
+    const onMessage = (event: MessageEvent) => {
+      if (isIntegrationAuthCompleteMessage(event) && event.data.success) {
+        setAuthError(null);
+      }
+    };
+    window.addEventListener("message", onMessage);
+    return () => window.removeEventListener("message", onMessage);
+  }, []);
 
   // Fetch issue type fields when issue type changes
   const fetchIssueTypeFields = useCallback(async () => {

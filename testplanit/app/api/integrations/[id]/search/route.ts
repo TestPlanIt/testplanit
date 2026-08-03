@@ -4,6 +4,12 @@ import { getServerSession } from "next-auth";
 import { NextRequest } from "next/server";
 import { authOptions } from "~/server/auth";
 
+// The search dialog opens this URL in a popup, so the callback should land on
+// the neutral auth-complete page (accessible to every signed-in user), not an
+// admin-only settings page.
+const buildOAuthKickoffUrl = (provider: string, integrationId: number) =>
+  `/api/integrations/oauth/${provider.toLowerCase()}/auth?integrationId=${integrationId}&returnUrl=${encodeURIComponent("/integrations/auth-complete")}`;
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -73,20 +79,14 @@ export async function GET(
       // For OAuth integrations, check user-specific auth
       const userAuth = integration.userIntegrationAuths[0];
       if (!userAuth || !userAuth.accessToken) {
-        // Generate auth URL for this integration
-        const manager = IntegrationManager.getInstance();
-        const adapter = await manager.getAdapter(integrationId.toString());
-
-        if (!adapter || !adapter.getAuthorizationUrl) {
-          return Response.json({ error: "Adapter not found" }, { status: 404 });
-        }
-
-        const authUrl = await adapter.getAuthorizationUrl(session.user.id);
-
+        // Point the client at the internal OAuth kickoff route: it generates
+        // AND stores the state parameter the callback verifies. Handing out
+        // the provider's raw authorize URL here skipped that step, so every
+        // authorization bounced off the callback with invalid_state.
         return Response.json(
           {
             error: "Authentication required",
-            authUrl,
+            authUrl: buildOAuthKickoffUrl(integration.provider, integrationId),
             requiresAuth: true,
           },
           { status: 401 }
@@ -152,16 +152,19 @@ export async function GET(
         error.message?.includes("401") ||
         error.message?.includes("Unauthorized")
       ) {
+        // Only OAuth integrations can be repaired by the user re-authorizing;
+        // expired API keys/PATs are fixed by an admin on the integration.
         if (
-          adapter.getAuthorizationUrl &&
-          typeof adapter.getAuthorizationUrl === "function"
+          integration.authType !== "API_KEY" &&
+          integration.authType !== "PERSONAL_ACCESS_TOKEN"
         ) {
-          const authUrl = await adapter.getAuthorizationUrl(session.user.id);
-
           return Response.json(
             {
               error: "Authentication expired",
-              authUrl,
+              authUrl: buildOAuthKickoffUrl(
+                integration.provider,
+                integrationId
+              ),
               requiresAuth: true,
             },
             { status: 401 }

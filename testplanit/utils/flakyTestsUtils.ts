@@ -124,34 +124,24 @@ export async function handleFlakyTestsPOST(
     const endDateParsed = endDate ? new Date(endDate) : null;
     const projectIdNum = projectId ? Number(projectId) : null;
 
-    // Determine source filter based on automatedFilter
-    // Automated sources: JUNIT, TESTNG, XUNIT, NUNIT, MSTEST, MOCHA, CUCUMBER
-    // Manual sources: MANUAL, API
-    const automatedSources = [
-      "JUNIT",
-      "TESTNG",
-      "XUNIT",
-      "NUNIT",
-      "MSTEST",
-      "MOCHA",
-      "CUCUMBER",
-    ];
-    const manualSources = ["MANUAL", "API"];
-    const sourceFilter =
+    // "Automated" means the case's `automated` flag — the definitive
+    // marker (reporters flip it) — not the source enum, which records where
+    // the case came from.
+    const automatedFlag =
       automatedFilter === "automated"
-        ? automatedSources
+        ? true
         : automatedFilter === "manual"
-          ? manualSources
+          ? false
           : null; // null means no filter (show all)
 
     // Ranked executions come from the shared service, which composes the
-    // date/source/project filters into one statement.
+    // date/flag/project filters into one statement.
     const rawResults: RawExecutionResult[] = await queryLatestTestResults({
       limit: runs,
       projectId: isCrossProject ? null : projectIdNum,
       startDate: startDateParsed,
       endDate: endDateParsed,
-      sources: sourceFilter,
+      automatedFlag,
       includeProject,
     });
 

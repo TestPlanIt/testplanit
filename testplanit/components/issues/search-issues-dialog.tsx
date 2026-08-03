@@ -23,6 +23,7 @@ import { AlertCircle, ExternalLink, Loader2, Plus, Search } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
+import { isIntegrationAuthCompleteMessage } from "~/lib/integrations/oauthPopup";
 import { CreateIssueDialog } from "./create-issue-dialog";
 import { CreateIssueJiraForm } from "./create-issue-jira-form";
 
@@ -236,6 +237,23 @@ export function SearchIssuesDialog({
       if (pollingForKeyRef.current === debouncedSearchQuery) return;
       void searchExternalIssues();
     }
+  }, [searchExternal, debouncedSearchQuery]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // The Authenticate button opens the OAuth flow in a popup that lands on
+  // /integrations/auth-complete, which posts back here. Clear the
+  // auth-required state and re-run the search the user was blocked on.
+  useEffect(() => {
+    const onMessage = (event: MessageEvent) => {
+      if (!isIntegrationAuthCompleteMessage(event) || !event.data.success) {
+        return;
+      }
+      setAuthError(null);
+      if (searchExternal && debouncedSearchQuery.length > 0) {
+        void searchExternalIssues();
+      }
+    };
+    window.addEventListener("message", onMessage);
+    return () => window.removeEventListener("message", onMessage);
   }, [searchExternal, debouncedSearchQuery]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const searchExternalIssues = async (

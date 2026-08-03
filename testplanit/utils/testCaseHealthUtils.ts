@@ -34,6 +34,7 @@ interface RawHealthResult {
   test_case_has_parameters: boolean;
   created_at: Date;
   last_executed_at: Date | null;
+  all_time_last_executed_at: Date | null;
   total_executions: bigint;
   pass_count: bigint;
   fail_count: bigint;
@@ -52,8 +53,11 @@ export function calculateHealthStatus(
   daysSinceLastExecution: number | null,
   minExecutionsForRate: number
 ): HealthStatus {
-  // Never executed
-  if (totalExecutions === 0 || daysSinceLastExecution === null) {
+  // Never executed — ever. daysSinceLastExecution derives from the case's
+  // ALL-TIME last execution, so a case that ran before the lookback window
+  // is not "never executed": it classifies neutrally here and surfaces
+  // through the stale flag instead.
+  if (daysSinceLastExecution === null) {
     return "never_executed";
   }
 
@@ -97,8 +101,8 @@ export function calculateHealthScore(
 ): number {
   let score = 100;
 
-  // Deduct for never executed
-  if (totalExecutions === 0 || daysSinceLastExecution === null) {
+  // Deduct for never executed (ever — days derive from all-time history)
+  if (daysSinceLastExecution === null) {
     score -= 50;
     return Math.max(0, score);
   }
@@ -155,8 +159,8 @@ export async function handleTestCaseHealthPOST(
       staleDaysThreshold = 30,
       minExecutionsForRate = 5,
       lookbackDays = 90,
-      startDate: _startDate,
-      endDate: _endDate,
+      startDate,
+      endDate,
       automatedFilter, // "all" | "automated" | "manual"
       healthStatusFilter, // "all" | "healthy" | "never_executed" | "always_passing" | "always_failing"
       staleFilter, // "all" | "stale" | "notStale"
@@ -198,28 +202,19 @@ export async function handleTestCaseHealthPOST(
       lookbackDate.setDate(lookbackDate.getDate() - lookback);
     }
 
-    // Determine source filter based on automatedFilter
-    const automatedSources = [
-      "JUNIT",
-      "TESTNG",
-      "XUNIT",
-      "NUNIT",
-      "MSTEST",
-      "MOCHA",
-      "CUCUMBER",
-    ];
-    const manualSources = ["MANUAL", "API"];
-    const sourceFilter =
+    // "Automated" means the case's `automated` flag — the definitive
+    // marker (reporters flip it) — not the source enum, which records where
+    // the case came from.
+    const automatedFlag =
       automatedFilter === "automated"
-        ? automatedSources
+        ? true
         : automatedFilter === "manual"
-          ? manualSources
+          ? false
           : null;
-
-    // Build source filter SQL fragment
-    const sourceFilterSql = sourceFilter
-      ? sql`AND rc.source::text = ANY(${sourceFilter})`
-      : sql``;
+    const sourceFilterSql =
+      automatedFlag == null
+        ? sql``
+        : sql`AND rc."automated" = ${automatedFlag}`;
 
     // Build project filter
     const projectFilterSql =
@@ -236,13 +231,25 @@ export async function handleTestCaseHealthPOST(
       : sql``;
     const _projectGroupBy = includeProject ? sql`, p.id, p.name` : sql``;
 
-    // Build lookback date filter (empty for "all time")
-    const manualLookbackFilter = lookbackDate
-      ? sql`AND trr."executedAt" >= ${lookbackDate}`
-      : sql``;
-    const junitLookbackFilter = lookbackDate
-      ? sql`AND jr."executedAt" >= ${lookbackDate}`
-      : sql``;
+    // Window filter = lookback intersected with the report's date range.
+    // The window scopes the STATS (counts, pass rate); never-vs-stale is
+    // judged from all-time history below.
+    const startDateVal = startDate ? new Date(startDate) : null;
+    const endDateVal = endDate ? new Date(endDate) : null;
+    const manualWindowStart =
+      lookbackDate && startDateVal
+        ? new Date(Math.max(lookbackDate.getTime(), startDateVal.getTime()))
+        : (lookbackDate ?? startDateVal);
+    const manualLookbackFilter = sql`${
+      manualWindowStart
+        ? sql`AND trr."executedAt" >= ${manualWindowStart}`
+        : sql``
+    } ${endDateVal ? sql`AND trr."executedAt" <= ${endDateVal}` : sql``}`;
+    const junitLookbackFilter = sql`${
+      manualWindowStart
+        ? sql`AND jr."executedAt" >= ${manualWindowStart}`
+        : sql``
+    } ${endDateVal ? sql`AND jr."executedAt" <= ${endDateVal}` : sql``}`;
 
     // Query to get test case health data
     // We combine both manual test results (TestRunResults) and automated results (JUnitTestResult)
@@ -302,6 +309,34 @@ export async function handleTestCaseHealthPOST(
           SUM(CASE WHEN is_failure = true THEN 1 ELSE 0 END) as fail_count
         FROM execution_results
         GROUP BY test_case_id
+      ),
+      -- All-time last execution per case (no window filters): decides
+      -- never_executed vs merely-not-executed-recently (stale).
+      all_time_executions AS (
+        SELECT rc.id as test_case_id, MAX(x.executed_at) as all_time_last
+        FROM "RepositoryCases" rc
+        INNER JOIN LATERAL (
+          SELECT trr."executedAt" as executed_at
+          FROM "TestRunCases" trc
+          INNER JOIN "TestRuns" tr ON tr.id = trc."testRunId" AND tr."isDeleted" = false
+          INNER JOIN "TestRunResults" trr ON trr."testRunCaseId" = trc.id
+          INNER JOIN "Status" s ON s.id = trr."statusId"
+            AND s."systemName" NOT IN ('untested', 'skipped')
+          WHERE trc."repositoryCaseId" = rc.id
+          UNION ALL
+          SELECT jr."executedAt"
+          FROM "JUnitTestResult" jr
+          INNER JOIN "JUnitTestSuite" jts ON jts.id = jr."testSuiteId"
+          INNER JOIN "TestRuns" tr ON tr.id = jts."testRunId" AND tr."isDeleted" = false
+          WHERE jr."repositoryCaseId" = rc.id
+            AND jr.type != 'SKIPPED'
+            AND jr."executedAt" IS NOT NULL
+        ) x ON true
+        WHERE rc."isDeleted" = false
+          AND rc."isArchived" = false
+          ${sourceFilterSql}
+          ${projectFilterSql}
+        GROUP BY rc.id
       )
       SELECT
         rc.id as test_case_id,
@@ -310,6 +345,7 @@ export async function handleTestCaseHealthPOST(
         rc."hasParameters" as test_case_has_parameters,
         rc."createdAt" as created_at,
         ae.last_executed_at,
+        ate.all_time_last as all_time_last_executed_at,
         COALESCE(ae.total_executions, 0) as total_executions,
         COALESCE(ae.pass_count, 0) as pass_count,
         COALESCE(ae.fail_count, 0) as fail_count
@@ -317,6 +353,7 @@ export async function handleTestCaseHealthPOST(
       FROM "RepositoryCases" rc
       ${projectJoin}
       LEFT JOIN aggregated_executions ae ON ae.test_case_id = rc.id
+      LEFT JOIN all_time_executions ate ON ate.test_case_id = rc.id
       WHERE rc."isDeleted" = false
         AND rc."isArchived" = false
         ${sourceFilterSql}
@@ -331,10 +368,12 @@ export async function handleTestCaseHealthPOST(
       const passCount = Number(row.pass_count);
       const failCount = Number(row.fail_count);
 
-      // Calculate days since last execution
+      // Days since last execution derive from ALL-TIME history: a case
+      // executed before the window is stale, not never_executed.
+      const lastEver = row.all_time_last_executed_at ?? row.last_executed_at;
       let daysSinceLastExecution: number | null = null;
-      if (row.last_executed_at) {
-        const lastExec = new Date(row.last_executed_at);
+      if (lastEver) {
+        const lastExec = new Date(lastEver);
         const now = new Date();
         daysSinceLastExecution = Math.floor(
           (now.getTime() - lastExec.getTime()) / (1000 * 60 * 60 * 24)
@@ -371,9 +410,7 @@ export async function handleTestCaseHealthPOST(
         testCaseSource: row.test_case_source,
         testCaseHasParameters: row.test_case_has_parameters,
         createdAt: row.created_at.toISOString(),
-        lastExecutedAt: row.last_executed_at
-          ? row.last_executed_at.toISOString()
-          : null,
+        lastExecutedAt: lastEver ? new Date(lastEver).toISOString() : null,
         daysSinceLastExecution,
         totalExecutions,
         passCount,
