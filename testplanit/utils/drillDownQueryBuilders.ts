@@ -912,7 +912,7 @@ export function buildSessionsQuery(
   offset: number,
   limit: number
 ): SessionsFindManyArgs {
-  const where: SessionsWhereInput = {};
+  const where: SessionsWhereInput = { isDeleted: false };
 
   // Apply project filter
   if (context.projectId) {
@@ -925,10 +925,39 @@ export function buildSessionsQuery(
   if (context.dimensions.user) {
     where.createdById = String(context.dimensions.user.id);
   }
+  if (context.dimensions.creator) {
+    where.createdById = String(context.dimensions.creator.id);
+  }
+  if (context.dimensions.session) {
+    where.id = Number(context.dimensions.session.id);
+  }
+  if (context.dimensions.assignedTo) {
+    where.assignedToId = String(context.dimensions.assignedTo.id);
+  }
+  if (context.dimensions.milestone) {
+    where.milestoneId =
+      context.dimensions.milestone.id === null
+        ? null
+        : Number(context.dimensions.milestone.id);
+  }
+  if (context.dimensions.template) {
+    where.templateId = Number(context.dimensions.template.id);
+  }
+  if (context.dimensions.state) {
+    where.stateId = Number(context.dimensions.state.id);
+  }
 
-  // Apply date filter
-  if (context.dimensions.date?.executedAt) {
-    const date = new Date(context.dimensions.date.executedAt);
+  // The Active Sessions metric counts sessions still in progress.
+  if (context.metricId === "activeSessions") {
+    where.isCompleted = false;
+  }
+
+  // Apply date filter — the session date dimension is the creation day.
+  const clickedSessionDate =
+    (context.dimensions.date as any)?.createdAt ??
+    context.dimensions.date?.executedAt;
+  if (clickedSessionDate) {
+    const date = new Date(clickedSessionDate as string);
     where.createdAt = {
       gte: startOfDayUTC(date),
       lt: endOfDayUTC(date),
@@ -1079,9 +1108,11 @@ export function buildIssuesQuery(
   offset: number,
   limit: number
 ): IssueFindManyArgs {
-  const where: IssueWhereInput = {};
+  const where: IssueWhereInput = { isDeleted: false };
 
-  // Apply project filter
+  // Apply project filter. For project-scoped drill-downs the route swaps
+  // this for the project-relevant issue population (direct FK plus
+  // case/run/session links) to match the aggregation.
   if (context.projectId) {
     where.projectId = context.projectId;
   } else if (context.dimensions.project) {
@@ -1092,10 +1123,47 @@ export function buildIssuesQuery(
   if (context.dimensions.user) {
     where.createdById = String(context.dimensions.user.id);
   }
+  if (context.dimensions.creator) {
+    where.createdById = String(context.dimensions.creator.id);
+  }
 
-  // Apply date filter
-  if (context.dimensions.date?.executedAt) {
-    const date = new Date(context.dimensions.date.executedAt);
+  // Issues group by type NAME (external ids vary per tracker); "Unspecified"
+  // carries a null id.
+  if (context.dimensions.issueType) {
+    where.issueTypeName =
+      context.dimensions.issueType.id === null
+        ? null
+        : String(
+            context.dimensions.issueType.name ?? context.dimensions.issueType.id
+          );
+  }
+
+  if (context.dimensions.issueTracker) {
+    where.integrationId =
+      context.dimensions.issueTracker.id === null
+        ? null
+        : Number(context.dimensions.issueTracker.id);
+  }
+
+  if (context.dimensions.issueStatus) {
+    where.status = String(context.dimensions.issueStatus.id);
+  }
+
+  // Priorities aggregate case-insensitively (dimension ids are lowercased).
+  if (context.dimensions.priority) {
+    where.priority = {
+      equals: String(context.dimensions.priority.id),
+      mode: "insensitive",
+    } as any;
+  }
+
+  // Apply date filter — the issue-tracking date dimension is the issue's
+  // creation day.
+  const clickedDate =
+    (context.dimensions.date as any)?.createdAt ??
+    context.dimensions.date?.executedAt;
+  if (clickedDate) {
+    const date = new Date(clickedDate as string);
     where.createdAt = {
       gte: startOfDayUTC(date),
       lt: endOfDayUTC(date),
@@ -1457,6 +1525,7 @@ export function getQueryBuilderForMetric(
     metricId === "sessions" ||
     metricId === "sessionDuration" ||
     metricId === "sessionCount" ||
+    metricId === "activeSessions" ||
     metricId === "averageDuration" ||
     metricId === "totalDuration"
   ) {
@@ -1527,6 +1596,7 @@ export function getModelForMetric(metricId: string): string {
     metricId === "sessions" ||
     metricId === "sessionDuration" ||
     metricId === "sessionCount" ||
+    metricId === "activeSessions" ||
     metricId === "averageDuration" ||
     metricId === "totalDuration"
   ) {

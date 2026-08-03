@@ -1,4 +1,5 @@
 import { baseDb } from "~/lib/db";
+import { queryProjectRelevantIssueIds } from "~/lib/projectIssueIdsQuery";
 
 /**
  * Returns the IDs of issues relevant to a project: filed under the project
@@ -12,41 +13,13 @@ import { baseDb } from "~/lib/db";
  * scans the large tables — ~1.1 s per query on production-scale data, vs ~3 ms
  * for this union. Callers then re-query issues by `id: { in: ids }` (which
  * still applies access policies), or filter further as needed.
+ *
+ * The query itself lives in lib/projectIssueIdsQuery.ts (client-safe,
+ * injected db) so isomorphic modules can run it without importing the
+ * server-only prisma stack.
  */
 export async function getProjectRelevantIssueIds(
   projectId: number
 ): Promise<number[]> {
-  const rows = await baseDb.$queryRaw<Array<{ id: number }>>`
-    SELECT i."id" AS id FROM "Issue" i
-      WHERE i."isDeleted" = false AND i."projectId" = ${projectId}
-    UNION
-    SELECT ci."issueId" AS id FROM "RepositoryCaseIssue" ci
-      JOIN "RepositoryCases" rc ON rc."id" = ci."caseId"
-      WHERE rc."projectId" = ${projectId} AND rc."isDeleted" = false
-    UNION
-    SELECT j."A" AS id FROM "_IssueToSessions" j
-      JOIN "Sessions" s ON s."id" = j."B"
-      WHERE s."projectId" = ${projectId} AND s."isDeleted" = false
-    UNION
-    SELECT j."A" AS id FROM "_IssueToSessionResults" j
-      JOIN "SessionResults" sr ON sr."id" = j."B"
-      JOIN "Sessions" s ON s."id" = sr."sessionId"
-      WHERE s."projectId" = ${projectId} AND s."isDeleted" = false
-    UNION
-    SELECT j."A" AS id FROM "_IssueToTestRuns" j
-      JOIN "TestRuns" r ON r."id" = j."B"
-      WHERE r."projectId" = ${projectId} AND r."isDeleted" = false
-    UNION
-    SELECT j."A" AS id FROM "_IssueToTestRunResults" j
-      JOIN "TestRunResults" rr ON rr."id" = j."B"
-      JOIN "TestRuns" r ON r."id" = rr."testRunId"
-      WHERE r."projectId" = ${projectId} AND r."isDeleted" = false
-    UNION
-    SELECT j."A" AS id FROM "_IssueToTestRunStepResults" j
-      JOIN "TestRunStepResults" trsr ON trsr."id" = j."B"
-      JOIN "TestRunResults" rr ON rr."id" = trsr."testRunResultId"
-      JOIN "TestRuns" r ON r."id" = rr."testRunId"
-      WHERE r."projectId" = ${projectId} AND r."isDeleted" = false
-  `;
-  return rows.map((r) => Number(r.id));
+  return queryProjectRelevantIssueIds(baseDb, projectId);
 }

@@ -13,7 +13,20 @@ vi.mock("~/server/auth", () => ({
 vi.mock("@/lib/db", () => ({
   baseDb: {
     status: { findMany: vi.fn() },
+    issue: { findMany: vi.fn(), count: vi.fn() },
   },
+}));
+
+vi.mock("@/lib/projectIssueIds", () => ({
+  getProjectRelevantIssueIds: vi.fn(),
+}));
+
+vi.mock("~/lib/services/milestoneMemberCoverage", () => ({
+  getMemberCoverage: vi.fn(),
+}));
+
+vi.mock("~/lib/authContext", () => ({
+  resolveViewerProjectScope: vi.fn(),
 }));
 
 vi.mock("~/utils/drillDownQueryBuilders", () => ({
@@ -28,7 +41,10 @@ vi.mock("~/lib/auth/utils", () => ({
 }));
 
 import { baseDb } from "@/lib/db";
+import { getProjectRelevantIssueIds } from "@/lib/projectIssueIds";
 import { getEnhancedDb } from "~/lib/auth/utils";
+import { resolveViewerProjectScope } from "~/lib/authContext";
+import { getMemberCoverage } from "~/lib/services/milestoneMemberCoverage";
 import { getServerSession } from "next-auth";
 import {
   buildJunitResultQuery,
@@ -461,6 +477,177 @@ describe("POST /api/report-builder/drill-down", () => {
       expect((baseDb as any).jUnitTestResult.findMany).not.toHaveBeenCalled();
       expect(data.total).toBe(1);
       expect(data.data).toHaveLength(1);
+    });
+  });
+
+  describe("milestone-readiness drill-down", () => {
+    beforeEach(() => {
+      (getServerSession as any).mockResolvedValue(mockSession);
+      (getEnhancedDb as any).mockResolvedValue({
+        projects: { findFirst: vi.fn().mockResolvedValue({ id: 1 }) },
+      });
+      (resolveViewerProjectScope as any).mockResolvedValue(null);
+    });
+
+    it("drills a readiness cell into the member issues in that state", async () => {
+      // Issue 101 fully passes, 102 fails, 103 has no linked cases.
+      (getMemberCoverage as any).mockResolvedValue({
+        101: {
+          uncovered: false,
+          linkedCaseCount: 2,
+          failed: 0,
+          inProgress: 0,
+          notRun: 0,
+        },
+        102: {
+          uncovered: false,
+          linkedCaseCount: 1,
+          failed: 1,
+          inProgress: 0,
+          notRun: 0,
+        },
+        103: {
+          uncovered: true,
+          linkedCaseCount: 0,
+          failed: 0,
+          inProgress: 0,
+          notRun: 0,
+        },
+      });
+      ((baseDb as any).issue.findMany as any).mockResolvedValue([
+        { id: 102, name: "ISS-102", title: "Broken" },
+      ]);
+
+      const response = await POST(
+        createRequest({
+          context: {
+            metricId: "failed",
+            metricLabel: "Failed",
+            metricValue: 1,
+            reportType: "milestone-readiness",
+            mode: "project",
+            projectId: 1,
+            dimensions: { milestone: { id: 55, name: "R1" } },
+          },
+        })
+      );
+
+      expect(response.status).toBe(200);
+      const data = await response.json();
+      expect(data.total).toBe(1);
+      expect(data.data[0].id).toBe(102);
+      expect((baseDb as any).issue.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { id: { in: [102] } } })
+      );
+      expect(getMemberCoverage).toHaveBeenCalledWith(55, {
+        projectId: 1,
+        accessibleProjectIds: null,
+      });
+    });
+
+    it("percentReady drills into the fully-passing member issues", async () => {
+      (getMemberCoverage as any).mockResolvedValue({
+        101: {
+          uncovered: false,
+          linkedCaseCount: 2,
+          failed: 0,
+          inProgress: 0,
+          notRun: 0,
+        },
+        102: {
+          uncovered: false,
+          linkedCaseCount: 1,
+          failed: 1,
+          inProgress: 0,
+          notRun: 0,
+        },
+      });
+      ((baseDb as any).issue.findMany as any).mockResolvedValue([
+        { id: 101, name: "ISS-101" },
+      ]);
+
+      const response = await POST(
+        createRequest({
+          context: {
+            metricId: "percentReady",
+            metricLabel: "Ready (%)",
+            metricValue: 50,
+            reportType: "milestone-readiness",
+            mode: "project",
+            projectId: 1,
+            dimensions: { milestone: { id: 55, name: "R1" } },
+          },
+        })
+      );
+
+      expect(response.status).toBe(200);
+      const data = await response.json();
+      expect(data.total).toBe(1);
+      expect((baseDb as any).issue.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { id: { in: [101] } } })
+      );
+    });
+
+    it("requires a milestone dimension", async () => {
+      const response = await POST(
+        createRequest({
+          context: {
+            metricId: "passed",
+            metricLabel: "Passed",
+            metricValue: 1,
+            reportType: "milestone-readiness",
+            mode: "project",
+            projectId: 1,
+            dimensions: {},
+          },
+        })
+      );
+
+      expect(response.status).toBe(400);
+    });
+  });
+
+  describe("issue drill-down population", () => {
+    it("project-scoped issue drill-downs use the project-relevant issue ids", async () => {
+      (getServerSession as any).mockResolvedValue(mockSession);
+      (getEnhancedDb as any).mockResolvedValue({
+        projects: { findFirst: vi.fn().mockResolvedValue({ id: 1 }) },
+      });
+      (getModelForMetric as any).mockReturnValue("issue");
+      (getQueryBuilderForMetric as any).mockReturnValue(() => ({
+        where: { isDeleted: false, projectId: 1 },
+        include: {},
+      }));
+      (getProjectRelevantIssueIds as any).mockResolvedValue([7, 8]);
+      ((baseDb as any).issue.findMany as any).mockResolvedValue([
+        { id: 7, name: "ISS-7" },
+        { id: 8, name: "ISS-8" },
+      ]);
+      ((baseDb as any).issue.count as any).mockResolvedValue(2);
+
+      const response = await POST(
+        createRequest({
+          context: {
+            metricId: "issueCount",
+            metricLabel: "Issue Count",
+            metricValue: 2,
+            reportType: "issue-tracking",
+            mode: "project",
+            projectId: 1,
+            dimensions: {},
+          },
+        })
+      );
+
+      expect(response.status).toBe(200);
+      const data = await response.json();
+      expect(data.total).toBe(2);
+      // Direct-FK scoping is swapped for the linked population.
+      expect((baseDb as any).issue.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { isDeleted: false, id: { in: [7, 8] } },
+        })
+      );
     });
   });
 });

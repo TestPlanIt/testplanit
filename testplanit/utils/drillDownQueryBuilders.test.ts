@@ -985,4 +985,158 @@ describe("drillDownQueryBuilders", () => {
       expect(result2.take).toBe(100);
     });
   });
+
+  // User-engagement dimensions (role, group) filter on the executor /
+  // submitter / creator across every builder its metrics reach.
+  describe("role and group dimension filters", () => {
+    it("buildTestExecutionQuery filters the executor by role and group", () => {
+      const context = createBaseContext({
+        reportType: "user-engagement",
+        metricId: "executionCount",
+        dimensions: {
+          role: { id: 5, name: "QA" },
+          group: { id: 9, name: "Web Team" },
+        },
+      });
+      const result = buildTestExecutionQuery(context, 0, 10);
+
+      expect(result.where?.executedBy).toEqual({
+        roleId: 5,
+        groups: { some: { groupId: 9 } },
+      });
+    });
+
+    it("buildJunitResultQuery filters the submitter by role and group", () => {
+      const context = createBaseContext({
+        reportType: "user-engagement",
+        metricId: "executionCount",
+        dimensions: {
+          role: { id: 5, name: "QA" },
+          group: { id: 9, name: "Web Team" },
+        },
+      });
+      const result = buildJunitResultQuery(context);
+
+      expect(result?.where.createdBy).toEqual({
+        roleId: 5,
+        groups: { some: { groupId: 9 } },
+      });
+    });
+
+    it("buildSessionResultsQuery filters live results by creator role/group", () => {
+      const context = createBaseContext({
+        reportType: "user-engagement",
+        metricId: "sessionResultCount",
+        dimensions: { role: { id: 5, name: "QA" } },
+      });
+      const result = buildSessionResultsQuery(context, 0, 10);
+
+      expect(result.where?.isDeleted).toBe(false);
+      expect(result.where?.createdBy).toEqual({ roleId: 5 });
+    });
+
+    it("buildRepositoryStatsQuery filters the case creator by role/group", () => {
+      const context = createBaseContext({
+        reportType: "user-engagement",
+        metricId: "createdCaseCount",
+        dimensions: { group: { id: 9, name: "Web Team" } },
+      });
+      const result = buildRepositoryStatsQuery(context, 0, 10);
+
+      expect(result.where?.creator).toEqual({
+        groups: { some: { groupId: 9 } },
+      });
+    });
+  });
+
+  describe("session-analysis dimension and metric handling", () => {
+    it("buildSessionsQuery excludes deleted sessions and honors the session dimensions", () => {
+      const context = createBaseContext({
+        reportType: "session-analysis",
+        metricId: "sessionCount",
+        dimensions: {
+          session: { id: 12, name: "Session 12" },
+          assignedTo: { id: "user-9", name: "Sam" },
+          milestone: { id: 3, name: "M3" },
+          template: { id: 4, name: "T4" },
+          state: { id: 6, name: "Open" },
+          creator: { id: "user-1", name: "Alex" },
+          date: { id: "d", createdAt: "2026-07-01T00:00:00.000Z" } as any,
+        },
+      });
+      const result = buildSessionsQuery(context, 0, 10);
+
+      expect(result.where?.isDeleted).toBe(false);
+      expect(result.where?.id).toBe(12);
+      expect(result.where?.assignedToId).toBe("user-9");
+      expect(result.where?.milestoneId).toBe(3);
+      expect(result.where?.templateId).toBe(4);
+      expect(result.where?.stateId).toBe(6);
+      expect(result.where?.createdById).toBe("user-1");
+      expect((result.where?.createdAt as any)?.gte).toEqual(
+        new Date("2026-07-01T00:00:00.000Z")
+      );
+    });
+
+    it("activeSessions restricts to in-progress sessions and maps to the sessions model", () => {
+      const context = createBaseContext({
+        reportType: "session-analysis",
+        metricId: "activeSessions",
+        dimensions: {},
+      });
+      const result = buildSessionsQuery(context, 0, 10);
+
+      expect(result.where?.isCompleted).toBe(false);
+      expect(getQueryBuilderForMetric("activeSessions")).toBe(
+        buildSessionsQuery
+      );
+      expect(getModelForMetric("activeSessions")).toBe("sessions");
+    });
+  });
+
+  describe("issue-tracking dimension handling", () => {
+    it("buildIssuesQuery excludes deleted issues and honors the issue dimensions", () => {
+      const context = createBaseContext({
+        reportType: "issue-tracking",
+        metricId: "issueCount",
+        dimensions: {
+          creator: { id: "user-1", name: "Alex" },
+          issueType: { id: "10001", name: "Bug" },
+          issueTracker: { id: 4, name: "Jira" },
+          issueStatus: { id: "Done", name: "Done" },
+          priority: { id: "high", name: "High" },
+          date: { id: "d", createdAt: "2026-07-01T00:00:00.000Z" } as any,
+        },
+      });
+      const result = buildIssuesQuery(context, 0, 10);
+
+      expect(result.where?.isDeleted).toBe(false);
+      expect(result.where?.createdById).toBe("user-1");
+      expect(result.where?.issueTypeName).toBe("Bug");
+      expect(result.where?.integrationId).toBe(4);
+      expect(result.where?.status).toBe("Done");
+      expect(result.where?.priority).toEqual({
+        equals: "high",
+        mode: "insensitive",
+      });
+      expect((result.where?.createdAt as any)?.gte).toEqual(
+        new Date("2026-07-01T00:00:00.000Z")
+      );
+    });
+
+    it("maps null issueType/issueTracker ids to the Unspecified/Internal populations", () => {
+      const context = createBaseContext({
+        reportType: "issue-tracking",
+        metricId: "issueCount",
+        dimensions: {
+          issueType: { id: null as any, name: "Unspecified" },
+          issueTracker: { id: null as any, name: "Internal" },
+        },
+      });
+      const result = buildIssuesQuery(context, 0, 10);
+
+      expect(result.where?.issueTypeName).toBeNull();
+      expect(result.where?.integrationId).toBeNull();
+    });
+  });
 });

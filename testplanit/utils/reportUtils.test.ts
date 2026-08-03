@@ -1,7 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 import {
   buildDateFilter,
+  createIssueTrackingMetricRegistry,
   createTestExecutionMetricRegistry,
+  createUserEngagementMetricRegistry,
   dimensionToDraggableField,
   draggableFieldToDimension,
   getReportSummary,
@@ -9,6 +11,10 @@ import {
   getSourceDisplayInfo,
   getUserIdFromRow,
 } from "./reportUtils";
+
+vi.mock("~/lib/projectIssueIdsQuery", () => ({
+  queryProjectRelevantIssueIds: vi.fn().mockResolvedValue([11, 12, 13]),
+}));
 
 describe("reportUtils", () => {
   describe("getReportSummary", () => {
@@ -731,6 +737,269 @@ describe("reportUtils", () => {
 
       expect(rows).toHaveLength(1);
       expect(rows[0].testCaseCount).toBe(2); // cases 42 and 108205
+    });
+  });
+
+  // The user-engagement registry counts the same manual ∪ automated result
+  // union as the test-execution registry, attributing automated results to
+  // the submitting user, and treats durations as seconds end to end.
+  describe("user-engagement metrics read the manual+automated union", () => {
+    const JAN1 = new Date("2026-01-01T10:00:00.000Z");
+
+    function engagementDb({
+      manualRows = [] as any[],
+      junitRows = [] as any[],
+      sessionRows = [] as any[],
+      caseRows = [] as any[],
+      manualCount = 0,
+      junitCount = 0,
+      manualAgg = {} as Record<string, any>,
+      junitAgg = {} as Record<string, any>,
+      sessionAgg = {} as Record<string, any>,
+      caseAgg = {} as Record<string, any>,
+    } = {}) {
+      return {
+        testRunResults: {
+          findMany: vi.fn().mockResolvedValue(manualRows),
+          count: vi.fn().mockResolvedValue(manualCount),
+          aggregate: vi.fn().mockResolvedValue(manualAgg),
+        },
+        jUnitTestResult: {
+          findMany: vi.fn().mockResolvedValue(junitRows),
+          count: vi.fn().mockResolvedValue(junitCount),
+          aggregate: vi.fn().mockResolvedValue(junitAgg),
+        },
+        sessionResults: {
+          findMany: vi.fn().mockResolvedValue(sessionRows),
+          count: vi.fn().mockResolvedValue(0),
+          aggregate: vi.fn().mockResolvedValue(sessionAgg),
+        },
+        repositoryCases: {
+          findMany: vi.fn().mockResolvedValue(caseRows),
+          aggregate: vi.fn().mockResolvedValue(caseAgg),
+        },
+      };
+    }
+
+    function manualExecution({
+      userId = "manual-user",
+      roleId = 5 as number | null,
+      groups = [] as Array<{ groupId: number }>,
+      elapsed = null as number | null,
+      executedAt = JAN1,
+    } = {}) {
+      return {
+        executedAt,
+        executedById: userId,
+        elapsed,
+        executedBy: { roleId, groups },
+        testRun: { projectId: 370 },
+      };
+    }
+
+    function junitExecution({
+      userId = "ci-bot",
+      roleId = 9 as number | null,
+      groups = [] as Array<{ groupId: number }>,
+      time = null as number | null,
+      executedAt = JAN1 as Date | null,
+      createdAt = JAN1,
+    } = {}) {
+      return {
+        executedAt,
+        createdAt,
+        createdById: userId,
+        time,
+        createdBy: { roleId, groups },
+        testSuite: { testRun: { projectId: 370 } },
+      };
+    }
+
+    const registry = createUserEngagementMetricRegistry(true);
+
+    it("executionCount totals both sources in the no-dimension path", async () => {
+      const db = engagementDb({ manualCount: 7410, junitCount: 137473 });
+
+      const rows = await registry.executionCount.aggregate(db, 370, [], {});
+
+      expect(rows).toEqual([{ executionCount: 144883 }]);
+    });
+
+    it("executionCount attributes automated results to the submitting user", async () => {
+      const db = engagementDb({
+        manualRows: [manualExecution(), manualExecution()],
+        junitRows: [junitExecution(), junitExecution(), junitExecution()],
+      });
+
+      const rows = await registry.executionCount.aggregate(
+        db,
+        370,
+        ["userId"],
+        {}
+      );
+
+      const manual = rows.find((r: any) => r.userId === "manual-user");
+      const ci = rows.find((r: any) => r.userId === "ci-bot");
+      expect(manual?.executionCount).toBe(2);
+      expect(ci?.executionCount).toBe(3);
+    });
+
+    it("executionCount fans out to each of the executor's groups and skips group-less users", async () => {
+      const db = engagementDb({
+        manualRows: [
+          manualExecution({ groups: [{ groupId: 1 }, { groupId: 2 }] }),
+        ],
+        junitRows: [junitExecution({ groups: [] })],
+      });
+
+      const rows = await registry.executionCount.aggregate(
+        db,
+        370,
+        ["groupId"],
+        {}
+      );
+
+      expect(rows).toHaveLength(2);
+      expect(rows.find((r: any) => r.groupId === 1)?.executionCount).toBe(1);
+      expect(rows.find((r: any) => r.groupId === 2)?.executionCount).toBe(1);
+    });
+
+    it("averageElapsed blends both sources in seconds — no /1000 scaling", async () => {
+      const db = engagementDb({
+        manualAgg: { _sum: { elapsed: 100 }, _count: { elapsed: 2 } },
+        junitAgg: { _sum: { time: 200 }, _count: { time: 3 } },
+      });
+
+      const rows = await registry.averageElapsed.aggregate(db, 370, [], {});
+
+      expect(rows).toEqual([{ averageElapsed: 60 }]); // 300 s / 5
+    });
+
+    it("averageElapsed returns null when nothing has a duration", async () => {
+      const db = engagementDb({
+        manualAgg: { _sum: { elapsed: null }, _count: { elapsed: 0 } },
+        junitAgg: { _sum: { time: null }, _count: { time: 0 } },
+      });
+
+      const rows = await registry.averageElapsed.aggregate(db, 370, [], {});
+
+      expect(rows).toEqual([{ averageElapsed: null }]);
+    });
+
+    it("averageElapsed supports the group dimension", async () => {
+      const db = engagementDb({
+        manualRows: [
+          manualExecution({ elapsed: 10, groups: [{ groupId: 7 }] }),
+        ],
+        junitRows: [junitExecution({ time: 30, groups: [{ groupId: 7 }] })],
+      });
+
+      const rows = await registry.averageElapsed.aggregate(
+        db,
+        370,
+        ["groupId"],
+        {}
+      );
+
+      expect(rows).toEqual([{ groupId: 7, averageElapsed: 20 }]);
+    });
+
+    it("lastActiveDate takes the max across executions, sessions, and case creation", async () => {
+      const db = engagementDb({
+        manualAgg: { _max: { executedAt: new Date("2026-01-01T00:00:00Z") } },
+        junitAgg: {
+          _max: {
+            executedAt: new Date("2026-02-01T00:00:00Z"),
+            createdAt: new Date("2026-01-20T00:00:00Z"),
+          },
+        },
+        sessionAgg: { _max: { createdAt: new Date("2026-03-01T00:00:00Z") } },
+        caseAgg: { _max: { createdAt: new Date("2026-01-15T00:00:00Z") } },
+      });
+
+      const rows = await registry.lastActiveDate.aggregate(db, 370, [], {});
+
+      expect(rows).toEqual([
+        { lastActiveDate: new Date("2026-03-01T00:00:00Z") },
+      ]);
+    });
+
+    it("lastActiveDate grouped by user includes session and case-creation activity", async () => {
+      const db = engagementDb({
+        manualRows: [
+          manualExecution({
+            userId: "user-1",
+            executedAt: new Date("2026-01-01T00:00:00Z"),
+          }),
+        ],
+        sessionRows: [
+          {
+            createdAt: new Date("2026-02-01T00:00:00Z"),
+            createdById: "user-2",
+            createdBy: { roleId: null, groups: [] },
+            session: { projectId: 370 },
+          },
+        ],
+        caseRows: [
+          {
+            createdAt: new Date("2026-03-01T00:00:00Z"),
+            creatorId: "user-1",
+            creator: { roleId: null, groups: [] },
+            projectId: 370,
+          },
+        ],
+      });
+
+      const rows = await registry.lastActiveDate.aggregate(
+        db,
+        370,
+        ["userId"],
+        {}
+      );
+
+      const user1 = rows.find((r: any) => r.userId === "user-1");
+      const user2 = rows.find((r: any) => r.userId === "user-2");
+      expect(user1?.lastActiveDate).toEqual(new Date("2026-03-01T00:00:00Z"));
+      expect(user2?.lastActiveDate).toEqual(new Date("2026-02-01T00:00:00Z"));
+    });
+
+    it("sessionResultCount excludes deleted session results", async () => {
+      const db = engagementDb();
+
+      await registry.sessionResultCount.aggregate(db, 370, [], {});
+
+      expect(db.sessionResults.count).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ isDeleted: false }),
+        })
+      );
+    });
+  });
+
+  // Issue-tracking's project population = direct-FK issues PLUS issues
+  // linked through the project's cases, runs, and sessions (Q12).
+  describe("issue-tracking population uses project-relevant linkage", () => {
+    it("issueCount counts linked issues, not only direct-FK ones", async () => {
+      const db = {
+        issue: {
+          findMany: vi
+            .fn()
+            .mockResolvedValue([{ id: 11 }, { id: 12 }, { id: 13 }]),
+        },
+      };
+
+      const registry = createIssueTrackingMetricRegistry(true);
+      const rows = await registry.issueCount.aggregate(db, 370, [], {});
+
+      expect(rows).toEqual([{ issueCount: 3 }]);
+      expect(db.issue.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            id: { in: [11, 12, 13] },
+            isDeleted: false,
+          }),
+        })
+      );
     });
   });
 });

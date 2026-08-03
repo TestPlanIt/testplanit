@@ -119,6 +119,7 @@ export function DrillDownDrawer({
   // Get columns based on metric type
   const columns = useDrillDownColumns({
     metricId: context?.metricId || "",
+    reportType: context?.reportType,
   });
 
   // Export functionality

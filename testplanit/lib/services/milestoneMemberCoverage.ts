@@ -13,6 +13,12 @@ import { getAllDescendantMilestoneIds } from "~/lib/services/milestoneDescendant
  * results, non-completed statuses, the system 'untested' status —
  * aggregates into the explicit `untested` total.
  *
+ * Deleted runs never decide readiness. A case with no in-scope run-case
+ * rollup at all classifies from its latest in-scope automated (JUnit)
+ * result instead — automated submissions don't always add the case to the
+ * run's composition. A rollup that exists always wins over the fallback,
+ * even when it is still untested.
+ *
  * Cross-project blend: a member issue's linked cases can live in OTHER
  * projects. Those cases count toward `linkedCaseCount` (and separately
  * toward `otherProjectCaseCount`) and their results blend into the same
@@ -101,6 +107,9 @@ export async function getMemberCoverage(
   // Single raw-SQL composition rather than N per-issue queries: for each
   // member issue, count linked RepositoryCases and classify each case's
   // latest in-scope TestRunCases result via the named Status convention.
+  // Cases with no run-case rollup at all fall back to their latest in-scope
+  // automated (JUnit) result — automated submissions don't always add the
+  // case to the run's composition, and those executions still count.
   const rows = await db.$queryRaw<
     Array<{
       issueId: number;
@@ -134,40 +143,88 @@ export async function getMemberCoverage(
         AND trc."isDeleted" = false
       LEFT JOIN "TestRuns" tr
         ON tr.id = trc."testRunId"
+        AND tr."isDeleted" = false
         AND (
           tr."milestoneId" = ANY(${scopedMilestoneIds}::int[])
           OR (
             lc."projectId" <> ${scope.projectId}
             AND tr."projectId" = lc."projectId"
-            AND tr."isDeleted" = false
           )
         )
       LEFT JOIN "Status" s ON s.id = trc."statusId"
       WHERE tr.id IS NOT NULL OR trc.id IS NULL
       ORDER BY lc."issueId", lc."caseId", trc."completedAt" DESC NULLS LAST, trc.id DESC
+    ),
+    latest_junit AS (
+      SELECT DISTINCT ON (lc."issueId", lc."caseId")
+        lc."issueId",
+        lc."caseId",
+        s."isSuccess" AS "isSuccess",
+        s."isFailure" AS "isFailure",
+        s."isCompleted" AS "isCompleted"
+      FROM linked_cases lc
+      JOIN "JUnitTestResult" jr ON jr."repositoryCaseId" = lc."caseId"
+      JOIN "JUnitTestSuite" js ON js.id = jr."testSuiteId"
+      JOIN "TestRuns" tr
+        ON tr.id = js."testRunId"
+        AND tr."isDeleted" = false
+        AND (
+          tr."milestoneId" = ANY(${scopedMilestoneIds}::int[])
+          OR (
+            lc."projectId" <> ${scope.projectId}
+            AND tr."projectId" = lc."projectId"
+          )
+        )
+      JOIN "Status" s
+        ON s.id = jr."statusId"
+        AND s."systemName" IS DISTINCT FROM 'untested'
+      ORDER BY lc."issueId", lc."caseId", jr."executedAt" DESC NULLS LAST, jr.id DESC
+    ),
+    effective AS (
+      SELECT
+        lc."issueId",
+        lc."caseId",
+        lc."projectId",
+        (lr."testRunCaseId" IS NOT NULL OR lj."caseId" IS NOT NULL)
+          AS "hasResult",
+        CASE
+          WHEN lr."testRunCaseId" IS NOT NULL THEN lr."isSuccess"
+          ELSE lj."isSuccess"
+        END AS "isSuccess",
+        CASE
+          WHEN lr."testRunCaseId" IS NOT NULL THEN lr."isFailure"
+          ELSE lj."isFailure"
+        END AS "isFailure",
+        CASE
+          WHEN lr."testRunCaseId" IS NOT NULL THEN lr."isCompleted"
+          ELSE lj."isCompleted"
+        END AS "isCompleted"
+      FROM linked_cases lc
+      LEFT JOIN latest_result lr
+        ON lr."issueId" = lc."issueId" AND lr."caseId" = lc."caseId"
+      LEFT JOIN latest_junit lj
+        ON lj."issueId" = lc."issueId" AND lj."caseId" = lc."caseId"
     )
     SELECT
-      lc."issueId" AS "issueId",
-      COUNT(DISTINCT lc."caseId") AS "linkedCaseCount",
-      COUNT(DISTINCT lc."caseId") FILTER (
-        WHERE lc."projectId" <> ${scope.projectId}
+      e."issueId" AS "issueId",
+      COUNT(DISTINCT e."caseId") AS "linkedCaseCount",
+      COUNT(DISTINCT e."caseId") FILTER (
+        WHERE e."projectId" <> ${scope.projectId}
       ) AS "otherProjectCaseCount",
-      COUNT(*) FILTER (WHERE lr."isSuccess" = true) AS "passed",
-      COUNT(*) FILTER (WHERE lr."isFailure" = true) AS "failed",
+      COUNT(*) FILTER (WHERE e."isSuccess" = true) AS "passed",
+      COUNT(*) FILTER (WHERE e."isFailure" = true) AS "failed",
       COUNT(*) FILTER (
-        WHERE lr."testRunCaseId" IS NOT NULL
-          AND lr."isCompleted" = true
-          AND lr."isSuccess" IS NOT true
-          AND lr."isFailure" IS NOT true
+        WHERE e."hasResult"
+          AND e."isCompleted" = true
+          AND e."isSuccess" IS NOT true
+          AND e."isFailure" IS NOT true
       ) AS "inProgress",
       COUNT(*) FILTER (
-        WHERE lr."testRunCaseId" IS NULL
-          OR lr."isCompleted" IS NOT true
+        WHERE NOT e."hasResult"
+          OR e."isCompleted" IS NOT true
       ) AS "notRun"
-    FROM linked_cases lc
-    LEFT JOIN latest_result lr
-      ON lr."issueId" = lc."issueId" AND lr."caseId" = lc."caseId"
-    GROUP BY lc."issueId"
+    FROM effective e
+    GROUP BY e."issueId"
   `;
 
   // Per-status counts for the same latest-result set (matrix display
@@ -201,31 +258,70 @@ export async function getMemberCoverage(
         AND trc."isDeleted" = false
       LEFT JOIN "TestRuns" tr
         ON tr.id = trc."testRunId"
+        AND tr."isDeleted" = false
         AND (
           tr."milestoneId" = ANY(${scopedMilestoneIds}::int[])
           OR (
             lc."projectId" <> ${scope.projectId}
             AND tr."projectId" = lc."projectId"
-            AND tr."isDeleted" = false
           )
         )
       WHERE tr.id IS NOT NULL OR trc.id IS NULL
       ORDER BY lc."issueId", lc."caseId", trc."completedAt" DESC NULLS LAST, trc.id DESC
+    ),
+    latest_junit AS (
+      SELECT DISTINCT ON (lc."issueId", lc."caseId")
+        lc."issueId",
+        lc."caseId",
+        jr."statusId" AS "statusId"
+      FROM linked_cases lc
+      JOIN "JUnitTestResult" jr ON jr."repositoryCaseId" = lc."caseId"
+      JOIN "JUnitTestSuite" js ON js.id = jr."testSuiteId"
+      JOIN "TestRuns" tr
+        ON tr.id = js."testRunId"
+        AND tr."isDeleted" = false
+        AND (
+          tr."milestoneId" = ANY(${scopedMilestoneIds}::int[])
+          OR (
+            lc."projectId" <> ${scope.projectId}
+            AND tr."projectId" = lc."projectId"
+          )
+        )
+      JOIN "Status" st
+        ON st.id = jr."statusId"
+        AND st."systemName" IS DISTINCT FROM 'untested'
+      ORDER BY lc."issueId", lc."caseId", jr."executedAt" DESC NULLS LAST, jr.id DESC
+    ),
+    effective AS (
+      SELECT
+        lc."issueId",
+        lc."caseId",
+        (lr."testRunCaseId" IS NOT NULL OR lj."caseId" IS NOT NULL)
+          AS "hasResult",
+        CASE
+          WHEN lr."testRunCaseId" IS NOT NULL THEN lr."statusId"
+          ELSE lj."statusId"
+        END AS "statusId"
+      FROM linked_cases lc
+      LEFT JOIN latest_result lr
+        ON lr."issueId" = lc."issueId" AND lr."caseId" = lc."caseId"
+      LEFT JOIN latest_junit lj
+        ON lj."issueId" = lc."issueId" AND lj."caseId" = lc."caseId"
     )
     SELECT
-      lr."issueId" AS "issueId",
-      lr."statusId" AS "statusId",
+      e."issueId" AS "issueId",
+      e."statusId" AS "statusId",
       s.name AS "name",
       c.value AS "color",
       COUNT(*) AS "count"
-    FROM latest_result lr
-    JOIN "Status" s ON s.id = lr."statusId"
+    FROM effective e
+    JOIN "Status" s ON s.id = e."statusId"
     LEFT JOIN "Color" c ON c.id = s."colorId"
-    WHERE lr."testRunCaseId" IS NOT NULL
+    WHERE e."hasResult"
       AND s."isCompleted" = true
       AND s."systemName" IS DISTINCT FROM 'untested'
-    GROUP BY lr."issueId", lr."statusId", s.name, c.value
-    ORDER BY lr."issueId", COUNT(*) DESC
+    GROUP BY e."issueId", e."statusId", s.name, c.value
+    ORDER BY e."issueId", COUNT(*) DESC
   `;
 
   const statusesByIssueId = new Map<number, CoverageStatusCount[]>();

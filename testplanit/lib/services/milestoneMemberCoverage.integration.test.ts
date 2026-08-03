@@ -322,4 +322,229 @@ describeIntegration("getMemberCoverage cross-project blend (live DB)", () => {
       expect(breakdown.failed).toBe(0);
     });
   });
+
+  async function createJunitResult(
+    tx: any,
+    lookups: Awaited<ReturnType<typeof seedLookups>>,
+    args: {
+      projectId: number;
+      caseId: number;
+      statusId: number;
+      executedAt: Date;
+      milestoneId?: number;
+    }
+  ) {
+    const run = await tx.testRuns.create({
+      data: {
+        name: `junit-run-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        projectId: args.projectId,
+        stateId: lookups.state.id,
+        createdById: lookups.creator.id,
+        testRunType: "REGULAR",
+        milestoneId: args.milestoneId ?? null,
+      },
+      select: { id: true },
+    });
+    const suite = await tx.jUnitTestSuite.create({
+      data: {
+        name: "suite",
+        testRunId: run.id,
+        createdById: lookups.creator.id,
+      },
+      select: { id: true },
+    });
+    await tx.jUnitTestResult.create({
+      data: {
+        type: "PASSED",
+        repositoryCaseId: args.caseId,
+        testSuiteId: suite.id,
+        createdById: lookups.creator.id,
+        statusId: args.statusId,
+        executedAt: args.executedAt,
+        time: 3.2,
+      },
+    });
+    return { runId: run.id };
+  }
+
+  it("falls back to milestone-scoped automated results when no run-case rollup exists, and never lets a deleted run's rollup decide", async () => {
+    const { baseDb, getMemberCoverage } = await importDeps();
+    await withRollback(baseDb, async (tx) => {
+      const lookups = await seedLookups(tx);
+      const home = await createProjectWithCase(tx, lookups, "jf");
+
+      const milestone = await tx.milestones.create({
+        data: {
+          projectId: home.projectId,
+          milestoneTypesId: lookups.milestoneType.id,
+          name: `ms-junit-${Date.now()}`,
+          createdBy: lookups.creator.id,
+        },
+        select: { id: true },
+      });
+      const issue = await tx.issue.create({
+        data: {
+          name: `ISS-JF-${Date.now()}`,
+          title: "JUnit fallback fixture",
+          createdById: lookups.creator.id,
+        },
+        select: { id: true },
+      });
+      await tx.milestoneIssue.create({
+        data: {
+          milestoneId: milestone.id,
+          issueId: issue.id,
+          source: "MANUAL",
+        },
+      });
+
+      // Second linked case whose only rollup lives in a soft-deleted
+      // milestone run — it must classify notRun, not passed.
+      const repo = await tx.repositories.findFirst({
+        where: { projectId: home.projectId },
+        select: { id: true },
+      });
+      const folder = await tx.repositoryFolders.findFirst({
+        where: { projectId: home.projectId },
+        select: { id: true },
+      });
+      const deletedRunCase = await tx.repositoryCases.create({
+        data: {
+          projectId: home.projectId,
+          repositoryId: repo.id,
+          folderId: folder.id,
+          templateId: lookups.template.id,
+          name: `Deleted-run case ${Date.now()}`,
+          stateId: lookups.state.id,
+          creatorId: lookups.creator.id,
+        },
+        select: { id: true },
+      });
+      for (const caseId of [home.caseId, deletedRunCase.id]) {
+        await tx.repositoryCaseIssue.create({
+          data: { caseId, issueId: issue.id },
+        });
+      }
+
+      // Fallback case: NO TestRunCases row anywhere. A passed automated
+      // result in a milestone-attached run decides; a LATER failed
+      // automated result in an OFF-milestone run must not override it.
+      await createJunitResult(tx, lookups, {
+        projectId: home.projectId,
+        caseId: home.caseId,
+        statusId: lookups.passedStatus.id,
+        executedAt: new Date("2026-01-01T00:00:00Z"),
+        milestoneId: milestone.id,
+      });
+      await createJunitResult(tx, lookups, {
+        projectId: home.projectId,
+        caseId: home.caseId,
+        statusId: lookups.failedStatus.id,
+        executedAt: new Date("2026-01-02T00:00:00Z"),
+      });
+
+      await createRunWithResult(tx, lookups, {
+        projectId: home.projectId,
+        caseId: deletedRunCase.id,
+        statusId: lookups.passedStatus.id,
+        completedAt: new Date("2026-01-01T00:00:00Z"),
+        milestoneId: milestone.id,
+        isDeleted: true,
+      });
+
+      const coverage = await getMemberCoverage(
+        milestone.id,
+        { projectId: home.projectId, accessibleProjectIds: null },
+        tx
+      );
+      const breakdown = coverage[issue.id];
+
+      expect(breakdown.linkedCaseCount).toBe(2);
+      expect(breakdown.passed).toBe(1);
+      expect(breakdown.failed).toBe(0);
+      expect(breakdown.notRun).toBe(1);
+      const statusCounts = Object.fromEntries(
+        breakdown.statuses.map((s) => [s.statusId, s.count])
+      );
+      expect(statusCounts[lookups.passedStatus.id]).toBe(1);
+      expect(breakdown.untested).toBe(1);
+    });
+  });
+
+  it("prefers an existing run-case rollup over the automated fallback", async () => {
+    const { baseDb, getMemberCoverage } = await importDeps();
+    await withRollback(baseDb, async (tx) => {
+      const lookups = await seedLookups(tx);
+      const home = await createProjectWithCase(tx, lookups, "rw");
+
+      const milestone = await tx.milestones.create({
+        data: {
+          projectId: home.projectId,
+          milestoneTypesId: lookups.milestoneType.id,
+          name: `ms-rollup-${Date.now()}`,
+          createdBy: lookups.creator.id,
+        },
+        select: { id: true },
+      });
+      const issue = await tx.issue.create({
+        data: {
+          name: `ISS-RW-${Date.now()}`,
+          title: "Rollup-wins fixture",
+          createdById: lookups.creator.id,
+        },
+        select: { id: true },
+      });
+      await tx.milestoneIssue.create({
+        data: {
+          milestoneId: milestone.id,
+          issueId: issue.id,
+          source: "MANUAL",
+        },
+      });
+      await tx.repositoryCaseIssue.create({
+        data: { caseId: home.caseId, issueId: issue.id },
+      });
+
+      // A live milestone run holds a rollup with NO status (still untested);
+      // a passed automated result also exists. The rollup wins: the case
+      // stays notRun until the rollup itself completes.
+      const run = await tx.testRuns.create({
+        data: {
+          name: `rollup-run-${Date.now()}`,
+          projectId: home.projectId,
+          stateId: lookups.state.id,
+          createdById: lookups.creator.id,
+          testRunType: "REGULAR",
+          milestoneId: milestone.id,
+        },
+        select: { id: true },
+      });
+      await tx.testRunCases.create({
+        data: {
+          testRunId: run.id,
+          repositoryCaseId: home.caseId,
+          order: 0,
+        },
+      });
+      await createJunitResult(tx, lookups, {
+        projectId: home.projectId,
+        caseId: home.caseId,
+        statusId: lookups.passedStatus.id,
+        executedAt: new Date("2026-01-01T00:00:00Z"),
+        milestoneId: milestone.id,
+      });
+
+      const coverage = await getMemberCoverage(
+        milestone.id,
+        { projectId: home.projectId, accessibleProjectIds: null },
+        tx
+      );
+      const breakdown = coverage[issue.id];
+
+      expect(breakdown.linkedCaseCount).toBe(1);
+      expect(breakdown.passed).toBe(0);
+      expect(breakdown.notRun).toBe(1);
+      expect(breakdown.untested).toBe(1);
+    });
+  });
 });

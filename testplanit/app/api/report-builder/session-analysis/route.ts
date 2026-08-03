@@ -445,8 +445,10 @@ const METRIC_REGISTRY: Record<
         }
 
         const group = grouped.get(key);
-        // Count active sessions (isActive = true)
-        if (session.isActive) {
+        // A session is active while it hasn't been completed. (Sessions has
+        // no isActive column — the old `session.isActive` check was always
+        // undefined, so this metric reported 0 everywhere.)
+        if (!session.isCompleted) {
           group.activeSessions++;
         }
       });

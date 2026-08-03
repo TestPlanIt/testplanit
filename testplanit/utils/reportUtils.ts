@@ -1,8 +1,38 @@
+import { queryProjectRelevantIssueIds } from "~/lib/projectIssueIdsQuery";
 import {
   buildFolderAncestorMap,
   groupResults,
   type GroupingOptions,
 } from "~/utils/reportGrouping";
+
+/**
+ * Project-scoped issue population for the issue-tracking report: issues
+ * filed under the project directly PLUS issues linked to the project's
+ * cases, runs, sessions, and results. Fetching by id keeps the query off
+ * the correlated-EXISTS path (see lib/projectIssueIds.ts). Runs the union
+ * on the passed db — this module is bundled into client components, so it
+ * must never import the server-only prisma stack.
+ */
+async function findProjectIssues(
+  db: any,
+  projectId: number,
+  args: { where?: Record<string, any> } & Record<string, any> = {}
+) {
+  const relevantIssueIds = await queryProjectRelevantIssueIds(
+    db,
+    Number(projectId)
+  );
+  if (relevantIssueIds.length === 0) return [];
+  const { where, ...rest } = args;
+  return db.issue.findMany({
+    where: {
+      id: { in: relevantIssueIds },
+      isDeleted: false,
+      ...(where ?? {}),
+    },
+    ...rest,
+  });
+}
 
 /**
  * Conditional `select` fragment for the executed case, included only when a
@@ -3285,25 +3315,17 @@ export function createIssueTrackingDimensionRegistry(
       label: "Creator",
       getValues: async (db: any, projectId?: number) => {
         if (isProjectSpecific && projectId) {
-          // Project-specific: Get creators from the project's issue config
-          const project = await db.projects.findUnique({
-            where: { id: Number(projectId) },
+          // Project-specific: creators across the project-relevant issues
+          const issues = await findProjectIssues(db, Number(projectId), {
             include: {
-              issues: {
-                where: { isDeleted: false },
-                include: {
-                  createdBy: {
-                    select: { id: true, name: true, email: true },
-                  },
-                },
-                distinct: ["createdById"],
+              createdBy: {
+                select: { id: true, name: true, email: true },
               },
             },
+            distinct: ["createdById"],
           });
 
-          if (!project?.issues) return [];
-
-          return project.issues
+          return issues
             .map((issue: any) => issue.createdBy)
             .filter((creator: any) => creator);
         } else {
@@ -3342,26 +3364,18 @@ export function createIssueTrackingDimensionRegistry(
         }> = [];
 
         if (isProjectSpecific && projectId) {
-          // Project-specific: Get distinct issue types from project's issues
-          const project = await db.projects.findUnique({
-            where: { id: Number(projectId) },
-            include: {
-              issues: {
-                where: { isDeleted: false },
-                select: {
-                  issueTypeName: true,
-                  issueTypeId: true,
-                  issueTypeIconUrl: true,
-                },
-                distinct: ["issueTypeName"],
-              },
+          // Project-specific: distinct types across the project-relevant issues
+          const issues = await findProjectIssues(db, Number(projectId), {
+            select: {
+              issueTypeName: true,
+              issueTypeId: true,
+              issueTypeIconUrl: true,
             },
+            distinct: ["issueTypeName"],
           });
 
-          if (!project?.issues) return results;
-
           // Check if there are issues without an issue type
-          const hasUnknownType = project.issues.some(
+          const hasUnknownType = issues.some(
             (issue: any) => issue.issueTypeName === null
           );
           if (hasUnknownType) {
@@ -3369,7 +3383,7 @@ export function createIssueTrackingDimensionRegistry(
           }
 
           // Add known issue types
-          project.issues.forEach((issue: any) => {
+          issues.forEach((issue: any) => {
             if (issue.issueTypeName) {
               results.push({
                 id: issue.issueTypeId || issue.issueTypeName,
@@ -3435,26 +3449,18 @@ export function createIssueTrackingDimensionRegistry(
         }> = [];
 
         if (isProjectSpecific && projectId) {
-          // Project-specific: Get integrations used by project's issues
-          const project = await db.projects.findUnique({
-            where: { id: Number(projectId) },
+          // Project-specific: trackers across the project-relevant issues
+          const issues = await findProjectIssues(db, Number(projectId), {
             include: {
-              issues: {
-                where: { isDeleted: false },
-                include: {
-                  integration: {
-                    select: { id: true, name: true, provider: true },
-                  },
-                },
-                distinct: ["integrationId"],
+              integration: {
+                select: { id: true, name: true, provider: true },
               },
             },
+            distinct: ["integrationId"],
           });
 
-          if (!project?.issues) return results;
-
           // Check if there are issues without an integration (internal)
-          const hasInternalIssues = project.issues.some(
+          const hasInternalIssues = issues.some(
             (issue: any) => issue.integrationId === null
           );
           if (hasInternalIssues) {
@@ -3462,7 +3468,7 @@ export function createIssueTrackingDimensionRegistry(
           }
 
           // Add external integrations
-          project.issues.forEach((issue: any) => {
+          issues.forEach((issue: any) => {
             if (issue.integration) {
               results.push(issue.integration);
             }
@@ -3510,24 +3516,15 @@ export function createIssueTrackingDimensionRegistry(
       label: "Issue Status",
       getValues: async (db: any, projectId?: number) => {
         if (isProjectSpecific && projectId) {
-          // Project-specific: Get distinct statuses from project's issues
-          const project = await db.projects.findUnique({
-            where: { id: Number(projectId) },
-            include: {
-              issues: {
-                where: {
-                  isDeleted: false,
-                  status: { not: null },
-                },
-                select: { status: true },
-                distinct: ["status"],
-              },
-            },
+          // Project-specific: distinct statuses across the project-relevant
+          // issues
+          const issues = await findProjectIssues(db, Number(projectId), {
+            where: { status: { not: null } },
+            select: { status: true },
+            distinct: ["status"],
           });
 
-          if (!project?.issues) return [];
-
-          return project.issues.map((issue: any) => ({
+          return issues.map((issue: any) => ({
             id: issue.status,
             name: issue.status,
           }));
@@ -3568,26 +3565,17 @@ export function createIssueTrackingDimensionRegistry(
         };
 
         if (isProjectSpecific && projectId) {
-          // Project-specific: Get distinct priorities from project's issues
-          const project = await db.projects.findUnique({
-            where: { id: Number(projectId) },
-            include: {
-              issues: {
-                where: {
-                  isDeleted: false,
-                  priority: { not: null },
-                },
-                select: { priority: true },
-                distinct: ["priority"],
-              },
-            },
+          // Project-specific: distinct priorities across the
+          // project-relevant issues
+          const issues = await findProjectIssues(db, Number(projectId), {
+            where: { priority: { not: null } },
+            select: { priority: true },
+            distinct: ["priority"],
           });
-
-          if (!project?.issues) return [];
 
           // Normalize priorities for case-insensitive grouping
           const uniquePriorities = new Map<string, string>();
-          project.issues.forEach((issue: any) => {
+          issues.forEach((issue: any) => {
             const normalized = normalizePriority(issue.priority);
             const key = normalized.toLowerCase();
             if (!uniquePriorities.has(key)) {
@@ -3639,23 +3627,16 @@ export function createIssueTrackingDimensionRegistry(
       label: "Creation Date",
       getValues: async (db: any, projectId?: number) => {
         if (isProjectSpecific && projectId) {
-          // Project-specific: Get dates from the project's issue config issues
-          const project = await db.projects.findUnique({
-            where: { id: Number(projectId) },
-            include: {
-              issues: {
-                where: { isDeleted: false },
-                select: { createdAt: true },
-                distinct: ["createdAt"],
-                orderBy: { createdAt: "asc" },
-              },
-            },
+          // Project-specific: creation days across the project-relevant
+          // issues
+          const issues = await findProjectIssues(db, Number(projectId), {
+            select: { createdAt: true },
+            distinct: ["createdAt"],
+            orderBy: { createdAt: "asc" },
           });
 
-          if (!project?.issues) return [];
-
           // Group dates by day
-          const datesByDay = project.issues.reduce((acc: any, curr: any) => {
+          const datesByDay = issues.reduce((acc: any, curr: any) => {
             const day = new Date(curr.createdAt);
             day.setUTCHours(0, 0, 0, 0);
             const dayStr = day.toISOString();
@@ -3724,30 +3705,17 @@ export function createIssueTrackingMetricRegistry(
         _dims?: string[]
       ) => {
         if (isProjectSpecific && projectId) {
-          // Project-specific implementation
-          const project = await db.projects.findUnique({
-            where: { id: Number(projectId) },
+          // Project-specific implementation: direct-FK issues plus issues
+          // linked through the project's cases, runs, and sessions.
+          const issues = await findProjectIssues(db, Number(projectId), {
+            where: buildDateFilter(filters, "createdAt"),
             include: {
-              issues: {
-                where: {
-                  isDeleted: false,
-                  ...buildDateFilter(filters, "createdAt"),
-                },
-                include: {
-                  ...(groupBy.includes("createdById")
-                    ? { createdBy: true }
-                    : {}),
-                  ...(groupBy.includes("integrationId")
-                    ? { integration: true }
-                    : {}),
-                },
-              },
+              ...(groupBy.includes("createdById") ? { createdBy: true } : {}),
+              ...(groupBy.includes("integrationId")
+                ? { integration: true }
+                : {}),
             },
           });
-
-          if (!project?.issues) return [];
-
-          const issues = project.issues;
 
           // Handle no grouping (total count)
           if (groupBy.length === 0) {

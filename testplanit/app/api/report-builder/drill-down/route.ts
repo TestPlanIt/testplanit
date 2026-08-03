@@ -4,9 +4,16 @@
  */
 
 import { baseDb } from "@/lib/db";
+import { getProjectRelevantIssueIds } from "@/lib/projectIssueIds";
 import { getServerSession } from "next-auth";
 import { NextRequest } from "next/server";
+import {
+  rollupIssueReadiness,
+  type IssueReadinessState,
+} from "~/app/[locale]/projects/milestones/[projectId]/[milestoneId]/milestoneReadiness";
 import { getEnhancedDb } from "~/lib/auth/utils";
+import { resolveViewerProjectScope } from "~/lib/authContext";
+import { getMemberCoverage } from "~/lib/services/milestoneMemberCoverage";
 import type {
   DrillDownRequest,
   DrillDownResponse,
@@ -186,6 +193,73 @@ async function handleDualSourceDrillDown(
   return Response.json(response);
 }
 
+/**
+ * Milestone-readiness metrics count member ISSUES per readiness state, so a
+ * cell drills into the matching member-issue list — computed from the same
+ * coverage rollup the report aggregates, never from a result-table query.
+ */
+const READINESS_STATE_BY_METRIC: Record<string, IssueReadinessState | "all"> = {
+  percentReady: "passed",
+  passed: "passed",
+  failed: "failed",
+  inProgress: "inProgress",
+  notRun: "notRun",
+  uncovered: "uncovered",
+  totalIssues: "all",
+};
+
+async function handleMilestoneReadinessDrillDown(
+  context: DrillDownRequest["context"],
+  offset: number,
+  limit: number,
+  session: any
+) {
+  const milestoneId = Number(context.dimensions.milestone?.id);
+  const projectId = Number(context.projectId);
+  if (!milestoneId || !projectId) {
+    return Response.json(
+      { error: "Milestone readiness drill-down requires a milestone" },
+      { status: 400 }
+    );
+  }
+
+  const state = READINESS_STATE_BY_METRIC[context.metricId];
+  const accessibleProjectIds = await resolveViewerProjectScope(session.user.id);
+  const coverage = await getMemberCoverage(milestoneId, {
+    projectId,
+    accessibleProjectIds,
+  });
+  const matchingIssueIds = Object.entries(coverage)
+    .filter(
+      ([, breakdown]) =>
+        state === "all" || rollupIssueReadiness(breakdown) === state
+    )
+    .map(([issueId]) => Number(issueId));
+
+  const total = matchingIssueIds.length;
+  const data: any[] =
+    total > 0
+      ? await baseDb.issue.findMany({
+          where: { id: { in: matchingIssueIds } },
+          include: {
+            project: { select: { id: true, name: true } },
+            createdBy: true,
+          },
+          orderBy: { createdAt: "desc" },
+          skip: offset,
+          take: limit,
+        })
+      : [];
+
+  const response: DrillDownResponse = {
+    data,
+    total,
+    hasMore: offset + data.length < total,
+    context,
+  };
+  return Response.json(response);
+}
+
 export async function POST(req: NextRequest) {
   try {
     // Check authentication
@@ -247,6 +321,20 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Milestone-readiness cells drill into member-issue lists computed from
+    // the same coverage rollup the report aggregates.
+    if (
+      context.reportType === "milestone-readiness" &&
+      READINESS_STATE_BY_METRIC[context.metricId]
+    ) {
+      return await handleMilestoneReadinessDrillDown(
+        context,
+        offset,
+        limit,
+        session
+      );
+    }
+
     // Result-level metric cells combine manual and automated results, so
     // their drill-down reads both tables.
     if (isDualSourceResultDrillDown(context)) {
@@ -262,6 +350,19 @@ export async function POST(req: NextRequest) {
 
     // Build the query
     const query = queryBuilder(context, offset, limit);
+
+    // Project-scoped issue drill-downs use the project-relevant population
+    // (direct FK plus case/run/session links), matching the aggregation.
+    if (
+      (context.metricId === "issues" || context.metricId === "issueCount") &&
+      context.projectId
+    ) {
+      const relevantIssueIds = await getProjectRelevantIssueIds(
+        Number(context.projectId)
+      );
+      delete (query.where as any).projectId;
+      (query.where as any).id = { in: relevantIssueIds };
+    }
 
     // Execute the query using dynamic model access
     const model = (baseDb as any)[modelName];
