@@ -1,9 +1,9 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { AutoTagWizardDialog } from "@/components/auto-tag/AutoTagWizardDialog";
-import { useDebounce } from "@/components/Debounce";
 import { ProjectIcon } from "@/components/ProjectIcon";
 import { VirtualizedDataTable } from "@/components/tables/VirtualizedDataTable";
 import { Filter } from "@/components/tables/Filter";
@@ -24,14 +24,6 @@ import { useEffect, useMemo, useState } from "react";
 import { useRequireAuth } from "~/hooks/useRequireAuth";
 import { useRouter } from "~/lib/navigation";
 import { ExtendedTags, useColumns } from "./columns";
-
-const PAGE_SIZE = 50;
-
-// Count columns are derived from filtered `_count` and can't be ordered across
-// pages by the database (Prisma can't sort on a filtered relation count).
-// Sorting by one fetches the full project-scoped set once and renders it through
-// the same virtualized table; "name" drives a genuine server-side infinite fetch.
-const COUNT_SORT_COLUMNS = ["cases", "sessions", "runs"];
 
 export default function ProjectTagListPage() {
   return <TagList />;
@@ -72,7 +64,6 @@ function TagList() {
     }
   }, [sortConfig.column, validColumnIds]);
   const [searchString, setSearchString] = useState("");
-  const debouncedSearchString = useDebounce(searchString, 500);
   const [columnVisibility, setColumnVisibility] = useState<
     Record<string, boolean>
   >({});
@@ -95,160 +86,51 @@ function TagList() {
     }
   );
 
-  // Only tags with at least one active (non-deleted, in-project) case, session,
-  // or run are shown — mirrors the project overview's tag scoping.
-  const tagsWhere = useMemo(() => {
-    const conditions: Array<Record<string, unknown>> = [
-      { isDeleted: false },
-      {
-        OR: [
-          {
-            caseTags: {
-              some: { case: { projectId: projectIdNumber, isDeleted: false } },
-            },
-          },
-          {
-            testRuns: {
-              some: { projectId: projectIdNumber, isDeleted: false },
-            },
-          },
-          {
-            sessions: {
-              some: { projectId: projectIdNumber, isDeleted: false },
-            },
-          },
-        ],
-      },
-    ];
-
-    const trimmed = debouncedSearchString.trim();
-    if (trimmed) {
-      conditions.push({
-        name: { contains: trimmed, mode: "insensitive" as const },
-      });
-    }
-
-    return { AND: conditions };
-  }, [projectIdNumber, debouncedSearchString]);
-
-  // Per-tag counts scoped to this project. Filtered `_count` keeps the counts
-  // accurate without loading every case/session/run into the client.
-  const tagsSelect = useMemo(
-    () =>
-      ({
-        id: true,
-        name: true,
-        _count: {
-          select: {
-            caseTags: {
-              where: { case: { projectId: projectIdNumber, isDeleted: false } },
-            },
-            testRuns: {
-              where: { projectId: projectIdNumber, isDeleted: false },
-            },
-            sessions: {
-              where: { projectId: projectIdNumber, isDeleted: false },
-            },
-          },
-        },
-      }) as const,
-    [projectIdNumber]
-  );
-
-  const isCountSort = COUNT_SORT_COLUMNS.includes(sortConfig.column);
-
-  const orderBy = useMemo(() => {
-    // Only "name" is a real DB column; count columns sort client-side over the
-    // full set (see COUNT_SORT_COLUMNS).
-    if (sortConfig.column === "name") {
-      return { name: sortConfig.direction } as const;
-    }
-    return { name: "asc" as const };
-  }, [sortConfig]);
-
-  const infiniteBaseArgs = useMemo(
-    () => ({
-      where: tagsWhere,
-      select: tagsSelect,
-      orderBy,
-      take: PAGE_SIZE,
-    }),
-    [tagsWhere, tagsSelect, orderBy]
-  );
-
   const queryEnabled = isAuthenticated && Number.isFinite(projectIdNumber);
 
-  const {
-    data: infinitePages,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-    isLoading: isLoadingInfinite,
-  } = useClientQueries(schema).tags.useInfiniteFindMany(infiniteBaseArgs, {
-    getNextPageParam: (lastPage, allPages) => {
-      if (!lastPage || lastPage.length < PAGE_SIZE) return undefined;
-      return { ...infiniteBaseArgs, skip: allPages.flat().length };
+  // Full project-scoped tag set (only tags with at least one active
+  // case/session/run, per-tag counts scoped to this project) from a server
+  // endpoint driven off baseDb — the policy-enforced ZenStack hooks this
+  // replaced re-inlined the Projects ACL as a correlated per-row subquery at
+  // every relation-filter site (see app/api/tags/project-list/route.ts).
+  // A project's tag list is small, so search/sort/pagination happen in memory.
+  const { data: allTags, isLoading: isLoadingTags } = useQuery({
+    queryKey: ["projectTagList", projectIdNumber],
+    queryFn: async () => {
+      const response = await fetch(
+        `/api/tags/project-list?projectId=${projectIdNumber}`
+      );
+      if (!response.ok) {
+        throw new Error("Failed to fetch project tags");
+      }
+      const body = await response.json();
+      return body.tags as ExtendedTags[];
     },
-    enabled: queryEnabled && !isCountSort,
+    enabled: queryEnabled,
   });
 
-  const { data: allTags, isLoading: isLoadingAll } = useClientQueries(
-    schema
-  ).tags.useFindMany(
-    { where: tagsWhere, select: tagsSelect, orderBy },
-    { enabled: queryEnabled && isCountSort }
-  );
-
-  const { data: tagsCount } = useClientQueries(schema).tags.useCount(
-    { where: tagsWhere },
-    { enabled: queryEnabled }
-  );
-
-  const rawTags = useMemo(
-    () =>
-      isCountSort
-        ? (allTags ?? [])
-        : ((infinitePages?.pages.flat() as unknown[]) ?? []),
-    [isCountSort, allTags, infinitePages]
-  );
-
-  const isLoadingTags = isCountSort ? isLoadingAll : isLoadingInfinite;
-
   const mappedTags = useMemo<ExtendedTags[]>(() => {
-    const mapped = (rawTags as any[]).map((tag) => ({
-      id: tag.id,
-      name: tag.name,
-      casesCount: tag._count?.caseTags ?? 0,
-      sessionsCount: tag._count?.sessions ?? 0,
-      runsCount: tag._count?.testRuns ?? 0,
-    }));
+    const trimmed = searchString.trim().toLowerCase();
+    const filtered = trimmed
+      ? (allTags ?? []).filter((tag) =>
+          tag.name.toLowerCase().includes(trimmed)
+        )
+      : (allTags ?? []);
 
-    if (isCountSort) {
-      return [...mapped].sort((a, b) => {
-        let aValue = 0;
-        let bValue = 0;
-        switch (sortConfig.column) {
-          case "cases":
-            aValue = a.casesCount;
-            bValue = b.casesCount;
-            break;
-          case "sessions":
-            aValue = a.sessionsCount;
-            bValue = b.sessionsCount;
-            break;
-          case "runs":
-            aValue = a.runsCount;
-            bValue = b.runsCount;
-            break;
-        }
-        return sortConfig.direction === "asc"
-          ? aValue - bValue
-          : bValue - aValue;
-      });
-    }
-
-    return mapped;
-  }, [rawTags, isCountSort, sortConfig]);
+    const direction = sortConfig.direction === "asc" ? 1 : -1;
+    return [...filtered].sort((a, b) => {
+      switch (sortConfig.column) {
+        case "cases":
+          return (a.casesCount - b.casesCount) * direction;
+        case "sessions":
+          return (a.sessionsCount - b.sessionsCount) * direction;
+        case "runs":
+          return (a.runsCount - b.runsCount) * direction;
+        default:
+          return a.name.localeCompare(b.name) * direction;
+      }
+    });
+  }, [allTags, searchString, sortConfig]);
 
   // ── AI Auto-Tag ──────────────────────────────────────────────────────
   const searchParams = useSearchParams();
@@ -441,7 +323,7 @@ function TagList() {
               <p className="text-sm text-muted-foreground shrink-0">
                 {t("admin.auditLogs.showing", {
                   loaded: mappedTags.length.toLocaleString(locale),
-                  total: (tagsCount ?? mappedTags.length).toLocaleString(
+                  total: (allTags?.length ?? mappedTags.length).toLocaleString(
                     locale
                   ),
                 })}
@@ -454,13 +336,11 @@ function TagList() {
               data={mappedTags as any}
               onSortChange={handleSortChange}
               sortConfig={sortConfig}
-              isLoading={isLoadingTags || isFetchingNextPage}
+              isLoading={isLoadingTags}
               columnVisibility={columnVisibility}
               onColumnVisibilityChange={setColumnVisibility}
-              hasMore={isCountSort ? false : !!hasNextPage}
-              onLoadMore={fetchNextPage}
               fillViewport
-              resetKey={`${debouncedSearchString}|${sortConfig.column}|${sortConfig.direction}`}
+              resetKey={`${searchString}|${sortConfig.column}|${sortConfig.direction}`}
               testIdPrefix="project-tags-table"
               rowTestIdPrefix="project-tag-row"
             />
