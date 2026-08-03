@@ -6194,7 +6194,10 @@
         "reviewReminderHoursPending": "Đang chờ xử lý trong {hoursPending, plural, one {# giờ} other {# giờ}}",
         "aiStepsDerivedTitle": "Các bước thử nghiệm được AI suy luận đã sẵn sàng",
         "aiStepsDerivedMessage": "{count, plural, other {# trường hợp thử nghiệm}} đã được cung cấp các bước do AI suy luận — hãy xem xét lại độ chính xác.",
-        "aiStepsDerivedReviewLink": "Xem xét lần chạy thử nghiệm"
+        "aiStepsDerivedReviewLink": "Xem xét lần chạy thử nghiệm",
+        "integrationAuthExpiredTitle": "Kết nối tích hợp đã hết hạn",
+        "integrationAuthExpiredMessage": "Kết nối của bạn tới \"{integrationName}\" đã hết hạn. Kết nối lại để tiếp tục đồng bộ vấn đề.",
+        "integrationAuthExpiredReconnect": "Kết nối lại"
       }
     },
     "issues": {

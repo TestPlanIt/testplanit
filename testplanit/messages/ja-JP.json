@@ -6194,7 +6194,10 @@
         "reviewReminderHoursPending": "{hoursPending, plural, one {# 時間} other {# 時間}} 保留中",
         "aiStepsDerivedTitle": "AI導出のテストステップの準備が完了しました",
         "aiStepsDerivedMessage": "{count, plural, other {#件のテストケース}}にAI導出のステップが付与されました — 正確性を確認してください。",
-        "aiStepsDerivedReviewLink": "テスト実行を確認"
+        "aiStepsDerivedReviewLink": "テスト実行を確認",
+        "integrationAuthExpiredTitle": "統合の接続が期限切れです",
+        "integrationAuthExpiredMessage": "「{integrationName}」への接続が期限切れになりました。課題の同期を再開するには再接続してください。",
+        "integrationAuthExpiredReconnect": "再接続"
       }
     },
     "issues": {

@@ -440,6 +440,7 @@ enum NotificationType {
     REVIEW_CANCELLED
     REVIEW_REMINDER
     AI_STEPS_DERIVED
+    INTEGRATION_AUTH_EXPIRED
 
     @@deny('all', auth() == null)
     @@allow('update', auth().access == 'ADMIN')
@@ -3618,6 +3619,7 @@ model UserIntegrationAuth {
     tokenExpiresAt DateTime?
     additionalData Json?                 // Provider-specific user data
     isActive       Boolean     @default(true)
+    needsReauthAt  DateTime?             // Set when token refresh is impossible; cleared on successful (re)auth
     lastUsedAt     DateTime?
     createdAt      DateTime    @default(now())
     updatedAt      DateTime    @updatedAt

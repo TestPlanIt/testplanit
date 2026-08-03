@@ -6194,7 +6194,10 @@
         "reviewReminderHoursPending": "等待 {hoursPending, plural, one {# 小時} other {# 小時}}",
         "aiStepsDerivedTitle": "AI 推導測試步驟已就緒",
         "aiStepsDerivedMessage": "{count, plural, other {# 個測試案例}} 已獲得 AI 推導的步驟 — 請檢查其準確性。",
-        "aiStepsDerivedReviewLink": "檢查測試執行"
+        "aiStepsDerivedReviewLink": "檢查測試執行",
+        "integrationAuthExpiredTitle": "整合連線已過期",
+        "integrationAuthExpiredMessage": "您與「{integrationName}」的連線已過期。請重新連線以繼續問題同步。",
+        "integrationAuthExpiredReconnect": "重新連線"
       }
     },
     "issues": {

@@ -15,6 +15,8 @@ const mockUpsert = vi.fn();
 const mockFindFirst = vi.fn();
 const mockUpdateMany = vi.fn();
 const mockCaptureAuditEvent = vi.fn();
+const mockIntegrationFindUnique = vi.fn();
+const mockCreateAuthExpiredNotification = vi.fn();
 
 vi.mock("@/lib/rawDb", () => ({
   rawDb: {
@@ -24,6 +26,16 @@ vi.mock("@/lib/rawDb", () => ({
       findFirst: (...a: unknown[]) => mockFindFirst(...a),
       updateMany: (...a: unknown[]) => mockUpdateMany(...a),
     },
+    integration: {
+      findUnique: (...a: unknown[]) => mockIntegrationFindUnique(...a),
+    },
+  },
+}));
+
+vi.mock("@/lib/services/notificationService", () => ({
+  NotificationService: {
+    createIntegrationAuthExpiredNotification: (...a: unknown[]) =>
+      mockCreateAuthExpiredNotification(...a),
   },
 }));
 
@@ -50,6 +62,8 @@ describe("AuthenticationService — UserIntegrationAuth audit", () => {
     mockUpdateMany.mockReset();
     mockCaptureAuditEvent.mockReset();
     mockCaptureAuditEvent.mockResolvedValue(undefined);
+    mockIntegrationFindUnique.mockReset();
+    mockCreateAuthExpiredNotification.mockReset();
   });
 
   it("storeUserAuth emits a CREATE audit on first auth, with NO tokens in the payload", async () => {
@@ -153,6 +167,61 @@ describe("AuthenticationService — UserIntegrationAuth audit", () => {
 
     await expect(
       AuthenticationService.storeUserAuth("user-1", 42, { accessToken: "tok" })
+    ).resolves.toBeUndefined();
+    expect(errSpy).toHaveBeenCalled();
+    errSpy.mockRestore();
+  });
+});
+
+describe("AuthenticationService — markNeedsReauth", () => {
+  beforeEach(() => {
+    mockUpdateMany.mockReset();
+    mockIntegrationFindUnique.mockReset();
+    mockCreateAuthExpiredNotification.mockReset();
+  });
+
+  it("marks the active row and notifies the owner on the first transition", async () => {
+    mockUpdateMany.mockResolvedValue({ count: 1 });
+    mockIntegrationFindUnique.mockResolvedValue({
+      name: "Jira Prod",
+      provider: "JIRA",
+    });
+
+    await AuthenticationService.markNeedsReauth("user-1", 42);
+
+    // Only rows not already marked are eligible — that guard is the dedupe.
+    expect(mockUpdateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          userId: "user-1",
+          integrationId: 42,
+          isActive: true,
+          needsReauthAt: null,
+        }),
+      })
+    );
+    expect(mockCreateAuthExpiredNotification).toHaveBeenCalledWith({
+      userId: "user-1",
+      integrationId: 42,
+      integrationName: "Jira Prod",
+      provider: "JIRA",
+    });
+  });
+
+  it("does NOT re-notify when the row is already marked", async () => {
+    mockUpdateMany.mockResolvedValue({ count: 0 });
+
+    await AuthenticationService.markNeedsReauth("user-1", 42);
+
+    expect(mockCreateAuthExpiredNotification).not.toHaveBeenCalled();
+  });
+
+  it("never breaks the calling sync path on failure", async () => {
+    mockUpdateMany.mockRejectedValue(new Error("db down"));
+    const errSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    await expect(
+      AuthenticationService.markNeedsReauth("user-1", 42)
     ).resolves.toBeUndefined();
     expect(errSpy).toHaveBeenCalled();
     errSpy.mockRestore();

@@ -6194,7 +6194,10 @@
         "reviewReminderHoursPending": "Beklemede {hoursPending, plural, one {# saat} other {# saat}}",
         "aiStepsDerivedTitle": "Yapay Zeka ile Türetilen Test Adımları Hazır",
         "aiStepsDerivedMessage": "{count, plural, one {# test durumuna} other {# test durumuna}} yapay zeka tarafından türetilmiş adımlar verildi — doğruluğunu inceleyin.",
-        "aiStepsDerivedReviewLink": "Test çalıştırmasını incele"
+        "aiStepsDerivedReviewLink": "Test çalıştırmasını incele",
+        "integrationAuthExpiredTitle": "Entegrasyon Bağlantısının Süresi Doldu",
+        "integrationAuthExpiredMessage": "\"{integrationName}\" ile bağlantınızın süresi doldu. Sorun senkronizasyonuna devam etmek için yeniden bağlanın.",
+        "integrationAuthExpiredReconnect": "Yeniden Bağlan"
       }
     },
     "issues": {

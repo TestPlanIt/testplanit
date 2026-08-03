@@ -6194,7 +6194,10 @@
         "reviewReminderHoursPending": "Pending for {hoursPending, plural, one {# hour} other {# hours}}",
         "aiStepsDerivedTitle": "AI-Derived Test Steps Ready",
         "aiStepsDerivedMessage": "{count, plural, one {# test case was} other {# test cases were}} given AI-derived steps — review for accuracy.",
-        "aiStepsDerivedReviewLink": "Review test run"
+        "aiStepsDerivedReviewLink": "Review test run",
+        "integrationAuthExpiredTitle": "Integration Connection Expired",
+        "integrationAuthExpiredMessage": "Your connection to \"{integrationName}\" has expired. Reconnect to resume issue syncing.",
+        "integrationAuthExpiredReconnect": "Reconnect"
       }
     },
     "issues": {

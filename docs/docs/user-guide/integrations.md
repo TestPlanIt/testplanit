@@ -542,9 +542,9 @@ For OAuth integrations, users must:
 
 ### Token Refresh and Re-authorization
 
-When an OAuth access token has expired, TestPlanIt refreshes it automatically the next time the integration is used, as long as a refresh token is on record (GitLab and Gitea/Forgejo issue these; GitHub OAuth App tokens do not expire). The refreshed token is saved transparently, so users normally never notice expiration.
+When an OAuth access token is expired — or within a few minutes of expiring — TestPlanIt refreshes it automatically the next time the integration is used, including from background issue and milestone syncs, as long as a refresh token is on record (Jira, GitLab, and Gitea/Forgejo issue these; GitHub OAuth App tokens do not expire). The refreshed token is saved transparently, so users normally never notice expiration.
 
-Re-authorization is only required when there is no usable refresh token — for example, the refresh token was revoked, or the OAuth app was not granted offline access. In that case:
+Re-authorization is only required when there is no usable refresh token — for example, the refresh token was revoked, expired from inactivity, or the OAuth app was not granted offline access. When that happens, the connection's owner receives a notification (bell and, depending on their notification preferences, email) with a **Reconnect** link that starts the consent flow directly. They can also re-authorize from anywhere the connection is used:
 
 - When creating an issue, the dialog shows an **Authenticate** button that opens the consent window in place.
 - At any time, a user can re-authorize from **Project → Integrations** using the **Authorize** button.
@@ -554,7 +554,7 @@ Each user authorizes and refreshes independently, so re-authorizing only affects
 
 :::caution Adding scopes requires everyone to re-authorize
 
-Providers bind the granted scope set to the connection at consent time and carry it unchanged through every refresh. So when an OAuth app gains new scopes — for example, adding the [Jira Software scopes](#jira-with-oauth-20) for sprint import — existing connections keep their old, narrower permissions indefinitely. Refreshing does not widen them, and neither does revoking the app in the provider's account settings: TestPlanIt has no re-authorization prompt, so a revoked connection simply starts failing.
+Providers bind the granted scope set to the connection at consent time and carry it unchanged through every refresh. So when an OAuth app gains new scopes — for example, adding the [Jira Software scopes](#jira-with-oauth-20) for sprint import — existing connections keep their old, narrower permissions indefinitely. Refreshing does not widen them. Revoking the app in the provider's account settings invalidates the stored refresh token, so the next time TestPlanIt uses the connection the owner is notified to reconnect — but until each user re-authorizes, their connection keeps its old scope set.
 
 Every user who has authorized the integration must re-authorize before the new scopes take effect for them. This matters even for features that aren't user-specific: milestone import borrows whichever authorized token was refreshed most recently, so a single teammate still holding an old-scope token can make the import fail again after it appeared to be fixed.
 

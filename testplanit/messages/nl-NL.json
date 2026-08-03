@@ -6194,7 +6194,10 @@
         "reviewReminderHoursPending": "In afwachting van {hoursPending, plural, one {# uur} other {# uur}}",
         "aiStepsDerivedTitle": "AI-afgeleide teststappen gereed",
         "aiStepsDerivedMessage": "{count, plural, one {# testcase heeft} other {# testcases hebben}} AI-afgeleide stappen gekregen — controleer op juistheid.",
-        "aiStepsDerivedReviewLink": "Testrun controleren"
+        "aiStepsDerivedReviewLink": "Testrun controleren",
+        "integrationAuthExpiredTitle": "Integratieverbinding verlopen",
+        "integrationAuthExpiredMessage": "Uw verbinding met \"{integrationName}\" is verlopen. Maak opnieuw verbinding om het synchroniseren van issues te hervatten.",
+        "integrationAuthExpiredReconnect": "Opnieuw verbinden"
       }
     },
     "issues": {

@@ -87,6 +87,35 @@ export class NotificationService {
   }
 
   /**
+   * Notify the owner of an OAuth integration connection that it needs
+   * re-authorization — the access token expired or was revoked and cannot be
+   * refreshed. Fired once per expiry event (deduped by
+   * `AuthenticationService.markNeedsReauth`).
+   */
+  static async createIntegrationAuthExpiredNotification(params: {
+    userId: string;
+    integrationId: number;
+    integrationName: string;
+    provider?: string;
+    tenantId?: string;
+  }) {
+    return this.createNotification({
+      userId: params.userId,
+      type: NotificationType.INTEGRATION_AUTH_EXPIRED,
+      title: "Integration connection expired",
+      message: `Your connection to "${params.integrationName}" has expired. Reconnect to resume issue syncing.`,
+      relatedEntityId: String(params.integrationId),
+      relatedEntityType: "Integration",
+      data: {
+        integrationId: params.integrationId,
+        integrationName: params.integrationName,
+        ...(params.provider ? { provider: params.provider } : {}),
+      },
+      tenantId: params.tenantId,
+    });
+  }
+
+  /**
    * Mark notifications as read
    */
   static async markNotificationsAsRead(

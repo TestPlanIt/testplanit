@@ -6194,7 +6194,10 @@
         "reviewReminderHoursPending": "Ожидается в течение {hoursPending, plural, one {# часов} other {# часов}}",
         "aiStepsDerivedTitle": "Шаги теста, созданные ИИ, готовы",
         "aiStepsDerivedMessage": "Для {count, plural, one {# тестового случая} few {# тестовых случаев} many {# тестовых случаев} other {# тестовых случаев}} были сгенерированы шаги ИИ — проверьте их точность.",
-        "aiStepsDerivedReviewLink": "Просмотреть тестовый запуск"
+        "aiStepsDerivedReviewLink": "Просмотреть тестовый запуск",
+        "integrationAuthExpiredTitle": "Подключение интеграции истекло",
+        "integrationAuthExpiredMessage": "Ваше подключение к \"{integrationName}\" истекло. Переподключитесь, чтобы возобновить синхронизацию задач.",
+        "integrationAuthExpiredReconnect": "Переподключить"
       }
     },
     "issues": {

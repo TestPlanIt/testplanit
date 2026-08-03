@@ -6194,7 +6194,10 @@
         "reviewReminderHoursPending": "Ausstehend für {hoursPending, plural, one {# Stunde} other {# Stunden}}",
         "aiStepsDerivedTitle": "KI-abgeleitete Testschritte bereit",
         "aiStepsDerivedMessage": "{count, plural, one {# Testfall wurde} other {# Testfälle wurden}} mit KI-abgeleiteten Schritten versehen — auf Richtigkeit prüfen.",
-        "aiStepsDerivedReviewLink": "Testlauf überprüfen"
+        "aiStepsDerivedReviewLink": "Testlauf überprüfen",
+        "integrationAuthExpiredTitle": "Integrationsverbindung abgelaufen",
+        "integrationAuthExpiredMessage": "Ihre Verbindung zu \"{integrationName}\" ist abgelaufen. Stellen Sie die Verbindung erneut her, um die Issue-Synchronisierung fortzusetzen.",
+        "integrationAuthExpiredReconnect": "Erneut verbinden"
       }
     },
     "issues": {

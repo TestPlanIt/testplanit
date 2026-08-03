@@ -6194,7 +6194,10 @@
         "reviewReminderHoursPending": "Pendiente durante {hoursPending, plural, one {# hora} other {# horas}}",
         "aiStepsDerivedTitle": "Pasos de prueba derivados por IA listos",
         "aiStepsDerivedMessage": "{count, plural, one {# caso de prueba recibió pasos derivados por IA} other {# casos de prueba recibieron pasos derivados por IA}} — revíselos para verificar su precisión.",
-        "aiStepsDerivedReviewLink": "Revisar ejecución de prueba"
+        "aiStepsDerivedReviewLink": "Revisar ejecución de prueba",
+        "integrationAuthExpiredTitle": "Conexión de integración caducada",
+        "integrationAuthExpiredMessage": "Su conexión con \"{integrationName}\" ha caducado. Vuelva a conectarse para reanudar la sincronización de incidencias.",
+        "integrationAuthExpiredReconnect": "Reconectar"
       }
     },
     "issues": {

@@ -29,6 +29,11 @@ export class IntegrationManager {
   // than served stale — otherwise reads start failing one hour after connect.
   private adapterCacheExpiry: Map<string, number> = new Map();
 
+  // Refresh OAuth tokens this long before their recorded expiry so a token
+  // can't lapse mid-request (or mid-way through a long sync). Also the
+  // freshness bar a concurrent-refresh loser waits for.
+  private static readonly TOKEN_REFRESH_MARGIN_MS = 5 * 60 * 1000;
+
   // Valkey pub/sub channel used to broadcast adapter-cache invalidations to
   // every other process. Each process caches adapters in its own memory, so a
   // credential/settings change on one pod must tell the others to evict too.
@@ -209,33 +214,100 @@ export class IntegrationManager {
         ? EncryptionService.decrypt(auth.refreshToken, masterKey)
         : undefined;
 
-      // Transparently refresh an expired access token. Refresh on behalf of the
-      // token's owner: read paths (issue hover/details) borrow a token without
-      // passing a userId, so fall back to the owning user recorded on the auth
-      // row. Without this, borrowed reads can never refresh and start failing an
-      // hour after the admin connects. The new token is persisted so subsequent
-      // requests skip the refresh.
+      // Transparently refresh an access token within TOKEN_REFRESH_MARGIN_MS
+      // of expiry. Refresh on behalf of the token's owner: read paths (issue
+      // hover/details) borrow a token without passing a userId, so fall back
+      // to the owning user recorded on the auth row. Without this, borrowed
+      // reads can never refresh and start failing an hour after the admin
+      // connects. The new token is persisted so subsequent requests skip the
+      // refresh.
       const isExpired =
-        !!auth.tokenExpiresAt && auth.tokenExpiresAt < new Date();
+        !!auth.tokenExpiresAt &&
+        auth.tokenExpiresAt.getTime() <
+          Date.now() + IntegrationManager.TOKEN_REFRESH_MARGIN_MS;
       const ownerId = userId ?? auth.userId;
       if (isExpired && refreshToken && ownerId && adapter.refreshTokens) {
-        try {
-          const refreshed = await adapter.refreshTokens(refreshToken);
-          accessToken = refreshed.accessToken;
-          refreshToken = refreshed.refreshToken || refreshToken;
-          authData.expiresAt = refreshed.expiresAt;
-          await AuthenticationService.storeUserAuth(ownerId, integration.id, {
-            accessToken: refreshed.accessToken,
-            refreshToken,
-            expiresAt: refreshed.expiresAt,
-          });
-        } catch (error) {
-          // Leave the stale token in place; the downstream request will fail
-          // with 401 and the UI surfaces the re-authorization prompt.
-          console.error(
-            `Failed to refresh OAuth token for integration ${integration.id}:`,
-            error
+        // Providers rotate refresh tokens — Atlassian revokes the whole token
+        // family when one is used twice — so exactly one process may refresh a
+        // given auth row at a time. Losers wait for the winner to persist the
+        // rotated tokens and re-read them instead of refreshing themselves.
+        const lockKey = `oauth-refresh-lock:${scope}:${integration.id}:${auth.userId}`;
+        const lockAcquired = !valkeyConnection
+          ? true
+          : (await valkeyConnection.set(lockKey, "1", "EX", 30, "NX")) === "OK";
+
+        if (!lockAcquired) {
+          const reread = await this.waitForRefreshedTokens(
+            db,
+            auth.id,
+            masterKey
           );
+          if (reread) {
+            accessToken = reread.accessToken;
+            refreshToken = reread.refreshToken ?? refreshToken;
+            authData.expiresAt = reread.expiresAt;
+          }
+          // If the winner failed, fall through with the stale token — the
+          // downstream request 401s, same as a failed refresh below.
+        } else {
+          try {
+            // Another process may have refreshed between our row read and the
+            // lock grant — re-check before burning the single-use refresh token.
+            const current = await db.userIntegrationAuth.findUnique({
+              where: { id: auth.id },
+            });
+            if (
+              current?.tokenExpiresAt &&
+              current.tokenExpiresAt.getTime() >
+                Date.now() + IntegrationManager.TOKEN_REFRESH_MARGIN_MS
+            ) {
+              accessToken = EncryptionService.decrypt(
+                current.accessToken,
+                masterKey
+              );
+              refreshToken = current.refreshToken
+                ? EncryptionService.decrypt(current.refreshToken, masterKey)
+                : refreshToken;
+              authData.expiresAt = current.tokenExpiresAt;
+            } else {
+              const refreshed = await adapter.refreshTokens(refreshToken);
+              accessToken = refreshed.accessToken;
+              refreshToken = refreshed.refreshToken || refreshToken;
+              authData.expiresAt = refreshed.expiresAt;
+              await AuthenticationService.storeUserAuth(
+                ownerId,
+                integration.id,
+                {
+                  accessToken: refreshed.accessToken,
+                  refreshToken,
+                  expiresAt: refreshed.expiresAt,
+                }
+              );
+            }
+          } catch (error) {
+            // Leave the stale token in place; the downstream request will fail
+            // with 401 and the UI surfaces the re-authorization prompt.
+            console.error(
+              `Failed to refresh OAuth token for integration ${integration.id}:`,
+              error
+            );
+            // invalid_grant means the refresh token itself is dead (revoked,
+            // rotated away, or past the provider's inactivity window) — flag
+            // the row so the owner is notified to reconnect.
+            if (
+              error instanceof Error &&
+              /invalid_grant/i.test(error.message)
+            ) {
+              await AuthenticationService.markNeedsReauth(
+                auth.userId,
+                integration.id
+              );
+            }
+          } finally {
+            if (valkeyConnection) {
+              await valkeyConnection.del(lockKey).catch(() => {});
+            }
+          }
         }
       }
 
@@ -258,15 +330,55 @@ export class IntegrationManager {
       this.adapterCache.set(cacheKey, adapter);
       // Track the access-token expiry so the cache hit above can evict and
       // rebuild once it lapses (OAuth only; API-key adapters have no expiry).
+      // Evict a margin early so the rebuild refreshes the token before it
+      // actually dies rather than after.
       if (authData.expiresAt) {
         this.adapterCacheExpiry.set(
           cacheKey,
-          new Date(authData.expiresAt).getTime()
+          new Date(authData.expiresAt).getTime() -
+            IntegrationManager.TOKEN_REFRESH_MARGIN_MS
         );
       }
     }
 
     return adapter;
+  }
+
+  /**
+   * Wait for a concurrent refresh (another process holds the refresh lock) to
+   * persist its rotated tokens, then return them decrypted. Polls the auth
+   * row briefly; null when the winner didn't produce a fresh token in time.
+   */
+  private async waitForRefreshedTokens(
+    db: typeof rawDb,
+    authId: string,
+    masterKey: ReturnType<typeof getMasterKey>
+  ): Promise<{
+    accessToken: string;
+    refreshToken?: string;
+    expiresAt: Date;
+  } | null> {
+    for (let attempt = 0; attempt < 4; attempt++) {
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const row = await db.userIntegrationAuth.findUnique({
+        where: { id: authId },
+      });
+      if (
+        row?.isActive &&
+        row.tokenExpiresAt &&
+        row.tokenExpiresAt.getTime() >
+          Date.now() + IntegrationManager.TOKEN_REFRESH_MARGIN_MS
+      ) {
+        return {
+          accessToken: EncryptionService.decrypt(row.accessToken, masterKey),
+          refreshToken: row.refreshToken
+            ? EncryptionService.decrypt(row.refreshToken, masterKey)
+            : undefined,
+          expiresAt: row.tokenExpiresAt,
+        };
+      }
+    }
+    return null;
   }
 
   /**

@@ -388,6 +388,37 @@ export function NotificationContent({
     );
   }
 
+  // Handle expired integration connections (OAuth token no longer refreshable)
+  if (notification.type === "INTEGRATION_AUTH_EXPIRED") {
+    const integrationName = data.integrationName || notification.title;
+    // The OAuth kickoff is an API route (no locale prefix), so use a plain
+    // anchor rather than the i18n Link wrapper.
+    const reconnectUrl =
+      data.provider && data.integrationId
+        ? `/api/integrations/oauth/${String(data.provider).toLowerCase()}/auth?integrationId=${data.integrationId}&returnUrl=${encodeURIComponent("/integrations/auth-complete")}`
+        : null;
+
+    return (
+      <div className="space-y-2">
+        <h4 className="font-medium text-sm">
+          {t("integrationAuthExpiredTitle")}
+        </h4>
+        <div className="text-sm text-muted-foreground space-y-1">
+          <p>{t("integrationAuthExpiredMessage", { integrationName })}</p>
+          {reconnectUrl && (
+            <a
+              href={reconnectUrl}
+              className="font-medium text-primary hover:underline inline-flex items-center gap-1"
+            >
+              {t("integrationAuthExpiredReconnect")}
+              <ExternalLink className="h-3 w-3" />
+            </a>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   // Handle LLM budget alerts
   if (notification.type === "LLM_BUDGET_ALERT") {
     const threshold = data.threshold;

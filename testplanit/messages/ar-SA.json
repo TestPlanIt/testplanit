@@ -6194,7 +6194,10 @@
         "reviewReminderHoursPending": "معلق منذ {hoursPending, plural, zero {# ساعة} one {ساعة واحدة} two {ساعتان} few {# ساعات} many {# ساعة} other {# ساعة}}",
         "aiStepsDerivedTitle": "خطوات اختبار مشتقة بالذكاء الاصطناعي جاهزة",
         "aiStepsDerivedMessage": "{count, plural, zero {لم تُمنح أي حالة اختبار} one {تم منح حالة اختبار واحدة} two {تم منح حالتي اختبار} few {تم منح # حالات اختبار} many {تم منح # حالة اختبار} other {تم منح # حالة اختبار}} خطوات مشتقة بالذكاء الاصطناعي — راجعها للتأكد من الدقة.",
-        "aiStepsDerivedReviewLink": "مراجعة جولة الاختبار"
+        "aiStepsDerivedReviewLink": "مراجعة جولة الاختبار",
+        "integrationAuthExpiredTitle": "انتهت صلاحية اتصال التكامل",
+        "integrationAuthExpiredMessage": "انتهت صلاحية اتصالك بـ \"{integrationName}\". أعد الاتصال لاستئناف مزامنة المشكلات.",
+        "integrationAuthExpiredReconnect": "إعادة الاتصال"
       }
     },
     "issues": {

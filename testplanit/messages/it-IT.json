@@ -6194,7 +6194,10 @@
         "reviewReminderHoursPending": "In attesa da {hoursPending, plural, one {# ore} other {# ore}}",
         "aiStepsDerivedTitle": "Passaggi di test derivati dall'AI pronti",
         "aiStepsDerivedMessage": "{count, plural, one {# caso di test ha} other {# casi di test hanno}} ricevuto passaggi derivati dall'AI — verificane l'accuratezza.",
-        "aiStepsDerivedReviewLink": "Rivedi l'esecuzione del test"
+        "aiStepsDerivedReviewLink": "Rivedi l'esecuzione del test",
+        "integrationAuthExpiredTitle": "Connessione all'integrazione scaduta",
+        "integrationAuthExpiredMessage": "La connessione a \"{integrationName}\" è scaduta. Riconnettiti per riprendere la sincronizzazione dei problemi.",
+        "integrationAuthExpiredReconnect": "Riconnetti"
       }
     },
     "issues": {

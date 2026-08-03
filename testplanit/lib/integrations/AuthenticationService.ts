@@ -155,6 +155,7 @@ export class AuthenticationService {
         tokenExpiresAt: authData.expiresAt,
         additionalData: authData.additionalData,
         isActive: true,
+        needsReauthAt: null,
         lastUsedAt: new Date(),
       },
       update: {
@@ -163,6 +164,7 @@ export class AuthenticationService {
         tokenExpiresAt: authData.expiresAt,
         additionalData: authData.additionalData,
         isActive: true,
+        needsReauthAt: null,
         lastUsedAt: new Date(),
       },
       select: { id: true, integration: { select: { name: true } } },
@@ -278,6 +280,47 @@ export class AuthenticationService {
     } catch (error) {
       console.error("Failed to refresh tokens:", error);
       return false;
+    }
+  }
+
+  /**
+   * Mark a user's auth row as needing re-authorization — the access token is
+   * expired and cannot be refreshed (no refresh token on record, or the
+   * provider terminally rejected it, e.g. OAuth `invalid_grant`). The
+   * `needsReauthAt IS NULL` guard makes the transition fire exactly once, so
+   * the owner gets a single notification per expiry event instead of one per
+   * failed sync tick. `storeUserAuth` clears the mark on successful (re)auth.
+   * Best-effort: a failure here must never break the calling sync path.
+   */
+  static async markNeedsReauth(
+    userId: string,
+    integrationId: number
+  ): Promise<void> {
+    try {
+      const { count } = await rawDb.userIntegrationAuth.updateMany({
+        where: { userId, integrationId, isActive: true, needsReauthAt: null },
+        data: { needsReauthAt: new Date() },
+      });
+      if (count === 0) return;
+
+      const integration = await rawDb.integration.findUnique({
+        where: { id: integrationId },
+        select: { name: true, provider: true },
+      });
+
+      const { NotificationService } =
+        await import("@/lib/services/notificationService");
+      await NotificationService.createIntegrationAuthExpiredNotification({
+        userId,
+        integrationId,
+        integrationName: integration?.name ?? `Integration #${integrationId}`,
+        provider: integration?.provider,
+      });
+    } catch (err) {
+      console.error(
+        "[AuthenticationService] Failed to mark integration auth for re-authorization:",
+        err
+      );
     }
   }
 

@@ -10,7 +10,21 @@ vi.mock("@/lib/rawDb", () => ({
     integration: {
       findUnique: vi.fn(),
     },
+    userIntegrationAuth: {
+      findUnique: vi.fn(),
+    },
   },
+}));
+
+// Mock Valkey so the single-flight refresh lock is deterministic: `set`
+// resolves "OK" (lock acquired) unless a test overrides it.
+vi.mock("@/lib/valkey", () => ({
+  default: {
+    set: vi.fn(),
+    del: vi.fn(),
+    publish: vi.fn(),
+  },
+  createSubscriberClient: vi.fn(() => null),
 }));
 
 // Mock encryption
@@ -26,16 +40,21 @@ vi.mock("@/utils/encryption", () => ({
 vi.mock("./AuthenticationService", () => ({
   AuthenticationService: {
     storeUserAuth: vi.fn(),
+    markNeedsReauth: vi.fn(),
   },
 }));
 
 // Get the mocked rawDb
 import { rawDb } from "@/lib/rawDb";
+import valkeyConnection from "@/lib/valkey";
 import { EncryptionService } from "@/utils/encryption";
 import { AuthenticationService } from "./AuthenticationService";
 
 const mockDb = rawDb as unknown as {
   integration: {
+    findUnique: ReturnType<typeof vi.fn>;
+  };
+  userIntegrationAuth: {
     findUnique: ReturnType<typeof vi.fn>;
   };
 };
@@ -45,6 +64,11 @@ describe("IntegrationManager", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    // Lock acquired, no concurrent refresh persisted — the common case.
+    vi.mocked(valkeyConnection!.set).mockResolvedValue("OK");
+    vi.mocked(valkeyConnection!.del).mockResolvedValue(1);
+    vi.mocked(valkeyConnection!.publish).mockResolvedValue(0);
+    mockDb.userIntegrationAuth.findUnique.mockResolvedValue(null);
     // Get fresh instance and clear any cached state
     manager = IntegrationManager.getInstance();
     manager.clearAllAdapters();
@@ -331,6 +355,254 @@ describe("IntegrationManager", () => {
           refreshToken: "fresh-refresh",
         })
       );
+
+      vi.unstubAllEnvs();
+    });
+
+    it("refreshes a token that is inside the expiry margin but not yet expired", async () => {
+      // A token with 2 minutes left would lapse mid-request (or mid-sync);
+      // the 5-minute margin refreshes it proactively.
+      vi.stubEnv("NEXTAUTH_URL", "https://app.example.com");
+      vi.mocked(EncryptionService.decrypt).mockImplementation(
+        (value: string) => value
+      );
+
+      const integration = {
+        id: 62,
+        name: "GitLab OAuth",
+        provider: "GITLAB",
+        status: "ACTIVE",
+        authType: "OAUTH2",
+        credentials: {
+          encrypted: JSON.stringify({
+            clientId: "gl-client",
+            clientSecret: "gl-secret",
+          }),
+        },
+        settings: { instanceUrl: "https://gitlab.com" },
+        userIntegrationAuths: [
+          {
+            userId: "owner-9",
+            isActive: true,
+            accessToken: "nearly-dead-access",
+            refreshToken: "the-refresh-token",
+            tokenExpiresAt: new Date(Date.now() + 2 * 60 * 1000),
+            updatedAt: new Date(),
+          },
+        ],
+      };
+      mockDb.integration.findUnique.mockResolvedValue(integration);
+
+      const mockFetch = vi
+        .fn()
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () =>
+            Promise.resolve({
+              access_token: "fresh-access",
+              refresh_token: "fresh-refresh",
+              expires_in: 7200,
+            }),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve({ id: 1, username: "u" }),
+        });
+      global.fetch = mockFetch;
+
+      await manager.getAdapter("62");
+
+      expect(mockFetch.mock.calls[0][0]).toBe("https://gitlab.com/oauth/token");
+      expect(AuthenticationService.storeUserAuth).toHaveBeenCalled();
+
+      vi.unstubAllEnvs();
+    });
+
+    it("marks the auth row needs-reauth when the provider rejects the refresh token", async () => {
+      // invalid_grant = the refresh token itself is dead (revoked/rotated/
+      // inactive too long). The owner must be flagged so they get notified to
+      // reconnect instead of the failure staying log-only.
+      vi.stubEnv("NEXTAUTH_URL", "https://app.example.com");
+      vi.mocked(EncryptionService.decrypt).mockImplementation(
+        (value: string) => value
+      );
+
+      const integration = {
+        id: 63,
+        name: "GitLab OAuth",
+        provider: "GITLAB",
+        status: "ACTIVE",
+        authType: "OAUTH2",
+        credentials: {
+          encrypted: JSON.stringify({
+            clientId: "gl-client",
+            clientSecret: "gl-secret",
+          }),
+        },
+        settings: { instanceUrl: "https://gitlab.com" },
+        userIntegrationAuths: [
+          {
+            userId: "owner-9",
+            isActive: true,
+            accessToken: "old-access",
+            refreshToken: "dead-refresh-token",
+            tokenExpiresAt: new Date(Date.now() - 1000),
+            updatedAt: new Date(),
+          },
+        ],
+      };
+      mockDb.integration.findUnique.mockResolvedValue(integration);
+
+      const mockFetch = vi
+        .fn()
+        // refresh exchange rejected terminally
+        .mockResolvedValueOnce({
+          ok: false,
+          text: () =>
+            Promise.resolve(
+              '{"error":"invalid_grant","error_description":"revoked"}'
+            ),
+        })
+        // authenticate() then proceeds with the stale token
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve({ id: 1, username: "u" }),
+        });
+      global.fetch = mockFetch;
+
+      await manager.getAdapter("63");
+
+      expect(AuthenticationService.markNeedsReauth).toHaveBeenCalledWith(
+        "owner-9",
+        63
+      );
+      expect(AuthenticationService.storeUserAuth).not.toHaveBeenCalled();
+
+      vi.unstubAllEnvs();
+    });
+
+    it("does not refresh when the row was already refreshed by another process", async () => {
+      // Double-checked locking: between the initial row read and the lock
+      // grant, another process may have persisted rotated tokens. Burning the
+      // old (single-use) refresh token anyway would revoke the token family.
+      vi.stubEnv("NEXTAUTH_URL", "https://app.example.com");
+      vi.mocked(EncryptionService.decrypt).mockImplementation(
+        (value: string) => value
+      );
+
+      const integration = {
+        id: 64,
+        name: "GitLab OAuth",
+        provider: "GITLAB",
+        status: "ACTIVE",
+        authType: "OAUTH2",
+        credentials: {
+          encrypted: JSON.stringify({
+            clientId: "gl-client",
+            clientSecret: "gl-secret",
+          }),
+        },
+        settings: { instanceUrl: "https://gitlab.com" },
+        userIntegrationAuths: [
+          {
+            id: "auth-row-64",
+            userId: "owner-9",
+            isActive: true,
+            accessToken: "old-access",
+            refreshToken: "old-refresh-token",
+            tokenExpiresAt: new Date(Date.now() - 1000),
+            updatedAt: new Date(),
+          },
+        ],
+      };
+      mockDb.integration.findUnique.mockResolvedValue(integration);
+      mockDb.userIntegrationAuth.findUnique.mockResolvedValue({
+        id: "auth-row-64",
+        userId: "owner-9",
+        isActive: true,
+        accessToken: "winner-access",
+        refreshToken: "winner-refresh",
+        tokenExpiresAt: new Date(Date.now() + 2 * 3600_000),
+      });
+
+      // Only the validation request should fire — no token exchange.
+      const mockFetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ id: 1, username: "u" }),
+      });
+      global.fetch = mockFetch;
+
+      await manager.getAdapter("64");
+
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+      expect(mockFetch.mock.calls[0][0]).toBe("https://gitlab.com/api/v4/user");
+      expect(AuthenticationService.storeUserAuth).not.toHaveBeenCalled();
+
+      vi.unstubAllEnvs();
+    });
+
+    it("waits for the lock holder and reuses its persisted tokens", async () => {
+      // Lock lost = another process is mid-refresh. The loser polls the auth
+      // row for the winner's rotated tokens instead of refreshing itself.
+      vi.stubEnv("NEXTAUTH_URL", "https://app.example.com");
+      vi.mocked(EncryptionService.decrypt).mockImplementation(
+        (value: string) => value
+      );
+      vi.mocked(valkeyConnection!.set).mockResolvedValue(null as any);
+
+      const integration = {
+        id: 65,
+        name: "GitLab OAuth",
+        provider: "GITLAB",
+        status: "ACTIVE",
+        authType: "OAUTH2",
+        credentials: {
+          encrypted: JSON.stringify({
+            clientId: "gl-client",
+            clientSecret: "gl-secret",
+          }),
+        },
+        settings: { instanceUrl: "https://gitlab.com" },
+        userIntegrationAuths: [
+          {
+            id: "auth-row-65",
+            userId: "owner-9",
+            isActive: true,
+            accessToken: "old-access",
+            refreshToken: "old-refresh-token",
+            tokenExpiresAt: new Date(Date.now() - 1000),
+            updatedAt: new Date(),
+          },
+        ],
+      };
+      mockDb.integration.findUnique.mockResolvedValue(integration);
+      mockDb.userIntegrationAuth.findUnique.mockResolvedValue({
+        id: "auth-row-65",
+        userId: "owner-9",
+        isActive: true,
+        accessToken: "winner-access",
+        refreshToken: "winner-refresh",
+        tokenExpiresAt: new Date(Date.now() + 2 * 3600_000),
+      });
+
+      const mockFetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ id: 1, username: "u" }),
+      });
+      global.fetch = mockFetch;
+
+      vi.useFakeTimers();
+      try {
+        const adapterPromise = manager.getAdapter("65");
+        await vi.advanceTimersByTimeAsync(1000);
+        await adapterPromise;
+      } finally {
+        vi.useRealTimers();
+      }
+
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+      expect(mockFetch.mock.calls[0][0]).toBe("https://gitlab.com/api/v4/user");
+      expect(AuthenticationService.storeUserAuth).not.toHaveBeenCalled();
 
       vi.unstubAllEnvs();
     });

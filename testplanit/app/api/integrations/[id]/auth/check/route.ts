@@ -58,6 +58,16 @@ export async function GET(
       );
     }
 
+    // A set needsReauthAt means a refresh was already tried and terminally
+    // rejected by the provider (or no refresh token exists) — prompt for
+    // re-authorization even though the row is still active.
+    if (userAuth.needsReauthAt) {
+      return NextResponse.json(
+        { error: "Token expired", authUrl },
+        { status: 401 }
+      );
+    }
+
     // If the access token has expired, it can be transparently refreshed on
     // first use when a refresh token is on record. Treat that as authenticated
     // here and let the adapter refresh when the request is actually made. Only

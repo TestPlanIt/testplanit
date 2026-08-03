@@ -9,6 +9,7 @@ import valkeyConnection from "../../valkey";
 import { projectIssueUpdateChannel } from "../../webhooks/issueUpdateChannels";
 import type { IssueAdapter, IssueData } from "../adapters/IssueAdapter";
 import { issueCache } from "../cache/IssueCache";
+import { AuthenticationService } from "../AuthenticationService";
 import { integrationManager } from "../IntegrationManager";
 
 export interface SyncJobData {
@@ -496,7 +497,9 @@ export class SyncService {
         where: { id: integrationId },
         include: {
           userIntegrationAuths: {
-            where: { userId: userId, isActive: true },
+            where: { isActive: true },
+            orderBy: { updatedAt: "desc" },
+            take: 1,
           },
         },
       });
@@ -507,14 +510,25 @@ export class SyncService {
 
       // Check authentication based on auth type
       if (integration.authType === "OAUTH2") {
-        // For OAuth, check if user has valid authentication
-        const userAuth = integration.userIntegrationAuths[0];
-        if (!userAuth) {
+        // The adapter below is resolved without a userId, so it authenticates
+        // with the integration's most recently active auth row (token
+        // borrowing — reads work without every user connecting their own
+        // account). Validate that same row here. An expired access token is
+        // fine as long as a refresh token is on record: getAdapter
+        // transparently refreshes it on first use.
+        const oauthAuth = integration.userIntegrationAuths[0];
+        if (!oauthAuth) {
           throw new Error("User not authenticated for this integration");
         }
-
-        // Check if token is expired
-        if (userAuth.tokenExpiresAt && userAuth.tokenExpiresAt < new Date()) {
+        if (
+          oauthAuth.tokenExpiresAt &&
+          oauthAuth.tokenExpiresAt < new Date() &&
+          !oauthAuth.refreshToken
+        ) {
+          await AuthenticationService.markNeedsReauth(
+            oauthAuth.userId,
+            integrationId
+          );
           throw new Error("Authentication token has expired");
         }
       } else if (
@@ -1220,7 +1234,9 @@ export class SyncService {
         where: { id: integrationId },
         include: {
           userIntegrationAuths: {
-            where: { userId: userId, isActive: true },
+            where: { isActive: true },
+            orderBy: { updatedAt: "desc" },
+            take: 1,
           },
         },
       });
@@ -1231,14 +1247,25 @@ export class SyncService {
 
       // Check authentication based on auth type
       if (integration.authType === "OAUTH2") {
-        // For OAuth, check if user has valid authentication
-        const userAuth = integration.userIntegrationAuths[0];
-        if (!userAuth) {
+        // The adapter below is resolved without a userId, so it authenticates
+        // with the integration's most recently active auth row (token
+        // borrowing — reads work without every user connecting their own
+        // account). Validate that same row here. An expired access token is
+        // fine as long as a refresh token is on record: getAdapter
+        // transparently refreshes it on first use.
+        const oauthAuth = integration.userIntegrationAuths[0];
+        if (!oauthAuth) {
           throw new Error("User not authenticated for this integration");
         }
-
-        // Check if token is expired
-        if (userAuth.tokenExpiresAt && userAuth.tokenExpiresAt < new Date()) {
+        if (
+          oauthAuth.tokenExpiresAt &&
+          oauthAuth.tokenExpiresAt < new Date() &&
+          !oauthAuth.refreshToken
+        ) {
+          await AuthenticationService.markNeedsReauth(
+            oauthAuth.userId,
+            integrationId
+          );
           throw new Error("Authentication token has expired");
         }
       } else if (
@@ -1325,6 +1352,10 @@ export class SyncService {
           oauthAuth.tokenExpiresAt < new Date() &&
           !oauthAuth.refreshToken
         ) {
+          await AuthenticationService.markNeedsReauth(
+            oauthAuth.userId,
+            integrationId
+          );
           throw new Error(
             "OAuth access token has expired and no refresh token is on record; an admin must re-authenticate"
           );

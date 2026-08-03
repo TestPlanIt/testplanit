@@ -6194,7 +6194,10 @@
         "reviewReminderHoursPending": "대기 시간: {hoursPending, plural, one {#시간} other {#시간}}",
         "aiStepsDerivedTitle": "AI 기반 테스트 단계 준비 완료",
         "aiStepsDerivedMessage": "{count, plural, other {테스트 케이스 #개}}에 AI가 도출한 단계가 추가되었습니다 — 정확성을 검토하세요.",
-        "aiStepsDerivedReviewLink": "테스트 실행 검토"
+        "aiStepsDerivedReviewLink": "테스트 실행 검토",
+        "integrationAuthExpiredTitle": "통합 연결이 만료되었습니다",
+        "integrationAuthExpiredMessage": "\"{integrationName}\"에 대한 연결이 만료되었습니다. 이슈 동기화를 재개하려면 다시 연결하세요.",
+        "integrationAuthExpiredReconnect": "다시 연결"
       }
     },
     "issues": {

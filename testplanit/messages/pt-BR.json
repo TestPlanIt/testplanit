@@ -6194,7 +6194,10 @@
         "reviewReminderHoursPending": "Aguardando {hoursPending, plural, one {# hora} other {# horas}}",
         "aiStepsDerivedTitle": "Passos de Teste Derivados por IA Prontos",
         "aiStepsDerivedMessage": "{count, plural, one {# caso de teste recebeu} other {# casos de teste receberam}} passos derivados por IA — revise a precisão.",
-        "aiStepsDerivedReviewLink": "Revisar execução de teste"
+        "aiStepsDerivedReviewLink": "Revisar execução de teste",
+        "integrationAuthExpiredTitle": "Conexão de Integração Expirada",
+        "integrationAuthExpiredMessage": "Sua conexão com \"{integrationName}\" expirou. Reconecte-se para retomar a sincronização de issues.",
+        "integrationAuthExpiredReconnect": "Reconectar"
       }
     },
     "issues": {

@@ -23,6 +23,7 @@ TestPlanIt currently supports the following notification types:
 - **Comment Mentions** - When someone mentions you in a comment (@username)
 - **System Announcements** - Important system-wide announcements and updates
 - **Milestone Due Reminder** - When a milestone's due date is approaching or overdue
+- **Integration Connection Expired** - When an OAuth integration connection you authorized can no longer refresh its token and must be reconnected; includes a **Reconnect** link that starts the consent flow
 
 ## Notification Center UI
 

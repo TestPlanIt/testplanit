@@ -114,6 +114,11 @@ const processor = async (job: Job) => {
         } else if (notification.type === "LLM_BUDGET_ALERT") {
           // Same destination as the bell-icon link (`data.link`) — admin LLM page.
           notificationUrl = `${baseUrl}/${urlLocale}${data.link ?? "/admin/llm"}`;
+        } else if (notification.type === "INTEGRATION_AUTH_EXPIRED") {
+          // OAuth re-auth kickoff is an API route — deliberately no locale prefix.
+          if (data.provider && data.integrationId) {
+            notificationUrl = `${baseUrl}/api/integrations/oauth/${String(data.provider).toLowerCase()}/auth?integrationId=${data.integrationId}&returnUrl=${encodeURIComponent("/integrations/auth-complete")}`;
+          }
         } else if (
           notification.type === "REVIEW_REQUESTED" ||
           notification.type === "REVIEW_APPROVED" ||
@@ -434,6 +439,16 @@ const processor = async (job: Job) => {
             );
             translatedMessage += `\n\n${commentLine}`;
           }
+        } else if (notification.type === "INTEGRATION_AUTH_EXPIRED") {
+          translatedTitle = await getServerTranslation(
+            userLocale,
+            "components.notifications.content.integrationAuthExpiredTitle"
+          );
+          translatedMessage = await getServerTranslation(
+            userLocale,
+            "components.notifications.content.integrationAuthExpiredMessage",
+            { integrationName: data.integrationName ?? "" }
+          );
         }
 
         // Get email template translations
@@ -563,6 +578,11 @@ const processor = async (job: Job) => {
             } else if (notification.type === "GENERATE_FROM_URL_COMPLETE") {
               if (data.projectId && data.jobId && !data.error) {
                 url = `${baseUrl}/${urlLocale}/projects/repository/${data.projectId}?urlJobId=${data.jobId}`;
+              }
+            } else if (notification.type === "INTEGRATION_AUTH_EXPIRED") {
+              // OAuth re-auth kickoff is an API route — no locale prefix.
+              if (data.provider && data.integrationId) {
+                url = `${baseUrl}/api/integrations/oauth/${String(data.provider).toLowerCase()}/auth?integrationId=${data.integrationId}&returnUrl=${encodeURIComponent("/integrations/auth-complete")}`;
               }
             } else if (
               notification.type === "REVIEW_REQUESTED" ||
@@ -740,6 +760,16 @@ const processor = async (job: Job) => {
                   hoursPending: data.hoursPending ?? 0,
                   count: reviewBulkCount ?? 0,
                 }
+              );
+            } else if (notification.type === "INTEGRATION_AUTH_EXPIRED") {
+              translatedTitle = await getServerTranslation(
+                userLocale,
+                "components.notifications.content.integrationAuthExpiredTitle"
+              );
+              translatedMessage = await getServerTranslation(
+                userLocale,
+                "components.notifications.content.integrationAuthExpiredMessage",
+                { integrationName: data.integrationName ?? "" }
               );
             }
 

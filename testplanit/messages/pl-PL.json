@@ -6194,7 +6194,10 @@
         "reviewReminderHoursPending": "Oczekiwanie na {hoursPending, plural, one {# godzina} other {# godzina}}",
         "aiStepsDerivedTitle": "Kroki testowe wygenerowane przez AI są gotowe",
         "aiStepsDerivedMessage": "Do {count, plural, one {# przypadku testowego} few {# przypadków testowych} many {# przypadków testowych} other {# przypadku testowego}} dodano kroki wygenerowane przez AI — sprawdź ich poprawność.",
-        "aiStepsDerivedReviewLink": "Przejrzyj przebieg testu"
+        "aiStepsDerivedReviewLink": "Przejrzyj przebieg testu",
+        "integrationAuthExpiredTitle": "Połączenie integracji wygasło",
+        "integrationAuthExpiredMessage": "Twoje połączenie z „{integrationName}” wygasło. Połącz się ponownie, aby wznowić synchronizację zgłoszeń.",
+        "integrationAuthExpiredReconnect": "Połącz ponownie"
       }
     },
     "issues": {

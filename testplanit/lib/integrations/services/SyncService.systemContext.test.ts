@@ -53,6 +53,14 @@ vi.mock("../cache/IssueCache", () => ({
   issueCache: { set: vi.fn(), setMetadata: vi.fn() },
 }));
 
+// Mocked so the OAuth pre-flight's terminal branch (expired + no refresh
+// token) can be asserted to flag the row for re-auth.
+vi.mock("../AuthenticationService", () => ({
+  AuthenticationService: {
+    markNeedsReauth: vi.fn(),
+  },
+}));
+
 const mockSyncIssue = vi.fn();
 vi.mock("../IntegrationManager", () => ({
   integrationManager: {
@@ -109,6 +117,7 @@ vi.mock("../../valkey", () => ({
   },
 }));
 
+import { AuthenticationService } from "../AuthenticationService";
 import { syncService } from "./SyncService";
 
 // ─── Fixtures ────────────────────────────────────────────────────────────
@@ -681,5 +690,98 @@ describe("performIssueRefreshSystem — SSE wake-up publish", () => {
 
     // SSE is opportunistic; the DB row is the source of truth.
     expect(result.success).toBe(true);
+  });
+});
+
+describe("performIssueRefresh (user context) — OAuth pre-flight", () => {
+  // Regression: background issue refreshes died with "Authentication token
+  // has expired" because the pre-flight rejected any expired token BEFORE
+  // getAdapter could transparently refresh it. Expired-but-refreshable must
+  // proceed; only expired-with-no-refresh-token is terminal.
+
+  const oauthIntegration = (auths: any[]) => ({
+    id: 1,
+    authType: "OAUTH2",
+    credentials: null,
+    provider: "JIRA",
+    userIntegrationAuths: auths,
+  });
+
+  beforeEach(() => {
+    mockUserFindUnique.mockResolvedValue({ id: "user-1", role: null });
+  });
+
+  it("expired access token WITH refresh token proceeds (adapter refreshes transparently)", async () => {
+    mockIntegrationFindUnique.mockResolvedValueOnce(
+      oauthIntegration([
+        {
+          userId: "owner-1",
+          isActive: true,
+          accessToken: "enc",
+          refreshToken: "enc-refresh",
+          tokenExpiresAt: new Date(Date.now() - 3600_000),
+        },
+      ])
+    );
+
+    const result = await syncService.performIssueRefresh("user-1", 1, "JIRA-1");
+
+    expect(result.success).toBe(true);
+    expect(mockSyncIssue).toHaveBeenCalled();
+    expect(AuthenticationService.markNeedsReauth).not.toHaveBeenCalled();
+  });
+
+  it("expired access token with NO refresh token fails and flags the row owner for re-auth", async () => {
+    mockIntegrationFindUnique.mockResolvedValueOnce(
+      oauthIntegration([
+        {
+          userId: "owner-1",
+          isActive: true,
+          accessToken: "enc",
+          refreshToken: null,
+          tokenExpiresAt: new Date(Date.now() - 3600_000),
+        },
+      ])
+    );
+
+    const result = await syncService.performIssueRefresh("user-1", 1, "JIRA-1");
+
+    expect(result.success).toBe(false);
+    expect(result.error).toBe("Authentication token has expired");
+    expect(AuthenticationService.markNeedsReauth).toHaveBeenCalledWith(
+      "owner-1",
+      1
+    );
+  });
+
+  it("proceeds when the triggering user has no auth row but another active row exists (borrowed reads)", async () => {
+    // getAdapter resolves without a userId, so it borrows the integration's
+    // most recent active auth row — the pre-flight must validate that same
+    // row, not the triggering user's.
+    mockIntegrationFindUnique.mockResolvedValueOnce(
+      oauthIntegration([
+        {
+          userId: "someone-else",
+          isActive: true,
+          accessToken: "enc",
+          refreshToken: "enc-refresh",
+          tokenExpiresAt: new Date(Date.now() + 3600_000),
+        },
+      ])
+    );
+
+    const result = await syncService.performIssueRefresh("user-1", 1, "JIRA-1");
+
+    expect(result.success).toBe(true);
+    expect(mockSyncIssue).toHaveBeenCalled();
+  });
+
+  it("fails when the integration has no active auth rows at all", async () => {
+    mockIntegrationFindUnique.mockResolvedValueOnce(oauthIntegration([]));
+
+    const result = await syncService.performIssueRefresh("user-1", 1, "JIRA-1");
+
+    expect(result.success).toBe(false);
+    expect(result.error).toBe("User not authenticated for this integration");
   });
 });
