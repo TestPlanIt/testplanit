@@ -32,6 +32,8 @@ The Report Builder lets you compose a custom report by picking a data source, th
 
 Results render as a single, continuously-scrolling list (no page controls) and the columns are sortable. Use **Export CSV** above the table to download the full result set — see [Exporting Results](./index.md#exporting-results).
 
+The builder keeps its configuration in the page URL, so other parts of the app can link into a pre-configured report. For example, the **Elapsed time report** action on a case's [Test Result History](../repository-case-details.mdx#test-result-history) opens a Test Execution report with **Date** and **Test Case** dimensions, the **Avg. Elapsed Time** metric, and the Test Case filter set to that case.
+
 ## Drill-Down
 
 The Report Builder supports interactive drill-down on every metric cell. Click any metric value in a report table to open a drawer showing the underlying records that contributed to that value.

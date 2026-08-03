@@ -42,6 +42,17 @@ The `Forecast` value provides an automated prediction of the test case's executi
 *   **Read-Only:** The forecast value is system-generated and cannot be edited directly by users. It serves as a data-driven insight into expected execution duration based on historical performance.
 *   **Display:** It is shown on the Test Case Details page and can be added as a column in the main [Repository View](./repository.md).
 
+## Test Result History
+
+Below the case information, the **Test Result History** panel lists every result the case has ever produced across all test runs — manual results, automated (JUnit) results, and pending entries for open runs where the case hasn't been executed yet. Each row shows the run, status, tester, execution time, duration, attachments, linked issues, and the case version the result was recorded against. Expand a row to see the full result: notes, custom result fields, step results, and — for parameterized cases — the iteration's parameter values (see [Parameterized Test Cases](./parameterized-test-cases.md#test-result-history)).
+
+The panel header offers two actions:
+
+*   **Elapsed time report** (line-graph icon): opens the [Report Builder](./reports/report-builder.md) pre-loaded with a **Test Execution** report for this case — **Date** and **Test Case** dimensions, the **Avg. Elapsed Time** metric, and the Test Case filter set to the current case — charting how the case's execution time trends over time. Shown only to users whose role grants **Reporting** permissions.
+*   **Add to Test Run**: adds the case to an existing open test run in the project. The picker lists open runs that don't already contain the case; composition-locked runs reject the add. Requires **Test Runs** Add/Edit permission and is unavailable for automated-source cases.
+
+When the header is too narrow for labeled buttons (for example in the docked side panel), the actions collapse into a single **⋮** actions menu, with **Add to Test Run** as a submenu inside it.
+
 ## Versions
 
 Choose a version from the Versions menu. The **Versions** view shows the history of changes made to this test case. Each entry represents a saved version, allowing you to track modifications over time.
