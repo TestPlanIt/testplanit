@@ -24,6 +24,63 @@ import type {
 import type { DrillDownContext } from "~/lib/types/reportDrillDown";
 
 /**
+ * Dimension ids each report type may send in a drill-down context. A key
+ * outside this list means no builder handles it — the drawer would silently
+ * ignore the filter and stop matching its cell — so the route rejects it
+ * loudly instead. Report types without an entry (custom presets) skip the
+ * check. Cross-project variants share their base type's list.
+ */
+export const DRILL_DOWN_DIMENSIONS_BY_REPORT: Record<
+  string,
+  ReadonlySet<string>
+> = {
+  "test-execution": new Set([
+    "configuration",
+    "date",
+    "folder",
+    "milestone",
+    "project",
+    "status",
+    "tag",
+    "testCase",
+    "testRun",
+    "user",
+  ]),
+  "user-engagement": new Set(["date", "group", "project", "role", "user"]),
+  "repository-stats": new Set([
+    "creator",
+    "date",
+    "folder",
+    "project",
+    "source",
+    "state",
+    "tag",
+    "template",
+    "testCase",
+  ]),
+  "issue-tracking": new Set([
+    "creator",
+    "date",
+    "issueStatus",
+    "issueTracker",
+    "issueType",
+    "priority",
+    "project",
+  ]),
+  "session-analysis": new Set([
+    "assignedTo",
+    "creator",
+    "date",
+    "milestone",
+    "session",
+    "state",
+    "template",
+  ]),
+  "project-health": new Set(["creator", "date", "milestone", "project"]),
+  "milestone-readiness": new Set(["date", "milestone"]),
+};
+
+/**
  * Normalize date to start of day in UTC
  */
 function startOfDayUTC(date: Date | string): Date {
@@ -52,7 +109,10 @@ function endOfDayUTC(date: Date | string): Date {
 }
 
 /**
- * Build base date filter from report-level date range
+ * Build base date filter from report-level date range. Mirrors
+ * reportUtils.buildDateFilter: the end date is inclusive of its entire day
+ * (exclusive next-day-midnight bound), so a drill-down never shows fewer
+ * rows than the aggregated cell.
  */
 function buildDateFilter(
   startDate?: string,
@@ -64,10 +124,15 @@ function buildDateFilter(
   if (startDate || endDate) {
     filter[dateField] = {};
     if (startDate) {
-      filter[dateField].gte = new Date(startDate);
+      const start = new Date(startDate);
+      start.setUTCHours(0, 0, 0, 0);
+      filter[dateField].gte = start;
     }
     if (endDate) {
-      filter[dateField].lte = new Date(endDate);
+      const nextDay = new Date(endDate);
+      nextDay.setUTCDate(nextDay.getUTCDate() + 1);
+      nextDay.setUTCHours(0, 0, 0, 0);
+      filter[dateField].lt = nextDay;
     }
   }
 
@@ -698,13 +763,14 @@ export function buildRepositoryStatsQuery(
   }
 
   // Apply report-level date range to CREATION date
-  if (context.startDate || context.endDate) {
+  const creationRangeFilter = buildDateFilter(
+    context.startDate,
+    context.endDate,
+    "createdAt"
+  );
+  if (creationRangeFilter.createdAt) {
     const existing = where.createdAt as any;
-    where.createdAt = {
-      ...(existing || {}),
-      ...(context.startDate && { gte: new Date(context.startDate) }),
-      ...(context.endDate && { lte: new Date(context.endDate) }),
-    };
+    where.createdAt = { ...(existing || {}), ...creationRangeFilter.createdAt };
   }
 
   return {
@@ -1523,7 +1589,6 @@ export function getQueryBuilderForMetric(
   // Session metrics
   if (
     metricId === "sessions" ||
-    metricId === "sessionDuration" ||
     metricId === "sessionCount" ||
     metricId === "activeSessions" ||
     metricId === "averageDuration" ||
@@ -1594,7 +1659,6 @@ export function getModelForMetric(metricId: string): string {
 
   if (
     metricId === "sessions" ||
-    metricId === "sessionDuration" ||
     metricId === "sessionCount" ||
     metricId === "activeSessions" ||
     metricId === "averageDuration" ||

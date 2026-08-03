@@ -64,7 +64,12 @@ interface DimensionConfig {
 interface MetricConfig {
   id: string;
   label: string;
-  aggregate: (
+  /**
+   * Absent on listing-only registries (automation-trends serves POST through
+   * its own handler); handleReportPOST validates metric ids against the
+   * registry, and a metric without an aggregate contributes no rows.
+   */
+  aggregate?: (
     baseDb: Prisma,
     projectId: number | undefined,
     groupBy: string[],
@@ -538,13 +543,15 @@ async function handleCrossProjectAggregation({
   // Aggregate all metrics using the same groupBy
   const rawMetricResults = await Promise.all(
     metricConfigs.map((metricConfig: MetricConfig) =>
-      metricConfig.aggregate(
-        baseDb,
-        undefined, // No projectId for cross-project
-        groupBy,
-        { startDate, endDate, folderIncludeDescendants },
-        dimensions
-      )
+      metricConfig.aggregate
+        ? metricConfig.aggregate(
+            baseDb,
+            undefined, // No projectId for cross-project
+            groupBy,
+            { startDate, endDate, folderIncludeDescendants },
+            dimensions
+          )
+        : Promise.resolve([])
     )
   );
 
@@ -562,10 +569,15 @@ async function handleCrossProjectAggregation({
     )
   );
 
-  // Get all dimension values lookup for display formatting
+  // Get all dimension values lookup for display formatting. Date dimensions
+  // derive their buckets from the aggregated rows (special-cased in row
+  // assembly), so their getValues — a full distinct-timestamp scan — would
+  // never be consulted; skip it.
   const dimensionValues = await Promise.all(
-    dimensionConfigs.map(
-      (config: DimensionConfig) => config.getValues(baseDb) // No projectId for cross-project
+    dimensionConfigs.map((config: DimensionConfig) =>
+      config.groupBy === "executedAt" || config.groupBy === "createdAt"
+        ? Promise.resolve([] as unknown[])
+        : config.getValues(baseDb)
     )
   );
 
@@ -883,13 +895,15 @@ async function handleProjectSpecificAggregation({
   // Aggregate all metrics using the same groupBy
   const rawMetricResults = await Promise.all(
     metricConfigs.map((metricConfig: MetricConfig) =>
-      metricConfig.aggregate(
-        baseDb,
-        projectId,
-        groupBy,
-        { startDate, endDate, folderIncludeDescendants },
-        dimensions
-      )
+      metricConfig.aggregate
+        ? metricConfig.aggregate(
+            baseDb,
+            projectId,
+            groupBy,
+            { startDate, endDate, folderIncludeDescendants },
+            dimensions
+          )
+        : Promise.resolve([])
     )
   );
 
@@ -907,10 +921,15 @@ async function handleProjectSpecificAggregation({
     )
   );
 
-  // Get all dimension values lookup for display formatting
+  // Get all dimension values lookup for display formatting. Date dimensions
+  // derive their buckets from the aggregated rows (special-cased in row
+  // assembly), so their getValues — a full distinct-timestamp scan — would
+  // never be consulted; skip it.
   const dimensionValues = await Promise.all(
     dimensionConfigs.map((config: DimensionConfig) =>
-      config.getValues(baseDb, projectId)
+      config.groupBy === "executedAt" || config.groupBy === "createdAt"
+        ? Promise.resolve([] as unknown[])
+        : config.getValues(baseDb, projectId)
     )
   );
 

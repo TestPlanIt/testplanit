@@ -29,12 +29,16 @@ vi.mock("~/lib/authContext", () => ({
   resolveViewerProjectScope: vi.fn(),
 }));
 
-vi.mock("~/utils/drillDownQueryBuilders", () => ({
-  getModelForMetric: vi.fn(),
-  getQueryBuilderForMetric: vi.fn(),
-  buildTestExecutionQuery: vi.fn(),
-  buildJunitResultQuery: vi.fn(),
-}));
+vi.mock("~/utils/drillDownQueryBuilders", async (importOriginal) => {
+  const actual = await importOriginal<any>();
+  return {
+    DRILL_DOWN_DIMENSIONS_BY_REPORT: actual.DRILL_DOWN_DIMENSIONS_BY_REPORT,
+    getModelForMetric: vi.fn(),
+    getQueryBuilderForMetric: vi.fn(),
+    buildTestExecutionQuery: vi.fn(),
+    buildJunitResultQuery: vi.fn(),
+  };
+});
 
 vi.mock("~/lib/auth/utils", () => ({
   getEnhancedDb: vi.fn(),
@@ -604,6 +608,30 @@ describe("POST /api/report-builder/drill-down", () => {
       );
 
       expect(response.status).toBe(400);
+    });
+  });
+
+  describe("dimension whitelist", () => {
+    it("rejects unknown dimension keys for whitelisted report types", async () => {
+      (getServerSession as any).mockResolvedValue(mockAdminSession);
+
+      const response = await POST(
+        createRequest({
+          context: {
+            metricId: "testResults",
+            metricLabel: "Test Results",
+            metricValue: 1,
+            reportType: "test-execution",
+            mode: "project",
+            projectId: 1,
+            dimensions: { bogus: { id: 1, name: "?" } },
+          },
+        })
+      );
+
+      expect(response.status).toBe(400);
+      const data = await response.json();
+      expect(data.error).toContain("bogus");
     });
   });
 

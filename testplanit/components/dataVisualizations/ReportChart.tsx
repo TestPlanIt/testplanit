@@ -3,6 +3,7 @@ import { useLocale, useTranslations } from "next-intl";
 import React from "react";
 import { useIssueColors } from "~/hooks/useIssueColors";
 import { toHumanReadable } from "~/utils/duration";
+import { metricUnit } from "~/utils/metricUnits";
 import { stringToColorCode } from "~/utils/stringToColorCode";
 import { FlakyTestsBubbleChart } from "./FlakyTestsBubbleChart";
 import { IssueTestCoverageChart } from "./IssueTestCoverageChart";
@@ -514,26 +515,21 @@ export const ReportChart: React.FC<ReportChartProps> = ({
     return null;
   }
 
+  // Unit metadata wins; the id/label heuristics only classify metrics that
+  // aren't in the units map (custom presets).
   const isElapsedTimeMetric = (metric: {
     value: string;
     label: string;
     originalLabel?: string;
   }): boolean => {
+    const unit = metricUnit(metric.value);
+    if (unit !== undefined) return unit === "seconds";
     const label = metric.label.toLowerCase();
     return (
       label.includes("elapsed") ||
       label.includes("time") ||
       label.includes("duration") ||
-      metric.value === "avgElapsed" ||
-      metric.value === "sumElapsed" ||
-      metric.value === "averageElapsed" ||
-      metric.value === "totalElapsed" ||
-      metric.value === "averageDuration" ||
-      metric.value === "totalDuration" ||
       metric.value === "averageResolutionTime" ||
-      metric.label === "Average Time per Execution" ||
-      metric.label === "Average Duration" ||
-      metric.label === "Total Duration" ||
       metric.label === "Average Resolution Time"
     );
   };
@@ -543,17 +539,15 @@ export const ReportChart: React.FC<ReportChartProps> = ({
     label: string;
     originalLabel?: string;
   }): boolean => {
+    const unit = metricUnit(metric.value);
+    if (unit !== undefined) return unit === "percent";
     const label = metric.label.toLowerCase();
     return (
       label.includes("rate") ||
       label.includes("percentage") ||
       label.includes("(%)") ||
       label.includes("%") ||
-      metric.value === "passRate" ||
-      metric.value === "automationRate" ||
       metric.value === "completionRate" ||
-      metric.label === "Pass Rate (%)" ||
-      metric.label === "Automation Rate (%)" ||
       metric.label === "Completion Rate (%)"
     );
   };

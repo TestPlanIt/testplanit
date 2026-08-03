@@ -9,6 +9,7 @@ import {
 } from "~/lib/constants/reportConstants";
 import { toHumanReadable } from "~/utils/duration";
 import { getDateFnsLocale } from "~/utils/locales";
+import { metricUnit } from "~/utils/metricUnits";
 import { getUserIdFromRow } from "~/utils/reportUtils";
 
 // Component imports - only using existing components
@@ -794,6 +795,37 @@ export function useReportColumns(
       // Get translated metric label
       const metricLabel = tReportsMetrics(metricId as any) || metricId;
 
+      // Unit metadata wins; the id/label heuristics only classify metrics
+      // that aren't in the units map (custom presets), so renaming a metric
+      // cannot silently change how its values render.
+      const unit = metricUnit(metricId);
+      const isPercentMetric =
+        unit !== undefined
+          ? unit === "percent"
+          : metricId.includes("Rate") ||
+            metricId.includes("Percentage") ||
+            metricLabel.includes("Rate") ||
+            metricLabel.includes("%");
+      const isDurationMetric =
+        unit !== undefined
+          ? unit === "seconds"
+          : metricId.includes("Time") ||
+            metricId.includes("Duration") ||
+            metricId.includes("Elapsed") ||
+            metricLabel.includes("Time") ||
+            metricLabel.includes("Duration") ||
+            metricLabel.includes("Elapsed");
+      const isSecondsFormat =
+        unit === "seconds" ||
+        metricId === "avgElapsedTime" ||
+        metricId === "avgElapsed" ||
+        metricId === "totalElapsedTime" ||
+        metricId === "averageElapsed";
+      const isDateMetric =
+        unit !== undefined
+          ? unit === "date"
+          : metricId === "lastActiveDate" || metricLabel.includes("Date");
+
       // Get help key for this metric using the helper function
       const helpKey = getMetricHelpKey(metricId);
 
@@ -846,12 +878,7 @@ export function useReportColumns(
             }, 0);
 
             // For percentages, calculate the average
-            if (
-              metricId.includes("Rate") ||
-              metricId.includes("Percentage") ||
-              metricLabel.includes("Rate") ||
-              metricLabel.includes("%")
-            ) {
+            if (isPercentMetric) {
               const avg = total / subRows.length;
               return (
                 <span className="inline-flex items-center px-2 py-1 text-xs font-bold rounded-full">
@@ -862,14 +889,7 @@ export function useReportColumns(
             }
 
             // For time metrics, show the total or average based on the metric type
-            if (
-              metricId.includes("Time") ||
-              metricId.includes("Duration") ||
-              metricId.includes("Elapsed") ||
-              metricLabel.includes("Time") ||
-              metricLabel.includes("Duration") ||
-              metricLabel.includes("Elapsed")
-            ) {
+            if (isDurationMetric) {
               // For "average" metrics, calculate average; for "total" metrics, use sum
               const isAverage =
                 metricId.toLowerCase().includes("avg") ||
@@ -885,13 +905,6 @@ export function useReportColumns(
                   </span>
                 );
               }
-
-              // avgElapsedTime and totalElapsedTime metrics return values in seconds
-              const isSecondsFormat =
-                metricId === "avgElapsedTime" ||
-                metricId === "avgElapsed" ||
-                metricId === "totalElapsedTime" ||
-                metricId === "averageElapsed";
 
               const humanReadableDuration = toHumanReadable(value, {
                 isSeconds: isSecondsFormat,
@@ -945,12 +958,7 @@ export function useReportColumns(
             };
 
             // Handle different metric types with simplified display
-            if (
-              metricId.includes("Rate") ||
-              metricId.includes("Percentage") ||
-              metricLabel.includes("Rate") ||
-              metricLabel.includes("%")
-            ) {
+            if (isPercentMetric) {
               // Null means "no population" (nothing ran) — render "—" so it
               // can't be mistaken for an all-failed 0%.
               if (value === null || value === undefined) {
@@ -978,14 +986,7 @@ export function useReportColumns(
               );
             }
 
-            if (
-              metricId.includes("Time") ||
-              metricId.includes("Duration") ||
-              metricId.includes("Elapsed") ||
-              metricLabel.includes("Time") ||
-              metricLabel.includes("Duration") ||
-              metricLabel.includes("Elapsed")
-            ) {
+            if (isDurationMetric) {
               const timeValue = typeof value === "number" ? value : 0;
 
               // Display "-" for zero duration values
@@ -996,13 +997,6 @@ export function useReportColumns(
                   </span>
                 );
               }
-
-              // avgElapsedTime and totalElapsedTime metrics return values in seconds
-              const isSecondsFormat =
-                metricId === "avgElapsedTime" ||
-                metricId === "avgElapsed" ||
-                metricId === "totalElapsedTime" ||
-                metricId === "averageElapsed";
 
               const humanReadableDuration = toHumanReadable(timeValue, {
                 isSeconds: isSecondsFormat,
@@ -1027,7 +1021,7 @@ export function useReportColumns(
               );
             }
 
-            if (metricId === "lastActiveDate" || metricLabel.includes("Date")) {
+            if (isDateMetric) {
               return value ? (
                 <RelativeTimeTooltip
                   date={value}

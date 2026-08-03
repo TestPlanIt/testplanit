@@ -13,6 +13,7 @@
 
 import { format } from "date-fns";
 import { toHumanReadable } from "~/utils/duration";
+import { metricUnit } from "~/utils/metricUnits";
 
 export type Translate = (
   key: string,
@@ -250,11 +251,17 @@ function metricAccessor(metric: {
   }
 }
 
+// Unit metadata wins; the id/label heuristics only classify metrics that
+// aren't in the units map (custom presets).
 function isRateMetric(m: { value: string; label: string }): boolean {
+  const unit = metricUnit(m.value);
+  if (unit !== undefined) return unit === "percent";
   return /rate|percentage|%/i.test(m.value) || /rate|%/i.test(m.label);
 }
 
 function isTimeMetric(m: { value: string; label: string }): boolean {
+  const unit = metricUnit(m.value);
+  if (unit !== undefined) return unit === "seconds";
   return (
     /time|duration|elapsed/i.test(m.value) ||
     /time|duration|elapsed/i.test(m.label)

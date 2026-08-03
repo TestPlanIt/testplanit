@@ -11,9 +11,16 @@ import {
   buildTestCasesQuery,
   buildTestExecutionQuery,
   buildTestRunsQuery,
+  DRILL_DOWN_DIMENSIONS_BY_REPORT,
   getModelForMetric,
   getQueryBuilderForMetric,
 } from "./drillDownQueryBuilders";
+import {
+  createIssueTrackingDimensionRegistry,
+  createRepositoryStatsDimensionRegistry,
+  createTestExecutionDimensionRegistry,
+  createUserEngagementDimensionRegistry,
+} from "./reportUtils";
 
 // Helper to create a base context
 function createBaseContext(
@@ -143,7 +150,7 @@ describe("drillDownQueryBuilders", () => {
 
       expect(result.where?.executedAt).toBeDefined();
       expect((result.where?.executedAt as any).gte).toBeInstanceOf(Date);
-      expect((result.where?.executedAt as any).lte).toBeInstanceOf(Date);
+      expect((result.where?.executedAt as any).lt).toBeInstanceOf(Date);
     });
 
     it("should exclude untested status by default", () => {
@@ -738,9 +745,10 @@ describe("drillDownQueryBuilders", () => {
       });
       const result = buildMilestoneCompletionQuery(context, 0, 10);
 
+      // The end day is included in full — exclusive next-day bound.
       expect((result.where?.testRun?.milestone as any)?.createdAt).toEqual({
-        gte: new Date("2026-01-01"),
-        lte: new Date("2026-02-01"),
+        gte: new Date("2026-01-01T00:00:00.000Z"),
+        lt: new Date("2026-02-02T00:00:00.000Z"),
       });
     });
 
@@ -855,8 +863,8 @@ describe("drillDownQueryBuilders", () => {
     describe("session metrics", () => {
       it.each([
         "sessions",
-        "sessionDuration",
         "sessionCount",
+        "activeSessions",
         "averageDuration",
         "totalDuration",
       ])("should return buildSessionsQuery for %s", (metricId) => {
@@ -945,8 +953,8 @@ describe("drillDownQueryBuilders", () => {
     describe("session metrics", () => {
       it.each([
         "sessions",
-        "sessionDuration",
         "sessionCount",
+        "activeSessions",
         "averageDuration",
         "totalDuration",
       ])("should return sessions for %s", (metricId) => {
@@ -1137,6 +1145,31 @@ describe("drillDownQueryBuilders", () => {
 
       expect(result.where?.issueTypeName).toBeNull();
       expect(result.where?.integrationId).toBeNull();
+    });
+  });
+
+  // The whitelist must cover every dimension a registry can emit — a missing
+  // entry would 400 legitimate drill-downs; an extra one would let a
+  // silently-ignored filter through.
+  describe("DRILL_DOWN_DIMENSIONS_BY_REPORT", () => {
+    it.each([
+      ["test-execution", createTestExecutionDimensionRegistry],
+      ["user-engagement", createUserEngagementDimensionRegistry],
+      ["issue-tracking", createIssueTrackingDimensionRegistry],
+      ["repository-stats", createRepositoryStatsDimensionRegistry],
+    ] as const)("covers every %s dimension id", (reportType, factory) => {
+      // isProjectSpecific=false includes the cross-project project dimension.
+      const registry = factory(false) as Record<string, any>;
+      const ids = Object.values(registry)
+        .filter(Boolean)
+        .map((d: any) => d.id);
+      const allowed = DRILL_DOWN_DIMENSIONS_BY_REPORT[reportType];
+      expect(ids.length).toBeGreaterThan(0);
+      ids.forEach((id: string) => {
+        expect(allowed.has(id), `${reportType} whitelist missing ${id}`).toBe(
+          true
+        );
+      });
     });
   });
 });

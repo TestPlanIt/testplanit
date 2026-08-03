@@ -22,6 +22,7 @@ import { authOptions } from "~/server/auth";
 import {
   buildJunitResultQuery,
   buildTestExecutionQuery,
+  DRILL_DOWN_DIMENSIONS_BY_REPORT,
   getModelForMetric,
   getQueryBuilderForMetric,
 } from "~/utils/drillDownQueryBuilders";
@@ -278,6 +279,29 @@ export async function POST(req: NextRequest) {
         { error: "Invalid drill-down context" },
         { status: 400 }
       );
+    }
+
+    // Reject dimension keys the report's builders don't handle — a silently
+    // ignored filter makes the drawer stop matching its cell.
+    const allowedDimensions =
+      DRILL_DOWN_DIMENSIONS_BY_REPORT[
+        context.reportType.replace(/^cross-project-/, "")
+      ];
+    if (allowedDimensions) {
+      const unknownKeys = Object.keys(context.dimensions ?? {}).filter(
+        (key) => !allowedDimensions.has(key)
+      );
+      if (unknownKeys.length > 0) {
+        console.warn(
+          `Drill-down: unknown dimension key(s) [${unknownKeys.join(", ")}] for report type ${context.reportType}`
+        );
+        return Response.json(
+          {
+            error: `Unknown dimension(s) for ${context.reportType}: ${unknownKeys.join(", ")}`,
+          },
+          { status: 400 }
+        );
+      }
     }
 
     // Check admin access for cross-project reports

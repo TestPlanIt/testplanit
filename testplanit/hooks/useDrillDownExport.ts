@@ -236,7 +236,6 @@ export function useDrillDownExport({
 
       // Session Duration metrics
       if (
-        metricId === "sessionDuration" ||
         metricId === "averageTimeSpent" ||
         metricId === "averageDuration" ||
         metricId === "totalDuration"

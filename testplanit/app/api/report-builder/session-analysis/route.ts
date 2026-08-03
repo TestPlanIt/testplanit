@@ -566,7 +566,7 @@ const METRIC_REGISTRY: Record<
           ...group,
           averageDuration:
             group.sessionCount > 0
-              ? Math.round((group.totalDuration / group.sessionCount) * 1000) // Convert seconds to milliseconds
+              ? Math.round(group.totalDuration / group.sessionCount)
               : 0,
         }));
       } else {
@@ -585,7 +585,7 @@ const METRIC_REGISTRY: Record<
         return results.map((result: any) => ({
           ...result,
           averageDuration: result._avg.elapsed
-            ? Math.round(result._avg.elapsed * 1000) // Convert seconds to milliseconds
+            ? Math.round(result._avg.elapsed)
             : 0,
         }));
       }
@@ -694,7 +694,7 @@ const METRIC_REGISTRY: Record<
 
         return Array.from(grouped.values()).map((group: any) => ({
           ...group,
-          totalDuration: group.totalDuration * 1000, // Convert seconds to milliseconds
+          totalDuration: group.totalDuration,
         }));
       } else {
         // Use database aggregation
@@ -711,7 +711,7 @@ const METRIC_REGISTRY: Record<
 
         return results.map((result: any) => ({
           ...result,
-          totalDuration: (result._sum.elapsed || 0) * 1000, // Convert seconds to milliseconds
+          totalDuration: result._sum.elapsed || 0,
         }));
       }
     },

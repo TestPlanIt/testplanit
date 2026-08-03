@@ -1174,7 +1174,6 @@ export function useDrillDownColumns({
 
     // Session Duration metric columns
     if (
-      metricId === "sessionDuration" ||
       metricId === "averageTimeSpent" ||
       metricId === "averageDuration" ||
       metricId === "totalDuration"
