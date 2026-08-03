@@ -6854,7 +6854,15 @@
       "issueCount": "## Nombre de problèmes\nNombre total de problèmes suivis.",
       "milestoneCount": "## Nombre d'étapes\nNombre total d'étapes.",
       "milestoneCompletionRate": "## Taux d'achèvement des jalons\nPourcentage de jalons achevés.",
-      "averageMilestoneDuration": "## Durée moyenne des étapes clés\nDurée moyenne des étapes clés en jours."
+      "averageMilestoneDuration": "## Durée moyenne des étapes clés\nDurée moyenne des étapes clés en jours.",
+      "llmCallCount": "## Appels LLM\nNombre de requêtes LLM effectuées dans ce groupe, y compris les appels échoués.",
+      "promptTokens": "## Jetons d'invite\nJetons envoyés au modèle en entrée pour tous les appels de ce groupe.",
+      "completionTokens": "## Jetons de complétion\nJetons générés par le modèle pour tous les appels de ce groupe.",
+      "totalTokens": "## Total des jetons\nJetons d'invite et de complétion combinés pour tous les appels de ce groupe.",
+      "totalCost": "## Coût total\nCoût estimé du fournisseur en USD pour les appels de ce groupe. Les modèles hébergés localement affichent un coût nul.",
+      "avgLatency": "## Latence moyenne\nTemps moyen mis par le fournisseur pour répondre à un appel de ce groupe.",
+      "successRate": "## Taux de réussite\nPourcentage d'appels de ce groupe s'étant terminés sans erreur.",
+      "errorCount": "## Appels échoués\nNombre d'appels de ce groupe s'étant terminés par une erreur."
     },
     "reportDimensions": {
       "user": "## Dimension utilisateur\nRegroupe les résultats par l'utilisateur qui a exécuté les tests ou qui est affecté aux éléments.",
@@ -6877,7 +6885,11 @@
       "issueStatus": "## Dimension d'état des problèmes\nRegroupe les résultats selon l'état actuel des problèmes (par exemple, Ouvert, En cours, Résolu, Fermé).",
       "priority": "## Dimension de priorité\nRegroupe les résultats par niveau de priorité du problème (par exemple, élevé, moyen, faible).",
       "source": "## Dimension source\nRegroupe les résultats selon la source d'exécution des tests (par exemple, Manuel, JUnit, API).",
-      "date": "## Dimension Date\nRegroupe les résultats par date pour l'analyse temporelle et les tendances."
+      "date": "## Dimension Date\nRegroupe les résultats par date pour l'analyse temporelle et les tendances.",
+      "feature": "## Dimension Fonctionnalité\nRegroupe l'utilisation du LLM par fonctionnalité de l'application ayant effectué l'appel (par ex. Génération de cas de test).",
+      "model": "## Dimension Modèle\nRegroupe l'utilisation du LLM par modèle ayant traité l'appel.",
+      "integration": "## Dimension Intégration\nRegroupe l'utilisation du LLM par intégration LLM configurée ayant géré l'appel.",
+      "outcome": "## Dimension Résultat\nSépare l'utilisation du LLM en appels réussis et échoués."
     },
     "reportBuilder": {
       "dimensions": "## Dimensions\nSélectionnez les dimensions que vous souhaitez analyser dans votre rapport. Les dimensions sont des attributs qui catégorisent vos données, comme la date, l'utilisateur, le statut, etc. Vous pouvez les réorganiser par glisser-déposer.",
@@ -7568,6 +7580,10 @@
           "label": "Suivi des problèmes inter-projets",
           "description": "Création, résolution et analyse d'impact des problèmes à travers les projets"
         },
+        "llmUsage": {
+          "label": "Utilisation du LLM",
+          "description": "Utilisation des jetons, coût et fiabilité des fonctionnalités LLM entre les projets"
+        },
         "automationTrends": {
           "label": "Tendances en matière d'automatisation inter-projets",
           "description": "Suivre l'avancement de l'automatisation semaine après semaine, par priorité, pour l'ensemble des projets."
@@ -7639,7 +7655,11 @@
       "issueType": "Type de problème",
       "issueTracker": "Suivi des problèmes",
       "issueStatus": "État du problème",
-      "tag": "Étiqueter"
+      "tag": "Étiqueter",
+      "feature": "Fonctionnalité",
+      "model": "Modèle",
+      "integration": "Intégration",
+      "outcome": "Résultat"
     },
     "metrics": {
       "percentReady": "Prêt (%)",
@@ -7683,7 +7703,15 @@
       "activeMilestones": "Étapes clés actives",
       "milestoneCompletion": "Achèvement des étapes clés (%)",
       "averageDuration": "Durée moyenne",
-      "totalDuration": "Durée totale"
+      "totalDuration": "Durée totale",
+      "llmCallCount": "Appels LLM",
+      "promptTokens": "Jetons d'invite",
+      "completionTokens": "Jetons de complétion",
+      "totalTokens": "Total des jetons",
+      "totalCost": "Coût total",
+      "avgLatency": "Latence moyenne",
+      "successRate": "Taux de réussite (%)",
+      "errorCount": "Appels échoués"
     },
     "drillDown": {
       "title": "Archives détaillées",

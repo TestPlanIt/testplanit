@@ -6854,7 +6854,15 @@
       "issueCount": "## Aantal problemen\nTotaal aantal gevolgde problemen.",
       "milestoneCount": "## Mijlpaalaantal\nTotaal aantal mijlpalen.",
       "milestoneCompletionRate": "## Mijlpaalvoltooiingspercentage\nPercentage voltooide mijlpalen.",
-      "averageMilestoneDuration": "## Gemiddelde mijlpaalduur\nGemiddelde duur van mijlpalen in dagen."
+      "averageMilestoneDuration": "## Gemiddelde mijlpaalduur\nGemiddelde duur van mijlpalen in dagen.",
+      "llmCallCount": "## LLM-aanroepen\nAantal LLM-verzoeken dat in deze groep is gedaan, inclusief mislukte aanroepen.",
+      "promptTokens": "## Prompttokens\nTokens die als invoer naar het model zijn verzonden voor alle aanroepen in deze groep.",
+      "completionTokens": "## Voltooiingstokens\nTokens die door het model zijn gegenereerd voor alle aanroepen in deze groep.",
+      "totalTokens": "## Totaal aantal tokens\nGecombineerde prompt- en voltooiingstokens voor alle aanroepen in deze groep.",
+      "totalCost": "## Totale kosten\nGeschatte providerkosten in USD voor de aanroepen in deze groep. Lokaal gehoste modellen registreren geen kosten.",
+      "avgLatency": "## Gem. latentie\nGemiddelde tijd die de provider nodig had om een aanroep in deze groep te beantwoorden.",
+      "successRate": "## Succespercentage\nPercentage aanroepen in deze groep dat zonder fout is voltooid.",
+      "errorCount": "## Mislukte aanroepen\nAantal aanroepen in deze groep dat is geëindigd in een fout."
     },
     "reportDimensions": {
       "user": "## Gebruikersdimensie\nGroepeert resultaten op basis van de gebruiker die de tests heeft uitgevoerd of aan de items is toegewezen.",
@@ -6877,7 +6885,11 @@
       "issueStatus": "## Dimensie Probleemstatus\nGroepeert resultaten op basis van de huidige status van problemen (bijv. Open, In behandeling, Opgelost, Gesloten).",
       "priority": "## Prioriteitsdimensie\nGroepeert resultaten op prioriteitsniveau van het probleem (bijv. Hoog, Gemiddeld, Laag).",
       "source": "## Brondimensie\nGroepeert resultaten op basis van de bron van de testuitvoering (bijv. Handmatig, JUnit, API).",
-      "date": "## Datumdimensie\nGroepeert resultaten op datum voor tijdgebaseerde analyses en trends."
+      "date": "## Datumdimensie\nGroepeert resultaten op datum voor tijdgebaseerde analyses en trends.",
+      "feature": "## Functiedimensie\nGroepeert LLM-gebruik op basis van de applicatiefunctie die de aanroep heeft gedaan (bijv. Testgevalgeneratie).",
+      "model": "## Modeldimensie\nGroepeert LLM-gebruik op basis van het model dat de aanroep heeft verwerkt.",
+      "integration": "## Integratiedimensie\nGroepeert LLM-gebruik op basis van de geconfigureerde LLM-integratie die de aanroep heeft afgehandeld.",
+      "outcome": "## Uitkomstdimensie\nSplitst LLM-gebruik in succesvolle en mislukte aanroepen."
     },
     "reportBuilder": {
       "dimensions": "## Dimensies\nSelecteer de dimensies die u in uw rapport wilt analyseren. Dimensies zijn kenmerken die uw gegevens categoriseren, zoals Datum, Gebruiker, Status, enz. U kunt ze slepen om de volgorde te wijzigen.",
@@ -7568,6 +7580,10 @@
           "label": "Cross-project probleemopsporing",
           "description": "Het creëren, oplossen en analyseren van de impact van problemen in projecten"
         },
+        "llmUsage": {
+          "label": "LLM-gebruik",
+          "description": "Tokengebruik, kosten en betrouwbaarheid van LLM-functies over alle projecten"
+        },
         "automationTrends": {
           "label": "Trends in projectoverstijgende automatisering",
           "description": "Volg de voortgang van de automatisering wekelijks per prioriteit binnen de verschillende projecten."
@@ -7639,7 +7655,11 @@
       "issueType": "Probleemtype",
       "issueTracker": "Probleemtracker",
       "issueStatus": "Probleemstatus",
-      "tag": "Tag"
+      "tag": "Tag",
+      "feature": "Functie",
+      "model": "Model",
+      "integration": "Integratie",
+      "outcome": "Uitkomst"
     },
     "metrics": {
       "percentReady": "Gereed (%)",
@@ -7683,7 +7703,15 @@
       "activeMilestones": "Actieve mijlpalen",
       "milestoneCompletion": "Voltooiing van de mijlpaal (%)",
       "averageDuration": "Gemiddelde duur",
-      "totalDuration": "Totale duur"
+      "totalDuration": "Totale duur",
+      "llmCallCount": "LLM-aanroepen",
+      "promptTokens": "Prompttokens",
+      "completionTokens": "Voltooiingstokens",
+      "totalTokens": "Totaal aantal tokens",
+      "totalCost": "Totale kosten",
+      "avgLatency": "Gem. latentie",
+      "successRate": "Succespercentage (%)",
+      "errorCount": "Mislukte aanroepen"
     },
     "drillDown": {
       "title": "Gedetailleerde gegevens",

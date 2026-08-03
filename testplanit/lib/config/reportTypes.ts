@@ -10,6 +10,7 @@ import {
   ScrollText,
   Shuffle,
   Bot,
+  Sparkles,
   TrendingUp,
   Users,
 } from "lucide-react";
@@ -168,6 +169,13 @@ export const getCrossProjectReportTypes = (tReports: any): ReportType[] => [
     description: tReports("crossProjectReportTypes.issueTracking.description"),
     icon: Bug,
     endpoint: "/api/report-builder/cross-project-issue-tracking",
+  },
+  {
+    id: "cross-project-llm-usage",
+    label: tReports("crossProjectReportTypes.llmUsage.label"),
+    description: tReports("crossProjectReportTypes.llmUsage.description"),
+    icon: Sparkles,
+    endpoint: "/api/report-builder/cross-project-llm-usage",
   },
   {
     id: "cross-project-automation-trends",

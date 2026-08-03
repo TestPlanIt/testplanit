@@ -12,8 +12,10 @@
  *              seconds unscaled)
  * - "percent": 0–100 rate; null means "no population" and renders "—"
  * - "date":    a timestamp
+ * - "currency": a USD dollar amount (LLM provider costs are priced in USD;
+ *              local models record 0)
  */
-export type MetricUnit = "count" | "seconds" | "percent" | "date";
+export type MetricUnit = "count" | "seconds" | "percent" | "date" | "currency";
 
 export const METRIC_UNITS: Record<string, MetricUnit> = {
   // test-execution
@@ -54,6 +56,15 @@ export const METRIC_UNITS: Record<string, MetricUnit> = {
   milestoneCompletion: "percent",
   totalMilestones: "count",
   activeMilestones: "count",
+  // llm-usage
+  llmCallCount: "count",
+  promptTokens: "count",
+  completionTokens: "count",
+  totalTokens: "count",
+  totalCost: "currency",
+  avgLatency: "seconds",
+  successRate: "percent",
+  errorCount: "count",
   // milestone-readiness
   percentReady: "percent",
   passed: "count",

@@ -6854,7 +6854,15 @@
       "issueCount": "## Anzahl der Probleme\nGesamtzahl der erfassten Probleme.",
       "milestoneCount": "## Meilensteinanzahl\nGesamtzahl der Meilensteine.",
       "milestoneCompletionRate": "## Meilenstein-Erfüllungsrate\nProzentsatz der abgeschlossenen Meilensteine.",
-      "averageMilestoneDuration": "## Durchschnittliche Meilensteindauer\nDurchschnittliche Dauer der Meilensteine in Tagen."
+      "averageMilestoneDuration": "## Durchschnittliche Meilensteindauer\nDurchschnittliche Dauer der Meilensteine in Tagen.",
+      "llmCallCount": "## LLM-Aufrufe\nAnzahl der LLM-Anfragen in dieser Gruppe, einschließlich fehlgeschlagener Aufrufe.",
+      "promptTokens": "## Prompt-Tokens\nAn das Modell als Eingabe gesendete Tokens über alle Aufrufe in dieser Gruppe hinweg.",
+      "completionTokens": "## Completion-Tokens\nVom Modell generierte Tokens über alle Aufrufe in dieser Gruppe hinweg.",
+      "totalTokens": "## Gesamte Tokens\nKombinierte Prompt- und Completion-Tokens über alle Aufrufe in dieser Gruppe hinweg.",
+      "totalCost": "## Gesamtkosten\nGeschätzte Anbieterkosten in USD für die Aufrufe in dieser Gruppe. Lokal gehostete Modelle verursachen keine Kosten.",
+      "avgLatency": "## Durchschn. Latenz\nDurchschnittliche Zeit, die der Anbieter für die Beantwortung eines Aufrufs in dieser Gruppe benötigte.",
+      "successRate": "## Erfolgsquote\nProzentsatz der Aufrufe in dieser Gruppe, die ohne Fehler abgeschlossen wurden.",
+      "errorCount": "## Fehlgeschlagene Aufrufe\nAnzahl der Aufrufe in dieser Gruppe, die mit einem Fehler endeten."
     },
     "reportDimensions": {
       "user": "## Benutzerdimension\nGruppiert die Ergebnisse nach dem Benutzer, der die Tests ausgeführt hat oder den Elementen zugeordnet ist.",
@@ -6877,7 +6885,11 @@
       "issueStatus": "## Problemstatus-Dimension\nGruppiert Ergebnisse nach dem aktuellen Status der Probleme (z. B. Offen, In Bearbeitung, Erledigt, Geschlossen).",
       "priority": "## Prioritätsdimension\nGruppiert Ergebnisse nach Prioritätsstufe des Problems (z. B. Hoch, Mittel, Niedrig).",
       "source": "## Source Dimension\nGruppiert die Ergebnisse nach der Quelle der Testausführung (z. B. Manuell, JUnit, API).",
-      "date": "## Datumsdimension\nGruppiert Ergebnisse nach Datum für zeitbasierte Analysen und Trends."
+      "date": "## Datumsdimension\nGruppiert Ergebnisse nach Datum für zeitbasierte Analysen und Trends.",
+      "feature": "## Feature-Dimension\nGruppiert die LLM-Nutzung nach der Anwendungsfunktion, die den Aufruf getätigt hat (z. B. Testfallgenerierung).",
+      "model": "## Modell-Dimension\nGruppiert die LLM-Nutzung nach dem Modell, das den Aufruf bearbeitet hat.",
+      "integration": "## Integrations-Dimension\nGruppiert die LLM-Nutzung nach der konfigurierten LLM-Integration, die den Aufruf verarbeitet hat.",
+      "outcome": "## Ergebnis-Dimension\nTeilt die LLM-Nutzung in erfolgreiche und fehlgeschlagene Aufrufe auf."
     },
     "reportBuilder": {
       "dimensions": "## Dimensionen\nWählen Sie die Dimensionen aus, die Sie in Ihrem Bericht analysieren möchten. Dimensionen sind Attribute, die Ihre Daten kategorisieren, z. B. Datum, Benutzer, Status usw. Sie können sie per Drag & Drop neu anordnen.",
@@ -7568,6 +7580,10 @@
           "label": "Projektübergreifende Problemverfolgung",
           "description": "Problemerkennung, Problemlösung und Folgenabschätzung in verschiedenen Projekten"
         },
+        "llmUsage": {
+          "label": "LLM-Nutzung",
+          "description": "Token-Nutzung, Kosten und Zuverlässigkeit von LLM-Funktionen projektübergreifend"
+        },
         "automationTrends": {
           "label": "Trends in der projektübergreifenden Automatisierung",
           "description": "Verfolgen Sie den Automatisierungsfortschritt wöchentlich nach Priorität in allen Projekten."
@@ -7639,7 +7655,11 @@
       "issueType": "Ausgabetyp",
       "issueTracker": "Problemverfolgung",
       "issueStatus": "Ausgabestatus",
-      "tag": "Etikett"
+      "tag": "Etikett",
+      "feature": "Funktion",
+      "model": "Modell",
+      "integration": "Anbindung",
+      "outcome": "Ergebnis"
     },
     "metrics": {
       "percentReady": "Bereit (%)",
@@ -7683,7 +7703,15 @@
       "activeMilestones": "Aktive Meilensteine",
       "milestoneCompletion": "Meilensteinerfüllung (%)",
       "averageDuration": "Durchschnittliche Dauer",
-      "totalDuration": "Gesamtdauer"
+      "totalDuration": "Gesamtdauer",
+      "llmCallCount": "LLM-Aufrufe",
+      "promptTokens": "Prompt-Tokens",
+      "completionTokens": "Completion-Tokens",
+      "totalTokens": "Gesamte Tokens",
+      "totalCost": "Gesamtkosten",
+      "avgLatency": "Durchschn. Latenz",
+      "successRate": "Erfolgsquote (%)",
+      "errorCount": "Fehlgeschlagene Aufrufe"
     },
     "drillDown": {
       "title": "Detaillierte Aufzeichnungen",

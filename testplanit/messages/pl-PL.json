@@ -6854,7 +6854,15 @@
       "issueCount": "## Liczba problemów\nCałkowita liczba śledzonych problemów.",
       "milestoneCount": "## Liczba kamieni milowych\nŁączna liczba kamieni milowych.",
       "milestoneCompletionRate": "## Współczynnik ukończenia kamieni milowych\nProcent ukończonych kamieni milowych.",
-      "averageMilestoneDuration": "## Średni czas trwania kamieni milowych\nŚredni czas trwania kamieni milowych w dniach."
+      "averageMilestoneDuration": "## Średni czas trwania kamieni milowych\nŚredni czas trwania kamieni milowych w dniach.",
+      "llmCallCount": "## Wywołania LLM\nLiczba żądań LLM wykonanych w tej grupie, w tym nieudanych wywołań.",
+      "promptTokens": "## Tokeny promptu\nTokeny wysłane do modelu jako dane wejściowe we wszystkich wywołaniach w tej grupie.",
+      "completionTokens": "## Tokeny odpowiedzi\nTokeny wygenerowane przez model we wszystkich wywołaniach w tej grupie.",
+      "totalTokens": "## Łączna liczba tokenów\nŁączna liczba tokenów promptu i odpowiedzi we wszystkich wywołaniach w tej grupie.",
+      "totalCost": "## Łączny koszt\nSzacowany koszt dostawcy w USD za wywołania w tej grupie. Modele hostowane lokalnie odnotowują zerowy koszt.",
+      "avgLatency": "## Śr. opóźnienie\nŚredni czas, jaki dostawca potrzebował na odpowiedź na wywołanie w tej grupie.",
+      "successRate": "## Wskaźnik sukcesu\nProcent wywołań w tej grupie, które zakończyły się bez błędu.",
+      "errorCount": "## Nieudane wywołania\nLiczba wywołań w tej grupie, które zakończyły się błędem."
     },
     "reportDimensions": {
       "user": "## Wymiar użytkownika\nGrupuje wyniki według użytkownika, który wykonał testy lub jest przypisany do elementów.",
@@ -6877,7 +6885,11 @@
       "issueStatus": "## Wymiar statusu problemu\nGrupuje wyniki według bieżącego statusu problemów (np. Otwarte, W toku, Rozwiązane, Zamknięte).",
       "priority": "## Wymiar priorytetu\nGrupuje wyniki według poziomu priorytetu problemu (np. Wysoki, Średni, Niski).",
       "source": "## Wymiar źródłowy\nGrupuje wyniki według źródła wykonania testu (np. Manual, JUnit, API).",
-      "date": "## Wymiar daty\nGrupuje wyniki według daty w celu przeprowadzenia analizy opartej na czasie i określenia trendów."
+      "date": "## Wymiar daty\nGrupuje wyniki według daty w celu przeprowadzenia analizy opartej na czasie i określenia trendów.",
+      "feature": "## Wymiar funkcji\nGrupuje użycie LLM według funkcji aplikacji, która wykonała wywołanie (np. Generowanie przypadków testowych).",
+      "model": "## Wymiar modelu\nGrupuje użycie LLM według modelu, który obsłużył wywołanie.",
+      "integration": "## Wymiar integracji\nGrupuje użycie LLM według skonfigurowanej integracji LLM, która obsłużyła wywołanie.",
+      "outcome": "## Wymiar wyniku\nDzieli użycie LLM na wywołania zakończone sukcesem i niepowodzeniem."
     },
     "reportBuilder": {
       "dimensions": "## Wymiary\nWybierz wymiary, które chcesz analizować w raporcie. Wymiary to atrybuty, które kategoryzują dane, takie jak Data, Użytkownik, Status itp. Możesz je przeciągać, aby zmienić ich kolejność.",
@@ -7568,6 +7580,10 @@
           "label": "Śledzenie problemów międzyprojektowych",
           "description": "Tworzenie i rozwiązywanie problemów oraz analiza wpływu na różne projekty"
         },
+        "llmUsage": {
+          "label": "Użycie LLM",
+          "description": "Użycie tokenów, koszt i niezawodność funkcji LLM w projektach"
+        },
         "automationTrends": {
           "label": "Trendy automatyzacji międzyprojektowej",
           "description": "Śledź postęp automatyzacji tydzień po tygodniu według priorytetów w różnych projektach"
@@ -7639,7 +7655,11 @@
       "issueType": "Typ problemu",
       "issueTracker": "Śledzenie problemów",
       "issueStatus": "Status wydania",
-      "tag": "Etykietka"
+      "tag": "Etykietka",
+      "feature": "Funkcja",
+      "model": "Model",
+      "integration": "Integracja",
+      "outcome": "Wynik"
     },
     "metrics": {
       "percentReady": "Gotowe (%)",
@@ -7683,7 +7703,15 @@
       "activeMilestones": "Aktywne kamienie milowe",
       "milestoneCompletion": "Ukończenie kamienia milowego (%)",
       "averageDuration": "Średni czas trwania",
-      "totalDuration": "Całkowity czas trwania"
+      "totalDuration": "Całkowity czas trwania",
+      "llmCallCount": "Wywołania LLM",
+      "promptTokens": "Tokeny promptu",
+      "completionTokens": "Tokeny odpowiedzi",
+      "totalTokens": "Łączna liczba tokenów",
+      "totalCost": "Łączny koszt",
+      "avgLatency": "Śr. opóźnienie",
+      "successRate": "Wskaźnik sukcesu (%)",
+      "errorCount": "Nieudane wywołania"
     },
     "drillDown": {
       "title": "Szczegółowe zapisy",

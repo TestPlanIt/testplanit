@@ -6854,7 +6854,15 @@
       "issueCount": "## 问题计数\n跟踪的问题总数。",
       "milestoneCount": "## 里程碑数量\n里程碑总数。",
       "milestoneCompletionRate": "## 里程碑完成率\n已完成里程碑的百分比。",
-      "averageMilestoneDuration": "## 平均里程碑持续时间\n里程碑的平均持续时间（以天为单位）。"
+      "averageMilestoneDuration": "## 平均里程碑持续时间\n里程碑的平均持续时间（以天为单位）。",
+      "llmCallCount": "## LLM 调用次数\n此组中发出的 LLM 请求数,包括失败的调用。",
+      "promptTokens": "## 提示词令牌数\n此组中所有调用作为输入发送给模型的令牌数。",
+      "completionTokens": "## 补全令牌数\n此组中所有调用由模型生成的令牌数。",
+      "totalTokens": "## 总令牌数\n此组中所有调用的提示词令牌和补全令牌之和。",
+      "totalCost": "## 总费用\n此组中调用的预估服务商美元费用。本地托管的模型费用记录为零。",
+      "avgLatency": "## 平均延迟\n此组中提供商响应调用所需的平均时间。",
+      "successRate": "## 成功率\n此组中未出现错误而成功完成的调用百分比。",
+      "errorCount": "## 失败调用数\n此组中以错误结束的调用数。"
     },
     "reportDimensions": {
       "user": "## 用户维度\n按执行测试或分配给项目的用户对结果进行分组。",
@@ -6877,7 +6885,11 @@
       "issueStatus": "## 问题状态维度\n按问题的当前状态（例如，打开、进行中、已解决、已关闭）对结果进行分组。",
       "priority": "## 优先级维度\n按问题优先级（例如，高、中、低）对结果进行分组。",
       "source": "## 源维度\n按测试执行的来源（例如，手动、JUnit、API）对结果进行分组。",
-      "date": "## 日期维度\n按日期对结果进行分组，以便进行基于时间的分析和趋势分析。"
+      "date": "## 日期维度\n按日期对结果进行分组，以便进行基于时间的分析和趋势分析。",
+      "feature": "## 功能维度\n按发出调用的应用功能对 LLM 使用情况进行分组(例如,测试用例生成)。",
+      "model": "## 模型维度\n按处理调用的模型对 LLM 使用情况进行分组。",
+      "integration": "## 集成维度\n按处理调用的已配置 LLM 集成对 LLM 使用情况进行分组。",
+      "outcome": "## 结果维度\n将 LLM 使用情况拆分为成功和失败的调用。"
     },
     "reportBuilder": {
       "dimensions": "## 维度\n选择要在报告中分析的维度。维度是用于对数据进行分类的属性，例如日期、用户、状态等。您可以拖动来重新排序。",
@@ -7568,6 +7580,10 @@
           "label": "跨项目问题跟踪",
           "description": "项目间的问题产生、解决和影响分析"
         },
+        "llmUsage": {
+          "label": "LLM 使用情况",
+          "description": "跨项目的 LLM 功能令牌使用量、费用和可靠性"
+        },
         "automationTrends": {
           "label": "跨项目自动化趋势",
           "description": "按优先级逐周跟踪各项目的自动化进度"
@@ -7639,7 +7655,11 @@
       "issueType": "问题类型",
       "issueTracker": "问题跟踪器",
       "issueStatus": "问题状态",
-      "tag": "标签"
+      "tag": "标签",
+      "feature": "功能",
+      "model": "模型",
+      "integration": "集成",
+      "outcome": "结果"
     },
     "metrics": {
       "percentReady": "就绪（%）",
@@ -7683,7 +7703,15 @@
       "activeMilestones": "活跃里程碑",
       "milestoneCompletion": "里程碑完成率（%）",
       "averageDuration": "平均持续时间",
-      "totalDuration": "总时长"
+      "totalDuration": "总时长",
+      "llmCallCount": "LLM 调用次数",
+      "promptTokens": "提示词令牌数",
+      "completionTokens": "补全令牌数",
+      "totalTokens": "总令牌数",
+      "totalCost": "总费用",
+      "avgLatency": "平均延迟",
+      "successRate": "成功率 (%)",
+      "errorCount": "失败调用数"
     },
     "drillDown": {
       "title": "详细记录",

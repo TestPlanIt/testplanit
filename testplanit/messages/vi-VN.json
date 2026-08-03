@@ -6854,7 +6854,15 @@
       "issueCount": "## Số lượng sự cố\nTổng số sự cố đã được theo dõi.",
       "milestoneCount": "## Số lượng cột mốc\nTổng số cột mốc.",
       "milestoneCompletionRate": "## Tỷ lệ hoàn thành cột mốc\nPhần trăm các cột mốc đã hoàn thành.",
-      "averageMilestoneDuration": "## Thời gian trung bình hoàn thành các mốc quan trọng\nThời gian trung bình hoàn thành các mốc quan trọng tính bằng ngày."
+      "averageMilestoneDuration": "## Thời gian trung bình hoàn thành các mốc quan trọng\nThời gian trung bình hoàn thành các mốc quan trọng tính bằng ngày.",
+      "llmCallCount": "## Số lượt gọi LLM\nSố lượng yêu cầu LLM được thực hiện trong nhóm này, bao gồm cả các lượt gọi thất bại.",
+      "promptTokens": "## Token đầu vào\nSố token được gửi đến mô hình dưới dạng đầu vào trên tất cả các lượt gọi trong nhóm này.",
+      "completionTokens": "## Token đầu ra\nSố token được mô hình tạo ra trên tất cả các lượt gọi trong nhóm này.",
+      "totalTokens": "## Tổng số Token\nTổng số token đầu vào và đầu ra trên tất cả các lượt gọi trong nhóm này.",
+      "totalCost": "## Tổng chi phí\nChi phí ước tính của nhà cung cấp tính bằng USD cho các lượt gọi trong nhóm này. Các mô hình được lưu trữ cục bộ ghi nhận chi phí là 0.",
+      "avgLatency": "## Độ trễ trung bình\nThời gian trung bình mà nhà cung cấp phản hồi một lượt gọi trong nhóm này.",
+      "successRate": "## Tỷ lệ thành công\nTỷ lệ phần trăm các lượt gọi trong nhóm này hoàn thành mà không gặp lỗi.",
+      "errorCount": "## Lượt gọi thất bại\nSố lượt gọi trong nhóm này kết thúc bằng lỗi."
     },
     "reportDimensions": {
       "user": "## Kích thước người dùng\nNhóm kết quả theo người dùng đã thực hiện các bài kiểm tra hoặc được chỉ định cho các mục.",
@@ -6877,7 +6885,11 @@
       "issueStatus": "## Kích thước trạng thái sự cố\nNhóm kết quả theo trạng thái hiện tại của sự cố (ví dụ: Đang mở, Đang xử lý, Đã giải quyết, Đã đóng).",
       "priority": "## Chiều ưu tiên\nNhóm kết quả theo mức độ ưu tiên của vấn đề (ví dụ: Cao, Trung bình, Thấp).",
       "source": "## Kích thước nguồn\nNhóm kết quả theo nguồn thực thi kiểm thử (ví dụ: Thủ công, JUnit, API).",
-      "date": "## Chiều dữ liệu theo ngày\nNhóm kết quả theo ngày để phân tích và theo dõi xu hướng dựa trên thời gian."
+      "date": "## Chiều dữ liệu theo ngày\nNhóm kết quả theo ngày để phân tích và theo dõi xu hướng dựa trên thời gian.",
+      "feature": "## Chiều Tính năng\nNhóm việc sử dụng LLM theo tính năng ứng dụng đã thực hiện lượt gọi (ví dụ: Tạo Ca Kiểm Thử).",
+      "model": "## Chiều Mô hình\nNhóm việc sử dụng LLM theo mô hình đã xử lý lượt gọi.",
+      "integration": "## Chiều Tích hợp\nNhóm việc sử dụng LLM theo tích hợp LLM đã được cấu hình để xử lý lượt gọi.",
+      "outcome": "## Chiều Kết quả\nPhân chia việc sử dụng LLM thành các lượt gọi thành công và thất bại."
     },
     "reportBuilder": {
       "dimensions": "## Kích thước\nChọn các kích thước bạn muốn phân tích trong báo cáo. Kích thước là các thuộc tính phân loại dữ liệu của bạn, chẳng hạn như Ngày, Người dùng, Trạng thái, v.v. Bạn có thể kéo để sắp xếp lại thứ tự chúng.",
@@ -7568,6 +7580,10 @@
           "label": "Theo dõi vấn đề giữa các dự án",
           "description": "Việc tạo lập, giải quyết và phân tích tác động của các vấn đề trong các dự án."
         },
+        "llmUsage": {
+          "label": "Sử dụng LLM",
+          "description": "Mức sử dụng token, chi phí và độ tin cậy của các tính năng LLM trên các dự án"
+        },
         "automationTrends": {
           "label": "Xu hướng tự động hóa xuyên dự án",
           "description": "Theo dõi tiến độ tự động hóa hàng tuần theo mức độ ưu tiên trên các dự án."
@@ -7639,7 +7655,11 @@
       "issueType": "Loại sự cố",
       "issueTracker": "Trình theo dõi sự cố",
       "issueStatus": "Trạng thái vấn đề",
-      "tag": "Nhãn"
+      "tag": "Nhãn",
+      "feature": "Tính năng",
+      "model": "Mô hình",
+      "integration": "Tích hợp",
+      "outcome": "Kết quả"
     },
     "metrics": {
       "percentReady": "Sẵn sàng (%)",
@@ -7683,7 +7703,15 @@
       "activeMilestones": "Các cột mốc quan trọng",
       "milestoneCompletion": "Tỷ lệ hoàn thành cột mốc (%)",
       "averageDuration": "Thời gian trung bình",
-      "totalDuration": "Tổng thời lượng"
+      "totalDuration": "Tổng thời lượng",
+      "llmCallCount": "Số lượt gọi LLM",
+      "promptTokens": "Token đầu vào",
+      "completionTokens": "Token đầu ra",
+      "totalTokens": "Tổng số Token",
+      "totalCost": "Tổng chi phí",
+      "avgLatency": "Độ trễ trung bình",
+      "successRate": "Tỷ lệ thành công (%)",
+      "errorCount": "Lượt gọi thất bại"
     },
     "drillDown": {
       "title": "Hồ sơ chi tiết",

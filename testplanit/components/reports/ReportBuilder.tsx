@@ -671,13 +671,17 @@ function ReportBuilderContent({
     ]
   );
 
+  // The drill-down route has no query builders for LLM usage metrics (its
+  // metric fallback reads testRunResults), so metric cells stay plain values.
+  const supportsDrillDown = !matchesReportType(reportType, "llm-usage");
+
   // Use the custom hook for generating columns
   const standardColumns = useReportColumns(
     lastUsedDimensions.map((d) => d.value),
     lastUsedMetrics.map((m) => m.value),
     lastUsedDimensions,
     lastUsedMetrics,
-    handleMetricClick,
+    supportsDrillDown ? handleMetricClick : undefined,
     projectId
   );
 

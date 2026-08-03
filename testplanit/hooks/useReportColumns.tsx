@@ -825,6 +825,17 @@ export function useReportColumns(
         unit !== undefined
           ? unit === "date"
           : metricId === "lastActiveDate" || metricLabel.includes("Date");
+      // Currency has no label heuristic — only the units map classifies it.
+      const isCurrencyMetric = unit === "currency";
+      const formatCurrency = (amount: number) =>
+        amount.toLocaleString(locale, {
+          style: "currency",
+          currency: "USD",
+          minimumFractionDigits: 2,
+          // Per-group LLM costs are often fractions of a cent; two extra
+          // digits keep them from collapsing to $0.00.
+          maximumFractionDigits: 4,
+        });
 
       // Get help key for this metric using the helper function
       const helpKey = getMetricHelpKey(metricId);
@@ -934,6 +945,14 @@ export function useReportColumns(
               );
             }
 
+            if (isCurrencyMetric) {
+              return (
+                <span className="inline-flex items-center px-2 py-1 text-xs font-bold rounded-full">
+                  {formatCurrency(total)}
+                </span>
+              );
+            }
+
             // Default numeric display - show sum
             return (
               <span className="inline-flex items-center px-2 py-1 text-xs font-bold rounded-full">
@@ -1029,6 +1048,22 @@ export function useReportColumns(
                 />
               ) : (
                 <span>-</span>
+              );
+            }
+
+            if (isCurrencyMetric) {
+              const isClickable = onMetricClick && numericValue > 0;
+              return (
+                <span
+                  className={`inline-flex items-center px-2 py-1 text-xs font-medium rounded-full ${
+                    isClickable
+                      ? "text-primary hover:underline cursor-pointer"
+                      : ""
+                  }`}
+                  onClick={isClickable ? handleClick : undefined}
+                >
+                  {formatCurrency(numericValue)}
+                </span>
               );
             }
 

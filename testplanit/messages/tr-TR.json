@@ -6854,7 +6854,15 @@
       "issueCount": "## Sorun Sayısı\nTakip edilen toplam sorun sayısı.",
       "milestoneCount": "## Dönüm Noktası Sayısı\nToplam dönüm noktası sayısı.",
       "milestoneCompletionRate": "## Dönüm Noktası Tamamlama Oranı\nTamamlanan dönüm noktalarının yüzdesi.",
-      "averageMilestoneDuration": "## Ortalama Dönüm Noktası Süresi\nDönüm noktalarının ortalama süresi (gün cinsinden)."
+      "averageMilestoneDuration": "## Ortalama Dönüm Noktası Süresi\nDönüm noktalarının ortalama süresi (gün cinsinden).",
+      "llmCallCount": "## LLM Çağrıları\nBu grupta yapılan LLM istek sayısı, başarısız çağrılar dahil.",
+      "promptTokens": "## İstem Belirteçleri\nBu gruptaki tüm çağrılarda modele girdi olarak gönderilen belirteçler.",
+      "completionTokens": "## Tamamlama Belirteçleri\nBu gruptaki tüm çağrılarda model tarafından üretilen belirteçler.",
+      "totalTokens": "## Toplam Belirteç\nBu gruptaki tüm çağrılardaki istem ve tamamlama belirteçlerinin toplamı.",
+      "totalCost": "## Toplam Maliyet\nBu gruptaki çağrılar için USD cinsinden tahmini sağlayıcı maliyeti. Yerel olarak barındırılan modeller sıfır maliyet kaydeder.",
+      "avgLatency": "## Ort. Gecikme\nSağlayıcının bu gruptaki bir çağrıya yanıt vermek için harcadığı ortalama süre.",
+      "successRate": "## Başarı Oranı\nBu gruptaki hatasız tamamlanan çağrıların yüzdesi.",
+      "errorCount": "## Başarısız Çağrılar\nBu gruptaki hatayla sonuçlanan çağrı sayısı."
     },
     "reportDimensions": {
       "user": "## Kullanıcı Boyutu\nSonuçları, testleri yürüten veya öğelere atanmış kullanıcıya göre gruplandırır.",
@@ -6877,7 +6885,11 @@
       "issueStatus": "## Sorun Durumu Boyutu\nSonuçları sorunların mevcut durumuna göre gruplandırır (örneğin, Açık, Devam Ediyor, Çözüldü, Kapalı).",
       "priority": "## Öncelik Boyutu\nSonuçları sorun öncelik düzeyine göre gruplandırır (örneğin, Yüksek, Orta, Düşük).",
       "source": "## Kaynak Boyutu\nTest yürütme kaynağına göre sonuçları gruplandırır (örneğin, Manuel, JUnit, API).",
-      "date": "## Tarih Boyutu\nZaman bazlı analiz ve trendler için sonuçları tarihe göre gruplandırır."
+      "date": "## Tarih Boyutu\nZaman bazlı analiz ve trendler için sonuçları tarihe göre gruplandırır.",
+      "feature": "## Özellik Boyutu\nLLM kullanımını çağrıyı yapan uygulama özelliğine göre gruplar (örn. Test Senaryosu Oluşturma).",
+      "model": "## Model Boyutu\nLLM kullanımını çağrıyı işleyen modele göre gruplar.",
+      "integration": "## Entegrasyon Boyutu\nLLM kullanımını çağrıyı yöneten yapılandırılmış LLM entegrasyonuna göre gruplar.",
+      "outcome": "## Sonuç Boyutu\nLLM kullanımını başarılı ve başarısız çağrılar olarak ayırır."
     },
     "reportBuilder": {
       "dimensions": "## Boyutlar\nRaporunuzda analiz etmek istediğiniz boyutları seçin. Boyutlar, verilerinizi kategorize eden özelliklerdir; örneğin Tarih, Kullanıcı, Durum vb. Bunları sürükleyerek yeniden sıralayabilirsiniz.",
@@ -7568,6 +7580,10 @@
           "label": "Projeler Arası Sorun Takibi",
           "description": "Projeler genelinde sorun oluşturma, çözme ve etki analizi"
         },
+        "llmUsage": {
+          "label": "LLM Kullanımı",
+          "description": "Projeler arasında LLM özelliklerinin belirteç kullanımı, maliyeti ve güvenilirliği"
+        },
         "automationTrends": {
           "label": "Projeler Arası Otomasyon Trendleri",
           "description": "Projeler genelinde öncelik sırasına göre otomasyon ilerlemesini haftalık olarak takip edin."
@@ -7639,7 +7655,11 @@
       "issueType": "Sorun Türü",
       "issueTracker": "Sorun Takip Sistemi",
       "issueStatus": "Sorun Durumu",
-      "tag": "Etiket"
+      "tag": "Etiket",
+      "feature": "Özellik",
+      "model": "Model",
+      "integration": "Entegrasyon",
+      "outcome": "Sonuç"
     },
     "metrics": {
       "percentReady": "Hazır (%)",
@@ -7683,7 +7703,15 @@
       "activeMilestones": "Aktif Dönüm Noktaları",
       "milestoneCompletion": "Dönüm Noktası Tamamlanma Oranı (%)",
       "averageDuration": "Ortalama Süre",
-      "totalDuration": "Toplam Süre"
+      "totalDuration": "Toplam Süre",
+      "llmCallCount": "LLM Çağrıları",
+      "promptTokens": "İstem Belirteçleri",
+      "completionTokens": "Tamamlama Belirteçleri",
+      "totalTokens": "Toplam Belirteç",
+      "totalCost": "Toplam Maliyet",
+      "avgLatency": "Ort. Gecikme",
+      "successRate": "Başarı Oranı (%)",
+      "errorCount": "Başarısız Çağrılar"
     },
     "drillDown": {
       "title": "Ayrıntılı Kayıtlar",

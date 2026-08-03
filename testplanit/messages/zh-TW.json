@@ -6854,7 +6854,15 @@
       "issueCount": "## 問題計數\n追蹤的總問題數。",
       "milestoneCount": "## 里程碑數\n里程碑總數。",
       "milestoneCompletionRate": "## 里程碑完成率\n已完成里程碑的百分比。",
-      "averageMilestoneDuration": "## 平均里程碑持續時間\n里程碑的平均持續時間（以天為單位）。"
+      "averageMilestoneDuration": "## 平均里程碑持續時間\n里程碑的平均持續時間（以天為單位）。",
+      "llmCallCount": "## LLM 呼叫\n此群組中發出的 LLM 請求數量，包括失敗的呼叫。",
+      "promptTokens": "## 提示權杖\n此群組中所有呼叫作為輸入傳送給模型的權杖數。",
+      "completionTokens": "## 完成權杖\n此群組中模型產生的所有呼叫的權杖數。",
+      "totalTokens": "## 總權杖數\n此群組中所有呼叫的提示與完成權杖總和。",
+      "totalCost": "## 總成本\n此群組中呼叫的預估提供商成本為美元。本地託管的模型成本記錄為零。",
+      "avgLatency": "## 平均延遲\n此群組中提供商回應呼叫所花費的平均時間。",
+      "successRate": "## 成功率\n此群組中未發生錯誤而完成的呼叫百分比。",
+      "errorCount": "## 失敗呼叫\n此群組中以錯誤結束的呼叫數量。"
     },
     "reportDimensions": {
       "user": "## 使用者維度\n依執行測試或指派給專案的使用者將結果分組。",
@@ -6877,7 +6885,11 @@
       "issueStatus": "## 問題狀態維度\n依問題的目前狀態（例如，開啟、進行中、已解決、已關閉）將結果分組。",
       "priority": "## 優先權維度\n依問題優先順序（例如，高、中、低）將結果分組。",
       "source": "## 來源維度\n依測試執行的來源（例如，手動、JUnit、API）將結果分組。",
-      "date": "## 日期維度\n將結果依日期分組，以便進行基於時間的分析和趨勢分析。"
+      "date": "## 日期維度\n將結果依日期分組，以便進行基於時間的分析和趨勢分析。",
+      "feature": "## 功能維度\n依發出呼叫的應用程式功能（例如測試案例產生）對 LLM 使用情況進行分組。",
+      "model": "## 模型維度\n依處理呼叫的模型對 LLM 使用情況進行分組。",
+      "integration": "## 整合維度\n依處理呼叫的已設定 LLM 整合對 LLM 使用情況進行分組。",
+      "outcome": "## 結果維度\n將 LLM 使用情況分為成功與失敗的呼叫。"
     },
     "reportBuilder": {
       "dimensions": "## 維度\n選擇要在報告中分析的維度。維度是用於對資料進行分類的屬性，例如日期、使用者、狀態等。您可以拖曳來重新排序。",
@@ -7568,6 +7580,10 @@
           "label": "跨專案問題追蹤",
           "description": "項目間的問題產生、解決與影響分析"
         },
+        "llmUsage": {
+          "label": "LLM 使用情況",
+          "description": "跨專案的 LLM 功能權杖使用量、成本與可靠性"
+        },
         "automationTrends": {
           "label": "跨專案自動化趨勢",
           "description": "按優先順序逐週追蹤各專案的自動化進度"
@@ -7639,7 +7655,11 @@
       "issueType": "問題類型",
       "issueTracker": "問題追蹤器",
       "issueStatus": "問題狀態",
-      "tag": "標籤"
+      "tag": "標籤",
+      "feature": "功能",
+      "model": "模型",
+      "integration": "整合",
+      "outcome": "結果"
     },
     "metrics": {
       "percentReady": "就緒（%）",
@@ -7683,7 +7703,15 @@
       "activeMilestones": "活躍里程碑",
       "milestoneCompletion": "里程碑完成率（%）",
       "averageDuration": "平均持續時間",
-      "totalDuration": "總時長"
+      "totalDuration": "總時長",
+      "llmCallCount": "LLM 呼叫",
+      "promptTokens": "提示權杖",
+      "completionTokens": "完成權杖",
+      "totalTokens": "總權杖數",
+      "totalCost": "總成本",
+      "avgLatency": "平均延遲",
+      "successRate": "成功率 (%)",
+      "errorCount": "失敗呼叫"
     },
     "drillDown": {
       "title": "詳細記錄",

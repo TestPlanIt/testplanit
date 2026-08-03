@@ -97,6 +97,7 @@ const sidebars: SidebarsConfig = {
                   },
                   items: [
                     'user-guide/cross-project-reports', // Cross-project report types + project scoping
+                    'user-guide/llm-usage-report', // AI token usage and cost report
                   ],
                 },
               ],

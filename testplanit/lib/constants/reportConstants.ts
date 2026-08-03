@@ -44,6 +44,16 @@ export const METRIC_ID_MAP: Record<string, string> = {
   milestoneCount: "milestoneCount",
   milestoneCompletionRate: "milestoneCompletionRate",
   averageMilestoneDuration: "averageMilestoneDuration",
+
+  // LLM usage metrics - canonical IDs
+  llmCallCount: "llmCallCount",
+  promptTokens: "promptTokens",
+  completionTokens: "completionTokens",
+  totalTokens: "totalTokens",
+  totalCost: "totalCost",
+  avgLatency: "avgLatency",
+  successRate: "successRate",
+  errorCount: "errorCount",
 };
 
 // Map metric translation keys to help keys for help tooltips
@@ -86,6 +96,16 @@ export const METRIC_HELP_KEYS: Record<string, string> = {
     "reportMetrics.milestoneCompletionRate",
   "reports.metrics.averageMilestoneDuration":
     "reportMetrics.averageMilestoneDuration",
+
+  // LLM usage metrics
+  "reports.metrics.llmCallCount": "reportMetrics.llmCallCount",
+  "reports.metrics.promptTokens": "reportMetrics.promptTokens",
+  "reports.metrics.completionTokens": "reportMetrics.completionTokens",
+  "reports.metrics.totalTokens": "reportMetrics.totalTokens",
+  "reports.metrics.totalCost": "reportMetrics.totalCost",
+  "reports.metrics.avgLatency": "reportMetrics.avgLatency",
+  "reports.metrics.successRate": "reportMetrics.successRate",
+  "reports.metrics.errorCount": "reportMetrics.errorCount",
 
   // Legacy mappings for backward compatibility
   "Test Results Count": "reportMetrics.count",
@@ -132,6 +152,10 @@ export const DIMENSION_ID_KEYS: Record<string, string> = {
   priority: "priority",
   source: "source",
   date: "date",
+  feature: "feature",
+  model: "model",
+  integration: "llmIntegrationId",
+  outcome: "success",
 };
 
 export const DIMENSION_LABEL_KEYS: Record<string, string> = {
@@ -157,6 +181,10 @@ export const DIMENSION_LABEL_KEYS: Record<string, string> = {
   priority: "reports.dimensions.priority",
   source: "reports.dimensions.source",
   date: "reports.dimensions.date",
+  feature: "reports.dimensions.feature",
+  model: "reports.dimensions.model",
+  integration: "reports.dimensions.integration",
+  outcome: "reports.dimensions.outcome",
 };
 
 // Map dimension IDs to help keys for help tooltips
@@ -182,6 +210,10 @@ export const DIMENSION_HELP_KEYS: Record<string, string> = {
   priority: "reportDimensions.priority",
   source: "reportDimensions.source",
   date: "reportDimensions.date",
+  feature: "reportDimensions.feature",
+  model: "reportDimensions.model",
+  integration: "reportDimensions.integration",
+  outcome: "reportDimensions.outcome",
 };
 
 // Helper function to normalize metric ID to canonical form

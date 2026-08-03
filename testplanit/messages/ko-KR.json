@@ -6854,7 +6854,15 @@
       "issueCount": "## 이슈 개수\n추적된 이슈의 총 개수입니다.",
       "milestoneCount": "## 마일스톤 개수\n총 마일스톤 수입니다.",
       "milestoneCompletionRate": "## 마일스톤 완료율\n완료된 마일스톤의 비율입니다.",
-      "averageMilestoneDuration": "## 평균 마일스톤 기간\n마일스톤의 평균 기간(일)."
+      "averageMilestoneDuration": "## 평균 마일스톤 기간\n마일스톤의 평균 기간(일).",
+      "llmCallCount": "## LLM 호출 수\n실패한 호출을 포함하여 이 그룹에서 이루어진 LLM 요청 수입니다.",
+      "promptTokens": "## 프롬프트 토큰\n이 그룹의 모든 호출에서 입력으로 모델에 전송된 토큰입니다.",
+      "completionTokens": "## 완료 토큰\n이 그룹의 모든 호출에서 모델이 생성한 토큰입니다.",
+      "totalTokens": "## 총 토큰\n이 그룹의 모든 호출에서 프롬프트 토큰과 완료 토큰을 합산한 값입니다.",
+      "totalCost": "## 총 비용\n이 그룹의 호출에 대해 USD로 추정된 제공업체 비용입니다. 로컬에서 호스팅되는 모델은 비용이 기록되지 않습니다.",
+      "avgLatency": "## 평균 지연 시간\n이 그룹의 호출에 대해 제공업체가 응답하는 데 걸린 평균 시간입니다.",
+      "successRate": "## 성공률\n이 그룹에서 오류 없이 완료된 호출의 비율입니다.",
+      "errorCount": "## 실패한 호출\n이 그룹에서 오류로 종료된 호출 수입니다."
     },
     "reportDimensions": {
       "user": "## 사용자 차원\n테스트를 실행한 사용자 또는 항목에 할당된 사용자를 기준으로 결과를 그룹화합니다.",
@@ -6877,7 +6885,11 @@
       "issueStatus": "## 이슈 상태 차원\n이슈의 현재 상태(예: 열림, 진행 중, 해결됨, 닫힘)별로 결과를 그룹화합니다.",
       "priority": "## 우선순위 차원\n이슈의 우선순위 수준(예: 높음, 중간, 낮음)별로 결과를 그룹화합니다.",
       "source": "## 소스 차원\n테스트 실행 소스(예: 수동, JUnit, API)별로 결과를 그룹화합니다.",
-      "date": "## 날짜 차원\n시간 기반 분석 및 추세 분석을 위해 결과를 날짜별로 그룹화합니다."
+      "date": "## 날짜 차원\n시간 기반 분석 및 추세 분석을 위해 결과를 날짜별로 그룹화합니다.",
+      "feature": "## 기능 차원\n호출을 수행한 애플리케이션 기능별로 LLM 사용량을 그룹화합니다(예: 테스트 케이스 생성).",
+      "model": "## 모델 차원\n호출을 처리한 모델별로 LLM 사용량을 그룹화합니다.",
+      "integration": "## 통합 차원\n호출을 처리한 구성된 LLM 통합별로 LLM 사용량을 그룹화합니다.",
+      "outcome": "## 결과 차원\nLLM 사용량을 성공한 호출과 실패한 호출로 나눕니다."
     },
     "reportBuilder": {
       "dimensions": "## 차원\n보고서에서 분석할 차원을 선택하세요. 차원은 날짜, 사용자, 상태 등과 같이 데이터를 분류하는 속성입니다. 드래그하여 순서를 변경할 수 있습니다.",
@@ -7568,6 +7580,10 @@
           "label": "프로젝트 간 이슈 추적",
           "description": "프로젝트 전반에 걸친 문제 발생, 해결 및 영향 분석"
         },
+        "llmUsage": {
+          "label": "LLM 사용량",
+          "description": "프로젝트 전반의 LLM 기능 토큰 사용량, 비용 및 안정성"
+        },
         "automationTrends": {
           "label": "프로젝트 간 자동화 트렌드",
           "description": "프로젝트별 우선순위에 따라 자동화 진행 상황을 매주 추적하세요."
@@ -7639,7 +7655,11 @@
       "issueType": "문제 유형",
       "issueTracker": "이슈 트래커",
       "issueStatus": "문제 상태",
-      "tag": "꼬리표"
+      "tag": "꼬리표",
+      "feature": "기능",
+      "model": "모델",
+      "integration": "통합",
+      "outcome": "결과"
     },
     "metrics": {
       "percentReady": "준비됨 (%)",
@@ -7683,7 +7703,15 @@
       "activeMilestones": "활성 마일스톤",
       "milestoneCompletion": "주요 단계 완료율(%)",
       "averageDuration": "평균 소요 시간",
-      "totalDuration": "총 소요 시간"
+      "totalDuration": "총 소요 시간",
+      "llmCallCount": "LLM 호출 수",
+      "promptTokens": "프롬프트 토큰",
+      "completionTokens": "완료 토큰",
+      "totalTokens": "총 토큰",
+      "totalCost": "총 비용",
+      "avgLatency": "평균 지연 시간",
+      "successRate": "성공률 (%)",
+      "errorCount": "실패한 호출"
     },
     "drillDown": {
       "title": "상세 기록",

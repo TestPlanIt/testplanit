@@ -182,6 +182,8 @@ The setting affects three behaviors:
 - **Budget alerts** — 80% / 90% / 100% threshold notifications reset on each new period
 - **Reset Spend** — the manual reset action on the Edit dialog clears usage from the current period start onward (older periods remain in the audit trail)
 
+For a historical breakdown of spend by feature, model, user, or project — beyond the current billing period — use the [LLM Usage report](./llm-usage-report.md) under **Administration → Reports**.
+
 Saving an integration with a changed `billingPeriodStartDay` clears any thresholds already fired so notifications can fire again under the new window.
 
 ### Test Connection & Model Capability Probing

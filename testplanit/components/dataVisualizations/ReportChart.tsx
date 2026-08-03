@@ -552,6 +552,10 @@ export const ReportChart: React.FC<ReportChartProps> = ({
     );
   };
 
+  // Currency has no label heuristic — only the units map classifies it.
+  const isCurrencyMetric = (metric: { value: string }): boolean =>
+    metricUnit(metric.value) === "currency";
+
   const formatMetricValue = (
     value: number,
     metric: { value: string; label: string; originalLabel?: string }
@@ -567,6 +571,16 @@ export const ReportChart: React.FC<ReportChartProps> = ({
     if (isPercentageMetric(metric)) {
       if (value === null || value === undefined) return "—";
       return `${value.toFixed(2)}%`;
+    }
+    if (isCurrencyMetric(metric)) {
+      return value.toLocaleString(locale, {
+        style: "currency",
+        currency: "USD",
+        minimumFractionDigits: 2,
+        // Per-group LLM costs are often fractions of a cent; two extra
+        // digits keep them from collapsing to $0.00.
+        maximumFractionDigits: 4,
+      });
     }
     return value.toLocaleString(locale);
   };

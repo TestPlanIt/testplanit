@@ -6854,7 +6854,15 @@
       "issueCount": "## Numero di problemi\nNumero totale di problemi monitorati.",
       "milestoneCount": "## Conteggio traguardi\nNumero totale di traguardi.",
       "milestoneCompletionRate": "## Tasso di completamento delle pietre miliari\nPercentuale di pietre miliari completate.",
-      "averageMilestoneDuration": "## Durata media delle pietre miliari\nDurata media delle pietre miliari in giorni."
+      "averageMilestoneDuration": "## Durata media delle pietre miliari\nDurata media delle pietre miliari in giorni.",
+      "llmCallCount": "## Chiamate LLM\nNumero di richieste LLM effettuate in questo gruppo, incluse le chiamate non riuscite.",
+      "promptTokens": "## Token del prompt\nToken inviati al modello come input in tutte le chiamate di questo gruppo.",
+      "completionTokens": "## Token di completamento\nToken generati dal modello in tutte le chiamate di questo gruppo.",
+      "totalTokens": "## Token totali\nToken del prompt e di completamento combinati in tutte le chiamate di questo gruppo.",
+      "totalCost": "## Costo totale\nCosto stimato del provider in USD per le chiamate di questo gruppo. I modelli ospitati localmente registrano un costo pari a zero.",
+      "avgLatency": "## Latenza media\nTempo medio impiegato dal provider per rispondere a una chiamata in questo gruppo.",
+      "successRate": "## Tasso di successo\nPercentuale di chiamate in questo gruppo completate senza errori.",
+      "errorCount": "## Chiamate non riuscite\nNumero di chiamate in questo gruppo terminate con un errore."
     },
     "reportDimensions": {
       "user": "## Dimensione utente\nRaggruppa i risultati in base all'utente che ha eseguito i test o a cui sono assegnati gli elementi.",
@@ -6877,7 +6885,11 @@
       "issueStatus": "## Dimensione Stato Problema\nRaggruppa i risultati in base allo stato attuale dei problemi (ad esempio, Aperto, In corso, Risolto, Chiuso).",
       "priority": "## Dimensione priorità\nRaggruppa i risultati in base al livello di priorità del problema (ad esempio, Alta, Media, Bassa).",
       "source": "## Dimensione sorgente\nRaggruppa i risultati in base alla sorgente di esecuzione del test (ad esempio, Manuale, JUnit, API).",
-      "date": "## Dimensione data\nRaggruppa i risultati per data per analisi e tendenze basate sul tempo."
+      "date": "## Dimensione data\nRaggruppa i risultati per data per analisi e tendenze basate sul tempo.",
+      "feature": "## Dimensione Funzionalità\nRaggruppa l'utilizzo LLM in base alla funzionalità dell'applicazione che ha effettuato la chiamata (ad es. Generazione di casi di test).",
+      "model": "## Dimensione Modello\nRaggruppa l'utilizzo LLM in base al modello che ha gestito la chiamata.",
+      "integration": "## Dimensione Integrazione\nRaggruppa l'utilizzo LLM in base all'integrazione LLM configurata che ha gestito la chiamata.",
+      "outcome": "## Dimensione Risultato\nDivide l'utilizzo LLM in chiamate riuscite e non riuscite."
     },
     "reportBuilder": {
       "dimensions": "## Dimensioni\nSeleziona le dimensioni che desideri analizzare nel tuo report. Le dimensioni sono attributi che categorizzano i dati, come Data, Utente, Stato, ecc. Puoi trascinarle per riordinarle.",
@@ -7568,6 +7580,10 @@
           "label": "Monitoraggio dei problemi tra progetti",
           "description": "Creazione di problemi, risoluzione e analisi dell'impatto nei progetti"
         },
+        "llmUsage": {
+          "label": "Utilizzo LLM",
+          "description": "Utilizzo di token, costo e affidabilità delle funzionalità LLM tra i progetti"
+        },
         "automationTrends": {
           "label": "Tendenze dell'automazione interprogetto",
           "description": "Monitora i progressi dell'automazione settimana dopo settimana, in base alla priorità, per tutti i progetti."
@@ -7639,7 +7655,11 @@
       "issueType": "Tipo di problema",
       "issueTracker": "Strumento di tracciamento dei problemi",
       "issueStatus": "Stato del problema",
-      "tag": "Etichetta"
+      "tag": "Etichetta",
+      "feature": "Funzionalità",
+      "model": "Modello",
+      "integration": "Integrazione",
+      "outcome": "Risultato"
     },
     "metrics": {
       "percentReady": "Pronto (%)",
@@ -7683,7 +7703,15 @@
       "activeMilestones": "Traguardi attivi",
       "milestoneCompletion": "Completamento della tappa (%)",
       "averageDuration": "Durata media",
-      "totalDuration": "Durata totale"
+      "totalDuration": "Durata totale",
+      "llmCallCount": "Chiamate LLM",
+      "promptTokens": "Token del prompt",
+      "completionTokens": "Token di completamento",
+      "totalTokens": "Token totali",
+      "totalCost": "Costo totale",
+      "avgLatency": "Latenza media",
+      "successRate": "Tasso di successo (%)",
+      "errorCount": "Chiamate non riuscite"
     },
     "drillDown": {
       "title": "Registri dettagliati",
