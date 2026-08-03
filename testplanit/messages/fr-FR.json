@@ -3803,6 +3803,11 @@
       "successMessage": "Exécution du test dupliquée avec succès '{name}'.",
       "errorMessage": "Échec de la duplication de l'exécution du test. Erreur : {error}"
     },
+    "removeCasesDialog": {
+      "title": "Supprimer les cas de test",
+      "description": "Êtes-vous sûr de vouloir supprimer ces cas de test de cet essai ?",
+      "warning": "Cette action est irréversible. Tous les résultats enregistrés pour ces cas de test dans cet essai seront perdus. Les cas de test eux-mêmes resteront dans le référentiel."
+    },
     "filter": {
       "placeholder": "Exécution des tests de filtrage..."
     },

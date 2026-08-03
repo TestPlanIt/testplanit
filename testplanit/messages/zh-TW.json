@@ -3803,6 +3803,11 @@
       "successMessage": "測試運行“{name}”已成功複製。",
       "errorMessage": "測試運行失敗。錯誤： {error}"
     },
+    "removeCasesDialog": {
+      "title": "移除測試用例",
+      "description": "您確定要從此測試運行中移除這些測試用例嗎？",
+      "warning": "此操作無法復原。此運行中針對這些測試用例記錄的任何結果都將遺失。測試用例本身將保留在儲存庫中。"
+    },
     "filter": {
       "placeholder": "過濾器測試運行..."
     },

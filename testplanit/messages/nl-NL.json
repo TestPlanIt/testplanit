@@ -3803,6 +3803,11 @@
       "successMessage": "Testrun '{name}' is succesvol gedupliceerd.",
       "errorMessage": "Het is niet gelukt om de testrun te dupliceren. Fout: {error}"
     },
+    "removeCasesDialog": {
+      "title": "Testcases verwijderen",
+      "description": "Weet u zeker dat u deze testcases uit deze testrun wilt verwijderen?",
+      "warning": "Deze actie kan niet ongedaan worden gemaakt. Alle resultaten die voor deze testcases in deze run zijn geregistreerd, gaan verloren. De testcases zelf blijven behouden in de repository."
+    },
     "filter": {
       "placeholder": "Filtertest uitgevoerd..."
     },

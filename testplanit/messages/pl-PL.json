@@ -3803,6 +3803,11 @@
       "successMessage": "Pomyślnie zduplikowano przebieg testu '{name}'.",
       "errorMessage": "Nie udało się zduplikować przebiegu testu. Błąd: {error}"
     },
+    "removeCasesDialog": {
+      "title": "Usuń przypadki testowe",
+      "description": "Czy na pewno chcesz usunąć te przypadki testowe z tego testu?",
+      "warning": "Ta akcja nie może zostać odwrócona. Wszelkie wyniki zapisane dla tych przypadków testowych w tym teście zostaną utracone. Same przypadki testowe pozostaną w repozytorium."
+    },
     "filter": {
       "placeholder": "Przeprowadź testy filtrów..."
     },

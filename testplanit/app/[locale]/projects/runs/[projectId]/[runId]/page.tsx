@@ -2374,18 +2374,14 @@ export default function TestRunPage() {
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center">
               <TriangleAlert className="w-6 h-6 me-2" />
-              {t("common.dialogs.confirmAction.title", {
-                action: "Remove Cases",
-              })}
+              {t("runs.removeCasesDialog.title")}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              {t("common.dialogs.confirmAction.message", {
-                action: "remove these test cases",
-              })}
+              {t("runs.removeCasesDialog.description")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="bg-destructive text-destructive-foreground p-2">
-            {t("common.dialogs.delete.warning", { item: "test cases" })}
+            {t("runs.removeCasesDialog.warning")}
           </div>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={handleRemoveCasesCancel}>

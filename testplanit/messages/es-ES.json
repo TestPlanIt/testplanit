@@ -3803,6 +3803,11 @@
       "successMessage": "Ejecución de prueba duplicada con éxito '{name}'.",
       "errorMessage": "Error al duplicar la ejecución de la prueba. Error: {error}"
     },
+    "removeCasesDialog": {
+      "title": "Eliminar Casos de Prueba",
+      "description": "¿Está seguro que desea eliminar estos casos de prueba de esta ejecución de prueba?",
+      "warning": "Esta acción no se puede deshacer. Se perderán todos los resultados registrados para estos casos de prueba en esta ejecución. Los casos de prueba en sí permanecerán en el repositorio."
+    },
     "filter": {
       "placeholder": "La prueba del filtro se ejecuta..."
     },

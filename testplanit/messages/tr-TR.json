@@ -3803,6 +3803,11 @@
       "successMessage": "'{name} ' test çalıştırması başarıyla tekrarlandı.",
       "errorMessage": "Test çalıştırması çoğaltılamadı. Hata: {error}"
     },
+    "removeCasesDialog": {
+      "title": "Test Vakalarını Kaldır",
+      "description": "Bu test vakalarını bu test çalışmasından kaldırmak istediğinizden emin misiniz?",
+      "warning": "Bu işlem geri alınamaz. Bu çalışmada bu test vakaları için kaydedilen tüm sonuçlar kaybolacaktır. Test vakalarının kendileri depoda kalacaktır."
+    },
     "filter": {
       "placeholder": "Filtreleme testleri çalışıyor..."
     },

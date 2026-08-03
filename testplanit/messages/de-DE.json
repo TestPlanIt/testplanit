@@ -3803,6 +3803,11 @@
       "successMessage": "Der Testlauf '{name}' wurde erfolgreich dupliziert.",
       "errorMessage": "Fehler beim Duplizieren des Testlaufs. Fehler: {error}"
     },
+    "removeCasesDialog": {
+      "title": "Testfälle entfernen",
+      "description": "Sind Sie sicher, dass Sie diese Testfälle aus diesem Testlauf entfernen möchten?",
+      "warning": "Diese Aktion kann nicht rückgängig gemacht werden. Alle für diese Testfälle in diesem Testlauf erfassten Ergebnisse gehen verloren. Die Testfälle selbst bleiben im Repository erhalten."
+    },
     "filter": {
       "placeholder": "Filtertestläufe..."
     },

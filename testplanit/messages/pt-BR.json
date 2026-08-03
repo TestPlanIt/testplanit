@@ -3803,6 +3803,11 @@
       "successMessage": "Execução de teste duplicada com sucesso '{name}'.",
       "errorMessage": "Falha ao duplicar a execução do teste. Erro: {error}"
     },
+    "removeCasesDialog": {
+      "title": "Remover Casos de Teste",
+      "description": "Tem certeza de que deseja remover estes casos de teste deste teste?",
+      "warning": "Esta ação não pode ser desfeita. Todos os resultados registrados para esses casos de teste neste teste serão perdidos. Os casos de teste em si permanecerão no repositório."
+    },
     "filter": {
       "placeholder": "Execução de testes de filtro..."
     },

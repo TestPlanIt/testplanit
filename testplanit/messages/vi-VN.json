@@ -3803,6 +3803,11 @@
       "successMessage": "Đã sao chép thành công quá trình chạy thử nghiệm '{name}'.",
       "errorMessage": "Không thể sao chép quá trình chạy thử nghiệm. Lỗi: {error}"
     },
+    "removeCasesDialog": {
+      "title": "Xóa các trường hợp kiểm thử",
+      "description": "Bạn có chắc chắn muốn xóa các trường hợp kiểm thử này khỏi lần chạy thử này không?",
+      "warning": "Hành động này không thể hoàn tác. Mọi kết quả đã ghi cho các trường hợp kiểm thử này trong lần chạy này sẽ bị mất. Các trường hợp kiểm thử vẫn sẽ được giữ lại trong kho lưu trữ."
+    },
     "filter": {
       "placeholder": "Chạy thử nghiệm bộ lọc..."
     },

@@ -3803,6 +3803,11 @@
       "successMessage": "Successfully duplicated test run '{name}'.",
       "errorMessage": "Failed to duplicate test run. Error: {error}"
     },
+    "removeCasesDialog": {
+      "title": "Remove Test Cases",
+      "description": "Are you sure you want to remove these test cases from this test run?",
+      "warning": "This action cannot be undone. Any results recorded for these test cases in this run will be lost. The test cases themselves will remain in the repository."
+    },
     "filter": {
       "placeholder": "Filter test runs..."
     },
