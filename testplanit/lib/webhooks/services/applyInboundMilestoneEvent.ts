@@ -364,6 +364,9 @@ export async function applyInboundMilestoneEvent(
           direction: "INBOUND",
           adapterType,
           eventType,
+          // Identifier only (kind + upstream id) — version/sprint names are
+          // payload content and stay out of the delivery log.
+          subjectRef: ref ? `${ref.kind}:${ref.externalId}` : null,
           statusCode: null,
           latencyMs: null,
           payloadDigest,

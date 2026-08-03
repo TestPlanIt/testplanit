@@ -1061,6 +1061,11 @@ describe("applyInboundMilestoneEvent", () => {
     await applyInboundMilestoneEvent(baseInput());
 
     expect(mocks.tx.webhookDelivery.create).toHaveBeenCalledTimes(1);
+    expect(mocks.tx.webhookDelivery.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ subjectRef: "RELEASE:10100" }),
+      })
+    );
     expect(mocks.tx.webhookEventDedup.findFirst).toHaveBeenCalledTimes(1);
     expect(mocks.tx.webhookEventDedup.create).toHaveBeenCalledTimes(1);
     expect(mocks.tx.webhookDelivery.update).toHaveBeenCalledWith({

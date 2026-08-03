@@ -199,6 +199,12 @@ describe("applyInboundIssueUpdate", () => {
 
     expect(result.outcome).toBe("synthetic");
     expect(result.deliveryId).toBe("del_1");
+    // Synthetic sentinel key never lands in subjectRef.
+    expect(mocks.tx.webhookDelivery.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ subjectRef: null }),
+      })
+    );
     // Issue lookup MUST NOT be called when synthetic.
     expect(mocks.tx.issue.findFirst).not.toHaveBeenCalled();
     expect(mocks.tx.issue.update).not.toHaveBeenCalled();
@@ -310,7 +316,7 @@ describe("applyInboundIssueUpdate", () => {
     expect(mocks.tx.webhookDelivery.create).toHaveBeenCalledTimes(1);
     expect(mocks.tx.webhookDelivery.create).toHaveBeenCalledWith(
       expect.objectContaining({
-        data: expect.objectContaining({ attempt: 1 }),
+        data: expect.objectContaining({ attempt: 1, subjectRef: "DEMO-42" }),
       })
     );
     expect(mocks.tx.webhookDelivery.update).toHaveBeenCalledWith({

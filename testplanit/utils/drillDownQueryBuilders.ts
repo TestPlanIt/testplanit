@@ -132,6 +132,24 @@ export function buildTestExecutionQuery(
     where.executedById = String(context.dimensions.user.id);
   }
 
+  // Role/group dimensions (user-engagement) filter on the executor.
+  const executorFilter: any = {};
+  if (context.dimensions.role) {
+    executorFilter.roleId =
+      context.dimensions.role.id == null
+        ? null
+        : Number(context.dimensions.role.id);
+  }
+  if (context.dimensions.group) {
+    executorFilter.groups =
+      context.dimensions.group.id == null
+        ? { none: {} }
+        : { some: { groupId: Number(context.dimensions.group.id) } };
+  }
+  if (Object.keys(executorFilter).length > 0) {
+    where.executedBy = executorFilter;
+  }
+
   if (context.dimensions.status) {
     where.statusId = Number(context.dimensions.status.id);
   }
@@ -313,6 +331,24 @@ export function buildJunitResultQuery(
 
   if (context.dimensions.user) {
     where.createdById = String(context.dimensions.user.id);
+  }
+
+  // Role/group dimensions (user-engagement) filter on the submitting user.
+  const submitterFilter: any = {};
+  if (context.dimensions.role) {
+    submitterFilter.roleId =
+      context.dimensions.role.id == null
+        ? null
+        : Number(context.dimensions.role.id);
+  }
+  if (context.dimensions.group) {
+    submitterFilter.groups =
+      context.dimensions.group.id == null
+        ? { none: {} }
+        : { some: { groupId: Number(context.dimensions.group.id) } };
+  }
+  if (Object.keys(submitterFilter).length > 0) {
+    where.createdBy = submitterFilter;
   }
 
   if (context.dimensions.status) {
@@ -559,6 +595,24 @@ export function buildRepositoryStatsQuery(
     where.creatorId = String(context.dimensions.creator.id);
   } else if (context.dimensions.user) {
     where.creatorId = String(context.dimensions.user.id);
+  }
+
+  // Role/group dimensions (user-engagement) filter on the case's creator.
+  const caseCreatorFilter: any = {};
+  if (context.dimensions.role) {
+    caseCreatorFilter.roleId =
+      context.dimensions.role.id == null
+        ? null
+        : Number(context.dimensions.role.id);
+  }
+  if (context.dimensions.group) {
+    caseCreatorFilter.groups =
+      context.dimensions.group.id == null
+        ? { none: {} }
+        : { some: { groupId: Number(context.dimensions.group.id) } };
+  }
+  if (Object.keys(caseCreatorFilter).length > 0) {
+    where.creator = caseCreatorFilter;
   }
 
   // Apply folder filter (a rolled-up subtree, or a single folder). Cases always
@@ -924,7 +978,7 @@ export function buildSessionResultsQuery(
   offset: number,
   limit: number
 ): SessionResultsFindManyArgs {
-  const where: SessionResultsWhereInput = {};
+  const where: SessionResultsWhereInput = { isDeleted: false };
 
   // Build session filter with all conditions
   const sessionFilter: any = {};
@@ -946,6 +1000,24 @@ export function buildSessionResultsQuery(
   // Apply dimension filters
   if (context.dimensions.user) {
     where.createdById = String(context.dimensions.user.id);
+  }
+
+  // Role/group dimensions (user-engagement) filter on the result's creator.
+  const creatorFilter: any = {};
+  if (context.dimensions.role) {
+    creatorFilter.roleId =
+      context.dimensions.role.id == null
+        ? null
+        : Number(context.dimensions.role.id);
+  }
+  if (context.dimensions.group) {
+    creatorFilter.groups =
+      context.dimensions.group.id == null
+        ? { none: {} }
+        : { some: { groupId: Number(context.dimensions.group.id) } };
+  }
+  if (Object.keys(creatorFilter).length > 0) {
+    where.createdBy = creatorFilter;
   }
 
   // Apply date filter
@@ -1183,7 +1255,9 @@ export function buildMilestoneCompletionQuery(
   offset: number,
   limit: number
 ): TestRunCasesFindManyArgs {
-  const where: TestRunCasesWhereInput = {};
+  // The metric counts live run-cases in live runs of live milestones, so the
+  // drill-down applies the same population filters.
+  const where: TestRunCasesWhereInput = { isDeleted: false };
 
   // Apply project filter through test run
   const testRunFilter: TestRunsWhereInput = {
@@ -1196,20 +1270,19 @@ export function buildMilestoneCompletionQuery(
     testRunFilter.projectId = Number(context.dimensions.project.id);
   }
 
+  const milestoneFilter: any = { isDeleted: false };
+
   // Apply milestone filter
-  if (context.dimensions.milestone) {
-    if (context.dimensions.milestone.id === null) {
-      testRunFilter.milestoneId = null;
-    } else {
-      testRunFilter.milestoneId = Number(context.dimensions.milestone.id);
-    }
+  if (
+    context.dimensions.milestone &&
+    context.dimensions.milestone.id !== null
+  ) {
+    testRunFilter.milestoneId = Number(context.dimensions.milestone.id);
   }
 
   // Apply creator filter (milestone creator)
   if (context.dimensions.creator) {
-    testRunFilter.milestone = {
-      createdBy: String(context.dimensions.creator.id),
-    };
+    milestoneFilter.createdBy = String(context.dimensions.creator.id);
   }
 
   // Apply date filter if present
@@ -1234,16 +1307,29 @@ export function buildMilestoneCompletionQuery(
         const nextDayStart = new Date(startOfDay);
         nextDayStart.setUTCDate(nextDayStart.getUTCDate() + 1);
 
-        if (!testRunFilter.milestone) {
-          testRunFilter.milestone = {};
-        }
-        testRunFilter.milestone.createdAt = {
+        milestoneFilter.createdAt = {
           gte: startOfDay,
           lt: nextDayStart,
         };
       }
     }
   }
+
+  // Apply report-level date range to the milestone's creation date, matching
+  // the aggregation
+  const milestoneRangeFilter = buildDateFilter(
+    context.startDate,
+    context.endDate,
+    "createdAt"
+  );
+  if (milestoneRangeFilter.createdAt) {
+    milestoneFilter.createdAt = {
+      ...(milestoneFilter.createdAt || {}),
+      ...milestoneRangeFilter.createdAt,
+    };
+  }
+
+  testRunFilter.milestone = milestoneFilter;
 
   where.testRun = testRunFilter;
 

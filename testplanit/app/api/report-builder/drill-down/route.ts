@@ -21,32 +21,35 @@ import {
 import { getFolderSubtreeIds } from "~/utils/reportGrouping";
 
 /**
- * Result-level metrics on the test-execution report read BOTH sources —
- * manual results (TestRunResults) and automated results (JUnitTestResult)
- * — so their drill-downs must list both. Elapsed metrics additionally
- * restrict to duration-bearing rows.
+ * Result-level metrics on the test-execution and user-engagement reports
+ * read BOTH sources — manual results (TestRunResults) and automated
+ * results (JUnitTestResult) — so their drill-downs must list both.
+ * Elapsed metrics additionally restrict to duration-bearing rows.
  */
-const ELAPSED_TEST_EXECUTION_METRICS = new Set([
+const ELAPSED_RESULT_METRICS = new Set([
   "avgElapsed",
   "avgElapsedTime",
   "sumElapsed",
   "totalElapsedTime",
+  "averageElapsed",
 ]);
-const COUNT_TEST_EXECUTION_METRICS = new Set([
+const COUNT_RESULT_METRICS = new Set([
   "testResults",
   "testResultCount",
   "passRate",
+  "executionCount",
 ]);
 
-function isDualSourceTestExecutionDrillDown(context: {
+function isDualSourceResultDrillDown(context: {
   metricId: string;
   reportType: string;
 }) {
   const baseReportType = context.reportType.replace(/^cross-project-/, "");
   return (
-    baseReportType === "test-execution" &&
-    (ELAPSED_TEST_EXECUTION_METRICS.has(context.metricId) ||
-      COUNT_TEST_EXECUTION_METRICS.has(context.metricId))
+    (baseReportType === "test-execution" ||
+      baseReportType === "user-engagement") &&
+    (ELAPSED_RESULT_METRICS.has(context.metricId) ||
+      COUNT_RESULT_METRICS.has(context.metricId))
   );
 }
 
@@ -60,7 +63,7 @@ async function handleDualSourceDrillDown(
   offset: number,
   limit: number
 ) {
-  const isElapsedMetric = ELAPSED_TEST_EXECUTION_METRICS.has(context.metricId);
+  const isElapsedMetric = ELAPSED_RESULT_METRICS.has(context.metricId);
   const manualQuery = buildTestExecutionQuery(context, offset, limit);
   if (isElapsedMetric) {
     // Only duration-bearing rows feed the elapsed metrics.
@@ -246,7 +249,7 @@ export async function POST(req: NextRequest) {
 
     // Result-level metric cells combine manual and automated results, so
     // their drill-down reads both tables.
-    if (isDualSourceTestExecutionDrillDown(context)) {
+    if (isDualSourceResultDrillDown(context)) {
       return await handleDualSourceDrillDown(context, offset, limit);
     }
 

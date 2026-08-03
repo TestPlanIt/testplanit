@@ -106,7 +106,7 @@ export const METRIC_HELP_KEYS: Record<string, string> = {
   "Average Duration": "reportMetrics.averageTimeSpent",
   "Total Duration": "reportMetrics.totalElapsedTime",
   "Last Active Date": "reportMetrics.lastActiveDate",
-  "Average Time per Execution (seconds)": "reportMetrics.avgElapsed",
+  "Average Time per Execution": "reportMetrics.avgElapsed",
 };
 
 // Map dimension value to API keys for ID and label

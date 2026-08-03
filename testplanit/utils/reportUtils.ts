@@ -104,10 +104,15 @@ function junitResultWhere(
   projectId: number | undefined,
   isProjectSpecific: boolean,
   filters?: { startDate?: string; endDate?: string },
-  opts: { requireTime?: boolean; runFilter?: Record<string, unknown> } = {}
+  opts: {
+    requireTime?: boolean;
+    requireExecutedAt?: boolean;
+    runFilter?: Record<string, unknown>;
+  } = {}
 ) {
   return {
     ...(opts.requireTime ? { time: { gt: 0 } } : {}),
+    ...(opts.requireExecutedAt ? { executedAt: { not: null } } : {}),
     // Untested is not an execution, and a null statusId is treated as
     // Untested — both are excluded from every result-level metric.
     statusId: { not: null },
@@ -2055,6 +2060,127 @@ export function createRepositoryStatsMetricRegistry(
 }
 
 // Shared dimension registry factory for user engagement
+/** Executor identity needed by the engagement dimensions (role + groups). */
+const engagementUserSelect = {
+  select: {
+    roleId: true,
+    groups: { select: { groupId: true } },
+  },
+};
+
+/**
+ * Rows for engagement execution metrics: the manual ∪ automated result
+ * union with executor identity attached, shaped for engagement grouping
+ * (user/role/group/project/date). Automated results attribute to the
+ * submitting user. Rows without an execution timestamp cannot sit on a
+ * date axis and are excluded from date groupings; elsewhere they fall
+ * back to their submission time.
+ */
+async function fetchEngagementExecutionRows(
+  db: any,
+  projectId: number | undefined,
+  isProjectSpecific: boolean,
+  groupBy: string[],
+  filters?: { startDate?: string; endDate?: string },
+  opts: { requireElapsed?: boolean } = {}
+) {
+  const [manual, junit] = await Promise.all([
+    db.testRunResults.findMany({
+      where: manualResultWhere(projectId, isProjectSpecific, filters, {
+        requireElapsed: opts.requireElapsed,
+      }),
+      select: {
+        executedAt: true,
+        executedById: true,
+        elapsed: true,
+        executedBy: engagementUserSelect,
+        testRun: { select: { projectId: true } },
+      },
+    }),
+    db.jUnitTestResult.findMany({
+      where: {
+        ...junitResultWhere(projectId, isProjectSpecific, filters, {
+          requireTime: opts.requireElapsed,
+        }),
+        ...(groupBy.includes("executedAt")
+          ? { executedAt: { not: null } }
+          : {}),
+      },
+      select: {
+        executedAt: true,
+        createdAt: true,
+        createdById: true,
+        time: true,
+        createdBy: engagementUserSelect,
+        testSuite: { select: { testRun: { select: { projectId: true } } } },
+      },
+    }),
+  ]);
+
+  return [
+    ...manual.map((r: any) => ({
+      executedAt: r.executedAt,
+      userId: r.executedById,
+      roleId: r.executedBy?.roleId ?? null,
+      groupIds: (r.executedBy?.groups ?? []).map((g: any) => g.groupId),
+      projectId: r.testRun.projectId,
+      elapsed: r.elapsed,
+    })),
+    ...junit.map((r: any) => ({
+      executedAt: r.executedAt ?? r.createdAt,
+      userId: r.createdById,
+      roleId: r.createdBy?.roleId ?? null,
+      groupIds: (r.createdBy?.groups ?? []).map((g: any) => g.groupId),
+      projectId: r.testSuite.testRun.projectId,
+      elapsed: r.time,
+    })),
+  ];
+}
+
+/**
+ * Groups engagement rows on any combination of the engagement dimensions.
+ * Group membership fans out (a user in two groups counts in both; users in
+ * no group have no bucket on that dimension), matching how the group
+ * dimension has always aggregated.
+ */
+function groupEngagementRows(
+  rows: any[],
+  groupBy: string[],
+  makeBucket: () => any,
+  accumulate: (bucket: any, row: any) => void
+) {
+  const grouped = new Map<string, any>();
+  const add = (row: any, groupId: number | null) => {
+    const keyFor = (field: string) => {
+      if (field === "executedAt") {
+        const date = new Date(row.executedAt);
+        date.setUTCHours(0, 0, 0, 0);
+        return date.toISOString();
+      }
+      if (field === "groupId") return groupId;
+      return row[field];
+    };
+    const key = groupBy.map(keyFor).join("|");
+    if (!grouped.has(key)) {
+      const bucket: any = makeBucket();
+      groupBy.forEach((field) => {
+        bucket[field] = keyFor(field);
+      });
+      grouped.set(key, bucket);
+    }
+    accumulate(grouped.get(key), row);
+  };
+
+  rows.forEach((row) => {
+    if (groupBy.includes("groupId")) {
+      (row.groupIds ?? []).forEach((gid: number) => add(row, gid));
+    } else {
+      add(row, null);
+    }
+  });
+  return grouped;
+}
+
 export function createUserEngagementDimensionRegistry(
   isProjectSpecific: boolean = true
 ) {
@@ -2154,6 +2280,7 @@ export function createUserEngagementDimensionRegistry(
               {
                 testRunResults: {
                   some: {
+                    isDeleted: false,
                     testRun: {
                       ...(isProjectSpecific && projectId
                         ? { projectId: Number(projectId) }
@@ -2163,10 +2290,26 @@ export function createUserEngagementDimensionRegistry(
                   },
                 },
               },
+              // Users who submitted automated results
+              {
+                junitTestResults: {
+                  some: {
+                    testSuite: {
+                      testRun: {
+                        ...(isProjectSpecific && projectId
+                          ? { projectId: Number(projectId) }
+                          : {}),
+                        isDeleted: false,
+                      },
+                    },
+                  },
+                },
+              },
               // Users who participated in sessions
               {
                 sessionResults: {
                   some: {
+                    isDeleted: false,
                     session: {
                       ...(isProjectSpecific && projectId
                         ? { projectId: Number(projectId) }
@@ -2214,6 +2357,7 @@ export function createUserEngagementDimensionRegistry(
                   {
                     testRunResults: {
                       some: {
+                        isDeleted: false,
                         testRun: {
                           ...(isProjectSpecific && projectId
                             ? { projectId: Number(projectId) }
@@ -2223,10 +2367,26 @@ export function createUserEngagementDimensionRegistry(
                       },
                     },
                   },
+                  // Users who submitted automated results
+                  {
+                    junitTestResults: {
+                      some: {
+                        testSuite: {
+                          testRun: {
+                            ...(isProjectSpecific && projectId
+                              ? { projectId: Number(projectId) }
+                              : {}),
+                            isDeleted: false,
+                          },
+                        },
+                      },
+                    },
+                  },
                   // Users who participated in sessions
                   {
                     sessionResults: {
                       some: {
+                        isDeleted: false,
                         session: {
                           ...(isProjectSpecific && projectId
                             ? { projectId: Number(projectId) }
@@ -2277,6 +2437,7 @@ export function createUserEngagementDimensionRegistry(
                     {
                       testRunResults: {
                         some: {
+                          isDeleted: false,
                           testRun: {
                             ...(isProjectSpecific && projectId
                               ? { projectId: Number(projectId) }
@@ -2286,10 +2447,26 @@ export function createUserEngagementDimensionRegistry(
                         },
                       },
                     },
+                    // Users who submitted automated results
+                    {
+                      junitTestResults: {
+                        some: {
+                          testSuite: {
+                            testRun: {
+                              ...(isProjectSpecific && projectId
+                                ? { projectId: Number(projectId) }
+                                : {}),
+                              isDeleted: false,
+                            },
+                          },
+                        },
+                      },
+                    },
                     // Users who participated in sessions
                     {
                       sessionResults: {
                         some: {
+                          isDeleted: false,
                           session: {
                             ...(isProjectSpecific && projectId
                               ? { projectId: Number(projectId) }
@@ -2320,6 +2497,8 @@ export function createUserEngagementDimensionRegistry(
         // Get unique activity dates from various user activities
         const testExecutions = await db.testRunResults.findMany({
           where: {
+            isDeleted: false,
+            executedAt: { not: null },
             testRun: {
               ...(isProjectSpecific && projectId
                 ? { projectId: Number(projectId) }
@@ -2332,8 +2511,18 @@ export function createUserEngagementDimensionRegistry(
           orderBy: { executedAt: "asc" },
         });
 
+        const junitExecutions = await db.jUnitTestResult.findMany({
+          where: junitResultWhere(projectId, isProjectSpecific, undefined, {
+            requireExecutedAt: true,
+          }),
+          select: { executedAt: true },
+          distinct: ["executedAt"],
+          orderBy: { executedAt: "asc" },
+        });
+
         const sessionResults = await db.sessionResults.findMany({
           where: {
+            isDeleted: false,
             session: {
               ...(isProjectSpecific && projectId
                 ? { projectId: Number(projectId) }
@@ -2361,9 +2550,10 @@ export function createUserEngagementDimensionRegistry(
         // Combine all dates and group by day
         const allDates = [
           ...testExecutions.map((t: any) => t.executedAt),
+          ...junitExecutions.map((t: any) => t.executedAt),
           ...sessionResults.map((s: any) => s.createdAt),
           ...caseCreations.map((c: any) => c.createdAt),
-        ];
+        ].filter(Boolean);
 
         const datesByDay = allDates.reduce((acc: any, date: any) => {
           const day = new Date(date);
@@ -2409,191 +2599,33 @@ export function createUserEngagementMetricRegistry(
         filters?: any,
         _dims?: string[]
       ) => {
-        if (groupBy.includes("executedAt")) {
-          const results = await db.testRunResults.findMany({
-            where: {
-              testRun: {
-                ...(isProjectSpecific && projectId
-                  ? { projectId: Number(projectId) }
-                  : {}),
-                isDeleted: false,
-              },
-              ...buildDateFilter(filters, "executedAt"),
-            },
-            select: {
-              executedAt: true,
-              executedById: true,
-              testRun: {
-                select: {
-                  projectId: true,
-                },
-              },
-            },
-          });
-
-          const groupedResults = results.reduce((acc: any, result: any) => {
-            const key = groupBy
-              .map((field) => {
-                if (field === "executedAt") {
-                  const date = new Date(result.executedAt);
-                  date.setUTCHours(0, 0, 0, 0);
-                  return date.toISOString();
-                } else if (field === "userId") {
-                  return result.executedById;
-                } else if (field === "projectId") {
-                  return result.testRun.projectId;
-                }
-                return result[field];
-              })
-              .join("|");
-
-            if (!acc[key]) {
-              acc[key] = {
-                ...groupBy.reduce((obj: any, field) => {
-                  if (field === "executedAt") {
-                    const date = new Date(result.executedAt);
-                    date.setUTCHours(0, 0, 0, 0);
-                    obj["executedAt"] = date.toISOString();
-                  } else if (field === "userId") {
-                    obj[field] = result.executedById;
-                  } else if (field === "projectId") {
-                    obj[field] = result.testRun.projectId;
-                  } else {
-                    obj[field] = result[field];
-                  }
-                  return obj;
-                }, {}),
-                executionCount: 0,
-              };
-            }
-            acc[key].executionCount++;
-            return acc;
-          }, {});
-
-          return Object.values(groupedResults);
-        }
-
         if (groupBy.length === 0) {
-          const count = await db.testRunResults.count({
-            where: {
-              testRun: {
-                ...(isProjectSpecific && projectId
-                  ? { projectId: Number(projectId) }
-                  : {}),
-                isDeleted: false,
-              },
-              ...buildDateFilter(filters, "executedAt"),
-            },
-          });
-          return [{ executionCount: count }];
+          const [manualCount, junitCount] = await Promise.all([
+            db.testRunResults.count({
+              where: manualResultWhere(projectId, isProjectSpecific, filters),
+            }),
+            db.jUnitTestResult.count({
+              where: junitResultWhere(projectId, isProjectSpecific, filters),
+            }),
+          ]);
+          return [{ executionCount: manualCount + junitCount }];
         }
 
-        // Manual grouping for other cases
-        const results = await db.testRunResults.findMany({
-          where: {
-            testRun: {
-              ...(isProjectSpecific && projectId
-                ? { projectId: Number(projectId) }
-                : {}),
-              isDeleted: false,
-            },
-            ...buildDateFilter(filters, "executedAt"),
-          },
-          select: {
-            executedById: true,
-            executedBy: {
-              select: {
-                roleId: true,
-                groups: {
-                  select: {
-                    groupId: true,
-                  },
-                },
-              },
-            },
-            testRun: {
-              select: {
-                projectId: true,
-              },
-            },
-          },
-        });
-
-        const grouped = new Map<string, any>();
-        results.forEach((result: any) => {
-          // Handle groupId specially - a user can be in multiple groups
-          if (groupBy.includes("groupId")) {
-            const userGroups = result.executedBy.groups || [];
-            if (userGroups.length === 0) {
-              // User is not in any group, skip this result for group dimension
-              return;
-            }
-
-            // Create a separate entry for each group the user belongs to
-            userGroups.forEach((groupAssignment: any) => {
-              const key = groupBy
-                .map((field) => {
-                  if (field === "userId") return result.executedById;
-                  if (field === "projectId") return result.testRun.projectId;
-                  if (field === "roleId") return result.executedBy.roleId;
-                  if (field === "groupId") return groupAssignment.groupId;
-                  return result[field];
-                })
-                .join("|");
-
-              if (!grouped.has(key)) {
-                const groupData: any = {};
-                groupBy.forEach((field) => {
-                  if (field === "userId") {
-                    groupData.userId = result.executedById;
-                  } else if (field === "projectId") {
-                    groupData.projectId = result.testRun.projectId;
-                  } else if (field === "roleId") {
-                    groupData.roleId = result.executedBy.roleId;
-                  } else if (field === "groupId") {
-                    groupData.groupId = groupAssignment.groupId;
-                  } else {
-                    groupData[field] = result[field];
-                  }
-                });
-                groupData.executionCount = 0;
-                grouped.set(key, groupData);
-              }
-
-              grouped.get(key).executionCount++;
-            });
-          } else {
-            // Normal grouping without groups
-            const key = groupBy
-              .map((field) => {
-                if (field === "userId") return result.executedById;
-                if (field === "projectId") return result.testRun.projectId;
-                if (field === "roleId") return result.executedBy.roleId;
-                return result[field];
-              })
-              .join("|");
-
-            if (!grouped.has(key)) {
-              const groupData: any = {};
-              groupBy.forEach((field) => {
-                if (field === "userId") {
-                  groupData.userId = result.executedById;
-                } else if (field === "projectId") {
-                  groupData.projectId = result.testRun.projectId;
-                } else if (field === "roleId") {
-                  groupData.roleId = result.executedBy.roleId;
-                } else {
-                  groupData[field] = result[field];
-                }
-              });
-              groupData.executionCount = 0;
-              grouped.set(key, groupData);
-            }
-
-            grouped.get(key).executionCount++;
+        const rows = await fetchEngagementExecutionRows(
+          db,
+          projectId,
+          isProjectSpecific,
+          groupBy,
+          filters
+        );
+        const grouped = groupEngagementRows(
+          rows,
+          groupBy,
+          () => ({ executionCount: 0 }),
+          (bucket) => {
+            bucket.executionCount++;
           }
-        });
-
+        );
         return Array.from(grouped.values());
       },
     },
@@ -2801,6 +2833,7 @@ export function createUserEngagementMetricRegistry(
         if (hasDateDimension) {
           const results = await db.sessionResults.findMany({
             where: {
+              isDeleted: false,
               session: {
                 ...(isProjectSpecific && projectId
                   ? { projectId: Number(projectId) }
@@ -2865,6 +2898,7 @@ export function createUserEngagementMetricRegistry(
         if (groupBy.length === 0) {
           const count = await db.sessionResults.count({
             where: {
+              isDeleted: false,
               session: {
                 ...(isProjectSpecific && projectId
                   ? { projectId: Number(projectId) }
@@ -2880,6 +2914,7 @@ export function createUserEngagementMetricRegistry(
         // Manual grouping for other cases
         const results = await db.sessionResults.findMany({
           where: {
+            isDeleted: false,
             session: {
               ...(isProjectSpecific && projectId
                 ? { projectId: Number(projectId) }
@@ -2988,7 +3023,7 @@ export function createUserEngagementMetricRegistry(
     },
     averageElapsed: {
       id: "averageElapsed",
-      label: "Average Time per Execution (seconds)",
+      label: "Average Time per Execution",
       aggregate: async (
         db: any,
         projectId: number | undefined,
@@ -2996,188 +3031,52 @@ export function createUserEngagementMetricRegistry(
         filters?: any,
         _dims?: string[]
       ) => {
-        if (groupBy.includes("executedAt")) {
-          const results = await db.testRunResults.findMany({
-            where: {
-              testRun: {
-                ...(isProjectSpecific && projectId
-                  ? { projectId: Number(projectId) }
-                  : {}),
-                isDeleted: false,
-              },
-              elapsed: {
-                not: null,
-              },
-              ...buildDateFilter(filters, "executedAt"),
-            },
-            select: {
-              executedAt: true,
-              executedById: true,
-              elapsed: true,
-              testRun: {
-                select: {
-                  projectId: true,
-                },
-              },
-            },
-          });
-
-          const groupedResults = results.reduce((acc: any, result: any) => {
-            const key = groupBy
-              .map((field) => {
-                if (field === "executedAt") {
-                  const date = new Date(result.executedAt);
-                  date.setUTCHours(0, 0, 0, 0);
-                  return date.toISOString();
-                } else if (field === "userId") {
-                  return result.executedById;
-                } else if (field === "projectId") {
-                  return result.testRun.projectId;
-                }
-                return result[field];
-              })
-              .join("|");
-
-            if (!acc[key]) {
-              acc[key] = {
-                ...groupBy.reduce((obj: any, field) => {
-                  if (field === "executedAt") {
-                    const date = new Date(result.executedAt);
-                    date.setUTCHours(0, 0, 0, 0);
-                    obj["executedAt"] = date.toISOString();
-                  } else if (field === "userId") {
-                    obj[field] = result.executedById;
-                  } else if (field === "projectId") {
-                    obj[field] = result.testRun.projectId;
-                  } else {
-                    obj[field] = result[field];
-                  }
-                  return obj;
-                }, {}),
-                totalElapsed: 0,
-                count: 0,
-              };
-            }
-            acc[key].totalElapsed += result.elapsed || 0;
-            acc[key].count++;
-            return acc;
-          }, {});
-
-          return Object.values(groupedResults).map((group: any) => ({
-            ...Object.fromEntries(
-              Object.entries(group).filter(
-                ([key]) => !["totalElapsed", "count"].includes(key)
-              )
-            ),
-            averageElapsed:
-              group.count > 0 ? group.totalElapsed / group.count / 1000 : 0,
-          }));
-        }
-
         if (groupBy.length === 0) {
-          const result = await db.testRunResults.aggregate({
-            where: {
-              testRun: {
-                ...(isProjectSpecific && projectId
-                  ? { projectId: Number(projectId) }
-                  : {}),
-                isDeleted: false,
-              },
-              elapsed: {
-                not: null,
-              },
-              ...buildDateFilter(filters, "executedAt"),
-            },
-            _avg: {
-              elapsed: true,
-            },
-          });
-          // If no results with elapsed time, return 0
-          // Otherwise, return the average in seconds (null values are already filtered out)
-          return [
-            {
-              averageElapsed: result._avg.elapsed
-                ? result._avg.elapsed / 1000
-                : 0,
-            },
-          ];
+          const [manualAgg, junitAgg] = await Promise.all([
+            db.testRunResults.aggregate({
+              where: manualResultWhere(projectId, isProjectSpecific, filters, {
+                requireElapsed: true,
+              }),
+              _sum: { elapsed: true },
+              _count: { elapsed: true },
+            }),
+            db.jUnitTestResult.aggregate({
+              where: junitResultWhere(projectId, isProjectSpecific, filters, {
+                requireTime: true,
+              }),
+              _sum: { time: true },
+              _count: { time: true },
+            }),
+          ]);
+          const count =
+            (manualAgg._count.elapsed ?? 0) + (junitAgg._count.time ?? 0);
+          const sum = (manualAgg._sum.elapsed ?? 0) + (junitAgg._sum.time ?? 0);
+          return [{ averageElapsed: count > 0 ? sum / count : null }];
         }
 
-        const results = await db.testRunResults.findMany({
-          where: {
-            testRun: {
-              ...(isProjectSpecific && projectId
-                ? { projectId: Number(projectId) }
-                : {}),
-              isDeleted: false,
-            },
-            elapsed: {
-              not: null,
-            },
-            ...buildDateFilter(filters, "executedAt"),
-          },
-          select: {
-            executedById: true,
-            elapsed: true,
-            executedBy: {
-              select: {
-                roleId: true,
-              },
-            },
-            testRun: {
-              select: {
-                projectId: true,
-              },
-            },
-          },
-        });
-
-        const grouped = new Map<string, any>();
-        results.forEach((result: any) => {
-          const key = groupBy
-            .map((field) => {
-              if (field === "userId") return result.executedById;
-              if (field === "projectId") return result.testRun.projectId;
-              if (field === "roleId") return result.executedBy.roleId;
-              return result[field];
-            })
-            .join("|");
-
-          if (!grouped.has(key)) {
-            const groupData: any = {};
-            groupBy.forEach((field) => {
-              if (field === "userId") {
-                groupData.userId = result.executedById;
-              } else if (field === "projectId") {
-                groupData.projectId = result.testRun.projectId;
-              } else if (field === "roleId") {
-                groupData.roleId = result.executedBy.roleId;
-              } else {
-                groupData[field] = result[field];
-              }
-            });
-            groupData.totalElapsed = 0;
-            groupData.count = 0;
-            grouped.set(key, groupData);
+        const rows = await fetchEngagementExecutionRows(
+          db,
+          projectId,
+          isProjectSpecific,
+          groupBy,
+          filters,
+          { requireElapsed: true }
+        );
+        const grouped = groupEngagementRows(
+          rows,
+          groupBy,
+          () => ({ totalElapsed: 0, count: 0 }),
+          (bucket, row) => {
+            bucket.totalElapsed += row.elapsed || 0;
+            bucket.count++;
           }
-
-          const group = grouped.get(key);
-          // Only count results with non-null elapsed time
-          if (result.elapsed !== null && result.elapsed !== undefined) {
-            group.totalElapsed += result.elapsed;
-            group.count++;
-          }
-        });
-
-        return Array.from(grouped.values()).map((group: any) => ({
-          ...Object.fromEntries(
-            Object.entries(group).filter(
-              ([key]) => !["totalElapsed", "count"].includes(key)
-            )
-          ),
-          averageElapsed:
-            group.count > 0 ? group.totalElapsed / group.count / 1000 : 0,
-        }));
+        );
+        return Array.from(grouped.values()).map(
+          ({ totalElapsed, count, ...dims }: any) => ({
+            ...dims,
+            averageElapsed: count > 0 ? totalElapsed / count : null,
+          })
+        );
       },
     },
     lastActiveDate: {
@@ -3190,140 +3089,125 @@ export function createUserEngagementMetricRegistry(
         filters?: any,
         _dims?: string[]
       ) => {
+        // "Active" spans everything this report counts as engagement:
+        // manual + automated executions, session results, and case creation.
+        const projectScope =
+          isProjectSpecific && projectId
+            ? { projectId: Number(projectId) }
+            : {};
+
         if (groupBy.length === 0) {
-          const result = await db.testRunResults.aggregate({
-            where: {
-              testRun: {
-                ...(isProjectSpecific && projectId
-                  ? { projectId: Number(projectId) }
-                  : {}),
+          const [manualAgg, junitAgg, sessionAgg, caseAgg] = await Promise.all([
+            db.testRunResults.aggregate({
+              where: manualResultWhere(projectId, isProjectSpecific, filters),
+              _max: { executedAt: true },
+            }),
+            db.jUnitTestResult.aggregate({
+              where: junitResultWhere(projectId, isProjectSpecific, filters),
+              _max: { executedAt: true, createdAt: true },
+            }),
+            db.sessionResults.aggregate({
+              where: {
                 isDeleted: false,
+                session: { ...projectScope, isDeleted: false },
+                ...buildDateFilter(filters, "createdAt"),
               },
-              ...buildDateFilter(filters, "executedAt"),
-            },
-            _max: {
-              executedAt: true,
-            },
-          });
-          return [{ lastActiveDate: result._max.executedAt }];
+              _max: { createdAt: true },
+            }),
+            db.repositoryCases.aggregate({
+              where: {
+                ...projectScope,
+                isDeleted: false,
+                ...buildDateFilter(filters, "createdAt"),
+              },
+              _max: { createdAt: true },
+            }),
+          ]);
+          const candidates = [
+            manualAgg._max.executedAt,
+            junitAgg._max.executedAt ?? junitAgg._max.createdAt,
+            sessionAgg._max.createdAt,
+            caseAgg._max.createdAt,
+          ].filter(Boolean);
+          const lastActiveDate = candidates.length
+            ? new Date(
+                Math.max(...candidates.map((d: any) => new Date(d).getTime()))
+              )
+            : null;
+          return [{ lastActiveDate }];
         }
 
-        const results = await db.testRunResults.findMany({
-          where: {
-            testRun: {
-              ...(isProjectSpecific && projectId
-                ? { projectId: Number(projectId) }
-                : {}),
-              isDeleted: false,
-            },
-            ...buildDateFilter(filters, "executedAt"),
-          },
-          select: {
-            executedAt: true,
-            executedById: true,
-            executedBy: {
-              select: {
-                roleId: true,
-                groups: {
-                  select: {
-                    groupId: true,
-                  },
-                },
+        const [executionRows, sessionRows, caseRows] = await Promise.all([
+          fetchEngagementExecutionRows(
+            db,
+            projectId,
+            isProjectSpecific,
+            groupBy,
+            filters
+          ),
+          db.sessionResults
+            .findMany({
+              where: {
+                isDeleted: false,
+                session: { ...projectScope, isDeleted: false },
+                ...buildDateFilter(filters, "createdAt"),
               },
-            },
-            testRun: {
               select: {
+                createdAt: true,
+                createdById: true,
+                createdBy: engagementUserSelect,
+                session: { select: { projectId: true } },
+              },
+            })
+            .then((rows: any[]) =>
+              rows.map((r: any) => ({
+                executedAt: r.createdAt,
+                userId: r.createdById,
+                roleId: r.createdBy?.roleId ?? null,
+                groupIds: (r.createdBy?.groups ?? []).map(
+                  (g: any) => g.groupId
+                ),
+                projectId: r.session.projectId,
+              }))
+            ),
+          db.repositoryCases
+            .findMany({
+              where: {
+                ...projectScope,
+                isDeleted: false,
+                ...buildDateFilter(filters, "createdAt"),
+              },
+              select: {
+                createdAt: true,
+                creatorId: true,
+                creator: engagementUserSelect,
                 projectId: true,
               },
-            },
-          },
-        });
+            })
+            .then((rows: any[]) =>
+              rows.map((r: any) => ({
+                executedAt: r.createdAt,
+                userId: r.creatorId,
+                roleId: r.creator?.roleId ?? null,
+                groupIds: (r.creator?.groups ?? []).map((g: any) => g.groupId),
+                projectId: r.projectId,
+              }))
+            ),
+        ]);
 
-        const grouped = new Map<string, any>();
-        results.forEach((result: any) => {
-          // Handle groupId specially - a user can be in multiple groups
-          if (groupBy.includes("groupId")) {
-            const userGroups = result.executedBy.groups || [];
-            if (userGroups.length === 0) {
-              // User is not in any group, skip this result for group dimension
-              return;
-            }
-
-            // Create a separate entry for each group the user belongs to
-            userGroups.forEach((groupAssignment: any) => {
-              const key = groupBy
-                .map((field) => {
-                  if (field === "userId") return result.executedById;
-                  if (field === "projectId") return result.testRun.projectId;
-                  if (field === "roleId") return result.executedBy.roleId;
-                  if (field === "groupId") return groupAssignment.groupId;
-                  return result[field];
-                })
-                .join("|");
-
-              if (!grouped.has(key)) {
-                const groupData: any = {};
-                groupBy.forEach((field) => {
-                  if (field === "userId") {
-                    groupData.userId = result.executedById;
-                  } else if (field === "projectId") {
-                    groupData.projectId = result.testRun.projectId;
-                  } else if (field === "roleId") {
-                    groupData.roleId = result.executedBy.roleId;
-                  } else if (field === "groupId") {
-                    groupData.groupId = groupAssignment.groupId;
-                  } else {
-                    groupData[field] = result[field];
-                  }
-                });
-                groupData.lastActiveDate = result.executedAt;
-                grouped.set(key, groupData);
-              } else {
-                const group = grouped.get(key);
-                if (
-                  new Date(result.executedAt) > new Date(group.lastActiveDate)
-                ) {
-                  group.lastActiveDate = result.executedAt;
-                }
-              }
-            });
-          } else {
-            // Normal grouping without groups
-            const key = groupBy
-              .map((field) => {
-                if (field === "userId") return result.executedById;
-                if (field === "projectId") return result.testRun.projectId;
-                if (field === "roleId") return result.executedBy.roleId;
-                return result[field];
-              })
-              .join("|");
-
-            if (!grouped.has(key)) {
-              const groupData: any = {};
-              groupBy.forEach((field) => {
-                if (field === "userId") {
-                  groupData.userId = result.executedById;
-                } else if (field === "projectId") {
-                  groupData.projectId = result.testRun.projectId;
-                } else if (field === "roleId") {
-                  groupData.roleId = result.executedBy.roleId;
-                } else {
-                  groupData[field] = result[field];
-                }
-              });
-              groupData.lastActiveDate = result.executedAt;
-              grouped.set(key, groupData);
-            } else {
-              const group = grouped.get(key);
-              if (
-                new Date(result.executedAt) > new Date(group.lastActiveDate)
-              ) {
-                group.lastActiveDate = result.executedAt;
-              }
+        const grouped = groupEngagementRows(
+          [...executionRows, ...sessionRows, ...caseRows],
+          groupBy,
+          () => ({ lastActiveDate: null }),
+          (bucket, row) => {
+            if (
+              !bucket.lastActiveDate ||
+              new Date(row.executedAt) > new Date(bucket.lastActiveDate)
+            ) {
+              bucket.lastActiveDate = row.executedAt;
             }
           }
-        });
-
+        );
         return Array.from(grouped.values());
       },
     },

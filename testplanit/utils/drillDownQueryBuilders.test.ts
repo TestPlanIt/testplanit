@@ -715,13 +715,33 @@ describe("drillDownQueryBuilders", () => {
       expect(result.where?.testRun?.milestoneId).toBe(60);
     });
 
-    it("should handle null milestone", () => {
+    it("scopes to live milestones and live run-cases", () => {
+      // The metric only aggregates runs attached to live milestones, so a
+      // "None" milestone population cannot exist and every drill-down keeps
+      // the same scoping.
       const context = createBaseContext({
         dimensions: { milestone: { id: null as any, name: "None" } },
       });
       const result = buildMilestoneCompletionQuery(context, 0, 10);
 
-      expect(result.where?.testRun?.milestoneId).toBeNull();
+      expect(result.where?.testRun?.milestoneId).toBeUndefined();
+      expect(result.where?.testRun?.milestone).toMatchObject({
+        isDeleted: false,
+      });
+      expect(result.where?.isDeleted).toBe(false);
+    });
+
+    it("applies the report-level date range to the milestone creation date", () => {
+      const context = createBaseContext({
+        startDate: "2026-01-01",
+        endDate: "2026-02-01",
+      });
+      const result = buildMilestoneCompletionQuery(context, 0, 10);
+
+      expect((result.where?.testRun?.milestone as any)?.createdAt).toEqual({
+        gte: new Date("2026-01-01"),
+        lte: new Date("2026-02-01"),
+      });
     });
 
     it("should apply creator dimension filter", () => {

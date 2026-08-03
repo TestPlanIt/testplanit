@@ -4906,6 +4906,7 @@ model WebhookDelivery {
     adapterType            AdapterType
     eventType              String?
     eventId                String?
+    subjectRef             String?
     statusCode             Int?
     latencyMs              Int?
     payloadDigest          String

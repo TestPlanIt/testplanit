@@ -531,7 +531,7 @@ export const ReportChart: React.FC<ReportChartProps> = ({
       metric.value === "averageDuration" ||
       metric.value === "totalDuration" ||
       metric.value === "averageResolutionTime" ||
-      metric.label === "Average Time per Execution (seconds)" ||
+      metric.label === "Average Time per Execution" ||
       metric.label === "Average Duration" ||
       metric.label === "Total Duration" ||
       metric.label === "Average Resolution Time"

@@ -51,6 +51,7 @@ type DeliveryListItem = {
   adapterType: string;
   eventType: string | null;
   eventId: string | null;
+  subjectRef: string | null;
   payloadDigest: string | null;
   statusCode: number | null;
   error: string | null;
@@ -302,6 +303,8 @@ function WebhookDeliveriesTabContent({ projectId }: WebhookDeliveriesTabProps) {
         return [{ webhookConfig: { name: dir } }, tieBreaker];
       case "event":
         return [{ eventType: dir }, tieBreaker];
+      case "subject":
+        return [{ subjectRef: dir }, tieBreaker];
       case "direction":
         return [{ direction: dir }, tieBreaker];
       case "status":
@@ -337,6 +340,7 @@ function WebhookDeliveriesTabContent({ projectId }: WebhookDeliveriesTabProps) {
         adapterType: true,
         eventType: true,
         eventId: true,
+        subjectRef: true,
         payloadDigest: true,
         statusCode: true,
         error: true,
@@ -655,6 +659,15 @@ function WebhookDeliveriesTabContent({ projectId }: WebhookDeliveriesTabProps) {
             ? (t as unknown as (key: string) => string)(k)
             : (row.original.eventType ?? "—");
         },
+      },
+      {
+        id: "subject",
+        accessorKey: "subjectRef",
+        header: t("tableHeaderSubjectRef"),
+        enableSorting: true,
+        enableResizing: true,
+        size: 150,
+        cell: ({ row }) => row.original.subjectRef ?? "—",
       },
       {
         id: "direction",

@@ -114,6 +114,7 @@ export function WebhookDeliveryDrawer({
         adapterType: true,
         eventType: true,
         eventId: true,
+        subjectRef: true,
         payloadDigest: true,
         statusCode: true,
         latencyMs: true,
@@ -190,6 +191,17 @@ export function WebhookDeliveryDrawer({
                           ? (t as unknown as (key: string) => string)(k)
                           : (delivery.eventType ?? "—");
                       })()}
+                    </p>
+                  </div>
+                  <div className="overflow-hidden">
+                    <label className="text-sm font-medium text-muted-foreground">
+                      {t("drawerLabelSubjectRef")}
+                    </label>
+                    <p
+                      className="text-sm font-mono truncate"
+                      data-testid="webhook-drawer-subject-ref"
+                    >
+                      {delivery.subjectRef ?? "—"}
                     </p>
                   </div>
                   <div className="overflow-hidden">

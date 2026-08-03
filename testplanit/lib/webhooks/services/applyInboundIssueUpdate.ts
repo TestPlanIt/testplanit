@@ -254,6 +254,10 @@ export async function applyInboundIssueUpdate(
           direction: "INBOUND",
           adapterType: adapterType,
           eventType: eventType,
+          // Identifier only (issue key / repo#number) — synthetic self-loop
+          // events carry the sentinel key, which is noise in the UI.
+          subjectRef:
+            linkedRef && !payload.synthetic ? linkedRef.externalKey : null,
           statusCode: null,
           latencyMs: null,
           payloadDigest,
