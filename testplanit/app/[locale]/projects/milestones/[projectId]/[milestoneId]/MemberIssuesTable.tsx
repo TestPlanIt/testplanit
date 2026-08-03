@@ -809,7 +809,7 @@ export function MemberIssuesTable({
             )}
         </div>
         <CollapsibleContent className="overflow-hidden data-[state=open]:animate-slide-down data-[state=closed]:animate-slide-up">
-          <CardContent>
+          <CardContent className="pt-1">
             {rows.length > 0 && (
               <div className="flex items-center gap-2 text-muted-foreground w-full flex-wrap mb-4">
                 <Filter
@@ -820,6 +820,27 @@ export function MemberIssuesTable({
                   dataTestId="member-issues-search"
                   className="grow shrink basis-[120px] min-w-[120px] max-w-lg"
                 />
+                <Select
+                  value={issueTypeFilter || "all"}
+                  onValueChange={(value) =>
+                    setIssueTypeFilter(value === "all" ? "" : value)
+                  }
+                >
+                  <SelectTrigger
+                    className="w-[140px] shrink-0"
+                    data-testid="member-issues-type-filter"
+                  >
+                    <SelectValue placeholder={t("filterAllTypes")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{t("filterAllTypes")}</SelectItem>
+                    {issueTypes.map((typeName) => (
+                      <SelectItem key={typeName} value={typeName}>
+                        {typeName}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <Select
                   value={coverageFilter || "all"}
                   onValueChange={(value) =>
@@ -872,27 +893,6 @@ export function MemberIssuesTable({
                     <SelectItem value="all">{t("filterAllSources")}</SelectItem>
                     <SelectItem value="SYNCED">{t("sourceSynced")}</SelectItem>
                     <SelectItem value="MANUAL">{t("sourceManual")}</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Select
-                  value={issueTypeFilter || "all"}
-                  onValueChange={(value) =>
-                    setIssueTypeFilter(value === "all" ? "" : value)
-                  }
-                >
-                  <SelectTrigger
-                    className="w-[140px] shrink-0"
-                    data-testid="member-issues-type-filter"
-                  >
-                    <SelectValue placeholder={t("filterAllTypes")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">{t("filterAllTypes")}</SelectItem>
-                    {issueTypes.map((typeName) => (
-                      <SelectItem key={typeName} value={typeName}>
-                        {typeName}
-                      </SelectItem>
-                    ))}
                   </SelectContent>
                 </Select>
               </div>
