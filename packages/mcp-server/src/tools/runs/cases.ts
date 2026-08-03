@@ -27,7 +27,7 @@ export function registerRunsCasesList(
     "testplanit_test_runs_cases_list",
     {
       description:
-        "List the test cases assigned to a specific run. Filters: isCompleted, statusId, assignedToId (user id, string). Cursor pagination ordered by `order` then `id`. NOTE: TestRunCases does not have a soft-delete field — case removal from a run is via direct deletion (cascading from the run), not isDeleted. Each row carries `latestResult` (most recent executedAt) inline — a union of manual TestRunResults and run-scoped automated JUnit results, discriminated by `source` (\"TestRun\" | \"JUnit\"); pass both the id and source to testplanit_test_run_results_get. Row `status` is the junction row's status when set, falling back to latestResult.status; the statusId FILTER matches only the junction column, which automated runs (testRunType != REGULAR) never set — filter automated results by status via testplanit_test_run_results_list({runId, statusId}) instead. (per EXEC-03 / D7-05)",
+        "List the test cases assigned to a specific run. Filters: isCompleted, statusId, assignedToId (user id, string). Cursor pagination ordered by `order` then `id`. Cases removed from the run (soft-deleted rows) are excluded; restore one via testplanit_runs_cases_add. Each row carries `latestResult` (most recent executedAt) inline — a union of manual TestRunResults and run-scoped automated JUnit results, discriminated by `source` (\"TestRun\" | \"JUnit\"); pass both the id and source to testplanit_test_run_results_get. Row `status` is the junction row's status when set, falling back to latestResult.status; the statusId FILTER matches only the junction column, which automated runs (testRunType != REGULAR) never set — filter automated results by status via testplanit_test_run_results_list({runId, statusId}) instead. (per EXEC-03 / D7-05)",
       inputSchema: {
         runId: z.number().int().positive(),
         isCompleted: z.boolean().optional(),
@@ -42,10 +42,10 @@ export function registerRunsCasesList(
     async (input) => {
       try {
         const limit = input.limit ?? DEFAULT_LIMIT;
-        // R1: TestRunCases has NO isDeleted column. The
-        // `TestRunCasesWhereInput` annotation makes adding one a TS2353.
+        // R1 (revised): exclude soft-removed run cases.
         const where: TestRunCasesWhereInput = {
           testRunId: input.runId,
+          isDeleted: false,
         };
         if (input.isCompleted !== undefined) where.isCompleted = input.isCompleted;
         if (input.statusId !== undefined) where.statusId = input.statusId;

@@ -21,8 +21,11 @@ import {
 // Reintroducing an unknown column produces TS2353 (Phase 6 WR-09 invariant).
 //
 // CRITICAL invariants:
-//   R1 — TestRunCases has NO `isDeleted` column (Cascade deletes only); never
-//        add `isDeleted: false` to a TestRunCases-shaped where clause.
+//   R1 (REVISED) — TestRunCases HAS `isDeleted` now (added with the run-case
+//        removal feature); soft-removed rows must be filtered with
+//        `isDeleted: false` in every TestRunCases list/count/groupBy, matching
+//        the web UI (lib/services/testRunSummary.ts). JUnitTestResult /
+//        JUnitTestSuite still have NO isDeleted (Cascade deletes only).
 //   R2 — TestRunStepResults relation to Status is named `stepStatus` (NOT `status`).
 //   R3 — Status rollup total is summed FROM groupBy results, never from a
 //        separate count call (counts must always sum to total).
@@ -301,8 +304,8 @@ export async function extractStatusNames(
     "groupBy",
     {
       by: ["statusId"],
-      // R1: TestRunCases has NO isDeleted; do NOT add `isDeleted: false`.
-      where: { testRunId: runId },
+      // R1 (revised): soft-removed run cases must not count toward the rollup.
+      where: { testRunId: runId, isDeleted: false },
       _count: { id: true },
     } satisfies TestRunCasesGroupByArgs,
     env,

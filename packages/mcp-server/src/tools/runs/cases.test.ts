@@ -103,6 +103,9 @@ describe("registerRunsCasesList", () => {
     const where = getLastCallBody()?.where as Record<string, unknown>;
     expect(where.isCompleted).toBe(true);
     expect(where.testRunId).toBe(50);
+    // Soft-removed run cases are excluded (TestRunCases gained isDeleted with
+    // the run-case removal feature).
+    expect(where.isDeleted).toBe(false);
   });
 
   it("filter: statusId", async () => {
@@ -127,7 +130,7 @@ describe("registerRunsCasesList", () => {
     expect(where.assignedToId).toBe("user-99");
   });
 
-  it("R1 invariant: NO isDeleted in where clause (TestRunCases has no such column)", async () => {
+  it("R1 (revised): soft-removed run cases are filtered with isDeleted: false", async () => {
     mockZenstack.mockResolvedValueOnce([]);
     const { client } = await setupClient();
     await client.callTool({
@@ -135,7 +138,7 @@ describe("registerRunsCasesList", () => {
       arguments: { runId: 50 },
     });
     const where = getLastCallBody()?.where as Record<string, unknown>;
-    expect(Object.keys(where)).not.toContain("isDeleted");
+    expect(where.isDeleted).toBe(false);
   });
 
   it("pagination: hasNextPage TRUE when rows.length > limit", async () => {

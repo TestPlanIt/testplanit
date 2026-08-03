@@ -122,8 +122,8 @@ export function registerRunsList(
                 "groupBy",
                 {
                   by: ["testRunId", "statusId"],
-                  // R1: TestRunCases has NO isDeleted; do NOT add `isDeleted: false`.
-                  where: { testRunId: { in: regularIds } },
+                  // R1 (revised): exclude soft-removed run cases from rollups.
+                  where: { testRunId: { in: regularIds }, isDeleted: false },
                   _count: { id: true },
                 } satisfies TestRunCasesGroupByArgs,
                 deps.env,

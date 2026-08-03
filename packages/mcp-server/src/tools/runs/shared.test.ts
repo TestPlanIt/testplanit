@@ -110,7 +110,7 @@ describe("extractStatusNames", () => {
     expect(firstCall[1]).toBe("groupBy");
     const firstBody = firstCall[2] as Record<string, unknown>;
     expect(firstBody.by).toEqual(["statusId"]);
-    expect(firstBody.where).toEqual({ testRunId: 42 });
+    expect(firstBody.where).toEqual({ testRunId: 42, isDeleted: false });
     expect(firstBody._count).toEqual({ id: true });
 
     const secondCall = mockZenstack.mock.calls[1];

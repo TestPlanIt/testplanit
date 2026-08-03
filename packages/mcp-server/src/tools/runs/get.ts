@@ -39,6 +39,8 @@ export function runDetailInclude(runId: number) {
   return {
     ...RUN_ROW_INCLUDE,
     testCases: {
+      // R1 (revised): exclude soft-removed run cases.
+      where: { isDeleted: false },
       // BL-04 deterministic ordering carried into the inline include.
       orderBy: [{ order: "asc" }, { id: "asc" }],
       take: TESTCASES_INLINE_LIMIT,

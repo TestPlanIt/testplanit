@@ -379,7 +379,7 @@ describe("registerRunsGet", () => {
     expect(Array.isArray(data.issues)).toBe(true);
   });
 
-  it("R1: NO isDeleted filter on testCases inline include", async () => {
+  it("R1 (revised): testCases inline include filters soft-removed rows", async () => {
     mockZenstack.mockResolvedValueOnce(makeRawRun({ testCases: [] }));
     mockZenstack.mockResolvedValueOnce([]);
 
@@ -391,7 +391,7 @@ describe("registerRunsGet", () => {
     const body = getCallBody(0);
     const include = body?.include as Record<string, unknown>;
     const tc = include?.testCases as Record<string, unknown>;
-    expect(tc).not.toHaveProperty("where");
+    expect(tc.where).toEqual({ isDeleted: false });
   });
 
   it("error path: extractStatusNames groupBy throws -> mapHttpErrorToToolResult", async () => {
