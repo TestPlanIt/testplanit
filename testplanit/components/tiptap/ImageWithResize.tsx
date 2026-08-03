@@ -222,6 +222,7 @@ const ResizableImageComponent = (props: any) => {
           >
             {/* Alignment buttons */}
             <button
+              type="button"
               onClick={() => handleAlign("left")}
               className={`p-1.5 rounded hover:bg-gray-700 ${imageAlign === "left" ? "bg-gray-700" : ""}`}
               title={t("alignLeft")}
@@ -229,6 +230,7 @@ const ResizableImageComponent = (props: any) => {
               <AlignLeft size={16} />
             </button>
             <button
+              type="button"
               onClick={() => handleAlign("center")}
               className={`p-1.5 rounded hover:bg-gray-700 ${imageAlign === "center" ? "bg-gray-700" : ""}`}
               title={t("alignCenter")}
@@ -236,6 +238,7 @@ const ResizableImageComponent = (props: any) => {
               <AlignCenter size={16} />
             </button>
             <button
+              type="button"
               onClick={() => handleAlign("right")}
               className={`p-1.5 rounded hover:bg-gray-700 ${imageAlign === "right" ? "bg-gray-700" : ""}`}
               title={t("alignRight")}
@@ -247,6 +250,7 @@ const ResizableImageComponent = (props: any) => {
 
             {/* Size presets */}
             <button
+              type="button"
               onClick={() => handleSetSize("small")}
               className="p-1.5 rounded hover:bg-gray-700"
               title={t("sizeSmall")}
@@ -254,6 +258,7 @@ const ResizableImageComponent = (props: any) => {
               <Smartphone size={16} />
             </button>
             <button
+              type="button"
               onClick={() => handleSetSize("medium")}
               className="p-1.5 rounded hover:bg-gray-700"
               title={t("sizeMedium")}
@@ -261,6 +266,7 @@ const ResizableImageComponent = (props: any) => {
               <Square size={16} />
             </button>
             <button
+              type="button"
               onClick={() => handleSetSize("large")}
               className="p-1.5 rounded hover:bg-gray-700"
               title={t("sizeLarge")}
@@ -268,6 +274,7 @@ const ResizableImageComponent = (props: any) => {
               <RectangleHorizontal size={16} />
             </button>
             <button
+              type="button"
               onClick={() => handleSetSize("full")}
               className="p-1.5 rounded hover:bg-gray-700"
               title={t("sizeFull")}
@@ -275,6 +282,7 @@ const ResizableImageComponent = (props: any) => {
               <Maximize size={16} />
             </button>
             <button
+              type="button"
               onClick={handleResetSize}
               className="p-1.5 rounded hover:bg-gray-700"
               title={t("resetSize")}
@@ -286,6 +294,7 @@ const ResizableImageComponent = (props: any) => {
 
             {/* Other controls */}
             <button
+              type="button"
               onClick={handleRotate}
               className="p-1.5 rounded hover:bg-gray-700"
               title={t("rotate")}
@@ -293,6 +302,7 @@ const ResizableImageComponent = (props: any) => {
               <RotateCw size={16} />
             </button>
             <button
+              type="button"
               onClick={deleteNode}
               className="p-1.5 rounded hover:bg-destructive"
               title={t("delete")}

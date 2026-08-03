@@ -296,6 +296,7 @@ function HeadCellContent({
         {dragHandle}
         {header.column.getCanGroup() && onGroupingChange ? (
           <button
+            type="button"
             onClick={header.column.getToggleGroupingHandler()}
             style={{ cursor: "pointer" }}
             className="me-1"
@@ -872,6 +873,7 @@ export function DataTable<TData extends DataRow, TValue>({
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
+                  type="button"
                   onClick={row.getToggleExpandedHandler()}
                   style={{ cursor: "pointer" }}
                   className="me-2"

@@ -64,6 +64,7 @@ const DialogContent = React.forwardRef<
         {children}
         <div className="absolute end-4 top-4 space-x-2">
           <button
+            type="button"
             className="rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 disabled:pointer-events-none"
             onClick={toggleFullScreen}
           >

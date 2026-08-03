@@ -945,6 +945,7 @@ export function CopyMoveDialog({
                   {job.result.errors.length > 0 && (
                     <div className="flex flex-col gap-1">
                       <button
+                        type="button"
                         className="flex items-center gap-1.5 text-sm text-destructive"
                         onClick={() => setErrorsExpanded((v) => !v)}
                       >

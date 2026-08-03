@@ -122,6 +122,7 @@ export function FeedbackBanner({
         {t("feedback.menuItem")}
       </Button>
       <button
+        type="button"
         onClick={handleDismiss}
         className="text-muted-foreground hover:text-foreground transition-colors ms-1"
         aria-label={t("common.actions.close")}

@@ -1251,6 +1251,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
               <div className="grid grid-cols-8 gap-2">
                 {gitHubEmojis.map((emoji) => (
                   <button
+                    type="button"
                     key={emoji.name}
                     className="text-xl"
                     onClick={() => handleEmojiClick(emoji)}

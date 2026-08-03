@@ -91,6 +91,7 @@ export function AutoTagProgress({
         </Button>
         {onDismiss && (
           <button
+            type="button"
             onClick={onDismiss}
             className="shrink-0 rounded-sm bg-destructive p-0.5 text-destructive-foreground hover:bg-destructive/80"
           >

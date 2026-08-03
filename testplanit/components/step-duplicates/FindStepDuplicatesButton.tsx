@@ -122,6 +122,7 @@ export function FindStepDuplicatesButton({
           {`${progressPercent}%`}
         </span>
         <button
+          type="button"
           onClick={handleCancel}
           className="text-muted-foreground hover:text-foreground"
           title={t("cancelScan")}

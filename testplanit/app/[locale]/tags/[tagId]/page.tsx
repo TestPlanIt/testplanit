@@ -523,6 +523,7 @@ function TagDetail() {
                 {t("common.ui.search.filters")}
                 {activeFilterCount > 0 && (
                   <button
+                    type="button"
                     onClick={() =>
                       updateFilters({
                         hideCompletedSessions: false,

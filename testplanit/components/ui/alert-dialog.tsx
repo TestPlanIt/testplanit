@@ -99,10 +99,13 @@ AlertDialogDescription.displayName =
 const AlertDialogAction = React.forwardRef<
   React.ElementRef<typeof AlertDialogPrimitive.Action>,
   React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Action>
->(({ className, ...props }, ref) => (
+>(({ className, type, ...props }, ref) => (
   <AlertDialogPrimitive.Action
     ref={ref}
     className={cn(buttonVariants(), className)}
+    // Radix alert-dialog sets no default button type, so inside a <form> a
+    // typeless Action/Cancel would submit it.
+    type={type ?? "button"}
     {...props}
   />
 ));
@@ -111,7 +114,7 @@ AlertDialogAction.displayName = AlertDialogPrimitive.Action.displayName;
 const AlertDialogCancel = React.forwardRef<
   React.ElementRef<typeof AlertDialogPrimitive.Cancel>,
   React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Cancel>
->(({ className, ...props }, ref) => (
+>(({ className, type, ...props }, ref) => (
   <AlertDialogPrimitive.Cancel
     ref={ref}
     className={cn(
@@ -119,6 +122,7 @@ const AlertDialogCancel = React.forwardRef<
       "mt-2 sm:mt-0",
       className
     )}
+    type={type ?? "button"}
     {...props}
   />
 ));

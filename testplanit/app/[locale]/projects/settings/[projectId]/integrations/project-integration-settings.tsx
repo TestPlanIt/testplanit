@@ -459,6 +459,7 @@ export function ProjectIntegrationSettings({
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <button
+                                type="button"
                                 onClick={() => handleSetDefault(ip.id)}
                                 className="opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
                                 aria-label={t("integration.setAsDefault")}

@@ -37,7 +37,12 @@ export const DropdownButton = ({
   );
 
   return (
-    <button className={buttonClass} disabled={disabled} onClick={onClick}>
+    <button
+      type="button"
+      className={buttonClass}
+      disabled={disabled}
+      onClick={onClick}
+    >
       {children}
     </button>
   );

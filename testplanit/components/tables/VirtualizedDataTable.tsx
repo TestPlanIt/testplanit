@@ -451,6 +451,7 @@ export function VirtualizedDataTable({
             }`;
         return (
           <button
+            type="button"
             onClick={row.getToggleExpandedHandler()}
             className="inline-flex w-4 items-center justify-center"
             aria-label={label}
@@ -691,6 +692,7 @@ export function VirtualizedDataTable({
                   >
                     {column.getCanGroup() && onGroupingChange ? (
                       <button
+                        type="button"
                         onClick={column.getToggleGroupingHandler()}
                         className="me-1"
                         aria-label={
@@ -716,6 +718,7 @@ export function VirtualizedDataTable({
                     </TruncatedHeaderLabel>
                     {isSortable && column.id !== "expander" && (
                       <button
+                        type="button"
                         onClick={() => onSortChange?.(column.id)}
                         className="ms-1 shrink-0 cursor-pointer"
                         aria-label={t("sort")}
@@ -848,6 +851,7 @@ export function VirtualizedDataTable({
                         content = (
                           <div className="flex items-center gap-1">
                             <button
+                              type="button"
                               onClick={row.getToggleExpandedHandler()}
                               className="me-1 p-1"
                               aria-label={
