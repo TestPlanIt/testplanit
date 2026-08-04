@@ -146,6 +146,20 @@ describe("AsyncCombobox virtualization", () => {
     expect(screen.getByText("Item 1")).toBeInTheDocument();
   });
 
+  it("caps the dropdown at the room Radix reports it has", async () => {
+    renderCombobox(makeOptions(500));
+
+    await openAndWait("Item 1");
+
+    // Without the cap the popover renders at its natural height, and rows past
+    // the window edge cannot be scrolled to: the list scrolls, the popover
+    // does not move.
+    const dropdown = screen.getByRole("dialog");
+    expect(dropdown.className).toContain(
+      "max-h-[var(--radix-popover-content-available-height)]"
+    );
+  });
+
   it("selecting a virtualized option reports that option", async () => {
     const onValueChange = vi.fn();
     render(
@@ -164,5 +178,39 @@ describe("AsyncCombobox virtualization", () => {
     fireEvent.click(screen.getByText("Item 1"));
 
     expect(onValueChange).toHaveBeenCalledWith({ id: 1, label: "Item 1" });
+  });
+
+  it("hands the active search to the option renderer, never to the trigger", async () => {
+    const options = makeOptions(3);
+    render(
+      <AsyncCombobox<Option>
+        value={options[0]}
+        onValueChange={vi.fn()}
+        fetchOptions={() => Promise.resolve(options)}
+        getOptionValue={(option) => option.id}
+        renderOption={(option, query) => (
+          <span>{query ? `${option.label} [${query}]` : option.label}</span>
+        )}
+        placeholder="Search"
+        showPagination={false}
+      />
+    );
+
+    // Grabbed before opening: the search box is a combobox too once the
+    // dropdown mounts.
+    const trigger = screen.getByRole("combobox");
+    await openAndWait("Item 2");
+
+    fireEvent.change(screen.getByPlaceholderText("Search"), {
+      target: { value: "item" },
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText("Item 2 [item]")).toBeInTheDocument();
+    });
+    // The trigger shows the chosen option, not a search result, so it gets no
+    // query to mark up.
+    expect(trigger).toHaveTextContent("Item 1");
+    expect(trigger).not.toHaveTextContent("[item]");
   });
 });

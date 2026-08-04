@@ -1,5 +1,6 @@
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
+import { HighlightedMatch } from "@/components/HighlightedMatch";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { Button } from "@/components/ui/button";
 import {
@@ -1287,27 +1288,6 @@ const TreeView: React.FC<{
     node.close();
   }, []);
 
-  const renderFolderName = (name: string): React.ReactNode => {
-    if (!normalizedFilter) return name;
-    const matchStart = name.toLowerCase().indexOf(normalizedFilter);
-    if (matchStart === -1) return name;
-    const matchEnd = matchStart + normalizedFilter.length;
-    // A <span> rather than <mark>: the global mark rule adds horizontal padding
-    // that pulls the surrounding letters apart mid-word.
-    return (
-      <>
-        {name.slice(0, matchStart)}
-        <span
-          className="bg-warning/30 dark:bg-warning/45 rounded-sm"
-          data-testid="folder-filter-match"
-        >
-          {name.slice(matchStart, matchEnd)}
-        </span>
-        {name.slice(matchEnd)}
-      </>
-    );
-  };
-
   // Custom node renderer with inline editing and context menu
   const Node = ({
     node,
@@ -1528,7 +1508,11 @@ const TreeView: React.FC<{
               : node.data.name
           }
         >
-          {renderFolderName(node.data.name)}
+          <HighlightedMatch
+            text={node.data.name}
+            query={normalizedFilter}
+            testId="folder-filter-match"
+          />
         </span>
 
         {pendingCopyTargets.has(data?.folderId ?? -1) && (

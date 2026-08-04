@@ -1,4 +1,5 @@
 import DynamicIcon from "@/components/DynamicIcon";
+import { HighlightedMatch } from "@/components/HighlightedMatch";
 import { AsyncCombobox } from "@/components/ui/async-combobox";
 import { CaretSortIcon } from "@radix-ui/react-icons";
 import { FolderOpen } from "lucide-react"; // Default folder icon
@@ -171,9 +172,10 @@ export const FolderSelect: React.FC<FolderSelectProps> = ({
       disabled={disabled || isLoading || flatOptions.length === 0}
       showPagination={false}
       minDropdownWidth={320}
-      renderOption={(option) => (
+      renderOption={(option, query) => (
         <div
           className="flex items-center gap-1 min-w-0"
+          data-testid={`folder-select-option-${option.value}`}
           style={{
             paddingInlineStart: option.level * INDENT_PER_LEVEL + INDENT_BASE,
           }}
@@ -186,7 +188,13 @@ export const FolderSelect: React.FC<FolderSelectProps> = ({
           ) : (
             <FolderOpen className="w-4 h-4 shrink-0 text-muted-foreground" />
           )}
-          <span className="truncate">{option.label}</span>
+          <span className="truncate">
+            <HighlightedMatch
+              text={option.label}
+              query={query}
+              testId="folder-filter-match"
+            />
+          </span>
         </div>
       )}
       renderTrigger={() => (
