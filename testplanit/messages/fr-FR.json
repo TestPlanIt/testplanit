@@ -2746,6 +2746,7 @@
       "add": "Ajouter une étape",
       "addSharedSteps": "Ajouter des étapes partagées",
       "delete": "Supprimer l'étape",
+      "removedFromCase": "Supprimé du cas de test",
       "confirmDelete": "Confirmer la suppression Étape {number, number}?",
       "createSharedSteps": "Créer une étape partagée {number, plural, one {Étapes} other {Étapes}}",
       "sharedStepsName": "Nom des étapes partagées",

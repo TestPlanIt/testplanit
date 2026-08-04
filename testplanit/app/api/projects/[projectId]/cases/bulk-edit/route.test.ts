@@ -1406,6 +1406,7 @@ describe("Bulk Edit API Route", () => {
   describe("Steps Updates", () => {
     it("handles steps replace operation", async () => {
       const mockDeleteMany = vi.fn().mockResolvedValue({ count: 2 });
+      const mockUpdateMany = vi.fn().mockResolvedValue({ count: 2 });
       const mockCreate = vi.fn().mockResolvedValue({});
       (baseDb.$transaction as any).mockImplementation(async (callback: any) => {
         return callback({
@@ -1427,6 +1428,7 @@ describe("Bulk Edit API Route", () => {
           steps: {
             create: mockCreate,
             update: vi.fn(),
+            updateMany: mockUpdateMany,
             deleteMany: mockDeleteMany,
           },
           workflows: { findUnique: vi.fn().mockResolvedValue(null) },
@@ -1465,7 +1467,16 @@ describe("Bulk Edit API Route", () => {
       const response = await POST(request, context);
 
       expect(response.status).toBe(200);
-      expect(mockDeleteMany).toHaveBeenCalledTimes(2);
+      // Steps must be SOFT-deleted: TestRunStepResults.stepId cascades, so a
+      // hard delete here would destroy recorded run results for these cases.
+      expect(mockDeleteMany).not.toHaveBeenCalled();
+      expect(mockUpdateMany).toHaveBeenCalledTimes(2);
+      for (const caseId of [1, 2]) {
+        expect(mockUpdateMany).toHaveBeenCalledWith({
+          where: { testCaseId: caseId, isDeleted: false },
+          data: { isDeleted: true },
+        });
+      }
       expect(mockCreate).toHaveBeenCalled();
     });
 

@@ -2746,6 +2746,7 @@
       "add": "단계 추가",
       "addSharedSteps": "공유 단계 추가",
       "delete": "삭제 단계",
+      "removedFromCase": "테스트 케이스에서 제거됨",
       "confirmDelete": "삭제 단계 확인 {number, number}?",
       "createSharedSteps": "공유 생성 {number, plural, one {단계} other {단계}}",
       "sharedStepsName": "공유 단계 이름",

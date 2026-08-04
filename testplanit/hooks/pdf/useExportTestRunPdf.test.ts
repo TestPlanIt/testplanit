@@ -93,3 +93,94 @@ describe("buildStepRows", () => {
     expect(rows[2].result).toBeUndefined();
   });
 });
+
+describe("buildStepRows — results whose step was removed from the case", () => {
+  it("appends a removed step's result instead of dropping it", () => {
+    const steps = [
+      { id: 10, order: 1, step: doc("Open app"), expectedResult: doc("Opens") },
+    ];
+    const stepResults = [
+      {
+        id: 1,
+        stepId: 10,
+        sharedStepItemId: null,
+        stepStatus: { name: "Passed" },
+      },
+      {
+        id: 2,
+        stepId: 99, // soft-deleted from the case after the run
+        sharedStepItemId: null,
+        stepStatus: { name: "Failed" },
+        step: {
+          step: doc("Old step"),
+          expectedResult: doc("Old expected"),
+          order: 2,
+          testCaseId: 7,
+        },
+      },
+    ];
+    const rows = buildStepRows(steps, stepResults, 7);
+    expect(rows).toHaveLength(2);
+    expect(rows[1].num).toBe(2);
+    expect(rows[1].removed).toBe(true);
+    expect(rows[1].stepText).toBe("Old step");
+    expect(rows[1].expectedText).toBe("Old expected");
+    expect(rows[1].result?.stepStatus?.name).toBe("Failed");
+    expect(rows[0].removed).toBeUndefined();
+  });
+
+  it("still renders results when every authored step was replaced", () => {
+    const stepResults = [
+      {
+        id: 3,
+        stepId: 99,
+        sharedStepItemId: null,
+        stepStatus: { name: "Passed" },
+        step: {
+          step: doc("Gone"),
+          expectedResult: null,
+          order: 1,
+          testCaseId: 7,
+        },
+      },
+    ];
+    const rows = buildStepRows([], stepResults, 7);
+    expect(rows).toHaveLength(1);
+    expect(rows[0].stepText).toBe("Gone");
+    expect(rows[0].removed).toBe(true);
+  });
+
+  it("does not adopt a result whose step belongs to another case", () => {
+    const steps = [
+      { id: 10, order: 1, step: doc("Open app"), expectedResult: doc("Opens") },
+    ];
+    const stepResults = [
+      {
+        id: 4,
+        stepId: 99,
+        sharedStepItemId: null,
+        stepStatus: { name: "Failed" },
+        step: {
+          step: doc("Other"),
+          expectedResult: null,
+          order: 1,
+          testCaseId: 8,
+        },
+      },
+    ];
+    expect(buildStepRows(steps, stepResults, 7)).toHaveLength(1);
+  });
+
+  it("drops unmatched results when no case id is supplied", () => {
+    const stepResults = [
+      {
+        id: 5,
+        stepId: 99,
+        sharedStepItemId: null,
+        stepStatus: { name: "Failed" },
+        step: { step: doc("X"), expectedResult: null, order: 1, testCaseId: 7 },
+      },
+    ];
+    expect(buildStepRows([], stepResults)).toEqual([]);
+  });
+});

@@ -2746,6 +2746,7 @@
       "add": "Añadir paso",
       "addSharedSteps": "Añadir pasos compartidos",
       "delete": "Eliminar paso",
+      "removedFromCase": "Eliminado del caso de prueba",
       "confirmDelete": "Confirmar eliminación Paso {number, number}?",
       "createSharedSteps": "¡Crear compartido {number, plural, one {Paso} other {¡Pasos}}",
       "sharedStepsName": "Nombre de pasos compartidos",

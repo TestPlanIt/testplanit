@@ -801,7 +801,12 @@ export default function TestResultHistory({
           name: true, // Added name for EditResultModal
           project: { select: { id: true, name: true } },
           steps: {
-            // Added steps for EditResultModal
+            // Drives EditResultModal's form fields, so it must list only the
+            // case's live steps — a soft-deleted step is no longer editable.
+            // Historical rendering does NOT use this list; it reads each
+            // result's own `stepResult.step` to-one relation, which resolves
+            // regardless of isDeleted.
+            where: { isDeleted: false },
             orderBy: { order: "asc" },
           },
           testRuns: {

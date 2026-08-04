@@ -2746,6 +2746,7 @@
       "add": "إضافة خطوة",
       "addSharedSteps": "إضافة خطوات مشتركة",
       "delete": "حذف الخطوة",
+      "removedFromCase": "تمت الإزالة من حالة الاختبار",
       "confirmDelete": "تأكيد حذف الخطوة {number, number}؟",
       "createSharedSteps": "إنشاء {number, plural, one {خطوة} other {خطوات}} مشتركة",
       "sharedStepsName": "اسم الخطوات المشتركة",

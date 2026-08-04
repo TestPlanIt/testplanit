@@ -2746,6 +2746,7 @@
       "add": "Добавить шаг",
       "addSharedSteps": "Добавить общие шаги",
       "delete": "Удалить шаг",
+      "removedFromCase": "Удалено из тест-кейса",
       "confirmDelete": "Подтвердите удаление Шаг {number, number}?",
       "createSharedSteps": "Создать общий {number, plural, one {Шаг} other {Шаги}}",
       "sharedStepsName": "Название общих шагов",

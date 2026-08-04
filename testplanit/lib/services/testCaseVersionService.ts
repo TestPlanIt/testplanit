@@ -163,6 +163,7 @@ export async function createTestCaseVersionInTransaction(
         },
       },
       steps: {
+        where: { isDeleted: false },
         orderBy: { order: "asc" },
         select: { step: true, expectedResult: true },
       },

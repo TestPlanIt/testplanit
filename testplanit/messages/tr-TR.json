@@ -2746,6 +2746,7 @@
       "add": "Adım Ekle",
       "addSharedSteps": "Paylaşılan Adımları Ekle",
       "delete": "Adımı Sil",
+      "removedFromCase": "Test durumundan kaldırıldı",
       "confirmDelete": "Silme işlemini onayla Adım {number, number}?",
       "createSharedSteps": "Paylaşılan Adım Oluştur {number, plural, one {Adımlar} other {Adımlar}}",
       "sharedStepsName": "Paylaşılan Adımların Adı",

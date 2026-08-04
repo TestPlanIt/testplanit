@@ -106,6 +106,7 @@ export const POST = withAuditContext(
             },
           },
           steps: {
+            where: { isDeleted: false },
             orderBy: { order: "asc" },
             select: { step: true, expectedResult: true },
           },
