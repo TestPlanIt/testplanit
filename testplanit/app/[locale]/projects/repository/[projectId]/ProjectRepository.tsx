@@ -36,12 +36,13 @@ import { ViewSelector } from "@/components/ViewSelector";
 import { RepositoryFilterBar } from "@/components/repository/filter-bar/RepositoryFilterBar";
 import {
   buildFilterDimensions,
+  type DynamicFieldDescriptor,
   type FilterDimension,
 } from "~/lib/repository/filterDimensions";
 import type { FilterPredicate } from "~/lib/schemas/repositoryFilterPredicates";
 import { useRepositoryFilters } from "~/hooks/useRepositoryFilters";
 import { ApplicationArea } from "~/zenstack/models";
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import {
   Bot,
   Bug,
@@ -588,6 +589,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
   // Tracks whether the panel was already collapsed before search started.
   // null = not currently in a search-initiated collapse.
   const wasCollapsedBeforeSearchRef = useRef<boolean | null>(null);
+  const isEsSearchActive = esSearchQuery.trim().length > 0;
 
   const t = useTranslations();
 
@@ -648,50 +650,27 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
   const hasActiveLlm =
     !!activeLlmIntegrations && activeLlmIntegrations.length > 0;
 
-  // Fetch aggregated view options for filters (lightweight query)
-  const { data: viewOptionsData, isError: viewOptionsIsError } = useQuery({
-    queryKey: [
-      "viewOptions",
-      numericProjectId,
-      isRunMode,
-      selectedTestCases,
-      params.runId,
-      selectedRunIds,
-    ],
-    queryFn: async () => {
-      const response = await fetch("/api/repository-cases/view-options", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          projectId: numericProjectId,
-          isRunMode,
-          selectedTestCases: isRunMode ? selectedTestCases : undefined,
-          runId: isRunMode && params.runId ? Number(params.runId) : undefined,
-          runIds: isRunMode && selectedRunIds ? selectedRunIds : undefined,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch view options");
-      }
-
-      return response.json();
-    },
-    enabled: isValidProjectId && sessionStatus !== "loading",
-    staleTime: 30000, // Cache for 30 seconds
-  });
-
   // Multi-dimension filter state (FilterBar chips). Run dims only exist in run
   // view mode; selection mode keeps predicates in memory so the dialog never
   // pollutes the host page's URL (spec §10).
+  //
+  // The registry's dynamic-field dimensions come from the view-options
+  // response, but the view-options request carries the predicates parsed
+  // against that registry — a data cycle. It is broken with a render-time
+  // mirror of the last response's dynamicFields: the first render parses URL
+  // predicates against the static dimensions only, and the response's arrival
+  // re-renders with the full registry (dynamic-field predicates resolve then).
   const includeRunDimensions = isRunMode && !isSelectionMode;
+  const [registryDynamicFields, setRegistryDynamicFields] = useState<
+    Record<string, DynamicFieldDescriptor> | undefined
+  >(undefined);
   const filterRegistry = useMemo(
     () =>
       buildFilterDimensions({
-        dynamicFields: viewOptionsData?.dynamicFields,
+        dynamicFields: registryDynamicFields,
         includeRunDimensions,
       }),
-    [viewOptionsData?.dynamicFields, includeRunDimensions]
+    [registryDynamicFields, includeRunDimensions]
   );
 
   const {
@@ -706,6 +685,63 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
     registry: filterRegistry,
     persistToUrl: !isSelectionMode,
   });
+
+  // Counts are computed under the predicates the TABLE is actually using:
+  // while ES search is active the interim bypass empties Cases' predicates
+  // (spec §13), so the counts request sends the same emptied set.
+  const countingPredicates = isEsSearchActive ? EMPTY_PREDICATES : predicates;
+  const countingPredicatesKey = isEsSearchActive ? "" : canonicalKey;
+
+  // Fetch aggregated view options for filters (lightweight query)
+  const {
+    data: viewOptionsData,
+    isError: viewOptionsIsError,
+    isPlaceholderData: viewOptionsIsPlaceholder,
+  } = useQuery({
+    queryKey: [
+      "viewOptions",
+      numericProjectId,
+      isRunMode,
+      selectedTestCases,
+      params.runId,
+      selectedRunIds,
+      countingPredicatesKey,
+    ],
+    queryFn: async () => {
+      const response = await fetch("/api/repository-cases/view-options", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          projectId: numericProjectId,
+          isRunMode,
+          selectedTestCases: isRunMode ? selectedTestCases : undefined,
+          runId: isRunMode && params.runId ? Number(params.runId) : undefined,
+          runIds: isRunMode && selectedRunIds ? selectedRunIds : undefined,
+          predicates: countingPredicates,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch view options");
+      }
+
+      return response.json();
+    },
+    enabled: isValidProjectId && sessionStatus !== "loading",
+    staleTime: 30000, // Cache for 30 seconds
+    // Predicate edits re-key the query; keep the previous counts visible
+    // (muted via countsMuted) instead of flashing empty during the refetch.
+    placeholderData: keepPreviousData,
+  });
+
+  if (
+    viewOptionsData?.dynamicFields &&
+    viewOptionsData.dynamicFields !== registryDynamicFields
+  ) {
+    // Render-time state adjustment (not an effect) so the full registry is
+    // committed in the same pass the response lands.
+    setRegistryDynamicFields(viewOptionsData.dynamicFields);
+  }
 
   // Run-mode "assigned to me" auto-seed (spec §10). The snapshot must be taken
   // from the initial URL at mount — before TestCasesSection auto-writes
@@ -1422,8 +1458,6 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
     // Panel restore is handled by the effect above via setEsSearchQuery("")
   }, []);
 
-  const isEsSearchActive = esSearchQuery.trim().length > 0;
-
   const toggleCollapse = () => {
     setIsTransitioning(true);
     if (panelRef.current) {
@@ -1845,7 +1879,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                           isRunMode={isRunMode}
                           viewOptions={viewOptions}
                           totalCount={viewOptionsData?.totalCount || 0}
-                          countsMuted={predicates.length > 0}
+                          countsMuted={viewOptionsIsPlaceholder}
                         />
                         <div className="ms-4">
                           {selectedItem === "folders" &&
@@ -2176,6 +2210,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                             totalCount={filterBarTotalCount}
                             isRunMode={isRunMode && !isSelectionMode}
                             searchPaused={searchPaused}
+                            countsMuted={viewOptionsIsPlaceholder}
                           />
                         </div>
                         <DropZoneOverlay

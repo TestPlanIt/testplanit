@@ -15,7 +15,11 @@
  * - the run-mode assigned-to-me seed decision matrix: fires once on a bare
  *   URL when the viewer has assignments; suppressed by existing `f` params,
  *   by a `?selectedCase=` deep link, outside run view mode, and on
- *   view-options errors; never re-fires after the user clears it.
+ *   view-options errors; never re-fires after the user clears it;
+ * - the view-options counts query is keyed by the canonical predicate
+ *   serialization and sends the table's active predicate set in its body
+ *   (the emptied set while the ES-search bypass is live); counts mute only
+ *   while placeholder (previous predicate set) data is displayed.
  *
  * The component renders for real; children (TreeView, Cases, ViewSelector,
  * FilterBar, ...) are prop-capturing stubs so the tests drive the actual
@@ -23,7 +27,13 @@
  */
 
 import React from "react";
-import { act, render, waitFor } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // ---- Hoisted spies / mutable holders (referenced from vi.mock factories) ----
@@ -34,6 +44,7 @@ const {
   paramsHolder,
   sessionHolder,
   viewOptionsHolder,
+  viewOptionsQueryHolder,
   viewSelectorSpy,
   filterBarSpy,
   casesSpy,
@@ -57,8 +68,15 @@ const {
     } as any,
   },
   viewOptionsHolder: {
-    current: { data: undefined as any, isError: false },
+    current: { data: undefined as any, isError: false } as {
+      data: any;
+      isError: boolean;
+      isPlaceholderData?: boolean;
+    },
   },
+  // Captures the options object ProjectRepository passes to the view-options
+  // useQuery (queryKey / queryFn / placeholderData assertions).
+  viewOptionsQueryHolder: { current: undefined as any },
   viewSelectorSpy: vi.fn(),
   filterBarSpy: vi.fn(),
   casesSpy: vi.fn(),
@@ -109,10 +127,13 @@ vi.mock("@tanstack/react-query", async (importOriginal) => {
     await importOriginal<typeof import("@tanstack/react-query")>();
   return {
     ...original,
-    useQuery: (options: any) =>
-      options?.queryKey?.[0] === "viewOptions"
-        ? viewOptionsHolder.current
-        : { data: undefined, isError: false, refetch: vi.fn() },
+    useQuery: (options: any) => {
+      if (options?.queryKey?.[0] === "viewOptions") {
+        viewOptionsQueryHolder.current = options;
+        return viewOptionsHolder.current;
+      }
+      return { data: undefined, isError: false, refetch: vi.fn() };
+    },
   };
 });
 
@@ -253,6 +274,8 @@ vi.mock("@/components/ui/resizable", () => ({
 
 // ---- Imports ----
 
+import { keepPreviousData } from "@tanstack/react-query";
+import { canonicalPredicateKey } from "~/lib/repository/filterUrlCodec";
 import type { FilterPredicate } from "~/lib/schemas/repositoryFilterPredicates";
 import ProjectRepositoryPage from "./ProjectRepository";
 
@@ -338,6 +361,7 @@ beforeEach(() => {
   setLocation("");
   paramsHolder.current = { projectId: "42" };
   viewOptionsHolder.current = { data: makeViewOptionsData(), isError: false };
+  viewOptionsQueryHolder.current = undefined;
 });
 
 // ---- Tests ----
@@ -534,5 +558,113 @@ describe("run-mode assigned-to-me seed", () => {
     viewOptionsHolder.current = { data: seedableRunOptions(), isError: false };
     rerenderRepo();
     expect(mockRouterReplace).not.toHaveBeenCalled();
+  });
+});
+
+describe("view-options counts wiring", () => {
+  const okResponse = (payload: Record<string, unknown> = {}) =>
+    new Response(JSON.stringify(payload), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+
+  it("keys the counts query by the canonical predicate key and sends the active predicates", async () => {
+    setLocation("?f=tags:any&f=templates:in:1,2");
+    renderRepo();
+
+    const options = viewOptionsQueryHolder.current;
+    expect(options.queryKey).toContain(
+      canonicalPredicateKey([tagsAny, templatesIn12])
+    );
+    expect(options.staleTime).toBe(30000);
+    // Previous counts stay visible (muted) instead of flashing empty while a
+    // predicate edit's refetch is in flight.
+    expect(options.placeholderData).toBe(keepPreviousData);
+
+    const fetchMock = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValue(okResponse());
+    try {
+      await options.queryFn();
+      const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+      expect(url).toBe("/api/repository-cases/view-options");
+      expect(JSON.parse(init.body as string).predicates).toEqual([
+        tagsAny,
+        templatesIn12,
+      ]);
+    } finally {
+      fetchMock.mockRestore();
+    }
+  });
+
+  it("mirrors the ES-search bypass: the counts request sends the emptied predicate set", async () => {
+    // A fresh Response per call — bodies are single-read and both the ES
+    // search effect and queryFn consume one.
+    const fetchMock = vi
+      .spyOn(globalThis, "fetch")
+      .mockImplementation(() =>
+        Promise.resolve(okResponse({ total: 0, hits: [] }))
+      );
+    try {
+      renderRepo({
+        isSelectionMode: true,
+        selectedTestCases: [],
+        onSelectionChange: vi.fn(),
+      });
+      act(() => lastProps(filterBarSpy).onAdd(templatesIn12));
+      expect(viewOptionsQueryHolder.current.queryKey).toContain(
+        canonicalPredicateKey([templatesIn12])
+      );
+
+      // The selection-mode ES search box activates the interim bypass.
+      const input = screen.getByPlaceholderText(
+        "search.placeholder.thisProject"
+      );
+      await act(async () => {
+        fireEvent.change(input, { target: { value: "login" } });
+      });
+
+      // The table drops its predicates during search…
+      expect(lastProps(casesSpy).predicates).toEqual([]);
+      // …and the counts query sends the same emptied set under the same key.
+      const options = viewOptionsQueryHolder.current;
+      expect(options.queryKey).not.toContain(
+        canonicalPredicateKey([templatesIn12])
+      );
+      await options.queryFn();
+      const viewOptionsCalls = fetchMock.mock.calls.filter(
+        ([url]) => url === "/api/repository-cases/view-options"
+      );
+      expect(viewOptionsCalls.length).toBeGreaterThan(0);
+      const body = JSON.parse(
+        (viewOptionsCalls.at(-1)![1] as RequestInit).body as string
+      );
+      expect(body.predicates).toEqual([]);
+    } finally {
+      fetchMock.mockRestore();
+    }
+  });
+
+  it("mutes sidebar and chip-editor counts only while placeholder counts are shown", () => {
+    setLocation("?f=tags:any");
+    viewOptionsHolder.current = {
+      data: makeViewOptionsData(),
+      isError: false,
+      isPlaceholderData: true,
+    };
+    const { rerenderRepo } = renderRepo();
+    expect(lastProps(viewSelectorSpy).countsMuted).toBe(true);
+    expect(lastProps(filterBarSpy).countsMuted).toBe(true);
+
+    // Fresh filter-aware counts landed: an active predicate alone no longer
+    // mutes anything.
+    viewOptionsHolder.current = {
+      data: makeViewOptionsData(),
+      isError: false,
+      isPlaceholderData: false,
+    };
+    rerenderRepo();
+    expect(lastProps(viewSelectorSpy).countsMuted).toBe(false);
+    expect(lastProps(filterBarSpy).countsMuted).toBe(false);
   });
 });

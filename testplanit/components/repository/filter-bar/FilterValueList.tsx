@@ -31,9 +31,9 @@ export interface FilterValueListProps {
   onToggle: (id: string | number) => void;
   renderOptionLabel?: (option: FilterValueOption) => ReactNode;
   /**
-   * True while option counts don't reflect the active predicates (the counts
-   * route is filter-blind until Phase 3) — counts render muted with an
-   * explanatory tooltip.
+   * True while option counts don't reflect the active predicates (the
+   * previous predicate set's counts are shown during a refetch) — counts
+   * render muted with an explanatory tooltip.
    */
   countsMuted?: boolean;
 }

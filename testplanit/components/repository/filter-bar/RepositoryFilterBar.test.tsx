@@ -1,5 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeAll, describe, expect, it, vi } from "vitest";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { buildFilterDimensions } from "~/lib/repository/filterDimensions";
 import type { FilterPredicate } from "~/lib/schemas/repositoryFilterPredicates";
 
@@ -118,6 +119,47 @@ describe("RepositoryFilterBar", () => {
     const group = screen.getByRole("group");
     expect(group.className).toContain("pointer-events-none");
     expect(group.className).toContain("opacity-50");
+  });
+
+  it("mutes chip-editor option counts with a tooltip while countsMuted is set", () => {
+    render(
+      <TooltipProvider>
+        <RepositoryFilterBar
+          {...makeProps({
+            predicates: [templatesIn([1])],
+            viewOptions: {
+              templates: [
+                { id: 1, name: "Login", count: 3 },
+                { id: 2, name: "Checkout", count: 5 },
+              ],
+            },
+            countsMuted: true,
+          })}
+        />
+      </TooltipProvider>
+    );
+    fireEvent.click(screen.getByLabelText("repository.filterBar.editFilter"));
+    expect(screen.getByText("3").className).toContain("opacity-50");
+  });
+
+  it("keeps chip-editor counts unmuted when countsMuted is false, even with active predicates", () => {
+    render(
+      <TooltipProvider>
+        <RepositoryFilterBar
+          {...makeProps({
+            predicates: [templatesIn([1])],
+            viewOptions: {
+              templates: [
+                { id: 1, name: "Login", count: 3 },
+                { id: 2, name: "Checkout", count: 5 },
+              ],
+            },
+          })}
+        />
+      </TooltipProvider>
+    );
+    fireEvent.click(screen.getByLabelText("repository.filterBar.editFilter"));
+    expect(screen.getByText("3").className).not.toContain("opacity-50");
   });
 
   it("adds an immediately-valid seed chip when a zero-arity dimension is picked", () => {

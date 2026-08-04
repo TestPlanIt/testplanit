@@ -87,8 +87,9 @@ interface ViewSelectorProps {
   ) => void;
   isRunMode?: boolean;
   totalCount: number;
-  /** Interim rule (spec §13): sidebar counts are filter-blind until the
-   * counts engine ships — mute them while any predicate is active. */
+  /** True while the shown counts are stale for the active predicates (the
+   * previous predicate set's view-options response is displayed while the
+   * filter-aware refetch is in flight) — counts render muted with a tooltip. */
   countsMuted?: boolean;
   viewOptions?: {
     templates: Array<{ id: number; name: string; count?: number }>;
@@ -333,8 +334,8 @@ export function ViewSelector({
     [onToggleFilterValue, dimensionKey]
   );
 
-  // Interim de-emphasis while chips are active (spec §13): the sidebar counts
-  // are filter-blind until the filter-aware counts engine ships.
+  // While a predicate edit's refetch is in flight the previous predicate
+  // set's counts stay visible — de-emphasize them until fresh data lands.
   const renderCount = useCallback(
     (count?: number): React.ReactNode => {
       const shown = count ?? 0;

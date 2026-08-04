@@ -45,6 +45,13 @@ export interface RepositoryFilterBarProps {
    * Phase-4 bypass deletion.
    */
   searchPaused?: boolean;
+  /**
+   * True while the chip editors' option counts are stale for the active
+   * predicates (the previous predicate set's view-options response is shown
+   * while the filter-aware refetch is in flight) — counts render muted with
+   * an explanatory tooltip.
+   */
+  countsMuted?: boolean;
 }
 
 interface ChipEntry {
@@ -69,6 +76,7 @@ export function RepositoryFilterBar({
   totalCount,
   isRunMode,
   searchPaused = false,
+  countsMuted = false,
 }: RepositoryFilterBarProps) {
   const t = useTranslations();
   const { data: session } = useSession();
@@ -101,10 +109,6 @@ export function RepositoryFilterBar({
     }
     return labels;
   }, [viewOptions?.dynamicFields]);
-
-  // Counts in the chip editors come from the filter-blind view-options route
-  // until Phase 3; mute them whenever any predicate is active (spec §13).
-  const countsMuted = predicates.length > 0;
 
   const handlePick = useCallback(
     (dimension: FilterDimension) => {
