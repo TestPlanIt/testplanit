@@ -85,7 +85,7 @@ import {
 } from "@/components/ui/tooltip";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { ApplicationArea } from "~/zenstack/models";
-import type { Attachments, RepositoryCases, Tags } from "~/zenstack/models";
+import type { Attachments, Tags } from "~/zenstack/models";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { JSONContent } from "@tiptap/react";
 import {
@@ -253,6 +253,8 @@ type TestRunWithRelations = {
   testCases: Array<{
     id: number;
     order: number;
+    repositoryCaseId: number;
+    totalIterations: number;
     status: {
       id: number;
       name: string;
@@ -260,9 +262,6 @@ type TestRunWithRelations = {
         value: string;
       };
     } | null;
-    repositoryCase: RepositoryCases & {
-      state: WorkflowStateWithRelations;
-    };
   }>;
   tags: Tags[];
   issues: IssueType[];
@@ -433,14 +432,17 @@ export default function TestRunPage() {
         createdBy: true,
         compositionLockedBy: { select: { id: true, name: true } },
         attachments: true,
+        // Keep this select thin: a run can hold thousands of cases and this
+        // relation is unpaginated, so don't hydrate repositoryCase (or other
+        // relations) here. The case table (ProjectRepository) fetches its own
+        // data; this list only feeds id/order/status lookups.
         testCases: {
           where: { isDeleted: false },
           select: {
             id: true,
             order: true,
+            repositoryCaseId: true,
             totalIterations: true,
-            passedIterations: true,
-            failedIterations: true,
             status: {
               select: {
                 id: true,
@@ -448,16 +450,6 @@ export default function TestRunPage() {
                 color: {
                   select: {
                     value: true,
-                  },
-                },
-              },
-            },
-            repositoryCase: {
-              include: {
-                state: {
-                  include: {
-                    icon: true,
-                    color: true,
                   },
                 },
               },
@@ -739,7 +731,7 @@ export default function TestRunPage() {
       setSelectedTags(testRunData.tags.map((tag) => tag.id));
       setSelectedIssues(testRunData.issues.map((issue) => issue.id));
       setSelectedTestCaseIds(
-        testRunData.testCases.map((tc) => tc.repositoryCase.id)
+        testRunData.testCases.map((tc) => tc.repositoryCaseId)
       );
       setIsFormInitialized(true);
     }
@@ -908,7 +900,7 @@ export default function TestRunPage() {
     try {
       // Get current test case IDs
       const currentTestCaseIds =
-        testRunData?.testCases.map((tc) => tc.repositoryCase.id) || [];
+        testRunData?.testCases.map((tc) => tc.repositoryCaseId) || [];
 
       // Prepare note and docs content to avoid double-stringification
       let noteContent = data.note;
@@ -1117,7 +1109,7 @@ export default function TestRunPage() {
     try {
       // Get current test case IDs
       const currentTestCaseIds =
-        testRunData?.testCases.map((tc) => tc.repositoryCase.id) || [];
+        testRunData?.testCases.map((tc) => tc.repositoryCaseId) || [];
 
       // Check if test cases have changed. A composition-locked run's case set is
       // frozen — never treat cases as changed (the UI disables selection; this
@@ -2420,7 +2412,7 @@ export default function TestRunPage() {
             testRunData &&
             (() => {
               const trc = testRunData.testCases.find(
-                (tc) => tc.repositoryCase.id === selectedTestCaseId
+                (tc) => tc.repositoryCaseId === selectedTestCaseId
               );
               if (!trc) return null;
               const innerProps = {
@@ -2440,13 +2432,12 @@ export default function TestRunPage() {
                 testRunCasesData: testRunData.testCases.map((tc) => ({
                   id: tc.id,
                   order: tc.order,
-                  repositoryCaseId: tc.repositoryCase.id,
+                  repositoryCaseId: tc.repositoryCaseId,
                 })),
                 isCompleted: testRunData.isCompleted,
               };
 
-              const totalIterations =
-                (trc as { totalIterations?: number }).totalIterations ?? 0;
+              const totalIterations = trc.totalIterations;
 
               if (totalIterations === 0) {
                 return (

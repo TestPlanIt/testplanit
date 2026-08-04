@@ -1,7 +1,7 @@
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { SelectedTestCasesDrawer } from "@/components/SelectedTestCasesDrawer";
-import { ApplicationArea, RepositoryCaseSource } from "~/zenstack/models";
+import { ApplicationArea } from "~/zenstack/models";
 import { CirclePlay, Combine, Lock } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useParams, useSearchParams } from "next/navigation";
@@ -59,12 +59,7 @@ type TestRunWithRelations = {
   testCases: Array<{
     id: number;
     order: number;
-    repositoryCase: {
-      id: number;
-      name: string;
-      state: WorkflowStateWithRelations;
-      source?: RepositoryCaseSource;
-    };
+    repositoryCaseId: number;
   }>;
 };
 
@@ -74,9 +69,7 @@ type SiblingTestRun = {
   name: string;
   configuration: { id: number; name: string } | null;
   testCases: Array<{
-    repositoryCase: {
-      id: number;
-    };
+    repositoryCaseId: number;
   }>;
 };
 
@@ -133,7 +126,7 @@ export function TestCasesSection({
   }, [searchParams]);
 
   const [selectedTestCases, setSelectedTestCases] = useState<number[]>(
-    testRunData?.testCases.map((tc) => tc.repositoryCase.id) || []
+    testRunData?.testCases.map((tc) => tc.repositoryCaseId) || []
   );
   const [isTableReady, setIsTableReady] = useState(false);
   const scrollAttempts = useRef(0);
@@ -174,11 +167,7 @@ export function TestCasesSection({
         testCases: {
           where: { isDeleted: false },
           select: {
-            repositoryCase: {
-              select: {
-                id: true,
-              },
-            },
+            repositoryCaseId: true,
           },
         },
       },
@@ -279,7 +268,7 @@ export function TestCasesSection({
     const uniqueCaseIds = new Set<number>();
     selectedConfigurations.forEach((run) => {
       run.testCases.forEach((tc) => {
-        uniqueCaseIds.add(tc.repositoryCase.id);
+        uniqueCaseIds.add(tc.repositoryCaseId);
       });
     });
     return uniqueCaseIds.size;
@@ -420,7 +409,7 @@ export function TestCasesSection({
       const sortedTestCases = [...testRunData.testCases].sort(
         (a, b) => a.order - b.order
       );
-      const firstTestCaseId = sortedTestCases[0]?.repositoryCase.id;
+      const firstTestCaseId = sortedTestCases[0]?.repositoryCaseId;
       if (firstTestCaseId) {
         const newSearchParams = new URLSearchParams(searchParams.toString());
         newSearchParams.set("selectedCase", firstTestCaseId.toString());
@@ -428,22 +417,6 @@ export function TestCasesSection({
       }
     }
   };
-
-  // Map the test cases to the format expected by SelectedTestCasesDrawer
-  const _mappedTestCases = testRunData.testCases.map((testCase) => ({
-    id: testCase.repositoryCase.id,
-    name: testCase.repositoryCase.name,
-    state: {
-      name: testCase.repositoryCase.state.name,
-      icon: testCase.repositoryCase.state.icon
-        ? { name: testCase.repositoryCase.state.icon.name }
-        : undefined,
-      color: testCase.repositoryCase.state.color
-        ? { value: testCase.repositoryCase.state.color.value }
-        : undefined,
-    },
-    source: testCase.repositoryCase.source,
-  }));
 
   // Helper function to fetch configurations for the combobox
   const fetchConfigurations = async (
@@ -571,7 +544,7 @@ export function TestCasesSection({
             selectedTestCases={
               isEditMode && !compositionLocked
                 ? selectedTestCases
-                : testRunData.testCases.map((tc) => tc.repositoryCase.id)
+                : testRunData.testCases.map((tc) => tc.repositoryCaseId)
             }
             selectedRunIds={
               isMultiConfigRun && (!isEditMode || compositionLocked)

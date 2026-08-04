@@ -30,7 +30,7 @@ import UploadAttachments, {
   type LinkAttachmentInput,
 } from "@/components/UploadAttachments";
 import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
-import type { Attachments, RepositoryCases, Tags } from "~/zenstack/models";
+import type { Attachments, Tags } from "~/zenstack/models";
 import { useTranslations } from "next-intl";
 import { IconName } from "~/types/globals";
 import { SelectedConfigurationInfo } from "./TestCasesSection";
@@ -124,6 +124,8 @@ type TestRunWithRelations = {
   testCases: Array<{
     id: number;
     order: number;
+    repositoryCaseId: number;
+    totalIterations: number;
     status: {
       id: number;
       name: string;
@@ -131,9 +133,6 @@ type TestRunWithRelations = {
         value: string;
       };
     } | null;
-    repositoryCase: RepositoryCases & {
-      state: WorkflowStateWithRelations;
-    };
   }>;
   tags: Tags[];
   issues: IssueType[];
