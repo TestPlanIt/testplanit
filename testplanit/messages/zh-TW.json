@@ -1070,7 +1070,35 @@
     "invalidProject": "項目ID無效。",
     "visualization": "視覺化",
     "results": "結果",
-    "loading": "載入中..."
+    "loading": "載入中...",
+    "operators": {
+      "eq": "等於",
+      "ne": "不等於",
+      "lt": "少於",
+      "lte": "小於或等於",
+      "gt": "大於",
+      "gte": "大於或等於",
+      "between": "之間",
+      "contains": "包含",
+      "notContains": "不含",
+      "startsWith": "以……開始",
+      "endsWith": "以……結尾",
+      "domain": "網域包含",
+      "on": "在",
+      "before": "之前",
+      "after": "之後",
+      "last7": "過去7天",
+      "last30": "過去30天",
+      "last90": "過去90天",
+      "thisYear": "今年",
+      "anyOf": "任一",
+      "allOf": "全部",
+      "noneOf": "無",
+      "is": "是",
+      "in": "為任一",
+      "hasValue": "有值",
+      "isEmpty": "為空"
+    }
   },
   "api": {
     "testResults": {
@@ -3436,6 +3464,23 @@
       "linkedIssuesDroppedTitle": "部分相關問題未包含在內。",
       "linkedIssuesDropped": "{count, plural, =1 {# 個連結問題已被捨棄} other {# 個連結問題已被捨棄}}，原因是權杖預算限制：{keys}。",
       "linkedIssuesPreviewHeading": "將會包含的相關問題"
+    },
+    "filterBar": {
+      "addFilter": "新增篩選器",
+      "removeFilter": "移除篩選器：{name}",
+      "editFilter": "編輯篩選器：{name}",
+      "activeCount": "{count, plural, =1 {# active filter} other {# active filters}}",
+      "resultsCount": "{count, plural, =1 {# result} other {# results}}",
+      "assignedToMe": "指派給我",
+      "noFilters": "沒有啟用中的篩選器",
+      "noMatches": "沒有符合篩選條件的測試案例",
+      "searchTruncated": "在前 {count, number} 個相符項目中篩選",
+      "sortedByRelevance": "依相關性排序",
+      "countsUpdating": "正在更新計數……",
+      "filterLimitReached": "已達篩選器上限（最多 {count} 個）",
+      "valueLimitReached": "已達值上限（每個篩選器最多 {count} 個）",
+      "filtersTruncated": "部分篩選器已被捨棄（最多 {count} 個）",
+      "valuesTruncated": "{count, plural, =1 {# value} other {# values}} per filter maximum — extra values were dropped"
     }
   },
   "tags": {

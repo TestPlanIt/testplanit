@@ -1070,7 +1070,35 @@
     "invalidProject": "プロジェクト ID が無効です。",
     "visualization": "視覚化",
     "results": "結果",
-    "loading": "読み込み中..."
+    "loading": "読み込み中...",
+    "operators": {
+      "eq": "等しい",
+      "ne": "等しくない",
+      "lt": "未満",
+      "lte": "以下",
+      "gt": "より大きい",
+      "gte": "以上",
+      "between": "間",
+      "contains": "含む",
+      "notContains": "含まない",
+      "startsWith": "から始まる",
+      "endsWith": "で終わる",
+      "domain": "ドメインに含まれる",
+      "on": "当日",
+      "before": "より前",
+      "after": "より後",
+      "last7": "過去7日間",
+      "last30": "過去30日間",
+      "last90": "過去90日間",
+      "thisYear": "今年",
+      "anyOf": "いずれか",
+      "allOf": "すべて",
+      "noneOf": "いずれでもない",
+      "is": "である",
+      "in": "いずれかである",
+      "hasValue": "値がある",
+      "isEmpty": "空である"
+    }
   },
   "api": {
     "testResults": {
@@ -3436,6 +3464,23 @@
       "linkedIssuesDroppedTitle": "関連する問題の一部は含まれていません",
       "linkedIssuesDropped": "{count, plural, =1 {# リンクされた問題は削除されました} other {# リンクされた問題は削除されました}} トークン予算のため: {keys}。",
       "linkedIssuesPreviewHeading": "関連する問題には以下が含まれます"
+    },
+    "filterBar": {
+      "addFilter": "フィルターを追加",
+      "removeFilter": "フィルターを削除: {name}",
+      "editFilter": "フィルターを編集: {name}",
+      "activeCount": "{count, plural, =1 {# active filter} other {# active filters}}",
+      "resultsCount": "{count, plural, =1 {# result} other {# results}}",
+      "assignedToMe": "自分に割り当てられた",
+      "noFilters": "アクティブなフィルターがありません",
+      "noMatches": "フィルター条件に一致するケースがありません",
+      "searchTruncated": "上位 {count, number} 件の一致結果内でフィルタリング",
+      "sortedByRelevance": "関連性で並べ替え",
+      "countsUpdating": "件数を更新中…",
+      "filterLimitReached": "フィルターの上限に達しました(最大 {count} 件)",
+      "valueLimitReached": "値の上限に達しました(フィルターごとに最大 {count} 件)",
+      "filtersTruncated": "一部のフィルターが削除されました(最大 {count} 件)",
+      "valuesTruncated": "{count, plural, =1 {# value} other {# values}} per filter maximum — extra values were dropped"
     }
   },
   "tags": {

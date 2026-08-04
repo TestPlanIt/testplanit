@@ -1070,7 +1070,35 @@
     "invalidProject": "잘못된 프로젝트 ID입니다.",
     "visualization": "심상",
     "results": "결과",
-    "loading": "로딩 중..."
+    "loading": "로딩 중...",
+    "operators": {
+      "eq": "같음",
+      "ne": "같지 않음",
+      "lt": "미만",
+      "lte": "이하",
+      "gt": "초과",
+      "gte": "이상",
+      "between": "사이",
+      "contains": "포함됨",
+      "notContains": "포함하지 않음",
+      "startsWith": "로 시작함",
+      "endsWith": "로 끝남",
+      "domain": "도메인 포함",
+      "on": "~에",
+      "before": "이전",
+      "after": "이후",
+      "last7": "지난 7일",
+      "last30": "지난 30일",
+      "last90": "지난 90일",
+      "thisYear": "올해",
+      "anyOf": "다음 중 하나",
+      "allOf": "모두",
+      "noneOf": "없음",
+      "is": "임",
+      "in": "다음 중 하나임",
+      "hasValue": "값 있음",
+      "isEmpty": "비어 있음"
+    }
   },
   "api": {
     "testResults": {
@@ -3436,6 +3464,23 @@
       "linkedIssuesDroppedTitle": "일부 연관된 문제가 포함되지 않았습니다.",
       "linkedIssuesDropped": "{count, plural, =1 {# 연결된 이슈가 삭제되었습니다} other {# 연결된 이슈가 삭제되었습니다}} 토큰 예산 부족으로 인해: {keys}.",
       "linkedIssuesPreviewHeading": "포함될 관련 이슈"
+    },
+    "filterBar": {
+      "addFilter": "필터 추가",
+      "removeFilter": "필터 제거: {name}",
+      "editFilter": "필터 편집: {name}",
+      "activeCount": "{count, plural, =1 {# active filter} other {# active filters}}",
+      "resultsCount": "{count, plural, =1 {# result} other {# results}}",
+      "assignedToMe": "내게 배정됨",
+      "noFilters": "활성 필터 없음",
+      "noMatches": "필터와 일치하는 케이스가 없습니다",
+      "searchTruncated": "상위 {count, number}개 일치 항목 내에서 필터링 중",
+      "sortedByRelevance": "관련성으로 정렬됨",
+      "countsUpdating": "개수 업데이트 중...",
+      "filterLimitReached": "필터 제한에 도달했습니다 (최대 {count}개)",
+      "valueLimitReached": "값 제한에 도달했습니다 (필터당 최대 {count}개)",
+      "filtersTruncated": "일부 필터가 삭제되었습니다 (최대 {count}개)",
+      "valuesTruncated": "{count, plural, =1 {# value} other {# values}} per filter maximum — extra values were dropped"
     }
   },
   "tags": {

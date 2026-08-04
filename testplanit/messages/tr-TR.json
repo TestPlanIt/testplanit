@@ -1070,7 +1070,35 @@
     "invalidProject": "Geçersiz proje kimliği.",
     "visualization": "Görselleştirme",
     "results": "Sonuçlar",
-    "loading": "Yükleniyor..."
+    "loading": "Yükleniyor...",
+    "operators": {
+      "eq": "Eşittir",
+      "ne": "Eşit değil",
+      "lt": "Küçüktür",
+      "lte": "Küçük veya eşittir",
+      "gt": "Büyüktür",
+      "gte": "Büyük veya eşittir",
+      "between": "Arasında",
+      "contains": "İçerir",
+      "notContains": "İçermez",
+      "startsWith": "Şununla başlar",
+      "endsWith": "Şununla sona erer",
+      "domain": "Alan adı içerir",
+      "on": "Tarihinde",
+      "before": "Önce",
+      "after": "Sonra",
+      "last7": "Son 7 gün",
+      "last30": "Son 30 gün",
+      "last90": "Son 90 gün",
+      "thisYear": "Bu yıl",
+      "anyOf": "Herhangi biri",
+      "allOf": "Hepsi",
+      "noneOf": "Hiçbiri",
+      "is": "Şudur",
+      "in": "Şunlardan biri",
+      "hasValue": "Değeri var",
+      "isEmpty": "Boş"
+    }
   },
   "api": {
     "testResults": {
@@ -3436,6 +3464,23 @@
       "linkedIssuesDroppedTitle": "Bağlantılı bazı konular dahil edilmemiştir.",
       "linkedIssuesDropped": "{count, plural, =1 {# bağlantılı sorun, token bütçesi nedeniyle kaldırıldı} other {# bağlantılı sorunlar, token bütçesi nedeniyle kaldırıldı}} : {keys}.",
       "linkedIssuesPreviewHeading": "Dahil edilecek bağlantılı konular"
+    },
+    "filterBar": {
+      "addFilter": "Filtre Ekle",
+      "removeFilter": "Filtreyi kaldır: {name}",
+      "editFilter": "Filtreyi düzenle: {name}",
+      "activeCount": "{count, plural, =1 {# active filter} other {# active filters}}",
+      "resultsCount": "{count, plural, =1 {# result} other {# results}}",
+      "assignedToMe": "Bana atananlar",
+      "noFilters": "Aktif filtre yok",
+      "noMatches": "Filtrelerinize uyan test durumu bulunamadı",
+      "searchTruncated": "En iyi {count, number} eşleşme içinde filtreleniyor",
+      "sortedByRelevance": "İlgiye göre sıralandı",
+      "countsUpdating": "Sayılar güncelleniyor...",
+      "filterLimitReached": "Filtre sınırına ulaşıldı (en fazla {count})",
+      "valueLimitReached": "Değer sınırına ulaşıldı (filtre başına en fazla {count})",
+      "filtersTruncated": "Bazı filtreler kaldırıldı (en fazla {count})",
+      "valuesTruncated": "{count, plural, =1 {# value} other {# values}} per filter maximum — extra values were dropped"
     }
   },
   "tags": {

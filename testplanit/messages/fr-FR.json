@@ -1070,7 +1070,35 @@
     "invalidProject": "ID de projet invalide.",
     "visualization": "Visualisation",
     "results": "Résultats",
-    "loading": "Chargement..."
+    "loading": "Chargement...",
+    "operators": {
+      "eq": "Égal à",
+      "ne": "Non égal à",
+      "lt": "Inférieur à",
+      "lte": "Inférieur ou égal à",
+      "gt": "Supérieur à",
+      "gte": "Supérieur ou égal à",
+      "between": "Entre",
+      "contains": "Contient",
+      "notContains": "Ne contient pas",
+      "startsWith": "Commence par",
+      "endsWith": "Se termine par",
+      "domain": "Le domaine contient",
+      "on": "Le",
+      "before": "Avant",
+      "after": "Après",
+      "last7": "Les 7 derniers jours",
+      "last30": "30 derniers jours",
+      "last90": "90 derniers jours",
+      "thisYear": "Cette année",
+      "anyOf": "L'un des",
+      "allOf": "Tous les",
+      "noneOf": "Aucun de",
+      "is": "Est",
+      "in": "Est l'un des",
+      "hasValue": "A une valeur",
+      "isEmpty": "Est vide"
+    }
   },
   "api": {
     "testResults": {
@@ -3436,6 +3464,23 @@
       "linkedIssuesDroppedTitle": "Certains problèmes liés n'ont pas été inclus.",
       "linkedIssuesDropped": "{count, plural, =1 {# problème lié a été supprimé} other {# problèmes liés ont été supprimés}} en raison du budget de jetons : {keys}.",
       "linkedIssuesPreviewHeading": "Problèmes connexes qui seront inclus"
+    },
+    "filterBar": {
+      "addFilter": "Ajouter un filtre",
+      "removeFilter": "Supprimer le filtre : {name}",
+      "editFilter": "Modifier le filtre : {name}",
+      "activeCount": "{count, plural, =1 {# filtre actif} other {# filtres actifs}}",
+      "resultsCount": "{count, plural, =1 {# résultat} other {# résultats}}",
+      "assignedToMe": "Assigné à moi",
+      "noFilters": "Aucun filtre actif",
+      "noMatches": "Aucun cas ne correspond à vos filtres",
+      "searchTruncated": "Filtrage parmi les {count, number} meilleures correspondances",
+      "sortedByRelevance": "Trié par pertinence",
+      "countsUpdating": "Mise à jour des compteurs...",
+      "filterLimitReached": "Limite de filtres atteinte ({count} maximum)",
+      "valueLimitReached": "Limite de valeurs atteinte ({count} maximum par filtre)",
+      "filtersTruncated": "Certains filtres ont été supprimés ({count} maximum)",
+      "valuesTruncated": "{count, plural, =1 {# valeur} other {# valeurs}} par filtre maximum — les valeurs supplémentaires ont été supprimées"
     }
   },
   "tags": {

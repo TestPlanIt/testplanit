@@ -1070,7 +1070,35 @@
     "invalidProject": "Nieprawidłowy identyfikator projektu.",
     "visualization": "Wyobrażanie sobie",
     "results": "Wyniki",
-    "loading": "Załadunek..."
+    "loading": "Załadunek...",
+    "operators": {
+      "eq": "Równa się",
+      "ne": "Nie równa się",
+      "lt": "Mniej niż",
+      "lte": "Mniejsze lub równe",
+      "gt": "Większe niż",
+      "gte": "Większe lub równe",
+      "between": "Między",
+      "contains": "Zawiera",
+      "notContains": "Nie zawiera",
+      "startsWith": "Zaczyna się od",
+      "endsWith": "Kończy się na",
+      "domain": "Domena zawiera",
+      "on": "W dniu",
+      "before": "Przed",
+      "after": "Po",
+      "last7": "Ostatnie 7 dni",
+      "last30": "Ostatnie 30 dni",
+      "last90": "Ostatnie 90 dni",
+      "thisYear": "W tym roku",
+      "anyOf": "Dowolne z",
+      "allOf": "Wszystkie z",
+      "noneOf": "Żadne z",
+      "is": "Jest",
+      "in": "Jest dowolnym z",
+      "hasValue": "Ma wartość",
+      "isEmpty": "Jest puste"
+    }
   },
   "api": {
     "testResults": {
@@ -3436,6 +3464,23 @@
       "linkedIssuesDroppedTitle": "Niektóre powiązane problemy nie zostały uwzględnione",
       "linkedIssuesDropped": "{count, plural, =1 {# powiązane problemy zostały usunięte} other {# powiązane problemy zostały usunięte}} z powodu budżetu tokenów: {keys}.",
       "linkedIssuesPreviewHeading": "Powiązane problemy, które zostaną uwzględnione"
+    },
+    "filterBar": {
+      "addFilter": "Dodaj filtr",
+      "removeFilter": "Usuń filtr: {name}",
+      "editFilter": "Edytuj filtr: {name}",
+      "activeCount": "{count, plural, =1 {# active filter} other {# active filters}}",
+      "resultsCount": "{count, plural, =1 {# result} other {# results}}",
+      "assignedToMe": "Przypisane do mnie",
+      "noFilters": "Brak aktywnych filtrów",
+      "noMatches": "Brak przypadków pasujących do Twoich filtrów",
+      "searchTruncated": "Filtrowanie w obrębie {count, number} najlepszych dopasowań",
+      "sortedByRelevance": "Posortowane według trafności",
+      "countsUpdating": "Aktualizowanie liczników...",
+      "filterLimitReached": "Osiągnięto limit filtrów (maksymalnie {count})",
+      "valueLimitReached": "Osiągnięto limit wartości (maksymalnie {count} na filtr)",
+      "filtersTruncated": "Niektóre filtry zostały pominięte (maksymalnie {count})",
+      "valuesTruncated": "{count, plural, =1 {# value} other {# values}} per filter maximum — extra values were dropped"
     }
   },
   "tags": {

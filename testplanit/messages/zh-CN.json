@@ -1070,7 +1070,35 @@
     "invalidProject": "项目ID无效。",
     "visualization": "可视化",
     "results": "结果",
-    "loading": "加载中..."
+    "loading": "加载中...",
+    "operators": {
+      "eq": "等于",
+      "ne": "不等于",
+      "lt": "小于",
+      "lte": "小于或等于",
+      "gt": "大于",
+      "gte": "大于或等于",
+      "between": "介于",
+      "contains": "包含",
+      "notContains": "不包含",
+      "startsWith": "以……开始",
+      "endsWith": "以……结尾",
+      "domain": "域名包含",
+      "on": "在",
+      "before": "之前",
+      "after": "之后",
+      "last7": "过去7天",
+      "last30": "过去30天",
+      "last90": "过去90天",
+      "thisYear": "今年",
+      "anyOf": "任意一个",
+      "allOf": "全部",
+      "noneOf": "无一个",
+      "is": "是",
+      "in": "是以下任意一个",
+      "hasValue": "有值",
+      "isEmpty": "为空"
+    }
   },
   "api": {
     "testResults": {
@@ -3436,6 +3464,23 @@
       "linkedIssuesDroppedTitle": "部分相关问题未包含在内。",
       "linkedIssuesDropped": "{count, plural, =1 {# 关联的问题已被删除} other {# 关联的问题已被删除}} 由于代币预算： {keys}。",
       "linkedIssuesPreviewHeading": "将会包含的相关问题"
+    },
+    "filterBar": {
+      "addFilter": "添加筛选器",
+      "removeFilter": "移除筛选器：{name}",
+      "editFilter": "编辑筛选器：{name}",
+      "activeCount": "{count, plural, =1 {# active filter} other {# active filters}}",
+      "resultsCount": "{count, plural, =1 {# result} other {# results}}",
+      "assignedToMe": "分配给我的",
+      "noFilters": "没有启用的筛选器",
+      "noMatches": "没有符合筛选条件的用例",
+      "searchTruncated": "仅在前 {count, number} 个匹配项中筛选",
+      "sortedByRelevance": "按相关性排序",
+      "countsUpdating": "正在更新计数……",
+      "filterLimitReached": "已达到筛选器数量上限（最多 {count} 个）",
+      "valueLimitReached": "已达到值数量上限（每个筛选器最多 {count} 个）",
+      "filtersTruncated": "部分筛选器已被丢弃（最多 {count} 个）",
+      "valuesTruncated": "{count, plural, =1 {# value} other {# values}} per filter maximum — extra values were dropped"
     }
   },
   "tags": {

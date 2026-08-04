@@ -1070,7 +1070,35 @@
     "invalidProject": "Ongeldige project-ID.",
     "visualization": "Visualisatie",
     "results": "Resultaten",
-    "loading": "Bezig met laden..."
+    "loading": "Bezig met laden...",
+    "operators": {
+      "eq": "Is gelijk aan",
+      "ne": "Niet gelijk",
+      "lt": "Minder dan",
+      "lte": "Minder dan of gelijk aan",
+      "gt": "Groter dan",
+      "gte": "Groter dan of gelijk aan",
+      "between": "Tussen",
+      "contains": "Bevat",
+      "notContains": "Bevat niet",
+      "startsWith": "Begint met",
+      "endsWith": "Eindigt met",
+      "domain": "Domein bevat",
+      "on": "Op",
+      "before": "Voor",
+      "after": "Na",
+      "last7": "Laatste 7 dagen",
+      "last30": "Laatste 30 dagen",
+      "last90": "Laatste 90 dagen",
+      "thisYear": "Dit jaar",
+      "anyOf": "Een van",
+      "allOf": "Alle van",
+      "noneOf": "Geen van",
+      "is": "Is",
+      "in": "Is een van",
+      "hasValue": "Heeft waarde",
+      "isEmpty": "Is leeg"
+    }
   },
   "api": {
     "testResults": {
@@ -3436,6 +3464,23 @@
       "linkedIssuesDroppedTitle": "Sommige gerelateerde onderwerpen zijn niet opgenomen.",
       "linkedIssuesDropped": "{count, plural, =1 {# gekoppeld probleem is verwijderd} other {# gekoppelde problemen zijn verwijderd}} vanwege tokenbudget: {keys}.",
       "linkedIssuesPreviewHeading": "Gerelateerde onderwerpen die zullen worden opgenomen"
+    },
+    "filterBar": {
+      "addFilter": "Filter toevoegen",
+      "removeFilter": "Filter verwijderen: {name}",
+      "editFilter": "Filter bewerken: {name}",
+      "activeCount": "{count, plural, =1 {# actieve filter} other {# actieve filters}}",
+      "resultsCount": "{count, plural, =1 {# resultaat} other {# resultaten}}",
+      "assignedToMe": "Toegewezen aan mij",
+      "noFilters": "Geen actieve filters",
+      "noMatches": "Geen testgevallen komen overeen met uw filters",
+      "searchTruncated": "Filteren binnen de top {count, number} resultaten",
+      "sortedByRelevance": "Gesorteerd op relevantie",
+      "countsUpdating": "Aantallen bijwerken...",
+      "filterLimitReached": "Filterlimiet bereikt (maximaal {count})",
+      "valueLimitReached": "Waardelimiet bereikt (maximaal {count} per filter)",
+      "filtersTruncated": "Sommige filters zijn verwijderd (maximaal {count})",
+      "valuesTruncated": "{count, plural, =1 {# waarde} other {# waarden}} maximaal per filter — extra waarden zijn verwijderd"
     }
   },
   "tags": {

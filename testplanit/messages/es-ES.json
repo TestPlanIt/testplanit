@@ -1070,7 +1070,35 @@
     "invalidProject": "ID de proyecto inválido.",
     "visualization": "Visualización",
     "results": "Resultados",
-    "loading": "Cargando..."
+    "loading": "Cargando...",
+    "operators": {
+      "eq": "Es igual a",
+      "ne": "No es igual a",
+      "lt": "Menor que",
+      "lte": "Menor o igual",
+      "gt": "Mayor que",
+      "gte": "Mayor o igual",
+      "between": "Entre",
+      "contains": "Contiene",
+      "notContains": "No contiene",
+      "startsWith": "Comienza con",
+      "endsWith": "Termina con",
+      "domain": "El dominio contiene",
+      "on": "En",
+      "before": "Antes de",
+      "after": "Después de",
+      "last7": "Últimos 7 días",
+      "last30": "Últimos 30 días",
+      "last90": "Últimos 90 días",
+      "thisYear": "Este año",
+      "anyOf": "Cualquiera de",
+      "allOf": "Todos",
+      "noneOf": "Ninguno de",
+      "is": "Es",
+      "in": "Es cualquiera de",
+      "hasValue": "Tiene valor",
+      "isEmpty": "Está vacío"
+    }
   },
   "api": {
     "testResults": {
@@ -3436,6 +3464,23 @@
       "linkedIssuesDroppedTitle": "Algunos temas relacionados no fueron incluidos.",
       "linkedIssuesDropped": "{count, plural, =1 {# El problema vinculado fue descartado} other {# Los problemas vinculados fueron descartados}} debido al presupuesto de tokens: {keys}.",
       "linkedIssuesPreviewHeading": "Temas relacionados que se incluirán"
+    },
+    "filterBar": {
+      "addFilter": "Añadir filtro",
+      "removeFilter": "Eliminar filtro: {name}",
+      "editFilter": "Editar filtro: {name}",
+      "activeCount": "{count, plural, =1 {# filtro activo} other {# filtros activos}}",
+      "resultsCount": "{count, plural, =1 {# resultado} other {# resultados}}",
+      "assignedToMe": "Asignado a mí",
+      "noFilters": "Sin filtros activos",
+      "noMatches": "Ningún caso coincide con sus filtros",
+      "searchTruncated": "Filtrando entre las {count, number} mejores coincidencias",
+      "sortedByRelevance": "Ordenado por relevancia",
+      "countsUpdating": "Actualizando recuentos...",
+      "filterLimitReached": "Límite de filtros alcanzado (máximo {count})",
+      "valueLimitReached": "Límite de valores alcanzado (máximo {count} por filtro)",
+      "filtersTruncated": "Se eliminaron algunos filtros (máximo {count})",
+      "valuesTruncated": "{count, plural, =1 {# valor} other {# valores}} por filtro como máximo — se eliminaron los valores adicionales"
     }
   },
   "tags": {

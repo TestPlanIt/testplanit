@@ -1070,7 +1070,35 @@
     "invalidProject": "Mã định danh dự án không hợp lệ.",
     "visualization": "Trực quan hóa",
     "results": "Kết quả",
-    "loading": "Đang tải..."
+    "loading": "Đang tải...",
+    "operators": {
+      "eq": "Bằng",
+      "ne": "Không bằng",
+      "lt": "Nhỏ hơn",
+      "lte": "Nhỏ hơn hoặc bằng",
+      "gt": "Lớn hơn",
+      "gte": "Lớn hơn hoặc bằng",
+      "between": "Trong khoảng",
+      "contains": "Chứa",
+      "notContains": "Không chứa",
+      "startsWith": "Bắt đầu bằng",
+      "endsWith": "Kết thúc bằng",
+      "domain": "Miền chứa",
+      "on": "Vào",
+      "before": "Trước",
+      "after": "Sau",
+      "last7": "7 ngày qua",
+      "last30": "30 ngày qua",
+      "last90": "90 ngày qua",
+      "thisYear": "Năm nay",
+      "anyOf": "Bất kỳ",
+      "allOf": "Tất cả",
+      "noneOf": "Không có",
+      "is": "Là",
+      "in": "Là bất kỳ",
+      "hasValue": "Có giá trị",
+      "isEmpty": "Trống"
+    }
   },
   "api": {
     "testResults": {
@@ -3436,6 +3464,23 @@
       "linkedIssuesDroppedTitle": "Một số vấn đề liên quan không được bao gồm.",
       "linkedIssuesDropped": "{count, plural, =1 {# Vấn đề được liên kết đã bị hủy bỏ} other {# Vấn đề được liên kết đã bị hủy bỏ}} do hạn mức token: {keys}.",
       "linkedIssuesPreviewHeading": "Các vấn đề liên quan sẽ được bao gồm"
+    },
+    "filterBar": {
+      "addFilter": "Thêm bộ lọc",
+      "removeFilter": "Xóa bộ lọc: {name}",
+      "editFilter": "Chỉnh sửa bộ lọc: {name}",
+      "activeCount": "{count, plural, =1 {# bộ lọc đang hoạt động} other {# bộ lọc đang hoạt động}}",
+      "resultsCount": "{count, plural, =1 {# kết quả} other {# kết quả}}",
+      "assignedToMe": "Được giao cho tôi",
+      "noFilters": "Không có bộ lọc đang hoạt động",
+      "noMatches": "Không có trường hợp thử nghiệm nào khớp với bộ lọc của bạn",
+      "searchTruncated": "Lọc trong số {count, number} kết quả khớp hàng đầu",
+      "sortedByRelevance": "Sắp xếp theo độ liên quan",
+      "countsUpdating": "Đang cập nhật số lượng...",
+      "filterLimitReached": "Đã đạt giới hạn bộ lọc (tối đa {count})",
+      "valueLimitReached": "Đã đạt giới hạn giá trị (tối đa {count} cho mỗi bộ lọc)",
+      "filtersTruncated": "Một số bộ lọc đã bị loại bỏ (tối đa {count})",
+      "valuesTruncated": "{count, plural, =1 {# giá trị} other {# giá trị}} tối đa cho mỗi bộ lọc — các giá trị dư đã bị loại bỏ"
     }
   },
   "tags": {
