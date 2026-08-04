@@ -10,6 +10,7 @@ import type {
   LinkedIssueRef,
 } from "~/lib/integrations/adapters/IssueAdapter";
 import { parameterCreateSchema } from "~/lib/schemas/parameterSchema";
+import { normalizeGeneratedSteps } from "~/utils/generatedSteps";
 
 // Hard cap on starter dataset rows emitted by the LLM (DoS guard).
 // Rows beyond this index are truncated with a `dataset_capped` warning.
@@ -868,7 +869,7 @@ export function buildSystemPrompt(
     )
     .join("\n");
   const stepsInstruction = includeSteps
-    ? "\n- For the Steps field in fieldValues, provide detailed step objects with 'step' and 'expectedResult' keys"
+    ? "\n- For the Steps field in fieldValues, provide an ARRAY of detailed step objects, each with a 'step' and an 'expectedResult' key. Emit one object per individual action — a test case normally needs several. Never return the steps as a string, and never pack a numbered list of actions into a single step object."
     : "";
   const priorityField = template.fields.find((f) =>
     f.name.toLowerCase().includes("priority")
@@ -1585,17 +1586,7 @@ export function parseAndValidateTestCases(
         }
       });
 
-      // If the LLM put steps at the top level instead of in fieldValues,
-      // move them into fieldValues for any Steps-type field
-      if (Array.isArray(tc.steps) && tc.steps.length > 0) {
-        const stepsFieldDef = template.fields.find(
-          (f) =>
-            f.type.toLowerCase() === "steps" || f.name.toLowerCase() === "steps"
-        );
-        if (stepsFieldDef && !validatedFieldValues[stepsFieldDef.name]) {
-          validatedFieldValues[stepsFieldDef.name] = tc.steps;
-        }
-      }
+      normalizeStepsFieldValue(validatedFieldValues, template, tc.steps);
 
       // If the LLM put priority at the top level instead of in fieldValues,
       // move it into fieldValues for any priority-like field
@@ -1834,6 +1825,29 @@ function extractRawTestCaseStrings(text: string): string[] {
  * narrowed to the user's selection), so a deselected field cannot reach the
  * preview or the import. Exact match by display name — what the import does.
  */
+/**
+ * Settle the Steps field on the canonical array of `{ step, expectedResult }`
+ * pairs. Sources it from fieldValues, or from a top-level `steps` key when the
+ * model put it there, and normalizes the shape — a model answers with a single
+ * object, a numbered-list string, or `action`/`expected` keys as readily as
+ * with the requested array, and every one of those renders as one step (or
+ * none) downstream.
+ */
+function normalizeStepsFieldValue(
+  fieldValues: Record<string, any>,
+  template: TemplateData,
+  topLevelSteps: unknown
+): void {
+  const stepsFieldDef = template.fields.find(
+    (f) => f.type.toLowerCase() === "steps" || f.name.toLowerCase() === "steps"
+  );
+  if (!stepsFieldDef) return;
+
+  const raw = fieldValues[stepsFieldDef.name] ?? topLevelSteps;
+  const steps = normalizeGeneratedSteps(raw);
+  if (steps.length > 0) fieldValues[stepsFieldDef.name] = steps;
+}
+
 function stripUnknownFieldValues(
   fieldValues: Record<string, any> | undefined,
   template: TemplateData
@@ -1881,16 +1895,7 @@ export function validateTestCase(
     }
   });
 
-  // If the LLM put steps at the top level, move into fieldValues
-  if (Array.isArray(tc.steps) && tc.steps.length > 0) {
-    const stepsFieldDef = template.fields.find(
-      (f) =>
-        f.type.toLowerCase() === "steps" || f.name.toLowerCase() === "steps"
-    );
-    if (stepsFieldDef && !validatedFieldValues[stepsFieldDef.name]) {
-      validatedFieldValues[stepsFieldDef.name] = tc.steps;
-    }
-  }
+  normalizeStepsFieldValue(validatedFieldValues, template, tc.steps);
 
   // If the LLM put priority at the top level, move into fieldValues
   if (tc.priority && typeof tc.priority === "string") {
