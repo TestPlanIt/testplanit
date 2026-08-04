@@ -1914,13 +1914,16 @@ export function TestCaseDetailsView({
   }, [folders, isLoading, testcase?.folder]);
 
   // Handle hash-based scrolling (e.g., #comments)
+  const scrolledHashRef = useRef<string | null>(null);
   useEffect(() => {
     if (!isLoading && typeof window !== "undefined") {
       const hash = window.location.hash;
-      if (hash) {
+      // Scroll once per hash so loading-state flips don't yank the viewport back
+      if (hash && scrolledHashRef.current !== hash) {
         setTimeout(() => {
           const element = document.querySelector(hash);
           if (element) {
+            scrolledHashRef.current = hash;
             element.scrollIntoView({ behavior: "smooth", block: "start" });
           }
         }, 100);

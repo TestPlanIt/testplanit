@@ -1325,14 +1325,17 @@ export default function SessionPage() {
   ]);
 
   // Scroll to hash anchor after page loads
+  const scrolledHashRef = useRef<string | null>(null);
   useEffect(() => {
     if (!isLoading && typeof window !== "undefined") {
       const hash = window.location.hash;
-      if (hash) {
+      // Scroll once per hash so loading-state flips don't yank the viewport back
+      if (hash && scrolledHashRef.current !== hash) {
         // Wait a bit for the DOM to be fully rendered
         setTimeout(() => {
           const element = document.querySelector(hash);
           if (element) {
+            scrolledHashRef.current = hash;
             element.scrollIntoView({ behavior: "smooth", block: "start" });
           }
         }, 100);

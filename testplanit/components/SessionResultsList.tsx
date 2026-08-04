@@ -61,7 +61,7 @@ import { useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
 import parseDuration from "parse-duration";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod/v4";
@@ -972,9 +972,27 @@ export function SessionResultsList({
   }, [refreshResults, refetch]);
 
   // Use an effect to handle hash scrolling that works with Next.js
+  const scrolledHashRef = useRef<string | null>(null);
   useEffect(() => {
     // Function to scroll to result based on hash
     const scrollToResult = () => {
+      if (typeof window === "undefined") return;
+
+      const hash = window.location.hash;
+      if (!hash || !hash.startsWith("#result-")) {
+        scrolledHashRef.current = null;
+        return;
+      }
+
+      // Scroll once per hash so data refetches don't yank the viewport back
+      if (scrolledHashRef.current === hash) return;
+
+      const resultId = hash.replace("#result-", "");
+      const resultElement = document.getElementById(`result-${resultId}`);
+      if (!resultElement) return;
+
+      scrolledHashRef.current = hash;
+
       // Remove any existing highlights
       document.querySelectorAll(".result-highlight").forEach((el) => {
         el.classList.remove(
@@ -985,41 +1003,30 @@ export function SessionResultsList({
         );
       });
 
-      // Check if there's a hash in the URL
-      if (typeof window !== "undefined") {
-        const hash = window.location.hash;
-        if (hash && hash.startsWith("#result-")) {
-          const resultId = hash.replace("#result-", "");
-          const resultElement = document.getElementById(`result-${resultId}`);
+      // Add highlight and scroll into view
+      resultElement.classList.add(
+        "result-highlight",
+        "ring-2",
+        "ring-primary",
+        "ring-opacity-70"
+      );
 
-          if (resultElement) {
-            // Add highlight and scroll into view
-            resultElement.classList.add(
-              "result-highlight",
-              "ring-2",
-              "ring-primary",
-              "ring-opacity-70"
-            );
+      // Smooth scroll to the element
+      setTimeout(() => {
+        resultElement.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
 
-            // Smooth scroll to the element
-            setTimeout(() => {
-              resultElement.scrollIntoView({
-                behavior: "smooth",
-                block: "start",
-              });
-
-              // Remove highlight after 3 seconds
-              setTimeout(() => {
-                resultElement.classList.remove(
-                  "ring-2",
-                  "ring-primary",
-                  "ring-opacity-70"
-                );
-              }, 3000);
-            }, 100);
-          }
-        }
-      }
+        // Remove highlight after 3 seconds
+        setTimeout(() => {
+          resultElement.classList.remove(
+            "ring-2",
+            "ring-primary",
+            "ring-opacity-70"
+          );
+        }, 3000);
+      }, 100);
     };
 
     // Run on initial load and when results are loaded
