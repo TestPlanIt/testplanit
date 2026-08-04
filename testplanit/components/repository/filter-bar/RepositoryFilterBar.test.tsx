@@ -2,7 +2,10 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeAll, describe, expect, it, vi } from "vitest";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { buildFilterDimensions } from "~/lib/repository/filterDimensions";
-import type { FilterPredicate } from "~/lib/schemas/repositoryFilterPredicates";
+import {
+  MAX_FILTER_PREDICATES,
+  type FilterPredicate,
+} from "~/lib/schemas/repositoryFilterPredicates";
 
 vi.mock("@/components/tables/UserNameCell", () => ({
   UserNameCell: ({ userId }: { userId: string }) => <span>{userId}</span>,
@@ -107,18 +110,30 @@ describe("RepositoryFilterBar", () => {
     });
   });
 
-  it("mutes the chips row and shows the notice while search pauses filters", () => {
+  it("keeps the chips live during search and reports a truncated search window", () => {
     render(
       <RepositoryFilterBar
-        {...makeProps({ predicates: [templatesIn([1])], searchPaused: true })}
+        {...makeProps({
+          predicates: [templatesIn([1])],
+          searchTruncated: true,
+          searchWindow: 10000,
+        })}
       />
     );
-    expect(screen.getByTestId("filter-bar-paused")).toHaveTextContent(
-      "repository.filterBar.pausedDuringSearch"
-    );
+    // Filters now intersect with search instead of being paused by it, so the
+    // chips row stays interactive.
     const group = screen.getByRole("group");
-    expect(group.className).toContain("pointer-events-none");
-    expect(group.className).toContain("opacity-50");
+    expect(group.className).not.toContain("pointer-events-none");
+    expect(screen.getByTestId("filter-bar-search-truncated")).toHaveTextContent(
+      "repository.filterBar.searchTruncated"
+    );
+  });
+
+  it("shows no truncation notice for a search inside the result window", () => {
+    render(
+      <RepositoryFilterBar {...makeProps({ predicates: [templatesIn([1])] })} />
+    );
+    expect(screen.queryByTestId("filter-bar-search-truncated")).toBeNull();
   });
 
   it("mutes chip-editor option counts with a tooltip while countsMuted is set", () => {
@@ -230,5 +245,131 @@ describe("RepositoryFilterBar", () => {
       operator: "in",
       values: ["other-user"],
     });
+  });
+});
+
+describe("RepositoryFilterBar cap feedback", () => {
+  // One chip per (dimension, operator) — the bar's keying invariant — so the
+  // fixture needs MAX_FILTER_PREDICATES distinct dimensions.
+  const atCap: FilterPredicate[] = Array.from(
+    { length: MAX_FILTER_PREDICATES },
+    (_, i) => ({
+      dimension: `field_${i + 1}`,
+      operator: "contains",
+      values: [`value${i}`],
+    })
+  );
+
+  const capRegistry = buildFilterDimensions({
+    dynamicFields: Array.from({ length: MAX_FILTER_PREDICATES }, (_, i) => ({
+      fieldId: i + 1,
+      type: "Text Long",
+    })),
+  });
+
+  it("disables Add-filter at the predicate cap", () => {
+    render(
+      <TooltipProvider>
+        <RepositoryFilterBar
+          {...makeProps({ predicates: atCap, registry: capRegistry })}
+        />
+      </TooltipProvider>
+    );
+    expect(screen.getByTestId("filter-bar-add")).toBeDisabled();
+  });
+
+  it("keeps Add-filter enabled one below the cap", () => {
+    render(
+      <TooltipProvider>
+        <RepositoryFilterBar
+          {...makeProps({
+            predicates: atCap.slice(1),
+            registry: capRegistry,
+          })}
+        />
+      </TooltipProvider>
+    );
+    expect(screen.getByTestId("filter-bar-add")).toBeEnabled();
+  });
+
+  it("says so when an over-cap link was trimmed", () => {
+    render(
+      <TooltipProvider>
+        <RepositoryFilterBar
+          {...makeProps({
+            predicates: [templatesIn([1])],
+            truncation: { predicatesDropped: 6, valuesTruncated: [] },
+          })}
+        />
+      </TooltipProvider>
+    );
+    expect(screen.getByTestId("filter-bar-truncated")).toHaveTextContent(
+      // vitest.setup.tsx carries its own message fixture, so t() echoes the key.
+      "repository.filterBar.filtersTruncated"
+    );
+    // The predicate cap was not the thing that bit, so its notice stays away.
+    expect(
+      screen.queryByTestId("filter-bar-values-truncated")
+    ).not.toBeInTheDocument();
+  });
+
+  it("reports a trimmed value list with its own notice, not the predicate cap", () => {
+    render(
+      <TooltipProvider>
+        <RepositoryFilterBar
+          {...makeProps({
+            predicates: [templatesIn([1])],
+            truncation: {
+              predicatesDropped: 0,
+              valuesTruncated: ["templates"],
+            },
+          })}
+        />
+      </TooltipProvider>
+    );
+    expect(screen.getByTestId("filter-bar-values-truncated")).toHaveTextContent(
+      "repository.filterBar.valuesTruncated"
+    );
+    expect(
+      screen.queryByTestId("filter-bar-truncated")
+    ).not.toBeInTheDocument();
+  });
+
+  it("shows both notices when both caps bit", () => {
+    render(
+      <TooltipProvider>
+        <RepositoryFilterBar
+          {...makeProps({
+            predicates: [templatesIn([1])],
+            truncation: {
+              predicatesDropped: 3,
+              valuesTruncated: ["templates", "tags"],
+            },
+          })}
+        />
+      </TooltipProvider>
+    );
+    expect(screen.getByTestId("filter-bar-truncated")).toHaveTextContent(
+      "repository.filterBar.filtersTruncated"
+    );
+    expect(screen.getByTestId("filter-bar-values-truncated")).toHaveTextContent(
+      "repository.filterBar.valuesTruncated"
+    );
+  });
+
+  it("stays quiet when nothing was trimmed", () => {
+    render(
+      <TooltipProvider>
+        <RepositoryFilterBar
+          {...makeProps({
+            predicates: [templatesIn([1])],
+            truncation: { predicatesDropped: 0, valuesTruncated: [] },
+          })}
+        />
+      </TooltipProvider>
+    );
+    expect(
+      screen.queryByTestId("filter-bar-truncated")
+    ).not.toBeInTheDocument();
   });
 });

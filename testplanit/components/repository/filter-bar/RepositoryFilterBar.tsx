@@ -10,8 +10,13 @@ import {
   type FilterDimension,
   type FilterDimensionRegistry,
 } from "~/lib/repository/filterDimensions";
-import type { FilterPredicate } from "~/lib/schemas/repositoryFilterPredicates";
-import { cn } from "~/utils";
+import {
+  isFilterPredicateLimitReached,
+  MAX_FILTER_PREDICATES,
+  MAX_VALUES_PER_PREDICATE,
+  type FilterCapTruncation,
+  type FilterPredicate,
+} from "~/lib/schemas/repositoryFilterPredicates";
 import { AddFilterButton } from "./AddFilterButton";
 import { chipKey, defaultPredicateFor, isCommittable } from "./chipHelpers";
 import { getDimensionIcon, getDimensionLabel } from "./dimensionPresentation";
@@ -40,11 +45,13 @@ export interface RepositoryFilterBarProps {
   totalCount: number;
   isRunMode: boolean;
   /**
-   * Interim rule (spec §13): while ES search bypasses predicates, the chips
-   * row is muted and a "filters are paused" notice shows. Removed with the
-   * Phase-4 bypass deletion.
+   * The active search matched more cases than Elasticsearch's result window
+   * could return, so filters and counts apply to the top `searchWindow`
+   * matches only (spec §9). Rendered as a notice beside the chips.
    */
-  searchPaused?: boolean;
+  searchTruncated?: boolean;
+  /** Size of that window, for the notice's number. */
+  searchWindow?: number;
   /**
    * True while the chip editors' option counts are stale for the active
    * predicates (the previous predicate set's view-options response is shown
@@ -52,6 +59,13 @@ export interface RepositoryFilterBarProps {
    * an explanatory tooltip.
    */
   countsMuted?: boolean;
+  /**
+   * What the hard caps trimmed, on read (an over-cap shared link) or on write
+   * (the codec's clamp) — `useRepositoryFilters.truncation`. Surfaced so an
+   * over-cap filter set never silently shows fewer filters, or fewer values,
+   * than it carried. The two caps render as two distinct notices.
+   */
+  truncation?: FilterCapTruncation;
 }
 
 interface ChipEntry {
@@ -75,8 +89,10 @@ export function RepositoryFilterBar({
   viewOptions,
   totalCount,
   isRunMode,
-  searchPaused = false,
+  searchTruncated = false,
+  searchWindow = 0,
   countsMuted = false,
+  truncation,
 }: RepositoryFilterBarProps) {
   const t = useTranslations();
   const { data: session } = useSession();
@@ -274,11 +290,7 @@ export function RepositoryFilterBar({
               })
             : t("repository.filterBar.noFilters")
         }
-        aria-disabled={searchPaused || undefined}
-        className={cn(
-          "flex flex-wrap items-center gap-1.5 min-w-0",
-          searchPaused && "opacity-50 pointer-events-none"
-        )}
+        className="flex flex-wrap items-center gap-1.5 min-w-0"
       >
         {chips.map((entry, index) => renderChip(entry, index))}
         {draft && renderChip(draft, null)}
@@ -299,6 +311,7 @@ export function RepositoryFilterBar({
           dynamicFieldLabels={dynamicFieldLabels}
           onPick={handlePick}
           triggerRef={addButtonRef}
+          limitReached={isFilterPredicateLimitReached(predicates.length)}
         />
         {predicates.length >= 2 && (
           <Button
@@ -312,12 +325,35 @@ export function RepositoryFilterBar({
           </Button>
         )}
       </div>
-      {searchPaused && (
+      {searchTruncated && (
         <span
           className="text-xs text-muted-foreground italic"
-          data-testid="filter-bar-paused"
+          data-testid="filter-bar-search-truncated"
         >
-          {t("repository.filterBar.pausedDuringSearch")}
+          {t("repository.filterBar.searchTruncated", { count: searchWindow })}
+        </span>
+      )}
+      {/* The two caps are reported separately: a trimmed chip list and a
+          trimmed value list are different losses with different limits, and
+          both can happen to the same link. */}
+      {truncation && truncation.predicatesDropped > 0 && (
+        <span
+          className="text-xs text-muted-foreground italic"
+          data-testid="filter-bar-truncated"
+        >
+          {t("repository.filterBar.filtersTruncated", {
+            count: MAX_FILTER_PREDICATES,
+          })}
+        </span>
+      )}
+      {truncation && truncation.valuesTruncated.length > 0 && (
+        <span
+          className="text-xs text-muted-foreground italic"
+          data-testid="filter-bar-values-truncated"
+        >
+          {t("repository.filterBar.valuesTruncated", {
+            count: MAX_VALUES_PER_PREDICATE,
+          })}
         </span>
       )}
       <span

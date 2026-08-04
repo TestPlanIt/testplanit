@@ -2,11 +2,22 @@ import { describe, expect, it } from "vitest";
 
 import { buildFilterDimensions } from "~/lib/repository/filterDimensions";
 import {
+  applyFilterPredicateCap,
   buildFilterPredicateSchema,
   buildFilterPredicatesSchema,
+  clampFilterPredicates,
   coerceFilterPredicate,
+  EMPTY_FILTER_CAP_TRUNCATION,
   filterPredicateInputSchema,
+  hasFilterCapTruncation,
+  isFilterPredicateLimitReached,
+  isFilterValueLimitReached,
+  MAX_FILTER_PREDICATES,
+  MAX_VALUES_PER_PREDICATE,
+  mergeFilterCapTruncation,
   parseFilterPredicates,
+  parseFilterPredicatesWithReport,
+  reportFilterCapTruncation,
   type FilterPredicateInput,
 } from "./repositoryFilterPredicates";
 
@@ -33,6 +44,9 @@ function predicate(
 ): FilterPredicateInput {
   return { dimension, operator, values };
 }
+
+const manyIds = (count: number) =>
+  Array.from({ length: count }, (_, index) => index + 1);
 
 describe("filterPredicateInputSchema (structural)", () => {
   it("rejects non-letter-first dimensions", () => {
@@ -405,5 +419,220 @@ describe("buildFilterPredicatesSchema / parseFilterPredicates (lenient)", () => 
     expect(result).toEqual([
       { dimension: "templates", operator: "in", values: [1] },
     ]);
+  });
+});
+
+describe("hard caps", () => {
+  it("truncates over-cap value lists to the first N, in order", () => {
+    const coerced = coerceFilterPredicate(
+      predicate("templates", "in", manyIds(MAX_VALUES_PER_PREDICATE + 25)),
+      repoRegistry
+    );
+    expect(coerced?.values).toHaveLength(MAX_VALUES_PER_PREDICATE);
+    expect(coerced?.values).toEqual(manyIds(MAX_VALUES_PER_PREDICATE));
+  });
+
+  it("is deterministic — the same input truncates the same way", () => {
+    const input = predicate("tags", "any", manyIds(500));
+    expect(coerceFilterPredicate(input, repoRegistry)).toEqual(
+      coerceFilterPredicate(input, repoRegistry)
+    );
+  });
+
+  it("still drops bounded operators that carry too many values", () => {
+    expect(
+      coerceFilterPredicate(predicate("automated", "is", [1, 0]), repoRegistry)
+    ).toBeNull();
+  });
+
+  it("keeps the first MAX_FILTER_PREDICATES valid predicates, in order", () => {
+    const input = Array.from({ length: MAX_FILTER_PREDICATES + 10 }, (_, i) =>
+      predicate("field_7", "contains", [`value${i}`])
+    );
+    const parsed = parseFilterPredicates(input, repoRegistry);
+
+    expect(parsed).toHaveLength(MAX_FILTER_PREDICATES);
+    expect(parsed[0]!.values).toEqual(["value0"]);
+    expect(parsed.at(-1)!.values).toEqual([
+      `value${MAX_FILTER_PREDICATES - 1}`,
+    ]);
+  });
+
+  it("counts only valid predicates towards the cap", () => {
+    const input = [
+      ...Array.from({ length: 10 }, () => predicate("templates", "bogus", [1])),
+      ...Array.from({ length: MAX_FILTER_PREDICATES }, (_, i) =>
+        predicate("field_7", "contains", [`value${i}`])
+      ),
+    ];
+    expect(parseFilterPredicates(input, repoRegistry)).toHaveLength(
+      MAX_FILTER_PREDICATES
+    );
+  });
+
+  it("reports what the caps would trim without coercing", () => {
+    const input = [
+      ...Array.from({ length: MAX_FILTER_PREDICATES + 3 }, (_, i) =>
+        predicate("field_7", "contains", [`value${i}`])
+      ),
+      predicate("tags", "any", manyIds(MAX_VALUES_PER_PREDICATE + 1)),
+    ];
+    // The over-cap tags predicate sits past the predicate cap, so only the
+    // dropped-predicate count applies to it.
+    expect(reportFilterCapTruncation(input)).toEqual({
+      predicatesDropped: 4,
+      valuesTruncated: [],
+    });
+
+    expect(
+      reportFilterCapTruncation([
+        predicate("tags", "any", manyIds(MAX_VALUES_PER_PREDICATE + 1)),
+      ])
+    ).toEqual({ predicatesDropped: 0, valuesTruncated: ["tags"] });
+  });
+
+  it("reports nothing for within-cap or non-array input", () => {
+    expect(
+      reportFilterCapTruncation([predicate("templates", "in", [1])])
+    ).toEqual({ predicatesDropped: 0, valuesTruncated: [] });
+    expect(reportFilterCapTruncation("nope")).toEqual({
+      predicatesDropped: 0,
+      valuesTruncated: [],
+    });
+  });
+
+  it("pairs predicates and truncation in parseFilterPredicatesWithReport", () => {
+    const input = Array.from({ length: MAX_FILTER_PREDICATES + 2 }, (_, i) =>
+      predicate("field_7", "contains", [`value${i}`])
+    );
+    const result = parseFilterPredicatesWithReport(input, repoRegistry);
+
+    expect(result.predicates).toHaveLength(MAX_FILTER_PREDICATES);
+    expect(result.truncation.predicatesDropped).toBe(2);
+    expect(hasFilterCapTruncation(result.truncation)).toBe(true);
+    expect(hasFilterCapTruncation(EMPTY_FILTER_CAP_TRUNCATION)).toBe(false);
+  });
+
+  it("exposes limit predicates for the UI", () => {
+    expect(isFilterPredicateLimitReached(MAX_FILTER_PREDICATES - 1)).toBe(
+      false
+    );
+    expect(isFilterPredicateLimitReached(MAX_FILTER_PREDICATES)).toBe(true);
+    expect(isFilterValueLimitReached(MAX_VALUES_PER_PREDICATE - 1)).toBe(false);
+    expect(isFilterValueLimitReached(MAX_VALUES_PER_PREDICATE)).toBe(true);
+  });
+
+  it("applyFilterPredicateCap copies and never mutates its input", () => {
+    const input = [predicate("templates", "in", [1])];
+    const capped = applyFilterPredicateCap(input);
+    expect(capped).toEqual(input);
+    expect(capped).not.toBe(input);
+  });
+});
+
+describe("clampFilterPredicates (write path)", () => {
+  it("passes a within-cap set through unchanged and reports nothing", () => {
+    const input = [
+      predicate("templates", "in", [1, 2]),
+      predicate("tags", "any", []),
+    ];
+    const result = clampFilterPredicates(input);
+
+    expect(result.predicates).toEqual(input);
+    expect(result.truncation).toEqual({
+      predicatesDropped: 0,
+      valuesTruncated: [],
+    });
+  });
+
+  it("keeps the first MAX_FILTER_PREDICATES and counts the rest", () => {
+    const input = Array.from({ length: MAX_FILTER_PREDICATES + 7 }, (_, i) =>
+      predicate("field_7", "contains", [`value${i}`])
+    );
+    const result = clampFilterPredicates(input);
+
+    expect(result.predicates).toEqual(input.slice(0, MAX_FILTER_PREDICATES));
+    expect(result.truncation).toEqual({
+      predicatesDropped: 7,
+      valuesTruncated: [],
+    });
+  });
+
+  it("trims over-cap value lists and names every affected dimension", () => {
+    const tagValues = manyIds(MAX_VALUES_PER_PREDICATE + 4);
+    const templateValues = manyIds(MAX_VALUES_PER_PREDICATE + 1);
+    const result = clampFilterPredicates([
+      predicate("tags", "any", tagValues),
+      predicate("templates", "in", templateValues),
+      predicate("states", "in", [1]),
+    ]);
+
+    expect(result.predicates[0]!.values).toEqual(
+      tagValues.slice(0, MAX_VALUES_PER_PREDICATE)
+    );
+    expect(result.predicates[1]!.values).toEqual(
+      templateValues.slice(0, MAX_VALUES_PER_PREDICATE)
+    );
+    expect(result.predicates[2]!.values).toEqual([1]);
+    expect(result.truncation).toEqual({
+      predicatesDropped: 0,
+      valuesTruncated: ["tags", "templates"],
+    });
+  });
+
+  it("never mutates the caller's predicates or their value arrays", () => {
+    const values = manyIds(MAX_VALUES_PER_PREDICATE + 2);
+    const input = [predicate("tags", "any", values)];
+    const result = clampFilterPredicates(input);
+
+    expect(values).toHaveLength(MAX_VALUES_PER_PREDICATE + 2);
+    expect(input[0]!.values).toHaveLength(MAX_VALUES_PER_PREDICATE + 2);
+    expect(result.predicates[0]).not.toBe(input[0]);
+  });
+
+  it("agrees with the parse path: clamped output is a parse fixed point", () => {
+    const { predicates } = clampFilterPredicates([
+      predicate("tags", "any", manyIds(MAX_VALUES_PER_PREDICATE + 30)),
+      ...Array.from({ length: MAX_FILTER_PREDICATES + 5 }, (_, i) =>
+        predicate("field_7", "contains", [`value${i}`])
+      ),
+    ]);
+    const reparsed = parseFilterPredicatesWithReport(predicates, repoRegistry);
+
+    expect(reparsed.predicates).toEqual(predicates);
+    expect(reparsed.truncation).toEqual({
+      predicatesDropped: 0,
+      valuesTruncated: [],
+    });
+  });
+});
+
+describe("mergeFilterCapTruncation", () => {
+  it("returns the other side untouched when one is empty", () => {
+    const some = { predicatesDropped: 2, valuesTruncated: ["tags"] };
+    expect(mergeFilterCapTruncation(EMPTY_FILTER_CAP_TRUNCATION, some)).toBe(
+      some
+    );
+    expect(mergeFilterCapTruncation(some, EMPTY_FILTER_CAP_TRUNCATION)).toBe(
+      some
+    );
+    expect(
+      mergeFilterCapTruncation(
+        EMPTY_FILTER_CAP_TRUNCATION,
+        EMPTY_FILTER_CAP_TRUNCATION
+      )
+    ).toEqual(EMPTY_FILTER_CAP_TRUNCATION);
+  });
+
+  it("sums dropped predicates and unions the value dimensions", () => {
+    expect(
+      mergeFilterCapTruncation(
+        { predicatesDropped: 2, valuesTruncated: ["tags", "templates"] },
+        { predicatesDropped: 3, valuesTruncated: ["tags", "states"] }
+      )
+    ).toEqual({
+      predicatesDropped: 5,
+      valuesTruncated: ["tags", "templates", "states"],
+    });
   });
 });

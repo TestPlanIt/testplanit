@@ -3474,8 +3474,13 @@
       "assignedToMe": "Assigned to me",
       "noFilters": "No active filters",
       "noMatches": "No cases match your filters",
-      "pausedDuringSearch": "Filters are paused while searching",
-      "countsIgnoreFilters": "Counts don't reflect active filters"
+      "searchTruncated": "Filtering within the top {count, number} matches",
+      "sortedByRelevance": "Sorted by relevance",
+      "countsUpdating": "Updating counts...",
+      "filterLimitReached": "Filter limit reached ({count} maximum)",
+      "valueLimitReached": "Value limit reached ({count} maximum per filter)",
+      "filtersTruncated": "Some filters were dropped ({count} maximum)",
+      "valuesTruncated": "{count, plural, =1 {# value} other {# values}} per filter maximum — extra values were dropped"
     }
   },
   "tags": {

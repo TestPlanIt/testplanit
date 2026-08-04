@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeAll, describe, expect, it, vi } from "vitest";
 
+import { MAX_VALUES_PER_PREDICATE } from "~/lib/schemas/repositoryFilterPredicates";
 import { FilterValueList } from "./FilterValueList";
 import type { FilterValueOption } from "./valueOptions";
 
@@ -108,5 +109,55 @@ describe("FilterValueList", () => {
       />
     );
     expect(screen.getByText("custom-smoke")).toBeInTheDocument();
+  });
+});
+
+describe("FilterValueList at the value cap", () => {
+  const atCap = Array.from(
+    { length: MAX_VALUES_PER_PREDICATE },
+    (_, i) => i + 100
+  );
+
+  it("blocks further selections and says so", () => {
+    const onToggle = vi.fn();
+    render(
+      <FilterValueList
+        options={shortOptions}
+        selectedValues={atCap}
+        onToggle={onToggle}
+      />
+    );
+
+    fireEvent.click(screen.getByTestId("filter-value-option-1"));
+    expect(onToggle).not.toHaveBeenCalled();
+    expect(screen.getByTestId("filter-value-limit")).toHaveTextContent(
+      // vitest.setup.tsx carries its own message fixture, so t() echoes the key.
+      "repository.filterBar.valueLimitReached"
+    );
+  });
+
+  it("still allows deselecting an already-selected value at the cap", () => {
+    const onToggle = vi.fn();
+    render(
+      <FilterValueList
+        options={shortOptions}
+        selectedValues={[1, ...atCap.slice(1)]}
+        onToggle={onToggle}
+      />
+    );
+
+    fireEvent.click(screen.getByTestId("filter-value-option-1"));
+    expect(onToggle).toHaveBeenCalledWith(1);
+  });
+
+  it("shows no notice below the cap", () => {
+    render(
+      <FilterValueList
+        options={shortOptions}
+        selectedValues={[1]}
+        onToggle={() => {}}
+      />
+    );
+    expect(screen.queryByTestId("filter-value-limit")).not.toBeInTheDocument();
   });
 });

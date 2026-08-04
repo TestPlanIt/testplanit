@@ -25,6 +25,9 @@ interface FetchCasesArgs {
   // (value-not-null); the real row selection happens via the shared matchers,
   // exactly as the table hooks apply them.
   postFetchFilters?: PostFetchFilter[];
+  // Elasticsearch id set of an active search. "All filtered" must mean the
+  // intersection the table shows, never the un-searched superset.
+  searchCaseIds?: number[];
 }
 
 // Define the precise select clause to match the client-side query
@@ -233,6 +236,11 @@ export async function fetchAllCasesForExport(
       //   "Server Action: Fetching FILTERED cases for export with where clause:",
       //   args.where
       // );
+      if (args.searchCaseIds) {
+        finalWhereClause = {
+          AND: [finalWhereClause, { id: { in: args.searchCaseIds } }],
+        };
+      }
     }
 
     let allDataRaw = await baseDb.repositoryCases.findMany({

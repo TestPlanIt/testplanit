@@ -32,6 +32,7 @@ export async function POST(request: NextRequest) {
       pagination,
       highlight = true,
       facets,
+      trackTotalHits,
     } = searchOptions;
 
     const client = getElasticsearchClient();
@@ -86,6 +87,7 @@ export async function POST(request: NextRequest) {
         index: existingIndices,
         query: esQuery,
         ...(aggs && { aggs }),
+        ...(trackTotalHits && { track_total_hits: true }),
         ...(sort && { sort: buildSort(sort) }),
         ...(pagination && {
           from: (pagination.page - 1) * pagination.size,

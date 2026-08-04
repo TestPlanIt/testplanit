@@ -2,9 +2,24 @@ import { act, renderHook } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { buildFilterDimensions } from "~/lib/repository/filterDimensions";
-import { parseFilterParams } from "~/lib/repository/filterUrlCodec";
-import type { FilterPredicate } from "~/lib/schemas/repositoryFilterPredicates";
-import { useRepositoryFilters } from "./useRepositoryFilters";
+import {
+  encodeCompressedFilterParam,
+  FILTER_URL_PARAM_BUDGET,
+  measureFilterParams,
+  parseFilterParams,
+} from "~/lib/repository/filterUrlCodec";
+import {
+  MAX_FILTER_PREDICATES,
+  MAX_VALUES_PER_PREDICATE,
+  type FilterPredicate,
+} from "~/lib/schemas/repositoryFilterPredicates";
+import {
+  assertsAbsence,
+  assertsValueExists,
+  dropConflictingPredicates,
+  predicatesConflict,
+  useRepositoryFilters,
+} from "./useRepositoryFilters";
 
 // --- Mocks ---
 
@@ -490,5 +505,445 @@ describe("useRepositoryFilters", () => {
       expect(result.current.canonicalKey).toBe(first);
       expect(first).toBe("tags:any&templates:in:1,2");
     });
+  });
+});
+
+describe("URL-length mitigation", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    setLocation("");
+    mockPathname.mockReturnValue("/projects/repository/1");
+  });
+
+  /** Text-heavy predicates — the shape that actually blows the budget. */
+  const bulky = (count: number): FilterPredicate[] =>
+    Array.from({ length: count }, (_, index) => ({
+      dimension: "field_12",
+      operator: "contains",
+      values: [`the quick brown fox jumps over the lazy dog ${index}`],
+    }));
+
+  function overBudgetPredicates(): FilterPredicate[] {
+    let count = 1;
+    while (
+      measureFilterParams(bulky(count)) <= FILTER_URL_PARAM_BUDGET &&
+      count < MAX_FILTER_PREDICATES
+    ) {
+      count += 1;
+    }
+    return bulky(count);
+  }
+
+  it("writes readable f params while under the budget", () => {
+    const { result } = renderFilters();
+
+    act(() => {
+      result.current.setPredicates([templatesIn12]);
+    });
+
+    const [url] = mockRouterReplace.mock.calls[0];
+    expect(url).toContain("f=templates:in:1,2");
+    expect(url).not.toContain("fz=");
+  });
+
+  it("switches to a single fz param over the budget and round-trips it", () => {
+    const predicates = overBudgetPredicates();
+    const { result } = renderFilters();
+
+    act(() => {
+      result.current.setPredicates(predicates);
+    });
+
+    const [url] = mockRouterReplace.mock.calls[0] as [string];
+    const search = url.slice(url.indexOf("?"));
+    expect(search).toMatch(/[?&]fz=/);
+    expect(search).not.toContain("f=");
+    expect(search.length).toBeLessThan(measureFilterParams(predicates));
+
+    setLocation(search);
+    const reloaded = renderFilters();
+    expect(reloaded.result.current.predicates).toEqual(predicates);
+  });
+
+  it("clears a stale fz when the filters shrink back under budget", () => {
+    const fz = encodeCompressedFilterParam(overBudgetPredicates())!;
+    setLocation(`?node=5&fz=${fz}`);
+    const { result } = renderFilters();
+
+    act(() => {
+      result.current.setPredicates([templatesIn12]);
+    });
+
+    const [url] = mockRouterReplace.mock.calls[0] as [string];
+    expect(url).toContain("node=5");
+    expect(url).toContain("f=templates:in:1,2");
+    expect(url).not.toContain("fz=");
+  });
+
+  it("reads fz and ignores f params sitting next to it", () => {
+    const fz = encodeCompressedFilterParam([tagsAny])!;
+    setLocation(`?f=templates:in:1,2&fz=${fz}`);
+    const { result } = renderFilters();
+
+    expect(result.current.predicates).toEqual([tagsAny]);
+  });
+
+  it("drops everything when fz is corrupt, without throwing", () => {
+    setLocation("?f=templates:in:1,2&fz=u!!!!");
+    const { result } = renderFilters();
+
+    expect(result.current.predicates).toEqual([]);
+    expect(result.current.canonicalKey).toBe("");
+  });
+
+  it("caps predicates on read and reports the truncation", () => {
+    const search = Array.from(
+      { length: MAX_FILTER_PREDICATES + 3 },
+      (_, i) => `f=field_12:contains:value${i}`
+    ).join("&");
+    setLocation(`?${search}`);
+    const { result } = renderFilters();
+
+    expect(result.current.predicates).toHaveLength(MAX_FILTER_PREDICATES);
+    expect(result.current.truncation.predicatesDropped).toBe(3);
+    expect(result.current.limitReached).toBe(true);
+  });
+
+  it("caps predicates on write too, and says so", () => {
+    const { result } = renderFilters({ persistToUrl: false });
+
+    act(() => {
+      result.current.setPredicates(bulky(MAX_FILTER_PREDICATES + 5));
+    });
+
+    expect(result.current.predicates).toHaveLength(MAX_FILTER_PREDICATES);
+    expect(result.current.limitReached).toBe(true);
+    // The write-path clamp is reported, not silent — the FilterBar renders it.
+    expect(result.current.truncation).toEqual({
+      predicatesDropped: 5,
+      valuesTruncated: [],
+    });
+  });
+
+  it("caps values per predicate on write, so the url survives a re-read", () => {
+    const values = Array.from(
+      { length: MAX_VALUES_PER_PREDICATE + 6 },
+      (_, i) => i + 1
+    );
+    const { result } = renderFilters();
+
+    act(() => {
+      result.current.setPredicates([
+        { dimension: "templates", operator: "in", values },
+      ]);
+    });
+
+    const [url] = mockRouterReplace.mock.calls[0] as [string];
+    setLocation(url.slice(url.indexOf("?")));
+    const { result: reread } = renderFilters();
+
+    expect(reread.current.predicates[0]!.values).toHaveLength(
+      MAX_VALUES_PER_PREDICATE
+    );
+    expect(reread.current.truncation).toEqual({
+      predicatesDropped: 0,
+      valuesTruncated: [],
+    });
+    expect(result.current.truncation).toEqual({
+      predicatesDropped: 0,
+      valuesTruncated: ["templates"],
+    });
+  });
+
+  it("skips the write when the compressed param already matches", () => {
+    const predicates = overBudgetPredicates();
+    const fz = encodeCompressedFilterParam(predicates)!;
+    setLocation(`?fz=${fz}`);
+    const { result } = renderFilters();
+
+    act(() => {
+      result.current.setPredicates(predicates);
+    });
+
+    expect(mockRouterReplace).not.toHaveBeenCalled();
+  });
+});
+
+describe("contradictory predicate resolution", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    setLocation("");
+    mockPathname.mockReturnValue("/projects/repository/1");
+  });
+
+  const bareNone = (dimension: string): FilterPredicate => ({
+    dimension,
+    operator: "none",
+    values: [],
+  });
+
+  describe("predicate helpers", () => {
+    it.each([
+      "in",
+      "all",
+      "is",
+      "eq",
+      "ne",
+      "lt",
+      "lte",
+      "gt",
+      "gte",
+      "between",
+      "on",
+      "before",
+      "after",
+      "last7",
+      "last30",
+      "last90",
+      "thisYear",
+      "contains",
+      "notContains",
+      "startsWith",
+      "endsWith",
+      "domain",
+    ])("treats %s as asserting a value exists", (operator) => {
+      const predicate = { dimension: "field_2", operator, values: [1] };
+      expect(assertsValueExists(predicate)).toBe(true);
+      expect(assertsAbsence(predicate)).toBe(false);
+    });
+
+    it("treats both faces of `any` as asserting a value exists", () => {
+      expect(
+        assertsValueExists({ dimension: "tags", operator: "any", values: [] })
+      ).toBe(true);
+      expect(
+        assertsValueExists({ dimension: "tags", operator: "any", values: [1] })
+      ).toBe(true);
+    });
+
+    it("treats only the BARE none as asserting absence", () => {
+      expect(assertsAbsence(bareNone("tags"))).toBe(true);
+      expect(
+        assertsAbsence({ dimension: "tags", operator: "none", values: [5] })
+      ).toBe(false);
+      expect(
+        assertsValueExists({ dimension: "tags", operator: "none", values: [5] })
+      ).toBe(false);
+    });
+
+    it("conflicts only within one dimension", () => {
+      expect(predicatesConflict(bareNone("tags"), tagsAny)).toBe(true);
+      expect(predicatesConflict(tagsAny, bareNone("tags"))).toBe(true);
+      expect(predicatesConflict(bareNone("tags"), templatesIn12)).toBe(false);
+    });
+
+    it("never conflicts with a valued none (has A but not B stays legal)", () => {
+      const valuedNone: FilterPredicate = {
+        dimension: "tags",
+        operator: "none",
+        values: [5],
+      };
+      expect(predicatesConflict(valuedNone, tagsAny)).toBe(false);
+      expect(predicatesConflict(valuedNone, bareNone("tags"))).toBe(false);
+    });
+
+    it("dropConflictingPredicates keeps the added predicate itself", () => {
+      const added = bareNone("tags");
+      expect(dropConflictingPredicates([tagsAny, added], added)).toEqual([
+        added,
+      ]);
+    });
+  });
+
+  it("adding bare none drops the dimension's value-asserting predicates", () => {
+    const { result } = renderFilters({ persistToUrl: false });
+
+    act(() => {
+      result.current.setPredicates([
+        templatesIn12,
+        { dimension: "tags", operator: "any", values: [1, 2] },
+        { dimension: "tags", operator: "all", values: [3] },
+      ]);
+    });
+    act(() => {
+      result.current.addPredicate(bareNone("tags"));
+    });
+
+    expect(result.current.predicates).toEqual([
+      templatesIn12,
+      bareNone("tags"),
+    ]);
+  });
+
+  it("adding a value-asserting predicate drops the dimension's bare none", () => {
+    const { result } = renderFilters({ persistToUrl: false });
+
+    act(() => {
+      result.current.setPredicates([bareNone("field_2"), templatesIn12]);
+    });
+    act(() => {
+      result.current.addPredicate({
+        dimension: "field_2",
+        operator: "in",
+        values: [147],
+      });
+    });
+
+    // The live repro: "None" + one dropdown option no longer AND to nothing.
+    expect(result.current.predicates).toEqual([
+      templatesIn12,
+      { dimension: "field_2", operator: "in", values: [147] },
+    ]);
+  });
+
+  it("bare none and bare any on one dimension are mutually exclusive", () => {
+    const { result } = renderFilters({ persistToUrl: false });
+
+    act(() => {
+      result.current.setPredicates([tagsAny]);
+    });
+    act(() => {
+      result.current.addPredicate(bareNone("tags"));
+    });
+    expect(result.current.predicates).toEqual([bareNone("tags")]);
+
+    act(() => {
+      result.current.addPredicate(tagsAny);
+    });
+    expect(result.current.predicates).toEqual([tagsAny]);
+  });
+
+  it("text-operator predicates conflict with the same field's bare none", () => {
+    const { result } = renderFilters({ persistToUrl: false });
+
+    act(() => {
+      result.current.setPredicates([
+        { dimension: "field_12", operator: "contains", values: ["foo"] },
+      ]);
+    });
+    act(() => {
+      result.current.addPredicate(bareNone("field_12"));
+    });
+
+    expect(result.current.predicates).toEqual([bareNone("field_12")]);
+  });
+
+  it("keeps a valued none next to a value-asserting predicate", () => {
+    const { result } = renderFilters({ persistToUrl: false });
+    const valuedNone: FilterPredicate = {
+      dimension: "tags",
+      operator: "none",
+      values: [5],
+    };
+
+    act(() => {
+      result.current.setPredicates([
+        {
+          dimension: "tags",
+          operator: "any",
+          values: [1],
+        },
+      ]);
+    });
+    act(() => {
+      result.current.addPredicate(valuedNone);
+    });
+
+    // "has tag 1 but not tag 5" is legitimate and must keep working.
+    expect(result.current.predicates).toEqual([
+      { dimension: "tags", operator: "any", values: [1] },
+      valuedNone,
+    ]);
+  });
+
+  it("leaves other dimensions' predicates alone", () => {
+    const { result } = renderFilters({ persistToUrl: false });
+
+    act(() => {
+      result.current.setPredicates([templatesIn12, tagsAny]);
+    });
+    act(() => {
+      result.current.addPredicate(bareNone("states"));
+    });
+
+    expect(result.current.predicates).toEqual([
+      templatesIn12,
+      tagsAny,
+      bareNone("states"),
+    ]);
+  });
+
+  it("updatePredicate re-keying to bare none drops the conflicting chip", () => {
+    const { result } = renderFilters({ persistToUrl: false });
+
+    act(() => {
+      result.current.setPredicates([
+        { dimension: "tags", operator: "any", values: [1] },
+        { dimension: "tags", operator: "all", values: [2] },
+      ]);
+    });
+    act(() => {
+      result.current.updatePredicate("tags", "all", bareNone("tags"));
+    });
+
+    expect(result.current.predicates).toEqual([bareNone("tags")]);
+  });
+
+  it("updatePredicate emptying a valued none turns it into a conflicting bare none", () => {
+    const { result } = renderFilters({ persistToUrl: false });
+
+    act(() => {
+      result.current.setPredicates([
+        { dimension: "tags", operator: "any", values: [1] },
+        { dimension: "tags", operator: "none", values: [5] },
+      ]);
+    });
+    act(() => {
+      result.current.updatePredicate("tags", "none", bareNone("tags"));
+    });
+
+    expect(result.current.predicates).toEqual([bareNone("tags")]);
+  });
+
+  it("updatePredicate re-keying away from bare none keeps unrelated chips", () => {
+    const { result } = renderFilters({ persistToUrl: false });
+
+    act(() => {
+      result.current.setPredicates([templatesIn12, bareNone("tags")]);
+    });
+    act(() => {
+      result.current.updatePredicate("tags", "none", {
+        dimension: "tags",
+        operator: "any",
+        values: [7],
+      });
+    });
+
+    expect(result.current.predicates).toEqual([
+      templatesIn12,
+      { dimension: "tags", operator: "any", values: [7] },
+    ]);
+  });
+
+  it("setPredicates stays permissive — it never rewrites a contradiction", () => {
+    const { result } = renderFilters({ persistToUrl: false });
+
+    act(() => {
+      result.current.setPredicates([bareNone("tags"), tagsAny]);
+    });
+
+    expect(result.current.predicates).toEqual([bareNone("tags"), tagsAny]);
+  });
+
+  it("the URL parse path stays permissive — a shared contradictory link renders both chips", () => {
+    setLocation("?f=tags:none&f=tags:any:1");
+
+    const { result } = renderFilters();
+
+    expect(result.current.predicates).toEqual([
+      bareNone("tags"),
+      { dimension: "tags", operator: "any", values: [1] },
+    ]);
+    expect(mockRouterReplace).not.toHaveBeenCalled();
   });
 });

@@ -87,11 +87,21 @@ interface ViewSelectorProps {
   ) => void;
   isRunMode?: boolean;
   totalCount: number;
+  /**
+   * Per-dimension self-excluded totals from the counts engine
+   * (`count(whereExcept(dimension))`). The "All …"/"Mixed" rows read these:
+   * `totalCount` is counted under ALL predicates, a smaller base than the
+   * per-option counts, so using it made "All" render below its own options.
+   * Absent (legacy payload) → the old totalCount/option-sum fallback.
+   */
+  dimensionTotals?: Record<string, number>;
   /** True while the shown counts are stale for the active predicates (the
    * previous predicate set's view-options response is displayed while the
    * filter-aware refetch is in flight) — counts render muted with a tooltip. */
   countsMuted?: boolean;
   viewOptions?: {
+    /** Same payload field as the prop above, when it rides inside viewOptions. */
+    dimensionTotals?: Record<string, number>;
     templates: Array<{ id: number; name: string; count?: number }>;
     states: Array<{
       id: number;
@@ -305,6 +315,7 @@ export function ViewSelector({
   onToggleFilterValue,
   isRunMode: _isRunMode,
   totalCount,
+  dimensionTotals,
   countsMuted = false,
   viewOptions,
 }: ViewSelectorProps) {
@@ -334,6 +345,21 @@ export function ViewSelector({
     [onToggleFilterValue, dimensionKey]
   );
 
+  // The "All …"/"Mixed" row's base. The engine's self-excluded total wins when
+  // the payload carries it; otherwise the pre-Phase-3 fallback (option sum or
+  // totalCount) applies. Never negative, so a stale payload cannot render one.
+  const totalsByDimension = dimensionTotals ?? viewOptions?.dimensionTotals;
+  const dimensionTotal = useCallback(
+    (dimension: string, fallback: number): number => {
+      const total = totalsByDimension?.[dimension];
+      return Math.max(
+        0,
+        typeof total === "number" && Number.isFinite(total) ? total : fallback
+      );
+    },
+    [totalsByDimension]
+  );
+
   // While a predicate edit's refetch is in flight the previous predicate
   // set's counts stay visible — de-emphasize them until fresh data lands.
   const renderCount = useCallback(
@@ -345,7 +371,7 @@ export function ViewSelector({
           <TooltipTrigger asChild>
             <span className="opacity-50 cursor-help">{shown}</span>
           </TooltipTrigger>
-          <TooltipContent>{tFilterBar("countsIgnoreFilters")}</TooltipContent>
+          <TooltipContent>{tFilterBar("countsUpdating")}</TooltipContent>
         </Tooltip>
       );
     },
@@ -462,9 +488,12 @@ export function ViewSelector({
               selected={isValueSelected(null)}
               onClick={() => handleFilterClick(null)}
               count={renderCount(
-                templateOptions.reduce(
-                  (sum, template) => sum + (template.count || 0),
-                  0
+                dimensionTotal(
+                  "templates",
+                  templateOptions.reduce(
+                    (sum, template) => sum + (template.count || 0),
+                    0
+                  )
                 )
               )}
             >
@@ -489,7 +518,13 @@ export function ViewSelector({
               selected={isValueSelected(null)}
               onClick={() => handleFilterClick(null)}
               count={renderCount(
-                stateOptions.reduce((sum, state) => sum + (state.count || 0), 0)
+                dimensionTotal(
+                  "states",
+                  stateOptions.reduce(
+                    (sum, state) => sum + (state.count || 0),
+                    0
+                  )
+                )
               )}
             >
               <span className="truncate">{t("views.allStates")}</span>
@@ -504,9 +539,12 @@ export function ViewSelector({
               selected={isValueSelected(null)}
               onClick={() => handleFilterClick(null)}
               count={renderCount(
-                creatorOptions.reduce(
-                  (sum, creator) => sum + (creator.count || 0),
-                  0
+                dimensionTotal(
+                  "creators",
+                  creatorOptions.reduce(
+                    (sum, creator) => sum + (creator.count || 0),
+                    0
+                  )
                 )
               )}
             >
@@ -528,7 +566,7 @@ export function ViewSelector({
             <FilterRow
               selected={isValueSelected(null)}
               onClick={() => handleFilterClick(null)}
-              count={renderCount(totalCount)}
+              count={renderCount(dimensionTotal("automated", totalCount))}
             >
               <span className="truncate">{t("views.allCases")}</span>
             </FilterRow>
@@ -561,7 +599,7 @@ export function ViewSelector({
             <FilterRow
               selected={isValueSelected(null)}
               onClick={() => handleFilterClick(null)}
-              count={renderCount(totalCount)}
+              count={renderCount(dimensionTotal("parameterized", totalCount))}
             >
               <span className="truncate">{t("views.allCases")}</span>
             </FilterRow>
@@ -594,7 +632,7 @@ export function ViewSelector({
             <FilterRow
               selected={isValueSelected(null)}
               onClick={() => handleFilterClick(null)}
-              count={renderCount(totalCount)}
+              count={renderCount(dimensionTotal("attachments", totalCount))}
             >
               <span className="truncate">{t("views.allCases")}</span>
             </FilterRow>
@@ -628,7 +666,10 @@ export function ViewSelector({
               selected={isValueSelected(null)}
               onClick={() => handleFilterClick(null)}
               count={renderCount(
-                (viewOptions as any)?.testRunOptions?.totalCount || totalCount
+                dimensionTotal(
+                  "status",
+                  (viewOptions as any)?.testRunOptions?.totalCount || totalCount
+                )
               )}
             >
               <CircleCheckBig className="w-4 h-4 shrink-0" />
@@ -671,7 +712,10 @@ export function ViewSelector({
               selected={isValueSelected(null)}
               onClick={() => handleFilterClick(null)}
               count={renderCount(
-                (viewOptions as any)?.testRunOptions?.totalCount || totalCount
+                dimensionTotal(
+                  "assignedTo",
+                  (viewOptions as any)?.testRunOptions?.totalCount || totalCount
+                )
               )}
             >
               <Users className="w-4 h-4 shrink-0" />
@@ -734,7 +778,7 @@ export function ViewSelector({
             <FilterRow
               selected={isValueSelected(null)}
               onClick={() => handleFilterClick(null)}
-              count={renderCount(totalCount)}
+              count={renderCount(dimensionTotal(dimensionKey, totalCount))}
             >
               <span className="truncate">{tCommon("fields.mixed")}</span>
             </FilterRow>
@@ -903,12 +947,24 @@ export function ViewSelector({
               }
 
               if (field?.options) {
-                // Counts are already provided by the API
+                // The engine emits hasValue/noValue for option fields from the
+                // same self-excluded base the option counts use. The old
+                // subtraction mixed bases — `totalCount` is counted under ALL
+                // predicates while the option counts self-exclude this field,
+                // so a filter on this very field made "None" negative. It
+                // survives only as the legacy-payload fallback, clamped.
+                const optionCounts = (field as any).counts as
+                  { hasValue?: number; noValue?: number } | undefined;
                 const totalWithValues = dynamicFieldOptions.reduce(
                   (sum: number, opt) => sum + (opt.count || 0),
                   0
                 );
-                const noneCount = totalCount - totalWithValues;
+                const noneCount = Math.max(
+                  0,
+                  typeof optionCounts?.noValue === "number"
+                    ? optionCounts.noValue
+                    : totalCount - totalWithValues
+                );
 
                 return (
                   <>

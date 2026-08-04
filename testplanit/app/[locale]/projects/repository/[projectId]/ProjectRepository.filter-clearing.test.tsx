@@ -83,6 +83,22 @@ const {
   treeViewSpy: vi.fn(),
 }));
 
+// Stable across renders (a fresh vi.fn per usePagination() call would be
+// unassertable) and cleared by the beforeEach vi.clearAllMocks().
+const { setCurrentPageSpy, toastErrorSpy, caseDetailsSpy } = vi.hoisted(() => ({
+  setCurrentPageSpy: vi.fn(),
+  toastErrorSpy: vi.fn(),
+  caseDetailsSpy: vi.fn(),
+}));
+
+vi.mock("sonner", () => ({
+  toast: {
+    error: toastErrorSpy,
+    success: vi.fn(),
+    info: vi.fn(),
+  },
+}));
+
 // ---- Navigation / session / i18n ----
 
 vi.mock("~/lib/navigation", () => ({
@@ -171,7 +187,7 @@ vi.mock("~/lib/contexts/PaginationContext", () => ({
   PaginationProvider: ({ children }: any) => children,
   usePagination: () => ({
     currentPage: 1,
-    setCurrentPage: vi.fn(),
+    setCurrentPage: setCurrentPageSpy,
     pageSize: 25,
     setPageSize: vi.fn(),
     totalItems: 0,
@@ -238,7 +254,10 @@ vi.mock("./GenerateTestCasesWizard", () => ({
 }));
 vi.mock("./ImportCasesWizard", () => ({ ImportCasesWizard: () => null }));
 vi.mock("@/components/repositories/CaseDetailsPanel", () => ({
-  CaseDetailsPanel: () => null,
+  CaseDetailsPanel: (props: any) => {
+    caseDetailsSpy(props);
+    return <div data-testid="case-details-stub" />;
+  },
 }));
 vi.mock("@/components/duplicates/FindDuplicatesButton", () => ({
   FindDuplicatesButton: () => null,
@@ -597,13 +616,17 @@ describe("view-options counts wiring", () => {
     }
   });
 
-  it("mirrors the ES-search bypass: the counts request sends the emptied predicate set", async () => {
+  it("intersects search with the filters instead of bypassing them", async () => {
     // A fresh Response per call — bodies are single-read and both the ES
-    // search effect and queryFn consume one.
+    // search effect and the counts queryFn consume one.
     const fetchMock = vi
       .spyOn(globalThis, "fetch")
-      .mockImplementation(() =>
-        Promise.resolve(okResponse({ total: 0, hits: [] }))
+      .mockImplementation((url) =>
+        Promise.resolve(
+          String(url).startsWith("/api/search")
+            ? okResponse({ total: 2, hits: [{ source: { id: 7 } }] })
+            : okResponse()
+        )
       );
     try {
       renderRepo({
@@ -612,25 +635,28 @@ describe("view-options counts wiring", () => {
         onSelectionChange: vi.fn(),
       });
       act(() => lastProps(filterBarSpy).onAdd(templatesIn12));
-      expect(viewOptionsQueryHolder.current.queryKey).toContain(
-        canonicalPredicateKey([templatesIn12])
-      );
 
-      // The selection-mode ES search box activates the interim bypass.
-      const input = screen.getByPlaceholderText(
-        "search.placeholder.thisProject"
-      );
+      const input = screen.getByTestId("es-search-input");
       await act(async () => {
         fireEvent.change(input, { target: { value: "login" } });
       });
 
-      // The table drops its predicates during search…
-      expect(lastProps(casesSpy).predicates).toEqual([]);
-      // …and the counts query sends the same emptied set under the same key.
-      const options = viewOptionsQueryHolder.current;
-      expect(options.queryKey).not.toContain(
+      // The table keeps its real predicates, folder scope and grouping axis;
+      // the resolved ids ride alongside as their own prop (spec §9).
+      expect(lastProps(casesSpy).predicates).toEqual([templatesIn12]);
+      expect(lastProps(casesSpy).searchResultIds).toEqual([7]);
+      expect(lastProps(casesSpy).searchKey).toBe("login");
+      expect(lastProps(casesSpy).predicatesKey).toBe(
         canonicalPredicateKey([templatesIn12])
       );
+
+      // The counts request carries the same predicates plus the search id
+      // snapshot, and the query string (never the id array) marks it in the key.
+      const options = viewOptionsQueryHolder.current;
+      expect(options.queryKey).toContain(
+        canonicalPredicateKey([templatesIn12])
+      );
+      expect(options.queryKey).toContain("login");
       await options.queryFn();
       const viewOptionsCalls = fetchMock.mock.calls.filter(
         ([url]) => url === "/api/repository-cases/view-options"
@@ -639,7 +665,109 @@ describe("view-options counts wiring", () => {
       const body = JSON.parse(
         (viewOptionsCalls.at(-1)![1] as RequestInit).body as string
       );
-      expect(body.predicates).toEqual([]);
+      expect(body.predicates).toEqual([templatesIn12]);
+      expect(body.searchCaseIds).toEqual([7]);
+    } finally {
+      fetchMock.mockRestore();
+    }
+  });
+
+  it("asks Elasticsearch for an exact total and skips archived cases", async () => {
+    const fetchMock = vi
+      .spyOn(globalThis, "fetch")
+      .mockImplementation((url) =>
+        Promise.resolve(
+          String(url).startsWith("/api/search")
+            ? okResponse({ total: 1, hits: [{ source: { id: 7 } }] })
+            : okResponse()
+        )
+      );
+    try {
+      renderRepo();
+      const input = screen.getByTestId("es-search-input");
+      await act(async () => {
+        fireEvent.change(input, { target: { value: "login" } });
+      });
+
+      const searchCall = fetchMock.mock.calls.find(([url]) =>
+        String(url).startsWith("/api/search")
+      );
+      const body = JSON.parse((searchCall![1] as RequestInit).body as string);
+      expect(body.filters.repositoryCase.isArchived).toBe(false);
+      expect(body.trackTotalHits).toBe(true);
+    } finally {
+      fetchMock.mockRestore();
+    }
+  });
+
+  it("mirrors the search box into ?q= in view mode only", async () => {
+    const fetchMock = vi
+      .spyOn(globalThis, "fetch")
+      .mockImplementation(() =>
+        Promise.resolve(okResponse({ total: 0, hits: [] }))
+      );
+    try {
+      renderRepo();
+      await act(async () => {
+        fireEvent.change(screen.getByTestId("es-search-input"), {
+          target: { value: "login" },
+        });
+      });
+      const written = mockRouterReplace.mock.calls
+        .map(([url]) => String(url))
+        .filter((url) => url.includes("q=login"));
+      expect(written.length).toBeGreaterThan(0);
+
+      // Selection mode holds the query in memory — writing it would pollute
+      // the host page's URL (spec §10).
+      mockRouterReplace.mockClear();
+      renderRepo({
+        isSelectionMode: true,
+        selectedTestCases: [],
+        onSelectionChange: vi.fn(),
+      });
+      await act(async () => {
+        fireEvent.change(screen.getAllByTestId("es-search-input").at(-1)!, {
+          target: { value: "login" },
+        });
+      });
+      expect(
+        mockRouterReplace.mock.calls.filter(([url]) =>
+          String(url).includes("q=")
+        )
+      ).toHaveLength(0);
+    } finally {
+      fetchMock.mockRestore();
+    }
+  });
+
+  it("reports what an over-cap shared link dropped", () => {
+    // 60 predicates > MAX_FILTER_PREDICATES: the hook caps the parse and the
+    // FilterBar has to say so rather than silently showing fewer filters.
+    setLocation(
+      "?" +
+        Array.from({ length: 60 }, (_, i) => `f=templates:in:${i + 1}`).join(
+          "&"
+        )
+    );
+    renderRepo();
+    expect(
+      lastProps(filterBarSpy).truncation.predicatesDropped
+    ).toBeGreaterThan(0);
+  });
+
+  it("seeds the search box from ?q= on load", async () => {
+    const fetchMock = vi
+      .spyOn(globalThis, "fetch")
+      .mockImplementation(() =>
+        Promise.resolve(okResponse({ total: 0, hits: [] }))
+      );
+    try {
+      setLocation("?q=checkout");
+      await act(async () => {
+        renderRepo();
+      });
+      expect(screen.getByTestId("es-search-input")).toHaveValue("checkout");
     } finally {
       fetchMock.mockRestore();
     }
@@ -666,5 +794,234 @@ describe("view-options counts wiring", () => {
     rerenderRepo();
     expect(lastProps(viewSelectorSpy).countsMuted).toBe(false);
     expect(lastProps(filterBarSpy).countsMuted).toBe(false);
+  });
+});
+
+describe("Elasticsearch failures never fall back to an unfiltered table (spec §9)", () => {
+  const okResponse = (payload: Record<string, unknown> = {}) =>
+    new Response(JSON.stringify(payload), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+  const failedResponse = () => new Response("boom", { status: 500 });
+
+  const typeSearch = async (text: string) => {
+    await act(async () => {
+      fireEvent.change(screen.getByTestId("es-search-input"), {
+        target: { value: text },
+      });
+    });
+  };
+
+  it("drops the ids, marks the search failed and toasts when the request is not ok", async () => {
+    const fetchMock = vi
+      .spyOn(globalThis, "fetch")
+      .mockImplementation((url) =>
+        Promise.resolve(
+          String(url).startsWith("/api/search")
+            ? failedResponse()
+            : okResponse()
+        )
+      );
+    try {
+      renderRepo();
+      await typeSearch("login");
+
+      // The ids are an AND'd filter now: leaving them null while a query is on
+      // screen used to render the entire repository as the search result.
+      const props = lastProps(casesSpy);
+      expect(props.searchFailed).toBe(true);
+      expect(props.searchPending).toBe(false);
+      expect(props.searchResultIds).toBeNull();
+      expect(toastErrorSpy).toHaveBeenCalledWith("common.errors.fetchFailed");
+    } finally {
+      fetchMock.mockRestore();
+    }
+  });
+
+  it("treats a dropped page mid-paging as a failure, not a truncated id set", async () => {
+    let searchCalls = 0;
+    const fetchMock = vi
+      .spyOn(globalThis, "fetch")
+      .mockImplementation((url) => {
+        if (!String(url).startsWith("/api/search")) {
+          return Promise.resolve(okResponse());
+        }
+        searchCalls += 1;
+        // 1,200 matches = three pages of 500: the first lands, a later one dies.
+        return Promise.resolve(
+          searchCalls === 1
+            ? okResponse({ total: 1200, hits: [{ source: { id: 7 } }] })
+            : failedResponse()
+        );
+      });
+    try {
+      renderRepo();
+      await typeSearch("login");
+
+      expect(searchCalls).toBeGreaterThan(1);
+      const props = lastProps(casesSpy);
+      expect(props.searchFailed).toBe(true);
+      // Publishing page 1 alone would AND a partial set into the where and
+      // hide matching cases with no signal at all.
+      expect(props.searchResultIds).toBeNull();
+    } finally {
+      fetchMock.mockRestore();
+    }
+  });
+
+  it("holds the table pending until the ids for a shared ?q= link arrive", async () => {
+    let resolveSearch: (response: Response) => void = () => {};
+    const pendingSearch = new Promise<Response>((resolve) => {
+      resolveSearch = resolve;
+    });
+    const fetchMock = vi
+      .spyOn(globalThis, "fetch")
+      .mockImplementation((url) =>
+        String(url).startsWith("/api/search")
+          ? pendingSearch
+          : Promise.resolve(okResponse())
+      );
+    try {
+      setLocation("?q=checkout");
+      render(repoElement());
+
+      // The first thing a shared link would otherwise show is every case in
+      // the repository.
+      expect(lastProps(casesSpy).searchPending).toBe(true);
+      expect(lastProps(casesSpy).searchFailed).toBe(false);
+      expect(lastProps(casesSpy).searchResultIds).toBeNull();
+      expect(lastProps(casesSpy).searchText).toBe("checkout");
+
+      await act(async () => {
+        resolveSearch(okResponse({ total: 1, hits: [{ source: { id: 7 } }] }));
+        await pendingSearch;
+      });
+
+      await waitFor(() => {
+        expect(lastProps(casesSpy).searchPending).toBe(false);
+      });
+      expect(lastProps(casesSpy).searchResultIds).toEqual([7]);
+    } finally {
+      fetchMock.mockRestore();
+    }
+  });
+
+  it("mutes the filter-aware counts while the search ids are missing", async () => {
+    const fetchMock = vi
+      .spyOn(globalThis, "fetch")
+      .mockImplementation((url) =>
+        Promise.resolve(
+          String(url).startsWith("/api/search")
+            ? failedResponse()
+            : okResponse()
+        )
+      );
+    try {
+      renderRepo();
+      await typeSearch("login");
+
+      // The counts intersect the resolved id set; without it they answer a
+      // wider question than the table does.
+      expect(lastProps(filterBarSpy).countsMuted).toBe(true);
+      expect(lastProps(viewSelectorSpy).countsMuted).toBe(true);
+    } finally {
+      fetchMock.mockRestore();
+    }
+  });
+
+  it("resets pagination to page 1 when the search changes", async () => {
+    const fetchMock = vi
+      .spyOn(globalThis, "fetch")
+      .mockImplementation(() =>
+        Promise.resolve(okResponse({ total: 0, hits: [] }))
+      );
+    try {
+      renderRepo();
+      setCurrentPageSpy.mockClear();
+
+      await typeSearch("login");
+
+      // Searching from page 4 would otherwise strand the user on a page the
+      // narrowed result set no longer has.
+      expect(setCurrentPageSpy).toHaveBeenCalledWith(1);
+    } finally {
+      fetchMock.mockRestore();
+    }
+  });
+});
+
+describe("one owner for this page's URL writes", () => {
+  const okResponse = (payload: Record<string, unknown> = {}) =>
+    new Response(JSON.stringify(payload), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+
+  const stubFetch = () =>
+    vi
+      .spyOn(globalThis, "fetch")
+      .mockImplementation(() =>
+        Promise.resolve(okResponse({ total: 0, hits: [] }))
+      );
+
+  const lastWrittenParams = () => {
+    const url = String(mockRouterReplace.mock.calls.at(-1)![0]);
+    return new URLSearchParams(url.split("?")[1] ?? "");
+  };
+
+  it("keeps a just-written param when the search box writes ?q=", async () => {
+    const fetchMock = stubFetch();
+    try {
+      setLocation("?node=5");
+      renderRepo();
+
+      // App Router navigations are async: window.location still shows the
+      // pre-write URL when the next writer composes.
+      act(() => lastProps(viewSelectorSpy).onValueChange("templates"));
+      await act(async () => {
+        fireEvent.change(screen.getByTestId("es-search-input"), {
+          target: { value: "login" },
+        });
+      });
+
+      const params = lastWrittenParams();
+      expect(params.get("q")).toBe("login");
+      expect(params.get("view")).toBe("templates");
+      expect(params.get("node")).toBe("5");
+    } finally {
+      fetchMock.mockRestore();
+    }
+  });
+
+  it("applies the readability pass so ?q= does not re-encode the f tokens", async () => {
+    const fetchMock = stubFetch();
+    try {
+      setLocation("?f=templates:in:1,2");
+      renderRepo();
+      await act(async () => {
+        fireEvent.change(screen.getByTestId("es-search-input"), {
+          target: { value: "login" },
+        });
+      });
+
+      const url = String(mockRouterReplace.mock.calls.at(-1)![0]);
+      expect(url).toContain("q=login");
+      expect(url).toContain("f=templates:in:1,2");
+      expect(url).not.toContain("%3A");
+    } finally {
+      fetchMock.mockRestore();
+    }
+  });
+
+  it("composes the details-panel writes from the live URL, keeping the filters", () => {
+    setLocation("?case=9&f=tags:any&node=3");
+    renderRepo();
+
+    act(() => lastProps(caseDetailsSpy).onClose());
+    const closed = lastWrittenParams();
+    expect(closed.get("case")).toBeNull();
+    expect(closed.getAll("f")).toEqual(["tags:any"]);
+    expect(closed.get("node")).toBe("3");
   });
 });

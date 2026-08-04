@@ -6,10 +6,12 @@ import {
   buildFacetScopeWhere,
   buildRunRowFilters,
   caseIdSetFragment,
+  computeRepositoryCaseFacetCounts,
   createFacetWhereComposer,
   partitionFacetPredicates,
   runRowPasses,
   type DimensionWhereFragment,
+  type FacetCountsDb,
 } from "./repositoryCaseFacetCounts";
 
 const dynamicFieldsRecord = {
@@ -245,5 +247,432 @@ describe("buildRunRowFilters / runRowPasses", () => {
     const none = buildRunRowFilters([predicate("templates", "in", [1])]);
     expect(none.size).toBe(0);
     expect(runRowPasses(none, row(9, "zz"))).toBe(true);
+  });
+});
+
+// --- Engine-level counting (fake DB) ---------------------------------------
+
+/**
+ * A tiny in-memory stand-in for the ORM client. It evaluates the engine's real
+ * `where` objects against fixture cases (throwing on any clause shape it does
+ * not model, so a silent mis-evaluation cannot pass a test) and records the
+ * id-select queries — the property "unchipped dimensions add no queries" is
+ * asserted directly against that call log.
+ */
+interface FakeCase {
+  id: number;
+  templateId: number;
+  stateId: number;
+  creatorId: string;
+  automated: boolean;
+  hasParameters: boolean;
+  stepCount: number;
+  /** fieldId -> stored JSON value (absent = no row for that field). */
+  fields: Record<number, unknown>;
+}
+
+interface FakeField {
+  id: number;
+  displayName: string;
+  type: string;
+  options?: Array<{ id: number; name: string; order: number }>;
+}
+
+const PROJECT_ID = 7;
+
+function matchesScalar(actual: unknown, condition: any): boolean {
+  if (condition !== null && typeof condition === "object") {
+    if ("in" in condition) return (condition.in as unknown[]).includes(actual);
+    if ("not" in condition) return actual !== condition.not;
+    throw new Error(
+      `fake db: unsupported scalar condition ${JSON.stringify(condition)}`
+    );
+  }
+  return actual === condition;
+}
+
+function matchesValueCondition(actual: unknown, condition: any): boolean {
+  if (condition === null || typeof condition !== "object") {
+    return String(actual) === String(condition);
+  }
+  if ("equals" in condition) {
+    return String(actual) === String(condition.equals);
+  }
+  if ("not" in condition) {
+    return actual !== null && actual !== undefined;
+  }
+  if ("array_contains" in condition) {
+    const wanted = condition.array_contains as unknown[];
+    return (
+      Array.isArray(actual) &&
+      wanted.every((value) => actual.map(String).includes(String(value)))
+    );
+  }
+  throw new Error(
+    `fake db: unsupported value condition ${JSON.stringify(condition)}`
+  );
+}
+
+function matchesFieldRow(
+  row: { fieldId: number; value: unknown },
+  condition: any
+): boolean {
+  return Object.entries(condition).every(([key, value]) => {
+    if (key === "fieldId") return row.fieldId === value;
+    if (key === "value") return matchesValueCondition(row.value, value);
+    if (key === "OR")
+      return (value as any[]).some((c) => matchesFieldRow(row, c));
+    if (key === "AND")
+      return (value as any[]).every((c) => matchesFieldRow(row, c));
+    if (key === "NOT") return !matchesFieldRow(row, value);
+    throw new Error(`fake db: unsupported field-value key ${key}`);
+  });
+}
+
+function fieldRows(item: FakeCase) {
+  return Object.entries(item.fields).map(([fieldId, value]) => ({
+    fieldId: Number(fieldId),
+    value,
+  }));
+}
+
+function matchesRelation<T>(
+  rows: T[],
+  condition: any,
+  match: (row: T, inner: any) => boolean
+): boolean {
+  return Object.entries(condition).every(([key, inner]) => {
+    if (key === "some") return rows.some((row) => match(row, inner));
+    if (key === "none") return !rows.some((row) => match(row, inner));
+    throw new Error(`fake db: unsupported relation key ${key}`);
+  });
+}
+
+function matchesWhere(item: FakeCase, where: any): boolean {
+  if (!where) return true;
+  return Object.entries(where).every(([key, value]) => {
+    switch (key) {
+      case "AND":
+        return (value as any[]).every((inner) => matchesWhere(item, inner));
+      case "OR":
+        return (value as any[]).some((inner) => matchesWhere(item, inner));
+      case "NOT":
+        return !matchesWhere(item, value);
+      case "isDeleted":
+      case "isArchived":
+        return value === false;
+      case "projectId":
+        return value === PROJECT_ID;
+      case "folder":
+        return true;
+      case "id":
+        return matchesScalar(item.id, value);
+      case "templateId":
+        return matchesScalar(item.templateId, value);
+      case "stateId":
+        return matchesScalar(item.stateId, value);
+      case "creatorId":
+        return matchesScalar(item.creatorId, value);
+      case "automated":
+        return matchesScalar(item.automated, value);
+      case "hasParameters":
+        return matchesScalar(item.hasParameters, value);
+      case "caseFieldValues":
+        return matchesRelation(fieldRows(item), value, matchesFieldRow);
+      case "steps":
+        return matchesRelation(
+          Array.from({ length: item.stepCount }, () => ({})),
+          value,
+          () => true
+        );
+      case "caseTags":
+      case "caseIssues":
+      case "attachments":
+        return matchesRelation([], value, () => true);
+      default:
+        throw new Error(`fake db: unsupported where key ${key}`);
+    }
+  });
+}
+
+function createFakeDb(cases: FakeCase[], fields: FakeField[]) {
+  const idSelectWheres: unknown[] = [];
+  const matching = (where: unknown) =>
+    cases.filter((item) => matchesWhere(item, where));
+
+  const db = {
+    templates: {
+      findMany: async (args: any) => {
+        if (args?.select?.caseFields) {
+          return [
+            {
+              id: 1,
+              templateName: "Default",
+              caseFields: fields.map((field) => ({
+                caseField: {
+                  id: field.id,
+                  displayName: field.displayName,
+                  type: { type: field.type },
+                  fieldOptions: (field.options ?? []).map((option) => ({
+                    fieldOption: {
+                      id: option.id,
+                      name: option.name,
+                      order: option.order,
+                      icon: null,
+                      iconColor: null,
+                    },
+                  })),
+                },
+              })),
+            },
+          ];
+        }
+        return [{ id: 1, templateName: "Default" }];
+      },
+    },
+    repositoryCases: {
+      findMany: async (args: any) => {
+        const selectKeys = Object.keys(args?.select ?? { id: true });
+        if (selectKeys.length === 1 && selectKeys[0] === "id") {
+          idSelectWheres.push(args.where);
+        }
+        return matching(args?.where).map((item) =>
+          Object.fromEntries(selectKeys.map((key) => [key, (item as any)[key]]))
+        );
+      },
+      groupBy: async (args: any) => {
+        const field = args.by[0] as keyof FakeCase;
+        const counts = new Map<unknown, number>();
+        for (const item of matching(args.where)) {
+          counts.set(item[field], (counts.get(item[field]) ?? 0) + 1);
+        }
+        return [...counts].map(([value, count]) => ({
+          [field]: value,
+          _count: count,
+        }));
+      },
+      count: async (args: any) => matching(args?.where).length,
+    },
+    caseFieldValues: {
+      findMany: async (args: any) => {
+        const { fieldId, testCaseId } = args.where;
+        return cases
+          .filter(
+            (item) =>
+              testCaseId.in.includes(item.id) && item.fields[fieldId] != null
+          )
+          .map((item) => ({
+            testCaseId: item.id,
+            value: item.fields[fieldId],
+          }));
+      },
+      count: async (args: any) => {
+        const { fieldId, testCaseId, value } = args.where;
+        return cases.filter(
+          (item) =>
+            testCaseId.in.includes(item.id) &&
+            item.fields[fieldId] != null &&
+            (value?.equals === undefined ||
+              item.fields[fieldId] === value.equals)
+        ).length;
+      },
+    },
+    workflows: { findMany: async () => [] },
+    user: { findMany: async () => [] },
+    tags: { findMany: async () => [] },
+    issue: { findMany: async () => [] },
+    testRunCases: { findMany: async () => [] },
+    $queryRaw: async () => [],
+  };
+
+  return { db: db as unknown as FacetCountsDb, idSelectWheres };
+}
+
+const SEVERITY: FakeField = {
+  id: 2,
+  displayName: "Severity",
+  type: "Dropdown",
+  options: [
+    { id: 147, name: "High", order: 1 },
+    { id: 148, name: "Low", order: 2 },
+  ],
+};
+
+const PLATFORMS: FakeField = {
+  id: 3,
+  displayName: "Platforms",
+  type: "Multi-Select",
+  options: [
+    { id: 200, name: "iOS", order: 1 },
+    { id: 201, name: "Android", order: 2 },
+  ],
+};
+
+/** 5 cases: 147 on c1/c2, 148 on c3, no Severity on c4/c5. */
+const FIXTURE_CASES: FakeCase[] = [
+  {
+    id: 1,
+    templateId: 10,
+    stateId: 20,
+    creatorId: "u1",
+    automated: false,
+    hasParameters: false,
+    stepCount: 0,
+    fields: { 2: 147, 3: [200, 201] },
+  },
+  {
+    id: 2,
+    templateId: 10,
+    stateId: 20,
+    creatorId: "u1",
+    automated: true,
+    hasParameters: false,
+    stepCount: 0,
+    fields: { 2: 147 },
+  },
+  {
+    id: 3,
+    templateId: 11,
+    stateId: 21,
+    creatorId: "u2",
+    automated: false,
+    hasParameters: false,
+    stepCount: 0,
+    fields: { 2: 148 },
+  },
+  {
+    id: 4,
+    templateId: 11,
+    stateId: 21,
+    creatorId: "u2",
+    automated: false,
+    hasParameters: false,
+    stepCount: 0,
+    fields: {},
+  },
+  {
+    id: 5,
+    templateId: 11,
+    stateId: 21,
+    creatorId: "u2",
+    automated: false,
+    hasParameters: false,
+    stepCount: 0,
+    fields: {},
+  },
+];
+
+describe("computeRepositoryCaseFacetCounts — option fields and dimensionTotals", () => {
+  it("emits hasValue/noValue for option fields from the same self-excluded base", async () => {
+    const { db } = createFakeDb(FIXTURE_CASES, [SEVERITY]);
+
+    // The live repro: group by a Dropdown field, filter to one of its options.
+    const result = await computeRepositoryCaseFacetCounts(db, {
+      projectId: PROJECT_ID,
+      predicates: [{ dimension: "field_2", operator: "in", values: [147] }],
+    });
+
+    // totalCount is under ALL predicates: only the two 147 cases.
+    expect(result.totalCount).toBe(2);
+
+    const severity = result.dynamicFields.Severity;
+    // The field self-excludes, so its base is all 5 cases: 3 valued, 2 not.
+    expect(severity.counts).toEqual({ hasValue: 3, noValue: 2 });
+    expect(severity.options).toEqual([
+      expect.objectContaining({ id: 147, count: 2 }),
+      expect.objectContaining({ id: 148, count: 1 }),
+    ]);
+
+    // The invariant the client renders: All >= every option row, none negative.
+    expect(result.dimensionTotals.field_2).toBe(5);
+    for (const option of severity.options ?? []) {
+      expect(option.count).toBeGreaterThanOrEqual(0);
+      expect(result.dimensionTotals.field_2).toBeGreaterThanOrEqual(
+        option.count
+      );
+    }
+    expect(severity.counts!.noValue).toBeGreaterThanOrEqual(0);
+  });
+
+  it("counts hasValue per CASE, not per selected option, for Multi-Select", async () => {
+    const { db } = createFakeDb(FIXTURE_CASES, [PLATFORMS]);
+
+    const result = await computeRepositoryCaseFacetCounts(db, {
+      projectId: PROJECT_ID,
+      predicates: [],
+    });
+
+    // c1 alone carries Platforms, with TWO options selected.
+    expect(result.dynamicFields.Platforms.counts).toEqual({
+      hasValue: 1,
+      noValue: 4,
+    });
+    expect(result.dynamicFields.Platforms.options).toEqual([
+      expect.objectContaining({ id: 200, count: 1 }),
+      expect.objectContaining({ id: 201, count: 1 }),
+    ]);
+  });
+
+  it("reports every dimension's self-excluded total", async () => {
+    const { db } = createFakeDb(FIXTURE_CASES, [SEVERITY]);
+
+    const result = await computeRepositoryCaseFacetCounts(db, {
+      projectId: PROJECT_ID,
+      predicates: [{ dimension: "field_2", operator: "in", values: [147] }],
+    });
+
+    expect(result.dimensionTotals).toEqual({
+      // Self-excluded: clearing the Severity chip would show all 5 cases.
+      field_2: 5,
+      // Every other dimension is unchipped, so its base IS whereAll.
+      templates: 2,
+      states: 2,
+      creators: 2,
+      automated: 2,
+      parameterized: 2,
+      attachments: 2,
+      tags: 2,
+      issues: 2,
+    });
+  });
+
+  it("self-excludes a chipped scalar dimension too", async () => {
+    const { db } = createFakeDb(FIXTURE_CASES, [SEVERITY]);
+
+    const result = await computeRepositoryCaseFacetCounts(db, {
+      projectId: PROJECT_ID,
+      predicates: [{ dimension: "templates", operator: "in", values: [10] }],
+    });
+
+    expect(result.totalCount).toBe(2);
+    // Clearing the templates chip would show all 5; everything else is scoped
+    // by it.
+    expect(result.dimensionTotals.templates).toBe(5);
+    expect(result.dimensionTotals.states).toBe(2);
+    expect(result.dimensionTotals.field_2).toBe(2);
+    // "All templates" >= each template row (2 + 3 = 5).
+    for (const template of result.templates) {
+      expect(result.dimensionTotals.templates).toBeGreaterThanOrEqual(
+        template.count
+      );
+    }
+  });
+
+  it("adds no id-select query for dimensions without an active predicate", async () => {
+    const unfiltered = createFakeDb(FIXTURE_CASES, [SEVERITY, PLATFORMS]);
+    await computeRepositoryCaseFacetCounts(unfiltered.db, {
+      projectId: PROJECT_ID,
+      predicates: [],
+    });
+    // Every dimension (both dynamic fields included) shares the whereAll base.
+    expect(unfiltered.idSelectWheres).toHaveLength(1);
+
+    const chipped = createFakeDb(FIXTURE_CASES, [SEVERITY, PLATFORMS]);
+    await computeRepositoryCaseFacetCounts(chipped.db, {
+      projectId: PROJECT_ID,
+      predicates: [{ dimension: "field_2", operator: "in", values: [147] }],
+    });
+    // Only the chipped dimension costs a second base.
+    expect(chipped.idSelectWheres).toHaveLength(2);
   });
 });

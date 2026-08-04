@@ -39,9 +39,15 @@ import {
   type DynamicFieldDescriptor,
   type FilterDimension,
 } from "~/lib/repository/filterDimensions";
-import type { FilterPredicate } from "~/lib/schemas/repositoryFilterPredicates";
+import {
+  applyReadabilityPass,
+  COMPRESSED_FILTER_PARAM,
+  encodeFilterPredicatesForUrl,
+  FILTER_PARAM,
+} from "~/lib/repository/filterUrlCodec";
 import { useRepositoryFilters } from "~/hooks/useRepositoryFilters";
 import { ApplicationArea } from "~/zenstack/models";
+import { toast } from "sonner";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import {
   Bot,
@@ -133,7 +139,10 @@ const ConditionalDndWrapper = ({
   );
 };
 
-const EMPTY_PREDICATES: FilterPredicate[] = [];
+// Elasticsearch's default index.max_result_window: `from + size` cannot go
+// past it, so a client-resolved id set can never cover more than the top
+// 10,000 matches (spec §9).
+const ES_MAX_RESULT_WINDOW = 10000;
 
 const parseTipTapContent = (content: any) => {
   if (
@@ -305,6 +314,9 @@ interface ViewOptions {
     unassignedCount: number;
     totalCount: number;
   };
+  /** Count per dimension under all OTHER dimensions' predicates — the base the
+   * "All …" rows share with their option rows. Absent on the legacy route. */
+  dimensionTotals?: Record<string, number>;
 }
 
 interface _ExtendedCases {
@@ -538,19 +550,58 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
     }
   }, [effectiveFullWidth]);
 
+  // --- Single owner for this component's URL writes ------------------------
+  // App Router navigations are async, so two `router.replace` calls composed
+  // from separate `window.location.search` reads each see the pre-write URL
+  // and the second silently drops the first's param. Every writer here goes
+  // through this helper, which composes from the freshest search string it
+  // knows: the value it last wrote, until the router commits it and
+  // window.location catches up. `useSearchParams` is deliberately not the
+  // source — TreeView writes `node` through raw history.replaceState and the
+  // snapshot lags (ColumnSelection documents the same). The codec's
+  // readability pass runs on the way out so readable `f` tokens written by
+  // useRepositoryFilters are not re-encoded on an unrelated write.
+  const pendingUrlWriteRef = useRef<{ from: string; to: string } | null>(null);
+  const replaceUrlParams = useCallback(
+    (mutate: (params: URLSearchParams) => void) => {
+      const currentSearch = window.location.search;
+      const pending = pendingUrlWriteRef.current;
+      const baseSearch =
+        pending && pending.from === currentSearch ? pending.to : currentSearch;
+      const query = new URLSearchParams(baseSearch);
+      const before = query.toString();
+      mutate(query);
+      const after = query.toString();
+      if (after === before) return;
+      pendingUrlWriteRef.current = {
+        from: currentSearch,
+        to: after ? `?${after}` : "",
+      };
+      const qs = applyReadabilityPass(after);
+      router.replace(qs ? `${pathName}?${qs}` : pathName, { scroll: false });
+    },
+    [pathName, router]
+  );
+
+  // Once the router commits (window.location moves off the value the overlay
+  // was composed against) the overlay is spent. Dropping it keeps a later
+  // back-navigation that happens to land on the same URL from replaying it.
+  useEffect(() => {
+    const pending = pendingUrlWriteRef.current;
+    if (pending && window.location.search !== pending.from) {
+      pendingUrlWriteRef.current = null;
+    }
+  }, [searchParams]);
+
   const closeDetails = useCallback(() => {
-    const p = new URLSearchParams(searchParams.toString());
-    p.delete("case");
-    router.replace(`${pathName}?${p.toString()}`, { scroll: false });
-  }, [searchParams, pathName, router]);
+    replaceUrlParams((p) => p.delete("case"));
+  }, [replaceUrlParams]);
 
   const goToCase = useCallback(
     (id: number) => {
-      const p = new URLSearchParams(searchParams.toString());
-      p.set("case", String(id));
-      router.replace(`${pathName}?${p.toString()}`, { scroll: false });
+      replaceUrlParams((p) => p.set("case", String(id)));
     },
-    [searchParams, pathName, router]
+    [replaceUrlParams]
   );
 
   const toggleDetailsFullWidth = useCallback(
@@ -578,20 +629,63 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
     setCopyMoveFolderName("");
   }, []);
 
-  // Elasticsearch-powered search state (for selection mode)
-  const [esSearchQuery, setEsSearchQuery] = useState("");
+  // Elasticsearch-powered search state. Rendered in repository view mode and in
+  // case-selection mode (run view mode has no ES search in v1 — spec §9). The
+  // query text lives in the `q` URL param in view mode and in memory only in
+  // selection mode, matching the predicate persistToUrl gating (spec §10).
+  // Tracks where the input actually renders: run view mode has none, and the
+  // run page flips between run view and edit (selection) mode on one component
+  // instance, so a query typed in edit mode must not stay live after the flip.
+  const isEsSearchAvailable = !isRunMode;
+  const persistSearchToUrl = isEsSearchAvailable && !isSelectionMode;
+  const [esSearchQuery, setEsSearchQuery] = useState(() =>
+    persistSearchToUrl ? (searchParams.get("q") ?? "") : ""
+  );
   const debouncedEsSearchQuery = useDebounce(esSearchQuery, 300);
   const [esSearchResultIds, setEsSearchResultIds] = useState<number[] | null>(
     null
   );
+  // The debounced query `esSearchResultIds` was resolved for. Moves in lockstep
+  // with the id array, so it identifies that array for React Query keys without
+  // hashing 10,000 ids on every render.
+  const [esSearchResultsQuery, setEsSearchResultsQuery] = useState("");
   const [_esSearchLoading, setEsSearchLoading] = useState(false);
   const [_esSearchTotal, setEsSearchTotal] = useState<number>(0);
-  // Tracks whether the panel was already collapsed before search started.
-  // null = not currently in a search-initiated collapse.
-  const wasCollapsedBeforeSearchRef = useRef<boolean | null>(null);
-  const isEsSearchActive = esSearchQuery.trim().length > 0;
+  // True when the match count exceeded the Elasticsearch result window: the id
+  // set (and therefore the table and the facet counts) covers only the top
+  // ES_MAX_RESULT_WINDOW matches.
+  const [esSearchTruncated, setEsSearchTruncated] = useState(false);
+  // The last resolution attempt failed (non-ok response, a rejected page fetch
+  // mid-paging, or a throw). The ids are a hard AND'd filter now, so a failure
+  // must NOT leave the table rendering the whole repository as if the search
+  // matched everything (spec §9: no silent fallback to unfiltered).
+  const [esSearchFailed, setEsSearchFailed] = useState(false);
+  // What the table and the counts actually intersect with. Null wherever the
+  // search box isn't offered, so a query held over from edit mode can't filter
+  // the run view (or silently disable its drag-reorder).
+  const activeSearchResultIds = isEsSearchAvailable ? esSearchResultIds : null;
+  const activeSearchKey = isEsSearchAvailable ? esSearchResultsQuery : "";
+  // The text the table is scoped to, resolved or not. It is the search half of
+  // the "current view" identity: pagination, the bulk selection and any
+  // in-flight select-all belong to a (folder, axis, predicates, search) tuple,
+  // and a change to any of them invalidates the others.
+  const activeSearchText = isEsSearchAvailable ? esSearchQuery.trim() : "";
+  const searchFailed = isEsSearchAvailable && esSearchFailed;
+  // A query is on screen but its id set is not usable yet. The table must show
+  // loading rather than the unfiltered list — the first thing a user sees on a
+  // shared `?q=` link would otherwise be every case in the repository.
+  const searchPending =
+    activeSearchText.length > 0 &&
+    !searchFailed &&
+    (activeSearchResultIds === null || activeSearchKey !== activeSearchText);
 
   const t = useTranslations();
+  // The search effect toasts on failure but must not re-run (and re-issue the
+  // search) just because the translator's identity changed.
+  const tRef = useRef(t);
+  useEffect(() => {
+    tRef.current = t;
+  }, [t]);
 
   // Sync URL parameter to state when it changes
   // Only depends on nodeParam to avoid feedback loops
@@ -661,6 +755,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
   // predicates against the static dimensions only, and the response's arrival
   // re-renders with the full registry (dynamic-field predicates resolve then).
   const includeRunDimensions = isRunMode && !isSelectionMode;
+  const persistFiltersToUrl = !isSelectionMode;
   const [registryDynamicFields, setRegistryDynamicFields] = useState<
     Record<string, DynamicFieldDescriptor> | undefined
   >(undefined);
@@ -681,16 +776,20 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
     removePredicate,
     clearPredicates,
     canonicalKey,
+    truncation: filterTruncation,
   } = useRepositoryFilters({
     registry: filterRegistry,
-    persistToUrl: !isSelectionMode,
+    persistToUrl: persistFiltersToUrl,
   });
 
-  // Counts are computed under the predicates the TABLE is actually using:
-  // while ES search is active the interim bypass empties Cases' predicates
-  // (spec §13), so the counts request sends the same emptied set.
-  const countingPredicates = isEsSearchActive ? EMPTY_PREDICATES : predicates;
-  const countingPredicatesKey = isEsSearchActive ? "" : canonicalKey;
+  // Counts are computed under the predicates the TABLE is actually using, and
+  // under the same search id snapshot (spec §8/§9): search is cross-cutting —
+  // every dimension's counts respect it, and it never self-excludes.
+  //
+  // The key carries `esSearchResultsQuery`, not the id array: it changes exactly
+  // when the ids do, so a cache entry can never hold counts computed from a
+  // different id set than the key implies.
+  const searchCaseIdsForCounts = activeSearchResultIds ?? undefined;
 
   // Fetch aggregated view options for filters (lightweight query)
   const {
@@ -705,7 +804,8 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
       selectedTestCases,
       params.runId,
       selectedRunIds,
-      countingPredicatesKey,
+      canonicalKey,
+      activeSearchKey,
     ],
     queryFn: async () => {
       const response = await fetch("/api/repository-cases/view-options", {
@@ -717,7 +817,8 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
           selectedTestCases: isRunMode ? selectedTestCases : undefined,
           runId: isRunMode && params.runId ? Number(params.runId) : undefined,
           runIds: isRunMode && selectedRunIds ? selectedRunIds : undefined,
-          predicates: countingPredicates,
+          predicates,
+          searchCaseIds: searchCaseIdsForCounts,
         }),
       });
 
@@ -754,7 +855,10 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
   } | null>(null);
   if (initialUrlRef.current === null) {
     initialUrlRef.current = {
-      hadZeroFParams: searchParams.getAll("f").length === 0,
+      // Both URL forms count as "carries filters": the compressed `fz` param
+      // replaces the readable `f` set above the URL budget.
+      hadZeroFParams:
+        searchParams.getAll("f").length === 0 && !searchParams.get("fz"),
       hadSelectedCase: searchParams.get("selectedCase") !== null,
     };
   }
@@ -1044,6 +1148,10 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
       tags: tagOptions,
       issues: issueOptions,
       testRunOptions: viewOptionsData.testRunOptions,
+      // Per-dimension self-excluded totals: the "All …" rows must share a base
+      // with the option rows beneath them, or they render smaller than their
+      // own options once a filter is active.
+      dimensionTotals: viewOptionsData.dimensionTotals,
     };
   }, [viewOptionsData, t]);
 
@@ -1336,16 +1444,49 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
   // Elasticsearch search effect - search for test cases in this project.
   // Fetches all matching IDs by paginating through ES results.
   // IDs are passed to Cases which uses a POST-based fetch (not ZenStack GET hooks)
-  // to avoid URL length limits.
+  // to avoid URL length limits, and to the view-options counts route.
+  //
+  // Failure is a hard state, never a fallback: the ids AND into the table's
+  // where, so publishing a partial set (or leaving the previous/null set in
+  // place) would show cases the search excludes. Any non-ok response, any
+  // rejected page fetch and any throw drop the whole attempt, raise
+  // `esSearchFailed` and toast (spec §9).
+  const trimmedSearchQuery = debouncedEsSearchQuery.trim();
   useEffect(() => {
-    if (!debouncedEsSearchQuery.trim()) {
+    if (!trimmedSearchQuery) {
       setEsSearchResultIds(null);
+      setEsSearchResultsQuery("");
       setEsSearchTotal(0);
+      setEsSearchTruncated(false);
+      setEsSearchFailed(false);
       return;
     }
 
     let cancelled = false;
     const PAGE_SIZE = 500;
+    // `from + size` can never exceed index.max_result_window (10,000 by
+    // default), so the id set tops out there. Requesting past it is a hard ES
+    // error, hence the clamp; the overflow is surfaced as a banner instead of
+    // being dropped silently. search_after/PIT streaming is the documented
+    // follow-up for lifting the ceiling.
+    const MAX_PAGES = Math.ceil(ES_MAX_RESULT_WINDOW / PAGE_SIZE);
+    const searchBody = (page: number) => ({
+      filters: {
+        query: trimmedSearchQuery,
+        entityTypes: ["repository_case"],
+        repositoryCase: {
+          projectIds: [numericProjectId],
+          // Archived cases are never shown in the table, so letting them
+          // consume slots in a capped id window only loses real matches.
+          isArchived: false,
+        },
+      },
+      pagination: { page, size: PAGE_SIZE },
+      highlight: false,
+      // Without this the total saturates at 10,000 and truncation is
+      // indistinguishable from an exactly-full result set.
+      trackTotalHits: true,
+    });
 
     const doSearch = async () => {
       setEsSearchLoading(true);
@@ -1354,28 +1495,20 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
         const response = await fetch("/api/search", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            filters: {
-              query: debouncedEsSearchQuery,
-              entityTypes: ["repository_case"],
-              repositoryCase: {
-                projectIds: [numericProjectId],
-              },
-            },
-            pagination: { page: 1, size: PAGE_SIZE },
-            highlight: false,
-          }),
+          body: JSON.stringify(searchBody(1)),
         });
 
         if (cancelled) return;
-        if (!response.ok) return;
+        if (!response.ok) {
+          throw new Error(`Search request failed: ${response.status}`);
+        }
 
         const data = await response.json();
         const total = data.total as number;
         const allIds: number[] = data.hits.map((hit: any) => hit.source.id);
 
         // Fetch remaining pages if needed
-        const totalPages = Math.ceil(total / PAGE_SIZE);
+        const totalPages = Math.min(Math.ceil(total / PAGE_SIZE), MAX_PAGES);
         if (totalPages > 1) {
           const remainingPages = Array.from(
             { length: totalPages - 1 },
@@ -1386,18 +1519,16 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
               fetch("/api/search", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  filters: {
-                    query: debouncedEsSearchQuery,
-                    entityTypes: ["repository_case"],
-                    repositoryCase: {
-                      projectIds: [numericProjectId],
-                    },
-                  },
-                  pagination: { page, size: PAGE_SIZE },
-                  highlight: false,
-                }),
-              }).then((r) => (r.ok ? r.json() : { hits: [] }))
+                body: JSON.stringify(searchBody(page)),
+              }).then((r) => {
+                // A dropped page is a partial id set, and a partial set AND'd
+                // into the where hides matching cases with no signal at all.
+                // Fail the whole resolution instead.
+                if (!r.ok) {
+                  throw new Error(`Search page ${page} failed: ${r.status}`);
+                }
+                return r.json();
+              })
             )
           );
 
@@ -1411,9 +1542,20 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
         }
 
         setEsSearchResultIds(allIds);
+        setEsSearchResultsQuery(trimmedSearchQuery);
         setEsSearchTotal(total);
+        setEsSearchTruncated(total > ES_MAX_RESULT_WINDOW);
+        setEsSearchFailed(false);
       } catch (err) {
+        if (cancelled) return;
         console.error("ES search error:", err);
+        // Drop any previously resolved set: it belongs to a different query.
+        setEsSearchResultIds(null);
+        setEsSearchResultsQuery("");
+        setEsSearchTotal(0);
+        setEsSearchTruncated(false);
+        setEsSearchFailed(true);
+        toast.error(tRef.current("common.errors.fetchFailed"));
       } finally {
         if (!cancelled) setEsSearchLoading(false);
       }
@@ -1423,39 +1565,66 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
     return () => {
       cancelled = true;
     };
-  }, [debouncedEsSearchQuery, numericProjectId]);
+  }, [trimmedSearchQuery, numericProjectId]);
 
-  // Auto-collapse left panel when ES search is active
+  // Re-state the filter family from the authoritative predicate array. The
+  // FilterBar's writer (useRepositoryFilters) and this component's writers are
+  // separate `router.replace` calls, so a `q` write composed from a stale
+  // window.location.search can carry a stale `f` set. Re-encoding from
+  // `predicates` — which is parsed from the committed URL — makes the filter
+  // family correct in whatever this component writes. Held back until the
+  // registry's dynamic fields have arrived: before that, dynamic-field
+  // predicates are not yet parseable and re-encoding would delete them.
+  const reassertFilterParams = useCallback(
+    (query: URLSearchParams) => {
+      if (!persistFiltersToUrl || registryDynamicFields === undefined) return;
+      const encoding = encodeFilterPredicatesForUrl(predicates);
+      query.delete(FILTER_PARAM);
+      query.delete(COMPRESSED_FILTER_PARAM);
+      if (encoding.compressed) {
+        query.set(COMPRESSED_FILTER_PARAM, encoding.compressed);
+      }
+      for (const token of encoding.fParams) {
+        query.append(FILTER_PARAM, token);
+      }
+    },
+    [persistFiltersToUrl, registryDynamicFields, predicates]
+  );
+
+  // Mirror the debounced query into `?q=` (view mode only — the case-selection
+  // dialog must not pollute the host page's URL, spec §10). It goes through the
+  // same compose-and-replace helper as every other write here, so a `case`,
+  // `view` or `node` param written moments earlier survives, and the filter
+  // family is re-stated from `predicates` rather than copied from a possibly
+  // stale URL. `searchParams` is a dependency so that a competing write which
+  // dropped `q` is healed on the next commit.
   useEffect(() => {
-    if (esSearchQuery.trim()) {
-      // Only capture pre-search state on the first transition into search
-      if (wasCollapsedBeforeSearchRef.current === null) {
-        wasCollapsedBeforeSearchRef.current = isCollapsed;
-        if (!isCollapsed && panelRef.current) {
-          setIsTransitioning(true);
-          panelRef.current.collapse();
-          setIsCollapsed(true);
-          setTimeout(() => setIsTransitioning(false), 300);
+    if (!persistSearchToUrl) return;
+    replaceUrlParams((query) => {
+      if ((query.get("q") ?? "") !== trimmedSearchQuery) {
+        if (trimmedSearchQuery) {
+          query.set("q", trimmedSearchQuery);
+        } else {
+          query.delete("q");
         }
       }
-    } else {
-      // Search cleared — restore panel if it wasn't collapsed before search
-      if (wasCollapsedBeforeSearchRef.current === false && panelRef.current) {
-        setIsTransitioning(true);
-        panelRef.current.expand();
-        setIsCollapsed(false);
-        setTimeout(() => setIsTransitioning(false), 300);
-      }
-      wasCollapsedBeforeSearchRef.current = null;
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [esSearchQuery]);
+      reassertFilterParams(query);
+    });
+  }, [
+    trimmedSearchQuery,
+    persistSearchToUrl,
+    replaceUrlParams,
+    reassertFilterParams,
+    searchParams,
+  ]);
 
   const cancelEsSearch = useCallback(() => {
     setEsSearchQuery("");
     setEsSearchResultIds(null);
+    setEsSearchResultsQuery("");
     setEsSearchTotal(0);
-    // Panel restore is handled by the effect above via setEsSearchQuery("")
+    setEsSearchTruncated(false);
+    setEsSearchFailed(false);
   }, []);
 
   const toggleCollapse = () => {
@@ -1483,17 +1652,12 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
       }
 
       if (!isSelectionMode) {
-        // Compose from window.location.search, not a useSearchParams snapshot:
-        // a just-written `f` param (useRepositoryFilters) may not have reached
-        // the snapshot yet and would be dropped from the URL here.
-        const params = new URLSearchParams(window.location.search);
-        params.set("view", value);
-        router.replace(`${pathName}?${params.toString()}`, {
-          scroll: false,
-        });
+        // Through the shared writer: a just-written `f` or `q` param may not
+        // have reached window.location yet and would otherwise be dropped.
+        replaceUrlParams((params) => params.set("view", value));
       }
     },
-    [pathName, router, handleSelectFolder, isSelectionMode]
+    [replaceUrlParams, handleSelectFolder, isSelectionMode]
   );
 
   // --- ViewSelector row-click bridge (spec §6) -----------------------------
@@ -1668,18 +1832,17 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
 
   // Any predicate add/remove/edit resets pagination to page 1 (spec §5),
   // through the override setter when the host owns pagination (spec §10).
+  // The search text narrows the same result set, so it resets the page too —
+  // otherwise a search run from page 4 lands on a page that no longer exists.
   const overrideSetCurrentPage = overridePagination?.setCurrentPage;
   const effectiveSetCurrentPage = overrideSetCurrentPage ?? setCurrentPage;
-  const prevCanonicalKeyRef = useRef(canonicalKey);
+  const prevResultSetKeyRef = useRef(`${canonicalKey}|${activeSearchText}`);
   useEffect(() => {
-    if (prevCanonicalKeyRef.current === canonicalKey) return;
-    prevCanonicalKeyRef.current = canonicalKey;
+    const resultSetKey = `${canonicalKey}|${activeSearchText}`;
+    if (prevResultSetKeyRef.current === resultSetKey) return;
+    prevResultSetKeyRef.current = resultSetKey;
     effectiveSetCurrentPage(1);
-  }, [canonicalKey, effectiveSetCurrentPage]);
-
-  // Interim rule (spec §13): ES search still bypasses predicates this phase,
-  // so chips are muted while a search is active.
-  const searchPaused = isEsSearchActive && predicates.length > 0;
+  }, [canonicalKey, activeSearchText, effectiveSetCurrentPage]);
 
   // Fetch minimal case position data for auto-paging in run mode
   const { data: casePositions } = useClientQueries(
@@ -1879,7 +2042,11 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                           isRunMode={isRunMode}
                           viewOptions={viewOptions}
                           totalCount={viewOptionsData?.totalCount || 0}
-                          countsMuted={viewOptionsIsPlaceholder}
+                          countsMuted={
+                            viewOptionsIsPlaceholder ||
+                            searchPending ||
+                            searchFailed
+                          }
                         />
                         <div className="ms-4">
                           {selectedItem === "folders" &&
@@ -1971,18 +2138,13 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                       </DropZoneOverlay>
                     </div>
                   </ResizablePanel>
-                  <ResizableHandle
-                    withHandle
-                    className="w-1"
-                    disabled={isEsSearchActive}
-                  />
+                  <ResizableHandle withHandle className="w-1" />
                   <div className="shrink-0 pt-0.5">
                     <Button
                       type="button"
                       onClick={toggleCollapse}
                       variant="secondary"
                       className="p-0 -ms-1 rounded-s-none"
-                      disabled={isEsSearchActive}
                     >
                       {isCollapsed ? <ChevronRight /> : <ChevronLeft />}
                     </Button>
@@ -2020,9 +2182,12 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                                 <div>{t("common.fields.testCases")}</div>
                               </div>
                             </div>
-                            {/* Elasticsearch search bar for selection mode */}
-                            {isSelectionMode && (
-                              <div className="relative flex-1 max-w-md">
+                            {/* Elasticsearch search — repository view mode and
+                                case-selection mode. Composes with folder scope
+                                and filter chips (spec §9); run view mode has no
+                                ES search in v1. */}
+                            {isEsSearchAvailable && (
+                              <div className="relative flex-1 max-w-md min-w-0">
                                 <Search className="absolute start-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                                 <Input
                                   type="text"
@@ -2034,6 +2199,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                                     setEsSearchQuery(e.target.value)
                                   }
                                   className="ps-10 pe-10 h-8"
+                                  data-testid="es-search-input"
                                 />
                                 {esSearchQuery && (
                                   <Button
@@ -2134,69 +2300,66 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                             )}
                           </div>
 
-                          {selectedItem === "folders" &&
-                            !isRunMode &&
-                            !isEsSearchActive && (
-                              <>
-                                <div className="@container flex items-center justify-between mt-2">
-                                  <BreadcrumbComponent
-                                    breadcrumbItems={getBreadcrumbItems}
-                                    projectId={projectIdParam}
-                                    onClick={handleBreadcrumbClick}
-                                    isLastClickable={false}
-                                  />
-                                  {selectedFolderId !== null && (
-                                    <Toggle
-                                      variant="outline"
-                                      size="sm"
-                                      pressed={showDescendants}
-                                      onPressedChange={setShowDescendants}
-                                      aria-label={t(
-                                        "repository.showDescendants"
-                                      )}
-                                      className="group h-7 gap-0 hover:gap-1 focus-visible:gap-1 @lg:gap-1 text-xs me-2 shrink-0 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
-                                    >
-                                      <FolderDown className="h-3.5 w-3.5 shrink-0" />
-                                      <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-64 group-focus-visible:max-w-64 @lg:max-w-64 select-none">
-                                        {t("repository.showDescendants")}
-                                      </span>
-                                    </Toggle>
-                                  )}
-                                </div>
-                                {/* Display Folder Documentation */}
-                                {selectedItem === "folders" &&
-                                  !isRunMode &&
-                                  selectedFolderId !== null &&
-                                  (() => {
-                                    const selectedFolderNode =
-                                      folderHierarchy.find(
-                                        (folder) =>
-                                          folder.id === selectedFolderId
-                                      );
-                                    if (selectedFolderNode?.data?.docs) {
-                                      const docsContent = parseTipTapContent(
-                                        selectedFolderNode.data.docs
-                                      );
-                                      const isEmpty =
-                                        isTiptapEmpty(docsContent);
+                          {/* Search no longer bypasses folder scope, so the
+                              breadcrumb and the descendants toggle stay
+                              visible while searching (spec §9). */}
+                          {selectedItem === "folders" && !isRunMode && (
+                            <>
+                              <div className="@container flex items-center justify-between mt-2">
+                                <BreadcrumbComponent
+                                  breadcrumbItems={getBreadcrumbItems}
+                                  projectId={projectIdParam}
+                                  onClick={handleBreadcrumbClick}
+                                  isLastClickable={false}
+                                />
+                                {selectedFolderId !== null && (
+                                  <Toggle
+                                    variant="outline"
+                                    size="sm"
+                                    pressed={showDescendants}
+                                    onPressedChange={setShowDescendants}
+                                    aria-label={t("repository.showDescendants")}
+                                    className="group h-7 gap-0 hover:gap-1 focus-visible:gap-1 @lg:gap-1 text-xs me-2 shrink-0 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+                                  >
+                                    <FolderDown className="h-3.5 w-3.5 shrink-0" />
+                                    <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-64 group-focus-visible:max-w-64 @lg:max-w-64 select-none">
+                                      {t("repository.showDescendants")}
+                                    </span>
+                                  </Toggle>
+                                )}
+                              </div>
+                              {/* Display Folder Documentation */}
+                              {selectedItem === "folders" &&
+                                !isRunMode &&
+                                selectedFolderId !== null &&
+                                (() => {
+                                  const selectedFolderNode =
+                                    folderHierarchy.find(
+                                      (folder) => folder.id === selectedFolderId
+                                    );
+                                  if (selectedFolderNode?.data?.docs) {
+                                    const docsContent = parseTipTapContent(
+                                      selectedFolderNode.data.docs
+                                    );
+                                    const isEmpty = isTiptapEmpty(docsContent);
 
-                                      if (!isEmpty) {
-                                        return (
-                                          <div className="ms-4 bg-muted rounded-lg">
-                                            <TipTapEditor
-                                              content={docsContent}
-                                              readOnly={true}
-                                              projectId={projectIdParam}
-                                              className="prose prose-sm max-w-none dark:prose-invert"
-                                            />
-                                          </div>
-                                        );
-                                      }
+                                    if (!isEmpty) {
+                                      return (
+                                        <div className="ms-4 bg-muted rounded-lg">
+                                          <TipTapEditor
+                                            content={docsContent}
+                                            readOnly={true}
+                                            projectId={projectIdParam}
+                                            className="prose prose-sm max-w-none dark:prose-invert"
+                                          />
+                                        </div>
+                                      );
                                     }
-                                    return null;
-                                  })()}
-                              </>
-                            )}
+                                  }
+                                  return null;
+                                })()}
+                            </>
+                          )}
                         </div>
                         <div className="mx-2 mt-2">
                           <RepositoryFilterBar
@@ -2209,26 +2372,35 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                             viewOptions={viewOptions}
                             totalCount={filterBarTotalCount}
                             isRunMode={isRunMode && !isSelectionMode}
-                            searchPaused={searchPaused}
-                            countsMuted={viewOptionsIsPlaceholder}
+                            truncation={filterTruncation}
+                            searchTruncated={
+                              isEsSearchAvailable && esSearchTruncated
+                            }
+                            searchWindow={ES_MAX_RESULT_WINDOW}
+                            // Counts intersect the resolved search id set; while
+                            // that set is missing (still resolving, or failed)
+                            // they answer a wider question than the table does.
+                            countsMuted={
+                              viewOptionsIsPlaceholder ||
+                              searchPending ||
+                              searchFailed
+                            }
                           />
                         </div>
                         <DropZoneOverlay
                           kind="reorder"
                           testId="reorder-drop-zone"
                         >
+                          {/* Search intersects, it no longer bypasses (spec
+                              §9): folder scope, grouping axis and predicates
+                              all stay real; the resolved id set rides
+                              alongside as searchResultIds. */}
                           <Cases
-                            folderId={
-                              isEsSearchActive ? null : selectedFolderId
-                            }
-                            viewType={
-                              isEsSearchActive ? "folders" : selectedItem
-                            }
-                            predicates={
-                              isEsSearchActive ? EMPTY_PREDICATES : predicates
-                            }
+                            folderId={selectedFolderId}
+                            viewType={selectedItem}
+                            predicates={predicates}
                             filterRegistry={filterRegistry}
-                            predicatesKey={isEsSearchActive ? "" : canonicalKey}
+                            predicatesKey={canonicalKey}
                             onClearFilters={clearPredicates}
                             isSelectionMode={isSelectionMode}
                             selectedTestCases={selectedTestCases}
@@ -2245,7 +2417,11 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                             canDelete={canDelete}
                             selectedFolderCaseCount={selectedFolderCaseCount}
                             overridePagination={overridePagination}
-                            searchResultIds={esSearchResultIds}
+                            searchResultIds={activeSearchResultIds}
+                            searchKey={activeSearchKey}
+                            searchText={activeSearchText}
+                            searchPending={searchPending}
+                            searchFailed={searchFailed}
                             copyMoveFolderId={copyMoveFolderId}
                             copyMoveFolderName={copyMoveFolderName}
                             onCopyMoveFolderDialogClose={

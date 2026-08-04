@@ -86,6 +86,7 @@ import { fetchAllCasesForExport as fetchAllCasesAction } from "~/app/actions/exp
 import { TFunction, useExportData } from "~/hooks/useExportData";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { useFindManyRepositoryCasesByDescendants } from "~/hooks/useRepositoryCasesByDescendants";
+import { useRepositoryCasesQuery } from "~/hooks/useRepositoryCasesQuery";
 import {
   PostFetchFilter,
   useFindManyRepositoryCasesFiltered,
@@ -258,6 +259,19 @@ const REPOSITORY_CASE_SORTABLE_SCALARS = new Set([
   "source",
 ]);
 
+// Size at which the repository list stops using the ZenStack GET hooks and
+// switches to POST /cases/query, measured on JSON.stringify(where).
+//
+// The GET path percent-encodes the clause into the query string, where JSON
+// punctuation ({ } " : ,) costs 3 characters each — roughly a 2-3x expansion —
+// on top of the select shape and meta params the hook also serializes. 2,000
+// characters of `where` therefore lands around 5-6 KB of request line, inside
+// the 8 KB budget nginx and Node's 16 KB header cap allow, with room for the
+// rest of the URL. Ordinary filter sets are 300-700 characters, so this only
+// diverts the genuinely id-heavy clauses (large tag/issue/folder id sets) that
+// would otherwise 414.
+const WHERE_POST_ROUTING_CHAR_BUDGET = 2000;
+
 // Shared select shape for repository case list queries. Used by both the
 // ZenStack useFindManyRepositoryCases hook (default GET path) and the
 // by-folder-descendants POST endpoint (used when "Show all descendants" is
@@ -388,8 +402,25 @@ interface CasesProps {
     totalItems: number;
     setTotalItems: (total: number) => void;
   };
-  /** When provided, restricts displayed cases to these IDs (from Elasticsearch search) */
+  /** Relevance-ordered id set from Elasticsearch. Intersected with the folder
+   * scope, the predicates and the in-table name filter (spec §9) — never a
+   * bypass. Null when no search is active; an empty array means the search
+   * matched nothing. */
   searchResultIds?: number[] | null;
+  /** Identity of `searchResultIds` for query keys — the debounced query string
+   * the ids were resolved for, never the array itself. */
+  searchKey?: string;
+  /** The search text the table is scoped to, resolved or not. Part of the
+   * "current view" identity alongside folder/axis/predicates: a change to it
+   * invalidates the bulk selection and any in-flight select-all. */
+  searchText?: string;
+  /** A query is on screen but its id set has not resolved yet. The ids are an
+   * AND'd filter, so the list must show loading rather than the unfiltered
+   * repository (spec §9). */
+  searchPending?: boolean;
+  /** The search could not be resolved. Same reasoning as `searchPending`, but
+   * terminal: the table shows the error state instead of an unfiltered list. */
+  searchFailed?: boolean;
   /** When set, opens CopyMoveDialog in folder mode for the given folder */
   copyMoveFolderId?: number | null;
   copyMoveFolderName?: string;
@@ -426,6 +457,10 @@ export default function Cases({
   selectedFolderCaseCount,
   overridePagination,
   searchResultIds,
+  searchKey,
+  searchText = "",
+  searchPending = false,
+  searchFailed = false,
   copyMoveFolderId,
   copyMoveFolderName,
   onCopyMoveFolderDialogClose,
@@ -941,7 +976,9 @@ export default function Cases({
 
   // Build repository case where clause (used for filtering by folder, view, template, etc.)
   // This excludes test run-specific filters like assignedTo and status
-  // NOTE: When searchResultIds is active, ZenStack hooks are disabled and data comes from POST fetch instead
+  // NOTE: While the POST route owns the list (active search, or a where too
+  // large for a GET) the ZenStack hooks are disabled and this same clause
+  // travels in the request body instead.
   const repositoryCaseWhereClause: RepositoryCasesWhereInput = useMemo(() => {
     const baseConditions: RepositoryCasesWhereInput[] = [
       {
@@ -1029,6 +1066,31 @@ export default function Cases({
     () => extractPostFetchFilters(predicates, filterRegistry),
     [predicates, filterRegistry]
   );
+
+  // --- GET vs POST routing (spec §9) ---------------------------------------
+  // The ZenStack hooks serialize `where` into the query string, so a big enough
+  // clause 414s (the documented reason the descendants POST exists). Two things
+  // blow past it: an Elasticsearch id set (up to 10,000 ids) and an id-heavy
+  // predicate/folder clause. Both take the same POST route, and the count rides
+  // with the list on that route so the two can never disagree.
+  const searchActive = Array.isArray(searchResultIds);
+  // A search is in play whose id set is unusable — still resolving, or failed.
+  // Before Phase 4 the ids were a bypass and a missing set simply meant "no
+  // search"; now they are an AND'd filter, so falling through to the ordinary
+  // query would render the ENTIRE repository as if the search had matched
+  // everything. Every list/count query is gated off here and the render shows
+  // loading (pending) or the error state (failed) instead — spec §9's "no
+  // silent fallback to unfiltered".
+  const searchUnresolved = searchPending || searchFailed;
+  const whereSerializedLength = useMemo(
+    () => JSON.stringify(repositoryCaseWhereClause).length,
+    [repositoryCaseWhereClause]
+  );
+  const isHeavyWhere = whereSerializedLength > WHERE_POST_ROUTING_CHAR_BUDGET;
+  // Run mode keeps its GET hook: intersecting there needs a POST twin of the
+  // testRunCases query (out of scope for v1), and it has no ES search.
+  const postQueryMode =
+    !isRunMode && (searchActive || (isHeavyWhere && !isDescendantsMode));
 
   // Run-scoped predicate fragments (status/assignedTo). Every fragment carries
   // an OR key, so they MUST be combined in an explicit AND array — spreading
@@ -1376,8 +1438,10 @@ export default function Cases({
       },
       {
         enabled: Boolean(
-          // Disable when ES search is active (data comes from POST fetch instead)
-          searchResultIds
+          // Disable when the list is served by POST /cases/query (active
+          // search, or a where too large for a GET) — the count comes from the
+          // same response, so list and count can't diverge.
+          postQueryMode
             ? false
             : // Disable in descendants mode (count comes from the POST endpoint)
               isDescendantsMode
@@ -1472,7 +1536,12 @@ export default function Cases({
     },
     postFetchFilters.length > 0 ? postFetchFilters : undefined,
     {
-      enabled: fetchAllIdsForSelection && !isRunMode && !isDescendantsMode,
+      enabled:
+        fetchAllIdsForSelection &&
+        !isRunMode &&
+        !isDescendantsMode &&
+        !postQueryMode &&
+        !searchUnresolved,
       refetchOnWindowFocus: false,
     }
   );
@@ -1487,15 +1556,79 @@ export default function Cases({
         folderId: folderId ?? 0,
         where: repositoryCaseWhereClauseWithoutFolderFilter,
         select: selectAllIdsSelect,
-        enabled: fetchAllIdsForSelection && !isRunMode && isDescendantsMode,
+        enabled:
+          fetchAllIdsForSelection &&
+          !isRunMode &&
+          isDescendantsMode &&
+          !postQueryMode &&
+          !searchUnresolved,
         keepPreviousData: false,
       },
       postFetchFilters.length > 0 ? postFetchFilters : undefined
     );
 
-  const allCaseIdsData = isDescendantsMode
-    ? allCaseIdsDataDescendants
-    : allCaseIdsDataZenStack;
+  // Search active + default sort => Elasticsearch relevance wins, and that
+  // order lives only in the position of searchResultIds, so the route is asked
+  // for it by omitting orderBy. A user-chosen (or remembered) column sort wins
+  // over relevance — the table must obey its own sort header (spec §9).
+  const useRelevanceOrder = searchActive && isDefaultSort;
+
+  // The full intersected id list behind select-all and the details panel's
+  // prev/next. `idsOnly` is enough unless text/link/steps matchers have to run
+  // in memory — those need the rows the matchers read, so the same request
+  // carries the select-all select instead.
+  const allIdsNeedRows = postFetchFilters.length > 0;
+  const allIdsWanted =
+    fetchAllIdsForSelection ||
+    Boolean(selectedCaseIdParam && !isRunMode && !isSelectionMode);
+  const postQueryAllIdsResult = useRepositoryCasesQuery(
+    {
+      projectId,
+      where: repositoryCaseWhereClause,
+      orderBy: useRelevanceOrder ? undefined : orderBy,
+      select: allIdsNeedRows ? selectAllIdsSelect : undefined,
+      idsOnly: !allIdsNeedRows,
+      searchCaseIds: searchResultIds ?? undefined,
+      searchKey,
+      enabled: Boolean(postQueryMode && allIdsWanted && !!session?.user),
+      // The ids are consumed as soon as they arrive; a previous view's set must
+      // never be applied to the cases now on screen.
+      keepPreviousData: false,
+    },
+    allIdsNeedRows ? postFetchFilters : undefined
+  );
+
+  const postQueryAllCaseIds = useMemo<number[] | undefined>(() => {
+    if (!postQueryMode) return undefined;
+    if (allIdsNeedRows) {
+      return postQueryAllIdsResult.data?.map((row: { id: number }) => row.id);
+    }
+    return postQueryAllIdsResult.ids;
+  }, [
+    postQueryMode,
+    allIdsNeedRows,
+    postQueryAllIdsResult.data,
+    postQueryAllIdsResult.ids,
+  ]);
+
+  // Memoized: it keys the select-all effect below, and an unstable identity
+  // would re-run that effect on every render.
+  const allCaseIdsData = useMemo(() => {
+    if (postQueryMode) {
+      // idsOnly returns bare ids; the select-all effect reads {id, isDeleted}
+      // rows (policy and isDeleted filtering already happened server-side).
+      return postQueryAllCaseIds?.map((id) => ({ id, isDeleted: false }));
+    }
+    return isDescendantsMode
+      ? allCaseIdsDataDescendants
+      : allCaseIdsDataZenStack;
+  }, [
+    postQueryMode,
+    postQueryAllCaseIds,
+    isDescendantsMode,
+    allCaseIdsDataDescendants,
+    allCaseIdsDataZenStack,
+  ]);
 
   const isTotalLoading = false;
 
@@ -1535,6 +1668,26 @@ export default function Cases({
     }
   }, [allCaseIdsData, selectAllAction, isSelectionMode, onSelectionChange, t]);
 
+  // The id-resolved sorts run during a search too, by AND'ing the resolved
+  // Elasticsearch ids into the where they resolve against. Skipping them
+  // instead (the pre-review behaviour) silently degraded the table to default
+  // order while the sort header still claimed the sort and the relevance pill
+  // stayed hidden — the UI would name an order it was not using. Both
+  // resolvers are server actions, so the where travels in a POST body and even
+  // a 10,000-id set cannot overflow a URL.
+  const idSortWhere = useMemo(
+    () =>
+      searchActive
+        ? {
+            AND: [
+              repositoryCaseWhereClause,
+              { id: { in: searchResultIds as number[] } },
+            ],
+          }
+        : repositoryCaseWhereClause,
+    [searchActive, repositoryCaseWhereClause, searchResultIds]
+  );
+
   // Sorting by Latest Results orders on the status of each case's most recent
   // result, which no ZenStack orderBy can express. The ids for the page are
   // resolved first, then handed to the query below as the whole filter, so the
@@ -1542,14 +1695,16 @@ export default function Cases({
   const isLatestResultsSort =
     !isDefaultSort && sortConfig?.column === "latestResults";
   const { pageIds: latestStatusPageIds } = useCaseIdsByLatestStatus({
-    where: repositoryCaseWhereClause,
+    where: idSortWhere,
     direction: sortConfig?.direction ?? "asc",
     skip: (currentPage - 1) * (pageSize === "All" ? 0 : pageSize),
     take: pageSize === "All" ? undefined : pageSize,
     enabled: Boolean(
       isLatestResultsSort &&
       !isRunMode &&
-      !searchResultIds &&
+      // An unresolved search would resolve the page against the un-searched
+      // superset.
+      !searchUnresolved &&
       // Works in descendants mode too: this is a server action (the where goes
       // in the POST body), so a large folder subtree can't overflow a URL.
       postFetchFilters.length === 0
@@ -1571,7 +1726,7 @@ export default function Cases({
   }, [isDefaultSort, sortConfig, uniqueCaseFieldList]);
   const isFieldOptionSort = fieldOptionSortFieldId !== null;
   const { pageIds: fieldOptionPageIds } = useCaseIdsByFieldOption({
-    where: repositoryCaseWhereClause,
+    where: idSortWhere,
     fieldId: fieldOptionSortFieldId ?? 0,
     direction: sortConfig?.direction ?? "asc",
     skip: (currentPage - 1) * (pageSize === "All" ? 0 : pageSize),
@@ -1579,7 +1734,7 @@ export default function Cases({
     enabled: Boolean(
       isFieldOptionSort &&
       !isRunMode &&
-      !searchResultIds &&
+      !searchUnresolved &&
       postFetchFilters.length === 0
     ),
   });
@@ -1626,9 +1781,11 @@ export default function Cases({
     {
       enabled: Boolean(
         // Skip the fetch when an id-resolved sort resolved to an empty page
-        // (its where would be `id: { in: [] }`), or when ES search is active
-        // (data comes from the POST fetch instead).
-        sortedPageEmpty || searchResultIds
+        // (its where would be `id: { in: [] }`), when the POST route owns the
+        // list (active search, or a where too large for a GET), or while a
+        // search is unresolved — this where has no search ids in it, so its
+        // rows would be the unfiltered repository.
+        sortedPageEmpty || postQueryMode || searchUnresolved
           ? false
           : // Disable in descendants mode (data comes from the POST endpoint) —
             // except when an id-resolved sort is active, where the ordered page
@@ -1852,7 +2009,11 @@ export default function Cases({
             ? undefined
             : pageSize,
       enabled: Boolean(
-        isDescendantsMode && !!session?.user && isValidProjectId
+        isDescendantsMode &&
+        !postQueryMode &&
+        !searchUnresolved &&
+        !!session?.user &&
+        isValidProjectId
       ),
     },
     postFetchFilters.length > 0 ? postFetchFilters : undefined,
@@ -1864,24 +2025,107 @@ export default function Cases({
       : undefined
   );
 
+  // POST /cases/query path: active search and/or a where too large for a GET.
+  // Text/link/steps matchers still run in memory, so those requests fetch the
+  // whole matching set and paginate client-side, exactly as the GET path does.
+  const clientPaginated = postFetchFilters.length > 0;
+  const postQuerySkip = (currentPage - 1) * (pageSize === "All" ? 0 : pageSize);
+  const postQueryTake = pageSize === "All" ? undefined : pageSize;
+  const postQueryResult = useRepositoryCasesQuery(
+    {
+      projectId,
+      // An id-resolved sort narrows the page to the ids it resolved, but the
+      // predicates travel WITH them: the resolution and this fetch are separate
+      // round trips, and in the window where the predicates changed and the
+      // ids have not re-resolved, an id-only where would show rows the active
+      // filters exclude. The where rides in a POST body, so the size argument
+      // behind the GET path's id-only form does not apply here.
+      where: sortedPageIds
+        ? { ...repositoryCaseWhereClause, id: { in: sortedPageIds } }
+        : repositoryCaseWhereClause,
+      orderBy: useRelevanceOrder ? undefined : orderBy,
+      select: REPOSITORY_CASE_LIST_SELECT,
+      skip: clientPaginated || sortedPageIds ? undefined : postQuerySkip,
+      take: clientPaginated || sortedPageIds ? undefined : postQueryTake,
+      searchCaseIds: searchResultIds ?? undefined,
+      searchKey,
+      enabled: Boolean(postQueryMode && !!session?.user && isValidProjectId),
+    },
+    clientPaginated ? postFetchFilters : undefined,
+    clientPaginated ? { skip: postQuerySkip, take: postQueryTake } : undefined
+  );
+
+  // An id-resolved sort's page request above is scoped to one page of ids, so
+  // its totalCount is the page size. The honest total comes from a count-only
+  // request (no `select`) carrying the real where.
+  const postQueryCountResult = useRepositoryCasesQuery({
+    projectId,
+    where: repositoryCaseWhereClause,
+    searchCaseIds: searchResultIds ?? undefined,
+    searchKey,
+    enabled: Boolean(
+      postQueryMode && !!sortedPageIds && !!session?.user && isValidProjectId
+    ),
+  });
+
   // When an id-resolved sort (latest results, dropdown field option) is active
   // under "show all descendants", the ordered page comes from the id-filtered
   // GET query, not the descendants POST — but the total count still comes from
   // the POST endpoint.
-  const useDescendantsData = isDescendantsMode && !sortedPageIds;
-  const data = useDescendantsData ? descendantsResult.data : zenStackData;
-  const isLoading = useDescendantsData
-    ? descendantsResult.isLoading
-    : zenStackIsLoading;
-  const filteredTotalCount = isDescendantsMode
-    ? descendantsResult.totalCount
-    : zenStackFilteredTotalCount;
+  const useDescendantsData =
+    isDescendantsMode && !sortedPageIds && !postQueryMode;
+  const data = postQueryMode
+    ? postQueryResult.data
+    : useDescendantsData
+      ? descendantsResult.data
+      : zenStackData;
+  const isLoading = searchPending
+    ? // Every list query is gated off while the ids resolve, so nothing is
+      // "loading" in React Query's sense — but the rows on screen do not answer
+      // the query the user just typed (or arrived with in `?q=`), and showing
+      // them unfiltered is the corruption this state exists to prevent.
+      true
+    : postQueryMode
+      ? postQueryResult.isLoading
+      : useDescendantsData
+        ? descendantsResult.isLoading
+        : zenStackIsLoading;
+  const filteredTotalCount = postQueryMode
+    ? sortedPageIds
+      ? postQueryCountResult.totalCount
+      : postQueryResult.totalCount
+    : isDescendantsMode
+      ? descendantsResult.totalCount
+      : zenStackFilteredTotalCount;
+
+  // A failed query keeps the previous rows on screen (keepPreviousData) — the
+  // toast is the only signal, because silently falling back to an unfiltered
+  // list would show cases the filters exclude.
+  const postQueryError = postQueryResult.error ?? postQueryCountResult.error;
+  const reportedQueryErrorRef = useRef<unknown>(null);
+  useEffect(() => {
+    if (!postQueryError) {
+      reportedQueryErrorRef.current = null;
+      return;
+    }
+    if (reportedQueryErrorRef.current === postQueryError) return;
+    reportedQueryErrorRef.current = postQueryError;
+    console.error("Repository cases query failed:", postQueryError);
+    toast.error(t("common.errors.fetchFailed"));
+  }, [postQueryError, t]);
   // Memoized so its identity is stable across renders (it feeds effect/callback
   // dependency lists); the ternary would otherwise build a new function each
   // render. `descendantsResult` is a fresh object each render, so depend on its
   // stable `refetch` method, not the whole object.
   const descendantsRefetch = descendantsResult.refetch;
+  const postQueryRefetch = postQueryResult.refetch;
+  const postQueryCountRefetch = postQueryCountResult.refetch;
   const refetchData = useMemo(() => {
+    if (postQueryMode) {
+      return async () => {
+        await Promise.all([postQueryRefetch(), postQueryCountRefetch()]);
+      };
+    }
     if (useDescendantsData) return descendantsRefetch;
     if (isDescendantsMode) {
       // Latest-sort under descendants: refresh both the id-filtered page and
@@ -1892,70 +2136,23 @@ export default function Cases({
     }
     return zenStackRefetchData;
   }, [
+    postQueryMode,
+    postQueryRefetch,
+    postQueryCountRefetch,
     useDescendantsData,
     isDescendantsMode,
     descendantsRefetch,
     zenStackRefetchData,
   ]);
 
-  // --- ES search POST-based data fetching ---
-  // When searchResultIds is active, fetch case data via POST to avoid URL length limits.
-  const [searchData, setSearchData] = useState<any[] | null>(null);
-  const [searchDataLoading, setSearchDataLoading] = useState(false);
-
-  useEffect(() => {
-    if (!searchResultIds || searchResultIds.length === 0) {
-      setSearchData(searchResultIds?.length === 0 ? [] : null);
-      return;
-    }
-
-    let cancelled = false;
-
-    const fetchSearchData = async () => {
-      setSearchDataLoading(true);
-      try {
-        // Paginate the IDs client-side, then fetch the page via POST
-        const skip =
-          (currentPage - 1) * (typeof pageSize === "number" ? pageSize : 0);
-        const take = typeof pageSize === "number" ? pageSize : undefined;
-
-        const response = await fetch(
-          `/api/projects/${projectId}/cases/fetch-many`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              caseIds: searchResultIds,
-              skip,
-              take,
-            }),
-          }
-        );
-
-        if (cancelled) return;
-
-        if (response.ok) {
-          const result = await response.json();
-          setSearchData(result.cases);
-        }
-      } catch (err) {
-        console.error("Search data fetch error:", err);
-      } finally {
-        if (!cancelled) setSearchDataLoading(false);
-      }
-    };
-
-    void fetchSearchData();
-    return () => {
-      cancelled = true;
-    };
-  }, [searchResultIds, currentPage, pageSize, projectId]);
-
   // Calculate total count based on mode
   const totalRepositoryCases = useMemo(() => {
-    // When ES search is active, use the search result count
-    if (searchResultIds) {
-      return searchResultIds.length;
+    // The POST route's count is the intersection's real size: it applies the
+    // predicates, the folder scope, the name filter AND row-level read policy,
+    // where the old search path just counted the raw Elasticsearch id array
+    // (over-counting archived and policy-hidden hits).
+    if (postQueryMode) {
+      return filteredTotalCount ?? 0;
     }
     // If we know the selected folder has 0 cases, return 0 immediately
     // (bypassed while predicates are active — spec §7.1)
@@ -1989,7 +2186,7 @@ export default function Cases({
     predicates,
     viewType,
     selectedFolderCaseCount,
-    searchResultIds,
+    postQueryMode,
     isDescendantsMode,
   ]);
 
@@ -2027,13 +2224,6 @@ export default function Cases({
     // If we're actively reordering, use the optimistic order
     if (optimisticReorder.inProgress && optimisticReorder.cases) {
       return optimisticReorder.cases;
-    }
-
-    // When ES search is active, use POST-fetched data
-    if (searchResultIds && searchData) {
-      return searchData.map((caseItem: any) => ({
-        ...caseItem,
-      }));
     }
 
     if (isRunMode && testRunCasesData) {
@@ -2090,15 +2280,7 @@ export default function Cases({
       return mapped;
     }
     return [];
-  }, [
-    isRunMode,
-    testRunCasesData,
-    data,
-    optimisticReorder,
-    searchResultIds,
-    searchData,
-    sortedPageIds,
-  ]);
+  }, [isRunMode, testRunCasesData, data, optimisticReorder, sortedPageIds]);
 
   // Bulk-fetch PENDING ReviewRequests for the visible page (D-06; one round
   // trip per page render — never per-row, per RESEARCH §"Pitfall 6").
@@ -2127,7 +2309,7 @@ export default function Cases({
         !isRunMode &&
         !isSelectionMode &&
         !!selectedCaseIdParam &&
-        !searchResultIds &&
+        !postQueryMode &&
         !isDescendantsMode &&
         !!session?.user
       ),
@@ -2142,14 +2324,14 @@ export default function Cases({
   // mode too — the where scopes to the resolved descendant folders and this is
   // a POST server action, so a deep subtree can't overflow a URL.
   const { pageIds: latestStatusAllIds } = useCaseIdsByLatestStatus({
-    where: repositoryCaseWhereClause,
+    where: idSortWhere,
     direction: sortConfig?.direction ?? "asc",
     enabled: Boolean(
       isLatestResultsSort &&
       !isRunMode &&
       !isSelectionMode &&
       !!selectedCaseIdParam &&
-      !searchResultIds &&
+      !searchUnresolved &&
       postFetchFilters.length === 0 &&
       !!session?.user
     ),
@@ -2159,7 +2341,7 @@ export default function Cases({
   // ordering the list applies through `fieldOptionPageIds`, but unpaginated so
   // prev/next steps across the whole filtered set.
   const { pageIds: fieldOptionAllIds } = useCaseIdsByFieldOption({
-    where: repositoryCaseWhereClause,
+    where: idSortWhere,
     fieldId: fieldOptionSortFieldId ?? 0,
     direction: sortConfig?.direction ?? "asc",
     enabled: Boolean(
@@ -2167,7 +2349,7 @@ export default function Cases({
       !isRunMode &&
       !isSelectionMode &&
       !!selectedCaseIdParam &&
-      !searchResultIds &&
+      !searchUnresolved &&
       postFetchFilters.length === 0 &&
       !!session?.user
     ),
@@ -2187,10 +2369,10 @@ export default function Cases({
       select: { id: true },
       enabled: Boolean(
         isDescendantsMode &&
+        !postQueryMode &&
         !isRunMode &&
         !isSelectionMode &&
         !!selectedCaseIdParam &&
-        !searchResultIds &&
         !isLatestResultsSort &&
         !isFieldOptionSort &&
         postFetchFilters.length === 0 &&
@@ -2200,13 +2382,18 @@ export default function Cases({
     });
 
   const allCaseIds = useMemo<number[]>(() => {
-    if (searchResultIds) return searchResultIds;
     // Id-resolved sorts (latest results, dropdown field option) order through
     // `sortedPageIds` for the list, not via `orderBy`, so `allCaseIdRows` is in
     // default order. Walk the full id-resolved ordering instead to keep
-    // prev/next in step with the sorted list.
+    // prev/next in step with the sorted list. During a search they resolve
+    // against the intersected id set (idSortWhere), so they agree with the
+    // list there too; relevance order only applies when no column sort is on.
     if (latestStatusAllIds) return latestStatusAllIds;
     if (fieldOptionAllIds) return fieldOptionAllIds;
+    // POST-routed list: the same intersected, ordered id list the route serves
+    // to select-all — NOT the raw Elasticsearch ids, which still contain
+    // archived, policy-hidden and filtered-out cases.
+    if (postQueryMode) return postQueryAllCaseIds ?? visibleCaseIds;
     // Descendants mode: the full ordered id list comes from the by-descendants
     // POST (the GET can't reproduce the subtree), so prev/next spans every page.
     if (isDescendantsMode) {
@@ -2228,7 +2415,8 @@ export default function Cases({
     }
     return ids;
   }, [
-    searchResultIds,
+    postQueryMode,
+    postQueryAllCaseIds,
     latestStatusAllIds,
     fieldOptionAllIds,
     isDescendantsMode,
@@ -2334,7 +2522,7 @@ export default function Cases({
   // Clear optimistic reorder when underlying data changes
   useEffect(() => {
     setOptimisticReorder({ inProgress: false, cases: null });
-  }, [currentPage, sortConfig, folderId, viewType, predicatesKey]);
+  }, [currentPage, sortConfig, folderId, viewType, predicatesKey, searchText]);
 
   // Scope the bulk-edit selection to the current view. Switching folders (or
   // changing the view/filter that determines which cases are shown) clears the
@@ -2343,11 +2531,14 @@ export default function Cases({
   // selection (that is what the cross-page merge logic is for). Run-mode
   // selection is owned by the parent and may legitimately span folders, so it
   // is left untouched here.
+  // The search text is part of that identity: it narrows the visible set
+  // exactly like a predicate does, so a selection made before a search must not
+  // survive it.
   const previousViewKeyRef = useRef<string | null>(null);
   useEffect(() => {
     if (isSelectionMode) return;
 
-    const viewKey = `${folderId}-${viewType}-${predicatesKey}`;
+    const viewKey = `${folderId}-${viewType}-${predicatesKey}-${searchText}`;
     if (
       previousViewKeyRef.current !== null &&
       previousViewKeyRef.current !== viewKey
@@ -2357,15 +2548,16 @@ export default function Cases({
       setLastSelectedIndex(null);
     }
     previousViewKeyRef.current = viewKey;
-  }, [folderId, viewType, predicatesKey, isSelectionMode]);
+  }, [folderId, viewType, predicatesKey, searchText, isSelectionMode]);
 
   // A Shift+click select-all belongs to the view it was started from. Changing
-  // the view abandons the in-flight ids fetch so its result can't be applied to
-  // the cases the user is now looking at.
+  // the view — including changing the search that scopes it — abandons the
+  // in-flight ids fetch so its result can't be applied to the cases the user is
+  // now looking at.
   useEffect(() => {
     setFetchAllIdsForSelection(false);
     setSelectAllAction(null);
-  }, [folderId, viewType, predicatesKey]);
+  }, [folderId, viewType, predicatesKey, searchText]);
 
   // Check if we're in multi-config mode (multiple test runs selected)
   const isMultiConfigMode =
@@ -2625,29 +2817,10 @@ export default function Cases({
           (index) => rowSelection[index.toString()]
         );
 
-        if (searchResultIds) {
-          // When ES search is active, use searchResultIds directly instead of querying DB
-          if (allSelectableSelected) {
-            if (isSelectionMode && onSelectionChange) {
-              onSelectionChange([]);
-            } else {
-              setSelectedCaseIdsForBulkEdit([]);
-            }
-            setRowSelection({});
-            toast.success(t("repository.deselectedAllCases"));
-          } else {
-            if (isSelectionMode && onSelectionChange) {
-              onSelectionChange(searchResultIds);
-            } else {
-              setSelectedCaseIdsForBulkEdit(searchResultIds);
-            }
-            toast.success(
-              t("repository.selectedAllCases", {
-                count: searchResultIds.length,
-              })
-            );
-          }
-        } else if (allSelectableSelected) {
+        // Search takes the same path as everything else now: the ids come from
+        // the intersected route result, never from the raw Elasticsearch set
+        // (which still holds archived, policy-hidden and filtered-out cases).
+        if (allSelectableSelected) {
           // Deselect all cases across all pages
           setFetchAllIdsForSelection(true);
           setSelectAllAction("deselect");
@@ -2737,8 +2910,6 @@ export default function Cases({
       selectedTestCases,
       selectedCaseIdsForBulkEdit,
       setSelectedCaseIdsForBulkEdit,
-      searchResultIds,
-      t,
     ]
   );
 
@@ -3274,6 +3445,10 @@ export default function Cases({
         // matchers so "all filtered" exports match the table's row set.
         postFetchFilters:
           postFetchFilters.length > 0 ? postFetchFilters : undefined,
+        // "All filtered" during an active search means the intersection, not
+        // the un-searched superset (spec §9). Rows come back in `orderBy`
+        // order, not relevance — export files carry no ranking.
+        searchCaseIds: searchResultIds ?? undefined,
       });
 
       if (response.success) {
@@ -3285,7 +3460,13 @@ export default function Cases({
         return []; // Or throw new Error(response.error);
       }
     },
-    [orderBy, repositoryCaseWhereClause, projectId, postFetchFilters]
+    [
+      orderBy,
+      repositoryCaseWhereClause,
+      projectId,
+      postFetchFilters,
+      searchResultIds,
+    ]
   );
 
   // Instantiate the hook
@@ -3344,6 +3525,18 @@ export default function Cases({
           <div className="flex flex-col grow w-full sm:w-1/2 min-w-[250px]">
             {/* filterComponent should always be rendered if we've reached this point */}
             {filterComponent}
+            {/* Which order the rows are in is otherwise invisible: a remembered
+                per-project sort silently outranks relevance, so say when
+                relevance is what's on screen (spec §9). Lives here rather than
+                in the FilterBar because only this component owns the sort. */}
+            {useRelevanceOrder && (
+              <div
+                className="mt-1 text-xs text-muted-foreground italic"
+                data-testid="sorted-by-relevance"
+              >
+                {t("repository.filterBar.sortedByRelevance")}
+              </div>
+            )}
             <div className="mt-4">
               <ColumnSelection
                 key="repository-cases-column-selection"
@@ -3483,6 +3676,21 @@ export default function Cases({
       </CardHeader>
       <CardContent>
         {(() => {
+          // A search that could not be resolved is terminal: its ids are an
+          // AND'd filter, so there is no honest list to show. Anything else
+          // here would be the unfiltered repository presented as the search
+          // result (spec §9).
+          if (searchFailed) {
+            return (
+              <div
+                className="text-muted-foreground text-pretty m-2"
+                data-testid="search-failed-message"
+              >
+                {t("search.errors.searchFailed")}
+              </div>
+            );
+          }
+
           // Handle preliminary states first (where DataTable might not be relevant)
           // Skip folder check when ES search results are active or predicates
           // are set — active filters query project-wide (spec §7.1).
@@ -3490,6 +3698,7 @@ export default function Cases({
             !folderId &&
             viewType === "folders" &&
             !searchResultIds &&
+            !searchPending &&
             predicates.length === 0
           ) {
             return (
@@ -3501,7 +3710,7 @@ export default function Cases({
 
           // If loading or column visibility not initialized, DataTable will show its own skeleton
           if (
-            (searchResultIds ? searchDataLoading : isLoading) ||
+            isLoading ||
             isTotalLoading ||
             isTemplatesLoading ||
             Object.keys(columnVisibility).length === 0
@@ -3587,6 +3796,13 @@ export default function Cases({
                 sortConfig={isCompleted ? undefined : sortConfig}
                 enableReorder={
                   isDefaultSort &&
+                  // Rows sit in relevance order during a search, so a drag
+                  // would compute `order` values from relevance-ordered
+                  // neighbours and corrupt the persisted case order. Filter
+                  // chips do NOT disable reordering (parity with the pre-chip
+                  // ViewSelector filters) — they narrow the set without
+                  // changing its order.
+                  !searchActive &&
                   !isSelectionMode &&
                   !isCompleted &&
                   !compositionLocked &&

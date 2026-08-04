@@ -11,6 +11,10 @@
  * `whereExcept(D)` IS `whereAll` (same object), so only chipped dimensions
  * cost extra queries.
  *
+ * `totalCount` is counted under ALL predicates, so it is NOT the base the
+ * self-excluded option counts sit on. `dimensionTotals` reports that base per
+ * dimension (`count(whereExcept(D))`) for the client's "All …"/"Mixed" rows.
+ *
  * Predicates partition into:
  *   - WHERE-expressible: compiled to Prisma fragments via the shared
  *     where-compiler (one self-contained fragment per predicate);
@@ -329,6 +333,19 @@ export interface DynamicFieldFacet {
   values?: unknown[];
 }
 
+/**
+ * Per-dimension self-excluded totals: for each dimension key, the count under
+ * `whereExcept(thatDimension)` — "what you'd see if you cleared this
+ * dimension's filters". The client's "All …"/"Mixed" rows read these instead
+ * of `totalCount`, which is counted under ALL predicates and therefore sits on
+ * a different (smaller) base than the self-excluded per-option counts.
+ *
+ * Every value is derived from numbers the facet queries already produced, so
+ * the field costs no extra round trips — unchipped dimensions share the
+ * `whereAll` base by construction.
+ */
+export type FacetDimensionTotals = Record<string, number>;
+
 export interface RepositoryCaseFacetCounts {
   templates: Array<{ id: number; name: string; count: number }>;
   states: Array<{
@@ -363,6 +380,8 @@ export interface RepositoryCaseFacetCounts {
     totalCount: number;
   } | null;
   totalCount: number;
+  /** Self-excluded per-dimension totals (additive; see FacetDimensionTotals). */
+  dimensionTotals: FacetDimensionTotals;
 }
 
 export interface ComputeFacetCountsOptions {
@@ -384,6 +403,17 @@ function andWhere(
   extra: RepositoryCasesWhereInput
 ): RepositoryCasesWhereInput {
   return { AND: [base, extra] };
+}
+
+/** Derived bucket sizes are subtractions; a stale/edge input never goes below 0. */
+function nonNegative(value: number): number {
+  return value > 0 ? value : 0;
+}
+
+function sumValues(values: Iterable<number>): number {
+  let total = 0;
+  for (const value of values) total += value;
+  return total;
 }
 
 function chunk<T>(items: readonly T[], size: number): T[][] {
@@ -1097,9 +1127,13 @@ export async function computeRepositoryCaseFacetCounts(
         select: { value: true },
       });
       const optionCountMap = new Map<number, number>();
+      // Per-CASE has-value tally. It is not the sum of the option counts: a
+      // Multi-Select case contributes to several options but is one case.
+      let withValueCount = 0;
       for (const fv of fieldValues) {
         if (fv.value === null || fv.value === undefined) continue;
         if (Array.isArray(fv.value)) {
+          if (fv.value.length > 0) withValueCount++;
           for (const optionId of fv.value) {
             if (typeof optionId === "number") {
               optionCountMap.set(
@@ -1109,6 +1143,7 @@ export async function computeRepositoryCaseFacetCounts(
             }
           }
         } else if (typeof fv.value === "number") {
+          withValueCount++;
           optionCountMap.set(fv.value, (optionCountMap.get(fv.value) ?? 0) + 1);
         }
       }
@@ -1121,6 +1156,15 @@ export async function computeRepositoryCaseFacetCounts(
             ...opt,
             count: optionCountMap.get(opt.id) ?? 0,
           })),
+          // Option fields emit the hasValue/noValue pair every other field
+          // type already does, derived from the SAME self-excluded base the
+          // option counts use. Without it the client had to subtract the
+          // option sum from `totalCount` (a different, smaller base) and the
+          // "None" row went negative.
+          counts: {
+            hasValue: withValueCount,
+            noValue: nonNegative(total - withValueCount),
+          },
         },
       ];
     }
@@ -1273,20 +1317,37 @@ export async function computeRepositoryCaseFacetCounts(
     ];
   };
 
+  // The self-excluded base each field's facet was counted under, reported as
+  // that dimension's total. `idsExcept` is memoized, so re-reading it here
+  // costs nothing (unchipped fields share the whereAll entry).
+  const computeDynamicFieldEntry = async (fieldInfo: DynamicFieldMeta) => {
+    const [displayName, facet] = await computeDynamicFieldFacet(fieldInfo);
+    const dimensionKey = dynamicFieldDimensionKey(fieldInfo.fieldId);
+    return {
+      displayName,
+      facet,
+      dimensionKey,
+      total: (await idsExcept(dimensionKey)).length,
+    };
+  };
+
   const dynamicFields: Record<string, DynamicFieldFacet> = {};
+  const dynamicFieldTotals: FacetDimensionTotals = {};
   for (const fieldChunk of chunk(
     [...dynamicFieldsMap.values()],
     DYNAMIC_FIELD_CHUNK_SIZE
   )) {
-    const results = await Promise.all(fieldChunk.map(computeDynamicFieldFacet));
-    for (const [displayName, facet] of results) {
-      dynamicFields[displayName] = facet;
+    const results = await Promise.all(fieldChunk.map(computeDynamicFieldEntry));
+    for (const entry of results) {
+      dynamicFields[entry.displayName] = entry.facet;
+      dynamicFieldTotals[entry.dimensionKey] = entry.total;
     }
   }
 
   // 12. Run facets: repo predicates via the shared exclusion id-set, the
   //     OTHER run dimension applied row-wise (self-exclusion per dimension).
   let testRunOptions: RepositoryCaseFacetCounts["testRunOptions"] = null;
+  const runDimensionTotals: FacetDimensionTotals = {};
   if (testRunRows) {
     const baseIds = new Set(await idsExcept(...RUN_DIMENSION_KEYS));
     const eligible = testRunRows.filter((row) =>
@@ -1353,10 +1414,38 @@ export async function computeRepositoryCaseFacetCounts(
       totalCount: eligible.filter((row) => runRowPasses(runRowFilters, row))
         .length,
     };
+
+    // Run-dimension totals are ROW totals (matching their row-counted facets,
+    // multi-config duplicates included), self-excluded per dimension — so
+    // "All statuses" >= every status row and >= untested.
+    runDimensionTotals.status = eligible.filter((row) =>
+      runRowPasses(runRowFilters, row, "status")
+    ).length;
+    runDimensionTotals.assignedTo = eligible.filter((row) =>
+      runRowPasses(runRowFilters, row, "assignedTo")
+    ).length;
   }
 
   // 13. Assemble — same keys, sorting, sentinel ids, and fallback names as
-  //     the legacy response.
+  //     the legacy response, plus the additive `dimensionTotals`.
+  //     Every total is read off numbers the facet queries already produced:
+  //     each facet's buckets partition its own self-excluded base, so their
+  //     sum IS `count(whereExcept(dimension))`.
+  const dimensionTotals: FacetDimensionTotals = {
+    templates: sumValues(templateCountMap.values()),
+    states: sumValues(stateCountMap.values()),
+    creators: sumValues(creatorCountMap.values()),
+    automated: sumValues(automatedWithCounts.map((entry) => entry.count)),
+    parameterized: sumValues(
+      parameterizedWithCounts.map((entry) => entry.count)
+    ),
+    attachments: sumValues(attachmentsWithCounts.map((entry) => entry.count)),
+    tags: tagCounts.totalExcept,
+    issues: issueCounts.totalExcept,
+    ...dynamicFieldTotals,
+    ...runDimensionTotals,
+  };
+
   return {
     templates: [...templateCountMap]
       .map(([id, count]) => ({
@@ -1425,5 +1514,6 @@ export async function computeRepositoryCaseFacetCounts(
     dynamicFields,
     testRunOptions,
     totalCount,
+    dimensionTotals,
   };
 }

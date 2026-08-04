@@ -14,6 +14,11 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useMemo, useState, type Ref } from "react";
@@ -21,6 +26,7 @@ import type {
   FilterDimension,
   FilterDimensionRegistry,
 } from "~/lib/repository/filterDimensions";
+import { MAX_FILTER_PREDICATES } from "~/lib/schemas/repositoryFilterPredicates";
 import { getDimensionIcon, getDimensionLabel } from "./dimensionPresentation";
 
 export interface AddFilterButtonProps {
@@ -31,6 +37,11 @@ export interface AddFilterButtonProps {
   onPick: (dimension: FilterDimension) => void;
   /** Lets the bar return focus here after the last chip is removed. */
   triggerRef?: Ref<HTMLButtonElement>;
+  /**
+   * At MAX_FILTER_PREDICATES the trigger is disabled and explains why — a
+   * 51st chip would be truncated away at parse.
+   */
+  limitReached?: boolean;
 }
 
 export function AddFilterButton({
@@ -38,6 +49,7 @@ export function AddFilterButton({
   dynamicFieldLabels,
   onPick,
   triggerRef,
+  limitReached = false,
 }: AddFilterButtonProps) {
   const t = useTranslations();
   const [open, setOpen] = useState(false);
@@ -52,20 +64,41 @@ export function AddFilterButton({
     [registry, t, dynamicFieldLabels]
   );
 
+  const trigger = (
+    <Button
+      ref={triggerRef}
+      variant="ghost"
+      size="sm"
+      className="h-6 text-xs"
+      disabled={limitReached}
+      data-testid="filter-bar-add"
+    >
+      <Plus className="h-3.5 w-3.5" />
+      {t("repository.filterBar.addFilter")}
+    </Button>
+  );
+
+  if (limitReached) {
+    return (
+      <Tooltip>
+        {/* A disabled button emits no pointer events; the span carries them. */}
+        <TooltipTrigger asChild>
+          <span tabIndex={0} data-testid="filter-bar-add-limit">
+            {trigger}
+          </span>
+        </TooltipTrigger>
+        <TooltipContent>
+          {t("repository.filterBar.filterLimitReached", {
+            count: MAX_FILTER_PREDICATES,
+          })}
+        </TooltipContent>
+      </Tooltip>
+    );
+  }
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          ref={triggerRef}
-          variant="ghost"
-          size="sm"
-          className="h-6 text-xs"
-          data-testid="filter-bar-add"
-        >
-          <Plus className="h-3.5 w-3.5" />
-          {t("repository.filterBar.addFilter")}
-        </Button>
-      </PopoverTrigger>
+      <PopoverTrigger asChild>{trigger}</PopoverTrigger>
       <PopoverContent className="w-64 p-0" align="start">
         <Command>
           <CommandInput

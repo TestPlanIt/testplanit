@@ -17,6 +17,10 @@ import {
 import { Check } from "lucide-react";
 import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
+import {
+  isFilterValueLimitReached,
+  MAX_VALUES_PER_PREDICATE,
+} from "~/lib/schemas/repositoryFilterPredicates";
 import { IconName } from "~/types/globals";
 import { cn } from "~/utils";
 import type { FilterValueOption } from "./valueOptions";
@@ -51,6 +55,9 @@ export function FilterValueList({
   countsMuted,
 }: FilterValueListProps) {
   const t = useTranslations();
+  // At the hard cap, further values would be truncated at parse — stop the
+  // click instead of accepting an edit the URL will silently drop.
+  const valueLimitReached = isFilterValueLimitReached(selectedValues.length);
 
   const renderLabel = (option: FilterValueOption) =>
     renderOptionLabel ? (
@@ -90,7 +97,7 @@ export function FilterValueList({
       <Tooltip>
         <TooltipTrigger asChild>{count}</TooltipTrigger>
         <TooltipContent>
-          {t("repository.filterBar.countsIgnoreFilters")}
+          {t("repository.filterBar.countsUpdating")}
         </TooltipContent>
       </Tooltip>
     );
@@ -110,14 +117,19 @@ export function FilterValueList({
         <CommandGroup>
           {options.map((option) => {
             const selected = selectedValues.includes(option.id);
+            const blocked = valueLimitReached && !selected;
             return (
               <CommandItem
                 key={option.id}
                 value={`${option.name} ${option.id}`}
-                onSelect={() => onToggle(option.id)}
+                onSelect={() => {
+                  if (blocked) return;
+                  onToggle(option.id);
+                }}
+                disabled={blocked}
                 data-testid={`filter-value-option-${option.id}`}
                 data-checked={selected ? "true" : undefined}
-                className="cursor-pointer"
+                className={cn(!blocked && "cursor-pointer")}
               >
                 <Check
                   className={cn(
@@ -134,6 +146,16 @@ export function FilterValueList({
           })}
         </CommandGroup>
       </CommandList>
+      {valueLimitReached && (
+        <p
+          className="px-2 py-1.5 text-xs text-muted-foreground border-t"
+          data-testid="filter-value-limit"
+        >
+          {t("repository.filterBar.valueLimitReached", {
+            count: MAX_VALUES_PER_PREDICATE,
+          })}
+        </p>
+      )}
     </Command>
   );
 }
