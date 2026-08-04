@@ -550,6 +550,8 @@
       "stepCount": "歩数",
       "enterText": "テキストを入力してください...",
       "enterUrl": "URLを入力してください",
+      "enterUrlPattern": "URLパターンを入力…",
+      "domainExample": "example.com",
       "issueIdExample": "第123号",
       "selectPriorityValuesOrEmpty": "優先度を選択してください（すべて選択する場合は空欄のままにしてください）。"
     },
@@ -2550,7 +2552,7 @@
       "testCases": "{count, plural, =0 {# テストケース} =1 {# テストケース} other {# テストケース}}",
       "activeMilestones": "{count, plural, =0 {# アクティブなマイルストーン} =1 {# アクティブなマイルストーン} other {# アクティブなマイルストーン}}",
       "activeRuns": "{count, plural, =0 {アクティブな実行#} =1 {アクティブな実行#} other {アクティブな実行#}}",
-      "automationRunsInProgress": "{count, plural, =0 {# Automation Runs in Progress} =1 {# Automation Run in Progress} other {# Automation Runs in Progress}}",
+      "automationRunsInProgress": "{count, plural, =0 {#件の自動化実行が進行中} =1 {#件の自動化実行が進行中} other {#件の自動化実行が進行中}}",
       "activeSessions": "{count, plural, =0 {アクティブセッション#} =1 {アクティブセッション#} other {アクティブセッション#}}",
       "issues": "{count, plural, =0 {# 問題} =1 {# 問題} other {# 問題}}"
     }
@@ -3469,18 +3471,17 @@
       "addFilter": "フィルターを追加",
       "removeFilter": "フィルターを削除: {name}",
       "editFilter": "フィルターを編集: {name}",
-      "activeCount": "{count, plural, =1 {# active filter} other {# active filters}}",
-      "resultsCount": "{count, plural, =1 {# result} other {# results}}",
+      "activeCount": "{count, plural, =1 {#件のアクティブなフィルター} other {#件のアクティブなフィルター}}",
       "assignedToMe": "自分に割り当てられた",
       "noFilters": "アクティブなフィルターがありません",
-      "noMatches": "フィルター条件に一致するケースがありません",
+      "noMatchingCases": "フィルター条件に一致するテストケースはありません",
       "searchTruncated": "上位 {count, number} 件の一致結果内でフィルタリング",
       "sortedByRelevance": "関連性で並べ替え",
       "countsUpdating": "件数を更新中…",
       "filterLimitReached": "フィルターの上限に達しました(最大 {count} 件)",
       "valueLimitReached": "値の上限に達しました(フィルターごとに最大 {count} 件)",
       "filtersTruncated": "一部のフィルターが削除されました(最大 {count} 件)",
-      "valuesTruncated": "{count, plural, =1 {# value} other {# values}} per filter maximum — extra values were dropped"
+      "valuesTruncated": "フィルターごとに最大{count, plural, =1 {#件の値} other {#件の値}} — 余分な値は削除されました"
     }
   },
   "tags": {
@@ -3810,7 +3811,7 @@
       "recentResultsDescription": "テスト実行の最新の結果を表示する",
       "recentAutomatedResultsTitle": "最近の自動結果",
       "noRecentAutomatedResults": "最近の自動結果が見つかりません。",
-      "automationRunsInProgress": "{count, plural, =1 {# Automation Run in Progress} other {# Automation Runs in Progress}}",
+      "automationRunsInProgress": "{count, plural, =1 {#件の自動化実行が進行中} other {#件の自動化実行が進行中}}",
       "automationRunsInProgressDescription": "実行中の自動テスト実行のライブステータス。",
       "recentResultsDateRange": "日付範囲",
       "recentResultsElapsed": "経過",
@@ -8218,6 +8219,8 @@
       "includeDeleted": "削除されたアイテムを含める",
       "filterActive": "フィルター有効:",
       "applyFilter": "フィルターを適用",
+      "invalidDate": "無効な日付",
+      "stepsCount": "{count, plural, other {#ステップ}}",
       "validation": {
         "firstValueMustBeLessThanSecond": "最初の値は2番目の値より小さくなければならない",
         "firstDateMustBeBeforeSecond": "最初のデートは2回目のデートより前に行わなければならない"

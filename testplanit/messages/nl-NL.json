@@ -550,6 +550,8 @@
       "stepCount": "stappen",
       "enterText": "Voer tekst in...",
       "enterUrl": "Voer de URL in",
+      "enterUrlPattern": "URL-patroon invoeren...",
+      "domainExample": "voorbeeld.com",
       "issueIdExample": "NUMMER-123",
       "selectPriorityValuesOrEmpty": "Selecteer prioriteitswaarden (of laat alles leeg)"
     },
@@ -3470,10 +3472,9 @@
       "removeFilter": "Filter verwijderen: {name}",
       "editFilter": "Filter bewerken: {name}",
       "activeCount": "{count, plural, =1 {# actieve filter} other {# actieve filters}}",
-      "resultsCount": "{count, plural, =1 {# resultaat} other {# resultaten}}",
       "assignedToMe": "Toegewezen aan mij",
       "noFilters": "Geen actieve filters",
-      "noMatches": "Geen testgevallen komen overeen met uw filters",
+      "noMatchingCases": "Er zijn geen testgevallen gevonden die overeenkomen met uw filters",
       "searchTruncated": "Filteren binnen de top {count, number} resultaten",
       "sortedByRelevance": "Gesorteerd op relevantie",
       "countsUpdating": "Aantallen bijwerken...",
@@ -8218,6 +8219,8 @@
       "includeDeleted": "Verwijderde items opnemen",
       "filterActive": "Actief filter:",
       "applyFilter": "Filter toepassen",
+      "invalidDate": "Ongeldige datum",
+      "stepsCount": "{count, plural, one {# stap} other {# stappen}}",
       "validation": {
         "firstValueMustBeLessThanSecond": "De eerste waarde moet kleiner zijn dan de tweede waarde.",
         "firstDateMustBeBeforeSecond": "De eerste date moet vóór de tweede date plaatsvinden."

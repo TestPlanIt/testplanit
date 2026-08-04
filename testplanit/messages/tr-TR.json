@@ -550,6 +550,8 @@
       "stepCount": "Adım sayısı",
       "enterText": "Metin girin...",
       "enterUrl": "URL girin",
+      "enterUrlPattern": "URL kalıbı girin...",
+      "domainExample": "örnek.com",
       "issueIdExample": "SAYI-123",
       "selectPriorityValuesOrEmpty": "Öncelik değerlerini seçin (veya tümü için boş bırakın)"
     },
@@ -3470,10 +3472,9 @@
       "removeFilter": "Filtreyi kaldır: {name}",
       "editFilter": "Filtreyi düzenle: {name}",
       "activeCount": "{count, plural, =1 {# active filter} other {# active filters}}",
-      "resultsCount": "{count, plural, =1 {# result} other {# results}}",
       "assignedToMe": "Bana atananlar",
       "noFilters": "Aktif filtre yok",
-      "noMatches": "Filtrelerinize uyan test durumu bulunamadı",
+      "noMatchingCases": "Filtrelerinize uyan test durumu bulunamadı",
       "searchTruncated": "En iyi {count, number} eşleşme içinde filtreleniyor",
       "sortedByRelevance": "İlgiye göre sıralandı",
       "countsUpdating": "Sayılar güncelleniyor...",
@@ -8218,6 +8219,8 @@
       "includeDeleted": "Silinen öğeleri dahil et",
       "filterActive": "Filtre etkin:",
       "applyFilter": "Filtre Uygula",
+      "invalidDate": "Geçersiz tarih",
+      "stepsCount": "{count, plural, one {# adım} other {# adımlar}}",
       "validation": {
         "firstValueMustBeLessThanSecond": "Birinci değer ikinci değerden küçük olmalıdır.",
         "firstDateMustBeBeforeSecond": "İlk buluşma ikinci buluşmadan önce olmalı."

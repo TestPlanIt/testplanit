@@ -550,6 +550,8 @@
       "stepCount": "عدد الخطوات",
       "enterText": "أدخل نصًا...",
       "enterUrl": "أدخل عنوان URL",
+      "enterUrlPattern": "أدخل نمط الرابط...",
+      "domainExample": "example.com",
       "issueIdExample": "ISSUE-123",
       "selectPriorityValuesOrEmpty": "حدد قيم الأولوية (أو اتركه فارغًا للكل)"
     },
@@ -3470,10 +3472,9 @@
       "removeFilter": "إزالة المرشح: {name}",
       "editFilter": "تعديل المرشح: {name}",
       "activeCount": "{count, plural, =1 {# مرشح نشط} other {# مرشحات نشطة}}",
-      "resultsCount": "{count, plural, =1 {# نتيجة} other {# نتائج}}",
       "assignedToMe": "معيّن إليّ",
       "noFilters": "لا توجد مرشحات نشطة",
-      "noMatches": "لا توجد حالات تطابق عوامل التصفية الخاصة بك",
+      "noMatchingCases": "لا توجد حالات اختبار تطابق عوامل التصفية",
       "searchTruncated": "التصفية ضمن أفضل {count, number} تطابق",
       "sortedByRelevance": "مرتب حسب الصلة",
       "countsUpdating": "جارٍ تحديث الأعداد...",
@@ -8218,6 +8219,8 @@
       "includeDeleted": "تضمين العناصر المحذوفة",
       "filterActive": "عامل التصفية نشط:",
       "applyFilter": "تطبيق عامل التصفية",
+      "invalidDate": "تاريخ غير صالح",
+      "stepsCount": "{count, plural, zero {# خطوة} one {# خطوة} two {# خطوتان} few {# خطوات} many {# خطوة} other {# خطوة}}",
       "validation": {
         "firstValueMustBeLessThanSecond": "يجب أن تكون القيمة الأولى أصغر من القيمة الثانية",
         "firstDateMustBeBeforeSecond": "يجب أن يكون التاريخ الأول قبل التاريخ الثاني"

@@ -550,6 +550,8 @@
       "stepCount": "Schrittzahl",
       "enterText": "Text eingeben...",
       "enterUrl": "URL eingeben",
+      "enterUrlPattern": "URL-Muster eingeben...",
+      "domainExample": "beispiel.de",
       "issueIdExample": "ISSUE-123",
       "selectPriorityValuesOrEmpty": "Prioritätswerte auswählen (oder für alle leer lassen)"
     },
@@ -3470,10 +3472,9 @@
       "removeFilter": "Filter entfernen: {name}",
       "editFilter": "Filter bearbeiten: {name}",
       "activeCount": "{count, plural, =1 {# aktiver Filter} other {# aktive Filter}}",
-      "resultsCount": "{count, plural, =1 {# Ergebnis} other {# Ergebnisse}}",
       "assignedToMe": "Mir zugewiesen",
       "noFilters": "Keine aktiven Filter",
-      "noMatches": "Keine Fälle entsprechen deinen Filtern",
+      "noMatchingCases": "Keine Testfälle entsprechen Ihren Filtern",
       "searchTruncated": "Filterung innerhalb der obersten {count, number} Treffer",
       "sortedByRelevance": "Nach Relevanz sortiert",
       "countsUpdating": "Zählungen werden aktualisiert...",
@@ -8218,6 +8219,8 @@
       "includeDeleted": "Gelöschte Elemente einschließen",
       "filterActive": "Filter aktiv:",
       "applyFilter": "Filter anwenden",
+      "invalidDate": "Ungültiges Datum",
+      "stepsCount": "{count, plural, one {# Schritt} other {# Schritte}}",
       "validation": {
         "firstValueMustBeLessThanSecond": "Der erste Wert muss kleiner als der zweite Wert sein.",
         "firstDateMustBeBeforeSecond": "Das erste Date muss vor dem zweiten Date stattfinden."

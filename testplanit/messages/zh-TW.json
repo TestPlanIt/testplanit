@@ -550,6 +550,8 @@
       "stepCount": "步數",
       "enterText": "請輸入文字...",
       "enterUrl": "輸入網址",
+      "enterUrlPattern": "輸入 URL 模式……",
+      "domainExample": "範例.com",
       "issueIdExample": "第123期",
       "selectPriorityValuesOrEmpty": "選擇優先值（或留空表示全部不選）"
     },
@@ -3470,10 +3472,9 @@
       "removeFilter": "移除篩選器：{name}",
       "editFilter": "編輯篩選器：{name}",
       "activeCount": "{count, plural, =1 {# active filter} other {# active filters}}",
-      "resultsCount": "{count, plural, =1 {# result} other {# results}}",
       "assignedToMe": "指派給我",
       "noFilters": "沒有啟用中的篩選器",
-      "noMatches": "沒有符合篩選條件的測試案例",
+      "noMatchingCases": "沒有符合您篩選條件的測試案例",
       "searchTruncated": "在前 {count, number} 個相符項目中篩選",
       "sortedByRelevance": "依相關性排序",
       "countsUpdating": "正在更新計數……",
@@ -8218,6 +8219,8 @@
       "includeDeleted": "包括已刪除的項目",
       "filterActive": "篩選器已啟用：",
       "applyFilter": "應用篩選器",
+      "invalidDate": "無效日期",
+      "stepsCount": "{count, plural, other {# 個步驟}}",
       "validation": {
         "firstValueMustBeLessThanSecond": "第一個值必須小於第二個值",
         "firstDateMustBeBeforeSecond": "第一次約會必須在第二次約會之前。"

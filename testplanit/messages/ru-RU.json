@@ -550,6 +550,8 @@
       "stepCount": "Количество шагов",
       "enterText": "Введите текст...",
       "enterUrl": "Введите URL",
+      "enterUrlPattern": "Введите шаблон URL...",
+      "domainExample": "example.com",
       "issueIdExample": "ВЫПУСК-123",
       "selectPriorityValuesOrEmpty": "Выберите значения приоритета (или оставьте поле пустым для всех)."
     },
@@ -3470,10 +3472,9 @@
       "removeFilter": "Удалить фильтр: {name}",
       "editFilter": "Редактировать фильтр: {name}",
       "activeCount": "{count, plural, =1 {# активный фильтр} few {# активных фильтра} many {# активных фильтров} other {# активных фильтра}}",
-      "resultsCount": "{count, plural, =1 {# результат} few {# результата} many {# результатов} other {# результата}}",
       "assignedToMe": "Назначено мне",
       "noFilters": "Нет активных фильтров",
-      "noMatches": "Нет тест-кейсов, соответствующих вашим фильтрам",
+      "noMatchingCases": "Нет тестовых случаев, соответствующих вашим фильтрам",
       "searchTruncated": "Фильтрация в пределах первых {count, number} совпадений",
       "sortedByRelevance": "Сортировка по релевантности",
       "countsUpdating": "Обновление счётчиков...",
@@ -8218,6 +8219,8 @@
       "includeDeleted": "Включить удалённые элементы",
       "filterActive": "Фильтр активен:",
       "applyFilter": "Применить фильтр",
+      "invalidDate": "Недопустимая дата",
+      "stepsCount": "{count, plural, one {# шаг} few {# шага} many {# шагов} other {# шага}}",
       "validation": {
         "firstValueMustBeLessThanSecond": "Первое значение должно быть меньше второго значения.",
         "firstDateMustBeBeforeSecond": "Первое свидание должно состояться раньше второго."

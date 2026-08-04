@@ -550,6 +550,8 @@
       "stepCount": "Contador de pasos",
       "enterText": "Introduzca el texto...",
       "enterUrl": "Introduzca la URL",
+      "enterUrlPattern": "Ingrese el patrón de URL...",
+      "domainExample": "ejemplo.com",
       "issueIdExample": "NÚMERO 123",
       "selectPriorityValuesOrEmpty": "Seleccione los valores de prioridad (o déjelos en blanco para todos)."
     },
@@ -3470,10 +3472,9 @@
       "removeFilter": "Eliminar filtro: {name}",
       "editFilter": "Editar filtro: {name}",
       "activeCount": "{count, plural, =1 {# filtro activo} other {# filtros activos}}",
-      "resultsCount": "{count, plural, =1 {# resultado} other {# resultados}}",
       "assignedToMe": "Asignado a mí",
       "noFilters": "Sin filtros activos",
-      "noMatches": "Ningún caso coincide con sus filtros",
+      "noMatchingCases": "No hay casos de prueba que coincidan con tus filtros",
       "searchTruncated": "Filtrando entre las {count, number} mejores coincidencias",
       "sortedByRelevance": "Ordenado por relevancia",
       "countsUpdating": "Actualizando recuentos...",
@@ -8218,6 +8219,8 @@
       "includeDeleted": "Incluye elementos eliminados",
       "filterActive": "Filtro activo:",
       "applyFilter": "Aplicar filtro",
+      "invalidDate": "Fecha inválida",
+      "stepsCount": "{count, plural, one {# paso} other {# pasos}}",
       "validation": {
         "firstValueMustBeLessThanSecond": "El primer valor debe ser menor que el segundo valor",
         "firstDateMustBeBeforeSecond": "La primera cita debe ser anterior a la segunda."

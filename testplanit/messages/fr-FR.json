@@ -550,6 +550,8 @@
       "stepCount": "Nombre de pas",
       "enterText": "Saisissez du texte...",
       "enterUrl": "Saisissez l'URL",
+      "enterUrlPattern": "Modèle d'URL...",
+      "domainExample": "exemple.com",
       "issueIdExample": "NUMÉRO 123",
       "selectPriorityValuesOrEmpty": "Sélectionnez les valeurs de priorité (ou laissez vide pour tout)"
     },
@@ -3470,10 +3472,9 @@
       "removeFilter": "Supprimer le filtre : {name}",
       "editFilter": "Modifier le filtre : {name}",
       "activeCount": "{count, plural, =1 {# filtre actif} other {# filtres actifs}}",
-      "resultsCount": "{count, plural, =1 {# résultat} other {# résultats}}",
       "assignedToMe": "Assigné à moi",
       "noFilters": "Aucun filtre actif",
-      "noMatches": "Aucun cas ne correspond à vos filtres",
+      "noMatchingCases": "Aucun cas de test ne correspond à vos filtres",
       "searchTruncated": "Filtrage parmi les {count, number} meilleures correspondances",
       "sortedByRelevance": "Trié par pertinence",
       "countsUpdating": "Mise à jour des compteurs...",
@@ -8218,6 +8219,8 @@
       "includeDeleted": "Inclure les éléments supprimés",
       "filterActive": "Filtre actif :",
       "applyFilter": "Appliquer le filtre",
+      "invalidDate": "Date invalide",
+      "stepsCount": "{count, plural, one {# étape} other {# étapes}}",
       "validation": {
         "firstValueMustBeLessThanSecond": "La première valeur doit être inférieure à la seconde valeur",
         "firstDateMustBeBeforeSecond": "Le premier rendez-vous doit avoir lieu avant le second."

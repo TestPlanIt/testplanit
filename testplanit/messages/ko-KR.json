@@ -550,6 +550,8 @@
       "stepCount": "걸음 수",
       "enterText": "텍스트를 입력하세요...",
       "enterUrl": "URL을 입력하세요",
+      "enterUrlPattern": "URL 패턴 입력...",
+      "domainExample": "example.com",
       "issueIdExample": "제123호",
       "selectPriorityValuesOrEmpty": "우선순위 값을 선택하세요 (모두 선택하려면 비워 두세요)."
     },
@@ -3470,10 +3472,9 @@
       "removeFilter": "필터 제거: {name}",
       "editFilter": "필터 편집: {name}",
       "activeCount": "{count, plural, =1 {# active filter} other {# active filters}}",
-      "resultsCount": "{count, plural, =1 {# result} other {# results}}",
       "assignedToMe": "내게 배정됨",
       "noFilters": "활성 필터 없음",
-      "noMatches": "필터와 일치하는 케이스가 없습니다",
+      "noMatchingCases": "필터 조건에 맞는 테스트 케이스가 없습니다",
       "searchTruncated": "상위 {count, number}개 일치 항목 내에서 필터링 중",
       "sortedByRelevance": "관련성으로 정렬됨",
       "countsUpdating": "개수 업데이트 중...",
@@ -8218,6 +8219,8 @@
       "includeDeleted": "삭제된 항목을 포함하세요",
       "filterActive": "필터 활성화됨:",
       "applyFilter": "필터 적용",
+      "invalidDate": "유효하지 않은 날짜",
+      "stepsCount": "{count, plural, other {# 단계}}",
       "validation": {
         "firstValueMustBeLessThanSecond": "첫 번째 값은 두 번째 값보다 작아야 합니다.",
         "firstDateMustBeBeforeSecond": "첫 번째 데이트는 두 번째 데이트보다 먼저 이루어져야 합니다."
