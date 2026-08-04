@@ -54,7 +54,9 @@ import { z } from "zod/v4";
 import {
   aggregateMultiRowSteps,
   inspectMultiRowAggregation,
+  type AggregatedStep,
 } from "~/lib/utils/aggregateMultiRowSteps";
+import { parseStepsCell } from "~/lib/utils/parseExportedSteps";
 import {
   convertMarkdownCasesToImportData,
   parseMarkdownTestCases,
@@ -1429,43 +1431,30 @@ export function ImportCasesWizard({
     );
   };
 
-  // Helper function to parse and render steps
-  const renderStepsPreview = (stepsValue: string) => {
-    if (!stepsValue) return null;
-
-    // Try to parse as JSON array first
-    let steps: Array<{ action?: string; expected?: string }> = [];
-    try {
-      const parsed = JSON.parse(stepsValue);
-      if (Array.isArray(parsed)) {
-        steps = parsed;
-      }
-    } catch {
-      // If not JSON, parse as pipe-separated format: "Action | Expected Result"
-      // Split by newlines only - each line should be a complete step
-      const stepLines = stepsValue.split(/\n/).filter((s) => s.trim());
-
-      steps = stepLines.map((line) => {
-        // Remove leading step number if present (e.g., "1. ", "10. ")
-        const trimmed = line.replace(/^\d+\.\s*/, "").trim();
-        // Check for pipe separator for expected result
-        const pipeIndex = trimmed.indexOf("|");
-        if (pipeIndex > -1) {
-          return {
-            action: trimmed.substring(0, pipeIndex).trim(),
-            expected: trimmed.substring(pipeIndex + 1).trim(),
-          };
-        }
-        return { action: trimmed };
-      });
-    }
+  /**
+   * Render the steps a case will be imported with. Multi-row mode hands over
+   * the steps the aggregator collected from the continuation rows — the mapped
+   * cell alone only ever holds the head row's single step. Single-row mode
+   * parses the cell with `parseStepsCell`, the same parser the import route
+   * runs, so the preview count matches what gets created.
+   */
+  const renderStepsPreview = (
+    stepsValue: string,
+    aggregatedSteps?: AggregatedStep[]
+  ) => {
+    const steps =
+      aggregatedSteps && aggregatedSteps.length > 0
+        ? [...aggregatedSteps].sort((a, b) => a.order - b.order)
+        : parseStepsCell(stepsValue ?? "");
 
     if (steps.length === 0) {
-      return <span className="text-muted-foreground">{stepsValue}</span>;
+      return stepsValue ? (
+        <span className="text-muted-foreground">{stepsValue}</span>
+      ) : null;
     }
 
     return (
-      <div className="space-y-2">
+      <div className="space-y-2" data-testid="import-steps-preview">
         {steps.map((step, idx) => (
           <div key={idx} className="border rounded p-2 bg-muted/30">
             <div className="flex gap-2">
@@ -1473,13 +1462,13 @@ export function ImportCasesWizard({
                 {idx + 1}
               </Badge>
               <div className="flex-1 space-y-1">
-                <div className="text-sm">{step.action}</div>
-                {step.expected && (
+                <div className="text-sm">{step.step}</div>
+                {step.expectedResult && (
                   <div className="text-sm text-muted-foreground">
                     <span className="font-medium">
                       {tCommon("fields.expectedResult")}:{" "}
                     </span>
-                    {step.expected}
+                    {step.expectedResult}
                   </div>
                 )}
               </div>
@@ -1529,9 +1518,12 @@ export function ImportCasesWizard({
   // Helper to render field value based on type
   const renderFieldValue = (
     field: { id: string; type: string } | undefined,
-    value: string
+    value: string,
+    aggregatedSteps?: AggregatedStep[]
   ) => {
-    if (!value) {
+    const isStepsField = field?.id === "steps" || field?.type === "Steps";
+
+    if (!value && !(isStepsField && aggregatedSteps?.length)) {
       return (
         <span className="text-muted-foreground">
           {tGlobal("sharedSteps.importWizard.page3.noValue")}
@@ -1550,8 +1542,8 @@ export function ImportCasesWizard({
       );
     }
 
-    if (field?.id === "steps" || field?.type === "Steps") {
-      return renderStepsPreview(value);
+    if (isStepsField) {
+      return renderStepsPreview(value, aggregatedSteps);
     }
 
     if (field?.id === "tags" || field?.type === "Tags") {
@@ -1720,7 +1712,11 @@ export function ImportCasesWizard({
                             {field?.displayName}:
                           </span>
                           <div className={isExpandedField ? "mt-1" : ""}>
-                            {renderFieldValue(field, value)}
+                            {renderFieldValue(
+                              field,
+                              value,
+                              caseData._aggregatedSteps
+                            )}
                           </div>
                         </div>
                       );
