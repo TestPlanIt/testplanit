@@ -4031,6 +4031,11 @@ export default function Cases({
         where: repositoryCaseWhereClause,
         scope: actionScope,
         projectId: projectId,
+        // Text/link/steps operator filters are applied post-fetch (the where
+        // clause only pre-filters value-not-null); the action runs the same
+        // matchers so "all filtered" exports match the table's row set.
+        postFetchFilters:
+          postFetchFilters.length > 0 ? postFetchFilters : undefined,
       });
 
       if (response.success) {
@@ -4042,7 +4047,7 @@ export default function Cases({
         return []; // Or throw new Error(response.error);
       }
     },
-    [orderBy, repositoryCaseWhereClause, projectId]
+    [orderBy, repositoryCaseWhereClause, projectId, postFetchFilters]
   );
 
   // Instantiate the hook
