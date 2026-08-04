@@ -1,10 +1,5 @@
-import { DateFilterInput } from "@/components/DateFilterInput";
 import DynamicIcon from "@/components/DynamicIcon";
-import { LinkFilterInput } from "@/components/LinkFilterInput";
-import { NumericFilterInput } from "@/components/NumericFilterInput";
-import { StepsFilterInput } from "@/components/StepsFilterInput";
 import { UserNameCell } from "@/components/tables/UserNameCell";
-import { TextFilterInput } from "@/components/TextFilterInput";
 import { MultiAsyncCombobox } from "@/components/ui/multi-async-combobox";
 import {
   Select,
@@ -14,6 +9,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import {
   Bot,
   CircleCheckBig,
@@ -28,11 +28,21 @@ import {
   Users,
   UserX,
 } from "lucide-react";
-import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useCallback, useMemo } from "react";
+import { dynamicFieldDimensionKey } from "~/lib/repository/filterDimensions";
 import { IconName } from "~/types/globals";
 import { cn } from "~/utils";
+
+/**
+ * Grouping control for the repository/run case list: the "View by" axis
+ * Select plus per-option rows with counts. Filtering state lives in the
+ * FilterBar's predicates (useRepositoryFilters) — clicking an option row
+ * toggles that value in the dimension's row-click predicate via
+ * `onToggleFilterValue`, and a row highlights while `isFilterValueActive`
+ * says its value is in an active predicate. Axis switching never touches
+ * predicates.
+ */
 
 interface ViewItem {
   id: string;
@@ -63,10 +73,23 @@ interface ViewSelectorProps {
   selectedItem: string;
   onValueChange: (value: string) => void;
   viewItems: ViewItem[];
-  selectedFilter: Array<string | number> | null;
-  onFilterChange: (value: Array<string | number> | null) => void;
+  /** Whether a row's value is in an active predicate (null = the "All" row,
+   * active while the dimension is unfiltered). */
+  isFilterValueActive: (
+    dimension: string,
+    value: string | number | null
+  ) => boolean;
+  /** Toggles a row's value in the dimension's row-click predicate
+   * (null = the "All" row, which clears the dimension's row-click chips). */
+  onToggleFilterValue: (
+    dimension: string,
+    value: string | number | null
+  ) => void;
   isRunMode?: boolean;
   totalCount: number;
+  /** Interim rule (spec §13): sidebar counts are filter-blind until the
+   * counts engine ships — mute them while any predicate is active. */
+  countsMuted?: boolean;
   viewOptions?: {
     templates: Array<{ id: number; name: string; count?: number }>;
     states: Array<{
@@ -105,8 +128,6 @@ interface ViewSelectorProps {
     };
   };
 }
-
-const _ALL_VALUES_FILTER = "__ALL__";
 
 // Above this many options the flat row list becomes unusable, so the axis
 // switches to the searchable multi-select used elsewhere in the app.
@@ -156,13 +177,9 @@ function FilterRow({
 
 interface FilterOptionListProps {
   options: FilterListOption[];
-  selectedFilter: Array<string | number> | null;
-  onFilterChange: (value: Array<string | number> | null) => void;
-  isValueSelected: (value: string | number | null) => boolean;
-  onOptionClick: (
-    value: string | number | null,
-    event?: React.MouseEvent
-  ) => void;
+  isValueSelected: (value: string | number) => boolean;
+  onOptionClick: (value: string | number) => void;
+  renderCount: (count?: number) => React.ReactNode;
   renderOptionLabel?: (option: FilterListOption) => React.ReactNode;
   placeholder: string;
 }
@@ -174,10 +191,9 @@ interface FilterOptionListProps {
  */
 function FilterOptionList({
   options,
-  selectedFilter,
-  onFilterChange,
   isValueSelected,
   onOptionClick,
+  renderCount,
   renderOptionLabel,
   placeholder,
 }: FilterOptionListProps) {
@@ -200,17 +216,9 @@ function FilterOptionList({
     [renderOptionLabel]
   );
 
-  const optionIds = useMemo(
-    () => new Set(options.map((option) => option.id)),
-    [options]
-  );
-
   const selectedOptions = useMemo(
-    () =>
-      Array.isArray(selectedFilter)
-        ? options.filter((option) => selectedFilter.includes(option.id))
-        : [],
-    [options, selectedFilter]
+    () => options.filter((option) => isValueSelected(option.id)),
+    [options, isValueSelected]
   );
 
   const fetchOptions = useCallback(
@@ -229,15 +237,17 @@ function FilterOptionList({
 
   const handleComboboxChange = useCallback(
     (selected: FilterListOption[]) => {
-      // Values that aren't part of this list (e.g. the pinned "Any"/"None"
-      // rows rendered above it) stay selected.
-      const preserved = Array.isArray(selectedFilter)
-        ? selectedFilter.filter((value) => !optionIds.has(value))
-        : [];
-      const next = [...preserved, ...selected.map((option) => option.id)];
-      onFilterChange(next.length > 0 ? next : null);
+      // Diff against the active set and toggle each changed value. The
+      // combobox has no select-all (hideSelectAll), so changes arrive one
+      // value at a time.
+      const next = new Set(selected.map((option) => option.id));
+      for (const option of options) {
+        if (isValueSelected(option.id) !== next.has(option.id)) {
+          onOptionClick(option.id);
+        }
+      }
     },
-    [onFilterChange, optionIds, selectedFilter]
+    [options, isValueSelected, onOptionClick]
   );
 
   if (options.length <= SEARCHABLE_OPTION_THRESHOLD) {
@@ -247,8 +257,8 @@ function FilterOptionList({
           <FilterRow
             key={option.id}
             selected={isValueSelected(option.id)}
-            onClick={(e) => onOptionClick(option.id, e)}
-            count={option.count ?? 0}
+            onClick={() => onOptionClick(option.id)}
+            count={renderCount(option.count)}
           >
             {renderLabel(option)}
           </FilterRow>
@@ -269,7 +279,7 @@ function FilterOptionList({
               {renderLabel(option)}
             </div>
             <span className="text-xs text-muted-foreground shrink-0 whitespace-nowrap">
-              {option.count ?? 0}
+              {renderCount(option.count)}
             </span>
           </div>
         )}
@@ -290,98 +300,61 @@ export function ViewSelector({
   selectedItem,
   onValueChange,
   viewItems,
-  selectedFilter,
-  onFilterChange,
+  isFilterValueActive,
+  onToggleFilterValue,
   isRunMode: _isRunMode,
   totalCount,
+  countsMuted = false,
   viewOptions,
 }: ViewSelectorProps) {
   const t = useTranslations("repository");
   const tCommon = useTranslations("common");
-  const session = useSession();
-  const hasAutoSelectedUser = useRef(false);
+  const tFilterBar = useTranslations("repository.filterBar");
 
-  useEffect(() => {
-    // Check if we're in assignedTo view and have a session user
-    if (
-      selectedItem === "assignedTo" &&
-      session.data?.user &&
-      selectedFilter === null &&
-      !hasAutoSelectedUser.current
-    ) {
-      // Find the assignedTo view item
-      const assignedToView = viewItems.find((item) => item.id === "assignedTo");
-      if (
-        assignedToView &&
-        "options" in assignedToView &&
-        Array.isArray(assignedToView.options)
-      ) {
-        // Find the current user in the options, ensuring user.id exists
-        const currentUserId = session.data?.user?.id;
-        if (typeof currentUserId === "string") {
-          const currentUserOption = assignedToView.options.find(
-            (opt) => opt.id === currentUserId
-          );
+  // The filter dimension the selected axis maps to: `field_<id>` for dynamic
+  // axes, the axis id otherwise ("folders" has no rows).
+  const dimensionKey = useMemo(() => {
+    if (!selectedItem.startsWith("dynamic_")) return selectedItem;
+    const fieldId = parseInt(selectedItem.split("_")[1]);
+    return Number.isNaN(fieldId)
+      ? selectedItem
+      : dynamicFieldDimensionKey(fieldId);
+  }, [selectedItem]);
 
-          if (currentUserOption && currentUserOption.id != null) {
-            onFilterChange([currentUserOption.id]); // Select current user as array
-            hasAutoSelectedUser.current = true; // Mark that we've auto-selected
-          }
-        }
-      }
-    }
-  }, [selectedItem, session, viewItems, onFilterChange, selectedFilter]);
-
-  // Helper function to check if a value is selected
   const isValueSelected = useCallback(
-    (value: string | number | null) => {
-      if (selectedFilter === null) return value === null;
-      if (!Array.isArray(selectedFilter)) return false;
-      if (value === null) return false;
-      return selectedFilter.includes(value);
-    },
-    [selectedFilter]
+    (value: string | number | null) => isFilterValueActive(dimensionKey, value),
+    [isFilterValueActive, dimensionKey]
   );
 
-  // Helper function to handle multi-select with modifier keys
   const handleFilterClick = useCallback(
-    (value: string | number | null, event?: React.MouseEvent) => {
-      // Check for modifier key (Cmd on Mac, Ctrl on Windows/Linux)
-      const isModifierPressed = event?.metaKey || event?.ctrlKey;
-
-      if (!isModifierPressed || value === null) {
-        // No modifier key or clicking "All" option - single select
-        onFilterChange(value === null ? null : [value]);
-      } else {
-        // Modifier key pressed - toggle selection
-        if (selectedFilter === null) {
-          // Nothing selected, start new selection
-          onFilterChange([value]);
-        } else {
-          const currentSelection = Array.isArray(selectedFilter)
-            ? selectedFilter
-            : [selectedFilter];
-          const valueIndex = currentSelection.findIndex((v) => v === value);
-
-          if (valueIndex >= 0) {
-            // Value already selected, remove it
-            const newSelection = currentSelection.filter((v) => v !== value);
-            onFilterChange(newSelection.length > 0 ? newSelection : null);
-          } else {
-            // Value not selected, add it
-            onFilterChange([...currentSelection, value]);
-          }
-        }
-      }
+    (value: string | number | null) => {
+      onToggleFilterValue(dimensionKey, value);
     },
-    [selectedFilter, onFilterChange]
+    [onToggleFilterValue, dimensionKey]
+  );
+
+  // Interim de-emphasis while chips are active (spec §13): the sidebar counts
+  // are filter-blind until the filter-aware counts engine ships.
+  const renderCount = useCallback(
+    (count?: number): React.ReactNode => {
+      const shown = count ?? 0;
+      if (!countsMuted) return shown;
+      return (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span className="opacity-50 cursor-help">{shown}</span>
+          </TooltipTrigger>
+          <TooltipContent>{tFilterBar("countsIgnoreFilters")}</TooltipContent>
+        </Tooltip>
+      );
+    },
+    [countsMuted, tFilterBar]
   );
 
   const listProps = {
-    selectedFilter,
-    onFilterChange,
-    isValueSelected,
-    onOptionClick: handleFilterClick,
+    isValueSelected: (value: string | number) => isValueSelected(value),
+    onOptionClick: (value: string | number) => handleFilterClick(value),
+    renderCount,
     placeholder: tCommon("search"),
   };
 
@@ -485,11 +458,13 @@ export function ViewSelector({
         {selectedItem === "templates" && (
           <>
             <FilterRow
-              selected={selectedFilter === null}
-              onClick={(e) => handleFilterClick(null, e)}
-              count={templateOptions.reduce(
-                (sum, template) => sum + (template.count || 0),
-                0
+              selected={isValueSelected(null)}
+              onClick={() => handleFilterClick(null)}
+              count={renderCount(
+                templateOptions.reduce(
+                  (sum, template) => sum + (template.count || 0),
+                  0
+                )
               )}
             >
               <span className="truncate">{t("views.allTemplates")}</span>
@@ -510,11 +485,10 @@ export function ViewSelector({
         {selectedItem === "states" && (
           <>
             <FilterRow
-              selected={selectedFilter === null}
-              onClick={(e) => handleFilterClick(null, e)}
-              count={stateOptions.reduce(
-                (sum, state) => sum + (state.count || 0),
-                0
+              selected={isValueSelected(null)}
+              onClick={() => handleFilterClick(null)}
+              count={renderCount(
+                stateOptions.reduce((sum, state) => sum + (state.count || 0), 0)
               )}
             >
               <span className="truncate">{t("views.allStates")}</span>
@@ -526,11 +500,13 @@ export function ViewSelector({
         {selectedItem === "creators" && (
           <>
             <FilterRow
-              selected={selectedFilter === null}
-              onClick={(e) => handleFilterClick(null, e)}
-              count={creatorOptions.reduce(
-                (sum, creator) => sum + (creator.count || 0),
-                0
+              selected={isValueSelected(null)}
+              onClick={() => handleFilterClick(null)}
+              count={renderCount(
+                creatorOptions.reduce(
+                  (sum, creator) => sum + (creator.count || 0),
+                  0
+                )
               )}
             >
               <Users className="w-4 h-4 shrink-0" />
@@ -549,9 +525,9 @@ export function ViewSelector({
         {selectedItem === "automated" && (
           <>
             <FilterRow
-              selected={selectedFilter === null}
-              onClick={(e) => handleFilterClick(null, e)}
-              count={totalCount}
+              selected={isValueSelected(null)}
+              onClick={() => handleFilterClick(null)}
+              count={renderCount(totalCount)}
             >
               <span className="truncate">{t("views.allCases")}</span>
             </FilterRow>
@@ -560,8 +536,8 @@ export function ViewSelector({
                 <FilterRow
                   key={item.value.toString()}
                   selected={isValueSelected(item.value ? 1 : 0)}
-                  onClick={(e) => handleFilterClick(item.value ? 1 : 0, e)}
-                  count={item.count}
+                  onClick={() => handleFilterClick(item.value ? 1 : 0)}
+                  count={renderCount(item.count)}
                 >
                   {item.value ? (
                     <Bot className="w-4 h-4 shrink-0" />
@@ -582,9 +558,9 @@ export function ViewSelector({
         {selectedItem === "parameterized" && (
           <>
             <FilterRow
-              selected={selectedFilter === null}
-              onClick={(e) => handleFilterClick(null, e)}
-              count={totalCount}
+              selected={isValueSelected(null)}
+              onClick={() => handleFilterClick(null)}
+              count={renderCount(totalCount)}
             >
               <span className="truncate">{t("views.allCases")}</span>
             </FilterRow>
@@ -593,8 +569,8 @@ export function ViewSelector({
                 <FilterRow
                   key={item.value.toString()}
                   selected={isValueSelected(item.value ? 1 : 0)}
-                  onClick={(e) => handleFilterClick(item.value ? 1 : 0, e)}
-                  count={item.count}
+                  onClick={() => handleFilterClick(item.value ? 1 : 0)}
+                  count={renderCount(item.count)}
                 >
                   {item.value ? (
                     <SquareStack className="w-4 h-4 shrink-0 text-primary" />
@@ -615,9 +591,9 @@ export function ViewSelector({
         {selectedItem === "attachments" && (
           <>
             <FilterRow
-              selected={selectedFilter === null}
-              onClick={(e) => handleFilterClick(null, e)}
-              count={totalCount}
+              selected={isValueSelected(null)}
+              onClick={() => handleFilterClick(null)}
+              count={renderCount(totalCount)}
             >
               <span className="truncate">{t("views.allCases")}</span>
             </FilterRow>
@@ -626,8 +602,8 @@ export function ViewSelector({
                 <FilterRow
                   key={item.value.toString()}
                   selected={isValueSelected(item.value ? 1 : 0)}
-                  onClick={(e) => handleFilterClick(item.value ? 1 : 0, e)}
-                  count={item.count}
+                  onClick={() => handleFilterClick(item.value ? 1 : 0)}
+                  count={renderCount(item.count)}
                 >
                   {item.value ? (
                     <Paperclip className="w-4 h-4 shrink-0 text-primary" />
@@ -648,19 +624,21 @@ export function ViewSelector({
         {selectedItem === "status" && (
           <>
             <FilterRow
-              selected={selectedFilter === null}
-              onClick={(e) => handleFilterClick(null, e)}
-              count={
+              selected={isValueSelected(null)}
+              onClick={() => handleFilterClick(null)}
+              count={renderCount(
                 (viewOptions as any)?.testRunOptions?.totalCount || totalCount
-              }
+              )}
             >
               <CircleCheckBig className="w-4 h-4 shrink-0" />
               <span className="truncate">{tCommon("filters.allStatuses")}</span>
             </FilterRow>
             <FilterRow
               selected={isValueSelected("untested")}
-              onClick={(e) => handleFilterClick("untested", e)}
-              count={(viewOptions as any)?.testRunOptions?.untestedCount || 0}
+              onClick={() => handleFilterClick("untested")}
+              count={renderCount(
+                (viewOptions as any)?.testRunOptions?.untestedCount || 0
+              )}
             >
               <div
                 className="w-3 h-3 rounded-full shrink-0"
@@ -689,19 +667,21 @@ export function ViewSelector({
         {selectedItem === "assignedTo" && (
           <>
             <FilterRow
-              selected={selectedFilter === null}
-              onClick={(e) => handleFilterClick(null, e)}
-              count={
+              selected={isValueSelected(null)}
+              onClick={() => handleFilterClick(null)}
+              count={renderCount(
                 (viewOptions as any)?.testRunOptions?.totalCount || totalCount
-              }
+              )}
             >
               <Users className="w-4 h-4 shrink-0" />
               <span className="truncate">{t("views.allAssignees")}</span>
             </FilterRow>
             <FilterRow
               selected={isValueSelected("unassigned")}
-              onClick={(e) => handleFilterClick("unassigned", e)}
-              count={(viewOptions as any)?.testRunOptions?.unassignedCount || 0}
+              onClick={() => handleFilterClick("unassigned")}
+              count={renderCount(
+                (viewOptions as any)?.testRunOptions?.unassignedCount || 0
+              )}
             >
               <UserX className="w-4 h-4 shrink-0" />
               <span className="truncate">{tCommon("labels.unassigned")}</span>
@@ -722,8 +702,8 @@ export function ViewSelector({
               <FilterRow
                 key={option.id}
                 selected={isValueSelected(option.id)}
-                onClick={(e) => handleFilterClick(option.id, e)}
-                count={option.count}
+                onClick={() => handleFilterClick(option.id)}
+                count={renderCount(option.count)}
               >
                 <span className="truncate">{option.name}</span>
               </FilterRow>
@@ -738,8 +718,8 @@ export function ViewSelector({
               <FilterRow
                 key={option.id}
                 selected={isValueSelected(option.id)}
-                onClick={(e) => handleFilterClick(option.id, e)}
-                count={option.count}
+                onClick={() => handleFilterClick(option.id)}
+                count={renderCount(option.count)}
               >
                 <span className="truncate">{option.name}</span>
               </FilterRow>
@@ -751,9 +731,9 @@ export function ViewSelector({
         {selectedItem.startsWith("dynamic_") && (
           <>
             <FilterRow
-              selected={selectedFilter === null}
-              onClick={(e) => handleFilterClick(null, e)}
-              count={totalCount}
+              selected={isValueSelected(null)}
+              onClick={() => handleFilterClick(null)}
+              count={renderCount(totalCount)}
             >
               <span className="truncate">{tCommon("fields.mixed")}</span>
             </FilterRow>
@@ -767,17 +747,17 @@ export function ViewSelector({
                   <>
                     <FilterRow
                       selected={isValueSelected(1)}
-                      onClick={(e) => handleFilterClick(1, e)}
-                      count={checkedCount}
+                      onClick={() => handleFilterClick(1)}
+                      count={renderCount(checkedCount)}
                     >
                       <span className="truncate">
                         {tCommon("fields.checked")}
                       </span>
                     </FilterRow>
                     <FilterRow
-                      selected={isValueSelected(2)}
-                      onClick={(e) => handleFilterClick(2, e)}
-                      count={uncheckedCount}
+                      selected={isValueSelected(0)}
+                      onClick={() => handleFilterClick(0)}
+                      count={renderCount(uncheckedCount)}
                     >
                       <span className="truncate">{t("fields.unchecked")}</span>
                     </FilterRow>
@@ -785,7 +765,9 @@ export function ViewSelector({
                 );
               }
 
-              // Handle Integer, Number fields with operator-based filtering
+              // Number/date/text/link/steps axes keep their has-value/no-value
+              // rows (the bare `any`/`none` predicates); the operator inputs
+              // moved into the FilterBar's chip editors.
               if (field?.type === "Integer" || field?.type === "Number") {
                 const noValueCount = (field as any).counts?.noValue || 0;
                 const hasValueCount = (field as any).counts?.hasValue || 0;
@@ -794,45 +776,24 @@ export function ViewSelector({
                   <>
                     <FilterRow
                       selected={isValueSelected("none")}
-                      onClick={(e) => handleFilterClick("none", e)}
-                      count={noValueCount}
+                      onClick={() => handleFilterClick("none")}
+                      count={renderCount(noValueCount)}
                     >
                       <span className="truncate opacity-40">
                         {t("fields.noValue")}
                       </span>
                     </FilterRow>
                     <FilterRow
-                      selected={isValueSelected("hasValue")}
-                      onClick={(e) => handleFilterClick("hasValue", e)}
-                      count={hasValueCount}
+                      selected={isValueSelected("any")}
+                      onClick={() => handleFilterClick("any")}
+                      count={renderCount(hasValueCount)}
                     >
                       <span className="truncate">{t("fields.hasValue")}</span>
                     </FilterRow>
-                    <div className="h-px bg-border my-1" />
-                    <NumericFilterInput
-                      fieldId={field.fieldId}
-                      fieldType={field.type}
-                      onFilterApply={(operator, value1, value2) => {
-                        const filterValue =
-                          value2 !== undefined
-                            ? `${operator}:${value1}:${value2}`
-                            : `${operator}:${value1}`;
-                        handleFilterClick(filterValue, undefined);
-                      }}
-                      onClearFilter={() => handleFilterClick(null, undefined)}
-                      currentFilter={
-                        selectedFilter &&
-                        Array.isArray(selectedFilter) &&
-                        selectedFilter.length > 0
-                          ? String(selectedFilter[0])
-                          : null
-                      }
-                    />
                   </>
                 );
               }
 
-              // Handle Date fields with operator-based filtering
               if (field?.type === "Date") {
                 const noValueCount = (field as any).counts?.noValue || 0;
                 const hasValueCount = (field as any).counts?.hasValue || 0;
@@ -841,57 +802,24 @@ export function ViewSelector({
                   <>
                     <FilterRow
                       selected={isValueSelected("none")}
-                      onClick={(e) => handleFilterClick("none", e)}
-                      count={noValueCount}
+                      onClick={() => handleFilterClick("none")}
+                      count={renderCount(noValueCount)}
                     >
                       <span className="truncate opacity-40">
                         {t("fields.noDate")}
                       </span>
                     </FilterRow>
                     <FilterRow
-                      selected={isValueSelected("hasValue")}
-                      onClick={(e) => handleFilterClick("hasValue", e)}
-                      count={hasValueCount}
+                      selected={isValueSelected("any")}
+                      onClick={() => handleFilterClick("any")}
+                      count={renderCount(hasValueCount)}
                     >
                       <span className="truncate">{t("fields.hasDate")}</span>
                     </FilterRow>
-                    <div className="h-px bg-border my-1" />
-                    <DateFilterInput
-                      fieldId={field.fieldId}
-                      onFilterApply={(operator, value1, value2) => {
-                        let filterValue: string;
-                        if (value1 && value2) {
-                          // Between operator with two dates - use pipe separator
-                          filterValue = `${operator}|${value1.toISOString()}|${value2.toISOString()}`;
-                        } else if (value1) {
-                          // Single date operator (on, before, after) - use pipe separator
-                          filterValue = `${operator}|${value1.toISOString()}`;
-                        } else {
-                          // Relative date operators (last7, last30, last90, thisYear)
-                          filterValue = operator;
-                        }
-                        handleFilterClick(filterValue, undefined);
-                      }}
-                      onClearFilter={() => handleFilterClick(null, undefined)}
-                      currentFilter={
-                        selectedFilter &&
-                        Array.isArray(selectedFilter) &&
-                        selectedFilter.length > 0
-                          ? (() => {
-                              const filter = String(selectedFilter[0]);
-                              // Only pass date operator filters, not hasValue/none
-                              return filter === "hasValue" || filter === "none"
-                                ? null
-                                : filter;
-                            })()
-                          : null
-                      }
-                    />
                   </>
                 );
               }
 
-              // Handle Text Long, Text String fields with operator-based filtering
               if (
                 field?.type === "Text Long" ||
                 field?.type === "Text String"
@@ -902,48 +830,25 @@ export function ViewSelector({
                 return (
                   <>
                     <FilterRow
-                      selected={isValueSelected("hasValue")}
-                      onClick={(e) => handleFilterClick("hasValue", e)}
-                      count={hasValueCount}
+                      selected={isValueSelected("any")}
+                      onClick={() => handleFilterClick("any")}
+                      count={renderCount(hasValueCount)}
                     >
                       <span className="truncate">{t("fields.hasText")}</span>
                     </FilterRow>
                     <FilterRow
                       selected={isValueSelected("none")}
-                      onClick={(e) => handleFilterClick("none", e)}
-                      count={noValueCount}
+                      onClick={() => handleFilterClick("none")}
+                      count={renderCount(noValueCount)}
                     >
                       <span className="truncate opacity-40">
                         {t("fields.noText")}
                       </span>
                     </FilterRow>
-                    <div className="h-px bg-border my-1" />
-                    <TextFilterInput
-                      fieldId={field.fieldId}
-                      onFilterApply={(operator, value) => {
-                        const filterValue = `${operator}|${value}`;
-                        handleFilterClick(filterValue, undefined);
-                      }}
-                      onClearFilter={() => handleFilterClick(null, undefined)}
-                      currentFilter={
-                        selectedFilter &&
-                        Array.isArray(selectedFilter) &&
-                        selectedFilter.length > 0
-                          ? (() => {
-                              const filter = String(selectedFilter[0]);
-                              // Only pass text operator filters, not hasValue/none
-                              return filter === "hasValue" || filter === "none"
-                                ? null
-                                : filter;
-                            })()
-                          : null
-                      }
-                    />
                   </>
                 );
               }
 
-              // Handle Link fields with operator-based filtering
               if (field?.type === "Link") {
                 const hasValueCount = (field as any).counts?.hasValue || 0;
                 const noValueCount = (field as any).counts?.noValue || 0;
@@ -951,48 +856,25 @@ export function ViewSelector({
                 return (
                   <>
                     <FilterRow
-                      selected={isValueSelected("hasValue")}
-                      onClick={(e) => handleFilterClick("hasValue", e)}
-                      count={hasValueCount}
+                      selected={isValueSelected("any")}
+                      onClick={() => handleFilterClick("any")}
+                      count={renderCount(hasValueCount)}
                     >
                       <span className="truncate">{t("fields.hasLink")}</span>
                     </FilterRow>
                     <FilterRow
                       selected={isValueSelected("none")}
-                      onClick={(e) => handleFilterClick("none", e)}
-                      count={noValueCount}
+                      onClick={() => handleFilterClick("none")}
+                      count={renderCount(noValueCount)}
                     >
                       <span className="truncate opacity-40">
                         {t("fields.noLink")}
                       </span>
                     </FilterRow>
-                    <div className="h-px bg-border my-1" />
-                    <LinkFilterInput
-                      fieldId={field.fieldId}
-                      onFilterApply={(operator, value) => {
-                        const filterValue = `${operator}|${value}`;
-                        handleFilterClick(filterValue, undefined);
-                      }}
-                      onClearFilter={() => handleFilterClick(null, undefined)}
-                      currentFilter={
-                        selectedFilter &&
-                        Array.isArray(selectedFilter) &&
-                        selectedFilter.length > 0
-                          ? (() => {
-                              const filter = String(selectedFilter[0]);
-                              // Only pass link operator filters, not hasValue/none
-                              return filter === "hasValue" || filter === "none"
-                                ? null
-                                : filter;
-                            })()
-                          : null
-                      }
-                    />
                   </>
                 );
               }
 
-              // Handle Steps fields with operator-based filtering
               if (field?.type === "Steps") {
                 const hasValueCount = (field as any).counts?.hasValue || 0;
                 const noValueCount = (field as any).counts?.noValue || 0;
@@ -1000,50 +882,21 @@ export function ViewSelector({
                 return (
                   <>
                     <FilterRow
-                      selected={isValueSelected("hasValue")}
-                      onClick={(e) => handleFilterClick("hasValue", e)}
-                      count={hasValueCount}
+                      selected={isValueSelected("any")}
+                      onClick={() => handleFilterClick("any")}
+                      count={renderCount(hasValueCount)}
                     >
                       <span className="truncate">{t("fields.hasSteps")}</span>
                     </FilterRow>
                     <FilterRow
                       selected={isValueSelected("none")}
-                      onClick={(e) => handleFilterClick("none", e)}
-                      count={noValueCount}
+                      onClick={() => handleFilterClick("none")}
+                      count={renderCount(noValueCount)}
                     >
                       <span className="truncate opacity-40">
                         {t("fields.noSteps")}
                       </span>
                     </FilterRow>
-                    <div className="h-px bg-border my-1" />
-                    <StepsFilterInput
-                      fieldId={field.fieldId}
-                      onFilterApply={(operator, value1, value2) => {
-                        let filterValue: string;
-                        if (value2 !== undefined) {
-                          // Between operator with two values
-                          filterValue = `${operator}|${value1}|${value2}`;
-                        } else {
-                          // Single value operator
-                          filterValue = `${operator}|${value1}`;
-                        }
-                        handleFilterClick(filterValue, undefined);
-                      }}
-                      onClearFilter={() => handleFilterClick(null, undefined)}
-                      currentFilter={
-                        selectedFilter &&
-                        Array.isArray(selectedFilter) &&
-                        selectedFilter.length > 0
-                          ? (() => {
-                              const filter = String(selectedFilter[0]);
-                              // Only pass steps operator filters, not hasValue/none
-                              return filter === "hasValue" || filter === "none"
-                                ? null
-                                : filter;
-                            })()
-                          : null
-                      }
-                    />
                   </>
                 );
               }
@@ -1061,8 +914,8 @@ export function ViewSelector({
                     {!field.required && (
                       <FilterRow
                         selected={isValueSelected("none")}
-                        onClick={(e) => handleFilterClick("none", e)}
-                        count={noneCount}
+                        onClick={() => handleFilterClick("none")}
+                        count={renderCount(noneCount)}
                       >
                         <CircleDashed className="w-4 h-4 shrink-0 opacity-40" />
                         <span className="truncate">

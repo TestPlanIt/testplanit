@@ -325,6 +325,9 @@ import { useFindManyRepositoryCasesByDescendants } from "~/hooks/useRepositoryCa
 import { useFindManyRepositoryCasesFiltered } from "~/hooks/useRepositoryCasesWithFilteredFields";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { usePagination } from "~/lib/contexts/PaginationContext";
+import { buildFilterDimensions } from "~/lib/repository/filterDimensions";
+import { canonicalPredicateKey } from "~/lib/repository/filterUrlCodec";
+import type { FilterPredicate } from "~/lib/schemas/repositoryFilterPredicates";
 import Cases from "./Cases";
 
 // ---- Test Fixtures ----
@@ -352,10 +355,23 @@ const mockCase = {
   createdAt: new Date(),
 };
 
+const testRegistry = buildFilterDimensions({
+  dynamicFields: [
+    { fieldId: 15, type: "Text Long" },
+    { fieldId: 3, type: "Steps" },
+  ],
+});
+
+const predicateProps = (predicates: FilterPredicate[]) => ({
+  predicates,
+  filterRegistry: testRegistry,
+  predicatesKey: canonicalPredicateKey(predicates),
+});
+
 const defaultProps = {
   folderId: null,
   viewType: "all",
-  filterId: null,
+  ...predicateProps([]),
   canAddEdit: true,
   canAddEditRun: false,
   canDelete: true,
@@ -480,7 +496,9 @@ describe("Select all ids query", () => {
       <Cases
         {...defaultProps}
         viewType="dynamic_15_Text Long"
-        filterId={["contains|hello"]}
+        {...predicateProps([
+          { dimension: "field_15", operator: "contains", values: ["hello"] },
+        ])}
       />
     );
     await screen.findByTestId("data-table");
@@ -503,7 +521,9 @@ describe("Select all ids query", () => {
       <Cases
         {...defaultProps}
         viewType="dynamic_3_Steps"
-        filterId={["gte|1"]}
+        {...predicateProps([
+          { dimension: "field_3", operator: "gte", values: [1] },
+        ])}
       />
     );
     await screen.findByTestId("data-table");
@@ -748,6 +768,39 @@ describe("Cases component", () => {
     });
   });
 
+  it("bypasses the select-folder wall and queries project-wide when predicates are active", async () => {
+    setupMocks({ data: [mockCase] });
+
+    render(
+      <Cases
+        {...defaultProps}
+        viewType="folders"
+        folderId={null}
+        searchResultIds={undefined}
+        {...predicateProps([
+          { dimension: "templates", operator: "in", values: [7] },
+        ])}
+      />
+    );
+
+    // Spec §7.1: with ≥1 active predicate and no folder selected, the wall is
+    // bypassed — the table renders instead of the "select folder" message.
+    const dataTable = await screen.findByTestId("data-table");
+    expect(dataTable.getAttribute("data-count")).toBe("1");
+
+    // The list query ran (not disabled by the folder gate) and its where has
+    // no folder scoping — project-wide, with the predicate fragment applied.
+    const listCall = (
+      useFindManyRepositoryCasesFiltered as any
+    ).mock.calls.find(([args]: any[]) => args?.orderBy && args?.select?.name);
+    expect(listCall).toBeDefined();
+    expect(listCall[2]?.enabled).toBe(true);
+    expect(JSON.stringify(listCall[0].where)).not.toContain("folderId");
+    expect(listCall[0].where.AND).toContainEqual({
+      templateId: { in: [7] },
+    });
+  });
+
   it("renders with showDescendants and descendantFolderIds props", async () => {
     const casesInMultipleFolders = [
       { ...mockCase, id: 1, name: "Case in Parent", folderId: 10 },
@@ -874,7 +927,7 @@ describe("Cases component", () => {
           {...defaultProps}
           viewType="folders"
           folderId={1}
-          filterId={null}
+          {...predicateProps([])}
         />
       );
 
@@ -889,7 +942,9 @@ describe("Cases component", () => {
           {...defaultProps}
           viewType="folders"
           folderId={1}
-          filterId={[7]}
+          {...predicateProps([
+            { dimension: "templates", operator: "in", values: [7] },
+          ])}
         />
       );
 

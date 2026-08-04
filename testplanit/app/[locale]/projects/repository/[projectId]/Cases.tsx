@@ -2,6 +2,7 @@ import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import AddTestRunModal from "@/[locale]/projects/runs/[projectId]/AddTestRunModal";
 import { AttachmentsCarousel } from "@/components/AttachmentsCarousel";
+import { Button } from "@/components/ui/button";
 import { AutoTagWizardDialog } from "@/components/auto-tag/AutoTagWizardDialog";
 import { useDebounce } from "@/components/Debounce";
 import {
@@ -34,7 +35,6 @@ import type {
   TestRunCasesGetPayload,
   TestRunCasesWhereInput,
 } from "~/zenstack/input";
-import { JsonNull } from "@zenstackhq/orm";
 import type { Tags as TagModel, Issue as IssueModel } from "~/zenstack/models";
 
 // The repositoryCases/testRunCases query results are typed loosely for the
@@ -53,6 +53,13 @@ import {
   RowSelectionState,
   Updater as TableUpdater,
 } from "@tanstack/react-table";
+import type { FilterDimensionRegistry } from "~/lib/repository/filterDimensions";
+import {
+  compileRepoPredicates,
+  compileRunPredicates,
+  extractPostFetchFilters,
+} from "~/lib/repository/filterWhereCompiler";
+import type { FilterPredicate } from "~/lib/schemas/repositoryFilterPredicates";
 import {
   ArrowRightLeft,
   PenSquare,
@@ -84,7 +91,6 @@ import {
   useFindManyRepositoryCasesFiltered,
 } from "~/hooks/useRepositoryCasesWithFilteredFields";
 import { usePagination } from "~/lib/contexts/PaginationContext";
-import { attachmentsWhereClause } from "~/lib/repositoryCaseAttachmentsFilter";
 import { useReviewFeatureEnabled } from "~/hooks/useReviewFeatureEnabled";
 import { usePathname, useRouter } from "~/lib/navigation";
 import { LatestResultsCell } from "@/components/tables/LatestResultsCell";
@@ -344,7 +350,17 @@ export interface CaseNav {
 interface CasesProps {
   folderId: number | null;
   viewType: string;
-  filterId: Array<string | number> | null;
+  /** Active filter predicates (implicit AND). Compiled to where fragments via
+   * lib/repository/filterWhereCompiler; folder scoping stays separate. */
+  predicates: FilterPredicate[];
+  /** The active mode's dimension registry (buildFilterDimensions). */
+  filterRegistry: FilterDimensionRegistry;
+  /** Canonical serialization of `predicates` (useRepositoryFilters.canonicalKey).
+   * Keys every reset effect and remount key that previously keyed on the
+   * single-axis filterId. */
+  predicatesKey: string;
+  /** Clears all active predicates — the zero-result empty state's CTA. */
+  onClearFilters?: () => void;
   isSelectionMode?: boolean;
   selectedTestCases?: number[];
   selectedRunIds?: number[];
@@ -389,7 +405,10 @@ interface CasesProps {
 export default function Cases({
   folderId,
   viewType,
-  filterId,
+  predicates,
+  filterRegistry,
+  predicatesKey,
+  onClearFilters,
   isSelectionMode = false,
   selectedTestCases = [],
   selectedRunIds,
@@ -671,8 +690,12 @@ export default function Cases({
       },
       {
         enabled: Boolean(
-          // Skip query if we know the selected folder has 0 cases
-          viewType === "folders" && selectedFolderCaseCount === 0
+          // Skip query if we know the selected folder has 0 cases. Active
+          // predicates bypass the folder wall (spec §7.1), so they also bypass
+          // this shortcut.
+          predicates.length === 0 &&
+            viewType === "folders" &&
+            selectedFolderCaseCount === 0
             ? false
             : !!projectId
         ),
@@ -940,738 +963,21 @@ export default function Cases({
       });
     }
 
-    // --- Apply folder/view/filter logic ---
-    // Skip assignedTo and status filters here - they're handled separately for test run cases
-    const isTestRunSpecificView =
-      viewType === "assignedTo" || viewType === "status";
-
     if (viewType === "folders" && folderId) {
-      // 1. Folder view with specific folder (or folder + all descendants)
+      // Folder view with specific folder (or folder + all descendants)
       if (descendantFolderIds && descendantFolderIds.length > 0) {
         baseConditions.push({ folderId: { in: descendantFolderIds } });
       } else {
         baseConditions.push({ folderId: { equals: folderId } });
       }
-    } else if (
-      !isTestRunSpecificView &&
-      (filterId === null || (Array.isArray(filterId) && filterId.length === 0))
-    ) {
-      // 2. Filter is null - means "All Values/All Items", so add no condition
-    } else if (!isTestRunSpecificView) {
-      // 4. Filter has specific value(s)
-      const filterArray = Array.isArray(filterId) ? filterId : [filterId];
-      const filterConditions: any[] = [];
-
-      // Build a condition for each filter value
-      for (const singleFilterId of filterArray) {
-        if (viewType.startsWith("dynamic_")) {
-          // Apply specific filter for dynamic views
-          const [_, ...fieldParts] = viewType.split("_");
-          const fieldKey = fieldParts.join("_");
-          const [fieldId, fieldType] = fieldKey.split("_");
-          const numericFieldId = parseInt(fieldId);
-
-          // Add the dynamic filtering logic here (Link, Dropdown, etc.)
-          if (fieldType === "Link") {
-            // Support both numeric IDs (legacy) and string IDs (new)
-            if (
-              (singleFilterId as number) === 1 ||
-              singleFilterId === "hasValue"
-            ) {
-              // Has link
-              filterConditions.push({
-                caseFieldValues: {
-                  some: {
-                    fieldId: numericFieldId,
-                    AND: [
-                      { value: { not: JsonNull } },
-                      { value: { not: { equals: "" } } },
-                    ],
-                  },
-                },
-              });
-            } else if (
-              (singleFilterId as number) === 2 ||
-              singleFilterId === "none"
-            ) {
-              // No link
-              filterConditions.push({
-                OR: [
-                  { caseFieldValues: { none: { fieldId: numericFieldId } } },
-                  {
-                    caseFieldValues: {
-                      some: {
-                        fieldId: numericFieldId,
-                        OR: [
-                          { value: { equals: JsonNull } },
-                          { value: { equals: "" } },
-                        ],
-                      },
-                    },
-                  },
-                ],
-              });
-            } else if (
-              typeof singleFilterId === "string" &&
-              singleFilterId.includes("|")
-            ) {
-              // Operator-based link filtering
-              const parts = singleFilterId.split("|");
-              const searchValue = parts[1];
-
-              if (searchValue) {
-                // For link operators, we fetch all non-null values and filter in application logic
-                filterConditions.push({
-                  caseFieldValues: {
-                    some: {
-                      fieldId: numericFieldId,
-                      value: { not: JsonNull },
-                    },
-                  },
-                });
-                // Note: Actual URL filtering will happen after fetch in application logic
-              }
-            }
-          } else if (fieldType === "Dropdown") {
-            // Handle special "none" value to filter for cases without this field
-            if (singleFilterId === "none") {
-              filterConditions.push({
-                OR: [
-                  // Case 1: No record exists for this fieldId
-                  { caseFieldValues: { none: { fieldId: numericFieldId } } },
-                  // Case 2: Record exists, but value is explicitly null
-                  {
-                    caseFieldValues: {
-                      some: {
-                        fieldId: numericFieldId,
-                        value: { equals: JsonNull },
-                      },
-                    },
-                  },
-                ],
-              });
-            } else {
-              filterConditions.push({
-                caseFieldValues: {
-                  some: {
-                    fieldId: numericFieldId,
-                    OR: [
-                      {
-                        value: {
-                          equals: (
-                            singleFilterId as string | number
-                          ).toString(),
-                        },
-                      },
-                      {
-                        value: { equals: singleFilterId as string | number },
-                      },
-                    ],
-                  },
-                },
-              });
-            }
-          } else if (fieldType === "Multi-Select") {
-            // Handle special "none" value to filter for cases without this field
-            if (singleFilterId === "none") {
-              filterConditions.push({
-                OR: [
-                  // Case 1: No record exists for this fieldId
-                  { caseFieldValues: { none: { fieldId: numericFieldId } } },
-                  // Case 2: Record exists, but value is explicitly null
-                  {
-                    caseFieldValues: {
-                      some: {
-                        fieldId: numericFieldId,
-                        value: { equals: JsonNull },
-                      },
-                    },
-                  },
-                ],
-              });
-            } else {
-              filterConditions.push({
-                caseFieldValues: {
-                  some: {
-                    fieldId: numericFieldId,
-                    value: {
-                      array_contains: [singleFilterId as string | number],
-                    },
-                  },
-                },
-              });
-            }
-          } else if (fieldType === "Steps") {
-            // Support both numeric IDs (legacy) and string IDs (new)
-            if (
-              (singleFilterId as number) === 1 ||
-              singleFilterId === "hasValue"
-            ) {
-              // Has steps
-              filterConditions.push({
-                steps: { some: { isDeleted: false } },
-              });
-            } else if (
-              (singleFilterId as number) === 2 ||
-              singleFilterId === "none"
-            ) {
-              // No steps
-              filterConditions.push({
-                steps: { none: { isDeleted: false } },
-              });
-            }
-          } else if (fieldType === "Checkbox") {
-            // singleFilterId 1 = Checked, singleFilterId 2 = Unchecked
-            filterConditions.push({
-              caseFieldValues: {
-                some: {
-                  fieldId: numericFieldId,
-                  value: {
-                    equals: (singleFilterId as number) === 1 ? true : false,
-                  },
-                },
-              },
-            });
-          } else if (fieldType === "Integer" || fieldType === "Number") {
-            // Handle special "none" value for cases without this field
-            if (singleFilterId === "none") {
-              filterConditions.push({
-                OR: [
-                  { caseFieldValues: { none: { fieldId: numericFieldId } } },
-                  {
-                    caseFieldValues: {
-                      some: {
-                        fieldId: numericFieldId,
-                        value: { equals: JsonNull },
-                      },
-                    },
-                  },
-                ],
-              });
-            } else if (singleFilterId === "hasValue") {
-              // Has any value (not null)
-              filterConditions.push({
-                caseFieldValues: {
-                  some: {
-                    fieldId: numericFieldId,
-                    value: { not: JsonNull },
-                  },
-                },
-              });
-            } else if (
-              typeof singleFilterId === "string" &&
-              singleFilterId.includes(":")
-            ) {
-              // Operator-based filter: format is "operator:value1" or "operator:value1:value2"
-              const parts = singleFilterId.split(":");
-              const operator = parts[0];
-              const value1 = parseFloat(parts[1]);
-
-              if (!isNaN(value1)) {
-                if (operator === "eq") {
-                  // Equals
-                  filterConditions.push({
-                    caseFieldValues: {
-                      some: {
-                        fieldId: numericFieldId,
-                        OR: [
-                          { value: { equals: value1 } },
-                          { value: { equals: value1.toString() } },
-                        ],
-                      },
-                    },
-                  });
-                } else if (operator === "ne") {
-                  // Not equals
-                  filterConditions.push({
-                    OR: [
-                      {
-                        caseFieldValues: {
-                          none: { fieldId: numericFieldId },
-                        },
-                      },
-                      {
-                        caseFieldValues: {
-                          some: {
-                            fieldId: numericFieldId,
-                            value: { equals: JsonNull },
-                          },
-                        },
-                      },
-                      {
-                        caseFieldValues: {
-                          some: {
-                            fieldId: numericFieldId,
-                            AND: [
-                              { value: { not: { equals: value1 } } },
-                              {
-                                value: { not: { equals: value1.toString() } },
-                              },
-                            ],
-                          },
-                        },
-                      },
-                    ],
-                  });
-                } else if (operator === "lt") {
-                  // Less than
-                  filterConditions.push({
-                    caseFieldValues: {
-                      some: {
-                        fieldId: numericFieldId,
-                        OR: [
-                          { value: { lt: value1 } },
-                          { value: { lt: value1.toString() } },
-                        ],
-                      },
-                    },
-                  });
-                } else if (operator === "lte") {
-                  // Less than or equal
-                  filterConditions.push({
-                    caseFieldValues: {
-                      some: {
-                        fieldId: numericFieldId,
-                        OR: [
-                          { value: { lte: value1 } },
-                          { value: { lte: value1.toString() } },
-                        ],
-                      },
-                    },
-                  });
-                } else if (operator === "gt") {
-                  // Greater than
-                  filterConditions.push({
-                    caseFieldValues: {
-                      some: {
-                        fieldId: numericFieldId,
-                        OR: [
-                          { value: { gt: value1 } },
-                          { value: { gt: value1.toString() } },
-                        ],
-                      },
-                    },
-                  });
-                } else if (operator === "gte") {
-                  // Greater than or equal
-                  filterConditions.push({
-                    caseFieldValues: {
-                      some: {
-                        fieldId: numericFieldId,
-                        OR: [
-                          { value: { gte: value1 } },
-                          { value: { gte: value1.toString() } },
-                        ],
-                      },
-                    },
-                  });
-                } else if (operator === "between" && parts.length === 3) {
-                  // Between two values
-                  const value2 = parseFloat(parts[2]);
-                  if (!isNaN(value2)) {
-                    filterConditions.push({
-                      caseFieldValues: {
-                        some: {
-                          fieldId: numericFieldId,
-                          OR: [
-                            {
-                              AND: [
-                                { value: { gte: value1 } },
-                                { value: { lte: value2 } },
-                              ],
-                            },
-                            {
-                              AND: [
-                                { value: { gte: value1.toString() } },
-                                { value: { lte: value2.toString() } },
-                              ],
-                            },
-                          ],
-                        },
-                      },
-                    });
-                  }
-                }
-              }
-            } else {
-              // Filter by specific numeric value (legacy support)
-              filterConditions.push({
-                caseFieldValues: {
-                  some: {
-                    fieldId: numericFieldId,
-                    OR: [
-                      {
-                        value: {
-                          equals: (
-                            singleFilterId as string | number
-                          ).toString(),
-                        },
-                      },
-                      {
-                        value: { equals: singleFilterId as string | number },
-                      },
-                    ],
-                  },
-                },
-              });
-            }
-          } else if (fieldType === "Date") {
-            // Handle special "none" value for cases without this field
-            if (singleFilterId === "none") {
-              filterConditions.push({
-                OR: [
-                  { caseFieldValues: { none: { fieldId: numericFieldId } } },
-                  {
-                    caseFieldValues: {
-                      some: {
-                        fieldId: numericFieldId,
-                        value: { equals: JsonNull },
-                      },
-                    },
-                  },
-                ],
-              });
-            } else if (singleFilterId === "hasValue") {
-              // Has any date (not null, not JSON null, and not empty string)
-              filterConditions.push({
-                caseFieldValues: {
-                  some: {
-                    fieldId: numericFieldId,
-                    AND: [
-                      { value: { not: JsonNull } },
-                      { NOT: { value: { equals: JsonNull } } },
-                      { NOT: { value: { equals: "" } } },
-                      { NOT: { value: { equals: null } } },
-                    ],
-                  },
-                },
-              });
-            } else if (singleFilterId === "last7") {
-              // Last 7 days
-              const now = new Date();
-              const sevenDaysAgo = new Date(
-                now.getTime() - 7 * 24 * 60 * 60 * 1000
-              );
-              const sevenDaysAgoStr = sevenDaysAgo.toISOString().split("T")[0];
-              filterConditions.push({
-                caseFieldValues: {
-                  some: {
-                    fieldId: numericFieldId,
-                    OR: [
-                      { value: { gte: sevenDaysAgoStr } },
-                      { value: { gte: sevenDaysAgo.toISOString() } },
-                    ],
-                  },
-                },
-              });
-            } else if (singleFilterId === "last30") {
-              // Last 30 days
-              const now = new Date();
-              const thirtyDaysAgo = new Date(
-                now.getTime() - 30 * 24 * 60 * 60 * 1000
-              );
-              const thirtyDaysAgoStr = thirtyDaysAgo
-                .toISOString()
-                .split("T")[0];
-              filterConditions.push({
-                caseFieldValues: {
-                  some: {
-                    fieldId: numericFieldId,
-                    OR: [
-                      { value: { gte: thirtyDaysAgoStr } },
-                      { value: { gte: thirtyDaysAgo.toISOString() } },
-                    ],
-                  },
-                },
-              });
-            } else if (singleFilterId === "last90") {
-              // Last 90 days
-              const now = new Date();
-              const ninetyDaysAgo = new Date(
-                now.getTime() - 90 * 24 * 60 * 60 * 1000
-              );
-              const ninetyDaysAgoStr = ninetyDaysAgo
-                .toISOString()
-                .split("T")[0];
-              filterConditions.push({
-                caseFieldValues: {
-                  some: {
-                    fieldId: numericFieldId,
-                    OR: [
-                      { value: { gte: ninetyDaysAgoStr } },
-                      { value: { gte: ninetyDaysAgo.toISOString() } },
-                    ],
-                  },
-                },
-              });
-            } else if (singleFilterId === "thisYear") {
-              // This year
-              const now = new Date();
-              const startOfYear = new Date(now.getFullYear(), 0, 1);
-              const startOfYearStr = startOfYear.toISOString().split("T")[0];
-              filterConditions.push({
-                caseFieldValues: {
-                  some: {
-                    fieldId: numericFieldId,
-                    OR: [
-                      { value: { gte: startOfYearStr } },
-                      { value: { gte: startOfYear.toISOString() } },
-                    ],
-                  },
-                },
-              });
-            } else if (
-              typeof singleFilterId === "string" &&
-              singleFilterId.includes("|")
-            ) {
-              // Operator-based filter: format is "operator|date1" or "operator|date1|date2"
-              const parts = singleFilterId.split("|");
-              const operator = parts[0];
-
-              if (operator === "on" && parts.length >= 2) {
-                // On date (exact match)
-                const date = new Date(parts[1]);
-                if (!isNaN(date.getTime())) {
-                  const dateStr = date.toISOString().split("T")[0];
-                  filterConditions.push({
-                    caseFieldValues: {
-                      some: {
-                        fieldId: numericFieldId,
-                        OR: [
-                          { value: { equals: dateStr } },
-                          { value: { equals: date.toISOString() } },
-                        ],
-                      },
-                    },
-                  });
-                }
-              } else if (operator === "before" && parts.length >= 2) {
-                // Before date
-                const date = new Date(parts[1]);
-                if (!isNaN(date.getTime())) {
-                  const dateStr = date.toISOString().split("T")[0];
-                  filterConditions.push({
-                    caseFieldValues: {
-                      some: {
-                        fieldId: numericFieldId,
-                        OR: [
-                          { value: { lt: dateStr } },
-                          { value: { lt: date.toISOString() } },
-                        ],
-                      },
-                    },
-                  });
-                }
-              } else if (operator === "after" && parts.length >= 2) {
-                // After date
-                const date = new Date(parts[1]);
-                if (!isNaN(date.getTime())) {
-                  const dateStr = date.toISOString().split("T")[0];
-                  filterConditions.push({
-                    caseFieldValues: {
-                      some: {
-                        fieldId: numericFieldId,
-                        OR: [
-                          { value: { gt: dateStr } },
-                          { value: { gt: date.toISOString() } },
-                        ],
-                      },
-                    },
-                  });
-                }
-              } else if (operator === "between" && parts.length === 3) {
-                // Between two dates
-                const date1 = new Date(parts[1]);
-                const date2 = new Date(parts[2]);
-                if (!isNaN(date1.getTime()) && !isNaN(date2.getTime())) {
-                  const dateStr1 = date1.toISOString().split("T")[0];
-                  const dateStr2 = date2.toISOString().split("T")[0];
-                  filterConditions.push({
-                    caseFieldValues: {
-                      some: {
-                        fieldId: numericFieldId,
-                        OR: [
-                          {
-                            AND: [
-                              { value: { gte: dateStr1 } },
-                              { value: { lte: dateStr2 } },
-                            ],
-                          },
-                          {
-                            AND: [
-                              { value: { gte: date1.toISOString() } },
-                              { value: { lte: date2.toISOString() } },
-                            ],
-                          },
-                        ],
-                      },
-                    },
-                  });
-                }
-              }
-            } else if ((singleFilterId as number) === 1) {
-              // Legacy: Has date
-              filterConditions.push({
-                caseFieldValues: {
-                  some: {
-                    fieldId: numericFieldId,
-                    value: { not: JsonNull },
-                  },
-                },
-              });
-            } else if ((singleFilterId as number) === 2) {
-              // Legacy: No date
-              filterConditions.push({
-                OR: [
-                  { caseFieldValues: { none: { fieldId: numericFieldId } } },
-                  {
-                    caseFieldValues: {
-                      some: {
-                        fieldId: numericFieldId,
-                        value: { equals: JsonNull },
-                      },
-                    },
-                  },
-                ],
-              });
-            }
-          } else if (fieldType === "Text Long" || fieldType === "Text String") {
-            // Handle hasValue/none special filters
-            if (singleFilterId === "hasValue") {
-              // Has text - filter for non-null, non-empty values
-              filterConditions.push({
-                caseFieldValues: {
-                  some: {
-                    fieldId: numericFieldId,
-                    AND: [
-                      { value: { not: JsonNull } },
-                      { value: { not: { equals: "" } } },
-                    ],
-                  },
-                },
-              });
-            } else if (singleFilterId === "none") {
-              // No text - filter for null, empty, or non-existent
-              filterConditions.push({
-                OR: [
-                  { caseFieldValues: { none: { fieldId: numericFieldId } } },
-                  {
-                    caseFieldValues: {
-                      some: {
-                        fieldId: numericFieldId,
-                        OR: [
-                          { value: { equals: JsonNull } },
-                          { value: { equals: "" } },
-                        ],
-                      },
-                    },
-                  },
-                ],
-              });
-            } else if (
-              typeof singleFilterId === "string" &&
-              singleFilterId.includes("|")
-            ) {
-              // Operator-based text filtering
-              const parts = singleFilterId.split("|");
-              const _operator = parts[0];
-              const searchValue = parts[1];
-
-              if (searchValue) {
-                // For text operators, we fetch all non-null values and filter in application logic
-                // This is necessary because Prisma doesn't support advanced string operations on JSON fields
-                filterConditions.push({
-                  caseFieldValues: {
-                    some: {
-                      fieldId: numericFieldId,
-                      value: { not: JsonNull },
-                    },
-                  },
-                });
-                // Note: Actual text filtering will happen after fetch in application logic
-              }
-            }
-          }
-        } else {
-          // Apply specific filter for standard views (using switch)
-          switch (viewType) {
-            case "templates":
-              filterConditions.push({
-                templateId: { equals: Number(singleFilterId) },
-              });
-              break;
-            case "states":
-              filterConditions.push({
-                stateId: { equals: Number(singleFilterId) },
-              });
-              break;
-            case "creators":
-              filterConditions.push({
-                creatorId: { equals: singleFilterId?.toString() },
-              });
-              break;
-            case "automated":
-              filterConditions.push({
-                automated: (singleFilterId as number) === 1 ? true : false,
-              });
-              break;
-            case "parameterized":
-              filterConditions.push({
-                hasParameters: (singleFilterId as number) === 1,
-              });
-              break;
-            case "attachments":
-              filterConditions.push(
-                attachmentsWhereClause((singleFilterId as number) === 1)
-              );
-              break;
-            case "tags":
-              if (singleFilterId === "any") {
-                filterConditions.push({
-                  caseTags: { some: { tag: { isDeleted: false } } },
-                });
-              } else if (singleFilterId === "none") {
-                filterConditions.push({
-                  caseTags: { none: { tag: { isDeleted: false } } },
-                });
-              } else {
-                filterConditions.push({
-                  caseTags: {
-                    some: {
-                      tag: { id: Number(singleFilterId), isDeleted: false },
-                    },
-                  },
-                });
-              }
-              break;
-            case "issues":
-              if (singleFilterId === "any") {
-                filterConditions.push({
-                  caseIssues: { some: { issue: { isDeleted: false } } },
-                });
-              } else if (singleFilterId === "none") {
-                filterConditions.push({
-                  caseIssues: { none: { issue: { isDeleted: false } } },
-                });
-              } else {
-                filterConditions.push({
-                  caseIssues: {
-                    some: {
-                      issue: { id: Number(singleFilterId), isDeleted: false },
-                    },
-                  },
-                });
-              }
-              break;
-          }
-        }
-      }
-
-      // Combine all filter conditions with OR (union of results)
-      if (filterConditions.length > 0) {
-        baseConditions.push({ OR: filterConditions });
-      }
     }
+
+    // One self-contained fragment per predicate, AND'd with the base
+    // conditions. Run-scoped predicates (status/assignedTo) are skipped by the
+    // compiler and applied to the TestRunCases where instead; text/link/steps
+    // operator predicates compile to their value-not-null SQL pre-filter only —
+    // postFetchFilters below carries their in-memory half.
+    baseConditions.push(...compileRepoPredicates(predicates, filterRegistry));
 
     const finalWhereClause: RepositoryCasesWhereInput = {
       AND: baseConditions,
@@ -1682,7 +988,8 @@ export default function Cases({
     projectId,
     viewType,
     folderId,
-    filterId,
+    predicates,
+    filterRegistry,
     descendantFolderIds,
     isSelectionMode,
     excludeNotStartedFromRuns,
@@ -1716,101 +1023,20 @@ export default function Cases({
       };
     }, [isDescendantsMode, repositoryCaseWhereClause]);
 
-  // Build post-fetch filters for text/link/steps operators
-  const postFetchFilters: PostFetchFilter[] = useMemo(() => {
-    const filters: PostFetchFilter[] = [];
+  // Post-fetch filters for text/link/steps operator predicates — the in-memory
+  // half of the fragments compileRepoPredicates pre-filters as value-not-null.
+  const postFetchFilters: PostFetchFilter[] = useMemo(
+    () => extractPostFetchFilters(predicates, filterRegistry),
+    [predicates, filterRegistry]
+  );
 
-    if (!filterId || !viewType) {
-      return filters;
-    }
-
-    if (!viewType.startsWith("dynamic_")) {
-      return filters;
-    }
-
-    const filterArray = Array.isArray(filterId) ? filterId : [filterId];
-
-    for (const singleFilterId of filterArray) {
-      if (typeof singleFilterId === "string" && singleFilterId.includes("|")) {
-        // Extract field info from viewType
-        const parts = viewType.split("_");
-        const fieldId = parseInt(parts[1]);
-        const fieldType = parts.slice(2).join("_");
-
-        if (fieldType === "Text Long" || fieldType === "Text String") {
-          const filterParts = singleFilterId.split("|");
-          filters.push({
-            fieldId,
-            type: "text",
-            operator: filterParts[0],
-            value1: filterParts[1],
-          });
-        } else if (fieldType === "Link") {
-          const filterParts = singleFilterId.split("|");
-          filters.push({
-            fieldId,
-            type: "link",
-            operator: filterParts[0],
-            value1: filterParts[1],
-          });
-        } else if (fieldType === "Steps") {
-          const filterParts = singleFilterId.split("|");
-          const count1 = parseInt(filterParts[1]);
-          const count2 = filterParts[2] ? parseInt(filterParts[2]) : undefined;
-          if (!isNaN(count1)) {
-            filters.push({
-              fieldId,
-              type: "steps",
-              operator: filterParts[0],
-              value1: count1,
-              value2: count2,
-            });
-          }
-        }
-      }
-    }
-
-    return filters;
-  }, [filterId, viewType]);
-
-  // Build test run case where clause (used for filtering by assignedTo and status)
-  const testRunCaseWhereClause: TestRunCasesWhereInput = useMemo(() => {
-    if (
-      !isRunMode ||
-      !filterId ||
-      (viewType !== "assignedTo" && viewType !== "status")
-    ) {
-      return {};
-    }
-
-    const filterArray = Array.isArray(filterId) ? filterId : [filterId];
-    const filterConditions: any[] = [];
-
-    for (const singleFilterId of filterArray) {
-      if (viewType === "assignedTo") {
-        if (singleFilterId === "unassigned") {
-          filterConditions.push({ assignedToId: { equals: null } });
-        } else {
-          filterConditions.push({
-            assignedToId: { equals: singleFilterId as string },
-          });
-        }
-      } else if (viewType === "status") {
-        if (singleFilterId === "untested") {
-          filterConditions.push({ statusId: { equals: null } });
-        } else {
-          filterConditions.push({
-            statusId: { equals: singleFilterId as number },
-          });
-        }
-      }
-    }
-
-    if (filterConditions.length > 0) {
-      return { OR: filterConditions };
-    }
-    return {};
-  }, [isRunMode, viewType, filterId]);
+  // Run-scoped predicate fragments (status/assignedTo). Every fragment carries
+  // an OR key, so they MUST be combined in an explicit AND array — spreading
+  // two as siblings silently overwrites the first (compiler contract).
+  const runPredicateFragments: TestRunCasesWhereInput[] = useMemo(
+    () => (isRunMode ? compileRunPredicates(predicates, filterRegistry) : []),
+    [isRunMode, predicates, filterRegistry]
+  );
 
   // Create orderBy for TestRunCases based on sortConfig
   const testRunCasesOrderBy: NonNullable<TestRunCasesFindManyArgs["orderBy"]> =
@@ -1883,7 +1109,7 @@ export default function Cases({
               ? effectiveRunIds[0]
               : { in: effectiveRunIds },
           isDeleted: false,
-          ...testRunCaseWhereClause,
+          AND: runPredicateFragments,
           repositoryCase: repositoryCaseWhereClause,
         },
         orderBy: testRunCasesOrderBy,
@@ -2157,7 +1383,10 @@ export default function Cases({
               isDescendantsMode
               ? false
               : // Skip query if we know the selected folder has 0 cases
-                viewType === "folders" && selectedFolderCaseCount === 0
+                // (bypassed while predicates are active — spec §7.1)
+                predicates.length === 0 &&
+                  viewType === "folders" &&
+                  selectedFolderCaseCount === 0
                 ? false
                 : !isRunMode && // Don't run this in run mode
                   ((!!session?.user && deferredSearchString.length === 0) ||
@@ -2181,7 +1410,7 @@ export default function Cases({
             ? effectiveRunIds[0]
             : { in: effectiveRunIds },
         isDeleted: false,
-        ...testRunCaseWhereClause,
+        AND: runPredicateFragments,
         repositoryCase: repositoryCaseWhereClause,
       },
     },
@@ -2407,7 +1636,10 @@ export default function Cases({
             isDescendantsMode && !sortedPageIds
             ? false
             : // Skip query if we know the selected folder has 0 cases
-              viewType === "folders" && selectedFolderCaseCount === 0
+              // (bypassed while predicates are active — spec §7.1)
+              predicates.length === 0 &&
+                viewType === "folders" &&
+                selectedFolderCaseCount === 0
               ? false
               : !isRunMode && // Don't run this query in run mode - we use testRunCasesData instead
                 ((!!session?.user && deferredSearchString.length === 0) ||
@@ -2726,7 +1958,12 @@ export default function Cases({
       return searchResultIds.length;
     }
     // If we know the selected folder has 0 cases, return 0 immediately
-    if (viewType === "folders" && selectedFolderCaseCount === 0) {
+    // (bypassed while predicates are active — spec §7.1)
+    if (
+      predicates.length === 0 &&
+      viewType === "folders" &&
+      selectedFolderCaseCount === 0
+    ) {
       return 0;
     }
     if (isRunMode) {
@@ -2749,6 +1986,7 @@ export default function Cases({
     filteredCountData,
     filteredTotalCount,
     postFetchFilters,
+    predicates,
     viewType,
     selectedFolderCaseCount,
     searchResultIds,
@@ -3096,7 +2334,7 @@ export default function Cases({
   // Clear optimistic reorder when underlying data changes
   useEffect(() => {
     setOptimisticReorder({ inProgress: false, cases: null });
-  }, [currentPage, sortConfig, folderId, viewType, filterId]);
+  }, [currentPage, sortConfig, folderId, viewType, predicatesKey]);
 
   // Scope the bulk-edit selection to the current view. Switching folders (or
   // changing the view/filter that determines which cases are shown) clears the
@@ -3109,7 +2347,7 @@ export default function Cases({
   useEffect(() => {
     if (isSelectionMode) return;
 
-    const viewKey = `${folderId}-${viewType}-${JSON.stringify(filterId)}`;
+    const viewKey = `${folderId}-${viewType}-${predicatesKey}`;
     if (
       previousViewKeyRef.current !== null &&
       previousViewKeyRef.current !== viewKey
@@ -3119,7 +2357,7 @@ export default function Cases({
       setLastSelectedIndex(null);
     }
     previousViewKeyRef.current = viewKey;
-  }, [folderId, viewType, filterId, isSelectionMode]);
+  }, [folderId, viewType, predicatesKey, isSelectionMode]);
 
   // A Shift+click select-all belongs to the view it was started from. Changing
   // the view abandons the in-flight ids fetch so its result can't be applied to
@@ -3127,7 +2365,7 @@ export default function Cases({
   useEffect(() => {
     setFetchAllIdsForSelection(false);
     setSelectAllAction(null);
-  }, [folderId, viewType, filterId]);
+  }, [folderId, viewType, predicatesKey]);
 
   // Check if we're in multi-config mode (multiple test runs selected)
   const isMultiConfigMode =
@@ -4246,8 +3484,14 @@ export default function Cases({
       <CardContent>
         {(() => {
           // Handle preliminary states first (where DataTable might not be relevant)
-          // Skip folder check when ES search results are active
-          if (!folderId && viewType === "folders" && !searchResultIds) {
+          // Skip folder check when ES search results are active or predicates
+          // are set — active filters query project-wide (spec §7.1).
+          if (
+            !folderId &&
+            viewType === "folders" &&
+            !searchResultIds &&
+            predicates.length === 0
+          ) {
             return (
               <div className="text-muted-foreground text-pretty m-2">
                 {t("repository.cases.selectFolder")}
@@ -4264,7 +3508,7 @@ export default function Cases({
           ) {
             return (
               <DataTable
-                key={`${folderId}-${viewType}-${filterId}-loading`}
+                key={`${folderId}-${viewType}-${predicatesKey}-loading`}
                 columns={columns}
                 data={[]} // Pass empty data while loading
                 onSortChange={isCompleted ? undefined : handleSortChange}
@@ -4284,6 +3528,22 @@ export default function Cases({
 
           // Handle empty states after loading and not in preliminary states
           if (cases.length === 0) {
+            // Active filters are the likeliest cause of an empty result set —
+            // say so and offer the way out, in every mode.
+            if (predicates.length > 0) {
+              return (
+                <div className="m-2 flex flex-col items-start space-y-2">
+                  <div className="text-muted-foreground text-pretty">
+                    {t("repository.filterBar.noMatches")}
+                  </div>
+                  {onClearFilters && (
+                    <Button variant="ghost" size="sm" onClick={onClearFilters}>
+                      {t("common.actions.clearAll")}
+                    </Button>
+                  )}
+                </div>
+              );
+            }
             if (isRunMode) {
               if (viewType === "folders" && folderId) {
                 // Case: In a folder in run mode, no cases
@@ -4313,7 +3573,7 @@ export default function Cases({
           return (
             <>
               <DataTable
-                key={`${folderId}-${viewType}-${filterId}-datatable`}
+                key={`${folderId}-${viewType}-${predicatesKey}-datatable`}
                 columns={columns}
                 data={cases}
                 storageKey={`repository-cases:${projectId}`}
