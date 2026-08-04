@@ -13,7 +13,7 @@ This page covers the whole feature top to bottom: authoring, datasets, execution
 
 Parameterized cases carry a **stacked-squares badge** next to their type icon wherever a case is rendered — the repository list, test run case lists, the case detail header, tag pages, the matrix grid, comment mentions, the selected-cases drawer, review queues, and report drill-downs. Hover the badge for the "Has parameterized steps" tooltip.
 
-To find every parameterized case in a project at once, switch the repository's view selector to **By Parameterization**. The list collapses to just the cases you want (or just the cases that aren't parameterized when you pick the inverse), with live counts on each option. See [Repository → Views & Filtering](./repository.md#views--filtering).
+To find every parameterized case in a project at once, open the repository's left-panel view selector, choose **Parameterization**, and click the **Parameterized** row (or **Not Parameterized** for the inverse). Clicking a row adds a matching filter chip above the case table, and each option carries a live count of the cases it would return. The chip combines with any other filters already applied. See [Repository](./repository.md).
 
 ## Concepts
 

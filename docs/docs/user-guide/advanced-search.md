@@ -13,7 +13,7 @@ TestPlanIt's Advanced Search feature provides a powerful, unified way to search 
 You can access the Advanced Search in two ways:
 
 1. **Global Search** - Click the search icon in the top navigation bar or use the keyboard shortcut `Cmd+K` (Mac) or `Ctrl+K` (Windows/Linux)
-2. **Context Search** - Use the search bar on specific pages (e.g., Repository, Test Runs, Sessions) to search within that context
+2. **Context Search** - Use the search bar on specific pages (e.g., Repository, Test Runs, Sessions) to search within that context. In the [repository](./projects/repository.md), search text narrows the case table alongside the current folder scope and filter chips rather than replacing them, so all three apply together
 
 ## Search Interface
 
