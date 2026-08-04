@@ -9,6 +9,7 @@ import {
   shapeAttachmentsFacet,
 } from "~/lib/repositoryCaseAttachmentsFilter";
 import { computeRepositoryCaseFacetCounts } from "~/lib/repositoryCaseFacetCounts";
+import { sanitizeSearchCaseIds } from "~/lib/repositoryCaseSearchIds";
 import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
 import { authOptions } from "~/server/auth";
 
@@ -28,7 +29,9 @@ interface ViewOptionsRequest {
   // above are ignored; when absent, the legacy path below is unchanged.
   // Parsed leniently against the server-built dimension registry.
   predicates?: unknown;
-  // ES-search intersection (cross-cutting; sent by the client from Phase 4).
+  // ES-search intersection (cross-cutting). Declared as number[] but arrives
+  // unvalidated from the client — it only reaches the engine through
+  // sanitizeSearchCaseIds, the same normalization POST /cases/query applies.
   searchCaseIds?: number[];
 }
 
@@ -86,11 +89,23 @@ export async function POST(request: Request) {
     // filter-aware facet engine; absent → the legacy path below, unchanged
     // (ReportBuilder and cross-project consumers keep legacy semantics).
     if (body.predicates !== undefined || body.searchCaseIds !== undefined) {
-      const sanitizedSearchCaseIds = Array.isArray(body.searchCaseIds)
-        ? body.searchCaseIds.filter((id): id is number =>
-            Number.isSafeInteger(id)
-          )
-        : undefined;
+      // The id set is the same scope the table page is cut from, so it goes
+      // through the same sanitizer as POST /cases/query. A non-array is not
+      // sanitizable into "no search" — an unrecognized shape would silently
+      // widen the counts to the whole project — so it is rejected outright.
+      if (
+        body.searchCaseIds !== undefined &&
+        !Array.isArray(body.searchCaseIds)
+      ) {
+        return NextResponse.json(
+          { error: "Invalid searchCaseIds" },
+          { status: 400 }
+        );
+      }
+      const sanitizedSearchCaseIds =
+        body.searchCaseIds === undefined
+          ? undefined
+          : sanitizeSearchCaseIds(body.searchCaseIds);
       const facetCounts = await computeRepositoryCaseFacetCounts(baseDb, {
         projectId,
         isRunMode,

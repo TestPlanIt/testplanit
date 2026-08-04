@@ -32,6 +32,13 @@ const LEGACY_OPERATORS: readonly string[] = [
 // in structured mode via the `operators` prop.
 const VALUELESS_OPERATORS: readonly string[] = ["any", "none"];
 
+// Operators that have a `common.operators.*` label; anything outside this set
+// (a hand-edited URL) falls back to the raw token rather than a missing key.
+const LABELLED_OPERATORS: readonly string[] = [
+  ...LEGACY_OPERATORS,
+  ...VALUELESS_OPERATORS,
+];
+
 interface TextFilterInputProps {
   fieldId: number;
   onFilterApply?: (operator: TextOperator, value: string) => void;
@@ -47,14 +54,6 @@ interface TextFilterInputProps {
   /** Operator whitelist for structured mode; defaults to the legacy set. */
   operators?: readonly string[];
 }
-
-const operatorSymbols: Record<TextOperator, string> = {
-  contains: "contains",
-  startsWith: "starts with",
-  endsWith: "ends with",
-  equals: "equals",
-  notContains: "does not contain",
-};
 
 export function TextFilterInput({
   fieldId: _fieldId,
@@ -130,14 +129,17 @@ export function TextFilterInput({
     currentFilter !== undefined &&
     currentFilter !== "";
 
+  const operatorLabel = (op: string) =>
+    LABELLED_OPERATORS.includes(op)
+      ? t(`common.operators.${operatorLabelKey(op)}`)
+      : op;
+
   // Format the current filter for display
   const formatFilterDisplay = (filter: string) => {
     if (!filter || !filter.includes("|")) return filter;
     const parts = filter.split("|");
-    const op = parts[0] as TextOperator;
-    const symbol = operatorSymbols[op] || op;
     const val = parts[1] || "";
-    return `${symbol} "${val}"`;
+    return `${operatorLabel(parts[0])} "${val}"`;
   };
 
   return (

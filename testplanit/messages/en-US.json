@@ -550,6 +550,8 @@
       "stepCount": "Step count",
       "enterText": "Enter text...",
       "enterUrl": "Enter URL",
+      "enterUrlPattern": "Enter URL pattern...",
+      "domainExample": "example.com",
       "issueIdExample": "ISSUE-123",
       "selectPriorityValuesOrEmpty": "Select priority values (or leave empty for all)"
     },
@@ -3470,10 +3472,9 @@
       "removeFilter": "Remove filter: {name}",
       "editFilter": "Edit filter: {name}",
       "activeCount": "{count, plural, =1 {# active filter} other {# active filters}}",
-      "resultsCount": "{count, plural, =1 {# result} other {# results}}",
       "assignedToMe": "Assigned to me",
       "noFilters": "No active filters",
-      "noMatches": "No cases match your filters",
+      "noMatchingCases": "No test cases match your filters",
       "searchTruncated": "Filtering within the top {count, number} matches",
       "sortedByRelevance": "Sorted by relevance",
       "countsUpdating": "Updating counts...",
@@ -8218,6 +8219,8 @@
       "includeDeleted": "Include deleted items",
       "filterActive": "Filter active:",
       "applyFilter": "Apply Filter",
+      "invalidDate": "Invalid date",
+      "stepsCount": "{count, plural, one {# step} other {# steps}}",
       "validation": {
         "firstValueMustBeLessThanSecond": "First value must be less than second value",
         "firstDateMustBeBeforeSecond": "First date must be before second date"

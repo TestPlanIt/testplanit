@@ -32,6 +32,13 @@ const LEGACY_OPERATORS: readonly string[] = [
 // in structured mode via the `operators` prop.
 const VALUELESS_OPERATORS: readonly string[] = ["any", "none"];
 
+// Operators that have a `common.operators.*` label; anything outside this set
+// (a hand-edited URL) falls back to the raw token rather than a missing key.
+const LABELLED_OPERATORS: readonly string[] = [
+  ...LEGACY_OPERATORS,
+  ...VALUELESS_OPERATORS,
+];
+
 interface LinkFilterInputProps {
   fieldId: number;
   onFilterApply?: (operator: LinkOperator, value: string) => void;
@@ -47,14 +54,6 @@ interface LinkFilterInputProps {
   /** Operator whitelist for structured mode; defaults to the legacy set. */
   operators?: readonly string[];
 }
-
-const operatorSymbols: Record<LinkOperator, string> = {
-  contains: "URL contains",
-  startsWith: "URL starts with",
-  endsWith: "URL ends with",
-  equals: "URL equals",
-  domain: "domain",
-};
 
 export function LinkFilterInput({
   fieldId: _fieldId,
@@ -130,14 +129,17 @@ export function LinkFilterInput({
     currentFilter !== undefined &&
     currentFilter !== "";
 
+  const operatorLabel = (op: string) =>
+    LABELLED_OPERATORS.includes(op)
+      ? t(`common.operators.${operatorLabelKey(op)}`)
+      : op;
+
   // Format the current filter for display
   const formatFilterDisplay = (filter: string) => {
     if (!filter || !filter.includes("|")) return filter;
     const parts = filter.split("|");
-    const op = parts[0] as LinkOperator;
-    const symbol = operatorSymbols[op] || op;
     const val = parts[1] || "";
-    return `${symbol} "${val}"`;
+    return `${operatorLabel(parts[0])} "${val}"`;
   };
 
   return (
@@ -192,7 +194,9 @@ export function LinkFilterInput({
           <Input
             type="text"
             placeholder={
-              operator === "domain" ? "example.com" : "Enter URL pattern..."
+              operator === "domain"
+                ? t("common.placeholders.domainExample")
+                : t("common.placeholders.enterUrlPattern")
             }
             value={value}
             onChange={(e) => {

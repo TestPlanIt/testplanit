@@ -78,16 +78,13 @@ interface DateFilterInputProps {
   operators?: readonly string[];
 }
 
-const operatorSymbols: Record<DateOperator, string> = {
-  on: "on",
-  before: "before",
-  after: "after",
-  between: "between",
-  last7: "last 7 days",
-  last30: "last 30 days",
-  last90: "last 90 days",
-  thisYear: "this year",
-};
+// Operators that have a `common.operators.*` label; anything outside this set
+// (a hand-edited URL) falls back to the raw token rather than a missing key.
+const LABELLED_OPERATORS: readonly string[] = [
+  ...LEGACY_OPERATORS,
+  "any",
+  "none",
+];
 
 export function DateFilterInput({
   fieldId: _fieldId,
@@ -220,6 +217,11 @@ export function DateFilterInput({
     currentFilter !== undefined &&
     currentFilter !== "";
 
+  const operatorLabel = (op: string) =>
+    LABELLED_OPERATORS.includes(op)
+      ? t(`common.operators.${operatorLabelKey(op)}`)
+      : op;
+
   // Format the current filter for display
   const formatFilterDisplay = (filter: string) => {
     if (!filter) return filter;
@@ -227,13 +229,12 @@ export function DateFilterInput({
     // Use pipe separator
     if (!filter.includes("|")) {
       // No pipe - it's a relative date filter
-      const symbol = operatorSymbols[filter as DateOperator] || filter;
-      return symbol;
+      return operatorLabel(filter);
     }
 
     const parts = filter.split("|");
-    const op = parts[0] as DateOperator;
-    const symbol = operatorSymbols[op] || op;
+    const symbol = operatorLabel(parts[0]);
+    const invalid = t("search.filters.invalidDate");
 
     if (parts.length === 3) {
       // Between operator with two dates
@@ -242,9 +243,9 @@ export function DateFilterInput({
       if (!isNaN(date1.getTime()) && !isNaN(date2.getTime())) {
         const d1 = format(date1, "PP", { locale: getDateFnsLocale(locale) });
         const d2 = format(date2, "PP", { locale: getDateFnsLocale(locale) });
-        return `${symbol} ${d1} and ${d2}`;
+        return `${symbol} ${d1} ${t("common.and")} ${d2}`;
       }
-      return `${symbol} Invalid Date`;
+      return `${symbol} ${invalid}`;
     } else if (parts[1]) {
       // Single date
       const date = new Date(parts[1]);
@@ -252,7 +253,7 @@ export function DateFilterInput({
         const d = format(date, "PP", { locale: getDateFnsLocale(locale) });
         return `${symbol} ${d}`;
       }
-      return `${symbol} Invalid Date`;
+      return `${symbol} ${invalid}`;
     }
     return symbol;
   };

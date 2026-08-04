@@ -81,7 +81,7 @@ import {
 } from "lucide-react";
 import { FindDuplicatesButton } from "@/components/duplicates/FindDuplicatesButton";
 import { useSession } from "next-auth/react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useParams, useSearchParams } from "next/navigation";
 import * as React from "react";
 import {
@@ -680,6 +680,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
     (activeSearchResultIds === null || activeSearchKey !== activeSearchText);
 
   const t = useTranslations();
+  const locale = useLocale();
   // The search effect toasts on failure but must not re-run (and re-issue the
   // search) just because the translator's identity changed.
   const tRef = useRef(t);
@@ -756,16 +757,17 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
   // re-renders with the full registry (dynamic-field predicates resolve then).
   const includeRunDimensions = isRunMode && !isSelectionMode;
   const persistFiltersToUrl = !isSelectionMode;
-  const [registryDynamicFields, setRegistryDynamicFields] = useState<
-    Record<string, DynamicFieldDescriptor> | undefined
-  >(undefined);
+  const [mirroredDynamicFields, setMirroredDynamicFields] = useState<{
+    signature: string;
+    fields?: Record<string, DynamicFieldDescriptor>;
+  }>({ signature: "" });
   const filterRegistry = useMemo(
     () =>
       buildFilterDimensions({
-        dynamicFields: registryDynamicFields,
+        dynamicFields: mirroredDynamicFields.fields,
         includeRunDimensions,
       }),
-    [registryDynamicFields, includeRunDimensions]
+    [mirroredDynamicFields.fields, includeRunDimensions]
   );
 
   const {
@@ -835,13 +837,30 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
     placeholderData: keepPreviousData,
   });
 
+  // Mirror on the field SET, not the payload's identity: every chip edit
+  // re-keys the counts query, so a fresh object arrives on each refetch even
+  // when the fields are unchanged. Comparing by reference rebuilt the registry
+  // (and remounted the open dimension picker) on every filter change, which
+  // dropped clicks mid-interaction.
+  const dynamicFieldSignature = useMemo(() => {
+    const fields = viewOptionsData?.dynamicFields as
+      Record<string, DynamicFieldDescriptor> | undefined;
+    if (!fields) return "";
+    return Object.values(fields)
+      .map((field) => `${field.fieldId}:${field.type}`)
+      .sort()
+      .join("|");
+  }, [viewOptionsData?.dynamicFields]);
   if (
-    viewOptionsData?.dynamicFields &&
-    viewOptionsData.dynamicFields !== registryDynamicFields
+    dynamicFieldSignature &&
+    dynamicFieldSignature !== mirroredDynamicFields.signature
   ) {
     // Render-time state adjustment (not an effect) so the full registry is
     // committed in the same pass the response lands.
-    setRegistryDynamicFields(viewOptionsData.dynamicFields);
+    setMirroredDynamicFields({
+      signature: dynamicFieldSignature,
+      fields: viewOptionsData.dynamicFields,
+    });
   }
 
   // Run-mode "assigned to me" auto-seed (spec §10). The snapshot must be taken
@@ -1282,22 +1301,38 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
         field,
       }));
 
+    // Alphabetical by the translated name so the axis list scans in one pass in
+    // every locale; "Folders" stays pinned first as the structural default view
+    // rather than sorting into the F's.
+    const collator = new Intl.Collator(locale, {
+      sensitivity: "base",
+      numeric: true,
+    });
+    const sortByName = <T extends { id: string; name: string }>(items: T[]) => {
+      const folders = items.filter((item) => item.id === "folders");
+      const rest = items
+        .filter((item) => item.id !== "folders")
+        .sort((a, b) => collator.compare(a.name, b.name));
+      return [...folders, ...rest];
+    };
+
     if (isRunMode) {
       // Combine runModeItems (excluding Tags) with baseItems and dynamicFields
       const runModeBaseItems = runModeItems.filter(
         (item) => item.id !== "tags"
       );
-      return [
+      return sortByName([
         ...runModeBaseItems,
         ...baseItems,
         ...issuesViewItem,
         ...dynamicFields,
-      ];
+      ]);
     }
 
     // For non-run mode, just return baseItems (which now includes Tags), Issues, and dynamicFields
-    return [...baseItems, ...issuesViewItem, ...dynamicFields];
+    return sortByName([...baseItems, ...issuesViewItem, ...dynamicFields]);
   }, [
+    locale,
     viewOptions.dynamicFields,
     t,
     isRunMode,
@@ -1392,21 +1427,6 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
   }, [viewParam, viewOptions, selectedItem]);
 
   const deferredFolderId = useDeferredValue(selectedFolderId);
-
-  const _updateURL = useCallback(
-    (folderId: number | null) => {
-      if (folderId !== null) {
-        const params = new URLSearchParams(searchParams.toString());
-        params.set("node", folderId.toString());
-        params.set("view", "folders");
-        const newUrl = `${pathName}?${params.toString()}`;
-        router.replace(newUrl, {
-          scroll: false,
-        });
-      }
-    },
-    [router, pathName, searchParams]
-  );
 
   const handleHierarchyChange = useCallback((hierarchy: FolderNode[]) => {
     setFolderHierarchy(hierarchy);
@@ -1577,7 +1597,8 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
   // predicates are not yet parseable and re-encoding would delete them.
   const reassertFilterParams = useCallback(
     (query: URLSearchParams) => {
-      if (!persistFiltersToUrl || registryDynamicFields === undefined) return;
+      if (!persistFiltersToUrl || mirroredDynamicFields.fields === undefined)
+        return;
       const encoding = encodeFilterPredicatesForUrl(predicates);
       query.delete(FILTER_PARAM);
       query.delete(COMPRESSED_FILTER_PARAM);
@@ -1588,7 +1609,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
         query.append(FILTER_PARAM, token);
       }
     },
-    [persistFiltersToUrl, registryDynamicFields, predicates]
+    [persistFiltersToUrl, mirroredDynamicFields.fields, predicates]
   );
 
   // Mirror the debounced query into `?q=` (view mode only — the case-selection
@@ -1805,7 +1826,14 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
     ]
   );
 
+  // Run mode opens on the first folder that holds cases — but a link that
+  // arrives carrying filters is already a project-wide view: active predicates
+  // bypass the folder wall (spec §7.1), so auto-selecting a folder here would
+  // silently narrow the shared result set. The decision reads the mount-time
+  // URL snapshot, not live `predicates`, so it can't flip when the viewer
+  // edits chips after load.
   useEffect(() => {
+    if (!initialUrlRef.current?.hadZeroFParams) return;
     if (isRunMode && folderIdsWithTestCases.length > 0 && !selectedFolderId) {
       handleSelectFolder(folderIdsWithTestCases[0]);
     }
@@ -1817,18 +1845,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
     isRepositoryLoading ||
     isLoadingPermissions;
 
-  const {
-    currentPage,
-    setCurrentPage,
-    pageSize,
-    totalItems: contextTotalItems,
-  } = usePagination();
-
-  // The FilterBar's results count comes from the TABLE query's count
-  // (filter/folder/search-aware) — Cases writes it into the pagination state —
-  // never from the view-options totalCount (spec §5/§8).
-  const filterBarTotalCount =
-    overridePagination?.totalItems ?? contextTotalItems;
+  const { currentPage, setCurrentPage, pageSize } = usePagination();
 
   // Any predicate add/remove/edit resets pagination to page 1 (spec §5),
   // through the override setter when the host owns pagination (spec §10).
@@ -2370,7 +2387,6 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                             onClearAll={clearPredicates}
                             registry={filterRegistry}
                             viewOptions={viewOptions}
-                            totalCount={filterBarTotalCount}
                             isRunMode={isRunMode && !isSelectionMode}
                             truncation={filterTruncation}
                             searchTruncated={

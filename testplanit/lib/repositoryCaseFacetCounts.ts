@@ -1484,11 +1484,17 @@ export async function computeRepositoryCaseFacetCounts(
         name: "No Tags",
         count: tagCounts.totalExcept - tagCounts.withTags,
       },
-      ...tagCounts.perTag.map((t) => ({
-        id: t.tagId,
-        name: tagDetails.find((td) => td.id === t.tagId)?.name || "Unknown",
-        count: t.count,
-      })),
+      // Sorted by name like every other facet: the GROUP BY behind perTag has
+      // no ORDER BY, and its two query branches (with/without the id-array
+      // bind) swap exactly when a predicate becomes active — so raw order can
+      // change between refetches and reshuffle an open value list mid-click.
+      ...tagCounts.perTag
+        .map((t) => ({
+          id: t.tagId,
+          name: tagDetails.find((td) => td.id === t.tagId)?.name || "Unknown",
+          count: t.count,
+        }))
+        .sort((a, b) => a.name.localeCompare(b.name) || a.id - b.id),
     ],
     issues: [
       {
@@ -1501,15 +1507,17 @@ export async function computeRepositoryCaseFacetCounts(
         name: "No Issues",
         count: issueCounts.totalExcept - issueCounts.withIssues,
       },
-      ...issueCounts.perIssue.map((i) => {
-        const issue = issueDetails.find((d) => d.id === i.issueId);
-        return {
-          id: i.issueId,
-          name: issue?.name || "Unknown",
-          title: issue?.title,
-          count: i.count,
-        };
-      }),
+      ...issueCounts.perIssue
+        .map((i) => {
+          const issue = issueDetails.find((d) => d.id === i.issueId);
+          return {
+            id: i.issueId,
+            name: issue?.name || "Unknown",
+            title: issue?.title,
+            count: i.count,
+          };
+        })
+        .sort((a, b) => a.name.localeCompare(b.name) || a.id - b.id),
     ],
     dynamicFields,
     testRunOptions,

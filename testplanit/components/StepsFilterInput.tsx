@@ -52,14 +52,20 @@ interface StepsFilterInputProps {
   operators?: readonly string[];
 }
 
-const operatorSymbols: Record<StepsOperator, string> = {
+// Comparison operators render as locale-neutral math symbols; every other
+// operator reads from `common.operators.*`.
+const OPERATOR_SYMBOLS: Record<string, string> = {
   eq: "=",
   lt: "<",
   lte: "≤",
   gt: ">",
   gte: "≥",
-  between: "between",
 };
+
+const LABELLED_OPERATORS: readonly string[] = [
+  ...LEGACY_OPERATORS,
+  ...VALUELESS_OPERATORS,
+];
 
 export function StepsFilterInput({
   fieldId: _fieldId,
@@ -157,17 +163,32 @@ export function StepsFilterInput({
 
   const hasActiveFilter = currentFilter && currentFilter.includes("|");
 
+  const operatorLabel = (op: string) =>
+    OPERATOR_SYMBOLS[op] ??
+    (LABELLED_OPERATORS.includes(op)
+      ? t(`common.operators.${operatorLabelKey(op)}`)
+      : op);
+
+  // "3 steps" / "1 step" — the count carries the plural, so a hand-edited
+  // non-numeric value falls back to the raw token.
+  const stepCount = (raw: string) => {
+    const count = Number(raw);
+    return raw.trim() === "" || isNaN(count)
+      ? raw
+      : t("search.filters.stepsCount", { count: Math.trunc(count) });
+  };
+
   // Format the current filter for display with symbols
   const formatFilterDisplay = (filter: string) => {
     if (!filter || !filter.includes("|")) return filter;
     const parts = filter.split("|");
-    const op = parts[0] as StepsOperator;
-    const symbol = operatorSymbols[op] || op;
+    const op = parts[0];
+    const symbol = operatorLabel(op);
 
     if (op === "between" && parts.length === 3) {
-      return `${symbol} ${parts[1]} and ${parts[2]} steps`;
+      return `${symbol} ${parts[1]} ${t("common.and")} ${stepCount(parts[2])}`;
     }
-    return `${symbol} ${parts[1]} steps`;
+    return `${symbol} ${stepCount(parts[1])}`;
   };
 
   return (

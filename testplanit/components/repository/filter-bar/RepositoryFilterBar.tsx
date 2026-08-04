@@ -41,8 +41,6 @@ export interface RepositoryFilterBarProps {
   /** The active mode's registry (buildFilterDimensions). */
   registry: FilterDimensionRegistry;
   viewOptions?: FilterBarViewOptions;
-  /** From the TABLE query's useCount (filter/folder/search-aware) — NOT view-options. */
-  totalCount: number;
   isRunMode: boolean;
   /**
    * The active search matched more cases than Elasticsearch's result window
@@ -87,7 +85,6 @@ export function RepositoryFilterBar({
   onClearAll,
   registry,
   viewOptions,
-  totalCount,
   isRunMode,
   searchTruncated = false,
   searchWindow = 0,
@@ -116,15 +113,28 @@ export function RepositoryFilterBar({
     [predicates, registry]
   );
 
+  // The counts payload gets a fresh identity on every refetch (each chip edit
+  // re-keys that query), so derive the labels from a stable signature instead
+  // of the object — otherwise the dimension list rebuilds under an open picker
+  // and drops the click that is in flight.
+  const dynamicFieldSignature = useMemo(
+    () =>
+      JSON.stringify(
+        Object.entries(viewOptions?.dynamicFields ?? {})
+          .map(([displayName, field]) => [field.fieldId, displayName] as const)
+          .sort((a, b) => a[0] - b[0])
+      ),
+    [viewOptions?.dynamicFields]
+  );
   const dynamicFieldLabels = useMemo(() => {
     const labels: Record<string, string> = {};
-    for (const [displayName, field] of Object.entries(
-      viewOptions?.dynamicFields ?? {}
-    )) {
-      labels[dynamicFieldDimensionKey(field.fieldId)] = displayName;
+    for (const [fieldId, displayName] of JSON.parse(
+      dynamicFieldSignature
+    ) as Array<[number, string]>) {
+      labels[dynamicFieldDimensionKey(fieldId)] = displayName;
     }
     return labels;
-  }, [viewOptions?.dynamicFields]);
+  }, [dynamicFieldSignature]);
 
   const handlePick = useCallback(
     (dimension: FilterDimension) => {
@@ -356,13 +366,6 @@ export function RepositoryFilterBar({
           })}
         </span>
       )}
-      <span
-        aria-live="polite"
-        className="text-xs text-muted-foreground whitespace-nowrap"
-        data-testid="filter-bar-results"
-      >
-        {t("repository.filterBar.resultsCount", { count: totalCount })}
-      </span>
     </div>
   );
 }

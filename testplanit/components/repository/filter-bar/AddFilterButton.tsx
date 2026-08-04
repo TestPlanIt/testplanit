@@ -20,8 +20,8 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Plus } from "lucide-react";
-import { useTranslations } from "next-intl";
-import { useMemo, useState, type Ref } from "react";
+import { useLocale, useTranslations } from "next-intl";
+import { useCallback, useMemo, useState, type Ref } from "react";
 import type {
   FilterDimension,
   FilterDimensionRegistry,
@@ -54,15 +54,40 @@ export function AddFilterButton({
   const t = useTranslations();
   const [open, setOpen] = useState(false);
 
-  const dimensions = useMemo(
-    () =>
-      Array.from(registry.values()).map((dimension) => ({
+  const locale = useLocale();
+
+  // cmdk's default scorer matches subsequences, so "auto" hits "Default Value
+  // Long Text" (def-A-U-l-T ... l-O-ng). Match plain substrings of the visible
+  // label instead, ignoring case and diacritics.
+  const filterByLabel = useCallback(
+    (value: string, search: string, keywords?: string[]) => {
+      const fold = (input: string) =>
+        input
+          .normalize("NFD")
+          .replace(/\p{Diacritic}/gu, "")
+          .toLocaleLowerCase(locale);
+      const haystack = keywords?.length ? keywords.join(" ") : value;
+      return fold(haystack).includes(fold(search)) ? 1 : 0;
+    },
+    [locale]
+  );
+
+  // Sorted by the translated label (not the registry key) so the list reads
+  // alphabetically in every locale; custom fields interleave with the built-in
+  // dimensions rather than trailing them, so scanning finds a name in one pass.
+  const dimensions = useMemo(() => {
+    const collator = new Intl.Collator(locale, {
+      sensitivity: "base",
+      numeric: true,
+    });
+    return Array.from(registry.values())
+      .map((dimension) => ({
         dimension,
         label: getDimensionLabel(dimension, t, dynamicFieldLabels),
         icon: getDimensionIcon(dimension),
-      })),
-    [registry, t, dynamicFieldLabels]
-  );
+      }))
+      .sort((a, b) => collator.compare(a.label, b.label));
+  }, [registry, t, dynamicFieldLabels, locale]);
 
   const trigger = (
     <Button
@@ -100,18 +125,21 @@ export function AddFilterButton({
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>{trigger}</PopoverTrigger>
       <PopoverContent className="w-64 p-0" align="start">
-        <Command>
+        <Command filter={filterByLabel}>
           <CommandInput
             placeholder={t("common.search")}
             className="h-8 text-xs"
           />
           <CommandList>
-            <CommandEmpty>{t("repository.filterBar.noMatches")}</CommandEmpty>
+            <CommandEmpty>{t("common.ui.search.noResultsFound")}</CommandEmpty>
             <CommandGroup>
               {dimensions.map(({ dimension, label, icon: Icon }) => (
                 <CommandItem
                   key={dimension.key}
-                  value={`${label} ${dimension.key}`}
+                  // The key is the (unique) cmdk value; only the visible label
+                  // is searchable, via keywords.
+                  value={dimension.key}
+                  keywords={[label]}
                   onSelect={() => {
                     setOpen(false);
                     onPick(dimension);

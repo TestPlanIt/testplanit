@@ -54,15 +54,21 @@ interface NumericFilterInputProps {
   operators?: readonly string[];
 }
 
-const operatorSymbols: Record<NumericOperator, string> = {
+// Comparison operators render as locale-neutral math symbols; every other
+// operator reads from `common.operators.*`.
+const OPERATOR_SYMBOLS: Record<string, string> = {
   eq: "=",
   ne: "≠",
   lt: "<",
   lte: "≤",
   gt: ">",
   gte: "≥",
-  between: "between",
 };
+
+const LABELLED_OPERATORS: readonly string[] = [
+  ...LEGACY_OPERATORS,
+  ...VALUELESS_OPERATORS,
+];
 
 export function NumericFilterInput({
   fieldId: _fieldId,
@@ -161,15 +167,21 @@ export function NumericFilterInput({
 
   const hasActiveFilter = currentFilter && currentFilter.includes(":");
 
+  const operatorLabel = (op: string) =>
+    OPERATOR_SYMBOLS[op] ??
+    (LABELLED_OPERATORS.includes(op)
+      ? t(`common.operators.${operatorLabelKey(op)}`)
+      : op);
+
   // Format the current filter for display with symbols
   const formatFilterDisplay = (filter: string) => {
     if (!filter || !filter.includes(":")) return filter;
     const parts = filter.split(":");
-    const op = parts[0] as NumericOperator;
-    const symbol = operatorSymbols[op] || op;
+    const op = parts[0];
+    const symbol = operatorLabel(op);
 
     if (op === "between" && parts.length === 3) {
-      return `${symbol} ${parts[1]} and ${parts[2]}`;
+      return `${symbol} ${parts[1]} ${t("common.and")} ${parts[2]}`;
     }
     return `${symbol} ${parts[1]}`;
   };

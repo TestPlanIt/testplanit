@@ -3743,7 +3743,7 @@ export default function Cases({
               return (
                 <div className="m-2 flex flex-col items-start space-y-2">
                   <div className="text-muted-foreground text-pretty">
-                    {t("repository.filterBar.noMatches")}
+                    {t("repository.filterBar.noMatchingCases")}
                   </div>
                   {onClearFilters && (
                     <Button variant="ghost" size="sm" onClick={onClearFilters}>

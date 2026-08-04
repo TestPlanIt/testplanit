@@ -113,7 +113,7 @@ export function FilterValueList({
         />
       )}
       <CommandList>
-        <CommandEmpty>{t("repository.filterBar.noMatches")}</CommandEmpty>
+        <CommandEmpty>{t("common.ui.search.noResultsFound")}</CommandEmpty>
         <CommandGroup>
           {options.map((option) => {
             const selected = selectedValues.includes(option.id);

@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
 import { paginatedFindManyWithRelations } from "~/lib/paginatedFindMany";
+import { sanitizeSearchCaseIds } from "~/lib/repositoryCaseSearchIds";
 import { authOptions } from "~/server/auth";
 
 // One POST read path for the repository table: the client-built predicate
@@ -25,11 +26,6 @@ const requestSchema = z.object({
   idsOnly: z.boolean().optional(),
 });
 
-// Elasticsearch's default `index.max_result_window`: the client can never
-// resolve more than 10,000 ids, so anything beyond that is a malformed or
-// hostile body rather than a real search snapshot.
-const ES_MAX_RESULT_WINDOW = 10000;
-
 // Hard ceiling on rows hydrated for one request. `take` is client-supplied, so
 // without a ceiling a single body can ask for every matching row with the full
 // relation select attached. Row COUNTS and `idsOnly` id lists are unaffected —
@@ -47,21 +43,6 @@ const HYDRATION_CHUNK_SIZE = 200;
 function resolveTake(take: number | undefined): number {
   if (take === undefined) return MAX_PAGE_SIZE;
   return Math.min(take, MAX_PAGE_SIZE);
-}
-
-// Keep safe positive integers, drop everything else, preserve the relevance
-// order the ids arrived in, and cap the set at the ES result window.
-function sanitizeSearchCaseIds(ids: number[]): number[] {
-  const seen = new Set<number>();
-  const sanitized: number[] = [];
-  for (const id of ids) {
-    if (!Number.isSafeInteger(id) || id <= 0) continue;
-    if (seen.has(id)) continue;
-    seen.add(id);
-    sanitized.push(id);
-    if (sanitized.length >= ES_MAX_RESULT_WINDOW) break;
-  }
-  return sanitized;
 }
 
 interface FindManyModel {
