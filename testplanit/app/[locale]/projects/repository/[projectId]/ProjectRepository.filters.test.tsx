@@ -2,10 +2,9 @@
  * Integration tests for ProjectRepository's filter/grouping separation.
  *
  * The ViewSelector is a pure grouping control: switching the "View by" axis
- * must never clear or seed filter predicates (the legacy seed/clear-on-axis-
- * switch behavior this file used to test is deleted). Filter state lives in
- * URL `f` params owned by useRepositoryFilters; the only automatic predicate
- * is the run-mode "assigned to me" seed, decided exactly once per visit.
+ * must never clear or seed filter predicates. Filter state lives in URL `f`
+ * params owned by useRepositoryFilters; the only automatic predicate is the
+ * run-mode "assigned to me" seed, decided exactly once per visit.
  *
  * Contract under test:
  * - axis switching writes only `?view=` and preserves the `f` params /
@@ -19,7 +18,10 @@
  * - the view-options counts query is keyed by the canonical predicate
  *   serialization and sends the table's active predicate set in its body
  *   (the emptied set while the ES-search bypass is live); counts mute only
- *   while placeholder (previous predicate set) data is displayed.
+ *   while placeholder (previous predicate set) data is displayed;
+ * - the run-mode first-folder auto-select stands down when the visited URL
+ *   already carries filters, so a shared filtered link is never silently
+ *   narrowed to one folder (spec §7.1).
  *
  * The component renders for real; children (TreeView, Cases, ViewSelector,
  * FilterBar, ...) are prop-capturing stubs so the tests drive the actual
@@ -49,6 +51,7 @@ const {
   filterBarSpy,
   casesSpy,
   treeViewSpy,
+  caseFoldersHolder,
 } = vi.hoisted(() => ({
   mockRouterReplace: vi.fn(),
   mockRouterPush: vi.fn(),
@@ -81,6 +84,9 @@ const {
   filterBarSpy: vi.fn(),
   casesSpy: vi.fn(),
   treeViewSpy: vi.fn(),
+  // Folders holding the run's cases — drives the run-mode first-folder
+  // auto-select.
+  caseFoldersHolder: { current: [] as Array<{ folderId: number }> },
 }));
 
 // Stable across renders (a fresh vi.fn per usePagination() call would be
@@ -172,7 +178,10 @@ vi.mock("@zenstackhq/tanstack-query/react", () => ({
       useFindMany: () => ({ data: [], isLoading: false }),
     },
     repositoryCases: {
-      useFindMany: () => ({ data: [], isLoading: false }),
+      useFindMany: () => ({
+        data: caseFoldersHolder.current,
+        isLoading: false,
+      }),
     },
   }),
 }));
@@ -381,6 +390,7 @@ beforeEach(() => {
   paramsHolder.current = { projectId: "42" };
   viewOptionsHolder.current = { data: makeViewOptionsData(), isError: false };
   viewOptionsQueryHolder.current = undefined;
+  caseFoldersHolder.current = [];
 });
 
 // ---- Tests ----
@@ -577,6 +587,50 @@ describe("run-mode assigned-to-me seed", () => {
     viewOptionsHolder.current = { data: seedableRunOptions(), isError: false };
     rerenderRepo();
     expect(mockRouterReplace).not.toHaveBeenCalled();
+  });
+});
+
+describe("run-mode first-folder auto-select vs shared filter links", () => {
+  beforeEach(() => {
+    paramsHolder.current = { projectId: "42", runId: "5" };
+    viewOptionsHolder.current = { data: seedableRunOptions(), isError: false };
+    caseFoldersHolder.current = [{ folderId: 9 }, { folderId: 4 }];
+  });
+
+  const renderRunFolders = () =>
+    renderRepo({ isRunMode: true, selectedTestCases: [101, 102] });
+
+  it("opens the first folder holding cases on a bare run-mode visit", () => {
+    setLocation("?view=folders&selectedCase=101");
+
+    renderRunFolders();
+
+    expect(lastProps(treeViewSpy).selectedFolderId).toBe(9);
+  });
+
+  it("stands down when the link already carries f params", () => {
+    setLocation("?view=folders&f=tags:any");
+
+    renderRunFolders();
+
+    expect(lastProps(filterBarSpy).predicates).toEqual([tagsAny]);
+    expect(lastProps(treeViewSpy).selectedFolderId).toBeNull();
+  });
+
+  it("stands down for a compressed fz link too", () => {
+    setLocation("?view=folders&fz=whatever");
+
+    renderRunFolders();
+
+    expect(lastProps(treeViewSpy).selectedFolderId).toBeNull();
+  });
+
+  it("keeps honouring an explicit ?node= alongside filters", () => {
+    setLocation("?view=folders&node=4&f=tags:any");
+
+    renderRunFolders();
+
+    expect(lastProps(treeViewSpy).selectedFolderId).toBe(4);
   });
 });
 

@@ -173,3 +173,86 @@ describe("view-options route — engine/legacy hard branch", () => {
     expect(mockedDb.repositoryCases.groupBy).not.toHaveBeenCalled();
   });
 });
+
+describe("view-options route — searchCaseIds sanitization", () => {
+  /** The id set actually handed to the engine. */
+  const sentSearchIds = () =>
+    (
+      (computeRepositoryCaseFacetCounts as ReturnType<typeof vi.fn>).mock
+        .calls[0][1] as { searchCaseIds?: number[] }
+    ).searchCaseIds;
+
+  it("drops negative, zero, non-integer and non-numeric ids", async () => {
+    const response = await POST(
+      makeRequest({
+        projectId: 42,
+        searchCaseIds: [
+          9,
+          -3,
+          0,
+          1.5,
+          Number.MAX_SAFE_INTEGER + 2,
+          "7",
+          null,
+          true,
+          4,
+        ],
+      })
+    );
+
+    expect(response.status).toBe(200);
+    // NaN/Infinity cannot survive JSON, but MAX_SAFE_INTEGER+2 and the
+    // non-numbers can — this is the id scope the counts are drawn from, so
+    // nothing unsanitized may reach the engine.
+    expect(sentSearchIds()).toEqual([9, 4]);
+  });
+
+  it("dedupes while preserving relevance order", async () => {
+    await POST(makeRequest({ projectId: 42, searchCaseIds: [5, 3, 5, 1, 3] }));
+
+    expect(sentSearchIds()).toEqual([5, 3, 1]);
+  });
+
+  it("caps the id set at the Elasticsearch 10,000-result window", async () => {
+    const ids = Array.from({ length: 10_050 }, (_, i) => i + 1);
+
+    await POST(makeRequest({ projectId: 42, searchCaseIds: ids }));
+
+    const sent = sentSearchIds()!;
+    expect(sent).toHaveLength(10_000);
+    expect(sent[0]).toBe(1);
+    expect(sent[9999]).toBe(10_000);
+  });
+
+  it("rejects a non-array searchCaseIds with 400 instead of ignoring it", async () => {
+    // Ignoring the field would widen the counts to the whole project while the
+    // table still shows a search result — the two must never disagree.
+    const response = await POST(
+      makeRequest({ projectId: 42, searchCaseIds: "1,2,3" })
+    );
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({ error: "Invalid searchCaseIds" });
+    expect(computeRepositoryCaseFacetCounts).not.toHaveBeenCalled();
+    expect(mockedDb.repositoryCases.groupBy).not.toHaveBeenCalled();
+  });
+
+  it("passes a present-but-empty set through as an empty set", async () => {
+    await POST(makeRequest({ projectId: 42, searchCaseIds: [] }));
+
+    expect(sentSearchIds()).toEqual([]);
+  });
+
+  it("passes undefined when the field is absent — no search at all", async () => {
+    await POST(makeRequest({ projectId: 42, predicates: [] }));
+
+    expect(sentSearchIds()).toBeUndefined();
+  });
+
+  it("sanitizes an all-junk set to empty rather than to no search", async () => {
+    await POST(makeRequest({ projectId: 42, searchCaseIds: [-1, 0, 2.5] }));
+
+    // Zero matches, NOT "search filter absent".
+    expect(sentSearchIds()).toEqual([]);
+  });
+});

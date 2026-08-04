@@ -65,7 +65,7 @@ describe("FilterValueList", () => {
       target: { value: "zzz" },
     });
     expect(
-      screen.getByText("repository.filterBar.noMatches")
+      screen.getByText("common.ui.search.noResultsFound")
     ).toBeInTheDocument();
   });
 

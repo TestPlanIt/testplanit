@@ -71,6 +71,59 @@ describe("AddFilterButton", () => {
     ).toHaveTextContent("Severity");
   });
 
+  it("lists dimensions alphabetically by label, interleaving custom fields", () => {
+    render(
+      <AddFilterButton
+        registry={buildFilterDimensions({
+          dynamicFields: [
+            { fieldId: 12, type: "Text String" },
+            { fieldId: 13, type: "Dropdown" },
+          ],
+        })}
+        dynamicFieldLabels={{ field_12: "Severity", field_13: "Browser" }}
+        onPick={() => {}}
+      />
+    );
+    fireEvent.click(screen.getByTestId("filter-bar-add"));
+    const labels = screen
+      .getAllByTestId(/^filter-dimension-option-/)
+      .map((el) => el.textContent?.trim() ?? "");
+    expect(labels).toEqual([...labels].sort((a, b) => a.localeCompare(b)));
+    // A custom field sorts among the built-ins rather than trailing them.
+    expect(labels.indexOf("Browser")).toBeLessThan(labels.indexOf("Severity"));
+  });
+
+  it("matches label substrings only, not subsequences or internal keys", () => {
+    render(
+      <AddFilterButton
+        registry={buildFilterDimensions({
+          dynamicFields: [{ fieldId: 13, type: "Text Long" }],
+        })}
+        dynamicFieldLabels={{ field_13: "Default Value Long Text" }}
+        onPick={() => {}}
+      />
+    );
+    fireEvent.click(screen.getByTestId("filter-bar-add"));
+    fireEvent.change(screen.getByRole("combobox"), {
+      target: { value: "auto" },
+    });
+    expect(
+      screen.getByTestId("filter-dimension-option-automated")
+    ).toBeInTheDocument();
+    // "auto" is a subsequence of "Default Value Long Text" but not a substring.
+    expect(
+      screen.queryByTestId("filter-dimension-option-field_13")
+    ).not.toBeInTheDocument();
+
+    // The internal dimension key is not searchable.
+    fireEvent.change(screen.getByRole("combobox"), {
+      target: { value: "field_13" },
+    });
+    expect(
+      screen.queryByTestId("filter-dimension-option-field_13")
+    ).not.toBeInTheDocument();
+  });
+
   it("reports the picked dimension and closes", () => {
     const onPick = vi.fn();
     render(<AddFilterButton registry={repoRegistry} onPick={onPick} />);

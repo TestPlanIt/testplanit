@@ -61,11 +61,9 @@ function makeProps(overrides: Record<string, unknown> = {}) {
 }
 
 describe("RepositoryFilterBar", () => {
-  it("renders a polite live results count", () => {
+  it("does not duplicate the pagination summary's result total", () => {
     render(<RepositoryFilterBar {...makeProps()} />);
-    const results = screen.getByTestId("filter-bar-results");
-    expect(results).toHaveAttribute("aria-live", "polite");
-    expect(results).toHaveTextContent("repository.filterBar.resultsCount");
+    expect(screen.queryByTestId("filter-bar-results")).not.toBeInTheDocument();
   });
 
   it("renders one chip per predicate", () => {

@@ -1,3 +1,4 @@
+import type { Page } from "@playwright/test";
 import { expect, test } from "../../../fixtures";
 import { RepositoryPage } from "../../../page-objects/repository/repository.page";
 
@@ -10,7 +11,19 @@ import { RepositoryPage } from "../../../page-objects/repository/repository.page
  * - Sort direction cycles: Default → Ascending → Descending → Default
  * - Pagination with sorting
  * - Actual data order verification
+ * - Sorting under an active grouping axis AND an active FilterBar chip
  */
+
+/** The `f` params currently serialized into the URL, form-decoded. */
+function filterParams(page: Page): string[] {
+  return new URL(page.url()).searchParams.getAll("f");
+}
+
+async function expectFilterParam(page: Page, pattern: RegExp): Promise<void> {
+  await expect
+    .poll(() => filterParams(page).join("|"), { timeout: 10000 })
+    .toMatch(pattern);
+}
 test.describe("Sorting", () => {
   let repositoryPage: RepositoryPage;
 
@@ -112,9 +125,12 @@ test.describe("Sorting", () => {
     // left open from a previous step.
     await button.focus();
     await button.press("Enter");
-    // Let the menu finish its open animation so the target item is stable.
-    await page.getByRole("menu").waitFor({ state: "visible" });
-    const item = page.getByRole("menuitem", { name: nextItem });
+    // Scope to the OPEN menu: a menu closed moments earlier is still in the
+    // DOM while its exit animation runs, so both it and its items match an
+    // unscoped role lookup (strict mode violation).
+    const openMenu = page.locator('[role="menu"][data-state="open"]').first();
+    await openMenu.waitFor({ state: "visible" });
+    const item = openMenu.getByRole("menuitem", { name: nextItem });
     await expect(item).toBeVisible();
     await item.click();
 
@@ -1263,9 +1279,12 @@ test.describe("Sorting with ViewSelector Filters", () => {
     // left open from a previous step.
     await button.focus();
     await button.press("Enter");
-    // Let the menu finish its open animation so the target item is stable.
-    await page.getByRole("menu").waitFor({ state: "visible" });
-    const item = page.getByRole("menuitem", { name: nextItem });
+    // Scope to the OPEN menu: a menu closed moments earlier is still in the
+    // DOM while its exit animation runs, so both it and its items match an
+    // unscoped role lookup (strict mode violation).
+    const openMenu = page.locator('[role="menu"][data-state="open"]').first();
+    await openMenu.waitFor({ state: "visible" });
+    const item = openMenu.getByRole("menuitem", { name: nextItem });
     await expect(item).toBeVisible();
     await item.click();
 
@@ -1335,27 +1354,41 @@ test.describe("Sorting with ViewSelector Filters", () => {
   }
 
   /**
-   * Helper to select a ViewSelector option
+   * Select a ViewSelector grouping axis. The trigger's test id is
+   * `view-selector-trigger` — the older `view-selector` id never matched, so
+   * these tests silently skipped the view switch entirely.
    */
-  async function selectView(
-    page: import("@playwright/test").Page,
-    viewName: string
-  ) {
-    // Click the view selector dropdown
-    const viewSelector = page.locator('[data-testid="view-selector"]').first();
-    if (await viewSelector.isVisible()) {
-      await viewSelector.click();
-      await page.waitForTimeout(300);
+  async function selectView(page: Page, viewName: string) {
+    const viewSelector = page.getByTestId("view-selector-trigger");
+    await expect(viewSelector).toBeVisible({ timeout: 10000 });
+    await viewSelector.click();
 
-      // Select the view option
-      const viewOption = page
-        .getByRole("option", { name: new RegExp(viewName, "i") })
-        .first();
-      if (await viewOption.isVisible()) {
-        await viewOption.click();
-        await page.waitForLoadState("networkidle");
-      }
-    }
+    const viewOption = page
+      .getByRole("option", { name: new RegExp(`^${viewName}$`, "i") })
+      .first();
+    await expect(viewOption).toBeVisible({ timeout: 5000 });
+    await viewOption.click();
+
+    await expect(viewSelector).toContainText(new RegExp(viewName, "i"), {
+      timeout: 10000,
+    });
+    await page.waitForLoadState("networkidle");
+  }
+
+  /**
+   * Click the first real option row of the current axis (row 0 is the
+   * "All …" row) and wait for the resulting filter chip.
+   */
+  async function applyFirstRowFilter(page: Page, chipTestId: string) {
+    const optionRow = page
+      .getByTestId("repository-left-panel")
+      .locator('[role="button"]')
+      .nth(1);
+    await expect(optionRow).toBeVisible({ timeout: 10000 });
+    await optionRow.click();
+
+    await expect(page.getByTestId(chipTestId)).toBeVisible({ timeout: 10000 });
+    await page.waitForLoadState("networkidle");
   }
 
   test("Sort After Switching to States View", async ({ api, page }) => {
@@ -1403,7 +1436,7 @@ test.describe("Sorting with ViewSelector Filters", () => {
       initialColumnCount = await getColumnCount(page);
 
       // Try to switch to States view if available
-      await selectView(page, "States");
+      await selectView(page, "State");
       await page.waitForTimeout(500);
     });
 
@@ -1451,9 +1484,21 @@ test.describe("Sorting with ViewSelector Filters", () => {
 
       initialColumnCount = await getColumnCount(page);
 
-      // Try to switch to Templates view
-      await selectView(page, "Templates");
+      await selectView(page, "Template");
       await page.waitForTimeout(500);
+    });
+
+    await test.step("Apply a template filter chip from the sidebar", async () => {
+      // Switching the axis no longer filters anything, so the filter has to
+      // be applied explicitly — otherwise the rest of the test would sort an
+      // unfiltered table and pass vacuously.
+      await applyFirstRowFilter(page, "filter-chip-templates-in");
+      await expectFilterParam(page, /templates:in:\d+/);
+      await waitForTableStable(page);
+
+      // All three cases use the default template, so they survive the filter.
+      const rows = page.locator("table").first().locator("tbody tr");
+      await expect(rows).toHaveCount(3, { timeout: 10000 });
     });
 
     await test.step("Cycle the Name sort and verify state and column count", async () => {
@@ -1495,9 +1540,19 @@ test.describe("Sorting with ViewSelector Filters", () => {
 
       initialColumnCount = await getColumnCount(page);
 
-      // Try to switch to Creators view
-      await selectView(page, "Creators");
+      await selectView(page, "Creator");
       await page.waitForTimeout(500);
+    });
+
+    await test.step("Apply a creator filter chip from the sidebar", async () => {
+      // Both cases were created by the same (admin) user, so the chip keeps
+      // them while proving the filter is really active.
+      await applyFirstRowFilter(page, "filter-chip-creators-in");
+      await expectFilterParam(page, /creators:in:.+/);
+      await waitForTableStable(page);
+
+      const rows = page.locator("table").first().locator("tbody tr");
+      await expect(rows).toHaveCount(2, { timeout: 10000 });
     });
 
     await test.step("Sort by Name and verify state and column count", async () => {
@@ -1505,6 +1560,8 @@ test.describe("Sorting with ViewSelector Filters", () => {
       await clickSortButton(page, "Name");
       expect(await getSortIconState(page, "Name")).toBe("Sorted ascending");
       expect(await getColumnCount(page)).toBe(initialColumnCount);
+      // The chip survives sorting.
+      await expect(page.getByTestId("filter-chip-creators-in")).toBeVisible();
     });
   });
 
@@ -1542,7 +1599,7 @@ test.describe("Sorting with ViewSelector Filters", () => {
 
     await test.step("Switch to States view and sort, confirming column count", async () => {
       // Switch to States view
-      await selectView(page, "States");
+      await selectView(page, "State");
       await page.waitForTimeout(500);
       await waitForTableStable(page);
 
@@ -1555,9 +1612,12 @@ test.describe("Sorting with ViewSelector Filters", () => {
     });
 
     await test.step("Switch back to Folders view and confirm column count", async () => {
-      // Switch back to Folders view
+      // Switch back to Folders view. Choosing the Folders axis clears the
+      // folder selection and the tree auto-selects the project's first root
+      // folder, which is not this test's folder — re-open it so the column
+      // count is measured against the same cases as the earlier steps.
       await selectView(page, "Folders");
-      await page.waitForTimeout(500);
+      await repositoryPage.selectFolder(folderId!);
       await waitForTableStable(page);
 
       // Column count should still be preserved
@@ -1599,13 +1659,28 @@ test.describe("Sorting with ViewSelector Filters", () => {
     const rows = table.locator("tbody tr");
 
     let initialColumnCount: number | undefined;
-    await test.step("Open the folder and search for Feature", async () => {
+    await test.step("Open the folder and capture the column count", async () => {
       await repositoryPage.goto(projectId);
       await repositoryPage.selectFolder(folderId!);
       await waitForTableStable(page);
 
       initialColumnCount = await getColumnCount(page);
+    });
 
+    await test.step("Apply a state filter chip from the sidebar", async () => {
+      // Filter chips and the in-table name filter are independent conditions
+      // that AND together — the chip must stay active while the name filter
+      // narrows further.
+      await selectView(page, "State");
+      await applyFirstRowFilter(page, "filter-chip-states-in");
+      await expectFilterParam(page, /states:in:\d+/);
+      await waitForTableStable(page);
+
+      // All four cases share the seeded default state.
+      await expect(rows).toHaveCount(4, { timeout: 10000 });
+    });
+
+    await test.step("Search for Feature within the filtered set", async () => {
       // Apply search filter
       const searchInput = page.getByTestId("search-input");
       await searchInput.fill("Feature");
@@ -1614,6 +1689,7 @@ test.describe("Sorting with ViewSelector Filters", () => {
 
       // Should have 3 results matching "Feature"
       await expect(rows).toHaveCount(3, { timeout: 10000 });
+      await expect(page.getByTestId("filter-chip-states-in")).toBeVisible();
     });
 
     await test.step("Sort the filtered results and verify state, count, and order", async () => {
@@ -1669,7 +1745,7 @@ test.describe("Sorting with ViewSelector Filters", () => {
 
     await test.step("Switch to States view, sort again, and verify state and column count", async () => {
       // Try switching to States view if available
-      await selectView(page, "States");
+      await selectView(page, "State");
       await page.waitForTimeout(300);
       await waitForTableStable(page);
 
@@ -1768,9 +1844,12 @@ test.describe("Run Mode Sorting", () => {
     await expect(button).toBeVisible({ timeout: 5000 });
     await button.focus();
     await button.press("Enter");
-    // Let the menu finish its open animation so the target item is stable.
-    await page.getByRole("menu").waitFor({ state: "visible" });
-    const item = page.getByRole("menuitem", { name: nextItem });
+    // Scope to the OPEN menu: a menu closed moments earlier is still in the
+    // DOM while its exit animation runs, so both it and its items match an
+    // unscoped role lookup (strict mode violation).
+    const openMenu = page.locator('[role="menu"][data-state="open"]').first();
+    await openMenu.waitFor({ state: "visible" });
+    const item = openMenu.getByRole("menuitem", { name: nextItem });
     await expect(item).toBeVisible();
     await item.click();
 
@@ -2018,6 +2097,14 @@ test.describe("Run Mode Sorting", () => {
 
     const table = page.locator("table").first();
     const rows = table.locator("tbody tr");
+
+    // Run mode seeds an "assigned to me" chip only when the viewer actually
+    // has assignments; none of these run cases are assigned, so the table must
+    // start unfiltered.
+    await expect(page.getByTestId("filter-chip-assignedTo-in")).not.toBeVisible(
+      { timeout: 10000 }
+    );
+    expect(new URL(page.url()).searchParams.getAll("f")).toEqual([]);
 
     // Initial count should be 3 (we added 3 cases)
     expect(await rows.count()).toBe(3);

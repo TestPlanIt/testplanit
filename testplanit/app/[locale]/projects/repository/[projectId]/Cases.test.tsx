@@ -1295,7 +1295,7 @@ describe("Search x filter intersection (spec §9)", () => {
     );
 
     expect(
-      await screen.findByText("repository.filterBar.noMatches")
+      await screen.findByText("repository.filterBar.noMatchingCases")
     ).toBeInTheDocument();
   });
 });

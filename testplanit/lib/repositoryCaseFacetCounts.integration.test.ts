@@ -15,15 +15,20 @@
  * Covered against real seeded data:
  *   1. whereExcept self-exclusion per dimension (template + tag chips), with
  *      unchipped dimensions counted under whereAll.
- *   2. tags all/none (valued + bare) fragment execution incl. soft-deleted
+ *   2. dimensionTotals: the self-excluded base for a chipped dimension, the
+ *      all-predicates total for every unchipped one.
+ *   3. tags all/none (valued + bare) fragment execution incl. soft-deleted
  *      tag exclusion.
- *   3. hasValue/noValue pairs derived from whereExcept (the legacy mixed-base
- *      negative-noValue shape now stays >= 0 and exact).
- *   4. searchCaseIds intersection — repo mode, and run mode where the search
- *      ids INTERSECT (not overwrite) the run-membership id filter.
- *   5. Text-operator predicates in counts, cross-checked against
+ *   4. hasValue/noValue pairs derived from whereExcept (the legacy mixed-base
+ *      negative-noValue shape now stays >= 0 and exact), including the
+ *      option-type (Dropdown) pair that produced a NEGATIVE "None" count in
+ *      production UAT.
+ *   5. searchCaseIds intersection — repo mode, run mode where the search ids
+ *      INTERSECT (not overwrite) the run-membership id filter, and the route's
+ *      sanitizer in front of it.
+ *   6. Text-operator predicates in counts, cross-checked against
  *      matchesPostFetchFilters over the same rows.
- *   6. LEGACY REGRESSION: the route handler with a ReportBuilder-shaped body
+ *   7. LEGACY REGRESSION: the route handler with a ReportBuilder-shaped body
  *      (no predicates) keeps legacy semantics — non-self-excluding
  *      templates/states — guarding against normalization into predicates.
  */
@@ -127,6 +132,9 @@ describeIntegration("repositoryCaseFacetCounts (live scratch DB)", () => {
   let tDel: { id: number };
   let fieldF: { id: number; displayName: string };
   let fieldG: { id: number; displayName: string };
+  let fieldD: { id: number; displayName: string };
+  let optD1: { id: number };
+  let optD2: { id: number };
   let run: { id: number };
   // c1..c6 repository-case ids, indexed 0..5.
   const cases: number[] = [];
@@ -209,6 +217,34 @@ describeIntegration("repositoryCaseFacetCounts (live scratch DB)", () => {
       select: { id: true, displayName: true },
     });
 
+    // Option-type field: the shape behind the production UAT bug where a
+    // Dropdown chipped to one option rendered a NEGATIVE "None" count.
+    const dropdownType = await client.caseFieldTypes.findFirst({
+      where: { type: "Dropdown" },
+      select: { id: true },
+    });
+    expect(dropdownType).not.toBeNull();
+
+    optD1 = await client.fieldOptions.create({
+      data: { name: `d1 ${suffix}`, order: 0 },
+      select: { id: true },
+    });
+    optD2 = await client.fieldOptions.create({
+      data: { name: `d2 ${suffix}`, order: 1 },
+      select: { id: true },
+    });
+    fieldD = await client.caseFields.create({
+      data: {
+        displayName: `D ${suffix}`,
+        systemName: `d_${suffix}`,
+        typeId: dropdownType!.id,
+        fieldOptions: {
+          create: [{ fieldOptionId: optD1.id }, { fieldOptionId: optD2.id }],
+        },
+      },
+      select: { id: true, displayName: true },
+    });
+
     tmplA = await client.templates.create({
       data: {
         templateName: `A ${suffix}`,
@@ -219,6 +255,7 @@ describeIntegration("repositoryCaseFacetCounts (live scratch DB)", () => {
           create: [
             { caseFieldId: fieldF.id, order: 0 },
             { caseFieldId: fieldG.id, order: 1 },
+            { caseFieldId: fieldD.id, order: 2 },
           ],
         },
       },
@@ -247,19 +284,20 @@ describeIntegration("repositoryCaseFacetCounts (live scratch DB)", () => {
       select: { id: true },
     });
 
-    // Case matrix (template, state, live tags, F text, G text):
-    //   c1: A, X, [t1],      "alpha foo",  "g one"
-    //   c2: A, Y, [t1,t2],   "bar",        "g two"
-    //   c3: B, X, [t2],      "foo baz",    "g three"
-    //   c4: A, X, [],        —             "g four"
-    //   c5: B, Y, [t1,t2],   —             "g five"
-    //   c6: B, X, [tDel],    —             —
+    // Case matrix (template, state, live tags, F text, G text, D option):
+    //   c1: A, X, [t1],      "alpha foo",  "g one",    D1
+    //   c2: A, Y, [t1,t2],   "bar",        "g two",    D1
+    //   c3: B, X, [t2],      "foo baz",    "g three",  —
+    //   c4: A, X, [],        —             "g four",   D2
+    //   c5: B, Y, [t1,t2],   —             "g five",   —
+    //   c6: B, X, [tDel],    —             —           —
     const matrix: Array<{
       templateId: number;
       stateId: number;
       tagIds: number[];
       f: string | null;
       g: string | null;
+      d: number | null;
     }> = [
       {
         templateId: tmplA.id,
@@ -267,6 +305,7 @@ describeIntegration("repositoryCaseFacetCounts (live scratch DB)", () => {
         tagIds: [t1.id],
         f: "alpha foo",
         g: "g one",
+        d: optD1.id,
       },
       {
         templateId: tmplA.id,
@@ -274,6 +313,7 @@ describeIntegration("repositoryCaseFacetCounts (live scratch DB)", () => {
         tagIds: [t1.id, t2.id],
         f: "bar",
         g: "g two",
+        d: optD1.id,
       },
       {
         templateId: tmplB.id,
@@ -281,6 +321,7 @@ describeIntegration("repositoryCaseFacetCounts (live scratch DB)", () => {
         tagIds: [t2.id],
         f: "foo baz",
         g: "g three",
+        d: null,
       },
       {
         templateId: tmplA.id,
@@ -288,6 +329,7 @@ describeIntegration("repositoryCaseFacetCounts (live scratch DB)", () => {
         tagIds: [],
         f: null,
         g: "g four",
+        d: optD2.id,
       },
       {
         templateId: tmplB.id,
@@ -295,6 +337,7 @@ describeIntegration("repositoryCaseFacetCounts (live scratch DB)", () => {
         tagIds: [t1.id, t2.id],
         f: null,
         g: "g five",
+        d: null,
       },
       {
         templateId: tmplB.id,
@@ -302,6 +345,7 @@ describeIntegration("repositoryCaseFacetCounts (live scratch DB)", () => {
         tagIds: [tDel.id],
         f: null,
         g: null,
+        d: null,
       },
     ];
     for (const [index, spec] of matrix.entries()) {
@@ -322,6 +366,10 @@ describeIntegration("repositoryCaseFacetCounts (live scratch DB)", () => {
                 : []),
               ...(spec.g !== null
                 ? [{ fieldId: fieldG.id, value: spec.g }]
+                : []),
+              // Dropdown values are stored as the bare numeric option id.
+              ...(spec.d !== null
+                ? [{ fieldId: fieldD.id, value: spec.d }]
                 : []),
             ],
           },
@@ -385,9 +433,18 @@ describeIntegration("repositoryCaseFacetCounts (live scratch DB)", () => {
           where: { id: { in: templateIds } },
         });
       }
-      const fieldIds = [fieldF, fieldG].filter(Boolean).map((f) => f.id);
+      const fieldIds = [fieldF, fieldG, fieldD]
+        .filter(Boolean)
+        .map((f) => f.id);
       if (fieldIds.length > 0) {
         await client.caseFields.deleteMany({ where: { id: { in: fieldIds } } });
+      }
+      // CaseFieldAssignment cascades with the field; the options do not.
+      const optionIds = [optD1, optD2].filter(Boolean).map((o) => o.id);
+      if (optionIds.length > 0) {
+        await client.fieldOptions.deleteMany({
+          where: { id: { in: optionIds } },
+        });
       }
       const tagIds = [t1, t2, tDel].filter(Boolean).map((t) => t.id);
       if (tagIds.length > 0) {
@@ -443,6 +500,51 @@ describeIntegration("repositoryCaseFacetCounts (live scratch DB)", () => {
       hasValue: 2,
       noValue: 0,
     });
+  });
+
+  it("reports dimensionTotals as the self-excluded base for a chipped dimension and the all-predicates total for the rest", async () => {
+    const result = await computeRepositoryCaseFacetCounts(db, {
+      projectId: project.id,
+      predicates: [
+        { dimension: "templates", operator: "in", values: [tmplA.id] },
+      ],
+    });
+
+    // whereAll = template A → {c1, c2, c4}.
+    expect(result.totalCount).toBe(3);
+
+    // CHIPPED dimension: its total is the count with its OWN chip lifted (all
+    // six cases), which is exactly the base its per-option counts sit on. The
+    // client's "All templates" row reads this instead of totalCount, so it can
+    // never be smaller than the options listed under it.
+    expect(result.dimensionTotals.templates).toBe(6);
+    expect(result.dimensionTotals.templates).toBe(
+      result.templates.reduce((sum, row) => sum + row.count, 0)
+    );
+
+    // UNCHIPPED dimensions share whereAll, so their total IS totalCount.
+    for (const key of [
+      "states",
+      "creators",
+      "automated",
+      "parameterized",
+      "attachments",
+      "tags",
+      "issues",
+      `field_${fieldD.id}`,
+      `field_${fieldF.id}`,
+      `field_${fieldG.id}`,
+    ]) {
+      expect([key, result.dimensionTotals[key]]).toEqual([key, 3]);
+    }
+
+    // Sums of the facet buckets agree with those totals (each facet's buckets
+    // partition its own base).
+    expect(result.states.reduce((sum, row) => sum + row.count, 0)).toBe(3);
+    expect(result.attachments.reduce((sum, row) => sum + row.count, 0)).toBe(3);
+    expect(countOf(result.tags, "any")! + countOf(result.tags, "none")!).toBe(
+      3
+    );
   });
 
   it("executes tags all/none fragments against real join rows, excluding soft-deleted tags", async () => {
@@ -508,6 +610,48 @@ describeIntegration("repositoryCaseFacetCounts (live scratch DB)", () => {
     });
   });
 
+  it("REGRESSION (production UAT): an option field chipped to one option keeps a non-negative, exact None count", async () => {
+    // The reported bug: a Dropdown filtered to one option rendered a NEGATIVE
+    // "None" row, because the client derived None by subtracting the option
+    // counts (self-excluded base = 6 cases) from totalCount (all-predicates
+    // base = 2 cases). The engine now emits the pair from the SAME base and
+    // publishes that base as dimensionTotals.
+    const result = await computeRepositoryCaseFacetCounts(db, {
+      projectId: project.id,
+      predicates: [
+        {
+          dimension: `field_${fieldD.id}`,
+          operator: "in",
+          values: [optD1.id],
+        },
+      ],
+    });
+
+    // whereAll = D is option 1 → {c1, c2}.
+    expect(result.totalCount).toBe(2);
+
+    const facet = result.dynamicFields[fieldD.displayName];
+    expect(facet).toBeDefined();
+    expect(facet.type).toBe("Dropdown");
+
+    // Self-excluded base = all six cases; three of them carry a D value.
+    expect(result.dimensionTotals[`field_${fieldD.id}`]).toBe(6);
+    expect(facet.counts).toEqual({ hasValue: 3, noValue: 3 });
+    expect(facet.counts!.noValue).toBeGreaterThanOrEqual(0);
+
+    // Option rows sit on that same base: D1 on c1+c2, D2 on c4.
+    expect(countOf(facet.options!, optD1.id)).toBe(2);
+    expect(countOf(facet.options!, optD2.id)).toBe(1);
+
+    // The identity the UI relies on: base - Σoptions = None (one option per
+    // case for a Dropdown). Under the old mixed bases this was 2 - 3 = -1.
+    const optionSum = facet.options!.reduce((sum, o) => sum + o.count, 0);
+    expect(result.dimensionTotals[`field_${fieldD.id}`] - optionSum).toBe(
+      facet.counts!.noValue
+    );
+    expect(result.totalCount - optionSum).toBeLessThan(0);
+  });
+
   it("computes counts only within searchCaseIds, without self-excluding the search", async () => {
     const result = await computeRepositoryCaseFacetCounts(db, {
       projectId: project.id,
@@ -548,6 +692,43 @@ describeIntegration("repositoryCaseFacetCounts (live scratch DB)", () => {
     ).toBeUndefined();
     // All rows in scope are untested (statusId null).
     expect(result.testRunOptions!.untestedCount).toBe(2);
+  });
+
+  it("ROUTE: hostile searchCaseIds are sanitized and still INTERSECT the run scope", async () => {
+    const response = await POST(
+      makeRequest({
+        projectId: project.id,
+        isRunMode: true,
+        runIds: [run.id],
+        predicates: [],
+        // Duplicated, negative, non-integer and non-numeric entries alongside
+        // c2, c3, c4. After sanitization the set is exactly {c2, c3, c4}.
+        searchCaseIds: [
+          cases[1],
+          cases[1],
+          -5,
+          0,
+          2.5,
+          "13",
+          null,
+          cases[2],
+          cases[3],
+        ],
+      })
+    );
+    expect(response.status).toBe(200);
+    const body = await response.json();
+
+    // Run membership {c1, c2, c3} ∩ search {c2, c3, c4} = {c2, c3}. Letting a
+    // junk id through, or overwriting either scope with the other, yields 3.
+    expect(body.totalCount).toBe(2);
+    expect(body.testRunOptions.totalCount).toBe(2);
+    expect(body.dimensionTotals.templates).toBe(2);
+    // c1 is in the run but outside the search; c4 is in the search but outside
+    // the run — neither may contribute.
+    expect(countOf(body.testRunOptions.assignedTo, userA.id)).toBeUndefined();
+    expect(countOf(body.testRunOptions.assignedTo, userB.id)).toBe(1);
+    expect(body.testRunOptions.unassignedCount).toBe(1);
   });
 
   it("self-excludes run dimensions: an assignedTo chip filters statuses and repo facets but not the assignedTo facet", async () => {
