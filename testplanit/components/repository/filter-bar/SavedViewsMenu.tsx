@@ -62,20 +62,19 @@ export interface SavedViewsMenuProps {
   predicates: FilterPredicate[];
   /** Live grouping axis (`?view=`); null means "the surface's default". */
   axis: string | null;
-  /** Live search text. */
-  search: string;
   /** Applies a view — routed to the FilterBar's own predicate setter. */
   onApply: (criteria: SavedRepositoryViewCriteria) => void;
-  /**
-   * false where filter state is memory-only (the case-selection dialog):
-   * there is no URL to reproduce, so saving is offered but disabled with an
-   * explanation. Applying stays available — a saved view is still a useful
-   * way to narrow the picker.
-   */
-  canSave: boolean;
   /** Dynamic-field ids that still exist, so a stale grouping axis degrades. */
   knownDynamicAxisFieldIds?: ReadonlySet<number>;
 }
+
+/**
+ * A view describes filters and grouping only. The criteria contract carries a
+ * `search` field, but the sole search box lives in the case-selection dialog
+ * as a stand-in for Advanced Search, which cannot be opened from inside it —
+ * surface-local text that no other surface could reproduce.
+ */
+const VIEW_SEARCH_TEXT = "";
 
 interface SavedViewTarget {
   id: string;
@@ -95,6 +94,11 @@ interface SavedViewTarget {
  * dimensions no longer exist (deleted custom field, retired grouping) applies
  * its surviving parts and says what it skipped rather than failing.
  *
+ * The menu works on every surface that mounts the FilterBar, including the
+ * case-selection dialog. Saving needs no URL — it writes the live predicates
+ * and axis to a ShareLink row — so memory-only filter state saves and applies
+ * exactly like URL-backed state does.
+ *
  * Deliberately NOT in ActionOverflow: the kebab collapse remounts its children
  * and breaks the filter-bar testids.
  */
@@ -103,9 +107,7 @@ export function SavedViewsMenu({
   registry,
   predicates,
   axis,
-  search,
   onApply,
-  canSave,
   knownDynamicAxisFieldIds,
 }: SavedViewsMenuProps) {
   const t = useTranslations();
@@ -148,13 +150,11 @@ export function SavedViewsMenu({
   const savableState = hasSavableRepositoryViewState({
     predicates,
     axis,
-    search,
+    search: VIEW_SEARCH_TEXT,
   });
-  const saveDisabledReason = !canSave
-    ? t("repository.savedViews.saveUnavailable")
-    : !savableState
-      ? t("repository.savedViews.nothingToSave")
-      : null;
+  const saveDisabledReason = !savableState
+    ? t("repository.savedViews.nothingToSave")
+    : null;
 
   const handleApply = useCallback(
     (view: SavedRepositoryView) => {
@@ -189,14 +189,14 @@ export function SavedViewsMenu({
       await saveView({
         name,
         description,
-        criteria: { predicates, axis, search },
+        criteria: { predicates, axis, search: VIEW_SEARCH_TEXT },
       });
       toast.success(t("repository.savedViews.saved"), {
         description: t("repository.savedViews.savedDescription", { name }),
       });
       returnFocusToTrigger();
     },
-    [saveView, predicates, axis, search, t, returnFocusToTrigger]
+    [saveView, predicates, axis, t, returnFocusToTrigger]
   );
 
   const openRename = useCallback((view: SavedRepositoryView) => {
@@ -381,7 +381,6 @@ export function SavedViewsMenu({
       <SaveViewDialog
         open={saveDialogOpen}
         onOpenChange={setSaveDialogOpen}
-        suggestedName={search}
         isSaving={isSaving}
         onSave={handleSave}
       />

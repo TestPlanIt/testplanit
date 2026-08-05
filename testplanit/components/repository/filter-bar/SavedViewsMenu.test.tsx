@@ -110,9 +110,7 @@ function makeProps(overrides: Record<string, unknown> = {}) {
     registry,
     predicates: [tagsAny] as FilterPredicate[],
     axis: "folders",
-    search: "checkout",
     onApply: vi.fn(),
-    canSave: true,
     ...overrides,
   };
 }
@@ -175,14 +173,13 @@ describe("SavedViewsMenu", () => {
     expect(screen.queryByTestId("saved-views-list")).not.toBeInTheDocument();
   });
 
-  it("saves the live filters, grouping axis and search under a name", async () => {
+  it("saves the live filters and grouping axis under a name, never search", async () => {
     render(<SavedViewsMenu {...makeProps()} />);
     openMenu();
     fireEvent.click(screen.getByTestId("save-view-button"));
 
-    // The search text seeds the name, editable like the saved-search dialog.
     const nameInput = await screen.findByTestId("saved-view-name-input");
-    expect(nameInput).toHaveValue("checkout");
+    expect(nameInput).toHaveValue("");
     fireEvent.change(nameInput, { target: { value: "  Checkout smoke  " } });
     fireEvent.change(screen.getByTestId("saved-view-description-input"), {
       target: { value: "What the release check covers" },
@@ -196,14 +193,16 @@ describe("SavedViewsMenu", () => {
       criteria: {
         predicates: [tagsAny],
         axis: "folders",
-        search: "checkout",
+        // A view describes filters and grouping; the selection dialog's
+        // search box is surface-local and is never captured.
+        search: "",
       },
     });
     expect(toastSuccessSpy).toHaveBeenCalled();
   });
 
   it("refuses an empty name without calling through to persistence", async () => {
-    render(<SavedViewsMenu {...makeProps({ search: "" })} />);
+    render(<SavedViewsMenu {...makeProps()} />);
     openMenu();
     fireEvent.click(screen.getByTestId("save-view-button"));
 
@@ -274,26 +273,8 @@ describe("SavedViewsMenu", () => {
     );
   });
 
-  it("disables saving where filter state is memory-only, but still applies", () => {
-    const props = makeProps({ canSave: false });
-    render(<SavedViewsMenu {...props} />);
-    openMenu();
-
-    expect(screen.getByTestId("save-view-button")).toBeDisabled();
-    expect(screen.getByTestId("save-view-disabled-hint")).toHaveTextContent(
-      "repository.savedViews.saveUnavailable"
-    );
-
-    fireEvent.click(screen.getByTestId("saved-view-item"));
-    expect(props.onApply).toHaveBeenCalledTimes(1);
-  });
-
   it("disables saving when there is nothing worth saving", () => {
-    render(
-      <SavedViewsMenu
-        {...makeProps({ predicates: [], axis: null, search: "" })}
-      />
-    );
+    render(<SavedViewsMenu {...makeProps({ predicates: [], axis: null })} />);
     openMenu();
 
     expect(screen.getByTestId("save-view-button")).toBeDisabled();

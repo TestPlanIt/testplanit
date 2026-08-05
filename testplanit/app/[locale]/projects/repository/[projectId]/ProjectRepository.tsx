@@ -1723,17 +1723,15 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
       if (axis === "folders") {
         handleSelectFolder(null);
       }
-      if (isEsSearchAvailable) {
-        setEsSearchQuery(criteria.search);
-      }
 
+      // A view carries no search text, so the selection dialog's box is left
+      // as the user typed it and intersects with the filters just applied.
       if (isSelectionMode) return;
 
       // One composed write for the axis and the freshly applied filter family:
       // `setPredicates` replaced the URL moments ago and window.location has
       // not caught up, so re-stating `f` here is what keeps this write from
-      // dropping it. The search text is never in the URL — the box only exists
-      // in the selection dialog, which returns above.
+      // dropping it.
       replaceUrlParams((query) => {
         query.set("view", axis);
         if (axis === "folders") {
@@ -1748,7 +1746,6 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
       resolveSavedViewAxis,
       setPredicates,
       handleSelectFolder,
-      isEsSearchAvailable,
       isSelectionMode,
       replaceUrlParams,
       reassertFilterParams,
@@ -2483,11 +2480,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                                 selectedItem === defaultViewAxis
                                   ? null
                                   : selectedItem,
-                              search: activeSearchText,
                               onApply: handleApplySavedView,
-                              // Selection-mode filters live in memory only —
-                              // there is no URL a saved view could reproduce.
-                              canSave: !isSelectionMode,
                             }}
                           />
                         </div>

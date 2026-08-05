@@ -1115,10 +1115,6 @@ describe("applying a saved view", () => {
     const binding = lastProps(filterBarSpy).savedViews;
     expect(binding.projectId).toBe(42);
     expect(binding.axis).toBe("templates");
-    // Saving is offered only where the box is absent, so a saved view created
-    // from the repository never captures search text.
-    expect(binding.search).toBe("");
-    expect(binding.canSave).toBe(true);
   });
 
   it("binds a null axis on the surface's default grouping", () => {
@@ -1227,11 +1223,12 @@ describe("applying a saved view", () => {
     expect(lastWrittenParams().get("view")).toBe("dynamic_12_Text Long");
   });
 
-  it("applies in memory in selection mode, where saving is not offered", async () => {
+  it("applies in memory in selection mode, where saving is offered too", async () => {
     setLocation("?view=folders");
-    renderRepo({ isSelectionMode: true, onSelectionChange: vi.fn() });
+    renderSelectionRepo();
 
-    expect(lastProps(filterBarSpy).savedViews.canSave).toBe(false);
+    // Saving needs no URL — memory-only filter state is savable like any other.
+    expect(lastProps(filterBarSpy).savedViews).toBeTruthy();
 
     await applySavedView({
       projectId: 42,
@@ -1245,5 +1242,36 @@ describe("applying a saved view", () => {
     expect(lastProps(filterBarSpy).predicates).toEqual([templatesIn12]);
     expect(lastProps(casesSpy).predicates).toEqual([templatesIn12]);
     expect(lastProps(viewSelectorSpy).selectedItem).toBe("templates");
+  });
+
+  it("leaves the selection dialog's search text alone when a view is applied", async () => {
+    const fetchMock = vi
+      .spyOn(globalThis, "fetch")
+      .mockImplementation(() =>
+        Promise.resolve(okResponse({ total: 0, hits: [] }))
+      );
+    try {
+      renderSelectionRepo();
+      await act(async () => {
+        fireEvent.change(screen.getByTestId("es-search-input"), {
+          target: { value: "login" },
+        });
+      });
+
+      await applySavedView({
+        projectId: 42,
+        predicates: [templatesIn12],
+        axis: "templates",
+        search: "",
+      });
+
+      // A view carries no search text, so applying one narrows by its filters
+      // and intersects with what the user typed instead of clearing it.
+      expect(screen.getByTestId("es-search-input")).toHaveValue("login");
+      expect(lastProps(casesSpy).searchText).toBe("login");
+      expect(lastProps(casesSpy).predicates).toEqual([templatesIn12]);
+    } finally {
+      fetchMock.mockRestore();
+    }
   });
 });

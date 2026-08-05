@@ -144,6 +144,38 @@ Filters are held in the page URL, so a link reproduces exactly the filtered list
 
 A filter set can hold up to **50 filters**, each with up to **200 values**. **Add Filter** is disabled once you reach 50 filters and says why, and a value list stops accepting new values at 200 with the same kind of notice. A link that arrives carrying more than either limit is trimmed down to fit, and a notice beside the chips tells you that filters or values were dropped.
 
+### Saved views
+
+A link covers ad-hoc sharing. When a set of filters is one you keep coming back to, give it a name instead: the bookmark icon on the filter bar holds your saved views for the project.
+
+#### Saving a view
+
+1. Build the view — add the filter chips you want and pick a grouping axis.
+2. Open the bookmark menu and choose **Save view**. (This stays disabled until there is something to save — a filter, or a grouping other than the default.)
+3. Give it a name and, optionally, a description.
+4. Click **Save**.
+
+#### Loading a view
+
+Open the bookmark menu and click any saved view to apply it. Its filters replace whatever is on the bar and its grouping axis is restored, and a message confirms which view was applied.
+
+#### Managing saved views
+
+Each view in the menu has two actions:
+
+* **Rename** (pencil icon) — Update the name and description.
+* **Delete** (trash icon) — Remove the view after a confirmation prompt.
+
+#### Good to know
+
+* **Saved views are private to you.** Only you can see and apply the views you save.
+* **A view belongs to one project.** The menu lists the views you saved in the project you are looking at.
+* **A view stores criteria, not a snapshot of cases.** Applying one runs fresh against the current repository.
+* **A view stores filters and grouping — not search text.** Search stacks on top of a view rather than being part of it.
+* **An applied view is still shareable.** Applying a view updates the page URL, so you can copy the link and hand the same list to someone else.
+* **A view survives the fields it referenced.** If a custom field a view filtered on has since been deleted, the view applies everything that is still valid and tells you how many filters it skipped. If its grouping axis is gone, the default grouping is used instead.
+* **Views work in the case-selection dialog too.** You can save and apply views when picking cases to add to a run or plan. A view saved inside a run that filters on **Status** or **Assigned To** applies only its remaining filters outside a run, where those fields do not exist.
+
 ### Searching
 
 The repository's own search is the **Filter cases...** box above the table. It narrows the list you are looking at to the cases whose name contains what you type, and it stacks with everything else: the folder scope, the grouping axis and every filter chip still apply.

@@ -24,11 +24,6 @@ import {
 export interface SaveViewDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  /**
-   * Seeds the (editable) name each time the dialog opens — the live search
-   * text, mirroring how SaveSearchDialog seeds from the query.
-   */
-  suggestedName?: string;
   isSaving?: boolean;
   /**
    * Persists the view. Rejecting keeps the dialog open with an error, so a
@@ -38,14 +33,13 @@ export interface SaveViewDialogProps {
 }
 
 /**
- * Names the current repository view (filters + grouping axis + search) for
- * later reuse. The twin of components/search/SaveSearchDialog.tsx — same
- * shape, same wording — so saved searches and saved views read as one idea.
+ * Names the current repository view (filters + grouping axis) for later reuse.
+ * The twin of components/search/SaveSearchDialog.tsx — same shape, same
+ * wording — so saved searches and saved views read as one idea.
  */
 export function SaveViewDialog({
   open,
   onOpenChange,
-  suggestedName = "",
   isSaving = false,
   onSave,
 }: SaveViewDialogProps) {
@@ -56,11 +50,10 @@ export function SaveViewDialog({
 
   useEffect(() => {
     if (open) {
-      setName(suggestedName.slice(0, SAVED_REPOSITORY_VIEW_NAME_MAX_LENGTH));
+      setName("");
       setDescription("");
       setError(null);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   const handleSave = async () => {

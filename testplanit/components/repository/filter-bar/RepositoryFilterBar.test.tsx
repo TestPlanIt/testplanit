@@ -391,9 +391,7 @@ describe("RepositoryFilterBar cap feedback", () => {
     const savedViews = {
       projectId: 42,
       axis: "folders",
-      search: "",
       onApply: vi.fn(),
-      canSave: true,
     };
 
     it("renders the saved-views control on the bar, outside any kebab", () => {

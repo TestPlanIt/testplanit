@@ -38,18 +38,11 @@ export interface RepositorySavedViewsBinding {
   projectId: number;
   /** Current grouping axis (`?view=`); null means the surface's default. */
   axis: string | null;
-  /** Current search text. */
-  search: string;
   /**
    * Applies a saved view. The host routes this through the same predicate
    * setter the chips use, so the URL updates and the view stays shareable.
    */
   onApply: (criteria: SavedRepositoryViewCriteria) => void;
-  /**
-   * false where filter state is memory-only (the case-selection dialog) —
-   * saving renders disabled with an explanation, applying still works.
-   */
-  canSave: boolean;
 }
 
 export interface RepositoryFilterBarProps {
@@ -386,9 +379,7 @@ export function RepositoryFilterBar({
           registry={registry}
           predicates={predicates}
           axis={savedViews.axis}
-          search={savedViews.search}
           onApply={savedViews.onApply}
-          canSave={savedViews.canSave}
           knownDynamicAxisFieldIds={knownDynamicAxisFieldIds}
         />
       )}
