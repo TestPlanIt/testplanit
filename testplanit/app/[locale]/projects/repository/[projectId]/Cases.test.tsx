@@ -159,26 +159,32 @@ vi.mock("~/hooks/useReviewFeatureEnabled", () => ({
   })),
 }));
 
+// Cases no longer reads the ZenStack GET wrapper — only the post-fetch matcher
+// types, which are erased. The mock stays so the real module (and the ZenStack
+// client it pulls in) is never loaded by this suite.
 vi.mock("~/hooks/useRepositoryCasesWithFilteredFields", () => ({
-  useFindManyRepositoryCasesFiltered: vi.fn(() => ({
-    data: [],
-    isLoading: false,
-    error: null,
-    totalCount: 0,
-    refetch: vi.fn(),
-  })),
+  useFindManyRepositoryCasesFiltered: vi.fn(),
+  filterOrphanedFieldValues: (row: unknown) => row,
+  matchesPostFetchFilters: () => true,
 }));
+
+const invalidateCaseListMock = vi.fn(() => Promise.resolve());
 
 vi.mock("~/hooks/useRepositoryCasesQuery", () => ({
   useRepositoryCasesQuery: vi.fn(() => ({
     data: [],
     ids: undefined,
+    caseIds: undefined,
     totalCount: 0,
     isLoading: false,
     isFetching: false,
     error: null,
     refetch: vi.fn(),
   })),
+  // Returns a STABLE invalidator — Cases puts it in effect/callback dep lists.
+  useRepositoryCasesInvalidation: vi.fn(() => invalidateCaseListMock),
+  invalidateRepositoryCasesQueries: vi.fn(() => Promise.resolve()),
+  notifyRepositoryCasesChanged: vi.fn(),
 }));
 
 vi.mock("~/hooks/useRepositoryCasesByDescendants", () => ({
@@ -358,7 +364,6 @@ import { useFindManyRepositoryCasesByDescendants } from "~/hooks/useRepositoryCa
 import { useRepositoryCasesQuery } from "~/hooks/useRepositoryCasesQuery";
 import { useExportData } from "~/hooks/useExportData";
 import { fetchAllCasesForExport } from "~/app/actions/exportActions";
-import { useFindManyRepositoryCasesFiltered } from "~/hooks/useRepositoryCasesWithFilteredFields";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { usePagination } from "~/lib/contexts/PaginationContext";
 import { getColumns } from "./columns";
@@ -425,14 +430,6 @@ function setupMocks({
   canAddEdit?: boolean;
   paginationOverrides?: Record<string, any>;
 } = {}) {
-  (useFindManyRepositoryCasesFiltered as any).mockReturnValue({
-    data,
-    isLoading,
-    error: null,
-    totalCount: data.length,
-    refetch: vi.fn(),
-  });
-
   (useFindManyRepositoryCasesByDescendants as any).mockReturnValue({
     data,
     isLoading,
@@ -526,14 +523,15 @@ afterEach(() => {
 
 // ---- Tests ----
 
-// The select-all ids query is the call that asks for `id` without an orderBy;
-// the list query alongside it carries the full row select.
-const selectAllIdsSelect = () => {
-  const call = (useFindManyRepositoryCasesFiltered as any).mock.calls.find(
-    ([args]: any[]) => args?.select?.id === true && !args?.orderBy
-  );
-  return call?.[0]?.select;
-};
+// The select-all ids request among the POST-route calls: it names its select
+// shape "ids" (no post-fetch filter) or "selectAll:<fields>" (with one).
+const selectAllIdsArgs = () =>
+  (useRepositoryCasesQuery as any).mock.calls.find(([args]: any[]) => {
+    const key = String(args?.selectKey ?? "");
+    return key === "ids" || key.startsWith("selectAll:");
+  })?.[0];
+
+const selectAllIdsSelect = () => selectAllIdsArgs()?.select;
 
 describe("Select all ids query", () => {
   it("asks only for ids when no post-fetch filter is active", async () => {
@@ -542,7 +540,12 @@ describe("Select all ids query", () => {
     render(<Cases {...defaultProps} viewType="folders" folderId={1} />);
     await screen.findByTestId("data-table");
 
-    expect(selectAllIdsSelect()).toEqual({ id: true, isDeleted: true });
+    // Nothing has to be matched in memory, so the route returns bare ids and
+    // no row is hydrated at all.
+    const args = selectAllIdsArgs();
+    expect(args.idsOnly).toBe(true);
+    expect(args.select).toBeUndefined();
+    expect(args.selectKey).toBe("ids");
   });
 
   it("includes the field values a text filter is applied to", async () => {
@@ -846,13 +849,11 @@ describe("Cases component", () => {
 
     // The list query ran (not disabled by the folder gate) and its where has
     // no folder scoping — project-wide, with the predicate fragment applied.
-    const listCall = (
-      useFindManyRepositoryCasesFiltered as any
-    ).mock.calls.find(([args]: any[]) => args?.orderBy && args?.select?.name);
+    const listCall = postListCall();
     expect(listCall).toBeDefined();
-    expect(listCall[2]?.enabled).toBe(true);
-    expect(JSON.stringify(listCall[0].where)).not.toContain("folderId");
-    expect(listCall[0].where.AND).toContainEqual({
+    expect(listCall.enabled).toBe(true);
+    expect(JSON.stringify(listCall.where)).not.toContain("folderId");
+    expect(listCall.where.AND).toContainEqual({
       templateId: { in: [7] },
     });
   });
@@ -1138,12 +1139,9 @@ describe("Search x filter intersection (spec §9)", () => {
     // orderBy is given.
     expect(listCall.orderBy).toBeUndefined();
 
-    // The ZenStack GET hooks stay off: 10,000 ids in a query string is the
-    // HTTP 414 this route exists to avoid.
-    const listGet = (useFindManyRepositoryCasesFiltered as any).mock.calls.find(
-      ([args]: any[]) => args?.orderBy && args?.select?.name
-    );
-    expect(listGet[2]?.enabled).toBe(false);
+    // There is no second transport left to disagree with: the count rides on
+    // this very response.
+    expect(postListCall().selectKey).toBe("list");
   });
 
   it("hands the table sort to the DB instead of relevance once the user has sorted", async () => {
@@ -1300,13 +1298,6 @@ describe("Search x filter intersection (spec §9)", () => {
   });
 });
 
-// The ZenStack GET list query: the one carrying both an orderBy and the row
-// select (the select-all ids query has neither).
-const listGetCall = () =>
-  (useFindManyRepositoryCasesFiltered as any).mock.calls.find(
-    ([args]: any[]) => args?.orderBy && args?.select?.name
-  );
-
 // The POST select-all request (idsOnly), whose `enabled` mirrors the in-flight
 // select-all state.
 const idsOnlyCall = () =>
@@ -1332,7 +1323,6 @@ describe("Unresolved search never falls back to the unfiltered list (spec §9)",
     // Every list query is gated off: none of their where clauses carry the
     // search ids, so their rows would be the unfiltered repository presented
     // as the search result.
-    expect(listGetCall()[2]?.enabled).toBe(false);
     expect(postCallsEnabled()).toHaveLength(0);
 
     const tableProps = vi.mocked(DataTable).mock.calls.at(-1)?.[0] as any;
@@ -1375,7 +1365,6 @@ describe("Unresolved search never falls back to the unfiltered list (spec §9)",
       await screen.findByTestId("search-failed-message")
     ).toBeInTheDocument();
     expect(screen.queryByTestId("data-table")).toBeNull();
-    expect(listGetCall()[2]?.enabled).toBe(false);
     expect(postCallsEnabled()).toHaveLength(0);
   });
 
@@ -1545,16 +1534,18 @@ describe("Id-resolved sorts under filters and search", () => {
   });
 });
 
-describe("Heavy-where POST routing", () => {
-  // 800 tag ids serialize well past the GET budget; the same clause would ride
-  // in the URL of the ZenStack GET hook and 414.
+describe("One transport for the list", () => {
+  // 800 tag ids serialize well past any GET budget. The clause size used to
+  // decide the transport; now it decides nothing, which is the point — there is
+  // no threshold left for the list query and the count query to answer
+  // differently.
   const heavyPredicate = {
     dimension: "tags",
     operator: "any",
     values: Array.from({ length: 800 }, (_, i) => i + 1),
   } as FilterPredicate;
 
-  it("routes list and count through the POST route together when the where is oversized", async () => {
+  it("takes the list and its total from one POST response when the where is oversized", async () => {
     setupMocks({ data: [mockCase] });
     const setTotalItems = vi.fn();
     (usePagination as any).mockReturnValue({
@@ -1571,6 +1562,7 @@ describe("Heavy-where POST routing", () => {
     (useRepositoryCasesQuery as any).mockReturnValue({
       data: [mockCase],
       ids: [1],
+      caseIds: undefined,
       isLoading: false,
       isFetching: false,
       error: null,
@@ -1590,19 +1582,13 @@ describe("Heavy-where POST routing", () => {
 
     const listCall = postListCall();
     expect(listCall.enabled).toBe(true);
-    // No search here — the route is chosen purely on clause size.
     expect(listCall.searchCaseIds).toBeUndefined();
-
-    // The ZenStack GET list query is off, and the total published to the
-    // pagination context is the route's — list and count share one source.
-    const listGet = (useFindManyRepositoryCasesFiltered as any).mock.calls.find(
-      ([args]: any[]) => args?.orderBy && args?.select?.name
-    );
-    expect(listGet[2]?.enabled).toBe(false);
+    // The total published to the pagination context came from the list
+    // response — list and count share one source, so they cannot disagree.
     expect(setTotalItems).toHaveBeenCalledWith(97);
   });
 
-  it("leaves an ordinary filter set on the ZenStack GET path", async () => {
+  it("routes an ordinary filter set through the same POST call", async () => {
     setupMocks({ data: [mockCase] });
 
     render(
@@ -1617,10 +1603,36 @@ describe("Heavy-where POST routing", () => {
     );
     await screen.findByTestId("data-table");
 
-    expect(postCallsEnabled()).toHaveLength(0);
-    const listGet = (useFindManyRepositoryCasesFiltered as any).mock.calls.find(
-      ([args]: any[]) => args?.orderBy && args?.select?.name
+    const listCall = postListCall();
+    expect(listCall.enabled).toBe(true);
+    expect(listCall.testRunIds).toBeUndefined();
+    expect(listCall.where.AND).toContainEqual({ templateId: { in: [7] } });
+  });
+
+  it("reads the run list from the same route, scoped to the run", async () => {
+    setupMocks({ data: [] });
+
+    render(
+      <Cases
+        {...defaultProps}
+        isRunMode
+        selectedRunIds={[31, 32]}
+        viewType="all"
+      />
     );
-    expect(listGet[2]?.enabled).toBe(true);
+    await screen.findByTestId("column-selection");
+
+    const runCall = (useRepositoryCasesQuery as any).mock.calls.find(
+      ([args]: any[]) => args?.selectKey === "runList"
+    )?.[0];
+    expect(runCall).toBeDefined();
+    expect(runCall.enabled).toBe(true);
+    // The run scope is a first-class parameter, not something smuggled into
+    // the repository predicate.
+    expect(runCall.testRunIds).toEqual([31, 32]);
+    // The repository half travels nested, so the route can AND it under
+    // `repositoryCase`.
+    expect(JSON.stringify(runCall.repositoryCaseWhere)).toContain("projectId");
+    expect(runCall.where.isDeleted).toBe(false);
   });
 });

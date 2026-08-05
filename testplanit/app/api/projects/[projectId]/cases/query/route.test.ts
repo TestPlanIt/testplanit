@@ -17,6 +17,8 @@ vi.mock("~/server/auth", () => ({
 const projectsFindUniqueMock = vi.fn();
 const casesFindManyMock = vi.fn();
 const casesCountMock = vi.fn();
+const runCasesFindManyMock = vi.fn();
+const runCasesCountMock = vi.fn();
 
 vi.mock("@/lib/auth/utils", () => ({
   getEnhancedDb: vi.fn(async () => ({
@@ -24,6 +26,10 @@ vi.mock("@/lib/auth/utils", () => ({
     repositoryCases: {
       findMany: casesFindManyMock,
       count: casesCountMock,
+    },
+    testRunCases: {
+      findMany: runCasesFindManyMock,
+      count: runCasesCountMock,
     },
   })),
 }));
@@ -73,6 +79,8 @@ beforeEach(() => {
   projectsFindUniqueMock.mockResolvedValue({ id: 42, isDeleted: false });
   casesFindManyMock.mockResolvedValue([]);
   casesCountMock.mockResolvedValue(0);
+  runCasesFindManyMock.mockResolvedValue([]);
+  runCasesCountMock.mockResolvedValue(0);
   paginatedFindManyWithRelationsMock.mockResolvedValue([]);
 });
 
@@ -590,5 +598,475 @@ describe("POST /api/projects/[projectId]/cases/query — idsOnly", () => {
       select: { id: true },
     });
     expect(casesCountMock).not.toHaveBeenCalled();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// RUN MODE — the same route reading TestRunCases. The invariants that must hold
+// here and are NOT shared with repository mode: the run scope is server-forced
+// and cannot be widened, the repository predicate travels nested under
+// `repositoryCase`, row identity is the testRunCase id (so a multi-config run
+// keeps one row per run x case), and relevance ranks by the CASE id while paging
+// by the ROW id.
+// ---------------------------------------------------------------------------
+
+/** The run select the run table actually asks for, trimmed to what matters. */
+const RUN_SELECT = {
+  id: true,
+  repositoryCaseId: true,
+  order: true,
+  repositoryCase: { select: { id: true, name: true } },
+};
+
+/** [clientWhere, ...clientNested, testRunId, testRun, repositoryCase, ...search] */
+const runScopeOperands = (runIds: number[]) => [
+  { testRunId: { in: runIds } },
+  { testRun: { projectId: 42, isDeleted: false } },
+  { repositoryCase: { projectId: 42 } },
+];
+
+describe("POST /api/projects/[projectId]/cases/query — run mode scope", () => {
+  it("reads TestRunCases and forces the run + project scope as AND operands", async () => {
+    const [req, ctx] = buildPost({
+      testRunIds: [11, 12],
+      where: { isDeleted: false, AND: [{ statusId: { in: [1, 2] } }] },
+      repositoryCaseWhere: { AND: [{ isDeleted: false }] },
+      orderBy: { order: "asc" },
+      select: RUN_SELECT,
+    });
+
+    const res = await POST(req, ctx);
+    expect(res.status).toBe(200);
+
+    // Repository mode's model is untouched.
+    expect(casesFindManyMock).not.toHaveBeenCalled();
+    expect(casesCountMock).not.toHaveBeenCalled();
+
+    const where = runCasesCountMock.mock.calls[0][0].where;
+    expect(andOperands(where)).toEqual([
+      { isDeleted: false, AND: [{ statusId: { in: [1, 2] } }] },
+      { repositoryCase: { AND: [{ isDeleted: false }] } },
+      ...runScopeOperands([11, 12]),
+    ]);
+    // No top-level key can shadow a forced operand.
+    expect(where).not.toHaveProperty("testRunId");
+    expect(where).not.toHaveProperty("repositoryCase");
+  });
+
+  it("cannot be widened by a client testRunId or repositoryCase key", async () => {
+    // The classic escalation attempt: name the same keys the server forces and
+    // hope the server spread-merges them. AND siblings can only contradict.
+    const [req, ctx] = buildPost({
+      testRunIds: [11],
+      where: {
+        testRunId: { in: [999] },
+        repositoryCase: { projectId: 999 },
+      },
+      repositoryCaseWhere: { projectId: 999 },
+      orderBy: { order: "asc" },
+      select: RUN_SELECT,
+    });
+
+    const res = await POST(req, ctx);
+    expect(res.status).toBe(200);
+
+    const operands = andOperands(runCasesCountMock.mock.calls[0][0].where);
+    // Both the client's attempt and the server's constraint are present.
+    expect(operands).toContainEqual({
+      testRunId: { in: [999] },
+      repositoryCase: { projectId: 999 },
+    });
+    expect(operands).toContainEqual({ repositoryCase: { projectId: 999 } });
+    expect(operands).toContainEqual({ testRunId: { in: [11] } });
+    expect(operands).toContainEqual({
+      testRun: { projectId: 42, isDeleted: false },
+    });
+    expect(operands).toContainEqual({ repositoryCase: { projectId: 42 } });
+  });
+
+  it("intersects the search id set on repositoryCaseId, not on the row id", async () => {
+    runCasesFindManyMock.mockResolvedValue([]);
+    const [req, ctx] = buildPost({
+      testRunIds: [11],
+      searchCaseIds: [7, 8],
+      select: RUN_SELECT,
+    });
+
+    await POST(req, ctx);
+
+    const operands = andOperands(runCasesFindManyMock.mock.calls[0][0].where);
+    expect(operands.at(-1)).toEqual({ repositoryCaseId: { in: [7, 8] } });
+    expect(operands).not.toContainEqual({ id: { in: [7, 8] } });
+  });
+
+  it("treats an empty run scope as zero rows, never as every run in the project", async () => {
+    const [req, ctx] = buildPost({ testRunIds: [], select: RUN_SELECT });
+
+    const res = await POST(req, ctx);
+    const body = await res.json();
+
+    expect(body).toEqual({ cases: [], totalCount: 0 });
+    expect(runCasesFindManyMock).not.toHaveBeenCalled();
+    expect(runCasesCountMock).not.toHaveBeenCalled();
+  });
+
+  it("returns empty ids for an empty run scope on the idsOnly path", async () => {
+    const [req, ctx] = buildPost({ testRunIds: [], idsOnly: true });
+
+    const res = await POST(req, ctx);
+    const body = await res.json();
+
+    expect(body).toEqual({ ids: [], caseIds: [], totalCount: 0 });
+    expect(runCasesFindManyMock).not.toHaveBeenCalled();
+  });
+
+  it("sanitizes the run id list the same way as the search id set", async () => {
+    const [req, ctx] = buildPost({
+      testRunIds: [11, 11, -2, 3.5, 12],
+      orderBy: { order: "asc" },
+      select: RUN_SELECT,
+    });
+
+    await POST(req, ctx);
+
+    expect(
+      andOperands(runCasesCountMock.mock.calls[0][0].where)
+    ).toContainEqual({ testRunId: { in: [11, 12] } });
+  });
+
+  it("rejects a nested repository predicate outside run mode", async () => {
+    // Without testRunIds there is nothing to nest it under, and silently
+    // dropping it would return a wider set than the caller asked for.
+    const [req, ctx] = buildPost({
+      repositoryCaseWhere: { isDeleted: false },
+      orderBy: { name: "asc" },
+      select: SELECT,
+    });
+
+    const res = await POST(req, ctx);
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body.error).toBe("repositoryCaseWhere requires testRunIds");
+    expect(casesCountMock).not.toHaveBeenCalled();
+    expect(runCasesCountMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects an absurdly long run id list instead of truncating it", async () => {
+    const [req, ctx] = buildPost({
+      testRunIds: Array.from({ length: 501 }, (_, i) => i + 1),
+      select: RUN_SELECT,
+    });
+
+    const res = await POST(req, ctx);
+    expect(res.status).toBe(400);
+  });
+});
+
+describe("POST /api/projects/[projectId]/cases/query — run mode paging", () => {
+  it("counts and pages TestRunCases rows through the paginated helper", async () => {
+    runCasesCountMock.mockResolvedValue(9);
+    paginatedFindManyWithRelationsMock.mockResolvedValue([
+      { id: 501, repositoryCaseId: 7 },
+      { id: 502, repositoryCaseId: 8 },
+    ]);
+
+    const [req, ctx] = buildPost({
+      testRunIds: [11],
+      orderBy: { order: "asc" },
+      select: RUN_SELECT,
+      skip: 25,
+      take: 25,
+    });
+
+    const res = await POST(req, ctx);
+    const body = await res.json();
+
+    expect(body.totalCount).toBe(9);
+    expect(body.cases.map((c: { id: number }) => c.id)).toEqual([501, 502]);
+
+    const [model, args] = paginatedFindManyWithRelationsMock.mock.calls[0];
+    expect(model.findMany).toBe(runCasesFindManyMock);
+    expect(args).toMatchObject({
+      orderBy: { order: "asc" },
+      skip: 25,
+      take: 25,
+    });
+  });
+
+  it("keeps one row per run x case for a multi-config run", async () => {
+    // Two runs (configurations) x the same repository case: two rows, distinct
+    // row ids, same repositoryCaseId. Collapsing them would drop a config's
+    // execution from the table.
+    runCasesCountMock.mockResolvedValue(4);
+    paginatedFindManyWithRelationsMock.mockResolvedValue([
+      { id: 501, repositoryCaseId: 7, testRun: { id: 11 } },
+      { id: 601, repositoryCaseId: 7, testRun: { id: 12 } },
+      { id: 502, repositoryCaseId: 8, testRun: { id: 11 } },
+      { id: 602, repositoryCaseId: 8, testRun: { id: 12 } },
+    ]);
+
+    const [req, ctx] = buildPost({
+      testRunIds: [11, 12],
+      orderBy: { order: "asc" },
+      select: RUN_SELECT,
+    });
+
+    const res = await POST(req, ctx);
+    const body = await res.json();
+
+    expect(body.totalCount).toBe(4);
+    expect(body.cases).toHaveLength(4);
+    expect(body.cases.map((c: { id: number }) => c.id)).toEqual([
+      501, 601, 502, 602,
+    ]);
+    expect(
+      body.cases.map((c: { repositoryCaseId: number }) => c.repositoryCaseId)
+    ).toEqual([7, 7, 8, 8]);
+  });
+
+  it("clamps the run page size to the ceiling", async () => {
+    const [req, ctx] = buildPost({
+      testRunIds: [11],
+      orderBy: { order: "asc" },
+      select: RUN_SELECT,
+      take: 99_999,
+    });
+
+    await POST(req, ctx);
+
+    expect(paginatedFindManyWithRelationsMock.mock.calls[0][1].take).toBe(
+      MAX_PAGE_SIZE
+    );
+  });
+
+  it("forces id into the select so paging and hydration can key rows", async () => {
+    const [req, ctx] = buildPost({
+      testRunIds: [11],
+      orderBy: { order: "asc" },
+      select: { repositoryCaseId: true },
+    });
+
+    await POST(req, ctx);
+
+    expect(paginatedFindManyWithRelationsMock.mock.calls[0][1].select).toEqual({
+      repositoryCaseId: true,
+      id: true,
+    });
+  });
+
+  it("returns cases: null for a count-only run request", async () => {
+    runCasesCountMock.mockResolvedValue(6);
+
+    const [req, ctx] = buildPost({
+      testRunIds: [11],
+      orderBy: { order: "asc" },
+    });
+
+    const res = await POST(req, ctx);
+    const body = await res.json();
+
+    expect(body).toEqual({ cases: null, totalCount: 6 });
+    expect(paginatedFindManyWithRelationsMock).not.toHaveBeenCalled();
+  });
+
+  it("serializes BigInt attachment sizes nested under repositoryCase", async () => {
+    runCasesCountMock.mockResolvedValue(1);
+    paginatedFindManyWithRelationsMock.mockResolvedValue([
+      {
+        id: 501,
+        repositoryCase: {
+          id: 7,
+          attachments: [{ id: 1, size: BigInt(4096) }],
+        },
+      },
+    ]);
+
+    const [req, ctx] = buildPost({
+      testRunIds: [11],
+      orderBy: { order: "asc" },
+      select: RUN_SELECT,
+    });
+
+    const res = await POST(req, ctx);
+    const body = await res.json();
+
+    expect(body.cases[0].repositoryCase.attachments[0].size).toBe("4096");
+  });
+});
+
+describe("POST /api/projects/[projectId]/cases/query — run mode relevance + idsOnly", () => {
+  it("ranks rows by the Elasticsearch case order and pages by row id", async () => {
+    // Case 5 ranks first, case 3 second; case 9 matched nothing in this run.
+    // Case 5 exists in two configurations — both rows keep rank 0 and are
+    // ordered between themselves by row id.
+    runCasesFindManyMock
+      .mockResolvedValueOnce([
+        { id: 601, repositoryCaseId: 5 },
+        { id: 502, repositoryCaseId: 3 },
+        { id: 501, repositoryCaseId: 5 },
+      ])
+      .mockResolvedValueOnce([
+        { id: 601, repositoryCaseId: 5 },
+        { id: 501, repositoryCaseId: 5 },
+      ]);
+
+    const [req, ctx] = buildPost({
+      testRunIds: [11, 12],
+      searchCaseIds: [5, 3, 9],
+      select: RUN_SELECT,
+      skip: 0,
+      take: 2,
+    });
+
+    const res = await POST(req, ctx);
+    const body = await res.json();
+
+    expect(body.totalCount).toBe(3);
+    expect(body.cases.map((c: { id: number }) => c.id)).toEqual([501, 601]);
+
+    // Phase 1 projects both ids; phase 2 hydrates the page by ROW id.
+    expect(runCasesFindManyMock.mock.calls[0][0].select).toEqual({
+      id: true,
+      repositoryCaseId: true,
+    });
+    expect(runCasesFindManyMock.mock.calls[1][0].where.id).toEqual({
+      in: [501, 601],
+    });
+    // The hydration query still carries the full server scope.
+    expect(
+      andOperands(runCasesFindManyMock.mock.calls[1][0].where)
+    ).toContainEqual({ testRun: { projectId: 42, isDeleted: false } });
+    expect(paginatedFindManyWithRelationsMock).not.toHaveBeenCalled();
+  });
+
+  it("pages the relevance list past the tied multi-config rows", async () => {
+    runCasesFindManyMock
+      .mockResolvedValueOnce([
+        { id: 601, repositoryCaseId: 5 },
+        { id: 502, repositoryCaseId: 3 },
+        { id: 501, repositoryCaseId: 5 },
+      ])
+      .mockResolvedValueOnce([{ id: 502, repositoryCaseId: 3 }]);
+
+    const [req, ctx] = buildPost({
+      testRunIds: [11, 12],
+      searchCaseIds: [5, 3, 9],
+      select: RUN_SELECT,
+      skip: 2,
+      take: 2,
+    });
+
+    const res = await POST(req, ctx);
+    const body = await res.json();
+
+    expect(body.totalCount).toBe(3);
+    expect(body.cases.map((c: { id: number }) => c.id)).toEqual([502]);
+  });
+
+  it("returns row ids with parallel case ids on the relevance idsOnly path", async () => {
+    runCasesFindManyMock.mockResolvedValueOnce([
+      { id: 601, repositoryCaseId: 5 },
+      { id: 502, repositoryCaseId: 3 },
+      { id: 501, repositoryCaseId: 5 },
+    ]);
+
+    const [req, ctx] = buildPost({
+      testRunIds: [11, 12],
+      searchCaseIds: [5, 3, 9],
+      idsOnly: true,
+      take: 1,
+    });
+
+    const res = await POST(req, ctx);
+    const body = await res.json();
+
+    // Paging is ignored on purpose (select-all / prev-next need every row), and
+    // the duplicated case id is NOT collapsed.
+    expect(body).toEqual({
+      ids: [501, 601, 502],
+      caseIds: [5, 5, 3],
+      totalCount: 3,
+    });
+    expect(runCasesFindManyMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("returns row ids with parallel case ids in DB order when orderBy is supplied", async () => {
+    runCasesFindManyMock.mockResolvedValueOnce([
+      { id: 501, repositoryCaseId: 7 },
+      { id: 601, repositoryCaseId: 7 },
+      { id: 502, repositoryCaseId: 8 },
+    ]);
+
+    const [req, ctx] = buildPost({
+      testRunIds: [11, 12],
+      orderBy: { order: "asc" },
+      idsOnly: true,
+    });
+
+    const res = await POST(req, ctx);
+    const body = await res.json();
+
+    expect(body).toEqual({
+      ids: [501, 601, 502],
+      caseIds: [7, 7, 8],
+      totalCount: 3,
+    });
+    expect(runCasesFindManyMock.mock.calls[0][0]).toMatchObject({
+      orderBy: { order: "asc" },
+      select: { id: true, repositoryCaseId: true },
+    });
+    expect(runCasesCountMock).not.toHaveBeenCalled();
+  });
+
+  it("drops rows whose case fell out of the search set", async () => {
+    // The run may contain cases the search never matched; ranking must not
+    // resurrect them with an undefined rank.
+    runCasesFindManyMock.mockResolvedValueOnce([
+      { id: 501, repositoryCaseId: 5 },
+      { id: 502, repositoryCaseId: 77 },
+    ]);
+
+    const [req, ctx] = buildPost({
+      testRunIds: [11],
+      searchCaseIds: [5],
+      idsOnly: true,
+    });
+
+    const res = await POST(req, ctx);
+    const body = await res.json();
+
+    expect(body).toEqual({ ids: [501], caseIds: [5], totalCount: 1 });
+  });
+
+  it("hydrates a large relevance page in bounded chunks", async () => {
+    const rows = Array.from({ length: 250 }, (_, i) => ({
+      id: 500 + i,
+      repositoryCaseId: i + 1,
+    }));
+    runCasesFindManyMock.mockImplementation(async (args: any) => {
+      if (!args.where.id) return rows;
+      const ids = args.where.id.in as number[];
+      return ids.map((id) => ({ id, repositoryCaseId: id - 499 }));
+    });
+
+    const [req, ctx] = buildPost({
+      testRunIds: [11],
+      searchCaseIds: rows.map((r) => r.repositoryCaseId),
+      select: RUN_SELECT,
+      take: 250,
+    });
+
+    const res = await POST(req, ctx);
+    const body = await res.json();
+
+    const hydrationCalls = runCasesFindManyMock.mock.calls.filter(
+      ([args]) => args.where.id
+    );
+    expect(hydrationCalls).toHaveLength(2);
+    expect(hydrationCalls[0][0].where.id.in).toHaveLength(HYDRATION_CHUNK_SIZE);
+    expect(hydrationCalls[1][0].where.id.in).toHaveLength(50);
+    expect(body.cases).toHaveLength(250);
+    expect(body.cases[0].id).toBe(500);
+    expect(body.cases[249].id).toBe(749);
   });
 });

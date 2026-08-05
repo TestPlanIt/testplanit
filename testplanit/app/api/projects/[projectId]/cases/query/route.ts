@@ -6,13 +6,35 @@ import { paginatedFindManyWithRelations } from "~/lib/paginatedFindMany";
 import { sanitizeSearchCaseIds } from "~/lib/repositoryCaseSearchIds";
 import { authOptions } from "~/server/auth";
 
-// One POST read path for the repository table: the client-built predicate
-// `where` (which carries folder scoping) and the Elasticsearch id set compose
-// here. POST rather than GET because a folder-subtree predicate or a 10,000-id
-// search set serialized into a query string blows past the HTTP 414 URI limit
-// (the same reason fetch-many and by-folder-descendants exist).
+// One POST read path for the case table in BOTH of its modes: the client-built
+// predicate `where` (which carries folder scoping) and the Elasticsearch id set
+// compose here. POST rather than GET because a folder-subtree predicate or a
+// 10,000-id search set serialized into a query string blows past the HTTP 414
+// URI limit (the same reason fetch-many and by-folder-descendants exist).
+//
+// REPOSITORY MODE (no `testRunIds`) reads RepositoryCases; row id = case id.
+// RUN MODE (`testRunIds` present) reads TestRunCases with the repository
+// predicate nested under `repositoryCase`; row id = testRunCase id, and a
+// multi-config run legitimately yields one row per (run x case) — those rows are
+// never deduped by case.
+//
+// The two modes share one route because they share every guarantee that matters
+// here: the same project membership gate, the same non-widening AND composition,
+// the same page ceiling, the same sanitized Elasticsearch id set and the same
+// relevance-order reconstruction. Only three things differ — the model, which
+// column carries the CASE id, and the scope operands — so they are parameters,
+// not a second implementation. A sibling route would have had to copy the
+// bounded-hydration and scope-forcing code that these guarantees live in, which
+// is exactly the code that must not drift.
 const requestSchema = z.object({
   where: z.record(z.string(), z.any()).optional(),
+  /**
+   * Presence switches the route to run mode. An explicit empty array means
+   * "no runs" and matches nothing — it never widens to the whole project.
+   */
+  testRunIds: z.array(z.number()).max(500).optional(),
+  /** Run mode only: the repository predicate, nested under `repositoryCase`. */
+  repositoryCaseWhere: z.record(z.string(), z.any()).optional(),
   orderBy: z
     .union([
       z.record(z.string(), z.any()),
@@ -51,6 +73,13 @@ interface FindManyModel {
   findMany: (args: any) => Promise<any[]>;
 }
 
+// The one model this request reads — RepositoryCases or TestRunCases. The two
+// delegates have incompatible overload sets, so they are narrowed to the two
+// operations this route actually calls.
+interface QueryModel extends FindManyModel {
+  count: (args: any) => Promise<number>;
+}
+
 // Hydrate an explicit id list in bounded batches. Each query matches at most
 // HYDRATION_CHUNK_SIZE rows, so relation building stays flat regardless of page
 // size. `where` still rides along so policy/scope constraints are re-applied.
@@ -72,19 +101,40 @@ async function hydrateByIds(
   return rows;
 }
 
+// Attachment `size` is a BigInt column and JSON.stringify throws on BigInt. In
+// run mode the attachments hang off the nested `repositoryCase` instead of the
+// row itself, so both positions are converted.
+function serializeAttachments(attachments: Array<Record<string, unknown>>) {
+  return attachments.map((a) => ({
+    ...a,
+    size: typeof a.size === "bigint" ? a.size.toString() : a.size,
+  }));
+}
+
 function serializeCases(cases: Array<Record<string, unknown>> | null) {
   if (!cases) return null;
   return cases.map((c) => {
-    const attachments = (c as { attachments?: Array<Record<string, unknown>> })
-      .attachments;
-    if (!attachments) return c;
-    return {
-      ...c,
-      attachments: attachments.map((a) => ({
-        ...a,
-        size: typeof a.size === "bigint" ? a.size.toString() : a.size,
-      })),
+    const row = c as {
+      attachments?: Array<Record<string, unknown>>;
+      repositoryCase?: { attachments?: Array<Record<string, unknown>> } | null;
     };
+    let serialized = c;
+    if (row.attachments) {
+      serialized = {
+        ...serialized,
+        attachments: serializeAttachments(row.attachments),
+      };
+    }
+    if (row.repositoryCase?.attachments) {
+      serialized = {
+        ...serialized,
+        repositoryCase: {
+          ...row.repositoryCase,
+          attachments: serializeAttachments(row.repositoryCase.attachments),
+        },
+      };
+    }
+    return serialized;
   });
 }
 
@@ -123,67 +173,150 @@ export async function POST(
     }
 
     const body = await request.json();
-    const { where, orderBy, select, skip, take, searchCaseIds, idsOnly } =
-      requestSchema.parse(body);
+    const {
+      where,
+      testRunIds,
+      repositoryCaseWhere,
+      orderBy,
+      select,
+      skip,
+      take,
+      searchCaseIds,
+      idsOnly,
+    } = requestSchema.parse(body);
+
+    const runMode = testRunIds !== undefined;
+
+    // A nested repository predicate has no meaning against RepositoryCases —
+    // accepting it silently would drop the filter and return a wider set than
+    // the caller asked for.
+    if (!runMode && repositoryCaseWhere !== undefined) {
+      return NextResponse.json(
+        { error: "repositoryCaseWhere requires testRunIds" },
+        { status: 400 }
+      );
+    }
 
     const pageSize = resolveTake(take);
+
+    // Same normalization as the search id set: safe positive ints, deduped.
+    const runIds = testRunIds ? sanitizeSearchCaseIds(testRunIds) : undefined;
 
     const searchIds =
       searchCaseIds === undefined
         ? undefined
         : sanitizeSearchCaseIds(searchCaseIds);
 
-    // A search that resolved to nothing (or to nothing usable) matches nothing —
-    // it must not degrade into "no search filter at all".
-    if (searchIds !== undefined && searchIds.length === 0) {
-      return NextResponse.json(
+    // Run mode reads TestRunCases; the CASE id (what Elasticsearch returns and
+    // what the repository predicate is about) lives in `repositoryCaseId`, while
+    // `id` stays the per-(run x case) row identity used for paging and
+    // hydration. Repository mode collapses both onto `id`.
+    const model = (runMode
+      ? db.testRunCases
+      : db.repositoryCases) as unknown as QueryModel;
+    const caseIdKey = runMode ? "repositoryCaseId" : "id";
+    // Phase-1 (id-only) projection. Run mode needs the case id alongside the row
+    // id to rank rows by Elasticsearch relevance.
+    const idSelect = runMode
+      ? { id: true, repositoryCaseId: true }
+      : { id: true };
+    const rowCaseId = (row: Record<string, unknown>) =>
+      row[caseIdKey] as number;
+
+    // Both hydration paths key rows by `id`, so it must be selected.
+    const effectiveSelect = select ? { ...select, id: true } : undefined;
+
+    const emptyResult = () =>
+      NextResponse.json(
         idsOnly
-          ? { ids: [], totalCount: 0 }
+          ? runMode
+            ? { ids: [], caseIds: [], totalCount: 0 }
+            : { ids: [], totalCount: 0 }
           : { cases: select ? [] : null, totalCount: 0 }
       );
-    }
+
+    // A search that resolved to nothing (or to nothing usable) matches nothing —
+    // it must not degrade into "no search filter at all". The same rule applies
+    // to an empty run scope: "no runs" is zero rows, never "every run in the
+    // project".
+    if (searchIds !== undefined && searchIds.length === 0) return emptyResult();
+    if (runIds !== undefined && runIds.length === 0) return emptyResult();
 
     // SERVER-FORCED SCOPE, INTERSECTED (never spread-merged): the client `where`
     // and each server constraint are separate AND operands, so a client key can
     // only ever narrow the result set. Two properties fall out of this shape:
-    //   - projectId and the search id set cannot be widened by a client key of
-    //     the same name (an AND sibling can contradict, never replace);
+    //   - projectId, the run scope and the search id set cannot be widened by a
+    //     client key of the same name (an AND sibling can contradict, never
+    //     replace);
     //   - a client's own `id` filter is preserved and intersected instead of
     //     being silently dropped by the search ids (page-by-id requests work).
     // Folder scoping is NOT server-forced here — the client sends it inside
     // `where`, where it is subject to the same intersection as any other
-    // predicate.
-    const enforcedWhere: Record<string, any> = {
-      AND: [
-        where ?? {},
-        { projectId },
-        ...(searchIds ? [{ id: { in: searchIds } }] : []),
-      ],
-    };
+    // predicate. Client operands come first, server operands last.
+    const enforcedWhere: Record<string, any> = runMode
+      ? {
+          AND: [
+            where ?? {},
+            ...(repositoryCaseWhere
+              ? [{ repositoryCase: repositoryCaseWhere }]
+              : []),
+            { testRunId: { in: runIds } },
+            // Both ends are pinned to this project: the run the row belongs to
+            // and the case it points at. Either alone would be enough today;
+            // together they hold even if one relation is ever re-parented.
+            { testRun: { projectId, isDeleted: false } },
+            { repositoryCase: { projectId } },
+            ...(searchIds ? [{ repositoryCaseId: { in: searchIds } }] : []),
+          ],
+        }
+      : {
+          AND: [
+            where ?? {},
+            { projectId },
+            ...(searchIds ? [{ id: { in: searchIds } }] : []),
+          ],
+        };
 
     // RELEVANCE PATH (spec §9): no explicit sort + an active search means the
     // Elasticsearch `_score` order wins. That order lives only in the position
-    // of searchCaseIds, so the page is cut from the id array and re-imposed on
-    // the hydrated rows.
+    // of searchCaseIds, so the page is cut from the ranked row list and
+    // re-imposed on the hydrated rows. In run mode a case id can map to several
+    // rows (one per configuration); they share a rank and are ordered by row id
+    // between themselves, and they are NOT collapsed into one row.
     if (!orderBy && searchIds) {
-      const matchedRows = await db.repositoryCases.findMany({
+      const matchedRows = (await model.findMany({
         where: enforcedWhere,
-        select: { id: true },
-      });
-      const matchedIds = new Set(
-        (matchedRows as Array<{ id: number }>).map((r) => r.id)
-      );
-      const orderedIds = searchIds.filter((id) => matchedIds.has(id));
+        select: idSelect,
+      })) as Array<Record<string, unknown>>;
+
+      const rankByCaseId = new Map(searchIds.map((id, index) => [id, index]));
+      const rankedRows = matchedRows
+        .filter((row) => rankByCaseId.has(rowCaseId(row)))
+        .sort((a, b) => {
+          const rank =
+            rankByCaseId.get(rowCaseId(a))! - rankByCaseId.get(rowCaseId(b))!;
+          return rank !== 0 ? rank : (a.id as number) - (b.id as number);
+        });
+
+      const orderedIds = rankedRows.map((row) => row.id as number);
       const totalCount = orderedIds.length;
 
       if (idsOnly) {
-        return NextResponse.json({ ids: orderedIds, totalCount });
+        return NextResponse.json(
+          runMode
+            ? {
+                ids: orderedIds,
+                caseIds: rankedRows.map(rowCaseId),
+                totalCount,
+              }
+            : { ids: orderedIds, totalCount }
+        );
       }
 
       const start = skip ?? 0;
       const pageIds = orderedIds.slice(start, start + pageSize);
 
-      if (!select || pageIds.length === 0) {
+      if (!effectiveSelect || pageIds.length === 0) {
         return NextResponse.json({
           cases: select ? [] : null,
           totalCount,
@@ -191,10 +324,10 @@ export async function POST(
       }
 
       const rows = await hydrateByIds(
-        db.repositoryCases,
+        model,
         enforcedWhere,
         pageIds,
-        select
+        effectiveSelect
       );
 
       const byId = new Map(rows.map((r) => [r.id as number, r]));
@@ -209,25 +342,29 @@ export async function POST(
     }
 
     if (idsOnly) {
-      const rows = (await db.repositoryCases.findMany({
+      const rows = (await model.findMany({
         where: enforcedWhere,
         orderBy,
-        select: { id: true },
-      })) as Array<{ id: number }>;
-      const ids = rows.map((r) => r.id);
-      return NextResponse.json({ ids, totalCount: ids.length });
+        select: idSelect,
+      })) as Array<Record<string, unknown>>;
+      const ids = rows.map((r) => r.id as number);
+      return NextResponse.json(
+        runMode
+          ? { ids, caseIds: rows.map(rowCaseId), totalCount: ids.length }
+          : { ids, totalCount: ids.length }
+      );
     }
 
     // Sorted/unsearched path: the DB owns both page composition and row order.
     // paginatedFindManyWithRelations keeps relation hydration O(page) instead of
     // O(all matching rows).
     const [totalCount, cases] = await Promise.all([
-      db.repositoryCases.count({ where: enforcedWhere }),
-      select
-        ? paginatedFindManyWithRelations(db.repositoryCases, {
+      model.count({ where: enforcedWhere }),
+      effectiveSelect
+        ? paginatedFindManyWithRelations(model, {
             where: enforcedWhere,
             orderBy,
-            select,
+            select: effectiveSelect,
             skip,
             take: pageSize,
           })
@@ -250,7 +387,7 @@ export async function POST(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    console.error("Error querying repository cases:", error);
+    console.error("Error querying cases:", error);
     return NextResponse.json(
       { error: "Failed to fetch cases" },
       { status: 500 }
