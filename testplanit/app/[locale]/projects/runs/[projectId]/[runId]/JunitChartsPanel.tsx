@@ -143,7 +143,11 @@ export default function JunitChartsPanel({
           className="mb-4"
           opts={{ loop: true }}
         >
-          <CarouselPrevious />
+          {/* The shared carousel parks its arrows 48px outside the track, which
+              overflows this narrow side panel and scrolls it horizontally.
+              Overlap the chart edge instead — which means they now need a
+              stacking layer to sit above the chart they overlap. */}
+          <CarouselPrevious className="start-0 z-10" />
           <CarouselContent>
             <CarouselItem>
               <Card shadow="none">
@@ -224,7 +228,7 @@ export default function JunitChartsPanel({
               </Card>
             </CarouselItem>
           </CarouselContent>
-          <CarouselNext />
+          <CarouselNext className="end-0 z-10" />
         </Carousel>
       </div>
       {/* Slide navigation dots */}
