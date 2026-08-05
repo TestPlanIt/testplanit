@@ -62,7 +62,7 @@ Restart Cursor after editing. If you prefer to pull the token from your shell en
 
 API tokens have two optional scope tags that change the server's behavior:
 
-- **`mode:read`** — narrows the token to read-only operations across REST and MCP. Recommended for agents that should query data but never modify it. The host enforces a single chokepoint and write attempts return a structured `READ_ONLY_TOKEN` error before the underlying mutation runs.
+- **`mode:read`** — narrows the token to read-only operations across REST and MCP. Recommended for agents that should query data but never modify it — including approving review requests, which `mode:read` blocks outright. The host enforces a single chokepoint and write attempts return a structured `READ_ONLY_TOKEN` error before the underlying mutation runs.
 - **`client:mcp`** — attributes audit-log entries from this token to the MCP source (`metadata.source: "mcp"`). The attribution is derived from the token scope itself — it cannot be forged from request-time headers. Recommended for any token used by an MCP-aware agent so administrators can correctly attribute agent-driven changes.
 
 Empty scopes (the default for pre-existing tokens) means full access with audit source `"api"` — backwards compatible.
