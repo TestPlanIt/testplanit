@@ -49,6 +49,7 @@ import type { Session } from "next-auth";
 import { useTranslations } from "next-intl";
 import React, { useMemo, useState } from "react";
 import { z } from "zod/v4";
+import { statusSurfaceVars } from "~/utils/contrastingTextColor";
 import { isAutomatedCaseSource } from "~/utils/testResultTypes";
 import { DateFormatter } from "./DateFormatter";
 import { UserNameCell } from "./tables/UserNameCell";
@@ -562,7 +563,13 @@ const LinkedCasesPanel: React.FC<LinkedCasesPanelProps> = ({
                             <div className="space-y-1">
                               <span
                                 className="px-2 py-0.5 rounded-lg text-xs font-semibold"
+                                data-status-surface={
+                                  status?.color?.value ? true : undefined
+                                }
                                 style={{
+                                  ...statusSurfaceVars(
+                                    status?.color?.value || ""
+                                  ),
                                   backgroundColor:
                                     status?.color?.value || undefined, // Handles null status
                                   color: status?.color?.value // Handles null status

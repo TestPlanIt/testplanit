@@ -537,6 +537,7 @@
       "selectProjects": "Selecionar projetos",
       "selectStates": "Selecionar estados",
       "selectTags": "Selecionar tags",
+      "addFieldTo": "Adicionar um campo a {section}",
       "selectTemplates": "Selecionar modelos",
       "selectUsers": "Selecionar usuários",
       "selectOption": "Selecione uma opção",
@@ -3909,7 +3910,8 @@
       "placeholder": "Execução de testes de filtro..."
     },
     "typeFilter": {
-      "both": "Manual e automatizado"
+      "both": "Manual e automatizado",
+      "label": "Filtrar por tipo de execução"
     },
     "empty": {
       "noMatchingCompleted": "Nenhum teste concluído corresponde ao seu filtro."

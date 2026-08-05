@@ -70,6 +70,7 @@ import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { usePathname, useRouter } from "~/lib/navigation";
 import { getBackgroundStyle } from "~/utils/colorUtils";
+import { statusSurfaceVars } from "~/utils/contrastingTextColor";
 import { toHumanReadable } from "~/utils/duration";
 import { fetchSignedUrl } from "~/utils/fetchSignedUrl";
 import { editorMinHeightStyle } from "~/utils/editorHeight";
@@ -1404,7 +1405,9 @@ export function SessionResultsList({
             <CardHeader className="p-0">
               <div
                 className="flex justify-between items-center p-2 rounded-t-md text-background"
+                data-status-surface
                 style={{
+                  ...statusSurfaceVars(getColorValue(result.status.color)),
                   backgroundColor: getColorValue(result.status.color),
                   color: "#fff",
                 }}

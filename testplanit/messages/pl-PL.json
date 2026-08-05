@@ -537,6 +537,7 @@
       "selectProjects": "Wybierz projekty",
       "selectStates": "Wybierz stany",
       "selectTags": "Wybierz tagi",
+      "addFieldTo": "Dodaj pole do {section}",
       "selectTemplates": "Wybierz szablony",
       "selectUsers": "Wybierz użytkowników",
       "selectOption": "Wybierz opcję",
@@ -3491,7 +3492,7 @@
       "addFilter": "Dodaj filtr",
       "removeFilter": "Usuń filtr: {name}",
       "editFilter": "Edytuj filtr: {name}",
-      "activeCount": "{count, plural, =1 {# active filter} other {# active filters}}",
+      "activeCount": "{count, plural, =1 {# aktywny filtr} other {# aktywne filtry}}",
       "assignedToMe": "Przypisane do mnie",
       "noFilters": "Brak aktywnych filtrów",
       "noMatchingCases": "Żaden przypadek testowy nie spełnia wybranych filtrów",
@@ -3501,7 +3502,7 @@
       "filterLimitReached": "Osiągnięto limit filtrów (maksymalnie {count})",
       "valueLimitReached": "Osiągnięto limit wartości (maksymalnie {count} na filtr)",
       "filtersTruncated": "Niektóre filtry zostały odrzucone (maksymalnie {count})",
-      "valuesTruncated": "{count, plural, =1 {# value} other {# values}} per filter maximum — extra values were dropped"
+      "valuesTruncated": "{count, plural, =1 {# wartość} other {# wartości}} na filtr maksymalnie — dodatkowe wartości zostały odrzucone"
     },
     "savedViews": {
       "title": "Zapisane widoki",
@@ -3520,9 +3521,9 @@
       "emptyHint": "Zapisz aktualne filtry, aby wrócić do nich później.",
       "apply": "Zastosuj widok: {name}",
       "applied": "Zastosowano „{name}”",
-      "droppedFilters": "{count, plural, =1 {# filter no longer exists and was skipped} other {# filters no longer exist and were skipped}}",
+      "droppedFilters": "{count, plural, =1 {# filtr już nie istnieje i został pominięty} other {# filtry już nie istnieją i zostały pominięte}}",
       "droppedGrouping": "Jego grupowanie nie jest już dostępne, więc użyto ustawienia domyślnego.",
-      "unreadable": "{count, plural, =1 {# saved view} other {# saved views}} couldn't be read",
+      "unreadable": "{count, plural, =1 {# zapisany widok} other {# zapisane widoki}} nie udało się odczytać",
       "rename": "Zmień nazwę",
       "renameTitle": "Zmień nazwę zapisanego widoku",
       "renamed": "Zapisany widok zaktualizowany",
@@ -3909,7 +3910,8 @@
       "placeholder": "Przeprowadź testy filtrów..."
     },
     "typeFilter": {
-      "both": "Manualne i automatyczne"
+      "both": "Manualne i automatyczne",
+      "label": "Filtruj według typu przebiegu"
     },
     "empty": {
       "noMatchingCompleted": "Nie znaleziono żadnych zakończonych przebiegów testowych odpowiadających wybranemu filtrowi."

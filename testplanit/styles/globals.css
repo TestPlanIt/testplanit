@@ -446,6 +446,29 @@ svg[class*="plot-"] .gantt-task-label text {
   outline: 2px solid hsl(var(--ring)) !important;
   outline-offset: 2px;
 }
+:is(.accessible, .accessibledark) [data-status-bar] {
+  /* 2.5.8 Target Size: every segment of a status bar links to a case, so each
+     one is a target, but the bar is 10px tall and a segment can be a few
+     pixels wide. Under these themes the bar grows to the 24px minimum and
+     scrolls instead of clipping the segments that no longer fit. Widths stay
+     proportional above the minimum; below it segments stop shrinking, so a run
+     with many cases trades an exact-width bar for reachable targets. */
+  height: 1.5rem;
+  overflow-x: auto;
+}
+:is(.accessible, .accessibledark) [data-status-bar] > * {
+  min-width: 1.5rem !important;
+}
+:is(.accessible, .accessibledark) [data-status-surface] {
+  /* 1.4.3 Contrast: statuses, tags and result colours are picked by admins, so
+     no fixed foreground is safe on them — white on the seeded green is 2.95:1.
+     The element supplies --status-surface-fg (black or white, whichever
+     contrasts better; see utils/contrastingTextColor.ts) and only the
+     accessible themes consume it, so the brand themes keep their own text
+     colour. !important because the colour is set inline alongside the
+     background. */
+  color: var(--status-surface-fg) !important;
+}
 
 /* Style the close button specifically for the TestRunCaseDetails sheet */
 .test-run-details-sheet > button.absolute.end-4.top-4 {
