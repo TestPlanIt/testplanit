@@ -1077,7 +1077,8 @@ export default function TestRunPage() {
 
       // A join against a peer that had no group of its own mints one uuid for
       // both records; this run was just stamped above, the peer is stamped
-      // here. Rolls this run back if the peer write fails.
+      // here. Rolls this run back if the peer write fails, and no-ops when
+      // this save didn't move the run — see the helper.
       await applyConfigurationGroupPeerStamp({
         update: (args) => updateTestRuns(args),
         recordId: Number(runId),
@@ -1224,6 +1225,11 @@ export default function TestRunPage() {
     setPendingAttachmentChanges({ edits: [], deletes: [] });
     setSelectedFiles([]);
     setSelectedLinks([]);
+    // Drop a staged group link. Unlike the other fields, this one is read back
+    // out of the form to render the membership list, so leaving it staged
+    // would show an abandoned link as though it were saved.
+    setValue("configurationGroupId", testRunData?.configurationGroupId ?? null);
+    setConfigGroupStampTargetId(null);
     // Exit edit mode
     const params = new URLSearchParams(searchParams.toString());
     params.delete("selectedCase"); // Also close sheet on cancel

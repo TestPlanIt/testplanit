@@ -1541,6 +1541,10 @@ export default function SessionPage() {
             : JSON.stringify(data.mission),
       };
 
+      const groupChanged =
+        (data.configurationGroupId ?? null) !==
+        (sessionData?.configurationGroupId ?? null);
+
       // Update session
       const updatedSession = await updateSessions({
         where: {
@@ -1561,8 +1565,7 @@ export default function SessionPage() {
           // the group and sweep it for auto-dissolve, so only send it when the
           // user actually changed it — an unchanged value can neither break an
           // invariant nor orphan a group.
-          ...((data.configurationGroupId ?? null) !==
-          (sessionData?.configurationGroupId ?? null)
+          ...(groupChanged
             ? configurationGroupUpdateData(data.configurationGroupId)
             : {}),
           attachments: {
@@ -1590,7 +1593,8 @@ export default function SessionPage() {
 
       // A join against a peer that had no group of its own mints one uuid for
       // both records; this session was just stamped above, the peer is stamped
-      // here. Rolls this session back if the peer write fails.
+      // here. Rolls this session back if the peer write fails, and no-ops when
+      // this save didn't move the session — see the helper.
       await applyConfigurationGroupPeerStamp({
         update: (args) => updateSessions(args),
         recordId: Number(sessionId),
@@ -1752,6 +1756,9 @@ export default function SessionPage() {
     // Reset pending attachment changes
     setPendingAttachmentChanges({ edits: [], deletes: [] });
     setSelectedFiles([]);
+    // `form.reset` above restores the group id, but the peer waiting to be
+    // stamped lives outside the form and would otherwise outlive the pick.
+    setConfigGroupStampTargetId(null);
     const params = new URLSearchParams(searchParams);
     params.delete("edit");
     router.replace(`?${params.toString()}`);

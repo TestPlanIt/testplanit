@@ -67,7 +67,13 @@ type GroupUpdateFn = (args: {
  * "multi-configuration" at every badge site.
  *
  * A no-op when the change didn't mint anything (the peer was already in a
- * group, or the change was an unlink).
+ * group, or the change was an unlink), and when this record's group did not
+ * move. That last case is the one that bites: the stamp target is picked in
+ * the form but only cleared by a successful save, so it outlives an abandoned
+ * edit or a save that threw. Stamping then would write this record's existing
+ * group onto a peer the user never confirmed — silently, since the record
+ * itself needs no write. A join always moves this record, so requiring that is
+ * free.
  */
 export async function applyConfigurationGroupPeerStamp(args: {
   update: GroupUpdateFn;
@@ -79,6 +85,7 @@ export async function applyConfigurationGroupPeerStamp(args: {
   const { update, recordId, groupId, stampTargetId, previousGroupId } = args;
   if (stampTargetId === null || !groupId) return;
   if (stampTargetId === recordId) return;
+  if (groupId === previousGroupId) return;
   try {
     await update({
       where: { id: stampTargetId },

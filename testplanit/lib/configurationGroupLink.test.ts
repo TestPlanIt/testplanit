@@ -84,6 +84,23 @@ describe("applyConfigurationGroupPeerStamp", () => {
     });
   });
 
+  it("does nothing when this record's group did not move", async () => {
+    // The stamp target is only cleared by a successful save, so it survives an
+    // abandoned edit or a save that threw. Stamping on a later save that left
+    // this record's group alone would silently pull that peer into the group.
+    const update = vi.fn().mockResolvedValue({});
+
+    await applyConfigurationGroupPeerStamp({
+      update,
+      recordId: 1,
+      groupId: GROUP_A,
+      stampTargetId: 9,
+      previousGroupId: GROUP_A,
+    });
+
+    expect(update).not.toHaveBeenCalled();
+  });
+
   it("does nothing when the peer was already in a group", async () => {
     const update = vi.fn().mockResolvedValue({});
 

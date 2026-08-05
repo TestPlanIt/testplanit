@@ -171,6 +171,32 @@ describe("ConfigurationGroupLinkField state", () => {
       screen.queryByTestId("configuration-group-unlink")
     ).not.toBeInTheDocument();
   });
+
+  it("shows saved membership, not a staged one, when not editable", () => {
+    // A staged pick that was never saved must not read as real membership:
+    // the "not saved yet" notice only renders in the editable branch, so a
+    // read-only panel showing `value` would assert a link with no warning.
+    mockRunFindMany.mockReturnValue({ data: [] });
+    renderField({ value: GROUP_B, savedValue: null, editable: false });
+
+    expect(mockRunFindMany).toHaveBeenCalled();
+    const [args, options] = mockRunFindMany.mock.calls[0];
+    // The saved value is null, so the query has no group to scope to and is
+    // disabled rather than fetching the staged group's members.
+    expect(args.where.configurationGroupId).toBeUndefined();
+    expect(options.enabled).toBe(false);
+    expect(screen.getByTestId("configuration-group-empty")).toBeVisible();
+  });
+
+  it("still shows the staged group while editable", () => {
+    mockRunFindMany.mockReturnValue({ data: [] });
+    renderField({ value: GROUP_B, savedValue: null, editable: true });
+
+    const [args] = mockRunFindMany.mock.calls[0];
+    expect(args.where).toEqual(
+      expect.objectContaining({ configurationGroupId: GROUP_B })
+    );
+  });
 });
 
 describe("ConfigurationGroupLinkField linking", () => {

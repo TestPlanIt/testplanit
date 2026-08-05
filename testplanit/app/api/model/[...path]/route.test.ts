@@ -2465,6 +2465,31 @@ describe("ZenStack chokepoint configuration-group guard", () => {
     expect(baseHandlerMock).not.toHaveBeenCalled();
   });
 
+  it("rejects an upsert whose create branch reaches into another project's group", async () => {
+    // `upsert` carries its own create payload, which runs whenever `where`
+    // matches nothing — the same rule as `create` has to reach it.
+    const { baseDb } = await import("~/lib/db");
+    installTable(baseDb as any, "testRuns", [
+      { id: 9, projectId: 8, configurationGroupId: GROUP_A, isDeleted: false },
+      { id: 10, projectId: 8, configurationGroupId: GROUP_A, isDeleted: false },
+    ]);
+
+    const { POST } = await import("./route");
+    const req = makeRequest("POST", ["testRuns", "upsert"], {
+      where: { id: 99999999 },
+      create: { name: "run", projectId: 7, configurationGroupId: GROUP_A },
+      update: {},
+    });
+    const res = await POST(req, {
+      params: Promise.resolve({ path: ["testRuns", "upsert"] }),
+    });
+    const body = await res.json();
+
+    expect(res.status).toBe(400);
+    expect(body.error.code).toBe("CONFIGURATION_GROUP_INVALID");
+    expect(baseHandlerMock).not.toHaveBeenCalled();
+  });
+
   it("allows the create-modal batch that mints a fresh group", async () => {
     const { baseDb } = await import("~/lib/db");
     installTable(baseDb as any, "testRuns", []);

@@ -538,8 +538,8 @@ export function readTargetRecordIds(
 }
 
 /**
- * `configurationGroupId` values a create/createMany payload wants to stamp,
- * paired with the projectId the new row lands in (null when the payload
+ * `configurationGroupId` values a create/createMany/upsert payload wants to
+ * stamp, paired with the projectId the new row lands in (null when the payload
  * expresses it in a shape we can't read — the guard then relies on the existing
  * members alone). Returns `null` when the operation can't mint membership, so
  * the caller pays no query cost.
@@ -547,13 +547,25 @@ export function readTargetRecordIds(
  * The create modals are the canonical caller: they mint one fresh uuid and
  * stamp it on every row of a multi-configuration batch, which has no existing
  * members and therefore always passes.
+ *
+ * `upsert` carries a create payload of its own under `create`, which reaches
+ * the database whenever the `where` matches nothing. Reading only `data` would
+ * leave that half of the operation unguarded while the identical payload sent
+ * to `create` is rejected — `readConfigurationGroupIntent` covers its `update`
+ * half.
  */
 export function readConfigurationGroupCreateIntents(
   operation: string,
   body: any
 ): Array<{ groupId: string; projectId: number | null }> | null {
-  if (operation !== "create" && operation !== "createMany") return null;
-  const raw = body?.data;
+  if (
+    operation !== "create" &&
+    operation !== "createMany" &&
+    operation !== "upsert"
+  ) {
+    return null;
+  }
+  const raw = operation === "upsert" ? body?.create : body?.data;
   const rows: any[] = Array.isArray(raw) ? raw : raw ? [raw] : [];
   const intents: Array<{ groupId: string; projectId: number | null }> = [];
   for (const rowData of rows) {

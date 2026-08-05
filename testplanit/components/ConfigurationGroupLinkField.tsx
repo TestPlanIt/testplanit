@@ -114,7 +114,13 @@ export function ConfigurationGroupLinkField({
   // up. Merged into the member list so the UI reflects the pick immediately.
   const [pendingPeer, setPendingPeer] = useState<CandidateOption | null>(null);
 
-  const scope = { configurationGroupId: value, projectId };
+  // Staged membership is only ever shown where it can also be saved. Outside
+  // edit mode the pages keep rendering this field, and a caller that stages a
+  // pick and then leaves without saving would otherwise have the abandoned
+  // group listed as though it were this record's real membership — the
+  // "not saved yet" notice lives in the editable branch and cannot warn there.
+  const displayedGroupId = editable ? value : savedValue;
+  const scope = { configurationGroupId: displayedGroupId, projectId };
   const memberArgs = {
     where: buildConfigurationGroupWhere(scope),
     select: {
@@ -143,7 +149,8 @@ export function ConfigurationGroupLinkField({
     }>;
     const list = rows.filter((row) => row.id !== recordId);
     if (
-      value &&
+      editable &&
+      displayedGroupId &&
       pendingPeer &&
       pendingPeer.id !== recordId &&
       !list.some((row) => row.id === pendingPeer.id)
@@ -160,7 +167,8 @@ export function ConfigurationGroupLinkField({
     runMembers.data,
     sessionMembers.data,
     recordId,
-    value,
+    editable,
+    displayedGroupId,
     pendingPeer,
   ]);
 
@@ -295,7 +303,7 @@ export function ConfigurationGroupLinkField({
     onChange({ groupId: null, stampTargetId: null });
   }, [onChange]);
 
-  const linked = !!value && peers.length > 0;
+  const linked = !!displayedGroupId && peers.length > 0;
   const hasUnsavedChange = value !== savedValue;
 
   return (
