@@ -2892,7 +2892,9 @@
         "title": "導入測試用例",
         "fields": {
           "workflowState": "工作流程狀態",
-          "column": "列 {number}"
+          "column": "列 {number}",
+          "caseId": "案例 ID",
+          "caseIdDescription": "TestPlanIt 案例 ID"
         },
         "success": {
           "description": "{count, plural, one {# 測試案例} other {# 測試案例}} 匯入成功"
@@ -2902,7 +2904,15 @@
           "folderRequired": "此導入位置需要選擇資料夾。",
           "fileRequired": "需要 CSV 或 Markdown 檔案。",
           "markdownParseFailed": "解析 Markdown 文件失敗",
-          "markdownLlmFailed": "AI解析不可用，使用標準解析器"
+          "markdownLlmFailed": "AI解析不可用，使用標準解析器",
+          "validationTitle": "匯入驗證失敗",
+          "validationSummary": "{count, plural, other {在您的檔案中發現 # 個問題}}。未匯入任何測試案例。",
+          "validationEntry": "第 {row, number} 列 · {field}：{message}",
+          "validationEntryNamed": "第 {row, number} 列「{name}」· {field}：{message}",
+          "validationMore": "{count, plural, other {還有 # 個問題}} 未顯示。",
+          "validationMultiRowNote": "列號指的是預覽中顯示的分組測試案例，而非原始 CSV 行。",
+          "partialTitle": "部分測試案例未匯入",
+          "partialSummary": "{failed, plural, other {# 列}} 無法匯入。{imported, plural, other {# 個測試案例}} 已成功匯入。"
         },
         "page1": {
           "fileType": {
@@ -2934,7 +2944,8 @@
           "title": "將 CSV 欄位對應到字段",
           "description": "將 CSV 檔案中的每一列對應到範本中的一個字段，或選擇忽略它。",
           "ignoreColumn": "忽略列",
-          "requiredFieldsWarning": "{count, plural, one {# 必填欄位為} other {# 必填欄位為}} 未對映"
+          "requiredFieldsWarning": "{count, plural, one {# 必填欄位為} other {# 必填欄位為}} 未對映",
+          "caseIdHint": "這必須是數字案例 ID — 相符的案例將被覆寫。"
         },
         "page3": {
           "title": "田間測繪概要",

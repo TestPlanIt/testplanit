@@ -2892,7 +2892,9 @@
         "title": "Импорт тестовых примеров",
         "fields": {
           "workflowState": "Состояние рабочего процесса",
-          "column": "Столбец {number}"
+          "column": "Столбец {number}",
+          "caseId": "ID случая",
+          "caseIdDescription": "ID случая TestPlanIt"
         },
         "success": {
           "description": "{count, plural, one {# тестовый пример} other {# тестовые примеры}} успешно импортированы"
@@ -2902,7 +2904,15 @@
           "folderRequired": "Для импорта в это место необходимо выбрать папку.",
           "fileRequired": "Требуется файл в формате CSV или Markdown.",
           "markdownParseFailed": "Не удалось разобрать файл Markdown.",
-          "markdownLlmFailed": "Анализ с помощью ИИ недоступен, используется стандартный парсер."
+          "markdownLlmFailed": "Анализ с помощью ИИ недоступен, используется стандартный парсер.",
+          "validationTitle": "Проверка импорта не пройдена",
+          "validationSummary": "{count, plural, one {Обнаружена # проблема} few {Обнаружены # проблемы} many {Обнаружено # проблем} other {Обнаружены # проблемы}} в вашем файле. Тестовые случаи не были импортированы.",
+          "validationEntry": "Строка {row, number} · {field}: {message}",
+          "validationEntryNamed": "Строка {row, number} «{name}» · {field}: {message}",
+          "validationMore": "Ещё {count, plural, one {# проблема} few {# проблемы} many {# проблем} other {# проблемы}} не показано.",
+          "validationMultiRowNote": "Номера строк соответствуют сгруппированным тестовым случаям, отображаемым в предварительном просмотре, а не исходным строкам CSV.",
+          "partialTitle": "Некоторые тестовые случаи не были импортированы",
+          "partialSummary": "Не удалось импортировать {failed, plural, one {# строку} few {# строки} many {# строк} other {# строки}}. Успешно импортировано {imported, plural, one {# тестовый случай} few {# тестовых случая} many {# тестовых случаев} other {# тестовых случая}}."
         },
         "page1": {
           "fileType": {
@@ -2934,7 +2944,8 @@
           "title": "Сопоставление столбцов CSV-файла с полями.",
           "description": "Сопоставьте каждый столбец CSV-файла с полем в шаблоне или выберите вариант игнорирования.",
           "ignoreColumn": "Игнорировать столбец",
-          "requiredFieldsWarning": "{count, plural, one {# обязательное поле} other {# обязательные поля}} не сопоставлены"
+          "requiredFieldsWarning": "{count, plural, one {# обязательное поле} other {# обязательные поля}} не сопоставлены",
+          "caseIdHint": "Это должен быть числовой ID случая — совпадающие случаи будут перезаписаны."
         },
         "page3": {
           "title": "Сводка по сопоставлению полей",

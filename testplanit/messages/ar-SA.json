@@ -2892,7 +2892,9 @@
         "title": "استيراد حالات الاختبار",
         "fields": {
           "workflowState": "حالة سير العمل",
-          "column": "العمود {number}"
+          "column": "العمود {number}",
+          "caseId": "معرّف الحالة",
+          "caseIdDescription": "معرّف الحالة في TestPlanIt"
         },
         "success": {
           "description": "تم استيراد {count, plural, zero {# حالة اختبار} one {حالة اختبار واحدة} two {حالتي اختبار} few {# حالات اختبار} many {# حالة اختبار} other {# حالة اختبار}} بنجاح"
@@ -2902,7 +2904,15 @@
           "folderRequired": "تحديد المجلد مطلوب لموقع الاستيراد هذا",
           "fileRequired": "مطلوب ملف CSV أو Markdown",
           "markdownParseFailed": "فشل تحليل ملف Markdown",
-          "markdownLlmFailed": "التحليل بالذكاء الاصطناعي غير متوفر، يتم استخدام المحلل القياسي"
+          "markdownLlmFailed": "التحليل بالذكاء الاصطناعي غير متوفر، يتم استخدام المحلل القياسي",
+          "validationTitle": "فشل التحقق من صحة الاستيراد",
+          "validationSummary": "تم العثور على {count, plural, zero {# مشكلة} one {مشكلة واحدة} two {مشكلتان} few {# مشاكل} many {# مشكلة} other {# مشكلة}} في ملفك. لم يتم استيراد أي حالات اختبار.",
+          "validationEntry": "الصف {row, number} · {field}: {message}",
+          "validationEntryNamed": "الصف {row, number} \"{name}\" · {field}: {message}",
+          "validationMore": "{count, plural, zero {# مشكلة أخرى غير معروضة} one {مشكلة أخرى واحدة غير معروضة} two {مشكلتان أخريان غير معروضتين} few {# مشاكل أخرى غير معروضة} many {# مشكلة أخرى غير معروضة} other {# مشكلة أخرى غير معروضة}}.",
+          "validationMultiRowNote": "تشير أرقام الصفوف إلى حالات الاختبار المجمّعة الظاهرة في المعاينة، وليس إلى أسطر CSV الأصلية.",
+          "partialTitle": "لم يتم استيراد بعض حالات الاختبار",
+          "partialSummary": "تعذر استيراد {failed, plural, zero {# صف} one {صف واحد} two {صفان} few {# صفوف} many {# صفًا} other {# صف}}. تم استيراد {imported, plural, zero {# حالة اختبار} one {حالة اختبار واحدة} two {حالتا اختبار} few {# حالات اختبار} many {# حالة اختبار} other {# حالة اختبار}} بنجاح."
         },
         "page1": {
           "fileType": {
@@ -2934,7 +2944,8 @@
           "title": "تخطيط أعمدة CSV إلى الحقول",
           "description": "خطّط كل عمود CSV إلى حقل في القالب أو اختر تجاهله.",
           "ignoreColumn": "تجاهل العمود",
-          "requiredFieldsWarning": "{count, plural, zero {# حقل مطلوب غير معين} one {حقل مطلوب واحد غير معين} two {حقلان مطلوبان غير معينين} few {# حقول مطلوبة غير معينة} many {# حقل مطلوب غير معين} other {# حقل مطلوب غير معين}}"
+          "requiredFieldsWarning": "{count, plural, zero {# حقل مطلوب غير معين} one {حقل مطلوب واحد غير معين} two {حقلان مطلوبان غير معينين} few {# حقول مطلوبة غير معينة} many {# حقل مطلوب غير معين} other {# حقل مطلوب غير معين}}",
+          "caseIdHint": "يجب أن يكون هذا هو معرّف الحالة الرقمي — يتم استبدال الحالات المطابقة."
         },
         "page3": {
           "title": "ملخص تخطيط الحقول",

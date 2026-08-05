@@ -2892,7 +2892,9 @@
         "title": "Import-Testfälle",
         "fields": {
           "workflowState": "Workflow-Status",
-          "column": "Spalte {number}"
+          "column": "Spalte {number}",
+          "caseId": "Fall-ID",
+          "caseIdDescription": "TestPlanIt-Fall-ID"
         },
         "success": {
           "description": "{count, plural, one {# Testfall} other {# Testfälle}} erfolgreich importiert"
@@ -2902,7 +2904,15 @@
           "folderRequired": "Für diesen Importort ist eine Ordnerauswahl erforderlich.",
           "fileRequired": "Eine CSV- oder Markdown-Datei ist erforderlich.",
           "markdownParseFailed": "Fehler beim Parsen der Markdown-Datei",
-          "markdownLlmFailed": "KI-Parsing nicht verfügbar, Standardparser wird verwendet"
+          "markdownLlmFailed": "KI-Parsing nicht verfügbar, Standardparser wird verwendet",
+          "validationTitle": "Importvalidierung fehlgeschlagen",
+          "validationSummary": "{count, plural, one {# Problem wurde} other {# Probleme wurden}} in Ihrer Datei gefunden. Es wurden keine Testfälle importiert.",
+          "validationEntry": "Zeile {row, number} · {field}: {message}",
+          "validationEntryNamed": "Zeile {row, number} \"{name}\" · {field}: {message}",
+          "validationMore": "{count, plural, one {# weiteres Problem wird} other {# weitere Probleme werden}} nicht angezeigt.",
+          "validationMultiRowNote": "Die Zeilennummern beziehen sich auf die gruppierten Testfälle in der Vorschau, nicht auf die rohen CSV-Zeilen.",
+          "partialTitle": "Einige Testfälle wurden nicht importiert",
+          "partialSummary": "{failed, plural, one {# Zeile konnte} other {# Zeilen konnten}} nicht importiert werden. {imported, plural, one {# Testfall wurde} other {# Testfälle wurden}} erfolgreich importiert."
         },
         "page1": {
           "fileType": {
@@ -2934,7 +2944,8 @@
           "title": "CSV-Spalten Feldern zuordnen",
           "description": "Ordnen Sie jede CSV-Spalte einem Feld in der Vorlage zu oder wählen Sie, ob sie ignoriert werden soll.",
           "ignoreColumn": "Spalte ignorieren",
-          "requiredFieldsWarning": "{count, plural, one {# Pflichtfeld ist} other {# Pflichtfelder sind}} nicht zugeordnet"
+          "requiredFieldsWarning": "{count, plural, one {# Pflichtfeld ist} other {# Pflichtfelder sind}} nicht zugeordnet",
+          "caseIdHint": "Dies muss die numerische Fall-ID sein — übereinstimmende Fälle werden überschrieben."
         },
         "page3": {
           "title": "Zusammenfassung der Feldzuordnung",

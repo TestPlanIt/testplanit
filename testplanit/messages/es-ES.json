@@ -2892,7 +2892,9 @@
         "title": "Importar Casos de Prueba",
         "fields": {
           "workflowState": "Estado de flujo de trabajo",
-          "column": "Columna {number}"
+          "column": "Columna {number}",
+          "caseId": "ID de caso",
+          "caseIdDescription": "ID de caso de TestPlanIt"
         },
         "success": {
           "description": "{count, plural, one {# caso de prueba} other {# casos de prueba}} importado correctamente"
@@ -2902,7 +2904,15 @@
           "folderRequired": "La selección de carpeta es necesaria para esta ubicación de importación",
           "fileRequired": "Se requiere un archivo CSV o Markdown",
           "markdownParseFailed": "No se pudo analizar el archivo Markdown",
-          "markdownLlmFailed": "Análisis de IA no disponible, se utiliza el analizador estándar"
+          "markdownLlmFailed": "Análisis de IA no disponible, se utiliza el analizador estándar",
+          "validationTitle": "Error de validación de importación",
+          "validationSummary": "{count, plural, one {Se encontró # problema} other {Se encontraron # problemas}} en su archivo. No se importó ningún caso de prueba.",
+          "validationEntry": "Fila {row, number} · {field}: {message}",
+          "validationEntryNamed": "Fila {row, number} \"{name}\" · {field}: {message}",
+          "validationMore": "{count, plural, one {# problema más no se muestra} other {# problemas más no se muestran}}.",
+          "validationMultiRowNote": "Los números de fila hacen referencia a los casos de prueba agrupados que se muestran en la vista previa, no a las líneas del CSV original.",
+          "partialTitle": "Algunos casos de prueba no se importaron",
+          "partialSummary": "{failed, plural, one {# fila no se pudo importar} other {# filas no se pudieron importar}}. {imported, plural, one {# caso de prueba se importó correctamente} other {# casos de prueba se importaron correctamente}}."
         },
         "page1": {
           "fileType": {
@@ -2934,7 +2944,8 @@
           "title": "Mapear columnas CSV a campos",
           "description": "Mapear cada columna CSV a un campo en la plantilla o elegir ignorarlo.",
           "ignoreColumn": "Ignorar Columna",
-          "requiredFieldsWarning": "{count, plural, one {# el campo requerido es} other {# los campos requeridos son}} no están mapeados"
+          "requiredFieldsWarning": "{count, plural, one {# el campo requerido es} other {# los campos requeridos son}} no están mapeados",
+          "caseIdHint": "Debe ser el ID numérico del caso; los casos coincidentes se sobrescriben."
         },
         "page3": {
           "title": "Resumen de mapeo de campos",

@@ -2892,7 +2892,9 @@
         "title": "Testcases importeren",
         "fields": {
           "workflowState": "Workflowstatus",
-          "column": "Kolom {number}"
+          "column": "Kolom {number}",
+          "caseId": "Testgeval-ID",
+          "caseIdDescription": "TestPlanIt Testgeval-ID"
         },
         "success": {
           "description": "{count, plural, one {# testcase} other {# testcases}} succesvol geïmporteerd"
@@ -2902,7 +2904,15 @@
           "folderRequired": "Voor deze importlocatie is mapselectie vereist",
           "fileRequired": "Een CSV- of Markdown-bestand is vereist.",
           "markdownParseFailed": "Het parseren van het Markdown-bestand is mislukt.",
-          "markdownLlmFailed": "AI-parsing niet beschikbaar, standaardparser wordt gebruikt."
+          "markdownLlmFailed": "AI-parsing niet beschikbaar, standaardparser wordt gebruikt.",
+          "validationTitle": "Importvalidatie mislukt",
+          "validationSummary": "{count, plural, one {# probleem is} other {# problemen zijn}} gevonden in uw bestand. Er zijn geen testgevallen geïmporteerd.",
+          "validationEntry": "Rij {row, number} · {field}: {message}",
+          "validationEntryNamed": "Rij {row, number} \"{name}\" · {field}: {message}",
+          "validationMore": "{count, plural, one {# extra probleem wordt} other {# extra problemen worden}} niet weergegeven.",
+          "validationMultiRowNote": "Rijnummers verwijzen naar de gegroepeerde testgevallen die in de voorvertoning worden weergegeven, niet naar de ruwe CSV-regels.",
+          "partialTitle": "Sommige testgevallen zijn niet geïmporteerd",
+          "partialSummary": "{failed, plural, one {# rij kon} other {# rijen konden}} niet worden geïmporteerd. {imported, plural, one {# testgeval is} other {# testgevallen zijn}} succesvol geïmporteerd."
         },
         "page1": {
           "fileType": {
@@ -2934,7 +2944,8 @@
           "title": "CSV-kolommen toewijzen aan velden",
           "description": "U kunt elke CSV-kolom toewijzen aan een veld in de sjabloon, of ervoor kiezen deze te negeren.",
           "ignoreColumn": "Kolom negeren",
-          "requiredFieldsWarning": "{count, plural, one {# verplicht veld is} other {# verplichte velden zijn}} niet toegewezen"
+          "requiredFieldsWarning": "{count, plural, one {# verplicht veld is} other {# verplichte velden zijn}} niet toegewezen",
+          "caseIdHint": "Dit moet het numerieke Testgeval-ID zijn — overeenkomende testgevallen worden overschreven."
         },
         "page3": {
           "title": "Samenvatting van veldtoewijzing",

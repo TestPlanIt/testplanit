@@ -2892,7 +2892,9 @@
         "title": "Importa casi di test",
         "fields": {
           "workflowState": "Stato del flusso di lavoro",
-          "column": "Colonna {number}"
+          "column": "Colonna {number}",
+          "caseId": "ID caso",
+          "caseIdDescription": "ID caso TestPlanIt"
         },
         "success": {
           "description": "{count, plural, one {# caso di test} other {# casi di test}} importato con successo"
@@ -2902,7 +2904,15 @@
           "folderRequired": "Per questa posizione di importazione è richiesta la selezione della cartella",
           "fileRequired": "È richiesto un file CSV o Markdown",
           "markdownParseFailed": "Impossibile analizzare il file Markdown",
-          "markdownLlmFailed": "Analisi sintattica tramite IA non disponibile, utilizzo del parser standard."
+          "markdownLlmFailed": "Analisi sintattica tramite IA non disponibile, utilizzo del parser standard.",
+          "validationTitle": "Convalida importazione non riuscita",
+          "validationSummary": "{count, plural, one {# problema è stato trovato} other {# problemi sono stati trovati}} nel file. Nessun caso di test è stato importato.",
+          "validationEntry": "Riga {row, number} · {field}: {message}",
+          "validationEntryNamed": "Riga {row, number} \"{name}\" · {field}: {message}",
+          "validationMore": "{count, plural, one {# altro problema non è} other {# altri problemi non sono}} mostrati.",
+          "validationMultiRowNote": "I numeri di riga si riferiscono ai casi di test raggruppati mostrati nell'anteprima, non alle righe CSV originali.",
+          "partialTitle": "Alcuni casi di test non sono stati importati",
+          "partialSummary": "{failed, plural, one {# riga non poteva essere importata} other {# righe non potevano essere importate}}. {imported, plural, one {# caso di test è stato importato} other {# casi di test sono stati importati}} correttamente."
         },
         "page1": {
           "fileType": {
@@ -2934,7 +2944,8 @@
           "title": "Mappa le colonne CSV sui campi",
           "description": "Associa ogni colonna CSV a un campo nel modello oppure scegli di ignorarla.",
           "ignoreColumn": "Ignora colonna",
-          "requiredFieldsWarning": "{count, plural, one {# il campo obbligatorio non è} other {# i campi obbligatori non sono}} mappati"
+          "requiredFieldsWarning": "{count, plural, one {# il campo obbligatorio non è} other {# i campi obbligatori non sono}} mappati",
+          "caseIdHint": "Deve essere l'ID caso numerico — i casi corrispondenti vengono sovrascritti."
         },
         "page3": {
           "title": "Riepilogo della mappatura del campo",

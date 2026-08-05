@@ -2892,7 +2892,9 @@
         "title": "테스트 케이스 가져오기",
         "fields": {
           "workflowState": "워크플로우 상태",
-          "column": "컬럼 {number}"
+          "column": "컬럼 {number}",
+          "caseId": "케이스 ID",
+          "caseIdDescription": "TestPlanIt 케이스 ID"
         },
         "success": {
           "description": "{count, plural, one {# 테스트 케이스} other {# 테스트 케이스}} 성공적으로 가져왔습니다"
@@ -2902,7 +2904,15 @@
           "folderRequired": "이 가져오기 위치를 선택하려면 폴더를 지정해야 합니다.",
           "fileRequired": "CSV 또는 Markdown 파일이 필요합니다.",
           "markdownParseFailed": "마크다운 파일을 구문 분석하는 데 실패했습니다.",
-          "markdownLlmFailed": "AI 구문 분석 기능을 사용할 수 없으므로 표준 구문 분석기를 사용합니다."
+          "markdownLlmFailed": "AI 구문 분석 기능을 사용할 수 없으므로 표준 구문 분석기를 사용합니다.",
+          "validationTitle": "가져오기 유효성 검사 실패",
+          "validationSummary": "파일에서 {count, plural, other {#개의 문제가}} 발견되었습니다. 테스트 케이스를 가져오지 못했습니다.",
+          "validationEntry": "{row, number}행 · {field}: {message}",
+          "validationEntryNamed": "{row, number}행 \"{name}\" · {field}: {message}",
+          "validationMore": "{count, plural, other {#개의 추가 문제가}} 표시되지 않았습니다.",
+          "validationMultiRowNote": "행 번호는 원시 CSV 줄이 아니라 미리보기에 표시된 그룹화된 테스트 케이스를 나타냅니다.",
+          "partialTitle": "일부 테스트 케이스를 가져오지 못했습니다",
+          "partialSummary": "{failed, plural, other {#개 행}}을 가져올 수 없습니다. {imported, plural, other {#개의 테스트 케이스}}가 성공적으로 가져와졌습니다."
         },
         "page1": {
           "fileType": {
@@ -2934,7 +2944,8 @@
           "title": "CSV 열을 필드에 매핑",
           "description": "CSV 파일의 각 열을 템플릿의 필드에 매핑하거나 무시하도록 선택할 수 있습니다.",
           "ignoreColumn": "무시할 열",
-          "requiredFieldsWarning": "{count, plural, one {# 필수 입력 필드는} other {# 필수 입력 필드는}} 매핑되지 않았습니다"
+          "requiredFieldsWarning": "{count, plural, one {# 필수 입력 필드는} other {# 필수 입력 필드는}} 매핑되지 않았습니다",
+          "caseIdHint": "이는 숫자로 된 케이스 ID여야 하며, 일치하는 케이스는 덮어씌워집니다."
         },
         "page3": {
           "title": "현장 지도 작성 요약",

@@ -2892,7 +2892,9 @@
         "title": "导入测试用例",
         "fields": {
           "workflowState": "工作流状态",
-          "column": "列 {number}"
+          "column": "列 {number}",
+          "caseId": "用例 ID",
+          "caseIdDescription": "TestPlanIt 用例 ID"
         },
         "success": {
           "description": "{count, plural, one {# 测试用例} other {# 测试用例}} 导入成功"
@@ -2902,7 +2904,15 @@
           "folderRequired": "此导入位置需要选择文件夹。",
           "fileRequired": "需要 CSV 或 Markdown 文件。",
           "markdownParseFailed": "解析 Markdown 文件失败",
-          "markdownLlmFailed": "AI解析不可用，使用标准解析器"
+          "markdownLlmFailed": "AI解析不可用，使用标准解析器",
+          "validationTitle": "导入验证失败",
+          "validationSummary": "{count, plural, other {在您的文件中发现 # 个问题}}。未导入任何测试用例。",
+          "validationEntry": "第 {row, number} 行 · {field}：{message}",
+          "validationEntryNamed": "第 {row, number} 行 \"{name}\" · {field}：{message}",
+          "validationMore": "{count, plural, other {还有 # 个问题未显示}}。",
+          "validationMultiRowNote": "行号指的是预览中显示的分组测试用例，而非原始 CSV 行。",
+          "partialTitle": "部分测试用例未导入",
+          "partialSummary": "{failed, plural, other {# 行}}无法导入。{imported, plural, other {# 个测试用例}}导入成功。"
         },
         "page1": {
           "fileType": {
@@ -2934,7 +2944,8 @@
           "title": "将 CSV 列映射到字段",
           "description": "将 CSV 文件中的每一列映射到模板中的一个字段，或者选择忽略它。",
           "ignoreColumn": "忽略列",
-          "requiredFieldsWarning": "{count, plural, one {# 必填字段为} other {# 必填字段为}} 未映射"
+          "requiredFieldsWarning": "{count, plural, one {# 必填字段为} other {# 必填字段为}} 未映射",
+          "caseIdHint": "此项必须为数字用例 ID — 匹配的用例将被覆盖。"
         },
         "page3": {
           "title": "田间测绘概要",

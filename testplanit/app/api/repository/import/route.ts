@@ -149,6 +149,10 @@ interface ImportError {
   row: number;
   field: string;
   error: string;
+  // Case name for the offending row, when it resolved. The wizard shows it
+  // alongside the row number so multi-row imports (where a row number means
+  // "grouped case N", not "CSV line N") are still identifiable.
+  caseName?: string;
 }
 
 export const POST = withAuditContext(async (request: NextRequest) => {
@@ -298,9 +302,25 @@ export const POST = withAuditContext(async (request: NextRequest) => {
         const errors: ImportError[] = [];
         const casesToImport: any[] = [];
 
+        // A missing Name mapping fails every row identically, which drowns the
+        // real problem in N copies of the same message. Say it once instead.
+        const nameMapping = body.fieldMappings.find(
+          (m) => m.templateField === "name"
+        );
+        if (!nameMapping) {
+          sendError(
+            "No column is mapped to Name. Go back to the column mapping step and map the column holding the test case name."
+          );
+          return;
+        }
+
         // Process each row
         for (let rowIndex = 0; rowIndex < rows.length; rowIndex++) {
           const row = rows[rowIndex];
+          // Errors raised while mapping this row's columns. Collected first so
+          // the case name — which may be mapped after the failing column — can
+          // be attached to all of them.
+          const rowErrors: ImportError[] = [];
           const caseData: any = {
             name: "",
             projectId: body.projectId,
@@ -366,9 +386,9 @@ export const POST = withAuditContext(async (request: NextRequest) => {
                   // Store steps separately for insertion into Steps table (not CaseFieldValues)
                   caseData.steps = validatedValue;
                 } catch (error: any) {
-                  errors.push({
+                  rowErrors.push({
                     row: rowIndex + 1,
-                    field: "Steps",
+                    field: `Steps (column "${mapping.csvColumn}")`,
                     error: error.message,
                   });
                 }
@@ -396,9 +416,9 @@ export const POST = withAuditContext(async (request: NextRequest) => {
                     caseData.fieldValues[field.caseField.id] = validatedValue;
                   }
                 } catch (error: any) {
-                  errors.push({
+                  rowErrors.push({
                     row: rowIndex + 1,
-                    field: field.caseField.displayName,
+                    field: `${field.caseField.displayName} (column "${mapping.csvColumn}")`,
                     error: error.message,
                   });
                 }
@@ -416,15 +436,18 @@ export const POST = withAuditContext(async (request: NextRequest) => {
             }));
           }
 
+          const caseName: string | undefined = caseData.name || undefined;
+          for (const rowError of rowErrors) {
+            rowError.caseName = caseName;
+          }
+          errors.push(...rowErrors);
+
           // Validate required fields
-          const nameMapping = body.fieldMappings.find(
-            (m) => m.templateField === "name"
-          );
-          if (!nameMapping || !caseData.name) {
+          if (!caseData.name) {
             errors.push({
               row: rowIndex + 1,
               field: "Name",
-              error: "Name is required",
+              error: `Name is required, but column "${nameMapping.csvColumn}" is empty for this row`,
             });
             continue;
           }
@@ -435,10 +458,20 @@ export const POST = withAuditContext(async (request: NextRequest) => {
               cf.caseField.isRequired &&
               !caseData.fieldValues[cf.caseField.id]
             ) {
+              const mappedColumn = body.fieldMappings.find(
+                (m) =>
+                  m.templateField?.toLowerCase() ===
+                    cf.caseField.systemName.toLowerCase() ||
+                  m.templateField?.toLowerCase() ===
+                    cf.caseField.displayName.toLowerCase()
+              );
               errors.push({
                 row: rowIndex + 1,
                 field: cf.caseField.displayName,
-                error: "Required field is missing",
+                caseName,
+                error: mappedColumn
+                  ? `Required field is missing — column "${mappedColumn.csvColumn}" is empty for this row`
+                  : "Required field is missing — no CSV column is mapped to it",
               });
             }
           }
@@ -467,6 +500,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
               errors.push({
                 row: rowIndex + 1,
                 field: "Folder",
+                caseName,
                 error: error.message,
               });
               continue;
@@ -939,6 +973,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
             errors.push({
               row: casesToImport.indexOf(caseData) + 1,
               field: "General",
+              caseName: caseData.name || undefined,
               error: error.message,
             });
           }

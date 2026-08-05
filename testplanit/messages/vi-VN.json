@@ -2892,7 +2892,9 @@
         "title": "Nhập các trường hợp kiểm thử",
         "fields": {
           "workflowState": "Trạng thái quy trình làm việc",
-          "column": "Cột {number}"
+          "column": "Cột {number}",
+          "caseId": "ID trường hợp",
+          "caseIdDescription": "ID Trường hợp TestPlanIt"
         },
         "success": {
           "description": "{count, plural, one {# trường hợp thử nghiệm} other {# các trường hợp thử nghiệm}} đã được nhập thành công"
@@ -2902,7 +2904,15 @@
           "folderRequired": "Bạn cần chọn thư mục cho vị trí nhập này.",
           "fileRequired": "Cần có tệp CSV hoặc Markdown.",
           "markdownParseFailed": "Không thể phân tích cú pháp tệp Markdown.",
-          "markdownLlmFailed": "Tính năng phân tích cú pháp bằng AI không khả dụng, đang sử dụng trình phân tích cú pháp tiêu chuẩn."
+          "markdownLlmFailed": "Tính năng phân tích cú pháp bằng AI không khả dụng, đang sử dụng trình phân tích cú pháp tiêu chuẩn.",
+          "validationTitle": "Xác thực nhập thất bại",
+          "validationSummary": "{count, plural, other {# vấn đề}} được tìm thấy trong tệp của bạn. Không có trường hợp kiểm thử nào được nhập.",
+          "validationEntry": "Dòng {row, number} · {field}: {message}",
+          "validationEntryNamed": "Dòng {row, number} \"{name}\" · {field}: {message}",
+          "validationMore": "{count, plural, other {# vấn đề khác}} không được hiển thị.",
+          "validationMultiRowNote": "Số dòng đề cập đến các trường hợp kiểm thử được nhóm hiển thị trong bản xem trước, không phải các dòng CSV thô.",
+          "partialTitle": "Một số trường hợp kiểm thử không được nhập",
+          "partialSummary": "{failed, plural, other {# dòng}} không thể nhập được. {imported, plural, other {# trường hợp kiểm thử}} đã được nhập thành công."
         },
         "page1": {
           "fileType": {
@@ -2934,7 +2944,8 @@
           "title": "Ánh xạ các cột CSV sang các trường",
           "description": "Bạn có thể ánh xạ từng cột trong tệp CSV đến một trường trong mẫu hoặc chọn bỏ qua bước này.",
           "ignoreColumn": "Bỏ qua cột",
-          "requiredFieldsWarning": "{count, plural, one {# Trường bắt buộc là} other {# Các trường bắt buộc là}} không được ánh xạ"
+          "requiredFieldsWarning": "{count, plural, one {# Trường bắt buộc là} other {# Các trường bắt buộc là}} không được ánh xạ",
+          "caseIdHint": "Đây phải là ID trường hợp dạng số — các trường hợp trùng khớp sẽ bị ghi đè."
         },
         "page3": {
           "title": "Tóm tắt lập bản đồ hiện trường",

@@ -2892,7 +2892,9 @@
         "title": "テストケースのインポート",
         "fields": {
           "workflowState": "ワークフロー状態",
-          "column": "列 {number}"
+          "column": "列 {number}",
+          "caseId": "ケースID",
+          "caseIdDescription": "TestPlanIt ケースID"
         },
         "success": {
           "description": "{count, plural, one {# テストケース} other {# テストケース}} 正常にインポートされました"
@@ -2902,7 +2904,15 @@
           "folderRequired": "このインポート場所にはフォルダの選択が必要です",
           "fileRequired": "CSVまたはMarkdownファイルが必要です",
           "markdownParseFailed": "Markdownファイルの解析に失敗しました",
-          "markdownLlmFailed": "AI解析は利用できません。標準パーサーを使用します。"
+          "markdownLlmFailed": "AI解析は利用できません。標準パーサーを使用します。",
+          "validationTitle": "インポートの検証に失敗しました",
+          "validationSummary": "{count, plural, other {#件の問題}}がファイル内に見つかりました。テストケースはインポートされませんでした。",
+          "validationEntry": "行 {row, number} · {field}: {message}",
+          "validationEntryNamed": "行 {row, number} \"{name}\" · {field}: {message}",
+          "validationMore": "他に{count, plural, other {#件の問題}}が表示されていません。",
+          "validationMultiRowNote": "行番号は、プレビューに表示されるグループ化されたテストケースを参照しており、CSVの生の行を参照するものではありません。",
+          "partialTitle": "一部のテストケースはインポートされませんでした",
+          "partialSummary": "{failed, plural, other {#行}}をインポートできませんでした。{imported, plural, other {#件のテストケース}}が正常にインポートされました。"
         },
         "page1": {
           "fileType": {
@@ -2934,7 +2944,8 @@
           "title": "CSV列をフィールドにマッピングする",
           "description": "各 CSV 列をテンプレートのフィールドにマップするか、無視することを選択します。",
           "ignoreColumn": "列を無視",
-          "requiredFieldsWarning": "{count, plural, one {# 必須フィールドは} other {# 必須フィールドは}} マッピングされていません"
+          "requiredFieldsWarning": "{count, plural, one {# 必須フィールドは} other {# 必須フィールドは}} マッピングされていません",
+          "caseIdHint": "これは数値のケースIDである必要があります。一致するケースは上書きされます。"
         },
         "page3": {
           "title": "フィールドマッピングの概要",

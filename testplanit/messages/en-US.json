@@ -2892,7 +2892,9 @@
         "title": "Import Test Cases",
         "fields": {
           "workflowState": "Workflow State",
-          "column": "Column {number}"
+          "column": "Column {number}",
+          "caseId": "Case ID",
+          "caseIdDescription": "TestPlanIt Case ID"
         },
         "success": {
           "description": "{count, plural, one {# test case} other {# test cases}} imported successfully"
@@ -2902,7 +2904,15 @@
           "folderRequired": "Folder selection is required for this import location",
           "fileRequired": "A CSV or Markdown file is required",
           "markdownParseFailed": "Failed to parse Markdown file",
-          "markdownLlmFailed": "AI parsing unavailable, using standard parser"
+          "markdownLlmFailed": "AI parsing unavailable, using standard parser",
+          "validationTitle": "Import validation failed",
+          "validationSummary": "{count, plural, one {# problem was} other {# problems were}} found in your file. No test cases were imported.",
+          "validationEntry": "Row {row, number} · {field}: {message}",
+          "validationEntryNamed": "Row {row, number} \"{name}\" · {field}: {message}",
+          "validationMore": "{count, plural, one {# more problem is} other {# more problems are}} not shown.",
+          "validationMultiRowNote": "Row numbers refer to the grouped test cases shown in the preview, not to raw CSV lines.",
+          "partialTitle": "Some test cases were not imported",
+          "partialSummary": "{failed, plural, one {# row} other {# rows}} could not be imported. {imported, plural, one {# test case was} other {# test cases were}} imported successfully."
         },
         "page1": {
           "fileType": {
@@ -2934,7 +2944,8 @@
           "title": "Map CSV Columns to Fields",
           "description": "Map each CSV column to a field in the template or choose to ignore it.",
           "ignoreColumn": "Ignore Column",
-          "requiredFieldsWarning": "{count, plural, one {# required field is} other {# required fields are}} not mapped"
+          "requiredFieldsWarning": "{count, plural, one {# required field is} other {# required fields are}} not mapped",
+          "caseIdHint": "This must be the numeric Case ID — matching cases are overwritten."
         },
         "page3": {
           "title": "Field Mapping Summary",

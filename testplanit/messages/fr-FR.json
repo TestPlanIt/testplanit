@@ -2892,7 +2892,9 @@
         "title": "Importer les cas de test",
         "fields": {
           "workflowState": "État du flux de travail",
-          "column": "Colonne {number}"
+          "column": "Colonne {number}",
+          "caseId": "ID du cas",
+          "caseIdDescription": "ID de cas TestPlanIt"
         },
         "success": {
           "description": "{count, plural, one {# cas de test} other {# cas de test}} importé avec succès"
@@ -2902,7 +2904,15 @@
           "folderRequired": "La sélection du dossier est requise pour cet emplacement d'importation",
           "fileRequired": "Un fichier CSV ou Markdown est requis.",
           "markdownParseFailed": "Impossible d'analyser le fichier Markdown",
-          "markdownLlmFailed": "Analyse par IA indisponible, utilisation de l'analyseur standard"
+          "markdownLlmFailed": "Analyse par IA indisponible, utilisation de l'analyseur standard",
+          "validationTitle": "La validation de l'importation a échoué",
+          "validationSummary": "{count, plural, one {# problème a été} other {# problèmes ont été}} trouvé dans votre fichier. Aucun cas de test n'a été importé.",
+          "validationEntry": "Ligne {row, number} · {field} : {message}",
+          "validationEntryNamed": "Ligne {row, number} « {name} » · {field} : {message}",
+          "validationMore": "{count, plural, one {# problème supplémentaire n'est pas affiché} other {# problèmes supplémentaires ne sont pas affichés}}.",
+          "validationMultiRowNote": "Les numéros de ligne font référence aux cas de test groupés affichés dans l'aperçu, et non aux lignes brutes du fichier CSV.",
+          "partialTitle": "Certains cas de test n'ont pas été importés",
+          "partialSummary": "{failed, plural, one {# ligne n'a pas pu être importée} other {# lignes n'ont pas pu être importées}}. {imported, plural, one {# cas de test a été importé} other {# cas de test ont été importés}} avec succès."
         },
         "page1": {
           "fileType": {
@@ -2934,7 +2944,8 @@
           "title": "Associer les colonnes CSV aux champs",
           "description": "Associez chaque colonne CSV à un champ du modèle ou choisissez de l'ignorer.",
           "ignoreColumn": "Ignorer la colonne",
-          "requiredFieldsWarning": "{count, plural, one {# champ obligatoire est} other {# champs obligatoires sont}} non mappés"
+          "requiredFieldsWarning": "{count, plural, one {# champ obligatoire est} other {# champs obligatoires sont}} non mappés",
+          "caseIdHint": "Il doit s'agir de l'ID de cas numérique — les cas correspondants seront écrasés."
         },
         "page3": {
           "title": "Résumé de la cartographie des champs",

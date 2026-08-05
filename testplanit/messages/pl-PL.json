@@ -2892,7 +2892,9 @@
         "title": "Importuj przypadki testowe",
         "fields": {
           "workflowState": "Stan przepływu pracy",
-          "column": "Kolumna {number}"
+          "column": "Kolumna {number}",
+          "caseId": "ID przypadku",
+          "caseIdDescription": "ID przypadku TestPlanIt"
         },
         "success": {
           "description": "{count, plural, one {# przypadek testowy} other {# przypadki testowe}} zaimportowano pomyślnie"
@@ -2902,7 +2904,15 @@
           "folderRequired": "W przypadku tej lokalizacji importu wymagany jest wybór folderu",
           "fileRequired": "Wymagany jest plik CSV lub Markdown",
           "markdownParseFailed": "Nie udało się przeanalizować pliku Markdown",
-          "markdownLlmFailed": "Analiza AI niedostępna, używany jest standardowy parser"
+          "markdownLlmFailed": "Analiza AI niedostępna, używany jest standardowy parser",
+          "validationTitle": "Walidacja importu nie powiodła się",
+          "validationSummary": "W Twoim pliku znaleziono {count, plural, one {# problem} few {# problemy} many {# problemów} other {# problemu}}. Nie zaimportowano żadnych przypadków testowych.",
+          "validationEntry": "Wiersz {row, number} · {field}: {message}",
+          "validationEntryNamed": "Wiersz {row, number} \"{name}\" · {field}: {message}",
+          "validationMore": "{count, plural, one {Jeszcze # problem nie jest wyświetlony.} few {Jeszcze # problemy nie są wyświetlone.} many {Jeszcze # problemów nie jest wyświetlonych.} other {Jeszcze # problemu nie jest wyświetlony.}}",
+          "validationMultiRowNote": "Numery wierszy odnoszą się do pogrupowanych przypadków testowych widocznych w podglądzie, a nie do surowych wierszy pliku CSV.",
+          "partialTitle": "Niektóre przypadki testowe nie zostały zaimportowane",
+          "partialSummary": "Nie udało się zaimportować {failed, plural, one {# wiersza} few {# wierszy} many {# wierszy} other {# wiersza}}. Zaimportowano pomyślnie {imported, plural, one {# przypadek testowy} few {# przypadki testowe} many {# przypadków testowych} other {# przypadku testowego}}."
         },
         "page1": {
           "fileType": {
@@ -2934,7 +2944,8 @@
           "title": "Mapowanie kolumn CSV na pola",
           "description": "Przypisz każdą kolumnę CSV do pola w szablonie lub zignoruj ją.",
           "ignoreColumn": "Ignoruj kolumnę",
-          "requiredFieldsWarning": "{count, plural, one {# wymagane pole to} other {# wymagane pola to}} nie są mapowane"
+          "requiredFieldsWarning": "{count, plural, one {# wymagane pole to} other {# wymagane pola to}} nie są mapowane",
+          "caseIdHint": "To musi być numeryczne ID przypadku — pasujące przypadki zostaną nadpisane."
         },
         "page3": {
           "title": "Podsumowanie mapowania terenu",
