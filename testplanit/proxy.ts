@@ -4,6 +4,7 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { checkApiRateLimit, type RateLimitResult } from "~/lib/api-rate-limit";
 import { normalizeRecordKeyPath } from "~/lib/recordKeyRoutes";
+import { getCachedSessionUser } from "~/lib/session-cache";
 import { defaultLocale, locales } from "./i18n/navigation";
 
 const middleware = createMiddleware({
@@ -70,6 +71,22 @@ function isExternalApiRequest(request: NextRequest): boolean {
 
   // No browser-specific headers found - treat as external API request
   return true;
+}
+
+/**
+ * Matches the OAuth "connect an integration" routes (e.g.
+ * /api/integrations/oauth/jira/auth and /api/integrations/oauth/jira/callback).
+ *
+ * The callback leg is hit via a genuine cross-site browser redirect: the
+ * provider (auth.atlassian.com, github.com, etc.) navigates the user's
+ * browser back to us with Origin/Referer set to the provider's own domain,
+ * not ours. That trips isExternalApiRequest() even though this is an
+ * ordinary session-cookie-authenticated browser flow, not a programmatic
+ * API call — the route itself still enforces auth via getServerSession.
+ * Both legs are exempted for symmetry.
+ */
+function isOAuthIntegrationRoute(pathname: string): boolean {
+  return /^\/api\/integrations\/oauth\/[^/]+\/(auth|callback)$/.test(pathname);
 }
 
 export default async function middlewareWithPreferences(request: NextRequest) {
@@ -226,9 +243,24 @@ export default async function middlewareWithPreferences(request: NextRequest) {
     // no-token branch above and are authorized by the report routes via the
     // internal bypass token.)
     const isShareBypass = pathname.startsWith("/api/share/");
-    if (!isShareBypass && isExternalApiRequest(request)) {
+    const isOAuthBypass = isOAuthIntegrationRoute(pathname);
+    if (!isShareBypass && !isOAuthBypass && isExternalApiRequest(request)) {
       // For external API requests, user must have isApi enabled
-      if (!token.isApi) {
+      let hasApiAccess = token.isApi === true;
+
+      // token.isApi is baked into the JWT at login/refresh time and can lag
+      // a DB grant for the life of the session (its JWT is only refreshed on
+      // sign-in or an explicit client-side update — enabling the admin
+      // toggle doesn't touch a user's existing session). Before blocking,
+      // re-check against the same short-TTL cache the session callback uses
+      // (see lib/session-cache.ts), so a grant takes effect within seconds
+      // instead of requiring the user to log out and back in.
+      if (!hasApiAccess && token.sub) {
+        const cached = await getCachedSessionUser(token.sub);
+        hasApiAccess = cached?.isApi === true;
+      }
+
+      if (!hasApiAccess) {
         return NextResponse.json(
           { error: "External API access not enabled for this account" },
           { status: 403 }

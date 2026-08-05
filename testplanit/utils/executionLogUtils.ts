@@ -305,6 +305,19 @@ export async function handleExecutionLogPOST(
               stepStatus: {
                 select: { name: true, color: { select: { value: true } } },
               },
+              // Read through the result's own to-one relations so a result
+              // whose step was soft-deleted still has content to render.
+              step: {
+                select: {
+                  step: true,
+                  expectedResult: true,
+                  order: true,
+                  testCaseId: true,
+                },
+              },
+              sharedStepItem: {
+                select: { step: true, expectedResult: true },
+              },
             },
           },
         },
@@ -386,7 +399,8 @@ export async function handleExecutionLogPOST(
         const merged = mergeResultsIntoSlots(
           expectedSlots,
           stepResultsByResultId.get(resultId) ?? [],
-          resultId
+          resultId,
+          Number(r.case_id)
         );
         steps = merged.length > 0 ? merged : undefined;
       }

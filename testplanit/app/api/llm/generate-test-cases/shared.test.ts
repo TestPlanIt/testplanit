@@ -809,6 +809,91 @@ describe("deselected fields — prompt exclusion + response strip", () => {
   });
 });
 
+describe("Steps field — shape normalization", () => {
+  function parseSteps(fieldValues: Record<string, any>, extra = {}) {
+    const { testCases } = parseAndValidateTestCases(
+      JSON.stringify({
+        testCases: [{ id: "tc_1", name: "Case", fieldValues, ...extra }],
+      }),
+      sampleTemplate,
+      sampleIssue
+    );
+    return testCases[0].fieldValues.Steps;
+  }
+
+  it("keeps every step of a well-formed array", () => {
+    const steps = parseSteps({
+      Steps: [
+        { step: "one", expectedResult: "r1" },
+        { step: "two", expectedResult: "r2" },
+        { step: "three", expectedResult: "r3" },
+      ],
+    });
+
+    expect(steps).toHaveLength(3);
+    expect(steps.map((s: any) => s.step)).toEqual(["one", "two", "three"]);
+  });
+
+  it("expands a numbered list emitted as a single string", () => {
+    const steps = parseSteps({ Steps: "1. Open page\n2. Click save" });
+
+    expect(steps).toHaveLength(2);
+    expect(steps[0].step).toBe("Open page");
+    expect(steps[1].step).toBe("Click save");
+  });
+
+  it("wraps a lone step object in an array", () => {
+    const steps = parseSteps({ Steps: { step: "only", expectedResult: "ok" } });
+    expect(steps).toEqual([{ step: "only", expectedResult: "ok" }]);
+  });
+
+  it("accepts action / expected key spellings", () => {
+    const steps = parseSteps({
+      Steps: [{ action: "click", expected: "modal opens" }],
+    });
+
+    expect(steps[0]).toMatchObject({
+      step: "click",
+      expectedResult: "modal opens",
+    });
+  });
+
+  it("normalizes steps migrated from the top level too", () => {
+    const { testCases } = parseAndValidateTestCases(
+      JSON.stringify({
+        testCases: [
+          {
+            id: "tc_1",
+            name: "Case",
+            fieldValues: { Description: "d" },
+            steps: [{ action: "a", expected: "b" }],
+          },
+        ],
+      }),
+      sampleTemplate,
+      sampleIssue
+    );
+
+    expect(testCases[0].fieldValues.Steps).toEqual([
+      expect.objectContaining({ step: "a", expectedResult: "b" }),
+    ]);
+  });
+
+  it("tells the model to emit one object per action", () => {
+    const prompt = buildSystemPrompt(
+      sampleTemplate,
+      { folderContext: 0 },
+      "few",
+      false,
+      undefined,
+      false
+    );
+
+    expect(prompt).toContain("ARRAY of detailed step objects");
+    expect(prompt).toContain("one object per individual action");
+  });
+});
+
 describe("buildSystemPrompt — name field language consistency", () => {
   it("fallback (inline) prompt instructs that the name match the fieldValues language", () => {
     const prompt = buildSystemPrompt(

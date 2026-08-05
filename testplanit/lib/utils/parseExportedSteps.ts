@@ -62,6 +62,40 @@ export function parseLabeledSteps(text: string): ParsedExportedStep[] {
   });
 }
 
+/**
+ * Every step held in a single CSV cell, in the order the import will create
+ * them. Recognizes, in order: a JSON array, the labeled block format the
+ * TestPlanIt CSV export writes ("Step 1:" / "Expected Result 1:" separated by
+ * `---`), and the legacy one-step-per-line form where a `|` splits the action
+ * from its expected result.
+ *
+ * The import wizard's preview and the import route both call this — a preview
+ * that parses the cell its own way shows a different step count than the one
+ * the import creates.
+ */
+export function parseStepsCell(text: string): ParsedExportedStep[] {
+  const stepsText = text?.toString() ?? "";
+  if (!stepsText.trim()) return [];
+
+  const jsonParsed = tryParseJsonSteps(stepsText);
+  if (jsonParsed) return jsonParsed;
+
+  if (hasLabeledStepFormat(stepsText)) return parseLabeledSteps(stepsText);
+
+  return stepsText
+    .split(/\n/)
+    .filter((line) => line.trim())
+    .map((line, index) => {
+      const withoutNumber = line.replace(/^\d+\.\s*/, "").trim();
+      const parts = withoutNumber.split("|").map((part) => part.trim());
+      return {
+        step: parts[0] || "",
+        expectedResult: parts[1] || "",
+        order: index,
+      };
+    });
+}
+
 export function tryParseJsonSteps(text: string): ParsedExportedStep[] | null {
   let parsed: unknown;
   try {

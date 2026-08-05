@@ -2776,6 +2776,7 @@
       "add": "ステップを追加",
       "addSharedSteps": "共有ステップを追加する",
       "delete": "ステップを削除",
+      "removedFromCase": "テストケースから削除されました",
       "confirmDelete": "削除手順の確認 {number, number}?",
       "createSharedSteps": "共有を作成 {number, plural, one {ステップ} other {ステップ}}",
       "sharedStepsName": "共有ステップ名",

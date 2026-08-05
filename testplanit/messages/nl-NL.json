@@ -2776,6 +2776,7 @@
       "add": "Stap toevoegen",
       "addSharedSteps": "Gedeelde stappen toevoegen",
       "delete": "Stap verwijderen",
+      "removedFromCase": "Verwijderd uit testcase",
       "confirmDelete": "Bevestig verwijderingsstap {number, number}?",
       "createSharedSteps": "Gedeelde {number, plural, one {Stap} other {Stappen}}maken",
       "sharedStepsName": "Naam gedeelde stappen",

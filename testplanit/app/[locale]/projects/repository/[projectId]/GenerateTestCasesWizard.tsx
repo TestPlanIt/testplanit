@@ -106,6 +106,12 @@ import {
   serializeTipTapJSON,
 } from "~/utils/tiptapConversion";
 import { generateHTMLFallback } from "~/utils/tiptapToHtml";
+import {
+  findGeneratedStepsEntry,
+  normalizeGeneratedSteps,
+} from "~/utils/generatedSteps";
+import { extractCompleteJsonFields } from "~/utils/partialJson";
+import { extractTextFromNode } from "~/utils/extractTextFromJson";
 import { sanitizeName } from "~/utils";
 import type { LinkedIssueRef } from "~/lib/integrations/adapters/IssueAdapter";
 import FieldValueRenderer from "./[caseId]/FieldValueRenderer";
@@ -189,7 +195,19 @@ function folderNameFromUrl(url: string): string {
   }
 }
 
-/** Get the steps array from a test case, checking both fieldValues (new) and top-level steps (legacy) */
+/** Plain text for the streaming stub, which renders steps without an editor. */
+function stepPreviewText(value: any): string {
+  if (typeof value === "string") return value;
+  if (value === null || value === undefined) return "";
+  return extractTextFromNode(value);
+}
+
+/**
+ * Get the steps array from a test case, checking both fieldValues (new) and
+ * top-level steps (legacy). The value is normalized because a model answers
+ * with a single object, a numbered-list string, or `action`/`expected` keys as
+ * readily as with the requested array of `{ step, expectedResult }` pairs.
+ */
 function getTestCaseSteps(
   testCase: GeneratedTestCase,
   templateFields?: Array<{
@@ -200,13 +218,15 @@ function getTestCaseSteps(
   if (templateFields) {
     for (const field of templateFields) {
       if (field.caseField.type.type === "Steps") {
-        const val = testCase.fieldValues[field.caseField.displayName];
-        if (Array.isArray(val) && val.length > 0) return val;
+        const steps = normalizeGeneratedSteps(
+          testCase.fieldValues[field.caseField.displayName]
+        );
+        if (steps.length > 0) return steps;
       }
     }
   }
   // Fallback to top-level steps (legacy LLM responses)
-  return testCase.steps ?? [];
+  return normalizeGeneratedSteps(testCase.steps);
 }
 
 /**
@@ -276,108 +296,35 @@ function extractPartialTestCases(
   if (depth > 0 && objectStart >= 0) {
     const partialJson = content.slice(objectStart);
 
-    // Extract "name": "value"
-    const nameMatch = partialJson.match(/"name"\s*:\s*"([^"]*?)"/);
-    if (!nameMatch) return results; // Name not complete yet
+    // Only the *top-level* keys of the object: a scan that ignores nesting
+    // reads the `step` / `expectedResult` keys inside the Steps array as
+    // fieldValues of their own, and keeps overwriting them, so a case with
+    // many steps renders as a single one.
+    const topLevel = extractCompleteJsonFields(partialJson);
 
-    const name = nameMatch[1];
+    const name = topLevel.complete.name;
+    if (typeof name !== "string") return results; // Name not complete yet
 
-    // Extract individual fieldValues
-    const fieldValues: Record<string, any> = {};
-    const fvStart = partialJson.indexOf('"fieldValues"');
-    if (fvStart !== -1) {
-      const fvBrace = partialJson.indexOf("{", fvStart);
-      if (fvBrace !== -1) {
-        const fvContent = partialJson.slice(fvBrace);
-        // Match complete "key": "value" pairs (string values)
-        const stringPairs = fvContent.matchAll(
-          /"([^"]+?)"\s*:\s*"((?:[^"\\]|\\.)*)"/g
-        );
-        for (const m of stringPairs) {
-          fieldValues[m[1]] = m[2].replace(/\\"/g, '"').replace(/\\n/g, "\n");
-        }
-        // Match complete "key": number pairs
-        const numPairs = fvContent.matchAll(/"([^"]+?)"\s*:\s*(\d+)/g);
-        for (const m of numPairs) {
-          fieldValues[m[1]] = parseInt(m[2], 10);
-        }
-        // Match complete "key": ["val1", "val2"] array pairs
-        const arrPairs = fvContent.matchAll(/"([^"]+?)"\s*:\s*\[([^\]]*)\]/g);
-        for (const m of arrPairs) {
-          try {
-            fieldValues[m[1]] = JSON.parse(`[${m[2]}]`);
-          } catch {
-            // Array not complete yet
-          }
-        }
-      }
-    }
+    const fieldValues: Record<string, any> =
+      topLevel.complete.fieldValues &&
+      typeof topLevel.complete.fieldValues === "object"
+        ? { ...topLevel.complete.fieldValues }
+        : topLevel.partialKey === "fieldValues" && topLevel.partialValue
+          ? extractCompleteJsonFields(topLevel.partialValue).complete
+          : {};
 
-    // Extract tags
-    let tags: string[] | undefined;
-    const tagsMatch = partialJson.match(/"tags"\s*:\s*\[(.*?)\]/s);
-    if (tagsMatch) {
-      try {
-        tags = JSON.parse(`[${tagsMatch[1]}]`);
-      } catch {
-        // tags not complete
-      }
-    }
+    const tags: string[] | undefined = Array.isArray(topLevel.complete.tags)
+      ? topLevel.complete.tags
+      : undefined;
 
-    // Extract steps (complete step objects only)
-    let steps: Array<{ step: string; expectedResult: string }> | undefined;
-    const stepsStart = partialJson.indexOf('"steps"');
-    if (stepsStart !== -1) {
-      const stepsArr = partialJson.indexOf("[", stepsStart);
-      if (stepsArr !== -1) {
-        const stepsContent = partialJson.slice(stepsArr);
-        // Find complete step objects — handle both field orderings
-        // Extract each {...} block in the steps array
-        steps = [];
-        let sDepth = 0;
-        let sObjStart = -1;
-        let sInStr = false;
-        let sEsc = false;
-        for (let si = 0; si < stepsContent.length; si++) {
-          const sc = stepsContent[si];
-          if (sEsc) {
-            sEsc = false;
-            continue;
-          }
-          if (sc === "\\") {
-            sEsc = true;
-            continue;
-          }
-          if (sc === '"') {
-            sInStr = !sInStr;
-            continue;
-          }
-          if (sInStr) continue;
-          if (sc === "{") {
-            if (sDepth === 0) sObjStart = si;
-            sDepth++;
-          } else if (sc === "}") {
-            sDepth--;
-            if (sDepth === 0 && sObjStart >= 0) {
-              try {
-                const stepObj = JSON.parse(
-                  stepsContent.slice(sObjStart, si + 1)
-                );
-                if (stepObj.step || stepObj.expectedResult) {
-                  steps.push({
-                    step: String(stepObj.step ?? ""),
-                    expectedResult: String(stepObj.expectedResult ?? ""),
-                  });
-                }
-              } catch {
-                /* incomplete */
-              }
-              sObjStart = -1;
-            }
-          }
-        }
-      }
-    }
+    // Steps live under the template's Steps field inside fieldValues; older
+    // responses put them at the top level.
+    const stepsEntry = findGeneratedStepsEntry(fieldValues);
+    const steps = stepsEntry
+      ? stepsEntry.steps
+      : normalizeGeneratedSteps(topLevel.complete.steps);
+    // Rendered by the stub's own steps section — not as raw JSON alongside it.
+    if (stepsEntry) delete fieldValues[stepsEntry.key];
 
     results.push({
       id: `streaming_${alreadyFinalized + 1}`,
@@ -385,7 +332,7 @@ function extractPartialTestCases(
       fieldValues,
       automated: false,
       tags,
-      steps,
+      steps: steps.length > 0 ? steps : undefined,
       _streaming: true,
     });
   }
@@ -894,7 +841,13 @@ const GeneratedTestCaseCard = memo(function GeneratedTestCaseCard({
             session,
             projectId,
             previousFieldValue: undefined,
-            fieldValue: testCase.fieldValues[displayName],
+            // Steps: hand the edit form the normalized list, not the raw model
+            // value — it seeds its field array from this prop, and after a save
+            // the raw value is gone (handleSave moves steps out of fieldValues).
+            fieldValue:
+              fieldType === "Steps"
+                ? stepsForDisplay
+                : testCase.fieldValues[displayName],
             stepsForDisplay:
               fieldType === "Steps" ? stepsForDisplay : undefined,
             explicitFieldNameForSteps:
@@ -1130,12 +1083,12 @@ const GeneratedTestCaseCard = memo(function GeneratedTestCaseCard({
                         {si + 1}
                         {":"}
                       </span>{" "}
-                      {step.step}
+                      {stepPreviewText(step.step)}
                     </div>
                     {step.expectedResult && (
                       <div className="text-muted-foreground/70">
                         {"Expected: "}
-                        {step.expectedResult}
+                        {stepPreviewText(step.expectedResult)}
                       </div>
                     )}
                   </div>

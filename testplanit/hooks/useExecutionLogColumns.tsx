@@ -106,6 +106,11 @@ export function useExecutionLogColumns(
                       )}
                       {t("common.fields.step")} {row.stepNumber}
                     </span>
+                    {row.isRemovedStep && (
+                      <span className="shrink-0 text-xs text-muted-foreground italic">
+                        {t("repository.steps.removedFromCase")}
+                      </span>
+                    )}
                     {row.stepText ? (
                       <TooltipProvider>
                         <Tooltip>

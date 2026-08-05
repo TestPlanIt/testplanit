@@ -2776,6 +2776,7 @@
       "add": "新增步驟",
       "addSharedSteps": "新增共享步驟",
       "delete": "刪除步驟",
+      "removedFromCase": "已從測試案例移除",
       "confirmDelete": "確認刪除步驟 {number, number}？",
       "createSharedSteps": "建立共享 {number, plural, one {步驟} other {步驟}}",
       "sharedStepsName": "共享步驟名稱",

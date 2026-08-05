@@ -121,6 +121,7 @@ import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
 import { CommentsSection } from "~/components/comments/CommentsSection";
 import TestRunCasesSummary from "~/components/TestRunCasesSummary";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
+import { useTestRunCaseDetail } from "~/hooks/useTestRunCaseDetail";
 import { PaginationProvider } from "~/lib/contexts/PaginationContext";
 import { Link, usePathname, useRouter } from "~/lib/navigation";
 import { updateTestRunForecast } from "~/services/testRunService";
@@ -1296,82 +1297,13 @@ export default function TestRunPage() {
     setSelectedTestCaseIds(testCaseIds);
   };
 
-  const { data: testcase, isLoading: isTestcaseLoading } = useClientQueries(
-    schema
-  ).repositoryCases.useFindFirst({
-    where: { id: selectedTestCaseId ?? undefined, isDeleted: false },
-    include: {
-      state: {
-        select: {
-          id: true,
-          name: true,
-          icon: { select: { name: true } },
-          color: { select: { value: true } },
-        },
-      },
-      project: true,
-      folder: true,
-      creator: true,
-      template: {
-        select: {
-          id: true,
-          templateName: true,
-          caseFields: {
-            select: {
-              caseFieldId: true,
-              order: true,
-              caseField: {
-                select: {
-                  id: true,
-                  defaultValue: true,
-                  displayName: true,
-                  type: { select: { type: true } },
-                  fieldOptions: {
-                    select: {
-                      fieldOption: {
-                        select: {
-                          id: true,
-                          icon: true,
-                          iconColor: true,
-                          name: true,
-                          order: true,
-                        },
-                      },
-                    },
-                    orderBy: { fieldOption: { order: "asc" } },
-                  },
-                },
-              },
-            },
-            orderBy: { order: "asc" },
-          },
-        },
-      },
-      caseFieldValues: {
-        select: {
-          id: true,
-          value: true,
-          fieldId: true,
-          field: {
-            select: {
-              id: true,
-              displayName: true,
-              type: { select: { type: true } },
-            },
-          },
-        },
-        where: { field: { isEnabled: true, isDeleted: false } },
-      },
-      attachments: {
-        orderBy: { createdAt: "desc" },
-        where: { isDeleted: false },
-      },
-      steps: {
-        where: { isDeleted: false },
-        orderBy: { order: "asc" },
-      },
-    },
-  });
+  // Only used below to clear `isTransitioning` once the case a "Next" click
+  // navigated to has actually loaded. Shares its (caseId, testRunId) query
+  // key with TestRunCaseDetails' own fetch of the same case, so React Query
+  // dedupes them into one request instead of two independent ACL-heavy
+  // queries. See lib/services/testRunCaseDetail.ts.
+  const { data: testcase, isLoading: isTestcaseLoading } =
+    useTestRunCaseDetail(selectedTestCaseId, Number(runId));
 
   useEffect(() => {
     if (!isTestcaseLoading && testcase) {

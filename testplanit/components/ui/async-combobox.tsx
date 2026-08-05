@@ -51,7 +51,9 @@ interface AsyncComboboxProps<T> {
     page: number,
     pageSize: number
   ) => Promise<{ results: T[]; total: number } | T[]>;
-  renderOption: (option: T) => React.ReactNode;
+  /** `query` is the search the listed options were fetched for — empty
+   *  wherever an option is rendered outside the list, such as on the trigger. */
+  renderOption: (option: T, query: string) => React.ReactNode;
   getOptionValue: (option: T) => string | number;
   placeholder?: string;
   triggerLabel?: React.ReactNode;
@@ -189,7 +191,7 @@ export function AsyncCombobox<T>({
         }}
       >
         <div className="flex items-center w-full [&_a]:no-underline [&_a]:text-inherit [&_a:hover]:text-inherit">
-          {renderOption(option)}
+          {renderOption(option, debouncedSearch)}
           {value && getOptionValue(option) === getOptionValue(value) && (
             <Check className="ms-auto h-4 w-4 text-muted-foreground" />
           )}
@@ -203,7 +205,7 @@ export function AsyncCombobox<T>({
     typeof triggerLabel === "undefined" ? fallbackPlaceholder : triggerLabel;
 
   const defaultContent = value ? (
-    renderOption(value)
+    renderOption(value, "")
   ) : showUnassigned ? (
     <div className="flex items-center text-start">
       {unassignedIcon ?? <UserX className="me-2 h-4 w-4" />}
@@ -301,13 +303,19 @@ export function AsyncCombobox<T>({
       </PopoverTrigger>
       <PopoverContent
         align="start"
-        className={cn(dropdownClassName || "p-0 max-w-[800px]")}
+        collisionPadding={8}
+        className={cn(
+          // The popover itself never scrolls, so it has to fit the room Radix
+          // reports: anything past the window edge cannot be reached at all.
+          "flex max-h-[var(--radix-popover-content-available-height)] flex-col overflow-hidden",
+          dropdownClassName || "p-0 max-w-[800px]"
+        )}
         style={{
           width: Math.max(width, minDropdownWidth),
           minWidth: minDropdownWidth,
         }}
       >
-        <Command className="w-full" shouldFilter={false}>
+        <Command className="w-full min-h-0 flex-1" shouldFilter={false}>
           <CommandInput
             placeholder={fallbackPlaceholder}
             value={search}
@@ -315,13 +323,15 @@ export function AsyncCombobox<T>({
             autoFocus
             className="my-2"
           />
-          <div className="relative">
+          <div className="relative flex min-h-0 flex-1 flex-col">
             {loading && (
               <div className="absolute inset-0 flex justify-center items-center bg-muted/60 z-10">
                 <Spinner />
               </div>
             )}
-            <CommandList ref={listRef} className="max-h-[70vh]">
+            {/* The search box and the footer keep their height; the list is
+                what gives way once the popover hits its cap. */}
+            <CommandList ref={listRef} className="min-h-0 flex-1 max-h-[70vh]">
               <CommandEmpty>{tCommon("labels.noResults")}</CommandEmpty>
               <CommandGroup
                 className={cn(loading ? "opacity-50 pointer-events-none" : "")}

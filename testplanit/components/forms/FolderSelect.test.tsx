@@ -167,9 +167,13 @@ describe("FolderSelect", () => {
     expect(trigger).not.toBeDisabled();
   });
 
+  /** Rows are found by folder id: a highlighted match splits the name across
+   *  elements, so a text lookup stops resolving once a filter is applied. */
+  const optionOf = (folderId: string) =>
+    screen.getByTestId(`folder-select-option-${folderId}`);
   /** paddingInlineStart is level * 10 + 5, matching the tree's indentation. */
-  const indentOf = (label: string) =>
-    screen.getByText(label).parentElement?.style.paddingInlineStart;
+  const indentOf = (folderId: string) =>
+    optionOf(folderId).style.paddingInlineStart;
 
   it("indents options by their depth in the hierarchy", async () => {
     render(
@@ -181,9 +185,9 @@ describe("FolderSelect", () => {
       expect(screen.getByText("Folder A")).toBeInTheDocument();
     });
 
-    expect(indentOf("Folder A")).toBe("5px");
-    expect(indentOf("Folder B")).toBe("5px");
-    expect(indentOf("Sub Folder")).toBe("15px");
+    expect(indentOf("1")).toBe("5px");
+    expect(indentOf("2")).toBe("5px");
+    expect(indentOf("3")).toBe("15px");
   });
 
   it("filters by name and keeps the match's ancestors for context", async () => {
@@ -201,12 +205,37 @@ describe("FolderSelect", () => {
     });
 
     await waitFor(() => {
-      expect(screen.queryByText("Folder B")).toBeNull();
+      expect(screen.queryByTestId("folder-select-option-2")).toBeNull();
     });
-    expect(screen.getByText("Sub Folder")).toBeInTheDocument();
+    expect(optionOf("3")).toHaveTextContent("Sub Folder");
     // Folder A is not a match; it stays so the indentation still reads.
-    expect(screen.getByText("Folder A")).toBeInTheDocument();
-    expect(indentOf("Sub Folder")).toBe("15px");
+    expect(optionOf("1")).toHaveTextContent("Folder A");
+    expect(indentOf("3")).toBe("15px");
+  });
+
+  it("highlights the matched part of a folder name, as the tree does", async () => {
+    render(
+      <FolderSelect value={null} onChange={vi.fn()} folders={sampleFolders} />
+    );
+
+    fireEvent.click(screen.getByRole("combobox"));
+    await waitFor(() => {
+      expect(screen.getByText("Folder B")).toBeInTheDocument();
+    });
+
+    fireEvent.change(screen.getByPlaceholderText("Select Folder"), {
+      target: { value: "sub" },
+    });
+
+    await waitFor(() => {
+      expect(screen.getAllByTestId("folder-filter-match")).toHaveLength(1);
+    });
+    // The match keeps the name's own casing rather than the typed query's.
+    expect(screen.getByTestId("folder-filter-match")).toHaveTextContent("Sub");
+    // Folder A only survives as an ancestor, so nothing in it is marked.
+    expect(
+      optionOf("1").querySelector('[data-testid="folder-filter-match"]')
+    ).toBeNull();
   });
 
   it("selecting a folder reports its id", async () => {
@@ -231,7 +260,8 @@ describe("FolderSelect", () => {
 
     const trigger = screen.getByRole("combobox");
     expect(trigger).toHaveTextContent("Sub Folder");
-    expect(indentOf("Sub Folder")).toBeFalsy();
+    // The trigger shows the plain name — no indented option row is rendered.
+    expect(screen.queryByTestId("folder-select-option-3")).toBeNull();
   });
 });
 

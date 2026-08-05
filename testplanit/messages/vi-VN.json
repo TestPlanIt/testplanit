@@ -2776,6 +2776,7 @@
       "add": "Thêm bước",
       "addSharedSteps": "Thêm các bước được chia sẻ",
       "delete": "Xóa bước",
+      "removedFromCase": "Đã xóa khỏi test case",
       "confirmDelete": "Xác nhận xóa Bước {number, number}?",
       "createSharedSteps": "Tạo các bước chia sẻ {number, plural, one {Bước} other {Các bước}}",
       "sharedStepsName": "Tên các bước được chia sẻ",

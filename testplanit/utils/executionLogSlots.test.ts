@@ -398,4 +398,117 @@ describe("mergeResultsIntoSlots", () => {
     const out = mergeResultsIntoSlots(slots, [result], 555);
     out.forEach((row) => expect(row.status).toEqual(UNTESTED_STATUS));
   });
+
+  it("appends a result whose step was removed from the case instead of dropping it", () => {
+    const removed: StepResultRow = {
+      id: 42,
+      stepId: 300, // soft-deleted, so it has no slot
+      sharedStepItemId: null,
+      elapsed: 12,
+      executedAt: "2025-03-01T12:00:00.000Z",
+      stepStatus: { name: "Failed", color: { value: "#C6252C" } },
+      step: {
+        step: { type: "text", text: "old step" },
+        expectedResult: { type: "text", text: "old expected" },
+        order: 5,
+        testCaseId: 1,
+      },
+    };
+    const out = mergeResultsIntoSlots(slots, [removed], 555, 1);
+    expect(out).toHaveLength(3);
+    // Live slots keep their numbering and stay unflagged.
+    expect(out[0].isRemovedStep).toBeUndefined();
+    expect(out[1].isRemovedStep).toBeUndefined();
+
+    const orphan = out[2];
+    expect(orphan.isRemovedStep).toBe(true);
+    expect(orphan.stepNumber).toBe("3");
+    expect(orphan.stepText).toBe("old step");
+    expect(orphan.expectedResult).toBe("old expected");
+    expect(orphan.status).toEqual({ name: "Failed", color: "#C6252C" });
+    expect(orphan.elapsed).toBe(12);
+    expect(orphan.executedAt).toBe("2025-03-01T12:00:00.000Z");
+  });
+
+  it("numbers removed steps after the highest live rank, not the row count", () => {
+    // One shared placeholder expanded into two dotted sub-rows: 2 rows, rank 1.
+    const sharedSlots = [
+      {
+        key: "100:1",
+        stepNumber: "1.1",
+        stepText: "item one",
+        expectedResult: "",
+        sharedGroupName: "Group",
+      },
+      {
+        key: "100:2",
+        stepNumber: "1.2",
+        stepText: "item two",
+        expectedResult: "",
+        sharedGroupName: "Group",
+      },
+    ];
+    const removed: StepResultRow = {
+      id: 7,
+      stepId: 300,
+      sharedStepItemId: null,
+      elapsed: null,
+      executedAt: null,
+      stepStatus: null,
+      step: {
+        step: null,
+        expectedResult: null,
+        order: 1,
+        testCaseId: 1,
+      },
+    };
+    const out = mergeResultsIntoSlots(sharedSlots, [removed], 555, 1);
+    expect(out).toHaveLength(3);
+    expect(out[2].stepNumber).toBe("2");
+  });
+
+  it("orders multiple removed steps by their recorded step order", () => {
+    const mk = (id: number, stepId: number, order: number): StepResultRow => ({
+      id,
+      stepId,
+      sharedStepItemId: null,
+      elapsed: null,
+      executedAt: null,
+      stepStatus: null,
+      step: {
+        step: { type: "text", text: `step ${order}` },
+        expectedResult: null,
+        order,
+        testCaseId: 1,
+      },
+    });
+    const out = mergeResultsIntoSlots(
+      slots,
+      [mk(9, 302, 9), mk(8, 301, 3)],
+      555,
+      1
+    );
+    expect(out.slice(2).map((r) => r.stepText)).toEqual(["step 3", "step 9"]);
+    expect(out.slice(2).map((r) => r.stepNumber)).toEqual(["3", "4"]);
+  });
+
+  it("does not adopt an unmatched result whose step belongs to another case", () => {
+    const foreign: StepResultRow = {
+      id: 999,
+      stepId: 200,
+      sharedStepItemId: null,
+      elapsed: null,
+      executedAt: null,
+      stepStatus: { name: "Passed", color: { value: "#2A843F" } },
+      step: {
+        step: null,
+        expectedResult: null,
+        order: 1,
+        testCaseId: 2, // different case
+      },
+    };
+    const out = mergeResultsIntoSlots(slots, [foreign], 555, 1);
+    expect(out).toHaveLength(2);
+    out.forEach((row) => expect(row.status).toEqual(UNTESTED_STATUS));
+  });
 });

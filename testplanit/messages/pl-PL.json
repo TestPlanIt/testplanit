@@ -2776,6 +2776,7 @@
       "add": "Dodaj krok",
       "addSharedSteps": "Dodaj współdzielone kroki",
       "delete": "Usuń krok",
+      "removedFromCase": "Usunięto z przypadku testowego",
       "confirmDelete": "Potwierdź usunięcie Krok {number, number}?",
       "createSharedSteps": "Utwórz współdzielone {number, plural, one {Krok} other {Kroki}}",
       "sharedStepsName": "Nazwa wspólnych kroków",

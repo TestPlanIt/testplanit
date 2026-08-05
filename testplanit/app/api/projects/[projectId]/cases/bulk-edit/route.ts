@@ -373,9 +373,14 @@ export const POST = withAuditContext(
             // Handle steps updates
             if (validatedData.stepsUpdates) {
               if (validatedData.stepsUpdates.operation === "replace") {
-                // Delete existing steps
-                await tx.steps.deleteMany({
-                  where: { testCaseId: caseId },
+                // Soft-delete the existing steps. TestRunStepResults.stepId is
+                // `onDelete: Cascade`, so a hard delete here would destroy every
+                // recorded step result in past and in-flight runs for this case.
+                // The replacement steps are created below and pick up the case
+                // via testCaseId; read paths filter `isDeleted: false`.
+                await tx.steps.updateMany({
+                  where: { testCaseId: caseId, isDeleted: false },
+                  data: { isDeleted: true },
                 });
 
                 // Create new steps

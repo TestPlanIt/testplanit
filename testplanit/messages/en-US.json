@@ -2776,6 +2776,7 @@
       "add": "Add Step",
       "addSharedSteps": "Add Shared Steps",
       "delete": "Delete Step",
+      "removedFromCase": "Removed from test case",
       "confirmDelete": "Confirm delete Step {number, number}?",
       "createSharedSteps": "Create Shared {number, plural, one {Step} other {Steps}}",
       "sharedStepsName": "Shared Steps Name",

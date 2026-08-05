@@ -6,7 +6,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // --- vi.hoisted for variables used in vi.mock factories ---
 const {
-  mockUseFindFirstRepositoryCasesFiltered,
+  mockUseTestRunCaseDetail,
   mockUseProjectPermissions,
   mockUseCreateTestRunResults,
   mockUseFindFirstWorkflows,
@@ -17,7 +17,7 @@ const {
   mockUseFindManyTemplates,
   mockUseSession,
 } = vi.hoisted(() => ({
-  mockUseFindFirstRepositoryCasesFiltered: vi.fn(),
+  mockUseTestRunCaseDetail: vi.fn(),
   mockUseProjectPermissions: vi.fn(),
   mockUseCreateTestRunResults: vi.fn(),
   mockUseFindFirstWorkflows: vi.fn(),
@@ -31,8 +31,8 @@ const {
 
 // --- Mocks ---
 
-vi.mock("~/hooks/useRepositoryCasesWithFilteredFields", () => ({
-  useFindFirstRepositoryCasesFiltered: mockUseFindFirstRepositoryCasesFiltered,
+vi.mock("~/hooks/useTestRunCaseDetail", () => ({
+  useTestRunCaseDetail: mockUseTestRunCaseDetail,
 }));
 
 vi.mock("~/hooks/useProjectPermissions", () => ({
@@ -209,9 +209,6 @@ const mockTestCase = {
   forecastAutomated: null,
   currentVersion: 1,
   state: null,
-  project: { id: 1, name: "Test Project" },
-  folder: null,
-  creator: null,
   template: { id: 1, templateName: "Default", caseFields: [] },
   caseFieldValues: [],
   attachments: [],
@@ -248,7 +245,7 @@ import { TestRunCaseDetails } from "./TestRunCaseDetails";
 // --- Test Setup ---
 
 function setupDefaultMocks() {
-  mockUseFindFirstRepositoryCasesFiltered.mockReturnValue({
+  mockUseTestRunCaseDetail.mockReturnValue({
     data: mockTestCase,
     isLoading: false,
   });
@@ -284,7 +281,7 @@ beforeEach(() => {
 
 describe("TestRunCaseDetails", () => {
   it("renders loading spinner when case data is loading", () => {
-    mockUseFindFirstRepositoryCasesFiltered.mockReturnValue({
+    mockUseTestRunCaseDetail.mockReturnValue({
       data: undefined,
       isLoading: true,
     });
@@ -427,7 +424,7 @@ describe("TestRunCaseDetails", () => {
         { tag: { id: 2, name: "regression" } },
       ],
     };
-    mockUseFindFirstRepositoryCasesFiltered.mockReturnValue({
+    mockUseTestRunCaseDetail.mockReturnValue({
       data: testCaseWithTags,
       isLoading: false,
     });
@@ -442,7 +439,7 @@ describe("TestRunCaseDetails", () => {
       ...mockTestCase,
       caseIssues: [{ issue: { id: 1, name: "BUG-001", externalId: "ext-1" } }],
     };
-    mockUseFindFirstRepositoryCasesFiltered.mockReturnValue({
+    mockUseTestRunCaseDetail.mockReturnValue({
       data: testCaseWithIssues,
       isLoading: false,
     });
@@ -484,7 +481,7 @@ describe("TestRunCaseDetails", () => {
         },
       ],
     };
-    mockUseFindFirstRepositoryCasesFiltered.mockReturnValue({
+    mockUseTestRunCaseDetail.mockReturnValue({
       data: testCaseWithFields,
       isLoading: false,
     });

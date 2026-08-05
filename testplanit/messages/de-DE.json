@@ -2776,6 +2776,7 @@
       "add": "Schritt hinzufügen",
       "addSharedSteps": "Gemeinsame Schritte hinzufügen",
       "delete": "Schritt löschen",
+      "removedFromCase": "Aus Testfall entfernt",
       "confirmDelete": "Löschvorgang bestätigen Schritt {number, number}?",
       "createSharedSteps": "Gemeinsame Schritte erstellen {number, plural, one {Schritt} other {Schritte}}",
       "sharedStepsName": "Gemeinsame Schritte Name",

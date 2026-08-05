@@ -5,6 +5,7 @@ import { schema } from "~/zenstack/schema";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { HighlightedMatch } from "@/components/HighlightedMatch";
 import { AsyncCombobox } from "@/components/ui/async-combobox";
 import { Input } from "@/components/ui/input";
 import {
@@ -578,14 +579,20 @@ export function CopyMoveDialog({
                       fetchOptions={fetchFolders}
                       getOptionValue={(f) => f.id}
                       isOptionDisabled={(f) => disabledFolderIds.has(f.id)}
-                      renderOption={(f) => (
+                      renderOption={(f, query) => (
                         <div
                           data-testid={`copy-move-folder-option-${f.id}`}
                           className="flex items-center gap-1.5"
                           style={{ paddingInlineStart: `${f.depth * 12}px` }}
                         >
                           <FolderOpen className="h-4 w-4 shrink-0 text-muted-foreground" />
-                          <span className="truncate">{f.name}</span>
+                          <span className="truncate">
+                            <HighlightedMatch
+                              text={f.name}
+                              query={query}
+                              testId="folder-filter-match"
+                            />
+                          </span>
                         </div>
                       )}
                       placeholder={tRepo("selectFolderPlaceholder")}
