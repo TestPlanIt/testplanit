@@ -17,10 +17,20 @@ vi.mock("./i18n/navigation", () => ({
   defaultLocale: "en-US",
 }));
 
+// Mock lib/session-cache (used for the isApi short-TTL re-check, so tests
+// don't hit a real DB/Valkey connection)
+vi.mock("~/lib/session-cache", () => ({
+  getCachedSessionUser: vi.fn(),
+}));
+
 import { getToken } from "next-auth/jwt";
+import { getCachedSessionUser } from "~/lib/session-cache";
 import middlewareWithPreferences from "./proxy";
 
 const mockGetToken = getToken as ReturnType<typeof vi.fn>;
+const mockGetCachedSessionUser = getCachedSessionUser as ReturnType<
+  typeof vi.fn
+>;
 
 // Helper to create a mock NextRequest
 function createMockRequest(
@@ -37,6 +47,10 @@ describe("External API Access Control", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     process.env.NEXTAUTH_SECRET = "test-secret";
+    // Default: no cached user (cache miss / DB unreachable) — matches
+    // pre-fix behavior of trusting token.isApi alone, so existing tests
+    // don't need to know about the cache re-check.
+    mockGetCachedSessionUser.mockResolvedValue(null);
   });
 
   afterEach(() => {
@@ -367,6 +381,121 @@ describe("External API Access Control", () => {
       });
 
       const request = createMockRequest("/api/reports/automation-trends", {});
+
+      const response = await middlewareWithPreferences(request);
+
+      expect(response.status).toBe(403);
+    });
+  });
+
+  describe("OAuth integration route exemption", () => {
+    it("should not apply API access control to the Jira OAuth callback route", async () => {
+      mockGetToken.mockResolvedValue({
+        sub: "user-123",
+        access: "USER",
+        isApi: false,
+      });
+
+      // Simulates the real-world redirect: Atlassian navigates the user's
+      // browser back to us with no same-origin signals at all.
+      const request = createMockRequest(
+        "/api/integrations/oauth/jira/callback?code=abc&state=xyz",
+        {}
+      );
+
+      const response = await middlewareWithPreferences(request);
+
+      expect(response.status).not.toBe(403);
+    });
+
+    it("should not apply API access control to the OAuth auth (redirect-out) route", async () => {
+      mockGetToken.mockResolvedValue({
+        sub: "user-123",
+        access: "USER",
+        isApi: false,
+      });
+
+      const request = createMockRequest(
+        "/api/integrations/oauth/github/auth",
+        {}
+      );
+
+      const response = await middlewareWithPreferences(request);
+
+      expect(response.status).not.toBe(403);
+    });
+
+    it("should still block unrelated routes nested under /api/integrations", async () => {
+      mockGetToken.mockResolvedValue({
+        sub: "user-123",
+        access: "USER",
+        isApi: false,
+      });
+
+      const request = createMockRequest("/api/integrations/jira/test-info", {});
+
+      const response = await middlewareWithPreferences(request);
+
+      expect(response.status).toBe(403);
+    });
+  });
+
+  describe("isApi short-TTL cache re-check", () => {
+    it("should allow a request when the JWT's isApi is stale but the cache reflects a fresh grant", async () => {
+      mockGetToken.mockResolvedValue({
+        sub: "user-123",
+        access: "USER",
+        isApi: false, // stale — baked in before the admin enabled API access
+      });
+      mockGetCachedSessionUser.mockResolvedValue({ isApi: true });
+
+      const request = createMockRequest("/api/model/users", {});
+
+      const response = await middlewareWithPreferences(request);
+
+      expect(response.status).not.toBe(403);
+      expect(mockGetCachedSessionUser).toHaveBeenCalledWith("user-123");
+    });
+
+    it("should still block when both the JWT and the cache say isApi is false", async () => {
+      mockGetToken.mockResolvedValue({
+        sub: "user-123",
+        access: "USER",
+        isApi: false,
+      });
+      mockGetCachedSessionUser.mockResolvedValue({ isApi: false });
+
+      const request = createMockRequest("/api/model/users", {});
+
+      const response = await middlewareWithPreferences(request);
+
+      expect(response.status).toBe(403);
+    });
+
+    it("should not consult the cache when the JWT already grants isApi", async () => {
+      mockGetToken.mockResolvedValue({
+        sub: "user-123",
+        access: "USER",
+        isApi: true,
+      });
+
+      const request = createMockRequest("/api/model/users", {});
+
+      const response = await middlewareWithPreferences(request);
+
+      expect(response.status).not.toBe(403);
+      expect(mockGetCachedSessionUser).not.toHaveBeenCalled();
+    });
+
+    it("should still block when the cache lookup misses (e.g. DB unreachable)", async () => {
+      mockGetToken.mockResolvedValue({
+        sub: "user-123",
+        access: "USER",
+        isApi: false,
+      });
+      mockGetCachedSessionUser.mockResolvedValue(null);
+
+      const request = createMockRequest("/api/model/users", {});
 
       const response = await middlewareWithPreferences(request);
 

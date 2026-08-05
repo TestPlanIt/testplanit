@@ -12,6 +12,15 @@
  *
  * The `lastActiveAt` update is separate and runs at most once every
  * 5 minutes per user, matching the pre-existing throttle.
+ *
+ * `isApi` is also re-read here by proxy.ts before it rejects an external
+ * API request: `token.isApi` is baked into the session JWT at
+ * login/refresh time and can otherwise lag a DB grant for the life of the
+ * session, since flipping the admin toggle doesn't touch the user's
+ * existing token. Routing that check through this cache means an admin
+ * grant takes effect within the 60s TTL instead of requiring re-login —
+ * see the `PATCH /api/users/[userId]` route, which already calls
+ * `invalidateSessionUserCache` after every update, for the sub-60s case.
  */
 
 import type {
@@ -39,11 +48,18 @@ export interface CachedSessionUser {
   authMethod: AuthMethod | null;
   preferences: UserPreferences | null;
   lastActiveAt: string | null; // ISO string
+  isApi: boolean;
 }
 
 type SelectedUser = Pick<
   User,
-  "name" | "access" | "image" | "emailVerified" | "authMethod" | "lastActiveAt"
+  | "name"
+  | "access"
+  | "image"
+  | "emailVerified"
+  | "authMethod"
+  | "lastActiveAt"
+  | "isApi"
 > & { userPreferences: UserPreferences | null };
 
 /**
@@ -78,6 +94,7 @@ export async function getCachedSessionUser(
       emailVerified: true,
       authMethod: true,
       lastActiveAt: true,
+      isApi: true,
       userPreferences: true,
     },
   });
@@ -106,6 +123,7 @@ export async function getCachedSessionUser(
     authMethod: user.authMethod ?? null,
     preferences,
     lastActiveAt: user.lastActiveAt ? user.lastActiveAt.toISOString() : null,
+    isApi: user.isApi,
   };
 
   // 4. Populate cache (best-effort)
