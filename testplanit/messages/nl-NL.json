@@ -736,6 +736,24 @@
       "selectDeselectAllApprove": "Selecteer of deselecteer 'goedkeuren' voor alle relevante gebieden.",
       "selectDeselectAllReadSensitive": "Selecteer of deselecteer leesgevoeligheid voor alle relevante gebieden."
     },
+    "configurationGroup": {
+      "title": "Configuratiegroep",
+      "notLinkedRun": "Niet gekoppeld aan een andere testrun.",
+      "notLinkedSession": "Niet gekoppeld aan een andere sessie.",
+      "linkRun": "Koppelen aan een testrun",
+      "linkSession": "Koppelen aan een sessie",
+      "changeRun": "Koppelen aan een andere testrun",
+      "changeSession": "Koppelen aan een andere sessie",
+      "unlink": "Ontkoppelen",
+      "pending": "Sla op om deze wijziging toe te passen.",
+      "saveError": "Het is niet gelukt de configuratiegroep bij te werken",
+      "candidateInGroupRun": "{count, plural, one {# run} other {# runs}}",
+      "candidateInGroupSession": "{count, plural, one {# sessie} other {# sessies}}",
+      "linkHintRun": "Koppelen aan een run koppelt u ook aan elke run die al met deze run is gegroepeerd.",
+      "linkHintSession": "Koppelen aan een sessie koppelt u ook aan elke sessie die al met deze sessie is gegroepeerd.",
+      "candidateInGroupTooltipRun": "{count, plural, one {# run in deze groep} other {# runs in deze groep}}",
+      "candidateInGroupTooltipSession": "{count, plural, one {# sessie in deze groep} other {# sessies in deze groep}}"
+    },
     "labels": {
       "projects": "{count, plural, =1 {# Project} other {# Projecten}}",
       "templates": "Sjablonen en velden",
@@ -773,6 +791,8 @@
       "multiConfiguration": "Onderdeel van een groep met meerdere configuraties",
       "compositionLocked": "Samenstelling vergrendeld — de set testgevallen is bevroren",
       "otherConfigurations": "Andere configuraties",
+      "noConfiguration": "Geen configuratie",
+      "configurationWithName": "{configuration} — {name}",
       "selected": "Geselecteerd: {count}",
       "defaultProjectAccess": "Standaard projecttoegang",
       "defaultAccessType": "Standaard toegangstype",
@@ -3896,6 +3916,11 @@
           "copy": "Bestaande testcasetoewijzingen kopiëren",
           "assign": "Alle testcases in de gedupliceerde testrun behouden hun bestaande toewijzingen",
           "unassign": "Alle testgevallen in de gedupliceerde testrun worden niet toegewezen"
+        },
+        "configurationGroup": {
+          "label": "Configuratiegroep",
+          "separate": "De kopieën worden alleen met elkaar gegroepeerd. De testrun die wordt gedupliceerd blijft buiten die groep",
+          "join": "De testrun die wordt gedupliceerd en elke kopie sluiten zich aan bij dezelfde configuratiegroep"
         }
       },
       "successMessage": "Testrun '{name}' is succesvol gedupliceerd.",
@@ -6690,6 +6715,7 @@
       "name": "## Sessienaam\nEen duidelijke, beschrijvende naam die het doel van uw testsessie aangeeft.\n\n- Moet uniek en betekenisvol zijn.\n- Helpt teamleden te begrijpen wat er wordt getest.\n- Wordt gebruikt in rapporten en tracking.",
       "template": "## Sjabloon\nSjablonen definiëren de structuur en inhoud van uw testsessie.\n\n- Biedt een consistente opmaak voor testdocumentatie\n- Bevat vooraf gedefinieerde secties en velden\n- Helpt testnormen in uw project te handhaven",
       "configuration": "## Configuratie\nDe specifieke omgeving of opstelling die vereist is voor deze testsessie.\n\n- Testomgeving (bijv. staging, productie)\n- Speciale configuraties of instellingen\n- Vereiste testgegevens of -voorwaarden",
+      "configurationGroup": "## Configuratiegroep\nSessies in een configuratiegroep behandelen dezelfde tests onder verschillende configuraties, zodat u ertussen kunt schakelen en de resultaten op één plek kunt vergelijken.\n\nSessies die samen voor meerdere configuraties zijn aangemaakt, worden automatisch gegroepeerd. Koppel hier een sessie wanneer deze afzonderlijk is aangemaakt.\n\nU koppelt aan één sessie, maar u sluit u aan bij alles waarmee die sessie al is gegroepeerd — een groep heeft geen eigenaar, dus elk lid is gekoppeld aan elk ander lid.\n\nGroeperen verandert alleen hoe de sessies samen worden weergegeven. Het verplaatst nooit testgevallen of resultaten.",
       "milestone": "## Mijlpaal\nKoppelt deze sessie aan een projectmijlpaal.\n\n- Helpt de testvoortgang richting projectdoelen te volgen.\n- Groepeert gerelateerde testsessies.\n- Ondersteunt rapportage op basis van mijlpalen.",
       "description": "## Beschrijving\nEen kort overzicht van wat deze testsessie omvat.\n\n- Belangrijkste gebieden of functies die worden getest\n- Belangrijke context of achtergrond\n- Speciale overwegingen of vereisten",
       "mission": "## Missie\nDe missie definieert de specifieke doelstellingen en doelen voor deze testsessie.\n\n- Wat test u?\n- Wat zijn de belangrijkste aandachtsgebieden?\n- Wat zijn de verwachte resultaten?\n\nEen duidelijke missie helpt om testen gefocust en productief te houden.",
@@ -6705,6 +6731,7 @@
       "name": "## Naam testrun\nVoer een beschrijvende naam in voor deze testrun, zodat u deze later gemakkelijk kunt herkennen.",
       "description": "## Beschrijving\nGeef een korte samenvatting of notities over deze testrun.",
       "configuration": "## Configuraties\nSelecteer een of meer configuraties (bijv. omgeving, browser, apparaat) waaronder de testruns worden uitgevoerd. Het selecteren van meerdere configuraties maakt voor elke configuratie een aparte testrun aan.",
+      "configurationGroup": "## Configuratiegroep\nRuns in een configuratiegroep behandelen dezelfde tests onder verschillende configuraties, zodat u ertussen kunt schakelen en de resultaten op één plek kunt vergelijken.\n\nRuns die samen voor meerdere configuraties zijn aangemaakt, worden automatisch gegroepeerd. Koppel hier een run wanneer deze afzonderlijk is aangemaakt — bijvoorbeeld één die u later voor een andere configuratie hebt gedupliceerd.\n\nU koppelt aan één run, maar u sluit u aan bij alles waarmee die run al is gegroepeerd — een groep heeft geen eigenaar, dus elk lid is gekoppeld aan elk ander lid.\n\nGroeperen verandert alleen hoe de runs samen worden weergegeven. Het verplaatst nooit testgevallen of resultaten.",
       "milestone": "## Mijlpaal\nKoppel deze testrun aan een specifieke projectmijlpaal om de voortgang richting grotere doelen bij te houden.",
       "docs": "## Documentatie\nVoeg alle relevante documentatie, links of gedetailleerde notities voor deze testrun toe.",
       "state": "## Status\nGeeft de huidige status of uitkomst van deze testrun aan volgens de workflow van uw project.",
@@ -6713,7 +6740,8 @@
       "attachments": "## Bijlagen\nUpload ondersteunende bestanden, schermafbeeldingen of logboeken met betrekking tot deze testrun.",
       "duplicate": {
         "statusesToInclude": "## Statussen om op te nemen\nSelecteer de statussen van testcases die u wilt opnemen in de gedupliceerde testrun.",
-        "copyAssignments": "## Toewijzingen kopiëren\nAls deze optie is ingeschakeld, worden de toewijzingen van de testcases gekopieerd naar de gedupliceerde testrun."
+        "copyAssignments": "## Toewijzingen kopiëren\nAls deze optie is ingeschakeld, worden de toewijzingen van de testcases gekopieerd naar de gedupliceerde testrun.",
+        "configurationGroup": "## Configuratiegroep\nTestruns die hetzelfde werk over verschillende configuraties behandelen, delen een configuratiegroep, en de configuratieschakelaar wisselt daartussen.\n\nLaat dit uitgeschakeld en de kopieën worden alleen met elkaar gegroepeerd, precies zoals voorheen. Schakel het in en de testrun die wordt gedupliceerd sluit zich aan bij dezelfde groep, zodat deze en elke kopie als gelijken verschijnen — ook bij een enkele kopie."
       }
     },
     "appConfig": {

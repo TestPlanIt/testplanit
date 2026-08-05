@@ -2088,3 +2088,447 @@ describe("ZenStack chokepoint SamlConfiguration cert normalization", () => {
     expect(body.data).toEqual({ entryPoint: "https://idp/new" });
   });
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Configuration-group membership guard. `configurationGroupId` links runs /
+// sessions that cover the same logical work across configurations, and is now
+// editable after the fact — so the generic RPC route is the write path and the
+// invariants (one project per group, uuid-or-null, addressable targets) are
+// enforced here. Mirrors the CR-03 shape: update, updateMany AND upsert.
+// ─────────────────────────────────────────────────────────────────────────────
+describe("ZenStack chokepoint configuration-group guard", () => {
+  const GROUP_A = "11111111-1111-4111-8111-111111111111";
+  const GROUP_B = "22222222-2222-4222-8222-222222222222";
+
+  type GroupRow = {
+    id: number;
+    projectId: number;
+    configurationGroupId: string | null;
+    isDeleted: boolean;
+  };
+
+  function installTable(db: any, model: string, rows: GroupRow[]) {
+    const matches = (r: GroupRow, where: any): boolean => {
+      if (!where) return true;
+      if (where.id !== undefined) {
+        if (typeof where.id === "object" && Array.isArray(where.id.in)) {
+          if (!where.id.in.includes(r.id)) return false;
+        } else if (r.id !== where.id) {
+          return false;
+        }
+      }
+      if (
+        where.configurationGroupId !== undefined &&
+        r.configurationGroupId !== where.configurationGroupId
+      ) {
+        return false;
+      }
+      if (where.isDeleted !== undefined && r.isDeleted !== where.isDeleted) {
+        return false;
+      }
+      return true;
+    };
+    const delegate = {
+      findUnique: vi.fn(async ({ where }: any) => {
+        const hit = rows.find((r) => matches(r, where));
+        return hit ? { ...hit } : null;
+      }),
+      findMany: vi.fn(async ({ where, take }: any) => {
+        const hits = rows
+          .filter((r) => matches(r, where))
+          .map((r) => ({ ...r }));
+        return typeof take === "number" ? hits.slice(0, take) : hits;
+      }),
+      update: vi.fn(async ({ where, data }: any) => {
+        const hit = rows.find((r) => r.id === where.id);
+        if (hit) Object.assign(hit, data);
+        return hit ? { ...hit } : null;
+      }),
+    };
+    db[model] = delegate;
+    return delegate;
+  }
+
+  function makeRequest(
+    method: string,
+    pathSegments: string[],
+    body: unknown
+  ): NextRequest {
+    const headers = new Headers();
+    headers.set("content-type", "application/json");
+    const json = JSON.stringify(body);
+    return {
+      method,
+      headers,
+      url: `http://localhost:3000/api/model/${pathSegments.join("/")}`,
+      clone() {
+        return this;
+      },
+      async text() {
+        return json;
+      },
+    } as unknown as NextRequest;
+  }
+
+  beforeEach(async () => {
+    vi.clearAllMocks();
+    const { getServerAuthSession } = await import("~/server/auth");
+    (getServerAuthSession as any).mockResolvedValue({
+      user: { id: "user-1", email: "u@e.com", name: "U" },
+    });
+    const { extractBearerToken } = await import("~/lib/api-token-auth");
+    (extractBearerToken as any).mockReturnValue(null);
+    const { baseDb } = await import("~/lib/db");
+    (baseDb as any).user.findUnique.mockResolvedValue({
+      id: "user-1",
+      email: "u@e.com",
+      name: "U",
+    });
+    baseHandlerMock.mockClear();
+    baseHandlerMock.mockResolvedValue(
+      new Response(JSON.stringify({ data: { id: 1 } }), { status: 200 })
+    );
+  });
+
+  it("rejects a cross-project join on update and skips baseHandler", async () => {
+    const { baseDb } = await import("~/lib/db");
+    installTable(baseDb as any, "testRuns", [
+      { id: 1, projectId: 7, configurationGroupId: null, isDeleted: false },
+      { id: 2, projectId: 8, configurationGroupId: GROUP_A, isDeleted: false },
+    ]);
+
+    const { PATCH } = await import("./route");
+    const req = makeRequest("PATCH", ["testRuns", "update"], {
+      where: { id: 1 },
+      data: { configurationGroupId: GROUP_A },
+    });
+    const res = await PATCH(req, {
+      params: Promise.resolve({ path: ["testRuns", "update"] }),
+    });
+    const body = await res.json();
+
+    expect(res.status).toBe(400);
+    expect(body.error.code).toBe("CONFIGURATION_GROUP_INVALID");
+    expect(body.error.message).toMatch(/same project/);
+    expect(baseHandlerMock).not.toHaveBeenCalled();
+  });
+
+  it("allows a same-project join on update", async () => {
+    const { baseDb } = await import("~/lib/db");
+    installTable(baseDb as any, "testRuns", [
+      { id: 1, projectId: 7, configurationGroupId: null, isDeleted: false },
+      { id: 2, projectId: 7, configurationGroupId: GROUP_A, isDeleted: false },
+    ]);
+
+    const { PATCH } = await import("./route");
+    const req = makeRequest("PATCH", ["testRuns", "update"], {
+      where: { id: 1 },
+      data: { configurationGroupId: GROUP_A },
+    });
+    const res = await PATCH(req, {
+      params: Promise.resolve({ path: ["testRuns", "update"] }),
+    });
+
+    expect(res.status).toBe(200);
+    expect(baseHandlerMock).toHaveBeenCalled();
+  });
+
+  it("gates the upsert update-branch (sessions)", async () => {
+    const { baseDb } = await import("~/lib/db");
+    installTable(baseDb as any, "sessions", [
+      { id: 1, projectId: 7, configurationGroupId: null, isDeleted: false },
+      { id: 2, projectId: 9, configurationGroupId: GROUP_A, isDeleted: false },
+    ]);
+
+    const { POST } = await import("./route");
+    const req = makeRequest("POST", ["sessions", "upsert"], {
+      where: { id: 1 },
+      create: { name: "fresh" },
+      update: { configurationGroupId: GROUP_A },
+    });
+    const res = await POST(req, {
+      params: Promise.resolve({ path: ["sessions", "upsert"] }),
+    });
+    const body = await res.json();
+
+    expect(res.status).toBe(400);
+    expect(body.error.code).toBe("CONFIGURATION_GROUP_INVALID");
+    expect(baseHandlerMock).not.toHaveBeenCalled();
+  });
+
+  it("gates updateMany with an { in: [...] } target list", async () => {
+    const { baseDb } = await import("~/lib/db");
+    installTable(baseDb as any, "testRuns", [
+      { id: 1, projectId: 7, configurationGroupId: null, isDeleted: false },
+      { id: 2, projectId: 8, configurationGroupId: null, isDeleted: false },
+    ]);
+
+    const { POST } = await import("./route");
+    const req = makeRequest("POST", ["testRuns", "updateMany"], {
+      where: { id: { in: [1, 2] } },
+      data: { configurationGroupId: GROUP_A },
+    });
+    const res = await POST(req, {
+      params: Promise.resolve({ path: ["testRuns", "updateMany"] }),
+    });
+    const body = await res.json();
+
+    expect(res.status).toBe(400);
+    expect(body.error.message).toMatch(/same project/);
+    expect(baseHandlerMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects a non-null assignment whose targets are an opaque filter", async () => {
+    const { baseDb } = await import("~/lib/db");
+    installTable(baseDb as any, "testRuns", []);
+
+    const { POST } = await import("./route");
+    const req = makeRequest("POST", ["testRuns", "updateMany"], {
+      where: { projectId: 7 },
+      data: { configurationGroupId: GROUP_A },
+    });
+    const res = await POST(req, {
+      params: Promise.resolve({ path: ["testRuns", "updateMany"] }),
+    });
+    const body = await res.json();
+
+    expect(res.status).toBe(400);
+    expect(body.error.message).toMatch(/specific records/);
+    expect(baseHandlerMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects a non-uuid group id", async () => {
+    const { baseDb } = await import("~/lib/db");
+    installTable(baseDb as any, "testRuns", [
+      { id: 1, projectId: 7, configurationGroupId: null, isDeleted: false },
+    ]);
+
+    const { PATCH } = await import("./route");
+    const req = makeRequest("PATCH", ["testRuns", "update"], {
+      where: { id: 1 },
+      data: { configurationGroupId: "not-a-uuid" },
+    });
+    const res = await PATCH(req, {
+      params: Promise.resolve({ path: ["testRuns", "update"] }),
+    });
+    const body = await res.json();
+
+    expect(res.status).toBe(400);
+    expect(body.error.message).toMatch(/UUID/);
+    expect(baseHandlerMock).not.toHaveBeenCalled();
+  });
+
+  it("matches the model case-insensitively (TestRuns path casing)", async () => {
+    const { baseDb } = await import("~/lib/db");
+    installTable(baseDb as any, "testRuns", [
+      { id: 1, projectId: 7, configurationGroupId: null, isDeleted: false },
+      { id: 2, projectId: 8, configurationGroupId: GROUP_A, isDeleted: false },
+    ]);
+
+    const { PATCH } = await import("./route");
+    const req = makeRequest("PATCH", ["TestRuns", "update"], {
+      where: { id: 1 },
+      data: { configurationGroupId: GROUP_A },
+    });
+    const res = await PATCH(req, {
+      params: Promise.resolve({ path: ["TestRuns", "update"] }),
+    });
+
+    expect(res.status).toBe(400);
+    expect(baseHandlerMock).not.toHaveBeenCalled();
+  });
+
+  it("pays no query cost when the payload does not touch the field", async () => {
+    const { baseDb } = await import("~/lib/db");
+    const delegate = installTable(baseDb as any, "testRuns", [
+      { id: 1, projectId: 7, configurationGroupId: GROUP_A, isDeleted: false },
+      { id: 2, projectId: 7, configurationGroupId: GROUP_A, isDeleted: false },
+    ]);
+
+    const { PATCH } = await import("./route");
+    const req = makeRequest("PATCH", ["testRuns", "update"], {
+      where: { id: 1 },
+      data: { name: "renamed" },
+    });
+    const res = await PATCH(req, {
+      params: Promise.resolve({ path: ["testRuns", "update"] }),
+    });
+
+    expect(res.status).toBe(200);
+    expect(delegate.findMany).not.toHaveBeenCalled();
+    expect(delegate.update).not.toHaveBeenCalled();
+  });
+
+  it("auto-dissolves the lone survivor after a member clears its group", async () => {
+    const { baseDb } = await import("~/lib/db");
+    const rows: GroupRow[] = [
+      { id: 1, projectId: 7, configurationGroupId: GROUP_A, isDeleted: false },
+      { id: 2, projectId: 7, configurationGroupId: GROUP_A, isDeleted: false },
+    ];
+    const delegate = installTable(baseDb as any, "testRuns", rows);
+    // Stand in for the real write the handler would have committed.
+    baseHandlerMock.mockImplementation(async () => {
+      rows[0].configurationGroupId = null;
+      return new Response(JSON.stringify({ data: { id: 1 } }), { status: 200 });
+    });
+
+    const { PATCH } = await import("./route");
+    const req = makeRequest("PATCH", ["testRuns", "update"], {
+      where: { id: 1 },
+      data: { configurationGroupId: null },
+    });
+    const res = await PATCH(req, {
+      params: Promise.resolve({ path: ["testRuns", "update"] }),
+    });
+
+    expect(res.status).toBe(200);
+    expect(delegate.update).toHaveBeenCalledWith({
+      where: { id: 2 },
+      data: { configurationGroupId: null },
+    });
+    expect(rows[1].configurationGroupId).toBeNull();
+  });
+
+  it("leaves a 3-member group intact when one member clears its group", async () => {
+    const { baseDb } = await import("~/lib/db");
+    const rows: GroupRow[] = [
+      { id: 1, projectId: 7, configurationGroupId: GROUP_A, isDeleted: false },
+      { id: 2, projectId: 7, configurationGroupId: GROUP_A, isDeleted: false },
+      { id: 3, projectId: 7, configurationGroupId: GROUP_A, isDeleted: false },
+    ];
+    const delegate = installTable(baseDb as any, "testRuns", rows);
+    baseHandlerMock.mockImplementation(async () => {
+      rows[0].configurationGroupId = null;
+      return new Response(JSON.stringify({ data: { id: 1 } }), { status: 200 });
+    });
+
+    const { PATCH } = await import("./route");
+    const req = makeRequest("PATCH", ["testRuns", "update"], {
+      where: { id: 1 },
+      data: { configurationGroupId: null },
+    });
+    await PATCH(req, {
+      params: Promise.resolve({ path: ["testRuns", "update"] }),
+    });
+
+    expect(delegate.update).not.toHaveBeenCalled();
+    expect(rows[1].configurationGroupId).toBe(GROUP_A);
+    expect(rows[2].configurationGroupId).toBe(GROUP_A);
+  });
+
+  it("auto-dissolves the lone survivor after a member is soft-deleted", async () => {
+    const { baseDb } = await import("~/lib/db");
+    const rows: GroupRow[] = [
+      { id: 1, projectId: 7, configurationGroupId: GROUP_B, isDeleted: false },
+      { id: 2, projectId: 7, configurationGroupId: GROUP_B, isDeleted: false },
+    ];
+    const delegate = installTable(baseDb as any, "sessions", rows);
+    baseHandlerMock.mockImplementation(async () => {
+      rows[0].isDeleted = true;
+      return new Response(JSON.stringify({ data: { id: 1 } }), { status: 200 });
+    });
+
+    const { PATCH } = await import("./route");
+    const req = makeRequest("PATCH", ["sessions", "update"], {
+      where: { id: 1 },
+      data: { isDeleted: true },
+    });
+    const res = await PATCH(req, {
+      params: Promise.resolve({ path: ["sessions", "update"] }),
+    });
+
+    expect(res.status).toBe(200);
+    expect(delegate.update).toHaveBeenCalledWith({
+      where: { id: 2 },
+      data: { configurationGroupId: null },
+    });
+  });
+
+  it("rejects a create that reaches into another project's group", async () => {
+    const { baseDb } = await import("~/lib/db");
+    installTable(baseDb as any, "testRuns", [
+      { id: 9, projectId: 8, configurationGroupId: GROUP_A, isDeleted: false },
+      { id: 10, projectId: 8, configurationGroupId: GROUP_A, isDeleted: false },
+    ]);
+
+    const { POST } = await import("./route");
+    const req = makeRequest("POST", ["testRuns", "create"], {
+      data: { name: "run", projectId: 7, configurationGroupId: GROUP_A },
+    });
+    const res = await POST(req, {
+      params: Promise.resolve({ path: ["testRuns", "create"] }),
+    });
+    const body = await res.json();
+
+    expect(res.status).toBe(400);
+    expect(body.error.code).toBe("CONFIGURATION_GROUP_INVALID");
+    expect(baseHandlerMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects an upsert whose create branch reaches into another project's group", async () => {
+    // `upsert` carries its own create payload, which runs whenever `where`
+    // matches nothing — the same rule as `create` has to reach it.
+    const { baseDb } = await import("~/lib/db");
+    installTable(baseDb as any, "testRuns", [
+      { id: 9, projectId: 8, configurationGroupId: GROUP_A, isDeleted: false },
+      { id: 10, projectId: 8, configurationGroupId: GROUP_A, isDeleted: false },
+    ]);
+
+    const { POST } = await import("./route");
+    const req = makeRequest("POST", ["testRuns", "upsert"], {
+      where: { id: 99999999 },
+      create: { name: "run", projectId: 7, configurationGroupId: GROUP_A },
+      update: {},
+    });
+    const res = await POST(req, {
+      params: Promise.resolve({ path: ["testRuns", "upsert"] }),
+    });
+    const body = await res.json();
+
+    expect(res.status).toBe(400);
+    expect(body.error.code).toBe("CONFIGURATION_GROUP_INVALID");
+    expect(baseHandlerMock).not.toHaveBeenCalled();
+  });
+
+  it("allows the create-modal batch that mints a fresh group", async () => {
+    const { baseDb } = await import("~/lib/db");
+    installTable(baseDb as any, "testRuns", []);
+
+    const { POST } = await import("./route");
+    const req = makeRequest("POST", ["testRuns", "create"], {
+      data: { name: "run", projectId: 7, configurationGroupId: GROUP_B },
+    });
+    const res = await POST(req, {
+      params: Promise.resolve({ path: ["testRuns", "create"] }),
+    });
+
+    expect(res.status).toBe(200);
+    expect(baseHandlerMock).toHaveBeenCalled();
+  });
+
+  it("skips auto-dissolve when the underlying mutation failed", async () => {
+    const { baseDb } = await import("~/lib/db");
+    const rows: GroupRow[] = [
+      { id: 1, projectId: 7, configurationGroupId: GROUP_A, isDeleted: false },
+      { id: 2, projectId: 7, configurationGroupId: GROUP_A, isDeleted: false },
+    ];
+    const delegate = installTable(baseDb as any, "testRuns", rows);
+    baseHandlerMock.mockResolvedValue(
+      new Response(JSON.stringify({ error: { message: "denied" } }), {
+        status: 403,
+      })
+    );
+
+    const { PATCH } = await import("./route");
+    const req = makeRequest("PATCH", ["testRuns", "update"], {
+      where: { id: 1 },
+      data: { configurationGroupId: null },
+    });
+    await PATCH(req, {
+      params: Promise.resolve({ path: ["testRuns", "update"] }),
+    });
+
+    expect(delegate.update).not.toHaveBeenCalled();
+    expect(rows[1].configurationGroupId).toBe(GROUP_A);
+  });
+});

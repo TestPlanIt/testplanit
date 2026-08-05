@@ -166,6 +166,10 @@ interface TestRunFormControlsProps {
   canAddEdit: boolean;
   canCreateTags?: boolean;
   selectedConfigurationsForDisplay?: SelectedConfigurationInfo[];
+  /** Rendered between Configuration and Milestone — the configuration-group
+   *  link belongs with the configuration it qualifies. Passed as a slot so
+   *  this component stays free of the group's state and mutations. */
+  configurationGroupSlot?: React.ReactNode;
   onAttachmentPendingChanges?: (changes: AttachmentChanges) => void;
   transitionCheck?: TransitionCheck;
 }
@@ -189,6 +193,7 @@ function TestRunFormControls({
   canAddEdit,
   canCreateTags = false,
   selectedConfigurationsForDisplay = [],
+  configurationGroupSlot,
   onAttachmentPendingChanges,
   transitionCheck,
 }: TestRunFormControlsProps) {
@@ -314,6 +319,7 @@ function TestRunFormControls({
           </FormItem>
         )}
       />
+      {configurationGroupSlot}
       {/* Milestone */}
       <FormField
         control={control}

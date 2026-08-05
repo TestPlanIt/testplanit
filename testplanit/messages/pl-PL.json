@@ -736,6 +736,24 @@
       "selectDeselectAllApprove": "Zaznacz lub odznacz opcję zatwierdzenia dla wszystkich odpowiednich obszarów",
       "selectDeselectAllReadSensitive": "Zaznacz lub odznacz opcję „Odczyt wrażliwy” dla wszystkich odpowiednich obszarów"
     },
+    "configurationGroup": {
+      "title": "Grupa konfiguracji",
+      "notLinkedRun": "Nie połączono z żadnym innym przebiegiem testowym.",
+      "notLinkedSession": "Nie połączono z żadną inną sesją.",
+      "linkRun": "Połącz z przebiegiem testowym",
+      "linkSession": "Połącz z sesją",
+      "changeRun": "Połącz z innym przebiegiem testowym",
+      "changeSession": "Połącz z inną sesją",
+      "unlink": "Odłącz",
+      "pending": "Zapisz, aby zastosować tę zmianę.",
+      "saveError": "Nie udało się zaktualizować grupy konfiguracji",
+      "candidateInGroupRun": "{count, plural, one {# przebieg} few {# przebiegi} many {# przebiegów} other {# przebiegu}}",
+      "candidateInGroupSession": "{count, plural, one {# sesja} few {# sesje} many {# sesji} other {# sesji}}",
+      "linkHintRun": "Połączenie z przebiegiem powoduje również połączenie z każdym przebiegiem już zgrupowanym z nim.",
+      "linkHintSession": "Połączenie z sesją powoduje również połączenie z każdą sesją już zgrupowaną z nią.",
+      "candidateInGroupTooltipRun": "{count, plural, one {# przebieg w tej grupie} few {# przebiegi w tej grupie} many {# przebiegów w tej grupie} other {# przebiegu w tej grupie}}",
+      "candidateInGroupTooltipSession": "{count, plural, one {# sesja w tej grupie} few {# sesje w tej grupie} many {# sesji w tej grupie} other {# sesji w tej grupie}}"
+    },
     "labels": {
       "projects": "{count, plural, =1 {# Projekt} other {# Projekty}}",
       "templates": "Szablony i pola",
@@ -773,6 +791,8 @@
       "multiConfiguration": "Część grupy wielokonfiguracyjnej",
       "compositionLocked": "Kompozycja zablokowana — zestaw przypadków jest zamrożony",
       "otherConfigurations": "Inne konfiguracje",
+      "noConfiguration": "Bez konfiguracji",
+      "configurationWithName": "{configuration} — {name}",
       "selected": "Wybrano: {count}",
       "defaultProjectAccess": "Domyślny dostęp do projektu",
       "defaultAccessType": "Domyślny typ dostępu",
@@ -3896,6 +3916,11 @@
           "copy": "Skopiuj istniejące przypisania przypadków testowych",
           "assign": "Wszystkie przypadki testowe w zduplikowanym przebiegu testu zachowają swoje istniejące przypisania",
           "unassign": "Wszystkie przypadki testowe w zduplikowanym przebiegu testu zostaną nieprzypisane"
+        },
+        "configurationGroup": {
+          "label": "Grupa konfiguracji",
+          "separate": "Kopie są grupowane tylko między sobą. Duplikowany przebieg testowy pozostaje poza tą grupą",
+          "join": "Duplikowany przebieg testowy i każda kopia przystępują do tej samej grupy konfiguracji"
         }
       },
       "successMessage": "Pomyślnie zduplikowano przebieg testu '{name}'.",
@@ -6690,6 +6715,7 @@
       "name": "## Nazwa sesji\nJasna, opisowa nazwa identyfikująca cel sesji testowej.\n\n– Powinna być unikatowa i znacząca\n– Pomaga członkom zespołu zrozumieć, co jest testowane\n– Używana w raportach i śledzeniu",
       "template": "## Szablon\nSzablony definiują strukturę i zawartość sesji testowej.\n\n— Zapewnia spójny format dokumentacji testowej\n— Zawiera predefiniowane sekcje i pola\n— Pomaga zachować standardy testowania w całym projekcie",
       "configuration": "## Konfiguracja\nOkreślone środowisko lub konfiguracja wymagana dla tej sesji testowej.\n\n— Środowisko testowe (np. środowisko przygotowawcze, produkcyjne)\n— Specjalne konfiguracje lub ustawienia\n— Wymagane dane lub warunki testowe",
+      "configurationGroup": "## Grupa konfiguracji\nSesje w grupie konfiguracji obejmują to samo testowanie w różnych konfiguracjach, dzięki czemu możesz przełączać się między nimi i porównywać ich wyniki w jednym miejscu.\n\nSesje utworzone razem dla kilku konfiguracji są grupowane automatycznie. Połącz sesję tutaj, gdy została utworzona samodzielnie.\n\nŁączysz się z jedną sesją, ale przystępujesz do wszystkiego, z czym ta sesja jest już zgrupowana — grupa nie ma właściciela, więc każdy element jest połączony z każdym innym.\n\nGrupowanie zmienia tylko sposób, w jaki sesje są przedstawiane razem. Nigdy nie przenosi przypadków testowych ani wyników.",
       "milestone": "## Kamień milowy\nKojarzy tę sesję z kamieniem milowym projektu.\n\n— Pomaga śledzić postęp testowania w kierunku celów projektu.\n— Grupuje powiązane sesje testowe.\n— Obsługuje raportowanie oparte na kamieniach milowych.",
       "description": "## Opis\nKrótki przegląd tego, co obejmuje ta sesja testowa.\n\n- Kluczowe obszary lub funkcje podlegające testowaniu\n- Ważny kontekst lub tło\n- Specjalne względy lub wymagania",
       "mission": "## Misja\nMisja definiuje szczegółowe cele i zadania dla tej sesji testowej.\n\n- Co testujesz?\n- Jakie są główne obszary zainteresowania?\n- Jakie są oczekiwane rezultaty?\n\nJasna misja pomaga zachować koncentrację i produktywność podczas testowania.",
@@ -6705,6 +6731,7 @@
       "name": "## Nazwa przebiegu testu\nWprowadź opisową nazwę tego przebiegu testu, aby później łatwo go zidentyfikować.",
       "description": "## Opis\nPodaj krótkie podsumowanie lub notatki dotyczące tego przebiegu testu.",
       "configuration": "## Konfiguracje\nWybierz jedną lub więcej konfiguracji (np. środowisko, przeglądarkę, urządzenie), w których będą wykonywane testy. Wybranie wielu konfiguracji spowoduje utworzenie osobnych testów dla każdej z nich.",
+      "configurationGroup": "## Grupa konfiguracji\nPrzebiegi w grupie konfiguracji obejmują to samo testowanie w różnych konfiguracjach, dzięki czemu możesz przełączać się między nimi i porównywać ich wyniki w jednym miejscu.\n\nPrzebiegi utworzone razem dla kilku konfiguracji są grupowane automatycznie. Połącz przebieg tutaj, gdy został utworzony samodzielnie — na przykład taki, który później zduplikowano dla innej konfiguracji.\n\nŁączysz się z jednym przebiegiem, ale przystępujesz do wszystkiego, z czym ten przebieg jest już zgrupowany — grupa nie ma właściciela, więc każdy element jest połączony z każdym innym.\n\nGrupowanie zmienia tylko sposób, w jaki przebiegi są przedstawiane razem. Nigdy nie przenosi przypadków testowych ani wyników.",
       "milestone": "## Kamień milowy\nPowiąż ten przebieg testowy z konkretnym kamieniem milowym projektu, aby śledzić postęp w kierunku większych celów.",
       "docs": "## Dokumentacja\nDołącz wszelką istotną dokumentację, linki lub szczegółowe notatki dotyczące tego przebiegu testu.",
       "state": "## Stan\nWskaż bieżący status lub wynik tego przebiegu testu zgodnie z przepływem pracy Twojego projektu.",
@@ -6713,7 +6740,8 @@
       "attachments": "## Załączniki\nPrześlij wszelkie pliki pomocnicze, zrzuty ekranu lub dzienniki związane z tym przebiegiem testu.",
       "duplicate": {
         "statusesToInclude": "## Statusy do uwzględnienia\nWybierz statusy przypadków testowych, które chcesz uwzględnić w zduplikowanym przebiegu testu.",
-        "copyAssignments": "## Kopiuj przypisania\nJeśli opcja jest włączona, przypisania przypadków testowych zostaną skopiowane do zduplikowanego przebiegu testu."
+        "copyAssignments": "## Kopiuj przypisania\nJeśli opcja jest włączona, przypisania przypadków testowych zostaną skopiowane do zduplikowanego przebiegu testu.",
+        "configurationGroup": "## Grupa konfiguracji\nPrzebiegi testowe obejmujące tę samą pracę w różnych konfiguracjach współdzielą grupę konfiguracji, a przełącznik konfiguracji umożliwia przechodzenie między nimi.\n\nJeśli pozostawisz to wyłączone, kopie będą grupowane tylko między sobą, tak jak wcześniej. Włącz tę opcję, aby duplikowany przebieg testowy przystąpił do tej samej grupy, dzięki czemu on i każda kopia będą wyświetlane jako elementy tego samego poziomu — dołącza również pojedyncza kopia."
       }
     },
     "appConfig": {

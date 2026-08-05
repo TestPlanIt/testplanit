@@ -736,6 +736,24 @@
       "selectDeselectAllApprove": "İlgili tüm alanlar için onay seçeneğini işaretleyin veya işaretini kaldırın.",
       "selectDeselectAllReadSensitive": "İlgili tüm alanlar için \"okumaya duyarlı\" seçeneğini işaretleyin veya işaretini kaldırın."
     },
+    "configurationGroup": {
+      "title": "Yapılandırma Grubu",
+      "notLinkedRun": "Başka bir test çalıştırmasına bağlı değil.",
+      "notLinkedSession": "Başka bir oturuma bağlı değil.",
+      "linkRun": "Bir test çalıştırmasına bağla",
+      "linkSession": "Bir oturuma bağla",
+      "changeRun": "Farklı bir test çalıştırmasına bağla",
+      "changeSession": "Farklı bir oturuma bağla",
+      "unlink": "Bağlantıyı kaldır",
+      "pending": "Bu değişikliği uygulamak için kaydedin.",
+      "saveError": "Yapılandırma grubu güncellenemedi",
+      "candidateInGroupRun": "{count, plural, one {# çalıştırma} other {# çalıştırma}}",
+      "candidateInGroupSession": "{count, plural, one {# oturum} other {# oturum}}",
+      "linkHintRun": "Bir çalıştırmaya bağlanmak, o çalıştırmayla zaten gruplanmış tüm çalıştırmalara da bağlanmanızı sağlar.",
+      "linkHintSession": "Bir oturuma bağlanmak, o oturumla zaten gruplanmış tüm oturumlara da bağlanmanızı sağlar.",
+      "candidateInGroupTooltipRun": "{count, plural, one {Bu grupta # çalıştırma} other {Bu grupta # çalıştırma}}",
+      "candidateInGroupTooltipSession": "{count, plural, one {Bu grupta # oturum} other {Bu grupta # oturum}}"
+    },
     "labels": {
       "projects": "{count, plural, =1 {# Proje} other {# Projeler}}",
       "templates": "Şablonlar ve Alanlar",
@@ -773,6 +791,8 @@
       "multiConfiguration": "Çoklu konfigürasyon grubunun bir parçası",
       "compositionLocked": "Kompozisyon kilitli — durum kümesi donduruldu",
       "otherConfigurations": "Diğer yapılandırmalar",
+      "noConfiguration": "Yapılandırma yok",
+      "configurationWithName": "{configuration} — {name}",
       "selected": "Seçilen: {count}",
       "defaultProjectAccess": "Varsayılan Proje Erişimi",
       "defaultAccessType": "Varsayılan Erişim Türü",
@@ -3896,6 +3916,11 @@
           "copy": "Mevcut test senaryosu atamalarını kopyala",
           "assign": "Tekrarlanan test çalıştırmasındaki tüm test senaryoları mevcut atamalarını koruyacaktır.",
           "unassign": "Tekrarlanan test çalıştırmasındaki tüm test senaryoları atanmamış olacaktır."
+        },
+        "configurationGroup": {
+          "label": "Yapılandırma Grubu",
+          "separate": "Kopyalar sadece birbirleriyle gruplanır. Çoğaltılan test çalıştırması bu grubun dışında kalır",
+          "join": "Çoğaltılan test çalıştırması ve her kopya aynı yapılandırma grubuna katılır"
         }
       },
       "successMessage": "'{name} ' test çalıştırması başarıyla tekrarlandı.",
@@ -6690,6 +6715,7 @@
       "name": "## Oturum Adı\nTest oturumunuzun amacını belirten açık ve açıklayıcı bir ad.\n\n- Benzersiz ve anlamlı olmalıdır\n- Ekip üyelerinin neyin test edildiğini anlamalarına yardımcı olur\n- Raporlarda ve izlemede kullanılır",
       "template": "## Şablon\nŞablonlar, test oturumunuzun yapısını ve içeriğini tanımlar.\n\n- Test dokümantasyonu için tutarlı bir format sağlar\n- Önceden tanımlanmış bölümler ve alanlar içerir\n- Projeniz genelinde test standartlarının korunmasına yardımcı olur",
       "configuration": "## Yapılandırma\nBu test oturumu için gerekli olan özel ortam veya kurulum.\n\n- Test ortamı (ör. Hazırlık, Üretim)\n- Özel yapılandırmalar veya ayarlar\n- Gerekli test verileri veya koşulları",
+      "configurationGroup": "## Yapılandırma Grubu\nBir yapılandırma grubundaki oturumlar, farklı yapılandırmalar altında aynı testi kapsar; böylece aralarında geçiş yapabilir ve sonuçlarını bir arada karşılaştırabilirsiniz.\n\nBirkaç yapılandırma için birlikte oluşturulan oturumlar otomatik olarak gruplanır. Bir oturum kendi başına oluşturulduysa burada bağlayın.\n\nBir oturuma bağlanırsınız, ancak o oturumun zaten gruplandığı her şeye de katılırsınız — bir grubun sahibi yoktur, bu nedenle her üye diğer her üyeye bağlıdır.\n\nGruplama yalnızca oturumların birlikte nasıl sunulduğunu değiştirir. Test senaryolarını veya sonuçlarını asla taşımaz.",
       "milestone": "## Dönüm Noktası\nBu oturumu bir proje dönüm noktasıyla ilişkilendirir.\n\n- Proje hedeflerine yönelik test ilerlemesini izlemeye yardımcı olur\n- İlgili test oturumlarını gruplandırır\n- Dönüm noktası tabanlı raporlamayı destekler",
       "description": "## Açıklama\nBu test oturumunun neleri kapsadığına dair kısa bir genel bakış.\n\n- Test edilen temel alanlar veya özellikler\n- Önemli bağlam veya arka plan bilgileri\n- Özel hususlar veya gereksinimler",
       "mission": "## Görev\nGörev, bu test oturumu için belirli amaç ve hedefleri tanımlar.\n\n- Neyi test ediyorsunuz?\n- Odaklanılacak temel alanlar nelerdir?\n- Beklenen sonuçlar nelerdir?\n\nNet bir görev, testin odaklı ve verimli kalmasına yardımcı olur.",
@@ -6705,6 +6731,7 @@
       "name": "## Test Çalıştırma Adı\nBu test çalıştırmasını daha sonra kolayca tanımlayabilmek için açıklayıcı bir ad girin.",
       "description": "## Açıklama\nBu test çalışması hakkında kısa bir özet veya not verin.",
       "configuration": "## Yapılandırmalar\nTest çalıştırmalarının yürütüleceği bir veya daha fazla yapılandırma seçin (örneğin, ortam, tarayıcı, cihaz). Birden fazla yapılandırma seçmek, her biri için ayrı test çalıştırmaları oluşturacaktır.",
+      "configurationGroup": "## Yapılandırma Grubu\nBir yapılandırma grubundaki çalıştırmalar, farklı yapılandırmalar altında aynı testi kapsar; böylece aralarında geçiş yapabilir ve sonuçlarını bir arada karşılaştırabilirsiniz.\n\nBirkaç yapılandırma için birlikte oluşturulan çalıştırmalar otomatik olarak gruplanır. Bir çalıştırma kendi başına oluşturulduysa — örneğin daha sonra başka bir yapılandırma için çoğalttığınız bir çalıştırma — burada bağlayın.\n\nBir çalıştırmaya bağlanırsınız, ancak o çalıştırmanın zaten gruplandığı her şeye de katılırsınız — bir grubun sahibi yoktur, bu nedenle her üye diğer her üyeye bağlıdır.\n\nGruplama yalnızca çalıştırmaların birlikte nasıl sunulduğunu değiştirir. Test senaryolarını veya sonuçlarını asla taşımaz.",
       "milestone": "## Dönüm Noktası\nBu test çalışmasını, daha büyük hedeflere doğru ilerlemeyi izlemek için belirli bir proje dönüm noktasıyla ilişkilendirin.",
       "docs": "## Dokümantasyon\nBu test çalışması için ilgili tüm dokümanları, bağlantıları veya ayrıntılı notları ekleyin.",
       "state": "## Durum\nProjenizin iş akışına göre bu test çalışmasının mevcut durumunu veya sonucunu belirtin.",
@@ -6713,7 +6740,8 @@
       "attachments": "## Ekler\nBu test çalışmasıyla ilgili destekleyici dosyaları, ekran görüntülerini veya günlükleri yükleyin.",
       "duplicate": {
         "statusesToInclude": "## Dahil Edilecek Durumlar\nYinelenen test çalıştırmasına dahil etmek istediğiniz test durumlarının durumlarını seçin.",
-        "copyAssignments": "## Atamaları Kopyala\nEtkinleştirilirse, test durumlarının atamaları çoğaltılan test çalıştırmasına kopyalanacaktır."
+        "copyAssignments": "## Atamaları Kopyala\nEtkinleştirilirse, test durumlarının atamaları çoğaltılan test çalıştırmasına kopyalanacaktır.",
+        "configurationGroup": "## Yapılandırma Grubu\nFarklı yapılandırmalarda aynı işi kapsayan test çalıştırmaları bir yapılandırma grubunu paylaşır ve yapılandırma değiştirici bunlar arasında geçiş yapar.\n\nBunu kapalı bırakırsanız, kopyalar tam olarak eskisi gibi sadece birbirleriyle gruplanır. Açarsanız, çoğaltılan test çalıştırması aynı gruba katılır; böylece o ve her kopya kardeş öğeler olarak görünür — tek bir kopya da katılır."
       }
     },
     "appConfig": {

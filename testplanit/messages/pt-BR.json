@@ -736,6 +736,24 @@
       "selectDeselectAllApprove": "Selecione ou desmarque \"Aprovar\" para todas as áreas relevantes.",
       "selectDeselectAllReadSensitive": "Selecione ou desmarque a opção \"Leitura sensível\" para todas as áreas relevantes."
     },
+    "configurationGroup": {
+      "title": "Grupo de configuração",
+      "notLinkedRun": "Não vinculado a nenhuma outra execução de teste.",
+      "notLinkedSession": "Não vinculado a nenhuma outra sessão.",
+      "linkRun": "Vincular a uma execução de teste",
+      "linkSession": "Vincular a uma sessão",
+      "changeRun": "Vincular a uma execução de teste diferente",
+      "changeSession": "Vincular a uma sessão diferente",
+      "unlink": "Desvincular",
+      "pending": "Salve para aplicar esta alteração.",
+      "saveError": "Falha ao atualizar o grupo de configuração",
+      "candidateInGroupRun": "{count, plural, one {# execução} other {# execuções}}",
+      "candidateInGroupSession": "{count, plural, one {# sessão} other {# sessões}}",
+      "linkHintRun": "Vincular-se a uma execução também vincula você a todas as execuções já agrupadas com ela.",
+      "linkHintSession": "Vincular-se a uma sessão também vincula você a todas as sessões já agrupadas com ela.",
+      "candidateInGroupTooltipRun": "{count, plural, one {# execução neste grupo} other {# execuções neste grupo}}",
+      "candidateInGroupTooltipSession": "{count, plural, one {# sessão neste grupo} other {# sessões neste grupo}}"
+    },
     "labels": {
       "projects": "{count, plural, =1 {# Projeto} other {# Projetos}}",
       "templates": "Modelos e Campos",
@@ -773,6 +791,8 @@
       "multiConfiguration": "Parte de um grupo de múltiplas configurações",
       "compositionLocked": "Composição bloqueada — o conjunto de casos está congelado",
       "otherConfigurations": "Outras configurações",
+      "noConfiguration": "Sem configuração",
+      "configurationWithName": "{configuration} — {name}",
       "selected": "Selecionado: {count}",
       "defaultProjectAccess": "Acesso ao projeto padrão",
       "defaultAccessType": "Tipo de acesso padrão",
@@ -3896,6 +3916,11 @@
           "copy": "Copiar atribuições de casos de teste existentes",
           "assign": "Todos os casos de teste na execução de teste duplicada manterão suas atribuições existentes.",
           "unassign": "Todos os casos de teste na execução de teste duplicada serão desatribuídos."
+        },
+        "configurationGroup": {
+          "label": "Grupo de configuração",
+          "separate": "As cópias são agrupadas apenas entre si. A execução de teste sendo duplicada permanece fora desse grupo",
+          "join": "A execução de teste sendo duplicada e todas as cópias entram no mesmo grupo de configuração"
         }
       },
       "successMessage": "Execução de teste duplicada com sucesso '{name}'.",
@@ -6690,6 +6715,7 @@
       "name": "## Nome da Sessão\nUm nome claro e descritivo que identifique o propósito da sua sessão de testes.\n\n- Deve ser único e significativo\n- Ajuda os membros da equipe a entenderem o que está sendo testado\n- Usado em relatórios e rastreamento",
       "template": "## Modelo\nOs modelos definem a estrutura e o conteúdo da sua sessão de testes.\n\n- Fornece um formato consistente para a documentação de testes\n- Inclui seções e campos predefinidos\n- Ajuda a manter os padrões de teste em todo o seu projeto",
       "configuration": "## Configuração\nO ambiente ou configuração específica necessária para esta sessão de teste.\n\n- Ambiente de teste (ex.: Staging, Produção)\n- Configurações ou definições especiais\n- Dados ou condições de teste necessários",
+      "configurationGroup": "## Grupo de configuração\nSessões em um grupo de configuração abrangem o mesmo teste em diferentes configurações, para que você possa alternar entre elas e comparar seus resultados em um só lugar.\n\nSessões criadas juntas para várias configurações são agrupadas automaticamente. Vincule uma sessão aqui quando ela tiver sido criada isoladamente.\n\nVocê se vincula a uma sessão, mas se une a tudo com que essa sessão já está agrupada — um grupo não tem proprietário, então cada membro está vinculado a todos os outros.\n\nO agrupamento só muda a forma como as sessões são apresentadas juntas. Ele nunca move casos de teste ou resultados.",
       "milestone": "## Marco\nAssocia esta sessão a um marco do projeto.\n\n- Ajuda a acompanhar o progresso dos testes em relação às metas do projeto\n- Agrupa sessões de teste relacionadas\n- Suporta relatórios baseados em marcos",
       "description": "## Descrição\nUma breve visão geral do que esta sessão de testes abrange.\n\n- Principais áreas ou funcionalidades que estão sendo testadas\n- Contexto ou histórico importante\n- Considerações ou requisitos especiais",
       "mission": "## Missão\nA missão define os objetivos e metas específicos para esta sessão de testes.\n\n- O que você está testando?\n- Quais são as principais áreas de foco?\n- Quais são os resultados esperados?\n\nUma missão clara ajuda a manter os testes focados e produtivos.",
@@ -6705,6 +6731,7 @@
       "name": "## Nome da Execução de Teste\nInsira um nome descritivo para esta execução de teste para identificá-la facilmente mais tarde.",
       "description": "## Descrição\nForneça um breve resumo ou anotações sobre esta execução de teste.",
       "configuration": "## Configurações\nSelecione uma ou mais configurações (por exemplo, ambiente, navegador, dispositivo) sob as quais os testes serão executados. Selecionar várias configurações criará testes separados para cada uma.",
+      "configurationGroup": "## Grupo de configuração\nExecuções em um grupo de configuração abrangem o mesmo teste em diferentes configurações, para que você possa alternar entre elas e comparar seus resultados em um só lugar.\n\nExecuções criadas juntas para várias configurações são agrupadas automaticamente. Vincule uma execução aqui quando ela tiver sido criada isoladamente — por exemplo, uma que você duplicou depois para outra configuração.\n\nVocê se vincula a uma execução, mas se une a tudo com que essa execução já está agrupada — um grupo não tem proprietário, então cada membro está vinculado a todos os outros.\n\nO agrupamento só muda a forma como as execuções são apresentadas juntas. Ele nunca move casos de teste ou resultados.",
       "milestone": "## Marco\nAssocie esta execução de teste a um marco específico do projeto para acompanhar o progresso em direção a objetivos maiores.",
       "docs": "## Documentação\nInclua qualquer documentação, links ou notas detalhadas relevantes para esta execução de teste.",
       "state": "## Estado\nIndique o estado atual ou o resultado desta execução de teste de acordo com o fluxo de trabalho do seu projeto.",
@@ -6713,7 +6740,8 @@
       "attachments": "## Anexos\nEnvie quaisquer arquivos, capturas de tela ou registros relacionados a esta execução de teste.",
       "duplicate": {
         "statusesToInclude": "## Status a incluir\nSelecione os status dos casos de teste que você deseja incluir na execução de teste duplicada.",
-        "copyAssignments": "## Copiar atribuições\nSe ativado, as atribuições dos casos de teste serão copiadas para a execução de teste duplicada."
+        "copyAssignments": "## Copiar atribuições\nSe ativado, as atribuições dos casos de teste serão copiadas para a execução de teste duplicada.",
+        "configurationGroup": "## Grupo de configuração\nExecuções de teste que abrangem o mesmo trabalho em diferentes configurações compartilham um grupo de configuração, e o alternador de configuração move entre elas.\n\nDeixe isso desativado e as cópias serão agrupadas apenas entre si, exatamente como antes. Ative e a execução de teste sendo duplicada entra no mesmo grupo, de modo que ela e todas as cópias aparecem como irmãs — mesmo uma única cópia entra também."
       }
     },
     "appConfig": {

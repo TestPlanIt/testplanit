@@ -55,7 +55,9 @@ The header displays:
 
 ## Multi-Configuration Support
 
-When a test run is part of a Configuration Group (created during test run creation), you can view and analyze test results across multiple configurations simultaneously.
+When a test run is part of a Configuration Group, you can view and analyze test results across multiple configurations simultaneously.
+
+Groups are usually formed when a multi-configuration test run is created, but you can also join, change, or leave a group afterwards — see [Configuration Group](#configuration-group) below.
 
 ### Configuration Selector
 
@@ -80,6 +82,22 @@ This feature is useful for:
 - Comparing test results across different browsers, operating systems, or environments
 - Getting an overview of testing progress across a matrix of configurations
 - Identifying test cases that fail in specific configurations
+
+### Configuration Group
+
+The **Configuration Group** field sits under **Configuration** in the run's details panel. It lists the other runs in the group, each linked and labelled by its configuration, so you can jump between environments of the same test effort.
+
+In **Edit** mode the field also lets you change which group the run belongs to. This matters when a group was not set up front — for example when you create one run, duplicate it for other configurations, and then want the original grouped with its duplicates:
+
+- **Link to a test run** — join the group of the run you pick
+- **Link to a different test run** — move to another group
+- **Unlink** — leave the group
+
+Membership is staged like any other edit and applied when you click **Save**.
+
+All members of a group are equal peers, so linking to a run that already has peers joins you to all of them — the picker shows each candidate's group size for that reason. Because a group needs at least two members, leaving a group of two also unlinks the run left behind.
+
+The controls are unavailable on completed runs, which cannot be edited, and while multiple configurations are selected in the configuration selector, since it is ambiguous which run you mean.
 
 ## Distributing Assignments
 

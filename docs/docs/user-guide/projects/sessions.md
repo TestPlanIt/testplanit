@@ -50,6 +50,8 @@ This tab displays a flat list of all sessions that have been marked as completed
 
 Sessions support selecting multiple configurations when creating or duplicating. When multiple configurations are selected, one session is created per configuration, all sharing the same metadata (name, template, state, milestone, tags, etc.) and linked via a shared configuration group ID. This is useful for testing across multiple environments (e.g., Chrome, Firefox, Safari) without manually creating separate sessions. See [Add Session - Multi-Configuration Support](./sessions-add.md#multi-configuration-support) for details.
 
+Grouping can also be corrected after the fact — a session can join, change, or leave a group from the **Configuration Group** field on its [details page](./sessions-details.md).
+
 ## Session Duplication
 
 Any session can be duplicated from its context menu (three-dot menu on the session item). Duplicating opens the Add Session dialog pre-populated with the original session's metadata, allowing you to quickly re-test scenarios for regression cycles or new milestones. Results are not copied — the new session starts fresh. See [Add Session - Session Duplication](./sessions-add.md#session-duplication) for details.

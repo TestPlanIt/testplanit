@@ -736,6 +736,24 @@
       "selectDeselectAllApprove": "Seleziona o deseleziona l'opzione \"approva\" per tutte le aree pertinenti.",
       "selectDeselectAllReadSensitive": "Seleziona o deseleziona \"Leggi sensibile\" per tutte le aree pertinenti"
     },
+    "configurationGroup": {
+      "title": "Gruppo di configurazione",
+      "notLinkedRun": "Non collegato a nessun'altra esecuzione di test.",
+      "notLinkedSession": "Non collegato a nessun'altra sessione.",
+      "linkRun": "Collega a un'esecuzione di test",
+      "linkSession": "Collega a una sessione",
+      "changeRun": "Collega a un'esecuzione di test diversa",
+      "changeSession": "Collega a una sessione diversa",
+      "unlink": "Scollega",
+      "pending": "Salva per applicare questa modifica.",
+      "saveError": "Impossibile aggiornare il gruppo di configurazione",
+      "candidateInGroupRun": "{count, plural, one {# esecuzione} other {# esecuzioni}}",
+      "candidateInGroupSession": "{count, plural, one {# sessione} other {# sessioni}}",
+      "linkHintRun": "Collegandoti a un'esecuzione, ti colleghi anche a tutte le esecuzioni già raggruppate con essa.",
+      "linkHintSession": "Collegandoti a una sessione, ti colleghi anche a tutte le sessioni già raggruppate con essa.",
+      "candidateInGroupTooltipRun": "{count, plural, one {# esecuzione in questo gruppo} other {# esecuzioni in questo gruppo}}",
+      "candidateInGroupTooltipSession": "{count, plural, one {# sessione in questo gruppo} other {# sessioni in questo gruppo}}"
+    },
     "labels": {
       "projects": "{count, plural, =1 {# Progetto} other {# Progetti}}",
       "templates": "Modelli e campi",
@@ -773,6 +791,8 @@
       "multiConfiguration": "Parte di un gruppo multiconfigurazione",
       "compositionLocked": "Composizione bloccata — l'insieme di casi è congelato",
       "otherConfigurations": "Altre configurazioni",
+      "noConfiguration": "Nessuna configurazione",
+      "configurationWithName": "{configuration} — {name}",
       "selected": "Selezionato: {count}",
       "defaultProjectAccess": "Accesso predefinito al progetto",
       "defaultAccessType": "Tipo di accesso predefinito",
@@ -3896,6 +3916,11 @@
           "copy": "Copia le assegnazioni dei casi di test esistenti",
           "assign": "Tutti i casi di test nell'esecuzione del test duplicato manterranno le loro assegnazioni esistenti",
           "unassign": "Tutti i casi di test nell'esecuzione del test duplicato non saranno assegnati"
+        },
+        "configurationGroup": {
+          "label": "Gruppo di configurazione",
+          "separate": "Le copie sono raggruppate solo tra loro. L'esecuzione di test in fase di duplicazione resta fuori da quel gruppo",
+          "join": "L'esecuzione di test in fase di duplicazione e ogni copia entrano a far parte dello stesso gruppo di configurazione"
         }
       },
       "successMessage": "Esecuzione del test duplicata con successo '{name}'.",
@@ -6690,6 +6715,7 @@
       "name": "## Nome sessione\nUn nome chiaro e descrittivo che identifichi lo scopo della sessione di test.\n\n- Deve essere univoco e significativo\n- Aiuta i membri del team a capire cosa viene testato\n- Utilizzato nei report e nel monitoraggio",
       "template": "## Template\nI template definiscono la struttura e il contenuto della sessione di test.\n\n- Fornisce un formato coerente per la documentazione dei test\n- Include sezioni e campi predefiniti\n- Aiuta a mantenere gli standard di test in tutto il progetto",
       "configuration": "## Configurazione\nL'ambiente o la configurazione specifici richiesti per questa sessione di test.\n\n- Ambiente di test (ad esempio, Staging, Produzione)\n- Configurazioni o impostazioni speciali\n- Dati o condizioni di test richiesti",
+      "configurationGroup": "## Gruppo di configurazione\nLe sessioni in un gruppo di configurazione riguardano lo stesso test svolto con configurazioni diverse, così puoi passare da una all'altra e confrontare i risultati in un unico posto.\n\nLe sessioni create insieme per diverse configurazioni vengono raggruppate automaticamente. Collega qui una sessione quando è stata creata singolarmente.\n\nColleghi una sessione, ma ti unisci a tutto ciò a cui quella sessione è già raggruppata — un gruppo non ha un proprietario, quindi ogni membro è collegato a tutti gli altri.\n\nIl raggruppamento cambia solo il modo in cui le sessioni vengono presentate insieme. Non sposta mai i casi di test o i risultati.",
       "milestone": "## Milestone\nAssocia questa sessione a una milestone del progetto.\n\n- Aiuta a monitorare i progressi dei test verso gli obiettivi del progetto\n- Raggruppa le sessioni di test correlate\n- Supporta la creazione di report basati su milestone",
       "description": "## Descrizione\nUna breve panoramica di ciò che copre questa sessione di test.\n\n- Aree o funzionalità chiave sottoposte a test\n- Contesto o background importante\n- Considerazioni o requisiti speciali",
       "mission": "## Missione\nLa missione definisce gli obiettivi e le finalità specifiche per questa sessione di test.\n\n- Cosa stai testando?\n- Quali sono le aree chiave su cui concentrarti?\n- Quali sono i risultati attesi?\n\nUna missione chiara aiuta a mantenere i test concentrati e produttivi.",
@@ -6705,6 +6731,7 @@
       "name": "## Nome esecuzione test\nInserisci un nome descrittivo per questa esecuzione test per identificarla facilmente in seguito.",
       "description": "## Descrizione\nFornisci un breve riepilogo o delle note su questa esecuzione del test.",
       "configuration": "## Configurazioni\nSeleziona una o più configurazioni (ad esempio, ambiente, browser, dispositivo) in base alle quali verranno eseguite le prove. Selezionando più configurazioni, verranno create prove separate per ciascuna.",
+      "configurationGroup": "## Gruppo di configurazione\nLe esecuzioni di test in un gruppo di configurazione riguardano lo stesso lavoro svolto con configurazioni diverse, così puoi passare da una all'altra e confrontare i risultati in un unico posto.\n\nLe esecuzioni create insieme per diverse configurazioni vengono raggruppate automaticamente. Collega qui un'esecuzione quando è stata creata singolarmente — ad esempio, una che hai duplicato successivamente per un'altra configurazione.\n\nColleghi un'esecuzione, ma ti unisci a tutto ciò a cui quell'esecuzione è già raggruppata — un gruppo non ha un proprietario, quindi ogni membro è collegato a tutti gli altri.\n\nIl raggruppamento cambia solo il modo in cui le esecuzioni vengono presentate insieme. Non sposta mai i casi di test o i risultati.",
       "milestone": "## Milestone\nAssocia questa esecuzione di test a una specifica milestone del progetto per monitorare i progressi verso obiettivi più ampi.",
       "docs": "## Documentazione\nIncludere qualsiasi documentazione pertinente, link o note dettagliate per questa esecuzione del test.",
       "state": "## Stato\nIndica lo stato attuale o il risultato di questa esecuzione del test in base al flusso di lavoro del tuo progetto.",
@@ -6713,7 +6740,8 @@
       "attachments": "## Allegati\nCarica eventuali file di supporto, screenshot o registri relativi a questa esecuzione del test.",
       "duplicate": {
         "statusesToInclude": "## Stati da includere\nSeleziona gli stati dei casi di test che desideri includere nell'esecuzione del test duplicato.",
-        "copyAssignments": "## Copia assegnazioni\nSe abilitata, le assegnazioni dei casi di test verranno copiate nell'esecuzione del test duplicata."
+        "copyAssignments": "## Copia assegnazioni\nSe abilitata, le assegnazioni dei casi di test verranno copiate nell'esecuzione del test duplicata.",
+        "configurationGroup": "## Gruppo di configurazione\nLe esecuzioni di test che riguardano lo stesso lavoro svolto con configurazioni diverse condividono un gruppo di configurazione, e il selettore di configurazione permette di passare dall'una all'altra.\n\nLascia questa opzione disattivata e le copie saranno raggruppate solo tra loro, esattamente come prima. Attivala e l'esecuzione di test in fase di duplicazione entra a far parte dello stesso gruppo, in modo che essa e ogni copia appaiano come elementi dello stesso livello — anche una singola copia si unisce."
       }
     },
     "appConfig": {

@@ -59,7 +59,6 @@ import * as React from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
-import { v4 as uuidv4 } from "uuid";
 import { z } from "zod/v4";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -67,6 +66,7 @@ import {
   type GetAssignmentsResponse,
 } from "~/app/actions/getAssignmentsForRunCases";
 import { emptyEditorContent } from "~/app/constants";
+import { planDuplicationGroup } from "./duplicationGroup";
 import { iterationProgressBus } from "~/lib/services/iterationProgressBus";
 import LoadingSpinner from "~/components/LoadingSpinner";
 import LoadingSpinnerAlert from "~/components/LoadingSpinnerAlert";
@@ -860,6 +860,10 @@ interface AddRunModalDuplicationPreset {
   originalStateId: number | null;
   originalNote?: any;
   originalDocs?: any;
+  /** Copies join the source run's configuration group instead of forming one. */
+  joinSourceGroup?: boolean;
+  /** The source run's group when the duplicate options were confirmed. */
+  originalConfigurationGroupId?: string | null;
 }
 
 interface AddTestRunModalProps {
@@ -919,6 +923,8 @@ export default function AddTestRunModal({
 
   const { mutateAsync: createTestRuns } =
     useClientQueries(schema).testRuns.useCreate();
+  const { mutateAsync: updateTestRun } =
+    useClientQueries(schema).testRuns.useUpdate();
   const { mutateAsync: createAttachments } =
     useClientQueries(schema).attachments.useCreate();
 
@@ -1319,6 +1325,10 @@ export default function AddTestRunModal({
       return;
     }
     setIsSubmitting(true);
+    // Hoisted so the catch below can tell whether the source run was stamped
+    // with a freshly minted group id but ended up with no siblings.
+    const createdRuns: any[] = [];
+    let stampedSourceRunId: number | null = null;
     try {
       let assignmentsToCopy: {
         repositoryCaseId: number;
@@ -1426,10 +1436,34 @@ export default function AddTestRunModal({
       const configsToCreate =
         data.configIds.length > 0 ? data.configIds : [null];
 
-      // Generate a group ID if creating multiple runs
-      const configurationGroupId = configsToCreate.length > 1 ? uuidv4() : null;
+      // Which configuration group the new runs land in. Without a duplication
+      // preset this is the historical rule (a fresh group only when 2+ configs
+      // are picked). Duplicating with "join the source's group" on puts every
+      // copy — even a single one — in the source's group instead.
+      const groupPlan = planDuplicationGroup({
+        configCount: configsToCreate.length,
+        joinSourceGroup: duplicationPreset?.joinSourceGroup === true,
+        sourceGroupId: duplicationPreset?.originalConfigurationGroupId ?? null,
+      });
+      const configurationGroupId = groupPlan.configurationGroupId;
 
-      const createdRuns: any[] = [];
+      // The source has no group yet, so it has to be stamped with the minted
+      // id as well — otherwise the copies group up without it, which is the
+      // defect this option exists to fix. Done BEFORE the runs are created so
+      // a failure here aborts with nothing created; the catch below undoes it
+      // if every create then fails and the source would be left alone in it.
+      if (
+        groupPlan.stampSource &&
+        duplicationPreset &&
+        configurationGroupId !== null
+      ) {
+        await updateTestRun({
+          where: { id: duplicationPreset.originalRunId },
+          data: { configurationGroupId },
+        });
+        stampedSourceRunId = duplicationPreset.originalRunId;
+      }
+
       setCreationProgress({ current: 0, total: configsToCreate.length });
 
       for (const configId of configsToCreate) {
@@ -1564,6 +1598,21 @@ export default function AddTestRunModal({
       router.refresh();
     } catch (error: any) {
       console.error("Failed to create test run:", error);
+      // Nothing was created, so the group the source was just stamped with has
+      // a single member. Auto-dissolve it by putting the source back.
+      if (stampedSourceRunId !== null && createdRuns.length === 0) {
+        try {
+          await updateTestRun({
+            where: { id: stampedSourceRunId },
+            data: { configurationGroupId: null },
+          });
+        } catch (revertError) {
+          console.error(
+            "Failed to revert the source run's configuration group:",
+            revertError
+          );
+        }
+      }
       toast.error(tCommon("errors.failedToFetchAssignments.title"), {
         description:
           error.message || tCommon("errors.failedToFetchAssignments.message"),

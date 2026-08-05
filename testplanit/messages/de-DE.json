@@ -736,6 +736,24 @@
       "selectDeselectAllApprove": "Wählen Sie die Genehmigung für alle relevanten Bereiche aus oder heben Sie die Auswahl auf.",
       "selectDeselectAllReadSensitive": "Aktivieren oder deaktivieren Sie die Option „Lesensibel“ für alle relevanten Bereiche."
     },
+    "configurationGroup": {
+      "title": "Konfigurationsgruppe",
+      "notLinkedRun": "Nicht mit einem anderen Testlauf verknüpft.",
+      "notLinkedSession": "Nicht mit einer anderen Sitzung verknüpft.",
+      "linkRun": "Mit einem Testlauf verknüpfen",
+      "linkSession": "Mit einer Sitzung verknüpfen",
+      "changeRun": "Mit einem anderen Testlauf verknüpfen",
+      "changeSession": "Mit einer anderen Sitzung verknüpfen",
+      "unlink": "Trennen",
+      "pending": "Speichern Sie, um diese Änderung anzuwenden.",
+      "saveError": "Die Konfigurationsgruppe konnte nicht aktualisiert werden",
+      "candidateInGroupRun": "{count, plural, one {# Testlauf} other {# Testläufe}}",
+      "candidateInGroupSession": "{count, plural, one {# Sitzung} other {# Sitzungen}}",
+      "linkHintRun": "Die Verknüpfung mit einem Testlauf verknüpft Sie auch mit allen anderen Testläufen, die bereits mit diesem gruppiert sind.",
+      "linkHintSession": "Die Verknüpfung mit einer Sitzung verknüpft Sie auch mit allen anderen Sitzungen, die bereits mit dieser gruppiert sind.",
+      "candidateInGroupTooltipRun": "{count, plural, one {# Testlauf in dieser Gruppe} other {# Testläufe in dieser Gruppe}}",
+      "candidateInGroupTooltipSession": "{count, plural, one {# Sitzung in dieser Gruppe} other {# Sitzungen in dieser Gruppe}}"
+    },
     "labels": {
       "projects": "{count, plural, =1 {# Projekt} other {# Projekte}}",
       "templates": "Vorlagen & Felder",
@@ -773,6 +791,8 @@
       "multiConfiguration": "Teil einer Multi-Konfigurationsgruppe",
       "compositionLocked": "Zusammensetzung gesperrt – die Fallmenge ist eingefroren",
       "otherConfigurations": "Andere Konfigurationen",
+      "noConfiguration": "Keine Konfiguration",
+      "configurationWithName": "{configuration} — {name}",
       "selected": "Ausgewählt: {count}",
       "defaultProjectAccess": "Standard-Projektzugriff",
       "defaultAccessType": "Standardzugriffstyp",
@@ -3896,6 +3916,11 @@
           "copy": "Vorhandene Testfallzuweisungen kopieren",
           "assign": "Alle Testfälle im duplizierten Testlauf behalten ihre bestehenden Zuordnungen.",
           "unassign": "Alle Testfälle im duplizierten Testlauf werden nicht zugewiesen."
+        },
+        "configurationGroup": {
+          "label": "Konfigurationsgruppe",
+          "separate": "Die Kopien werden nur untereinander gruppiert. Der duplizierte Testlauf bleibt außerhalb dieser Gruppe",
+          "join": "Der duplizierte Testlauf und jede Kopie treten derselben Konfigurationsgruppe bei"
         }
       },
       "successMessage": "Der Testlauf '{name}' wurde erfolgreich dupliziert.",
@@ -6690,6 +6715,7 @@
       "name": "## Sitzungsname\nEin klarer, aussagekräftiger Name, der den Zweck Ihrer Testsitzung beschreibt.\n\n- Sollte eindeutig und aussagekräftig sein.\n- Hilft Teammitgliedern zu verstehen, was getestet wird.\n- Wird in Berichten und zur Nachverfolgung verwendet.",
       "template": "## Vorlage\nVorlagen definieren die Struktur und den Inhalt Ihrer Testsitzung.\n\n- Bietet ein einheitliches Format für die Testdokumentation\n- Enthält vordefinierte Abschnitte und Felder\n- Hilft dabei, Teststandards in Ihrem gesamten Projekt einzuhalten",
       "configuration": "## Konfiguration\nDie für diese Testsitzung erforderliche spezifische Umgebung oder Einrichtung.\n\n- Testumgebung (z. B. Staging, Produktion)\n- Spezielle Konfigurationen oder Einstellungen\n- Erforderliche Testdaten oder -bedingungen",
+      "configurationGroup": "## Konfigurationsgruppe\nSitzungen in einer Konfigurationsgruppe decken denselben Test unter verschiedenen Konfigurationen ab, sodass Sie zwischen ihnen wechseln und ihre Ergebnisse an einem Ort vergleichen können.\n\nSitzungen, die zusammen für mehrere Konfigurationen erstellt wurden, werden automatisch gruppiert. Verknüpfen Sie hier eine Sitzung, wenn sie eigenständig erstellt wurde.\n\nSie verknüpfen sich mit einer Sitzung, treten aber allem bei, mit dem diese Sitzung bereits gruppiert ist — eine Gruppe hat keinen Besitzer, daher ist jedes Mitglied mit jedem anderen verknüpft.\n\nDie Gruppierung ändert nur, wie die Sitzungen zusammen dargestellt werden. Testfälle oder Ergebnisse werden dabei nie verschoben.",
       "milestone": "## Meilenstein\nVerknüpft diese Sitzung mit einem Projektmeilenstein.\n\n– Hilft, den Testfortschritt im Hinblick auf die Projektziele zu verfolgen.\n– Gruppiert zusammengehörige Testsitzungen.\n– Unterstützt die meilensteinbasierte Berichterstellung.",
       "description": "## Beschreibung\nEin kurzer Überblick über den Inhalt dieser Testsitzung.\n\n- Wichtige Testbereiche oder Funktionen\n- Wichtiger Kontext oder Hintergrund\n- Besondere Überlegungen oder Anforderungen",
       "mission": "## Mission\nDie Mission definiert die spezifischen Ziele und Vorgaben für diese Testphase.\n\n- Was wird getestet?\n- Worauf liegt der Fokus?\n- Welche Ergebnisse werden erwartet?\n\nEine klare Mission trägt dazu bei, dass das Testen fokussiert und produktiv bleibt.",
@@ -6705,6 +6731,7 @@
       "name": "## Name des Testlaufs\nGeben Sie einen aussagekräftigen Namen für diesen Testlauf ein, um ihn später leichter identifizieren zu können.",
       "description": "## Beschreibung\nGeben Sie eine kurze Zusammenfassung oder Anmerkungen zu diesem Testlauf an.",
       "configuration": "## Konfigurationen\nWählen Sie eine oder mehrere Konfigurationen (z. B. Umgebung, Browser, Gerät) aus, unter denen die Testläufe ausgeführt werden sollen. Durch die Auswahl mehrerer Konfigurationen werden für jede Konfiguration separate Testläufe erstellt.",
+      "configurationGroup": "## Konfigurationsgruppe\nTestläufe in einer Konfigurationsgruppe decken denselben Test unter verschiedenen Konfigurationen ab, sodass Sie zwischen ihnen wechseln und ihre Ergebnisse an einem Ort vergleichen können.\n\nTestläufe, die zusammen für mehrere Konfigurationen erstellt wurden, werden automatisch gruppiert. Verknüpfen Sie hier einen Testlauf, wenn er eigenständig erstellt wurde — zum Beispiel einen, den Sie später für eine andere Konfiguration dupliziert haben.\n\nSie verknüpfen sich mit einem Testlauf, treten aber allem bei, mit dem dieser Testlauf bereits gruppiert ist — eine Gruppe hat keinen Besitzer, daher ist jedes Mitglied mit jedem anderen verknüpft.\n\nDie Gruppierung ändert nur, wie die Testläufe zusammen dargestellt werden. Testfälle oder Ergebnisse werden dabei nie verschoben.",
       "milestone": "## Meilenstein\nOrdnen Sie diesen Testlauf einem bestimmten Projektmeilenstein zu, um den Fortschritt in Richtung übergeordneter Ziele zu verfolgen.",
       "docs": "## Dokumentation\nFügen Sie hier alle relevanten Dokumente, Links oder detaillierten Notizen zu diesem Testlauf ein.",
       "state": "## Status\nGeben Sie den aktuellen Status oder das Ergebnis dieses Testlaufs gemäß dem Workflow Ihres Projekts an.",
@@ -6713,7 +6740,8 @@
       "attachments": "## Anhänge\nLaden Sie alle unterstützenden Dateien, Screenshots oder Protokolle hoch, die mit diesem Testlauf in Zusammenhang stehen.",
       "duplicate": {
         "statusesToInclude": "## Einzuschließende Status\nWählen Sie die Status der Testfälle aus, die Sie in den duplizierten Testlauf einbeziehen möchten.",
-        "copyAssignments": "## Zuweisungen kopieren\nWenn diese Option aktiviert ist, werden die Zuweisungen der Testfälle in den duplizierten Testlauf kopiert."
+        "copyAssignments": "## Zuweisungen kopieren\nWenn diese Option aktiviert ist, werden die Zuweisungen der Testfälle in den duplizierten Testlauf kopiert.",
+        "configurationGroup": "## Konfigurationsgruppe\nTestläufe, die dieselbe Arbeit über verschiedene Konfigurationen hinweg abdecken, teilen sich eine Konfigurationsgruppe, und der Konfigurationsschalter wechselt zwischen ihnen.\n\nLassen Sie dies deaktiviert, werden die Kopien nur untereinander gruppiert, genau wie zuvor. Aktivieren Sie es, tritt der duplizierte Testlauf derselben Gruppe bei, sodass er und jede Kopie als Geschwister erscheinen — auch bei einer einzelnen Kopie."
       }
     },
     "appConfig": {

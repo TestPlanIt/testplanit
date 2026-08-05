@@ -736,6 +736,24 @@
       "selectDeselectAllApprove": "Select or deselect approve for all relevant areas",
       "selectDeselectAllReadSensitive": "Select or deselect read sensitive for all relevant areas"
     },
+    "configurationGroup": {
+      "title": "Configuration Group",
+      "notLinkedRun": "Not linked to any other test run.",
+      "notLinkedSession": "Not linked to any other session.",
+      "linkRun": "Link to a test run",
+      "linkSession": "Link to a session",
+      "changeRun": "Link to a different test run",
+      "changeSession": "Link to a different session",
+      "unlink": "Unlink",
+      "pending": "Save to apply this change.",
+      "saveError": "Failed to update the configuration group",
+      "candidateInGroupRun": "{count, plural, one {# run} other {# runs}}",
+      "candidateInGroupSession": "{count, plural, one {# session} other {# sessions}}",
+      "linkHintRun": "Linking to a run also links you to every run already grouped with it.",
+      "linkHintSession": "Linking to a session also links you to every session already grouped with it.",
+      "candidateInGroupTooltipRun": "{count, plural, one {# run in this group} other {# runs in this group}}",
+      "candidateInGroupTooltipSession": "{count, plural, one {# session in this group} other {# sessions in this group}}"
+    },
     "labels": {
       "projects": "{count, plural, =1 {# Project} other {# Projects}}",
       "templates": "Templates & Fields",
@@ -773,6 +791,8 @@
       "multiConfiguration": "Part of a multi-configuration group",
       "compositionLocked": "Composition locked — the case set is frozen",
       "otherConfigurations": "Other configurations",
+      "noConfiguration": "No configuration",
+      "configurationWithName": "{configuration} — {name}",
       "selected": "Selected: {count}",
       "defaultProjectAccess": "Default Project Access",
       "defaultAccessType": "Default Access Type",
@@ -3896,6 +3916,11 @@
           "copy": "Copy existing test case assignments",
           "assign": "All test cases in the duplicated test run will retain their existing assignments",
           "unassign": "All test cases in the duplicated test run will be unassigned"
+        },
+        "configurationGroup": {
+          "label": "Configuration Group",
+          "separate": "The copies are grouped with each other only. The test run being duplicated stays outside that group",
+          "join": "The test run being duplicated and every copy join the same configuration group"
         }
       },
       "successMessage": "Successfully duplicated test run '{name}'.",
@@ -6690,6 +6715,7 @@
       "name": "## Session Name\nA clear, descriptive name that identifies the purpose of your testing session.\n\n- Should be unique and meaningful\n- Helps team members understand what is being tested\n- Used in reports and tracking",
       "template": "## Template\nTemplates define the structure and content of your testing session.\n\n- Provides a consistent format for test documentation\n- Includes predefined sections and fields\n- Helps maintain testing standards across your project",
       "configuration": "## Configuration\nThe specific environment or setup required for this testing session.\n\n- Test environment (e.g., Staging, Production)\n- Special configurations or settings\n- Required test data or conditions",
+      "configurationGroup": "## Configuration Group\nSessions in a configuration group cover the same testing under different configurations, so you can switch between them and compare their results in one place.\n\nSessions created together for several configurations are grouped automatically. Link a session here when it was created on its own.\n\nYou link to one session, but you join everything that session is already grouped with — a group has no owner, so every member is linked to every other.\n\nGrouping only changes how the sessions are presented together. It never moves test cases or results.",
       "milestone": "## Milestone\nAssociates this session with a project milestone.\n\n- Helps track testing progress towards project goals\n- Groups related testing sessions\n- Supports milestone-based reporting",
       "description": "## Description\nA brief overview of what this testing session covers.\n\n- Key areas or features being tested\n- Important context or background\n- Special considerations or requirements",
       "mission": "## Mission\nThe mission defines the specific objectives and goals for this testing session.\n\n- What are you testing?\n- What are the key areas of focus?\n- What are the expected outcomes?\n\nA clear mission helps keep testing focused and productive.",
@@ -6705,6 +6731,7 @@
       "name": "## Test Run Name\nEnter a descriptive name for this test run to easily identify it later.",
       "description": "## Description\nProvide a brief summary or notes about this test run.",
       "configuration": "## Configurations\nSelect one or more configurations (e.g., environment, browser, device) under which test runs will be executed. Selecting multiple configurations will create separate test runs for each.",
+      "configurationGroup": "## Configuration Group\nRuns in a configuration group cover the same testing under different configurations, so you can switch between them and compare their results in one place.\n\nRuns created together for several configurations are grouped automatically. Link a run here when it was created on its own — for example, one you duplicated later for another configuration.\n\nYou link to one run, but you join everything that run is already grouped with — a group has no owner, so every member is linked to every other.\n\nGrouping only changes how the runs are presented together. It never moves test cases or results.",
       "milestone": "## Milestone\nAssociate this test run with a specific project milestone to track progress towards larger goals.",
       "docs": "## Documentation\nInclude any relevant documentation, links, or detailed notes for this test run.",
       "state": "## State\nIndicate the current status or outcome of this test run according to your project's workflow.",
@@ -6713,7 +6740,8 @@
       "attachments": "## Attachments\nUpload any supporting files, screenshots, or logs related to this test run.",
       "duplicate": {
         "statusesToInclude": "## Statuses to Include\nSelect the statuses of test cases you want to include in the duplicated test run.",
-        "copyAssignments": "## Copy Assignments\nIf enabled, the assignments of the test cases will be copied to the duplicated test run."
+        "copyAssignments": "## Copy Assignments\nIf enabled, the assignments of the test cases will be copied to the duplicated test run.",
+        "configurationGroup": "## Configuration Group\nTest runs that cover the same work across different configurations share a configuration group, and the configuration switcher moves between them.\n\nLeave this off and the copies are grouped with each other only, exactly as before. Turn it on and the test run being duplicated joins that same group, so it and every copy appear as siblings — a single copy joins too."
       }
     },
     "appConfig": {

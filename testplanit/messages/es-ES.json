@@ -736,6 +736,24 @@
       "selectDeselectAllApprove": "Seleccione o deseleccione la opción \"Aprobar\" para todas las áreas relevantes.",
       "selectDeselectAllReadSensitive": "Seleccione o deseleccione la opción de lectura confidencial para todas las áreas pertinentes."
     },
+    "configurationGroup": {
+      "title": "Grupo de configuración",
+      "notLinkedRun": "No está vinculado a ninguna otra ejecución de prueba.",
+      "notLinkedSession": "No está vinculado a ninguna otra sesión.",
+      "linkRun": "Vincular a una ejecución de prueba",
+      "linkSession": "Vincular a una sesión",
+      "changeRun": "Vincular a una ejecución de prueba diferente",
+      "changeSession": "Vincular a una sesión diferente",
+      "unlink": "Desvincular",
+      "pending": "Guarde para aplicar este cambio.",
+      "saveError": "Error al actualizar el grupo de configuración",
+      "candidateInGroupRun": "{count, plural, one {# ejecución} other {# ejecuciones}}",
+      "candidateInGroupSession": "{count, plural, one {# sesión} other {# sesiones}}",
+      "linkHintRun": "Vincularse a una ejecución también lo vincula a todas las ejecuciones ya agrupadas con ella.",
+      "linkHintSession": "Vincularse a una sesión también lo vincula a todas las sesiones ya agrupadas con ella.",
+      "candidateInGroupTooltipRun": "{count, plural, one {# ejecución en este grupo} other {# ejecuciones en este grupo}}",
+      "candidateInGroupTooltipSession": "{count, plural, one {# sesión en este grupo} other {# sesiones en este grupo}}"
+    },
     "labels": {
       "projects": "{count, plural, =1 {# Proyecto} other {# Proyectos}}",
       "templates": "Plantillas y campos",
@@ -773,6 +791,8 @@
       "multiConfiguration": "Parte de un grupo de configuración múltiple",
       "compositionLocked": "Composición bloqueada — el conjunto de casos está congelado",
       "otherConfigurations": "Otras configuraciones",
+      "noConfiguration": "Sin configuración",
+      "configurationWithName": "{configuration} — {name}",
       "selected": "Seleccionado: {count}",
       "defaultProjectAccess": "Acceso al proyecto por defecto",
       "defaultAccessType": "Tipo de acceso por defecto",
@@ -3896,6 +3916,11 @@
           "copy": "Copiar asignaciones de casos de prueba existentes",
           "assign": "Todos los casos de prueba en la prueba duplicada conservarán sus asignaciones existentes",
           "unassign": "Todos los casos de prueba en la prueba duplicada serán desasignados"
+        },
+        "configurationGroup": {
+          "label": "Grupo de configuración",
+          "separate": "Las copias se agrupan solo entre sí. La ejecución de prueba que se está duplicando permanece fuera de ese grupo",
+          "join": "La ejecución de prueba que se está duplicando y cada copia se unen al mismo grupo de configuración"
         }
       },
       "successMessage": "Ejecución de prueba duplicada con éxito '{name}'.",
@@ -6690,6 +6715,7 @@
       "name": "## Nombre de la sesión\nUn nombre claro y descriptivo que identifica el propósito de su sesión de prueba.\n\n- Debe ser único y significativo\n- Ayuda a los miembros del equipo a entender lo que se está probando\n- Utilizado en informes y seguimiento",
       "template": "## Plantilla\nLas plantillas definen la estructura y el contenido de su sesión de pruebas.\n\n- Proporciona un formato consistente para la documentación de prueba\n- Incluye secciones predefinidas y campos\n- Ayuda a mantener los estándares de prueba en todo su proyecto",
       "configuration": "## Configuración\nEl entorno específico o la configuración requerida para esta sesión de prueba.\n\n- Entorno de prueba (e. ., Staging, Producción)\n- Configuraciones especiales o ajustes\n- Datos de prueba o condiciones requeridas",
+      "configurationGroup": "## Grupo de configuración\nLas sesiones de un grupo de configuración cubren las mismas pruebas bajo diferentes configuraciones, de modo que puede alternar entre ellas y comparar sus resultados en un solo lugar.\n\nLas sesiones creadas juntas para varias configuraciones se agrupan automáticamente. Vincule una sesión aquí cuando se haya creado de forma independiente.\n\nUsted se vincula a una sesión, pero se une a todo lo que esa sesión ya tenga agrupado — un grupo no tiene propietario, por lo que cada miembro está vinculado a todos los demás.\n\nAgrupar solo cambia la forma en que las sesiones se presentan juntas. Nunca mueve casos de prueba ni resultados.",
       "milestone": "## Hito\nAsocia esta sesión con un hito del proyecto.\n\n- Ayuda a rastrear el progreso de las pruebas hacia los objetivos del proyecto\n- Sesiones de prueba relacionadas con grupos\n- Soporta informes basados en hitos",
       "description": "## Descripción\nUn breve resumen de lo que cubre esta sesión de pruebas.\n\n- Áreas clave o características siendo probadas\n- Contexto importante o fondo\n- Consideraciones especiales o requisitos",
       "mission": "## Misión\\nLa misión define los objetivos y metas específicos para esta sesión de pruebas.\\n\\n- ¿Qué estás probando?\\n- ¿Cuáles son las áreas clave del enfoque?\\n- ¿Cuáles son los resultados esperados?\\n\\nUna misión clara ayuda a mantener las pruebas centradas y productivas.",
@@ -6705,6 +6731,7 @@
       "name": "## Nombre de prueba Run\nIngrese un nombre descriptivo para esta prueba ejecutada para identificarla más tarde.",
       "description": "## Descripción\nProporcione un breve resumen o notas sobre esta ejecución de prueba.",
       "configuration": "## Configuraciones\nSeleccione una o más configuraciones (p. ej., entorno, navegador, dispositivo) bajo las cuales se ejecutarán las pruebas. Si selecciona varias configuraciones, se crearán pruebas independientes para cada una.",
+      "configurationGroup": "## Grupo de configuración\nLas ejecuciones de un grupo de configuración cubren las mismas pruebas bajo diferentes configuraciones, de modo que puede alternar entre ellas y comparar sus resultados en un solo lugar.\n\nLas ejecuciones creadas juntas para varias configuraciones se agrupan automáticamente. Vincule una ejecución aquí cuando se haya creado de forma independiente — por ejemplo, una que duplicó más tarde para otra configuración.\n\nUsted se vincula a una ejecución, pero se une a todo lo que esa ejecución ya tenga agrupado — un grupo no tiene propietario, por lo que cada miembro está vinculado a todos los demás.\n\nAgrupar solo cambia la forma en que las ejecuciones se presentan juntas. Nunca mueve casos de prueba ni resultados.",
       "milestone": "## Hito\nAsociar esta prueba con un hito específico del proyecto para seguir el progreso hacia metas más grandes.",
       "docs": "## Documentación\nIncluya cualquier documentación, enlace o notas detalladas para esta ejecución de prueba.",
       "state": "## Estado\nIndica el estado actual o resultado de esta prueba de acuerdo con el flujo de trabajo de tu proyecto.",
@@ -6713,7 +6740,8 @@
       "attachments": "## Adjuntos\nSube cualquier archivo de soporte, capturas de pantalla o registros relacionados con esta ejecución de prueba.",
       "duplicate": {
         "statusesToInclude": "## Estados a incluir\nSeleccione los estados de los casos de prueba que desea incluir en la ejecución de prueba duplicada.",
-        "copyAssignments": "## Copiar asignaciones\nSi está activado, las asignaciones de los casos de prueba se copiarán en la ejecución de prueba duplicada."
+        "copyAssignments": "## Copiar asignaciones\nSi está activado, las asignaciones de los casos de prueba se copiarán en la ejecución de prueba duplicada.",
+        "configurationGroup": "## Grupo de configuración\nLas ejecuciones de prueba que cubren el mismo trabajo en diferentes configuraciones comparten un grupo de configuración, y el selector de configuración permite moverse entre ellas.\n\nDeje esto desactivado y las copias se agrupan solo entre sí, exactamente como antes. Actívelo y la ejecución de prueba que se está duplicando se une a ese mismo grupo, de modo que ella y cada copia aparecen como elementos del mismo nivel — incluso una sola copia se une también."
       }
     },
     "appConfig": {

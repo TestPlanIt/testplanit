@@ -55,6 +55,7 @@ Displays the following session properties. In Edit mode, most fields become edit
 - **Template**: The selected [Session Template](../templates-fields.md).
 - **State**: The current [Workflow State](../workflows.md).
 - **Configuration**: The linked [Configuration](../configurations.md). In Edit mode, the dropdown lists only Configurations assigned to this project.
+- **Configuration Group**: The other sessions this session is grouped with, each labelled by its configuration. In Edit mode, **Link to a session**, **Link to a different session**, and **Unlink** change that membership; the change is applied when you save. All members are equal peers, so linking to a session joins you to every session already grouped with it, and leaving a group of two unlinks the remaining session as well. Unavailable on completed sessions, which cannot be edited. See [Changing Group Membership Later](../configurations.md#changing-group-membership-later).
 - **Milestone**: The linked project [Milestone](./milestones.md). In Edit mode, a searchable dropdown — type to filter; only active milestones are shown; completed milestones are excluded.
 - **Assigned To**: The user assigned to the session.
 - **Estimate**: The estimated duration for the session.
