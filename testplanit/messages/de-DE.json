@@ -558,6 +558,8 @@
       "stepCount": "Schrittzahl",
       "enterText": "Text eingeben...",
       "enterUrl": "URL eingeben",
+      "enterUrlPattern": "URL-Muster eingeben...",
+      "domainExample": "beispiel.de",
       "issueIdExample": "ISSUE-123",
       "selectPriorityValuesOrEmpty": "Prioritätswerte auswählen (oder für alle leer lassen)"
     },
@@ -1078,7 +1080,35 @@
     "invalidProject": "Ungültige Projekt-ID.",
     "visualization": "Visualisierung",
     "results": "Ergebnisse",
-    "loading": "Laden..."
+    "loading": "Laden...",
+    "operators": {
+      "eq": "Gleich",
+      "ne": "Nicht gleich",
+      "lt": "Weniger als",
+      "lte": "Kleiner oder gleich",
+      "gt": "Größer als",
+      "gte": "Größer oder gleich",
+      "between": "Zwischen",
+      "contains": "Enthält",
+      "notContains": "Enthält nicht",
+      "startsWith": "Beginnt mit",
+      "endsWith": "Endet mit",
+      "domain": "Domain enthält",
+      "on": "An",
+      "before": "Vor",
+      "after": "Nach",
+      "last7": "Letzte 7 Tage",
+      "last30": "Letzte 30 Tage",
+      "last90": "Letzte 90 Tage",
+      "thisYear": "Dieses Jahr",
+      "anyOf": "Beliebige von",
+      "allOf": "Alle von",
+      "noneOf": "Keine von",
+      "is": "Ist",
+      "in": "Ist eines von",
+      "hasValue": "Hat Wert",
+      "isEmpty": "Ist leer"
+    }
   },
   "api": {
     "testResults": {
@@ -3456,6 +3486,22 @@
       "linkedIssuesDroppedTitle": "Einige damit zusammenhängende Probleme wurden nicht berücksichtigt.",
       "linkedIssuesDropped": "{count, plural, =1 {# verknüpftes Problem wurde verworfen} other {# verknüpfte Probleme wurden verworfen}} aufgrund des Token-Budgets: {keys}.",
       "linkedIssuesPreviewHeading": "Verknüpfte Tickets, die aufgenommen werden"
+    },
+    "filterBar": {
+      "addFilter": "Filter hinzufügen",
+      "removeFilter": "Filter entfernen: {name}",
+      "editFilter": "Filter bearbeiten: {name}",
+      "activeCount": "{count, plural, =1 {# aktiver Filter} other {# aktive Filter}}",
+      "assignedToMe": "Mir zugewiesen",
+      "noFilters": "Keine aktiven Filter",
+      "noMatchingCases": "Keine Testfälle entsprechen Ihren Filtern",
+      "searchTruncated": "Filterung innerhalb der obersten {count, number} Treffer",
+      "sortedByRelevance": "Nach Relevanz sortiert",
+      "countsUpdating": "Zählungen werden aktualisiert...",
+      "filterLimitReached": "Filterlimit erreicht ({count} maximal)",
+      "valueLimitReached": "Wertelimit erreicht ({count} maximal pro Filter)",
+      "filtersTruncated": "Einige Filter wurden verworfen ({count} maximal)",
+      "valuesTruncated": "{count, plural, =1 {# Wert} other {# Werte}} pro Filter maximal — zusätzliche Werte wurden verworfen"
     }
   },
   "tags": {
@@ -8190,6 +8236,8 @@
       "includeDeleted": "Gelöschte Elemente einschließen",
       "filterActive": "Filter aktiv:",
       "applyFilter": "Filter anwenden",
+      "invalidDate": "Ungültiges Datum",
+      "stepsCount": "{count, plural, one {# Schritt} other {# Schritte}}",
       "validation": {
         "firstValueMustBeLessThanSecond": "Der erste Wert muss kleiner als der zweite Wert sein.",
         "firstDateMustBeBeforeSecond": "Das erste Date muss vor dem zweiten Date stattfinden."

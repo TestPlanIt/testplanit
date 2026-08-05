@@ -1,3 +1,4 @@
+import type { Page } from "@playwright/test";
 import { expect, test } from "../../../fixtures";
 import { RepositoryPage } from "../../../page-objects/repository/repository.page";
 
@@ -5,9 +6,31 @@ import { RepositoryPage } from "../../../page-objects/repository/repository.page
  * Search & Filter Tests
  *
  * Test cases for searching and filtering test cases in the repository.
- * The repository uses a text filter input (search-input) to filter the DataTable
- * and a ViewSelector dropdown to filter by different views (folders, states, templates, etc.).
+ *
+ * `search-input` is the repository's own search: the in-table NAME filter
+ * exercised here, always AND'ed as a base condition and never serialized to
+ * the URL. It is the only text input on this page — the Elasticsearch box
+ * (`es-search-input`) exists solely in the case-selection dialog, where
+ * Unified Search is unreachable. Dimension filtering itself lives in the
+ * FilterBar (chips + `?f=` params), which composes with both the folder scope
+ * and the name filter.
  */
+
+/** The `f` params currently serialized into the URL, form-decoded. */
+function filterParams(page: Page): string[] {
+  return new URL(page.url()).searchParams.getAll("f");
+}
+
+/** Open the FilterBar's Add-filter picker and choose a dimension. */
+async function addFilterDimension(page: Page, dimension: string) {
+  const addButton = page.getByTestId("filter-bar-add");
+  await expect(addButton).toBeVisible({ timeout: 10000 });
+  await addButton.click();
+  const option = page.getByTestId(`filter-dimension-option-${dimension}`);
+  await expect(option).toBeVisible({ timeout: 5000 });
+  await option.click();
+}
+
 test.describe("Search & Filter", () => {
   let repositoryPage: RepositoryPage;
 
@@ -786,6 +809,97 @@ test.describe("Search & Filter", () => {
       await expect(page.locator("text=/1-/")).toBeVisible({
         timeout: 5000,
       });
+    });
+  });
+
+  test("Name Filter Composes With a Filter Chip Inside a Folder", async ({
+    api,
+    page,
+  }) => {
+    const projectId = await getTestProjectId(api);
+
+    let folderId: number | undefined;
+    let stateIds: number[] = [];
+    const uniqueId = Date.now();
+    const matchingName = `ChipMatch${uniqueId}`;
+    const sameStateOtherName = `ChipOther${uniqueId}`;
+    const otherStateName = `ChipMatchWrongState${uniqueId}`;
+
+    await test.step("Create a folder with cases across two states", async () => {
+      const folderName = `Chip Compose Folder ${uniqueId}`;
+      folderId = await api.createFolder(projectId, folderName);
+      stateIds = await api.getStateIds(projectId, 2);
+
+      await api.createTestCaseWithState(
+        projectId,
+        folderId,
+        matchingName,
+        stateIds[0]
+      );
+      await api.createTestCaseWithState(
+        projectId,
+        folderId,
+        sameStateOtherName,
+        stateIds[0]
+      );
+      await api.createTestCaseWithState(
+        projectId,
+        folderId,
+        otherStateName,
+        stateIds[1]
+      );
+    });
+
+    await test.step("Open repository and select the folder", async () => {
+      await repositoryPage.goto(projectId);
+      await repositoryPage.selectFolder(folderId!);
+      await page.waitForLoadState("networkidle");
+
+      await expect(
+        page.locator(`text="${otherStateName}"`).first()
+      ).toBeVisible({ timeout: 10000 });
+    });
+
+    await test.step("Add a state filter chip from the FilterBar", async () => {
+      await addFilterDimension(page, "states");
+      await page.getByTestId(`filter-value-option-${stateIds[0]}`).click();
+
+      await expect(page.getByTestId("filter-chip-states-in")).toBeVisible({
+        timeout: 10000,
+      });
+      await page.keyboard.press("Escape");
+
+      // Folder scope AND the predicate: the other state's case is gone.
+      await expect(page.locator(`text="${otherStateName}"`)).not.toBeVisible({
+        timeout: 5000,
+      });
+      await expect(page.locator(`text="${matchingName}"`).first()).toBeVisible({
+        timeout: 10000,
+      });
+    });
+
+    await test.step("Narrow further with the in-table name filter", async () => {
+      const searchInput = page.getByTestId("search-input");
+      await expect(searchInput).toBeVisible({ timeout: 5000 });
+      await searchInput.fill(matchingName);
+      await page.waitForLoadState("networkidle");
+    });
+
+    await test.step("Verify only the case matching every condition remains", async () => {
+      await expect(page.locator(`text="${matchingName}"`).first()).toBeVisible({
+        timeout: 10000,
+      });
+      await expect(
+        page.locator(`text="${sameStateOtherName}"`)
+      ).not.toBeVisible({ timeout: 5000 });
+      await expect(page.locator(`text="${otherStateName}"`)).not.toBeVisible({
+        timeout: 5000,
+      });
+
+      // The chip is still active, and only the chip is serialized — the name
+      // filter stays out of the URL.
+      await expect(page.getByTestId("filter-chip-states-in")).toBeVisible();
+      expect(filterParams(page)).toEqual([`states:in:${stateIds[0]}`]);
     });
   });
 });

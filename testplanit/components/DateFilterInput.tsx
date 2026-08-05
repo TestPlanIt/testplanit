@@ -1,5 +1,9 @@
 "use client";
 
+import {
+  operatorLabelKey,
+  type FilterInputValue,
+} from "@/components/filterInputValue";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -31,48 +35,75 @@ type DateOperator =
   | "last90"
   | "thisYear";
 
+const LEGACY_OPERATORS: readonly string[] = [
+  "on",
+  "before",
+  "after",
+  "between",
+  "last7",
+  "last30",
+  "last90",
+  "thisYear",
+];
+
+const RELATIVE_OPERATORS: readonly string[] = [
+  "last7",
+  "last30",
+  "last90",
+  "thisYear",
+];
+
+// Relative operators plus the registry has-value / is-empty operators (the
+// latter only offered in structured mode via the `operators` prop).
+const VALUELESS_OPERATORS: readonly string[] = [
+  ...RELATIVE_OPERATORS,
+  "any",
+  "none",
+];
+
 interface DateFilterInputProps {
   fieldId: number;
-  onFilterApply: (operator: DateOperator, value1?: Date, value2?: Date) => void;
+  onFilterApply?: (
+    operator: DateOperator,
+    value1?: Date,
+    value2?: Date
+  ) => void;
   onClearFilter?: () => void;
   currentFilter: string | null;
+  /** Structured chip-editor mode: the committed {operator, values} (ISO strings). */
+  value?: FilterInputValue | null;
+  /** Structured change path — emits only complete states. */
+  onValueChange?: (next: FilterInputValue) => void;
+  /** Operator whitelist for structured mode; defaults to the legacy set. */
+  operators?: readonly string[];
 }
 
-const operatorLabels: Record<DateOperator, string> = {
-  on: "On date (=)",
-  before: "Before date (<)",
-  after: "After date (>)",
-  between: "Between dates",
-  last7: "Last 7 days",
-  last30: "Last 30 days",
-  last90: "Last 90 days",
-  thisYear: "This year",
-};
-
-const operatorSymbols: Record<DateOperator, string> = {
-  on: "on",
-  before: "before",
-  after: "after",
-  between: "between",
-  last7: "last 7 days",
-  last30: "last 30 days",
-  last90: "last 90 days",
-  thisYear: "this year",
-};
+// Operators that have a `common.operators.*` label; anything outside this set
+// (a hand-edited URL) falls back to the raw token rather than a missing key.
+const LABELLED_OPERATORS: readonly string[] = [
+  ...LEGACY_OPERATORS,
+  "any",
+  "none",
+];
 
 export function DateFilterInput({
   fieldId: _fieldId,
   onFilterApply,
   onClearFilter,
   currentFilter,
+  value,
+  onValueChange,
+  operators,
 }: DateFilterInputProps) {
   const t = useTranslations();
   const locale = useLocale();
-  const [operator, setOperator] = useState<DateOperator>("on");
+  const [operator, setOperator] = useState<string>("on");
   const [date1, setDate1] = useState<Date | undefined>(undefined);
   const [date2, setDate2] = useState<Date | undefined>(undefined);
   const [popover1Open, setPopover1Open] = useState(false);
   const [popover2Open, setPopover2Open] = useState(false);
+
+  const operatorOptions = operators ?? LEGACY_OPERATORS;
 
   // Parse current filter if it exists
   useEffect(() => {
@@ -80,7 +111,7 @@ export function DateFilterInput({
       // Use pipe separator to avoid conflicts with ISO date format
       if (currentFilter.includes("|")) {
         const parts = currentFilter.split("|");
-        setOperator(parts[0] as DateOperator);
+        setOperator(parts[0]);
 
         if (parts[1]) {
           const date = new Date(parts[1]);
@@ -97,15 +128,49 @@ export function DateFilterInput({
         }
       } else {
         // Relative date operator without date value (last7, last30, etc.)
-        setOperator(currentFilter as DateOperator);
+        setOperator(currentFilter);
       }
     }
   }, [currentFilter]);
 
+  // Structured mode: sync from the committed predicate value.
+  useEffect(() => {
+    if (!value) return;
+    setOperator(value.operator);
+    const parseDate = (raw: string | number | undefined) => {
+      if (raw === undefined) return undefined;
+      const parsed = new Date(String(raw));
+      return isNaN(parsed.getTime()) ? undefined : parsed;
+    };
+    setDate1(parseDate(value.values[0]));
+    setDate2(parseDate(value.values[1]));
+  }, [value]);
+
+  const emitStructured = (op: string, d1?: Date, d2?: Date) => {
+    if (!onValueChange) return;
+    if (VALUELESS_OPERATORS.includes(op)) {
+      onValueChange({ operator: op, values: [] });
+      return;
+    }
+    if (!d1) return;
+    if (op === "between") {
+      if (!d2 || d1 >= d2) return;
+      onValueChange({
+        operator: op,
+        values: [format(d1, "yyyy-MM-dd"), format(d2, "yyyy-MM-dd")],
+      });
+      return;
+    }
+    onValueChange({ operator: op, values: [format(d1, "yyyy-MM-dd")] });
+  };
+
   const handleApply = () => {
-    // Relative date filters don't need date inputs
-    if (["last7", "last30", "last90", "thisYear"].includes(operator)) {
-      onFilterApply(operator);
+    // Valueless filters (relative ranges, has-value/is-empty) need no dates
+    if (VALUELESS_OPERATORS.includes(operator)) {
+      if (RELATIVE_OPERATORS.includes(operator)) {
+        onFilterApply?.(operator as DateOperator);
+      }
+      emitStructured(operator);
       return;
     }
 
@@ -114,10 +179,11 @@ export function DateFilterInput({
 
     if (operator === "between") {
       if (!date2) return;
-      onFilterApply(operator, date1, date2);
+      onFilterApply?.(operator, date1, date2);
     } else {
-      onFilterApply(operator, date1);
+      onFilterApply?.(operator as DateOperator, date1);
     }
+    emitStructured(operator, date1, date2);
   };
 
   const _handleKeyPress = (e: React.KeyboardEvent) => {
@@ -127,8 +193,8 @@ export function DateFilterInput({
   };
 
   const isValid = () => {
-    // Relative date filters are always valid
-    if (["last7", "last30", "last90", "thisYear"].includes(operator)) {
+    // Valueless filters are always valid
+    if (VALUELESS_OPERATORS.includes(operator)) {
       return true;
     }
 
@@ -144,14 +210,17 @@ export function DateFilterInput({
     return true;
   };
 
-  const needsDateInput = !["last7", "last30", "last90", "thisYear"].includes(
-    operator
-  );
+  const needsDateInput = !VALUELESS_OPERATORS.includes(operator);
 
   const hasActiveFilter =
     currentFilter !== null &&
     currentFilter !== undefined &&
     currentFilter !== "";
+
+  const operatorLabel = (op: string) =>
+    LABELLED_OPERATORS.includes(op)
+      ? t(`common.operators.${operatorLabelKey(op)}`)
+      : op;
 
   // Format the current filter for display
   const formatFilterDisplay = (filter: string) => {
@@ -160,13 +229,12 @@ export function DateFilterInput({
     // Use pipe separator
     if (!filter.includes("|")) {
       // No pipe - it's a relative date filter
-      const symbol = operatorSymbols[filter as DateOperator] || filter;
-      return symbol;
+      return operatorLabel(filter);
     }
 
     const parts = filter.split("|");
-    const op = parts[0] as DateOperator;
-    const symbol = operatorSymbols[op] || op;
+    const symbol = operatorLabel(parts[0]);
+    const invalid = t("search.filters.invalidDate");
 
     if (parts.length === 3) {
       // Between operator with two dates
@@ -175,9 +243,9 @@ export function DateFilterInput({
       if (!isNaN(date1.getTime()) && !isNaN(date2.getTime())) {
         const d1 = format(date1, "PP", { locale: getDateFnsLocale(locale) });
         const d2 = format(date2, "PP", { locale: getDateFnsLocale(locale) });
-        return `${symbol} ${d1} and ${d2}`;
+        return `${symbol} ${d1} ${t("common.and")} ${d2}`;
       }
-      return `${symbol} Invalid Date`;
+      return `${symbol} ${invalid}`;
     } else if (parts[1]) {
       // Single date
       const date = new Date(parts[1]);
@@ -185,7 +253,7 @@ export function DateFilterInput({
         const d = format(date, "PP", { locale: getDateFnsLocale(locale) });
         return `${symbol} ${d}`;
       }
-      return `${symbol} Invalid Date`;
+      return `${symbol} ${invalid}`;
     }
     return symbol;
   };
@@ -218,7 +286,12 @@ export function DateFilterInput({
 
       <Select
         value={operator}
-        onValueChange={(val) => setOperator(val as DateOperator)}
+        onValueChange={(val) => {
+          setOperator(val);
+          // Valueless operators are complete on selection; dated operators
+          // wait for a (valid) date pick.
+          emitStructured(val, date1, date2);
+        }}
       >
         <SelectTrigger
           className="w-full h-8 text-xs"
@@ -227,9 +300,9 @@ export function DateFilterInput({
           <SelectValue placeholder={t("common.placeholders.selectOperator")} />
         </SelectTrigger>
         <SelectContent>
-          {(Object.keys(operatorLabels) as DateOperator[]).map((op) => (
+          {operatorOptions.map((op) => (
             <SelectItem key={op} value={op} className="text-xs">
-              {operatorLabels[op]}
+              {t(`common.operators.${operatorLabelKey(op)}`)}
             </SelectItem>
           ))}
         </SelectContent>
@@ -262,6 +335,7 @@ export function DateFilterInput({
                   if (date) {
                     setDate1(date);
                     setPopover1Open(false);
+                    emitStructured(operator, date, date2);
                   }
                 }}
                 autoFocus
@@ -299,6 +373,7 @@ export function DateFilterInput({
                       if (date) {
                         setDate2(date);
                         setPopover2Open(false);
+                        emitStructured(operator, date1, date);
                       }
                     }}
                     autoFocus

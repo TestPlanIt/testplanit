@@ -20,6 +20,7 @@ TestPlanIt is a comprehensive test management platform designed to help teams pl
 ### Repository Organization
 
 - **Hierarchical folders** - Organize test cases into nested folders for logical grouping
+- **Stacked filters** - Narrow the case list with filter chips across templates, states, creators, automation, tags, issues, and custom fields; counts update as you go and the whole filter set travels in a shareable URL
 - **Custom fields** - Filter test cases by custom fields
 - **Tags** - Apply tags to categorize and filter test cases across projects
 - **Issues** - Attach issues to quickly navigate between test cases and related issues

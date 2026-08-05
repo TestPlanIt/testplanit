@@ -558,6 +558,8 @@
       "stepCount": "عدد الخطوات",
       "enterText": "أدخل نصًا...",
       "enterUrl": "أدخل عنوان URL",
+      "enterUrlPattern": "أدخل نمط الرابط...",
+      "domainExample": "example.com",
       "issueIdExample": "ISSUE-123",
       "selectPriorityValuesOrEmpty": "حدد قيم الأولوية (أو اتركه فارغًا للكل)"
     },
@@ -1078,7 +1080,35 @@
     "invalidProject": "معرّف مشروع غير صالح.",
     "visualization": "التصور البصري",
     "results": "النتائج",
-    "loading": "جارٍ التحميل..."
+    "loading": "جارٍ التحميل...",
+    "operators": {
+      "eq": "يساوي",
+      "ne": "لا يساوي",
+      "lt": "أصغر من",
+      "lte": "أصغر من أو يساوي",
+      "gt": "أكبر من",
+      "gte": "أكبر من أو يساوي",
+      "between": "بين",
+      "contains": "يحتوي على",
+      "notContains": "لا يحتوي على",
+      "startsWith": "يبدأ بـ",
+      "endsWith": "ينتهي بـ",
+      "domain": "النطاق يحتوي على",
+      "on": "في",
+      "before": "قبل",
+      "after": "بعد",
+      "last7": "آخر 7 أيام",
+      "last30": "آخر 30 يومًا",
+      "last90": "آخر 90 يومًا",
+      "thisYear": "هذا العام",
+      "anyOf": "أي من",
+      "allOf": "كل من",
+      "noneOf": "لا شيء من",
+      "is": "هو",
+      "in": "هو أي من",
+      "hasValue": "يحتوي على قيمة",
+      "isEmpty": "فارغ"
+    }
   },
   "api": {
     "testResults": {
@@ -3456,6 +3486,22 @@
       "linkedIssuesDroppedTitle": "لم يتم تضمين بعض المشكلات المرتبطة",
       "linkedIssuesDropped": "{count, plural, =1 {تم حذف مشكلة مرتبطة واحدة} zero {تم حذف # مشكلة مرتبطة} two {تم حذف مشكلتين مرتبطتين} few {تم حذف # مشكلات مرتبطة} many {تم حذف # مشكلة مرتبطة} other {تم حذف # مشكلة مرتبطة}} بسبب حدود الرموز: {keys}.",
       "linkedIssuesPreviewHeading": "المشكلات المرتبطة التي سيتم تضمينها"
+    },
+    "filterBar": {
+      "addFilter": "إضافة مرشح",
+      "removeFilter": "إزالة المرشح: {name}",
+      "editFilter": "تعديل المرشح: {name}",
+      "activeCount": "{count, plural, =1 {# مرشح نشط} other {# مرشحات نشطة}}",
+      "assignedToMe": "معيّن إليّ",
+      "noFilters": "لا توجد مرشحات نشطة",
+      "noMatchingCases": "لا توجد حالات اختبار تطابق عوامل التصفية",
+      "searchTruncated": "التصفية ضمن أفضل {count, number} تطابق",
+      "sortedByRelevance": "مرتب حسب الصلة",
+      "countsUpdating": "جارٍ تحديث الأعداد...",
+      "filterLimitReached": "تم الوصول إلى الحد الأقصى للمرشحات ({count} كحد أقصى)",
+      "valueLimitReached": "تم الوصول إلى الحد الأقصى للقيم ({count} كحد أقصى لكل مرشح)",
+      "filtersTruncated": "تم حذف بعض المرشحات ({count} كحد أقصى)",
+      "valuesTruncated": "{count, plural, =1 {# قيمة} other {# قيم}} كحد أقصى لكل مرشح — تم حذف القيم الزائدة"
     }
   },
   "tags": {
@@ -8190,6 +8236,8 @@
       "includeDeleted": "تضمين العناصر المحذوفة",
       "filterActive": "عامل التصفية نشط:",
       "applyFilter": "تطبيق عامل التصفية",
+      "invalidDate": "تاريخ غير صالح",
+      "stepsCount": "{count, plural, zero {# خطوة} one {# خطوة} two {# خطوتان} few {# خطوات} many {# خطوة} other {# خطوة}}",
       "validation": {
         "firstValueMustBeLessThanSecond": "يجب أن تكون القيمة الأولى أصغر من القيمة الثانية",
         "firstDateMustBeBeforeSecond": "يجب أن يكون التاريخ الأول قبل التاريخ الثاني"

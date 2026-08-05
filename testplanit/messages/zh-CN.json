@@ -558,6 +558,8 @@
       "stepCount": "步数",
       "enterText": "请输入文字...",
       "enterUrl": "输入网址",
+      "enterUrlPattern": "输入 URL 模式……",
+      "domainExample": "example.com",
       "issueIdExample": "第123期",
       "selectPriorityValuesOrEmpty": "选择优先级值（或留空表示全部不选）"
     },
@@ -1078,7 +1080,35 @@
     "invalidProject": "项目ID无效。",
     "visualization": "可视化",
     "results": "结果",
-    "loading": "加载中..."
+    "loading": "加载中...",
+    "operators": {
+      "eq": "等于",
+      "ne": "不等于",
+      "lt": "小于",
+      "lte": "小于或等于",
+      "gt": "大于",
+      "gte": "大于或等于",
+      "between": "介于",
+      "contains": "包含",
+      "notContains": "不包含",
+      "startsWith": "以……开始",
+      "endsWith": "以……结尾",
+      "domain": "域名包含",
+      "on": "在",
+      "before": "之前",
+      "after": "之后",
+      "last7": "过去7天",
+      "last30": "过去30天",
+      "last90": "过去90天",
+      "thisYear": "今年",
+      "anyOf": "任意一个",
+      "allOf": "全部",
+      "noneOf": "无一个",
+      "is": "是",
+      "in": "是以下任意一个",
+      "hasValue": "有值",
+      "isEmpty": "为空"
+    }
   },
   "api": {
     "testResults": {
@@ -3456,6 +3486,22 @@
       "linkedIssuesDroppedTitle": "部分相关问题未包含在内。",
       "linkedIssuesDropped": "{count, plural, =1 {# 关联的问题已被删除} other {# 关联的问题已被删除}} 由于代币预算： {keys}。",
       "linkedIssuesPreviewHeading": "将会包含的相关问题"
+    },
+    "filterBar": {
+      "addFilter": "添加筛选器",
+      "removeFilter": "移除筛选器：{name}",
+      "editFilter": "编辑筛选器：{name}",
+      "activeCount": "{count, plural, =1 {# 个有效筛选条件} other {# 个有效筛选条件}}",
+      "assignedToMe": "分配给我的",
+      "noFilters": "没有启用的筛选器",
+      "noMatchingCases": "没有符合您筛选条件的测试用例",
+      "searchTruncated": "仅在前 {count, number} 个匹配项中筛选",
+      "sortedByRelevance": "按相关性排序",
+      "countsUpdating": "正在更新计数……",
+      "filterLimitReached": "已达到筛选器数量上限（最多 {count} 个）",
+      "valueLimitReached": "已达到值数量上限（每个筛选器最多 {count} 个）",
+      "filtersTruncated": "部分筛选器已被丢弃（最多 {count} 个）",
+      "valuesTruncated": "每个筛选条件最多 {count, plural, =1 {# 个值} other {# 个值}}，超出部分已被删除"
     }
   },
   "tags": {
@@ -8190,6 +8236,8 @@
       "includeDeleted": "包括已删除的项目",
       "filterActive": "筛选器已启用：",
       "applyFilter": "应用筛选器",
+      "invalidDate": "无效日期",
+      "stepsCount": "{count, plural, other {# 个步骤}}",
       "validation": {
         "firstValueMustBeLessThanSecond": "第一个值必须小于第二个值",
         "firstDateMustBeBeforeSecond": "第一次约会必须在第二次约会之前。"

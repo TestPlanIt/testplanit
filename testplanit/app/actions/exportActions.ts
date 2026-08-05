@@ -7,6 +7,11 @@ import type {
   RepositoryCasesWhereInput,
 } from "~/zenstack/input";
 import { baseDb } from "~/lib/db";
+import {
+  filterOrphanedFieldValues,
+  matchesPostFetchFilters,
+  type PostFetchFilter,
+} from "~/lib/repositoryCaseFieldMatchers";
 import { resolveSharedSteps } from "~/lib/utils/resolveSharedSteps";
 import { getServerAuthSession } from "~/server/auth";
 
@@ -16,6 +21,13 @@ interface FetchCasesArgs {
   where: RepositoryCasesWhereInput;
   scope?: "allFiltered" | "allProject"; // Add scope indicator
   projectId?: number; // Add projectId, needed for allProject scope
+  // Active text/link/steps operator filters — SQL can only pre-filter these
+  // (value-not-null); the real row selection happens via the shared matchers,
+  // exactly as the table hooks apply them.
+  postFetchFilters?: PostFetchFilter[];
+  // Elasticsearch id set of an active search. "All filtered" must mean the
+  // intersection the table shows, never the un-searched superset.
+  searchCaseIds?: number[];
 }
 
 // Define the precise select clause to match the client-side query
@@ -224,13 +236,38 @@ export async function fetchAllCasesForExport(
       //   "Server Action: Fetching FILTERED cases for export with where clause:",
       //   args.where
       // );
+      if (args.searchCaseIds) {
+        finalWhereClause = {
+          AND: [finalWhereClause, { id: { in: args.searchCaseIds } }],
+        };
+      }
     }
 
-    const allDataRaw = await baseDb.repositoryCases.findMany({
+    let allDataRaw = await baseDb.repositoryCases.findMany({
       where: finalWhereClause, // Use the determined where clause
       orderBy: args.orderBy,
       select: exportSelectClause,
     });
+    // Apply the table's post-fetch text/link/steps matchers so the export row
+    // set matches what the filtered table shows. Runs BEFORE shared-step
+    // expansion: steps filters count shared-group placeholders as one step,
+    // like the table's steps select. "allProject" scope ignores filters, same
+    // as it ignores the where clause. Matching is done against the
+    // orphan-filtered view of each row (as the table hooks do) without
+    // altering the exported row content.
+    if (
+      args.scope !== "allProject" &&
+      args.postFetchFilters &&
+      args.postFetchFilters.length > 0
+    ) {
+      const postFetchFilters = args.postFetchFilters;
+      allDataRaw = allDataRaw.filter((row: any) =>
+        matchesPostFetchFilters(
+          filterOrphanedFieldValues(row),
+          postFetchFilters
+        )
+      );
+    }
     // Resolve shared step references (expand placeholders into actual step items)
     const allData = await resolveSharedSteps(allDataRaw);
     // Cast source to RepositoryCaseSource for type safety

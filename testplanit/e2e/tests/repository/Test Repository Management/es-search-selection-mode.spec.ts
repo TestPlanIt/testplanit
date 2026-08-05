@@ -1,18 +1,98 @@
+import type { APIRequestContext, Locator, Page } from "@playwright/test";
 import { expect, test } from "../../../fixtures";
+import { waitForStableBox } from "../../../utils/wait-for-stable";
 
 /**
  * Elasticsearch Search in Selection Mode Tests
  *
- * Tests the Elasticsearch-powered search functionality that appears when
- * the repository is in selection mode (e.g., when selecting test cases for
- * a test run in AddTestRunModal step 2).
+ * The Elasticsearch box exists ONLY in the case-selection dialog (e.g.
+ * AddTestRunModal step 2), because the app's Unified Search is not reachable
+ * from inside a dialog. Repository browsing is served by Unified Search and by
+ * the in-table name filter (`search-input`), so there is no `es-search-input`
+ * on the repository page at all.
  *
  * Covers:
  * - ES search input appears only in selection mode
  * - Typing a query filters cases to ES results
  * - Clearing search restores full case list
  * - Select All uses search result IDs (not entire folder)
+ * - the query intersects with the FilterBar chips instead of bypassing them
  */
+
+function chip(page: Page, dimension: string, operator: string): Locator {
+  return page.getByTestId(`filter-chip-${dimension}-${operator}`);
+}
+
+function caseRowById(page: Page, caseId: number): Locator {
+  return page.getByTestId(`case-row-${caseId}`);
+}
+
+/** Closes whichever chip editor happens to be open, if any. */
+async function ensureEditorClosed(page: Page): Promise<void> {
+  const editor = page.getByTestId("filter-chip-editor");
+  if (await editor.isVisible().catch(() => false)) {
+    await page.keyboard.press("Escape");
+    await expect(editor).toBeHidden({ timeout: 10000 });
+  }
+}
+
+async function pickDimension(page: Page, dimensionKey: string): Promise<void> {
+  await ensureEditorClosed(page);
+  const addButton = page.getByTestId("filter-bar-add");
+  await expect(addButton).toBeVisible({ timeout: 15000 });
+  await addButton.click();
+
+  const option = page.getByTestId(`filter-dimension-option-${dimensionKey}`);
+  await expect(option).toBeVisible({ timeout: 10000 });
+  await waitForStableBox(option);
+  await option.click();
+  await expect(page.getByTestId("filter-chip-editor")).toBeVisible({
+    timeout: 10000,
+  });
+}
+
+async function toggleValue(page: Page, id: number | string): Promise<void> {
+  const option = page.getByTestId(`filter-value-option-${id}`);
+  await expect(option).toBeVisible({ timeout: 15000 });
+  await waitForStableBox(option);
+  await option.click();
+}
+
+/**
+ * Blocks until Elasticsearch has the expected number of hits for `query` in
+ * this project — indexing is asynchronous, and a fixed sleep is exactly the
+ * kind of flake the house rules forbid.
+ */
+async function waitForEsHits(
+  request: APIRequestContext,
+  baseURL: string,
+  projectId: number,
+  query: string,
+  expectedHits: number
+): Promise<void> {
+  await expect
+    .poll(
+      async () => {
+        const response = await request.post(`${baseURL}/api/search`, {
+          data: {
+            filters: {
+              query,
+              entityTypes: ["repository_case"],
+              repositoryCase: { projectIds: [projectId], isArchived: false },
+            },
+            pagination: { page: 1, size: 50 },
+            highlight: false,
+            trackTotalHits: true,
+          },
+        });
+        if (!response.ok()) return -1;
+        const body = await response.json();
+        return typeof body.total === "number" ? body.total : -1;
+      },
+      { timeout: 45000, intervals: [500, 1000, 2000, 3000] }
+    )
+    .toBe(expectedHits);
+}
 
 /**
  * Helper to click a folder node in the ProjectRepository tree inside the dialog.
@@ -96,35 +176,47 @@ async function openModalAndGoToStep2(
 }
 
 test.describe("Elasticsearch Search in Selection Mode", () => {
-  test("should show ES search input when in selection mode (AddTestRunModal step 2)", async ({
+  test("should show ES search input in selection mode only, never on the repository page", async ({
     api,
     page,
   }) => {
     let dialog: import("@playwright/test").Locator | undefined;
+    let projectId!: number;
 
     await test.step("Create project, folder, and a test case", async () => {
-      const projectId = await api.createProject(`E2E ES Search ${Date.now()}`);
+      projectId = await api.createProject(`E2E ES Search ${Date.now()}`);
       const folderId = await api.createFolder(projectId, "ES Search Folder");
       await api.createTestCase(
         projectId,
         folderId,
         `ES Search Case ${Date.now()}`
       );
+    });
 
+    await test.step("The repository page offers the name filter, not the ES box", async () => {
+      await page.goto(`/en-US/projects/repository/${projectId}`);
+      await page.waitForLoadState("load");
+
+      // Unified Search covers this page; a second box here matched on step text
+      // and custom fields and showed rows with no visibly matching term.
+      await expect(page.getByTestId("search-input")).toBeVisible({
+        timeout: 20000,
+      });
+      await expect(page.getByTestId("es-search-input")).toHaveCount(0);
+    });
+
+    await test.step("Verify the ES search input appears in selection mode", async () => {
       // Navigate to test runs page and open AddTestRunModal
       await page.goto(`/en-US/projects/runs/${projectId}`);
       await page.waitForLoadState("load");
 
       dialog = await openModalAndGoToStep2(page, `ES Search Run ${Date.now()}`);
-    });
 
-    await test.step("Verify the ES search input appears in selection mode", async () => {
-      // In step 2, the ProjectRepository is rendered in selection mode
-      // The ES search input should be visible
-      const esSearchInput = dialog!.locator(
-        'input[placeholder*="Search in this project"]'
-      );
-      await expect(esSearchInput).toBeVisible({ timeout: 10000 });
+      // In step 2, the ProjectRepository is rendered in selection mode — the
+      // dialog has no route to Unified Search, so the box lives here.
+      await expect(dialog!.getByTestId("es-search-input")).toBeVisible({
+        timeout: 10000,
+      });
     });
   });
 
@@ -352,6 +444,106 @@ test.describe("Elasticsearch Search in Selection Mode", () => {
       ) {
         await expect(selectedIndicator).toBeVisible();
       }
+    });
+  });
+
+  test("Search intersects with the filter chips instead of bypassing them", async ({
+    api,
+    page,
+    request,
+    baseURL,
+  }) => {
+    const ts = Date.now();
+    const folderName = `ES Intersect Folder ${ts}`;
+    const searchToken = `Zeb${ts}`;
+    let projectId!: number;
+    let tagId!: number;
+    let searchHitTagged!: number;
+    let searchHitUntagged!: number;
+    let taggedNoSearchHit!: number;
+
+    await test.step("Seed three cases: search+tag, search only, tag only", async () => {
+      projectId = await api.createProject(`E2E ES Intersect ${ts}`);
+      const folderId = await api.createFolder(projectId, folderName);
+
+      tagId = await api.createTag(`esintersect-${ts}`);
+
+      searchHitTagged = await api.createTestCase(
+        projectId,
+        folderId,
+        `${searchToken} Alpha`
+      );
+      searchHitUntagged = await api.createTestCase(
+        projectId,
+        folderId,
+        `${searchToken} Beta`
+      );
+      taggedNoSearchHit = await api.createTestCase(
+        projectId,
+        folderId,
+        `Pla${ts} Gamma`
+      );
+
+      await api.addTagToTestCase(searchHitTagged, tagId);
+      await api.addTagToTestCase(taggedNoSearchHit, tagId);
+
+      await waitForEsHits(
+        request,
+        baseURL ?? "http://localhost:3000",
+        projectId,
+        searchToken,
+        2
+      );
+    });
+
+    let dialog: import("@playwright/test").Locator | undefined;
+
+    await test.step("Open the selection dialog on the seeded folder", async () => {
+      await page.goto(`/en-US/projects/runs/${projectId}`);
+      await page.waitForLoadState("load");
+
+      dialog = await openModalAndGoToStep2(page, `ES Intersect Run ${ts}`);
+      await expect(dialog!.getByTestId("es-search-input")).toBeVisible({
+        timeout: 10000,
+      });
+
+      await clickFolderInDialog(page, folderName);
+      await expect(caseRowById(page, searchHitTagged)).toBeVisible({
+        timeout: 20000,
+      });
+    });
+
+    await test.step("Apply a Tag chip", async () => {
+      await pickDimension(page, "tags");
+      await toggleValue(page, tagId);
+      await ensureEditorClosed(page);
+
+      await expect(chip(page, "tags", "any")).toBeVisible();
+      await expect(caseRowById(page, searchHitUntagged)).toBeHidden();
+    });
+
+    await test.step("Typing in the search box narrows to the intersection", async () => {
+      await dialog!.getByTestId("es-search-input").fill(searchToken);
+
+      await expect(caseRowById(page, searchHitTagged)).toBeVisible({
+        timeout: 20000,
+      });
+      // Matches the search but carries no tag.
+      await expect(caseRowById(page, searchHitUntagged)).toBeHidden();
+      // Carries the tag but does not match the search.
+      await expect(caseRowById(page, taggedNoSearchHit)).toBeHidden();
+      // Scoped to the dialog: the runs list behind it renders its own
+      // pagination footer.
+      await expect(dialog!.getByTestId("pagination-info")).toContainText(
+        "of 1",
+        { timeout: 15000 }
+      );
+    });
+
+    await test.step("The dialog never writes its query to the host URL", async () => {
+      const params = new URL(page.url()).searchParams;
+      expect(params.get("q")).toBeNull();
+      expect(params.getAll("f")).toEqual([]);
     });
   });
 });

@@ -48,23 +48,24 @@ The page features a resizable two-panel layout:
 
 * **Left Panel (Navigation/View Selection)**:
 
-    * **View Selector**: Allows switching between different ways to organize and filter test cases (e.g., By Folder, By Template, By State, By Tag, By Custom Fields, etc.).
-    * **Folder Tree (Default View)**: Displays a hierarchical structure of folders. You can:
+    * **View by Selector**: A dropdown at the top of the panel that chooses how the case list is grouped — Folders, Template, State, Creator, Automation, Parameterization, Attachments, Tag, Issue, and one entry per custom field. See [Views & Filtering](#views--filtering).
+    * **Folder Tree (Folders View)**: Displays a hierarchical structure of folders. You can:
         * Expand/Collapse folders using the chevron icons. Hold ⌥ (Alt on Windows and Linux) while clicking a chevron to expand or collapse all of that folder's subfolders at once; on a top-level folder the same click applies to every folder in the tree.
         * Filter the tree by name. Projects with more than 15 folders show a filter box above the tree; matching folders stay in place under their parents so you can still see where each one sits, and clearing the filter restores whatever you had expanded.
         * Select a folder to view its contained test cases in the right panel.
         * Drag and drop folders to reorder them or change their parent (except in Run Mode, or while the tree is filtered).
         * Add a new folder using the **Add Folder** button (icon: CirclePlus) at the top.
         * Edit an existing folder's name/docs using the **Edit** button (icon: SquarePen) that appears on hover.
-    * **Filter Panel (Other Views)**: When a view other than "By Folder" is selected, this panel shows the available filters for that view (e.g., list of templates, states, creators), each with a count of matching cases. Selecting an item filters the cases shown in the right panel. See [Selecting filter values](#selecting-filter-values) for how short and long lists differ.
+    * **Option Rows (Other Axes)**: When the axis is anything other than Folders, the panel lists that axis's values (templates, states, creators, tags, field options, and so on), each with a count of matching cases. Clicking a row adds a filter for that value and the row stays highlighted while it is active. See [Views & Filtering](#views--filtering).
     * **Collapse Button**: A chevron button (`<`/`>`) on the handle between panels allows collapsing or expanding this left panel.
 
 * **Right Panel (Test Case List)**:
-    * **Breadcrumbs (Folder View Only)**: Shows the path to the currently selected folder. Next to the breadcrumb, a **Show all descendants** toggle (folder-down icon) lets you view test cases from the selected folder and all of its nested subfolders in a single list. When enabled, each test case row displays a folder badge showing which subfolder it belongs to, with a tooltip showing the full folder path. All existing sorting, filtering, search, and bulk actions work on the aggregated list.
+    * **Breadcrumbs (Folder View Only)**: Shows the path to the currently selected folder. Next to the breadcrumb, a **Show all descendants** toggle (folder-down icon) lets you view test cases from the selected folder and all of its nested subfolders in a single list. When enabled, each test case row displays a folder badge showing which subfolder it belongs to, with a tooltip showing the full folder path. All existing sorting, filtering, and bulk actions work on the aggregated list.
     * **Add Case Button**: Allows adding a new test case using a detailed modal (`AddCaseModal`).
     * **Generate Test Cases Button**: Opens the AI generation wizard (sparkles icon, requires [LLM Integration](../llm-integrations.md)).
     * **Import Cases Button**: Opens the CSV import wizard for bulk test case creation.
-    * **Filter Input**: Search for test cases by name within the current view/filter.
+    * **Filter Bar**: The active filters, shown as chips directly above the table, alongside the **Add Filter** button and **Clear All**. See [Views & Filtering](#views--filtering).
+    * **Filter Cases Box**: A **Filter cases...** box that narrows the list to the cases whose name contains what you type. It applies on top of the folder scope, the grouping axis and every filter chip. See [Searching](#searching).
     * **Column Selection**: Choose which columns are visible in the table using the **Columns** control. Your selection is remembered automatically — it is saved in your browser and scoped to this project's repository, so the columns you pick are still there the next time you open it.
     * **Pagination**: Controls for navigating through pages of test cases.
     * **Test Case Table (`DataTable`)**: Displays the list of test cases based on the current selection/filters. Supports:
@@ -76,32 +77,90 @@ The page features a resizable two-panel layout:
 
 ## Views & Filtering
 
-The **View Selector** in the left panel provides powerful ways to slice your test case data:
+Two controls work together. The **View by** list in the left panel decides how the case list is grouped and gives you a one-click way to filter on that axis. The **filter bar** above the table holds every filter that is actually applied, as removable chips. They are independent: switching the grouping axis regroups the list but never adds, seeds, or clears a filter.
 
-* **By Folder**: The default hierarchical view.
-* **By Template**: Groups cases by the template they use.
-* **By State**: Groups cases by their current workflow state.
-* **By Creator**: Groups cases by the user who created them.
-* **By Automation**: Filters cases based on whether they are marked as automated.
-* **By Parameterization**: Filters cases by whether they have parameters declared (Parameterized / Not Parameterized). Each option shows a live count of matching cases. See [Parameterized Test Cases](./parameterized-test-cases.md) for what makes a case parameterized.
-* **By Attachments**: Filters cases by whether they carry attached files (Has Attachments / No Attachments), each with a live count. Only files currently attached count — a case whose attachments were all removed appears under **No Attachments**.
-* **By Tag**: Filters cases based on assigned tags (Any Tag, No Tags, or a specific tag).
-* **By Issue**: Filters cases based on linked issues (Any Issue, No Issues, or a specific issue). This view only appears when there are test cases with issues attached.
-* **By Custom Field**: If custom fields are defined in templates, a view appears per field. Supported field types are Dropdown, Multi-Select, Link, Steps, Checkbox, Integer, Number, Date, Text Long, and Text String.
+### View by
 
-When you open the repository as part of a **test run** (Run Mode), two additional views appear in place of (and alongside) the base views:
+Pick an axis from the dropdown at the top of the left panel. The axes are listed alphabetically, with **Folders** pinned first as the default. Every axis other than Folders lists that axis's values in the panel, each with a live count.
 
-* **By Assigned To**: Filters the run's cases by their assignee (Unassigned, or a specific team member).
-* **By Status**: Filters by the result status within this run (Untested, or any of the configured result statuses such as Passed, Failed, Blocked).
+Clicking an option row toggles a filter for that value: a chip appears on the filter bar and the row stays highlighted for as long as the filter is active. Click the row again — or remove the chip — to drop it. The **All …** row at the top of each axis (**All Templates**, **All States**, **All Cases**, **All Values** for a custom field, and so on) clears the filters those row clicks created for that axis, and is highlighted whenever the axis is unfiltered. Axes with more than ten values render a searchable, paged picker instead of a flat row list.
 
-### Selecting filter values
+The available axes are:
 
-Every view is multi-select: you can filter by several templates, tags, issues, or field values at once, and the table shows the cases matching any of them.
+* **Folders**: The hierarchical folder tree, and the default axis.
+* **Template**: The template each case uses.
+* **State**: The current workflow state.
+* **Creator**: The user who created the case.
+* **Automation**: Automated / Not Automated.
+* **Parameterization**: Parameterized / Not Parameterized. See [Parameterized Test Cases](./parameterized-test-cases.md) for what makes a case parameterized.
+* **Attachments**: Has Attachments / No Attachments. Only files currently attached count — a case whose attachments were all removed appears under **No Attachments**.
+* **Tag**: **Any Tag** and **No Tags** stay pinned above the list of individual tags.
+* **Issue**: **Any Issue** and **No Issues** above the list of linked issues. This axis only appears when at least one case in the project has an issue linked.
+* **One axis per custom field**: Dropdown, Multi-Select, Link, Steps, Checkbox, Integer, Number, Date, Text Long, and Text String fields each get an axis, named after the field. Dropdown and Multi-Select list their options (plus **None** when the field is optional), Checkbox shows **Checked** / **Unchecked**, and the remaining types show a has-value / no-value pair such as **Has Date** / **No Date**.
 
-* **Short lists (10 or fewer values)** appear as rows with a live count next to each one. Click a row to filter by that value on its own, or Cmd-click (Ctrl-click on Windows/Linux) to add and remove values from the current selection.
-* **Long lists (more than 10 values)** appear as a searchable picker instead, so views like By Issue or By Tag stay usable when a project has thousands of values. Type to narrow the list, page through the results, and click values to toggle them. Each selected value becomes a chip on the picker, and the **x** on a chip removes it. Counts are shown next to each value in the dropdown.
+Opening the repository as part of a **test run** (Run Mode) adds two more axes alongside the rest:
 
-Summary options stay directly above the picker in every view — **All Templates**, **Any Tag** / **No Tags**, **Any Issue** / **No Issues**, **Untested**, **Unassigned**, and **None** — so the broad filters remain one click away. These combine with picked values: selecting **No Tags** and then a specific tag shows the cases that have no tags plus the cases carrying that tag.
+* **Assigned To**: **Unassigned**, plus each member the run's cases are assigned to.
+* **Status**: **Untested**, plus each configured result status such as Passed, Failed, or Blocked.
+
+### Filtering
+
+**Add Filter** on the bar opens a searchable, alphabetical list of everything you can filter on: templates, states, creators, automation, parameterization, attachments, tags, issues, every filterable custom field, and — in Run Mode — status and assignee. Pick one and its chip opens ready to edit.
+
+Each chip reads *Field: operator values*. Click the chip body to reopen its editor and change the operator or tick more values, or click the **x** to remove it. **Clear All** appears once two or more filters are active. When a filter set leaves no matching cases, the table says so and offers the same **Clear All**.
+
+Filters combine like this:
+
+* Filters on **different fields** are combined with AND. A Template chip and a State chip return the cases matching both.
+* Several **values inside one chip** are combined with OR. A Template chip holding two templates returns the cases using either.
+* **Tag** and **Issue** chips add an operator choice: **Any of** (carries at least one of the listed values), **All of** (carries every one of them), and **None of** (carries none of them).
+* A chip with **no values** reads **Has value** or **Is empty**. A Tag chip set to **Is empty** returns the cases with no tags at all.
+
+There is no way to OR across different fields — every chip narrows the result set further.
+
+An emptiness filter and a specific value on the same field would match nothing together, so they are mutually exclusive: selecting **No Tags** while a specific tag is filtered drops the tag filter, and picking a tag drops **No Tags**. A valued **None of** is not an emptiness claim, so "has tag A but not tag B" is still expressible as a **Tag: Any of A** chip plus a **Tag: None of B** chip.
+
+Filters apply to whatever the list is currently showing: in the Folders view that is the selected folder, plus its subfolders when **Show all descendants** is on; on every other axis it is the whole project.
+
+Custom-field chips offer the operators that suit the field's type:
+
+| Field type | Operators |
+| --- | --- |
+| Dropdown, Multi-Select | Is any of, Any of, None of |
+| Checkbox | Is (Checked / Unchecked) |
+| Integer, Number | `=`, `≠`, `<`, `≤`, `>`, `≥`, Between, Has value, Is empty |
+| Steps | `=`, `<`, `≤`, `>`, `≥`, Between, Has value, Is empty |
+| Date | On, Before, After, Between, Last 7 days, Last 30 days, Last 90 days, This year, Has value, Is empty |
+| Text Long, Text String | Contains, Does not contain, Starts with, Ends with, Equals, Has value, Is empty |
+| Link | Contains, Domain contains, Starts with, Ends with, Equals, Has value, Is empty |
+
+### What the counts mean
+
+The number beside an option — in the left panel and in a chip's value list alike — is what you would get by clicking it. Each field's counts are calculated under all of the *other* active filters — and, in the case-selection dialog, under the current search — but not under its own, so filtering on a field still shows you what its other values would return. Counts cover the whole project (in Run Mode, the whole run) and are not narrowed by the selected folder. While fresh counts are being fetched the previous numbers stay on screen, dimmed, with an "Updating counts..." tooltip.
+
+### Sharing and limits
+
+Filters are held in the page URL, so a link reproduces exactly the filtered list you are looking at, and a reload keeps it. A filter set too large for a readable URL is stored compressed in a single parameter instead. Filters and search text set inside the case-selection dialog are kept in memory only and never touch the URL of the page behind it.
+
+A filter set can hold up to **50 filters**, each with up to **200 values**. **Add Filter** is disabled once you reach 50 filters and says why, and a value list stops accepting new values at 200 with the same kind of notice. A link that arrives carrying more than either limit is trimmed down to fit, and a notice beside the chips tells you that filters or values were dropped.
+
+### Searching
+
+The repository's own search is the **Filter cases...** box above the table. It narrows the list you are looking at to the cases whose name contains what you type, and it stacks with everything else: the folder scope, the grouping axis and every filter chip still apply.
+
+For full-text search across a project — step text, custom field values, and the rest of a case's content — use [Advanced Search](../advanced-search.md), reachable from anywhere in the app with the search icon in the top navigation bar or `Cmd+K` / `Ctrl+K`. It covers the repository, so the repository page itself carries no full-text search box.
+
+The case-selection dialog used when adding cases to a run or plan does have its own full-text search box, because Advanced Search cannot be opened from inside the dialog. That search intersects with everything else rather than replacing it: the folder scope, the grouping axis, and every filter chip all still apply. Searching does not clear your filters, and filtering does not clear your search.
+
+* While a search is active and you have not chosen a sort, results are ordered by relevance and the list says **Sorted by relevance**.
+* A search that matches more cases than the search index will return in one result set shows **Filtering within the top 10,000 matches** beside the chips: filters and counts apply to those matches only.
+* If the search cannot be run, the list reports the failure instead of falling back to unfiltered results.
+
+A test run's own case list has no full-text search box; use the filter bar there instead.
+
+### Run Mode
+
+The first time you open a run's case list, an **Assigned to me** filter is applied for you if that run has cases assigned to you. It is an ordinary chip — remove it to see the whole run. The seeding is skipped when the link you arrived on already carries filters or points at a particular case, so a shared link always shows what its sender saw. A quick **Assigned to me** toggle also sits on the filter bar in Run Mode for turning that filter on and off later.
 
 ## Test Case Table Columns
 
