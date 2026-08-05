@@ -523,9 +523,8 @@ test.describe("Custom Fields - Repository View and Filter", () => {
     const matchingName = `E2E NameFilterMatch ${uniqueId}`;
     const otherName = `E2E Untouched ${uniqueId}`;
 
-    // The in-table name filter. Pinned to its test id: the repository header
-    // now also renders the Elasticsearch box (es-search-input), so a
-    // placeholder-based locator would match the wrong input.
+    // The in-table name filter — the repository's own search. Pinned to its
+    // test id rather than a placeholder so it stays unambiguous.
     const searchInput = page.getByTestId("search-input");
 
     await test.step("Seed a matching and a non-matching test case", async () => {

@@ -1,14 +1,16 @@
 import type { APIRequestContext, Locator, Page } from "@playwright/test";
 import { expect, test } from "../../../fixtures";
 import { RepositoryPage } from "../../../page-objects/repository/repository.page";
-import { waitForStableBox } from "../../../utils/wait-for-stable";
 
 /**
- * Repository Multi-Dimension Filtering — search, folder wall and facet counts
+ * Repository Multi-Dimension Filtering — folder wall and facet counts
+ *
+ * The Elasticsearch box is not part of the repository view (it exists only in
+ * the case-selection dialog, where Unified Search is unreachable), so its
+ * intersection with the filter chips is covered by
+ * es-search-selection-mode.spec.ts instead.
  *
  * Covered here:
- *  - the Elasticsearch box in repository view mode intersects with the filter
- *    chips instead of bypassing them, and `?q=` survives a reload
  *  - an active filter bypasses the "select a folder" wall and queries the
  *    whole project
  *  - sidebar option counts are filter-aware, and the Dropdown "None" row never
@@ -24,37 +26,6 @@ function chip(page: Page, dimension: string, operator: string): Locator {
 
 function caseRow(page: Page, caseId: number): Locator {
   return page.getByTestId(`case-row-${caseId}`);
-}
-
-/** Closes whichever chip editor happens to be open, if any. */
-async function ensureEditorClosed(page: Page): Promise<void> {
-  const editor = page.getByTestId("filter-chip-editor");
-  if (await editor.isVisible().catch(() => false)) {
-    await page.keyboard.press("Escape");
-    await expect(editor).toBeHidden({ timeout: 10000 });
-  }
-}
-
-async function pickDimension(page: Page, dimensionKey: string): Promise<void> {
-  await ensureEditorClosed(page);
-  const addButton = page.getByTestId("filter-bar-add");
-  await expect(addButton).toBeVisible({ timeout: 15000 });
-  await addButton.click();
-
-  const option = page.getByTestId(`filter-dimension-option-${dimensionKey}`);
-  await expect(option).toBeVisible({ timeout: 10000 });
-  await waitForStableBox(option);
-  await option.click();
-  await expect(page.getByTestId("filter-chip-editor")).toBeVisible({
-    timeout: 10000,
-  });
-}
-
-async function toggleValue(page: Page, id: number | string): Promise<void> {
-  const option = page.getByTestId(`filter-value-option-${id}`);
-  await expect(option).toBeVisible({ timeout: 15000 });
-  await waitForStableBox(option);
-  await option.click();
 }
 
 async function selectViewAxis(
@@ -129,152 +100,11 @@ async function getStateNames(
   return byId;
 }
 
-/**
- * Blocks until Elasticsearch has the expected number of hits for `query` in
- * this project — indexing is asynchronous, and a fixed sleep is exactly the
- * kind of flake the house rules forbid.
- */
-async function waitForEsHits(
-  request: APIRequestContext,
-  baseURL: string,
-  projectId: number,
-  query: string,
-  expectedHits: number
-): Promise<void> {
-  await expect
-    .poll(
-      async () => {
-        const response = await request.post(`${baseURL}/api/search`, {
-          data: {
-            filters: {
-              query,
-              entityTypes: ["repository_case"],
-              repositoryCase: { projectIds: [projectId], isArchived: false },
-            },
-            pagination: { page: 1, size: 50 },
-            highlight: false,
-            trackTotalHits: true,
-          },
-        });
-        if (!response.ok()) return -1;
-        const body = await response.json();
-        return typeof body.total === "number" ? body.total : -1;
-      },
-      { timeout: 45000, intervals: [500, 1000, 2000, 3000] }
-    )
-    .toBe(expectedHits);
-}
-
-test.describe("Repository Multi-Dimension Filtering - search and counts", () => {
+test.describe("Repository Multi-Dimension Filtering - folder wall and counts", () => {
   let repositoryPage: RepositoryPage;
 
   test.beforeEach(async ({ page }) => {
     repositoryPage = new RepositoryPage(page);
-  });
-
-  test("Search intersects with the filter chips and ?q= survives a reload", async ({
-    api,
-    page,
-    request,
-    baseURL,
-  }) => {
-    const ts = Date.now();
-    const searchToken = `Zeb${ts}`;
-    let projectId!: number;
-    let tagId!: number;
-    let searchHitTagged!: number;
-    let searchHitUntagged!: number;
-    let taggedNoSearchHit!: number;
-
-    await test.step("Seed three cases: search+tag, search only, tag only", async () => {
-      projectId = await api.createProject(`E2E MF Search ${ts}`);
-      const folderId = await api.getRootFolderId(projectId);
-
-      tagId = await api.createTag(`mfsearch-${ts}`);
-
-      searchHitTagged = await api.createTestCase(
-        projectId,
-        folderId,
-        `${searchToken} Alpha`
-      );
-      searchHitUntagged = await api.createTestCase(
-        projectId,
-        folderId,
-        `${searchToken} Beta`
-      );
-      taggedNoSearchHit = await api.createTestCase(
-        projectId,
-        folderId,
-        `Pla${ts} Gamma`
-      );
-
-      await api.addTagToTestCase(searchHitTagged, tagId);
-      await api.addTagToTestCase(taggedNoSearchHit, tagId);
-
-      await waitForEsHits(
-        request,
-        baseURL ?? "http://localhost:3000",
-        projectId,
-        searchToken,
-        2
-      );
-    });
-
-    await test.step("Open the repository and apply a Tag chip", async () => {
-      await repositoryPage.goto(projectId);
-      await expect(caseRow(page, searchHitTagged)).toBeVisible({
-        timeout: 20000,
-      });
-
-      await pickDimension(page, "tags");
-      await toggleValue(page, tagId);
-      await ensureEditorClosed(page);
-
-      await expect(chip(page, "tags", "any")).toBeVisible();
-      await expect(caseRow(page, searchHitUntagged)).toBeHidden();
-    });
-
-    await test.step("Typing in the search box narrows to the intersection", async () => {
-      const searchInput = page.getByTestId("es-search-input");
-      await expect(searchInput).toBeVisible({ timeout: 15000 });
-      await searchInput.fill(searchToken);
-
-      await expect(caseRow(page, searchHitTagged)).toBeVisible({
-        timeout: 20000,
-      });
-      // Matches the search but carries no tag.
-      await expect(caseRow(page, searchHitUntagged)).toBeHidden();
-      // Carries the tag but does not match the search.
-      await expect(caseRow(page, taggedNoSearchHit)).toBeHidden();
-      await expect(page.getByTestId("pagination-info")).toContainText("of 1", {
-        timeout: 15000,
-      });
-    });
-
-    await test.step("Both the query and the chip land in the URL", async () => {
-      await expect(async () => {
-        const params = new URL(page.url()).searchParams;
-        expect(params.get("q")).toBe(searchToken);
-        expect(params.getAll("f")).toEqual([`tags:any:${tagId}`]);
-      }).toPass({ timeout: 15000 });
-    });
-
-    await test.step("Reloading restores the query, the chip and the intersection", async () => {
-      await page.reload();
-      await repositoryPage.waitForRepositoryLoad();
-
-      await expect(page.getByTestId("es-search-input")).toHaveValue(
-        searchToken,
-        { timeout: 20000 }
-      );
-      await expect(chip(page, "tags", "any")).toBeVisible();
-
-      await expect(caseRow(page, searchHitTagged)).toBeVisible({
-        timeout: 20000,
-      });
-      await expect(caseRow(page, searchHitUntagged)).toBeHidden();
-      await expect(caseRow(page, taggedNoSearchHit)).toBeHidden();
-    });
   });
 
   test("An active filter bypasses the select-a-folder wall and reaches the whole project", async ({

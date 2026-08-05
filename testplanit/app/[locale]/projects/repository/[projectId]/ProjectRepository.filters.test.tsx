@@ -16,9 +16,12 @@
  *   by a `?selectedCase=` deep link, outside run view mode, and on
  *   view-options errors; never re-fires after the user clears it;
  * - the view-options counts query is keyed by the canonical predicate
- *   serialization and sends the table's active predicate set in its body
- *   (the emptied set while the ES-search bypass is live); counts mute only
- *   while placeholder (previous predicate set) data is displayed;
+ *   serialization and sends the table's active predicate set in its body,
+ *   intersected with the resolved search id set; counts mute only while
+ *   placeholder (previous predicate set) data is displayed;
+ * - the Elasticsearch box exists only in the case-selection dialog (the
+ *   repository view is served by Unified Search and the in-table name
+ *   filter), and its query is held in memory, never in the host URL;
  * - the run-mode first-folder auto-select stands down when the visited URL
  *   already carries filters, so a shared filtered link is never silently
  *   narrowed to one folder (spec §7.1).
@@ -31,6 +34,7 @@
 import React from "react";
 import {
   act,
+  cleanup,
   fireEvent,
   render,
   screen,
@@ -376,6 +380,20 @@ function renderRepo(props: Record<string, any> = {}) {
   };
 }
 
+/**
+ * The Elasticsearch box exists ONLY in the case-selection dialog — the
+ * repository view is covered by Unified Search and the in-table name filter.
+ * Every search-behaviour test therefore renders the dialog.
+ */
+function renderSelectionRepo(props: Record<string, any> = {}) {
+  return renderRepo({
+    isSelectionMode: true,
+    selectedTestCases: [],
+    onSelectionChange: vi.fn(),
+    ...props,
+  });
+}
+
 /** The single URL written by an axis switch, parsed for assertion. */
 function writtenViewUrl() {
   expect(mockRouterReplace).toHaveBeenCalledTimes(1);
@@ -683,11 +701,7 @@ describe("view-options counts wiring", () => {
         )
       );
     try {
-      renderRepo({
-        isSelectionMode: true,
-        selectedTestCases: [],
-        onSelectionChange: vi.fn(),
-      });
+      renderSelectionRepo();
       act(() => lastProps(filterBarSpy).onAdd(templatesIn12));
 
       const input = screen.getByTestId("es-search-input");
@@ -737,7 +751,7 @@ describe("view-options counts wiring", () => {
         )
       );
     try {
-      renderRepo();
+      renderSelectionRepo();
       const input = screen.getByTestId("es-search-input");
       await act(async () => {
         fireEvent.change(input, { target: { value: "login" } });
@@ -754,42 +768,49 @@ describe("view-options counts wiring", () => {
     }
   });
 
-  it("mirrors the search box into ?q= in view mode only", async () => {
+  it("offers the Elasticsearch box only in the case-selection dialog", async () => {
     const fetchMock = vi
       .spyOn(globalThis, "fetch")
       .mockImplementation(() =>
         Promise.resolve(okResponse({ total: 0, hits: [] }))
       );
     try {
+      // Repository browsing is covered by Unified Search and the in-table name
+      // filter; a second box here matched on step text and custom fields and
+      // showed rows with no visibly matching term.
       renderRepo();
+      expect(screen.queryByTestId("es-search-input")).toBeNull();
+      expect(lastProps(casesSpy).searchResultIds).toBeNull();
+      expect(lastProps(casesSpy).searchText).toBe("");
+
+      cleanup();
+
+      // The dialog has no route to Unified Search, so the box lives here.
+      renderSelectionRepo();
+      expect(screen.getByTestId("es-search-input")).toBeInTheDocument();
+    } finally {
+      fetchMock.mockRestore();
+    }
+  });
+
+  it("holds the selection-dialog query in memory, never in the host URL", async () => {
+    const fetchMock = vi
+      .spyOn(globalThis, "fetch")
+      .mockImplementation(() =>
+        Promise.resolve(okResponse({ total: 0, hits: [] }))
+      );
+    try {
+      renderSelectionRepo();
       await act(async () => {
         fireEvent.change(screen.getByTestId("es-search-input"), {
           target: { value: "login" },
         });
       });
-      const written = mockRouterReplace.mock.calls
-        .map(([url]) => String(url))
-        .filter((url) => url.includes("q=login"));
-      expect(written.length).toBeGreaterThan(0);
 
-      // Selection mode holds the query in memory — writing it would pollute
-      // the host page's URL (spec §10).
-      mockRouterReplace.mockClear();
-      renderRepo({
-        isSelectionMode: true,
-        selectedTestCases: [],
-        onSelectionChange: vi.fn(),
-      });
-      await act(async () => {
-        fireEvent.change(screen.getAllByTestId("es-search-input").at(-1)!, {
-          target: { value: "login" },
-        });
-      });
-      expect(
-        mockRouterReplace.mock.calls.filter(([url]) =>
-          String(url).includes("q=")
-        )
-      ).toHaveLength(0);
+      // Spec §10: the dialog never writes to the page that hosts it.
+      expect(mockRouterReplace).not.toHaveBeenCalled();
+      expect(mockRouterPush).not.toHaveBeenCalled();
+      expect(lastProps(casesSpy).searchText).toBe("login");
     } finally {
       fetchMock.mockRestore();
     }
@@ -808,23 +829,6 @@ describe("view-options counts wiring", () => {
     expect(
       lastProps(filterBarSpy).truncation.predicatesDropped
     ).toBeGreaterThan(0);
-  });
-
-  it("seeds the search box from ?q= on load", async () => {
-    const fetchMock = vi
-      .spyOn(globalThis, "fetch")
-      .mockImplementation(() =>
-        Promise.resolve(okResponse({ total: 0, hits: [] }))
-      );
-    try {
-      setLocation("?q=checkout");
-      await act(async () => {
-        renderRepo();
-      });
-      expect(screen.getByTestId("es-search-input")).toHaveValue("checkout");
-    } finally {
-      fetchMock.mockRestore();
-    }
   });
 
   it("mutes sidebar and chip-editor counts only while placeholder counts are shown", () => {
@@ -878,7 +882,7 @@ describe("Elasticsearch failures never fall back to an unfiltered table (spec §
         )
       );
     try {
-      renderRepo();
+      renderSelectionRepo();
       await typeSearch("login");
 
       // The ids are an AND'd filter now: leaving them null while a query is on
@@ -910,7 +914,7 @@ describe("Elasticsearch failures never fall back to an unfiltered table (spec §
         );
       });
     try {
-      renderRepo();
+      renderSelectionRepo();
       await typeSearch("login");
 
       expect(searchCalls).toBeGreaterThan(1);
@@ -924,7 +928,7 @@ describe("Elasticsearch failures never fall back to an unfiltered table (spec §
     }
   });
 
-  it("holds the table pending until the ids for a shared ?q= link arrive", async () => {
+  it("holds the table pending until the ids arrive", async () => {
     let resolveSearch: (response: Response) => void = () => {};
     const pendingSearch = new Promise<Response>((resolve) => {
       resolveSearch = resolve;
@@ -937,11 +941,11 @@ describe("Elasticsearch failures never fall back to an unfiltered table (spec §
           : Promise.resolve(okResponse())
       );
     try {
-      setLocation("?q=checkout");
-      render(repoElement());
+      renderSelectionRepo();
+      await typeSearch("checkout");
 
-      // The first thing a shared link would otherwise show is every case in
-      // the repository.
+      // Without the pending gate the dialog would offer every case in the
+      // repository for selection while the ids are still resolving.
       expect(lastProps(casesSpy).searchPending).toBe(true);
       expect(lastProps(casesSpy).searchFailed).toBe(false);
       expect(lastProps(casesSpy).searchResultIds).toBeNull();
@@ -972,7 +976,7 @@ describe("Elasticsearch failures never fall back to an unfiltered table (spec §
         )
       );
     try {
-      renderRepo();
+      renderSelectionRepo();
       await typeSearch("login");
 
       // The counts intersect the resolved id set; without it they answer a
@@ -991,7 +995,7 @@ describe("Elasticsearch failures never fall back to an unfiltered table (spec §
         Promise.resolve(okResponse({ total: 0, hits: [] }))
       );
     try {
-      renderRepo();
+      renderSelectionRepo();
       setCurrentPageSpy.mockClear();
 
       await typeSearch("login");
@@ -1024,7 +1028,7 @@ describe("one owner for this page's URL writes", () => {
     return new URLSearchParams(url.split("?")[1] ?? "");
   };
 
-  it("keeps a just-written param when the search box writes ?q=", async () => {
+  it("keeps a just-written param when the next writer composes", async () => {
     const fetchMock = stubFetch();
     try {
       setLocation("?node=5");
@@ -1034,33 +1038,32 @@ describe("one owner for this page's URL writes", () => {
       // pre-write URL when the next writer composes.
       act(() => lastProps(viewSelectorSpy).onValueChange("templates"));
       await act(async () => {
-        fireEvent.change(screen.getByTestId("es-search-input"), {
-          target: { value: "login" },
+        lastProps(filterBarSpy).savedViews.onApply({
+          projectId: 42,
+          predicates: [templatesIn12],
+          axis: "states",
+          search: "",
         });
       });
 
       const params = lastWrittenParams();
-      expect(params.get("q")).toBe("login");
-      expect(params.get("view")).toBe("templates");
+      expect(params.get("view")).toBe("states");
       expect(params.get("node")).toBe("5");
+      expect(params.getAll("f")).toEqual(["templates:in:1,2"]);
     } finally {
       fetchMock.mockRestore();
     }
   });
 
-  it("applies the readability pass so ?q= does not re-encode the f tokens", async () => {
+  it("applies the readability pass so a ?view= write does not re-encode the f tokens", async () => {
     const fetchMock = stubFetch();
     try {
       setLocation("?f=templates:in:1,2");
       renderRepo();
-      await act(async () => {
-        fireEvent.change(screen.getByTestId("es-search-input"), {
-          target: { value: "login" },
-        });
-      });
+      act(() => lastProps(viewSelectorSpy).onValueChange("templates"));
 
       const url = String(mockRouterReplace.mock.calls.at(-1)![0]);
-      expect(url).toContain("q=login");
+      expect(url).toContain("view=templates");
       expect(url).toContain("f=templates:in:1,2");
       expect(url).not.toContain("%3A");
     } finally {
@@ -1105,13 +1108,15 @@ describe("applying a saved view", () => {
     });
   };
 
-  it("binds the saved-views control with the live axis and search", () => {
+  it("binds the saved-views control with the live axis", () => {
     setLocation("?view=templates");
     renderRepo();
 
     const binding = lastProps(filterBarSpy).savedViews;
     expect(binding.projectId).toBe(42);
     expect(binding.axis).toBe("templates");
+    // Saving is offered only where the box is absent, so a saved view created
+    // from the repository never captures search text.
     expect(binding.search).toBe("");
     expect(binding.canSave).toBe(true);
   });
@@ -1125,7 +1130,7 @@ describe("applying a saved view", () => {
     expect(lastProps(filterBarSpy).savedViews.axis).toBeNull();
   });
 
-  it("writes the applied predicates, axis and search into one shareable URL", async () => {
+  it("writes the applied predicates and axis into one shareable URL", async () => {
     const fetchMock = stubFetch();
     try {
       setLocation("?view=templates&node=9&f=tags:any");
@@ -1136,7 +1141,7 @@ describe("applying a saved view", () => {
         projectId: 42,
         predicates: [templatesIn12],
         axis: "states",
-        search: "login",
+        search: "",
       });
 
       // The predicate half went through useRepositoryFilters' own setter, so
@@ -1147,7 +1152,9 @@ describe("applying a saved view", () => {
       const params = lastWrittenParams();
       expect(params.getAll("f")).toEqual(["templates:in:1,2"]);
       expect(params.get("view")).toBe("states");
-      expect(params.get("q")).toBe("login");
+      // The search box only exists in the selection dialog, so a saved view's
+      // search text never reaches the repository URL.
+      expect(params.get("q")).toBeNull();
       // Nothing else on the page is disturbed.
       expect(params.get("node")).toBe("9");
       expect(mockRouterPush).not.toHaveBeenCalled();
@@ -1157,10 +1164,10 @@ describe("applying a saved view", () => {
     }
   });
 
-  it("clears a search the applied view does not carry", async () => {
+  it("clears the filters and folder selection an applied view does not carry", async () => {
     const fetchMock = stubFetch();
     try {
-      setLocation("?view=folders&q=login&f=tags:any");
+      setLocation("?view=folders&node=4&f=tags:any");
       renderRepo();
       mockRouterReplace.mockClear();
 
@@ -1172,7 +1179,6 @@ describe("applying a saved view", () => {
       });
 
       const params = lastWrittenParams();
-      expect(params.get("q")).toBeNull();
       expect(params.getAll("f")).toEqual([]);
       // The folders axis owns the folder selection: applying it goes back to
       // the root the saved view described.

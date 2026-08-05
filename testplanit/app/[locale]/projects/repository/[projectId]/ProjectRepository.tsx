@@ -635,18 +635,18 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
     setCopyMoveFolderName("");
   }, []);
 
-  // Elasticsearch-powered search state. Rendered in repository view mode and in
-  // case-selection mode (run view mode has no ES search in v1 — spec §9). The
-  // query text lives in the `q` URL param in view mode and in memory only in
-  // selection mode, matching the predicate persistToUrl gating (spec §10).
-  // Tracks where the input actually renders: run view mode has none, and the
-  // run page flips between run view and edit (selection) mode on one component
-  // instance, so a query typed in edit mode must not stay live after the flip.
-  const isEsSearchAvailable = !isRunMode;
-  const persistSearchToUrl = isEsSearchAvailable && !isSelectionMode;
-  const [esSearchQuery, setEsSearchQuery] = useState(() =>
-    persistSearchToUrl ? (searchParams.get("q") ?? "") : ""
-  );
+  // Elasticsearch-powered search state. The box exists ONLY in the
+  // case-selection dialog, because the app's Unified Search is not reachable
+  // from inside that dialog. The repository view is covered by Unified Search
+  // and by the in-table name filter, so a second input there would compete with
+  // both. The query text lives in memory only — the dialog never writes to the
+  // host page's URL (spec §10).
+  //
+  // The run page flips between run view and edit (selection) mode on one
+  // component instance, so this also guarantees a query typed in edit mode
+  // stops filtering after the flip back.
+  const isEsSearchAvailable = isSelectionMode;
+  const [esSearchQuery, setEsSearchQuery] = useState("");
   const debouncedEsSearchQuery = useDebounce(esSearchQuery, 300);
   const [esSearchResultIds, setEsSearchResultIds] = useState<number[] | null>(
     null
@@ -678,8 +678,8 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
   const activeSearchText = isEsSearchAvailable ? esSearchQuery.trim() : "";
   const searchFailed = isEsSearchAvailable && esSearchFailed;
   // A query is on screen but its id set is not usable yet. The table must show
-  // loading rather than the unfiltered list — the first thing a user sees on a
-  // shared `?q=` link would otherwise be every case in the repository.
+  // loading rather than the unfiltered list — the dialog would otherwise offer
+  // every case in the repository for selection while the search resolves.
   const searchPending =
     activeSearchText.length > 0 &&
     !searchFailed &&
@@ -1595,7 +1595,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
 
   // Re-state the filter family from the authoritative predicate array. The
   // FilterBar's writer (useRepositoryFilters) and this component's writers are
-  // separate `router.replace` calls, so a `q` write composed from a stale
+  // separate `router.replace` calls, so a `view` write composed from a stale
   // window.location.search can carry a stale `f` set. Re-encoding from
   // `predicates` — which is parsed from the committed URL — makes the filter
   // family correct in whatever this component writes. Held back until the
@@ -1636,33 +1636,6 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
     }
   }, [canonicalKey]);
 
-  // Mirror the debounced query into `?q=` (view mode only — the case-selection
-  // dialog must not pollute the host page's URL, spec §10). It goes through the
-  // same compose-and-replace helper as every other write here, so a `case`,
-  // `view` or `node` param written moments earlier survives, and the filter
-  // family is re-stated from `predicates` rather than copied from a possibly
-  // stale URL. `searchParams` is a dependency so that a competing write which
-  // dropped `q` is healed on the next commit.
-  useEffect(() => {
-    if (!persistSearchToUrl) return;
-    replaceUrlParams((query) => {
-      if ((query.get("q") ?? "") !== trimmedSearchQuery) {
-        if (trimmedSearchQuery) {
-          query.set("q", trimmedSearchQuery);
-        } else {
-          query.delete("q");
-        }
-      }
-      reassertFilterParams(query);
-    });
-  }, [
-    trimmedSearchQuery,
-    persistSearchToUrl,
-    replaceUrlParams,
-    reassertFilterParams,
-    searchParams,
-  ]);
-
   const cancelEsSearch = useCallback(() => {
     setEsSearchQuery("");
     setEsSearchResultIds(null);
@@ -1697,8 +1670,8 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
       }
 
       if (!isSelectionMode) {
-        // Through the shared writer: a just-written `f` or `q` param may not
-        // have reached window.location yet and would otherwise be dropped.
+        // Through the shared writer: a just-written `f` param may not have
+        // reached window.location yet and would otherwise be dropped.
         replaceUrlParams((params) => params.set("view", value));
       }
     },
@@ -1756,21 +1729,17 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
 
       if (isSelectionMode) return;
 
-      // One composed write for the axis, the search text and the freshly
-      // applied filter family: `setPredicates` replaced the URL moments ago and
-      // window.location has not caught up, so re-stating `f` here is what keeps
-      // this write from dropping it.
+      // One composed write for the axis and the freshly applied filter family:
+      // `setPredicates` replaced the URL moments ago and window.location has
+      // not caught up, so re-stating `f` here is what keeps this write from
+      // dropping it. The search text is never in the URL — the box only exists
+      // in the selection dialog, which returns above.
       replaceUrlParams((query) => {
         query.set("view", axis);
         if (axis === "folders") {
           // The selection was just reset to the root; leaving `node` behind
           // would restore a folder the saved view never described on reload.
           query.delete("node");
-        }
-        if (criteria.search) {
-          query.set("q", criteria.search);
-        } else {
-          query.delete("q");
         }
         reassertFilterParams(query);
       });
@@ -2304,10 +2273,10 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                                 <div>{t("common.fields.testCases")}</div>
                               </div>
                             </div>
-                            {/* Elasticsearch search — repository view mode and
-                                case-selection mode. Composes with folder scope
-                                and filter chips (spec §9); run view mode has no
-                                ES search in v1. */}
+                            {/* Elasticsearch search bar for selection mode —
+                                the dialog has no access to Unified Search.
+                                Composes with folder scope and filter chips
+                                (spec §9) rather than bypassing them. */}
                             {isEsSearchAvailable && (
                               <div className="relative flex-1 max-w-md min-w-0">
                                 <Search className="absolute start-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />

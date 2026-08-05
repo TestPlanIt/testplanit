@@ -7,12 +7,13 @@ import { RepositoryPage } from "../../../page-objects/repository/repository.page
  *
  * Test cases for searching and filtering test cases in the repository.
  *
- * The repository has two independent text inputs and they must not be
- * confused: `search-input` is the in-table NAME filter exercised here — it is
- * always AND'ed as a base condition and never serializes to the URL — while
- * `es-search-input` is the Elasticsearch box in the repository header.
- * Dimension filtering itself lives in the FilterBar (chips + `?f=` params),
- * which composes with both the folder scope and the name filter.
+ * `search-input` is the repository's own search: the in-table NAME filter
+ * exercised here, always AND'ed as a base condition and never serialized to
+ * the URL. It is the only text input on this page — the Elasticsearch box
+ * (`es-search-input`) exists solely in the case-selection dialog, where
+ * Unified Search is unreachable. Dimension filtering itself lives in the
+ * FilterBar (chips + `?f=` params), which composes with both the folder scope
+ * and the name filter.
  */
 
 /** The `f` params currently serialized into the URL, form-decoded. */
