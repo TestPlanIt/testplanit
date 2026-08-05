@@ -30,10 +30,6 @@ import { AddResultModal } from "@/projects/repository/[projectId]/AddResultModal
 import FieldValueRenderer from "@/projects/repository/[projectId]/[caseId]/FieldValueRenderer";
 import type { ParameterChipMeta } from "~/lib/tiptap/parameterMentionExtension";
 import type { Attachments, Status } from "~/zenstack/models";
-import type {
-  RepositoryCasesGetPayload,
-  RepositoryCasesSelect,
-} from "~/zenstack/input";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   Check,
@@ -57,7 +53,7 @@ import { notifyTestCaseAssignment } from "~/app/actions/test-run-notifications";
 import { emptyEditorContent } from "~/app/constants";
 import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
-import { useFindFirstRepositoryCasesFiltered } from "~/hooks/useRepositoryCasesWithFilteredFields";
+import { useTestRunCaseDetail } from "~/hooks/useTestRunCaseDetail";
 import {
   isIssueRequiredOnFailureSubmitResultError,
   isJustificationRequiredSubmitResultError,
@@ -204,232 +200,19 @@ export function TestRunCaseDetails({
     },
   });
 
-  // Define the select object for repositoryCaseWithDetails
-  const repositoryCaseWithDetailsSelect = {
-    id: true,
-    name: true,
-    estimate: true,
-    forecastManual: true,
-    forecastAutomated: true,
-    currentVersion: true,
-    state: {
-      select: {
-        id: true,
-        name: true,
-        icon: { select: { name: true } },
-        color: { select: { value: true } },
-      },
-    },
-    project: true,
-    folder: true,
-    creator: true,
-    template: {
-      select: {
-        id: true,
-        templateName: true,
-        caseFields: {
-          select: {
-            caseFieldId: true,
-            order: true,
-            caseField: {
-              select: {
-                id: true,
-                defaultValue: true,
-                displayName: true,
-                type: { select: { type: true } },
-                fieldOptions: {
-                  select: {
-                    fieldOption: {
-                      select: {
-                        id: true,
-                        icon: true,
-                        iconColor: true,
-                        name: true,
-                        order: true,
-                      },
-                    },
-                  },
-                  orderBy: { fieldOption: { order: "asc" } },
-                },
-              },
-            },
-          },
-          orderBy: { order: "asc" },
-        },
-      },
-    },
-    caseFieldValues: {
-      select: {
-        id: true,
-        value: true,
-        fieldId: true,
-        field: {
-          select: {
-            id: true,
-            displayName: true,
-            type: { select: { type: true } },
-          },
-        },
-      },
-      where: { field: { isEnabled: true, isDeleted: false } },
-    },
-    attachments: {
-      orderBy: { createdAt: "desc" },
-      where: { isDeleted: false },
-      select: {
-        id: true,
-        name: true,
-        url: true,
-        createdAt: true,
-        mimeType: true,
-        size: true,
-        note: true,
-        createdBy: { select: { name: true, id: true } },
-        testCaseId: true,
-        isDeleted: true,
-        deletedAt: true,
-        createdById: true,
-        sessionId: true,
-        sessionResultsId: true,
-        testRunsId: true,
-        testRunResultsId: true,
-        testRunStepResultId: true,
-        junitTestResultId: true,
-      },
-    },
-    steps: {
-      where: { isDeleted: false },
-      orderBy: { order: "asc" },
-      select: {
-        id: true,
-        step: true,
-        testCaseId: true,
-        order: true,
-        expectedResult: true,
-        isDeleted: true,
-        deletedAt: true,
-        sharedStepGroupId: true,
-        sharedStepGroup: {
-          select: {
-            id: true,
-            name: true,
-            projectId: true,
-            isDeleted: true,
-            deletedAt: true,
-            createdAt: true,
-            updatedAt: true,
-            createdById: true,
-          },
-        },
-      },
-    },
-    caseTags: {
-      where: { tag: { isDeleted: false } },
-      orderBy: { tag: { name: "asc" } },
-      select: {
-        tag: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-      },
-    },
-    caseIssues: {
-      include: {
-        issue: {
-          include: {
-            integration: {
-              select: {
-                id: true,
-                provider: true,
-                name: true,
-              },
-            },
-          },
-        },
-      },
-    },
-    testRuns: {
-      where: {
-        testRunId: testRunId || undefined,
-      },
-      select: {
-        id: true,
-        testRun: {
-          select: {
-            id: true,
-            name: true,
-            milestone: {
-              select: {
-                name: true,
-                completedAt: true,
-              },
-            },
-            configuration: {
-              select: {
-                id: true,
-                name: true,
-              },
-            },
-          },
-        },
-        results: {
-          select: {
-            id: true,
-            status: {
-              select: {
-                name: true,
-                color: {
-                  select: {
-                    value: true,
-                  },
-                },
-              },
-            },
-            executedBy: {
-              select: {
-                id: true,
-                name: true,
-              },
-            },
-            editedBy: {
-              select: {
-                id: true,
-                name: true,
-              },
-            },
-            editedAt: true,
-            executedAt: true,
-            elapsed: true,
-            attempt: true,
-          },
-        },
-        assignedTo: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-      },
-    },
-    source: true,
-    automated: true,
-    hasParameters: true,
-  } satisfies RepositoryCasesSelect;
-
-  // Define the explicit type for the testcase based on the select
-  type RepositoryCaseWithDetails = RepositoryCasesGetPayload<{
-    select: typeof repositoryCaseWithDetailsSelect;
-  }>;
-
-  const { data: testcase, isLoading } = useFindFirstRepositoryCasesFiltered({
-    where: { id: caseId, isDeleted: false },
-    select: repositoryCaseWithDetailsSelect,
-  }) as {
-    data: RepositoryCaseWithDetails | null | undefined;
-    isLoading: boolean;
-  };
+  // Full case detail (steps, tags, issues, template fields, per-run results,
+  // ...) now comes from a server route off baseDb instead of the
+  // policy-enforced ZenStack client hook -- that hook's ~10 nested relations
+  // (plus `project`/`folder`/`creator` full-object includes nobody read) hit
+  // the same ACL correlated-subquery pathology documented in
+  // testplanit-acl-overhead-investigation: mean 10.6s / max 65s per call in
+  // prod. See lib/services/testRunCaseDetail.ts. The run page's own
+  // transition-clearing check calls this same hook with the same
+  // (caseId, testRunId), so React Query dedupes the two into one request.
+  const { data: testcase, isLoading } = useTestRunCaseDetail(
+    caseId,
+    testRunId
+  );
 
   // Does this case's template require a result field? Quick-pass / quick-status
   // can't capture one, so when it does we escalate to the full Add Result modal
