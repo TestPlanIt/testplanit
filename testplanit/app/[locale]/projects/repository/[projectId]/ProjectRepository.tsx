@@ -41,11 +41,17 @@ import {
 } from "~/lib/repository/filterDimensions";
 import {
   applyReadabilityPass,
+  canonicalPredicateKey,
   COMPRESSED_FILTER_PARAM,
   encodeFilterPredicatesForUrl,
   FILTER_PARAM,
 } from "~/lib/repository/filterUrlCodec";
+import type { FilterPredicate } from "~/lib/schemas/repositoryFilterPredicates";
 import { useRepositoryFilters } from "~/hooks/useRepositoryFilters";
+import {
+  REPOSITORY_VIEW_STATIC_AXES,
+  type SavedRepositoryViewCriteria,
+} from "~/lib/schemas/savedRepositoryView";
 import { ApplicationArea } from "~/zenstack/models";
 import { toast } from "sonner";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
@@ -1595,11 +1601,22 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
   // family correct in whatever this component writes. Held back until the
   // registry's dynamic fields have arrived: before that, dynamic-field
   // predicates are not yet parseable and re-encoding would delete them.
+  // Predicates a saved view just applied. `predicates` is parsed from the
+  // COMMITTED URL, so between the apply and the router commit it still holds
+  // the pre-apply set — re-stating that set would immediately undo the view.
+  // Every write from here re-states the applied set until the URL catches up.
+  const appliedViewFiltersRef = useRef<{
+    key: string;
+    predicates: FilterPredicate[];
+  } | null>(null);
+
   const reassertFilterParams = useCallback(
     (query: URLSearchParams) => {
       if (!persistFiltersToUrl || mirroredDynamicFields.fields === undefined)
         return;
-      const encoding = encodeFilterPredicatesForUrl(predicates);
+      const encoding = encodeFilterPredicatesForUrl(
+        appliedViewFiltersRef.current?.predicates ?? predicates
+      );
       query.delete(FILTER_PARAM);
       query.delete(COMPRESSED_FILTER_PARAM);
       if (encoding.compressed) {
@@ -1611,6 +1628,13 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
     },
     [persistFiltersToUrl, mirroredDynamicFields.fields, predicates]
   );
+
+  // The applied set is spent as soon as the committed URL parses back to it.
+  useEffect(() => {
+    if (appliedViewFiltersRef.current?.key === canonicalKey) {
+      appliedViewFiltersRef.current = null;
+    }
+  }, [canonicalKey]);
 
   // Mirror the debounced query into `?q=` (view mode only — the case-selection
   // dialog must not pollute the host page's URL, spec §10). It goes through the
@@ -1679,6 +1703,87 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
       }
     },
     [replaceUrlParams, handleSelectFolder, isSelectionMode]
+  );
+
+  // --- Saved views ---------------------------------------------------------
+  // A saved view is the curated twin of the shareable URL: same state, named
+  // and reusable. Applying one goes through the SAME setters the FilterBar and
+  // the ViewSelector use, so the URL updates and the applied view stays
+  // shareable by link. A view whose grouping axis no longer resolves (a
+  // deleted dynamic field) falls back to the surface's default rather than
+  // grouping by nothing — the menu says what it skipped.
+  // The axis this surface groups by when a view does not name one.
+  const defaultViewAxis = isRunMode ? "assignedTo" : "folders";
+
+  const resolveSavedViewAxis = useCallback(
+    (axis: string | null): string => {
+      const fallback = defaultViewAxis;
+      if (!axis) return fallback;
+      if ((REPOSITORY_VIEW_STATIC_AXES as readonly string[]).includes(axis)) {
+        return axis;
+      }
+      if (axis.startsWith("dynamic_")) {
+        const fieldId = parseInt(axis.split("_")[1], 10);
+        const exists = Object.values(viewOptions.dynamicFields || {}).some(
+          (field) => field.fieldId === fieldId
+        );
+        return exists ? axis : fallback;
+      }
+      return fallback;
+    },
+    [defaultViewAxis, viewOptions.dynamicFields]
+  );
+
+  const handleApplySavedView = useCallback(
+    (criteria: SavedRepositoryViewCriteria) => {
+      const axis = resolveSavedViewAxis(criteria.axis);
+
+      // The FilterBar's own predicate setter — the URL write (or the in-memory
+      // set in selection mode) is identical to editing the chips by hand.
+      appliedViewFiltersRef.current = {
+        key: canonicalPredicateKey(criteria.predicates),
+        predicates: criteria.predicates,
+      };
+      setPredicates(criteria.predicates);
+
+      setSelectedItem(axis);
+      if (axis === "folders") {
+        handleSelectFolder(null);
+      }
+      if (isEsSearchAvailable) {
+        setEsSearchQuery(criteria.search);
+      }
+
+      if (isSelectionMode) return;
+
+      // One composed write for the axis, the search text and the freshly
+      // applied filter family: `setPredicates` replaced the URL moments ago and
+      // window.location has not caught up, so re-stating `f` here is what keeps
+      // this write from dropping it.
+      replaceUrlParams((query) => {
+        query.set("view", axis);
+        if (axis === "folders") {
+          // The selection was just reset to the root; leaving `node` behind
+          // would restore a folder the saved view never described on reload.
+          query.delete("node");
+        }
+        if (criteria.search) {
+          query.set("q", criteria.search);
+        } else {
+          query.delete("q");
+        }
+        reassertFilterParams(query);
+      });
+    },
+    [
+      resolveSavedViewAxis,
+      setPredicates,
+      handleSelectFolder,
+      isEsSearchAvailable,
+      isSelectionMode,
+      replaceUrlParams,
+      reassertFilterParams,
+    ]
   );
 
   // --- ViewSelector row-click bridge (spec §6) -----------------------------
@@ -2401,6 +2506,20 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                               searchPending ||
                               searchFailed
                             }
+                            savedViews={{
+                              projectId: numericProjectId,
+                              // null = "this surface's default grouping", so a
+                              // bare page is correctly nothing worth saving.
+                              axis:
+                                selectedItem === defaultViewAxis
+                                  ? null
+                                  : selectedItem,
+                              search: activeSearchText,
+                              onApply: handleApplySavedView,
+                              // Selection-mode filters live in memory only —
+                              // there is no URL a saved view could reproduce.
+                              canSave: !isSelectionMode,
+                            }}
                           />
                         </div>
                         <DropZoneOverlay

@@ -11,6 +11,22 @@ vi.mock("@/components/tables/UserNameCell", () => ({
   UserNameCell: ({ userId }: { userId: string }) => <span>{userId}</span>,
 }));
 
+// The saved-views menu's persistence is covered by SavedViewsMenu.test.tsx;
+// here only its presence on the bar matters.
+vi.mock("~/hooks/useSavedRepositoryViews", () => ({
+  useSavedRepositoryViews: () => ({
+    views: [],
+    unreadableCount: 0,
+    isLoading: false,
+    refetch: vi.fn(),
+    saveView: vi.fn(),
+    renameView: vi.fn(),
+    deleteView: vi.fn(),
+    isSaving: false,
+    isMutating: false,
+  }),
+}));
+
 import { RepositoryFilterBar } from "./RepositoryFilterBar";
 
 beforeAll(() => {
@@ -369,5 +385,37 @@ describe("RepositoryFilterBar cap feedback", () => {
     expect(
       screen.queryByTestId("filter-bar-truncated")
     ).not.toBeInTheDocument();
+  });
+
+  describe("saved views", () => {
+    const savedViews = {
+      projectId: 42,
+      axis: "folders",
+      search: "",
+      onApply: vi.fn(),
+      canSave: true,
+    };
+
+    it("renders the saved-views control on the bar, outside any kebab", () => {
+      render(
+        <TooltipProvider>
+          <RepositoryFilterBar {...makeProps({ savedViews })} />
+        </TooltipProvider>
+      );
+      const trigger = screen.getByTestId("saved-views-trigger");
+      expect(trigger).toBeInTheDocument();
+      expect(screen.getByTestId("filter-bar")).toContainElement(trigger);
+    });
+
+    it("omits the control on surfaces that do not bind it", () => {
+      render(
+        <TooltipProvider>
+          <RepositoryFilterBar {...makeProps()} />
+        </TooltipProvider>
+      );
+      expect(
+        screen.queryByTestId("saved-views-trigger")
+      ).not.toBeInTheDocument();
+    });
   });
 });

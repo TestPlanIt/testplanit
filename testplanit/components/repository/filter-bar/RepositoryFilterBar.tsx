@@ -17,14 +17,40 @@ import {
   type FilterCapTruncation,
   type FilterPredicate,
 } from "~/lib/schemas/repositoryFilterPredicates";
+import type { SavedRepositoryViewCriteria } from "~/lib/schemas/savedRepositoryView";
 import { AddFilterButton } from "./AddFilterButton";
 import { chipKey, defaultPredicateFor, isCommittable } from "./chipHelpers";
 import { getDimensionIcon, getDimensionLabel } from "./dimensionPresentation";
 import { FilterChip } from "./FilterChip";
+import { SavedViewsMenu } from "./SavedViewsMenu";
 import {
   getDimensionValueOptions,
   type FilterBarViewOptions,
 } from "./valueOptions";
+
+/**
+ * Everything the saved-views control needs that the FilterBar does not already
+ * hold: the owning project, the grouping axis and search text a view captures
+ * alongside the predicates, and the apply callback. Omit the prop entirely to
+ * render the bar without saved views.
+ */
+export interface RepositorySavedViewsBinding {
+  projectId: number;
+  /** Current grouping axis (`?view=`); null means the surface's default. */
+  axis: string | null;
+  /** Current search text. */
+  search: string;
+  /**
+   * Applies a saved view. The host routes this through the same predicate
+   * setter the chips use, so the URL updates and the view stays shareable.
+   */
+  onApply: (criteria: SavedRepositoryViewCriteria) => void;
+  /**
+   * false where filter state is memory-only (the case-selection dialog) —
+   * saving renders disabled with an explanation, applying still works.
+   */
+  canSave: boolean;
+}
 
 export interface RepositoryFilterBarProps {
   predicates: FilterPredicate[];
@@ -64,6 +90,12 @@ export interface RepositoryFilterBarProps {
    * than it carried. The two caps render as two distinct notices.
    */
   truncation?: FilterCapTruncation;
+  /**
+   * Wires the saved-views menu into the bar. Saved views are the curated,
+   * named complement to the ad-hoc sharing the `f`/`fz` URL params already
+   * provide — same state, different lifetime.
+   */
+  savedViews?: RepositorySavedViewsBinding;
 }
 
 interface ChipEntry {
@@ -90,6 +122,7 @@ export function RepositoryFilterBar({
   searchWindow = 0,
   countsMuted = false,
   truncation,
+  savedViews,
 }: RepositoryFilterBarProps) {
   const t = useTranslations();
   const { data: session } = useSession();
@@ -135,6 +168,18 @@ export function RepositoryFilterBar({
     }
     return labels;
   }, [dynamicFieldSignature]);
+
+  // The dynamic-field ids that still exist, so a saved view grouped by a
+  // deleted field degrades to the default axis instead of grouping by nothing.
+  const knownDynamicAxisFieldIds = useMemo(
+    () =>
+      new Set(
+        (JSON.parse(dynamicFieldSignature) as Array<[number, string]>).map(
+          ([fieldId]) => fieldId
+        )
+      ),
+    [dynamicFieldSignature]
+  );
 
   const handlePick = useCallback(
     (dimension: FilterDimension) => {
@@ -335,6 +380,18 @@ export function RepositoryFilterBar({
           </Button>
         )}
       </div>
+      {savedViews && (
+        <SavedViewsMenu
+          projectId={savedViews.projectId}
+          registry={registry}
+          predicates={predicates}
+          axis={savedViews.axis}
+          search={savedViews.search}
+          onApply={savedViews.onApply}
+          canSave={savedViews.canSave}
+          knownDynamicAxisFieldIds={knownDynamicAxisFieldIds}
+        />
+      )}
       {searchTruncated && (
         <span
           className="text-xs text-muted-foreground italic"

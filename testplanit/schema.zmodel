@@ -4562,6 +4562,7 @@ enum ShareLinkEntityType {
     SESSION
     DASHBOARD
     SEARCH
+    REPOSITORY_VIEW
 
     @@deny('all', auth() == null)
     @@allow('read', true)

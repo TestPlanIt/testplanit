@@ -1079,3 +1079,165 @@ describe("one owner for this page's URL writes", () => {
     expect(closed.get("node")).toBe("3");
   });
 });
+
+describe("applying a saved view", () => {
+  const okResponse = (payload: Record<string, unknown> = {}) =>
+    new Response(JSON.stringify(payload), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+
+  const stubFetch = () =>
+    vi
+      .spyOn(globalThis, "fetch")
+      .mockImplementation(() =>
+        Promise.resolve(okResponse({ total: 0, hits: [] }))
+      );
+
+  const lastWrittenParams = () => {
+    const url = String(mockRouterReplace.mock.calls.at(-1)![0]);
+    return new URLSearchParams(url.split("?")[1] ?? "");
+  };
+
+  const applySavedView = async (criteria: Record<string, unknown>) => {
+    await act(async () => {
+      lastProps(filterBarSpy).savedViews.onApply(criteria);
+    });
+  };
+
+  it("binds the saved-views control with the live axis and search", () => {
+    setLocation("?view=templates");
+    renderRepo();
+
+    const binding = lastProps(filterBarSpy).savedViews;
+    expect(binding.projectId).toBe(42);
+    expect(binding.axis).toBe("templates");
+    expect(binding.search).toBe("");
+    expect(binding.canSave).toBe(true);
+  });
+
+  it("binds a null axis on the surface's default grouping", () => {
+    setLocation("?view=folders");
+    renderRepo();
+
+    // Nothing to distinguish this page from a bare visit, so there is nothing
+    // worth saving — the menu decides that from the criteria it is handed.
+    expect(lastProps(filterBarSpy).savedViews.axis).toBeNull();
+  });
+
+  it("writes the applied predicates, axis and search into one shareable URL", async () => {
+    const fetchMock = stubFetch();
+    try {
+      setLocation("?view=templates&node=9&f=tags:any");
+      renderRepo();
+      mockRouterReplace.mockClear();
+
+      await applySavedView({
+        projectId: 42,
+        predicates: [templatesIn12],
+        axis: "states",
+        search: "login",
+      });
+
+      // The predicate half went through useRepositoryFilters' own setter, so
+      // the applied view is a normal, shareable filter URL.
+      expect(mockRouterReplace.mock.calls[0][0]).toContain(
+        "f=templates:in:1,2"
+      );
+      const params = lastWrittenParams();
+      expect(params.getAll("f")).toEqual(["templates:in:1,2"]);
+      expect(params.get("view")).toBe("states");
+      expect(params.get("q")).toBe("login");
+      // Nothing else on the page is disturbed.
+      expect(params.get("node")).toBe("9");
+      expect(mockRouterPush).not.toHaveBeenCalled();
+      expect(lastProps(viewSelectorSpy).selectedItem).toBe("states");
+    } finally {
+      fetchMock.mockRestore();
+    }
+  });
+
+  it("clears a search the applied view does not carry", async () => {
+    const fetchMock = stubFetch();
+    try {
+      setLocation("?view=folders&q=login&f=tags:any");
+      renderRepo();
+      mockRouterReplace.mockClear();
+
+      await applySavedView({
+        projectId: 42,
+        predicates: [],
+        axis: "folders",
+        search: "",
+      });
+
+      const params = lastWrittenParams();
+      expect(params.get("q")).toBeNull();
+      expect(params.getAll("f")).toEqual([]);
+      // The folders axis owns the folder selection: applying it goes back to
+      // the root the saved view described.
+      expect(params.get("node")).toBeNull();
+      expect(lastProps(treeViewSpy).selectedFolderId).toBeNull();
+    } finally {
+      fetchMock.mockRestore();
+    }
+  });
+
+  it("falls back to the default axis when the view's grouping field is gone", async () => {
+    setLocation("?view=templates");
+    renderRepo();
+    mockRouterReplace.mockClear();
+
+    // fieldId 99 is not in the view-options dynamic fields.
+    await applySavedView({
+      projectId: 42,
+      predicates: [tagsAny],
+      axis: "dynamic_99_Text Long",
+      search: "",
+    });
+
+    // The surviving predicate still applies — the stale axis alone does not
+    // sink the view.
+    expect(lastWrittenParams().get("view")).toBe("folders");
+    expect(lastWrittenParams().getAll("f")).toEqual(["tags:any"]);
+    expect(lastProps(viewSelectorSpy).selectedItem).toBe("folders");
+  });
+
+  it("keeps a surviving dynamic-field axis", async () => {
+    setLocation("?view=folders");
+    renderRepo();
+    mockRouterReplace.mockClear();
+
+    await applySavedView({
+      projectId: 42,
+      predicates: [],
+      axis: "dynamic_12_Text Long",
+      search: "",
+    });
+
+    expect(lastProps(viewSelectorSpy).selectedItem).toBe(
+      "dynamic_12_Text Long"
+    );
+    expect(lastWrittenParams().get("view")).toBe("dynamic_12_Text Long");
+  });
+
+  it("applies in memory in selection mode, where saving is not offered", async () => {
+    setLocation("?view=folders");
+    renderRepo({ isSelectionMode: true, onSelectionChange: vi.fn() });
+
+    expect(lastProps(filterBarSpy).savedViews.canSave).toBe(false);
+
+    await applySavedView({
+      projectId: 42,
+      predicates: [templatesIn12],
+      axis: "templates",
+      search: "",
+    });
+
+    expect(mockRouterReplace).not.toHaveBeenCalled();
+    expect(mockRouterPush).not.toHaveBeenCalled();
+    expect(lastProps(filterBarSpy).predicates).toEqual([templatesIn12]);
+    expect(lastProps(casesSpy).predicates).toEqual([templatesIn12]);
+    expect(lastProps(viewSelectorSpy).selectedItem).toBe("templates");
+  });
+});
