@@ -51,7 +51,7 @@ This step collects the core details for the new test run. The form is split into
 This step involves selecting the test cases to be included in the run.
 
 - **Layout**: This step displays the [Test Case Repository](./repository.md) in selection mode.
-  - The standard repository view is available — the folder tree, the left panel's view selector, the filter chips, and the full-text search box — though filters and search text applied here are not written to the page URL.
+  - The standard repository view is available — the folder tree, the left panel's view selector, and the filter chips — plus a full-text search box that this dialog adds because [Advanced Search](../advanced-search.md) cannot be opened from inside it. Filters and search text applied here are not written to the page URL. See [Searching](./repository.md#searching).
   - Checkboxes appear next to each test case.
   - A drawer icon in the header shows the count of currently selected cases and allows viewing/managing the selection.
 - **Selection**: Check the box next to any test case you want to include in this run.

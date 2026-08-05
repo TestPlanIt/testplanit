@@ -60,12 +60,12 @@ The page features a resizable two-panel layout:
     * **Collapse Button**: A chevron button (`<`/`>`) on the handle between panels allows collapsing or expanding this left panel.
 
 * **Right Panel (Test Case List)**:
-    * **Breadcrumbs (Folder View Only)**: Shows the path to the currently selected folder. Next to the breadcrumb, a **Show all descendants** toggle (folder-down icon) lets you view test cases from the selected folder and all of its nested subfolders in a single list. When enabled, each test case row displays a folder badge showing which subfolder it belongs to, with a tooltip showing the full folder path. All existing sorting, filtering, search, and bulk actions work on the aggregated list.
+    * **Breadcrumbs (Folder View Only)**: Shows the path to the currently selected folder. Next to the breadcrumb, a **Show all descendants** toggle (folder-down icon) lets you view test cases from the selected folder and all of its nested subfolders in a single list. When enabled, each test case row displays a folder badge showing which subfolder it belongs to, with a tooltip showing the full folder path. All existing sorting, filtering, and bulk actions work on the aggregated list.
     * **Add Case Button**: Allows adding a new test case using a detailed modal (`AddCaseModal`).
     * **Generate Test Cases Button**: Opens the AI generation wizard (sparkles icon, requires [LLM Integration](../llm-integrations.md)).
     * **Import Cases Button**: Opens the CSV import wizard for bulk test case creation.
-    * **Search**: Full-text search across the project's test cases. It narrows the list you are looking at rather than replacing it — the folder scope, the grouping axis and every active filter still apply. Available in the repository and in the case-selection dialog, but not inside a test run.
     * **Filter Bar**: The active filters, shown as chips directly above the table, alongside the **Add Filter** button and **Clear All**. See [Views & Filtering](#views--filtering).
+    * **Filter Cases Box**: A **Filter cases...** box that narrows the list to the cases whose name contains what you type. It applies on top of the folder scope, the grouping axis and every filter chip. See [Searching](#searching).
     * **Column Selection**: Choose which columns are visible in the table using the **Columns** control. Your selection is remembered automatically — it is saved in your browser and scoped to this project's repository, so the columns you pick are still there the next time you open it.
     * **Pagination**: Controls for navigating through pages of test cases.
     * **Test Case Table (`DataTable`)**: Displays the list of test cases based on the current selection/filters. Supports:
@@ -136,23 +136,27 @@ Custom-field chips offer the operators that suit the field's type:
 
 ### What the counts mean
 
-The number beside an option — in the left panel and in a chip's value list alike — is what you would get by clicking it. Each field's counts are calculated under all of the *other* active filters and the current search, but not under its own, so filtering on a field still shows you what its other values would return. Counts cover the whole project (in Run Mode, the whole run) and are not narrowed by the selected folder. While fresh counts are being fetched the previous numbers stay on screen, dimmed, with an "Updating counts..." tooltip.
+The number beside an option — in the left panel and in a chip's value list alike — is what you would get by clicking it. Each field's counts are calculated under all of the *other* active filters — and, in the case-selection dialog, under the current search — but not under its own, so filtering on a field still shows you what its other values would return. Counts cover the whole project (in Run Mode, the whole run) and are not narrowed by the selected folder. While fresh counts are being fetched the previous numbers stay on screen, dimmed, with an "Updating counts..." tooltip.
 
 ### Sharing and limits
 
-Filters are held in the page URL, so a link reproduces exactly the filtered list you are looking at, and a reload keeps it. A filter set too large for a readable URL is stored compressed in a single parameter instead. Filters set inside the case-selection dialog are kept in memory only and never touch the URL of the page behind it.
+Filters are held in the page URL, so a link reproduces exactly the filtered list you are looking at, and a reload keeps it. A filter set too large for a readable URL is stored compressed in a single parameter instead. Filters and search text set inside the case-selection dialog are kept in memory only and never touch the URL of the page behind it.
 
 A filter set can hold up to **50 filters**, each with up to **200 values**. **Add Filter** is disabled once you reach 50 filters and says why, and a value list stops accepting new values at 200 with the same kind of notice. A link that arrives carrying more than either limit is trimmed down to fit, and a notice beside the chips tells you that filters or values were dropped.
 
-### Search and filters together
+### Searching
 
-The search box above the table runs a full-text search across the project's test cases and intersects it with everything else: the folder scope, the grouping axis, and every filter chip all still apply. Searching does not clear your filters, and filtering does not clear your search.
+The repository's own search is the **Filter cases...** box above the table. It narrows the list you are looking at to the cases whose name contains what you type, and it stacks with everything else: the folder scope, the grouping axis and every filter chip still apply.
+
+For full-text search across a project — step text, custom field values, and the rest of a case's content — use [Advanced Search](../advanced-search.md), reachable from anywhere in the app with the search icon in the top navigation bar or `Cmd+K` / `Ctrl+K`. It covers the repository, so the repository page itself carries no full-text search box.
+
+The case-selection dialog used when adding cases to a run or plan does have its own full-text search box, because Advanced Search cannot be opened from inside the dialog. That search intersects with everything else rather than replacing it: the folder scope, the grouping axis, and every filter chip all still apply. Searching does not clear your filters, and filtering does not clear your search.
 
 * While a search is active and you have not chosen a sort, results are ordered by relevance and the list says **Sorted by relevance**.
 * A search that matches more cases than the search index will return in one result set shows **Filtering within the top 10,000 matches** beside the chips: filters and counts apply to those matches only.
 * If the search cannot be run, the list reports the failure instead of falling back to unfiltered results.
 
-Search is available in the repository and in the case-selection dialog used when adding cases to a run or plan. A test run's own case list has no search box; use the filter bar there instead.
+A test run's own case list has no full-text search box; use the filter bar there instead.
 
 ### Run Mode
 
