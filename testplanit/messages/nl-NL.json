@@ -558,6 +558,8 @@
       "stepCount": "stappen",
       "enterText": "Voer tekst in...",
       "enterUrl": "Voer de URL in",
+      "enterUrlPattern": "Voer URL-patroon in...",
+      "domainExample": "voorbeeld.com",
       "issueIdExample": "NUMMER-123",
       "selectPriorityValuesOrEmpty": "Selecteer prioriteitswaarden (of laat alles leeg)"
     },
@@ -1078,7 +1080,35 @@
     "invalidProject": "Ongeldige project-ID.",
     "visualization": "Visualisatie",
     "results": "Resultaten",
-    "loading": "Bezig met laden..."
+    "loading": "Bezig met laden...",
+    "operators": {
+      "eq": "Is gelijk aan",
+      "ne": "Niet gelijk aan",
+      "lt": "Kleiner dan",
+      "lte": "Kleiner dan of gelijk aan",
+      "gt": "Groter dan",
+      "gte": "Groter dan of gelijk aan",
+      "between": "Tussen",
+      "contains": "Bevat",
+      "notContains": "Bevat niet",
+      "startsWith": "Begint met",
+      "endsWith": "Eindigt met",
+      "domain": "Domein bevat",
+      "on": "Op",
+      "before": "Vóór",
+      "after": "Na",
+      "last7": "Laatste 7 dagen",
+      "last30": "Laatste 30 dagen",
+      "last90": "Laatste 90 dagen",
+      "thisYear": "Dit jaar",
+      "anyOf": "Een van",
+      "allOf": "Alle van",
+      "noneOf": "Geen van",
+      "is": "Is",
+      "in": "Is een van",
+      "hasValue": "Heeft waarde",
+      "isEmpty": "Is leeg"
+    }
   },
   "api": {
     "testResults": {
@@ -2892,7 +2922,9 @@
         "title": "Testcases importeren",
         "fields": {
           "workflowState": "Workflowstatus",
-          "column": "Kolom {number}"
+          "column": "Kolom {number}",
+          "caseId": "Testgeval-ID",
+          "caseIdDescription": "TestPlanIt Testgeval-ID"
         },
         "success": {
           "description": "{count, plural, one {# testcase} other {# testcases}} succesvol geïmporteerd"
@@ -2902,7 +2934,15 @@
           "folderRequired": "Voor deze importlocatie is mapselectie vereist",
           "fileRequired": "Een CSV- of Markdown-bestand is vereist.",
           "markdownParseFailed": "Het parseren van het Markdown-bestand is mislukt.",
-          "markdownLlmFailed": "AI-parsing niet beschikbaar, standaardparser wordt gebruikt."
+          "markdownLlmFailed": "AI-parsing niet beschikbaar, standaardparser wordt gebruikt.",
+          "validationTitle": "Importvalidatie mislukt",
+          "validationSummary": "{count, plural, one {# probleem is} other {# problemen zijn}} gevonden in uw bestand. Er zijn geen testgevallen geïmporteerd.",
+          "validationEntry": "Rij {row, number} · {field}: {message}",
+          "validationEntryNamed": "Rij {row, number} \"{name}\" · {field}: {message}",
+          "validationMore": "{count, plural, one {# extra probleem wordt} other {# extra problemen worden}} niet weergegeven.",
+          "validationMultiRowNote": "Rijnummers verwijzen naar de gegroepeerde testgevallen die in de voorvertoning worden weergegeven, niet naar de ruwe CSV-regels.",
+          "partialTitle": "Sommige testgevallen zijn niet geïmporteerd",
+          "partialSummary": "{failed, plural, one {# rij kon} other {# rijen konden}} niet worden geïmporteerd. {imported, plural, one {# testgeval is} other {# testgevallen zijn}} succesvol geïmporteerd."
         },
         "page1": {
           "fileType": {
@@ -2934,7 +2974,8 @@
           "title": "CSV-kolommen toewijzen aan velden",
           "description": "U kunt elke CSV-kolom toewijzen aan een veld in de sjabloon, of ervoor kiezen deze te negeren.",
           "ignoreColumn": "Kolom negeren",
-          "requiredFieldsWarning": "{count, plural, one {# verplicht veld is} other {# verplichte velden zijn}} niet toegewezen"
+          "requiredFieldsWarning": "{count, plural, one {# verplicht veld is} other {# verplichte velden zijn}} niet toegewezen",
+          "caseIdHint": "Dit moet het numerieke Testgeval-ID zijn — overeenkomende testgevallen worden overschreven."
         },
         "page3": {
           "title": "Samenvatting van veldtoewijzing",
@@ -3445,6 +3486,52 @@
       "linkedIssuesDroppedTitle": "Sommige gerelateerde onderwerpen zijn niet opgenomen.",
       "linkedIssuesDropped": "{count, plural, =1 {# gekoppeld probleem is verwijderd} other {# gekoppelde problemen zijn verwijderd}} vanwege tokenbudget: {keys}.",
       "linkedIssuesPreviewHeading": "Gerelateerde onderwerpen die zullen worden opgenomen"
+    },
+    "filterBar": {
+      "addFilter": "Filter toevoegen",
+      "removeFilter": "Filter verwijderen: {name}",
+      "editFilter": "Filter bewerken: {name}",
+      "activeCount": "{count, plural, =1 {# actief filter} other {# actieve filters}}",
+      "assignedToMe": "Toegewezen aan mij",
+      "noFilters": "Geen actieve filters",
+      "noMatchingCases": "Geen testgevallen komen overeen met uw filters",
+      "searchTruncated": "Filteren binnen de top {count, number} overeenkomsten",
+      "sortedByRelevance": "Gesorteerd op relevantie",
+      "countsUpdating": "Aantallen bijwerken...",
+      "filterLimitReached": "Filterlimiet bereikt ({count} maximum)",
+      "valueLimitReached": "Waardelimiet bereikt ({count} maximum per filter)",
+      "filtersTruncated": "Sommige filters zijn verwijderd ({count} maximum)",
+      "valuesTruncated": "{count, plural, =1 {# waarde} other {# waarden}} per filter maximaal — extra waarden zijn verwijderd"
+    },
+    "savedViews": {
+      "title": "Opgeslagen weergaven",
+      "save": "Weergave opslaan",
+      "saveTitle": "Weergave opslaan",
+      "saveDescription": "Geef deze weergave een naam zodat u later naar deze filters kunt terugkeren.",
+      "namePlaceholder": "bijv. Smoketests, niet geautomatiseerd",
+      "descriptionPlaceholder": "Waarvoor deze weergave dient",
+      "nameRequired": "Voer een naam in voor deze weergave.",
+      "loginRequired": "U moet aangemeld zijn om weergaven op te slaan.",
+      "nothingToSave": "Voeg eerst een filter of groepering toe.",
+      "saved": "Weergave opgeslagen",
+      "savedDescription": "“{name}” staat nu bij uw opgeslagen weergaven.",
+      "saveFailed": "Kan de weergave niet opslaan. Probeer het opnieuw.",
+      "empty": "Nog geen opgeslagen weergaven",
+      "emptyHint": "Sla de huidige filters op om er later naar terug te keren.",
+      "apply": "Weergave toepassen: {name}",
+      "applied": "“{name}” toegepast",
+      "droppedFilters": "{count, plural, =1 {# filter bestaat niet meer en is overgeslagen} other {# filters bestaan niet meer en zijn overgeslagen}}",
+      "droppedGrouping": "De groepering ervan is niet meer beschikbaar, dus wordt de standaardinstelling gebruikt.",
+      "unreadable": "{count, plural, =1 {# opgeslagen weergave kon niet worden gelezen} other {# opgeslagen weergaven konden niet worden gelezen}}",
+      "rename": "Naam wijzigen",
+      "renameTitle": "Naam van opgeslagen weergave wijzigen",
+      "renamed": "Opgeslagen weergave bijgewerkt",
+      "renameFailed": "Kan de weergave niet bijwerken. Probeer het opnieuw.",
+      "delete": "Verwijderen",
+      "deleteTitle": "Opgeslagen weergave verwijderen?",
+      "deleteConfirm": "“{name}” wordt verwijderd uit uw opgeslagen weergaven. Dit kan niet ongedaan worden gemaakt.",
+      "deleted": "Opgeslagen weergave verwijderd",
+      "deleteFailed": "Kan de weergave niet verwijderen. Probeer het opnieuw."
     }
   },
   "tags": {
@@ -8179,6 +8266,8 @@
       "includeDeleted": "Verwijderde items opnemen",
       "filterActive": "Actief filter:",
       "applyFilter": "Filter toepassen",
+      "invalidDate": "Ongeldige datum",
+      "stepsCount": "{count, plural, one {# stap} other {# stappen}}",
       "validation": {
         "firstValueMustBeLessThanSecond": "De eerste waarde moet kleiner zijn dan de tweede waarde.",
         "firstDateMustBeBeforeSecond": "De eerste date moet vóór de tweede date plaatsvinden."

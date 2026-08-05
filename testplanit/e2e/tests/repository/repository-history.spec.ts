@@ -313,7 +313,79 @@ test.describe("Repository — navigation & history", () => {
     await test.step("Verify the view param updated with no new push", async () => {
       expect(new URL(page.url()).searchParams.get("view")).toBe("states");
 
+      // The axis is a pure grouping control: it must not seed a filter into
+      // the URL (it used to auto-select the first option of the new axis).
+      expect(new URL(page.url()).searchParams.getAll("f")).toEqual([]);
+
       // History: zero new pushes (handleViewChange already uses replace).
+      expectPushCount(await getHistoryLog(page), 0);
+    });
+  });
+
+  test("applying a filter chip updates URL; no new push", async ({
+    api,
+    page,
+  }) => {
+    const projectId = await api.createProject(
+      `Hist Filter ${Date.now()}-${Math.random().toString(36).slice(2, 6)}`
+    );
+
+    await test.step("Seed a project with one folder and one case", async () => {
+      const folderId = await api.createFolder(projectId, "F1");
+      await api.createTestCase(projectId, folderId, "Case 1");
+    });
+
+    await test.step("Open the repository in the States view and reset the log", async () => {
+      await installHistoryTracker(page);
+      await page.goto(`/en-US/projects/repository/${projectId}?view=states`);
+      await page.waitForLoadState("networkidle");
+      await expect(
+        page.getByTestId("repository-left-panel").getByText("All States")
+      ).toBeVisible({ timeout: 15000 });
+      await page.waitForTimeout(300);
+
+      await resetHistoryLog(page);
+    });
+
+    await test.step("Click the first state row to add a filter chip", async () => {
+      // Row 0 is "All States"; row 1 is the only state the seeded case uses.
+      const stateRow = page
+        .getByTestId("repository-left-panel")
+        .locator('[role="button"]')
+        .nth(1);
+      await expect(stateRow).toBeVisible({ timeout: 10000 });
+      await stateRow.click();
+
+      await expect(page.getByTestId("filter-chip-states-in")).toBeVisible({
+        timeout: 10000,
+      });
+      await page.waitForLoadState("networkidle");
+      await page.waitForTimeout(300);
+    });
+
+    await test.step("Verify the f param is written with no new push", async () => {
+      // Filter state is URL-serialized...
+      await expect
+        .poll(() => new URL(page.url()).searchParams.getAll("f").join("|"), {
+          timeout: 10000,
+        })
+        .toMatch(/states:in:\d+/);
+      // ...and the grouping axis is untouched by it.
+      expect(new URL(page.url()).searchParams.get("view")).toBe("states");
+
+      // History: zero — useRepositoryFilters always replaces, never pushes,
+      // so filter churn cannot pollute the back stack.
+      expectPushCount(await getHistoryLog(page), 0);
+    });
+
+    await test.step("Remove the chip and verify still no new push", async () => {
+      await page.getByTestId("filter-chip-states-in-remove").click();
+
+      await expect
+        .poll(() => new URL(page.url()).searchParams.getAll("f"), {
+          timeout: 10000,
+        })
+        .toEqual([]);
       expectPushCount(await getHistoryLog(page), 0);
     });
   });

@@ -56,6 +56,10 @@ import {
   inspectMultiRowAggregation,
   type AggregatedStep,
 } from "~/lib/utils/aggregateMultiRowSteps";
+import {
+  autoMapImportColumns,
+  type MappableField,
+} from "~/lib/utils/autoMapImportColumns";
 import { parseStepsCell } from "~/lib/utils/parseExportedSteps";
 import {
   convertMarkdownCasesToImportData,
@@ -90,9 +94,21 @@ interface FieldMapping {
   templateField: string | null;
 }
 
+// Row-level failures reported by /api/repository/import.
+interface ImportRowError {
+  row: number;
+  field: string;
+  error: string;
+  caseName?: string;
+}
+
 interface ParsedCase {
   [key: string]: any;
 }
+
+// How many row errors the failure panel lists before collapsing the rest into
+// a "N more problems" line.
+const MAX_LISTED_IMPORT_ERRORS = 25;
 
 // Zod validation schema for page 1
 const createPage1Schema = (t: any, _tGlobal: any) =>
@@ -190,6 +206,11 @@ export function ImportCasesWizard({
   // Validation errors state
   const [validationErrors, setValidationErrors] =
     useState<Page1ValidationErrors>({});
+
+  // Row-level failures returned by the import API, kept on screen so the user
+  // can read every one of them and fix the mapping — a toast alone can't say
+  // where the problem is.
+  const [importErrors, setImportErrors] = useState<ImportRowError[]>([]);
 
   // What the preview, pagination, and submit counts should reflect. In
   // multi-row mode this is the aggregated case rows (one per case), not the
@@ -387,10 +408,10 @@ export function ImportCasesWizard({
   const selectedTemplate = templates?.find(
     (t) => t.id.toString() === selectedTemplateId
   );
-  const templateFields = useMemo(() => {
+  const templateFields = useMemo<MappableField[]>(() => {
     if (!selectedTemplate) return [];
 
-    const fields = selectedTemplate.caseFields.map((cf) => ({
+    const fields: MappableField[] = selectedTemplate.caseFields.map((cf) => ({
       id: cf.caseField.systemName,
       displayName: cf.caseField.displayName,
       isRequired: cf.caseField.isRequired,
@@ -408,7 +429,7 @@ export function ImportCasesWizard({
     }
 
     // Add system fields if they don't already exist in the template
-    const systemFields = [
+    const systemFields: MappableField[] = [
       {
         id: "estimate",
         displayName: tCommon("fields.estimate"),
@@ -500,9 +521,10 @@ export function ImportCasesWizard({
       },
       {
         id: "id",
-        displayName: tCommon("fields.id"),
+        displayName: t("importWizard.fields.caseId"),
         isRequired: false,
         type: "ID",
+        description: t("importWizard.fields.caseIdDescription"),
       },
     ];
 
@@ -524,125 +546,11 @@ export function ImportCasesWizard({
     }
 
     return fields;
-  }, [selectedTemplate, importLocation, tGlobal, tCommon]);
-
-  // Common field name mappings used by both CSV and Markdown parsers
-  const commonMappings: Record<string, string> = {
-    "case name": "name",
-    "test case name": "name",
-    title: "name",
-    tag: "tags",
-    step: "steps",
-    "test steps": "steps",
-    expected: "expectedResult",
-    "expected result": "expectedResult",
-    "expected results": "expectedResult",
-    "expected outcome": "expectedResult",
-    estimated: "estimate",
-    estimation: "estimate",
-    "is automated": "automated",
-    automation: "automated",
-    "folder path": "folder",
-    path: "folder",
-    attachment: "attachments",
-    issue: "issues",
-    "linked case": "linkedCases",
-    "linked test case": "linkedCases",
-    "workflow state": "workflowState",
-    state: "workflowState",
-    status: "workflowState",
-    "created at": "createdAt",
-    "created date": "createdAt",
-    "creation date": "createdAt",
-    "date created": "createdAt",
-    "created by": "createdBy",
-    creator: "createdBy",
-    author: "createdBy",
-    "created user": "createdBy",
-    version: "version",
-    "version number": "version",
-    "case version": "version",
-    revision: "version",
-    "test runs": "testRuns",
-    "test run": "testRuns",
-    runs: "testRuns",
-    executions: "testRuns",
-    id: "id",
-    "test case id": "id",
-    "case id": "id",
-    identifier: "id",
-    description: "description",
-    preconditions: "preconditions",
-    prerequisites: "preconditions",
-    "pre-conditions": "preconditions",
-  };
+  }, [selectedTemplate, importLocation, t, tGlobal, tCommon]);
 
   // Create field mappings from column headers using auto-matching
-  const createFieldMappings = (columnHeaders: string[]): FieldMapping[] => {
-    const usedFields = new Set<string>();
-    return columnHeaders.map((col: string) => {
-      let matchedField: string | null = null;
-      const normalizedColName = col.toLowerCase().trim();
-
-      // Skip template column
-      if (
-        normalizedColName === "template" ||
-        normalizedColName === "templatename" ||
-        normalizedColName === "template name"
-      ) {
-        return { csvColumn: col, templateField: null };
-      }
-
-      // Try exact match first
-      const exactMatch = templateFields.find(
-        (field) =>
-          !usedFields.has(field.id) &&
-          (field.displayName.toLowerCase() === normalizedColName ||
-            field.id.toLowerCase() === normalizedColName)
-      );
-
-      if (exactMatch) {
-        matchedField = exactMatch.id;
-        usedFields.add(exactMatch.id);
-      } else {
-        // Try common variations
-        for (const [commonName, fieldId] of Object.entries(commonMappings)) {
-          if (
-            normalizedColName === commonName ||
-            normalizedColName.includes(commonName)
-          ) {
-            const field = templateFields.find(
-              (f) => f.id === fieldId && !usedFields.has(f.id)
-            );
-            if (field) {
-              matchedField = fieldId;
-              usedFields.add(fieldId);
-              break;
-            }
-          }
-        }
-
-        // Partial matching fallback
-        if (!matchedField) {
-          const partialMatch = templateFields.find(
-            (field) =>
-              !usedFields.has(field.id) &&
-              (normalizedColName.includes(field.displayName.toLowerCase()) ||
-                normalizedColName.includes(field.id.toLowerCase()) ||
-                field.displayName.toLowerCase().includes(normalizedColName) ||
-                field.id.toLowerCase().includes(normalizedColName))
-          );
-
-          if (partialMatch) {
-            matchedField = partialMatch.id;
-            usedFields.add(partialMatch.id);
-          }
-        }
-      }
-
-      return { csvColumn: col, templateField: matchedField };
-    });
-  };
+  const createFieldMappings = (columnHeaders: string[]): FieldMapping[] =>
+    autoMapImportColumns(columnHeaders, templateFields);
 
   // Parse CSV file - only called when advancing from page 1 to page 2
   const parseCSVFile = () => {
@@ -816,6 +724,9 @@ export function ImportCasesWizard({
     setFieldMappings((prev) =>
       prev.map((m) => (m.csvColumn === csvColumn ? { ...m, templateField } : m))
     );
+    // The listed failures describe the previous mapping; drop them so the
+    // panel never contradicts what the user is now about to import.
+    setImportErrors([]);
   };
 
   const getMappedFields = () => {
@@ -882,9 +793,26 @@ export function ImportCasesWizard({
     return true;
   };
 
+  // "Row 4 "Login works" · Priority: Invalid option "Highest"." — the server
+  // sends English field/error text, the frame around it is localized.
+  const formatImportError = (rowError: ImportRowError) =>
+    rowError.caseName
+      ? t("importWizard.errors.validationEntryNamed", {
+          row: rowError.row,
+          name: rowError.caseName,
+          field: rowError.field,
+          message: rowError.error,
+        })
+      : t("importWizard.errors.validationEntry", {
+          row: rowError.row,
+          field: rowError.field,
+          message: rowError.error,
+        });
+
   const handleImport = async () => {
     setIsImporting(true);
     setImportProgress(0);
+    setImportErrors([]);
 
     try {
       const response = await fetch(`/api/repository/import`, {
@@ -936,17 +864,13 @@ export function ImportCasesWizard({
               if (data.error) {
                 // Handle error
                 if (data.errors && data.errors.length > 0) {
-                  toast.error(
-                    tGlobal("sharedSteps.importWizard.errors.validationFailed"),
-                    {
-                      description: tGlobal(
-                        "sharedSteps.importWizard.errors.validationDescription",
-                        {
-                          count: data.errors.length,
-                        }
-                      ),
-                    }
-                  );
+                  const rowErrors = data.errors as ImportRowError[];
+                  setImportErrors(rowErrors);
+                  toast.error(t("importWizard.errors.validationTitle"), {
+                    description: `${t("importWizard.errors.validationSummary", {
+                      count: rowErrors.length,
+                    })} ${formatImportError(rowErrors[0])}`,
+                  });
                 } else {
                   throw new Error(
                     data.error ||
@@ -957,6 +881,26 @@ export function ImportCasesWizard({
               }
 
               if (data.complete) {
+                const rowErrors = (data.errors ?? []) as ImportRowError[];
+
+                // Cases that failed while being written are reported on the
+                // completion event. Keep the wizard open in that case so the
+                // failure panel can say which rows didn't make it.
+                if (rowErrors.length > 0) {
+                  setImportErrors(rowErrors);
+                  toast.error(t("importWizard.errors.partialTitle"), {
+                    description: `${t("importWizard.errors.partialSummary", {
+                      failed: rowErrors.length,
+                      imported: data.importedCount,
+                    })} ${formatImportError(rowErrors[0])}`,
+                  });
+                  onImportComplete?.();
+                  window.dispatchEvent(
+                    new CustomEvent("repositoryCasesChanged")
+                  );
+                  return;
+                }
+
                 // Import completed
                 toast.success(t("importWizard.title"), {
                   description: t("importWizard.success.description", {
@@ -1289,35 +1233,51 @@ export function ImportCasesWizard({
               className="grid grid-cols-2 gap-4 items-center"
             >
               <div className="font-medium">{mapping.csvColumn}</div>
-              <Select
-                value={mapping.templateField || "ignore"}
-                onValueChange={(value) =>
-                  handleFieldMappingChange(
-                    mapping.csvColumn,
-                    value === "ignore" ? null : value
-                  )
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ignore">
-                    {t("importWizard.page2.ignoreColumn")}
-                  </SelectItem>
-                  <Separator />
-                  {getAvailableFields(mapping).map((field) => (
-                    <SelectItem key={field.id} value={field.id}>
-                      {field.displayName}
-                      {field.isRequired && (
-                        <Badge variant="secondary" className="ms-2">
-                          {tCommon("fields.required")}
-                        </Badge>
-                      )}
+              <div className="space-y-1">
+                <Select
+                  value={mapping.templateField || "ignore"}
+                  onValueChange={(value) =>
+                    handleFieldMappingChange(
+                      mapping.csvColumn,
+                      value === "ignore" ? null : value
+                    )
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ignore">
+                      {t("importWizard.page2.ignoreColumn")}
                     </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                    <Separator />
+                    {getAvailableFields(mapping).map((field) => (
+                      <SelectItem key={field.id} value={field.id}>
+                        <span className="flex flex-col items-start">
+                          <span className="flex items-center">
+                            {field.displayName}
+                            {field.isRequired && (
+                              <Badge variant="secondary" className="ms-2">
+                                {tCommon("fields.required")}
+                              </Badge>
+                            )}
+                          </span>
+                          {field.description && (
+                            <span className="text-xs text-muted-foreground">
+                              {field.description}
+                            </span>
+                          )}
+                        </span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {mapping.templateField === "id" && (
+                  <p className="ps-2 text-xs text-muted-foreground">
+                    {t("importWizard.page2.caseIdHint")}
+                  </p>
+                )}
+              </div>
             </div>
           ))}
         </div>
@@ -1731,6 +1691,45 @@ export function ImportCasesWizard({
     );
   };
 
+  const renderImportErrors = () => {
+    if (importErrors.length === 0) return null;
+
+    const listed = importErrors.slice(0, MAX_LISTED_IMPORT_ERRORS);
+    const hidden = importErrors.length - listed.length;
+
+    return (
+      <Alert variant="destructive" className="mb-4">
+        <AlertCircle className="h-4 w-4" />
+        <AlertDescription>
+          <div className="space-y-2">
+            <p className="font-medium">
+              {t("importWizard.errors.validationSummary", {
+                count: importErrors.length,
+              })}
+            </p>
+            {fileType === "csv" && rowMode === "multi" && (
+              <p className="text-xs">
+                {t("importWizard.errors.validationMultiRowNote")}
+              </p>
+            )}
+            <ul className="list-disc space-y-1 ps-5 text-sm">
+              {listed.map((rowError, index) => (
+                <li key={`${rowError.row}-${rowError.field}-${index}`}>
+                  {formatImportError(rowError)}
+                </li>
+              ))}
+            </ul>
+            {hidden > 0 && (
+              <p className="text-xs">
+                {t("importWizard.errors.validationMore", { count: hidden })}
+              </p>
+            )}
+          </div>
+        </AlertDescription>
+      </Alert>
+    );
+  };
+
   const _canProceedToNextPage = () => {
     // Always return true to keep the button enabled
     return true;
@@ -1785,6 +1784,7 @@ export function ImportCasesWizard({
               })}
             />
           )}
+          {renderImportErrors()}
           {currentPage === 1 && renderPage1()}
           {currentPage === 2 && renderPage2()}
           {currentPage === 3 && renderPage3()}

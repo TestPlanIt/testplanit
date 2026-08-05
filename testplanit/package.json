@@ -223,6 +223,7 @@
     "docx-preview": "^0.4.0",
     "dompurify": "^3.4.12",
     "embla-carousel-react": "^8.6.0",
+    "fflate": "^0.8.3",
     "filesize": "^11.0.22",
     "formidable": "^3.5.4",
     "framer-motion": "^12.42.2",

@@ -1,3 +1,4 @@
+import type { Locator, Page } from "@playwright/test";
 import { expect, test } from "../../../fixtures";
 import { RepositoryPage } from "../../../page-objects/repository/repository.page";
 
@@ -15,10 +16,45 @@ import { RepositoryPage } from "../../../page-objects/repository/repository.page
  * - Checkbox fields: View by "Checked" or "Unchecked"
  *
  * These tests verify:
- * 1. Dynamic view options appear in the view selector
- * 2. Filtering by custom field values works correctly
- * 3. Custom field filter UI in advanced search works
+ * 1. Dynamic view options appear in the view selector (grouping axes)
+ * 2. Filtering by custom field values produces a FilterBar chip and a `?f=`
+ *    URL param — the axis itself never seeds or clears filters
+ * 3. The FilterBar's Add-filter / chip-editor path works for any dimension
  */
+
+/** A clickable option row in the left panel (rows carry no test id). */
+function sidebarRow(page: Page, name: string | RegExp): Locator {
+  return page
+    .getByTestId("repository-left-panel")
+    .locator('[role="button"]')
+    .filter({ hasText: name })
+    .first();
+}
+
+/** The `f` params currently serialized into the URL, form-decoded. */
+function filterParams(page: Page): string[] {
+  return new URL(page.url()).searchParams.getAll("f");
+}
+
+async function expectFilterParam(page: Page, pattern: RegExp): Promise<void> {
+  await expect
+    .poll(() => filterParams(page).join("|"), { timeout: 10000 })
+    .toMatch(pattern);
+}
+
+async function expectNoFilterParams(page: Page): Promise<void> {
+  await expect.poll(() => filterParams(page)).toEqual([]);
+}
+
+/** Open the FilterBar's Add-filter picker and choose a dimension. */
+async function addFilterDimension(page: Page, dimension: string) {
+  const addButton = page.getByTestId("filter-bar-add");
+  await expect(addButton).toBeVisible({ timeout: 10000 });
+  await addButton.click();
+  const option = page.getByTestId(`filter-dimension-option-${dimension}`);
+  await expect(option).toBeVisible({ timeout: 5000 });
+  await option.click();
+}
 
 test.describe("Custom Fields - Repository View and Filter", () => {
   let repositoryPage: RepositoryPage;
@@ -238,13 +274,17 @@ test.describe("Custom Fields - Repository View and Filter", () => {
 
   test("Tag view shows tag filtering options", async ({ api, page }) => {
     const projectId = await getTestProjectId(api);
+    const caseName = `E2E Tag Axis Case ${Date.now()}`;
 
     // Select Tag view
     const tagsOption = page
       .locator('[role="option"]')
       .filter({ hasText: /^Tag$/i });
 
-    let hasTagsView: boolean | undefined;
+    await test.step("Seed an untagged test case", async () => {
+      const rootFolderId = await api.getRootFolderId(projectId);
+      await api.createTestCase(projectId, rootFolderId, caseName);
+    });
 
     await test.step("Open repository and the view selector", async () => {
       await repositoryPage.goto(projectId);
@@ -257,21 +297,23 @@ test.describe("Custom Fields - Repository View and Filter", () => {
       await viewSelector.click();
     });
 
-    await test.step("Check whether the Tag view option is available", async () => {
-      hasTagsView = await tagsOption.isVisible();
+    await test.step("Select the Tag view and verify filter options appear", async () => {
+      // The Tag axis is always offered — grouping is independent of data.
+      await expect(tagsOption).toBeVisible({ timeout: 5000 });
+      await tagsOption.click();
+      await page.waitForLoadState("networkidle");
+
+      // Tag view pins the Any Tag / No Tags rows above the tag list
+      await expect(sidebarRow(page, "Any Tag")).toBeVisible({ timeout: 10000 });
+      await expect(sidebarRow(page, "No Tags")).toBeVisible({ timeout: 5000 });
     });
 
-    await test.step("Select the Tag view and verify filter options appear", async () => {
-      if (hasTagsView) {
-        await tagsOption.click();
-        await page.waitForLoadState("networkidle");
-
-        // Tag filter options should appear
-        // Tag view shows tag options
-        await expect(page.locator('[role="button"]').first()).toBeVisible({
-          timeout: 10000,
-        });
-      }
+    await test.step("Verify selecting the axis seeded no tag filter", async () => {
+      await expect(page.getByTestId("filter-chip-tags-any")).not.toBeVisible();
+      await expectNoFilterParams(page);
+      await expect(page.locator(`text="${caseName}"`).first()).toBeVisible({
+        timeout: 10000,
+      });
     });
   });
 
@@ -349,100 +391,85 @@ test.describe("Custom Fields - Repository View and Filter", () => {
     });
   });
 
-  test("Cmd/Ctrl+Click allows multi-select on filter options", async ({
+  test("Chip editor multi-selects values within one dimension", async ({
     api,
     page,
   }) => {
     const projectId = await getTestProjectId(api);
+    const uniqueId = Date.now();
+    const case1Name = `E2E Multi-Select State1 ${uniqueId}`;
+    const case2Name = `E2E Multi-Select State2 ${uniqueId}`;
+    const case3Name = `E2E Multi-Select State3 ${uniqueId}`;
+    let stateIds: number[] = [];
 
-    // Get the state filter buttons (excluding "All States")
-    const stateButtons = page.locator('[role="button"]');
-
-    const stateOptionsToClick: string[] = [];
-
-    await test.step("Seed test cases in two different states", async () => {
-      // Create test cases with different states to ensure multiple state options are available
+    await test.step("Seed test cases in three different states", async () => {
+      // Cmd/Ctrl+Click multi-select is gone; values are accumulated in a
+      // single predicate, either by clicking sidebar rows or — as here — from
+      // the chip editor's value list.
       const rootFolderId = await api.getRootFolderId(projectId);
-      const stateIds = await api.getStateIds(projectId, 2);
+      stateIds = await api.getStateIds(projectId, 3);
 
-      // Create test cases in different states
       await api.createTestCaseWithState(
         projectId,
         rootFolderId,
-        `E2E Multi-Select State1 ${Date.now()}`,
+        case1Name,
         stateIds[0]
       );
       await api.createTestCaseWithState(
         projectId,
         rootFolderId,
-        `E2E Multi-Select State2 ${Date.now()}`,
+        case2Name,
         stateIds[1]
       );
-    });
-
-    await test.step("Open repository and switch to the State view", async () => {
-      await repositoryPage.goto(projectId);
-
-      // Start in State view (scoped to repository-left-panel-header to avoid project selector)
-      const viewSelector = page.locator(
-        '[data-testid="view-selector-trigger"]'
+      await api.createTestCaseWithState(
+        projectId,
+        rootFolderId,
+        case3Name,
+        stateIds[2]
       );
-      await expect(viewSelector).toBeVisible({ timeout: 10000 });
-      await viewSelector.click();
-
-      const statesOption = page
-        .locator('[role="option"]')
-        .filter({ hasText: /^State$/i });
-      await expect(statesOption).toBeVisible({ timeout: 5000 });
-      await statesOption.click();
-
-      await page.waitForLoadState("networkidle");
     });
 
-    await test.step("Collect two state filter options", async () => {
-      const buttonCount = await stateButtons.count();
-
-      // Find at least 2 state options to multi-select
-      for (let i = 0; i < buttonCount; i++) {
-        const button = stateButtons.nth(i);
-        const text = await button.textContent();
-        if (
-          text &&
-          !text.includes("All States") &&
-          !text.includes("Mixed") &&
-          stateOptionsToClick.length < 2
-        ) {
-          stateOptionsToClick.push(text);
-        }
-      }
+    await test.step("Open the repository", async () => {
+      await repositoryPage.goto(projectId);
+      await expect(page.locator(`text="${case1Name}"`).first()).toBeVisible({
+        timeout: 15000,
+      });
     });
 
-    await test.step("Multi-select two state filters via Cmd/Ctrl+Click", async () => {
-      if (stateOptionsToClick.length >= 2) {
-        // Click first option normally
-        const firstOption = stateButtons.filter({
-          hasText: stateOptionsToClick[0],
-        });
-        await firstOption.click();
-        await page.waitForLoadState("networkidle");
+    await test.step("Add a State filter and pick the first value", async () => {
+      await addFilterDimension(page, "states");
 
-        // Verify first filter applied - check URL or filtered results
-        await page.waitForTimeout(500);
+      // The seeded `states:in` predicate has no values yet, so the chip opens
+      // as a draft editor until a value is chosen.
+      await expect(page.getByTestId("filter-chip-editor")).toBeVisible({
+        timeout: 5000,
+      });
+      await page.getByTestId(`filter-value-option-${stateIds[0]}`).click();
 
-        // Cmd/Ctrl+Click second option to multi-select
-        const secondOption = stateButtons.filter({
-          hasText: stateOptionsToClick[1],
-        });
-        await secondOption.click({
-          modifiers: [process.platform === "darwin" ? "Meta" : "Control"],
-        });
-        await page.waitForLoadState("networkidle");
+      const chip = page.getByTestId("filter-chip-states-in");
+      await expect(chip).toBeVisible({ timeout: 10000 });
+      await expectFilterParam(page, new RegExp(`^states:in:${stateIds[0]}$`));
+    });
 
-        // Verify multi-select worked by checking that test cases from both states are visible
-        // The UI shows selected state via check icons, not bg-primary class
-        // Just verify the functionality works by waiting for content to load
-        await page.waitForTimeout(500);
-      }
+    await test.step("Pick a second value in the same chip", async () => {
+      await page.getByTestId(`filter-value-option-${stateIds[1]}`).click();
+      await expectFilterParam(
+        page,
+        new RegExp(`states:in:${stateIds[0]},${stateIds[1]}`)
+      );
+      await page.keyboard.press("Escape");
+    });
+
+    await test.step("Verify both selected states match and the third does not", async () => {
+      await expect(page.locator(`text="${case1Name}"`).first()).toBeVisible({
+        timeout: 10000,
+      });
+      await expect(page.locator(`text="${case2Name}"`).first()).toBeVisible({
+        timeout: 10000,
+      });
+      await expect(page.locator(`text="${case3Name}"`)).not.toBeVisible({
+        timeout: 5000,
+      });
     });
   });
 
@@ -492,13 +519,19 @@ test.describe("Custom Fields - Repository View and Filter", () => {
     page,
   }) => {
     const projectId = await getTestProjectId(api);
+    const uniqueId = Date.now();
+    const matchingName = `E2E NameFilterMatch ${uniqueId}`;
+    const otherName = `E2E Untouched ${uniqueId}`;
 
-    // Find the search input
-    const searchInput = page.locator(
-      '[data-testid="search-input"], input[placeholder*="Search"], input[type="search"]'
-    );
+    // The in-table name filter — the repository's own search. Pinned to its
+    // test id rather than a placeholder so it stays unambiguous.
+    const searchInput = page.getByTestId("search-input");
 
-    let isSearchVisible: boolean | undefined;
+    await test.step("Seed a matching and a non-matching test case", async () => {
+      const rootFolderId = await api.getRootFolderId(projectId);
+      await api.createTestCase(projectId, rootFolderId, matchingName);
+      await api.createTestCase(projectId, rootFolderId, otherName);
+    });
 
     await test.step("Open repository and locate the search input", async () => {
       await repositoryPage.goto(projectId);
@@ -506,16 +539,28 @@ test.describe("Custom Fields - Repository View and Filter", () => {
       // Wait for page to load
       await page.waitForLoadState("networkidle");
 
-      isSearchVisible = await searchInput.first().isVisible();
+      await expect(searchInput).toBeVisible({ timeout: 10000 });
+      await expect(page.locator(`text="${otherName}"`).first()).toBeVisible({
+        timeout: 10000,
+      });
     });
 
     await test.step("Type a search term to filter test cases", async () => {
-      if (isSearchVisible) {
-        // Type a search term
-        await searchInput.first().fill("test");
-        // Wait for debounce and API response
-        await page.waitForLoadState("networkidle");
-      }
+      await searchInput.fill("NameFilterMatch");
+      // Wait for debounce and API response
+      await page.waitForLoadState("networkidle");
+    });
+
+    await test.step("Verify only the matching case remains", async () => {
+      await expect(page.locator(`text="${matchingName}"`).first()).toBeVisible({
+        timeout: 10000,
+      });
+      await expect(page.locator(`text="${otherName}"`)).not.toBeVisible({
+        timeout: 5000,
+      });
+
+      // The in-table name filter never serializes to the URL.
+      await expectNoFilterParams(page);
     });
   });
 });
@@ -541,6 +586,7 @@ test.describe("Custom Fields - Advanced Search Filters", () => {
     page,
   }) => {
     const projectId = await getTestProjectId(api);
+    const priorityCaseName = `E2E Priority View Test ${Date.now()}`;
 
     // Define the view selector
     const viewSelector = page.locator('[data-testid="view-selector-trigger"]');
@@ -571,11 +617,7 @@ test.describe("Custom Fields - Advanced Search Filters", () => {
 
       // Create a test case to ensure there's data in the repository
       const rootFolderId = await api.getRootFolderId(projectId);
-      await api.createTestCase(
-        projectId,
-        rootFolderId,
-        `E2E Priority View Test ${Date.now()}`
-      );
+      await api.createTestCase(projectId, rootFolderId, priorityCaseName);
     });
 
     await test.step("Open repository and wait for view options to load", async () => {
@@ -625,9 +667,36 @@ test.describe("Custom Fields - Advanced Search Filters", () => {
       // Verify the view selector now shows Priority
       await expect(viewSelector).toContainText(/Priority/i);
 
-      // Priority filter options should appear (e.g., "All Priorities" or specific priority values)
-      const priorityFilters = page.locator('[role="button"]');
+      // Priority filter options should appear (the "Mixed" row plus the
+      // field's option rows)
+      const priorityFilters =
+        repositoryPage.leftPanel.locator('[role="button"]');
       await expect(priorityFilters.first()).toBeVisible({ timeout: 10000 });
+    });
+
+    await test.step("Verify the dynamic-field axis seeds no filter", async () => {
+      // `?view=dynamic_*` used to auto-select the field's first option; it now
+      // loads unfiltered.
+      await expect(
+        page.locator('[data-testid^="filter-chip-field_"]')
+      ).toHaveCount(0);
+      await expectNoFilterParams(page);
+      await expect(
+        page.locator(`text="${priorityCaseName}"`).first()
+      ).toBeVisible({ timeout: 10000 });
+    });
+
+    await test.step("Click a Priority option row and verify a field chip appears", async () => {
+      // Row 0 is the "Mixed" row; row 1 is the first real value.
+      const optionRow = repositoryPage.leftPanel
+        .locator('[role="button"]')
+        .nth(1);
+      await expect(optionRow).toBeVisible({ timeout: 10000 });
+      await optionRow.click();
+
+      const chip = page.locator('[data-testid^="filter-chip-field_"]').first();
+      await expect(chip).toBeVisible({ timeout: 10000 });
+      await expectFilterParam(page, /field_\d+:(in|any|none)/);
     });
   });
 
@@ -677,16 +746,18 @@ test.describe("Custom Fields - Advanced Search Filters", () => {
 
   test("Clear all filters button resets filters", async ({ api, page }) => {
     const projectId = await getTestProjectId(api);
-
-    let clickedFilter = false;
+    const caseName = `E2E Clear Filter Test ${Date.now()}`;
+    let stateIds: number[] = [];
 
     await test.step("Seed a test case and open repository", async () => {
       // Create a test case to ensure there's data to filter
       const rootFolderId = await api.getRootFolderId(projectId);
-      await api.createTestCase(
+      stateIds = await api.getStateIds(projectId, 1);
+      await api.createTestCaseWithState(
         projectId,
         rootFolderId,
-        `E2E Clear Filter Test ${Date.now()}`
+        caseName,
+        stateIds[0]
       );
 
       await repositoryPage.goto(projectId);
@@ -709,41 +780,50 @@ test.describe("Custom Fields - Advanced Search Filters", () => {
       await page.waitForLoadState("networkidle");
     });
 
-    await test.step("Apply a specific template filter", async () => {
-      // Find and click a specific template filter
-      const templateOptions = page.locator('[role="button"]');
-      const templateCount = await templateOptions.count();
+    await test.step("Apply a specific template filter from the sidebar", async () => {
+      // Row 0 is "All Templates"; row 1 is the first individual template.
+      const templateRow = repositoryPage.leftPanel
+        .locator('[role="button"]')
+        .nth(1);
+      await expect(templateRow).toBeVisible({ timeout: 10000 });
+      await templateRow.click();
 
-      for (let i = 0; i < templateCount; i++) {
-        const button = templateOptions.nth(i);
-        const text = await button.textContent();
-        if (
-          text &&
-          !text.includes("All Templates") &&
-          !text.includes("Mixed")
-        ) {
-          await button.click();
-          await page.waitForLoadState("networkidle");
-          clickedFilter = true;
-          break;
-        }
-      }
+      await expect(page.getByTestId("filter-chip-templates-in")).toBeVisible({
+        timeout: 10000,
+      });
+      await expectFilterParam(page, /templates:in:\d+/);
     });
 
-    await test.step("Reset the filter with All Templates", async () => {
-      if (clickedFilter) {
-        // Click "All Templates" to reset the filter
-        const allTemplates = page.locator(
-          '[role="button"]:has-text("All Templates")'
-        );
-        if (await allTemplates.first().isVisible()) {
-          await allTemplates.first().click();
-          await page.waitForLoadState("networkidle");
+    await test.step("Add a second filter from a different dimension", async () => {
+      // Clear-all only appears at two or more predicates, and filters from
+      // different dimensions AND together.
+      await addFilterDimension(page, "states");
+      await page.getByTestId(`filter-value-option-${stateIds[0]}`).click();
+      await expect(page.getByTestId("filter-chip-states-in")).toBeVisible({
+        timeout: 10000,
+      });
+      await page.keyboard.press("Escape");
 
-          // All Templates should now be selected
-          await expect(allTemplates.first()).toHaveClass(/bg-primary/);
-        }
-      }
+      await expect(page.locator(`text="${caseName}"`).first()).toBeVisible({
+        timeout: 10000,
+      });
+    });
+
+    await test.step("Clear every filter with the FilterBar's Clear all", async () => {
+      const clearAll = page.getByTestId("filter-bar-clear");
+      await expect(clearAll).toBeVisible({ timeout: 10000 });
+      await clearAll.click();
+
+      await expect(
+        page.getByTestId("filter-chip-templates-in")
+      ).not.toBeVisible({ timeout: 10000 });
+      await expect(page.getByTestId("filter-chip-states-in")).not.toBeVisible();
+      await expectNoFilterParams(page);
+
+      // The "All Templates" row is the unfiltered-dimension indicator.
+      await expect(sidebarRow(page, /All Templates/i)).toHaveClass(
+        /bg-primary/
+      );
     });
   });
 });
@@ -792,8 +872,10 @@ test.describe("Custom Fields - Filter Count Display", () => {
     });
 
     await test.step("Scan filter options for a numeric count", async () => {
-      // Look for filter options with counts (number in parentheses or plain number)
-      const filterButtons = page.locator('[role="button"]');
+      // Look for filter options with counts (number in parentheses or plain
+      // number). Scoped to the left panel so FilterBar controls can't satisfy
+      // the assertion instead of the option rows.
+      const filterButtons = repositoryPage.leftPanel.locator('[role="button"]');
       const buttonCount = await filterButtons.count();
 
       for (let i = 0; i < buttonCount; i++) {
@@ -837,12 +919,13 @@ test.describe("Custom Fields - Filter Count Display", () => {
 
     await test.step("Verify the All States option shows a total count", async () => {
       // The "All States" option should show a total count
-      const allStates = page.locator('[role="button"]:has-text("All States")');
-      await expect(allStates.first()).toBeVisible({ timeout: 10000 });
+      const allStates = sidebarRow(page, "All States");
+      await expect(allStates).toBeVisible({ timeout: 10000 });
 
-      const text = await allStates.first().textContent();
+      const text = await allStates.textContent();
       // Should contain "All States" and a number
       expect(text).toContain("All States");
+      expect(text).toMatch(/\d/);
     });
   });
 });

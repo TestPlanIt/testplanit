@@ -558,6 +558,8 @@
       "stepCount": "歩数",
       "enterText": "テキストを入力してください...",
       "enterUrl": "URLを入力してください",
+      "enterUrlPattern": "URLパターンを入力…",
+      "domainExample": "example.com",
       "issueIdExample": "第123号",
       "selectPriorityValuesOrEmpty": "優先度を選択してください（すべて選択する場合は空欄のままにしてください）。"
     },
@@ -1078,7 +1080,35 @@
     "invalidProject": "プロジェクト ID が無効です。",
     "visualization": "視覚化",
     "results": "結果",
-    "loading": "読み込み中..."
+    "loading": "読み込み中...",
+    "operators": {
+      "eq": "等しい",
+      "ne": "等しくない",
+      "lt": "未満",
+      "lte": "以下",
+      "gt": "より大きい",
+      "gte": "以上",
+      "between": "間",
+      "contains": "含む",
+      "notContains": "含まない",
+      "startsWith": "で始まる",
+      "endsWith": "で終わる",
+      "domain": "ドメインに含む",
+      "on": "指定日",
+      "before": "より前",
+      "after": "より後",
+      "last7": "過去7日間",
+      "last30": "過去30日間",
+      "last90": "過去90日間",
+      "thisYear": "今年",
+      "anyOf": "いずれか",
+      "allOf": "すべて",
+      "noneOf": "いずれでもない",
+      "is": "は",
+      "in": "いずれかに一致",
+      "hasValue": "値がある",
+      "isEmpty": "空である"
+    }
   },
   "api": {
     "testResults": {
@@ -2892,7 +2922,9 @@
         "title": "テストケースのインポート",
         "fields": {
           "workflowState": "ワークフロー状態",
-          "column": "列 {number}"
+          "column": "列 {number}",
+          "caseId": "ケースID",
+          "caseIdDescription": "TestPlanIt ケースID"
         },
         "success": {
           "description": "{count, plural, one {# テストケース} other {# テストケース}} 正常にインポートされました"
@@ -2902,7 +2934,15 @@
           "folderRequired": "このインポート場所にはフォルダの選択が必要です",
           "fileRequired": "CSVまたはMarkdownファイルが必要です",
           "markdownParseFailed": "Markdownファイルの解析に失敗しました",
-          "markdownLlmFailed": "AI解析は利用できません。標準パーサーを使用します。"
+          "markdownLlmFailed": "AI解析は利用できません。標準パーサーを使用します。",
+          "validationTitle": "インポートの検証に失敗しました",
+          "validationSummary": "{count, plural, other {#件の問題}}がファイル内に見つかりました。テストケースはインポートされませんでした。",
+          "validationEntry": "行 {row, number} · {field}: {message}",
+          "validationEntryNamed": "行 {row, number} \"{name}\" · {field}: {message}",
+          "validationMore": "他に{count, plural, other {#件の問題}}が表示されていません。",
+          "validationMultiRowNote": "行番号は、プレビューに表示されるグループ化されたテストケースを参照しており、CSVの生の行を参照するものではありません。",
+          "partialTitle": "一部のテストケースはインポートされませんでした",
+          "partialSummary": "{failed, plural, other {#行}}をインポートできませんでした。{imported, plural, other {#件のテストケース}}が正常にインポートされました。"
         },
         "page1": {
           "fileType": {
@@ -2934,7 +2974,8 @@
           "title": "CSV列をフィールドにマッピングする",
           "description": "各 CSV 列をテンプレートのフィールドにマップするか、無視することを選択します。",
           "ignoreColumn": "列を無視",
-          "requiredFieldsWarning": "{count, plural, one {# 必須フィールドは} other {# 必須フィールドは}} マッピングされていません"
+          "requiredFieldsWarning": "{count, plural, one {# 必須フィールドは} other {# 必須フィールドは}} マッピングされていません",
+          "caseIdHint": "これは数値のケースIDである必要があります。一致するケースは上書きされます。"
         },
         "page3": {
           "title": "フィールドマッピングの概要",
@@ -3445,6 +3486,52 @@
       "linkedIssuesDroppedTitle": "関連する問題の一部は含まれていません",
       "linkedIssuesDropped": "{count, plural, =1 {# リンクされた問題は削除されました} other {# リンクされた問題は削除されました}} トークン予算のため: {keys}。",
       "linkedIssuesPreviewHeading": "関連する問題には以下が含まれます"
+    },
+    "filterBar": {
+      "addFilter": "フィルターを追加",
+      "removeFilter": "フィルターを削除: {name}",
+      "editFilter": "フィルターを編集: {name}",
+      "activeCount": "{count, plural, =1 {# active filter} other {# active filters}}",
+      "assignedToMe": "自分に割り当て",
+      "noFilters": "アクティブなフィルターがありません",
+      "noMatchingCases": "フィルターに一致するテストケースがありません",
+      "searchTruncated": "上位{count, number}件の一致内でフィルタリング",
+      "sortedByRelevance": "関連度で並べ替え",
+      "countsUpdating": "件数を更新中…",
+      "filterLimitReached": "フィルターの上限に達しました（最大{count}件）",
+      "valueLimitReached": "値の上限に達しました（フィルターごとに最大{count}件）",
+      "filtersTruncated": "一部のフィルターが削除されました（最大{count}件）",
+      "valuesTruncated": "{count, plural, =1 {# value} other {# values}} per filter maximum — extra values were dropped"
+    },
+    "savedViews": {
+      "title": "保存済みビュー",
+      "save": "ビューを保存",
+      "saveTitle": "ビューを保存",
+      "saveDescription": "後でこれらのフィルターに戻れるように、このビューに名前を付けてください。",
+      "namePlaceholder": "例：スモークケース、未自動化",
+      "descriptionPlaceholder": "このビューの用途",
+      "nameRequired": "このビューの名前を入力してください。",
+      "loginRequired": "ビューを保存するにはサインインする必要があります。",
+      "nothingToSave": "先にフィルターまたはグループ化を追加してください。",
+      "saved": "ビューを保存しました",
+      "savedDescription": "「{name}」を保存済みビューに追加しました。",
+      "saveFailed": "ビューを保存できませんでした。もう一度お試しください。",
+      "empty": "保存済みビューはまだありません",
+      "emptyHint": "後で戻れるように、現在のフィルターを保存してください。",
+      "apply": "ビューを適用: {name}",
+      "applied": "「{name}」を適用しました",
+      "droppedFilters": "{count, plural, =1 {# filter no longer exists and was skipped} other {# filters no longer exist and were skipped}}",
+      "droppedGrouping": "そのグループ化は利用できなくなったため、デフォルトが使用されます。",
+      "unreadable": "{count, plural, =1 {# saved view} other {# saved views}} couldn't be read",
+      "rename": "名前を変更",
+      "renameTitle": "保存済みビューの名前を変更",
+      "renamed": "保存済みビューを更新しました",
+      "renameFailed": "ビューを更新できませんでした。もう一度お試しください。",
+      "delete": "削除",
+      "deleteTitle": "保存済みビューを削除しますか？",
+      "deleteConfirm": "「{name}」が保存済みビューから削除されます。この操作は元に戻せません。",
+      "deleted": "保存済みビューを削除しました",
+      "deleteFailed": "ビューを削除できませんでした。もう一度お試しください。"
     }
   },
   "tags": {
@@ -8179,6 +8266,8 @@
       "includeDeleted": "削除されたアイテムを含める",
       "filterActive": "フィルター有効:",
       "applyFilter": "フィルターを適用",
+      "invalidDate": "無効な日付",
+      "stepsCount": "{count, plural, other {#ステップ}}",
       "validation": {
         "firstValueMustBeLessThanSecond": "最初の値は2番目の値より小さくなければならない",
         "firstDateMustBeBeforeSecond": "最初のデートは2回目のデートより前に行わなければならない"

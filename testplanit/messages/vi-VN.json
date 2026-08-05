@@ -558,6 +558,8 @@
       "stepCount": "Số bước",
       "enterText": "Nhập văn bản...",
       "enterUrl": "Nhập URL",
+      "enterUrlPattern": "Nhập mẫu URL...",
+      "domainExample": "example.com",
       "issueIdExample": "SỐ 123",
       "selectPriorityValuesOrEmpty": "Chọn các giá trị ưu tiên (hoặc để trống nếu muốn chọn tất cả)"
     },
@@ -1078,7 +1080,35 @@
     "invalidProject": "Mã định danh dự án không hợp lệ.",
     "visualization": "Trực quan hóa",
     "results": "Kết quả",
-    "loading": "Đang tải..."
+    "loading": "Đang tải...",
+    "operators": {
+      "eq": "Bằng",
+      "ne": "Không bằng",
+      "lt": "Nhỏ hơn",
+      "lte": "Nhỏ hơn hoặc bằng",
+      "gt": "Lớn hơn",
+      "gte": "Lớn hơn hoặc bằng",
+      "between": "Trong khoảng",
+      "contains": "Chứa",
+      "notContains": "Không chứa",
+      "startsWith": "Bắt đầu với",
+      "endsWith": "Kết thúc bằng",
+      "domain": "Miền chứa",
+      "on": "Vào",
+      "before": "Trước",
+      "after": "Sau",
+      "last7": "7 ngày qua",
+      "last30": "30 ngày qua",
+      "last90": "90 ngày qua",
+      "thisYear": "Năm nay",
+      "anyOf": "Bất kỳ trong số",
+      "allOf": "Tất cả trong số",
+      "noneOf": "Không có trong số",
+      "is": "Là",
+      "in": "Là bất kỳ trong số",
+      "hasValue": "Có giá trị",
+      "isEmpty": "Trống"
+    }
   },
   "api": {
     "testResults": {
@@ -2892,7 +2922,9 @@
         "title": "Nhập các trường hợp kiểm thử",
         "fields": {
           "workflowState": "Trạng thái quy trình làm việc",
-          "column": "Cột {number}"
+          "column": "Cột {number}",
+          "caseId": "ID trường hợp",
+          "caseIdDescription": "ID Trường hợp TestPlanIt"
         },
         "success": {
           "description": "{count, plural, one {# trường hợp thử nghiệm} other {# các trường hợp thử nghiệm}} đã được nhập thành công"
@@ -2902,7 +2934,15 @@
           "folderRequired": "Bạn cần chọn thư mục cho vị trí nhập này.",
           "fileRequired": "Cần có tệp CSV hoặc Markdown.",
           "markdownParseFailed": "Không thể phân tích cú pháp tệp Markdown.",
-          "markdownLlmFailed": "Tính năng phân tích cú pháp bằng AI không khả dụng, đang sử dụng trình phân tích cú pháp tiêu chuẩn."
+          "markdownLlmFailed": "Tính năng phân tích cú pháp bằng AI không khả dụng, đang sử dụng trình phân tích cú pháp tiêu chuẩn.",
+          "validationTitle": "Xác thực nhập thất bại",
+          "validationSummary": "{count, plural, other {# vấn đề}} được tìm thấy trong tệp của bạn. Không có trường hợp kiểm thử nào được nhập.",
+          "validationEntry": "Dòng {row, number} · {field}: {message}",
+          "validationEntryNamed": "Dòng {row, number} \"{name}\" · {field}: {message}",
+          "validationMore": "{count, plural, other {# vấn đề khác}} không được hiển thị.",
+          "validationMultiRowNote": "Số dòng đề cập đến các trường hợp kiểm thử được nhóm hiển thị trong bản xem trước, không phải các dòng CSV thô.",
+          "partialTitle": "Một số trường hợp kiểm thử không được nhập",
+          "partialSummary": "{failed, plural, other {# dòng}} không thể nhập được. {imported, plural, other {# trường hợp kiểm thử}} đã được nhập thành công."
         },
         "page1": {
           "fileType": {
@@ -2934,7 +2974,8 @@
           "title": "Ánh xạ các cột CSV sang các trường",
           "description": "Bạn có thể ánh xạ từng cột trong tệp CSV đến một trường trong mẫu hoặc chọn bỏ qua bước này.",
           "ignoreColumn": "Bỏ qua cột",
-          "requiredFieldsWarning": "{count, plural, one {# Trường bắt buộc là} other {# Các trường bắt buộc là}} không được ánh xạ"
+          "requiredFieldsWarning": "{count, plural, one {# Trường bắt buộc là} other {# Các trường bắt buộc là}} không được ánh xạ",
+          "caseIdHint": "Đây phải là ID trường hợp dạng số — các trường hợp trùng khớp sẽ bị ghi đè."
         },
         "page3": {
           "title": "Tóm tắt lập bản đồ hiện trường",
@@ -3445,6 +3486,52 @@
       "linkedIssuesDroppedTitle": "Một số vấn đề liên quan không được bao gồm.",
       "linkedIssuesDropped": "{count, plural, =1 {# Vấn đề được liên kết đã bị hủy bỏ} other {# Vấn đề được liên kết đã bị hủy bỏ}} do hạn mức token: {keys}.",
       "linkedIssuesPreviewHeading": "Các vấn đề liên quan sẽ được bao gồm"
+    },
+    "filterBar": {
+      "addFilter": "Thêm bộ lọc",
+      "removeFilter": "Xóa bộ lọc: {name}",
+      "editFilter": "Chỉnh sửa bộ lọc: {name}",
+      "activeCount": "{count, plural, =1 {# active filter} other {# active filters}}",
+      "assignedToMe": "Được giao cho tôi",
+      "noFilters": "Không có bộ lọc đang hoạt động",
+      "noMatchingCases": "Không có trường hợp thử nghiệm nào phù hợp với bộ lọc của bạn",
+      "searchTruncated": "Lọc trong {count, number} kết quả phù hợp hàng đầu",
+      "sortedByRelevance": "Sắp xếp theo độ liên quan",
+      "countsUpdating": "Đang cập nhật số lượng...",
+      "filterLimitReached": "Đã đạt giới hạn bộ lọc (tối đa {count})",
+      "valueLimitReached": "Đã đạt giới hạn giá trị (tối đa {count} cho mỗi bộ lọc)",
+      "filtersTruncated": "Một số bộ lọc đã bị loại bỏ (tối đa {count})",
+      "valuesTruncated": "{count, plural, =1 {# value} other {# values}} per filter maximum — extra values were dropped"
+    },
+    "savedViews": {
+      "title": "Các chế độ xem đã lưu",
+      "save": "Lưu chế độ xem",
+      "saveTitle": "Lưu chế độ xem",
+      "saveDescription": "Đặt tên cho chế độ xem này để bạn có thể quay lại các bộ lọc này sau.",
+      "namePlaceholder": "ví dụ: Các trường hợp smoke, chưa tự động hóa",
+      "descriptionPlaceholder": "Mục đích của chế độ xem này",
+      "nameRequired": "Nhập tên cho chế độ xem này.",
+      "loginRequired": "Bạn phải đăng nhập để lưu chế độ xem.",
+      "nothingToSave": "Thêm bộ lọc hoặc nhóm trước.",
+      "saved": "Đã lưu chế độ xem",
+      "savedDescription": "“{name}” hiện đã có trong các chế độ xem đã lưu của bạn.",
+      "saveFailed": "Không thể lưu chế độ xem. Vui lòng thử lại.",
+      "empty": "Chưa có chế độ xem nào được lưu",
+      "emptyHint": "Lưu các bộ lọc hiện tại để quay lại sau.",
+      "apply": "Áp dụng chế độ xem: {name}",
+      "applied": "Đã áp dụng “{name}”",
+      "droppedFilters": "{count, plural, =1 {# filter no longer exists and was skipped} other {# filters no longer exist and were skipped}}",
+      "droppedGrouping": "Nhóm của nó không còn khả dụng, vì vậy nhóm mặc định được sử dụng.",
+      "unreadable": "{count, plural, =1 {# saved view} other {# saved views}} couldn't be read",
+      "rename": "Đổi tên",
+      "renameTitle": "Đổi tên chế độ xem đã lưu",
+      "renamed": "Đã cập nhật chế độ xem đã lưu",
+      "renameFailed": "Không thể cập nhật chế độ xem. Vui lòng thử lại.",
+      "delete": "Xóa",
+      "deleteTitle": "Xóa chế độ xem đã lưu?",
+      "deleteConfirm": "“{name}” sẽ bị xóa khỏi các chế độ xem đã lưu của bạn. Hành động này không thể hoàn tác.",
+      "deleted": "Đã xóa chế độ xem đã lưu",
+      "deleteFailed": "Không thể xóa chế độ xem. Vui lòng thử lại."
     }
   },
   "tags": {
@@ -8179,6 +8266,8 @@
       "includeDeleted": "Bao gồm các mục đã xóa",
       "filterActive": "Bộ lọc đang hoạt động:",
       "applyFilter": "Áp dụng bộ lọc",
+      "invalidDate": "Ngày không hợp lệ",
+      "stepsCount": "{count, plural, other {# bước}}",
       "validation": {
         "firstValueMustBeLessThanSecond": "Giá trị đầu tiên phải nhỏ hơn giá trị thứ hai.",
         "firstDateMustBeBeforeSecond": "Buổi hẹn hò đầu tiên phải diễn ra trước buổi hẹn hò thứ hai."

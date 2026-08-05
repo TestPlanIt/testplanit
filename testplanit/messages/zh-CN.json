@@ -558,6 +558,8 @@
       "stepCount": "步数",
       "enterText": "请输入文字...",
       "enterUrl": "输入网址",
+      "enterUrlPattern": "输入URL模式……",
+      "domainExample": "example.com",
       "issueIdExample": "第123期",
       "selectPriorityValuesOrEmpty": "选择优先级值（或留空表示全部不选）"
     },
@@ -1078,7 +1080,35 @@
     "invalidProject": "项目ID无效。",
     "visualization": "可视化",
     "results": "结果",
-    "loading": "加载中..."
+    "loading": "加载中...",
+    "operators": {
+      "eq": "等于",
+      "ne": "不等于",
+      "lt": "小于",
+      "lte": "小于或等于",
+      "gt": "大于",
+      "gte": "大于或等于",
+      "between": "之间",
+      "contains": "包含",
+      "notContains": "不含",
+      "startsWith": "开头为",
+      "endsWith": "结尾为",
+      "domain": "域名包含",
+      "on": "在",
+      "before": "之前",
+      "after": "之后",
+      "last7": "过去7天",
+      "last30": "过去30天",
+      "last90": "过去90天",
+      "thisYear": "今年",
+      "anyOf": "任一",
+      "allOf": "全部",
+      "noneOf": "均不",
+      "is": "是",
+      "in": "是任一",
+      "hasValue": "有值",
+      "isEmpty": "为空"
+    }
   },
   "api": {
     "testResults": {
@@ -2892,7 +2922,9 @@
         "title": "导入测试用例",
         "fields": {
           "workflowState": "工作流状态",
-          "column": "列 {number}"
+          "column": "列 {number}",
+          "caseId": "用例 ID",
+          "caseIdDescription": "TestPlanIt 用例 ID"
         },
         "success": {
           "description": "{count, plural, one {# 测试用例} other {# 测试用例}} 导入成功"
@@ -2902,7 +2934,15 @@
           "folderRequired": "此导入位置需要选择文件夹。",
           "fileRequired": "需要 CSV 或 Markdown 文件。",
           "markdownParseFailed": "解析 Markdown 文件失败",
-          "markdownLlmFailed": "AI解析不可用，使用标准解析器"
+          "markdownLlmFailed": "AI解析不可用，使用标准解析器",
+          "validationTitle": "导入验证失败",
+          "validationSummary": "{count, plural, other {在您的文件中发现 # 个问题}}。未导入任何测试用例。",
+          "validationEntry": "第 {row, number} 行 · {field}：{message}",
+          "validationEntryNamed": "第 {row, number} 行 \"{name}\" · {field}：{message}",
+          "validationMore": "{count, plural, other {还有 # 个问题未显示}}。",
+          "validationMultiRowNote": "行号指的是预览中显示的分组测试用例，而非原始 CSV 行。",
+          "partialTitle": "部分测试用例未导入",
+          "partialSummary": "{failed, plural, other {# 行}}无法导入。{imported, plural, other {# 个测试用例}}导入成功。"
         },
         "page1": {
           "fileType": {
@@ -2934,7 +2974,8 @@
           "title": "将 CSV 列映射到字段",
           "description": "将 CSV 文件中的每一列映射到模板中的一个字段，或者选择忽略它。",
           "ignoreColumn": "忽略列",
-          "requiredFieldsWarning": "{count, plural, one {# 必填字段为} other {# 必填字段为}} 未映射"
+          "requiredFieldsWarning": "{count, plural, one {# 必填字段为} other {# 必填字段为}} 未映射",
+          "caseIdHint": "此项必须为数字用例 ID — 匹配的用例将被覆盖。"
         },
         "page3": {
           "title": "田间测绘概要",
@@ -3445,6 +3486,52 @@
       "linkedIssuesDroppedTitle": "部分相关问题未包含在内。",
       "linkedIssuesDropped": "{count, plural, =1 {# 关联的问题已被删除} other {# 关联的问题已被删除}} 由于代币预算： {keys}。",
       "linkedIssuesPreviewHeading": "将会包含的相关问题"
+    },
+    "filterBar": {
+      "addFilter": "添加筛选器",
+      "removeFilter": "移除筛选器：{name}",
+      "editFilter": "编辑筛选器：{name}",
+      "activeCount": "{count, plural, =1 {# 个启用的筛选器} other {# 个启用的筛选器}}",
+      "assignedToMe": "分配给我",
+      "noFilters": "没有启用的筛选器",
+      "noMatchingCases": "没有符合筛选条件的测试用例",
+      "searchTruncated": "仅在前 {count, number} 个匹配结果中筛选",
+      "sortedByRelevance": "按相关性排序",
+      "countsUpdating": "正在更新计数……",
+      "filterLimitReached": "已达到筛选器数量上限（最多 {count} 个）",
+      "valueLimitReached": "已达到值数量上限（每个筛选器最多 {count} 个）",
+      "filtersTruncated": "部分筛选器已被丢弃（最多 {count} 个）",
+      "valuesTruncated": "每个筛选器最多 {count, plural, =1 {# 个值} other {# 个值}}——超出的值已被丢弃"
+    },
+    "savedViews": {
+      "title": "已保存的视图",
+      "save": "保存视图",
+      "saveTitle": "保存视图",
+      "saveDescription": "为此视图命名，以便日后返回这些筛选条件。",
+      "namePlaceholder": "例如：冒烟测试用例，未自动化",
+      "descriptionPlaceholder": "此视图的用途",
+      "nameRequired": "请输入此视图的名称。",
+      "loginRequired": "您必须登录后才能保存视图。",
+      "nothingToSave": "请先添加筛选器或分组。",
+      "saved": "视图已保存",
+      "savedDescription": "“{name}”现已加入您已保存的视图。",
+      "saveFailed": "无法保存视图，请重试。",
+      "empty": "暂无已保存的视图",
+      "emptyHint": "保存当前筛选条件，以便日后返回。",
+      "apply": "应用视图：{name}",
+      "applied": "已应用“{name}”",
+      "droppedFilters": "{count, plural, =1 {# 个筛选器已不存在，已被跳过} other {# 个筛选器已不存在，已被跳过}}",
+      "droppedGrouping": "其分组已不可用，因此使用默认分组。",
+      "unreadable": "{count, plural, =1 {# 个已保存的视图} other {# 个已保存的视图}}无法读取",
+      "rename": "重命名",
+      "renameTitle": "重命名已保存的视图",
+      "renamed": "已保存的视图已更新",
+      "renameFailed": "无法更新视图，请重试。",
+      "delete": "删除",
+      "deleteTitle": "删除已保存的视图？",
+      "deleteConfirm": "“{name}”将从您已保存的视图中移除。此操作无法撤销。",
+      "deleted": "已保存的视图已删除",
+      "deleteFailed": "无法删除视图，请重试。"
     }
   },
   "tags": {
@@ -8179,6 +8266,8 @@
       "includeDeleted": "包括已删除的项目",
       "filterActive": "筛选器已启用：",
       "applyFilter": "应用筛选器",
+      "invalidDate": "无效日期",
+      "stepsCount": "{count, plural, other {# 步骤}}",
       "validation": {
         "firstValueMustBeLessThanSecond": "第一个值必须小于第二个值",
         "firstDateMustBeBeforeSecond": "第一次约会必须在第二次约会之前。"

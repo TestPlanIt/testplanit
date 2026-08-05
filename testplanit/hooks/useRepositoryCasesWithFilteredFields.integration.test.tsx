@@ -1,23 +1,33 @@
 /**
- * Integration tests for ViewSelector filters with useFindManyRepositoryCasesFiltered
+ * Integration tests for FilterBar predicates flowing through
+ * useFindManyRepositoryCasesFiltered.
  *
- * These tests validate the complete filter flow:
- * 1. User applies filter in ViewSelector
- * 2. Filter state is passed to useFindManyRepositoryCasesFiltered
- * 3. Correct data is fetched/filtered
- * 4. Table displays correct results
- * 5. Pagination counts are accurate
+ * These tests validate the complete filter flow as Cases.tsx wires it:
+ * 1. FilterBar produces FilterPredicate[] (dimension/operator/values)
+ * 2. compileRepoPredicates compiles the SQL half (where fragments, AND'd with
+ *    the base conditions); text/link operator predicates compile to their
+ *    value-not-null pre-filter only, steps count operators to no fragment
+ * 3. extractPostFetchFilters carries the in-memory half to the hook
+ * 4. The hook post-fetch-filters the fetched rows and reports totalCount
+ * 5. Client-side pagination slices the filtered set
  *
  * Test Strategy:
  * - Create test data with known values for each field type
- * - Test all filter operators with positive cases (includes expected results)
- * - Test negative cases (excludes non-matching results)
+ * - Test all post-fetch operators with positive cases (includes expected
+ *   results) and negative cases (excludes non-matching results)
  * - Validate pagination totalCount matches filtered results
  */
 
 import type { RepositoryCases } from "~/zenstack/models";
+import { JsonNull } from "@zenstackhq/orm";
 import { renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { buildFilterDimensions } from "~/lib/repository/filterDimensions";
+import {
+  compileRepoPredicates,
+  extractPostFetchFilters,
+} from "~/lib/repository/filterWhereCompiler";
+import type { FilterPredicate } from "~/lib/schemas/repositoryFilterPredicates";
 import { useFindManyRepositoryCasesFiltered } from "./useRepositoryCasesWithFilteredFields";
 
 // The wrapper reads useClientQueries(schema).repositoryCases.useFindMany; hoist
@@ -32,6 +42,38 @@ vi.mock("@zenstackhq/tanstack-query/react", () => ({
     repositoryCases: { useFindMany: useFindManyRepositoryCases },
   }),
 }));
+
+// Registry matching the dynamic fields the fixtures use: 100 = Text Long,
+// 101 = Link, 3 = Steps (dimension keys field_100 / field_101 / field_3).
+const registry = buildFilterDimensions({
+  dynamicFields: [
+    { fieldId: 100, type: "Text Long" },
+    { fieldId: 101, type: "Link" },
+    { fieldId: 3, type: "Steps" },
+  ],
+});
+
+/**
+ * Renders the hook exactly as Cases.tsx feeds it: predicates compile to where
+ * fragments AND'd with the base conditions, and to the post-fetch filter list.
+ */
+function renderFiltered(
+  predicates: FilterPredicate[],
+  clientPagination?: { skip: number; take: number | undefined }
+) {
+  const where = {
+    AND: [{ projectId: 1 }, ...compileRepoPredicates(predicates, registry)],
+  };
+  const postFetchFilters = extractPostFetchFilters(predicates, registry);
+  return renderHook(() =>
+    useFindManyRepositoryCasesFiltered(
+      { where } as any,
+      postFetchFilters.length > 0 ? postFetchFilters : undefined,
+      undefined,
+      clientPagination
+    )
+  );
+}
 
 // Test data setup - known values for comprehensive testing
 const createTestCase = (
@@ -153,28 +195,20 @@ const TEST_DATA: Array<
 describe("useFindManyRepositoryCasesFiltered - Integration Tests", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Mock API response with all test data
+    (useFindManyRepositoryCases as any).mockReturnValue({
+      data: TEST_DATA,
+      isLoading: false,
+      error: null,
+      totalCount: TEST_DATA.length,
+    });
   });
 
   describe("Text Filter Integration", () => {
     it('should filter cases containing "test" and exclude others', async () => {
-      // Mock API response with all test data
-      (useFindManyRepositoryCases as any).mockReturnValue({
-        data: TEST_DATA,
-        isLoading: false,
-        error: null,
-        totalCount: TEST_DATA.length,
-      });
-
-      const { result } = renderHook(() =>
-        useFindManyRepositoryCasesFiltered({ where: { projectId: 1 } }, [
-          {
-            fieldId: 100,
-            type: "text",
-            operator: "contains",
-            value1: "test",
-          },
-        ])
-      );
+      const { result } = renderFiltered([
+        { dimension: "field_100", operator: "contains", values: ["test"] },
+      ]);
 
       await waitFor(() => {
         expect(result.current.isLoading).toBe(false);
@@ -197,24 +231,38 @@ describe("useFindManyRepositoryCasesFiltered - Integration Tests", () => {
       expect(result.current.totalCount).toBe(4);
     });
 
-    it("should return no results for non-existent text (negative test)", async () => {
-      (useFindManyRepositoryCases as any).mockReturnValue({
-        data: TEST_DATA,
-        isLoading: false,
-        error: null,
-        totalCount: TEST_DATA.length,
-      });
+    it("should pass the SQL pre-filter half (value not null) through to the query", async () => {
+      renderFiltered([
+        { dimension: "field_100", operator: "contains", values: ["test"] },
+      ]);
 
-      const { result } = renderHook(() =>
-        useFindManyRepositoryCasesFiltered({ where: { projectId: 1 } }, [
-          {
-            fieldId: 100,
-            type: "text",
-            operator: "contains",
-            value1: "NONEXISTENT_TERM_XYZ123",
+      // The operator itself resolves post-fetch; the where carries only the
+      // value-not-null pre-filter compiled from the same predicate.
+      expect(useFindManyRepositoryCases).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            AND: [
+              { projectId: 1 },
+              {
+                caseFieldValues: {
+                  some: { fieldId: 100, value: { not: JsonNull } },
+                },
+              },
+            ],
           },
-        ])
+        }),
+        undefined
       );
+    });
+
+    it("should return no results for non-existent text (negative test)", async () => {
+      const { result } = renderFiltered([
+        {
+          dimension: "field_100",
+          operator: "contains",
+          values: ["NONEXISTENT_TERM_XYZ123"],
+        },
+      ]);
 
       await waitFor(() => {
         expect(result.current.isLoading).toBe(false);
@@ -225,23 +273,9 @@ describe("useFindManyRepositoryCasesFiltered - Integration Tests", () => {
     });
 
     it('should filter cases starting with "Test" (startsWith operator)', async () => {
-      (useFindManyRepositoryCases as any).mockReturnValue({
-        data: TEST_DATA,
-        isLoading: false,
-        error: null,
-        totalCount: TEST_DATA.length,
-      });
-
-      const { result } = renderHook(() =>
-        useFindManyRepositoryCasesFiltered({ where: { projectId: 1 } }, [
-          {
-            fieldId: 100,
-            type: "text",
-            operator: "startsWith",
-            value1: "Test",
-          },
-        ])
-      );
+      const { result } = renderFiltered([
+        { dimension: "field_100", operator: "startsWith", values: ["Test"] },
+      ]);
 
       await waitFor(() => {
         expect(result.current.isLoading).toBe(false);
@@ -257,23 +291,9 @@ describe("useFindManyRepositoryCasesFiltered - Integration Tests", () => {
     });
 
     it('should filter cases NOT containing "test" (notContains operator)', async () => {
-      (useFindManyRepositoryCases as any).mockReturnValue({
-        data: TEST_DATA,
-        isLoading: false,
-        error: null,
-        totalCount: TEST_DATA.length,
-      });
-
-      const { result } = renderHook(() =>
-        useFindManyRepositoryCasesFiltered({ where: { projectId: 1 } }, [
-          {
-            fieldId: 100,
-            type: "text",
-            operator: "notContains",
-            value1: "test",
-          },
-        ])
-      );
+      const { result } = renderFiltered([
+        { dimension: "field_100", operator: "notContains", values: ["test"] },
+      ]);
 
       await waitFor(() => {
         expect(result.current.isLoading).toBe(false);
@@ -291,23 +311,9 @@ describe("useFindManyRepositoryCasesFiltered - Integration Tests", () => {
 
   describe("Link Filter Integration", () => {
     it("should filter cases with github.com domain", async () => {
-      (useFindManyRepositoryCases as any).mockReturnValue({
-        data: TEST_DATA,
-        isLoading: false,
-        error: null,
-        totalCount: TEST_DATA.length,
-      });
-
-      const { result } = renderHook(() =>
-        useFindManyRepositoryCasesFiltered({ where: { projectId: 1 } }, [
-          {
-            fieldId: 101,
-            type: "link",
-            operator: "domain",
-            value1: "github.com",
-          },
-        ])
-      );
+      const { result } = renderFiltered([
+        { dimension: "field_101", operator: "domain", values: ["github.com"] },
+      ]);
 
       await waitFor(() => {
         expect(result.current.isLoading).toBe(false);
@@ -323,23 +329,9 @@ describe("useFindManyRepositoryCasesFiltered - Integration Tests", () => {
     });
 
     it('should filter cases with URL containing "api"', async () => {
-      (useFindManyRepositoryCases as any).mockReturnValue({
-        data: TEST_DATA,
-        isLoading: false,
-        error: null,
-        totalCount: TEST_DATA.length,
-      });
-
-      const { result } = renderHook(() =>
-        useFindManyRepositoryCasesFiltered({ where: { projectId: 1 } }, [
-          {
-            fieldId: 101,
-            type: "link",
-            operator: "contains",
-            value1: "api",
-          },
-        ])
-      );
+      const { result } = renderFiltered([
+        { dimension: "field_101", operator: "contains", values: ["api"] },
+      ]);
 
       await waitFor(() => {
         expect(result.current.isLoading).toBe(false);
@@ -353,23 +345,13 @@ describe("useFindManyRepositoryCasesFiltered - Integration Tests", () => {
     });
 
     it("should return no results for non-existent domain (negative test)", async () => {
-      (useFindManyRepositoryCases as any).mockReturnValue({
-        data: TEST_DATA,
-        isLoading: false,
-        error: null,
-        totalCount: TEST_DATA.length,
-      });
-
-      const { result } = renderHook(() =>
-        useFindManyRepositoryCasesFiltered({ where: { projectId: 1 } }, [
-          {
-            fieldId: 101,
-            type: "link",
-            operator: "domain",
-            value1: "nonexistent-domain-xyz.com",
-          },
-        ])
-      );
+      const { result } = renderFiltered([
+        {
+          dimension: "field_101",
+          operator: "domain",
+          values: ["nonexistent-domain-xyz.com"],
+        },
+      ]);
 
       await waitFor(() => {
         expect(result.current.isLoading).toBe(false);
@@ -382,23 +364,9 @@ describe("useFindManyRepositoryCasesFiltered - Integration Tests", () => {
 
   describe("Steps Filter Integration", () => {
     it("should filter cases with exactly 3 steps", async () => {
-      (useFindManyRepositoryCases as any).mockReturnValue({
-        data: TEST_DATA,
-        isLoading: false,
-        error: null,
-        totalCount: TEST_DATA.length,
-      });
-
-      const { result } = renderHook(() =>
-        useFindManyRepositoryCasesFiltered({ where: { projectId: 1 } }, [
-          {
-            fieldId: -1, // Steps is a special built-in field
-            type: "steps",
-            operator: "eq",
-            value1: 3,
-          },
-        ])
-      );
+      const { result } = renderFiltered([
+        { dimension: "field_3", operator: "eq", values: [3] },
+      ]);
 
       await waitFor(() => {
         expect(result.current.isLoading).toBe(false);
@@ -413,24 +381,21 @@ describe("useFindManyRepositoryCasesFiltered - Integration Tests", () => {
       expect(result.current.totalCount).toBe(4);
     });
 
-    it("should filter cases with > 3 steps", async () => {
-      (useFindManyRepositoryCases as any).mockReturnValue({
-        data: TEST_DATA,
-        isLoading: false,
-        error: null,
-        totalCount: TEST_DATA.length,
-      });
+    it("compiles no SQL fragment for step-count operators (post-fetch only)", async () => {
+      renderFiltered([{ dimension: "field_3", operator: "eq", values: [3] }]);
 
-      const { result } = renderHook(() =>
-        useFindManyRepositoryCasesFiltered({ where: { projectId: 1 } }, [
-          {
-            fieldId: -1,
-            type: "steps",
-            operator: "gt",
-            value1: 3,
-          },
-        ])
+      // Count comparisons have no SQL pre-filter (legacy parity): the where
+      // carries only the base conditions.
+      expect(useFindManyRepositoryCases).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { AND: [{ projectId: 1 }] } }),
+        undefined
       );
+    });
+
+    it("should filter cases with > 3 steps", async () => {
+      const { result } = renderFiltered([
+        { dimension: "field_3", operator: "gt", values: [3] },
+      ]);
 
       await waitFor(() => {
         expect(result.current.isLoading).toBe(false);
@@ -446,24 +411,9 @@ describe("useFindManyRepositoryCasesFiltered - Integration Tests", () => {
     });
 
     it("should filter cases with steps between 3 and 5", async () => {
-      (useFindManyRepositoryCases as any).mockReturnValue({
-        data: TEST_DATA,
-        isLoading: false,
-        error: null,
-        totalCount: TEST_DATA.length,
-      });
-
-      const { result } = renderHook(() =>
-        useFindManyRepositoryCasesFiltered({ where: { projectId: 1 } }, [
-          {
-            fieldId: -1,
-            type: "steps",
-            operator: "between",
-            value1: 3,
-            value2: 5,
-          },
-        ])
-      );
+      const { result } = renderFiltered([
+        { dimension: "field_3", operator: "between", values: [3, 5] },
+      ]);
 
       await waitFor(() => {
         expect(result.current.isLoading).toBe(false);
@@ -480,30 +430,11 @@ describe("useFindManyRepositoryCasesFiltered - Integration Tests", () => {
   });
 
   describe("Multiple Filters Integration", () => {
-    it("should apply AND logic for multiple filters", async () => {
-      (useFindManyRepositoryCases as any).mockReturnValue({
-        data: TEST_DATA,
-        isLoading: false,
-        error: null,
-        totalCount: TEST_DATA.length,
-      });
-
-      const { result } = renderHook(() =>
-        useFindManyRepositoryCasesFiltered({ where: { projectId: 1 } }, [
-          {
-            fieldId: 100,
-            type: "text",
-            operator: "contains",
-            value1: "test",
-          },
-          {
-            fieldId: -1,
-            type: "steps",
-            operator: "eq",
-            value1: 3,
-          },
-        ])
-      );
+    it("should apply AND logic for multiple predicates", async () => {
+      const { result } = renderFiltered([
+        { dimension: "field_100", operator: "contains", values: ["test"] },
+        { dimension: "field_3", operator: "eq", values: [3] },
+      ]);
 
       await waitFor(() => {
         expect(result.current.isLoading).toBe(false);
@@ -518,36 +449,12 @@ describe("useFindManyRepositoryCasesFiltered - Integration Tests", () => {
       expect(result.current.totalCount).toBe(3);
     });
 
-    it("should apply three filters with AND logic", async () => {
-      (useFindManyRepositoryCases as any).mockReturnValue({
-        data: TEST_DATA,
-        isLoading: false,
-        error: null,
-        totalCount: TEST_DATA.length,
-      });
-
-      const { result } = renderHook(() =>
-        useFindManyRepositoryCasesFiltered({ where: { projectId: 1 } }, [
-          {
-            fieldId: 100,
-            type: "text",
-            operator: "contains",
-            value1: "test",
-          },
-          {
-            fieldId: -1,
-            type: "steps",
-            operator: "eq",
-            value1: 3,
-          },
-          {
-            fieldId: 101,
-            type: "link",
-            operator: "domain",
-            value1: "github.com",
-          },
-        ])
-      );
+    it("should apply three predicates with AND logic", async () => {
+      const { result } = renderFiltered([
+        { dimension: "field_100", operator: "contains", values: ["test"] },
+        { dimension: "field_3", operator: "eq", values: [3] },
+        { dimension: "field_101", operator: "domain", values: ["github.com"] },
+      ]);
 
       await waitFor(() => {
         expect(result.current.isLoading).toBe(false);
@@ -562,36 +469,17 @@ describe("useFindManyRepositoryCasesFiltered - Integration Tests", () => {
       expect(result.current.totalCount).toBe(2);
     });
 
-    it("should return no results when multiple filters have no overlap (negative test)", async () => {
-      (useFindManyRepositoryCases as any).mockReturnValue({
-        data: TEST_DATA,
-        isLoading: false,
-        error: null,
-        totalCount: TEST_DATA.length,
-      });
-
-      const { result } = renderHook(() =>
-        useFindManyRepositoryCasesFiltered({ where: { projectId: 1 } }, [
-          {
-            fieldId: 100,
-            type: "text",
-            operator: "contains",
-            value1: "test",
-          },
-          {
-            fieldId: -1,
-            type: "steps",
-            operator: "eq",
-            value1: 7, // Only case 4 has 7 steps, and it contains "test", so this should match
-          },
-        ])
-      );
+    it("should intersect predicates down to a single matching case", async () => {
+      const { result } = renderFiltered([
+        { dimension: "field_100", operator: "contains", values: ["test"] },
+        // Only case 4 has 7 steps, and it contains "test", so this matches it
+        { dimension: "field_3", operator: "eq", values: [7] },
+      ]);
 
       await waitFor(() => {
         expect(result.current.isLoading).toBe(false);
       });
 
-      // Actually case 4 should match this (has "test" and 7 steps)
       expect(result.current.data).toHaveLength(1);
       expect((result.current.data as any[])[0].id).toBe(4);
     });
@@ -599,29 +487,17 @@ describe("useFindManyRepositoryCasesFiltered - Integration Tests", () => {
 
   describe("Pagination Integration", () => {
     it("should correctly paginate filtered results", async () => {
-      (useFindManyRepositoryCases as any).mockReturnValue({
-        data: TEST_DATA,
-        isLoading: false,
-        error: null,
-        totalCount: TEST_DATA.length,
-      });
+      const textContainsTest: FilterPredicate = {
+        dimension: "field_100",
+        operator: "contains",
+        values: ["test"],
+      };
 
       // Page 1 with pageSize=2
-      const { result: page1Result } = renderHook(() =>
-        useFindManyRepositoryCasesFiltered(
-          { where: { projectId: 1 } },
-          [
-            {
-              fieldId: 100,
-              type: "text",
-              operator: "contains",
-              value1: "test",
-            },
-          ],
-          undefined,
-          { skip: 0, take: 2 }
-        )
-      );
+      const { result: page1Result } = renderFiltered([textContainsTest], {
+        skip: 0,
+        take: 2,
+      });
 
       await waitFor(() => {
         expect(page1Result.current.isLoading).toBe(false);
@@ -632,21 +508,10 @@ describe("useFindManyRepositoryCasesFiltered - Integration Tests", () => {
       expect(page1Result.current.totalCount).toBe(4);
 
       // Page 2 with pageSize=2
-      const { result: page2Result } = renderHook(() =>
-        useFindManyRepositoryCasesFiltered(
-          { where: { projectId: 1 } },
-          [
-            {
-              fieldId: 100,
-              type: "text",
-              operator: "contains",
-              value1: "test",
-            },
-          ],
-          undefined,
-          { skip: 2, take: 2 }
-        )
-      );
+      const { result: page2Result } = renderFiltered([textContainsTest], {
+        skip: 2,
+        take: 2,
+      });
 
       await waitFor(() => {
         expect(page2Result.current.isLoading).toBe(false);
@@ -668,28 +533,10 @@ describe("useFindManyRepositoryCasesFiltered - Integration Tests", () => {
     });
 
     it("should handle last page with fewer items", async () => {
-      (useFindManyRepositoryCases as any).mockReturnValue({
-        data: TEST_DATA,
-        isLoading: false,
-        error: null,
-        totalCount: TEST_DATA.length,
-      });
-
       // Page 2 with pageSize=3 for 4 results total
-      const { result } = renderHook(() =>
-        useFindManyRepositoryCasesFiltered(
-          { where: { projectId: 1 } },
-          [
-            {
-              fieldId: 100,
-              type: "text",
-              operator: "contains",
-              value1: "test",
-            },
-          ],
-          undefined,
-          { skip: 3, take: 3 }
-        )
+      const { result } = renderFiltered(
+        [{ dimension: "field_100", operator: "contains", values: ["test"] }],
+        { skip: 3, take: 3 }
       );
 
       await waitFor(() => {

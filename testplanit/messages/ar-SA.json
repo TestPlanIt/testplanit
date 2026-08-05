@@ -558,6 +558,8 @@
       "stepCount": "عدد الخطوات",
       "enterText": "أدخل نصًا...",
       "enterUrl": "أدخل عنوان URL",
+      "enterUrlPattern": "أدخل نمط الرابط...",
+      "domainExample": "example.com",
       "issueIdExample": "ISSUE-123",
       "selectPriorityValuesOrEmpty": "حدد قيم الأولوية (أو اتركه فارغًا للكل)"
     },
@@ -1078,7 +1080,35 @@
     "invalidProject": "معرّف مشروع غير صالح.",
     "visualization": "التصور البصري",
     "results": "النتائج",
-    "loading": "جارٍ التحميل..."
+    "loading": "جارٍ التحميل...",
+    "operators": {
+      "eq": "يساوي",
+      "ne": "لا يساوي",
+      "lt": "أصغر من",
+      "lte": "أصغر من أو يساوي",
+      "gt": "أكبر من",
+      "gte": "أكبر من أو يساوي",
+      "between": "بين",
+      "contains": "يحتوي على",
+      "notContains": "لا يحتوي على",
+      "startsWith": "يبدأ بـ",
+      "endsWith": "ينتهي بـ",
+      "domain": "النطاق يحتوي على",
+      "on": "في",
+      "before": "قبل",
+      "after": "بعد",
+      "last7": "آخر 7 أيام",
+      "last30": "آخر 30 يومًا",
+      "last90": "آخر 90 يومًا",
+      "thisYear": "هذا العام",
+      "anyOf": "أي من",
+      "allOf": "كل من",
+      "noneOf": "لا شيء من",
+      "is": "هو",
+      "in": "هو أي من",
+      "hasValue": "يحتوي على قيمة",
+      "isEmpty": "فارغ"
+    }
   },
   "api": {
     "testResults": {
@@ -2892,7 +2922,9 @@
         "title": "استيراد حالات الاختبار",
         "fields": {
           "workflowState": "حالة سير العمل",
-          "column": "العمود {number}"
+          "column": "العمود {number}",
+          "caseId": "معرّف الحالة",
+          "caseIdDescription": "معرّف الحالة في TestPlanIt"
         },
         "success": {
           "description": "تم استيراد {count, plural, zero {# حالة اختبار} one {حالة اختبار واحدة} two {حالتي اختبار} few {# حالات اختبار} many {# حالة اختبار} other {# حالة اختبار}} بنجاح"
@@ -2902,7 +2934,15 @@
           "folderRequired": "تحديد المجلد مطلوب لموقع الاستيراد هذا",
           "fileRequired": "مطلوب ملف CSV أو Markdown",
           "markdownParseFailed": "فشل تحليل ملف Markdown",
-          "markdownLlmFailed": "التحليل بالذكاء الاصطناعي غير متوفر، يتم استخدام المحلل القياسي"
+          "markdownLlmFailed": "التحليل بالذكاء الاصطناعي غير متوفر، يتم استخدام المحلل القياسي",
+          "validationTitle": "فشل التحقق من صحة الاستيراد",
+          "validationSummary": "تم العثور على {count, plural, zero {# مشكلة} one {مشكلة واحدة} two {مشكلتان} few {# مشاكل} many {# مشكلة} other {# مشكلة}} في ملفك. لم يتم استيراد أي حالات اختبار.",
+          "validationEntry": "الصف {row, number} · {field}: {message}",
+          "validationEntryNamed": "الصف {row, number} \"{name}\" · {field}: {message}",
+          "validationMore": "{count, plural, zero {# مشكلة أخرى غير معروضة} one {مشكلة أخرى واحدة غير معروضة} two {مشكلتان أخريان غير معروضتين} few {# مشاكل أخرى غير معروضة} many {# مشكلة أخرى غير معروضة} other {# مشكلة أخرى غير معروضة}}.",
+          "validationMultiRowNote": "تشير أرقام الصفوف إلى حالات الاختبار المجمّعة الظاهرة في المعاينة، وليس إلى أسطر CSV الأصلية.",
+          "partialTitle": "لم يتم استيراد بعض حالات الاختبار",
+          "partialSummary": "تعذر استيراد {failed, plural, zero {# صف} one {صف واحد} two {صفان} few {# صفوف} many {# صفًا} other {# صف}}. تم استيراد {imported, plural, zero {# حالة اختبار} one {حالة اختبار واحدة} two {حالتا اختبار} few {# حالات اختبار} many {# حالة اختبار} other {# حالة اختبار}} بنجاح."
         },
         "page1": {
           "fileType": {
@@ -2934,7 +2974,8 @@
           "title": "تخطيط أعمدة CSV إلى الحقول",
           "description": "خطّط كل عمود CSV إلى حقل في القالب أو اختر تجاهله.",
           "ignoreColumn": "تجاهل العمود",
-          "requiredFieldsWarning": "{count, plural, zero {# حقل مطلوب غير معين} one {حقل مطلوب واحد غير معين} two {حقلان مطلوبان غير معينين} few {# حقول مطلوبة غير معينة} many {# حقل مطلوب غير معين} other {# حقل مطلوب غير معين}}"
+          "requiredFieldsWarning": "{count, plural, zero {# حقل مطلوب غير معين} one {حقل مطلوب واحد غير معين} two {حقلان مطلوبان غير معينين} few {# حقول مطلوبة غير معينة} many {# حقل مطلوب غير معين} other {# حقل مطلوب غير معين}}",
+          "caseIdHint": "يجب أن يكون هذا هو معرّف الحالة الرقمي — يتم استبدال الحالات المطابقة."
         },
         "page3": {
           "title": "ملخص تخطيط الحقول",
@@ -3445,6 +3486,52 @@
       "linkedIssuesDroppedTitle": "لم يتم تضمين بعض المشكلات المرتبطة",
       "linkedIssuesDropped": "{count, plural, =1 {تم حذف مشكلة مرتبطة واحدة} zero {تم حذف # مشكلة مرتبطة} two {تم حذف مشكلتين مرتبطتين} few {تم حذف # مشكلات مرتبطة} many {تم حذف # مشكلة مرتبطة} other {تم حذف # مشكلة مرتبطة}} بسبب حدود الرموز: {keys}.",
       "linkedIssuesPreviewHeading": "المشكلات المرتبطة التي سيتم تضمينها"
+    },
+    "filterBar": {
+      "addFilter": "إضافة مرشح",
+      "removeFilter": "إزالة المرشح: {name}",
+      "editFilter": "تعديل المرشح: {name}",
+      "activeCount": "{count, plural, =1 {# active filter} other {# active filters}}",
+      "assignedToMe": "معيّن إليّ",
+      "noFilters": "لا توجد مرشحات نشطة",
+      "noMatchingCases": "لا توجد حالات اختبار تطابق مرشحاتك",
+      "searchTruncated": "التصفية ضمن أفضل {count, number} نتيجة مطابقة",
+      "sortedByRelevance": "مرتب حسب الصلة",
+      "countsUpdating": "جارٍ تحديث الأعداد...",
+      "filterLimitReached": "تم الوصول إلى الحد الأقصى للمرشحات ({count} كحد أقصى)",
+      "valueLimitReached": "تم الوصول إلى الحد الأقصى للقيم ({count} كحد أقصى لكل مرشح)",
+      "filtersTruncated": "تم تجاهل بعض المرشحات ({count} كحد أقصى)",
+      "valuesTruncated": "{count, plural, =1 {# value} other {# values}} per filter maximum — extra values were dropped"
+    },
+    "savedViews": {
+      "title": "طرق العرض المحفوظة",
+      "save": "حفظ طريقة العرض",
+      "saveTitle": "حفظ طريقة العرض",
+      "saveDescription": "قم بتسمية طريقة العرض هذه للرجوع إلى هذه المرشحات لاحقًا.",
+      "namePlaceholder": "مثال: حالات الدخان، غير مؤتمتة",
+      "descriptionPlaceholder": "الغرض من طريقة العرض هذه",
+      "nameRequired": "أدخل اسمًا لطريقة العرض هذه.",
+      "loginRequired": "يجب تسجيل الدخول لحفظ طرق العرض.",
+      "nothingToSave": "أضف مرشحًا أو تجميعًا أولاً.",
+      "saved": "تم حفظ طريقة العرض",
+      "savedDescription": "\"{name}\" أصبح الآن ضمن طرق العرض المحفوظة لديك.",
+      "saveFailed": "تعذّر حفظ طريقة العرض. يرجى المحاولة مرة أخرى.",
+      "empty": "لا توجد طرق عرض محفوظة بعد",
+      "emptyHint": "احفظ المرشحات الحالية للرجوع إليها لاحقًا.",
+      "apply": "تطبيق طريقة العرض: {name}",
+      "applied": "تم تطبيق \"{name}\"",
+      "droppedFilters": "{count, plural, =1 {# filter no longer exists and was skipped} other {# filters no longer exist and were skipped}}",
+      "droppedGrouping": "لم يعد تجميعها متوفرًا، لذا يتم استخدام التجميع الافتراضي.",
+      "unreadable": "{count, plural, =1 {# saved view} other {# saved views}} couldn't be read",
+      "rename": "إعادة تسمية",
+      "renameTitle": "إعادة تسمية طريقة العرض المحفوظة",
+      "renamed": "تم تحديث طريقة العرض المحفوظة",
+      "renameFailed": "تعذّر تحديث طريقة العرض. يرجى المحاولة مرة أخرى.",
+      "delete": "حذف",
+      "deleteTitle": "هل تريد حذف طريقة العرض المحفوظة؟",
+      "deleteConfirm": "سيتم إزالة \"{name}\" من طرق العرض المحفوظة لديك. لا يمكن التراجع عن هذا الإجراء.",
+      "deleted": "تم حذف طريقة العرض المحفوظة",
+      "deleteFailed": "تعذّر حذف طريقة العرض. يرجى المحاولة مرة أخرى."
     }
   },
   "tags": {
@@ -8179,6 +8266,8 @@
       "includeDeleted": "تضمين العناصر المحذوفة",
       "filterActive": "عامل التصفية نشط:",
       "applyFilter": "تطبيق عامل التصفية",
+      "invalidDate": "تاريخ غير صالح",
+      "stepsCount": "{count, plural, zero {لا توجد خطوات} one {خطوة واحدة} two {خطوتان} few {# خطوات} many {# خطوة} other {# خطوة}}",
       "validation": {
         "firstValueMustBeLessThanSecond": "يجب أن تكون القيمة الأولى أصغر من القيمة الثانية",
         "firstDateMustBeBeforeSecond": "يجب أن يكون التاريخ الأول قبل التاريخ الثاني"

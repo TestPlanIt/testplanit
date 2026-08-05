@@ -558,6 +558,8 @@
       "stepCount": "Step count",
       "enterText": "Enter text...",
       "enterUrl": "Enter URL",
+      "enterUrlPattern": "Enter URL pattern...",
+      "domainExample": "example.com",
       "issueIdExample": "ISSUE-123",
       "selectPriorityValuesOrEmpty": "Select priority values (or leave empty for all)"
     },
@@ -1094,7 +1096,35 @@
     "invalidProject": "Invalid project ID.",
     "visualization": "Visualization",
     "results": "Results",
-    "loading": "Loading..."
+    "loading": "Loading...",
+    "operators": {
+      "eq": "Equals",
+      "ne": "Not equals",
+      "lt": "Less than",
+      "lte": "Less than or equal",
+      "gt": "Greater than",
+      "gte": "Greater than or equal",
+      "between": "Between",
+      "contains": "Contains",
+      "notContains": "Does not contain",
+      "startsWith": "Starts with",
+      "endsWith": "Ends with",
+      "domain": "Domain contains",
+      "on": "On",
+      "before": "Before",
+      "after": "After",
+      "last7": "Last 7 days",
+      "last30": "Last 30 days",
+      "last90": "Last 90 days",
+      "thisYear": "This year",
+      "anyOf": "Any of",
+      "allOf": "All of",
+      "noneOf": "None of",
+      "is": "Is",
+      "in": "Is any of",
+      "hasValue": "Has value",
+      "isEmpty": "Is empty"
+    }
   },
   "api": {
     "testResults": {
@@ -2908,7 +2938,9 @@
         "title": "Import Test Cases",
         "fields": {
           "workflowState": "Workflow State",
-          "column": "Column {number}"
+          "column": "Column {number}",
+          "caseId": "Case ID",
+          "caseIdDescription": "TestPlanIt Case ID"
         },
         "success": {
           "description": "{count, plural, one {# test case} other {# test cases}} imported successfully"
@@ -2918,7 +2950,15 @@
           "folderRequired": "Folder selection is required for this import location",
           "fileRequired": "A CSV or Markdown file is required",
           "markdownParseFailed": "Failed to parse Markdown file",
-          "markdownLlmFailed": "AI parsing unavailable, using standard parser"
+          "markdownLlmFailed": "AI parsing unavailable, using standard parser",
+          "validationTitle": "Import validation failed",
+          "validationSummary": "{count, plural, one {# problem was} other {# problems were}} found in your file. No test cases were imported.",
+          "validationEntry": "Row {row, number} · {field}: {message}",
+          "validationEntryNamed": "Row {row, number} \"{name}\" · {field}: {message}",
+          "validationMore": "{count, plural, one {# more problem is} other {# more problems are}} not shown.",
+          "validationMultiRowNote": "Row numbers refer to the grouped test cases shown in the preview, not to raw CSV lines.",
+          "partialTitle": "Some test cases were not imported",
+          "partialSummary": "{failed, plural, one {# row} other {# rows}} could not be imported. {imported, plural, one {# test case was} other {# test cases were}} imported successfully."
         },
         "page1": {
           "fileType": {
@@ -2950,7 +2990,8 @@
           "title": "Map CSV Columns to Fields",
           "description": "Map each CSV column to a field in the template or choose to ignore it.",
           "ignoreColumn": "Ignore Column",
-          "requiredFieldsWarning": "{count, plural, one {# required field is} other {# required fields are}} not mapped"
+          "requiredFieldsWarning": "{count, plural, one {# required field is} other {# required fields are}} not mapped",
+          "caseIdHint": "This must be the numeric Case ID — matching cases are overwritten."
         },
         "page3": {
           "title": "Field Mapping Summary",
@@ -3461,6 +3502,52 @@
       "linkedIssuesDroppedTitle": "Some linked issues were not included",
       "linkedIssuesDropped": "{count, plural, =1 {# linked issue was dropped} other {# linked issues were dropped}} due to token budget: {keys}.",
       "linkedIssuesPreviewHeading": "Linked issues that will be included"
+    },
+    "filterBar": {
+      "addFilter": "Add Filter",
+      "removeFilter": "Remove filter: {name}",
+      "editFilter": "Edit filter: {name}",
+      "activeCount": "{count, plural, =1 {# active filter} other {# active filters}}",
+      "assignedToMe": "Assigned to me",
+      "noFilters": "No active filters",
+      "noMatchingCases": "No test cases match your filters",
+      "searchTruncated": "Filtering within the top {count, number} matches",
+      "sortedByRelevance": "Sorted by relevance",
+      "countsUpdating": "Updating counts...",
+      "filterLimitReached": "Filter limit reached ({count} maximum)",
+      "valueLimitReached": "Value limit reached ({count} maximum per filter)",
+      "filtersTruncated": "Some filters were dropped ({count} maximum)",
+      "valuesTruncated": "{count, plural, =1 {# value} other {# values}} per filter maximum — extra values were dropped"
+    },
+    "savedViews": {
+      "title": "Saved views",
+      "save": "Save view",
+      "saveTitle": "Save view",
+      "saveDescription": "Name this view so you can return to these filters later.",
+      "namePlaceholder": "e.g. Smoke cases, not automated",
+      "descriptionPlaceholder": "What this view is for",
+      "nameRequired": "Enter a name for this view.",
+      "loginRequired": "You must be signed in to save views.",
+      "nothingToSave": "Add a filter or a grouping first.",
+      "saved": "View saved",
+      "savedDescription": "“{name}” is now in your saved views.",
+      "saveFailed": "Couldn't save the view. Please try again.",
+      "empty": "No saved views yet",
+      "emptyHint": "Save the current filters to return to them later.",
+      "apply": "Apply view: {name}",
+      "applied": "Applied “{name}”",
+      "droppedFilters": "{count, plural, =1 {# filter no longer exists and was skipped} other {# filters no longer exist and were skipped}}",
+      "droppedGrouping": "Its grouping is no longer available, so the default is used.",
+      "unreadable": "{count, plural, =1 {# saved view} other {# saved views}} couldn't be read",
+      "rename": "Rename",
+      "renameTitle": "Rename saved view",
+      "renamed": "Saved view updated",
+      "renameFailed": "Couldn't update the view. Please try again.",
+      "delete": "Delete",
+      "deleteTitle": "Delete saved view?",
+      "deleteConfirm": "“{name}” will be removed from your saved views. This can't be undone.",
+      "deleted": "Saved view deleted",
+      "deleteFailed": "Couldn't delete the view. Please try again."
     }
   },
   "tags": {
@@ -8201,6 +8288,8 @@
       "includeDeleted": "Include deleted items",
       "filterActive": "Filter active:",
       "applyFilter": "Apply Filter",
+      "invalidDate": "Invalid date",
+      "stepsCount": "{count, plural, one {# step} other {# steps}}",
       "validation": {
         "firstValueMustBeLessThanSecond": "First value must be less than second value",
         "firstDateMustBeBeforeSecond": "First date must be before second date"

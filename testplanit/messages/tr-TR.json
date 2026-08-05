@@ -558,6 +558,8 @@
       "stepCount": "Adım sayısı",
       "enterText": "Metin girin...",
       "enterUrl": "URL girin",
+      "enterUrlPattern": "URL kalıbı girin...",
+      "domainExample": "ornek.com",
       "issueIdExample": "SAYI-123",
       "selectPriorityValuesOrEmpty": "Öncelik değerlerini seçin (veya tümü için boş bırakın)"
     },
@@ -1078,7 +1080,35 @@
     "invalidProject": "Geçersiz proje kimliği.",
     "visualization": "Görselleştirme",
     "results": "Sonuçlar",
-    "loading": "Yükleniyor..."
+    "loading": "Yükleniyor...",
+    "operators": {
+      "eq": "Eşittir",
+      "ne": "Eşit değil",
+      "lt": "Daha az",
+      "lte": "Daha küçük veya eşit",
+      "gt": "Daha büyük",
+      "gte": "Büyük veya eşit",
+      "between": "Arasında",
+      "contains": "İçerir",
+      "notContains": "İçermez",
+      "startsWith": "Şununla başlar",
+      "endsWith": "Şununla sona erer",
+      "domain": "Alan adı içerir",
+      "on": "Şu tarihte",
+      "before": "Önce",
+      "after": "Sonra",
+      "last7": "Son 7 gün",
+      "last30": "Son 30 gün",
+      "last90": "Son 90 gün",
+      "thisYear": "Bu yıl",
+      "anyOf": "Herhangi biri",
+      "allOf": "Tümü",
+      "noneOf": "Hiçbiri",
+      "is": "Şudur",
+      "in": "Herhangi biridir",
+      "hasValue": "Değeri var",
+      "isEmpty": "Boş"
+    }
   },
   "api": {
     "testResults": {
@@ -2892,7 +2922,9 @@
         "title": "Test Senaryolarını İçe Aktar",
         "fields": {
           "workflowState": "İş Akışı Durumu",
-          "column": "Sütun {number}"
+          "column": "Sütun {number}",
+          "caseId": "Test Durumu ID",
+          "caseIdDescription": "TestPlanIt Test Durumu ID"
         },
         "success": {
           "description": "{count, plural, one {# test durumu} other {# test durumları}} başarıyla içe aktarıldı"
@@ -2902,7 +2934,15 @@
           "folderRequired": "Bu içe aktarma konumu için klasör seçimi gereklidir.",
           "fileRequired": "CSV veya Markdown dosyası gereklidir.",
           "markdownParseFailed": "Markdown dosyasını ayrıştırma başarısız oldu.",
-          "markdownLlmFailed": "Yapay zeka ile ayrıştırma kullanılamıyor, standart ayrıştırıcı kullanılıyor."
+          "markdownLlmFailed": "Yapay zeka ile ayrıştırma kullanılamıyor, standart ayrıştırıcı kullanılıyor.",
+          "validationTitle": "İçe aktarma doğrulaması başarısız oldu",
+          "validationSummary": "Dosyanızda {count, plural, one {# sorun} other {# sorun}} bulundu. Hiçbir test durumu içe aktarılmadı.",
+          "validationEntry": "Satır {row, number} · {field}: {message}",
+          "validationEntryNamed": "Satır {row, number} \"{name}\" · {field}: {message}",
+          "validationMore": "{count, plural, one {# sorun daha} other {# sorun daha}} gösterilmiyor.",
+          "validationMultiRowNote": "Satır numaraları, önizlemede gösterilen gruplandırılmış test durumlarını ifade eder, ham CSV satırlarını değil.",
+          "partialTitle": "Bazı test durumları içe aktarılmadı",
+          "partialSummary": "{failed, plural, one {# satır} other {# satır}} içe aktarılamadı. {imported, plural, one {# test durumu} other {# test durumu}} başarıyla içe aktarıldı."
         },
         "page1": {
           "fileType": {
@@ -2934,7 +2974,8 @@
           "title": "CSV Sütunlarını Alanlara Eşleme",
           "description": "Her CSV sütununu şablondaki bir alana eşleştirin veya yok saymayı seçin.",
           "ignoreColumn": "Sütunu Yok Say",
-          "requiredFieldsWarning": "{count, plural, one {# gerekli alan} other {# gerekli alanlar}} eşleştirilmemiş"
+          "requiredFieldsWarning": "{count, plural, one {# gerekli alan} other {# gerekli alanlar}} eşleştirilmemiş",
+          "caseIdHint": "Bu, sayısal Test Durumu ID'si olmalıdır — eşleşen durumların üzerine yazılır."
         },
         "page3": {
           "title": "Alan Eşleme Özeti",
@@ -3445,6 +3486,52 @@
       "linkedIssuesDroppedTitle": "Bağlantılı bazı konular dahil edilmemiştir.",
       "linkedIssuesDropped": "{count, plural, =1 {# bağlantılı sorun, token bütçesi nedeniyle kaldırıldı} other {# bağlantılı sorunlar, token bütçesi nedeniyle kaldırıldı}} : {keys}.",
       "linkedIssuesPreviewHeading": "Dahil edilecek bağlantılı konular"
+    },
+    "filterBar": {
+      "addFilter": "Filtre Ekle",
+      "removeFilter": "Filtreyi kaldır: {name}",
+      "editFilter": "Filtreyi düzenle: {name}",
+      "activeCount": "{count, plural, =1 {# aktif filtre} other {# aktif filtre}}",
+      "assignedToMe": "Bana atanmış",
+      "noFilters": "Aktif filtre yok",
+      "noMatchingCases": "Filtrelerinize uyan test senaryosu yok",
+      "searchTruncated": "İlk {count, number} eşleşme içinde filtreleniyor",
+      "sortedByRelevance": "İlgiye göre sıralandı",
+      "countsUpdating": "Sayılar güncelleniyor...",
+      "filterLimitReached": "Filtre limitine ulaşıldı (en fazla {count})",
+      "valueLimitReached": "Değer limitine ulaşıldı (filtre başına en fazla {count})",
+      "filtersTruncated": "Bazı filtreler kaldırıldı (en fazla {count})",
+      "valuesTruncated": "Filtre başına en fazla {count, plural, =1 {# değer} other {# değer}} — ek değerler kaldırıldı"
+    },
+    "savedViews": {
+      "title": "Kayıtlı görünümler",
+      "save": "Görünümü kaydet",
+      "saveTitle": "Görünümü kaydet",
+      "saveDescription": "Bu filtrelere daha sonra geri dönebilmek için bu görünüme bir ad verin.",
+      "namePlaceholder": "örn. Duman testleri, otomatik değil",
+      "descriptionPlaceholder": "Bu görünümün amacı",
+      "nameRequired": "Bu görünüm için bir ad girin.",
+      "loginRequired": "Görünümleri kaydetmek için oturum açmış olmanız gerekir.",
+      "nothingToSave": "Önce bir filtre veya gruplama ekleyin.",
+      "saved": "Görünüm kaydedildi",
+      "savedDescription": "\"{name}\" artık kayıtlı görünümlerinizde.",
+      "saveFailed": "Görünüm kaydedilemedi. Lütfen tekrar deneyin.",
+      "empty": "Henüz kayıtlı görünüm yok",
+      "emptyHint": "Daha sonra geri dönmek için geçerli filtreleri kaydedin.",
+      "apply": "Görünümü uygula: {name}",
+      "applied": "\"{name}\" uygulandı",
+      "droppedFilters": "{count, plural, =1 {# filtre artık mevcut değil ve atlandı} other {# filtre artık mevcut değil ve atlandı}}",
+      "droppedGrouping": "Gruplaması artık kullanılamıyor, bu nedenle varsayılan kullanılıyor.",
+      "unreadable": "{count, plural, =1 {# kayıtlı görünüm} other {# kayıtlı görünüm}} okunamadı",
+      "rename": "Yeniden adlandır",
+      "renameTitle": "Kayıtlı görünümü yeniden adlandır",
+      "renamed": "Kayıtlı görünüm güncellendi",
+      "renameFailed": "Görünüm güncellenemedi. Lütfen tekrar deneyin.",
+      "delete": "Sil",
+      "deleteTitle": "Kayıtlı görünüm silinsin mi?",
+      "deleteConfirm": "\"{name}\" kayıtlı görünümlerinizden kaldırılacak. Bu işlem geri alınamaz.",
+      "deleted": "Kayıtlı görünüm silindi",
+      "deleteFailed": "Görünüm silinemedi. Lütfen tekrar deneyin."
     }
   },
   "tags": {
@@ -8179,6 +8266,8 @@
       "includeDeleted": "Silinen öğeleri dahil et",
       "filterActive": "Filtre etkin:",
       "applyFilter": "Filtre Uygula",
+      "invalidDate": "Geçersiz tarih",
+      "stepsCount": "{count, plural, one {# adım} other {# adım}}",
       "validation": {
         "firstValueMustBeLessThanSecond": "Birinci değer ikinci değerden küçük olmalıdır.",
         "firstDateMustBeBeforeSecond": "İlk buluşma ikinci buluşmadan önce olmalı."

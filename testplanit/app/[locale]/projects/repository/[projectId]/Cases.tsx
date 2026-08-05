@@ -2,6 +2,7 @@ import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import AddTestRunModal from "@/[locale]/projects/runs/[projectId]/AddTestRunModal";
 import { AttachmentsCarousel } from "@/components/AttachmentsCarousel";
+import { Button } from "@/components/ui/button";
 import { AutoTagWizardDialog } from "@/components/auto-tag/AutoTagWizardDialog";
 import { useDebounce } from "@/components/Debounce";
 import {
@@ -27,14 +28,12 @@ import {
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import type {
   RepositoryCasesFindManyArgs,
-  RepositoryCasesGetPayload,
   RepositoryCasesSelect,
   RepositoryCasesWhereInput,
   TestRunCasesFindManyArgs,
-  TestRunCasesGetPayload,
+  TestRunCasesSelect,
   TestRunCasesWhereInput,
 } from "~/zenstack/input";
-import { JsonNull } from "@zenstackhq/orm";
 import type { Tags as TagModel, Issue as IssueModel } from "~/zenstack/models";
 
 // The repositoryCases/testRunCases query results are typed loosely for the
@@ -53,6 +52,13 @@ import {
   RowSelectionState,
   Updater as TableUpdater,
 } from "@tanstack/react-table";
+import type { FilterDimensionRegistry } from "~/lib/repository/filterDimensions";
+import {
+  compileRepoPredicates,
+  compileRunPredicates,
+  extractPostFetchFilters,
+} from "~/lib/repository/filterWhereCompiler";
+import type { FilterPredicate } from "~/lib/schemas/repositoryFilterPredicates";
 import {
   ArrowRightLeft,
   PenSquare,
@@ -78,13 +84,12 @@ import { toast } from "sonner";
 import { fetchAllCasesForExport as fetchAllCasesAction } from "~/app/actions/exportActions";
 import { TFunction, useExportData } from "~/hooks/useExportData";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
-import { useFindManyRepositoryCasesByDescendants } from "~/hooks/useRepositoryCasesByDescendants";
 import {
-  PostFetchFilter,
-  useFindManyRepositoryCasesFiltered,
-} from "~/hooks/useRepositoryCasesWithFilteredFields";
+  useRepositoryCasesInvalidation,
+  useRepositoryCasesQuery,
+} from "~/hooks/useRepositoryCasesQuery";
+import type { PostFetchFilter } from "~/hooks/useRepositoryCasesWithFilteredFields";
 import { usePagination } from "~/lib/contexts/PaginationContext";
-import { attachmentsWhereClause } from "~/lib/repositoryCaseAttachmentsFilter";
 import { useReviewFeatureEnabled } from "~/hooks/useReviewFeatureEnabled";
 import { usePathname, useRouter } from "~/lib/navigation";
 import { LatestResultsCell } from "@/components/tables/LatestResultsCell";
@@ -252,10 +257,9 @@ const REPOSITORY_CASE_SORTABLE_SCALARS = new Set([
   "source",
 ]);
 
-// Shared select shape for repository case list queries. Used by both the
-// ZenStack useFindManyRepositoryCases hook (default GET path) and the
-// by-folder-descendants POST endpoint (used when "Show all descendants" is
-// active on a deeply nested folder) so both return identical row shapes.
+// Select shape for the repository case list. Module-level so the query key
+// never has to hash it — callers name the shape with a short `selectKey`
+// instead.
 const REPOSITORY_CASE_LIST_SELECT = {
   id: true,
   projectId: true,
@@ -325,6 +329,123 @@ const REPOSITORY_CASE_LIST_SELECT = {
   },
 } as const satisfies RepositoryCasesSelect;
 
+// Select shape for the run-mode case list (TestRunCases rows with the
+// repository case nested under `repositoryCase`). Module-level so the query
+// key never has to hash it and so the run list and its id list agree.
+const TEST_RUN_CASE_LIST_SELECT = {
+  id: true,
+  repositoryCaseId: true,
+  order: true,
+  statusId: true,
+  status: {
+    select: {
+      id: true,
+      name: true,
+      color: {
+        select: {
+          value: true,
+        },
+      },
+    },
+  },
+  assignedToId: true,
+  assignedTo: {
+    select: {
+      id: true,
+      name: true,
+    },
+  },
+  isCompleted: true,
+  notes: true,
+  startedAt: true,
+  completedAt: true,
+  elapsed: true,
+  // Phase 3 — surface iteration count so the status cell can detect
+  // parameterized cases and render its read-only sheet-opener.
+  totalIterations: true,
+  testRun: {
+    select: {
+      id: true,
+      configuration: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+    },
+  },
+  repositoryCase: {
+    select: {
+      id: true,
+      projectId: true,
+      project: true,
+      creator: true,
+      folder: true,
+      repositoryId: true,
+      folderId: true,
+      templateId: true,
+      name: true,
+      stateId: true,
+      estimate: true,
+      forecastManual: true,
+      forecastAutomated: true,
+      order: true,
+      createdAt: true,
+      creatorId: true,
+      automated: true,
+      hasParameters: true,
+      isArchived: true,
+      isDeleted: true,
+      currentVersion: true,
+      source: true,
+      state: CASE_STATE_SELECT,
+      template: CASE_TEMPLATE_SELECT,
+      caseFieldValues: CASE_FIELD_VALUES_SELECT,
+      attachments: CASE_ATTACHMENTS_SELECT,
+      steps: CASE_STEPS_SELECT,
+      caseTags: CASE_TAGS_SELECT,
+      caseIssues: CASE_ISSUES_SELECT,
+      testRuns: {
+        select: {
+          id: true,
+          testRun: {
+            select: {
+              id: true,
+              name: true,
+              projectId: true,
+              isDeleted: true,
+              isCompleted: true,
+            },
+          },
+        },
+      },
+      linksFrom: {
+        select: {
+          caseBId: true,
+          type: true,
+          isDeleted: true,
+        },
+      },
+      linksTo: {
+        select: {
+          caseAId: true,
+          type: true,
+          isDeleted: true,
+        },
+      },
+      _count: {
+        select: {
+          comments: {
+            where: {
+              isDeleted: false,
+            },
+          },
+        },
+      },
+    },
+  },
+} as const satisfies TestRunCasesSelect;
+
 /**
  * Prev/next context for the docked case-details panel. Cases owns the list's
  * filter/sort so it derives the ordered id set and the selected case's position
@@ -344,7 +465,17 @@ export interface CaseNav {
 interface CasesProps {
   folderId: number | null;
   viewType: string;
-  filterId: Array<string | number> | null;
+  /** Active filter predicates (implicit AND). Compiled to where fragments via
+   * lib/repository/filterWhereCompiler; folder scoping stays separate. */
+  predicates: FilterPredicate[];
+  /** The active mode's dimension registry (buildFilterDimensions). */
+  filterRegistry: FilterDimensionRegistry;
+  /** Canonical serialization of `predicates` (useRepositoryFilters.canonicalKey).
+   * Keys every reset effect and remount key that previously keyed on the
+   * single-axis filterId. */
+  predicatesKey: string;
+  /** Clears all active predicates — the zero-result empty state's CTA. */
+  onClearFilters?: () => void;
   isSelectionMode?: boolean;
   selectedTestCases?: number[];
   selectedRunIds?: number[];
@@ -372,8 +503,25 @@ interface CasesProps {
     totalItems: number;
     setTotalItems: (total: number) => void;
   };
-  /** When provided, restricts displayed cases to these IDs (from Elasticsearch search) */
+  /** Relevance-ordered id set from Elasticsearch. Intersected with the folder
+   * scope, the predicates and the in-table name filter (spec §9) — never a
+   * bypass. Null when no search is active; an empty array means the search
+   * matched nothing. */
   searchResultIds?: number[] | null;
+  /** Identity of `searchResultIds` for query keys — the debounced query string
+   * the ids were resolved for, never the array itself. */
+  searchKey?: string;
+  /** The search text the table is scoped to, resolved or not. Part of the
+   * "current view" identity alongside folder/axis/predicates: a change to it
+   * invalidates the bulk selection and any in-flight select-all. */
+  searchText?: string;
+  /** A query is on screen but its id set has not resolved yet. The ids are an
+   * AND'd filter, so the list must show loading rather than the unfiltered
+   * repository (spec §9). */
+  searchPending?: boolean;
+  /** The search could not be resolved. Same reasoning as `searchPending`, but
+   * terminal: the table shows the error state instead of an unfiltered list. */
+  searchFailed?: boolean;
   /** When set, opens CopyMoveDialog in folder mode for the given folder */
   copyMoveFolderId?: number | null;
   copyMoveFolderName?: string;
@@ -389,7 +537,10 @@ interface CasesProps {
 export default function Cases({
   folderId,
   viewType,
-  filterId,
+  predicates,
+  filterRegistry,
+  predicatesKey,
+  onClearFilters,
   isSelectionMode = false,
   selectedTestCases = [],
   selectedRunIds,
@@ -407,6 +558,10 @@ export default function Cases({
   selectedFolderCaseCount,
   overridePagination,
   searchResultIds,
+  searchKey,
+  searchText = "",
+  searchPending = false,
+  searchFailed = false,
   copyMoveFolderId,
   copyMoveFolderName,
   onCopyMoveFolderDialogClose,
@@ -590,7 +745,12 @@ export default function Cases({
   });
   const showCopyMove = canAddEdit && (projectCount ?? 0) > 1;
 
-  // *** NEW: Fetch total project case count ***
+  // Total project case count — and the ANCHOR for seam 2 of
+  // useRepositoryCasesInvalidation. It is the live ZenStack RepositoryCases
+  // query that a hand-rolled `queryClient.invalidateQueries` (AddCase's inline
+  // save) lands on, which is how that path reaches the POST-routed list. Do not
+  // remove or disable it without giving that seam another RepositoryCases query
+  // to observe.
   const { data: totalProjectCasesCountData } = useClientQueries(
     schema
   ).repositoryCases.useCount(
@@ -671,8 +831,12 @@ export default function Cases({
       },
       {
         enabled: Boolean(
-          // Skip query if we know the selected folder has 0 cases
-          viewType === "folders" && selectedFolderCaseCount === 0
+          // Skip query if we know the selected folder has 0 cases. Active
+          // predicates bypass the folder wall (spec §7.1), so they also bypass
+          // this shortcut.
+          predicates.length === 0 &&
+            viewType === "folders" &&
+            selectedFolderCaseCount === 0
             ? false
             : !!projectId
         ),
@@ -918,7 +1082,9 @@ export default function Cases({
 
   // Build repository case where clause (used for filtering by folder, view, template, etc.)
   // This excludes test run-specific filters like assignedTo and status
-  // NOTE: When searchResultIds is active, ZenStack hooks are disabled and data comes from POST fetch instead
+  // NOTE: While the POST route owns the list (active search, or a where too
+  // large for a GET) the ZenStack hooks are disabled and this same clause
+  // travels in the request body instead.
   const repositoryCaseWhereClause: RepositoryCasesWhereInput = useMemo(() => {
     const baseConditions: RepositoryCasesWhereInput[] = [
       {
@@ -940,738 +1106,21 @@ export default function Cases({
       });
     }
 
-    // --- Apply folder/view/filter logic ---
-    // Skip assignedTo and status filters here - they're handled separately for test run cases
-    const isTestRunSpecificView =
-      viewType === "assignedTo" || viewType === "status";
-
     if (viewType === "folders" && folderId) {
-      // 1. Folder view with specific folder (or folder + all descendants)
+      // Folder view with specific folder (or folder + all descendants)
       if (descendantFolderIds && descendantFolderIds.length > 0) {
         baseConditions.push({ folderId: { in: descendantFolderIds } });
       } else {
         baseConditions.push({ folderId: { equals: folderId } });
       }
-    } else if (
-      !isTestRunSpecificView &&
-      (filterId === null || (Array.isArray(filterId) && filterId.length === 0))
-    ) {
-      // 2. Filter is null - means "All Values/All Items", so add no condition
-    } else if (!isTestRunSpecificView) {
-      // 4. Filter has specific value(s)
-      const filterArray = Array.isArray(filterId) ? filterId : [filterId];
-      const filterConditions: any[] = [];
-
-      // Build a condition for each filter value
-      for (const singleFilterId of filterArray) {
-        if (viewType.startsWith("dynamic_")) {
-          // Apply specific filter for dynamic views
-          const [_, ...fieldParts] = viewType.split("_");
-          const fieldKey = fieldParts.join("_");
-          const [fieldId, fieldType] = fieldKey.split("_");
-          const numericFieldId = parseInt(fieldId);
-
-          // Add the dynamic filtering logic here (Link, Dropdown, etc.)
-          if (fieldType === "Link") {
-            // Support both numeric IDs (legacy) and string IDs (new)
-            if (
-              (singleFilterId as number) === 1 ||
-              singleFilterId === "hasValue"
-            ) {
-              // Has link
-              filterConditions.push({
-                caseFieldValues: {
-                  some: {
-                    fieldId: numericFieldId,
-                    AND: [
-                      { value: { not: JsonNull } },
-                      { value: { not: { equals: "" } } },
-                    ],
-                  },
-                },
-              });
-            } else if (
-              (singleFilterId as number) === 2 ||
-              singleFilterId === "none"
-            ) {
-              // No link
-              filterConditions.push({
-                OR: [
-                  { caseFieldValues: { none: { fieldId: numericFieldId } } },
-                  {
-                    caseFieldValues: {
-                      some: {
-                        fieldId: numericFieldId,
-                        OR: [
-                          { value: { equals: JsonNull } },
-                          { value: { equals: "" } },
-                        ],
-                      },
-                    },
-                  },
-                ],
-              });
-            } else if (
-              typeof singleFilterId === "string" &&
-              singleFilterId.includes("|")
-            ) {
-              // Operator-based link filtering
-              const parts = singleFilterId.split("|");
-              const searchValue = parts[1];
-
-              if (searchValue) {
-                // For link operators, we fetch all non-null values and filter in application logic
-                filterConditions.push({
-                  caseFieldValues: {
-                    some: {
-                      fieldId: numericFieldId,
-                      value: { not: JsonNull },
-                    },
-                  },
-                });
-                // Note: Actual URL filtering will happen after fetch in application logic
-              }
-            }
-          } else if (fieldType === "Dropdown") {
-            // Handle special "none" value to filter for cases without this field
-            if (singleFilterId === "none") {
-              filterConditions.push({
-                OR: [
-                  // Case 1: No record exists for this fieldId
-                  { caseFieldValues: { none: { fieldId: numericFieldId } } },
-                  // Case 2: Record exists, but value is explicitly null
-                  {
-                    caseFieldValues: {
-                      some: {
-                        fieldId: numericFieldId,
-                        value: { equals: JsonNull },
-                      },
-                    },
-                  },
-                ],
-              });
-            } else {
-              filterConditions.push({
-                caseFieldValues: {
-                  some: {
-                    fieldId: numericFieldId,
-                    OR: [
-                      {
-                        value: {
-                          equals: (
-                            singleFilterId as string | number
-                          ).toString(),
-                        },
-                      },
-                      {
-                        value: { equals: singleFilterId as string | number },
-                      },
-                    ],
-                  },
-                },
-              });
-            }
-          } else if (fieldType === "Multi-Select") {
-            // Handle special "none" value to filter for cases without this field
-            if (singleFilterId === "none") {
-              filterConditions.push({
-                OR: [
-                  // Case 1: No record exists for this fieldId
-                  { caseFieldValues: { none: { fieldId: numericFieldId } } },
-                  // Case 2: Record exists, but value is explicitly null
-                  {
-                    caseFieldValues: {
-                      some: {
-                        fieldId: numericFieldId,
-                        value: { equals: JsonNull },
-                      },
-                    },
-                  },
-                ],
-              });
-            } else {
-              filterConditions.push({
-                caseFieldValues: {
-                  some: {
-                    fieldId: numericFieldId,
-                    value: {
-                      array_contains: [singleFilterId as string | number],
-                    },
-                  },
-                },
-              });
-            }
-          } else if (fieldType === "Steps") {
-            // Support both numeric IDs (legacy) and string IDs (new)
-            if (
-              (singleFilterId as number) === 1 ||
-              singleFilterId === "hasValue"
-            ) {
-              // Has steps
-              filterConditions.push({
-                steps: { some: { isDeleted: false } },
-              });
-            } else if (
-              (singleFilterId as number) === 2 ||
-              singleFilterId === "none"
-            ) {
-              // No steps
-              filterConditions.push({
-                steps: { none: { isDeleted: false } },
-              });
-            }
-          } else if (fieldType === "Checkbox") {
-            // singleFilterId 1 = Checked, singleFilterId 2 = Unchecked
-            filterConditions.push({
-              caseFieldValues: {
-                some: {
-                  fieldId: numericFieldId,
-                  value: {
-                    equals: (singleFilterId as number) === 1 ? true : false,
-                  },
-                },
-              },
-            });
-          } else if (fieldType === "Integer" || fieldType === "Number") {
-            // Handle special "none" value for cases without this field
-            if (singleFilterId === "none") {
-              filterConditions.push({
-                OR: [
-                  { caseFieldValues: { none: { fieldId: numericFieldId } } },
-                  {
-                    caseFieldValues: {
-                      some: {
-                        fieldId: numericFieldId,
-                        value: { equals: JsonNull },
-                      },
-                    },
-                  },
-                ],
-              });
-            } else if (singleFilterId === "hasValue") {
-              // Has any value (not null)
-              filterConditions.push({
-                caseFieldValues: {
-                  some: {
-                    fieldId: numericFieldId,
-                    value: { not: JsonNull },
-                  },
-                },
-              });
-            } else if (
-              typeof singleFilterId === "string" &&
-              singleFilterId.includes(":")
-            ) {
-              // Operator-based filter: format is "operator:value1" or "operator:value1:value2"
-              const parts = singleFilterId.split(":");
-              const operator = parts[0];
-              const value1 = parseFloat(parts[1]);
-
-              if (!isNaN(value1)) {
-                if (operator === "eq") {
-                  // Equals
-                  filterConditions.push({
-                    caseFieldValues: {
-                      some: {
-                        fieldId: numericFieldId,
-                        OR: [
-                          { value: { equals: value1 } },
-                          { value: { equals: value1.toString() } },
-                        ],
-                      },
-                    },
-                  });
-                } else if (operator === "ne") {
-                  // Not equals
-                  filterConditions.push({
-                    OR: [
-                      {
-                        caseFieldValues: {
-                          none: { fieldId: numericFieldId },
-                        },
-                      },
-                      {
-                        caseFieldValues: {
-                          some: {
-                            fieldId: numericFieldId,
-                            value: { equals: JsonNull },
-                          },
-                        },
-                      },
-                      {
-                        caseFieldValues: {
-                          some: {
-                            fieldId: numericFieldId,
-                            AND: [
-                              { value: { not: { equals: value1 } } },
-                              {
-                                value: { not: { equals: value1.toString() } },
-                              },
-                            ],
-                          },
-                        },
-                      },
-                    ],
-                  });
-                } else if (operator === "lt") {
-                  // Less than
-                  filterConditions.push({
-                    caseFieldValues: {
-                      some: {
-                        fieldId: numericFieldId,
-                        OR: [
-                          { value: { lt: value1 } },
-                          { value: { lt: value1.toString() } },
-                        ],
-                      },
-                    },
-                  });
-                } else if (operator === "lte") {
-                  // Less than or equal
-                  filterConditions.push({
-                    caseFieldValues: {
-                      some: {
-                        fieldId: numericFieldId,
-                        OR: [
-                          { value: { lte: value1 } },
-                          { value: { lte: value1.toString() } },
-                        ],
-                      },
-                    },
-                  });
-                } else if (operator === "gt") {
-                  // Greater than
-                  filterConditions.push({
-                    caseFieldValues: {
-                      some: {
-                        fieldId: numericFieldId,
-                        OR: [
-                          { value: { gt: value1 } },
-                          { value: { gt: value1.toString() } },
-                        ],
-                      },
-                    },
-                  });
-                } else if (operator === "gte") {
-                  // Greater than or equal
-                  filterConditions.push({
-                    caseFieldValues: {
-                      some: {
-                        fieldId: numericFieldId,
-                        OR: [
-                          { value: { gte: value1 } },
-                          { value: { gte: value1.toString() } },
-                        ],
-                      },
-                    },
-                  });
-                } else if (operator === "between" && parts.length === 3) {
-                  // Between two values
-                  const value2 = parseFloat(parts[2]);
-                  if (!isNaN(value2)) {
-                    filterConditions.push({
-                      caseFieldValues: {
-                        some: {
-                          fieldId: numericFieldId,
-                          OR: [
-                            {
-                              AND: [
-                                { value: { gte: value1 } },
-                                { value: { lte: value2 } },
-                              ],
-                            },
-                            {
-                              AND: [
-                                { value: { gte: value1.toString() } },
-                                { value: { lte: value2.toString() } },
-                              ],
-                            },
-                          ],
-                        },
-                      },
-                    });
-                  }
-                }
-              }
-            } else {
-              // Filter by specific numeric value (legacy support)
-              filterConditions.push({
-                caseFieldValues: {
-                  some: {
-                    fieldId: numericFieldId,
-                    OR: [
-                      {
-                        value: {
-                          equals: (
-                            singleFilterId as string | number
-                          ).toString(),
-                        },
-                      },
-                      {
-                        value: { equals: singleFilterId as string | number },
-                      },
-                    ],
-                  },
-                },
-              });
-            }
-          } else if (fieldType === "Date") {
-            // Handle special "none" value for cases without this field
-            if (singleFilterId === "none") {
-              filterConditions.push({
-                OR: [
-                  { caseFieldValues: { none: { fieldId: numericFieldId } } },
-                  {
-                    caseFieldValues: {
-                      some: {
-                        fieldId: numericFieldId,
-                        value: { equals: JsonNull },
-                      },
-                    },
-                  },
-                ],
-              });
-            } else if (singleFilterId === "hasValue") {
-              // Has any date (not null, not JSON null, and not empty string)
-              filterConditions.push({
-                caseFieldValues: {
-                  some: {
-                    fieldId: numericFieldId,
-                    AND: [
-                      { value: { not: JsonNull } },
-                      { NOT: { value: { equals: JsonNull } } },
-                      { NOT: { value: { equals: "" } } },
-                      { NOT: { value: { equals: null } } },
-                    ],
-                  },
-                },
-              });
-            } else if (singleFilterId === "last7") {
-              // Last 7 days
-              const now = new Date();
-              const sevenDaysAgo = new Date(
-                now.getTime() - 7 * 24 * 60 * 60 * 1000
-              );
-              const sevenDaysAgoStr = sevenDaysAgo.toISOString().split("T")[0];
-              filterConditions.push({
-                caseFieldValues: {
-                  some: {
-                    fieldId: numericFieldId,
-                    OR: [
-                      { value: { gte: sevenDaysAgoStr } },
-                      { value: { gte: sevenDaysAgo.toISOString() } },
-                    ],
-                  },
-                },
-              });
-            } else if (singleFilterId === "last30") {
-              // Last 30 days
-              const now = new Date();
-              const thirtyDaysAgo = new Date(
-                now.getTime() - 30 * 24 * 60 * 60 * 1000
-              );
-              const thirtyDaysAgoStr = thirtyDaysAgo
-                .toISOString()
-                .split("T")[0];
-              filterConditions.push({
-                caseFieldValues: {
-                  some: {
-                    fieldId: numericFieldId,
-                    OR: [
-                      { value: { gte: thirtyDaysAgoStr } },
-                      { value: { gte: thirtyDaysAgo.toISOString() } },
-                    ],
-                  },
-                },
-              });
-            } else if (singleFilterId === "last90") {
-              // Last 90 days
-              const now = new Date();
-              const ninetyDaysAgo = new Date(
-                now.getTime() - 90 * 24 * 60 * 60 * 1000
-              );
-              const ninetyDaysAgoStr = ninetyDaysAgo
-                .toISOString()
-                .split("T")[0];
-              filterConditions.push({
-                caseFieldValues: {
-                  some: {
-                    fieldId: numericFieldId,
-                    OR: [
-                      { value: { gte: ninetyDaysAgoStr } },
-                      { value: { gte: ninetyDaysAgo.toISOString() } },
-                    ],
-                  },
-                },
-              });
-            } else if (singleFilterId === "thisYear") {
-              // This year
-              const now = new Date();
-              const startOfYear = new Date(now.getFullYear(), 0, 1);
-              const startOfYearStr = startOfYear.toISOString().split("T")[0];
-              filterConditions.push({
-                caseFieldValues: {
-                  some: {
-                    fieldId: numericFieldId,
-                    OR: [
-                      { value: { gte: startOfYearStr } },
-                      { value: { gte: startOfYear.toISOString() } },
-                    ],
-                  },
-                },
-              });
-            } else if (
-              typeof singleFilterId === "string" &&
-              singleFilterId.includes("|")
-            ) {
-              // Operator-based filter: format is "operator|date1" or "operator|date1|date2"
-              const parts = singleFilterId.split("|");
-              const operator = parts[0];
-
-              if (operator === "on" && parts.length >= 2) {
-                // On date (exact match)
-                const date = new Date(parts[1]);
-                if (!isNaN(date.getTime())) {
-                  const dateStr = date.toISOString().split("T")[0];
-                  filterConditions.push({
-                    caseFieldValues: {
-                      some: {
-                        fieldId: numericFieldId,
-                        OR: [
-                          { value: { equals: dateStr } },
-                          { value: { equals: date.toISOString() } },
-                        ],
-                      },
-                    },
-                  });
-                }
-              } else if (operator === "before" && parts.length >= 2) {
-                // Before date
-                const date = new Date(parts[1]);
-                if (!isNaN(date.getTime())) {
-                  const dateStr = date.toISOString().split("T")[0];
-                  filterConditions.push({
-                    caseFieldValues: {
-                      some: {
-                        fieldId: numericFieldId,
-                        OR: [
-                          { value: { lt: dateStr } },
-                          { value: { lt: date.toISOString() } },
-                        ],
-                      },
-                    },
-                  });
-                }
-              } else if (operator === "after" && parts.length >= 2) {
-                // After date
-                const date = new Date(parts[1]);
-                if (!isNaN(date.getTime())) {
-                  const dateStr = date.toISOString().split("T")[0];
-                  filterConditions.push({
-                    caseFieldValues: {
-                      some: {
-                        fieldId: numericFieldId,
-                        OR: [
-                          { value: { gt: dateStr } },
-                          { value: { gt: date.toISOString() } },
-                        ],
-                      },
-                    },
-                  });
-                }
-              } else if (operator === "between" && parts.length === 3) {
-                // Between two dates
-                const date1 = new Date(parts[1]);
-                const date2 = new Date(parts[2]);
-                if (!isNaN(date1.getTime()) && !isNaN(date2.getTime())) {
-                  const dateStr1 = date1.toISOString().split("T")[0];
-                  const dateStr2 = date2.toISOString().split("T")[0];
-                  filterConditions.push({
-                    caseFieldValues: {
-                      some: {
-                        fieldId: numericFieldId,
-                        OR: [
-                          {
-                            AND: [
-                              { value: { gte: dateStr1 } },
-                              { value: { lte: dateStr2 } },
-                            ],
-                          },
-                          {
-                            AND: [
-                              { value: { gte: date1.toISOString() } },
-                              { value: { lte: date2.toISOString() } },
-                            ],
-                          },
-                        ],
-                      },
-                    },
-                  });
-                }
-              }
-            } else if ((singleFilterId as number) === 1) {
-              // Legacy: Has date
-              filterConditions.push({
-                caseFieldValues: {
-                  some: {
-                    fieldId: numericFieldId,
-                    value: { not: JsonNull },
-                  },
-                },
-              });
-            } else if ((singleFilterId as number) === 2) {
-              // Legacy: No date
-              filterConditions.push({
-                OR: [
-                  { caseFieldValues: { none: { fieldId: numericFieldId } } },
-                  {
-                    caseFieldValues: {
-                      some: {
-                        fieldId: numericFieldId,
-                        value: { equals: JsonNull },
-                      },
-                    },
-                  },
-                ],
-              });
-            }
-          } else if (fieldType === "Text Long" || fieldType === "Text String") {
-            // Handle hasValue/none special filters
-            if (singleFilterId === "hasValue") {
-              // Has text - filter for non-null, non-empty values
-              filterConditions.push({
-                caseFieldValues: {
-                  some: {
-                    fieldId: numericFieldId,
-                    AND: [
-                      { value: { not: JsonNull } },
-                      { value: { not: { equals: "" } } },
-                    ],
-                  },
-                },
-              });
-            } else if (singleFilterId === "none") {
-              // No text - filter for null, empty, or non-existent
-              filterConditions.push({
-                OR: [
-                  { caseFieldValues: { none: { fieldId: numericFieldId } } },
-                  {
-                    caseFieldValues: {
-                      some: {
-                        fieldId: numericFieldId,
-                        OR: [
-                          { value: { equals: JsonNull } },
-                          { value: { equals: "" } },
-                        ],
-                      },
-                    },
-                  },
-                ],
-              });
-            } else if (
-              typeof singleFilterId === "string" &&
-              singleFilterId.includes("|")
-            ) {
-              // Operator-based text filtering
-              const parts = singleFilterId.split("|");
-              const _operator = parts[0];
-              const searchValue = parts[1];
-
-              if (searchValue) {
-                // For text operators, we fetch all non-null values and filter in application logic
-                // This is necessary because Prisma doesn't support advanced string operations on JSON fields
-                filterConditions.push({
-                  caseFieldValues: {
-                    some: {
-                      fieldId: numericFieldId,
-                      value: { not: JsonNull },
-                    },
-                  },
-                });
-                // Note: Actual text filtering will happen after fetch in application logic
-              }
-            }
-          }
-        } else {
-          // Apply specific filter for standard views (using switch)
-          switch (viewType) {
-            case "templates":
-              filterConditions.push({
-                templateId: { equals: Number(singleFilterId) },
-              });
-              break;
-            case "states":
-              filterConditions.push({
-                stateId: { equals: Number(singleFilterId) },
-              });
-              break;
-            case "creators":
-              filterConditions.push({
-                creatorId: { equals: singleFilterId?.toString() },
-              });
-              break;
-            case "automated":
-              filterConditions.push({
-                automated: (singleFilterId as number) === 1 ? true : false,
-              });
-              break;
-            case "parameterized":
-              filterConditions.push({
-                hasParameters: (singleFilterId as number) === 1,
-              });
-              break;
-            case "attachments":
-              filterConditions.push(
-                attachmentsWhereClause((singleFilterId as number) === 1)
-              );
-              break;
-            case "tags":
-              if (singleFilterId === "any") {
-                filterConditions.push({
-                  caseTags: { some: { tag: { isDeleted: false } } },
-                });
-              } else if (singleFilterId === "none") {
-                filterConditions.push({
-                  caseTags: { none: { tag: { isDeleted: false } } },
-                });
-              } else {
-                filterConditions.push({
-                  caseTags: {
-                    some: {
-                      tag: { id: Number(singleFilterId), isDeleted: false },
-                    },
-                  },
-                });
-              }
-              break;
-            case "issues":
-              if (singleFilterId === "any") {
-                filterConditions.push({
-                  caseIssues: { some: { issue: { isDeleted: false } } },
-                });
-              } else if (singleFilterId === "none") {
-                filterConditions.push({
-                  caseIssues: { none: { issue: { isDeleted: false } } },
-                });
-              } else {
-                filterConditions.push({
-                  caseIssues: {
-                    some: {
-                      issue: { id: Number(singleFilterId), isDeleted: false },
-                    },
-                  },
-                });
-              }
-              break;
-          }
-        }
-      }
-
-      // Combine all filter conditions with OR (union of results)
-      if (filterConditions.length > 0) {
-        baseConditions.push({ OR: filterConditions });
-      }
     }
+
+    // One self-contained fragment per predicate, AND'd with the base
+    // conditions. Run-scoped predicates (status/assignedTo) are skipped by the
+    // compiler and applied to the TestRunCases where instead; text/link/steps
+    // operator predicates compile to their value-not-null SQL pre-filter only —
+    // postFetchFilters below carries their in-memory half.
+    baseConditions.push(...compileRepoPredicates(predicates, filterRegistry));
 
     const finalWhereClause: RepositoryCasesWhereInput = {
       AND: baseConditions,
@@ -1682,135 +1131,53 @@ export default function Cases({
     projectId,
     viewType,
     folderId,
-    filterId,
+    predicates,
+    filterRegistry,
     descendantFolderIds,
     isSelectionMode,
     excludeNotStartedFromRuns,
   ]);
 
-  // When `showDescendants` is on with a selected folder, the descendant folder
-  // IDs are fetched via a POST endpoint that resolves them server-side (recursive
-  // CTE). This avoids serializing a very large `folderId: { in: [...] }` array
-  // into the URL of the ZenStack GET request, which triggers HTTP 414 on deep
-  // folder trees.
-  const isDescendantsMode =
-    showDescendants &&
-    folderId !== null &&
-    folderId !== undefined &&
-    viewType === "folders" &&
-    !isRunMode &&
-    (descendantFolderIds?.length ?? 0) > 0;
+  // Post-fetch filters for text/link/steps operator predicates — the in-memory
+  // half of the fragments compileRepoPredicates pre-filters as value-not-null.
+  const postFetchFilters: PostFetchFilter[] = useMemo(
+    () => extractPostFetchFilters(predicates, filterRegistry),
+    [predicates, filterRegistry]
+  );
 
-  // The descendants POST body omits the folder filter — the server injects it
-  // after resolving the subtree.
-  const repositoryCaseWhereClauseWithoutFolderFilter: RepositoryCasesWhereInput =
-    useMemo(() => {
-      if (!isDescendantsMode) return repositoryCaseWhereClause;
-      const andList = Array.isArray(repositoryCaseWhereClause.AND)
-        ? (repositoryCaseWhereClause.AND as RepositoryCasesWhereInput[])
-        : repositoryCaseWhereClause.AND
-          ? [repositoryCaseWhereClause.AND as RepositoryCasesWhereInput]
-          : [];
-      return {
-        AND: andList.filter((cond) => !("folderId" in (cond ?? {}))),
-      };
-    }, [isDescendantsMode, repositoryCaseWhereClause]);
+  // --- One transport (spec §9) ---------------------------------------------
+  // The list, the count and the id list all come from POST /cases/query, in
+  // repository AND run mode. The table used to choose per query between the
+  // ZenStack GET hooks, the by-folder-descendants POST and this route, based on
+  // whether a search was active and how long the serialized `where` was — and
+  // the list query and the count query made that choice independently, so a
+  // disagreement showed rows and a total that did not match. "Show all
+  // descendants" needs no separate endpoint here: `descendantFolderIds` is
+  // already resolved client-side into `repositoryCaseWhereClause`, and a POST
+  // body has no URI length to overflow.
+  const searchActive = Array.isArray(searchResultIds);
+  // A search is in play whose id set is unusable — still resolving, or failed.
+  // Before Phase 4 the ids were a bypass and a missing set simply meant "no
+  // search"; now they are an AND'd filter, so falling through to the ordinary
+  // query would render the ENTIRE repository as if the search had matched
+  // everything. Every list/count query is gated off here and the render shows
+  // loading (pending) or the error state (failed) instead — spec §9's "no
+  // silent fallback to unfiltered".
+  const searchUnresolved = searchPending || searchFailed;
 
-  // Build post-fetch filters for text/link/steps operators
-  const postFetchFilters: PostFetchFilter[] = useMemo(() => {
-    const filters: PostFetchFilter[] = [];
+  // A plain useQuery sits outside ZenStack's model-keyed query graph, so the
+  // automatic post-mutation invalidation the GET hooks had is re-established
+  // centrally here — one seam for every mutation site, present and future.
+  // It also hands back the manual invalidator the few call sites below use.
+  const invalidateCaseList = useRepositoryCasesInvalidation();
 
-    if (!filterId || !viewType) {
-      return filters;
-    }
-
-    if (!viewType.startsWith("dynamic_")) {
-      return filters;
-    }
-
-    const filterArray = Array.isArray(filterId) ? filterId : [filterId];
-
-    for (const singleFilterId of filterArray) {
-      if (typeof singleFilterId === "string" && singleFilterId.includes("|")) {
-        // Extract field info from viewType
-        const parts = viewType.split("_");
-        const fieldId = parseInt(parts[1]);
-        const fieldType = parts.slice(2).join("_");
-
-        if (fieldType === "Text Long" || fieldType === "Text String") {
-          const filterParts = singleFilterId.split("|");
-          filters.push({
-            fieldId,
-            type: "text",
-            operator: filterParts[0],
-            value1: filterParts[1],
-          });
-        } else if (fieldType === "Link") {
-          const filterParts = singleFilterId.split("|");
-          filters.push({
-            fieldId,
-            type: "link",
-            operator: filterParts[0],
-            value1: filterParts[1],
-          });
-        } else if (fieldType === "Steps") {
-          const filterParts = singleFilterId.split("|");
-          const count1 = parseInt(filterParts[1]);
-          const count2 = filterParts[2] ? parseInt(filterParts[2]) : undefined;
-          if (!isNaN(count1)) {
-            filters.push({
-              fieldId,
-              type: "steps",
-              operator: filterParts[0],
-              value1: count1,
-              value2: count2,
-            });
-          }
-        }
-      }
-    }
-
-    return filters;
-  }, [filterId, viewType]);
-
-  // Build test run case where clause (used for filtering by assignedTo and status)
-  const testRunCaseWhereClause: TestRunCasesWhereInput = useMemo(() => {
-    if (
-      !isRunMode ||
-      !filterId ||
-      (viewType !== "assignedTo" && viewType !== "status")
-    ) {
-      return {};
-    }
-
-    const filterArray = Array.isArray(filterId) ? filterId : [filterId];
-    const filterConditions: any[] = [];
-
-    for (const singleFilterId of filterArray) {
-      if (viewType === "assignedTo") {
-        if (singleFilterId === "unassigned") {
-          filterConditions.push({ assignedToId: { equals: null } });
-        } else {
-          filterConditions.push({
-            assignedToId: { equals: singleFilterId as string },
-          });
-        }
-      } else if (viewType === "status") {
-        if (singleFilterId === "untested") {
-          filterConditions.push({ statusId: { equals: null } });
-        } else {
-          filterConditions.push({
-            statusId: { equals: singleFilterId as number },
-          });
-        }
-      }
-    }
-
-    if (filterConditions.length > 0) {
-      return { OR: filterConditions };
-    }
-    return {};
-  }, [isRunMode, viewType, filterId]);
+  // Run-scoped predicate fragments (status/assignedTo). Every fragment carries
+  // an OR key, so they MUST be combined in an explicit AND array — spreading
+  // two as siblings silently overwrites the first (compiler contract).
+  const runPredicateFragments: TestRunCasesWhereInput[] = useMemo(
+    () => (isRunMode ? compileRunPredicates(predicates, filterRegistry) : []),
+    [isRunMode, predicates, filterRegistry]
+  );
 
   // Create orderBy for TestRunCases based on sortConfig
   const testRunCasesOrderBy: NonNullable<TestRunCasesFindManyArgs["orderBy"]> =
@@ -1873,209 +1240,14 @@ export default function Cases({
         ? [runId]
         : [];
 
-  // Fetch test run cases and their related repository cases for run mode
-  const { data: testRunCasesData, refetch: refetchTestRunCases } =
-    useClientQueries(schema).testRunCases.useFindMany(
-      {
-        where: {
-          testRunId:
-            effectiveRunIds.length === 1
-              ? effectiveRunIds[0]
-              : { in: effectiveRunIds },
-          isDeleted: false,
-          ...testRunCaseWhereClause,
-          repositoryCase: repositoryCaseWhereClause,
-        },
-        orderBy: testRunCasesOrderBy,
-        skip: (currentPage - 1) * (pageSize === "All" ? 0 : pageSize),
-        take: pageSize === "All" ? undefined : pageSize,
-        select: {
-          id: true,
-          repositoryCaseId: true,
-          order: true,
-          statusId: true,
-          status: {
-            select: {
-              id: true,
-              name: true,
-              color: {
-                select: {
-                  value: true,
-                },
-              },
-            },
-          },
-          assignedToId: true,
-          assignedTo: {
-            select: {
-              id: true,
-              name: true,
-            },
-          },
-          isCompleted: true,
-          notes: true,
-          startedAt: true,
-          completedAt: true,
-          elapsed: true,
-          // Phase 3 — surface iteration count so the status cell can detect
-          // parameterized cases and render its read-only sheet-opener.
-          totalIterations: true,
-          testRun: {
-            select: {
-              id: true,
-              configuration: {
-                select: {
-                  id: true,
-                  name: true,
-                },
-              },
-            },
-          },
-          repositoryCase: {
-            select: {
-              id: true,
-              projectId: true,
-              project: true,
-              creator: true,
-              folder: true,
-              repositoryId: true,
-              folderId: true,
-              templateId: true,
-              name: true,
-              stateId: true,
-              estimate: true,
-              forecastManual: true,
-              forecastAutomated: true,
-              order: true,
-              createdAt: true,
-              creatorId: true,
-              automated: true,
-              hasParameters: true,
-              isArchived: true,
-              isDeleted: true,
-              currentVersion: true,
-              source: true,
-              state: CASE_STATE_SELECT,
-              template: CASE_TEMPLATE_SELECT,
-              caseFieldValues: CASE_FIELD_VALUES_SELECT,
-              attachments: CASE_ATTACHMENTS_SELECT,
-              steps: CASE_STEPS_SELECT,
-              caseTags: CASE_TAGS_SELECT,
-              caseIssues: CASE_ISSUES_SELECT,
-              testRuns: {
-                select: {
-                  id: true,
-                  testRun: {
-                    select: {
-                      id: true,
-                      name: true,
-                      projectId: true,
-                      isDeleted: true,
-                      isCompleted: true,
-                    },
-                  },
-                },
-              },
-              linksFrom: {
-                select: {
-                  caseBId: true,
-                  type: true,
-                  isDeleted: true,
-                },
-              },
-              linksTo: {
-                select: {
-                  caseAId: true,
-                  type: true,
-                  isDeleted: true,
-                },
-              },
-              _count: {
-                select: {
-                  comments: {
-                    where: {
-                      isDeleted: false,
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
-      {
-        enabled:
-          isRunMode &&
-          !!session?.user &&
-          isValidProjectId &&
-          effectiveRunIds.length > 0,
-        refetchOnWindowFocus: true,
-      }
-    ) as {
-      data:
-        | TestRunCasesGetPayload<{
-            select: {
-              id: true;
-              repositoryCaseId: true;
-              order: true;
-              statusId: true;
-              status: {
-                select: {
-                  id: true;
-                  name: true;
-                  color: {
-                    select: {
-                      value: true;
-                    };
-                  };
-                };
-              };
-              assignedToId: true;
-              assignedTo: {
-                select: {
-                  id: true;
-                  name: true;
-                };
-              };
-              isCompleted: true;
-              notes: true;
-              startedAt: true;
-              completedAt: true;
-              elapsed: true;
-              testRun: {
-                select: {
-                  id: true;
-                  configuration: {
-                    select: {
-                      id: true;
-                      name: true;
-                    };
-                  };
-                };
-              };
-              repositoryCase: {
-                select: {
-                  id: true;
-                  projectId: true;
-                  folderId: true;
-                  templateId: true;
-                  name: true;
-                  stateId: true;
-                  order: true;
-                  createdAt: true;
-                  creatorId: true;
-                  automated: true;
-                  hasParameters: true;
-                  isArchived: true;
-                  isDeleted: true;
-                  source: true;
-                };
-              };
-            };
-          }>[]
-        | undefined;
-      refetch: any;
-    };
+  // Run-mode TestRunCases predicate. The route forces the run scope, the
+  // project on both ends and (in search) the case id set; this carries only
+  // what the client owns — soft-delete plus the run-scoped predicate fragments
+  // (status/assignedTo). The repository half travels as `repositoryCaseWhere`.
+  const testRunCasesWhere = useMemo(
+    () => ({ isDeleted: false, AND: runPredicateFragments }),
+    [runPredicateFragments]
+  );
 
   // orderBy for repository cases (used in non-run mode)
   const orderBy: NonNullable<RepositoryCasesFindManyArgs["orderBy"]> =
@@ -2141,62 +1313,10 @@ export default function Cases({
       return { order: "asc" };
     }, [sortConfig, isDefaultSort]);
 
-  // Add filtered count query for accurate pagination
-  // For repository mode: count repository cases
-  const { data: filteredCountData, refetch: refetchFilteredCount } =
-    useClientQueries(schema).repositoryCases.useCount(
-      {
-        where: repositoryCaseWhereClause,
-      },
-      {
-        enabled: Boolean(
-          // Disable when ES search is active (data comes from POST fetch instead)
-          searchResultIds
-            ? false
-            : // Disable in descendants mode (count comes from the POST endpoint)
-              isDescendantsMode
-              ? false
-              : // Skip query if we know the selected folder has 0 cases
-                viewType === "folders" && selectedFolderCaseCount === 0
-                ? false
-                : !isRunMode && // Don't run this in run mode
-                  ((!!session?.user && deferredSearchString.length === 0) ||
-                    deferredSearchString.length > 0)
-        ),
-        refetchOnWindowFocus: false,
-        // Keep previous data to prevent count from dropping to 0 during refetch
-        // This prevents pagination from resetting when switching pages
-        placeholderData: (previousData) => previousData,
-      }
-    );
-
-  // For run mode: count test run cases matching the filters
-  const { data: testRunCasesCountData } = useClientQueries(
-    schema
-  ).testRunCases.useCount(
-    {
-      where: {
-        testRunId:
-          effectiveRunIds.length === 1
-            ? effectiveRunIds[0]
-            : { in: effectiveRunIds },
-        isDeleted: false,
-        ...testRunCaseWhereClause,
-        repositoryCase: repositoryCaseWhereClause,
-      },
-    },
-    {
-      enabled: Boolean(
-        isRunMode &&
-        !!session?.user &&
-        isValidProjectId &&
-        effectiveRunIds.length > 0
-      ),
-      refetchOnWindowFocus: false,
-      // Keep previous data to prevent count from dropping to 0 during refetch
-      placeholderData: (previousData) => previousData,
-    }
-  );
+  // Counts no longer have a query of their own: the list response carries
+  // the total for the same intersection it paged, so rows and total cannot
+  // disagree. The only exception is an id-resolved sort, whose page request is
+  // scoped to one page of ids — see postQueryCountResult below.
 
   // Text/link/steps filters are applied in JS to the fetched rows, so the
   // select-all ids query has to carry the relations those filters read — with
@@ -2235,38 +1355,70 @@ export default function Cases({
     return select;
   }, [postFetchFilters]);
 
-  // Query to fetch all case IDs when Shift+click Select All is used
-  const { data: allCaseIdsDataZenStack } = useFindManyRepositoryCasesFiltered(
-    {
-      where: repositoryCaseWhereClause,
-      select: selectAllIdsSelect,
-    },
-    postFetchFilters.length > 0 ? postFetchFilters : undefined,
-    {
-      enabled: fetchAllIdsForSelection && !isRunMode && !isDescendantsMode,
-      refetchOnWindowFocus: false,
-    }
+  // Stable name of the select-all row shape for the query key. The select
+  // itself varies only with the post-fetch filters it has to feed, so the field
+  // ids it carries are the whole of its identity — hashing the object would
+  // just be a bigger way of saying this.
+  const selectAllIdsSelectKey = useMemo(
+    () =>
+      postFetchFilters.length === 0
+        ? "ids"
+        : `selectAll:${postFetchFilters
+            .map((filter) => `${filter.type}:${filter.fieldId}`)
+            .sort()
+            .join(",")}`,
+    [postFetchFilters]
   );
 
-  // Parallel select-all-IDs fetch for descendants mode (POST to avoid 414).
-  // The ids are consumed as soon as they arrive, so this query must never carry
-  // the previous folder's rows over into the new one.
-  const { data: allCaseIdsDataDescendants } =
-    useFindManyRepositoryCasesByDescendants(
-      {
-        projectId,
-        folderId: folderId ?? 0,
-        where: repositoryCaseWhereClauseWithoutFolderFilter,
-        select: selectAllIdsSelect,
-        enabled: fetchAllIdsForSelection && !isRunMode && isDescendantsMode,
-        keepPreviousData: false,
-      },
-      postFetchFilters.length > 0 ? postFetchFilters : undefined
-    );
+  // Search active + default sort => Elasticsearch relevance wins, and that
+  // order lives only in the position of searchResultIds, so the route is asked
+  // for it by omitting orderBy. A user-chosen (or remembered) column sort wins
+  // over relevance — the table must obey its own sort header (spec §9).
+  const useRelevanceOrder = searchActive && isDefaultSort;
 
-  const allCaseIdsData = isDescendantsMode
-    ? allCaseIdsDataDescendants
-    : allCaseIdsDataZenStack;
+  // The full intersected id list behind select-all and the details panel's
+  // prev/next. `idsOnly` is enough unless text/link/steps matchers have to run
+  // in memory — those need the rows the matchers read, so the same request
+  // carries the select-all select instead.
+  const allIdsNeedRows = postFetchFilters.length > 0;
+  const allIdsWanted =
+    fetchAllIdsForSelection ||
+    Boolean(selectedCaseIdParam && !isRunMode && !isSelectionMode);
+  const postQueryAllIdsResult = useRepositoryCasesQuery(
+    {
+      projectId,
+      where: repositoryCaseWhereClause,
+      orderBy: useRelevanceOrder ? undefined : orderBy,
+      select: allIdsNeedRows ? selectAllIdsSelect : undefined,
+      selectKey: selectAllIdsSelectKey,
+      idsOnly: !allIdsNeedRows,
+      searchCaseIds: searchResultIds ?? undefined,
+      searchKey,
+      enabled: Boolean(
+        allIdsWanted && !isRunMode && !searchUnresolved && !!session?.user
+      ),
+      // The ids are consumed as soon as they arrive; a previous view's set must
+      // never be applied to the cases now on screen.
+      keepPreviousData: false,
+    },
+    allIdsNeedRows ? postFetchFilters : undefined
+  );
+
+  const postQueryAllCaseIds = useMemo<number[] | undefined>(() => {
+    if (allIdsNeedRows) {
+      return postQueryAllIdsResult.data?.map((row: { id: number }) => row.id);
+    }
+    return postQueryAllIdsResult.ids;
+  }, [allIdsNeedRows, postQueryAllIdsResult.data, postQueryAllIdsResult.ids]);
+
+  // Memoized: it keys the select-all effect below, and an unstable identity
+  // would re-run that effect on every render. `idsOnly` returns bare ids; the
+  // effect reads {id, isDeleted} rows (policy and isDeleted filtering already
+  // happened server-side).
+  const allCaseIdsData = useMemo(
+    () => postQueryAllCaseIds?.map((id) => ({ id, isDeleted: false })),
+    [postQueryAllCaseIds]
+  );
 
   const isTotalLoading = false;
 
@@ -2306,6 +1458,26 @@ export default function Cases({
     }
   }, [allCaseIdsData, selectAllAction, isSelectionMode, onSelectionChange, t]);
 
+  // The id-resolved sorts run during a search too, by AND'ing the resolved
+  // Elasticsearch ids into the where they resolve against. Skipping them
+  // instead (the pre-review behaviour) silently degraded the table to default
+  // order while the sort header still claimed the sort and the relevance pill
+  // stayed hidden — the UI would name an order it was not using. Both
+  // resolvers are server actions, so the where travels in a POST body and even
+  // a 10,000-id set cannot overflow a URL.
+  const idSortWhere = useMemo(
+    () =>
+      searchActive
+        ? {
+            AND: [
+              repositoryCaseWhereClause,
+              { id: { in: searchResultIds as number[] } },
+            ],
+          }
+        : repositoryCaseWhereClause,
+    [searchActive, repositoryCaseWhereClause, searchResultIds]
+  );
+
   // Sorting by Latest Results orders on the status of each case's most recent
   // result, which no ZenStack orderBy can express. The ids for the page are
   // resolved first, then handed to the query below as the whole filter, so the
@@ -2313,14 +1485,16 @@ export default function Cases({
   const isLatestResultsSort =
     !isDefaultSort && sortConfig?.column === "latestResults";
   const { pageIds: latestStatusPageIds } = useCaseIdsByLatestStatus({
-    where: repositoryCaseWhereClause,
+    where: idSortWhere,
     direction: sortConfig?.direction ?? "asc",
     skip: (currentPage - 1) * (pageSize === "All" ? 0 : pageSize),
     take: pageSize === "All" ? undefined : pageSize,
     enabled: Boolean(
       isLatestResultsSort &&
       !isRunMode &&
-      !searchResultIds &&
+      // An unresolved search would resolve the page against the un-searched
+      // superset.
+      !searchUnresolved &&
       // Works in descendants mode too: this is a server action (the where goes
       // in the POST body), so a large folder subtree can't overflow a URL.
       postFetchFilters.length === 0
@@ -2342,7 +1516,7 @@ export default function Cases({
   }, [isDefaultSort, sortConfig, uniqueCaseFieldList]);
   const isFieldOptionSort = fieldOptionSortFieldId !== null;
   const { pageIds: fieldOptionPageIds } = useCaseIdsByFieldOption({
-    where: repositoryCaseWhereClause,
+    where: idSortWhere,
     fieldId: fieldOptionSortFieldId ?? 0,
     direction: sortConfig?.direction ?? "asc",
     skip: (currentPage - 1) * (pageSize === "All" ? 0 : pageSize),
@@ -2350,7 +1524,7 @@ export default function Cases({
     enabled: Boolean(
       isFieldOptionSort &&
       !isRunMode &&
-      !searchResultIds &&
+      !searchUnresolved &&
       postFetchFilters.length === 0
     ),
   });
@@ -2368,434 +1542,163 @@ export default function Cases({
     Array.isArray(sortedPageIds) &&
     sortedPageIds.length === 0;
 
-  const result = useFindManyRepositoryCasesFiltered(
-    {
-      orderBy: orderBy,
-      where: sortedPageIds
-        ? isDescendantsMode
-          ? // A folder subtree can be too large to serialize into the GET query
-            // string; the page ids already encode the descendants scope (they
-            // came from the same where), so filter by them alone.
-            { id: { in: sortedPageIds } }
-          : { ...repositoryCaseWhereClause, id: { in: sortedPageIds } }
-        : repositoryCaseWhereClause,
-      select: REPOSITORY_CASE_LIST_SELECT,
-      // When post-fetch filtering is active, fetch all data (no pagination)
-      // Otherwise apply server-side pagination for repository mode
-      skip:
-        postFetchFilters.length > 0 || sortedPageIds
-          ? undefined
-          : (currentPage - 1) * (pageSize === "All" ? 0 : pageSize),
-      take:
-        postFetchFilters.length > 0 || sortedPageIds
-          ? undefined
-          : pageSize === "All"
-            ? undefined
-            : pageSize,
-    },
-    postFetchFilters.length > 0 ? postFetchFilters : undefined,
-    {
-      enabled: Boolean(
-        // Skip the fetch when an id-resolved sort resolved to an empty page
-        // (its where would be `id: { in: [] }`), or when ES search is active
-        // (data comes from the POST fetch instead).
-        sortedPageEmpty || searchResultIds
-          ? false
-          : // Disable in descendants mode (data comes from the POST endpoint) —
-            // except when an id-resolved sort is active, where the ordered page
-            // is fetched here by id (a short list, safe for GET).
-            isDescendantsMode && !sortedPageIds
-            ? false
-            : // Skip query if we know the selected folder has 0 cases
-              viewType === "folders" && selectedFolderCaseCount === 0
-              ? false
-              : !isRunMode && // Don't run this query in run mode - we use testRunCasesData instead
-                ((!!session?.user && deferredSearchString.length === 0) ||
-                  deferredSearchString.length > 0)
-      ),
-      refetchOnWindowFocus: false,
-    },
-    // When post-fetch filtering is active, apply client-side pagination
-    postFetchFilters.length > 0
-      ? {
-          skip: (currentPage - 1) * (pageSize === "All" ? 0 : pageSize),
-          take: pageSize === "All" ? undefined : pageSize,
-        }
-      : undefined
-  ) as {
-    data:
-      | RepositoryCasesGetPayload<{
-          select: {
-            id: true;
-            projectId: true;
-            project: true;
-            creator: true;
-            folder: true;
-            repositoryId: true;
-            folderId: true;
-            templateId: true;
-            name: true;
-            stateId: true;
-            estimate: true;
-            forecastManual: true;
-            forecastAutomated: true;
-            order: true;
-            createdAt: true;
-            creatorId: true;
-            automated: true;
-            hasParameters: true;
-            isArchived: true;
-            isDeleted: true;
-            currentVersion: true;
-            source: true;
-            state: {
-              select: {
-                id: true;
-                name: true;
-                icon: {
-                  select: {
-                    name: true;
-                  };
-                };
-                color: {
-                  select: {
-                    value: true;
-                  };
-                };
-              };
-            };
-            template: {
-              select: {
-                id: true;
-                templateName: true;
-                caseFields: {
-                  select: {
-                    caseField: {
-                      select: {
-                        id: true;
-                        defaultValue: true;
-                        displayName: true;
-                        type: {
-                          select: {
-                            type: true;
-                          };
-                        };
-                        fieldOptions: {
-                          select: {
-                            fieldOption: {
-                              select: {
-                                id: true;
-                                icon: true;
-                                iconColor: true;
-                                name: true;
-                              };
-                            };
-                          };
-                        };
-                      };
-                    };
-                  };
-                };
-              };
-            };
-            caseFieldValues: {
-              select: {
-                id: true;
-                value: true;
-                fieldId: true;
-                field: {
-                  select: {
-                    id: true;
-                    displayName: true;
-                    type: {
-                      select: {
-                        type: true;
-                      };
-                    };
-                  };
-                };
-              };
-              where: { field: { isEnabled: true; isDeleted: false } };
-            };
-            attachments: {
-              orderBy: { createdAt: "desc" };
-              where: { isDeleted: false };
-            };
-            steps: {
-              where: {
-                isDeleted: false;
-                OR: [
-                  { sharedStepGroupId: null },
-                  { sharedStepGroup: { isDeleted: false } },
-                ];
-              };
-              orderBy: { order: "asc" };
-              select: {
-                id: true;
-                order: true;
-                step: true;
-                expectedResult: true;
-                sharedStepGroupId: true;
-                sharedStepGroup: {
-                  select: {
-                    name: true;
-                  };
-                };
-              };
-            };
-            caseTags: {
-              where: { tag: { isDeleted: false } };
-              include: { tag: true };
-            };
-            caseIssues: {
-              where: { issue: { isDeleted: false } };
-              include: {
-                issue: {
-                  include: {
-                    integration: true;
-                  };
-                };
-              };
-            };
-            testRuns: {
-              select: {
-                id: true;
-                testRun: {
-                  select: {
-                    id: true;
-                    name: true;
-                    projectId: true;
-                    isDeleted: true;
-                    isCompleted: true;
-                  };
-                };
-              };
-            };
-            linksFrom: {
-              select: {
-                caseBId: true;
-                type: true;
-                isDeleted: true;
-              };
-            };
-            linksTo: {
-              select: {
-                caseAId: true;
-                type: true;
-                isDeleted: true;
-              };
-            };
-          };
-        }>[]
-      | undefined;
-    isLoading: boolean;
-    totalCount: number;
-    refetch: any;
-  };
+  // ---- THE list query -----------------------------------------------------
+  // Repository mode and run mode differ only in scope operands and row shape,
+  // so both go through the same POST hook. The response carries the rows AND
+  // the total for the same intersection, which is why there is no separate
+  // count query to drift out of step with it.
+  // Text/link/steps matchers run in memory, so those requests fetch the whole
+  // matching set and paginate client-side. Run mode does NOT do this — it never
+  // has, and the matchers would have to reach through `repositoryCase` — so a
+  // text predicate there still pre-filters in SQL only.
+  const clientPaginated = !isRunMode && postFetchFilters.length > 0;
+  const postQuerySkip = (currentPage - 1) * (pageSize === "All" ? 0 : pageSize);
+  const postQueryTake = pageSize === "All" ? undefined : pageSize;
 
-  const {
-    data: zenStackData,
-    isLoading: zenStackIsLoading,
-    totalCount: zenStackFilteredTotalCount,
-    refetch: zenStackRefetchData,
-  } = result;
+  // The selected folder is known to be empty and no predicate is active, so the
+  // answer is "no rows" without asking (spec §7.1).
+  const knownEmptyFolder =
+    predicates.length === 0 &&
+    viewType === "folders" &&
+    selectedFolderCaseCount === 0;
 
-  // Descendants POST path: same shape as `result`, used when the folder subtree
-  // is too large to serialize into the ZenStack GET query string.
-  const descendantsResult = useFindManyRepositoryCasesByDescendants(
-    {
-      projectId,
-      folderId: folderId ?? 0,
-      where: repositoryCaseWhereClauseWithoutFolderFilter,
-      orderBy,
-      select: REPOSITORY_CASE_LIST_SELECT,
-      skip:
-        postFetchFilters.length > 0
-          ? undefined
-          : (currentPage - 1) * (pageSize === "All" ? 0 : pageSize),
-      take:
-        postFetchFilters.length > 0
-          ? undefined
-          : pageSize === "All"
-            ? undefined
-            : pageSize,
-      enabled: Boolean(
-        isDescendantsMode && !!session?.user && isValidProjectId
-      ),
-    },
-    postFetchFilters.length > 0 ? postFetchFilters : undefined,
-    postFetchFilters.length > 0
-      ? {
-          skip: (currentPage - 1) * (pageSize === "All" ? 0 : pageSize),
-          take: pageSize === "All" ? undefined : pageSize,
-        }
-      : undefined
+  const listEnabled = Boolean(
+    !!session?.user &&
+    isValidProjectId &&
+    // A search whose ids are unresolved or failed must not fall through to a
+    // query without them — that would render the whole repository as if the
+    // search had matched everything.
+    !searchUnresolved &&
+    (isRunMode
+      ? effectiveRunIds.length > 0
+      : // An id-resolved sort that resolved to an empty page has nothing to
+        // fetch; the list derives empty from it anyway.
+        !sortedPageEmpty && !knownEmptyFolder)
   );
 
-  // When an id-resolved sort (latest results, dropdown field option) is active
-  // under "show all descendants", the ordered page comes from the id-filtered
-  // GET query, not the descendants POST — but the total count still comes from
-  // the POST endpoint.
-  const useDescendantsData = isDescendantsMode && !sortedPageIds;
-  const data = useDescendantsData ? descendantsResult.data : zenStackData;
-  const isLoading = useDescendantsData
-    ? descendantsResult.isLoading
-    : zenStackIsLoading;
-  const filteredTotalCount = isDescendantsMode
-    ? descendantsResult.totalCount
-    : zenStackFilteredTotalCount;
-  // Memoized so its identity is stable across renders (it feeds effect/callback
-  // dependency lists); the ternary would otherwise build a new function each
-  // render. `descendantsResult` is a fresh object each render, so depend on its
-  // stable `refetch` method, not the whole object.
-  const descendantsRefetch = descendantsResult.refetch;
-  const refetchData = useMemo(() => {
-    if (useDescendantsData) return descendantsRefetch;
-    if (isDescendantsMode) {
-      // Latest-sort under descendants: refresh both the id-filtered page and
-      // the POST-endpoint count.
-      return async () => {
-        await Promise.all([zenStackRefetchData(), descendantsRefetch()]);
-      };
-    }
-    return zenStackRefetchData;
-  }, [
-    useDescendantsData,
-    isDescendantsMode,
-    descendantsRefetch,
-    zenStackRefetchData,
-  ]);
+  const postQueryResult = useRepositoryCasesQuery(
+    {
+      projectId,
+      testRunIds: isRunMode ? effectiveRunIds : undefined,
+      // An id-resolved sort narrows the page to the ids it resolved, but the
+      // predicates travel WITH them: the resolution and this fetch are separate
+      // round trips, and in the window where the predicates changed and the
+      // ids have not re-resolved, an id-only where would show rows the active
+      // filters exclude. The where rides in a POST body, so no size argument
+      // for an id-only form applies.
+      where: isRunMode
+        ? testRunCasesWhere
+        : sortedPageIds
+          ? { ...repositoryCaseWhereClause, id: { in: sortedPageIds } }
+          : repositoryCaseWhereClause,
+      repositoryCaseWhere: isRunMode ? repositoryCaseWhereClause : undefined,
+      orderBy: isRunMode
+        ? testRunCasesOrderBy
+        : useRelevanceOrder
+          ? undefined
+          : orderBy,
+      select: isRunMode
+        ? TEST_RUN_CASE_LIST_SELECT
+        : REPOSITORY_CASE_LIST_SELECT,
+      selectKey: isRunMode ? "runList" : "list",
+      skip: clientPaginated || sortedPageIds ? undefined : postQuerySkip,
+      take: clientPaginated || sortedPageIds ? undefined : postQueryTake,
+      searchCaseIds: searchResultIds ?? undefined,
+      searchKey,
+      enabled: listEnabled,
+      // Run rows carry other people's live results; the repository list does
+      // not change under you the same way.
+      refetchOnWindowFocus: isRunMode,
+    },
+    clientPaginated ? postFetchFilters : undefined,
+    clientPaginated ? { skip: postQuerySkip, take: postQueryTake } : undefined
+  );
 
-  // --- ES search POST-based data fetching ---
-  // When searchResultIds is active, fetch case data via POST to avoid URL length limits.
-  const [searchData, setSearchData] = useState<any[] | null>(null);
-  const [searchDataLoading, setSearchDataLoading] = useState(false);
+  // An id-resolved sort's page request above is scoped to one page of ids, so
+  // its totalCount is the page size. The honest total comes from a count-only
+  // request (no `select`) carrying the real where.
+  const postQueryCountResult = useRepositoryCasesQuery({
+    projectId,
+    where: repositoryCaseWhereClause,
+    selectKey: "count",
+    searchCaseIds: searchResultIds ?? undefined,
+    searchKey,
+    enabled: Boolean(
+      !isRunMode &&
+      !!sortedPageIds &&
+      !searchUnresolved &&
+      !!session?.user &&
+      isValidProjectId
+    ),
+  });
 
+  // Run mode's rows are TestRunCases with the case nested under
+  // `repositoryCase`; repository mode's rows ARE the cases. Downstream consumers
+  // still read the two under their historical names.
+  const testRunCasesData = isRunMode
+    ? (postQueryResult.data ?? undefined)
+    : undefined;
+  const data = isRunMode ? undefined : postQueryResult.data;
+  const isLoading = searchPending
+    ? // Every list query is gated off while the ids resolve, so nothing is
+      // "loading" in React Query's sense — but the rows on screen do not answer
+      // the query the user just typed (or arrived with in `?q=`), and showing
+      // them unfiltered is the corruption this state exists to prevent.
+      true
+    : postQueryResult.isLoading;
+  const filteredTotalCount =
+    !isRunMode && sortedPageIds
+      ? postQueryCountResult.totalCount
+      : postQueryResult.totalCount;
+
+  // A failed query keeps the previous rows on screen (keepPreviousData) — the
+  // toast is the only signal, because silently falling back to an unfiltered
+  // list would show cases the filters exclude.
+  const postQueryError = postQueryResult.error ?? postQueryCountResult.error;
+  const reportedQueryErrorRef = useRef<unknown>(null);
   useEffect(() => {
-    if (!searchResultIds || searchResultIds.length === 0) {
-      setSearchData(searchResultIds?.length === 0 ? [] : null);
+    if (!postQueryError) {
+      reportedQueryErrorRef.current = null;
       return;
     }
+    if (reportedQueryErrorRef.current === postQueryError) return;
+    reportedQueryErrorRef.current = postQueryError;
+    console.error("Repository cases query failed:", postQueryError);
+    toast.error(t("common.errors.fetchFailed"));
+  }, [postQueryError, t]);
 
-    let cancelled = false;
+  // Every consumer that used to reach for one query's `refetch` now goes
+  // through the shared invalidator, so the list, the count and the id list are
+  // refreshed together and no caller has to know how many queries there are.
+  const refetchData = invalidateCaseList;
 
-    const fetchSearchData = async () => {
-      setSearchDataLoading(true);
-      try {
-        // Paginate the IDs client-side, then fetch the page via POST
-        const skip =
-          (currentPage - 1) * (typeof pageSize === "number" ? pageSize : 0);
-        const take = typeof pageSize === "number" ? pageSize : undefined;
-
-        const response = await fetch(
-          `/api/projects/${projectId}/cases/fetch-many`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              caseIds: searchResultIds,
-              skip,
-              take,
-            }),
-          }
-        );
-
-        if (cancelled) return;
-
-        if (response.ok) {
-          const result = await response.json();
-          setSearchData(result.cases);
-        }
-      } catch (err) {
-        console.error("Search data fetch error:", err);
-      } finally {
-        if (!cancelled) setSearchDataLoading(false);
-      }
-    };
-
-    void fetchSearchData();
-    return () => {
-      cancelled = true;
-    };
-  }, [searchResultIds, currentPage, pageSize, projectId]);
-
-  // Calculate total count based on mode
+  // The list response's count is the intersection's real size: it applies the
+  // predicates, the folder scope, the run scope, the name filter AND row-level
+  // read policy, where the old search path just counted the raw Elasticsearch
+  // id array (over-counting archived and policy-hidden hits).
   const totalRepositoryCases = useMemo(() => {
-    // When ES search is active, use the search result count
-    if (searchResultIds) {
-      return searchResultIds.length;
-    }
-    // If we know the selected folder has 0 cases, return 0 immediately
-    if (viewType === "folders" && selectedFolderCaseCount === 0) {
-      return 0;
-    }
-    if (isRunMode) {
-      // In run mode, use the test run cases count
-      return testRunCasesCountData || 0;
-    }
-    // In descendants mode, the count comes from the descendants POST endpoint
-    // (the separate count hook is disabled to avoid a duplicate 414).
-    if (isDescendantsMode) {
-      return filteredTotalCount ?? 0;
-    }
-    // In repository mode, use post-fetch filtered count if available, otherwise use database count
-    if (postFetchFilters.length > 0 && filteredTotalCount !== undefined) {
-      return filteredTotalCount;
-    }
-    return filteredCountData || 0;
-  }, [
-    isRunMode,
-    testRunCasesCountData,
-    filteredCountData,
-    filteredTotalCount,
-    postFetchFilters,
-    viewType,
-    selectedFolderCaseCount,
-    searchResultIds,
-    isDescendantsMode,
-  ]);
+    // A folder known to be empty with no predicate active answers 0 without a
+    // query (spec §7.1) — the list query is gated off in that case, so its
+    // placeholder total must not leak through.
+    if (!isRunMode && knownEmptyFolder) return 0;
+    return filteredTotalCount ?? 0;
+  }, [isRunMode, knownEmptyFolder, filteredTotalCount]);
 
   // Update total items in pagination context
   useEffect(() => {
     setTotalItems(totalRepositoryCases);
   }, [totalRepositoryCases, setTotalItems]);
 
-  // Refetch all repository cases data (both list and count)
-  const refetchRepositoryCases = useCallback(() => {
-    refetchData();
-    void refetchFilteredCount();
-  }, [refetchData, refetchFilteredCount]);
-
-  // Listen for repository cases changes (e.g., after import or bulk delete)
-  useEffect(() => {
-    const handleRepositoryCasesChanged = () => {
-      refetchRepositoryCases();
-    };
-
-    window.addEventListener(
-      "repositoryCasesChanged",
-      handleRepositoryCasesChanged as EventListener
-    );
-    return () => {
-      window.removeEventListener(
-        "repositoryCasesChanged",
-        handleRepositoryCasesChanged as EventListener
-      );
-    };
-  }, [refetchRepositoryCases]);
+  // Kept as a named alias because callers throughout this file (bulk edit,
+  // reorder recovery, modals) read as "refresh the cases". List, count and id
+  // list are one invalidation now, so there is nothing else to fan out to.
+  const refetchRepositoryCases = refetchData;
 
   // For isRunMode, flatten testRunCasesData for the table
   const cases = useMemo(() => {
     // If we're actively reordering, use the optimistic order
     if (optimisticReorder.inProgress && optimisticReorder.cases) {
       return optimisticReorder.cases;
-    }
-
-    // When ES search is active, use POST-fetched data
-    if (searchResultIds && searchData) {
-      return searchData.map((caseItem: any) => ({
-        ...caseItem,
-      }));
     }
 
     if (isRunMode && testRunCasesData) {
@@ -2852,15 +1755,7 @@ export default function Cases({
       return mapped;
     }
     return [];
-  }, [
-    isRunMode,
-    testRunCasesData,
-    data,
-    optimisticReorder,
-    searchResultIds,
-    searchData,
-    sortedPageIds,
-  ]);
+  }, [isRunMode, testRunCasesData, data, optimisticReorder, sortedPageIds]);
 
   // Bulk-fetch PENDING ReviewRequests for the visible page (D-06; one round
   // trip per page render — never per-row, per RESEARCH §"Pitfall 6").
@@ -2871,47 +1766,27 @@ export default function Cases({
   );
 
   // Ordered id list of the FULL filtered result set (all pages), powering the
-  // docked details panel's prev/next stepper. ES search already yields an ordered
-  // id list; otherwise fetch ids-only with the same where/orderBy as the list.
-  // Disabled in descendants mode — its ids come from a POST endpoint the ZenStack
-  // GET can't reproduce without risking a 414 on deep trees, so `descendantsAllIdRows`
-  // below supplies them there — and when no case is open.
-  const { data: allCaseIdRows } = useClientQueries(
-    schema
-  ).repositoryCases.useFindMany(
-    {
-      where: repositoryCaseWhereClause,
-      orderBy,
-      select: { id: true },
-    },
-    {
-      enabled: Boolean(
-        !isRunMode &&
-        !isSelectionMode &&
-        !!selectedCaseIdParam &&
-        !searchResultIds &&
-        !isDescendantsMode &&
-        !!session?.user
-      ),
-    }
-  );
+  // docked details panel's prev/next stepper. It comes from the same POST route
+  // the list does — `postQueryAllIdsResult` above, whose `idsOnly` response is
+  // the intersected, ordered id set (NOT the raw Elasticsearch ids, which still
+  // contain archived, policy-hidden and filtered-out cases).
 
   // Same window-function ordering the list applies through `latestStatusPageIds`,
   // but unpaginated: the details panel's prev/next must step across the whole
   // filtered set, not just the current page. Latest-results sort can't be
-  // expressed as an `orderBy`, so `allCaseIdRows` above stays in default order
+  // expressed as an `orderBy`, so the ids-only list stays in default order
   // and can't drive prev/next when this sort is active. Works in descendants
   // mode too — the where scopes to the resolved descendant folders and this is
   // a POST server action, so a deep subtree can't overflow a URL.
   const { pageIds: latestStatusAllIds } = useCaseIdsByLatestStatus({
-    where: repositoryCaseWhereClause,
+    where: idSortWhere,
     direction: sortConfig?.direction ?? "asc",
     enabled: Boolean(
       isLatestResultsSort &&
       !isRunMode &&
       !isSelectionMode &&
       !!selectedCaseIdParam &&
-      !searchResultIds &&
+      !searchUnresolved &&
       postFetchFilters.length === 0 &&
       !!session?.user
     ),
@@ -2921,7 +1796,7 @@ export default function Cases({
   // ordering the list applies through `fieldOptionPageIds`, but unpaginated so
   // prev/next steps across the whole filtered set.
   const { pageIds: fieldOptionAllIds } = useCaseIdsByFieldOption({
-    where: repositoryCaseWhereClause,
+    where: idSortWhere,
     fieldId: fieldOptionSortFieldId ?? 0,
     direction: sortConfig?.direction ?? "asc",
     enabled: Boolean(
@@ -2929,73 +1804,39 @@ export default function Cases({
       !isRunMode &&
       !isSelectionMode &&
       !!selectedCaseIdParam &&
-      !searchResultIds &&
+      !searchUnresolved &&
       postFetchFilters.length === 0 &&
       !!session?.user
     ),
   });
 
-  // Descendants mode: the paginated list comes from the by-descendants POST (a
-  // deep tree would 414 a ZenStack GET). Fetch that same subtree's ids-only and
-  // unpaginated so the details panel's prev/next steps across every page, not
-  // just the visible one. Id-resolved sorts are handled by `latestStatusAllIds`
-  // and `fieldOptionAllIds` above; this covers the ordinary `orderBy` case.
-  const { data: descendantsAllIdRows } =
-    useFindManyRepositoryCasesByDescendants({
-      projectId,
-      folderId: folderId ?? 0,
-      where: repositoryCaseWhereClauseWithoutFolderFilter,
-      orderBy,
-      select: { id: true },
-      enabled: Boolean(
-        isDescendantsMode &&
-        !isRunMode &&
-        !isSelectionMode &&
-        !!selectedCaseIdParam &&
-        !searchResultIds &&
-        !isLatestResultsSort &&
-        !isFieldOptionSort &&
-        postFetchFilters.length === 0 &&
-        !!session?.user &&
-        isValidProjectId
-      ),
-    });
-
   const allCaseIds = useMemo<number[]>(() => {
-    if (searchResultIds) return searchResultIds;
     // Id-resolved sorts (latest results, dropdown field option) order through
-    // `sortedPageIds` for the list, not via `orderBy`, so `allCaseIdRows` is in
-    // default order. Walk the full id-resolved ordering instead to keep
-    // prev/next in step with the sorted list.
+    // `sortedPageIds` for the list, not via `orderBy`, so the ids-only list is
+    // in default order. Walk the full id-resolved ordering instead to keep
+    // prev/next in step with the sorted list. During a search they resolve
+    // against the intersected id set (idSortWhere), so they agree with the
+    // list there too; relevance order only applies when no column sort is on.
     if (latestStatusAllIds) return latestStatusAllIds;
     if (fieldOptionAllIds) return fieldOptionAllIds;
-    // Descendants mode: the full ordered id list comes from the by-descendants
-    // POST (the GET can't reproduce the subtree), so prev/next spans every page.
-    if (isDescendantsMode) {
-      return descendantsAllIdRows
-        ? descendantsAllIdRows.map((r: { id: number }) => r.id)
-        : visibleCaseIds;
-    }
-    if (!allCaseIdRows) return visibleCaseIds;
-    const ids = allCaseIdRows.map((r: { id: number }) => r.id);
-    // A drag-reorder only shuffles the current page, but `allCaseIdRows` keeps
-    // the pre-reorder order until its query refetches. The current page is a
-    // contiguous block within `ids` (same orderBy), so while the optimistic
-    // reorder is in flight, overwrite that block with the reordered visible ids
-    // — otherwise the details panel's prev/next steps through the stale order.
+    if (!postQueryAllCaseIds) return visibleCaseIds;
+    // A drag-reorder only shuffles the current page, but the ids-only list
+    // keeps the pre-reorder order until its query refetches. The current page
+    // is a contiguous block within `ids` (same orderBy), so while the
+    // optimistic reorder is in flight, overwrite that block with the reordered
+    // visible ids — otherwise prev/next steps through the stale order.
     if (optimisticReorder.inProgress) {
       const visibleSet = new Set(visibleCaseIds);
       let vi = 0;
-      return ids.map((id) => (visibleSet.has(id) ? visibleCaseIds[vi++] : id));
+      return postQueryAllCaseIds.map((id) =>
+        visibleSet.has(id) ? visibleCaseIds[vi++] : id
+      );
     }
-    return ids;
+    return postQueryAllCaseIds;
   }, [
-    searchResultIds,
+    postQueryAllCaseIds,
     latestStatusAllIds,
     fieldOptionAllIds,
-    isDescendantsMode,
-    descendantsAllIdRows,
-    allCaseIdRows,
     visibleCaseIds,
     optimisticReorder.inProgress,
   ]);
@@ -3096,7 +1937,7 @@ export default function Cases({
   // Clear optimistic reorder when underlying data changes
   useEffect(() => {
     setOptimisticReorder({ inProgress: false, cases: null });
-  }, [currentPage, sortConfig, folderId, viewType, filterId]);
+  }, [currentPage, sortConfig, folderId, viewType, predicatesKey, searchText]);
 
   // Scope the bulk-edit selection to the current view. Switching folders (or
   // changing the view/filter that determines which cases are shown) clears the
@@ -3105,11 +1946,14 @@ export default function Cases({
   // selection (that is what the cross-page merge logic is for). Run-mode
   // selection is owned by the parent and may legitimately span folders, so it
   // is left untouched here.
+  // The search text is part of that identity: it narrows the visible set
+  // exactly like a predicate does, so a selection made before a search must not
+  // survive it.
   const previousViewKeyRef = useRef<string | null>(null);
   useEffect(() => {
     if (isSelectionMode) return;
 
-    const viewKey = `${folderId}-${viewType}-${JSON.stringify(filterId)}`;
+    const viewKey = `${folderId}-${viewType}-${predicatesKey}-${searchText}`;
     if (
       previousViewKeyRef.current !== null &&
       previousViewKeyRef.current !== viewKey
@@ -3119,15 +1963,16 @@ export default function Cases({
       setLastSelectedIndex(null);
     }
     previousViewKeyRef.current = viewKey;
-  }, [folderId, viewType, filterId, isSelectionMode]);
+  }, [folderId, viewType, predicatesKey, searchText, isSelectionMode]);
 
   // A Shift+click select-all belongs to the view it was started from. Changing
-  // the view abandons the in-flight ids fetch so its result can't be applied to
-  // the cases the user is now looking at.
+  // the view — including changing the search that scopes it — abandons the
+  // in-flight ids fetch so its result can't be applied to the cases the user is
+  // now looking at.
   useEffect(() => {
     setFetchAllIdsForSelection(false);
     setSelectAllAction(null);
-  }, [folderId, viewType, filterId]);
+  }, [folderId, viewType, predicatesKey, searchText]);
 
   // Check if we're in multi-config mode (multiple test runs selected)
   const isMultiConfigMode =
@@ -3387,29 +2232,10 @@ export default function Cases({
           (index) => rowSelection[index.toString()]
         );
 
-        if (searchResultIds) {
-          // When ES search is active, use searchResultIds directly instead of querying DB
-          if (allSelectableSelected) {
-            if (isSelectionMode && onSelectionChange) {
-              onSelectionChange([]);
-            } else {
-              setSelectedCaseIdsForBulkEdit([]);
-            }
-            setRowSelection({});
-            toast.success(t("repository.deselectedAllCases"));
-          } else {
-            if (isSelectionMode && onSelectionChange) {
-              onSelectionChange(searchResultIds);
-            } else {
-              setSelectedCaseIdsForBulkEdit(searchResultIds);
-            }
-            toast.success(
-              t("repository.selectedAllCases", {
-                count: searchResultIds.length,
-              })
-            );
-          }
-        } else if (allSelectableSelected) {
+        // Search takes the same path as everything else now: the ids come from
+        // the intersected route result, never from the raw Elasticsearch set
+        // (which still holds archived, policy-hidden and filtered-out cases).
+        if (allSelectableSelected) {
           // Deselect all cases across all pages
           setFetchAllIdsForSelection(true);
           setSelectAllAction("deselect");
@@ -3499,8 +2325,6 @@ export default function Cases({
       selectedTestCases,
       selectedCaseIdsForBulkEdit,
       setSelectedCaseIdsForBulkEdit,
-      searchResultIds,
-      t,
     ]
   );
 
@@ -3763,14 +2587,6 @@ export default function Cases({
     }
   }, [deferredSearchString, searchString, setCurrentPage]);
 
-  // Add effect to force refetch when folder changes
-  useEffect(() => {
-    if (viewType === "folders" && folderId) {
-      refetchRepositoryCases();
-      refetchData();
-    }
-  }, [folderId, viewType, refetchRepositoryCases, refetchData]);
-
   const handlePageSizeChange = (value: string | number) => {
     const newSize =
       value === "All" ? totalItems : parseInt(value.toString(), 10);
@@ -3935,21 +2751,14 @@ export default function Cases({
       setOptimisticReorder({ inProgress: false, cases: null });
 
       // If needed, we can still manually refetch to ensure consistency
-      if (isRunMode) {
-        await refetchTestRunCases();
-        await refetchData();
-      } else {
-        await refetchRepositoryCases();
-        await refetchData();
-      }
+      await refetchData();
     }
   };
 
   const handleCloseBulkEditModal = (refetchNeeded?: boolean) => {
     setIsBulkEditModalOpen(false);
     if (refetchNeeded) {
-      refetchRepositoryCases(); // This refetches both data and count
-      refetchTestRunCases();
+      void refetchRepositoryCases(); // list, count and id list in one go
       // Clear selection after successful bulk edit operation
       setRowSelection({});
       setSelectedCaseIdsForBulkEdit([]);
@@ -4031,6 +2840,15 @@ export default function Cases({
         where: repositoryCaseWhereClause,
         scope: actionScope,
         projectId: projectId,
+        // Text/link/steps operator filters are applied post-fetch (the where
+        // clause only pre-filters value-not-null); the action runs the same
+        // matchers so "all filtered" exports match the table's row set.
+        postFetchFilters:
+          postFetchFilters.length > 0 ? postFetchFilters : undefined,
+        // "All filtered" during an active search means the intersection, not
+        // the un-searched superset (spec §9). Rows come back in `orderBy`
+        // order, not relevance — export files carry no ranking.
+        searchCaseIds: searchResultIds ?? undefined,
       });
 
       if (response.success) {
@@ -4042,7 +2860,13 @@ export default function Cases({
         return []; // Or throw new Error(response.error);
       }
     },
-    [orderBy, repositoryCaseWhereClause, projectId]
+    [
+      orderBy,
+      repositoryCaseWhereClause,
+      projectId,
+      postFetchFilters,
+      searchResultIds,
+    ]
   );
 
   // Instantiate the hook
@@ -4101,6 +2925,18 @@ export default function Cases({
           <div className="flex flex-col grow w-full sm:w-1/2 min-w-[250px]">
             {/* filterComponent should always be rendered if we've reached this point */}
             {filterComponent}
+            {/* Which order the rows are in is otherwise invisible: a remembered
+                per-project sort silently outranks relevance, so say when
+                relevance is what's on screen (spec §9). Lives here rather than
+                in the FilterBar because only this component owns the sort. */}
+            {useRelevanceOrder && (
+              <div
+                className="mt-1 text-xs text-muted-foreground italic"
+                data-testid="sorted-by-relevance"
+              >
+                {t("repository.filterBar.sortedByRelevance")}
+              </div>
+            )}
             <div className="mt-4">
               <ColumnSelection
                 key="repository-cases-column-selection"
@@ -4240,9 +3076,31 @@ export default function Cases({
       </CardHeader>
       <CardContent>
         {(() => {
+          // A search that could not be resolved is terminal: its ids are an
+          // AND'd filter, so there is no honest list to show. Anything else
+          // here would be the unfiltered repository presented as the search
+          // result (spec §9).
+          if (searchFailed) {
+            return (
+              <div
+                className="text-muted-foreground text-pretty m-2"
+                data-testid="search-failed-message"
+              >
+                {t("search.errors.searchFailed")}
+              </div>
+            );
+          }
+
           // Handle preliminary states first (where DataTable might not be relevant)
-          // Skip folder check when ES search results are active
-          if (!folderId && viewType === "folders" && !searchResultIds) {
+          // Skip folder check when ES search results are active or predicates
+          // are set — active filters query project-wide (spec §7.1).
+          if (
+            !folderId &&
+            viewType === "folders" &&
+            !searchResultIds &&
+            !searchPending &&
+            predicates.length === 0
+          ) {
             return (
               <div className="text-muted-foreground text-pretty m-2">
                 {t("repository.cases.selectFolder")}
@@ -4252,14 +3110,14 @@ export default function Cases({
 
           // If loading or column visibility not initialized, DataTable will show its own skeleton
           if (
-            (searchResultIds ? searchDataLoading : isLoading) ||
+            isLoading ||
             isTotalLoading ||
             isTemplatesLoading ||
             Object.keys(columnVisibility).length === 0
           ) {
             return (
               <DataTable
-                key={`${folderId}-${viewType}-${filterId}-loading`}
+                key={`${folderId}-${viewType}-${predicatesKey}-loading`}
                 columns={columns}
                 data={[]} // Pass empty data while loading
                 onSortChange={isCompleted ? undefined : handleSortChange}
@@ -4279,6 +3137,22 @@ export default function Cases({
 
           // Handle empty states after loading and not in preliminary states
           if (cases.length === 0) {
+            // Active filters are the likeliest cause of an empty result set —
+            // say so and offer the way out, in every mode.
+            if (predicates.length > 0) {
+              return (
+                <div className="m-2 flex flex-col items-start space-y-2">
+                  <div className="text-muted-foreground text-pretty">
+                    {t("repository.filterBar.noMatchingCases")}
+                  </div>
+                  {onClearFilters && (
+                    <Button variant="ghost" size="sm" onClick={onClearFilters}>
+                      {t("common.actions.clearAll")}
+                    </Button>
+                  )}
+                </div>
+              );
+            }
             if (isRunMode) {
               if (viewType === "folders" && folderId) {
                 // Case: In a folder in run mode, no cases
@@ -4308,7 +3182,7 @@ export default function Cases({
           return (
             <>
               <DataTable
-                key={`${folderId}-${viewType}-${filterId}-datatable`}
+                key={`${folderId}-${viewType}-${predicatesKey}-datatable`}
                 columns={columns}
                 data={cases}
                 storageKey={`repository-cases:${projectId}`}
@@ -4322,6 +3196,13 @@ export default function Cases({
                 sortConfig={isCompleted ? undefined : sortConfig}
                 enableReorder={
                   isDefaultSort &&
+                  // Rows sit in relevance order during a search, so a drag
+                  // would compute `order` values from relevance-ordered
+                  // neighbours and corrupt the persisted case order. Filter
+                  // chips do NOT disable reordering (parity with the pre-chip
+                  // ViewSelector filters) — they narrow the set without
+                  // changing its order.
+                  !searchActive &&
                   !isSelectionMode &&
                   !isCompleted &&
                   !compositionLocked &&

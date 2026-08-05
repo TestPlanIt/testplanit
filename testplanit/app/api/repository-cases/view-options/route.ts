@@ -8,6 +8,8 @@ import {
   attachmentsWhereClause,
   shapeAttachmentsFacet,
 } from "~/lib/repositoryCaseAttachmentsFilter";
+import { computeRepositoryCaseFacetCounts } from "~/lib/repositoryCaseFacetCounts";
+import { sanitizeSearchCaseIds } from "~/lib/repositoryCaseSearchIds";
 import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
 import { authOptions } from "~/server/auth";
 
@@ -22,6 +24,15 @@ interface ViewOptionsRequest {
   stateIds?: number[];
   automated?: number[];
   dynamicFieldFilters?: Record<number, (string | number)[]>;
+  // Multi-dimension FilterBar contract (spec §8). When `predicates` is
+  // present the filter-aware facet engine runs and the legacy filter fields
+  // above are ignored; when absent, the legacy path below is unchanged.
+  // Parsed leniently against the server-built dimension registry.
+  predicates?: unknown;
+  // ES-search intersection (cross-cutting). Declared as number[] but arrives
+  // unvalidated from the client — it only reaches the engine through
+  // sanitizeSearchCaseIds, the same normalization POST /cases/query applies.
+  searchCaseIds?: number[];
 }
 
 export async function POST(request: Request) {
@@ -72,6 +83,38 @@ export async function POST(request: Request) {
 
     if (!hasAccess) {
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
+    }
+
+    // HARD BRANCH (spec §8): predicates/searchCaseIds present → the
+    // filter-aware facet engine; absent → the legacy path below, unchanged
+    // (ReportBuilder and cross-project consumers keep legacy semantics).
+    if (body.predicates !== undefined || body.searchCaseIds !== undefined) {
+      // The id set is the same scope the table page is cut from, so it goes
+      // through the same sanitizer as POST /cases/query. A non-array is not
+      // sanitizable into "no search" — an unrecognized shape would silently
+      // widen the counts to the whole project — so it is rejected outright.
+      if (
+        body.searchCaseIds !== undefined &&
+        !Array.isArray(body.searchCaseIds)
+      ) {
+        return NextResponse.json(
+          { error: "Invalid searchCaseIds" },
+          { status: 400 }
+        );
+      }
+      const sanitizedSearchCaseIds =
+        body.searchCaseIds === undefined
+          ? undefined
+          : sanitizeSearchCaseIds(body.searchCaseIds);
+      const facetCounts = await computeRepositoryCaseFacetCounts(baseDb, {
+        projectId,
+        isRunMode,
+        effectiveRunIds,
+        selectedTestCases,
+        predicates: body.predicates,
+        searchCaseIds: sanitizedSearchCaseIds,
+      });
+      return NextResponse.json(facetCounts);
     }
 
     // Build the base where clause for repository cases

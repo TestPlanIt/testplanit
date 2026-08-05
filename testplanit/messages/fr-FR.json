@@ -558,6 +558,8 @@
       "stepCount": "Nombre de pas",
       "enterText": "Saisissez du texte...",
       "enterUrl": "Saisissez l'URL",
+      "enterUrlPattern": "Saisir un modèle d'URL...",
+      "domainExample": "exemple.com",
       "issueIdExample": "NUMÉRO 123",
       "selectPriorityValuesOrEmpty": "Sélectionnez les valeurs de priorité (ou laissez vide pour tout)"
     },
@@ -1078,7 +1080,35 @@
     "invalidProject": "ID de projet invalide.",
     "visualization": "Visualisation",
     "results": "Résultats",
-    "loading": "Chargement..."
+    "loading": "Chargement...",
+    "operators": {
+      "eq": "Égal à",
+      "ne": "Non égal à",
+      "lt": "Inférieur à",
+      "lte": "Inférieur ou égal à",
+      "gt": "Supérieur à",
+      "gte": "Supérieur ou égal à",
+      "between": "Entre",
+      "contains": "Contient",
+      "notContains": "Ne contient pas",
+      "startsWith": "Commence par",
+      "endsWith": "Se termine par",
+      "domain": "Le domaine contient",
+      "on": "Le",
+      "before": "Avant",
+      "after": "Après",
+      "last7": "Les 7 derniers jours",
+      "last30": "Les 30 derniers jours",
+      "last90": "Les 90 derniers jours",
+      "thisYear": "Cette année",
+      "anyOf": "N'importe lequel",
+      "allOf": "Tous",
+      "noneOf": "Aucun",
+      "is": "Est",
+      "in": "Est l'un de",
+      "hasValue": "A une valeur",
+      "isEmpty": "Est vide"
+    }
   },
   "api": {
     "testResults": {
@@ -2892,7 +2922,9 @@
         "title": "Importer les cas de test",
         "fields": {
           "workflowState": "État du flux de travail",
-          "column": "Colonne {number}"
+          "column": "Colonne {number}",
+          "caseId": "ID du cas",
+          "caseIdDescription": "ID de cas TestPlanIt"
         },
         "success": {
           "description": "{count, plural, one {# cas de test} other {# cas de test}} importé avec succès"
@@ -2902,7 +2934,15 @@
           "folderRequired": "La sélection du dossier est requise pour cet emplacement d'importation",
           "fileRequired": "Un fichier CSV ou Markdown est requis.",
           "markdownParseFailed": "Impossible d'analyser le fichier Markdown",
-          "markdownLlmFailed": "Analyse par IA indisponible, utilisation de l'analyseur standard"
+          "markdownLlmFailed": "Analyse par IA indisponible, utilisation de l'analyseur standard",
+          "validationTitle": "La validation de l'importation a échoué",
+          "validationSummary": "{count, plural, one {# problème a été} other {# problèmes ont été}} trouvé dans votre fichier. Aucun cas de test n'a été importé.",
+          "validationEntry": "Ligne {row, number} · {field} : {message}",
+          "validationEntryNamed": "Ligne {row, number} « {name} » · {field} : {message}",
+          "validationMore": "{count, plural, one {# problème supplémentaire n'est pas affiché} other {# problèmes supplémentaires ne sont pas affichés}}.",
+          "validationMultiRowNote": "Les numéros de ligne font référence aux cas de test groupés affichés dans l'aperçu, et non aux lignes brutes du fichier CSV.",
+          "partialTitle": "Certains cas de test n'ont pas été importés",
+          "partialSummary": "{failed, plural, one {# ligne n'a pas pu être importée} other {# lignes n'ont pas pu être importées}}. {imported, plural, one {# cas de test a été importé} other {# cas de test ont été importés}} avec succès."
         },
         "page1": {
           "fileType": {
@@ -2934,7 +2974,8 @@
           "title": "Associer les colonnes CSV aux champs",
           "description": "Associez chaque colonne CSV à un champ du modèle ou choisissez de l'ignorer.",
           "ignoreColumn": "Ignorer la colonne",
-          "requiredFieldsWarning": "{count, plural, one {# champ obligatoire est} other {# champs obligatoires sont}} non mappés"
+          "requiredFieldsWarning": "{count, plural, one {# champ obligatoire est} other {# champs obligatoires sont}} non mappés",
+          "caseIdHint": "Il doit s'agir de l'ID de cas numérique — les cas correspondants seront écrasés."
         },
         "page3": {
           "title": "Résumé de la cartographie des champs",
@@ -3445,6 +3486,52 @@
       "linkedIssuesDroppedTitle": "Certains problèmes liés n'ont pas été inclus.",
       "linkedIssuesDropped": "{count, plural, =1 {# problème lié a été supprimé} other {# problèmes liés ont été supprimés}} en raison du budget de jetons : {keys}.",
       "linkedIssuesPreviewHeading": "Problèmes connexes qui seront inclus"
+    },
+    "filterBar": {
+      "addFilter": "Ajouter un filtre",
+      "removeFilter": "Supprimer le filtre : {name}",
+      "editFilter": "Modifier le filtre : {name}",
+      "activeCount": "{count, plural, =1 {1 filtre actif} other {# filtres actifs}}",
+      "assignedToMe": "Attribué à moi",
+      "noFilters": "Aucun filtre actif",
+      "noMatchingCases": "Aucun cas de test ne correspond à vos filtres",
+      "searchTruncated": "Filtrage parmi les {count, number} premiers résultats",
+      "sortedByRelevance": "Trié par pertinence",
+      "countsUpdating": "Mise à jour des compteurs...",
+      "filterLimitReached": "Limite de filtres atteinte ({count} maximum)",
+      "valueLimitReached": "Limite de valeurs atteinte ({count} maximum par filtre)",
+      "filtersTruncated": "Certains filtres ont été supprimés ({count} maximum)",
+      "valuesTruncated": "{count, plural, =1 {1 valeur} other {# valeurs}} maximum par filtre — les valeurs supplémentaires ont été supprimées"
+    },
+    "savedViews": {
+      "title": "Vues enregistrées",
+      "save": "Enregistrer la vue",
+      "saveTitle": "Enregistrer la vue",
+      "saveDescription": "Nommez cette vue pour pouvoir revenir à ces filtres plus tard.",
+      "namePlaceholder": "ex. Cas de fumée, non automatisés",
+      "descriptionPlaceholder": "À quoi sert cette vue",
+      "nameRequired": "Saisissez un nom pour cette vue.",
+      "loginRequired": "Vous devez être connecté pour enregistrer des vues.",
+      "nothingToSave": "Ajoutez d'abord un filtre ou un regroupement.",
+      "saved": "Vue enregistrée",
+      "savedDescription": "« {name} » figure désormais dans vos vues enregistrées.",
+      "saveFailed": "Impossible d'enregistrer la vue. Veuillez réessayer.",
+      "empty": "Aucune vue enregistrée pour le moment",
+      "emptyHint": "Enregistrez les filtres actuels pour y revenir plus tard.",
+      "apply": "Appliquer la vue : {name}",
+      "applied": "« {name} » appliquée",
+      "droppedFilters": "{count, plural, =1 {1 filtre n'existe plus et a été ignoré} other {# filtres n'existent plus et ont été ignorés}}",
+      "droppedGrouping": "Son regroupement n'est plus disponible, celui par défaut est donc utilisé.",
+      "unreadable": "{count, plural, =1 {1 vue enregistrée n'a pas pu être lue} other {# vues enregistrées n'ont pas pu être lues}}",
+      "rename": "Renommer",
+      "renameTitle": "Renommer la vue enregistrée",
+      "renamed": "Vue enregistrée mise à jour",
+      "renameFailed": "Impossible de mettre à jour la vue. Veuillez réessayer.",
+      "delete": "Supprimer",
+      "deleteTitle": "Supprimer la vue enregistrée ?",
+      "deleteConfirm": "« {name} » sera retirée de vos vues enregistrées. Cette action est irréversible.",
+      "deleted": "Vue enregistrée supprimée",
+      "deleteFailed": "Impossible de supprimer la vue. Veuillez réessayer."
     }
   },
   "tags": {
@@ -8179,6 +8266,8 @@
       "includeDeleted": "Inclure les éléments supprimés",
       "filterActive": "Filtre actif :",
       "applyFilter": "Appliquer le filtre",
+      "invalidDate": "Date invalide",
+      "stepsCount": "{count, plural, one {# étape} other {# étapes}}",
       "validation": {
         "firstValueMustBeLessThanSecond": "La première valeur doit être inférieure à la seconde valeur",
         "firstDateMustBeBeforeSecond": "Le premier rendez-vous doit avoir lieu avant le second."

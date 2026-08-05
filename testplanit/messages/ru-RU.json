@@ -558,6 +558,8 @@
       "stepCount": "Количество шагов",
       "enterText": "Введите текст...",
       "enterUrl": "Введите URL",
+      "enterUrlPattern": "Введите шаблон URL...",
+      "domainExample": "example.com",
       "issueIdExample": "ВЫПУСК-123",
       "selectPriorityValuesOrEmpty": "Выберите значения приоритета (или оставьте поле пустым для всех)."
     },
@@ -1078,7 +1080,35 @@
     "invalidProject": "Неверный идентификатор проекта.",
     "visualization": "Визуализация",
     "results": "Результаты",
-    "loading": "Загрузка..."
+    "loading": "Загрузка...",
+    "operators": {
+      "eq": "Равно",
+      "ne": "Не равно",
+      "lt": "Меньше",
+      "lte": "Меньше или равно",
+      "gt": "Больше",
+      "gte": "Больше или равно",
+      "between": "Между",
+      "contains": "Содержит",
+      "notContains": "Не содержит",
+      "startsWith": "Начинается с",
+      "endsWith": "Заканчивается на",
+      "domain": "Домен содержит",
+      "on": "На",
+      "before": "До",
+      "after": "После",
+      "last7": "Последние 7 дней",
+      "last30": "Последние 30 дней",
+      "last90": "Последние 90 дней",
+      "thisYear": "В этом году",
+      "anyOf": "Любой из",
+      "allOf": "Все из",
+      "noneOf": "Ни один из",
+      "is": "Является",
+      "in": "Является любым из",
+      "hasValue": "Имеет значение",
+      "isEmpty": "Пусто"
+    }
   },
   "api": {
     "testResults": {
@@ -2892,7 +2922,9 @@
         "title": "Импорт тестовых примеров",
         "fields": {
           "workflowState": "Состояние рабочего процесса",
-          "column": "Столбец {number}"
+          "column": "Столбец {number}",
+          "caseId": "ID случая",
+          "caseIdDescription": "ID случая TestPlanIt"
         },
         "success": {
           "description": "{count, plural, one {# тестовый пример} other {# тестовые примеры}} успешно импортированы"
@@ -2902,7 +2934,15 @@
           "folderRequired": "Для импорта в это место необходимо выбрать папку.",
           "fileRequired": "Требуется файл в формате CSV или Markdown.",
           "markdownParseFailed": "Не удалось разобрать файл Markdown.",
-          "markdownLlmFailed": "Анализ с помощью ИИ недоступен, используется стандартный парсер."
+          "markdownLlmFailed": "Анализ с помощью ИИ недоступен, используется стандартный парсер.",
+          "validationTitle": "Проверка импорта не пройдена",
+          "validationSummary": "{count, plural, one {Обнаружена # проблема} few {Обнаружены # проблемы} many {Обнаружено # проблем} other {Обнаружены # проблемы}} в вашем файле. Тестовые случаи не были импортированы.",
+          "validationEntry": "Строка {row, number} · {field}: {message}",
+          "validationEntryNamed": "Строка {row, number} «{name}» · {field}: {message}",
+          "validationMore": "Ещё {count, plural, one {# проблема} few {# проблемы} many {# проблем} other {# проблемы}} не показано.",
+          "validationMultiRowNote": "Номера строк соответствуют сгруппированным тестовым случаям, отображаемым в предварительном просмотре, а не исходным строкам CSV.",
+          "partialTitle": "Некоторые тестовые случаи не были импортированы",
+          "partialSummary": "Не удалось импортировать {failed, plural, one {# строку} few {# строки} many {# строк} other {# строки}}. Успешно импортировано {imported, plural, one {# тестовый случай} few {# тестовых случая} many {# тестовых случаев} other {# тестовых случая}}."
         },
         "page1": {
           "fileType": {
@@ -2934,7 +2974,8 @@
           "title": "Сопоставление столбцов CSV-файла с полями.",
           "description": "Сопоставьте каждый столбец CSV-файла с полем в шаблоне или выберите вариант игнорирования.",
           "ignoreColumn": "Игнорировать столбец",
-          "requiredFieldsWarning": "{count, plural, one {# обязательное поле} other {# обязательные поля}} не сопоставлены"
+          "requiredFieldsWarning": "{count, plural, one {# обязательное поле} other {# обязательные поля}} не сопоставлены",
+          "caseIdHint": "Это должен быть числовой ID случая — совпадающие случаи будут перезаписаны."
         },
         "page3": {
           "title": "Сводка по сопоставлению полей",
@@ -3445,6 +3486,52 @@
       "linkedIssuesDroppedTitle": "Некоторые связанные вопросы не были включены.",
       "linkedIssuesDropped": "{count, plural, =1 {# связанная задача была отменена} other {# связанные задачи были отменены}} из-за бюджета токенов: {keys}.",
       "linkedIssuesPreviewHeading": "Включены связанные вопросы"
+    },
+    "filterBar": {
+      "addFilter": "Добавить фильтр",
+      "removeFilter": "Удалить фильтр: {name}",
+      "editFilter": "Редактировать фильтр: {name}",
+      "activeCount": "{count, plural, =1 {# active filter} other {# active filters}}",
+      "assignedToMe": "Назначено мне",
+      "noFilters": "Нет активных фильтров",
+      "noMatchingCases": "Нет тест-кейсов, соответствующих вашим фильтрам",
+      "searchTruncated": "Фильтрация в пределах первых {count, number} совпадений",
+      "sortedByRelevance": "Отсортировано по релевантности",
+      "countsUpdating": "Обновление счётчиков...",
+      "filterLimitReached": "Достигнут предел фильтров (максимум {count})",
+      "valueLimitReached": "Достигнут предел значений (максимум {count} на фильтр)",
+      "filtersTruncated": "Некоторые фильтры были удалены (максимум {count})",
+      "valuesTruncated": "{count, plural, =1 {# value} other {# values}} per filter maximum — extra values were dropped"
+    },
+    "savedViews": {
+      "title": "Сохранённые представления",
+      "save": "Сохранить представление",
+      "saveTitle": "Сохранить представление",
+      "saveDescription": "Назовите это представление, чтобы позже вернуться к этим фильтрам.",
+      "namePlaceholder": "напр. Smoke-тесты, не автоматизированные",
+      "descriptionPlaceholder": "Для чего нужно это представление",
+      "nameRequired": "Введите название для этого представления.",
+      "loginRequired": "Для сохранения представлений необходимо войти в систему.",
+      "nothingToSave": "Сначала добавьте фильтр или группировку.",
+      "saved": "Представление сохранено",
+      "savedDescription": "«{name}» теперь в ваших сохранённых представлениях.",
+      "saveFailed": "Не удалось сохранить представление. Пожалуйста, попробуйте ещё раз.",
+      "empty": "Сохранённых представлений пока нет",
+      "emptyHint": "Сохраните текущие фильтры, чтобы вернуться к ним позже.",
+      "apply": "Применить представление: {name}",
+      "applied": "Применено «{name}»",
+      "droppedFilters": "{count, plural, =1 {# filter no longer exists and was skipped} other {# filters no longer exist and were skipped}}",
+      "droppedGrouping": "Его группировка больше не доступна, поэтому используется значение по умолчанию.",
+      "unreadable": "{count, plural, =1 {# saved view} other {# saved views}} couldn't be read",
+      "rename": "Переименовать",
+      "renameTitle": "Переименовать сохранённое представление",
+      "renamed": "Сохранённое представление обновлено",
+      "renameFailed": "Не удалось обновить представление. Пожалуйста, попробуйте ещё раз.",
+      "delete": "Удалить",
+      "deleteTitle": "Удалить сохранённое представление?",
+      "deleteConfirm": "«{name}» будет удалено из ваших сохранённых представлений. Это действие нельзя отменить.",
+      "deleted": "Сохранённое представление удалено",
+      "deleteFailed": "Не удалось удалить представление. Пожалуйста, попробуйте ещё раз."
     }
   },
   "tags": {
@@ -8179,6 +8266,8 @@
       "includeDeleted": "Включить удалённые элементы",
       "filterActive": "Фильтр активен:",
       "applyFilter": "Применить фильтр",
+      "invalidDate": "Недействительная дата",
+      "stepsCount": "{count, plural, one {# шаг} few {# шага} many {# шагов} other {# шага}}",
       "validation": {
         "firstValueMustBeLessThanSecond": "Первое значение должно быть меньше второго значения.",
         "firstDateMustBeBeforeSecond": "Первое свидание должно состояться раньше второго."

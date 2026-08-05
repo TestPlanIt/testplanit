@@ -49,8 +49,8 @@ The header displays:
 - **Test Cases Section**:
   - **Title**: "Cases in this Run".
   - **List**: Displays the [Test Case Repository](./repository.md) view, filtered to show only the test cases included in _this specific run_.
-    - **View Mode**: Shows test cases with their current execution status (pass, fail, blocked, untested) and allows clicking on a case to view its execution details in the right panel.
-    - **Edit Mode**: Allows selecting/deselecting test cases to be included in the run. The standard repository filtering and folder structure are available. A confirmation dialog appears if removing test cases, as this action deletes associated results.
+    - **View Mode**: Shows test cases with their current execution status (pass, fail, blocked, untested) and allows clicking on a case to view its execution details in the right panel. Alongside the repository's own filters, the list adds **Status** and **Assigned To** dimensions. When you open a run that has cases assigned to you, an **Assigned to me** filter chip is applied for you — remove it like any other chip to see the whole run. The full-text search box is not offered here; use the filter chips to narrow the list.
+    - **Edit Mode**: Allows selecting/deselecting test cases to be included in the run. This is the case-selection view: the folder tree and the filter chips work as they do in the [repository](./repository.md), and a full-text search box is offered alongside them — see [Searching](./repository.md#searching). Filters and search text applied here are not written to the page URL. A confirmation dialog appears if removing test cases, as this action deletes associated results.
     - **Run Mode**: When viewing a case in the right panel, the left panel shows the test cases list, allowing navigation between them.
 
 ## Multi-Configuration Support
@@ -73,7 +73,7 @@ When multiple configurations are selected:
 - **Status Distribution**: The donut chart displays combined status counts for all selected configurations
 - **Test Cases Table**: Shows test cases with their configuration name displayed, allowing you to see status differences across environments
 - **Tooltips**: Hovering over status indicators shows the configuration name for each test case
-- **Filtering**: The ViewSelector filters work across all selected configurations, showing accurate counts
+- **Filtering**: Filter chips apply across all selected configurations, and the left panel's option counts are calculated over the same set
 
 This feature is useful for:
 

@@ -558,6 +558,8 @@
       "stepCount": "Schrittzahl",
       "enterText": "Text eingeben...",
       "enterUrl": "URL eingeben",
+      "enterUrlPattern": "URL-Muster eingeben...",
+      "domainExample": "beispiel.de",
       "issueIdExample": "ISSUE-123",
       "selectPriorityValuesOrEmpty": "Prioritätswerte auswählen (oder für alle leer lassen)"
     },
@@ -1078,7 +1080,35 @@
     "invalidProject": "Ungültige Projekt-ID.",
     "visualization": "Visualisierung",
     "results": "Ergebnisse",
-    "loading": "Laden..."
+    "loading": "Laden...",
+    "operators": {
+      "eq": "Gleich",
+      "ne": "Nicht gleich",
+      "lt": "Weniger als",
+      "lte": "Kleiner oder gleich",
+      "gt": "Größer als",
+      "gte": "Größer oder gleich",
+      "between": "Zwischen",
+      "contains": "Enthält",
+      "notContains": "Enthält nicht",
+      "startsWith": "Beginnt mit",
+      "endsWith": "Endet mit",
+      "domain": "Domain enthält",
+      "on": "An",
+      "before": "Vor",
+      "after": "Nach",
+      "last7": "Letzte 7 Tage",
+      "last30": "Letzte 30 Tage",
+      "last90": "Letzte 90 Tage",
+      "thisYear": "Dieses Jahr",
+      "anyOf": "Eines von",
+      "allOf": "Alle von",
+      "noneOf": "Keines von",
+      "is": "Ist",
+      "in": "Ist eines von",
+      "hasValue": "Hat Wert",
+      "isEmpty": "Ist leer"
+    }
   },
   "api": {
     "testResults": {
@@ -2892,7 +2922,9 @@
         "title": "Import-Testfälle",
         "fields": {
           "workflowState": "Workflow-Status",
-          "column": "Spalte {number}"
+          "column": "Spalte {number}",
+          "caseId": "Fall-ID",
+          "caseIdDescription": "TestPlanIt-Fall-ID"
         },
         "success": {
           "description": "{count, plural, one {# Testfall} other {# Testfälle}} erfolgreich importiert"
@@ -2902,7 +2934,15 @@
           "folderRequired": "Für diesen Importort ist eine Ordnerauswahl erforderlich.",
           "fileRequired": "Eine CSV- oder Markdown-Datei ist erforderlich.",
           "markdownParseFailed": "Fehler beim Parsen der Markdown-Datei",
-          "markdownLlmFailed": "KI-Parsing nicht verfügbar, Standardparser wird verwendet"
+          "markdownLlmFailed": "KI-Parsing nicht verfügbar, Standardparser wird verwendet",
+          "validationTitle": "Importvalidierung fehlgeschlagen",
+          "validationSummary": "{count, plural, one {# Problem wurde} other {# Probleme wurden}} in Ihrer Datei gefunden. Es wurden keine Testfälle importiert.",
+          "validationEntry": "Zeile {row, number} · {field}: {message}",
+          "validationEntryNamed": "Zeile {row, number} \"{name}\" · {field}: {message}",
+          "validationMore": "{count, plural, one {# weiteres Problem wird} other {# weitere Probleme werden}} nicht angezeigt.",
+          "validationMultiRowNote": "Die Zeilennummern beziehen sich auf die gruppierten Testfälle in der Vorschau, nicht auf die rohen CSV-Zeilen.",
+          "partialTitle": "Einige Testfälle wurden nicht importiert",
+          "partialSummary": "{failed, plural, one {# Zeile konnte} other {# Zeilen konnten}} nicht importiert werden. {imported, plural, one {# Testfall wurde} other {# Testfälle wurden}} erfolgreich importiert."
         },
         "page1": {
           "fileType": {
@@ -2934,7 +2974,8 @@
           "title": "CSV-Spalten Feldern zuordnen",
           "description": "Ordnen Sie jede CSV-Spalte einem Feld in der Vorlage zu oder wählen Sie, ob sie ignoriert werden soll.",
           "ignoreColumn": "Spalte ignorieren",
-          "requiredFieldsWarning": "{count, plural, one {# Pflichtfeld ist} other {# Pflichtfelder sind}} nicht zugeordnet"
+          "requiredFieldsWarning": "{count, plural, one {# Pflichtfeld ist} other {# Pflichtfelder sind}} nicht zugeordnet",
+          "caseIdHint": "Dies muss die numerische Fall-ID sein — übereinstimmende Fälle werden überschrieben."
         },
         "page3": {
           "title": "Zusammenfassung der Feldzuordnung",
@@ -3445,6 +3486,52 @@
       "linkedIssuesDroppedTitle": "Einige damit zusammenhängende Probleme wurden nicht berücksichtigt.",
       "linkedIssuesDropped": "{count, plural, =1 {# verknüpftes Problem wurde verworfen} other {# verknüpfte Probleme wurden verworfen}} aufgrund des Token-Budgets: {keys}.",
       "linkedIssuesPreviewHeading": "Verknüpfte Tickets, die aufgenommen werden"
+    },
+    "filterBar": {
+      "addFilter": "Filter hinzufügen",
+      "removeFilter": "Filter entfernen: {name}",
+      "editFilter": "Filter bearbeiten: {name}",
+      "activeCount": "{count, plural, =1 {# aktiver Filter} other {# aktive Filter}}",
+      "assignedToMe": "Mir zugewiesen",
+      "noFilters": "Keine aktiven Filter",
+      "noMatchingCases": "Keine Testfälle entsprechen Ihren Filtern",
+      "searchTruncated": "Filterung innerhalb der Top {count, number} Treffer",
+      "sortedByRelevance": "Nach Relevanz sortiert",
+      "countsUpdating": "Anzahl wird aktualisiert...",
+      "filterLimitReached": "Filterlimit erreicht (maximal {count})",
+      "valueLimitReached": "Wertelimit erreicht (maximal {count} pro Filter)",
+      "filtersTruncated": "Einige Filter wurden entfernt (maximal {count})",
+      "valuesTruncated": "{count, plural, =1 {# Wert} other {# Werte}} pro Filter maximal — zusätzliche Werte wurden entfernt"
+    },
+    "savedViews": {
+      "title": "Gespeicherte Ansichten",
+      "save": "Ansicht speichern",
+      "saveTitle": "Ansicht speichern",
+      "saveDescription": "Benennen Sie diese Ansicht, um später zu diesen Filtern zurückzukehren.",
+      "namePlaceholder": "z. B. Smoke-Testfälle, nicht automatisiert",
+      "descriptionPlaceholder": "Wofür diese Ansicht gedacht ist",
+      "nameRequired": "Geben Sie einen Namen für diese Ansicht ein.",
+      "loginRequired": "Sie müssen angemeldet sein, um Ansichten zu speichern.",
+      "nothingToSave": "Fügen Sie zuerst einen Filter oder eine Gruppierung hinzu.",
+      "saved": "Ansicht gespeichert",
+      "savedDescription": "„{name}“ befindet sich jetzt in Ihren gespeicherten Ansichten.",
+      "saveFailed": "Die Ansicht konnte nicht gespeichert werden. Bitte versuchen Sie es erneut.",
+      "empty": "Noch keine gespeicherten Ansichten",
+      "emptyHint": "Speichern Sie die aktuellen Filter, um später zu ihnen zurückzukehren.",
+      "apply": "Ansicht anwenden: {name}",
+      "applied": "„{name}“ angewendet",
+      "droppedFilters": "{count, plural, =1 {# Filter existiert nicht mehr und wurde übersprungen} other {# Filter existieren nicht mehr und wurden übersprungen}}",
+      "droppedGrouping": "Die Gruppierung ist nicht mehr verfügbar, daher wird die Standardeinstellung verwendet.",
+      "unreadable": "{count, plural, =1 {# gespeicherte Ansicht konnte nicht gelesen werden} other {# gespeicherte Ansichten konnten nicht gelesen werden}}",
+      "rename": "Umbenennen",
+      "renameTitle": "Gespeicherte Ansicht umbenennen",
+      "renamed": "Gespeicherte Ansicht aktualisiert",
+      "renameFailed": "Die Ansicht konnte nicht aktualisiert werden. Bitte versuchen Sie es erneut.",
+      "delete": "Löschen",
+      "deleteTitle": "Gespeicherte Ansicht löschen?",
+      "deleteConfirm": "„{name}“ wird aus Ihren gespeicherten Ansichten entfernt. Dies kann nicht rückgängig gemacht werden.",
+      "deleted": "Gespeicherte Ansicht gelöscht",
+      "deleteFailed": "Die Ansicht konnte nicht gelöscht werden. Bitte versuchen Sie es erneut."
     }
   },
   "tags": {
@@ -8179,6 +8266,8 @@
       "includeDeleted": "Gelöschte Elemente einschließen",
       "filterActive": "Filter aktiv:",
       "applyFilter": "Filter anwenden",
+      "invalidDate": "Ungültiges Datum",
+      "stepsCount": "{count, plural, one {# Schritt} other {# Schritte}}",
       "validation": {
         "firstValueMustBeLessThanSecond": "Der erste Wert muss kleiner als der zweite Wert sein.",
         "firstDateMustBeBeforeSecond": "Das erste Date muss vor dem zweiten Date stattfinden."

@@ -558,6 +558,8 @@
       "stepCount": "걸음 수",
       "enterText": "텍스트를 입력하세요...",
       "enterUrl": "URL을 입력하세요",
+      "enterUrlPattern": "URL 패턴 입력...",
+      "domainExample": "example.com",
       "issueIdExample": "제123호",
       "selectPriorityValuesOrEmpty": "우선순위 값을 선택하세요 (모두 선택하려면 비워 두세요)."
     },
@@ -1078,7 +1080,35 @@
     "invalidProject": "잘못된 프로젝트 ID입니다.",
     "visualization": "심상",
     "results": "결과",
-    "loading": "로딩 중..."
+    "loading": "로딩 중...",
+    "operators": {
+      "eq": "같음",
+      "ne": "같지 않음",
+      "lt": "미만",
+      "lte": "이하",
+      "gt": "초과",
+      "gte": "이상",
+      "between": "범위",
+      "contains": "포함",
+      "notContains": "포함하지 않음",
+      "startsWith": "시작 문자열",
+      "endsWith": "끝 문자열",
+      "domain": "도메인 포함",
+      "on": "~에",
+      "before": "이전",
+      "after": "이후",
+      "last7": "지난 7일",
+      "last30": "지난 30일",
+      "last90": "지난 90일",
+      "thisYear": "올해",
+      "anyOf": "다음 중 하나",
+      "allOf": "모두",
+      "noneOf": "해당 없음",
+      "is": "~임",
+      "in": "다음 중 하나임",
+      "hasValue": "값 있음",
+      "isEmpty": "비어 있음"
+    }
   },
   "api": {
     "testResults": {
@@ -2892,7 +2922,9 @@
         "title": "테스트 케이스 가져오기",
         "fields": {
           "workflowState": "워크플로우 상태",
-          "column": "컬럼 {number}"
+          "column": "컬럼 {number}",
+          "caseId": "케이스 ID",
+          "caseIdDescription": "TestPlanIt 케이스 ID"
         },
         "success": {
           "description": "{count, plural, one {# 테스트 케이스} other {# 테스트 케이스}} 성공적으로 가져왔습니다"
@@ -2902,7 +2934,15 @@
           "folderRequired": "이 가져오기 위치를 선택하려면 폴더를 지정해야 합니다.",
           "fileRequired": "CSV 또는 Markdown 파일이 필요합니다.",
           "markdownParseFailed": "마크다운 파일을 구문 분석하는 데 실패했습니다.",
-          "markdownLlmFailed": "AI 구문 분석 기능을 사용할 수 없으므로 표준 구문 분석기를 사용합니다."
+          "markdownLlmFailed": "AI 구문 분석 기능을 사용할 수 없으므로 표준 구문 분석기를 사용합니다.",
+          "validationTitle": "가져오기 유효성 검사 실패",
+          "validationSummary": "파일에서 {count, plural, other {#개의 문제가}} 발견되었습니다. 테스트 케이스를 가져오지 못했습니다.",
+          "validationEntry": "{row, number}행 · {field}: {message}",
+          "validationEntryNamed": "{row, number}행 \"{name}\" · {field}: {message}",
+          "validationMore": "{count, plural, other {#개의 추가 문제가}} 표시되지 않았습니다.",
+          "validationMultiRowNote": "행 번호는 원시 CSV 줄이 아니라 미리보기에 표시된 그룹화된 테스트 케이스를 나타냅니다.",
+          "partialTitle": "일부 테스트 케이스를 가져오지 못했습니다",
+          "partialSummary": "{failed, plural, other {#개 행}}을 가져올 수 없습니다. {imported, plural, other {#개의 테스트 케이스}}가 성공적으로 가져와졌습니다."
         },
         "page1": {
           "fileType": {
@@ -2934,7 +2974,8 @@
           "title": "CSV 열을 필드에 매핑",
           "description": "CSV 파일의 각 열을 템플릿의 필드에 매핑하거나 무시하도록 선택할 수 있습니다.",
           "ignoreColumn": "무시할 열",
-          "requiredFieldsWarning": "{count, plural, one {# 필수 입력 필드는} other {# 필수 입력 필드는}} 매핑되지 않았습니다"
+          "requiredFieldsWarning": "{count, plural, one {# 필수 입력 필드는} other {# 필수 입력 필드는}} 매핑되지 않았습니다",
+          "caseIdHint": "이는 숫자로 된 케이스 ID여야 하며, 일치하는 케이스는 덮어씌워집니다."
         },
         "page3": {
           "title": "현장 지도 작성 요약",
@@ -3445,6 +3486,52 @@
       "linkedIssuesDroppedTitle": "일부 연관된 문제가 포함되지 않았습니다.",
       "linkedIssuesDropped": "{count, plural, =1 {# 연결된 이슈가 삭제되었습니다} other {# 연결된 이슈가 삭제되었습니다}} 토큰 예산 부족으로 인해: {keys}.",
       "linkedIssuesPreviewHeading": "포함될 관련 이슈"
+    },
+    "filterBar": {
+      "addFilter": "필터 추가",
+      "removeFilter": "필터 제거: {name}",
+      "editFilter": "필터 편집: {name}",
+      "activeCount": "{count, plural, =1 {활성 필터 #개} other {활성 필터 #개}}",
+      "assignedToMe": "내게 할당됨",
+      "noFilters": "활성 필터 없음",
+      "noMatchingCases": "필터와 일치하는 테스트 케이스가 없습니다",
+      "searchTruncated": "상위 {count, number}개 일치 항목 내에서 필터링",
+      "sortedByRelevance": "관련성 기준으로 정렬됨",
+      "countsUpdating": "개수 업데이트 중...",
+      "filterLimitReached": "필터 개수 제한에 도달했습니다 (최대 {count}개)",
+      "valueLimitReached": "값 개수 제한에 도달했습니다 (필터당 최대 {count}개)",
+      "filtersTruncated": "일부 필터가 삭제되었습니다 (최대 {count}개)",
+      "valuesTruncated": "{count, plural, =1 {필터당 최대 #개 값} other {필터당 최대 #개 값}} — 초과된 값은 삭제되었습니다"
+    },
+    "savedViews": {
+      "title": "저장된 보기",
+      "save": "보기 저장",
+      "saveTitle": "보기 저장",
+      "saveDescription": "나중에 이 필터로 돌아올 수 있도록 이 보기의 이름을 지정하세요.",
+      "namePlaceholder": "예: 스모크 케이스, 자동화되지 않음",
+      "descriptionPlaceholder": "이 보기의 용도",
+      "nameRequired": "이 보기의 이름을 입력하세요.",
+      "loginRequired": "보기를 저장하려면 로그인해야 합니다.",
+      "nothingToSave": "먼저 필터 또는 그룹화를 추가하세요.",
+      "saved": "보기 저장됨",
+      "savedDescription": "“{name}” 보기가 저장된 보기에 추가되었습니다.",
+      "saveFailed": "보기를 저장할 수 없습니다. 다시 시도해 주세요.",
+      "empty": "저장된 보기가 아직 없습니다",
+      "emptyHint": "현재 필터를 저장하여 나중에 다시 사용할 수 있습니다.",
+      "apply": "보기 적용: {name}",
+      "applied": "“{name}” 적용됨",
+      "droppedFilters": "{count, plural, =1 {#개 필터가 더 이상 존재하지 않아 건너뛰었습니다} other {#개 필터가 더 이상 존재하지 않아 건너뛰었습니다}}",
+      "droppedGrouping": "그룹화가 더 이상 사용할 수 없어 기본값이 사용됩니다.",
+      "unreadable": "{count, plural, =1 {저장된 보기 #개} other {저장된 보기 #개}}를 읽을 수 없습니다",
+      "rename": "이름 변경",
+      "renameTitle": "저장된 보기 이름 변경",
+      "renamed": "저장된 보기가 업데이트되었습니다",
+      "renameFailed": "보기를 업데이트할 수 없습니다. 다시 시도해 주세요.",
+      "delete": "삭제",
+      "deleteTitle": "저장된 보기를 삭제하시겠습니까?",
+      "deleteConfirm": "“{name}” 보기가 저장된 보기에서 삭제됩니다. 이 작업은 취소할 수 없습니다.",
+      "deleted": "저장된 보기가 삭제되었습니다",
+      "deleteFailed": "보기를 삭제할 수 없습니다. 다시 시도해 주세요."
     }
   },
   "tags": {
@@ -8179,6 +8266,8 @@
       "includeDeleted": "삭제된 항목을 포함하세요",
       "filterActive": "필터 활성화됨:",
       "applyFilter": "필터 적용",
+      "invalidDate": "잘못된 날짜",
+      "stepsCount": "{count, plural, other {# 단계}}",
       "validation": {
         "firstValueMustBeLessThanSecond": "첫 번째 값은 두 번째 값보다 작아야 합니다.",
         "firstDateMustBeBeforeSecond": "첫 번째 데이트는 두 번째 데이트보다 먼저 이루어져야 합니다."

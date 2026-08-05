@@ -1,5 +1,9 @@
 "use client";
 
+import {
+  operatorLabelKey,
+  type FilterInputValue,
+} from "@/components/filterInputValue";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -15,52 +19,77 @@ import { useEffect, useState } from "react";
 
 type StepsOperator = "eq" | "lt" | "lte" | "gt" | "gte" | "between";
 
+const LEGACY_OPERATORS: readonly string[] = [
+  "eq",
+  "lt",
+  "lte",
+  "gt",
+  "gte",
+  "between",
+];
+
+// Registry operators that take no value (has-value / is-empty); only offered
+// in structured mode via the `operators` prop.
+const VALUELESS_OPERATORS: readonly string[] = ["any", "none"];
+
 interface StepsFilterInputProps {
   fieldId: number;
-  onFilterApply: (
+  onFilterApply?: (
     operator: StepsOperator,
     value1: number,
     value2?: number
   ) => void;
   onClearFilter?: () => void;
   currentFilter: string | null;
+  /** Structured chip-editor mode: the committed {operator, values}. */
+  value?: FilterInputValue | null;
+  /**
+   * Structured change path — emits only complete, parseable states (the chip
+   * editor debounces free-text edits before persisting).
+   */
+  onValueChange?: (next: FilterInputValue) => void;
+  /** Operator whitelist for structured mode; defaults to the legacy set. */
+  operators?: readonly string[];
 }
 
-const operatorLabels: Record<StepsOperator, string> = {
-  eq: "Equals (=)",
-  lt: "Less than (<)",
-  lte: "Less than or equal (≤)",
-  gt: "Greater than (>)",
-  gte: "Greater than or equal (≥)",
-  between: "Between",
-};
-
-const operatorSymbols: Record<StepsOperator, string> = {
+// Comparison operators render as locale-neutral math symbols; every other
+// operator reads from `common.operators.*`.
+const OPERATOR_SYMBOLS: Record<string, string> = {
   eq: "=",
   lt: "<",
   lte: "≤",
   gt: ">",
   gte: "≥",
-  between: "between",
 };
+
+const LABELLED_OPERATORS: readonly string[] = [
+  ...LEGACY_OPERATORS,
+  ...VALUELESS_OPERATORS,
+];
 
 export function StepsFilterInput({
   fieldId: _fieldId,
   onFilterApply,
   onClearFilter,
   currentFilter,
+  value,
+  onValueChange,
+  operators,
 }: StepsFilterInputProps) {
   const t = useTranslations();
-  const [operator, setOperator] = useState<StepsOperator>("eq");
+  const [operator, setOperator] = useState<string>("eq");
   const [value1, setValue1] = useState<string>("");
   const [value2, setValue2] = useState<string>("");
+
+  const operatorOptions = operators ?? LEGACY_OPERATORS;
+  const isValueless = VALUELESS_OPERATORS.includes(operator);
 
   // Parse current filter if it exists
   useEffect(() => {
     if (currentFilter && currentFilter.includes("|")) {
       const parts = currentFilter.split("|");
       if (parts.length >= 2) {
-        setOperator(parts[0] as StepsOperator);
+        setOperator(parts[0]);
         setValue1(parts[1]);
         if (parts.length === 3) {
           setValue2(parts[2]);
@@ -69,17 +98,47 @@ export function StepsFilterInput({
     }
   }, [currentFilter]);
 
+  // Structured mode: sync from the committed predicate value.
+  useEffect(() => {
+    if (!value) return;
+    setOperator(value.operator);
+    setValue1(value.values[0] !== undefined ? String(value.values[0]) : "");
+    setValue2(value.values[1] !== undefined ? String(value.values[1]) : "");
+  }, [value]);
+
+  const emitStructured = (op: string, raw1: string, raw2: string) => {
+    if (!onValueChange) return;
+    if (VALUELESS_OPERATORS.includes(op)) {
+      onValueChange({ operator: op, values: [] });
+      return;
+    }
+    const num1 = parseInt(raw1);
+    if (isNaN(num1) || num1 < 0) return;
+    if (op === "between") {
+      const num2 = parseInt(raw2);
+      if (isNaN(num2) || num2 < 0 || num1 >= num2) return;
+      onValueChange({ operator: op, values: [num1, num2] });
+      return;
+    }
+    onValueChange({ operator: op, values: [num1] });
+  };
+
   const handleApply = () => {
+    if (isValueless) {
+      emitStructured(operator, value1, value2);
+      return;
+    }
     const num1 = parseInt(value1);
     if (isNaN(num1) || num1 < 0) return;
 
     if (operator === "between") {
       const num2 = parseInt(value2);
       if (isNaN(num2) || num2 < 0) return;
-      onFilterApply(operator, num1, num2);
+      onFilterApply?.(operator, num1, num2);
     } else {
-      onFilterApply(operator, num1);
+      onFilterApply?.(operator as StepsOperator, num1);
     }
+    emitStructured(operator, value1, value2);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -89,6 +148,7 @@ export function StepsFilterInput({
   };
 
   const isValid = () => {
+    if (isValueless) return true;
     const num1 = parseInt(value1);
     if (isNaN(num1) || num1 < 0) return false;
 
@@ -103,17 +163,32 @@ export function StepsFilterInput({
 
   const hasActiveFilter = currentFilter && currentFilter.includes("|");
 
+  const operatorLabel = (op: string) =>
+    OPERATOR_SYMBOLS[op] ??
+    (LABELLED_OPERATORS.includes(op)
+      ? t(`common.operators.${operatorLabelKey(op)}`)
+      : op);
+
+  // "3 steps" / "1 step" — the count carries the plural, so a hand-edited
+  // non-numeric value falls back to the raw token.
+  const stepCount = (raw: string) => {
+    const count = Number(raw);
+    return raw.trim() === "" || isNaN(count)
+      ? raw
+      : t("search.filters.stepsCount", { count: Math.trunc(count) });
+  };
+
   // Format the current filter for display with symbols
   const formatFilterDisplay = (filter: string) => {
     if (!filter || !filter.includes("|")) return filter;
     const parts = filter.split("|");
-    const op = parts[0] as StepsOperator;
-    const symbol = operatorSymbols[op] || op;
+    const op = parts[0];
+    const symbol = operatorLabel(op);
 
     if (op === "between" && parts.length === 3) {
-      return `${symbol} ${parts[1]} and ${parts[2]} steps`;
+      return `${symbol} ${parts[1]} ${t("common.and")} ${stepCount(parts[2])}`;
     }
-    return `${symbol} ${parts[1]} steps`;
+    return `${symbol} ${stepCount(parts[1])}`;
   };
 
   return (
@@ -144,7 +219,10 @@ export function StepsFilterInput({
 
       <Select
         value={operator}
-        onValueChange={(val) => setOperator(val as StepsOperator)}
+        onValueChange={(val) => {
+          setOperator(val);
+          emitStructured(val, value1, value2);
+        }}
       >
         <SelectTrigger
           className="w-full h-8 text-xs"
@@ -153,53 +231,61 @@ export function StepsFilterInput({
           <SelectValue placeholder={t("common.placeholders.selectOperator")} />
         </SelectTrigger>
         <SelectContent>
-          {(Object.keys(operatorLabels) as StepsOperator[]).map((op) => (
+          {operatorOptions.map((op) => (
             <SelectItem key={op} value={op} className="text-xs">
-              {operatorLabels[op]}
+              {t(`common.operators.${operatorLabelKey(op)}`)}
             </SelectItem>
           ))}
         </SelectContent>
       </Select>
 
-      <div className="flex gap-2 items-center">
-        <Input
-          type="number"
-          step="1"
-          min="0"
-          placeholder={t("common.placeholders.stepCount")}
-          value={value1}
-          onChange={(e) => setValue1(e.target.value)}
-          onKeyPress={handleKeyPress}
-          className="h-8 text-xs"
-        />
+      {!isValueless && (
+        <div className="flex gap-2 items-center">
+          <Input
+            type="number"
+            step="1"
+            min="0"
+            placeholder={t("common.placeholders.stepCount")}
+            value={value1}
+            onChange={(e) => {
+              setValue1(e.target.value);
+              emitStructured(operator, e.target.value, value2);
+            }}
+            onKeyPress={handleKeyPress}
+            className="h-8 text-xs"
+          />
 
-        {operator === "between" && (
-          <>
-            <span className="text-xs text-muted-foreground">
-              {t("common.and")}
-            </span>
-            <Input
-              type="number"
-              step="1"
-              min="0"
-              placeholder={t("common.placeholders.stepCount")}
-              value={value2}
-              onChange={(e) => setValue2(e.target.value)}
-              onKeyPress={handleKeyPress}
-              className="h-8 text-xs"
-            />
-          </>
-        )}
+          {operator === "between" && (
+            <>
+              <span className="text-xs text-muted-foreground">
+                {t("common.and")}
+              </span>
+              <Input
+                type="number"
+                step="1"
+                min="0"
+                placeholder={t("common.placeholders.stepCount")}
+                value={value2}
+                onChange={(e) => {
+                  setValue2(e.target.value);
+                  emitStructured(operator, value1, e.target.value);
+                }}
+                onKeyPress={handleKeyPress}
+                className="h-8 text-xs"
+              />
+            </>
+          )}
 
-        <Button
-          size="sm"
-          onClick={handleApply}
-          disabled={!isValid()}
-          className="h-8 w-8 p-0 shrink-0"
-        >
-          <Check className="h-3 w-3" />
-        </Button>
-      </div>
+          <Button
+            size="sm"
+            onClick={handleApply}
+            disabled={!isValid()}
+            className="h-8 w-8 p-0 shrink-0"
+          >
+            <Check className="h-3 w-3" />
+          </Button>
+        </div>
+      )}
 
       {operator === "between" &&
         value1 &&

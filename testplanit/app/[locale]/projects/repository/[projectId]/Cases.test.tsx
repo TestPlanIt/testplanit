@@ -129,12 +129,27 @@ vi.mock("~/hooks/useLatestTestResults", () => ({
   useLatestTestResults: () => ({}),
 }));
 
+// Plain holders rather than vi.fn: afterEach's vi.clearAllMocks() would strip
+// a mock implementation, and these hooks are read on every render.
+const idSortHolder = vi.hoisted(() => ({
+  latest: { pageIds: null as number[] | null, isFetching: false },
+  fieldOption: { pageIds: null as number[] | null, isFetching: false },
+  latestArgs: [] as any[],
+  fieldOptionArgs: [] as any[],
+}));
+
 vi.mock("~/hooks/useCaseIdsByLatestStatus", () => ({
-  useCaseIdsByLatestStatus: () => ({ pageIds: null, isFetching: false }),
+  useCaseIdsByLatestStatus: (args: any) => {
+    idSortHolder.latestArgs.push(args);
+    return idSortHolder.latest;
+  },
 }));
 
 vi.mock("~/hooks/useCaseIdsByFieldOption", () => ({
-  useCaseIdsByFieldOption: () => ({ pageIds: null, isFetching: false }),
+  useCaseIdsByFieldOption: (args: any) => {
+    idSortHolder.fieldOptionArgs.push(args);
+    return idSortHolder.fieldOption;
+  },
 }));
 
 vi.mock("~/hooks/useReviewFeatureEnabled", () => ({
@@ -144,14 +159,32 @@ vi.mock("~/hooks/useReviewFeatureEnabled", () => ({
   })),
 }));
 
+// Cases no longer reads the ZenStack GET wrapper — only the post-fetch matcher
+// types, which are erased. The mock stays so the real module (and the ZenStack
+// client it pulls in) is never loaded by this suite.
 vi.mock("~/hooks/useRepositoryCasesWithFilteredFields", () => ({
-  useFindManyRepositoryCasesFiltered: vi.fn(() => ({
+  useFindManyRepositoryCasesFiltered: vi.fn(),
+  filterOrphanedFieldValues: (row: unknown) => row,
+  matchesPostFetchFilters: () => true,
+}));
+
+const invalidateCaseListMock = vi.fn(() => Promise.resolve());
+
+vi.mock("~/hooks/useRepositoryCasesQuery", () => ({
+  useRepositoryCasesQuery: vi.fn(() => ({
     data: [],
-    isLoading: false,
-    error: null,
+    ids: undefined,
+    caseIds: undefined,
     totalCount: 0,
+    isLoading: false,
+    isFetching: false,
+    error: null,
     refetch: vi.fn(),
   })),
+  // Returns a STABLE invalidator — Cases puts it in effect/callback dep lists.
+  useRepositoryCasesInvalidation: vi.fn(() => invalidateCaseListMock),
+  invalidateRepositoryCasesQueries: vi.fn(() => Promise.resolve()),
+  notifyRepositoryCasesChanged: vi.fn(),
 }));
 
 vi.mock("~/hooks/useRepositoryCasesByDescendants", () => ({
@@ -317,14 +350,26 @@ vi.mock("./columns", () => ({
 }));
 
 // ---- Imports ----
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { DataTable } from "@/components/tables/DataTable";
 import React from "react";
 import * as NextAuth from "next-auth/react";
 import { useFindManyRepositoryCasesByDescendants } from "~/hooks/useRepositoryCasesByDescendants";
-import { useFindManyRepositoryCasesFiltered } from "~/hooks/useRepositoryCasesWithFilteredFields";
+import { useRepositoryCasesQuery } from "~/hooks/useRepositoryCasesQuery";
+import { useExportData } from "~/hooks/useExportData";
+import { fetchAllCasesForExport } from "~/app/actions/exportActions";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { usePagination } from "~/lib/contexts/PaginationContext";
+import { getColumns } from "./columns";
+import { buildFilterDimensions } from "~/lib/repository/filterDimensions";
+import { canonicalPredicateKey } from "~/lib/repository/filterUrlCodec";
+import type { FilterPredicate } from "~/lib/schemas/repositoryFilterPredicates";
 import Cases from "./Cases";
 
 // ---- Test Fixtures ----
@@ -352,10 +397,23 @@ const mockCase = {
   createdAt: new Date(),
 };
 
+const testRegistry = buildFilterDimensions({
+  dynamicFields: [
+    { fieldId: 15, type: "Text Long" },
+    { fieldId: 3, type: "Steps" },
+  ],
+});
+
+const predicateProps = (predicates: FilterPredicate[]) => ({
+  predicates,
+  filterRegistry: testRegistry,
+  predicatesKey: canonicalPredicateKey(predicates),
+});
+
 const defaultProps = {
   folderId: null,
   viewType: "all",
-  filterId: null,
+  ...predicateProps([]),
   canAddEdit: true,
   canAddEditRun: false,
   canDelete: true,
@@ -372,14 +430,6 @@ function setupMocks({
   canAddEdit?: boolean;
   paginationOverrides?: Record<string, any>;
 } = {}) {
-  (useFindManyRepositoryCasesFiltered as any).mockReturnValue({
-    data,
-    isLoading,
-    error: null,
-    totalCount: data.length,
-    refetch: vi.fn(),
-  });
-
   (useFindManyRepositoryCasesByDescendants as any).mockReturnValue({
     data,
     isLoading,
@@ -387,6 +437,21 @@ function setupMocks({
     error: null,
     totalCount: data.length,
     refetch: vi.fn(),
+  });
+
+  (useRepositoryCasesQuery as any).mockReturnValue({
+    data,
+    ids: data.map((row: any) => row.id),
+    isLoading,
+    isFetching: false,
+    error: null,
+    totalCount: data.length,
+    refetch: vi.fn(),
+  });
+
+  (useExportData as any).mockReturnValue({
+    handleExport: vi.fn(),
+    isExporting: false,
   });
 
   (useProjectPermissions as any).mockReturnValue({
@@ -426,6 +491,10 @@ beforeAll(() => {
 
 beforeEach(() => {
   setupMocks();
+  idSortHolder.latest = { pageIds: null, isFetching: false };
+  idSortHolder.fieldOption = { pageIds: null, isFetching: false };
+  idSortHolder.latestArgs.length = 0;
+  idSortHolder.fieldOptionArgs.length = 0;
   // Re-set session mock since vi.clearAllMocks() removes implementations
   (NextAuth.useSession as any).mockReturnValue({
     data: {
@@ -454,14 +523,15 @@ afterEach(() => {
 
 // ---- Tests ----
 
-// The select-all ids query is the call that asks for `id` without an orderBy;
-// the list query alongside it carries the full row select.
-const selectAllIdsSelect = () => {
-  const call = (useFindManyRepositoryCasesFiltered as any).mock.calls.find(
-    ([args]: any[]) => args?.select?.id === true && !args?.orderBy
-  );
-  return call?.[0]?.select;
-};
+// The select-all ids request among the POST-route calls: it names its select
+// shape "ids" (no post-fetch filter) or "selectAll:<fields>" (with one).
+const selectAllIdsArgs = () =>
+  (useRepositoryCasesQuery as any).mock.calls.find(([args]: any[]) => {
+    const key = String(args?.selectKey ?? "");
+    return key === "ids" || key.startsWith("selectAll:");
+  })?.[0];
+
+const selectAllIdsSelect = () => selectAllIdsArgs()?.select;
 
 describe("Select all ids query", () => {
   it("asks only for ids when no post-fetch filter is active", async () => {
@@ -470,7 +540,12 @@ describe("Select all ids query", () => {
     render(<Cases {...defaultProps} viewType="folders" folderId={1} />);
     await screen.findByTestId("data-table");
 
-    expect(selectAllIdsSelect()).toEqual({ id: true, isDeleted: true });
+    // Nothing has to be matched in memory, so the route returns bare ids and
+    // no row is hydrated at all.
+    const args = selectAllIdsArgs();
+    expect(args.idsOnly).toBe(true);
+    expect(args.select).toBeUndefined();
+    expect(args.selectKey).toBe("ids");
   });
 
   it("includes the field values a text filter is applied to", async () => {
@@ -480,7 +555,9 @@ describe("Select all ids query", () => {
       <Cases
         {...defaultProps}
         viewType="dynamic_15_Text Long"
-        filterId={["contains|hello"]}
+        {...predicateProps([
+          { dimension: "field_15", operator: "contains", values: ["hello"] },
+        ])}
       />
     );
     await screen.findByTestId("data-table");
@@ -503,7 +580,9 @@ describe("Select all ids query", () => {
       <Cases
         {...defaultProps}
         viewType="dynamic_3_Steps"
-        filterId={["gte|1"]}
+        {...predicateProps([
+          { dimension: "field_3", operator: "gte", values: [1] },
+        ])}
       />
     );
     await screen.findByTestId("data-table");
@@ -748,6 +827,37 @@ describe("Cases component", () => {
     });
   });
 
+  it("bypasses the select-folder wall and queries project-wide when predicates are active", async () => {
+    setupMocks({ data: [mockCase] });
+
+    render(
+      <Cases
+        {...defaultProps}
+        viewType="folders"
+        folderId={null}
+        searchResultIds={undefined}
+        {...predicateProps([
+          { dimension: "templates", operator: "in", values: [7] },
+        ])}
+      />
+    );
+
+    // Spec §7.1: with ≥1 active predicate and no folder selected, the wall is
+    // bypassed — the table renders instead of the "select folder" message.
+    const dataTable = await screen.findByTestId("data-table");
+    expect(dataTable.getAttribute("data-count")).toBe("1");
+
+    // The list query ran (not disabled by the folder gate) and its where has
+    // no folder scoping — project-wide, with the predicate fragment applied.
+    const listCall = postListCall();
+    expect(listCall).toBeDefined();
+    expect(listCall.enabled).toBe(true);
+    expect(JSON.stringify(listCall.where)).not.toContain("folderId");
+    expect(listCall.where.AND).toContainEqual({
+      templateId: { in: [7] },
+    });
+  });
+
   it("renders with showDescendants and descendantFolderIds props", async () => {
     const casesInMultipleFolders = [
       { ...mockCase, id: 1, name: "Case in Parent", folderId: 10 },
@@ -874,7 +984,7 @@ describe("Cases component", () => {
           {...defaultProps}
           viewType="folders"
           folderId={1}
-          filterId={null}
+          {...predicateProps([])}
         />
       );
 
@@ -889,7 +999,53 @@ describe("Cases component", () => {
           {...defaultProps}
           viewType="folders"
           folderId={1}
-          filterId={[7]}
+          {...predicateProps([
+            { dimension: "templates", operator: "in", values: [7] },
+          ])}
+        />
+      );
+
+      await waitFor(() => {
+        expect(
+          screen.queryByTestId("bulk-edit-button")
+        ).not.toBeInTheDocument();
+      });
+    } finally {
+      restoreDataTable();
+    }
+  });
+
+  it("clears the bulk-edit selection when the search changes", async () => {
+    const restoreDataTable = installSelectableDataTable();
+    try {
+      setupMocks({ data: [{ ...mockCase, id: 101, folderId: 1 }] });
+
+      const { rerender } = render(
+        <Cases
+          {...defaultProps}
+          viewType="folders"
+          folderId={1}
+          searchResultIds={[101]}
+          searchKey="login"
+          searchText="login"
+        />
+      );
+
+      fireEvent.click(await screen.findByTestId("simulate-select-first-row"));
+      expect(await screen.findByTestId("bulk-edit-button")).toBeInTheDocument();
+
+      // The search narrows the visible set exactly like a predicate does, so
+      // the selection is scoped out the same way — a bulk action must not span
+      // cases the new search excludes.
+      setupMocks({ data: [{ ...mockCase, id: 202, folderId: 1 }] });
+      rerender(
+        <Cases
+          {...defaultProps}
+          viewType="folders"
+          folderId={1}
+          searchResultIds={[202]}
+          searchKey="checkout"
+          searchText="checkout"
         />
       );
 
@@ -938,5 +1094,545 @@ describe("Cases component", () => {
       expect(screen.getByTestId("data-table")).toBeInTheDocument();
     });
     expect(onSelectionChange).not.toHaveBeenCalledWith([]);
+  });
+});
+
+// The list request among the POST-route calls: it is the one carrying the row
+// select (the ids-only / count-only calls do not).
+const postListCall = () =>
+  (useRepositoryCasesQuery as any).mock.calls.find(
+    ([args]: any[]) => args?.select?.name === true
+  )?.[0];
+
+const postCallsEnabled = () =>
+  (useRepositoryCasesQuery as any).mock.calls.filter(
+    ([args]: any[]) => args?.enabled
+  );
+
+describe("Search x filter intersection (spec §9)", () => {
+  it("routes the list through the POST query route, composing predicates with the search ids", async () => {
+    setupMocks({ data: [mockCase] });
+
+    render(
+      <Cases
+        {...defaultProps}
+        viewType="folders"
+        folderId={1}
+        searchResultIds={[7, 3, 9]}
+        searchKey="login"
+        {...predicateProps([
+          { dimension: "templates", operator: "in", values: [7] },
+        ])}
+      />
+    );
+    await screen.findByTestId("data-table");
+
+    const listCall = postListCall();
+    expect(listCall.enabled).toBe(true);
+    expect(listCall.searchCaseIds).toEqual([7, 3, 9]);
+    expect(listCall.searchKey).toBe("login");
+    // The predicates and the folder scope ride in the same where — search
+    // intersects, it does not bypass.
+    expect(listCall.where.AND).toContainEqual({ templateId: { in: [7] } });
+    expect(JSON.stringify(listCall.where)).toContain("folderId");
+    // Default sort => relevance order, which the route only applies when no
+    // orderBy is given.
+    expect(listCall.orderBy).toBeUndefined();
+
+    // There is no second transport left to disagree with: the count rides on
+    // this very response.
+    expect(postListCall().selectKey).toBe("list");
+  });
+
+  it("hands the table sort to the DB instead of relevance once the user has sorted", async () => {
+    const { readStoredColumnSort } =
+      await import("@/components/tables/ColumnSelection");
+    (readStoredColumnSort as any).mockReturnValue({
+      column: "name",
+      direction: "desc",
+    });
+    try {
+      setupMocks({ data: [mockCase] });
+
+      render(
+        <Cases
+          {...defaultProps}
+          viewType="folders"
+          folderId={1}
+          searchResultIds={[7, 3]}
+          searchKey="login"
+        />
+      );
+      await screen.findByTestId("data-table");
+
+      expect(postListCall().orderBy).toEqual({ name: "desc" });
+      expect(screen.queryByTestId("sorted-by-relevance")).toBeNull();
+    } finally {
+      (readStoredColumnSort as any).mockReturnValue(null);
+    }
+  });
+
+  it("surfaces the active relevance order and disables reordering during search", async () => {
+    setupMocks({ data: [mockCase] });
+
+    render(
+      <Cases
+        {...defaultProps}
+        viewType="folders"
+        folderId={1}
+        searchResultIds={[1]}
+        searchKey="login"
+      />
+    );
+    await screen.findByTestId("data-table");
+
+    expect(screen.getByTestId("sorted-by-relevance")).toBeInTheDocument();
+    const tableProps = vi.mocked(DataTable).mock.calls.at(-1)?.[0] as any;
+    expect(tableProps.enableReorder).toBe(false);
+  });
+
+  it("keeps reordering enabled when only filter chips are active", async () => {
+    setupMocks({ data: [mockCase] });
+
+    render(
+      <Cases
+        {...defaultProps}
+        viewType="folders"
+        folderId={1}
+        {...predicateProps([
+          { dimension: "templates", operator: "in", values: [7] },
+        ])}
+      />
+    );
+    await screen.findByTestId("data-table");
+
+    const tableProps = vi.mocked(DataTable).mock.calls.at(-1)?.[0] as any;
+    expect(tableProps.enableReorder).toBe(true);
+  });
+
+  it("takes the total from the route, not from the raw search id count", async () => {
+    setupMocks({ data: [mockCase] });
+    const setTotalItems = vi.fn();
+    (usePagination as any).mockReturnValue({
+      currentPage: 1,
+      setCurrentPage: vi.fn(),
+      pageSize: 25,
+      setPageSize: vi.fn(),
+      totalItems: 1,
+      setTotalItems,
+      totalPages: 1,
+      startIndex: 1,
+      endIndex: 1,
+    });
+    // The route intersected 4 raw hits down to 1 readable, unarchived case.
+    (useRepositoryCasesQuery as any).mockReturnValue({
+      data: [mockCase],
+      ids: [1],
+      isLoading: false,
+      isFetching: false,
+      error: null,
+      totalCount: 1,
+      refetch: vi.fn(),
+    });
+
+    render(
+      <Cases
+        {...defaultProps}
+        viewType="folders"
+        folderId={1}
+        searchResultIds={[1, 2, 3, 4]}
+        searchKey="login"
+      />
+    );
+    await screen.findByTestId("data-table");
+
+    expect(setTotalItems).toHaveBeenCalledWith(1);
+    expect(setTotalItems).not.toHaveBeenCalledWith(4);
+  });
+
+  it("intersects an all-filtered export with the active search", async () => {
+    setupMocks({ data: [mockCase] });
+
+    render(
+      <Cases
+        {...defaultProps}
+        viewType="folders"
+        folderId={1}
+        searchResultIds={[7, 3]}
+        searchKey="login"
+      />
+    );
+    await screen.findByTestId("data-table");
+
+    (fetchAllCasesForExport as any).mockResolvedValue({
+      success: true,
+      data: [],
+    });
+    const exportArgs = (useExportData as any).mock.calls.at(-1)[0];
+    await exportArgs.fetchAllData({ scope: "allFiltered" });
+
+    expect(
+      (fetchAllCasesForExport as any).mock.calls.at(-1)[0].searchCaseIds
+    ).toEqual([7, 3]);
+  });
+
+  it("shows the filters-aware empty state when the intersection is empty", async () => {
+    setupMocks({ data: [] });
+
+    render(
+      <Cases
+        {...defaultProps}
+        viewType="folders"
+        folderId={1}
+        searchResultIds={[]}
+        searchKey="nothing"
+        {...predicateProps([
+          { dimension: "templates", operator: "in", values: [7] },
+        ])}
+      />
+    );
+
+    expect(
+      await screen.findByText("repository.filterBar.noMatchingCases")
+    ).toBeInTheDocument();
+  });
+});
+
+// The POST select-all request (idsOnly), whose `enabled` mirrors the in-flight
+// select-all state.
+const idsOnlyCall = () =>
+  (useRepositoryCasesQuery as any).mock.calls
+    .filter(([args]: any[]) => args?.idsOnly === true)
+    .at(-1)?.[0];
+
+describe("Unresolved search never falls back to the unfiltered list (spec §9)", () => {
+  it("shows loading, not the whole repository, while the search ids resolve", async () => {
+    setupMocks({ data: [mockCase] });
+
+    render(
+      <Cases
+        {...defaultProps}
+        viewType="folders"
+        folderId={1}
+        searchText="login"
+        searchPending
+      />
+    );
+    await screen.findByTestId("data-table");
+
+    // Every list query is gated off: none of their where clauses carry the
+    // search ids, so their rows would be the unfiltered repository presented
+    // as the search result.
+    expect(postCallsEnabled()).toHaveLength(0);
+
+    const tableProps = vi.mocked(DataTable).mock.calls.at(-1)?.[0] as any;
+    expect(tableProps.isLoading).toBe(true);
+    expect(tableProps.data).toEqual([]);
+  });
+
+  it("does not fall back to the select-folder wall on a shared ?q= link", async () => {
+    setupMocks({ data: [] });
+
+    render(
+      <Cases
+        {...defaultProps}
+        viewType="folders"
+        folderId={null}
+        searchText="login"
+        searchPending
+      />
+    );
+
+    expect(screen.queryByText("repository.cases.selectFolder")).toBeNull();
+    const tableProps = vi.mocked(DataTable).mock.calls.at(-1)?.[0] as any;
+    expect(tableProps.isLoading).toBe(true);
+  });
+
+  it("renders the error state instead of a list when the search failed", async () => {
+    setupMocks({ data: [mockCase] });
+
+    render(
+      <Cases
+        {...defaultProps}
+        viewType="folders"
+        folderId={1}
+        searchText="login"
+        searchFailed
+      />
+    );
+
+    expect(
+      await screen.findByTestId("search-failed-message")
+    ).toBeInTheDocument();
+    expect(screen.queryByTestId("data-table")).toBeNull();
+    expect(postCallsEnabled()).toHaveLength(0);
+  });
+
+  it("abandons an in-flight select-all when the search changes", async () => {
+    setupMocks({ data: [mockCase] });
+    // Keep the select-all ids request in flight (no ids yet) so its `enabled`
+    // flag stays observable; the list request keeps its rows.
+    (useRepositoryCasesQuery as any).mockImplementation((args: any) =>
+      args?.idsOnly
+        ? {
+            data: undefined,
+            ids: undefined,
+            isLoading: true,
+            isFetching: true,
+            error: null,
+            totalCount: 0,
+            refetch: vi.fn(),
+          }
+        : {
+            data: [mockCase],
+            ids: [1],
+            isLoading: false,
+            isFetching: false,
+            error: null,
+            totalCount: 1,
+            refetch: vi.fn(),
+          }
+    );
+
+    const { rerender } = render(
+      <Cases
+        {...defaultProps}
+        viewType="folders"
+        folderId={1}
+        searchResultIds={[1]}
+        searchKey="login"
+        searchText="login"
+      />
+    );
+    await screen.findByTestId("data-table");
+
+    // Shift+click select-all: handleSelectAllClick is the 16th positional
+    // argument getColumns receives.
+    const selectAllClick = (getColumns as any).mock.calls.at(-1)[15];
+    expect(typeof selectAllClick).toBe("function");
+    await act(async () => {
+      selectAllClick({ shiftKey: true });
+    });
+    expect(idsOnlyCall()?.enabled).toBe(true);
+
+    // A different search is a different view: the ids now in flight belong to
+    // the previous one and must never be applied to what is on screen.
+    rerender(
+      <Cases
+        {...defaultProps}
+        viewType="folders"
+        folderId={1}
+        searchResultIds={[2]}
+        searchKey="checkout"
+        searchText="checkout"
+      />
+    );
+
+    await waitFor(() => {
+      expect(idsOnlyCall()?.enabled).toBe(false);
+    });
+  });
+});
+
+describe("Id-resolved sorts under filters and search", () => {
+  const useLatestResultsSort = async () => {
+    const { readStoredColumnSort } =
+      await import("@/components/tables/ColumnSelection");
+    (readStoredColumnSort as any).mockReturnValue({
+      column: "latestResults",
+      direction: "asc",
+    });
+    return () => (readStoredColumnSort as any).mockReturnValue(null);
+  };
+
+  it("keeps the predicates in the POST where alongside the resolved page ids", async () => {
+    const restoreSort = await useLatestResultsSort();
+    try {
+      idSortHolder.latest = { pageIds: [1], isFetching: false };
+      setupMocks({ data: [mockCase] });
+
+      render(
+        <Cases
+          {...defaultProps}
+          viewType="folders"
+          folderId={1}
+          searchResultIds={[1, 4, 7]}
+          searchKey="login"
+          searchText="login"
+          {...predicateProps([
+            { dimension: "templates", operator: "in", values: [7] },
+          ])}
+        />
+      );
+      await screen.findByTestId("data-table");
+
+      // The page ids narrow the fetch, but the predicates travel with them:
+      // between a predicate edit and the ids re-resolving, an id-only where
+      // would hydrate rows the active filters exclude.
+      const listCall = postListCall();
+      expect(listCall.where.id).toEqual({ in: [1] });
+      expect(listCall.where.AND).toContainEqual({ templateId: { in: [7] } });
+    } finally {
+      restoreSort();
+    }
+  });
+
+  it("resolves the ordered page against the search ids instead of degrading to default order", async () => {
+    const restoreSort = await useLatestResultsSort();
+    try {
+      idSortHolder.latest = { pageIds: [1], isFetching: false };
+      setupMocks({ data: [mockCase] });
+
+      render(
+        <Cases
+          {...defaultProps}
+          viewType="folders"
+          folderId={1}
+          searchResultIds={[1, 4, 7]}
+          searchKey="login"
+          searchText="login"
+        />
+      );
+      await screen.findByTestId("data-table");
+
+      // The paginated resolver (the one carrying skip/take) is the list's;
+      // the unpaginated twin drives the details panel's prev/next.
+      const args = idSortHolder.latestArgs
+        .filter((a) => a.skip !== undefined)
+        .at(-1);
+      expect(args.enabled).toBe(true);
+      expect(args.where.AND).toContainEqual({ id: { in: [1, 4, 7] } });
+      // The sort really is what's on screen, so the relevance pill stays away.
+      expect(screen.queryByTestId("sorted-by-relevance")).toBeNull();
+    } finally {
+      restoreSort();
+    }
+  });
+
+  it("stops resolving the ordered page while the search is unresolved", async () => {
+    const restoreSort = await useLatestResultsSort();
+    try {
+      setupMocks({ data: [mockCase] });
+
+      render(
+        <Cases
+          {...defaultProps}
+          viewType="folders"
+          folderId={1}
+          searchText="login"
+          searchPending
+        />
+      );
+
+      // Resolving here would order the un-searched superset.
+      expect(idSortHolder.latestArgs.every((a) => a.enabled === false)).toBe(
+        true
+      );
+    } finally {
+      restoreSort();
+    }
+  });
+});
+
+describe("One transport for the list", () => {
+  // 800 tag ids serialize well past any GET budget. The clause size used to
+  // decide the transport; now it decides nothing, which is the point — there is
+  // no threshold left for the list query and the count query to answer
+  // differently.
+  const heavyPredicate = {
+    dimension: "tags",
+    operator: "any",
+    values: Array.from({ length: 800 }, (_, i) => i + 1),
+  } as FilterPredicate;
+
+  it("takes the list and its total from one POST response when the where is oversized", async () => {
+    setupMocks({ data: [mockCase] });
+    const setTotalItems = vi.fn();
+    (usePagination as any).mockReturnValue({
+      currentPage: 1,
+      setCurrentPage: vi.fn(),
+      pageSize: 25,
+      setPageSize: vi.fn(),
+      totalItems: 97,
+      setTotalItems,
+      totalPages: 4,
+      startIndex: 1,
+      endIndex: 25,
+    });
+    (useRepositoryCasesQuery as any).mockReturnValue({
+      data: [mockCase],
+      ids: [1],
+      caseIds: undefined,
+      isLoading: false,
+      isFetching: false,
+      error: null,
+      totalCount: 97,
+      refetch: vi.fn(),
+    });
+
+    render(
+      <Cases
+        {...defaultProps}
+        viewType="folders"
+        folderId={1}
+        {...predicateProps([heavyPredicate])}
+      />
+    );
+    await screen.findByTestId("data-table");
+
+    const listCall = postListCall();
+    expect(listCall.enabled).toBe(true);
+    expect(listCall.searchCaseIds).toBeUndefined();
+    // The total published to the pagination context came from the list
+    // response — list and count share one source, so they cannot disagree.
+    expect(setTotalItems).toHaveBeenCalledWith(97);
+  });
+
+  it("routes an ordinary filter set through the same POST call", async () => {
+    setupMocks({ data: [mockCase] });
+
+    render(
+      <Cases
+        {...defaultProps}
+        viewType="folders"
+        folderId={1}
+        {...predicateProps([
+          { dimension: "templates", operator: "in", values: [7] },
+        ])}
+      />
+    );
+    await screen.findByTestId("data-table");
+
+    const listCall = postListCall();
+    expect(listCall.enabled).toBe(true);
+    expect(listCall.testRunIds).toBeUndefined();
+    expect(listCall.where.AND).toContainEqual({ templateId: { in: [7] } });
+  });
+
+  it("reads the run list from the same route, scoped to the run", async () => {
+    setupMocks({ data: [] });
+
+    render(
+      <Cases
+        {...defaultProps}
+        isRunMode
+        selectedRunIds={[31, 32]}
+        viewType="all"
+      />
+    );
+    await screen.findByTestId("column-selection");
+
+    const runCall = (useRepositoryCasesQuery as any).mock.calls.find(
+      ([args]: any[]) => args?.selectKey === "runList"
+    )?.[0];
+    expect(runCall).toBeDefined();
+    expect(runCall.enabled).toBe(true);
+    // The run scope is a first-class parameter, not something smuggled into
+    // the repository predicate.
+    expect(runCall.testRunIds).toEqual([31, 32]);
+    // The repository half travels nested, so the route can AND it under
+    // `repositoryCase`.
+    expect(JSON.stringify(runCall.repositoryCaseWhere)).toContain("projectId");
+    expect(runCall.where.isDeleted).toBe(false);
   });
 });
