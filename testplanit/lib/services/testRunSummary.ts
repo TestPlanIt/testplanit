@@ -159,6 +159,7 @@ export async function getRegularRunSummary(
     LEFT JOIN "Status" s ON trc."statusId" = s.id
     LEFT JOIN "Color" c ON s."colorId" = c.id
     WHERE trc."testRunId" = ${testRunId}
+      AND trc."isDeleted" = false
     GROUP BY trc."statusId", s.name, c.value, s."isCompleted", s."isSuccess", s."isFailure"
     ORDER BY trc."statusId" ASC NULLS LAST
   `;
@@ -178,6 +179,7 @@ export async function getRegularRunSummary(
     FROM "TestRunResults" trr
     JOIN "TestRunCases" trc ON trr."testRunCaseId" = trc.id
     WHERE trc."testRunId" = ${testRunId}
+      AND trc."isDeleted" = false
       AND trr."isDeleted" = false
   `;
 
@@ -190,6 +192,7 @@ export async function getRegularRunSummary(
     JOIN "RepositoryCases" rc ON trc."repositoryCaseId" = rc.id
     LEFT JOIN "TestRunResults" trr ON trr."testRunCaseId" = trc.id AND trr."isDeleted" = false
     WHERE trc."testRunId" = ${testRunId}
+      AND trc."isDeleted" = false
       AND trr.id IS NULL
   `;
 
@@ -255,6 +258,7 @@ export async function getRegularRunSummary(
           AND trr."isDeleted" = false
       ) result_count ON true
       WHERE trc."testRunId" = ${testRunId}
+        AND trc."isDeleted" = false
       ORDER BY trc."order" ASC
       LIMIT 1000
     `;

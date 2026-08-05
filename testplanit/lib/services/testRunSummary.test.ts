@@ -124,6 +124,35 @@ describe("getTestRunSummary", () => {
     expect(summary.issues).toHaveLength(1);
     expect(summary.issues[0].projectIds).toEqual([42]);
   });
+
+  it("excludes soft-deleted TestRunCases rows from every regular-run summary query", async () => {
+    // Regression guard for run 92851: a soft-delete migration (removing a
+    // case from a run sets isDeleted instead of hard-deleting the row)
+    // never reached getRegularRunSummary's raw SQL, so removed cases kept
+    // inflating the header count (header showed 311, case list showed 211
+    // — 100 soft-deleted rows still being summed). Every query that reads
+    // "TestRunCases" must filter isDeleted = false.
+    const fakeClient = makeFakeClient({
+      testRunType: "REGULAR",
+      forecastManual: null,
+      issues: [],
+      workflowType: "IN_PROGRESS",
+    });
+
+    await getTestRunSummary(1, {
+      client: fakeClient as any,
+      includeCaseDetails: true,
+    });
+
+    const queriesAgainstTestRunCases = fakeClient.$queryRaw.mock.calls
+      .map(([tpl]) => (tpl as TemplateStringsArray).join(" "))
+      .filter((sql) => sql.includes('"TestRunCases" trc'));
+
+    expect(queriesAgainstTestRunCases.length).toBeGreaterThanOrEqual(4);
+    for (const sql of queriesAgainstTestRunCases) {
+      expect(sql).toMatch(/trc\."isDeleted"\s*=\s*false/);
+    }
+  });
 });
 
 interface FakeClientOptions {
