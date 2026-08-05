@@ -36,6 +36,16 @@ import {
   type AuditEvent,
 } from "~/lib/services/auditLog";
 import {
+  assertConfigurationGroupCreateAllowed,
+  assertConfigurationGroupWriteAllowed,
+  dissolveOrphanedGroups,
+  isConfigurationGroupError,
+  readConfigurationGroupCreateIntents,
+  readConfigurationGroupIntent,
+  readTargetRecordIds,
+  resolveConfigurationGroupModel,
+} from "~/lib/services/configurationGroups";
+import {
   assertReviewGatePasses,
   resolveCreateStateRemap,
 } from "~/lib/services/reviewGate";
@@ -880,6 +890,104 @@ async function handleRequest(
       }
     }
 
+    // Configuration-group membership guard (TestRuns + Sessions).
+    // `configurationGroupId` links runs/sessions that cover the same logical
+    // work across different configurations. Membership is editable after the
+    // fact, and the generic RPC route is the write path — so the invariants
+    // live here rather than in whichever modal happens to call them:
+    //   - the field only ever holds a uuid or null;
+    //   - a non-null assignment must be addressable to specific record ids;
+    //   - every member of a group shares one projectId.
+    // Covered on update / updateMany / upsert. The sibling CR-03 review gate
+    // above shipped as update-only and had to be widened for exactly this
+    // reason; this gate starts wide.
+    //
+    // The same block captures the PRE-mutation group ids of the rows being
+    // touched so the post-mutation hook (below the ES-sync shims) can apply
+    // AUTO-DISSOLVE to any group that just dropped to a single member — a lone
+    // member still renders as "multi-configuration" at five badge sites.
+    // Payloads that neither assign `configurationGroupId` nor remove the row
+    // short-circuit in `readConfigurationGroupIntent` and pay no query cost.
+    const configGroupModel =
+      isMutation && parsedPath
+        ? resolveConfigurationGroupModel(parsedPath.model)
+        : null;
+    let configGroupVacated: string[] = [];
+    if (configGroupModel && parsedPath) {
+      // Creates mint membership too (the create modals stamp one fresh uuid
+      // across a multi-configuration batch). A fresh group has no members, so
+      // the modals always pass; a create that reaches for an EXISTING group in
+      // another project is rejected on the same rule as a join.
+      const createIntents = readConfigurationGroupCreateIntents(
+        parsedPath.operation,
+        requestBody
+      );
+      if (createIntents) {
+        try {
+          await assertConfigurationGroupCreateAllowed(
+            baseDb,
+            configGroupModel,
+            createIntents
+          );
+        } catch (err) {
+          if (isConfigurationGroupError(err)) {
+            return NextResponse.json(
+              { error: { code: err.code, message: err.message } },
+              { status: 400 }
+            );
+          }
+          throw err;
+        }
+      }
+
+      const intent = readConfigurationGroupIntent(
+        parsedPath.operation,
+        requestBody
+      );
+      if (intent) {
+        const recordIds = readTargetRecordIds(
+          parsedPath.operation,
+          requestBody
+        );
+        if (intent.touchesGroup) {
+          try {
+            await assertConfigurationGroupWriteAllowed(
+              baseDb,
+              configGroupModel,
+              { recordIds, groupId: intent.groupId }
+            );
+          } catch (err) {
+            if (isConfigurationGroupError(err)) {
+              return NextResponse.json(
+                { error: { code: err.code, message: err.message } },
+                { status: 400 }
+              );
+            }
+            throw err;
+          }
+        }
+        if (recordIds && recordIds.length > 0) {
+          try {
+            const priorRows = await (baseDb as any)[configGroupModel].findMany({
+              where: { id: { in: recordIds } },
+              select: { configurationGroupId: true },
+            });
+            configGroupVacated = (priorRows ?? [])
+              .map(
+                (row: { configurationGroupId: string | null }) =>
+                  row?.configurationGroupId ?? null
+              )
+              .filter((g: string | null): g is string => !!g);
+          } catch (e) {
+            console.error(
+              "[ConfigurationGroups] Failed to capture pre-mutation group ids:",
+              e
+            );
+          }
+        }
+      }
+    }
+
     // Session subject for the audit GUC (applied to this request's runWithAuditContext frame below)
     // so a session result and its nested result-field values record the session's name and project
     // at write time — session results go through this generic route, not a bespoke endpoint, so
@@ -1241,6 +1349,27 @@ async function handleRequest(
           "[ZenStack] Error parsing response for Elasticsearch sync:",
           e
         );
+      }
+    }
+
+    // Configuration-group AUTO-DISSOLVE. A group with a single live member is
+    // meaningless: five badge sites render "multi-configuration" purely on
+    // `configurationGroupId` being non-empty, so a lone survivor would keep
+    // claiming membership. Whenever a member left a group in this request —
+    // explicitly (field cleared), implicitly (joined a different group), or by
+    // being soft-deleted (`isDeleted: true`, which every membership read
+    // filters out) — clear the survivor's id too. Runs post-commit against
+    // `baseDb` like the ES-sync and webhook shims, so the survivor's own audit
+    // / ES / webhook side effects still fire.
+    if (response.ok && configGroupModel && configGroupVacated.length > 0) {
+      try {
+        await dissolveOrphanedGroups(
+          baseDb,
+          configGroupModel,
+          configGroupVacated
+        );
+      } catch (e) {
+        console.error("[ConfigurationGroups] Auto-dissolve failed:", e);
       }
     }
 

@@ -10,6 +10,14 @@ import { ConfigurationNameDisplay } from "~/components/ConfigurationNameDisplay"
 import { Button } from "~/components/ui/button";
 import { MultiAsyncCombobox } from "~/components/ui/multi-async-combobox";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
+import {
+  buildConfigurationGroupMemberLabels,
+  buildConfigurationGroupWhere,
+  isConfigurationGroupQueryEnabled,
+  parseProjectIdParam,
+  reconcileConfigurationSelection,
+  resolveSelectionFromUrl,
+} from "~/lib/configurationGroupSwitcher";
 import { usePathname, useRouter } from "~/lib/navigation";
 import ProjectRepository from "../../../repository/[projectId]/ProjectRepository";
 
@@ -146,15 +154,22 @@ export function TestCasesSection({
   } = useProjectPermissions(params.projectId, "TestRunResults");
   const canAddEditResults = testRunResultPermissions?.canAddEdit ?? false;
 
+  // Group membership is editable, so the sibling query is scoped to this run's
+  // project: a stale or hand-written group id must not surface runs from
+  // another project.
+  const groupProjectId =
+    testRunData?.project?.id ?? parseProjectIdParam(params.projectId);
+  const siblingQueryScope = {
+    configurationGroupId: testRunData?.configurationGroupId,
+    projectId: groupProjectId,
+  };
+
   // Fetch sibling test runs for multi-config test runs
   const { data: siblingTestRunsData } = useClientQueries(
     schema
   ).testRuns.useFindMany(
     {
-      where: {
-        configurationGroupId: testRunData?.configurationGroupId ?? undefined,
-        isDeleted: false,
-      },
+      where: buildConfigurationGroupWhere(siblingQueryScope),
       select: {
         id: true,
         name: true,
@@ -171,14 +186,12 @@ export function TestCasesSection({
           },
         },
       },
-      orderBy: {
-        configuration: {
-          name: "asc",
-        },
-      },
+      // Two members may share a configuration, so break ties on id to keep the
+      // switcher's order stable.
+      orderBy: [{ configuration: { name: "asc" } }, { id: "asc" }],
     },
     {
-      enabled: !!testRunData?.configurationGroupId,
+      enabled: isConfigurationGroupQueryEnabled(siblingQueryScope),
     }
   );
 
@@ -193,39 +206,63 @@ export function TestCasesSection({
     }));
   }, [siblingTestRunsData]);
 
-  // Initialize selected configurations from URL or default to current test run
+  // Two runs in a group may share a configuration, so a configuration name is
+  // not always enough to tell members apart — those entries carry the run name.
+  const memberLabels = useMemo(
+    () =>
+      buildConfigurationGroupMemberLabels(siblingTestRuns, {
+        noConfiguration: t("common.labels.noConfiguration"),
+        withMemberName: (values) =>
+          t("common.labels.configurationWithName", values),
+      }),
+    [siblingTestRuns, t]
+  );
+
+  const memberLabel = (run: SiblingTestRun) =>
+    memberLabels.get(run.id) ?? run.name;
+
+  // Initialize the selection from the URL (or the viewed run) once, then keep it
+  // reconciled: membership can change while the page is open, and a run that
+  // left the group must not stay selected.
   useEffect(() => {
+    if (!testRunData) return;
+
+    const reconciled = reconcileConfigurationSelection(
+      selectedConfigurations,
+      siblingTestRuns
+    );
+
     if (
+      reconciled.length === 0 &&
       siblingTestRuns.length > 0 &&
-      testRunData &&
-      selectedConfigurations.length === 0 &&
       !hasInitializedFromUrl.current
     ) {
-      hasInitializedFromUrl.current = true;
-
-      // If URL has configs param, use those
-      if (configurationsFromUrl && configurationsFromUrl.length > 0) {
-        const configsFromUrl = siblingTestRuns.filter((run) =>
-          configurationsFromUrl.includes(run.id)
-        );
-        if (configsFromUrl.length > 0) {
-          setSelectedConfigurations(configsFromUrl);
-          return;
-        }
-      }
-
-      // Default to current test run
+      // Ids from the URL are resolved against real membership, so an unrelated
+      // run id in `?configs=` is ignored.
+      const fromUrl = resolveSelectionFromUrl(
+        siblingTestRuns,
+        configurationsFromUrl
+      );
       const currentRun = siblingTestRuns.find(
         (run) => run.id === testRunData.id
       );
-      if (currentRun) {
-        setSelectedConfigurations([currentRun]);
+      const seeded =
+        fromUrl.length > 0 ? fromUrl : currentRun ? [currentRun] : [];
+
+      if (seeded.length > 0) {
+        hasInitializedFromUrl.current = true;
+        setSelectedConfigurations(seeded);
+        return;
       }
+    }
+
+    if (reconciled !== selectedConfigurations) {
+      setSelectedConfigurations([...reconciled]);
     }
   }, [
     siblingTestRuns,
     testRunData,
-    selectedConfigurations.length,
+    selectedConfigurations,
     configurationsFromUrl,
   ]);
 
@@ -285,9 +322,14 @@ export function TestCasesSection({
     }
   }, [selectedConfigurations.length, onMultiConfigSelected]);
 
-  // Notify parent when selected configurations change
+  // Notify parent when selected configurations change. Once the selection has
+  // been seeded, an empty selection is reported too: the group can be dissolved
+  // while the page is open and the parent must not keep querying ex-members.
   useEffect(() => {
-    if (onSelectedConfigurationsChange && selectedConfigurations.length > 0) {
+    if (
+      onSelectedConfigurationsChange &&
+      (selectedConfigurations.length > 0 || hasInitializedFromUrl.current)
+    ) {
       const configInfos: SelectedConfigurationInfo[] =
         selectedConfigurations.map((run) => ({
           id: run.id,
@@ -431,7 +473,8 @@ export function TestCasesSection({
       filtered = siblingTestRuns.filter(
         (run) =>
           run.name.toLowerCase().includes(lowerQuery) ||
-          run.configuration?.name?.toLowerCase().includes(lowerQuery)
+          run.configuration?.name?.toLowerCase().includes(lowerQuery) ||
+          memberLabel(run).toLowerCase().includes(lowerQuery)
       );
     }
 
@@ -506,7 +549,7 @@ export function TestCasesSection({
               <div className="flex items-center w-11/12 gap-2 justify-between">
                 <ConfigurationNameDisplay
                   configuration={option.configuration}
-                  name={option.configuration?.name || option.name}
+                  name={memberLabel(option)}
                   truncate
                 />
                 <span className="text-xs text-muted-foreground whitespace-nowrap">
@@ -517,12 +560,10 @@ export function TestCasesSection({
               </div>
             )}
             renderSelectedOption={(option) => (
-              <span>{option.configuration?.name || option.name}</span>
+              <span>{memberLabel(option)}</span>
             )}
             getOptionValue={(option) => option.id}
-            getOptionLabel={(option) =>
-              option.configuration?.name || option.name
-            }
+            getOptionLabel={(option) => memberLabel(option)}
             placeholder={t("common.placeholders.selectConfigurations")}
             className="flex-1"
           />

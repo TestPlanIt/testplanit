@@ -5,6 +5,10 @@ import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { AttachmentsCarousel } from "@/components/AttachmentsCarousel";
 import { AttachmentChanges } from "@/components/AttachmentsDisplay";
+import {
+  ConfigurationGroupLinkField,
+  type ConfigurationGroupLinkChange,
+} from "@/components/ConfigurationGroupLinkField";
 import TestRunResultsDonut from "@/components/dataVisualizations/TestRunResultsDonut";
 import { DateFormatter } from "@/components/DateFormatter";
 import { ForecastDisplay } from "@/components/ForecastDisplay";
@@ -117,6 +121,11 @@ import { FormProvider, useForm } from "react-hook-form";
 import { PanelImperativeHandle } from "react-resizable-panels";
 import { z } from "zod/v4";
 import { emptyEditorContent } from "~/app/constants";
+import {
+  applyConfigurationGroupPeerStamp,
+  canEditConfigurationGroup,
+  configurationGroupUpdateData,
+} from "~/lib/configurationGroupLink";
 import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
 import { CommentsSection } from "~/components/comments/CommentsSection";
 import TestRunCasesSummary from "~/components/TestRunCasesSummary";
@@ -155,6 +164,8 @@ interface FormValues {
   docs: any;
   attachments: Attachments[];
   selectedIssues: number[];
+  /** Configuration-group membership; null when this run is not linked. */
+  configurationGroupId: string | null;
 }
 
 // Base schema
@@ -167,6 +178,7 @@ const BaseFormSchema = z.object({
   docs: z.any().nullable(),
   attachments: z.array(z.any()).optional(),
   selectedIssues: z.array(z.number()),
+  configurationGroupId: z.string().nullable(),
 });
 
 type MilestoneWithType = {
@@ -346,6 +358,12 @@ export default function TestRunPage() {
     useClientQueries(schema).testRunStepResults.useUpdateMany();
   const { mutateAsync: softDeleteTestRunCaseIterations } =
     useClientQueries(schema).testRunCaseIteration.useUpdateMany();
+  // Peer awaiting a `configurationGroupId` stamp — set when the user links
+  // this run to a peer that had no group of its own, cleared once saved.
+  const [configGroupStampTargetId, setConfigGroupStampTargetId] = useState<
+    number | null
+  >(null);
+  const [isSavingConfigGroup, setIsSavingConfigGroup] = useState(false);
   const [zoomedChart, setZoomedChart] = useState<null | "donut">(null);
   const [isDuplicateDialogOpen, setIsDuplicateDialogOpen] = useState(false);
   const [isDistributeDialogOpen, setIsDistributeDialogOpen] = useState(false);
@@ -637,6 +655,7 @@ export default function TestRunPage() {
       docs: null,
       attachments: [],
       selectedIssues: [],
+      configurationGroupId: null,
     },
     mode: "onSubmit",
   });
@@ -724,6 +743,7 @@ export default function TestRunPage() {
         docs: testRunData.docs || JSON.stringify(emptyEditorContent),
         attachments: testRunData.attachments || [],
         selectedIssues: testRunData.issues.map((issue) => issue.id),
+        configurationGroupId: testRunData.configurationGroupId ?? null,
       };
       form.reset(initialData, {
         keepDefaultValues: true,
@@ -914,6 +934,44 @@ export default function TestRunPage() {
         docsContent = JSON.stringify(docsContent);
       }
 
+      // Assigning `configurationGroupId` makes the RPC guard re-validate the
+      // group and sweep it for auto-dissolve, so only send it when the user
+      // actually changed it — an unchanged value can neither break an
+      // invariant nor orphan a group.
+      const groupChanged =
+        (data.configurationGroupId ?? null) !==
+        (testRunData?.configurationGroupId ?? null);
+
+      // Everything below is written identically by BOTH update paths (the
+      // cases-changed branch and the metadata-only branch). Building it once
+      // is what keeps a newly added field — `configurationGroupId` being the
+      // reason this exists — from silently no-opping on whichever branch a
+      // future edit forgets.
+      const sharedUpdateData = {
+        name: data.name,
+        configId: data.configId || null,
+        milestoneId: data.milestoneId || null,
+        stateId: data.stateId,
+        note: noteContent,
+        docs: docsContent,
+        ...(groupChanged
+          ? configurationGroupUpdateData(data.configurationGroupId)
+          : {}),
+        attachments: {
+          set: [],
+          connect:
+            data.attachments?.map((attachment) => ({
+              id: attachment.id,
+            })) || [],
+        },
+        tags: {
+          set: selectedTags.map((tagId) => ({ id: tagId })),
+        },
+        issues: {
+          set: selectedIssues.map((issueId) => ({ id: issueId })),
+        },
+      };
+
       // Check if test cases have changed. A composition-locked run's case set is
       // frozen — never treat cases as changed (the UI disables selection; this
       // also keeps a stray diff from hitting the DB guard trigger).
@@ -975,25 +1033,7 @@ export default function TestRunPage() {
             id: Number(runId),
           },
           data: {
-            name: data.name,
-            configId: data.configId || null,
-            milestoneId: data.milestoneId || null,
-            stateId: data.stateId,
-            note: noteContent,
-            docs: docsContent,
-            attachments: {
-              set: [],
-              connect:
-                data.attachments?.map((attachment) => ({
-                  id: attachment.id,
-                })) || [],
-            },
-            tags: {
-              set: selectedTags.map((tagId) => ({ id: tagId })),
-            },
-            issues: {
-              set: selectedIssues.map((issueId) => ({ id: issueId })),
-            },
+            ...sharedUpdateData,
             testCases: {
               updateMany:
                 removedCaseIds.length > 0
@@ -1032,29 +1072,21 @@ export default function TestRunPage() {
           where: {
             id: Number(runId),
           },
-          data: {
-            name: data.name,
-            configId: data.configId || null,
-            milestoneId: data.milestoneId || null,
-            stateId: data.stateId,
-            note: noteContent,
-            docs: docsContent,
-            attachments: {
-              set: [],
-              connect:
-                data.attachments?.map((attachment) => ({
-                  id: attachment.id,
-                })) || [],
-            },
-            tags: {
-              set: selectedTags.map((tagId) => ({ id: tagId })),
-            },
-            issues: {
-              set: selectedIssues.map((issueId) => ({ id: issueId })),
-            },
-          },
+          data: sharedUpdateData,
         });
       }
+
+      // A join against a peer that had no group of its own mints one uuid for
+      // both records; this run was just stamped above, the peer is stamped
+      // here. Rolls this run back if the peer write fails.
+      await applyConfigurationGroupPeerStamp({
+        update: (args) => updateTestRuns(args),
+        recordId: Number(runId),
+        groupId: data.configurationGroupId,
+        stampTargetId: configGroupStampTargetId,
+        previousGroupId: testRunData?.configurationGroupId ?? null,
+      });
+      setConfigGroupStampTargetId(null);
 
       // Apply pending attachment edits
       const editPromises = pendingAttachmentChanges.edits.map(async (edit) => {
@@ -1101,6 +1133,45 @@ export default function TestRunPage() {
         message: `An error occurred: ${err.message}`,
       });
       throw err; // Re-throw to be caught by onSubmit
+    }
+  };
+
+  // Configuration-group link/unlink.
+  //
+  // In edit mode the change rides along with the rest of the form (see
+  // `saveTestRun`, which writes the field on both of its update paths).
+  // Outside edit mode the form never submits — and a COMPLETED run has no Edit
+  // action at all — so the change is written straight away: grouping is
+  // navigational metadata and correcting it after the fact is the point.
+  const handleConfigurationGroupChange = async (
+    change: ConfigurationGroupLinkChange
+  ) => {
+    if (isEditMode) {
+      setValue("configurationGroupId", change.groupId, { shouldDirty: true });
+      setConfigGroupStampTargetId(change.stampTargetId);
+      return;
+    }
+    const previousGroupId = testRunData?.configurationGroupId ?? null;
+    setIsSavingConfigGroup(true);
+    try {
+      await updateTestRuns({
+        where: { id: Number(runId) },
+        data: configurationGroupUpdateData(change.groupId),
+      });
+      await applyConfigurationGroupPeerStamp({
+        update: (args) => updateTestRuns(args),
+        recordId: Number(runId),
+        groupId: change.groupId,
+        stampTargetId: change.stampTargetId,
+        previousGroupId,
+      });
+      setValue("configurationGroupId", change.groupId);
+      await refetchTestRun();
+    } catch (err) {
+      console.error("Configuration group update failed:", err);
+      toast.error(t("common.configurationGroup.saveError"));
+    } finally {
+      setIsSavingConfigGroup(false);
     }
   };
 
@@ -2262,6 +2333,26 @@ export default function TestRunPage() {
                     selectedConfigurationsForDisplay={selectedConfigurations}
                     onAttachmentPendingChanges={setPendingAttachmentChanges}
                     transitionCheck={isJUnitRun ? undefined : transitionCheck}
+                  />
+                  {/* Configuration-group membership. Deliberately outside the
+                      `isEditMode` gate: a completed or composition-locked run
+                      can still be linked and unlinked (product decision), and
+                      a completed run has no Edit action to get into the form
+                      with. */}
+                  <ConfigurationGroupLinkField
+                    model="testRuns"
+                    recordId={testRunData.id}
+                    projectId={numericProjectId}
+                    value={form.watch("configurationGroupId") ?? null}
+                    savedValue={testRunData.configurationGroupId ?? null}
+                    onChange={(change) => {
+                      void handleConfigurationGroupChange(change);
+                    }}
+                    editable={canEditConfigurationGroup({
+                      canAddEdit: canAddEditRun,
+                      isMultiConfigurationView: isMultiConfigSelected,
+                    })}
+                    disabled={isSubmitting || isSavingConfigGroup}
                   />
                   {selectedAttachmentIndex !== null && (
                     <AttachmentsCarousel

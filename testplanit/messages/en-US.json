@@ -733,6 +733,20 @@
       "selectDeselectAllApprove": "Select or deselect approve for all relevant areas",
       "selectDeselectAllReadSensitive": "Select or deselect read sensitive for all relevant areas"
     },
+    "configurationGroup": {
+      "title": "Configuration Group",
+      "notLinkedRun": "Not linked to any other test run.",
+      "notLinkedSession": "Not linked to any other session.",
+      "linkRun": "Link to a test run",
+      "linkSession": "Link to a session",
+      "changeRun": "Link to a different test run",
+      "changeSession": "Link to a different session",
+      "unlink": "Unlink",
+      "dissolveWarningRun": "Unlinking also unlinks {name} — a configuration group needs at least two test runs.",
+      "dissolveWarningSession": "Unlinking also unlinks {name} — a configuration group needs at least two sessions.",
+      "pending": "Not saved yet — save to apply this change.",
+      "saveError": "Failed to update the configuration group"
+    },
     "labels": {
       "projects": "{count, plural, =1 {# Project} other {# Projects}}",
       "templates": "Templates & Fields",
@@ -770,6 +784,8 @@
       "multiConfiguration": "Part of a multi-configuration group",
       "compositionLocked": "Composition locked — the case set is frozen",
       "otherConfigurations": "Other configurations",
+      "noConfiguration": "No configuration",
+      "configurationWithName": "{configuration} — {name}",
       "selected": "Selected: {count}",
       "defaultProjectAccess": "Default Project Access",
       "defaultAccessType": "Default Access Type",
@@ -3808,6 +3824,11 @@
           "copy": "Copy existing test case assignments",
           "assign": "All test cases in the duplicated test run will retain their existing assignments",
           "unassign": "All test cases in the duplicated test run will be unassigned"
+        },
+        "configurationGroup": {
+          "label": "Configuration Group",
+          "separate": "The copies are grouped with each other only. The test run being duplicated stays outside that group",
+          "join": "The test run being duplicated and every copy join the same configuration group"
         }
       },
       "successMessage": "Successfully duplicated test run '{name}'.",
@@ -6624,7 +6645,8 @@
       "attachments": "## Attachments\nUpload any supporting files, screenshots, or logs related to this test run.",
       "duplicate": {
         "statusesToInclude": "## Statuses to Include\nSelect the statuses of test cases you want to include in the duplicated test run.",
-        "copyAssignments": "## Copy Assignments\nIf enabled, the assignments of the test cases will be copied to the duplicated test run."
+        "copyAssignments": "## Copy Assignments\nIf enabled, the assignments of the test cases will be copied to the duplicated test run.",
+        "configurationGroup": "## Configuration Group\nTest runs that cover the same work across different configurations share a configuration group, and the configuration switcher moves between them.\n\nLeave this off and the copies are grouped with each other only, exactly as before. Turn it on and the test run being duplicated joins that same group, so it and every copy appear as siblings — a single copy joins too."
       }
     },
     "appConfig": {

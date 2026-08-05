@@ -17,6 +17,11 @@ import { Label } from "@/components/ui/label";
 import { MultiAsyncCombobox } from "@/components/ui/multi-async-combobox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Switch } from "@/components/ui/switch";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -25,6 +30,11 @@ import {
   type DistributeAssignmentsResult,
 } from "~/app/actions/distributeRunCaseAssignments";
 import { searchProjectMembers } from "~/app/actions/searchProjectMembers";
+import {
+  buildConfigurationGroupMemberLabels,
+  buildConfigurationGroupWhere,
+  isConfigurationGroupQueryEnabled,
+} from "~/lib/configurationGroupSwitcher";
 import type {
   DistributePlan,
   DistributeStrategy,
@@ -100,23 +110,29 @@ export function DistributeAssignmentsModal({
     }
   }, [isOpen]);
 
-  // Sibling runs (one per configuration) when this run is part of a group.
+  // Sibling runs when this run is part of a group. Group membership is
+  // editable, so the query is scoped to this run's project — a stale or
+  // hand-written group id must not reach into another project.
+  const siblingQueryScope = { configurationGroupId, projectId };
+
   const { data: siblingRuns } = useClientQueries(schema).testRuns.useFindMany(
     {
       where: {
-        configurationGroupId: configurationGroupId ?? undefined,
-        isDeleted: false,
+        ...buildConfigurationGroupWhere(siblingQueryScope),
         // Completed runs can't be modified — exclude them so "All
         // configurations" never blocks on a finished sibling config.
         isCompleted: false,
       },
       select: {
         id: true,
+        name: true,
         configuration: { select: { id: true, name: true } },
       },
-      orderBy: { configuration: { name: "asc" } },
+      // Members may share a configuration, so break ties on id for a stable
+      // column order.
+      orderBy: [{ configuration: { name: "asc" } }, { id: "asc" }],
     },
-    { enabled: isOpen && !!configurationGroupId }
+    { enabled: isOpen && isConfigurationGroupQueryEnabled(siblingQueryScope) }
   );
 
   const hasConfigGroup =
@@ -129,13 +145,17 @@ export function DistributeAssignmentsModal({
     return [runId];
   }, [hasConfigGroup, scope, siblingRuns, runId]);
 
-  const configNameByRun = useMemo(() => {
-    const map = new Map<number, string>();
-    for (const r of siblingRuns ?? []) {
-      if (r.configuration?.name) map.set(r.id, r.configuration.name);
-    }
-    return map;
-  }, [siblingRuns]);
+  // Two runs in a group may share a configuration, so the column headers fall
+  // back to the run name whenever the configuration alone is ambiguous.
+  const configLabelByRun = useMemo(
+    () =>
+      buildConfigurationGroupMemberLabels(siblingRuns ?? [], {
+        noConfiguration: t("common.labels.noConfiguration"),
+        withMemberName: (values) =>
+          t("common.labels.configurationWithName", values),
+      }),
+    [siblingRuns, t]
+  );
 
   const effectiveStrategy: DistributeStrategy = hasConfigGroup
     ? strategy
@@ -501,16 +521,19 @@ export function DistributeAssignmentsModal({
                     )}
                     {showConfigColumns &&
                       runIds.map((rid) => {
-                        const name = configNameByRun.get(rid) ?? `#${rid}`;
+                        const name = configLabelByRun.get(rid) ?? `#${rid}`;
                         return (
-                          <div
-                            key={rid}
-                            className="shrink-0 truncate px-3 py-2 text-end"
-                            style={{ width: 168 }}
-                            title={name}
-                          >
-                            {name}
-                          </div>
+                          <Tooltip key={rid}>
+                            <TooltipTrigger asChild>
+                              <div
+                                className="shrink-0 truncate px-3 py-2 text-end"
+                                style={{ width: 168 }}
+                              >
+                                {name}
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent>{name}</TooltipContent>
+                          </Tooltip>
                         );
                       })}
                     <div className="flex-1" />

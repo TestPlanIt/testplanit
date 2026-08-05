@@ -43,6 +43,7 @@ interface DuplicateTestRunDialogProps {
 const FormSchema = z.object({
   statusesToInclude: z.array(z.number()),
   copyAssignments: z.boolean(),
+  joinSourceGroup: z.boolean(),
 });
 
 type FormValues = z.infer<typeof FormSchema>;
@@ -56,6 +57,14 @@ export interface AddRunModalDuplicationPreset {
   originalStateId: number | null;
   originalNote?: any;
   originalDocs?: any;
+  /**
+   * The user asked for the copies to join the source run's configuration
+   * group instead of forming their own. `AddTestRunModal` resolves the group
+   * id from this pair via `planDuplicationGroup`.
+   */
+  joinSourceGroup?: boolean;
+  /** The source run's group at the time the duplicate options were confirmed. */
+  originalConfigurationGroupId?: string | null;
 }
 
 export interface AddTestRunModalInitProps {
@@ -82,6 +91,9 @@ const DuplicateTestRunDialog: React.FC<DuplicateTestRunDialogProps> = ({
     defaultValues: {
       statusesToInclude: [],
       copyAssignments: false,
+      // Off by default: duplicating keeps today's behaviour (the copies form
+      // their own group) unless the user explicitly asks to join the source.
+      joinSourceGroup: false,
     },
   });
 
@@ -98,6 +110,7 @@ const DuplicateTestRunDialog: React.FC<DuplicateTestRunDialogProps> = ({
           stateId: true,
           note: true,
           docs: true,
+          configurationGroupId: true,
           testCases: {
             where: {
               isDeleted: false,
@@ -330,6 +343,9 @@ const DuplicateTestRunDialog: React.FC<DuplicateTestRunDialogProps> = ({
           originalStateId: originalRunData.stateId,
           originalNote: originalRunData.note,
           originalDocs: originalRunData.docs,
+          joinSourceGroup: data.joinSourceGroup,
+          originalConfigurationGroupId:
+            originalRunData.configurationGroupId ?? null,
         },
         defaultMilestoneId: originalRunData.milestoneId ?? undefined,
       };
@@ -494,6 +510,37 @@ const DuplicateTestRunDialog: React.FC<DuplicateTestRunDialogProps> = ({
                       onCheckedChange={field.onChange}
                       disabled={isSubmittingThisDialog}
                       aria-label={t("fields.copyAssignments.label")}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="joinSourceGroup"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                  <div className="space-y-0.5">
+                    <FormLabel className="text-base flex items-center">
+                      {t("fields.configurationGroup.label")}
+                      <HelpPopover helpKey="testRun.duplicate.configurationGroup" />
+                    </FormLabel>
+                    <FormDescription>
+                      {field.value
+                        ? t("fields.configurationGroup.join")
+                        : t("fields.configurationGroup.separate")}
+                    </FormDescription>
+                  </div>
+                  <FormControl>
+                    <Switch
+                      id="join-configuration-group-switch"
+                      data-testid="join-configuration-group-switch"
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                      disabled={isSubmittingThisDialog}
+                      aria-label={t("fields.configurationGroup.label")}
                     />
                   </FormControl>
                   <FormMessage />

@@ -8,6 +8,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "~/lib/navigation";
 
 import { AttachmentChanges } from "@/components/AttachmentsDisplay";
+import {
+  ConfigurationGroupLinkField,
+  type ConfigurationGroupLinkChange,
+} from "@/components/ConfigurationGroupLinkField";
 import { Loading } from "@/components/Loading";
 import { RequestReviewButton } from "@/components/reviews/RequestReviewButton";
 import { SessionAuditLogSheet } from "@/components/sessions/SessionAuditLogSheet";
@@ -19,6 +23,7 @@ import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { useSession } from "next-auth/react";
 import { FormProvider, useForm, useFormContext } from "react-hook-form";
+import { toast } from "sonner";
 import { z } from "zod/v4";
 import { notifySessionAssignment } from "~/app/actions/session-notifications";
 import { searchProjectMembers } from "~/app/actions/searchProjectMembers";
@@ -110,6 +115,16 @@ import parseDuration from "parse-duration";
 import type { Control, FieldErrors, Resolver } from "react-hook-form";
 import { PanelImperativeHandle } from "react-resizable-panels";
 import { emptyEditorContent, MAX_DURATION } from "~/app/constants";
+import {
+  applyConfigurationGroupPeerStamp,
+  canEditConfigurationGroup,
+  configurationGroupUpdateData,
+} from "~/lib/configurationGroupLink";
+import {
+  buildConfigurationGroupMemberLabels,
+  buildConfigurationGroupWhere,
+  isConfigurationGroupQueryEnabled,
+} from "~/lib/configurationGroupSwitcher";
 import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
 import { useExportSessionPdf } from "~/hooks/pdf/useExportSessionPdf";
 import SessionResultsSummary from "~/components/SessionResultsSummary";
@@ -139,6 +154,8 @@ interface FormValues {
   issueIds: number[];
   forecastManual: number | null | undefined;
   forecastAutomated: number | null | undefined;
+  /** Configuration-group membership; null when this session is not linked. */
+  configurationGroupId: string | null;
 }
 
 // Then define the base schema
@@ -157,6 +174,7 @@ const BaseFormSchema = z.object({
   issueIds: z.array(z.number()).optional(),
   forecastManual: z.number().nullable().optional(),
   forecastAutomated: z.number().nullable().optional(),
+  configurationGroupId: z.string().nullable(),
 });
 
 interface Template {
@@ -853,6 +871,12 @@ export default function SessionPage() {
   // repository case details bar).
   const { ref: headerRef, compact: headerCompact } = useContainerCompact();
   const [auditOpen, setAuditOpen] = useState(false);
+  // Peer awaiting a `configurationGroupId` stamp — set when the user links
+  // this session to a peer that had no group of its own, cleared once saved.
+  const [configGroupStampTargetId, setConfigGroupStampTargetId] = useState<
+    number | null
+  >(null);
+  const [isSavingConfigGroup, setIsSavingConfigGroup] = useState(false);
   const t = useTranslations("sessions");
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
@@ -1051,22 +1075,29 @@ export default function SessionPage() {
     configuration: { id: number; name: string } | null;
   };
 
+  // Group membership is editable, so the sibling query is scoped to this
+  // session's project: a stale or hand-written group id must not surface
+  // sessions from another project.
+  const siblingQueryScope = {
+    configurationGroupId: sessionData?.configurationGroupId,
+    projectId: sessionData?.projectId ?? numericProjectId,
+  };
+
   const { data: siblingSessions } = useClientQueries(
     schema
   ).sessions.useFindMany(
     {
-      where: {
-        configurationGroupId: sessionData?.configurationGroupId ?? undefined,
-        isDeleted: false,
-      },
+      where: buildConfigurationGroupWhere(siblingQueryScope),
       select: {
         id: true,
         name: true,
         configuration: { select: { id: true, name: true } },
       },
-      orderBy: { createdAt: "asc" },
+      // Members may share a configuration, so break ties on id for a stable
+      // switcher order.
+      orderBy: [{ createdAt: "asc" }, { id: "asc" }],
     },
-    { enabled: !!sessionData?.configurationGroupId }
+    { enabled: isConfigurationGroupQueryEnabled(siblingQueryScope) }
   );
 
   const siblingList: SiblingSession[] = useMemo(
@@ -1081,6 +1112,23 @@ export default function SessionPage() {
     [siblingList, sessionId]
   );
 
+  // Two sessions in a group may share a configuration, so entries the
+  // configuration cannot identify carry the session name as well.
+  const siblingLabels = useMemo(
+    () =>
+      buildConfigurationGroupMemberLabels(siblingList, {
+        noConfiguration: tCommon("labels.noConfiguration"),
+        withMemberName: (values) =>
+          tCommon("labels.configurationWithName", values),
+      }),
+    [siblingList, tCommon]
+  );
+
+  const siblingLabel = useCallback(
+    (sibling: SiblingSession) => siblingLabels.get(sibling.id) ?? sibling.name,
+    [siblingLabels]
+  );
+
   const fetchSiblingConfigurations = useCallback(
     async (query: string, page: number, pageSize: number) => {
       let filtered = siblingList;
@@ -1089,7 +1137,8 @@ export default function SessionPage() {
         filtered = siblingList.filter(
           (s) =>
             s.name.toLowerCase().includes(lower) ||
-            s.configuration?.name?.toLowerCase().includes(lower)
+            s.configuration?.name?.toLowerCase().includes(lower) ||
+            siblingLabel(s).toLowerCase().includes(lower)
         );
       }
       const start = page * pageSize;
@@ -1098,7 +1147,7 @@ export default function SessionPage() {
         total: filtered.length,
       };
     },
-    [siblingList]
+    [siblingList, siblingLabel]
   );
 
   // Fetch versions
@@ -1166,6 +1215,7 @@ export default function SessionPage() {
       issueIds: [],
       forecastManual: null,
       forecastAutomated: null,
+      configurationGroupId: null,
     },
     mode: "onSubmit",
   });
@@ -1273,6 +1323,7 @@ export default function SessionPage() {
         issueIds: sessionData.issues?.map((issue) => issue.id) || [],
         forecastManual: sessionData.forecastManual,
         forecastAutomated: sessionData.forecastAutomated,
+        configurationGroupId: sessionData.configurationGroupId ?? null,
       };
 
       // Reset form and ensure values are set
@@ -1444,6 +1495,44 @@ export default function SessionPage() {
     }
   }, [sessionData]);
 
+  // Configuration-group link/unlink.
+  //
+  // In edit mode the change rides along with the rest of the form. Outside
+  // edit mode the form never submits — and a completed session has no Edit
+  // action — so the change is written straight away: grouping is navigational
+  // metadata and correcting it after the fact is the point.
+  const handleConfigurationGroupChange = async (
+    change: ConfigurationGroupLinkChange
+  ) => {
+    if (isEditMode) {
+      setValue("configurationGroupId", change.groupId, { shouldDirty: true });
+      setConfigGroupStampTargetId(change.stampTargetId);
+      return;
+    }
+    const previousGroupId = sessionData?.configurationGroupId ?? null;
+    setIsSavingConfigGroup(true);
+    try {
+      await updateSessions({
+        where: { id: Number(sessionId) },
+        data: configurationGroupUpdateData(change.groupId),
+      });
+      await applyConfigurationGroupPeerStamp({
+        update: (args) => updateSessions(args),
+        recordId: Number(sessionId),
+        groupId: change.groupId,
+        stampTargetId: change.stampTargetId,
+        previousGroupId,
+      });
+      setValue("configurationGroupId", change.groupId);
+      await refetchSession();
+    } catch (err) {
+      console.error("Configuration group update failed:", err);
+      toast.error(tCommon("configurationGroup.saveError"));
+    } finally {
+      setIsSavingConfigGroup(false);
+    }
+  };
+
   // Update onSubmit function
   const onSubmit = async (data: FormValues) => {
     // Strict-transitive review-gate preflight. The live inline error
@@ -1492,6 +1581,14 @@ export default function SessionPage() {
           estimate: transformedData.estimate,
           note: transformedData.note,
           mission: transformedData.mission,
+          // Assigning `configurationGroupId` makes the RPC guard re-validate
+          // the group and sweep it for auto-dissolve, so only send it when the
+          // user actually changed it — an unchanged value can neither break an
+          // invariant nor orphan a group.
+          ...((data.configurationGroupId ?? null) !==
+          (sessionData?.configurationGroupId ?? null)
+            ? configurationGroupUpdateData(data.configurationGroupId)
+            : {}),
           attachments: {
             set: [], // Clear existing attachments
             connect:
@@ -1514,6 +1611,18 @@ export default function SessionPage() {
       });
 
       if (!updatedSession) throw new Error("Failed to update session");
+
+      // A join against a peer that had no group of its own mints one uuid for
+      // both records; this session was just stamped above, the peer is stamped
+      // here. Rolls this session back if the peer write fails.
+      await applyConfigurationGroupPeerStamp({
+        update: (args) => updateSessions(args),
+        recordId: Number(sessionId),
+        groupId: data.configurationGroupId,
+        stampTargetId: configGroupStampTargetId,
+        previousGroupId: sessionData?.configurationGroupId ?? null,
+      });
+      setConfigGroupStampTargetId(null);
 
       // Create new version
       const _issuesDataForVersion = (data.issueIds || [])
@@ -2250,12 +2359,10 @@ export default function SessionPage() {
                             }}
                             fetchOptions={fetchSiblingConfigurations}
                             renderOption={(option) => (
-                              <div className="flex items-center gap-2">
+                              <div className="flex items-center gap-2 min-w-0">
                                 <ConfigurationNameDisplay
                                   configuration={option.configuration}
-                                  name={
-                                    option.configuration?.name || option.name
-                                  }
+                                  name={siblingLabel(option)}
                                   truncate
                                 />
                               </div>
@@ -2386,6 +2493,24 @@ export default function SessionPage() {
                     canAddEditTags={showAddEditTagsPerm}
                     onAttachmentPendingChanges={setPendingAttachmentChanges}
                     transitionCheck={transitionCheck}
+                  />
+                  {/* Configuration-group membership. Deliberately outside the
+                      `isEditMode` gate: a completed session can still be
+                      linked and unlinked, and has no Edit action to get into
+                      the form with. */}
+                  <ConfigurationGroupLinkField
+                    model="sessions"
+                    recordId={sessionData.id}
+                    projectId={numericProjectId!}
+                    value={form.watch("configurationGroupId") ?? null}
+                    savedValue={sessionData.configurationGroupId ?? null}
+                    onChange={(change) => {
+                      void handleConfigurationGroupChange(change);
+                    }}
+                    editable={canEditConfigurationGroup({
+                      canAddEdit: canAddEditSession || isSuperAdmin,
+                    })}
+                    disabled={isSubmitting || isSavingConfigGroup}
                   />
                   {selectedAttachmentIndex !== null && (
                     <AttachmentsCarousel
