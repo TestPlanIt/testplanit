@@ -83,6 +83,7 @@ import FieldValueRenderer from "~/app/[locale]/projects/repository/[projectId]/[
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { resolveEffectiveWindowSeconds } from "~/lib/services/editWindow";
 import { Link, useRouter } from "~/lib/navigation";
+import { statusSurfaceVars } from "~/utils/contrastingTextColor";
 import { getDateFnsLocale } from "~/utils/locales";
 import { isAutomatedCaseSource } from "~/utils/testResultTypes";
 import TipTapEditor from "./tiptap/TipTapEditor";
@@ -526,7 +527,9 @@ const StepResultsDisplay = ({
                   </div>
                   <Badge
                     variant="outline"
+                    data-status-surface
                     style={{
+                      ...statusSurfaceVars(stepResult.status.color.value),
                       backgroundColor: stepResult.status.color.value,
                       color: "white",
                       borderColor: stepResult.status.color.value,
@@ -690,7 +693,9 @@ const RenderSharedGroupInHistoryList: React.FC<{
               {itemResult && (
                 <Badge
                   variant="outline"
+                  data-status-surface
                   style={{
+                    ...statusSurfaceVars(itemResult.status.color.value),
                     backgroundColor: itemResult.status.color.value,
                     color: "white",
                     borderColor: itemResult.status.color.value,
@@ -1413,6 +1418,11 @@ export default function TestResultHistory({
                       variant="ghost"
                       size="icon"
                       className="h-6 w-6"
+                      aria-label={
+                        allExpanded
+                          ? tCommon("actions.collapse")
+                          : tCommon("actions.expand")
+                      }
                       onClick={() => {
                         toggleExpanded("all");
                       }}
@@ -1604,7 +1614,9 @@ export default function TestResultHistory({
                     <TableCell className="max-w-[120px]">
                       <Badge
                         variant="outline"
+                        data-status-surface
                         style={{
+                          ...statusSurfaceVars(statusColor),
                           backgroundColor: statusColor,
                           color: "white",
                           borderColor: statusColor,
@@ -1737,6 +1749,7 @@ export default function TestResultHistory({
                             variant="ghost"
                             size="icon"
                             className="h-6 w-6"
+                            aria-label={tCommon("actions.edit")}
                             onClick={() => {
                               setEditingResult({
                                 id: result.originalDbId,

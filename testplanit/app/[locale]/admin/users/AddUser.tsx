@@ -648,7 +648,9 @@ export function AddUser({ open, onClose }: AddUserProps) {
                               }}
                               value={value}
                             >
-                              <SelectTrigger>
+                              <SelectTrigger
+                                aria-label={tCommon("fields.access")}
+                              >
                                 <SelectValue
                                   placeholder={tCommon("fields.access")}
                                 />
@@ -693,7 +695,7 @@ export function AddUser({ open, onClose }: AddUserProps) {
                         onValueChange={field.onChange}
                         value={field.value}
                       >
-                        <SelectTrigger>
+                        <SelectTrigger aria-label={tCommon("fields.role")}>
                           <SelectValue
                             placeholder={tCommon("fields.role_placeholder")}
                           />
@@ -737,6 +739,7 @@ export function AddUser({ open, onClose }: AddUserProps) {
                           return (
                             <MultiAsyncCombobox<GroupOption>
                               value={selectedGroups}
+                              ariaLabel={tCommon("fields.groups")}
                               onValueChange={(selected) =>
                                 field.onChange(
                                   selected.map((group) => group.id)
@@ -785,6 +788,7 @@ export function AddUser({ open, onClose }: AddUserProps) {
                           return (
                             <MultiAsyncCombobox<ProjectOption>
                               value={selectedProjects}
+                              ariaLabel={tCommon("fields.projects")}
                               onValueChange={(selected) =>
                                 field.onChange(
                                   selected.map((project) => project.id)

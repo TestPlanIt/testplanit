@@ -227,6 +227,11 @@ const Welcome = ({ user: _user }: { user: AuthUser }) => {
             onClick={toggleCollapse}
             variant="secondary"
             className="p-0 -ms-1 rounded-s-none"
+            aria-label={
+              isCollapsed
+                ? t("common.actions.expand")
+                : t("common.actions.collapse")
+            }
           >
             {isCollapsed ? <ChevronRight /> : <ChevronLeft />}
           </Button>

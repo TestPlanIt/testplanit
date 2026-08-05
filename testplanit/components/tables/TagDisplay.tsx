@@ -32,25 +32,42 @@ export const TagsDisplay: React.FC<Tags> = ({
       ? "overflow-hidden truncate max-w-xs text-base flex items-center"
       : "overflow-hidden truncate max-w-xl flex items-center";
 
+  const badge = (
+    <div className="flex items-center max-w-full">
+      <Badge key={id} className="me-1 mb-1">
+        {link ? (
+          <span className={textClassName}>
+            <Tag className={tagClassName} />
+            <span className="truncate">{name}</span>
+          </span>
+        ) : (
+          <div className="flex items-center me-1">
+            <Tag className={tagClassName} />
+            <span className={textClassName}>{name}</span>
+          </div>
+        )}
+      </Badge>
+    </div>
+  );
+
   return (
     <Tooltip>
-      <TooltipTrigger type="button" className="cursor-default">
-        <div className="flex items-center max-w-full">
-          <Badge key={id} className="me-1 mb-1">
-            {link ? (
-              <Link href={link} className={textClassName}>
-                <Tag className={tagClassName} />
-                <span className="truncate">{name}</span>
-              </Link>
-            ) : (
-              <div className="flex items-center me-1">
-                <Tag className={tagClassName} />
-                <span className={textClassName}>{name}</span>
-              </div>
-            )}
-          </Badge>
-        </div>
-      </TooltipTrigger>
+      {/* 4.1.2 nested-interactive / 2.5.8 Target Size: a link inside the
+          trigger button nested two controls and left the outer one barely
+          clickable, so a linked tag makes the link itself the trigger. An
+          unlinked tag is inert and still needs the button to stay focusable.
+          `cursor-default` is kept either way so the cursor is unchanged. */}
+      {link ? (
+        <TooltipTrigger asChild>
+          <Link href={link} className="cursor-default">
+            {badge}
+          </Link>
+        </TooltipTrigger>
+      ) : (
+        <TooltipTrigger type="button" className="cursor-default">
+          {badge}
+        </TooltipTrigger>
+      )}
       <TooltipContent>
         <div>{name}</div>
       </TooltipContent>

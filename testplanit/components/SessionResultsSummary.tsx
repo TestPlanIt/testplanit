@@ -19,6 +19,7 @@ import { useMemo, useState } from "react";
 import type { SessionSummaryData } from "~/app/api/sessions/[sessionId]/summary/route";
 import { Link } from "~/lib/navigation";
 import { cn } from "~/utils";
+import { statusSurfaceVars } from "~/utils/contrastingTextColor";
 import { toHumanReadable } from "~/utils/duration";
 import { ElapsedTime } from "./ElapsedTime";
 import { sortSummaryItems } from "~/utils/summarySort";
@@ -140,7 +141,10 @@ export function SessionResultsSummary({
     return (
       <div className={cn("flex flex-col space-y-1 w-full", className)}>
         {/* Show a default status bar at the top */}
-        <div className="h-2.5 w-full rounded-full overflow-hidden">
+        <div
+          className="h-2.5 w-full rounded-full overflow-hidden"
+          data-status-bar
+        >
           <Tooltip>
             <TooltipTrigger asChild>
               <Link
@@ -156,7 +160,9 @@ export function SessionResultsSummary({
             <TooltipContent
               side="top"
               className="border-0 text-white px-3 py-2"
+              data-status-surface
               style={{
+                ...statusSurfaceVars(firstStatus?.color?.value || "#B1B2B3"),
                 backgroundColor: firstStatus?.color?.value || "#B1B2B3",
               }}
             >
@@ -192,7 +198,10 @@ export function SessionResultsSummary({
   return (
     <div className={cn("flex flex-col space-y-1 w-full", className)}>
       {/* Color bar for results at the top */}
-      <div className="flex h-2.5 w-full rounded-full overflow-hidden">
+      <div
+        className="flex h-2.5 w-full rounded-full overflow-hidden"
+        data-status-bar
+      >
         {sortedResults.map((result, _index) => {
           const color = result.statusColorValue || "#B1B2B3";
           // Calculate width: equal distribution if no duration, or proportional if durations exist
@@ -234,7 +243,11 @@ export function SessionResultsSummary({
               </TooltipTrigger>
               <TooltipContent
                 className="border-0 text-muted px-3 py-2"
-                style={{ backgroundColor: color }}
+                data-status-surface
+                style={{
+                  ...statusSurfaceVars(color),
+                  backgroundColor: color,
+                }}
               >
                 <div className="flex items-center gap-1 font-semibold text-sm">
                   <div className="rounded-full bg-muted w-2 h-2" />

@@ -537,6 +537,7 @@
       "selectProjects": "选择项目",
       "selectStates": "选择状态",
       "selectTags": "选择标签",
+      "addFieldTo": "添加字段到{section}",
       "selectTemplates": "选择模板",
       "selectUsers": "选择用户",
       "selectOption": "选择一个选项",
@@ -3909,7 +3910,8 @@
       "placeholder": "过滤器测试运行..."
     },
     "typeFilter": {
-      "both": "手动和自动"
+      "both": "手动和自动",
+      "label": "按运行类型筛选"
     },
     "empty": {
       "noMatchingCompleted": "没有符合您筛选条件的已完成测试运行。"

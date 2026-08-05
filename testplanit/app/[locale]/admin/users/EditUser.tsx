@@ -547,7 +547,9 @@ export function EditUser({ user, open, onClose }: EditUserProps) {
                             value={value}
                             disabled={user?.id === session?.user?.id}
                           >
-                            <SelectTrigger>
+                            <SelectTrigger
+                              aria-label={tCommon("fields.access")}
+                            >
                               <SelectValue
                                 placeholder={tCommon("fields.access")}
                               />
@@ -598,7 +600,7 @@ export function EditUser({ user, open, onClose }: EditUserProps) {
                             value={value?.toString()}
                             disabled={user?.id === session?.user?.id}
                           >
-                            <SelectTrigger>
+                            <SelectTrigger aria-label={tCommon("fields.role")}>
                               <SelectValue
                                 placeholder={tCommon("fields.role")}
                               />
@@ -645,6 +647,7 @@ export function EditUser({ user, open, onClose }: EditUserProps) {
                         return (
                           <MultiAsyncCombobox<GroupOption>
                             value={selectedGroups}
+                            ariaLabel={tCommon("fields.groups")}
                             onValueChange={(selected) =>
                               field.onChange(selected.map((group) => group.id))
                             }
@@ -691,6 +694,7 @@ export function EditUser({ user, open, onClose }: EditUserProps) {
                         return (
                           <MultiAsyncCombobox<ProjectOption>
                             value={selectedProjects}
+                            ariaLabel={tCommon("fields.projects")}
                             onValueChange={(selected) =>
                               field.onChange(
                                 selected.map((project) => project.id)

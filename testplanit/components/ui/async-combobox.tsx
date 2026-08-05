@@ -57,6 +57,11 @@ interface AsyncComboboxProps<T> {
   getOptionValue: (option: T) => string | number;
   placeholder?: string;
   triggerLabel?: React.ReactNode;
+  /**
+   * Accessible name for the trigger. The trigger is a button, so its selected
+   * value does not name it — pass the field's visible label.
+   */
+  ariaLabel?: string;
   disabled?: boolean;
   isOptionDisabled?: (option: T) => boolean;
   className?: ClassValue;
@@ -91,6 +96,7 @@ export function AsyncCombobox<T>({
   getOptionValue,
   placeholder,
   triggerLabel,
+  ariaLabel,
   disabled = false,
   isOptionDisabled,
   className,
@@ -287,6 +293,7 @@ export function AsyncCombobox<T>({
               variant="outline"
               role="combobox"
               aria-expanded={open}
+              aria-label={ariaLabel}
               className={cn("justify-start text-start group", className)}
               disabled={disabled}
             >

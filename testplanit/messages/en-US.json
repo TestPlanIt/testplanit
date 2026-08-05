@@ -537,6 +537,7 @@
       "selectProjects": "Select projects",
       "selectStates": "Select states",
       "selectTags": "Select tags",
+      "addFieldTo": "Add a field to {section}",
       "selectTemplates": "Select templates",
       "selectUsers": "Select users",
       "selectOption": "Select an option",
@@ -3909,7 +3910,8 @@
       "placeholder": "Filter test runs..."
     },
     "typeFilter": {
-      "both": "Manual & Automated"
+      "both": "Manual & Automated",
+      "label": "Filter by run type"
     },
     "empty": {
       "noMatchingCompleted": "No completed test runs match your filter."

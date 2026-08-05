@@ -537,6 +537,7 @@
       "selectProjects": "Выберите проекты",
       "selectStates": "Выберите статусы",
       "selectTags": "Выберите теги",
+      "addFieldTo": "Добавить поле в {section}",
       "selectTemplates": "Выберите шаблоны",
       "selectUsers": "Выберите пользователей",
       "selectOption": "Выберите вариант",
@@ -3491,7 +3492,7 @@
       "addFilter": "Добавить фильтр",
       "removeFilter": "Удалить фильтр: {name}",
       "editFilter": "Редактировать фильтр: {name}",
-      "activeCount": "{count, plural, =1 {# active filter} other {# active filters}}",
+      "activeCount": "{count, plural, =1 {# активный фильтр} other {# активных фильтров}}",
       "assignedToMe": "Назначено мне",
       "noFilters": "Нет активных фильтров",
       "noMatchingCases": "Нет тест-кейсов, соответствующих вашим фильтрам",
@@ -3501,7 +3502,7 @@
       "filterLimitReached": "Достигнут предел фильтров (максимум {count})",
       "valueLimitReached": "Достигнут предел значений (максимум {count} на фильтр)",
       "filtersTruncated": "Некоторые фильтры были удалены (максимум {count})",
-      "valuesTruncated": "{count, plural, =1 {# value} other {# values}} per filter maximum — extra values were dropped"
+      "valuesTruncated": "{count, plural, =1 {Максимум # значение} other {Максимум # значений}} на фильтр — лишние значения были удалены"
     },
     "savedViews": {
       "title": "Сохранённые представления",
@@ -3520,9 +3521,9 @@
       "emptyHint": "Сохраните текущие фильтры, чтобы вернуться к ним позже.",
       "apply": "Применить представление: {name}",
       "applied": "Применено «{name}»",
-      "droppedFilters": "{count, plural, =1 {# filter no longer exists and was skipped} other {# filters no longer exist and were skipped}}",
+      "droppedFilters": "{count, plural, =1 {# фильтр больше не существует и был пропущен} other {# фильтров больше не существует и были пропущены}}",
       "droppedGrouping": "Его группировка больше не доступна, поэтому используется значение по умолчанию.",
-      "unreadable": "{count, plural, =1 {# saved view} other {# saved views}} couldn't be read",
+      "unreadable": "{count, plural, =1 {# сохранённый вид} other {# сохранённых видов}} не удалось прочитать",
       "rename": "Переименовать",
       "renameTitle": "Переименовать сохранённое представление",
       "renamed": "Сохранённое представление обновлено",
@@ -3909,7 +3910,8 @@
       "placeholder": "Тестовые запуски фильтров..."
     },
     "typeFilter": {
-      "both": "Ручной и автоматизированный"
+      "both": "Ручной и автоматизированный",
+      "label": "Фильтр по типу запуска"
     },
     "empty": {
       "noMatchingCompleted": "Ни один из завершенных тестовых запусков не соответствует вашему фильтру."
