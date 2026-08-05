@@ -115,8 +115,8 @@ const projectFilterSchema = z
 const issueFilterSchema = z
   .object({
     ...baseEntityFilterShape,
+    issueIds: z.array(z.number()).optional(),
     externalIds: z.array(z.string()).optional(),
-    hasExternalId: z.boolean().optional(),
   })
   .loose();
 
@@ -126,10 +126,6 @@ const milestoneFilterSchema = z
     milestoneTypeIds: z.array(z.number()).optional(),
     parentIds: z.array(z.number()).optional(),
     isCompleted: z.boolean().optional(),
-    dueDateRange: z
-      .object({ from: coercedDate.optional(), to: coercedDate.optional() })
-      .optional(),
-    hasParent: z.boolean().optional(),
   })
   .loose();
 

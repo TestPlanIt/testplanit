@@ -647,6 +647,20 @@ describe("addRepositoryCaseFilters", () => {
     expect(filter).toContainEqual({ term: { isArchived: false } });
   });
 
+  it("adds source filter", () => {
+    const filter: any[] = [];
+    addRepositoryCaseFilters(filter, { source: ["JUNIT"] });
+    expect(filter).toContainEqual({ terms: { source: ["JUNIT"] } });
+  });
+
+  it("adds estimate range in seconds", () => {
+    const filter: any[] = [];
+    addRepositoryCaseFilters(filter, { estimateRange: { min: 60, max: 600 } });
+    expect(filter).toContainEqual({
+      range: { estimate: { gte: 60, lte: 600 } },
+    });
+  });
+
   it("adds nested tags filter with ignore_unmapped", () => {
     const filter: any[] = [];
     addRepositoryCaseFilters(filter, { tagIds: [1, 2, 3] });
@@ -759,6 +773,30 @@ describe("addTestRunFilters", () => {
     expect(filter).toContainEqual({ term: { isCompleted: false } });
   });
 
+  it("adds creatorIds filter", () => {
+    const filter: any[] = [];
+    addTestRunFilters(filter, { creatorIds: ["user-1"] });
+    expect(filter).toContainEqual({ terms: { createdById: ["user-1"] } });
+  });
+
+  it("adds nested tags filter with ignore_unmapped", () => {
+    const filter: any[] = [];
+    addTestRunFilters(filter, { tagIds: [3] });
+    expect(filter).toContainEqual({
+      nested: {
+        path: "tags",
+        ignore_unmapped: true,
+        query: { terms: { "tags.id": [3] } },
+      },
+    });
+  });
+
+  it("adds elapsed range in seconds", () => {
+    const filter: any[] = [];
+    addTestRunFilters(filter, { elapsedRange: { min: 120 } });
+    expect(filter).toContainEqual({ range: { elapsed: { gte: 120 } } });
+  });
+
   it("adds testRunType filter", () => {
     const filter: any[] = [];
     addTestRunFilters(filter, { testRunType: "JUNIT" });
@@ -794,6 +832,42 @@ describe("addSessionFilters", () => {
 // ============================================================
 // addSharedStepFilters
 // ============================================================
+describe("addSessionFilters (durations, tags, creators)", () => {
+  it("adds nested tags filter with ignore_unmapped", () => {
+    const filter: any[] = [];
+    addSessionFilters(filter, { tagIds: [5] });
+    expect(filter).toContainEqual({
+      nested: {
+        path: "tags",
+        ignore_unmapped: true,
+        query: { terms: { "tags.id": [5] } },
+      },
+    });
+  });
+
+  it("adds creatorIds filter", () => {
+    const filter: any[] = [];
+    addSessionFilters(filter, { creatorIds: ["user-3"] });
+    expect(filter).toContainEqual({ terms: { createdById: ["user-3"] } });
+  });
+
+  it("adds estimate and elapsed ranges independently", () => {
+    const filter: any[] = [];
+    addSessionFilters(filter, {
+      estimateRange: { min: 60 },
+      elapsedRange: { max: 900 },
+    });
+    expect(filter).toContainEqual({ range: { estimate: { gte: 60 } } });
+    expect(filter).toContainEqual({ range: { elapsed: { lte: 900 } } });
+  });
+
+  it("skips a range with neither bound set", () => {
+    const filter: any[] = [];
+    addSessionFilters(filter, { estimateRange: {} });
+    expect(filter).toEqual([]);
+  });
+});
+
 describe("addSharedStepFilters", () => {
   it("adds projectIds filter", () => {
     const filter: any[] = [];
@@ -829,6 +903,12 @@ describe("addProjectFilters", () => {
 // addIssueFilters
 // ============================================================
 describe("addIssueFilters", () => {
+  it("adds issueIds filter", () => {
+    const filter: any[] = [];
+    addIssueFilters(filter, { issueIds: [4, 9] });
+    expect(filter).toContainEqual({ terms: { id: [4, 9] } });
+  });
+
   it("adds externalIds filter", () => {
     const filter: any[] = [];
     addIssueFilters(filter, { externalIds: ["JIRA-123", "GH-456"] });
@@ -864,6 +944,35 @@ describe("addMilestoneFilters", () => {
 // ============================================================
 // addDateRangeFilter
 // ============================================================
+describe("date ranges reach every entity", () => {
+  const dateRange = { field: "createdAt", from: new Date("2026-01-01") };
+
+  it("applies to shared steps", () => {
+    const filter: any[] = [];
+    addSharedStepFilters(filter, { dateRange });
+    expect(filter).toHaveLength(1);
+    expect(filter[0].range.createdAt.gte).toEqual(dateRange.from);
+  });
+
+  it("applies to issues", () => {
+    const filter: any[] = [];
+    addIssueFilters(filter, { dateRange });
+    expect(filter).toHaveLength(1);
+  });
+
+  it("applies to milestones", () => {
+    const filter: any[] = [];
+    addMilestoneFilters(filter, { dateRange });
+    expect(filter).toHaveLength(1);
+  });
+
+  it("applies creatorIds to milestones", () => {
+    const filter: any[] = [];
+    addMilestoneFilters(filter, { creatorIds: ["user-9"] });
+    expect(filter).toContainEqual({ terms: { createdById: ["user-9"] } });
+  });
+});
+
 describe("addDateRangeFilter", () => {
   it("adds range filter with both from and to", () => {
     const filter: any[] = [];

@@ -109,19 +109,14 @@ export interface ProjectFilters {
 }
 
 export interface IssueFilters extends BaseEntityFilters {
+  issueIds?: number[];
   externalIds?: string[];
-  hasExternalId?: boolean;
 }
 
 export interface MilestoneFilters extends BaseEntityFilters {
   milestoneTypeIds?: number[];
   parentIds?: number[];
   isCompleted?: boolean;
-  dueDateRange?: {
-    from?: Date;
-    to?: Date;
-  };
-  hasParent?: boolean;
 }
 
 export interface UnifiedSearchFilters {

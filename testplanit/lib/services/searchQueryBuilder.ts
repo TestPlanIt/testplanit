@@ -324,6 +324,9 @@ export function addRepositoryCaseFilters(filter: any[], rcFilters: any) {
   if (typeof rcFilters.isArchived === "boolean") {
     filter.push({ term: { isArchived: rcFilters.isArchived } });
   }
+  if (rcFilters.source && rcFilters.source.length > 0) {
+    filter.push({ terms: { source: rcFilters.source } });
+  }
   if (rcFilters.tagIds && rcFilters.tagIds.length > 0) {
     filter.push({
       nested: {
@@ -337,6 +340,9 @@ export function addRepositoryCaseFilters(filter: any[], rcFilters: any) {
   }
   if (rcFilters.customFields) {
     addCustomFieldFilters(filter, rcFilters.customFields);
+  }
+  if (rcFilters.estimateRange) {
+    addNumericRangeFilter(filter, "estimate", rcFilters.estimateRange);
   }
   if (rcFilters.dateRange) {
     addDateRangeFilter(filter, rcFilters.dateRange);
@@ -452,6 +458,29 @@ export function buildCustomFieldQuery(cf: CustomFieldFilter): any {
 }
 
 /**
+ * Add a numeric min/max range filter.
+ *
+ * Durations (`estimate`, `elapsed`) are indexed in seconds, so callers pass
+ * seconds — the filter panel converts from the minutes it shows the user.
+ */
+export function addNumericRangeFilter(
+  filter: any[],
+  field: string,
+  range: { min?: number; max?: number }
+) {
+  const rangeQuery: any = {};
+  if (typeof range.min === "number") {
+    rangeQuery.gte = range.min;
+  }
+  if (typeof range.max === "number") {
+    rangeQuery.lte = range.max;
+  }
+  if (Object.keys(rangeQuery).length > 0) {
+    filter.push({ range: { [field]: rangeQuery } });
+  }
+}
+
+/**
  * Add date range filter
  */
 export function addDateRangeFilter(filter: any[], dateRange: any) {
@@ -488,6 +517,20 @@ export function addTestRunFilters(filter: any[], trFilters: any) {
   if (trFilters.milestoneIds && trFilters.milestoneIds.length > 0) {
     filter.push({ terms: { milestoneId: trFilters.milestoneIds } });
   }
+  if (trFilters.creatorIds && trFilters.creatorIds.length > 0) {
+    filter.push({ terms: { createdById: trFilters.creatorIds } });
+  }
+  if (trFilters.tagIds && trFilters.tagIds.length > 0) {
+    filter.push({
+      nested: {
+        path: "tags",
+        ignore_unmapped: true,
+        query: {
+          terms: { "tags.id": trFilters.tagIds },
+        },
+      },
+    });
+  }
   if (typeof trFilters.isCompleted === "boolean") {
     filter.push({ term: { isCompleted: trFilters.isCompleted } });
   }
@@ -496,6 +539,9 @@ export function addTestRunFilters(filter: any[], trFilters: any) {
   }
   if (trFilters.customFields) {
     addCustomFieldFilters(filter, trFilters.customFields);
+  }
+  if (trFilters.elapsedRange) {
+    addNumericRangeFilter(filter, "elapsed", trFilters.elapsedRange);
   }
   if (trFilters.dateRange) {
     addDateRangeFilter(filter, trFilters.dateRange);
@@ -524,11 +570,31 @@ export function addSessionFilters(filter: any[], sFilters: any) {
   if (sFilters.milestoneIds && sFilters.milestoneIds.length > 0) {
     filter.push({ terms: { milestoneId: sFilters.milestoneIds } });
   }
+  if (sFilters.creatorIds && sFilters.creatorIds.length > 0) {
+    filter.push({ terms: { createdById: sFilters.creatorIds } });
+  }
+  if (sFilters.tagIds && sFilters.tagIds.length > 0) {
+    filter.push({
+      nested: {
+        path: "tags",
+        ignore_unmapped: true,
+        query: {
+          terms: { "tags.id": sFilters.tagIds },
+        },
+      },
+    });
+  }
   if (typeof sFilters.isCompleted === "boolean") {
     filter.push({ term: { isCompleted: sFilters.isCompleted } });
   }
   if (sFilters.customFields) {
     addCustomFieldFilters(filter, sFilters.customFields);
+  }
+  if (sFilters.estimateRange) {
+    addNumericRangeFilter(filter, "estimate", sFilters.estimateRange);
+  }
+  if (sFilters.elapsedRange) {
+    addNumericRangeFilter(filter, "elapsed", sFilters.elapsedRange);
   }
   if (sFilters.dateRange) {
     addDateRangeFilter(filter, sFilters.dateRange);
@@ -544,6 +610,9 @@ export function addSharedStepFilters(filter: any[], ssFilters: any) {
   }
   if (ssFilters.creatorIds) {
     filter.push({ terms: { createdById: ssFilters.creatorIds } });
+  }
+  if (ssFilters.dateRange) {
+    addDateRangeFilter(filter, ssFilters.dateRange);
   }
 }
 
@@ -569,11 +638,17 @@ export function addIssueFilters(filter: any[], iFilters: any) {
   if (iFilters.projectIds && iFilters.projectIds.length > 0) {
     filter.push({ terms: { projectId: iFilters.projectIds } });
   }
+  if (iFilters.issueIds && iFilters.issueIds.length > 0) {
+    filter.push({ terms: { id: iFilters.issueIds } });
+  }
   if (iFilters.externalIds && iFilters.externalIds.length > 0) {
     filter.push({ terms: { externalId: iFilters.externalIds } });
   }
   if (iFilters.creatorIds) {
     filter.push({ terms: { createdById: iFilters.creatorIds } });
+  }
+  if (iFilters.dateRange) {
+    addDateRangeFilter(filter, iFilters.dateRange);
   }
 }
 
@@ -592,6 +667,12 @@ export function addMilestoneFilters(filter: any[], mFilters: any) {
   }
   if (typeof mFilters.isCompleted === "boolean") {
     filter.push({ term: { isCompleted: mFilters.isCompleted } });
+  }
+  if (mFilters.creatorIds && mFilters.creatorIds.length > 0) {
+    filter.push({ terms: { createdById: mFilters.creatorIds } });
+  }
+  if (mFilters.dateRange) {
+    addDateRangeFilter(filter, mFilters.dateRange);
   }
 }
 

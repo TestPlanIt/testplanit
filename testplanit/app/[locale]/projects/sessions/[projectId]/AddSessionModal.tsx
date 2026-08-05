@@ -935,33 +935,18 @@ export function AddSessionModal({
                   control={control}
                   name="configIds"
                   render={({ field }) => {
-                    const clearAllConfigurations = () => {
-                      field.onChange([]);
-                      setSelectedConfigs([]);
-                    };
-
                     return (
                       <FormItem>
-                        <FormLabel className="flex justify-between items-center">
-                          <div className="flex items-center">
-                            {t("common.fields.configurations")}
-                            {selectedConfigs.length > 0 && (
-                              <span className="ms-1 text-muted-foreground">
-                                {"("}
-                                {selectedConfigs.length}
-                                {")"}
-                              </span>
-                            )}
-                            <HelpPopover helpKey="session.configuration" />
-                          </div>
+                        <FormLabel className="flex items-center">
+                          {t("common.fields.configurations")}
                           {selectedConfigs.length > 0 && (
-                            <span
-                              onClick={clearAllConfigurations}
-                              className="cursor-pointer text-sm text-muted-foreground hover:underline"
-                            >
-                              {t("common.actions.clearAll")}
+                            <span className="ms-1 text-muted-foreground">
+                              {"("}
+                              {selectedConfigs.length}
+                              {")"}
                             </span>
                           )}
+                          <HelpPopover helpKey="session.configuration" />
                         </FormLabel>
                         <FormControl>
                           <MultiAsyncCombobox<ConfigurationOption>

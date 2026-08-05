@@ -173,6 +173,9 @@ const BEFORE_IMAGE_MODELS = new Set<string>([
   "TestRuns",
   "Sessions",
   "Issue",
+  // Deleting a tag link leaves nothing to load afterwards — the before-image is
+  // the only way to know which case needs re-indexing.
+  "RepositoryCaseTag",
   "ApiToken",
   "AppConfig",
   "SsoProvider",
@@ -345,6 +348,24 @@ export const sideEffectsPlugin = definePlugin(schema, {
             before,
             after
           );
+          break;
+        }
+
+        // Tags live in the case's Elasticsearch document but are written as
+        // standalone link rows (the case details view and the CSV import both
+        // create/delete RepositoryCaseTag directly, never touching the case).
+        // Without this the index keeps the tags the case had when it was last
+        // saved, so tag search and the tag facet silently miss re-tagged cases.
+        case "RepositoryCaseTag": {
+          const caseIds = new Set<number>();
+          for (const row of [...after, ...before]) {
+            if (row?.caseId != null) caseIds.add(row.caseId);
+          }
+          for (const caseId of caseIds) {
+            syncRepositoryCaseToElasticsearch(caseId).catch(
+              logEsError("repository case", caseId)
+            );
+          }
           break;
         }
 

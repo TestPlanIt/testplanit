@@ -314,32 +314,18 @@ const BasicInfoDialog = React.memo(
                       return { results, total: filtered.length };
                     };
 
-                    const clearAllConfigurations = () => {
-                      field.onChange([]);
-                    };
-
                     return (
                       <FormItem>
-                        <FormLabel className="flex justify-between items-center">
-                          <div className="flex items-center">
-                            {tCommon("fields.configurations")}
-                            {selectedConfigs.length > 0 && (
-                              <span className="ms-1 text-muted-foreground">
-                                {"("}
-                                {selectedConfigs.length}
-                                {")"}
-                              </span>
-                            )}
-                            <HelpPopover helpKey="testRun.configuration" />
-                          </div>
+                        <FormLabel className="flex items-center">
+                          {tCommon("fields.configurations")}
                           {selectedConfigs.length > 0 && (
-                            <span
-                              onClick={clearAllConfigurations}
-                              className="cursor-pointer text-sm text-muted-foreground hover:underline"
-                            >
-                              {tCommon("actions.clearAll")}
+                            <span className="ms-1 text-muted-foreground">
+                              {"("}
+                              {selectedConfigs.length}
+                              {")"}
                             </span>
                           )}
+                          <HelpPopover helpKey="testRun.configuration" />
                         </FormLabel>
                         <FormControl>
                           <MultiAsyncCombobox<ConfigurationOption>

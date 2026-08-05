@@ -391,12 +391,11 @@ test.describe("Test Run Configuration Combobox", () => {
         page.locator(`[role="option"]:has-text("${config1}")`)
       ).toBeVisible({ timeout: 5000 });
 
-      // Click "Select All" option (selects all visible matching configs)
-      const selectAllOption = page.locator(
-        '[role="option"][data-value="__select_all__"]'
-      );
-      await expect(selectAllOption).toBeVisible({ timeout: 3000 });
-      await selectAllOption.click();
+      // Click "Select All" (selects every config matching the search, not just
+      // the visible page)
+      const selectAll = page.getByTestId("multi-async-combobox-select-all");
+      await expect(selectAll).toBeVisible({ timeout: 3000 });
+      await selectAll.click();
 
       // Close the popover
       await page.keyboard.press("Escape");
@@ -410,7 +409,7 @@ test.describe("Test Run Configuration Combobox", () => {
     });
   });
 
-  test("should show Clear All link when configurations are selected", async ({
+  test("should clear every selected configuration from the dropdown", async ({
     api,
     page,
   }) => {
@@ -422,14 +421,13 @@ test.describe("Test Run Configuration Combobox", () => {
       await api.createConfiguration(configName, projectId);
     });
 
-    let dialog: any;
     let configCombobox: any;
 
     await test.step("Open the new test run modal configurations combobox", async () => {
       await page.goto(`/en-US/projects/runs/${projectId}`);
       await page.waitForLoadState("load");
 
-      ({ dialog, configCombobox } = await openModalAndGetConfigCombobox(page));
+      ({ configCombobox } = await openModalAndGetConfigCombobox(page));
       await openComboboxDropdown(page, configCombobox);
     });
 
@@ -446,10 +444,14 @@ test.describe("Test Run Configuration Combobox", () => {
     });
 
     await test.step("Click Clear All and verify the configuration is removed", async () => {
-      // Click "Clear All" link (force: true for dialog overlay)
-      const clearAll = dialog.locator('span:has-text("Clear All")');
+      // Clear All lives in the dropdown, which is portaled outside the dialog
+      await openComboboxDropdown(page, configCombobox);
+
+      const clearAll = page.getByTestId("multi-async-combobox-clear-all");
       await expect(clearAll).toBeVisible();
-      await clearAll.click({ force: true });
+      await clearAll.click();
+
+      await page.keyboard.press("Escape");
 
       // Verify config is no longer in combobox trigger
       await expect(configCombobox).not.toContainText(configName, {

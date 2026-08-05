@@ -156,6 +156,41 @@ export function MultiAsyncCombobox<T>({
     );
   };
 
+  const visibleOptions = hideSelected
+    ? options.filter((option) => !isSelected(option))
+    : options;
+
+  // What "Select all" would add: everything matching the current search, not
+  // just the page on screen.
+  const selectAllCount =
+    total != null
+      ? hideSelected
+        ? total - value.length
+        : total
+      : visibleOptions.length;
+
+  const showSelectAll =
+    !hideSelectAll && selectAllCount > 0 && visibleOptions.length > 0;
+
+  const selectAll = async () => {
+    // Fetch all matching items (use large page size to get all)
+    const allItemsResult = await fetchOptions(search, 0, 10000);
+    let allItems: T[] = [];
+    if (Array.isArray(allItemsResult)) {
+      allItems = allItemsResult;
+    } else if (allItemsResult && "results" in allItemsResult) {
+      allItems = allItemsResult.results;
+    }
+
+    const newSelections = [...value];
+    allItems.forEach((option) => {
+      if (!value.some((v) => getOptionValue(v) === getOptionValue(option))) {
+        newSelections.push(option);
+      }
+    });
+    onValueChange(newSelections);
+  };
+
   return (
     <Popover
       open={open}
@@ -244,6 +279,48 @@ export function MultiAsyncCombobox<T>({
             autoFocus
             className="my-2"
           />
+          {(showSelectAll || value.length > 0) && (
+            <div className="flex items-center border-b px-2 py-1">
+              {showSelectAll && (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  disabled={loading}
+                  data-testid="multi-async-combobox-select-all"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    void selectAll();
+                  }}
+                >
+                  <PackagePlus className="h-3 w-3 shrink-0" />
+                  {tCommon("actions.selectAll")} {"("}
+                  {selectAllCount}
+                  {")"}
+                </Button>
+              )}
+              {value.length > 0 && (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  className="ms-auto"
+                  data-testid="multi-async-combobox-clear-all"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    onValueChange([]);
+                  }}
+                >
+                  <X className="h-3 w-3 shrink-0" />
+                  {tCommon("actions.clearAll")} {"("}
+                  {value.length}
+                  {")"}
+                </Button>
+              )}
+            </div>
+          )}
           <div className="relative">
             {loading && (
               <div className="absolute inset-0 flex justify-center items-center bg-muted/60 z-10">
@@ -255,96 +332,22 @@ export function MultiAsyncCombobox<T>({
               <CommandGroup
                 className={cn(loading ? "opacity-50 pointer-events-none" : "")}
               >
-                {(() => {
-                  const visibleOptions = hideSelected
-                    ? options.filter((option) => !isSelected(option))
-                    : options;
-                  const selectAllCount =
-                    total != null
-                      ? hideSelected
-                        ? total - value.length
-                        : total
-                      : visibleOptions.length;
-
-                  return (
-                    <>
-                      {!hideSelectAll &&
-                        selectAllCount > 0 &&
-                        visibleOptions.length > 0 && (
-                          <CommandItem
-                            value="__select_all__"
-                            onSelect={async () => {
-                              // Fetch all matching items (use large page size to get all)
-                              const allItemsResult = await fetchOptions(
-                                search,
-                                0,
-                                10000
-                              );
-                              let allItems: T[] = [];
-                              if (Array.isArray(allItemsResult)) {
-                                allItems = allItemsResult;
-                              } else if (
-                                allItemsResult &&
-                                "results" in allItemsResult
-                              ) {
-                                allItems = allItemsResult.results;
-                              }
-
-                              // Filter out already selected when hideSelected is true
-                              const itemsToAdd = hideSelected
-                                ? allItems.filter(
-                                    (option) =>
-                                      !value.some(
-                                        (v) =>
-                                          getOptionValue(v) ===
-                                          getOptionValue(option)
-                                      )
-                                  )
-                                : allItems;
-
-                              const newSelections = [...value];
-                              itemsToAdd.forEach((option) => {
-                                if (
-                                  !value.some(
-                                    (v) =>
-                                      getOptionValue(v) ===
-                                      getOptionValue(option)
-                                  )
-                                ) {
-                                  newSelections.push(option);
-                                }
-                              });
-                              onValueChange(newSelections);
-                            }}
-                            className="border-b mb-1"
-                          >
-                            <div className="flex items-center w-full text-foreground-background font-medium gap-2">
-                              <PackagePlus className="h-3 w-3 shrink-0" />
-                              {tCommon("actions.selectAll")} {"("}
-                              {selectAllCount}
-                              {")"}
-                            </div>
-                          </CommandItem>
-                        )}
-                      {visibleOptions.map((option) => (
-                        <CommandItem
-                          key={getOptionValue(option)}
-                          value={String(getOptionValue(option))}
-                          onSelect={() => toggleOption(option)}
-                        >
-                          <div className="flex items-center w-full [&_a]:no-underline [&_a]:text-inherit [&_a:hover]:text-inherit">
-                            {renderOption(option)}
-                            {!hideSelected && isSelected(option) ? (
-                              <Check className="ms-auto h-4 w-4" />
-                            ) : (
-                              <Check className="text-transparent" />
-                            )}
-                          </div>
-                        </CommandItem>
-                      ))}
-                    </>
-                  );
-                })()}
+                {visibleOptions.map((option) => (
+                  <CommandItem
+                    key={getOptionValue(option)}
+                    value={String(getOptionValue(option))}
+                    onSelect={() => toggleOption(option)}
+                  >
+                    <div className="flex items-center w-full [&_a]:no-underline [&_a]:text-inherit [&_a:hover]:text-inherit">
+                      {renderOption(option)}
+                      {!hideSelected && isSelected(option) ? (
+                        <Check className="ms-auto h-4 w-4" />
+                      ) : (
+                        <Check className="text-transparent" />
+                      )}
+                    </div>
+                  </CommandItem>
+                ))}
               </CommandGroup>
             </CommandList>
             <div className="flex items-center justify-between gap-2 border-t px-2 py-1 bg-muted">

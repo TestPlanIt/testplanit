@@ -56,8 +56,8 @@ test.describe("Session Configuration Select All", () => {
       // The "Select All" option should show the total count, not just page count
       // Since there are 12+ configs total (possibly more from other tests),
       // the count should be greater than 10 (the page size)
-      const selectAllOption = page.locator(
-        '[role="option"][data-value="__select_all__"]'
+      const selectAllOption = page.getByTestId(
+        "multi-async-combobox-select-all"
       );
       await expect(selectAllOption).toBeVisible({ timeout: 5000 });
 
@@ -118,8 +118,8 @@ test.describe("Session Configuration Select All", () => {
       await page.waitForTimeout(1000);
 
       // Click Select All
-      const selectAllOption = page.locator(
-        '[role="option"][data-value="__select_all__"]'
+      const selectAllOption = page.getByTestId(
+        "multi-async-combobox-select-all"
       );
       await expect(selectAllOption).toBeVisible({ timeout: 5000 });
       await selectAllOption.click();

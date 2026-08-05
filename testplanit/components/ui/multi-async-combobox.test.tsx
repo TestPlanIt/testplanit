@@ -9,6 +9,7 @@ vi.mock("next-intl", () => ({
       "common.actions.previous": "Previous",
       "common.actions.next": "Next",
       "common.actions.selectAll": "Select All",
+      "common.actions.clearAll": "Clear All",
       "common.search": "Search",
       "common.placeholders.selectConfigurations": "Select",
     };
@@ -69,5 +70,68 @@ describe("MultiAsyncCombobox trigger loading state", () => {
       ).not.toBeInTheDocument();
     });
     expect(screen.getByText("Item 1")).toBeInTheDocument();
+  });
+});
+
+describe("MultiAsyncCombobox selection toolbar", () => {
+  const renderCombobox = (
+    props: Partial<React.ComponentProps<typeof MultiAsyncCombobox<Option>>> = {}
+  ) =>
+    render(
+      <MultiAsyncCombobox<Option>
+        value={[]}
+        onValueChange={vi.fn()}
+        fetchOptions={async () => makeOptions(3)}
+        renderOption={(option) => <span>{option.label}</span>}
+        getOptionValue={(option) => option.id}
+        getOptionLabel={(option) => option.label}
+        placeholder="Search"
+        {...props}
+      />
+    );
+
+  it("clears every selection when Clear All is clicked", async () => {
+    const onValueChange = vi.fn();
+    renderCombobox({ value: makeOptions(2), onValueChange });
+
+    fireEvent.click(screen.getByRole("combobox"));
+
+    fireEvent.click(
+      await screen.findByTestId("multi-async-combobox-clear-all")
+    );
+
+    expect(onValueChange).toHaveBeenCalledWith([]);
+  });
+
+  it("offers no Clear All while nothing is selected", async () => {
+    renderCombobox();
+
+    fireEvent.click(screen.getByRole("combobox"));
+
+    expect(await screen.findByText("Item 1")).toBeInTheDocument();
+    expect(
+      screen.queryByTestId("multi-async-combobox-clear-all")
+    ).not.toBeInTheDocument();
+  });
+
+  it("selects every match — not just the page on screen — from Select All", async () => {
+    const onValueChange = vi.fn();
+    const all = makeOptions(25);
+    renderCombobox({
+      onValueChange,
+      pageSize: 10,
+      fetchOptions: async (_query, page, pageSize) => ({
+        results: all.slice(page * pageSize, (page + 1) * pageSize),
+        total: all.length,
+      }),
+    });
+
+    fireEvent.click(screen.getByRole("combobox"));
+
+    fireEvent.click(await screen.findByText(/Select All/));
+
+    await waitFor(() => {
+      expect(onValueChange).toHaveBeenCalledWith(all);
+    });
   });
 });

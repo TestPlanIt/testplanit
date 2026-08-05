@@ -11,9 +11,9 @@ import {
 } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { MultiAsyncCombobox } from "@/components/ui/multi-async-combobox";
 import {
   Popover,
   PopoverContent,
@@ -34,7 +34,6 @@ import {
   Bot,
   Boxes,
   Bug,
-  Calendar as CalendarIcon2,
   CalendarIcon,
   CheckCircle,
   Clock,
@@ -43,13 +42,11 @@ import {
   FileText,
   FolderTree,
   GitBranch,
-  Hash,
   Layers,
   LayoutTemplate,
   ListChecks,
   Milestone,
   PlayCircle,
-  Search,
   Settings,
   Tags,
   Timer,
@@ -57,10 +54,11 @@ import {
   User,
   UserCheck,
   Workflow,
+  LayoutList,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
-import { useEffect, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useState } from "react";
 import {
   BaseEntityFilters,
   IssueFilters,
@@ -72,8 +70,89 @@ import {
   TestRunFilters,
   UnifiedSearchFilters,
 } from "~/types/search";
+import { searchIssues } from "~/app/actions/searchIssues";
 import { cn, isAdmin } from "~/utils";
 import { CustomFieldFilters } from "./CustomFieldFilters";
+
+/** The entity a workflow's states belong to. */
+type WorkflowScope = "CASES" | "RUNS" | "SESSIONS";
+
+/** One row of the issue picker — mirrors what `searchIssues` selects. */
+interface IssueOption {
+  id: number;
+  name: string;
+  title: string;
+  externalKey: string | null;
+}
+
+/** How many options a filter combobox shows per page. */
+const OPTION_PAGE_SIZE = 20;
+
+/**
+ * Durations are indexed in seconds, but the range inputs are labelled in
+ * minutes — so the filter itself carries seconds and these convert at the edge.
+ */
+const SECONDS_PER_MINUTE = 60;
+
+const secondsToMinutes = (seconds?: number) =>
+  seconds === undefined ? "" : Math.round(seconds / SECONDS_PER_MINUTE);
+
+const minutesToSeconds = (value: string) => {
+  const minutes = parseInt(value, 10);
+  return Number.isNaN(minutes) ? undefined : minutes * SECONDS_PER_MINUTE;
+};
+
+/**
+ * The queries below already load every option the viewer is allowed to see, so
+ * the comboboxes search and page through that list in memory instead of
+ * hitting the server again.
+ */
+function localOptionFetcher<T>(items: T[], getLabel: (item: T) => string) {
+  return async (query: string, page: number, pageSize: number) => {
+    const term = query.trim().toLowerCase();
+    const matches = term
+      ? items.filter((item) => getLabel(item).toLowerCase().includes(term))
+      : items;
+    return {
+      results: matches.slice(page * pageSize, (page + 1) * pageSize),
+      total: matches.length,
+    };
+  };
+}
+
+/**
+ * Maps the combobox selection back to ids, keeping any id that isn't in the
+ * loaded option list — a saved search can reference entities the current
+ * queries don't return, and those shouldn't silently disappear.
+ */
+function mergeSelectedIds<Id, T>(
+  currentIds: Id[] | undefined,
+  loaded: T[] | undefined,
+  selected: T[],
+  getId: (item: T) => Id
+): Id[] {
+  const loadedIds = new Set((loaded ?? []).map(getId));
+  const preserved = (currentIds ?? []).filter((id) => !loadedIds.has(id));
+  return [...preserved, ...selected.map(getId)];
+}
+
+/** Option label plus its facet count, when the search returned one. */
+function OptionLabel({
+  children,
+  count,
+}: {
+  children: ReactNode;
+  count?: number;
+}) {
+  return (
+    <span className="flex items-center gap-1 min-w-0">
+      <span className="truncate">{children}</span>
+      {count !== undefined && (
+        <span className="text-muted-foreground shrink-0">{`(${count})`}</span>
+      )}
+    </span>
+  );
+}
 
 interface FacetedSearchFiltersProps {
   entityTypes: SearchableEntityType[];
@@ -94,7 +173,9 @@ export function FacetedSearchFilters({
   const { data: session } = useSession();
   const [localFilters, setLocalFilters] =
     useState<UnifiedSearchFilters>(filters);
-  const [searchQuery, setSearchQuery] = useState("");
+  // Issues picked from the dropdown this session, so their chips render
+  // without waiting on the hydration query below.
+  const [pickedIssues, setPickedIssues] = useState<IssueOption[]>([]);
 
   // Fetch data for filters
   // Note: ZenStack handles access control automatically based on schema policies
@@ -117,7 +198,7 @@ export function FacetedSearchFilters({
 
   // Map entity types to workflow scopes
   const getWorkflowScopes = () => {
-    const scopes: any[] = []; // Using any[] to work with Prisma enum
+    const scopes: WorkflowScope[] = [];
     if (entityTypes.includes(SearchableEntityType.REPOSITORY_CASE)) {
       scopes.push("CASES");
     }
@@ -156,46 +237,66 @@ export function FacetedSearchFilters({
   // Fetch workflow states - filtered by scope and project access
   const { data: workflowStates } = useClientQueries(
     schema
-  ).workflows.useFindMany({
-    where: {
-      isDeleted: false,
-      isEnabled: true,
-      ...(workflowScopes.length > 0 && { scope: { in: workflowScopes } }),
-      // If searching within a specific project, only show workflows assigned to that project
-      // If global search and user is not admin, only show workflows from projects the user has access to
-      ...(projectId
-        ? {
-            projects: {
-              some: {
-                projectId: projectId,
-              },
-            },
-          }
-        : session?.user?.access !== "ADMIN" && currentUserProjectIds.length > 0
+  ).workflows.useFindMany(
+    {
+      where: {
+        isDeleted: false,
+        isEnabled: true,
+        scope: { in: workflowScopes },
+        // If searching within a specific project, only show workflows assigned to that project
+        // If global search and user is not admin, only show workflows from projects the user has access to
+        ...(projectId
           ? {
               projects: {
                 some: {
-                  projectId: {
-                    in: currentUserProjectIds,
-                  },
+                  projectId: projectId,
                 },
               },
             }
           : session?.user?.access !== "ADMIN" &&
-              currentUserProjectIds.length === 0
+              currentUserProjectIds.length > 0
             ? {
-                id: {
-                  in: [], // No projects = no workflow states visible
+                projects: {
+                  some: {
+                    projectId: {
+                      in: currentUserProjectIds,
+                    },
+                  },
                 },
               }
-            : {}),
+            : session?.user?.access !== "ADMIN" &&
+                currentUserProjectIds.length === 0
+              ? {
+                  id: {
+                    in: [], // No projects = no workflow states visible
+                  },
+                }
+              : {}),
+      },
+      orderBy: { order: "asc" },
+      include: {
+        icon: true,
+        color: true,
+      },
     },
-    orderBy: { order: "asc" },
-    include: {
-      icon: true,
-      color: true,
-    },
-  });
+    { enabled: workflowScopes.length > 0 }
+  );
+
+  type WorkflowStateOption = NonNullable<typeof workflowStates>[number];
+
+  /** States split by the entity they belong to, so each entity section can
+   *  offer only its own states instead of one mixed list. */
+  const statesByScope = useMemo(() => {
+    const grouped: Record<WorkflowScope, WorkflowStateOption[]> = {
+      CASES: [],
+      RUNS: [],
+      SESSIONS: [],
+    };
+    for (const state of workflowStates ?? []) {
+      grouped[state.scope]?.push(state);
+    }
+    return grouped;
+  }, [workflowStates]);
 
   const { data: tags } = useClientQueries(schema).tags.useFindMany({
     where: { isDeleted: false },
@@ -342,6 +443,17 @@ export function FacetedSearchFilters({
     ],
   });
 
+  // The issue picker pages against the server, so ids restored from a saved
+  // search have to be hydrated separately or their chips would be nameless.
+  const selectedIssueIds = localFilters.issue?.issueIds ?? [];
+  const { data: hydratedIssues } = useClientQueries(schema).issue.useFindMany(
+    {
+      where: { id: { in: selectedIssueIds } },
+      select: { id: true, name: true, title: true, externalKey: true },
+    },
+    { enabled: selectedIssueIds.length > 0 }
+  );
+
   // Update local filters when props change
   useEffect(() => {
     setLocalFilters(filters);
@@ -364,7 +476,6 @@ export function FacetedSearchFilters({
     // Count base filters only once (not per entity type)
     const baseFilters = getBaseFilters();
     if (baseFilters.projectIds?.length) count++;
-    if (baseFilters.stateIds?.length) count++;
     if (baseFilters.tagIds?.length) count++;
     if (baseFilters.creatorIds?.length) count++;
     if (baseFilters.dateRange?.from || baseFilters.dateRange?.to) count++;
@@ -378,6 +489,7 @@ export function FacetedSearchFilters({
       switch (entityType) {
         case SearchableEntityType.REPOSITORY_CASE:
           const repoFilters = entityFilters as RepositoryCaseFilters;
+          if (repoFilters.stateIds?.length) count++;
           if (repoFilters.folderIds?.length) count++;
           if (repoFilters.templateIds?.length) count++;
           if (repoFilters.automated !== undefined) count++;
@@ -392,6 +504,7 @@ export function FacetedSearchFilters({
           break;
         case SearchableEntityType.TEST_RUN:
           const runFilters = entityFilters as TestRunFilters;
+          if (runFilters.stateIds?.length) count++;
           if (runFilters.configurationIds?.length) count++;
           if (runFilters.milestoneIds?.length) count++;
           if (runFilters.isCompleted !== undefined) count++;
@@ -404,6 +517,7 @@ export function FacetedSearchFilters({
           break;
         case SearchableEntityType.SESSION:
           const sessionFilters = entityFilters as SessionFilters;
+          if (sessionFilters.stateIds?.length) count++;
           if (sessionFilters.templateIds?.length) count++;
           if (sessionFilters.assignedToIds?.length) count++;
           if (sessionFilters.configurationIds?.length) count++;
@@ -421,17 +535,11 @@ export function FacetedSearchFilters({
           break;
         case SearchableEntityType.ISSUE:
           const issueFilters = entityFilters as IssueFilters;
-          if (issueFilters.hasExternalId !== undefined) count++;
+          if (issueFilters.issueIds?.length) count++;
           break;
         case SearchableEntityType.MILESTONE:
           const milestoneFilters = entityFilters as MilestoneFilters;
           if (milestoneFilters.isCompleted !== undefined) count++;
-          if (milestoneFilters.hasParent !== undefined) count++;
-          if (
-            milestoneFilters.dueDateRange?.from ||
-            milestoneFilters.dueDateRange?.to
-          )
-            count++;
           break;
       }
     });
@@ -449,11 +557,6 @@ export function FacetedSearchFilters({
         localFilters.sharedStep?.projectIds ||
         localFilters.issue?.projectIds ||
         localFilters.milestone?.projectIds ||
-        [],
-      stateIds:
-        localFilters.repositoryCase?.stateIds ||
-        localFilters.testRun?.stateIds ||
-        localFilters.session?.stateIds ||
         [],
       tagIds:
         localFilters.repositoryCase?.tagIds ||
@@ -621,21 +724,180 @@ export function FacetedSearchFilters({
     };
   };
 
-  // Filter items based on search query
-  const filterItems = (items: any[], nameField: string = "name") => {
-    if (!searchQuery) return items;
-    return items.filter((item) =>
-      item[nameField]?.toLowerCase().includes(searchQuery.toLowerCase())
+  // Facet count for an option, when the current search produced one
+  const getFacetCount = (facet: string, key: string | number) =>
+    facetCounts?.[facet]?.buckets.find((b) => b.key === String(key))?.doc_count;
+
+  // Option fetchers — memoized so the comboboxes don't refetch on every render
+  const fetchProjects = useMemo(
+    () => localOptionFetcher(projects ?? [], (p) => p.name),
+    [projects]
+  );
+  const fetchCaseStates = useMemo(
+    () => localOptionFetcher(statesByScope.CASES, (s) => s.name),
+    [statesByScope]
+  );
+  const fetchRunStates = useMemo(
+    () => localOptionFetcher(statesByScope.RUNS, (s) => s.name),
+    [statesByScope]
+  );
+  const fetchSessionStates = useMemo(
+    () => localOptionFetcher(statesByScope.SESSIONS, (s) => s.name),
+    [statesByScope]
+  );
+  const fetchTags = useMemo(
+    () => localOptionFetcher(tags ?? [], (tag) => tag.name),
+    [tags]
+  );
+  const fetchUsers = useMemo(
+    () => localOptionFetcher(users ?? [], (u) => u.name ?? ""),
+    [users]
+  );
+  const fetchFolders = useMemo(
+    () => localOptionFetcher(folders ?? [], (f) => f.name),
+    [folders]
+  );
+  const fetchTemplates = useMemo(
+    () => localOptionFetcher(templates ?? [], (tpl) => tpl.templateName),
+    [templates]
+  );
+  const fetchConfigurations = useMemo(
+    () => localOptionFetcher(configurations ?? [], (c) => c.name),
+    [configurations]
+  );
+  const fetchMilestones = useMemo(
+    () => localOptionFetcher(milestones ?? [], (m) => m.name),
+    [milestones]
+  );
+  // Issues are the one option list too large to hold in memory, so they page
+  // against the database instead.
+  const fetchIssues = useMemo(
+    () => (query: string, page: number, pageSize: number) =>
+      searchIssues(query, page, pageSize, projectId),
+    [projectId]
+  );
+
+  // Selected ids resolved back to the option rows the comboboxes render
+  const selectedProjects = (projects ?? []).filter((p) =>
+    baseFilters.projectIds?.includes(p.id)
+  );
+  const selectedTags = (tags ?? []).filter((tag) =>
+    baseFilters.tagIds?.includes(tag.id)
+  );
+  const selectedCreators = (users ?? []).filter((u) =>
+    baseFilters.creatorIds?.includes(u.id)
+  );
+  const selectedFolders = (folders ?? []).filter((f) =>
+    localFilters.repositoryCase?.folderIds?.includes(f.id)
+  );
+  const selectedCaseTemplates = (templates ?? []).filter((tpl) =>
+    localFilters.repositoryCase?.templateIds?.includes(tpl.id)
+  );
+  const selectedRunConfigurations = (configurations ?? []).filter((c) =>
+    localFilters.testRun?.configurationIds?.includes(c.id)
+  );
+  const selectedRunMilestones = (milestones ?? []).filter((m) =>
+    localFilters.testRun?.milestoneIds?.includes(m.id)
+  );
+  const selectedSessionTemplates = (templates ?? []).filter((tpl) =>
+    localFilters.session?.templateIds?.includes(tpl.id)
+  );
+  const selectedAssignees = (users ?? []).filter((u) =>
+    localFilters.session?.assignedToIds?.includes(u.id)
+  );
+  // Issue chips come from whichever source knows the issue: the ones just
+  // picked from the dropdown, falling back to the hydration query for ids that
+  // arrived with a saved search.
+  const pickedIssuesById = new Map(pickedIssues.map((i) => [i.id, i]));
+  const hydratedIssuesById = new Map(
+    (hydratedIssues ?? []).map((i) => [i.id, i])
+  );
+  const selectedIssues = selectedIssueIds
+    .map((id) => pickedIssuesById.get(id) ?? hydratedIssuesById.get(id))
+    .filter((issue): issue is IssueOption => issue !== undefined);
+
+  /**
+   * The workflow state picker for one entity. A state belongs to a single
+   * entity, so the picker offers only that entity's states and writes to that
+   * entity's filters — a case state must not narrow the run results.
+   */
+  const renderStatePicker = (
+    entityType: SearchableEntityType,
+    states: WorkflowStateOption[],
+    fetchStates: ReturnType<typeof localOptionFetcher<WorkflowStateOption>>,
+    testId: string
+  ) => {
+    if (states.length === 0) return null;
+    const stateIds = (getEntityFilters(entityType) as BaseEntityFilters | null)
+      ?.stateIds;
+    const selected = states.filter((s) => stateIds?.includes(s.id));
+    return (
+      <div className="space-y-2" data-testid={testId}>
+        <Label className="text-sm font-medium flex items-center gap-1">
+          <Workflow className="h-4 w-4" />
+          {t("search.filters.states")}
+        </Label>
+        <MultiAsyncCombobox
+          value={selected}
+          onValueChange={(picked) =>
+            updateEntityFilters(entityType, {
+              stateIds: mergeSelectedIds(
+                stateIds,
+                states,
+                picked,
+                (state) => state.id
+              ),
+            })
+          }
+          fetchOptions={fetchStates}
+          renderOption={(state) => (
+            <span className="flex items-center gap-1 min-w-0">
+              {state.icon && (
+                <DynamicIcon
+                  name={
+                    state.icon
+                      .name as keyof typeof import("lucide-react/dynamicIconImports").default
+                  }
+                  className="h-4 w-4 shrink-0"
+                  style={{ color: state.color?.value }}
+                />
+              )}
+              <OptionLabel count={getFacetCount("states", state.id)}>
+                {state.name}
+              </OptionLabel>
+            </span>
+          )}
+          renderSelectedOption={(state) => (
+            <span className="flex items-center gap-1 min-w-0">
+              {state.icon && (
+                <DynamicIcon
+                  name={
+                    state.icon
+                      .name as keyof typeof import("lucide-react/dynamicIconImports").default
+                  }
+                  className="h-3 w-3 shrink-0"
+                  style={{ color: state.color?.value }}
+                />
+              )}
+              <span className="truncate">{state.name}</span>
+            </span>
+          )}
+          getOptionValue={(state) => state.id}
+          getOptionLabel={(state) => state.name}
+          placeholder={t("common.placeholders.selectStates")}
+          pageSize={OPTION_PAGE_SIZE}
+        />
+      </div>
     );
   };
 
   return (
     <div
-      className="space-y-4 max-w-[325px] overflow-x-hidden"
+      className="flex h-full w-full flex-col gap-4 overflow-x-hidden"
       data-testid="faceted-search-filters"
     >
-      {/* Header */}
-      <div className="flex items-center justify-between">
+      {/* Header — pe-8 keeps the Clear All button clear of the sheet's close button */}
+      <div className="flex items-center justify-between pe-8">
         <div>
           <h3 className="text-lg font-semibold">{t("search.filters.title")}</h3>
           {activeFilterCount > 0 && (
@@ -656,19 +918,7 @@ export function FacetedSearchFilters({
 
       <Separator />
 
-      {/* Search within filters */}
-      <div className="relative">
-        <Search className="absolute start-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-        <Input
-          type="text"
-          placeholder={t("search.filters.searchPlaceholder")}
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="ps-10"
-        />
-      </div>
-
-      <ScrollArea className="h-[calc(100vh-300px)] w-full">
+      <ScrollArea className="min-h-0 w-full flex-1 pe-3">
         {/* Selected Entity Types */}
         {entityTypes.length > 0 && (
           <div className="mb-4">
@@ -700,450 +950,127 @@ export function FacetedSearchFilters({
           {/* Common Filters */}
           <AccordionItem value="common">
             <AccordionTrigger>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1">
                 <Settings className="h-4 w-4" />
                 {t("search.filters.common")}
               </div>
             </AccordionTrigger>
-            <AccordionContent className="space-y-4 overflow-x-hidden min-w-0 max-w-[325px] px-1">
+            <AccordionContent className="space-y-4 overflow-x-hidden min-w-0 pl-2">
               {/* Projects */}
               {projects && projects.length > 0 && !projectId && (
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium flex items-center gap-2">
+                  <Label className="text-sm font-medium flex items-center gap-1">
                     <Boxes className="h-4 w-4" />
                     {t("common.fields.projects")}
                   </Label>
-                  <div className="space-y-1 max-h-40 overflow-y-auto">
-                    {filterItems(projects).map((project) => (
-                      <div
-                        key={project.id}
-                        className="flex items-center space-x-2"
+                  <MultiAsyncCombobox
+                    value={selectedProjects}
+                    onValueChange={(selected) =>
+                      updateBaseFilters({
+                        projectIds: mergeSelectedIds(
+                          baseFilters.projectIds,
+                          projects,
+                          selected,
+                          (p) => p.id
+                        ),
+                      })
+                    }
+                    fetchOptions={fetchProjects}
+                    renderOption={(project) => (
+                      <span
+                        className={cn(
+                          "flex items-center gap-1 min-w-0",
+                          project.isCompleted &&
+                            "text-muted-foreground line-through"
+                        )}
                       >
-                        <Checkbox
-                          id={`project-${project.id}`}
-                          checked={
-                            baseFilters.projectIds?.includes(project.id) ||
-                            false
-                          }
-                          onCheckedChange={(checked) => {
-                            const newProjectIds = checked
-                              ? [...(baseFilters.projectIds || []), project.id]
-                              : (baseFilters.projectIds || []).filter(
-                                  (id) => id !== project.id
-                                );
-                            updateBaseFilters({ projectIds: newProjectIds });
-                          }}
-                        />
-                        <label
-                          htmlFor={`project-${project.id}`}
-                          className={cn(
-                            "text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center gap-1 min-w-0",
-                            project.isCompleted && "text-muted-foreground"
-                          )}
+                        {project.isCompleted && (
+                          <CheckCircle className="h-3 w-3 shrink-0" />
+                        )}
+                        <OptionLabel
+                          count={getFacetCount("projects", project.id)}
                         >
-                          {project.isCompleted && (
-                            <CheckCircle className="h-3 w-3 shrink-0" />
-                          )}
-                          <span
-                            className={cn(
-                              "truncate",
-                              project.isCompleted ? "line-through" : ""
-                            )}
-                          >
-                            {project.name}
-                          </span>
-                          {(() => {
-                            const bucket = facetCounts?.projects?.buckets.find(
-                              (b) => b.key === project.id.toString()
-                            );
-                            return bucket ? (
-                              <span className="text-muted-foreground ms-1 shrink-0">
-                                {`(${bucket.doc_count})`}
-                              </span>
-                            ) : null;
-                          })()}
-                        </label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Workflow States */}
-              {workflowStates && workflowStates.length > 0 && (
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium flex items-center gap-2">
-                    <Workflow className="h-4 w-4" />
-                    {t("search.filters.states")}
-                  </Label>
-                  <div className="space-y-1 max-h-40 overflow-y-auto">
-                    {/* Group states by scope if multiple scopes */}
-                    {workflowScopes.length > 1 ? (
-                      <>
-                        {workflowScopes.includes("CASES") &&
-                          filterItems(
-                            workflowStates.filter((s) => s.scope === "CASES")
-                          ).length > 0 && (
-                            <>
-                              <div className="text-xs font-semibold text-muted-foreground mt-2 first:mt-0">
-                                {t("search.entityTypes.repositoryCase")}
-                              </div>
-                              {filterItems(
-                                workflowStates.filter(
-                                  (s) => s.scope === "CASES"
-                                )
-                              ).map((state) => (
-                                <div
-                                  key={state.id}
-                                  className="flex items-center space-x-2 ms-2"
-                                >
-                                  <Checkbox
-                                    id={`state-${state.id}`}
-                                    checked={
-                                      baseFilters.stateIds?.includes(
-                                        state.id
-                                      ) || false
-                                    }
-                                    onCheckedChange={(checked) => {
-                                      const newStateIds = checked
-                                        ? [
-                                            ...(baseFilters.stateIds || []),
-                                            state.id,
-                                          ]
-                                        : (baseFilters.stateIds || []).filter(
-                                            (id) => id !== state.id
-                                          );
-                                      updateBaseFilters({
-                                        stateIds: newStateIds,
-                                      });
-                                    }}
-                                  />
-                                  <label
-                                    htmlFor={`state-${state.id}`}
-                                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center gap-2 min-w-0"
-                                  >
-                                    {state.icon && (
-                                      <DynamicIcon
-                                        name={
-                                          state.icon
-                                            .name as keyof typeof import("lucide-react/dynamicIconImports").default
-                                        }
-                                        className="h-4 w-4 shrink-0"
-                                        style={{ color: state.color?.value }}
-                                      />
-                                    )}
-                                    <span className="truncate">
-                                      {state.name}
-                                    </span>
-                                    {(() => {
-                                      const bucket =
-                                        facetCounts?.states?.buckets.find(
-                                          (b) => b.key === state.id.toString()
-                                        );
-                                      return bucket ? (
-                                        <span className="text-muted-foreground shrink-0">
-                                          {`(${bucket.doc_count})`}
-                                        </span>
-                                      ) : null;
-                                    })()}
-                                  </label>
-                                </div>
-                              ))}
-                            </>
-                          )}
-                        {workflowScopes.includes("RUNS") &&
-                          filterItems(
-                            workflowStates.filter((s) => s.scope === "RUNS")
-                          ).length > 0 && (
-                            <>
-                              <div className="text-xs font-semibold text-muted-foreground mt-2">
-                                {t("common.fields.testRuns")}
-                              </div>
-                              {filterItems(
-                                workflowStates.filter((s) => s.scope === "RUNS")
-                              ).map((state) => (
-                                <div
-                                  key={state.id}
-                                  className="flex items-center space-x-2 ms-2"
-                                >
-                                  <Checkbox
-                                    id={`state-${state.id}`}
-                                    checked={
-                                      baseFilters.stateIds?.includes(
-                                        state.id
-                                      ) || false
-                                    }
-                                    onCheckedChange={(checked) => {
-                                      const newStateIds = checked
-                                        ? [
-                                            ...(baseFilters.stateIds || []),
-                                            state.id,
-                                          ]
-                                        : (baseFilters.stateIds || []).filter(
-                                            (id) => id !== state.id
-                                          );
-                                      updateBaseFilters({
-                                        stateIds: newStateIds,
-                                      });
-                                    }}
-                                  />
-                                  <label
-                                    htmlFor={`state-${state.id}`}
-                                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center gap-2 min-w-0"
-                                  >
-                                    {state.icon && (
-                                      <DynamicIcon
-                                        name={
-                                          state.icon
-                                            .name as keyof typeof import("lucide-react/dynamicIconImports").default
-                                        }
-                                        className="h-4 w-4 shrink-0"
-                                        style={{ color: state.color?.value }}
-                                      />
-                                    )}
-                                    <span className="truncate">
-                                      {state.name}
-                                    </span>
-                                    {(() => {
-                                      const bucket =
-                                        facetCounts?.states?.buckets.find(
-                                          (b) => b.key === state.id.toString()
-                                        );
-                                      return bucket ? (
-                                        <span className="text-muted-foreground shrink-0">
-                                          {`(${bucket.doc_count})`}
-                                        </span>
-                                      ) : null;
-                                    })()}
-                                  </label>
-                                </div>
-                              ))}
-                            </>
-                          )}
-                        {workflowScopes.includes("SESSIONS") &&
-                          filterItems(
-                            workflowStates.filter((s) => s.scope === "SESSIONS")
-                          ).length > 0 && (
-                            <>
-                              <div className="text-xs font-semibold text-muted-foreground mt-2">
-                                {t("common.fields.sessions")}
-                              </div>
-                              {filterItems(
-                                workflowStates.filter(
-                                  (s) => s.scope === "SESSIONS"
-                                )
-                              ).map((state) => (
-                                <div
-                                  key={state.id}
-                                  className="flex items-center space-x-2 ms-2"
-                                >
-                                  <Checkbox
-                                    id={`state-${state.id}`}
-                                    checked={
-                                      baseFilters.stateIds?.includes(
-                                        state.id
-                                      ) || false
-                                    }
-                                    onCheckedChange={(checked) => {
-                                      const newStateIds = checked
-                                        ? [
-                                            ...(baseFilters.stateIds || []),
-                                            state.id,
-                                          ]
-                                        : (baseFilters.stateIds || []).filter(
-                                            (id) => id !== state.id
-                                          );
-                                      updateBaseFilters({
-                                        stateIds: newStateIds,
-                                      });
-                                    }}
-                                  />
-                                  <label
-                                    htmlFor={`state-${state.id}`}
-                                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center gap-2 min-w-0"
-                                  >
-                                    {state.icon && (
-                                      <DynamicIcon
-                                        name={
-                                          state.icon
-                                            .name as keyof typeof import("lucide-react/dynamicIconImports").default
-                                        }
-                                        className="h-4 w-4 shrink-0"
-                                        style={{ color: state.color?.value }}
-                                      />
-                                    )}
-                                    <span className="truncate">
-                                      {state.name}
-                                    </span>
-                                    {(() => {
-                                      const bucket =
-                                        facetCounts?.states?.buckets.find(
-                                          (b) => b.key === state.id.toString()
-                                        );
-                                      return bucket ? (
-                                        <span className="text-muted-foreground shrink-0">
-                                          {`(${bucket.doc_count})`}
-                                        </span>
-                                      ) : null;
-                                    })()}
-                                  </label>
-                                </div>
-                              ))}
-                            </>
-                          )}
-                      </>
-                    ) : (
-                      /* Single scope - show states without grouping */
-                      filterItems(workflowStates).map((state) => (
-                        <div
-                          key={state.id}
-                          className="flex items-center space-x-2"
-                        >
-                          <Checkbox
-                            id={`state-${state.id}`}
-                            checked={
-                              baseFilters.stateIds?.includes(state.id) || false
-                            }
-                            onCheckedChange={(checked) => {
-                              const newStateIds = checked
-                                ? [...(baseFilters.stateIds || []), state.id]
-                                : (baseFilters.stateIds || []).filter(
-                                    (id) => id !== state.id
-                                  );
-                              updateBaseFilters({ stateIds: newStateIds });
-                            }}
-                          />
-                          <label
-                            htmlFor={`state-${state.id}`}
-                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center gap-2 min-w-0"
-                          >
-                            {state.icon && (
-                              <DynamicIcon
-                                name={
-                                  state.icon
-                                    .name as keyof typeof import("lucide-react/dynamicIconImports").default
-                                }
-                                className="h-4 w-4 shrink-0"
-                                style={{ color: state.color?.value }}
-                              />
-                            )}
-                            <span className="truncate">{state.name}</span>
-                            {(() => {
-                              const bucket = facetCounts?.states?.buckets.find(
-                                (b) => b.key === state.id.toString()
-                              );
-                              return bucket ? (
-                                <span className="text-muted-foreground shrink-0">
-                                  {`(${bucket.doc_count})`}
-                                </span>
-                              ) : null;
-                            })()}
-                          </label>
-                        </div>
-                      ))
+                          {project.name}
+                        </OptionLabel>
+                      </span>
                     )}
-                  </div>
+                    getOptionValue={(project) => project.id}
+                    getOptionLabel={(project) => project.name}
+                    placeholder={t("common.placeholders.selectProjects")}
+                    pageSize={OPTION_PAGE_SIZE}
+                  />
                 </div>
               )}
 
               {/* Tags */}
               {tags && tags.length > 0 && (
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium flex items-center gap-2">
+                  <Label className="text-sm font-medium flex items-center gap-1">
                     <Tags className="h-4 w-4" />
                     {t("common.fields.tags")}
                   </Label>
-                  <div className="space-y-1 max-h-40 overflow-y-auto">
-                    {filterItems(tags).map((tag) => (
-                      <div key={tag.id} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={`tag-${tag.id}`}
-                          checked={
-                            baseFilters.tagIds?.includes(tag.id) || false
-                          }
-                          onCheckedChange={(checked) => {
-                            const newTagIds = checked
-                              ? [...(baseFilters.tagIds || []), tag.id]
-                              : (baseFilters.tagIds || []).filter(
-                                  (id) => id !== tag.id
-                                );
-                            updateBaseFilters({ tagIds: newTagIds });
-                          }}
-                        />
-                        <label
-                          htmlFor={`tag-${tag.id}`}
-                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center gap-1 min-w-0"
-                        >
-                          <span className="truncate">{tag.name}</span>
-                          {(() => {
-                            const bucket = facetCounts?.tags?.buckets.find(
-                              (b) => b.key === tag.id.toString()
-                            );
-                            return bucket ? (
-                              <span className="text-muted-foreground shrink-0">
-                                {`(${bucket.doc_count})`}
-                              </span>
-                            ) : null;
-                          })()}
-                        </label>
-                      </div>
-                    ))}
-                  </div>
+                  <MultiAsyncCombobox
+                    value={selectedTags}
+                    onValueChange={(selected) =>
+                      updateBaseFilters({
+                        tagIds: mergeSelectedIds(
+                          baseFilters.tagIds,
+                          tags,
+                          selected,
+                          (tag) => tag.id
+                        ),
+                      })
+                    }
+                    fetchOptions={fetchTags}
+                    renderOption={(tag) => (
+                      <OptionLabel count={getFacetCount("tags", tag.id)}>
+                        {tag.name}
+                      </OptionLabel>
+                    )}
+                    getOptionValue={(tag) => tag.id}
+                    getOptionLabel={(tag) => tag.name}
+                    placeholder={t("common.placeholders.selectTags")}
+                    pageSize={OPTION_PAGE_SIZE}
+                  />
                 </div>
               )}
 
               {/* Created By */}
               {users && users.length > 0 && (
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium flex items-center gap-2">
+                  <Label className="text-sm font-medium flex items-center gap-1">
                     <User className="h-4 w-4" />
                     {t("common.fields.createdBy")}
                   </Label>
-                  <div className="space-y-1 max-h-40 overflow-y-auto">
-                    {filterItems(users).map((user) => (
-                      <div
-                        key={user.id}
-                        className="flex items-center space-x-2"
-                      >
-                        <Checkbox
-                          id={`user-${user.id}`}
-                          checked={
-                            baseFilters.creatorIds?.includes(user.id) || false
-                          }
-                          onCheckedChange={(checked) => {
-                            const newCreatorIds = checked
-                              ? [...(baseFilters.creatorIds || []), user.id]
-                              : (baseFilters.creatorIds || []).filter(
-                                  (id) => id !== user.id
-                                );
-                            updateBaseFilters({ creatorIds: newCreatorIds });
-                          }}
-                        />
-                        <label
-                          htmlFor={`user-${user.id}`}
-                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center gap-1 min-w-0"
-                        >
-                          <span className="truncate">{user.name}</span>
-                          {(() => {
-                            const bucket = facetCounts?.creators?.buckets.find(
-                              (b) => b.key === user.id
-                            );
-                            return bucket ? (
-                              <span className="text-muted-foreground shrink-0">
-                                {`(${bucket.doc_count})`}
-                              </span>
-                            ) : null;
-                          })()}
-                        </label>
-                      </div>
-                    ))}
-                  </div>
+                  <MultiAsyncCombobox
+                    value={selectedCreators}
+                    onValueChange={(selected) =>
+                      updateBaseFilters({
+                        creatorIds: mergeSelectedIds(
+                          baseFilters.creatorIds,
+                          users,
+                          selected,
+                          (user) => user.id
+                        ),
+                      })
+                    }
+                    fetchOptions={fetchUsers}
+                    renderOption={(user) => (
+                      <OptionLabel count={getFacetCount("creators", user.id)}>
+                        {user.name}
+                      </OptionLabel>
+                    )}
+                    getOptionValue={(user) => user.id}
+                    getOptionLabel={(user) => user.name ?? ""}
+                    placeholder={t("common.placeholders.selectUsers")}
+                    pageSize={OPTION_PAGE_SIZE}
+                  />
                 </div>
               )}
 
               {/* Date Range */}
               <div className="space-y-2">
-                <Label className="text-sm font-medium flex items-center gap-2">
+                <Label className="text-sm font-medium flex items-center gap-1">
                   <CalendarIcon className="h-4 w-4" />
                   {t("runs.summary.recentResultsDateRange")}
                 </Label>
@@ -1175,7 +1102,7 @@ export function FacetedSearchFilters({
                     </SelectContent>
                   </Select>
 
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-2 gap-1">
                     <Popover>
                       <PopoverTrigger asChild>
                         <Button
@@ -1284,12 +1211,12 @@ export function FacetedSearchFilters({
           {/* Entity-Specific Filters */}
           <AccordionItem value="entity-specific">
             <AccordionTrigger>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1">
                 <FileText className="h-4 w-4" />
                 {t("search.filters.entitySpecific")}
               </div>
             </AccordionTrigger>
-            <AccordionContent className="space-y-4 overflow-x-hidden min-w-0 max-w-[325px] px-1">
+            <AccordionContent className="space-y-4 overflow-x-hidden min-w-0 px-1">
               {/* Repository Case Filters */}
               {entityTypes.includes(SearchableEntityType.REPOSITORY_CASE) && (
                 <div className="space-y-4 p-4 bg-muted rounded-lg border border-border/50 max-w-full overflow-x-hidden">
@@ -1297,132 +1224,93 @@ export function FacetedSearchFilters({
                     {t("search.entityTypes.repositoryCase")}
                   </h4>
 
+                  {/* Workflow States */}
+                  {renderStatePicker(
+                    SearchableEntityType.REPOSITORY_CASE,
+                    statesByScope.CASES,
+                    fetchCaseStates,
+                    "case-states-filter"
+                  )}
+
                   {/* Folders */}
                   {folders && folders.length > 0 && (
                     <div className="space-y-2">
-                      <Label className="text-sm font-medium flex items-center gap-2">
+                      <Label className="text-sm font-medium flex items-center gap-1">
                         <FolderTree className="h-4 w-4" />
                         {t("repository.folders")}
                       </Label>
-                      <div className="space-y-1 max-h-40 overflow-y-auto">
-                        {filterItems(folders).map((folder) => (
-                          <div
-                            key={folder.id}
-                            className="flex items-center space-x-2"
+                      <MultiAsyncCombobox
+                        value={selectedFolders}
+                        onValueChange={(selected) =>
+                          updateEntityFilters(
+                            SearchableEntityType.REPOSITORY_CASE,
+                            {
+                              folderIds: mergeSelectedIds(
+                                localFilters.repositoryCase?.folderIds,
+                                folders,
+                                selected,
+                                (folder) => folder.id
+                              ),
+                            }
+                          )
+                        }
+                        fetchOptions={fetchFolders}
+                        renderOption={(folder) => (
+                          <OptionLabel
+                            count={getFacetCount("folders", folder.id)}
                           >
-                            <Checkbox
-                              id={`folder-${folder.id}`}
-                              checked={
-                                localFilters.repositoryCase?.folderIds?.includes(
-                                  folder.id
-                                ) || false
-                              }
-                              onCheckedChange={(checked) => {
-                                const currentFolderIds =
-                                  localFilters.repositoryCase?.folderIds || [];
-                                const newFolderIds = checked
-                                  ? [...currentFolderIds, folder.id]
-                                  : currentFolderIds.filter(
-                                      (id) => id !== folder.id
-                                    );
-                                updateEntityFilters(
-                                  SearchableEntityType.REPOSITORY_CASE,
-                                  {
-                                    folderIds: newFolderIds,
-                                  }
-                                );
-                              }}
-                            />
-                            <label
-                              htmlFor={`folder-${folder.id}`}
-                              className="text-sm font-medium leading-none flex items-center gap-1 min-w-0"
-                            >
-                              <span className="truncate">{folder.name}</span>
-                              {(() => {
-                                const bucket =
-                                  facetCounts?.folders?.buckets.find(
-                                    (b) => b.key === folder.id.toString()
-                                  );
-                                return bucket ? (
-                                  <span className="text-muted-foreground shrink-0">
-                                    {`(${bucket.doc_count})`}
-                                  </span>
-                                ) : null;
-                              })()}
-                            </label>
-                          </div>
-                        ))}
-                      </div>
+                            {folder.name}
+                          </OptionLabel>
+                        )}
+                        getOptionValue={(folder) => folder.id}
+                        getOptionLabel={(folder) => folder.name}
+                        placeholder={t("common.placeholders.selectFolders")}
+                        pageSize={OPTION_PAGE_SIZE}
+                      />
                     </div>
                   )}
 
                   {/* Templates */}
                   {templates && templates.length > 0 && (
                     <div className="space-y-2">
-                      <Label className="text-sm font-medium flex items-center gap-2">
+                      <Label className="text-sm font-medium flex items-center gap-1">
                         <LayoutTemplate className="h-4 w-4" />
                         {t("common.fields.templates")}
                       </Label>
-                      <div className="space-y-1 max-h-40 overflow-y-auto">
-                        {filterItems(templates, "templateName").map(
-                          (template) => (
-                            <div
-                              key={template.id}
-                              className="flex items-center space-x-2"
-                            >
-                              <Checkbox
-                                id={`template-${template.id}`}
-                                checked={
-                                  localFilters.repositoryCase?.templateIds?.includes(
-                                    template.id
-                                  ) || false
-                                }
-                                onCheckedChange={(checked) => {
-                                  const currentTemplateIds =
-                                    localFilters.repositoryCase?.templateIds ||
-                                    [];
-                                  const newTemplateIds = checked
-                                    ? [...currentTemplateIds, template.id]
-                                    : currentTemplateIds.filter(
-                                        (id) => id !== template.id
-                                      );
-                                  updateEntityFilters(
-                                    SearchableEntityType.REPOSITORY_CASE,
-                                    {
-                                      templateIds: newTemplateIds,
-                                    }
-                                  );
-                                }}
-                              />
-                              <label
-                                htmlFor={`template-${template.id}`}
-                                className="text-sm font-medium leading-none flex items-center gap-1 min-w-0"
-                              >
-                                <span className="truncate">
-                                  {template.templateName}
-                                </span>
-                                {(() => {
-                                  const bucket =
-                                    facetCounts?.templates?.buckets.find(
-                                      (b) => b.key === template.id.toString()
-                                    );
-                                  return bucket ? (
-                                    <span className="text-muted-foreground shrink-0">
-                                      {`(${bucket.doc_count})`}
-                                    </span>
-                                  ) : null;
-                                })()}
-                              </label>
-                            </div>
+                      <MultiAsyncCombobox
+                        value={selectedCaseTemplates}
+                        onValueChange={(selected) =>
+                          updateEntityFilters(
+                            SearchableEntityType.REPOSITORY_CASE,
+                            {
+                              templateIds: mergeSelectedIds(
+                                localFilters.repositoryCase?.templateIds,
+                                templates,
+                                selected,
+                                (template) => template.id
+                              ),
+                            }
                           )
+                        }
+                        fetchOptions={fetchTemplates}
+                        renderOption={(template) => (
+                          <OptionLabel
+                            count={getFacetCount("templates", template.id)}
+                          >
+                            {template.templateName}
+                          </OptionLabel>
                         )}
-                      </div>
+                        getOptionValue={(template) => template.id}
+                        getOptionLabel={(template) => template.templateName}
+                        placeholder={t("common.placeholders.selectTemplates")}
+                        pageSize={OPTION_PAGE_SIZE}
+                      />
                     </div>
                   )}
 
                   {/* Automation Status */}
                   <div className="space-y-2">
-                    <Label className="text-sm font-medium flex items-center gap-2">
+                    <Label className="text-sm font-medium flex items-center gap-1">
                       <Bot className="h-4 w-4" />
                       {t("common.ui.search.automationStatus")}
                     </Label>
@@ -1470,11 +1358,11 @@ export function FacetedSearchFilters({
 
                   {/* Estimate Range */}
                   <div className="space-y-2">
-                    <Label className="text-sm font-medium flex items-center gap-2">
+                    <Label className="text-sm font-medium flex items-center gap-1">
                       <Timer className="h-4 w-4" />
                       {t("search.filters.estimateRange")}
                     </Label>
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-2 gap-1">
                       <div>
                         <Label className="text-xs text-muted-foreground">
                           {t("search.filters.minValue")}
@@ -1483,14 +1371,11 @@ export function FacetedSearchFilters({
                           type="number"
                           placeholder="0"
                           min="0"
-                          value={
-                            localFilters.repositoryCase?.estimateRange?.min ||
-                            ""
-                          }
+                          value={secondsToMinutes(
+                            localFilters.repositoryCase?.estimateRange?.min
+                          )}
                           onChange={(e) => {
-                            const value = e.target.value
-                              ? parseInt(e.target.value)
-                              : undefined;
+                            const value = minutesToSeconds(e.target.value);
                             updateEntityFilters(
                               SearchableEntityType.REPOSITORY_CASE,
                               {
@@ -1511,14 +1396,11 @@ export function FacetedSearchFilters({
                           type="number"
                           placeholder="∞"
                           min="0"
-                          value={
-                            localFilters.repositoryCase?.estimateRange?.max ||
-                            ""
-                          }
+                          value={secondsToMinutes(
+                            localFilters.repositoryCase?.estimateRange?.max
+                          )}
                           onChange={(e) => {
-                            const value = e.target.value
-                              ? parseInt(e.target.value)
-                              : undefined;
+                            const value = minutesToSeconds(e.target.value);
                             updateEntityFilters(
                               SearchableEntityType.REPOSITORY_CASE,
                               {
@@ -1539,7 +1421,8 @@ export function FacetedSearchFilters({
 
                   {/* Custom Fields */}
                   <div className="space-y-2">
-                    <Label className="text-sm font-medium">
+                    <Label className="text-sm font-medium flex items-center gap-1">
+                      <LayoutList className="h-4 w-4" />
                       {t("search.customFields")}
                     </Label>
                     <CustomFieldFilters
@@ -1566,9 +1449,17 @@ export function FacetedSearchFilters({
                     {t("common.fields.testRuns")}
                   </h4>
 
+                  {/* Workflow States */}
+                  {renderStatePicker(
+                    SearchableEntityType.TEST_RUN,
+                    statesByScope.RUNS,
+                    fetchRunStates,
+                    "run-states-filter"
+                  )}
+
                   {/* Test Run Type */}
                   <div className="space-y-2">
-                    <Label className="text-sm font-medium flex items-center gap-2">
+                    <Label className="text-sm font-medium flex items-center gap-1">
                       <GitBranch className="h-4 w-4" />
                       {t("search.filters.testRunType")}
                     </Label>
@@ -1603,118 +1494,72 @@ export function FacetedSearchFilters({
                   {/* Configurations */}
                   {configurations && configurations.length > 0 && (
                     <div className="space-y-2">
-                      <Label className="text-sm font-medium flex items-center gap-2">
+                      <Label className="text-sm font-medium flex items-center gap-1">
                         <Combine className="h-4 w-4" />
                         {t("common.fields.configurations")}
                       </Label>
-                      <div className="space-y-1 max-h-40 overflow-y-auto">
-                        {filterItems(configurations).map((config) => (
-                          <div
-                            key={config.id}
-                            className="flex items-center space-x-2"
+                      <MultiAsyncCombobox
+                        value={selectedRunConfigurations}
+                        onValueChange={(selected) =>
+                          updateEntityFilters(SearchableEntityType.TEST_RUN, {
+                            configurationIds: mergeSelectedIds(
+                              localFilters.testRun?.configurationIds,
+                              configurations,
+                              selected,
+                              (config) => config.id
+                            ),
+                          })
+                        }
+                        fetchOptions={fetchConfigurations}
+                        renderOption={(config) => (
+                          <OptionLabel
+                            count={getFacetCount("configurations", config.id)}
                           >
-                            <Checkbox
-                              id={`config-${config.id}`}
-                              checked={
-                                localFilters.testRun?.configurationIds?.includes(
-                                  config.id
-                                ) || false
-                              }
-                              onCheckedChange={(checked) => {
-                                const currentConfigIds =
-                                  localFilters.testRun?.configurationIds || [];
-                                const newConfigIds = checked
-                                  ? [...currentConfigIds, config.id]
-                                  : currentConfigIds.filter(
-                                      (id) => id !== config.id
-                                    );
-                                updateEntityFilters(
-                                  SearchableEntityType.TEST_RUN,
-                                  {
-                                    configurationIds: newConfigIds,
-                                  }
-                                );
-                              }}
-                            />
-                            <label
-                              htmlFor={`config-${config.id}`}
-                              className="text-sm font-medium leading-none flex items-center gap-1 min-w-0"
-                            >
-                              <span className="truncate">{config.name}</span>
-                              {(() => {
-                                const bucket =
-                                  facetCounts?.configurations?.buckets.find(
-                                    (b) => b.key === config.id.toString()
-                                  );
-                                return bucket ? (
-                                  <span className="text-muted-foreground shrink-0">
-                                    {`(${bucket.doc_count})`}
-                                  </span>
-                                ) : null;
-                              })()}
-                            </label>
-                          </div>
-                        ))}
-                      </div>
+                            {config.name}
+                          </OptionLabel>
+                        )}
+                        getOptionValue={(config) => config.id}
+                        getOptionLabel={(config) => config.name}
+                        placeholder={t(
+                          "common.placeholders.selectConfigurations"
+                        )}
+                        pageSize={OPTION_PAGE_SIZE}
+                      />
                     </div>
                   )}
 
                   {/* Milestones */}
                   {milestones && milestones.length > 0 && (
                     <div className="space-y-2">
-                      <Label className="text-sm font-medium flex items-center gap-2">
+                      <Label className="text-sm font-medium flex items-center gap-1">
                         <Milestone className="h-4 w-4" />
                         {t("common.fields.milestones")}
                       </Label>
-                      <div className="space-y-1 max-h-40 overflow-y-auto">
-                        {filterItems(milestones).map((milestone) => (
-                          <div
-                            key={milestone.id}
-                            className="flex items-center space-x-2"
+                      <MultiAsyncCombobox
+                        value={selectedRunMilestones}
+                        onValueChange={(selected) =>
+                          updateEntityFilters(SearchableEntityType.TEST_RUN, {
+                            milestoneIds: mergeSelectedIds(
+                              localFilters.testRun?.milestoneIds,
+                              milestones,
+                              selected,
+                              (milestone) => milestone.id
+                            ),
+                          })
+                        }
+                        fetchOptions={fetchMilestones}
+                        renderOption={(milestone) => (
+                          <OptionLabel
+                            count={getFacetCount("milestones", milestone.id)}
                           >
-                            <Checkbox
-                              id={`milestone-${milestone.id}`}
-                              checked={
-                                localFilters.testRun?.milestoneIds?.includes(
-                                  milestone.id
-                                ) || false
-                              }
-                              onCheckedChange={(checked) => {
-                                const currentMilestoneIds =
-                                  localFilters.testRun?.milestoneIds || [];
-                                const newMilestoneIds = checked
-                                  ? [...currentMilestoneIds, milestone.id]
-                                  : currentMilestoneIds.filter(
-                                      (id) => id !== milestone.id
-                                    );
-                                updateEntityFilters(
-                                  SearchableEntityType.TEST_RUN,
-                                  {
-                                    milestoneIds: newMilestoneIds,
-                                  }
-                                );
-                              }}
-                            />
-                            <label
-                              htmlFor={`milestone-${milestone.id}`}
-                              className="text-sm font-medium leading-none flex items-center gap-1 min-w-0"
-                            >
-                              <span className="truncate">{milestone.name}</span>
-                              {(() => {
-                                const bucket =
-                                  facetCounts?.milestones?.buckets.find(
-                                    (b) => b.key === milestone.id.toString()
-                                  );
-                                return bucket ? (
-                                  <span className="text-muted-foreground shrink-0">
-                                    {`(${bucket.doc_count})`}
-                                  </span>
-                                ) : null;
-                              })()}
-                            </label>
-                          </div>
-                        ))}
-                      </div>
+                            {milestone.name}
+                          </OptionLabel>
+                        )}
+                        getOptionValue={(milestone) => milestone.id}
+                        getOptionLabel={(milestone) => milestone.name}
+                        placeholder={t("common.placeholders.selectMilestones")}
+                        pageSize={OPTION_PAGE_SIZE}
+                      />
                     </div>
                   )}
 
@@ -1731,7 +1576,7 @@ export function FacetedSearchFilters({
                     />
                     <Label
                       htmlFor="completed"
-                      className="flex items-center gap-2"
+                      className="flex items-center gap-1"
                     >
                       <CheckCircle className="h-4 w-4" />
                       {t("search.filters.completedOnly")}
@@ -1740,11 +1585,11 @@ export function FacetedSearchFilters({
 
                   {/* Elapsed Time Range */}
                   <div className="space-y-2">
-                    <Label className="text-sm font-medium flex items-center gap-2">
+                    <Label className="text-sm font-medium flex items-center gap-1">
                       <Clock className="h-4 w-4" />
                       {t("search.filters.elapsedRange")}
                     </Label>
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-2 gap-1">
                       <div>
                         <Label className="text-xs text-muted-foreground">
                           {t("search.filters.minValue")}
@@ -1753,11 +1598,11 @@ export function FacetedSearchFilters({
                           type="number"
                           placeholder="0"
                           min="0"
-                          value={localFilters.testRun?.elapsedRange?.min || ""}
+                          value={secondsToMinutes(
+                            localFilters.testRun?.elapsedRange?.min
+                          )}
                           onChange={(e) => {
-                            const value = e.target.value
-                              ? parseInt(e.target.value)
-                              : undefined;
+                            const value = minutesToSeconds(e.target.value);
                             updateEntityFilters(SearchableEntityType.TEST_RUN, {
                               elapsedRange: {
                                 ...localFilters.testRun?.elapsedRange,
@@ -1775,11 +1620,11 @@ export function FacetedSearchFilters({
                           type="number"
                           placeholder="∞"
                           min="0"
-                          value={localFilters.testRun?.elapsedRange?.max || ""}
+                          value={secondsToMinutes(
+                            localFilters.testRun?.elapsedRange?.max
+                          )}
                           onChange={(e) => {
-                            const value = e.target.value
-                              ? parseInt(e.target.value)
-                              : undefined;
+                            const value = minutesToSeconds(e.target.value);
                             updateEntityFilters(SearchableEntityType.TEST_RUN, {
                               elapsedRange: {
                                 ...localFilters.testRun?.elapsedRange,
@@ -1804,125 +1649,81 @@ export function FacetedSearchFilters({
                     {t("common.fields.sessions")}
                   </h4>
 
+                  {/* Workflow States */}
+                  {renderStatePicker(
+                    SearchableEntityType.SESSION,
+                    statesByScope.SESSIONS,
+                    fetchSessionStates,
+                    "session-states-filter"
+                  )}
+
                   {/* Session Templates */}
                   {templates && templates.length > 0 && (
                     <div className="space-y-2">
-                      <Label className="text-sm font-medium flex items-center gap-2">
+                      <Label className="text-sm font-medium flex items-center gap-1">
                         <LayoutTemplate className="h-4 w-4" />
                         {t("common.fields.templates")}
                       </Label>
-                      <div className="space-y-1 max-h-40 overflow-y-auto">
-                        {filterItems(templates, "templateName").map(
-                          (template) => (
-                            <div
-                              key={template.id}
-                              className="flex items-center space-x-2"
-                            >
-                              <Checkbox
-                                id={`session-template-${template.id}`}
-                                checked={
-                                  localFilters.session?.templateIds?.includes(
-                                    template.id
-                                  ) || false
-                                }
-                                onCheckedChange={(checked) => {
-                                  const currentTemplateIds =
-                                    localFilters.session?.templateIds || [];
-                                  const newTemplateIds = checked
-                                    ? [...currentTemplateIds, template.id]
-                                    : currentTemplateIds.filter(
-                                        (id) => id !== template.id
-                                      );
-                                  updateEntityFilters(
-                                    SearchableEntityType.SESSION,
-                                    {
-                                      templateIds: newTemplateIds,
-                                    }
-                                  );
-                                }}
-                              />
-                              <label
-                                htmlFor={`session-template-${template.id}`}
-                                className="text-sm font-medium leading-none flex items-center gap-1 min-w-0"
-                              >
-                                <span className="truncate">
-                                  {template.templateName}
-                                </span>
-                                {(() => {
-                                  const bucket =
-                                    facetCounts?.templates?.buckets.find(
-                                      (b) => b.key === template.id.toString()
-                                    );
-                                  return bucket ? (
-                                    <span className="text-muted-foreground shrink-0">
-                                      {`(${bucket.doc_count})`}
-                                    </span>
-                                  ) : null;
-                                })()}
-                              </label>
-                            </div>
-                          )
+                      <MultiAsyncCombobox
+                        value={selectedSessionTemplates}
+                        onValueChange={(selected) =>
+                          updateEntityFilters(SearchableEntityType.SESSION, {
+                            templateIds: mergeSelectedIds(
+                              localFilters.session?.templateIds,
+                              templates,
+                              selected,
+                              (template) => template.id
+                            ),
+                          })
+                        }
+                        fetchOptions={fetchTemplates}
+                        renderOption={(template) => (
+                          <OptionLabel
+                            count={getFacetCount("templates", template.id)}
+                          >
+                            {template.templateName}
+                          </OptionLabel>
                         )}
-                      </div>
+                        getOptionValue={(template) => template.id}
+                        getOptionLabel={(template) => template.templateName}
+                        placeholder={t("common.placeholders.selectTemplates")}
+                        pageSize={OPTION_PAGE_SIZE}
+                      />
                     </div>
                   )}
 
                   {/* Assigned To */}
                   {users && users.length > 0 && (
                     <div className="space-y-2">
-                      <Label className="text-sm font-medium flex items-center gap-2">
+                      <Label className="text-sm font-medium flex items-center gap-1">
                         <UserCheck className="h-4 w-4" />
                         {t("common.fields.assignedTo")}
                       </Label>
-                      <div className="space-y-1 max-h-40 overflow-y-auto">
-                        {filterItems(users).map((user) => (
-                          <div
-                            key={user.id}
-                            className="flex items-center space-x-2"
+                      <MultiAsyncCombobox
+                        value={selectedAssignees}
+                        onValueChange={(selected) =>
+                          updateEntityFilters(SearchableEntityType.SESSION, {
+                            assignedToIds: mergeSelectedIds(
+                              localFilters.session?.assignedToIds,
+                              users,
+                              selected,
+                              (user) => user.id
+                            ),
+                          })
+                        }
+                        fetchOptions={fetchUsers}
+                        renderOption={(user) => (
+                          <OptionLabel
+                            count={getFacetCount("assignedTo", user.id)}
                           >
-                            <Checkbox
-                              id={`assigned-${user.id}`}
-                              checked={
-                                localFilters.session?.assignedToIds?.includes(
-                                  user.id
-                                ) || false
-                              }
-                              onCheckedChange={(checked) => {
-                                const currentAssignedIds =
-                                  localFilters.session?.assignedToIds || [];
-                                const newAssignedIds = checked
-                                  ? [...currentAssignedIds, user.id]
-                                  : currentAssignedIds.filter(
-                                      (id) => id !== user.id
-                                    );
-                                updateEntityFilters(
-                                  SearchableEntityType.SESSION,
-                                  {
-                                    assignedToIds: newAssignedIds,
-                                  }
-                                );
-                              }}
-                            />
-                            <label
-                              htmlFor={`assigned-${user.id}`}
-                              className="text-sm font-medium leading-none flex items-center gap-1 min-w-0"
-                            >
-                              <span className="truncate">{user.name}</span>
-                              {(() => {
-                                const bucket =
-                                  facetCounts?.assignedTo?.buckets.find(
-                                    (b) => b.key === user.id
-                                  );
-                                return bucket ? (
-                                  <span className="text-muted-foreground shrink-0">
-                                    {`(${bucket.doc_count})`}
-                                  </span>
-                                ) : null;
-                              })()}
-                            </label>
-                          </div>
-                        ))}
-                      </div>
+                            {user.name}
+                          </OptionLabel>
+                        )}
+                        getOptionValue={(user) => user.id}
+                        getOptionLabel={(user) => user.name ?? ""}
+                        placeholder={t("common.placeholders.selectUsers")}
+                        pageSize={OPTION_PAGE_SIZE}
+                      />
                     </div>
                   )}
 
@@ -1939,7 +1740,7 @@ export function FacetedSearchFilters({
                     />
                     <Label
                       htmlFor="session-completed"
-                      className="flex items-center gap-2"
+                      className="flex items-center gap-1"
                     >
                       <CheckCircle className="h-4 w-4" />
                       {t("search.filters.completedOnly")}
@@ -1948,11 +1749,11 @@ export function FacetedSearchFilters({
 
                   {/* Session Estimate Range */}
                   <div className="space-y-2">
-                    <Label className="text-sm font-medium flex items-center gap-2">
+                    <Label className="text-sm font-medium flex items-center gap-1">
                       <Timer className="h-4 w-4" />
                       {t("search.filters.estimateRange")}
                     </Label>
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-2 gap-1">
                       <div>
                         <Label className="text-xs text-muted-foreground">
                           {t("search.filters.minValue")}
@@ -1961,11 +1762,11 @@ export function FacetedSearchFilters({
                           type="number"
                           placeholder="0"
                           min="0"
-                          value={localFilters.session?.estimateRange?.min || ""}
+                          value={secondsToMinutes(
+                            localFilters.session?.estimateRange?.min
+                          )}
                           onChange={(e) => {
-                            const value = e.target.value
-                              ? parseInt(e.target.value)
-                              : undefined;
+                            const value = minutesToSeconds(e.target.value);
                             updateEntityFilters(SearchableEntityType.SESSION, {
                               estimateRange: {
                                 ...localFilters.session?.estimateRange,
@@ -1983,11 +1784,11 @@ export function FacetedSearchFilters({
                           type="number"
                           placeholder="∞"
                           min="0"
-                          value={localFilters.session?.estimateRange?.max || ""}
+                          value={secondsToMinutes(
+                            localFilters.session?.estimateRange?.max
+                          )}
                           onChange={(e) => {
-                            const value = e.target.value
-                              ? parseInt(e.target.value)
-                              : undefined;
+                            const value = minutesToSeconds(e.target.value);
                             updateEntityFilters(SearchableEntityType.SESSION, {
                               estimateRange: {
                                 ...localFilters.session?.estimateRange,
@@ -2005,11 +1806,11 @@ export function FacetedSearchFilters({
 
                   {/* Session Elapsed Time Range */}
                   <div className="space-y-2">
-                    <Label className="text-sm font-medium flex items-center gap-2">
+                    <Label className="text-sm font-medium flex items-center gap-1">
                       <Clock className="h-4 w-4" />
                       {t("search.filters.elapsedRange")}
                     </Label>
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-2 gap-1">
                       <div>
                         <Label className="text-xs text-muted-foreground">
                           {t("search.filters.minValue")}
@@ -2018,11 +1819,11 @@ export function FacetedSearchFilters({
                           type="number"
                           placeholder="0"
                           min="0"
-                          value={localFilters.session?.elapsedRange?.min || ""}
+                          value={secondsToMinutes(
+                            localFilters.session?.elapsedRange?.min
+                          )}
                           onChange={(e) => {
-                            const value = e.target.value
-                              ? parseInt(e.target.value)
-                              : undefined;
+                            const value = minutesToSeconds(e.target.value);
                             updateEntityFilters(SearchableEntityType.SESSION, {
                               elapsedRange: {
                                 ...localFilters.session?.elapsedRange,
@@ -2040,11 +1841,11 @@ export function FacetedSearchFilters({
                           type="number"
                           placeholder="∞"
                           min="0"
-                          value={localFilters.session?.elapsedRange?.max || ""}
+                          value={secondsToMinutes(
+                            localFilters.session?.elapsedRange?.max
+                          )}
                           onChange={(e) => {
-                            const value = e.target.value
-                              ? parseInt(e.target.value)
-                              : undefined;
+                            const value = minutesToSeconds(e.target.value);
                             updateEntityFilters(SearchableEntityType.SESSION, {
                               elapsedRange: {
                                 ...localFilters.session?.elapsedRange,
@@ -2069,24 +1870,41 @@ export function FacetedSearchFilters({
                     {t("common.fields.issues")}
                   </h4>
 
-                  {/* Has External ID */}
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="has-external-id"
-                      checked={localFilters.issue?.hasExternalId === true}
-                      onCheckedChange={(checked) => {
+                  {/* Issues */}
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium flex items-center gap-2">
+                      <Bug className="h-4 w-4" />
+                      {t("common.fields.issues")}
+                    </Label>
+                    <MultiAsyncCombobox<IssueOption>
+                      value={selectedIssues}
+                      onValueChange={(selected) => {
+                        setPickedIssues(selected);
                         updateEntityFilters(SearchableEntityType.ISSUE, {
-                          hasExternalId: checked ? true : undefined,
+                          issueIds: selected.map((issue) => issue.id),
                         });
                       }}
+                      fetchOptions={fetchIssues}
+                      renderOption={(issue) => (
+                        <span className="flex items-center gap-1 min-w-0 font-medium">
+                          {issue.externalKey && (
+                            <span className="shrink-0">
+                              {issue.externalKey}
+                              {":"}
+                            </span>
+                          )}
+                          <span className="truncate font-normal">
+                            {issue.title}
+                          </span>
+                        </span>
+                      )}
+                      getOptionValue={(issue) => issue.id}
+                      getOptionLabel={(issue) =>
+                        issue.externalKey || issue.name
+                      }
+                      placeholder={t("common.placeholders.selectIssues")}
+                      pageSize={OPTION_PAGE_SIZE}
                     />
-                    <Label
-                      htmlFor="has-external-id"
-                      className="flex items-center gap-2"
-                    >
-                      <Hash className="h-4 w-4" />
-                      {t("search.filters.hasExternalId")}
-                    </Label>
                   </div>
                 </div>
               )}
@@ -2097,119 +1915,6 @@ export function FacetedSearchFilters({
                   <h4 className="font-medium text-sm uppercase tracking-wider text-muted-foreground">
                     {t("common.fields.milestones")}
                   </h4>
-
-                  {/* Has Parent */}
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="has-parent"
-                      checked={localFilters.milestone?.hasParent === true}
-                      onCheckedChange={(checked) => {
-                        updateEntityFilters(SearchableEntityType.MILESTONE, {
-                          hasParent: checked ? true : undefined,
-                        });
-                      }}
-                    />
-                    <Label
-                      htmlFor="has-parent"
-                      className="flex items-center gap-2"
-                    >
-                      <GitBranch className="h-4 w-4" />
-                      {t("search.filters.hasParent")}
-                    </Label>
-                  </div>
-
-                  {/* Due Date Range */}
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium flex items-center gap-2">
-                      <CalendarIcon2 className="h-4 w-4" />
-                      {t("search.filters.dueDateRange")}
-                    </Label>
-                    <div className="grid grid-cols-2 gap-2">
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant="outline"
-                            className={cn(
-                              "justify-start text-start font-normal min-w-0 w-full",
-                              !localFilters.milestone?.dueDateRange?.from &&
-                                "text-muted-foreground"
-                            )}
-                          >
-                            <CalendarIcon className="h-4 w-4 shrink-0" />
-                            <span className="truncate">
-                              {localFilters.milestone?.dueDateRange?.from
-                                ? format(
-                                    localFilters.milestone.dueDateRange.from,
-                                    "PP"
-                                  )
-                                : t("search.filters.from")}
-                            </span>
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0">
-                          <Calendar
-                            mode="single"
-                            selected={
-                              localFilters.milestone?.dueDateRange?.from
-                            }
-                            onSelect={(date) => {
-                              updateEntityFilters(
-                                SearchableEntityType.MILESTONE,
-                                {
-                                  dueDateRange: {
-                                    ...localFilters.milestone?.dueDateRange,
-                                    from: date,
-                                  },
-                                }
-                              );
-                            }}
-                            autoFocus
-                          />
-                        </PopoverContent>
-                      </Popover>
-
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant="outline"
-                            className={cn(
-                              "justify-start text-start font-normal min-w-0 w-full",
-                              !localFilters.milestone?.dueDateRange?.to &&
-                                "text-muted-foreground"
-                            )}
-                          >
-                            <CalendarIcon className="h-4 w-4 shrink-0" />
-                            <span className="truncate">
-                              {localFilters.milestone?.dueDateRange?.to
-                                ? format(
-                                    localFilters.milestone.dueDateRange.to,
-                                    "PP"
-                                  )
-                                : t("search.filters.to")}
-                            </span>
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0">
-                          <Calendar
-                            mode="single"
-                            selected={localFilters.milestone?.dueDateRange?.to}
-                            onSelect={(date) => {
-                              updateEntityFilters(
-                                SearchableEntityType.MILESTONE,
-                                {
-                                  dueDateRange: {
-                                    ...localFilters.milestone?.dueDateRange,
-                                    to: date,
-                                  },
-                                }
-                              );
-                            }}
-                            autoFocus
-                          />
-                        </PopoverContent>
-                      </Popover>
-                    </div>
-                  </div>
 
                   {/* Milestone Completed */}
                   <div className="flex items-center space-x-2">
@@ -2224,7 +1929,7 @@ export function FacetedSearchFilters({
                     />
                     <Label
                       htmlFor="milestone-completed"
-                      className="flex items-center gap-2"
+                      className="flex items-center gap-1"
                     >
                       <CheckCircle className="h-4 w-4" />
                       {t("search.filters.completedOnly")}

@@ -70,13 +70,14 @@ describe("parseSavedSearchConfig", () => {
     );
   });
 
-  it("revives a milestone dueDateRange", () => {
+  it("revives a milestone dateRange", () => {
     const config = buildSavedSearchConfig(
       buildCriteria({
         selectedEntities: [SearchableEntityType.MILESTONE],
         filters: {
           milestone: {
-            dueDateRange: {
+            dateRange: {
+              field: "createdAt",
               from: new Date("2026-03-01T00:00:00.000Z"),
               to: new Date("2026-03-31T00:00:00.000Z"),
             },
@@ -85,7 +86,23 @@ describe("parseSavedSearchConfig", () => {
       })
     );
     const parsed = parseSavedSearchConfig(JSON.parse(JSON.stringify(config)));
-    expect(parsed!.filters.milestone?.dueDateRange?.from).toBeInstanceOf(Date);
+    expect(parsed!.filters.milestone?.dateRange?.from).toBeInstanceOf(Date);
+  });
+
+  it("revives a session duration range", () => {
+    const config = buildSavedSearchConfig(
+      buildCriteria({
+        selectedEntities: [SearchableEntityType.SESSION],
+        filters: {
+          session: { estimateRange: { min: 300, max: 3600 } },
+        },
+      })
+    );
+    const parsed = parseSavedSearchConfig(JSON.parse(JSON.stringify(config)));
+    expect(parsed!.filters.session?.estimateRange).toEqual({
+      min: 300,
+      max: 3600,
+    });
   });
 
   it("preserves custom-field values without coercing them", () => {
