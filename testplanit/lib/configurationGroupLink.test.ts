@@ -49,10 +49,10 @@ describe("canEditConfigurationGroup", () => {
     expect(canEditConfigurationGroup({ canAddEdit: true })).toBe(true);
   });
 
-  it("stays available for completed and composition-locked records", () => {
-    // Completion and composition locks are deliberately not inputs: grouping
-    // is navigational metadata and re-grouping after the fact is the point.
-    expect(canEditConfigurationGroup({ canAddEdit: true })).toBe(true);
+  it("is unavailable on completed records, which render no Save", () => {
+    expect(
+      canEditConfigurationGroup({ canAddEdit: true, isCompleted: true })
+    ).toBe(false);
   });
 
   it("is unavailable while several configurations are viewed at once", () => {

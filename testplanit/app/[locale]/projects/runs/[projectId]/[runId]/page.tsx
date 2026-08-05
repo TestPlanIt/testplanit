@@ -363,7 +363,6 @@ export default function TestRunPage() {
   const [configGroupStampTargetId, setConfigGroupStampTargetId] = useState<
     number | null
   >(null);
-  const [isSavingConfigGroup, setIsSavingConfigGroup] = useState(false);
   const [zoomedChart, setZoomedChart] = useState<null | "donut">(null);
   const [isDuplicateDialogOpen, setIsDuplicateDialogOpen] = useState(false);
   const [isDistributeDialogOpen, setIsDistributeDialogOpen] = useState(false);
@@ -1136,43 +1135,14 @@ export default function TestRunPage() {
     }
   };
 
-  // Configuration-group link/unlink.
-  //
-  // In edit mode the change rides along with the rest of the form (see
-  // `saveTestRun`, which writes the field on both of its update paths).
-  // Outside edit mode the form never submits — and a COMPLETED run has no Edit
-  // action at all — so the change is written straight away: grouping is
-  // navigational metadata and correcting it after the fact is the point.
-  const handleConfigurationGroupChange = async (
+  // Configuration-group link/unlink. The control is offered in edit mode only,
+  // so the change is staged here and written by `saveTestRun`, which sets the
+  // field on both of its update paths.
+  const handleConfigurationGroupChange = (
     change: ConfigurationGroupLinkChange
   ) => {
-    if (isEditMode) {
-      setValue("configurationGroupId", change.groupId, { shouldDirty: true });
-      setConfigGroupStampTargetId(change.stampTargetId);
-      return;
-    }
-    const previousGroupId = testRunData?.configurationGroupId ?? null;
-    setIsSavingConfigGroup(true);
-    try {
-      await updateTestRuns({
-        where: { id: Number(runId) },
-        data: configurationGroupUpdateData(change.groupId),
-      });
-      await applyConfigurationGroupPeerStamp({
-        update: (args) => updateTestRuns(args),
-        recordId: Number(runId),
-        groupId: change.groupId,
-        stampTargetId: change.stampTargetId,
-        previousGroupId,
-      });
-      setValue("configurationGroupId", change.groupId);
-      await refetchTestRun();
-    } catch (err) {
-      console.error("Configuration group update failed:", err);
-      toast.error(t("common.configurationGroup.saveError"));
-    } finally {
-      setIsSavingConfigGroup(false);
-    }
+    setValue("configurationGroupId", change.groupId, { shouldDirty: true });
+    setConfigGroupStampTargetId(change.stampTargetId);
   };
 
   // Update onSubmit function
@@ -2333,26 +2303,29 @@ export default function TestRunPage() {
                     selectedConfigurationsForDisplay={selectedConfigurations}
                     onAttachmentPendingChanges={setPendingAttachmentChanges}
                     transitionCheck={isJUnitRun ? undefined : transitionCheck}
-                  />
-                  {/* Configuration-group membership. Deliberately outside the
-                      `isEditMode` gate: a completed or composition-locked run
-                      can still be linked and unlinked (product decision), and
-                      a completed run has no Edit action to get into the form
-                      with. */}
-                  <ConfigurationGroupLinkField
-                    model="testRuns"
-                    recordId={testRunData.id}
-                    projectId={numericProjectId}
-                    value={form.watch("configurationGroupId") ?? null}
-                    savedValue={testRunData.configurationGroupId ?? null}
-                    onChange={(change) => {
-                      void handleConfigurationGroupChange(change);
-                    }}
-                    editable={canEditConfigurationGroup({
-                      canAddEdit: canAddEditRun,
-                      isMultiConfigurationView: isMultiConfigSelected,
-                    })}
-                    disabled={isSubmitting || isSavingConfigGroup}
+                    configurationGroupSlot={
+                      /* Sits under Configuration, which it qualifies. The
+                         membership list stays visible outside edit mode; the
+                         link/unlink actions are gated behind Edit like every
+                         other field here. */
+                      <ConfigurationGroupLinkField
+                        model="testRuns"
+                        recordId={testRunData.id}
+                        projectId={numericProjectId}
+                        value={form.watch("configurationGroupId") ?? null}
+                        savedValue={testRunData.configurationGroupId ?? null}
+                        onChange={handleConfigurationGroupChange}
+                        editable={
+                          isEditMode &&
+                          canEditConfigurationGroup({
+                            canAddEdit: canAddEditRun,
+                            isMultiConfigurationView: isMultiConfigSelected,
+                            isCompleted: !!testRunData.isCompleted,
+                          })
+                        }
+                        disabled={isSubmitting}
+                      />
+                    }
                   />
                   {selectedAttachmentIndex !== null && (
                     <AttachmentsCarousel

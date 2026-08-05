@@ -35,10 +35,9 @@ export function configurationGroupUpdateData(
 }
 
 /**
- * Grouping is navigational metadata. Correcting it after the fact is the whole
- * point of the control, so a COMPLETED or COMPOSITION-LOCKED run (or a
- * completed session) may still be linked and unlinked — those states are
- * deliberately not inputs here.
+ * A group edit is staged in the form and written by Save, so the control is
+ * only offered where a Save exists. Completed runs and sessions render no
+ * Save, which is why completion closes the control here.
  *
  * The multi-configuration aggregate view is excluded because "this record" is
  * ambiguous while several members are selected at once.
@@ -46,8 +45,11 @@ export function configurationGroupUpdateData(
 export function canEditConfigurationGroup(args: {
   canAddEdit: boolean;
   isMultiConfigurationView?: boolean;
+  isCompleted?: boolean;
 }): boolean {
-  return !!args.canAddEdit && !args.isMultiConfigurationView;
+  return (
+    !!args.canAddEdit && !args.isMultiConfigurationView && !args.isCompleted
+  );
 }
 
 type GroupUpdateFn = (args: {

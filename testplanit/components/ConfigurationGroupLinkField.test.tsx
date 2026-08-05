@@ -20,12 +20,6 @@ vi.mock("next-intl", () => ({
         "common.configurationGroup.pending": "Not saved yet",
         "common.labels.noConfiguration": "No configuration",
       };
-      if (fullKey === "common.configurationGroup.dissolveWarningRun") {
-        return `Unlinking also unlinks ${values?.name}`;
-      }
-      if (fullKey === "common.configurationGroup.dissolveWarningSession") {
-        return `Unlinking also unlinks ${values?.name}`;
-      }
       if (fullKey === "common.labels.configurationWithName") {
         return `${values?.configuration} — ${values?.name}`;
       }
@@ -283,27 +277,5 @@ describe("ConfigurationGroupLinkField unlinking", () => {
       groupId: null,
       stampTargetId: null,
     });
-  });
-
-  it("warns that the last remaining peer is unlinked too", () => {
-    mockRunFindMany.mockReturnValue({
-      data: [peerRow(1, "Run A"), peerRow(2, "Run B")],
-    });
-    renderField({ value: GROUP_A, savedValue: GROUP_A });
-
-    expect(
-      screen.getByTestId("configuration-group-dissolve-warning")
-    ).toHaveTextContent("Unlinking also unlinks Run B");
-  });
-
-  it("does not warn while two or more peers remain", () => {
-    mockRunFindMany.mockReturnValue({
-      data: [peerRow(1, "Run A"), peerRow(2, "Run B"), peerRow(3, "Run C")],
-    });
-    renderField({ value: GROUP_A, savedValue: GROUP_A });
-
-    expect(
-      screen.queryByTestId("configuration-group-dissolve-warning")
-    ).not.toBeInTheDocument();
   });
 });

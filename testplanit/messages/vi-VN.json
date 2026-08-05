@@ -735,6 +735,24 @@
       "selectDeselectAllApprove": "Chọn hoặc bỏ chọn phê duyệt cho tất cả các khu vực liên quan.",
       "selectDeselectAllReadSensitive": "Chọn hoặc bỏ chọn chế độ đọc cho tất cả các khu vực liên quan."
     },
+    "configurationGroup": {
+      "title": "Nhóm cấu hình",
+      "notLinkedRun": "Không liên kết với lần chạy thử nghiệm nào khác.",
+      "notLinkedSession": "Không liên kết với phiên nào khác.",
+      "linkRun": "Liên kết với lần chạy thử nghiệm",
+      "linkSession": "Liên kết với phiên",
+      "changeRun": "Liên kết với lần chạy thử nghiệm khác",
+      "changeSession": "Liên kết với phiên khác",
+      "unlink": "Hủy liên kết",
+      "pending": "Lưu để áp dụng thay đổi này.",
+      "saveError": "Không thể cập nhật nhóm cấu hình",
+      "candidateInGroupRun": "{count, plural, other {# lần chạy}}",
+      "candidateInGroupSession": "{count, plural, other {# phiên}}",
+      "linkHintRun": "Liên kết với một lần chạy cũng liên kết bạn với mọi lần chạy đã được nhóm cùng với nó.",
+      "linkHintSession": "Liên kết với một phiên cũng liên kết bạn với mọi phiên đã được nhóm cùng với nó.",
+      "candidateInGroupTooltipRun": "{count, plural, other {# lần chạy trong nhóm này}}",
+      "candidateInGroupTooltipSession": "{count, plural, other {# phiên trong nhóm này}}"
+    },
     "labels": {
       "projects": "{count, plural, =1 {# Dự án} other {# Dự án}}",
       "templates": "Mẫu & Trường",
@@ -772,6 +790,8 @@
       "multiConfiguration": "Một phần của nhóm cấu hình đa dạng",
       "compositionLocked": "Thành phần đã bị khóa — tập hợp trường hợp thử nghiệm đã bị đóng băng",
       "otherConfigurations": "Các cấu hình khác",
+      "noConfiguration": "Không có cấu hình",
+      "configurationWithName": "{configuration} — {name}",
       "selected": "Đã chọn: {count}",
       "defaultProjectAccess": "Quyền truy cập dự án mặc định",
       "defaultAccessType": "Loại truy cập mặc định",
@@ -3895,6 +3915,11 @@
           "copy": "Sao chép các gán trường hợp kiểm thử hiện có",
           "assign": "Tất cả các trường hợp thử nghiệm trong lần chạy thử nghiệm trùng lặp sẽ giữ nguyên các thiết lập hiện có của chúng.",
           "unassign": "Tất cả các trường hợp thử nghiệm trong lần chạy thử nghiệm trùng lặp sẽ được hủy gán."
+        },
+        "configurationGroup": {
+          "label": "Nhóm cấu hình",
+          "separate": "Các bản sao chỉ được nhóm với nhau. Lần chạy thử nghiệm đang được sao chép vẫn nằm ngoài nhóm đó",
+          "join": "Lần chạy thử nghiệm đang được sao chép và mọi bản sao đều tham gia vào cùng một nhóm cấu hình"
         }
       },
       "successMessage": "Đã sao chép thành công quá trình chạy thử nghiệm '{name}'.",
@@ -6688,6 +6713,7 @@
       "name": "## Tên phiên\nMột tên rõ ràng, mô tả mục đích của phiên kiểm thử.\n\n- Nên là duy nhất và có ý nghĩa\n- Giúp các thành viên nhóm hiểu được điều gì đang được kiểm thử\n- Được sử dụng trong báo cáo và theo dõi",
       "template": "## Mẫu\nMẫu xác định cấu trúc và nội dung của phiên kiểm thử của bạn.\n\n- Cung cấp định dạng nhất quán cho tài liệu kiểm thử\n- Bao gồm các phần và trường được xác định trước\n- Giúp duy trì các tiêu chuẩn kiểm thử trong toàn bộ dự án của bạn",
       "configuration": "## Cấu hình\nMôi trường hoặc thiết lập cụ thể cần thiết cho phiên kiểm thử này.\n\n- Môi trường kiểm thử (ví dụ: Staging, Production)\n- Cấu hình hoặc cài đặt đặc biệt\n- Dữ liệu hoặc điều kiện kiểm thử cần thiết",
+      "configurationGroup": "## Nhóm cấu hình\nCác phiên trong một nhóm cấu hình bao gồm cùng một hoạt động kiểm thử nhưng dưới các cấu hình khác nhau, vì vậy bạn có thể chuyển đổi giữa chúng và so sánh kết quả của chúng ở cùng một nơi.\n\nCác phiên được tạo cùng nhau cho nhiều cấu hình sẽ được nhóm tự động. Hãy liên kết một phiên tại đây khi nó được tạo riêng lẻ.\n\nBạn liên kết với một phiên, nhưng bạn sẽ tham gia vào mọi thứ mà phiên đó đã được nhóm cùng — một nhóm không có chủ sở hữu, vì vậy mọi thành viên đều được liên kết với mọi thành viên khác.\n\nViệc nhóm chỉ thay đổi cách các phiên được hiển thị cùng nhau. Nó không bao giờ di chuyển các trường hợp thử nghiệm hoặc kết quả.",
       "milestone": "## Mốc quan trọng\nLiên kết phiên này với một mốc quan trọng của dự án.\n\n- Giúp theo dõi tiến độ kiểm thử hướng tới mục tiêu dự án\n- Nhóm các phiên kiểm thử có liên quan\n- Hỗ trợ báo cáo dựa trên mốc quan trọng",
       "description": "## Mô tả\nTổng quan ngắn gọn về nội dung của phiên kiểm thử này.\n\n- Các khu vực hoặc tính năng chính đang được kiểm thử\n- Bối cảnh hoặc thông tin quan trọng\n- Các lưu ý hoặc yêu cầu đặc biệt",
       "mission": "## Nhiệm vụ\nNhiệm vụ xác định các mục tiêu cụ thể cho phiên thử nghiệm này.\n\n- Bạn đang thử nghiệm cái gì?\n- Các lĩnh vực trọng tâm chính là gì?\n- Kết quả mong đợi là gì?\n\nMột nhiệm vụ rõ ràng giúp việc thử nghiệm tập trung và hiệu quả hơn.",
@@ -6703,6 +6729,7 @@
       "name": "## Tên Lần Chạy Thử Nghiệm\nNhập một tên mô tả cho lần chạy thử nghiệm này để dễ dàng nhận dạng sau này.",
       "description": "## Mô tả\nCung cấp bản tóm tắt ngắn gọn hoặc ghi chú về lần chạy thử nghiệm này.",
       "configuration": "## Cấu hình\nChọn một hoặc nhiều cấu hình (ví dụ: môi trường, trình duyệt, thiết bị) mà theo đó các lần chạy thử nghiệm sẽ được thực hiện. Việc chọn nhiều cấu hình sẽ tạo ra các lần chạy thử nghiệm riêng biệt cho mỗi cấu hình.",
+      "configurationGroup": "## Nhóm cấu hình\nCác lần chạy trong một nhóm cấu hình bao gồm cùng một hoạt động kiểm thử nhưng dưới các cấu hình khác nhau, vì vậy bạn có thể chuyển đổi giữa chúng và so sánh kết quả của chúng ở cùng một nơi.\n\nCác lần chạy được tạo cùng nhau cho nhiều cấu hình sẽ được nhóm tự động. Hãy liên kết một lần chạy tại đây khi nó được tạo riêng lẻ — ví dụ, một lần chạy bạn đã sao chép sau đó cho một cấu hình khác.\n\nBạn liên kết với một lần chạy, nhưng bạn sẽ tham gia vào mọi thứ mà lần chạy đó đã được nhóm cùng — một nhóm không có chủ sở hữu, vì vậy mọi thành viên đều được liên kết với mọi thành viên khác.\n\nViệc nhóm chỉ thay đổi cách các lần chạy được hiển thị cùng nhau. Nó không bao giờ di chuyển các trường hợp thử nghiệm hoặc kết quả.",
       "milestone": "## Mốc quan trọng\nLiên kết lần chạy thử nghiệm này với một mốc quan trọng cụ thể của dự án để theo dõi tiến độ hướng tới các mục tiêu lớn hơn.",
       "docs": "## Tài liệu\nBao gồm bất kỳ tài liệu, liên kết hoặc ghi chú chi tiết nào có liên quan cho lần chạy thử nghiệm này.",
       "state": "## Trạng thái\nCho biết trạng thái hiện tại hoặc kết quả của lần chạy thử nghiệm này theo quy trình làm việc của dự án.",
@@ -6711,7 +6738,8 @@
       "attachments": "## Tệp đính kèm\nVui lòng tải lên bất kỳ tệp hỗ trợ, ảnh chụp màn hình hoặc nhật ký nào liên quan đến lần chạy thử nghiệm này.",
       "duplicate": {
         "statusesToInclude": "## Các trạng thái cần bao gồm\nChọn các trạng thái của trường hợp kiểm thử mà bạn muốn bao gồm trong lần chạy kiểm thử trùng lặp.",
-        "copyAssignments": "## Sao chép phân công\nNếu được bật, các phân công của các trường hợp kiểm thử sẽ được sao chép sang lần chạy kiểm thử trùng lặp."
+        "copyAssignments": "## Sao chép phân công\nNếu được bật, các phân công của các trường hợp kiểm thử sẽ được sao chép sang lần chạy kiểm thử trùng lặp.",
+        "configurationGroup": "## Nhóm cấu hình\nCác lần chạy thử nghiệm bao gồm cùng một công việc trên các cấu hình khác nhau sẽ chia sẻ một nhóm cấu hình, và bộ chuyển đổi cấu hình sẽ di chuyển giữa chúng.\n\nĐể tùy chọn này tắt thì các bản sao chỉ được nhóm với nhau, giống như trước đây. Bật nó lên thì lần chạy thử nghiệm đang được sao chép sẽ tham gia vào cùng nhóm đó, vì vậy nó và mọi bản sao xuất hiện như các thành viên cùng nhóm — dù chỉ có một bản sao cũng sẽ tham gia."
       }
     },
     "appConfig": {

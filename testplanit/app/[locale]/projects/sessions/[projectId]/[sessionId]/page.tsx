@@ -23,7 +23,6 @@ import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { useSession } from "next-auth/react";
 import { FormProvider, useForm, useFormContext } from "react-hook-form";
-import { toast } from "sonner";
 import { z } from "zod/v4";
 import { notifySessionAssignment } from "~/app/actions/session-notifications";
 import { searchProjectMembers } from "~/app/actions/searchProjectMembers";
@@ -287,6 +286,10 @@ interface SessionFormControlsProps {
       }[]
     | undefined;
   canAddEditTags: boolean;
+  /** Rendered between Configuration and Milestone — the configuration-group
+   *  link belongs with the configuration it qualifies. Passed as a slot so
+   *  this component stays free of the group's state and mutations. */
+  configurationGroupSlot?: React.ReactNode;
   onAttachmentPendingChanges?: (changes: AttachmentChanges) => void;
   transitionCheck?: {
     allowed: boolean;
@@ -312,6 +315,7 @@ function SessionFormControls({
   handleSelect,
   issues,
   canAddEditTags,
+  configurationGroupSlot,
   onAttachmentPendingChanges,
   transitionCheck,
 }: SessionFormControlsProps) {
@@ -501,6 +505,8 @@ function SessionFormControls({
           </FormItem>
         )}
       />
+
+      {configurationGroupSlot}
 
       {/* Milestone */}
       <FormField
@@ -876,7 +882,6 @@ export default function SessionPage() {
   const [configGroupStampTargetId, setConfigGroupStampTargetId] = useState<
     number | null
   >(null);
-  const [isSavingConfigGroup, setIsSavingConfigGroup] = useState(false);
   const t = useTranslations("sessions");
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
@@ -1495,42 +1500,13 @@ export default function SessionPage() {
     }
   }, [sessionData]);
 
-  // Configuration-group link/unlink.
-  //
-  // In edit mode the change rides along with the rest of the form. Outside
-  // edit mode the form never submits — and a completed session has no Edit
-  // action — so the change is written straight away: grouping is navigational
-  // metadata and correcting it after the fact is the point.
-  const handleConfigurationGroupChange = async (
+  // Configuration-group link/unlink. The control is offered in edit mode only,
+  // so the change is staged here and written by the form's submit path.
+  const handleConfigurationGroupChange = (
     change: ConfigurationGroupLinkChange
   ) => {
-    if (isEditMode) {
-      setValue("configurationGroupId", change.groupId, { shouldDirty: true });
-      setConfigGroupStampTargetId(change.stampTargetId);
-      return;
-    }
-    const previousGroupId = sessionData?.configurationGroupId ?? null;
-    setIsSavingConfigGroup(true);
-    try {
-      await updateSessions({
-        where: { id: Number(sessionId) },
-        data: configurationGroupUpdateData(change.groupId),
-      });
-      await applyConfigurationGroupPeerStamp({
-        update: (args) => updateSessions(args),
-        recordId: Number(sessionId),
-        groupId: change.groupId,
-        stampTargetId: change.stampTargetId,
-        previousGroupId,
-      });
-      setValue("configurationGroupId", change.groupId);
-      await refetchSession();
-    } catch (err) {
-      console.error("Configuration group update failed:", err);
-      toast.error(tCommon("configurationGroup.saveError"));
-    } finally {
-      setIsSavingConfigGroup(false);
-    }
+    setValue("configurationGroupId", change.groupId, { shouldDirty: true });
+    setConfigGroupStampTargetId(change.stampTargetId);
   };
 
   // Update onSubmit function
@@ -2493,24 +2469,24 @@ export default function SessionPage() {
                     canAddEditTags={showAddEditTagsPerm}
                     onAttachmentPendingChanges={setPendingAttachmentChanges}
                     transitionCheck={transitionCheck}
-                  />
-                  {/* Configuration-group membership. Deliberately outside the
-                      `isEditMode` gate: a completed session can still be
-                      linked and unlinked, and has no Edit action to get into
-                      the form with. */}
-                  <ConfigurationGroupLinkField
-                    model="sessions"
-                    recordId={sessionData.id}
-                    projectId={numericProjectId!}
-                    value={form.watch("configurationGroupId") ?? null}
-                    savedValue={sessionData.configurationGroupId ?? null}
-                    onChange={(change) => {
-                      void handleConfigurationGroupChange(change);
-                    }}
-                    editable={canEditConfigurationGroup({
-                      canAddEdit: canAddEditSession || isSuperAdmin,
-                    })}
-                    disabled={isSubmitting || isSavingConfigGroup}
+                    configurationGroupSlot={
+                      <ConfigurationGroupLinkField
+                        model="sessions"
+                        recordId={sessionData.id}
+                        projectId={numericProjectId!}
+                        value={form.watch("configurationGroupId") ?? null}
+                        savedValue={sessionData.configurationGroupId ?? null}
+                        onChange={handleConfigurationGroupChange}
+                        editable={
+                          isEditMode &&
+                          canEditConfigurationGroup({
+                            canAddEdit: canAddEditSession || isSuperAdmin,
+                            isCompleted: !!sessionData.isCompleted,
+                          })
+                        }
+                        disabled={isSubmitting}
+                      />
+                    }
                   />
                   {selectedAttachmentIndex !== null && (
                     <AttachmentsCarousel

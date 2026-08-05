@@ -735,6 +735,24 @@
       "selectDeselectAllApprove": "Sélectionnez ou désélectionnez « Approuver » pour toutes les zones concernées.",
       "selectDeselectAllReadSensitive": "Sélectionnez ou désélectionnez l'option « Lecture sensible » pour toutes les zones concernées."
     },
+    "configurationGroup": {
+      "title": "Groupe de configuration",
+      "notLinkedRun": "Non lié à aucune autre exécution de test.",
+      "notLinkedSession": "Non lié à aucune autre session.",
+      "linkRun": "Lier à une exécution de test",
+      "linkSession": "Lier à une session",
+      "changeRun": "Lier à une autre exécution de test",
+      "changeSession": "Lier à une autre session",
+      "unlink": "Dissocier",
+      "pending": "Enregistrez pour appliquer cette modification.",
+      "saveError": "Échec de la mise à jour du groupe de configuration",
+      "candidateInGroupRun": "{count, plural, one {# exécution} other {# exécutions}}",
+      "candidateInGroupSession": "{count, plural, one {# session} other {# sessions}}",
+      "linkHintRun": "Lier à une exécution vous lie également à toutes les exécutions déjà regroupées avec elle.",
+      "linkHintSession": "Lier à une session vous lie également à toutes les sessions déjà regroupées avec elle.",
+      "candidateInGroupTooltipRun": "{count, plural, one {# exécution dans ce groupe} other {# exécutions dans ce groupe}}",
+      "candidateInGroupTooltipSession": "{count, plural, one {# session dans ce groupe} other {# sessions dans ce groupe}}"
+    },
     "labels": {
       "projects": "{count, plural, =1 {# Projet} other {# Projets}}",
       "templates": "Modèles et champs",
@@ -772,6 +790,8 @@
       "multiConfiguration": "Faisant partie d'un groupe à configurations multiples",
       "compositionLocked": "Composition verrouillée — l'ensemble des cas est figé",
       "otherConfigurations": "Autres configurations",
+      "noConfiguration": "Aucune configuration",
+      "configurationWithName": "{configuration} — {name}",
       "selected": "Sélectionné : {count}",
       "defaultProjectAccess": "Accès au projet par défaut",
       "defaultAccessType": "Type d'accès par défaut",
@@ -3895,6 +3915,11 @@
           "copy": "Copier les affectations de cas de test existantes",
           "assign": "Tous les cas de test de l'exécution de test dupliquée conserveront leurs affectations existantes.",
           "unassign": "Tous les cas de test de l'exécution de test dupliquée ne seront pas attribués."
+        },
+        "configurationGroup": {
+          "label": "Groupe de configuration",
+          "separate": "Les copies sont regroupées uniquement entre elles. L'exécution de test dupliquée reste en dehors de ce groupe",
+          "join": "L'exécution de test dupliquée et chaque copie rejoignent le même groupe de configuration"
         }
       },
       "successMessage": "Exécution du test dupliquée avec succès '{name}'.",
@@ -6688,6 +6713,7 @@
       "name": "## Nom de la session\nUn nom clair et descriptif qui identifie l'objectif de votre session de test.\n\n- Doit être unique et significatif.\n- Aide les membres de l'équipe à comprendre ce qui est testé.\n- Utilisé dans les rapports et le suivi.",
       "template": "## Modèle\nLes modèles définissent la structure et le contenu de votre session de test.\n\n- Fournit un format cohérent pour la documentation des tests\n- Inclut des sections et des champs prédéfinis\n- Contribue au maintien des normes de test dans l'ensemble de votre projet",
       "configuration": "## Configuration\nEnvironnement ou configuration spécifique requis pour cette session de test.\n\n- Environnement de test (ex. : Préproduction, Production)\n- Configurations ou paramètres spéciaux\n- Données ou conditions de test requises",
+      "configurationGroup": "## Groupe de configuration\nLes sessions d'un groupe de configuration couvrent les mêmes tests sous différentes configurations, ce qui vous permet de passer de l'une à l'autre et de comparer leurs résultats au même endroit.\n\nLes sessions créées ensemble pour plusieurs configurations sont regroupées automatiquement. Liez une session ici lorsqu'elle a été créée séparément.\n\nVous vous liez à une session, mais vous rejoignez tout ce à quoi cette session est déjà regroupée — un groupe n'a pas de propriétaire, donc chaque membre est lié à tous les autres.\n\nLe regroupement modifie uniquement la façon dont les sessions sont présentées ensemble. Il ne déplace jamais les cas de test ni les résultats.",
       "milestone": "## Étape importante\nAssocie cette session à une étape importante du projet.\n\n- Permet de suivre l'avancement des tests par rapport aux objectifs du projet.\n- Regroupe les sessions de test associées.\n- Prend en charge la génération de rapports basés sur les étapes importantes.",
       "description": "## Description\nUn bref aperçu du contenu de cette session de test.\n\n- Domaines ou fonctionnalités clés testés\n- Contexte ou informations générales importantes\n- Considérations ou exigences particulières",
       "mission": "## Mission\nLa mission définit les objectifs spécifiques de cette session de test.\n\n- Que testez-vous ?\n- Quels sont les principaux axes de test ?\n- Quels sont les résultats attendus ?\n\nUne mission claire permet de maintenir des tests ciblés et productifs.",
@@ -6703,6 +6729,7 @@
       "name": "## Nom de l'exécution de test\nEntrez un nom descriptif pour cette exécution de test afin de l'identifier facilement ultérieurement.",
       "description": "## Description\nVeuillez fournir un bref résumé ou des notes concernant cette exécution de test.",
       "configuration": "## Configurations\nSélectionnez une ou plusieurs configurations (par exemple, environnement, navigateur, appareil) sous lesquelles les tests seront exécutés. La sélection de plusieurs configurations créera des tests distincts pour chacune d'elles.",
+      "configurationGroup": "## Groupe de configuration\nLes exécutions d'un groupe de configuration couvrent les mêmes tests sous différentes configurations, ce qui vous permet de passer de l'une à l'autre et de comparer leurs résultats au même endroit.\n\nLes exécutions créées ensemble pour plusieurs configurations sont regroupées automatiquement. Liez une exécution ici lorsqu'elle a été créée séparément — par exemple, une que vous avez dupliquée plus tard pour une autre configuration.\n\nVous vous liez à une exécution, mais vous rejoignez tout ce à quoi cette exécution est déjà regroupée — un groupe n'a pas de propriétaire, donc chaque membre est lié à tous les autres.\n\nLe regroupement modifie uniquement la façon dont les exécutions sont présentées ensemble. Il ne déplace jamais les cas de test ni les résultats.",
       "milestone": "## Étape importante\nAssociez cette exécution de test à une étape importante spécifique du projet pour suivre les progrès vers des objectifs plus larges.",
       "docs": "## Documentation\nIncluez toute documentation pertinente, tous liens ou toutes notes détaillées pour cette exécution de test.",
       "state": "## État\nIndiquez l'état actuel ou le résultat de cette exécution de test en fonction du flux de travail de votre projet.",
@@ -6711,7 +6738,8 @@
       "attachments": "## Pièces jointes\nVeuillez télécharger tous les fichiers, captures d'écran ou journaux de support relatifs à cette exécution de test.",
       "duplicate": {
         "statusesToInclude": "## Statuts à inclure\nSélectionnez les statuts des cas de test que vous souhaitez inclure dans l'exécution de test dupliquée.",
-        "copyAssignments": "## Copier les affectations\nSi cette option est activée, les affectations des cas de test seront copiées dans l'exécution de test dupliquée."
+        "copyAssignments": "## Copier les affectations\nSi cette option est activée, les affectations des cas de test seront copiées dans l'exécution de test dupliquée.",
+        "configurationGroup": "## Groupe de configuration\nLes exécutions de test qui couvrent le même travail sous différentes configurations partagent un groupe de configuration, et le sélecteur de configuration permet de passer de l'une à l'autre.\n\nLaissez cette option désactivée et les copies sont regroupées uniquement entre elles, exactement comme avant. Activez-la et l'exécution de test dupliquée rejoint ce même groupe, de sorte qu'elle et chaque copie apparaissent comme des membres du même groupe — une seule copie rejoint également."
       }
     },
     "appConfig": {

@@ -22,9 +22,16 @@
 
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { AsyncCombobox } from "@/components/ui/async-combobox";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { ConfigurationNameDisplay } from "@/components/ConfigurationNameDisplay";
-import { Link2, Link2Off, TriangleAlert } from "lucide-react";
+import { HelpPopover } from "@/components/ui/help-popover";
+import { Link2, Link2Off } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCallback, useMemo, useState } from "react";
 import {
@@ -55,6 +62,10 @@ type CandidateOption = {
   projectId: number;
   configurationGroupId: string | null;
   configuration: { id: number; name: string } | null;
+  /** How many records are already in this candidate's group. Picking it links
+   *  you to all of them, not just the one you chose, so the count is shown in
+   *  the option itself — after the fact is too late to be useful. */
+  groupSize?: number;
 };
 
 interface ConfigurationGroupLinkFieldProps {
@@ -94,6 +105,9 @@ export function ConfigurationGroupLinkField({
 }: ConfigurationGroupLinkFieldProps) {
   const t = useTranslations("common");
   const isRuns = model === "testRuns";
+  const helpKey = isRuns
+    ? "testRun.configurationGroup"
+    : "session.configurationGroup";
 
   // A peer picked in this session that isn't in the member query yet — either
   // because the group id was just minted, or because the query hasn't caught
@@ -205,6 +219,46 @@ export function ConfigurationGroupLinkField({
         const countPayload = await countResponse.json();
         if (typeof countPayload?.data === "number") total = countPayload.data;
       }
+      // A candidate already in a group brings its whole group with it. Resolve
+      // the sizes for this page so the option can say so before it is picked.
+      const groupIds = Array.from(
+        new Set(
+          results
+            .map((r) => r.configurationGroupId)
+            .filter((id): id is string => !!id)
+        )
+      );
+      if (groupIds.length > 0) {
+        const sizeResponse = await fetch(
+          `/api/model/${path}/findMany?q=${encodeURIComponent(
+            JSON.stringify({
+              where: {
+                projectId,
+                isDeleted: false,
+                configurationGroupId: { in: groupIds },
+              },
+              select: { configurationGroupId: true },
+            })
+          )}`
+        );
+        if (sizeResponse.ok) {
+          const sizePayload = await sizeResponse.json();
+          const rows = Array.isArray(sizePayload?.data) ? sizePayload.data : [];
+          const sizes = new Map<string, number>();
+          for (const row of rows as Array<{ configurationGroupId: string }>) {
+            sizes.set(
+              row.configurationGroupId,
+              (sizes.get(row.configurationGroupId) ?? 0) + 1
+            );
+          }
+          for (const r of results) {
+            if (r.configurationGroupId) {
+              r.groupSize = sizes.get(r.configurationGroupId);
+            }
+          }
+        }
+      }
+
       return { results, total };
     },
     [model, projectId, excludedIds]
@@ -243,16 +297,16 @@ export function ConfigurationGroupLinkField({
 
   const linked = !!value && peers.length > 0;
   const hasUnsavedChange = value !== savedValue;
-  // Leaving a group of two takes the last peer with it: a lone member still
-  // renders as "multi-configuration" everywhere, so the server clears it too.
-  const dissolvePeer = peers.length === 1 ? peers[0] : null;
 
   return (
     <div className="space-y-2" data-testid="configuration-group-link-field">
       {/* A plain heading, not a `FormLabel`: this block renders outside the
           form on read-only records, where there is no react-hook-form context
           to read, and it labels a group of controls rather than one input. */}
-      <p className="text-base font-bold">{t("configurationGroup.title")}</p>
+      <div className="flex items-center gap-1">
+        <p className="text-base font-bold">{t("configurationGroup.title")}</p>
+        <HelpPopover helpKey={helpKey} />
+      </div>
       {linked ? (
         <ul className="space-y-1" data-testid="configuration-group-members">
           {peers.map((peer) => (
@@ -287,11 +341,24 @@ export function ConfigurationGroupLinkField({
       )}
       {editable && (
         <div className="space-y-2">
+          {/* The consequence of picking, stated where the picking happens:
+              a group has no owner, so joining one run joins all of them.
+              Only rendered with the actions — it is advice about an action
+              the reader cannot take outside edit mode. */}
+          <p
+            className="text-muted-foreground text-xs"
+            data-testid="configuration-group-link-hint"
+          >
+            {isRuns
+              ? t("configurationGroup.linkHintRun")
+              : t("configurationGroup.linkHintSession")}
+          </p>
           <div className="flex flex-wrap items-center gap-2">
             <AsyncCombobox<CandidateOption>
               value={null}
               onValueChange={handlePick}
               fetchOptions={fetchCandidates}
+              showTotal
               getOptionValue={(option) => option.id}
               disabled={disabled}
               minDropdownWidth={320}
@@ -314,14 +381,57 @@ export function ConfigurationGroupLinkField({
                 </span>
               }
               renderOption={(option) => (
-                <div className="flex min-w-0 flex-col">
+                // `flex-1` so this fills the option row: the option is a flex
+                // container, and without it this box sizes to its content, so
+                // the badge's right edge lands mid-option instead of flush.
+                <div className="flex min-w-0 flex-1 flex-col">
                   <span className="truncate">{option.name}</span>
-                  <ConfigurationNameDisplay
-                    name={option.configuration?.name}
-                    fallback={t("labels.noConfiguration")}
-                    className="text-muted-foreground text-xs"
-                    truncate
-                  />
+                  {/* Configuration on the left, group size pinned right: the
+                      badge is what changes the outcome of picking, so it is
+                      never the part that truncates. */}
+                  <div className="flex w-full min-w-0 items-center justify-between gap-2">
+                    <ConfigurationNameDisplay
+                      name={option.configuration?.name}
+                      fallback={t("labels.noConfiguration")}
+                      className="text-muted-foreground min-w-0 text-xs"
+                      truncate
+                    />
+                    {option.groupSize && option.groupSize > 1 ? (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Badge
+                            variant="secondary"
+                            className="shrink-0 text-xs font-normal"
+                            data-testid={`configuration-group-candidate-size-${option.id}`}
+                          >
+                            {isRuns
+                              ? t("configurationGroup.candidateInGroupRun", {
+                                  count: option.groupSize,
+                                })
+                              : t(
+                                  "configurationGroup.candidateInGroupSession",
+                                  {
+                                    count: option.groupSize,
+                                  }
+                                )}
+                          </Badge>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          {isRuns
+                            ? t(
+                                "configurationGroup.candidateInGroupTooltipRun",
+                                {
+                                  count: option.groupSize,
+                                }
+                              )
+                            : t(
+                                "configurationGroup.candidateInGroupTooltipSession",
+                                { count: option.groupSize }
+                              )}
+                        </TooltipContent>
+                      </Tooltip>
+                    ) : null}
+                  </div>
                 </div>
               )}
               renderTrigger={({ defaultContent }) => (
@@ -353,23 +463,6 @@ export function ConfigurationGroupLinkField({
               </Button>
             )}
           </div>
-          {dissolvePeer && (
-            <p
-              className="text-muted-foreground flex items-start gap-1 text-xs"
-              data-testid="configuration-group-dissolve-warning"
-            >
-              <TriangleAlert className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-              <span>
-                {isRuns
-                  ? t("configurationGroup.dissolveWarningRun", {
-                      name: dissolvePeer.name,
-                    })
-                  : t("configurationGroup.dissolveWarningSession", {
-                      name: dissolvePeer.name,
-                    })}
-              </span>
-            </p>
-          )}
           {hasUnsavedChange && (
             <p
               className="text-muted-foreground text-xs"
