@@ -20,6 +20,7 @@ import {
   registerMilestones,
   type MilestonesDeps,
 } from "./milestones/index.js";
+import { registerReviews, type ReviewsDeps } from "./reviews/index.js";
 
 /**
  * Aggregate dependencies for every tool registered by
@@ -39,15 +40,17 @@ export type ToolRegistryDeps =
   & CodeRepositoriesDeps
   & IssuesDeps
   & RepositoryCaseLinksDeps
-  & MilestonesDeps;
+  & MilestonesDeps
+  & ReviewsDeps;
 
 /**
  * Register every tool shipped by `@testplanit/mcp-server`.
  *
  * Tools are grouped by domain: whoami (debug/identity), cases, templates
  * (templates_list), folders, tags, projects (agent context disambiguation),
- * runs, sessions, code-repositories, issues, repository-case-links, and
- * milestones (milestones_list, milestones_get, milestone_types_list).
+ * runs, sessions, code-repositories, issues, repository-case-links,
+ * milestones (milestones_list, milestones_get, milestone_types_list), and
+ * reviews (the caller's own review inbox).
  */
 export function registerAll(
   server: McpServer,
@@ -65,6 +68,7 @@ export function registerAll(
   registerIssues(server, deps);
   registerRepositoryCaseLinks(server, deps);
   registerMilestones(server, deps);
+  registerReviews(server, deps);
 }
 
 export {
@@ -80,6 +84,7 @@ export {
   registerIssues,
   registerRepositoryCaseLinks,
   registerMilestones,
+  registerReviews,
 };
 export type { WhoamiDeps } from "./whoami.js";
 export type { CasesDeps } from "./cases/index.js";
@@ -93,3 +98,4 @@ export type { CodeRepositoriesDeps } from "./code-repositories/index.js";
 export type { IssuesDeps } from "./issues/index.js";
 export type { RepositoryCaseLinksDeps } from "./repository-case-links/index.js";
 export type { MilestonesDeps } from "./milestones/index.js";
+export type { ReviewsDeps } from "./reviews/index.js";
