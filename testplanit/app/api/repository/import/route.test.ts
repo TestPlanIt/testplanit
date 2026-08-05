@@ -419,7 +419,7 @@ describe("CSV Import API Route", () => {
       expect(result.error?.error).toBe("No default workflow found");
     });
 
-    it("validates required fields", async () => {
+    it("fails up front when no column is mapped to Name", async () => {
       const request = createRequest({
         projectId: 1,
         file: "Col1,Col2\nValue1,Value2",
@@ -435,6 +435,28 @@ describe("CSV Import API Route", () => {
       const response = await POST(request);
       const result = await parseSSEResponse(response);
 
+      expect(result.error?.error).toBe(
+        "No column is mapped to Name. Go back to the column mapping step and map the column holding the test case name."
+      );
+      expect(result.error?.errors).toBeUndefined();
+    });
+
+    it("validates required fields", async () => {
+      const request = createRequest({
+        projectId: 1,
+        file: "Name,Col2\n,Value2",
+        delimiter: ",",
+        hasHeaders: true,
+        encoding: "UTF-8",
+        templateId: 1,
+        importLocation: "single_folder",
+        folderId: 1,
+        fieldMappings: [{ csvColumn: "Name", templateField: "name" }],
+      });
+
+      const response = await POST(request);
+      const result = await parseSSEResponse(response);
+
       expect(result.error?.error).toBe("Validation failed");
       expect(result.error?.errors?.length).toBeGreaterThanOrEqual(1);
       // Should have at least Name required error
@@ -442,7 +464,7 @@ describe("CSV Import API Route", () => {
         expect.objectContaining({
           row: 1,
           field: "Name",
-          error: "Name is required",
+          error: 'Name is required, but column "Name" is empty for this row',
         })
       );
     });
