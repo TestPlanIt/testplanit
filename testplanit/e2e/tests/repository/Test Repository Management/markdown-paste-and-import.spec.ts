@@ -334,12 +334,14 @@ test.describe("Markdown Paste & Import", () => {
       .locator('[data-testid="next-button"]')
       .first();
 
+    // The wizard starts with no folder selected, so the import step has to pick
+    // this one explicitly — the first option in the list is Root Folder.
+    const folderName = `MD CSV Import Folder ${Date.now()}`;
+
     await test.step("Create project and folder, then open the repository", async () => {
       projectId = await getTestProjectId(api, "Import");
       // Ensure the template has a Description (Text Long) field for import mapping
       await ensureDescriptionFieldOnTemplate(api, projectId);
-      const uniqueId = Date.now();
-      const folderName = `MD CSV Import Folder ${uniqueId}`;
       const folderId = await api.createFolder(projectId, folderName);
 
       await repositoryPage.goto(projectId);
@@ -383,16 +385,18 @@ test.describe("Markdown Paste & Import", () => {
       await expect(templateOption).toBeVisible({ timeout: 5000 });
       await templateOption.click();
 
-      // Select folder if needed
+      // Select the folder this test created, not whatever sorts first.
       const folderSelect = importDialog
         .locator('button:has-text("Select a folder")')
         .first();
-      if (await folderSelect.isVisible({ timeout: 2000 }).catch(() => false)) {
-        await folderSelect.click();
-        const folderOption = page.locator('[role="option"]').first();
-        await expect(folderOption).toBeVisible({ timeout: 5000 });
-        await folderOption.click();
-      }
+      await expect(folderSelect).toBeVisible({ timeout: 5000 });
+      await folderSelect.click();
+      const folderOption = page
+        .locator('[role="option"]')
+        .filter({ hasText: folderName })
+        .first();
+      await expect(folderOption).toBeVisible({ timeout: 5000 });
+      await folderOption.click();
     });
 
     await test.step("Step through the wizard pages to the preview", async () => {
