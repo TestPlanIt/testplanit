@@ -537,6 +537,7 @@
       "selectProjects": "Projeleri seçin",
       "selectStates": "Durumları seçin",
       "selectTags": "Etiketleri seçin",
+      "addFieldTo": "{section} bölümüne bir alan ekle",
       "selectTemplates": "Şablonları seçin",
       "selectUsers": "Kullanıcıları seçin",
       "selectOption": "Bir seçenek seçin",
@@ -3934,7 +3935,8 @@
       "placeholder": "Filtreleme testleri çalışıyor..."
     },
     "typeFilter": {
-      "both": "Manuel ve Otomatik"
+      "both": "Manuel ve Otomatik",
+      "label": "Çalıştırma türüne göre filtrele"
     },
     "empty": {
       "noMatchingCompleted": "Tamamlanmış test çalıştırmalarından hiçbiri filtrenizle eşleşmiyor."

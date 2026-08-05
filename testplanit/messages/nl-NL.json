@@ -537,6 +537,7 @@
       "selectProjects": "Selecteer projecten",
       "selectStates": "Selecteer statussen",
       "selectTags": "Selecteer tags",
+      "addFieldTo": "Een veld toevoegen aan {section}",
       "selectTemplates": "Selecteer sjablonen",
       "selectUsers": "Selecteer gebruikers",
       "selectOption": "Selecteer een optie",
@@ -3934,7 +3935,8 @@
       "placeholder": "Filtertest uitgevoerd..."
     },
     "typeFilter": {
-      "both": "Handmatig en geautomatiseerd"
+      "both": "Handmatig en geautomatiseerd",
+      "label": "Filteren op runtype"
     },
     "empty": {
       "noMatchingCompleted": "Er zijn geen voltooide testruns die aan uw filter voldoen."

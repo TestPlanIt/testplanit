@@ -20,8 +20,10 @@ The TestPlanIt MCP server lets AI agents — Claude Desktop, Cursor, custom MCP-
 - List code repositories configured in a project (with credentials never returned)
 - List folders and tags scoped to a project, with usage counts and tree relationships preserved
 - Generate a QuickScript (AI automation script) from one or more test cases, following the project's connected code repository when one is configured
+- List the review requests assigned to you — the Review inbox queue, covering both direct assignment and assignment to a role you hold — with the subject, the workflow transition being requested, and the requester's note
+- Approve, request changes on, or reject a review request on your behalf — the same eligibility, append-only, and auto-transition rules the app enforces, and refused outright for read-only tokens
 
-See the [npm package README](https://www.npmjs.com/package/@testplanit/mcp-server) for the full tool reference, including request/response schemas for all 47 tools.
+See the [npm package README](https://www.npmjs.com/package/@testplanit/mcp-server) for the full tool reference, including request/response schemas for all 49 tools.
 
 ## Installation
 

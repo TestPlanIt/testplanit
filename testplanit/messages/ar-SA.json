@@ -537,6 +537,7 @@
       "selectProjects": "حدد المشاريع",
       "selectStates": "حدد الحالات",
       "selectTags": "حدد الوسوم",
+      "addFieldTo": "إضافة حقل إلى {section}",
       "selectTemplates": "حدد القوالب",
       "selectUsers": "حدد المستخدمين",
       "selectOption": "حدد خيارًا",
@@ -3934,7 +3935,8 @@
       "placeholder": "تصفية تشغيلات الاختبار..."
     },
     "typeFilter": {
-      "both": "يدوي وآلي"
+      "both": "يدوي وآلي",
+      "label": "تصفية حسب نوع التشغيل"
     },
     "empty": {
       "noMatchingCompleted": "لا توجد تشغيلات اختبار مكتملة تطابق المرشح الخاص بك."

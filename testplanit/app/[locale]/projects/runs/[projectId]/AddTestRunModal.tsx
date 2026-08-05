@@ -330,6 +330,7 @@ const BasicInfoDialog = React.memo(
                         <FormControl>
                           <MultiAsyncCombobox<ConfigurationOption>
                             value={selectedConfigs}
+                            ariaLabel={tCommon("fields.configurations")}
                             hideSelected={true}
                             onValueChange={(configs) => {
                               field.onChange(configs.map((c) => c.id));
@@ -442,7 +443,7 @@ const BasicInfoDialog = React.memo(
                         value={field.value?.toString()}
                       >
                         <FormControl>
-                          <SelectTrigger>
+                          <SelectTrigger aria-label={tCommon("fields.state")}>
                             <SelectValue
                               placeholder={tCommon("placeholders.selectState")}
                             />

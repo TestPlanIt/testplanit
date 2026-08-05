@@ -3240,6 +3240,11 @@ function ReportBuilderContent({
             onClick={toggleCollapse}
             variant="secondary"
             className="p-0 -ms-1 rounded-s-none"
+            aria-label={
+              isCollapsed
+                ? tCommon("actions.expand")
+                : tCommon("actions.collapse")
+            }
           >
             {isCollapsed ? <ChevronRight /> : <ChevronLeft />}
           </Button>

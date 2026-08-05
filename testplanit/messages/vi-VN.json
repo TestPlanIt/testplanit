@@ -537,6 +537,7 @@
       "selectProjects": "Chọn dự án",
       "selectStates": "Chọn trạng thái",
       "selectTags": "Chọn thẻ",
+      "addFieldTo": "Thêm trường vào {section}",
       "selectTemplates": "Chọn mẫu",
       "selectUsers": "Chọn người dùng",
       "selectOption": "Chọn một tùy chọn",
@@ -3934,7 +3935,8 @@
       "placeholder": "Chạy thử nghiệm bộ lọc..."
     },
     "typeFilter": {
-      "both": "Thủ công & Tự động"
+      "both": "Thủ công & Tự động",
+      "label": "Lọc theo loại lần chạy"
     },
     "empty": {
       "noMatchingCompleted": "Không có kết quả chạy thử nào phù hợp với bộ lọc của bạn."

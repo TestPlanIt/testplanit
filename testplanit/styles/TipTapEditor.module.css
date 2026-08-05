@@ -92,6 +92,51 @@
   color: #e5e7eb !important;
 }
 
+/*
+ * Accessible Dark overrides.
+ *
+ * The `.dark` rules above do not reach this theme — its class is
+ * "accessibledark", and Tailwind's `dark:` variant is class-based on `.dark`
+ * alone — so editor content kept the prose palette's dark body colour on a
+ * dark page (1.7:1, WCAG 1.4.3). These mirror the `.dark` set but resolve to
+ * the theme's own tokens, which are contrast-audited, rather than repeating
+ * the fixed greys.
+ */
+:global(.accessibledark) .editorContent,
+:global(.accessibledark) .editorContent p,
+:global(.accessibledark) .editorContent ul,
+:global(.accessibledark) .editorContent ol,
+:global(.accessibledark) .editorContent li,
+:global(.accessibledark) .editorContent li::marker {
+  color: hsl(var(--foreground)) !important;
+}
+
+:global(.accessibledark) .editorContent h1,
+:global(.accessibledark) .editorContent h2,
+:global(.accessibledark) .editorContent h3,
+:global(.accessibledark) .editorContent h4,
+:global(.accessibledark) .editorContent h5,
+:global(.accessibledark) .editorContent h6,
+:global(.accessibledark) .editorContent strong {
+  color: hsl(var(--foreground)) !important;
+}
+
+:global(.accessibledark) .editorContent a {
+  /* --primary is near-white in this theme, which would make links
+     indistinguishable from body text; --ring is the theme's bright accent. */
+  color: hsl(var(--ring)) !important;
+}
+
+:global(.accessibledark) .editorContent code {
+  color: hsl(var(--foreground)) !important;
+  background-color: hsl(var(--muted)) !important;
+}
+
+:global(.accessibledark) .editorContent blockquote {
+  color: hsl(var(--muted-foreground)) !important;
+  border-inline-start-color: hsl(var(--border)) !important;
+}
+
 /* Table styles - override prose defaults */
 .editorContent table {
   border-collapse: collapse !important;
@@ -133,6 +178,16 @@
 
 :global(.dark) .editorContent table th {
   background-color: rgba(203, 213, 225, 0.08);
+}
+
+:global(.accessibledark) .editorContent table,
+:global(.accessibledark) .editorContent table td,
+:global(.accessibledark) .editorContent table th {
+  border-color: hsl(var(--border)) !important;
+}
+
+:global(.accessibledark) .editorContent table th {
+  background-color: hsl(var(--muted));
 }
 
 /* Table wrapper - ensure grips aren't clipped */

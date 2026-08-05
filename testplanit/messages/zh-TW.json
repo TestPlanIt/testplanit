@@ -537,6 +537,7 @@
       "selectProjects": "選擇項目",
       "selectStates": "選擇狀態",
       "selectTags": "選擇標籤",
+      "addFieldTo": "新增欄位至 {section}",
       "selectTemplates": "選擇模板",
       "selectUsers": "選擇用戶",
       "selectOption": "選擇一個選項",
@@ -3934,7 +3935,8 @@
       "placeholder": "過濾器測試運行..."
     },
     "typeFilter": {
-      "both": "手動和自動"
+      "both": "手動和自動",
+      "label": "依執行類型篩選"
     },
     "empty": {
       "noMatchingCompleted": "沒有符合您篩選條件的已完成測試運行。"

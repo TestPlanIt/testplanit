@@ -30,6 +30,7 @@ import type { TestRunSummaryData } from "~/app/api/test-runs/[testRunId]/summary
 import { Link } from "~/lib/navigation";
 import { aggregateRunCounts } from "~/lib/services/testRunSummary-shared";
 import { cn } from "~/utils";
+import { statusSurfaceVars } from "~/utils/contrastingTextColor";
 import { toHumanReadable } from "~/utils/duration";
 import { isAutomatedTestRunType } from "~/utils/testResultTypes";
 import { sortSummaryItems } from "~/utils/summarySort";
@@ -269,7 +270,10 @@ export function TestRunCasesSummary({
   if (summaryData.totalCases === 0) {
     return (
       <div className={cn("flex flex-col space-y-1 w-full", className)}>
-        <div className="flex h-2.5 w-full rounded-full overflow-hidden">
+        <div
+          className="flex h-2.5 w-full rounded-full overflow-hidden"
+          data-status-bar
+        >
           <Tooltip>
             <TooltipTrigger asChild>
               <Link
@@ -285,7 +289,9 @@ export function TestRunCasesSummary({
             <TooltipContent
               side="top"
               className="border-0 px-3 py-2"
+              data-status-surface
               style={{
+                ...statusSurfaceVars(firstStatus?.color?.value || "#B1B2B3"),
                 backgroundColor: firstStatus?.color?.value || "#B1B2B3",
               }}
             >
@@ -374,7 +380,11 @@ export function TestRunCasesSummary({
                 </TooltipTrigger>
                 <TooltipContent
                   className="border-0 text-muted px-3 py-2"
-                  style={{ backgroundColor: result.statusColor }}
+                  data-status-surface
+                  style={{
+                    ...statusSurfaceVars(result.statusColor),
+                    backgroundColor: result.statusColor,
+                  }}
                 >
                   <div className="flex items-center gap-1 font-semibold text-sm">
                     <div className="rounded-full bg-muted w-2 h-2" />
@@ -511,6 +521,7 @@ export function TestRunCasesSummary({
       {/* Color bar for individual test results */}
       <div
         className="flex h-2.5 w-full rounded-full overflow-hidden bg-muted"
+        data-status-bar
         data-testid="test-run-cases-status-bar"
       >
         {sortedCaseDetails.map((item, index) => {
@@ -551,7 +562,11 @@ export function TestRunCasesSummary({
               </TooltipTrigger>
               <TooltipContent
                 className="border-0 text-muted px-3 py-2"
-                style={{ backgroundColor: color }}
+                data-status-surface
+                style={{
+                  ...statusSurfaceVars(color),
+                  backgroundColor: color,
+                }}
               >
                 <div className="flex items-center gap-1 font-semibold text-sm">
                   <div className="rounded-full bg-muted w-2 h-2" />

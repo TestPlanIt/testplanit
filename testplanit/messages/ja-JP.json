@@ -537,6 +537,7 @@
       "selectProjects": "プロジェクトを選択",
       "selectStates": "ステータスを選択",
       "selectTags": "タグを選択",
+      "addFieldTo": "{section}にフィールドを追加",
       "selectTemplates": "テンプレートを選択",
       "selectUsers": "ユーザーを選択",
       "selectOption": "オプションを選択",
@@ -3934,7 +3935,8 @@
       "placeholder": "フィルターテストが実行されます..."
     },
     "typeFilter": {
-      "both": "手動と自動"
+      "both": "手動と自動",
+      "label": "実行タイプで絞り込む"
     },
     "empty": {
       "noMatchingCompleted": "完了したテスト実行の中にフィルターに一致するものはありません。"

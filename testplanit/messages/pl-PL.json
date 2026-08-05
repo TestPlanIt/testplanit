@@ -537,6 +537,7 @@
       "selectProjects": "Wybierz projekty",
       "selectStates": "Wybierz stany",
       "selectTags": "Wybierz tagi",
+      "addFieldTo": "Dodaj pole do {section}",
       "selectTemplates": "Wybierz szablony",
       "selectUsers": "Wybierz użytkowników",
       "selectOption": "Wybierz opcję",
@@ -3934,7 +3935,8 @@
       "placeholder": "Przeprowadź testy filtrów..."
     },
     "typeFilter": {
-      "both": "Manualne i automatyczne"
+      "both": "Manualne i automatyczne",
+      "label": "Filtruj według typu przebiegu"
     },
     "empty": {
       "noMatchingCompleted": "Nie znaleziono żadnych zakończonych przebiegów testowych odpowiadających wybranemu filtrowi."

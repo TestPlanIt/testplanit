@@ -537,6 +537,7 @@
       "selectProjects": "Projekte auswählen",
       "selectStates": "Status auswählen",
       "selectTags": "Tags auswählen",
+      "addFieldTo": "Feld zu {section} hinzufügen",
       "selectTemplates": "Vorlagen auswählen",
       "selectUsers": "Benutzer auswählen",
       "selectOption": "Wählen Sie eine Option aus",
@@ -3934,7 +3935,8 @@
       "placeholder": "Filtertestläufe..."
     },
     "typeFilter": {
-      "both": "Manuell & Automatisiert"
+      "both": "Manuell & Automatisiert",
+      "label": "Nach Ausführungstyp filtern"
     },
     "empty": {
       "noMatchingCompleted": "Es wurden keine abgeschlossenen Testläufe gefunden, die Ihrem Filter entsprechen."

@@ -48,6 +48,11 @@ interface MultiAsyncComboboxProps<T> {
   getOptionValue: (option: T) => string | number;
   getOptionLabel: (option: T) => string;
   placeholder?: string;
+  /**
+   * Accessible name for the trigger. The trigger is a button, so its selected
+   * values do not name it — pass the field's visible label.
+   */
+  ariaLabel?: string;
   disabled?: boolean;
   className?: ClassValue;
   dropdownClassName?: ClassValue;
@@ -66,6 +71,7 @@ export function MultiAsyncCombobox<T>({
   getOptionValue,
   getOptionLabel,
   placeholder,
+  ariaLabel,
   disabled = false,
   className,
   dropdownClassName,
@@ -209,6 +215,7 @@ export function MultiAsyncCombobox<T>({
           variant="outline"
           role="combobox"
           aria-expanded={open}
+          aria-label={ariaLabel}
           className={cn(
             "w-full justify-between text-start font-normal min-h-10 h-auto",
             !value.length && "text-muted-foreground",

@@ -153,6 +153,7 @@ export const MilestoneSelect: React.FC<MilestoneSelectProps> = ({
       renderOption={(option) => <MilestoneOptionContent milestone={option} />}
       getOptionValue={(option) => option.value}
       placeholder={tCommon("placeholders.selectMilestone")}
+      ariaLabel={tCommon("fields.milestone")}
       disabled={disabled || isLoading || !milestones || milestones.length === 0}
       className="w-full justify-between bg-transparent font-normal hover:bg-muted"
       showUnassigned

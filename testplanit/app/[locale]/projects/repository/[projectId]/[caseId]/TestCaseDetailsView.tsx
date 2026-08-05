@@ -2086,24 +2086,28 @@ export function TestCaseDetailsView({
                   </div>
                 ) : (
                   <div className="flex items-center space-x-2 w-fit">
+                    {/* 2.5.8 Target Size: `asChild` renders one anchor with the
+                        button's styles. Nesting the button inside the link put
+                        a target inside a target, leaving the outer one all but
+                        unclickable. */}
                     {!isEditMode && !inSheet && (
-                      <Link
-                        href={`/projects/repository/${projectId}?${
-                          testcase.folder?.id
-                            ? `node=${testcase.folder.id}&`
-                            : ""
-                        }case=${testcase.id}`}
+                      <Button
+                        asChild
+                        variant="outline"
+                        size="icon"
+                        className="me-2"
+                        aria-label={t("common.aria.backToTestCase")}
                       >
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="icon"
-                          className="me-2"
-                          aria-label={t("common.aria.backToTestCase")}
+                        <Link
+                          href={`/projects/repository/${projectId}?${
+                            testcase.folder?.id
+                              ? `node=${testcase.folder.id}&`
+                              : ""
+                          }case=${testcase.id}`}
                         >
                           <ArrowLeft className="h-4 w-4" />
-                        </Button>
-                      </Link>
+                        </Link>
+                      </Button>
                     )}
                     <CaseDisplay
                       id={testcase.id}

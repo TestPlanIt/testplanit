@@ -841,7 +841,11 @@ const UserProfile: React.FC<UserProfileProps> = ({
                                 <span className="text-sm">
                                   {tCommon("fields.apiUser")}
                                 </span>
-                                <Switch disabled checked={user.isApi} />
+                                <Switch
+                                  disabled
+                                  checked={user.isApi}
+                                  aria-label={tCommon("fields.apiUser")}
+                                />
                               </div>
 
                               <Separator className="opacity-50" />

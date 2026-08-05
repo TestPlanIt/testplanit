@@ -1403,6 +1403,7 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
                 >
                   <SelectTrigger
                     className="w-[200px]"
+                    aria-label={t("typeFilter.label")}
                     data-testid="run-type-filter"
                   >
                     <SelectValue />

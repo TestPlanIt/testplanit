@@ -37,6 +37,35 @@ export const TagsDisplay: React.FC<Tags> = ({
       ? "overflow-hidden truncate max-w-xs text-base flex items-center"
       : "overflow-hidden truncate max-w-xl flex items-center";
 
+  const badge = (
+    <div className="flex items-center max-w-full">
+      {/* A linked tag lightens on hover instead of taking the default badge's
+          darker tint: the trigger is an anchor, and the global `body a:hover`
+          rule greys anything that does not set its own hover colour, which is
+          unreadable on the badge. An unlinked tag has no hover state to show. */}
+      <Badge
+        key={id}
+        className={
+          link
+            ? "me-1 mb-1 hover:bg-primary/20 hover:text-primary"
+            : "me-1 mb-1"
+        }
+      >
+        {link ? (
+          <span className={textClassName}>
+            <Tag className={tagClassName} />
+            <span className="truncate">{name}</span>
+          </span>
+        ) : (
+          <div className="flex items-center me-1">
+            <Tag className={tagClassName} />
+            <span className={textClassName}>{name}</span>
+          </div>
+        )}
+      </Badge>
+    </div>
+  );
+
   return (
     <TooltipProvider
       delayDuration={TAG_TOOLTIP_DELAY_MS}
@@ -45,36 +74,22 @@ export const TagsDisplay: React.FC<Tags> = ({
       skipDelayDuration={0}
     >
       <Tooltip>
-        <TooltipTrigger type="button" className="cursor-default">
-          <div className="flex items-center max-w-full">
-            <Badge
-              key={id}
-              className={
-                link
-                  ? "me-1 mb-1 hover:bg-primary/20 hover:text-primary"
-                  : "me-1 mb-1"
-              }
-            >
-              {link ? (
-                // `hover:text-primary` on the anchor itself: the global
-                // `body a:hover` rule greys link text, which is unreadable
-                // against the badge.
-                <Link
-                  href={link}
-                  className={`${textClassName} hover:text-primary`}
-                >
-                  <Tag className={tagClassName} />
-                  <span className="truncate">{name}</span>
-                </Link>
-              ) : (
-                <div className="flex items-center me-1">
-                  <Tag className={tagClassName} />
-                  <span className={textClassName}>{name}</span>
-                </div>
-              )}
-            </Badge>
-          </div>
-        </TooltipTrigger>
+        {/* 4.1.2 nested-interactive / 2.5.8 Target Size: a link inside the
+            trigger button nested two controls and left the outer one barely
+            clickable, so a linked tag makes the link itself the trigger. An
+            unlinked tag is inert and still needs the button to stay focusable.
+            `cursor-default` is kept either way so the cursor is unchanged. */}
+        {link ? (
+          <TooltipTrigger asChild>
+            <Link href={link} className="cursor-default">
+              {badge}
+            </Link>
+          </TooltipTrigger>
+        ) : (
+          <TooltipTrigger type="button" className="cursor-default">
+            {badge}
+          </TooltipTrigger>
+        )}
         <TooltipContent>
           <div>{name}</div>
         </TooltipContent>

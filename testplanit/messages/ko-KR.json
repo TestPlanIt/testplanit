@@ -537,6 +537,7 @@
       "selectProjects": "프로젝트 선택",
       "selectStates": "상태 선택",
       "selectTags": "태그 선택",
+      "addFieldTo": "{section}에 필드 추가",
       "selectTemplates": "템플릿 선택",
       "selectUsers": "사용자 선택",
       "selectOption": "옵션을 선택하세요",
@@ -3934,7 +3935,8 @@
       "placeholder": "필터 테스트 실행..."
     },
     "typeFilter": {
-      "both": "수동 및 자동"
+      "both": "수동 및 자동",
+      "label": "실행 유형으로 필터링"
     },
     "empty": {
       "noMatchingCompleted": "필터 조건과 일치하는 완료된 테스트 실행이 없습니다."
