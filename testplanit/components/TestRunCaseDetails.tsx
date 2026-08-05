@@ -209,10 +209,7 @@ export function TestRunCaseDetails({
   // prod. See lib/services/testRunCaseDetail.ts. The run page's own
   // transition-clearing check calls this same hook with the same
   // (caseId, testRunId), so React Query dedupes the two into one request.
-  const { data: testcase, isLoading } = useTestRunCaseDetail(
-    caseId,
-    testRunId
-  );
+  const { data: testcase, isLoading } = useTestRunCaseDetail(caseId, testRunId);
 
   // Does this case's template require a result field? Quick-pass / quick-status
   // can't capture one, so when it does we escalate to the full Add Result modal

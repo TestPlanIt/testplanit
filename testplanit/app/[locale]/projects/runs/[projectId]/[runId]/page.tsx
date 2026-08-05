@@ -1302,8 +1302,10 @@ export default function TestRunPage() {
   // key with TestRunCaseDetails' own fetch of the same case, so React Query
   // dedupes them into one request instead of two independent ACL-heavy
   // queries. See lib/services/testRunCaseDetail.ts.
-  const { data: testcase, isLoading: isTestcaseLoading } =
-    useTestRunCaseDetail(selectedTestCaseId, Number(runId));
+  const { data: testcase, isLoading: isTestcaseLoading } = useTestRunCaseDetail(
+    selectedTestCaseId,
+    Number(runId)
+  );
 
   useEffect(() => {
     if (!isTestcaseLoading && testcase) {

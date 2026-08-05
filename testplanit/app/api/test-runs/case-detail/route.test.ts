@@ -157,9 +157,7 @@ describe("Test Run Case Detail Route", () => {
       (resolveViewerProjectScope as any).mockResolvedValue([5]);
       (getTestRunCaseDetail as any).mockResolvedValue({ id: 42 });
 
-      await GET(
-        createMockRequest({ caseId: "42", testRunId: "10" }) as any
-      );
+      await GET(createMockRequest({ caseId: "42", testRunId: "10" }) as any);
 
       expect(getTestRunCaseDetail).toHaveBeenCalledWith(42, 10);
     });
