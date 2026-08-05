@@ -27,17 +27,17 @@
     "@babel/core": "^8.0.1",
     "@babel/preset-env": "^8.0.2",
     "@babel/preset-react": "^8.0.1",
-    "@forge/cli": "^13.0.0",
-    "@tailwindcss/postcss": "^4.3.1",
+    "@forge/cli": "^13.2.0",
+    "@tailwindcss/postcss": "^4.3.3",
     "babel-loader": "^10.1.1",
     "css-loader": "^7.1.4",
-    "html-webpack-plugin": "^5.6.7",
+    "html-webpack-plugin": "^5.6.8",
     "mini-css-extract-plugin": "^2.10.2",
     "postcss": "^8.5.15",
     "postcss-loader": "^8.2.1",
     "style-loader": "^4.0.0",
-    "tailwindcss": "^4.3.1",
-    "webpack": "^5.108.0",
-    "webpack-cli": "^7.0.3"
+    "tailwindcss": "^4.3.3",
+    "webpack": "^5.109.2",
+    "webpack-cli": "^7.2.2"
   }
 }
