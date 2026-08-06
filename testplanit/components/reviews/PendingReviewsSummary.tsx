@@ -20,11 +20,20 @@ import type { PendingReviewSummaryRequest } from "./types";
  * rendered. The section sits at the top of the home page's "Your Assignments"
  * card, so an unbounded queue would push the runs/sessions it shares the card
  * with off-screen. The inbox at /reviews is the full, filterable surface.
+ *
+ * Exported so the dashboard can pass it as the query's `take` — the fetch is
+ * bounded to what actually renders instead of pulling the viewer's whole queue.
  */
-const MAX_VISIBLE_ROWS = 5;
+export const PENDING_REVIEWS_SUMMARY_LIMIT = 5;
 
 interface PendingReviewsSummaryProps {
   requests: PendingReviewSummaryRequest[];
+  /**
+   * Size of the full queue, for the heading and the "view all" affordance.
+   * `requests` may be a bounded page of it. Defaults to `requests.length` for
+   * callers that hand over everything they have.
+   */
+  totalCount?: number;
 }
 
 /**
@@ -119,19 +128,23 @@ export function usePendingReviewEntityMaps(
  */
 export function PendingReviewsSummary({
   requests,
+  totalCount,
 }: PendingReviewsSummaryProps) {
   const t = useTranslations();
 
+  // Kept even when the caller already bounded the fetch: the cap is this
+  // component's layout contract, not the query's.
   const visibleRequests = useMemo(
-    () => requests.slice(0, MAX_VISIBLE_ROWS),
+    () => requests.slice(0, PENDING_REVIEWS_SUMMARY_LIMIT),
     [requests]
   );
-  const hiddenCount = requests.length - visibleRequests.length;
+  const total = totalCount ?? requests.length;
+  const hiddenCount = total - visibleRequests.length;
 
   const { caseById, runById, sessionById } =
     usePendingReviewEntityMaps(visibleRequests);
 
-  if (requests.length === 0) return null;
+  if (total === 0) return null;
 
   return (
     <div className="space-y-2" data-testid="dashboard-pending-reviews">
@@ -142,7 +155,7 @@ export function PendingReviewsSummary({
         data-testid="dashboard-pending-reviews-count"
       >
         <Inbox className="w-5 h-5 text-muted-foreground" />
-        {t("users.profile.assignments.reviews", { count: requests.length })}
+        {t("users.profile.assignments.reviews", { count: total })}
       </h3>
       <div className="space-y-4 ps-6">
         {visibleRequests.map((request) => (

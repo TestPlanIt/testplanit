@@ -2,6 +2,7 @@
 
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
+import type { ReviewRequestWhereInput } from "~/zenstack/input";
 
 import {
   PENDING_REVIEW_SUMMARY_INCLUDE,
@@ -10,13 +11,50 @@ import {
 import { useReviewAssigneeRoleIds } from "./useReviewAssigneeRoleIds";
 import { useReviewFeatureEnabled } from "./useReviewFeatureEnabled";
 
+export interface UsePendingReviewRequestsOptions {
+  /**
+   * Cap on rows fetched. Surfaces that render a fixed-height slice should pass
+   * their render cap so the query stops being O(the viewer's whole queue) —
+   * `totalCount` still reports the true size for headings and "view all".
+   * Omit for surfaces that genuinely list everything (client-side sorting over
+   * a truncated set would sort the wrong rows).
+   */
+  take?: number;
+}
+
 export interface UsePendingReviewRequestsResult {
   /** PENDING requests the viewer is on the hook for, oldest first. */
   requests: PendingReviewSummaryRequest[];
+  /**
+   * Size of the full queue, independent of `take`. Falls back to
+   * `requests.length` while the count is in flight or when unbounded.
+   */
+  totalCount: number;
   /** True until the feature flag and the listing have both resolved. */
   isLoading: boolean;
   /** System-level review-feature flag. Undefined while loading. */
   enabled: boolean | undefined;
+}
+
+/**
+ * The canonical "reviews waiting on this viewer" filter, shared by every
+ * surface that reports the queue — the header badge's count, the home
+ * dashboard's summary, and the profile page's Assignments table.
+ *
+ * Kept as one builder rather than copies so the surfaces can't drift, and so
+ * the emitted queries hash to the same React Query key: the header badge and
+ * the dashboard's `totalCount` dedupe into a single request.
+ */
+export function pendingReviewsForViewerWhere(
+  userId: string | null | undefined,
+  roleIds: number[]
+): ReviewRequestWhereInput {
+  return {
+    status: "PENDING",
+    isDeleted: false,
+    project: { reviewWorkflowEnabled: true },
+    OR: [{ assigneeUserId: userId ?? "" }, { assigneeRoleId: { in: roleIds } }],
+  };
 }
 
 /**
@@ -33,7 +71,8 @@ export interface UsePendingReviewRequestsResult {
  *   - the viewer is the direct assignee OR holds the assigned role
  *
  * Sorted oldest-first — the most-overdue request reads at the top, matching
- * the inbox's default Pending sort.
+ * the inbox's default Pending sort. Pass `take` to bound the fetch to what the
+ * surface actually renders; `totalCount` still reports the whole queue.
  *
  * `refetchOnWindowFocus` is on (per the inbox's precedent): the app's
  * QueryClient defaults it to false, and a reviewer coming back from another
@@ -44,35 +83,46 @@ export interface UsePendingReviewRequestsResult {
  * `pnpm zenstack generate`.
  */
 export function usePendingReviewRequests(
-  userId: string | null | undefined
+  userId: string | null | undefined,
+  options: UsePendingReviewRequestsOptions = {}
 ): UsePendingReviewRequestsResult {
+  const { take } = options;
   const { enabled, isLoading: featureLoading } = useReviewFeatureEnabled();
   const roleIds = useReviewAssigneeRoleIds(userId);
+  const queryEnabled = !!userId && enabled === true;
+  const where = pendingReviewsForViewerWhere(userId, roleIds);
 
   const { data, isLoading: rowsLoading } = useClientQueries(
     schema
   ).reviewRequest.useFindMany(
     {
-      where: {
-        status: "PENDING",
-        isDeleted: false,
-        project: { reviewWorkflowEnabled: true },
-        OR: [
-          { assigneeUserId: userId ?? "" },
-          { assigneeRoleId: { in: roleIds } },
-        ],
-      },
+      where,
       include: PENDING_REVIEW_SUMMARY_INCLUDE,
       orderBy: { createdAt: "asc" },
+      ...(take !== undefined ? { take } : {}),
     },
     {
-      enabled: !!userId && enabled === true,
+      enabled: queryEnabled,
       refetchOnWindowFocus: true,
     } as any
   );
 
+  // Only worth a round trip when the listing is capped — uncapped callers
+  // already hold every row. Deliberately mirrors the header badge's count
+  // query so the two share a cache entry rather than double-fetching.
+  const { data: count } = useClientQueries(schema).reviewRequest.useCount(
+    { where },
+    {
+      enabled: queryEnabled && take !== undefined,
+      refetchOnWindowFocus: true,
+    } as any
+  );
+
+  const requests = (data as PendingReviewSummaryRequest[] | undefined) ?? [];
+
   return {
-    requests: (data as PendingReviewSummaryRequest[] | undefined) ?? [],
+    requests,
+    totalCount: typeof count === "number" ? count : requests.length,
     // A disabled query never reports isLoading, so the flag fetch has to be
     // folded in explicitly — otherwise consumers read "loaded, nothing here"
     // during the window before the flag resolves.

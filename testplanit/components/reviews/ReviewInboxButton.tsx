@@ -13,6 +13,7 @@ import { useTranslations } from "next-intl";
 import { useEffect } from "react";
 
 import { createDeferredEventSource } from "~/hooks/deferredEventSource";
+import { pendingReviewsForViewerWhere } from "~/hooks/usePendingReviewRequests";
 import { useReviewAssigneeRoleIds } from "~/hooks/useReviewAssigneeRoleIds";
 import { useReviewFeatureEnabled } from "~/hooks/useReviewFeatureEnabled";
 import { Link } from "~/lib/navigation";
@@ -57,15 +58,10 @@ export function ReviewInboxButton({
 
   const { data: count } = useClientQueries(schema).reviewRequest.useCount(
     {
-      where: {
-        status: "PENDING",
-        isDeleted: false,
-        project: { reviewWorkflowEnabled: true },
-        OR: [
-          { assigneeUserId: session?.user?.id ?? "" },
-          { assigneeRoleId: { in: currentUserRoleIds } },
-        ],
-      },
+      where: pendingReviewsForViewerWhere(
+        session?.user?.id,
+        currentUserRoleIds
+      ),
     },
     { enabled: !!session?.user?.id && enabled === true }
   );

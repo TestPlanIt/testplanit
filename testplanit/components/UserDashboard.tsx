@@ -31,7 +31,10 @@ import { useCallback, useMemo } from "react";
 import type { UserDashboardData } from "~/app/api/users/[userId]/dashboard/route";
 import { DateFormatter } from "~/components/DateFormatter";
 import { PendingReviewBadge } from "~/components/reviews/PendingReviewBadge";
-import { PendingReviewsSummary } from "~/components/reviews/PendingReviewsSummary";
+import {
+  PENDING_REVIEWS_SUMMARY_LIMIT,
+  PendingReviewsSummary,
+} from "~/components/reviews/PendingReviewsSummary";
 import { usePendingReviewRequests } from "~/hooks/usePendingReviewRequests";
 import { usePendingReviewsByEntity } from "~/hooks/usePendingReviewsByEntity";
 import { Link, useRouter } from "~/lib/navigation";
@@ -637,9 +640,14 @@ export function UserDashboard() {
 
   // --- 6. Fetch PENDING review requests waiting on this user ---
   // Same scope as the header's review-inbox badge, so the count the user sees
-  // in the global header and the queue rendered here can't disagree.
-  const { requests: pendingReviews, isLoading: isLoadingPendingReviews } =
-    usePendingReviewRequests(userId);
+  // in the global header and the queue rendered here can't disagree. Bounded to
+  // the rows the summary renders — the heading's total comes from the count
+  // query the badge already runs, so a long queue costs no extra rows here.
+  const {
+    requests: pendingReviews,
+    totalCount: pendingReviewsTotal,
+    isLoading: isLoadingPendingReviews,
+  } = usePendingReviewRequests(userId, { take: PENDING_REVIEWS_SUMMARY_LIMIT });
 
   // Pending-review badges on the run/session cards below — entity-scoped
   // (ANY pending review on the run/session), matching the list pages.
@@ -790,7 +798,7 @@ export function UserDashboard() {
   const hasRuns = runsRequiringAttention.length > 0;
   // userActiveSessions is already filtered, check its length directly
   const hasSessions = userActiveSessions && userActiveSessions.length > 0;
-  const hasPendingReviews = pendingReviews.length > 0;
+  const hasPendingReviews = pendingReviewsTotal > 0;
 
   // Condition for showing the chart (now calendar)
   const showCalendar = scheduledWorkItems && scheduledWorkItems.length > 0;
@@ -869,7 +877,10 @@ export function UserDashboard() {
         {/* --- Reviews waiting on this user --- */}
         {/* Top of the card by design: a review request blocks someone else's
             work until it's decided, so it outranks the user's own queue. */}
-        <PendingReviewsSummary requests={pendingReviews} />
+        <PendingReviewsSummary
+          requests={pendingReviews}
+          totalCount={pendingReviewsTotal}
+        />
 
         {/* --- User Work Chart/Calendar --- */}
         {showGanttChart && (

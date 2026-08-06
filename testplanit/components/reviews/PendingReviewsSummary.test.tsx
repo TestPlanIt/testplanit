@@ -95,10 +95,10 @@ function makeRequest(
   } as any;
 }
 
-function renderSummary(requests: any[]) {
+function renderSummary(requests: any[], totalCount?: number) {
   return render(
     <TooltipProvider>
-      <PendingReviewsSummary requests={requests} />
+      <PendingReviewsSummary requests={requests} totalCount={totalCount} />
     </TooltipProvider>
   );
 }
@@ -185,6 +185,35 @@ describe("PendingReviewsSummary", () => {
     );
     const viewAll = screen.getByTestId("dashboard-pending-reviews-view-all");
     expect(viewAll).toHaveAttribute("href", "/reviews");
+  });
+
+  // The dashboard bounds its query to the render cap, so `requests` arrives
+  // already truncated and only `totalCount` knows the queue is longer.
+  it("links to the inbox when a bounded page hides the rest of the queue", () => {
+    const requests = Array.from({ length: 5 }, (_, i) =>
+      makeRequest(`r${i}`, { entityId: 100 + i })
+    );
+
+    renderSummary(requests, 23);
+
+    expect(screen.getAllByTestId(/^dashboard-pending-review-r/)).toHaveLength(
+      5
+    );
+    expect(
+      screen.getByTestId("dashboard-pending-reviews-view-all")
+    ).toHaveAttribute("href", "/reviews");
+  });
+
+  it("omits the inbox link when a bounded page is the whole queue", () => {
+    const requests = Array.from({ length: 3 }, (_, i) =>
+      makeRequest(`r${i}`, { entityId: 100 + i })
+    );
+
+    renderSummary(requests, 3);
+
+    expect(
+      screen.queryByTestId("dashboard-pending-reviews-view-all")
+    ).not.toBeInTheDocument();
   });
 
   it("skips the entity side-fetches for types not in the visible rows", () => {
