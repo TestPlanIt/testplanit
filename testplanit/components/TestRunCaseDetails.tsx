@@ -46,7 +46,7 @@ import {
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import { toast } from "sonner";
 import { searchProjectMembers } from "~/app/actions/searchProjectMembers";
 import { notifyTestCaseAssignment } from "~/app/actions/test-run-notifications";
@@ -127,6 +127,14 @@ export function TestRunCaseDetails({
   const tCommon = useTranslations("common");
   const { data: session } = useSession();
   const queryClient = useQueryClient();
+
+  // AsyncCombobox refetches whenever `fetchOptions` changes identity, so an
+  // inline arrow would refetch on every render of this component.
+  const fetchMemberOptions = useCallback(
+    (query: string, page: number, pageSize: number) =>
+      searchProjectMembers(projectId, query, page, pageSize),
+    [projectId]
+  );
   const [selectedAttachmentIndex, setSelectedAttachmentIndex] = useState<
     number | null
   >(null);
@@ -729,9 +737,7 @@ export function TestRunCaseDetails({
                       : null
                   }
                   onValueChange={handleAssignmentChange}
-                  fetchOptions={(query, page, pageSize) =>
-                    searchProjectMembers(projectId, query, page, pageSize)
-                  }
+                  fetchOptions={fetchMemberOptions}
                   renderOption={(user) => (
                     <UserNameCell userId={user.id} hideLink />
                   )}

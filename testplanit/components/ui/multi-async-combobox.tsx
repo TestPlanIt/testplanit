@@ -105,6 +105,10 @@ export function MultiAsyncCombobox<T>({
 
   // Fetch when opened, then refetch as the page or the debounced search moves —
   // debouncing keeps a keystroke burst from firing a query per character.
+  // `fetchOptions` stays in the deps on purpose: local fetchers built with
+  // useMemo over their data (see FacetedSearchFilters) change identity when
+  // that data lands, and the list must refresh when they do. Call sites must
+  // therefore pass a stable function — an inline arrow refetches every render.
   useEffect(() => {
     if (!open) return;
     let ignore = false;
@@ -275,7 +279,15 @@ export function MultiAsyncCombobox<T>({
       </PopoverTrigger>
       <PopoverContent
         align="start"
-        className={cn(dropdownClassName || "p-0 min-w-[400px] max-w-[800px]")}
+        collisionPadding={8}
+        className={cn(
+          dropdownClassName || "p-0 min-w-[400px] max-w-[800px]",
+          // Keep the whole panel inside the viewport. Radix flips above the
+          // trigger when there is no room below, but flipping does not shrink
+          // the panel, so a full page of options pushes the search box and the
+          // Select All row past the top edge and out of reach.
+          "max-h-[var(--radix-popover-content-available-height)] overflow-y-auto"
+        )}
         style={{ width: Math.max(width, 400) }}
       >
         <Command className="w-full" shouldFilter={false}>

@@ -280,6 +280,23 @@ export function AddSessionModal({
     setMissionContent(newContent);
   }, []);
 
+  // MultiAsyncCombobox refetches whenever its `fetchOptions` identity changes,
+  // so an inline arrow re-runs the effect on every render and leaves `loading`
+  // permanently flapping — which keeps the Select All button disabled.
+  const fetchConfigurationOptions = useCallback(
+    (query: string, page: number, pageSize: number) =>
+      searchConfigurations(query, page, pageSize, numericProjectId),
+    [numericProjectId]
+  );
+
+  // AsyncCombobox refetches whenever `fetchOptions` changes identity, so an
+  // inline arrow would refetch on every render of this component.
+  const fetchMemberOptions = useCallback(
+    (query: string, page: number, pageSize: number) =>
+      searchProjectMembers(numericProjectId, query, page, pageSize),
+    [numericProjectId]
+  );
+
   const FormSchema = z.object({
     name: z.string().min(2, {
       message: t("common.validation.nameMinLength"),
@@ -956,14 +973,7 @@ export function AddSessionModal({
                               setSelectedConfigs(configs);
                               field.onChange(configs.map((c) => c.id));
                             }}
-                            fetchOptions={(query, page, pageSize) =>
-                              searchConfigurations(
-                                query,
-                                page,
-                                pageSize,
-                                numericProjectId
-                              )
-                            }
+                            fetchOptions={fetchConfigurationOptions}
                             renderOption={(config) => (
                               <div className="flex items-center gap-2">
                                 <Combine className="w-4 h-4" />
@@ -1221,14 +1231,7 @@ export function AddSessionModal({
                               onValueChange={(user) => {
                                 onChange(user ? user.id : null);
                               }}
-                              fetchOptions={(query, page, pageSize) =>
-                                searchProjectMembers(
-                                  Number(projectId),
-                                  query,
-                                  page,
-                                  pageSize
-                                )
-                              }
+                              fetchOptions={fetchMemberOptions}
                               renderOption={(user) => (
                                 <UserNameCell userId={user.id} hideLink />
                               )}

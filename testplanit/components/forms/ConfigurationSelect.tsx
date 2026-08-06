@@ -3,7 +3,7 @@ import { schema } from "~/zenstack/schema";
 import { AsyncCombobox } from "@/components/ui/async-combobox";
 import { CircleSlash2, Combine } from "lucide-react";
 import { useTranslations } from "next-intl";
-import React from "react";
+import React, { useCallback } from "react";
 import { searchConfigurations } from "~/app/actions/searchConfigurations";
 import { cn, type ClassValue } from "~/utils";
 
@@ -40,13 +40,19 @@ export const ConfigurationSelect: React.FC<ConfigurationSelectProps> = ({
       ? { id: currentConfig.id, name: currentConfig.name }
       : null;
 
+  // AsyncCombobox refetches whenever `fetchOptions` changes identity, so an
+  // inline arrow would refetch on every render of this component.
+  const fetchOptions = useCallback(
+    (query: string, page: number, pageSize: number) =>
+      searchConfigurations(query, page, pageSize, projectId),
+    [projectId]
+  );
+
   return (
     <AsyncCombobox<ConfigOption>
       value={resolvedValue}
       onValueChange={(opt) => onChange(opt ? opt.id : null)}
-      fetchOptions={(query, page, pageSize) =>
-        searchConfigurations(query, page, pageSize, projectId)
-      }
+      fetchOptions={fetchOptions}
       renderOption={(opt) => (
         <div className="flex items-center gap-1 min-w-0">
           <Combine className="w-4 h-4 shrink-0" />

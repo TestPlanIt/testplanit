@@ -4,7 +4,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { ColumnDef } from "@tanstack/react-table";
 import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { getMaxOrderInTestRun } from "~/app/actions/test-run";
 import { usePathname, useRouter } from "~/lib/navigation";
@@ -1176,6 +1176,15 @@ const AssigneeCell = React.memo(function AssigneeCell({
 }) {
   const [isAssigning, setIsAssigning] = useState(false);
   const t = useTranslations();
+
+  // AsyncCombobox refetches whenever `fetchOptions` changes identity, so an
+  // inline arrow would refetch on every render of this component.
+  const fetchMemberOptions = useCallback(
+    (query: string, page: number, pageSize: number) =>
+      searchProjectMembers(row.original.projectId, query, page, pageSize),
+    [row.original.projectId]
+  );
+
   const { mutateAsync: updateTestRunCase } =
     useClientQueries(schema).testRunCases.useUpdate();
 
@@ -1239,9 +1248,7 @@ const AssigneeCell = React.memo(function AssigneeCell({
     <AsyncCombobox
       value={currentUser}
       onValueChange={handleAssignmentChange}
-      fetchOptions={(query, page, pageSize) =>
-        searchProjectMembers(row.original.projectId, query, page, pageSize)
-      }
+      fetchOptions={fetchMemberOptions}
       renderOption={(user) => <UserNameCell userId={user.id} hideLink />}
       getOptionValue={(user) => user.id}
       placeholder={t("sessions.placeholders.selectUser")}

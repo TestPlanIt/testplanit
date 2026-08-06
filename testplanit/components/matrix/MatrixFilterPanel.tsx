@@ -3,7 +3,7 @@
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { useTranslations } from "next-intl";
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 
 import { ConfigurationNameDisplay } from "@/components/ConfigurationNameDisplay";
 import DatasetNameDisplay from "@/components/parameters/DatasetNameDisplay";
@@ -57,6 +57,23 @@ interface DatasetOptionRow {
  */
 export function MatrixFilterPanel({ projectId }: { projectId: number }) {
   const t = useTranslations("projects.matrix");
+
+  // MultiAsyncCombobox refetches whenever `fetchOptions` changes identity, so an
+  // inline arrow would refetch on every render of this component.
+  const fetchStatusOptions = useCallback(
+    (query: string, page: number, pageSize: number) =>
+      searchProjectStatuses(projectId, query, page, pageSize),
+    [projectId]
+  );
+
+  // MultiAsyncCombobox refetches whenever `fetchOptions` changes identity, so an
+  // inline arrow would refetch on every render of this component.
+  const fetchDatasetOptions = useCallback(
+    (query: string, page: number, pageSize: number) =>
+      searchProjectDataSets(projectId, query, page, pageSize),
+    [projectId]
+  );
+
   const { filters, setFilters } = useMatrixFilters();
 
   const statusIds = filters.statusIds ?? [];
@@ -174,9 +191,7 @@ export function MatrixFilterPanel({ projectId }: { projectId: number }) {
           onValueChange={(opts) =>
             setFilters({ statusIds: opts.map((o) => o.id) })
           }
-          fetchOptions={(query, page, pageSize) =>
-            searchProjectStatuses(projectId, query, page, pageSize)
-          }
+          fetchOptions={fetchStatusOptions}
           renderOption={(opt) => (
             <StatusDotDisplay name={opt.name} color={opt.color} />
           )}
@@ -233,9 +248,7 @@ export function MatrixFilterPanel({ projectId }: { projectId: number }) {
           onValueChange={(opts) =>
             setFilters({ datasetIds: opts.map((o) => o.id) })
           }
-          fetchOptions={(query, page, pageSize) =>
-            searchProjectDataSets(projectId, query, page, pageSize)
-          }
+          fetchOptions={fetchDatasetOptions}
           renderOption={(opt) => (
             <DatasetNameDisplay
               name={opt.name}

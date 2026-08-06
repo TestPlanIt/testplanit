@@ -320,6 +320,14 @@ function SessionFormControls({
   transitionCheck,
 }: SessionFormControlsProps) {
   const t = useTranslations("sessions");
+
+  // AsyncCombobox refetches whenever `fetchOptions` changes identity, so an
+  // inline arrow would refetch on every render of this component.
+  const fetchMemberOptions = useCallback(
+    (query: string, page: number, pageSize: number) =>
+      searchProjectMembers(numericProjectId, query, page, pageSize),
+    [numericProjectId]
+  );
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
 
@@ -571,14 +579,7 @@ function SessionFormControls({
                   onValueChange={(user) => {
                     field.onChange(user ? user.id : "none");
                   }}
-                  fetchOptions={(query, page, pageSize) =>
-                    searchProjectMembers(
-                      numericProjectId,
-                      query,
-                      page,
-                      pageSize
-                    )
-                  }
+                  fetchOptions={fetchMemberOptions}
                   renderOption={(user) => (
                     <UserNameCell userId={user.id} hideLink />
                   )}

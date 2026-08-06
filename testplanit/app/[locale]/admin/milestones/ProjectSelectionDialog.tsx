@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { MultiAsyncCombobox } from "@/components/ui/multi-async-combobox";
 import { useTranslations } from "next-intl";
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import { searchProjects } from "~/app/actions/searchProjects";
 
 type ProjectOption = Awaited<
@@ -33,6 +33,14 @@ export const ProjectSelectionDialog: React.FC<ProjectSelectionDialogProps> = ({
   const t = useTranslations("admin.milestones");
   const tCommon = useTranslations("common");
   const [selectedProjects, setSelectedProjects] = useState<ProjectOption[]>([]);
+
+  // MultiAsyncCombobox refetches whenever `fetchOptions` changes identity, so
+  // an inline arrow would refetch on every render of this dialog.
+  const fetchOptions = useCallback(
+    (query: string, page: number, pageSize: number) =>
+      searchProjects(query, page, pageSize),
+    []
+  );
 
   const handleNext = () => {
     if (selectedProjects.length > 0) {
@@ -57,9 +65,7 @@ export const ProjectSelectionDialog: React.FC<ProjectSelectionDialogProps> = ({
         <MultiAsyncCombobox<ProjectOption>
           value={selectedProjects}
           onValueChange={setSelectedProjects}
-          fetchOptions={(query, page, pageSize) =>
-            searchProjects(query, page, pageSize)
-          }
+          fetchOptions={fetchOptions}
           renderOption={(project) => (
             <div className="flex min-w-0 items-center gap-2">
               <ProjectIcon iconUrl={project.iconUrl} width={16} height={16} />

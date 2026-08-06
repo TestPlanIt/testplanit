@@ -23,7 +23,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useTranslations } from "next-intl";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
   distributeRunCaseAssignments,
@@ -84,6 +84,15 @@ export function DistributeAssignmentsModal({
   };
 
   const [selectedUsers, setSelectedUsers] = useState<UserOption[]>([]);
+
+  // MultiAsyncCombobox refetches whenever `fetchOptions` changes identity, so an
+  // inline arrow would refetch on every render of this component.
+  const fetchMemberOptions = useCallback(
+    (query: string, page: number, pageSize: number) =>
+      searchProjectMembers(projectId, query, page, pageSize),
+    [projectId]
+  );
+
   const [scope, setScope] = useState<Scope>("ALL_CONFIGS");
   const [strategy, setStrategy] =
     useState<DistributeStrategy>("SPLIT_BY_CONFIG");
@@ -287,9 +296,7 @@ export function DistributeAssignmentsModal({
             <MultiAsyncCombobox<UserOption>
               value={selectedUsers}
               onValueChange={setSelectedUsers}
-              fetchOptions={(query, page, pageSize) =>
-                searchProjectMembers(projectId, query, page, pageSize)
-              }
+              fetchOptions={fetchMemberOptions}
               renderOption={(user) => (
                 <UserNameCell userId={user.id} hideLink />
               )}

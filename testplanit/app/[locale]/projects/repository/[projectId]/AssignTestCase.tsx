@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { useTranslations } from "next-intl";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { searchProjectMembers } from "~/app/actions/searchProjectMembers";
 import {
@@ -57,6 +57,14 @@ export function AssignTestCaseModal({
     image: string | null;
   } | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // AsyncCombobox refetches whenever `fetchOptions` changes identity, so an
+  // inline arrow would refetch on every render of this component.
+  const fetchMemberOptions = useCallback(
+    (query: string, page: number, pageSize: number) =>
+      searchProjectMembers(projectId, query, page, pageSize),
+    [projectId]
+  );
 
   // Update mutation
   const { mutateAsync: updateTestRunCase } =
@@ -209,9 +217,7 @@ export function AssignTestCaseModal({
               <AsyncCombobox
                 value={selectedUser}
                 onValueChange={setSelectedUser}
-                fetchOptions={(query, page, pageSize) =>
-                  searchProjectMembers(projectId, query, page, pageSize)
-                }
+                fetchOptions={fetchMemberOptions}
                 renderOption={(user) => (
                   <UserNameCell userId={user.id} hideLink />
                 )}

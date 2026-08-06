@@ -147,6 +147,10 @@ export function AsyncCombobox<T>({
 
   // Fetch when opened, then refetch as the page or the debounced search moves —
   // debouncing keeps a keystroke burst from firing a query per character.
+  // `fetchOptions` stays in the deps on purpose: local fetchers built with
+  // useMemo over their data change identity when that data lands, and the list
+  // must refresh when they do. Call sites must therefore pass a stable
+  // function — an inline arrow refetches on every render.
   useEffect(() => {
     if (!open) return;
     let ignore = false;
