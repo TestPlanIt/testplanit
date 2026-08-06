@@ -864,7 +864,8 @@
       "showing": "Seans",
       "total": "suma {count, plural, =1 {# element} other {# elementy}}",
       "filtered": "odfiltrowane z",
-      "pageOfPages": "Strona {current} z {total}"
+      "pageOfPages": "Strona {current} z {total}",
+      "loadedOfTotal": "{loaded, number} z {total, number}"
     },
     "upload": {
       "title": "Prześlij nowe zdjęcie profilowe",
@@ -3944,7 +3945,7 @@
     },
     "empty": {
       "noMatchingCompleted": "Nie znaleziono żadnych zakończonych przebiegów testowych odpowiadających wybranemu filtrowi.",
-      "noMatchingActive": "Nie znaleziono żadnych aktywnych przebiegów testowych odpowiadających wybranym filtrom."
+      "noMatchingActive": "Żaden aktywny przebieg testowy nie odpowiada wybranym filtrom."
     },
     "milestoneGroup": {
       "runCount": "{count, plural, one {# przebieg} few {# przebiegi} many {# przebiegów} other {# przebiegu}}",
@@ -7327,7 +7328,7 @@
         }
       }
     },
-    "projectRunsFilters": "## Filtrowanie przebiegów testowych\n\nPrzełącz etykietę, aby zawęzić listę. Etykiety obejmują zarówno kartę Aktywne, jak i Zakończone i są pamiętane na tym urządzeniu dla tego projektu.\n\n- **Ręczne** / **Automatyczne** — ogranicza listę do danego typu przebiegu. Włączenie obu (lub wyłączenie obu) pokazuje wszystkie przebiegi.\n- **Moje przebiegi testowe** — tylko przebiegi, w których uczestniczysz: utworzyłeś przebieg, przypisano Ci w nim przypadek testowy lub zapisałeś w nim wynik testu."
+    "projectRunsFilters": "## Filtrowanie przebiegów testowych\n\nPrzełącz etykietę, aby zawęzić listę. Etykiety mają zastosowanie zarówno do kart Aktywne, jak i Zakończone, i są zapamiętywane na tym urządzeniu dla tego projektu.\n\n- **Ręczne** / **Automatyczne** — ogranicz listę do danego typu przebiegu. Włączenie obu (lub wyłączenie obu) pokazuje wszystkie przebiegi.\n- **Moje przebiegi testowe** — tylko przebiegi, w których uczestniczysz: utworzyłeś przebieg, przypisano Ci w nim przypadek testowy lub zarejestrowałeś w nim wynik testu."
   },
   "reports": {
     "ui": {

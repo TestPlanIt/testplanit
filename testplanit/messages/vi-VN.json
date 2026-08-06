@@ -29,7 +29,7 @@
     "lastEditedBy": "Lần chỉnh sửa cuối cùng bởi",
     "actions": {
       "edit": "Biên tập",
-      "editTestCase": "Chỉnh sửa trường hợp kiểm thử",
+      "editTestCase": "Sửa trường hợp kiểm thử",
       "save": "Cứu",
       "delete": "Xóa bỏ",
       "create": "Tạo nên",
@@ -864,7 +864,8 @@
       "showing": "Đang hiển thị",
       "total": "Tổng số {count, plural, =1 {# mặt hàng} other {# mặt hàng}}",
       "filtered": "được lọc từ",
-      "pageOfPages": "Trang {current} trên {total}"
+      "pageOfPages": "Trang {current} trên {total}",
+      "loadedOfTotal": "{loaded, number} trong số {total, number}"
     },
     "upload": {
       "title": "Tải ảnh đại diện mới lên",
@@ -3944,7 +3945,7 @@
     },
     "empty": {
       "noMatchingCompleted": "Không có kết quả chạy thử nào phù hợp với bộ lọc của bạn.",
-      "noMatchingActive": "Không có lần chạy thử nghiệm đang hoạt động nào phù hợp với bộ lọc của bạn."
+      "noMatchingActive": "Không có lần chạy thử nghiệm hoạt động nào phù hợp với bộ lọc của bạn."
     },
     "milestoneGroup": {
       "runCount": "{count, plural, other {# lần chạy}}",
@@ -3952,7 +3953,7 @@
       "collapseAll": "Thu gọn tất cả"
     },
     "runFilters": {
-      "label": "Lọc các lần chạy thử nghiệm",
+      "label": "Lọc lần chạy thử nghiệm",
       "mine": "Lần chạy thử nghiệm của tôi"
     },
     "typeFilter": {
@@ -7327,7 +7328,7 @@
         }
       }
     },
-    "projectRunsFilters": "## Lọc các lần chạy thử nghiệm\n\nBật/tắt một thẻ để thu hẹp danh sách. Các thẻ áp dụng cho cả tab Đang hoạt động và Đã hoàn thành, và được ghi nhớ trên thiết bị này cho dự án này.\n\n- **Thủ công** / **Tự động** — giới hạn danh sách theo loại lần chạy đó. Bật cả hai (hoặc tắt cả hai) sẽ hiển thị mọi lần chạy.\n- **Lần chạy thử nghiệm của tôi** — chỉ các lần chạy bạn tham gia: bạn đã tạo lần chạy, bạn được gán một trường hợp thử nghiệm trong đó, hoặc bạn đã ghi lại một kết quả thử nghiệm trong đó."
+    "projectRunsFilters": "## Lọc lần chạy thử nghiệm\n\nBật/tắt một thẻ để thu hẹp danh sách. Các thẻ áp dụng cho cả tab Đang hoạt động và Đã hoàn thành, và được ghi nhớ trên thiết bị này cho dự án này.\n\n- **Thủ công** / **Tự động** — giới hạn danh sách theo loại lần chạy đó. Bật cả hai (hoặc tắt cả hai) sẽ hiển thị tất cả các lần chạy.\n- **Lần chạy thử nghiệm của tôi** — chỉ các lần chạy bạn tham gia: bạn đã tạo lần chạy, bạn được gán một trường hợp kiểm thử trong đó, hoặc bạn đã ghi lại một kết quả kiểm thử trong đó."
   },
   "reports": {
     "ui": {

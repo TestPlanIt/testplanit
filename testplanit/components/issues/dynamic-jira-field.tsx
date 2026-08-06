@@ -17,7 +17,11 @@ import { HelpPopover } from "@/components/ui/help-popover";
 import { Input } from "@/components/ui/input";
 import { useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
-import { useState } from "react";
+import { useCallback, useMemo, useState } from "react";
+
+/** Stable no-op fetcher for disabled comboboxes — module-level so its
+ *  identity never changes and it can't trigger option refetches. */
+const EMPTY_FETCH_OPTIONS = async () => ({ results: [], total: 0 });
 import { Controller, UseFormReturn } from "react-hook-form";
 import MultiSelect from "react-select";
 import { getCustomStyles } from "~/styles/multiSelectStyles";
@@ -119,6 +123,41 @@ function UserPickerField({
     formField.value ? { id: formField.value, name: formField.value } : null
   );
 
+  // AsyncCombobox refetches whenever `fetchOptions` changes identity, so it
+  // must stay referentially stable across renders — an inline arrow resets
+  // the dropdown to page 0 on every render and it can never load more.
+  const fetchJiraUsers = useCallback(
+    async (query: string, page: number, pageSize: number) => {
+      try {
+        const params = new URLSearchParams({
+          query,
+          startAt: (page * pageSize).toString(),
+          maxResults: pageSize.toString(),
+        });
+        if (projectKey) {
+          params.append("projectKey", projectKey);
+        }
+        const response = await fetch(
+          `/api/integrations/${integrationId}/search-users?${params.toString()}`
+        );
+        if (!response.ok) throw new Error("Failed to search users");
+
+        const data = await response.json();
+        return {
+          results: data.users.map((user: any) => ({
+            id: user.accountId,
+            name: user.displayName || user.emailAddress,
+          })),
+          total: data.total || data.users.length,
+        };
+      } catch (error) {
+        console.error("Failed to search users:", error);
+        return { results: [], total: 0 };
+      }
+    },
+    [integrationId, projectKey]
+  );
+
   return (
     <FormItem>
       <div className="flex items-center gap-2">
@@ -139,34 +178,7 @@ function UserPickerField({
             setSelectedUser(value);
             formField.onChange(value?.id || "");
           }}
-          fetchOptions={async (query, page, pageSize) => {
-            try {
-              const params = new URLSearchParams({
-                query,
-                startAt: (page * pageSize).toString(),
-                maxResults: pageSize.toString(),
-              });
-              if (projectKey) {
-                params.append("projectKey", projectKey);
-              }
-              const response = await fetch(
-                `/api/integrations/${integrationId}/search-users?${params.toString()}`
-              );
-              if (!response.ok) throw new Error("Failed to search users");
-
-              const data = await response.json();
-              return {
-                results: data.users.map((user: any) => ({
-                  id: user.accountId,
-                  name: user.displayName || user.emailAddress,
-                })),
-                total: data.total || data.users.length,
-              };
-            } catch (error) {
-              console.error("Failed to search users:", error);
-              return { results: [], total: 0 };
-            }
-          }}
+          fetchOptions={fetchJiraUsers}
           renderOption={(user) => user.name}
           getOptionValue={(user) => user.id}
           placeholder={t("common.searchUsers")}
@@ -275,12 +287,65 @@ export function DynamicJiraField({
   const { theme } = useTheme();
   const customStyles = getCustomStyles({ theme: theme || "light" });
 
+  const allowedValueOptions = useMemo(
+    () =>
+      (field.allowedValues ?? []).map((v) => ({
+        value: v.id || v.value,
+        label: v.name || v.value || v.id,
+      })),
+    [field.allowedValues]
+  );
+
+  // AsyncCombobox refetches whenever `fetchOptions` changes identity, so
+  // these must stay referentially stable across renders — an inline arrow
+  // resets the dropdown to page 0 on every render and it can never load
+  // more. (They also cannot live in the render helpers below: those are
+  // plain functions, not components, so hooks are off-limits there.)
+  const fetchAllowedValueOptions = useCallback(
+    async (query: string, page: number, pageSize: number) => {
+      const filtered = query
+        ? allowedValueOptions.filter((opt) =>
+            opt.label.toLowerCase().includes(query.toLowerCase())
+          )
+        : allowedValueOptions;
+
+      const start = page * pageSize;
+      const end = start + pageSize;
+      return {
+        results: filtered.slice(start, end),
+        total: filtered.length,
+      };
+    },
+    [allowedValueOptions]
+  );
+
+  const fetchLinkableIssues = useCallback(
+    async (query: string) => {
+      try {
+        const response = await fetch(
+          `/api/integrations/${integrationId}/search-issues?query=${encodeURIComponent(query)}`
+        );
+        if (!response.ok) throw new Error("Failed to search issues");
+
+        const data = await response.json();
+        return {
+          results: data.issues.map((issue: any) => ({
+            id: issue.key,
+            name: `${issue.key}: ${issue.title}`,
+          })),
+          total: data.total,
+        };
+      } catch (error) {
+        console.error("Failed to search issues:", error);
+        return { results: [], total: 0 };
+      }
+    },
+    [integrationId]
+  );
+
   // Helper function to render select fields
   const renderSelectField = (isSingle = true) => {
-    const options = field.allowedValues!.map((v) => ({
-      value: v.id || v.value,
-      label: v.name || v.value || v.id,
-    }));
+    const options = allowedValueOptions;
 
     if (!isSingle || field.schema.type === "array") {
       // Multi-select - use Controller for proper value handling
@@ -354,20 +419,7 @@ export function DynamicJiraField({
                 onValueChange={(value) => {
                   formField.onChange(value?.value || "");
                 }}
-                fetchOptions={async (query, page, pageSize) => {
-                  const filtered = query
-                    ? options.filter((opt) =>
-                        opt.label.toLowerCase().includes(query.toLowerCase())
-                      )
-                    : options;
-
-                  const start = page * pageSize;
-                  const end = start + pageSize;
-                  return {
-                    results: filtered.slice(start, end),
-                    total: filtered.length,
-                  };
-                }}
+                fetchOptions={fetchAllowedValueOptions}
                 renderOption={(opt) => opt.label}
                 getOptionValue={(opt) => opt.value || ""}
                 placeholder={t("common.select")}
@@ -528,27 +580,7 @@ export function DynamicJiraField({
                       : null
                   }
                   onValueChange={(value) => formField.onChange(value?.id || "")}
-                  fetchOptions={async (query) => {
-                    try {
-                      const response = await fetch(
-                        `/api/integrations/${integrationId}/search-issues?query=${encodeURIComponent(query)}`
-                      );
-                      if (!response.ok)
-                        throw new Error("Failed to search issues");
-
-                      const data = await response.json();
-                      return {
-                        results: data.issues.map((issue: any) => ({
-                          id: issue.key,
-                          name: `${issue.key}: ${issue.title}`,
-                        })),
-                        total: data.total,
-                      };
-                    } catch (error) {
-                      console.error("Failed to search issues:", error);
-                      return { results: [], total: 0 };
-                    }
-                  }}
+                  fetchOptions={fetchLinkableIssues}
                   renderOption={(issue) => issue.name}
                   getOptionValue={(issue) => issue.id}
                   placeholder={t("issues.searchForIssue")}
@@ -590,7 +622,7 @@ export function DynamicJiraField({
                   <AsyncCombobox
                     value={null}
                     onValueChange={() => {}}
-                    fetchOptions={async () => ({ results: [], total: 0 })}
+                    fetchOptions={EMPTY_FETCH_OPTIONS}
                     renderOption={() => ""}
                     getOptionValue={() => ""}
                     placeholder={t("issues.noTeamsAvailable")}

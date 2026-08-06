@@ -231,7 +231,7 @@ test.describe("Session Configuration Combobox", () => {
     });
   });
 
-  test("should show pagination controls with Previous/Next buttons", async ({
+  test("should show the loaded-count footer instead of a pager", async ({
     api,
     page,
   }) => {
@@ -264,14 +264,14 @@ test.describe("Session Configuration Combobox", () => {
       page.locator(`[role="option"]:has-text("${configName}")`)
     ).toBeVisible({ timeout: 5000 });
 
-    // Verify pagination footer is visible
-    const prevButton = page.getByRole("button", { name: "Previous" });
-    const nextButton = page.getByRole("button", { name: "Next" });
-    await expect(prevButton).toBeVisible({ timeout: 5000 });
-    await expect(nextButton).toBeVisible({ timeout: 5000 });
-
-    // Previous should be disabled on first page
-    await expect(prevButton).toBeDisabled();
+    // The list infinite-scrolls now: a count footer replaces the old
+    // Previous/Next pager.
+    const countFooter = page.getByTestId("multi-async-combobox-count-footer");
+    await expect(countFooter).toBeVisible({ timeout: 5000 });
+    await expect(countFooter).toHaveText(/1 of 1/);
+    await expect(
+      page.getByRole("button", { name: "Previous" })
+    ).not.toBeVisible();
   });
 
   test("should create session with selected configuration", async ({

@@ -864,7 +864,8 @@
       "showing": "Tonen",
       "total": "totaal {count, plural, =1 {# items} other {# items}}",
       "filtered": "gefilterd van",
-      "pageOfPages": "Pagina {current} van {total}"
+      "pageOfPages": "Pagina {current} van {total}",
+      "loadedOfTotal": "{loaded, number} van {total, number}"
     },
     "upload": {
       "title": "Nieuwe profielfoto uploaden",
@@ -7327,7 +7328,7 @@
         }
       }
     },
-    "projectRunsFilters": "## Testruns filteren\n\nSchakel een chip in om de lijst te beperken. Chips zijn van toepassing op zowel het tabblad Actief als Voltooid, en worden op dit apparaat onthouden voor dit project.\n\n- **Handmatig** / **Geautomatiseerd** — beperk de lijst tot dat type run. Als u beide inschakelt (of beide uitschakelt), worden alle runs weergegeven.\n- **Mijn testruns** — alleen runs waaraan u deelneemt: u hebt de run aangemaakt, u bent toegewezen aan een testcase erin, of u hebt een testresultaat erin geregistreerd."
+    "projectRunsFilters": "## Testruns filteren\n\nSchakel een chip in om de lijst te beperken. Chips zijn van toepassing op zowel het tabblad Actief als Voltooid, en worden op dit apparaat onthouden voor dit project.\n\n- **Handmatig** / **Geautomatiseerd** — beperk de lijst tot dat type run. Als u beide inschakelt (of beide uitschakelt), worden alle runs weergegeven.\n- **Mijn testruns** — alleen runs waaraan u deelneemt: u heeft de run aangemaakt, u heeft een testgeval toegewezen gekregen in de run, of u heeft een testresultaat vastgelegd in de run."
   },
   "reports": {
     "ui": {

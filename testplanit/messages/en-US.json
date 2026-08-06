@@ -864,7 +864,8 @@
       "showing": "Showing",
       "total": "total {count, plural, =1 {# item} other {# items}}",
       "filtered": "filtered from",
-      "pageOfPages": "Page {current} of {total}"
+      "pageOfPages": "Page {current} of {total}",
+      "loadedOfTotal": "{loaded, number} of {total, number}"
     },
     "upload": {
       "title": "Upload New Profile Picture",

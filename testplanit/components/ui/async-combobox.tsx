@@ -1,5 +1,3 @@
-/* eslint-disable react-hooks/incompatible-library -- TanStack Virtual's useVirtualizer() returns unstable function references by design; React Compiler auto-skips memoization here and the lint rule reports it (same as hooks/useVirtualizedInfiniteList.ts). */
-
 import { Button } from "@/components/ui/button";
 import {
   Command,
@@ -14,11 +12,14 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { useDebounce } from "@/components/Debounce";
-import { useVirtualizer } from "@tanstack/react-virtual";
 import { Check, Loader2, UserX } from "lucide-react";
 import { useTranslations } from "next-intl";
 import React, { useEffect, useRef, useState } from "react";
+import {
+  useAsyncComboboxOptions,
+  type AsyncOptionsFetcher,
+} from "~/hooks/useAsyncComboboxOptions";
+import { useVirtualizedInfiniteList } from "~/hooks/useVirtualizedInfiniteList";
 import { cn, type ClassValue } from "~/utils";
 
 /** Above this many options the list virtualizes. Smaller lists keep rendering
@@ -26,10 +27,6 @@ import { cn, type ClassValue } from "~/utils";
  *  navigation over every row — virtualized rows only exist while scrolled to. */
 const VIRTUALIZE_THRESHOLD = 100;
 const ESTIMATED_OPTION_HEIGHT = 36;
-
-/** How long typing pauses before options are fetched, so a keystroke burst
- *  doesn't fire a query per character. */
-const SEARCH_DEBOUNCE_MS = 300;
 
 function Spinner({
   className,
@@ -46,11 +43,7 @@ function Spinner({
 interface AsyncComboboxProps<T> {
   value: T | null;
   onValueChange: (value: T | null) => void;
-  fetchOptions: (
-    query: string,
-    page: number,
-    pageSize: number
-  ) => Promise<{ results: T[]; total: number } | T[]>;
+  fetchOptions: AsyncOptionsFetcher<T>;
   /** `query` is the search the listed options were fetched for — empty
    *  wherever an option is rendered outside the list, such as on the trigger. */
   renderOption: (option: T, query: string) => React.ReactNode;
@@ -68,7 +61,7 @@ interface AsyncComboboxProps<T> {
   dropdownClassName?: ClassValue;
   pageSize?: number;
   showTotal?: boolean;
-  /** Hide the Previous/Next footer — for local (non-paged) option sources
+  /** Hide the loaded-count footer — for local (non-paged) option sources
    *  where fetchOptions returns the full filtered list every time. */
   showPagination?: boolean;
   /** Minimum pixel width of the dropdown (defaults to 400; narrow form
@@ -101,8 +94,8 @@ export function AsyncCombobox<T>({
   isOptionDisabled,
   className,
   dropdownClassName,
-  pageSize = 10,
-  showTotal = false,
+  pageSize = 30,
+  showTotal: _showTotal = false,
   showPagination = true,
   minDropdownWidth = 400,
   showUnassigned = false,
@@ -112,26 +105,46 @@ export function AsyncCombobox<T>({
 }: AsyncComboboxProps<T>) {
   const tCommon = useTranslations("common");
   const [open, setOpen] = useState(false);
-  const [search, setSearch] = useState("");
-  const [options, setOptions] = useState<T[]>([]);
-  const [loading, setLoading] = useState(false);
-  const debouncedSearch = useDebounce(search, SEARCH_DEBOUNCE_MS);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const [width, setWidth] = useState<number>(200);
-  const [page, setPage] = useState(0);
-  const _inputRef = useRef<HTMLInputElement>(null);
-  const [_focusedIndex, _setFocusedIndex] = useState<number | null>(null);
-  const [total, setTotal] = useState<number | null>(null);
-  const listRef = useRef<HTMLDivElement>(null);
 
-  // Mounting thousands of CommandItems is what makes a large list slow to open.
-  const shouldVirtualize = options.length > VIRTUALIZE_THRESHOLD;
-  const virtualizer = useVirtualizer<HTMLDivElement, HTMLDivElement>({
-    count: shouldVirtualize ? options.length : 0,
-    getScrollElement: () => listRef.current,
-    estimateSize: () => ESTIMATED_OPTION_HEIGHT,
-    overscan: 12,
+  const {
+    search,
+    setSearch,
+    debouncedSearch,
+    options,
+    total,
+    hasMore,
+    loading,
+    loadingMore,
+    loadMore,
+    resetPaging,
+  } = useAsyncComboboxOptions<T>({
+    open,
+    fetchOptions,
+    getOptionValue,
+    pageSize,
   });
+
+  // Mounting thousands of CommandItems is what makes a large list slow to
+  // open, so past the threshold only the visible window renders. The hook
+  // also owns the load-more wiring (bottom sentinel + virtualizer-index
+  // trigger behind a shared double-fire guard), which is why it runs even
+  // below the threshold — with `count: 0` the virtualizer idles and the
+  // sentinel alone pulls the next page.
+  const shouldVirtualize = options.length > VIRTUALIZE_THRESHOLD;
+  const { scrollRef, sentinelRef, virtualItems, totalSize, measureElement } =
+    useVirtualizedInfiniteList({
+      count: shouldVirtualize ? options.length : 0,
+      loadedCount: options.length,
+      estimateSize: ESTIMATED_OPTION_HEIGHT,
+      overscan: 12,
+      hasMore,
+      isLoading: loading || loadingMore,
+      onLoadMore: loadMore,
+      boundToViewport: false,
+      resetKey: debouncedSearch,
+    });
 
   // Update width when trigger element changes size
   useEffect(() => {
@@ -144,48 +157,6 @@ export function AsyncCombobox<T>({
     resizeObserver.observe(triggerRef.current);
     return () => resizeObserver.disconnect();
   }, []);
-
-  // Fetch when opened, then refetch as the page or the debounced search moves —
-  // debouncing keeps a keystroke burst from firing a query per character.
-  // `fetchOptions` stays in the deps on purpose: local fetchers built with
-  // useMemo over their data change identity when that data lands, and the list
-  // must refresh when they do. Call sites must therefore pass a stable
-  // function — an inline arrow refetches on every render.
-  useEffect(() => {
-    if (!open) return;
-    let ignore = false;
-    setLoading(true);
-    void fetchOptions(debouncedSearch, page, pageSize)
-      .then((result) => {
-        if (ignore) return;
-        if (Array.isArray(result)) {
-          setOptions(result);
-          setTotal(null);
-        } else if (
-          result &&
-          typeof result === "object" &&
-          "results" in result &&
-          "total" in result
-        ) {
-          setOptions(result.results);
-          setTotal(result.total);
-        } else {
-          setOptions([]);
-          setTotal(null);
-        }
-      })
-      .finally(() => {
-        if (!ignore) setLoading(false);
-      });
-    return () => {
-      ignore = true;
-    };
-  }, [debouncedSearch, page, pageSize, open, fetchOptions]);
-
-  // Reset page when search changes
-  useEffect(() => {
-    setPage(0);
-  }, [search]);
 
   const renderCommandItem = (option: T) => {
     const optionDisabled = isOptionDisabled?.(option) ?? false;
@@ -249,7 +220,13 @@ export function AsyncCombobox<T>({
   );
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover
+      open={open}
+      onOpenChange={(isOpen) => {
+        setOpen(isOpen);
+        if (!isOpen) resetPaging();
+      }}
+    >
       <PopoverTrigger asChild>
         {(() => {
           if (renderTrigger) {
@@ -348,7 +325,10 @@ export function AsyncCombobox<T>({
             )}
             {/* The search box and the footer keep their height; the list is
                 what gives way once the popover hits its cap. */}
-            <CommandList ref={listRef} className="min-h-0 flex-1 max-h-[70vh]">
+            <CommandList
+              ref={scrollRef}
+              className="min-h-0 flex-1 max-h-[70vh]"
+            >
               <CommandEmpty>{tCommon("labels.noResults")}</CommandEmpty>
               <CommandGroup
                 className={cn(loading ? "opacity-50 pointer-events-none" : "")}
@@ -376,16 +356,16 @@ export function AsyncCombobox<T>({
                 {shouldVirtualize ? (
                   <div
                     className="relative w-full"
-                    style={{ height: virtualizer.getTotalSize() }}
+                    style={{ height: totalSize }}
                     data-testid="async-combobox-virtual-list"
                   >
-                    {virtualizer.getVirtualItems().map((virtualRow) => {
+                    {virtualItems.map((virtualRow) => {
                       const option = options[virtualRow.index];
                       if (!option) return null;
                       return (
                         <div
                           key={getOptionValue(option)}
-                          ref={virtualizer.measureElement}
+                          ref={measureElement}
                           data-index={virtualRow.index}
                           className="absolute top-0 start-0 w-full"
                           style={{
@@ -401,45 +381,29 @@ export function AsyncCombobox<T>({
                   options.map(renderCommandItem)
                 )}
               </CommandGroup>
+              {loadingMore && (
+                <div
+                  className="flex items-center justify-center py-2"
+                  data-testid="async-combobox-loading-more"
+                >
+                  <Spinner />
+                </div>
+              )}
+              {/* Load-more sentinel: scrolling it into view pulls the next
+                  page. Rendered last so it sits below every row. */}
+              <div ref={sentinelRef} aria-hidden="true" />
             </CommandList>
-            {showPagination && (
-              <div className="flex items-center justify-between gap-2 border-t px-2 py-1 bg-muted">
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="ghost"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    setPage((p) => Math.max(0, p - 1));
-                  }}
-                  disabled={page === 0 || loading}
-                >
-                  {tCommon("actions.previous")}
-                </Button>
+            {showPagination && total != null && (
+              <div
+                className="flex items-center justify-center border-t px-2 py-1 bg-muted"
+                data-testid="async-combobox-count-footer"
+              >
                 <span className="text-xs text-muted-foreground">
-                  {showTotal && total != null
-                    ? `Showing ${page * pageSize + 1}–${page * pageSize + options.length} of ${total}`
-                    : `Page ${page + 1}`}
+                  {tCommon("pagination.loadedOfTotal", {
+                    loaded: options.length,
+                    total,
+                  })}
                 </span>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="ghost"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    setPage((p) => p + 1);
-                  }}
-                  disabled={
-                    loading ||
-                    (total != null
-                      ? (page + 1) * pageSize >= total
-                      : options.length < pageSize)
-                  }
-                >
-                  {tCommon("actions.next")}
-                </Button>
               </div>
             )}
           </div>

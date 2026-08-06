@@ -864,7 +864,8 @@
       "showing": "Anzeige",
       "total": "Gesamt {count, plural, =1 {# Artikel} other {# Artikel}}",
       "filtered": "gefiltert von",
-      "pageOfPages": "Seite {current} von {total}"
+      "pageOfPages": "Seite {current} von {total}",
+      "loadedOfTotal": "{loaded, number} von {total, number}"
     },
     "upload": {
       "title": "Neues Profilbild hochladen",
@@ -3944,7 +3945,7 @@
     },
     "empty": {
       "noMatchingCompleted": "Es wurden keine abgeschlossenen Testläufe gefunden, die Ihrem Filter entsprechen.",
-      "noMatchingActive": "Es wurden keine aktiven Testläufe gefunden, die Ihrem Filter entsprechen."
+      "noMatchingActive": "Es wurden keine aktiven Testläufe gefunden, die Ihren Filtern entsprechen."
     },
     "milestoneGroup": {
       "runCount": "{count, plural, one {# Testlauf} other {# Testläufe}}",
@@ -3956,8 +3957,7 @@
       "mine": "Meine Testläufe"
     },
     "typeFilter": {
-      "both": "Manuell & Automatisiert",
-      "label": "Nach Laufart filtern"
+      "both": "Manuell & Automatisiert"
     }
   },
   "admin": {
@@ -7328,7 +7328,7 @@
         }
       }
     },
-    "projectRunsFilters": "## Testläufe filtern\n\nAktivieren Sie ein Chip, um die Liste einzuschränken. Chips gelten sowohl für die Registerkarten „Aktiv“ als auch „Abgeschlossen“ und werden auf diesem Gerät für dieses Projekt gespeichert.\n\n- **Manuell** / **Automatisiert** — beschränkt die Liste auf diese Art von Lauf. Wenn beide aktiviert (oder beide deaktiviert) sind, werden alle Läufe angezeigt.\n- **Meine Testläufe** — nur Läufe, an denen Sie beteiligt sind: Sie haben den Lauf erstellt, Ihnen ist ein Testfall darin zugewiesen, oder Sie haben ein Testergebnis darin erfasst."
+    "projectRunsFilters": "## Testläufe filtern\n\nAktivieren Sie ein Chip, um die Liste einzugrenzen. Chips gelten sowohl für die Tabs „Aktiv“ als auch „Abgeschlossen“ und werden auf diesem Gerät für dieses Projekt gespeichert.\n\n- **Manuell** / **Automatisiert** — beschränkt die Liste auf diese Art von Testlauf. Wenn beide aktiviert (oder beide deaktiviert) sind, werden alle Testläufe angezeigt.\n- **Meine Testläufe** — nur Testläufe, an denen Sie beteiligt sind: Sie haben den Testlauf erstellt, Ihnen ist ein Testfall darin zugewiesen, oder Sie haben ein Testergebnis darin erfasst."
   },
   "reports": {
     "ui": {

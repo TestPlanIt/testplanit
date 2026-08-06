@@ -1,5 +1,11 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("next-intl", () => ({
   useTranslations: (namespace?: string) => (key: string) => {
@@ -30,6 +36,47 @@ const makeOptions = (count: number): Option[] =>
     id: i + 1,
     label: `Item ${i + 1}`,
   }));
+
+// jsdom has no IntersectionObserver, and without one the load-more sentinel
+// never wires. Controllable stand-in so tests drive intersection by hand.
+let observers: MockIntersectionObserver[] = [];
+
+class MockIntersectionObserver {
+  callback: IntersectionObserverCallback;
+  constructor(callback: IntersectionObserverCallback) {
+    this.callback = callback;
+    observers.push(this);
+  }
+  observe() {}
+  unobserve() {}
+  disconnect() {
+    observers = observers.filter((o) => o !== this);
+  }
+  takeRecords() {
+    return [];
+  }
+  fire(isIntersecting: boolean) {
+    this.callback(
+      [{ isIntersecting } as IntersectionObserverEntry],
+      this as unknown as IntersectionObserver
+    );
+  }
+}
+
+const fireSentinel = (isIntersecting: boolean) => {
+  act(() => {
+    observers.forEach((o) => o.fire(isIntersecting));
+  });
+};
+
+beforeEach(() => {
+  vi.stubGlobal("IntersectionObserver", MockIntersectionObserver);
+});
+
+afterEach(() => {
+  observers = [];
+  vi.unstubAllGlobals();
+});
 
 describe("MultiAsyncCombobox trigger loading state", () => {
   it("swaps the chevron for a spinner while options load, then restores it", async () => {
@@ -112,6 +159,36 @@ describe("MultiAsyncCombobox selection toolbar", () => {
     expect(
       screen.queryByTestId("multi-async-combobox-clear-all")
     ).not.toBeInTheDocument();
+  });
+
+  it("appends further pages as the sentinel comes into view", async () => {
+    const all = makeOptions(25);
+    renderCombobox({
+      pageSize: 10,
+      fetchOptions: async (_query, page, pageSize) => ({
+        results: all.slice(page * pageSize, (page + 1) * pageSize),
+        total: all.length,
+      }),
+    });
+
+    fireEvent.click(screen.getByRole("combobox"));
+    expect(await screen.findByText("Item 1")).toBeInTheDocument();
+    expect(screen.queryByText("Item 11")).not.toBeInTheDocument();
+    expect(screen.queryByText("Previous")).not.toBeInTheDocument();
+    expect(screen.queryByText("Next")).not.toBeInTheDocument();
+
+    // Scrolled to the bottom: the sentinel intersects and, page by page, the
+    // viewport-fill keeps pulling while it stays visible.
+    fireSentinel(true);
+
+    await waitFor(() => {
+      expect(screen.getByText("Item 25")).toBeInTheDocument();
+    });
+    // Earlier pages are still mounted — appended, not swapped.
+    expect(screen.getByText("Item 1")).toBeInTheDocument();
+    expect(
+      screen.getByTestId("multi-async-combobox-count-footer")
+    ).toBeInTheDocument();
   });
 
   it("selects every match — not just the page on screen — from Select All", async () => {

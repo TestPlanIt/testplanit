@@ -70,9 +70,10 @@ test.describe("Session Configuration Select All", () => {
       // Should be at least 12 (our configs, plus possibly pre-existing ones)
       expect(count).toBeGreaterThanOrEqual(12);
 
-      // The page indicator should show "1-10 of N" confirming we're on page 1
-      const paginationText = page.locator("text=/1–10 of/");
-      await expect(paginationText).toBeVisible({ timeout: 5000 });
+      // The footer should show "loaded of total" for the accumulated list
+      const countFooter = page.getByTestId("multi-async-combobox-count-footer");
+      await expect(countFooter).toBeVisible({ timeout: 5000 });
+      await expect(countFooter).toHaveText(/\d+ of \d+/);
     });
   });
 

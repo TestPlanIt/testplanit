@@ -864,7 +864,8 @@
       "showing": "Affichage",
       "total": "total {count, plural, =1 {# article} other {# articles}}",
       "filtered": "filtré de",
-      "pageOfPages": "Page {current} de {total}"
+      "pageOfPages": "Page {current} de {total}",
+      "loadedOfTotal": "{loaded, number} sur {total, number}"
     },
     "upload": {
       "title": "Ajouter une nouvelle photo de profil",
@@ -7327,7 +7328,7 @@
         }
       }
     },
-    "projectRunsFilters": "## Filtrer les exécutions de test\n\nActivez ou désactivez une puce pour affiner la liste. Les puces s'appliquent aux onglets Actives et Terminées, et sont mémorisées sur cet appareil pour ce projet.\n\n- **Manuel** / **Automatisé** — limite la liste à ce type d'exécution. Activer les deux (ou désactiver les deux) affiche toutes les exécutions.\n- **Mes exécutions de test** — uniquement les exécutions auxquelles vous participez : vous avez créé l'exécution, un cas de test vous y est assigné, ou vous avez enregistré un résultat de test dans celle-ci."
+    "projectRunsFilters": "## Filtrage des exécutions de test\n\nActivez ou désactivez une puce pour affiner la liste. Les puces s'appliquent aux onglets Actives et Terminées, et sont mémorisées sur cet appareil pour ce projet.\n\n- **Manuel** / **Automatisé** — limite la liste à ce type d'exécution. Activer les deux (ou les désactiver toutes les deux) affiche toutes les exécutions.\n- **Mes exécutions de test** — uniquement les exécutions auxquelles vous participez : vous avez créé l'exécution, un cas de test vous y est assigné, ou vous avez enregistré un résultat de test dans celle-ci."
   },
   "reports": {
     "ui": {

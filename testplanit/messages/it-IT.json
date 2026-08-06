@@ -864,7 +864,8 @@
       "showing": "Mostrando",
       "total": "totale {count, plural, =1 {# articolo} other {# articoli}}",
       "filtered": "filtrato da",
-      "pageOfPages": "Pagina {current} di {total}"
+      "pageOfPages": "Pagina {current} di {total}",
+      "loadedOfTotal": "{loaded, number} di {total, number}"
     },
     "upload": {
       "title": "Carica una nuova immagine del profilo",
@@ -3944,7 +3945,7 @@
     },
     "empty": {
       "noMatchingCompleted": "Nessun test completato corrisponde al filtro.",
-      "noMatchingActive": "Nessuna esecuzione di test attiva corrisponde ai filtri."
+      "noMatchingActive": "Nessuna esecuzione di test attiva corrisponde ai tuoi filtri."
     },
     "milestoneGroup": {
       "runCount": "{count, plural, one {# esecuzione} other {# esecuzioni}}",
@@ -3952,8 +3953,8 @@
       "collapseAll": "Comprimi tutto"
     },
     "runFilters": {
-      "label": "Filtra le esecuzioni dei test",
-      "mine": "Le mie esecuzioni dei test"
+      "label": "Filtra esecuzioni test",
+      "mine": "Le mie esecuzioni test"
     },
     "typeFilter": {
       "both": "Manuale e automatizzato"
@@ -7327,7 +7328,7 @@
         }
       }
     },
-    "projectRunsFilters": "## Filtraggio delle esecuzioni dei test\n\nAttiva un filtro per restringere l'elenco. I filtri si applicano sia alla scheda Attive che a quella Completate e vengono memorizzati su questo dispositivo per questo progetto.\n\n- **Manuale** / **Automatizzato** — limita l'elenco a quel tipo di esecuzione. Attivando entrambi (o disattivando entrambi) vengono mostrate tutte le esecuzioni.\n- **Le mie esecuzioni dei test** — solo le esecuzioni a cui partecipi: hai creato l'esecuzione, ti è stato assegnato un caso di test al suo interno, oppure hai registrato un risultato di test al suo interno."
+    "projectRunsFilters": "## Filtraggio delle esecuzioni test\n\nAttiva o disattiva un chip per restringere l'elenco. I chip si applicano sia alla scheda Attive che a quella Completate e vengono memorizzati su questo dispositivo per questo progetto.\n\n- **Manuale** / **Automatizzato** — limita l'elenco a quel tipo di esecuzione. Attivando entrambi (o disattivandoli entrambi) vengono mostrate tutte le esecuzioni.\n- **Le mie esecuzioni test** — solo le esecuzioni a cui partecipi: hai creato l'esecuzione, ti è stato assegnato un caso di prova al suo interno, oppure hai registrato un risultato di test al suo interno."
   },
   "reports": {
     "ui": {

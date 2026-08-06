@@ -538,7 +538,7 @@
       "selectProjects": "选择项目",
       "selectStates": "选择状态",
       "selectTags": "选择标签",
-      "addFieldTo": "向 {section} 添加字段",
+      "addFieldTo": "添加字段到{section}",
       "selectTemplates": "选择模板",
       "selectUsers": "选择用户",
       "selectOption": "选择一个选项",
@@ -864,7 +864,8 @@
       "showing": "显示",
       "total": "总计 {count, plural, =1 {# 件数} other {# 件数}}",
       "filtered": "已筛选",
-      "pageOfPages": "第 {current} 页，共 {total} 页"
+      "pageOfPages": "第 {current} 页，共 {total} 页",
+      "loadedOfTotal": "{loaded, number} / {total, number}"
     },
     "upload": {
       "title": "上传新的个人资料图片",
@@ -3944,7 +3945,7 @@
     },
     "empty": {
       "noMatchingCompleted": "没有符合您筛选条件的已完成测试运行。",
-      "noMatchingActive": "没有符合您筛选条件的进行中测试运行。"
+      "noMatchingActive": "没有符合您筛选条件的活动测试运行。"
     },
     "milestoneGroup": {
       "runCount": "{count, plural, other {# 个运行}}",
@@ -7327,7 +7328,7 @@
         }
       }
     },
-    "projectRunsFilters": "## 筛选测试运行\n\n切换标签以缩小列表范围。标签同时适用于“进行中”和“已完成”选项卡，并会在此设备上为此项目记住设置。\n\n- **手动** / **自动化** — 将列表限制为该类型的运行。同时打开（或同时关闭）两者将显示所有运行。\n- **我的测试运行** — 仅显示您参与的运行：您创建了该运行、您在其中被分配了测试用例，或您在其中记录了测试结果。"
+    "projectRunsFilters": "## 筛选测试运行\n\n切换标签以缩小列表范围。标签同时适用于“活动”和“已完成”标签页,并会在此设备上为该项目记住您的选择。\n\n- **手动** / **自动化** — 将列表限制为该类型的运行。同时开启(或同时关闭)两者将显示所有运行。\n- **我的测试运行** — 仅显示您参与的运行:您创建了该运行、您被分配了其中的测试用例,或您在其中记录了测试结果。"
   },
   "reports": {
     "ui": {

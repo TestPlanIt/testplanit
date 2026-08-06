@@ -460,7 +460,7 @@ test.describe("Test Run Configuration Combobox", () => {
     });
   });
 
-  test("should show pagination controls in combobox dropdown", async ({
+  test("should show the loaded-count footer in the combobox dropdown", async ({
     api,
     page,
   }) => {
@@ -489,19 +489,14 @@ test.describe("Test Run Configuration Combobox", () => {
       ).toBeVisible({ timeout: 5000 });
     });
 
-    await test.step("Verify pagination footer shows Previous/Next with Previous disabled", async () => {
-      // Verify pagination footer is visible with Previous/Next buttons
-      // Scope to the combobox popover to avoid matching the dialog's wizard "Next" button
-      const comboboxPopover = page.locator("[cmdk-list]").first().locator("..");
-      const prevButton = comboboxPopover.getByRole("button", {
-        name: "Previous",
-      });
-      const nextButton = comboboxPopover.getByRole("button", { name: "Next" });
-      await expect(prevButton).toBeVisible();
-      await expect(nextButton).toBeVisible();
-
-      // Previous should be disabled on first page
-      await expect(prevButton).toBeDisabled();
+    await test.step("Verify the count footer replaces the Previous/Next pager", async () => {
+      // The list infinite-scrolls now: a count footer replaces the old pager.
+      const countFooter = page.getByTestId("multi-async-combobox-count-footer");
+      await expect(countFooter).toBeVisible();
+      await expect(countFooter).toHaveText(/1 of 1/);
+      await expect(
+        page.getByRole("button", { name: "Previous" })
+      ).not.toBeVisible();
     });
   });
 

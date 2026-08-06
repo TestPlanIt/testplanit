@@ -1,5 +1,19 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { beforeAll, describe, expect, it, vi } from "vitest";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
+import {
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
 
 // TanStack Virtual takes its first measurement from the scroll element's
 // offsetHeight, and the shared ResizeObserver mock never fires. Without a
@@ -15,6 +29,47 @@ beforeAll(() => {
     configurable: true,
     value: 300,
   });
+});
+
+// jsdom has no IntersectionObserver, and without one the load-more sentinel
+// never wires. Controllable stand-in so tests drive intersection by hand.
+let observers: MockIntersectionObserver[] = [];
+
+class MockIntersectionObserver {
+  callback: IntersectionObserverCallback;
+  constructor(callback: IntersectionObserverCallback) {
+    this.callback = callback;
+    observers.push(this);
+  }
+  observe() {}
+  unobserve() {}
+  disconnect() {
+    observers = observers.filter((o) => o !== this);
+  }
+  takeRecords() {
+    return [];
+  }
+  fire(isIntersecting: boolean) {
+    this.callback(
+      [{ isIntersecting } as IntersectionObserverEntry],
+      this as unknown as IntersectionObserver
+    );
+  }
+}
+
+const fireSentinel = (isIntersecting: boolean) => {
+  act(() => {
+    observers.forEach((o) => o.fire(isIntersecting));
+  });
+};
+
+beforeEach(() => {
+  vi.stubGlobal("IntersectionObserver", MockIntersectionObserver);
+});
+
+afterEach(() => {
+  observers = [];
+  vi.unstubAllGlobals();
 });
 
 vi.mock("next-intl", () => ({
@@ -212,6 +267,66 @@ describe("AsyncCombobox virtualization", () => {
     // query to mark up.
     expect(trigger).toHaveTextContent("Item 1");
     expect(trigger).not.toHaveTextContent("[item]");
+  });
+
+  describe("infinite scroll", () => {
+    const renderPaged = (all: Option[], pageSize = 10) =>
+      render(
+        <AsyncCombobox<Option>
+          value={null}
+          onValueChange={vi.fn()}
+          fetchOptions={(_query, page, size) =>
+            Promise.resolve({
+              results: all.slice(page * size, (page + 1) * size),
+              total: all.length,
+            })
+          }
+          getOptionValue={(option) => option.id}
+          renderOption={(option) => <span>{option.label}</span>}
+          placeholder="Search"
+          pageSize={pageSize}
+        />
+      );
+
+    it("appends further pages as the sentinel comes into view", async () => {
+      renderPaged(makeOptions(25));
+
+      await openAndWait("Item 1");
+      expect(screen.queryByText("Item 11")).not.toBeInTheDocument();
+
+      // Scrolled to the bottom: the sentinel intersects and, page by page,
+      // the viewport-fill keeps pulling while it stays visible.
+      fireSentinel(true);
+
+      await waitFor(() => {
+        expect(screen.getByText("Item 25")).toBeInTheDocument();
+      });
+      // Earlier pages are still mounted — appended, not swapped.
+      expect(screen.getByText("Item 1")).toBeInTheDocument();
+      expect(screen.getAllByRole("option")).toHaveLength(25);
+    });
+
+    it("shows the loaded-of-total footer instead of a pager", async () => {
+      renderPaged(makeOptions(25));
+
+      await openAndWait("Item 1");
+
+      expect(
+        screen.getByTestId("async-combobox-count-footer")
+      ).toBeInTheDocument();
+      expect(screen.queryByText("Previous")).not.toBeInTheDocument();
+      expect(screen.queryByText("Next")).not.toBeInTheDocument();
+    });
+
+    it("offers no footer for local full-list sources", async () => {
+      renderCombobox(makeOptions(10));
+
+      await openAndWait("Item 1");
+
+      expect(
+        screen.queryByTestId("async-combobox-count-footer")
+      ).not.toBeInTheDocument();
+    });
   });
 
   // WCAG 4.1.2. A combobox trigger usually shows only the selected value (or

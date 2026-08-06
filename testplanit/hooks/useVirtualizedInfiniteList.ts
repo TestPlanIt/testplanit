@@ -138,6 +138,13 @@ export function useVirtualizedInfiniteList({
     getScrollElement: () => scrollElRef.current,
     estimateSize: () => estimateSize,
     overscan,
+    // Rows measure themselves through `measureElement` ref callbacks, which
+    // run during React's commit. The default scroll-sync flushSync then fires
+    // inside a lifecycle, where React logs "flushSync was called from inside
+    // a lifecycle method" and refuses to flush — so the sync path buys
+    // nothing here and only produces the error. Plain re-renders keep the
+    // window correct.
+    useFlushSync: false,
   });
 
   // Latest values for the observer callback without re-subscribing each

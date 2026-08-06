@@ -864,7 +864,8 @@
       "showing": "顯示",
       "total": "總計 {count, plural, =1 {# 件數} other {# 件數}}",
       "filtered": "已篩選",
-      "pageOfPages": "第 {current} 頁，共 {total} 頁"
+      "pageOfPages": "第 {current} 頁，共 {total} 頁",
+      "loadedOfTotal": "{loaded, number} / {total, number}"
     },
     "upload": {
       "title": "上傳新的個人資料圖片",
@@ -3944,7 +3945,7 @@
     },
     "empty": {
       "noMatchingCompleted": "沒有符合您篩選條件的已完成測試運行。",
-      "noMatchingActive": "沒有符合您篩選條件的啟用中測試運行。"
+      "noMatchingActive": "沒有符合您篩選條件的進行中測試運行。"
     },
     "milestoneGroup": {
       "runCount": "{count, plural, other {# 次運行}}",
@@ -3956,8 +3957,7 @@
       "mine": "我的測試運行"
     },
     "typeFilter": {
-      "both": "手動和自動",
-      "label": "依運行類型篩選"
+      "both": "手動和自動"
     }
   },
   "admin": {
@@ -7328,7 +7328,7 @@
         }
       }
     },
-    "projectRunsFilters": "## 篩選測試運行\n\n切換標籤以縮小列表範圍。標籤同時套用於「啟用中」和「已完成」分頁，並會針對此專案在此裝置上記住設定。\n\n- **手動** / **自動化** — 將列表限制為該類型的運行。同時開啟（或同時關閉）兩者將顯示所有運行。\n- **我的測試運行** — 僅顯示您參與的運行：您建立了該運行、您被指派了其中的測試案例，或您在其中記錄了測試結果。"
+    "projectRunsFilters": "## 篩選測試運行\n\n切換標籤以縮小列表範圍。標籤同時適用於「進行中」和「已完成」分頁，並會在此裝置上針對此專案記住設定。\n\n- **手動** / **自動化** — 將列表限制為該類型的運行。同時開啟（或同時關閉）兩者將顯示所有運行。\n- **我的測試運行** — 僅顯示您參與的運行：您建立了該運行、您被指派了其中的測試用例，或您在其中記錄了測試結果。"
   },
   "reports": {
     "ui": {

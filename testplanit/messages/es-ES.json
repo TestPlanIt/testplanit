@@ -538,7 +538,7 @@
       "selectProjects": "Seleccionar proyectos",
       "selectStates": "Seleccionar estados",
       "selectTags": "Seleccionar etiquetas",
-      "addFieldTo": "Agregar un campo a {section}",
+      "addFieldTo": "Añadir un campo a {section}",
       "selectTemplates": "Seleccionar plantillas",
       "selectUsers": "Seleccionar usuarios",
       "selectOption": "Seleccione una opción",
@@ -864,7 +864,8 @@
       "showing": "Mostrar",
       "total": "total {count, plural, =1 {# artículo} other {# artículos}}",
       "filtered": "filtrado desde",
-      "pageOfPages": "Página {current} de {total}"
+      "pageOfPages": "Página {current} de {total}",
+      "loadedOfTotal": "{loaded, number} de {total, number}"
     },
     "upload": {
       "title": "Subir nueva foto de perfil",
@@ -3953,7 +3954,7 @@
     },
     "runFilters": {
       "label": "Filtrar ejecuciones de prueba",
-      "mine": "Mis ejecuciones de prueba"
+      "mine": "Mis Ejecuciones de Prueba"
     },
     "typeFilter": {
       "both": "Manual y automatizado"
@@ -7327,7 +7328,7 @@
         }
       }
     },
-    "projectRunsFilters": "## Filtrado de ejecuciones de prueba\n\nActive o desactive una etiqueta para acotar la lista. Las etiquetas se aplican tanto a las pestañas Activas como Completadas, y se recuerdan en este dispositivo para este proyecto.\n\n- **Manual** / **Automatizada** — limita la lista a ese tipo de ejecución. Activar ambas (o desactivar ambas) muestra todas las ejecuciones.\n- **Mis ejecuciones de prueba** — solo las ejecuciones en las que participa: usted creó la ejecución, tiene asignado un caso de prueba en ella, o registró un resultado de prueba en ella."
+    "projectRunsFilters": "## Filtrado de ejecuciones de prueba\n\nActive o desactive un chip para acotar la lista. Los chips se aplican tanto a las pestañas Activas como Completadas, y se recuerdan en este dispositivo para este proyecto.\n\n- **Manual** / **Automatizado** — limita la lista a ese tipo de ejecución. Activar ambos (o desactivar ambos) muestra todas las ejecuciones.\n- **Mis Ejecuciones de Prueba** — solo las ejecuciones en las que usted participa: usted creó la ejecución, tiene asignado un caso de prueba en ella, o registró un resultado de prueba en ella."
   },
   "reports": {
     "ui": {

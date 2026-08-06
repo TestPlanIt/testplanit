@@ -323,6 +323,70 @@ export function ProjectIntegrationSettings({
     return externalProjects.filter((p) => !linkedIds.has(p.id));
   }, [externalProjects, integrationProjects]);
 
+  // AsyncCombobox refetches whenever `fetchOptions` changes identity, so
+  // fetchers must stay referentially stable across renders — an inline arrow
+  // resets the dropdown to page 0 on every render and it can never load
+  // more. The per-mapping issue-type fetchers live in a memoized map because
+  // hooks can't be called inside the `integrationProjects?.map()` rows.
+  const issueTypeFetchers = useMemo(() => {
+    const fetchers = new Map<
+      string,
+      (
+        query: string,
+        page: number,
+        pageSize: number
+      ) => Promise<{ results: IssueType[]; total: number }>
+    >();
+    for (const ip of integrationProjects ?? []) {
+      fetchers.set(ip.id, async (query, page, pageSize) => {
+        try {
+          const response = await fetch(
+            `/api/integrations/${integration.id}/issue-types?projectKey=${encodeURIComponent(ip.externalProjectKey)}`
+          );
+          if (response.ok) {
+            const data = await response.json();
+            const issueTypes = data.issueTypes || [];
+            const filtered = query
+              ? issueTypes.filter((type: any) =>
+                  type.name.toLowerCase().includes(query.toLowerCase())
+                )
+              : issueTypes;
+            const start = page * pageSize;
+            return {
+              results: filtered.slice(start, start + pageSize),
+              total: filtered.length,
+            };
+          }
+        } catch (error) {
+          console.error("Failed to fetch issue types:", error);
+        }
+        return { results: [], total: 0 };
+      });
+    }
+    return fetchers;
+  }, [integrationProjects, integration.id]);
+
+  const fetchAddableExternalProjects = useCallback(
+    async (query: string, page: number, pageSize: number) => {
+      // Load external projects if not already loaded
+      if (externalProjects.length === 0) {
+        await loadExternalProjects();
+      }
+      const filtered = availableToAdd.filter(
+        (p) =>
+          !query ||
+          p.name.toLowerCase().includes(query.toLowerCase()) ||
+          p.key.toLowerCase().includes(query.toLowerCase())
+      );
+      const start = page * pageSize;
+      return {
+        results: filtered.slice(start, start + pageSize),
+        total: filtered.length,
+      };
+    },
+    [externalProjects.length, loadExternalProjects, availableToAdd]
+  );
+
   if (needsAuth) {
     return (
       <Card>
@@ -542,38 +606,7 @@ export function ProjectIntegrationSettings({
                                 },
                               });
                             }}
-                            fetchOptions={async (query, page, pageSize) => {
-                              try {
-                                const response = await fetch(
-                                  `/api/integrations/${integration.id}/issue-types?projectKey=${encodeURIComponent(ip.externalProjectKey)}`
-                                );
-                                if (response.ok) {
-                                  const data = await response.json();
-                                  const issueTypes = data.issueTypes || [];
-                                  const filtered = query
-                                    ? issueTypes.filter((type: any) =>
-                                        type.name
-                                          .toLowerCase()
-                                          .includes(query.toLowerCase())
-                                      )
-                                    : issueTypes;
-                                  const start = page * pageSize;
-                                  return {
-                                    results: filtered.slice(
-                                      start,
-                                      start + pageSize
-                                    ),
-                                    total: filtered.length,
-                                  };
-                                }
-                              } catch (error) {
-                                console.error(
-                                  "Failed to fetch issue types:",
-                                  error
-                                );
-                              }
-                              return { results: [], total: 0 };
-                            }}
+                            fetchOptions={issueTypeFetchers.get(ip.id)!}
                             renderOption={(type) => type.name}
                             getOptionValue={(type) => type.id}
                             placeholder={t(
@@ -647,23 +680,7 @@ export function ProjectIntegrationSettings({
                   <MultiAsyncCombobox<ExternalProject>
                     value={selectedNewProjects}
                     onValueChange={setSelectedNewProjects}
-                    fetchOptions={async (query, page, pageSize) => {
-                      // Load external projects if not already loaded
-                      if (externalProjects.length === 0) {
-                        await loadExternalProjects();
-                      }
-                      const filtered = availableToAdd.filter(
-                        (p) =>
-                          !query ||
-                          p.name.toLowerCase().includes(query.toLowerCase()) ||
-                          p.key.toLowerCase().includes(query.toLowerCase())
-                      );
-                      const start = page * pageSize;
-                      return {
-                        results: filtered.slice(start, start + pageSize),
-                        total: filtered.length,
-                      };
-                    }}
+                    fetchOptions={fetchAddableExternalProjects}
                     renderOption={(project) => (
                       <span>
                         {project.name}{" "}

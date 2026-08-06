@@ -74,6 +74,29 @@ export function MatrixFilterPanel({ projectId }: { projectId: number }) {
     [projectId]
   );
 
+  // Same stability requirement as above.
+  const fetchConfigOptions = useCallback(
+    async (query: string, page: number, pageSize: number) => {
+      const real = await searchProjectMatrixConfigurations(
+        projectId,
+        query,
+        page,
+        pageSize
+      );
+      // Synthetic "(none)" sentinel matches the cell axis "(none)"
+      // column. Only show on the first page when there's no search
+      // query — otherwise it pollutes paginated results.
+      if (page === 0 && (!query || query.trim().length === 0)) {
+        return {
+          results: [{ id: 0, name: t("configNone") }, ...real.results],
+          total: real.total + 1,
+        };
+      }
+      return real;
+    },
+    [projectId, t]
+  );
+
   const { filters, setFilters } = useMatrixFilters();
 
   const statusIds = filters.statusIds ?? [];
@@ -212,24 +235,7 @@ export function MatrixFilterPanel({ projectId }: { projectId: number }) {
           onValueChange={(opts) =>
             setFilters({ configIds: opts.map((o) => o.id) })
           }
-          fetchOptions={async (query, page, pageSize) => {
-            const real = await searchProjectMatrixConfigurations(
-              projectId,
-              query,
-              page,
-              pageSize
-            );
-            // Synthetic "(none)" sentinel matches the cell axis "(none)"
-            // column. Only show on the first page when there's no search
-            // query — otherwise it pollutes paginated results.
-            if (page === 0 && (!query || query.trim().length === 0)) {
-              return {
-                results: [{ id: 0, name: t("configNone") }, ...real.results],
-                total: real.total + 1,
-              };
-            }
-            return real;
-          }}
+          fetchOptions={fetchConfigOptions}
           renderOption={(opt) => <ConfigurationNameDisplay name={opt.name} />}
           renderSelectedOption={(opt) => (
             <ConfigurationNameDisplay name={opt.name} />

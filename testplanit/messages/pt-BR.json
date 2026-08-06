@@ -864,7 +864,8 @@
       "showing": "Exibindo",
       "total": "total {count, plural, =1 {# item} other {# itens}}",
       "filtered": "filtrado de",
-      "pageOfPages": "Página {current} de {total}"
+      "pageOfPages": "Página {current} de {total}",
+      "loadedOfTotal": "{loaded, number} de {total, number}"
     },
     "upload": {
       "title": "Carregar nova foto de perfil",
@@ -3953,7 +3954,7 @@
     },
     "runFilters": {
       "label": "Filtrar execuções de teste",
-      "mine": "Minhas Execuções de Teste"
+      "mine": "Minhas execuções de teste"
     },
     "typeFilter": {
       "both": "Manual e automatizado"
@@ -7327,7 +7328,7 @@
         }
       }
     },
-    "projectRunsFilters": "## Filtrando execuções de teste\n\nAtive um chip para restringir a lista. Os chips se aplicam tanto às abas Ativas quanto Concluídas, e são lembrados neste dispositivo para este projeto.\n\n- **Manual** / **Automatizado** — limita a lista a esse tipo de execução. Ativar ambos (ou desativar ambos) mostra todas as execuções.\n- **Minhas Execuções de Teste** — apenas execuções das quais você participa: você criou a execução, você tem um caso de teste atribuído nela, ou você registrou um resultado de teste nela."
+    "projectRunsFilters": "## Filtragem de execuções de teste\n\nAtive ou desative um chip para restringir a lista. Os chips se aplicam tanto às abas Ativas quanto Concluídas e são lembrados neste dispositivo para este projeto.\n\n- **Manual** / **Automatizado** — limita a lista a esse tipo de execução. Ativar ambos (ou desativar ambos) mostra todas as execuções.\n- **Minhas execuções de teste** — apenas execuções em que você participa: você criou a execução, você está designado a um caso de teste nela, ou você registrou um resultado de teste nela."
   },
   "reports": {
     "ui": {

@@ -3,7 +3,7 @@
 import { ProjectAccessType } from "~/zenstack/models";
 import type { Roles, User } from "~/zenstack/models";
 import { useTranslations } from "next-intl";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Control,
   UseFormGetValues,
@@ -162,29 +162,36 @@ export function ProjectUserPermissions({
 
   // --- Derived State ---
   const assignedUserIds = Object.keys(userPermissionsState || {});
-  const availableUsersToAdd =
-    allUsers?.filter((u) => !userPermissionsState?.[u.id]) ?? [];
+  const availableUsersToAdd = useMemo(
+    () => allUsers?.filter((u) => !userPermissionsState?.[u.id]) ?? [],
+    [allUsers, userPermissionsState]
+  );
 
-  // AsyncCombobox functions
-  const fetchUsers = async (
-    query: string,
-    page: number,
-    pageSize: number
-  ): Promise<{ results: UserWithRole[]; total: number }> => {
-    const filtered = availableUsersToAdd.filter((user) => {
-      const searchString = `${user.name} ${user.email}`.toLowerCase();
-      return searchString.includes(query.toLowerCase());
-    });
+  // AsyncCombobox refetches whenever `fetchOptions` changes identity, so it
+  // must stay referentially stable across renders — an inline arrow resets
+  // the dropdown to page 0 on every render and it can never load more.
+  const fetchUsers = useCallback(
+    async (
+      query: string,
+      page: number,
+      pageSize: number
+    ): Promise<{ results: UserWithRole[]; total: number }> => {
+      const filtered = availableUsersToAdd.filter((user) => {
+        const searchString = `${user.name} ${user.email}`.toLowerCase();
+        return searchString.includes(query.toLowerCase());
+      });
 
-    const start = page * pageSize;
-    const end = start + pageSize;
-    const paginatedResults = filtered.slice(start, end);
+      const start = page * pageSize;
+      const end = start + pageSize;
+      const paginatedResults = filtered.slice(start, end);
 
-    return {
-      results: paginatedResults,
-      total: filtered.length,
-    };
-  };
+      return {
+        results: paginatedResults,
+        total: filtered.length,
+      };
+    },
+    [availableUsersToAdd]
+  );
 
   const renderUserOption = (user: UserWithRole) => (
     <UserNameCell userId={user.id} hideLink={true} />
