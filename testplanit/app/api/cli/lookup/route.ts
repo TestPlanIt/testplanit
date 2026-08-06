@@ -9,6 +9,7 @@ import { baseDb } from "@/lib/db";
 import { WorkflowScope } from "~/zenstack/models";
 import { NextRequest, NextResponse } from "next/server";
 import { authenticateApiToken } from "~/lib/api-token-auth";
+import { isUniqueConstraintError } from "~/lib/utils/errors";
 import { getServerAuthSession } from "~/server/auth";
 
 interface LookupRequest {
@@ -172,21 +173,56 @@ export async function POST(request: NextRequest) {
       }
 
       case "tag": {
-        // Look up tag by name (tags are global)
+        // Look up tag by name (tags are global). Case-insensitive, matching
+        // every other tag-creation path in the app (see
+        // app/api/admin/tags/create/route.ts) — an exact-case match here let
+        // CI jobs recreate "regression"/"Regression"-style duplicates
+        // whenever a run submitted a different casing than what existed.
         let tag = await baseDb.tags.findFirst({
           where: {
-            name: name,
+            name: { equals: name, mode: "insensitive" },
             isDeleted: false,
           },
           select: { id: true, name: true },
         });
 
         if (!tag && createIfMissing) {
-          // Create the tag if it doesn't exist
-          tag = await baseDb.tags.create({
-            data: { name: name },
-            select: { id: true, name: true },
+          // A case-variant may exist soft-deleted — restore it instead of
+          // creating a fresh duplicate.
+          const deletedTag = await baseDb.tags.findFirst({
+            where: {
+              name: { equals: name, mode: "insensitive" },
+              isDeleted: true,
+            },
+            select: { id: true },
           });
+
+          try {
+            tag = deletedTag
+              ? await baseDb.tags.update({
+                  where: { id: deletedTag.id },
+                  data: { isDeleted: false },
+                  select: { id: true, name: true },
+                })
+              : await baseDb.tags.create({
+                  data: { name: name },
+                  select: { id: true, name: true },
+                });
+          } catch (err) {
+            // Race: another request created/restored a case-variant between
+            // the lookup above and this write. Fall back to the same
+            // case-insensitive detection rather than surfacing a 500.
+            if (isUniqueConstraintError(err)) {
+              tag = await baseDb.tags.findFirst({
+                where: {
+                  name: { equals: name, mode: "insensitive" },
+                  isDeleted: false,
+                },
+                select: { id: true, name: true },
+              });
+            }
+            if (!tag) throw err;
+          }
           result = { id: tag.id, name: tag.name, created: true };
         } else if (!tag) {
           return NextResponse.json(
