@@ -401,4 +401,74 @@ describe("RequestReviewSheet", () => {
     ) as HTMLTextAreaElement;
     expect(comment.value).toBe("");
   });
+
+  it("(h) keeps an in-progress comment when a background refetch hands it a new initialValues object", () => {
+    const initialAssignee: AssigneeOption = {
+      kind: "role",
+      id: 7,
+      name: "Tester",
+      notifyCount: 3,
+    };
+    // ReviewStatusBanner memoizes initialValues off a live ReviewRequest
+    // query, so a refetch produces a value-identical but reference-new
+    // object on every poll/invalidate.
+    const propsFor = () =>
+      makeProps({
+        initialValues: {
+          assignee: { ...initialAssignee },
+          targetStateId: 11,
+        },
+      });
+
+    const { rerender } = render(<RequestReviewSheet {...propsFor()} />);
+
+    const comment = screen.getByTestId(
+      "request-review-comment"
+    ) as HTMLTextAreaElement;
+    fireEvent.change(comment, { target: { value: "Please check the steps." } });
+    fireEvent.click(screen.getByTestId("request-review-assignee"));
+
+    rerender(<RequestReviewSheet {...propsFor()} />);
+
+    expect(
+      (screen.getByTestId("request-review-comment") as HTMLTextAreaElement)
+        .value
+    ).toBe("Please check the steps.");
+    expect(
+      screen.getByTestId("request-review-assignee").getAttribute("data-value")
+    ).toBe("user:user-1");
+  });
+
+  it("(i) re-applies the prefill when the Sheet is reopened", () => {
+    const initialValues = {
+      assignee: {
+        kind: "role" as const,
+        id: 7,
+        name: "Tester",
+        notifyCount: 3,
+      },
+      targetStateId: 11,
+    };
+
+    const { rerender } = render(
+      <RequestReviewSheet {...makeProps({ initialValues })} />
+    );
+
+    fireEvent.change(screen.getByTestId("request-review-comment"), {
+      target: { value: "draft" },
+    });
+
+    rerender(
+      <RequestReviewSheet {...makeProps({ open: false, initialValues })} />
+    );
+    rerender(<RequestReviewSheet {...makeProps({ initialValues })} />);
+
+    expect(
+      (screen.getByTestId("request-review-comment") as HTMLTextAreaElement)
+        .value
+    ).toBe("");
+    expect(
+      screen.getByTestId("request-review-assignee").getAttribute("data-value")
+    ).toBe("role:7");
+  });
 });
