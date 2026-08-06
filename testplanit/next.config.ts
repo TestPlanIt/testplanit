@@ -114,6 +114,12 @@ const buildAllowedDevOrigins = (): string[] => {
   return Array.from(hosts);
 };
 
+// Turbopack's build cache lives in .next/cache and only speeds anything up when
+// that directory survives between builds. CI runners and Docker layers start
+// clean, so writing it there is cost without payoff. Local builds keep it.
+const enableTurbopackBuildCache =
+  !process.env.CI && process.env.DOCKER_BUILD !== "true";
+
 const nextConfig: NextConfig = {
   typescript: { ignoreBuildErrors: true },
   output: "standalone",
@@ -146,6 +152,7 @@ const nextConfig: NextConfig = {
     "/**": ["./prisma/audit_row_change.sql"],
   },
   experimental: {
+    turbopackFileSystemCacheForBuild: enableTurbopackBuildCache,
     // Limit number of workers to reduce memory usage during build
     workerThreads: false,
     cpus: 2,

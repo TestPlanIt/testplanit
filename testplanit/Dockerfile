@@ -144,6 +144,8 @@ ENV NEXTAUTH_URL=http://localhost:3000
 ENV SKIP_VALKEY_CONNECTION=true
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV UV_THREADPOOL_SIZE=4
+# Container layers start clean, so the Turbopack build cache is never restored.
+ENV DOCKER_BUILD=true
 ENV BASE_DOMAIN=${BASE_DOMAIN}
 WORKDIR /app/testplanit
 # The ZenStack v3 client is generated in the base stage (`pnpm zenstack

@@ -39,6 +39,10 @@ allowBuilds:
 # Pinned transitive dependency versions (moved from package.json#pnpm.overrides;
 # pnpm 11 no longer reads the pnpm field in package.json).
 overrides:
+  # No source imports axios; it reaches the tree via swagger-ui-react ->
+  # @swagger-api/apidom-reference ('^1.16.0'). The override keeps that on a
+  # single, current copy now that the direct dependency is gone.
+  'axios': '^1.19.0'
   'csstype': '^3.2.0'
   'postcss': '^8.5.10'
   '@csstools/css-syntax-patches-for-csstree': '^1.0.20'
