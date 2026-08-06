@@ -1,5 +1,5 @@
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ReviewDecisionBadge } from "@/components/comments/CommentTypeBadge";
 import {
   Tooltip,
   TooltipContent,
@@ -13,7 +13,6 @@ import type {
 import type { ColumnDef } from "@tanstack/react-table";
 import {
   ArrowRight,
-  Ban,
   CheckCircle2,
   MessageCircleWarning,
   XCircle,
@@ -96,6 +95,11 @@ export interface ExtendedReviewRequest extends ReviewRequest {
     image: string | null;
   } | null;
   assigneeRole: { id: number; name: string } | null;
+  decidedBy?: {
+    id: string;
+    name: string | null;
+    image: string | null;
+  } | null;
 }
 
 /**
@@ -142,56 +146,20 @@ interface UseColumnsArgs {
 }
 
 /**
- * Outcome-badge content for the Decided tab. Matches the badge treatment
- * used in `CommentItem` for `REVIEW_DECISION` so the two surfaces read
- * consistently.
+ * Outcome-badge content for the Decided tab. Delegates the per-status
+ * visuals to the shared `ReviewDecisionBadge`; undecided rows render a
+ * plain dash.
  */
-function DecisionStatusBadge({
-  status,
-  t,
-}: {
-  status: ReviewStatus | null;
-  t: TranslateFn;
-}) {
-  // Filled-background badges so the outcome color is the primary visual
-  // signal (success / warning / destructive / neutral), with white text +
-  // icon for readable contrast across light + dark themes. Tokens
-  // `success` and `warning` come from the project Tailwind config; only
-  // `success` has a paired `success-foreground`, so the warning row falls
-  // back to plain `text-white`.
-  if (status === "APPROVED") {
-    return (
-      <Badge className="gap-1 bg-success text-success-foreground border-success hover:bg-success/90">
-        <CheckCircle2 className="h-3 w-3 shrink-0" />
-        {t("comments.type.reviewDecision.approved")}
-      </Badge>
-    );
+function DecisionStatusBadge({ status }: { status: ReviewStatus | null }) {
+  if (
+    status !== "APPROVED" &&
+    status !== "CHANGES_REQUESTED" &&
+    status !== "REJECTED" &&
+    status !== "CANCELLED"
+  ) {
+    return <span className="text-muted-foreground">-</span>;
   }
-  if (status === "CHANGES_REQUESTED") {
-    return (
-      <Badge className="gap-1 bg-warning text-white border-warning hover:bg-warning/90">
-        <MessageCircleWarning className="h-3 w-3 shrink-0" />
-        {t("comments.type.reviewDecision.changesRequested")}
-      </Badge>
-    );
-  }
-  if (status === "REJECTED") {
-    return (
-      <Badge variant="destructive" className="gap-1">
-        <XCircle className="h-3 w-3 shrink-0" />
-        {t("comments.type.reviewDecision.rejected")}
-      </Badge>
-    );
-  }
-  if (status === "CANCELLED") {
-    return (
-      <Badge className="gap-1 bg-muted-foreground text-background border-muted-foreground hover:bg-muted-foreground/90">
-        <Ban className="h-3 w-3 shrink-0" />
-        {t("comments.type.reviewDecision.cancelled")}
-      </Badge>
-    );
-  }
-  return <span className="text-muted-foreground">-</span>;
+  return <ReviewDecisionBadge status={status} />;
 }
 
 /**
@@ -461,6 +429,29 @@ export const useColumns = ({
             },
           };
 
+    // Decided tab only — the tab now lists decisions on reviews the viewer
+    // requested alongside their own decisions, so the row has to say who
+    // actually decided it.
+    const decidedByColumn: ColumnDef<InboxTableRow> = {
+      id: "decidedBy",
+      accessorKey: "decidedByUserId",
+      header: t("reviews.inbox.columnDecidedBy"),
+      enableSorting: true,
+      minSize: 125,
+      size: 220,
+      cell: ({ row }) => {
+        const decidedBy = row.original.decidedBy;
+        if (!decidedBy) {
+          return <span className="text-muted-foreground">-</span>;
+        }
+        return (
+          <span className="inline-flex min-w-0 max-w-full items-center gap-1 rounded-md border border-muted-foreground/50 bg-secondary px-1 py-0 text-xs text-secondary-foreground transition-colors hover:bg-secondary/80 cursor-pointer [&_*]:cursor-pointer [&_a]:no-underline">
+            <UserNameCell userId={decidedBy.id} shrinkLink />
+          </span>
+        );
+      },
+    };
+
     const tailColumn: ColumnDef<InboxTableRow> =
       view === "pending"
         ? {
@@ -507,10 +498,12 @@ export const useColumns = ({
             size: 180,
             meta: { isPinned: "right" } satisfies CustomColumnMeta,
             cell: ({ row }) => (
-              <DecisionStatusBadge status={row.original.status} t={t} />
+              <DecisionStatusBadge status={row.original.status} />
             ),
           };
 
-    return [...baseColumns, timestampColumn, tailColumn];
+    return view === "decided"
+      ? [...baseColumns, decidedByColumn, timestampColumn, tailColumn]
+      : [...baseColumns, timestampColumn, tailColumn];
   }, [t, view, actions, caseById, testRunById, sessionById, onOpenCase]);
 };

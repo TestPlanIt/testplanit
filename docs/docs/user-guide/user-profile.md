@@ -144,6 +144,8 @@ Shows historical account information:
 
 Shown only on your own profile. Lists comments where you've been @-mentioned across the system, with links back to the originating test case, run, session, or issue. Useful for catching up on conversations that need your input.
 
+Comments created by the [review workflow](reviews-inbox.md) carry the same badge and color accent here as in the entity's own thread — **Review request**, or the decision outcome (**Approved**, **Changes requested**, **Rejected**, or **Cancelled**) — so review activity stands out in the list.
+
 ## Editing Mode
 
 When you click the **Edit Profile** button:

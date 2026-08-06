@@ -20,6 +20,13 @@ import { useEffect, useMemo, useState } from "react";
 import { usePageSizeOptions } from "~/hooks/usePageSizeOptions";
 import { Link } from "~/lib/navigation";
 import { createMentionExtension } from "~/lib/tiptap/mentionExtension";
+import { cn } from "~/utils";
+import {
+  CommentTypeBadge,
+  getCommentAccentClasses,
+  type CommentType,
+  type ReviewRequestStatus,
+} from "@/components/comments/CommentTypeBadge";
 
 interface UserMentionedCommentsProps {
   userId: string;
@@ -32,6 +39,10 @@ interface CommentDisplayProps {
     createdAt: Date;
     isEdited: boolean;
     projectId: number;
+    type?: CommentType;
+    reviewRequest?: {
+      status: ReviewRequestStatus;
+    } | null;
     creator: {
       id: string;
       name: string | null;
@@ -70,6 +81,12 @@ interface CommentDisplayProps {
 
 function CommentDisplay({ comment }: CommentDisplayProps) {
   const tGlobal = useTranslations();
+
+  const commentType: CommentType = comment.type ?? "GENERAL";
+  const accentClasses = getCommentAccentClasses(
+    commentType,
+    comment.reviewRequest?.status
+  );
 
   const displayEditor = useEditor({
     immediatelyRender: false,
@@ -208,9 +225,21 @@ function CommentDisplay({ comment }: CommentDisplayProps) {
           </div>
         </div>
 
+        {commentType !== "GENERAL" && (
+          <div>
+            <CommentTypeBadge
+              type={commentType}
+              reviewStatus={comment.reviewRequest?.status}
+            />
+          </div>
+        )}
+
         {/* Comment content */}
         <div
-          className="rounded-md border border-border bg-muted/30 p-3"
+          className={cn(
+            "rounded-md border border-border bg-muted/30 p-3",
+            accentClasses
+          )}
           style={{ wordBreak: "break-word", overflowWrap: "anywhere" }}
         >
           <EditorContent editor={displayEditor} />
@@ -260,6 +289,11 @@ export function UserMentionedComments({ userId }: UserMentionedCommentsProps) {
           testRun: true,
           session: true,
           milestone: true,
+          reviewRequest: {
+            select: {
+              status: true,
+            },
+          },
         },
       },
     },

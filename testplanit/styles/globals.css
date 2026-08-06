@@ -469,6 +469,29 @@ svg[class*="plot-"] .gantt-task-label text {
      background. */
   color: var(--status-surface-fg) !important;
 }
+:is(.accessible, .accessibledark) [data-review-status] {
+  /* Review-decision badges paint with theme tokens, not admin-chosen hexes,
+     so the readable foreground is known per theme rather than computed at
+     render time: each accessible theme's paired *-foreground token is the
+     black/white pick contrastingTextColor.ts makes for that theme's
+     background value (e.g. --warning flips from dark amber in .accessible
+     to light amber in .accessibledark, so its foreground flips white →
+     near-black). Publishing it as --status-surface-fg lets the badge reuse
+     the [data-status-surface] consumption rule above. */
+  --status-surface-fg: hsl(var(--primary-foreground));
+}
+:is(.accessible, .accessibledark) [data-review-status="approved"] {
+  --status-surface-fg: hsl(var(--success-foreground));
+}
+:is(.accessible, .accessibledark) [data-review-status="changes_requested"] {
+  --status-surface-fg: hsl(var(--warning-foreground));
+}
+:is(.accessible, .accessibledark) [data-review-status="rejected"] {
+  --status-surface-fg: hsl(var(--destructive-foreground));
+}
+:is(.accessible, .accessibledark) [data-review-status="cancelled"] {
+  --status-surface-fg: hsl(var(--background));
+}
 
 /* Style the close button specifically for the TestRunCaseDetails sheet */
 .test-run-details-sheet > button.absolute.end-4.top-4 {

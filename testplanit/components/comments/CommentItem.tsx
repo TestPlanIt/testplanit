@@ -4,22 +4,10 @@ import { JSONContent } from "@tiptap/core";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { formatDistanceToNow } from "date-fns";
-import {
-  Ban,
-  CheckCircle2,
-  Clock,
-  Edit,
-  MessageCircleWarning,
-  MessageSquareWarning,
-  MoreVertical,
-  Trash2,
-  XCircle,
-} from "lucide-react";
-import type { LucideIcon } from "lucide-react";
+import { Clock, Edit, MoreVertical, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { UserNameCell } from "~/components/tables/UserNameCell";
-import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import {
   Dialog,
@@ -43,6 +31,7 @@ import {
 import { createMentionExtension } from "~/lib/tiptap/mentionExtension";
 import { cn } from "~/utils";
 import { CommentEditor } from "./CommentEditor";
+import { CommentTypeBadge, getCommentAccentClasses } from "./CommentTypeBadge";
 
 interface CommentItemProps {
   comment: {
@@ -101,91 +90,10 @@ export function CommentItem({
   const canEdit = isCreator && !isReviewType;
   const canDelete = (isCreator || isAdmin) && !isReviewType;
 
-  const badgeKey = (() => {
-    if (commentType === "REVIEW_REQUEST") {
-      return "comments.type.reviewRequest";
-    }
-    if (commentType === "REVIEW_DECISION") {
-      switch (comment.reviewRequest?.status) {
-        case "APPROVED":
-          return "comments.type.reviewDecision.approved";
-        case "CHANGES_REQUESTED":
-          return "comments.type.reviewDecision.changesRequested";
-        case "REJECTED":
-          return "comments.type.reviewDecision.rejected";
-        case "CANCELLED":
-          return "comments.type.reviewDecision.cancelled";
-        default:
-          return "comments.type.reviewDecision.generic";
-      }
-    }
-    return null;
-  })();
-
-  const accentClasses = (() => {
-    if (commentType === "REVIEW_REQUEST") {
-      return "border-s-4 border-s-primary";
-    }
-    if (commentType === "REVIEW_DECISION") {
-      switch (comment.reviewRequest?.status) {
-        case "APPROVED":
-          return "border-s-4 border-s-emerald-500";
-        case "CHANGES_REQUESTED":
-          return "border-s-4 border-s-amber-500";
-        case "REJECTED":
-          return "border-s-4 border-s-destructive";
-        case "CANCELLED":
-          return "border-s-4 border-s-muted-foreground";
-        default:
-          return "border-s-4 border-s-muted-foreground";
-      }
-    }
-    return "";
-  })();
-
-  const badgeProps: { variant?: "destructive"; className: string } = (() => {
-    const base = "gap-1";
-    if (commentType === "REVIEW_DECISION") {
-      switch (comment.reviewRequest?.status) {
-        case "APPROVED":
-          return {
-            className: `${base} bg-success text-success-foreground border-success hover:bg-success/90`,
-          };
-        case "CHANGES_REQUESTED":
-          return {
-            className: `${base} bg-warning text-white border-warning hover:bg-warning/90`,
-          };
-        case "REJECTED":
-          return { variant: "destructive", className: base };
-        case "CANCELLED":
-          return {
-            className: `${base} bg-muted-foreground text-background border-muted-foreground hover:bg-muted-foreground/90`,
-          };
-        default:
-          return { className: base };
-      }
-    }
-    return { className: `${base} bg-secondary text-secondary-foreground` };
-  })();
-
-  const BadgeIcon: LucideIcon | null = (() => {
-    if (commentType === "REVIEW_REQUEST") return MessageSquareWarning;
-    if (commentType === "REVIEW_DECISION") {
-      switch (comment.reviewRequest?.status) {
-        case "APPROVED":
-          return CheckCircle2;
-        case "CHANGES_REQUESTED":
-          return MessageCircleWarning;
-        case "REJECTED":
-          return XCircle;
-        case "CANCELLED":
-          return Ban;
-        default:
-          return null;
-      }
-    }
-    return null;
-  })();
+  const accentClasses = getCommentAccentClasses(
+    commentType,
+    comment.reviewRequest?.status
+  );
 
   // Editor for displaying comment content (read-only)
   const displayEditor = useEditor({
@@ -309,16 +217,12 @@ export function CommentItem({
           </div>
         </div>
 
-        {badgeKey && (
+        {isReviewType && (
           <div>
-            <Badge
-              variant={badgeProps.variant}
-              data-testid={`comment-type-badge-${commentType.toLowerCase()}`}
-              className={badgeProps.className}
-            >
-              {BadgeIcon && <BadgeIcon className="h-3 w-3 shrink-0" />}
-              {t(badgeKey)}
-            </Badge>
+            <CommentTypeBadge
+              type={commentType}
+              reviewStatus={comment.reviewRequest?.status}
+            />
           </div>
         )}
 
