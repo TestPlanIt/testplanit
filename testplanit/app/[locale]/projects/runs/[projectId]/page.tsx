@@ -33,13 +33,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { SimpleDndProvider } from "@/components/ui/SimpleDndProvider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PageTitle, SectionHeader } from "@/components/ui/typography";
@@ -76,6 +69,15 @@ import AddTestRunModal from "./AddTestRunModal";
 import DuplicateTestRunDialog, {
   AddTestRunModalInitProps,
 } from "./DuplicateTestRunDialog";
+import { RunFilterChips } from "./RunFilterChips";
+import {
+  EMPTY_RUN_FILTERS,
+  isAnyRunFilterActive,
+  parseStoredRunFilters,
+  runFiltersStorageKey,
+  runTypeFilterFor,
+  type RunFilters,
+} from "./runFilters";
 import TestRunDisplay, { type TestRunsWithDetails } from "./TestRunDisplay";
 
 interface ProjectTestRunsProps {
@@ -134,12 +136,52 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
     500
   );
 
-  // Test Run Type Filter State (for both Active and Completed tabs) - persisted in URL
-  type RunTypeFilter = "both" | "manual" | "automated";
-  const [runTypeFilter, setRunTypeFilter] = useTabState("runType", "both") as [
-    RunTypeFilter,
-    (value: RunTypeFilter) => void,
-  ];
+  // Run list filters (Manual / Automated / My Test Runs), applied to both the
+  // Active and Completed tabs and remembered per project in localStorage: they
+  // are a personal working preference on a page people return to constantly,
+  // not something to re-pick every visit.
+  //
+  // "My Test Runs" = the signed-in user created the run, is assigned a case in
+  // it, or recorded a result in it — the same three roles the row's
+  // contributor avatars credit (see TestRunItem's MemberList).
+  const [runFilters, setRunFilters] = useState<RunFilters>(EMPTY_RUN_FILTERS);
+  const [filtersHydrated, setFiltersHydrated] = useState(false);
+
+  // Read in an effect, not in the initializer: localStorage isn't available
+  // during SSR and reading it inline would hydrate-mismatch.
+  useEffect(() => {
+    try {
+      setRunFilters(
+        parseStoredRunFilters(
+          window.localStorage.getItem(runFiltersStorageKey(projectId))
+        )
+      );
+    } catch {
+      // localStorage unavailable (private mode) — no filters.
+    } finally {
+      setFiltersHydrated(true);
+    }
+  }, [projectId]);
+
+  const handleRunFiltersChange = useCallback(
+    (next: RunFilters) => {
+      setRunFilters(next);
+      try {
+        window.localStorage.setItem(
+          runFiltersStorageKey(projectId),
+          JSON.stringify(next)
+        );
+      } catch {
+        // Persistence is best-effort.
+      }
+    },
+    [projectId]
+  );
+
+  const runTypeFilter = runTypeFilterFor(runFilters);
+  const participantFilterActive = runFilters.mine;
+  const participantFilter = participantFilterActive ? "mine" : "all";
+  const anyRunFilterActive = isAnyRunFilterActive(runFilters);
 
   // Calculate pagination for completed runs
   const effectiveCompletedPageSize =
@@ -403,22 +445,74 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
     [allIncompleteTestRuns]
   );
 
-  // Apply type filter to incomplete (active) runs
+  // Ids of the ACTIVE runs the signed-in user participates in. Kept as its own
+  // id-only query rather than folded into the list query above for two
+  // reasons: the AutomationRunsCard reads that list and must keep reflecting
+  // every in-progress automated run regardless of this filter, and toggling
+  // the filter then costs one small round trip instead of refetching the whole
+  // list payload. The completed tab filters server-side instead — it is
+  // already paginated there (see /api/test-runs/completed).
+  const currentUserId = session?.user?.id;
+  const { data: participantRunRows, isLoading: isLoadingParticipantRuns } =
+    useClientQueries(schema).testRuns.useFindMany(
+      {
+        where: {
+          projectId: numericProjectId ?? undefined,
+          isCompleted: false,
+          isDeleted: false,
+          OR: [
+            { createdById: currentUserId },
+            {
+              testCases: {
+                some: { isDeleted: false, assignedToId: currentUserId },
+              },
+            },
+            {
+              results: {
+                some: { isDeleted: false, executedById: currentUserId },
+              },
+            },
+          ],
+        },
+        select: { id: true },
+      },
+      {
+        enabled:
+          participantFilterActive &&
+          !!numericProjectId &&
+          !!currentUserId &&
+          activeTab === "active",
+        staleTime: 30000,
+      }
+    ) ?? { data: [], isLoading: false };
+
+  const participantRunIds = useMemo(
+    () => new Set((participantRunRows ?? []).map((run) => run.id)),
+    [participantRunRows]
+  );
+
+  // Apply type + participation filters to incomplete (active) runs
   const incompleteTestRuns = useMemo(() => {
     if (!allIncompleteTestRuns) return [];
-    if (runTypeFilter === "both") return allIncompleteTestRuns;
+    let runs = allIncompleteTestRuns;
 
     if (runTypeFilter === "manual") {
-      return allIncompleteTestRuns.filter(
-        (run) => !isAutomatedTestRunType(run.testRunType)
-      );
-    } else {
-      // automated filter
-      return allIncompleteTestRuns.filter((run) =>
-        isAutomatedTestRunType(run.testRunType)
-      );
+      runs = runs.filter((run) => !isAutomatedTestRunType(run.testRunType));
+    } else if (runTypeFilter === "automated") {
+      runs = runs.filter((run) => isAutomatedTestRunType(run.testRunType));
     }
-  }, [allIncompleteTestRuns, runTypeFilter]);
+
+    if (participantFilterActive) {
+      runs = runs.filter((run) => participantRunIds.has(run.id));
+    }
+
+    return runs;
+  }, [
+    allIncompleteTestRuns,
+    runTypeFilter,
+    participantFilterActive,
+    participantRunIds,
+  ]);
 
   // Handle tab change with query invalidation
   const handleTabChange = useCallback(
@@ -518,6 +612,7 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
         effectiveCompletedPageSize,
         debouncedCompletedRunsSearchString,
         runTypeFilter,
+        participantFilter,
       ],
       queryFn: async () => {
         if (!numericProjectId) return null;
@@ -528,6 +623,7 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
           pageSize: effectiveCompletedPageSize.toString(),
           search: debouncedCompletedRunsSearchString,
           runType: runTypeFilter,
+          participant: participantFilter,
         });
 
         const response = await fetch(`/api/test-runs/completed?${params}`);
@@ -536,7 +632,10 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
         }
         return response.json();
       },
-      enabled: !!numericProjectId && activeTab === "completed",
+      // Waits for the stored filters so this fires once with them, rather
+      // than once unfiltered and again a tick later.
+      enabled:
+        !!numericProjectId && activeTab === "completed" && filtersHydrated,
       staleTime: 30000, // Cache for 30 seconds
       refetchInterval: activeTab === "completed" ? 30000 : false, // Refetch every 30s when on completed tab
     });
@@ -557,10 +656,15 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
     setCompletedRunsPage(1);
   }, [debouncedCompletedRunsSearchString, setCompletedRunsPage]);
 
-  // Reset to first page when page size or run type filter changes
+  // Reset to first page when page size or either list filter changes
   useEffect(() => {
     setCompletedRunsPage(1);
-  }, [completedRunsPageSize, runTypeFilter, setCompletedRunsPage]);
+  }, [
+    completedRunsPageSize,
+    runTypeFilter,
+    participantFilter,
+    setCompletedRunsPage,
+  ]);
 
   const { data: milestones } = useClientQueries(schema).milestones.useFindMany({
     where: {
@@ -1393,32 +1497,10 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
                 )}
               </div>
 
-              {/* Test Run Type Filter */}
-              <div className="mb-4 flex flex-row items-center gap-2">
-                <Select
-                  value={runTypeFilter}
-                  onValueChange={(value) =>
-                    setRunTypeFilter(value as RunTypeFilter)
-                  }
-                >
-                  <SelectTrigger
-                    className="w-[200px]"
-                    aria-label={t("typeFilter.label")}
-                    data-testid="run-type-filter"
-                  >
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="both">{t("typeFilter.both")}</SelectItem>
-                    <SelectItem value="manual">
-                      {tCommon("fields.manual")}
-                    </SelectItem>
-                    <SelectItem value="automated">
-                      {tCommon("fields.automated")}
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              <RunFilterChips
+                filters={runFilters}
+                onChange={handleRunFiltersChange}
+              />
 
               <Tabs value={activeTab} onValueChange={handleTabChange}>
                 <TabsList className="w-full">
@@ -1434,12 +1516,18 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
 
                 <TabsContent value="active">
                   <div className="flex flex-col">
-                    {incompleteTestRuns?.length === 0 ? (
+                    {participantFilterActive && isLoadingParticipantRuns ? (
+                      <div className="mt-4 flex justify-center">
+                        <LoadingSpinner />
+                      </div>
+                    ) : incompleteTestRuns?.length === 0 ? (
                       <div className="mt-4 flex flex-col items-center justify-center gap-4">
                         <p className="text-center text-muted-foreground">
-                          {tCommon("messages.emptyActive")}
+                          {anyRunFilterActive
+                            ? t("empty.noMatchingActive")
+                            : tCommon("messages.emptyActive")}
                         </p>
-                        {canAddEdit && (
+                        {canAddEdit && !anyRunFilterActive && (
                           <Button
                             variant="default"
                             onClick={() => setIsAddTestRunModalOpen(true)}
@@ -1510,7 +1598,7 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
                     {/* Test Runs Display */}
                     {completedTestRuns?.length === 0 ? (
                       <div className="mt-4 text-center text-muted-foreground">
-                        {completedRunsSearchString
+                        {completedRunsSearchString || anyRunFilterActive
                           ? t("empty.noMatchingCompleted")
                           : tCommon("messages.emptyCompleted")}
                       </div>

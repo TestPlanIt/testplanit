@@ -537,7 +537,7 @@
       "selectProjects": "Seleccionar proyectos",
       "selectStates": "Seleccionar estados",
       "selectTags": "Seleccionar etiquetas",
-      "addFieldTo": "Añadir un campo a {section}",
+      "addFieldTo": "Agregar un campo a {section}",
       "selectTemplates": "Seleccionar plantillas",
       "selectUsers": "Seleccionar usuarios",
       "selectOption": "Seleccione una opción",
@@ -3934,12 +3934,21 @@
     "filter": {
       "placeholder": "La prueba del filtro se ejecuta..."
     },
-    "typeFilter": {
-      "both": "Manual y automatizado",
-      "label": "Filtrar por tipo de ejecución"
-    },
     "empty": {
-      "noMatchingCompleted": "No hay ninguna prueba completada que coincida con su filtro."
+      "noMatchingCompleted": "No hay ninguna prueba completada que coincida con su filtro.",
+      "noMatchingActive": "Ninguna ejecución de prueba activa coincide con sus filtros."
+    },
+    "milestoneGroup": {
+      "runCount": "{count, plural, one {# ejecución} other {# ejecuciones}}",
+      "expandAll": "Expandir todo",
+      "collapseAll": "Contraer todo"
+    },
+    "runFilters": {
+      "label": "Filtrar ejecuciones de prueba",
+      "mine": "Mis ejecuciones de prueba"
+    },
+    "typeFilter": {
+      "both": "Manual y automatizado"
     }
   },
   "admin": {
@@ -7309,7 +7318,8 @@
           "content": "Administre integraciones a nivel de proyecto, configuraciones de modelos de IA y enlaces compartidos desde aquí."
         }
       }
-    }
+    },
+    "projectRunsFilters": "## Filtrado de ejecuciones de prueba\n\nActive o desactive una etiqueta para acotar la lista. Las etiquetas se aplican tanto a las pestañas Activas como Completadas, y se recuerdan en este dispositivo para este proyecto.\n\n- **Manual** / **Automatizada** — limita la lista a ese tipo de ejecución. Activar ambas (o desactivar ambas) muestra todas las ejecuciones.\n- **Mis ejecuciones de prueba** — solo las ejecuciones en las que participa: usted creó la ejecución, tiene asignado un caso de prueba en ella, o registró un resultado de prueba en ella."
   },
   "reports": {
     "ui": {

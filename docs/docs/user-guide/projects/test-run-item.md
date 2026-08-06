@@ -27,7 +27,7 @@ The component uses a 4-column grid:
     - Shows a summary of the execution status of the test cases included in the run using the `TestRunCasesSummary` component. This usually includes counts or percentages of passed, failed, blocked, skipped, or untested cases.
 
 4. **Members & Actions (Right Column)**:
-    - **Active Runs**: Displays user avatars involved with the run (creator, assigned testers, executors) using the `MemberList` component.
+    - **Active Runs**: Displays user avatars involved with the run (creator, assigned testers, executors) using the `MemberList` component. These are the same three roles the [My Test Runs filter](./runs.md#what-counts-as-taking-part) matches on, so filtering by it keeps the runs your avatar appears on.
     - **Completed Runs**: Shows the associated [Milestone](./milestones.md) (if any) and the completion date.
     - **Actions Menu** (Visible on Active runs for Admins/Project Admins):
       - A vertical ellipsis (`...`) button triggers a dropdown menu.

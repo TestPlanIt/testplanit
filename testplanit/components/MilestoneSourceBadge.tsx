@@ -69,6 +69,14 @@ interface MilestoneSourceBadgeProps {
    */
   integrationProjects?: MilestoneIntegrationProject[] | null;
   className?: string;
+  /**
+   * Whether project admins get the dropdown carrying "Unlink from
+   * {provider}". Surfaces that only group BY milestone rather than manage
+   * milestones (the test-runs list) pass false: there the badge is a plain
+   * open-in-tracker link for every role, and unlinking stays on the
+   * milestones pages that own that lifecycle.
+   */
+  showUnlinkAction?: boolean;
 }
 
 /**
@@ -243,6 +251,7 @@ export function MilestoneSourceBadge({
   projectId,
   integrationProjects,
   className,
+  showUnlinkAction = true,
 }: MilestoneSourceBadgeProps) {
   const t = useTranslations("milestones");
   const tCommon = useTranslations("common");
@@ -266,6 +275,7 @@ export function MilestoneSourceBadge({
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [isUnlinking, setIsUnlinking] = useState(false);
   const { isProjectAdmin } = useProjectPermissions(projectId ?? 0);
+  const canUnlink = showUnlinkAction && isProjectAdmin;
 
   // RESEARCH.md Pitfall 3: a converted (detached) milestone keeps
   // integrationId set, so the render guard must also admit detachedAt-set
@@ -451,7 +461,7 @@ export function MilestoneSourceBadge({
           {safeExternalUrl && <ExternalLink className="h-3 w-3" />}
         </Badge>
       </span>
-      {isProjectAdmin ? (
+      {canUnlink ? (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Badge
@@ -505,7 +515,7 @@ export function MilestoneSourceBadge({
           {badgeSegments}
         </Badge>
       )}
-      {isProjectAdmin && (
+      {canUnlink && (
         <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>

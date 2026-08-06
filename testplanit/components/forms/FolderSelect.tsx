@@ -120,6 +120,13 @@ export interface FolderSelectProps {
   placeholder?: string;
   disabled?: boolean;
   className?: string;
+  /**
+   * Accessible name for the trigger. The trigger shows the selected folder
+   * (or a placeholder), never a name of its own, so without this it reaches
+   * screen readers as an unnamed combobox — a visible <label> beside it does
+   * not name a button. Defaults to "Parent folder".
+   */
+  ariaLabel?: string;
 }
 
 export const FolderSelect: React.FC<FolderSelectProps> = ({
@@ -130,6 +137,7 @@ export const FolderSelect: React.FC<FolderSelectProps> = ({
   placeholder, // Use default from translations
   disabled = false,
   className,
+  ariaLabel,
 }) => {
   const tCommon = useTranslations("common");
   const tRepository = useTranslations("repository");
@@ -169,6 +177,7 @@ export const FolderSelect: React.FC<FolderSelectProps> = ({
       fetchOptions={fetchOptions}
       getOptionValue={(option) => option.value}
       placeholder={displayPlaceholder}
+      ariaLabel={ariaLabel ?? tCommon("fields.parentFolder")}
       disabled={disabled || isLoading || flatOptions.length === 0}
       showPagination={false}
       minDropdownWidth={320}

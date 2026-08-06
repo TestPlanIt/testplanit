@@ -3934,12 +3934,21 @@
     "filter": {
       "placeholder": "Filtertestläufe..."
     },
-    "typeFilter": {
-      "both": "Manuell & Automatisiert",
-      "label": "Nach Ausführungstyp filtern"
-    },
     "empty": {
-      "noMatchingCompleted": "Es wurden keine abgeschlossenen Testläufe gefunden, die Ihrem Filter entsprechen."
+      "noMatchingCompleted": "Es wurden keine abgeschlossenen Testläufe gefunden, die Ihrem Filter entsprechen.",
+      "noMatchingActive": "Es wurden keine aktiven Testläufe gefunden, die Ihrem Filter entsprechen."
+    },
+    "milestoneGroup": {
+      "runCount": "{count, plural, one {# Testlauf} other {# Testläufe}}",
+      "expandAll": "Alle erweitern",
+      "collapseAll": "Alle ausblenden"
+    },
+    "runFilters": {
+      "label": "Testläufe filtern",
+      "mine": "Meine Testläufe"
+    },
+    "typeFilter": {
+      "both": "Manuell & Automatisiert"
     }
   },
   "admin": {
@@ -7309,7 +7318,8 @@
           "content": "Von hier aus verwalten Sie Integrationen auf Projektebene, KI-Modellkonfigurationen und freigegebene Links."
         }
       }
-    }
+    },
+    "projectRunsFilters": "## Testläufe filtern\n\nAktivieren Sie ein Chip, um die Liste einzuschränken. Chips gelten sowohl für die Registerkarten „Aktiv“ als auch „Abgeschlossen“ und werden auf diesem Gerät für dieses Projekt gespeichert.\n\n- **Manuell** / **Automatisiert** — beschränkt die Liste auf diese Art von Lauf. Wenn beide aktiviert (oder beide deaktiviert) sind, werden alle Läufe angezeigt.\n- **Meine Testläufe** — nur Läufe, an denen Sie beteiligt sind: Sie haben den Lauf erstellt, Ihnen ist ein Testfall darin zugewiesen, oder Sie haben ein Testergebnis darin erfasst."
   },
   "reports": {
     "ui": {

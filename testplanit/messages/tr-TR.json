@@ -537,7 +537,7 @@
       "selectProjects": "Projeleri seçin",
       "selectStates": "Durumları seçin",
       "selectTags": "Etiketleri seçin",
-      "addFieldTo": "{section} bölümüne bir alan ekle",
+      "addFieldTo": "{section}'a alan ekle",
       "selectTemplates": "Şablonları seçin",
       "selectUsers": "Kullanıcıları seçin",
       "selectOption": "Bir seçenek seçin",
@@ -3934,12 +3934,21 @@
     "filter": {
       "placeholder": "Filtreleme testleri çalışıyor..."
     },
-    "typeFilter": {
-      "both": "Manuel ve Otomatik",
-      "label": "Çalıştırma türüne göre filtrele"
-    },
     "empty": {
-      "noMatchingCompleted": "Tamamlanmış test çalıştırmalarından hiçbiri filtrenizle eşleşmiyor."
+      "noMatchingCompleted": "Tamamlanmış test çalıştırmalarından hiçbiri filtrenizle eşleşmiyor.",
+      "noMatchingActive": "Aktif test çalıştırmalarından hiçbiri filtrelerinizle eşleşmiyor."
+    },
+    "milestoneGroup": {
+      "runCount": "{count, plural, one {# çalıştırma} other {# çalıştırma}}",
+      "expandAll": "Tümünü genişlet",
+      "collapseAll": "Tümünü daralt"
+    },
+    "runFilters": {
+      "label": "Test çalıştırmalarını filtrele",
+      "mine": "Test Çalıştırmalarım"
+    },
+    "typeFilter": {
+      "both": "Manuel ve Otomatik"
     }
   },
   "admin": {
@@ -7309,7 +7318,8 @@
           "content": "Proje düzeyindeki entegrasyonları, yapay zeka modeli yapılandırmalarını ve paylaşılan bağlantıları buradan yönetebilirsiniz."
         }
       }
-    }
+    },
+    "projectRunsFilters": "## Test çalıştırmalarını filtreleme\n\nListeyi daraltmak için bir etiketi açın/kapatın. Etiketler hem Aktif hem de Tamamlanmış sekmelerine uygulanır ve bu proje için bu cihazda hatırlanır.\n\n- **Manuel** / **Otomatik** — listeyi o türdeki çalıştırmalarla sınırlar. Her ikisini de açmak (veya her ikisini de kapatmak) tüm çalıştırmaları gösterir.\n- **Test Çalıştırmalarım** — yalnızca içinde yer aldığınız çalıştırmalar: çalıştırmayı siz oluşturdunuz, içinde size atanmış bir test senaryosu var veya içinde bir test sonucu kaydettiniz."
   },
   "reports": {
     "ui": {

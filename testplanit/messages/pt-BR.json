@@ -3934,12 +3934,21 @@
     "filter": {
       "placeholder": "Execução de testes de filtro..."
     },
-    "typeFilter": {
-      "both": "Manual e automatizado",
-      "label": "Filtrar por tipo de execução"
-    },
     "empty": {
-      "noMatchingCompleted": "Nenhum teste concluído corresponde ao seu filtro."
+      "noMatchingCompleted": "Nenhum teste concluído corresponde ao seu filtro.",
+      "noMatchingActive": "Nenhuma execução de teste ativa corresponde aos seus filtros."
+    },
+    "milestoneGroup": {
+      "runCount": "{count, plural, one {# execução} other {# execuções}}",
+      "expandAll": "Expandir tudo",
+      "collapseAll": "Recolher tudo"
+    },
+    "runFilters": {
+      "label": "Filtrar execuções de teste",
+      "mine": "Minhas Execuções de Teste"
+    },
+    "typeFilter": {
+      "both": "Manual e automatizado"
     }
   },
   "admin": {
@@ -7309,7 +7318,8 @@
           "content": "Gerencie integrações em nível de projeto, configurações de modelos de IA e links compartilhados a partir daqui."
         }
       }
-    }
+    },
+    "projectRunsFilters": "## Filtrando execuções de teste\n\nAtive um chip para restringir a lista. Os chips se aplicam tanto às abas Ativas quanto Concluídas, e são lembrados neste dispositivo para este projeto.\n\n- **Manual** / **Automatizado** — limita a lista a esse tipo de execução. Ativar ambos (ou desativar ambos) mostra todas as execuções.\n- **Minhas Execuções de Teste** — apenas execuções das quais você participa: você criou a execução, você tem um caso de teste atribuído nela, ou você registrou um resultado de teste nela."
   },
   "reports": {
     "ui": {

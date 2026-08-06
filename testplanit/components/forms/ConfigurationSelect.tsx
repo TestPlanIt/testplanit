@@ -16,6 +16,13 @@ export interface ConfigurationSelectProps {
   className?: ClassValue;
   /** Restrict options to configurations assigned to this project. */
   projectId?: number;
+  /**
+   * Accessible name for the trigger. The trigger renders the selected
+   * configuration (or nothing at all when unset), so without a name it is an
+   * unnamed combobox to a screen reader — a visible <label> beside it does
+   * not name a button. Defaults to "Configuration".
+   */
+  ariaLabel?: string;
 }
 
 export const ConfigurationSelect: React.FC<ConfigurationSelectProps> = ({
@@ -24,6 +31,7 @@ export const ConfigurationSelect: React.FC<ConfigurationSelectProps> = ({
   disabled = false,
   className,
   projectId,
+  ariaLabel,
 }) => {
   const tCommon = useTranslations("common");
 
@@ -61,6 +69,7 @@ export const ConfigurationSelect: React.FC<ConfigurationSelectProps> = ({
       )}
       getOptionValue={(opt) => opt.id}
       placeholder=""
+      ariaLabel={ariaLabel ?? tCommon("fields.configuration")}
       disabled={disabled}
       className={cn("w-full overflow-hidden", className)}
       pageSize={20}

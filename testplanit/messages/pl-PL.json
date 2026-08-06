@@ -3934,12 +3934,21 @@
     "filter": {
       "placeholder": "Przeprowadź testy filtrów..."
     },
-    "typeFilter": {
-      "both": "Manualne i automatyczne",
-      "label": "Filtruj według typu przebiegu"
-    },
     "empty": {
-      "noMatchingCompleted": "Nie znaleziono żadnych zakończonych przebiegów testowych odpowiadających wybranemu filtrowi."
+      "noMatchingCompleted": "Nie znaleziono żadnych zakończonych przebiegów testowych odpowiadających wybranemu filtrowi.",
+      "noMatchingActive": "Nie znaleziono żadnych aktywnych przebiegów testowych odpowiadających wybranym filtrom."
+    },
+    "milestoneGroup": {
+      "runCount": "{count, plural, one {# przebieg} few {# przebiegi} many {# przebiegów} other {# przebiegu}}",
+      "expandAll": "Rozwiń wszystko",
+      "collapseAll": "Zwiń wszystko"
+    },
+    "runFilters": {
+      "label": "Filtruj przebiegi testowe",
+      "mine": "Moje przebiegi testowe"
+    },
+    "typeFilter": {
+      "both": "Manualne i automatyczne"
     }
   },
   "admin": {
@@ -7309,7 +7318,8 @@
           "content": "Stąd możesz zarządzać integracjami na poziomie projektu, konfiguracjami modeli AI i udostępnianymi linkami."
         }
       }
-    }
+    },
+    "projectRunsFilters": "## Filtrowanie przebiegów testowych\n\nPrzełącz etykietę, aby zawęzić listę. Etykiety obejmują zarówno kartę Aktywne, jak i Zakończone i są pamiętane na tym urządzeniu dla tego projektu.\n\n- **Ręczne** / **Automatyczne** — ogranicza listę do danego typu przebiegu. Włączenie obu (lub wyłączenie obu) pokazuje wszystkie przebiegi.\n- **Moje przebiegi testowe** — tylko przebiegi, w których uczestniczysz: utworzyłeś przebieg, przypisano Ci w nim przypadek testowy lub zapisałeś w nim wynik testu."
   },
   "reports": {
     "ui": {

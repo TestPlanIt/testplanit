@@ -90,7 +90,7 @@ import {
 import { CompleteMilestoneDialog } from "../../CompleteMilestoneDialog";
 import { DeleteMilestoneModal } from "../DeleteMilestoneModal";
 import ChildMilestoneItem from "./ChildMilestoneItem";
-import { MilestoneSourceBadge } from "../MilestoneSourceBadge";
+import { MilestoneSourceBadge } from "@/components/MilestoneSourceBadge";
 import { IssuesCard, type IssuesCardHandle } from "./IssuesCard";
 import MilestoneFormControls from "./MilestoneFormControls";
 import { buildMilestoneUpdatePayload } from "./milestoneUpdatePayload";

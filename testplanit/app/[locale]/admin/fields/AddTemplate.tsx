@@ -490,6 +490,7 @@ export function AddTemplate({ open, onClose }: AddTemplateProps) {
                         return (
                           <MultiAsyncCombobox<ProjectOption>
                             value={selectedProjects}
+                            ariaLabel={tCommon("fields.projects")}
                             onValueChange={(selected) =>
                               field.onChange(
                                 selected.map((project) => project.id)
