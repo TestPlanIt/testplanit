@@ -152,6 +152,10 @@ export function ManageTags({
       {canCreateTags ? (
         <CreatableSelect
           isMulti
+          // react-select forwards this to its inner combobox input, which has
+          // no <label> of its own — without it the control is unnamed
+          // (WCAG 4.1.2). A placeholder is not an accessible name.
+          aria-label={tCommon("fields.tags")}
           options={allTagOptions}
           value={valueForSelect}
           onChange={handleTagChange}
@@ -177,6 +181,7 @@ export function ManageTags({
       ) : (
         <Select
           isMulti
+          aria-label={tCommon("fields.tags")}
           options={allTagOptions}
           value={valueForSelect}
           onChange={handleTagChange}

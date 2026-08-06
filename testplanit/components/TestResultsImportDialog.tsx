@@ -420,7 +420,7 @@ export default function TestResultsImportDialog({
                   onValueChange={(val) => setFormat(val as TestResultFormat)}
                   disabled={isImporting}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger id="format">
                     <SelectValue placeholder={tFormat("placeholder")} />
                   </SelectTrigger>
                   <SelectContent>
@@ -586,7 +586,7 @@ export default function TestResultsImportDialog({
                           value={field.value}
                           disabled={isImporting}
                         >
-                          <SelectTrigger>
+                          <SelectTrigger id="state">
                             <SelectValue
                               placeholder={tCommon("placeholders.selectState")}
                             />
@@ -642,7 +642,7 @@ export default function TestResultsImportDialog({
                           value={field.value}
                           disabled={isImporting}
                         >
-                          <SelectTrigger>
+                          <SelectTrigger id="template">
                             <SelectValue
                               placeholder={tCommon(
                                 "placeholders.selectTemplate"

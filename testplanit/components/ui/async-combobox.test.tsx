@@ -213,4 +213,62 @@ describe("AsyncCombobox virtualization", () => {
     expect(trigger).toHaveTextContent("Item 1");
     expect(trigger).not.toHaveTextContent("[item]");
   });
+
+  // WCAG 4.1.2. A combobox trigger usually shows only the selected value (or
+  // a placeholder), so ariaLabel is the sole thing naming it. The custom
+  // trigger path dropped it, shipping unnamed comboboxes into dialogs.
+  describe("trigger accessible name", () => {
+    it("names the default trigger from ariaLabel", () => {
+      render(
+        <AsyncCombobox<Option>
+          value={null}
+          onValueChange={vi.fn()}
+          fetchOptions={() => Promise.resolve([])}
+          getOptionValue={(option) => option.id}
+          renderOption={(option) => <span>{option.label}</span>}
+          ariaLabel="Parent folder"
+        />
+      );
+
+      expect(
+        screen.getByRole("combobox", { name: "Parent folder" })
+      ).toBeInTheDocument();
+    });
+
+    it("names a custom trigger from ariaLabel", () => {
+      render(
+        <AsyncCombobox<Option>
+          value={null}
+          onValueChange={vi.fn()}
+          fetchOptions={() => Promise.resolve([])}
+          getOptionValue={(option) => option.id}
+          renderOption={(option) => <span>{option.label}</span>}
+          ariaLabel="Configuration"
+          renderTrigger={() => <button />}
+        />
+      );
+
+      expect(
+        screen.getByRole("combobox", { name: "Configuration" })
+      ).toBeInTheDocument();
+    });
+
+    it("lets a custom trigger's own aria-label win", () => {
+      render(
+        <AsyncCombobox<Option>
+          value={null}
+          onValueChange={vi.fn()}
+          fetchOptions={() => Promise.resolve([])}
+          getOptionValue={(option) => option.id}
+          renderOption={(option) => <span>{option.label}</span>}
+          ariaLabel="Fallback"
+          renderTrigger={() => <button aria-label="Explicit" />}
+        />
+      );
+
+      expect(
+        screen.getByRole("combobox", { name: "Explicit" })
+      ).toBeInTheDocument();
+    });
+  });
 });

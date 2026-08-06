@@ -282,6 +282,12 @@ export function AsyncCombobox<T>({
               role: props.role ?? "combobox",
               "aria-expanded": open,
               "aria-haspopup": "listbox",
+              // A custom trigger is usually an icon or a value-only control
+              // with no text of its own, so without this it reaches the page
+              // as an unnamed combobox (WCAG 4.1.2). The default-Button path
+              // below already applies ariaLabel; this path silently dropped
+              // it. An aria-label set on the custom element itself wins.
+              "aria-label": props["aria-label"] ?? ariaLabel,
               className: cn(className, props.className),
             } as any);
           }
