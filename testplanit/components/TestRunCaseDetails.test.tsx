@@ -402,6 +402,31 @@ describe("TestRunCaseDetails", () => {
     expect(onNextCase).toHaveBeenCalledWith(42);
   });
 
+  it("renders the Edit Test Case button when onEditCase is provided", () => {
+    renderWithQueryClient(
+      <TestRunCaseDetails {...defaultProps} onEditCase={vi.fn()} />
+    );
+    expect(screen.getByTestId("run-case-edit-case")).toBeInTheDocument();
+  });
+
+  it("hides the Edit Test Case button when onEditCase is not provided", () => {
+    renderWithQueryClient(<TestRunCaseDetails {...defaultProps} />);
+    expect(screen.queryByTestId("run-case-edit-case")).not.toBeInTheDocument();
+  });
+
+  it("calls onEditCase when the Edit Test Case button is clicked", async () => {
+    const user = userEvent.setup();
+    const onEditCase = vi.fn();
+
+    renderWithQueryClient(
+      <TestRunCaseDetails {...defaultProps} onEditCase={onEditCase} />
+    );
+
+    await user.click(screen.getByTestId("run-case-edit-case"));
+
+    expect(onEditCase).toHaveBeenCalledTimes(1);
+  });
+
   it("shows case position indicator (1 of N)", () => {
     renderWithQueryClient(<TestRunCaseDetails {...defaultProps} />);
     // caseId=42 is index 0, so "1 of 3"

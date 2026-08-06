@@ -29,6 +29,7 @@
     "lastEditedBy": "Última edición por",
     "actions": {
       "edit": "Editar",
+      "editTestCase": "Editar Caso de Prueba",
       "save": "Guardar",
       "delete": "Eliminar",
       "create": "Crear",

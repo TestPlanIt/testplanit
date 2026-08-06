@@ -148,6 +148,26 @@ describe("Test Run Case Detail Route", () => {
     });
   });
 
+  describe("Serialization", () => {
+    it("serializes BigInt fields (attachment sizes) as numbers", async () => {
+      (getServerSession as any).mockResolvedValue(mockSession);
+      (baseDb.repositoryCases.findUnique as any).mockResolvedValue({
+        projectId: 5,
+      });
+      (resolveViewerProjectScope as any).mockResolvedValue([5]);
+      (getTestRunCaseDetail as any).mockResolvedValue({
+        id: 42,
+        attachments: [{ id: 1, size: BigInt(123456) }],
+      });
+
+      const response = await GET(createMockRequest({ caseId: "42" }) as any);
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(data.testcase.attachments[0].size).toBe(123456);
+    });
+  });
+
   describe("testRunId passthrough", () => {
     it("passes a numeric testRunId through to getTestRunCaseDetail", async () => {
       (getServerSession as any).mockResolvedValue(mockSession);

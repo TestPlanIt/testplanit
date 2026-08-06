@@ -29,6 +29,7 @@
     "lastEditedBy": "최종 수정자:",
     "actions": {
       "edit": "편집하다",
+      "editTestCase": "테스트 케이스 편집",
       "save": "구하다",
       "delete": "삭제",
       "create": "만들다",

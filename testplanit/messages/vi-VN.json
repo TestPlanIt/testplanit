@@ -29,6 +29,7 @@
     "lastEditedBy": "Lần chỉnh sửa cuối cùng bởi",
     "actions": {
       "edit": "Biên tập",
+      "editTestCase": "Chỉnh sửa trường hợp kiểm thử",
       "save": "Cứu",
       "delete": "Xóa bỏ",
       "create": "Tạo nên",

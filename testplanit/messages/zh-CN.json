@@ -29,6 +29,7 @@
     "lastEditedBy": "最后编辑于",
     "actions": {
       "edit": "编辑",
+      "editTestCase": "编辑测试用例",
       "save": "节省",
       "delete": "删除",
       "create": "创造",

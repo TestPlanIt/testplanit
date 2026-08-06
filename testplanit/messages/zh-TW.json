@@ -29,6 +29,7 @@
     "lastEditedBy": "最後編輯於",
     "actions": {
       "edit": "編輯",
+      "editTestCase": "編輯測試用例",
       "save": "節省",
       "delete": "刪除",
       "create": "創造",
@@ -3948,7 +3949,8 @@
       "mine": "我的測試運行"
     },
     "typeFilter": {
-      "both": "手動和自動"
+      "both": "手動和自動",
+      "label": "依運行類型篩選"
     }
   },
   "admin": {

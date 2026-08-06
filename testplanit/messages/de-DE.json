@@ -29,6 +29,7 @@
     "lastEditedBy": "Zuletzt bearbeitet von",
     "actions": {
       "edit": "Bearbeiten",
+      "editTestCase": "Testfall bearbeiten",
       "save": "Speichern",
       "delete": "Löschen",
       "create": "Erstellen",
@@ -3948,7 +3949,8 @@
       "mine": "Meine Testläufe"
     },
     "typeFilter": {
-      "both": "Manuell & Automatisiert"
+      "both": "Manuell & Automatisiert",
+      "label": "Nach Laufart filtern"
     }
   },
   "admin": {
