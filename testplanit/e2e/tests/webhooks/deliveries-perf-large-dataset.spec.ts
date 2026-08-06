@@ -138,16 +138,33 @@ test.describe("Webhook deliveries tab — large dataset performance (N-03)", () 
     // Call it *before* the action that triggers the fetch, then await it:
     //   const p = nextDeliveriesRows(); await <action>; const ids = await p;
     const nextDeliveriesRows = async (): Promise<string[]> => {
-      const resp = await page.waitForResponse(
-        (r) =>
-          r.url().includes("/api/model/webhookDelivery/findMany") &&
-          r.status() === 200,
-        { timeout: PAGE_LOAD_BUDGET_MS }
-      );
-      const body = (await resp.json()) as
-        { data?: Array<{ id: unknown }> } | Array<{ id: unknown }>;
-      const rows = Array.isArray(body) ? body : (body?.data ?? []);
-      return rows.map((r) => String(r.id));
+      // The tab fires two webhookDelivery/findMany requests: the distinct
+      // event-type query behind the filter dropdown (select: { eventType },
+      // so its rows carry no id) and the paged table query (select: { id, ...
+      // }, take: PAGE_SIZE). The event-type response is far smaller and
+      // usually lands first, so match on payload shape instead of taking
+      // whichever arrives soonest.
+      const deadline = Date.now() + PAGE_LOAD_BUDGET_MS;
+      for (;;) {
+        const remaining = deadline - Date.now();
+        if (remaining <= 0) {
+          throw new Error(
+            "timed out waiting for the paged webhookDelivery/findMany response"
+          );
+        }
+        const resp = await page.waitForResponse(
+          (r) =>
+            r.url().includes("/api/model/webhookDelivery/findMany") &&
+            r.status() === 200,
+          { timeout: remaining }
+        );
+        const body = (await resp.json()) as
+          { data?: Array<{ id?: unknown }> } | Array<{ id?: unknown }>;
+        const rows = Array.isArray(body) ? body : (body?.data ?? []);
+        if (rows.length > 0 && rows.every((r) => r?.id !== undefined)) {
+          return rows.map((r) => String(r.id));
+        }
+      }
     };
 
     await test.step("First page loads exactly PAGE_SIZE rows (not all) within budget", async () => {

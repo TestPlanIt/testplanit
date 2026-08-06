@@ -80,18 +80,18 @@ test.describe("Audit Log Management - Filtering", () => {
     await expect(actionFilter).toBeVisible({ timeout: 10000 });
     await actionFilter.click();
 
-    // The action list is paginated, so narrow it by search before selecting.
-    const searchInput = page.locator("[cmdk-input]").first();
-    await searchInput.fill("LOGIN FAILED");
-    const loginFailedOption = page.locator(
-      '[role="option"]:has-text("LOGIN FAILED")'
-    );
-    await expect(loginFailedOption).toBeVisible({ timeout: 5000 });
-    await loginFailedOption.click();
+    // getAuditLogActions only offers actions that have rows behind them, and
+    // which actions exist shifts as other specs write audit entries, so drive
+    // the selection from whatever the picker actually lists.
+    const options = page.locator('[role="option"]');
+    await expect(options.first()).toBeVisible({ timeout: 5000 });
+    const action = (await options.first().innerText()).trim();
+
+    await options.first().click();
     await page.keyboard.press("Escape");
 
     // The selection shows as a badge on the trigger and the table re-renders.
-    await expect(actionFilter).toContainText("LOGIN FAILED", { timeout: 5000 });
+    await expect(actionFilter).toContainText(action, { timeout: 5000 });
     await page.waitForLoadState("networkidle");
     await expect(page.getByTestId("audit-logs-table")).toBeVisible({
       timeout: 10000,
@@ -113,23 +113,30 @@ test.describe("Audit Log Management - Filtering", () => {
     await expect(actionFilter).toBeVisible({ timeout: 10000 });
     await actionFilter.click();
 
-    const searchInput = page.locator("[cmdk-input]").first();
+    // Same data-driven selection as the single-select test: take the first two
+    // actions the picker offers rather than naming ones that may have no rows.
+    const options = page.locator('[role="option"]');
+    await expect(options.first()).toBeVisible({ timeout: 5000 });
+    const available = (await options.allInnerTexts())
+      .map((text) => text.trim())
+      .filter(Boolean);
+    expect(
+      available.length,
+      "need at least two audit actions present to multi-select"
+    ).toBeGreaterThanOrEqual(2);
+    const [firstAction, secondAction] = available;
 
-    // The popover stays open across selections, so both actions can be picked
-    // in one pass.
-    for (const action of ["ACCOUNT LOCKED", "ACCOUNT UNLOCKED"]) {
-      await searchInput.fill(action);
-      const option = page.locator(`[role="option"]:has-text("${action}")`);
-      await expect(option).toBeVisible({ timeout: 5000 });
-      await option.click();
-    }
+    // Options render in source order and keep their position when selected, so
+    // the popover stays open and both can be picked by index in one pass.
+    await options.nth(0).click();
+    await options.nth(1).click();
 
     await page.keyboard.press("Escape");
 
-    await expect(actionFilter).toContainText("ACCOUNT LOCKED", {
+    await expect(actionFilter).toContainText(firstAction, {
       timeout: 5000,
     });
-    await expect(actionFilter).toContainText("ACCOUNT UNLOCKED");
+    await expect(actionFilter).toContainText(secondAction);
 
     await page.waitForLoadState("networkidle");
     await expect(page.getByTestId("audit-logs-table")).toBeVisible({

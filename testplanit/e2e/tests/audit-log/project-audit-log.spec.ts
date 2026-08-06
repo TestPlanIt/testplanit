@@ -79,14 +79,19 @@ test.describe("Project Audit Log", () => {
     });
 
     await test.step("Filtering by action keeps the table rendered", async () => {
-      // Action filter is the first MultiAsyncCombobox trigger (the
-      // DateRangePicker before it is a plain button). Scoped to `button` so the
-      // cmdk search input (also role="combobox") can't match once open.
-      const actionFilter = page.locator('button[role="combobox"]').first();
+      // Scoped to the filter's own wrapper: project pages render a
+      // project-switcher combobox in the sidebar ahead of the filters, so a
+      // page-wide `button[role="combobox"]` .first() opens that instead and no
+      // cmdk input ever appears.
+      const actionFilter = page
+        .getByTestId("project-audit-log-action-filter")
+        .locator('button[role="combobox"]');
       await expect(actionFilter).toBeVisible({ timeout: 10000 });
       await actionFilter.click();
 
       // The action list is paginated, so narrow it by search before selecting.
+      // This picker offers the full AuditAction enum (not just actions with
+      // rows), so BULK CREATE is always present.
       await page.locator("[cmdk-input]").first().fill("BULK CREATE");
       const bulkCreateOption = page.locator(
         '[role="option"]:has-text("BULK CREATE")'

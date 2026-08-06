@@ -456,7 +456,7 @@ export function ProjectAuditLog({
           </Form>
         </div>
 
-        <div>
+        <div data-testid="project-audit-log-action-filter">
           <Label className="sr-only">{t("filterAction")}</Label>
           <MultiAsyncCombobox<AuditAction>
             value={actionFilter}
