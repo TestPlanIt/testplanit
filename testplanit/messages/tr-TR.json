@@ -29,6 +29,7 @@
     "lastEditedBy": "Son düzenleme:",
     "actions": {
       "edit": "Düzenlemek",
+      "editTestCase": "Test Durumunu Düzenle",
       "save": "Kaydetmek",
       "delete": "Silmek",
       "create": "Yaratmak",

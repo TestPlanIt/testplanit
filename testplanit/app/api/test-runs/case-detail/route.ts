@@ -41,5 +41,12 @@ export async function GET(request: NextRequest) {
   }
 
   const testcase = await getTestRunCaseDetail(caseId, testRunId);
-  return NextResponse.json({ testcase });
+  // Attachments.size is a BigInt, which JSON.stringify rejects. File sizes fit
+  // safely within Number precision.
+  const body = JSON.stringify({ testcase }, (_key, value) =>
+    typeof value === "bigint" ? Number(value) : value
+  );
+  return new NextResponse(body, {
+    headers: { "content-type": "application/json" },
+  });
 }

@@ -334,6 +334,13 @@ interface TestCaseDetailsViewProps {
   inSheet?: boolean;
   /** Closes the Sheet (used by the not-found guard and delete success); Sheet mode only. */
   onClose?: () => void;
+  /**
+   * Enter edit mode once loaded, without requiring the `?edit=true` URL param
+   * (hosts like the run page already use `edit` for their own mode).
+   */
+  startInEditMode?: boolean;
+  /** Called when edit mode exits via Save (saved=true) or Cancel (saved=false). */
+  onEditExit?: (saved: boolean) => void;
 }
 
 export function TestCaseDetailsView({
@@ -341,6 +348,8 @@ export function TestCaseDetailsView({
   projectIdOverride,
   inSheet = false,
   onClose,
+  startInEditMode = false,
+  onEditExit,
 }: TestCaseDetailsViewProps = {}) {
   const {
     session,
@@ -1147,7 +1156,7 @@ export function TestCaseDetailsView({
   useEffect(() => {
     if (
       !editParamProcessed.current &&
-      searchParams.get("edit") === "true" &&
+      (startInEditMode || searchParams.get("edit") === "true") &&
       canAddEdit &&
       testcase?.template?.id &&
       !isEditMode
@@ -1156,7 +1165,7 @@ export function TestCaseDetailsView({
       setSelectedTemplateId(testcase.template.id);
       setIsEditMode(true);
     }
-  }, [searchParams, canAddEdit, testcase, isEditMode]);
+  }, [searchParams, startInEditMode, canAddEdit, testcase, isEditMode]);
 
   const handleCancel = () => {
     setIsEditMode(false);
@@ -1165,6 +1174,7 @@ export function TestCaseDetailsView({
     setSelectedFiles([]);
     setSelectedLinks([]);
     // Form will be reset through the template change effect
+    onEditExit?.(false);
   };
 
   const handleSave = async (data: any) => {
@@ -1874,6 +1884,7 @@ export function TestCaseDetailsView({
       setSelectedFiles([]);
       setSelectedLinks([]);
       void refetch();
+      onEditExit?.(true);
     } catch (error) {
       console.error("Error in handleSave:", error);
       setIsSubmitting(false);

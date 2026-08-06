@@ -29,6 +29,7 @@
     "lastEditedBy": "آخر تعديل بواسطة",
     "actions": {
       "edit": "تعديل",
+      "editTestCase": "تعديل حالة الاختبار",
       "save": "حفظ",
       "delete": "حذف",
       "create": "إنشاء",

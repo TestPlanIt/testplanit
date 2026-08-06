@@ -29,6 +29,7 @@
     "lastEditedBy": "Laatst bewerkt door",
     "actions": {
       "edit": "Bewerking",
+      "editTestCase": "Testgeval bewerken",
       "save": "Redden",
       "delete": "Verwijderen",
       "create": "Creëren",

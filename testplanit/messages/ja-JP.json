@@ -29,6 +29,7 @@
     "lastEditedBy": "最終編集者",
     "actions": {
       "edit": "編集",
+      "editTestCase": "テストケースを編集",
       "save": "保存",
       "delete": "消去",
       "create": "作成する",

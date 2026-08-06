@@ -53,6 +53,13 @@ This view typically includes:
 8. **Add Overall Details (Optional)**: Add overall comments or attachments.
 9. **Navigate/Close**: Use the Previous/Next buttons or Close button to move to another case or return to the run overview.
 
+## Editing the Test Case In Place
+
+If you hold the **Test Case Repository** add/edit permission, an **Edit Test Case** button (pencil icon) appears next to the Previous/Next navigation in the panel header. Clicking it replaces the execution view with the same edit form used on the [Test Case Details](./repository-case-details.mdx) page, so you can correct the name, steps, or fields before recording a result.
+
+- **Save** creates a new version of the test case and returns to the execution view. Results recorded afterwards reference the new version.
+- **Cancel** discards the changes and returns to the execution view.
+
 ## Result Validation and Editing
 
 A project can apply rules that govern how results are recorded and corrected. These are configured by administrators and surface during execution:

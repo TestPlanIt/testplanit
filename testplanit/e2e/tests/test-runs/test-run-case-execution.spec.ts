@@ -457,4 +457,70 @@ test.describe("Test Case Execution", () => {
       ).toBeVisible({ timeout: 10000 });
     });
   });
+
+  test("should edit the test case in place from the execution panel", async ({
+    api,
+    page,
+  }) => {
+    const ts = Date.now();
+    const caseName = `Inline Edit Case ${ts}`;
+    const updatedName = `Inline Edit Case Updated ${ts}`;
+    let projectId: number | undefined;
+    let runId: number | undefined;
+    let caseId: number | undefined;
+
+    await test.step("Seed a project, folder, case, and run with the case added", async () => {
+      projectId = await api.createProject(`E2E Inline Edit ${ts}`);
+      const folderId = await api.createFolder(projectId, `Edit Folder ${ts}`);
+      caseId = await api.createTestCase(projectId, folderId, caseName);
+      runId = await api.createTestRun(projectId, `Edit Run ${ts}`);
+      await api.addTestCaseToTestRun(runId, caseId);
+    });
+
+    await test.step("Open the run detail page with the case selected", async () => {
+      await page.goto(
+        `/en-US/projects/runs/${projectId}/${runId}?selectedCase=${caseId}`
+      );
+      await page.waitForLoadState("load");
+
+      const sheet = page.locator(".test-run-details-sheet");
+      await expect(sheet).toBeVisible({ timeout: 15000 });
+    });
+
+    await test.step("Enter edit mode from the panel", async () => {
+      await page.getByTestId("run-case-edit-case").click();
+
+      // The sheet content swaps to the repository details view in edit mode.
+      await expect(page.getByTestId("run-case-edit-panel")).toBeVisible({
+        timeout: 15000,
+      });
+    });
+
+    await test.step("Change the case name and save", async () => {
+      // The name field is the edit form's only textarea (steps use Tiptap).
+      const nameField = page
+        .getByTestId("run-case-edit-panel")
+        .locator("textarea")
+        .first();
+      await expect(nameField).toHaveValue(caseName, { timeout: 15000 });
+      await nameField.fill(updatedName);
+
+      await page
+        .getByTestId("run-case-edit-panel")
+        .getByRole("button", { name: "Save", exact: true })
+        .click();
+    });
+
+    await test.step("Verify return to the execution view with the updated name", async () => {
+      await expect(page.getByTestId("run-case-edit-panel")).toBeHidden({
+        timeout: 20000,
+      });
+
+      const sheet = page.locator(".test-run-details-sheet");
+      await expect(sheet).toBeVisible({ timeout: 15000 });
+      await expect(sheet.locator(`text="${updatedName}"`).first()).toBeVisible({
+        timeout: 15000,
+      });
+    });
+  });
 });

@@ -42,6 +42,7 @@ import {
   Combine,
   LayoutTemplate,
   Plus,
+  SquarePen,
   SquareStack,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
@@ -106,6 +107,12 @@ interface TestRunCaseDetailsProps {
    * against. Wrapper formats this from the active iteration + totalIterations.
    */
   activeIterationLabel?: string;
+  /**
+   * Switches the host Sheet to in-place test-case editing. Only provided when
+   * the viewer holds the TestCaseRepository add/edit permission (the host
+   * gates it), so presence doubles as the permission check.
+   */
+  onEditCase?: () => void;
 }
 
 export function TestRunCaseDetails({
@@ -122,6 +129,7 @@ export function TestRunCaseDetails({
   stepParameters,
   activeIterationId,
   activeIterationLabel,
+  onEditCase,
 }: TestRunCaseDetailsProps) {
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
@@ -756,6 +764,25 @@ export function TestRunCaseDetails({
         {/* --- Previous/Next Buttons --- */}
         <TooltipProvider>
           <div className="flex items-center gap-2 shrink-0 me-8">
+            {onEditCase && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={onEditCase}
+                    aria-label={tCommon("actions.editTestCase")}
+                    data-testid="run-case-edit-case"
+                  >
+                    <SquarePen className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {tCommon("actions.editTestCase")}
+                </TooltipContent>
+              </Tooltip>
+            )}
             {/* Prev Button */}
             <Tooltip>
               <TooltipTrigger asChild>

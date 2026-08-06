@@ -29,6 +29,7 @@
     "lastEditedBy": "Last edited by",
     "actions": {
       "edit": "Edit",
+      "editTestCase": "Edit Test Case",
       "save": "Save",
       "delete": "Delete",
       "create": "Create",

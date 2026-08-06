@@ -29,6 +29,7 @@
     "lastEditedBy": "Ostatnio edytowane przez",
     "actions": {
       "edit": "Redagować",
+      "editTestCase": "Edytuj przypadek testowy",
       "save": "Ratować",
       "delete": "Usuwać",
       "create": "Tworzyć",

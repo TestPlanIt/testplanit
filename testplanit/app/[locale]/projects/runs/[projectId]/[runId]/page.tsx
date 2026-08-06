@@ -20,6 +20,7 @@ import { RunAuditLogSheet } from "@/components/runs/RunAuditLogSheet";
 import { RecordId } from "@/components/RecordId";
 import { ReviewStatusBanner } from "@/components/reviews/ReviewStatusBanner";
 import { TestRunCaseDetails } from "@/components/TestRunCaseDetails";
+import { TestCaseDetailsView } from "@/projects/repository/[projectId]/[caseId]/TestCaseDetailsView";
 import {
   useTestRunLiveStream,
   type TestRunWakeUp,
@@ -392,6 +393,14 @@ export default function TestRunPage() {
   const { permissions: tagsPermissions, isLoading: isLoadingTagsPermissions } =
     useProjectPermissions(numericProjectId, ApplicationArea.Tags);
 
+  // Fetch TestCaseRepository permission — gates in-place case editing from the
+  // execution details Sheet.
+  const { permissions: caseRepoPermissions } = useProjectPermissions(
+    numericProjectId,
+    ApplicationArea.TestCaseRepository
+  );
+  const canAddEditCases = caseRepoPermissions?.canAddEdit ?? false;
+
   // Extract permissions
   const canAddEditRun = testRunPermissions?.canAddEdit ?? false;
   const canDeleteRun = testRunPermissions?.canDelete ?? false;
@@ -407,6 +416,13 @@ export default function TestRunPage() {
   const selectedTestCaseId = searchParams.get("selectedCase")
     ? parseInt(searchParams.get("selectedCase")!)
     : null;
+
+  // In-place case editing inside the details Sheet. Uses its own `editCase`
+  // param — `edit` already means "edit the run" on this page.
+  const editingSelectedCase =
+    !!selectedTestCaseId &&
+    searchParams.get("editCase") === "true" &&
+    canAddEditCases;
 
   const { data: statusScope } = useClientQueries(
     schema
@@ -848,9 +864,20 @@ export default function TestRunPage() {
       // If sheet is closing, remove selectedCase from URL
       const params = new URLSearchParams(searchParams.toString());
       params.delete("selectedCase");
+      params.delete("editCase");
       router.replace(`${pathname}?${params.toString()}`);
     }
     // Opening is handled by URL change triggered from TestCasesSection clicking a row
+  };
+
+  const setEditCaseParam = (on: boolean) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (on) {
+      params.set("editCase", "true");
+    } else {
+      params.delete("editCase");
+    }
+    router.replace(`${pathname}?${params.toString()}`);
   };
 
   // Fix the useEffect for content initialization to handle double-JSON-stringification
@@ -2401,8 +2428,16 @@ export default function TestRunPage() {
             sits over the sticky bg-primary header. It must layer above that
             header (z-30 > the header's z-20) or the header hides it, and use
             primary-foreground so it stays legible where primary is light
-            (e.g. dark mode). */}
-        <SheetContent className="sm:max-w-4xl w-full p-0 test-run-details-sheet [&>button]:z-30 [&>button]:text-primary-foreground [&>button]:opacity-100">
+            (e.g. dark mode). While editing the case in place, the content is
+            the repository details view (plain background), so the
+            primary-header styling is dropped to keep the X visible. */}
+        <SheetContent
+          className={`sm:max-w-4xl w-full p-0 [&>button]:z-30 [&>button]:opacity-100 ${
+            editingSelectedCase
+              ? ""
+              : "test-run-details-sheet [&>button]:text-primary-foreground"
+          }`}
+        >
           <SheetHeader>
             <SheetTitle className="sr-only">
               {t("repository.version.detailsRegion")}
@@ -2439,7 +2474,40 @@ export default function TestRunPage() {
                   repositoryCaseId: tc.repositoryCaseId,
                 })),
                 isCompleted: testRunData.isCompleted,
+                onEditCase: canAddEditCases
+                  ? () => setEditCaseParam(true)
+                  : undefined,
               };
+
+              if (editingSelectedCase) {
+                return (
+                  <div
+                    className="h-full overflow-y-auto"
+                    data-testid="run-case-edit-panel"
+                  >
+                    <TestCaseDetailsView
+                      key={`edit-${selectedTestCaseId}`}
+                      caseIdOverride={String(selectedTestCaseId)}
+                      projectIdOverride={safeProjectId}
+                      inSheet
+                      startInEditMode
+                      onClose={() => handleSheetOpenChange(false)}
+                      onEditExit={(saved) => {
+                        setEditCaseParam(false);
+                        if (saved) {
+                          void queryClient.invalidateQueries({
+                            queryKey: [
+                              "test-run-case-detail",
+                              selectedTestCaseId,
+                              Number(runId),
+                            ],
+                          });
+                        }
+                      }}
+                    />
+                  </div>
+                );
+              }
 
               const totalIterations = trc.totalIterations;
 
