@@ -9,7 +9,9 @@
  *   COV-02 — implicit many-to-many join tables linking Tags/Issue to those entities.
  *   COV-04 — all remaining app-audited data entities (45 tables, Phase 15).
  *   SAF-02 — per-table denylist: camelCase timestamps (where the table has them) + credential
- *            columns on User/Integration/LlmIntegration/CodeRepository/WebhookConfig + opaque
+ *            columns on User/Integration/LlmIntegration/CodeRepository/WebhookConfig + the
+ *            machine-written WebhookConfig delivery telemetry (last*At, consecutiveFailureCount) +
+ *            opaque
  *            machine-written integration payloads (Issue.externalData/data) + the high-volume TipTap
  *            step columns (Steps.step/expectedResult). Human-authored rich-text description columns
  *            (Milestones.note/docs, Sessions.note/mission, Issue.note, Comment.content) are NOT
@@ -270,9 +272,24 @@ export const TRIGGER_REGISTRY: TriggerConfig[] = [
   // Webhook configuration. token + secret are credential material and are
   // DENYLISTED so they never land in the append-only DataChangeLog (SAF-02/04);
   // the dedicated WebhookConfigSecret table stays excluded entirely.
+  // The last*At timestamps and consecutiveFailureCount are machine-written delivery telemetry
+  // bumped on every receipt/dispatch, always alongside the real change they follow. Denylisted so
+  // a pure heartbeat bump produces an empty diff and the trigger's no-op short-circuit drops the
+  // row entirely. A health transition still audits: endpointHealth stays captured, and health.ts
+  // additionally emits WEBHOOK_HEALTH_CHANGED.
   {
     table: "WebhookConfig",
-    denylist: ["createdAt", "updatedAt", "token", "secret"],
+    denylist: [
+      "createdAt",
+      "updatedAt",
+      "token",
+      "secret",
+      "lastReceivedAt",
+      "lastDispatchedAt",
+      "lastSuccessAt",
+      "lastFailureAt",
+      "consecutiveFailureCount",
+    ],
     nameCol: "name",
     projectCol: "projectId",
   },
