@@ -23,6 +23,12 @@ import { Window as HappyDOMWindow } from "happy-dom";
 import { Readable } from "node:stream";
 import { emptyEditorContent } from "../app/constants/backend";
 import {
+  Table,
+  TableCell,
+  TableHeader,
+  TableRow,
+} from "../app/extensions/Table";
+import {
   disconnectAllTenantClients,
   getDbClientForJob,
   isMultiTenantMode,
@@ -920,6 +926,15 @@ const TIPTAP_EXTENSIONS = [
       levels: [1, 2, 3, 4],
     },
   }),
+  // Testmo/CKEditor renders step tables as <figure class="table"><table>...
+  // Without these, ProseMirror's DOMParser has no rule for <table>/<tr>/<td>
+  // and silently splices cell text into the surrounding paragraph with no
+  // separators (e.g. "Opp_A$5000close date..."). Same node types the app's
+  // own step editor already registers (components/tiptap/TipTapEditor.tsx).
+  Table,
+  TableRow,
+  TableCell,
+  TableHeader,
 ];
 
 // Reusable Happy-DOM window to avoid creating new contexts for each conversion
@@ -1134,7 +1149,9 @@ const isTipTapDocumentEmpty = (doc: Record<string, unknown>): boolean => {
   return false;
 };
 
-const convertToTipTapJsonValue = (value: unknown): JsonValue | null => {
+// Exported for scripts/syncTestmoCaseEdits.ts, which must produce byte-identical
+// step payloads to this importer.
+export const convertToTipTapJsonValue = (value: unknown): JsonValue | null => {
   const doc = convertToTipTapDocument(value);
   if (!doc || isTipTapDocumentEmpty(doc)) {
     return null;
