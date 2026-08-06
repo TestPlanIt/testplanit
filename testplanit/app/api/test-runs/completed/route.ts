@@ -100,6 +100,7 @@ export async function GET(req: NextRequest) {
     const pageSize = Number(searchParams.get("pageSize")) || 25;
     const search = searchParams.get("search") || "";
     const runType = searchParams.get("runType") || "both"; // both, manual, automated
+    const participant = searchParams.get("participant") || "all"; // all, mine
 
     if (isNaN(projectId)) {
       return NextResponse.json(
@@ -128,6 +129,25 @@ export async function GET(req: NextRequest) {
       where.testRunType = "REGULAR";
     } else if (runType === "automated") {
       where.testRunType = { in: AUTOMATED_TEST_RUN_TYPES };
+    }
+
+    // "Runs I'm involved in": created the run, is assigned a case in it, or
+    // recorded a result in it — the same three roles the row's contributor
+    // avatars credit (see TestRunItem's MemberList).
+    if (participant === "mine") {
+      where.OR = [
+        { createdById: session.user.id },
+        {
+          testCases: {
+            some: { isDeleted: false, assignedToId: session.user.id },
+          },
+        },
+        {
+          results: {
+            some: { isDeleted: false, executedById: session.user.id },
+          },
+        },
+      ];
     }
 
     // Get total count for pagination

@@ -3934,12 +3934,21 @@
     "filter": {
       "placeholder": "Chạy thử nghiệm bộ lọc..."
     },
-    "typeFilter": {
-      "both": "Thủ công & Tự động",
-      "label": "Lọc theo loại lần chạy"
-    },
     "empty": {
-      "noMatchingCompleted": "Không có kết quả chạy thử nào phù hợp với bộ lọc của bạn."
+      "noMatchingCompleted": "Không có kết quả chạy thử nào phù hợp với bộ lọc của bạn.",
+      "noMatchingActive": "Không có lần chạy thử nghiệm đang hoạt động nào phù hợp với bộ lọc của bạn."
+    },
+    "milestoneGroup": {
+      "runCount": "{count, plural, other {# lần chạy}}",
+      "expandAll": "Mở rộng tất cả",
+      "collapseAll": "Thu gọn tất cả"
+    },
+    "runFilters": {
+      "label": "Lọc các lần chạy thử nghiệm",
+      "mine": "Lần chạy thử nghiệm của tôi"
+    },
+    "typeFilter": {
+      "both": "Thủ công & Tự động"
     }
   },
   "admin": {
@@ -7309,7 +7318,8 @@
           "content": "Từ đây, bạn có thể quản lý các tích hợp cấp dự án, cấu hình mô hình AI và các liên kết chia sẻ."
         }
       }
-    }
+    },
+    "projectRunsFilters": "## Lọc các lần chạy thử nghiệm\n\nBật/tắt một thẻ để thu hẹp danh sách. Các thẻ áp dụng cho cả tab Đang hoạt động và Đã hoàn thành, và được ghi nhớ trên thiết bị này cho dự án này.\n\n- **Thủ công** / **Tự động** — giới hạn danh sách theo loại lần chạy đó. Bật cả hai (hoặc tắt cả hai) sẽ hiển thị mọi lần chạy.\n- **Lần chạy thử nghiệm của tôi** — chỉ các lần chạy bạn tham gia: bạn đã tạo lần chạy, bạn được gán một trường hợp thử nghiệm trong đó, hoặc bạn đã ghi lại một kết quả thử nghiệm trong đó."
   },
   "reports": {
     "ui": {

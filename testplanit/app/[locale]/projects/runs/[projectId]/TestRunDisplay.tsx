@@ -4,8 +4,14 @@ import { DateTextDisplay } from "@/components/DateTextDisplay";
 import DynamicIcon from "@/components/DynamicIcon";
 import { Loading } from "@/components/Loading";
 import { MilestoneIconAndName } from "@/components/MilestoneIconAndName";
+import { MilestoneSourceBadge } from "@/components/MilestoneSourceBadge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import type {
   MilestonesGetPayload,
   TestRunsGetPayload,
@@ -15,7 +21,13 @@ import {
   useProjectTestRunStream,
   type TestRunWakeUp,
 } from "~/hooks/useTestRunLiveStream";
-import { CirclePlus, GripVertical } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronsDownUp,
+  ChevronsUpDown,
+  CirclePlus,
+  GripVertical,
+} from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
@@ -37,6 +49,13 @@ import {
   sortMilestones,
 } from "~/utils/milestoneUtils";
 import AddTestRunModal from "./AddTestRunModal";
+import {
+  collapsedStorageKey,
+  collectRenderedMilestoneKeys,
+  countRunsInSubtree,
+  parseStoredCollapsedGroups,
+  UNSCHEDULED_GROUP_KEY,
+} from "./milestoneGroups";
 import TestRunItem from "./TestRunItem";
 import CompleteTestRunDialog from "./[runId]/CompleteTestRunDialog";
 
@@ -328,6 +347,7 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
   onDuplicateTestRun,
 }) => {
   const t = useTranslations("runs");
+  const tCommon = useTranslations("common");
   const tMilestones = useTranslations("milestones");
   const tSessions = useTranslations("sessions");
   const { projectId } = useParams();
@@ -548,6 +568,113 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
     [incompleteTestRuns, sortedMilestoneTree]
   );
 
+  // Integrations backing the milestones on this page, so the source badges
+  // below can resolve their Jira project ("space") segment. Fetched ONCE for
+  // the whole list rather than per group header — same shape the milestones
+  // list uses (MilestoneDisplay).
+  const integrationIds = useMemo(() => {
+    const ids = new Set<number>();
+    for (const milestone of milestonesProp) {
+      if (milestone.integrationId != null) ids.add(milestone.integrationId);
+    }
+    return Array.from(ids);
+  }, [milestonesProp]);
+
+  const { data: integrationProjects } = useClientQueries(
+    schema
+  ).integrationProject.useFindMany(
+    {
+      where: {
+        isActive: true,
+        projectIntegration: {
+          projectId: numericProjectId,
+          integrationId: { in: integrationIds },
+        },
+      },
+      select: {
+        externalProjectKey: true,
+        externalProjectName: true,
+        projectIntegration: { select: { integrationId: true } },
+      },
+    },
+    { enabled: !isNaN(numericProjectId) && integrationIds.length > 0 }
+  );
+
+  // Collapsed milestone groups, remembered per project. Keys are milestone
+  // ids as strings plus UNSCHEDULED_GROUP_KEY; absence means expanded, so a
+  // brand-new group shows up open rather than inheriting a stale collapse.
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(
+    () => new Set()
+  );
+
+  // Hydrated in an effect, not in the initializer: localStorage isn't
+  // available during SSR and reading it inline would hydrate-mismatch.
+  useEffect(() => {
+    if (isNaN(numericProjectId)) return;
+    try {
+      setCollapsedGroups(
+        parseStoredCollapsedGroups(
+          window.localStorage.getItem(collapsedStorageKey(numericProjectId))
+        )
+      );
+    } catch {
+      // localStorage unavailable (private mode) — start fully expanded.
+    }
+  }, [numericProjectId]);
+
+  const persistCollapsedGroups = useCallback(
+    (next: Set<string>) => {
+      if (isNaN(numericProjectId)) return;
+      try {
+        window.localStorage.setItem(
+          collapsedStorageKey(numericProjectId),
+          JSON.stringify(Array.from(next))
+        );
+      } catch {
+        // Persistence is best-effort.
+      }
+    },
+    [numericProjectId]
+  );
+
+  const setGroupOpen = useCallback(
+    (groupKey: string, open: boolean) => {
+      setCollapsedGroups((prev) => {
+        const next = new Set(prev);
+        if (open) next.delete(groupKey);
+        else next.add(groupKey);
+        persistCollapsedGroups(next);
+        return next;
+      });
+    },
+    [persistCollapsedGroups]
+  );
+
+  // Every group key currently on screen — drives the expand/collapse-all
+  // control and its label.
+  const renderedGroupKeys = useMemo(() => {
+    const keys: string[] = [];
+    if (groupedTestRunData.unscheduled.length > 0) {
+      keys.push(UNSCHEDULED_GROUP_KEY);
+    }
+    for (const milestone of sortedMilestoneTree) {
+      keys.push(...collectRenderedMilestoneKeys(milestone, groupedTestRunData));
+    }
+    return keys;
+  }, [groupedTestRunData, sortedMilestoneTree]);
+
+  const allGroupsCollapsed =
+    renderedGroupKeys.length > 0 &&
+    renderedGroupKeys.every((key) => collapsedGroups.has(key));
+
+  const handleToggleAllGroups = useCallback(() => {
+    const next = allGroupsCollapsed
+      ? new Set<string>()
+      : new Set(renderedGroupKeys);
+    setCollapsedGroups(next);
+    persistCollapsedGroups(next);
+  }, [allGroupsCollapsed, renderedGroupKeys, persistCollapsedGroups]);
+
   const allRunsCompleted = useMemo(
     () => testRuns.every((run) => run.isCompleted),
     [testRuns]
@@ -713,6 +840,10 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
       const hasTestRunsUnderMilestone =
         currentGroupedRuns.milestones[milestone.id]?.testRuns.length > 0;
 
+      const groupKey = String(milestone.id);
+      const isOpen = !collapsedGroups.has(groupKey);
+      const subtreeRunCount = countRunsInSubtree(milestone, currentGroupedRuns);
+
       return (
         <DroppableMilestoneGroup
           key={milestone.id}
@@ -725,13 +856,20 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
               : "w-full rounded-lg bg-muted mb-4"
           }
         >
-          <div
-            className={`milestone-grid bg-primary/10 p-2 pe-4 ${
-              depth === 0 ? "rounded-t-lg" : ""
-            }`}
+          {/* Collapsing a milestone hides its runs AND its child milestone
+              groups — they live inside this CollapsibleContent, which is what
+              keeps the nesting readable when a deep tree is folded away. The
+              header itself stays put, so the group remains a drop target. */}
+          <Collapsible
+            open={isOpen}
+            onOpenChange={(open) => setGroupOpen(groupKey, open)}
           >
-            {/* Milestone Name */}
-            <div className="flex items-center gap-1 justify-start min-w-0">
+            <div
+              className={`milestone-grid bg-primary/10 p-2 pe-4 ${
+                depth === 0 ? "rounded-t-lg" : ""
+              }`}
+            >
+              {/* Milestone Name */}
               <div className="flex items-center gap-1 justify-start min-w-0">
                 {depth > 0 && (
                   <DynamicIcon
@@ -739,75 +877,318 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
                     className="w-6 h-6 text-primary/50 shrink-0 bg-transparent"
                   />
                 )}
+                {/* Only the chevron toggles: the header also holds the
+                    milestone link and the Add Run button, so a whole-row
+                    trigger would swallow both. */}
+                <CollapsibleTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 shrink-0"
+                    aria-label={
+                      isOpen
+                        ? tCommon("actions.collapse")
+                        : tCommon("actions.expand")
+                    }
+                    data-testid={`milestone-group-toggle-${milestone.id}`}
+                  >
+                    {/* One rotating chevron rather than swapping two icons:
+                        a swap can't tween. Closed points at the group's start
+                        edge, which flips under RTL. */}
+                    <ChevronDown
+                      className={cn(
+                        "h-4 w-4 transition-transform duration-200",
+                        !isOpen && "-rotate-90 rtl:rotate-90"
+                      )}
+                    />
+                  </Button>
+                </CollapsibleTrigger>
                 <div className="truncate">
-                  <MilestoneIconAndName milestone={milestone} />
+                  <MilestoneIconAndName
+                    milestone={milestone}
+                    // The full source badge renders right beside this — no
+                    // duplicate glyph inside the name.
+                    showSourceIcon={false}
+                  />
+                </div>
+                <MilestoneSourceBadge
+                  milestone={milestone}
+                  projectId={numericProjectId}
+                  integrationProjects={integrationProjects}
+                  // This page groups BY milestone but doesn't manage them;
+                  // unlinking stays on the milestones pages.
+                  showUnlinkAction={false}
+                />
+                <Badge
+                  variant="outline"
+                  className="shrink-0 text-xs font-normal text-muted-foreground"
+                  data-testid={`milestone-group-count-${milestone.id}`}
+                >
+                  {t("milestoneGroup.runCount", { count: subtreeRunCount })}
+                </Badge>
+              </div>
+
+              {/* Status */}
+              <div className="milestone-status flex gap-2 justify-center">
+                <Badge
+                  style={{ backgroundColor: badge }}
+                  className="text-secondary-background border-2 border-secondary-foreground text-sm"
+                >
+                  {tMilestones(`statusLabels.${status}` as any)}
+                </Badge>
+              </div>
+
+              {/* Dates */}
+              <div className="milestone-dates flex justify-end">
+                <div className="grow text-sm text-muted-foreground">
+                  {canAddEditRun && (
+                    <>
+                      <Button
+                        variant="link"
+                        className="p-0"
+                        onClick={() => handleAddTestRun(milestone.id)}
+                      >
+                        <CirclePlus className="h-4 w-4" />
+                        <span className="hidden md:inline">
+                          {t("add.title")}
+                        </span>
+                      </Button>
+                      {isAddTestRunModalOpen &&
+                        selectedMilestoneId === milestone.id && (
+                          <AddTestRunModal
+                            defaultMilestoneId={milestone.id}
+                            open={isAddTestRunModalOpen}
+                            onClose={() => {
+                              setIsAddTestRunModalOpen(false);
+                              setModalSelectedTestCases([]);
+                              setSelectedMilestoneId(null);
+                            }}
+                            initialSelectedCaseIds={modalSelectedTestCases}
+                            onSelectedCasesChange={setModalSelectedTestCases}
+                          />
+                        )}
+                    </>
+                  )}
+                  <DateTextDisplay
+                    startDate={
+                      milestone.startedAt ? new Date(milestone.startedAt) : null
+                    }
+                    endDate={
+                      milestone.completedAt
+                        ? new Date(milestone.completedAt)
+                        : null
+                    }
+                    isCompleted={milestone.isCompleted}
+                  />
                 </div>
               </div>
             </div>
 
-            {/* Status */}
-            <div className="milestone-status flex gap-2 justify-center">
-              <Badge
-                style={{ backgroundColor: badge }}
-                className="text-secondary-background border-2 border-secondary-foreground text-sm"
-              >
-                {tMilestones(`statusLabels.${status}` as any)}
-              </Badge>
-            </div>
+            {/* overflow-hidden is what the height keyframes clip against;
+                without it the rows spill out at full height for the whole
+                animation instead of being wiped. */}
+            <CollapsibleContent className="overflow-hidden data-[state=closed]:animate-slide-up data-[state=open]:animate-slide-down">
+              {/* Render test runs under this milestone FIRST */}
+              {hasTestRunsUnderMilestone && (
+                <div className="test-runs-container bg-muted pe-4 pb-2 mb-2">
+                  {currentGroupedRuns.milestones[milestone.id]?.testRuns.map(
+                    (testRun) => (
+                      <div
+                        key={testRun.id}
+                        style={{ paddingInlineStart: "2.5rem" }}
+                      >
+                        <DraggableTestRunWrapper
+                          testRunId={testRun.id}
+                          testRunName={testRun.name}
+                          currentMilestoneId={testRun.milestoneId}
+                          canDrag={canAddEditRun && !testRun.isCompleted}
+                        >
+                          <TestRunItem
+                            testRun={{
+                              id: testRun.id,
+                              name: testRun.name,
+                              isCompleted: testRun.isCompleted,
+                              compositionLockedAt: testRun.compositionLockedAt,
+                              testRunType: testRun.testRunType,
+                              configuration: testRun.configuration,
+                              configurationGroupId:
+                                testRun.configurationGroupId,
+                              state: testRun.state,
+                              note:
+                                typeof testRun.note === "string"
+                                  ? testRun.note
+                                  : testRun.note
+                                    ? JSON.stringify(testRun.note)
+                                    : undefined,
+                              completedAt: testRun.completedAt
+                                ? new Date(testRun.completedAt)
+                                : undefined,
+                              milestone: testRun.milestone
+                                ? {
+                                    id: testRun.milestone.id,
+                                    name: testRun.milestone.name,
+                                    startedAt: testRun.milestone.startedAt
+                                      ? new Date(testRun.milestone.startedAt)
+                                      : undefined,
+                                    completedAt: testRun.milestone.completedAt
+                                      ? new Date(testRun.milestone.completedAt)
+                                      : undefined,
+                                    isCompleted: testRun.milestone.isCompleted,
+                                    milestoneType:
+                                      testRun.milestone.milestoneType,
+                                  }
+                                : undefined,
+                              projectId: testRun.projectId,
+                              testCases: testCasesByTestRunId[testRun.id] || [],
+                              createdBy: testRun.createdBy,
+                              forecastManual: testRun.forecastManual,
+                              forecastAutomated: testRun.forecastAutomated,
+                              createdAt: testRun.createdAt,
+                            }}
+                            onComplete={handleOpenDialogParam}
+                            isAdmin={isAdminParam}
+                            isNew={false}
+                            onDuplicate={onDuplicateTestRunParam}
+                            summaryData={summariesData?.summaries[testRun.id]}
+                            summaryLoading={isBatchSummariesLoading}
+                            pendingRequest={pendingByTestRunId.get(testRun.id)}
+                            showMilestone={false}
+                          />
+                        </DraggableTestRunWrapper>
+                      </div>
+                    )
+                  )}
+                </div>
+              )}
 
-            {/* Dates */}
-            <div className="milestone-dates flex justify-end">
-              <div className="grow text-sm text-muted-foreground">
-                {canAddEditRun && (
-                  <>
-                    <Button
-                      variant="link"
-                      className="p-0"
-                      onClick={() => handleAddTestRun(milestone.id)}
-                    >
-                      <CirclePlus className="h-4 w-4" />
-                      <span className="hidden md:inline">{t("add.title")}</span>
-                    </Button>
-                    {isAddTestRunModalOpen &&
-                      selectedMilestoneId === milestone.id && (
-                        <AddTestRunModal
-                          defaultMilestoneId={milestone.id}
-                          open={isAddTestRunModalOpen}
-                          onClose={() => {
-                            setIsAddTestRunModalOpen(false);
-                            setModalSelectedTestCases([]);
-                            setSelectedMilestoneId(null);
-                          }}
-                          initialSelectedCaseIds={modalSelectedTestCases}
-                          onSelectedCasesChange={setModalSelectedTestCases}
-                        />
-                      )}
-                  </>
-                )}
-                <DateTextDisplay
-                  startDate={
-                    milestone.startedAt ? new Date(milestone.startedAt) : null
-                  }
-                  endDate={
-                    milestone.completedAt
-                      ? new Date(milestone.completedAt)
-                      : null
-                  }
-                  isCompleted={milestone.isCompleted}
-                />
-              </div>
-            </div>
+              {/* THEN render child milestones */}
+              {milestone.children?.map((childMilestone) =>
+                renderMilestoneWithTestRuns(childMilestone, depth + 1)
+              )}
+            </CollapsibleContent>
+          </Collapsible>
+        </DroppableMilestoneGroup>
+      );
+    };
+
+    // No header means no chevron to reopen with, so the group has to stay
+    // expanded in that (runs-all-completed) case regardless of stored state.
+    const showUnscheduledHeader = currentGroupedRuns.unscheduled.some(
+      (testRun) => !testRun.isCompleted
+    );
+    const isUnscheduledOpen =
+      !showUnscheduledHeader || !collapsedGroups.has(UNSCHEDULED_GROUP_KEY);
+
+    return (
+      <>
+        {renderedGroupKeys.length > 1 && (
+          <div className="mb-2 flex justify-end">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={handleToggleAllGroups}
+              data-testid="milestone-groups-toggle-all"
+            >
+              {allGroupsCollapsed ? (
+                <ChevronsUpDown className="h-4 w-4 me-2" />
+              ) : (
+                <ChevronsDownUp className="h-4 w-4 me-2" />
+              )}
+              {allGroupsCollapsed
+                ? t("milestoneGroup.expandAll")
+                : t("milestoneGroup.collapseAll")}
+            </Button>
           </div>
-
-          {/* Render test runs under this milestone FIRST */}
-          {hasTestRunsUnderMilestone && (
-            <div className="test-runs-container bg-muted pe-4 pb-2 mb-2">
-              {currentGroupedRuns.milestones[milestone.id]?.testRuns.map(
-                (testRun) => (
-                  <div
-                    key={testRun.id}
-                    style={{ paddingInlineStart: "2.5rem" }}
-                  >
+        )}
+        {currentGroupedRuns.unscheduled.length > 0 && (
+          <DroppableMilestoneGroup
+            milestoneId={null}
+            milestoneName={tSessions("noMilestone")}
+            onDropTestRun={handleDropTestRun}
+            className="w-full bg-muted rounded-lg p-0 pb-2"
+          >
+            <Collapsible
+              open={isUnscheduledOpen}
+              onOpenChange={(open) => setGroupOpen(UNSCHEDULED_GROUP_KEY, open)}
+            >
+              {showUnscheduledHeader && (
+                <div className="milestone-grid bg-primary/10 rounded-t-lg p-4">
+                  <div className="milestone-name flex items-center gap-1">
+                    <CollapsibleTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 shrink-0"
+                        aria-label={
+                          isUnscheduledOpen
+                            ? tCommon("actions.collapse")
+                            : tCommon("actions.expand")
+                        }
+                        data-testid="milestone-group-toggle-unscheduled"
+                      >
+                        <ChevronDown
+                          className={cn(
+                            "h-4 w-4 transition-transform duration-200",
+                            !isUnscheduledOpen && "-rotate-90 rtl:rotate-90"
+                          )}
+                        />
+                      </Button>
+                    </CollapsibleTrigger>
+                    <DynamicIcon
+                      name="calendar-off"
+                      className="w-6 h-6 shrink-0"
+                    />
+                    <div className="truncate">{tSessions("noMilestone")}</div>
+                    <Badge
+                      variant="outline"
+                      className="shrink-0 text-xs font-normal text-muted-foreground"
+                      data-testid="milestone-group-count-unscheduled"
+                    >
+                      {t("milestoneGroup.runCount", {
+                        count: currentGroupedRuns.unscheduled.length,
+                      })}
+                    </Badge>
+                  </div>
+                  <div className="milestone-status"></div>
+                  <div className="milestone-dates flex justify-end">
+                    {canAddEditRun && (
+                      <>
+                        <Button
+                          onClick={() => handleAddTestRun(null)}
+                          aria-label={t("add.title")}
+                          className="group gap-0 transition-all duration-200 hover:gap-2"
+                        >
+                          <CirclePlus className="h-4 w-4" />
+                          <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-xs">
+                            {t("add.title")}
+                          </span>
+                        </Button>
+                        {isAddTestRunModalOpen &&
+                          selectedMilestoneId === null && (
+                            <AddTestRunModal
+                              open={isAddTestRunModalOpen}
+                              onClose={() => {
+                                setIsAddTestRunModalOpen(false);
+                                setModalSelectedTestCases([]);
+                              }}
+                              initialSelectedCaseIds={modalSelectedTestCases}
+                              onSelectedCasesChange={setModalSelectedTestCases}
+                            />
+                          )}
+                      </>
+                    )}
+                  </div>
+                </div>
+              )}
+              {/* overflow-hidden is what the height keyframes clip against;
+                without it the rows spill out at full height for the whole
+                animation instead of being wiped. */}
+              <CollapsibleContent className="overflow-hidden data-[state=closed]:animate-slide-up data-[state=open]:animate-slide-down">
+                {currentGroupedRuns.unscheduled.map((testRun) => (
+                  <div key={testRun.id} className="ps-4 pe-4">
                     <DraggableTestRunWrapper
                       testRunId={testRun.id}
                       testRunName={testRun.name}
@@ -861,133 +1242,12 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
                         summaryData={summariesData?.summaries[testRun.id]}
                         summaryLoading={isBatchSummariesLoading}
                         pendingRequest={pendingByTestRunId.get(testRun.id)}
-                        showMilestone={false}
                       />
                     </DraggableTestRunWrapper>
                   </div>
-                )
-              )}
-            </div>
-          )}
-
-          {/* THEN render child milestones */}
-          {milestone.children?.map((childMilestone) =>
-            renderMilestoneWithTestRuns(childMilestone, depth + 1)
-          )}
-        </DroppableMilestoneGroup>
-      );
-    };
-
-    return (
-      <>
-        {currentGroupedRuns.unscheduled.length > 0 && (
-          <DroppableMilestoneGroup
-            milestoneId={null}
-            milestoneName={tSessions("noMilestone")}
-            onDropTestRun={handleDropTestRun}
-            className="w-full bg-muted rounded-lg p-0 pb-2"
-          >
-            {currentGroupedRuns.unscheduled.some(
-              (testRun) => !testRun.isCompleted
-            ) && (
-              <div className="milestone-grid bg-primary/10 rounded-t-lg p-4">
-                <div className="milestone-name flex items-center gap-1">
-                  <DynamicIcon
-                    name="calendar-off"
-                    className="w-6 h-6 shrink-0"
-                  />
-                  <div className="truncate">{tSessions("noMilestone")}</div>
-                </div>
-                <div className="milestone-status"></div>
-                <div className="milestone-dates flex justify-end">
-                  {canAddEditRun && (
-                    <>
-                      <Button
-                        onClick={() => handleAddTestRun(null)}
-                        aria-label={t("add.title")}
-                        className="group gap-0 transition-all duration-200 hover:gap-2"
-                      >
-                        <CirclePlus className="h-4 w-4" />
-                        <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-xs">
-                          {t("add.title")}
-                        </span>
-                      </Button>
-                      {isAddTestRunModalOpen &&
-                        selectedMilestoneId === null && (
-                          <AddTestRunModal
-                            open={isAddTestRunModalOpen}
-                            onClose={() => {
-                              setIsAddTestRunModalOpen(false);
-                              setModalSelectedTestCases([]);
-                            }}
-                            initialSelectedCaseIds={modalSelectedTestCases}
-                            onSelectedCasesChange={setModalSelectedTestCases}
-                          />
-                        )}
-                    </>
-                  )}
-                </div>
-              </div>
-            )}
-            {currentGroupedRuns.unscheduled.map((testRun) => (
-              <div key={testRun.id} className="ps-4 pe-4">
-                <DraggableTestRunWrapper
-                  testRunId={testRun.id}
-                  testRunName={testRun.name}
-                  currentMilestoneId={testRun.milestoneId}
-                  canDrag={canAddEditRun && !testRun.isCompleted}
-                >
-                  <TestRunItem
-                    testRun={{
-                      id: testRun.id,
-                      name: testRun.name,
-                      isCompleted: testRun.isCompleted,
-                      compositionLockedAt: testRun.compositionLockedAt,
-                      testRunType: testRun.testRunType,
-                      configuration: testRun.configuration,
-                      configurationGroupId: testRun.configurationGroupId,
-                      state: testRun.state,
-                      note:
-                        typeof testRun.note === "string"
-                          ? testRun.note
-                          : testRun.note
-                            ? JSON.stringify(testRun.note)
-                            : undefined,
-                      completedAt: testRun.completedAt
-                        ? new Date(testRun.completedAt)
-                        : undefined,
-                      milestone: testRun.milestone
-                        ? {
-                            id: testRun.milestone.id,
-                            name: testRun.milestone.name,
-                            startedAt: testRun.milestone.startedAt
-                              ? new Date(testRun.milestone.startedAt)
-                              : undefined,
-                            completedAt: testRun.milestone.completedAt
-                              ? new Date(testRun.milestone.completedAt)
-                              : undefined,
-                            isCompleted: testRun.milestone.isCompleted,
-                            milestoneType: testRun.milestone.milestoneType,
-                          }
-                        : undefined,
-                      projectId: testRun.projectId,
-                      testCases: testCasesByTestRunId[testRun.id] || [],
-                      createdBy: testRun.createdBy,
-                      forecastManual: testRun.forecastManual,
-                      forecastAutomated: testRun.forecastAutomated,
-                      createdAt: testRun.createdAt,
-                    }}
-                    onComplete={handleOpenDialogParam}
-                    isAdmin={isAdminParam}
-                    isNew={false}
-                    onDuplicate={onDuplicateTestRunParam}
-                    summaryData={summariesData?.summaries[testRun.id]}
-                    summaryLoading={isBatchSummariesLoading}
-                    pendingRequest={pendingByTestRunId.get(testRun.id)}
-                  />
-                </DraggableTestRunWrapper>
-              </div>
-            ))}
+                ))}
+              </CollapsibleContent>
+            </Collapsible>
           </DroppableMilestoneGroup>
         )}
         <div className="rounded-b-lg mb-4"></div>

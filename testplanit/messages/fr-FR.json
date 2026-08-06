@@ -3934,12 +3934,21 @@
     "filter": {
       "placeholder": "Exécution des tests de filtrage..."
     },
-    "typeFilter": {
-      "both": "Manuel et automatisé",
-      "label": "Filtrer par type d'exécution"
-    },
     "empty": {
-      "noMatchingCompleted": "Aucun test n'a été effectué et ne correspond à votre filtre."
+      "noMatchingCompleted": "Aucun test n'a été effectué et ne correspond à votre filtre.",
+      "noMatchingActive": "Aucune exécution de test active ne correspond à vos filtres."
+    },
+    "milestoneGroup": {
+      "runCount": "{count, plural, one {# exécution} other {# exécutions}}",
+      "expandAll": "Développer tout",
+      "collapseAll": "Réduire tout"
+    },
+    "runFilters": {
+      "label": "Filtrer les exécutions de test",
+      "mine": "Mes exécutions de test"
+    },
+    "typeFilter": {
+      "both": "Manuel et automatisé"
     }
   },
   "admin": {
@@ -7309,7 +7318,8 @@
           "content": "Gérez ici les intégrations au niveau du projet, les configurations des modèles d'IA et les liens partagés."
         }
       }
-    }
+    },
+    "projectRunsFilters": "## Filtrer les exécutions de test\n\nActivez ou désactivez une puce pour affiner la liste. Les puces s'appliquent aux onglets Actives et Terminées, et sont mémorisées sur cet appareil pour ce projet.\n\n- **Manuel** / **Automatisé** — limite la liste à ce type d'exécution. Activer les deux (ou désactiver les deux) affiche toutes les exécutions.\n- **Mes exécutions de test** — uniquement les exécutions auxquelles vous participez : vous avez créé l'exécution, un cas de test vous y est assigné, ou vous avez enregistré un résultat de test dans celle-ci."
   },
   "reports": {
     "ui": {

@@ -3934,12 +3934,21 @@
     "filter": {
       "placeholder": "Filter test runs..."
     },
-    "typeFilter": {
-      "both": "Manual & Automated",
-      "label": "Filter by run type"
-    },
     "empty": {
-      "noMatchingCompleted": "No completed test runs match your filter."
+      "noMatchingCompleted": "No completed test runs match your filter.",
+      "noMatchingActive": "No active test runs match your filters."
+    },
+    "milestoneGroup": {
+      "runCount": "{count, plural, one {# run} other {# runs}}",
+      "expandAll": "Expand all",
+      "collapseAll": "Collapse all"
+    },
+    "runFilters": {
+      "label": "Filter test runs",
+      "mine": "My Test Runs"
+    },
+    "typeFilter": {
+      "both": "Manual & Automated"
     }
   },
   "admin": {
@@ -7309,7 +7318,8 @@
           "content": "Manage project-level integrations, AI model configurations, and shared links from here."
         }
       }
-    }
+    },
+    "projectRunsFilters": "## Filtering test runs\n\nToggle a chip to narrow the list. Chips apply to both the Active and Completed tabs, and are remembered on this device for this project.\n\n- **Manual** / **Automated** — limit the list to that kind of run. Turning both on (or both off) shows every run.\n- **My Test Runs** — only runs you take part in: you created the run, you are assigned a test case in it, or you recorded a test result in it."
   },
   "reports": {
     "ui": {

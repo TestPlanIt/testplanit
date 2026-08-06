@@ -3934,12 +3934,21 @@
     "filter": {
       "placeholder": "Filtertest uitgevoerd..."
     },
-    "typeFilter": {
-      "both": "Handmatig en geautomatiseerd",
-      "label": "Filteren op runtype"
-    },
     "empty": {
-      "noMatchingCompleted": "Er zijn geen voltooide testruns die aan uw filter voldoen."
+      "noMatchingCompleted": "Er zijn geen voltooide testruns die aan uw filter voldoen.",
+      "noMatchingActive": "Er zijn geen actieve testruns die aan uw filters voldoen."
+    },
+    "milestoneGroup": {
+      "runCount": "{count, plural, one {# testrun} other {# testruns}}",
+      "expandAll": "Alles uitvouwen",
+      "collapseAll": "Alles samenvouwen"
+    },
+    "runFilters": {
+      "label": "Testruns filteren",
+      "mine": "Mijn testruns"
+    },
+    "typeFilter": {
+      "both": "Handmatig en geautomatiseerd"
     }
   },
   "admin": {
@@ -7309,7 +7318,8 @@
           "content": "Beheer hier projectintegraties, AI-modelconfiguraties en gedeelde links."
         }
       }
-    }
+    },
+    "projectRunsFilters": "## Testruns filteren\n\nSchakel een chip in om de lijst te beperken. Chips zijn van toepassing op zowel het tabblad Actief als Voltooid, en worden op dit apparaat onthouden voor dit project.\n\n- **Handmatig** / **Geautomatiseerd** — beperk de lijst tot dat type run. Als u beide inschakelt (of beide uitschakelt), worden alle runs weergegeven.\n- **Mijn testruns** — alleen runs waaraan u deelneemt: u hebt de run aangemaakt, u bent toegewezen aan een testcase erin, of u hebt een testresultaat erin geregistreerd."
   },
   "reports": {
     "ui": {

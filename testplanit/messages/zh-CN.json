@@ -537,7 +537,7 @@
       "selectProjects": "选择项目",
       "selectStates": "选择状态",
       "selectTags": "选择标签",
-      "addFieldTo": "添加字段到{section}",
+      "addFieldTo": "向 {section} 添加字段",
       "selectTemplates": "选择模板",
       "selectUsers": "选择用户",
       "selectOption": "选择一个选项",
@@ -3934,12 +3934,21 @@
     "filter": {
       "placeholder": "过滤器测试运行..."
     },
-    "typeFilter": {
-      "both": "手动和自动",
-      "label": "按运行类型筛选"
-    },
     "empty": {
-      "noMatchingCompleted": "没有符合您筛选条件的已完成测试运行。"
+      "noMatchingCompleted": "没有符合您筛选条件的已完成测试运行。",
+      "noMatchingActive": "没有符合您筛选条件的进行中测试运行。"
+    },
+    "milestoneGroup": {
+      "runCount": "{count, plural, other {# 个运行}}",
+      "expandAll": "全部展开",
+      "collapseAll": "全部收起"
+    },
+    "runFilters": {
+      "label": "筛选测试运行",
+      "mine": "我的测试运行"
+    },
+    "typeFilter": {
+      "both": "手动和自动"
     }
   },
   "admin": {
@@ -7309,7 +7318,8 @@
           "content": "从这里管理项目级集成、AI 模型配置和共享链接。"
         }
       }
-    }
+    },
+    "projectRunsFilters": "## 筛选测试运行\n\n切换标签以缩小列表范围。标签同时适用于“进行中”和“已完成”选项卡，并会在此设备上为此项目记住设置。\n\n- **手动** / **自动化** — 将列表限制为该类型的运行。同时打开（或同时关闭）两者将显示所有运行。\n- **我的测试运行** — 仅显示您参与的运行：您创建了该运行、您在其中被分配了测试用例，或您在其中记录了测试结果。"
   },
   "reports": {
     "ui": {

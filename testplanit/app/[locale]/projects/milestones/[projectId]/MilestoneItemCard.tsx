@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   MilestoneSourceBadge,
   type MilestoneIntegrationProject,
-} from "./MilestoneSourceBadge";
+} from "@/components/MilestoneSourceBadge";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,

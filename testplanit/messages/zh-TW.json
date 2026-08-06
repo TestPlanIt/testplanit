@@ -3934,12 +3934,21 @@
     "filter": {
       "placeholder": "過濾器測試運行..."
     },
-    "typeFilter": {
-      "both": "手動和自動",
-      "label": "依執行類型篩選"
-    },
     "empty": {
-      "noMatchingCompleted": "沒有符合您篩選條件的已完成測試運行。"
+      "noMatchingCompleted": "沒有符合您篩選條件的已完成測試運行。",
+      "noMatchingActive": "沒有符合您篩選條件的啟用中測試運行。"
+    },
+    "milestoneGroup": {
+      "runCount": "{count, plural, other {# 次運行}}",
+      "expandAll": "全部展開",
+      "collapseAll": "全部收起"
+    },
+    "runFilters": {
+      "label": "篩選測試運行",
+      "mine": "我的測試運行"
+    },
+    "typeFilter": {
+      "both": "手動和自動"
     }
   },
   "admin": {
@@ -7309,7 +7318,8 @@
           "content": "從這裡管理專案級整合、AI 模型配置和共享連結。"
         }
       }
-    }
+    },
+    "projectRunsFilters": "## 篩選測試運行\n\n切換標籤以縮小列表範圍。標籤同時套用於「啟用中」和「已完成」分頁，並會針對此專案在此裝置上記住設定。\n\n- **手動** / **自動化** — 將列表限制為該類型的運行。同時開啟（或同時關閉）兩者將顯示所有運行。\n- **我的測試運行** — 僅顯示您參與的運行：您建立了該運行、您被指派了其中的測試案例，或您在其中記錄了測試結果。"
   },
   "reports": {
     "ui": {

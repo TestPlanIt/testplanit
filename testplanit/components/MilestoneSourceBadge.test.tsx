@@ -253,6 +253,80 @@ describe("MilestoneSourceBadge", () => {
     expect(global.fetch).not.toHaveBeenCalled();
   });
 
+  // The test-runs page groups BY milestone but does not manage them, so it
+  // opts out of the unlink affordance: project admins there get the same
+  // plain open-in-tracker link everyone else gets.
+  describe("showUnlinkAction={false}", () => {
+    beforeEach(() => {
+      mockIsProjectAdmin = true;
+    });
+
+    it("renders no dropdown menu even for a project admin", () => {
+      render(
+        <MilestoneSourceBadge
+          milestone={synced}
+          projectId={7}
+          showUnlinkAction={false}
+        />
+      );
+
+      expect(screen.getByTestId("milestone-source-badge")).toBeInTheDocument();
+      openMenu(screen.getByTestId("milestone-source-badge"));
+      expect(screen.queryByTestId("milestone-source-menu-open")).toBeNull();
+      expect(screen.queryByTestId("milestone-source-menu-unlink")).toBeNull();
+    });
+
+    it("clicking the badge opens the tracker directly", () => {
+      const openSpy = vi.spyOn(window, "open").mockImplementation(() => null);
+      render(
+        <MilestoneSourceBadge
+          milestone={synced}
+          projectId={7}
+          showUnlinkAction={false}
+        />
+      );
+
+      fireEvent.click(screen.getByTestId("milestone-source-badge"));
+
+      expect(openSpy).toHaveBeenCalledWith(
+        synced.externalUrl,
+        "_blank",
+        "noopener,noreferrer"
+      );
+      openSpy.mockRestore();
+    });
+
+    it("offers no path to the unlink route", () => {
+      render(
+        <MilestoneSourceBadge
+          milestone={synced}
+          projectId={7}
+          showUnlinkAction={false}
+        />
+      );
+
+      fireEvent.click(screen.getByTestId("milestone-source-badge"));
+
+      expect(
+        screen.queryByTestId("milestone-source-unlink-confirm")
+      ).toBeNull();
+      expect(global.fetch).not.toHaveBeenCalledWith(
+        "/api/milestones/42/unlink",
+        expect.anything()
+      );
+    });
+
+    // Default-on: the milestones pages must keep their menu untouched.
+    it("still shows the menu for a project admin when the prop is omitted", () => {
+      render(<MilestoneSourceBadge milestone={synced} projectId={7} />);
+
+      openMenu(screen.getByTestId("milestone-source-badge"));
+      expect(
+        screen.getByTestId("milestone-source-menu-unlink")
+      ).toBeInTheDocument();
+    });
+  });
+
   describe("non-project-admin gating", () => {
     beforeEach(() => {
       mockIsProjectAdmin = false;

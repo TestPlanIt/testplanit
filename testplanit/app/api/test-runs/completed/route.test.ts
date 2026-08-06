@@ -183,6 +183,73 @@ describe("Completed Test Runs API Route", () => {
       expect(countCall.where.testRunType).toHaveProperty("in");
     });
 
+    it("does not constrain participation by default", async () => {
+      const request = createRequest({ projectId: "1" });
+      await GET(request);
+
+      const countCall = (baseDb.testRuns.count as any).mock.calls[0][0];
+      expect(countCall.where).not.toHaveProperty("OR");
+    });
+
+    it("does not constrain participation when participant=all", async () => {
+      const request = createRequest({ projectId: "1", participant: "all" });
+      await GET(request);
+
+      const countCall = (baseDb.testRuns.count as any).mock.calls[0][0];
+      expect(countCall.where).not.toHaveProperty("OR");
+    });
+
+    // The three participation roles must stay in lockstep with the
+    // contributor avatars on each run row (TestRunItem's MemberList): the
+    // creator, case assignees, and result executors. Dropping one here would
+    // silently hide runs the user demonstrably worked on.
+    it("matches creator, assignee, or executor when participant=mine", async () => {
+      const request = createRequest({ projectId: "1", participant: "mine" });
+      await GET(request);
+
+      const countCall = (baseDb.testRuns.count as any).mock.calls[0][0];
+      expect(countCall.where.OR).toEqual([
+        { createdById: "user-123" },
+        { testCases: { some: { isDeleted: false, assignedToId: "user-123" } } },
+        { results: { some: { isDeleted: false, executedById: "user-123" } } },
+      ]);
+    });
+
+    it("scopes participation to the signed-in user", async () => {
+      (getServerSession as any).mockResolvedValue({
+        user: { ...mockSession.user, id: "someone-else" },
+      });
+      const request = createRequest({ projectId: "1", participant: "mine" });
+      await GET(request);
+
+      const countCall = (baseDb.testRuns.count as any).mock.calls[0][0];
+      expect(countCall.where.OR[0]).toEqual({ createdById: "someone-else" });
+    });
+
+    // The count drives pagination, so an OR that reaches findMany but not
+    // count would report more pages than the filtered list actually has.
+    it("applies the participation filter to the count and the page alike", async () => {
+      const request = createRequest({ projectId: "1", participant: "mine" });
+      await GET(request);
+
+      const countCall = (baseDb.testRuns.count as any).mock.calls[0][0];
+      const findCall = (baseDb.testRuns.findMany as any).mock.calls[0][0];
+      expect(findCall.where.OR).toEqual(countCall.where.OR);
+    });
+
+    it("combines the participation and run type filters", async () => {
+      const request = createRequest({
+        projectId: "1",
+        participant: "mine",
+        runType: "manual",
+      });
+      await GET(request);
+
+      const countCall = (baseDb.testRuns.count as any).mock.calls[0][0];
+      expect(countCall.where).toHaveProperty("testRunType", "REGULAR");
+      expect(countCall.where.OR).toHaveLength(3);
+    });
+
     it("applies default pagination when not specified", async () => {
       const request = createRequest({ projectId: "1" });
       await GET(request);
