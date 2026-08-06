@@ -135,7 +135,7 @@ Reviewers find pending requests in their inbox:
 1. Click the **Review inbox** icon in the top navigation bar (an inbox icon with a count badge when there are pending items). The icon is hidden for users who have no access to any project with **Review Workflow** turned on — there's nothing for them to act on.
 2. The inbox shows two tabs:
     - **Pending** — requests assigned to you, directly or via a role you hold.
-    - **Decided** — requests you've already decided on.
+    - **Decided** — requests you've decided, plus decided requests you originally submitted, with a **Decided by** column showing who acted.
 3. Click a request to open the entity in a side panel showing:
     - Requester name and comment
     - Current state and target state
@@ -273,7 +273,7 @@ Not today. A request has one assignee — either one user or one role. The first
 A role-assigned request that resolves to zero project-eligible reviewers is still visible in the requester's UI but cannot be acted on until project access is restored or the request is reassigned (cancel and re-submit).
 
 **Can I see who has approved which transitions for an entity?**
-Yes. The **Decided** tab in the Review inbox shows requests you decided. Per-entity history is also available — open the entity, scroll to the review history section, and you'll see the chain of requests and decisions.
+Yes. The **Decided** tab in the Review inbox shows requests you decided and decisions made on requests you submitted, with filters for status, requester, and decider. Per-entity history is also available — open the entity, scroll to the review history section, and you'll see the chain of requests and decisions.
 
 **Does Review & Approval apply to API-driven updates?**
 Yes. The gate is enforced at the API layer, so updates from the ZenStack auto-API, server actions, and direct HTTP routes all honor the gate. Service accounts that bypass the gate must be granted explicit project administrator access AND the per-project toggle must be turned off; there is no per-request bypass.

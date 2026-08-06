@@ -23,11 +23,11 @@ Pending requests also appear at the top of **Your Assignments** on the [Dashboar
 The inbox has two tabs:
 
 - **Pending** — requests assigned to you (directly or via a role you hold) that are awaiting a decision. Sorted oldest first, so the most overdue is on top.
-- **Decided** — requests you've already decided, most recent first.
+- **Decided** — the decision history you're involved in: requests you decided **and** decided requests you originally submitted, most recent first. A **Decided by** column shows who made each decision, so requesters can follow the outcome of their own requests without visiting each entity.
 
-Two filters narrow the list: **Entity type** (test cases, test runs, sessions) and **Project**.
+Searchable multi-select filters narrow the list: **Entity type**, **Project**, and **Requester** on both tabs, plus **Decided by** and **Status** (Approved / Changes requested / Rejected) on the Decided tab. Each dropdown only offers values that actually occur in the current tab's rows — no choice can filter the table down to nothing — and an empty selection means "all".
 
-Each row shows the entity, its project, the requester, the workflow transition being reviewed (**From → To**), and when it was requested or decided. On the Decided tab, a status badge shows the outcome: **Approved**, **Changes requested**, **Rejected**, or **Cancelled**.
+Each row shows the entity, its project, the requester, the workflow transition being reviewed (**From → To**), and when it was requested or decided. On the Decided tab, a status badge shows the outcome: **Approved**, **Changes requested**, or **Rejected**.
 
 ## Test Case Details Panel
 

@@ -11,7 +11,18 @@ import {
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { History, Inbox } from "lucide-react";
+import { MultiAsyncCombobox } from "@/components/ui/multi-async-combobox";
+import {
+  CheckCircle2,
+  Compass,
+  History,
+  Inbox,
+  ListChecks,
+  MessageCircleWarning,
+  PlayCircle,
+  XCircle,
+} from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
@@ -20,6 +31,8 @@ import type { PanelImperativeHandle } from "react-resizable-panels";
 
 import { DataTable } from "@/components/tables/DataTable";
 import { CaseDetailsPanel } from "@/components/repositories/CaseDetailsPanel";
+import { ProjectNameDisplay } from "~/components/search/ProjectNameDisplay";
+import { UserNameCell } from "~/components/tables/UserNameCell";
 import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "~/utils";
 import {
@@ -47,9 +60,98 @@ import {
   type InboxView,
 } from "./columns";
 
-type EntityTypeFilter = "all" | "CASE" | "RUN" | "SESSION";
-type ProjectFilter = "all" | number;
+type EntityTypeValue = "CASE" | "RUN" | "SESSION";
 type Decision = "APPROVED" | "CHANGES_REQUESTED" | "REJECTED";
+
+const DECIDED_STATUSES = ["APPROVED", "CHANGES_REQUESTED", "REJECTED"] as const;
+
+/** Options per combobox page (matches the audit-logs filter pickers). */
+const FILTER_PAGE_SIZE = 25;
+
+/** Entity-type option icons — the same glyphs the app uses for a test
+ *  case (TestCaseNameDisplay), a run (TestRunNameDisplay / project menu),
+ *  and a session (project menu). */
+const ENTITY_TYPE_ICONS: Record<EntityTypeValue, LucideIcon> = {
+  CASE: ListChecks,
+  RUN: PlayCircle,
+  SESSION: Compass,
+};
+
+/** Status option icons + colors — mirrors ReviewDecisionBadge and the
+ *  Pending tab's action buttons so the outcome color language matches. */
+const STATUS_ICONS: Record<Decision, { icon: LucideIcon; className: string }> =
+  {
+    APPROVED: { icon: CheckCircle2, className: "text-emerald-500" },
+    CHANGES_REQUESTED: {
+      icon: MessageCircleWarning,
+      className: "text-amber-500",
+    },
+    REJECTED: { icon: XCircle, className: "text-destructive" },
+  };
+
+/** Option shapes the filter comboboxes carry. Empty selection = "All". */
+interface EntityTypeOption {
+  value: EntityTypeValue;
+  label: string;
+}
+interface ProjectOption {
+  id: number;
+  name: string;
+  iconUrl?: string | null;
+}
+interface UserOption {
+  id: string;
+  name: string | null;
+}
+interface StatusOption {
+  value: Decision;
+  label: string;
+}
+
+/**
+ * Slim row shape the filter-options query fetches — just enough to derive
+ * which entity types / projects / requesters / deciders / statuses actually
+ * occur in the current tab's scope, so no dropdown ever offers a choice
+ * that would filter the table down to zero rows.
+ */
+interface ScopeOptionRow {
+  entityType: EntityTypeValue;
+  status: string;
+  project: ProjectOption | null;
+  requestedBy: UserOption | null;
+  decidedBy: UserOption | null;
+}
+
+/** Case-insensitive contains-filter + pager for local combobox sources. */
+function filterAndPage<T>(
+  items: T[],
+  query: string,
+  page: number,
+  pageSize: number,
+  label: (item: T) => string
+) {
+  const q = query.trim().toLowerCase();
+  const filtered = q
+    ? items.filter((item) => label(item).toLowerCase().includes(q))
+    : items;
+  return {
+    results: filtered.slice(page * pageSize, page * pageSize + pageSize),
+    total: filtered.length,
+  };
+}
+
+/** Dedupe option objects by key, then sort by display label. */
+function uniqueSorted<T>(
+  items: (T | null | undefined)[],
+  key: (item: T) => string | number,
+  label: (item: T) => string
+): T[] {
+  const m = new Map<string | number, T>();
+  for (const item of items) {
+    if (item != null) m.set(key(item), item);
+  }
+  return [...m.values()].sort((a, b) => label(a).localeCompare(label(b)));
+}
 
 interface ActiveDialogState {
   decision: Decision;
@@ -114,20 +216,42 @@ function ReviewsInboxContent({ userId }: { userId: string }) {
   const { enabled: featureEnabled, isLoading: featureLoading } =
     useReviewFeatureEnabled();
 
-  const [entityTypeFilter, setEntityTypeFilter] =
-    useState<EntityTypeFilter>("all");
-  const [projectFilter, setProjectFilter] = useState<ProjectFilter>("all");
+  // Multi-select filters — empty array = "All". Each holds option objects
+  // so the combobox chips render without a lookup.
+  const [entityTypeFilter, setEntityTypeFilter] = useState<EntityTypeOption[]>(
+    []
+  );
+  const [projectFilter, setProjectFilter] = useState<ProjectOption[]>([]);
+  const [requesterFilter, setRequesterFilter] = useState<UserOption[]>([]);
+  // Decided tab only — narrow the history to outcomes and/or deciders.
+  // Both are ignored (and hidden) on the Pending tab, where every row is
+  // PENDING and undecided by definition.
+  const [decidedStatusFilter, setDecidedStatusFilter] = useState<
+    StatusOption[]
+  >([]);
+  const [decidedByFilter, setDecidedByFilter] = useState<UserOption[]>([]);
+
+  const router = useRouter();
+  const pathName = usePathname();
+  const searchParams = useSearchParams();
 
   // Tab state — Pending (queue I still need to act on) vs Decided
   // (history of what I've already approved / requested changes on /
-  // rejected). Per-tab sort defaults differ: pending sorts oldest-first
-  // (most-overdue at the top), decided sorts most-recently-decided first.
-  const [view, setView] = useState<InboxView>("pending");
+  // rejected). The selection lives in the URL (`tab`; omitted = pending)
+  // so a reload or shared link lands on the same tab. Per-tab sort
+  // defaults differ: pending sorts oldest-first (most-overdue at the
+  // top), decided sorts most-recently-decided first.
+  const view: InboxView =
+    searchParams.get("tab") === "decided" ? "decided" : "pending";
 
   const [sortConfig, setSortConfig] = useState<{
     column: string;
     direction: "asc" | "desc";
-  }>({ column: "requestedAt", direction: "asc" });
+  }>(() =>
+    view === "pending"
+      ? { column: "requestedAt", direction: "asc" }
+      : { column: "decidedAt", direction: "desc" }
+  );
   const [columnVisibility, setColumnVisibility] = useState<
     Record<string, boolean>
   >({});
@@ -141,39 +265,36 @@ function ReviewsInboxContent({ userId }: { userId: string }) {
   };
 
   const handleViewChange = (next: InboxView) => {
-    setView(next);
-    // Reset sort to the natural default for the new tab so the column
-    // header arrow makes sense after the switch.
+    // replace, not push — flipping tabs shouldn't stack history entries.
+    const p = new URLSearchParams(searchParams.toString());
+    if (next === "decided") p.set("tab", "decided");
+    else p.delete("tab");
+    const query = p.toString();
+    router.replace(query ? `${pathName}?${query}` : pathName, {
+      scroll: false,
+    });
+  };
+
+  // Reset sort to the natural default for the tab so the column header
+  // arrow makes sense after a switch. Keyed on `view` (not done in the
+  // change handler) so Back/Forward-driven tab changes reset it too.
+  useEffect(() => {
     setSortConfig(
-      next === "pending"
+      view === "pending"
         ? { column: "requestedAt", direction: "asc" }
         : { column: "decidedAt", direction: "desc" }
     );
-  };
+  }, [view]);
 
   // Role IDs the viewer can be reached through as an assignee (global +
   // SPECIFIC_ROLE), flattened by the shared hook the header badge also uses.
   const currentUserRoleIds = useReviewAssigneeRoleIds(userId);
 
-  const { data: projects } = useClientQueries(schema).projects.useFindMany({
-    where: { isDeleted: false },
-    select: { id: true, name: true },
-    orderBy: { name: "asc" },
-  });
-
-  const whereClause = useMemo(() => {
-    // Pending tab → PENDING + (I'm the direct assignee OR I hold one of
-    // the assigned roles). Decided tab → rows I've decided regardless of
-    // the resulting status. The two scopes are mutually exclusive so the
-    // queue and the history never double-count a row.
-    //
-    // Project-flag scoping: hide requests from projects whose review
-    // workflow toggle is OFF. Stale rows persist in the table (cancel +
-    // decide flips status; a project toggling its review workflow off
-    // doesn't touch existing rows) so the filter has to live at query
-    // time. The system-level kill switch short-circuits the whole query
-    // via `enabled: featureEnabled === true` below.
-    const conditions: any[] =
+  // Base scope of the current tab — everything the tab can show BEFORE the
+  // five UI filters narrow it. Shared by the rows query (which appends the
+  // filter conditions) and the filter-options query below.
+  const baseConditions = useMemo(
+    (): any[] =>
       view === "pending"
         ? [
             { status: "PENDING" },
@@ -187,23 +308,182 @@ function ReviewsInboxContent({ userId }: { userId: string }) {
             },
           ]
         : [
-            { decidedByUserId: userId },
             {
-              status: {
-                in: ["APPROVED", "CHANGES_REQUESTED", "REJECTED"] as const,
-              },
+              OR: [{ decidedByUserId: userId }, { requestedByUserId: userId }],
             },
+            { status: { in: DECIDED_STATUSES } },
             { isDeleted: false },
             { project: { reviewWorkflowEnabled: true } },
-          ];
-    if (entityTypeFilter !== "all") {
-      conditions.push({ entityType: entityTypeFilter });
+          ],
+    [view, userId, currentUserRoleIds]
+  );
+
+  // --- Filter combobox option sources --------------------------------------
+  // One slim query over the tab's base scope feeds every dropdown, so each
+  // only offers values that actually occur in the rows the tab can show —
+  // never a choice that would filter the table to zero. Deliberately NOT
+  // narrowed by the active filters: the option lists stay stable while the
+  // user composes a multi-select.
+  const { data: scopeRowsData } = useClientQueries(
+    schema
+  ).reviewRequest.useFindMany(
+    {
+      where: { AND: baseConditions },
+      select: {
+        entityType: true,
+        status: true,
+        project: { select: { id: true, name: true, iconUrl: true } },
+        requestedBy: { select: { id: true, name: true } },
+        decidedBy: { select: { id: true, name: true } },
+      },
+    } as any,
+    { enabled: featureEnabled === true } as any
+  );
+  const scopeRows = useMemo(
+    () => (scopeRowsData ?? []) as unknown as ScopeOptionRow[],
+    [scopeRowsData]
+  );
+
+  const entityTypeLabels = useMemo<Record<EntityTypeValue, string>>(
+    () => ({
+      CASE: t("reviews.inbox.filterEntityTypeCase"),
+      RUN: t("reviews.inbox.filterEntityTypeRun"),
+      SESSION: t("reviews.inbox.filterEntityTypeSession"),
+    }),
+    [t]
+  );
+  const statusLabels = useMemo<Record<Decision, string>>(
+    () => ({
+      APPROVED: t("comments.type.reviewDecision.approved"),
+      CHANGES_REQUESTED: t("comments.type.reviewDecision.changesRequested"),
+      REJECTED: t("comments.type.reviewDecision.rejected"),
+    }),
+    [t]
+  );
+
+  const entityTypeOptions = useMemo<EntityTypeOption[]>(() => {
+    const present = new Set(scopeRows.map((r) => r.entityType));
+    return (["CASE", "RUN", "SESSION"] as const)
+      .filter((v) => present.has(v))
+      .map((v) => ({ value: v, label: entityTypeLabels[v] }));
+  }, [scopeRows, entityTypeLabels]);
+  const statusOptions = useMemo<StatusOption[]>(() => {
+    const present = new Set(scopeRows.map((r) => r.status));
+    return DECIDED_STATUSES.filter((v) => present.has(v)).map((v) => ({
+      value: v,
+      label: statusLabels[v],
+    }));
+  }, [scopeRows, statusLabels]);
+  const projectOptions = useMemo(
+    () =>
+      uniqueSorted(
+        scopeRows.map((r) => r.project),
+        (p) => p.id,
+        (p) => p.name
+      ),
+    [scopeRows]
+  );
+  const userLabel = (u: UserOption) => u.name ?? u.id;
+  const requesterOptions = useMemo(
+    () =>
+      uniqueSorted(
+        scopeRows.map((r) => r.requestedBy),
+        (u) => u.id,
+        userLabel
+      ),
+    [scopeRows]
+  );
+  const deciderOptions = useMemo(
+    () =>
+      uniqueSorted(
+        scopeRows.map((r) => r.decidedBy),
+        (u) => u.id,
+        userLabel
+      ),
+    [scopeRows]
+  );
+
+  // Stable fetchers (the combobox refetches when their identity changes,
+  // i.e. when the scope data lands) — filter by the typed query, page for
+  // the combobox footer.
+  const fetchEntityTypeOptions = useCallback(
+    async (query: string, page: number, pageSize: number) =>
+      filterAndPage(entityTypeOptions, query, page, pageSize, (o) => o.label),
+    [entityTypeOptions]
+  );
+  const fetchStatusOptions = useCallback(
+    async (query: string, page: number, pageSize: number) =>
+      filterAndPage(statusOptions, query, page, pageSize, (o) => o.label),
+    [statusOptions]
+  );
+  const fetchProjectOptions = useCallback(
+    async (query: string, page: number, pageSize: number) =>
+      filterAndPage(projectOptions, query, page, pageSize, (p) => p.name),
+    [projectOptions]
+  );
+  const fetchRequesterOptions = useCallback(
+    async (query: string, page: number, pageSize: number) =>
+      filterAndPage(requesterOptions, query, page, pageSize, userLabel),
+    [requesterOptions]
+  );
+  const fetchDeciderOptions = useCallback(
+    async (query: string, page: number, pageSize: number) =>
+      filterAndPage(deciderOptions, query, page, pageSize, userLabel),
+    [deciderOptions]
+  );
+
+  const whereClause = useMemo(() => {
+    // Pending tab → PENDING + (I'm the direct assignee OR I hold one of
+    // the assigned roles). Decided tab → rows I've decided PLUS decided
+    // rows on reviews I requested, so a requester can see the outcome of
+    // their own requests without hunting through each entity's comment
+    // thread. The two scopes stay mutually exclusive (PENDING vs decided
+    // statuses) so the queue and the history never double-count a row.
+    //
+    // Project-flag scoping (inside baseConditions): hide requests from
+    // projects whose review workflow toggle is OFF. Stale rows persist in
+    // the table (cancel + decide flips status; a project toggling its
+    // review workflow off doesn't touch existing rows) so the filter has
+    // to live at query time. The system-level kill switch short-circuits
+    // the whole query via `enabled: featureEnabled === true` below.
+    //
+    // Each multi-select narrows with an `in` clause; empty = no clause
+    // (= "All"). The Status selection replaces the decided tab's broad
+    // three-status IN from baseConditions rather than stacking a second,
+    // contradictory status condition.
+    const conditions: any[] = baseConditions.map((c) =>
+      c.status && view === "decided" && decidedStatusFilter.length > 0
+        ? { status: { in: decidedStatusFilter.map((o) => o.value) } }
+        : c
+    );
+    if (entityTypeFilter.length > 0) {
+      conditions.push({
+        entityType: { in: entityTypeFilter.map((o) => o.value) },
+      });
     }
-    if (projectFilter !== "all") {
-      conditions.push({ projectId: projectFilter });
+    if (projectFilter.length > 0) {
+      conditions.push({ projectId: { in: projectFilter.map((o) => o.id) } });
+    }
+    if (requesterFilter.length > 0) {
+      conditions.push({
+        requestedByUserId: { in: requesterFilter.map((o) => o.id) },
+      });
+    }
+    if (view === "decided" && decidedByFilter.length > 0) {
+      conditions.push({
+        decidedByUserId: { in: decidedByFilter.map((o) => o.id) },
+      });
     }
     return { AND: conditions };
-  }, [view, userId, currentUserRoleIds, entityTypeFilter, projectFilter]);
+  }, [
+    view,
+    baseConditions,
+    entityTypeFilter,
+    projectFilter,
+    requesterFilter,
+    decidedStatusFilter,
+    decidedByFilter,
+  ]);
 
   // Map DataTable's column id → ReviewRequest orderBy field. Anything that
   // doesn't have a server-side analog (custom render-only column) falls back
@@ -222,6 +502,8 @@ function ReviewsInboxContent({ userId }: { userId: string }) {
         return { toStateId: dir };
       case "status":
         return { status: dir };
+      case "decidedBy":
+        return { decidedByUserId: dir };
       case "decidedAt":
         return { decidedAt: dir };
       case "requestedAt":
@@ -258,6 +540,7 @@ function ReviewsInboxContent({ userId }: { userId: string }) {
         },
         assigneeUser: { select: { id: true, name: true, image: true } },
         assigneeRole: { select: { id: true, name: true } },
+        decidedBy: { select: { id: true, name: true, image: true } },
       },
     },
     {
@@ -382,9 +665,6 @@ function ReviewsInboxContent({ userId }: { userId: string }) {
   // lives in the URL (`case` + `caseProject`; the inbox spans projects, so the
   // case id alone isn't enough) so the panel survives a reload, is linkable,
   // and closes on Back.
-  const router = useRouter();
-  const pathName = usePathname();
-  const searchParams = useSearchParams();
   const caseParam = searchParams.get("case");
   const caseProjectParam = searchParams.get("caseProject");
   const selectedCaseId = caseParam && caseProjectParam ? caseParam : null;
@@ -599,70 +879,153 @@ function ReviewsInboxContent({ userId }: { userId: string }) {
               </TabsList>
             </Tabs>
 
-            {/* Filters row */}
+            {/* Filters row — searchable multi-select comboboxes; an empty
+                selection means "All". Option lists are derived from the
+                current tab's scope, so nothing offered can zero the table.
+                Wrapper divs carry the test ids because the combobox
+                trigger is an internal button. */}
             <div className="flex flex-wrap items-end gap-4">
-              <div className="w-[200px]">
-                <Label
-                  htmlFor="reviews-inbox-entity-type-filter"
-                  className="text-xs text-muted-foreground"
-                >
+              <div
+                className="w-[200px]"
+                data-testid="reviews-inbox-entity-type-filter"
+              >
+                <Label className="text-xs text-muted-foreground">
                   {t("reviews.inbox.filterEntityType")}
                 </Label>
-                <select
-                  id="reviews-inbox-entity-type-filter"
-                  data-testid="reviews-inbox-entity-type-filter"
+                <MultiAsyncCombobox<EntityTypeOption>
                   value={entityTypeFilter}
-                  onChange={(e) =>
-                    setEntityTypeFilter(e.target.value as EntityTypeFilter)
-                  }
-                  className="mt-1 flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm"
-                >
-                  <option value="all">
-                    {t("reviews.inbox.filterAllEntityTypes")}
-                  </option>
-                  <option value="CASE">
-                    {t("reviews.inbox.filterEntityTypeCase")}
-                  </option>
-                  <option value="RUN">
-                    {t("reviews.inbox.filterEntityTypeRun")}
-                  </option>
-                  <option value="SESSION">
-                    {t("reviews.inbox.filterEntityTypeSession")}
-                  </option>
-                </select>
-              </div>
-
-              <div className="w-[240px]">
-                <Label
-                  htmlFor="reviews-inbox-project-filter"
-                  className="text-xs text-muted-foreground"
-                >
-                  {t("reviews.inbox.filterProject")}
-                </Label>
-                <select
-                  id="reviews-inbox-project-filter"
-                  data-testid="reviews-inbox-project-filter"
-                  value={
-                    projectFilter === "all" ? "all" : String(projectFilter)
-                  }
-                  onChange={(e) => {
-                    const next = e.target.value;
-                    setProjectFilter(
-                      next === "all" ? "all" : Number.parseInt(next, 10)
+                  onValueChange={setEntityTypeFilter}
+                  fetchOptions={fetchEntityTypeOptions}
+                  renderOption={(o) => {
+                    const Icon = ENTITY_TYPE_ICONS[o.value];
+                    return (
+                      <span className="flex min-w-0 items-center gap-2">
+                        <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
+                        <span className="truncate">{o.label}</span>
+                      </span>
                     );
                   }}
-                  className="mt-1 flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm"
-                >
-                  <option value="all">
-                    {t("reviews.inbox.filterAllProjects")}
-                  </option>
-                  {(projects ?? []).map((p: { id: number; name: string }) => (
-                    <option key={p.id} value={String(p.id)}>
-                      {p.name}
-                    </option>
-                  ))}
-                </select>
+                  getOptionValue={(o) => o.value}
+                  getOptionLabel={(o) => o.label}
+                  placeholder={t("reviews.inbox.filterAllEntityTypes")}
+                  ariaLabel={t("reviews.inbox.filterEntityType")}
+                  className="mt-1"
+                  pageSize={FILTER_PAGE_SIZE}
+                />
               </div>
+
+              <div
+                className="w-[240px]"
+                data-testid="reviews-inbox-project-filter"
+              >
+                <Label className="text-xs text-muted-foreground">
+                  {t("reviews.inbox.filterProject")}
+                </Label>
+                <MultiAsyncCombobox<ProjectOption>
+                  value={projectFilter}
+                  onValueChange={setProjectFilter}
+                  fetchOptions={fetchProjectOptions}
+                  renderOption={(p) => (
+                    <ProjectNameDisplay
+                      projectName={p.name}
+                      projectId={p.id}
+                      iconUrl={p.iconUrl}
+                      fitContainer
+                    />
+                  )}
+                  getOptionValue={(p) => p.id}
+                  getOptionLabel={(p) => p.name}
+                  placeholder={t("reviews.inbox.filterAllProjects")}
+                  ariaLabel={t("reviews.inbox.filterProject")}
+                  className="mt-1"
+                  pageSize={FILTER_PAGE_SIZE}
+                />
+              </div>
+
+              <div
+                className="w-[240px]"
+                data-testid="reviews-inbox-requester-filter"
+              >
+                <Label className="text-xs text-muted-foreground">
+                  {t("reviews.inbox.filterRequester")}
+                </Label>
+                <MultiAsyncCombobox<UserOption>
+                  value={requesterFilter}
+                  onValueChange={setRequesterFilter}
+                  fetchOptions={fetchRequesterOptions}
+                  renderOption={(u) => <UserNameCell userId={u.id} hideLink />}
+                  renderSelectedOption={(u) => <span>{userLabel(u)}</span>}
+                  getOptionValue={(u) => u.id}
+                  getOptionLabel={userLabel}
+                  placeholder={t("reviews.inbox.filterAllRequesters")}
+                  ariaLabel={t("reviews.inbox.filterRequester")}
+                  className="mt-1"
+                  pageSize={FILTER_PAGE_SIZE}
+                />
+              </div>
+
+              {/* Decider + outcome filters — Decided tab only; the Pending
+                  queue is all PENDING and undecided, so neither applies.
+                  Ordered to mirror the Decided tab's column order
+                  (… Decided by → … → Status). */}
+              {view === "decided" && (
+                <>
+                  <div
+                    className="w-[240px]"
+                    data-testid="reviews-inbox-decided-by-filter"
+                  >
+                    <Label className="text-xs text-muted-foreground">
+                      {t("reviews.inbox.filterDecidedBy")}
+                    </Label>
+                    <MultiAsyncCombobox<UserOption>
+                      value={decidedByFilter}
+                      onValueChange={setDecidedByFilter}
+                      fetchOptions={fetchDeciderOptions}
+                      renderOption={(u) => (
+                        <UserNameCell userId={u.id} hideLink />
+                      )}
+                      renderSelectedOption={(u) => <span>{userLabel(u)}</span>}
+                      getOptionValue={(u) => u.id}
+                      getOptionLabel={userLabel}
+                      placeholder={t("reviews.inbox.filterAllDeciders")}
+                      ariaLabel={t("reviews.inbox.filterDecidedBy")}
+                      className="mt-1"
+                      pageSize={FILTER_PAGE_SIZE}
+                    />
+                  </div>
+
+                  <div
+                    className="w-[200px]"
+                    data-testid="reviews-inbox-status-filter"
+                  >
+                    <Label className="text-xs text-muted-foreground">
+                      {t("reviews.inbox.filterStatus")}
+                    </Label>
+                    <MultiAsyncCombobox<StatusOption>
+                      value={decidedStatusFilter}
+                      onValueChange={setDecidedStatusFilter}
+                      fetchOptions={fetchStatusOptions}
+                      renderOption={(o) => {
+                        const { icon: Icon, className } = STATUS_ICONS[o.value];
+                        return (
+                          <span className="flex min-w-0 items-center gap-2">
+                            <Icon
+                              className={cn("h-4 w-4 shrink-0", className)}
+                            />
+                            <span className="truncate">{o.label}</span>
+                          </span>
+                        );
+                      }}
+                      getOptionValue={(o) => o.value}
+                      getOptionLabel={(o) => o.label}
+                      placeholder={t("reviews.inbox.filterAllStatuses")}
+                      ariaLabel={t("reviews.inbox.filterStatus")}
+                      className="mt-1"
+                      pageSize={FILTER_PAGE_SIZE}
+                    />
+                  </div>
+                </>
+              )}
             </div>
 
             {/* Feature-disabled empty state (D-20 silent disable). */}
