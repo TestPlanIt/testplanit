@@ -28,7 +28,6 @@ import {
 } from "@/components/ui/tooltip";
 import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
 import { ApplicationArea } from "~/zenstack/models";
-import type { Configurations } from "~/zenstack/models";
 import {
   Bot,
   CheckCircle,
@@ -51,58 +50,50 @@ import { cn } from "~/utils";
 import { isAutomatedTestRunType } from "~/utils/testResultTypes";
 import CompleteTestRunDialog from "./[runId]/CompleteTestRunDialog";
 
-export interface TestRunItemProps {
-  testRun: {
+/**
+ * The narrowest run shape this row renders. Declared structurally, and loose
+ * enough to take a query payload as-is (nullable dates, a JSON `note`), so any
+ * page that can select these fields — the runs list, the project overview
+ * panel — gets the same row instead of hand-rolling its own markup.
+ */
+export interface TestRunItemData {
+  id: number;
+  name: string;
+  isCompleted: boolean;
+  compositionLockedAt?: Date | string | null;
+  testRunType: string;
+  configuration?: { name: string } | null;
+  configurationGroupId?: string | null;
+  createdAt?: Date | string | null;
+  state: {
     id: number;
     name: string;
-    isCompleted: boolean;
-    compositionLockedAt?: Date | string | null;
-    testRunType: string;
-    configuration: Configurations | null;
-    configurationGroupId: string | null;
-    createdAt?: Date | string;
-    state: {
-      id: number;
-      name: string;
-      icon?: {
-        name: string;
-      };
-      color?: {
-        value: string;
-      };
-    };
-    note?: string;
-    completedAt?: Date;
-    milestone?: {
-      id: number;
-      name: string;
-      startedAt?: Date | null;
-      completedAt?: Date | null;
-      isCompleted?: boolean;
-      milestoneType: {
-        id: number;
-        name: string;
-        icon: { name: string } | null;
-      };
-    };
-    projectId: number;
-    testCases?: {
-      id: number;
-      repositoryCaseId: number;
-    }[];
-    createdBy: {
-      id: string;
-      name: string;
-    };
-    forecastManual: number | null;
-    forecastAutomated: number | null;
+    icon?: { name: string } | null;
+    color?: { value: string } | null;
   };
-  milestonePath?: string;
+  note?: unknown;
+  completedAt?: Date | string | null;
+  milestone?:
+    React.ComponentProps<typeof MilestoneIconAndName>["milestone"] | null;
+  projectId: number;
+  createdBy: {
+    id: string;
+    name: string;
+  };
+  forecastManual: number | null;
+  forecastAutomated: number | null;
+}
+
+export interface TestRunItemProps {
+  testRun: TestRunItemData;
   isNew?: boolean;
   showMilestone?: boolean;
   onDuplicate?: (run: { id: number; name: string }) => void;
-  onComplete?: (testRun: any) => void;
-  isAdmin?: boolean;
+  /** Falls back to the route param; pass it where the route isn't the runs
+   *  page (e.g. the project overview panel). */
+  projectId?: number;
+  /** Set false for read-only surfaces that shouldn't offer row actions. */
+  showActions?: boolean;
   summaryData?: TestRunSummaryData;
   /** True while the page's batch summary fetch is in flight — keeps each row
    * from firing its own per-run summary fallback in the meantime. */
@@ -119,6 +110,8 @@ const TestRunItem: React.FC<TestRunItemProps> = ({
   isNew,
   showMilestone = true,
   onDuplicate,
+  projectId: projectIdProp,
+  showActions = true,
   summaryData,
   summaryLoading = false,
   pendingRequest,
@@ -128,12 +121,13 @@ const TestRunItem: React.FC<TestRunItemProps> = ({
 }) => {
   const tCommon = useTranslations("common");
   const t = useTranslations();
-  const { projectId } = useParams();
+  const params = useParams();
   const router = useRouter();
   const [isCompleteDialogOpen, setIsCompleteDialogOpen] = useState(false);
 
   // Fetch permissions
-  const numericProjectId = parseInt(projectId as string, 10);
+  const numericProjectId =
+    projectIdProp ?? parseInt(params.projectId as string, 10);
   const { permissions: testRunPermissions, isLoading: isLoadingPermissions } =
     useProjectPermissions(numericProjectId, ApplicationArea.TestRuns);
   const canCloseRun = testRunPermissions?.canClose ?? false;
@@ -151,7 +145,16 @@ const TestRunItem: React.FC<TestRunItemProps> = ({
     !isLoadingPermissions &&
     onDuplicate;
 
-  const showMoreMenu = showEditItem || showCompleteItem || showDuplicateItem;
+  const showMoreMenu =
+    showActions && (showEditItem || showCompleteItem || showDuplicateItem);
+
+  // `note` arrives as a JSON column; render the string form.
+  const noteText =
+    typeof testRun.note === "string"
+      ? testRun.note
+      : testRun.note
+        ? JSON.stringify(testRun.note)
+        : undefined;
 
   const isRecentlyCreated =
     !!testRun.createdAt &&
@@ -297,7 +300,7 @@ const TestRunItem: React.FC<TestRunItemProps> = ({
           <div className="flex-1 min-w-0">
             <div className="flex items-center min-w-0 w-full">
               <Link
-                href={`/projects/runs/${projectId}/${testRun.id}`}
+                href={`/projects/runs/${numericProjectId}/${testRun.id}`}
                 className="group inline-flex items-center gap-1 min-w-0 max-w-full"
               >
                 <h3 className="text-sm font-semibold flex items-center gap-1 hover:text-primary min-w-0">
@@ -367,9 +370,9 @@ const TestRunItem: React.FC<TestRunItemProps> = ({
               </div>
             </div>
             <div className="text-sm text-muted-foreground line-clamp-1">
-              {testRun.note && (
+              {noteText && (
                 <TextFromJson
-                  jsonString={testRun.note}
+                  jsonString={noteText}
                   format="text"
                   room={`testrun-note-${testRun.id}`}
                 />
@@ -477,7 +480,7 @@ const TestRunItem: React.FC<TestRunItemProps> = ({
                       <DropdownMenuItem
                         onClick={() =>
                           router.push(
-                            `/projects/runs/${projectId}/${testRun.id}?edit=true`
+                            `/projects/runs/${numericProjectId}/${testRun.id}?edit=true`
                           )
                         }
                         data-testid={`testrun-edit-${testRun.id}`}

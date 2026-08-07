@@ -4,10 +4,6 @@ import { describe, expect, it, vi } from "vitest";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import SessionItem from "./SessionItem";
 
-// SessionItem imports its testSession type from SessionDisplay; stub the
-// module so the test doesn't load the whole display tree.
-vi.mock("./SessionDisplay", () => ({}));
-
 vi.mock("~/hooks/useProjectPermissions", () => ({
   useProjectPermissions: () => ({
     permissions: { canAddEdit: false, canClose: false, canDelete: false },

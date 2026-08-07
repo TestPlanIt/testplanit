@@ -32,7 +32,6 @@ import {
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
 import { Textarea } from "@/components/ui/textarea";
-import type { TestRunItemProps } from "@/projects/runs/[projectId]/TestRunItem";
 import TestRunItem from "@/projects/runs/[projectId]/TestRunItem";
 import { SessionsWithDetails } from "@/projects/sessions/[projectId]/SessionDisplay";
 import SessionItem from "@/projects/sessions/[projectId]/SessionItem";
@@ -1140,56 +1139,9 @@ export default function MilestoneDetailsPage() {
                           getKey={(testRun) => testRun.id}
                           data-testid="milestone-test-runs-list"
                           renderItem={(testRun) => {
-                            const transformedTestRun: TestRunItemProps["testRun"] =
-                              {
-                                id: testRun.id,
-                                name: testRun.name,
-                                testRunType: testRun.testRunType,
-                                isCompleted: testRun.isCompleted,
-                                compositionLockedAt:
-                                  testRun.compositionLockedAt,
-                                configuration: testRun.configuration,
-                                configurationGroupId:
-                                  testRun.configurationGroupId,
-                                state: {
-                                  id: testRun.state.id,
-                                  name: testRun.state.name,
-                                  icon: testRun.state.icon,
-                                  color: testRun.state.color,
-                                },
-                                note:
-                                  typeof testRun.note === "string"
-                                    ? testRun.note
-                                    : testRun.note
-                                      ? JSON.stringify(testRun.note)
-                                      : "",
-                                completedAt: testRun.completedAt || undefined,
-                                milestone: testRun.milestone
-                                  ? {
-                                      id: testRun.milestone.id,
-                                      name: testRun.milestone.name,
-                                      startedAt: testRun.milestone.startedAt,
-                                      completedAt:
-                                        testRun.milestone.completedAt,
-                                      isCompleted:
-                                        testRun.milestone.isCompleted,
-                                      milestoneType: {
-                                        id: testRun.milestone.milestoneType.id,
-                                        name: testRun.milestone.milestoneType
-                                          .name,
-                                        icon: testRun.milestone.milestoneType
-                                          .icon,
-                                      },
-                                    }
-                                  : undefined,
-                                projectId: testRun.projectId,
-                                createdBy: testRun.createdBy,
-                                forecastManual: testRun.forecastManual,
-                                forecastAutomated: testRun.forecastAutomated,
-                              };
                             return (
                               <TestRunItem
-                                testRun={transformedTestRun}
+                                testRun={testRun}
                                 showMilestone={
                                   testRun.milestoneId !== Number(milestoneId)
                                 }

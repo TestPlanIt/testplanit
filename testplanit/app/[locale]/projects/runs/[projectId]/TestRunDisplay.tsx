@@ -25,7 +25,6 @@ import {
   SquarePen,
   Trash2,
 } from "lucide-react";
-import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
 import { useParams } from "next/navigation";
@@ -61,7 +60,6 @@ import {
   UNSCHEDULED_GROUP_KEY,
 } from "./milestoneGroups";
 import TestRunItem from "./TestRunItem";
-import CompleteTestRunDialog from "./[runId]/CompleteTestRunDialog";
 
 const _testRunPropSelect = {
   id: true,
@@ -355,7 +353,6 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
   const tMilestones = useTranslations("milestones");
   const tSessions = useTranslations("sessions");
   const { projectId } = useParams();
-  const { data: session } = useSession();
   const { resolvedTheme } = useTheme();
   const { data: colors, isLoading: isColorsLoading } = useClientQueries(
     schema
@@ -397,9 +394,6 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
   );
   const [isAddTestRunModalOpen, setIsAddTestRunModalOpen] = useState(false);
   const [colorMap, setColorMap] = useState<ColorMap | null>(null);
-  const [selectedTestRun, setSelectedTestRun] =
-    useState<TestRunsWithDetails | null>(null);
-  const [, setIsDialogOpen] = useState(false);
   const [, setNewTestRunId] = useState<number | null>(null);
   const [modalSelectedTestCases, setModalSelectedTestCases] = useState<
     number[]
@@ -464,28 +458,6 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
       enabled: testRunIds.length > 0,
       staleTime: 30000, // Cache for 30 seconds
     });
-
-  const { data: testRunCases } = useClientQueries(
-    schema
-  ).testRunCases.useFindMany(
-    {
-      where: { testRunId: { in: testRunIds }, isDeleted: false },
-      select: { id: true, testRunId: true, repositoryCaseId: true },
-    },
-    { enabled: testRunIds.length > 0 }
-  );
-
-  const testCasesByTestRunId = useMemo(() => {
-    if (!testRunCases) return {};
-    return testRunCases.reduce(
-      (acc, testCase) => {
-        if (!acc[testCase.testRunId]) acc[testCase.testRunId] = [];
-        acc[testCase.testRunId].push(testCase);
-        return acc;
-      },
-      {} as Record<number, typeof testRunCases>
-    );
-  }, [testRunCases]);
 
   const incompleteTestRuns = useMemo(() => {
     return [...testRuns]
@@ -771,17 +743,6 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
     };
   }, []);
 
-  const isAdmin =
-    session?.user?.access === "ADMIN" ||
-    session?.user?.access === "PROJECTADMIN";
-  const handleOpenDialog = (testRun: TestRunsWithDetails) => {
-    setSelectedTestRun(testRun);
-    setIsDialogOpen(true);
-  };
-  const _handleCloseDialog = () => {
-    setIsDialogOpen(false);
-    setSelectedTestRun(null);
-  };
   const handleAddTestRun = (milestoneId: number | null) => {
     setSelectedMilestoneId(milestoneId);
     setIsAddTestRunModalOpen(true);
@@ -882,45 +843,7 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
               onSelectedChange={(checked) =>
                 toggleRunSelected(testRun.id, checked)
               }
-              testRun={{
-                id: testRun.id,
-                name: testRun.name,
-                isCompleted: testRun.isCompleted,
-                compositionLockedAt: testRun.compositionLockedAt,
-                testRunType: testRun.testRunType,
-                configuration: testRun.configuration,
-                configurationGroupId: testRun.configurationGroupId,
-                state: testRun.state,
-                note:
-                  typeof testRun.note === "string"
-                    ? testRun.note
-                    : testRun.note
-                      ? JSON.stringify(testRun.note)
-                      : undefined,
-                completedAt: testRun.completedAt
-                  ? new Date(testRun.completedAt)
-                  : undefined,
-                milestone: testRun.milestone
-                  ? {
-                      id: testRun.milestone.id,
-                      name: testRun.milestone.name,
-                      startedAt: testRun.milestone.startedAt
-                        ? new Date(testRun.milestone.startedAt)
-                        : undefined,
-                      completedAt: testRun.milestone.completedAt
-                        ? new Date(testRun.milestone.completedAt)
-                        : undefined,
-                      isCompleted: testRun.milestone.isCompleted,
-                      milestoneType: testRun.milestone.milestoneType,
-                    }
-                  : undefined,
-                projectId: testRun.projectId,
-                createdBy: testRun.createdBy,
-                forecastManual: testRun.forecastManual,
-                forecastAutomated: testRun.forecastAutomated,
-                createdAt: testRun.createdAt,
-              }}
-              milestonePath={testRun.milestone?.name}
+              testRun={testRun}
               onDuplicate={onDuplicateTestRun}
               summaryData={batchSummaries?.summaries[testRun.id]}
               summaryLoading={isBatchSummariesLoading}
@@ -933,19 +856,6 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
           ))}
         </div>
         {bulkDialogs}
-        {selectedTestRun && (
-          <CompleteTestRunDialog
-            open={true}
-            onClose={() => {
-              setIsDialogOpen(false);
-              setSelectedTestRun(null);
-            }}
-            testRunId={selectedTestRun.id}
-            projectId={selectedTestRun.projectId}
-            stateId={selectedTestRun.state.id}
-            stateName={selectedTestRun.state.name}
-          />
-        )}
       </div>
     );
   }
@@ -953,8 +863,6 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
   const renderGroupedTestRuns = (
     currentGroupedRuns: GroupedTestRuns,
     currentMilestoneTree: MilestonesWithTypes[],
-    handleOpenDialogParam: (testRun: TestRunsWithDetails) => void,
-    isAdminParam: boolean,
     onDuplicateTestRunParam?: (run: { id: number; name: string }) => void,
     summariesData?: BatchTestRunSummaryResponse
   ) => {
@@ -1137,49 +1045,7 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
                             onSelectedChange={(checked) =>
                               toggleRunSelected(testRun.id, checked)
                             }
-                            testRun={{
-                              id: testRun.id,
-                              name: testRun.name,
-                              isCompleted: testRun.isCompleted,
-                              compositionLockedAt: testRun.compositionLockedAt,
-                              testRunType: testRun.testRunType,
-                              configuration: testRun.configuration,
-                              configurationGroupId:
-                                testRun.configurationGroupId,
-                              state: testRun.state,
-                              note:
-                                typeof testRun.note === "string"
-                                  ? testRun.note
-                                  : testRun.note
-                                    ? JSON.stringify(testRun.note)
-                                    : undefined,
-                              completedAt: testRun.completedAt
-                                ? new Date(testRun.completedAt)
-                                : undefined,
-                              milestone: testRun.milestone
-                                ? {
-                                    id: testRun.milestone.id,
-                                    name: testRun.milestone.name,
-                                    startedAt: testRun.milestone.startedAt
-                                      ? new Date(testRun.milestone.startedAt)
-                                      : undefined,
-                                    completedAt: testRun.milestone.completedAt
-                                      ? new Date(testRun.milestone.completedAt)
-                                      : undefined,
-                                    isCompleted: testRun.milestone.isCompleted,
-                                    milestoneType:
-                                      testRun.milestone.milestoneType,
-                                  }
-                                : undefined,
-                              projectId: testRun.projectId,
-                              testCases: testCasesByTestRunId[testRun.id] || [],
-                              createdBy: testRun.createdBy,
-                              forecastManual: testRun.forecastManual,
-                              forecastAutomated: testRun.forecastAutomated,
-                              createdAt: testRun.createdAt,
-                            }}
-                            onComplete={handleOpenDialogParam}
-                            isAdmin={isAdminParam}
+                            testRun={testRun}
                             isNew={false}
                             onDuplicate={onDuplicateTestRunParam}
                             summaryData={summariesData?.summaries[testRun.id]}
@@ -1304,47 +1170,7 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
                         onSelectedChange={(checked) =>
                           toggleRunSelected(testRun.id, checked)
                         }
-                        testRun={{
-                          id: testRun.id,
-                          name: testRun.name,
-                          isCompleted: testRun.isCompleted,
-                          compositionLockedAt: testRun.compositionLockedAt,
-                          testRunType: testRun.testRunType,
-                          configuration: testRun.configuration,
-                          configurationGroupId: testRun.configurationGroupId,
-                          state: testRun.state,
-                          note:
-                            typeof testRun.note === "string"
-                              ? testRun.note
-                              : testRun.note
-                                ? JSON.stringify(testRun.note)
-                                : undefined,
-                          completedAt: testRun.completedAt
-                            ? new Date(testRun.completedAt)
-                            : undefined,
-                          milestone: testRun.milestone
-                            ? {
-                                id: testRun.milestone.id,
-                                name: testRun.milestone.name,
-                                startedAt: testRun.milestone.startedAt
-                                  ? new Date(testRun.milestone.startedAt)
-                                  : undefined,
-                                completedAt: testRun.milestone.completedAt
-                                  ? new Date(testRun.milestone.completedAt)
-                                  : undefined,
-                                isCompleted: testRun.milestone.isCompleted,
-                                milestoneType: testRun.milestone.milestoneType,
-                              }
-                            : undefined,
-                          projectId: testRun.projectId,
-                          testCases: testCasesByTestRunId[testRun.id] || [],
-                          createdBy: testRun.createdBy,
-                          forecastManual: testRun.forecastManual,
-                          forecastAutomated: testRun.forecastAutomated,
-                          createdAt: testRun.createdAt,
-                        }}
-                        onComplete={handleOpenDialogParam}
-                        isAdmin={isAdminParam}
+                        testRun={testRun}
                         isNew={false}
                         onDuplicate={onDuplicateTestRunParam}
                         summaryData={summariesData?.summaries[testRun.id]}
@@ -1375,8 +1201,6 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
           {renderGroupedTestRuns(
             groupedTestRunData,
             sortedMilestoneTree,
-            handleOpenDialog,
-            isAdmin,
             onDuplicateTestRun,
             batchSummaries
           )}
@@ -1384,19 +1208,6 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
       </div>
 
       {bulkDialogs}
-      {selectedTestRun && (
-        <CompleteTestRunDialog
-          open={true}
-          onClose={() => {
-            setIsDialogOpen(false);
-            setSelectedTestRun(null);
-          }}
-          testRunId={selectedTestRun.id}
-          projectId={selectedTestRun.projectId}
-          stateId={selectedTestRun.state.id}
-          stateName={selectedTestRun.state.name}
-        />
-      )}
     </div>
   );
 };

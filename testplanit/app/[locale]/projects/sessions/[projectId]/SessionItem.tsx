@@ -41,18 +41,48 @@ import { Link, useRouter } from "~/lib/navigation";
 import type { IconName } from "~/types/globals";
 import { cn } from "~/utils";
 import { RecordKeyMenuItem } from "@/components/RecordKeyMenuItem";
-import { SessionsWithDetails } from "./SessionDisplay";
 
-interface SessionItemProps {
-  testSession: SessionsWithDetails;
+/**
+ * The narrowest session shape this row renders. Declared structurally rather
+ * than as the sessions page's `SessionsWithDetails` so any page that can
+ * select these fields — the sessions list, the project overview panel — gets
+ * the same row instead of hand-rolling its own markup.
+ */
+export interface SessionItemData {
+  id: number;
+  name: string;
   isCompleted: boolean;
-  onComplete: (testSession: SessionsWithDetails) => void;
+  createdAt?: Date | string | null;
+  completedAt?: Date | string | null;
+  note?: unknown;
+  configurationGroupId?: string | null;
+  configuration?: { name: string } | null;
+  state: {
+    name: string;
+    icon?: { name: string } | null;
+    color?: { value: string } | null;
+  };
+  createdBy: { id: string };
+  assignedTo?: { id: string } | null;
+  milestone?:
+    React.ComponentProps<typeof MilestoneIconAndName>["milestone"] | null;
+}
+
+interface SessionItemProps<T extends SessionItemData> {
+  testSession: T;
+  isCompleted: boolean;
+  onComplete?: (testSession: T) => void;
   onDuplicate?: (session: { id: number; name: string }) => void;
-  canComplete: boolean;
+  canComplete?: boolean;
   canEdit?: boolean;
   canDuplicate?: boolean;
   isNew?: boolean;
   showMilestone?: boolean;
+  /** Falls back to the route param; pass it where the route isn't the
+   *  sessions page (e.g. the project overview panel). */
+  projectId?: number;
+  /** Set false for read-only surfaces that shouldn't offer row actions. */
+  showActions?: boolean;
   /**
    * Pre-fetched PENDING ReviewRequest for this row's entity (bulk-loaded by
    * the parent SessionDisplay; see RESEARCH §"Pitfall 6"). `undefined` means
@@ -65,27 +95,30 @@ interface SessionItemProps {
   onSelectedChange?: (selected: boolean) => void;
 }
 
-const SessionItem: React.FC<SessionItemProps> = ({
+const SessionItem = <T extends SessionItemData>({
   testSession,
   isCompleted,
   onComplete,
   onDuplicate,
-  canComplete,
+  canComplete = false,
   canEdit,
   canDuplicate,
   isNew,
   showMilestone = true,
+  projectId: projectIdProp,
+  showActions = true,
   pendingRequest,
   selectable = false,
   selected = false,
   onSelectedChange,
-}) => {
-  const { projectId } = useParams();
+}: SessionItemProps<T>) => {
+  const params = useParams();
   const router = useRouter();
   const t = useTranslations();
 
   // Fetch permissions
-  const numericProjectId = parseInt(projectId as string, 10);
+  const numericProjectId =
+    projectIdProp ?? parseInt(params.projectId as string, 10);
   const { permissions: sessionPermissions, isLoading: isLoadingPermissions } =
     useProjectPermissions(numericProjectId, ApplicationArea.Sessions);
   const canEditSession = canEdit ?? sessionPermissions?.canAddEdit ?? false;
@@ -95,7 +128,16 @@ const SessionItem: React.FC<SessionItemProps> = ({
     canEditSession && !testSession.isCompleted && !isLoadingPermissions;
   const showCompleteItem = !testSession.isCompleted && canComplete;
   const showDuplicateItem = canDuplicate ?? canEditSession;
-  const showMoreMenu = showEditItem || showCompleteItem || showDuplicateItem;
+  const showMoreMenu =
+    showActions && (showEditItem || showCompleteItem || showDuplicateItem);
+
+  // `note` arrives as a JSON column; render the string form.
+  const noteText =
+    typeof testSession.note === "string"
+      ? testSession.note
+      : testSession.note
+        ? JSON.stringify(testSession.note)
+        : undefined;
 
   const isRecentlyCreated =
     !!testSession.createdAt &&
@@ -166,7 +208,7 @@ const SessionItem: React.FC<SessionItemProps> = ({
         <div className="flex-1 min-w-0">
           <div className="flex items-center min-w-0 w-full">
             <Link
-              href={`/projects/sessions/${projectId}/${testSession.id}`}
+              href={`/projects/sessions/${numericProjectId}/${testSession.id}`}
               className="group inline-flex items-center gap-1 min-w-0 max-w-full"
             >
               <h3 className="text-sm font-semibold flex items-center gap-1 hover:text-primary min-w-0">
@@ -210,9 +252,9 @@ const SessionItem: React.FC<SessionItemProps> = ({
             </div>
           </div>
           <div className="text-sm text-muted-foreground line-clamp-1">
-            {testSession.note && (
+            {noteText && (
               <TextFromJson
-                jsonString={testSession.note as string}
+                jsonString={noteText}
                 format="text"
                 room={`session-note-${testSession.id}`}
               />
@@ -293,7 +335,7 @@ const SessionItem: React.FC<SessionItemProps> = ({
                   <DropdownMenuItem
                     onClick={() =>
                       router.push(
-                        `/projects/sessions/${projectId}/${testSession.id}?edit=true`
+                        `/projects/sessions/${numericProjectId}/${testSession.id}?edit=true`
                       )
                     }
                     data-testid={`session-edit-${testSession.id}`}
@@ -320,7 +362,7 @@ const SessionItem: React.FC<SessionItemProps> = ({
                 )}
 
                 {showCompleteItem && (
-                  <DropdownMenuItem onSelect={() => onComplete(testSession)}>
+                  <DropdownMenuItem onSelect={() => onComplete?.(testSession)}>
                     <CheckCircle className="me-2 h-4 w-4" />
                     {t("sessions.actions.complete")}
                   </DropdownMenuItem>
