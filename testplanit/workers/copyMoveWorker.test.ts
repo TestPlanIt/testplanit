@@ -90,6 +90,7 @@ const mockDb = {
   repositoryCases: {
     findFirst: vi.fn(),
     findMany: vi.fn(),
+    update: vi.fn(),
     updateMany: vi.fn(),
     deleteMany: vi.fn(),
   },
@@ -291,6 +292,7 @@ describe("CopyMoveWorker", () => {
 
     // No existing cases in target folder (maxOrder = null)
     mockDb.repositoryCases.findFirst.mockResolvedValue(null);
+    mockDb.repositoryCases.update.mockResolvedValue({});
 
     // Source cases default
     mockDb.repositoryCases.findMany.mockResolvedValue([mockSourceCase]);
@@ -887,13 +889,42 @@ describe("CopyMoveWorker", () => {
       expect(collisionCall?.where?.id).toEqual({ notIn: [1] });
 
       // Case is actually moved, not skipped
-      expect(mockTx.repositoryCases.create).toHaveBeenCalledTimes(1);
       expect(result.movedCount).toBe(1);
       expect(result.skippedCount).toBe(0);
-      expect(mockDb.repositoryCases.updateMany).toHaveBeenCalledWith({
-        where: { id: { in: [1] } },
-        data: { isDeleted: true },
-      });
+    });
+
+    it("IN-PLACE-MOVE-01: same-project move relocates the source row instead of create-then-delete", async () => {
+      // DB-confirmed (23505): a same-project move that stays create-then-
+      // -delete targets the exact same (projectId, name, className,
+      // source) tuple the source row already holds. That unique index has
+      // no isDeleted exception, so creating a second row there 23505s
+      // against the still-live source before the batch soft-delete at the
+      // end of the loop ever runs. The fix relocates the existing row via
+      // update() instead — no new row, nothing left to soft-delete.
+      const sameProjMoveJobData = {
+        ...baseMoveJobData,
+        sourceProjectId: 20,
+        targetProjectId: 20,
+        caseIds: [1],
+        conflictResolution: "skip" as const,
+      };
+
+      mockDb.repositoryCaseVersions.findMany.mockResolvedValue([]);
+
+      const { processor } = await loadWorker();
+      const result = await processor(
+        makeMockJob({ data: sameProjMoveJobData }) as Job
+      );
+
+      expect(mockTx.repositoryCases.create).not.toHaveBeenCalled();
+      expect(mockTx.repositoryCases.update).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { id: 1 } })
+      );
+      expect(result.movedCount).toBe(1);
+
+      // The relocated row is still live under the same id — nothing to
+      // soft-delete and no separate original left behind.
+      expect(mockDb.repositoryCases.updateMany).not.toHaveBeenCalled();
     });
 
     it("SELF-COLLISION-02: same-project move + rename does NOT append (copy) suffix when no real collision exists", async () => {
@@ -912,11 +943,14 @@ describe("CopyMoveWorker", () => {
       const { processor } = await loadWorker();
       await processor(makeMockJob({ data: sameProjRenameMoveJobData }) as Job);
 
-      expect(mockTx.repositoryCases.create).toHaveBeenCalledWith(
-        expect.objectContaining({
-          data: expect.objectContaining({ name: "Test Case 1" }),
-        })
+      // In-place relocation never touches `name` at all — confirming no
+      // rename logic silently kicked in and appended a "(copy)" suffix.
+      const updateCall = mockTx.repositoryCases.update.mock.calls.find(
+        (c: any[]) => c[0]?.where?.id === 1
       );
+      expect(updateCall).toBeDefined();
+      expect(updateCall?.[0]?.data?.name).toBeUndefined();
+      expect(mockTx.repositoryCases.create).not.toHaveBeenCalled();
     });
 
     it("should set movedCount equal to copiedCount on successful move", async () => {
@@ -1170,6 +1204,73 @@ describe("CopyMoveWorker", () => {
 
       // Source cases should NOT be soft-deleted since operation failed
       expect(mockDb.repositoryCases.updateMany).not.toHaveBeenCalled();
+    });
+
+    it("IN-PLACE-MOVE-ROLLBACK: restores relocated case fields instead of hard-deleting it when a later case fails", async () => {
+      // In-place moves reuse the source row's own id as newId (see
+      // IN-PLACE-MOVE-01), so the generic rollback — which hard-deletes
+      // every id in createdTargetIds — would destroy real, pre-existing
+      // data instead of undoing a copy. It must restore the row's
+      // original fields instead.
+      const twoSourceCases = [
+        {
+          ...mockSourceCase,
+          id: 1,
+          repositoryId: 100,
+          folderId: 1000,
+          templateId: 30,
+          stateId: 5,
+          order: 0,
+        },
+        { ...mockSourceCase, id: 2, name: "Test Case 2" },
+      ];
+      mockDb.repositoryCases.findMany.mockResolvedValue(twoSourceCases);
+      mockDb.repositoryCaseVersions.findMany.mockResolvedValue([]);
+
+      const sameProjMoveJobData = {
+        ...baseCopyJobData,
+        operation: "move" as const,
+        sourceProjectId: 20,
+        targetProjectId: 20,
+        caseIds: [1, 2],
+      };
+
+      // First transaction (case 1, in-place) succeeds; second (case 2) fails.
+      let txCallCount = 0;
+      mockDb.$transaction.mockImplementation(async (fn: Function) => {
+        txCallCount++;
+        if (txCallCount === 1) {
+          mockTx.repositoryCases.update.mockResolvedValueOnce({ id: 1 });
+          return fn(mockTx);
+        }
+        throw new Error("Second case failed");
+      });
+
+      const { processor } = await loadWorker();
+
+      await expect(
+        processor(
+          makeMockJob({
+            id: "job-inplace-rollback",
+            data: sameProjMoveJobData,
+          }) as Job
+        )
+      ).rejects.toThrow("Second case failed");
+
+      // Must NOT hard-delete the relocated case — it's real, pre-existing data.
+      expect(mockDb.repositoryCases.deleteMany).not.toHaveBeenCalled();
+
+      // Must restore its pre-move fields.
+      expect(mockDb.repositoryCases.update).toHaveBeenCalledWith({
+        where: { id: 1 },
+        data: {
+          repositoryId: 100,
+          folderId: 1000,
+          templateId: 30,
+          stateId: 5,
+          order: 0,
+        },
+      });
     });
   });
 

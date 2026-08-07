@@ -475,7 +475,22 @@ const processor = async (
 
     // 8. Initialize state
     const sharedGroupMap = new Map<number, number>();
-    const createdTargetIds: Array<{ newId: number; sourceId: number }> = [];
+    const createdTargetIds: Array<{
+      newId: number;
+      sourceId: number;
+      // true when the "move" relocated the source row itself in place
+      // rather than creating a new row and soft-deleting the old one.
+      inPlace: boolean;
+      // Pre-move field snapshot for in-place entries only, so a rollback
+      // can restore the row instead of hard-deleting a pre-existing case.
+      originalFields?: {
+        repositoryId: number;
+        folderId: number;
+        templateId: number;
+        stateId: number;
+        order: number;
+      };
+    }> = [];
     const result: CopyMoveJobResult = {
       copiedCount: 0,
       movedCount: 0,
@@ -591,6 +606,17 @@ const processor = async (
           effectiveTargetTemplateId
         );
 
+        // A move that stays in the same project and keeps the same name
+        // (no rename applied above) targets the exact same (projectId,
+        // name, className, source) tuple the source row already holds.
+        // That tuple is unique table-wide with no isDeleted exception, so
+        // there is no legal way to create a second row there — the only
+        // valid "move" is to relocate the existing row itself.
+        const isInPlaceMove =
+          job.data.operation === "move" &&
+          job.data.sourceProjectId === job.data.targetProjectId &&
+          caseName === sourceCase.name;
+
         const newCaseId = await db.$transaction(async (tx: any) => {
           // Phase 13 CTX-02 — stamp the actor GUC as the FIRST statement inside
           // this existing per-case transaction so trigger-captured rows for the
@@ -610,13 +636,8 @@ const processor = async (
               tenantId: job.data?.tenantId ?? getCurrentTenantId() ?? null,
             }
           )}, true)`;
-          // a. Create-or-restore the target RepositoryCases row. A prior
-          //    soft-deleted case at the same (projectId, name, className,
-          //    source) tuple (e.g. the user previously deleted a copy
-          //    with the same name) gets resurrected with the fresh
-          //    payload instead of 23505ing. Prisma's compound-unique
-          //    upsert rejects null for nullable members like `className`,
-          //    so the find-then-branch pattern is the typesafe path.
+          // a. Create-or-restore (or, for an in-place move, relocate) the
+          //    target RepositoryCases row.
           const caseFields = {
             repositoryId: job.data.targetRepositoryId,
             folderId: caseFolderId,
@@ -626,8 +647,29 @@ const processor = async (
             estimate: sourceCase.estimate,
             creatorId: sourceCase.creatorId,
             order: caseOrder,
-            currentVersion: 1,
           };
+
+          if (isInPlaceMove) {
+            // Relocate the existing row directly — every child row (Steps,
+            // CaseFieldValues, Attachments, Tags, Issues, Versions,
+            // Comments) already points at this id, so there's nothing to
+            // copy and no version bump/history rewrite needed. currentVersion
+            // is deliberately left untouched (unlike the create/resurrect
+            // paths below) since this is the same row, not a new one.
+            const movedCase = await tx.repositoryCases.update({
+              where: { id: sourceCase.id },
+              data: caseFields,
+            });
+            return movedCase.id;
+          }
+
+          // Create-or-restore the target RepositoryCases row. A prior
+          // soft-deleted case at the same (projectId, name, className,
+          // source) tuple (e.g. the user previously deleted a copy
+          // with the same name) gets resurrected with the fresh
+          // payload instead of 23505ing. Prisma's compound-unique
+          // upsert rejects null for nullable members like `className`,
+          // so the find-then-branch pattern is the typesafe path.
           const softDeletedExisting = await tx.repositoryCases.findFirst({
             where: {
               projectId: job.data.targetProjectId,
@@ -641,7 +683,7 @@ const processor = async (
           const newCase = softDeletedExisting
             ? await tx.repositoryCases.update({
                 where: { id: softDeletedExisting.id },
-                data: { ...caseFields, isDeleted: false },
+                data: { ...caseFields, currentVersion: 1, isDeleted: false },
               })
             : await tx.repositoryCases.create({
                 data: {
@@ -650,6 +692,7 @@ const processor = async (
                   className: sourceCase.className,
                   source: sourceCase.source,
                   ...caseFields,
+                  currentVersion: 1,
                 },
               });
 
@@ -860,18 +903,53 @@ const processor = async (
           return newCase.id;
         });
 
-        createdTargetIds.push({ newId: newCaseId, sourceId: sourceCase.id });
+        createdTargetIds.push({
+          newId: newCaseId,
+          sourceId: sourceCase.id,
+          inPlace: isInPlaceMove,
+          ...(isInPlaceMove
+            ? {
+                originalFields: {
+                  repositoryId: sourceCase.repositoryId,
+                  folderId: sourceCase.folderId,
+                  templateId: sourceCase.templateId,
+                  stateId: sourceCase.stateId,
+                  order: sourceCase.order,
+                },
+              }
+            : {}),
+        });
         result.copiedCount++;
       }
     } catch (err: any) {
-      // Rollback: delete all created target cases (cascade handles children)
+      // Rollback. Freshly-created target cases get hard-deleted (cascade
+      // handles children) same as before. In-place entries never created
+      // anything new — newId is the pre-existing source case, so deleting
+      // it would destroy real data; restore its original fields instead.
       if (createdTargetIds.length > 0) {
         console.error(
-          `Copy-move job ${job.id} failed — rolling back ${createdTargetIds.length} created cases.`
+          `Copy-move job ${job.id} failed — rolling back ${createdTargetIds.length} processed cases.`
         );
-        await db.repositoryCases.deleteMany({
-          where: { id: { in: createdTargetIds.map((c) => c.newId) } },
-        });
+        const createdIds = createdTargetIds
+          .filter((c) => !c.inPlace)
+          .map((c) => c.newId);
+        if (createdIds.length > 0) {
+          await db.repositoryCases.deleteMany({
+            where: { id: { in: createdIds } },
+          });
+        }
+        for (const c of createdTargetIds) {
+          if (c.inPlace && c.originalFields) {
+            await db.repositoryCases
+              .update({ where: { id: c.newId }, data: c.originalFields })
+              .catch((revertErr: unknown) =>
+                console.error(
+                  `Copy-move job ${job.id} rollback failed to restore case ${c.newId}:`,
+                  revertErr
+                )
+              );
+          }
+        }
       }
       throw err;
     }
@@ -880,11 +958,17 @@ const processor = async (
     // against same-project self-collision with conflictResolution:"skip" where
     // every case is skipped (copiedCount=0) but the old code deleted originals.
     if (job.data.operation === "move" && createdTargetIds.length > 0) {
-      const movedSourceIds = createdTargetIds.map((c) => c.sourceId);
-      await db.repositoryCases.updateMany({
-        where: { id: { in: movedSourceIds } },
-        data: { isDeleted: true },
-      });
+      // In-place moves relocated the source row itself — it's still the
+      // live case (same id), not a leftover original to soft-delete.
+      const movedSourceIds = createdTargetIds
+        .filter((c) => !c.inPlace)
+        .map((c) => c.sourceId);
+      if (movedSourceIds.length > 0) {
+        await db.repositoryCases.updateMany({
+          where: { id: { in: movedSourceIds } },
+          data: { isDeleted: true },
+        });
+      }
 
       // Move: soft-delete source FOLDERS after all cases soft-deleted
       if (job.data.folderTree && job.data.folderTree.length > 0) {
@@ -912,9 +996,13 @@ const processor = async (
       );
     }
 
-    // For move: also remove source cases from ES index (best-effort, only those actually moved)
+    // For move: also remove source cases from ES index (best-effort, only
+    // those actually soft-deleted — in-place entries share newId===sourceId
+    // and were already re-synced live above, nothing to remove).
     if (job.data.operation === "move" && createdTargetIds.length > 0) {
-      for (const sourceId of createdTargetIds.map((c) => c.sourceId)) {
+      for (const sourceId of createdTargetIds
+        .filter((c) => !c.inPlace)
+        .map((c) => c.sourceId)) {
         syncRepositoryCaseToElasticsearch(
           sourceId,
           job.data.tenantId,
@@ -933,7 +1021,7 @@ const processor = async (
     result.droppedLinkCount = 0;
 
     // 12b. Audit logging — log bulk operation for created cases
-    for (const { newId } of createdTargetIds) {
+    for (const { newId } of createdTargetIds.filter((c) => !c.inPlace)) {
       captureAuditEvent({
         action: "CREATE",
         entityType: "RepositoryCases",
@@ -947,6 +1035,24 @@ const processor = async (
           jobId: job.id,
         },
       }).catch(() => {}); // best-effort, don't fail the job
+    }
+
+    // In-place moves never created a new row, so they don't belong in the
+    // CREATE audit above — log them as an UPDATE reflecting the relocation.
+    for (const { newId } of createdTargetIds.filter((c) => c.inPlace)) {
+      captureAuditEvent({
+        action: "UPDATE",
+        entityType: "RepositoryCases",
+        entityId: String(newId),
+        projectId: job.data.targetProjectId,
+        userId: job.data.userId,
+        tenantId: job.data.tenantId,
+        metadata: {
+          source: `copy-move:${job.data.operation}`,
+          targetFolderId: job.data.targetFolderId,
+          jobId: job.id,
+        },
+      }).catch(() => {});
     }
 
     // Provenance audit — within-project copies only
@@ -972,9 +1078,14 @@ const processor = async (
       }
     }
 
-    // Audit logging — log soft-deletes for moved source cases
+    // Audit logging — log soft-deletes for moved source cases. Sourced from
+    // createdTargetIds (not job.data.caseIds) so skipped cases and in-place
+    // relocations — neither of which were actually soft-deleted — don't get
+    // a false DELETE entry.
     if (job.data.operation === "move") {
-      for (const sourceId of job.data.caseIds) {
+      for (const sourceId of createdTargetIds
+        .filter((c) => !c.inPlace)
+        .map((c) => c.sourceId)) {
         captureAuditEvent({
           action: "DELETE",
           entityType: "RepositoryCases",
