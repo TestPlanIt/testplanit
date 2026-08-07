@@ -114,8 +114,7 @@ export const useColumns = (
   userPreferences: { user: { preferences: { timezone?: string } } },
   onViewDetails: (log: ExtendedAuditLog) => void,
   t: ReturnType<typeof useTranslations<"admin.auditLogs">>,
-  tCommon: ReturnType<typeof useTranslations<"common">>,
-  tUserMenu: ReturnType<typeof useTranslations<"userMenu">>
+  tCommon: ReturnType<typeof useTranslations<"common">>
 ): ColumnDef<ExtendedAuditLog>[] => {
   const { formatKey } = useRecordKeyConfig();
   return useMemo(
@@ -259,8 +258,12 @@ export const useColumns = (
                 <span className="text-xs text-muted-foreground">{email}</span>
               )}
               {!name && !email && (
-                <span className="text-muted-foreground">
-                  {tUserMenu("themes.system")}
+                // The actor id was captured but its name/email never resolved
+                // (e.g. rows written before Bearer-auth carried identity).
+                // Show the raw id — never a label that reads as system
+                // attribution, which this is not.
+                <span className="font-mono text-xs text-muted-foreground break-all">
+                  {userId || "-"}
                 </span>
               )}
             </div>
@@ -328,6 +331,6 @@ export const useColumns = (
         ),
       },
     ],
-    [userPreferences, onViewDetails, t, tCommon, tUserMenu, formatKey]
+    [userPreferences, onViewDetails, t, tCommon, formatKey]
   );
 };

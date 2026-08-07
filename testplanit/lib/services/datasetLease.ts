@@ -7,7 +7,6 @@ import {
   extractBearerToken,
 } from "~/lib/api-token-auth";
 import { getUserWithRole } from "~/lib/auth/utils";
-import { baseDb } from "~/lib/db";
 import { authOptions } from "~/server/auth";
 import { getAuthDb } from "~/lib/zenstack";
 import type { DbClient, TxClient } from "~/lib/zenstack";
@@ -100,17 +99,13 @@ export async function resolveLeaseApiUser(
     };
   }
 
-  const dbUser = await baseDb.user.findUnique({
-    where: { id: apiAuth.userId! },
-    select: { name: true, email: true },
-  });
   return {
     ok: true,
     user: {
       userId: apiAuth.userId!,
       access: apiAuth.access,
-      userName: dbUser?.name ?? undefined,
-      userEmail: dbUser?.email ?? undefined,
+      userName: apiAuth.userName,
+      userEmail: apiAuth.userEmail,
       scopes: apiAuth.scopes,
     },
   };

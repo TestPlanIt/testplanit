@@ -27,7 +27,12 @@ export async function checkAdminAuth(
     userAccess = apiAuth.access;
     if (apiAuth.userId) {
       // Attribute restore/purge audit rows (CDC GUC actor) to the token owner.
-      enrichFromApiAuth({ userId: apiAuth.userId, scopes: apiAuth.scopes });
+      enrichFromApiAuth({
+        userId: apiAuth.userId,
+        userName: apiAuth.userName,
+        userEmail: apiAuth.userEmail,
+        scopes: apiAuth.scopes,
+      });
     }
   }
 

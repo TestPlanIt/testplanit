@@ -321,6 +321,8 @@ describe("API Token Authentication", () => {
         scopes: ["read", "write"],
         user: {
           id: "user-123",
+          name: "Token Owner",
+          email: "owner@example.com",
           access: "ADMIN",
           isActive: true,
           isDeleted: false,
@@ -333,6 +335,10 @@ describe("API Token Authentication", () => {
 
       expect(result.authenticated).toBe(true);
       expect(result.userId).toBe("user-123");
+      // Carried so Bearer routes can attribute audit rows with the actor's
+      // display identity, not just the id.
+      expect(result.userName).toBe("Token Owner");
+      expect(result.userEmail).toBe("owner@example.com");
       expect(result.access).toBe("ADMIN");
       expect(result.scopes).toEqual(["read", "write"]);
       expect(result.error).toBeUndefined();

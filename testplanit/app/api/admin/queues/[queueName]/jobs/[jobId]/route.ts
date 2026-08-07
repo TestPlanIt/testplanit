@@ -33,7 +33,11 @@ async function checkAdminAuth(
     userAccess = apiAuth.access;
 
     if (apiAuth.userId) {
-      enrichFromApiAuth({ userId: apiAuth.userId });
+      enrichFromApiAuth({
+        userId: apiAuth.userId,
+        userName: apiAuth.userName,
+        userEmail: apiAuth.userEmail,
+      });
     }
   }
 

@@ -61,7 +61,6 @@ export function ProjectAuditLog({
   const t = useTranslations("admin.auditLogs");
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
-  const tUserMenu = useTranslations("userMenu");
 
   const [sortConfig, setSortConfig] = useState<{
     column: string;
@@ -320,7 +319,9 @@ export function ProjectAuditLog({
           log.entityType,
           log.entityId || "",
           log.entityName || "",
-          log.userName || tGlobal("userMenu.themes.system"),
+          log.userId === SYSTEM_ACTOR_ID
+            ? t("systemActor")
+            : log.userName || log.userId || "",
           log.userEmail || "",
           log.project?.name || "",
           ipAddress,
@@ -406,13 +407,7 @@ export function ProjectAuditLog({
 
   // Reuse the admin audit-log columns, but drop the project column — every row
   // belongs to the same project here.
-  const allColumns = useColumns(
-    userPreferences,
-    handleViewDetails,
-    t,
-    tCommon,
-    tUserMenu
-  );
+  const allColumns = useColumns(userPreferences, handleViewDetails, t, tCommon);
   const columns = useMemo(
     () => allColumns.filter((c) => c.id !== "project"),
     [allColumns]

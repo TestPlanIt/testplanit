@@ -163,7 +163,12 @@ export const POST = withAuditContext(async (request: NextRequest) => {
 
     if (apiAuth.userId) {
       // Scopes included so the audit rows carry source "api", not "web".
-      enrichFromApiAuth({ userId: apiAuth.userId, scopes: apiAuth.scopes });
+      enrichFromApiAuth({
+          userId: apiAuth.userId,
+          userName: apiAuth.userName,
+          userEmail: apiAuth.userEmail,
+          scopes: apiAuth.scopes,
+        });
     }
   }
 

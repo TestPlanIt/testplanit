@@ -44,7 +44,12 @@ export const POST = withAuditContext(async (request: NextRequest) => {
       userId = apiAuth.userId;
       if (apiAuth.userId) {
         // Attribute the attachment's audit rows (CDC GUC actor) to the token owner.
-        enrichFromApiAuth({ userId: apiAuth.userId, scopes: apiAuth.scopes });
+        enrichFromApiAuth({
+          userId: apiAuth.userId,
+          userName: apiAuth.userName,
+          userEmail: apiAuth.userEmail,
+          scopes: apiAuth.scopes,
+        });
       }
     }
   }

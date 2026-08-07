@@ -109,7 +109,6 @@ function AuditLogsContent({ session }: { session: Session }) {
   const t = useTranslations("admin.auditLogs");
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
-  const tUserMenu = useTranslations("userMenu");
 
   const [sortConfig, setSortConfig] = useState<{
     column: string;
@@ -437,7 +436,9 @@ function AuditLogsContent({ session }: { session: Session }) {
           log.entityType,
           log.entityId || "",
           log.entityName || "",
-          log.userName || tGlobal("userMenu.themes.system"),
+          log.userId === SYSTEM_ACTOR_ID
+            ? t("systemActor")
+            : log.userName || log.userId || "",
           log.userEmail || "",
           log.project?.name || "",
           ipAddress,
@@ -527,13 +528,7 @@ function AuditLogsContent({ session }: { session: Session }) {
     [dateFormat, timezone]
   );
 
-  const columns = useColumns(
-    userPreferences,
-    handleViewDetails,
-    t,
-    tCommon,
-    tUserMenu
-  );
+  const columns = useColumns(userPreferences, handleViewDetails, t, tCommon);
 
   const [columnVisibility, setColumnVisibility] = useState<
     Record<string, boolean>

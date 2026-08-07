@@ -516,16 +516,9 @@ async function handleRequest(
       // Build auth context for AsyncLocalStorage
       apiAuthContext = {
         userId: apiAuth.userId!,
+        email: apiAuth.userEmail,
+        name: apiAuth.userName,
       };
-      // Look up user info for audit context
-      const user = await baseDb.user.findUnique({
-        where: { id: apiAuth.userId },
-        select: { email: true, name: true },
-      });
-      if (user) {
-        apiAuthContext.email = user.email ?? undefined;
-        apiAuthContext.name = user.name ?? undefined;
-      }
     }
   }
 

@@ -41,6 +41,8 @@ export const GET = withAuditContext(async (request: NextRequest) => {
       scopes = apiAuth.scopes ?? [];
       enrichFromApiAuth({
         userId: apiAuth.userId!,
+        userName: apiAuth.userName,
+        userEmail: apiAuth.userEmail,
         scopes: apiAuth.scopes,
       });
     }

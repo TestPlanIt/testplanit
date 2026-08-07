@@ -45,7 +45,6 @@ export function UserAuditLog({ userId }: UserAuditLogProps) {
   const locale = useLocale();
   const t = useTranslations("admin.auditLogs");
   const tCommon = useTranslations("common");
-  const tUserMenu = useTranslations("userMenu");
   const tProfile = useTranslations("users.profile.auditLog");
 
   const [detailId, setDetailId] = useState<string | null>(null);
@@ -238,13 +237,7 @@ export function UserAuditLog({ userId }: UserAuditLogProps) {
 
   // Reuse the admin audit-log columns, but drop the user column — every row
   // belongs to the same user here.
-  const allColumns = useColumns(
-    userPreferences,
-    handleViewDetails,
-    t,
-    tCommon,
-    tUserMenu
-  );
+  const allColumns = useColumns(userPreferences, handleViewDetails, t, tCommon);
   const columns = useMemo(
     () => allColumns.filter((c) => c.id !== "userEmail"),
     [allColumns]

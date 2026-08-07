@@ -19,6 +19,9 @@ export interface CachedTokenInfo {
   tokenId: string;
   userId: string;
   userAccess: string | null;
+  /** Optional: entries written before these fields existed lack them (30s TTL). */
+  userName?: string | null;
+  userEmail?: string | null;
   scopes: string[];
   expiresAt: string | null;
 }

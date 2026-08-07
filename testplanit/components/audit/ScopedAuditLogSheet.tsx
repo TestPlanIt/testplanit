@@ -153,7 +153,6 @@ function ScopedAuditLogContent({
   const locale = useLocale();
   const t = useTranslations("admin.auditLogs");
   const tCommon = useTranslations("common");
-  const tUserMenu = useTranslations("userMenu");
   const tProfile = useTranslations("users.profile.auditLog");
 
   const [detailId, setDetailId] = useState<string | null>(null);
@@ -281,13 +280,7 @@ function ScopedAuditLogContent({
 
   // Reuse the admin audit-log columns, but drop the columns that are constant
   // for a single entity: project, entity type, and entity name.
-  const allColumns = useColumns(
-    userPreferences,
-    handleViewDetails,
-    t,
-    tCommon,
-    tUserMenu
-  );
+  const allColumns = useColumns(userPreferences, handleViewDetails, t, tCommon);
   const columns = useMemo(
     () =>
       allColumns.filter(
