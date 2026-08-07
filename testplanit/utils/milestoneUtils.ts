@@ -186,93 +186,61 @@ export const getStatus = (milestone: Milestones): string => {
   }
 };
 
+// Urgency tiers: past due, started (soonest deadline), delayed, upcoming,
+// unscheduled, completed
+const getSortRank = (milestone: Milestones): number => {
+  if (milestone.isCompleted) return 5;
+  switch (getStatus(milestone)) {
+    case STATUS_KEYS.PAST_DUE:
+      return 0;
+    case STATUS_KEYS.STARTED:
+      return 1;
+    case STATUS_KEYS.DELAYED:
+      return 2;
+    case STATUS_KEYS.UPCOMING:
+      return 3;
+    default:
+      return 4;
+  }
+};
+
 export const sortMilestones = (
   milestones: MilestonesWithTypes[]
 ): MilestonesWithTypes[] => {
   return milestones?.sort((a, b) => {
-    // If both are completed, sort by completedAt date
-    if (a.isCompleted && b.isCompleted) {
-      return (
-        parseISO(b.completedAt!.toISOString()).getTime() -
-        parseISO(a.completedAt!.toISOString()).getTime()
-      );
-    }
+    const rankA = getSortRank(a);
+    const rankB = getSortRank(b);
+    if (rankA !== rankB) return rankA - rankB;
 
-    // If one is completed and the other is not, completed milestones come last
-    if (a.isCompleted) return 1;
-    if (b.isCompleted) return -1;
+    const aStart = a.startedAt ? a.startedAt.getTime() : null;
+    const bStart = b.startedAt ? b.startedAt.getTime() : null;
+    const aEnd = a.completedAt ? a.completedAt.getTime() : null;
+    const bEnd = b.completedAt ? b.completedAt.getTime() : null;
 
-    const aStartDate = a.startedAt ? parseISO(a.startedAt.toISOString()) : null;
-    const bStartDate = b.startedAt ? parseISO(b.startedAt.toISOString()) : null;
-
-    const aEndDate = a.completedAt
-      ? parseISO(a.completedAt.toISOString())
-      : null;
-    const bEndDate = b.completedAt
-      ? parseISO(b.completedAt.toISOString())
-      : null;
-
-    // Started milestones in order of start date
-    if (a.isStarted && b.isStarted) {
-      return aStartDate && bStartDate
-        ? aStartDate.getTime() - bStartDate.getTime()
-        : 0;
+    switch (rankA) {
+      // Completed: most recently completed first
+      case 5:
+        return (bEnd ?? 0) - (aEnd ?? 0);
+      // Past due and started: earliest end date first, no end date last,
+      // then by start date
+      case 0:
+      case 1:
+        if (aEnd !== null && bEnd !== null && aEnd !== bEnd) {
+          return aEnd - bEnd;
+        }
+        if (aEnd !== null && bEnd === null) return -1;
+        if (aEnd === null && bEnd !== null) return 1;
+        return aStart !== null && bStart !== null ? aStart - bStart : 0;
+      // Delayed and upcoming: soonest scheduled date first
+      case 2:
+      case 3: {
+        const aDate = aStart ?? aEnd;
+        const bDate = bStart ?? bEnd;
+        return aDate !== null && bDate !== null ? aDate - bDate : 0;
+      }
+      // Unscheduled: keep incoming order
+      default:
+        return 0;
     }
-
-    // Milestones without start and end dates
-    if (!aStartDate && !aEndDate && !bStartDate && !bEndDate) {
-      return 0; // Both unscheduled, order doesn't matter
-    }
-    if (!aStartDate && !aEndDate) {
-      return -1; // a is unscheduled, b has dates -> a comes BEFORE b
-    }
-    if (!bStartDate && !bEndDate) {
-      return 1; // b is unscheduled, a has dates -> b comes AFTER a (so a comes first)
-    }
-
-    // Milestones with past start dates
-    if (
-      aStartDate &&
-      isBefore(aStartDate, new Date()) &&
-      bStartDate &&
-      isBefore(bStartDate, new Date())
-    ) {
-      return aStartDate.getTime() - bStartDate.getTime();
-    }
-    if (aStartDate && isBefore(aStartDate, new Date())) {
-      return -1;
-    }
-    if (bStartDate && isBefore(bStartDate, new Date())) {
-      return 1;
-    }
-
-    // Milestones with future start dates
-    if (
-      aStartDate &&
-      isAfter(aStartDate, new Date()) &&
-      bStartDate &&
-      isAfter(bStartDate, new Date())
-    ) {
-      return aStartDate.getTime() - bStartDate.getTime();
-    }
-    if (aStartDate && isAfter(aStartDate, new Date())) {
-      return -1;
-    }
-    if (bStartDate && isAfter(bStartDate, new Date())) {
-      return 1;
-    }
-
-    // Milestones with end dates, not started
-    if (!a.isStarted && aEndDate && bEndDate) {
-      return aEndDate.getTime() - bEndDate.getTime();
-    }
-    if (!a.isStarted && aEndDate) {
-      return -1;
-    }
-    if (!b.isStarted && bEndDate) {
-      return 1;
-    }
-
-    return 0;
   });
 };
