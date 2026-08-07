@@ -34,6 +34,7 @@ import { useRouter } from "~/lib/navigation";
 import { AddSessionModal } from "./AddSessionModal";
 import SessionDisplay from "./SessionDisplay";
 
+import { CollapsibleSummarySection } from "@/components/CollapsibleSummarySection";
 import CompletedRunsLineChart, {
   type MonthlyCount,
 } from "@/components/dataVisualizations/CompletedRunsLineChart";
@@ -740,208 +741,214 @@ const ProjectSessions: React.FC<ProjectSessionsProps> = ({ params }) => {
             </CardHeader>
             <CardContent className="flex flex-col">
               {/* --- Summary Metrics Display --- */}
-              <div className="mb-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {/* Card 1: Work Distribution - (Modified above) */}
-                {(isLoadingIncomplete ||
-                  (workDistributionChartData.children &&
-                    workDistributionChartData.children.length > 0)) && (
-                  <Card>
-                    <CardHeader className="pb-2 flex flex-row items-start justify-between">
-                      <div>
-                        <CardTitle className="font-medium">
-                          {t("runs.summary.workDistributionTitle")}
-                        </CardTitle>
-                        <CardDescription>
-                          <div className="flex flex-row gap-1">
-                            <p>
-                              {t(
-                                "sessions.summary.workDistributionDescription"
-                              )}
-                            </p>
-                            <p>
-                              {toHumanReadable(totalSunburstEstimate, {
-                                isSeconds: true,
-                              })}
-                            </p>
-                          </div>
-                        </CardDescription>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6"
-                        onClick={() =>
-                          handleOpenChartOverlay({
-                            type: "sunburst",
-                            title: t("runs.summary.workDistributionTitle"),
-                            data: workDistributionChartData,
-                            projectId: projectId,
-                            onLegendDataGenerated: handleSunburstLegend,
-                            onTotalCalculated: handleSunburstTotal,
-                            onSessionClick: handleSessionSunburstClick,
-                            isZoomed: true,
-                          })
-                        }
-                      >
-                        <Maximize2 className="h-4 w-4" />
-                        <span className="sr-only">
-                          {tCommon("actions.expand")}
-                        </span>
-                      </Button>
-                    </CardHeader>
-                    <CardContent className="flex justify-center items-center p-2">
-                      {isLoadingIncomplete ? (
-                        <LoadingSpinner />
-                      ) : workDistributionChartData.children &&
-                        workDistributionChartData.children.length > 0 ? (
-                        <SummarySunburstChart
-                          data={workDistributionChartData}
-                          projectId={projectId}
-                          onLegendDataGenerated={handleSunburstLegend}
-                          onTotalCalculated={handleSunburstTotal}
-                          onSessionClick={handleSessionSunburstClick}
-                        />
-                      ) : (
-                        <p className="text-sm text-muted-foreground text-center px-4 h-[210px] flex items-center justify-center">
-                          {t("runs.summary.noWorkDistributionData")}
-                        </p>
-                      )}
-                    </CardContent>
-                  </Card>
-                )}
-
-                {/* Card 2: Recent Session Results - Conditional Render */}
-                {(isLoadingRecentSessionResults ||
-                  recentSessionResultsChartData.length > 0) && (
-                  <Card>
-                    <CardHeader className="pb-2 flex flex-row items-start justify-between">
-                      <div>
-                        <CardTitle className="font-medium">
-                          {t("sessions.summary.recentResultsTitle")}
-                        </CardTitle>
-                        <CardDescription className="flex flex-col">
-                          {!isLoadingRecentSessionResults &&
-                            recentSessionResultsDateRange.first &&
-                            recentSessionResultsDateRange.last && (
-                              <span>
-                                <DateFormatter
-                                  date={recentSessionResultsDateRange.first}
-                                  formatString={
-                                    sessionData?.user.preferences?.dateFormat +
-                                    " " +
-                                    sessionData?.user.preferences?.timeFormat
-                                  }
-                                  timezone={
-                                    sessionData?.user.preferences?.timezone
-                                  }
-                                />
-                                {" – "}
-                                <DateFormatter
-                                  date={recentSessionResultsDateRange.last}
-                                  formatString={
-                                    sessionData?.user.preferences?.dateFormat +
-                                    " " +
-                                    sessionData?.user.preferences?.timeFormat
-                                  }
-                                  timezone={
-                                    sessionData?.user.preferences?.timezone
-                                  }
-                                />
-                              </span>
-                            )}
-                        </CardDescription>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6"
-                        onClick={() =>
-                          handleOpenChartOverlay({
-                            type: "donut",
-                            title: t("sessions.summary.recentResultsTitle"),
-                            data: recentSessionResultsChartData,
-                            isZoomed: true,
-                          })
-                        }
-                      >
-                        <Maximize2 className="h-4 w-4" />
-                        <span className="sr-only">
-                          {tCommon("actions.expand")}
-                        </span>
-                      </Button>
-                    </CardHeader>
-                    <CardContent className="flex justify-center items-center p-2">
-                      {isLoadingRecentSessionResults ? (
-                        <LoadingSpinner />
-                      ) : recentSessionResultsChartData.length > 0 ? (
-                        <RecentResultsDonut
-                          data={recentSessionResultsChartData}
-                        />
-                      ) : (
-                        <p className="text-sm text-muted-foreground text-center px-4 h-[210px] flex items-center justify-center">
-                          {t("sessions.summary.noRecentResults")}
-                        </p>
-                      )}
-                    </CardContent>
-                    <CardFooter className="flex justify-center items-center">
-                      {!isLoadingRecentSessionResults &&
-                        recentSessionResultsChartData.length > 0 && (
-                          <span className="font-semibold">{`${recentSessionResultsSuccessRate.toFixed(1)}% ${tCommon("labels.successRate")}`}</span>
+              <CollapsibleSummarySection
+                storageKey={`tpi.sessions.${numericProjectId}.summaryCollapsed`}
+              >
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {/* Card 1: Work Distribution - (Modified above) */}
+                  {(isLoadingIncomplete ||
+                    (workDistributionChartData.children &&
+                      workDistributionChartData.children.length > 0)) && (
+                    <Card>
+                      <CardHeader className="pb-2 flex flex-row items-start justify-between">
+                        <div>
+                          <CardTitle className="font-medium">
+                            {t("runs.summary.workDistributionTitle")}
+                          </CardTitle>
+                          <CardDescription>
+                            <div className="flex flex-row gap-1">
+                              <p>
+                                {t(
+                                  "sessions.summary.workDistributionDescription"
+                                )}
+                              </p>
+                              <p>
+                                {toHumanReadable(totalSunburstEstimate, {
+                                  isSeconds: true,
+                                })}
+                              </p>
+                            </div>
+                          </CardDescription>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6"
+                          onClick={() =>
+                            handleOpenChartOverlay({
+                              type: "sunburst",
+                              title: t("runs.summary.workDistributionTitle"),
+                              data: workDistributionChartData,
+                              projectId: projectId,
+                              onLegendDataGenerated: handleSunburstLegend,
+                              onTotalCalculated: handleSunburstTotal,
+                              onSessionClick: handleSessionSunburstClick,
+                              isZoomed: true,
+                            })
+                          }
+                        >
+                          <Maximize2 className="h-4 w-4" />
+                          <span className="sr-only">
+                            {tCommon("actions.expand")}
+                          </span>
+                        </Button>
+                      </CardHeader>
+                      <CardContent className="flex justify-center items-center p-2">
+                        {isLoadingIncomplete ? (
+                          <LoadingSpinner />
+                        ) : workDistributionChartData.children &&
+                          workDistributionChartData.children.length > 0 ? (
+                          <SummarySunburstChart
+                            data={workDistributionChartData}
+                            projectId={projectId}
+                            onLegendDataGenerated={handleSunburstLegend}
+                            onTotalCalculated={handleSunburstTotal}
+                            onSessionClick={handleSessionSunburstClick}
+                          />
+                        ) : (
+                          <p className="text-sm text-muted-foreground text-center px-4 h-[210px] flex items-center justify-center">
+                            {t("runs.summary.noWorkDistributionData")}
+                          </p>
                         )}
-                    </CardFooter>
-                  </Card>
-                )}
+                      </CardContent>
+                    </Card>
+                  )}
 
-                {/* Card 3: Session Completion Trend - Conditional Render */}
-                {(isLoadingChartData ||
-                  completedSessionsMonthlyData.length > 0) && (
-                  <Card>
-                    <CardHeader className="pb-2 flex flex-row items-start justify-between">
-                      <div>
-                        <CardTitle className="font-medium">
-                          {t("sessions.summary.completionTrendTitle6Mo")}
-                        </CardTitle>
-                        <CardDescription>
-                          {t("sessions.summary.completionTrendDescription")}
-                        </CardDescription>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6"
-                        onClick={() =>
-                          handleOpenChartOverlay({
-                            type: "line",
-                            title: t(
-                              "sessions.summary.completionTrendTitle6Mo"
-                            ),
-                            data: completedSessionsMonthlyData,
-                            isZoomed: true,
-                          })
-                        }
-                      >
-                        <Maximize2 className="h-4 w-4" />
-                        <span className="sr-only">
-                          {tCommon("actions.expand")}
-                        </span>
-                      </Button>
-                    </CardHeader>
-                    <CardContent className="p-2">
-                      {isLoadingChartData ? (
-                        <LoadingSpinner />
-                      ) : completedSessionsMonthlyData.length > 0 ? (
-                        <CompletedRunsLineChart
-                          data={completedSessionsMonthlyData}
-                        />
-                      ) : (
-                        <p className="text-sm text-muted-foreground text-center px-4 h-[210px] flex items-center justify-center">
-                          {t("sessions.summary.noCompletedSessions6Mo")}
-                        </p>
-                      )}
-                    </CardContent>
-                  </Card>
-                )}
-              </div>
+                  {/* Card 2: Recent Session Results - Conditional Render */}
+                  {(isLoadingRecentSessionResults ||
+                    recentSessionResultsChartData.length > 0) && (
+                    <Card>
+                      <CardHeader className="pb-2 flex flex-row items-start justify-between">
+                        <div>
+                          <CardTitle className="font-medium">
+                            {t("sessions.summary.recentResultsTitle")}
+                          </CardTitle>
+                          <CardDescription className="flex flex-col">
+                            {!isLoadingRecentSessionResults &&
+                              recentSessionResultsDateRange.first &&
+                              recentSessionResultsDateRange.last && (
+                                <span>
+                                  <DateFormatter
+                                    date={recentSessionResultsDateRange.first}
+                                    formatString={
+                                      sessionData?.user.preferences
+                                        ?.dateFormat +
+                                      " " +
+                                      sessionData?.user.preferences?.timeFormat
+                                    }
+                                    timezone={
+                                      sessionData?.user.preferences?.timezone
+                                    }
+                                  />
+                                  {" – "}
+                                  <DateFormatter
+                                    date={recentSessionResultsDateRange.last}
+                                    formatString={
+                                      sessionData?.user.preferences
+                                        ?.dateFormat +
+                                      " " +
+                                      sessionData?.user.preferences?.timeFormat
+                                    }
+                                    timezone={
+                                      sessionData?.user.preferences?.timezone
+                                    }
+                                  />
+                                </span>
+                              )}
+                          </CardDescription>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6"
+                          onClick={() =>
+                            handleOpenChartOverlay({
+                              type: "donut",
+                              title: t("sessions.summary.recentResultsTitle"),
+                              data: recentSessionResultsChartData,
+                              isZoomed: true,
+                            })
+                          }
+                        >
+                          <Maximize2 className="h-4 w-4" />
+                          <span className="sr-only">
+                            {tCommon("actions.expand")}
+                          </span>
+                        </Button>
+                      </CardHeader>
+                      <CardContent className="flex justify-center items-center p-2">
+                        {isLoadingRecentSessionResults ? (
+                          <LoadingSpinner />
+                        ) : recentSessionResultsChartData.length > 0 ? (
+                          <RecentResultsDonut
+                            data={recentSessionResultsChartData}
+                          />
+                        ) : (
+                          <p className="text-sm text-muted-foreground text-center px-4 h-[210px] flex items-center justify-center">
+                            {t("sessions.summary.noRecentResults")}
+                          </p>
+                        )}
+                      </CardContent>
+                      <CardFooter className="flex justify-center items-center">
+                        {!isLoadingRecentSessionResults &&
+                          recentSessionResultsChartData.length > 0 && (
+                            <span className="font-semibold">{`${recentSessionResultsSuccessRate.toFixed(1)}% ${tCommon("labels.successRate")}`}</span>
+                          )}
+                      </CardFooter>
+                    </Card>
+                  )}
+
+                  {/* Card 3: Session Completion Trend - Conditional Render */}
+                  {(isLoadingChartData ||
+                    completedSessionsMonthlyData.length > 0) && (
+                    <Card>
+                      <CardHeader className="pb-2 flex flex-row items-start justify-between">
+                        <div>
+                          <CardTitle className="font-medium">
+                            {t("sessions.summary.completionTrendTitle6Mo")}
+                          </CardTitle>
+                          <CardDescription>
+                            {t("sessions.summary.completionTrendDescription")}
+                          </CardDescription>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6"
+                          onClick={() =>
+                            handleOpenChartOverlay({
+                              type: "line",
+                              title: t(
+                                "sessions.summary.completionTrendTitle6Mo"
+                              ),
+                              data: completedSessionsMonthlyData,
+                              isZoomed: true,
+                            })
+                          }
+                        >
+                          <Maximize2 className="h-4 w-4" />
+                          <span className="sr-only">
+                            {tCommon("actions.expand")}
+                          </span>
+                        </Button>
+                      </CardHeader>
+                      <CardContent className="p-2">
+                        {isLoadingChartData ? (
+                          <LoadingSpinner />
+                        ) : completedSessionsMonthlyData.length > 0 ? (
+                          <CompletedRunsLineChart
+                            data={completedSessionsMonthlyData}
+                          />
+                        ) : (
+                          <p className="text-sm text-muted-foreground text-center px-4 h-[210px] flex items-center justify-center">
+                            {t("sessions.summary.noCompletedSessions6Mo")}
+                          </p>
+                        )}
+                      </CardContent>
+                    </Card>
+                  )}
+                </div>
+              </CollapsibleSummarySection>
               {/* --- End Summary Metrics Display --- */}
 
               {/* --- Start Restored Tabs Component --- */}

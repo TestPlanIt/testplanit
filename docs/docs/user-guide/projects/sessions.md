@@ -17,7 +17,9 @@ Similar to the Test Runs page, this page is structured within a card layout and 
     - Shows the current Project Name and Icon.
     - Includes an **Add Session** button (visible to users with appropriate permissions - Admin or Project Admin) to open the [Add Session dialog](./sessions-add.md).
 
-2. **Tabs**:
+2. **Summary Cards**: A collapsible **Summary** section of chart cards (work distribution, recent session results, and completion trend). Collapse it with its header to give the session list the full page; the choice is remembered per project in your browser.
+
+3. **Tabs**:
     - **Active**: Shows sessions that are currently in progress (not marked as completed).
     - **Completed**: Shows sessions that have been marked as completed.
 

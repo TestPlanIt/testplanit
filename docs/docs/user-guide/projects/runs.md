@@ -25,7 +25,7 @@ The page is structured within a card layout and features:
 
 ## Summary Cards
 
-The top of the page shows a row of summary cards. Each card appears only when it has data to show, so the row adapts to the project's activity.
+The top of the page shows a row of summary cards inside a collapsible **Summary** section. Each card appears only when it has data to show, so the row adapts to the project's activity. Collapse the section with its header to give the run list the full page; the choice is remembered per project in your browser, like the [filter chips](#filtering).
 
 ### Automation Runs in Progress
 
