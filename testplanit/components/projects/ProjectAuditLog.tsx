@@ -22,8 +22,7 @@ import {
   ExtendedAuditLog,
   useColumns,
 } from "~/app/[locale]/admin/audit-logs/columns";
-import type { AuditLogUserOption } from "~/app/actions/searchAuditLogUsers";
-import { searchProjectAuditLogUsers } from "~/app/actions/searchProjectAuditLogUsers";
+import type { AuditLogUserOption } from "~/lib/services/auditLog/searchAuditLogUsers";
 import { DateRangePickerField } from "~/components/forms/DateRangePickerField";
 import { AUDIT_ACTIONS, formatAuditAction } from "~/lib/audit/auditActions";
 import { groupAuditRows } from "~/lib/audit/groupAuditRows";
@@ -219,9 +218,27 @@ export function ProjectAuditLog({
     orderBy: { entityType: "asc" },
   });
 
+  // A plain request rather than a Server Action: Next runs Server Actions one
+  // at a time per client, so a slow actor search would stall every other action
+  // this page issues until a reload.
   const fetchUserOptions = useCallback(
-    (query: string, page: number, pageSize: number) =>
-      searchProjectAuditLogUsers(projectId, query, page, pageSize),
+    async (query: string, page: number, pageSize: number) => {
+      const params = new URLSearchParams({
+        q: query,
+        page: String(page),
+        pageSize: String(pageSize),
+      });
+      const response = await fetch(
+        `/api/projects/${projectId}/audit-log-users?${params}`
+      );
+      if (!response.ok) {
+        throw new Error(`Failed to load audit log users (${response.status})`);
+      }
+      return (await response.json()) as {
+        results: AuditLogUserOption[];
+        total: number;
+      };
+    },
     [projectId]
   );
 
