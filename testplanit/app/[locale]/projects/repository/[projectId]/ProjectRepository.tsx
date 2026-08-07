@@ -2,6 +2,7 @@
 
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
+import { commitUrlSearch } from "~/lib/urlState";
 import BreadcrumbComponent from "@/components/BreadcrumbComponent";
 import { useDebounce } from "@/components/Debounce";
 import { UnifiedDragPreview } from "@/components/dnd/UnifiedDragPreview";
@@ -108,7 +109,6 @@ import {
   PaginationProvider,
   usePagination,
 } from "~/lib/contexts/PaginationContext";
-import { usePathname, useRouter } from "~/lib/navigation";
 import { useFolderStats } from "~/lib/useFolderStats";
 import { AddCase } from "./AddCase";
 import { AddFolder } from "./AddFolder";
@@ -435,8 +435,6 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
   const numericProjectId = parseInt(projectId, 10);
   const isValidProjectId = !isNaN(numericProjectId);
 
-  const router = useRouter();
-  const pathName = usePathname();
   const { data: session, status: sessionStatus } = useSession();
 
   // Use the validated numericProjectId here
@@ -584,9 +582,14 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
         to: after ? `?${after}` : "",
       };
       const qs = applyReadabilityPass(after);
-      router.replace(qs ? `${pathName}?${qs}` : pathName, { scroll: false });
+      // commitUrlSearch instead of router.replace: same-route URL-state sync
+      // (see lib/urlState.ts — the router must not be involved, and readers
+      // subscribe through useLocationSearch).
+      const url = new URL(window.location.href);
+      url.search = qs ? `?${qs}` : "";
+      commitUrlSearch(url);
     },
-    [pathName, router]
+    []
   );
 
   // Once the router commits (window.location moves off the value the overlay

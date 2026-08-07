@@ -9,6 +9,21 @@ const mockSearchParams = { current: "" };
 // columns does NOT write `?columns=` to the URL on mount.
 const navMocks = vi.hoisted(() => ({ push: vi.fn(), replace: vi.fn() }));
 
+// URL-state write spy (see lib/urlState.ts) — records writes as
+// "pathname?search" so assertions read like URLs.
+const { mockCommitUrlSearch } = vi.hoisted(() => ({
+  mockCommitUrlSearch: vi.fn(),
+}));
+
+vi.mock("~/lib/urlState", () => ({
+  commitUrlSearch: (url: string | URL) => {
+    const u = new URL(url.toString(), "http://localhost");
+    mockCommitUrlSearch(`${u.pathname}${u.search}`);
+  },
+  pushUrlSearch: vi.fn(),
+  useLocationSearch: () => window.location.search,
+}));
+
 vi.mock("next/navigation", () => ({
   useSearchParams: () => new URLSearchParams(mockSearchParams.current),
 }));
@@ -74,6 +89,7 @@ beforeEach(() => {
   mockSearchParams.current = "";
   navMocks.push.mockClear();
   navMocks.replace.mockClear();
+  mockCommitUrlSearch.mockClear();
 });
 
 describe("column visibility storage helpers", () => {
@@ -465,7 +481,7 @@ describe("restore vs. URL", () => {
 
     expect(onVisibilityChange).toHaveBeenCalled(); // mounted + computed state
     expect(navMocks.push).not.toHaveBeenCalled(); // but no URL written
-    expect(navMocks.replace).not.toHaveBeenCalled();
+    expect(mockCommitUrlSearch).not.toHaveBeenCalled();
   });
 
   it("updates the ?columns= URL on an explicit change when column memory is OFF", async () => {
@@ -483,8 +499,8 @@ describe("restore vs. URL", () => {
     await user.click(screen.getByTestId("column-selection-trigger"));
     await user.click(await screen.findByRole("checkbox", { name: /Col B/ }));
 
-    await waitFor(() => expect(navMocks.replace).toHaveBeenCalled());
-    const url = navMocks.replace.mock.calls.at(-1)?.[0] as string;
+    await waitFor(() => expect(mockCommitUrlSearch).toHaveBeenCalled());
+    const url = mockCommitUrlSearch.mock.calls.at(-1)?.[0] as string;
     expect(url).toContain("columns=");
   });
 
@@ -511,8 +527,8 @@ describe("restore vs. URL", () => {
       expect(readStoredColumnVisibility("mem-view")?.colB).toBe(false)
     );
     // ...and the shareable URL is kept in sync.
-    await waitFor(() => expect(navMocks.replace).toHaveBeenCalled());
-    expect(navMocks.replace.mock.calls.at(-1)?.[0] as string).toContain(
+    await waitFor(() => expect(mockCommitUrlSearch).toHaveBeenCalled());
+    expect(mockCommitUrlSearch.mock.calls.at(-1)?.[0] as string).toContain(
       "columns="
     );
   });

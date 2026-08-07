@@ -1,9 +1,9 @@
 "use client";
 
 import { useSession } from "next-auth/react";
+import { commitUrlSearch } from "~/lib/urlState";
 import { useSearchParams } from "next/navigation";
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { useRouter } from "~/lib/navigation";
 
 export type PageSizeOption = number | "All";
 
@@ -41,7 +41,6 @@ export function PaginationProvider({
   children,
   defaultPageSize = 10,
 }: PaginationProviderProps) {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const { data: session } = useSession();
 
@@ -147,9 +146,16 @@ export function PaginationProvider({
 
       params.set("page", currentPage.toString());
       params.set("pageSize", pageSize.toString());
-      router.replace(`?${params.toString()}`, { scroll: false });
+      // commitUrlSearch, not router.replace: this mirrors pagination state
+      // into the URL (including the initial remembered-pageSize override) and
+      // same-route URL-state syncs must not involve the router (see
+      // lib/urlState.ts — a router navigation here can swap the page to its
+      // loading fallback and reset mounted state).
+      const url = new URL(window.location.href);
+      url.search = params.toString() ? `?${params.toString()}` : "";
+      commitUrlSearch(url);
     }
-  }, [currentPage, pageSize, router, searchParams]);
+  }, [currentPage, pageSize, searchParams]);
 
   const value = {
     currentPage,
