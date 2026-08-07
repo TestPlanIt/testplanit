@@ -445,7 +445,7 @@ interface GeneratedTestCaseCardProps {
   caseWarnings?: Array<{ caseIndex: number; message: string }>;
 }
 
-const GeneratedTestCaseCard = memo(function GeneratedTestCaseCard({
+export const GeneratedTestCaseCard = memo(function GeneratedTestCaseCard({
   testCase,
   template,
   selectedFieldIds,
@@ -701,10 +701,16 @@ const GeneratedTestCaseCard = memo(function GeneratedTestCaseCard({
     formState: { errors },
   } = formMethods;
 
+  // Seed the form when the card enters edit mode. `defaultValues` is rebuilt
+  // whenever the test case, the template, or the field selection arrives as a
+  // fresh object — a query refetch is enough — so resetting on that identity
+  // alone would drop whatever the user had already changed in the open form.
+  const wasEditingRef = useRef(false);
   useEffect(() => {
-    if (isEditing) {
+    if (isEditing && !wasEditingRef.current) {
       reset(defaultValues);
     }
+    wasEditingRef.current = isEditing;
   }, [isEditing, defaultValues, reset]);
 
   const handleSave = handleSubmit((data) => {
