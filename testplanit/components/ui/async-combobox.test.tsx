@@ -119,6 +119,41 @@ const openAndWait = async (firstLabel: string) => {
   });
 };
 
+describe("AsyncCombobox empty state", () => {
+  it("withholds No Results until the fetch settles", async () => {
+    let resolveFetch!: (options: Option[]) => void;
+    const pending = new Promise<Option[]>((resolve) => {
+      resolveFetch = resolve;
+    });
+    render(
+      <AsyncCombobox<Option>
+        value={null}
+        onValueChange={vi.fn()}
+        fetchOptions={() => pending}
+        getOptionValue={(option) => option.id}
+        renderOption={(option) => <span>{option.label}</span>}
+        placeholder="Search"
+        showPagination={false}
+      />
+    );
+
+    fireEvent.click(screen.getByRole("combobox"));
+
+    // In flight: the list is empty but nothing is known yet, so the spinner
+    // must not sit on top of a "No Results" message.
+    await waitFor(() => {
+      expect(
+        screen.getByTestId("async-combobox-trigger-spinner")
+      ).toBeInTheDocument();
+    });
+    expect(screen.queryByText("No Results")).not.toBeInTheDocument();
+
+    resolveFetch([]);
+
+    expect(await screen.findByText("No Results")).toBeInTheDocument();
+  });
+});
+
 describe("AsyncCombobox virtualization", () => {
   it("renders every option in full below the threshold", async () => {
     const options = makeOptions(10);

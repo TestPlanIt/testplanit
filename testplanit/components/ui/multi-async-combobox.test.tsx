@@ -118,6 +118,39 @@ describe("MultiAsyncCombobox trigger loading state", () => {
     });
     expect(screen.getByText("Item 1")).toBeInTheDocument();
   });
+
+  it("withholds No Results until the fetch settles", async () => {
+    let resolveFetch!: (options: Option[]) => void;
+    const pending = new Promise<Option[]>((resolve) => {
+      resolveFetch = resolve;
+    });
+    render(
+      <MultiAsyncCombobox<Option>
+        value={[]}
+        onValueChange={vi.fn()}
+        fetchOptions={() => pending}
+        renderOption={(option) => <span>{option.label}</span>}
+        getOptionValue={(option) => option.id}
+        getOptionLabel={(option) => option.label}
+        placeholder="Search"
+      />
+    );
+
+    fireEvent.click(screen.getByRole("combobox"));
+
+    // In flight: the list is empty but nothing is known yet, so the spinner
+    // must not sit on top of a "No Results" message.
+    await waitFor(() => {
+      expect(
+        screen.getByTestId("multi-async-combobox-trigger-spinner")
+      ).toBeInTheDocument();
+    });
+    expect(screen.queryByText("No Results")).not.toBeInTheDocument();
+
+    resolveFetch([]);
+
+    expect(await screen.findByText("No Results")).toBeInTheDocument();
+  });
 });
 
 describe("MultiAsyncCombobox selection toolbar", () => {
