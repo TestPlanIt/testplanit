@@ -13,6 +13,7 @@ import {
 import { TestRunCasesSummary } from "@/components/TestRunCasesSummary";
 import TextFromJson from "@/components/TextFromJson";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -107,6 +108,10 @@ export interface TestRunItemProps {
    * from firing its own per-run summary fallback in the meantime. */
   summaryLoading?: boolean;
   pendingRequest?: PendingReviewSummary;
+  /** Multi-select support: shows a leading checkbox when provided. */
+  selectable?: boolean;
+  selected?: boolean;
+  onSelectedChange?: (selected: boolean) => void;
 }
 
 const TestRunItem: React.FC<TestRunItemProps> = ({
@@ -117,6 +122,9 @@ const TestRunItem: React.FC<TestRunItemProps> = ({
   summaryData,
   summaryLoading = false,
   pendingRequest,
+  selectable = false,
+  selected = false,
+  onSelectedChange,
 }) => {
   const tCommon = useTranslations("common");
   const t = useTranslations();
@@ -275,6 +283,17 @@ const TestRunItem: React.FC<TestRunItemProps> = ({
       >
         {/* Left Column - Name & Note */}
         <div className="flex items-center min-w-0">
+          {selectable && (
+            <Checkbox
+              checked={selected}
+              onCheckedChange={(checked) =>
+                onSelectedChange?.(checked === true)
+              }
+              aria-label={tCommon("bulk.selectItem")}
+              className="me-2 shrink-0"
+              data-testid={`testrun-select-${testRun.id}`}
+            />
+          )}
           <div className="flex-1 min-w-0">
             <div className="flex items-center min-w-0 w-full">
               <Link

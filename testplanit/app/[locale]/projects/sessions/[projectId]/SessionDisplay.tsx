@@ -15,13 +15,17 @@ import type {
   User,
   Workflows,
 } from "~/zenstack/models";
-import { CirclePlus } from "lucide-react";
+import { CheckCircle, CirclePlus, SquarePen, Trash2 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import type { PendingReviewSummary } from "@/components/reviews/PendingReviewBadge";
+import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { useReviewFeatureEnabled } from "~/hooks/useReviewFeatureEnabled";
+import { BulkActionBar } from "@/components/bulk/BulkActionBar";
+import { transformMilestones } from "@/components/forms/MilestoneSelect";
+import type { OverflowAction } from "@/components/ui/action-bar";
 import {
   ColorMap,
   createColorMap,
@@ -35,6 +39,9 @@ import {
   AddSessionModal,
   type SessionDuplicationPreset,
 } from "./AddSessionModal";
+import BulkCompleteSessionsDialog from "./BulkCompleteSessionsDialog";
+import BulkDeleteSessionsDialog from "./BulkDeleteSessionsDialog";
+import BulkEditSessionsDialog from "./BulkEditSessionsDialog";
 import SessionItem from "./SessionItem";
 import { CompleteSessionDialog } from "./[sessionId]/CompleteSessionDialog";
 
@@ -269,6 +276,69 @@ const SessionDisplay: React.FC<SessionDisplayProps> = ({
     });
     return map;
   }, [pendingReviewsForVisibleSessions]);
+
+  // --- Bulk selection state ---
+  const numericProjectId = sessionProjectId ?? NaN;
+  const { permissions: sessionPermissions } = useProjectPermissions(
+    numericProjectId,
+    "Sessions"
+  );
+  const canDeleteSession = sessionPermissions?.canDelete ?? false;
+  const bulkSelectable = canAddEdit || canCloseSession || canDeleteSession;
+
+  const [selectedSessionIds, setSelectedSessionIds] = useState<Set<number>>(
+    () => new Set()
+  );
+  const [bulkDialog, setBulkDialog] = useState<
+    "edit" | "complete" | "delete" | null
+  >(null);
+
+  // Prune selections that no longer exist in the list so bulk actions can't
+  // touch invisible rows.
+  useEffect(() => {
+    setSelectedSessionIds((prev) => {
+      const valid = new Set(testSessions.map((s) => s.id));
+      const next = new Set([...prev].filter((id) => valid.has(id)));
+      return next.size === prev.size ? prev : next;
+    });
+  }, [testSessions]);
+
+  const toggleSessionSelected = useCallback((id: number, checked: boolean) => {
+    setSelectedSessionIds((prev) => {
+      const next = new Set(prev);
+      if (checked) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  }, []);
+  const clearSessionSelection = useCallback(
+    () => setSelectedSessionIds(new Set()),
+    []
+  );
+
+  const selectedSessionsList = useMemo(
+    () => testSessions.filter((s) => selectedSessionIds.has(s.id)),
+    [testSessions, selectedSessionIds]
+  );
+  // Field edits and completion exclude completed sessions (their fields are
+  // frozen); delete applies to any selection.
+  const editEligibleIds = useMemo(
+    () => selectedSessionsList.filter((s) => !s.isCompleted).map((s) => s.id),
+    [selectedSessionsList]
+  );
+  const completeEligibleSessions = useMemo(
+    () => selectedSessionsList.filter((s) => !s.isCompleted),
+    [selectedSessionsList]
+  );
+  const deleteEligibleIds = useMemo(
+    () => selectedSessionsList.map((s) => s.id),
+    [selectedSessionsList]
+  );
+
+  const milestoneOptions = useMemo(
+    () => transformMilestones(milestones),
+    [milestones]
+  );
 
   // Single AddSessionModal state (handles both add and duplicate)
   const [addModalOpen, setAddModalOpen] = useState(false);
@@ -561,6 +631,11 @@ const SessionDisplay: React.FC<SessionDisplayProps> = ({
                       isNew={newSessionId === testSession.id}
                       showMilestone={false}
                       pendingRequest={pendingBySessionId.get(testSession.id)}
+                      selectable={bulkSelectable}
+                      selected={selectedSessionIds.has(testSession.id)}
+                      onSelectedChange={(checked) =>
+                        toggleSessionSelected(testSession.id, checked)
+                      }
                     />
                   </div>
                 )
@@ -624,6 +699,11 @@ const SessionDisplay: React.FC<SessionDisplayProps> = ({
                   isNew={newSessionId === testSession.id}
                   showMilestone={false}
                   pendingRequest={pendingBySessionId.get(testSession.id)}
+                  selectable={bulkSelectable}
+                  selected={selectedSessionIds.has(testSession.id)}
+                  onSelectedChange={(checked) =>
+                    toggleSessionSelected(testSession.id, checked)
+                  }
                 />
               </div>
             ))}
@@ -643,10 +723,85 @@ const SessionDisplay: React.FC<SessionDisplayProps> = ({
       ? "completed"
       : "active";
 
+  const bulkActions: OverflowAction[] = [
+    {
+      key: "edit",
+      icon: SquarePen,
+      label: tCommon("bulk.editAction", { count: editEligibleIds.length }),
+      onClick: () => setBulkDialog("edit"),
+      disabled: editEligibleIds.length === 0,
+      hidden: !canAddEdit,
+      testId: "session-bulk-edit",
+    },
+    {
+      key: "complete",
+      icon: CheckCircle,
+      label: tCommon("bulk.completeAction", {
+        count: completeEligibleSessions.length,
+      }),
+      onClick: () => setBulkDialog("complete"),
+      disabled: completeEligibleSessions.length === 0,
+      hidden: !canCloseSession,
+      testId: "session-bulk-complete",
+    },
+    {
+      key: "delete",
+      icon: Trash2,
+      label: tCommon("bulk.deleteAction", { count: deleteEligibleIds.length }),
+      onClick: () => setBulkDialog("delete"),
+      disabled: deleteEligibleIds.length === 0,
+      hidden: !canDeleteSession,
+      destructive: true,
+      testId: "session-bulk-delete",
+    },
+  ];
+
+  const bulkBar = bulkSelectable ? (
+    <BulkActionBar
+      selectedCount={selectedSessionIds.size}
+      onClearSelection={clearSessionSelection}
+      actions={bulkActions}
+      testIdPrefix="session"
+    />
+  ) : null;
+
+  const bulkDialogs = (
+    <>
+      {bulkDialog === "edit" && sessionProjectId != null && (
+        <BulkEditSessionsDialog
+          open
+          onOpenChange={(open) => !open && setBulkDialog(null)}
+          sessionIds={editEligibleIds}
+          projectId={sessionProjectId}
+          milestoneOptions={milestoneOptions}
+          onDone={clearSessionSelection}
+        />
+      )}
+      {bulkDialog === "complete" && sessionProjectId != null && (
+        <BulkCompleteSessionsDialog
+          open
+          onOpenChange={(open) => !open && setBulkDialog(null)}
+          sessions={completeEligibleSessions}
+          projectId={sessionProjectId}
+          onDone={clearSessionSelection}
+        />
+      )}
+      {bulkDialog === "delete" && (
+        <BulkDeleteSessionsDialog
+          open
+          onOpenChange={(open) => !open && setBulkDialog(null)}
+          sessionIds={deleteEligibleIds}
+          onDone={clearSessionSelection}
+        />
+      )}
+    </>
+  );
+
   return (
     <div className="flex flex-col items-center w-full">
       <div className="w-full relative">
         <div className="flex flex-col w-full">
+          {bulkBar}
           {displayMode === "active" ? (
             // Render grouped sessions for active tab
             renderGroupedSessions(
@@ -670,6 +825,11 @@ const SessionDisplay: React.FC<SessionDisplayProps> = ({
                   isNew={newSessionId === testSession.id}
                   showMilestone={true}
                   pendingRequest={pendingBySessionId.get(testSession.id)}
+                  selectable={bulkSelectable}
+                  selected={selectedSessionIds.has(testSession.id)}
+                  onSelectedChange={(checked) =>
+                    toggleSessionSelected(testSession.id, checked)
+                  }
                 />
               ))}
             </div>
@@ -677,6 +837,7 @@ const SessionDisplay: React.FC<SessionDisplayProps> = ({
         </div>
       </div>
 
+      {bulkDialogs}
       {selectedSession && (
         <CompleteSessionDialog
           open={isDialogOpen}

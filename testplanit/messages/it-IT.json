@@ -3,6 +3,18 @@
     "name": "Nome",
     "cancel": "Cancellare",
     "dismiss": "Congedare",
+    "bulk": {
+      "selectItem": "Seleziona elemento",
+      "editAction": "Modifica ({count})",
+      "completeAction": "Completa ({count})",
+      "deleteAction": "Elimina ({count})",
+      "editTitle": "Modifica in blocco ({count})",
+      "applyToCount": "Le modifiche si applicano a {count, plural, one {# elemento} other {# elementi}}.",
+      "tagsAdditiveHint": "I tag selezionati vengono aggiunti a ogni elemento; i tag esistenti vengono mantenuti.",
+      "completeSuccess": "{count, plural, one {# elemento completato} other {# elementi completati}}",
+      "deleteSuccess": "{count, plural, one {# elemento eliminato} other {# elementi eliminati}}",
+      "partialFailure": "{failedCount} di {totalCount} elementi non è stato possibile aggiornare"
+    },
     "of": "di",
     "on": "su",
     "at": "a",
@@ -2398,6 +2410,12 @@
     }
   },
   "sessions": {
+    "bulk": {
+      "completeTitle": "Completa {count, plural, one {# Sessione} other {# Sessioni}}",
+      "completeDescription": "Sei sicuro di voler completare {count, plural, one {questa Sessione} other {queste Sessioni}}?",
+      "deleteTitle": "Elimina {count, plural, one {# Sessione} other {# Sessioni}}",
+      "deleteDescription": "Sei sicuro di voler eliminare {count, plural, one {questa Sessione} other {queste Sessioni}}?"
+    },
     "auditLog": {
       "trigger": "Attività",
       "description": "Tutte le modifiche registrate per questa sessione."
@@ -3741,6 +3759,12 @@
     }
   },
   "runs": {
+    "bulk": {
+      "completeTitle": "Completa {count, plural, one {# Esecuzione di prova} other {# Esecuzioni di prova}}",
+      "completeDescription": "Sei sicuro di voler completare {count, plural, one {questa esecuzione di prova} other {queste esecuzioni di prova}}?",
+      "deleteTitle": "Elimina {count, plural, one {# Esecuzione di prova} other {# Esecuzioni di prova}}",
+      "deleteDescription": "Sei sicuro di voler eliminare {count, plural, one {questa esecuzione di prova} other {queste esecuzioni di prova}}? I risultati verranno conservati per analisi storiche."
+    },
     "composition": {
       "lock": "Casi bloccati",
       "unlocked": "Casi sbloccati",
@@ -3949,8 +3973,8 @@
     },
     "milestoneGroup": {
       "runCount": "{count, plural, one {# esecuzione} other {# esecuzioni}}",
-      "expandAll": "Espandi tutto",
-      "collapseAll": "Comprimi tutto"
+      "altHintMac": "Tieni premuto ⌥ per espandere o comprimere tutti i gruppi",
+      "altHintWin": "Tieni premuto Alt per espandere o comprimere tutti i gruppi"
     },
     "runFilters": {
       "label": "Filtra esecuzioni test",

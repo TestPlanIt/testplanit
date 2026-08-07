@@ -8,6 +8,7 @@ import {
 } from "@/components/reviews/PendingReviewBadge";
 import TextFromJson from "@/components/TextFromJson";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -58,6 +59,10 @@ interface SessionItemProps {
    * no pending review for this row.
    */
   pendingRequest?: PendingReviewSummary;
+  /** Multi-select support: shows a leading checkbox when provided. */
+  selectable?: boolean;
+  selected?: boolean;
+  onSelectedChange?: (selected: boolean) => void;
 }
 
 const SessionItem: React.FC<SessionItemProps> = ({
@@ -71,6 +76,9 @@ const SessionItem: React.FC<SessionItemProps> = ({
   isNew,
   showMilestone = true,
   pendingRequest,
+  selectable = false,
+  selected = false,
+  onSelectedChange,
 }) => {
   const { projectId } = useParams();
   const router = useRouter();
@@ -146,6 +154,15 @@ const SessionItem: React.FC<SessionItemProps> = ({
     >
       {/* Left Column - Name & Note */}
       <div className="flex items-center min-w-0">
+        {selectable && (
+          <Checkbox
+            checked={selected}
+            onCheckedChange={(checked) => onSelectedChange?.(checked === true)}
+            aria-label={t("common.bulk.selectItem")}
+            className="me-2 shrink-0"
+            data-testid={`session-select-${testSession.id}`}
+          />
+        )}
         <div className="flex-1 min-w-0">
           <div className="flex items-center min-w-0 w-full">
             <Link

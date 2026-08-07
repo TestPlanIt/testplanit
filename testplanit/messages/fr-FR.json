@@ -3,6 +3,18 @@
     "name": "Nom",
     "cancel": "Annuler",
     "dismiss": "Rejeter",
+    "bulk": {
+      "selectItem": "Sélectionner un élément",
+      "editAction": "Modifier ({count})",
+      "completeAction": "Terminer ({count})",
+      "deleteAction": "Supprimer ({count})",
+      "editTitle": "Modification en masse ({count})",
+      "applyToCount": "Les modifications s'appliquent à {count, plural, one {# élément} other {# éléments}}.",
+      "tagsAdditiveHint": "Les balises sélectionnées sont ajoutées à chaque élément ; les balises existantes sont conservées.",
+      "completeSuccess": "{count, plural, one {# élément terminé} other {# éléments terminés}}",
+      "deleteSuccess": "{count, plural, one {# élément supprimé} other {# éléments supprimés}}",
+      "partialFailure": "{failedCount} élément(s) sur {totalCount} n'ont pas pu être mis à jour"
+    },
     "of": "de",
     "on": "sur",
     "at": "à",
@@ -2398,6 +2410,12 @@
     }
   },
   "sessions": {
+    "bulk": {
+      "completeTitle": "Terminer {count, plural, one {# Session} other {# Sessions}}",
+      "completeDescription": "Êtes-vous sûr de vouloir terminer {count, plural, one {cette Session} other {ces Sessions}} ?",
+      "deleteTitle": "Supprimer {count, plural, one {# Session} other {# Sessions}}",
+      "deleteDescription": "Êtes-vous sûr de vouloir supprimer {count, plural, one {cette Session} other {ces Sessions}} ?"
+    },
     "auditLog": {
       "trigger": "Activité",
       "description": "Toutes les modifications enregistrées pour cette session."
@@ -3741,6 +3759,12 @@
     }
   },
   "runs": {
+    "bulk": {
+      "completeTitle": "Terminer {count, plural, one {# Exécution de test} other {# Exécutions de test}}",
+      "completeDescription": "Êtes-vous sûr de vouloir terminer {count, plural, one {cette exécution de test} other {ces exécutions de test}} ?",
+      "deleteTitle": "Supprimer {count, plural, one {# Exécution de test} other {# Exécutions de test}}",
+      "deleteDescription": "Êtes-vous sûr de vouloir supprimer {count, plural, one {cette exécution de test} other {ces exécutions de test}} ? Les résultats seront conservés à des fins d’analyse historique."
+    },
     "composition": {
       "lock": "Cas verrouillés",
       "unlocked": "Cas déverrouillés",
@@ -3949,8 +3973,8 @@
     },
     "milestoneGroup": {
       "runCount": "{count, plural, one {# exécution} other {# exécutions}}",
-      "expandAll": "Développer tout",
-      "collapseAll": "Réduire tout"
+      "altHintMac": "Maintenez ⌥ enfoncée pour développer ou réduire tous les groupes",
+      "altHintWin": "Maintenez la touche Alt enfoncée pour développer ou réduire tous les groupes"
     },
     "runFilters": {
       "label": "Filtrer les exécutions de test",

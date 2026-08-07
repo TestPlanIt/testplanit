@@ -15,6 +15,7 @@ The component uses a 4-column grid:
 
 1. **Name & Note (Left Column)**:
 
+    - **Selection Checkbox**: Shown at the start of the row for users with edit, complete, or delete permission. Ticking it selects the run for [bulk operations](./runs.md#bulk-operations).
     - **Name**: Displays the test run name with a Play Circle icon. The name is a link that navigates to the [Test Run Details](./run-details.md) page for that specific run. Hovering over the name shows a link icon. A **lock icon** appears next to the name when the run's [composition is locked](./run-details.md#composition-lock).
     - **Note**: A single line preview of the test run's description (if provided). Uses the plain text version from the rich-text editor.
 

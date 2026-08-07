@@ -110,9 +110,9 @@ This is the default view. Active test runs are grouped by their associated miles
 Projects with many milestones produce a long page. Every group can be folded away:
 
 - Click the **chevron** at the start of a group header to collapse or expand that group. Only the chevron toggles — the rest of the header stays clickable, so the milestone name still opens the milestone and the `+` button still creates a run.
+- Hold **Alt** (**⌥** on Mac) while clicking any group's chevron to expand or collapse **all** groups at once. Resting the pointer on a chevron for a moment reveals a hint naming the shortcut.
 - Collapsing a parent milestone also hides the child milestone groups nested inside it, folding away an entire branch in one click.
 - The run count in each header includes runs in child milestones, so a collapsed group still tells you how much it is hiding.
-- **Expand all** / **Collapse all** appears above the list when there is more than one group.
 
 Group headers stay visible when collapsed, so you can still drag a run onto a folded milestone.
 
@@ -133,6 +133,24 @@ The milestone assignment is updated immediately. Visual feedback shows valid dro
 :::info Permissions Required
 Drag and drop is only available to users with edit permissions for test runs. Completed test runs cannot be dragged.
 :::
+
+## Bulk Operations
+
+Several test runs can be changed in one step. Users with edit, complete, or delete permission for test runs see a **checkbox** at the start of each run row; without any of those permissions the checkboxes are hidden entirely.
+
+Ticking at least one checkbox reveals a toolbar above the list. Each action button carries the number of selected runs it will apply to, and the **X** button deselects everything. On narrow windows the buttons collapse into a single **⋮** menu.
+
+- **Edit**: Opens a dialog for changing the **milestone**, **workflow state**, and **tags** of every selected run. Tick the fields you want to change — untouched fields keep each run's current value. Tags are **added** to each run's existing tags, never replacing them.
+- **Complete**: Completes every selected active run at once. Like the single-run dialog, you pick the done state and the completion date, and the same warning applies — completed runs can no longer be modified.
+- **Delete**: Deletes the selected runs after confirmation. Results are retained for historical analysis, and deleted runs can be restored from the [Trash](../trash.md).
+
+Each action only applies to the selected runs it is valid for, and its count reflects that:
+
+- **Edit** skips completed runs and automated runs — the same runs whose row menu offers no Edit entry.
+- **Complete** skips runs that are already completed.
+- **Delete** applies to any selected run, so on the **Completed** tab it is the one action available.
+
+Actions you lack permission for are not shown, and every change is checked per run on the server — if some runs cannot be updated (for example, a state change blocked by a [review gate](../review-approvals.md)), the rest still go through and a message reports how many failed.
 
 ## Completed Tab
 

@@ -7,11 +7,13 @@ import { MilestoneIconAndName } from "@/components/MilestoneIconAndName";
 import { MilestoneSourceBadge } from "@/components/MilestoneSourceBadge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
 import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import type {
   MilestonesGetPayload,
   TestRunsGetPayload,
@@ -22,11 +24,12 @@ import {
   type TestRunWakeUp,
 } from "~/hooks/useTestRunLiveStream";
 import {
+  CheckCircle,
   ChevronDown,
-  ChevronsDownUp,
-  ChevronsUpDown,
   CirclePlus,
   GripVertical,
+  SquarePen,
+  Trash2,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
@@ -40,6 +43,7 @@ import type { PendingReviewSummary } from "@/components/reviews/PendingReviewBad
 import { useReviewFeatureEnabled } from "~/hooks/useReviewFeatureEnabled";
 import { ItemTypes } from "~/types/dndTypes";
 import { cn } from "~/utils";
+import { isAutomatedTestRunType } from "~/utils/testResultTypes";
 import {
   ColorMap,
   createColorMap,
@@ -48,7 +52,14 @@ import {
   MilestonesWithTypes,
   sortMilestones,
 } from "~/utils/milestoneUtils";
+import { BulkActionBar } from "@/components/bulk/BulkActionBar";
+import { transformMilestones } from "@/components/forms/MilestoneSelect";
+import type { OverflowAction } from "@/components/ui/action-bar";
+import { isMacPlatform } from "~/hooks/useDragModifier";
 import AddTestRunModal from "./AddTestRunModal";
+import BulkCompleteTestRunsDialog from "./BulkCompleteTestRunsDialog";
+import BulkDeleteTestRunsDialog from "./BulkDeleteTestRunsDialog";
+import BulkEditTestRunsDialog from "./BulkEditTestRunsDialog";
 import {
   collapsedStorageKey,
   collectRenderedMilestoneKeys,
@@ -239,6 +250,72 @@ const DroppableMilestoneGroup: React.FC<DroppableMilestoneGroupProps> = ({
   );
 };
 
+/** Far longer than the app-wide tooltip delay: the chevron is a click target
+ *  first, and working down through the groups must not summon a hint over the
+ *  next row. Only someone who stops on the chevron gets it. Matches the
+ *  repository folder tree's chevron. */
+const CHEVRON_HINT_DELAY_MS = 2500;
+
+/**
+ * Expand/collapse control for a milestone group header. Alt-clicking (⌥ on
+ * Mac) reaches every group instead of the one — same modifier the repository
+ * folder tree uses — so the hover hint names it.
+ */
+const GroupChevron: React.FC<{
+  isOpen: boolean;
+  testId: string;
+  onClick: (event: React.MouseEvent<HTMLButtonElement>) => void;
+}> = ({ isOpen, testId, onClick }) => {
+  const t = useTranslations("runs");
+  const tCommon = useTranslations("common");
+  const label = isOpen
+    ? tCommon("actions.collapse")
+    : tCommon("actions.expand");
+  return (
+    <TooltipProvider
+      delayDuration={CHEVRON_HINT_DELAY_MS}
+      // Radix otherwise reopens with no delay at all for a while after the
+      // first hint, which is exactly the click-through case.
+      skipDelayDuration={0}
+      disableHoverableContent
+    >
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6 shrink-0"
+            aria-label={label}
+            data-testid={testId}
+            onClick={onClick}
+          >
+            {/* One rotating chevron rather than swapping two icons: a swap
+              can't tween. Closed points at the group's start edge, which
+              flips under RTL. */}
+            <ChevronDown
+              className={cn(
+                "h-4 w-4 transition-transform duration-200",
+                !isOpen && "-rotate-90 rtl:rotate-90"
+              )}
+            />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent side="bottom">
+          <p className="text-xs">{label}</p>
+          <p className="text-xs text-primary-foreground/65 mt-1">
+            {t(
+              isMacPlatform()
+                ? "milestoneGroup.altHintMac"
+                : "milestoneGroup.altHintWin"
+            )}
+          </p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+};
+
 const buildMilestoneTree = (
   milestones: MilestonePropItem[]
 ): MilestonesWithTypes[] => {
@@ -364,6 +441,9 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
   const { permissions: testRunPermissions, isLoading: isLoadingPermissions } =
     useProjectPermissions(numericProjectId, "TestRuns");
   const canAddEditRun = testRunPermissions?.canAddEdit ?? false;
+  const canCloseRun = testRunPermissions?.canClose ?? false;
+  const canDeleteRun = testRunPermissions?.canDelete ?? false;
+  const bulkSelectable = canAddEditRun || canCloseRun || canDeleteRun;
 
   // Mutation for updating test run milestone
   const queryClient = useQueryClient();
@@ -650,8 +730,8 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
     [persistCollapsedGroups]
   );
 
-  // Every group key currently on screen — drives the expand/collapse-all
-  // control and its label.
+  // Every group key currently on screen — the alt-click expand/collapse-all
+  // gesture reaches exactly these.
   const renderedGroupKeys = useMemo(() => {
     const keys: string[] = [];
     if (groupedTestRunData.unscheduled.length > 0) {
@@ -663,21 +743,76 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
     return keys;
   }, [groupedTestRunData, sortedMilestoneTree]);
 
-  const allGroupsCollapsed =
-    renderedGroupKeys.length > 0 &&
-    renderedGroupKeys.every((key) => collapsedGroups.has(key));
-
-  const handleToggleAllGroups = useCallback(() => {
-    const next = allGroupsCollapsed
-      ? new Set<string>()
-      : new Set(renderedGroupKeys);
-    setCollapsedGroups(next);
-    persistCollapsedGroups(next);
-  }, [allGroupsCollapsed, renderedGroupKeys, persistCollapsedGroups]);
+  const setAllGroupsCollapsed = useCallback(
+    (collapsed: boolean) => {
+      const next = collapsed ? new Set(renderedGroupKeys) : new Set<string>();
+      setCollapsedGroups(next);
+      persistCollapsedGroups(next);
+    },
+    [renderedGroupKeys, persistCollapsedGroups]
+  );
 
   const allRunsCompleted = useMemo(
     () => testRuns.every((run) => run.isCompleted),
     [testRuns]
+  );
+
+  // --- Bulk selection state ---
+  const [selectedRunIds, setSelectedRunIds] = useState<Set<number>>(
+    () => new Set()
+  );
+  const [bulkDialog, setBulkDialog] = useState<
+    "edit" | "complete" | "delete" | null
+  >(null);
+
+  // Prune selections that no longer exist in the list (deleted, completed
+  // away from this tab, filtered out) so bulk actions can't touch invisible
+  // rows.
+  useEffect(() => {
+    setSelectedRunIds((prev) => {
+      const valid = new Set(testRuns.map((run) => run.id));
+      const next = new Set([...prev].filter((id) => valid.has(id)));
+      return next.size === prev.size ? prev : next;
+    });
+  }, [testRuns]);
+
+  const toggleRunSelected = useCallback((id: number, checked: boolean) => {
+    setSelectedRunIds((prev) => {
+      const next = new Set(prev);
+      if (checked) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  }, []);
+  const clearRunSelection = useCallback(() => setSelectedRunIds(new Set()), []);
+
+  const selectedRuns = useMemo(
+    () => testRuns.filter((run) => selectedRunIds.has(run.id)),
+    [testRuns, selectedRunIds]
+  );
+  // Mirrors the single-item gating: field edits exclude completed and
+  // automated runs, complete excludes completed, delete applies to any.
+  const editEligibleIds = useMemo(
+    () =>
+      selectedRuns
+        .filter(
+          (run) => !run.isCompleted && !isAutomatedTestRunType(run.testRunType)
+        )
+        .map((run) => run.id),
+    [selectedRuns]
+  );
+  const completeEligibleIds = useMemo(
+    () => selectedRuns.filter((run) => !run.isCompleted).map((run) => run.id),
+    [selectedRuns]
+  );
+  const deleteEligibleIds = useMemo(
+    () => selectedRuns.map((run) => run.id),
+    [selectedRuns]
+  );
+
+  const milestoneOptions = useMemo(
+    () => transformMilestones(milestonesProp),
+    [milestonesProp]
   );
 
   useEffect(() => {
@@ -728,6 +863,80 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
   if (isColorsLoading || isLoadingPermissions || !colorMap) return <Loading />;
   if (!testRuns || testRuns.length === 0) return null;
 
+  const bulkActions: OverflowAction[] = [
+    {
+      key: "edit",
+      icon: SquarePen,
+      label: tCommon("bulk.editAction", { count: editEligibleIds.length }),
+      onClick: () => setBulkDialog("edit"),
+      disabled: editEligibleIds.length === 0,
+      hidden: !canAddEditRun,
+      testId: "testrun-bulk-edit",
+    },
+    {
+      key: "complete",
+      icon: CheckCircle,
+      label: tCommon("bulk.completeAction", {
+        count: completeEligibleIds.length,
+      }),
+      onClick: () => setBulkDialog("complete"),
+      disabled: completeEligibleIds.length === 0,
+      hidden: !canCloseRun,
+      testId: "testrun-bulk-complete",
+    },
+    {
+      key: "delete",
+      icon: Trash2,
+      label: tCommon("bulk.deleteAction", { count: deleteEligibleIds.length }),
+      onClick: () => setBulkDialog("delete"),
+      disabled: deleteEligibleIds.length === 0,
+      hidden: !canDeleteRun,
+      destructive: true,
+      testId: "testrun-bulk-delete",
+    },
+  ];
+
+  const bulkBar = bulkSelectable ? (
+    <BulkActionBar
+      selectedCount={selectedRunIds.size}
+      onClearSelection={clearRunSelection}
+      actions={bulkActions}
+      testIdPrefix="testrun"
+    />
+  ) : null;
+
+  const bulkDialogs = (
+    <>
+      {bulkDialog === "edit" && (
+        <BulkEditTestRunsDialog
+          open
+          onOpenChange={(open) => !open && setBulkDialog(null)}
+          testRunIds={editEligibleIds}
+          projectId={numericProjectId}
+          milestoneOptions={milestoneOptions}
+          onDone={clearRunSelection}
+        />
+      )}
+      {bulkDialog === "complete" && (
+        <BulkCompleteTestRunsDialog
+          open
+          onOpenChange={(open) => !open && setBulkDialog(null)}
+          testRunIds={completeEligibleIds}
+          projectId={numericProjectId}
+          onDone={clearRunSelection}
+        />
+      )}
+      {bulkDialog === "delete" && (
+        <BulkDeleteTestRunsDialog
+          open
+          onOpenChange={(open) => !open && setBulkDialog(null)}
+          testRunIds={deleteEligibleIds}
+          onDone={clearRunSelection}
+        />
+      )}
+    </>
+  );
+
   if (allRunsCompleted) {
     const sortedCompletedTestRuns = [...testRuns].sort((a, b) => {
       return (
@@ -737,9 +946,15 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
     return (
       <div className="flex flex-col items-center w-full">
         <div className="w-full">
+          {bulkBar}
           {sortedCompletedTestRuns.map((testRun) => (
             <TestRunItem
               key={testRun.id}
+              selectable={bulkSelectable}
+              selected={selectedRunIds.has(testRun.id)}
+              onSelectedChange={(checked) =>
+                toggleRunSelected(testRun.id, checked)
+              }
               testRun={{
                 id: testRun.id,
                 name: testRun.name,
@@ -790,6 +1005,7 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
             />
           ))}
         </div>
+        {bulkDialogs}
         {selectedTestRun && (
           <CompleteTestRunDialog
             open={true}
@@ -880,30 +1096,14 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
                 {/* Only the chevron toggles: the header also holds the
                     milestone link and the Add Run button, so a whole-row
                     trigger would swallow both. */}
-                <CollapsibleTrigger asChild>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6 shrink-0"
-                    aria-label={
-                      isOpen
-                        ? tCommon("actions.collapse")
-                        : tCommon("actions.expand")
-                    }
-                    data-testid={`milestone-group-toggle-${milestone.id}`}
-                  >
-                    {/* One rotating chevron rather than swapping two icons:
-                        a swap can't tween. Closed points at the group's start
-                        edge, which flips under RTL. */}
-                    <ChevronDown
-                      className={cn(
-                        "h-4 w-4 transition-transform duration-200",
-                        !isOpen && "-rotate-90 rtl:rotate-90"
-                      )}
-                    />
-                  </Button>
-                </CollapsibleTrigger>
+                <GroupChevron
+                  isOpen={isOpen}
+                  testId={`milestone-group-toggle-${milestone.id}`}
+                  onClick={(e) => {
+                    if (e.altKey) setAllGroupsCollapsed(isOpen);
+                    else setGroupOpen(groupKey, !isOpen);
+                  }}
+                />
                 <div className="truncate">
                   <MilestoneIconAndName
                     milestone={milestone}
@@ -1005,6 +1205,11 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
                           canDrag={canAddEditRun && !testRun.isCompleted}
                         >
                           <TestRunItem
+                            selectable={bulkSelectable}
+                            selected={selectedRunIds.has(testRun.id)}
+                            onSelectedChange={(checked) =>
+                              toggleRunSelected(testRun.id, checked)
+                            }
                             testRun={{
                               id: testRun.id,
                               name: testRun.name,
@@ -1082,26 +1287,6 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
 
     return (
       <>
-        {renderedGroupKeys.length > 1 && (
-          <div className="mb-2 flex justify-end">
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={handleToggleAllGroups}
-              data-testid="milestone-groups-toggle-all"
-            >
-              {allGroupsCollapsed ? (
-                <ChevronsUpDown className="h-4 w-4 me-2" />
-              ) : (
-                <ChevronsDownUp className="h-4 w-4 me-2" />
-              )}
-              {allGroupsCollapsed
-                ? t("milestoneGroup.expandAll")
-                : t("milestoneGroup.collapseAll")}
-            </Button>
-          </div>
-        )}
         {currentGroupedRuns.unscheduled.length > 0 && (
           <DroppableMilestoneGroup
             milestoneId={null}
@@ -1116,27 +1301,18 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
               {showUnscheduledHeader && (
                 <div className="milestone-grid bg-primary/10 rounded-t-lg p-4">
                   <div className="milestone-name flex items-center gap-1">
-                    <CollapsibleTrigger asChild>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6 shrink-0"
-                        aria-label={
-                          isUnscheduledOpen
-                            ? tCommon("actions.collapse")
-                            : tCommon("actions.expand")
-                        }
-                        data-testid="milestone-group-toggle-unscheduled"
-                      >
-                        <ChevronDown
-                          className={cn(
-                            "h-4 w-4 transition-transform duration-200",
-                            !isUnscheduledOpen && "-rotate-90 rtl:rotate-90"
-                          )}
-                        />
-                      </Button>
-                    </CollapsibleTrigger>
+                    <GroupChevron
+                      isOpen={isUnscheduledOpen}
+                      testId="milestone-group-toggle-unscheduled"
+                      onClick={(e) => {
+                        if (e.altKey) setAllGroupsCollapsed(isUnscheduledOpen);
+                        else
+                          setGroupOpen(
+                            UNSCHEDULED_GROUP_KEY,
+                            !isUnscheduledOpen
+                          );
+                      }}
+                    />
                     <DynamicIcon
                       name="calendar-off"
                       className="w-6 h-6 shrink-0"
@@ -1196,6 +1372,11 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
                       canDrag={canAddEditRun && !testRun.isCompleted}
                     >
                       <TestRunItem
+                        selectable={bulkSelectable}
+                        selected={selectedRunIds.has(testRun.id)}
+                        onSelectedChange={(checked) =>
+                          toggleRunSelected(testRun.id, checked)
+                        }
                         testRun={{
                           id: testRun.id,
                           name: testRun.name,
@@ -1263,6 +1444,7 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
     <div className="flex flex-col items-center w-full">
       <div className="w-full relative">
         <div className="flex flex-col w-full">
+          {bulkBar}
           {renderGroupedTestRuns(
             groupedTestRunData,
             sortedMilestoneTree,
@@ -1274,6 +1456,7 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
         </div>
       </div>
 
+      {bulkDialogs}
       {selectedTestRun && (
         <CompleteTestRunDialog
           open={true}

@@ -3,6 +3,18 @@
     "name": "Namen",
     "cancel": "Abbrechen",
     "dismiss": "Verwerfen",
+    "bulk": {
+      "selectItem": "Element auswählen",
+      "editAction": "Bearbeiten ({count})",
+      "completeAction": "Abschließen ({count})",
+      "deleteAction": "Löschen ({count})",
+      "editTitle": "Massenbearbeitung ({count})",
+      "applyToCount": "Änderungen gelten für {count, plural, one {# Element} other {# Elemente}}.",
+      "tagsAdditiveHint": "Ausgewählte Tags werden zu jedem Element hinzugefügt; vorhandene Tags bleiben erhalten.",
+      "completeSuccess": "{count, plural, one {# Element abgeschlossen} other {# Elemente abgeschlossen}}",
+      "deleteSuccess": "{count, plural, one {# Element gelöscht} other {# Elemente gelöscht}}",
+      "partialFailure": "{failedCount} von {totalCount} Elementen konnten nicht aktualisiert werden"
+    },
     "of": "von",
     "on": "An",
     "at": "bei",
@@ -2398,6 +2410,12 @@
     }
   },
   "sessions": {
+    "bulk": {
+      "completeTitle": "{count, plural, one {# Sitzung} other {# Sitzungen}} abschließen",
+      "completeDescription": "Sind Sie sicher, dass Sie {count, plural, one {diese Sitzung} other {diese Sitzungen}} abschließen möchten?",
+      "deleteTitle": "{count, plural, one {# Sitzung} other {# Sitzungen}} löschen",
+      "deleteDescription": "Sind Sie sicher, dass Sie {count, plural, one {diese Sitzung} other {diese Sitzungen}} löschen möchten?"
+    },
     "auditLog": {
       "trigger": "Aktivität",
       "description": "Alle für diese Sitzung aufgezeichneten Änderungen."
@@ -3741,6 +3759,12 @@
     }
   },
   "runs": {
+    "bulk": {
+      "completeTitle": "{count, plural, one {# Testlauf} other {# Testläufe}} abschließen",
+      "completeDescription": "Sind Sie sicher, dass Sie {count, plural, one {diesen Testlauf} other {diese Testläufe}} abschließen möchten?",
+      "deleteTitle": "{count, plural, one {# Testlauf} other {# Testläufe}} löschen",
+      "deleteDescription": "Sind Sie sicher, dass Sie {count, plural, one {diesen Testlauf} other {diese Testläufe}} löschen möchten? Die Ergebnisse werden für historische Analysen gespeichert."
+    },
     "composition": {
       "lock": "Fälle gesperrt",
       "unlocked": "Fälle entsperrt",
@@ -3949,8 +3973,8 @@
     },
     "milestoneGroup": {
       "runCount": "{count, plural, one {# Testlauf} other {# Testläufe}}",
-      "expandAll": "Alle erweitern",
-      "collapseAll": "Alle ausblenden"
+      "altHintMac": "Halten Sie ⌥ gedrückt, um alle Gruppen zu erweitern oder einzuklappen",
+      "altHintWin": "Halten Sie die Alt-Taste gedrückt, um alle Gruppen zu erweitern oder einzuklappen"
     },
     "runFilters": {
       "label": "Testläufe filtern",

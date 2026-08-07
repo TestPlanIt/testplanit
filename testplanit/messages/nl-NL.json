@@ -3,6 +3,18 @@
     "name": "Naam",
     "cancel": "Annuleren",
     "dismiss": "Afwijzen",
+    "bulk": {
+      "selectItem": "Item selecteren",
+      "editAction": "Bewerken ({count})",
+      "completeAction": "Voltooien ({count})",
+      "deleteAction": "Verwijderen ({count})",
+      "editTitle": "Bulk bewerken ({count})",
+      "applyToCount": "Wijzigingen zijn van toepassing op {count, plural, one {# item} other {# items}}.",
+      "tagsAdditiveHint": "Geselecteerde tags worden aan elk item toegevoegd; bestaande tags blijven behouden.",
+      "completeSuccess": "{count, plural, one {# item voltooid} other {# items voltooid}}",
+      "deleteSuccess": "{count, plural, one {# item verwijderd} other {# items verwijderd}}",
+      "partialFailure": "{failedCount} van {totalCount} items konden niet worden bijgewerkt"
+    },
     "of": "van",
     "on": "op",
     "at": "bij",
@@ -2398,6 +2410,12 @@
     }
   },
   "sessions": {
+    "bulk": {
+      "completeTitle": "Voltooi {count, plural, one {# Sessie} other {# Sessies}}",
+      "completeDescription": "Weet u zeker dat u {count, plural, one {deze Sessie} other {deze Sessies}} wilt voltooien?",
+      "deleteTitle": "Verwijder {count, plural, one {# Sessie} other {# Sessies}}",
+      "deleteDescription": "Weet u zeker dat u {count, plural, one {deze Sessie} other {deze Sessies}} wilt verwijderen?"
+    },
     "auditLog": {
       "trigger": "Activiteit",
       "description": "Alle wijzigingen vastgelegd voor deze sessie."
@@ -3741,6 +3759,12 @@
     }
   },
   "runs": {
+    "bulk": {
+      "completeTitle": "Voltooi {count, plural, one {# Testrun} other {# Testruns}}",
+      "completeDescription": "Weet u zeker dat u {count, plural, one {deze testrun} other {deze testruns}} wilt voltooien?",
+      "deleteTitle": "Verwijder {count, plural, one {# Testrun} other {# Testruns}}",
+      "deleteDescription": "Weet u zeker dat u {count, plural, one {deze testrun} other {deze testruns}} wilt verwijderen? Resultaten worden bewaard voor historische analyse."
+    },
     "composition": {
       "lock": "Gevallen vergrendeld",
       "unlocked": "Testgevallen ontgrendeld",
@@ -3949,8 +3973,8 @@
     },
     "milestoneGroup": {
       "runCount": "{count, plural, one {# testrun} other {# testruns}}",
-      "expandAll": "Alles uitvouwen",
-      "collapseAll": "Alles samenvouwen"
+      "altHintMac": "Houd ⌥ ingedrukt om alle groepen uit te vouwen of samen te vouwen",
+      "altHintWin": "Houd Alt ingedrukt om alle groepen uit te vouwen of samen te vouwen"
     },
     "runFilters": {
       "label": "Testruns filteren",

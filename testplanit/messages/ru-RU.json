@@ -3,6 +3,18 @@
     "name": "Имя",
     "cancel": "Отмена",
     "dismiss": "Увольнять",
+    "bulk": {
+      "selectItem": "Выберите элемент",
+      "editAction": "Изменить ({count})",
+      "completeAction": "Завершить ({count})",
+      "deleteAction": "Удалить ({count})",
+      "editTitle": "Массовое изменение ({count})",
+      "applyToCount": "Изменения применяются к {count, plural, one {# элементу} few {# элементам} many {# элементам} other {# элементам}}.",
+      "tagsAdditiveHint": "Выбранные теги добавляются к каждому элементу; существующие теги сохраняются.",
+      "completeSuccess": "{count, plural, one {# элемент завершён} few {# элемента завершены} many {# элементов завершено} other {# элемента завершено}}",
+      "deleteSuccess": "{count, plural, one {# элемент удалён} few {# элемента удалены} many {# элементов удалено} other {# элемента удалено}}",
+      "partialFailure": "Не удалось обновить {failedCount} из {totalCount} элементов"
+    },
     "of": "из",
     "on": "на",
     "at": "в",
@@ -2398,6 +2410,12 @@
     }
   },
   "sessions": {
+    "bulk": {
+      "completeTitle": "Завершить {count, plural, one {# сессию} few {# сессии} many {# сессий} other {# сессии}}",
+      "completeDescription": "Вы уверены, что хотите завершить {count, plural, one {эту сессию} few {эти сессии} many {эти сессии} other {эти сессии}}?",
+      "deleteTitle": "Удалить {count, plural, one {# сессию} few {# сессии} many {# сессий} other {# сессии}}",
+      "deleteDescription": "Вы уверены, что хотите удалить {count, plural, one {эту сессию} few {эти сессии} many {эти сессии} other {эти сессии}}?"
+    },
     "auditLog": {
       "trigger": "Активность",
       "description": "Все изменения, зафиксированные для этой сессии."
@@ -3741,6 +3759,12 @@
     }
   },
   "runs": {
+    "bulk": {
+      "completeTitle": "Завершить {count, plural, one {# тестовый запуск} few {# тестовых запуска} many {# тестовых запусков} other {# тестовых запуска}}",
+      "completeDescription": "Вы уверены, что хотите завершить {count, plural, one {этот тестовый запуск} few {эти тестовые запуски} many {эти тестовые запуски} other {эти тестовые запуски}}?",
+      "deleteTitle": "Удалить {count, plural, one {# тестовый запуск} few {# тестовых запуска} many {# тестовых запусков} other {# тестовых запуска}}",
+      "deleteDescription": "Вы уверены, что хотите удалить {count, plural, one {этот тестовый запуск} few {эти тестовые запуски} many {эти тестовые запуски} other {эти тестовые запуски}}? Результаты будут сохранены для исторического анализа."
+    },
     "composition": {
       "lock": "Тестовые случаи заблокированы",
       "unlocked": "Разблокированные случаи",
@@ -3949,8 +3973,8 @@
     },
     "milestoneGroup": {
       "runCount": "{count, plural, one {# запуск} few {# запуска} many {# запусков} other {# запуска}}",
-      "expandAll": "Развернуть все",
-      "collapseAll": "Свернуть все"
+      "altHintMac": "Удерживайте ⌥, чтобы развернуть или свернуть все группы",
+      "altHintWin": "Удерживайте Alt, чтобы развернуть или свернуть все группы"
     },
     "runFilters": {
       "label": "Фильтр тестовых запусков",

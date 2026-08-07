@@ -3,6 +3,18 @@
     "name": "Name",
     "cancel": "Cancel",
     "dismiss": "Dismiss",
+    "bulk": {
+      "selectItem": "Select item",
+      "editAction": "Edit ({count})",
+      "completeAction": "Complete ({count})",
+      "deleteAction": "Delete ({count})",
+      "editTitle": "Bulk Edit ({count})",
+      "applyToCount": "Changes apply to {count, plural, one {# item} other {# items}}.",
+      "tagsAdditiveHint": "Selected tags are added to each item; existing tags are kept.",
+      "completeSuccess": "{count, plural, one {# item completed} other {# items completed}}",
+      "deleteSuccess": "{count, plural, one {# item deleted} other {# items deleted}}",
+      "partialFailure": "{failedCount} of {totalCount} items could not be updated"
+    },
     "of": "of",
     "on": "on",
     "at": "at",
@@ -2398,6 +2410,12 @@
     }
   },
   "sessions": {
+    "bulk": {
+      "completeTitle": "Complete {count, plural, one {# Session} other {# Sessions}}",
+      "completeDescription": "Are you sure you want to complete {count, plural, one {this Session} other {these Sessions}}?",
+      "deleteTitle": "Delete {count, plural, one {# Session} other {# Sessions}}",
+      "deleteDescription": "Are you sure you want to delete {count, plural, one {this Session} other {these Sessions}}?"
+    },
     "auditLog": {
       "trigger": "Activity",
       "description": "All changes recorded for this session."
@@ -3741,6 +3759,12 @@
     }
   },
   "runs": {
+    "bulk": {
+      "completeTitle": "Complete {count, plural, one {# Test Run} other {# Test Runs}}",
+      "completeDescription": "Are you sure you want to complete {count, plural, one {this test run} other {these test runs}}?",
+      "deleteTitle": "Delete {count, plural, one {# Test Run} other {# Test Runs}}",
+      "deleteDescription": "Are you sure you want to delete {count, plural, one {this test run} other {these test runs}}? Results will be retained for historical analysis."
+    },
     "composition": {
       "lock": "Cases Locked",
       "unlocked": "Cases Unlocked",
@@ -3949,8 +3973,8 @@
     },
     "milestoneGroup": {
       "runCount": "{count, plural, one {# run} other {# runs}}",
-      "expandAll": "Expand all",
-      "collapseAll": "Collapse all"
+      "altHintMac": "Hold ⌥ to expand or collapse all groups",
+      "altHintWin": "Hold Alt to expand or collapse all groups"
     },
     "runFilters": {
       "label": "Filter test runs",

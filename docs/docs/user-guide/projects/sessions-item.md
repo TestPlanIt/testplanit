@@ -15,6 +15,7 @@ The component uses a 4-column grid, similar to the [Test Run Item](./test-run-it
 
 1. **Name & Note (Left Column)**:
 
+    - **Selection Checkbox**: Shown at the start of the row for users with edit, complete, or delete permission. Ticking it selects the session for [bulk operations](./sessions.md#bulk-operations).
     - **Name**: Displays the session name with a Compass icon. The name is a link that navigates to the [Session Details](./sessions-details.md) page for that specific session. Hovering over the name shows a link icon.
     - **Note**: A single line preview of the session's description (if provided), showing the plain text version.
 

@@ -3,6 +3,18 @@
     "name": "Tên",
     "cancel": "Hủy bỏ",
     "dismiss": "Miễn nhiệm",
+    "bulk": {
+      "selectItem": "Chọn mục",
+      "editAction": "Sửa ({count})",
+      "completeAction": "Hoàn thành ({count})",
+      "deleteAction": "Xóa ({count})",
+      "editTitle": "Sửa hàng loạt ({count})",
+      "applyToCount": "Các thay đổi áp dụng cho {count, plural, other {# mục}}.",
+      "tagsAdditiveHint": "Các thẻ đã chọn được thêm vào từng mục; các thẻ hiện có được giữ lại.",
+      "completeSuccess": "{count, plural, other {# mục đã hoàn thành}}",
+      "deleteSuccess": "{count, plural, other {# mục đã bị xóa}}",
+      "partialFailure": "{failedCount} trong số {totalCount} mục không thể cập nhật"
+    },
     "of": "của",
     "on": "TRÊN",
     "at": "Tại",
@@ -2398,6 +2410,12 @@
     }
   },
   "sessions": {
+    "bulk": {
+      "completeTitle": "Hoàn thành {count, plural, other {# Phiên}}",
+      "completeDescription": "Bạn có chắc chắn muốn hoàn thành {count, plural, other {các Phiên này}} không?",
+      "deleteTitle": "Xóa {count, plural, other {# Phiên}}",
+      "deleteDescription": "Bạn có chắc chắn muốn xóa {count, plural, other {các Phiên này}} không?"
+    },
     "auditLog": {
       "trigger": "Hoạt động",
       "description": "Tất cả các thay đổi được ghi lại cho phiên này."
@@ -3741,6 +3759,12 @@
     }
   },
   "runs": {
+    "bulk": {
+      "completeTitle": "Hoàn thành {count, plural, other {# Lần chạy thử nghiệm}}",
+      "completeDescription": "Bạn có chắc chắn muốn hoàn thành {count, plural, other {các lần chạy thử nghiệm này}} không?",
+      "deleteTitle": "Xóa {count, plural, other {# Lần chạy thử nghiệm}}",
+      "deleteDescription": "Bạn có chắc chắn muốn xóa {count, plural, other {các lần chạy thử nghiệm này}} không? Kết quả sẽ được lưu giữ để phân tích lịch sử."
+    },
     "composition": {
       "lock": "Trường hợp thử nghiệm đã bị khóa",
       "unlocked": "Trường hợp kiểm thử đã mở khóa",
@@ -3949,8 +3973,8 @@
     },
     "milestoneGroup": {
       "runCount": "{count, plural, other {# lần chạy}}",
-      "expandAll": "Mở rộng tất cả",
-      "collapseAll": "Thu gọn tất cả"
+      "altHintMac": "Giữ ⌥ để mở rộng hoặc thu gọn tất cả các nhóm",
+      "altHintWin": "Giữ phím Alt để mở rộng hoặc thu gọn tất cả các nhóm"
     },
     "runFilters": {
       "label": "Lọc lần chạy thử nghiệm",

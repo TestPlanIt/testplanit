@@ -3,6 +3,18 @@
     "name": "الاسم",
     "cancel": "إلغاء",
     "dismiss": "إغلاق",
+    "bulk": {
+      "selectItem": "تحديد عنصر",
+      "editAction": "تعديل ({count})",
+      "completeAction": "إكمال ({count})",
+      "deleteAction": "حذف ({count})",
+      "editTitle": "تعديل جماعي ({count})",
+      "applyToCount": "تُطبَّق التغييرات على {count, plural, zero {# عنصر} one {عنصر واحد} two {عنصرين} few {# عناصر} many {# عنصرًا} other {# عنصر}}.",
+      "tagsAdditiveHint": "تتم إضافة الوسوم المحددة إلى كل عنصر؛ ويتم الاحتفاظ بالوسوم الحالية.",
+      "completeSuccess": "{count, plural, zero {# عنصر مكتمل} one {عنصر واحد مكتمل} two {عنصران مكتملان} few {# عناصر مكتملة} many {# عنصرًا مكتملًا} other {# عنصر مكتمل}}",
+      "deleteSuccess": "{count, plural, zero {# عنصر محذوف} one {عنصر واحد محذوف} two {عنصران محذوفان} few {# عناصر محذوفة} many {# عنصرًا محذوفًا} other {# عنصر محذوف}}",
+      "partialFailure": "تعذر تحديث {failedCount} من أصل {totalCount} عنصر"
+    },
     "of": "من",
     "on": "في",
     "at": "عند",
@@ -2398,6 +2410,12 @@
     }
   },
   "sessions": {
+    "bulk": {
+      "completeTitle": "إكمال {count, plural, zero {# جلسة} one {جلسة واحدة} two {جلستان} few {# جلسات} many {# جلسة} other {# جلسة}}",
+      "completeDescription": "هل أنت متأكد أنك تريد إكمال {count, plural, zero {هذه الجلسات} one {هذه الجلسة} two {هاتين الجلستين} few {هذه الجلسات} many {هذه الجلسات} other {هذه الجلسات}}؟",
+      "deleteTitle": "حذف {count, plural, zero {# جلسة} one {جلسة واحدة} two {جلستان} few {# جلسات} many {# جلسة} other {# جلسة}}",
+      "deleteDescription": "هل أنت متأكد أنك تريد حذف {count, plural, zero {هذه الجلسات} one {هذه الجلسة} two {هاتين الجلستين} few {هذه الجلسات} many {هذه الجلسات} other {هذه الجلسات}}؟"
+    },
     "auditLog": {
       "trigger": "النشاط",
       "description": "جميع التغييرات المسجلة لهذه الجلسة."
@@ -3741,6 +3759,12 @@
     }
   },
   "runs": {
+    "bulk": {
+      "completeTitle": "إكمال {count, plural, zero {# دورة اختبار} one {دورة اختبار واحدة} two {دورتا اختبار} few {# دورات اختبار} many {# دورة اختبار} other {# دورة اختبار}}",
+      "completeDescription": "هل أنت متأكد أنك تريد إكمال {count, plural, zero {دورات الاختبار هذه} one {دورة الاختبار هذه} two {دورتا الاختبار هاتان} few {دورات الاختبار هذه} many {دورات الاختبار هذه} other {دورات الاختبار هذه}}؟",
+      "deleteTitle": "حذف {count, plural, zero {# دورة اختبار} one {دورة اختبار واحدة} two {دورتا اختبار} few {# دورات اختبار} many {# دورة اختبار} other {# دورة اختبار}}",
+      "deleteDescription": "هل أنت متأكد أنك تريد حذف {count, plural, zero {دورات الاختبار هذه} one {دورة الاختبار هذه} two {دورتا الاختبار هاتان} few {دورات الاختبار هذه} many {دورات الاختبار هذه} other {دورات الاختبار هذه}}؟ سيتم الاحتفاظ بالنتائج للتحليل التاريخي."
+    },
     "composition": {
       "lock": "الحالات مقفلة",
       "unlocked": "الحالات غير المقفلة",
@@ -3949,8 +3973,8 @@
     },
     "milestoneGroup": {
       "runCount": "{count, plural, zero {# تشغيل} one {تشغيل واحد} two {تشغيلان} few {# تشغيلات} many {# تشغيلاً} other {# تشغيل}}",
-      "expandAll": "توسيع الكل",
-      "collapseAll": "طي الكل"
+      "altHintMac": "اضغط مع الاستمرار على ⌥ لتوسيع أو طي كل المجموعات",
+      "altHintWin": "اضغط مع الاستمرار على Alt لتوسيع أو طي كل المجموعات"
     },
     "runFilters": {
       "label": "تصفية تشغيلات الاختبار",

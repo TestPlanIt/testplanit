@@ -38,6 +38,20 @@ This is the default view. Active sessions are grouped by their associated milest
 
 - **Empty State**: If there are no active sessions, a message is displayed, along with a prominent **Create Session** button (if the user has permission).
 
+## Bulk Operations
+
+Several sessions can be changed in one step. Users with edit, complete, or delete permission for sessions see a **checkbox** at the start of each session row; without any of those permissions the checkboxes are hidden entirely.
+
+Ticking at least one checkbox reveals a toolbar above the list. Each action button carries the number of selected sessions it will apply to, and the **X** button deselects everything. On narrow windows the buttons collapse into a single **⋮** menu.
+
+- **Edit**: Opens a dialog for changing the **milestone**, **workflow state**, **assignee**, and **tags** of every selected session. Tick the fields you want to change — untouched fields keep each session's current value. The assignee field can also bulk-**unassign**, and tags are **added** to each session's existing tags, never replacing them.
+- **Complete**: Completes every selected active session at once. Like the single-session dialog, you pick the done state and the completion date; each session records a version snapshot exactly as it would when completed individually.
+- **Delete**: Deletes the selected sessions after confirmation. Historical data remains in the project, and deleted sessions can be restored from the [Trash](../trash.md).
+
+**Edit** and **Complete** skip sessions that are already completed, and each button's count reflects only the selected sessions it will actually touch. **Delete** applies to any selected session, so on the **Completed** tab it is the one action available.
+
+Actions you lack permission for are not shown, and every change is checked per session on the server — if some sessions cannot be updated, the rest still go through and a message reports how many failed.
+
 ## Completed Tab
 
 This tab displays a flat list of all sessions that have been marked as completed.
