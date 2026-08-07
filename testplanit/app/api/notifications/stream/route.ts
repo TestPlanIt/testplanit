@@ -10,11 +10,6 @@ import {
 import { createSubscriberClient } from "~/lib/valkey";
 import { authOptions } from "~/server/auth";
 
-// SSE notifications transport — long-lived stream + IORedis pub/sub require the
-// Node.js runtime, never Edge, and must opt out of any Next.js prerendering.
-export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
-
 // ---- env-driven config (D-17 / LIM-01 / LIM-02) ----
 const PER_TENANT_CAP = Number(process.env.SSE_PER_TENANT_CAP ?? "1000");
 const PER_USER_CAP = Number(process.env.SSE_PER_USER_CAP ?? "4");

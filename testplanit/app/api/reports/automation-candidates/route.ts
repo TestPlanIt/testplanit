@@ -47,10 +47,6 @@ import {
 import { buildHeuristicRanking } from "~/lib/services/reports/automationCandidatesHeuristic";
 import { authOptions } from "~/server/auth";
 
-// Long-running LLM completion needs the Node.js runtime; opt out of every
-// Next prerender path.
-export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
 export const maxDuration = 300; // 5 minutes — covers the slowest LLM responses
 
 /**

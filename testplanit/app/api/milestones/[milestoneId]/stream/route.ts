@@ -44,11 +44,6 @@ import { baseDb } from "~/lib/db";
 import { createSubscriberClient } from "~/lib/valkey";
 import { authOptions } from "~/server/auth";
 
-// Long-lived stream + IORedis pub/sub require the Node.js runtime; opt out
-// of every Next.js prerender path.
-export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
-
 const HEARTBEAT_MS = 25_000;
 
 export async function GET(

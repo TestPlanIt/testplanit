@@ -122,6 +122,11 @@ const enableTurbopackBuildCache =
 
 const nextConfig: NextConfig = {
   typescript: { ignoreBuildErrors: true },
+  // Instant Navigations (cacheComponents + partialPrefetching) is
+  // deliberately OFF: the codebase is migrated and E2E-proven compatible, but
+  // the flags are pre-stable in Next 16.3. Re-enabling is a two-line flip.
+  cacheComponents: false,
+  partialPrefetching: false,
   output: "standalone",
   allowedDevOrigins: buildAllowedDevOrigins(),
   turbopack: {

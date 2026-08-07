@@ -9,12 +9,12 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { AlertCircle } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { getTranslations } from "next-intl/server";
 import { Link } from "~/lib/navigation";
 
-export default function TrialExpiredPage() {
-  const t = useTranslations("TrialExpired");
-  const tGlobal = useTranslations();
+export default async function TrialExpiredPage() {
+  const t = await getTranslations("TrialExpired");
+  const tGlobal = await getTranslations();
 
   const contactEmail =
     process.env.NEXT_PUBLIC_CONTACT_EMAIL || "sales@testplanit.com";
