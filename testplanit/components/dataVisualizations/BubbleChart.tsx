@@ -194,15 +194,16 @@ export const BubbleChart: React.FC<BubbleChartProps> = ({
       })
       .style("cursor", "pointer")
       .on("mouseenter", function (_event, d) {
+        // Named transition so it doesn't cancel the entrance animation
         d3.select(this)
-          .transition()
+          .transition("hover")
           .duration(300)
           .attr("r", d.r * 1.4)
           .style("filter", "brightness(1.15)");
       })
       .on("mouseleave", function (_event, d) {
         d3.select(this)
-          .transition()
+          .transition("hover")
           .duration(200)
           .attr("r", d.r)
           .style("filter", "brightness(1)");

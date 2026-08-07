@@ -254,10 +254,11 @@ const SummarySunburstChart: React.FC<SummarySunburstChartProps> = ({
       if (isClickable) {
         currentPath
           .on("mouseover.linkeffect", function () {
-            currentPath.transition().duration(150).attr("opacity", 0.7);
+            // Named transition so it doesn't cancel the entrance animation
+            currentPath.transition("hover").duration(150).style("opacity", 0.7);
           })
           .on("mouseout.linkeffect", function () {
-            currentPath.transition().duration(150).attr("opacity", 1);
+            currentPath.transition("hover").duration(150).style("opacity", 1);
           });
       } else {
         currentPath
