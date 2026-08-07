@@ -2441,6 +2441,9 @@
       "viewSessionDetails": "Sitzung ansehen"
     },
     "noMilestone": "Kein Meilenstein",
+    "milestoneGroup": {
+      "sessionCount": "{count, plural, one {# Sitzung} other {# Sitzungen}}"
+    },
     "completeDialog": {
       "noWorkflowsConfigured": "Für dieses Projekt sind keine Abschluss-Workflows konfiguriert. Bitte konfigurieren Sie Workflows in den Administratoreinstellungen, um den Sitzungsabschluss zu aktivieren."
     },

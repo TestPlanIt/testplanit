@@ -2441,6 +2441,9 @@
       "viewSessionDetails": "查看会话"
     },
     "noMilestone": "没有里程碑",
+    "milestoneGroup": {
+      "sessionCount": "{count, plural, other {# 个会话}}"
+    },
     "completeDialog": {
       "noWorkflowsConfigured": "此项目未配置任何完成工作流程。请在管理设置中配置工作流程以启用会话完成功能。"
     },

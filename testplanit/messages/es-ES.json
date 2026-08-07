@@ -2441,6 +2441,9 @@
       "viewSessionDetails": "Ver sesión"
     },
     "noMilestone": "Sin hito",
+    "milestoneGroup": {
+      "sessionCount": "{count, plural, one {# sesión} other {# sesiones}}"
+    },
     "completeDialog": {
       "noWorkflowsConfigured": "No hay flujos de trabajo de finalización configurados para este proyecto. Configure los flujos de trabajo en la configuración de administrador para habilitar la finalización de la sesión."
     },

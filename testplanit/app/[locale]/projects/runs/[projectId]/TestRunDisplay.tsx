@@ -8,12 +8,7 @@ import { MilestoneSourceBadge } from "@/components/MilestoneSourceBadge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { MilestoneGroupChevron } from "@/components/MilestoneGroupChevron";
 import type {
   MilestonesGetPayload,
   TestRunsGetPayload,
@@ -25,7 +20,6 @@ import {
 } from "~/hooks/useTestRunLiveStream";
 import {
   CheckCircle,
-  ChevronDown,
   CirclePlus,
   GripVertical,
   SquarePen,
@@ -55,7 +49,6 @@ import {
 import { BulkActionBar } from "@/components/bulk/BulkActionBar";
 import { transformMilestones } from "@/components/forms/MilestoneSelect";
 import type { OverflowAction } from "@/components/ui/action-bar";
-import { isMacPlatform } from "~/hooks/useDragModifier";
 import AddTestRunModal from "./AddTestRunModal";
 import BulkCompleteTestRunsDialog from "./BulkCompleteTestRunsDialog";
 import BulkDeleteTestRunsDialog from "./BulkDeleteTestRunsDialog";
@@ -247,72 +240,6 @@ const DroppableMilestoneGroup: React.FC<DroppableMilestoneGroupProps> = ({
     >
       {children}
     </div>
-  );
-};
-
-/** Far longer than the app-wide tooltip delay: the chevron is a click target
- *  first, and working down through the groups must not summon a hint over the
- *  next row. Only someone who stops on the chevron gets it. Matches the
- *  repository folder tree's chevron. */
-const CHEVRON_HINT_DELAY_MS = 2500;
-
-/**
- * Expand/collapse control for a milestone group header. Alt-clicking (⌥ on
- * Mac) reaches every group instead of the one — same modifier the repository
- * folder tree uses — so the hover hint names it.
- */
-const GroupChevron: React.FC<{
-  isOpen: boolean;
-  testId: string;
-  onClick: (event: React.MouseEvent<HTMLButtonElement>) => void;
-}> = ({ isOpen, testId, onClick }) => {
-  const t = useTranslations("runs");
-  const tCommon = useTranslations("common");
-  const label = isOpen
-    ? tCommon("actions.collapse")
-    : tCommon("actions.expand");
-  return (
-    <TooltipProvider
-      delayDuration={CHEVRON_HINT_DELAY_MS}
-      // Radix otherwise reopens with no delay at all for a while after the
-      // first hint, which is exactly the click-through case.
-      skipDelayDuration={0}
-      disableHoverableContent
-    >
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="h-6 w-6 shrink-0"
-            aria-label={label}
-            data-testid={testId}
-            onClick={onClick}
-          >
-            {/* One rotating chevron rather than swapping two icons: a swap
-              can't tween. Closed points at the group's start edge, which
-              flips under RTL. */}
-            <ChevronDown
-              className={cn(
-                "h-4 w-4 transition-transform duration-200",
-                !isOpen && "-rotate-90 rtl:rotate-90"
-              )}
-            />
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent side="bottom">
-          <p className="text-xs">{label}</p>
-          <p className="text-xs text-primary-foreground/65 mt-1">
-            {t(
-              isMacPlatform()
-                ? "milestoneGroup.altHintMac"
-                : "milestoneGroup.altHintWin"
-            )}
-          </p>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
   );
 };
 
@@ -1096,7 +1023,7 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
                 {/* Only the chevron toggles: the header also holds the
                     milestone link and the Add Run button, so a whole-row
                     trigger would swallow both. */}
-                <GroupChevron
+                <MilestoneGroupChevron
                   isOpen={isOpen}
                   testId={`milestone-group-toggle-${milestone.id}`}
                   onClick={(e) => {
@@ -1301,7 +1228,7 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
               {showUnscheduledHeader && (
                 <div className="milestone-grid bg-primary/10 rounded-t-lg p-4">
                   <div className="milestone-name flex items-center gap-1">
-                    <GroupChevron
+                    <MilestoneGroupChevron
                       isOpen={isUnscheduledOpen}
                       testId="milestone-group-toggle-unscheduled"
                       onClick={(e) => {

@@ -2441,6 +2441,9 @@
       "viewSessionDetails": "View Session"
     },
     "noMilestone": "No Milestone",
+    "milestoneGroup": {
+      "sessionCount": "{count, plural, one {# session} other {# sessions}}"
+    },
     "completeDialog": {
       "noWorkflowsConfigured": "No completion workflows are configured for this project. Please configure workflows in the admin settings to enable session completion."
     },

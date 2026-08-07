@@ -3,9 +3,11 @@ import { schema } from "~/zenstack/schema";
 import { DateTextDisplay } from "@/components/DateTextDisplay";
 import DynamicIcon from "@/components/DynamicIcon";
 import { Loading } from "@/components/Loading";
+import { MilestoneGroupChevron } from "@/components/MilestoneGroupChevron";
 import { MilestoneIconAndName } from "@/components/MilestoneIconAndName";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
 import type {
   Color,
   Configurations,
@@ -42,6 +44,13 @@ import {
 import BulkCompleteSessionsDialog from "./BulkCompleteSessionsDialog";
 import BulkDeleteSessionsDialog from "./BulkDeleteSessionsDialog";
 import BulkEditSessionsDialog from "./BulkEditSessionsDialog";
+import {
+  collapsedStorageKey,
+  collectRenderedMilestoneKeys,
+  countSessionsInSubtree,
+  parseStoredCollapsedGroups,
+  UNSCHEDULED_GROUP_KEY,
+} from "./milestoneGroups";
 import SessionItem from "./SessionItem";
 import { CompleteSessionDialog } from "./[sessionId]/CompleteSessionDialog";
 
@@ -340,6 +349,56 @@ const SessionDisplay: React.FC<SessionDisplayProps> = ({
     [milestones]
   );
 
+  // Collapsed milestone groups, remembered per project. Keys are milestone
+  // ids as strings plus UNSCHEDULED_GROUP_KEY; absence means expanded, so a
+  // brand-new group shows up open rather than inheriting a stale collapse.
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(
+    () => new Set()
+  );
+
+  // Hydrated in an effect, not in the initializer: localStorage isn't
+  // available during SSR and reading it inline would hydrate-mismatch.
+  useEffect(() => {
+    if (isNaN(numericProjectId)) return;
+    try {
+      setCollapsedGroups(
+        parseStoredCollapsedGroups(
+          window.localStorage.getItem(collapsedStorageKey(numericProjectId))
+        )
+      );
+    } catch {
+      // localStorage unavailable (private mode) — start fully expanded.
+    }
+  }, [numericProjectId]);
+
+  const persistCollapsedGroups = useCallback(
+    (next: Set<string>) => {
+      if (isNaN(numericProjectId)) return;
+      try {
+        window.localStorage.setItem(
+          collapsedStorageKey(numericProjectId),
+          JSON.stringify(Array.from(next))
+        );
+      } catch {
+        // Persistence is best-effort.
+      }
+    },
+    [numericProjectId]
+  );
+
+  const setGroupOpen = useCallback(
+    (groupKey: string, open: boolean) => {
+      setCollapsedGroups((prev) => {
+        const next = new Set(prev);
+        if (open) next.delete(groupKey);
+        else next.add(groupKey);
+        persistCollapsedGroups(next);
+        return next;
+      });
+    },
+    [persistCollapsedGroups]
+  );
+
   // Single AddSessionModal state (handles both add and duplicate)
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [addModalMilestoneId, setAddModalMilestoneId] = useState<
@@ -511,6 +570,24 @@ const SessionDisplay: React.FC<SessionDisplayProps> = ({
   const sortedMilestones = sortMilestones(milestones);
   const groupedSessions = groupSessions(sortedSessions, sortedMilestones);
 
+  // Every group key currently on screen — the alt-click expand/collapse-all
+  // gesture reaches exactly these.
+  const renderedGroupKeys: string[] = [];
+  if (groupedSessions.unscheduled.length > 0) {
+    renderedGroupKeys.push(UNSCHEDULED_GROUP_KEY);
+  }
+  buildMilestoneTree(sortedMilestones).forEach((milestone) => {
+    renderedGroupKeys.push(
+      ...collectRenderedMilestoneKeys(milestone, groupedSessions)
+    );
+  });
+
+  const setAllGroupsCollapsed = (collapsed: boolean) => {
+    const next = collapsed ? new Set(renderedGroupKeys) : new Set<string>();
+    setCollapsedGroups(next);
+    persistCollapsedGroups(next);
+  };
+
   const renderGroupedSessions = (
     groupedSessions: GroupedSessions,
     milestones: MilestonesWithTypes[],
@@ -546,6 +623,13 @@ const SessionDisplay: React.FC<SessionDisplayProps> = ({
       const hasSessionsUnderMilestone =
         groupedSessions.milestones[milestone.id]?.testSessions.length > 0;
 
+      const groupKey = String(milestone.id);
+      const isOpen = !collapsedGroups.has(groupKey);
+      const subtreeSessionCount = countSessionsInSubtree(
+        milestone,
+        groupedSessions
+      );
+
       return (
         <div
           key={milestone.id}
@@ -555,11 +639,17 @@ const SessionDisplay: React.FC<SessionDisplayProps> = ({
               : "w-full rounded-lg bg-muted mb-4"
           }
         >
-          <div
-            className={`milestone-grid bg-primary/10 p-2 pe-4 ${depth === 0 ? "rounded-t-lg" : ""}`}
+          {/* Collapsing a milestone hides its sessions AND its child milestone
+              groups — they live inside this CollapsibleContent, which is what
+              keeps the nesting readable when a deep tree is folded away. */}
+          <Collapsible
+            open={isOpen}
+            onOpenChange={(open) => setGroupOpen(groupKey, open)}
           >
-            {/* Milestone Name */}
-            <div className="flex items-center gap-1 justify-start min-w-0">
+            <div
+              className={`milestone-grid bg-primary/10 p-2 pe-4 ${depth === 0 ? "rounded-t-lg" : ""}`}
+            >
+              {/* Milestone Name */}
               <div className="flex items-center gap-1 justify-start min-w-0">
                 {depth > 0 && (
                   <DynamicIcon
@@ -567,61 +657,196 @@ const SessionDisplay: React.FC<SessionDisplayProps> = ({
                     className="w-6 h-6 text-primary/50 shrink-0 bg-transparent"
                   />
                 )}
+                {/* Only the chevron toggles: the header also holds the
+                    milestone link and the Add Session button, so a whole-row
+                    trigger would swallow both. */}
+                <MilestoneGroupChevron
+                  isOpen={isOpen}
+                  testId={`milestone-group-toggle-${milestone.id}`}
+                  onClick={(e) => {
+                    if (e.altKey) setAllGroupsCollapsed(isOpen);
+                    else setGroupOpen(groupKey, !isOpen);
+                  }}
+                />
                 <div className="truncate">
                   <MilestoneIconAndName milestone={milestone} />
+                </div>
+                <Badge
+                  variant="outline"
+                  className="shrink-0 text-xs font-normal text-muted-foreground"
+                  data-testid={`milestone-group-count-${milestone.id}`}
+                >
+                  {t("milestoneGroup.sessionCount", {
+                    count: subtreeSessionCount,
+                  })}
+                </Badge>
+              </div>
+
+              {/* Status */}
+              <div className="milestone-status flex gap-2 justify-center">
+                <Badge
+                  style={{ backgroundColor: badge }}
+                  className="text-secondary-background border-2 border-secondary-foreground text-sm"
+                >
+                  {tMilestones(`statusLabels.${status}` as any)}
+                </Badge>
+              </div>
+
+              {/* Dates */}
+              <div className="milestone-dates flex justify-end">
+                <div className="grow text-sm text-muted-foreground">
+                  {canAddEdit && (
+                    <Button
+                      variant="link"
+                      className="p-0"
+                      onClick={() => handleOpenAddModal(milestone.id)}
+                    >
+                      <CirclePlus className="h-4 w-4" />
+                      <span className="hidden md:inline">{tCommon("add")}</span>
+                    </Button>
+                  )}
+                  <DateTextDisplay
+                    startDate={
+                      milestone.startedAt ? new Date(milestone.startedAt) : null
+                    }
+                    endDate={
+                      milestone.completedAt
+                        ? new Date(milestone.completedAt)
+                        : null
+                    }
+                    isCompleted={milestone.isCompleted}
+                  />
                 </div>
               </div>
             </div>
 
-            {/* Status */}
-            <div className="milestone-status flex gap-2 justify-center">
-              <Badge
-                style={{ backgroundColor: badge }}
-                className="text-secondary-background border-2 border-secondary-foreground text-sm"
-              >
-                {tMilestones(`statusLabels.${status}` as any)}
-              </Badge>
-            </div>
+            {/* overflow-hidden is what the height keyframes clip against;
+                without it the rows spill out at full height for the whole
+                animation instead of being wiped. */}
+            <CollapsibleContent className="overflow-hidden data-[state=closed]:animate-slide-up data-[state=open]:animate-slide-down">
+              {/* Render sessions under this milestone FIRST */}
+              {hasSessionsUnderMilestone && (
+                <div className="sessions-container bg-muted pe-4 pb-2 mb-2">
+                  {groupedSessions.milestones[milestone.id]?.testSessions.map(
+                    (testSession) => (
+                      <div
+                        key={testSession.id}
+                        style={{ paddingInlineStart: "1.5rem" }}
+                      >
+                        <SessionItem
+                          key={testSession.id}
+                          testSession={testSession}
+                          isCompleted={testSession.isCompleted}
+                          onComplete={handleOpenDialog}
+                          onDuplicate={handleDuplicateSession}
+                          canComplete={canCloseSession}
+                          canDuplicate={canAddEdit}
+                          isNew={newSessionId === testSession.id}
+                          showMilestone={false}
+                          pendingRequest={pendingBySessionId.get(
+                            testSession.id
+                          )}
+                          selectable={bulkSelectable}
+                          selected={selectedSessionIds.has(testSession.id)}
+                          onSelectedChange={(checked) =>
+                            toggleSessionSelected(testSession.id, checked)
+                          }
+                        />
+                      </div>
+                    )
+                  )}
+                </div>
+              )}
 
-            {/* Dates */}
-            <div className="milestone-dates flex justify-end">
-              <div className="grow text-sm text-muted-foreground">
-                {canAddEdit && (
-                  <Button
-                    variant="link"
-                    className="p-0"
-                    onClick={() => handleOpenAddModal(milestone.id)}
-                  >
-                    <CirclePlus className="h-4 w-4" />
-                    <span className="hidden md:inline">{tCommon("add")}</span>
-                  </Button>
-                )}
-                <DateTextDisplay
-                  startDate={
-                    milestone.startedAt ? new Date(milestone.startedAt) : null
-                  }
-                  endDate={
-                    milestone.completedAt
-                      ? new Date(milestone.completedAt)
-                      : null
-                  }
-                  isCompleted={milestone.isCompleted}
-                />
-              </div>
-            </div>
-          </div>
+              {/* THEN render child milestones */}
+              {milestone.children?.map((childMilestone) =>
+                renderMilestoneWithSessions(
+                  childMilestone,
+                  depth + 1,
+                  dateFormat
+                )
+              )}
+            </CollapsibleContent>
+          </Collapsible>
+        </div>
+      );
+    };
 
-          {/* Render sessions under this milestone FIRST */}
-          {hasSessionsUnderMilestone && (
-            <div className="sessions-container bg-muted pe-4 pb-2 mb-2">
-              {groupedSessions.milestones[milestone.id]?.testSessions.map(
-                (testSession) => (
-                  <div
-                    key={testSession.id}
-                    style={{ paddingInlineStart: "1.5rem" }}
-                  >
+    // No header means no chevron to reopen with, so the group has to stay
+    // expanded in that (sessions-all-completed) case regardless of stored
+    // state.
+    const showUnscheduledHeader = groupedSessions.unscheduled.some(
+      (testSession) => !testSession.isCompleted
+    );
+    const isUnscheduledOpen =
+      !showUnscheduledHeader || !collapsedGroups.has(UNSCHEDULED_GROUP_KEY);
+
+    return (
+      <>
+        {groupedSessions.unscheduled.length > 0 && (
+          <div
+            className="w-full bg-muted rounded-lg p-0 pb-2"
+            key={JSON.stringify(groupedSessions)}
+          >
+            <Collapsible
+              open={isUnscheduledOpen}
+              onOpenChange={(open) => setGroupOpen(UNSCHEDULED_GROUP_KEY, open)}
+            >
+              {showUnscheduledHeader && (
+                <div className="milestone-grid bg-primary/10 rounded-t-lg p-4">
+                  <div className="milestone-name flex items-center gap-1">
+                    <MilestoneGroupChevron
+                      isOpen={isUnscheduledOpen}
+                      testId="milestone-group-toggle-unscheduled"
+                      onClick={(e) => {
+                        if (e.altKey) setAllGroupsCollapsed(isUnscheduledOpen);
+                        else
+                          setGroupOpen(
+                            UNSCHEDULED_GROUP_KEY,
+                            !isUnscheduledOpen
+                          );
+                      }}
+                    />
+                    <DynamicIcon
+                      name="calendar-off"
+                      className="w-6 h-6 shrink-0"
+                    />
+                    <div className="truncate">{t("noMilestone")}</div>
+                    <Badge
+                      variant="outline"
+                      className="shrink-0 text-xs font-normal text-muted-foreground"
+                      data-testid="milestone-group-count-unscheduled"
+                    >
+                      {t("milestoneGroup.sessionCount", {
+                        count: groupedSessions.unscheduled.length,
+                      })}
+                    </Badge>
+                  </div>
+                  <div className="milestone-status"></div>
+                  <div className="milestone-dates flex justify-end">
+                    {canAddEdit && (
+                      <Button
+                        variant="default"
+                        onClick={() => handleOpenAddModal()}
+                        aria-label={t("actions.add")}
+                        className="group gap-0 transition-all duration-200 hover:gap-2"
+                      >
+                        <CirclePlus className="h-4 w-4" />
+                        <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-xs">
+                          {t("actions.add")}
+                        </span>
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              )}
+              {/* overflow-hidden is what the height keyframes clip against;
+                  without it the rows spill out at full height for the whole
+                  animation instead of being wiped. */}
+              <CollapsibleContent className="overflow-hidden data-[state=closed]:animate-slide-up data-[state=open]:animate-slide-down">
+                {groupedSessions.unscheduled.map((testSession) => (
+                  <div key={testSession.id} className="ps-4 pe-4">
                     <SessionItem
-                      key={testSession.id}
                       testSession={testSession}
                       isCompleted={testSession.isCompleted}
                       onComplete={handleOpenDialog}
@@ -638,75 +863,9 @@ const SessionDisplay: React.FC<SessionDisplayProps> = ({
                       }
                     />
                   </div>
-                )
-              )}
-            </div>
-          )}
-
-          {/* THEN render child milestones */}
-          {milestone.children?.map((childMilestone) =>
-            renderMilestoneWithSessions(childMilestone, depth + 1, dateFormat)
-          )}
-        </div>
-      );
-    };
-
-    return (
-      <>
-        {groupedSessions.unscheduled.length > 0 && (
-          <div
-            className="w-full bg-muted rounded-lg p-0 pb-2"
-            key={JSON.stringify(groupedSessions)}
-          >
-            {groupedSessions.unscheduled.some(
-              (testSession) => !testSession.isCompleted
-            ) && (
-              <div className="milestone-grid bg-primary/10 rounded-t-lg p-4">
-                <div className="milestone-name flex items-center gap-1">
-                  <DynamicIcon
-                    name="calendar-off"
-                    className="w-6 h-6 shrink-0"
-                  />
-                  <div className="truncate">{t("noMilestone")}</div>
-                </div>
-                <div className="milestone-status"></div>
-                <div className="milestone-dates flex justify-end">
-                  {canAddEdit && (
-                    <Button
-                      variant="default"
-                      onClick={() => handleOpenAddModal()}
-                      aria-label={t("actions.add")}
-                      className="group gap-0 transition-all duration-200 hover:gap-2"
-                    >
-                      <CirclePlus className="h-4 w-4" />
-                      <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-xs">
-                        {t("actions.add")}
-                      </span>
-                    </Button>
-                  )}
-                </div>
-              </div>
-            )}
-            {groupedSessions.unscheduled.map((testSession) => (
-              <div key={testSession.id} className="ps-4 pe-4">
-                <SessionItem
-                  testSession={testSession}
-                  isCompleted={testSession.isCompleted}
-                  onComplete={handleOpenDialog}
-                  onDuplicate={handleDuplicateSession}
-                  canComplete={canCloseSession}
-                  canDuplicate={canAddEdit}
-                  isNew={newSessionId === testSession.id}
-                  showMilestone={false}
-                  pendingRequest={pendingBySessionId.get(testSession.id)}
-                  selectable={bulkSelectable}
-                  selected={selectedSessionIds.has(testSession.id)}
-                  onSelectedChange={(checked) =>
-                    toggleSessionSelected(testSession.id, checked)
-                  }
-                />
-              </div>
-            ))}
+                ))}
+              </CollapsibleContent>
+            </Collapsible>
           </div>
         )}
         <div className="rounded-b-lg mb-4"></div>

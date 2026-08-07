@@ -2441,6 +2441,9 @@
       "viewSessionDetails": "Sessie bekijken"
     },
     "noMilestone": "Geen mijlpaal",
+    "milestoneGroup": {
+      "sessionCount": "{count, plural, one {# sessie} other {# sessies}}"
+    },
     "completeDialog": {
       "noWorkflowsConfigured": "Er zijn geen voltooiingsworkflows geconfigureerd voor dit project. Configureer workflows in de beheerdersinstellingen om sessievoltooiing in te schakelen."
     },

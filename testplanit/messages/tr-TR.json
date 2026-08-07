@@ -2441,6 +2441,9 @@
       "viewSessionDetails": "Oturumu Görüntüle"
     },
     "noMilestone": "Dönüm Noktası Yok",
+    "milestoneGroup": {
+      "sessionCount": "{count, plural, one {# oturum} other {# oturum}}"
+    },
     "completeDialog": {
       "noWorkflowsConfigured": "Bu proje için herhangi bir tamamlama iş akışı yapılandırılmamıştır. Oturum tamamlamayı etkinleştirmek için lütfen yönetici ayarlarında iş akışlarını yapılandırın."
     },

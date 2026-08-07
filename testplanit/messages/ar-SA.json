@@ -2441,6 +2441,9 @@
       "viewSessionDetails": "عرض الجلسة"
     },
     "noMilestone": "لا يوجد معلم رئيسي",
+    "milestoneGroup": {
+      "sessionCount": "{count, plural, zero {# جلسة} one {جلسة واحدة} two {جلستان} few {# جلسات} many {# جلسة} other {# جلسة}}"
+    },
     "completeDialog": {
       "noWorkflowsConfigured": "لا توجد سير عمل إكمال مُهيأة لهذا المشروع. يرجى تهيئة سير العمل في إعدادات الإدارة لتمكين إكمال الجلسة."
     },

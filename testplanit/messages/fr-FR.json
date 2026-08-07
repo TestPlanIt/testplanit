@@ -2441,6 +2441,9 @@
       "viewSessionDetails": "Afficher la session"
     },
     "noMilestone": "Aucun jalon",
+    "milestoneGroup": {
+      "sessionCount": "{count, plural, one {# session} other {# sessions}}"
+    },
     "completeDialog": {
       "noWorkflowsConfigured": "Aucun flux de travail de validation n'est configuré pour ce projet. Veuillez configurer les flux de travail dans les paramètres d'administration pour activer la validation des sessions."
     },

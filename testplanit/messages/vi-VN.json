@@ -2441,6 +2441,9 @@
       "viewSessionDetails": "Xem phiên"
     },
     "noMilestone": "Không có cột mốc nào",
+    "milestoneGroup": {
+      "sessionCount": "{count, plural, other {# phiên}}"
+    },
     "completeDialog": {
       "noWorkflowsConfigured": "Hiện chưa có quy trình hoàn thành nào được cấu hình cho dự án này. Vui lòng cấu hình quy trình trong cài đặt quản trị để kích hoạt tính năng hoàn thành phiên."
     },

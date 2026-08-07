@@ -2441,6 +2441,9 @@
       "viewSessionDetails": "세션 보기"
     },
     "noMilestone": "이정표 없음",
+    "milestoneGroup": {
+      "sessionCount": "{count, plural, other {# 세션}}"
+    },
     "completeDialog": {
       "noWorkflowsConfigured": "이 프로젝트에는 완료 워크플로가 구성되어 있지 않습니다. 세션 완료 기능을 활성화하려면 관리자 설정에서 워크플로를 구성하십시오."
     },

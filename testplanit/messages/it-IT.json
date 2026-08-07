@@ -2441,6 +2441,9 @@
       "viewSessionDetails": "Visualizza sessione"
     },
     "noMilestone": "Nessuna pietra miliare",
+    "milestoneGroup": {
+      "sessionCount": "{count, plural, one {# sessione} other {# sessioni}}"
+    },
     "completeDialog": {
       "noWorkflowsConfigured": "Non sono configurati flussi di lavoro di completamento per questo progetto. Configurare i flussi di lavoro nelle impostazioni di amministrazione per abilitare il completamento della sessione."
     },

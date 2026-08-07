@@ -2441,6 +2441,9 @@
       "viewSessionDetails": "セッションを見る"
     },
     "noMilestone": "マイルストーンなし",
+    "milestoneGroup": {
+      "sessionCount": "{count, plural, other {# 件のセッション}}"
+    },
     "completeDialog": {
       "noWorkflowsConfigured": "このプロジェクトには完了ワークフローが設定されていません。セッションの完了を有効にするには、管理設定でワークフローを設定してください。"
     },

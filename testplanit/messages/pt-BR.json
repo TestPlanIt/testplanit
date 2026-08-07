@@ -2441,6 +2441,9 @@
       "viewSessionDetails": "Visualizar sessão"
     },
     "noMilestone": "Sem marco",
+    "milestoneGroup": {
+      "sessionCount": "{count, plural, one {# sessão} other {# sessões}}"
+    },
     "completeDialog": {
       "noWorkflowsConfigured": "Nenhum fluxo de trabalho de conclusão está configurado para este projeto. Configure os fluxos de trabalho nas configurações de administração para habilitar a conclusão da sessão."
     },

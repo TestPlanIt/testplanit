@@ -2441,6 +2441,9 @@
       "viewSessionDetails": "Wyświetl sesję"
     },
     "noMilestone": "Brak kamienia milowego",
+    "milestoneGroup": {
+      "sessionCount": "{count, plural, one {# sesja} few {# sesje} many {# sesji} other {# sesji}}"
+    },
     "completeDialog": {
       "noWorkflowsConfigured": "Dla tego projektu nie skonfigurowano żadnych przepływów pracy związanych z ukończeniem. Skonfiguruj przepływy pracy w ustawieniach administratora, aby umożliwić ukończenie sesji."
     },
