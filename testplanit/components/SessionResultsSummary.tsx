@@ -142,7 +142,7 @@ export function SessionResultsSummary({
       <div className={cn("flex flex-col space-y-1 w-full", className)}>
         {/* Show a default status bar at the top */}
         <div
-          className="h-2.5 w-full rounded-full overflow-hidden"
+          className="h-2.5 w-full rounded-full overflow-x-auto overflow-y-hidden"
           data-status-bar
         >
           <Tooltip>
@@ -199,7 +199,7 @@ export function SessionResultsSummary({
     <div className={cn("flex flex-col space-y-1 w-full", className)}>
       {/* Color bar for results at the top */}
       <div
-        className="flex h-2.5 w-full rounded-full overflow-hidden"
+        className="flex h-2.5 w-full rounded-full overflow-x-auto overflow-y-hidden"
         data-status-bar
       >
         {sortedResults.map((result, _index) => {

@@ -95,6 +95,12 @@ This is the default view. Active test runs are grouped by their associated miles
   - A count of the test runs in the group, including those in any child milestones
   - Milestone Status Badge (e.g., Upcoming, In Progress, Completed)
   - Milestone Dates (Start/End/Due)
+
+  When the header is too narrow to hold all of this, it sheds detail in order rather than
+  cutting the milestone name short: first the dates drop their year (`Oct 31 - Dec 24`), then
+  the milestone type icon disappears and a **Completed** label becomes a check icon, then the
+  test runs count is dropped. The milestone name is the last thing to be shortened.
+
   - An **Add Test Run** button ( `+` icon) specific to that milestone, allowing you to quickly create a run linked to it.
 - **Unscheduled Runs**: Test runs not linked to any milestone are grouped under a special "Unscheduled" section header.
   - This section also has an **Add Test Run** button to create an unscheduled run.

@@ -65,7 +65,6 @@ interface MilestoneItemCardProps {
   onOpenEditModal: (milestone: MilestonesWithTypes) => void;
   onOpenDeleteModal: (milestone: MilestonesWithTypes) => void;
   level?: number;
-  compact?: boolean;
 }
 
 const MilestoneItemCard: React.FC<MilestoneItemCardProps> = ({
@@ -83,7 +82,6 @@ const MilestoneItemCard: React.FC<MilestoneItemCardProps> = ({
   onOpenEditModal,
   onOpenDeleteModal,
   level = 0,
-  compact = false,
 }) => {
   const t = useTranslations("milestones");
   const tGlobal = useTranslations();
@@ -142,7 +140,7 @@ const MilestoneItemCard: React.FC<MilestoneItemCardProps> = ({
 
   return (
     <div
-      className={`overflow-auto relative flex flex-col gap-1 ${compact ? "" : "sm:grid sm:grid-cols-[1fr_auto_1fr] sm:gap-4 sm:items-center sm:border-4"} w-full my-2 p-2 border-2 rounded-lg shadow-xs`}
+      className="@container overflow-hidden relative w-full my-2 p-2 border-4 rounded-lg shadow-xs"
       style={{
         backgroundColor: bg,
         borderColor: border,
@@ -150,208 +148,198 @@ const MilestoneItemCard: React.FC<MilestoneItemCardProps> = ({
         width: `calc(100% - ${level * 20}px)`,
       }}
     >
-      {/* Mobile: flex row with name+badge+actions. Desktop: children become grid columns via sm:contents */}
-      <div
-        className={`flex items-center gap-2 ${compact ? "" : "sm:contents"}`}
-      >
-        {/* Column 1: Details, Dates */}
-        <div className="flex items-start flex-1 min-w-0">
-          {startDate && (
-            <div
-              className={`${compact ? "hidden" : "hidden sm:block"} me-4 pt-1`}
+      {/* The card is the query container, so the layout lives one level in —
+          an element can't respond to its own container query. */}
+      <div className="flex flex-col gap-1 @xl:grid @xl:grid-cols-[1fr_auto_1fr] @xl:gap-4 @xl:items-center">
+        {/* Narrow: one row of name + badge + actions. @xl: children become
+            grid columns via @xl:contents */}
+        <div className="flex items-center gap-2 @xl:contents">
+          {/* Column 1: Details, Dates */}
+          <div className="flex items-start flex-1 min-w-0">
+            {startDate && (
+              <div className="hidden @2xl:block me-4 pt-1">
+                <CalendarDisplay date={startDate} />
+              </div>
+            )}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <MilestoneIconAndName
+                  milestone={milestone}
+                  projectId={projectId}
+                  // The full source badge renders right beside this — no
+                  // duplicate glyph inside the name.
+                  showSourceIcon={false}
+                />
+                <MilestoneSourceBadge
+                  milestone={milestone}
+                  projectId={projectId}
+                  integrationProjects={integrationProjects}
+                />
+              </div>
+              <p className="hidden @2xl:block text-md text-muted-foreground ms-7">
+                <TextFromJson
+                  jsonString={milestone.note as string}
+                  format="text"
+                  room={`milestone-note-${milestone.id}`}
+                />
+              </p>
+              {/* The start and end calendars carry the same dates from @2xl
+                  up, so the text range only earns its place below that. */}
+              <div className="@2xl:hidden ms-7">
+                <DateTextDisplay
+                  startDate={startDate}
+                  endDate={endDate}
+                  isCompleted={milestone.isCompleted}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Column 2: Status Badge */}
+          <div className="flex shrink-0 @xl:w-24 justify-center">
+            <Badge
+              style={{ backgroundColor: badge }}
+              className="text-foreground border-2 border-secondary-foreground text-sm"
             >
-              <CalendarDisplay date={startDate} />
-            </div>
-          )}
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
-              <MilestoneIconAndName
-                milestone={milestone}
-                projectId={projectId}
-                // The full source badge renders right beside this — no
-                // duplicate glyph inside the name.
-                showSourceIcon={false}
-              />
-              <MilestoneSourceBadge
-                milestone={milestone}
-                projectId={projectId}
-                integrationProjects={integrationProjects}
-              />
-            </div>
-            <p
-              className={`${compact ? "hidden" : "hidden sm:block"} text-md text-muted-foreground ms-7`}
-            >
-              <TextFromJson
-                jsonString={milestone.note as string}
-                format="text"
-                room={`milestone-note-${milestone.id}`}
-              />
-            </p>
-            <div className={`${compact ? "hidden" : "hidden sm:block"} ms-7`}>
-              <DateTextDisplay
-                startDate={startDate}
-                endDate={endDate}
-                isCompleted={milestone.isCompleted}
-              />
-            </div>
+              {t(`statusLabels.${status}` as any)}
+            </Badge>
+          </div>
+
+          {/* Column 3: End Date Calendar, Actions */}
+          <div className="flex items-center shrink-0 @xl:justify-end @xl:space-x-2">
+            {endDate && (
+              <div className="hidden @2xl:block">
+                <CalendarDisplay
+                  date={endDate}
+                  showYear={milestone.isCompleted}
+                />
+              </div>
+            )}
+            {(session.user.access === "ADMIN" ||
+              session.user.access === "PROJECTADMIN") && (
+              <DropdownMenu modal={false}>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="secondary"
+                    size="icon"
+                    className="p-0 m-0 h-7 w-7"
+                    aria-label={tCommon("actions.actionsLabel")}
+                  >
+                    <MoreVertical className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuGroup>
+                    {!isSynced &&
+                      !milestone.isStarted &&
+                      !milestone.isCompleted && (
+                        <DropdownMenuItem
+                          onSelect={() => onStartMilestone(milestone)}
+                        >
+                          <SquarePlay className="w-5 h-5 me-2" />
+                          {tGlobal("common.actions.start")}
+                        </DropdownMenuItem>
+                      )}
+                    {!isSynced &&
+                      milestone.isStarted &&
+                      !milestone.isCompleted && (
+                        <DropdownMenuItem
+                          onSelect={() => onStopMilestone(milestone)}
+                        >
+                          <StopCircle className="w-5 h-5 me-2" />
+                          {t("status.stop")}
+                        </DropdownMenuItem>
+                      )}
+                    {!isSynced && milestone.isCompleted && (
+                      <DropdownMenuItem
+                        onSelect={() => onReopenMilestone(milestone)}
+                        disabled={isParentCompleted(milestone.parentId)}
+                      >
+                        <RotateCcw className="w-5 h-5 me-2" />
+                        {t("status.reopen")}
+                      </DropdownMenuItem>
+                    )}
+                    <DropdownMenuItem
+                      onSelect={() => onOpenEditModal(milestone)}
+                    >
+                      <div className="flex items-center">
+                        <SquarePen className="w-5 h-5 me-2" />
+                        {tCommon("actions.edit")}
+                      </div>
+                    </DropdownMenuItem>
+                    {!isSynced &&
+                      milestone.isStarted &&
+                      !milestone.isCompleted && (
+                        <DropdownMenuItem
+                          onSelect={() => onOpenCompleteDialog(milestone)}
+                        >
+                          <CheckCircle className="w-5 h-5 me-2" />
+                          {tGlobal("common.actions.complete")}
+                        </DropdownMenuItem>
+                      )}
+                    <RecordKeyMenuItem
+                      type="MILESTONE"
+                      id={milestone.id}
+                      projectId={projectId}
+                    />
+                    <DropdownMenuItem
+                      onSelect={() => onOpenDeleteModal(milestone)}
+                      className="text-destructive hover:text-destructive-foreground"
+                    >
+                      <div className="flex items-center">
+                        <Trash2 className="w-5 h-5 me-2" />
+                        {tCommon("actions.delete")}
+                      </div>
+                    </DropdownMenuItem>
+                  </DropdownMenuGroup>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
           </div>
         </div>
 
-        {/* Column 2: Status Badge */}
-        <div
-          className={`flex shrink-0 ${compact ? "" : "sm:w-24"} justify-center`}
-        >
-          <Badge
-            style={{ backgroundColor: badge }}
-            className="text-foreground border-2 border-secondary-foreground text-sm"
-          >
-            {t(`statusLabels.${status}` as any)}
-          </Badge>
-        </div>
+        {/* Milestone Summary - spans all columns once the grid engages */}
+        <div className="@xl:col-span-3 border-t">
+          <MilestoneSummary milestoneId={milestone.id} projectId={projectId} />
 
-        {/* Column 3: End Date Calendar, Actions */}
-        <div
-          className={`flex items-center shrink-0 ${compact ? "" : "sm:justify-end sm:space-x-2"}`}
-        >
-          {endDate && (
-            <div className={compact ? "hidden" : "hidden sm:block"}>
-              <CalendarDisplay
-                date={endDate}
-                showYear={milestone.isCompleted}
-              />
-            </div>
-          )}
-          {(session.user.access === "ADMIN" ||
-            session.user.access === "PROJECTADMIN") && (
-            <DropdownMenu modal={false}>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="secondary"
-                  size="icon"
-                  className="p-0 m-0 h-7 w-7"
-                  aria-label={tCommon("actions.actionsLabel")}
-                >
-                  <MoreVertical className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuGroup>
-                  {!isSynced &&
-                    !milestone.isStarted &&
-                    !milestone.isCompleted && (
-                      <DropdownMenuItem
-                        onSelect={() => onStartMilestone(milestone)}
-                      >
-                        <SquarePlay className="w-5 h-5 me-2" />
-                        {tGlobal("common.actions.start")}
-                      </DropdownMenuItem>
-                    )}
-                  {!isSynced &&
-                    milestone.isStarted &&
-                    !milestone.isCompleted && (
-                      <DropdownMenuItem
-                        onSelect={() => onStopMilestone(milestone)}
-                      >
-                        <StopCircle className="w-5 h-5 me-2" />
-                        {t("status.stop")}
-                      </DropdownMenuItem>
-                    )}
-                  {!isSynced && milestone.isCompleted && (
-                    <DropdownMenuItem
-                      onSelect={() => onReopenMilestone(milestone)}
-                      disabled={isParentCompleted(milestone.parentId)}
-                    >
-                      <RotateCcw className="w-5 h-5 me-2" />
-                      {t("status.reopen")}
-                    </DropdownMenuItem>
-                  )}
-                  <DropdownMenuItem onSelect={() => onOpenEditModal(milestone)}>
-                    <div className="flex items-center">
-                      <SquarePen className="w-5 h-5 me-2" />
-                      {tCommon("actions.edit")}
-                    </div>
-                  </DropdownMenuItem>
-                  {!isSynced &&
-                    milestone.isStarted &&
-                    !milestone.isCompleted && (
-                      <DropdownMenuItem
-                        onSelect={() => onOpenCompleteDialog(milestone)}
-                      >
-                        <CheckCircle className="w-5 h-5 me-2" />
-                        {tGlobal("common.actions.complete")}
-                      </DropdownMenuItem>
-                    )}
-                  <RecordKeyMenuItem
-                    type="MILESTONE"
-                    id={milestone.id}
-                    projectId={projectId}
-                  />
-                  <DropdownMenuItem
-                    onSelect={() => onOpenDeleteModal(milestone)}
-                    className="text-destructive hover:text-destructive-foreground"
-                  >
-                    <div className="flex items-center">
-                      <Trash2 className="w-5 h-5 me-2" />
-                      {tCommon("actions.delete")}
-                    </div>
-                  </DropdownMenuItem>
-                </DropdownMenuGroup>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
-        </div>
-      </div>
-
-      {/* Mobile-only: date text as its own row */}
-      <div className={`${compact ? "" : "sm:hidden"} ms-7`}>
-        <DateTextDisplay
-          startDate={startDate}
-          endDate={endDate}
-          isCompleted={milestone.isCompleted}
-        />
-      </div>
-
-      {/* Milestone Summary - spans all columns on desktop */}
-      <div className={`${compact ? "" : "sm:col-span-3"} border-t`}>
-        <MilestoneSummary milestoneId={milestone.id} projectId={projectId} />
-
-        {/* Forecast Section - below summary */}
-        <div className="text-xs text-muted-foreground">
-          {isLoadingForecast ? (
-            <div className="flex items-center gap-1">
-              <LoadingSpinner className="w-3 h-3" />
-            </div>
-          ) : milestoneForecast ? (
-            <div className="flex flex-col gap-0.5 items-start">
-              {milestoneForecast.manualEstimate > 0 && (
-                <ForecastDisplay
-                  seconds={milestoneForecast.manualEstimate}
-                  type="manual"
-                  className="text-xs text-start"
-                />
-              )}
-              {milestoneForecast.automatedEstimate > 0 && (
-                <ForecastDisplay
-                  seconds={milestoneForecast.automatedEstimate}
-                  type="automated"
-                  className="text-xs text-start"
-                  round={false}
-                />
-              )}
-              {milestoneForecast.mixedEstimate > 0 &&
-                milestoneForecast.mixedEstimate !==
-                  milestoneForecast.manualEstimate &&
-                milestoneForecast.mixedEstimate !==
-                  milestoneForecast.automatedEstimate && (
+          {/* Forecast Section - below summary */}
+          <div className="hidden @lg:block text-xs text-muted-foreground">
+            {isLoadingForecast ? (
+              <div className="flex items-center gap-1">
+                <LoadingSpinner className="w-3 h-3" />
+              </div>
+            ) : milestoneForecast ? (
+              <div className="flex flex-col gap-0.5 items-start">
+                {milestoneForecast.manualEstimate > 0 && (
                   <ForecastDisplay
-                    seconds={milestoneForecast.mixedEstimate}
-                    type="mixed"
+                    seconds={milestoneForecast.manualEstimate}
+                    type="manual"
+                    className="text-xs text-start"
+                  />
+                )}
+                {milestoneForecast.automatedEstimate > 0 && (
+                  <ForecastDisplay
+                    seconds={milestoneForecast.automatedEstimate}
+                    type="automated"
                     className="text-xs text-start"
                     round={false}
                   />
                 )}
-            </div>
-          ) : null}
+                {milestoneForecast.mixedEstimate > 0 &&
+                  milestoneForecast.mixedEstimate !==
+                    milestoneForecast.manualEstimate &&
+                  milestoneForecast.mixedEstimate !==
+                    milestoneForecast.automatedEstimate && (
+                    <ForecastDisplay
+                      seconds={milestoneForecast.mixedEstimate}
+                      type="mixed"
+                      className="text-xs text-start"
+                      round={false}
+                    />
+                  )}
+              </div>
+            ) : null}
+          </div>
         </div>
       </div>
     </div>

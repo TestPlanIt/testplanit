@@ -899,7 +899,7 @@ describe("MilestoneItemCard", () => {
     });
   });
 
-  describe("level and compact props", () => {
+  describe("level prop", () => {
     it("applies margin-left based on level prop", () => {
       const milestone = createMilestone();
       const cbs = mockCallbacks();
@@ -932,24 +932,6 @@ describe("MilestoneItemCard", () => {
       );
       const card = container.firstChild as HTMLElement;
       expect(card.style.marginInlineStart).toBe("0px");
-    });
-
-    it("renders in compact mode without sm:grid classes", () => {
-      const milestone = createMilestone();
-      const cbs = mockCallbacks();
-      const { container } = render(
-        <MilestoneItemCard
-          milestone={milestone}
-          session={adminSession}
-          colorMap={mockColorMap}
-          theme="light"
-          compact={true}
-          {...cbs}
-        />
-      );
-      const card = container.firstChild as HTMLElement;
-      // Compact mode removes sm:grid classes
-      expect(card.className).not.toContain("sm:grid");
     });
   });
 

@@ -271,7 +271,7 @@ export function TestRunCasesSummary({
     return (
       <div className={cn("flex flex-col space-y-1 w-full", className)}>
         <div
-          className="flex h-2.5 w-full rounded-full overflow-hidden"
+          className="flex h-2.5 w-full rounded-full overflow-x-auto overflow-y-hidden"
           data-status-bar
         >
           <Tooltip>
@@ -347,7 +347,8 @@ export function TestRunCasesSummary({
       <div className={cn("flex flex-col space-y-1 w-full", className)}>
         {/* Color bar for JUnit test results */}
         <div
-          className="flex h-2.5 w-full rounded-full overflow-hidden bg-muted"
+          className="flex h-2.5 w-full rounded-full overflow-x-auto overflow-y-hidden bg-muted"
+          data-status-bar
           data-testid="test-run-cases-status-bar"
         >
           {resultSegments.map((result, index) => {
@@ -520,7 +521,7 @@ export function TestRunCasesSummary({
     <div className={cn("flex flex-col space-y-1 w-full", className)}>
       {/* Color bar for individual test results */}
       <div
-        className="flex h-2.5 w-full rounded-full overflow-hidden bg-muted"
+        className="flex h-2.5 w-full rounded-full overflow-x-auto overflow-y-hidden bg-muted"
         data-status-bar
         data-testid="test-run-cases-status-bar"
       >

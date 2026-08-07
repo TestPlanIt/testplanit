@@ -35,8 +35,6 @@ const TestRunsSection: React.FC<TestRunsSectionProps> = ({ projectId }) => {
       note: true,
       projectId: true,
       configurationGroupId: true,
-      forecastManual: true,
-      forecastAutomated: true,
       configuration: true,
       state: { include: { icon: true, color: true } },
       createdBy: true,

@@ -647,7 +647,7 @@ const SessionDisplay: React.FC<SessionDisplayProps> = ({
             onOpenChange={(open) => setGroupOpen(groupKey, open)}
           >
             <div
-              className={`milestone-grid bg-primary/10 p-2 pe-4 ${depth === 0 ? "rounded-t-lg" : ""}`}
+              className={`@container milestone-grid bg-primary/10 p-2 pe-4 ${depth === 0 ? "rounded-t-lg" : ""}`}
             >
               {/* Milestone Name */}
               <div className="flex items-center gap-1 justify-start min-w-0">
@@ -668,12 +668,12 @@ const SessionDisplay: React.FC<SessionDisplayProps> = ({
                     else setGroupOpen(groupKey, !isOpen);
                   }}
                 />
-                <div className="truncate">
+                <div className="truncate min-w-0">
                   <MilestoneIconAndName milestone={milestone} />
                 </div>
                 <Badge
                   variant="outline"
-                  className="shrink-0 text-xs font-normal text-muted-foreground"
+                  className="shrink-0 hidden @lg:inline-flex text-xs font-normal text-muted-foreground"
                   data-testid={`milestone-group-count-${milestone.id}`}
                 >
                   {t("milestoneGroup.sessionCount", {
@@ -706,6 +706,7 @@ const SessionDisplay: React.FC<SessionDisplayProps> = ({
                     </Button>
                   )}
                   <DateTextDisplay
+                    responsive
                     startDate={
                       milestone.startedAt ? new Date(milestone.startedAt) : null
                     }
@@ -793,7 +794,7 @@ const SessionDisplay: React.FC<SessionDisplayProps> = ({
               onOpenChange={(open) => setGroupOpen(UNSCHEDULED_GROUP_KEY, open)}
             >
               {showUnscheduledHeader && (
-                <div className="milestone-grid bg-primary/10 rounded-t-lg p-4">
+                <div className="@container milestone-grid bg-primary/10 rounded-t-lg p-4">
                   <div className="milestone-name flex items-center gap-1">
                     <MilestoneGroupChevron
                       isOpen={isUnscheduledOpen}
@@ -814,7 +815,7 @@ const SessionDisplay: React.FC<SessionDisplayProps> = ({
                     <div className="truncate">{t("noMilestone")}</div>
                     <Badge
                       variant="outline"
-                      className="shrink-0 text-xs font-normal text-muted-foreground"
+                      className="shrink-0 hidden @lg:inline-flex text-xs font-normal text-muted-foreground"
                       data-testid="milestone-group-count-unscheduled"
                     >
                       {t("milestoneGroup.sessionCount", {

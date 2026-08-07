@@ -184,7 +184,9 @@
 
   .milestone-grid {
     display: grid;
-    grid-template-columns: 1fr auto auto; /* Three columns: Name (flexible), Status (fixed), Dates (fixed) */
+    /* minmax(0, 1fr) — a bare 1fr floors at min-content, so the name track
+       could never give way and the fixed side columns won instead. */
+    grid-template-columns: minmax(0, 1fr) auto auto;
     gap: 1rem; /* Adjust spacing between columns */
     align-items: center; /* Vertically align items */
     width: 100%;
@@ -198,12 +200,19 @@
   }
 
   .milestone-status {
-    width: 120px; /* Fixed width for status column */
+    /* A floor, not a fixed width: 120px was reserved whether the cell held a
+       status badge or nothing at all, starving the milestone name beside it.
+       Keep the floor below the natural width of a status badge, so it only
+       pads the empty (unscheduled) case and never reserves space. */
+    min-width: 4rem;
     text-align: center; /* Center-align status */
   }
 
   .milestone-dates {
-    width: 200px; /* Fixed width for dates column */
+    /* Same reasoning as .milestone-status. Well below a rendered date range,
+       so groups with dates size to them and the unscheduled group — which has
+       only the add button — stops holding 160px it never uses. */
+    min-width: 5rem;
     text-align: end; /* End-align dates */
   }
 }
@@ -445,6 +454,19 @@ svg[class*="plot-"] .gantt-task-label text {
   /* 2.4.7 Focus Visible: consistent, high-contrast focus ring */
   outline: 2px solid hsl(var(--ring)) !important;
   outline-offset: 2px;
+}
+html:not(.accessible):not(.accessibledark) [data-status-bar] {
+  /* The bar scrolls (see overflow-x-auto on the element) once its segments hit
+     their 4px floor. At 10px tall a native scrollbar would be most of the bar,
+     so hide it here — the segments are links, so keyboard users still reach
+     every one and focus scrolls it into view, and the counts below the bar
+     carry the totals regardless. The accessible themes keep their scrollbar:
+     the rule below grows the bar to 24px, where one fits. */
+  scrollbar-width: none;
+}
+html:not(.accessible):not(.accessibledark)
+  [data-status-bar]::-webkit-scrollbar {
+  display: none;
 }
 :is(.accessible, .accessibledark) [data-status-bar] {
   /* 2.5.8 Target Size: every segment of a status bar links to a case, so each

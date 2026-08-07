@@ -33,12 +33,19 @@ interface MilestoneIconAndNameProps {
   /** Set false where the full MilestoneSourceBadge renders adjacently
    *  (milestone list cards) to avoid a duplicate tracker glyph. */
   showSourceIcon?: boolean;
+  /**
+   * Drop the type glyph as the nearest `@container` ancestor narrows, so the
+   * name keeps its room. Opt-in and container-dependent: without a container
+   * ancestor the `@`-variant never matches and the icon would stay hidden.
+   */
+  collapsibleIcon?: boolean;
 }
 
 export const MilestoneIconAndName: React.FC<MilestoneIconAndNameProps> = ({
   milestone,
   projectId,
   showSourceIcon = true,
+  collapsibleIcon = false,
 }) => {
   // Determine the appropriate link based on whether projectId is provided
   const href = projectId
@@ -59,7 +66,11 @@ export const MilestoneIconAndName: React.FC<MilestoneIconAndNameProps> = ({
           name={
             (milestone.milestoneType?.icon?.name as IconName) || "milestone"
           }
-          className="w-6 h-6 shrink-0"
+          className={
+            collapsibleIcon
+              ? "w-6 h-6 shrink-0 hidden @xl:block"
+              : "w-6 h-6 shrink-0"
+          }
         />
         <span className="truncate">{milestone.name}</span>
         {showSourceIcon && <MilestoneSourceIcon milestone={milestone} />}
