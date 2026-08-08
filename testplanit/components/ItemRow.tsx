@@ -30,6 +30,17 @@ const TIER_CLASS: Record<ItemRowTier, string> = {
   "3xl": "hidden @3xl:flex", // 768px
 };
 
+// `bare` slots keep their tier but drop the layout box.
+const TIER_CLASS_BARE: Record<ItemRowTier, string> = {
+  base: "contents",
+  sm: "hidden @sm:contents",
+  md: "hidden @md:contents",
+  lg: "hidden @lg:contents",
+  xl: "hidden @xl:contents",
+  "2xl": "hidden @2xl:contents",
+  "3xl": "hidden @3xl:contents",
+};
+
 /** Slot lists are built with `cond && {...}` guards, so any falsy value.  */
 type MaybeSlot = ItemRowSlot | false | null | undefined | "" | 0;
 
@@ -37,6 +48,22 @@ export interface ItemRowSlot {
   key: string;
   /** Defaults to "base" — always visible. */
   tier?: ItemRowTier;
+  /**
+   * Render without a layout wrapper (`display: contents`), so the slot's own
+   * element becomes the flex item and its sizing rules apply against the row
+   * directly. Use for anything that already manages its own width — the
+   * milestone source badge measures itself and sheds segments, and an extra
+   * wrapper leaves it negotiating against that wrapper instead of the name.
+   * Tier visibility still works; only the layout box goes away.
+   */
+  bare?: boolean;
+  /**
+   * Never shrink this slot — it shows whole or, once its tier is missed, not
+   * at all. For content that reads as nonsense when clipped: a date range cut
+   * to "Jul 16 - Ju" is worse than no date range. Pinned identity chips sit
+   * outside the shrinking chip group so nothing can clip them.
+   */
+  pinned?: boolean;
   content: React.ReactNode;
 }
 
@@ -61,10 +88,21 @@ export interface ItemRowProps {
   progress?: React.ReactNode;
   /** Metadata line, pinned to the trailing edge so it forms a scan column. */
   trailing?: MaybeSlot[];
-  /** Third line. Only earns space once the row is wide. */
+  /** Only earns space once the row is wide. */
   note?: React.ReactNode;
+  /**
+   * Put the note directly under the name instead of after the metadata line,
+   * where it reads as a description of the name rather than a footnote.
+   */
+  noteBelowName?: boolean;
   /** Workflow state color — tints the border and background. */
   accentColor?: string | null;
+  /**
+   * Explicit surface colours, for callers that already resolved them (the
+   * milestone status palette is theme-aware and hands back a background and
+   * border directly). Takes precedence over `accentColor`.
+   */
+  surface?: { background?: string; border?: string };
   isNew?: boolean;
   selectable?: boolean;
   selected?: boolean;
@@ -75,18 +113,24 @@ export interface ItemRowProps {
 const renderSlots = (slots: ItemRowProps["chips"], className?: string) =>
   (slots ?? [])
     .filter((slot): slot is ItemRowSlot => Boolean(slot))
-    .map((slot) => (
-      <div
-        key={slot.key}
-        className={cn(
-          TIER_CLASS[slot.tier ?? "base"],
-          "items-center min-w-0",
-          className
-        )}
-      >
-        {slot.content}
-      </div>
-    ));
+    .map((slot) =>
+      slot.bare ? (
+        <div key={slot.key} className={TIER_CLASS_BARE[slot.tier ?? "base"]}>
+          {slot.content}
+        </div>
+      ) : (
+        <div
+          key={slot.key}
+          className={cn(
+            TIER_CLASS[slot.tier ?? "base"],
+            "items-center min-w-0",
+            className
+          )}
+        >
+          {slot.content}
+        </div>
+      )
+    );
 
 /**
  * The shared run/session list row.
@@ -109,7 +153,9 @@ export const ItemRow: React.FC<ItemRowProps> = ({
   progress,
   trailing,
   note,
+  noteBelowName = false,
   accentColor,
+  surface,
   isNew,
   selectable = false,
   selected = false,
@@ -117,6 +163,26 @@ export const ItemRow: React.FC<ItemRowProps> = ({
   selectTestId,
 }) => {
   const t = useTranslations("common");
+
+  // `bare` adornments manage their own width, so they belong in the row's
+  // negotiation rather than inside the (growable) name block.
+  const adornmentSlots = (adornments ?? []).filter(
+    (slot): slot is ItemRowSlot => Boolean(slot)
+  );
+  const bareAdornments = adornmentSlots.filter((slot) => slot.bare);
+  const pinnedAdornments = adornmentSlots.filter((slot) => !slot.bare);
+
+  const identitySlots = (identityChips ?? []).filter(
+    (slot): slot is ItemRowSlot => Boolean(slot)
+  );
+  const pinnedIdentity = identitySlots.filter((slot) => slot.pinned);
+  const shrinkingIdentity = identitySlots.filter((slot) => !slot.pinned);
+
+  const noteEl = note ? (
+    <div className="hidden @xl:block text-sm text-muted-foreground line-clamp-1">
+      {note}
+    </div>
+  ) : null;
 
   return (
     <div
@@ -126,12 +192,15 @@ export const ItemRow: React.FC<ItemRowProps> = ({
         isNew && "border-primary animate-pulse"
       )}
       style={{
-        backgroundColor: accentColor ? `${accentColor}10` : undefined,
-        borderColor: accentColor
-          ? isNew
-            ? accentColor
-            : `${accentColor}44`
-          : undefined,
+        backgroundColor:
+          surface?.background ?? (accentColor ? `${accentColor}10` : undefined),
+        borderColor:
+          surface?.border ??
+          (accentColor
+            ? isNew
+              ? accentColor
+              : `${accentColor}44`
+            : undefined),
       }}
     >
       <div className="flex flex-col gap-1">
@@ -148,11 +217,12 @@ export const ItemRow: React.FC<ItemRowProps> = ({
               data-testid={selectTestId}
             />
           )}
-          {/* `flex-auto`, not `flex-1`: a zero flex-basis would make this absorb
-              every pixel the configuration takes, truncating the name first.
-              With a content basis the two shrink against each other, and the
-              weighting below decides which one gives way. */}
-          <div className="group flex items-center gap-1 min-w-0 flex-auto">
+          {/* Content basis and no grow. A zero basis (`flex-1`) would absorb
+              every pixel the chips take, truncating the name first; growing
+              would push the adornments below away from the name and give them
+              slack so they never start collapsing. The spacer takes the free
+              space instead, and shrink weights decide who gives way. */}
+          <div className="group flex items-center gap-1 min-w-0 flex-initial">
             <Link
               href={href}
               className="inline-flex items-center gap-1 min-w-0 max-w-full"
@@ -171,21 +241,38 @@ export const ItemRow: React.FC<ItemRowProps> = ({
                 </Tooltip>
               </h3>
             </Link>
-            {renderSlots(adornments, "shrink-0")}
+            {renderSlots(pinnedAdornments, "shrink-0")}
           </div>
-          {/* Outweighs the name's shrink factor, so the configuration gives up
-              its width first and truncates down to `min-w-20` before the run
-              name loses a single character. */}
-          {identityChips?.some(Boolean) && (
-            <div className="flex items-center gap-3 shrink-[9999] min-w-20 max-w-[45%] overflow-hidden">
-              {renderSlots(identityChips)}
+          {/* Self-sizing adornments sit OUTSIDE the name block on purpose. The
+              name block grows into free space, so anything nested in it has
+              slack and never starts collapsing until the block itself shrinks
+              — which reads as the adornment appearing and disappearing rather
+              than shedding parts. Out here it negotiates against the row. */}
+          {renderSlots(bareAdornments)}
+          {/* Absorbs free space so the name and its adornments stay together on
+              the leading edge while the state and actions stay on the trailing
+              one. Zero basis, so it contributes nothing when space is short. */}
+          <div className="flex-1 min-w-0" aria-hidden="true" />
+          {/* Outweighs the name's shrink factor, so these give up their width
+              first and the name is the last thing to truncate. The weight is
+              modest so a self-sizing adornment (shrink-[999]) sheds its parts
+              first, rather than these soaking up the whole deficit. `min-w-0`, not
+              a floor: a floor reserves its width even when the content is
+              shorter (a start date with no end date, say), leaving dead space
+              beside the name instead of handing it back. */}
+          {shrinkingIdentity.length > 0 && (
+            <div className="flex items-center gap-3 shrink-[99] min-w-0 max-w-[45%] overflow-hidden">
+              {renderSlots(shrinkingIdentity)}
             </div>
           )}
+          {renderSlots(pinnedIdentity, "shrink-0 whitespace-nowrap")}
           {state && <div className="shrink-0 flex items-center">{state}</div>}
           {actions && (
             <div className="shrink-0 flex items-center">{actions}</div>
           )}
         </div>
+
+        {noteBelowName && noteEl}
 
         {/* Metadata line */}
         {(chips?.some(Boolean) || progress || trailing?.some(Boolean)) && (
@@ -204,11 +291,7 @@ export const ItemRow: React.FC<ItemRowProps> = ({
           </div>
         )}
 
-        {note && (
-          <div className="hidden @xl:block text-sm text-muted-foreground line-clamp-1">
-            {note}
-          </div>
-        )}
+        {!noteBelowName && noteEl}
       </div>
     </div>
   );

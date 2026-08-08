@@ -409,7 +409,7 @@ export function TestRunCasesSummary({
         {/* Summary text below the bar */}
         <div className="flex justify-between items-center">
           <div
-            className="text-muted-foreground text-xs truncate grow me-2"
+            className="flex items-center min-w-0 grow me-2 text-muted-foreground text-xs"
             title={summaryTitle}
           >
             {`${tCommon("labels.total")}: ${totalItems} ${tCommon("plural.case", { count: totalItems })}`}
@@ -655,13 +655,15 @@ export function TestRunCasesSummary({
           className="text-muted-foreground text-xs truncate grow me-2"
           title={`${summaryText}${totalElapsedText ? ` • ${tCommon("fields.totalElapsed")}: ${totalElapsedText}` : ""}${totalEstimateText ? ` • ${tCommon("fields.totalEstimate")}: ${totalEstimateText}` : ""}`}
         >
-          {`${tCommon("labels.total")}: ${totalItems} ${tCommon("plural.case", { count: totalItems })}`}
-          {summaryText ? ` (${summaryText})` : ""}
+          <span className="truncate shrink">
+            {`${tCommon("labels.total")}: ${totalItems} ${tCommon("plural.case", { count: totalItems })}`}
+            {summaryText ? ` (${summaryText})` : ""}
+          </span>
           {totalElapsedText ? (
             <Tooltip>
               <TooltipTrigger asChild>
                 <span
-                  className="inline-flex items-center ms-1 cursor-default"
+                  className="inline-flex items-center ms-1 cursor-default shrink-[999] min-w-0 overflow-hidden whitespace-nowrap"
                   data-testid="total-elapsed-display"
                 >
                   {" • "}
@@ -680,7 +682,7 @@ export function TestRunCasesSummary({
             <Tooltip>
               <TooltipTrigger asChild>
                 <span
-                  className="inline-flex items-center ms-1 cursor-default"
+                  className="inline-flex items-center ms-1 cursor-default shrink-[9999] min-w-0 overflow-hidden whitespace-nowrap"
                   data-testid="total-estimate-display"
                 >
                   {" • "}

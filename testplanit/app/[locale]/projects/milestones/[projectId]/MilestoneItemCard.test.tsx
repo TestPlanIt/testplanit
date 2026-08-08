@@ -13,6 +13,7 @@ vi.mock("next-intl", () => ({
 
 vi.mock("~/lib/navigation", () => ({
   useRouter: () => ({ refresh: vi.fn() }),
+  Link: ({ children, href }: any) => <a href={href}>{children}</a>,
 }));
 
 let mockIsProjectAdmin = true;
@@ -42,12 +43,6 @@ vi.mock("~/components/LoadingSpinner", () => ({
 vi.mock("@/components/ForecastDisplay", () => ({
   ForecastDisplay: ({ seconds, type }: any) => (
     <div data-testid={`forecast-${type}`} data-seconds={seconds} />
-  ),
-}));
-
-vi.mock("@/components/MilestoneIconAndName", () => ({
-  MilestoneIconAndName: ({ milestone }: any) => (
-    <div data-testid="milestone-icon-name">{milestone.name}</div>
   ),
 }));
 
@@ -274,7 +269,7 @@ describe("MilestoneItemCard", () => {
   });
 
   describe("basic rendering", () => {
-    it("renders milestone name via MilestoneIconAndName", () => {
+    it("renders the milestone name", () => {
       const milestone = createMilestone({ name: "My Sprint" });
       const cbs = mockCallbacks();
       render(
