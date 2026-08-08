@@ -1,9 +1,14 @@
 import { Job, Worker } from "bullmq";
 import { DbNull } from "@zenstackhq/orm";
-import { WorkflowScope } from "~/zenstack/models";
 import { runWithAuditContext } from "../lib/auditContext";
-import { buildGucPayload } from "../lib/audit/gucContext";
+import { buildGucPayload, withAuditGuc } from "../lib/audit/gucContext";
 import type { ActorContextJobData } from "../lib/auditContextEnqueue";
+import {
+  createCaseStateMapper,
+  createGatedStateResolver,
+  getCasesWorkflowAssignments,
+  getWorkflowNamesByIds,
+} from "../lib/services/workflowStateMapping";
 import {
   disconnectAllTenantClients,
   getCurrentTenantId,
@@ -14,7 +19,6 @@ import {
 } from "../lib/multiTenantDb";
 import { COPY_MOVE_QUEUE_NAME } from "../lib/queueNames";
 import { captureAuditEvent } from "../lib/services/auditLog";
-import { resolveCreateStateRemap } from "../lib/services/reviewGate";
 import { withTenantContext } from "../lib/tenantContext";
 import valkeyConnection from "../lib/valkey";
 import { BULLMQ_PREFIX } from "../lib/bullPrefix";
@@ -28,13 +32,16 @@ interface CopyMoveJobDataCore extends MultiTenantJobData {
   caseIds: number[];
   sourceProjectId: number;
   targetProjectId: number;
-  targetRepositoryId: number;
   targetFolderId: number;
   conflictResolution: "skip" | "rename" | "overwrite";
   sharedStepGroupResolution: "reuse" | "create_new";
   userId: string;
-  targetTemplateId: number;
-  targetDefaultWorkflowStateId: number;
+  // Target context for rows created in the target project. A same-project
+  // move is a pure relocation and carries none of these — it derives the
+  // repository from the target folder and touches neither template nor state.
+  targetRepositoryId?: number;
+  targetTemplateId?: number;
+  targetDefaultWorkflowStateId?: number;
   folderTree?: FolderTreeNode[];
 }
 
@@ -277,6 +284,293 @@ async function fetchTemplateFields(
   return result;
 }
 
+// ─── Same-project move: relocation ──────────────────────────────────────────
+
+/** Audit-context payload for this job's transactions (CTX-02). */
+function jobGucPayload(job: Job<CopyMoveJobData>) {
+  return {
+    ...buildGucPayload(),
+    source: "worker",
+    tenantId: job.data?.tenantId ?? getCurrentTenantId() ?? null,
+  };
+}
+
+/**
+ * A move that stays inside one project relocates the existing rows: cases
+ * keep their name, template, state, versions, children and comments, and a
+ * moved folder keeps its identity and subtree. Nothing is created, renamed
+ * or restamped, so none of the copy machinery (collision resolution,
+ * template/state mapping, child-record duplication) is involved.
+ *
+ * The whole relocation runs in ONE transaction, so a failure leaves the
+ * repository exactly as it was — there is no rollback bookkeeping.
+ */
+async function relocateWithinProject(
+  job: Job<CopyMoveJobData>,
+  db: any
+): Promise<CopyMoveJobResult> {
+  const result: CopyMoveJobResult = {
+    copiedCount: 0,
+    movedCount: 0,
+    skippedCount: 0,
+    droppedLinkCount: 0,
+    errors: [],
+  };
+  const projectId = job.data.targetProjectId;
+
+  // The target folder anchors the move: every relocated row lands in its
+  // repository (a folder belongs to exactly one repository, so the folder —
+  // not the job payload — is the authority on the repository id).
+  const targetFolder = await db.repositoryFolders.findFirst({
+    where: {
+      id: job.data.targetFolderId,
+      projectId,
+      isDeleted: false,
+    },
+    select: { id: true, repositoryId: true },
+  });
+  if (!targetFolder) {
+    throw new Error("Target folder not found in target project");
+  }
+  const targetRepositoryId = targetFolder.repositoryId;
+
+  const folderTree =
+    job.data.folderTree && job.data.folderTree.length > 0
+      ? job.data.folderTree
+      : undefined;
+
+  // Moving a folder into itself or its own subtree would orphan the tree.
+  // The dialog disables these targets; enforce it server-side too.
+  if (folderTree?.some((n) => n.sourceFolderId === job.data.targetFolderId)) {
+    throw new Error("Cannot move a folder into itself or its own subtree");
+  }
+
+  // The projectId filter is load-bearing: the route only checks project
+  // access, so without it a crafted payload could relocate another
+  // project's rows.
+  const sourceCases: Array<{ id: number; folderId: number }> =
+    await db.repositoryCases.findMany({
+      where: {
+        id: { in: job.data.caseIds },
+        projectId,
+        isDeleted: false,
+      },
+      select: { id: true, folderId: true },
+    });
+
+  await job.updateProgress({ processed: 0, total: sourceCases.length });
+
+  // ── Plan ──────────────────────────────────────────────────────────────
+  // Case moves are row updates; folder moves reparent the existing folder
+  // row (its whole subtree comes along untouched) unless a live same-named
+  // sibling already exists under the destination — then the folder merges:
+  // its direct cases move into the sibling, its children re-anchor under
+  // the sibling, and the emptied source folder is soft-deleted.
+  const caseMoves: Array<{ caseId: number; folderId: number; order: number }> =
+    [];
+  const folderReparents: Array<{
+    folderId: number;
+    parentId: number;
+    order: number;
+  }> = [];
+  const mergedFolderIds: number[] = [];
+
+  // Next free `order` per destination folder, fetched once per folder.
+  const nextCaseOrder = new Map<number, number>();
+  const claimCaseOrder = async (folderId: number): Promise<number> => {
+    if (!nextCaseOrder.has(folderId)) {
+      const maxRow = await db.repositoryCases.findFirst({
+        where: { folderId },
+        orderBy: { order: "desc" },
+        select: { order: true },
+      });
+      nextCaseOrder.set(folderId, (maxRow?.order ?? -1) + 1);
+    }
+    const order = nextCaseOrder.get(folderId)!;
+    nextCaseOrder.set(folderId, order + 1);
+    return order;
+  };
+  const nextFolderOrder = new Map<number, number>();
+  const claimFolderOrder = async (parentId: number): Promise<number> => {
+    if (!nextFolderOrder.has(parentId)) {
+      const maxRow = await db.repositoryFolders.findFirst({
+        where: { projectId, parentId, isDeleted: false },
+        orderBy: { order: "desc" },
+        select: { order: true },
+      });
+      nextFolderOrder.set(parentId, (maxRow?.order ?? -1) + 1);
+    }
+    const order = nextFolderOrder.get(parentId)!;
+    nextFolderOrder.set(parentId, order + 1);
+    return order;
+  };
+
+  if (folderTree) {
+    const folderRows: Array<{
+      id: number;
+      parentId: number | null;
+      name: string;
+    }> = await db.repositoryFolders.findMany({
+      where: {
+        id: { in: folderTree.map((n) => n.sourceFolderId) },
+        projectId,
+        isDeleted: false,
+      },
+      select: { id: true, parentId: true, name: true },
+    });
+    const folderRowById = new Map(folderRows.map((f) => [f.id, f]));
+    const childrenOf = new Map<string, FolderTreeNode[]>();
+    for (const node of folderTree) {
+      if (node.parentLocalKey === null) continue;
+      const list = childrenOf.get(node.parentLocalKey) ?? [];
+      list.push(node);
+      childrenOf.set(node.parentLocalKey, list);
+    }
+
+    const queue = folderTree
+      .filter((n) => n.parentLocalKey === null)
+      .map((node) => ({ node, destParentId: targetFolder.id }));
+    while (queue.length > 0) {
+      const { node, destParentId } = queue.shift()!;
+      const row = folderRowById.get(node.sourceFolderId);
+      if (!row) continue;
+
+      if (row.parentId === destParentId) {
+        // Already lives there — the folder, its subtree and its cases are
+        // all exactly where they belong. Nothing to do.
+        continue;
+      }
+
+      const sibling = await db.repositoryFolders.findFirst({
+        where: {
+          projectId,
+          parentId: destParentId,
+          name: row.name,
+          isDeleted: false,
+          id: { not: row.id },
+        },
+        select: { id: true },
+      });
+
+      if (!sibling) {
+        folderReparents.push({
+          folderId: row.id,
+          parentId: destParentId,
+          order: await claimFolderOrder(destParentId),
+        });
+        // The subtree rides along with the reparented folder.
+        continue;
+      }
+
+      // Merge into the existing sibling.
+      for (const caseId of node.caseIds) {
+        caseMoves.push({
+          caseId,
+          folderId: sibling.id,
+          order: await claimCaseOrder(sibling.id),
+        });
+      }
+      for (const child of childrenOf.get(node.localKey) ?? []) {
+        queue.push({ node: child, destParentId: sibling.id });
+      }
+      mergedFolderIds.push(row.id);
+    }
+  } else {
+    for (const sourceCase of sourceCases) {
+      if (sourceCase.folderId === targetFolder.id) continue;
+      caseMoves.push({
+        caseId: sourceCase.id,
+        folderId: targetFolder.id,
+        order: await claimCaseOrder(targetFolder.id),
+      });
+    }
+  }
+
+  // ── Execute atomically ────────────────────────────────────────────────
+  await withAuditGuc(db, jobGucPayload(job), async (tx: any) => {
+    for (const move of caseMoves) {
+      await tx.repositoryCases.update({
+        where: { id: move.caseId },
+        data: {
+          folderId: move.folderId,
+          repositoryId: targetRepositoryId,
+          order: move.order,
+        },
+      });
+    }
+    for (const reparent of folderReparents) {
+      await tx.repositoryFolders.update({
+        where: { id: reparent.folderId },
+        data: {
+          parentId: reparent.parentId,
+          repositoryId: targetRepositoryId,
+          order: reparent.order,
+        },
+      });
+    }
+    if (mergedFolderIds.length > 0) {
+      await tx.repositoryFolders.updateMany({
+        where: { id: { in: mergedFolderIds } },
+        data: { isDeleted: true },
+      });
+    }
+  });
+
+  await job.updateProgress({
+    processed: sourceCases.length,
+    total: sourceCases.length,
+    finalizing: true,
+  });
+
+  // ES stores each case's folder path, so every case in the move is
+  // re-synced — including cases whose rows didn't change but whose folder
+  // was reparented. Best-effort, after commit.
+  for (const sourceCase of sourceCases) {
+    syncRepositoryCaseToElasticsearch(
+      sourceCase.id,
+      job.data.tenantId,
+      db
+    ).catch((err) =>
+      console.error(`ES sync failed for moved case ${sourceCase.id}:`, err)
+    );
+  }
+
+  // Audit the rows that changed: relocated cases and reparented folders.
+  for (const move of caseMoves) {
+    captureAuditEvent({
+      action: "UPDATE",
+      entityType: "RepositoryCases",
+      entityId: String(move.caseId),
+      projectId,
+      userId: job.data.userId,
+      tenantId: job.data.tenantId,
+      metadata: {
+        source: "copy-move:move",
+        targetFolderId: move.folderId,
+        jobId: job.id,
+      },
+    }).catch(() => {});
+  }
+  for (const reparent of folderReparents) {
+    captureAuditEvent({
+      action: "UPDATE",
+      entityType: "RepositoryFolders",
+      entityId: String(reparent.folderId),
+      projectId,
+      userId: job.data.userId,
+      tenantId: job.data.tenantId,
+      metadata: {
+        source: "copy-move:move",
+        targetParentFolderId: reparent.parentId,
+        jobId: job.id,
+      },
+    }).catch(() => {});
+  }
+
+  result.movedCount = sourceCases.length;
+  return result;
+}
+
 // ─── Processor ──────────────────────────────────────────────────────────────
 
 // re-establish the ALS frame from job.data.actorContext so
@@ -305,6 +599,30 @@ const processor = async (
     if (cancelledAtStart) {
       await redis.del(cancelKey(job.id));
       throw new Error("Job cancelled by user");
+    }
+
+    // A move within one project is a relocation, not a copy — handled by its
+    // own path with none of the machinery below.
+    if (
+      job.data.operation === "move" &&
+      job.data.sourceProjectId === job.data.targetProjectId
+    ) {
+      return relocateWithinProject(job, db);
+    }
+
+    // Everything past this point creates rows in the target project, which
+    // requires the resolved target context.
+    const targetRepositoryId = job.data.targetRepositoryId;
+    const targetTemplateId = job.data.targetTemplateId;
+    const targetDefaultWorkflowStateId = job.data.targetDefaultWorkflowStateId;
+    if (
+      targetRepositoryId == null ||
+      targetTemplateId == null ||
+      targetDefaultWorkflowStateId == null
+    ) {
+      throw new Error(
+        "Copy/cross-project move job is missing resolved target context"
+      );
     }
 
     // 4. Pre-fetch folderMaxOrder (only used for non-folder-tree jobs)
@@ -344,7 +662,7 @@ const processor = async (
         const existingFolder = await db.repositoryFolders.findFirst({
           where: {
             projectId: job.data.targetProjectId,
-            repositoryId: job.data.targetRepositoryId,
+            repositoryId: targetRepositoryId,
             parentId: parentTargetId,
             name: node.name,
             isDeleted: false,
@@ -360,7 +678,7 @@ const processor = async (
           const maxFolderOrderRow = await db.repositoryFolders.findFirst({
             where: {
               projectId: job.data.targetProjectId,
-              repositoryId: job.data.targetRepositoryId,
+              repositoryId: targetRepositoryId,
               parentId: parentTargetId,
             },
             orderBy: { order: "desc" },
@@ -369,7 +687,7 @@ const processor = async (
           const newFolder = await db.repositoryFolders.create({
             data: {
               projectId: job.data.targetProjectId,
-              repositoryId: job.data.targetRepositoryId,
+              repositoryId: targetRepositoryId,
               parentId: parentTargetId,
               name: node.name,
               order: (maxFolderOrderRow?.order ?? -1) + 1,
@@ -396,9 +714,15 @@ const processor = async (
       }
     }
 
-    // 5. Pre-fetch source cases with their related data
+    // 5. Pre-fetch source cases with their related data. The projectId
+    // filter is load-bearing: the route only checks project access, so
+    // without it a crafted payload could copy or move another project's rows.
     const sourceCases = await db.repositoryCases.findMany({
-      where: { id: { in: job.data.caseIds }, isDeleted: false },
+      where: {
+        id: { in: job.data.caseIds },
+        projectId: job.data.sourceProjectId,
+        isDeleted: false,
+      },
       include: {
         steps: {
           where: { isDeleted: false },
@@ -432,7 +756,8 @@ const processor = async (
       },
     });
 
-    // 6. For move: fetch version history separately to avoid 63-char alias limit
+    // 6. For move: fetch version history separately to avoid the 63-char
+    // alias limit.
     const sourceVersionsMap = new Map<number, any[]>();
     if (job.data.operation === "move") {
       for (const sc of sourceCases) {
@@ -446,7 +771,7 @@ const processor = async (
 
     // 7. Pre-fetch template assignments for the target project so we can
     // preserve each source case's template when it's still available there
-    // (instead of silently rewriting every case to job.data.targetTemplateId,
+    // (instead of silently rewriting every case to targetTemplateId,
     // which would, e.g., swap a "Case (steps)" case to whatever happens to
     // be the target's first assigned template). Field definitions are
     // cached lazily per template since the source set may now span several.
@@ -457,6 +782,28 @@ const processor = async (
       });
     const targetAssignedTemplateIds = new Set<number>(
       targetTemplateAssignments.map((a: { templateId: number }) => a.templateId)
+    );
+
+    // 7b. Workflow-state resolution, shared with the preflight route so the
+    // preview the user confirmed is exactly what lands: keep exact states,
+    // else match by name, else the target default — then run the result
+    // through the review gate, since every row this operation writes is
+    // created fresh in the target project.
+    const targetStates = await getCasesWorkflowAssignments(
+      db,
+      job.data.targetProjectId
+    );
+    const uniqueSourceStateIds = [
+      ...new Set(sourceCases.map((c: { stateId: number }) => c.stateId)),
+    ];
+    const sourceStateNames = await getWorkflowNamesByIds(
+      db,
+      uniqueSourceStateIds
+    );
+    const stateMapper = createCaseStateMapper(targetStates, sourceStateNames);
+    const resolveGatedState = createGatedStateResolver(
+      db,
+      job.data.targetProjectId
     );
 
     const templateFieldsCache = new Map<
@@ -475,22 +822,7 @@ const processor = async (
 
     // 8. Initialize state
     const sharedGroupMap = new Map<number, number>();
-    const createdTargetIds: Array<{
-      newId: number;
-      sourceId: number;
-      // true when the "move" relocated the source row itself in place
-      // rather than creating a new row and soft-deleting the old one.
-      inPlace: boolean;
-      // Pre-move field snapshot for in-place entries only, so a rollback
-      // can restore the row instead of hard-deleting a pre-existing case.
-      originalFields?: {
-        repositoryId: number;
-        folderId: number;
-        templateId: number;
-        stateId: number;
-        order: number;
-      };
-    }> = [];
+    const createdTargetIds: Array<{ newId: number; sourceId: number }> = [];
     const result: CopyMoveJobResult = {
       copiedCount: 0,
       movedCount: 0,
@@ -520,16 +852,6 @@ const processor = async (
             ? { className: { equals: null as any } }
             : { className: sourceCase.className };
 
-        // A move within the same project would otherwise self-collide: the
-        // source case still satisfies (name, className, source) until its
-        // soft-delete after the loop. Exclude the move source IDs so we only
-        // see real conflicts. Copy keeps them included — the unique
-        // constraint would genuinely block a same-name duplicate.
-        const movingSourceFilter =
-          job.data.operation === "move"
-            ? { id: { notIn: job.data.caseIds } }
-            : {};
-
         const existingCase = await db.repositoryCases.findFirst({
           where: {
             projectId: job.data.targetProjectId,
@@ -537,7 +859,6 @@ const processor = async (
             ...classNameWhere,
             source: sourceCase.source,
             isDeleted: false,
-            ...movingSourceFilter,
           },
           select: { id: true },
         });
@@ -559,7 +880,6 @@ const processor = async (
                   ...classNameWhere,
                   source: sourceCase.source,
                   isDeleted: false,
-                  ...movingSourceFilter,
                 },
                 select: { id: true },
               });
@@ -591,14 +911,14 @@ const processor = async (
 
         // Preserve the source case's template when it's still assigned to
         // the target project; otherwise fall back to the resolved
-        // job.data.targetTemplateId. Field option remapping uses the
+        // targetTemplateId. Field option remapping uses the
         // matching source/target field snapshots so the values land on the
         // right options when the template differs.
         const effectiveTargetTemplateId = targetAssignedTemplateIds.has(
           sourceCase.templateId
         )
           ? sourceCase.templateId
-          : job.data.targetTemplateId;
+          : targetTemplateId;
         const sourceTemplateFields = await getTemplateFields(
           sourceCase.templateId
         );
@@ -606,369 +926,287 @@ const processor = async (
           effectiveTargetTemplateId
         );
 
-        // A move that stays in the same project and keeps the same name
-        // (no rename applied above) targets the exact same (projectId,
-        // name, className, source) tuple the source row already holds.
-        // That tuple is unique table-wide with no isDeleted exception, so
-        // there is no legal way to create a second row there — the only
-        // valid "move" is to relocate the existing row itself.
-        const isInPlaceMove =
-          job.data.operation === "move" &&
-          job.data.sourceProjectId === job.data.targetProjectId &&
-          caseName === sourceCase.name;
+        // The case keeps its status, resolved through the same mapper the
+        // preflight previewed with, then gated for the freshly created row.
+        const effectiveStateId = await resolveGatedState(
+          stateMapper.map(sourceCase.stateId)?.stateId ??
+            targetDefaultWorkflowStateId
+        );
 
-        const newCaseId = await db.$transaction(async (tx: any) => {
-          // Phase 13 CTX-02 — stamp the actor GUC as the FIRST statement inside
-          // this existing per-case transaction so trigger-captured rows for the
-          // copied RepositoryCases/Steps/CaseFieldValues carry the originating
-          // user/tenant. SET LOCAL only inside a $transaction (Pitfall A); we
-          // inject here rather than wrapping the processor (Pitfall H).
-          await tx.$executeRaw`SELECT set_config('app.audit_context', ${JSON.stringify(
-            {
-              // Full actor frame from the restored job context (CTX-02): the
-              // processor runs inside runWithAuditContext(actorContext), so
-              // buildGucPayload() carries userName + operationId (not just
-              // userId). Without it the copied rows' CDC capture had a blank
-              // actor name and a synthetic operationId that did not group under
-              // the originating save alongside the semantic CREATE/DUPLICATED.
-              ...buildGucPayload(),
-              source: "worker",
-              tenantId: job.data?.tenantId ?? getCurrentTenantId() ?? null,
-            }
-          )}, true)`;
-          // a. Create-or-restore (or, for an in-place move, relocate) the
-          //    target RepositoryCases row.
-          const caseFields = {
-            repositoryId: job.data.targetRepositoryId,
-            folderId: caseFolderId,
-            templateId: effectiveTargetTemplateId,
-            stateId: job.data.targetDefaultWorkflowStateId,
-            automated: sourceCase.automated,
-            estimate: sourceCase.estimate,
-            creatorId: sourceCase.creatorId,
-            order: caseOrder,
-          };
+        // Phase 13 CTX-02 — withAuditGuc stamps the actor GUC as the FIRST
+        // statement inside this per-case transaction so trigger-captured rows
+        // for the copied RepositoryCases/Steps/CaseFieldValues carry the
+        // originating user/tenant. The processor runs inside
+        // runWithAuditContext(actorContext), so buildGucPayload() carries
+        // userName + operationId, grouping CDC rows under the originating
+        // save alongside the semantic CREATE/DUPLICATED.
+        const newCaseId = await withAuditGuc(
+          db,
+          jobGucPayload(job),
+          async (tx: any) => {
+            // a. Create-or-restore the target RepositoryCases row.
+            const caseFields = {
+              repositoryId: targetRepositoryId,
+              folderId: caseFolderId,
+              templateId: effectiveTargetTemplateId,
+              stateId: effectiveStateId,
+              automated: sourceCase.automated,
+              estimate: sourceCase.estimate,
+              creatorId: sourceCase.creatorId,
+              order: caseOrder,
+            };
 
-          if (isInPlaceMove) {
-            // Relocate the existing row directly — every child row (Steps,
-            // CaseFieldValues, Attachments, Tags, Issues, Versions,
-            // Comments) already points at this id, so there's nothing to
-            // copy and no version bump/history rewrite needed. currentVersion
-            // is deliberately left untouched (unlike the create/resurrect
-            // paths below) since this is the same row, not a new one.
-            const movedCase = await tx.repositoryCases.update({
-              where: { id: sourceCase.id },
-              data: caseFields,
-            });
-            return movedCase.id;
-          }
-
-          // Create-or-restore the target RepositoryCases row. A prior
-          // soft-deleted case at the same (projectId, name, className,
-          // source) tuple (e.g. the user previously deleted a copy
-          // with the same name) gets resurrected with the fresh
-          // payload instead of 23505ing. Prisma's compound-unique
-          // upsert rejects null for nullable members like `className`,
-          // so the find-then-branch pattern is the typesafe path.
-          const softDeletedExisting = await tx.repositoryCases.findFirst({
-            where: {
-              projectId: job.data.targetProjectId,
-              name: caseName,
-              className: sourceCase.className,
-              source: sourceCase.source,
-              isDeleted: true,
-            },
-            select: { id: true },
-          });
-          const newCase = softDeletedExisting
-            ? await tx.repositoryCases.update({
-                where: { id: softDeletedExisting.id },
-                data: { ...caseFields, currentVersion: 1, isDeleted: false },
-              })
-            : await tx.repositoryCases.create({
-                data: {
-                  projectId: job.data.targetProjectId,
-                  name: caseName,
-                  className: sourceCase.className,
-                  source: sourceCase.source,
-                  ...caseFields,
-                  currentVersion: 1,
-                },
-              });
-
-          // b. Create Steps
-          for (const step of sourceCase.steps) {
-            let resolvedSharedStepGroupId: number | null = null;
-
-            if (step.sharedStepGroupId !== null && step.sharedStepGroup) {
-              resolvedSharedStepGroupId = await resolveSharedStepGroup(
-                tx,
-                step.sharedStepGroup,
-                job.data,
-                sharedGroupMap
-              );
-            }
-
-            await tx.steps.create({
-              data: {
-                testCaseId: newCase.id,
-                step: step.step,
-                expectedResult: step.expectedResult,
-                order: step.order,
-                sharedStepGroupId: resolvedSharedStepGroupId,
+            // A prior soft-deleted case at the same (projectId, name,
+            // className, source) tuple (e.g. the user previously deleted a
+            // copy with the same name) gets resurrected with the fresh
+            // payload instead of 23505ing. Prisma's compound-unique upsert
+            // rejects null for nullable members like `className`, so the
+            // find-then-branch pattern is the typesafe path.
+            const softDeletedExisting = await tx.repositoryCases.findFirst({
+              where: {
+                projectId: job.data.targetProjectId,
+                name: caseName,
+                className: sourceCase.className,
+                source: sourceCase.source,
+                isDeleted: true,
               },
+              select: { id: true },
             });
-          }
+            const newCase = softDeletedExisting
+              ? await tx.repositoryCases.update({
+                  where: { id: softDeletedExisting.id },
+                  data: { ...caseFields, currentVersion: 1, isDeleted: false },
+                })
+              : await tx.repositoryCases.create({
+                  data: {
+                    projectId: job.data.targetProjectId,
+                    name: caseName,
+                    className: sourceCase.className,
+                    source: sourceCase.source,
+                    ...caseFields,
+                    currentVersion: 1,
+                  },
+                });
 
-          // c. Create CaseFieldValues (resolve option IDs by name for dropdown/multiselect)
-          for (const fieldValue of sourceCase.caseFieldValues) {
-            const resolvedValue = resolveFieldValue(
-              fieldValue.fieldId,
-              fieldValue.value,
-              sourceTemplateFields,
-              targetTemplateFields
-            );
-            if (resolvedValue !== null) {
-              await tx.caseFieldValues.create({
+            // b. Create Steps
+            for (const step of sourceCase.steps) {
+              let resolvedSharedStepGroupId: number | null = null;
+
+              if (step.sharedStepGroupId !== null && step.sharedStepGroup) {
+                resolvedSharedStepGroupId = await resolveSharedStepGroup(
+                  tx,
+                  step.sharedStepGroup,
+                  job.data,
+                  sharedGroupMap
+                );
+              }
+
+              await tx.steps.create({
                 data: {
                   testCaseId: newCase.id,
-                  fieldId: fieldValue.fieldId,
-                  value: resolvedValue,
+                  step: step.step,
+                  expectedResult: step.expectedResult,
+                  order: step.order,
+                  sharedStepGroupId: resolvedSharedStepGroupId,
                 },
               });
             }
-          }
 
-          // d. Create Attachments (new DB rows pointing to same URLs — no re-upload)
-          for (const attachment of sourceCase.attachments) {
-            await tx.attachments.create({
-              data: {
-                testCaseId: newCase.id,
-                url: attachment.url,
-                name: attachment.name,
-                note: attachment.note,
-                mimeType: attachment.mimeType,
-                size: attachment.size,
-                createdById: attachment.createdById,
-              },
-            });
-          }
-
-          // e. Connect Tags (tags are global — connect by existing tag ID)
-          if (sourceCase.caseTags.length > 0) {
-            await tx.repositoryCaseTag.createMany({
-              data: sourceCase.caseTags.map((ct: { tag: { id: number } }) => ({
-                caseId: newCase.id,
-                tagId: ct.tag.id,
-              })),
-              skipDuplicates: true,
-            });
-          }
-
-          // f. Connect Issues (issues are global — connect by existing issue ID)
-          if (sourceCase.caseIssues.length > 0) {
-            await tx.repositoryCaseIssue.createMany({
-              data: sourceCase.caseIssues.map(
-                (ci: { issue: { id: number } }) => ({
-                  caseId: newCase.id,
-                  issueId: ci.issue.id,
-                })
-              ),
-              skipDuplicates: true,
-            });
-          }
-
-          // g. Version handling
-          if (job.data.operation === "copy") {
-            // Copy: version 1, fresh history
-            await tx.repositoryCases.update({
-              where: { id: newCase.id },
-              data: { currentVersion: 1 },
-            });
-            await createTestCaseVersionInTransaction(tx, newCase.id, {
-              version: 1,
-              creatorId: job.data.userId,
-            });
-          } else {
-            // Move: preserve full version history with updated FKs
-            const sourceVersions = sourceVersionsMap.get(sourceCase.id) ?? [];
-            let lastVersionNumber = 1;
-            const versionStateRemap = new Map<
-              number,
-              { id: number; name: string }
-            >();
-            for (const ver of sourceVersions) {
-              let effectiveVerStateId = ver.stateId;
-              let effectiveVerStateName = ver.stateName;
-              const cached = versionStateRemap.get(ver.stateId);
-              if (cached) {
-                effectiveVerStateId = cached.id;
-                effectiveVerStateName = cached.name;
-              } else {
-                const remapped =
-                  (await resolveCreateStateRemap(
-                    tx,
-                    job.data.targetProjectId,
-                    WorkflowScope.CASES,
-                    ver.stateId
-                  )) ?? ver.stateId;
-                if (remapped !== ver.stateId) {
-                  const remappedRow = await tx.workflows.findUnique({
-                    where: { id: remapped },
-                    select: { name: true },
-                  });
-                  effectiveVerStateId = remapped;
-                  effectiveVerStateName = remappedRow?.name ?? ver.stateName;
-                }
-                versionStateRemap.set(ver.stateId, {
-                  id: effectiveVerStateId,
-                  name: effectiveVerStateName,
+            // c. Create CaseFieldValues (resolve option IDs by name for dropdown/multiselect)
+            for (const fieldValue of sourceCase.caseFieldValues) {
+              const resolvedValue = resolveFieldValue(
+                fieldValue.fieldId,
+                fieldValue.value,
+                sourceTemplateFields,
+                targetTemplateFields
+              );
+              if (resolvedValue !== null) {
+                await tx.caseFieldValues.create({
+                  data: {
+                    testCaseId: newCase.id,
+                    fieldId: fieldValue.fieldId,
+                    value: resolvedValue,
+                  },
                 });
               }
-              await tx.repositoryCaseVersions.create({
-                data: {
-                  repositoryCaseId: newCase.id,
-                  // Update location FKs to target
-                  projectId: job.data.targetProjectId,
-                  repositoryId: job.data.targetRepositoryId,
-                  folderId: caseFolderId,
-                  // Preserve static snapshot fields
-                  staticProjectId: ver.staticProjectId,
-                  staticProjectName: ver.staticProjectName,
-                  folderName: ver.folderName,
-                  templateId: ver.templateId,
-                  templateName: ver.templateName,
-                  name: ver.name,
-                  stateId: effectiveVerStateId,
-                  stateName: effectiveVerStateName,
-                  estimate: ver.estimate,
-                  forecastManual: ver.forecastManual,
-                  forecastAutomated: ver.forecastAutomated,
-                  order: ver.order,
-                  createdAt: ver.createdAt,
-                  creatorId: ver.creatorId,
-                  creatorName: ver.creatorName,
-                  automated: ver.automated,
-                  isArchived: ver.isArchived,
-                  isDeleted: ver.isDeleted,
-                  version: ver.version,
-                  // v3 rejects raw `null` for nullable Json columns on create;
-                  // the DbNull sentinel writes SQL NULL (the snapshot's empty
-                  // state). Mirrors lib/scim/services/* coercion.
-                  steps: ver.steps ?? DbNull,
-                  tags: ver.tags ?? DbNull,
-                  issues: ver.issues ?? DbNull,
-                  links: ver.links ?? DbNull,
-                  attachments: ver.attachments ?? DbNull,
-                },
-              });
-              lastVersionNumber = ver.version;
             }
-            await tx.repositoryCases.update({
-              where: { id: newCase.id },
-              data: { currentVersion: lastVersionNumber },
-            });
 
-            // h. Comments (move only: preserve all comments)
-            const comments = sourceCase.comments ?? [];
-            for (const comment of comments) {
-              await tx.comment.create({
+            // d. Create Attachments (new DB rows pointing to same URLs — no re-upload)
+            for (const attachment of sourceCase.attachments) {
+              await tx.attachments.create({
                 data: {
-                  content: comment.content,
-                  projectId: job.data.targetProjectId,
-                  repositoryCaseId: newCase.id,
-                  creatorId: comment.creatorId,
-                  createdAt: comment.createdAt,
-                  isEdited: comment.isEdited,
+                  testCaseId: newCase.id,
+                  url: attachment.url,
+                  name: attachment.name,
+                  note: attachment.note,
+                  mimeType: attachment.mimeType,
+                  size: attachment.size,
+                  createdById: attachment.createdById,
                 },
               });
             }
-          }
 
-          // Provenance link — within-project copies only
-          if (
-            job.data.operation === "copy" &&
-            job.data.sourceProjectId === job.data.targetProjectId
-          ) {
-            await tx.repositoryCaseLink.create({
-              data: {
-                caseAId: newCase.id,
-                caseBId: sourceCase.id,
-                type: "DUPLICATED_FROM",
-                createdById: job.data.userId,
-              },
-            });
-          }
+            // e. Connect Tags (tags are global — connect by existing tag ID)
+            if (sourceCase.caseTags.length > 0) {
+              await tx.repositoryCaseTag.createMany({
+                data: sourceCase.caseTags.map(
+                  (ct: { tag: { id: number } }) => ({
+                    caseId: newCase.id,
+                    tagId: ct.tag.id,
+                  })
+                ),
+                skipDuplicates: true,
+              });
+            }
 
-          return newCase.id;
-        });
+            // f. Connect Issues (issues are global — connect by existing issue ID)
+            if (sourceCase.caseIssues.length > 0) {
+              await tx.repositoryCaseIssue.createMany({
+                data: sourceCase.caseIssues.map(
+                  (ci: { issue: { id: number } }) => ({
+                    caseId: newCase.id,
+                    issueId: ci.issue.id,
+                  })
+                ),
+                skipDuplicates: true,
+              });
+            }
+
+            // g. Version handling
+            if (job.data.operation === "copy") {
+              // Copy: version 1, fresh history
+              await tx.repositoryCases.update({
+                where: { id: newCase.id },
+                data: { currentVersion: 1 },
+              });
+              await createTestCaseVersionInTransaction(tx, newCase.id, {
+                version: 1,
+                creatorId: job.data.userId,
+              });
+            } else {
+              // Move: preserve full version history with updated FKs
+              const sourceVersions = sourceVersionsMap.get(sourceCase.id) ?? [];
+              let lastVersionNumber = 1;
+              for (const ver of sourceVersions) {
+                // Snapshot states resolve through the same mapper as the live
+                // row — the snapshot's own stateName drives the name match, so
+                // history keeps its recorded state even when no moved case
+                // currently holds it — then through the review gate, so
+                // history can't point at a state the target project doesn't
+                // have. Both resolvers are memoized at job level.
+                const effectiveVerStateId = await resolveGatedState(
+                  stateMapper.map(ver.stateId, ver.stateName)?.stateId ??
+                    targetDefaultWorkflowStateId
+                );
+                const effectiveVerStateName =
+                  stateMapper.targetName(effectiveVerStateId) ?? ver.stateName;
+                await tx.repositoryCaseVersions.create({
+                  data: {
+                    repositoryCaseId: newCase.id,
+                    // Update location FKs to target
+                    projectId: job.data.targetProjectId,
+                    repositoryId: targetRepositoryId,
+                    folderId: caseFolderId,
+                    // Preserve static snapshot fields
+                    staticProjectId: ver.staticProjectId,
+                    staticProjectName: ver.staticProjectName,
+                    folderName: ver.folderName,
+                    templateId: ver.templateId,
+                    templateName: ver.templateName,
+                    name: ver.name,
+                    stateId: effectiveVerStateId,
+                    stateName: effectiveVerStateName,
+                    estimate: ver.estimate,
+                    forecastManual: ver.forecastManual,
+                    forecastAutomated: ver.forecastAutomated,
+                    order: ver.order,
+                    createdAt: ver.createdAt,
+                    creatorId: ver.creatorId,
+                    creatorName: ver.creatorName,
+                    automated: ver.automated,
+                    isArchived: ver.isArchived,
+                    isDeleted: ver.isDeleted,
+                    version: ver.version,
+                    // v3 rejects raw `null` for nullable Json columns on create;
+                    // the DbNull sentinel writes SQL NULL (the snapshot's empty
+                    // state). Mirrors lib/scim/services/* coercion.
+                    steps: ver.steps ?? DbNull,
+                    tags: ver.tags ?? DbNull,
+                    issues: ver.issues ?? DbNull,
+                    links: ver.links ?? DbNull,
+                    attachments: ver.attachments ?? DbNull,
+                  },
+                });
+                lastVersionNumber = ver.version;
+              }
+              await tx.repositoryCases.update({
+                where: { id: newCase.id },
+                data: { currentVersion: lastVersionNumber },
+              });
+
+              // h. Comments (move only: preserve all comments)
+              const comments = sourceCase.comments ?? [];
+              for (const comment of comments) {
+                await tx.comment.create({
+                  data: {
+                    content: comment.content,
+                    projectId: job.data.targetProjectId,
+                    repositoryCaseId: newCase.id,
+                    creatorId: comment.creatorId,
+                    createdAt: comment.createdAt,
+                    isEdited: comment.isEdited,
+                  },
+                });
+              }
+            }
+
+            // Provenance link — within-project copies only
+            if (
+              job.data.operation === "copy" &&
+              job.data.sourceProjectId === job.data.targetProjectId
+            ) {
+              await tx.repositoryCaseLink.create({
+                data: {
+                  caseAId: newCase.id,
+                  caseBId: sourceCase.id,
+                  type: "DUPLICATED_FROM",
+                  createdById: job.data.userId,
+                },
+              });
+            }
+
+            return newCase.id;
+          }
+        );
 
         createdTargetIds.push({
           newId: newCaseId,
           sourceId: sourceCase.id,
-          inPlace: isInPlaceMove,
-          ...(isInPlaceMove
-            ? {
-                originalFields: {
-                  repositoryId: sourceCase.repositoryId,
-                  folderId: sourceCase.folderId,
-                  templateId: sourceCase.templateId,
-                  stateId: sourceCase.stateId,
-                  order: sourceCase.order,
-                },
-              }
-            : {}),
         });
         result.copiedCount++;
       }
     } catch (err: any) {
-      // Rollback. Freshly-created target cases get hard-deleted (cascade
-      // handles children) same as before. In-place entries never created
-      // anything new — newId is the pre-existing source case, so deleting
-      // it would destroy real data; restore its original fields instead.
+      // Rollback: every entry is a freshly-created target case, so
+      // hard-delete them all (cascade handles children).
       if (createdTargetIds.length > 0) {
         console.error(
-          `Copy-move job ${job.id} failed — rolling back ${createdTargetIds.length} processed cases.`
+          `Copy-move job ${job.id} failed — rolling back ${createdTargetIds.length} created cases.`
         );
-        const createdIds = createdTargetIds
-          .filter((c) => !c.inPlace)
-          .map((c) => c.newId);
-        if (createdIds.length > 0) {
-          await db.repositoryCases.deleteMany({
-            where: { id: { in: createdIds } },
-          });
-        }
-        for (const c of createdTargetIds) {
-          if (c.inPlace && c.originalFields) {
-            await db.repositoryCases
-              .update({ where: { id: c.newId }, data: c.originalFields })
-              .catch((revertErr: unknown) =>
-                console.error(
-                  `Copy-move job ${job.id} rollback failed to restore case ${c.newId}:`,
-                  revertErr
-                )
-              );
-          }
-        }
+        await db.repositoryCases.deleteMany({
+          where: { id: { in: createdTargetIds.map((c) => c.newId) } },
+        });
       }
       throw err;
     }
 
-    // 10. Move: soft-delete only source cases that were actually copied — guards
-    // against same-project self-collision with conflictResolution:"skip" where
-    // every case is skipped (copiedCount=0) but the old code deleted originals.
+    // 10. Move: soft-delete only source cases that were actually copied —
+    // guards against a fully-skipped move (every case hit a collision with
+    // conflictResolution:"skip") deleting the originals.
     if (job.data.operation === "move" && createdTargetIds.length > 0) {
-      // In-place moves relocated the source row itself — it's still the
-      // live case (same id), not a leftover original to soft-delete.
-      const movedSourceIds = createdTargetIds
-        .filter((c) => !c.inPlace)
-        .map((c) => c.sourceId);
-      if (movedSourceIds.length > 0) {
-        await db.repositoryCases.updateMany({
-          where: { id: { in: movedSourceIds } },
-          data: { isDeleted: true },
-        });
-      }
+      await db.repositoryCases.updateMany({
+        where: { id: { in: createdTargetIds.map((c) => c.sourceId) } },
+        data: { isDeleted: true },
+      });
 
       // Move: soft-delete source FOLDERS after all cases soft-deleted
       if (job.data.folderTree && job.data.folderTree.length > 0) {
@@ -996,13 +1234,10 @@ const processor = async (
       );
     }
 
-    // For move: also remove source cases from ES index (best-effort, only
-    // those actually soft-deleted — in-place entries share newId===sourceId
-    // and were already re-synced live above, nothing to remove).
+    // For move: also remove the soft-deleted source cases from the ES index
+    // (best-effort).
     if (job.data.operation === "move" && createdTargetIds.length > 0) {
-      for (const sourceId of createdTargetIds
-        .filter((c) => !c.inPlace)
-        .map((c) => c.sourceId)) {
+      for (const { sourceId } of createdTargetIds) {
         syncRepositoryCaseToElasticsearch(
           sourceId,
           job.data.tenantId,
@@ -1021,7 +1256,7 @@ const processor = async (
     result.droppedLinkCount = 0;
 
     // 12b. Audit logging — log bulk operation for created cases
-    for (const { newId } of createdTargetIds.filter((c) => !c.inPlace)) {
+    for (const { newId } of createdTargetIds) {
       captureAuditEvent({
         action: "CREATE",
         entityType: "RepositoryCases",
@@ -1035,24 +1270,6 @@ const processor = async (
           jobId: job.id,
         },
       }).catch(() => {}); // best-effort, don't fail the job
-    }
-
-    // In-place moves never created a new row, so they don't belong in the
-    // CREATE audit above — log them as an UPDATE reflecting the relocation.
-    for (const { newId } of createdTargetIds.filter((c) => c.inPlace)) {
-      captureAuditEvent({
-        action: "UPDATE",
-        entityType: "RepositoryCases",
-        entityId: String(newId),
-        projectId: job.data.targetProjectId,
-        userId: job.data.userId,
-        tenantId: job.data.tenantId,
-        metadata: {
-          source: `copy-move:${job.data.operation}`,
-          targetFolderId: job.data.targetFolderId,
-          jobId: job.id,
-        },
-      }).catch(() => {});
     }
 
     // Provenance audit — within-project copies only
@@ -1079,13 +1296,10 @@ const processor = async (
     }
 
     // Audit logging — log soft-deletes for moved source cases. Sourced from
-    // createdTargetIds (not job.data.caseIds) so skipped cases and in-place
-    // relocations — neither of which were actually soft-deleted — don't get
-    // a false DELETE entry.
+    // createdTargetIds (not job.data.caseIds) so skipped cases don't get a
+    // false DELETE entry.
     if (job.data.operation === "move") {
-      for (const sourceId of createdTargetIds
-        .filter((c) => !c.inPlace)
-        .map((c) => c.sourceId)) {
+      for (const { sourceId } of createdTargetIds) {
         captureAuditEvent({
           action: "DELETE",
           entityType: "RepositoryCases",

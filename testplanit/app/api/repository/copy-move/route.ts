@@ -7,6 +7,10 @@ import { withAuditContext } from "~/lib/auditContextWrappers";
 import { baseDb } from "~/lib/db";
 import { getCopyMoveQueue } from "~/lib/queues";
 import { authOptions } from "~/server/auth";
+import {
+  findActiveRepository,
+  getCasesWorkflowAssignments,
+} from "~/lib/services/workflowStateMapping";
 import { submitSchema } from "./schemas";
 
 // Wrapped with withAuditContext so
@@ -153,67 +157,64 @@ export const POST = withAuditContext(async (request: NextRequest) => {
       // If user has neither ADMIN nor PROJECTADMIN access, skip silently
     }
 
-    // 9. Resolve targetRepositoryId
-    let resolvedTargetRepositoryId = body.targetRepositoryId;
-    if (!resolvedTargetRepositoryId) {
-      const targetRepository = await enhancedDb.repositories.findFirst({
-        where: {
-          projectId: body.targetProjectId,
-          isActive: true,
-          isDeleted: false,
-        },
-      });
-      if (!targetRepository) {
-        return NextResponse.json(
-          { error: "No active repository found in target project" },
-          { status: 400 }
-        );
-      }
-      resolvedTargetRepositoryId = targetRepository.id;
-    }
+    // 9-11. Resolve target repository / default state / template. A move
+    // within one project is a pure relocation — the worker derives the
+    // repository from the target folder and reads neither a template nor a
+    // workflow state — so these lookups (and their 400s) are skipped for it.
+    const isSameProjectMove =
+      body.operation === "move" &&
+      body.sourceProjectId === body.targetProjectId;
 
-    // 10. Resolve targetDefaultWorkflowStateId
+    let resolvedTargetRepositoryId = body.targetRepositoryId;
     let resolvedTargetDefaultWorkflowStateId =
       body.targetDefaultWorkflowStateId;
-    if (!resolvedTargetDefaultWorkflowStateId) {
-      const targetWorkflowAssignments =
-        await enhancedDb.projectWorkflowAssignment.findMany({
-          where: { projectId: body.targetProjectId },
-          include: {
-            workflow: { select: { id: true, isDefault: true } },
-          },
-        });
-
-      const defaultWorkflow = targetWorkflowAssignments.find(
-        (a: { workflow: { isDefault: boolean } }) => a.workflow.isDefault
-      );
-      const fallbackWorkflow = targetWorkflowAssignments[0];
-
-      const resolvedWorkflow = defaultWorkflow ?? fallbackWorkflow;
-      if (!resolvedWorkflow) {
-        return NextResponse.json(
-          { error: "No default workflow state found in target project" },
-          { status: 400 }
-        );
-      }
-      resolvedTargetDefaultWorkflowStateId = resolvedWorkflow.workflow.id;
-    }
-
-    // 11. Resolve targetTemplateId
     let resolvedTargetTemplateId = body.targetTemplateId;
-    if (!resolvedTargetTemplateId) {
-      const targetTemplateAssignments =
-        await enhancedDb.templateProjectAssignment.findMany({
-          where: { projectId: body.targetProjectId },
-        });
 
-      if (!targetTemplateAssignments[0]) {
-        return NextResponse.json(
-          { error: "No template assignment found in target project" },
-          { status: 400 }
+    if (!isSameProjectMove) {
+      if (!resolvedTargetRepositoryId) {
+        const targetRepository = await findActiveRepository(
+          enhancedDb as any,
+          body.targetProjectId
         );
+        if (!targetRepository) {
+          return NextResponse.json(
+            { error: "No active repository found in target project" },
+            { status: 400 }
+          );
+        }
+        resolvedTargetRepositoryId = targetRepository.id;
       }
-      resolvedTargetTemplateId = targetTemplateAssignments[0].templateId;
+
+      if (!resolvedTargetDefaultWorkflowStateId) {
+        const targetStates = await getCasesWorkflowAssignments(
+          enhancedDb as any,
+          body.targetProjectId
+        );
+        const defaultState =
+          targetStates.find((s) => s.isDefault) ?? targetStates[0];
+        if (!defaultState) {
+          return NextResponse.json(
+            { error: "No default workflow state found in target project" },
+            { status: 400 }
+          );
+        }
+        resolvedTargetDefaultWorkflowStateId = defaultState.id;
+      }
+
+      if (!resolvedTargetTemplateId) {
+        const targetTemplateAssignments =
+          await enhancedDb.templateProjectAssignment.findMany({
+            where: { projectId: body.targetProjectId },
+          });
+
+        if (!targetTemplateAssignments[0]) {
+          return NextResponse.json(
+            { error: "No template assignment found in target project" },
+            { status: 400 }
+          );
+        }
+        resolvedTargetTemplateId = targetTemplateAssignments[0].templateId;
+      }
     }
 
     // 12. Enqueue job

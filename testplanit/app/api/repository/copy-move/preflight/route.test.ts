@@ -12,6 +12,8 @@ const {
   mockDbTemplatesFindMany,
   mockDbProjectWorkflowAssignmentFindMany,
   mockDbRepositoriesFindFirst,
+  mockDbWorkflowsFindMany,
+  mockDbAppConfigFindUnique,
 } = vi.hoisted(() => ({
   mockGetServerSession: vi.fn(),
   mockEnhance: vi.fn(),
@@ -22,6 +24,8 @@ const {
   mockDbTemplatesFindMany: vi.fn(),
   mockDbProjectWorkflowAssignmentFindMany: vi.fn(),
   mockDbRepositoriesFindFirst: vi.fn(),
+  mockDbWorkflowsFindMany: vi.fn(),
+  mockDbAppConfigFindUnique: vi.fn(),
 }));
 
 // ─── Mock next-auth ───────────────────────────────────────────────────────────
@@ -63,6 +67,14 @@ vi.mock("~/lib/db", () => ({
     repositories: {
       findFirst: (...args: any[]) => mockDbRepositoriesFindFirst(...args),
     },
+    // Source-state name resolution reads the workflows table directly.
+    workflows: {
+      findMany: (...args: any[]) => mockDbWorkflowsFindMany(...args),
+    },
+    // Review-gate feature flag (default-off in tests).
+    appConfig: {
+      findUnique: (...args: any[]) => mockDbAppConfigFindUnique(...args),
+    },
   },
 }));
 
@@ -80,6 +92,8 @@ const mockEnhancedDb = {
   projectWorkflowAssignment: { findMany: vi.fn() },
   repositories: { findFirst: vi.fn() },
   templates: { findMany: vi.fn() },
+  workflows: { findMany: vi.fn() },
+  appConfig: { findUnique: vi.fn() },
 };
 
 // ─── Fixtures ─────────────────────────────────────────────────────────────────
@@ -118,7 +132,7 @@ const baseTargetWorkflowAssignments = [
   },
 ];
 
-const _baseSourceWorkflowStates = [{ id: 100, name: "Not Started" }];
+const baseSourceWorkflowStates = [{ id: 100, name: "Not Started" }];
 
 const baseTargetRepository = { id: 200 };
 
@@ -180,6 +194,13 @@ function setupDefaultMocks() {
 
   mockDbTemplatesFindMany.mockResolvedValue([]);
   mockEnhancedDb.templates.findMany.mockResolvedValue([]);
+
+  // Source-state names resolve from the workflows table by id.
+  mockDbWorkflowsFindMany.mockResolvedValue(baseSourceWorkflowStates);
+  mockEnhancedDb.workflows.findMany.mockResolvedValue(baseSourceWorkflowStates);
+  // Review feature flag row absent -> gate disabled.
+  mockDbAppConfigFindUnique.mockResolvedValue(null);
+  mockEnhancedDb.appConfig.findUnique.mockResolvedValue(null);
 }
 
 // ─── Tests ───────────────────────────────────────────────────────────────────
@@ -408,11 +429,11 @@ describe("POST /api/repository/copy-move/preflight", () => {
     expect(data.collisions).toHaveLength(0);
   });
 
-  it("SELF-COLLISION: scopes the collision query out of moving source ids on move", async () => {
-    // Customer-reported: moving a case within the same project surfaced a
-    // Skip/Rename conflict because the (name, className, source) tuple
-    // matched the moving case itself. Fix excludes the source IDs from
-    // the collision lookup when operation === 'move'.
+  it("SELF-COLLISION: same-project move short-circuits with nothing to report", async () => {
+    // A same-project move only relocates rows, so preflight has nothing to
+    // preview: no collision query, no template/workflow warnings, and no
+    // target repository/template/state context (a relocation reads none of
+    // it). A case cannot conflict with itself.
     setupDefaultMocks();
     const { POST } = await import("./route");
     const res = await POST(
@@ -424,10 +445,16 @@ describe("POST /api/repository/copy-move/preflight", () => {
       })
     );
     expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.collisions).toHaveLength(0);
+    expect(data.workflowMappings).toHaveLength(0);
+    expect(data.templateMismatch).toBe(false);
+    expect(data.targetRepositoryId).toBeUndefined();
+    expect(data.targetDefaultWorkflowStateId).toBeUndefined();
+    expect(data.targetTemplateId).toBeUndefined();
 
-    // Collision check is the second findMany on the admin path
-    const collisionCall = mockDbRepositoryCasesFindMany.mock.calls[1]?.[0];
-    expect(collisionCall?.where?.id).toEqual({ notIn: [1, 2] });
+    // The short-circuit answers before any case rows are read.
+    expect(mockDbRepositoryCasesFindMany).not.toHaveBeenCalled();
   });
 
   it("SELF-COLLISION: does NOT scope the collision query out of source ids on copy", async () => {

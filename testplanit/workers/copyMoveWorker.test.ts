@@ -77,6 +77,8 @@ const mockTx = {
     findMany: vi.fn(),
   },
   sharedStepGroup: { findFirst: vi.fn(), create: vi.fn() },
+  // Same-project relocation reparents/merges folders inside its transaction.
+  repositoryFolders: { update: vi.fn(), updateMany: vi.fn() },
   repositoryCaseVersions: { create: vi.fn(), findMany: vi.fn() },
   comment: { create: vi.fn() },
   repositoryCaseLink: { create: vi.fn() },
@@ -97,6 +99,7 @@ const mockDb = {
   repositoryCaseVersions: { findMany: vi.fn() },
   repositoryFolders: {
     findFirst: vi.fn(),
+    findMany: vi.fn(),
     create: vi.fn(),
     updateMany: vi.fn(),
   },
@@ -106,6 +109,14 @@ const mockDb = {
   // templates can be preserved per case when still assigned. Default to
   // empty so existing tests fall through to job.data.targetTemplateId.
   templateProjectAssignment: { findMany: vi.fn().mockResolvedValue([]) },
+  // Worker pre-fetches the target project's CASES workflow states to keep
+  // each case's status. Default to empty so existing tests fall through to
+  // job.data.targetDefaultWorkflowStateId.
+  projectWorkflowAssignment: { findMany: vi.fn().mockResolvedValue([]) },
+  workflows: { findMany: vi.fn().mockResolvedValue([]), findUnique: vi.fn() },
+  // resolveCreateStateRemap short-circuit: feature disabled returns candidate unchanged.
+  appConfig: { findUnique: vi.fn().mockResolvedValue({ value: false }) },
+  projects: { findUnique: vi.fn() },
   $transaction: vi.fn((fn: Function) => fn(mockTx)),
   $disconnect: vi.fn(),
 };
@@ -162,6 +173,7 @@ const mockSourceCase = {
   templateId: 30,
   className: null,
   source: null,
+  folderId: 1000,
   automated: false,
   estimate: null,
   creatorId: "user-1",
@@ -261,6 +273,13 @@ type JobData = Omit<
   operation: "copy" | "move";
   sharedStepGroupResolution: "reuse" | "create_new";
   conflictResolution: "skip" | "rename";
+  folderTree?: Array<{
+    localKey: string;
+    sourceFolderId: number;
+    name: string;
+    parentLocalKey: string | null;
+    caseIds: number[];
+  }>;
 };
 
 function makeMockJob(
@@ -864,95 +883,6 @@ describe("CopyMoveWorker", () => {
       expect(result.movedCount).toBe(0);
     });
 
-    it("SELF-COLLISION-01: same-project move does NOT treat source as its own collision", async () => {
-      // Customer-reported: moving a case within the same project showed a
-      // Skip/Rename conflict because the (name, className, source) tuple
-      // matched the case being moved. Fix excludes the move source IDs
-      // from the collision lookup.
-      const sameProjMoveJobData = {
-        ...baseMoveJobData,
-        sourceProjectId: 20,
-        targetProjectId: 20,
-        caseIds: [1],
-        conflictResolution: "skip" as const,
-      };
-
-      mockDb.repositoryCaseVersions.findMany.mockResolvedValue([]);
-
-      const { processor } = await loadWorker();
-      const result = await processor(
-        makeMockJob({ data: sameProjMoveJobData }) as Job
-      );
-
-      // The collision query must scope out the source case
-      const collisionCall = mockDb.repositoryCases.findFirst.mock.calls[1]?.[0];
-      expect(collisionCall?.where?.id).toEqual({ notIn: [1] });
-
-      // Case is actually moved, not skipped
-      expect(result.movedCount).toBe(1);
-      expect(result.skippedCount).toBe(0);
-    });
-
-    it("IN-PLACE-MOVE-01: same-project move relocates the source row instead of create-then-delete", async () => {
-      // DB-confirmed (23505): a same-project move that stays create-then-
-      // -delete targets the exact same (projectId, name, className,
-      // source) tuple the source row already holds. That unique index has
-      // no isDeleted exception, so creating a second row there 23505s
-      // against the still-live source before the batch soft-delete at the
-      // end of the loop ever runs. The fix relocates the existing row via
-      // update() instead — no new row, nothing left to soft-delete.
-      const sameProjMoveJobData = {
-        ...baseMoveJobData,
-        sourceProjectId: 20,
-        targetProjectId: 20,
-        caseIds: [1],
-        conflictResolution: "skip" as const,
-      };
-
-      mockDb.repositoryCaseVersions.findMany.mockResolvedValue([]);
-
-      const { processor } = await loadWorker();
-      const result = await processor(
-        makeMockJob({ data: sameProjMoveJobData }) as Job
-      );
-
-      expect(mockTx.repositoryCases.create).not.toHaveBeenCalled();
-      expect(mockTx.repositoryCases.update).toHaveBeenCalledWith(
-        expect.objectContaining({ where: { id: 1 } })
-      );
-      expect(result.movedCount).toBe(1);
-
-      // The relocated row is still live under the same id — nothing to
-      // soft-delete and no separate original left behind.
-      expect(mockDb.repositoryCases.updateMany).not.toHaveBeenCalled();
-    });
-
-    it("SELF-COLLISION-02: same-project move + rename does NOT append (copy) suffix when no real collision exists", async () => {
-      // Companion to SELF-COLLISION-01: Rename used to land "Foo (copy)"
-      // because the source matched itself. Post-fix the name is preserved.
-      const sameProjRenameMoveJobData = {
-        ...baseMoveJobData,
-        sourceProjectId: 20,
-        targetProjectId: 20,
-        caseIds: [1],
-        conflictResolution: "rename" as const,
-      };
-
-      mockDb.repositoryCaseVersions.findMany.mockResolvedValue([]);
-
-      const { processor } = await loadWorker();
-      await processor(makeMockJob({ data: sameProjRenameMoveJobData }) as Job);
-
-      // In-place relocation never touches `name` at all — confirming no
-      // rename logic silently kicked in and appended a "(copy)" suffix.
-      const updateCall = mockTx.repositoryCases.update.mock.calls.find(
-        (c: any[]) => c[0]?.where?.id === 1
-      );
-      expect(updateCall).toBeDefined();
-      expect(updateCall?.[0]?.data?.name).toBeUndefined();
-      expect(mockTx.repositoryCases.create).not.toHaveBeenCalled();
-    });
-
     it("should set movedCount equal to copiedCount on successful move", async () => {
       const { processor } = await loadWorker();
       const result = await processor(
@@ -961,6 +891,246 @@ describe("CopyMoveWorker", () => {
 
       expect(result.movedCount).toBe(1);
       expect(result.copiedCount).toBe(0);
+    });
+  });
+
+  // ─── Same-project move: relocation ────────────────────────────────────────
+
+  describe("same-project move (relocation)", () => {
+    const relocateJobData = {
+      ...baseCopyJobData,
+      operation: "move" as const,
+      sourceProjectId: 20,
+      targetProjectId: 20,
+      caseIds: [1],
+    };
+
+    beforeEach(() => {
+      // Target folder lookup — the folder, not the job payload, is the
+      // authority on the repository the moved rows land in.
+      mockDb.repositoryFolders.findFirst.mockResolvedValue({
+        id: 2000,
+        repositoryId: 200,
+      });
+      mockDb.repositoryFolders.findMany.mockResolvedValue([]);
+    });
+
+    it("RELOCATE-01: updates only the row's location — no create, no collision check, no soft-delete", async () => {
+      const { processor } = await loadWorker();
+      const result = await processor(
+        makeMockJob({ data: relocateJobData }) as Job
+      );
+
+      // No collision lookup at all — a case cannot conflict with itself.
+      const collisionCalls = mockDb.repositoryCases.findFirst.mock.calls.filter(
+        (c: any[]) => c[0]?.where?.name !== undefined
+      );
+      expect(collisionCalls).toHaveLength(0);
+
+      expect(mockTx.repositoryCases.create).not.toHaveBeenCalled();
+      const relocateCall = mockTx.repositoryCases.update.mock.calls.find(
+        (c: any[]) => c[0]?.where?.id === 1
+      );
+      // Only the location moves — the case keeps its state, template, name
+      // and everything else it was authored with, and the repository comes
+      // from the target folder row.
+      expect(Object.keys(relocateCall![0].data).sort()).toEqual([
+        "folderId",
+        "order",
+        "repositoryId",
+      ]);
+      expect(relocateCall![0].data.repositoryId).toBe(200);
+
+      // The row is still live under the same id — nothing to soft-delete.
+      expect(mockDb.repositoryCases.updateMany).not.toHaveBeenCalled();
+      expect(result.movedCount).toBe(1);
+      expect(result.skippedCount).toBe(0);
+    });
+
+    it("RELOCATE-02: rename conflict resolution never renames a relocation", async () => {
+      const { processor } = await loadWorker();
+      await processor(
+        makeMockJob({
+          data: { ...relocateJobData, conflictResolution: "rename" as const },
+        }) as Job
+      );
+
+      const relocateCall = mockTx.repositoryCases.update.mock.calls.find(
+        (c: any[]) => c[0]?.where?.id === 1
+      );
+      expect(relocateCall).toBeDefined();
+      expect(relocateCall?.[0]?.data?.name).toBeUndefined();
+      expect(mockTx.repositoryCases.create).not.toHaveBeenCalled();
+    });
+
+    it("RELOCATE-03: a case already in the target folder is a no-op", async () => {
+      mockDb.repositoryCases.findMany.mockResolvedValue([
+        { ...mockSourceCase, folderId: 2000 },
+      ]);
+
+      const { processor } = await loadWorker();
+      const result = await processor(
+        makeMockJob({ data: relocateJobData }) as Job
+      );
+
+      expect(mockTx.repositoryCases.update).not.toHaveBeenCalled();
+      expect(result.movedCount).toBe(1);
+    });
+
+    it("RELOCATE-04: folder-tree move reparents the folder; its cases ride along untouched", async () => {
+      mockDb.repositoryFolders.findFirst
+        .mockReset()
+        .mockResolvedValueOnce({ id: 2000, repositoryId: 200 }) // target folder
+        .mockResolvedValueOnce(null) // same-named sibling under target
+        .mockResolvedValueOnce(null); // max folder order under target
+      mockDb.repositoryFolders.findMany.mockResolvedValue([
+        { id: 3000, parentId: 999, name: "Sub" },
+      ]);
+
+      const { processor } = await loadWorker();
+      const result = await processor(
+        makeMockJob({
+          data: {
+            ...relocateJobData,
+            folderTree: [
+              {
+                localKey: "3000",
+                sourceFolderId: 3000,
+                name: "Sub",
+                parentLocalKey: null,
+                caseIds: [1],
+              },
+            ],
+          },
+        }) as Job
+      );
+
+      expect(mockTx.repositoryFolders.update).toHaveBeenCalledWith({
+        where: { id: 3000 },
+        data: { parentId: 2000, repositoryId: 200, order: 0 },
+      });
+      // The subtree and its cases ride along with the reparented folder.
+      expect(mockTx.repositoryCases.update).not.toHaveBeenCalled();
+      // The folder survives — nothing was recreated, so nothing is deleted.
+      expect(mockTx.repositoryFolders.updateMany).not.toHaveBeenCalled();
+      expect(mockDb.repositoryFolders.updateMany).not.toHaveBeenCalled();
+      expect(result.movedCount).toBe(1);
+    });
+
+    it("RELOCATE-05: folder-tree move merges into an existing same-named folder and soft-deletes the emptied source", async () => {
+      mockDb.repositoryFolders.findFirst
+        .mockReset()
+        .mockResolvedValueOnce({ id: 2000, repositoryId: 200 }) // target folder
+        .mockResolvedValueOnce({ id: 4000 }); // same-named sibling -> merge
+      mockDb.repositoryFolders.findMany.mockResolvedValue([
+        { id: 3000, parentId: 999, name: "Sub" },
+      ]);
+
+      const { processor } = await loadWorker();
+      await processor(
+        makeMockJob({
+          data: {
+            ...relocateJobData,
+            folderTree: [
+              {
+                localKey: "3000",
+                sourceFolderId: 3000,
+                name: "Sub",
+                parentLocalKey: null,
+                caseIds: [1],
+              },
+            ],
+          },
+        }) as Job
+      );
+
+      // Direct cases move into the surviving sibling...
+      expect(mockTx.repositoryCases.update).toHaveBeenCalledWith({
+        where: { id: 1 },
+        data: { folderId: 4000, repositoryId: 200, order: 0 },
+      });
+      // ...and the emptied source folder is soft-deleted; the sibling stays.
+      expect(mockTx.repositoryFolders.update).not.toHaveBeenCalled();
+      expect(mockTx.repositoryFolders.updateMany).toHaveBeenCalledWith({
+        where: { id: { in: [3000] } },
+        data: { isDeleted: true },
+      });
+    });
+
+    it("RELOCATE-06: moving a folder that already lives under the target parent changes nothing", async () => {
+      // Regression guard: the old recreate-and-delete flow "merged" the
+      // folder with itself and then soft-deleted it, orphaning its live
+      // cases from the tree.
+      mockDb.repositoryFolders.findFirst
+        .mockReset()
+        .mockResolvedValueOnce({ id: 2000, repositoryId: 200 }); // target folder
+      mockDb.repositoryFolders.findMany.mockResolvedValue([
+        { id: 3000, parentId: 2000, name: "Sub" },
+      ]);
+
+      const { processor } = await loadWorker();
+      const result = await processor(
+        makeMockJob({
+          data: {
+            ...relocateJobData,
+            folderTree: [
+              {
+                localKey: "3000",
+                sourceFolderId: 3000,
+                name: "Sub",
+                parentLocalKey: null,
+                caseIds: [1],
+              },
+            ],
+          },
+        }) as Job
+      );
+
+      expect(mockTx.repositoryCases.update).not.toHaveBeenCalled();
+      expect(mockTx.repositoryFolders.update).not.toHaveBeenCalled();
+      expect(mockTx.repositoryFolders.updateMany).not.toHaveBeenCalled();
+      expect(result.movedCount).toBe(1);
+    });
+
+    it("RELOCATE-07: rejects moving a folder into its own subtree", async () => {
+      const { processor } = await loadWorker();
+      await expect(
+        processor(
+          makeMockJob({
+            data: {
+              ...relocateJobData,
+              folderTree: [
+                {
+                  localKey: "2000",
+                  sourceFolderId: 2000,
+                  name: "Self",
+                  parentLocalKey: null,
+                  caseIds: [1],
+                },
+              ],
+            },
+          }) as Job
+        )
+      ).rejects.toThrow("Cannot move a folder into itself or its own subtree");
+    });
+
+    it("RELOCATE-08: a failed relocation is atomic — no partial state, no rollback deletes", async () => {
+      mockDb.$transaction.mockRejectedValue(new Error("relocation failed"));
+
+      const { processor } = await loadWorker();
+      await expect(
+        processor(makeMockJob({ data: relocateJobData }) as Job)
+      ).rejects.toThrow("relocation failed");
+
+      expect(mockDb.repositoryCases.deleteMany).not.toHaveBeenCalled();
+      expect(mockDb.repositoryCases.updateMany).not.toHaveBeenCalled();
+    });
+
+    it("RELOCATE-09: re-syncs every moved case to ES after the transaction commits", async () => {
+      const { processor } = await loadWorker();
+      await processor(makeMockJob({ data: relocateJobData }) as Job);
+
+      expect(mockSyncToES).toHaveBeenCalledWith(1, undefined, mockDb);
     });
   });
 
@@ -1204,73 +1374,6 @@ describe("CopyMoveWorker", () => {
 
       // Source cases should NOT be soft-deleted since operation failed
       expect(mockDb.repositoryCases.updateMany).not.toHaveBeenCalled();
-    });
-
-    it("IN-PLACE-MOVE-ROLLBACK: restores relocated case fields instead of hard-deleting it when a later case fails", async () => {
-      // In-place moves reuse the source row's own id as newId (see
-      // IN-PLACE-MOVE-01), so the generic rollback — which hard-deletes
-      // every id in createdTargetIds — would destroy real, pre-existing
-      // data instead of undoing a copy. It must restore the row's
-      // original fields instead.
-      const twoSourceCases = [
-        {
-          ...mockSourceCase,
-          id: 1,
-          repositoryId: 100,
-          folderId: 1000,
-          templateId: 30,
-          stateId: 5,
-          order: 0,
-        },
-        { ...mockSourceCase, id: 2, name: "Test Case 2" },
-      ];
-      mockDb.repositoryCases.findMany.mockResolvedValue(twoSourceCases);
-      mockDb.repositoryCaseVersions.findMany.mockResolvedValue([]);
-
-      const sameProjMoveJobData = {
-        ...baseCopyJobData,
-        operation: "move" as const,
-        sourceProjectId: 20,
-        targetProjectId: 20,
-        caseIds: [1, 2],
-      };
-
-      // First transaction (case 1, in-place) succeeds; second (case 2) fails.
-      let txCallCount = 0;
-      mockDb.$transaction.mockImplementation(async (fn: Function) => {
-        txCallCount++;
-        if (txCallCount === 1) {
-          mockTx.repositoryCases.update.mockResolvedValueOnce({ id: 1 });
-          return fn(mockTx);
-        }
-        throw new Error("Second case failed");
-      });
-
-      const { processor } = await loadWorker();
-
-      await expect(
-        processor(
-          makeMockJob({
-            id: "job-inplace-rollback",
-            data: sameProjMoveJobData,
-          }) as Job
-        )
-      ).rejects.toThrow("Second case failed");
-
-      // Must NOT hard-delete the relocated case — it's real, pre-existing data.
-      expect(mockDb.repositoryCases.deleteMany).not.toHaveBeenCalled();
-
-      // Must restore its pre-move fields.
-      expect(mockDb.repositoryCases.update).toHaveBeenCalledWith({
-        where: { id: 1 },
-        data: {
-          repositoryId: 100,
-          folderId: 1000,
-          templateId: 30,
-          stateId: 5,
-          order: 0,
-        },
-      });
     });
   });
 
@@ -1692,6 +1795,13 @@ describe("CopyMoveWorker", () => {
     });
 
     it("does NOT write link for move operation (even within-project)", async () => {
+      // Same-project move takes the relocation path, which needs the target
+      // folder row.
+      mockDb.repositoryFolders.findFirst.mockResolvedValue({
+        id: 2000,
+        repositoryId: 200,
+      });
+
       const { processor } = await loadWorker();
       await processor(
         makeMockJob({

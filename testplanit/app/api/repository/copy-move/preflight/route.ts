@@ -4,6 +4,13 @@ import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import { baseDb } from "~/lib/db";
 import { authOptions } from "~/server/auth";
+import {
+  createCaseStateMapper,
+  createGatedStateResolver,
+  findActiveRepository,
+  getCasesWorkflowAssignments,
+  getWorkflowNamesByIds,
+} from "~/lib/services/workflowStateMapping";
 import { preflightSchema, type PreflightResponse } from "../schemas";
 
 export async function POST(request: Request) {
@@ -72,23 +79,6 @@ export async function POST(request: Request) {
       );
     }
 
-    const sourceCaseSelect = {
-      id: true,
-      name: true,
-      className: true,
-      source: true,
-      templateId: true,
-      stateId: true,
-    } as const;
-    const sourceCases = await reader.repositoryCases.findMany({
-      where: {
-        id: { in: body.caseIds },
-        projectId: body.sourceProjectId,
-        isDeleted: false,
-      },
-      select: sourceCaseSelect,
-    });
-
     // Move update-access check (move = soft-delete via isDeleted: true = needs update permission)
     // Since the worker uses raw baseDb, we verify the user's role permits canAddEdit on TestCaseRepository.
     // Admin users always have access.
@@ -103,6 +93,48 @@ export async function POST(request: Request) {
         hasSourceUpdateAccess = userPerms?.canAddEdit ?? false;
       }
     }
+
+    // ─── Same-project move: nothing to preview ────────────────────────────────
+    // Moving cases between folders of one project only changes where the rows
+    // live. They keep their name, template and state, so there is no template
+    // mismatch to report, no workflow state to remap, and nothing for a case
+    // to collide with (its identity tuple is unchanged, and it cannot
+    // conflict with itself). The target repository/template/state context is
+    // omitted — a relocation reads none of it.
+    if (
+      body.operation === "move" &&
+      body.sourceProjectId === body.targetProjectId
+    ) {
+      const response: PreflightResponse = {
+        hasSourceReadAccess: true,
+        hasTargetWriteAccess: true,
+        hasSourceUpdateAccess,
+        templateMismatch: false,
+        missingTemplates: [],
+        canAutoAssignTemplates:
+          user?.access === "ADMIN" || user?.access === "PROJECTADMIN",
+        workflowMappings: [],
+        unmappedStates: [],
+        collisions: [],
+      };
+      return NextResponse.json(response);
+    }
+
+    const sourceCases = await reader.repositoryCases.findMany({
+      where: {
+        id: { in: body.caseIds },
+        projectId: body.sourceProjectId,
+        isDeleted: false,
+      },
+      select: {
+        id: true,
+        name: true,
+        className: true,
+        source: true,
+        templateId: true,
+        stateId: true,
+      },
+    });
 
     // ─── Template compatibility ────────────────────────────────────────────────
 
@@ -153,73 +185,48 @@ export async function POST(request: Request) {
       ...new Set(sourceCases.map((c: { stateId: number }) => c.stateId)),
     ];
 
-    const targetWorkflowAssignments =
-      await reader.projectWorkflowAssignment.findMany({
-        where: { projectId: body.targetProjectId },
-        include: {
-          workflow: { select: { id: true, name: true, isDefault: true } },
-        },
-      });
-
-    const targetWorkflows = targetWorkflowAssignments.map(
-      (a: { workflow: { id: number; name: string; isDefault: boolean } }) =>
-        a.workflow
+    // The same resolver the worker executes with, so this preview cannot
+    // drift from the outcome: keep exact states, else match by name, else the
+    // target default — then run the result through the review gate, since
+    // every row this operation writes is created fresh in the target project.
+    const targetStates = await getCasesWorkflowAssignments(
+      reader as any,
+      body.targetProjectId
     );
-
-    const targetWorkflowByName = new Map<
-      string,
-      { id: number; name: string; isDefault: boolean }
-    >();
-    for (const wf of targetWorkflows) {
-      targetWorkflowByName.set(wf.name.toLowerCase(), wf);
-    }
-
-    const defaultTargetWorkflow = targetWorkflows.find(
-      (wf: { isDefault: boolean }) => wf.isDefault
-    ) ??
-      targetWorkflows[0] ?? { id: 0, name: "Unknown", isDefault: true };
-
-    // We need source state names — fetch from the source project's workflow assignments
-    const sourceWorkflowAssignments =
-      await reader.projectWorkflowAssignment.findMany({
-        where: { projectId: body.sourceProjectId },
-        include: {
-          workflow: { select: { id: true, name: true, isDefault: true } },
-        },
-      });
-
-    const sourceWorkflowById = new Map<
-      number,
-      { id: number; name: string; isDefault: boolean }
-    >();
-    for (const a of sourceWorkflowAssignments) {
-      sourceWorkflowById.set(a.workflow.id, a.workflow);
-    }
+    const sourceStateNames = await getWorkflowNamesByIds(
+      reader as any,
+      uniqueSourceStateIds
+    );
+    const mapper = createCaseStateMapper(targetStates, sourceStateNames);
+    const resolveGatedState = createGatedStateResolver(
+      reader as any,
+      body.targetProjectId
+    );
 
     const workflowMappings: PreflightResponse["workflowMappings"] = [];
     const unmappedStates: PreflightResponse["unmappedStates"] = [];
 
     for (const stateId of uniqueSourceStateIds) {
-      const sourceState = sourceWorkflowById.get(stateId);
-      const sourceStateName = sourceState?.name ?? `State ${stateId}`;
-
-      const nameMatch = targetWorkflowByName.get(sourceStateName.toLowerCase());
-      if (nameMatch) {
-        workflowMappings.push({
-          sourceStateId: stateId,
-          sourceStateName,
-          targetStateId: nameMatch.id,
-          targetStateName: nameMatch.name,
-          isDefaultFallback: false,
-        });
-      } else {
-        workflowMappings.push({
-          sourceStateId: stateId,
-          sourceStateName,
-          targetStateId: defaultTargetWorkflow.id,
-          targetStateName: defaultTargetWorkflow.name,
-          isDefaultFallback: true,
-        });
+      const sourceStateName =
+        sourceStateNames.get(stateId) ?? `State ${stateId}`;
+      const mapped = mapper.map(stateId);
+      if (!mapped) {
+        // Target project has no CASES states at all — the submit route
+        // rejects this before a job is enqueued.
+        unmappedStates.push({ id: stateId, name: sourceStateName });
+        continue;
+      }
+      const finalStateId = await resolveGatedState(mapped.stateId);
+      const isDefaultFallback =
+        mapped.via === "default" || finalStateId !== mapped.stateId;
+      workflowMappings.push({
+        sourceStateId: stateId,
+        sourceStateName,
+        targetStateId: finalStateId,
+        targetStateName: mapper.targetName(finalStateId) ?? sourceStateName,
+        isDefaultFallback,
+      });
+      if (isDefaultFallback) {
         unmappedStates.push({ id: stateId, name: sourceStateName });
       }
     }
@@ -236,11 +243,6 @@ export async function POST(request: Request) {
       where: {
         projectId: body.targetProjectId,
         isDeleted: false,
-        // A move within the same project would otherwise self-collide: the
-        // sources match themselves on (name, className, source). Exclude
-        // them so we only flag real conflicts with other cases. Copy keeps
-        // them included because the unique constraint really would block.
-        ...(body.operation === "move" ? { id: { notIn: body.caseIds } } : {}),
         OR: sourceNames.map((n) => ({
           name: n.name,
           // Match NULL className explicitly — omitting the filter would
@@ -266,29 +268,22 @@ export async function POST(request: Request) {
       })
     );
 
-    // ─── Resolve target repository ────────────────────────────────────────────
+    // ─── Resolve target repository / template / default state ─────────────────
+    // All optional: when one cannot be resolved it is omitted and the submit
+    // route reports the failure with a proper error.
 
-    const targetRepository = await reader.repositories.findFirst({
-      where: {
-        projectId: body.targetProjectId,
-        isActive: true,
-        isDeleted: false,
-      },
-    });
+    const targetRepository = await findActiveRepository(
+      reader as any,
+      body.targetProjectId
+    );
+    const targetRepositoryId = targetRepository?.id;
 
-    const targetRepositoryId = targetRepository?.id ?? 0;
-
-    // ─── Resolve target template ID ───────────────────────────────────────────
-    // Use first target template assignment, or first source template if all match
-
+    // First target template assignment, or the first source template as a
+    // fallback (valid when the templates all match).
     const targetTemplateId =
-      targetTemplateAssignments[0]?.templateId ??
-      uniqueSourceTemplateIds[0] ??
-      0;
+      targetTemplateAssignments[0]?.templateId ?? uniqueSourceTemplateIds[0];
 
-    // ─── Resolve target default workflow state ID ─────────────────────────────
-
-    const targetDefaultWorkflowStateId = defaultTargetWorkflow.id;
+    const targetDefaultWorkflowStateId = mapper.defaultStateId;
 
     const response: PreflightResponse = {
       hasSourceReadAccess: true,
