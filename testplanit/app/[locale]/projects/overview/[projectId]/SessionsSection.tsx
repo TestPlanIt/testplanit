@@ -1,14 +1,10 @@
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
-import { DateTextDisplay } from "@/components/DateTextDisplay";
 import LoadingSpinner from "@/components/LoadingSpinner";
-import { Compass, LinkIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import React from "react";
-import { PendingReviewBadge } from "~/components/reviews/PendingReviewBadge";
-import SessionResultsSummary from "~/components/SessionResultsSummary";
+import SessionItem from "~/app/[locale]/projects/sessions/[projectId]/SessionItem";
 import { usePendingReviewsByEntity } from "~/hooks/usePendingReviewsByEntity";
-import { Link } from "~/lib/navigation";
 
 interface SessionsSectionProps {
   projectId: number;
@@ -26,6 +22,26 @@ const SessionsSection: React.FC<SessionsSectionProps> = ({ projectId }) => {
         { isDeleted: false },
         { isCompleted: false },
       ],
+    },
+    // Mirrors the sessions page selection so SessionItem renders identically here.
+    select: {
+      id: true,
+      name: true,
+      isCompleted: true,
+      completedAt: true,
+      createdAt: true,
+      note: true,
+      projectId: true,
+      configurationGroupId: true,
+      configuration: true,
+      state: { include: { icon: true, color: true } },
+      createdBy: true,
+      assignedTo: true,
+      milestone: {
+        include: {
+          milestoneType: { include: { icon: true } },
+        },
+      },
     },
     orderBy: { createdAt: "desc" },
     take: 5,
@@ -52,61 +68,19 @@ const SessionsSection: React.FC<SessionsSectionProps> = ({ projectId }) => {
 
   return (
     <div className="flex flex-col">
-      <div className="flex flex-col">
-        <h2 className="text-primary mb-2">
-          {t("projects.overview.latestSessions")}
-        </h2>
-        <ul className="flex flex-col w-full space-y-4">
-          {sessions.map((testSession) => (
-            <li key={testSession.id} className="ms-6">
-              <div className="grid grid-cols-[1fr,2fr] gap-4 items-center">
-                {/* Left column - Session name and created date */}
-                <div className="flex flex-col space-y-1 min-w-0">
-                  {/* First row - Session name */}
-                  <Link
-                    href={`/projects/sessions/${projectId}/${testSession.id}`}
-                    className="block"
-                  >
-                    <div className="flex items-center group">
-                      <Compass className="h-5 w-5 shrink-0 me-2" />
-                      <span className="font-medium truncate pe-1">
-                        {testSession.name}
-                      </span>
-                      <span className="shrink-0 me-1">
-                        <PendingReviewBadge
-                          pendingRequest={pendingReviewsBySessionId.get(
-                            testSession.id
-                          )}
-                        />
-                      </span>
-                      <LinkIcon className="w-4 h-4 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
-                    </div>
-                  </Link>
-
-                  {/* Second row - Created date */}
-                  <div className="text-sm text-muted-foreground ms-7 flex items-center min-w-0">
-                    <span className="shrink-0 whitespace-nowrap me-1">
-                      {t("common.fields.created")}
-                      {": "}
-                    </span>
-                    <span className="truncate">
-                      <DateTextDisplay startDate={testSession.createdAt} />
-                    </span>
-                  </div>
-                </div>
-
-                {/* Right column - SessionResultsSummary (spans both rows) */}
-                <div className="flex justify-end min-w-0">
-                  <SessionResultsSummary
-                    sessionId={testSession.id}
-                    className="w-full"
-                  />
-                </div>
-              </div>
-            </li>
-          ))}
-        </ul>
-      </div>
+      <h2 className="text-primary mb-2">
+        {t("projects.overview.latestSessions")}
+      </h2>
+      {sessions.map((testSession) => (
+        <SessionItem
+          key={testSession.id}
+          testSession={testSession}
+          isCompleted={testSession.isCompleted}
+          projectId={projectId}
+          showActions={false}
+          pendingRequest={pendingReviewsBySessionId.get(testSession.id)}
+        />
+      ))}
     </div>
   );
 };

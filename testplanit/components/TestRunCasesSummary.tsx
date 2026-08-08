@@ -271,7 +271,7 @@ export function TestRunCasesSummary({
     return (
       <div className={cn("flex flex-col space-y-1 w-full", className)}>
         <div
-          className="flex h-2.5 w-full rounded-full overflow-hidden"
+          className="flex h-2.5 w-full rounded-full overflow-x-auto overflow-y-hidden"
           data-status-bar
         >
           <Tooltip>
@@ -347,7 +347,8 @@ export function TestRunCasesSummary({
       <div className={cn("flex flex-col space-y-1 w-full", className)}>
         {/* Color bar for JUnit test results */}
         <div
-          className="flex h-2.5 w-full rounded-full overflow-hidden bg-muted"
+          className="flex h-2.5 w-full rounded-full overflow-x-auto overflow-y-hidden bg-muted"
+          data-status-bar
           data-testid="test-run-cases-status-bar"
         >
           {resultSegments.map((result, index) => {
@@ -408,7 +409,7 @@ export function TestRunCasesSummary({
         {/* Summary text below the bar */}
         <div className="flex justify-between items-center">
           <div
-            className="text-muted-foreground text-xs truncate grow me-2"
+            className="flex items-center min-w-0 grow me-2 text-muted-foreground text-xs"
             title={summaryTitle}
           >
             {`${tCommon("labels.total")}: ${totalItems} ${tCommon("plural.case", { count: totalItems })}`}
@@ -520,7 +521,7 @@ export function TestRunCasesSummary({
     <div className={cn("flex flex-col space-y-1 w-full", className)}>
       {/* Color bar for individual test results */}
       <div
-        className="flex h-2.5 w-full rounded-full overflow-hidden bg-muted"
+        className="flex h-2.5 w-full rounded-full overflow-x-auto overflow-y-hidden bg-muted"
         data-status-bar
         data-testid="test-run-cases-status-bar"
       >
@@ -654,13 +655,15 @@ export function TestRunCasesSummary({
           className="text-muted-foreground text-xs truncate grow me-2"
           title={`${summaryText}${totalElapsedText ? ` • ${tCommon("fields.totalElapsed")}: ${totalElapsedText}` : ""}${totalEstimateText ? ` • ${tCommon("fields.totalEstimate")}: ${totalEstimateText}` : ""}`}
         >
-          {`${tCommon("labels.total")}: ${totalItems} ${tCommon("plural.case", { count: totalItems })}`}
-          {summaryText ? ` (${summaryText})` : ""}
+          <span className="truncate shrink">
+            {`${tCommon("labels.total")}: ${totalItems} ${tCommon("plural.case", { count: totalItems })}`}
+            {summaryText ? ` (${summaryText})` : ""}
+          </span>
           {totalElapsedText ? (
             <Tooltip>
               <TooltipTrigger asChild>
                 <span
-                  className="inline-flex items-center ms-1 cursor-default"
+                  className="inline-flex items-center ms-1 cursor-default shrink-[999] min-w-0 overflow-hidden whitespace-nowrap"
                   data-testid="total-elapsed-display"
                 >
                   {" • "}
@@ -679,7 +682,7 @@ export function TestRunCasesSummary({
             <Tooltip>
               <TooltipTrigger asChild>
                 <span
-                  className="inline-flex items-center ms-1 cursor-default"
+                  className="inline-flex items-center ms-1 cursor-default shrink-[9999] min-w-0 overflow-hidden whitespace-nowrap"
                   data-testid="total-estimate-display"
                 >
                   {" • "}

@@ -25,3 +25,24 @@ export function formatDateRange(
   if (s && e) return `${s} ${separator} ${e}`;
   return s ?? e ?? undefined;
 }
+
+/**
+ * Drops the year from a **date-fns** format string, keeping the rest intact —
+ * "MM/dd/yyyy" becomes "MM/dd", "MMM d, yyyy" becomes "MMM d". The date format
+ * is a user preference, so the year can't be assumed to sit in any particular
+ * place; the separator immediately before the token goes with it, and any left
+ * dangling at either end is trimmed.
+ *
+ * Callers holding a user preference must run it through
+ * `mapDateTimeFormatString` first — a DateFormat enum value like "MMM_D_YYYY"
+ * is not a format string, and stripping it here yields an unmappable key.
+ *
+ * Used where a full date would crowd out more important content and the exact
+ * year is still one hover away in the tooltip.
+ */
+export function stripYearFromFormat(formatString: string): string {
+  return formatString
+    .replace(/[.\-/,\s]*[yYuU]+/g, "")
+    .replace(/^[.\-/,\s]+|[.\-/,\s]+$/g, "")
+    .trim();
+}

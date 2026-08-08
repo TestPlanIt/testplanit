@@ -3,6 +3,18 @@
     "name": "姓名",
     "cancel": "取消",
     "dismiss": "解僱",
+    "bulk": {
+      "selectItem": "選取項目",
+      "editAction": "編輯（{count}）",
+      "completeAction": "完成（{count}）",
+      "deleteAction": "刪除（{count}）",
+      "editTitle": "批量編輯（{count}）",
+      "applyToCount": "變更套用至 {count, plural, other {# 個項目}}。",
+      "tagsAdditiveHint": "所選標籤會新增至每個項目；現有標籤將被保留。",
+      "completeSuccess": "{count, plural, other {已完成 # 個項目}}",
+      "deleteSuccess": "{count, plural, other {已刪除 # 個項目}}",
+      "partialFailure": "{totalCount} 個項目中有 {failedCount} 個無法更新"
+    },
     "of": "的",
     "on": "在",
     "at": "在",
@@ -2398,6 +2410,12 @@
     }
   },
   "sessions": {
+    "bulk": {
+      "completeTitle": "完成 {count, plural, other {# 個工作階段}}",
+      "completeDescription": "您確定要完成 {count, plural, other {這些工作階段}} 嗎？",
+      "deleteTitle": "刪除 {count, plural, other {# 個工作階段}}",
+      "deleteDescription": "您確定要刪除 {count, plural, other {這些工作階段}} 嗎？"
+    },
     "auditLog": {
       "trigger": "活動",
       "description": "此工作階段的所有變更記錄。"
@@ -2423,6 +2441,9 @@
       "viewSessionDetails": "查看會話"
     },
     "noMilestone": "沒有里程碑",
+    "milestoneGroup": {
+      "sessionCount": "{count, plural, other {# 個會話}}"
+    },
     "completeDialog": {
       "noWorkflowsConfigured": "此項目未配置任何完成工作流程。請在管理設定中配置工作流程以啟用會話完成功能。"
     },
@@ -3514,7 +3535,7 @@
       "addFilter": "新增篩選器",
       "removeFilter": "移除篩選器：{name}",
       "editFilter": "編輯篩選器：{name}",
-      "activeCount": "{count, plural, =1 {# active filter} other {# active filters}}",
+      "activeCount": "{count, plural, =1 {# 個使用中的篩選條件} other {# 個使用中的篩選條件}}",
       "assignedToMe": "指派給我",
       "noFilters": "無啟用篩選器",
       "noMatchingCases": "沒有符合您篩選條件的測試案例",
@@ -3524,7 +3545,7 @@
       "filterLimitReached": "已達篩選器上限（最多 {count} 個）",
       "valueLimitReached": "已達值上限（每個篩選器最多 {count} 個）",
       "filtersTruncated": "部分篩選器已被捨棄（最多 {count} 個）",
-      "valuesTruncated": "{count, plural, =1 {# value} other {# values}} per filter maximum — extra values were dropped"
+      "valuesTruncated": "每個篩選條件最多 {count, plural, =1 {# 個值} other {# 個值}} — 多餘的值已被捨棄"
     },
     "savedViews": {
       "title": "已儲存的檢視",
@@ -3543,9 +3564,9 @@
       "emptyHint": "儲存目前的篩選條件，以便日後返回使用。",
       "apply": "套用檢視：{name}",
       "applied": "已套用「{name}」",
-      "droppedFilters": "{count, plural, =1 {# filter no longer exists and was skipped} other {# filters no longer exist and were skipped}}",
+      "droppedFilters": "{count, plural, =1 {# 個篩選條件已不存在，已略過} other {# 個篩選條件已不存在，已略過}}",
       "droppedGrouping": "其分組已不再可用，因此使用預設值。",
-      "unreadable": "{count, plural, =1 {# saved view} other {# saved views}} couldn't be read",
+      "unreadable": "{count, plural, =1 {# 個已儲存檢視} other {# 個已儲存檢視}}無法讀取",
       "rename": "重新命名",
       "renameTitle": "重新命名已儲存的檢視",
       "renamed": "已儲存的檢視已更新",
@@ -3741,6 +3762,12 @@
     }
   },
   "runs": {
+    "bulk": {
+      "completeTitle": "完成 {count, plural, other {# 個測試運行}}",
+      "completeDescription": "您確定要完成 {count, plural, other {這些測試運行}} 嗎？",
+      "deleteTitle": "刪除 {count, plural, other {# 個測試運行}}",
+      "deleteDescription": "您確定要刪除 {count, plural, other {這些測試運行}} 嗎？結果將保留以供歷史分析。"
+    },
     "composition": {
       "lock": "案例已鎖定",
       "unlocked": "已解鎖的案例",
@@ -3949,8 +3976,8 @@
     },
     "milestoneGroup": {
       "runCount": "{count, plural, other {# 次運行}}",
-      "expandAll": "全部展開",
-      "collapseAll": "全部收起"
+      "altHintMac": "按住 ⌥ 鍵以展開或折疊所有群組",
+      "altHintWin": "按住 Alt 鍵以展開或折疊所有群組"
     },
     "runFilters": {
       "label": "篩選測試運行",

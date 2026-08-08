@@ -3,6 +3,18 @@
     "name": "名前",
     "cancel": "キャンセル",
     "dismiss": "却下する",
+    "bulk": {
+      "selectItem": "項目を選択",
+      "editAction": "編集 ({count})",
+      "completeAction": "完了 ({count})",
+      "deleteAction": "削除 ({count})",
+      "editTitle": "一括編集 ({count})",
+      "applyToCount": "変更は {count, plural, other {#件のアイテム}} に適用されます。",
+      "tagsAdditiveHint": "選択したタグは各項目に追加されます。既存のタグは保持されます。",
+      "completeSuccess": "{count, plural, other {#件のアイテムが完了しました}}",
+      "deleteSuccess": "{count, plural, other {#件のアイテムが削除されました}}",
+      "partialFailure": "{totalCount} 件中 {failedCount} 件のアイテムを更新できませんでした"
+    },
     "of": "の",
     "on": "の上",
     "at": "で",
@@ -2398,6 +2410,12 @@
     }
   },
   "sessions": {
+    "bulk": {
+      "completeTitle": "{count, plural, other {# 件のセッション}}を完了",
+      "completeDescription": "{count, plural, other {これらのセッションを完了してもよろしいですか？}}",
+      "deleteTitle": "{count, plural, other {# 件のセッション}}を削除",
+      "deleteDescription": "{count, plural, other {これらのセッションを削除してもよろしいですか？}}"
+    },
     "auditLog": {
       "trigger": "活動",
       "description": "このセッションで記録されたすべての変更です。"
@@ -2423,6 +2441,9 @@
       "viewSessionDetails": "セッションを見る"
     },
     "noMilestone": "マイルストーンなし",
+    "milestoneGroup": {
+      "sessionCount": "{count, plural, other {# 件のセッション}}"
+    },
     "completeDialog": {
       "noWorkflowsConfigured": "このプロジェクトには完了ワークフローが設定されていません。セッションの完了を有効にするには、管理設定でワークフローを設定してください。"
     },
@@ -3741,6 +3762,12 @@
     }
   },
   "runs": {
+    "bulk": {
+      "completeTitle": "{count, plural, other {# 件のテスト実行}}を完了",
+      "completeDescription": "{count, plural, other {これらのテスト実行を完了してもよろしいですか？}}",
+      "deleteTitle": "{count, plural, other {# 件のテスト実行}}を削除",
+      "deleteDescription": "{count, plural, other {これらのテスト実行}}を削除してもよろしいですか? 結果は履歴分析のために保持されます。"
+    },
     "composition": {
       "lock": "ケースロック済み",
       "unlocked": "ロック解除されたケース",
@@ -3949,8 +3976,8 @@
     },
     "milestoneGroup": {
       "runCount": "{count, plural, other {# 回の実行}}",
-      "expandAll": "すべて展開",
-      "collapseAll": "すべて折りたたむ"
+      "altHintMac": "⌥キーを押しながらクリックすると、すべてのグループを展開/折りたたみできます",
+      "altHintWin": "Altキーを押しながらクリックすると、すべてのグループを展開/折りたたみできます"
     },
     "runFilters": {
       "label": "テスト実行をフィルター",

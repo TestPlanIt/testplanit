@@ -3,6 +3,18 @@
     "name": "姓名",
     "cancel": "取消",
     "dismiss": "解雇",
+    "bulk": {
+      "selectItem": "选择项目",
+      "editAction": "编辑（{count}）",
+      "completeAction": "完成（{count}）",
+      "deleteAction": "删除（{count}）",
+      "editTitle": "批量编辑（{count}）",
+      "applyToCount": "更改将应用于 {count, plural, other {# 个项目}}。",
+      "tagsAdditiveHint": "所选标签将添加到每个项目；现有标签将保留。",
+      "completeSuccess": "{count, plural, other {# 个项目已完成}}",
+      "deleteSuccess": "{count, plural, other {# 个项目已删除}}",
+      "partialFailure": "{totalCount} 个项目中有 {failedCount} 个无法更新"
+    },
     "of": "的",
     "on": "在",
     "at": "在",
@@ -2398,6 +2410,12 @@
     }
   },
   "sessions": {
+    "bulk": {
+      "completeTitle": "完成 {count, plural, other {# 个会话}}",
+      "completeDescription": "您确定要完成{count, plural, other {这些会话}}吗？",
+      "deleteTitle": "删除 {count, plural, other {# 个会话}}",
+      "deleteDescription": "您确定要删除{count, plural, other {这些会话}}吗？"
+    },
     "auditLog": {
       "trigger": "活动",
       "description": "此会话记录的所有更改。"
@@ -2423,6 +2441,9 @@
       "viewSessionDetails": "查看会话"
     },
     "noMilestone": "没有里程碑",
+    "milestoneGroup": {
+      "sessionCount": "{count, plural, other {# 个会话}}"
+    },
     "completeDialog": {
       "noWorkflowsConfigured": "此项目未配置任何完成工作流程。请在管理设置中配置工作流程以启用会话完成功能。"
     },
@@ -3741,6 +3762,12 @@
     }
   },
   "runs": {
+    "bulk": {
+      "completeTitle": "完成 {count, plural, other {# 个测试运行}}",
+      "completeDescription": "您确定要完成{count, plural, other {这些测试运行}}吗？",
+      "deleteTitle": "删除 {count, plural, other {# 个测试运行}}",
+      "deleteDescription": "您确定要删除{count, plural, other {这些测试运行}}吗？结果将保留以供历史分析。"
+    },
     "composition": {
       "lock": "用例已锁定",
       "unlocked": "已解锁的用例",
@@ -3949,8 +3976,8 @@
     },
     "milestoneGroup": {
       "runCount": "{count, plural, other {# 个运行}}",
-      "expandAll": "全部展开",
-      "collapseAll": "全部收起"
+      "altHintMac": "按住 ⌥ 键展开或折叠所有分组",
+      "altHintWin": "按住 Alt 键展开或折叠所有分组"
     },
     "runFilters": {
       "label": "筛选测试运行",

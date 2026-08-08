@@ -7,31 +7,31 @@ sidebar_position: 2 # After Add Test Run Modal
 
 This component displays a summary of a single test run, typically shown in lists on the main [Test Runs](./runs.md) page (both Active and Completed tabs).
 
-It provides a quick overview of the run's status and key information, presented in a consistent grid layout.
+It provides a quick overview of the run's status and key information, presented in a consistent two-line layout.
 
 ## Layout and Information
 
-The component uses a 4-column grid:
+The item is laid out in two lines: identity above, detail below.
 
-1. **Name & Note (Left Column)**:
+**Identity line**
 
-    - **Name**: Displays the test run name with a Play Circle icon. The name is a link that navigates to the [Test Run Details](./run-details.md) page for that specific run. Hovering over the name shows a link icon. A **lock icon** appears next to the name when the run's [composition is locked](./run-details.md#composition-lock).
-    - **Note**: A single line preview of the test run's description (if provided). Uses the plain text version from the rich-text editor.
+- **Selection Checkbox**: Shown at the start of the row for users with edit, complete, or delete permission. Ticking it selects the run for [bulk operations](./runs.md#bulk-operations).
+- **Name**: Displays the test run name with a Play Circle icon, or a Bot icon for automated runs. The name is a link that navigates to the [Test Run Details](./run-details.md) page for that specific run. Hovering over the row shows a link icon, and the full name is always available in a tooltip when it is too long to fit.
+- **Indicators**: A **lock icon** when the run's [composition is locked](./run-details.md#composition-lock), a **multi-configuration icon** when the run belongs to a configuration group, a flame for runs created in the last few minutes, and a **pending review badge** when the run is awaiting a decision.
+- **Configuration**: The run's configuration, when it has one.
+- **Status**: The current workflow state, using the `WorkflowStateDisplay` component — the state's icon, name, and associated color.
+- **Actions Menu**: A vertical ellipsis (`...`) button opens a dropdown with **Edit**, **Duplicate**, **Complete**, and the record key, subject to your permissions.
 
-2. **Status (Middle Column 1)**:
+**Detail line**
 
-    - Displays the current workflow state of the test run using the `WorkflowStateDisplay` component. This typically includes the state's icon, name, and associated color.
+- **Test Case Summary**: The execution status of the cases in the run, using the `TestRunCasesSummary` component — a segmented bar plus counts, elapsed time and total estimate. Every segment links to its case. The bar **scrolls horizontally** when a run has more cases than it can seat.
+- **Milestone**: The associated [Milestone](./milestones.md), when the run has one and the surrounding list is not already grouped by milestone.
+- **Completion Date**: Shown in place of the members on completed runs.
+- **Members**: User avatars involved with the run (creator, assigned testers, executors), shown at the end of the line using the `MemberList` component. These are the same three roles the [My Test Runs filter](./runs.md#what-counts-as-taking-part) matches on, so filtering by it keeps the runs your avatar appears on.
 
-3. **Test Case Summary (Middle Column 2)**:
+**Note line**
 
-    - Shows a summary of the execution status of the test cases included in the run using the `TestRunCasesSummary` component. This usually includes counts or percentages of passed, failed, blocked, skipped, or untested cases.
-
-4. **Members & Actions (Right Column)**:
-    - **Active Runs**: Displays user avatars involved with the run (creator, assigned testers, executors) using the `MemberList` component. These are the same three roles the [My Test Runs filter](./runs.md#what-counts-as-taking-part) matches on, so filtering by it keeps the runs your avatar appears on.
-    - **Completed Runs**: Shows the associated [Milestone](./milestones.md) (if any) and the completion date.
-    - **Actions Menu** (Visible on Active runs for Admins/Project Admins):
-      - A vertical ellipsis (`...`) button triggers a dropdown menu.
-      - **Complete**: Opens the **Complete Test Run Dialog** to mark the run as finished.
+- A single line preview of the test run's description, when one is set. Uses the plain text version from the rich-text editor.
 
 ## Styling
 

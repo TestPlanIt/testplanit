@@ -7,11 +7,8 @@ import { MilestoneIconAndName } from "@/components/MilestoneIconAndName";
 import { MilestoneSourceBadge } from "@/components/MilestoneSourceBadge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
+import { MilestoneGroupChevron } from "@/components/MilestoneGroupChevron";
 import type {
   MilestonesGetPayload,
   TestRunsGetPayload,
@@ -22,13 +19,12 @@ import {
   type TestRunWakeUp,
 } from "~/hooks/useTestRunLiveStream";
 import {
-  ChevronDown,
-  ChevronsDownUp,
-  ChevronsUpDown,
+  CheckCircle,
   CirclePlus,
   GripVertical,
+  SquarePen,
+  Trash2,
 } from "lucide-react";
-import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
 import { useParams } from "next/navigation";
@@ -40,6 +36,7 @@ import type { PendingReviewSummary } from "@/components/reviews/PendingReviewBad
 import { useReviewFeatureEnabled } from "~/hooks/useReviewFeatureEnabled";
 import { ItemTypes } from "~/types/dndTypes";
 import { cn } from "~/utils";
+import { isAutomatedTestRunType } from "~/utils/testResultTypes";
 import {
   ColorMap,
   createColorMap,
@@ -48,7 +45,13 @@ import {
   MilestonesWithTypes,
   sortMilestones,
 } from "~/utils/milestoneUtils";
+import { BulkActionBar } from "@/components/bulk/BulkActionBar";
+import { transformMilestones } from "@/components/forms/MilestoneSelect";
+import type { OverflowAction } from "@/components/ui/action-bar";
 import AddTestRunModal from "./AddTestRunModal";
+import BulkCompleteTestRunsDialog from "./BulkCompleteTestRunsDialog";
+import BulkDeleteTestRunsDialog from "./BulkDeleteTestRunsDialog";
+import BulkEditTestRunsDialog from "./BulkEditTestRunsDialog";
 import {
   collapsedStorageKey,
   collectRenderedMilestoneKeys,
@@ -57,7 +60,6 @@ import {
   UNSCHEDULED_GROUP_KEY,
 } from "./milestoneGroups";
 import TestRunItem from "./TestRunItem";
-import CompleteTestRunDialog from "./[runId]/CompleteTestRunDialog";
 
 const _testRunPropSelect = {
   id: true,
@@ -351,7 +353,6 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
   const tMilestones = useTranslations("milestones");
   const tSessions = useTranslations("sessions");
   const { projectId } = useParams();
-  const { data: session } = useSession();
   const { resolvedTheme } = useTheme();
   const { data: colors, isLoading: isColorsLoading } = useClientQueries(
     schema
@@ -364,6 +365,9 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
   const { permissions: testRunPermissions, isLoading: isLoadingPermissions } =
     useProjectPermissions(numericProjectId, "TestRuns");
   const canAddEditRun = testRunPermissions?.canAddEdit ?? false;
+  const canCloseRun = testRunPermissions?.canClose ?? false;
+  const canDeleteRun = testRunPermissions?.canDelete ?? false;
+  const bulkSelectable = canAddEditRun || canCloseRun || canDeleteRun;
 
   // Mutation for updating test run milestone
   const queryClient = useQueryClient();
@@ -390,9 +394,6 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
   );
   const [isAddTestRunModalOpen, setIsAddTestRunModalOpen] = useState(false);
   const [colorMap, setColorMap] = useState<ColorMap | null>(null);
-  const [selectedTestRun, setSelectedTestRun] =
-    useState<TestRunsWithDetails | null>(null);
-  const [, setIsDialogOpen] = useState(false);
   const [, setNewTestRunId] = useState<number | null>(null);
   const [modalSelectedTestCases, setModalSelectedTestCases] = useState<
     number[]
@@ -457,28 +458,6 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
       enabled: testRunIds.length > 0,
       staleTime: 30000, // Cache for 30 seconds
     });
-
-  const { data: testRunCases } = useClientQueries(
-    schema
-  ).testRunCases.useFindMany(
-    {
-      where: { testRunId: { in: testRunIds }, isDeleted: false },
-      select: { id: true, testRunId: true, repositoryCaseId: true },
-    },
-    { enabled: testRunIds.length > 0 }
-  );
-
-  const testCasesByTestRunId = useMemo(() => {
-    if (!testRunCases) return {};
-    return testRunCases.reduce(
-      (acc, testCase) => {
-        if (!acc[testCase.testRunId]) acc[testCase.testRunId] = [];
-        acc[testCase.testRunId].push(testCase);
-        return acc;
-      },
-      {} as Record<number, typeof testRunCases>
-    );
-  }, [testRunCases]);
 
   const incompleteTestRuns = useMemo(() => {
     return [...testRuns]
@@ -650,8 +629,8 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
     [persistCollapsedGroups]
   );
 
-  // Every group key currently on screen — drives the expand/collapse-all
-  // control and its label.
+  // Every group key currently on screen — the alt-click expand/collapse-all
+  // gesture reaches exactly these.
   const renderedGroupKeys = useMemo(() => {
     const keys: string[] = [];
     if (groupedTestRunData.unscheduled.length > 0) {
@@ -663,21 +642,76 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
     return keys;
   }, [groupedTestRunData, sortedMilestoneTree]);
 
-  const allGroupsCollapsed =
-    renderedGroupKeys.length > 0 &&
-    renderedGroupKeys.every((key) => collapsedGroups.has(key));
-
-  const handleToggleAllGroups = useCallback(() => {
-    const next = allGroupsCollapsed
-      ? new Set<string>()
-      : new Set(renderedGroupKeys);
-    setCollapsedGroups(next);
-    persistCollapsedGroups(next);
-  }, [allGroupsCollapsed, renderedGroupKeys, persistCollapsedGroups]);
+  const setAllGroupsCollapsed = useCallback(
+    (collapsed: boolean) => {
+      const next = collapsed ? new Set(renderedGroupKeys) : new Set<string>();
+      setCollapsedGroups(next);
+      persistCollapsedGroups(next);
+    },
+    [renderedGroupKeys, persistCollapsedGroups]
+  );
 
   const allRunsCompleted = useMemo(
     () => testRuns.every((run) => run.isCompleted),
     [testRuns]
+  );
+
+  // --- Bulk selection state ---
+  const [selectedRunIds, setSelectedRunIds] = useState<Set<number>>(
+    () => new Set()
+  );
+  const [bulkDialog, setBulkDialog] = useState<
+    "edit" | "complete" | "delete" | null
+  >(null);
+
+  // Prune selections that no longer exist in the list (deleted, completed
+  // away from this tab, filtered out) so bulk actions can't touch invisible
+  // rows.
+  useEffect(() => {
+    setSelectedRunIds((prev) => {
+      const valid = new Set(testRuns.map((run) => run.id));
+      const next = new Set([...prev].filter((id) => valid.has(id)));
+      return next.size === prev.size ? prev : next;
+    });
+  }, [testRuns]);
+
+  const toggleRunSelected = useCallback((id: number, checked: boolean) => {
+    setSelectedRunIds((prev) => {
+      const next = new Set(prev);
+      if (checked) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  }, []);
+  const clearRunSelection = useCallback(() => setSelectedRunIds(new Set()), []);
+
+  const selectedRuns = useMemo(
+    () => testRuns.filter((run) => selectedRunIds.has(run.id)),
+    [testRuns, selectedRunIds]
+  );
+  // Mirrors the single-item gating: field edits exclude completed and
+  // automated runs, complete excludes completed, delete applies to any.
+  const editEligibleIds = useMemo(
+    () =>
+      selectedRuns
+        .filter(
+          (run) => !run.isCompleted && !isAutomatedTestRunType(run.testRunType)
+        )
+        .map((run) => run.id),
+    [selectedRuns]
+  );
+  const completeEligibleIds = useMemo(
+    () => selectedRuns.filter((run) => !run.isCompleted).map((run) => run.id),
+    [selectedRuns]
+  );
+  const deleteEligibleIds = useMemo(
+    () => selectedRuns.map((run) => run.id),
+    [selectedRuns]
+  );
+
+  const milestoneOptions = useMemo(
+    () => transformMilestones(milestonesProp),
+    [milestonesProp]
   );
 
   useEffect(() => {
@@ -709,17 +743,6 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
     };
   }, []);
 
-  const isAdmin =
-    session?.user?.access === "ADMIN" ||
-    session?.user?.access === "PROJECTADMIN";
-  const handleOpenDialog = (testRun: TestRunsWithDetails) => {
-    setSelectedTestRun(testRun);
-    setIsDialogOpen(true);
-  };
-  const _handleCloseDialog = () => {
-    setIsDialogOpen(false);
-    setSelectedTestRun(null);
-  };
   const handleAddTestRun = (milestoneId: number | null) => {
     setSelectedMilestoneId(milestoneId);
     setIsAddTestRunModalOpen(true);
@@ -727,6 +750,80 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
 
   if (isColorsLoading || isLoadingPermissions || !colorMap) return <Loading />;
   if (!testRuns || testRuns.length === 0) return null;
+
+  const bulkActions: OverflowAction[] = [
+    {
+      key: "edit",
+      icon: SquarePen,
+      label: tCommon("bulk.editAction", { count: editEligibleIds.length }),
+      onClick: () => setBulkDialog("edit"),
+      disabled: editEligibleIds.length === 0,
+      hidden: !canAddEditRun,
+      testId: "testrun-bulk-edit",
+    },
+    {
+      key: "complete",
+      icon: CheckCircle,
+      label: tCommon("bulk.completeAction", {
+        count: completeEligibleIds.length,
+      }),
+      onClick: () => setBulkDialog("complete"),
+      disabled: completeEligibleIds.length === 0,
+      hidden: !canCloseRun,
+      testId: "testrun-bulk-complete",
+    },
+    {
+      key: "delete",
+      icon: Trash2,
+      label: tCommon("bulk.deleteAction", { count: deleteEligibleIds.length }),
+      onClick: () => setBulkDialog("delete"),
+      disabled: deleteEligibleIds.length === 0,
+      hidden: !canDeleteRun,
+      destructive: true,
+      testId: "testrun-bulk-delete",
+    },
+  ];
+
+  const bulkBar = bulkSelectable ? (
+    <BulkActionBar
+      selectedCount={selectedRunIds.size}
+      onClearSelection={clearRunSelection}
+      actions={bulkActions}
+      testIdPrefix="testrun"
+    />
+  ) : null;
+
+  const bulkDialogs = (
+    <>
+      {bulkDialog === "edit" && (
+        <BulkEditTestRunsDialog
+          open
+          onOpenChange={(open) => !open && setBulkDialog(null)}
+          testRunIds={editEligibleIds}
+          projectId={numericProjectId}
+          milestoneOptions={milestoneOptions}
+          onDone={clearRunSelection}
+        />
+      )}
+      {bulkDialog === "complete" && (
+        <BulkCompleteTestRunsDialog
+          open
+          onOpenChange={(open) => !open && setBulkDialog(null)}
+          testRunIds={completeEligibleIds}
+          projectId={numericProjectId}
+          onDone={clearRunSelection}
+        />
+      )}
+      {bulkDialog === "delete" && (
+        <BulkDeleteTestRunsDialog
+          open
+          onOpenChange={(open) => !open && setBulkDialog(null)}
+          testRunIds={deleteEligibleIds}
+          onDone={clearRunSelection}
+        />
+      )}
+    </>
+  );
 
   if (allRunsCompleted) {
     const sortedCompletedTestRuns = [...testRuns].sort((a, b) => {
@@ -737,48 +834,16 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
     return (
       <div className="flex flex-col items-center w-full">
         <div className="w-full">
+          {bulkBar}
           {sortedCompletedTestRuns.map((testRun) => (
             <TestRunItem
               key={testRun.id}
-              testRun={{
-                id: testRun.id,
-                name: testRun.name,
-                isCompleted: testRun.isCompleted,
-                compositionLockedAt: testRun.compositionLockedAt,
-                testRunType: testRun.testRunType,
-                configuration: testRun.configuration,
-                configurationGroupId: testRun.configurationGroupId,
-                state: testRun.state,
-                note:
-                  typeof testRun.note === "string"
-                    ? testRun.note
-                    : testRun.note
-                      ? JSON.stringify(testRun.note)
-                      : undefined,
-                completedAt: testRun.completedAt
-                  ? new Date(testRun.completedAt)
-                  : undefined,
-                milestone: testRun.milestone
-                  ? {
-                      id: testRun.milestone.id,
-                      name: testRun.milestone.name,
-                      startedAt: testRun.milestone.startedAt
-                        ? new Date(testRun.milestone.startedAt)
-                        : undefined,
-                      completedAt: testRun.milestone.completedAt
-                        ? new Date(testRun.milestone.completedAt)
-                        : undefined,
-                      isCompleted: testRun.milestone.isCompleted,
-                      milestoneType: testRun.milestone.milestoneType,
-                    }
-                  : undefined,
-                projectId: testRun.projectId,
-                createdBy: testRun.createdBy,
-                forecastManual: testRun.forecastManual,
-                forecastAutomated: testRun.forecastAutomated,
-                createdAt: testRun.createdAt,
-              }}
-              milestonePath={testRun.milestone?.name}
+              selectable={bulkSelectable}
+              selected={selectedRunIds.has(testRun.id)}
+              onSelectedChange={(checked) =>
+                toggleRunSelected(testRun.id, checked)
+              }
+              testRun={testRun}
               onDuplicate={onDuplicateTestRun}
               summaryData={batchSummaries?.summaries[testRun.id]}
               summaryLoading={isBatchSummariesLoading}
@@ -790,19 +855,7 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
             />
           ))}
         </div>
-        {selectedTestRun && (
-          <CompleteTestRunDialog
-            open={true}
-            onClose={() => {
-              setIsDialogOpen(false);
-              setSelectedTestRun(null);
-            }}
-            testRunId={selectedTestRun.id}
-            projectId={selectedTestRun.projectId}
-            stateId={selectedTestRun.state.id}
-            stateName={selectedTestRun.state.name}
-          />
-        )}
+        {bulkDialogs}
       </div>
     );
   }
@@ -810,8 +863,6 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
   const renderGroupedTestRuns = (
     currentGroupedRuns: GroupedTestRuns,
     currentMilestoneTree: MilestonesWithTypes[],
-    handleOpenDialogParam: (testRun: TestRunsWithDetails) => void,
-    isAdminParam: boolean,
     onDuplicateTestRunParam?: (run: { id: number; name: string }) => void,
     summariesData?: BatchTestRunSummaryResponse
   ) => {
@@ -865,7 +916,7 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
             onOpenChange={(open) => setGroupOpen(groupKey, open)}
           >
             <div
-              className={`milestone-grid bg-primary/10 p-2 pe-4 ${
+              className={`@container milestone-grid bg-primary/10 p-2 pe-4 ${
                 depth === 0 ? "rounded-t-lg" : ""
               }`}
             >
@@ -880,32 +931,17 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
                 {/* Only the chevron toggles: the header also holds the
                     milestone link and the Add Run button, so a whole-row
                     trigger would swallow both. */}
-                <CollapsibleTrigger asChild>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6 shrink-0"
-                    aria-label={
-                      isOpen
-                        ? tCommon("actions.collapse")
-                        : tCommon("actions.expand")
-                    }
-                    data-testid={`milestone-group-toggle-${milestone.id}`}
-                  >
-                    {/* One rotating chevron rather than swapping two icons:
-                        a swap can't tween. Closed points at the group's start
-                        edge, which flips under RTL. */}
-                    <ChevronDown
-                      className={cn(
-                        "h-4 w-4 transition-transform duration-200",
-                        !isOpen && "-rotate-90 rtl:rotate-90"
-                      )}
-                    />
-                  </Button>
-                </CollapsibleTrigger>
-                <div className="truncate">
+                <MilestoneGroupChevron
+                  isOpen={isOpen}
+                  testId={`milestone-group-toggle-${milestone.id}`}
+                  onClick={(e) => {
+                    if (e.altKey) setAllGroupsCollapsed(isOpen);
+                    else setGroupOpen(groupKey, !isOpen);
+                  }}
+                />
+                <div className="truncate min-w-0">
                   <MilestoneIconAndName
+                    collapsibleIcon
                     milestone={milestone}
                     // The full source badge renders right beside this — no
                     // duplicate glyph inside the name.
@@ -922,7 +958,7 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
                 />
                 <Badge
                   variant="outline"
-                  className="shrink-0 text-xs font-normal text-muted-foreground"
+                  className="shrink-0 hidden @lg:inline-flex text-xs font-normal text-muted-foreground"
                   data-testid={`milestone-group-count-${milestone.id}`}
                 >
                   {t("milestoneGroup.runCount", { count: subtreeRunCount })}
@@ -971,6 +1007,7 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
                     </>
                   )}
                   <DateTextDisplay
+                    responsive
                     startDate={
                       milestone.startedAt ? new Date(milestone.startedAt) : null
                     }
@@ -1005,49 +1042,12 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
                           canDrag={canAddEditRun && !testRun.isCompleted}
                         >
                           <TestRunItem
-                            testRun={{
-                              id: testRun.id,
-                              name: testRun.name,
-                              isCompleted: testRun.isCompleted,
-                              compositionLockedAt: testRun.compositionLockedAt,
-                              testRunType: testRun.testRunType,
-                              configuration: testRun.configuration,
-                              configurationGroupId:
-                                testRun.configurationGroupId,
-                              state: testRun.state,
-                              note:
-                                typeof testRun.note === "string"
-                                  ? testRun.note
-                                  : testRun.note
-                                    ? JSON.stringify(testRun.note)
-                                    : undefined,
-                              completedAt: testRun.completedAt
-                                ? new Date(testRun.completedAt)
-                                : undefined,
-                              milestone: testRun.milestone
-                                ? {
-                                    id: testRun.milestone.id,
-                                    name: testRun.milestone.name,
-                                    startedAt: testRun.milestone.startedAt
-                                      ? new Date(testRun.milestone.startedAt)
-                                      : undefined,
-                                    completedAt: testRun.milestone.completedAt
-                                      ? new Date(testRun.milestone.completedAt)
-                                      : undefined,
-                                    isCompleted: testRun.milestone.isCompleted,
-                                    milestoneType:
-                                      testRun.milestone.milestoneType,
-                                  }
-                                : undefined,
-                              projectId: testRun.projectId,
-                              testCases: testCasesByTestRunId[testRun.id] || [],
-                              createdBy: testRun.createdBy,
-                              forecastManual: testRun.forecastManual,
-                              forecastAutomated: testRun.forecastAutomated,
-                              createdAt: testRun.createdAt,
-                            }}
-                            onComplete={handleOpenDialogParam}
-                            isAdmin={isAdminParam}
+                            selectable={bulkSelectable}
+                            selected={selectedRunIds.has(testRun.id)}
+                            onSelectedChange={(checked) =>
+                              toggleRunSelected(testRun.id, checked)
+                            }
+                            testRun={testRun}
                             isNew={false}
                             onDuplicate={onDuplicateTestRunParam}
                             summaryData={summariesData?.summaries[testRun.id]}
@@ -1082,26 +1082,6 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
 
     return (
       <>
-        {renderedGroupKeys.length > 1 && (
-          <div className="mb-2 flex justify-end">
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={handleToggleAllGroups}
-              data-testid="milestone-groups-toggle-all"
-            >
-              {allGroupsCollapsed ? (
-                <ChevronsUpDown className="h-4 w-4 me-2" />
-              ) : (
-                <ChevronsDownUp className="h-4 w-4 me-2" />
-              )}
-              {allGroupsCollapsed
-                ? t("milestoneGroup.expandAll")
-                : t("milestoneGroup.collapseAll")}
-            </Button>
-          </div>
-        )}
         {currentGroupedRuns.unscheduled.length > 0 && (
           <DroppableMilestoneGroup
             milestoneId={null}
@@ -1114,29 +1094,20 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
               onOpenChange={(open) => setGroupOpen(UNSCHEDULED_GROUP_KEY, open)}
             >
               {showUnscheduledHeader && (
-                <div className="milestone-grid bg-primary/10 rounded-t-lg p-4">
+                <div className="@container milestone-grid bg-primary/10 rounded-t-lg p-4">
                   <div className="milestone-name flex items-center gap-1">
-                    <CollapsibleTrigger asChild>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6 shrink-0"
-                        aria-label={
-                          isUnscheduledOpen
-                            ? tCommon("actions.collapse")
-                            : tCommon("actions.expand")
-                        }
-                        data-testid="milestone-group-toggle-unscheduled"
-                      >
-                        <ChevronDown
-                          className={cn(
-                            "h-4 w-4 transition-transform duration-200",
-                            !isUnscheduledOpen && "-rotate-90 rtl:rotate-90"
-                          )}
-                        />
-                      </Button>
-                    </CollapsibleTrigger>
+                    <MilestoneGroupChevron
+                      isOpen={isUnscheduledOpen}
+                      testId="milestone-group-toggle-unscheduled"
+                      onClick={(e) => {
+                        if (e.altKey) setAllGroupsCollapsed(isUnscheduledOpen);
+                        else
+                          setGroupOpen(
+                            UNSCHEDULED_GROUP_KEY,
+                            !isUnscheduledOpen
+                          );
+                      }}
+                    />
                     <DynamicIcon
                       name="calendar-off"
                       className="w-6 h-6 shrink-0"
@@ -1144,7 +1115,7 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
                     <div className="truncate">{tSessions("noMilestone")}</div>
                     <Badge
                       variant="outline"
-                      className="shrink-0 text-xs font-normal text-muted-foreground"
+                      className="shrink-0 hidden @lg:inline-flex text-xs font-normal text-muted-foreground"
                       data-testid="milestone-group-count-unscheduled"
                     >
                       {t("milestoneGroup.runCount", {
@@ -1196,47 +1167,12 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
                       canDrag={canAddEditRun && !testRun.isCompleted}
                     >
                       <TestRunItem
-                        testRun={{
-                          id: testRun.id,
-                          name: testRun.name,
-                          isCompleted: testRun.isCompleted,
-                          compositionLockedAt: testRun.compositionLockedAt,
-                          testRunType: testRun.testRunType,
-                          configuration: testRun.configuration,
-                          configurationGroupId: testRun.configurationGroupId,
-                          state: testRun.state,
-                          note:
-                            typeof testRun.note === "string"
-                              ? testRun.note
-                              : testRun.note
-                                ? JSON.stringify(testRun.note)
-                                : undefined,
-                          completedAt: testRun.completedAt
-                            ? new Date(testRun.completedAt)
-                            : undefined,
-                          milestone: testRun.milestone
-                            ? {
-                                id: testRun.milestone.id,
-                                name: testRun.milestone.name,
-                                startedAt: testRun.milestone.startedAt
-                                  ? new Date(testRun.milestone.startedAt)
-                                  : undefined,
-                                completedAt: testRun.milestone.completedAt
-                                  ? new Date(testRun.milestone.completedAt)
-                                  : undefined,
-                                isCompleted: testRun.milestone.isCompleted,
-                                milestoneType: testRun.milestone.milestoneType,
-                              }
-                            : undefined,
-                          projectId: testRun.projectId,
-                          testCases: testCasesByTestRunId[testRun.id] || [],
-                          createdBy: testRun.createdBy,
-                          forecastManual: testRun.forecastManual,
-                          forecastAutomated: testRun.forecastAutomated,
-                          createdAt: testRun.createdAt,
-                        }}
-                        onComplete={handleOpenDialogParam}
-                        isAdmin={isAdminParam}
+                        selectable={bulkSelectable}
+                        selected={selectedRunIds.has(testRun.id)}
+                        onSelectedChange={(checked) =>
+                          toggleRunSelected(testRun.id, checked)
+                        }
+                        testRun={testRun}
                         isNew={false}
                         onDuplicate={onDuplicateTestRunParam}
                         summaryData={summariesData?.summaries[testRun.id]}
@@ -1263,30 +1199,17 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
     <div className="flex flex-col items-center w-full">
       <div className="w-full relative">
         <div className="flex flex-col w-full">
+          {bulkBar}
           {renderGroupedTestRuns(
             groupedTestRunData,
             sortedMilestoneTree,
-            handleOpenDialog,
-            isAdmin,
             onDuplicateTestRun,
             batchSummaries
           )}
         </div>
       </div>
 
-      {selectedTestRun && (
-        <CompleteTestRunDialog
-          open={true}
-          onClose={() => {
-            setIsDialogOpen(false);
-            setSelectedTestRun(null);
-          }}
-          testRunId={selectedTestRun.id}
-          projectId={selectedTestRun.projectId}
-          stateId={selectedTestRun.state.id}
-          stateName={selectedTestRun.state.name}
-        />
-      )}
+      {bulkDialogs}
     </div>
   );
 };

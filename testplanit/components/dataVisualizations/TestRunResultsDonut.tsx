@@ -131,7 +131,11 @@ const TestRunResultsDonut: React.FC<TestRunResultsDonutProps> = ({
     // Add event handlers before animation
     arcPaths
       .on("mouseover", function (event, d) {
-        d3.select(this).transition().duration(150).attr("opacity", 0.85);
+        // Named transition so it doesn't cancel the entrance animation
+        d3.select(this)
+          .transition("hover")
+          .duration(150)
+          .style("opacity", 0.85);
         if (tooltipRef.current) {
           tooltipRef.current.style.display = "block";
           tooltipRef.current.style.fontSize = `${tooltipFontSize}px`;
@@ -153,7 +157,7 @@ const TestRunResultsDonut: React.FC<TestRunResultsDonutProps> = ({
         }
       })
       .on("mouseout", function () {
-        d3.select(this).transition().duration(150).attr("opacity", 1);
+        d3.select(this).transition("hover").duration(150).style("opacity", 1);
         if (tooltipRef.current) {
           tooltipRef.current.style.display = "none";
         }

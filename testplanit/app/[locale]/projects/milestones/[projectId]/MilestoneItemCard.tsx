@@ -1,11 +1,11 @@
 "use client";
 
-import { CalendarDisplay } from "@/components/DateCalendarDisplay";
 import { DateTextDisplay } from "@/components/DateTextDisplay";
 import { RecordKeyMenuItem } from "@/components/RecordKeyMenuItem";
-import { ForecastDisplay } from "@/components/ForecastDisplay";
-import { MilestoneIconAndName } from "@/components/MilestoneIconAndName";
 import { MilestoneSummary } from "@/components/MilestoneSummary";
+import { CalendarDisplay } from "@/components/DateCalendarDisplay";
+import DynamicIcon from "@/components/DynamicIcon";
+import { ItemRow } from "@/components/ItemRow";
 import TextFromJson from "@/components/TextFromJson";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -32,21 +32,14 @@ import {
 } from "lucide-react";
 import type { Session } from "next-auth";
 import { useTranslations } from "next-intl";
-import React, { useEffect, useState } from "react";
-import LoadingSpinner from "~/components/LoadingSpinner";
+import React from "react";
 import {
   ColorMap,
   getStatus,
   getStatusStyle,
   MilestonesWithTypes,
 } from "~/utils/milestoneUtils";
-
-interface MilestoneForecastData {
-  manualEstimate: number;
-  mixedEstimate: number;
-  automatedEstimate: number;
-  areAllCasesAutomated: boolean;
-}
+import type { IconName } from "~/types/globals";
 
 interface MilestoneItemCardProps {
   milestone: MilestonesWithTypes;
@@ -65,7 +58,6 @@ interface MilestoneItemCardProps {
   onOpenEditModal: (milestone: MilestonesWithTypes) => void;
   onOpenDeleteModal: (milestone: MilestonesWithTypes) => void;
   level?: number;
-  compact?: boolean;
 }
 
 const MilestoneItemCard: React.FC<MilestoneItemCardProps> = ({
@@ -83,42 +75,10 @@ const MilestoneItemCard: React.FC<MilestoneItemCardProps> = ({
   onOpenEditModal,
   onOpenDeleteModal,
   level = 0,
-  compact = false,
 }) => {
   const t = useTranslations("milestones");
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
-
-  const [milestoneForecast, setMilestoneForecast] =
-    useState<MilestoneForecastData | null>(null);
-  const [isLoadingForecast, setIsLoadingForecast] = useState(false);
-
-  useEffect(() => {
-    const fetchMilestoneForecast = async () => {
-      if (!milestone.id) return;
-      setIsLoadingForecast(true);
-      try {
-        const response = await fetch(
-          `/api/milestones/${milestone.id}/forecast`
-        );
-        if (!response.ok) {
-          throw new Error(`API error: ${response.status}`);
-        }
-        const data: MilestoneForecastData = await response.json();
-        setMilestoneForecast(data);
-      } catch (error) {
-        console.error(
-          `Failed to fetch milestone forecast for ${milestone.id}:`,
-          error
-        );
-        setMilestoneForecast(null);
-      } finally {
-        setIsLoadingForecast(false);
-      }
-    };
-
-    void fetchMilestoneForecast();
-  }, [milestone.id]);
 
   if (!session || !colorMap) return null;
 
@@ -140,89 +100,101 @@ const MilestoneItemCard: React.FC<MilestoneItemCardProps> = ({
   // always fail. The tracker owns a synced milestone's lifecycle.
   const isSynced = milestone.integrationId != null;
 
+  const canManage =
+    session.user.access === "ADMIN" || session.user.access === "PROJECTADMIN";
+
   return (
+    // Nesting offset lives on a wrapper so the row itself stays a plain
+    // full-width block — it is the query container, and its width has to be
+    // the width the content actually gets.
     <div
-      className={`overflow-auto relative flex flex-col gap-1 ${compact ? "" : "sm:grid sm:grid-cols-[1fr_auto_1fr] sm:gap-4 sm:items-center sm:border-4"} w-full my-2 p-2 border-2 rounded-lg shadow-xs`}
       style={{
-        backgroundColor: bg,
-        borderColor: border,
         marginInlineStart: `${level * 20}px`,
         width: `calc(100% - ${level * 20}px)`,
       }}
     >
-      {/* Mobile: flex row with name+badge+actions. Desktop: children become grid columns via sm:contents */}
-      <div
-        className={`flex items-center gap-2 ${compact ? "" : "sm:contents"}`}
-      >
-        {/* Column 1: Details, Dates */}
-        <div className="flex items-start flex-1 min-w-0">
-          {startDate && (
-            <div
-              className={`${compact ? "hidden" : "hidden sm:block"} me-4 pt-1`}
-            >
+      <ItemRow
+        leading={
+          startDate ? (
+            <div className="flex shrink-0 overflow-hidden max-w-0 opacity-0 transition-all duration-200 ease-out motion-reduce:transition-none @2xl:max-w-20 @2xl:opacity-100 @2xl:me-3">
               <CalendarDisplay date={startDate} />
             </div>
-          )}
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
-              <MilestoneIconAndName
-                milestone={milestone}
-                projectId={projectId}
-                // The full source badge renders right beside this — no
-                // duplicate glyph inside the name.
-                showSourceIcon={false}
-              />
-              <MilestoneSourceBadge
-                milestone={milestone}
-                projectId={projectId}
-                integrationProjects={integrationProjects}
-              />
-            </div>
-            <p
-              className={`${compact ? "hidden" : "hidden sm:block"} text-md text-muted-foreground ms-7`}
-            >
-              <TextFromJson
-                jsonString={milestone.note as string}
-                format="text"
-                room={`milestone-note-${milestone.id}`}
-              />
-            </p>
-            <div className={`${compact ? "hidden" : "hidden sm:block"} ms-7`}>
-              <DateTextDisplay
-                startDate={startDate}
-                endDate={endDate}
-                isCompleted={milestone.isCompleted}
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Column 2: Status Badge */}
-        <div
-          className={`flex shrink-0 ${compact ? "" : "sm:w-24"} justify-center`}
-        >
-          <Badge
-            style={{ backgroundColor: badge }}
-            className="text-foreground border-2 border-secondary-foreground text-sm"
-          >
-            {t(`statusLabels.${status}` as any)}
-          </Badge>
-        </div>
-
-        {/* Column 3: End Date Calendar, Actions */}
-        <div
-          className={`flex items-center shrink-0 ${compact ? "" : "sm:justify-end sm:space-x-2"}`}
-        >
-          {endDate && (
-            <div className={compact ? "hidden" : "hidden sm:block"}>
+          ) : null
+        }
+        trailing={
+          endDate ? (
+            <div className="flex shrink-0 overflow-hidden max-w-0 opacity-0 transition-all duration-200 ease-out motion-reduce:transition-none @2xl:max-w-20 @2xl:opacity-100 @2xl:ms-3">
               <CalendarDisplay
                 date={endDate}
                 showYear={milestone.isCompleted}
               />
             </div>
-          )}
-          {(session.user.access === "ADMIN" ||
-            session.user.access === "PROJECTADMIN") && (
+          ) : null
+        }
+        href={
+          projectId
+            ? `/projects/milestones/${projectId}/${milestone.id}`
+            : `/milestone/${milestone.id}`
+        }
+        name={milestone.name}
+        surface={{ background: bg, border }}
+        icon={
+          <DynamicIcon
+            name={
+              (milestone.milestoneType?.icon?.name as IconName) || "milestone"
+            }
+            className="h-5 w-5 shrink-0"
+          />
+        }
+        adornments={[
+          {
+            key: "source",
+            tier: "lg",
+            // The badge measures itself and sheds segments down to its icon;
+            // let it negotiate with the name directly rather than through a
+            // wrapper of ours.
+            bare: true,
+            content: (
+              <MilestoneSourceBadge
+                milestone={milestone}
+                projectId={projectId}
+                integrationProjects={integrationProjects}
+              />
+            ),
+          },
+        ]}
+        identityChips={[
+          (startDate || endDate) && {
+            key: "dates",
+            // A clipped date range is unreadable, so it collapses whole once
+            // the row is too narrow to seat it. Bounded above as well: from
+            // @2xl the calendar blocks on the card edges carry the same dates,
+            // and the two must never render together.
+            tier: "md",
+            maxTier: "2xl",
+            pinned: true,
+            content: (
+              <span className="whitespace-nowrap text-sm truncate">
+                <DateTextDisplay
+                  responsive
+                  startDate={startDate}
+                  endDate={endDate}
+                  isCompleted={milestone.isCompleted}
+                />
+              </span>
+            ),
+          },
+        ]}
+        state={
+          <Badge
+            style={{ backgroundColor: badge }}
+            className="text-foreground border-2 border-secondary-foreground text-sm whitespace-nowrap"
+          >
+            {t(`statusLabels.${status}` as any)}
+          </Badge>
+        }
+        actions={
+          canManage && (
             <DropdownMenu modal={false}>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -298,62 +270,25 @@ const MilestoneItemCard: React.FC<MilestoneItemCardProps> = ({
                 </DropdownMenuGroup>
               </DropdownMenuContent>
             </DropdownMenu>
-          )}
-        </div>
-      </div>
-
-      {/* Mobile-only: date text as its own row */}
-      <div className={`${compact ? "" : "sm:hidden"} ms-7`}>
-        <DateTextDisplay
-          startDate={startDate}
-          endDate={endDate}
-          isCompleted={milestone.isCompleted}
-        />
-      </div>
-
-      {/* Milestone Summary - spans all columns on desktop */}
-      <div className={`${compact ? "" : "sm:col-span-3"} border-t`}>
-        <MilestoneSummary milestoneId={milestone.id} projectId={projectId} />
-
-        {/* Forecast Section - below summary */}
-        <div className="text-xs text-muted-foreground">
-          {isLoadingForecast ? (
-            <div className="flex items-center gap-1">
-              <LoadingSpinner className="w-3 h-3" />
-            </div>
-          ) : milestoneForecast ? (
-            <div className="flex flex-col gap-0.5 items-start">
-              {milestoneForecast.manualEstimate > 0 && (
-                <ForecastDisplay
-                  seconds={milestoneForecast.manualEstimate}
-                  type="manual"
-                  className="text-xs text-start"
-                />
-              )}
-              {milestoneForecast.automatedEstimate > 0 && (
-                <ForecastDisplay
-                  seconds={milestoneForecast.automatedEstimate}
-                  type="automated"
-                  className="text-xs text-start"
-                  round={false}
-                />
-              )}
-              {milestoneForecast.mixedEstimate > 0 &&
-                milestoneForecast.mixedEstimate !==
-                  milestoneForecast.manualEstimate &&
-                milestoneForecast.mixedEstimate !==
-                  milestoneForecast.automatedEstimate && (
-                  <ForecastDisplay
-                    seconds={milestoneForecast.mixedEstimate}
-                    type="mixed"
-                    className="text-xs text-start"
-                    round={false}
-                  />
-                )}
-            </div>
-          ) : null}
-        </div>
-      </div>
+          )
+        }
+        progress={
+          <MilestoneSummary milestoneId={milestone.id} projectId={projectId} />
+        }
+        noteBelowName
+        noteTier="base"
+        note={
+          milestone.note ? (
+            <span className="pl-6">
+              <TextFromJson
+                jsonString={milestone.note as string}
+                format="text"
+                room={`milestone-note-${milestone.id}`}
+              />
+            </span>
+          ) : null
+        }
+      />
     </div>
   );
 };

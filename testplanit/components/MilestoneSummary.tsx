@@ -201,7 +201,8 @@ export function MilestoneSummary({
     <div className={cn("flex flex-col space-y-1 w-full", className)}>
       {/* Color bar for milestone items */}
       <div
-        className="flex h-2.5 w-full rounded-full overflow-hidden bg-muted"
+        className="flex h-2.5 w-full rounded-full overflow-x-auto overflow-y-hidden bg-muted"
+        data-status-bar
         data-testid="milestone-summary-bar"
       >
         {sortedSegments.map((segment, _index) => {
@@ -303,18 +304,18 @@ export function MilestoneSummary({
       </div>
 
       {/* Container for Summary Text and Issues */}
-      <div className="flex flex-wrap justify-between items-center gap-y-1">
+      <div className="flex flex-nowrap justify-between items-center gap-2">
         {/* Summary text below the bar */}
         <div
-          className="text-muted-foreground text-xs truncate grow me-2"
+          className="flex items-center min-w-0 grow text-muted-foreground text-xs"
           title={`${testRunCount} ${tCommon("plural.run", { count: testRunCount })}, ${sessionCount} ${tGlobal("sessions.title", { count: sessionCount })}${totalElapsedText ? ` • ${tCommon("fields.totalElapsed")}: ${totalElapsedText}` : ""}${totalEstimateText ? ` • ${tCommon("fields.totalEstimate")}: ${totalEstimateText}` : ""}`}
         >
-          {`${testRunCount} ${tCommon("plural.run", { count: testRunCount })}, ${sessionCount} ${tGlobal("sessions.title", { count: sessionCount })}`}
+          <span className="truncate shrink">{`${testRunCount} ${tCommon("plural.run", { count: testRunCount })}, ${sessionCount} ${tGlobal("sessions.title", { count: sessionCount })}`}</span>
           {totalElapsedText ? (
             <Tooltip>
               <TooltipTrigger asChild>
                 <span
-                  className="inline-flex items-center ms-1 cursor-default"
+                  className="inline-flex items-center ms-1 cursor-default shrink-[999] min-w-0 overflow-hidden whitespace-nowrap"
                   data-testid="total-elapsed-display"
                 >
                   {" • "}
@@ -333,7 +334,7 @@ export function MilestoneSummary({
             <Tooltip>
               <TooltipTrigger asChild>
                 <span
-                  className="inline-flex items-center ms-1 cursor-default"
+                  className="inline-flex items-center ms-1 cursor-default shrink-[9999] min-w-0 overflow-hidden whitespace-nowrap"
                   data-testid="total-estimate-display"
                 >
                   {" • "}

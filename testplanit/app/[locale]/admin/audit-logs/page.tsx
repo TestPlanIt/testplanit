@@ -24,14 +24,8 @@ import { AuditAction } from "~/zenstack/models";
 import { endOfDay, endOfWeek, format, startOfDay, startOfWeek } from "date-fns";
 import { Download } from "lucide-react";
 import type { Session } from "next-auth";
-import {
-  AuditLogUserOption,
-  searchAuditLogUsers,
-} from "~/app/actions/searchAuditLogUsers";
 import { DateRangePickerField } from "~/components/forms/DateRangePickerField";
-import { getAuditLogActions } from "~/app/actions/getAuditLogActions";
-import { getAuditLogEntityTypes } from "~/app/actions/getAuditLogEntityTypes";
-import { getAuditLogProjects } from "~/app/actions/getAuditLogProjects";
+import type { AuditLogUserOption } from "~/lib/services/auditLog/searchAuditLogUsers";
 import { SYSTEM_ACTOR_ID } from "~/lib/auditContextConstants";
 import { formatAuditAction } from "~/lib/audit/auditActions";
 import { groupAuditRows } from "~/lib/audit/groupAuditRows";
@@ -66,6 +60,48 @@ function currentWeekRange(): DateRange {
 interface ProjectFilterOption {
   id: number;
   name: string;
+}
+
+/**
+ * Read one of the filter-option sources behind the audit-log pickers.
+ *
+ * A plain request, not a Server Action: Next runs Server Actions one at a time
+ * per client, so the slowest picker (users — distinct actors across the whole
+ * audit table) used to hold every other picker's fetch behind it.
+ */
+async function fetchFilterOptions<T>(
+  params: Record<string, string>
+): Promise<T> {
+  const response = await fetch(
+    `/api/admin/audit-logs/filters?${new URLSearchParams(params)}`
+  );
+  if (!response.ok) {
+    throw new Error(`Failed to load filter options (${response.status})`);
+  }
+  return (await response.json()) as T;
+}
+
+/**
+ * Memoize a fetched-once option list in a ref, clearing the ref when the fetch
+ * fails or comes back empty so the next open retries. Without the failure path
+ * a single rejected request latches in the ref and the picker stays empty for
+ * the life of the page.
+ */
+function loadOnce<T>(
+  ref: React.RefObject<Promise<T[]> | null>,
+  load: () => Promise<T[]>
+): Promise<T[]> {
+  ref.current ??= load().then(
+    (value) => {
+      if (value.length === 0) ref.current = null;
+      return value;
+    },
+    (error) => {
+      ref.current = null;
+      throw error;
+    }
+  );
+  return ref.current;
 }
 
 export default function AuditLogsPage() {
@@ -284,7 +320,7 @@ function AuditLogsContent({ session }: { session: Session }) {
   // changes rarely, so reopening the picker or repeating a search serves
   // from memory instead of re-running the query.
   const userOptionsCacheRef = useRef(
-    new Map<string, ReturnType<typeof searchAuditLogUsers>>()
+    new Map<string, Promise<{ results: AuditLogUserOption[]; total: number }>>()
   );
   const fetchUserOptions = useCallback(
     (query: string, page: number, pageSize: number) => {
@@ -292,12 +328,24 @@ function AuditLogsContent({ session }: { session: Session }) {
       const cache = userOptionsCacheRef.current;
       const cached = cache.get(key);
       if (cached) return cached;
-      const promise = searchAuditLogUsers(query, page, pageSize);
-      cache.set(key, promise);
-      // An empty result may be a failed fetch — let the next call retry.
-      void promise.then((result) => {
-        if (result.results.length === 0) cache.delete(key);
+      const promise = fetchFilterOptions<{
+        results: AuditLogUserOption[];
+        total: number;
+      }>({
+        type: "users",
+        q: query,
+        page: String(page),
+        pageSize: String(pageSize),
       });
+      cache.set(key, promise);
+      // An empty or failed result may be transient — let the next call retry
+      // rather than serving the same dead promise for the page's lifetime.
+      void promise.then(
+        (result) => {
+          if (result.results.length === 0) cache.delete(key);
+        },
+        () => cache.delete(key)
+      );
       return promise;
     },
     []
@@ -308,10 +356,9 @@ function AuditLogsContent({ session }: { session: Session }) {
   const actionsPromiseRef = useRef<Promise<AuditAction[]> | null>(null);
   const fetchActionOptions = useCallback(
     async (query: string, page: number, pageSize: number) => {
-      actionsPromiseRef.current ??= getAuditLogActions();
-      const actions = await actionsPromiseRef.current;
-      // An empty list may be a failed fetch — let the next call retry.
-      if (actions.length === 0) actionsPromiseRef.current = null;
+      const actions = await loadOnce(actionsPromiseRef, () =>
+        fetchFilterOptions<AuditAction[]>({ type: "actions" })
+      );
       const q = query.trim().toLowerCase();
       const filtered = q
         ? actions.filter((action) =>
@@ -331,10 +378,9 @@ function AuditLogsContent({ session }: { session: Session }) {
   const entityTypesPromiseRef = useRef<Promise<string[]> | null>(null);
   const fetchEntityTypeOptions = useCallback(
     async (query: string, page: number, pageSize: number) => {
-      entityTypesPromiseRef.current ??= getAuditLogEntityTypes();
-      const entityTypes = await entityTypesPromiseRef.current;
-      // An empty list may be a failed fetch — let the next call retry.
-      if (entityTypes.length === 0) entityTypesPromiseRef.current = null;
+      const entityTypes = await loadOnce(entityTypesPromiseRef, () =>
+        fetchFilterOptions<string[]>({ type: "entityTypes" })
+      );
       const q = query.trim().toLowerCase();
       const filtered = q
         ? entityTypes.filter((entityType) =>
@@ -355,10 +401,9 @@ function AuditLogsContent({ session }: { session: Session }) {
   );
   const fetchProjectOptions = useCallback(
     async (query: string, page: number, pageSize: number) => {
-      projectsPromiseRef.current ??= getAuditLogProjects();
-      const projects = await projectsPromiseRef.current;
-      // An empty list may be a failed fetch — let the next call retry.
-      if (projects.length === 0) projectsPromiseRef.current = null;
+      const projects = await loadOnce(projectsPromiseRef, () =>
+        fetchFilterOptions<ProjectFilterOption[]>({ type: "projects" })
+      );
       const q = query.trim().toLowerCase();
       const filtered = q
         ? projects.filter((project) => project.name.toLowerCase().includes(q))

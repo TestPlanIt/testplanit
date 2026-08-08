@@ -20,7 +20,7 @@ The page shows milestones as cards, grouped under two tabs:
 
 A **kind filter** dropdown above the tabs narrows both tabs to a single milestone kind. It lists **All milestones**, then an entry for each kind actually present: **Synced releases** and **Synced sprints** for milestones synced from Jira (its Fix Versions and Sprints), plus one entry per local milestone type in use — each labeled with the type's name and shown with its own type icon, rather than grouped into a single "Local" bucket. The dropdown appears only when the project has more than one kind to choose between.
 
-Within each tab, child milestones are nested and indented beneath their parent. Each card shows the milestone's name, type icon, status badge, start/due dates, a [summary bar](./milestone-details.md#summary) of its test run and session results, and a forecast estimate.
+Within each tab, child milestones are nested and indented beneath their parent. Each card shows the milestone's name, type icon, status badge and date range, its note where one is set, and a [summary bar](./milestone-details.md#summary) of its test run and session results. The summary bar carries the totals, including the total estimate and elapsed time.
 
 A milestone synced from an external tracker (currently Jira) shows a [source badge](./milestone-details.md#source-badge) next to its name — for example **Jira · Sprint · active · Website**.
 

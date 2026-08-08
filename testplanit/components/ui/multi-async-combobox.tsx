@@ -96,6 +96,7 @@ export function MultiAsyncCombobox<T>({
     hasMore,
     loading,
     loadingMore,
+    settled,
     loadMore,
     resetPaging,
   } = useAsyncComboboxOptions<T>({
@@ -361,7 +362,11 @@ export function MultiAsyncCombobox<T>({
               ref={scrollRef}
               className="min-h-0 flex-1 max-h-[300px]"
             >
-              <CommandEmpty>{tCommon("labels.noResults")}</CommandEmpty>
+              {/* Only once the fetch has settled — otherwise "no results"
+                  renders under the loading overlay and contradicts it. */}
+              {settled && !loading && (
+                <CommandEmpty>{tCommon("labels.noResults")}</CommandEmpty>
+              )}
               <CommandGroup
                 className={cn(loading ? "opacity-50 pointer-events-none" : "")}
               >

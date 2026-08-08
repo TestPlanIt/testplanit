@@ -137,6 +137,59 @@ describe("useAsyncComboboxOptions", () => {
     expect(result.current.loading).toBe(false);
   });
 
+  it("stays unsettled until the first page resolves", async () => {
+    // `settled` gates the "no results" message: while the first fetch is in
+    // flight the list is empty but nothing is known yet, so the message must
+    // not render under the loading spinner.
+    let resolvePage: (value: { results: Option[]; total: number }) => void;
+    const fetcher = () =>
+      new Promise<{ results: Option[]; total: number }>((resolve) => {
+        resolvePage = resolve;
+      });
+    const { result } = renderOptionsHook(fetcher);
+
+    await waitFor(() => expect(result.current.loading).toBe(true));
+    expect(result.current.settled).toBe(false);
+
+    await act(async () => {
+      resolvePage({ results: [], total: 0 });
+    });
+    expect(result.current.settled).toBe(true);
+    expect(result.current.loading).toBe(false);
+  });
+
+  it("settles — and clears the spinner — when the fetch rejects", async () => {
+    // A failed load must still reveal the empty state, or the list sits blank
+    // with neither a spinner nor a message.
+    const { result } = renderOptionsHook(async () => {
+      throw new Error("boom");
+    });
+
+    await waitFor(() => expect(result.current.settled).toBe(true));
+    expect(result.current.loading).toBe(false);
+    expect(result.current.options).toEqual([]);
+  });
+
+  it("goes unsettled again when the dropdown closes", async () => {
+    // Stable across renders — the hook refetches on `fetchOptions` identity.
+    const fetcher = async () => makeOptions(3);
+    const { result, rerender } = renderHook(
+      ({ open }) =>
+        useAsyncComboboxOptions<Option>({
+          open,
+          fetchOptions: fetcher,
+          getOptionValue,
+          pageSize: 10,
+        }),
+      { initialProps: { open: true } }
+    );
+
+    await waitFor(() => expect(result.current.settled).toBe(true));
+    rerender({ open: false });
+    // The next open re-fetches, so the empty state must be gated again.
+    await waitFor(() => expect(result.current.settled).toBe(false));
+  });
+
   it("restarts from page 0 when the search changes", async () => {
     const all = makeOptions(25);
     const fetcher = vi.fn(

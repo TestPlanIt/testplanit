@@ -3,6 +3,18 @@
     "name": "Nombre",
     "cancel": "Cancelar",
     "dismiss": "Despedir",
+    "bulk": {
+      "selectItem": "Seleccionar elemento",
+      "editAction": "Editar ({count})",
+      "completeAction": "Completar ({count})",
+      "deleteAction": "Eliminar ({count})",
+      "editTitle": "Edición masiva ({count})",
+      "applyToCount": "Los cambios se aplican a {count, plural, one {# elemento} other {# elementos}}.",
+      "tagsAdditiveHint": "Las etiquetas seleccionadas se añaden a cada elemento; las etiquetas existentes se conservan.",
+      "completeSuccess": "{count, plural, one {# elemento completado} other {# elementos completados}}",
+      "deleteSuccess": "{count, plural, one {# elemento eliminado} other {# elementos eliminados}}",
+      "partialFailure": "{failedCount} de {totalCount} elementos no se pudieron actualizar"
+    },
     "of": "de",
     "on": "en",
     "at": "en",
@@ -2398,6 +2410,12 @@
     }
   },
   "sessions": {
+    "bulk": {
+      "completeTitle": "Completar {count, plural, one {# Sesión} other {# Sesiones}}",
+      "completeDescription": "¿Está seguro de que desea completar {count, plural, one {esta Sesión} other {estas Sesiones}}?",
+      "deleteTitle": "Eliminar {count, plural, one {# Sesión} other {# Sesiones}}",
+      "deleteDescription": "¿Está seguro de que desea eliminar {count, plural, one {esta Sesión} other {estas Sesiones}}?"
+    },
     "auditLog": {
       "trigger": "Actividad",
       "description": "Todos los cambios registrados para esta sesión."
@@ -2423,6 +2441,9 @@
       "viewSessionDetails": "Ver sesión"
     },
     "noMilestone": "Sin hito",
+    "milestoneGroup": {
+      "sessionCount": "{count, plural, one {# sesión} other {# sesiones}}"
+    },
     "completeDialog": {
       "noWorkflowsConfigured": "No hay flujos de trabajo de finalización configurados para este proyecto. Configure los flujos de trabajo en la configuración de administrador para habilitar la finalización de la sesión."
     },
@@ -3741,6 +3762,12 @@
     }
   },
   "runs": {
+    "bulk": {
+      "completeTitle": "Completar {count, plural, one {# Ejecución de prueba} other {# Ejecuciones de prueba}}",
+      "completeDescription": "¿Está seguro de que desea completar {count, plural, one {esta ejecución de prueba} other {estas ejecuciones de prueba}}?",
+      "deleteTitle": "Eliminar {count, plural, one {# Ejecución de prueba} other {# Ejecuciones de prueba}}",
+      "deleteDescription": "¿Está seguro de que desea eliminar {count, plural, one {esta ejecución de prueba} other {estas ejecuciones de prueba}}? Los resultados se conservarán para el análisis histórico."
+    },
     "composition": {
       "lock": "Casos Bloqueados",
       "unlocked": "Casos desbloqueados",
@@ -3949,8 +3976,8 @@
     },
     "milestoneGroup": {
       "runCount": "{count, plural, one {# ejecución} other {# ejecuciones}}",
-      "expandAll": "Expandir todo",
-      "collapseAll": "Contraer todo"
+      "altHintMac": "Mantenga presionada ⌥ para expandir o contraer todos los grupos",
+      "altHintWin": "Mantenga presionada Alt para expandir o contraer todos los grupos"
     },
     "runFilters": {
       "label": "Filtrar ejecuciones de prueba",

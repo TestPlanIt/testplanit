@@ -25,13 +25,11 @@ interface ColorMap {
 interface MilestoneDisplayProps {
   milestones: MilestonesWithTypes[];
   projectId?: number;
-  compact?: boolean;
 }
 
 const MilestoneDisplay: React.FC<MilestoneDisplayProps> = ({
   milestones,
   projectId,
-  compact = false,
 }) => {
   const { data: session } = useSession();
   const { resolvedTheme } = useTheme();
@@ -168,7 +166,6 @@ const MilestoneDisplay: React.FC<MilestoneDisplayProps> = ({
             onOpenEditModal={openEditModal}
             onOpenDeleteModal={openDeleteModal}
             level={level}
-            compact={compact}
           />
           {renderIncompleteMilestones(
             milestonesToRender,
@@ -200,7 +197,6 @@ const MilestoneDisplay: React.FC<MilestoneDisplayProps> = ({
           onReopenMilestone={handleReopenMilestone}
           onOpenEditModal={openEditModal}
           onOpenDeleteModal={openDeleteModal}
-          compact={compact}
         />
       ));
   };

@@ -3,6 +3,18 @@
     "name": "이름",
     "cancel": "취소",
     "dismiss": "해고하다",
+    "bulk": {
+      "selectItem": "항목 선택",
+      "editAction": "편집 ({count})",
+      "completeAction": "완료 ({count})",
+      "deleteAction": "삭제 ({count})",
+      "editTitle": "일괄 편집 ({count})",
+      "applyToCount": "변경 사항이 {count, plural, other {항목 #개}}에 적용됩니다.",
+      "tagsAdditiveHint": "선택한 태그가 각 항목에 추가되며 기존 태그는 유지됩니다.",
+      "completeSuccess": "{count, plural, other {항목 #개 완료됨}}",
+      "deleteSuccess": "{count, plural, other {항목 #개 삭제됨}}",
+      "partialFailure": "{totalCount}개 항목 중 {failedCount}개를 업데이트할 수 없습니다"
+    },
     "of": "~의",
     "on": "~에",
     "at": "~에",
@@ -2398,6 +2410,12 @@
     }
   },
   "sessions": {
+    "bulk": {
+      "completeTitle": "{count, plural, other {# 세션}} 완료",
+      "completeDescription": "{count, plural, other {선택한 세션}}을 완료하시겠습니까?",
+      "deleteTitle": "{count, plural, other {# 세션}} 삭제",
+      "deleteDescription": "{count, plural, other {선택한 세션}}을 삭제하시겠습니까?"
+    },
     "auditLog": {
       "trigger": "활동",
       "description": "이 세션에 기록된 모든 변경 사항입니다."
@@ -2423,6 +2441,9 @@
       "viewSessionDetails": "세션 보기"
     },
     "noMilestone": "이정표 없음",
+    "milestoneGroup": {
+      "sessionCount": "{count, plural, other {# 세션}}"
+    },
     "completeDialog": {
       "noWorkflowsConfigured": "이 프로젝트에는 완료 워크플로가 구성되어 있지 않습니다. 세션 완료 기능을 활성화하려면 관리자 설정에서 워크플로를 구성하십시오."
     },
@@ -3741,6 +3762,12 @@
     }
   },
   "runs": {
+    "bulk": {
+      "completeTitle": "{count, plural, other {# 테스트 실행}} 완료",
+      "completeDescription": "{count, plural, other {선택한 테스트 실행}}을 완료하시겠습니까?",
+      "deleteTitle": "{count, plural, other {# 테스트 실행}} 삭제",
+      "deleteDescription": "{count, plural, other {선택한 테스트 실행}}을 삭제하시겠습니까? 결과는 기록 분석을 위해 보존됩니다."
+    },
     "composition": {
       "lock": "케이스 잠김",
       "unlocked": "케이스 잠금 해제됨",
@@ -3949,8 +3976,8 @@
     },
     "milestoneGroup": {
       "runCount": "{count, plural, other {실행 #개}}",
-      "expandAll": "모두 펼치기",
-      "collapseAll": "모두 접기"
+      "altHintMac": "⌥ 키를 누른 상태로 모든 그룹을 펼치거나 접으세요",
+      "altHintWin": "Alt 키를 누른 상태로 모든 그룹을 펼치거나 접으세요"
     },
     "runFilters": {
       "label": "테스트 실행 필터",

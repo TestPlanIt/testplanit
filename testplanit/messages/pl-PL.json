@@ -3,6 +3,18 @@
     "name": "Nazwa",
     "cancel": "Anulować",
     "dismiss": "Odrzucać",
+    "bulk": {
+      "selectItem": "Wybierz element",
+      "editAction": "Edytuj ({count})",
+      "completeAction": "Zakończ ({count})",
+      "deleteAction": "Usuń ({count})",
+      "editTitle": "Edycja zbiorcza ({count})",
+      "applyToCount": "Zmiany dotyczą {count, plural, one {# elementu} few {# elementów} many {# elementów} other {# elementu}}.",
+      "tagsAdditiveHint": "Wybrane tagi są dodawane do każdego elementu; istniejące tagi są zachowywane.",
+      "completeSuccess": "{count, plural, one {Ukończono # element} few {Ukończono # elementy} many {Ukończono # elementów} other {Ukończono # elementu}}",
+      "deleteSuccess": "{count, plural, one {Usunięto # element} few {Usunięto # elementy} many {Usunięto # elementów} other {Usunięto # elementu}}",
+      "partialFailure": "Nie udało się zaktualizować {failedCount} z {totalCount} elementów"
+    },
     "of": "z",
     "on": "NA",
     "at": "Na",
@@ -2398,6 +2410,12 @@
     }
   },
   "sessions": {
+    "bulk": {
+      "completeTitle": "Zakończ {count, plural, one {# Sesję} few {# Sesje} many {# Sesji} other {# Sesji}}",
+      "completeDescription": "Czy na pewno chcesz zakończyć {count, plural, one {tę sesję} few {te sesje} many {tych sesji} other {tych sesji}}?",
+      "deleteTitle": "Usuń {count, plural, one {# Sesję} few {# Sesje} many {# Sesji} other {# Sesji}}",
+      "deleteDescription": "Czy na pewno chcesz usunąć {count, plural, one {tę sesję} few {te sesje} many {tych sesji} other {tych sesji}}?"
+    },
     "auditLog": {
       "trigger": "Aktywność",
       "description": "Wszystkie zmiany odnotowane dla tej sesji."
@@ -2423,6 +2441,9 @@
       "viewSessionDetails": "Wyświetl sesję"
     },
     "noMilestone": "Brak kamienia milowego",
+    "milestoneGroup": {
+      "sessionCount": "{count, plural, one {# sesja} few {# sesje} many {# sesji} other {# sesji}}"
+    },
     "completeDialog": {
       "noWorkflowsConfigured": "Dla tego projektu nie skonfigurowano żadnych przepływów pracy związanych z ukończeniem. Skonfiguruj przepływy pracy w ustawieniach administratora, aby umożliwić ukończenie sesji."
     },
@@ -3741,6 +3762,12 @@
     }
   },
   "runs": {
+    "bulk": {
+      "completeTitle": "Zakończ {count, plural, one {# Test rozruchowy} few {# Testy rozruchowe} many {# Testów rozruchowych} other {# Testów rozruchowych}}",
+      "completeDescription": "Czy na pewno chcesz zakończyć {count, plural, one {ten test rozruchowy} few {te testy rozruchowe} many {tych testów rozruchowych} other {tych testów rozruchowych}}?",
+      "deleteTitle": "Usuń {count, plural, one {# Test rozruchowy} few {# Testy rozruchowe} many {# Testów rozruchowych} other {# Testów rozruchowych}}",
+      "deleteDescription": "Czy na pewno chcesz usunąć {count, plural, one {ten test rozruchowy} few {te testy rozruchowe} many {tych testów rozruchowych} other {tych testów rozruchowych}}? Wyniki zostaną zachowane do analizy historycznej."
+    },
     "composition": {
       "lock": "Przypadki zablokowane",
       "unlocked": "Przypadki odblokowane",
@@ -3949,8 +3976,8 @@
     },
     "milestoneGroup": {
       "runCount": "{count, plural, one {# przebieg} few {# przebiegi} many {# przebiegów} other {# przebiegu}}",
-      "expandAll": "Rozwiń wszystko",
-      "collapseAll": "Zwiń wszystko"
+      "altHintMac": "Przytrzymaj ⌥, aby rozwinąć lub zwinąć wszystkie grupy",
+      "altHintWin": "Przytrzymaj klawisz Alt, aby rozwinąć lub zwinąć wszystkie grupy"
     },
     "runFilters": {
       "label": "Filtruj przebiegi testowe",

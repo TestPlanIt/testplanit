@@ -3,6 +3,18 @@
     "name": "İsim",
     "cancel": "İptal etmek",
     "dismiss": "Azletmek",
+    "bulk": {
+      "selectItem": "Öğe seç",
+      "editAction": "Düzenle ({count})",
+      "completeAction": "Tamamla ({count})",
+      "deleteAction": "Sil ({count})",
+      "editTitle": "Toplu Düzenle ({count})",
+      "applyToCount": "Değişiklikler {count, plural, one {# öğeye} other {# öğeye}} uygulanır.",
+      "tagsAdditiveHint": "Seçilen etiketler her öğeye eklenir; mevcut etiketler korunur.",
+      "completeSuccess": "{count, plural, one {# öğe tamamlandı} other {# öğe tamamlandı}}",
+      "deleteSuccess": "{count, plural, one {# öğe silindi} other {# öğe silindi}}",
+      "partialFailure": "{totalCount} öğeden {failedCount} tanesi güncellenemedi"
+    },
     "of": "ile ilgili",
     "on": "Açık",
     "at": "de",
@@ -2398,6 +2410,12 @@
     }
   },
   "sessions": {
+    "bulk": {
+      "completeTitle": "{count, plural, one {# Oturumu Tamamla} other {# Oturumu Tamamla}}",
+      "completeDescription": "Bu {count, plural, one {oturumu} other {oturumları}} tamamlamak istediğinizden emin misiniz?",
+      "deleteTitle": "{count, plural, one {# Oturumu Sil} other {# Oturumu Sil}}",
+      "deleteDescription": "Bu {count, plural, one {oturumu} other {oturumları}} silmek istediğinizden emin misiniz?"
+    },
     "auditLog": {
       "trigger": "Aktivite",
       "description": "Bu oturum için kaydedilen tüm değişiklikler."
@@ -2423,6 +2441,9 @@
       "viewSessionDetails": "Oturumu Görüntüle"
     },
     "noMilestone": "Dönüm Noktası Yok",
+    "milestoneGroup": {
+      "sessionCount": "{count, plural, one {# oturum} other {# oturum}}"
+    },
     "completeDialog": {
       "noWorkflowsConfigured": "Bu proje için herhangi bir tamamlama iş akışı yapılandırılmamıştır. Oturum tamamlamayı etkinleştirmek için lütfen yönetici ayarlarında iş akışlarını yapılandırın."
     },
@@ -3741,6 +3762,12 @@
     }
   },
   "runs": {
+    "bulk": {
+      "completeTitle": "{count, plural, one {# Test Çalıştırmasını Tamamla} other {# Test Çalıştırmasını Tamamla}}",
+      "completeDescription": "Bu {count, plural, one {test çalıştırmasını} other {test çalıştırmalarını}} tamamlamak istediğinizden emin misiniz?",
+      "deleteTitle": "{count, plural, one {# Test Çalıştırmasını Sil} other {# Test Çalıştırmasını Sil}}",
+      "deleteDescription": "Bu {count, plural, one {test çalıştırmasını} other {test çalıştırmalarını}} silmek istediğinizden emin misiniz? Sonuçlar geçmişe dönük analiz için saklanacaktır."
+    },
     "composition": {
       "lock": "Durumlar Kilitli",
       "unlocked": "Kilidi Açılan Senaryolar",
@@ -3949,8 +3976,8 @@
     },
     "milestoneGroup": {
       "runCount": "{count, plural, one {# çalıştırma} other {# çalıştırma}}",
-      "expandAll": "Tümünü genişlet",
-      "collapseAll": "Tümünü daralt"
+      "altHintMac": "Tüm grupları genişletmek veya daraltmak için ⌥ tuşunu basılı tutun",
+      "altHintWin": "Tüm grupları genişletmek veya daraltmak için Alt tuşunu basılı tutun"
     },
     "runFilters": {
       "label": "Test çalıştırmalarını filtrele",

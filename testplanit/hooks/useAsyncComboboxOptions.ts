@@ -55,6 +55,12 @@ export function useAsyncComboboxOptions<T>({
   });
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
+  // Whether a page-0 fetch has finished since the dropdown opened. The empty
+  // state hangs off this rather than off `options.length` alone: between the
+  // open and the effect below setting `loading`, and again for the whole first
+  // fetch, the list is legitimately empty but nothing is known yet — rendering
+  // "No results" there contradicts the spinner sitting on top of it.
+  const [settled, setSettled] = useState(false);
 
   // Read through a ref inside the fetch effect: call sites pass inline
   // arrows, and tracking the identity as an effect dep would refetch every
@@ -72,7 +78,10 @@ export function useAsyncComboboxOptions<T>({
   // Call sites must therefore pass a stable function — an inline arrow
   // refetches on every render.
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      setSettled(false);
+      return;
+    }
     let ignore = false;
     const append = page > 0;
     if (append) setLoadingMore(true);
@@ -122,10 +131,23 @@ export function useAsyncComboboxOptions<T>({
           return { options, total, hasMore };
         });
       })
+      .catch((error) => {
+        if (ignore) return;
+        // Swallowed rather than rethrown: `finally` below still clears the
+        // spinner and reveals the empty state, and an unhandled rejection here
+        // would surface as a page-level error overlay for a failed option load.
+        console.error("Failed to load combobox options", error);
+      })
       .finally(() => {
         if (ignore) return;
         if (append) setLoadingMore(false);
-        else setLoading(false);
+        else {
+          setLoading(false);
+          // In `finally`, not `then`: a rejected fetch has to reveal the empty
+          // state too, or a failed load leaves a blank list with no spinner
+          // and no message.
+          setSettled(true);
+        }
       });
     return () => {
       ignore = true;
@@ -163,6 +185,9 @@ export function useAsyncComboboxOptions<T>({
     hasMore: state.hasMore,
     loading,
     loadingMore,
+    /** True once a page-0 fetch has settled for the current open session —
+     *  gates the "no results" message so it can't render under the spinner. */
+    settled,
     loadMore,
     resetPaging,
   };

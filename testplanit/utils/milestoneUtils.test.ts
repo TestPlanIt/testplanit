@@ -590,7 +590,7 @@ describe("Date-Dependent Milestone Utils", () => {
       expect(sorted.map((m) => m.id)).toEqual([3, 1, 2]); // m3 (not completed), m1 (completed later), m2 (completed earlier)
     });
 
-    it("should sort started milestones first by startedAt ascending", () => {
+    it("should sort started milestones without end dates by startedAt ascending", () => {
       const m1 = createMockMilestoneWithType(1, {
         isStarted: true,
         startedAt: PAST_DATE_1,
@@ -608,7 +608,45 @@ describe("Date-Dependent Milestone Utils", () => {
       expect(sorted.map((m) => m.id)).toEqual([2, 1, 3]); // m2 (started earlier), m1 (started later), m3 (upcoming)
     });
 
-    it("should sort unscheduled milestones before upcoming/delayed", () => {
+    it("should sort started milestones by earliest end date first", () => {
+      const m1 = createMockMilestoneWithType(1, {
+        isStarted: true,
+        startedAt: PAST_DATE_2,
+        completedAt: FUTURE_DATE_2,
+      }); // Started earlier, ends later
+      const m2 = createMockMilestoneWithType(2, {
+        isStarted: true,
+        startedAt: PAST_DATE_1,
+        completedAt: FUTURE_DATE_1,
+      }); // Started later, ends earlier
+      const m3 = createMockMilestoneWithType(3, {
+        isStarted: true,
+        startedAt: PAST_DATE_2,
+        completedAt: null,
+      }); // Started, no end date
+
+      const sorted = sortMilestones([m1, m2, m3]);
+      // Earliest end date first; no end date sorts after those with end dates
+      expect(sorted.map((m) => m.id)).toEqual([2, 1, 3]);
+    });
+
+    it("should fall back to startedAt for started milestones with the same end date", () => {
+      const m1 = createMockMilestoneWithType(1, {
+        isStarted: true,
+        startedAt: PAST_DATE_1,
+        completedAt: FUTURE_DATE_1,
+      }); // Started later
+      const m2 = createMockMilestoneWithType(2, {
+        isStarted: true,
+        startedAt: PAST_DATE_2,
+        completedAt: FUTURE_DATE_1,
+      }); // Started earlier
+
+      const sorted = sortMilestones([m1, m2]);
+      expect(sorted.map((m) => m.id)).toEqual([2, 1]);
+    });
+
+    it("should sort unscheduled milestones after delayed and upcoming", () => {
       const m1 = createMockMilestoneWithType(1, {
         isStarted: false,
         startedAt: null,
@@ -624,8 +662,32 @@ describe("Date-Dependent Milestone Utils", () => {
       }); // Delayed (past start)
 
       const sorted = sortMilestones([m1, m2, m3]);
-      // Expected order: Unscheduled, Delayed, Upcoming (Based on original logic)
-      expect(sorted.map((m) => m.id)).toEqual([1, 3, 2]); // Update expectation
+      // Delayed, Upcoming, Unscheduled
+      expect(sorted.map((m) => m.id)).toEqual([3, 2, 1]);
+    });
+
+    it("should sort past due milestones first, most overdue first", () => {
+      const m1 = createMockMilestoneWithType(1, {
+        isStarted: true,
+        completedAt: PAST_DATE_1,
+      }); // Started, overdue
+      const m2 = createMockMilestoneWithType(2, {
+        isStarted: true,
+        completedAt: PAST_DATE_2,
+      }); // Started, more overdue
+      const m3 = createMockMilestoneWithType(3, {
+        isStarted: true,
+        completedAt: FUTURE_DATE_1,
+      }); // Started, on track
+      const m4 = createMockMilestoneWithType(4, {
+        isStarted: false,
+        startedAt: PAST_DATE_2,
+        completedAt: PAST_DATE_1,
+      }); // Never started, both dates past
+
+      const sorted = sortMilestones([m1, m2, m3, m4]);
+      // Past due (end date asc, m1/m4 tie keeps input order), then started
+      expect(sorted.map((m) => m.id)).toEqual([2, 1, 4, 3]);
     });
 
     it("should handle milestones with only end dates", () => {
@@ -645,8 +707,8 @@ describe("Date-Dependent Milestone Utils", () => {
       }); // Upcoming (later end date only)
 
       const sorted = sortMilestones([m1, m2, m3]);
-      // Logic seems to prioritize start dates, then end dates if not started
-      expect(sorted.map((m) => m.id)).toEqual([2, 1, 3]); // Upcoming (start date), Upcoming (earlier end), Upcoming (later end)
+      // All upcoming, soonest scheduled date first (m2/m3 tie keeps input order)
+      expect(sorted.map((m) => m.id)).toEqual([1, 2, 3]);
     });
 
     // Add more complex sorting scenarios if needed, e.g., mixing various types
@@ -678,11 +740,11 @@ describe("Date-Dependent Milestone Utils", () => {
       }); // Delayed
 
       const sorted = sortMilestones([m1, m2, m3, m4, m5, m6]);
-      // Expected: Unscheduled, Started (past asc), Delayed, Upcoming, Completed (desc) (Based on original logic)
-      expect(sorted.map((m) => m.id)).toEqual([3, 2, 5, 6, 4, 1]);
+      // Expected: Started (start asc), Delayed, Upcoming, Unscheduled, Completed
+      expect(sorted.map((m) => m.id)).toEqual([2, 5, 6, 4, 3, 1]);
     });
 
-    it("should sort past-started before non-past-started", () => {
+    it("should sort delayed before upcoming", () => {
       const m1 = createMockMilestoneWithType(1, {
         isStarted: false,
         startedAt: FUTURE_DATE_1,
@@ -701,7 +763,7 @@ describe("Date-Dependent Milestone Utils", () => {
       expect(sorted.map((m) => m.id)).toEqual([2, 1, 3]);
     });
 
-    it("should sort future-started before others (when not past-started)", () => {
+    it("should sort upcoming milestones by soonest scheduled date", () => {
       const m1 = createMockMilestoneWithType(1, {
         isStarted: false,
         completedAt: FUTURE_DATE_2,
@@ -740,7 +802,6 @@ describe("Date-Dependent Milestone Utils", () => {
     });
 
     it("should sort unscheduled last among non-completed, non-started items", () => {
-      // Re-verify this based on reverted logic: Unscheduled should be first.
       const m1 = createMockMilestoneWithType(1, {
         isStarted: false,
         startedAt: null,
@@ -760,8 +821,8 @@ describe("Date-Dependent Milestone Utils", () => {
       }); // Delayed (past start)
 
       const sorted = sortMilestones([m1, m2, m3, m4]);
-      // Unscheduled, Delayed, Upcoming (start), Upcoming (end)
-      expect(sorted.map((m) => m.id)).toEqual([1, 4, 2, 3]);
+      // Delayed, Upcoming (m2/m3 tie keeps input order), Unscheduled
+      expect(sorted.map((m) => m.id)).toEqual([4, 2, 3, 1]);
     });
 
     it("should return an empty array if input is empty or null/undefined", () => {

@@ -1,5 +1,3 @@
-"use server";
-
 import { sql } from "kysely";
 
 import { baseDb } from "~/lib/db";

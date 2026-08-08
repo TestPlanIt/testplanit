@@ -1,19 +1,10 @@
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
-import { DateTextDisplay } from "@/components/DateTextDisplay";
 import LoadingSpinner from "@/components/LoadingSpinner";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { Combine, LinkIcon, Lock, PlayCircle } from "lucide-react";
 import { useTranslations } from "next-intl";
 import React from "react";
-import { PendingReviewBadge } from "~/components/reviews/PendingReviewBadge";
-import { TestRunCasesSummary } from "~/components/TestRunCasesSummary";
+import TestRunItem from "~/app/[locale]/projects/runs/[projectId]/TestRunItem";
 import { usePendingReviewsByEntity } from "~/hooks/usePendingReviewsByEntity";
-import { Link } from "~/lib/navigation";
 
 interface TestRunsSectionProps {
   projectId: number;
@@ -32,11 +23,24 @@ const TestRunsSection: React.FC<TestRunsSectionProps> = ({ projectId }) => {
         { isCompleted: false },
       ],
     },
-    include: {
-      configuration: {
-        select: {
-          id: true,
-          name: true,
+    // Mirrors the runs page selection so TestRunItem renders identically here.
+    select: {
+      id: true,
+      name: true,
+      isCompleted: true,
+      testRunType: true,
+      completedAt: true,
+      compositionLockedAt: true,
+      createdAt: true,
+      note: true,
+      projectId: true,
+      configurationGroupId: true,
+      configuration: true,
+      state: { include: { icon: true, color: true } },
+      createdBy: true,
+      milestone: {
+        include: {
+          milestoneType: { include: { icon: true } },
         },
       },
     },
@@ -62,93 +66,18 @@ const TestRunsSection: React.FC<TestRunsSectionProps> = ({ projectId }) => {
 
   return (
     <div className="flex flex-col">
-      <div className="flex flex-col">
-        <h2 className="text-primary mb-2">
-          {t("projects.overview.latestTestRuns")}
-        </h2>
-        <ul className="flex flex-col w-full space-y-4">
-          {testRuns.map((testRun) => (
-            <li key={testRun.id} className="ms-6">
-              <div className="grid grid-cols-[1fr,2fr] gap-4 items-center">
-                {/* Left column - Test run name and created date */}
-                <div className="flex flex-col space-y-1 min-w-0">
-                  {/* First row - Test run name */}
-                  <Link
-                    href={`/projects/runs/${projectId}/${testRun.id}`}
-                    className="block"
-                  >
-                    <div className="flex items-center group">
-                      <PlayCircle className="h-5 w-5 shrink-0 me-2" />
-                      <span className="font-medium truncate pe-1">
-                        {testRun.name}
-                      </span>
-                      <span className="shrink-0 me-1">
-                        <PendingReviewBadge
-                          pendingRequest={pendingReviewsByRunId.get(testRun.id)}
-                        />
-                      </span>
-                      {(testRun as any).configurationGroupId && (
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <span className="shrink-0 me-1">
-                              <Combine className="w-4 h-4 text-muted-foreground" />
-                            </span>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p className="text-background/50">
-                              {t("common.labels.multiConfiguration")}
-                            </p>
-                            {testRun.configuration && (
-                              <p className="flex text-xs text-background">
-                                <Combine className="w-4 h-4 shrink-0 me-1" />
-                                {testRun.configuration.name}
-                              </p>
-                            )}
-                          </TooltipContent>
-                        </Tooltip>
-                      )}
-                      {(testRun as any).compositionLockedAt && (
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <span className="shrink-0 me-1">
-                              <Lock className="w-4 h-4 text-muted-foreground" />
-                            </span>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            {t("common.labels.compositionLocked")}
-                          </TooltipContent>
-                        </Tooltip>
-                      )}
-                      <LinkIcon className="w-4 h-4 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
-                    </div>
-                  </Link>
-
-                  {/* Second row - Created date */}
-                  <div className="text-sm text-muted-foreground ms-7 flex items-center min-w-0">
-                    <span className="shrink-0 whitespace-nowrap me-1">
-                      {t("common.fields.created")}
-                      {": "}
-                    </span>
-                    <span className="truncate">
-                      <DateTextDisplay startDate={testRun.createdAt} />
-                    </span>
-                  </div>
-                </div>
-
-                {/* Right column - TestRunCasesSummary (spans both rows) */}
-                <div className="flex justify-end min-w-0">
-                  <TestRunCasesSummary
-                    testRunId={testRun.id}
-                    projectId={projectId}
-                    testRunType={testRun.testRunType}
-                    className="w-full"
-                  />
-                </div>
-              </div>
-            </li>
-          ))}
-        </ul>
-      </div>
+      <h2 className="text-primary mb-2">
+        {t("projects.overview.latestTestRuns")}
+      </h2>
+      {testRuns.map((testRun) => (
+        <TestRunItem
+          key={testRun.id}
+          testRun={testRun}
+          projectId={projectId}
+          showActions={false}
+          pendingRequest={pendingReviewsByRunId.get(testRun.id)}
+        />
+      ))}
     </div>
   );
 };

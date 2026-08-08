@@ -3,6 +3,18 @@
     "name": "Nome",
     "cancel": "Cancelar",
     "dismiss": "Liberar",
+    "bulk": {
+      "selectItem": "Selecionar item",
+      "editAction": "Editar ({count})",
+      "completeAction": "Concluir ({count})",
+      "deleteAction": "Excluir ({count})",
+      "editTitle": "Edição em massa ({count})",
+      "applyToCount": "As alterações se aplicam a {count, plural, one {# item} other {# itens}}.",
+      "tagsAdditiveHint": "As tags selecionadas são adicionadas a cada item; as tags existentes são mantidas.",
+      "completeSuccess": "{count, plural, one {# item concluído} other {# itens concluídos}}",
+      "deleteSuccess": "{count, plural, one {# item excluído} other {# itens excluídos}}",
+      "partialFailure": "{failedCount} de {totalCount} itens não puderam ser atualizados"
+    },
     "of": "de",
     "on": "sobre",
     "at": "no",
@@ -2398,6 +2410,12 @@
     }
   },
   "sessions": {
+    "bulk": {
+      "completeTitle": "Concluir {count, plural, one {# Sessão} other {# Sessões}}",
+      "completeDescription": "Tem certeza de que deseja concluir {count, plural, one {esta Sessão} other {estas Sessões}}?",
+      "deleteTitle": "Excluir {count, plural, one {# Sessão} other {# Sessões}}",
+      "deleteDescription": "Tem certeza de que deseja excluir {count, plural, one {esta Sessão} other {estas Sessões}}?"
+    },
     "auditLog": {
       "trigger": "Atividade",
       "description": "Todas as alterações registradas para esta sessão."
@@ -2423,6 +2441,9 @@
       "viewSessionDetails": "Visualizar sessão"
     },
     "noMilestone": "Sem marco",
+    "milestoneGroup": {
+      "sessionCount": "{count, plural, one {# sessão} other {# sessões}}"
+    },
     "completeDialog": {
       "noWorkflowsConfigured": "Nenhum fluxo de trabalho de conclusão está configurado para este projeto. Configure os fluxos de trabalho nas configurações de administração para habilitar a conclusão da sessão."
     },
@@ -3741,6 +3762,12 @@
     }
   },
   "runs": {
+    "bulk": {
+      "completeTitle": "Concluir {count, plural, one {# Execução de teste} other {# Execuções de teste}}",
+      "completeDescription": "Tem certeza de que deseja concluir {count, plural, one {esta execução de teste} other {estas execuções de teste}}?",
+      "deleteTitle": "Excluir {count, plural, one {# Execução de teste} other {# Execuções de teste}}",
+      "deleteDescription": "Tem certeza de que deseja excluir {count, plural, one {esta execução de teste} other {estas execuções de teste}}? Os resultados serão mantidos para análises históricas."
+    },
     "composition": {
       "lock": "Casos Bloqueados",
       "unlocked": "Casos Desbloqueados",
@@ -3949,8 +3976,8 @@
     },
     "milestoneGroup": {
       "runCount": "{count, plural, one {# execução} other {# execuções}}",
-      "expandAll": "Expandir tudo",
-      "collapseAll": "Recolher tudo"
+      "altHintMac": "Mantenha pressionada a tecla ⌥ para expandir ou recolher todos os grupos",
+      "altHintWin": "Mantenha pressionada a tecla Alt para expandir ou recolher todos os grupos"
     },
     "runFilters": {
       "label": "Filtrar execuções de teste",
