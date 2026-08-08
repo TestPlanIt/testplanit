@@ -11,8 +11,7 @@ It provides a quick overview of the run's status and key information, presented 
 
 ## Layout and Information
 
-The item is laid out in two lines, so a run's identity always reads first and
-its detail follows beneath.
+The item is laid out in two lines: identity above, detail below.
 
 **Identity line**
 
@@ -25,7 +24,7 @@ its detail follows beneath.
 
 **Detail line**
 
-- **Test Case Summary**: The execution status of the cases in the run, using the `TestRunCasesSummary` component — a segmented bar plus counts, elapsed time and total estimate. Every segment links to its case. When a run has more cases than the bar can seat, the bar **scrolls horizontally** rather than hiding the cases that no longer fit.
+- **Test Case Summary**: The execution status of the cases in the run, using the `TestRunCasesSummary` component — a segmented bar plus counts, elapsed time and total estimate. Every segment links to its case. The bar **scrolls horizontally** when a run has more cases than it can seat.
 - **Milestone**: The associated [Milestone](./milestones.md), when the run has one and the surrounding list is not already grouped by milestone.
 - **Completion Date**: Shown in place of the members on completed runs.
 - **Members**: User avatars involved with the run (creator, assigned testers, executors), shown at the end of the line using the `MemberList` component. These are the same three roles the [My Test Runs filter](./runs.md#what-counts-as-taking-part) matches on, so filtering by it keeps the runs your avatar appears on.
@@ -33,18 +32,6 @@ its detail follows beneath.
 **Note line**
 
 - A single line preview of the test run's description, when one is set. Uses the plain text version from the rich-text editor.
-
-## Responsive Behavior
-
-The item adapts to the width of the area holding it rather than to the browser
-window, so the same run shown in a narrow side panel collapses independently of
-a full-width list.
-
-As the row narrows, information gives way in a fixed order, least important
-first: the note, then the forecast-style detail and configuration, then the
-milestone, then the member avatars, and finally the smaller indicator glyphs.
-The run name is the last thing to give up space, and even then it truncates
-rather than disappearing, with the full text in its tooltip.
 
 ## Styling
 

@@ -11,8 +11,7 @@ It provides a quick overview of the session's status and key information, presen
 
 ## Layout and Information
 
-The item is laid out in two lines, so a session's identity always reads first
-and its detail follows beneath.
+The item is laid out in two lines: identity above, detail below.
 
 **Identity line**
 
@@ -28,7 +27,7 @@ and its detail follows beneath.
 
 **Detail line**
 
-- **Results Summary**: The results recorded within the session using the `SessionResultsSummary` component — a segmented bar plus counts of notes, bugs and questions. When a session has more results than the bar can seat, the bar **scrolls horizontally** rather than hiding the ones that no longer fit.
+- **Results Summary**: The results recorded within the session using the `SessionResultsSummary` component — a segmented bar plus counts of notes, bugs and questions. The bar **scrolls horizontally** when a session has more results than it can seat.
 - **Milestone**: The associated [Milestone](./milestones.md), when the session has one and the surrounding list is not already grouped by milestone.
 - **Completion Date**: Shown in place of the members on completed sessions.
 - **Members**: User avatars involved with the session (Creator, Assigned To), shown at the end of the line using the `MemberList` component.
@@ -36,18 +35,6 @@ and its detail follows beneath.
 **Note line**
 
 - A single line preview of the session's description, when one is set, showing the plain text version.
-
-## Responsive Behavior
-
-The item adapts to the width of the area holding it rather than to the browser
-window, so the same session shown in a narrow side panel collapses
-independently of a full-width list.
-
-As the row narrows, information gives way in a fixed order, least important
-first: the note, then the configuration, then the milestone, then the member
-avatars, and finally the smaller indicator glyphs. The session name is the last
-thing to give up space, and even then it truncates rather than disappearing,
-with the full text in its tooltip.
 
 ## Styling
 
