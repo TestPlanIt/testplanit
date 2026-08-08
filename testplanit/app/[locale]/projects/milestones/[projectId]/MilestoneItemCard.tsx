@@ -3,6 +3,7 @@
 import { DateTextDisplay } from "@/components/DateTextDisplay";
 import { RecordKeyMenuItem } from "@/components/RecordKeyMenuItem";
 import { MilestoneSummary } from "@/components/MilestoneSummary";
+import { CalendarDisplay } from "@/components/DateCalendarDisplay";
 import DynamicIcon from "@/components/DynamicIcon";
 import { ItemRow } from "@/components/ItemRow";
 import TextFromJson from "@/components/TextFromJson";
@@ -113,6 +114,23 @@ const MilestoneItemCard: React.FC<MilestoneItemCardProps> = ({
       }}
     >
       <ItemRow
+        leading={
+          startDate ? (
+            <div className="flex shrink-0 overflow-hidden max-w-0 opacity-0 transition-all duration-200 ease-out motion-reduce:transition-none @2xl:max-w-20 @2xl:opacity-100 @2xl:me-3">
+              <CalendarDisplay date={startDate} />
+            </div>
+          ) : null
+        }
+        trailing={
+          endDate ? (
+            <div className="flex shrink-0 overflow-hidden max-w-0 opacity-0 transition-all duration-200 ease-out motion-reduce:transition-none @2xl:max-w-20 @2xl:opacity-100 @2xl:ms-3">
+              <CalendarDisplay
+                date={endDate}
+                showYear={milestone.isCompleted}
+              />
+            </div>
+          ) : null
+        }
         href={
           projectId
             ? `/projects/milestones/${projectId}/${milestone.id}`
@@ -149,9 +167,11 @@ const MilestoneItemCard: React.FC<MilestoneItemCardProps> = ({
           (startDate || endDate) && {
             key: "dates",
             // A clipped date range is unreadable, so it collapses whole once
-            // the row is too narrow to seat it. It still sheds its year first,
-            // inside DateTextDisplay.
+            // the row is too narrow to seat it. Bounded above as well: from
+            // @2xl the calendar blocks on the card edges carry the same dates,
+            // and the two must never render together.
             tier: "md",
+            maxTier: "2xl",
             pinned: true,
             content: (
               <span className="whitespace-nowrap text-sm truncate">
@@ -256,6 +276,7 @@ const MilestoneItemCard: React.FC<MilestoneItemCardProps> = ({
           <MilestoneSummary milestoneId={milestone.id} projectId={projectId} />
         }
         noteBelowName
+        noteTier="base"
         note={
           milestone.note ? (
             <span className="pl-6">

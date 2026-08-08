@@ -335,7 +335,7 @@ const SessionItem = <T extends SessionItemData>({
             ),
           },
       ]}
-      trailing={[
+      metaTrailing={[
         !isCompleted && {
           key: "members",
           tier: "xl",

@@ -46,7 +46,7 @@ const MilestonesSection: React.FC<MilestonesSectionProps> = ({ projectId }) => {
   if (isLoadingMilestones || isLoadingCount) {
     return (
       <div className="h-full flex flex-col border rounded-lg bg-card text-card-foreground shadow-sm">
-        <div className="p-6 pb-4 border-b">
+        <div className="px-6 py-4 bg-foreground/5">
           <SectionHeader className="flex items-center gap-2 text-lg md:text-lg">
             <Milestone className="h-5 w-5 shrink-0" />
             <CardTitle>{t("projects.overview.currentMilestones")}</CardTitle>
@@ -61,8 +61,10 @@ const MilestonesSection: React.FC<MilestonesSectionProps> = ({ projectId }) => {
 
   return (
     <div className="h-full flex flex-col border rounded-lg bg-card text-card-foreground shadow-sm">
-      {/* Wraps to its own line — left-justified under the title — when narrow. */}
-      <div className="p-6 pb-0 border-b flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+      {/* Matches the collapsible section headers in the right panel, minus
+          the hover tint — that reads as "clickable", and this one isn't.
+          Wraps to its own line — left-justified under the title — when narrow. */}
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 px-6 py-4 bg-foreground/5">
         <SectionHeader className="flex items-center gap-2 text-lg md:text-lg">
           <Milestone className="h-5 w-5 shrink-0" />
           <CardTitle>{t("projects.overview.currentMilestones")}</CardTitle>

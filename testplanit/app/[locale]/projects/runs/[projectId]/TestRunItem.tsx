@@ -445,7 +445,7 @@ const TestRunItem: React.FC<TestRunItemProps> = ({
               ),
             },
         ]}
-        trailing={[
+        metaTrailing={[
           !testRun.isCompleted && {
             key: "members",
             tier: "xl",
