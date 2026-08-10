@@ -24,11 +24,12 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useSession } from "next-auth/react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { PanelImperativeHandle } from "react-resizable-panels";
 
+import { Loading } from "@/components/Loading";
 import { DataTable } from "@/components/tables/DataTable";
 import { CaseDetailsPanel } from "@/components/repositories/CaseDetailsPanel";
 import { ProjectNameDisplay } from "~/components/search/ProjectNameDisplay";
@@ -212,6 +213,7 @@ function ReviewsInboxContent({ userId }: { userId: string }) {
     key: string,
     params?: Record<string, unknown>
   ) => string;
+  const locale = useLocale();
   const queryClient = useQueryClient();
   const { enabled: featureEnabled, isLoading: featureLoading } =
     useReviewFeatureEnabled();
@@ -513,7 +515,9 @@ function ReviewsInboxContent({ userId }: { userId: string }) {
     }
   }, [sortConfig, view]);
 
-  const { data: rows } = useClientQueries(schema).reviewRequest.useFindMany(
+  const { data: rows, isLoading: isLoadingReviews } = useClientQueries(
+    schema
+  ).reviewRequest.useFindMany(
     {
       where: whereClause,
       orderBy,
@@ -1028,6 +1032,18 @@ function ReviewsInboxContent({ userId }: { userId: string }) {
               )}
             </div>
 
+            {/* Row count, matching the other virtualized list pages. The
+                inbox loads its full result set, so loaded always equals
+                total. */}
+            {!featureDisabled && !isLoadingReviews && tableData.length > 0 && (
+              <p className="mt-1 text-end text-sm text-muted-foreground">
+                {t("admin.auditLogs.showing", {
+                  loaded: tableData.length.toLocaleString(locale),
+                  total: tableData.length.toLocaleString(locale),
+                })}
+              </p>
+            )}
+
             {/* Feature-disabled empty state (D-20 silent disable). */}
             {featureDisabled && (
               <div
@@ -1058,8 +1074,11 @@ function ReviewsInboxContent({ userId }: { userId: string }) {
                   className="min-w-0"
                   data-testid="reviews-list-pane"
                 >
-                  {/* Empty state when no rows match (and feature is enabled). */}
-                  {tableData.length === 0 ? (
+                  {/* Loading first — the empty copy must not flash while the
+                      query is still in flight. */}
+                  {isLoadingReviews ? (
+                    <Loading />
+                  ) : tableData.length === 0 ? (
                     <div
                       data-testid="reviews-inbox-empty"
                       className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground"
