@@ -11,6 +11,8 @@ import { readRecordKeyTypeTokens } from "~/lib/services/recordKeyConfig";
 import { getServerAuthSession } from "~/server/auth";
 import { SearchableEntityType, type SearchHit } from "~/types/search";
 
+export const dynamic = "force-dynamic";
+
 type EnhancedDb = Awaited<ReturnType<typeof getEnhancedDb>>;
 
 /**

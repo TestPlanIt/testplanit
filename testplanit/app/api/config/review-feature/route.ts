@@ -14,6 +14,8 @@ import { isReviewFeatureSystemEnabled } from "~/lib/services/reviewFeatureFlag";
  * next request. `force-dynamic` matches the existing `/api/config/trial`
  * pattern.
  */
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   const enabled = await isReviewFeatureSystemEnabled(baseDb);
   return NextResponse.json({ enabled });

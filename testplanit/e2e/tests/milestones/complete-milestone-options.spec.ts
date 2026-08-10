@@ -40,7 +40,7 @@ test.describe("Complete Milestone - Feature Validation", () => {
     await test.step("Open the Complete action from the milestone card menu", async () => {
       // Find the first milestone card
       const milestoneCard = page
-        .getByTestId("milestone-card")
+        .locator("div")
         .filter({ hasText: "Test Milestone" })
         .first();
       await expect(milestoneCard).toBeVisible({ timeout: 10000 });
@@ -104,7 +104,7 @@ test.describe("Complete Milestone - Feature Validation", () => {
     await test.step("Collect the incomplete milestone cards", async () => {
       // Look for incomplete milestone cards (cards in the Active tab)
       milestoneCards = page
-        .getByTestId("milestone-card")
+        .locator("div")
         .filter({ hasText: /Test Milestone|Milestone/ });
       count = await milestoneCards.count();
     });
@@ -201,7 +201,7 @@ test.describe("Complete Milestone - Feature Validation", () => {
     await test.step("Collect the incomplete milestone cards", async () => {
       // Look for incomplete milestone cards
       milestoneCards = page
-        .getByTestId("milestone-card")
+        .locator("div")
         .filter({ hasText: /Test Milestone|Milestone/ });
       count = await milestoneCards.count();
     });

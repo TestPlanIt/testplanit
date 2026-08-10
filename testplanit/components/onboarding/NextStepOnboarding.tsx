@@ -34,14 +34,11 @@ function TourCard({
   const t = useTranslations();
 
   return (
-    <div className="relative" data-testid="tour-card">
+    <div className="relative">
       <Card className="w-80 shadow-lg border-border bg-card/70 text-card-foreground backdrop-blur-xs">
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
-            <CardTitle
-              className="text-xl font-semibold text-primary"
-              data-testid="tour-card-title"
-            >
+            <CardTitle className="text-xl font-semibold text-primary">
               {step.title}
             </CardTitle>
             {skipTour && (
@@ -50,7 +47,6 @@ function TourCard({
                 size="sm"
                 onClick={skipTour}
                 className="h-8 w-8 p-0 hover:bg-muted"
-                data-testid="tour-card-skip"
               >
                 <X className="h-4 w-4" />
                 <span className="sr-only">
@@ -74,19 +70,13 @@ function TourCard({
                   size="sm"
                   onClick={prevStep}
                   className="text-xs"
-                  data-testid="tour-card-prev"
                 >
                   <ChevronLeft className="h-3 w-3" />
                   {t("common.actions.previous") || "Previous"}
                 </Button>
               )}
 
-              <Button
-                size="sm"
-                onClick={nextStep}
-                className="text-xs"
-                data-testid="tour-card-next"
-              >
+              <Button size="sm" onClick={nextStep} className="text-xs">
                 {currentStep === totalSteps - 1
                   ? t("common.actions.finish") || "Finish"
                   : t("common.actions.next") || "Next"}
@@ -96,10 +86,7 @@ function TourCard({
               </Button>
             </div>
 
-            <div
-              className="text-xs text-muted-foreground"
-              data-testid="tour-card-progress"
-            >
+            <div className="text-xs text-muted-foreground">
               {currentStep + 1} / {totalSteps}
             </div>
           </div>
@@ -246,9 +233,7 @@ const createTourSteps = (
           icon: null,
           title: t("help.tour.projectTour.projectSections.title"),
           content: t("help.tour.projectTour.projectSections.content"),
-          // The sidebar container in app/[locale]/projects/layout.tsx; the
-          // step spotlights the section list as a whole.
-          selector: "#project-menu",
+          selector: "#project-section",
           side: "right",
           showControls: true,
           showSkip: true,
@@ -897,12 +882,7 @@ const useI18nNavigationAdapter = (): NavigationAdapter => {
 };
 
 interface NextStepOnboardingProps {
-  // Children are optional: the tour overlay portals to <body> and targets
-  // elements by selector, so this component works as a childless sibling of
-  // the app tree. That keeps its URL hooks (useSearchParams/usePathname),
-  // which suspend during the page-load prerender, from gating the whole app
-  // behind one Suspense boundary.
-  children?: React.ReactNode;
+  children: React.ReactNode;
 }
 
 // Inner component that has access to NextStep context
@@ -1237,62 +1217,37 @@ export function NextStepOnboarding({ children }: NextStepOnboardingProps) {
       activeTourRef.current = tourParam;
       window.__activeTour = tourParam;
 
-      // Wait until the target step's element exists before starting. A fixed
-      // delay silently loses the tour on cold loads, where the sidebar the
-      // step points at renders only after session/permission queries resolve
-      // (nextstepjs shows nothing when the selector matches no element).
-      const targetStep = parseInt(stepParam || "0", 10);
-      const restoredTour = tourSteps.find((tour) => tour.tour === tourParam);
-      const targetSelector = restoredTour?.steps[targetStep]?.selector;
-      const restorationDeadline = Date.now() + 15000;
-      // Target readiness is a soft deadline: after this, start anyway — the
-      // library tolerates a missing target by centering the card, so a slow
-      // (or stale) selector must not swallow the whole tour.
-      const targetDeadline = Date.now() + 5000;
-
-      // The poll is deliberately NOT cancelled on effect cleanup: this effect
-      // re-runs as session/preferences/permissions load in, and each re-run
-      // skips restoration (window.__activeTour is already set) — a cleanup
-      // here would cancel the pending poll on the first re-run and the tour
-      // would never start.
-      const tryStartRestoredTour = () => {
+      // Small delay to ensure DOM is ready
+      setTimeout(() => {
+        // Access the original startOnboardingTour without URL parameter override
         const originalStartTour = (window as any)._originalStartOnboardingTour;
-        const targetReady =
-          !targetSelector ||
-          document.querySelector(targetSelector) ||
-          Date.now() > targetDeadline;
-        if (!originalStartTour || !targetReady) {
-          if (Date.now() < restorationDeadline) {
-            window.setTimeout(tryStartRestoredTour, 250);
+        if (originalStartTour) {
+          const targetStep = parseInt(stepParam || "0", 10);
+
+          // Hide the tour UI while we jump to the correct step to prevent
+          // a flash of step 0 content before the target step renders
+          if (targetStep > 0) {
+            const style = document.createElement("style");
+            style.id = "nextstep-restoration-hide";
+            style.textContent =
+              '[data-name="nextstep-overlay"], [data-name="nextstep-card"], [data-name="nextstep-overlay2"] { visibility: hidden !important; }';
+            document.head.appendChild(style);
           }
-          return;
-        }
 
-        // Hide the tour UI while we jump to the correct step to prevent
-        // a flash of step 0 content before the target step renders
-        if (targetStep > 0) {
-          const style = document.createElement("style");
-          style.id = "nextstep-restoration-hide";
-          style.textContent =
-            '[data-name="nextstep-overlay"], [data-name="nextstep-card"], [data-name="nextstep-overlay2"] { visibility: hidden !important; }';
-          document.head.appendChild(style);
+          originalStartTour(tourParam);
+          // Jump to the correct step immediately after starting
+          if (targetStep > 0) {
+            (window as any).__setTourStep?.(targetStep);
+            // Remove the hiding style after the step is set (setCurrentStep uses setTimeout(0))
+            setTimeout(() => {
+              const hideStyle = document.getElementById(
+                "nextstep-restoration-hide"
+              );
+              if (hideStyle) hideStyle.remove();
+            }, 50);
+          }
         }
-
-        originalStartTour(tourParam);
-        // Jump to the correct step immediately after starting
-        if (targetStep > 0) {
-          (window as any).__setTourStep?.(targetStep);
-          // Remove the hiding style after the step is set (setCurrentStep uses setTimeout(0))
-          setTimeout(() => {
-            const hideStyle = document.getElementById(
-              "nextstep-restoration-hide"
-            );
-            if (hideStyle) hideStyle.remove();
-          }, 50);
-        }
-      };
-
-      window.setTimeout(tryStartRestoredTour, 250);
+      }, 1000);
       return;
     }
 
@@ -1331,7 +1286,6 @@ export function NextStepOnboarding({ children }: NextStepOnboardingProps) {
     stepParam,
     userPreferences,
     session?.user?.id,
-    tourSteps,
   ]);
 
   return (

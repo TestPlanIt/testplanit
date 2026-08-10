@@ -103,10 +103,12 @@ async function seedCoreData() {
   console.log("Seeding role permissions...");
   const areas = Object.values(ApplicationArea);
   for (const area of areas) {
-    // Admin permissions
+    // Admin permissions. `update: {}` — role permissions are edited from
+    // admin/roles, and the seed re-runs on every deploy; re-asserting the
+    // defaults here would silently undo the admin's grants.
     await db.rolePermission.upsert({
       where: { roleId_area: { roleId: adminRole.id, area: area } },
-      update: adminPermissions,
+      update: {},
       create: {
         roleId: adminRole.id,
         area: area,
@@ -118,7 +120,7 @@ async function seedCoreData() {
     const specificUserPerms = getUserPermissionForArea(area);
     await db.rolePermission.upsert({
       where: { roleId_area: { roleId: userRole.id, area: area } },
-      update: specificUserPerms,
+      update: {},
       create: {
         roleId: userRole.id,
         area: area,
@@ -483,14 +485,9 @@ async function seedCoreData() {
 
   const _admin = await db.user.upsert({
     where: { email: adminEmail }, // Use configured email
-    update: {
-      roleId: adminRole.id,
-      emailVerified: new Date(),
-      name: adminName,
-      isActive: true,
-      isApi: true,
-      access: "ADMIN",
-    },
+    // `update: {}` — the admin's name, role, access and active flag are all
+    // editable once the account exists, and the seed re-runs on every deploy.
+    update: {},
     create: {
       email: adminEmail,
       name: adminName,
@@ -1224,21 +1221,10 @@ async function seedPriorityFieldOptions() {
       where: { name: option.name },
     });
 
-    if (fieldOption) {
-      // Update existing option
-      fieldOption = await db.fieldOptions.update({
-        where: { id: fieldOption.id },
-        data: {
-          order: option.order,
-          isDefault: option.isDefault,
-          iconColorId: option.iconColorId,
-          iconId: option.iconId,
-          isEnabled: true,
-          isDeleted: false,
-        },
-      });
-    } else {
-      // Create new option
+    if (!fieldOption) {
+      // Create new option. An option that already exists is left alone: every
+      // field here is editable from admin/fields, and re-asserting them would
+      // re-enable (and un-delete) an option the admin retired.
       fieldOption = await db.fieldOptions.create({
         data: {
           name: option.name,
@@ -1489,18 +1475,11 @@ async function seedWorkflows() {
         },
       });
 
-      if (existingWorkflow) {
-        await db.workflows.update({
-          where: { id: existingWorkflow.id },
-          data: {
-            order: workflow.order,
-            iconId: icon.id,
-            colorId: color.id,
-            isEnabled: workflow.isEnabled,
-            // Do NOT touch isDefault — preserve the admin's choice.
-          },
-        });
-      } else {
+      // Everything this seed could resync — order, icon, colour, isEnabled,
+      // isDefault — is editable from the admin workflows screen, and the seed
+      // re-runs on every deploy. An existing workflow is therefore left exactly
+      // as the admin left it; only a missing one is created.
+      if (!existingWorkflow) {
         await db.workflows.create({
           data: {
             order: workflow.order,
@@ -1599,11 +1578,9 @@ async function seedMilestoneTypes() {
   const milestoneTypePromises = milestoneTypesWithIconIds.map((type) =>
     db.milestoneTypes.upsert({
       where: { id: type.id },
-      update: {
-        name: type.name,
-        iconId: type.iconId,
-        // Do NOT touch isDefault — preserve the admin's choice.
-      },
+      // `update: {}` — name, icon and isDefault are all editable from
+      // admin/milestones, so an existing type is left as the admin left it.
+      update: {},
       create: {
         id: type.id,
         name: type.name,

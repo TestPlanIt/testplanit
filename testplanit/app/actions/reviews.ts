@@ -4,6 +4,7 @@ import type { JSONContent } from "@tiptap/core";
 import { revalidatePath } from "next/cache";
 import { getTranslations } from "next-intl/server";
 
+import { localeFromPreference } from "~/i18n/navigation";
 import { auditedTransaction } from "~/lib/audit/auditedTransaction";
 import { withActionAuditContext } from "~/lib/auditContextWrappers";
 import { captureAuditEvent } from "~/lib/services/auditLog";
@@ -179,96 +180,106 @@ export const requestReview = withActionAuditContext(
       throw eligibilityErr;
     }
 
-    const trimmed = input.commentText.trim();
-
-    // Build the TipTap doc that will become the Comment.content. For direct
-    // user-assignees, prepend a mention node so the existing comment-mention
-    // notification fires for the assignee without extra wiring. Role assignees
-    // fall through with no mention node (see method docstring).
-    let assigneeMentionNode: JSONContent | null = null;
-    if (input.assigneeUserId !== null) {
-      const assigneeUser = await baseDb.user.findUnique({
-        where: { id: input.assigneeUserId },
-        select: { id: true, name: true },
-      });
-      if (assigneeUser) {
-        assigneeMentionNode = {
-          type: "mention",
-          attrs: { id: assigneeUser.id, label: assigneeUser.name ?? "user" },
-        };
-      }
-    }
-
-    // Default-text fallback: when the requester leaves the comment blank we
-    // still want a useful body on the persisted Comment row — both for the
-    // assignee's context and for the comment thread to show something other
-    // than an empty bubble. Build a "Please review the transition from
-    // {from} → {to}" string with the role name appended when role-assigned.
-    // Skip the round-trip when the requester actually typed something.
-    //
-    // The text is localized to the requester's session locale via
-    // `getTranslations()` — the locale comes from the same next-intl
-    // request scope the layout uses. The persisted Comment.content carries
-    // whichever language the requester saw at submit time; the comment
-    // thread renders it verbatim so a French reviewer reading an English
-    // requester's default comment sees the English version (consistent
-    // with how user-typed comments work).
-    let defaultCommentText: string | null = null;
-    if (trimmed.length === 0) {
-      const [fromState, toState, assigneeRole, t] = await Promise.all([
-        baseDb.workflows.findUnique({
-          where: { id: input.fromStateId },
-          select: { name: true },
-        }),
-        baseDb.workflows.findUnique({
-          where: { id: input.toStateId },
-          select: { name: true },
-        }),
-        input.assigneeRoleId !== null
-          ? baseDb.roles.findUnique({
-              where: { id: input.assigneeRoleId },
-              select: { name: true },
-            })
-          : Promise.resolve(null),
-        getTranslations("reviews.requester"),
-      ]);
-      const fromName = fromState?.name ?? "";
-      const toName = toState?.name ?? "";
-      defaultCommentText = assigneeRole
-        ? t("defaultCommentRole", {
-            fromState: fromName,
-            toState: toName,
-            roleName: assigneeRole.name,
-          })
-        : t("defaultComment", { fromState: fromName, toState: toName });
-    }
-
-    const bodyText = trimmed.length > 0 ? trimmed : (defaultCommentText ?? "");
-
-    const paragraphChildren: JSONContent[] = [];
-    if (assigneeMentionNode) {
-      paragraphChildren.push(assigneeMentionNode);
-      if (bodyText.length > 0) {
-        paragraphChildren.push({ type: "text", text: " " });
-      }
-    }
-    if (bodyText.length > 0) {
-      paragraphChildren.push({ type: "text", text: bodyText });
-    }
-
-    const commentContent: JSONContent = {
-      type: "doc",
-      content: [{ type: "paragraph", content: paragraphChildren }],
-    };
-
-    const entityFkField: "repositoryCaseId" | "testRunId" | "sessionId" =
-      input.entityType === "CASE"
-        ? "repositoryCaseId"
-        : input.entityType === "RUN"
-          ? "testRunId"
-          : "sessionId";
-
+    // One try spans the whole request: the pre-transaction prep below
+    // (assignee lookup, default-comment localization) can throw too, and
+    // before this widening those throws escaped the action uncaught — no
+    // `requestReview failed` log line, just an opaque client toast.
     try {
+      const trimmed = input.commentText.trim();
+
+      // Build the TipTap doc that will become the Comment.content. For direct
+      // user-assignees, prepend a mention node so the existing comment-mention
+      // notification fires for the assignee without extra wiring. Role assignees
+      // fall through with no mention node (see method docstring).
+      let assigneeMentionNode: JSONContent | null = null;
+      if (input.assigneeUserId !== null) {
+        const assigneeUser = await baseDb.user.findUnique({
+          where: { id: input.assigneeUserId },
+          select: { id: true, name: true },
+        });
+        if (assigneeUser) {
+          assigneeMentionNode = {
+            type: "mention",
+            attrs: { id: assigneeUser.id, label: assigneeUser.name ?? "user" },
+          };
+        }
+      }
+
+      // Default-text fallback: when the requester leaves the comment blank we
+      // still want a useful body on the persisted Comment row — both for the
+      // assignee's context and for the comment thread to show something other
+      // than an empty bubble. Build a "Please review the transition from
+      // {from} → {to}" string with the role name appended when role-assigned.
+      // Skip the round-trip when the requester actually typed something.
+      //
+      // The text is localized to the requester's own `UserPreferences.locale`,
+      // threaded explicitly into `getTranslations({locale})` — never a bare
+      // `getTranslations()`, which delegates locale resolution to
+      // i18n/request.ts and broke every review request while that file read
+      // `next/root-params` (unsupported in a Server Action; reverted in
+      // 9919fa7e). The persisted Comment.content carries whichever language the
+      // requester saw at submit time; the comment thread renders it verbatim so
+      // a French reviewer reading an English requester's default comment sees
+      // the English version (consistent with how user-typed comments work).
+      let defaultCommentText: string | null = null;
+      if (trimmed.length === 0) {
+        const [fromState, toState, assigneeRole, t] = await Promise.all([
+          baseDb.workflows.findUnique({
+            where: { id: input.fromStateId },
+            select: { name: true },
+          }),
+          baseDb.workflows.findUnique({
+            where: { id: input.toStateId },
+            select: { name: true },
+          }),
+          input.assigneeRoleId !== null
+            ? baseDb.roles.findUnique({
+                where: { id: input.assigneeRoleId },
+                select: { name: true },
+              })
+            : Promise.resolve(null),
+          getTranslations({
+            locale: localeFromPreference(session.user.preferences?.locale),
+            namespace: "reviews.requester",
+          }),
+        ]);
+        const fromName = fromState?.name ?? "";
+        const toName = toState?.name ?? "";
+        defaultCommentText = assigneeRole
+          ? t("defaultCommentRole", {
+              fromState: fromName,
+              toState: toName,
+              roleName: assigneeRole.name,
+            })
+          : t("defaultComment", { fromState: fromName, toState: toName });
+      }
+
+      const bodyText =
+        trimmed.length > 0 ? trimmed : (defaultCommentText ?? "");
+
+      const paragraphChildren: JSONContent[] = [];
+      if (assigneeMentionNode) {
+        paragraphChildren.push(assigneeMentionNode);
+        if (bodyText.length > 0) {
+          paragraphChildren.push({ type: "text", text: " " });
+        }
+      }
+      if (bodyText.length > 0) {
+        paragraphChildren.push({ type: "text", text: bodyText });
+      }
+
+      const commentContent: JSONContent = {
+        type: "doc",
+        content: [{ type: "paragraph", content: paragraphChildren }],
+      };
+
+      const entityFkField: "repositoryCaseId" | "testRunId" | "sessionId" =
+        input.entityType === "CASE"
+          ? "repositoryCaseId"
+          : input.entityType === "RUN"
+            ? "testRunId"
+            : "sessionId";
+
       const { reviewRequestId, commentId } = await auditedTransaction(
         async (tx) => {
           const reviewRequest = await tx.reviewRequest.create({
@@ -673,7 +684,10 @@ export const bulkRequestReview = withActionAuditContext(
                 select: { name: true },
               })
             : Promise.resolve(null),
-          getTranslations("reviews.requester"),
+          getTranslations({
+            locale: localeFromPreference(session.user.preferences?.locale),
+            namespace: "reviews.requester",
+          }),
         ]);
 
       const stateById = new Map(

@@ -1,8 +1,9 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
-import { commitUrlSearch, useLocationSearch } from "~/lib/urlState";
+import { useSearchParams } from "next/navigation";
 
+import { usePathname, useRouter } from "~/lib/navigation";
 import {
   getOperatorArity,
   type FilterDimensionRegistry,
@@ -29,21 +30,20 @@ import {
  *
  * Predicates live as repeated `f` query params, one per predicate
  * (`?f=templates:in:1,2&f=tags:any` — lib/repository/filterUrlCodec.ts owns
- * the grammar), so filters survive reload and are shareable. Reads parse the
- * `f` params leniently against the active mode's dimension registry: invalid
- * predicates (unknown dimension — including run dims outside run mode — bad
- * operator/arity/values) are dropped, never thrown.
+ * the grammar), so filters survive reload and are shareable. Reads parse
+ * `useSearchParams().getAll("f")` leniently against the active mode's
+ * dimension registry: invalid predicates (unknown dimension — including run
+ * dims outside run mode — bad operator/arity/values) are dropped, never
+ * thrown.
  *
- * Reads and writes go through lib/urlState.ts (`useLocationSearch` /
- * `commitUrlSearch`): same-route URL-state syncs must not involve the router
- * (a router.replace is a real RSC navigation under cacheComponents), and raw
- * history writes are invisible to `useSearchParams`, so the shared pub/sub is
- * the one reactive source. Always replace, never push, so filter churn does
- * not pollute history. The query is composed from `window.location.search`
- * so a just-committed write from another component (TreeView's `node`,
- * ColumnSelection's `columns`) is never dropped. Every other param
- * (node/case/view/columns/matrix filters) is preserved — only the `f` keys
- * are deleted and re-appended.
+ * Writes go through `router.replace(..., { scroll: false })` from
+ * `~/lib/navigation` (locale preserved) — always replace, never push, so
+ * filter churn does not pollute history. The query is composed from
+ * `window.location.search`, NOT a useSearchParams snapshot: TreeView writes
+ * `node` via raw history.replaceState and useSearchParams can lag
+ * (ColumnSelection.tsx documents the same), so a snapshot would silently drop
+ * a just-selected folder. Every other param (node/case/view/columns/matrix
+ * filters) is preserved — only the `f` keys are deleted and re-appended.
  * A serialized-echo guard skips the write when the `f` set already matches
  * the URL; it doubles as the re-entrancy guard for URL→state sync effects.
  *
@@ -202,13 +202,9 @@ export function useRepositoryFilters({
   registry,
   persistToUrl,
 }: UseRepositoryFiltersOptions): UseRepositoryFiltersResult {
-  // Reactive window.location.search — NOT useSearchParams, which does not
-  // observe the raw history writes commitUrlSearch performs.
-  const locationSearch = useLocationSearch();
-  const searchParams = useMemo(
-    () => new URLSearchParams(locationSearch),
-    [locationSearch]
-  );
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
 
   const [localPredicates, setLocalPredicates] =
     useState<FilterPredicate[]>(EMPTY_PREDICATES);
@@ -276,14 +272,9 @@ export function useRepositoryFilters({
         query.append(FILTER_PARAM, token);
       }
       const qs = applyReadabilityPass(query.toString());
-      // commitUrlSearch, not router.replace: filter writes are same-route
-      // URL-state syncs (see lib/urlState.ts for why the router must not be
-      // involved and why a plain replaceState is not enough).
-      const url = new URL(window.location.href);
-      url.search = qs ? `?${qs}` : "";
-      commitUrlSearch(url);
+      router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
     },
-    [persistToUrl]
+    [persistToUrl, router, pathname]
   );
 
   const addPredicate = useCallback(

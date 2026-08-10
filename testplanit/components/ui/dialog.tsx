@@ -4,6 +4,8 @@ import { useTranslations } from "next-intl";
 import React, { useState } from "react";
 import { cn } from "~/utils";
 
+import { preventDismissFromInsideContent } from "./layerDismissGuard";
+
 const Dialog = DialogPrimitive.Root;
 const DialogTrigger = DialogPrimitive.Trigger;
 const DialogPortal = DialogPrimitive.Portal;
@@ -39,6 +41,19 @@ const DialogContent = React.forwardRef<
   const t = useTranslations("common.ui.dialog");
   const tGlobal = useTranslations();
 
+  const contentRef = React.useRef<HTMLDivElement | null>(null);
+  const setContentRef = React.useCallback(
+    (node: HTMLDivElement | null) => {
+      contentRef.current = node;
+      if (typeof ref === "function") {
+        ref(node);
+      } else if (ref) {
+        ref.current = node;
+      }
+    },
+    [ref]
+  );
+
   const toggleFullScreen = (e: any) => {
     e.stopPropagation();
     if (fullScreen === undefined) {
@@ -51,7 +66,7 @@ const DialogContent = React.forwardRef<
     <DialogPortal>
       <DialogOverlay />
       <DialogPrimitive.Content
-        ref={ref}
+        ref={setContentRef}
         className={cn(
           "overflow-y-auto fixed z-50 grid sm:rounded-lg gap-4 border bg-background p-6 pt-8 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
           isFullScreen
@@ -60,6 +75,10 @@ const DialogContent = React.forwardRef<
           className
         )}
         {...props}
+        onPointerDownOutside={(event) => {
+          props.onPointerDownOutside?.(event);
+          preventDismissFromInsideContent(contentRef.current, event);
+        }}
       >
         {children}
         <div className="absolute end-4 top-4 space-x-2">

@@ -2,7 +2,6 @@
 
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
-import { commitUrlSearch } from "~/lib/urlState";
 import BreadcrumbComponent from "@/components/BreadcrumbComponent";
 import { useDebounce } from "@/components/Debounce";
 import { UnifiedDragPreview } from "@/components/dnd/UnifiedDragPreview";
@@ -109,6 +108,7 @@ import {
   PaginationProvider,
   usePagination,
 } from "~/lib/contexts/PaginationContext";
+import { usePathname, useRouter } from "~/lib/navigation";
 import { useFolderStats } from "~/lib/useFolderStats";
 import { AddCase } from "./AddCase";
 import { AddFolder } from "./AddFolder";
@@ -435,6 +435,8 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
   const numericProjectId = parseInt(projectId, 10);
   const isValidProjectId = !isNaN(numericProjectId);
 
+  const router = useRouter();
+  const pathName = usePathname();
   const { data: session, status: sessionStatus } = useSession();
 
   // Use the validated numericProjectId here
@@ -582,14 +584,9 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
         to: after ? `?${after}` : "",
       };
       const qs = applyReadabilityPass(after);
-      // commitUrlSearch instead of router.replace: same-route URL-state sync
-      // (see lib/urlState.ts — the router must not be involved, and readers
-      // subscribe through useLocationSearch).
-      const url = new URL(window.location.href);
-      url.search = qs ? `?${qs}` : "";
-      commitUrlSearch(url);
+      router.replace(qs ? `${pathName}?${qs}` : pathName, { scroll: false });
     },
-    []
+    [pathName, router]
   );
 
   // Once the router commits (window.location moves off the value the overlay
@@ -1668,17 +1665,13 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
     (value: string) => {
       setSelectedItem(value);
 
-      if (value === "folders") {
-        handleSelectFolder(null);
-      }
-
       if (!isSelectionMode) {
         // Through the shared writer: a just-written `f` param may not have
         // reached window.location yet and would otherwise be dropped.
         replaceUrlParams((params) => params.set("view", value));
       }
     },
-    [replaceUrlParams, handleSelectFolder, isSelectionMode]
+    [replaceUrlParams, isSelectionMode]
   );
 
   // --- Saved views ---------------------------------------------------------
@@ -1723,9 +1716,6 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
       setPredicates(criteria.predicates);
 
       setSelectedItem(axis);
-      if (axis === "folders") {
-        handleSelectFolder(null);
-      }
 
       // A view carries no search text, so the selection dialog's box is left
       // as the user typed it and intersects with the filters just applied.
@@ -1734,21 +1724,16 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
       // One composed write for the axis and the freshly applied filter family:
       // `setPredicates` replaced the URL moments ago and window.location has
       // not caught up, so re-stating `f` here is what keeps this write from
-      // dropping it.
+      // dropping it. A view describes filters and grouping, not a location, so
+      // `node` is carried through: the filters apply where the user already is.
       replaceUrlParams((query) => {
         query.set("view", axis);
-        if (axis === "folders") {
-          // The selection was just reset to the root; leaving `node` behind
-          // would restore a folder the saved view never described on reload.
-          query.delete("node");
-        }
         reassertFilterParams(query);
       });
     },
     [
       resolveSavedViewAxis,
       setPredicates,
-      handleSelectFolder,
       isSelectionMode,
       replaceUrlParams,
       reassertFilterParams,

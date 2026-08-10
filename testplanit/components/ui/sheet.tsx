@@ -6,6 +6,8 @@ import * as React from "react";
 
 import { cn } from "~/utils";
 
+import { preventDismissFromInsideContent } from "./layerDismissGuard";
+
 const Sheet = SheetPrimitive.Root;
 
 const SheetTrigger = SheetPrimitive.Trigger;
@@ -59,13 +61,30 @@ const SheetContent = React.forwardRef<
 >(({ side = "right", className, children, ...props }, ref) => {
   const tGlobal = useTranslations();
 
+  const contentRef = React.useRef<HTMLDivElement | null>(null);
+  const setContentRef = React.useCallback(
+    (node: HTMLDivElement | null) => {
+      contentRef.current = node;
+      if (typeof ref === "function") {
+        ref(node);
+      } else if (ref) {
+        ref.current = node;
+      }
+    },
+    [ref]
+  );
+
   return (
     <SheetPortal>
       <SheetOverlay />
       <SheetPrimitive.Content
-        ref={ref}
+        ref={setContentRef}
         className={cn(sheetVariants({ side }), className)}
         {...props}
+        onPointerDownOutside={(event) => {
+          props.onPointerDownOutside?.(event);
+          preventDismissFromInsideContent(contentRef.current, event);
+        }}
       >
         {children}
         <SheetPrimitive.Close className="absolute end-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-hidden focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-secondary">
