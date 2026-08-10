@@ -141,16 +141,29 @@ function UserList() {
     }
   }, [revokingUser, tAdmin]);
 
-  // Sort by `scimGivenName` always puts nulls last so the SCIM-managed users
-  // (the non-null rows) appear at the top regardless of asc/desc direction —
-  // matches the "SCIM" column UX of "click to find SCIM users."
+  // The SCIM column displays Yes/No, so it sorts by SCIM-ness like a boolean:
+  // ascending puts non-SCIM (No) first, descending puts SCIM-managed (Yes)
+  // first. The nulls placement is what encodes that — the given name only
+  // orders rows within the SCIM block.
   // A trailing `id` tiebreaker keeps offset pagination stable when the primary
   // sort key isn't unique (otherwise pages can duplicate or skip rows).
   const orderBy: NonNullable<UserFindManyArgs["orderBy"]> = useMemo(
     () =>
       sortConfig?.column === "scimGivenName"
         ? [
-            { scimGivenName: { sort: sortConfig.direction, nulls: "last" } },
+            sortConfig.direction === "asc"
+              ? {
+                  scimGivenName: {
+                    sort: "asc" as const,
+                    nulls: "first" as const,
+                  },
+                }
+              : {
+                  scimGivenName: {
+                    sort: "desc" as const,
+                    nulls: "last" as const,
+                  },
+                },
             { id: "asc" },
           ]
         : sortConfig
