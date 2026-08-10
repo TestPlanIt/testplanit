@@ -637,6 +637,19 @@ export function MemberIssuesTable({
     }));
   };
 
+  // Explicit-direction sort from the header column menu; `null` (Remove sort)
+  // restores the default order.
+  const handleSortColumn = (
+    column: string,
+    direction: "asc" | "desc" | null
+  ) => {
+    if (direction === null) {
+      setSortConfig({ column: "key", direction: "asc" });
+    } else {
+      setSortConfig({ column, direction });
+    }
+  };
+
   const isLoading = isLoadingMembers || isLoadingCoverage;
 
   // Collapsed preference persists across refreshes. Seeded in an effect
@@ -926,6 +939,7 @@ export function MemberIssuesTable({
                 columns={columns as any}
                 data={sortedRows as any}
                 onSortChange={handleSortChange}
+                onSortColumn={handleSortColumn}
                 sortConfig={sortConfig}
                 isLoading={isLoading}
                 columnVisibility={columnVisibility}

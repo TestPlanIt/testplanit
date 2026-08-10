@@ -133,6 +133,19 @@ function RoleList() {
     setSortConfig({ column, direction });
   };
 
+  // Explicit-direction sort from the header column menu; `null` (Remove sort)
+  // restores the default order.
+  const handleSortColumn = (
+    column: string,
+    direction: "asc" | "desc" | null
+  ) => {
+    if (direction === null) {
+      setSortConfig({ column: "name", direction: "asc" });
+    } else {
+      setSortConfig({ column, direction });
+    }
+  };
+
   if (!session || session.user.access !== "ADMIN") {
     return null;
   }
@@ -190,6 +203,7 @@ function RoleList() {
               columns={columns as any}
               data={rolesData}
               onSortChange={handleSortChange}
+              onSortColumn={handleSortColumn}
               sortConfig={sortConfig}
               columnVisibility={columnVisibility}
               onColumnVisibilityChange={setColumnVisibility}

@@ -258,6 +258,19 @@ function Configurations(): React.ReactElement | null {
     setSortConfig({ column, direction });
   };
 
+  // Explicit-direction sort from the header column menu; `null` (Remove sort)
+  // restores the default order.
+  const handleSortColumn = (
+    column: string,
+    direction: "asc" | "desc" | null
+  ) => {
+    if (direction === null) {
+      setSortConfig(undefined);
+    } else {
+      setSortConfig({ column, direction });
+    }
+  };
+
   if (isAuthenticated && session?.user.access === "ADMIN") {
     return (
       <main>
@@ -340,6 +353,7 @@ function Configurations(): React.ReactElement | null {
                 data={configurations || []}
                 flexColumnId="name"
                 onSortChange={handleSortChange}
+                onSortColumn={handleSortColumn}
                 sortConfig={sortConfig}
                 columnVisibility={columnVisibility}
                 onColumnVisibilityChange={setColumnVisibility}

@@ -56,6 +56,16 @@ const cycleSort =
       ? { column, direction: "desc" }
       : { column, direction: "asc" };
 
+/** Explicit-direction sort from the header column menu; `null` (Remove sort)
+ * restores the default name order. */
+const explicitSort = (
+  column: string,
+  direction: "asc" | "desc" | null
+): SortConfig =>
+  direction === null
+    ? { column: "name", direction: "asc" }
+    : { column, direction };
+
 function sortRows<T>(
   rows: T[],
   sort: SortConfig,
@@ -147,6 +157,21 @@ export function UserAssignments({ userId }: UserAssignmentsProps) {
   );
   const handleSessionSortChange = useCallback(
     (column: string) => setSessionSort(cycleSort(column)),
+    []
+  );
+  const handleReviewSortColumn = useCallback(
+    (column: string, direction: "asc" | "desc" | null) =>
+      setReviewSort(explicitSort(column, direction)),
+    []
+  );
+  const handleRunSortColumn = useCallback(
+    (column: string, direction: "asc" | "desc" | null) =>
+      setRunSort(explicitSort(column, direction)),
+    []
+  );
+  const handleSessionSortColumn = useCallback(
+    (column: string, direction: "asc" | "desc" | null) =>
+      setSessionSort(explicitSort(column, direction)),
     []
   );
 
@@ -483,6 +508,7 @@ export function UserAssignments({ userId }: UserAssignmentsProps) {
             data={sortedReviewRows}
             sortConfig={reviewSort}
             onSortChange={handleReviewSortChange}
+            onSortColumn={handleReviewSortColumn}
             columnVisibility={reviewColumnVisibility}
             onColumnVisibilityChange={setReviewColumnVisibility}
             rowTestIdPrefix="profile-assignments-review"
@@ -504,6 +530,7 @@ export function UserAssignments({ userId }: UserAssignmentsProps) {
             data={sortedRuns}
             sortConfig={runSort}
             onSortChange={handleRunSortChange}
+            onSortColumn={handleRunSortColumn}
             columnVisibility={runColumnVisibility}
             onColumnVisibilityChange={setRunColumnVisibility}
             rowTestIdPrefix="profile-assignments-run"
@@ -524,6 +551,7 @@ export function UserAssignments({ userId }: UserAssignmentsProps) {
             data={sortedSessions}
             sortConfig={sessionSort}
             onSortChange={handleSessionSortChange}
+            onSortColumn={handleSessionSortColumn}
             columnVisibility={sessionColumnVisibility}
             onColumnVisibilityChange={setSessionColumnVisibility}
             rowTestIdPrefix="profile-assignments-session"

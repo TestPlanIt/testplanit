@@ -266,6 +266,23 @@ function ReviewsInboxContent({ userId }: { userId: string }) {
     }));
   };
 
+  // Explicit-direction sort from the header column menu; `null` (Remove sort)
+  // restores the tab's default order.
+  const handleSortColumn = (
+    column: string,
+    direction: "asc" | "desc" | null
+  ) => {
+    if (direction === null) {
+      setSortConfig(
+        view === "pending"
+          ? { column: "requestedAt", direction: "asc" }
+          : { column: "decidedAt", direction: "desc" }
+      );
+    } else {
+      setSortConfig({ column, direction });
+    }
+  };
+
   const handleViewChange = (next: InboxView) => {
     // replace, not push — flipping tabs shouldn't stack history entries.
     const p = new URLSearchParams(searchParams.toString());
@@ -1100,6 +1117,7 @@ function ReviewsInboxContent({ userId }: { userId: string }) {
                       data={tableData as any}
                       sortConfig={sortConfig}
                       onSortChange={handleSortChange}
+                      onSortColumn={handleSortColumn}
                       columnVisibility={columnVisibility}
                       onColumnVisibilityChange={setColumnVisibility}
                       estimateSize={48}

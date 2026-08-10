@@ -320,7 +320,7 @@ describe("UserAssignments", () => {
     expect(runRow.textContent).toContain("RUN #300");
   });
 
-  it("sorts runs by name via the header sort control", async () => {
+  it("sorts runs by name via the header column menu", async () => {
     mockFetchWith(dashboardData);
 
     renderComponent();
@@ -338,10 +338,12 @@ describe("UserAssignments", () => {
       "profile-assignments-run-100",
     ]);
 
-    // Clicking the name column's sort control flips to descending.
-    fireEvent.click(
-      within(runTable).getAllByRole("button", { name: "sort" })[0]
-    );
+    // Descending via the name column's header menu (the standard sort UI).
+    const trigger = within(runTable).getAllByRole("button", {
+      name: "columnOptions",
+    })[0];
+    fireEvent.pointerDown(trigger);
+    fireEvent.click(screen.getByText("sortDesc"));
     expect(rowIds()).toEqual([
       "profile-assignments-run-100",
       "profile-assignments-run-300",

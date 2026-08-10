@@ -86,6 +86,19 @@ export function FoundInTestingIssues({
     }));
   };
 
+  // Explicit-direction sort from the header column menu; `null` (Remove sort)
+  // restores the default order.
+  const handleSortColumn = (
+    column: string,
+    direction: "asc" | "desc" | null
+  ) => {
+    if (direction === null) {
+      setSortConfig({ column: "key", direction: "asc" });
+    } else {
+      setSortConfig({ column, direction });
+    }
+  };
+
   const sortedIssues = useMemo(() => {
     const rows = [...issues];
     const dir = sortConfig.direction === "asc" ? 1 : -1;
@@ -348,6 +361,7 @@ export function FoundInTestingIssues({
                 onColumnVisibilityChange={setColumnVisibility}
                 sortConfig={sortConfig}
                 onSortChange={handleSortChange}
+                onSortColumn={handleSortColumn}
                 enableColumnPinning
                 pinnedColumnStyle={
                   milestoneRow?.isCompleted

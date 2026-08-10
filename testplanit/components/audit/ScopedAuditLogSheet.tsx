@@ -271,6 +271,19 @@ function ScopedAuditLogContent({
     setSortConfig({ column, direction });
   };
 
+  // Explicit-direction sort from the header column menu; `null` (Remove sort)
+  // restores the default order.
+  const handleSortColumn = (
+    column: string,
+    direction: "asc" | "desc" | null
+  ) => {
+    if (direction === null) {
+      setSortConfig({ column: "timestamp", direction: "desc" });
+    } else {
+      setSortConfig({ column, direction });
+    }
+  };
+
   const dateFormat = session?.user?.preferences?.dateFormat;
   const timezone = session?.user?.preferences?.timezone;
   const userPreferences = useMemo(
@@ -335,6 +348,7 @@ function ScopedAuditLogContent({
           subRowsLabel={t("relatedChanges")}
           sortConfig={sortConfig}
           onSortChange={handleSortChange}
+          onSortColumn={handleSortColumn}
           columnVisibility={columnVisibility}
           onColumnVisibilityChange={setColumnVisibility}
           flexColumnId="userEmail"

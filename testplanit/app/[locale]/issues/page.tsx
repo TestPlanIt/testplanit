@@ -394,6 +394,19 @@ function Issues() {
     setSortConfig({ column, direction });
   };
 
+  // Explicit-direction sort from the header column menu; `null` (Remove sort)
+  // restores the default order.
+  const handleSortColumn = (
+    column: string,
+    direction: "asc" | "desc" | null
+  ) => {
+    if (direction === null) {
+      setSortConfig({ column: "name", direction: "asc" });
+    } else {
+      setSortConfig({ column, direction });
+    }
+  };
+
   return (
     <main>
       <Card>
@@ -474,6 +487,7 @@ function Issues() {
               columns={columns as any}
               data={mappedIssues as any}
               onSortChange={handleSortChange}
+              onSortColumn={handleSortColumn}
               sortConfig={sortConfig}
               isLoading={isLoadingIssues || isFetchingNextPage}
               columnVisibility={columnVisibility}

@@ -50,6 +50,19 @@ export function ProjectReviewToggleList() {
     [sortConfig]
   );
 
+  // Explicit-direction sort from the header column menu; `null` (Remove sort)
+  // restores the default order.
+  const handleSortColumn = useCallback(
+    (column: string, direction: "asc" | "desc" | null) => {
+      if (direction === null) {
+        setSortConfig({ column: "name", direction: "asc" });
+      } else {
+        setSortConfig({ column, direction });
+      }
+    },
+    []
+  );
+
   const where = useMemo(
     () => ({
       isDeleted: false,
@@ -212,6 +225,7 @@ export function ProjectReviewToggleList() {
           columns={columns as ColumnDef<any, any>[]}
           data={projects}
           onSortChange={handleSortChange}
+          onSortColumn={handleSortColumn}
           sortConfig={sortConfig}
           columnVisibility={columnVisibility}
           onColumnVisibilityChange={setColumnVisibility}

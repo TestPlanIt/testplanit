@@ -120,6 +120,20 @@ export function StepDuplicateResultsTable({
     setCurrentPage(1);
   };
 
+  // Explicit-direction sort from the header column menu; `null` (Remove sort)
+  // restores the default order.
+  const handleSortColumn = (
+    column: string,
+    direction: "asc" | "desc" | null
+  ) => {
+    if (direction === null) {
+      setSortConfig({ column: "stepCount", direction: "desc" });
+    } else {
+      setSortConfig({ column, direction });
+    }
+    setCurrentPage(1);
+  };
+
   const handlePageSizeChange = (size: number | "All") => {
     setPageSize(typeof size === "number" ? size : 100);
     setCurrentPage(1);
@@ -457,6 +471,7 @@ export function StepDuplicateResultsTable({
           columns={columns}
           data={pageItems}
           onSortChange={handleSortChange}
+          onSortColumn={handleSortColumn}
           sortConfig={sortConfig}
           columnVisibility={columnVisibility}
           onColumnVisibilityChange={setColumnVisibility}

@@ -124,6 +124,7 @@ interface ReportRendererProps {
   // Sorting
   sortConfig?: { column: string; direction: "asc" | "desc" } | null;
   onSortChange: (columnId: string) => void;
+  onSortColumn?: (columnId: string, direction: "asc" | "desc" | null) => void;
 
   // Column visibility
   columnVisibility: VisibilityState;
@@ -181,6 +182,7 @@ export function ReportRenderer({
   isExportingCsv = false,
   sortConfig,
   onSortChange,
+  onSortColumn,
   columnVisibility,
   onColumnVisibilityChange,
   grouping,
@@ -541,6 +543,7 @@ export function ReportRenderer({
               columnSizingStorageKey={`report:${getBaseReportType(reportType)}`}
               sortConfig={sortConfig || undefined}
               onSortChange={onSortChange}
+              onSortColumn={onSortColumn}
               grouping={grouping}
               onGroupingChange={onGroupingChange}
               expanded={expanded}

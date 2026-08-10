@@ -95,6 +95,10 @@ function ProjectAdmin() {
   const [columnVisibility, setColumnVisibility] = useState<
     Record<string, boolean>
   >({});
+  // Hide-column requests from the table's header menu are routed through the
+  // Columns control (the visibility owner) so persistence and its checkboxes
+  // stay in sync.
+  const hideColumnRef = useRef<((columnId: string) => void) | null>(null);
 
   const [editingProject, setEditingProject] = useState<ExtendedProjects | null>(
     null
@@ -371,6 +375,19 @@ function ProjectAdmin() {
     setSortConfig({ column, direction });
   };
 
+  // Explicit-direction sort from the header column menu; `null` (Remove sort)
+  // restores the default order.
+  const handleSortColumn = (
+    column: string,
+    direction: "asc" | "desc" | null
+  ) => {
+    if (direction === null) {
+      setSortConfig({ column: "name", direction: "asc" });
+    } else {
+      setSortConfig({ column, direction });
+    }
+  };
+
   const onSubmit: SubmitHandler<FormData> = async (data) => {
     if (data.completedAt) {
       setIsAlertDialogOpen(false);
@@ -455,6 +472,7 @@ function ProjectAdmin() {
                     storageKey="admin-projects"
                     columns={columns}
                     onVisibilityChange={setColumnVisibility}
+                    hideColumnRef={hideColumnRef}
                   />
                 </div>
               </div>
@@ -477,6 +495,8 @@ function ProjectAdmin() {
               columns={columns}
               data={tableData || []}
               onSortChange={handleSortChange}
+              onSortColumn={handleSortColumn}
+              onHideColumn={(columnId) => hideColumnRef.current?.(columnId)}
               sortConfig={sortConfig}
               columnVisibility={columnVisibility}
               onColumnVisibilityChange={setColumnVisibility}

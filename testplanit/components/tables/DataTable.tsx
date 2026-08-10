@@ -509,7 +509,10 @@ function PagedTable<TData extends DataRow, TValue>({
   scrollToSelectedRow = true,
   storageKey,
   enableColumnReorder = !!storageKey,
-  enableColumnMenu = !!storageKey,
+  // The explicit-direction menu is the house standard on every sortable
+  // column, so it turns on as soon as a handler is wired to act on it (or the
+  // surface persists column prefs, the pre-menu heuristic).
+  enableColumnMenu = !!storageKey || !!(onSortColumn || onHideColumn),
 }: Omit<PagedDataTableProps<TData, TValue>, "virtualized">) {
   const tLabels = useTranslations("common.labels");
   const tActions = useTranslations("common.actions");

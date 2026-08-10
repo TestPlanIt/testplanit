@@ -238,6 +238,19 @@ export default function SoftDeletedDataTable({
     setSortConfig({ column: columnId, direction });
   };
 
+  // Explicit-direction sort from the header column menu; `null` (Remove sort)
+  // restores the default order.
+  const handleSortColumn = (
+    column: string,
+    direction: "asc" | "desc" | null
+  ) => {
+    if (direction === null) {
+      setSortConfig({ column: "id", direction: "asc" });
+    } else {
+      setSortConfig({ column, direction });
+    }
+  };
+
   const columns = useMemo<ColumnDef<SoftDeletedItem>[]>(() => {
     const defaultColumns: ColumnDef<SoftDeletedItem>[] = [
       {
@@ -390,6 +403,7 @@ export default function SoftDeletedDataTable({
             onColumnVisibilityChange={setColumnVisibility}
             sortConfig={sortConfig}
             onSortChange={handleSortChange}
+            onSortColumn={handleSortColumn}
             enableColumnPinning
             hasMore={hasMore}
             isLoading={isInitialLoading || isLoadingMore}

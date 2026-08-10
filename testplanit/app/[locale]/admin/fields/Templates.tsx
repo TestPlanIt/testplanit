@@ -174,6 +174,19 @@ export default function TemplateComponent() {
     setSortConfig({ column, direction });
   };
 
+  // Explicit-direction sort from the header column menu; `null` (Remove sort)
+  // restores the default order.
+  const handleSortColumn = (
+    column: string,
+    direction: "asc" | "desc" | null
+  ) => {
+    if (direction === null) {
+      setSortConfig(undefined);
+    } else {
+      setSortConfig({ column, direction });
+    }
+  };
+
   if (status === "loading") return null;
 
   if (session && session.user.access === "ADMIN") {
@@ -216,7 +229,7 @@ export default function TemplateComponent() {
                 onColumnVisibilityChange={setColumnVisibility}
                 isLoading={isLoading}
                 storageKey="admin-templates"
-                enableColumnMenu={false}
+                onSortColumn={handleSortColumn}
               />
             </div>
           </CardContent>

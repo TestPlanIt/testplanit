@@ -210,6 +210,10 @@ function IntegrationList() {
   const [columnVisibility, setColumnVisibility] = useState<
     Record<string, boolean>
   >({});
+  // Hide-column requests from the table's header menu are routed through the
+  // Columns control (the visibility owner) so persistence and its checkboxes
+  // stay in sync.
+  const hideColumnRef = useRef<((columnId: string) => void) | null>(null);
 
   if (status === "loading") return null;
 
@@ -225,6 +229,19 @@ function IntegrationList() {
         ? "desc"
         : "asc";
     setSortConfig({ column, direction });
+  };
+
+  // Explicit-direction sort from the header column menu; `null` (Remove sort)
+  // restores the default order.
+  const handleSortColumn = (
+    column: string,
+    direction: "asc" | "desc" | null
+  ) => {
+    if (direction === null) {
+      setSortConfig({ column: "name", direction: "asc" });
+    } else {
+      setSortConfig({ column, direction });
+    }
   };
 
   return (
@@ -267,6 +284,7 @@ function IntegrationList() {
                       storageKey="admin-integrations"
                       columns={columns}
                       onVisibilityChange={setColumnVisibility}
+                      hideColumnRef={hideColumnRef}
                     />
                   </div>
                 </div>
@@ -290,6 +308,8 @@ function IntegrationList() {
               columns={columns as any}
               data={integrationRows}
               onSortChange={handleSortChange}
+              onSortColumn={handleSortColumn}
+              onHideColumn={(columnId) => hideColumnRef.current?.(columnId)}
               sortConfig={sortConfig}
               columnVisibility={columnVisibility}
               onColumnVisibilityChange={setColumnVisibility}
