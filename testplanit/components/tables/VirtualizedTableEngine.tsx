@@ -4,9 +4,7 @@
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  Column,
   ColumnDef,
-  ColumnPinningState,
   ColumnSizingState,
   ExpandedState,
   flexRender,
@@ -15,9 +13,7 @@ import {
   getGroupedRowModel,
   getSortedRowModel,
   OnChangeFn,
-  Row,
   RowSelectionState,
-  SortingState,
   Updater,
   useReactTable,
   VisibilityState,
@@ -41,51 +37,31 @@ import {
 } from "react";
 import { useVirtualizedInfiniteList } from "~/hooks/useVirtualizedInfiniteList";
 import { cn } from "~/utils";
+import {
+  type CustomColumnMeta,
+  type SortConfig,
+  getFlexPinningStyles,
+  resolveGroupableCellContent,
+  TruncatedHeaderLabel,
+  useExpanderColumn,
+  useInitialColumnPinning,
+  useSortingAdapter,
+} from "./dataTableShared";
 import { tableStyles } from "./tableStyles";
 
 /**
- * Sticky-column CSS for a pinned column, mirroring `DataTable`'s
- * `getCommonPinningStyles`. Only applied when the caller opts in via
- * `enableColumnPinning`; returns `{}` for unpinned columns. The pinned cell
- * also needs an opaque background (applied via className) so horizontally
- * scrolled content doesn't bleed through.
- */
-function getPinningStyles(column: Column<any, any>): CSSProperties {
-  const isPinned = column.getIsPinned();
-  if (!isPinned) return {};
-  const isLastLeftPinned =
-    isPinned === "left" && column.getIsLastColumn("left");
-  const isFirstRightPinned =
-    isPinned === "right" && column.getIsFirstColumn("right");
-  return {
-    position: "sticky",
-    left: isPinned === "left" ? column.getStart("left") : undefined,
-    right: isPinned === "right" ? column.getStart("right") : undefined,
-    zIndex: 2,
-    boxShadow: isLastLeftPinned
-      ? "4px 0 8px -4px rgba(0,0,0,0.3)"
-      : isFirstRightPinned
-        ? "-4px 0 8px -4px rgba(0,0,0,0.3)"
-        : undefined,
-  };
-}
-
-/**
- * Virtualized, infinite-scrolling table.
+ * The virtualized, infinite-scrolling render engine behind `DataTable`'s
+ * `virtualized` mode. Not part of the public API — consumers render
+ * `<DataTable virtualized ... />`.
  *
- * A lighter-weight alternative to the shared `DataTable` for surfaces that need
- * to render an arbitrarily large result set as one continuous, page-seam-free
+ * Renders an arbitrarily large result set as one continuous, page-seam-free
  * list. It supports draggable column resizing (live, and optionally persisted
  * per user via `columnSizingStorageKey`) and opt-in column pinning
- * (`enableColumnPinning`, off by default), but not `DataTable`'s drag-reorder;
- * it keeps the table features that scroll well (sorting, grouping, expansion,
- * sub-rows, column visibility) by driving a TanStack `useReactTable` instance
- * and rendering its flattened row model (`getRowModel().rows`) through
- * `useVirtualizedInfiniteList`.
- *
- * Consumed by the reports results panel and the admin audit-log table; both
- * converge on the same scroll model. Per-surface chrome (empty-state copy,
- * test-id prefixes) is parameterized.
+ * (`enableColumnPinning`, on by default), but not the paged engine's
+ * drag-reorder; it keeps the table features that scroll well (sorting,
+ * grouping, expansion, sub-rows, column visibility) by driving a TanStack
+ * `useReactTable` instance and rendering its flattened row model
+ * (`getRowModel().rows`) through `useVirtualizedInfiniteList`.
  *
  * Layout: an outer horizontal-scroll container holds a flex column whose width
  * is the summed column width; a non-scrolling header row sits on top and a
@@ -100,49 +76,16 @@ function getPinningStyles(column: Column<any, any>): CSSProperties {
  *     sentinel pulls and the caller appends.
  */
 
-const EXPANDER_WIDTH = 24;
 const ESTIMATED_ROW_HEIGHT = 44;
 
-/**
- * Header label that surfaces a native tooltip with the column's full text, but
- * only while that text is actually clipped by the column's width. Works for any
- * header content (a plain string or a render function with icons) by reading the
- * rendered `textContent`, and re-measures on column resize via a ResizeObserver
- * so the tooltip appears/disappears live as the user drags the column narrower
- * or wider.
- */
-function TruncatedHeaderLabel({ children }: { children: ReactNode }) {
-  const spanRef = useRef<HTMLSpanElement>(null);
-  const [title, setTitle] = useState<string | undefined>(undefined);
-
-  useEffect(() => {
-    const el = spanRef.current;
-    if (!el) return;
-    const measure = () => {
-      const isClipped = el.scrollWidth > el.clientWidth;
-      setTitle(isClipped ? el.textContent?.trim() || undefined : undefined);
-    };
-    measure();
-    const observer = new ResizeObserver(measure);
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [children]);
-
-  return (
-    <span ref={spanRef} title={title} className="min-w-0 truncate">
-      {children}
-    </span>
-  );
-}
-
-interface VirtualizedDataTableProps {
+export interface VirtualizedTableEngineProps {
   columns: ColumnDef<any, any>[];
   data: any[];
 
   columnVisibility: VisibilityState;
   onColumnVisibilityChange: (visibility: VisibilityState) => void;
 
-  sortConfig?: { column: string; direction: "asc" | "desc" } | null;
+  sortConfig?: SortConfig | null;
   onSortChange?: (columnId: string) => void;
 
   grouping?: string[];
@@ -290,7 +233,7 @@ interface VirtualizedDataTableProps {
   rowTestIdPrefix?: string;
 }
 
-export function VirtualizedDataTable({
+export function VirtualizedTableEngine({
   columns,
   data,
   columnVisibility,
@@ -326,32 +269,17 @@ export function VirtualizedDataTable({
   highlightRowId,
   testIdPrefix = "virtualized-table",
   rowTestIdPrefix = "virtualized-row",
-}: VirtualizedDataTableProps) {
+}: VirtualizedTableEngineProps) {
   const t = useTranslations("common.table");
   const tActions = useTranslations("common.actions");
   const tLabels = useTranslations("common.labels");
   const tAria = useTranslations("common.aria");
   const tErrors = useTranslations("search.errors");
 
-  // Convert the caller's sortConfig into TanStack's controlled sorting state,
-  // ignoring a stale sort that points at a column the current set lacks
-  // (mirrors DataTable's guard).
-  const sorting: SortingState = useMemo(() => {
-    if (!sortConfig) return [];
-    if (!columns.some((c) => c.id === sortConfig.column)) return [];
-    return [{ id: sortConfig.column, desc: sortConfig.direction === "desc" }];
-  }, [sortConfig, columns]);
-
-  const handleSortingChange = useCallback(
-    (updaterOrValue: Updater<SortingState>) => {
-      if (!onSortChange) return;
-      const next =
-        typeof updaterOrValue === "function"
-          ? updaterOrValue(sorting)
-          : updaterOrValue;
-      if (next.length > 0) onSortChange(next[0].id);
-    },
-    [onSortChange, sorting]
+  const { sorting, handleSortingChange } = useSortingAdapter(
+    sortConfig,
+    onSortChange,
+    columns
   );
 
   const handleVisibilityChange = useCallback(
@@ -391,92 +319,22 @@ export function VirtualizedDataTable({
     }
   });
 
-  // Column pinning. Seed the left/right pin sets once, then let TanStack own the
-  // state. First, honor any explicit `meta.isPinned`. When the caller pinned
-  // nothing, default to freezing the first and last columns (the auto-added
-  // expander rides along on the left so it doesn't scroll out from under the
-  // pinned first column). Mirrors DataTable's explicit path.
-  const [columnPinning, setColumnPinning] = useState<ColumnPinningState>({
-    left: [],
-    right: [],
+  // Column pinning: seed the left/right pin sets once (explicit `meta.isPinned`
+  // first, first/last fallback otherwise), then let TanStack own the state.
+  const [columnPinning, setColumnPinning] = useInitialColumnPinning({
+    columns,
+    grouping,
+    getSubRows,
+    enabled: enableColumnPinning,
+    autoPinFirstLast: pinFirstLast,
   });
-  const initialPinningDone = useRef(false);
-  useEffect(() => {
-    if (!enableColumnPinning || initialPinningDone.current) return;
-    const left: string[] = [];
-    const right: string[] = [];
-    for (const column of columns) {
-      const pin = (column.meta as { isPinned?: "left" | "right" } | undefined)
-        ?.isPinned;
-      const id = column.id as string;
-      if (pin === "left") left.push(id);
-      else if (pin === "right") right.push(id);
-    }
-    if (
-      pinFirstLast &&
-      left.length === 0 &&
-      right.length === 0 &&
-      columns.length > 1
-    ) {
-      const firstId = columns[0]?.id as string | undefined;
-      const lastId = columns[columns.length - 1]?.id as string | undefined;
-      const hasExpander = !!(grouping && grouping.length > 0) || !!getSubRows;
-      if (firstId) left.push(firstId);
-      if (hasExpander) left.unshift("expander");
-      if (lastId && lastId !== firstId) right.push(lastId);
-    }
-    setColumnPinning({ left, right });
-    initialPinningDone.current = true;
-  }, [enableColumnPinning, pinFirstLast, columns, grouping, getSubRows]);
 
   // In pinning mode the body scrolls horizontally; this ref lets the header
   // viewport mirror the body's scrollLeft so the columns stay aligned.
   const headerScrollRef = useRef<HTMLDivElement>(null);
 
   // Prepend an expander column when rows can nest (grouping or sub-rows).
-  const expanderColumn: ColumnDef<any, any> = useMemo(
-    () => ({
-      id: "expander",
-      header: () => null,
-      cell: ({ row }: { row: Row<any> }) => {
-        if (!row.getCanExpand()) return null;
-        const isExpanded = row.getIsExpanded();
-        const subRowsCount = row.subRows?.length ?? 0;
-        const label = isExpanded
-          ? tActions("collapse")
-          : `${tActions("expand")}${
-              subRowsLabel && subRowsCount > 0
-                ? ` • ${subRowsCount} ${subRowsLabel}`
-                : ""
-            }`;
-        return (
-          <button
-            type="button"
-            onClick={row.getToggleExpandedHandler()}
-            className="inline-flex w-4 items-center justify-center"
-            aria-label={label}
-            title={label}
-          >
-            <span
-              className="inline-block transition-transform duration-200"
-              style={{
-                transform: isExpanded ? "rotate(90deg)" : "rotate(0deg)",
-              }}
-            >
-              {"▶"}
-            </span>
-          </button>
-        );
-      },
-      size: EXPANDER_WIDTH,
-      minSize: EXPANDER_WIDTH,
-      maxSize: EXPANDER_WIDTH,
-      enableSorting: false,
-      enableHiding: false,
-      enableResizing: false,
-    }),
-    [tActions, subRowsLabel]
-  );
+  const expanderColumn = useExpanderColumn<any>(subRowsLabel);
 
   const groupingActive = !!(grouping && grouping.length > 0);
   const finalColumns = useMemo(
@@ -662,7 +520,9 @@ export function VirtualizedDataTable({
               .filter((header) => header.column.getIsVisible())
               .map((header) => {
                 const { column } = header;
-                const isSortable = column.columnDef.enableSorting !== false;
+                const isSortable =
+                  column.columnDef.enableSorting !== false &&
+                  column.id !== "expander";
                 const isActiveSort = sortConfig?.column === column.id;
                 const direction = isActiveSort
                   ? sortConfig?.direction
@@ -684,7 +544,9 @@ export function VirtualizedDataTable({
                       ...(isFlex
                         ? { flex: "1 1 0%", minWidth: column.getSize() }
                         : { width: column.getSize() }),
-                      ...(enableColumnPinning ? getPinningStyles(column) : {}),
+                      ...(enableColumnPinning
+                        ? getFlexPinningStyles(column)
+                        : {}),
                       ...(enableColumnPinning && column.getIsPinned()
                         ? (pinnedHeaderStyle ?? pinnedColumnStyle ?? {})
                         : {}),
@@ -716,7 +578,7 @@ export function VirtualizedDataTable({
                     <TruncatedHeaderLabel>
                       {flexRender(column.columnDef.header, header.getContext())}
                     </TruncatedHeaderLabel>
-                    {isSortable && column.id !== "expander" && (
+                    {isSortable && (
                       <button
                         type="button"
                         onClick={() => onSortChange?.(column.id)}
@@ -845,60 +707,19 @@ export function VirtualizedDataTable({
                   >
                     {row.getVisibleCells().map((cell, cellIndex) => {
                       const { column } = cell;
-                      let content: ReactNode;
-                      if (groupingActive && cell.getIsGrouped()) {
-                        const showCount = !column.columnDef.aggregatedCell;
-                        content = (
-                          <div className="flex items-center gap-1">
-                            <button
-                              type="button"
-                              onClick={row.getToggleExpandedHandler()}
-                              className="me-1 p-1"
-                              aria-label={
-                                row.getIsExpanded()
-                                  ? tActions("collapse")
-                                  : tActions("expand")
-                              }
-                            >
-                              <span
-                                className="inline-block transition-transform duration-200"
-                                style={{
-                                  transform: row.getIsExpanded()
-                                    ? "rotate(90deg)"
-                                    : "rotate(0deg)",
-                                }}
-                              >
-                                {"▶"}
-                              </span>
-                            </button>
-                            {flexRender(
-                              column.columnDef.cell,
-                              cell.getContext()
-                            )}
-                            {showCount ? ` (${row.subRows.length})` : null}
-                          </div>
-                        );
-                      } else if (groupingActive && cell.getIsAggregated()) {
-                        content = flexRender(
-                          column.columnDef.aggregatedCell ??
-                            column.columnDef.cell,
-                          cell.getContext()
-                        );
-                      } else if (groupingActive && cell.getIsPlaceholder()) {
-                        content = null;
-                      } else {
-                        content = flexRender(
-                          column.columnDef.cell,
-                          cell.getContext()
-                        );
-                      }
+                      const content = resolveGroupableCellContent(
+                        cell,
+                        row,
+                        groupingActive,
+                        tActions
+                      );
                       const isFlex = hasFlex && column.id === flexColumnId;
                       // Cells truncate to a single line by default so long raw
                       // text doesn't wrap and grow the row — the user widens the
                       // column to see more. A column opts out with
                       // `meta: { wrap: true }`.
                       const wrap = (
-                        column.columnDef.meta as { wrap?: boolean } | undefined
+                        column.columnDef.meta as CustomColumnMeta | undefined
                       )?.wrap;
                       return (
                         <div
@@ -929,7 +750,7 @@ export function VirtualizedDataTable({
                               ? { flex: "1 1 0%", minWidth: column.getSize() }
                               : { width: column.getSize() }),
                             ...(enableColumnPinning
-                              ? getPinningStyles(column)
+                              ? getFlexPinningStyles(column)
                               : {}),
                             ...(enableColumnPinning &&
                             column.getIsPinned() &&

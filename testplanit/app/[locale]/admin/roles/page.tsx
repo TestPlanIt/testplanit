@@ -8,7 +8,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "~/lib/navigation";
 
 import { useDebounce } from "@/components/Debounce";
-import { VirtualizedDataTable } from "@/components/tables/VirtualizedDataTable";
+import { DataTable } from "@/components/tables/DataTable";
 import { ExtendedRoles, useColumns } from "./columns";
 
 import { Filter } from "@/components/tables/Filter";
@@ -184,7 +184,8 @@ function RoleList() {
             )}
           </div>
           <div className="mt-4 w-full">
-            <VirtualizedDataTable
+            <DataTable
+              virtualized
               fillViewport
               columns={columns as any}
               data={rolesData}

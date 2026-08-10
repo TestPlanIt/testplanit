@@ -17,7 +17,7 @@ import { Button } from "@/components/ui/button";
 import { DateFormatter } from "@/components/DateFormatter";
 import { DateRangePicker } from "@/components/forms/DateRangePicker";
 import { ColumnSelection } from "@/components/tables/ColumnSelection";
-import { VirtualizedDataTable } from "@/components/tables/VirtualizedDataTable";
+import { DataTable } from "@/components/tables/DataTable";
 import type { ColumnDef } from "@tanstack/react-table";
 import { useSession } from "next-auth/react";
 
@@ -777,7 +777,8 @@ function WebhookDeliveriesTabContent({ projectId }: WebhookDeliveriesTabProps) {
         className="h-[calc(100vh-24rem)] min-h-[400px] w-full"
         data-testid="webhook-deliveries-table"
       >
-        <VirtualizedDataTable
+        <DataTable
+          virtualized
           columns={columns as ColumnDef<any, any>[]}
           data={tableData}
           sortConfig={sortConfig}

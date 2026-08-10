@@ -5,7 +5,7 @@ import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { AutoTagWizardDialog } from "@/components/auto-tag/AutoTagWizardDialog";
 import { ProjectIcon } from "@/components/ProjectIcon";
-import { VirtualizedDataTable } from "@/components/tables/VirtualizedDataTable";
+import { DataTable } from "@/components/tables/DataTable";
 import { Filter } from "@/components/tables/Filter";
 import { Button } from "@/components/ui/button";
 import {
@@ -331,7 +331,8 @@ function TagList() {
             )}
           </div>
           <div className="mt-4 w-full">
-            <VirtualizedDataTable
+            <DataTable
+              virtualized
               columns={columns as any}
               data={mappedTags as any}
               onSortChange={handleSortChange}

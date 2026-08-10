@@ -9,7 +9,7 @@ import { useRouter } from "~/lib/navigation";
 
 import { useDebounce } from "@/components/Debounce";
 import { ColumnSelection } from "@/components/tables/ColumnSelection";
-import { VirtualizedDataTable } from "@/components/tables/VirtualizedDataTable";
+import { DataTable } from "@/components/tables/DataTable";
 import { ExtendedApiToken, useColumns } from "./columns";
 
 import { Filter } from "@/components/tables/Filter";
@@ -316,7 +316,8 @@ function ApiTokensList() {
           </div>
 
           <div className="mt-4 w-full">
-            <VirtualizedDataTable
+            <DataTable
+              virtualized
               fillViewport
               columns={columns as any}
               data={tokenRows}

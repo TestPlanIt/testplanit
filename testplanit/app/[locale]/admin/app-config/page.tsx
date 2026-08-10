@@ -3,7 +3,7 @@
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { useDebounce } from "@/components/Debounce";
-import { VirtualizedDataTable } from "@/components/tables/VirtualizedDataTable";
+import { DataTable } from "@/components/tables/DataTable";
 import { Filter } from "@/components/tables/Filter";
 import { Button } from "@/components/ui/button";
 import { SectionHeader } from "@/components/ui/typography";
@@ -159,7 +159,8 @@ function AppConfigs() {
           )}
         </div>
         <div className="mt-4 w-full">
-          <VirtualizedDataTable
+          <DataTable
+            virtualized
             fillViewport
             flexColumnId="value"
             columns={columns as any}

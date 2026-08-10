@@ -5,7 +5,7 @@ import { schema } from "~/zenstack/schema";
 import { useDebounce } from "@/components/Debounce";
 import { ProjectIcon } from "@/components/ProjectIcon";
 import { Filter } from "@/components/tables/Filter";
-import { VirtualizedDataTable } from "@/components/tables/VirtualizedDataTable";
+import { DataTable } from "@/components/tables/DataTable";
 import {
   Card,
   CardContent,
@@ -611,7 +611,8 @@ function ProjectIssues() {
             )}
           </div>
           <div className="mt-4 w-full">
-            <VirtualizedDataTable
+            <DataTable
+              virtualized
               columns={columns as any}
               data={mappedIssues as any}
               onSortChange={handleSortChange}

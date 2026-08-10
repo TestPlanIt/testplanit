@@ -12,7 +12,7 @@ import {
   ColumnSelection,
   CustomColumnDef,
 } from "@/components/tables/ColumnSelection";
-import { VirtualizedDataTable } from "@/components/tables/VirtualizedDataTable";
+import { DataTable } from "@/components/tables/DataTable";
 import { ExtendedProjects, useColumns } from "./columns";
 
 import { CreateProjectWizard } from "@/admin/projects/CreateProjectWizard";
@@ -471,7 +471,8 @@ function ProjectAdmin() {
             )}
           </div>
           <div className="mt-4 w-full">
-            <VirtualizedDataTable
+            <DataTable
+              virtualized
               fillViewport
               columns={columns}
               data={tableData || []}

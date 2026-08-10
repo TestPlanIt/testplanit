@@ -3,7 +3,7 @@
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { Loading } from "@/components/Loading";
-import { VirtualizedDataTable } from "@/components/tables/VirtualizedDataTable";
+import { DataTable } from "@/components/tables/DataTable";
 import TipTapEditor from "@/components/tiptap/TipTapEditor";
 import { Button } from "@/components/ui/button";
 import { SectionHeader } from "@/components/ui/typography";
@@ -434,7 +434,8 @@ function NotificationSettingsContent() {
               className="h-[500px] min-h-[300px] w-full"
               data-testid="notification-history-table"
             >
-              <VirtualizedDataTable
+              <DataTable
+                virtualized
                 columns={columns as any}
                 data={tableData}
                 columnVisibility={columnVisibility}

@@ -5,7 +5,7 @@ import { schema } from "~/zenstack/schema";
 import { IntegrationModal } from "@/components/admin/integrations/IntegrationModal";
 import { useDebounce } from "@/components/Debounce";
 import { ColumnSelection } from "@/components/tables/ColumnSelection";
-import { VirtualizedDataTable } from "@/components/tables/VirtualizedDataTable";
+import { DataTable } from "@/components/tables/DataTable";
 import { Filter } from "@/components/tables/Filter";
 import {
   AlertDialog,
@@ -284,7 +284,8 @@ function IntegrationList() {
           </div>
 
           <div className="mt-4 w-full">
-            <VirtualizedDataTable
+            <DataTable
+              virtualized
               fillViewport
               columns={columns as any}
               data={integrationRows}

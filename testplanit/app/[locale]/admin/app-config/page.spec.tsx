@@ -95,10 +95,10 @@ vi.mock("@/components/Debounce", () => ({
   useDebounce: (value: any) => value, // Return value immediately
 }));
 
-// Mock the VirtualizedDataTable component (the page renders the table through it
+// Mock the DataTable component (the page renders the table through it
 // since the pagination → infinite-scroll conversion).
-vi.mock("@/components/tables/VirtualizedDataTable", () => ({
-  VirtualizedDataTable: vi.fn(({ data, isLoading, columns: _columns }) => {
+vi.mock("@/components/tables/DataTable", () => ({
+  DataTable: vi.fn(({ data, isLoading, columns: _columns }) => {
     if (isLoading) {
       return <div>{"Table Loading..."}</div>;
     }
@@ -267,9 +267,8 @@ test("sorts ascending on first click", async () => {
   }));
   renderPage(AppConfigs);
 
-  const tableMock = (
-    await vi.importMock("@/components/tables/VirtualizedDataTable")
-  ).VirtualizedDataTable as any;
+  const tableMock = (await vi.importMock("@/components/tables/DataTable"))
+    .DataTable as any;
   await waitFor(() => expect(tableMock).toHaveBeenCalled());
   const onSortChange = tableMock.mock.lastCall![0].onSortChange;
 

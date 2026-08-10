@@ -48,7 +48,7 @@ export interface ExtendedAuditLog extends AuditLog {
   // legacy and semantic (captureAuditEvent) rows.
   // Populated only on a grouped lead row (see lib/audit/groupAuditRows): the
   // other AuditLog rows that share this lead's operationId, rendered as
-  // expandable sub-rows by VirtualizedDataTable's getSubRows. Absent on
+  // expandable sub-rows by DataTable's getSubRows. Absent on
   // singletons.
   auditChildren?: ExtendedAuditLog[];
 }

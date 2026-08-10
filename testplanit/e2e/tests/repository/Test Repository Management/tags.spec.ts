@@ -369,7 +369,7 @@ test.describe("Tags", () => {
       await filterInput.fill(originalName);
       await page.waitForLoadState("networkidle");
 
-      // Find the row with our tag (admin tags list is a VirtualizedDataTable)
+      // Find the row with our tag (admin tags list is a virtualized DataTable)
       const tagRow = page
         .getByRole("row")
         .filter({ hasText: originalName })
@@ -447,7 +447,7 @@ test.describe("Tags", () => {
       await filterInput.fill(tagName);
       await page.waitForLoadState("networkidle");
 
-      // Find the row with our tag (admin tags list is a VirtualizedDataTable)
+      // Find the row with our tag (admin tags list is a virtualized DataTable)
       const tagRow = page.getByRole("row").filter({ hasText: tagName }).first();
       await expect(tagRow).toBeVisible({ timeout: 5000 });
 
@@ -1089,7 +1089,7 @@ test.describe("Tags", () => {
       await page.waitForLoadState("networkidle");
 
       // Find the specific row containing our tag name, then click its edit button
-      // (admin tags list is a VirtualizedDataTable — role="table"/row, no <table>)
+      // (admin tags list is a virtualized DataTable — role="table"/row, no <table>)
       tableBody = page.getByRole("table");
       const tagRow = tableBody
         .getByRole("row")
@@ -1250,7 +1250,7 @@ test.describe("Tags", () => {
     });
 
     await test.step("Verify the usage count shows 2", async () => {
-      // Find the row with our tag (admin tags list is a VirtualizedDataTable)
+      // Find the row with our tag (admin tags list is a virtualized DataTable)
       const tagRow = page.getByRole("row").filter({ hasText: tagName }).first();
       await expect(tagRow).toBeVisible({ timeout: 5000 });
 

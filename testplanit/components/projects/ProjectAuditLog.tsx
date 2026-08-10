@@ -5,7 +5,7 @@ import { schema } from "~/zenstack/schema";
 import { useDebounce } from "@/components/Debounce";
 import { ColumnSelection } from "@/components/tables/ColumnSelection";
 import { Filter } from "@/components/tables/Filter";
-import { VirtualizedDataTable } from "@/components/tables/VirtualizedDataTable";
+import { DataTable } from "@/components/tables/DataTable";
 import { Form } from "@/components/ui/form";
 import { Label } from "@/components/ui/label";
 import { MultiAsyncCombobox } from "@/components/ui/multi-async-combobox";
@@ -561,7 +561,8 @@ export function ProjectAuditLog({
           gap-4 column, so its own top margin is dropped to avoid doubling the
           space above it (matches the admin audit-log toolbar→table gap). */}
       <div className="h-[calc(100vh-22rem)] min-h-[400px] w-full">
-        <VirtualizedDataTable
+        <DataTable
+          virtualized
           columns={columns as any}
           data={groupedData as any}
           getSubRows={(row) => row.auditChildren}

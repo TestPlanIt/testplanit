@@ -202,7 +202,7 @@ export function useVirtualizedInfiniteList({
   // the guard is held for the entire in-flight fetch (we only clear once we've
   // observed `isLoading` go true and then false, i.e. a completed cycle), so a
   // second trigger firing while the first request is in flight still bails.
-  // Mirrors the `wasResizingRef` falling-edge flush in VirtualizedDataTable.
+  // Mirrors the `wasResizingRef` falling-edge flush in VirtualizedTableEngine.
   const wasLoadingRef = useRef(false);
   useEffect(() => {
     if (wasLoadingRef.current && !isLoading) {

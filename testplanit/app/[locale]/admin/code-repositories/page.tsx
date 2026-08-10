@@ -5,7 +5,7 @@ import { schema } from "~/zenstack/schema";
 import { CodeRepositoryModal } from "@/components/admin/code-repositories/CodeRepositoryModal";
 import { useDebounce } from "@/components/Debounce";
 import { ColumnSelection } from "@/components/tables/ColumnSelection";
-import { VirtualizedDataTable } from "@/components/tables/VirtualizedDataTable";
+import { DataTable } from "@/components/tables/DataTable";
 import { Filter } from "@/components/tables/Filter";
 import {
   AlertDialog,
@@ -296,7 +296,8 @@ function CodeRepositoryList() {
             </div>
           ) : (
             <div className="mt-4 w-full">
-              <VirtualizedDataTable
+              <DataTable
+                virtualized
                 fillViewport
                 columns={columns as any}
                 data={repoRows}

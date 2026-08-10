@@ -12,7 +12,7 @@ import { useRouter } from "~/lib/navigation";
 import { useDebounce } from "@/components/Debounce";
 import { ColumnSelection } from "@/components/tables/ColumnSelection";
 import { Filter } from "@/components/tables/Filter";
-import { VirtualizedDataTable } from "@/components/tables/VirtualizedDataTable";
+import { DataTable } from "@/components/tables/DataTable";
 import { Button } from "@/components/ui/button";
 import { SectionHeader } from "@/components/ui/typography";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -756,7 +756,8 @@ function AuditLogsContent({ session }: { session: Session }) {
               explicit height so the virtualizer's CSS-bounded scroll body has
               something to fill. */}
           <div className="mt-4 h-[calc(100vh-20rem)] min-h-[400px] w-full">
-            <VirtualizedDataTable
+            <DataTable
+              virtualized
               columns={columns as any}
               data={groupedData as any}
               getSubRows={(row) => row.auditChildren}

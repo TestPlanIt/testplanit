@@ -1,3 +1,4 @@
+"use client";
 /* eslint-disable react-hooks/incompatible-library -- This file consumes a library API (TanStack Table / TanStack Virtual / react-hook-form watch) that returns unstable function references by design; React Compiler auto-skips memoization here and the lint rule reports it. */
 
 import { Skeleton } from "@/components/ui/skeleton";
@@ -10,16 +11,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import {
-  Column,
   ColumnDef,
   ColumnOrderState,
-  ColumnPinningState,
   ColumnSizingState,
   ExpandedState,
   flexRender,
@@ -29,7 +22,6 @@ import {
   getSortedRowModel,
   OnChangeFn,
   RowSelectionState,
-  SortingState,
   Updater,
   useReactTable,
   VisibilityState,
@@ -73,6 +65,7 @@ import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
 import React, {
   CSSProperties,
+  type ReactNode,
   useCallback,
   useEffect,
   useMemo,
@@ -80,7 +73,6 @@ import React, {
   useState,
 } from "react";
 import { usePathname, useRouter } from "~/lib/navigation";
-import { Button } from "../ui/button";
 import SortableItem from "./SortableItem";
 import { tableStyles } from "./tableStyles";
 import {
@@ -89,26 +81,79 @@ import {
   writeStoredColumnOrder,
   writeStoredColumnWidths,
 } from "./ColumnSelection";
+import {
+  type CustomColumnMeta,
+  type DataRow,
+  type SortConfig,
+  getCommonPinningStyles,
+  reconcileColumnOrder,
+  resolveGroupableCellContent,
+  shallowEqualRecord,
+  useExpanderColumn,
+  useInitialColumnPinning,
+  useSortingAdapter,
+} from "./dataTableShared";
+import {
+  VirtualizedTableEngine,
+  type VirtualizedTableEngineProps,
+} from "./VirtualizedTableEngine";
 
-// Define DataRow to include folderId optionally, required by SortableItem
-interface DataRow {
-  id: number | string;
-  name: string;
-  folderId?: number | null; // Add folderId as optional here
-  isActive?: boolean;
-  [key: string]: any;
-}
+export { reconcileColumnOrder } from "./dataTableShared";
+export type { CustomColumnMeta, DataRow } from "./dataTableShared";
 
-// Define structure for items passed to SortableItem for drag preview
+// Structure for items passed to SortableItem for drag preview
 interface DraggedCaseInfoForSortableItem {
   id: number | string;
   name: string;
 }
 
-interface DataTableProps<TData extends DataRow, TValue> {
+/**
+ * Props shared by both render modes of `DataTable`.
+ */
+export interface DataTableBaseProps<TData extends DataRow, TValue = any> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
+  columnVisibility: Record<string, boolean>;
+  onColumnVisibilityChange: (visibility: Record<string, boolean>) => void;
+  sortConfig?: SortConfig | null;
   onSortChange?: (columnId: string) => void;
+  grouping?: string[];
+  onGroupingChange?: OnChangeFn<string[]>;
+  expanded?: ExpandedState;
+  onExpandedChange?: OnChangeFn<ExpandedState>;
+  getSubRows?: (originalRow: TData, index: number) => TData[] | undefined;
+  subRowsLabel?: string;
+  rowSelection?: RowSelectionState;
+  onRowSelectionChange?: OnChangeFn<RowSelectionState>;
+  /** Stable row identity for selection state — without it TanStack keys
+   * selection by row INDEX, which silently re-targets selections when the
+   * data is filtered or re-sorted. */
+  getRowId?: (originalRow: TData, index: number) => string;
+  /** Whether a fetch is in flight. Paged mode swaps the body for skeleton rows
+   * (`pageSize` of them, after a 300ms delay) and suppresses the empty state;
+   * virtualized mode keeps the loaded rows, shows a bottom skeleton while a
+   * page appends, and gates the load-more trigger. */
+  isLoading?: boolean;
+  /** Shown when the result set is empty and not loading. Defaults to the
+   * generic "no results" label so consumers only override for surface copy. */
+  emptyMessage?: ReactNode;
+  /** Prefix for each row's data-testid. Defaults to "case-row" in paged mode
+   * and "virtualized-row" in virtualized mode (both pre-merge defaults, which
+   * E2E suites rely on). Rows rendered through the paged drag-reorder path
+   * (`enableReorder`) always carry the fixed `case-row-` prefix. */
+  rowTestIdPrefix?: string;
+}
+
+/**
+ * Paged mode (the default): renders a real `<table>` with the full (already
+ * paged) row set. Supports drag-to-reorder rows, column drag-reorder + header
+ * menu, and remembered column order/widths via `storageKey`.
+ */
+export interface PagedDataTableProps<
+  TData extends DataRow,
+  TValue = any,
+> extends DataTableBaseProps<TData, TValue> {
+  virtualized?: false;
   /**
    * Explicit-direction sort, used by the header column menu (the cycling
    * `onSortChange` can't express a direction). `null` clears the sort.
@@ -121,32 +166,13 @@ interface DataTableProps<TData extends DataRow, TValue> {
    * in sync. The menu's Hide item only renders when this is provided.
    */
   onHideColumn?: (columnId: string) => void;
-  sortConfig?: { column: string; direction: "asc" | "desc" };
   enableReorder?: boolean;
   onReorder?: (dragIndex: number, hoverIndex: number) => void;
-  expandedRows?: Set<number | string>;
-  handleExpandClick?: (id: number | string) => void;
-  renderExpandedRow?: (row: TData) => React.ReactNode;
-  columnVisibility: Record<string, boolean>;
-  onColumnVisibilityChange: (visibility: Record<string, boolean>) => void;
-  relatedFieldKey?: string;
-  isLoading?: boolean;
+  selectedItemsForDrag?: DraggedCaseInfoForSortableItem[];
+  itemType?: string;
+  /** Number of skeleton rows rendered while loading. */
   pageSize?: number;
   onTestCaseClick?: (id: number | string) => void;
-  canEdit?: boolean;
-  rowSelection?: RowSelectionState;
-  onRowSelectionChange?: (updater: Updater<RowSelectionState>) => void;
-  cellPinningStyleFn?: (column: Column<any>) => CSSProperties;
-  selectedItemsForDrag?: DraggedCaseInfoForSortableItem[];
-  grouping?: string[];
-  onGroupingChange?: OnChangeFn<string[]>;
-  expanded?: ExpandedState;
-  onExpandedChange?: OnChangeFn<ExpandedState>;
-  itemType?: string;
-  getSubRows?: (originalRow: TData, index: number) => TData[] | undefined;
-  subRowColumns?: ColumnDef<any, any>[];
-  subRowsLabel?: string;
-  rowTestIdPrefix?: string;
   /** Explicit id of the row to highlight and scroll to. Falls back to the
    * `selectedCase` search param when not provided (e.g. the run page), so the
    * repository details panel can drive it from its own `case` param. String
@@ -169,86 +195,69 @@ interface DataTableProps<TData extends DataRow, TValue> {
   enableColumnMenu?: boolean;
 }
 
-interface CustomColumnMeta {
-  isVisible?: boolean;
-  isPinned?: "left" | "right";
-  /** Opt a column out of the default single-line truncation so its cells wrap. */
-  wrap?: boolean;
+/**
+ * Virtualized mode: renders an arbitrarily large result set as one continuous,
+ * page-seam-free list (windowed rows + optional fetch-on-scroll). See
+ * `VirtualizedTableEngine` for the full per-prop documentation.
+ */
+export interface VirtualizedDataTableProps<TData extends DataRow, TValue = any>
+  extends
+    DataTableBaseProps<TData, TValue>,
+    Pick<
+      VirtualizedTableEngineProps,
+      | "flexColumnId"
+      | "enableColumnPinning"
+      | "pinFirstLast"
+      | "pinnedColumnStyle"
+      | "pinnedHeaderStyle"
+      | "columnSizingStorageKey"
+      | "hasMore"
+      | "onLoadMore"
+      | "loadMoreError"
+      | "onRetryLoadMore"
+      | "loadedCount"
+      | "resetKey"
+      | "estimateSize"
+      | "fillViewport"
+      | "scrollToRowId"
+      | "highlightRowId"
+      | "testIdPrefix"
+    > {
+  virtualized: true;
 }
 
-function shallowEqualRecord(
-  a: Record<string, boolean>,
-  b: Record<string, boolean>
-): boolean {
-  const aKeys = Object.keys(a);
-  const bKeys = Object.keys(b);
-  return (
-    aKeys.length === bKeys.length && bKeys.every((key) => a[key] === b[key])
-  );
-}
-
-// Define this OUTSIDE the component function
-const getCommonPinningStyles = (column: Column<any>): CSSProperties => {
-  const isPinned = column.getIsPinned();
-  const isLastLeftPinnedColumn =
-    isPinned === "left" && column.getIsLastColumn("left");
-  const isFirstRightPinnedColumn =
-    isPinned === "right" && column.getIsFirstColumn("right");
-
-  return {
-    boxShadow: isLastLeftPinnedColumn
-      ? "4px 0 8px -4px rgba(0,0,0,0.3)"
-      : isFirstRightPinnedColumn
-        ? "-4px 0 8px -4px rgba(0,0,0,0.3)"
-        : undefined,
-    left: isPinned === "left" ? `${column.getStart("left")}px` : undefined,
-    right: isPinned === "right" ? `${column.getStart("right")}px` : undefined,
-    position: isPinned ? "sticky" : "relative",
-    width: column.getSize(),
-    maxWidth: column.columnDef.maxSize,
-    minWidth: column.columnDef.minSize,
-    // A pinned column sits above the resize separators (`z-20`), which otherwise
-    // paint on top of it: reorderable non-pinned headers drop their stacking
-    // context when idle, so their handles compete globally and would bleed over
-    // the pinned column as it stays put while other columns scroll under it.
-    zIndex: isPinned ? 21 : 0,
-  };
-};
+export type DataTableProps<TData extends DataRow, TValue = any> =
+  PagedDataTableProps<TData, TValue> | VirtualizedDataTableProps<TData, TValue>;
 
 /**
- * Merge a stored column order with the columns present now: keep stored ids that
- * still exist (in their saved order), then splice any new id in after its
- * nearest preceding natural neighbour. Falls back to the natural order when
- * nothing usable is stored. Exported for unit testing.
+ * The shared data table. One component, two render modes selected by the
+ * `virtualized` parameter:
+ *
+ *   - Paged (default): a real `<table>` rendering the full row set the caller
+ *     already paged (via `Pagination`), with row drag-reorder, column
+ *     drag-reorder, the header column menu, and remembered column prefs.
+ *   - `virtualized`: windowed rows through `useVirtualizedInfiniteList` for
+ *     arbitrarily large result sets, with optional fetch-on-scroll
+ *     (`hasMore`/`onLoadMore`), viewport filling, and deep-link scroll.
+ *
+ * Both modes share sorting, grouping, expansion, sub-rows, selection, column
+ * visibility/resizing/pinning semantics and the same visual language
+ * (`tableStyles`).
  */
-export function reconcileColumnOrder(
-  natural: string[],
-  stored: string[] | null
-): string[] {
-  if (!stored || stored.length === 0) return natural;
-  const naturalSet = new Set(natural);
-  const result = stored.filter((id) => naturalSet.has(id));
-  const present = new Set(result);
-  natural.forEach((id, i) => {
-    if (present.has(id)) return;
-    // Insert after the nearest preceding natural column already placed.
-    let insertAt = 0;
-    for (let j = i - 1; j >= 0; j--) {
-      const idx = result.indexOf(natural[j]);
-      if (idx !== -1) {
-        insertAt = idx + 1;
-        break;
-      }
-    }
-    result.splice(insertAt, 0, id);
-    present.add(id);
-  });
-  return result;
+export function DataTable<TData extends DataRow, TValue = any>(
+  props: DataTableProps<TData, TValue>
+) {
+  if (props.virtualized) {
+    const { virtualized: _virtualized, ...engineProps } = props;
+    return <VirtualizedTableEngine {...engineProps} />;
+  }
+  const { virtualized: _virtualized, ...pagedProps } = props;
+  return <PagedTable {...pagedProps} />;
 }
 
 type HeadCellContentProps = {
   header: any;
-  sortConfig?: { column: string; direction: "asc" | "desc" };
+  sortConfig?: SortConfig;
   onSortIconClick: (header: any) => void;
   onResizeMouseDown: (header: any, e: React.MouseEvent) => void;
   onGroupingChange?: OnChangeFn<string[]>;
@@ -434,10 +443,7 @@ function HeadCellContent({
  * top/bottom borders so colouring one edge doesn't shift the row. The cell keeps
  * its own background; the sort is signalled by the accent bar alone.
  */
-function getHeadCellClassName(
-  header: any,
-  sortConfig?: { column: string; direction: "asc" | "desc" }
-): string {
+function getHeadCellClassName(header: any, sortConfig?: SortConfig): string {
   const base = `select-none ${tableStyles.headerCell} px-2 border-y-2 border-transparent ${
     header.column.getIsPinned()
       ? "bg-primary-foreground"
@@ -456,13 +462,7 @@ function getHeadCellClassName(
  * constraint means a click never starts a drag. Used only for non-pinned
  * columns when reordering is enabled.
  */
-function SortableHeadCell({
-  header,
-  cellPinningStyleFn,
-  ...contentProps
-}: HeadCellContentProps & {
-  cellPinningStyleFn: (column: Column<any>) => CSSProperties;
-}) {
+function SortableHeadCell({ header, ...contentProps }: HeadCellContentProps) {
   const t = useTranslations("common.table");
   const { column } = header;
   const {
@@ -475,7 +475,7 @@ function SortableHeadCell({
     isDragging,
   } = useSortable({ id: column.id });
   const style: CSSProperties = {
-    ...cellPinningStyleFn(column),
+    ...getCommonPinningStyles(column),
     transform: CSS.Translate.toString(transform),
     transition,
     opacity: isDragging ? 0.7 : undefined,
@@ -508,28 +508,26 @@ function SortableHeadCell({
   );
 }
 
-export function DataTable<TData extends DataRow, TValue>({
+/**
+ * The paged render engine behind `DataTable` (the default mode). Renders a real
+ * `<table>` with the full row set the caller already paged.
+ */
+function PagedTable<TData extends DataRow, TValue>({
   columns,
   data,
   onSortChange,
   onSortColumn,
   onHideColumn,
-  sortConfig,
+  sortConfig: sortConfigProp,
   enableReorder,
   onReorder,
-  expandedRows = new Set(),
-  handleExpandClick,
-  renderExpandedRow,
   columnVisibility,
   onColumnVisibilityChange,
-  relatedFieldKey: _relatedFieldKey = "variants",
   isLoading = false,
   pageSize = 10,
   onTestCaseClick,
-  canEdit: _canEdit = false,
   rowSelection: externalRowSelection,
   onRowSelectionChange: externalOnRowSelectionChange,
-  cellPinningStyleFn = getCommonPinningStyles,
   selectedItemsForDrag,
   grouping,
   onGroupingChange,
@@ -537,20 +535,22 @@ export function DataTable<TData extends DataRow, TValue>({
   onExpandedChange,
   itemType,
   getSubRows,
-  subRowColumns: _subRowColumns,
+  getRowId,
   subRowsLabel,
+  emptyMessage,
   rowTestIdPrefix = "case-row",
   selectedRowId,
   scrollToSelectedRow = true,
   storageKey,
   enableColumnReorder = !!storageKey,
   enableColumnMenu = !!storageKey,
-}: DataTableProps<TData, TValue>) {
+}: Omit<PagedDataTableProps<TData, TValue>, "virtualized">) {
   const tLabels = useTranslations("common.labels");
   const tActions = useTranslations("common.actions");
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
+  const sortConfig = sortConfigProp ?? undefined;
   const selectedCaseId =
     selectedRowId ??
     (searchParams.get("selectedCase")
@@ -696,10 +696,6 @@ export function DataTable<TData extends DataRow, TValue>({
   }, [columns, effectiveColumnVisibility, columnVisibility]);
 
   const [localData, setLocalData] = useState<TData[]>(() => data || []);
-  const [columnPinning, setColumnPinning] = useState<ColumnPinningState>({
-    left: [],
-    right: [],
-  });
   const [columnSizing, setColumnSizing] = useState<ColumnSizingState>({});
   const [columnOrder, setColumnOrder] = useState<ColumnOrderState>([]);
   // Column order/width remembered in localStorage (opt-in via storageKey): init
@@ -714,83 +710,30 @@ export function DataTable<TData extends DataRow, TValue>({
   const onRowSelectionChange =
     externalOnRowSelectionChange ?? setInternalRowSelection;
 
-  // Convert sortConfig to SortingState for TanStack Table
-  const sorting: SortingState = useMemo(() => {
-    if (!sortConfig) return [];
-
-    // Validate that the column exists in the columns array
-    const columnExists = columns.some((col) => col.id === sortConfig.column);
-    if (!columnExists) {
-      // console.warn(
-      //   `[DataTable] Ignoring sort config for non-existent column: "${sortConfig.column}"`
-      // );
-      return [];
-    }
-
-    return [{ id: sortConfig.column, desc: sortConfig.direction === "desc" }];
-  }, [sortConfig, columns]);
-
-  const handleSortingChange = useCallback(
-    (updaterOrValue: Updater<SortingState>) => {
-      if (!onSortChange) return;
-
-      const newSorting =
-        typeof updaterOrValue === "function"
-          ? updaterOrValue(sorting)
-          : updaterOrValue;
-
-      if (newSorting.length > 0) {
-        onSortChange(newSorting[0].id);
-      }
-    },
-    [onSortChange, sorting]
+  const { sorting, handleSortingChange } = useSortingAdapter(
+    sortConfig,
+    onSortChange,
+    columns
   );
 
   const [isResizing, setIsResizing] = useState(false);
   const clickTimeoutRef = useRef<number | null>(null);
-  const initialPinningDone = useRef(false);
   const resizeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     setLocalData(data || []);
   }, [data]);
 
-  useEffect(() => {
-    if (initialPinningDone.current) {
-      return;
-    }
-
-    // Initialize column pinning based on column meta properties
-    const leftPinned: string[] = [];
-    const rightPinned: string[] = [];
-
-    columns.forEach((column) => {
-      const columnId = column.id as string;
-      const isPinned = (column.meta as any)?.isPinned;
-
-      if (isPinned === "left") {
-        leftPinned.push(columnId);
-      } else if (isPinned === "right") {
-        rightPinned.push(columnId);
-      }
-    });
-
-    // The auto-added expander column (present when grouping or sub-rows are on)
-    // carries its own `isPinned: "left"`, but it isn't part of the `columns`
-    // prop above — pin it here so the toggle leads the row at the far left
-    // rather than floating between the last left-pinned column and the first
-    // center column.
-    if ((grouping && grouping.length > 0) || getSubRows) {
-      leftPinned.unshift("expander");
-    }
-
-    setColumnPinning({
-      left: leftPinned,
-      right: rightPinned,
-    });
-
-    initialPinningDone.current = true;
-  }, [columns, grouping, getSubRows]);
+  // Initialize column pinning from column meta; the auto-added expander column
+  // (present when grouping or sub-rows are on) is pinned so the toggle leads
+  // the row at the far left rather than floating between the last left-pinned
+  // column and the first center column.
+  const [columnPinning, setColumnPinning] = useInitialColumnPinning({
+    columns,
+    grouping,
+    getSubRows,
+    alwaysPinExpander: true,
+  });
 
   // Adapter function to handle react-table's updater function format
   const handleVisibilityChange = (updaterOrValue: Updater<VisibilityState>) => {
@@ -856,53 +799,8 @@ export function DataTable<TData extends DataRow, TValue>({
     [storageKey]
   );
 
-  // Add expander column if grouping is set
-  const expanderColumn: ColumnDef<TData, any> = useMemo(
-    () => ({
-      id: "expander",
-      header: () => null,
-      cell: ({ row }) => {
-        if (!row.getCanExpand()) return null;
-        const isExpanded = row.getIsExpanded();
-        const subRowsCount = row.subRows?.length ?? 0;
-        const tooltipText = isExpanded
-          ? tActions("collapse")
-          : `${tActions("expand")}${subRowsLabel && subRowsCount > 0 ? ` \u2022 ${subRowsCount} ${subRowsLabel}` : ""}`;
-        return (
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  type="button"
-                  onClick={row.getToggleExpandedHandler()}
-                  style={{ cursor: "pointer" }}
-                  className="me-2"
-                  aria-label={tooltipText}
-                >
-                  <span
-                    className="inline-flex items-center justify-center w-4 transition-transform duration-200"
-                    style={{
-                      transform: isExpanded ? "rotate(90deg)" : "rotate(0deg)",
-                    }}
-                  >
-                    {"\u25B6"}
-                  </span>
-                </button>
-              </TooltipTrigger>
-              <TooltipContent>{tooltipText}</TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        );
-      },
-      size: 24,
-      minSize: 24,
-      maxSize: 24,
-      enableResizing: false,
-      enableHiding: false,
-      meta: { isPinned: "left" },
-    }),
-    [tActions, subRowsLabel]
-  );
+  // Add expander column if grouping or sub-rows are set
+  const expanderColumn = useExpanderColumn<TData>(subRowsLabel);
   const finalColumns = useMemo(() => {
     if ((grouping && grouping.length > 0) || getSubRows) {
       return [expanderColumn, ...columns];
@@ -950,6 +848,7 @@ export function DataTable<TData extends DataRow, TValue>({
         ? getExpandedRowModel()
         : undefined,
     getSubRows: getSubRows,
+    ...(getRowId ? { getRowId } : {}),
     enableColumnPinning: true,
     enableColumnResizing: true,
     enableRowSelection: true,
@@ -974,7 +873,7 @@ export function DataTable<TData extends DataRow, TValue>({
     onColumnVisibilityChange: handleVisibilityChange,
     defaultColumn: {
       minSize: 50, // Min column width
-      maxSize: 1500, // Max column width (matches VirtualizedDataTable)
+      maxSize: 1500, // Max column width (matches the virtualized engine)
       size: 150, // Default column width
       enableResizing: true, // Explicitly enable resizing by default
     },
@@ -988,7 +887,7 @@ export function DataTable<TData extends DataRow, TValue>({
       ? selectedItemsForDrag
       : table.getSelectedRowModel().flatRows.map((row) => ({
           id: row.original.id,
-          name: row.original.name,
+          name: row.original.name ?? "",
         }));
 
   const handleMouseDown = (header: any, e: React.MouseEvent) => {
@@ -1057,8 +956,7 @@ export function DataTable<TData extends DataRow, TValue>({
     };
   }, []);
 
-  // Track leaf row IDs rendered as part of a flattened group (for grouped/expandable rendering)
-  const _renderedLeafRowIds = new Set<string | number>();
+  const groupingActive = !!(grouping && grouping.length > 0);
 
   if (!data) {
     return null;
@@ -1074,7 +972,7 @@ export function DataTable<TData extends DataRow, TValue>({
       {table.getVisibleLeafColumns().map((column) => (
         <TableCell
           key={String(column.id)}
-          style={cellPinningStyleFn(column)}
+          style={getCommonPinningStyles(column)}
           className={`${tableStyles.cell} px-2 ${
             column.getIsPinned() ? `shadow-md ${tableStyles.rowSurface}` : ""
           }`}
@@ -1183,7 +1081,6 @@ export function DataTable<TData extends DataRow, TValue>({
                       return (
                         <SortableHeadCell
                           key={String(header.id)}
-                          cellPinningStyleFn={cellPinningStyleFn}
                           {...contentProps}
                         />
                       );
@@ -1191,7 +1088,7 @@ export function DataTable<TData extends DataRow, TValue>({
                     return (
                       <TableHead
                         key={String(header.id)}
-                        style={cellPinningStyleFn(header.column)}
+                        style={getCommonPinningStyles(header.column)}
                         className={getHeadCellClassName(header, sortConfig)}
                       >
                         <HeadCellContent {...contentProps} />
@@ -1231,6 +1128,7 @@ export function DataTable<TData extends DataRow, TValue>({
                     original: {
                       ...row.original,
                       folderId: row.original.folderId ?? null, // Convert undefined to null
+                      name: row.original.name ?? "",
                     },
                   };
 
@@ -1244,16 +1142,9 @@ export function DataTable<TData extends DataRow, TValue>({
                       // so reorderable rows stay aligned with the header, which
                       // renders in table order.
                       visibleColumns={table.getVisibleLeafColumns()}
-                      handleExpandClick={handleExpandClick}
-                      expandedRows={expandedRows}
-                      renderExpandedRow={
-                        renderExpandedRow
-                          ? (row: any) => renderExpandedRow(row)
-                          : undefined
-                      }
                       canDragTestCase={true}
                       onReorder={onReorder}
-                      cellPinningStyleFn={cellPinningStyleFn}
+                      cellPinningStyleFn={getCommonPinningStyles}
                       selectedItemsForDrag={selectedItemsForDragFinal}
                       itemType={itemType}
                       selectedRowId={selectedCaseId}
@@ -1263,151 +1154,81 @@ export function DataTable<TData extends DataRow, TValue>({
                 }
 
                 return (
-                  <React.Fragment key={row.id}>
-                    <TableRow
-                      data-state={row.getIsSelected() ? "selected" : undefined}
-                      className={`${onTestCaseClick || handleExpandClick ? "cursor-pointer" : "cursor-default"} ${tableStyles.rowDivider} ${
-                        isSelected
-                          ? "bg-primary/20 hover:bg-primary/30 border-4 border-primary"
-                          : isSubRow
-                            ? tableStyles.rowSurfaceNested
-                            : isGrouped
-                              ? "bg-accent font-semibold"
-                              : tableStyles.rowSurface
-                      }`}
-                      data-row-id={row.original.id}
-                      data-testid={`${rowTestIdPrefix}-${row.original.id}`}
-                      onClick={() => {
-                        if (onTestCaseClick && !isGrouped) {
-                          onTestCaseClick(row.original.id);
-                        } else if (handleExpandClick && !isGrouped) {
-                          handleExpandClick(row.original.id);
-                        }
-                      }}
-                    >
-                      {row.getVisibleCells().map((cell, cellIndex) => {
-                        const { column } = cell;
-                        let cellContent: React.ReactNode = null;
-                        const _shouldIndent = cellIndex === 0 && isSubRow;
-                        const groupingActive = !!(
-                          grouping && grouping.length > 0
-                        );
-
-                        if (groupingActive && cell.getIsGrouped()) {
-                          // If grouped, show group label and count
-                          // Only show count if there's no custom aggregatedCell (which handles its own display)
-                          const showCount =
-                            !cell.column.columnDef.aggregatedCell;
-
-                          cellContent = (
-                            <div className="flex items-center gap-1">
-                              <Button
-                                {...{
-                                  variant: "ghost",
-                                  onClick: row.getToggleExpandedHandler(),
-                                  style: { cursor: "pointer" },
-                                  className: "me-1 p-1",
-                                }}
-                              >
-                                <span
-                                  className="inline-flex items-center justify-center w-4 transition-transform duration-200"
-                                  style={{
-                                    transform: row.getIsExpanded()
-                                      ? "rotate(90deg)"
-                                      : "rotate(0deg)",
-                                  }}
-                                >
-                                  {"▶"}
-                                </span>
-                              </Button>
-                              {flexRender(
-                                cell.column.columnDef.cell,
-                                cell.getContext()
-                              )}
-                              {showCount && (
-                                <>
-                                  {" "}
-                                  {"("}
-                                  {row.subRows.length}
-                                  {")"}
-                                </>
-                              )}
-                            </div>
-                          );
-                        } else if (groupingActive && cell.getIsAggregated()) {
-                          // If aggregated, show aggregate value
-                          cellContent = flexRender(
-                            cell.column.columnDef.aggregatedCell ??
-                              cell.column.columnDef.cell,
-                            cell.getContext()
-                          );
-                        } else if (groupingActive && cell.getIsPlaceholder()) {
-                          cellContent = null;
-                        } else {
-                          cellContent = flexRender(
-                            cell.column.columnDef.cell,
-                            cell.getContext()
-                          );
-                        }
-                        return (
-                          <TableCell
-                            key={String(column.id)}
-                            data-column-id={String(column.id)}
-                            style={cellPinningStyleFn(column)}
-                            // Only a pinned cell needs its own fill, to hide the
-                            // cells scrolling under it — the row's own surface, or for
-                            // a selected row the opaque equivalent of its primary/20
-                            // tint so the highlight covers the pinned column too.
-                            // Everything else stays transparent so the row surface
-                            // shows through; this path renders whenever reorder is
-                            // off, e.g. while sorted.
-                            className={`${tableStyles.cell} px-2 ${
-                              column.getIsPinned()
-                                ? isSelected
-                                  ? "shadow-md bg-[color-mix(in_srgb,var(--color-primary)_36%,var(--color-background))]"
-                                  : `shadow-md ${isSubRow ? "table-row-surface-nested" : "table-row-surface"}`
-                                : isSelected
-                                  ? "bg-primary/20"
-                                  : ""
-                            } ${
-                              column.id === "expander" ||
-                              (column.getIsPinned() &&
-                                !column.getIsLastColumn(
-                                  column.getIsPinned() as "left" | "right"
-                                ))
-                                ? "border-e-0"
-                                : "border-e"
-                            }`}
-                          >
-                            {/* Cells truncate to a single line by default so long
-                                raw text doesn't wrap and grow the row — the user
-                                widens the column to see more. A column opts out
-                                with `meta: { wrap: true }`. The fixed table
-                                layout gives the cell its rendered width, so the
-                                wrapper carries no width of its own — content may
-                                use all the space a stretched column actually
-                                has, not just the configured `size`. */}
-                            {(column.columnDef.meta as CustomColumnMeta)
-                              ?.wrap ? (
-                              cellContent
-                            ) : (
-                              <div className="truncate">{cellContent}</div>
-                            )}
-                          </TableCell>
-                        );
-                      })}
-                    </TableRow>
-                    {row.getIsExpanded() && renderExpandedRow && (
-                      <TableRow className="w-fit">
+                  <TableRow
+                    key={row.id}
+                    data-state={row.getIsSelected() ? "selected" : undefined}
+                    className={`${onTestCaseClick ? "cursor-pointer" : "cursor-default"} ${tableStyles.rowDivider} ${
+                      isSelected
+                        ? "bg-primary/20 hover:bg-primary/30 border-4 border-primary"
+                        : isSubRow
+                          ? tableStyles.rowSurfaceNested
+                          : isGrouped
+                            ? "bg-accent font-semibold"
+                            : tableStyles.rowSurface
+                    }`}
+                    data-row-id={row.original.id}
+                    data-testid={`${rowTestIdPrefix}-${row.original.id}`}
+                    onClick={() => {
+                      if (onTestCaseClick && !isGrouped) {
+                        onTestCaseClick(row.original.id);
+                      }
+                    }}
+                  >
+                    {row.getVisibleCells().map((cell) => {
+                      const { column } = cell;
+                      const cellContent = resolveGroupableCellContent(
+                        cell,
+                        row,
+                        groupingActive,
+                        tActions
+                      );
+                      return (
                         <TableCell
-                          colSpan={visibleColumns.length}
-                          className="bg-muted/30 w-fit"
+                          key={String(column.id)}
+                          data-column-id={String(column.id)}
+                          style={getCommonPinningStyles(column)}
+                          // Only a pinned cell needs its own fill, to hide the
+                          // cells scrolling under it — the row's own surface, or for
+                          // a selected row the opaque equivalent of its primary/20
+                          // tint so the highlight covers the pinned column too.
+                          // Everything else stays transparent so the row surface
+                          // shows through; this path renders whenever reorder is
+                          // off, e.g. while sorted.
+                          className={`${tableStyles.cell} px-2 ${
+                            column.getIsPinned()
+                              ? isSelected
+                                ? "shadow-md bg-[color-mix(in_srgb,var(--color-primary)_36%,var(--color-background))]"
+                                : `shadow-md ${isSubRow ? "table-row-surface-nested" : "table-row-surface"}`
+                              : isSelected
+                                ? "bg-primary/20"
+                                : ""
+                          } ${
+                            column.id === "expander" ||
+                            (column.getIsPinned() &&
+                              !column.getIsLastColumn(
+                                column.getIsPinned() as "left" | "right"
+                              ))
+                              ? "border-e-0"
+                              : "border-e"
+                          }`}
                         >
-                          {renderExpandedRow(row.original)}
+                          {/* Cells truncate to a single line by default so long
+                              raw text doesn't wrap and grow the row — the user
+                              widens the column to see more. A column opts out
+                              with `meta: { wrap: true }`. The fixed table
+                              layout gives the cell its rendered width, so the
+                              wrapper carries no width of its own — content may
+                              use all the space a stretched column actually
+                              has, not just the configured `size`. */}
+                          {(column.columnDef.meta as CustomColumnMeta)?.wrap ? (
+                            cellContent
+                          ) : (
+                            <div className="truncate">{cellContent}</div>
+                          )}
                         </TableCell>
-                      </TableRow>
-                    )}
-                  </React.Fragment>
+                      );
+                    })}
+                  </TableRow>
                 );
               })}
           {!showSkeleton &&
@@ -1418,7 +1239,7 @@ export function DataTable<TData extends DataRow, TValue>({
                   colSpan={visibleColumns.length}
                   className="h-12 text-center text-muted-foreground"
                 >
-                  {tLabels("noResults")}
+                  {emptyMessage ?? tLabels("noResults")}
                 </TableCell>
               </TableRow>
             )}

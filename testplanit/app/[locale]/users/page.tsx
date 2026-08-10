@@ -10,7 +10,7 @@ import { useRouter } from "~/lib/navigation";
 import { useAccessibleProjectsForUsers } from "~/hooks/useAccessibleProjectsForUsers";
 import { useDebounce } from "@/components/Debounce";
 import { ColumnSelection } from "@/components/tables/ColumnSelection";
-import { VirtualizedDataTable } from "@/components/tables/VirtualizedDataTable";
+import { DataTable } from "@/components/tables/DataTable";
 import { ExtendedUser, useUserColumns } from "./columns";
 
 import { Filter } from "@/components/tables/Filter";
@@ -178,7 +178,8 @@ function Users() {
               )}
             </div>
             <div id="users-list" className="mt-4 w-full">
-              <VirtualizedDataTable
+              <DataTable
+                virtualized
                 columns={columns as any}
                 data={users as any}
                 onSortChange={handleSortChange}

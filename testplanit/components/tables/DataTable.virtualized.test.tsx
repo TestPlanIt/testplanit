@@ -2,7 +2,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import React from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { act, fireEvent, render, screen } from "~/test/test-utils";
-import { VirtualizedDataTable } from "./VirtualizedDataTable";
+import { DataTable, type VirtualizedDataTableProps } from "./DataTable";
 
 // The real hook owns TanStack Virtual + an IntersectionObserver, neither of
 // which produces layout (or fires) under jsdom. Replace it with a pass-through
@@ -72,10 +72,9 @@ const baseColumns: ColumnDef<RowShape, any>[] = [
   },
 ];
 
-function renderTable(
-  overrides: Partial<React.ComponentProps<typeof VirtualizedDataTable>> = {}
-) {
-  const props: React.ComponentProps<typeof VirtualizedDataTable> = {
+function renderTable(overrides: Partial<VirtualizedDataTableProps<any>> = {}) {
+  const props: VirtualizedDataTableProps<any> = {
+    virtualized: true,
     columns: baseColumns as ColumnDef<any, any>[],
     data: [
       { id: 1, name: "Alpha", count: 10 },
@@ -86,10 +85,10 @@ function renderTable(
     onSortChange: vi.fn(),
     ...overrides,
   };
-  return { props, ...render(<VirtualizedDataTable {...props} />) };
+  return { props, ...render(<DataTable {...props} />) };
 }
 
-describe("VirtualizedDataTable", () => {
+describe("DataTable (virtualized mode)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     hookMock.lastOnLoadMore = null;

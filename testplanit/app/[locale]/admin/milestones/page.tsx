@@ -13,7 +13,7 @@ import {
   CustomColumnDef,
 } from "@/components/tables/ColumnSelection";
 import { Filter } from "@/components/tables/Filter";
-import { VirtualizedDataTable } from "@/components/tables/VirtualizedDataTable";
+import { DataTable } from "@/components/tables/DataTable";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -250,7 +250,8 @@ function MilestoneTypes() {
             />
           </div>
           <div className="mt-4 w-full">
-            <VirtualizedDataTable
+            <DataTable
+              virtualized
               fillViewport
               columns={columns as any}
               data={milestoneTypes}

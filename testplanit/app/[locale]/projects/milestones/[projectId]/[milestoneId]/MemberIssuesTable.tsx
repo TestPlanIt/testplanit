@@ -5,7 +5,7 @@ import { schema } from "~/zenstack/schema";
 import { ApplicationArea } from "~/zenstack/models";
 import { useDebounce } from "@/components/Debounce";
 import { Filter } from "@/components/tables/Filter";
-import { VirtualizedDataTable } from "@/components/tables/VirtualizedDataTable";
+import { DataTable } from "@/components/tables/DataTable";
 import { Badge } from "@/components/ui/badge";
 import { CardContent } from "@/components/ui/card";
 import {
@@ -108,11 +108,11 @@ function matchesCoverageState(
 
 /**
  * "In scope" accordion section of the Issues card on the milestone detail
- * page (MLINK-04, D-07/D-08). A VirtualizedDataTable of this milestone's
+ * page (MLINK-04, D-07/D-08). A virtualized DataTable of this milestone's
  * `MilestoneIssue` rows (D-15: this milestone's members only, never
  * descendant-scoped) joined with the per-issue coverage breakdown from the
  * 18-05 coverage route. Mirrors the project Issues page's
- * VirtualizedDataTable wiring and column patterns. Rendered as a bare
+ * virtualized DataTable wiring and column patterns. Rendered as a bare
  * section (no owning Card) — the parent `IssuesCard` supplies the outer
  * card and pairs this with the sibling "Found in testing" section.
  */
@@ -921,7 +921,8 @@ export function MemberIssuesTable({
                 )}
               </div>
             ) : (
-              <VirtualizedDataTable
+              <DataTable
+                virtualized
                 columns={columns as any}
                 data={sortedRows as any}
                 onSortChange={handleSortChange}
@@ -943,7 +944,7 @@ export function MemberIssuesTable({
                 hasMore={false}
                 rowSelection={rowSelection}
                 onRowSelectionChange={setRowSelection}
-                getRowId={(row: ExtendedMemberIssue) => String(row.issueId)}
+                getRowId={(row) => String(row.issueId)}
                 estimateSize={56}
                 resetKey={`${debouncedSearchString}|${coverageFilter}|${sourceFilter}|${issueTypeFilter}|${sortConfig.column}|${sortConfig.direction}`}
                 testIdPrefix="member-issues-table"

@@ -9,7 +9,7 @@ import { useRouter } from "~/lib/navigation";
 
 import { useDebounce } from "@/components/Debounce";
 import { ColumnSelection } from "@/components/tables/ColumnSelection";
-import { VirtualizedDataTable } from "@/components/tables/VirtualizedDataTable";
+import { DataTable } from "@/components/tables/DataTable";
 import { ExtendedScimToken, useColumns } from "./columns";
 
 import { Filter } from "@/components/tables/Filter";
@@ -423,7 +423,8 @@ function ScimTokensList() {
           </div>
 
           <div className="mt-4 w-full" data-testid="scim-table">
-            <VirtualizedDataTable
+            <DataTable
+              virtualized
               fillViewport
               columns={columns as any}
               data={(tokens ?? []) as ExtendedScimToken[]}

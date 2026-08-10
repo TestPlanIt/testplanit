@@ -9,7 +9,7 @@ import { useRouter } from "~/lib/navigation";
 
 import { useDebounce } from "@/components/Debounce";
 import { ColumnSelection } from "@/components/tables/ColumnSelection";
-import { VirtualizedDataTable } from "@/components/tables/VirtualizedDataTable";
+import { DataTable } from "@/components/tables/DataTable";
 import { Filter } from "@/components/tables/Filter";
 import { Button } from "@/components/ui/button";
 import { SectionHeader } from "@/components/ui/typography";
@@ -221,7 +221,8 @@ function PromptConfigList() {
           </div>
 
           <div className="mt-4 w-full">
-            <VirtualizedDataTable
+            <DataTable
+              virtualized
               fillViewport
               columns={columns as any}
               data={(configs as ExtendedPromptConfig[]) || []}

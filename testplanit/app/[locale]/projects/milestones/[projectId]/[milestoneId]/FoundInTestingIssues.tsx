@@ -4,7 +4,7 @@ import DOMPurify from "dompurify";
 import { stripHtmlTags } from "~/utils/stripHtmlTags";
 import { IssueStatusDisplay } from "@/components/IssueStatusDisplay";
 import { IssuesDisplay } from "@/components/tables/IssuesDisplay";
-import { VirtualizedDataTable } from "@/components/tables/VirtualizedDataTable";
+import { DataTable } from "@/components/tables/DataTable";
 import { Badge } from "@/components/ui/badge";
 import {
   Popover,
@@ -340,7 +340,8 @@ export function FoundInTestingIssues({
                 {t("foundInTestingEmpty")}
               </div>
             ) : (
-              <VirtualizedDataTable
+              <DataTable
+                virtualized
                 columns={columns as any}
                 data={sortedIssues as any}
                 columnVisibility={columnVisibility}

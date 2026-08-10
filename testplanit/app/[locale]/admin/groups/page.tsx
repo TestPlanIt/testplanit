@@ -9,7 +9,7 @@ import { useRouter } from "~/lib/navigation";
 
 import { useDebounce } from "@/components/Debounce";
 import { CustomColumnDef } from "@/components/tables/ColumnSelection";
-import { VirtualizedDataTable } from "@/components/tables/VirtualizedDataTable";
+import { DataTable } from "@/components/tables/DataTable";
 import { ExtendedGroups, useColumns } from "./columns";
 
 import { Filter } from "@/components/tables/Filter";
@@ -186,7 +186,8 @@ function GroupList() {
               )}
             </div>
             <div className="mt-4 w-full">
-              <VirtualizedDataTable
+              <DataTable
+                virtualized
                 fillViewport
                 columns={columns as any}
                 data={groups}

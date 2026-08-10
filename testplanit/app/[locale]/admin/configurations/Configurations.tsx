@@ -2,7 +2,7 @@ import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { useDebounce } from "@/components/Debounce";
 import { CustomColumnMeta } from "@/components/tables/ColumnSelection";
-import { VirtualizedDataTable } from "@/components/tables/VirtualizedDataTable";
+import { DataTable } from "@/components/tables/DataTable";
 import { Filter } from "@/components/tables/Filter";
 import { ProjectIcon } from "@/components/ProjectIcon";
 import { AsyncCombobox } from "@/components/ui/async-combobox";
@@ -334,7 +334,8 @@ function Configurations(): React.ReactElement | null {
               )}
             </div>
             <div className="mt-4 w-full">
-              <VirtualizedDataTable
+              <DataTable
+                virtualized
                 columns={columns as any}
                 data={configurations || []}
                 flexColumnId="name"

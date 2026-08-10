@@ -32,7 +32,7 @@ test.describe("Role Management", () => {
     });
 
     await test.step("Verify the roles table lists at least one role", async () => {
-      // VirtualizedDataTable renders a div grid (role="table"), not a <table>
+      // The virtualized DataTable renders a div grid (role="table"), not a <table>
       const table = page.getByRole("table");
       await expect(table).toBeVisible({ timeout: 10000 });
 

@@ -3214,9 +3214,6 @@ export default function Cases({
                 onColumnVisibilityChange={handleColumnVisibilityChange}
                 isLoading={false} // Explicitly false as loading is handled above
                 pageSize={typeof pageSize === "number" ? pageSize : totalItems}
-                canEdit={
-                  (!isRunMode && canAddEdit) || (isRunMode && canAddEditRun)
-                }
                 rowSelection={rowSelection}
                 onRowSelectionChange={handleTableRowSelectionChange}
                 selectedItemsForDrag={selectedItemsForDrag}

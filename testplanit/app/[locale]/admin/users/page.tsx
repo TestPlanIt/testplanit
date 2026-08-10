@@ -11,7 +11,7 @@ import { useRouter } from "~/lib/navigation";
 import { useAccessibleProjectsForUsers } from "~/hooks/useAccessibleProjectsForUsers";
 import { useDebounce } from "@/components/Debounce";
 import { ColumnSelection } from "@/components/tables/ColumnSelection";
-import { VirtualizedDataTable } from "@/components/tables/VirtualizedDataTable";
+import { DataTable } from "@/components/tables/DataTable";
 import type { UserFindManyArgs } from "~/zenstack/input";
 import { ExtendedUser, useColumns } from "./columns";
 
@@ -355,7 +355,8 @@ function UserList() {
           </div>
 
           <div className="mt-4 w-full">
-            <VirtualizedDataTable
+            <DataTable
+              virtualized
               fillViewport
               columns={columns as any}
               data={userRows}

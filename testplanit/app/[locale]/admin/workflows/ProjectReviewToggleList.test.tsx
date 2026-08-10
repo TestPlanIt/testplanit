@@ -61,8 +61,8 @@ vi.mock("~/lib/contexts/PaginationContext", () => ({
 // effects firing. Also exposes a sort-header proxy so tests can trigger the
 // onSortChange callback the real DataTable invokes on header click.
 const dataTableLastProps: { current: any } = { current: null };
-vi.mock("@/components/tables/VirtualizedDataTable", () => ({
-  VirtualizedDataTable: (props: any) => {
+vi.mock("@/components/tables/DataTable", () => ({
+  DataTable: (props: any) => {
     dataTableLastProps.current = props;
     const { columns, data, onSortChange } = props;
     return (

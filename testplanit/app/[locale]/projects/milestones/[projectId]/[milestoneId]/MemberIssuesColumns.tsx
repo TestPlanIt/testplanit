@@ -458,7 +458,7 @@ export function useMemberIssueColumns({
       columns.push({
         id: "actions",
         // Centered icon header, matching the repository Cases table's Actions
-        // column. VirtualizedDataTable wraps header content in a
+        // column. The virtualized DataTable wraps header content in a
         // shrink-to-content TruncatedHeaderLabel span, so a plain `w-full` would
         // collapse to the icon's own width; sizing the wrapper to the column's
         // inner width (its size minus the header cell's px-3 on both sides) lets

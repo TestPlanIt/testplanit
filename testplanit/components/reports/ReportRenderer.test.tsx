@@ -57,11 +57,11 @@ vi.mock("~/hooks/useExecutionLogColumns", () => ({
   useExecutionLogColumns: () => mockExecutionLogColumns,
 }));
 
-// Mock VirtualizedDataTable to render data rows for inspection and capture
+// Mock DataTable to render data rows for inspection and capture
 // the props ReportRenderer forwards (incl. the infinite-scroll wiring).
 const tableMock = vi.hoisted(() => ({ lastProps: null as any }));
-vi.mock("~/components/tables/VirtualizedDataTable", () => ({
-  VirtualizedDataTable: (props: any) => {
+vi.mock("~/components/tables/DataTable", () => ({
+  DataTable: (props: any) => {
     tableMock.lastProps = props;
     return (
       <div data-testid="data-table">

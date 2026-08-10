@@ -3,7 +3,7 @@
 import { useDebounce } from "@/components/Debounce";
 import { Loading } from "@/components/Loading";
 import { Filter } from "@/components/tables/Filter";
-import { VirtualizedDataTable } from "@/components/tables/VirtualizedDataTable";
+import { DataTable } from "@/components/tables/DataTable";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -382,7 +382,8 @@ export default function SoftDeletedDataTable({
         </div>
       ) : (
         <div className="min-h-[400px] w-full flex-1">
-          <VirtualizedDataTable
+          <DataTable
+            virtualized
             columns={columns as ColumnDef<any, any>[]}
             data={data}
             columnVisibility={columnVisibility}

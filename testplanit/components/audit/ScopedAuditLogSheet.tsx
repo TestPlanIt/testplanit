@@ -2,7 +2,7 @@
 
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
-import { VirtualizedDataTable } from "@/components/tables/VirtualizedDataTable";
+import { DataTable } from "@/components/tables/DataTable";
 import {
   ActionButtonContent,
   collapsibleActionClass,
@@ -327,7 +327,8 @@ function ScopedAuditLogContent({
 
       {/* Data Table — virtualized, infinite scroll. */}
       <div className="h-[calc(100vh-16rem)] min-h-[320px] w-full">
-        <VirtualizedDataTable
+        <DataTable
+          virtualized
           columns={columns as any}
           data={groupedData as any}
           getSubRows={(row) => row.auditChildren}
