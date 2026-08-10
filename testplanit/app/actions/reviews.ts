@@ -4,6 +4,7 @@ import type { JSONContent } from "@tiptap/core";
 import { revalidatePath } from "next/cache";
 import { getTranslations } from "next-intl/server";
 
+import { localeFromPreference } from "~/i18n/navigation";
 import { auditedTransaction } from "~/lib/audit/auditedTransaction";
 import { withActionAuditContext } from "~/lib/auditContextWrappers";
 import { captureAuditEvent } from "~/lib/services/auditLog";
@@ -206,13 +207,15 @@ export const requestReview = withActionAuditContext(
     // {from} → {to}" string with the role name appended when role-assigned.
     // Skip the round-trip when the requester actually typed something.
     //
-    // The text is localized to the requester's session locale via
-    // `getTranslations()` — the locale comes from the same next-intl
-    // request scope the layout uses. The persisted Comment.content carries
-    // whichever language the requester saw at submit time; the comment
-    // thread renders it verbatim so a French reviewer reading an English
-    // requester's default comment sees the English version (consistent
-    // with how user-typed comments work).
+    // The text is localized to the requester's own `UserPreferences.locale`,
+    // threaded explicitly into `getTranslations({locale})` — never a bare
+    // `getTranslations()`, which delegates locale resolution to
+    // i18n/request.ts and broke every review request while that file read
+    // `next/root-params` (unsupported in a Server Action; reverted in
+    // 9919fa7e). The persisted Comment.content carries whichever language the
+    // requester saw at submit time; the comment thread renders it verbatim so
+    // a French reviewer reading an English requester's default comment sees
+    // the English version (consistent with how user-typed comments work).
     let defaultCommentText: string | null = null;
     if (trimmed.length === 0) {
       const [fromState, toState, assigneeRole, t] = await Promise.all([
@@ -230,7 +233,10 @@ export const requestReview = withActionAuditContext(
               select: { name: true },
             })
           : Promise.resolve(null),
-        getTranslations("reviews.requester"),
+        getTranslations({
+          locale: localeFromPreference(session.user.preferences?.locale),
+          namespace: "reviews.requester",
+        }),
       ]);
       const fromName = fromState?.name ?? "";
       const toName = toState?.name ?? "";
@@ -673,7 +679,10 @@ export const bulkRequestReview = withActionAuditContext(
                 select: { name: true },
               })
             : Promise.resolve(null),
-          getTranslations("reviews.requester"),
+          getTranslations({
+            locale: localeFromPreference(session.user.preferences?.locale),
+            namespace: "reviews.requester",
+          }),
         ]);
 
       const stateById = new Map(

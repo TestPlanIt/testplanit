@@ -23,6 +23,29 @@ export type Locale = (typeof locales)[number];
 
 export const defaultLocale = "en-US" as const;
 
+/**
+ * Convert a Prisma `Locale` enum value (`en_US`) to the BCP-47 tag next-intl
+ * uses (`en-US`), falling back to `defaultLocale` for unset/unknown values.
+ *
+ * Server-side senders (emails, notifications, and Server Actions that persist
+ * user-visible text) localize to the actor's stored preference rather than to
+ * whatever `[locale]` segment the request happened to carry, matching the
+ * convention in `lib/email/*` and `lib/services/*`. Threading it explicitly
+ * also keeps `getTranslations({locale})` independent of how `i18n/request.ts`
+ * resolves an absent locale — a bare `getTranslations()` inherits that
+ * resolution, which has already broken once inside a Server Action (the
+ * `next/root-params` attempt reverted in 9919fa7e).
+ *
+ * The membership check is a plain `includes` rather than next-intl's
+ * `hasLocale` to keep this module dependency-free — `proxy.ts` imports it.
+ */
+export function localeFromPreference(value: string | null | undefined): Locale {
+  const tag = (value ?? "").replace("_", "-");
+  return (locales as readonly string[]).includes(tag)
+    ? (tag as Locale)
+    : defaultLocale;
+}
+
 export const languageNames: Record<string, string> = {
   "de-DE": "Deutsch (Deutschland)",
   "en-US": "English (US)",

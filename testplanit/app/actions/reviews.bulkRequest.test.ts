@@ -19,8 +19,15 @@ vi.mock("next/headers", () => ({
   headers: vi.fn(async () => ({ get: () => null })),
 }));
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
+// Declares a rest parameter so `.mock.calls[n][0]` is indexable — see the
+// note on the CommentService spies below.
+const getTranslationsMock = vi.fn(
+  async (..._a: any[]) =>
+    (key: string) =>
+      key
+);
 vi.mock("next-intl/server", () => ({
-  getTranslations: vi.fn(async () => (key: string) => key),
+  getTranslations: (...a: unknown[]) => getTranslationsMock(...a),
 }));
 
 const sessionMock = vi.fn();
@@ -456,5 +463,49 @@ describe("bulkRequestReview", () => {
     const result = await bulkRequestReview(baseInput);
 
     expect(result).toEqual({ success: false, error: "INTERNAL_ERROR" });
+  });
+
+  // ── Locale threading ───────────────────────────────────────────────────
+  //
+  // A bare `getTranslations("ns")` resolves the locale through
+  // i18n/request.ts, which reads `rootParams.locale()` — and Next throws on
+  // that inside a Server Action, failing every bulk request with a generic
+  // INTERNAL_ERROR. The requester's own locale must be threaded explicitly.
+  // These assert the object form so the bare form can't come back.
+
+  it("threads the requester's locale into getTranslations", async () => {
+    sessionMock.mockResolvedValue({
+      user: { id: REQUESTER, name: "Brad", preferences: { locale: "es_ES" } },
+    });
+
+    await bulkRequestReview(baseInput);
+
+    expect(getTranslationsMock).toHaveBeenCalledWith({
+      locale: "es-ES",
+      namespace: "reviews.requester",
+    });
+  });
+
+  it("falls back to en-US when the requester has no locale preference", async () => {
+    // beforeEach's session carries no `preferences` at all.
+    await bulkRequestReview(baseInput);
+
+    expect(getTranslationsMock).toHaveBeenCalledWith({
+      locale: "en-US",
+      namespace: "reviews.requester",
+    });
+  });
+
+  it("falls back to en-US for an unrecognized stored locale", async () => {
+    sessionMock.mockResolvedValue({
+      user: { id: REQUESTER, name: "Brad", preferences: { locale: "xx_XX" } },
+    });
+
+    await bulkRequestReview(baseInput);
+
+    expect(getTranslationsMock).toHaveBeenCalledWith({
+      locale: "en-US",
+      namespace: "reviews.requester",
+    });
   });
 });
