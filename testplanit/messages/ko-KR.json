@@ -863,7 +863,7 @@
       "reorderColumn": "드래그하여 열 순서 변경",
       "sortAsc": "오름차순 정렬",
       "sortDesc": "내림차순 정렬",
-      "removeSort": "수동 정렬",
+      "removeSort": "정렬 제거",
       "hideColumn": "열 숨기기",
       "columnOptions": "열 옵션"
     },
@@ -6385,7 +6385,7 @@
         "integrationAuthExpiredMessage": "\"{integrationName}\"에 대한 연결이 만료되었습니다. 이슈 동기화를 재개하려면 다시 연결하세요.",
         "integrationAuthExpiredReconnect": "다시 연결",
         "runReadyToCompleteTitle": "테스트 실행 완료 준비됨",
-        "runReadyToCompleteMessage": "{count, plural, other {전체 #개 케이스가 실행되었습니다.}}",
+        "runReadyToCompleteExecuted": "{count, plural, other {전체 #개 케이스가}} 실행되었습니다.",
         "runReadyToCompleteEmailMessage": "테스트 실행 \"{testRunName}\"(프로젝트 \"{projectName}\")의 {caseCount, plural, other {케이스 #개}}가 모두 실행되었습니다. 이 실행은 완료로 표시할 준비가 되었습니다.",
         "runReadyToCompleteReason": "이 프로젝트에서 테스트 실행을 완료할 수 있는 권한이 있어 이 알림을 받고 있습니다."
       }

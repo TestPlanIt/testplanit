@@ -863,7 +863,7 @@
       "reorderColumn": "ドラッグして列を並べ替え",
       "sortAsc": "昇順で並べ替え",
       "sortDesc": "降順で並べ替え",
-      "removeSort": "手動並べ替え",
+      "removeSort": "並べ替えを解除",
       "hideColumn": "列を非表示",
       "columnOptions": "列のオプション"
     },
@@ -6385,7 +6385,7 @@
         "integrationAuthExpiredMessage": "「{integrationName}」への接続が期限切れになりました。課題の同期を再開するには再接続してください。",
         "integrationAuthExpiredReconnect": "再接続",
         "runReadyToCompleteTitle": "テスト実行の完了準備が整いました",
-        "runReadyToCompleteMessage": "{count, plural, other {すべての # 件のケースが}}実行されました。",
+        "runReadyToCompleteExecuted": "{count, plural, other {すべての # 件のケースが}} 実行されました。",
         "runReadyToCompleteEmailMessage": "テスト実行「{testRunName}」（プロジェクト「{projectName}」）内のすべての{caseCount, plural, other {# 件のケース}}が実行されました。この実行は完了としてマークする準備ができています。",
         "runReadyToCompleteReason": "このプロジェクトでテスト実行を完了する権限があるため、この通知を受信しています。"
       }

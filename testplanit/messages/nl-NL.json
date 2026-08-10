@@ -863,7 +863,7 @@
       "reorderColumn": "Sleep om kolom te herschikken",
       "sortAsc": "Oplopend sorteren",
       "sortDesc": "Aflopend sorteren",
-      "removeSort": "Handmatig sorteren",
+      "removeSort": "Sortering verwijderen",
       "hideColumn": "Kolom verbergen",
       "columnOptions": "Kolomopties"
     },
@@ -6385,7 +6385,7 @@
         "integrationAuthExpiredMessage": "Uw verbinding met \"{integrationName}\" is verlopen. Maak opnieuw verbinding om het synchroniseren van issues te hervatten.",
         "integrationAuthExpiredReconnect": "Opnieuw verbinden",
         "runReadyToCompleteTitle": "Testrun Gereed om te Voltooien",
-        "runReadyToCompleteMessage": "{count, plural, one {# testgeval is} other {Alle # testgevallen zijn}} uitgevoerd.",
+        "runReadyToCompleteExecuted": "{count, plural, one {# testgeval is} other {Alle # testgevallen zijn}} uitgevoerd.",
         "runReadyToCompleteEmailMessage": "Alle {caseCount, plural, one {# case} other {# cases}} in testrun \"{testRunName}\" (project \"{projectName}\") zijn uitgevoerd. De run is gereed om als voltooid te worden gemarkeerd.",
         "runReadyToCompleteReason": "Je ontvangt dit omdat je testruns in dit project kunt voltooien."
       }

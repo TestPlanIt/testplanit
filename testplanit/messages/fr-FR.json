@@ -863,7 +863,7 @@
       "reorderColumn": "Glisser pour réorganiser la colonne",
       "sortAsc": "Trier par ordre croissant",
       "sortDesc": "Trier par ordre décroissant",
-      "removeSort": "Tri manuel",
+      "removeSort": "Supprimer le tri",
       "hideColumn": "Masquer la colonne",
       "columnOptions": "Options de colonne"
     },
@@ -6385,7 +6385,7 @@
         "integrationAuthExpiredMessage": "Votre connexion à \"{integrationName}\" a expiré. Reconnectez-vous pour reprendre la synchronisation des tickets.",
         "integrationAuthExpiredReconnect": "Reconnecter",
         "runReadyToCompleteTitle": "Cycle de test prêt à être terminé",
-        "runReadyToCompleteMessage": "{count, plural, one {# cas a été exécuté} other {Tous les # cas ont été exécutés}}.",
+        "runReadyToCompleteExecuted": "{count, plural, one {# cas a été} other {Les # cas ont été}} exécuté(s).",
         "runReadyToCompleteEmailMessage": "Tous les {caseCount, plural, one {# cas de test} other {# cas de test}} du cycle de test « {testRunName} » (projet « {projectName} ») ont été exécutés. Le cycle est prêt à être marqué comme terminé.",
         "runReadyToCompleteReason": "Vous recevez ceci parce que vous pouvez terminer les cycles de test dans ce projet."
       }

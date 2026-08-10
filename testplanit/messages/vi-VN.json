@@ -863,7 +863,7 @@
       "reorderColumn": "Kéo để sắp xếp lại cột",
       "sortAsc": "Sắp xếp tăng dần",
       "sortDesc": "Sắp xếp giảm dần",
-      "removeSort": "Sắp xếp thủ công",
+      "removeSort": "Bỏ sắp xếp",
       "hideColumn": "Ẩn cột",
       "columnOptions": "Tùy chọn cột"
     },
@@ -6385,7 +6385,7 @@
         "integrationAuthExpiredMessage": "Kết nối của bạn tới \"{integrationName}\" đã hết hạn. Kết nối lại để tiếp tục đồng bộ vấn đề.",
         "integrationAuthExpiredReconnect": "Kết nối lại",
         "runReadyToCompleteTitle": "Lượt Chạy Kiểm Thử Đã Sẵn Sàng Hoàn Tất",
-        "runReadyToCompleteMessage": "{count, plural, other {Tất cả # trường hợp đã được thực thi.}}",
+        "runReadyToCompleteExecuted": "{count, plural, other {Tất cả # trường hợp đã được thực thi.}}",
         "runReadyToCompleteEmailMessage": "Tất cả {caseCount, plural, other {# trường hợp}} trong lượt chạy kiểm thử \"{testRunName}\" (dự án \"{projectName}\") đã được thực thi. Lượt chạy đã sẵn sàng để được đánh dấu là hoàn tất.",
         "runReadyToCompleteReason": "Bạn nhận được thông báo này vì bạn có quyền hoàn tất các lượt chạy kiểm thử trong dự án này."
       }

@@ -863,7 +863,7 @@
       "reorderColumn": "Перетащите, чтобы изменить порядок столбца",
       "sortAsc": "Сортировать по возрастанию",
       "sortDesc": "Сортировать по убыванию",
-      "removeSort": "Ручная сортировка",
+      "removeSort": "Убрать сортировку",
       "hideColumn": "Скрыть столбец",
       "columnOptions": "Параметры столбца"
     },
@@ -6385,7 +6385,7 @@
         "integrationAuthExpiredMessage": "Ваше подключение к \"{integrationName}\" истекло. Переподключитесь, чтобы возобновить синхронизацию задач.",
         "integrationAuthExpiredReconnect": "Переподключить",
         "runReadyToCompleteTitle": "Тестовый прогон готов к завершению",
-        "runReadyToCompleteMessage": "{count, plural, one {# случай выполнен} few {Все # случая выполнены} many {Все # случаев выполнены} other {Все # случая выполнены}}.",
+        "runReadyToCompleteExecuted": "{count, plural, one {# случай выполнен} few {Все # случая выполнены} many {Все # случаев выполнены} other {Все # случая выполнены}}.",
         "runReadyToCompleteEmailMessage": "Все {caseCount, plural, one {# случай} few {# случая} many {# случаев} other {# случая}} в тестовом прогоне \"{testRunName}\" (проект \"{projectName}\") выполнены. Прогон готов к завершению.",
         "runReadyToCompleteReason": "Вы получаете это уведомление, так как можете завершать тестовые прогоны в этом проекте."
       }

@@ -863,7 +863,7 @@
       "reorderColumn": "Zum Neuordnen der Spalte ziehen",
       "sortAsc": "Aufsteigend sortieren",
       "sortDesc": "Absteigend sortieren",
-      "removeSort": "Manuelle Sortierung",
+      "removeSort": "Sortierung entfernen",
       "hideColumn": "Spalte ausblenden",
       "columnOptions": "Spaltenoptionen"
     },
@@ -6385,7 +6385,7 @@
         "integrationAuthExpiredMessage": "Ihre Verbindung zu \"{integrationName}\" ist abgelaufen. Stellen Sie die Verbindung erneut her, um die Issue-Synchronisierung fortzusetzen.",
         "integrationAuthExpiredReconnect": "Erneut verbinden",
         "runReadyToCompleteTitle": "Testlauf bereit zum Abschluss",
-        "runReadyToCompleteMessage": "{count, plural, one {# Fall wurde} other {Alle # Fälle wurden}} ausgeführt.",
+        "runReadyToCompleteExecuted": "{count, plural, one {# Fall wurde} other {Alle # Fälle wurden}} ausgeführt.",
         "runReadyToCompleteEmailMessage": "Alle {caseCount, plural, one {# Testfall} other {# Testfälle}} im Testlauf \"{testRunName}\" (Projekt \"{projectName}\") wurden ausgeführt. Der Testlauf kann jetzt als abgeschlossen markiert werden.",
         "runReadyToCompleteReason": "Sie erhalten diese Nachricht, weil Sie Testläufe in diesem Projekt abschließen können."
       }

@@ -863,7 +863,7 @@
       "reorderColumn": "Arrastrar para reordenar columna",
       "sortAsc": "Ordenar ascendente",
       "sortDesc": "Ordenar descendente",
-      "removeSort": "Orden manual",
+      "removeSort": "Quitar ordenación",
       "hideColumn": "Ocultar columna",
       "columnOptions": "Opciones de columna"
     },
@@ -6385,7 +6385,7 @@
         "integrationAuthExpiredMessage": "Su conexión con \"{integrationName}\" ha caducado. Vuelva a conectarse para reanudar la sincronización de incidencias.",
         "integrationAuthExpiredReconnect": "Reconectar",
         "runReadyToCompleteTitle": "Ejecución de prueba lista para completar",
-        "runReadyToCompleteMessage": "{count, plural, one {El caso # ha sido ejecutado.} other {Todos los # casos han sido ejecutados.}}",
+        "runReadyToCompleteExecuted": "{count, plural, one {# caso ha sido ejecutado.} other {Todos los # casos han sido ejecutados.}}",
         "runReadyToCompleteEmailMessage": "Se han ejecutado {caseCount, plural, one {# caso} other {# casos}} en la ejecución de prueba \"{testRunName}\" (proyecto \"{projectName}\"). La ejecución está lista para marcarse como completada.",
         "runReadyToCompleteReason": "Recibe esto porque puede completar ejecuciones de prueba en este proyecto."
       }

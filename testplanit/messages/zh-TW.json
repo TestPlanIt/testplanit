@@ -863,7 +863,7 @@
       "reorderColumn": "拖曳以重新排序欄",
       "sortAsc": "升序排列",
       "sortDesc": "降序排列",
-      "removeSort": "手動排序",
+      "removeSort": "移除排序",
       "hideColumn": "隱藏欄",
       "columnOptions": "欄選項"
     },
@@ -6385,7 +6385,7 @@
         "integrationAuthExpiredMessage": "您與「{integrationName}」的連線已過期。請重新連線以繼續問題同步。",
         "integrationAuthExpiredReconnect": "重新連線",
         "runReadyToCompleteTitle": "測試執行已準備好完成",
-        "runReadyToCompleteMessage": "{count, plural, other {全部 # 個測試案例均已執行完成。}}",
+        "runReadyToCompleteExecuted": "{count, plural, other {所有 # 個測試案例已執行}}",
         "runReadyToCompleteEmailMessage": "測試執行「{testRunName}」（專案「{projectName}」）中的所有 {caseCount, plural, other {# 個案例}} 均已執行。此執行已可標記為完成。",
         "runReadyToCompleteReason": "您收到此通知是因為您可以完成此專案中的測試執行。"
       }

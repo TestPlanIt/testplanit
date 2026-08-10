@@ -863,7 +863,7 @@
       "reorderColumn": "Sütunu yeniden sıralamak için sürükleyin",
       "sortAsc": "Artan sıraya göre sırala",
       "sortDesc": "Azalan sıraya göre sırala",
-      "removeSort": "Manuel sıralama",
+      "removeSort": "Sıralamayı kaldır",
       "hideColumn": "Sütunu gizle",
       "columnOptions": "Sütun seçenekleri"
     },
@@ -6385,7 +6385,7 @@
         "integrationAuthExpiredMessage": "\"{integrationName}\" ile bağlantınızın süresi doldu. Sorun senkronizasyonuna devam etmek için yeniden bağlanın.",
         "integrationAuthExpiredReconnect": "Yeniden Bağlan",
         "runReadyToCompleteTitle": "Test Çalıştırması Tamamlanmaya Hazır",
-        "runReadyToCompleteMessage": "{count, plural, one {# durum} other {Tüm # durum}} çalıştırıldı.",
+        "runReadyToCompleteExecuted": "{count, plural, one {# durum çalıştırıldı.} other {Tüm # durum çalıştırıldı.}}",
         "runReadyToCompleteEmailMessage": "\"{testRunName}\" test çalıştırmasındaki (proje \"{projectName}\") tüm {caseCount, plural, one {# test senaryosu} other {# test senaryosu}} çalıştırıldı. Çalıştırma tamamlandı olarak işaretlenmeye hazır.",
         "runReadyToCompleteReason": "Bu projede test çalıştırmalarını tamamlayabildiğiniz için bu bildirimi alıyorsunuz."
       }

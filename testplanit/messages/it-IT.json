@@ -863,7 +863,7 @@
       "reorderColumn": "Trascina per riordinare la colonna",
       "sortAsc": "Ordina in ordine crescente",
       "sortDesc": "Ordina in ordine decrescente",
-      "removeSort": "Ordinamento manuale",
+      "removeSort": "Rimuovi ordinamento",
       "hideColumn": "Nascondi colonna",
       "columnOptions": "Opzioni colonna"
     },
@@ -6385,7 +6385,7 @@
         "integrationAuthExpiredMessage": "La connessione a \"{integrationName}\" è scaduta. Riconnettiti per riprendere la sincronizzazione dei problemi.",
         "integrationAuthExpiredReconnect": "Riconnetti",
         "runReadyToCompleteTitle": "Esecuzione Test Pronta per il Completamento",
-        "runReadyToCompleteMessage": "{count, plural, one {# caso è stato eseguito.} other {Tutti i # casi sono stati eseguiti.}}",
+        "runReadyToCompleteExecuted": "{count, plural, one {Il caso # è stato eseguito.} other {Tutti i # casi sono stati eseguiti.}}",
         "runReadyToCompleteEmailMessage": "Tutti i {caseCount, plural, one {# caso} other {# casi}} nell'esecuzione del test \"{testRunName}\" (progetto \"{projectName}\") sono stati eseguiti. L'esecuzione è pronta per essere contrassegnata come completata.",
         "runReadyToCompleteReason": "Ricevi questa notifica perché puoi completare le esecuzioni dei test in questo progetto."
       }
