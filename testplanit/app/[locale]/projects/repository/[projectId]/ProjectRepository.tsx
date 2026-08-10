@@ -1665,17 +1665,13 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
     (value: string) => {
       setSelectedItem(value);
 
-      if (value === "folders") {
-        handleSelectFolder(null);
-      }
-
       if (!isSelectionMode) {
         // Through the shared writer: a just-written `f` param may not have
         // reached window.location yet and would otherwise be dropped.
         replaceUrlParams((params) => params.set("view", value));
       }
     },
-    [replaceUrlParams, handleSelectFolder, isSelectionMode]
+    [replaceUrlParams, isSelectionMode]
   );
 
   // --- Saved views ---------------------------------------------------------
@@ -1720,9 +1716,6 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
       setPredicates(criteria.predicates);
 
       setSelectedItem(axis);
-      if (axis === "folders") {
-        handleSelectFolder(null);
-      }
 
       // A view carries no search text, so the selection dialog's box is left
       // as the user typed it and intersects with the filters just applied.
@@ -1731,21 +1724,16 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
       // One composed write for the axis and the freshly applied filter family:
       // `setPredicates` replaced the URL moments ago and window.location has
       // not caught up, so re-stating `f` here is what keeps this write from
-      // dropping it.
+      // dropping it. A view describes filters and grouping, not a location, so
+      // `node` is carried through: the filters apply where the user already is.
       replaceUrlParams((query) => {
         query.set("view", axis);
-        if (axis === "folders") {
-          // The selection was just reset to the root; leaving `node` behind
-          // would restore a folder the saved view never described on reload.
-          query.delete("node");
-        }
         reassertFilterParams(query);
       });
     },
     [
       resolveSavedViewAxis,
       setPredicates,
-      handleSelectFolder,
       isSelectionMode,
       replaceUrlParams,
       reassertFilterParams,

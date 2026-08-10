@@ -462,18 +462,20 @@ describe("axis switching never touches predicates", () => {
     expect(lastProps(casesSpy).predicates).toEqual([]);
   });
 
-  it("keeps the folders grouping concern: switching to folders resets the selected folder, not the filters", () => {
+  it("keeps the folders grouping concern: switching to folders keeps the selected folder and the filters", () => {
     setLocation("?view=templates&node=9&f=tags:any");
     renderRepo();
 
     mockRouterReplace.mockClear();
     act(() => lastProps(viewSelectorSpy).onValueChange("folders"));
 
-    // Grouping bookkeeping still happens (folder selection cleared)…
-    expect(lastProps(treeViewSpy).selectedFolderId).toBeNull();
-    // …while the filter predicates survive the switch.
+    // Switching the grouping axis is not a relocation: the folder the URL
+    // names stays selected instead of snapping back to the root.
+    expect(lastProps(treeViewSpy).selectedFolderId).toBe(9);
+    // …and the filter predicates survive the switch.
     const { params } = writtenViewUrl();
     expect(params.get("view")).toBe("folders");
+    expect(params.get("node")).toBe("9");
     expect(params.getAll("f")).toEqual(["tags:any"]);
     expect(lastProps(filterBarSpy).predicates).toEqual([tagsAny]);
   });
@@ -1160,7 +1162,7 @@ describe("applying a saved view", () => {
     }
   });
 
-  it("clears the filters and folder selection an applied view does not carry", async () => {
+  it("clears the filters an applied view does not carry but keeps the selected folder", async () => {
     const fetchMock = stubFetch();
     try {
       setLocation("?view=folders&node=4&f=tags:any");
@@ -1176,10 +1178,10 @@ describe("applying a saved view", () => {
 
       const params = lastWrittenParams();
       expect(params.getAll("f")).toEqual([]);
-      // The folders axis owns the folder selection: applying it goes back to
-      // the root the saved view described.
-      expect(params.get("node")).toBeNull();
-      expect(lastProps(treeViewSpy).selectedFolderId).toBeNull();
+      // A view describes filters and grouping, not a location: the folder the
+      // user is in survives so the view's filters apply where they are.
+      expect(params.get("node")).toBe("4");
+      expect(lastProps(treeViewSpy).selectedFolderId).toBe(4);
     } finally {
       fetchMock.mockRestore();
     }
