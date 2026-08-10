@@ -7,9 +7,18 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import {
+  type DragEndEvent,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import { arrayMove } from "@dnd-kit/sortable";
+import {
   Cell,
   Column,
   ColumnDef,
+  ColumnOrderState,
   ColumnPinningState,
   flexRender,
   OnChangeFn,
@@ -30,6 +39,10 @@ import {
   useState,
 } from "react";
 import { Button } from "../ui/button";
+import {
+  readStoredColumnOrder,
+  writeStoredColumnOrder,
+} from "./ColumnSelection";
 
 /**
  * Internals shared by the two render engines of `DataTable` (the paged
@@ -315,6 +328,78 @@ export function useInitialColumnPinning({
   ]);
 
   return [columnPinning, setColumnPinning];
+}
+
+/**
+ * Column drag-reorder state shared by both engines: TanStack `columnOrder`
+ * hydrated once from localStorage (under ColumnSelection's
+ * `testplanit:columnOrder:` namespace), reconciled whenever the column set
+ * changes (so a template/report switch keeps the user's arrangement of
+ * still-present columns), and written back on every completed drag. The
+ * dnd-kit sensors use a 5px activation distance so a plain click (sort) or a
+ * resize-handle drag never starts a column drag.
+ */
+export function usePersistedColumnOrder({
+  enabled,
+  storageKey,
+  finalColumns,
+}: {
+  enabled: boolean;
+  storageKey?: string;
+  finalColumns: ColumnDef<any, any>[];
+}): {
+  columnOrder: ColumnOrderState;
+  setColumnOrder: Dispatch<SetStateAction<ColumnOrderState>>;
+  handleColumnDragEnd: (event: DragEndEvent) => void;
+  columnDragSensors: ReturnType<typeof useSensors>;
+} {
+  const [columnOrder, setColumnOrder] = useState<ColumnOrderState>([]);
+  // Hydrate in an effect so the server render (no localStorage) and the first
+  // client render match.
+  const didHydrate = useRef(false);
+
+  useEffect(() => {
+    if (!enabled) return;
+    const natural = finalColumns.map((c) => c.id as string);
+    if (!didHydrate.current) {
+      didHydrate.current = true;
+      setColumnOrder(
+        reconcileColumnOrder(natural, readStoredColumnOrder(storageKey))
+      );
+      return;
+    }
+    setColumnOrder((prev) =>
+      reconcileColumnOrder(natural, prev.length > 0 ? prev : null)
+    );
+  }, [enabled, storageKey, finalColumns]);
+
+  const columnDragSensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor)
+  );
+
+  const handleColumnDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      const { active, over } = event;
+      if (!over || active.id === over.id) return;
+      setColumnOrder((prev) => {
+        const oldIndex = prev.indexOf(active.id as string);
+        const newIndex = prev.indexOf(over.id as string);
+        if (oldIndex === -1 || newIndex === -1) return prev;
+        const next = arrayMove(prev, oldIndex, newIndex);
+        if (storageKey) writeStoredColumnOrder(storageKey, next);
+        return next;
+      });
+    },
+    [storageKey]
+  );
+
+  return {
+    columnOrder,
+    setColumnOrder,
+    handleColumnDragEnd,
+    columnDragSensors,
+  };
 }
 
 /**

@@ -3,6 +3,14 @@
 
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { closestCenter, DndContext } from "@dnd-kit/core";
+import { restrictToHorizontalAxis } from "@dnd-kit/modifiers";
+import {
+  horizontalListSortingStrategy,
+  SortableContext,
+  useSortable,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import {
   ColumnDef,
   ColumnSizingState,
@@ -22,6 +30,7 @@ import {
   ArrowDownAZ,
   ArrowDownUp,
   ArrowUpZA,
+  GripVertical,
   Group,
   UnfoldVertical,
 } from "lucide-react";
@@ -35,6 +44,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { flushSync } from "react-dom";
 import { useVirtualizedInfiniteList } from "~/hooks/useVirtualizedInfiniteList";
 import { cn } from "~/utils";
 import {
@@ -45,6 +55,7 @@ import {
   TruncatedHeaderLabel,
   useExpanderColumn,
   useInitialColumnPinning,
+  usePersistedColumnOrder,
   useSortingAdapter,
 } from "./dataTableShared";
 import { tableStyles } from "./tableStyles";
@@ -56,12 +67,13 @@ import { tableStyles } from "./tableStyles";
  *
  * Renders an arbitrarily large result set as one continuous, page-seam-free
  * list. It supports draggable column resizing (live, and optionally persisted
- * per user via `columnSizingStorageKey`) and opt-in column pinning
- * (`enableColumnPinning`, on by default), but not the paged engine's
- * drag-reorder; it keeps the table features that scroll well (sorting,
- * grouping, expansion, sub-rows, column visibility) by driving a TanStack
- * `useReactTable` instance and rendering its flattened row model
- * (`getRowModel().rows`) through `useVirtualizedInfiniteList`.
+ * per user via `columnSizingStorageKey`), opt-in column pinning
+ * (`enableColumnPinning`, on by default), and drag-to-reorder of non-pinned
+ * columns (grip handles; order persisted under the same key as widths); it
+ * keeps the table features that scroll well (sorting, grouping, expansion,
+ * sub-rows, column visibility) by driving a TanStack `useReactTable` instance
+ * and rendering its flattened row model (`getRowModel().rows`) through
+ * `useVirtualizedInfiniteList`.
  *
  * Layout: an outer horizontal-scroll container holds a flex column whose width
  * is the summed column width; a non-scrolling header row sits on top and a
@@ -77,6 +89,67 @@ import { tableStyles } from "./tableStyles";
  */
 
 const ESTIMATED_ROW_HEIGHT = 44;
+
+/**
+ * Render-prop shell that makes one flex header cell drag-reorderable. The cell
+ * div is the sortable node (so it slides during a drag) but only the grip
+ * carries the drag listeners — sort clicks and the resize handle keep working,
+ * and the 5px pointer-activation constraint means a click never starts a drag.
+ * Rendered for every header while reordering is on; `disabled` (pinned columns
+ * and the expander) keeps the hook mounted but inert, so hook order is stable
+ * across pinning changes.
+ */
+function SortableHeaderShell({
+  id,
+  disabled,
+  reorderLabel,
+  children,
+}: {
+  id: string;
+  disabled: boolean;
+  reorderLabel: string;
+  children: (shell: {
+    setNodeRef?: (node: HTMLElement | null) => void;
+    dragStyle: CSSProperties;
+    grip: ReactNode;
+  }) => ReactNode;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    setActivatorNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id, disabled });
+  if (disabled) {
+    return <>{children({ dragStyle: {}, grip: null })}</>;
+  }
+  const dragStyle: CSSProperties = {
+    transform: CSS.Translate.toString(transform),
+    transition,
+    opacity: isDragging ? 0.7 : undefined,
+    zIndex: isDragging ? 3 : undefined,
+  };
+  const grip = (
+    <button
+      type="button"
+      ref={setActivatorNodeRef}
+      {...attributes}
+      {...listeners}
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+      }}
+      aria-label={reorderLabel}
+      className="me-1 shrink-0 cursor-grab touch-none text-muted-foreground/50 hover:text-foreground active:cursor-grabbing"
+    >
+      <GripVertical className="h-4 w-4" />
+    </button>
+  );
+  return <>{children({ setNodeRef, dragStyle, grip })}</>;
+}
 
 export interface VirtualizedTableEngineProps {
   columns: ColumnDef<any, any>[];
@@ -163,6 +236,16 @@ export interface VirtualizedTableEngineProps {
    * always enabled regardless; without a key the widths just reset on remount.
    */
   columnSizingStorageKey?: string;
+
+  /**
+   * Drag-to-reorder for non-pinned columns via a grip handle in each header.
+   * Defaults to on whenever the table has a persistence key (an explicit
+   * `columnSizingStorageKey`, or a real `testIdPrefix` it can fall back to);
+   * the new order is remembered per user under that key, in the same
+   * localStorage namespace the paged engine uses. Pass `false` to turn the
+   * handles off.
+   */
+  enableColumnReorder?: boolean;
 
   // Infinite scroll (defaults keep the table in full-set / client mode).
   hasMore?: boolean;
@@ -255,6 +338,7 @@ export function VirtualizedTableEngine({
   pinnedColumnStyle,
   pinnedHeaderStyle,
   columnSizingStorageKey,
+  enableColumnReorder: enableColumnReorderProp,
   hasMore = false,
   isLoading = false,
   onLoadMore,
@@ -309,6 +393,10 @@ export function VirtualizedTableEngine({
   const columnSizingStorage = effectiveColumnSizingKey
     ? `vdt:colsize:${effectiveColumnSizingKey}`
     : null;
+  // Reorder rides the same per-surface key as widths: on wherever the table
+  // can remember the order, off for keyless (stateless) tables.
+  const enableColumnReorder =
+    enableColumnReorderProp ?? !!effectiveColumnSizingKey;
   const [columnSizing, setColumnSizing] = useState<ColumnSizingState>(() => {
     if (!columnSizingStorage || typeof window === "undefined") return {};
     try {
@@ -343,6 +431,19 @@ export function VirtualizedTableEngine({
     [groupingActive, getSubRows, expanderColumn, columns]
   );
 
+  // Drag-to-reorder columns, persisted per surface under the same key as
+  // widths.
+  const {
+    columnOrder,
+    setColumnOrder,
+    handleColumnDragEnd,
+    columnDragSensors,
+  } = usePersistedColumnOrder({
+    enabled: enableColumnReorder,
+    storageKey: effectiveColumnSizingKey,
+    finalColumns,
+  });
+
   const table = useReactTable({
     data,
     columns: finalColumns,
@@ -362,11 +463,13 @@ export function VirtualizedTableEngine({
       columnVisibility,
       sorting,
       columnSizing,
+      ...(enableColumnReorder && { columnOrder }),
       ...(enableColumnPinning && { columnPinning }),
       ...(rowSelection !== undefined && { rowSelection }),
       ...(grouping !== undefined && { grouping }),
       ...(expanded !== undefined && { expanded }),
     },
+    ...(enableColumnReorder && { onColumnOrderChange: setColumnOrder }),
     ...(enableColumnPinning && { onColumnPinningChange: setColumnPinning }),
     ...(onGroupingChange !== undefined && { onGroupingChange }),
     ...(onExpandedChange !== undefined && { onExpandedChange }),
@@ -414,6 +517,36 @@ export function VirtualizedTableEngine({
   const hasFlex =
     !!flexColumnId && leafColumns.some((c) => c.id === flexColumnId);
   const tableWidth = hasFlex ? "100%" : totalWidth;
+
+  // Start a column-resize drag. For the FLEX column, first seed its tracked
+  // size from the rendered width: while it absorbs slack its on-screen width
+  // exceeds `getSize()`, and TanStack measures the drag from `getSize()` — so
+  // without the seed the drag would silently adjust an invisible minimum and
+  // the column wouldn't appear to move. `flushSync` commits the seed before
+  // the resize handler captures its start size (we're in a DOM event handler,
+  // where flushSync is legal). After a resize the column keeps flexing, but
+  // never below the width the user chose; double-click still resets it.
+  const beginResize = useCallback(
+    (header: any, e: React.MouseEvent | React.TouchEvent) => {
+      const column = header.column;
+      if (hasFlex && column.id === flexColumnId) {
+        const cell = (e.currentTarget as HTMLElement).closest(
+          '[role="columnheader"]'
+        ) as HTMLElement | null;
+        const rendered = cell?.getBoundingClientRect().width;
+        if (rendered && Math.abs(rendered - column.getSize()) > 1) {
+          flushSync(() => {
+            setColumnSizing((prev) => ({
+              ...prev,
+              [column.id]: Math.round(rendered),
+            }));
+          });
+        }
+      }
+      header.getResizeHandler()(e);
+    },
+    [hasFlex, flexColumnId]
+  );
   // With a flex column the full-width layers stretch to "100%" so the flex
   // column soaks up slack — but a resized fixed column can still push the
   // summed column width past the container. Floor those layers at that summed
@@ -476,7 +609,7 @@ export function VirtualizedTableEngine({
 
   const headers = table.getHeaderGroups().at(-1)?.headers ?? [];
 
-  return (
+  const tableElement = (
     <div
       className={cn(
         "rounded-lg border-2 border-primary/10",
@@ -516,9 +649,15 @@ export function VirtualizedTableEngine({
                 : undefined
             }
           >
-            {headers
-              .filter((header) => header.column.getIsVisible())
-              .map((header) => {
+            {(() => {
+              const renderHeaderCell = (
+                header: (typeof headers)[number],
+                shell: {
+                  setNodeRef?: (node: HTMLElement | null) => void;
+                  dragStyle: CSSProperties;
+                  grip: ReactNode;
+                }
+              ) => {
                 const { column } = header;
                 const isSortable =
                   column.columnDef.enableSorting !== false &&
@@ -531,6 +670,7 @@ export function VirtualizedTableEngine({
                 return (
                   <div
                     key={header.id}
+                    ref={shell.setNodeRef}
                     role="columnheader"
                     className={cn(
                       "relative flex select-none items-center gap-1 border-e px-3 last:border-e-0",
@@ -550,8 +690,10 @@ export function VirtualizedTableEngine({
                       ...(enableColumnPinning && column.getIsPinned()
                         ? (pinnedHeaderStyle ?? pinnedColumnStyle ?? {})
                         : {}),
+                      ...shell.dragStyle,
                     }}
                   >
+                    {shell.grip}
                     {column.getCanGroup() && onGroupingChange ? (
                       <button
                         type="button"
@@ -594,13 +736,16 @@ export function VirtualizedTableEngine({
                         )}
                       </button>
                     )}
-                    {/* Drag-to-resize handle on the column's right edge. The flex
-                      column absorbs slack (no fixed width to drag) and the
-                      expander column opts out via enableResizing:false. */}
-                    {column.getCanResize() && !isFlex && (
+                    {/* Drag-to-resize handle on the column's right edge. The
+                      expander column opts out via enableResizing:false. The
+                      flex column is resizable too — beginResize seeds its size
+                      from the rendered width so the drag tracks what's on
+                      screen; the chosen width becomes its minimum while it
+                      keeps absorbing slack. */}
+                    {column.getCanResize() && (
                       <div
-                        onMouseDown={header.getResizeHandler()}
-                        onTouchStart={header.getResizeHandler()}
+                        onMouseDown={(e) => beginResize(header, e)}
+                        onTouchStart={(e) => beginResize(header, e)}
                         onDoubleClick={() => column.resetSize()}
                         role="separator"
                         aria-orientation="vertical"
@@ -617,7 +762,43 @@ export function VirtualizedTableEngine({
                     )}
                   </div>
                 );
-              })}
+              };
+
+              const visibleHeaders = headers.filter((header) =>
+                header.column.getIsVisible()
+              );
+              if (!enableColumnReorder) {
+                return visibleHeaders.map((header) =>
+                  renderHeaderCell(header, { dragStyle: {}, grip: null })
+                );
+              }
+              // Pinned columns and the expander stay put; everything else can
+              // be dragged.
+              const reorderDisabledFor = (
+                column: (typeof headers)[number]["column"]
+              ) =>
+                (enableColumnPinning && !!column.getIsPinned()) ||
+                column.id === "expander";
+              return (
+                <SortableContext
+                  items={visibleHeaders
+                    .filter((h) => !reorderDisabledFor(h.column))
+                    .map((h) => h.column.id)}
+                  strategy={horizontalListSortingStrategy}
+                >
+                  {visibleHeaders.map((header) => (
+                    <SortableHeaderShell
+                      key={header.id}
+                      id={header.column.id}
+                      disabled={reorderDisabledFor(header.column)}
+                      reorderLabel={t("reorderColumn")}
+                    >
+                      {(shell) => renderHeaderCell(header, shell)}
+                    </SortableHeaderShell>
+                  ))}
+                </SortableContext>
+              );
+            })()}
           </div>
         </div>
 
@@ -808,5 +989,21 @@ export function VirtualizedTableEngine({
         </div>
       </div>
     </div>
+  );
+
+  if (!enableColumnReorder) return tableElement;
+
+  // The DndContext wraps the whole table (not just the header row) because it
+  // renders a hidden accessibility <div> that must not join the header's flex
+  // layout.
+  return (
+    <DndContext
+      sensors={columnDragSensors}
+      collisionDetection={closestCenter}
+      modifiers={[restrictToHorizontalAxis]}
+      onDragEnd={handleColumnDragEnd}
+    >
+      {tableElement}
+    </DndContext>
   );
 }

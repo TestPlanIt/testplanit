@@ -211,6 +211,7 @@ export interface VirtualizedDataTableProps<TData extends DataRow, TValue = any>
       | "pinnedColumnStyle"
       | "pinnedHeaderStyle"
       | "columnSizingStorageKey"
+      | "enableColumnReorder"
       | "hasMore"
       | "onLoadMore"
       | "loadMoreError"
