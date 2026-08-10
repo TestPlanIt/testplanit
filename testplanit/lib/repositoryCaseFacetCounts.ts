@@ -28,6 +28,7 @@
 
 import { DbNull } from "@zenstackhq/orm";
 
+import { ReviewEntityType } from "~/zenstack/models";
 import type { RepositoryCasesWhereInput } from "~/zenstack/input";
 import type { baseDb } from "~/lib/db";
 import {
@@ -40,11 +41,13 @@ import {
 } from "~/lib/repositoryCaseFieldMatchers";
 import {
   ASSIGNED_TO_UNASSIGNED_SENTINEL,
+  IN_REVIEW_DIMENSION,
   STATUS_UNTESTED_SENTINEL,
   buildFilterDimensions,
   dynamicFieldDimensionKey,
   type FilterDimensionRegistry,
 } from "~/lib/repository/filterDimensions";
+import { isReviewFeatureSystemEnabled } from "~/lib/services/reviewFeatureFlag";
 import {
   compileRepoPredicates,
   extractPostFetchFilters,
@@ -127,7 +130,9 @@ export interface FacetPredicatePartition {
 export function partitionFacetPredicates(
   predicates: readonly FilterPredicate[],
   registry: FilterDimensionRegistry,
-  now: Date
+  now: Date,
+  /** Pending-review case ids for the `inReview` dimension (see the compiler). */
+  inReviewCaseIds: readonly number[] = []
 ): FacetPredicatePartition {
   const whereFragments: DimensionWhereFragment[] = [];
   const idSetPredicates: IdSetPredicateSpec[] = [];
@@ -149,7 +154,10 @@ export function partitionFacetPredicates(
       });
       continue;
     }
-    const fragment = compileRepoPredicates([predicate], registry, { now })[0];
+    const fragment = compileRepoPredicates([predicate], registry, {
+      now,
+      inReviewCaseIds,
+    })[0];
     if (fragment) {
       whereFragments.push({ dimension: dimension.key, where: fragment });
     }
@@ -359,6 +367,12 @@ export interface RepositoryCaseFacetCounts {
   automated: Array<{ value: boolean; count: number }>;
   parameterized: Array<{ value: boolean; count: number }>;
   attachments: Array<{ value: boolean; count: number }>;
+  /**
+   * Present only while the review workflow is live for the project — the
+   * dimension does not exist otherwise, and an all-zero facet would put a
+   * dead "In Review" axis in the ViewSelector of every other project.
+   */
+  inReview?: Array<{ value: boolean; count: number }>;
   tags: Array<{ id: number | "any" | "none"; name: string; count: number }>;
   issues: Array<{
     id: number | "any" | "none";
@@ -444,6 +458,19 @@ export async function computeRepositoryCaseFacetCounts(
   const effectiveRunIds = options.effectiveRunIds ?? [];
   const searchCaseIds = options.searchCaseIds ?? null;
 
+  // Kicked off here so the two flag reads overlap the dynamic-field metadata
+  // query below; awaited at step 1b.
+  const reviewEnabledPromise = Promise.all([
+    isReviewFeatureSystemEnabled(db),
+    db.projects.findUnique({
+      where: { id: projectId },
+      select: { reviewWorkflowEnabled: true },
+    }),
+  ]).then(
+    ([systemEnabled, project]) =>
+      systemEnabled && project?.reviewWorkflowEnabled === true
+  );
+
   // 1. Dynamic-field metadata first — the registry needs the field types
   //    before predicates can be parsed.
   const dynamicFieldInfo = await db.templates.findMany({
@@ -515,6 +542,29 @@ export async function computeRepositoryCaseFacetCounts(
     }
   }
 
+  // 1b. Review-workflow gate, then the PENDING-review case ids the `inReview`
+  //     dimension resolves through. ReviewRequest references its entity
+  //     polymorphically (no FK back-relation to RepositoryCases), so the set
+  //     is materialized here and compiles to an id fragment — the same lane
+  //     the text/link/steps id-set predicates use. Indexed on
+  //     (projectId, status); off-project rows can't leak in, so the set is
+  //     one project's review queue rather than a scan of the repository.
+  const reviewEnabled = await reviewEnabledPromise;
+  let inReviewCaseIds: number[] = [];
+  if (reviewEnabled) {
+    const pendingRows = await db.reviewRequest.findMany({
+      where: {
+        projectId,
+        entityType: ReviewEntityType.CASE,
+        status: "PENDING",
+        isDeleted: false,
+      },
+      select: { entityId: true },
+    });
+    inReviewCaseIds = [...new Set(pendingRows.map((row) => row.entityId))];
+  }
+  const inReviewCaseIdSet = new Set(inReviewCaseIds);
+
   // 2. Registry + lenient parse (invalid predicates drop silently).
   const registry = buildFilterDimensions({
     dynamicFields: [...dynamicFieldsMap.values()].map((field) => ({
@@ -522,6 +572,7 @@ export async function computeRepositoryCaseFacetCounts(
       type: field.type,
     })),
     includeRunDimensions: isRunMode,
+    includeInReview: reviewEnabled,
   });
   const predicates = parseFilterPredicates(options.predicates ?? [], registry);
 
@@ -577,7 +628,12 @@ export async function computeRepositoryCaseFacetCounts(
   });
 
   // 5. Partition predicates.
-  const partition = partitionFacetPredicates(predicates, registry, now);
+  const partition = partitionFacetPredicates(
+    predicates,
+    registry,
+    now,
+    inReviewCaseIds
+  );
 
   // 6. Resolve id-set predicates (text/link/steps operators) — one bounded
   //    fetch per field / one steps GROUP BY, all in parallel.
@@ -1031,6 +1087,32 @@ export async function computeRepositoryCaseFacetCounts(
     return shapeAttachmentsFacet(totalExcept, withAttachments);
   })();
 
+  // Both buckets come from ONE materialization of `whereExcept(inReview)` —
+  // the id list is already in memory, so the split is a Set membership test
+  // rather than a second COUNT. Unchipped, that id list is the same promise
+  // totalCountTask awaits (idsExcept memoizes on the excluded-dimension set).
+  const inReviewTask = (async (): Promise<
+    Array<{ value: boolean; count: number }> | undefined
+  > => {
+    if (!reviewEnabled) return undefined;
+    if (multiConfig) {
+      const rows = await weightedRowsExcept(IN_REVIEW_DIMENSION);
+      const withReview = rows.filter((row) =>
+        inReviewCaseIdSet.has(row.repositoryCaseId)
+      ).length;
+      return [
+        { value: true, count: withReview },
+        { value: false, count: nonNegative(rows.length - withReview) },
+      ];
+    }
+    const ids = await idsExcept(IN_REVIEW_DIMENSION);
+    const withReview = ids.filter((id) => inReviewCaseIdSet.has(id)).length;
+    return [
+      { value: true, count: withReview },
+      { value: false, count: nonNegative(ids.length - withReview) },
+    ];
+  })();
+
   const totalCountTask = (async () => {
     if (multiConfig) {
       return (await weightedRowsExcept()).length;
@@ -1047,6 +1129,7 @@ export async function computeRepositoryCaseFacetCounts(
     tagCounts,
     issueCounts,
     attachmentsWithCounts,
+    inReviewWithCounts,
     totalCount,
   ] = await Promise.all([
     scalarCounts<number>("templates", "templateId", (p) => p.templateId),
@@ -1057,6 +1140,7 @@ export async function computeRepositoryCaseFacetCounts(
     tagCountsTask,
     issueCountsTask,
     attachmentsTask,
+    inReviewTask,
     totalCountTask,
   ]);
 
@@ -1440,6 +1524,13 @@ export async function computeRepositoryCaseFacetCounts(
       parameterizedWithCounts.map((entry) => entry.count)
     ),
     attachments: sumValues(attachmentsWithCounts.map((entry) => entry.count)),
+    ...(inReviewWithCounts
+      ? {
+          [IN_REVIEW_DIMENSION]: sumValues(
+            inReviewWithCounts.map((entry) => entry.count)
+          ),
+        }
+      : {}),
     tags: tagCounts.totalExcept,
     issues: issueCounts.totalExcept,
     ...dynamicFieldTotals,
@@ -1477,6 +1568,7 @@ export async function computeRepositoryCaseFacetCounts(
     automated: automatedWithCounts,
     parameterized: parameterizedWithCounts,
     attachments: attachmentsWithCounts,
+    ...(inReviewWithCounts ? { inReview: inReviewWithCounts } : {}),
     tags: [
       { id: "any" as const, name: "Any Tag", count: tagCounts.withTags },
       {

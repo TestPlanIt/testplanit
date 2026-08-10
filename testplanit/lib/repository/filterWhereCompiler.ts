@@ -28,6 +28,7 @@ import type { PostFetchFilter } from "~/lib/repositoryCaseFieldMatchers";
 import type { FilterPredicate } from "~/lib/schemas/repositoryFilterPredicates";
 import {
   ASSIGNED_TO_UNASSIGNED_SENTINEL,
+  IN_REVIEW_DIMENSION,
   STATUS_UNTESTED_SENTINEL,
   type FilterDimension,
   type FilterDimensionRegistry,
@@ -583,6 +584,18 @@ export interface CompileRepoPredicatesOptions {
    * counts route can evaluate every dimension against one timestamp.
    */
   now?: Date;
+  /**
+   * Case ids carrying a PENDING ReviewRequest, for the `inReview` dimension.
+   * ReviewRequest references its entity polymorphically (no FK back-relation),
+   * so there is no relation to traverse from a RepositoryCases where — the
+   * caller resolves the set and it compiles to an id fragment.
+   *
+   * Omitted (or undefined) is treated as the EMPTY set, not as "no filter":
+   * an unresolved set must never widen `inReview:is:1` into the whole
+   * repository. Callers that can tell "still loading" from "genuinely none"
+   * should hold their query off instead of rendering the empty-set answer.
+   */
+  inReviewCaseIds?: readonly number[];
 }
 
 /**
@@ -606,6 +619,7 @@ export function compileRepoPredicates(
   options?: CompileRepoPredicatesOptions
 ): RepositoryCasesWhereInput[] {
   const now = options?.now ?? new Date();
+  const inReviewCaseIds = options?.inReviewCaseIds ?? [];
   const fragments: RepositoryCasesWhereInput[] = [];
 
   for (const predicate of predicates) {
@@ -637,6 +651,17 @@ export function compileRepoPredicates(
       case "attachments": {
         const value = booleanFromIsValue(predicate.values);
         fragment = value === null ? null : attachmentsWhereClause(value);
+        break;
+      }
+      case IN_REVIEW_DIMENSION: {
+        const value = booleanFromIsValue(predicate.values);
+        const ids = [...inReviewCaseIds];
+        fragment =
+          value === null
+            ? null
+            : value
+              ? { id: { in: ids } }
+              : { NOT: { id: { in: ids } } };
         break;
       }
       case "tags":

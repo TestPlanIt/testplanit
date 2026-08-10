@@ -32,6 +32,8 @@ export interface FilterBarViewOptions {
   automated?: Array<{ value: boolean; count: number }>;
   parameterized?: Array<{ value: boolean; count: number }>;
   attachments?: Array<{ value: boolean; count: number }>;
+  /** Only present while the project runs the review workflow. */
+  inReview?: Array<{ value: boolean; count: number }>;
   dynamicFields?: Record<
     string,
     {
@@ -116,6 +118,13 @@ export function getDimensionValueOptions(
         t,
         "common.fields.hasAttachments",
         "common.fields.noAttachments"
+      );
+    case "inReview":
+      return booleanOptions(
+        viewOptions?.inReview,
+        t,
+        "common.fields.inReview",
+        "common.fields.notInReview"
       );
     case "tags":
       // The tags/issues payloads ship "any"/"none" pseudo-rows for the

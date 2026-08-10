@@ -96,6 +96,42 @@ describe("compileRepoPredicates — boolean dimensions", () => {
   });
 });
 
+describe("compileRepoPredicates — inReview", () => {
+  const inReviewRegistry = buildFilterDimensions({ includeInReview: true });
+  const compileInReview = (
+    p: FilterPredicate,
+    inReviewCaseIds?: readonly number[]
+  ) => compileRepoPredicates([p], inReviewRegistry, { inReviewCaseIds });
+
+  it("is [1] → the injected id set; is [0] → its complement", () => {
+    expect(compileInReview(predicate("inReview", "is", [1]), [7, 9])).toEqual([
+      { id: { in: [7, 9] } },
+    ]);
+    expect(compileInReview(predicate("inReview", "is", [0]), [7, 9])).toEqual([
+      { NOT: { id: { in: [7, 9] } } },
+    ]);
+  });
+
+  it("treats a missing id set as EMPTY, never as 'no filter'", () => {
+    // The alternative — emitting no fragment — would widen "In Review" to the
+    // whole repository while the set is still resolving.
+    expect(compileInReview(predicate("inReview", "is", [1]))).toEqual([
+      { id: { in: [] } },
+    ]);
+    expect(compileInReview(predicate("inReview", "is", [0]))).toEqual([
+      { NOT: { id: { in: [] } } },
+    ]);
+  });
+
+  it("is dropped entirely by a registry built without the dimension", () => {
+    expect(
+      compileRepoPredicates([predicate("inReview", "is", [1])], repoRegistry, {
+        inReviewCaseIds: [7],
+      })
+    ).toEqual([]);
+  });
+});
+
 describe("compileRepoPredicates — tags", () => {
   it("bare any → has any live tag", () => {
     expect(compileOne(predicate("tags", "any"))).toEqual([

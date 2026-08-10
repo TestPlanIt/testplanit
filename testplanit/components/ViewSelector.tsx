@@ -21,6 +21,7 @@ import {
   FileX,
   LayoutTemplate,
   LucideIcon,
+  MessageSquareWarning,
   Paperclip,
   Square,
   SquareStack,
@@ -114,6 +115,8 @@ interface ViewSelectorProps {
     automated: Array<{ value: boolean; count: number }>;
     parameterized: Array<{ value: boolean; count: number }>;
     attachments: Array<{ value: boolean; count: number }>;
+    /** Only present while the project runs the review workflow. */
+    inReview?: Array<{ value: boolean; count: number }>;
     dynamicFields: Record<string, any>;
     tags?: Array<{
       id: number | string;
@@ -653,6 +656,39 @@ export function ViewSelector({
                     {item.value
                       ? tCommon("fields.hasAttachments")
                       : tCommon("fields.noAttachments")}
+                  </span>
+                </FilterRow>
+              )
+            )}
+          </>
+        )}
+
+        {selectedItem === "inReview" && (
+          <>
+            <FilterRow
+              selected={isValueSelected(null)}
+              onClick={() => handleFilterClick(null)}
+              count={renderCount(dimensionTotal("inReview", totalCount))}
+            >
+              <span className="truncate">{t("views.allCases")}</span>
+            </FilterRow>
+            {viewOptions?.inReview?.map(
+              (item: { value: boolean; count: number }) => (
+                <FilterRow
+                  key={item.value.toString()}
+                  selected={isValueSelected(item.value ? 1 : 0)}
+                  onClick={() => handleFilterClick(item.value ? 1 : 0)}
+                  count={renderCount(item.count)}
+                >
+                  {item.value ? (
+                    <MessageSquareWarning className="w-4 h-4 shrink-0 text-primary" />
+                  ) : (
+                    <CircleDashed className="w-4 h-4 shrink-0 opacity-60" />
+                  )}
+                  <span className="truncate">
+                    {item.value
+                      ? tCommon("fields.inReview")
+                      : tCommon("fields.notInReview")}
                   </span>
                 </FilterRow>
               )

@@ -64,6 +64,10 @@ export const REPOSITORY_VIEW_STATIC_AXES = [
   "automated",
   "parameterized",
   "attachments",
+  // Review-workflow-only axis. Kept in the structural whitelist so a saved
+  // view survives the flags still resolving; ProjectRepository degrades it to
+  // the default axis once the review workflow is known to be off.
+  "inReview",
   "status",
   "assignedTo",
   "tags",
