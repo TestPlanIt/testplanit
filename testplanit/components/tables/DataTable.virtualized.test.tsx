@@ -335,6 +335,34 @@ describe("DataTable (virtualized mode)", () => {
     }
   });
 
+  it("renders no header column menu when no menu handler is wired", () => {
+    renderTable();
+    expect(screen.queryByLabelText("columnOptions")).not.toBeInTheDocument();
+    // The plain sort-cycle buttons remain.
+    expect(screen.getAllByLabelText("sort").length).toBeGreaterThan(0);
+  });
+
+  it("offers explicit sort directions through the header column menu", () => {
+    const onSortColumn = vi.fn();
+    renderTable({ onSortColumn, enableColumnPinning: false });
+    const triggers = screen.getAllByLabelText("columnOptions");
+    expect(triggers).toHaveLength(2);
+    // The cycling sort button is replaced by the menu trigger.
+    expect(screen.queryByLabelText("sort")).not.toBeInTheDocument();
+    fireEvent.pointerDown(triggers[0]);
+    fireEvent.click(screen.getByText("sortDesc"));
+    expect(onSortColumn).toHaveBeenCalledWith("name", "desc");
+  });
+
+  it("routes Hide column through onHideColumn", () => {
+    const onHideColumn = vi.fn();
+    renderTable({ onHideColumn, enableColumnPinning: false });
+    const triggers = screen.getAllByLabelText("columnOptions");
+    fireEvent.pointerDown(triggers[1]);
+    fireEvent.click(screen.getByText("hideColumn"));
+    expect(onHideColumn).toHaveBeenCalledWith("count");
+  });
+
   it("seeds column widths from localStorage when a storage key is set", () => {
     window.localStorage.setItem(
       "vdt:colsize:my-key",

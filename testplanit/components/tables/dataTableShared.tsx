@@ -1,6 +1,10 @@
 "use client";
 
 import {
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
+import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
@@ -26,6 +30,13 @@ import {
   SortingState,
   Updater,
 } from "@tanstack/react-table";
+import {
+  ArrowDownAZ,
+  ArrowDownUp,
+  ArrowUpZA,
+  Check,
+  EyeOff,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
 import {
   type CSSProperties,
@@ -455,6 +466,76 @@ export function resolveGroupableCellContent(
     return null;
   }
   return flexRender(cell.column.columnDef.cell, cell.getContext());
+}
+
+/**
+ * The items of the per-column header menu, shared by both engines: explicit
+ * sort direction (asc / desc / remove) and Hide column. Rendered inside a
+ * `DropdownMenuContent` the engine supplies. Hide is only offered when the
+ * column can be hidden AND an `onHideColumn` owner is wired to apply it (so
+ * persistence + the Columns control stay in sync — see the visibility
+ * single-owner rule).
+ */
+export function ColumnMenuItems({
+  columnId,
+  isSortable,
+  canHide,
+  isActiveSort,
+  sortDirection,
+  onSortColumn,
+  onHideColumn,
+}: {
+  columnId: string;
+  isSortable: boolean;
+  canHide: boolean;
+  isActiveSort: boolean;
+  sortDirection?: "asc" | "desc";
+  onSortColumn?: (columnId: string, direction: "asc" | "desc" | null) => void;
+  onHideColumn?: (columnId: string) => void;
+}) {
+  const t = useTranslations("common.table");
+  return (
+    <>
+      {isSortable && (
+        <>
+          <DropdownMenuItem
+            className="gap-1"
+            onSelect={() => onSortColumn?.(columnId, "asc")}
+          >
+            <ArrowDownAZ className="h-4 w-4" />
+            {t("sortAsc")}
+            {sortDirection === "asc" && <Check className="ms-auto h-4 w-4" />}
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            className="gap-1"
+            onSelect={() => onSortColumn?.(columnId, "desc")}
+          >
+            <ArrowUpZA className="h-4 w-4" />
+            {t("sortDesc")}
+            {sortDirection === "desc" && <Check className="ms-auto h-4 w-4" />}
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            className="gap-1"
+            disabled={!isActiveSort}
+            onSelect={() => onSortColumn?.(columnId, null)}
+          >
+            <ArrowDownUp className="h-4 w-4" />
+            {t("removeSort")}
+          </DropdownMenuItem>
+        </>
+      )}
+      {isSortable && canHide && <DropdownMenuSeparator />}
+      {canHide && (
+        <DropdownMenuItem
+          className="gap-1"
+          onSelect={() => onHideColumn?.(columnId)}
+        >
+          <EyeOff className="h-4 w-4" />
+          {t("hideColumn")}
+        </DropdownMenuItem>
+      )}
+    </>
+  );
 }
 
 /**

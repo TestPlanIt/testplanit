@@ -30,9 +30,7 @@ import {
   ArrowDownAZ,
   ArrowDownUp,
   ArrowUpZA,
-  Check,
   ChevronDown,
-  EyeOff,
   Group,
   GripVertical,
   UnfoldVertical,
@@ -40,8 +38,6 @@ import {
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -82,6 +78,7 @@ import {
   writeStoredColumnWidths,
 } from "./ColumnSelection";
 import {
+  ColumnMenuItems,
   type CustomColumnMeta,
   type DataRow,
   type SortConfig,
@@ -134,6 +131,18 @@ export interface DataTableBaseProps<TData extends DataRow, TValue = any> {
    * virtualized mode keeps the loaded rows, shows a bottom skeleton while a
    * page appends, and gates the load-more trigger. */
   isLoading?: boolean;
+  /**
+   * Explicit-direction sort, used by the header column menu (the cycling
+   * `onSortChange` can't express a direction). `null` clears the sort.
+   */
+  onSortColumn?: (columnId: string, direction: "asc" | "desc" | null) => void;
+  /**
+   * Hide a column from the header menu. Routed to a callback (rather than
+   * TanStack's `toggleVisibility`) so the owner of visibility state — the
+   * Columns control — makes the change, keeping persistence and the checkboxes
+   * in sync. The menu's Hide item only renders when this is provided.
+   */
+  onHideColumn?: (columnId: string) => void;
   /** Shown when the result set is empty and not loading. Defaults to the
    * generic "no results" label so consumers only override for surface copy. */
   emptyMessage?: ReactNode;
@@ -154,18 +163,6 @@ export interface PagedDataTableProps<
   TValue = any,
 > extends DataTableBaseProps<TData, TValue> {
   virtualized?: false;
-  /**
-   * Explicit-direction sort, used by the header column menu (the cycling
-   * `onSortChange` can't express a direction). `null` clears the sort.
-   */
-  onSortColumn?: (columnId: string, direction: "asc" | "desc" | null) => void;
-  /**
-   * Hide a column from the header menu. Routed to a callback (rather than
-   * TanStack's `toggleVisibility`) so the owner of visibility state — the
-   * Columns control — makes the change, keeping persistence and the checkboxes
-   * in sync. The menu's Hide item only renders when this is provided.
-   */
-  onHideColumn?: (columnId: string) => void;
   enableReorder?: boolean;
   onReorder?: (dragIndex: number, hoverIndex: number) => void;
   selectedItemsForDrag?: DraggedCaseInfoForSortableItem[];
@@ -212,6 +209,7 @@ export interface VirtualizedDataTableProps<TData extends DataRow, TValue = any>
       | "pinnedHeaderStyle"
       | "columnSizingStorageKey"
       | "enableColumnReorder"
+      | "enableColumnMenu"
       | "hasMore"
       | "onLoadMore"
       | "loadMoreError"
@@ -347,48 +345,15 @@ function HeadCellContent({
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start">
-              {isSortable && (
-                <>
-                  <DropdownMenuItem
-                    className="gap-1"
-                    onSelect={() => onSortColumn?.(header.column.id, "asc")}
-                  >
-                    <ArrowDownAZ className="h-4 w-4" />
-                    {t("sortAsc")}
-                    {sortDirection === "asc" && (
-                      <Check className="ms-auto h-4 w-4" />
-                    )}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    className="gap-1"
-                    onSelect={() => onSortColumn?.(header.column.id, "desc")}
-                  >
-                    <ArrowUpZA className="h-4 w-4" />
-                    {t("sortDesc")}
-                    {sortDirection === "desc" && (
-                      <Check className="ms-auto h-4 w-4" />
-                    )}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    className="gap-1"
-                    disabled={!isActiveSort}
-                    onSelect={() => onSortColumn?.(header.column.id, null)}
-                  >
-                    <ArrowDownUp className="h-4 w-4" />
-                    {t("removeSort")}
-                  </DropdownMenuItem>
-                </>
-              )}
-              {isSortable && canHide && <DropdownMenuSeparator />}
-              {canHide && (
-                <DropdownMenuItem
-                  className="gap-1"
-                  onSelect={() => onHideColumn?.(header.column.id)}
-                >
-                  <EyeOff className="h-4 w-4" />
-                  {t("hideColumn")}
-                </DropdownMenuItem>
-              )}
+              <ColumnMenuItems
+                columnId={header.column.id}
+                isSortable={Boolean(isSortable)}
+                canHide={canHide}
+                isActiveSort={isActiveSort}
+                sortDirection={sortDirection}
+                onSortColumn={onSortColumn}
+                onHideColumn={onHideColumn}
+              />
             </DropdownMenuContent>
           </DropdownMenu>
         ) : (

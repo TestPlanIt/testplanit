@@ -2,6 +2,11 @@
 /* eslint-disable react-hooks/incompatible-library -- This file consumes TanStack Table / TanStack Virtual APIs that return unstable function references by design; React Compiler auto-skips memoization here and the lint rule reports it (same as components/matrix/MatrixGrid.tsx and hooks/useVirtualizedInfiniteList.ts). */
 
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { closestCenter, DndContext } from "@dnd-kit/core";
 import { restrictToHorizontalAxis } from "@dnd-kit/modifiers";
@@ -30,6 +35,7 @@ import {
   ArrowDownAZ,
   ArrowDownUp,
   ArrowUpZA,
+  ChevronDown,
   GripVertical,
   Group,
   UnfoldVertical,
@@ -48,6 +54,7 @@ import { flushSync } from "react-dom";
 import { useVirtualizedInfiniteList } from "~/hooks/useVirtualizedInfiniteList";
 import { cn } from "~/utils";
 import {
+  ColumnMenuItems,
   type CustomColumnMeta,
   type SortConfig,
   getFlexPinningStyles,
@@ -160,6 +167,25 @@ export interface VirtualizedTableEngineProps {
 
   sortConfig?: SortConfig | null;
   onSortChange?: (columnId: string) => void;
+  /**
+   * Explicit-direction sort, used by the header column menu (the cycling
+   * `onSortChange` can't express a direction). `null` clears the sort.
+   */
+  onSortColumn?: (columnId: string, direction: "asc" | "desc" | null) => void;
+  /**
+   * Hide a column from the header menu. Routed to a callback (rather than
+   * TanStack's `toggleVisibility`) so the owner of visibility state — the
+   * Columns control — makes the change, keeping persistence and the checkboxes
+   * in sync. The menu's Hide item only renders when this is provided.
+   */
+  onHideColumn?: (columnId: string) => void;
+  /**
+   * Per-column header menu (explicit sort direction + hide column). Defaults
+   * to on when `onSortColumn` or `onHideColumn` is wired — the menu can only
+   * offer actions a handler will actually perform; headers keep the plain
+   * label + sort-cycle button otherwise.
+   */
+  enableColumnMenu?: boolean;
 
   grouping?: string[];
   onGroupingChange?: OnChangeFn<string[]>;
@@ -323,6 +349,9 @@ export function VirtualizedTableEngine({
   onColumnVisibilityChange,
   sortConfig,
   onSortChange,
+  onSortColumn,
+  onHideColumn,
+  enableColumnMenu: enableColumnMenuProp,
   grouping,
   onGroupingChange,
   expanded,
@@ -397,6 +426,9 @@ export function VirtualizedTableEngine({
   // can remember the order, off for keyless (stateless) tables.
   const enableColumnReorder =
     enableColumnReorderProp ?? !!effectiveColumnSizingKey;
+  // The header menu only appears when a handler is wired to act on it.
+  const enableColumnMenu =
+    enableColumnMenuProp ?? Boolean(onSortColumn || onHideColumn);
   const [columnSizing, setColumnSizing] = useState<ColumnSizingState>(() => {
     if (!columnSizingStorage || typeof window === "undefined") return {};
     try {
@@ -717,25 +749,78 @@ export function VirtualizedTableEngine({
                         )}
                       </button>
                     ) : null}
-                    <TruncatedHeaderLabel>
-                      {flexRender(column.columnDef.header, header.getContext())}
-                    </TruncatedHeaderLabel>
-                    {isSortable && (
-                      <button
-                        type="button"
-                        onClick={() => onSortChange?.(column.id)}
-                        className="ms-1 shrink-0 cursor-pointer"
-                        aria-label={t("sort")}
-                      >
-                        {isActiveSort && direction === "asc" ? (
+                    {(() => {
+                      const canHide =
+                        Boolean(onHideColumn) &&
+                        column.getCanHide() &&
+                        column.id !== "expander";
+                      const hasMenu =
+                        enableColumnMenu && (isSortable || canHide);
+                      const sortIndicator =
+                        isActiveSort && direction === "asc" ? (
                           <ArrowDownAZ className="h-4 w-4" />
                         ) : isActiveSort && direction === "desc" ? (
                           <ArrowUpZA className="h-4 w-4" />
                         ) : (
                           <ArrowDownUp className="h-4 w-4 opacity-50" />
-                        )}
-                      </button>
-                    )}
+                        );
+                      if (hasMenu) {
+                        return (
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <button
+                                type="button"
+                                className="flex min-w-0 cursor-pointer items-center gap-1 outline-none"
+                                aria-label={t("columnOptions")}
+                              >
+                                <TruncatedHeaderLabel>
+                                  {flexRender(
+                                    column.columnDef.header,
+                                    header.getContext()
+                                  )}
+                                </TruncatedHeaderLabel>
+                                {isSortable && sortIndicator}
+                                <ChevronDown
+                                  className="h-3 w-3 shrink-0 opacity-50"
+                                  aria-hidden="true"
+                                />
+                              </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="start">
+                              <ColumnMenuItems
+                                columnId={column.id}
+                                isSortable={isSortable}
+                                canHide={canHide}
+                                isActiveSort={Boolean(isActiveSort)}
+                                sortDirection={direction}
+                                onSortColumn={onSortColumn}
+                                onHideColumn={onHideColumn}
+                              />
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        );
+                      }
+                      return (
+                        <>
+                          <TruncatedHeaderLabel>
+                            {flexRender(
+                              column.columnDef.header,
+                              header.getContext()
+                            )}
+                          </TruncatedHeaderLabel>
+                          {isSortable && (
+                            <button
+                              type="button"
+                              onClick={() => onSortChange?.(column.id)}
+                              className="ms-1 shrink-0 cursor-pointer"
+                              aria-label={t("sort")}
+                            >
+                              {sortIndicator}
+                            </button>
+                          )}
+                        </>
+                      );
+                    })()}
                     {/* Drag-to-resize handle on the column's right edge. The
                       expander column opts out via enableResizing:false. The
                       flex column is resizable too — beginResize seeds its size
