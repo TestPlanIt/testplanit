@@ -24,7 +24,6 @@ import {
   getCoreRowModel,
   getExpandedRowModel,
   getGroupedRowModel,
-  getSortedRowModel,
   OnChangeFn,
   RowSelectionState,
   Updater,
@@ -480,12 +479,17 @@ export function VirtualizedTableEngine({
     data,
     columns: finalColumns,
     getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
     getGroupedRowModel: groupingActive ? getGroupedRowModel() : undefined,
     getExpandedRowModel:
       groupingActive || getSubRows ? getExpandedRowModel() : undefined,
     getSubRows,
     enableSorting: true,
+    // The CALLER owns row order (server orderBy or its own sort of `data`) —
+    // sortConfig is display state. Without this, TanStack re-sorts the rows
+    // client-side by each column's accessor, fighting the server: enum columns
+    // sort by Postgres enum-definition order server-side but alphabetically
+    // client-side, and infinite-scroll page seams get scrambled.
+    manualSorting: true,
     enableColumnResizing: true,
     enableColumnPinning,
     enableRowSelection: rowSelection !== undefined,
