@@ -232,6 +232,7 @@
       "high": "Haut"
     },
     "filters": {
+      "all": "Tous",
       "allStatuses": "Tous les statuts",
       "allPriorities": "Toutes les priorités"
     },
@@ -580,6 +581,7 @@
     "errors": {
       "error": "Erreur",
       "somethingWentWrong": "Une erreur inattendue s'est produite. Veuillez réessayer plus tard.",
+      "completeNotPermitted": "Vous n'êtes pas autorisé à finaliser cet élément.",
       "emailRequired": "Saisissez votre adresse e-mail.",
       "emailInvalid": "Ceci n'est pas une adresse e-mail valide.",
       "passwordRequired": "Un mot de passe est requis.",
@@ -2224,7 +2226,13 @@
       "description": "Aucune description fournie",
       "documentation": "Aucune documentation fournie",
       "testRuns": "Aucun essai.",
+      "noMatchingTestRuns": "Aucune exécution de test ne correspond à vos filtres.",
+      "noMatchingSessions": "Aucune session ne correspond à vos filtres.",
       "forecasts": "Aucune donnée prévisionnelle disponible"
+    },
+    "cardFilters": {
+      "labelRuns": "Filtrer les exécutions de tests",
+      "labelSessions": "Filtrer les sessions"
     },
     "browser": {
       "kindAll": "Toutes les étapes",
@@ -2407,6 +2415,11 @@
       "filterHasUntested": "A des cas non testés",
       "createRunNoCases": "Aucun des problèmes sélectionnés n'a de cas de test lié.",
       "createTestRunDetailed": "Créer une exécution de test ({issues, plural, one {# problème} other {# problèmes}} · {cases, plural, one {# cas} other {# cas}})"
+    },
+    "complete": {
+      "skippedForPermission": "Le jalon a été terminé. Ses cycles de test et sessions ont été laissés ouverts car vous n'avez pas la permission de les terminer.",
+      "skippedTestRunsForPermission": "Le jalon a été terminé. Ses cycles de test ont été laissés ouverts car vous n'avez pas la permission de les terminer.",
+      "skippedSessionsForPermission": "Le jalon a été terminé. Ses sessions ont été laissées ouvertes car vous n'avez pas la permission de les terminer."
     }
   },
   "sessions": {
@@ -2427,7 +2440,12 @@
       "overtime": "Au-dessus de l'estimation de : {time}"
     },
     "empty": {
-      "noMatchingCompleted": "Aucune session terminée ne correspond à votre filtre."
+      "noMatchingCompleted": "Aucune session terminée ne correspond à votre filtre.",
+      "noMatchingActive": "Aucune session active ne correspond à vos filtres."
+    },
+    "sessionFilters": {
+      "label": "Filtrer les sessions",
+      "mine": "Mes sessions"
     },
     "filter": {
       "placeholder": "Sessions de filtrage..."
@@ -6365,7 +6383,11 @@
         "aiStepsDerivedReviewLink": "Examiner l'exécution de test",
         "integrationAuthExpiredTitle": "Connexion d'intégration expirée",
         "integrationAuthExpiredMessage": "Votre connexion à \"{integrationName}\" a expiré. Reconnectez-vous pour reprendre la synchronisation des tickets.",
-        "integrationAuthExpiredReconnect": "Reconnecter"
+        "integrationAuthExpiredReconnect": "Reconnecter",
+        "runReadyToCompleteTitle": "Cycle de test prêt à être terminé",
+        "runReadyToCompleteMessage": "{count, plural, one {# cas a été exécuté} other {Tous les # cas ont été exécutés}}.",
+        "runReadyToCompleteEmailMessage": "Tous les {caseCount, plural, one {# cas de test} other {# cas de test}} du cycle de test « {testRunName} » (projet « {projectName} ») ont été exécutés. Le cycle est prêt à être marqué comme terminé.",
+        "runReadyToCompleteReason": "Vous recevez ceci parce que vous pouvez terminer les cycles de test dans ce projet."
       }
     },
     "issues": {
@@ -7355,7 +7377,8 @@
         }
       }
     },
-    "projectRunsFilters": "## Filtrage des exécutions de test\n\nActivez ou désactivez une puce pour affiner la liste. Les puces s'appliquent aux onglets Actives et Terminées, et sont mémorisées sur cet appareil pour ce projet.\n\n- **Manuel** / **Automatisé** — limite la liste à ce type d'exécution. Activer les deux (ou les désactiver toutes les deux) affiche toutes les exécutions.\n- **Mes exécutions de test** — uniquement les exécutions auxquelles vous participez : vous avez créé l'exécution, un cas de test vous y est assigné, ou vous avez enregistré un résultat de test dans celle-ci."
+    "projectRunsFilters": "## Filtrage des exécutions de test\n\nActivez ou désactivez une puce pour affiner la liste. Les puces s'appliquent aux onglets Actives et Terminées, et sont mémorisées sur cet appareil pour ce projet.\n\n- **Manuel** / **Automatisé** — limite la liste à ce type d'exécution. Activer les deux (ou les désactiver toutes les deux) affiche toutes les exécutions.\n- **Mes exécutions de test** — uniquement les exécutions auxquelles vous participez : vous avez créé l'exécution, un cas de test vous y est assigné, ou vous avez enregistré un résultat de test dans celle-ci.",
+    "projectSessionsFilters": "## Filtrage des sessions\n\nActivez une puce pour affiner la liste. Les puces s'appliquent aux onglets Actives et Terminées, et sont mémorisées sur cet appareil pour ce projet.\n\n- **Mes sessions** — uniquement les sessions auxquelles vous participez : vous avez créé la session, ou elle vous est assignée."
   },
   "reports": {
     "ui": {

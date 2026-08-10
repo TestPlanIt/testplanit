@@ -11,6 +11,13 @@ import {
   userChannel,
 } from "../lib/notifications/channels";
 import { getEmailQueue, NOTIFICATION_QUEUE_NAME } from "../lib/queues";
+import { NotificationService } from "../lib/services/notificationService";
+import { resolveRunCompletionRecipients } from "../lib/services/runCompletionRecipients";
+import {
+  claimRunReadyTransition,
+  JOB_CHECK_RUN_READY,
+  type RunReadyCheckJobData,
+} from "../lib/services/runReadyCheck";
 import { withTenantContext } from "../lib/tenantContext";
 import valkeyConnection from "../lib/valkey";
 import { BULLMQ_PREFIX } from "../lib/bullPrefix";
@@ -242,6 +249,52 @@ const processor = async (job: Job) => {
         throw error;
       }
       break;
+
+    case JOB_CHECK_RUN_READY: {
+      const readyData = job.data as RunReadyCheckJobData;
+
+      try {
+        // The raw per-tenant client on purpose: the marker write is
+        // bookkeeping and must not re-run the run's search sync or webhook
+        // emitters, which a plugin-carrying client would.
+        const outcome = await claimRunReadyTransition(
+          db as never,
+          readyData.runId
+        );
+
+        if (!outcome.notify) {
+          console.log(
+            `Run ${readyData.runId} readiness check: ${outcome.reason}`
+          );
+          break;
+        }
+
+        const targetUserIds = await resolveRunCompletionRecipients(
+          outcome.notify.projectId
+        );
+
+        await NotificationService.createRunReadyToCompleteNotification({
+          targetUserIds,
+          testRunId: outcome.notify.runId,
+          testRunName: outcome.notify.runName,
+          projectId: outcome.notify.projectId,
+          projectName: outcome.notify.projectName,
+          caseCount: outcome.notify.caseCount,
+          tenantId: readyData.tenantId,
+        });
+
+        console.log(
+          `Run ${readyData.runId} is ready to complete; notified ${targetUserIds.length} user(s)`
+        );
+      } catch (error) {
+        console.error(
+          `Failed readiness check for run ${readyData.runId}:`,
+          error
+        );
+        throw error;
+      }
+      break;
+    }
 
     default:
       throw new Error(`Unknown job type: ${job.name}`);

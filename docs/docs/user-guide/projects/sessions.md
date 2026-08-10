@@ -19,9 +19,34 @@ Similar to the Test Runs page, this page is structured within a card layout and 
 
 2. **Summary Cards**: A collapsible **Summary** section of chart cards (work distribution, recent session results, and completion trend). Collapse it with its header to give the session list the full page; the choice is remembered per project in your browser.
 
-3. **Tabs**:
+3. **Filter Chips**: A row of [filter chips](#filtering) above the tabs.
+
+4. **Tabs**:
    - **Active**: Shows sessions that are currently in progress (not marked as completed).
    - **Completed**: Shows sessions that have been marked as completed.
+
+## Filtering
+
+Above the tabs sits a row of filter chips. Click a chip to switch it on, click it again to switch it off. Filters apply to **both** the Active and Completed tabs, so switching tabs keeps your view narrowed.
+
+- **My Sessions**: Limits the list to sessions you take part in — see [What counts as taking part](#what-counts-as-taking-part).
+
+A **Clear All** button appears whenever at least one chip is on and switches all of them off at once.
+
+### What counts as taking part
+
+**My Sessions** shows a session when either of these is true for you:
+
+- You **created** the session.
+- The session is **assigned** to you.
+
+These are the same two roles credited by the contributor avatars on each session row (see [Session Item](./sessions-item.md)), so a session appearing under this filter is a session your avatar appears on. The [Test Runs](./runs.md#what-counts-as-taking-part) page's third role — "recorded a test result" — has no session equivalent, because a session's results are all authored under its single assignee.
+
+The chips narrow the two session lists only. The **Summary** charts above them — including the work-distribution breakdown — keep reporting on every session in the project, so turning on **My Sessions** does not reshape the project's overall picture.
+
+:::info Filters are remembered per project
+Your chip selection is stored in your browser for each project, so returning to a project's Sessions page restores the filters you last used there. Because they are stored locally rather than in the address bar, filters are personal — they do not travel to teammates through a copied link, and they do not follow you to another browser or device.
+:::
 
 ## Active Tab
 
@@ -41,7 +66,7 @@ This is the default view. Active sessions are grouped by their associated milest
 
   _Sessions within milestone groups are sorted by creation date. Milestones themselves are sorted logically (often chronologically based on start/end dates or a defined order)._
 
-- **Empty State**: If there are no active sessions, a message is displayed, along with a prominent **Create Session** button (if the user has permission).
+- **Empty State**: If the project has no active sessions at all, a message is displayed, along with a prominent **Create Session** button (if the user has permission). If sessions exist but none match your [filter chips](#filtering), the message says so instead and the button is omitted — the fix is to clear a filter, not to create a session.
 
 ### Collapsing Milestone Groups
 
@@ -76,7 +101,8 @@ This tab displays a flat list of all sessions that have been marked as completed
 
 - **Sorting**: Completed sessions are sorted by their **completion date**, with the most recently completed sessions appearing first.
 - **Session Items**: Each completed session is displayed using the [Session Item](./sessions-item.md) component, showing key details.
-- **Empty State**: If there are no completed sessions, a message indicating this is shown.
+- **Filtering**: The [filter chips](#filtering) apply here too, alongside this tab's own search box. Filtering happens across the whole set of completed sessions, not just the page you are looking at, and the result is re-paginated from the first page.
+- **Empty State**: If there are no completed sessions, a message indicating this is shown. If the search box or a filter chip excluded them all, the message says nothing matched instead.
 
 ## Multi-Configuration Sessions
 

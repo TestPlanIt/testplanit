@@ -35,6 +35,8 @@ import {
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import React, { useEffect, useState } from "react";
+import { toast } from "sonner";
+import { isCompleteNotPermittedError } from "~/utils/completionError";
 import { useTransitionGateStatus } from "~/hooks/useTransitionGateStatus";
 import { IconName } from "~/types/globals";
 import { cn } from "~/utils";
@@ -122,6 +124,15 @@ const CompleteTestRunDialog: React.FC<CompleteTestRunDialogProps> = ({
       onClose();
     } catch (error) {
       console.error("Error completing test run:", error);
+      // The server enforces canClose on the completion write, so a user who
+      // reaches this dialog through a stale permission cache gets a 403. Say
+      // so — silently doing nothing reads as the button being broken.
+      toast.error(
+        isCompleteNotPermittedError(error)
+          ? t("common.errors.completeNotPermitted")
+          : t("common.errors.somethingWentWrong"),
+        { id: "complete-run-permission-error" }
+      );
     } finally {
       setIsSubmitting(false);
     }

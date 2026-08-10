@@ -30,6 +30,8 @@ import { CalendarIcon, CircleCheckBig, TriangleAlert } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import { isCompleteNotPermittedError } from "~/utils/completionError";
 import { useRouter } from "~/lib/navigation";
 import { IconName } from "~/types/globals";
 import { cn } from "~/utils";
@@ -148,7 +150,22 @@ export function CompleteSessionDialog({
     try {
       setIsSubmitting(true);
       const nextVersion = session.currentVersion + 1;
-      // First create a new version record
+
+      // Complete the session BEFORE snapshotting the version. The completion
+      // write is the one the server gates on canClose, and SessionVersions is
+      // unique on (sessionId, version) — snapshotting first would leave an
+      // orphan row behind a rejected update, and the retry would then collide
+      // on that unique index and never succeed.
+      await updateSessions({
+        where: { id: session.id },
+        data: {
+          isCompleted: true,
+          completedAt: selectedDate,
+          stateId: selectedStateId,
+          currentVersion: nextVersion,
+        },
+      });
+
       await createSessionVersions({
         data: {
           sessionId: session.id,
@@ -184,21 +201,16 @@ export function CompleteSessionDialog({
         },
       });
 
-      // Then update the session
-      await updateSessions({
-        where: { id: session.id },
-        data: {
-          isCompleted: true,
-          completedAt: selectedDate,
-          stateId: selectedStateId,
-          currentVersion: nextVersion,
-        },
-      });
-
       router.refresh();
       onOpenChange(false);
     } catch (error) {
       console.error("Error completing session:", error);
+      toast.error(
+        isCompleteNotPermittedError(error)
+          ? t("common.errors.completeNotPermitted")
+          : t("common.errors.somethingWentWrong"),
+        { id: "complete-session-permission-error" }
+      );
     } finally {
       setIsSubmitting(false);
     }

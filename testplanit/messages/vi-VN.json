@@ -232,6 +232,7 @@
       "high": "Cao"
     },
     "filters": {
+      "all": "Tất cả",
       "allStatuses": "Tất cả trạng thái",
       "allPriorities": "Tất cả các ưu tiên"
     },
@@ -580,6 +581,7 @@
     "errors": {
       "error": "Lỗi",
       "somethingWentWrong": "Đã xảy ra lỗi không mong muốn. Vui lòng thử lại sau.",
+      "completeNotPermitted": "Bạn không có quyền hoàn thành mục này.",
       "emailRequired": "Nhập địa chỉ email của bạn.",
       "emailInvalid": "Đây không phải là địa chỉ email hợp lệ.",
       "passwordRequired": "Cần nhập mật khẩu.",
@@ -2224,7 +2226,13 @@
       "description": "Không có mô tả nào được cung cấp.",
       "documentation": "Không có tài liệu nào được cung cấp.",
       "testRuns": "Không có thử nghiệm nào được thực hiện",
+      "noMatchingTestRuns": "Không có lượt chạy thử nghiệm nào khớp với bộ lọc của bạn.",
+      "noMatchingSessions": "Không có phiên nào khớp với bộ lọc của bạn.",
       "forecasts": "Không có dữ liệu dự báo nào."
+    },
+    "cardFilters": {
+      "labelRuns": "Lọc lượt chạy thử nghiệm",
+      "labelSessions": "Lọc các phiên"
     },
     "browser": {
       "kindAll": "Tất cả cột mốc",
@@ -2407,6 +2415,11 @@
       "filterHasUntested": "Có trường hợp thử nghiệm chưa kiểm thử",
       "createRunNoCases": "Không có vấn đề nào trong số các vấn đề đã chọn có trường hợp thử nghiệm liên kết.",
       "createTestRunDetailed": "Tạo lần chạy thử nghiệm ({issues, plural, other {# vấn đề}} · {cases, plural, other {# trường hợp}})"
+    },
+    "complete": {
+      "skippedForPermission": "Cột mốc đã hoàn thành. Các lượt chạy thử nghiệm và phiên của cột mốc này vẫn để mở vì bạn không có quyền hoàn thành chúng.",
+      "skippedTestRunsForPermission": "Cột mốc đã hoàn thành. Các lượt chạy thử nghiệm của cột mốc này vẫn để mở vì bạn không có quyền hoàn thành chúng.",
+      "skippedSessionsForPermission": "Cột mốc đã hoàn thành. Các Phiên của cột mốc này vẫn để mở vì bạn không có quyền hoàn thành chúng."
     }
   },
   "sessions": {
@@ -2427,7 +2440,12 @@
       "overtime": "Ước tính vượt quá bởi: {time}"
     },
     "empty": {
-      "noMatchingCompleted": "Không có phiên nào đã hoàn thành phù hợp với bộ lọc của bạn."
+      "noMatchingCompleted": "Không có phiên nào đã hoàn thành phù hợp với bộ lọc của bạn.",
+      "noMatchingActive": "Không có Phiên đang hoạt động nào phù hợp với bộ lọc của bạn."
+    },
+    "sessionFilters": {
+      "label": "Lọc các phiên",
+      "mine": "Phiên của tôi"
     },
     "filter": {
       "placeholder": "Lọc các phiên..."
@@ -6365,7 +6383,11 @@
         "aiStepsDerivedReviewLink": "Xem xét lần chạy thử nghiệm",
         "integrationAuthExpiredTitle": "Kết nối tích hợp đã hết hạn",
         "integrationAuthExpiredMessage": "Kết nối của bạn tới \"{integrationName}\" đã hết hạn. Kết nối lại để tiếp tục đồng bộ vấn đề.",
-        "integrationAuthExpiredReconnect": "Kết nối lại"
+        "integrationAuthExpiredReconnect": "Kết nối lại",
+        "runReadyToCompleteTitle": "Lượt Chạy Kiểm Thử Đã Sẵn Sàng Hoàn Tất",
+        "runReadyToCompleteMessage": "{count, plural, other {Tất cả # trường hợp đã được thực thi.}}",
+        "runReadyToCompleteEmailMessage": "Tất cả {caseCount, plural, other {# trường hợp}} trong lượt chạy kiểm thử \"{testRunName}\" (dự án \"{projectName}\") đã được thực thi. Lượt chạy đã sẵn sàng để được đánh dấu là hoàn tất.",
+        "runReadyToCompleteReason": "Bạn nhận được thông báo này vì bạn có quyền hoàn tất các lượt chạy kiểm thử trong dự án này."
       }
     },
     "issues": {
@@ -7355,7 +7377,8 @@
         }
       }
     },
-    "projectRunsFilters": "## Lọc lần chạy thử nghiệm\n\nBật/tắt một thẻ để thu hẹp danh sách. Các thẻ áp dụng cho cả tab Đang hoạt động và Đã hoàn thành, và được ghi nhớ trên thiết bị này cho dự án này.\n\n- **Thủ công** / **Tự động** — giới hạn danh sách theo loại lần chạy đó. Bật cả hai (hoặc tắt cả hai) sẽ hiển thị tất cả các lần chạy.\n- **Lần chạy thử nghiệm của tôi** — chỉ các lần chạy bạn tham gia: bạn đã tạo lần chạy, bạn được gán một trường hợp kiểm thử trong đó, hoặc bạn đã ghi lại một kết quả kiểm thử trong đó."
+    "projectRunsFilters": "## Lọc lần chạy thử nghiệm\n\nBật/tắt một thẻ để thu hẹp danh sách. Các thẻ áp dụng cho cả tab Đang hoạt động và Đã hoàn thành, và được ghi nhớ trên thiết bị này cho dự án này.\n\n- **Thủ công** / **Tự động** — giới hạn danh sách theo loại lần chạy đó. Bật cả hai (hoặc tắt cả hai) sẽ hiển thị tất cả các lần chạy.\n- **Lần chạy thử nghiệm của tôi** — chỉ các lần chạy bạn tham gia: bạn đã tạo lần chạy, bạn được gán một trường hợp kiểm thử trong đó, hoặc bạn đã ghi lại một kết quả kiểm thử trong đó.",
+    "projectSessionsFilters": "## Lọc phiên\n\nBật một chip để thu hẹp danh sách. Các chip áp dụng cho cả tab Đang hoạt động và Đã hoàn tất, và được ghi nhớ trên thiết bị này cho dự án này.\n\n- **Phiên của tôi** — chỉ các phiên bạn tham gia: bạn đã tạo phiên, hoặc phiên được giao cho bạn."
   },
   "reports": {
     "ui": {

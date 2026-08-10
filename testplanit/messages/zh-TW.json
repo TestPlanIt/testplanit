@@ -232,6 +232,7 @@
       "high": "高的"
     },
     "filters": {
+      "all": "全部",
       "allStatuses": "所有狀態",
       "allPriorities": "所有優先事項"
     },
@@ -580,6 +581,7 @@
     "errors": {
       "error": "錯誤",
       "somethingWentWrong": "發生意外錯誤，請稍後重試。",
+      "completeNotPermitted": "您沒有權限完成此項目。",
       "emailRequired": "請輸入您的電子郵件地址。",
       "emailInvalid": "這是一個無效的電子郵件地址。",
       "passwordRequired": "需要輸入密碼。",
@@ -2224,7 +2226,13 @@
       "description": "未提供描述",
       "documentation": "未提供任何文件。",
       "testRuns": "沒有測試運行",
+      "noMatchingTestRuns": "沒有符合您篩選條件的測試執行。",
+      "noMatchingSessions": "沒有符合您篩選條件的Session。",
       "forecasts": "暫無預測數據"
+    },
+    "cardFilters": {
+      "labelRuns": "篩選測試執行",
+      "labelSessions": "篩選Session"
     },
     "browser": {
       "kindAll": "所有里程碑",
@@ -2407,6 +2415,11 @@
       "filterHasUntested": "有未測試的案例",
       "createRunNoCases": "所選問題均未連結測試案例。",
       "createTestRunDetailed": "建立測試執行（{issues, plural, other {# 個問題}} · {cases, plural, other {# 個案例}}）"
+    },
+    "complete": {
+      "skippedForPermission": "里程碑已完成。由於您沒有權限完成其測試執行和會話,因此它們保持開啟狀態。",
+      "skippedTestRunsForPermission": "里程碑已完成。由於您沒有權限完成其測試執行,因此它們保持開啟狀態。",
+      "skippedSessionsForPermission": "里程碑已完成。由於您沒有權限完成其會話,因此它們保持開啟狀態。"
     }
   },
   "sessions": {
@@ -2427,7 +2440,12 @@
       "overtime": "超出估計值： {time}"
     },
     "empty": {
-      "noMatchingCompleted": "沒有符合您篩選條件的已完成會話。"
+      "noMatchingCompleted": "沒有符合您篩選條件的已完成會話。",
+      "noMatchingActive": "沒有符合您篩選條件的活動中會話。"
+    },
+    "sessionFilters": {
+      "label": "篩選會話",
+      "mine": "我的會話"
     },
     "filter": {
       "placeholder": "篩選會話..."
@@ -6365,7 +6383,11 @@
         "aiStepsDerivedReviewLink": "檢查測試執行",
         "integrationAuthExpiredTitle": "整合連線已過期",
         "integrationAuthExpiredMessage": "您與「{integrationName}」的連線已過期。請重新連線以繼續問題同步。",
-        "integrationAuthExpiredReconnect": "重新連線"
+        "integrationAuthExpiredReconnect": "重新連線",
+        "runReadyToCompleteTitle": "測試執行已準備好完成",
+        "runReadyToCompleteMessage": "{count, plural, other {全部 # 個測試案例均已執行完成。}}",
+        "runReadyToCompleteEmailMessage": "測試執行「{testRunName}」（專案「{projectName}」）中的所有 {caseCount, plural, other {# 個案例}} 均已執行。此執行已可標記為完成。",
+        "runReadyToCompleteReason": "您收到此通知是因為您可以完成此專案中的測試執行。"
       }
     },
     "issues": {
@@ -7355,7 +7377,8 @@
         }
       }
     },
-    "projectRunsFilters": "## 篩選測試運行\n\n切換標籤以縮小列表範圍。標籤同時適用於「進行中」和「已完成」分頁，並會在此裝置上針對此專案記住設定。\n\n- **手動** / **自動化** — 將列表限制為該類型的運行。同時開啟（或同時關閉）兩者將顯示所有運行。\n- **我的測試運行** — 僅顯示您參與的運行：您建立了該運行、您被指派了其中的測試用例，或您在其中記錄了測試結果。"
+    "projectRunsFilters": "## 篩選測試運行\n\n切換標籤以縮小列表範圍。標籤同時適用於「進行中」和「已完成」分頁，並會在此裝置上針對此專案記住設定。\n\n- **手動** / **自動化** — 將列表限制為該類型的運行。同時開啟（或同時關閉）兩者將顯示所有運行。\n- **我的測試運行** — 僅顯示您參與的運行：您建立了該運行、您被指派了其中的測試用例，或您在其中記錄了測試結果。",
+    "projectSessionsFilters": "## 篩選工作階段\n\n切換晶片以縮小清單範圍。晶片同時套用於「進行中」及「已完成」分頁，並會針對此裝置和此專案記住設定。\n\n- **我的工作階段** — 僅顯示您參與的工作階段：由您建立的工作階段，或指派給您的工作階段。"
   },
   "reports": {
     "ui": {

@@ -94,6 +94,8 @@ describe("NotificationContent", () => {
         aiStepsDerivedMessage:
           "{count} test cases were given AI-derived steps — review for accuracy.",
         aiStepsDerivedReviewLink: "Review test run",
+        runReadyToCompleteTitle: "Test Run Ready to Complete",
+        runReadyToCompleteExecuted: "All {count} cases have been executed.",
       };
 
       let result = translations[key] || key;
@@ -316,6 +318,55 @@ describe("NotificationContent", () => {
 
       expect(screen.getByText("stored fallback message")).toBeInTheDocument();
       // No run link when projectId/testRunId are missing
+      expect(screen.queryByRole("link")).not.toBeInTheDocument();
+    });
+  });
+
+  describe("Run Ready To Complete", () => {
+    it("should render the run link and the localized message", () => {
+      const notification = {
+        id: "ready-1",
+        type: "RUN_READY_TO_COMPLETE",
+        title: "Test run ready to complete",
+        message: "stored fallback message",
+        data: {
+          projectId: 456,
+          testRunId: 123,
+          testRunName: "Nightly CI",
+          projectName: "Checkout",
+          caseCount: 12,
+        },
+      };
+
+      render(<NotificationContent notification={notification} />);
+
+      expect(
+        screen.getByTestId("notification-run-ready-to-complete")
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText(/All 12 cases have been executed/)
+      ).toBeInTheDocument();
+      // The run is named the same way every other notification names one.
+      expect(screen.getByText("Nightly CI")).toBeInTheDocument();
+      // The Link mock in this file drops extra props, so assert by role the
+      // way the sibling AI_STEPS_DERIVED case does.
+      const link = screen.getByRole("link");
+      expect(link).toHaveAttribute("href", "/projects/runs/456/123");
+      expect(screen.getByText("Nightly CI")).toBeInTheDocument();
+    });
+
+    it("should fall back to the stored title/message when data is incomplete", () => {
+      const notification = {
+        id: "ready-2",
+        type: "RUN_READY_TO_COMPLETE",
+        title: "Test run ready to complete",
+        message: "stored fallback message",
+        data: {},
+      };
+
+      render(<NotificationContent notification={notification} />);
+
+      expect(screen.getByText("stored fallback message")).toBeInTheDocument();
       expect(screen.queryByRole("link")).not.toBeInTheDocument();
     });
   });

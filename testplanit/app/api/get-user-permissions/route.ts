@@ -1,10 +1,14 @@
 "use server";
 
 import { ApplicationArea, ProjectAccessType } from "~/zenstack/models";
-import type { Roles } from "~/zenstack/models";
 import { NextResponse } from "next/server";
 import { z } from "zod/v4";
-import { baseDb } from "~/lib/db";
+import {
+  areaPermissionsFrom,
+  hasProjectAccess,
+  resolveEffectiveProjectAccess,
+  type AreaPermissions,
+} from "~/lib/services/areaPermission";
 import { authorizeProjectAdminForProject } from "~/lib/integrations/importAuthorization";
 import { getServerAuthSession } from "~/server/auth";
 
@@ -15,35 +19,6 @@ const PermissionCheckSchema = z.object({
   area: z.nativeEnum(ApplicationArea).optional(),
   checkAccessOnly: z.boolean().optional(), // New flag to only check if user has project access
 });
-
-// Helper type for Role with its permissions included
-type RoleWithPermissions = Roles & {
-  rolePermissions: {
-    area: ApplicationArea;
-    canAddEdit: boolean;
-    canDelete: boolean;
-    canClose: boolean;
-  }[];
-};
-
-// Helper function to get permissions for a specific role and area
-function getPermissionsForArea(
-  role: RoleWithPermissions | null | undefined,
-  area: ApplicationArea
-): { canAddEdit: boolean; canDelete: boolean; canClose: boolean } {
-  const defaultPerms = { canAddEdit: false, canDelete: false, canClose: false };
-  if (!role) {
-    return defaultPerms;
-  }
-  const specificPerm = role.rolePermissions.find((p) => p.area === area);
-  return specificPerm
-    ? {
-        canAddEdit: specificPerm.canAddEdit,
-        canDelete: specificPerm.canDelete,
-        canClose: specificPerm.canClose,
-      }
-    : defaultPerms;
-}
 
 export async function POST(request: Request) {
   // CR-02 fix: require an authenticated caller and refuse to disclose
@@ -86,209 +61,36 @@ export async function POST(request: Request) {
   }
 
   try {
-    // 1. Fetch all necessary data in parallel (or sequentially if dependencies exist)
-    const userPromise = baseDb.user.findUnique({
-      where: { id: userId },
-      include: {
-        role: { include: { rolePermissions: true } }, // Include global role and its permissions
-        groups: { select: { groupId: true } }, // Get IDs of groups user belongs to
-      },
-    });
+    // The precedence ladder itself lives in lib/services/areaPermission.ts so
+    // that server-side gates enforcing what this endpoint reports (e.g. the
+    // completion gate in app/api/model/[...path]/route.ts) resolve access the
+    // same way by construction rather than by a second hand-written copy.
+    const resolution = await resolveEffectiveProjectAccess(userId, projectId);
 
-    const projectPromise = baseDb.projects.findUnique({
-      where: { id: projectId },
-      include: {
-        defaultRole: { include: { rolePermissions: true } }, // Include project default role and permissions
-      },
-    });
-
-    const userProjectPermissionPromise =
-      baseDb.userProjectPermission.findUnique({
-        where: { userId_projectId: { userId, projectId } },
-        include: {
-          role: { include: { rolePermissions: true } }, // Include specific role if assigned
-        },
-      });
-
-    const [user, project, userProjectPermission] = await Promise.all([
-      userPromise,
-      projectPromise,
-      userProjectPermissionPromise,
-    ]);
-
-    // --- Basic Checks ---
-    if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
-    if (!project) {
-      return NextResponse.json({ error: "Project not found" }, { status: 404 });
-    }
-
-    let effectiveRole: RoleWithPermissions | null | undefined = null;
-    let accessDenied = false;
-    // Set when the effective role came from a group grant, so the reported
-    // accessType reflects the deciding path instead of the project default.
-    let groupAccessType: ProjectAccessType | null = null;
-
-    // Check if user is a System ADMIN or PROJECTADMIN
-    // System ADMINs have full permissions on all projects
-    // System PROJECTADMINs have full permissions on all accessible projects
-    const userAccess = (user as any).access;
-    const isSystemAdmin = userAccess === "ADMIN";
-    const isSystemProjectAdmin = userAccess === "PROJECTADMIN";
-
-    // 2. Determine Effective Role based on precedence
-
-    // --- User Specific Permission ---
-    if (userProjectPermission) {
-      switch (userProjectPermission.accessType) {
-        case ProjectAccessType.NO_ACCESS:
-          accessDenied = true;
-          break;
-        case ProjectAccessType.GLOBAL_ROLE:
-          effectiveRole = user.role as RoleWithPermissions | null;
-          break;
-        case ProjectAccessType.SPECIFIC_ROLE:
-          // userProjectPermission includes the role with permissions
-          effectiveRole =
-            userProjectPermission.role as RoleWithPermissions | null;
-          break;
-        case ProjectAccessType.DEFAULT:
-          // Defer to groups/project defaults
-          break;
-      }
-    }
-
-    // --- Group Permissions (if not decided by user-specific) ---
-    if (!accessDenied && !effectiveRole && user.groups.length > 0) {
-      const groupIds = user.groups.map((g) => g.groupId);
-      const groupPermissions = await baseDb.groupProjectPermission.findMany({
-        where: {
-          projectId: projectId,
-          groupId: { in: groupIds },
-          accessType: { not: ProjectAccessType.DEFAULT }, // Ignore default, look for specific denial/grant
-        },
-        include: {
-          role: { include: { rolePermissions: true } }, // Include role for SPECIFIC_ROLE
-        },
-        orderBy: {
-          // Define precedence if needed (e.g., NO_ACCESS first, then SPECIFIC_ROLE?)
-          // For now, find the first specific role or denial
-          accessType: "asc", // Process NO_ACCESS first if it exists
-        },
-      });
-
-      const specificRolePermission = groupPermissions.find(
-        (p) => p.accessType === ProjectAccessType.SPECIFIC_ROLE
+    if (!resolution.resolved) {
+      return NextResponse.json(
+        { error: "User or project not found" },
+        { status: 404 }
       );
-      const globalRolePermission = groupPermissions.find(
-        (p) => p.accessType === ProjectAccessType.GLOBAL_ROLE
-      );
-      const noAccessPermission = groupPermissions.find(
-        (p) => p.accessType === ProjectAccessType.NO_ACCESS
-      );
-
-      if (noAccessPermission) {
-        // Requirement: If *any* group denies access, does it override others?
-        // Assuming for now it does NOT necessarily deny if another path grants.
-        // If denial *should* override, set accessDenied = true here.
-      }
-
-      if (specificRolePermission) {
-        effectiveRole =
-          specificRolePermission.role as RoleWithPermissions | null;
-        groupAccessType = ProjectAccessType.SPECIFIC_ROLE;
-      } else if (globalRolePermission) {
-        // Group grant that defers to each member's own global role — the
-        // schema policies' "group with GLOBAL_ROLE access type" branch and
-        // the AuthCtx read resolver both honor this path.
-        effectiveRole = user.role as RoleWithPermissions | null;
-        if (effectiveRole) {
-          groupAccessType = ProjectAccessType.GLOBAL_ROLE;
-        }
-      }
-      // If only DEFAULT permissions found in groups, we defer to project default anyway.
     }
 
-    // --- Project Default Permissions (if not decided yet) ---
-    if (!accessDenied && !effectiveRole) {
-      switch (project.defaultAccessType) {
-        case ProjectAccessType.NO_ACCESS:
-          accessDenied = true;
-          break;
-        case ProjectAccessType.GLOBAL_ROLE:
-          effectiveRole = user.role as RoleWithPermissions | null;
-          break;
-        case ProjectAccessType.SPECIFIC_ROLE:
-          effectiveRole = project.defaultRole as RoleWithPermissions | null;
-          break;
-      }
-    }
+    const {
+      isSystemAdmin,
+      isSystemProjectAdmin,
+      effectiveRole,
+      userAccessType,
+      groupAccessType,
+      projectDefaultAccessType,
+    } = resolution;
 
-    // 3. Get Permissions from Effective Role
-    let resultData: any; // Use 'any' temporarily, or define a more specific union type
-
-    // System ADMINs always have full permissions
-    // System PROJECTADMINs have full permissions on projects they can access
-    if (isSystemAdmin || (isSystemProjectAdmin && !accessDenied)) {
-      if (area) {
-        // Return full permissions for the specific area
-        resultData = { canAddEdit: true, canDelete: true, canClose: true };
-      } else {
-        // Return full permissions for all areas
-        const allPermissions: Record<
-          string,
-          { canAddEdit: boolean; canDelete: boolean; canClose: boolean }
-        > = {};
-        for (const enumArea of Object.values(ApplicationArea)) {
-          allPermissions[enumArea] = {
-            canAddEdit: true,
-            canDelete: true,
-            canClose: true,
-          };
-        }
-        resultData = allPermissions;
-      }
-    } else if (!accessDenied && effectiveRole) {
-      if (area) {
-        // Area provided: Return permissions for the specific area
-        const finalPermissions = getPermissionsForArea(effectiveRole, area);
-        resultData = finalPermissions;
-      } else {
-        // Area not provided: Return permissions for all areas
-        const allPermissions: Record<
-          string,
-          { canAddEdit: boolean; canDelete: boolean; canClose: boolean }
-        > = {};
-        for (const enumArea of Object.values(ApplicationArea)) {
-          allPermissions[enumArea] = getPermissionsForArea(
-            effectiveRole,
-            enumArea
-          );
-        }
-        resultData = allPermissions;
-      }
-    } else {
-      // Access denied or no effective role
-      if (area) {
-        // Return all false for the specific area
-        resultData = { canAddEdit: false, canDelete: false, canClose: false };
-      } else {
-        // Return all false for all areas
-        const allPermissions: Record<
-          string,
-          { canAddEdit: boolean; canDelete: boolean; canClose: boolean }
-        > = {};
-        for (const enumArea of Object.values(ApplicationArea)) {
-          allPermissions[enumArea] = {
-            canAddEdit: false,
-            canDelete: false,
-            canClose: false,
-          };
-        }
-        resultData = allPermissions;
-      }
-    }
+    const resultData: AreaPermissions | Record<string, AreaPermissions> = area
+      ? areaPermissionsFrom(resolution, area)
+      : Object.fromEntries(
+          Object.values(ApplicationArea).map((enumArea) => [
+            enumArea,
+            areaPermissionsFrom(resolution, enumArea),
+          ])
+        );
 
     // Numeric effective-role id for UI gating predicates that need the role
     // pointer (e.g. review action panel role-holder match). Null for system
@@ -299,10 +101,7 @@ export async function POST(request: Request) {
     // If checkAccessOnly is true, just return whether the user has access
     if (checkAccessOnly) {
       return NextResponse.json({
-        hasAccess:
-          isSystemAdmin ||
-          isSystemProjectAdmin ||
-          (!accessDenied && effectiveRole !== null),
+        hasAccess: hasProjectAccess(resolution),
         effectiveRole: isSystemAdmin
           ? "System Admin"
           : isSystemProjectAdmin
@@ -313,11 +112,11 @@ export async function POST(request: Request) {
           ? "SYSTEM_ADMIN"
           : isSystemProjectAdmin
             ? "SYSTEM_PROJECTADMIN"
-            : userProjectPermission?.accessType ||
+            : userAccessType ||
               groupAccessType ||
-              (project.defaultAccessType === ProjectAccessType.GLOBAL_ROLE
+              (projectDefaultAccessType === ProjectAccessType.GLOBAL_ROLE
                 ? "GLOBAL_ROLE"
-                : project.defaultAccessType === ProjectAccessType.SPECIFIC_ROLE
+                : projectDefaultAccessType === ProjectAccessType.SPECIFIC_ROLE
                   ? "SPECIFIC_ROLE"
                   : "NO_ACCESS"),
       });
@@ -330,10 +129,7 @@ export async function POST(request: Request) {
     );
 
     return NextResponse.json({
-      hasAccess:
-        isSystemAdmin ||
-        isSystemProjectAdmin ||
-        (!accessDenied && effectiveRole !== null),
+      hasAccess: hasProjectAccess(resolution),
       effectiveRole: isSystemAdmin
         ? "System Admin"
         : isSystemProjectAdmin

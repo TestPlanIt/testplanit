@@ -259,9 +259,19 @@ For each application area, roles can have:
 
 - **canAddEdit** - Create and modify items
 - **canDelete** - Delete items
-- **canClose** - Mark items as complete/closed
+- **canClose** - Mark items as complete/closed. On the **TestRuns** and **Sessions** areas this is enforced on the write itself, not only by hiding the button — see [Completing runs and sessions](#completing-runs-and-sessions).
 - **canReadSensitive** - View values otherwise masked as `••••••` or `[REDACTED]`. Honored by the **TestCaseRestrictedFields** and **TestRunResultRestrictedFields** areas; the other areas ignore it. Without this grant on the right area, a user sees `••••••` in dataset rows / iteration cells and `[REDACTED]` in the issue prefill body and matrix exports.
 - **canApprove** - Eligible to be assigned as a reviewer and to decide review requests in the Review & Approval feature. Honored on the **TestCaseRepository**, **TestRuns**, and **Sessions** areas; the other areas ignore it.
+
+### Completing runs and sessions
+
+Marking a test run or a session **completed** is treated as a privileged, one-way act — a completed run or session is frozen and cannot be reopened in the app — so **canClose** on the matching area is checked on the server every time the completed flag changes, not just when deciding whether to draw the **Complete** button.
+
+This has three consequences worth knowing:
+
+- **Every route is covered.** The check applies to the write itself, so it holds for the UI, the [public API](../api-reference.md), the SDKs, and the MCP server alike. Holding **canAddEdit** on Test Runs does not let an integration complete a run through the API.
+- **Users see a clear refusal.** If a user's permissions changed while they had a page open, the **Complete** dialog reports that they do not have permission rather than appearing to do nothing.
+- **Completing a milestone needs its own grants.** Milestone completion optionally cascades into the milestone's test runs and sessions. Each half of that cascade requires **canClose** on **that** area — **canClose** on Milestones alone is not a side door into closing runs. If a user can close the milestone but not its runs, the milestone still completes and a message tells them which half was left open, so the runs can be closed by someone who holds the permission. (When [review gates](./review-approvals.md#milestone-completion) block a cascade, the behavior is different: the whole cascade is rolled back.)
 
 ### Managing Roles
 

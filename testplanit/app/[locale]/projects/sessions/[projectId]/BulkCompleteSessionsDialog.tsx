@@ -88,11 +88,23 @@ const BulkCompleteSessionsDialog: React.FC<BulkCompleteSessionsDialogProps> = ({
     }
   }, [workflows]);
 
-  // Completing a session snapshots it into a SessionVersions record first —
-  // same flow as the single-session CompleteSessionDialog.
+  // Same flow as the single-session CompleteSessionDialog: complete first,
+  // then snapshot. The completion write is the one the server gates on
+  // canClose, and SessionVersions is unique on (sessionId, version) — writing
+  // the snapshot first would leave an orphan row behind a rejected update, and
+  // the retry would then collide on that unique index and never succeed.
   const completeOne = async (session: SessionsWithDetails) => {
     const stateId = selectedStateId ?? session.stateId;
     const nextVersion = session.currentVersion + 1;
+    await updateSession({
+      where: { id: session.id },
+      data: {
+        isCompleted: true,
+        completedAt: selectedDate,
+        stateId,
+        currentVersion: nextVersion,
+      },
+    });
     await createSessionVersion({
       data: {
         sessionId: session.id,
@@ -124,15 +136,6 @@ const BulkCompleteSessionsDialog: React.FC<BulkCompleteSessionsDialogProps> = ({
         completedAt: selectedDate,
         tags: "[]",
         attachments: "[]",
-      },
-    });
-    await updateSession({
-      where: { id: session.id },
-      data: {
-        isCompleted: true,
-        completedAt: selectedDate,
-        stateId,
-        currentVersion: nextVersion,
       },
     });
   };

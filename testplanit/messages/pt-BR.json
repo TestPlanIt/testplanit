@@ -232,6 +232,7 @@
       "high": "Alto"
     },
     "filters": {
+      "all": "Todos",
       "allStatuses": "Todos os status",
       "allPriorities": "Todas as prioridades"
     },
@@ -580,6 +581,7 @@
     "errors": {
       "error": "Erro",
       "somethingWentWrong": "Ocorreu um erro inesperado. Tente novamente mais tarde.",
+      "completeNotPermitted": "Você não tem permissão para concluir este item.",
       "emailRequired": "Insira seu endereço de e-mail.",
       "emailInvalid": "Este endereço de e-mail não é válido.",
       "passwordRequired": "É necessário usar uma senha.",
@@ -2224,7 +2226,13 @@
       "description": "Nenhuma descrição fornecida",
       "documentation": "Nenhuma documentação foi fornecida.",
       "testRuns": "Sem testes corridos",
+      "noMatchingTestRuns": "Nenhuma execução de teste corresponde aos seus filtros.",
+      "noMatchingSessions": "Nenhuma sessão corresponde aos seus filtros.",
       "forecasts": "Não há dados de previsão disponíveis."
+    },
+    "cardFilters": {
+      "labelRuns": "Filtrar execuções de teste",
+      "labelSessions": "Filtrar sessões"
     },
     "browser": {
       "kindAll": "Todos os marcos",
@@ -2407,6 +2415,11 @@
       "filterHasUntested": "Possui casos não testados",
       "createRunNoCases": "Nenhuma das issues selecionadas possui casos de teste vinculados.",
       "createTestRunDetailed": "Criar test run ({issues, plural, one {# issue} other {# issues}} · {cases, plural, one {# caso} other {# casos}})"
+    },
+    "complete": {
+      "skippedForPermission": "O milestone foi concluído. Seus test runs e sessões foram deixados abertos porque você não tem permissão para concluí-los.",
+      "skippedTestRunsForPermission": "O milestone foi concluído. Seus test runs foram deixados abertos porque você não tem permissão para concluí-los.",
+      "skippedSessionsForPermission": "O milestone foi concluído. Suas Sessões foram deixadas abertas porque você não tem permissão para concluí-las."
     }
   },
   "sessions": {
@@ -2427,7 +2440,12 @@
       "overtime": "Estimativa acima de: {time}"
     },
     "empty": {
-      "noMatchingCompleted": "Nenhuma sessão concluída corresponde ao seu filtro."
+      "noMatchingCompleted": "Nenhuma sessão concluída corresponde ao seu filtro.",
+      "noMatchingActive": "Nenhuma sessão ativa corresponde aos seus filtros."
+    },
+    "sessionFilters": {
+      "label": "Filtrar sessões",
+      "mine": "Minhas Sessões"
     },
     "filter": {
       "placeholder": "Filtrar sessões..."
@@ -6365,7 +6383,11 @@
         "aiStepsDerivedReviewLink": "Revisar execução de teste",
         "integrationAuthExpiredTitle": "Conexão de Integração Expirada",
         "integrationAuthExpiredMessage": "Sua conexão com \"{integrationName}\" expirou. Reconecte-se para retomar a sincronização de issues.",
-        "integrationAuthExpiredReconnect": "Reconectar"
+        "integrationAuthExpiredReconnect": "Reconectar",
+        "runReadyToCompleteTitle": "Execução de Teste Pronta para Concluir",
+        "runReadyToCompleteMessage": "{count, plural, one {# caso foi executado} other {Todos os # casos foram executados}}.",
+        "runReadyToCompleteEmailMessage": "Todos os {caseCount, plural, one {# caso} other {# casos}} na execução de teste \"{testRunName}\" (projeto \"{projectName}\") foram executados. A execução está pronta para ser marcada como concluída.",
+        "runReadyToCompleteReason": "Você está recebendo esta notificação porque pode concluir execuções de teste neste projeto."
       }
     },
     "issues": {
@@ -7355,7 +7377,8 @@
         }
       }
     },
-    "projectRunsFilters": "## Filtragem de execuções de teste\n\nAtive ou desative um chip para restringir a lista. Os chips se aplicam tanto às abas Ativas quanto Concluídas e são lembrados neste dispositivo para este projeto.\n\n- **Manual** / **Automatizado** — limita a lista a esse tipo de execução. Ativar ambos (ou desativar ambos) mostra todas as execuções.\n- **Minhas execuções de teste** — apenas execuções em que você participa: você criou a execução, você está designado a um caso de teste nela, ou você registrou um resultado de teste nela."
+    "projectRunsFilters": "## Filtragem de execuções de teste\n\nAtive ou desative um chip para restringir a lista. Os chips se aplicam tanto às abas Ativas quanto Concluídas e são lembrados neste dispositivo para este projeto.\n\n- **Manual** / **Automatizado** — limita a lista a esse tipo de execução. Ativar ambos (ou desativar ambos) mostra todas as execuções.\n- **Minhas execuções de teste** — apenas execuções em que você participa: você criou a execução, você está designado a um caso de teste nela, ou você registrou um resultado de teste nela.",
+    "projectSessionsFilters": "## Filtrando sessões\n\nAlterne um chip para restringir a lista. Os chips se aplicam tanto às abas Ativas quanto Concluídas, e são lembrados neste dispositivo para este projeto.\n\n- **Minhas Sessões** — apenas sessões das quais você participa: você criou a sessão, ou ela está atribuída a você."
   },
   "reports": {
     "ui": {

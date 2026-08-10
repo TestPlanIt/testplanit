@@ -422,6 +422,60 @@ describe("NotificationService", () => {
     });
   });
 
+  describe("createRunReadyToCompleteNotification", () => {
+    it("queues one notification per recipient with the payload the renderers read", async () => {
+      mockQueue.add.mockResolvedValue({ id: "job-ready" } as any);
+
+      await NotificationService.createRunReadyToCompleteNotification({
+        targetUserIds: ["user-1", "user-2"],
+        testRunId: 42,
+        testRunName: "Regression sweep",
+        projectId: 7,
+        projectName: "Checkout",
+        caseCount: 12,
+        tenantId: "acme",
+      });
+
+      expect(mockQueue.add).toHaveBeenCalledTimes(2);
+      expect(mockQueue.add).toHaveBeenCalledWith(
+        "create-notification",
+        {
+          userId: "user-1",
+          type: NotificationType.RUN_READY_TO_COMPLETE,
+          title: "Test run ready to complete",
+          message: expect.stringContaining('"Regression sweep"'),
+          relatedEntityId: "42",
+          relatedEntityType: "TestRuns",
+          // The worker has no ambient tenant context, so the caller's
+          // tenantId must survive the hop or a multi-tenant deployment
+          // writes the row into the wrong database.
+          tenantId: "acme",
+          data: {
+            testRunId: 42,
+            testRunName: "Regression sweep",
+            projectId: 7,
+            projectName: "Checkout",
+            caseCount: 12,
+          },
+        },
+        { removeOnComplete: true, removeOnFail: false }
+      );
+    });
+
+    it("queues nothing when nobody can complete the run", async () => {
+      await NotificationService.createRunReadyToCompleteNotification({
+        targetUserIds: [],
+        testRunId: 42,
+        testRunName: "Regression sweep",
+        projectId: 7,
+        projectName: "Checkout",
+        caseCount: 12,
+      });
+
+      expect(mockQueue.add).not.toHaveBeenCalled();
+    });
+  });
+
   describe("createMilestoneDueNotification", () => {
     it("should create a notification for milestone due soon", async () => {
       const mockJobId = "job-milestone-due";

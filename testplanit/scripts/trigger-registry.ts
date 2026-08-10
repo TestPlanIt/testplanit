@@ -74,8 +74,11 @@ export const TRIGGER_REGISTRY: TriggerConfig[] = [
 
   // ── Runs family ───────────────────────────────────────────────────────────
   {
+    // readyToCompleteNotifiedAt is bookkeeping for the "ready to complete"
+    // notification, not a change anyone reviewing a run's history cares
+    // about — and it flips on every execution/re-arm cycle.
     table: "TestRuns",
-    denylist: ["createdAt", "updatedAt"],
+    denylist: ["createdAt", "updatedAt", "readyToCompleteNotifiedAt"],
     nameCol: "name",
     projectCol: "projectId",
   },

@@ -33,6 +33,15 @@ import { usePageSizeOptions } from "~/hooks/usePageSizeOptions";
 import { useRouter } from "~/lib/navigation";
 import { AddSessionModal } from "./AddSessionModal";
 import SessionDisplay from "./SessionDisplay";
+import { SessionFilterChips } from "./SessionFilterChips";
+import {
+  EMPTY_SESSION_FILTERS,
+  isAnySessionFilterActive,
+  isMySession,
+  parseStoredSessionFilters,
+  sessionFiltersStorageKey,
+} from "./sessionFilters";
+import { usePersistedFilter } from "~/hooks/usePersistedFilter";
 
 import { CollapsibleSummarySection } from "@/components/CollapsibleSummarySection";
 import CompletedRunsLineChart, {
@@ -120,6 +129,17 @@ const ProjectSessions: React.FC<ProjectSessionsProps> = ({ params }) => {
     completedSessionsSearchString,
     500
   );
+
+  // Session list filter ("My Sessions"), applied to both the Active and
+  // Completed tabs and remembered per project in localStorage — the same
+  // treatment the runs page gives its chips.
+  const [sessionFilters, setSessionFilters] = usePersistedFilter(
+    sessionFiltersStorageKey(projectId),
+    EMPTY_SESSION_FILTERS,
+    parseStoredSessionFilters
+  );
+  const sessionFiltersActive = isAnySessionFilterActive(sessionFilters);
+  const currentUserId = sessionData?.user?.id;
 
   // Calculate pagination for completed sessions
   const effectiveCompletedPageSize =
@@ -282,16 +302,42 @@ const ProjectSessions: React.FC<ProjectSessionsProps> = ({ params }) => {
   // Determine if we need to filter
   const hasFilter = debouncedCompletedSessionsSearchString.trim().length > 0;
 
+  // The chips narrow the two lists only. `incompleteSessions` itself stays
+  // whole: the work-distribution sunburst below reads it and must keep
+  // reflecting every in-flight session, not just the current user's.
+  const visibleIncompleteSessions = useMemo(() => {
+    if (!incompleteSessions) return [];
+    if (!sessionFilters.mine) return incompleteSessions;
+    return incompleteSessions.filter((session) =>
+      isMySession(session, currentUserId)
+    );
+  }, [incompleteSessions, sessionFilters.mine, currentUserId]);
+
   // Client-side filtering when filter is active (avoids extra query on every keystroke)
+  // The chip predicate folds in here rather than after the page slice below,
+  // because the count, page-size options and pagination all read this array.
   const filteredData = useMemo(() => {
-    if (!hasFilter || !allCompletedSessions) {
-      return allCompletedSessions || [];
+    let sessions = allCompletedSessions || [];
+
+    if (sessionFilters.mine) {
+      sessions = sessions.filter((session) =>
+        isMySession(session, currentUserId)
+      );
     }
+
+    if (!hasFilter) return sessions;
+
     const searchLower = debouncedCompletedSessionsSearchString.toLowerCase();
-    return allCompletedSessions.filter((session) =>
+    return sessions.filter((session) =>
       session.name.toLowerCase().includes(searchLower)
     );
-  }, [allCompletedSessions, debouncedCompletedSessionsSearchString, hasFilter]);
+  }, [
+    allCompletedSessions,
+    debouncedCompletedSessionsSearchString,
+    hasFilter,
+    sessionFilters.mine,
+    currentUserId,
+  ]);
 
   // Pagination on filtered data
   const totalCompletedSessionsCount = filteredData.length;
@@ -356,10 +402,14 @@ const ProjectSessions: React.FC<ProjectSessionsProps> = ({ params }) => {
     setCompletedSessionsPage(1);
   }, [debouncedCompletedSessionsSearchString, setCompletedSessionsPage]);
 
-  // Reset to first page when page size changes
+  // Reset to first page when page size or the list filter changes
   useEffect(() => {
     setCompletedSessionsPage(1);
-  }, [completedSessionsPageSize, setCompletedSessionsPage]);
+  }, [
+    completedSessionsPageSize,
+    sessionFilters.mine,
+    setCompletedSessionsPage,
+  ]);
 
   useEffect(() => {
     const isDataLoading =
@@ -951,6 +1001,11 @@ const ProjectSessions: React.FC<ProjectSessionsProps> = ({ params }) => {
               </CollapsibleSummarySection>
               {/* --- End Summary Metrics Display --- */}
 
+              <SessionFilterChips
+                filters={sessionFilters}
+                onChange={setSessionFilters}
+              />
+
               {/* --- Start Restored Tabs Component --- */}
               <Tabs value={activeTab} onValueChange={handleTabChange}>
                 <TabsList className="w-full">
@@ -966,12 +1021,18 @@ const ProjectSessions: React.FC<ProjectSessionsProps> = ({ params }) => {
 
                 <TabsContent value="active">
                   <div className="flex flex-col">
-                    {incompleteSessions?.length === 0 ? (
+                    {visibleIncompleteSessions.length === 0 ? (
                       <div className="mt-4 flex flex-col items-center justify-center gap-4">
                         <p className="text-center text-muted-foreground">
-                          {t("common.empty.activeSessions")}
+                          {sessionFiltersActive
+                            ? t("sessions.empty.noMatchingActive")
+                            : t("common.empty.activeSessions")}
                         </p>
-                        {canAddEditSession && (
+                        {/* No Create CTA while a chip is on: the project may
+                            well have active sessions, just none of the user's,
+                            so offering to create one answers the wrong
+                            question. */}
+                        {canAddEditSession && !sessionFiltersActive && (
                           <>
                             <Button
                               variant="default"
@@ -993,7 +1054,7 @@ const ProjectSessions: React.FC<ProjectSessionsProps> = ({ params }) => {
                       </div>
                     ) : (
                       <SessionDisplay
-                        testSessions={incompleteSessions || []}
+                        testSessions={visibleIncompleteSessions}
                         milestones={transformedMilestones}
                         canAddEdit={showAddButtonPerm}
                         canCloseSession={showCompleteOptionPerm}
@@ -1050,7 +1111,7 @@ const ProjectSessions: React.FC<ProjectSessionsProps> = ({ params }) => {
                     {/* Sessions Display */}
                     {completedSessions?.length === 0 ? (
                       <div className="mt-4 text-center text-muted-foreground">
-                        {completedSessionsSearchString
+                        {completedSessionsSearchString || sessionFiltersActive
                           ? t("sessions.empty.noMatchingCompleted")
                           : t("common.empty.completedSessions")}
                       </div>

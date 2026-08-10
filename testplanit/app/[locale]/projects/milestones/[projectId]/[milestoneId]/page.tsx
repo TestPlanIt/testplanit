@@ -35,10 +35,21 @@ import { Textarea } from "@/components/ui/textarea";
 import TestRunItem from "@/projects/runs/[projectId]/TestRunItem";
 import { SessionsWithDetails } from "@/projects/sessions/[projectId]/SessionDisplay";
 import SessionItem from "@/projects/sessions/[projectId]/SessionItem";
+import { isMySession } from "@/projects/sessions/[projectId]/sessionFilters";
 import {
   CompletableSession,
   CompleteSessionDialog,
 } from "@/projects/sessions/[projectId]/[sessionId]/CompleteSessionDialog";
+import { CardFilterChips } from "./CardFilterChips";
+import {
+  EMPTY_CARD_FILTERS,
+  isAnyCardFilterActive,
+  matchesCardStatus,
+  parseStoredCardFilters,
+  runsCardFiltersStorageKey,
+  sessionsCardFiltersStorageKey,
+} from "./cardFilters";
+import { usePersistedFilter } from "~/hooks/usePersistedFilter";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { ApplicationArea } from "~/zenstack/models";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -142,6 +153,22 @@ export default function MilestoneDetailsPage() {
 
   const { data: sessionAuth } = useSession();
   const locale = useLocale();
+  const currentUserId = sessionAuth?.user?.id;
+
+  // Per-card list filters (status + "mine"), remembered per milestone. They
+  // narrow the two card lists only — every rollup on this page (summaries,
+  // burndown, forecast, coverage, PDF export, the milestone-completion
+  // cascade) keeps reading the unfiltered data.
+  const [runsCardFilters, setRunsCardFilters] = usePersistedFilter(
+    runsCardFiltersStorageKey(milestoneId),
+    EMPTY_CARD_FILTERS,
+    parseStoredCardFilters
+  );
+  const [sessionsCardFilters, setSessionsCardFilters] = usePersistedFilter(
+    sessionsCardFiltersStorageKey(milestoneId),
+    EMPTY_CARD_FILTERS,
+    parseStoredCardFilters
+  );
 
   const { isExporting: isExportingPdf, handleExport: handleExportPdf } =
     useExportMilestonePdf({
@@ -430,6 +457,71 @@ export default function MilestoneDetailsPage() {
     "SESSION",
     sessionIds
   );
+
+  // Ids of the runs the signed-in user participates in — created it, is
+  // assigned a case in it, or recorded a result in it, the same triad the runs
+  // list page's "My Test Runs" chip uses and the same three roles the row's
+  // contributor avatars credit. It needs its own id-only query because the
+  // list query above deliberately omits `testCases` and `results`.
+  //
+  // Scoped by `allMilestoneIds` rather than by `testRunIds`: the latter's
+  // identity churns with every list refetch and would re-key this query.
+  const { data: mineRunRows } = useClientQueries(schema).testRuns.useFindMany(
+    {
+      where: {
+        milestoneId: { in: allMilestoneIds },
+        isDeleted: false,
+        OR: [
+          { createdById: currentUserId },
+          {
+            testCases: {
+              some: { isDeleted: false, assignedToId: currentUserId },
+            },
+          },
+          {
+            results: {
+              some: { isDeleted: false, executedById: currentUserId },
+            },
+          },
+        ],
+      },
+      select: { id: true },
+    },
+    {
+      enabled:
+        runsCardFilters.mine && !!currentUserId && allMilestoneIds.length > 0,
+      staleTime: 30000,
+    }
+  ) ?? { data: [] };
+
+  const mineRunIds = useMemo(
+    () => new Set((mineRunRows ?? []).map((run) => run.id)),
+    [mineRunRows]
+  );
+
+  // The two card lists. Everything else on this page — batch summaries,
+  // pending reviews, the milestone summary, burndown, forecast, the PDF
+  // export and the "complete associated runs/sessions" cascade — keeps
+  // reading milestoneTestRuns / milestoneSessions whole.
+  const visibleTestRuns = useMemo(() => {
+    if (!milestoneTestRuns) return [];
+    return milestoneTestRuns.filter(
+      (run) =>
+        matchesCardStatus(runsCardFilters, run.isCompleted) &&
+        (!runsCardFilters.mine || mineRunIds.has(run.id))
+    );
+  }, [milestoneTestRuns, runsCardFilters, mineRunIds]);
+
+  // "Mine" for a session is created-by or assigned-to — the two roles the
+  // session row credits — so it needs no companion query.
+  const visibleSessions = useMemo(() => {
+    if (!milestoneSessions) return [];
+    return milestoneSessions.filter(
+      (testSession) =>
+        matchesCardStatus(sessionsCardFilters, testSession.isCompleted) &&
+        (!sessionsCardFilters.mine || isMySession(testSession, currentUserId))
+    );
+  }, [milestoneSessions, sessionsCardFilters, currentUserId]);
 
   // Batch-fetch test run summaries for all test runs. The route caps a
   // batch at 100 ids — milestones with many runs (especially via nested
@@ -1130,12 +1222,17 @@ export default function MilestoneDetailsPage() {
                       storageKey="tpi.milestone.testRuns.collapsed"
                       icon={<PlayCircle className="h-5 w-5" />}
                       title={tCommon("labels.testRuns", {
-                        count: milestoneTestRuns?.length || 0,
+                        count: visibleTestRuns.length,
                       })}
                     >
-                      {milestoneTestRuns && milestoneTestRuns.length > 0 ? (
+                      <CardFilterChips
+                        variant="runs"
+                        filters={runsCardFilters}
+                        onChange={setRunsCardFilters}
+                      />
+                      {visibleTestRuns.length > 0 ? (
                         <VirtualizedCardList
-                          items={milestoneTestRuns}
+                          items={visibleTestRuns}
                           getKey={(testRun) => testRun.id}
                           data-testid="milestone-test-runs-list"
                           renderItem={(testRun) => {
@@ -1158,7 +1255,9 @@ export default function MilestoneDetailsPage() {
                         />
                       ) : (
                         <div className="text-muted-foreground text-sm">
-                          {t("empty.testRuns")}
+                          {isAnyCardFilterActive(runsCardFilters)
+                            ? t("empty.noMatchingTestRuns")
+                            : t("empty.testRuns")}
                         </div>
                       )}
                     </CollapsibleSection>
@@ -1171,12 +1270,17 @@ export default function MilestoneDetailsPage() {
                       storageKey="tpi.milestone.sessions.collapsed"
                       icon={<Compass className="h-5 w-5" />}
                       title={tCommon("labels.sessions", {
-                        count: milestoneSessions?.length || 0,
+                        count: visibleSessions.length,
                       })}
                     >
-                      {milestoneSessions && milestoneSessions.length > 0 ? (
+                      <CardFilterChips
+                        variant="sessions"
+                        filters={sessionsCardFilters}
+                        onChange={setSessionsCardFilters}
+                      />
+                      {visibleSessions.length > 0 ? (
                         <VirtualizedCardList
-                          items={milestoneSessions}
+                          items={visibleSessions}
                           getKey={(testSession) => testSession.id}
                           data-testid="milestone-sessions-list"
                           renderItem={(testSession) => (
@@ -1196,7 +1300,9 @@ export default function MilestoneDetailsPage() {
                         />
                       ) : (
                         <div className="text-muted-foreground text-sm">
-                          {tGlobal("common.empty.sessions")}
+                          {isAnyCardFilterActive(sessionsCardFilters)
+                            ? t("empty.noMatchingSessions")
+                            : tGlobal("common.empty.sessions")}
                         </div>
                       )}
                     </CollapsibleSection>
