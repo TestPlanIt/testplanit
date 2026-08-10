@@ -1,6 +1,7 @@
 /**
  * Live-DB integration test for cancelling in-flight reviews when their subject
- * is soft-deleted.
+ * is deleted — soft-deleted (every current UI path) or hard-deleted (guarding
+ * the plugin's `delete` branch, which cascades nothing here).
  *
  * Background: nothing in the delete paths touched ReviewRequest, so deleting a
  * case, run, or session left its PENDING reviews sitting in reviewers' queues
@@ -27,7 +28,7 @@ const HAS_DB_URL = Boolean(process.env.DATABASE_URL);
 const describeIntegration =
   RUN_INTEGRATION && HAS_DB_URL ? describe : describe.skip;
 
-describeIntegration("soft-delete cancels in-flight reviews (live DB)", () => {
+describeIntegration("deletes cancel in-flight reviews (live DB)", () => {
   let baseDb: typeof import("~/lib/db").baseDb;
 
   const created = {
@@ -245,5 +246,20 @@ describeIntegration("soft-delete cancels in-flight reviews (live DB)", () => {
 
     expect(await statusOf(a.reviewId)).toBe("CANCELLED");
     expect(await statusOf(b.reviewId)).toBe("CANCELLED");
+  }, 60_000);
+
+  // ReviewRequest points at its subject polymorphically (entityType+entityId,
+  // no FK back-relation), so a hard delete cascades nothing — without an
+  // explicit cancel the PENDING row survives pointing at an id that no longer
+  // resolves, which is the stranded-inbox state this suite exists to prevent.
+  // No UI path hard-deletes today; this guards the plugin's `delete` branch so
+  // one added later can't silently reintroduce it.
+  it("cancels a PENDING review when its case is hard-deleted", async () => {
+    const { caseId, reviewId } = await makeCaseUnderReview("hard", "PENDING");
+    expect(await statusOf(reviewId)).toBe("PENDING");
+
+    await baseDb.repositoryCases.delete({ where: { id: caseId } });
+
+    expect(await statusOf(reviewId)).toBe("CANCELLED");
   }, 60_000);
 });

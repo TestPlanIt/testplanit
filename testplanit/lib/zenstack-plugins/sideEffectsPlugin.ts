@@ -190,6 +190,41 @@ const REVIEWABLE_ENTITY_TYPE = {
 } as const;
 
 /**
+ * Flip the in-flight reviews for `names` to CANCELLED and announce them.
+ * Shared tail of the soft- and hard-delete paths; `cause` only labels the
+ * failure log. Names are carried in because the announcement copy needs them
+ * after the subject rows are gone.
+ */
+async function cancelAndAnnounceReviews(
+  tx: TxClient,
+  model: keyof typeof REVIEWABLE_ENTITY_TYPE,
+  names: Map<number, string>,
+  cause: "soft-delete" | "hard-delete"
+): Promise<void> {
+  if (names.size === 0) return;
+
+  const cancelled = await cancelReviewsForDeletedEntities(
+    tx,
+    REVIEWABLE_ENTITY_TYPE[model],
+    [...names.keys()]
+  );
+  if (cancelled.length === 0) return;
+
+  // Snapshot the actor before detaching — the AsyncLocalStorage frame may not
+  // still be current when the promise runs.
+  const ctx = getAuditContext();
+  void announceDeletionCancelledReviews(cancelled, names, {
+    userId: ctx?.userId ?? null,
+    userName: ctx?.userName ?? null,
+  }).catch((error) =>
+    console.error(
+      `Failed to announce reviews cancelled by ${model} ${cause}:`,
+      error
+    )
+  );
+}
+
+/**
  * Cancel the review requests a soft-delete leaves in flight. Fires on the
  * false → true `isDeleted` edge only, so a re-save can't re-cancel or
  * re-notify. Names come off the before-image for the notification copy.
@@ -208,27 +243,30 @@ async function cancelReviewsForSoftDeleted(
     if (row.isDeleted !== true || old?.isDeleted !== false) continue;
     names.set(row.id, old.name ?? row.name ?? "");
   }
-  if (names.size === 0) return;
+  await cancelAndAnnounceReviews(tx, model, names, "soft-delete");
+}
 
-  const cancelled = await cancelReviewsForDeletedEntities(
-    tx,
-    REVIEWABLE_ENTITY_TYPE[model],
-    [...names.keys()]
-  );
-  if (cancelled.length === 0) return;
-
-  // Snapshot the actor before detaching — the AsyncLocalStorage frame may not
-  // still be current when the promise runs.
-  const ctx = getAuditContext();
-  void announceDeletionCancelledReviews(cancelled, names, {
-    userId: ctx?.userId ?? null,
-    userName: ctx?.userName ?? null,
-  }).catch((error) =>
-    console.error(
-      `Failed to announce reviews cancelled by ${model} soft-delete:`,
-      error
-    )
-  );
+/**
+ * Cancel the review requests a genuine hard `delete` leaves in flight.
+ *
+ * Every current UI delete path soft-deletes (`isDeleted: true`), so the
+ * function above is the one that fires in practice — but the per-model `delete`
+ * branches below all `break` before reaching it, which would strand PENDING
+ * reviews (and their inbox rows) pointing at a row that no longer exists. A
+ * hard delete has no after-image to diff, so the ids and names come entirely
+ * off the before-image.
+ */
+async function cancelReviewsForHardDeleted(
+  tx: TxClient,
+  model: keyof typeof REVIEWABLE_ENTITY_TYPE,
+  before: any[]
+): Promise<void> {
+  const names = new Map<number, string>();
+  for (const old of before) {
+    if (old?.id == null) continue;
+    names.set(old.id, old.name ?? "");
+  }
+  await cancelAndAnnounceReviews(tx, model, names, "hard-delete");
 }
 
 function logEsError(kind: string, id: unknown) {
@@ -302,6 +340,7 @@ export const sideEffectsPlugin = definePlugin(schema, {
               );
               await emitCaseDeleted(old, tx);
             }
+            await cancelReviewsForHardDeleted(tx, "RepositoryCases", before);
             break;
           }
           for (let i = 0; i < after.length; i++) {
@@ -395,7 +434,10 @@ export const sideEffectsPlugin = definePlugin(schema, {
         }
 
         case "TestRuns": {
-          if (action === "delete") break;
+          if (action === "delete") {
+            await cancelReviewsForHardDeleted(tx, "TestRuns", before);
+            break;
+          }
           for (let i = 0; i < after.length; i++) {
             const row = after[i];
             const old = before[i] ?? null;
@@ -466,6 +508,7 @@ export const sideEffectsPlugin = definePlugin(schema, {
                   logEsError("session", old.id)
                 );
             }
+            await cancelReviewsForHardDeleted(tx, "Sessions", before);
             break;
           }
           for (let i = 0; i < after.length; i++) {
