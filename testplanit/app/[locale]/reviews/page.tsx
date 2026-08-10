@@ -1069,40 +1069,32 @@ function ReviewsInboxContent({ userId }: { userId: string }) {
                         : t("reviews.inbox.emptyDecided")}
                     </div>
                   ) : (
-                    // Two CSS layers on this wrapper — both opt-in via Tailwind
-                    // arbitrary variants so the shared `DataTable` component
-                    // stays untouched:
-                    //
-                    //   1. `[&_tbody_tr]:h-12` pins every row at 48px so the
-                    //      Pending tab (taller — 32px decision icon-buttons in
-                    //      the Actions cell) and the Decided tab (shorter —
-                    //      just a Status badge) render at identical heights.
-                    //   2. `[&_table]:!w-px` overrides DataTable's `w-full`. Under
-                    //      `table-layout: fixed` the used width is the greater of
-                    //      the specified width and the sum of the column widths, so
-                    //      a tiny width resolves to exactly that sum. Without it the
-                    //      table stretches and fixed layout shares the surplus out
-                    //      across the columns, so none honors its `size`.
-                    <div className="[&_table]:!w-px [&_tbody_tr]:h-12">
-                      <DataTable
-                        // DataTable reads `meta.isPinned` once per mount, and the
-                        // tabs pin a different trailing column (Actions vs Status).
-                        // Returning to a tab with cached rows never unmounts it, so
-                        // without this key it keeps the other tab's pin.
-                        key={view}
-                        columns={columns as any}
-                        data={tableData as any}
-                        sortConfig={sortConfig}
-                        onSortChange={handleSortChange}
-                        columnVisibility={columnVisibility}
-                        onColumnVisibilityChange={setColumnVisibility}
-                        rowTestIdPrefix="reviews-inbox-row"
-                        storageKey="reviews-inbox"
-                        enableColumnMenu={false}
-                        selectedRowId={selectedRowId}
-                        scrollToSelectedRow={false}
-                      />
-                    </div>
+                    <DataTable
+                      virtualized
+                      fillViewport
+                      // The engine seeds `meta.isPinned` once per mount, and the
+                      // tabs pin a different trailing column (Actions vs Status).
+                      // Returning to a tab with cached rows never unmounts it, so
+                      // without this key it keeps the other tab's pin.
+                      key={view}
+                      columns={columns as any}
+                      data={tableData as any}
+                      sortConfig={sortConfig}
+                      onSortChange={handleSortChange}
+                      columnVisibility={columnVisibility}
+                      onColumnVisibilityChange={setColumnVisibility}
+                      estimateSize={48}
+                      // The result-set scope is exactly the where clause (tab +
+                      // every filter), so its serialization is the signal that
+                      // the list should scroll back to the top.
+                      resetKey={JSON.stringify(whereClause)}
+                      columnSizingStorageKey="reviews-inbox"
+                      testIdPrefix="reviews-inbox-table"
+                      rowTestIdPrefix="reviews-inbox-row"
+                      // Highlight (without scrolling) the row the details panel
+                      // is showing; the row id is the ReviewRequest id.
+                      highlightRowId={selectedRowId}
+                    />
                   )}
                 </ResizablePanel>
 
