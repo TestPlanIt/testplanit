@@ -9,12 +9,6 @@ import { createSubscriberClient } from "~/lib/valkey";
 import { projectIssueUpdateChannel } from "~/lib/webhooks/issueUpdateChannels";
 import { authOptions } from "~/server/auth";
 
-// SSE issue-updates transport — same constraints as the notifications
-// route: long-lived stream + IORedis pub/sub require the Node.js
-// runtime, never Edge, and must opt out of any Next.js prerendering.
-export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
-
 // Env-driven config — separate caps from notifications so a misbehaving
 // issues-stream pod can't starve the notifications transport.
 const PER_TENANT_CAP = Number(process.env.SSE_ISSUES_PER_TENANT_CAP ?? "1000");

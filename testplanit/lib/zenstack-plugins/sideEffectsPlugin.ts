@@ -79,6 +79,7 @@ import {
   isEntityAuditSuppressed,
 } from "~/lib/services/auditLog";
 import { invalidateApiTokenCache } from "~/lib/api-token-cache";
+import { enqueueRunReadyCheck } from "~/lib/services/runReadyCheck";
 
 // Models whose standalone hooked-client writes set the app.audit_context GUC so
 // the CDC trigger records the acting user. When the write is already inside an
@@ -329,6 +330,20 @@ export const sideEffectsPlugin = definePlugin(schema, {
                   select: { workflowType: true },
                 });
                 if (newState?.workflowType === WorkflowType.NOT_STARTED) {
+                  // Which runs lose a case, read before the update so the
+                  // rows are still matchable. Dropping the last unexecuted
+                  // case can make a run fully executed, and mutations issued
+                  // from inside a hook do not re-enter the plugin, so the
+                  // TestRunCases case below will not see this one.
+                  const affected = await tx.testRunCases.findMany({
+                    where: {
+                      repositoryCaseId: row.id,
+                      isDeleted: false,
+                      testRun: { isCompleted: false },
+                      results: { none: {} },
+                    },
+                    select: { testRunId: true },
+                  });
                   await tx.testRunCases.updateMany({
                     where: {
                       repositoryCaseId: row.id,
@@ -338,6 +353,16 @@ export const sideEffectsPlugin = definePlugin(schema, {
                     },
                     data: { isDeleted: true },
                   });
+                  if (affected.length > 0) {
+                    const { getCurrentTenantId } =
+                      await import("~/lib/multiTenantDb");
+                    const tenantId = getCurrentTenantId();
+                    for (const runId of new Set(
+                      affected.map((c) => c.testRunId)
+                    )) {
+                      void enqueueRunReadyCheck(runId, tenantId);
+                    }
+                  }
                 }
               }
             }
@@ -637,6 +662,41 @@ export const sideEffectsPlugin = definePlugin(schema, {
                 invalidateApiTokenCache(token).catch((error: unknown) =>
                   console.error("Failed to invalidate API token cache:", error)
                 );
+            }
+          }
+          break;
+        }
+
+        // Every path that can change how much of a run is left to execute
+        // writes a TestRunCases row in the same transaction — recording a
+        // result, editing one, deleting one, bulk-skipping, fanning out
+        // iterations, adding or removing cases. Hooking this one model is
+        // therefore the single seam that catches a run both filling up and
+        // emptying again, which is what lets the notification re-arm.
+        //
+        // Iterations need no case of their own: every iteration status write
+        // is paired with a case write inside the same transaction.
+        //
+        // Only run ids are collected here. The predicate itself runs in a
+        // debounced worker job, so a bulk import writing thousands of rows
+        // costs one enqueue per run rather than a pair of COUNTs per row.
+        case "TestRunCases": {
+          // Hard deletes arrive with neither `after` nor a before-image
+          // (TestRunCases is deliberately not in BEFORE_IMAGE_MODELS — a
+          // before-load on the hottest table in the app is not worth it).
+          // The only hard-delete callers re-create the row immediately
+          // afterwards, which re-enqueues.
+          const runIds = new Set<number>();
+          for (const row of after) {
+            if (typeof row?.testRunId === "number") runIds.add(row.testRunId);
+          }
+          if (runIds.size > 0) {
+            const { getCurrentTenantId } = await import("~/lib/multiTenantDb");
+            const tenantId = getCurrentTenantId();
+            for (const runId of runIds) {
+              // Detached: this hook body runs inside the writer's transaction
+              // and must never hold it open or fail it.
+              void enqueueRunReadyCheck(runId, tenantId);
             }
           }
           break;

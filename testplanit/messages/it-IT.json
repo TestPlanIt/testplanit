@@ -232,6 +232,7 @@
       "high": "Alto"
     },
     "filters": {
+      "all": "Tutto",
       "allStatuses": "Tutti gli stati",
       "allPriorities": "Tutte le priorità"
     },
@@ -580,6 +581,7 @@
     "errors": {
       "error": "Errore",
       "somethingWentWrong": "Si è verificato un errore imprevisto. Riprova più tardi.",
+      "completeNotPermitted": "Non hai l'autorizzazione per completare questo elemento.",
       "emailRequired": "Inserisci il tuo indirizzo email.",
       "emailInvalid": "Questo non è un indirizzo email valido.",
       "passwordRequired": "È richiesta la password.",
@@ -2224,7 +2226,13 @@
       "description": "Nessuna descrizione fornita",
       "documentation": "Nessuna documentazione fornita",
       "testRuns": "Nessuna prova",
+      "noMatchingTestRuns": "Nessuna esecuzione di test corrisponde ai filtri selezionati.",
+      "noMatchingSessions": "Nessuna sessione corrisponde ai filtri selezionati.",
       "forecasts": "Nessun dato di previsione disponibile"
+    },
+    "cardFilters": {
+      "labelRuns": "Filtra esecuzioni di test",
+      "labelSessions": "Filtra sessioni"
     },
     "browser": {
       "kindAll": "Tutti i traguardi",
@@ -2407,6 +2415,11 @@
       "filterHasUntested": "Con casi non testati",
       "createRunNoCases": "Nessuno dei problemi selezionati ha casi di test collegati.",
       "createTestRunDetailed": "Crea esecuzione test ({issues, plural, one {# problema} other {# problemi}} · {cases, plural, one {# caso} other {# casi}})"
+    },
+    "complete": {
+      "skippedForPermission": "Il milestone è stato completato. Le sue esecuzioni di test e sessioni sono state lasciate aperte perché non hai il permesso di completarle.",
+      "skippedTestRunsForPermission": "Il milestone è stato completato. Le sue esecuzioni di test sono state lasciate aperte perché non hai il permesso di completarle.",
+      "skippedSessionsForPermission": "Il milestone è stato completato. Le sue Sessioni sono state lasciate aperte perché non hai il permesso di completarle."
     }
   },
   "sessions": {
@@ -2427,7 +2440,12 @@
       "overtime": "Oltre la stima di: {time}"
     },
     "empty": {
-      "noMatchingCompleted": "Nessuna sessione completata corrisponde al tuo filtro."
+      "noMatchingCompleted": "Nessuna sessione completata corrisponde al tuo filtro.",
+      "noMatchingActive": "Nessuna sessione attiva corrisponde ai tuoi filtri."
+    },
+    "sessionFilters": {
+      "label": "Filtra sessioni",
+      "mine": "Le mie sessioni"
     },
     "filter": {
       "placeholder": "Filtra sessioni..."
@@ -3535,7 +3553,7 @@
       "addFilter": "Aggiungi filtro",
       "removeFilter": "Rimuovi filtro: {name}",
       "editFilter": "Modifica filtro: {name}",
-      "activeCount": "{count, plural, =1 {# active filter} other {# active filters}}",
+      "activeCount": "{count, plural, =1 {# filtro attivo} other {# filtri attivi}}",
       "assignedToMe": "Assegnato a me",
       "noFilters": "Nessun filtro attivo",
       "noMatchingCases": "Nessun caso di test corrisponde ai filtri selezionati",
@@ -6365,7 +6383,11 @@
         "aiStepsDerivedReviewLink": "Rivedi l'esecuzione del test",
         "integrationAuthExpiredTitle": "Connessione all'integrazione scaduta",
         "integrationAuthExpiredMessage": "La connessione a \"{integrationName}\" è scaduta. Riconnettiti per riprendere la sincronizzazione dei problemi.",
-        "integrationAuthExpiredReconnect": "Riconnetti"
+        "integrationAuthExpiredReconnect": "Riconnetti",
+        "runReadyToCompleteTitle": "Esecuzione Test Pronta per il Completamento",
+        "runReadyToCompleteMessage": "{count, plural, one {# caso è stato eseguito.} other {Tutti i # casi sono stati eseguiti.}}",
+        "runReadyToCompleteEmailMessage": "Tutti i {caseCount, plural, one {# caso} other {# casi}} nell'esecuzione del test \"{testRunName}\" (progetto \"{projectName}\") sono stati eseguiti. L'esecuzione è pronta per essere contrassegnata come completata.",
+        "runReadyToCompleteReason": "Ricevi questa notifica perché puoi completare le esecuzioni dei test in questo progetto."
       }
     },
     "issues": {
@@ -7355,7 +7377,8 @@
         }
       }
     },
-    "projectRunsFilters": "## Filtraggio delle esecuzioni test\n\nAttiva o disattiva un chip per restringere l'elenco. I chip si applicano sia alla scheda Attive che a quella Completate e vengono memorizzati su questo dispositivo per questo progetto.\n\n- **Manuale** / **Automatizzato** — limita l'elenco a quel tipo di esecuzione. Attivando entrambi (o disattivandoli entrambi) vengono mostrate tutte le esecuzioni.\n- **Le mie esecuzioni test** — solo le esecuzioni a cui partecipi: hai creato l'esecuzione, ti è stato assegnato un caso di prova al suo interno, oppure hai registrato un risultato di test al suo interno."
+    "projectRunsFilters": "## Filtraggio delle esecuzioni test\n\nAttiva o disattiva un chip per restringere l'elenco. I chip si applicano sia alla scheda Attive che a quella Completate e vengono memorizzati su questo dispositivo per questo progetto.\n\n- **Manuale** / **Automatizzato** — limita l'elenco a quel tipo di esecuzione. Attivando entrambi (o disattivandoli entrambi) vengono mostrate tutte le esecuzioni.\n- **Le mie esecuzioni test** — solo le esecuzioni a cui partecipi: hai creato l'esecuzione, ti è stato assegnato un caso di prova al suo interno, oppure hai registrato un risultato di test al suo interno.",
+    "projectSessionsFilters": "## Filtraggio delle sessioni\n\nAttiva un filtro per restringere l'elenco. I filtri si applicano sia alla scheda Attive che a quella Completate e vengono memorizzati su questo dispositivo per questo progetto.\n\n- **Le mie sessioni** — solo le sessioni a cui partecipi: quelle che hai creato o che ti sono state assegnate."
   },
   "reports": {
     "ui": {

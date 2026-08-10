@@ -232,6 +232,7 @@
       "high": "Hoog"
     },
     "filters": {
+      "all": "Alle",
       "allStatuses": "Alle statussen",
       "allPriorities": "Alle prioriteiten"
     },
@@ -580,6 +581,7 @@
     "errors": {
       "error": "Fout",
       "somethingWentWrong": "Er is een onverwachte fout opgetreden. Probeer het later opnieuw.",
+      "completeNotPermitted": "U hebt geen toestemming om dit item te voltooien.",
       "emailRequired": "Voer uw e-mailadres in.",
       "emailInvalid": "Dit is geen geldig e-mailadres.",
       "passwordRequired": "Een wachtwoord is vereist.",
@@ -2224,7 +2226,13 @@
       "description": "Geen beschrijving verstrekt",
       "documentation": "Geen documentatie verstrekt",
       "testRuns": "Geen testritten",
+      "noMatchingTestRuns": "Geen testruns komen overeen met uw filters.",
+      "noMatchingSessions": "Geen sessies komen overeen met uw filters.",
       "forecasts": "Geen prognosegegevens beschikbaar"
+    },
+    "cardFilters": {
+      "labelRuns": "Testruns filteren",
+      "labelSessions": "Sessies filteren"
     },
     "browser": {
       "kindAll": "Alle mijlpalen",
@@ -2407,6 +2415,11 @@
       "filterHasUntested": "Heeft ongeteste gevallen",
       "createRunNoCases": "Geen van de geselecteerde problemen heeft gekoppelde testgevallen.",
       "createTestRunDetailed": "Testrun aanmaken ({issues, plural, one {# probleem} other {# problemen}} · {cases, plural, one {# geval} other {# gevallen}})"
+    },
+    "complete": {
+      "skippedForPermission": "De milestone is voltooid. De testruns en sessies zijn open gelaten omdat u geen toestemming heeft om ze te voltooien.",
+      "skippedTestRunsForPermission": "De milestone is voltooid. De testruns zijn open gelaten omdat u geen toestemming heeft om ze te voltooien.",
+      "skippedSessionsForPermission": "De milestone is voltooid. De sessies zijn open gelaten omdat u geen toestemming heeft om ze te voltooien."
     }
   },
   "sessions": {
@@ -2427,7 +2440,12 @@
       "overtime": "Over de schatting met: {time}"
     },
     "empty": {
-      "noMatchingCompleted": "Er zijn geen voltooide sessies die aan uw filter voldoen."
+      "noMatchingCompleted": "Er zijn geen voltooide sessies die aan uw filter voldoen.",
+      "noMatchingActive": "Geen actieve sessies komen overeen met uw filters."
+    },
+    "sessionFilters": {
+      "label": "Sessies filteren",
+      "mine": "Mijn sessies"
     },
     "filter": {
       "placeholder": "Sessies filteren..."
@@ -6365,7 +6383,11 @@
         "aiStepsDerivedReviewLink": "Testrun controleren",
         "integrationAuthExpiredTitle": "Integratieverbinding verlopen",
         "integrationAuthExpiredMessage": "Uw verbinding met \"{integrationName}\" is verlopen. Maak opnieuw verbinding om het synchroniseren van issues te hervatten.",
-        "integrationAuthExpiredReconnect": "Opnieuw verbinden"
+        "integrationAuthExpiredReconnect": "Opnieuw verbinden",
+        "runReadyToCompleteTitle": "Testrun Gereed om te Voltooien",
+        "runReadyToCompleteMessage": "{count, plural, one {# testgeval is} other {Alle # testgevallen zijn}} uitgevoerd.",
+        "runReadyToCompleteEmailMessage": "Alle {caseCount, plural, one {# case} other {# cases}} in testrun \"{testRunName}\" (project \"{projectName}\") zijn uitgevoerd. De run is gereed om als voltooid te worden gemarkeerd.",
+        "runReadyToCompleteReason": "Je ontvangt dit omdat je testruns in dit project kunt voltooien."
       }
     },
     "issues": {
@@ -7355,7 +7377,8 @@
         }
       }
     },
-    "projectRunsFilters": "## Testruns filteren\n\nSchakel een chip in om de lijst te beperken. Chips zijn van toepassing op zowel het tabblad Actief als Voltooid, en worden op dit apparaat onthouden voor dit project.\n\n- **Handmatig** / **Geautomatiseerd** — beperk de lijst tot dat type run. Als u beide inschakelt (of beide uitschakelt), worden alle runs weergegeven.\n- **Mijn testruns** — alleen runs waaraan u deelneemt: u heeft de run aangemaakt, u heeft een testgeval toegewezen gekregen in de run, of u heeft een testresultaat vastgelegd in de run."
+    "projectRunsFilters": "## Testruns filteren\n\nSchakel een chip in om de lijst te beperken. Chips zijn van toepassing op zowel het tabblad Actief als Voltooid, en worden op dit apparaat onthouden voor dit project.\n\n- **Handmatig** / **Geautomatiseerd** — beperk de lijst tot dat type run. Als u beide inschakelt (of beide uitschakelt), worden alle runs weergegeven.\n- **Mijn testruns** — alleen runs waaraan u deelneemt: u heeft de run aangemaakt, u heeft een testgeval toegewezen gekregen in de run, of u heeft een testresultaat vastgelegd in de run.",
+    "projectSessionsFilters": "## Sessies filteren\n\nSchakel een chip in om de lijst te beperken. Chips zijn van toepassing op zowel het tabblad Actief als Voltooid, en worden op dit apparaat onthouden voor dit project.\n\n- **Mijn sessies** — alleen sessies waaraan je deelneemt: je hebt de sessie aangemaakt, of ze is aan jou toegewezen."
   },
   "reports": {
     "ui": {

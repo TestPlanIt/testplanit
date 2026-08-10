@@ -232,6 +232,7 @@
       "high": "Wysoki"
     },
     "filters": {
+      "all": "Wszystkie",
       "allStatuses": "Wszystkie statusy",
       "allPriorities": "Wszystkie priorytety"
     },
@@ -580,6 +581,7 @@
     "errors": {
       "error": "Błąd",
       "somethingWentWrong": "Wystąpił nieoczekiwany błąd. Spróbuj ponownie później.",
+      "completeNotPermitted": "Nie masz uprawnień do zakończenia tego elementu.",
       "emailRequired": "Podaj swój adres e-mail.",
       "emailInvalid": "To nie jest prawidłowy adres e-mail.",
       "passwordRequired": "Hasło jest wymagane.",
@@ -2224,7 +2226,13 @@
       "description": "Brak opisu",
       "documentation": "Brak dokumentacji",
       "testRuns": "Brak przebiegów testowych",
+      "noMatchingTestRuns": "Brak przebiegów testów spełniających kryteria filtrów.",
+      "noMatchingSessions": "Brak sesji spełniających kryteria filtrów.",
       "forecasts": "Brak dostępnych danych prognostycznych"
+    },
+    "cardFilters": {
+      "labelRuns": "Filtruj przebiegi testów",
+      "labelSessions": "Filtruj sesje"
     },
     "browser": {
       "kindAll": "Wszystkie kamienie milowe",
@@ -2407,6 +2415,11 @@
       "filterHasUntested": "Zawiera nietestowane przypadki",
       "createRunNoCases": "Żaden z wybranych problemów nie ma połączonych przypadków testowych.",
       "createTestRunDetailed": "Utwórz przebieg testu ({issues, plural, one {# problem} few {# problemy} many {# problemów} other {# problemu}} · {cases, plural, one {# przypadek} few {# przypadki} many {# przypadków} other {# przypadku}})"
+    },
+    "complete": {
+      "skippedForPermission": "Kamień milowy został zakończony. Jego przebiegi testów i sesje pozostały otwarte, ponieważ nie masz uprawnień do ich zakończenia.",
+      "skippedTestRunsForPermission": "Kamień milowy został zakończony. Jego przebiegi testów pozostały otwarte, ponieważ nie masz uprawnień do ich zakończenia.",
+      "skippedSessionsForPermission": "Kamień milowy został zakończony. Jego sesje pozostały otwarte, ponieważ nie masz uprawnień do ich zakończenia."
     }
   },
   "sessions": {
@@ -2427,7 +2440,12 @@
       "overtime": "Powyżej szacunku o: {time}"
     },
     "empty": {
-      "noMatchingCompleted": "Żadna z zakończonych sesji nie spełnia kryteriów filtra."
+      "noMatchingCompleted": "Żadna z zakończonych sesji nie spełnia kryteriów filtra.",
+      "noMatchingActive": "Żadna z aktywnych sesji nie spełnia kryteriów filtra."
+    },
+    "sessionFilters": {
+      "label": "Filtruj sesje",
+      "mine": "Moje sesje"
     },
     "filter": {
       "placeholder": "Filtruj sesje..."
@@ -6365,7 +6383,11 @@
         "aiStepsDerivedReviewLink": "Przejrzyj przebieg testu",
         "integrationAuthExpiredTitle": "Połączenie integracji wygasło",
         "integrationAuthExpiredMessage": "Twoje połączenie z „{integrationName}” wygasło. Połącz się ponownie, aby wznowić synchronizację zgłoszeń.",
-        "integrationAuthExpiredReconnect": "Połącz ponownie"
+        "integrationAuthExpiredReconnect": "Połącz ponownie",
+        "runReadyToCompleteTitle": "Przebieg testu gotowy do zakończenia",
+        "runReadyToCompleteMessage": "Wykonano {count, plural, one {# przypadek} few {wszystkie # przypadki} many {wszystkich # przypadków} other {wszystkich # przypadków}}.",
+        "runReadyToCompleteEmailMessage": "Wszystkie {caseCount, plural, one {# przypadek} few {# przypadki} many {# przypadków} other {# przypadków}} w przebiegu testu „{testRunName}” (projekt „{projectName}”) zostały wykonane. Przebieg jest gotowy do oznaczenia jako zakończony.",
+        "runReadyToCompleteReason": "Otrzymujesz tę wiadomość, ponieważ możesz kończyć przebiegi testów w tym projekcie."
       }
     },
     "issues": {
@@ -7355,7 +7377,8 @@
         }
       }
     },
-    "projectRunsFilters": "## Filtrowanie przebiegów testowych\n\nPrzełącz etykietę, aby zawęzić listę. Etykiety mają zastosowanie zarówno do kart Aktywne, jak i Zakończone, i są zapamiętywane na tym urządzeniu dla tego projektu.\n\n- **Ręczne** / **Automatyczne** — ogranicz listę do danego typu przebiegu. Włączenie obu (lub wyłączenie obu) pokazuje wszystkie przebiegi.\n- **Moje przebiegi testowe** — tylko przebiegi, w których uczestniczysz: utworzyłeś przebieg, przypisano Ci w nim przypadek testowy lub zarejestrowałeś w nim wynik testu."
+    "projectRunsFilters": "## Filtrowanie przebiegów testowych\n\nPrzełącz etykietę, aby zawęzić listę. Etykiety mają zastosowanie zarówno do kart Aktywne, jak i Zakończone, i są zapamiętywane na tym urządzeniu dla tego projektu.\n\n- **Ręczne** / **Automatyczne** — ogranicz listę do danego typu przebiegu. Włączenie obu (lub wyłączenie obu) pokazuje wszystkie przebiegi.\n- **Moje przebiegi testowe** — tylko przebiegi, w których uczestniczysz: utworzyłeś przebieg, przypisano Ci w nim przypadek testowy lub zarejestrowałeś w nim wynik testu.",
+    "projectSessionsFilters": "## Filtrowanie sesji\n\nPrzełącz etykietę, aby zawęzić listę. Etykiety mają zastosowanie zarówno do kart Aktywne, jak i Zakończone, i są zapamiętywane na tym urządzeniu dla tego projektu.\n\n- **Moje sesje** — tylko sesje, w których uczestniczysz: utworzyłeś sesję lub została ona Ci przypisana."
   },
   "reports": {
     "ui": {

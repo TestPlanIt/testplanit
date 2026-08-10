@@ -441,6 +441,7 @@ enum NotificationType {
     REVIEW_REMINDER
     AI_STEPS_DERIVED
     INTEGRATION_AUTH_EXPIRED
+    RUN_READY_TO_COMPLETE
 
     @@deny('all', auth() == null)
     @@allow('update', auth().access == 'ADMIN')
@@ -2717,28 +2718,28 @@ model SessionFieldValues {
 }
 
 model TestRuns {
-    id                    Int              @id @default(autoincrement())
-    projectId             Int
-    project               Projects         @relation(fields: [projectId], references: [id], onDelete: Cascade)
-    name                  String           @length(1)
-    note                  Json?
-    docs                  Json?
-    configId              Int?
-    configuration         Configurations?  @relation(fields: [configId], references: [id], onDelete: SetNull)
-    milestoneId           Int?
-    milestone             Milestones?      @relation(fields: [milestoneId], references: [id], onDelete: SetNull)
-    stateId               Int
-    state                 Workflows        @relation(fields: [stateId], references: [id])
-    forecastManual        Int?
-    forecastAutomated     Float?
-    elapsed               Int?
-    isCompleted           Boolean          @default(false)
-    isDeleted             Boolean          @default(false)
-    deletedAt             DateTime?        @db.Timestamptz(6)
-    completedAt           DateTime?
-    createdAt             DateTime         @default(now()) @db.Timestamptz(6)
-    createdById           String
-    createdBy             User             @relation("TestRunCreatedBy", fields: [createdById], references: [id])
+    id                        Int              @id @default(autoincrement())
+    projectId                 Int
+    project                   Projects         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    name                      String           @length(1)
+    note                      Json?
+    docs                      Json?
+    configId                  Int?
+    configuration             Configurations?  @relation(fields: [configId], references: [id], onDelete: SetNull)
+    milestoneId               Int?
+    milestone                 Milestones?      @relation(fields: [milestoneId], references: [id], onDelete: SetNull)
+    stateId                   Int
+    state                     Workflows        @relation(fields: [stateId], references: [id])
+    forecastManual            Int?
+    forecastAutomated         Float?
+    elapsed                   Int?
+    isCompleted               Boolean          @default(false)
+    isDeleted                 Boolean          @default(false)
+    deletedAt                 DateTime?        @db.Timestamptz(6)
+    completedAt               DateTime?
+    createdAt                 DateTime         @default(now()) @db.Timestamptz(6)
+    createdById               String
+    createdBy                 User             @relation("TestRunCreatedBy", fields: [createdById], references: [id])
     // Execution-start composition lock: freezes which cases are in the run
     // (add / remove / reorder) while execution continues. Distinct from the
     // completion lock (testRun.isCompleted), which freezes everything. null =
@@ -2749,22 +2750,28 @@ model TestRuns {
     // enhanced-client/RPC write so an editor can't clear the lock by bypassing
     // the creator/admin unlock gate. A Postgres trigger (scripts/apply-triggers)
     // is the authoritative backstop on TestRunCases.
-    compositionLockedAt   DateTime?        @db.Timestamptz(6) @deny('update', true)
-    compositionLockedById String?          @deny('update', true)
-    compositionLockedBy   User?            @relation("TestRunCompositionLockedBy", fields: [compositionLockedById], references: [id])
-    attachments           Attachments[]
-    testCases             TestRunCases[]
-    results               TestRunResults[]
-    tags                  Tags[]
-    issues                Issue[]
-    testRunType           TestRunType      @default(REGULAR)
-    junitTestSuites       JUnitTestSuite[]
-    comments              Comment[]
-    configurationGroupId  String?
+    compositionLockedAt       DateTime?        @db.Timestamptz(6) @deny('update', true)
+    compositionLockedById     String?          @deny('update', true)
+    compositionLockedBy       User?            @relation("TestRunCompositionLockedBy", fields: [compositionLockedById], references: [id])
+    attachments               Attachments[]
+    testCases                 TestRunCases[]
+    results                   TestRunResults[]
+    tags                      Tags[]
+    issues                    Issue[]
+    testRunType               TestRunType      @default(REGULAR)
+    junitTestSuites           JUnitTestSuite[]
+    comments                  Comment[]
+    configurationGroupId      String?
     // Source run id when this row was created by duplicating another; drives
     // the test_run.duplicated webhook event. A provenance marker, not a live
     // FK — it intentionally survives deletion of the source.
-    duplicatedFromId      Int?
+    duplicatedFromId          Int?
+    // One-shot marker for the "every case has been executed" notification.
+    // Stamped when the run first becomes fully executed, cleared when it stops
+    // being so, which is what re-arms the notification. Written only by the
+    // ready-check worker on the raw client; @deny('update', true) keeps
+    // enhanced-client and RPC writers out (cf. compositionLockedAt above).
+    readyToCompleteNotifiedAt DateTime?        @db.Timestamptz(6) @deny('update', true)
 
     @@index([projectId, isDeleted])
     @@index([createdById])

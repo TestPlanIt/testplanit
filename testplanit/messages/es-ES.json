@@ -232,6 +232,7 @@
       "high": "Alto"
     },
     "filters": {
+      "all": "Todo",
       "allStatuses": "Todos los estados",
       "allPriorities": "Todas las prioridades"
     },
@@ -580,6 +581,7 @@
     "errors": {
       "error": "Error",
       "somethingWentWrong": "Se ha producido un error inesperado. Inténtalo de nuevo más tarde.",
+      "completeNotPermitted": "No tienes permiso para completar este elemento.",
       "emailRequired": "Introduzca su dirección de correo electrónico.",
       "emailInvalid": "Esta no es una dirección de correo electrónico válida.",
       "passwordRequired": "Se requiere contraseña.",
@@ -2224,7 +2226,13 @@
       "description": "No se proporcionó descripción",
       "documentation": "No hay documentación proporcionada",
       "testRuns": "No hay pruebas",
+      "noMatchingTestRuns": "Ninguna ejecución de prueba coincide con tus filtros.",
+      "noMatchingSessions": "Ninguna sesión coincide con tus filtros.",
       "forecasts": "No hay datos de previsión disponibles"
+    },
+    "cardFilters": {
+      "labelRuns": "Filtrar ejecuciones de prueba",
+      "labelSessions": "Filtrar sesiones"
     },
     "browser": {
       "kindAll": "Todos los hitos",
@@ -2407,6 +2415,11 @@
       "filterHasUntested": "Tiene casos sin probar",
       "createRunNoCases": "Ninguno de los problemas seleccionados tiene casos de prueba vinculados.",
       "createTestRunDetailed": "Crear ejecución de prueba ({issues, plural, one {# problema} other {# problemas}} · {cases, plural, one {# caso} other {# casos}})"
+    },
+    "complete": {
+      "skippedForPermission": "El hito se completó. Sus ejecuciones de prueba y sesiones quedaron abiertas porque no tienes permiso para completarlas.",
+      "skippedTestRunsForPermission": "El hito se completó. Sus ejecuciones de prueba quedaron abiertas porque no tienes permiso para completarlas.",
+      "skippedSessionsForPermission": "El hito se completó. Sus sesiones quedaron abiertas porque no tienes permiso para completarlas."
     }
   },
   "sessions": {
@@ -2427,7 +2440,12 @@
       "overtime": "Sobre la estimación por: {time}"
     },
     "empty": {
-      "noMatchingCompleted": "No hay sesiones completadas que coincidan con tu filtro."
+      "noMatchingCompleted": "No hay sesiones completadas que coincidan con tu filtro.",
+      "noMatchingActive": "No hay sesiones activas que coincidan con tus filtros."
+    },
+    "sessionFilters": {
+      "label": "Filtrar sesiones",
+      "mine": "Mis sesiones"
     },
     "filter": {
       "placeholder": "Filtrar sesiones..."
@@ -6365,7 +6383,11 @@
         "aiStepsDerivedReviewLink": "Revisar ejecución de prueba",
         "integrationAuthExpiredTitle": "Conexión de integración caducada",
         "integrationAuthExpiredMessage": "Su conexión con \"{integrationName}\" ha caducado. Vuelva a conectarse para reanudar la sincronización de incidencias.",
-        "integrationAuthExpiredReconnect": "Reconectar"
+        "integrationAuthExpiredReconnect": "Reconectar",
+        "runReadyToCompleteTitle": "Ejecución de prueba lista para completar",
+        "runReadyToCompleteMessage": "{count, plural, one {El caso # ha sido ejecutado.} other {Todos los # casos han sido ejecutados.}}",
+        "runReadyToCompleteEmailMessage": "Se han ejecutado {caseCount, plural, one {# caso} other {# casos}} en la ejecución de prueba \"{testRunName}\" (proyecto \"{projectName}\"). La ejecución está lista para marcarse como completada.",
+        "runReadyToCompleteReason": "Recibe esto porque puede completar ejecuciones de prueba en este proyecto."
       }
     },
     "issues": {
@@ -7355,7 +7377,8 @@
         }
       }
     },
-    "projectRunsFilters": "## Filtrado de ejecuciones de prueba\n\nActive o desactive un chip para acotar la lista. Los chips se aplican tanto a las pestañas Activas como Completadas, y se recuerdan en este dispositivo para este proyecto.\n\n- **Manual** / **Automatizado** — limita la lista a ese tipo de ejecución. Activar ambos (o desactivar ambos) muestra todas las ejecuciones.\n- **Mis Ejecuciones de Prueba** — solo las ejecuciones en las que usted participa: usted creó la ejecución, tiene asignado un caso de prueba en ella, o registró un resultado de prueba en ella."
+    "projectRunsFilters": "## Filtrado de ejecuciones de prueba\n\nActive o desactive un chip para acotar la lista. Los chips se aplican tanto a las pestañas Activas como Completadas, y se recuerdan en este dispositivo para este proyecto.\n\n- **Manual** / **Automatizado** — limita la lista a ese tipo de ejecución. Activar ambos (o desactivar ambos) muestra todas las ejecuciones.\n- **Mis Ejecuciones de Prueba** — solo las ejecuciones en las que usted participa: usted creó la ejecución, tiene asignado un caso de prueba en ella, o registró un resultado de prueba en ella.",
+    "projectSessionsFilters": "## Filtrado de sesiones\n\nActive un chip para reducir la lista. Los chips se aplican tanto a las pestañas Activas como Completadas, y se recuerdan en este dispositivo para este proyecto.\n\n- **Mis Sesiones** — solo las sesiones en las que participa: usted creó la sesión, o está asignada a usted."
   },
   "reports": {
     "ui": {

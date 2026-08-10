@@ -123,6 +123,23 @@ vi.mock("~/lib/navigation", () => ({
   redirect: vi.fn(),
 }));
 
+// URL-state write spy (see lib/urlState.ts) — records writes as
+// "pathname?search" so assertions read like URLs. The stubbed location keeps
+// its "/projects/repository/1"-style path out of the picture: writes compose
+// from window.location.href, so the recorded path follows the stub.
+const { mockCommitUrlSearch } = vi.hoisted(() => ({
+  mockCommitUrlSearch: vi.fn(),
+}));
+
+vi.mock("~/lib/urlState", () => ({
+  commitUrlSearch: (url: string | URL) => {
+    const u = new URL(url.toString(), "http://localhost");
+    mockCommitUrlSearch(`${u.pathname}${u.search}`);
+  },
+  pushUrlSearch: vi.fn(),
+  useLocationSearch: () => window.location.search,
+}));
+
 vi.mock("next/navigation", () => ({
   useParams: () => paramsHolder.current,
   // Mirrors the real subscription: reflects the current URL each render.
@@ -396,8 +413,8 @@ function renderSelectionRepo(props: Record<string, any> = {}) {
 
 /** The single URL written by an axis switch, parsed for assertion. */
 function writtenViewUrl() {
-  expect(mockRouterReplace).toHaveBeenCalledTimes(1);
-  const url = mockRouterReplace.mock.calls[0][0] as string;
+  expect(mockCommitUrlSearch).toHaveBeenCalledTimes(1);
+  const url = mockCommitUrlSearch.mock.calls[0][0] as string;
   const [path, qs = ""] = url.split("?");
   return { path, params: new URLSearchParams(qs) };
 }
@@ -421,7 +438,7 @@ describe("axis switching never touches predicates", () => {
     const before = lastProps(filterBarSpy).predicates;
     expect(before).toEqual([tagsAny, templatesIn12]);
 
-    mockRouterReplace.mockClear();
+    mockCommitUrlSearch.mockClear();
     act(() => lastProps(viewSelectorSpy).onValueChange("templates"));
 
     // Exactly one URL write: the ?view= change, with everything else intact.
@@ -450,7 +467,7 @@ describe("axis switching never touches predicates", () => {
     setLocation("?view=folders");
     renderRepo();
 
-    mockRouterReplace.mockClear();
+    mockCommitUrlSearch.mockClear();
     act(() => lastProps(viewSelectorSpy).onValueChange(axis));
 
     const { params } = writtenViewUrl();
@@ -466,7 +483,7 @@ describe("axis switching never touches predicates", () => {
     setLocation("?view=templates&node=9&f=tags:any");
     renderRepo();
 
-    mockRouterReplace.mockClear();
+    mockCommitUrlSearch.mockClear();
     act(() => lastProps(viewSelectorSpy).onValueChange("folders"));
 
     // Grouping bookkeeping still happens (folder selection cleared)…
@@ -490,7 +507,7 @@ describe("?view= gating in selection mode", () => {
 
     act(() => lastProps(viewSelectorSpy).onValueChange("templates"));
 
-    expect(mockRouterReplace).not.toHaveBeenCalled();
+    expect(mockCommitUrlSearch).not.toHaveBeenCalled();
     expect(mockRouterPush).not.toHaveBeenCalled();
     // The grouping change still applies in memory.
     expect(lastProps(viewSelectorSpy).selectedItem).toBe("templates");
@@ -502,7 +519,7 @@ describe("?view= gating in selection mode", () => {
 
     expect(lastProps(filterBarSpy).predicates).toEqual([]);
     expect(lastProps(casesSpy).predicates).toEqual([]);
-    expect(mockRouterReplace).not.toHaveBeenCalled();
+    expect(mockCommitUrlSearch).not.toHaveBeenCalled();
   });
 });
 
@@ -516,10 +533,9 @@ describe("run-mode assigned-to-me seed", () => {
     setLocation("");
     renderRepo({ isRunMode: true });
 
-    await waitFor(() => expect(mockRouterReplace).toHaveBeenCalledTimes(1));
-    expect(mockRouterReplace).toHaveBeenCalledWith(
-      "/projects/repository/42?f=assignedTo:in:user-test",
-      { scroll: false }
+    await waitFor(() => expect(mockCommitUrlSearch).toHaveBeenCalledTimes(1));
+    expect(mockCommitUrlSearch).toHaveBeenCalledWith(
+      "/projects/repository/42?f=assignedTo:in:user-test"
     );
   });
 
@@ -529,11 +545,11 @@ describe("run-mode assigned-to-me seed", () => {
     const { rerenderRepo } = renderRepo({ isRunMode: true });
 
     // No decision until testRunOptions resolve.
-    expect(mockRouterReplace).not.toHaveBeenCalled();
+    expect(mockCommitUrlSearch).not.toHaveBeenCalled();
 
     viewOptionsHolder.current = { data: seedableRunOptions(), isError: false };
     rerenderRepo();
-    await waitFor(() => expect(mockRouterReplace).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(mockCommitUrlSearch).toHaveBeenCalledTimes(1));
 
     // The router applies the seed…
     setLocation("?f=assignedTo:in:user-test");
@@ -544,7 +560,7 @@ describe("run-mode assigned-to-me seed", () => {
     viewOptionsHolder.current = { data: seedableRunOptions(), isError: false };
     rerenderRepo();
 
-    expect(mockRouterReplace).toHaveBeenCalledTimes(1);
+    expect(mockCommitUrlSearch).toHaveBeenCalledTimes(1);
   });
 
   it.each([
@@ -554,14 +570,14 @@ describe("run-mode assigned-to-me seed", () => {
     setLocation(search);
     renderRepo({ isRunMode: true });
 
-    expect(mockRouterReplace).not.toHaveBeenCalled();
+    expect(mockCommitUrlSearch).not.toHaveBeenCalled();
   });
 
   it("is suppressed by a ?selectedCase= deep link", () => {
     setLocation("?selectedCase=77");
     renderRepo({ isRunMode: true });
 
-    expect(mockRouterReplace).not.toHaveBeenCalled();
+    expect(mockCommitUrlSearch).not.toHaveBeenCalled();
   });
 
   it("does not seed when the viewer has no assignments, even if options later include them", () => {
@@ -571,12 +587,12 @@ describe("run-mode assigned-to-me seed", () => {
       isError: false,
     };
     const { rerenderRepo } = renderRepo({ isRunMode: true });
-    expect(mockRouterReplace).not.toHaveBeenCalled();
+    expect(mockCommitUrlSearch).not.toHaveBeenCalled();
 
     // The decision was already made; later data including me changes nothing.
     viewOptionsHolder.current = { data: seedableRunOptions(), isError: false };
     rerenderRepo();
-    expect(mockRouterReplace).not.toHaveBeenCalled();
+    expect(mockCommitUrlSearch).not.toHaveBeenCalled();
   });
 
   it("does not seed outside run view mode (repository browsing)", () => {
@@ -584,14 +600,14 @@ describe("run-mode assigned-to-me seed", () => {
     setLocation("");
     renderRepo({ isRunMode: false });
 
-    expect(mockRouterReplace).not.toHaveBeenCalled();
+    expect(mockCommitUrlSearch).not.toHaveBeenCalled();
   });
 
   it("does not seed in selection mode and keeps run affordances off", () => {
     setLocation("");
     renderRepo({ isRunMode: true, isSelectionMode: true });
 
-    expect(mockRouterReplace).not.toHaveBeenCalled();
+    expect(mockCommitUrlSearch).not.toHaveBeenCalled();
     expect(lastProps(filterBarSpy).isRunMode).toBe(false);
     expect(lastProps(filterBarSpy).predicates).toEqual([]);
   });
@@ -600,11 +616,11 @@ describe("run-mode assigned-to-me seed", () => {
     setLocation("");
     viewOptionsHolder.current = { data: undefined, isError: true };
     const { rerenderRepo } = renderRepo({ isRunMode: true });
-    expect(mockRouterReplace).not.toHaveBeenCalled();
+    expect(mockCommitUrlSearch).not.toHaveBeenCalled();
 
     viewOptionsHolder.current = { data: seedableRunOptions(), isError: false };
     rerenderRepo();
-    expect(mockRouterReplace).not.toHaveBeenCalled();
+    expect(mockCommitUrlSearch).not.toHaveBeenCalled();
   });
 });
 
@@ -808,7 +824,7 @@ describe("view-options counts wiring", () => {
       });
 
       // Spec §10: the dialog never writes to the page that hosts it.
-      expect(mockRouterReplace).not.toHaveBeenCalled();
+      expect(mockCommitUrlSearch).not.toHaveBeenCalled();
       expect(mockRouterPush).not.toHaveBeenCalled();
       expect(lastProps(casesSpy).searchText).toBe("login");
     } finally {
@@ -1024,7 +1040,7 @@ describe("one owner for this page's URL writes", () => {
       );
 
   const lastWrittenParams = () => {
-    const url = String(mockRouterReplace.mock.calls.at(-1)![0]);
+    const url = String(mockCommitUrlSearch.mock.calls.at(-1)![0]);
     return new URLSearchParams(url.split("?")[1] ?? "");
   };
 
@@ -1062,7 +1078,7 @@ describe("one owner for this page's URL writes", () => {
       renderRepo();
       act(() => lastProps(viewSelectorSpy).onValueChange("templates"));
 
-      const url = String(mockRouterReplace.mock.calls.at(-1)![0]);
+      const url = String(mockCommitUrlSearch.mock.calls.at(-1)![0]);
       expect(url).toContain("view=templates");
       expect(url).toContain("f=templates:in:1,2");
       expect(url).not.toContain("%3A");
@@ -1098,7 +1114,7 @@ describe("applying a saved view", () => {
       );
 
   const lastWrittenParams = () => {
-    const url = String(mockRouterReplace.mock.calls.at(-1)![0]);
+    const url = String(mockCommitUrlSearch.mock.calls.at(-1)![0]);
     return new URLSearchParams(url.split("?")[1] ?? "");
   };
 
@@ -1131,7 +1147,7 @@ describe("applying a saved view", () => {
     try {
       setLocation("?view=templates&node=9&f=tags:any");
       renderRepo();
-      mockRouterReplace.mockClear();
+      mockCommitUrlSearch.mockClear();
 
       await applySavedView({
         projectId: 42,
@@ -1142,7 +1158,7 @@ describe("applying a saved view", () => {
 
       // The predicate half went through useRepositoryFilters' own setter, so
       // the applied view is a normal, shareable filter URL.
-      expect(mockRouterReplace.mock.calls[0][0]).toContain(
+      expect(mockCommitUrlSearch.mock.calls[0][0]).toContain(
         "f=templates:in:1,2"
       );
       const params = lastWrittenParams();
@@ -1165,7 +1181,7 @@ describe("applying a saved view", () => {
     try {
       setLocation("?view=folders&node=4&f=tags:any");
       renderRepo();
-      mockRouterReplace.mockClear();
+      mockCommitUrlSearch.mockClear();
 
       await applySavedView({
         projectId: 42,
@@ -1188,7 +1204,7 @@ describe("applying a saved view", () => {
   it("falls back to the default axis when the view's grouping field is gone", async () => {
     setLocation("?view=templates");
     renderRepo();
-    mockRouterReplace.mockClear();
+    mockCommitUrlSearch.mockClear();
 
     // fieldId 99 is not in the view-options dynamic fields.
     await applySavedView({
@@ -1208,7 +1224,7 @@ describe("applying a saved view", () => {
   it("keeps a surviving dynamic-field axis", async () => {
     setLocation("?view=folders");
     renderRepo();
-    mockRouterReplace.mockClear();
+    mockCommitUrlSearch.mockClear();
 
     await applySavedView({
       projectId: 42,
@@ -1237,7 +1253,7 @@ describe("applying a saved view", () => {
       search: "",
     });
 
-    expect(mockRouterReplace).not.toHaveBeenCalled();
+    expect(mockCommitUrlSearch).not.toHaveBeenCalled();
     expect(mockRouterPush).not.toHaveBeenCalled();
     expect(lastProps(filterBarSpy).predicates).toEqual([templatesIn12]);
     expect(lastProps(casesSpy).predicates).toEqual([templatesIn12]);

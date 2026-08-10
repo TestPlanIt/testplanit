@@ -1,5 +1,6 @@
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
+import { commitUrlSearch } from "~/lib/urlState";
 import AddTestRunModal from "@/[locale]/projects/runs/[projectId]/AddTestRunModal";
 import { AttachmentsCarousel } from "@/components/AttachmentsCarousel";
 import { Button } from "@/components/ui/button";
@@ -923,13 +924,14 @@ export default function Cases({
       hasAutoSelectedRef.current = true;
       const firstFolder = projectFolders[0];
 
-      // Navigate to the first folder by updating the URL
-      const currentSearchParams = new URLSearchParams(searchParams.toString());
-      currentSearchParams.set("node", firstFolder.id.toString());
-      currentSearchParams.set("view", "folders");
-
-      const newUrl = `${pathname}?${currentSearchParams.toString()}`;
-      router.replace(newUrl);
+      // Select the first folder by updating the URL. commitUrlSearch, not
+      // router.replace: same-route URL-state sync (see lib/urlState.ts), so
+      // the mounted page (and any dialog hosting this component, e.g. the
+      // run-creation case picker) keeps its state.
+      const url = new URL(window.location.href);
+      url.searchParams.set("node", firstFolder.id.toString());
+      url.searchParams.set("view", "folders");
+      commitUrlSearch(url);
 
       // Dispatch a custom event to notify the tree component
       // Use a small timeout to ensure the URL change propagates

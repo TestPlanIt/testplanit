@@ -23,6 +23,7 @@ TestPlanIt currently supports the following notification types:
 - **Comment Mentions** - When someone mentions you in a comment (@username)
 - **System Announcements** - Important system-wide announcements and updates
 - **Milestone Due Reminder** - When a milestone's due date is approaching or overdue
+- **Test Run Ready to Complete** - When every test case in a run has been executed, sent to the users who can complete that run; includes a **Review and complete** link to the run
 - **Integration Connection Expired** - When an OAuth integration connection you authorized can no longer refresh its token and must be reconnected; includes a **Reconnect** link that starts the consent flow
 
 ## Notification Center UI
@@ -210,6 +211,31 @@ When a milestone's due date is approaching or has passed, notifications are auto
 4. Configure how many days before the due date to start notifications
 
 For more details, see [Milestone Details - Due Date Notifications](./projects/milestone-details.md#due-date-notifications).
+
+#### Test Run Ready to Complete Notifications
+
+When the last outstanding piece of work in a test run receives a final result, everyone who can close that run is told it is ready.
+
+**What "ready" means**:
+
+- Every live test case in the run carries a status that counts as **completed** in the workflow. A case left **Untested**, or moved to a status such as **Retest** or **Blocked**, keeps the run open — those are explicit "not finished" signals, not missing data.
+- For [parameterized cases](./projects/parameterized-test-cases.md), every **iteration** must also carry a completed status. A case with one of ten iterations passed does not count as executed.
+- Cases removed from the run no longer hold it open.
+- A run with no cases at all never qualifies.
+
+**Recipients**: The users who could actually complete the run — anyone whose effective role in the project grants **canClose** on **Test Runs**, plus system administrators and project administrators with access to the project.
+
+**Features**:
+
+- **The run is not completed for you.** Completing a run is irreversible, so the notification is a prompt, not an action — it carries a **Review and complete** link to the run, and the decision stays with a person.
+- Only **manual** runs are covered. Automated runs report through their CI job rather than case-by-case execution, so these counts don't describe them; see [Abandoned automation cleanup](./statuses.md#abandoned-automation-cleanup) for closing those.
+- **One notification per fill-up.** A run notifies once when it becomes fully executed. If it stops being fully executed — a result is deleted, or a new case is added — it re-arms, and notifies again the next time it fills up.
+- Evaluation runs a few seconds behind the result that triggered it, which also collapses a bulk submission of many results into a single notification rather than one per case.
+- Runs that are already completed are skipped.
+
+:::note Very broad recipient lists are skipped
+If a project is configured so that its **default access** role can close test runs, every active user in the deployment becomes a recipient. Above 100 recipients the notification stops being a signal, so it is skipped for that run and a warning is written to the server logs instead. If your team expects these notifications and never receives them, check whether the project's default role grants **canClose** on Test Runs — see the [Permissions Guide](./permissions-guide.md).
+:::
 
 ## User Preferences
 

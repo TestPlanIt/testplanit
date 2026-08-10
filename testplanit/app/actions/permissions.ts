@@ -157,9 +157,19 @@ export async function getUserProjectPermissions(
     const specificRolePermission = groupPermissions.find(
       (p) => p.accessType === ProjectAccessType.SPECIFIC_ROLE
     );
+    const globalRolePermission = groupPermissions.find(
+      (p) => p.accessType === ProjectAccessType.GLOBAL_ROLE
+    );
 
     if (specificRolePermission) {
       effectiveRole = specificRolePermission.role as RoleWithPermissions | null;
+    } else if (globalRolePermission) {
+      // A group granted GLOBAL_ROLE access carries the member's own global
+      // role onto the project. Omitting this branch made these users look
+      // permissionless here while /api/get-user-permissions — which the UI
+      // asks — granted them the role, so the UI offered actions this check
+      // then refused.
+      effectiveRole = user.role as RoleWithPermissions | null;
     }
   }
 

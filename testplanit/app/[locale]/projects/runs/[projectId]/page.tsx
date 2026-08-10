@@ -2,6 +2,7 @@
 
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
+import { commitUrlSearch } from "~/lib/urlState";
 import { AutomationRunsCard } from "@/components/AutomationRunsCard";
 import { CollapsibleSummarySection } from "@/components/CollapsibleSummarySection";
 import CompletedRunsLineChart from "@/components/dataVisualizations/CompletedRunsLineChart";
@@ -63,7 +64,7 @@ import {
   usePagination,
 } from "~/lib/contexts/PaginationContext";
 import { usePageSizeOptions } from "~/hooks/usePageSizeOptions";
-import { usePathname, useRouter } from "~/lib/navigation";
+import { useRouter } from "~/lib/navigation";
 import { toHumanReadable } from "~/utils/duration";
 import { isAutomatedTestRunType } from "~/utils/testResultTypes";
 import AddTestRunModal from "./AddTestRunModal";
@@ -104,7 +105,6 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
   const { projectId } = use(params);
   const router = useRouter();
   const searchParams = useSearchParams();
-  const pathname = usePathname();
   const [isLoading, setIsLoading] = useState(true);
   const {
     session,
@@ -227,8 +227,11 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
   // New handler for the main "Add Test Run" modal open state change
   const handleCloseAddTestRunModal = useCallback(() => {
     setIsAddTestRunModalOpen(false);
-    // Clear URL params when closing this specific modal
-    router.replace(pathname, { scroll: false });
+    // Clear URL params when closing this specific modal. commitUrlSearch,
+    // not router.replace: same-route URL-state sync (see lib/urlState.ts).
+    const clearedUrl = new URL(window.location.href);
+    clearedUrl.search = "";
+    commitUrlSearch(clearedUrl);
     // Clear sessionStorage when modal closes
     sessionStorage.removeItem("createTestRun_selectedCases");
     sessionStorage.removeItem("createTestRun_linkedIssues");
@@ -237,7 +240,7 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
     setModalSelectedTestCases([]);
     setModalLinkedIssueIds([]);
     setModalDefaultMilestoneId(undefined);
-  }, [router, setIsAddTestRunModalOpen, pathname]);
+  }, [setIsAddTestRunModalOpen]);
 
   // New state for DuplicateTestRunDialog and subsequent AddTestRunModal for duplication
   const [isDuplicateDialogOpen, setIsDuplicateDialogOpen] = useState(false);

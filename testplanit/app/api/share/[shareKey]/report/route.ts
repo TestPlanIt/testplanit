@@ -9,8 +9,6 @@ import {
 import { baseDb } from "~/lib/db";
 import { authOptions } from "~/server/auth";
 
-export const dynamic = "force-dynamic";
-
 /**
  * GET /api/share/[shareKey]/report
  * Fetch report data for a shared link (public access)

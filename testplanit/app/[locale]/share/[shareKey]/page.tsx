@@ -15,8 +15,6 @@ interface SharePageProps {
   }>;
 }
 
-export const dynamic = "force-dynamic";
-
 async function fetchShareMetadata(shareKey: string) {
   // Use NEXTAUTH_URL directly to preserve the correct protocol (http/https)
   const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";

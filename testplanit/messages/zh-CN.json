@@ -232,6 +232,7 @@
       "high": "高的"
     },
     "filters": {
+      "all": "全部",
       "allStatuses": "所有状态",
       "allPriorities": "所有优先事项"
     },
@@ -580,6 +581,7 @@
     "errors": {
       "error": "错误",
       "somethingWentWrong": "发生意外错误，请稍后重试。",
+      "completeNotPermitted": "您没有权限完成此项目。",
       "emailRequired": "请输入您的电子邮件地址。",
       "emailInvalid": "这是一个无效的电子邮件地址。",
       "passwordRequired": "需要输入密码。",
@@ -2224,7 +2226,13 @@
       "description": "未提供描述",
       "documentation": "未提供任何文件。",
       "testRuns": "没有测试运行",
+      "noMatchingTestRuns": "没有符合筛选条件的测试运行。",
+      "noMatchingSessions": "没有符合筛选条件的会话。",
       "forecasts": "暂无预测数据"
+    },
+    "cardFilters": {
+      "labelRuns": "筛选测试运行",
+      "labelSessions": "筛选会话"
     },
     "browser": {
       "kindAll": "所有里程碑",
@@ -2407,6 +2415,11 @@
       "filterHasUntested": "有未测试的用例",
       "createRunNoCases": "所选问题均未链接测试用例。",
       "createTestRunDetailed": "创建测试运行（{issues, plural, other {# 个问题}} · {cases, plural, other {# 个用例}}）"
+    },
+    "complete": {
+      "skippedForPermission": "里程碑已完成。由于您没有权限完成其测试运行和会话,它们仍保持打开状态。",
+      "skippedTestRunsForPermission": "里程碑已完成。由于您没有权限完成其测试运行,它们仍保持打开状态。",
+      "skippedSessionsForPermission": "里程碑已完成。由于您没有权限完成其会话,它们仍保持打开状态。"
     }
   },
   "sessions": {
@@ -2427,7 +2440,12 @@
       "overtime": "超过估计值： {time}"
     },
     "empty": {
-      "noMatchingCompleted": "没有符合您筛选条件的已完成会话。"
+      "noMatchingCompleted": "没有符合您筛选条件的已完成会话。",
+      "noMatchingActive": "没有符合您筛选条件的活跃会话。"
+    },
+    "sessionFilters": {
+      "label": "筛选会话",
+      "mine": "我的会话"
     },
     "filter": {
       "placeholder": "筛选会话..."
@@ -6365,7 +6383,11 @@
         "aiStepsDerivedReviewLink": "查看测试运行",
         "integrationAuthExpiredTitle": "集成连接已过期",
         "integrationAuthExpiredMessage": "您与“{integrationName}”的连接已过期。请重新连接以恢复问题同步。",
-        "integrationAuthExpiredReconnect": "重新连接"
+        "integrationAuthExpiredReconnect": "重新连接",
+        "runReadyToCompleteTitle": "测试运行已准备好完成",
+        "runReadyToCompleteMessage": "{count, plural, other {全部 # 个用例已执行。}}",
+        "runReadyToCompleteEmailMessage": "测试运行“{testRunName}”(项目“{projectName}”)中的所有 {caseCount, plural, other {# 个用例}} 均已执行。该运行已可标记为完成。",
+        "runReadyToCompleteReason": "您收到此通知是因为您可以完成此项目中的测试运行。"
       }
     },
     "issues": {
@@ -7355,7 +7377,8 @@
         }
       }
     },
-    "projectRunsFilters": "## 筛选测试运行\n\n切换标签以缩小列表范围。标签同时适用于“活动”和“已完成”标签页,并会在此设备上为该项目记住您的选择。\n\n- **手动** / **自动化** — 将列表限制为该类型的运行。同时开启(或同时关闭)两者将显示所有运行。\n- **我的测试运行** — 仅显示您参与的运行:您创建了该运行、您被分配了其中的测试用例,或您在其中记录了测试结果。"
+    "projectRunsFilters": "## 筛选测试运行\n\n切换标签以缩小列表范围。标签同时适用于“活动”和“已完成”标签页,并会在此设备上为该项目记住您的选择。\n\n- **手动** / **自动化** — 将列表限制为该类型的运行。同时开启(或同时关闭)两者将显示所有运行。\n- **我的测试运行** — 仅显示您参与的运行:您创建了该运行、您被分配了其中的测试用例,或您在其中记录了测试结果。",
+    "projectSessionsFilters": "## 筛选会话\n\n切换标签以缩小列表范围。标签同时适用于“进行中”和“已完成”选项卡,并会在此设备上为该项目记住相应设置。\n\n- **我的会话** — 仅显示您参与的会话:由您创建的会话,或分配给您的会话。"
   },
   "reports": {
     "ui": {

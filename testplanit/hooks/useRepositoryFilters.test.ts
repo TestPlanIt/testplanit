@@ -45,6 +45,22 @@ vi.mock("next/navigation", () => ({
   useSearchParams: () => new URLSearchParams(window.location.search),
 }));
 
+const { mockCommitUrlSearch } = vi.hoisted(() => ({
+  mockCommitUrlSearch: vi.fn(),
+}));
+
+vi.mock("~/lib/urlState", () => ({
+  // Record writes as "pathname?search" so expectations read like URLs; the
+  // read hook mirrors the real subscription by reflecting the current
+  // (stubbed) location each render.
+  commitUrlSearch: (url: string | URL) => {
+    const u = new URL(url.toString(), "http://localhost");
+    mockCommitUrlSearch(`${u.pathname}${u.search}`);
+  },
+  pushUrlSearch: vi.fn(),
+  useLocationSearch: () => window.location.search,
+}));
+
 // --- Fixtures ---
 
 const repoRegistry = buildFilterDimensions({
@@ -154,10 +170,9 @@ describe("useRepositoryFilters", () => {
         result.current.setPredicates([templatesIn12, tagsAny]);
       });
 
-      expect(mockRouterReplace).toHaveBeenCalledTimes(1);
-      expect(mockRouterReplace).toHaveBeenCalledWith(
-        "/projects/repository/1?node=42&view=templates&status=1&status=2&f=templates:in:1,2&f=tags:any",
-        { scroll: false }
+      expect(mockCommitUrlSearch).toHaveBeenCalledTimes(1);
+      expect(mockCommitUrlSearch).toHaveBeenCalledWith(
+        "/projects/repository/1?node=42&view=templates&status=1&status=2&f=templates:in:1,2&f=tags:any"
       );
     });
 
@@ -169,7 +184,7 @@ describe("useRepositoryFilters", () => {
         ]);
       });
 
-      const url = mockRouterReplace.mock.calls[0][0] as string;
+      const url = mockCommitUrlSearch.mock.calls[0][0] as string;
       expect(url).toBe(
         "/projects/repository/1?f=field_12:contains:foo%252Cbar"
       );
@@ -188,9 +203,8 @@ describe("useRepositoryFilters", () => {
         result.current.setPredicates([]);
       });
 
-      expect(mockRouterReplace).toHaveBeenCalledWith(
-        "/projects/repository/1?node=1",
-        { scroll: false }
+      expect(mockCommitUrlSearch).toHaveBeenCalledWith(
+        "/projects/repository/1?node=1"
       );
     });
 
@@ -202,9 +216,9 @@ describe("useRepositoryFilters", () => {
         result.current.setPredicates([]);
       });
 
-      expect(mockRouterReplace).toHaveBeenCalledWith("/projects/repository/1", {
-        scroll: false,
-      });
+      expect(mockCommitUrlSearch).toHaveBeenCalledWith(
+        "/projects/repository/1"
+      );
     });
   });
 
@@ -217,7 +231,7 @@ describe("useRepositoryFilters", () => {
         result.current.setPredicates([templatesIn12, tagsAny]);
       });
 
-      expect(mockRouterReplace).not.toHaveBeenCalled();
+      expect(mockCommitUrlSearch).not.toHaveBeenCalled();
     });
 
     it("skips even when the URL carries the form-encoded variant", () => {
@@ -228,7 +242,7 @@ describe("useRepositoryFilters", () => {
         result.current.setPredicates([templatesIn12, tagsAny]);
       });
 
-      expect(mockRouterReplace).not.toHaveBeenCalled();
+      expect(mockCommitUrlSearch).not.toHaveBeenCalled();
     });
 
     it("skips when both the URL and the next set are empty", () => {
@@ -239,7 +253,7 @@ describe("useRepositoryFilters", () => {
         result.current.setPredicates([]);
       });
 
-      expect(mockRouterReplace).not.toHaveBeenCalled();
+      expect(mockCommitUrlSearch).not.toHaveBeenCalled();
     });
 
     it("writes when the f set actually differs", () => {
@@ -250,7 +264,7 @@ describe("useRepositoryFilters", () => {
         result.current.setPredicates([templatesIn12]);
       });
 
-      expect(mockRouterReplace).toHaveBeenCalledTimes(1);
+      expect(mockCommitUrlSearch).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -272,7 +286,7 @@ describe("useRepositoryFilters", () => {
       });
 
       expect(result.current.predicates).toEqual([tagsAny]);
-      expect(mockRouterReplace).not.toHaveBeenCalled();
+      expect(mockCommitUrlSearch).not.toHaveBeenCalled();
       expect(mockRouterPush).not.toHaveBeenCalled();
       expect(window.location.search).toBe("?f=templates:in:1");
     });
@@ -468,9 +482,8 @@ describe("useRepositoryFilters", () => {
       });
 
       // delete-all-then-append: the f set re-serializes after the other params.
-      expect(mockRouterReplace).toHaveBeenCalledWith(
-        "/projects/repository/1?node=9&f=templates:in:1&f=tags:any",
-        { scroll: false }
+      expect(mockCommitUrlSearch).toHaveBeenCalledWith(
+        "/projects/repository/1?node=9&f=templates:in:1&f=tags:any"
       );
     });
 
@@ -482,9 +495,8 @@ describe("useRepositoryFilters", () => {
         result.current.removePredicate("tags", "any");
       });
 
-      expect(mockRouterReplace).toHaveBeenCalledWith(
-        "/projects/repository/1?f=templates:in:1",
-        { scroll: false }
+      expect(mockCommitUrlSearch).toHaveBeenCalledWith(
+        "/projects/repository/1?f=templates:in:1"
       );
     });
   });
@@ -541,7 +553,7 @@ describe("URL-length mitigation", () => {
       result.current.setPredicates([templatesIn12]);
     });
 
-    const [url] = mockRouterReplace.mock.calls[0];
+    const [url] = mockCommitUrlSearch.mock.calls[0];
     expect(url).toContain("f=templates:in:1,2");
     expect(url).not.toContain("fz=");
   });
@@ -554,7 +566,7 @@ describe("URL-length mitigation", () => {
       result.current.setPredicates(predicates);
     });
 
-    const [url] = mockRouterReplace.mock.calls[0] as [string];
+    const [url] = mockCommitUrlSearch.mock.calls[0] as [string];
     const search = url.slice(url.indexOf("?"));
     expect(search).toMatch(/[?&]fz=/);
     expect(search).not.toContain("f=");
@@ -574,7 +586,7 @@ describe("URL-length mitigation", () => {
       result.current.setPredicates([templatesIn12]);
     });
 
-    const [url] = mockRouterReplace.mock.calls[0] as [string];
+    const [url] = mockCommitUrlSearch.mock.calls[0] as [string];
     expect(url).toContain("node=5");
     expect(url).toContain("f=templates:in:1,2");
     expect(url).not.toContain("fz=");
@@ -638,7 +650,7 @@ describe("URL-length mitigation", () => {
       ]);
     });
 
-    const [url] = mockRouterReplace.mock.calls[0] as [string];
+    const [url] = mockCommitUrlSearch.mock.calls[0] as [string];
     setLocation(url.slice(url.indexOf("?")));
     const { result: reread } = renderFilters();
 
@@ -665,7 +677,7 @@ describe("URL-length mitigation", () => {
       result.current.setPredicates(predicates);
     });
 
-    expect(mockRouterReplace).not.toHaveBeenCalled();
+    expect(mockCommitUrlSearch).not.toHaveBeenCalled();
   });
 });
 
@@ -944,6 +956,6 @@ describe("contradictory predicate resolution", () => {
       bareNone("tags"),
       { dimension: "tags", operator: "any", values: [1] },
     ]);
-    expect(mockRouterReplace).not.toHaveBeenCalled();
+    expect(mockCommitUrlSearch).not.toHaveBeenCalled();
   });
 });

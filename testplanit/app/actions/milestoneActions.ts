@@ -38,6 +38,14 @@ interface ServerActionResult {
   status: "success" | "confirmation_required" | "error";
   message?: string;
   impact?: CompletionImpact;
+  /**
+   * Set when the milestone completed but a requested cascade half was dropped
+   * because the caller lacks canClose on that area.
+   */
+  skippedForPermission?: {
+    skippedTestRuns: boolean;
+    skippedSessions: boolean;
+  };
 }
 
 /**
@@ -69,8 +77,8 @@ export async function completeMilestoneCascade(
         completionDate,
         isPreview: _isPreview,
         forceCompleteDependencies,
-        completeTestRuns = true,
-        completeSessions = true,
+        completeTestRuns: requestedCompleteTestRuns = true,
+        completeSessions: requestedCompleteSessions = true,
         testRunStateId,
         sessionStateId,
       } = parseResult.data;
@@ -103,6 +111,33 @@ export async function completeMilestoneCascade(
             "You do not have permission to complete milestones in this project.",
         };
       }
+
+      // Completing the milestone's runs and sessions is the same act as
+      // completing them individually, which requires canClose on their own
+      // areas — Milestones.canClose alone must not be a side door. The cascade
+      // degrades rather than failing: the milestone still completes, and the
+      // caller is told which halves were skipped.
+      const [canCloseTestRuns, canCloseSessions] = await Promise.all([
+        checkUserPermission(
+          session.user.id,
+          projectId,
+          session,
+          ApplicationArea.TestRuns,
+          "canClose"
+        ),
+        checkUserPermission(
+          session.user.id,
+          projectId,
+          session,
+          ApplicationArea.Sessions,
+          "canClose"
+        ),
+      ]);
+
+      const completeTestRuns = requestedCompleteTestRuns && canCloseTestRuns;
+      const completeSessions = requestedCompleteSessions && canCloseSessions;
+      const skippedTestRuns = requestedCompleteTestRuns && !canCloseTestRuns;
+      const skippedSessions = requestedCompleteSessions && !canCloseSessions;
 
       // --- Determine target completed stateId for Test Runs ---
       let completedTestRunStateId: number | undefined = undefined;
@@ -413,7 +448,12 @@ export async function completeMilestoneCascade(
 
         // Success path returns no `message`; the client renders a localized
         // toast based on whether dependencies were involved.
-        return { status: "success" };
+        return {
+          status: "success",
+          ...(skippedTestRuns || skippedSessions
+            ? { skippedForPermission: { skippedTestRuns, skippedSessions } }
+            : {}),
+        };
       } catch (error) {
         // Review & Approval (Plan 01-04). When a per-entity preflight rejects
         // an in-flight cascade, surface the typed code through the server

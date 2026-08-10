@@ -816,6 +816,64 @@ export function NotificationContent({
     );
   }
 
+  if (notification.type === "RUN_READY_TO_COMPLETE") {
+    if (data.projectId && data.testRunId) {
+      const runLink = `/projects/runs/${data.projectId}/${data.testRunId}`;
+      return (
+        <div
+          className="space-y-2"
+          data-testid="notification-run-ready-to-complete"
+        >
+          <h4 className="font-medium text-sm">
+            {t("runReadyToCompleteTitle")}
+          </h4>
+          <div className="text-sm text-muted-foreground space-y-1">
+            <p>
+              {t("runReadyToCompleteExecuted", {
+                count: data.caseCount ?? 0,
+              })}
+            </p>
+            {/* The run is named the way every other notification names one:
+                a linked TestRunNameDisplay with its icon, then "in project"
+                and the project cell. */}
+            <div className="flex items-center gap-1">
+              <Link
+                href={runLink}
+                data-testid="notification-run-ready-link"
+                className="font-medium text-primary hover:underline inline-flex items-center gap-1"
+              >
+                <TestRunNameDisplay
+                  testRun={{
+                    id: data.testRunId,
+                    name: data.testRunName || data.entityName,
+                  }}
+                  showIcon={true}
+                />
+                <ExternalLink className="h-3 w-3" />
+              </Link>
+            </div>
+            <div className="flex items-center gap-1 flex-wrap">
+              <span>{t("inProject")}</span>
+              <ProjectNameCell
+                projectId={data.projectId}
+                value={data.projectName}
+                size="sm"
+              />
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Fallback for notifications without complete data
+    return (
+      <div className="space-y-1">
+        <h4 className="font-medium text-sm">{notification.title}</h4>
+        <p className="text-sm text-muted-foreground">{notification.message}</p>
+      </div>
+    );
+  }
+
   // Fallback for other notification types
   return (
     <div className="space-y-1">

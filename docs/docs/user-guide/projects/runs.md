@@ -134,6 +134,17 @@ The milestone assignment is updated immediately. Visual feedback shows valid dro
 Drag and drop is only available to users with edit permissions for test runs. Completed test runs cannot be dragged.
 :::
 
+## Ready-to-complete notifications
+
+You do not have to watch a run to know when it is finished. When the last outstanding case in a manual run receives a final result, TestPlanIt notifies the people who can close that run — **Test Run Ready to Complete** arrives in the [notification bell](../notifications-inbox.md) (and by email, according to each recipient's preferences) with a **Review and complete** link straight to the run.
+
+- **Who is notified**: anyone whose role grants **canClose** on Test Runs in that project, plus the administrators who can reach it.
+- **What counts as finished**: every live case — and, for [parameterized cases](./parameterized-test-cases.md), every iteration — carries a status that counts as completed in the workflow. Cases left **Untested**, or sitting in a status such as **Retest** or **Blocked**, keep the run open.
+- **The run stays open.** Completing is irreversible, so TestPlanIt prompts rather than acts. Use the **Complete** action when you are ready — see [Run Details](./run-details.md).
+- **It re-arms.** If the run stops being fully executed — a result is deleted, or a case is added — the notification is sent again the next time it fills up.
+
+Automated runs are not covered: they report through their CI job rather than case-by-case execution. To close automated runs that a lost CI agent left in progress, see [Abandoned automation cleanup](../statuses.md#abandoned-automation-cleanup).
+
 ## Bulk Operations
 
 Several test runs can be changed in one step. Users with edit, complete, or delete permission for test runs see a **checkbox** at the start of each run row; without any of those permissions the checkboxes are hidden entirely.

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { usePathname, useRouter } from "~/lib/navigation";
+import { pushUrlSearch } from "~/lib/urlState";
 
 /**
  * Custom hook to manage tab state via URL search parameters.
@@ -29,8 +29,6 @@ export function useTabState(
   paramName: string = "tab",
   defaultValue: string
 ): [string, (value: string) => void] {
-  const router = useRouter();
-  const pathname = usePathname();
   const isInitialized = useRef(false);
 
   // Read initial value from URL on mount
@@ -77,14 +75,15 @@ export function useTabState(
         params.set(paramName, value);
       }
 
-      // Build the new URL
-      const queryString = params.toString();
-      const newUrl = queryString ? `${pathname}?${queryString}` : pathname;
-
-      // Update the URL without reloading the page
-      router.push(newUrl, { scroll: false });
+      // Build the new URL and push it without a router navigation (see
+      // lib/urlState.ts — a router.push here is a real RSC navigation under
+      // cacheComponents/partialPrefetching and can reset mounted page state).
+      // push, not replace: Back steps through tab changes on purpose.
+      const url = new URL(window.location.href);
+      url.search = params.toString() ? `?${params.toString()}` : "";
+      pushUrlSearch(url);
     },
-    [router, pathname, paramName, defaultValue]
+    [paramName, defaultValue]
   );
 
   return [currentTab, setTab];

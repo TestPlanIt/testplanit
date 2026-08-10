@@ -19,8 +19,8 @@ The page uses a resizable two-panel layout:
   - **(View Mode Only)** A stack of icon-and-title cards follows — **Burndown**, **Issues**, **Test Runs**, and **Sessions**. Each card is an independently collapsible accordion that remembers whether you last left it expanded or collapsed (persisted per browser):
     - **Burndown**: The [execution burndown](#burndown) over the milestone window. Appears only when the milestone has both a window anchor and executable scope.
     - **Issues**: The [Issues card](#issues), whose header shows a single deduped issue total across its two sections.
-    - **Test Runs**: Test Runs linked to this milestone and all descendant milestones. Runs from child milestones display a milestone label to indicate their source. Long lists are virtualized, loading each row as you scroll.
-    - **Sessions**: Test Sessions linked to this milestone and all descendant milestones. Sessions from child milestones display a milestone label to indicate their source. Long lists are virtualized, loading each row as you scroll.
+    - **Test Runs**: Test Runs linked to this milestone and all descendant milestones. Runs from child milestones display a milestone label to indicate their source. Long lists are virtualized, loading each row as you scroll. The list can be narrowed with [filter chips](#filtering-the-test-runs-and-sessions-cards).
+    - **Sessions**: Test Sessions linked to this milestone and all descendant milestones. Sessions from child milestones display a milestone label to indicate their source. Long lists are virtualized, loading each row as you scroll. The list can be narrowed with [filter chips](#filtering-the-test-runs-and-sessions-cards).
 - **Right Panel (Controls & Details)**:
   - Displays/allows editing of core milestone properties using form controls.
 
@@ -134,6 +134,32 @@ When the linked Jira sprint or version has more issues than are linked here — 
 A read-only table of issues surfaced by test runs and sessions linked to this milestone **and its child milestones**. It uses the same table layout as **In scope**, with each row showing the issue (including its issue-type icon), a **Description** column, and the issue's status. An issue that also appears in **In scope** carries an **In scope** badge here.
 
 This section has no linking controls of its own — to change what a milestone is linked to, use **In scope** above.
+
+## Filtering the Test Runs and Sessions cards
+
+The **Test Runs** and **Sessions** cards each carry their own row of filter chips just below the card header. The two cards filter independently — narrowing the runs list leaves the sessions list alone.
+
+Each row offers two controls:
+
+- **All** / **Active** / **Completed**: A one-of-three choice of completion state. **All** is the unfiltered view, so switching back to it is how you clear this control — there is no separate Clear All.
+- **My Test Runs** / **My Sessions**: An independent on/off toggle that limits the card to the work you take part in. It combines with the state choice, so **Active** plus **My Test Runs** gives you your own in-flight runs.
+
+What counts as yours matches the list pages exactly:
+
+- A **test run** is yours if you created it, you are assigned a test case in it, or you recorded a test result in it — see [What counts as taking part](./runs.md#what-counts-as-taking-part).
+- A **session** is yours if you created it or it is assigned to you — see [What counts as taking part](./sessions.md#what-counts-as-taking-part).
+
+The count in each card header reflects what the filters currently show, so a card reading **Test Runs (3)** with a chip on is telling you three runs matched, not that the milestone has three.
+
+:::info Filters are remembered per milestone
+Each card's chip selection is stored in your browser for that specific milestone, so returning to a milestone restores the filters you last used on it, and a different milestone starts unfiltered. Because they are stored locally rather than in the address bar, filters are personal — they do not travel to teammates through a copied link, and they do not follow you to another browser or device.
+:::
+
+:::caution Filters change the cards only
+These chips are a view control for the two lists. Every other number on the page — the [Summary](#summary), the [Burndown](#burndown), the [Issues](#issues) card, the Forecast, the Completion Rate, and the [PDF export](#exporting-to-pdf) — keeps reading the milestone's full set of runs and sessions. Completing the milestone likewise cascades over everything linked to it, not just what a chip left visible.
+:::
+
+If nothing matches, the card says so rather than showing the generic "no test runs" / "no sessions" message, so you can tell an empty milestone from an over-narrowed filter.
 
 ## Editing Details (Edit Mode)
 

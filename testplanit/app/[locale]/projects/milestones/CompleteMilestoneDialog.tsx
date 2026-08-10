@@ -239,6 +239,20 @@ export function CompleteMilestoneDialog({
             name: milestoneToComplete.name,
           })
         );
+        // Completing the milestone's runs and sessions needs canClose on those
+        // areas, not just on Milestones. When the caller has one and not the
+        // other the cascade drops that half rather than failing the whole
+        // action — say which half, or the runs silently stay open.
+        const skipped = result.skippedForPermission;
+        if (skipped?.skippedTestRuns || skipped?.skippedSessions) {
+          toast.warning(
+            skipped.skippedTestRuns && skipped.skippedSessions
+              ? t("milestones.complete.skippedForPermission")
+              : skipped.skippedTestRuns
+                ? t("milestones.complete.skippedTestRunsForPermission")
+                : t("milestones.complete.skippedSessionsForPermission")
+          );
+        }
         onCompleteSuccess();
         onOpenChange(false);
       } else {

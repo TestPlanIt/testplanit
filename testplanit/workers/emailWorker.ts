@@ -119,6 +119,10 @@ const processor = async (job: Job) => {
           if (data.provider && data.integrationId) {
             notificationUrl = `${baseUrl}/api/integrations/oauth/${String(data.provider).toLowerCase()}/auth?integrationId=${data.integrationId}&returnUrl=${encodeURIComponent("/integrations/auth-complete")}`;
           }
+        } else if (notification.type === "RUN_READY_TO_COMPLETE") {
+          if (data.projectId && data.testRunId) {
+            notificationUrl = `${baseUrl}/${urlLocale}/projects/runs/${data.projectId}/${data.testRunId}`;
+          }
         } else if (
           notification.type === "REVIEW_REQUESTED" ||
           notification.type === "REVIEW_APPROVED" ||
@@ -449,6 +453,20 @@ const processor = async (job: Job) => {
             "components.notifications.content.integrationAuthExpiredMessage",
             { integrationName: data.integrationName ?? "" }
           );
+        } else if (notification.type === "RUN_READY_TO_COMPLETE") {
+          translatedTitle = await getServerTranslation(
+            userLocale,
+            "components.notifications.content.runReadyToCompleteTitle"
+          );
+          translatedMessage = await getServerTranslation(
+            userLocale,
+            "components.notifications.content.runReadyToCompleteEmailMessage",
+            {
+              caseCount: Number(data.caseCount ?? 0),
+              testRunName: data.testRunName ?? "",
+              projectName: data.projectName ?? "",
+            }
+          );
         }
 
         // Get email template translations
@@ -476,6 +494,11 @@ const processor = async (job: Job) => {
             "components.notifications.content.milestoneNotificationContinue"
           );
           additionalInfo = `${reasonMessage} ${continueMessage}`;
+        } else if (notification.type === "RUN_READY_TO_COMPLETE") {
+          additionalInfo = await getServerTranslation(
+            userLocale,
+            "components.notifications.content.runReadyToCompleteReason"
+          );
         }
 
         await sendNotificationEmail({
@@ -583,6 +606,10 @@ const processor = async (job: Job) => {
               // OAuth re-auth kickoff is an API route — no locale prefix.
               if (data.provider && data.integrationId) {
                 url = `${baseUrl}/api/integrations/oauth/${String(data.provider).toLowerCase()}/auth?integrationId=${data.integrationId}&returnUrl=${encodeURIComponent("/integrations/auth-complete")}`;
+              }
+            } else if (notification.type === "RUN_READY_TO_COMPLETE") {
+              if (data.projectId && data.testRunId) {
+                url = `${baseUrl}/${urlLocale}/projects/runs/${data.projectId}/${data.testRunId}`;
               }
             } else if (
               notification.type === "REVIEW_REQUESTED" ||
@@ -770,6 +797,20 @@ const processor = async (job: Job) => {
                 userLocale,
                 "components.notifications.content.integrationAuthExpiredMessage",
                 { integrationName: data.integrationName ?? "" }
+              );
+            } else if (notification.type === "RUN_READY_TO_COMPLETE") {
+              translatedTitle = await getServerTranslation(
+                userLocale,
+                "components.notifications.content.runReadyToCompleteTitle"
+              );
+              translatedMessage = await getServerTranslation(
+                userLocale,
+                "components.notifications.content.runReadyToCompleteEmailMessage",
+                {
+                  caseCount: Number(data.caseCount ?? 0),
+                  testRunName: data.testRunName ?? "",
+                  projectName: data.projectName ?? "",
+                }
               );
             }
 

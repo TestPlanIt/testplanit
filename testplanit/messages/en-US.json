@@ -232,6 +232,7 @@
       "high": "High"
     },
     "filters": {
+      "all": "All",
       "allStatuses": "All Statuses",
       "allPriorities": "All Priorities"
     },
@@ -580,6 +581,7 @@
     "errors": {
       "error": "Error",
       "somethingWentWrong": "An unexpected error occurred. Please try again later.",
+      "completeNotPermitted": "You do not have permission to complete this item.",
       "emailRequired": "Enter your email address.",
       "emailInvalid": "This is not a valid email address.",
       "passwordRequired": "Password is required.",
@@ -2224,7 +2226,13 @@
       "description": "No description provided",
       "documentation": "No documentation provided",
       "testRuns": "No test runs",
+      "noMatchingTestRuns": "No test runs match your filters.",
+      "noMatchingSessions": "No Sessions match your filters.",
       "forecasts": "No forecast data available"
+    },
+    "cardFilters": {
+      "labelRuns": "Filter test runs",
+      "labelSessions": "Filter sessions"
     },
     "browser": {
       "kindAll": "All milestones",
@@ -2407,6 +2415,11 @@
       "filterHasUntested": "Has untested cases",
       "createRunNoCases": "None of the selected issues have linked test cases.",
       "createTestRunDetailed": "Create test run ({issues, plural, one {# issue} other {# issues}} · {cases, plural, one {# case} other {# cases}})"
+    },
+    "complete": {
+      "skippedForPermission": "The milestone was completed. Its test runs and sessions were left open because you do not have permission to complete them.",
+      "skippedTestRunsForPermission": "The milestone was completed. Its test runs were left open because you do not have permission to complete them.",
+      "skippedSessionsForPermission": "The milestone was completed. Its Sessions were left open because you do not have permission to complete them."
     }
   },
   "sessions": {
@@ -2427,7 +2440,12 @@
       "overtime": "Over the Estimate by: {time}"
     },
     "empty": {
-      "noMatchingCompleted": "No completed Sessions match your filter."
+      "noMatchingCompleted": "No completed Sessions match your filter.",
+      "noMatchingActive": "No active Sessions match your filters."
+    },
+    "sessionFilters": {
+      "label": "Filter sessions",
+      "mine": "My Sessions"
     },
     "filter": {
       "placeholder": "Filter sessions..."
@@ -6365,7 +6383,11 @@
         "aiStepsDerivedReviewLink": "Review test run",
         "integrationAuthExpiredTitle": "Integration Connection Expired",
         "integrationAuthExpiredMessage": "Your connection to \"{integrationName}\" has expired. Reconnect to resume issue syncing.",
-        "integrationAuthExpiredReconnect": "Reconnect"
+        "integrationAuthExpiredReconnect": "Reconnect",
+        "runReadyToCompleteTitle": "Test Run Ready to Complete",
+        "runReadyToCompleteExecuted": "{count, plural, one {# case has} other {All # cases have}} been executed.",
+        "runReadyToCompleteEmailMessage": "All {caseCount, plural, one {# case} other {# cases}} in test run \"{testRunName}\" (project \"{projectName}\") have been executed. The run is ready to be marked completed.",
+        "runReadyToCompleteReason": "You are receiving this because you can complete test runs in this project."
       }
     },
     "issues": {
@@ -7355,7 +7377,8 @@
         }
       }
     },
-    "projectRunsFilters": "## Filtering test runs\n\nToggle a chip to narrow the list. Chips apply to both the Active and Completed tabs, and are remembered on this device for this project.\n\n- **Manual** / **Automated** — limit the list to that kind of run. Turning both on (or both off) shows every run.\n- **My Test Runs** — only runs you take part in: you created the run, you are assigned a test case in it, or you recorded a test result in it."
+    "projectRunsFilters": "## Filtering test runs\n\nToggle a chip to narrow the list. Chips apply to both the Active and Completed tabs, and are remembered on this device for this project.\n\n- **Manual** / **Automated** — limit the list to that kind of run. Turning both on (or both off) shows every run.\n- **My Test Runs** — only runs you take part in: you created the run, you are assigned a test case in it, or you recorded a test result in it.",
+    "projectSessionsFilters": "## Filtering sessions\n\nToggle a chip to narrow the list. Chips apply to both the Active and Completed tabs, and are remembered on this device for this project.\n\n- **My Sessions** — only sessions you take part in: you created the session, or it is assigned to you."
   },
   "reports": {
     "ui": {

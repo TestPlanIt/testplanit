@@ -9,8 +9,6 @@ import {
 } from "~/lib/rate-limit";
 import { auditAuthEvent } from "~/lib/services/auditLog";
 
-export const dynamic = "force-dynamic";
-
 /**
  * POST /api/share/[shareKey]/password-verify
  * Verify password for password-protected share link

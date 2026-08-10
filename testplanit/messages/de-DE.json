@@ -232,6 +232,7 @@
       "high": "Hoch"
     },
     "filters": {
+      "all": "Alle",
       "allStatuses": "Alle Status",
       "allPriorities": "Alle Prioritäten"
     },
@@ -580,6 +581,7 @@
     "errors": {
       "error": "Fehler",
       "somethingWentWrong": "Es ist ein unerwarteter Fehler aufgetreten. Bitte versuchen Sie es später erneut.",
+      "completeNotPermitted": "Sie haben keine Berechtigung, dieses Element abzuschließen.",
       "emailRequired": "Geben Sie Ihre E-Mail-Adresse ein.",
       "emailInvalid": "Dies ist keine gültige E-Mail-Adresse.",
       "passwordRequired": "Ein Passwort ist erforderlich.",
@@ -2224,7 +2226,13 @@
       "description": "Keine Beschreibung vorhanden",
       "documentation": "Es wurde keine Dokumentation bereitgestellt.",
       "testRuns": "Keine Testläufe",
+      "noMatchingTestRuns": "Keine Testläufe entsprechen deinen Filtern.",
+      "noMatchingSessions": "Keine Sitzungen entsprechen deinen Filtern.",
       "forecasts": "Es sind keine Prognosedaten verfügbar."
+    },
+    "cardFilters": {
+      "labelRuns": "Testläufe filtern",
+      "labelSessions": "Sitzungen filtern"
     },
     "browser": {
       "kindAll": "Alle Meilensteine",
@@ -2407,6 +2415,11 @@
       "filterHasUntested": "Hat ungetestete Fälle",
       "createRunNoCases": "Keines der ausgewählten Probleme hat verknüpfte Testfälle.",
       "createTestRunDetailed": "Testlauf erstellen ({issues, plural, one {# Problem} other {# Probleme}} · {cases, plural, one {# Fall} other {# Fälle}})"
+    },
+    "complete": {
+      "skippedForPermission": "Der Meilenstein wurde abgeschlossen. Die zugehörigen Testläufe und Sitzungen wurden offen gelassen, da Sie nicht die Berechtigung haben, diese abzuschließen.",
+      "skippedTestRunsForPermission": "Der Meilenstein wurde abgeschlossen. Die zugehörigen Testläufe wurden offen gelassen, da Sie nicht die Berechtigung haben, diese abzuschließen.",
+      "skippedSessionsForPermission": "Der Meilenstein wurde abgeschlossen. Die zugehörigen Sitzungen wurden offen gelassen, da Sie nicht die Berechtigung haben, diese abzuschließen."
     }
   },
   "sessions": {
@@ -2427,7 +2440,12 @@
       "overtime": "Über die Schätzung um: {time}"
     },
     "empty": {
-      "noMatchingCompleted": "Keine abgeschlossenen Sitzungen entsprechen Ihrem Filter."
+      "noMatchingCompleted": "Keine abgeschlossenen Sitzungen entsprechen Ihrem Filter.",
+      "noMatchingActive": "Keine aktiven Sitzungen entsprechen Ihren Filtern."
+    },
+    "sessionFilters": {
+      "label": "Sitzungen filtern",
+      "mine": "Meine Sitzungen"
     },
     "filter": {
       "placeholder": "Sitzungen filtern..."
@@ -6365,7 +6383,11 @@
         "aiStepsDerivedReviewLink": "Testlauf überprüfen",
         "integrationAuthExpiredTitle": "Integrationsverbindung abgelaufen",
         "integrationAuthExpiredMessage": "Ihre Verbindung zu \"{integrationName}\" ist abgelaufen. Stellen Sie die Verbindung erneut her, um die Issue-Synchronisierung fortzusetzen.",
-        "integrationAuthExpiredReconnect": "Erneut verbinden"
+        "integrationAuthExpiredReconnect": "Erneut verbinden",
+        "runReadyToCompleteTitle": "Testlauf bereit zum Abschluss",
+        "runReadyToCompleteMessage": "{count, plural, one {# Fall wurde} other {Alle # Fälle wurden}} ausgeführt.",
+        "runReadyToCompleteEmailMessage": "Alle {caseCount, plural, one {# Testfall} other {# Testfälle}} im Testlauf \"{testRunName}\" (Projekt \"{projectName}\") wurden ausgeführt. Der Testlauf kann jetzt als abgeschlossen markiert werden.",
+        "runReadyToCompleteReason": "Sie erhalten diese Nachricht, weil Sie Testläufe in diesem Projekt abschließen können."
       }
     },
     "issues": {
@@ -7355,7 +7377,8 @@
         }
       }
     },
-    "projectRunsFilters": "## Testläufe filtern\n\nAktivieren Sie ein Chip, um die Liste einzugrenzen. Chips gelten sowohl für die Tabs „Aktiv“ als auch „Abgeschlossen“ und werden auf diesem Gerät für dieses Projekt gespeichert.\n\n- **Manuell** / **Automatisiert** — beschränkt die Liste auf diese Art von Testlauf. Wenn beide aktiviert (oder beide deaktiviert) sind, werden alle Testläufe angezeigt.\n- **Meine Testläufe** — nur Testläufe, an denen Sie beteiligt sind: Sie haben den Testlauf erstellt, Ihnen ist ein Testfall darin zugewiesen, oder Sie haben ein Testergebnis darin erfasst."
+    "projectRunsFilters": "## Testläufe filtern\n\nAktivieren Sie ein Chip, um die Liste einzugrenzen. Chips gelten sowohl für die Tabs „Aktiv“ als auch „Abgeschlossen“ und werden auf diesem Gerät für dieses Projekt gespeichert.\n\n- **Manuell** / **Automatisiert** — beschränkt die Liste auf diese Art von Testlauf. Wenn beide aktiviert (oder beide deaktiviert) sind, werden alle Testläufe angezeigt.\n- **Meine Testläufe** — nur Testläufe, an denen Sie beteiligt sind: Sie haben den Testlauf erstellt, Ihnen ist ein Testfall darin zugewiesen, oder Sie haben ein Testergebnis darin erfasst.",
+    "projectSessionsFilters": "## Sitzungen filtern\n\nAktivieren Sie einen Chip, um die Liste einzugrenzen. Chips gelten sowohl für die Registerkarten \"Aktiv\" als auch \"Abgeschlossen\" und werden auf diesem Gerät für dieses Projekt gespeichert.\n\n- **Meine Sitzungen** — nur Sitzungen, an denen Sie beteiligt sind: Sie haben die Sitzung erstellt oder sie wurde Ihnen zugewiesen."
   },
   "reports": {
     "ui": {

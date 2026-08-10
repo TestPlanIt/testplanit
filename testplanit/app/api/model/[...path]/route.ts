@@ -50,6 +50,11 @@ import {
   resolveCreateStateRemap,
 } from "~/lib/services/reviewGate";
 import {
+  assertCanFlipCompletion,
+  isCompletionGatedModel,
+  isCompletionPermissionError,
+} from "~/lib/services/completionGate";
+import {
   assertResultEditWindowOpen,
   isEditWindowExpiredError,
 } from "~/lib/services/editWindow";
@@ -1116,6 +1121,53 @@ async function handleRequest(
         }
       } catch (e) {
         console.error("[Webhooks] Failed to capture pre-snapshot:", e);
+      }
+    }
+
+    // Completion gate. `isCompleted` on a run or a session is UI-gated on
+    // `canClose` for the matching area, but the schema @@allow('update') rules
+    // also admit the creator and anyone with canAddEdit/canDelete — so the
+    // button is hidden while the write still succeeds through this RPC, the
+    // SDK, or MCP. This makes the server enforce the rule the UI shows.
+    //
+    // Raw-client writers (the milestone cascade, the abandoned-run sweeper,
+    // the importers) never reach this chokepoint by design; they carry no
+    // human actor and are gated where they start.
+    //
+    // Placed after the webhook pre-snapshot so the single-row path reuses that
+    // already-loaded row, and before the handler runs so a rejection
+    // short-circuits the write.
+    if (
+      isMutation &&
+      parsedPath &&
+      isCompletionGatedModel(parsedPath.model) &&
+      authenticatedUserId
+    ) {
+      try {
+        await assertCanFlipCompletion({
+          model: parsedPath.model,
+          operation: parsedPath.operation,
+          body: requestBody,
+          actorUserId: authenticatedUserId,
+          preSnapshot:
+            webhookMutation?.model === parsedPath.model
+              ? webhookPreSnapshot
+              : null,
+        });
+      } catch (err) {
+        if (isCompletionPermissionError(err)) {
+          return NextResponse.json(
+            {
+              error: {
+                code: err.code,
+                entityType: err.entityType,
+                entityIds: err.entityIds,
+              },
+            },
+            { status: 403 }
+          );
+        }
+        throw err;
       }
     }
 

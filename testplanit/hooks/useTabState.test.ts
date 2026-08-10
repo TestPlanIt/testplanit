@@ -4,6 +4,20 @@ import { useTabState } from "./useTabState";
 
 // --- Mocks ---
 
+const { mockPushUrlSearch } = vi.hoisted(() => ({
+  mockPushUrlSearch: vi.fn(),
+}));
+
+vi.mock("~/lib/urlState", () => ({
+  // Record pushes as "pathname?search" so expectations read like URLs.
+  pushUrlSearch: (url: string | URL) => {
+    const u = new URL(url.toString(), "http://localhost");
+    mockPushUrlSearch(`${u.pathname}${u.search}`);
+  },
+  commitUrlSearch: vi.fn(),
+  useLocationSearch: () => window.location.search,
+}));
+
 const { mockRouterPush } = vi.hoisted(() => ({
   mockRouterPush: vi.fn(),
 }));
@@ -95,7 +109,7 @@ describe("useTabState", () => {
     expect(result.current[0]).toBe("completed");
   });
 
-  it("should call router.push when setTab is called", () => {
+  it("should push a history entry when setTab is called", () => {
     Object.defineProperty(window, "location", {
       value: { search: "", href: "http://localhost/projects/42" },
       writable: true,
@@ -108,10 +122,10 @@ describe("useTabState", () => {
       result.current[1]("completed");
     });
 
-    expect(mockRouterPush).toHaveBeenCalledTimes(1);
-    expect(mockRouterPush).toHaveBeenCalledWith("/projects/42?tab=completed", {
-      scroll: false,
-    });
+    expect(mockPushUrlSearch).toHaveBeenCalledTimes(1);
+    expect(mockPushUrlSearch).toHaveBeenCalledWith(
+      "/projects/42?tab=completed"
+    );
   });
 
   it("should remove param from URL when setTab is called with default value", () => {
@@ -131,9 +145,7 @@ describe("useTabState", () => {
     });
 
     // Should navigate to URL without the tab param
-    expect(mockRouterPush).toHaveBeenCalledWith("/projects/42", {
-      scroll: false,
-    });
+    expect(mockPushUrlSearch).toHaveBeenCalledWith("/projects/42");
   });
 
   it("should preserve other URL params when changing tab", () => {
@@ -152,7 +164,7 @@ describe("useTabState", () => {
       result.current[1]("completed");
     });
 
-    const calledUrl = mockRouterPush.mock.calls[0][0] as string;
+    const calledUrl = mockPushUrlSearch.mock.calls[0][0] as string;
     expect(calledUrl).toContain("page=2");
     expect(calledUrl).toContain("tab=completed");
   });

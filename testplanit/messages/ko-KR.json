@@ -232,6 +232,7 @@
       "high": "높은"
     },
     "filters": {
+      "all": "전체",
       "allStatuses": "모든 상태",
       "allPriorities": "모든 우선순위"
     },
@@ -580,6 +581,7 @@
     "errors": {
       "error": "오류",
       "somethingWentWrong": "예기치 않은 오류가 발생했습니다. 나중에 다시 시도해 주세요.",
+      "completeNotPermitted": "이 항목을 완료할 권한이 없습니다.",
       "emailRequired": "이메일 주소를 입력하세요.",
       "emailInvalid": "이 이메일 주소는 유효하지 않습니다.",
       "passwordRequired": "비밀번호를 입력해야 합니다.",
@@ -2224,7 +2226,13 @@
       "description": "설명 없음",
       "documentation": "제공된 서류 없음",
       "testRuns": "테스트 실행 없음",
+      "noMatchingTestRuns": "필터 조건에 맞는 테스트 실행이 없습니다.",
+      "noMatchingSessions": "필터 조건에 맞는 세션이 없습니다.",
       "forecasts": "예측 데이터가 없습니다."
+    },
+    "cardFilters": {
+      "labelRuns": "테스트 실행 필터링",
+      "labelSessions": "세션 필터링"
     },
     "browser": {
       "kindAll": "모든 마일스톤",
@@ -2407,6 +2415,11 @@
       "filterHasUntested": "테스트되지 않은 케이스 있음",
       "createRunNoCases": "선택한 이슈 중 연결된 테스트 케이스가 있는 항목이 없습니다.",
       "createTestRunDetailed": "테스트 실행 생성 ({issues, plural, other {이슈 #개}} · {cases, plural, other {케이스 #개}})"
+    },
+    "complete": {
+      "skippedForPermission": "마일스톤이 완료되었습니다. 완료할 권한이 없어 해당 테스트 실행 및 세션은 열린 상태로 남았습니다.",
+      "skippedTestRunsForPermission": "마일스톤이 완료되었습니다. 완료할 권한이 없어 해당 테스트 실행은 열린 상태로 남았습니다.",
+      "skippedSessionsForPermission": "마일스톤이 완료되었습니다. 완료할 권한이 없어 해당 세션은 열린 상태로 남았습니다."
     }
   },
   "sessions": {
@@ -2427,7 +2440,12 @@
       "overtime": "예상치 초과: {time}"
     },
     "empty": {
-      "noMatchingCompleted": "필터 조건에 맞는 완료된 세션이 없습니다."
+      "noMatchingCompleted": "필터 조건에 맞는 완료된 세션이 없습니다.",
+      "noMatchingActive": "필터 조건에 맞는 활성 세션이 없습니다."
+    },
+    "sessionFilters": {
+      "label": "세션 필터링",
+      "mine": "내 세션"
     },
     "filter": {
       "placeholder": "세션을 필터링하세요..."
@@ -6365,7 +6383,11 @@
         "aiStepsDerivedReviewLink": "테스트 실행 검토",
         "integrationAuthExpiredTitle": "통합 연결이 만료되었습니다",
         "integrationAuthExpiredMessage": "\"{integrationName}\"에 대한 연결이 만료되었습니다. 이슈 동기화를 재개하려면 다시 연결하세요.",
-        "integrationAuthExpiredReconnect": "다시 연결"
+        "integrationAuthExpiredReconnect": "다시 연결",
+        "runReadyToCompleteTitle": "테스트 실행 완료 준비됨",
+        "runReadyToCompleteMessage": "{count, plural, other {전체 #개 케이스가 실행되었습니다.}}",
+        "runReadyToCompleteEmailMessage": "테스트 실행 \"{testRunName}\"(프로젝트 \"{projectName}\")의 {caseCount, plural, other {케이스 #개}}가 모두 실행되었습니다. 이 실행은 완료로 표시할 준비가 되었습니다.",
+        "runReadyToCompleteReason": "이 프로젝트에서 테스트 실행을 완료할 수 있는 권한이 있어 이 알림을 받고 있습니다."
       }
     },
     "issues": {
@@ -7355,7 +7377,8 @@
         }
       }
     },
-    "projectRunsFilters": "## 테스트 실행 필터링\n\n칩을 토글하여 목록을 좁힐 수 있습니다. 칩은 활성 탭과 완료 탭 모두에 적용되며, 이 기기에서 이 프로젝트에 대해 기억됩니다.\n\n- **수동** / **자동** — 해당 유형의 실행만 목록에 표시합니다. 둘 다 켜거나(또는 둘 다 끄면) 모든 실행이 표시됩니다.\n- **내 테스트 실행** — 본인이 참여한 실행만 표시합니다: 실행을 생성했거나, 실행에서 테스트 케이스가 할당되었거나, 실행에서 테스트 결과를 기록한 경우입니다."
+    "projectRunsFilters": "## 테스트 실행 필터링\n\n칩을 토글하여 목록을 좁힐 수 있습니다. 칩은 활성 탭과 완료 탭 모두에 적용되며, 이 기기에서 이 프로젝트에 대해 기억됩니다.\n\n- **수동** / **자동** — 해당 유형의 실행만 목록에 표시합니다. 둘 다 켜거나(또는 둘 다 끄면) 모든 실행이 표시됩니다.\n- **내 테스트 실행** — 본인이 참여한 실행만 표시합니다: 실행을 생성했거나, 실행에서 테스트 케이스가 할당되었거나, 실행에서 테스트 결과를 기록한 경우입니다.",
+    "projectSessionsFilters": "## 세션 필터링\n\n칩을 토글하여 목록을 좁힙니다. 칩은 활성 탭과 완료된 탭 모두에 적용되며, 이 프로젝트에 대해 이 기기에서 기억됩니다.\n\n- **내 세션** — 회원님이 참여하는 세션만 표시됩니다: 회원님이 생성했거나 회원님에게 할당된 세션입니다."
   },
   "reports": {
     "ui": {

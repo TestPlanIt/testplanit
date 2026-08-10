@@ -232,6 +232,7 @@
       "high": "Yüksek"
     },
     "filters": {
+      "all": "Tümü",
       "allStatuses": "Tüm Durumlar",
       "allPriorities": "Tüm Öncelikler"
     },
@@ -580,6 +581,7 @@
     "errors": {
       "error": "Hata",
       "somethingWentWrong": "Beklenmeyen bir hata oluştu. Lütfen daha sonra tekrar deneyin.",
+      "completeNotPermitted": "Bu öğeyi tamamlama izniniz yok.",
       "emailRequired": "E-posta adresinizi girin.",
       "emailInvalid": "Bu geçerli bir e-posta adresi değil.",
       "passwordRequired": "Şifre gereklidir.",
@@ -2224,7 +2226,13 @@
       "description": "Açıklama verilmedi.",
       "documentation": "Herhangi bir belge sunulmadı.",
       "testRuns": "Test çalışması yok.",
+      "noMatchingTestRuns": "Filtrelerinize uyan test çalıştırması bulunamadı.",
+      "noMatchingSessions": "Filtrelerinize uyan oturum bulunamadı.",
       "forecasts": "Tahmin verisi mevcut değil."
+    },
+    "cardFilters": {
+      "labelRuns": "Test çalıştırmalarını filtrele",
+      "labelSessions": "Oturumları filtrele"
     },
     "browser": {
       "kindAll": "Tüm dönüm noktaları",
@@ -2407,6 +2415,11 @@
       "filterHasUntested": "Test edilmemiş durumları var",
       "createRunNoCases": "Seçilen sorunların hiçbirinde bağlı test durumu yok.",
       "createTestRunDetailed": "Test çalıştırması oluştur ({issues, plural, one {# sorun} other {# sorun}} · {cases, plural, one {# durum} other {# durum}})"
+    },
+    "complete": {
+      "skippedForPermission": "Kilometre taşı tamamlandı. Test çalıştırmaları ve oturumları, bunları tamamlama izniniz olmadığı için açık bırakıldı.",
+      "skippedTestRunsForPermission": "Kilometre taşı tamamlandı. Test çalıştırmaları, bunları tamamlama izniniz olmadığı için açık bırakıldı.",
+      "skippedSessionsForPermission": "Kilometre taşı tamamlandı. Oturumları, bunları tamamlama izniniz olmadığı için açık bırakıldı."
     }
   },
   "sessions": {
@@ -2427,7 +2440,12 @@
       "overtime": "Tahminin Üzerindeki Miktar: {time}"
     },
     "empty": {
-      "noMatchingCompleted": "Filtrenize uyan tamamlanmış oturum bulunamadı."
+      "noMatchingCompleted": "Filtrenize uyan tamamlanmış oturum bulunamadı.",
+      "noMatchingActive": "Filtrelerinize uyan aktif oturum bulunamadı."
+    },
+    "sessionFilters": {
+      "label": "Oturumları filtrele",
+      "mine": "Oturumlarım"
     },
     "filter": {
       "placeholder": "Oturumları filtrele..."
@@ -6365,7 +6383,11 @@
         "aiStepsDerivedReviewLink": "Test çalıştırmasını incele",
         "integrationAuthExpiredTitle": "Entegrasyon Bağlantısının Süresi Doldu",
         "integrationAuthExpiredMessage": "\"{integrationName}\" ile bağlantınızın süresi doldu. Sorun senkronizasyonuna devam etmek için yeniden bağlanın.",
-        "integrationAuthExpiredReconnect": "Yeniden Bağlan"
+        "integrationAuthExpiredReconnect": "Yeniden Bağlan",
+        "runReadyToCompleteTitle": "Test Çalıştırması Tamamlanmaya Hazır",
+        "runReadyToCompleteMessage": "{count, plural, one {# durum} other {Tüm # durum}} çalıştırıldı.",
+        "runReadyToCompleteEmailMessage": "\"{testRunName}\" test çalıştırmasındaki (proje \"{projectName}\") tüm {caseCount, plural, one {# test senaryosu} other {# test senaryosu}} çalıştırıldı. Çalıştırma tamamlandı olarak işaretlenmeye hazır.",
+        "runReadyToCompleteReason": "Bu projede test çalıştırmalarını tamamlayabildiğiniz için bu bildirimi alıyorsunuz."
       }
     },
     "issues": {
@@ -7355,7 +7377,8 @@
         }
       }
     },
-    "projectRunsFilters": "## Test çalıştırmalarını filtreleme\n\nListeyi daraltmak için bir etiketi açıp kapatın. Etiketler hem Aktif hem de Tamamlanmış sekmelerine uygulanır ve bu proje için bu cihazda hatırlanır.\n\n- **Manuel** / **Otomatik** — listeyi o türdeki çalıştırmalarla sınırlar. Her ikisini de açmak (veya her ikisini de kapatmak) tüm çalıştırmaları gösterir.\n- **Test Çalıştırmalarım** — yalnızca sizin dahil olduğunuz çalıştırmalar: çalıştırmayı siz oluşturdunuz, içinde size bir test durumu atanmış ya da içinde bir test sonucu kaydetmişsiniz."
+    "projectRunsFilters": "## Test çalıştırmalarını filtreleme\n\nListeyi daraltmak için bir etiketi açıp kapatın. Etiketler hem Aktif hem de Tamamlanmış sekmelerine uygulanır ve bu proje için bu cihazda hatırlanır.\n\n- **Manuel** / **Otomatik** — listeyi o türdeki çalıştırmalarla sınırlar. Her ikisini de açmak (veya her ikisini de kapatmak) tüm çalıştırmaları gösterir.\n- **Test Çalıştırmalarım** — yalnızca sizin dahil olduğunuz çalıştırmalar: çalıştırmayı siz oluşturdunuz, içinde size bir test durumu atanmış ya da içinde bir test sonucu kaydetmişsiniz.",
+    "projectSessionsFilters": "## Oturumları filtreleme\n\nListeyi daraltmak için bir çip seçin/kaldırın. Çipler hem Etkin hem de Tamamlanan sekmelerine uygulanır ve bu proje için bu cihazda hatırlanır.\n\n- **Oturumlarım** — yalnızca içinde bulunduğunuz oturumlar: oturumu siz oluşturdunuz veya size atanmış."
   },
   "reports": {
     "ui": {

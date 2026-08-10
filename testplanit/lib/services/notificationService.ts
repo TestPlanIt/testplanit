@@ -174,6 +174,53 @@ export class NotificationService {
   }
 
   /**
+   * Tell everyone who can complete a run that every one of its cases has been
+   * executed.
+   *
+   * The persisted `title`/`message` hold an English fallback; the bell
+   * (NotificationContent) and the email worker re-render localized copy from
+   * `data` at display time, per the contract every notification type follows.
+   *
+   * `tenantId` is explicit because the caller is a worker, where the ambient
+   * tenant context that `createNotification` would otherwise read is absent.
+   */
+  static async createRunReadyToCompleteNotification(params: {
+    targetUserIds: string[];
+    testRunId: number;
+    testRunName: string;
+    projectId: number;
+    projectName: string;
+    caseCount: number;
+    tenantId?: string;
+  }) {
+    if (params.targetUserIds.length === 0) return;
+
+    const title = "Test run ready to complete";
+    const message = `Every case in test run "${params.testRunName}" in project "${params.projectName}" has been executed.`;
+
+    await Promise.all(
+      params.targetUserIds.map((userId) =>
+        this.createNotification({
+          userId,
+          type: NotificationType.RUN_READY_TO_COMPLETE,
+          title,
+          message,
+          relatedEntityId: params.testRunId.toString(),
+          relatedEntityType: "TestRuns",
+          tenantId: params.tenantId,
+          data: {
+            testRunId: params.testRunId,
+            testRunName: params.testRunName,
+            projectId: params.projectId,
+            projectName: params.projectName,
+            caseCount: params.caseCount,
+          },
+        })
+      )
+    );
+  }
+
+  /**
    * Create a user registration notification for all System Admins
    */
   static async createUserRegistrationNotification(

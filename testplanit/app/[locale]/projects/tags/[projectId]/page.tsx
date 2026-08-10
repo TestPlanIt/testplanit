@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { commitUrlSearch } from "~/lib/urlState";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { AutoTagWizardDialog } from "@/components/auto-tag/AutoTagWizardDialog";
@@ -143,7 +144,7 @@ function TagList() {
       // Remove the search param so closing the dialog isn't blocked
       const url = new URL(window.location.href);
       url.searchParams.delete("autoTag");
-      window.history.replaceState({}, "", url.pathname + url.search);
+      commitUrlSearch(url.pathname + url.search);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

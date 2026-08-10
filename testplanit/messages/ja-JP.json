@@ -232,6 +232,7 @@
       "high": "高い"
     },
     "filters": {
+      "all": "全て",
       "allStatuses": "すべてのステータス",
       "allPriorities": "すべての優先事項"
     },
@@ -580,6 +581,7 @@
     "errors": {
       "error": "エラー",
       "somethingWentWrong": "予期しないエラーが発生しました。しばらくしてからもう一度お試しください。",
+      "completeNotPermitted": "この項目を完了する権限がありません。",
       "emailRequired": "メールアドレスを入力してください。",
       "emailInvalid": "このメールアドレスは有効ではありません。",
       "passwordRequired": "パスワードが必要です。",
@@ -2224,7 +2226,13 @@
       "description": "説明なし",
       "documentation": "文書は提供されていません",
       "testRuns": "テスト実行なし",
+      "noMatchingTestRuns": "フィルター条件に一致するテスト実行はありません。",
+      "noMatchingSessions": "フィルター条件に一致するセッションはありません。",
       "forecasts": "予測データはありません"
+    },
+    "cardFilters": {
+      "labelRuns": "テスト実行をフィルター",
+      "labelSessions": "セッションをフィルター"
     },
     "browser": {
       "kindAll": "すべてのマイルストーン",
@@ -2407,6 +2415,11 @@
       "filterHasUntested": "未テストのケースあり",
       "createRunNoCases": "選択した問題にはリンクされたテストケースがありません。",
       "createTestRunDetailed": "テスト実行を作成（{issues, plural, other {#件の問題}} · {cases, plural, other {#件のケース}}）"
+    },
+    "complete": {
+      "skippedForPermission": "マイルストーンは完了しました。テスト実行とセッションを完了する権限がないため、これらは未完了のままになっています。",
+      "skippedTestRunsForPermission": "マイルストーンは完了しました。テスト実行を完了する権限がないため、これらは未完了のままになっています。",
+      "skippedSessionsForPermission": "マイルストーンは完了しました。セッションを完了する権限がないため、これらは未完了のままになっています。"
     }
   },
   "sessions": {
@@ -2427,7 +2440,12 @@
       "overtime": "予想を上回った人: {time}"
     },
     "empty": {
-      "noMatchingCompleted": "完了したセッションがフィルターに一致しません。"
+      "noMatchingCompleted": "完了したセッションがフィルターに一致しません。",
+      "noMatchingActive": "フィルターに一致するアクティブなセッションがありません。"
+    },
+    "sessionFilters": {
+      "label": "セッションをフィルタリング",
+      "mine": "自分のセッション"
     },
     "filter": {
       "placeholder": "セッションをフィルタリング..."
@@ -6365,7 +6383,11 @@
         "aiStepsDerivedReviewLink": "テスト実行を確認",
         "integrationAuthExpiredTitle": "統合の接続が期限切れです",
         "integrationAuthExpiredMessage": "「{integrationName}」への接続が期限切れになりました。課題の同期を再開するには再接続してください。",
-        "integrationAuthExpiredReconnect": "再接続"
+        "integrationAuthExpiredReconnect": "再接続",
+        "runReadyToCompleteTitle": "テスト実行の完了準備が整いました",
+        "runReadyToCompleteMessage": "{count, plural, other {すべての # 件のケースが}}実行されました。",
+        "runReadyToCompleteEmailMessage": "テスト実行「{testRunName}」（プロジェクト「{projectName}」）内のすべての{caseCount, plural, other {# 件のケース}}が実行されました。この実行は完了としてマークする準備ができています。",
+        "runReadyToCompleteReason": "このプロジェクトでテスト実行を完了する権限があるため、この通知を受信しています。"
       }
     },
     "issues": {
@@ -7355,7 +7377,8 @@
         }
       }
     },
-    "projectRunsFilters": "## テスト実行のフィルタリング\n\nチップを切り替えてリストを絞り込みます。チップは「アクティブ」タブと「完了」タブの両方に適用され、このプロジェクトについてこのデバイス上で記憶されます。\n\n- **手動** / **自動** — その種類の実行のみにリストを限定します。両方をオンにする（または両方をオフにする）と、すべての実行が表示されます。\n- **自分のテスト実行** — 自分が関与している実行のみ：自分が作成した実行、自分にテストケースが割り当てられている実行、または自分がテスト結果を記録した実行です。"
+    "projectRunsFilters": "## テスト実行のフィルタリング\n\nチップを切り替えてリストを絞り込みます。チップは「アクティブ」タブと「完了」タブの両方に適用され、このプロジェクトについてこのデバイス上で記憶されます。\n\n- **手動** / **自動** — その種類の実行のみにリストを限定します。両方をオンにする（または両方をオフにする）と、すべての実行が表示されます。\n- **自分のテスト実行** — 自分が関与している実行のみ：自分が作成した実行、自分にテストケースが割り当てられている実行、または自分がテスト結果を記録した実行です。",
+    "projectSessionsFilters": "## セッションのフィルタリング\n\nチップを切り替えてリストを絞り込みます。チップは「進行中」タブと「完了」タブの両方に適用され、このプロジェクトについてこのデバイスに記憶されます。\n\n- **マイセッション** — 自分が関与しているセッションのみ：自分が作成したセッション、または自分に割り当てられたセッション。"
   },
   "reports": {
     "ui": {
