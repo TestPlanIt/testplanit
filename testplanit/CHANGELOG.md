@@ -1,3 +1,10 @@
+## [0.44.1](https://github.com/TestPlanIt/testplanit/compare/v0.44.0...v0.44.1) (2026-08-10)
+
+### Bug Fixes
+
+* **api:** stop losing results when parallel workers race to create the same folder ([#564](https://github.com/TestPlanIt/testplanit/issues/564)) ([ba7e7a5](https://github.com/TestPlanIt/testplanit/commit/ba7e7a504e31ed723bf7fc72850173a6111f2cfa))
+* **deps:** resolve 13 of 15 open Dependabot alerts ([#578](https://github.com/TestPlanIt/testplanit/issues/578)) ([8a4e5cd](https://github.com/TestPlanIt/testplanit/commit/8a4e5cd556b10387055e080eebdc154347bc6742))
+
 ## [0.44.0](https://github.com/TestPlanIt/testplanit/compare/v0.43.0...v0.44.0) (2026-08-01)
 
 ### Features
