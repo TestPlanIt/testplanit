@@ -2,7 +2,6 @@ import { getTranslations } from "next-intl/server";
 import { KeyRound } from "lucide-react";
 
 import { Card, CardContent } from "@/components/ui/card";
-import * as rootParams from "next/root-params";
 import type { Locale } from "~/i18n/navigation";
 import { redirect } from "~/lib/navigation";
 import {
@@ -25,13 +24,15 @@ import {
  * arbitrary query content.
  */
 export default async function PasswordlessCodePage({
+  params,
   searchParams,
 }: {
+  params: Promise<{ locale: Locale }>;
   searchParams: Promise<{ code?: string }>;
 }) {
-  const locale = (await rootParams.locale()) as Locale;
+  const { locale } = await params;
   const { code: rawCode } = await searchParams;
-  const t = await getTranslations();
+  const t = await getTranslations({ locale });
 
   const code = normalizePasswordlessCode(rawCode ?? "");
   if (!isValidPasswordlessCodeFormat(code)) {

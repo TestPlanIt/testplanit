@@ -7,6 +7,8 @@ import { baseDb } from "~/lib/db";
 import { NotificationService } from "~/lib/services/notificationService";
 import { authOptions } from "~/server/auth";
 
+export const dynamic = "force-dynamic";
+
 /**
  * GET /api/share/[shareKey]
  * Fetch share link metadata (without accessing content)

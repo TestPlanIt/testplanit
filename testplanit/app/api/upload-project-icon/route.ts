@@ -2,6 +2,7 @@ import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { NextRequest, NextResponse } from "next/server";
 
 export const maxDuration = 60;
+export const dynamic = "force-dynamic";
 
 /**
  * POST /api/upload-project-icon

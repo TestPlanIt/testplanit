@@ -10,19 +10,22 @@ import { SectionHeader } from "@/components/ui/typography";
 import { getServerSession } from "next-auth/next";
 import { getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
-import { Suspense } from "react";
 import { authOptions } from "~/server/auth";
 
-export async function generateMetadata() {
+interface PageProps {
+  params: Promise<{
+    locale: string;
+  }>;
+}
+
+export async function generateMetadata({ params: _params }: PageProps) {
   const t = await getTranslations("reports.shareDialog.manageShares");
   return {
     title: t("adminTitle"),
   };
 }
 
-// Session-gated content: getServerSession reads headers, so it must stream
-// behind Suspense rather than block the route shell.
-async function AdminSharesContent() {
+export default async function AdminSharesPage({ params: _params }: PageProps) {
   const session = await getServerSession(authOptions);
 
   // Only ADMIN users can access this page
@@ -30,10 +33,6 @@ async function AdminSharesContent() {
     notFound();
   }
 
-  return <ShareLinkList showProjectColumn={true} />;
-}
-
-export default async function AdminSharesPage() {
   const t = await getTranslations("reports.shareDialog.manageShares");
 
   return (
@@ -46,9 +45,7 @@ export default async function AdminSharesPage() {
           <CardDescription>{t("adminDescription")}</CardDescription>
         </CardHeader>
         <CardContent>
-          <Suspense fallback={null}>
-            <AdminSharesContent />
-          </Suspense>
+          <ShareLinkList showProjectColumn={true} />
         </CardContent>
       </Card>
     </main>

@@ -5,6 +5,8 @@ import { getVersionInfo } from "~/lib/version";
 import { db } from "~/server/db";
 import { getElasticsearchClient } from "~/services/elasticsearchService";
 
+export const dynamic = "force-dynamic";
+
 interface ServiceCheck {
   status: "ok" | "error" | "disabled";
   message?: string;

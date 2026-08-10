@@ -29,6 +29,9 @@ import { withAuditContext } from "~/lib/auditContextWrappers";
 import { baseDb } from "~/lib/db";
 import { authOptions } from "~/server/auth";
 
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
 export const DELETE = withAuditContext(
   async (
     req: NextRequest,

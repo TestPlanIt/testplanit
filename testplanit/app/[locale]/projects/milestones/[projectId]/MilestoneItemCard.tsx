@@ -108,7 +108,6 @@ const MilestoneItemCard: React.FC<MilestoneItemCardProps> = ({
     // full-width block — it is the query container, and its width has to be
     // the width the content actually gets.
     <div
-      data-testid="milestone-card"
       style={{
         marginInlineStart: `${level * 20}px`,
         width: `calc(100% - ${level * 20}px)`,
