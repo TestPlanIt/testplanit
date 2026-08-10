@@ -2,7 +2,6 @@
 
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
-import { commitUrlSearch } from "~/lib/urlState";
 import { DateFormatter } from "@/components/DateFormatter";
 import { IssuePriorityDisplay } from "@/components/IssuePriorityDisplay";
 import { SearchIssuesDialog } from "@/components/issues/search-issues-dialog";
@@ -2032,7 +2031,7 @@ export function GenerateTestCasesWizard({
     // Remove the param from URL immediately to prevent re-triggering
     const url = new URL(window.location.href);
     url.searchParams.delete("urlJobId");
-    commitUrlSearch(url);
+    window.history.replaceState({}, "", url.toString());
 
     void handleResumeUrlJob(urlJobIdParam);
     // eslint-disable-next-line react-hooks/exhaustive-deps

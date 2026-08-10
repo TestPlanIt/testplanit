@@ -1,5 +1,4 @@
 import { Button } from "@/components/ui/button";
-import { commitUrlSearch } from "~/lib/urlState";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Popover,
@@ -17,6 +16,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { usePathname, useRouter } from "~/lib/navigation";
 
 const COLUMN_VISIBILITY_STORAGE_PREFIX = "testplanit:columnVisibility:";
 const COLUMN_ORDER_STORAGE_PREFIX = "testplanit:columnOrder:";
@@ -291,6 +291,8 @@ export function ColumnSelection<TData>({
   storageKey,
   hideColumnRef,
 }: ColumnSelectionProps<TData>) {
+  const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const columnVisibilityQuery = searchParams.get("columns");
   const t = useTranslations("common");
@@ -516,21 +518,18 @@ export function ColumnSelection<TData>({
     }
 
     query.set("columns", newColumns);
-    // commitUrlSearch, not router.replace: this effect mirrors
-    // column-visibility state into the URL (including the initial default set
-    // on load), and same-route URL-state syncs must not involve the router
-    // (see lib/urlState.ts — a router.replace can unmount open dialogs; the
-    // run-creation case picker mounts this component inside one). replace,
-    // not push: a push adds a history entry per sync, so leaving the page
-    // takes two Back clicks.
-    const url = new URL(window.location.href);
-    url.search = query.toString() ? `?${query.toString()}` : "";
-    commitUrlSearch(url);
+    const url = `${pathname}?${query.toString()}`;
+    // replace, not push: this effect mirrors column-visibility state into the
+    // URL (including the initial default set on load). A push adds a history
+    // entry per sync, so leaving the page takes two Back clicks.
+    router.replace(url, { scroll: false });
   }, [
     columnVisibility,
     onVisibilityChange,
+    router,
     columnVisibilityQuery,
     metadataSource,
+    pathname,
   ]);
 
   const handleCheckboxChange = (columnId: string, isChecked: boolean) => {
