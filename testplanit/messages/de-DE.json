@@ -343,6 +343,8 @@
       "notParameterized": "Nicht parametrisiert",
       "hasAttachments": "Hat Anhänge",
       "noAttachments": "Keine Anhänge",
+      "inReview": "In Überprüfung",
+      "notInReview": "Nicht in Überprüfung",
       "testRuns": "Testläufe",
       "title": "Titel",
       "project": "Projekt",
@@ -3113,6 +3115,7 @@
       "byAutomation": "Automatisierung",
       "byParameterized": "Parametrisierung",
       "byAttachments": "Anhänge",
+      "byReview": "Überprüfung",
       "allTemplates": "Alle Vorlagen",
       "allStates": "Alle Staaten",
       "allCreators": "Alle Schöpfer",
@@ -6385,7 +6388,7 @@
         "integrationAuthExpiredMessage": "Ihre Verbindung zu \"{integrationName}\" ist abgelaufen. Stellen Sie die Verbindung erneut her, um die Issue-Synchronisierung fortzusetzen.",
         "integrationAuthExpiredReconnect": "Erneut verbinden",
         "runReadyToCompleteTitle": "Testlauf bereit zum Abschluss",
-        "runReadyToCompleteMessage": "{count, plural, one {# Fall wurde} other {Alle # Fälle wurden}} ausgeführt.",
+        "runReadyToCompleteExecuted": "{count, plural, one {# Fall wurde} other {Alle # Fälle wurden}} ausgeführt.",
         "runReadyToCompleteEmailMessage": "Alle {caseCount, plural, one {# Testfall} other {# Testfälle}} im Testlauf \"{testRunName}\" (Projekt \"{projectName}\") wurden ausgeführt. Der Testlauf kann jetzt als abgeschlossen markiert werden.",
         "runReadyToCompleteReason": "Sie erhalten diese Nachricht, weil Sie Testläufe in diesem Projekt abschließen können."
       }

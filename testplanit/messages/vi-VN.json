@@ -343,6 +343,8 @@
       "notParameterized": "Không có tham số",
       "hasAttachments": "Có tệp đính kèm",
       "noAttachments": "Không có tệp đính kèm",
+      "inReview": "Đang xem xét",
+      "notInReview": "Không xem xét",
       "testRuns": "Chạy thử nghiệm",
       "title": "Tiêu đề",
       "project": "Dự án",
@@ -3113,6 +3115,7 @@
       "byAutomation": "Tự động hóa",
       "byParameterized": "Tham số hóa",
       "byAttachments": "Tệp đính kèm",
+      "byReview": "Đánh giá",
       "allTemplates": "Tất cả các mẫu",
       "allStates": "Tất cả các tiểu bang",
       "allCreators": "Tất cả những người sáng tạo",
@@ -6385,7 +6388,7 @@
         "integrationAuthExpiredMessage": "Kết nối của bạn tới \"{integrationName}\" đã hết hạn. Kết nối lại để tiếp tục đồng bộ vấn đề.",
         "integrationAuthExpiredReconnect": "Kết nối lại",
         "runReadyToCompleteTitle": "Lượt Chạy Kiểm Thử Đã Sẵn Sàng Hoàn Tất",
-        "runReadyToCompleteMessage": "{count, plural, other {Tất cả # trường hợp đã được thực thi.}}",
+        "runReadyToCompleteExecuted": "{count, plural, other {Tất cả # trường hợp đã được thực thi.}}",
         "runReadyToCompleteEmailMessage": "Tất cả {caseCount, plural, other {# trường hợp}} trong lượt chạy kiểm thử \"{testRunName}\" (dự án \"{projectName}\") đã được thực thi. Lượt chạy đã sẵn sàng để được đánh dấu là hoàn tất.",
         "runReadyToCompleteReason": "Bạn nhận được thông báo này vì bạn có quyền hoàn tất các lượt chạy kiểm thử trong dự án này."
       }

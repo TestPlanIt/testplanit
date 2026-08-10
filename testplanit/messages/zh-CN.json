@@ -343,6 +343,8 @@
       "notParameterized": "未参数化",
       "hasAttachments": "有附件",
       "noAttachments": "无附件",
+      "inReview": "审查中",
+      "notInReview": "未在审查中",
       "testRuns": "测试运行",
       "title": "标题",
       "project": "项目",
@@ -3113,6 +3115,7 @@
       "byAutomation": "自动化",
       "byParameterized": "参数化",
       "byAttachments": "附件",
+      "byReview": "审查",
       "allTemplates": "所有模板",
       "allStates": "所有州",
       "allCreators": "所有创作者",
@@ -6385,7 +6388,7 @@
         "integrationAuthExpiredMessage": "您与“{integrationName}”的连接已过期。请重新连接以恢复问题同步。",
         "integrationAuthExpiredReconnect": "重新连接",
         "runReadyToCompleteTitle": "测试运行已准备好完成",
-        "runReadyToCompleteMessage": "{count, plural, other {全部 # 个用例已执行。}}",
+        "runReadyToCompleteExecuted": "{count, plural, other {全部 # 个用例已执行}}。",
         "runReadyToCompleteEmailMessage": "测试运行“{testRunName}”(项目“{projectName}”)中的所有 {caseCount, plural, other {# 个用例}} 均已执行。该运行已可标记为完成。",
         "runReadyToCompleteReason": "您收到此通知是因为您可以完成此项目中的测试运行。"
       }

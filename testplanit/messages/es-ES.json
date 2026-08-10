@@ -343,6 +343,8 @@
       "notParameterized": "No parametrizado",
       "hasAttachments": "Tiene Adjuntos",
       "noAttachments": "Sin Adjuntos",
+      "inReview": "En revisión",
+      "notInReview": "No en revisión",
       "testRuns": "Prueba de ejecuciones",
       "title": "Título",
       "project": "Proyecto",
@@ -3113,6 +3115,7 @@
       "byAutomation": "Automatización",
       "byParameterized": "Parametrización",
       "byAttachments": "Adjuntos",
+      "byReview": "Revisión",
       "allTemplates": "Todas las plantillas",
       "allStates": "Todos los Estados",
       "allCreators": "Todos los Creadores",
@@ -6385,7 +6388,7 @@
         "integrationAuthExpiredMessage": "Su conexión con \"{integrationName}\" ha caducado. Vuelva a conectarse para reanudar la sincronización de incidencias.",
         "integrationAuthExpiredReconnect": "Reconectar",
         "runReadyToCompleteTitle": "Ejecución de prueba lista para completar",
-        "runReadyToCompleteMessage": "{count, plural, one {El caso # ha sido ejecutado.} other {Todos los # casos han sido ejecutados.}}",
+        "runReadyToCompleteExecuted": "{count, plural, one {# caso ha sido ejecutado.} other {Todos los # casos han sido ejecutados.}}",
         "runReadyToCompleteEmailMessage": "Se han ejecutado {caseCount, plural, one {# caso} other {# casos}} en la ejecución de prueba \"{testRunName}\" (proyecto \"{projectName}\"). La ejecución está lista para marcarse como completada.",
         "runReadyToCompleteReason": "Recibe esto porque puede completar ejecuciones de prueba en este proyecto."
       }

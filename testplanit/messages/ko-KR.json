@@ -343,6 +343,8 @@
       "notParameterized": "매개변수화되지 않음",
       "hasAttachments": "첨부파일 있음",
       "noAttachments": "첨부파일 없음",
+      "inReview": "검토 중",
+      "notInReview": "검토 중 아님",
       "testRuns": "테스트 실행",
       "title": "제목",
       "project": "프로젝트",
@@ -3113,6 +3115,7 @@
       "byAutomation": "오토메이션",
       "byParameterized": "매개변수화",
       "byAttachments": "첨부파일",
+      "byReview": "검토",
       "allTemplates": "모든 템플릿",
       "allStates": "모든 주",
       "allCreators": "모든 크리에이터",
@@ -6385,7 +6388,7 @@
         "integrationAuthExpiredMessage": "\"{integrationName}\"에 대한 연결이 만료되었습니다. 이슈 동기화를 재개하려면 다시 연결하세요.",
         "integrationAuthExpiredReconnect": "다시 연결",
         "runReadyToCompleteTitle": "테스트 실행 완료 준비됨",
-        "runReadyToCompleteMessage": "{count, plural, other {전체 #개 케이스가 실행되었습니다.}}",
+        "runReadyToCompleteExecuted": "{count, plural, other {전체 #개 케이스가}} 실행되었습니다.",
         "runReadyToCompleteEmailMessage": "테스트 실행 \"{testRunName}\"(프로젝트 \"{projectName}\")의 {caseCount, plural, other {케이스 #개}}가 모두 실행되었습니다. 이 실행은 완료로 표시할 준비가 되었습니다.",
         "runReadyToCompleteReason": "이 프로젝트에서 테스트 실행을 완료할 수 있는 권한이 있어 이 알림을 받고 있습니다."
       }

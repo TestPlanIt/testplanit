@@ -70,6 +70,16 @@ export const FILTER_VALUE_MAX_LENGTH = 256;
 export const STATUS_UNTESTED_SENTINEL = "untested";
 export const ASSIGNED_TO_UNASSIGNED_SENTINEL = "unassigned";
 
+/**
+ * "Has a PENDING ReviewRequest" — the list-wide twin of the per-row pending
+ * review badge. Not in REPO_STATIC_DIMENSIONS: it only exists while the
+ * project runs the review workflow (system flag AND
+ * Projects.reviewWorkflowEnabled), so it is opt-in per
+ * `buildFilterDimensions({ includeInReview })`. Everywhere else it is absent
+ * from the registry, which drops any `inReview` predicate at parse.
+ */
+export const IN_REVIEW_DIMENSION = "inReview";
+
 /** Valueless relative-date operators (Date fields). */
 export const RELATIVE_DATE_OPERATORS = [
   "last7",
@@ -213,6 +223,18 @@ export const REPO_STATIC_DIMENSIONS: readonly FilterDimension[] = [
   },
 ];
 
+/**
+ * Review-workflow-only repo dimension. ReviewRequest is polymorphic (no FK
+ * back-relation to RepositoryCases), so this one is not SQL-expressible from
+ * the case row alone — the compiler resolves it through an injected id set.
+ */
+export const IN_REVIEW_DIMENSION_DEF: FilterDimension = {
+  key: IN_REVIEW_DIMENSION,
+  scope: "repo",
+  valueType: "boolean",
+  operators: BOOLEAN_OPERATORS,
+};
+
 export const RUN_DIMENSIONS: readonly FilterDimension[] = [
   {
     key: "status",
@@ -288,16 +310,31 @@ export interface BuildFilterDimensionsOptions {
    * the URL are then dropped at parse.
    */
   includeRunDimensions?: boolean;
+  /**
+   * Include the `inReview` dimension. True only when the review workflow is
+   * live for the project (system flag AND Projects.reviewWorkflowEnabled) —
+   * elsewhere the dimension must not exist at all, so a shared link carrying
+   * an `inReview` predicate degrades to "no such filter" rather than
+   * silently filtering by a feature the project does not run.
+   */
+  includeInReview?: boolean;
 }
 
 export function buildFilterDimensions(
   options: BuildFilterDimensionsOptions = {}
 ): FilterDimensionRegistry {
-  const { dynamicFields, includeRunDimensions = false } = options;
+  const {
+    dynamicFields,
+    includeRunDimensions = false,
+    includeInReview = false,
+  } = options;
   const registry = new Map<string, FilterDimension>();
 
   for (const dimension of REPO_STATIC_DIMENSIONS) {
     registry.set(dimension.key, dimension);
+  }
+  if (includeInReview) {
+    registry.set(IN_REVIEW_DIMENSION_DEF.key, IN_REVIEW_DIMENSION_DEF);
   }
   if (includeRunDimensions) {
     for (const dimension of RUN_DIMENSIONS) {

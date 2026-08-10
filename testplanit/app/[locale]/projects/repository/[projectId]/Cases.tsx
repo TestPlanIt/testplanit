@@ -52,7 +52,10 @@ import {
   RowSelectionState,
   Updater as TableUpdater,
 } from "@tanstack/react-table";
-import type { FilterDimensionRegistry } from "~/lib/repository/filterDimensions";
+import {
+  IN_REVIEW_DIMENSION,
+  type FilterDimensionRegistry,
+} from "~/lib/repository/filterDimensions";
 import {
   compileRepoPredicates,
   compileRunPredicates,
@@ -476,6 +479,11 @@ interface CasesProps {
   predicatesKey: string;
   /** Clears all active predicates — the zero-result empty state's CTA. */
   onClearFilters?: () => void;
+  /** Case ids carrying a PENDING review — how the `inReview` predicate
+   * compiles (ReviewRequest has no relation to traverse from a case where).
+   * `undefined` = unresolved: the list holds rather than answering an
+   * `inReview` filter from the empty set. */
+  inReviewCaseIds?: number[];
   isSelectionMode?: boolean;
   selectedTestCases?: number[];
   selectedRunIds?: number[];
@@ -541,6 +549,7 @@ export default function Cases({
   filterRegistry,
   predicatesKey,
   onClearFilters,
+  inReviewCaseIds,
   isSelectionMode = false,
   selectedTestCases = [],
   selectedRunIds,
@@ -1120,7 +1129,9 @@ export default function Cases({
     // compiler and applied to the TestRunCases where instead; text/link/steps
     // operator predicates compile to their value-not-null SQL pre-filter only —
     // postFetchFilters below carries their in-memory half.
-    baseConditions.push(...compileRepoPredicates(predicates, filterRegistry));
+    baseConditions.push(
+      ...compileRepoPredicates(predicates, filterRegistry, { inReviewCaseIds })
+    );
 
     const finalWhereClause: RepositoryCasesWhereInput = {
       AND: baseConditions,
@@ -1133,10 +1144,19 @@ export default function Cases({
     folderId,
     predicates,
     filterRegistry,
+    inReviewCaseIds,
     descendantFolderIds,
     isSelectionMode,
     excludeNotStartedFromRuns,
   ]);
+
+  // An `inReview` predicate is answered from a separately fetched id set. Until
+  // it resolves the compiler's empty-set default would render "no cases in
+  // review" — same failure mode as running a search before its ids land, so it
+  // gets the same treatment: gate the queries off and show loading.
+  const inReviewUnresolved =
+    inReviewCaseIds === undefined &&
+    predicates.some((predicate) => predicate.dimension === IN_REVIEW_DIMENSION);
 
   // Post-fetch filters for text/link/steps operator predicates — the in-memory
   // half of the fragments compileRepoPredicates pre-filters as value-not-null.
@@ -1569,6 +1589,7 @@ export default function Cases({
     // query without them — that would render the whole repository as if the
     // search had matched everything.
     !searchUnresolved &&
+    !inReviewUnresolved &&
     (isRunMode
       ? effectiveRunIds.length > 0
       : // An id-resolved sort that resolved to an empty page has nothing to
@@ -1627,6 +1648,7 @@ export default function Cases({
       !isRunMode &&
       !!sortedPageIds &&
       !searchUnresolved &&
+      !inReviewUnresolved &&
       !!session?.user &&
       isValidProjectId
     ),
@@ -1639,13 +1661,15 @@ export default function Cases({
     ? (postQueryResult.data ?? undefined)
     : undefined;
   const data = isRunMode ? undefined : postQueryResult.data;
-  const isLoading = searchPending
-    ? // Every list query is gated off while the ids resolve, so nothing is
-      // "loading" in React Query's sense — but the rows on screen do not answer
-      // the query the user just typed (or arrived with in `?q=`), and showing
-      // them unfiltered is the corruption this state exists to prevent.
-      true
-    : postQueryResult.isLoading;
+  const isLoading =
+    searchPending || inReviewUnresolved
+      ? // Every list query is gated off while the ids resolve, so nothing is
+        // "loading" in React Query's sense — but the rows on screen do not
+        // answer the query the user just typed (or arrived with in `?q=`), and
+        // showing them unfiltered is the corruption this state exists to
+        // prevent.
+        true
+      : postQueryResult.isLoading;
   const filteredTotalCount =
     !isRunMode && sortedPageIds
       ? postQueryCountResult.totalCount

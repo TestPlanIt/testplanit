@@ -4,6 +4,7 @@ import {
   ASSIGNED_TO_UNASSIGNED_SENTINEL,
   BETWEEN_OPERATOR,
   FILTER_DIMENSION_KEY_PATTERN,
+  IN_REVIEW_DIMENSION,
   OPERATOR_ARITY,
   RELATIVE_DATE_OPERATORS,
   REPO_STATIC_DIMENSIONS,
@@ -61,6 +62,23 @@ describe("buildFilterDimensions", () => {
       valueType: "userList",
       operators: ["in"],
       sentinels: [ASSIGNED_TO_UNASSIGNED_SENTINEL],
+    });
+  });
+
+  it("omits inReview unless the review workflow is live", () => {
+    expect(buildFilterDimensions().has("inReview")).toBe(false);
+    expect(
+      buildFilterDimensions({ includeRunDimensions: true }).has("inReview")
+    ).toBe(false);
+  });
+
+  it("adds inReview as a repo-scoped boolean dimension when requested", () => {
+    const registry = buildFilterDimensions({ includeInReview: true });
+    expect(registry.get("inReview")).toMatchObject({
+      key: IN_REVIEW_DIMENSION,
+      scope: "repo",
+      valueType: "boolean",
+      operators: ["is"],
     });
   });
 

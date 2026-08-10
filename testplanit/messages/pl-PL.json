@@ -343,6 +343,8 @@
       "notParameterized": "Nie sparametryzowane",
       "hasAttachments": "Ma załączniki",
       "noAttachments": "Brak załączników",
+      "inReview": "W recenzji",
+      "notInReview": "Nie w recenzji",
       "testRuns": "Testy biegowe",
       "title": "Tytuł",
       "project": "Projekt",
@@ -3113,6 +3115,7 @@
       "byAutomation": "Automatyzacja",
       "byParameterized": "Parametryzacja",
       "byAttachments": "Załączniki",
+      "byReview": "Recenzja",
       "allTemplates": "Wszystkie szablony",
       "allStates": "Wszystkie stany",
       "allCreators": "Wszyscy twórcy",
@@ -6385,7 +6388,7 @@
         "integrationAuthExpiredMessage": "Twoje połączenie z „{integrationName}” wygasło. Połącz się ponownie, aby wznowić synchronizację zgłoszeń.",
         "integrationAuthExpiredReconnect": "Połącz ponownie",
         "runReadyToCompleteTitle": "Przebieg testu gotowy do zakończenia",
-        "runReadyToCompleteMessage": "Wykonano {count, plural, one {# przypadek} few {wszystkie # przypadki} many {wszystkich # przypadków} other {wszystkich # przypadków}}.",
+        "runReadyToCompleteExecuted": "{count, plural, one {Przypadek # został wykonany} few {Wszystkie # przypadki zostały wykonane} many {Wszystkich # przypadków zostało wykonanych} other {Wszystkich # przypadków zostało wykonanych}}.",
         "runReadyToCompleteEmailMessage": "Wszystkie {caseCount, plural, one {# przypadek} few {# przypadki} many {# przypadków} other {# przypadków}} w przebiegu testu „{testRunName}” (projekt „{projectName}”) zostały wykonane. Przebieg jest gotowy do oznaczenia jako zakończony.",
         "runReadyToCompleteReason": "Otrzymujesz tę wiadomość, ponieważ możesz kończyć przebiegi testów w tym projekcie."
       }

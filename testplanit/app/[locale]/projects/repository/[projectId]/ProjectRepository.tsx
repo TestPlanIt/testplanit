@@ -36,6 +36,7 @@ import { ViewSelector } from "@/components/ViewSelector";
 import { RepositoryFilterBar } from "@/components/repository/filter-bar/RepositoryFilterBar";
 import {
   buildFilterDimensions,
+  IN_REVIEW_DIMENSION,
   type DynamicFieldDescriptor,
   type FilterDimension,
 } from "~/lib/repository/filterDimensions";
@@ -73,6 +74,7 @@ import {
   Link,
   ListChecks,
   ListOrdered,
+  MessageSquareWarning,
   Paperclip,
   Search,
   Sparkles,
@@ -103,7 +105,9 @@ import { emptyEditorContent } from "~/app/constants";
 import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
 import { ProjectIcon } from "~/components/ProjectIcon";
 import { usePageFileDrop } from "~/hooks/usePageFileDrop";
+import { usePendingReviewCaseIds } from "~/hooks/usePendingReviewCaseIds";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
+import { useReviewFeatureEnabled } from "~/hooks/useReviewFeatureEnabled";
 import {
   PaginationProvider,
   usePagination,
@@ -294,6 +298,11 @@ interface ViewOptions {
     count: number;
   }>;
   attachments: Array<{
+    value: boolean;
+    count: number;
+  }>;
+  /** Only present while the project runs the review workflow. */
+  inReview?: Array<{
     value: boolean;
     count: number;
   }>;
@@ -763,6 +772,20 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
   // re-renders with the full registry (dynamic-field predicates resolve then).
   const includeRunDimensions = isRunMode && !isSelectionMode;
   const persistFiltersToUrl = !isSelectionMode;
+
+  // "In Review" only exists where the review workflow does (system flag AND
+  // the project's own toggle). While the flags are still resolving the
+  // dimension stays out of the registry, so a shared `inReview` link drops the
+  // predicate rather than filtering by a set that isn't loaded yet — the same
+  // degradation a predicate on a deleted custom field gets.
+  const { enabled: reviewFeatureEnabled } =
+    useReviewFeatureEnabled(numericProjectId);
+  const reviewWorkflowActive = reviewFeatureEnabled === true;
+  const { caseIds: inReviewCaseIds } = usePendingReviewCaseIds(
+    numericProjectId,
+    reviewWorkflowActive
+  );
+
   const [mirroredDynamicFields, setMirroredDynamicFields] = useState<{
     signature: string;
     fields?: Record<string, DynamicFieldDescriptor>;
@@ -772,8 +795,9 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
       buildFilterDimensions({
         dynamicFields: mirroredDynamicFields.fields,
         includeRunDimensions,
+        includeInReview: reviewWorkflowActive,
       }),
-    [mirroredDynamicFields.fields, includeRunDimensions]
+    [mirroredDynamicFields.fields, includeRunDimensions, reviewWorkflowActive]
   );
 
   const {
@@ -1169,6 +1193,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
       automated: viewOptionsData.automated || [],
       parameterized: viewOptionsData.parameterized || [],
       attachments: viewOptionsData.attachments || [],
+      inReview: viewOptionsData.inReview,
       dynamicFields,
       tags: tagOptions,
       issues: issueOptions,
@@ -1217,6 +1242,16 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
         name: t("repository.views.byAttachments"),
         icon: Paperclip,
       },
+      // Review axis only where the review workflow runs — see filterRegistry.
+      ...(reviewWorkflowActive
+        ? [
+            {
+              id: IN_REVIEW_DIMENSION,
+              name: t("repository.views.byReview"),
+              icon: MessageSquareWarning,
+            },
+          ]
+        : []),
       // Always include Tags view
       {
         id: "tags",
@@ -1345,6 +1380,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
     viewOptionsData,
     viewOptions.tags,
     viewOptions.issues,
+    reviewWorkflowActive,
   ]);
 
   const [selectedItem, setSelectedItem] = useState<string>(() => {
@@ -1356,6 +1392,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
       "automated",
       "parameterized",
       "attachments",
+      "inReview",
       "status",
       "assignedTo",
       "tags",
@@ -1410,6 +1447,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
         "automated",
         "parameterized",
         "attachments",
+        "inReview",
         "status",
         "assignedTo",
         "tags",
@@ -1431,6 +1469,22 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
       }
     }
   }, [viewParam, viewOptions, selectedItem]);
+
+  // `?view=inReview` is accepted from the URL before the review flags resolve
+  // — rejecting it at mount would strand every shared link on the default axis
+  // while the config fetch is in flight. Once the flags come back OFF the axis
+  // genuinely does not exist here, so fall back to the surface's default
+  // rather than render a Select with no matching item.
+  useEffect(() => {
+    if (reviewFeatureEnabled !== false) return;
+    setSelectedItem((current) =>
+      current === IN_REVIEW_DIMENSION
+        ? isRunMode
+          ? "assignedTo"
+          : "folders"
+        : current
+    );
+  }, [reviewFeatureEnabled, isRunMode]);
 
   const deferredFolderId = useDeferredValue(selectedFolderId);
 
@@ -2487,6 +2541,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                             filterRegistry={filterRegistry}
                             predicatesKey={canonicalKey}
                             onClearFilters={clearPredicates}
+                            inReviewCaseIds={inReviewCaseIds}
                             isSelectionMode={isSelectionMode}
                             selectedTestCases={selectedTestCases}
                             selectedRunIds={selectedRunIds}

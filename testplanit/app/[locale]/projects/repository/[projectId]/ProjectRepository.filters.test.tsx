@@ -170,7 +170,16 @@ vi.mock("@zenstackhq/tanstack-query/react", () => ({
         data: { id: 42, name: "Test Project", iconUrl: null },
         isLoading: false,
       }),
+      // useReviewFeatureEnabled's per-project half. Off here, so the
+      // review-only `inReview` axis/dimension stays out of the registry.
+      useFindUnique: () => ({
+        data: { reviewWorkflowEnabled: false },
+        isLoading: false,
+      }),
       useCount: () => ({ data: 1, isLoading: false }),
+    },
+    reviewRequest: {
+      useFindMany: () => ({ data: [], isLoading: false }),
     },
     repositories: {
       useFindFirst: () => ({ data: { id: 7 }, isLoading: false }),

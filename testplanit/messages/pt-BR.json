@@ -343,6 +343,8 @@
       "notParameterized": "Não parametrizado",
       "hasAttachments": "Possui Anexos",
       "noAttachments": "Sem Anexos",
+      "inReview": "Em Revisão",
+      "notInReview": "Não Está em Revisão",
       "testRuns": "Testes de execução",
       "title": "Título",
       "project": "Projeto",
@@ -3113,6 +3115,7 @@
       "byAutomation": "Automação",
       "byParameterized": "Parametrização",
       "byAttachments": "Anexos",
+      "byReview": "Análise",
       "allTemplates": "Todos os modelos",
       "allStates": "Todos os estados",
       "allCreators": "Todos os Criadores",
@@ -6385,7 +6388,7 @@
         "integrationAuthExpiredMessage": "Sua conexão com \"{integrationName}\" expirou. Reconecte-se para retomar a sincronização de issues.",
         "integrationAuthExpiredReconnect": "Reconectar",
         "runReadyToCompleteTitle": "Execução de Teste Pronta para Concluir",
-        "runReadyToCompleteMessage": "{count, plural, one {# caso foi executado} other {Todos os # casos foram executados}}.",
+        "runReadyToCompleteExecuted": "{count, plural, one {O caso # foi executado} other {Todos os # casos foram executados}}.",
         "runReadyToCompleteEmailMessage": "Todos os {caseCount, plural, one {# caso} other {# casos}} na execução de teste \"{testRunName}\" (projeto \"{projectName}\") foram executados. A execução está pronta para ser marcada como concluída.",
         "runReadyToCompleteReason": "Você está recebendo esta notificação porque pode concluir execuções de teste neste projeto."
       }

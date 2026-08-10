@@ -343,6 +343,8 @@
       "notParameterized": "غير معلمن",
       "hasAttachments": "يحتوي على مرفقات",
       "noAttachments": "بلا مرفقات",
+      "inReview": "قيد المراجعة",
+      "notInReview": "ليس قيد المراجعة",
       "testRuns": "تشغيلات الاختبار",
       "title": "العنوان",
       "project": "المشروع",
@@ -3113,6 +3115,7 @@
       "byAutomation": "الأتمتة",
       "byParameterized": "المعلمة",
       "byAttachments": "المرفقات",
+      "byReview": "مراجعة",
       "allTemplates": "جميع القوالب",
       "allStates": "جميع الحالات",
       "allCreators": "جميع المُنشِئين",
@@ -6385,7 +6388,7 @@
         "integrationAuthExpiredMessage": "انتهت صلاحية اتصالك بـ \"{integrationName}\". أعد الاتصال لاستئناف مزامنة المشكلات.",
         "integrationAuthExpiredReconnect": "إعادة الاتصال",
         "runReadyToCompleteTitle": "دورة الاختبار جاهزة للإكمال",
-        "runReadyToCompleteMessage": "{count, plural, zero {لم يتم تنفيذ أي حالة} one {تم تنفيذ الحالة الواحدة} two {تم تنفيذ الحالتين} few {تم تنفيذ الحالات الـ#} many {تم تنفيذ الحالات الـ#} other {تم تنفيذ جميع الحالات الـ#}}.",
+        "runReadyToCompleteExecuted": "{count, plural, zero {لم يتم تنفيذ أي حالة} one {تم تنفيذ الحالة} two {تم تنفيذ الحالتان} few {تم تنفيذ الـ # حالات} many {تم تنفيذ الـ # حالة} other {تم تنفيذ جميع الـ # حالة}}.",
         "runReadyToCompleteEmailMessage": "تم تنفيذ جميع {caseCount, plural, zero {# حالة} one {حالة واحدة} two {حالتان} few {# حالات} many {# حالة} other {# حالة}} في دورة الاختبار \"{testRunName}\" (المشروع \"{projectName}\"). الدورة جاهزة لتُصنَّف كمكتملة.",
         "runReadyToCompleteReason": "تصلك هذه الرسالة لأنك تستطيع إكمال دورات الاختبار في هذا المشروع."
       }

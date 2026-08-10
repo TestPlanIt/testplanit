@@ -395,7 +395,18 @@ function matchesWhere(item: FakeCase, where: any): boolean {
   });
 }
 
-function createFakeDb(cases: FakeCase[], fields: FakeField[]) {
+interface FakeReview {
+  /** Both flags at once: the AppConfig kill switch AND the project toggle. */
+  enabled: boolean;
+  /** Case ids carrying a PENDING ReviewRequest. */
+  pendingCaseIds?: number[];
+}
+
+function createFakeDb(
+  cases: FakeCase[],
+  fields: FakeField[],
+  review?: FakeReview
+) {
   const idSelectWheres: unknown[] = [];
   const matching = (where: unknown) =>
     cases.filter((item) => matchesWhere(item, where));
@@ -482,6 +493,18 @@ function createFakeDb(cases: FakeCase[], fields: FakeField[]) {
     tags: { findMany: async () => [] },
     issue: { findMany: async () => [] },
     testRunCases: { findMany: async () => [] },
+    appConfig: {
+      findUnique: async () => (review?.enabled ? { value: true } : null),
+    },
+    projects: {
+      findUnique: async () => ({
+        reviewWorkflowEnabled: review?.enabled === true,
+      }),
+    },
+    reviewRequest: {
+      findMany: async () =>
+        (review?.pendingCaseIds ?? []).map((entityId) => ({ entityId })),
+    },
     $queryRaw: async () => [],
   };
 
@@ -674,5 +697,88 @@ describe("computeRepositoryCaseFacetCounts — option fields and dimensionTotals
     });
     // Only the chipped dimension costs a second base.
     expect(chipped.idSelectWheres).toHaveLength(2);
+  });
+});
+
+describe("computeRepositoryCaseFacetCounts — inReview", () => {
+  it("omits the facet entirely when the review workflow is off", async () => {
+    const { db } = createFakeDb(FIXTURE_CASES, [SEVERITY]);
+
+    const result = await computeRepositoryCaseFacetCounts(db, {
+      projectId: PROJECT_ID,
+      predicates: [],
+    });
+
+    // Absent, not all-zero: an empty facet would put a dead "In Review" axis
+    // in the ViewSelector of every project that does not run reviews.
+    expect(result.inReview).toBeUndefined();
+    expect(result.dimensionTotals.inReview).toBeUndefined();
+  });
+
+  it("splits the base into in-review / not-in-review when it is on", async () => {
+    const { db } = createFakeDb(FIXTURE_CASES, [SEVERITY], {
+      enabled: true,
+      pendingCaseIds: [1, 3],
+    });
+
+    const result = await computeRepositoryCaseFacetCounts(db, {
+      projectId: PROJECT_ID,
+      predicates: [],
+    });
+
+    expect(result.inReview).toEqual([
+      { value: true, count: 2 },
+      { value: false, count: 3 },
+    ]);
+    expect(result.dimensionTotals.inReview).toBe(5);
+  });
+
+  it("drops an inReview predicate while the review workflow is off", async () => {
+    const { db } = createFakeDb(FIXTURE_CASES, [SEVERITY]);
+
+    const result = await computeRepositoryCaseFacetCounts(db, {
+      projectId: PROJECT_ID,
+      predicates: [{ dimension: "inReview", operator: "is", values: [1] }],
+    });
+
+    // The dimension is not in the server registry, so the predicate never
+    // parses — the counts stay unfiltered rather than collapsing to zero.
+    expect(result.totalCount).toBe(5);
+  });
+
+  it("filters by the predicate and still self-excludes its own facet", async () => {
+    const { db } = createFakeDb(FIXTURE_CASES, [SEVERITY], {
+      enabled: true,
+      pendingCaseIds: [1, 3],
+    });
+
+    const result = await computeRepositoryCaseFacetCounts(db, {
+      projectId: PROJECT_ID,
+      predicates: [{ dimension: "inReview", operator: "is", values: [1] }],
+    });
+
+    expect(result.totalCount).toBe(2);
+    // Other dimensions are scoped by the chip...
+    expect(result.dimensionTotals.templates).toBe(2);
+    // ...but inReview's own base is what clearing it would show.
+    expect(result.dimensionTotals.inReview).toBe(5);
+    expect(result.inReview).toEqual([
+      { value: true, count: 2 },
+      { value: false, count: 3 },
+    ]);
+  });
+
+  it("counts the complement for is [0]", async () => {
+    const { db } = createFakeDb(FIXTURE_CASES, [SEVERITY], {
+      enabled: true,
+      pendingCaseIds: [1, 3],
+    });
+
+    const result = await computeRepositoryCaseFacetCounts(db, {
+      projectId: PROJECT_ID,
+      predicates: [{ dimension: "inReview", operator: "is", values: [0] }],
+    });
+
+    expect(result.totalCount).toBe(3);
   });
 });

@@ -343,6 +343,8 @@
       "notParameterized": "パラメータ化されていません",
       "hasAttachments": "添付ファイルあり",
       "noAttachments": "添付ファイルなし",
+      "inReview": "レビュー中",
+      "notInReview": "レビュー中でない",
       "testRuns": "テスト実行",
       "title": "タイトル",
       "project": "プロジェクト",
@@ -3113,6 +3115,7 @@
       "byAutomation": "オートメーション",
       "byParameterized": "パラメータ化",
       "byAttachments": "添付ファイル",
+      "byReview": "レビュー",
       "allTemplates": "すべてのテンプレート",
       "allStates": "すべての州",
       "allCreators": "すべてのクリエイター",
@@ -6385,7 +6388,7 @@
         "integrationAuthExpiredMessage": "「{integrationName}」への接続が期限切れになりました。課題の同期を再開するには再接続してください。",
         "integrationAuthExpiredReconnect": "再接続",
         "runReadyToCompleteTitle": "テスト実行の完了準備が整いました",
-        "runReadyToCompleteMessage": "{count, plural, other {すべての # 件のケースが}}実行されました。",
+        "runReadyToCompleteExecuted": "{count, plural, other {すべての # 件のケースが}} 実行されました。",
         "runReadyToCompleteEmailMessage": "テスト実行「{testRunName}」（プロジェクト「{projectName}」）内のすべての{caseCount, plural, other {# 件のケース}}が実行されました。この実行は完了としてマークする準備ができています。",
         "runReadyToCompleteReason": "このプロジェクトでテスト実行を完了する権限があるため、この通知を受信しています。"
       }

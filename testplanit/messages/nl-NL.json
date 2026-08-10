@@ -343,6 +343,8 @@
       "notParameterized": "Niet geparameteriseerd",
       "hasAttachments": "Heeft bijlagen",
       "noAttachments": "Geen bijlagen",
+      "inReview": "In beoordeling",
+      "notInReview": "Niet in beoordeling",
       "testRuns": "Testruns",
       "title": "Titel",
       "project": "Project",
@@ -3113,6 +3115,7 @@
       "byAutomation": "Automatisering",
       "byParameterized": "Parameterisering",
       "byAttachments": "Bijlagen",
+      "byReview": "Beoordeling",
       "allTemplates": "Alle sjablonen",
       "allStates": "Alle staten",
       "allCreators": "Alle makers",
@@ -6385,7 +6388,7 @@
         "integrationAuthExpiredMessage": "Uw verbinding met \"{integrationName}\" is verlopen. Maak opnieuw verbinding om het synchroniseren van issues te hervatten.",
         "integrationAuthExpiredReconnect": "Opnieuw verbinden",
         "runReadyToCompleteTitle": "Testrun Gereed om te Voltooien",
-        "runReadyToCompleteMessage": "{count, plural, one {# testgeval is} other {Alle # testgevallen zijn}} uitgevoerd.",
+        "runReadyToCompleteExecuted": "{count, plural, one {# testgeval is} other {Alle # testgevallen zijn}} uitgevoerd.",
         "runReadyToCompleteEmailMessage": "Alle {caseCount, plural, one {# case} other {# cases}} in testrun \"{testRunName}\" (project \"{projectName}\") zijn uitgevoerd. De run is gereed om als voltooid te worden gemarkeerd.",
         "runReadyToCompleteReason": "Je ontvangt dit omdat je testruns in dit project kunt voltooien."
       }

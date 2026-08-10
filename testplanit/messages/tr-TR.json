@@ -343,6 +343,8 @@
       "notParameterized": "Parametrelendirilmemiş",
       "hasAttachments": "Ekleri Var",
       "noAttachments": "Ek Yok",
+      "inReview": "İncelemede",
+      "notInReview": "İncelemede Değil",
       "testRuns": "Test Çalışmaları",
       "title": "Başlık",
       "project": "Proje",
@@ -3113,6 +3115,7 @@
       "byAutomation": "Otomasyon",
       "byParameterized": "Parametrizasyon",
       "byAttachments": "Ekler",
+      "byReview": "İnceleme",
       "allTemplates": "Tüm Şablonlar",
       "allStates": "Tüm Eyaletler",
       "allCreators": "Tüm Yaratıcılar",
@@ -6385,7 +6388,7 @@
         "integrationAuthExpiredMessage": "\"{integrationName}\" ile bağlantınızın süresi doldu. Sorun senkronizasyonuna devam etmek için yeniden bağlanın.",
         "integrationAuthExpiredReconnect": "Yeniden Bağlan",
         "runReadyToCompleteTitle": "Test Çalıştırması Tamamlanmaya Hazır",
-        "runReadyToCompleteMessage": "{count, plural, one {# durum} other {Tüm # durum}} çalıştırıldı.",
+        "runReadyToCompleteExecuted": "{count, plural, one {# durum çalıştırıldı.} other {Tüm # durum çalıştırıldı.}}",
         "runReadyToCompleteEmailMessage": "\"{testRunName}\" test çalıştırmasındaki (proje \"{projectName}\") tüm {caseCount, plural, one {# test senaryosu} other {# test senaryosu}} çalıştırıldı. Çalıştırma tamamlandı olarak işaretlenmeye hazır.",
         "runReadyToCompleteReason": "Bu projede test çalıştırmalarını tamamlayabildiğiniz için bu bildirimi alıyorsunuz."
       }

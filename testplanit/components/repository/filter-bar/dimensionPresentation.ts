@@ -10,6 +10,7 @@ import {
   ListChecks,
   ListOrdered,
   type LucideIcon,
+  MessageSquareWarning,
   Paperclip,
   SquareCheckBig,
   SquareStack,
@@ -47,6 +48,10 @@ export const DIMENSION_PRESENTATION: Readonly<
     labelKey: "repository.views.byParameterized",
   },
   attachments: { icon: Paperclip, labelKey: "repository.views.byAttachments" },
+  inReview: {
+    icon: MessageSquareWarning,
+    labelKey: "repository.views.byReview",
+  },
   tags: { icon: Tags, labelKey: "repository.views.byTag" },
   issues: { icon: Bug, labelKey: "repository.views.byIssue" },
   status: { icon: CircleCheckBig, labelKey: "common.actions.status" },
