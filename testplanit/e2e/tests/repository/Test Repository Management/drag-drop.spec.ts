@@ -1,5 +1,6 @@
 import { expect, test } from "../../../fixtures";
 import { RepositoryPage } from "../../../page-objects/repository/repository.page";
+import { waitForStableBox } from "../../../utils/wait-for-stable";
 
 /**
  * Drag & Drop Tests
@@ -480,8 +481,8 @@ test.describe("Drag & Drop", () => {
         .first();
       const targetFolderElement = repositoryPage.getFolderById(targetFolderId!);
 
-      await expect(selectedRow).toBeVisible({ timeout: 5000 });
-      await expect(targetFolderElement).toBeVisible({ timeout: 5000 });
+      await expect(selectedRow).toBeVisible({ timeout: 10000 });
+      await expect(targetFolderElement).toBeVisible({ timeout: 10000 });
 
       // Scroll elements into view
       await selectedRow.evaluate((el) =>
@@ -490,6 +491,12 @@ test.describe("Drag & Drop", () => {
       await targetFolderElement.evaluate((el) =>
         el.scrollIntoView({ block: "center" })
       );
+
+      // Selecting the two cases re-renders the row and the folder tree, so the
+      // node backing either locator can be replaced between the visibility
+      // check and the measurement — which reads back as a null box.
+      await waitForStableBox(selectedRow);
+      await waitForStableBox(targetFolderElement);
 
       const rowBox = await selectedRow.boundingBox();
       const targetBox = await targetFolderElement.boundingBox();

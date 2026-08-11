@@ -104,7 +104,11 @@ test.describe("INT-06: LLM parameter + dataset generation", () => {
     let projectId: number | undefined;
     await test.step("Provision project, LLM integration, folder, and seed case", async () => {
       projectId = await api.createProject(`E2E INT-06 Toggle ${ts}`);
-      const llmId = await api.createLlmIntegration(`E2E INT-06 LLM ${ts}`);
+      // LlmIntegration.name is globally unique and the three tests in this file
+      // run in parallel workers, so a bare millisecond stamp collides.
+      const llmId = await api.createLlmIntegration(
+        `E2E INT-06 LLM ${ts}-${Math.random().toString(36).slice(2, 7)}`
+      );
       await api.linkLlmToProject(projectId, llmId);
       const folderId = await api.createFolder(projectId, `Folder ${ts}`);
       await api.createTestCase(projectId, folderId, `Existing Case ${ts}`);
@@ -176,7 +180,11 @@ test.describe("INT-06: LLM parameter + dataset generation", () => {
     let projectId: number | undefined;
     await test.step("Provision project, LLM integration, folder, and seed case", async () => {
       projectId = await api.createProject(`E2E INT-06 Body ${ts}`);
-      const llmId = await api.createLlmIntegration(`E2E INT-06 LLM ${ts}`);
+      // LlmIntegration.name is globally unique and the three tests in this file
+      // run in parallel workers, so a bare millisecond stamp collides.
+      const llmId = await api.createLlmIntegration(
+        `E2E INT-06 LLM ${ts}-${Math.random().toString(36).slice(2, 7)}`
+      );
       await api.linkLlmToProject(projectId, llmId);
       const folderId = await api.createFolder(projectId, `Folder ${ts}`);
       await api.createTestCase(projectId, folderId, `Existing Case ${ts}`);
@@ -280,7 +288,11 @@ test.describe("INT-06: LLM parameter + dataset generation", () => {
     let projectId: number | undefined;
     await test.step("Provision project, LLM integration, folder, and seed case", async () => {
       projectId = await api.createProject(`E2E INT-06 Trunc ${ts}`);
-      const llmId = await api.createLlmIntegration(`E2E INT-06 LLM ${ts}`);
+      // LlmIntegration.name is globally unique and the three tests in this file
+      // run in parallel workers, so a bare millisecond stamp collides.
+      const llmId = await api.createLlmIntegration(
+        `E2E INT-06 LLM ${ts}-${Math.random().toString(36).slice(2, 7)}`
+      );
       await api.linkLlmToProject(projectId, llmId);
       const folderId = await api.createFolder(projectId, `Folder ${ts}`);
       await api.createTestCase(projectId, folderId, `Existing Case ${ts}`);

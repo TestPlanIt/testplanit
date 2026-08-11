@@ -25,6 +25,20 @@ async function openFolderWithCase(
 }
 
 /**
+ * Ticks a case row's select checkbox. The cases table keeps re-rendering while
+ * its queries settle, so the row backing the locator can be replaced mid-click
+ * ("element was detached from the DOM"). Retry until the box actually reads as
+ * checked instead of trusting one click to land.
+ */
+async function selectCase(page: Page, caseId: number): Promise<void> {
+  const checkbox = page.locator(`[data-testid="case-checkbox-${caseId}"]`);
+  await expect(async () => {
+    await checkbox.click({ timeout: 5000 });
+    await expect(checkbox).toBeChecked({ timeout: 3000 });
+  }).toPass({ timeout: 30_000 });
+}
+
+/**
  * Same-project copy/move via the wizard dialog. Pure DOM clicks — no HTML5
  * drag, no modifier keys; the flushReactRender / resolveCopyModifier helpers
  * from drag-drop-modifier-aware.spec.ts do not apply here.
@@ -188,9 +202,7 @@ test.describe("Copy/Move dialog same-project", () => {
       await page.goto(`/en-US/projects/repository/${projectId}`);
       await openFolderWithCase(page, rootFolderId, sourceCaseAId);
 
-      await page
-        .locator(`[data-testid="case-checkbox-${sourceCaseAId}"]`)
-        .click();
+      await selectCase(page, sourceCaseAId);
       await clickOverflowAction(page, "copy-move-button", "cases-actions-menu");
 
       await expect(page.getByTestId("copy-move-dialog")).toBeVisible();
@@ -289,9 +301,7 @@ test.describe("Copy/Move dialog same-project", () => {
       await page.goto(`/en-US/projects/repository/${projectId}`);
       await openFolderWithCase(page, rootFolderId, sourceCaseBId);
 
-      await page
-        .locator(`[data-testid="case-checkbox-${sourceCaseBId}"]`)
-        .click();
+      await selectCase(page, sourceCaseBId);
       await clickOverflowAction(page, "copy-move-button", "cases-actions-menu");
 
       await expect(page.getByTestId("copy-move-dialog")).toBeVisible();
@@ -418,12 +428,8 @@ test.describe("Copy/Move dialog same-project", () => {
     await test.step("Select two cases and pick the sibling folder", async () => {
       // Source A still lives in the root folder — test 2 COPIED it, did not
       // move. Source C is untouched.
-      await page
-        .locator(`[data-testid="case-checkbox-${sourceCaseAId}"]`)
-        .click();
-      await page
-        .locator(`[data-testid="case-checkbox-${sourceCaseCId}"]`)
-        .click();
+      await selectCase(page, sourceCaseAId);
+      await selectCase(page, sourceCaseCId);
       await clickOverflowAction(page, "copy-move-button", "cases-actions-menu");
 
       await expect(page.getByTestId("copy-move-dialog")).toBeVisible();

@@ -1,6 +1,47 @@
+import type { APIRequestContext } from "@playwright/test";
 import { expect, test } from "../../fixtures";
 import { RepositoryPage } from "../../page-objects/repository/repository.page";
 import { UnifiedSearchPage } from "../../page-objects/unified-search.page";
+
+/**
+ * Blocks until the tag link created through the API is visible to a
+ * tag-filtered search. Tagging writes a standalone link row and the case's
+ * Elasticsearch document is rebuilt from a fire-and-forget side effect, so the
+ * tag lands in the index some time after the API call returns — under a loaded
+ * suite, well past any fixed sleep. The filtered query the UI issues when the
+ * tag is picked runs exactly once and nothing re-queries, so a search made too
+ * early returns nothing and the results list empties out.
+ */
+async function waitForTagIndexed(
+  request: APIRequestContext,
+  baseURL: string,
+  projectId: number,
+  tagId: number,
+  expectedHits: number
+): Promise<void> {
+  await expect
+    .poll(
+      async () => {
+        const response = await request.post(`${baseURL}/api/search`, {
+          data: {
+            filters: {
+              query: "",
+              entityTypes: ["repository_case"],
+              repositoryCase: { projectIds: [projectId], tagIds: [tagId] },
+            },
+            pagination: { page: 1, size: 50 },
+            highlight: false,
+            trackTotalHits: true,
+          },
+        });
+        if (!response.ok()) return -1;
+        const body = await response.json();
+        return typeof body.total === "number" ? body.total : -1;
+      },
+      { timeout: 45000, intervals: [500, 1000, 2000, 3000] }
+    )
+    .toBe(expectedHits);
+}
 
 /**
  * Faceted Search Filter E2E Tests
@@ -63,7 +104,12 @@ test.describe("Faceted Search Filters", () => {
     });
   });
 
-  test("Tag filter narrows results", async ({ page, api }) => {
+  test("Tag filter narrows results", async ({
+    page,
+    api,
+    request,
+    baseURL,
+  }) => {
     const uniqueId = Date.now();
     // Use data-testid to avoid strict mode violation when filter dialog also opens
     const searchSheet = page.locator('[data-testid="global-search-sheet"]');
@@ -94,12 +140,7 @@ test.describe("Faceted Search Filters", () => {
       // Assign tag to one case
       await api.addTagToTestCase(taggedCaseId, tagId!);
 
-      // Tagging fires an async re-index of the case, and Elasticsearch only
-      // makes it searchable at the next refresh — so this needs more slack than
-      // the plain create above. The filtered query is issued once when the tag
-      // is picked; if the re-index hasn't landed by then it returns nothing,
-      // and nothing re-queries.
-      await page.waitForTimeout(5000);
+      await waitForTagIndexed(request, baseURL!, projectId, tagId!, 1);
     });
 
     await test.step("Open search and query for the unique term", async () => {
@@ -218,6 +259,8 @@ test.describe("Faceted Search Filters", () => {
   test("Clearing filters restores unfiltered results", async ({
     page,
     api,
+    request,
+    baseURL,
   }) => {
     const uniqueId = Date.now();
     // Use the specific global-search-sheet test ID to avoid strict mode violation
@@ -248,9 +291,7 @@ test.describe("Faceted Search Filters", () => {
       const tagId = await api.createTag(`ClearFilterTag${uniqueId}`);
       await api.addTagToTestCase(alphaId, tagId);
 
-      // See the tag-filter test: the re-index triggered by tagging has to land
-      // before the filtered query runs, and it only runs once.
-      await page.waitForTimeout(5000);
+      await waitForTagIndexed(request, baseURL!, projectId, tagId, 1);
     });
 
     await test.step("Search and confirm both cases appear initially", async () => {
