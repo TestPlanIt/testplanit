@@ -259,6 +259,7 @@ const TestRunItem: React.FC<TestRunItemProps> = ({
       <ItemRow
         id={`testrun-${testRun.id}`}
         href={`/projects/runs/${numericProjectId}/${testRun.id}`}
+        prefetch={false}
         name={testRun.name}
         accentColor={testRun.state.color?.value}
         isNew={isNew}

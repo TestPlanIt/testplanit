@@ -98,6 +98,10 @@ export interface ItemRowProps {
   /** DOM id, used as a scroll target by the list pages. */
   id?: string;
   href: string;
+  /** Forwarded to the name's link. Pass `false` on lists that mount every row
+   *  at once, where prefetching each destination costs a server render per
+   *  row; the row is then fetched on click instead. */
+  prefetch?: boolean;
   /** Leading type glyph. */
   icon: React.ReactNode;
   name: string;
@@ -179,6 +183,7 @@ const renderSlots = (slots: ItemRowProps["chips"], className?: string) =>
 export const ItemRow: React.FC<ItemRowProps> = ({
   id,
   href,
+  prefetch,
   icon,
   name,
   adornments,
@@ -279,6 +284,7 @@ export const ItemRow: React.FC<ItemRowProps> = ({
             <div className="group flex items-center gap-1 min-w-0 flex-initial">
               <Link
                 href={href}
+                prefetch={prefetch}
                 className="inline-flex items-center gap-1 min-w-0 max-w-full"
               >
                 <h3 className="text-sm font-semibold flex items-center gap-1 hover:text-primary min-w-0">
