@@ -5237,6 +5237,11 @@ const importTestRunStepResults = async (
 
   const chunkIterator = createChunkIterator();
   let processedCount = 0;
+  // Steps created already-soft-deleted to carry historical step results whose
+  // order the case no longer has (it was edited in Testmo after the run ran).
+  // Counted so the import log reports them rather than leaving them invisible.
+  let retiredStepsCreated = 0;
+  const retiredStepCaseIds = new Set<number>();
 
   for await (const chunk of chunkIterator) {
     const stepEntries: Array<{
@@ -5297,12 +5302,19 @@ const importTestRunStepResults = async (
 
     const existingStepRows = await db.steps.findMany({
       where: { testCaseId: { in: [...repositoryCaseIdsForChunk] } },
-      select: { id: true, testCaseId: true, order: true },
+      select: { id: true, testCaseId: true, order: true, isDeleted: true },
     });
-    // key: "caseId:order" → stepId
+    // key: "caseId:order" → stepId. Soft-deleted rows are included so a re-import
+    // re-attaches to the retired steps this importer already created rather than
+    // creating a second copy, but a LIVE row always wins the key — a case can
+    // hold both once a step at that order has been removed and replaced.
     const stepIdByKey = new Map<string, number>();
+    const stepDeletedByKey = new Map<string, boolean>();
     for (const s of existingStepRows) {
-      stepIdByKey.set(`${s.testCaseId}:${s.order}`, s.id);
+      const key = `${s.testCaseId}:${s.order}`;
+      if (stepIdByKey.has(key) && stepDeletedByKey.get(key) === false) continue;
+      stepIdByKey.set(key, s.id);
+      stepDeletedByKey.set(key, s.isDeleted);
     }
 
     for (const stepEntry of stepEntries) {
@@ -5320,8 +5332,21 @@ const importTestRunStepResults = async (
       let stepId = stepIdByKey.get(stepKey);
 
       if (!stepId) {
-        // Canonical step missing (shouldn't happen normally) — create it so the
-        // result record has a valid stepId to reference.
+        // Testmo snapshots the step list into each run result at execution time,
+        // so a historical result routinely references steps the case no longer
+        // has — it was edited after the run. Creating a LIVE step here is what
+        // injected phantom extra steps into current cases (often duplicating the
+        // tail of the real list). But `TestRunStepResults.stepId` is required, so
+        // dropping the row would also discard the step's recorded status, notes
+        // and elapsed time.
+        //
+        // Create the step already soft-deleted instead: the FK gets a target and
+        // the per-step history survives, while every path that builds a case's
+        // live step list filters `isDeleted: false` — the case editor, the run
+        // execution view, version snapshots, exports, copy/move and the
+        // Elasticsearch document — so it never shows up as a step of the case.
+        // The run-result read path deliberately does NOT filter it, which is what
+        // makes the historical detail still render.
         const stepAction = toStringValue(record.text1);
         const stepData = toStringValue(record.text2);
         const expectedResult = toStringValue(record.text3);
@@ -5353,6 +5378,13 @@ const importTestRunStepResults = async (
           ? convertToTipTapJsonValue(expectedResultContent)
           : null;
 
+        // `deletedAt` is deliberately left NULL. tpl_stamp_deleted_at_steps only
+        // stamps on an isDeleted UPDATE precisely so a row INSERTed already-deleted
+        // keeps it null, and a retention sweep keyed off deletedAt therefore never
+        // claims these rows — which is what must not happen here, since purging one
+        // would cascade away (onDelete: Cascade) the very step results it exists to
+        // hold. It is also the honest value: the step was never live on this case,
+        // so there is no moment at which it was deleted.
         const createdStep = await db.steps.create({
           data: {
             testCaseId: repositoryCaseId,
@@ -5361,10 +5393,14 @@ const importTestRunStepResults = async (
             expectedResult: expectedPayload
               ? JSON.stringify(expectedPayload)
               : undefined,
+            isDeleted: true,
           },
         });
         stepId = createdStep.id;
         stepIdByKey.set(stepKey, stepId);
+        stepDeletedByKey.set(stepKey, true);
+        retiredStepsCreated += 1;
+        retiredStepCaseIds.add(repositoryCaseId);
       }
 
       const statusSourceId = toNumberValue(record.status_id);
@@ -5406,6 +5442,17 @@ const importTestRunStepResults = async (
         await persistProgress(entityName, message);
       }
     }
+  }
+
+  if (retiredStepsCreated > 0) {
+    logMessage(
+      context,
+      "Created retired (soft-deleted) steps to hold history for steps the test case no longer has",
+      {
+        steps: retiredStepsCreated,
+        cases: retiredStepCaseIds.size,
+      }
+    );
   }
 
   return summary;

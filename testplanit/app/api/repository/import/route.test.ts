@@ -252,6 +252,8 @@ describe("CSV Import API Route", () => {
     steps: {
       create: vi.fn(),
       deleteMany: vi.fn(),
+      findMany: vi.fn(),
+      updateMany: vi.fn(),
     },
   };
   // enhanceWithAudit() calls enhanceWithAudit(rawDb, { user }).$extends({...}); the
@@ -293,6 +295,7 @@ describe("CSV Import API Route", () => {
       })
     );
     mockEnhancedDb.repositoryCases.findFirst.mockResolvedValue(null);
+    mockEnhancedDb.steps.findMany.mockResolvedValue([]);
     mockEnhancedDb.repositoryCases.findUnique.mockImplementation(
       ({ where }: any) => ({
         id: where.id,
@@ -1314,6 +1317,56 @@ describe("CSV Import API Route", () => {
       expect(issueCalls.length).toBeGreaterThan(0);
       expect(mockEnhancedDb.attachments.create).toHaveBeenCalled();
       expect(mockEnhancedDb.testRunCases.create).toHaveBeenCalled();
+    });
+
+    it("retires executed steps instead of hard-deleting them on update (regression)", async () => {
+      // TestRunStepResults.stepId is onDelete: Cascade, so hard-deleting a step
+      // that has been executed takes its step results with it. Re-importing a
+      // case must not erase its execution history: executed steps are retired
+      // (soft-deleted) and only never-executed ones are really deleted.
+      const existingCase = { id: 1001, name: "Test Case" };
+      mockEnhancedDb.repositoryCases.findFirst.mockResolvedValue(existingCase);
+      mockEnhancedDb.repositoryCases.update.mockResolvedValue(existingCase);
+      mockEnhancedDb.steps.findMany.mockResolvedValue([
+        { id: 501, _count: { stepResults: 3 } },
+        { id: 502, _count: { stepResults: 0 } },
+        { id: 503, _count: { stepResults: 1 } },
+      ]);
+
+      const request = createRequest({
+        projectId: 1,
+        file: "ID,Name,Description,Steps\n1001,Test Case,Test Description,Step 1 | Result 1",
+        delimiter: ",",
+        hasHeaders: true,
+        encoding: "UTF-8",
+        templateId: 1,
+        importLocation: "single_folder",
+        folderId: 1,
+        fieldMappings: [
+          { csvColumn: "ID", templateField: "id" },
+          { csvColumn: "Name", templateField: "name" },
+          { csvColumn: "Description", templateField: "description" },
+          { csvColumn: "Steps", templateField: "steps" },
+        ],
+      });
+
+      const response = await POST(request);
+      const result = await parseSSEResponse(response);
+      expect(result.complete).toBeDefined();
+
+      // Executed steps retired, never hard-deleted.
+      expect(mockEnhancedDb.steps.updateMany).toHaveBeenCalledWith({
+        where: { id: { in: [501, 503] } },
+        data: { isDeleted: true },
+      });
+      // Only the unexecuted step is actually removed.
+      expect(mockEnhancedDb.steps.deleteMany).toHaveBeenCalledWith({
+        where: { id: { in: [502] } },
+      });
+      // The old blanket delete must be gone.
+      expect(mockEnhancedDb.steps.deleteMany).not.toHaveBeenCalledWith({
+        where: { testCaseId: 1001 },
+      });
     });
 
     it("creates new version for updated test cases", async () => {

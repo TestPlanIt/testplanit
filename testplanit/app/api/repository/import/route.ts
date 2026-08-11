@@ -754,11 +754,41 @@ export const POST = withAuditContext(async (request: NextRequest) => {
 
             // Create steps in the Steps table if present
             if (caseData.steps && Array.isArray(caseData.steps)) {
-              // Delete existing steps if updating
+              // Clear the existing steps if updating. This CANNOT be a blanket
+              // deleteMany: `TestRunStepResults.stepId` is `onDelete: Cascade`, so
+              // hard-deleting a step that has been executed destroys every step
+              // result ever recorded against it — re-importing a case would
+              // silently erase its execution history.
+              //
+              // So the two kinds are separated: a step that has step results is
+              // retired (soft-deleted) and keeps them attached — the run-result
+              // read path does not filter `step.isDeleted`, so the history still
+              // renders — while a step that was never executed is genuinely
+              // deleted, which keeps re-imports from accumulating dead rows.
               if (isUpdate) {
-                await enhancedDb.steps.deleteMany({
-                  where: { testCaseId: newCase.id },
+                const existingSteps = await enhancedDb.steps.findMany({
+                  where: { testCaseId: newCase.id, isDeleted: false },
+                  select: { id: true, _count: { select: { stepResults: true } } },
                 });
+
+                const executedStepIds = existingSteps
+                  .filter((step) => step._count.stepResults > 0)
+                  .map((step) => step.id);
+                const unexecutedStepIds = existingSteps
+                  .filter((step) => step._count.stepResults === 0)
+                  .map((step) => step.id);
+
+                if (executedStepIds.length > 0) {
+                  await enhancedDb.steps.updateMany({
+                    where: { id: { in: executedStepIds } },
+                    data: { isDeleted: true },
+                  });
+                }
+                if (unexecutedStepIds.length > 0) {
+                  await enhancedDb.steps.deleteMany({
+                    where: { id: { in: unexecutedStepIds } },
+                  });
+                }
               }
 
               for (const stepData of caseData.steps) {
