@@ -352,7 +352,13 @@ export function MultiAsyncCombobox<T>({
               )}
             </div>
           )}
-          <div className="relative flex min-h-0 flex-1 flex-col">
+          <div
+            className={cn(
+              "relative flex min-h-0 flex-1 flex-col",
+              // An empty list collapses to zero height, clipping the spinner.
+              loading && visibleOptions.length === 0 && "min-h-24"
+            )}
+          >
             {loading && (
               <div className="absolute inset-0 flex justify-center items-center bg-muted/60 z-10">
                 <Spinner />
