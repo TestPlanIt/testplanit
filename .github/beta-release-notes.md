@@ -6,94 +6,149 @@ installs. You build it yourself from the source attached below.
 
 > ⚠️ This is pre-release software. **Back up your database before trying it.**
 
-### What's new since beta.11
+### What's new since beta.12
 
-#### Reporter packages — beta channel on npm
+#### Test runs & sessions
 
-- **The integration packages now ship betas on npm** under the `beta`
-  dist-tag: `npm i @testplanit/wdio-reporter@beta` (likewise
-  `playwright-reporter`, `api`, and `mcp-server`). These track the 1.0 app;
-  the default `latest` install is unaffected.
-- **One run across sharded CI** — set `TESTPLANIT_RUN_ID` (or `testRunId`)
-  and every WebdriverIO or Playwright invocation attaches to that run instead
-  of creating its own. The pipeline owns the lifecycle through the new
-  `testplanit create-run` / `complete-run` CLI in `@testplanit/api`. Each
-  execution records its own suite, named by capability/project and spec
-  (`testSuiteName` overrides it; Playwright adds a `{shard}` placeholder).
-- The WebdriverIO service now hands its run id to forked workers, so workers
-  on separate agents or containers attach to the service's run instead of
-  creating runs of their own.
-- New `excludeSkipped` reporter option omits skipped results from runs.
+- **Bulk edit, complete, and delete** — row checkboxes and a bulk action bar
+  on the Test Runs and Sessions lists. Bulk Edit changes milestone, state,
+  and additive tags (plus assignee for sessions); every action is
+  permission-gated per item, with partial failures reported.
+- **Filter chips and collapsible milestone groups** — Manual, Automated, and
+  My Test Runs toggles apply to both the Active and Completed tabs and
+  persist per project. Milestone groups collapse (Alt-click for all) and
+  remember their state, each header carrying a subtree count; summary charts
+  collapse too. Milestones synced from Jira link straight to the sprint or
+  release.
+- **Runs tell you when they're ready to complete** — a notification goes to
+  the people who can actually close a run once every case has a result,
+  sent once per run.
+- **Edit a test case in place from the execution panel** — the details sheet
+  swaps into repository edit mode and back, without leaving the run.
+- **Configuration groups are editable after creation** — runs and sessions
+  can be linked, relinked, and unlinked from their sibling group, so a run
+  created on its own can finally join the group its duplicates formed.
+- Fixes: soft-deleted cases no longer inflate run summary counts, a bulk step
+  replace no longer destroys recorded step results, and loading a run stops
+  hydrating every repository case (with Pass & Next off the ACL-policy path).
 
-#### Automation runs
+#### Repository
 
-- **Automation Runs card** — project cards show automated-run activity with
-  live updates.
-- **Abandoned runs can auto-close** — an aborted CI job used to leave its run
-  In Progress forever. An opt-in sweep now closes automated runs idle past a
-  threshold (system default plus per-project override). Off by default.
-- **The MCP server understands automated runs** — run results tools return
-  JUnit results (with stack trace, stdout/stderr, and timing detail), status
-  rollups count those results instead of reporting automated runs as 100%
-  untested, and per-case status falls back to the latest result.
-- **Automation Trends counts reality** — flipping a case to automated never
-  recorded a version snapshot, so trends undercounted automated cases (one
-  project reported 33 instead of 2,316). Flips are snapshotted now and
-  history is backfilled; deleted cases count in the periods they existed, the
-  chart no longer pads future periods, and CSV percentages keep a decimal.
+- **Filter cases across multiple dimensions** — a new filter bar composes
+  predicates over any combination of fields, tags, issues, and system
+  attributes, independent of the View-by axis. Filters are editable chips,
+  serialized into shareable `?f=` URLs, with any/all/none matching for tags
+  and issues and an Assigned-to-me quick chip in run mode. Exports now honor
+  the filters the table is showing.
+- **An In Review axis and filter** — a project's whole review queue is one
+  click away, showing every case under review rather than only the ones
+  assigned to you. Appears only where the review workflow is enabled.
+- Saved views are offered in the case-selection dialog, and applying a saved
+  view keeps the folder you're standing in.
+- Moving cases within the same project is a pure relocation — no more
+  self-collisions on the unique index or churned case data.
+- The folder search dropdown stays inside the window and marks its matches.
+- Parallel CI workers racing to create the same folder no longer lose
+  results.
 
-#### Repository & folders
+#### Reports
 
-- **Folders are findable in large trees** — a type-to-filter box above the
-  folder tree (appears past 15 folders) keeps each match's ancestors and
-  subtree reachable; expand-all no longer freezes the tab, and big trees are
-  actually virtualized.
-- **Folder pickers are searchable** — the case-edit, import-wizard, and
-  results-import folder dropdowns search by name and virtualize long lists,
-  keeping the hierarchy indentation.
-- Shift+click select-all is scoped to the folder and view you're looking at,
-  and respects active text, link, and steps filters.
-- Sorting on a Dropdown custom field orders cases by the field's option
-  order.
+- **Metrics read manual and automated results together** — elapsed metrics,
+  their drill-downs, and the Test Case dimension now cover both
+  `TestRunResults` and JUnit results, keyed by repository case so
+  automation-only cases report correctly. Seconds-vs-milliseconds display is
+  corrected across tables, charts, drill-downs, and CSV, and elapsed axes
+  render real durations (45s / 5m 10s / 2h 5m).
+- **Per-dimension value filters** on every custom report, carried through
+  share links.
+- **New cross-project LLM Usage report** — token counts, estimated cost,
+  latency, and success rate, sliceable by feature, model, user, project,
+  integration, and outcome.
+- Test Result History gains a report action that opens Report Builder
+  pre-filtered to that case's elapsed time.
+- Report routes are authorization-gated end to end, and drill-down dimension
+  keys are validated against a per-report whitelist.
 
-#### Jira issue panel
+#### Milestones
 
-- **Case fields in the panel** — templates gain a per-field Jira toggle (off
-  by default); opted-in fields render as chips under each linked case, with
-  dropdown values in their option colors.
-- Steps fields show a step-count chip that opens a numbered step list in a
-  popover, with shared step groups expanded inline.
-- **The Generate QuickScript button appears where it should** — the panel now
-  finds linked cases across every accessible project instead of one guessed
-  from the Jira-key mapping, and the project picker shows each project's
-  linked-case count.
-- Generated test names include the case ID in brackets, so imported results
-  attach to the case the script was generated from instead of creating
-  duplicates.
+- **Cross-project coverage on in-scope issues** — issues whose cases live in
+  other projects now show those cases as a clickable +N list and blend their
+  latest results into the coverage breakdown, readiness rollup, and PDF
+  export. Counts are scoped to the projects the viewer can actually see,
+  closing a leak where linked-case counts included every project.
+- Member coverage falls back to automated results for otherwise-untested
+  cases, and deleted runs no longer skew readiness.
+- Milestone lists sort by urgency — past due first, then started, delayed,
+  upcoming, unscheduled, and completed.
 
-#### Audit logs
+#### Reviews
 
-- A new Source column captures the originating table, and project attribution
-  reaches attachments and rolled-up child entities.
-- Filter pickers no longer scan the whole log: actor, action, entity-type,
-  and project options load lazily via index seeks, the Actions filter shows
-  only actions actually present, search is debounced, and the date range
-  defaults to the current week.
+- Request and decision comments carry a type badge and color accent in entity
+  threads and mentioned-comment lists.
+- The inbox Decided tab includes decisions on reviews you requested, with a
+  Decided by column, and its filters are searchable multi-selects scoped to
+  what the current tab actually contains.
+- **The MCP server surfaces your review inbox**, so an agent can see what is
+  waiting on you and act on it.
+- Reviews are cancelled when their subject is deleted, and the dashboard's
+  pending-review query is bounded.
+
+#### Search & pickers
+
+- **Advanced Filters are searchable comboboxes** — the ten checkbox lists
+  become pickers, and several controls that looked functional but filtered
+  nothing (estimate/elapsed ranges, tags and created-by on runs and sessions,
+  case source, date ranges) now work. Re-tagged cases are findable again.
+- Async comboboxes scroll infinitely instead of paging, with a loaded-of-total
+  footer, virtualized long lists, and no more fetch loops or off-screen
+  panels.
+- Numeric queries match entities by exact ID.
+
+#### Integrations
+
+- **Expired OAuth tokens refresh during background syncs** instead of failing
+  the sync, refreshing five minutes ahead of expiry behind a lock so
+  rotating-refresh-token providers can't have the family revoked. When a
+  refresh is terminally rejected, you get a one-time bell and email notice
+  with a reconnect link.
+- Jira and OAuth callbacks are no longer blocked by stale API grants.
+- Webhook deliveries record the entity they were about, shown as a Reference
+  column.
+
+#### Tables
+
+- **One table component for paged and virtualized views** — virtualized
+  tables gain the paged engine's column drag-reorder, resizing, and per-column
+  header menu, with layout remembered per surface.
+- The column-selection popover grows wider instead of scrolling.
+
+#### Import & generation
+
+- Edits made on the Review & Import step of AI generation are kept.
+- CSV import previews every step it will create, validates required fields,
+  and explains ID-field errors instead of failing opaquely.
+- Testmo imports convert tables inside step content.
 
 #### Fixes & interface
 
-- **Sign-in matches emails case-insensitively** — SAML and other identity
-  flows no longer miss an existing account (or auto-provision a duplicate)
-  over letter case.
-- Case version history no longer shows a case's attachments as deleted —
-  versions now snapshot the attachments that actually exist.
-- Kebab menus on horizontally-scrolling pages open reliably — opening one no
-  longer locks scroll and shifts the layout out from under the cursor.
-- Creating an issue in Jira carries images and videos embedded in the
-  description over as attachments.
-- Issue tables show clean plain-text previews of rich-text descriptions.
-- The reviews inbox gains the docked case details panel.
-- AI tag analysis batches more entities per request.
+- **The seed no longer overwrites settings an admin changed.** It re-ran on
+  every deploy and re-asserted defaults onto existing rows — silently
+  re-enabling disabled workflow states and undoing role permission grants,
+  admin account edits, milestone types, and retired priority options. A seed
+  now creates what is missing and leaves the rest alone. (It does not repair
+  data an earlier run already overwrote.)
+- Dialogs and sheets stay open when you press a resize handle inside them —
+  this was closing the Add Test Run wizard, the Add Case dialog, and the run
+  page's case-edit sheet, discarding in-progress edits.
+- **The accessible-theme accessibility gate passes.** Unnamed comboboxes and
+  switches got real labels, and admin-chosen status, tag, and result colors
+  publish a readable foreground that only the accessible themes consume — the
+  brand themes look unchanged.
+- Case-insensitive tag matching in the CLI and auto-tag routes, so CI jobs
+  and the tagger stop creating duplicates that differ only by case.
+- Audit rows attribute child-table and API-token writes to the acting user,
+  by name and email.
+- Upgraded to Next.js 16.3 with dependencies brought current.
 
 ### Try it
 
