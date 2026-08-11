@@ -21,10 +21,8 @@ import { RecordId } from "@/components/RecordId";
 import { ReviewStatusBanner } from "@/components/reviews/ReviewStatusBanner";
 import { TestRunCaseDetails } from "@/components/TestRunCaseDetails";
 import { TestCaseDetailsView } from "@/projects/repository/[projectId]/[caseId]/TestCaseDetailsView";
-import {
-  useTestRunLiveStream,
-  type TestRunWakeUp,
-} from "~/hooks/useTestRunLiveStream";
+import { useTestRunLiveStream } from "~/hooks/useTestRunLiveStream";
+import { useCoalescedWakeUp } from "~/hooks/useCoalescedWakeUp";
 import { useTransitionGateStatus } from "~/hooks/useTransitionGateStatus";
 import { IterationAwareTestRunCaseDetails } from "~/components/iterations/IterationAwareTestRunCaseDetails";
 import TipTapEditor from "@/components/tiptap/TipTapEditor";
@@ -580,25 +578,23 @@ export default function TestRunPage() {
   // layer is untrusted plumbing (Architectural Directive 2). Stream is
   // disabled once the run is completed so we don't hold an EventSource
   // open indefinitely on a historical run page.
+  // Wake-ups are coalesced: a reporter streaming results publishes one per
+  // result row, and this page pays three refetches — the run itself, the
+  // summary, and the JUnit suites — for every one of them.
   const queryClient = useQueryClient();
-  const onLiveWakeUp = useCallback(
-    (event: TestRunWakeUp) => {
-      // Ignore the `sync` checkpoint (fires on every reconnect) so routine
-      // EventSource reconnects don't refetch the run + summary + JUnit suites.
-      if (event.event === "sync") return;
-      refetchTestRun();
-      void queryClient.invalidateQueries({
-        queryKey: ["testRunSummary", Number(runId)],
-      });
-      // Automation runs render their results from JUnit suites; refresh those
-      // so reporter-streamed results appear live (the run refetch alone doesn't
-      // cover the separate suite/result query).
-      void queryClient.invalidateQueries({
-        queryKey: ["zenstack", "JUnitTestSuite"],
-      });
-    },
-    [refetchTestRun, queryClient, runId]
-  );
+  const onWakeUpFlush = useCallback(() => {
+    refetchTestRun();
+    void queryClient.invalidateQueries({
+      queryKey: ["testRunSummary", Number(runId)],
+    });
+    // Automation runs render their results from JUnit suites; refresh those
+    // so reporter-streamed results appear live (the run refetch alone doesn't
+    // cover the separate suite/result query).
+    void queryClient.invalidateQueries({
+      queryKey: ["zenstack", "JUnitTestSuite"],
+    });
+  }, [refetchTestRun, queryClient, runId]);
+  const onLiveWakeUp = useCoalescedWakeUp(onWakeUpFlush);
   useTestRunLiveStream({
     runId: !isNaN(Number(runId)) ? Number(runId) : null,
     enabled: !testRunData?.isCompleted,

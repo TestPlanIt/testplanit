@@ -14,10 +14,9 @@ import type {
   TestRunsGetPayload,
 } from "~/zenstack/input";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  useProjectTestRunStream,
-  type TestRunWakeUp,
-} from "~/hooks/useTestRunLiveStream";
+import { useProjectTestRunStream } from "~/hooks/useTestRunLiveStream";
+import { useCoalescedWakeUp } from "~/hooks/useCoalescedWakeUp";
+import { testRunCasesQueryMatchesRuns } from "./wakeUpInvalidation";
 import {
   CheckCircle,
   CirclePlus,
@@ -501,14 +500,15 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
   // Invalidating ["TestRuns"] alone would silently no-op against those
   // hooks.
   //
+  // Three of those trees hold one query per page; TestRunCases holds one per
+  // mounted tile, so it is the only one where a bare prefix turns a
+  // single-run change into a refetch per tile. It is narrowed below.
+  //
   // The stream stays dormant when no run on this page is in progress —
   // nothing live to update — matching the detail page's gating on
   // !testRunData?.isCompleted.
-  const onLiveWakeUp = useCallback(
-    (event: TestRunWakeUp) => {
-      // Ignore the `sync` checkpoint (fires on every reconnect) so routine
-      // EventSource reconnects don't storm the four project-wide invalidations.
-      if (event.event === "sync") return;
+  const onWakeUpFlush = useCallback(
+    (runIds: ReadonlySet<number | null>) => {
       // Bare prefix on purpose: the page's AutomationRunsCard keys its
       // summaries query on its own id subset, so invalidating only this
       // list's exact key would leave the card stale.
@@ -519,14 +519,29 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
         queryKey: ["zenstack", "TestRuns"],
       });
       void queryClient.invalidateQueries({
-        queryKey: ["zenstack", "TestRunCases"],
-      });
-      void queryClient.invalidateQueries({
         queryKey: ["zenstack", "ReviewRequest"],
+      });
+
+      // A wake-up with no run id can't be attributed, so fall back to the
+      // whole tree rather than silently leaving a tile stale.
+      if (runIds.has(null)) {
+        void queryClient.invalidateQueries({
+          queryKey: ["zenstack", "TestRunCases"],
+        });
+        return;
+      }
+      // The run id can't be pushed into the query key — it lives inside the
+      // key's `args` slot, past where prefix matching reaches. A predicate
+      // ANDs with the prefix and can read it; see wakeUpInvalidation.ts.
+      void queryClient.invalidateQueries({
+        queryKey: ["zenstack", "TestRunCases"],
+        predicate: (query) =>
+          testRunCasesQueryMatchesRuns(query.queryKey, runIds),
       });
     },
     [queryClient]
   );
+  const onLiveWakeUp = useCoalescedWakeUp(onWakeUpFlush);
   useProjectTestRunStream({
     projectId: !isNaN(numericProjectId) ? numericProjectId : null,
     enabled: incompleteTestRuns.length > 0,
