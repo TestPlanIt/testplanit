@@ -14,6 +14,7 @@ import {
   getStatusStyle,
   MilestonesWithTypes,
   sortMilestones,
+  sortMilestoneTree,
   STATUS_KEYS,
 } from "./milestoneUtils";
 
@@ -829,6 +830,67 @@ describe("Date-Dependent Milestone Utils", () => {
       expect(sortMilestones([])).toEqual([]);
       expect(sortMilestones(null as any)).toBeUndefined(); // Or potentially throw, depending on how ?.sort behaves
       expect(sortMilestones(undefined as any)).toBeUndefined();
+    });
+  });
+
+  // --- sortMilestoneTree Tests ---
+
+  describe("sortMilestoneTree", () => {
+    const createMockMilestoneWithType = (
+      id: number,
+      props: Partial<Milestones>,
+      children: MilestonesWithTypes[] = []
+    ): MilestonesWithTypes => ({
+      ...(baseMockMilestone as Milestones),
+      id,
+      ...props,
+      milestoneType: mockMilestoneType,
+      children,
+    });
+
+    // Completed sorts last, delayed first — the same ranking at every level.
+    const completed = (id: number) =>
+      createMockMilestoneWithType(id, {
+        isCompleted: true,
+        completedAt: PAST_DATE_1,
+      });
+    const delayed = (id: number) =>
+      createMockMilestoneWithType(id, {
+        isStarted: false,
+        startedAt: PAST_DATE_1,
+      });
+
+    it("ranks children, not just roots", () => {
+      const root = createMockMilestoneWithType(1, { isStarted: false }, [
+        completed(2),
+        delayed(3),
+      ]);
+
+      const sorted = sortMilestoneTree([root]);
+
+      expect(sorted[0].children.map((m) => m.id)).toEqual([3, 2]);
+    });
+
+    it("ranks every nesting level, not only the first", () => {
+      const grandchildren = [completed(4), delayed(5)];
+      const root = createMockMilestoneWithType(1, { isStarted: false }, [
+        createMockMilestoneWithType(2, { isStarted: false }, grandchildren),
+      ]);
+
+      const sorted = sortMilestoneTree([root]);
+
+      expect(sorted[0].children[0].children.map((m) => m.id)).toEqual([5, 4]);
+    });
+
+    it("ranks roots the same way sortMilestones does", () => {
+      const roots = [completed(1), delayed(2)];
+
+      expect(sortMilestoneTree(roots).map((m) => m.id)).toEqual([2, 1]);
+    });
+
+    it("tolerates empty and nullish input like sortMilestones", () => {
+      expect(sortMilestoneTree([])).toEqual([]);
+      expect(sortMilestoneTree(null as any)).toBeUndefined();
     });
   });
 });

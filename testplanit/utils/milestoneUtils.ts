@@ -244,3 +244,21 @@ export const sortMilestones = (
     }
   });
 };
+
+/**
+ * Same ranking as sortMilestones, applied at every nesting level of an
+ * already-built tree. The flat milestone lists sort once and then filter by
+ * parent at each level, so their children come out ranked; a tree has to be
+ * walked to get the same order. Sorts in place, like sortMilestones.
+ */
+export const sortMilestoneTree = (
+  milestones: MilestonesWithTypes[]
+): MilestonesWithTypes[] => {
+  const sorted = sortMilestones(milestones);
+  sorted?.forEach((milestone) => {
+    if (milestone.children?.length) {
+      sortMilestoneTree(milestone.children);
+    }
+  });
+  return sorted;
+};

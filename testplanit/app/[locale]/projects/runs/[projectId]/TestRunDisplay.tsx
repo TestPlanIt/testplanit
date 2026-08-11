@@ -42,7 +42,7 @@ import {
   getStatus,
   getStatusStyle,
   MilestonesWithTypes,
-  sortMilestones,
+  sortMilestoneTree,
 } from "~/utils/milestoneUtils";
 import { BulkActionBar } from "@/components/bulk/BulkActionBar";
 import { VirtualizedCardList } from "@/components/VirtualizedCardList";
@@ -554,7 +554,7 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
     [milestonesProp]
   );
   const sortedMilestoneTree = useMemo(
-    () => sortMilestones(milestoneTree),
+    () => sortMilestoneTree(milestoneTree),
     [milestoneTree]
   );
 
