@@ -184,10 +184,10 @@ vi.mock("@/components/ui/dialog", () => ({
   DialogFooter: ({ children }: any) => <div>{children}</div>,
 }));
 
-// VirtualizedDataTable stub: emits row testids + invokes each column's cell
+// DataTable stub: emits row testids + invokes each column's cell
 // renderer so the "actions" Eye-icon column is exercisable in tests.
-vi.mock("@/components/tables/VirtualizedDataTable", () => ({
-  VirtualizedDataTable: ({ data, columns }: any) => (
+vi.mock("@/components/tables/DataTable", () => ({
+  DataTable: ({ data, columns }: any) => (
     <table data-testid="webhook-deliveries-datatable">
       <tbody>
         {data.map((row: any) => (

@@ -8,7 +8,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "~/lib/navigation";
 
 import { useDebounce } from "@/components/Debounce";
-import { VirtualizedDataTable } from "@/components/tables/VirtualizedDataTable";
+import { DataTable } from "@/components/tables/DataTable";
 import { ExtendedRoles, useColumns } from "./columns";
 
 import { Filter } from "@/components/tables/Filter";
@@ -133,6 +133,19 @@ function RoleList() {
     setSortConfig({ column, direction });
   };
 
+  // Explicit-direction sort from the header column menu; `null` (Remove sort)
+  // restores the default order.
+  const handleSortColumn = (
+    column: string,
+    direction: "asc" | "desc" | null
+  ) => {
+    if (direction === null) {
+      setSortConfig({ column: "name", direction: "asc" });
+    } else {
+      setSortConfig({ column, direction });
+    }
+  };
+
   if (!session || session.user.access !== "ADMIN") {
     return null;
   }
@@ -184,11 +197,13 @@ function RoleList() {
             )}
           </div>
           <div className="mt-4 w-full">
-            <VirtualizedDataTable
+            <DataTable
+              virtualized
               fillViewport
               columns={columns as any}
               data={rolesData}
               onSortChange={handleSortChange}
+              onSortColumn={handleSortColumn}
               sortConfig={sortConfig}
               columnVisibility={columnVisibility}
               onColumnVisibilityChange={setColumnVisibility}

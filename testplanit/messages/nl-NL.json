@@ -865,7 +865,7 @@
       "reorderColumn": "Sleep om kolom te herschikken",
       "sortAsc": "Oplopend sorteren",
       "sortDesc": "Aflopend sorteren",
-      "removeSort": "Handmatig sorteren",
+      "removeSort": "Sortering verwijderen",
       "hideColumn": "Kolom verbergen",
       "columnOptions": "Kolomopties"
     },

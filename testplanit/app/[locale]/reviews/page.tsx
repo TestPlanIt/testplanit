@@ -24,11 +24,12 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useSession } from "next-auth/react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { PanelImperativeHandle } from "react-resizable-panels";
 
+import { Loading } from "@/components/Loading";
 import { DataTable } from "@/components/tables/DataTable";
 import { CaseDetailsPanel } from "@/components/repositories/CaseDetailsPanel";
 import { ProjectNameDisplay } from "~/components/search/ProjectNameDisplay";
@@ -212,6 +213,7 @@ function ReviewsInboxContent({ userId }: { userId: string }) {
     key: string,
     params?: Record<string, unknown>
   ) => string;
+  const locale = useLocale();
   const queryClient = useQueryClient();
   const { enabled: featureEnabled, isLoading: featureLoading } =
     useReviewFeatureEnabled();
@@ -262,6 +264,23 @@ function ReviewsInboxContent({ userId }: { userId: string }) {
       direction:
         prev.column === columnId && prev.direction === "asc" ? "desc" : "asc",
     }));
+  };
+
+  // Explicit-direction sort from the header column menu; `null` (Remove sort)
+  // restores the tab's default order.
+  const handleSortColumn = (
+    column: string,
+    direction: "asc" | "desc" | null
+  ) => {
+    if (direction === null) {
+      setSortConfig(
+        view === "pending"
+          ? { column: "requestedAt", direction: "asc" }
+          : { column: "decidedAt", direction: "desc" }
+      );
+    } else {
+      setSortConfig({ column, direction });
+    }
   };
 
   const handleViewChange = (next: InboxView) => {
@@ -513,7 +532,9 @@ function ReviewsInboxContent({ userId }: { userId: string }) {
     }
   }, [sortConfig, view]);
 
-  const { data: rows } = useClientQueries(schema).reviewRequest.useFindMany(
+  const { data: rows, isLoading: isLoadingReviews } = useClientQueries(
+    schema
+  ).reviewRequest.useFindMany(
     {
       where: whereClause,
       orderBy,
@@ -1028,6 +1049,18 @@ function ReviewsInboxContent({ userId }: { userId: string }) {
               )}
             </div>
 
+            {/* Row count, matching the other virtualized list pages. The
+                inbox loads its full result set, so loaded always equals
+                total. */}
+            {!featureDisabled && !isLoadingReviews && tableData.length > 0 && (
+              <p className="mt-1 text-end text-sm text-muted-foreground">
+                {t("admin.auditLogs.showing", {
+                  loaded: tableData.length.toLocaleString(locale),
+                  total: tableData.length.toLocaleString(locale),
+                })}
+              </p>
+            )}
+
             {/* Feature-disabled empty state (D-20 silent disable). */}
             {featureDisabled && (
               <div
@@ -1058,8 +1091,11 @@ function ReviewsInboxContent({ userId }: { userId: string }) {
                   className="min-w-0"
                   data-testid="reviews-list-pane"
                 >
-                  {/* Empty state when no rows match (and feature is enabled). */}
-                  {tableData.length === 0 ? (
+                  {/* Loading first — the empty copy must not flash while the
+                      query is still in flight. */}
+                  {isLoadingReviews ? (
+                    <Loading />
+                  ) : tableData.length === 0 ? (
                     <div
                       data-testid="reviews-inbox-empty"
                       className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground"
@@ -1069,40 +1105,33 @@ function ReviewsInboxContent({ userId }: { userId: string }) {
                         : t("reviews.inbox.emptyDecided")}
                     </div>
                   ) : (
-                    // Two CSS layers on this wrapper — both opt-in via Tailwind
-                    // arbitrary variants so the shared `DataTable` component
-                    // stays untouched:
-                    //
-                    //   1. `[&_tbody_tr]:h-12` pins every row at 48px so the
-                    //      Pending tab (taller — 32px decision icon-buttons in
-                    //      the Actions cell) and the Decided tab (shorter —
-                    //      just a Status badge) render at identical heights.
-                    //   2. `[&_table]:!w-px` overrides DataTable's `w-full`. Under
-                    //      `table-layout: fixed` the used width is the greater of
-                    //      the specified width and the sum of the column widths, so
-                    //      a tiny width resolves to exactly that sum. Without it the
-                    //      table stretches and fixed layout shares the surplus out
-                    //      across the columns, so none honors its `size`.
-                    <div className="[&_table]:!w-px [&_tbody_tr]:h-12">
-                      <DataTable
-                        // DataTable reads `meta.isPinned` once per mount, and the
-                        // tabs pin a different trailing column (Actions vs Status).
-                        // Returning to a tab with cached rows never unmounts it, so
-                        // without this key it keeps the other tab's pin.
-                        key={view}
-                        columns={columns as any}
-                        data={tableData as any}
-                        sortConfig={sortConfig}
-                        onSortChange={handleSortChange}
-                        columnVisibility={columnVisibility}
-                        onColumnVisibilityChange={setColumnVisibility}
-                        rowTestIdPrefix="reviews-inbox-row"
-                        storageKey="reviews-inbox"
-                        enableColumnMenu={false}
-                        selectedRowId={selectedRowId}
-                        scrollToSelectedRow={false}
-                      />
-                    </div>
+                    <DataTable
+                      virtualized
+                      fillViewport
+                      // The engine seeds `meta.isPinned` once per mount, and the
+                      // tabs pin a different trailing column (Actions vs Status).
+                      // Returning to a tab with cached rows never unmounts it, so
+                      // without this key it keeps the other tab's pin.
+                      key={view}
+                      columns={columns as any}
+                      data={tableData as any}
+                      sortConfig={sortConfig}
+                      onSortChange={handleSortChange}
+                      onSortColumn={handleSortColumn}
+                      columnVisibility={columnVisibility}
+                      onColumnVisibilityChange={setColumnVisibility}
+                      estimateSize={48}
+                      // The result-set scope is exactly the where clause (tab +
+                      // every filter), so its serialization is the signal that
+                      // the list should scroll back to the top.
+                      resetKey={JSON.stringify(whereClause)}
+                      columnSizingStorageKey="reviews-inbox"
+                      testIdPrefix="reviews-inbox-table"
+                      rowTestIdPrefix="reviews-inbox-row"
+                      // Highlight (without scrolling) the row the details panel
+                      // is showing; the row id is the ReviewRequest id.
+                      highlightRowId={selectedRowId}
+                    />
                   )}
                 </ResizablePanel>
 

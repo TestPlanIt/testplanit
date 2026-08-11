@@ -335,7 +335,7 @@ test.describe("Prompt Configurations - Delete Operations", () => {
     });
 
     await test.step("Verify the default config delete button is disabled", async () => {
-      // Find the row with the "Default" badge (VirtualizedDataTable data rows
+      // Find the row with the "Default" badge (virtualized DataTable data rows
       // carry data-row-id; there is no <tbody>/<tr>)
       const defaultRow = promptsPage.dataTable.locator("[data-row-id]", {
         hasText: "Default",

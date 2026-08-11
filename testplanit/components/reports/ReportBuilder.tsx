@@ -3297,6 +3297,15 @@ function ReportBuilderContent({
                     : "asc",
               }));
             }}
+            // Explicit-direction sort from the header column menu; `null`
+            // (Remove sort) restores the default order.
+            onSortColumn={(column, direction) => {
+              if (direction === null) {
+                setSortConfig(null);
+              } else {
+                setSortConfig({ column, direction });
+              }
+            }}
             columnVisibility={columnVisibility}
             onColumnVisibilityChange={setColumnVisibility}
             grouping={grouping}

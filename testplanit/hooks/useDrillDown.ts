@@ -10,7 +10,10 @@ import type {
   DrillDownResponse,
 } from "~/lib/types/reportDrillDown";
 
-const RECORDS_PER_PAGE = 50;
+// Sized for result sets in the tens of thousands: the count/record queries
+// are cheap, and the drawer renders through the virtualized table, so a
+// large page costs one fast fetch rather than a DOM explosion.
+const RECORDS_PER_PAGE = 500;
 
 interface UseDrillDownReturn {
   /** Whether the drill-down drawer is open */

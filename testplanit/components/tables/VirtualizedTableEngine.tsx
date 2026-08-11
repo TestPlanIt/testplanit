@@ -2,22 +2,30 @@
 /* eslint-disable react-hooks/incompatible-library -- This file consumes TanStack Table / TanStack Virtual APIs that return unstable function references by design; React Compiler auto-skips memoization here and the lint rule reports it (same as components/matrix/MatrixGrid.tsx and hooks/useVirtualizedInfiniteList.ts). */
 
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
 import {
-  Column,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Skeleton } from "@/components/ui/skeleton";
+import { closestCenter, DndContext } from "@dnd-kit/core";
+import { restrictToHorizontalAxis } from "@dnd-kit/modifiers";
+import {
+  horizontalListSortingStrategy,
+  SortableContext,
+  useSortable,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import {
   ColumnDef,
-  ColumnPinningState,
   ColumnSizingState,
   ExpandedState,
   flexRender,
   getCoreRowModel,
   getExpandedRowModel,
   getGroupedRowModel,
-  getSortedRowModel,
   OnChangeFn,
-  Row,
   RowSelectionState,
-  SortingState,
   Updater,
   useReactTable,
   VisibilityState,
@@ -26,6 +34,8 @@ import {
   ArrowDownAZ,
   ArrowDownUp,
   ArrowUpZA,
+  ChevronDown,
+  GripVertical,
   Group,
   UnfoldVertical,
 } from "lucide-react";
@@ -39,53 +49,37 @@ import {
   useRef,
   useState,
 } from "react";
+import { flushSync } from "react-dom";
 import { useVirtualizedInfiniteList } from "~/hooks/useVirtualizedInfiniteList";
 import { cn } from "~/utils";
+import {
+  ColumnMenuItems,
+  type CustomColumnMeta,
+  type SortConfig,
+  getFlexPinningStyles,
+  resolveGroupableCellContent,
+  TruncatedHeaderLabel,
+  useExpanderColumn,
+  useInitialColumnPinning,
+  usePersistedColumnOrder,
+  useSortingAdapter,
+} from "./dataTableShared";
 import { tableStyles } from "./tableStyles";
 
 /**
- * Sticky-column CSS for a pinned column, mirroring `DataTable`'s
- * `getCommonPinningStyles`. Only applied when the caller opts in via
- * `enableColumnPinning`; returns `{}` for unpinned columns. The pinned cell
- * also needs an opaque background (applied via className) so horizontally
- * scrolled content doesn't bleed through.
- */
-function getPinningStyles(column: Column<any, any>): CSSProperties {
-  const isPinned = column.getIsPinned();
-  if (!isPinned) return {};
-  const isLastLeftPinned =
-    isPinned === "left" && column.getIsLastColumn("left");
-  const isFirstRightPinned =
-    isPinned === "right" && column.getIsFirstColumn("right");
-  return {
-    position: "sticky",
-    left: isPinned === "left" ? column.getStart("left") : undefined,
-    right: isPinned === "right" ? column.getStart("right") : undefined,
-    zIndex: 2,
-    boxShadow: isLastLeftPinned
-      ? "4px 0 8px -4px rgba(0,0,0,0.3)"
-      : isFirstRightPinned
-        ? "-4px 0 8px -4px rgba(0,0,0,0.3)"
-        : undefined,
-  };
-}
-
-/**
- * Virtualized, infinite-scrolling table.
+ * The virtualized, infinite-scrolling render engine behind `DataTable`'s
+ * `virtualized` mode. Not part of the public API — consumers render
+ * `<DataTable virtualized ... />`.
  *
- * A lighter-weight alternative to the shared `DataTable` for surfaces that need
- * to render an arbitrarily large result set as one continuous, page-seam-free
+ * Renders an arbitrarily large result set as one continuous, page-seam-free
  * list. It supports draggable column resizing (live, and optionally persisted
- * per user via `columnSizingStorageKey`) and opt-in column pinning
- * (`enableColumnPinning`, off by default), but not `DataTable`'s drag-reorder;
- * it keeps the table features that scroll well (sorting, grouping, expansion,
+ * per user via `columnSizingStorageKey`), opt-in column pinning
+ * (`enableColumnPinning`, on by default), and drag-to-reorder of non-pinned
+ * columns (grip handles; order persisted under the same key as widths); it
+ * keeps the table features that scroll well (sorting, grouping, expansion,
  * sub-rows, column visibility) by driving a TanStack `useReactTable` instance
  * and rendering its flattened row model (`getRowModel().rows`) through
  * `useVirtualizedInfiniteList`.
- *
- * Consumed by the reports results panel and the admin audit-log table; both
- * converge on the same scroll model. Per-surface chrome (empty-state copy,
- * test-id prefixes) is parameterized.
  *
  * Layout: an outer horizontal-scroll container holds a flex column whose width
  * is the summed column width; a non-scrolling header row sits on top and a
@@ -100,50 +94,97 @@ function getPinningStyles(column: Column<any, any>): CSSProperties {
  *     sentinel pulls and the caller appends.
  */
 
-const EXPANDER_WIDTH = 24;
 const ESTIMATED_ROW_HEIGHT = 44;
 
 /**
- * Header label that surfaces a native tooltip with the column's full text, but
- * only while that text is actually clipped by the column's width. Works for any
- * header content (a plain string or a render function with icons) by reading the
- * rendered `textContent`, and re-measures on column resize via a ResizeObserver
- * so the tooltip appears/disappears live as the user drags the column narrower
- * or wider.
+ * Render-prop shell that makes one flex header cell drag-reorderable. The cell
+ * div is the sortable node (so it slides during a drag) but only the grip
+ * carries the drag listeners — sort clicks and the resize handle keep working,
+ * and the 5px pointer-activation constraint means a click never starts a drag.
+ * Rendered for every header while reordering is on; `disabled` (pinned columns
+ * and the expander) keeps the hook mounted but inert, so hook order is stable
+ * across pinning changes.
  */
-function TruncatedHeaderLabel({ children }: { children: ReactNode }) {
-  const spanRef = useRef<HTMLSpanElement>(null);
-  const [title, setTitle] = useState<string | undefined>(undefined);
-
-  useEffect(() => {
-    const el = spanRef.current;
-    if (!el) return;
-    const measure = () => {
-      const isClipped = el.scrollWidth > el.clientWidth;
-      setTitle(isClipped ? el.textContent?.trim() || undefined : undefined);
-    };
-    measure();
-    const observer = new ResizeObserver(measure);
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [children]);
-
-  return (
-    <span ref={spanRef} title={title} className="min-w-0 truncate">
-      {children}
-    </span>
+function SortableHeaderShell({
+  id,
+  disabled,
+  reorderLabel,
+  children,
+}: {
+  id: string;
+  disabled: boolean;
+  reorderLabel: string;
+  children: (shell: {
+    setNodeRef?: (node: HTMLElement | null) => void;
+    dragStyle: CSSProperties;
+    grip: ReactNode;
+  }) => ReactNode;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    setActivatorNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id, disabled });
+  if (disabled) {
+    return <>{children({ dragStyle: {}, grip: null })}</>;
+  }
+  const dragStyle: CSSProperties = {
+    transform: CSS.Translate.toString(transform),
+    transition,
+    opacity: isDragging ? 0.7 : undefined,
+    zIndex: isDragging ? 3 : undefined,
+  };
+  const grip = (
+    <button
+      type="button"
+      ref={setActivatorNodeRef}
+      {...attributes}
+      {...listeners}
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+      }}
+      aria-label={reorderLabel}
+      className="me-1 shrink-0 cursor-grab touch-none text-muted-foreground/50 hover:text-foreground active:cursor-grabbing"
+    >
+      <GripVertical className="h-4 w-4" />
+    </button>
   );
+  return <>{children({ setNodeRef, dragStyle, grip })}</>;
 }
 
-interface VirtualizedDataTableProps {
+export interface VirtualizedTableEngineProps {
   columns: ColumnDef<any, any>[];
   data: any[];
 
   columnVisibility: VisibilityState;
   onColumnVisibilityChange: (visibility: VisibilityState) => void;
 
-  sortConfig?: { column: string; direction: "asc" | "desc" } | null;
+  sortConfig?: SortConfig | null;
   onSortChange?: (columnId: string) => void;
+  /**
+   * Explicit-direction sort, used by the header column menu (the cycling
+   * `onSortChange` can't express a direction). `null` clears the sort.
+   */
+  onSortColumn?: (columnId: string, direction: "asc" | "desc" | null) => void;
+  /**
+   * Hide a column from the header menu. Routed to a callback (rather than
+   * TanStack's `toggleVisibility`) so the owner of visibility state — the
+   * Columns control — makes the change, keeping persistence and the checkboxes
+   * in sync. The menu's Hide item only renders when this is provided.
+   */
+  onHideColumn?: (columnId: string) => void;
+  /**
+   * Per-column header menu (explicit sort direction + hide column). Defaults
+   * to on when `onSortColumn` or `onHideColumn` is wired — the menu can only
+   * offer actions a handler will actually perform; headers keep the plain
+   * label + sort-cycle button otherwise.
+   */
+  enableColumnMenu?: boolean;
 
   grouping?: string[];
   onGroupingChange?: OnChangeFn<string[]>;
@@ -221,6 +262,16 @@ interface VirtualizedDataTableProps {
    */
   columnSizingStorageKey?: string;
 
+  /**
+   * Drag-to-reorder for non-pinned columns via a grip handle in each header.
+   * Defaults to on whenever the table has a persistence key (an explicit
+   * `columnSizingStorageKey`, or a real `testIdPrefix` it can fall back to);
+   * the new order is remembered per user under that key, in the same
+   * localStorage namespace the paged engine uses. Pass `false` to turn the
+   * handles off.
+   */
+  enableColumnReorder?: boolean;
+
   // Infinite scroll (defaults keep the table in full-set / client mode).
   hasMore?: boolean;
   isLoading?: boolean;
@@ -290,13 +341,16 @@ interface VirtualizedDataTableProps {
   rowTestIdPrefix?: string;
 }
 
-export function VirtualizedDataTable({
+export function VirtualizedTableEngine({
   columns,
   data,
   columnVisibility,
   onColumnVisibilityChange,
   sortConfig,
   onSortChange,
+  onSortColumn,
+  onHideColumn,
+  enableColumnMenu: enableColumnMenuProp,
   grouping,
   onGroupingChange,
   expanded,
@@ -312,6 +366,7 @@ export function VirtualizedDataTable({
   pinnedColumnStyle,
   pinnedHeaderStyle,
   columnSizingStorageKey,
+  enableColumnReorder: enableColumnReorderProp,
   hasMore = false,
   isLoading = false,
   onLoadMore,
@@ -326,32 +381,17 @@ export function VirtualizedDataTable({
   highlightRowId,
   testIdPrefix = "virtualized-table",
   rowTestIdPrefix = "virtualized-row",
-}: VirtualizedDataTableProps) {
+}: VirtualizedTableEngineProps) {
   const t = useTranslations("common.table");
   const tActions = useTranslations("common.actions");
   const tLabels = useTranslations("common.labels");
   const tAria = useTranslations("common.aria");
   const tErrors = useTranslations("search.errors");
 
-  // Convert the caller's sortConfig into TanStack's controlled sorting state,
-  // ignoring a stale sort that points at a column the current set lacks
-  // (mirrors DataTable's guard).
-  const sorting: SortingState = useMemo(() => {
-    if (!sortConfig) return [];
-    if (!columns.some((c) => c.id === sortConfig.column)) return [];
-    return [{ id: sortConfig.column, desc: sortConfig.direction === "desc" }];
-  }, [sortConfig, columns]);
-
-  const handleSortingChange = useCallback(
-    (updaterOrValue: Updater<SortingState>) => {
-      if (!onSortChange) return;
-      const next =
-        typeof updaterOrValue === "function"
-          ? updaterOrValue(sorting)
-          : updaterOrValue;
-      if (next.length > 0) onSortChange(next[0].id);
-    },
-    [onSortChange, sorting]
+  const { sorting, handleSortingChange } = useSortingAdapter(
+    sortConfig,
+    onSortChange,
+    columns
   );
 
   const handleVisibilityChange = useCallback(
@@ -381,6 +421,13 @@ export function VirtualizedDataTable({
   const columnSizingStorage = effectiveColumnSizingKey
     ? `vdt:colsize:${effectiveColumnSizingKey}`
     : null;
+  // Reorder rides the same per-surface key as widths: on wherever the table
+  // can remember the order, off for keyless (stateless) tables.
+  const enableColumnReorder =
+    enableColumnReorderProp ?? !!effectiveColumnSizingKey;
+  // The header menu only appears when a handler is wired to act on it.
+  const enableColumnMenu =
+    enableColumnMenuProp ?? Boolean(onSortColumn || onHideColumn);
   const [columnSizing, setColumnSizing] = useState<ColumnSizingState>(() => {
     if (!columnSizingStorage || typeof window === "undefined") return {};
     try {
@@ -391,92 +438,22 @@ export function VirtualizedDataTable({
     }
   });
 
-  // Column pinning. Seed the left/right pin sets once, then let TanStack own the
-  // state. First, honor any explicit `meta.isPinned`. When the caller pinned
-  // nothing, default to freezing the first and last columns (the auto-added
-  // expander rides along on the left so it doesn't scroll out from under the
-  // pinned first column). Mirrors DataTable's explicit path.
-  const [columnPinning, setColumnPinning] = useState<ColumnPinningState>({
-    left: [],
-    right: [],
+  // Column pinning: seed the left/right pin sets once (explicit `meta.isPinned`
+  // first, first/last fallback otherwise), then let TanStack own the state.
+  const [columnPinning, setColumnPinning] = useInitialColumnPinning({
+    columns,
+    grouping,
+    getSubRows,
+    enabled: enableColumnPinning,
+    autoPinFirstLast: pinFirstLast,
   });
-  const initialPinningDone = useRef(false);
-  useEffect(() => {
-    if (!enableColumnPinning || initialPinningDone.current) return;
-    const left: string[] = [];
-    const right: string[] = [];
-    for (const column of columns) {
-      const pin = (column.meta as { isPinned?: "left" | "right" } | undefined)
-        ?.isPinned;
-      const id = column.id as string;
-      if (pin === "left") left.push(id);
-      else if (pin === "right") right.push(id);
-    }
-    if (
-      pinFirstLast &&
-      left.length === 0 &&
-      right.length === 0 &&
-      columns.length > 1
-    ) {
-      const firstId = columns[0]?.id as string | undefined;
-      const lastId = columns[columns.length - 1]?.id as string | undefined;
-      const hasExpander = !!(grouping && grouping.length > 0) || !!getSubRows;
-      if (firstId) left.push(firstId);
-      if (hasExpander) left.unshift("expander");
-      if (lastId && lastId !== firstId) right.push(lastId);
-    }
-    setColumnPinning({ left, right });
-    initialPinningDone.current = true;
-  }, [enableColumnPinning, pinFirstLast, columns, grouping, getSubRows]);
 
   // In pinning mode the body scrolls horizontally; this ref lets the header
   // viewport mirror the body's scrollLeft so the columns stay aligned.
   const headerScrollRef = useRef<HTMLDivElement>(null);
 
   // Prepend an expander column when rows can nest (grouping or sub-rows).
-  const expanderColumn: ColumnDef<any, any> = useMemo(
-    () => ({
-      id: "expander",
-      header: () => null,
-      cell: ({ row }: { row: Row<any> }) => {
-        if (!row.getCanExpand()) return null;
-        const isExpanded = row.getIsExpanded();
-        const subRowsCount = row.subRows?.length ?? 0;
-        const label = isExpanded
-          ? tActions("collapse")
-          : `${tActions("expand")}${
-              subRowsLabel && subRowsCount > 0
-                ? ` • ${subRowsCount} ${subRowsLabel}`
-                : ""
-            }`;
-        return (
-          <button
-            type="button"
-            onClick={row.getToggleExpandedHandler()}
-            className="inline-flex w-4 items-center justify-center"
-            aria-label={label}
-            title={label}
-          >
-            <span
-              className="inline-block transition-transform duration-200"
-              style={{
-                transform: isExpanded ? "rotate(90deg)" : "rotate(0deg)",
-              }}
-            >
-              {"▶"}
-            </span>
-          </button>
-        );
-      },
-      size: EXPANDER_WIDTH,
-      minSize: EXPANDER_WIDTH,
-      maxSize: EXPANDER_WIDTH,
-      enableSorting: false,
-      enableHiding: false,
-      enableResizing: false,
-    }),
-    [tActions, subRowsLabel]
-  );
+  const expanderColumn = useExpanderColumn<any>(subRowsLabel);
 
   const groupingActive = !!(grouping && grouping.length > 0);
   const finalColumns = useMemo(
@@ -485,16 +462,34 @@ export function VirtualizedDataTable({
     [groupingActive, getSubRows, expanderColumn, columns]
   );
 
+  // Drag-to-reorder columns, persisted per surface under the same key as
+  // widths.
+  const {
+    columnOrder,
+    setColumnOrder,
+    handleColumnDragEnd,
+    columnDragSensors,
+  } = usePersistedColumnOrder({
+    enabled: enableColumnReorder,
+    storageKey: effectiveColumnSizingKey,
+    finalColumns,
+  });
+
   const table = useReactTable({
     data,
     columns: finalColumns,
     getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
     getGroupedRowModel: groupingActive ? getGroupedRowModel() : undefined,
     getExpandedRowModel:
       groupingActive || getSubRows ? getExpandedRowModel() : undefined,
     getSubRows,
     enableSorting: true,
+    // The CALLER owns row order (server orderBy or its own sort of `data`) —
+    // sortConfig is display state. Without this, TanStack re-sorts the rows
+    // client-side by each column's accessor, fighting the server: enum columns
+    // sort by Postgres enum-definition order server-side but alphabetically
+    // client-side, and infinite-scroll page seams get scrambled.
+    manualSorting: true,
     enableColumnResizing: true,
     enableColumnPinning,
     enableRowSelection: rowSelection !== undefined,
@@ -504,11 +499,13 @@ export function VirtualizedDataTable({
       columnVisibility,
       sorting,
       columnSizing,
+      ...(enableColumnReorder && { columnOrder }),
       ...(enableColumnPinning && { columnPinning }),
       ...(rowSelection !== undefined && { rowSelection }),
       ...(grouping !== undefined && { grouping }),
       ...(expanded !== undefined && { expanded }),
     },
+    ...(enableColumnReorder && { onColumnOrderChange: setColumnOrder }),
     ...(enableColumnPinning && { onColumnPinningChange: setColumnPinning }),
     ...(onGroupingChange !== undefined && { onGroupingChange }),
     ...(onExpandedChange !== undefined && { onExpandedChange }),
@@ -556,6 +553,36 @@ export function VirtualizedDataTable({
   const hasFlex =
     !!flexColumnId && leafColumns.some((c) => c.id === flexColumnId);
   const tableWidth = hasFlex ? "100%" : totalWidth;
+
+  // Start a column-resize drag. For the FLEX column, first seed its tracked
+  // size from the rendered width: while it absorbs slack its on-screen width
+  // exceeds `getSize()`, and TanStack measures the drag from `getSize()` — so
+  // without the seed the drag would silently adjust an invisible minimum and
+  // the column wouldn't appear to move. `flushSync` commits the seed before
+  // the resize handler captures its start size (we're in a DOM event handler,
+  // where flushSync is legal). After a resize the column keeps flexing, but
+  // never below the width the user chose; double-click still resets it.
+  const beginResize = useCallback(
+    (header: any, e: React.MouseEvent | React.TouchEvent) => {
+      const column = header.column;
+      if (hasFlex && column.id === flexColumnId) {
+        const cell = (e.currentTarget as HTMLElement).closest(
+          '[role="columnheader"]'
+        ) as HTMLElement | null;
+        const rendered = cell?.getBoundingClientRect().width;
+        if (rendered && Math.abs(rendered - column.getSize()) > 1) {
+          flushSync(() => {
+            setColumnSizing((prev) => ({
+              ...prev,
+              [column.id]: Math.round(rendered),
+            }));
+          });
+        }
+      }
+      header.getResizeHandler()(e);
+    },
+    [hasFlex, flexColumnId]
+  );
   // With a flex column the full-width layers stretch to "100%" so the flex
   // column soaks up slack — but a resized fixed column can still push the
   // summed column width past the container. Floor those layers at that summed
@@ -618,7 +645,7 @@ export function VirtualizedDataTable({
 
   const headers = table.getHeaderGroups().at(-1)?.headers ?? [];
 
-  return (
+  const tableElement = (
     <div
       className={cn(
         "rounded-lg border-2 border-primary/10",
@@ -658,11 +685,19 @@ export function VirtualizedDataTable({
                 : undefined
             }
           >
-            {headers
-              .filter((header) => header.column.getIsVisible())
-              .map((header) => {
+            {(() => {
+              const renderHeaderCell = (
+                header: (typeof headers)[number],
+                shell: {
+                  setNodeRef?: (node: HTMLElement | null) => void;
+                  dragStyle: CSSProperties;
+                  grip: ReactNode;
+                }
+              ) => {
                 const { column } = header;
-                const isSortable = column.columnDef.enableSorting !== false;
+                const isSortable =
+                  column.columnDef.enableSorting !== false &&
+                  column.id !== "expander";
                 const isActiveSort = sortConfig?.column === column.id;
                 const direction = isActiveSort
                   ? sortConfig?.direction
@@ -671,6 +706,7 @@ export function VirtualizedDataTable({
                 return (
                   <div
                     key={header.id}
+                    ref={shell.setNodeRef}
                     role="columnheader"
                     className={cn(
                       "relative flex select-none items-center gap-1 border-e px-3 last:border-e-0",
@@ -684,12 +720,16 @@ export function VirtualizedDataTable({
                       ...(isFlex
                         ? { flex: "1 1 0%", minWidth: column.getSize() }
                         : { width: column.getSize() }),
-                      ...(enableColumnPinning ? getPinningStyles(column) : {}),
+                      ...(enableColumnPinning
+                        ? getFlexPinningStyles(column)
+                        : {}),
                       ...(enableColumnPinning && column.getIsPinned()
                         ? (pinnedHeaderStyle ?? pinnedColumnStyle ?? {})
                         : {}),
+                      ...shell.dragStyle,
                     }}
                   >
+                    {shell.grip}
                     {column.getCanGroup() && onGroupingChange ? (
                       <button
                         type="button"
@@ -713,32 +753,88 @@ export function VirtualizedDataTable({
                         )}
                       </button>
                     ) : null}
-                    <TruncatedHeaderLabel>
-                      {flexRender(column.columnDef.header, header.getContext())}
-                    </TruncatedHeaderLabel>
-                    {isSortable && column.id !== "expander" && (
-                      <button
-                        type="button"
-                        onClick={() => onSortChange?.(column.id)}
-                        className="ms-1 shrink-0 cursor-pointer"
-                        aria-label={t("sort")}
-                      >
-                        {isActiveSort && direction === "asc" ? (
+                    {(() => {
+                      const canHide =
+                        Boolean(onHideColumn) &&
+                        column.getCanHide() &&
+                        column.id !== "expander";
+                      const hasMenu =
+                        enableColumnMenu && (isSortable || canHide);
+                      const sortIndicator =
+                        isActiveSort && direction === "asc" ? (
                           <ArrowDownAZ className="h-4 w-4" />
                         ) : isActiveSort && direction === "desc" ? (
                           <ArrowUpZA className="h-4 w-4" />
                         ) : (
                           <ArrowDownUp className="h-4 w-4 opacity-50" />
-                        )}
-                      </button>
-                    )}
-                    {/* Drag-to-resize handle on the column's right edge. The flex
-                      column absorbs slack (no fixed width to drag) and the
-                      expander column opts out via enableResizing:false. */}
-                    {column.getCanResize() && !isFlex && (
+                        );
+                      if (hasMenu) {
+                        return (
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <button
+                                type="button"
+                                className="flex min-w-0 cursor-pointer items-center gap-1 outline-none"
+                                aria-label={t("columnOptions")}
+                              >
+                                <TruncatedHeaderLabel>
+                                  {flexRender(
+                                    column.columnDef.header,
+                                    header.getContext()
+                                  )}
+                                </TruncatedHeaderLabel>
+                                {isSortable && sortIndicator}
+                                <ChevronDown
+                                  className="h-3 w-3 shrink-0 opacity-50"
+                                  aria-hidden="true"
+                                />
+                              </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="start">
+                              <ColumnMenuItems
+                                columnId={column.id}
+                                isSortable={isSortable}
+                                canHide={canHide}
+                                isActiveSort={Boolean(isActiveSort)}
+                                sortDirection={direction}
+                                onSortColumn={onSortColumn}
+                                onHideColumn={onHideColumn}
+                              />
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        );
+                      }
+                      return (
+                        <>
+                          <TruncatedHeaderLabel>
+                            {flexRender(
+                              column.columnDef.header,
+                              header.getContext()
+                            )}
+                          </TruncatedHeaderLabel>
+                          {isSortable && (
+                            <button
+                              type="button"
+                              onClick={() => onSortChange?.(column.id)}
+                              className="ms-1 shrink-0 cursor-pointer"
+                              aria-label={t("sort")}
+                            >
+                              {sortIndicator}
+                            </button>
+                          )}
+                        </>
+                      );
+                    })()}
+                    {/* Drag-to-resize handle on the column's right edge. The
+                      expander column opts out via enableResizing:false. The
+                      flex column is resizable too — beginResize seeds its size
+                      from the rendered width so the drag tracks what's on
+                      screen; the chosen width becomes its minimum while it
+                      keeps absorbing slack. */}
+                    {column.getCanResize() && (
                       <div
-                        onMouseDown={header.getResizeHandler()}
-                        onTouchStart={header.getResizeHandler()}
+                        onMouseDown={(e) => beginResize(header, e)}
+                        onTouchStart={(e) => beginResize(header, e)}
                         onDoubleClick={() => column.resetSize()}
                         role="separator"
                         aria-orientation="vertical"
@@ -755,7 +851,43 @@ export function VirtualizedDataTable({
                     )}
                   </div>
                 );
-              })}
+              };
+
+              const visibleHeaders = headers.filter((header) =>
+                header.column.getIsVisible()
+              );
+              if (!enableColumnReorder) {
+                return visibleHeaders.map((header) =>
+                  renderHeaderCell(header, { dragStyle: {}, grip: null })
+                );
+              }
+              // Pinned columns and the expander stay put; everything else can
+              // be dragged.
+              const reorderDisabledFor = (
+                column: (typeof headers)[number]["column"]
+              ) =>
+                (enableColumnPinning && !!column.getIsPinned()) ||
+                column.id === "expander";
+              return (
+                <SortableContext
+                  items={visibleHeaders
+                    .filter((h) => !reorderDisabledFor(h.column))
+                    .map((h) => h.column.id)}
+                  strategy={horizontalListSortingStrategy}
+                >
+                  {visibleHeaders.map((header) => (
+                    <SortableHeaderShell
+                      key={header.id}
+                      id={header.column.id}
+                      disabled={reorderDisabledFor(header.column)}
+                      reorderLabel={t("reorderColumn")}
+                    >
+                      {(shell) => renderHeaderCell(header, shell)}
+                    </SortableHeaderShell>
+                  ))}
+                </SortableContext>
+              );
+            })()}
           </div>
         </div>
 
@@ -845,60 +977,19 @@ export function VirtualizedDataTable({
                   >
                     {row.getVisibleCells().map((cell, cellIndex) => {
                       const { column } = cell;
-                      let content: ReactNode;
-                      if (groupingActive && cell.getIsGrouped()) {
-                        const showCount = !column.columnDef.aggregatedCell;
-                        content = (
-                          <div className="flex items-center gap-1">
-                            <button
-                              type="button"
-                              onClick={row.getToggleExpandedHandler()}
-                              className="me-1 p-1"
-                              aria-label={
-                                row.getIsExpanded()
-                                  ? tActions("collapse")
-                                  : tActions("expand")
-                              }
-                            >
-                              <span
-                                className="inline-block transition-transform duration-200"
-                                style={{
-                                  transform: row.getIsExpanded()
-                                    ? "rotate(90deg)"
-                                    : "rotate(0deg)",
-                                }}
-                              >
-                                {"▶"}
-                              </span>
-                            </button>
-                            {flexRender(
-                              column.columnDef.cell,
-                              cell.getContext()
-                            )}
-                            {showCount ? ` (${row.subRows.length})` : null}
-                          </div>
-                        );
-                      } else if (groupingActive && cell.getIsAggregated()) {
-                        content = flexRender(
-                          column.columnDef.aggregatedCell ??
-                            column.columnDef.cell,
-                          cell.getContext()
-                        );
-                      } else if (groupingActive && cell.getIsPlaceholder()) {
-                        content = null;
-                      } else {
-                        content = flexRender(
-                          column.columnDef.cell,
-                          cell.getContext()
-                        );
-                      }
+                      const content = resolveGroupableCellContent(
+                        cell,
+                        row,
+                        groupingActive,
+                        tActions
+                      );
                       const isFlex = hasFlex && column.id === flexColumnId;
                       // Cells truncate to a single line by default so long raw
                       // text doesn't wrap and grow the row — the user widens the
                       // column to see more. A column opts out with
                       // `meta: { wrap: true }`.
                       const wrap = (
-                        column.columnDef.meta as { wrap?: boolean } | undefined
+                        column.columnDef.meta as CustomColumnMeta | undefined
                       )?.wrap;
                       return (
                         <div
@@ -929,7 +1020,7 @@ export function VirtualizedDataTable({
                               ? { flex: "1 1 0%", minWidth: column.getSize() }
                               : { width: column.getSize() }),
                             ...(enableColumnPinning
-                              ? getPinningStyles(column)
+                              ? getFlexPinningStyles(column)
                               : {}),
                             ...(enableColumnPinning &&
                             column.getIsPinned() &&
@@ -987,5 +1078,21 @@ export function VirtualizedDataTable({
         </div>
       </div>
     </div>
+  );
+
+  if (!enableColumnReorder) return tableElement;
+
+  // The DndContext wraps the whole table (not just the header row) because it
+  // renders a hidden accessibility <div> that must not join the header's flex
+  // layout.
+  return (
+    <DndContext
+      sensors={columnDragSensors}
+      collisionDetection={closestCenter}
+      modifiers={[restrictToHorizontalAxis]}
+      onDragEnd={handleColumnDragEnd}
+    >
+      {tableElement}
+    </DndContext>
   );
 }

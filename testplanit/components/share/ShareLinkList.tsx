@@ -238,6 +238,19 @@ export function ShareLinkList({
     );
   }, []);
 
+  // Explicit-direction sort from the header column menu; `null` (Remove sort)
+  // restores the default order.
+  const handleSortColumn = useCallback(
+    (column: string, direction: "asc" | "desc" | null) => {
+      if (direction === null) {
+        setSortConfig({ column: "created", direction: "desc" });
+      } else {
+        setSortConfig({ column, direction });
+      }
+    },
+    []
+  );
+
   const data = useMemo<ShareRow[]>(
     () =>
       (shares ?? []).map((share: any) => ({
@@ -569,6 +582,7 @@ export function ShareLinkList({
         columns={columns}
         data={data}
         onSortChange={handleSortChange}
+        onSortColumn={handleSortColumn}
         sortConfig={sortConfig}
         columnVisibility={columnVisibility}
         onColumnVisibilityChange={setColumnVisibility}

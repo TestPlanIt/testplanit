@@ -54,6 +54,19 @@ export default function ResultFields() {
     setSortConfig({ column, direction });
   };
 
+  // Explicit-direction sort from the header column menu; `null` (Remove sort)
+  // restores the default order.
+  const handleSortColumn = (
+    column: string,
+    direction: "asc" | "desc" | null
+  ) => {
+    if (direction === null) {
+      setSortConfig(undefined);
+    } else {
+      setSortConfig({ column, direction });
+    }
+  };
+
   const handleToggle = useCallback(
     async (id: number, key: keyof ExtendedResultFields, value: boolean) => {
       try {
@@ -168,7 +181,7 @@ export default function ResultFields() {
               onColumnVisibilityChange={setColumnVisibility}
               isLoading={isLoading}
               storageKey="admin-result-fields"
-              enableColumnMenu={false}
+              onSortColumn={handleSortColumn}
             />
           </div>
         </CardContent>

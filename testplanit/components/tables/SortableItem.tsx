@@ -23,16 +23,11 @@ interface TestCaseDragOperationItem {
   draggedItems?: DraggedCaseInfo[]; // Array of all items being dragged
 }
 
-function SortableItem<
-  TData extends { id: number | string; folderId: number | null; name: string },
->({
+function SortableItem({
   id: _id,
   row,
   index,
   visibleColumns,
-  handleExpandClick,
-  expandedRows,
-  renderExpandedRow,
   canDragTestCase,
   onReorder,
   cellPinningStyleFn,
@@ -45,9 +40,6 @@ function SortableItem<
   row: any;
   index: number;
   visibleColumns: any[];
-  handleExpandClick?: (id: number | string) => void;
-  expandedRows?: Set<number | string>;
-  renderExpandedRow?: (row: TData) => React.ReactNode;
   canDragTestCase: boolean;
   onReorder: (dragIndex: number, hoverIndex: number) => void;
   cellPinningStyleFn: (column: Column<any>) => CSSProperties;
@@ -305,11 +297,6 @@ function SortableItem<
         data-row-id={row.original.id}
         data-testid={`case-row-${row.original.id}`}
         data-handler-id={handlerId}
-        onClick={(_e) => {
-          if (!isDragging) {
-            handleExpandClick?.(row.original.id);
-          }
-        }}
       >
         {/* Iterate over the visibleColumns prop to ensure order matches header */}
         {visibleColumns.map((column: any, colIndex: number) => {
@@ -377,17 +364,6 @@ function SortableItem<
           );
         })}
       </TableRow>
-
-      {expandedRows?.has(row.original.id) && renderExpandedRow && (
-        <TableRow className="w-fit">
-          <TableCell
-            colSpan={visibleColumns.length}
-            className="bg-muted/30 w-fit"
-          >
-            {renderExpandedRow(row.original)}
-          </TableCell>
-        </TableRow>
-      )}
     </>
   );
 }

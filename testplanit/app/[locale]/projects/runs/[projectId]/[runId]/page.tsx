@@ -1472,6 +1472,21 @@ export default function TestRunPage() {
     });
   };
 
+  // Explicit-direction sort from the header column menu; `null` (Remove sort)
+  // restores the default order.
+  const handleJunitSortColumn = (
+    column: string,
+    direction: "asc" | "desc" | null
+  ) => {
+    if (direction === null) {
+      // The JUnit sorter returns the raw API order for a falsy config, so
+      // "Remove sort" must restore the table's actual default instead.
+      setJunitSortConfig({ column: "executedAt", direction: "desc" });
+    } else {
+      setJunitSortConfig({ column, direction });
+    }
+  };
+
   // --- REGULAR TEST RUN TABLE STATE ---
   // Fetch status distribution from view-options API for accurate counts across selected configurations
   const effectiveRunIdsForResults = useMemo(() => {
@@ -2167,6 +2182,7 @@ export default function TestRunPage() {
                             sortedJunitTestCases={sortedJunitTestCases}
                             junitSortConfig={junitSortConfig}
                             handleJunitSortChange={handleJunitSortChange}
+                            onSortColumn={handleJunitSortColumn}
                             isJUnitLoading={isJUnitLoading}
                             selectedTestCaseId={selectedTestCaseId}
                           />

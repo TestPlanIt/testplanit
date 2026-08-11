@@ -865,7 +865,7 @@
       "reorderColumn": "Glisser pour réorganiser la colonne",
       "sortAsc": "Trier par ordre croissant",
       "sortDesc": "Trier par ordre décroissant",
-      "removeSort": "Tri manuel",
+      "removeSort": "Supprimer le tri",
       "hideColumn": "Masquer la colonne",
       "columnOptions": "Options de colonne"
     },

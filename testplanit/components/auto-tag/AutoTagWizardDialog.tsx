@@ -608,6 +608,20 @@ export function AutoTagWizardDialog({
     setReviewPage(1);
   }, []);
 
+  // Explicit-direction sort from the header column menu; `null` (Remove sort)
+  // restores the default order.
+  const handleReviewSortColumn = useCallback(
+    (column: string, direction: "asc" | "desc" | null) => {
+      if (direction === null) {
+        setReviewSortConfig({ column: "name", direction: "asc" });
+      } else {
+        setReviewSortConfig({ column, direction });
+      }
+      setReviewPage(1);
+    },
+    []
+  );
+
   const filteredReviewRows = useMemo(() => {
     let rows = reviewRows;
     if (reviewEntityTypes.length < 3) {
@@ -1159,6 +1173,7 @@ export function AutoTagWizardDialog({
                     columnVisibility={reviewColumnVisibility}
                     onColumnVisibilityChange={setReviewColumnVisibility}
                     onSortChange={handleReviewSortChange}
+                    onSortColumn={handleReviewSortColumn}
                     sortConfig={reviewSortConfig}
                     pageSize={effectivePageSize}
                   />

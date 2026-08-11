@@ -9,7 +9,7 @@ import { useRouter } from "~/lib/navigation";
 
 import { useDebounce } from "@/components/Debounce";
 import { CustomColumnDef } from "@/components/tables/ColumnSelection";
-import { VirtualizedDataTable } from "@/components/tables/VirtualizedDataTable";
+import { DataTable } from "@/components/tables/DataTable";
 import { ExtendedGroups, useColumns } from "./columns";
 
 import { Filter } from "@/components/tables/Filter";
@@ -116,6 +116,19 @@ function GroupList() {
     setSortConfig({ column, direction });
   };
 
+  // Explicit-direction sort from the header column menu; `null` (Remove sort)
+  // restores the default order.
+  const handleSortColumn = (
+    column: string,
+    direction: "asc" | "desc" | null
+  ) => {
+    if (direction === null) {
+      setSortConfig({ column: "name", direction: "asc" });
+    } else {
+      setSortConfig({ column, direction });
+    }
+  };
+
   const columns: CustomColumnDef<ExtendedGroups>[] = useColumns(
     tCommon,
     t,
@@ -186,11 +199,13 @@ function GroupList() {
               )}
             </div>
             <div className="mt-4 w-full">
-              <VirtualizedDataTable
+              <DataTable
+                virtualized
                 fillViewport
                 columns={columns as any}
                 data={groups}
                 onSortChange={handleSortChange}
+                onSortColumn={handleSortColumn}
                 sortConfig={sortConfig}
                 columnVisibility={columnVisibility}
                 onColumnVisibilityChange={setColumnVisibility}

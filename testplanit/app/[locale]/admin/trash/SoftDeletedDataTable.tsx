@@ -3,7 +3,7 @@
 import { useDebounce } from "@/components/Debounce";
 import { Loading } from "@/components/Loading";
 import { Filter } from "@/components/tables/Filter";
-import { VirtualizedDataTable } from "@/components/tables/VirtualizedDataTable";
+import { DataTable } from "@/components/tables/DataTable";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -238,6 +238,19 @@ export default function SoftDeletedDataTable({
     setSortConfig({ column: columnId, direction });
   };
 
+  // Explicit-direction sort from the header column menu; `null` (Remove sort)
+  // restores the default order.
+  const handleSortColumn = (
+    column: string,
+    direction: "asc" | "desc" | null
+  ) => {
+    if (direction === null) {
+      setSortConfig({ column: "id", direction: "asc" });
+    } else {
+      setSortConfig({ column, direction });
+    }
+  };
+
   const columns = useMemo<ColumnDef<SoftDeletedItem>[]>(() => {
     const defaultColumns: ColumnDef<SoftDeletedItem>[] = [
       {
@@ -382,13 +395,15 @@ export default function SoftDeletedDataTable({
         </div>
       ) : (
         <div className="min-h-[400px] w-full flex-1">
-          <VirtualizedDataTable
+          <DataTable
+            virtualized
             columns={columns as ColumnDef<any, any>[]}
             data={data}
             columnVisibility={columnVisibility}
             onColumnVisibilityChange={setColumnVisibility}
             sortConfig={sortConfig}
             onSortChange={handleSortChange}
+            onSortColumn={handleSortColumn}
             enableColumnPinning
             hasMore={hasMore}
             isLoading={isInitialLoading || isLoadingMore}

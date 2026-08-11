@@ -865,7 +865,7 @@
       "reorderColumn": "拖动以重新排列列",
       "sortAsc": "升序排列",
       "sortDesc": "降序排列",
-      "removeSort": "手动排序",
+      "removeSort": "移除排序",
       "hideColumn": "隐藏列",
       "columnOptions": "列选项"
     },

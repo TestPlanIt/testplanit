@@ -4,7 +4,7 @@ import DOMPurify from "dompurify";
 import { stripHtmlTags } from "~/utils/stripHtmlTags";
 import { IssueStatusDisplay } from "@/components/IssueStatusDisplay";
 import { IssuesDisplay } from "@/components/tables/IssuesDisplay";
-import { VirtualizedDataTable } from "@/components/tables/VirtualizedDataTable";
+import { DataTable } from "@/components/tables/DataTable";
 import { Badge } from "@/components/ui/badge";
 import {
   Popover,
@@ -84,6 +84,19 @@ export function FoundInTestingIssues({
       direction:
         prev.column === column && prev.direction === "asc" ? "desc" : "asc",
     }));
+  };
+
+  // Explicit-direction sort from the header column menu; `null` (Remove sort)
+  // restores the default order.
+  const handleSortColumn = (
+    column: string,
+    direction: "asc" | "desc" | null
+  ) => {
+    if (direction === null) {
+      setSortConfig({ column: "key", direction: "asc" });
+    } else {
+      setSortConfig({ column, direction });
+    }
   };
 
   const sortedIssues = useMemo(() => {
@@ -340,13 +353,15 @@ export function FoundInTestingIssues({
                 {t("foundInTestingEmpty")}
               </div>
             ) : (
-              <VirtualizedDataTable
+              <DataTable
+                virtualized
                 columns={columns as any}
                 data={sortedIssues as any}
                 columnVisibility={columnVisibility}
                 onColumnVisibilityChange={setColumnVisibility}
                 sortConfig={sortConfig}
                 onSortChange={handleSortChange}
+                onSortColumn={handleSortColumn}
                 enableColumnPinning
                 pinnedColumnStyle={
                   milestoneRow?.isCompleted

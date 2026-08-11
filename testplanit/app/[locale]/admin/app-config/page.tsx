@@ -3,7 +3,7 @@
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { useDebounce } from "@/components/Debounce";
-import { VirtualizedDataTable } from "@/components/tables/VirtualizedDataTable";
+import { DataTable } from "@/components/tables/DataTable";
 import { Filter } from "@/components/tables/Filter";
 import { Button } from "@/components/ui/button";
 import { SectionHeader } from "@/components/ui/typography";
@@ -96,6 +96,19 @@ function AppConfigs() {
     setSortConfig({ column, direction });
   };
 
+  // Explicit-direction sort from the header column menu; `null` (Remove sort)
+  // restores the default order.
+  const handleSortColumn = (
+    column: string,
+    direction: "asc" | "desc" | null
+  ) => {
+    if (direction === null) {
+      setSortConfig({ column: "key", direction: "asc" });
+    } else {
+      setSortConfig({ column, direction });
+    }
+  };
+
   const columns = useMemo(
     () => getColumns(tCommon, setEditingConfig, setDeletingConfig),
     [tCommon]
@@ -159,12 +172,14 @@ function AppConfigs() {
           )}
         </div>
         <div className="mt-4 w-full">
-          <VirtualizedDataTable
+          <DataTable
+            virtualized
             fillViewport
             flexColumnId="value"
             columns={columns as any}
             data={tableData}
             onSortChange={handleSortChange}
+            onSortColumn={handleSortColumn}
             sortConfig={sortConfig}
             columnVisibility={columnVisibility}
             onColumnVisibilityChange={setColumnVisibility}

@@ -3,7 +3,7 @@
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { useDebounce } from "@/components/Debounce";
-import { VirtualizedDataTable } from "@/components/tables/VirtualizedDataTable";
+import { DataTable } from "@/components/tables/DataTable";
 import { Filter } from "@/components/tables/Filter";
 import { TagsDisplay } from "@/components/tables/TagDisplay";
 import { Badge } from "@/components/ui/badge";
@@ -589,7 +589,8 @@ function TagDetail() {
                 </p>
               )}
               <div className="h-[calc(100vh-24rem)] min-h-[400px] w-full">
-                <VirtualizedDataTable
+                <DataTable
+                  virtualized
                   columns={caseColumns as any}
                   data={mappedCases}
                   columnVisibility={{}}
@@ -621,7 +622,8 @@ function TagDetail() {
                 </p>
               )}
               <div className="h-[calc(100vh-24rem)] min-h-[400px] w-full">
-                <VirtualizedDataTable
+                <DataTable
+                  virtualized
                   columns={testRunColumns as any}
                   data={mappedTestRuns}
                   columnVisibility={{}}
@@ -653,7 +655,8 @@ function TagDetail() {
                 </p>
               )}
               <div className="h-[calc(100vh-24rem)] min-h-[400px] w-full">
-                <VirtualizedDataTable
+                <DataTable
+                  virtualized
                   columns={sessionColumns as any}
                   data={mappedSessions}
                   columnVisibility={{}}

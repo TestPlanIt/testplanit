@@ -5,7 +5,7 @@ import { schema } from "~/zenstack/schema";
 import { useDebounce } from "@/components/Debounce";
 import { ColumnSelection } from "@/components/tables/ColumnSelection";
 import { Filter } from "@/components/tables/Filter";
-import { VirtualizedDataTable } from "@/components/tables/VirtualizedDataTable";
+import { DataTable } from "@/components/tables/DataTable";
 import { Form } from "@/components/ui/form";
 import { Label } from "@/components/ui/label";
 import { MultiAsyncCombobox } from "@/components/ui/multi-async-combobox";
@@ -14,7 +14,7 @@ import type { VisibilityState } from "@tanstack/react-table";
 import { endOfDay, format, startOfDay } from "date-fns";
 import { useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DateRange } from "react-day-picker";
 import { useForm, useWatch } from "react-hook-form";
 import { AuditLogDetailModal } from "~/app/[locale]/admin/audit-logs/AuditLogDetailModal";
@@ -78,6 +78,10 @@ export function ProjectAuditLog({
   const dateRange = useWatch({ control: dateForm.control, name: "dateRange" });
   const [selectedLogId, setSelectedLogId] = useState<string | null>(null);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
+  // Hide-column requests from the table's header menu are routed through the
+  // Columns control (the visibility owner) so persistence and its checkboxes
+  // stay in sync.
+  const hideColumnRef = useRef<((columnId: string) => void) | null>(null);
   const [isExporting, setIsExporting] = useState(false);
 
   // Always hard-scoped to this project; the audit log denormalizes projectId
@@ -438,6 +442,19 @@ export function ProjectAuditLog({
     setSortConfig({ column, direction });
   };
 
+  // Explicit-direction sort from the header column menu; `null` (Remove sort)
+  // restores the default order.
+  const handleSortColumn = (
+    column: string,
+    direction: "asc" | "desc" | null
+  ) => {
+    if (direction === null) {
+      setSortConfig({ column: "timestamp", direction: "desc" });
+    } else {
+      setSortConfig({ column, direction });
+    }
+  };
+
   // Surface the export handler + its state to the page so the Export button can
   // render in the card header alongside the title (matching the admin layout).
   useEffect(() => {
@@ -545,6 +562,7 @@ export function ProjectAuditLog({
           storageKey="project-audit-logs"
           columns={columns}
           onVisibilityChange={setColumnVisibility}
+          hideColumnRef={hideColumnRef}
         />
 
         {rows.length > 0 && (
@@ -561,13 +579,16 @@ export function ProjectAuditLog({
           gap-4 column, so its own top margin is dropped to avoid doubling the
           space above it (matches the admin audit-log toolbar→table gap). */}
       <div className="h-[calc(100vh-22rem)] min-h-[400px] w-full">
-        <VirtualizedDataTable
+        <DataTable
+          virtualized
           columns={columns as any}
           data={groupedData as any}
           getSubRows={(row) => row.auditChildren}
           subRowsLabel={t("relatedChanges")}
           sortConfig={sortConfig}
           onSortChange={handleSortChange}
+          onSortColumn={handleSortColumn}
+          onHideColumn={(columnId) => hideColumnRef.current?.(columnId)}
           columnVisibility={columnVisibility}
           onColumnVisibilityChange={setColumnVisibility}
           flexColumnId="entityName"

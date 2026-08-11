@@ -10,7 +10,7 @@ import { expect, test } from "../../../fixtures";
  * - Viewing the detail modal for a log entry
  * - Exporting audit logs as CSV
  *
- * The page renders a VirtualizedDataTable (testIdPrefix="audit-logs-table",
+ * The page renders a virtualized DataTable (testIdPrefix="audit-logs-table",
  * rowTestIdPrefix="audit-log-row"), which is an ARIA-rolled div structure — NOT
  * a semantic <table>/<thead>/<tbody>. The container carries
  * data-testid="audit-logs-table", the scroll body "audit-logs-table-scroll",

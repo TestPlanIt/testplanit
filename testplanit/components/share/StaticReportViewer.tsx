@@ -102,6 +102,19 @@ export function StaticReportViewer({
     }));
   }, []);
 
+  // Explicit-direction sort from the header column menu; `null` (Remove sort)
+  // restores the default order.
+  const handleSortColumn = useCallback(
+    (column: string, direction: "asc" | "desc" | null) => {
+      if (direction === null) {
+        setSortConfig(null);
+      } else {
+        setSortConfig({ column, direction });
+      }
+    },
+    []
+  );
+
   // CSV export — the shared payload holds the full result set in memory.
   const { isExporting: isExportingCsv, exportCsv } = useReportCsvExport();
   const handleExportCsv = useCallback(() => {
@@ -289,6 +302,7 @@ export function StaticReportViewer({
           isExportingCsv={isExportingCsv}
           sortConfig={sortConfig}
           onSortChange={handleSortChange}
+          onSortColumn={handleSortColumn}
           columnVisibility={columnVisibility}
           onColumnVisibilityChange={setColumnVisibility}
           grouping={grouping}

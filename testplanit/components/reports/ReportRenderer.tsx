@@ -5,7 +5,7 @@ import { ReportChart } from "@/components/dataVisualizations/ReportChart";
 import { DateFormatter } from "@/components/DateFormatter";
 import { Loading } from "@/components/Loading";
 import { MatrixReportPreset } from "@/components/matrix/MatrixReportPreset";
-import { VirtualizedDataTable } from "@/components/tables/VirtualizedDataTable";
+import { DataTable } from "@/components/tables/DataTable";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -124,6 +124,7 @@ interface ReportRendererProps {
   // Sorting
   sortConfig?: { column: string; direction: "asc" | "desc" } | null;
   onSortChange: (columnId: string) => void;
+  onSortColumn?: (columnId: string, direction: "asc" | "desc" | null) => void;
 
   // Column visibility
   columnVisibility: VisibilityState;
@@ -181,6 +182,7 @@ export function ReportRenderer({
   isExportingCsv = false,
   sortConfig,
   onSortChange,
+  onSortColumn,
   columnVisibility,
   onColumnVisibilityChange,
   grouping,
@@ -532,7 +534,8 @@ export function ReportRenderer({
             </div>
           </CardHeader>
           <CardContent className="h-[calc(100%-4rem)] p-6 pt-0">
-            <VirtualizedDataTable
+            <DataTable
+              virtualized
               columns={columns as ColumnDef<any>[]}
               data={results}
               columnVisibility={columnVisibility}
@@ -540,6 +543,7 @@ export function ReportRenderer({
               columnSizingStorageKey={`report:${getBaseReportType(reportType)}`}
               sortConfig={sortConfig || undefined}
               onSortChange={onSortChange}
+              onSortColumn={onSortColumn}
               grouping={grouping}
               onGroupingChange={onGroupingChange}
               expanded={expanded}

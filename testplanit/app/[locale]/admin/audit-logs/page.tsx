@@ -12,7 +12,7 @@ import { useRouter } from "~/lib/navigation";
 import { useDebounce } from "@/components/Debounce";
 import { ColumnSelection } from "@/components/tables/ColumnSelection";
 import { Filter } from "@/components/tables/Filter";
-import { VirtualizedDataTable } from "@/components/tables/VirtualizedDataTable";
+import { DataTable } from "@/components/tables/DataTable";
 import { Button } from "@/components/ui/button";
 import { SectionHeader } from "@/components/ui/typography";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -578,6 +578,10 @@ function AuditLogsContent({ session }: { session: Session }) {
   const [columnVisibility, setColumnVisibility] = useState<
     Record<string, boolean>
   >({});
+  // Hide-column requests from the table's header menu are routed through the
+  // Columns control (the visibility owner) so persistence and its checkboxes
+  // stay in sync.
+  const hideColumnRef = useRef<((columnId: string) => void) | null>(null);
 
   // Toggle sort direction on the clicked column; the new orderBy restarts the
   // infinite query from the first page.
@@ -589,6 +593,19 @@ function AuditLogsContent({ session }: { session: Session }) {
         ? "desc"
         : "asc";
     setSortConfig({ column, direction });
+  };
+
+  // Explicit-direction sort from the header column menu; `null` (Remove sort)
+  // restores the default order.
+  const handleSortColumn = (
+    column: string,
+    direction: "asc" | "desc" | null
+  ) => {
+    if (direction === null) {
+      setSortConfig({ column: "timestamp", direction: "desc" });
+    } else {
+      setSortConfig({ column, direction });
+    }
   };
 
   return (
@@ -739,6 +756,7 @@ function AuditLogsContent({ session }: { session: Session }) {
                 storageKey="admin-audit-logs"
                 columns={columns}
                 onVisibilityChange={setColumnVisibility}
+                hideColumnRef={hideColumnRef}
               />
 
               {rows.length > 0 && (
@@ -756,13 +774,16 @@ function AuditLogsContent({ session }: { session: Session }) {
               explicit height so the virtualizer's CSS-bounded scroll body has
               something to fill. */}
           <div className="mt-4 h-[calc(100vh-20rem)] min-h-[400px] w-full">
-            <VirtualizedDataTable
+            <DataTable
+              virtualized
               columns={columns as any}
               data={groupedData as any}
               getSubRows={(row) => row.auditChildren}
               subRowsLabel={t("relatedChanges")}
               sortConfig={sortConfig}
               onSortChange={handleSortChange}
+              onSortColumn={handleSortColumn}
+              onHideColumn={(columnId) => hideColumnRef.current?.(columnId)}
               columnVisibility={columnVisibility}
               onColumnVisibilityChange={setColumnVisibility}
               flexColumnId="entityName"

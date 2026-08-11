@@ -176,12 +176,12 @@ vi.mock("@/components/ui/button", () => ({
   ),
 }));
 
-// Render VirtualizedDataTable as a passthrough table so rows/cells appear in
+// Render DataTable as a passthrough table so rows/cells appear in
 // the DOM without the real fetch-on-scroll virtualizer (which renders 0 rows
 // in jsdom — see project memory on useVirtualizedInfiniteList).
 const dataTableLastProps: { current: any } = { current: null };
-vi.mock("@/components/tables/VirtualizedDataTable", () => ({
-  VirtualizedDataTable: (props: any) => {
+vi.mock("@/components/tables/DataTable", () => ({
+  DataTable: (props: any) => {
     dataTableLastProps.current = props;
     const { columns, data, rowSelection, onRowSelectionChange, getRowId } =
       props;

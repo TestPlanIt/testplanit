@@ -865,7 +865,7 @@
       "reorderColumn": "Trascina per riordinare la colonna",
       "sortAsc": "Ordina in ordine crescente",
       "sortDesc": "Ordina in ordine decrescente",
-      "removeSort": "Ordinamento manuale",
+      "removeSort": "Rimuovi ordinamento",
       "hideColumn": "Nascondi colonna",
       "columnOptions": "Opzioni colonna"
     },

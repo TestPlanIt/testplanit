@@ -54,6 +54,19 @@ export default function CaseFields() {
     setSortConfig({ column, direction });
   };
 
+  // Explicit-direction sort from the header column menu; `null` (Remove sort)
+  // restores the default order.
+  const handleSortColumn = (
+    column: string,
+    direction: "asc" | "desc" | null
+  ) => {
+    if (direction === null) {
+      setSortConfig(undefined);
+    } else {
+      setSortConfig({ column, direction });
+    }
+  };
+
   const handleToggle = useCallback(
     async (id: number, key: keyof ExtendedCaseFields, value: boolean) => {
       try {
@@ -168,7 +181,7 @@ export default function CaseFields() {
               onColumnVisibilityChange={setColumnVisibility}
               isLoading={isLoading}
               storageKey="admin-case-fields"
-              enableColumnMenu={false}
+              onSortColumn={handleSortColumn}
             />
           </div>
         </CardContent>

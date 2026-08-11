@@ -16,8 +16,7 @@ import {
   DrawerTitle,
 } from "@/components/ui/drawer";
 import { Circle, Dot, Download, X } from "lucide-react";
-import { useTranslations } from "next-intl";
-import { useEffect, useRef } from "react";
+import { useLocale, useTranslations } from "next-intl";
 import LoadingSpinner from "~/components/LoadingSpinner";
 import { DataTable } from "~/components/tables/DataTable";
 import { useDrillDownColumns } from "~/hooks/useDrillDownColumns";
@@ -114,7 +113,7 @@ export function DrillDownDrawer({
   const t = useTranslations();
   const tReports = useTranslations("reports.drillDown");
   const tGlobal = useTranslations();
-  const loadMoreRef = useRef<HTMLDivElement>(null);
+  const locale = useLocale();
 
   // Get columns based on metric type
   const columns = useDrillDownColumns({
@@ -127,26 +126,6 @@ export function DrillDownDrawer({
     context,
     t: tGlobal,
   });
-
-  // Infinite scroll: observe the load more trigger
-  useEffect(() => {
-    if (!loadMoreRef.current || !hasMore || isLoadingMore || isLoading) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting) {
-          onLoadMore();
-        }
-      },
-      { threshold: 0.1 }
-    );
-
-    observer.observe(loadMoreRef.current);
-
-    return () => {
-      observer.disconnect();
-    };
-  }, [hasMore, isLoadingMore, isLoading, onLoadMore]);
 
   if (!context) return null;
 
@@ -166,7 +145,13 @@ export function DrillDownDrawer({
               <DrawerDescription className="mt-1 flex flex-col gap-1">
                 <span className="flex items-center">
                   {dimensionSummary} <Dot className="h-4 w-4 shrink-0" />
-                  {tReports("recordCount", { count: total })}
+                  {/* Loaded-vs-total, matching the other incremental tables —
+                      the drawer appends pages on scroll, so a bare total
+                      wouldn't say how much is actually on screen. */}
+                  {t("admin.auditLogs.showing", {
+                    loaded: records.length.toLocaleString(locale),
+                    total: total.toLocaleString(locale),
+                  })}
                 </span>
                 {aggregates?.statusCounts &&
                   aggregates.statusCounts.length > 0 && (
@@ -227,7 +212,7 @@ export function DrillDownDrawer({
           </div>
         </DrawerHeader>
 
-        <div className="flex-1 overflow-auto p-4">
+        <div className="flex min-h-0 flex-1 flex-col p-4">
           {error && (
             <Alert variant="destructive" className="mb-4">
               <AlertDescription>
@@ -253,36 +238,28 @@ export function DrillDownDrawer({
 
           {records.length > 0 && (
             <>
-              <div className="w-full [&_table]:table-fixed [&>div]:w-full [&>div]:max-w-full">
-                <DataTable<DrillDownRecord, any>
-                  columns={columns}
+              {/* Virtualized: only the visible window hits the DOM, and the
+                  engine owns the fetch-on-scroll trigger and the loading-more
+                  skeleton — a drill-down can hold tens of thousands of rows. */}
+              <div className="min-h-0 flex-1">
+                <DataTable
+                  virtualized
+                  columns={columns as any}
                   data={records}
-                  isLoading={false}
                   columnVisibility={{}}
                   onColumnVisibilityChange={() => {}}
-                  pageSize={records.length} // Show all loaded records
+                  hasMore={hasMore}
+                  isLoading={isLoadingMore}
+                  onLoadMore={onLoadMore}
+                  testIdPrefix="drill-down-table"
+                  rowTestIdPrefix="drill-down-row"
                 />
               </div>
-
-              {/* Infinite scroll trigger */}
-              <div
-                ref={loadMoreRef}
-                className="h-20 flex items-center justify-center"
-              >
-                {isLoadingMore && (
-                  <div className="flex items-center gap-2 whitespace-nowrap">
-                    <LoadingSpinner delay={0} />
-                    <p className="text-sm text-muted-foreground">
-                      {tReports("loadingMore")}
-                    </p>
-                  </div>
-                )}
-                {!hasMore && records.length > 0 && (
-                  <p className="text-sm text-muted-foreground">
-                    {tReports("allLoaded")}
-                  </p>
-                )}
-              </div>
+              {!hasMore && (
+                <p className="shrink-0 pt-2 text-center text-sm text-muted-foreground">
+                  {tReports("allLoaded")}
+                </p>
+              )}
             </>
           )}
         </div>

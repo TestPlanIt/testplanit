@@ -2,7 +2,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import React from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { act, fireEvent, render, screen } from "~/test/test-utils";
-import { VirtualizedDataTable } from "./VirtualizedDataTable";
+import { DataTable, type VirtualizedDataTableProps } from "./DataTable";
 
 // The real hook owns TanStack Virtual + an IntersectionObserver, neither of
 // which produces layout (or fires) under jsdom. Replace it with a pass-through
@@ -72,10 +72,9 @@ const baseColumns: ColumnDef<RowShape, any>[] = [
   },
 ];
 
-function renderTable(
-  overrides: Partial<React.ComponentProps<typeof VirtualizedDataTable>> = {}
-) {
-  const props: React.ComponentProps<typeof VirtualizedDataTable> = {
+function renderTable(overrides: Partial<VirtualizedDataTableProps<any>> = {}) {
+  const props: VirtualizedDataTableProps<any> = {
+    virtualized: true,
     columns: baseColumns as ColumnDef<any, any>[],
     data: [
       { id: 1, name: "Alpha", count: 10 },
@@ -86,10 +85,10 @@ function renderTable(
     onSortChange: vi.fn(),
     ...overrides,
   };
-  return { props, ...render(<VirtualizedDataTable {...props} />) };
+  return { props, ...render(<DataTable {...props} />) };
 }
 
-describe("VirtualizedDataTable", () => {
+describe("DataTable (virtualized mode)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     hookMock.lastOnLoadMore = null;
@@ -259,6 +258,13 @@ describe("VirtualizedDataTable", () => {
     ).toBeInTheDocument();
   });
 
+  it("renders a resize handle on the flex column", () => {
+    renderTable({ flexColumnId: "name", enableColumnPinning: false });
+    expect(
+      screen.getByTestId("virtualized-table-resize-name")
+    ).toBeInTheDocument();
+  });
+
   it("does not render a resize handle on the non-resizable expander column", () => {
     renderTable({ grouping: ["name"] });
     // The expander column opts out via enableResizing:false.
@@ -289,6 +295,72 @@ describe("VirtualizedDataTable", () => {
       .getByText("Beta")
       .closest('[role="row"]') as HTMLElement;
     expect(other.className).not.toContain("outline-primary");
+  });
+
+  it("shows drag-to-reorder grips on non-pinned columns when the table persists state", () => {
+    renderTable({
+      columnSizingStorageKey: "reorder-key",
+      enableColumnPinning: false,
+    });
+    expect(screen.getAllByLabelText("reorderColumn")).toHaveLength(2);
+  });
+
+  it("keeps grips off pinned columns", () => {
+    // Default pinning freezes the first and last columns — with only two
+    // columns both are pinned, so no grips render.
+    renderTable({ columnSizingStorageKey: "reorder-key" });
+    expect(screen.queryByLabelText("reorderColumn")).not.toBeInTheDocument();
+  });
+
+  it("renders no grips for a stateless table (no storage key)", () => {
+    renderTable({ enableColumnPinning: false });
+    expect(screen.queryByLabelText("reorderColumn")).not.toBeInTheDocument();
+  });
+
+  it("applies a remembered column order from localStorage", () => {
+    window.localStorage.setItem(
+      "testplanit:columnOrder:reorder-key",
+      JSON.stringify(["count", "name"])
+    );
+    try {
+      renderTable({
+        columnSizingStorageKey: "reorder-key",
+        enableColumnPinning: false,
+      });
+      const headerCells = screen.getAllByRole("columnheader");
+      expect(headerCells[0].textContent).toContain("Count");
+      expect(headerCells[1].textContent).toContain("Name");
+    } finally {
+      window.localStorage.removeItem("testplanit:columnOrder:reorder-key");
+    }
+  });
+
+  it("renders no header column menu when no menu handler is wired", () => {
+    renderTable();
+    expect(screen.queryByLabelText("columnOptions")).not.toBeInTheDocument();
+    // The plain sort-cycle buttons remain.
+    expect(screen.getAllByLabelText("sort").length).toBeGreaterThan(0);
+  });
+
+  it("offers explicit sort directions through the header column menu", () => {
+    const onSortColumn = vi.fn();
+    renderTable({ onSortColumn, enableColumnPinning: false });
+    const triggers = screen.getAllByLabelText("columnOptions");
+    expect(triggers).toHaveLength(2);
+    // The cycling sort button is replaced by the menu trigger.
+    expect(screen.queryByLabelText("sort")).not.toBeInTheDocument();
+    fireEvent.pointerDown(triggers[0]);
+    fireEvent.click(screen.getByText("sortDesc"));
+    expect(onSortColumn).toHaveBeenCalledWith("name", "desc");
+  });
+
+  it("routes Hide column through onHideColumn", () => {
+    const onHideColumn = vi.fn();
+    renderTable({ onHideColumn, enableColumnPinning: false });
+    const triggers = screen.getAllByLabelText("columnOptions");
+    fireEvent.pointerDown(triggers[1]);
+    fireEvent.click(screen.getByText("hideColumn"));
+    expect(onHideColumn).toHaveBeenCalledWith("count");
   });
 
   it("seeds column widths from localStorage when a storage key is set", () => {

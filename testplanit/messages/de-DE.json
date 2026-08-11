@@ -865,7 +865,7 @@
       "reorderColumn": "Zum Neuordnen der Spalte ziehen",
       "sortAsc": "Aufsteigend sortieren",
       "sortDesc": "Absteigend sortieren",
-      "removeSort": "Manuelle Sortierung",
+      "removeSort": "Sortierung entfernen",
       "hideColumn": "Spalte ausblenden",
       "columnOptions": "Spaltenoptionen"
     },

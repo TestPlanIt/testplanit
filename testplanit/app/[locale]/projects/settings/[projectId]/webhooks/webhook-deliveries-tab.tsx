@@ -17,7 +17,7 @@ import { Button } from "@/components/ui/button";
 import { DateFormatter } from "@/components/DateFormatter";
 import { DateRangePicker } from "@/components/forms/DateRangePicker";
 import { ColumnSelection } from "@/components/tables/ColumnSelection";
-import { VirtualizedDataTable } from "@/components/tables/VirtualizedDataTable";
+import { DataTable } from "@/components/tables/DataTable";
 import type { ColumnDef } from "@tanstack/react-table";
 import { useSession } from "next-auth/react";
 
@@ -31,7 +31,7 @@ import {
 import { Eye, Inbox, Send } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { bulkReplayFailedDeliveries } from "~/app/actions/webhook-config";
@@ -219,6 +219,10 @@ function WebhookDeliveriesTabContent({ projectId }: WebhookDeliveriesTabProps) {
   const [columnVisibility, setColumnVisibility] = useState<
     Record<string, boolean>
   >({});
+  // Hide-column requests from the table's header menu are routed through the
+  // Columns control (the visibility owner) so persistence and its checkboxes
+  // stay in sync.
+  const hideColumnRef = useRef<((columnId: string) => void) | null>(null);
 
   const handleSortChange = (columnId: string) => {
     setSortConfig((prev) => ({
@@ -226,6 +230,19 @@ function WebhookDeliveriesTabContent({ projectId }: WebhookDeliveriesTabProps) {
       direction:
         prev.column === columnId && prev.direction === "asc" ? "desc" : "asc",
     }));
+  };
+
+  // Explicit-direction sort from the header column menu; `null` (Remove sort)
+  // restores the default order.
+  const handleSortColumn = (
+    column: string,
+    direction: "asc" | "desc" | null
+  ) => {
+    if (direction === null) {
+      setSortConfig({ column: "received", direction: "desc" });
+    } else {
+      setSortConfig({ column, direction });
+    }
   };
 
   const { data: session } = useSession();
@@ -777,11 +794,14 @@ function WebhookDeliveriesTabContent({ projectId }: WebhookDeliveriesTabProps) {
         className="h-[calc(100vh-24rem)] min-h-[400px] w-full"
         data-testid="webhook-deliveries-table"
       >
-        <VirtualizedDataTable
+        <DataTable
+          virtualized
           columns={columns as ColumnDef<any, any>[]}
           data={tableData}
           sortConfig={sortConfig}
           onSortChange={handleSortChange}
+          onSortColumn={handleSortColumn}
+          onHideColumn={(columnId) => hideColumnRef.current?.(columnId)}
           columnVisibility={columnVisibility}
           onColumnVisibilityChange={setColumnVisibility}
           isLoading={isLoadingDeliveries || isFetchingNextPage}
@@ -814,6 +834,7 @@ function WebhookDeliveriesTabContent({ projectId }: WebhookDeliveriesTabProps) {
                 columns as ColumnDef<DeliveryRow & { name: string }, unknown>[]
               }
               onVisibilityChange={setColumnVisibility}
+              hideColumnRef={hideColumnRef}
             />
           </div>
         </div>

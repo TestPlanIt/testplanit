@@ -337,11 +337,7 @@ export const useColumns = ({
           if (!requester) {
             return <span className="text-muted-foreground">-</span>;
           }
-          return (
-            <span className="inline-flex min-w-0 max-w-full items-center gap-1 rounded-md border border-muted-foreground/50 bg-secondary px-1 py-0 text-xs text-secondary-foreground transition-colors hover:bg-secondary/80 cursor-pointer [&_*]:cursor-pointer [&_a]:no-underline">
-              <UserNameCell userId={requester.id} shrinkLink />
-            </span>
-          );
+          return <UserNameCell userId={requester.id} />;
         },
       },
       {
@@ -444,11 +440,7 @@ export const useColumns = ({
         if (!decidedBy) {
           return <span className="text-muted-foreground">-</span>;
         }
-        return (
-          <span className="inline-flex min-w-0 max-w-full items-center gap-1 rounded-md border border-muted-foreground/50 bg-secondary px-1 py-0 text-xs text-secondary-foreground transition-colors hover:bg-secondary/80 cursor-pointer [&_*]:cursor-pointer [&_a]:no-underline">
-            <UserNameCell userId={decidedBy.id} shrinkLink />
-          </span>
-        );
+        return <UserNameCell userId={decidedBy.id} />;
       },
     };
 

@@ -1553,6 +1553,19 @@ export default function Cases({
   // sort column at a time).
   const sortedPageIds = latestStatusPageIds ?? fieldOptionPageIds;
 
+  // Whether an id-resolved sort governs the list right now. Downstream
+  // total-count plumbing must branch on this MODE, not on `sortedPageIds`
+  // presence: the resolved ids flicker to undefined while a page flip
+  // re-resolves, and in that gap an ids-presence branch falls back to the list
+  // query's page-sized totalCount — which collapses totalPages to 1 and lets
+  // the page clamp yank the user back to page 1.
+  const idResolvedSortActive =
+    (isLatestResultsSort || isFieldOptionSort) &&
+    !isRunMode &&
+    !searchUnresolved &&
+    !inReviewUnresolved &&
+    postFetchFilters.length === 0;
+
   // An id-resolved sort that resolved to an empty page: the ordered page-id
   // list came back empty (no matching cases, or a transient during the sort).
   // The list derives empty from this anyway, so skip the id-filtered fetch that
@@ -1645,12 +1658,7 @@ export default function Cases({
     searchCaseIds: searchResultIds ?? undefined,
     searchKey,
     enabled: Boolean(
-      !isRunMode &&
-      !!sortedPageIds &&
-      !searchUnresolved &&
-      !inReviewUnresolved &&
-      !!session?.user &&
-      isValidProjectId
+      idResolvedSortActive && !!session?.user && isValidProjectId
     ),
   });
 
@@ -1670,10 +1678,9 @@ export default function Cases({
         // prevent.
         true
       : postQueryResult.isLoading;
-  const filteredTotalCount =
-    !isRunMode && sortedPageIds
-      ? postQueryCountResult.totalCount
-      : postQueryResult.totalCount;
+  const filteredTotalCount = idResolvedSortActive
+    ? postQueryCountResult.totalCount
+    : postQueryResult.totalCount;
 
   // A failed query keeps the previous rows on screen (keepPreviousData) — the
   // toast is the only signal, because silently falling back to an unfiltered
@@ -3238,9 +3245,6 @@ export default function Cases({
                 onColumnVisibilityChange={handleColumnVisibilityChange}
                 isLoading={false} // Explicitly false as loading is handled above
                 pageSize={typeof pageSize === "number" ? pageSize : totalItems}
-                canEdit={
-                  (!isRunMode && canAddEdit) || (isRunMode && canAddEditRun)
-                }
                 rowSelection={rowSelection}
                 onRowSelectionChange={handleTableRowSelectionChange}
                 selectedItemsForDrag={selectedItemsForDrag}

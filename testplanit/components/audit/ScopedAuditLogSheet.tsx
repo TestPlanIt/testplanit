@@ -2,7 +2,7 @@
 
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
-import { VirtualizedDataTable } from "@/components/tables/VirtualizedDataTable";
+import { DataTable } from "@/components/tables/DataTable";
 import {
   ActionButtonContent,
   collapsibleActionClass,
@@ -271,6 +271,19 @@ function ScopedAuditLogContent({
     setSortConfig({ column, direction });
   };
 
+  // Explicit-direction sort from the header column menu; `null` (Remove sort)
+  // restores the default order.
+  const handleSortColumn = (
+    column: string,
+    direction: "asc" | "desc" | null
+  ) => {
+    if (direction === null) {
+      setSortConfig({ column: "timestamp", direction: "desc" });
+    } else {
+      setSortConfig({ column, direction });
+    }
+  };
+
   const dateFormat = session?.user?.preferences?.dateFormat;
   const timezone = session?.user?.preferences?.timezone;
   const userPreferences = useMemo(
@@ -327,13 +340,15 @@ function ScopedAuditLogContent({
 
       {/* Data Table — virtualized, infinite scroll. */}
       <div className="h-[calc(100vh-16rem)] min-h-[320px] w-full">
-        <VirtualizedDataTable
+        <DataTable
+          virtualized
           columns={columns as any}
           data={groupedData as any}
           getSubRows={(row) => row.auditChildren}
           subRowsLabel={t("relatedChanges")}
           sortConfig={sortConfig}
           onSortChange={handleSortChange}
+          onSortColumn={handleSortColumn}
           columnVisibility={columnVisibility}
           onColumnVisibilityChange={setColumnVisibility}
           flexColumnId="userEmail"

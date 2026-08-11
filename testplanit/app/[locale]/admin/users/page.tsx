@@ -5,13 +5,13 @@ import { schema } from "~/zenstack/schema";
 import { useQueryClient } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "~/lib/navigation";
 
 import { useAccessibleProjectsForUsers } from "~/hooks/useAccessibleProjectsForUsers";
 import { useDebounce } from "@/components/Debounce";
 import { ColumnSelection } from "@/components/tables/ColumnSelection";
-import { VirtualizedDataTable } from "@/components/tables/VirtualizedDataTable";
+import { DataTable } from "@/components/tables/DataTable";
 import type { UserFindManyArgs } from "~/zenstack/input";
 import { ExtendedUser, useColumns } from "./columns";
 
@@ -141,16 +141,29 @@ function UserList() {
     }
   }, [revokingUser, tAdmin]);
 
-  // Sort by `scimGivenName` always puts nulls last so the SCIM-managed users
-  // (the non-null rows) appear at the top regardless of asc/desc direction —
-  // matches the "SCIM" column UX of "click to find SCIM users."
+  // The SCIM column displays Yes/No, so it sorts by SCIM-ness like a boolean:
+  // ascending puts non-SCIM (No) first, descending puts SCIM-managed (Yes)
+  // first. The nulls placement is what encodes that — the given name only
+  // orders rows within the SCIM block.
   // A trailing `id` tiebreaker keeps offset pagination stable when the primary
   // sort key isn't unique (otherwise pages can duplicate or skip rows).
   const orderBy: NonNullable<UserFindManyArgs["orderBy"]> = useMemo(
     () =>
       sortConfig?.column === "scimGivenName"
         ? [
-            { scimGivenName: { sort: sortConfig.direction, nulls: "last" } },
+            sortConfig.direction === "asc"
+              ? {
+                  scimGivenName: {
+                    sort: "asc" as const,
+                    nulls: "first" as const,
+                  },
+                }
+              : {
+                  scimGivenName: {
+                    sort: "desc" as const,
+                    nulls: "last" as const,
+                  },
+                },
             { id: "asc" },
           ]
         : sortConfig
@@ -263,6 +276,10 @@ function UserList() {
   const [columnVisibility, setColumnVisibility] = useState<
     Record<string, boolean>
   >({});
+  // Hide-column requests from the table's header menu are routed through the
+  // Columns control (the visibility owner) so persistence and its checkboxes
+  // stay in sync.
+  const hideColumnRef = useRef<((columnId: string) => void) | null>(null);
 
   if (status === "loading") return null;
 
@@ -278,6 +295,19 @@ function UserList() {
         ? "desc"
         : "asc";
     setSortConfig({ column, direction });
+  };
+
+  // Explicit-direction sort from the header column menu; `null` (Remove sort)
+  // returns to the default name order.
+  const handleSortColumn = (
+    column: string,
+    direction: "asc" | "desc" | null
+  ) => {
+    if (direction === null) {
+      setSortConfig({ column: "name", direction: "asc" });
+    } else {
+      setSortConfig({ column, direction });
+    }
   };
 
   return (
@@ -323,6 +353,7 @@ function UserList() {
                       storageKey="admin-users"
                       columns={columns}
                       onVisibilityChange={setColumnVisibility}
+                      hideColumnRef={hideColumnRef}
                     />
                   </div>
                   <div>
@@ -355,11 +386,14 @@ function UserList() {
           </div>
 
           <div className="mt-4 w-full">
-            <VirtualizedDataTable
+            <DataTable
+              virtualized
               fillViewport
               columns={columns as any}
               data={userRows}
               onSortChange={handleSortChange}
+              onSortColumn={handleSortColumn}
+              onHideColumn={(columnId) => hideColumnRef.current?.(columnId)}
               sortConfig={sortConfig}
               columnVisibility={columnVisibility}
               onColumnVisibilityChange={setColumnVisibility}

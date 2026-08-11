@@ -865,7 +865,7 @@
       "reorderColumn": "Arrastrar para reordenar columna",
       "sortAsc": "Ordenar ascendente",
       "sortDesc": "Ordenar descendente",
-      "removeSort": "Orden manual",
+      "removeSort": "Quitar ordenación",
       "hideColumn": "Ocultar columna",
       "columnOptions": "Opciones de columna"
     },

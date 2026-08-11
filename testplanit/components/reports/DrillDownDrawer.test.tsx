@@ -17,6 +17,7 @@ const { mockColumns, mockExportToCSV } = vi.hoisted(() => ({
 // Mock next-intl
 vi.mock("next-intl", () => ({
   useTranslations: () => (key: string) => key.split(".").pop() ?? key,
+  useLocale: () => "en-US",
 }));
 
 // Mock useDrillDownColumns
@@ -33,16 +34,20 @@ vi.mock("~/hooks/useDrillDownExport", () => ({
 }));
 
 // Mock DataTable
+const dataTableLastProps = vi.hoisted(() => ({ current: {} as any }));
 vi.mock("~/components/tables/DataTable", () => ({
-  DataTable: ({ data }: { data: any[] }) => (
-    <div data-testid="data-table">
-      {data.map((row, i) => (
-        <div key={i} data-testid="data-table-row">
-          {row.name}
-        </div>
-      ))}
-    </div>
-  ),
+  DataTable: (props: any) => {
+    dataTableLastProps.current = props;
+    return (
+      <div data-testid="data-table">
+        {props.data.map((row: any, i: number) => (
+          <div key={i} data-testid="data-table-row">
+            {row.name}
+          </div>
+        ))}
+      </div>
+    );
+  },
 }));
 
 // Mock LoadingSpinner
@@ -182,7 +187,7 @@ describe("DrillDownDrawer", () => {
     expect(screen.getByText("allLoaded")).toBeInTheDocument();
   });
 
-  it("shows loading more spinner when isLoadingMore is true", () => {
+  it("hands the load-more state to the virtualized table", () => {
     render(
       <DrillDownDrawer
         {...defaultProps}
@@ -192,7 +197,13 @@ describe("DrillDownDrawer", () => {
         total={2}
       />
     );
-    expect(screen.getByTestId("loading-spinner")).toBeInTheDocument();
+    // The engine owns the fetch-on-scroll trigger and the loading-more
+    // skeleton; the drawer's job is to wire the state through.
+    const props = dataTableLastProps.current;
+    expect(props.virtualized).toBe(true);
+    expect(props.hasMore).toBe(true);
+    expect(props.isLoading).toBe(true);
+    expect(typeof props.onLoadMore).toBe("function");
   });
 
   it("calls onClose when close button is clicked", () => {

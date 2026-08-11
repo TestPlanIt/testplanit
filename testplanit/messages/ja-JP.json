@@ -865,7 +865,7 @@
       "reorderColumn": "ドラッグして列を並べ替え",
       "sortAsc": "昇順で並べ替え",
       "sortDesc": "降順で並べ替え",
-      "removeSort": "手動並べ替え",
+      "removeSort": "並べ替えを解除",
       "hideColumn": "列を非表示",
       "columnOptions": "列のオプション"
     },

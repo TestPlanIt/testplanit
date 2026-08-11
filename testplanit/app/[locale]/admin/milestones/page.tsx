@@ -4,7 +4,7 @@ import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "~/lib/navigation";
 
 import { useDebounce } from "@/components/Debounce";
@@ -13,7 +13,7 @@ import {
   CustomColumnDef,
 } from "@/components/tables/ColumnSelection";
 import { Filter } from "@/components/tables/Filter";
-import { VirtualizedDataTable } from "@/components/tables/VirtualizedDataTable";
+import { DataTable } from "@/components/tables/DataTable";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -174,6 +174,10 @@ function MilestoneTypes() {
     });
     return initialVisibility;
   });
+  // Hide-column requests from the table's header menu are routed through the
+  // Columns control (the visibility owner) so persistence and its checkboxes
+  // stay in sync.
+  const hideColumnRef = useRef<((columnId: string) => void) | null>(null);
 
   if (status === "loading") return null;
 
@@ -185,6 +189,19 @@ function MilestoneTypes() {
         ? "desc"
         : "asc";
     setSortConfig({ column, direction });
+  };
+
+  // Explicit-direction sort from the header column menu; `null` (Remove sort)
+  // restores the default order.
+  const handleSortColumn = (
+    column: string,
+    direction: "asc" | "desc" | null
+  ) => {
+    if (direction === null) {
+      setSortConfig({ column: "name", direction: "asc" });
+    } else {
+      setSortConfig({ column, direction });
+    }
   };
 
   return (
@@ -247,14 +264,18 @@ function MilestoneTypes() {
               storageKey="admin-milestones"
               columns={columns}
               onVisibilityChange={setColumnVisibility}
+              hideColumnRef={hideColumnRef}
             />
           </div>
           <div className="mt-4 w-full">
-            <VirtualizedDataTable
+            <DataTable
+              virtualized
               fillViewport
               columns={columns as any}
               data={milestoneTypes}
               onSortChange={handleSortChange}
+              onSortColumn={handleSortColumn}
+              onHideColumn={(columnId) => hideColumnRef.current?.(columnId)}
               sortConfig={sortConfig}
               columnVisibility={columnVisibility}
               onColumnVisibilityChange={setColumnVisibility}

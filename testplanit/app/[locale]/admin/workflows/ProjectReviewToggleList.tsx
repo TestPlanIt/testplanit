@@ -4,7 +4,7 @@ import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { useDebounce } from "@/components/Debounce";
 import { ProjectIcon } from "@/components/ProjectIcon";
-import { VirtualizedDataTable } from "@/components/tables/VirtualizedDataTable";
+import { DataTable } from "@/components/tables/DataTable";
 import { Filter } from "@/components/tables/Filter";
 import { ProjectNameCell } from "@/components/tables/ProjectNameCell";
 import { Switch } from "@/components/ui/switch";
@@ -48,6 +48,19 @@ export function ProjectReviewToggleList() {
       setSortConfig({ column, direction });
     },
     [sortConfig]
+  );
+
+  // Explicit-direction sort from the header column menu; `null` (Remove sort)
+  // restores the default order.
+  const handleSortColumn = useCallback(
+    (column: string, direction: "asc" | "desc" | null) => {
+      if (direction === null) {
+        setSortConfig({ column: "name", direction: "asc" });
+      } else {
+        setSortConfig({ column, direction });
+      }
+    },
+    []
   );
 
   const where = useMemo(
@@ -207,10 +220,12 @@ export function ProjectReviewToggleList() {
         </p>
       )}
       <div className="mt-4 h-[500px] min-h-[300px] w-full">
-        <VirtualizedDataTable
+        <DataTable
+          virtualized
           columns={columns as ColumnDef<any, any>[]}
           data={projects}
           onSortChange={handleSortChange}
+          onSortColumn={handleSortColumn}
           sortConfig={sortConfig}
           columnVisibility={columnVisibility}
           onColumnVisibilityChange={setColumnVisibility}

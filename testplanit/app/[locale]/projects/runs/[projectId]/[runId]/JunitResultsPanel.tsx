@@ -5,7 +5,7 @@ import { Filter } from "@/components/tables/Filter";
 import { PaginationComponent } from "@/components/tables/Pagination";
 import { PaginationInfo } from "@/components/tables/PaginationControls";
 import { useSession } from "next-auth/react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePageSizeOptions } from "~/hooks/usePageSizeOptions";
 import { usePagination } from "~/lib/contexts/PaginationContext";
 import { getJunitColumns } from "./junitColumns";
@@ -19,6 +19,7 @@ interface JunitResultsPanelProps {
   junitSortConfig:
     { column: string; direction: "asc" | "desc" } | null | undefined;
   handleJunitSortChange: (column: string) => void;
+  onSortColumn?: (column: string, direction: "asc" | "desc" | null) => void;
   isJUnitLoading: boolean;
   selectedTestCaseId: number | null;
 }
@@ -39,6 +40,7 @@ export default function JunitResultsPanel({
   sortedJunitTestCases,
   junitSortConfig,
   handleJunitSortChange,
+  onSortColumn,
   isJUnitLoading,
   selectedTestCaseId,
 }: JunitResultsPanelProps) {
@@ -47,6 +49,7 @@ export default function JunitResultsPanel({
   const [junitColumnVisibility, setJunitColumnVisibility] = useState<
     Record<string, boolean>
   >({});
+  const hideColumnRef = useRef<((columnId: string) => void) | null>(null);
   const {
     currentPage: junitPage,
     setCurrentPage: setJunitPage,
@@ -150,6 +153,7 @@ export default function JunitResultsPanel({
               storageKey={`junit-results:${projectId}:${runId}`}
               columns={junitColumns as any}
               onVisibilityChange={setJunitColumnVisibility}
+              hideColumnRef={hideColumnRef}
             />
           </div>
         </div>
@@ -184,8 +188,9 @@ export default function JunitResultsPanel({
           pageSize={effectivePageSize}
           sortConfig={junitSortConfig ?? undefined}
           onSortChange={handleJunitSortChange}
+          onSortColumn={onSortColumn}
+          onHideColumn={(columnId) => hideColumnRef.current?.(columnId)}
           storageKey="run-junit-results"
-          enableColumnMenu={false}
         />
         {!isJUnitLoading && (!jUnitSuites || jUnitSuites.length === 0) && (
           <div className="text-muted-foreground">

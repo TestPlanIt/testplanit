@@ -865,7 +865,7 @@
       "reorderColumn": "اسحب لإعادة ترتيب العمود",
       "sortAsc": "ترتيب تصاعدي",
       "sortDesc": "ترتيب تنازلي",
-      "removeSort": "ترتيب يدوي",
+      "removeSort": "إزالة الترتيب",
       "hideColumn": "إخفاء العمود",
       "columnOptions": "خيارات العمود"
     },

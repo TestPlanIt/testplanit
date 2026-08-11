@@ -865,7 +865,7 @@
       "reorderColumn": "드래그하여 열 순서 변경",
       "sortAsc": "오름차순 정렬",
       "sortDesc": "내림차순 정렬",
-      "removeSort": "수동 정렬",
+      "removeSort": "정렬 제거",
       "hideColumn": "열 숨기기",
       "columnOptions": "열 옵션"
     },

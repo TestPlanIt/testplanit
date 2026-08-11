@@ -4,13 +4,13 @@ import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useRouter } from "~/lib/navigation";
 
 import { useAccessibleProjectsForUsers } from "~/hooks/useAccessibleProjectsForUsers";
 import { useDebounce } from "@/components/Debounce";
 import { ColumnSelection } from "@/components/tables/ColumnSelection";
-import { VirtualizedDataTable } from "@/components/tables/VirtualizedDataTable";
+import { DataTable } from "@/components/tables/DataTable";
 import { ExtendedUser, useUserColumns } from "./columns";
 
 import { Filter } from "@/components/tables/Filter";
@@ -127,6 +127,8 @@ function Users() {
 
   const columns = useUserColumns(tCommon);
 
+  const hideColumnRef = useRef<((columnId: string) => void) | null>(null);
+
   if (status === "loading") return null;
 
   const handleSortChange = (column: string) => {
@@ -137,6 +139,19 @@ function Users() {
         ? "desc"
         : "asc";
     setSortConfig({ column, direction });
+  };
+
+  // Explicit-direction sort from the header column menu; `null` (Remove sort)
+  // restores the default order.
+  const handleSortColumn = (
+    column: string,
+    direction: "asc" | "desc" | null
+  ) => {
+    if (direction === null) {
+      setSortConfig(undefined);
+    } else {
+      setSortConfig({ column, direction });
+    }
   };
 
   if (session && session.user.access !== "NONE") {
@@ -164,6 +179,7 @@ function Users() {
                     storageKey="users-directory"
                     columns={columns}
                     onVisibilityChange={setColumnVisibility}
+                    hideColumnRef={hideColumnRef}
                   />
                 </div>
               </div>
@@ -178,10 +194,13 @@ function Users() {
               )}
             </div>
             <div id="users-list" className="mt-4 w-full">
-              <VirtualizedDataTable
+              <DataTable
+                virtualized
                 columns={columns as any}
                 data={users as any}
                 onSortChange={handleSortChange}
+                onSortColumn={handleSortColumn}
+                onHideColumn={(columnId) => hideColumnRef.current?.(columnId)}
                 sortConfig={sortConfig}
                 columnVisibility={columnVisibility}
                 onColumnVisibilityChange={setColumnVisibility}
