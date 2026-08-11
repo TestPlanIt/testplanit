@@ -1865,6 +1865,12 @@ model RepositoryCases {
     deletedAt               DateTime?                    @db.Timestamptz(6)
     currentVersion          Int                          @default(1)
     hasParameters           Boolean                      @default(false)
+    // Number of LIVE (isDeleted = false) rows in `steps`, maintained by the
+    // tpl_case_step_count_steps trigger (scripts/apply-triggers.ts). Exists purely
+    // so the repository/run list can sort by step count: `orderBy` on a relation
+    // `_count` cannot take a `where`, so it counts retired steps too and disagrees
+    // with the number the column displays. Read it, never write it.
+    liveStepCount           Int                          @default(0)
     repositoryCaseVersions  RepositoryCaseVersions[]
     caseFieldValues         CaseFieldValues[]
     resultFieldValues       ResultFieldValues[]
@@ -1895,6 +1901,7 @@ model RepositoryCases {
     @@index([automated])
     @@index([createdAt])
     @@index([hasParameters])
+    @@index([liveStepCount])
     @@deny('all', auth() == null)
     @@deny('all', auth().access == 'NONE')
 

@@ -1237,7 +1237,10 @@ export default function Cases({
       } else if (column === "attachments") {
         return { repositoryCase: { attachments: { _count: direction } } };
       } else if (column === "steps") {
-        return { repositoryCase: { steps: { _count: direction } } };
+        // Not `steps: { _count }`: a relation count orderBy takes no `where`, so it
+        // counts retired (soft-deleted) steps the column does not display. The
+        // trigger-maintained scalar counts live steps only.
+        return { repositoryCase: { liveStepCount: direction } };
       } else if (column === "tags") {
         return { repositoryCase: { caseTags: { _count: direction } } };
       } else if (column === "issues") {
@@ -1296,7 +1299,9 @@ export default function Cases({
         return { attachments: { _count: direction } };
       }
       if (column === "steps") {
-        return { steps: { _count: direction } };
+        // See the run-mode builder above: a relation count orderBy cannot exclude
+        // retired steps, so sort on the trigger-maintained live count instead.
+        return { liveStepCount: direction };
       }
       if (column === "tags") {
         return { caseTags: { _count: direction } };

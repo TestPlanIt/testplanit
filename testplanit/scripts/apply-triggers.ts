@@ -93,6 +93,9 @@ function singleDefaultTriggerNameFor(table: string): string {
   return "tpl_single_default_" + table.toLowerCase().replace(/[^a-z0-9]/g, "_");
 }
 
+/** The single live-step-count trigger. Its own prefix keeps it out of the tpl_audit_% / tpl_single_default_% / tpl_stamp_deleted_at_% drift checks. */
+const CASE_STEP_COUNT_TRIGGER = "tpl_case_step_count_steps";
+
 /** tpl_stamp_deleted_at_<lowercased table>. Distinct prefix keeps these out of the tpl_audit_% / tpl_single_default_% drift checks. */
 function stampDeletedAtTriggerNameFor(table: string): string {
   return (
@@ -135,6 +138,56 @@ BEGIN
       TG_TABLE_NAME, scope_col
     ) USING NEW."id", scope_val;
   END IF;
+  RETURN NULL;
+END;
+$$ LANGUAGE plpgsql;
+`;
+
+/**
+ * Live step-count maintenance (a business rule, NOT audit). Keeps
+ * `RepositoryCases."liveStepCount"` equal to the number of that case's `Steps` rows
+ * with `isDeleted = false`.
+ *
+ * It exists because the repository/run list can sort by the Steps column, and
+ * `orderBy: { steps: { _count } }` cannot take a `where` — ZenStack's
+ * applyRelationOrderBy builds a correlated `count(1)` with only the join predicate,
+ * so retired steps are counted and the sort disagrees with the number the column
+ * shows. A denormalized scalar is the only form the ORM can sort by in BOTH the
+ * repository and run lists (the ordered-page-ids pattern used for latestResults is
+ * disabled in run mode).
+ *
+ * In the DB rather than app code because steps are written from many paths —
+ * the step editor, bulk edit, CSV/Excel import, copy/move, the Testmo importer,
+ * the shared-step conversion service, and one-off SQL scripts. A trigger cannot
+ * drift; a counter maintained by hand in eight call sites will.
+ *
+ * AFTER INSERT/UPDATE/DELETE, and it recomputes rather than applying a delta:
+ * recomputing is idempotent, so a re-run, a bulk `updateMany`, or a row moving
+ * between cases can never accumulate error. Both the old and new `testCaseId` are
+ * refreshed so a step reparented by an UPDATE settles both sides.
+ */
+const CASE_STEP_COUNT_FN_SQL = `
+CREATE OR REPLACE FUNCTION tpl_refresh_case_step_count() RETURNS TRIGGER AS $$
+DECLARE
+  affected int[];
+BEGIN
+  affected := ARRAY(
+    SELECT DISTINCT x FROM unnest(ARRAY[
+      CASE WHEN TG_OP <> 'INSERT' THEN OLD."testCaseId" END,
+      CASE WHEN TG_OP <> 'DELETE' THEN NEW."testCaseId" END
+    ]) AS x WHERE x IS NOT NULL
+  );
+
+  UPDATE "RepositoryCases" rc
+     SET "liveStepCount" = COALESCE(s.cnt, 0)
+    FROM unnest(affected) AS a(case_id)
+    LEFT JOIN LATERAL (
+      SELECT count(*) AS cnt FROM "Steps" st
+       WHERE st."testCaseId" = a.case_id AND st."isDeleted" = false
+    ) s ON true
+   WHERE rc.id = a.case_id
+     AND rc."liveStepCount" IS DISTINCT FROM COALESCE(s.cnt, 0);
+
   RETURN NULL;
 END;
 $$ LANGUAGE plpgsql;
@@ -508,6 +561,24 @@ export async function applyAuditTriggers(
       }
     }
 
+    // 2e. Live step-count maintenance (business rule). One trigger on "Steps" keeps
+    //     RepositoryCases."liveStepCount" in step with the live rows so the Steps
+    //     column can be sorted on (a relation _count orderBy cannot exclude retired
+    //     steps). Its own prefix keeps it out of the three drift checks above.
+    await client.query(CASE_STEP_COUNT_FN_SQL);
+    await client.query(
+      `DROP TRIGGER IF EXISTS ${CASE_STEP_COUNT_TRIGGER} ON "Steps";`
+    );
+    await client.query(
+      `CREATE TRIGGER ${CASE_STEP_COUNT_TRIGGER}
+         AFTER INSERT OR UPDATE OR DELETE ON "Steps"
+         FOR EACH ROW EXECUTE FUNCTION tpl_refresh_case_step_count();`
+    );
+    // No reconciliation pass here: the column is populated once by the migration
+    // that adds it, and this trigger keeps it in step from then on. If a `db push`
+    // ever drops the trigger, steps written before the next apply leave stale
+    // counts — recompute them with the UPDATE in that migration.
+
     // 3. Append-only ENFORCEMENT triggers on DataChangeLog (the real SAF-03 guarantee).
     await client.query(APPEND_ONLY_ENFORCEMENT_SQL);
 
@@ -611,6 +682,7 @@ export async function applyAuditTriggers(
           : " ") +
         `+ tpl_enforce_single_default() + ${SINGLE_DEFAULT_REGISTRY.length} tpl_single_default_* triggers ` +
         `+ tpl_stamp_deleted_at() + ${SOFT_DELETE_REGISTRY.length} tpl_stamp_deleted_at_* triggers ` +
+        `+ tpl_refresh_case_step_count() + ${CASE_STEP_COUNT_TRIGGER} ` +
         `+ DataChangeLog append-only enforcement (tpl_dcl_no_delete/tpl_dcl_no_update) + GRANT/REVOKE defense-in-depth ` +
         `+ AuditLog CDC idempotency index (audit_log_cdc_idempotency) ` +
         `(idempotent, via ${usingDirect ? "DIRECT_DATABASE_URL" : "DATABASE_URL"}).`
