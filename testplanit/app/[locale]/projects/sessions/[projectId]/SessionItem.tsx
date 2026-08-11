@@ -206,7 +206,10 @@ const SessionItem = <T extends SessionItemData>({
           content: (
             <Tooltip>
               <TooltipTrigger asChild>
-                <span className="shrink-0">
+                <span
+                  className="shrink-0"
+                  data-testid={`session-multi-config-${testSession.id}`}
+                >
                   <Combine className="w-4 h-4 text-muted-foreground" />
                 </span>
               </TooltipTrigger>

@@ -94,6 +94,10 @@ test.describe("Repository cross-folder selection clears on folder switch", () =>
     api.untrackProject(projectId);
     folderACaseIds.forEach((id) => api.untrackCase(id));
     folderBCaseIds.forEach((id) => api.untrackCase(id));
+    // The folders must outlive this test too, or teardown soft-deletes them
+    // out from under the scenario test below.
+    api.untrackFolder(folderAId);
+    api.untrackFolder(folderBId);
   });
 
   test("Select All in Folder A does not leak into Folder B", async ({

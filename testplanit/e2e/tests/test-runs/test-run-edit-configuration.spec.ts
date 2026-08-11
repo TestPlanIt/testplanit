@@ -121,9 +121,11 @@ test.describe("Test Run Edit Configuration", () => {
         page.locator(`[role="option"]:has-text("${configName}")`)
       ).toBeVisible({ timeout: 10000 });
 
-      // The list infinite-scrolls now: a count footer replaces the old pager
+      // The list infinite-scrolls now: a count footer replaces the old pager.
+      // ConfigurationSelect is a single-select AsyncCombobox, so the footer
+      // carries the single-select test id — not the MultiAsyncCombobox one.
       await expect(
-        page.getByTestId("multi-async-combobox-count-footer")
+        page.getByTestId("async-combobox-count-footer")
       ).toBeVisible();
     });
   });

@@ -107,7 +107,7 @@ test.describe("Sorting", () => {
       current === "Sorted ascending"
         ? "Sort descending"
         : current === "Sorted descending"
-          ? "Manual sort"
+          ? "Remove sort"
           : "Sort ascending";
     const button = page
       .locator("table")
@@ -1261,7 +1261,7 @@ test.describe("Sorting with ViewSelector Filters", () => {
       current === "Sorted ascending"
         ? "Sort descending"
         : current === "Sorted descending"
-          ? "Manual sort"
+          ? "Remove sort"
           : "Sort ascending";
     const button = page
       .locator("table")
@@ -1830,7 +1830,7 @@ test.describe("Run Mode Sorting", () => {
       current === "Sorted ascending"
         ? "Sort descending"
         : current === "Sorted descending"
-          ? "Manual sort"
+          ? "Remove sort"
           : "Sort ascending";
     const button = page
       .locator("table")

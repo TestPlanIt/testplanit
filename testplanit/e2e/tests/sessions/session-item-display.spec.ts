@@ -105,16 +105,18 @@ test.describe("Session Item Display", () => {
       await page.waitForLoadState("load");
     });
 
-    await test.step("Verify the multi-config combine indicator appears in the name heading", async () => {
+    await test.step("Verify the multi-config combine indicator appears beside the name", async () => {
       // Both session items should be visible
       const sessionItem1 = page.locator(`#session-${session1Id}`);
       await expect(sessionItem1).toBeVisible({ timeout: 15000 });
 
-      // The multi-config indicator is a Combine icon rendered inside the name
-      // heading; it only appears for sessions in a configuration group.
-      const nameArea = sessionItem1.locator("h3").first();
-      await expect(nameArea).toBeVisible({ timeout: 5000 });
-      await expect(nameArea.locator("svg.lucide-combine")).toHaveCount(1);
+      // The multi-config indicator is an ItemRow *adornment*, which renders
+      // outside the name <h3> by design, so target it by test id. A session
+      // with a configuration also renders a Combine glyph in its identity
+      // chip — the test id is what tells the two apart.
+      await expect(
+        sessionItem1.getByTestId(`session-multi-config-${session1Id}`)
+      ).toBeVisible({ timeout: 5000 });
     });
 
     // Cleanup
@@ -140,17 +142,21 @@ test.describe("Session Item Display", () => {
       await page.waitForLoadState("load");
     });
 
-    await test.step("Verify the combine indicator is absent from the name heading", async () => {
+    await test.step("Verify the multi-config indicator is absent", async () => {
       const sessionItem = page.locator(`#session-${sessionId}`);
       await expect(sessionItem).toBeVisible({ timeout: 15000 });
 
-      // A single-config session does not belong to a configuration group, so the
-      // multi-config Combine indicator must not appear in the name heading.
-      // (The heading may still contain a compass icon, a link icon, and a
-      // "recently created" flame, so assert on the indicator specifically rather
-      // than a raw SVG count.)
-      const nameArea = sessionItem.locator("h3").first();
-      await expect(nameArea.locator("svg.lucide-combine")).toHaveCount(0);
+      // A single-config session does not belong to a configuration group, so
+      // the multi-config adornment must not render. Scoping to the adornment's
+      // test id rather than the <h3> subtree keeps this meaningful: the h3
+      // never contains the glyph either way, so the old assertion passed even
+      // when the indicator was broken.
+      await expect(
+        sessionItem.getByTestId(`session-multi-config-${sessionId}`)
+      ).toHaveCount(0);
+      // No liveness anchor is needed here: the positive test above asserts the
+      // same test id IS visible for a grouped session, so a dead selector
+      // would fail there rather than passing silently in both places.
     });
 
     // Cleanup

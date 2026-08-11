@@ -33,8 +33,8 @@ async function openFolderWithCase(
  *   - same-project copy creates a new case in the target folder; verifies
  *     the (Current) suffix is visible on the picker trigger and that copy
  *     is the default operation
- *   - same-project move soft-deletes the source and creates a new case in
- *     the target folder
+ *   - same-project move relocates the source row into the target folder,
+ *     keeping its id and leaving no copy behind
  *   - multi-select copy hits the plural ICU branch
  *
  * Folder-mode descendant disable (CONTEXT D-08..D-10) and the same-folder
@@ -170,6 +170,12 @@ test.describe("Copy/Move dialog same-project", () => {
       api.untrackCase(sourceCaseAId);
       api.untrackCase(sourceCaseBId);
       api.untrackCase(sourceCaseCId);
+      // The folders must outlive this test too: without untracking, the setup
+      // test's fixture teardown soft-deletes them, and the destination folder
+      // then never appears in the dialog's folder combobox for the later
+      // tests. afterAll still cleans them up.
+      api.untrackFolder(siblingFolderId);
+      api.untrackFolder(nestedFolderId);
     });
   });
 
@@ -327,27 +333,27 @@ test.describe("Copy/Move dialog same-project", () => {
       await page.getByTestId("copy-move-close-button").click();
     });
 
-    await test.step("Verify source soft-deleted and one new case in nested folder", async () => {
-      // Verify move semantics: the original source case is now soft-deleted,
-      // and a non-deleted case lives in the nested folder. The worker
-      // implements move as "create renamed copy in target folder, then
-      // soft-delete original" (workers/copyMoveWorker.ts:541-559 + 755-759),
-      // so move + rename produces a new case row rather than mutating the
-      // source's folderId in place.
+    await test.step("Verify the source row relocated into the nested folder", async () => {
+      // Verify move semantics: a same-project move is a PURE RELOCATION.
+      // relocateWithinProject (workers/copyMoveWorker.ts) updates the existing
+      // row's folderId/repositoryId/order inside one transaction — nothing is
+      // created, renamed or soft-deleted — so the source keeps its id and
+      // stays live, and it is the very row that now sits in the nested folder.
       const sourceRes = await request.get(
         `${baseURL}/api/model/repositoryCases/findFirst`,
         {
           params: {
             q: JSON.stringify({
               where: { id: sourceCaseBId },
-              select: { id: true, isDeleted: true },
+              select: { id: true, isDeleted: true, folderId: true },
             }),
           },
         }
       );
       expect(sourceRes.ok()).toBeTruthy();
       const sourceBody = await sourceRes.json();
-      expect(sourceBody.data.isDeleted).toBe(true);
+      expect(sourceBody.data.isDeleted).toBe(false);
+      expect(sourceBody.data.folderId).toBe(nestedFolderId);
 
       const targetRes = await request.get(
         `${baseURL}/api/model/repositoryCases/findMany`,
@@ -367,10 +373,10 @@ test.describe("Copy/Move dialog same-project", () => {
       expect(targetRes.ok()).toBeTruthy();
       const targetBody = await targetRes.json();
       const movedCases = targetBody.data as Array<{ id: number; name: string }>;
+      // Exactly one case, and it is the SAME row — a relocation leaves no copy
+      // behind, so a second row here would mean the copy path ran by mistake.
       expect(movedCases.length).toBe(1);
-      for (const c of movedCases) {
-        if (!trackedNewCaseIds.includes(c.id)) trackedNewCaseIds.push(c.id);
-      }
+      expect(movedCases[0].id).toBe(sourceCaseBId);
     });
   });
 

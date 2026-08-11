@@ -231,6 +231,9 @@ test.describe("Drag-drop modifier-aware UX", () => {
       api.untrackProject(projectId);
       api.untrackCase(sourceCaseId);
       api.untrackCase(secondCaseId);
+      // The drop target must outlive this test too, or teardown soft-deletes
+      // it out from under the drag tests below.
+      api.untrackFolder(targetFolderId);
     });
   });
 

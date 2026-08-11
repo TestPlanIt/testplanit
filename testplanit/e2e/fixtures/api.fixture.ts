@@ -79,6 +79,11 @@ export class ApiHelper {
     if (idx >= 0) this.createdCaseIds.splice(idx, 1);
   }
 
+  untrackFolder(folderId: number): void {
+    const idx = this.createdFolderIds.indexOf(folderId);
+    if (idx >= 0) this.createdFolderIds.splice(idx, 1);
+  }
+
   untrackTag(tagId: number): void {
     const idx = this.createdTagIds.indexOf(tagId);
     if (idx >= 0) this.createdTagIds.splice(idx, 1);
