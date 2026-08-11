@@ -114,25 +114,13 @@ Projects with many milestones produce a long page. Every group can be folded awa
 - Collapsing a parent milestone also hides the child milestone groups nested inside it, folding away an entire branch in one click.
 - The run count in each header includes runs in child milestones, so a collapsed group still tells you how much it is hiding.
 
-Group headers stay visible when collapsed, so you can still drag a run onto a folded milestone.
-
 :::info Collapse state is remembered per project
 Which groups you collapsed is stored in your browser for each project and restored on your next visit. Like the [filter chips](#filtering), this is personal to you and your current browser. Groups that appear later — a new milestone, or one whose first run you just created — start expanded.
 :::
 
-### Drag and Drop to Milestones
+### Changing a run's milestone
 
-Active test runs can be reassigned to different milestones using drag and drop:
-
-1. **Hover** over a test run to reveal the grip handle (⋮⋮) on the left side
-2. **Drag** the test run by the grip handle
-3. **Drop** it onto a different milestone group or the "Unscheduled" section
-
-The milestone assignment is updated immediately. Visual feedback shows valid drop targets as you drag.
-
-:::info Permissions Required
-Drag and drop is only available to users with edit permissions for test runs. Completed test runs cannot be dragged.
-:::
+A run's milestone is set from **Edit** in its row menu, or for several runs at once from the bulk **Edit** action described under [Bulk Operations](#bulk-operations). Completed runs cannot be reassigned.
 
 ## Ready-to-complete notifications
 

@@ -57,10 +57,6 @@ vi.mock("next-intl", () => ({
   ),
 }));
 vi.mock("next/navigation", () => ({ useParams: () => ({ projectId: "1" }) }));
-vi.mock("react-dnd", () => ({
-  useDrag: () => [{ isDragging: false }, vi.fn(), vi.fn()],
-  useDrop: () => [{ isOver: false, canDrop: false }, vi.fn()],
-}));
 vi.mock("@/components/DynamicIcon", () => ({ default: () => null }));
 vi.mock("@/components/MilestoneSourceBadge", () => ({
   MilestoneSourceBadge: () => null,

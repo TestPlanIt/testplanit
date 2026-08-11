@@ -17,24 +17,15 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useProjectTestRunStream } from "~/hooks/useTestRunLiveStream";
 import { useCoalescedWakeUp } from "~/hooks/useCoalescedWakeUp";
 import { testRunCasesQueryMatchesRuns } from "./wakeUpInvalidation";
-import {
-  CheckCircle,
-  CirclePlus,
-  GripVertical,
-  SquarePen,
-  Trash2,
-} from "lucide-react";
+import { CheckCircle, CirclePlus, SquarePen, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
 import { useParams } from "next/navigation";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { useDrag, useDrop } from "react-dnd";
 import type { BatchTestRunSummaryResponse } from "~/app/api/test-runs/summaries/route";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import type { PendingReviewSummary } from "@/components/reviews/PendingReviewBadge";
 import { useReviewFeatureEnabled } from "~/hooks/useReviewFeatureEnabled";
-import { ItemTypes } from "~/types/dndTypes";
-import { cn } from "~/utils";
 import { isAutomatedTestRunType } from "~/utils/testResultTypes";
 import {
   ColorMap,
@@ -126,119 +117,6 @@ type GroupedTestRuns = {
       testRuns: TestRunsWithDetails[];
     };
   };
-};
-
-// Drag-and-drop item type for test runs
-interface DraggedTestRun {
-  type: typeof ItemTypes.TEST_RUN;
-  id: number;
-  name: string;
-  currentMilestoneId: number | null;
-}
-
-// Draggable wrapper for test run items
-interface DraggableTestRunWrapperProps {
-  testRunId: number;
-  testRunName: string;
-  currentMilestoneId: number | null;
-  canDrag: boolean;
-  children: React.ReactNode;
-}
-
-const DraggableTestRunWrapper: React.FC<DraggableTestRunWrapperProps> = ({
-  testRunId,
-  testRunName,
-  currentMilestoneId,
-  canDrag,
-  children,
-}) => {
-  const [{ isDragging }, drag, preview] = useDrag(
-    () => ({
-      type: ItemTypes.TEST_RUN,
-      item: {
-        type: ItemTypes.TEST_RUN,
-        id: testRunId,
-        name: testRunName,
-        currentMilestoneId,
-      } as DraggedTestRun,
-      canDrag: () => canDrag,
-      collect: (monitor) => ({
-        isDragging: monitor.isDragging(),
-      }),
-    }),
-    [testRunId, testRunName, currentMilestoneId, canDrag]
-  );
-
-  return (
-    <div
-      ref={(node) => {
-        preview(node);
-      }}
-      className={cn("relative group", isDragging && "opacity-50")}
-    >
-      {canDrag && (
-        <div
-          ref={(node) => {
-            drag(node);
-          }}
-          className="absolute -start-4 top-1/2 -translate-y-1/2 cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity z-10"
-        >
-          <GripVertical className="h-5 w-5 text-muted-foreground" />
-        </div>
-      )}
-      {children}
-    </div>
-  );
-};
-
-// Droppable wrapper for milestone groups
-interface DroppableMilestoneGroupProps {
-  milestoneId: number | null; // null for unscheduled
-  milestoneName: string;
-  onDropTestRun: (testRunId: number, targetMilestoneId: number | null) => void;
-  children: React.ReactNode;
-  className?: string;
-}
-
-const DroppableMilestoneGroup: React.FC<DroppableMilestoneGroupProps> = ({
-  milestoneId,
-  milestoneName: _milestoneName,
-  onDropTestRun,
-  children,
-  className,
-}) => {
-  const [{ isOver, canDrop }, drop] = useDrop(
-    () => ({
-      accept: ItemTypes.TEST_RUN,
-      canDrop: (item: DraggedTestRun) => {
-        // Can drop if moving to a different milestone
-        return item.currentMilestoneId !== milestoneId;
-      },
-      drop: (item: DraggedTestRun) => {
-        onDropTestRun(item.id, milestoneId);
-      },
-      collect: (monitor) => ({
-        isOver: monitor.isOver(),
-        canDrop: monitor.canDrop(),
-      }),
-    }),
-    [milestoneId, onDropTestRun]
-  );
-
-  return (
-    <div
-      ref={(node) => {
-        drop(node);
-      }}
-      className={cn(
-        className,
-        isOver && canDrop && "ring-2 ring-primary ring-inset bg-primary/5",
-        isOver && !canDrop && "ring-2 ring-muted-foreground/30 ring-inset"
-      )}
-    >
-      {children}
-    </div>
-  );
 };
 
 const buildMilestoneTree = (
@@ -369,25 +247,7 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
   const canDeleteRun = testRunPermissions?.canDelete ?? false;
   const bulkSelectable = canAddEditRun || canCloseRun || canDeleteRun;
 
-  // Mutation for updating test run milestone
   const queryClient = useQueryClient();
-  const updateTestRunMutation = useClientQueries(schema).testRuns.useUpdate();
-
-  const handleDropTestRun = useCallback(
-    async (testRunId: number, targetMilestoneId: number | null) => {
-      try {
-        await updateTestRunMutation.mutateAsync({
-          where: { id: testRunId },
-          data: { milestoneId: targetMilestoneId },
-        });
-        // Invalidate test runs query to refresh the data
-        void queryClient.invalidateQueries({ queryKey: ["testRuns"] });
-      } catch (error) {
-        console.error("Failed to update test run milestone:", error);
-      }
-    },
-    [updateTestRunMutation, queryClient]
-  );
 
   const [selectedMilestoneId, setSelectedMilestoneId] = useState<number | null>(
     null
@@ -919,11 +779,8 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
       const subtreeRunCount = countRunsInSubtree(milestone, currentGroupedRuns);
 
       return (
-        <DroppableMilestoneGroup
+        <div
           key={milestone.id}
-          milestoneId={milestone.id}
-          milestoneName={milestone.name}
-          onDropTestRun={handleDropTestRun}
           className={
             depth > 0
               ? "w-full ps-4 bg-muted rounded-lg mb-4"
@@ -1064,27 +921,20 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
                     data-testid={`milestone-test-runs-list-${milestone.id}`}
                     renderItem={(testRun) => (
                       <div style={{ paddingInlineStart: "2.5rem" }}>
-                        <DraggableTestRunWrapper
-                          testRunId={testRun.id}
-                          testRunName={testRun.name}
-                          currentMilestoneId={testRun.milestoneId}
-                          canDrag={canAddEditRun && !testRun.isCompleted}
-                        >
-                          <TestRunItem
-                            selectable={bulkSelectable}
-                            selected={selectedRunIds.has(testRun.id)}
-                            onSelectedChange={(checked) =>
-                              toggleRunSelected(testRun.id, checked)
-                            }
-                            testRun={testRun}
-                            isNew={false}
-                            onDuplicate={onDuplicateTestRunParam}
-                            summaryData={summariesData?.summaries[testRun.id]}
-                            summaryLoading={isBatchSummariesLoading}
-                            pendingRequest={pendingByTestRunId.get(testRun.id)}
-                            showMilestone={false}
-                          />
-                        </DraggableTestRunWrapper>
+                        <TestRunItem
+                          selectable={bulkSelectable}
+                          selected={selectedRunIds.has(testRun.id)}
+                          onSelectedChange={(checked) =>
+                            toggleRunSelected(testRun.id, checked)
+                          }
+                          testRun={testRun}
+                          isNew={false}
+                          onDuplicate={onDuplicateTestRunParam}
+                          summaryData={summariesData?.summaries[testRun.id]}
+                          summaryLoading={isBatchSummariesLoading}
+                          pendingRequest={pendingByTestRunId.get(testRun.id)}
+                          showMilestone={false}
+                        />
                       </div>
                     )}
                   />
@@ -1097,7 +947,7 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
               )}
             </CollapsibleContent>
           </Collapsible>
-        </DroppableMilestoneGroup>
+        </div>
       );
     };
 
@@ -1112,12 +962,7 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
     return (
       <>
         {currentGroupedRuns.unscheduled.length > 0 && (
-          <DroppableMilestoneGroup
-            milestoneId={null}
-            milestoneName={tSessions("noMilestone")}
-            onDropTestRun={handleDropTestRun}
-            className="w-full bg-muted rounded-lg p-0 pb-2"
-          >
+          <div className="w-full bg-muted rounded-lg p-0 pb-2">
             <Collapsible
               open={isUnscheduledOpen}
               onOpenChange={(open) => setGroupOpen(UNSCHEDULED_GROUP_KEY, open)}
@@ -1196,32 +1041,25 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
                   data-testid="unscheduled-test-runs-list"
                   renderItem={(testRun) => (
                     <div className="ps-4 pe-4">
-                      <DraggableTestRunWrapper
-                        testRunId={testRun.id}
-                        testRunName={testRun.name}
-                        currentMilestoneId={testRun.milestoneId}
-                        canDrag={canAddEditRun && !testRun.isCompleted}
-                      >
-                        <TestRunItem
-                          selectable={bulkSelectable}
-                          selected={selectedRunIds.has(testRun.id)}
-                          onSelectedChange={(checked) =>
-                            toggleRunSelected(testRun.id, checked)
-                          }
-                          testRun={testRun}
-                          isNew={false}
-                          onDuplicate={onDuplicateTestRunParam}
-                          summaryData={summariesData?.summaries[testRun.id]}
-                          summaryLoading={isBatchSummariesLoading}
-                          pendingRequest={pendingByTestRunId.get(testRun.id)}
-                        />
-                      </DraggableTestRunWrapper>
+                      <TestRunItem
+                        selectable={bulkSelectable}
+                        selected={selectedRunIds.has(testRun.id)}
+                        onSelectedChange={(checked) =>
+                          toggleRunSelected(testRun.id, checked)
+                        }
+                        testRun={testRun}
+                        isNew={false}
+                        onDuplicate={onDuplicateTestRunParam}
+                        summaryData={summariesData?.summaries[testRun.id]}
+                        summaryLoading={isBatchSummariesLoading}
+                        pendingRequest={pendingByTestRunId.get(testRun.id)}
+                      />
                     </div>
                   )}
                 />
               </CollapsibleContent>
             </Collapsible>
-          </DroppableMilestoneGroup>
+          </div>
         )}
         <div className="rounded-b-lg mb-4"></div>
 
