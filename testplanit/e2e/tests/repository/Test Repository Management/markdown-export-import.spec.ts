@@ -803,16 +803,15 @@ test.describe("Markdown Export & Import", () => {
     const exportDialog = page.locator('[role="dialog"]');
     const importDialog = page.locator('[role="dialog"]');
     let targetFolderId: number | undefined;
+    let sourceFolderId: number | undefined;
+    let sourceCaseId: number | undefined;
     let exportedCsv: string | undefined;
     let descValue: any;
 
     await test.step("Create source case with rich content and target folder", async () => {
       // Create source folder with rich content case
       const sourceFolderName = `RT Source Folder ${uniqueId}`;
-      const sourceFolderId = await api.createFolder(
-        projectId,
-        sourceFolderName
-      );
+      sourceFolderId = await api.createFolder(projectId, sourceFolderName);
 
       // Ensure the Description field is on the project's template
       const { descriptionFieldId } = await ensureDescriptionFieldOnTemplate(
@@ -820,7 +819,7 @@ test.describe("Markdown Export & Import", () => {
         projectId
       );
 
-      await api.createTestCaseWithFieldValues(
+      sourceCaseId = await api.createTestCaseWithFieldValues(
         projectId,
         sourceFolderId,
         originalCaseName,
@@ -946,6 +945,25 @@ test.describe("Markdown Export & Import", () => {
       await nextButton.click();
       await page.waitForLoadState("networkidle");
 
+      // Page 2 is column mapping. A full export carries the case's own ID and
+      // Version columns, and the wizard auto-maps both. Left alone, a mapped
+      // Case ID makes this an in-place OVERWRITE of the source case (it is
+      // relocated into the target folder) rather than a round trip that
+      // produces a new case — so unmap them and import as new.
+      const unmapColumn = async (csvColumn: string) => {
+        const trigger = page.getByTestId(`import-column-mapping-${csvColumn}`);
+        await expect(trigger).toBeVisible({ timeout: 10000 });
+        await trigger.scrollIntoViewIfNeeded();
+        await trigger.click();
+        // SelectContent renders in a portal, outside the dialog.
+        const ignoreOption = page.getByTestId("import-column-mapping-ignore");
+        await expect(ignoreOption).toBeVisible({ timeout: 5000 });
+        await ignoreOption.click();
+        await expect(trigger).toContainText("Ignore Column");
+      };
+      await unmapColumn("ID");
+      await unmapColumn("Version");
+
       await page.waitForTimeout(1000);
       await expect(nextButton).toBeEnabled({ timeout: 5000 });
       await nextButton.click();
@@ -993,6 +1011,29 @@ test.describe("Markdown Export & Import", () => {
       expect(caseResponse.ok()).toBeTruthy();
       const reimportedCase = (await caseResponse.json()).data;
       expect(reimportedCase).toBeTruthy();
+
+      // A round trip must CREATE a case, not overwrite the source. Without
+      // this the test passes on an in-place overwrite: the original case is
+      // relocated into the target folder and every assertion below still
+      // holds, because it is inspecting the original's own field values.
+      expect(reimportedCase.id).not.toBe(sourceCaseId);
+
+      // ...and the source case must still be sitting in the source folder.
+      const sourceResponse = await request.get(
+        `${baseURL}/api/model/repositoryCases/findFirst`,
+        {
+          params: {
+            q: JSON.stringify({
+              where: { id: sourceCaseId },
+              select: { id: true, folderId: true, isDeleted: true },
+            }),
+          },
+        }
+      );
+      expect(sourceResponse.ok()).toBeTruthy();
+      const sourceCase = (await sourceResponse.json()).data;
+      expect(sourceCase.isDeleted).toBe(false);
+      expect(sourceCase.folderId).toBe(sourceFolderId);
 
       const fieldValuesResponse = await request.get(
         `${baseURL}/api/model/caseFieldValues/findMany`,

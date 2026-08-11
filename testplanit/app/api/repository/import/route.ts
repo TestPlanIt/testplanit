@@ -768,7 +768,10 @@ export const POST = withAuditContext(async (request: NextRequest) => {
               if (isUpdate) {
                 const existingSteps = await enhancedDb.steps.findMany({
                   where: { testCaseId: newCase.id, isDeleted: false },
-                  select: { id: true, _count: { select: { stepResults: true } } },
+                  select: {
+                    id: true,
+                    _count: { select: { stepResults: true } },
+                  },
                 });
 
                 const executedStepIds = existingSteps
@@ -813,8 +816,16 @@ export const POST = withAuditContext(async (request: NextRequest) => {
                   where: { repositoryCaseId: newCase.id },
                   orderBy: { version: "desc" },
                 });
+              // A version from the file may only ever move the case FORWARD.
+              // Trusting it verbatim breaks the documented export-edit-reimport
+              // round trip: a TestPlanIt export carries the case's own Version,
+              // so re-importing it asks for a version snapshot that already
+              // exists and violates @@unique([repositoryCaseId, version]).
+              const highestVersion = latestVersion?.version || 0;
               versionNumber =
-                caseData.version || (latestVersion?.version || 0) + 1;
+                caseData.version && caseData.version > highestVersion
+                  ? caseData.version
+                  : highestVersion + 1;
 
               // Update the case's currentVersion
               await enhancedDb.repositoryCases.update({

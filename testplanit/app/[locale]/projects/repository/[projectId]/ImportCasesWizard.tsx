@@ -1243,11 +1243,16 @@ export function ImportCasesWizard({
                     )
                   }
                 >
-                  <SelectTrigger>
+                  <SelectTrigger
+                    data-testid={`import-column-mapping-${mapping.csvColumn}`}
+                  >
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="ignore">
+                    <SelectItem
+                      value="ignore"
+                      data-testid="import-column-mapping-ignore"
+                    >
                       {t("importWizard.page2.ignoreColumn")}
                     </SelectItem>
                     <Separator />
