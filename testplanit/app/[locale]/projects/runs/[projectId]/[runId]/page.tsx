@@ -417,12 +417,20 @@ export default function TestRunPage() {
     ? parseInt(searchParams.get("selectedCase")!)
     : null;
 
-  // In-place case editing inside the details Sheet. Uses its own `editCase`
-  // param — `edit` already means "edit the run" on this page.
+  // In-place case editing inside the details Sheet. Held in component state
+  // rather than a URL param: the case table's own load-time URL syncs (column
+  // visibility, page, pageSize) each rebuild the query string from their own
+  // snapshot, so a param written while those are still settling is dropped and
+  // edit mode silently never opens.
+  const [isEditingCase, setIsEditingCase] = useState(false);
   const editingSelectedCase =
-    !!selectedTestCaseId &&
-    searchParams.get("editCase") === "true" &&
-    canAddEditCases;
+    !!selectedTestCaseId && isEditingCase && canAddEditCases;
+
+  // Opening a different case — or closing the sheet, which clears the param —
+  // leaves edit mode behind with it.
+  useEffect(() => {
+    setIsEditingCase(false);
+  }, [selectedTestCaseId]);
 
   const { data: statusScope } = useClientQueries(
     schema
@@ -864,20 +872,9 @@ export default function TestRunPage() {
       // If sheet is closing, remove selectedCase from URL
       const params = new URLSearchParams(searchParams.toString());
       params.delete("selectedCase");
-      params.delete("editCase");
       router.replace(`${pathname}?${params.toString()}`);
     }
     // Opening is handled by URL change triggered from TestCasesSection clicking a row
-  };
-
-  const setEditCaseParam = (on: boolean) => {
-    const params = new URLSearchParams(searchParams.toString());
-    if (on) {
-      params.set("editCase", "true");
-    } else {
-      params.delete("editCase");
-    }
-    router.replace(`${pathname}?${params.toString()}`);
   };
 
   // Fix the useEffect for content initialization to handle double-JSON-stringification
@@ -2491,7 +2488,7 @@ export default function TestRunPage() {
                 })),
                 isCompleted: testRunData.isCompleted,
                 onEditCase: canAddEditCases
-                  ? () => setEditCaseParam(true)
+                  ? () => setIsEditingCase(true)
                   : undefined,
               };
 
@@ -2509,7 +2506,7 @@ export default function TestRunPage() {
                       startInEditMode
                       onClose={() => handleSheetOpenChange(false)}
                       onEditExit={(saved) => {
-                        setEditCaseParam(false);
+                        setIsEditingCase(false);
                         if (saved) {
                           void queryClient.invalidateQueries({
                             queryKey: [
