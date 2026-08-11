@@ -344,7 +344,7 @@
       "hasAttachments": "有附件",
       "noAttachments": "無附件",
       "inReview": "審查中",
-      "notInReview": "未審查",
+      "notInReview": "非審查中",
       "testRuns": "測試運行",
       "title": "標題",
       "project": "專案",

@@ -344,7 +344,7 @@
       "hasAttachments": "添付ファイルあり",
       "noAttachments": "添付ファイルなし",
       "inReview": "レビュー中",
-      "notInReview": "レビュー中でない",
+      "notInReview": "レビュー中ではない",
       "testRuns": "テスト実行",
       "title": "タイトル",
       "project": "プロジェクト",
