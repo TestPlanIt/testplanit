@@ -45,6 +45,7 @@ import {
   sortMilestones,
 } from "~/utils/milestoneUtils";
 import { BulkActionBar } from "@/components/bulk/BulkActionBar";
+import { VirtualizedCardList } from "@/components/VirtualizedCardList";
 import { transformMilestones } from "@/components/forms/MilestoneSelect";
 import type { OverflowAction } from "@/components/ui/action-bar";
 import AddTestRunModal from "./AddTestRunModal";
@@ -1044,12 +1045,18 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
               {/* Render test runs under this milestone FIRST */}
               {hasTestRunsUnderMilestone && (
                 <div className="test-runs-container bg-muted pe-4 pb-2 mb-2">
-                  {currentGroupedRuns.milestones[milestone.id]?.testRuns.map(
-                    (testRun) => (
-                      <div
-                        key={testRun.id}
-                        style={{ paddingInlineStart: "2.5rem" }}
-                      >
+                  {/* space-y-0: the rows carry their own my-2, so the list's
+                      default vertical rhythm would double the gap. */}
+                  <VirtualizedCardList
+                    items={
+                      currentGroupedRuns.milestones[milestone.id]?.testRuns ??
+                      []
+                    }
+                    getKey={(testRun) => testRun.id}
+                    className="space-y-0"
+                    data-testid={`milestone-test-runs-list-${milestone.id}`}
+                    renderItem={(testRun) => (
+                      <div style={{ paddingInlineStart: "2.5rem" }}>
                         <DraggableTestRunWrapper
                           testRunId={testRun.id}
                           testRunName={testRun.name}
@@ -1072,8 +1079,8 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
                           />
                         </DraggableTestRunWrapper>
                       </div>
-                    )
-                  )}
+                    )}
+                  />
                 </div>
               )}
 
@@ -1173,30 +1180,38 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
                 without it the rows spill out at full height for the whole
                 animation instead of being wiped. */}
               <CollapsibleContent className="overflow-hidden data-[state=closed]:animate-slide-up data-[state=open]:animate-slide-down">
-                {currentGroupedRuns.unscheduled.map((testRun) => (
-                  <div key={testRun.id} className="ps-4 pe-4">
-                    <DraggableTestRunWrapper
-                      testRunId={testRun.id}
-                      testRunName={testRun.name}
-                      currentMilestoneId={testRun.milestoneId}
-                      canDrag={canAddEditRun && !testRun.isCompleted}
-                    >
-                      <TestRunItem
-                        selectable={bulkSelectable}
-                        selected={selectedRunIds.has(testRun.id)}
-                        onSelectedChange={(checked) =>
-                          toggleRunSelected(testRun.id, checked)
-                        }
-                        testRun={testRun}
-                        isNew={false}
-                        onDuplicate={onDuplicateTestRunParam}
-                        summaryData={summariesData?.summaries[testRun.id]}
-                        summaryLoading={isBatchSummariesLoading}
-                        pendingRequest={pendingByTestRunId.get(testRun.id)}
-                      />
-                    </DraggableTestRunWrapper>
-                  </div>
-                ))}
+                {/* space-y-0: the rows carry their own my-2, so the list's
+                    default vertical rhythm would double the gap. */}
+                <VirtualizedCardList
+                  items={currentGroupedRuns.unscheduled}
+                  getKey={(testRun) => testRun.id}
+                  className="space-y-0"
+                  data-testid="unscheduled-test-runs-list"
+                  renderItem={(testRun) => (
+                    <div className="ps-4 pe-4">
+                      <DraggableTestRunWrapper
+                        testRunId={testRun.id}
+                        testRunName={testRun.name}
+                        currentMilestoneId={testRun.milestoneId}
+                        canDrag={canAddEditRun && !testRun.isCompleted}
+                      >
+                        <TestRunItem
+                          selectable={bulkSelectable}
+                          selected={selectedRunIds.has(testRun.id)}
+                          onSelectedChange={(checked) =>
+                            toggleRunSelected(testRun.id, checked)
+                          }
+                          testRun={testRun}
+                          isNew={false}
+                          onDuplicate={onDuplicateTestRunParam}
+                          summaryData={summariesData?.summaries[testRun.id]}
+                          summaryLoading={isBatchSummariesLoading}
+                          pendingRequest={pendingByTestRunId.get(testRun.id)}
+                        />
+                      </DraggableTestRunWrapper>
+                    </div>
+                  )}
+                />
               </CollapsibleContent>
             </Collapsible>
           </DroppableMilestoneGroup>
