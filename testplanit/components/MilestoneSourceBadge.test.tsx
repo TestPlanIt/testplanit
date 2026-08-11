@@ -327,6 +327,65 @@ describe("MilestoneSourceBadge", () => {
     });
   });
 
+  // Pickers render the badge as decoration: a click on a combobox option has
+  // to select the milestone, and on the combobox trigger a dropdown would nest
+  // a menu inside a button.
+  describe("interactive={false}", () => {
+    it("renders the badge but no menu, even for a project admin", () => {
+      render(
+        <MilestoneSourceBadge
+          milestone={synced}
+          projectId={7}
+          interactive={false}
+        />
+      );
+
+      const badge = screen.getByTestId("milestone-source-badge");
+      expect(badge).toBeInTheDocument();
+      openMenu(badge);
+      expect(screen.queryByTestId("milestone-source-menu-open")).toBeNull();
+      expect(screen.queryByTestId("milestone-source-menu-unlink")).toBeNull();
+    });
+
+    it("neither opens the tracker on click nor advertises the link", () => {
+      const openSpy = vi.spyOn(window, "open").mockImplementation(() => null);
+      render(
+        <MilestoneSourceBadge
+          milestone={synced}
+          projectId={7}
+          interactive={false}
+        />
+      );
+
+      expect(screen.queryByTestId("milestone-open-in-tracker")).toBeNull();
+      fireEvent.click(screen.getByTestId("milestone-source-badge"));
+
+      expect(openSpy).not.toHaveBeenCalled();
+      openSpy.mockRestore();
+    });
+
+    it("does not navigate from a merged badge whose target is tracked locally", () => {
+      mockFindFirstMilestones.mockReturnValue({
+        data: { id: 100, name: "v2.0", projectId: 7 },
+      });
+      render(
+        <MilestoneSourceBadge
+          milestone={{
+            ...synced,
+            externalState: "merged",
+            detachedAt: new Date().toISOString(),
+            mergedToExternalId: "10099",
+          }}
+          interactive={false}
+        />
+      );
+
+      fireEvent.click(screen.getByTestId("milestone-source-badge"));
+
+      expect(mockRouterPush).not.toHaveBeenCalled();
+    });
+  });
+
   describe("non-project-admin gating", () => {
     beforeEach(() => {
       mockIsProjectAdmin = false;

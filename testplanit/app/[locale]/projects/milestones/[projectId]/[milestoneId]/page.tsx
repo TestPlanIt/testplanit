@@ -99,7 +99,7 @@ import {
 } from "~/utils/milestoneUtils";
 import { CompleteMilestoneDialog } from "../../CompleteMilestoneDialog";
 import { DeleteMilestoneModal } from "../DeleteMilestoneModal";
-import ChildMilestoneItem from "./ChildMilestoneItem";
+import MilestoneItemCard from "../MilestoneItemCard";
 import { MilestoneSourceBadge } from "@/components/MilestoneSourceBadge";
 import { IssuesCard, type IssuesCardHandle } from "./IssuesCard";
 import MilestoneFormControls from "./MilestoneFormControls";
@@ -137,6 +137,14 @@ export default function MilestoneDetailsPage() {
     useState<MilestoneForecastData | null>(null);
   const [isLoadingForecast, setIsLoadingForecast] = useState(false);
   const [isCompleteDialogOpen, setIsCompleteDialogOpen] = useState(false);
+  // The child rows carry their own lifecycle actions, so the delete and
+  // complete dialogs need a second, child-scoped instance — the ones above
+  // are bound to the milestone this page is about.
+  const [selectedChildMilestone, setSelectedChildMilestone] =
+    useState<MilestonesWithTypes | null>(null);
+  const [isChildDeleteModalOpen, setIsChildDeleteModalOpen] = useState(false);
+  const [isChildCompleteDialogOpen, setIsChildCompleteDialogOpen] =
+    useState(false);
   // Action bar collapses into a kebab when the header is narrow (mirrors the
   // repository case details bar).
   const { ref: headerRef, compact: headerCompact } = useContainerCompact();
@@ -254,29 +262,6 @@ export default function MilestoneDetailsPage() {
     },
   });
 
-  // Active IntegrationProject mapping(s) for this milestone's integration,
-  // scoped to this project — feeds the source badge's Jira project ("space")
-  // segment. Only fires for synced milestones.
-  const { data: milestoneIntegrationProjects } = useClientQueries(
-    schema
-  ).integrationProject.useFindMany(
-    {
-      where: {
-        isActive: true,
-        projectIntegration: {
-          projectId: Number(projectId),
-          integrationId: milestone?.integrationId ?? undefined,
-        },
-      },
-      select: {
-        externalProjectKey: true,
-        externalProjectName: true,
-        projectIntegration: { select: { integrationId: true } },
-      },
-    },
-    { enabled: milestone?.integrationId != null }
-  );
-
   const queryClient = useQueryClient();
 
   // D-15/D-16: subscribe this detail page to its per-entity milestone
@@ -345,6 +330,33 @@ export default function MilestoneDetailsPage() {
         },
       },
     });
+
+  // Every active IntegrationProject mapping for this project — feeds the
+  // Jira project ("space") segment on the header badge AND on the child rows'
+  // badges. Scoped to the project rather than to this milestone's integration
+  // because a local parent can own synced children; each badge filters the
+  // list down to its own integration. Skipped entirely when nothing on the
+  // page is synced.
+  const { data: milestoneIntegrationProjects } = useClientQueries(
+    schema
+  ).integrationProject.useFindMany(
+    {
+      where: {
+        isActive: true,
+        projectIntegration: { projectId: Number(projectId) },
+      },
+      select: {
+        externalProjectKey: true,
+        externalProjectName: true,
+        projectIntegration: { select: { integrationId: true } },
+      },
+    },
+    {
+      enabled:
+        milestone?.integrationId != null ||
+        (allProjectMilestones ?? []).some((m) => m.integrationId != null),
+    }
+  );
 
   const { data: colors } = useClientQueries(schema).color.useFindMany({
     include: { colorFamily: true },
@@ -736,36 +748,82 @@ export default function MilestoneDetailsPage() {
     }
   };
 
+  // Child rows are the same entity as the milestones LIST rows, so they are
+  // the same component — one place owns the layout, the responsive collapse,
+  // the source badge, and the lifecycle actions below.
+  const handleStartChildMilestone = async (child: MilestonesWithTypes) => {
+    await updateMilestone({
+      where: { id: child.id },
+      data: { isStarted: true, startedAt: new Date() },
+    });
+  };
+
+  const handleStopChildMilestone = async (child: MilestonesWithTypes) => {
+    await updateMilestone({
+      where: { id: child.id },
+      data: { isStarted: false, startedAt: null },
+    });
+  };
+
+  const handleReopenChildMilestone = async (child: MilestonesWithTypes) => {
+    await updateMilestone({
+      where: { id: child.id },
+      data: { isCompleted: false, completedAt: null },
+    });
+  };
+
+  const handleOpenChildEditModal = (child: MilestonesWithTypes) => {
+    router.push(`/projects/milestones/${projectId}/${child.id}?edit=true`);
+  };
+
+  const handleOpenChildDeleteModal = (child: MilestonesWithTypes) => {
+    setSelectedChildMilestone(child);
+    setIsChildDeleteModalOpen(true);
+  };
+
+  const handleOpenChildCompleteDialog = (child: MilestonesWithTypes) => {
+    setSelectedChildMilestone(child);
+    setIsChildCompleteDialogOpen(true);
+  };
+
+  const isParentCompleted = (parentId: number | null): boolean => {
+    if (!parentId) return false;
+    return Boolean(
+      (allProjectMilestones || []).find((m) => m.id === parentId)?.isCompleted
+    );
+  };
+
   const renderChildMilestones = (
     milestones: MilestonesWithTypes[],
     parentId: number,
     level: number = 0
   ): React.ReactNode[] => {
-    const handleMilestoneClick =
-      (clickedMilestoneId: number) => (e: React.MouseEvent) => {
-        e.preventDefault();
-        e.stopPropagation();
-        router.push(`/projects/milestones/${projectId}/${clickedMilestoneId}`);
-      };
-
-    const milestonesWithChildren: MilestonesWithTypes[] = (
-      allProjectMilestones || []
-    ).map((m) => ({ ...m, children: [] }));
-
     return milestones
       .filter((m) => m.parentId === parentId)
       .map((currentChildMilestone) => (
-        <ChildMilestoneItem
-          key={currentChildMilestone.id}
-          milestone={currentChildMilestone}
-          projectId={projectId}
-          theme={resolvedTheme}
-          colorMap={colorMap}
-          level={level}
-          onMilestoneClick={handleMilestoneClick}
-          renderChildNodes={renderChildMilestones}
-          allMilestones={milestonesWithChildren}
-        />
+        <React.Fragment key={currentChildMilestone.id}>
+          <MilestoneItemCard
+            milestone={currentChildMilestone}
+            projectId={Number(projectId)}
+            integrationProjects={milestoneIntegrationProjects}
+            theme={resolvedTheme}
+            colorMap={colorMap}
+            session={sessionAuth}
+            level={level}
+            isParentCompleted={isParentCompleted}
+            onOpenCompleteDialog={handleOpenChildCompleteDialog}
+            onStartMilestone={handleStartChildMilestone}
+            onStopMilestone={handleStopChildMilestone}
+            onReopenMilestone={handleReopenChildMilestone}
+            onOpenEditModal={handleOpenChildEditModal}
+            onOpenDeleteModal={handleOpenChildDeleteModal}
+          />
+          {renderChildMilestones(
+            milestones,
+            currentChildMilestone.id,
+            level + 1
+          )}
+        </React.Fragment>
       ));
   };
 
@@ -1151,7 +1209,7 @@ export default function MilestoneDetailsPage() {
                     allProjectMilestones.length > 0 && (
                       <div className="mt-6">
                         <Label>{t("labels.childMilestones")}</Label>
-                        <div className="mt-2">
+                        <div className="mt-2 flex w-full flex-col">
                           {(() => {
                             const childMilestones = allProjectMilestones
                               .map((milestone) => ({
@@ -1409,6 +1467,45 @@ export default function MilestoneDetailsPage() {
           milestoneToComplete={milestone as unknown as MilestonesWithTypes}
           onCompleteSuccess={() => {
             toast.success(t("toast.updatedWithName", { name: milestone.name }));
+            router.refresh();
+          }}
+        />
+      )}
+
+      {/* Child-scoped copies of the two dialogs above, driven by the child
+          rows' action menus. Deleting a child leaves this page intact, so
+          neither of these touches the wasDeleted redirect. Both share one
+          selection, so each success closes its own flag before clearing it —
+          a flag left open would re-mount that dialog the moment the OTHER one
+          selects a child. */}
+      {selectedChildMilestone && (
+        <DeleteMilestoneModal
+          milestone={selectedChildMilestone}
+          open={isChildDeleteModalOpen}
+          onOpenChange={setIsChildDeleteModalOpen}
+          milestones={allProjectMilestones || []}
+          onDeleteSuccess={() => {
+            setIsChildDeleteModalOpen(false);
+            setSelectedChildMilestone(null);
+            void queryClient.invalidateQueries({
+              predicate: (query) =>
+                JSON.stringify(query.queryKey).includes("Milestones"),
+            });
+          }}
+        />
+      )}
+
+      {selectedChildMilestone && (
+        <CompleteMilestoneDialog
+          open={isChildCompleteDialogOpen}
+          onOpenChange={setIsChildCompleteDialogOpen}
+          milestoneToComplete={selectedChildMilestone}
+          onCompleteSuccess={() => {
+            toast.success(
+              t("toast.updatedWithName", { name: selectedChildMilestone.name })
+            );
+            setIsChildCompleteDialogOpen(false);
+            setSelectedChildMilestone(null);
             router.refresh();
           }}
         />

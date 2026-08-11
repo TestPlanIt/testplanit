@@ -1,6 +1,6 @@
 "use client";
 
-import { useLayoutEffect, useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState, type ReactElement } from "react";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import {
@@ -77,6 +77,15 @@ interface MilestoneSourceBadgeProps {
    * milestones pages that own that lifecycle.
    */
   showUnlinkAction?: boolean;
+  /**
+   * Whether the badge carries its own click behaviour (open in tracker, the
+   * unlink menu, merged-target navigation). Pass false where the badge is
+   * decoration inside something else that owns the click — a combobox option
+   * or the picker trigger, where a click must select the milestone, and
+   * nesting a menu inside the trigger button would be invalid markup. The
+   * segment collapse, tooltip, and accessible label are unaffected.
+   */
+  interactive?: boolean;
 }
 
 /**
@@ -148,6 +157,7 @@ function JiraGlyph() {
 function RemovedOrMergedBadge({
   milestone,
   className,
+  interactive = true,
 }: MilestoneSourceBadgeProps) {
   const t = useTranslations("milestones");
   const router = useRouter();
@@ -178,7 +188,7 @@ function RemovedOrMergedBadge({
         })
       : t("sync.sourceRemoved", { provider });
 
-  const isLinkable = isMerged && target;
+  const isLinkable = interactive && isMerged && target;
 
   return (
     <Badge
@@ -214,6 +224,113 @@ function RemovedOrMergedBadge({
 }
 
 /**
+ * Gives a rendered badge its project-admin dropdown ("Open in {provider}" /
+ * "Unlink from {provider}") and the unlink confirmation. Split out of
+ * {@link MilestoneSourceBadge} so the permissions fetch and unlink machinery
+ * only mount where the menu can actually appear — a picker rendering a badge
+ * per option pays for none of it. Non-admins get the badge back untouched.
+ */
+function SourceBadgeWithUnlinkMenu({
+  milestone,
+  projectId,
+  canOpenInTracker,
+  onOpenInTracker,
+  renderBadge,
+}: {
+  milestone: MilestoneSourceBadgeMilestone;
+  projectId?: number;
+  canOpenInTracker: boolean;
+  onOpenInTracker: () => void;
+  /** Renders the badge itself; `asMenuTrigger` is true for the copy handed to
+   *  the dropdown trigger, which must not carry its own click handler. */
+  renderBadge: (asMenuTrigger: boolean) => ReactElement;
+}) {
+  const t = useTranslations("milestones");
+  const tCommon = useTranslations("common");
+  const router = useRouter();
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [isUnlinking, setIsUnlinking] = useState(false);
+  const { isProjectAdmin } = useProjectPermissions(projectId ?? 0);
+
+  const provider = t("sync.providerJira");
+
+  const handleUnlink = async () => {
+    setIsUnlinking(true);
+    try {
+      const res = await fetch(`/api/milestones/${milestone.id}/unlink`, {
+        method: "POST",
+      });
+      if (!res.ok) {
+        throw new Error(`Unlink failed with status ${res.status}`);
+      }
+      toast.success(t("sync.unlinkSuccess"));
+      setConfirmOpen(false);
+      router.refresh();
+    } catch (err) {
+      console.error("Failed to unlink milestone:", err);
+      toast.error(t("sync.unlinkError"));
+    } finally {
+      setIsUnlinking(false);
+    }
+  };
+
+  // Client-side mirror of the unlink route's authorization — a 403 is the
+  // backstop. Non-admins get the plain open-in-tracker badge rather than a
+  // single-item menu.
+  if (!isProjectAdmin) return renderBadge(false);
+
+  return (
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>{renderBadge(true)}</DropdownMenuTrigger>
+        <DropdownMenuContent align="start" onClick={(e) => e.stopPropagation()}>
+          <DropdownMenuItem
+            disabled={!canOpenInTracker}
+            className="gap-1"
+            onClick={onOpenInTracker}
+            data-testid="milestone-source-menu-open"
+          >
+            <ExternalLink className="h-4 w-4" />
+            {t("sync.openInJira")}
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            className="gap-1 text-destructive focus:text-destructive"
+            onClick={() => setConfirmOpen(true)}
+            data-testid="milestone-source-menu-unlink"
+          >
+            <Unlink className="h-4 w-4" />
+            {t("sync.unlinkMenuItem", { provider })}
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("sync.unlinkConfirmTitle")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("sync.unlinkConfirmDescription")}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel data-testid="milestone-source-unlink-cancel">
+              {tCommon("cancel")}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              disabled={isUnlinking}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => void handleUnlink()}
+              data-testid="milestone-source-unlink-confirm"
+            >
+              {t("sync.unlinkConfirmAction")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
+  );
+}
+
+/**
  * The "Jira · Sprint · active" source badge shown on synced milestones
  * (LOCK-05). When a safe external URL is stored, the badge itself is the
  * open-in-tracker link and the external-link icon fades in on hover.
@@ -245,6 +362,10 @@ function RemovedOrMergedBadge({
  * width. An invisible full-width copy keeps the wrapper requesting the
  * expanded width, so the badge grows back as soon as space returns; the
  * full label stays available via aria-label.
+ *
+ * With `interactive={false}` all of the above holds except the click
+ * behaviour: no menu, no tracker link, no hover link icon — for surfaces
+ * that own the click themselves, such as combobox options.
  */
 export function MilestoneSourceBadge({
   milestone,
@@ -252,10 +373,9 @@ export function MilestoneSourceBadge({
   integrationProjects,
   className,
   showUnlinkAction = true,
+  interactive = true,
 }: MilestoneSourceBadgeProps) {
   const t = useTranslations("milestones");
-  const tCommon = useTranslations("common");
-  const router = useRouter();
   const wrapRef = useRef<HTMLSpanElement>(null);
   const measureRef = useRef<HTMLSpanElement>(null);
   const projectSpace = resolveMilestoneProjectSpace(
@@ -272,10 +392,7 @@ export function MilestoneSourceBadge({
   // 4/5 only apply when a project space is resolved. Starts fully expanded
   // and the layout effect collapses to fit before paint.
   const [level, setLevel] = useState(projectSpace ? 5 : 3);
-  const [confirmOpen, setConfirmOpen] = useState(false);
-  const [isUnlinking, setIsUnlinking] = useState(false);
-  const { isProjectAdmin } = useProjectPermissions(projectId ?? 0);
-  const canUnlink = showUnlinkAction && isProjectAdmin;
+  const canUnlink = interactive && showUnlinkAction;
 
   // RESEARCH.md Pitfall 3: a converted (detached) milestone keeps
   // integrationId set, so the render guard must also admit detachedAt-set
@@ -296,34 +413,20 @@ export function MilestoneSourceBadge({
     t("sync.sourceBadge", { provider, kind, state }) +
     (projectSpace ? ` · ${projectSpace.name}` : "");
 
-  const safeExternalUrl =
-    milestone.externalUrl && SAFE_EXTERNAL_URL_RE.test(milestone.externalUrl)
+  // Non-interactive badges never open the tracker, so they also drop the
+  // hover link icon — otherwise they'd advertise an affordance they don't
+  // have. Resolved once and used by BOTH copies so the measured width keeps
+  // matching what actually renders.
+  const trackerUrl =
+    interactive &&
+    milestone.externalUrl &&
+    SAFE_EXTERNAL_URL_RE.test(milestone.externalUrl)
       ? milestone.externalUrl
       : null;
 
   const openInTracker = () => {
-    if (!safeExternalUrl) return;
-    window.open(safeExternalUrl, "_blank", "noopener,noreferrer");
-  };
-
-  const handleUnlink = async () => {
-    setIsUnlinking(true);
-    try {
-      const res = await fetch(`/api/milestones/${milestone.id}/unlink`, {
-        method: "POST",
-      });
-      if (!res.ok) {
-        throw new Error(`Unlink failed with status ${res.status}`);
-      }
-      toast.success(t("sync.unlinkSuccess"));
-      setConfirmOpen(false);
-      router.refresh();
-    } catch (err) {
-      console.error("Failed to unlink milestone:", err);
-      toast.error(t("sync.unlinkError"));
-    } finally {
-      setIsUnlinking(false);
-    }
+    if (!trackerUrl) return;
+    window.open(trackerUrl, "_blank", "noopener,noreferrer");
   };
 
   useLayoutEffect(() => {
@@ -377,15 +480,7 @@ export function MilestoneSourceBadge({
     const ro = new ResizeObserver(compute);
     ro.observe(wrap);
     return () => ro.disconnect();
-  }, [
-    isLocal,
-    provider,
-    kind,
-    state,
-    safeExternalUrl,
-    projectName,
-    projectShort,
-  ]);
+  }, [isLocal, provider, kind, state, trackerUrl, projectName, projectShort]);
 
   if (isLocal) return null;
 
@@ -403,7 +498,13 @@ export function MilestoneSourceBadge({
     (milestone.externalState === "deleted" ||
       milestone.externalState === "merged")
   ) {
-    return <RemovedOrMergedBadge milestone={milestone} className={className} />;
+    return (
+      <RemovedOrMergedBadge
+        milestone={milestone}
+        className={className}
+        interactive={interactive}
+      />
+    );
   }
 
   const badgeSegments = (
@@ -419,13 +520,31 @@ export function MilestoneSourceBadge({
           {`· ${level >= 5 ? projectSpace.name : projectSpace.short}`}
         </span>
       )}
-      {safeExternalUrl && (
+      {trackerUrl && (
         <ExternalLink
           data-testid="milestone-open-in-tracker"
           className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity"
         />
       )}
     </>
+  );
+
+  const renderBadge = (asMenuTrigger: boolean) => (
+    <Badge
+      data-testid="milestone-source-badge"
+      variant="outline"
+      role={trackerUrl ? "link" : undefined}
+      title={trackerUrl ? t("sync.openInJira") : badgeLabel}
+      aria-label={badgeLabel}
+      className={`text-xs max-w-full gap-1 whitespace-nowrap group ${
+        asMenuTrigger || trackerUrl
+          ? "cursor-pointer hover:bg-secondary/80"
+          : "cursor-default"
+      }`}
+      onClick={!asMenuTrigger && trackerUrl ? openInTracker : undefined}
+    >
+      {badgeSegments}
+    </Badge>
   );
 
   return (
@@ -458,89 +577,19 @@ export function MilestoneSourceBadge({
           {projectSpace && (
             <span data-seg="project-full">{`· ${projectSpace.name}`}</span>
           )}
-          {safeExternalUrl && <ExternalLink className="h-3 w-3" />}
+          {trackerUrl && <ExternalLink className="h-3 w-3" />}
         </Badge>
       </span>
       {canUnlink ? (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Badge
-              data-testid="milestone-source-badge"
-              variant="outline"
-              role={safeExternalUrl ? "link" : undefined}
-              title={safeExternalUrl ? t("sync.openInJira") : badgeLabel}
-              aria-label={badgeLabel}
-              className={`text-xs max-w-full gap-1 whitespace-nowrap group cursor-pointer hover:bg-secondary/80`}
-            >
-              {badgeSegments}
-            </Badge>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent
-            align="start"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <DropdownMenuItem
-              disabled={!safeExternalUrl}
-              className="gap-1"
-              onClick={openInTracker}
-              data-testid="milestone-source-menu-open"
-            >
-              <ExternalLink className="h-4 w-4" />
-              {t("sync.openInJira")}
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              className="gap-1 text-destructive focus:text-destructive"
-              onClick={() => setConfirmOpen(true)}
-              data-testid="milestone-source-menu-unlink"
-            >
-              <Unlink className="h-4 w-4" />
-              {t("sync.unlinkMenuItem", { provider })}
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <SourceBadgeWithUnlinkMenu
+          milestone={milestone}
+          projectId={projectId}
+          canOpenInTracker={Boolean(trackerUrl)}
+          onOpenInTracker={openInTracker}
+          renderBadge={renderBadge}
+        />
       ) : (
-        <Badge
-          data-testid="milestone-source-badge"
-          variant="outline"
-          role={safeExternalUrl ? "link" : undefined}
-          title={safeExternalUrl ? t("sync.openInJira") : badgeLabel}
-          aria-label={badgeLabel}
-          className={`text-xs max-w-full gap-1 whitespace-nowrap group ${
-            safeExternalUrl
-              ? "cursor-pointer hover:bg-secondary/80"
-              : "cursor-default"
-          }`}
-          onClick={safeExternalUrl ? openInTracker : undefined}
-        >
-          {badgeSegments}
-        </Badge>
-      )}
-      {canUnlink && (
-        <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>
-                {t("sync.unlinkConfirmTitle")}
-              </AlertDialogTitle>
-              <AlertDialogDescription>
-                {t("sync.unlinkConfirmDescription")}
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel data-testid="milestone-source-unlink-cancel">
-                {tCommon("cancel")}
-              </AlertDialogCancel>
-              <AlertDialogAction
-                disabled={isUnlinking}
-                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                onClick={() => void handleUnlink()}
-                data-testid="milestone-source-unlink-confirm"
-              >
-                {t("sync.unlinkConfirmAction")}
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+        renderBadge(false)
       )}
     </span>
   );

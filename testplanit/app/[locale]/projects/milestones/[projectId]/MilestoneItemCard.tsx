@@ -2,6 +2,7 @@
 
 import { DateTextDisplay } from "@/components/DateTextDisplay";
 import { RecordKeyMenuItem } from "@/components/RecordKeyMenuItem";
+import { MilestoneForecastChips } from "@/components/MilestoneForecastChips";
 import { MilestoneSummary } from "@/components/MilestoneSummary";
 import { CalendarDisplay } from "@/components/DateCalendarDisplay";
 import DynamicIcon from "@/components/DynamicIcon";
@@ -272,6 +273,15 @@ const MilestoneItemCard: React.FC<MilestoneItemCardProps> = ({
             </DropdownMenu>
           )
         }
+        chips={[
+          {
+            key: "forecast",
+            // Two short durations, and the only place the milestone's
+            // outstanding effort appears in a list — it stays at every width.
+            tier: "base",
+            content: <MilestoneForecastChips milestoneId={milestone.id} />,
+          },
+        ]}
         progress={
           <MilestoneSummary milestoneId={milestone.id} projectId={projectId} />
         }

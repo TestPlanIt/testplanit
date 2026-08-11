@@ -34,6 +34,12 @@ vi.mock("@/components/MilestoneSummary", () => ({
   ),
 }));
 
+vi.mock("@/components/MilestoneForecastChips", () => ({
+  MilestoneForecastChips: ({ milestoneId }: any) => (
+    <div data-testid="milestone-forecast" data-milestone={milestoneId} />
+  ),
+}));
+
 vi.mock("~/components/LoadingSpinner", () => ({
   default: ({ className }: any) => (
     <span data-testid="loading-spinner" className={className} />
@@ -313,6 +319,22 @@ describe("MilestoneItemCard", () => {
       );
       const summary = screen.getByTestId("milestone-summary");
       expect(summary.getAttribute("data-milestone")).toBe("99");
+    });
+
+    it("renders the remaining-effort forecast for the milestone", () => {
+      const milestone = createMilestone({ id: 99 });
+      const cbs = mockCallbacks();
+      render(
+        <MilestoneItemCard
+          milestone={milestone}
+          session={adminSession}
+          colorMap={mockColorMap}
+          theme="light"
+          {...cbs}
+        />
+      );
+      const forecast = screen.getByTestId("milestone-forecast");
+      expect(forecast.getAttribute("data-milestone")).toBe("99");
     });
   });
 

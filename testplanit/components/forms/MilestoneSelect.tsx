@@ -1,5 +1,5 @@
 import DynamicIcon from "@/components/DynamicIcon";
-import { MilestoneSourceIcon } from "@/components/MilestoneSourceIcon";
+import { MilestoneSourceBadge } from "@/components/MilestoneSourceBadge";
 import { AsyncCombobox } from "@/components/ui/async-combobox";
 import { useTranslations } from "next-intl";
 import React from "react";
@@ -15,10 +15,13 @@ export const transformMilestones = (
     };
     parentId: number | null;
     // Tracker-linkage fields (optional — options without them just don't
-    // show the source icon).
+    // show the source badge, or show it with fewer segments).
     integrationId?: number | null;
     externalKind?: string | null;
+    externalState?: string | null;
+    externalUrl?: string | null;
     detachedAt?: Date | string | null;
+    mergedToExternalId?: string | null;
   }[]
 ) => {
   return (
@@ -33,7 +36,10 @@ export const transformMilestones = (
       parentId: milestone.parentId,
       integrationId: milestone.integrationId,
       externalKind: milestone.externalKind,
+      externalState: milestone.externalState,
+      externalUrl: milestone.externalUrl,
       detachedAt: milestone.detachedAt,
+      mergedToExternalId: milestone.mergedToExternalId,
     })) || []
   );
 };
@@ -47,7 +53,10 @@ interface MilestoneSelectOption {
   parentId: number | null;
   integrationId?: number | null;
   externalKind?: string | null;
+  externalState?: string | null;
+  externalUrl?: string | null;
   detachedAt?: Date | string | null;
+  mergedToExternalId?: string | null;
   /** Nesting depth while browsing the tree; absent/0 for search results and
    *  the trigger's selected-value rendering. */
   level?: number;
@@ -80,13 +89,19 @@ const flattenMilestoneTree = (
     ]);
 };
 
+/**
+ * The source badge here is decoration, not a control: the option's own click
+ * has to select the milestone, and on the trigger it would nest a menu inside
+ * a button. `interactive={false}` keeps the segments and their collapse while
+ * dropping the menu and the tracker link.
+ */
 const MilestoneOptionContent = ({
   milestone,
 }: {
   milestone: MilestoneSelectOption;
 }) => (
   <div
-    className="flex min-w-0 items-center gap-1"
+    className="flex min-w-0 flex-1 items-center gap-1"
     style={
       milestone.level
         ? { paddingInlineStart: `${milestone.level * 20}px` }
@@ -100,7 +115,18 @@ const MilestoneOptionContent = ({
       />
     )}
     <span className="truncate">{milestone.label}</span>
-    <MilestoneSourceIcon milestone={milestone} />
+    <MilestoneSourceBadge
+      milestone={{
+        id: Number(milestone.value),
+        integrationId: milestone.integrationId ?? null,
+        externalKind: milestone.externalKind ?? null,
+        externalState: milestone.externalState ?? null,
+        externalUrl: milestone.externalUrl ?? null,
+        detachedAt: milestone.detachedAt ?? null,
+        mergedToExternalId: milestone.mergedToExternalId ?? null,
+      }}
+      interactive={false}
+    />
   </div>
 );
 

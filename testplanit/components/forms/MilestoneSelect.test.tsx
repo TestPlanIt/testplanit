@@ -86,6 +86,29 @@ describe("transformMilestones utility", () => {
     const result = transformMilestones(input);
     expect(result[0].milestoneType?.icon).toBeNull();
   });
+
+  it("carries every tracker-linkage field the source badge renders", () => {
+    const result = transformMilestones([
+      {
+        id: 1,
+        name: "Sprint 1",
+        parentId: null,
+        integrationId: 9,
+        externalKind: "ITERATION",
+        externalState: "active",
+        externalUrl: "https://jira.example.com/browse/ABT-1",
+        detachedAt: null,
+        mergedToExternalId: null,
+      },
+    ]);
+
+    expect(result[0]).toMatchObject({
+      integrationId: 9,
+      externalKind: "ITERATION",
+      externalState: "active",
+      externalUrl: "https://jira.example.com/browse/ABT-1",
+    });
+  });
 });
 
 describe("MilestoneSelect", () => {
@@ -190,6 +213,33 @@ describe("MilestoneSelect", () => {
     });
     expect(screen.queryByText("Sprint 2")).toBeNull();
     expect(screen.getByText("Sub Milestone")).toBeInTheDocument();
+  });
+
+  it("marks synced options with the tracker source badge, and leaves local ones bare", async () => {
+    render(
+      <MilestoneSelect
+        value={null}
+        onChange={vi.fn()}
+        milestones={[
+          {
+            value: "1",
+            label: "Sprint 1",
+            parentId: null,
+            integrationId: 9,
+            externalKind: "ITERATION",
+            externalState: "active",
+          },
+          { value: "2", label: "Sprint 2", parentId: null },
+        ]}
+      />
+    );
+
+    fireEvent.click(screen.getByRole("combobox"));
+    await waitFor(() => {
+      expect(screen.getByText("Sprint 1")).toBeInTheDocument();
+    });
+
+    expect(screen.getAllByTestId("milestone-source-badge")).toHaveLength(1);
   });
 
   it("selecting an option calls onChange with its value and closes", async () => {
