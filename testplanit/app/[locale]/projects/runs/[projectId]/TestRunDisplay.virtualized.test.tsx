@@ -187,6 +187,26 @@ describe("TestRunDisplay tile windowing", () => {
     expect(screen.getByTestId("stub-run-5")).toBeInTheDocument();
   });
 
+  it("windows the flat list the all-completed view falls back to", () => {
+    hookMock.window = [0, 1, 2];
+    const completed = makeRuns(40).map((run) => ({
+      ...run,
+      isCompleted: true,
+      completedAt: new Date("2026-02-01T00:00:00Z"),
+    }));
+    render(<TestRunDisplay testRuns={completed} milestones={[]} />);
+
+    // This view returns early, before the milestone grouping runs at all.
+    expect(
+      screen.queryByTestId("unscheduled-test-runs-list")
+    ).not.toBeInTheDocument();
+    expect(screen.getByTestId("completed-test-runs-list").className).toContain(
+      "overflow-auto"
+    );
+    expect(screen.getByTestId("stub-run-3")).toBeInTheDocument();
+    expect(screen.queryByTestId("stub-run-4")).not.toBeInTheDocument();
+  });
+
   it("keeps a row selected after it scrolls out of the window", () => {
     hookMock.window = [0, 1, 2];
     const runs = makeRuns(40);

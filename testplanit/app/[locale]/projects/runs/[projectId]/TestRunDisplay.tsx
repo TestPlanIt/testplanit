@@ -851,25 +851,32 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
       <div className="flex flex-col items-center w-full">
         <div className="w-full">
           {bulkBar}
-          {sortedCompletedTestRuns.map((testRun) => (
-            <TestRunItem
-              key={testRun.id}
-              selectable={bulkSelectable}
-              selected={selectedRunIds.has(testRun.id)}
-              onSelectedChange={(checked) =>
-                toggleRunSelected(testRun.id, checked)
-              }
-              testRun={testRun}
-              onDuplicate={onDuplicateTestRun}
-              summaryData={batchSummaries?.summaries[testRun.id]}
-              summaryLoading={isBatchSummariesLoading}
-              pendingRequest={pendingByTestRunId.get(testRun.id)}
-              // Completed runs render as a flat list (not grouped by
-              // milestone), so the milestone is shown here — unlike the
-              // active tab's grouped view, where it would be redundant.
-              showMilestone={true}
-            />
-          ))}
+          {/* space-y-0: the rows carry their own my-2, so the list's default
+              vertical rhythm would double the gap. */}
+          <VirtualizedCardList
+            items={sortedCompletedTestRuns}
+            getKey={(testRun) => testRun.id}
+            className="space-y-0"
+            data-testid="completed-test-runs-list"
+            renderItem={(testRun) => (
+              <TestRunItem
+                selectable={bulkSelectable}
+                selected={selectedRunIds.has(testRun.id)}
+                onSelectedChange={(checked) =>
+                  toggleRunSelected(testRun.id, checked)
+                }
+                testRun={testRun}
+                onDuplicate={onDuplicateTestRun}
+                summaryData={batchSummaries?.summaries[testRun.id]}
+                summaryLoading={isBatchSummariesLoading}
+                pendingRequest={pendingByTestRunId.get(testRun.id)}
+                // Completed runs render as a flat list (not grouped by
+                // milestone), so the milestone is shown here — unlike the
+                // active tab's grouped view, where it would be redundant.
+                showMilestone={true}
+              />
+            )}
+          />
         </div>
         {bulkDialogs}
       </div>
