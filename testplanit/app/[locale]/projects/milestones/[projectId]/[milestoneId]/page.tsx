@@ -96,6 +96,7 @@ import {
   ColorMap,
   createColorMap,
   MilestonesWithTypes,
+  sortMilestones,
 } from "~/utils/milestoneUtils";
 import { CompleteMilestoneDialog } from "../../CompleteMilestoneDialog";
 import { DeleteMilestoneModal } from "../DeleteMilestoneModal";
@@ -798,33 +799,29 @@ export default function MilestoneDetailsPage() {
     parentId: number,
     level: number = 0
   ): React.ReactNode[] => {
-    return milestones
-      .filter((m) => m.parentId === parentId)
-      .map((currentChildMilestone) => (
-        <React.Fragment key={currentChildMilestone.id}>
-          <MilestoneItemCard
-            milestone={currentChildMilestone}
-            projectId={Number(projectId)}
-            integrationProjects={milestoneIntegrationProjects}
-            theme={resolvedTheme}
-            colorMap={colorMap}
-            session={sessionAuth}
-            level={level}
-            isParentCompleted={isParentCompleted}
-            onOpenCompleteDialog={handleOpenChildCompleteDialog}
-            onStartMilestone={handleStartChildMilestone}
-            onStopMilestone={handleStopChildMilestone}
-            onReopenMilestone={handleReopenChildMilestone}
-            onOpenEditModal={handleOpenChildEditModal}
-            onOpenDeleteModal={handleOpenChildDeleteModal}
-          />
-          {renderChildMilestones(
-            milestones,
-            currentChildMilestone.id,
-            level + 1
-          )}
-        </React.Fragment>
-      ));
+    return sortMilestones(
+      milestones.filter((m) => m.parentId === parentId)
+    ).map((currentChildMilestone) => (
+      <React.Fragment key={currentChildMilestone.id}>
+        <MilestoneItemCard
+          milestone={currentChildMilestone}
+          projectId={Number(projectId)}
+          integrationProjects={milestoneIntegrationProjects}
+          theme={resolvedTheme}
+          colorMap={colorMap}
+          session={sessionAuth}
+          level={level}
+          isParentCompleted={isParentCompleted}
+          onOpenCompleteDialog={handleOpenChildCompleteDialog}
+          onStartMilestone={handleStartChildMilestone}
+          onStopMilestone={handleStopChildMilestone}
+          onReopenMilestone={handleReopenChildMilestone}
+          onOpenEditModal={handleOpenChildEditModal}
+          onOpenDeleteModal={handleOpenChildDeleteModal}
+        />
+        {renderChildMilestones(milestones, currentChildMilestone.id, level + 1)}
+      </React.Fragment>
+    ));
   };
 
   const handleCompleteSession = (testSession: any) => {
