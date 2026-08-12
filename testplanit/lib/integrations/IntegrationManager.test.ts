@@ -841,18 +841,19 @@ describe("IntegrationManager", () => {
       expect(decrypt).toHaveBeenCalledWith("encrypted-credentials-string");
     });
 
-    it("refuses to build an adapter when a stored secret is cleartext", async () => {
-      vi.mocked(isEncrypted).mockReturnValue(false);
+    it("refuses to build an adapter when a stored secret will not decrypt", async () => {
+      vi.mocked(isEncrypted).mockReturnValue(true);
+      vi.mocked(decrypt).mockRejectedValue(new Error("Failed to decrypt data"));
 
       mockPrisma.integration.findUnique.mockResolvedValue({
         id: 6,
-        name: "Jira Cleartext",
+        name: "Jira Corrupt",
         provider: "JIRA",
         status: "ACTIVE",
         authType: "API_KEY",
         credentials: {
           email: "test@example.com",
-          apiToken: "cleartext-token",
+          apiToken: "looks-encrypted-but-is-not",
         },
         settings: { baseUrl: "https://test.atlassian.net" },
         userIntegrationAuths: [],
@@ -867,8 +868,33 @@ describe("IntegrationManager", () => {
       );
 
       expect(error?.kind).toBe("credentials_corrupt");
-      // The credential is never forwarded to the provider.
+      // The unreadable credential is never forwarded to the provider.
       expect(mockFetch).not.toHaveBeenCalled();
+    });
+
+    it("builds an adapter from cleartext credentials, which the admin UI writes", async () => {
+      vi.mocked(isEncrypted).mockReturnValue(false);
+
+      mockPrisma.integration.findUnique.mockResolvedValue({
+        id: 7,
+        name: "Jira Cleartext",
+        provider: "JIRA",
+        status: "ACTIVE",
+        authType: "API_KEY",
+        credentials: {
+          email: "test@example.com",
+          apiToken: "cleartext-token",
+        },
+        settings: { baseUrl: "https://test.atlassian.net" },
+        userIntegrationAuths: [],
+      });
+
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ accountId: "test-user" }),
+      });
+
+      expect(await manager.getAdapter("7")).toBeTruthy();
     });
   });
 
