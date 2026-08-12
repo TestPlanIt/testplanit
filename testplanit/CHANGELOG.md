@@ -1,3 +1,9 @@
+## [0.44.3](https://github.com/TestPlanIt/testplanit/compare/v0.44.2...v0.44.3) (2026-08-12)
+
+### Bug Fixes
+
+* **integrations:** accept cleartext credentials, refuse only undecryptable ones ([#583](https://github.com/TestPlanIt/testplanit/issues/583)) ([8c38285](https://github.com/TestPlanIt/testplanit/commit/8c38285a6968987755a852d931c7ac8981f4539a))
+
 ## [0.44.2](https://github.com/TestPlanIt/testplanit/compare/v0.44.1...v0.44.2) (2026-08-12)
 
 ### Bug Fixes
