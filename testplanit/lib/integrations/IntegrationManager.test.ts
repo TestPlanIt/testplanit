@@ -14,11 +14,17 @@ vi.mock("@/lib/prismaBase", () => ({
 }));
 
 // Mock encryption
+// Identity crypto: fixtures store credential values verbatim, so the tests
+// exercise adapter wiring rather than the cipher. `isEncrypted` reports true
+// for the same reason — refusal of cleartext secrets is covered against the
+// real implementation in credentials.test.ts.
 vi.mock("@/utils/encryption", () => ({
   EncryptionService: {
     decrypt: vi.fn((encrypted: string) => encrypted),
   },
   getMasterKey: vi.fn(() => "test-master-key"),
+  decrypt: vi.fn(async (encrypted: string) => encrypted),
+  isEncrypted: vi.fn(() => true),
 }));
 
 // Mock AuthenticationService so token persistence during refresh is observable
@@ -31,7 +37,7 @@ vi.mock("./AuthenticationService", () => ({
 
 // Get the mocked prisma
 import { prisma } from "@/lib/prismaBase";
-import { EncryptionService } from "@/utils/encryption";
+import { EncryptionService, decrypt, isEncrypted } from "@/utils/encryption";
 import { AuthenticationService } from "./AuthenticationService";
 
 const mockPrisma = prisma as unknown as {
@@ -45,6 +51,10 @@ describe("IntegrationManager", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    // clearAllMocks resets calls but not implementations, so re-assert the
+    // identity crypto defaults for tests that override them.
+    vi.mocked(decrypt).mockImplementation(async (v: string) => v);
+    vi.mocked(isEncrypted).mockReturnValue(true);
     // Get fresh instance and clear any cached state
     manager = IntegrationManager.getInstance();
     manager.clearAllAdapters();
@@ -106,7 +116,7 @@ describe("IntegrationManager", () => {
   describe("buildAdapterConfig (OAuth)", () => {
     it("decrypts per-integration OAuth client credentials and computes the redirect URI", async () => {
       vi.stubEnv("NEXTAUTH_URL", "https://app.example.com");
-      vi.mocked(EncryptionService.decrypt).mockReturnValue(
+      vi.mocked(decrypt).mockResolvedValue(
         JSON.stringify({ clientId: "gh-client", clientSecret: "gh-secret" })
       );
 
@@ -813,7 +823,7 @@ describe("IntegrationManager", () => {
 
       mockPrisma.integration.findUnique.mockResolvedValue(mockIntegration);
 
-      vi.mocked(EncryptionService.decrypt).mockReturnValue(
+      vi.mocked(decrypt).mockResolvedValue(
         JSON.stringify({
           email: "test@example.com",
           apiToken: "decrypted-token",
@@ -828,10 +838,37 @@ describe("IntegrationManager", () => {
 
       await manager.getAdapter("5");
 
-      expect(EncryptionService.decrypt).toHaveBeenCalledWith(
-        "encrypted-credentials-string",
-        "test-master-key"
+      expect(decrypt).toHaveBeenCalledWith("encrypted-credentials-string");
+    });
+
+    it("refuses to build an adapter when a stored secret is cleartext", async () => {
+      vi.mocked(isEncrypted).mockReturnValue(false);
+
+      mockPrisma.integration.findUnique.mockResolvedValue({
+        id: 6,
+        name: "Jira Cleartext",
+        provider: "JIRA",
+        status: "ACTIVE",
+        authType: "API_KEY",
+        credentials: {
+          email: "test@example.com",
+          apiToken: "cleartext-token",
+        },
+        settings: { baseUrl: "https://test.atlassian.net" },
+        userIntegrationAuths: [],
+      });
+
+      const mockFetch = vi.fn();
+      global.fetch = mockFetch;
+
+      const error = await manager.getAdapter("6").then(
+        () => null,
+        (e) => e
       );
+
+      expect(error?.kind).toBe("credentials_corrupt");
+      // The credential is never forwarded to the provider.
+      expect(mockFetch).not.toHaveBeenCalled();
     });
   });
 
