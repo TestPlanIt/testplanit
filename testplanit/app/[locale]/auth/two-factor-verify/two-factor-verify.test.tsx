@@ -87,10 +87,24 @@ describe("TwoFactorVerifyPage", () => {
     global.fetch = mockFetch as any;
   });
 
-  afterEach(() => {
-    // input-otp sets internal timers that fire after the jsdom environment
-    // tears down, causing "window is not defined" errors in parallel runs.
+  afterEach(async () => {
+    // input-otp schedules THREE timeouts (0ms, 10ms and 50ms — its `ht` helper)
+    // from inside a useEffect, discards their ids, and returns no cleanup for
+    // them, so nothing in the library or in cleanup() can cancel them. Each one
+    // dispatches a React state update.
+    //
+    // Unmounting alone therefore isn't enough: in a full-suite run the pending
+    // timers can fire AFTER this file's jsdom environment is torn down, and
+    // react-dom throws "ReferenceError: window is not defined". Vitest reports
+    // that as an unhandled error and fails the entire run even when every test
+    // passed — and because it depends on teardown timing, the number of errors
+    // varied between runs (2-3), which is what made it look intermittent.
+    //
+    // So: unmount first, then stay alive past the longest timer so all three
+    // fire while `window` still exists. A state update on an unmounted
+    // component is a no-op, so they land harmlessly.
     cleanup();
+    await new Promise((resolve) => setTimeout(resolve, 60));
   });
 
   it("renders OTP input slots for 6-digit code entry", () => {
