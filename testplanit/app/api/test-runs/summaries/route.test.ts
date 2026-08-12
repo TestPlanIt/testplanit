@@ -183,6 +183,32 @@ describe("Test Run Summaries (Batch) API Route", () => {
       expect(Object.keys(data.summaries).length).toBeGreaterThan(0);
     });
 
+    it("returns each run's execution window, null where there are no results", async () => {
+      (baseDb.$queryRaw as any)
+        .mockResolvedValueOnce([]) // comments counts
+        .mockResolvedValueOnce(mockStatusCounts) // status counts
+        .mockResolvedValueOnce([]) // elapsed
+        .mockResolvedValueOnce([]) // estimates
+        .mockResolvedValueOnce([]) // case details
+        .mockResolvedValueOnce([
+          {
+            testRunId: 1,
+            firstResultAt: new Date("2026-07-16T10:00:00.000Z"),
+            lastResultAt: new Date("2026-07-22T15:30:00.000Z"),
+          },
+        ]); // result windows — run 2 has no results
+
+      const request = createRequest({ testRunIds: "1,2" });
+      const response = await GET(request);
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(data.summaries[1].firstResultAt).toBe("2026-07-16T10:00:00.000Z");
+      expect(data.summaries[1].lastResultAt).toBe("2026-07-22T15:30:00.000Z");
+      expect(data.summaries[2].firstResultAt).toBeNull();
+      expect(data.summaries[2].lastResultAt).toBeNull();
+    });
+
     it("parses comma-separated test run IDs correctly", async () => {
       const request = createRequest({ testRunIds: "1, 2, 3" });
       await GET(request);

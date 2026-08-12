@@ -43,6 +43,7 @@ import { useParams } from "next/navigation";
 import React, { useState } from "react";
 import type { TestRunSummaryData } from "~/app/api/test-runs/[testRunId]/summary/route";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
+import { useTestRunResultWindow } from "~/hooks/useResultWindow";
 import { useRouter } from "~/lib/navigation";
 import type { IconName } from "~/types/globals";
 import { isAutomatedTestRunType } from "~/utils/testResultTypes";
@@ -155,6 +156,15 @@ const TestRunItem: React.FC<TestRunItemProps> = ({
   const isRecentlyCreated =
     !!testRun.createdAt &&
     Date.now() - new Date(testRun.createdAt).getTime() < 5 * 60 * 1000;
+
+  // Execution window, read from the same summary the progress bar renders —
+  // whether the page batch-fetched it or the bar fetches it per row.
+  const { startDate, endDate } = useTestRunResultWindow({
+    testRunId: testRun.id,
+    isCompleted: testRun.isCompleted,
+    summary: summaryData,
+    enabled: !summaryLoading,
+  });
 
   // Contributor lookup for the MemberList: only assignee/executor ids+names.
   // A narrow select, NOT include — full case + result rows per run made this
@@ -341,6 +351,27 @@ const TestRunItem: React.FC<TestRunItemProps> = ({
           },
         ]}
         identityChips={[
+          startDate && {
+            // Pinned, so it renders after the shrinking chips and immediately
+            // before the state badge. A clipped date range is unreadable, so
+            // it collapses whole once the row is too narrow to seat it; the
+            // year drops first, below @2xl.
+            key: "dates",
+            tier: "md",
+            pinned: true,
+            content: (
+              <span className="whitespace-nowrap text-sm">
+                <DateTextDisplay
+                  responsive
+                  startDate={startDate}
+                  endDate={endDate}
+                  // A lone start date reads as a bare timestamp; a range
+                  // doesn't need telling.
+                  startLabel={endDate ? undefined : tCommon("fields.started")}
+                />
+              </span>
+            ),
+          },
           testRun.configuration && {
             key: "configuration",
             tier: "md",
@@ -434,16 +465,6 @@ const TestRunItem: React.FC<TestRunItemProps> = ({
               key: "milestone",
               tier: "lg",
               content: <MilestoneIconAndName milestone={testRun.milestone} />,
-            },
-          testRun.isCompleted &&
-            testRun.completedAt && {
-              key: "completed",
-              content: (
-                <DateTextDisplay
-                  endDate={new Date(testRun.completedAt)}
-                  isCompleted={true}
-                />
-              ),
             },
         ]}
         metaTrailing={[

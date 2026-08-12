@@ -37,6 +37,7 @@ import { useParams } from "next/navigation";
 import React from "react";
 import { SessionResultsSummary } from "~/components/SessionResultsSummary";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
+import { useSessionResultWindow } from "~/hooks/useResultWindow";
 import { useRouter } from "~/lib/navigation";
 import type { IconName } from "~/types/globals";
 import { RecordKeyMenuItem } from "@/components/RecordKeyMenuItem";
@@ -142,6 +143,12 @@ const SessionItem = <T extends SessionItemData>({
     !!testSession.createdAt &&
     Date.now() - new Date(testSession.createdAt).getTime() < 5 * 60 * 1000;
 
+  // Execution window, read from the same summary the results bar below renders.
+  const { startDate, endDate } = useSessionResultWindow({
+    sessionId: testSession.id,
+    isCompleted: testSession.isCompleted,
+  });
+
   // Transform state data to match WorkflowStateDisplay expectations
   const workflowState = {
     state: {
@@ -237,6 +244,27 @@ const SessionItem = <T extends SessionItemData>({
         },
       ]}
       identityChips={[
+        startDate && {
+          // Pinned, so it renders after the shrinking chips and immediately
+          // before the state badge. A clipped date range is unreadable, so it
+          // collapses whole once the row is too narrow to seat it; the year
+          // drops first, below @2xl.
+          key: "dates",
+          tier: "md",
+          pinned: true,
+          content: (
+            <span className="whitespace-nowrap text-sm">
+              <DateTextDisplay
+                responsive
+                startDate={startDate}
+                endDate={endDate}
+                // A lone start date reads as a bare timestamp; a range doesn't
+                // need telling.
+                startLabel={endDate ? undefined : t("common.fields.started")}
+              />
+            </span>
+          ),
+        },
         testSession.configuration && {
           key: "configuration",
           tier: "md",
@@ -327,16 +355,6 @@ const SessionItem = <T extends SessionItemData>({
             key: "milestone",
             tier: "lg",
             content: <MilestoneIconAndName milestone={testSession.milestone} />,
-          },
-        isCompleted &&
-          testSession.completedAt && {
-            key: "completed",
-            content: (
-              <DateTextDisplay
-                endDate={new Date(testSession.completedAt)}
-                isCompleted={true}
-              />
-            ),
           },
       ]}
       metaTrailing={[

@@ -335,6 +335,7 @@
       "fieldType": "Alan Türü",
       "templates": "Şablonlar",
       "started": "Başladı",
+      "ended": "Bitti",
       "startDate": "Başlangıç Tarihi",
       "automated": "Otomatik",
       "manual": "Manuel",

@@ -335,6 +335,7 @@
       "fieldType": "Tipo de campo",
       "templates": "Plantillas",
       "started": "Iniciado",
+      "ended": "Finalizado",
       "startDate": "Fecha de inicio",
       "automated": "Automatizado",
       "manual": "Manual",

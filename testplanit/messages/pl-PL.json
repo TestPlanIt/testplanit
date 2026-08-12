@@ -335,6 +335,7 @@
       "fieldType": "Typ pola",
       "templates": "Szablony",
       "started": "Rozpoczęto",
+      "ended": "Zakończono",
       "startDate": "Data rozpoczęcia",
       "automated": "Zautomatyzowany",
       "manual": "Podręcznik",

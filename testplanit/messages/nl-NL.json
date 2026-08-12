@@ -335,6 +335,7 @@
       "fieldType": "Veldtype",
       "templates": "Sjablonen",
       "started": "Begonnen",
+      "ended": "Beëindigd",
       "startDate": "Startdatum",
       "automated": "Geautomatiseerd",
       "manual": "Handmatig",

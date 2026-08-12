@@ -160,6 +160,16 @@ describe("Session Summary API Route", () => {
       expect(data).toHaveProperty("resultIssues");
     });
 
+    it("returns the execution window from the earliest and latest result", async () => {
+      const [request, context] = createRequest();
+      const response = await GET(request, context);
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(data.firstResultAt).toBe("2024-01-01T10:00:00.000Z");
+      expect(data.lastResultAt).toBe("2024-01-01T10:05:00.000Z");
+    });
+
     it("calculates totalElapsed from all results", async () => {
       const [request, context] = createRequest();
       const response = await GET(request, context);
@@ -260,6 +270,8 @@ describe("Session Summary API Route", () => {
       expect(response.status).toBe(200);
       expect(data.results).toHaveLength(0);
       expect(data.totalElapsed).toBe(0);
+      expect(data.firstResultAt).toBeNull();
+      expect(data.lastResultAt).toBeNull();
     });
   });
 

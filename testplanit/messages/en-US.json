@@ -335,6 +335,7 @@
       "fieldType": "Field Type",
       "templates": "Templates",
       "started": "Started",
+      "ended": "Ended",
       "startDate": "Start Date",
       "automated": "Automated",
       "manual": "Manual",

@@ -28,6 +28,7 @@ import { notifySessionAssignment } from "~/app/actions/session-notifications";
 import { searchProjectMembers } from "~/app/actions/searchProjectMembers";
 import { CommentsSection } from "~/components/comments/CommentsSection";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
+import { useSessionResultWindow } from "~/hooks/useResultWindow";
 
 import { ConfigurationNameDisplay } from "@/components/ConfigurationNameDisplay";
 import { ConfigurationSelect } from "@/components/forms/ConfigurationSelect";
@@ -35,6 +36,7 @@ import { AsyncCombobox } from "@/components/ui/async-combobox";
 import { AttachmentsCarousel } from "@/components/AttachmentsCarousel";
 import { AttachmentsDisplay } from "@/components/AttachmentsDisplay";
 import { CreationInfo } from "@/components/CreationInfo";
+import { ResultDatesInfo } from "@/components/ResultDatesInfo";
 import { DateFormatter } from "@/components/DateFormatter";
 import DynamicIcon from "@/components/DynamicIcon";
 import { ForecastDisplay } from "@/components/ForecastDisplay";
@@ -333,6 +335,13 @@ function SessionFormControls({
 
   const locale = useLocale();
   const { setValue } = useFormContext<FormValues>();
+
+  // Execution window, read from the summary the results panel already holds.
+  // Called above the early return so the hook order stays stable.
+  const { startDate, endDate } = useSessionResultWindow({
+    sessionId: testSession?.id ?? 0,
+    isCompleted: !!testSession?.isCompleted,
+  });
 
   if (!testSession) return null;
 
@@ -810,13 +819,20 @@ function SessionFormControls({
         }}
       />
 
-      {/* Created By - only shown in view mode */}
+      {/* Execution dates + Created By - only shown in view mode */}
       {!isEditMode && (
-        <CreationInfo
-          userId={testSession?.createdBy.id}
-          createdAt={testSession?.createdAt}
-          className="w-fit"
-        />
+        <>
+          <ResultDatesInfo
+            startDate={startDate}
+            endDate={endDate}
+            className="w-fit"
+          />
+          <CreationInfo
+            userId={testSession?.createdBy.id}
+            createdAt={testSession?.createdAt}
+            className="w-fit"
+          />
+        </>
       )}
     </div>
   );

@@ -335,6 +335,7 @@
       "fieldType": "نوع الحقل",
       "templates": "القوالب",
       "started": "بدأ",
+      "ended": "انتهى",
       "startDate": "تاريخ البدء",
       "automated": "مؤتمت",
       "manual": "يدوي",

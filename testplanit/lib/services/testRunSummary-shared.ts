@@ -16,6 +16,14 @@ export type TestRunSummaryData = {
    *  to stop the "importing" spinner on runs that have gone quiet. Only the
    *  batch summaries endpoint populates it. */
   lastActivityAt?: string | null;
+  /** Earliest recorded result for the run (ISO string), or null on a run
+   *  nobody has executed yet. The run's start date is derived from execution,
+   *  not from when the run was created. */
+  firstResultAt?: string | null;
+  /** Latest recorded result (ISO string). Callers show it as the run's end
+   *  date only once the run is completed — on an open run the newest result
+   *  is just the last thing that happened, not an ending. */
+  lastResultAt?: string | null;
   totalCases: number;
   statusCounts: Array<{
     statusId: number | null;

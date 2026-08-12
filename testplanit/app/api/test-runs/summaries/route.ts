@@ -307,6 +307,28 @@ async function getBatchRegularRunSummaries(
     ORDER BY trc."testRunId", trc."order" ASC
   `;
 
+  // Execution window per run: earliest and latest result. Results on a
+  // soft-deleted case are excluded, same as the elapsed total above.
+  const resultWindows = await baseDb.$queryRaw<
+    Array<{
+      testRunId: number;
+      firstResultAt: Date | null;
+      lastResultAt: Date | null;
+    }>
+  >`
+    SELECT
+      trc."testRunId",
+      MIN(trr."executedAt") as "firstResultAt",
+      MAX(trr."executedAt") as "lastResultAt"
+    FROM "TestRunResults" trr
+    JOIN "TestRunCases" trc ON trr."testRunCaseId" = trc.id
+    WHERE trc."testRunId" = ANY(${testRunIds})
+      AND trc."isDeleted" = false
+      AND trr."isDeleted" = false
+    GROUP BY trc."testRunId"
+  `;
+  const resultWindowMap = new Map(resultWindows.map((r) => [r.testRunId, r]));
+
   // Get forecasts for test runs
   const testRuns = await baseDb.testRuns.findMany({
     where: { id: { in: testRunIds } },
@@ -383,7 +405,11 @@ async function getBatchRegularRunSummaries(
 
     const caseDetailsForRun = caseDetailsByRun.get(testRunId) || [];
 
+    const resultWindow = resultWindowMap.get(testRunId);
+
     summaries.set(testRunId, {
+      firstResultAt: resultWindow?.firstResultAt?.toISOString() ?? null,
+      lastResultAt: resultWindow?.lastResultAt?.toISOString() ?? null,
       totalCases,
       statusCounts: statusCountsForRun,
       completionRate,
@@ -462,6 +488,27 @@ async function getBatchJUnitRunSummaries(
   const timeMap = new Map(
     timeResults.map((r) => [r.testRunId, Number(r.totalTime || 0)])
   );
+
+  // Execution window. A reporter only sometimes sends `executedAt`, so fall
+  // back to the import time — an automated run with no timestamps at all would
+  // otherwise show no start date.
+  const resultWindows = await baseDb.$queryRaw<
+    Array<{
+      testRunId: number;
+      firstResultAt: Date | null;
+      lastResultAt: Date | null;
+    }>
+  >`
+    SELECT
+      jts."testRunId",
+      MIN(COALESCE(jtr."executedAt", jtr."createdAt")) as "firstResultAt",
+      MAX(COALESCE(jtr."executedAt", jtr."createdAt")) as "lastResultAt"
+    FROM "JUnitTestResult" jtr
+    JOIN "JUnitTestSuite" jts ON jtr."testSuiteId" = jts.id
+    WHERE jts."testRunId" = ANY(${testRunIds})
+    GROUP BY jts."testRunId"
+  `;
+  const resultWindowMap = new Map(resultWindows.map((r) => [r.testRunId, r]));
 
   // Group aggregates by test run
   const aggregatesByRun = new Map<
@@ -591,7 +638,11 @@ async function getBatchJUnitRunSummaries(
     const completionRate =
       totalTests > 0 ? Math.min((completedTests / totalTests) * 100, 100) : 0;
 
+    const resultWindow = resultWindowMap.get(testRunId);
+
     summaries.set(testRunId, {
+      firstResultAt: resultWindow?.firstResultAt?.toISOString() ?? null,
+      lastResultAt: resultWindow?.lastResultAt?.toISOString() ?? null,
       totalCases: totalTests,
       statusCounts,
       completionRate,

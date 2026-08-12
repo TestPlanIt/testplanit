@@ -9,6 +9,9 @@ vi.mock("@zenstackhq/tanstack-query/react", () => ({
     testRunCases: { useFindMany: () => ({ data: [] }) },
   }),
 }));
+vi.mock("~/hooks/useResultWindow", () => ({
+  useTestRunResultWindow: () => ({ startDate: null, endDate: null }),
+}));
 vi.mock("~/hooks/useProjectPermissions", () => ({
   useProjectPermissions: () => ({
     permissions: { canAddEdit: false, canClose: false, canDelete: false },

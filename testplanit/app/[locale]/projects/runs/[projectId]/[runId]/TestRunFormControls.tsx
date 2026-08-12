@@ -4,6 +4,7 @@ import {
 } from "@/components/AttachmentsDisplay";
 import { ConfigurationNameDisplay } from "@/components/ConfigurationNameDisplay";
 import { CreationInfo } from "@/components/CreationInfo";
+import { ResultDatesInfo } from "@/components/ResultDatesInfo";
 import DynamicIcon from "@/components/DynamicIcon";
 import { ConfigurationSelect } from "@/components/forms/ConfigurationSelect";
 import { MilestoneSelect } from "@/components/forms/MilestoneSelect";
@@ -32,6 +33,7 @@ import UploadAttachments, {
 import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
 import type { Attachments, Tags } from "~/zenstack/models";
 import { useTranslations } from "next-intl";
+import { useTestRunResultWindow } from "~/hooks/useResultWindow";
 import { IconName } from "~/types/globals";
 import { SelectedConfigurationInfo } from "./TestCasesSection";
 
@@ -198,6 +200,13 @@ function TestRunFormControls({
   transitionCheck,
 }: TestRunFormControlsProps) {
   const t = useTranslations();
+
+  // Execution window, read from the summary the page's progress bar already
+  // holds. Called above the early return so the hook order stays stable.
+  const { startDate, endDate } = useTestRunResultWindow({
+    testRunId: testRun?.id ?? 0,
+    isCompleted: !!testRun?.isCompleted,
+  });
 
   if (!testRun) return null;
 
@@ -472,13 +481,20 @@ function TestRunFormControls({
           );
         }}
       />
-      {/* Created By - only shown in view mode */}
+      {/* Execution dates + Created By - only shown in view mode */}
       {!isEditMode && (
-        <CreationInfo
-          userId={testRun?.createdBy.id}
-          createdAt={testRun?.createdAt}
-          className="w-fit"
-        />
+        <>
+          <ResultDatesInfo
+            startDate={startDate}
+            endDate={endDate}
+            className="w-fit"
+          />
+          <CreationInfo
+            userId={testRun?.createdBy.id}
+            createdAt={testRun?.createdAt}
+            className="w-fit"
+          />
+        </>
       )}
     </div>
   );

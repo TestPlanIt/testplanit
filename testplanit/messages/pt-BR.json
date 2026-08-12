@@ -335,6 +335,7 @@
       "fieldType": "Tipo de campo",
       "templates": "Modelos",
       "started": "Iniciado",
+      "ended": "Encerrado",
       "startDate": "Data de início",
       "automated": "Automatizado",
       "manual": "Manual",

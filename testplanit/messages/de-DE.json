@@ -335,6 +335,7 @@
       "fieldType": "Feldtyp",
       "templates": "Vorlagen",
       "started": "Begonnen",
+      "ended": "Beendet",
       "startDate": "Startdatum",
       "automated": "Automatisiert",
       "manual": "Handbuch",

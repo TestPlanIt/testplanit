@@ -4,6 +4,9 @@ import { describe, expect, it, vi } from "vitest";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import SessionItem from "./SessionItem";
 
+vi.mock("~/hooks/useResultWindow", () => ({
+  useSessionResultWindow: () => ({ startDate: null, endDate: null }),
+}));
 vi.mock("~/hooks/useProjectPermissions", () => ({
   useProjectPermissions: () => ({
     permissions: { canAddEdit: false, canClose: false, canDelete: false },

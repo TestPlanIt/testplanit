@@ -66,6 +66,12 @@ describe("Test Run Summary API Route", () => {
   const mockElapsedResult = [{ totalElapsed: BigInt(1200) }];
   const mockEstimateResult = [{ totalEstimate: BigInt(600) }];
   const mockCommentsCount = [{ count: BigInt(2) }];
+  const mockResultWindow = [
+    {
+      firstResultAt: new Date("2026-07-16T10:00:00.000Z"),
+      lastResultAt: new Date("2026-07-22T15:30:00.000Z"),
+    },
+  ];
 
   const createRequest = (
     testRunId: string = "1",
@@ -88,7 +94,8 @@ describe("Test Run Summary API Route", () => {
       .mockResolvedValueOnce(mockCommentsCount) // comments count
       .mockResolvedValueOnce(mockStatusCounts) // status counts
       .mockResolvedValueOnce(mockElapsedResult) // elapsed
-      .mockResolvedValueOnce(mockEstimateResult); // estimate
+      .mockResolvedValueOnce(mockEstimateResult) // estimate
+      .mockResolvedValueOnce(mockResultWindow); // first/last result
   });
 
   describe("Authentication", () => {
@@ -172,6 +179,34 @@ describe("Test Run Summary API Route", () => {
 
       expect(response.status).toBe(200);
       expect(data.completionRate).toBeCloseTo(62.5, 1);
+    });
+
+    it("returns the execution window from the earliest and latest result", async () => {
+      const [request, context] = createRequest();
+      const response = await GET(request, context);
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(data.firstResultAt).toBe("2026-07-16T10:00:00.000Z");
+      expect(data.lastResultAt).toBe("2026-07-22T15:30:00.000Z");
+    });
+
+    it("returns a null execution window when the run has no results", async () => {
+      (baseDb.$queryRaw as any)
+        .mockReset()
+        .mockResolvedValueOnce(mockCommentsCount)
+        .mockResolvedValueOnce(mockStatusCounts)
+        .mockResolvedValueOnce(mockElapsedResult)
+        .mockResolvedValueOnce(mockEstimateResult)
+        .mockResolvedValueOnce([{ firstResultAt: null, lastResultAt: null }]);
+
+      const [request, context] = createRequest();
+      const response = await GET(request, context);
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(data.firstResultAt).toBeNull();
+      expect(data.lastResultAt).toBeNull();
     });
 
     it("converts BigInt elapsed to number", async () => {
@@ -282,7 +317,8 @@ describe("Test Run Summary API Route", () => {
         .mockReset()
         .mockResolvedValueOnce(mockCommentsCount) // comments count
         .mockResolvedValueOnce(mockJUnitAggregates) // result aggregates
-        .mockResolvedValueOnce(mockJUnitTime); // total time
+        .mockResolvedValueOnce(mockJUnitTime) // total time
+        .mockResolvedValueOnce(mockResultWindow); // first/last result
     });
 
     it("returns junitSummary for automated test runs", async () => {

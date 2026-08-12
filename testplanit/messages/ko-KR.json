@@ -335,6 +335,7 @@
       "fieldType": "필드 유형",
       "templates": "템플릿",
       "started": "시작됨",
+      "ended": "종료됨",
       "startDate": "시작일",
       "automated": "자동화된",
       "manual": "수동",

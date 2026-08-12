@@ -335,6 +335,7 @@
       "fieldType": "字段類型",
       "templates": "範本",
       "started": "開始",
+      "ended": "結束",
       "startDate": "開始日期",
       "automated": "自動化",
       "manual": "手動的",

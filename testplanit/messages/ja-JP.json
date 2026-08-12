@@ -335,6 +335,7 @@
       "fieldType": "フィールドタイプ",
       "templates": "テンプレート",
       "started": "開始",
+      "ended": "終了日時",
       "startDate": "開始日",
       "automated": "自動化",
       "manual": "マニュアル",

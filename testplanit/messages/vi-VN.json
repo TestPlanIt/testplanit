@@ -335,6 +335,7 @@
       "fieldType": "Loại trường",
       "templates": "Mẫu",
       "started": "Bắt đầu",
+      "ended": "Đã kết thúc",
       "startDate": "Ngày bắt đầu",
       "automated": "Tự động",
       "manual": "Thủ công",

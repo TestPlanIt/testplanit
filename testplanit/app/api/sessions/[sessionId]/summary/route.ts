@@ -8,6 +8,14 @@ export type SessionSummaryData = {
   estimate: number | null;
   totalElapsed: number;
   commentsCount: number;
+  /** Earliest recorded result (ISO string), or null on a session nobody has
+   *  logged a result against. The session's start date is derived from
+   *  execution, not from when the session was created. */
+  firstResultAt: string | null;
+  /** Latest recorded result (ISO string). Callers show it as the session's
+   *  end date only once the session is completed — on an open session the
+   *  newest result is just the last thing that happened, not an ending. */
+  lastResultAt: string | null;
   results: Array<{
     id: number;
     createdAt: Date;
@@ -211,11 +219,16 @@ export async function GET(
       issueIds: resultIssuesMap.get(result.id) || [],
     }));
 
+    // `results` is ordered by createdAt ASC above, so the ends of the array
+    // are the session's execution window.
     const response: SessionSummaryData = {
       sessionId: sessionData.id,
       estimate: sessionData.estimate,
       totalElapsed,
       commentsCount,
+      firstResultAt: results[0]?.createdAt.toISOString() ?? null,
+      lastResultAt:
+        results[results.length - 1]?.createdAt.toISOString() ?? null,
       results: resultsWithIssues,
       sessionIssues: sessionData.issues,
       resultIssues,

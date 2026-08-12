@@ -196,6 +196,22 @@ export async function getRegularRunSummary(
       AND trr.id IS NULL
   `;
 
+  // Execution window: the run starts at its earliest result and ends at its
+  // latest. Results on a soft-deleted case are excluded, same as the elapsed
+  // total above, so removing a case can't strand the window on it.
+  const resultWindow = await client.$queryRaw<
+    Array<{ firstResultAt: Date | null; lastResultAt: Date | null }>
+  >`
+    SELECT
+      MIN(trr."executedAt") as "firstResultAt",
+      MAX(trr."executedAt") as "lastResultAt"
+    FROM "TestRunResults" trr
+    JOIN "TestRunCases" trc ON trr."testRunCaseId" = trc.id
+    WHERE trc."testRunId" = ${testRunId}
+      AND trc."isDeleted" = false
+      AND trr."isDeleted" = false
+  `;
+
   let caseDetails: Array<{
     id: number;
     repositoryCaseId: number;
@@ -285,6 +301,8 @@ export async function getRegularRunSummary(
     TestRunSummaryData,
     "testRunType" | "issues" | "commentsCount"
   > = {
+    firstResultAt: resultWindow[0]?.firstResultAt?.toISOString() ?? null,
+    lastResultAt: resultWindow[0]?.lastResultAt?.toISOString() ?? null,
     totalCases,
     statusCounts: statusCounts.map((item) => ({
       statusId: item.statusId,
@@ -349,6 +367,20 @@ export async function getJUnitRunSummary(
     Array<{ totalTime: number | null }>
   >`
     SELECT COALESCE(SUM(jtr.time), 0) as "totalTime"
+    FROM "JUnitTestResult" jtr
+    JOIN "JUnitTestSuite" jts ON jtr."testSuiteId" = jts.id
+    WHERE jts."testRunId" = ${testRunId}
+  `;
+
+  // Execution window. A reporter only sometimes sends `executedAt`, so fall
+  // back to the import time — an automated run with no timestamps at all would
+  // otherwise show no start date.
+  const resultWindow = await client.$queryRaw<
+    Array<{ firstResultAt: Date | null; lastResultAt: Date | null }>
+  >`
+    SELECT
+      MIN(COALESCE(jtr."executedAt", jtr."createdAt")) as "firstResultAt",
+      MAX(COALESCE(jtr."executedAt", jtr."createdAt")) as "lastResultAt"
     FROM "JUnitTestResult" jtr
     JOIN "JUnitTestSuite" jts ON jtr."testSuiteId" = jts.id
     WHERE jts."testRunId" = ${testRunId}
@@ -451,6 +483,8 @@ export async function getJUnitRunSummary(
     totalTests > 0 ? Math.min((completedTests / totalTests) * 100, 100) : 0;
 
   return {
+    firstResultAt: resultWindow[0]?.firstResultAt?.toISOString() ?? null,
+    lastResultAt: resultWindow[0]?.lastResultAt?.toISOString() ?? null,
     totalCases: totalTests,
     statusCounts,
     completionRate,
