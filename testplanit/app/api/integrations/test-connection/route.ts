@@ -1,5 +1,9 @@
 import { baseDb } from "@/lib/db";
-import { decrypt, isEncrypted } from "@/utils/encryption";
+import { resolveStoredCredentials } from "@/lib/integrations/credentials";
+import {
+  isIntegrationApiError,
+  responseStatusForIntegrationError,
+} from "@/lib/integrations/errors";
 import { IntegrationProvider } from "~/zenstack/models";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
@@ -796,46 +800,31 @@ export const POST = withAuditContext(async (req: NextRequest) => {
       // always failed against the originally-saved config.
       authType = body.authType ?? integration.authType;
 
-      // Decrypt stored credentials as a base; request-provided (form) values win.
+      // Decrypt stored credentials as a base; request-provided (form) values
+      // win. A failure here is reported to the admin instead of being worked
+      // around: the previous fallback sent the unreadable stored value
+      // upstream as if it were a credential.
       const storedCredentials: Record<string, string> = {};
-      if (
-        integration.credentials &&
-        typeof integration.credentials === "object"
-      ) {
-        // Check if credentials are stored with an 'encrypted' key (PUT route format)
-        if (
-          "encrypted" in integration.credentials &&
-          typeof integration.credentials.encrypted === "string"
-        ) {
-          try {
-            const decrypted = await decrypt(integration.credentials.encrypted);
-            Object.assign(storedCredentials, JSON.parse(decrypted));
-          } catch (e) {
-            console.error("Failed to decrypt credentials:", e);
-          }
-        } else {
-          // Handle individual field encryption or plain text
-          const encryptedCreds = integration.credentials as Record<
-            string,
-            string
-          >;
-          for (const [key, value] of Object.entries(encryptedCreds)) {
-            if (value && typeof value === "string") {
-              try {
-                // Check if the value is encrypted using the utility function
-                storedCredentials[key] = isEncrypted(value)
-                  ? await decrypt(value)
-                  : value;
-              } catch {
-                // If decryption fails, use the value as-is
-                console.warn(
-                  `Failed to decrypt credential ${key}, using as-is`
-                );
-                storedCredentials[key] = value;
-              }
-            }
-          }
+      try {
+        Object.assign(
+          storedCredentials,
+          await resolveStoredCredentials(
+            integration.credentials,
+            integration.provider
+          )
+        );
+      } catch (error) {
+        if (isIntegrationApiError(error)) {
+          console.error(
+            `Cannot read stored credentials for integration ${integration.id}:`,
+            error.cause ?? error
+          );
+          return NextResponse.json(
+            { success: false, error: error.userMessage },
+            { status: responseStatusForIntegrationError(error) }
+          );
         }
+        throw error;
       }
       // Fill only the credentials the form did not supply (request wins).
       for (const [key, value] of Object.entries(storedCredentials)) {

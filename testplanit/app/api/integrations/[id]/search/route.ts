@@ -1,5 +1,10 @@
 import { getEnhancedDb } from "@/lib/auth/utils";
 import { IntegrationManager } from "@/lib/integrations/IntegrationManager";
+import {
+  integrationErrorBody,
+  responseStatusForIntegrationError,
+  toIntegrationError,
+} from "~/lib/integrations/errors";
 import { getServerSession } from "next-auth";
 import { NextRequest } from "next/server";
 import { authOptions } from "~/server/auth";
@@ -147,20 +152,20 @@ export async function GET(
         total,
       });
     } catch (error: any) {
-      // Check if this is an auth error
-      if (
-        error.message?.includes("401") ||
-        error.message?.includes("Unauthorized")
-      ) {
+      const integrationError = toIntegrationError(error, integration.provider);
+
+      if (integrationError.kind === "auth") {
         // Only OAuth integrations can be repaired by the user re-authorizing;
-        // expired API keys/PATs are fixed by an admin on the integration.
+        // expired API keys/PATs are fixed by an admin on the integration, so
+        // those get the actionable message instead of a re-auth prompt that
+        // cannot resolve them.
         if (
           integration.authType !== "API_KEY" &&
           integration.authType !== "PERSONAL_ACCESS_TOKEN"
         ) {
           return Response.json(
             {
-              error: "Authentication expired",
+              ...integrationErrorBody(integrationError),
               authUrl: buildOAuthKickoffUrl(
                 integration.provider,
                 integrationId
@@ -169,24 +174,25 @@ export async function GET(
             },
             { status: 401 }
           );
-        } else {
-          return Response.json(
-            {
-              error: "Authentication expired",
-              requiresAuth: true,
-            },
-            { status: 401 }
-          );
         }
+
+        return Response.json(integrationErrorBody(integrationError), {
+          status: responseStatusForIntegrationError(integrationError),
+        });
       }
 
-      throw error;
+      throw integrationError;
     }
   } catch (error: any) {
     console.error("Search error:", error);
-    return Response.json(
-      { error: error.message || "Failed to search issues" },
-      { status: 500 }
-    );
+
+    // `toIntegrationError` is idempotent, so an error already typed by the
+    // inner catch passes through unchanged. Responding with its `userMessage`
+    // rather than `error.message` keeps adapter internals and upstream
+    // response bodies out of the client.
+    const integrationError = toIntegrationError(error, "");
+    return Response.json(integrationErrorBody(integrationError), {
+      status: responseStatusForIntegrationError(integrationError),
+    });
   }
 }

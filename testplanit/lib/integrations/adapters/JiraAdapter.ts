@@ -24,6 +24,7 @@ import {
   userRefField,
 } from "./jiraDeployment";
 import { adfToWikiMarkup } from "./jiraWikiMarkup";
+import { IntegrationApiError, integrationErrorFromStatus } from "../errors";
 
 /**
  * Board -> project ownership is near-static (boards rarely move between
@@ -256,9 +257,7 @@ export class JiraAdapter extends BaseAdapter {
           { headers }
         );
         if (!response.ok) {
-          throw new Error(
-            `Jira API authentication failed: ${response.statusText}`
-          );
+          throw integrationErrorFromStatus("JIRA", response.status);
         }
         this.apiKeyAuthActive = true;
       } else {
@@ -295,9 +294,7 @@ export class JiraAdapter extends BaseAdapter {
               { headers }
             );
             if (!v2Response.ok) {
-              throw new Error(
-                `Jira API authentication failed: ${v2Response.statusText}`
-              );
+              throw integrationErrorFromStatus("JIRA", v2Response.status);
             }
             this.apiKeyAuthActive = true;
           } else if (!this.authCreds.email && !this.authCreds.username) {
@@ -306,15 +303,16 @@ export class JiraAdapter extends BaseAdapter {
             // bare token — Cloud's API-key auth only accepts Basic
             // email:apiToken, so that guess can never succeed here. Surface
             // this explicitly instead of an opaque 401/403.
-            throw new Error(
-              "Jira Cloud authentication requires an email address paired with the API token (Basic auth) — a bare API token alone cannot authenticate against Jira Cloud."
+            throw new IntegrationApiError(
+              "JIRA",
+              v3Response.status,
+              "auth",
+              "Jira Cloud requires an account email paired with an API token — a bare API token alone cannot authenticate against Jira Cloud. Add the email address for the account that owns the token, or create a token at https://id.atlassian.com/manage-profile/security/api-tokens."
             );
           } else {
             // serverInfo reports Cloud but v3 /myself 404'd — surface the
             // original failure rather than silently switching versions.
-            throw new Error(
-              `Jira API authentication failed: ${v3Response.statusText}`
-            );
+            throw integrationErrorFromStatus("JIRA", v3Response.status);
           }
         }
       }

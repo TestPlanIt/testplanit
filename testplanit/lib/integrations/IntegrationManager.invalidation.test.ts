@@ -33,9 +33,13 @@ const {
 vi.mock("@/lib/rawDb", () => ({
   rawDb: { integration: { findUnique: findUniqueMock } },
 }));
+// Identity crypto: fixtures store credential values verbatim, so these tests
+// exercise cache scoping rather than the cipher.
 vi.mock("@/utils/encryption", () => ({
   EncryptionService: { decrypt: vi.fn((e: string) => e) },
   getMasterKey: vi.fn(() => "test-master-key"),
+  decrypt: vi.fn(async (e: string) => e),
+  isEncrypted: vi.fn(() => true),
 }));
 vi.mock("./AuthenticationService", () => ({
   AuthenticationService: { storeUserAuth: vi.fn() },
