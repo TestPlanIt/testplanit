@@ -24,14 +24,6 @@ export const metadata: Metadata = {
     description:
       "Streamline your software testing with TestPlanIt's powerful test case management, execution tracking, and comprehensive reporting tools.",
     siteName: "TestPlanIt",
-    images: [
-      {
-        url: "/tpi_logo_og.png",
-        width: 1200,
-        height: 630,
-        alt: "TestPlanIt Logo",
-      },
-    ],
     locale: "en_US",
     type: "website",
   },
@@ -40,7 +32,6 @@ export const metadata: Metadata = {
     title: "TestPlanIt - Modern Test Management Platform",
     description:
       "Streamline your software testing with TestPlanIt's powerful test case management, execution tracking, and comprehensive reporting tools.",
-    images: ["/tpi_logo_og.png"],
   },
 };
 

@@ -3,6 +3,7 @@ import createMiddleware from "next-intl/middleware";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { checkApiRateLimit, type RateLimitResult } from "~/lib/api-rate-limit";
+import { isLinkPreviewBot, matchPreviewRoute } from "~/lib/linkPreview";
 import { normalizeRecordKeyPath } from "~/lib/recordKeyRoutes";
 import { getCachedSessionUser } from "~/lib/session-cache";
 import { defaultLocale, locales } from "./i18n/navigation";
@@ -349,9 +350,34 @@ export default async function middlewareWithPreferences(request: NextRequest) {
 
     // For unauthenticated users trying to access protected routes
     if (!token) {
-      // Redirect to signin page
       const pathSegments = pathname.split("/").filter(Boolean);
       const locale = pathSegments[0] || defaultLocale;
+
+      // Link unfurlers (Slack, Teams, iMessage, …) fetch the URL with no
+      // cookies. Redirecting them to /signin makes every shared deep link
+      // preview as the sign-in page's metadata — one generic card for the whole
+      // app. Rewrite to a metadata-only document instead so the card reflects
+      // what was actually shared. The rewrite keeps the URL and status, renders
+      // none of the app shell, and reads no record data unless the instance
+      // opted in via LINK_PREVIEW_MODE.
+      if (isLinkPreviewBot(request.headers.get("user-agent"))) {
+        const { entity, id } = matchPreviewRoute(pathWithoutLocale);
+
+        // The handler still sees the *incoming* URL after a rewrite, so the
+        // destination's query string never reaches it — pass what it needs as
+        // request headers, which Next does propagate to rewrite destinations.
+        const previewHeaders = new Headers(request.headers);
+        previewHeaders.set("x-link-preview-entity", entity);
+        previewHeaders.set("x-link-preview-locale", locale);
+        previewHeaders.set("x-link-preview-path", pathname);
+        if (id !== null) previewHeaders.set("x-link-preview-id", String(id));
+
+        return NextResponse.rewrite(new URL("/api/link-preview", request.url), {
+          request: { headers: previewHeaders },
+        });
+      }
+
+      // Redirect to signin page
       const redirectUrl = new URL(request.url);
       redirectUrl.pathname = `/${locale}/signin`;
       // Preserve error parameter from NextAuth (e.g., expired magic link)
