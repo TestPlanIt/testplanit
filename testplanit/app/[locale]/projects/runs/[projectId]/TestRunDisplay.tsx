@@ -20,15 +20,7 @@ import { CheckCircle, CirclePlus, SquarePen, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
 import { useParams } from "next/navigation";
-import React, {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
-import { useWindowVirtualizer } from "@tanstack/react-virtual";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import type { BatchTestRunSummaryResponse } from "~/app/api/test-runs/summaries/route";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import type { PendingReviewSummary } from "@/components/reviews/PendingReviewBadge";
@@ -43,6 +35,7 @@ import {
   sortMilestoneTree,
 } from "~/utils/milestoneUtils";
 import { BulkActionBar } from "@/components/bulk/BulkActionBar";
+import { WindowVirtualizedList } from "@/components/WindowVirtualizedList";
 import { transformMilestones } from "@/components/forms/MilestoneSelect";
 import type { OverflowAction } from "@/components/ui/action-bar";
 import AddTestRunModal from "./AddTestRunModal";
@@ -125,89 +118,6 @@ type GroupedTestRuns = {
     };
   };
 };
-
-// useLayoutEffect warns under SSR; this is a client tree, but guard anyway.
-const useIsomorphicLayoutEffect =
-  typeof window !== "undefined" ? useLayoutEffect : useEffect;
-
-interface WindowVirtualizedListProps<T> {
-  items: T[];
-  getKey: (item: T, index: number) => React.Key;
-  renderItem: (item: T, index: number) => React.ReactNode;
-  estimateSize?: number;
-  overscan?: number;
-  "data-testid"?: string;
-}
-
-/**
- * Windowed list that scrolls with the page rather than in a container of its
- * own. The runs list is one long tree of groups, so a bounded scroll region
- * per group would leave the page scrolling differently in different places
- * depending on how many runs each group happens to hold. A window virtualizer
- * keeps the single page scroll and still mounts only the visible rows — which
- * is what defers each row's own on-mount queries until it comes into view.
- *
- * Positions come out in document space, so the list's distance from the top of
- * the document is subtracted back out. Everything above it can change height
- * (summary cards, filters, the bulk bar appearing), so that distance is
- * re-measured rather than read once.
- */
-function WindowVirtualizedList<T>({
-  items,
-  getKey,
-  renderItem,
-  estimateSize = 120,
-  overscan = 8,
-  "data-testid": testId,
-}: WindowVirtualizedListProps<T>) {
-  const listRef = useRef<HTMLDivElement>(null);
-  const [scrollMargin, setScrollMargin] = useState(0);
-
-  useIsomorphicLayoutEffect(() => {
-    const element = listRef.current;
-    if (!element) return;
-    const measure = () =>
-      setScrollMargin(element.getBoundingClientRect().top + window.scrollY);
-    measure();
-    const observer = new ResizeObserver(measure);
-    observer.observe(document.body);
-    return () => observer.disconnect();
-  }, []);
-
-  const virtualizer = useWindowVirtualizer({
-    count: items.length,
-    estimateSize: () => estimateSize,
-    overscan,
-    scrollMargin,
-  });
-
-  return (
-    <div
-      ref={listRef}
-      className="relative w-full"
-      style={{ height: virtualizer.getTotalSize() }}
-      data-testid={testId}
-    >
-      {virtualizer.getVirtualItems().map((virtualRow) => {
-        const item = items[virtualRow.index];
-        if (item === undefined) return null;
-        return (
-          <div
-            key={getKey(item, virtualRow.index)}
-            data-index={virtualRow.index}
-            ref={virtualizer.measureElement}
-            className="absolute start-0 top-0 flex w-full flex-col"
-            style={{
-              transform: `translateY(${virtualRow.start - scrollMargin}px)`,
-            }}
-          >
-            {renderItem(item, virtualRow.index)}
-          </div>
-        );
-      })}
-    </div>
-  );
-}
 
 const buildMilestoneTree = (
   milestones: MilestonePropItem[]
@@ -861,21 +771,21 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
     // the rows are siblings in one virtualizer, so there is nothing to nest in.
     const indent = { paddingInlineStart: `${row.depth}rem` };
 
-    if (row.kind === "run") {
+    if (row.kind === "item") {
       return (
         <div className="pe-4 ps-4" style={indent}>
           <TestRunItem
             selectable={bulkSelectable}
-            selected={selectedRunIds.has(row.run.id)}
+            selected={selectedRunIds.has(row.item.id)}
             onSelectedChange={(checked) =>
-              toggleRunSelected(row.run.id, checked)
+              toggleRunSelected(row.item.id, checked)
             }
-            testRun={row.run}
+            testRun={row.item}
             isNew={false}
             onDuplicate={onDuplicateTestRun}
-            summaryData={batchSummaries?.summaries[row.run.id]}
+            summaryData={batchSummaries?.summaries[row.item.id]}
             summaryLoading={isBatchSummariesLoading}
-            pendingRequest={pendingByTestRunId.get(row.run.id)}
+            pendingRequest={pendingByTestRunId.get(row.item.id)}
             // Only the unscheduled group leaves the milestone unsaid by its
             // own header, and its runs are the ones at depth 0.
             showMilestone={row.depth === 0}
@@ -928,7 +838,7 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
       );
     }
 
-    const { milestone, subtreeRunCount } = row;
+    const { milestone, subtreeItemCount } = row;
     const groupKey = String(milestone.id);
     const isOpen = !collapsedGroups.has(groupKey);
     const status = getStatus(milestone);
@@ -983,7 +893,7 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
             className="shrink-0 hidden @lg:inline-flex text-xs font-normal text-muted-foreground"
             data-testid={`milestone-group-count-${milestone.id}`}
           >
-            {t("milestoneGroup.runCount", { count: subtreeRunCount })}
+            {t("milestoneGroup.runCount", { count: subtreeItemCount })}
           </Badge>
         </div>
 

@@ -186,8 +186,8 @@ describe("buildRunListRows", () => {
 
   const shape = (rows: RunListRow<Run, Node>[]) =>
     rows.map((row) =>
-      row.kind === "run"
-        ? `run-${row.run.id}@${row.depth}`
+      row.kind === "item"
+        ? `run-${row.item.id}@${row.depth}`
         : row.kind === "milestone-header"
           ? `m${row.milestone.id}@${row.depth}`
           : "unscheduled"
@@ -216,7 +216,7 @@ describe("buildRunListRows", () => {
 
   it("reports the whole subtree on a header, so a collapsed group says what it hid", () => {
     const header = build().find((row) => row.kind === "milestone-header");
-    expect(header).toMatchObject({ subtreeRunCount: 3 });
+    expect(header).toMatchObject({ subtreeItemCount: 3 });
   });
 
   it("skips milestones with no runs at or below them", () => {

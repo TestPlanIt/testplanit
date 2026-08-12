@@ -70,3 +70,118 @@ export function parseStoredCollapsedGroups(stored: string | null): Set<string> {
     return new Set();
   }
 }
+
+/**
+ * One rendered line of a milestone-grouped list. These lists are trees, but
+ * they render through a single virtualizer, so the tree is flattened to rows
+ * and nesting is carried by `depth` rather than by nested elements.
+ */
+export type GroupedListRow<TItem, TMilestone extends MilestoneNode> =
+  | { kind: "unscheduled-header"; key: string; depth: 0 }
+  | {
+      kind: "milestone-header";
+      key: string;
+      milestone: TMilestone;
+      depth: number;
+      /** Items in this milestone and everything under it — what collapsing hides. */
+      subtreeItemCount: number;
+    }
+  | { kind: "item"; key: string; item: TItem; depth: number };
+
+/** Items grouped directly under one milestone, excluding its descendants. */
+export type DirectItems<TItem> = (milestoneId: number) => TItem[];
+
+export interface BuildGroupedListRowsArgs<
+  TItem,
+  TMilestone extends MilestoneNode,
+> {
+  unscheduled: TItem[];
+  directItems: DirectItems<TItem>;
+  /** Milestone tree, already ranked. Rendered depth-first after the unscheduled group. */
+  tree: TMilestone[];
+  collapsedGroups: ReadonlySet<string>;
+  /**
+   * False when the unscheduled group renders no header — it then has no
+   * chevron to reopen with, so it stays expanded whatever the stored collapse
+   * state says.
+   */
+  showUnscheduledHeader: boolean;
+  getItemKey: (item: TItem) => string | number;
+}
+
+/**
+ * Flattens a milestone-grouped list into the exact row sequence it renders:
+ * the unscheduled group first, then each milestone depth-first with its own
+ * items ahead of its children. A collapsed milestone contributes its header
+ * and nothing below it — children included, which is what makes collapsing a
+ * parent fold away a whole branch. Milestones with no items at or below them
+ * are skipped entirely, matching collectRenderedMilestoneKeys.
+ */
+export function buildGroupedListRows<
+  TItem,
+  TMilestone extends MilestoneNode & { children?: TMilestone[] },
+>({
+  unscheduled,
+  directItems,
+  tree,
+  collapsedGroups,
+  showUnscheduledHeader,
+  getItemKey,
+}: BuildGroupedListRowsArgs<TItem, TMilestone>): GroupedListRow<
+  TItem,
+  TMilestone
+>[] {
+  const rows: GroupedListRow<TItem, TMilestone>[] = [];
+  const directCount: DirectItemCount = (id) => directItems(id).length;
+
+  if (unscheduled.length > 0) {
+    if (showUnscheduledHeader) {
+      rows.push({
+        kind: "unscheduled-header",
+        key: "header-unscheduled",
+        depth: 0,
+      });
+    }
+    if (!showUnscheduledHeader || !collapsedGroups.has(UNSCHEDULED_GROUP_KEY)) {
+      unscheduled.forEach((item) => {
+        rows.push({
+          kind: "item",
+          key: `item-${getItemKey(item)}`,
+          item,
+          depth: 0,
+        });
+      });
+    }
+  }
+
+  const walk = (milestone: TMilestone, depth: number) => {
+    const subtreeItemCount = countItemsInSubtree(milestone, directCount);
+    if (subtreeItemCount === 0) return;
+
+    rows.push({
+      kind: "milestone-header",
+      key: `header-milestone-${milestone.id}`,
+      milestone,
+      depth,
+      subtreeItemCount,
+    });
+
+    if (collapsedGroups.has(String(milestone.id))) return;
+
+    directItems(milestone.id).forEach((item) => {
+      rows.push({
+        kind: "item",
+        key: `item-${getItemKey(item)}`,
+        item,
+        depth: depth + 1,
+      });
+    });
+
+    const children = (milestone.children ?? []) as TMilestone[];
+    children.forEach((child) => walk(child, depth + 1));
+  };
+
+  tree.forEach((milestone) => walk(milestone, 0));
+
+  return rows;
+}

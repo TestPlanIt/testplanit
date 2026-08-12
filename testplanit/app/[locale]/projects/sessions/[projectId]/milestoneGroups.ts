@@ -5,9 +5,11 @@
  */
 
 import {
+  buildGroupedListRows,
   collectRenderedMilestoneKeys as collectKeys,
   countItemsInSubtree,
   type DirectItemCount,
+  type GroupedListRow,
   type MilestoneNode,
 } from "~/utils/milestoneGroupCollapse";
 
@@ -42,4 +44,47 @@ export function collectRenderedMilestoneKeys(
   grouped: SessionGroups
 ): string[] {
   return collectKeys(milestone, directSessionCount(grouped));
+}
+
+/** One rendered line of the session list. */
+export type SessionListRow<
+  TSession,
+  TMilestone extends MilestoneNode = MilestoneNode,
+> = GroupedListRow<TSession, TMilestone>;
+
+interface BuildSessionListRowsArgs<TSession, TMilestone extends MilestoneNode> {
+  unscheduled: TSession[];
+  grouped: {
+    milestones: { [milestoneId: number]: { testSessions: TSession[] } };
+  };
+  tree: TMilestone[];
+  collapsedGroups: ReadonlySet<string>;
+  showUnscheduledHeader: boolean;
+  getSessionId: (session: TSession) => number;
+}
+
+/** Session-shaped binding over the shared flattening. */
+export function buildSessionListRows<
+  TSession,
+  TMilestone extends MilestoneNode & { children?: TMilestone[] },
+>({
+  unscheduled,
+  grouped,
+  tree,
+  collapsedGroups,
+  showUnscheduledHeader,
+  getSessionId,
+}: BuildSessionListRowsArgs<TSession, TMilestone>): SessionListRow<
+  TSession,
+  TMilestone
+>[] {
+  return buildGroupedListRows<TSession, TMilestone>({
+    unscheduled,
+    directItems: (milestoneId) =>
+      grouped.milestones[milestoneId]?.testSessions ?? [],
+    tree,
+    collapsedGroups,
+    showUnscheduledHeader,
+    getItemKey: getSessionId,
+  });
 }
