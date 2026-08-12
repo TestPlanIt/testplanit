@@ -12,33 +12,27 @@ vi.mock("~/hooks/useProjectPermissions", () => ({
 }));
 
 // ── Virtualizer control ─────────────────────────────────────────────────────
-// TanStack Virtual measures a zero-height container under jsdom and would
-// report an empty window for every list, so the real hook can't distinguish
-// "windowed correctly" from "rendered nothing". This pass-through reports a
-// window we choose; see components/VirtualizedCardList.test.tsx for the same
-// pattern applied to the list component in isolation.
+// TanStack Virtual measures against a real layout, which jsdom does not
+// provide (the global ResizeObserver mock is a no-op), so the real virtualizer
+// reports an empty window for every list and "windowed correctly" would be
+// indistinguishable from "rendered nothing". This pass-through reports a
+// window we choose.
 const hookMock = vi.hoisted(() => ({
   window: null as number[] | null, // indices to render; null = all `count`
+  lastCount: 0,
 }));
-vi.mock("~/hooks/useVirtualizedInfiniteList", () => ({
-  useVirtualizedInfiniteList: (opts: { count: number }) => {
+vi.mock("@tanstack/react-virtual", () => ({
+  useWindowVirtualizer: (opts: { count: number }) => {
+    hookMock.lastCount = opts.count;
     const indices =
       hookMock.window ?? Array.from({ length: opts.count }, (_, i) => i);
     return {
-      scrollRef: () => {},
-      sentinelRef: { current: null },
-      virtualizer: {},
-      virtualItems: indices.map((index) => ({
-        key: index,
-        index,
-        start: index * 96,
-        size: 96,
-        end: (index + 1) * 96,
-        lane: 0,
-      })),
-      totalSize: opts.count * 96,
+      getTotalSize: () => opts.count * 96,
+      getVirtualItems: () =>
+        indices
+          .filter((index) => index < opts.count)
+          .map((index) => ({ key: index, index, start: index * 96, size: 96 })),
       measureElement: () => {},
-      maxHeight: null,
     };
   },
 }));
@@ -157,30 +151,30 @@ beforeEach(() => {
   });
 });
 
-describe("TestRunDisplay tile windowing", () => {
-  it("mounts only the windowed rows of a large unscheduled group", () => {
+describe("TestRunDisplay row windowing", () => {
+  it("mounts only the windowed rows", () => {
+    // 41 rows: the unscheduled header, then 40 runs.
     hookMock.window = [0, 1, 2];
     render(<TestRunDisplay testRuns={makeRuns(40)} milestones={[]} />);
 
     expect(screen.getByTestId("stub-run-1")).toBeInTheDocument();
-    expect(screen.getByTestId("stub-run-3")).toBeInTheDocument();
-    expect(screen.queryByTestId("stub-run-4")).not.toBeInTheDocument();
+    expect(screen.getByTestId("stub-run-2")).toBeInTheDocument();
+    expect(screen.queryByTestId("stub-run-3")).not.toBeInTheDocument();
     expect(screen.queryByTestId("stub-run-40")).not.toBeInTheDocument();
   });
 
-  it("puts a large group in a bounded scroll container and leaves a small one in the page scroll", () => {
-    const { unmount } = render(
-      <TestRunDisplay testRuns={makeRuns(40)} milestones={[]} />
-    );
-    expect(
-      screen.getByTestId("unscheduled-test-runs-list").className
-    ).toContain("overflow-auto");
-    unmount();
+  it("gives the virtualizer a row per run plus the group header", () => {
+    render(<TestRunDisplay testRuns={makeRuns(12)} milestones={[]} />);
+    expect(hookMock.lastCount).toBe(13);
+  });
 
-    render(<TestRunDisplay testRuns={makeRuns(5)} milestones={[]} />);
-    const small = screen.getByTestId("unscheduled-test-runs-list");
-    expect(small.className).not.toContain("overflow-auto");
-    expect(screen.getByTestId("stub-run-5")).toBeInTheDocument();
+  // The whole point of scrolling with the page: no group gets a scroll
+  // container of its own, whatever its size.
+  it("never puts rows in a bounded scroll container", () => {
+    render(<TestRunDisplay testRuns={makeRuns(40)} milestones={[]} />);
+    const list = screen.getByTestId("run-list");
+    expect(list.className).not.toContain("overflow-auto");
+    expect(list.querySelector(".overflow-auto")).toBeNull();
   });
 
   it("windows the flat list the all-completed view falls back to", () => {
@@ -193,12 +187,9 @@ describe("TestRunDisplay tile windowing", () => {
     render(<TestRunDisplay testRuns={completed} milestones={[]} />);
 
     // This view returns early, before the milestone grouping runs at all.
-    expect(
-      screen.queryByTestId("unscheduled-test-runs-list")
-    ).not.toBeInTheDocument();
-    expect(screen.getByTestId("completed-test-runs-list").className).toContain(
-      "overflow-auto"
-    );
+    expect(screen.queryByTestId("run-list")).not.toBeInTheDocument();
+    const list = screen.getByTestId("completed-test-runs-list");
+    expect(list.className).not.toContain("overflow-auto");
     expect(screen.getByTestId("stub-run-3")).toBeInTheDocument();
     expect(screen.queryByTestId("stub-run-4")).not.toBeInTheDocument();
   });

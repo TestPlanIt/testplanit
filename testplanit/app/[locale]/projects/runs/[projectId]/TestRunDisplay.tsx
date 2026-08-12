@@ -7,7 +7,6 @@ import { MilestoneIconAndName } from "@/components/MilestoneIconAndName";
 import { MilestoneSourceBadge } from "@/components/MilestoneSourceBadge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
 import { MilestoneGroupChevron } from "@/components/MilestoneGroupChevron";
 import type {
   MilestonesGetPayload,
@@ -21,7 +20,15 @@ import { CheckCircle, CirclePlus, SquarePen, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
 import { useParams } from "next/navigation";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import { useWindowVirtualizer } from "@tanstack/react-virtual";
 import type { BatchTestRunSummaryResponse } from "~/app/api/test-runs/summaries/route";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import type { PendingReviewSummary } from "@/components/reviews/PendingReviewBadge";
@@ -36,7 +43,6 @@ import {
   sortMilestoneTree,
 } from "~/utils/milestoneUtils";
 import { BulkActionBar } from "@/components/bulk/BulkActionBar";
-import { VirtualizedCardList } from "@/components/VirtualizedCardList";
 import { transformMilestones } from "@/components/forms/MilestoneSelect";
 import type { OverflowAction } from "@/components/ui/action-bar";
 import AddTestRunModal from "./AddTestRunModal";
@@ -44,10 +50,11 @@ import BulkCompleteTestRunsDialog from "./BulkCompleteTestRunsDialog";
 import BulkDeleteTestRunsDialog from "./BulkDeleteTestRunsDialog";
 import BulkEditTestRunsDialog from "./BulkEditTestRunsDialog";
 import {
+  buildRunListRows,
   collapsedStorageKey,
   collectRenderedMilestoneKeys,
-  countRunsInSubtree,
   parseStoredCollapsedGroups,
+  type RunListRow,
   UNSCHEDULED_GROUP_KEY,
 } from "./milestoneGroups";
 import TestRunItem from "./TestRunItem";
@@ -118,6 +125,89 @@ type GroupedTestRuns = {
     };
   };
 };
+
+// useLayoutEffect warns under SSR; this is a client tree, but guard anyway.
+const useIsomorphicLayoutEffect =
+  typeof window !== "undefined" ? useLayoutEffect : useEffect;
+
+interface WindowVirtualizedListProps<T> {
+  items: T[];
+  getKey: (item: T, index: number) => React.Key;
+  renderItem: (item: T, index: number) => React.ReactNode;
+  estimateSize?: number;
+  overscan?: number;
+  "data-testid"?: string;
+}
+
+/**
+ * Windowed list that scrolls with the page rather than in a container of its
+ * own. The runs list is one long tree of groups, so a bounded scroll region
+ * per group would leave the page scrolling differently in different places
+ * depending on how many runs each group happens to hold. A window virtualizer
+ * keeps the single page scroll and still mounts only the visible rows — which
+ * is what defers each row's own on-mount queries until it comes into view.
+ *
+ * Positions come out in document space, so the list's distance from the top of
+ * the document is subtracted back out. Everything above it can change height
+ * (summary cards, filters, the bulk bar appearing), so that distance is
+ * re-measured rather than read once.
+ */
+function WindowVirtualizedList<T>({
+  items,
+  getKey,
+  renderItem,
+  estimateSize = 120,
+  overscan = 8,
+  "data-testid": testId,
+}: WindowVirtualizedListProps<T>) {
+  const listRef = useRef<HTMLDivElement>(null);
+  const [scrollMargin, setScrollMargin] = useState(0);
+
+  useIsomorphicLayoutEffect(() => {
+    const element = listRef.current;
+    if (!element) return;
+    const measure = () =>
+      setScrollMargin(element.getBoundingClientRect().top + window.scrollY);
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(document.body);
+    return () => observer.disconnect();
+  }, []);
+
+  const virtualizer = useWindowVirtualizer({
+    count: items.length,
+    estimateSize: () => estimateSize,
+    overscan,
+    scrollMargin,
+  });
+
+  return (
+    <div
+      ref={listRef}
+      className="relative w-full"
+      style={{ height: virtualizer.getTotalSize() }}
+      data-testid={testId}
+    >
+      {virtualizer.getVirtualItems().map((virtualRow) => {
+        const item = items[virtualRow.index];
+        if (item === undefined) return null;
+        return (
+          <div
+            key={getKey(item, virtualRow.index)}
+            data-index={virtualRow.index}
+            ref={virtualizer.measureElement}
+            className="absolute start-0 top-0 flex w-full flex-col"
+            style={{
+              transform: `translateY(${virtualRow.start - scrollMargin}px)`,
+            }}
+          >
+            {renderItem(item, virtualRow.index)}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
 
 const buildMilestoneTree = (
   milestones: MilestonePropItem[]
@@ -624,6 +714,30 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
     setIsAddTestRunModalOpen(true);
   };
 
+  // No header means no chevron to reopen with, so that group has to stay
+  // expanded in the runs-all-completed case regardless of stored state.
+  const showUnscheduledHeader = groupedTestRunData.unscheduled.some(
+    (testRun) => !testRun.isCompleted
+  );
+
+  const runListRows = useMemo(
+    () =>
+      buildRunListRows<TestRunsWithDetails, MilestonesWithTypes>({
+        unscheduled: groupedTestRunData.unscheduled,
+        grouped: groupedTestRunData,
+        tree: sortedMilestoneTree,
+        collapsedGroups,
+        showUnscheduledHeader,
+        getRunId: (testRun) => testRun.id,
+      }),
+    [
+      groupedTestRunData,
+      sortedMilestoneTree,
+      collapsedGroups,
+      showUnscheduledHeader,
+    ]
+  );
+
   if (isColorsLoading || isLoadingPermissions || !colorMap) return <Loading />;
   if (!testRuns || testRuns.length === 0) return null;
 
@@ -711,12 +825,9 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
       <div className="flex flex-col items-center w-full">
         <div className="w-full">
           {bulkBar}
-          {/* space-y-0: the rows carry their own my-2, so the list's default
-              vertical rhythm would double the gap. */}
-          <VirtualizedCardList
+          <WindowVirtualizedList
             items={sortedCompletedTestRuns}
             getKey={(testRun) => testRun.id}
-            className="space-y-0"
             data-testid="completed-test-runs-list"
             renderItem={(testRun) => (
               <TestRunItem
@@ -743,346 +854,209 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
     );
   }
 
-  const renderGroupedTestRuns = (
-    currentGroupedRuns: GroupedTestRuns,
-    currentMilestoneTree: MilestonesWithTypes[],
-    onDuplicateTestRunParam?: (run: { id: number; name: string }) => void,
-    summariesData?: BatchTestRunSummaryResponse
+  const renderRunListRow = (
+    row: RunListRow<TestRunsWithDetails, MilestonesWithTypes>
   ) => {
-    const hasTestRuns = (milestone: MilestonesWithTypes): boolean => {
-      if (currentGroupedRuns.milestones[milestone.id]?.testRuns.length > 0) {
-        return true;
-      }
+    // Nesting is carried by indentation rather than by nested containers —
+    // the rows are siblings in one virtualizer, so there is nothing to nest in.
+    const indent = { paddingInlineStart: `${row.depth}rem` };
 
-      return milestone.children?.some(hasTestRuns) ?? false;
-    };
-
-    const renderMilestoneWithTestRuns = (
-      milestone: MilestonesWithTypes,
-      depth: number = 0
-    ) => {
-      if (!hasTestRuns(milestone)) return null;
-
-      const status = getStatus(milestone);
-      const { badge } = getStatusStyle(
-        status,
-        resolvedTheme || "light",
-        colorMap
-      );
-
-      // Check if there are test runs under this milestone
-      const hasTestRunsUnderMilestone =
-        currentGroupedRuns.milestones[milestone.id]?.testRuns.length > 0;
-
-      const groupKey = String(milestone.id);
-      const isOpen = !collapsedGroups.has(groupKey);
-      const subtreeRunCount = countRunsInSubtree(milestone, currentGroupedRuns);
-
+    if (row.kind === "run") {
       return (
-        <div
-          key={milestone.id}
-          className={
-            depth > 0
-              ? "w-full ps-4 bg-muted rounded-lg mb-4"
-              : "w-full rounded-lg bg-muted mb-4"
-          }
-        >
-          {/* Collapsing a milestone hides its runs AND its child milestone
-              groups — they live inside this CollapsibleContent, which is what
-              keeps the nesting readable when a deep tree is folded away. The
-              header itself stays put, so the group remains a drop target. */}
-          <Collapsible
-            open={isOpen}
-            onOpenChange={(open) => setGroupOpen(groupKey, open)}
-          >
-            <div
-              className={`@container milestone-grid bg-primary/10 p-2 pe-4 ${
-                depth === 0 ? "rounded-t-lg" : ""
-              }`}
-            >
-              {/* Milestone Name */}
-              <div className="flex items-center gap-1 justify-start min-w-0">
-                {depth > 0 && (
-                  <DynamicIcon
-                    name="corner-down-right"
-                    className="w-6 h-6 text-primary/50 shrink-0 bg-transparent"
-                  />
-                )}
-                {/* Only the chevron toggles: the header also holds the
-                    milestone link and the Add Run button, so a whole-row
-                    trigger would swallow both. */}
-                <MilestoneGroupChevron
-                  isOpen={isOpen}
-                  testId={`milestone-group-toggle-${milestone.id}`}
-                  onClick={(e) => {
-                    if (e.altKey) setAllGroupsCollapsed(isOpen);
-                    else setGroupOpen(groupKey, !isOpen);
-                  }}
-                />
-                <div className="truncate min-w-0">
-                  <MilestoneIconAndName
-                    collapsibleIcon
-                    milestone={milestone}
-                    // The full source badge renders right beside this — no
-                    // duplicate glyph inside the name.
-                    showSourceIcon={false}
-                  />
-                </div>
-                <MilestoneSourceBadge
-                  milestone={milestone}
-                  projectId={numericProjectId}
-                  integrationProjects={integrationProjects}
-                  // This page groups BY milestone but doesn't manage them;
-                  // unlinking stays on the milestones pages.
-                  showUnlinkAction={false}
-                />
-                <Badge
-                  variant="outline"
-                  className="shrink-0 hidden @lg:inline-flex text-xs font-normal text-muted-foreground"
-                  data-testid={`milestone-group-count-${milestone.id}`}
-                >
-                  {t("milestoneGroup.runCount", { count: subtreeRunCount })}
-                </Badge>
-              </div>
-
-              {/* Status */}
-              <div className="milestone-status flex gap-2 justify-center">
-                <Badge
-                  style={{ backgroundColor: badge }}
-                  className="text-secondary-background border-2 border-secondary-foreground text-sm"
-                >
-                  {tMilestones(`statusLabels.${status}` as any)}
-                </Badge>
-              </div>
-
-              {/* Dates */}
-              <div className="milestone-dates flex justify-end">
-                <div className="grow text-sm text-muted-foreground">
-                  {canAddEditRun && (
-                    <>
-                      <Button
-                        variant="link"
-                        className="p-0"
-                        onClick={() => handleAddTestRun(milestone.id)}
-                      >
-                        <CirclePlus className="h-4 w-4" />
-                        <span className="hidden md:inline">
-                          {t("add.title")}
-                        </span>
-                      </Button>
-                      {isAddTestRunModalOpen &&
-                        selectedMilestoneId === milestone.id && (
-                          <AddTestRunModal
-                            defaultMilestoneId={milestone.id}
-                            open={isAddTestRunModalOpen}
-                            onClose={() => {
-                              setIsAddTestRunModalOpen(false);
-                              setModalSelectedTestCases([]);
-                              setSelectedMilestoneId(null);
-                            }}
-                            initialSelectedCaseIds={modalSelectedTestCases}
-                            onSelectedCasesChange={setModalSelectedTestCases}
-                          />
-                        )}
-                    </>
-                  )}
-                  <DateTextDisplay
-                    responsive
-                    startDate={
-                      milestone.startedAt ? new Date(milestone.startedAt) : null
-                    }
-                    endDate={
-                      milestone.completedAt
-                        ? new Date(milestone.completedAt)
-                        : null
-                    }
-                    isCompleted={milestone.isCompleted}
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* overflow-hidden is what the height keyframes clip against;
-                without it the rows spill out at full height for the whole
-                animation instead of being wiped. */}
-            <CollapsibleContent className="overflow-hidden data-[state=closed]:animate-slide-up data-[state=open]:animate-slide-down">
-              {/* Render test runs under this milestone FIRST */}
-              {hasTestRunsUnderMilestone && (
-                <div className="test-runs-container bg-muted pe-4 pb-2 mb-2">
-                  {/* space-y-0: the rows carry their own my-2, so the list's
-                      default vertical rhythm would double the gap. */}
-                  <VirtualizedCardList
-                    items={
-                      currentGroupedRuns.milestones[milestone.id]?.testRuns ??
-                      []
-                    }
-                    getKey={(testRun) => testRun.id}
-                    className="space-y-0"
-                    data-testid={`milestone-test-runs-list-${milestone.id}`}
-                    renderItem={(testRun) => (
-                      <div style={{ paddingInlineStart: "2.5rem" }}>
-                        <TestRunItem
-                          selectable={bulkSelectable}
-                          selected={selectedRunIds.has(testRun.id)}
-                          onSelectedChange={(checked) =>
-                            toggleRunSelected(testRun.id, checked)
-                          }
-                          testRun={testRun}
-                          isNew={false}
-                          onDuplicate={onDuplicateTestRunParam}
-                          summaryData={summariesData?.summaries[testRun.id]}
-                          summaryLoading={isBatchSummariesLoading}
-                          pendingRequest={pendingByTestRunId.get(testRun.id)}
-                          showMilestone={false}
-                        />
-                      </div>
-                    )}
-                  />
-                </div>
-              )}
-
-              {/* THEN render child milestones */}
-              {milestone.children?.map((childMilestone) =>
-                renderMilestoneWithTestRuns(childMilestone, depth + 1)
-              )}
-            </CollapsibleContent>
-          </Collapsible>
+        <div className="pe-4 ps-4" style={indent}>
+          <TestRunItem
+            selectable={bulkSelectable}
+            selected={selectedRunIds.has(row.run.id)}
+            onSelectedChange={(checked) =>
+              toggleRunSelected(row.run.id, checked)
+            }
+            testRun={row.run}
+            isNew={false}
+            onDuplicate={onDuplicateTestRun}
+            summaryData={batchSummaries?.summaries[row.run.id]}
+            summaryLoading={isBatchSummariesLoading}
+            pendingRequest={pendingByTestRunId.get(row.run.id)}
+            // Only the unscheduled group leaves the milestone unsaid by its
+            // own header, and its runs are the ones at depth 0.
+            showMilestone={row.depth === 0}
+          />
         </div>
       );
-    };
+    }
 
-    // No header means no chevron to reopen with, so the group has to stay
-    // expanded in that (runs-all-completed) case regardless of stored state.
-    const showUnscheduledHeader = currentGroupedRuns.unscheduled.some(
-      (testRun) => !testRun.isCompleted
+    if (row.kind === "unscheduled-header") {
+      const isOpen = !collapsedGroups.has(UNSCHEDULED_GROUP_KEY);
+      return (
+        <div className="@container milestone-grid bg-primary/10 p-4">
+          <div className="milestone-name flex items-center gap-1">
+            <MilestoneGroupChevron
+              isOpen={isOpen}
+              testId="milestone-group-toggle-unscheduled"
+              onClick={(e) => {
+                if (e.altKey) setAllGroupsCollapsed(isOpen);
+                else setGroupOpen(UNSCHEDULED_GROUP_KEY, !isOpen);
+              }}
+            />
+            <DynamicIcon name="calendar-off" className="w-6 h-6 shrink-0" />
+            <div className="truncate">{tSessions("noMilestone")}</div>
+            <Badge
+              variant="outline"
+              className="shrink-0 hidden @lg:inline-flex text-xs font-normal text-muted-foreground"
+              data-testid="milestone-group-count-unscheduled"
+            >
+              {t("milestoneGroup.runCount", {
+                count: groupedTestRunData.unscheduled.length,
+              })}
+            </Badge>
+          </div>
+          <div className="milestone-status"></div>
+          <div className="milestone-dates flex justify-end">
+            {canAddEditRun && (
+              <Button
+                onClick={() => handleAddTestRun(null)}
+                aria-label={t("add.title")}
+                className="group gap-0 transition-all duration-200 hover:gap-2"
+              >
+                <CirclePlus className="h-4 w-4" />
+                <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-xs">
+                  {t("add.title")}
+                </span>
+              </Button>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    const { milestone, subtreeRunCount } = row;
+    const groupKey = String(milestone.id);
+    const isOpen = !collapsedGroups.has(groupKey);
+    const status = getStatus(milestone);
+    const { badge } = getStatusStyle(
+      status,
+      resolvedTheme || "light",
+      colorMap
     );
-    const isUnscheduledOpen =
-      !showUnscheduledHeader || !collapsedGroups.has(UNSCHEDULED_GROUP_KEY);
 
     return (
-      <>
-        {currentGroupedRuns.unscheduled.length > 0 && (
-          <div className="w-full bg-muted rounded-lg p-0 pb-2">
-            <Collapsible
-              open={isUnscheduledOpen}
-              onOpenChange={(open) => setGroupOpen(UNSCHEDULED_GROUP_KEY, open)}
-            >
-              {showUnscheduledHeader && (
-                <div className="@container milestone-grid bg-primary/10 rounded-t-lg p-4">
-                  <div className="milestone-name flex items-center gap-1">
-                    <MilestoneGroupChevron
-                      isOpen={isUnscheduledOpen}
-                      testId="milestone-group-toggle-unscheduled"
-                      onClick={(e) => {
-                        if (e.altKey) setAllGroupsCollapsed(isUnscheduledOpen);
-                        else
-                          setGroupOpen(
-                            UNSCHEDULED_GROUP_KEY,
-                            !isUnscheduledOpen
-                          );
-                      }}
-                    />
-                    <DynamicIcon
-                      name="calendar-off"
-                      className="w-6 h-6 shrink-0"
-                    />
-                    <div className="truncate">{tSessions("noMilestone")}</div>
-                    <Badge
-                      variant="outline"
-                      className="shrink-0 hidden @lg:inline-flex text-xs font-normal text-muted-foreground"
-                      data-testid="milestone-group-count-unscheduled"
-                    >
-                      {t("milestoneGroup.runCount", {
-                        count: currentGroupedRuns.unscheduled.length,
-                      })}
-                    </Badge>
-                  </div>
-                  <div className="milestone-status"></div>
-                  <div className="milestone-dates flex justify-end">
-                    {canAddEditRun && (
-                      <>
-                        <Button
-                          onClick={() => handleAddTestRun(null)}
-                          aria-label={t("add.title")}
-                          className="group gap-0 transition-all duration-200 hover:gap-2"
-                        >
-                          <CirclePlus className="h-4 w-4" />
-                          <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-xs">
-                            {t("add.title")}
-                          </span>
-                        </Button>
-                        {isAddTestRunModalOpen &&
-                          selectedMilestoneId === null && (
-                            <AddTestRunModal
-                              open={isAddTestRunModalOpen}
-                              onClose={() => {
-                                setIsAddTestRunModalOpen(false);
-                                setModalSelectedTestCases([]);
-                              }}
-                              initialSelectedCaseIds={modalSelectedTestCases}
-                              onSelectedCasesChange={setModalSelectedTestCases}
-                            />
-                          )}
-                      </>
-                    )}
-                  </div>
-                </div>
-              )}
-              {/* overflow-hidden is what the height keyframes clip against;
-                without it the rows spill out at full height for the whole
-                animation instead of being wiped. */}
-              <CollapsibleContent className="overflow-hidden data-[state=closed]:animate-slide-up data-[state=open]:animate-slide-down">
-                {/* space-y-0: the rows carry their own my-2, so the list's
-                    default vertical rhythm would double the gap. */}
-                <VirtualizedCardList
-                  items={currentGroupedRuns.unscheduled}
-                  getKey={(testRun) => testRun.id}
-                  className="space-y-0"
-                  data-testid="unscheduled-test-runs-list"
-                  renderItem={(testRun) => (
-                    <div className="ps-4 pe-4">
-                      <TestRunItem
-                        selectable={bulkSelectable}
-                        selected={selectedRunIds.has(testRun.id)}
-                        onSelectedChange={(checked) =>
-                          toggleRunSelected(testRun.id, checked)
-                        }
-                        testRun={testRun}
-                        isNew={false}
-                        onDuplicate={onDuplicateTestRunParam}
-                        summaryData={summariesData?.summaries[testRun.id]}
-                        summaryLoading={isBatchSummariesLoading}
-                        pendingRequest={pendingByTestRunId.get(testRun.id)}
-                      />
-                    </div>
-                  )}
-                />
-              </CollapsibleContent>
-            </Collapsible>
+      <div
+        className="@container milestone-grid bg-primary/10 p-2 pe-4"
+        style={indent}
+      >
+        <div className="flex items-center gap-1 justify-start min-w-0">
+          {row.depth > 0 && (
+            <DynamicIcon
+              name="corner-down-right"
+              className="w-6 h-6 text-primary/50 shrink-0 bg-transparent"
+            />
+          )}
+          {/* Only the chevron toggles: the header also holds the milestone
+              link and the Add Run button, so a whole-row trigger would
+              swallow both. */}
+          <MilestoneGroupChevron
+            isOpen={isOpen}
+            testId={`milestone-group-toggle-${milestone.id}`}
+            onClick={(e) => {
+              if (e.altKey) setAllGroupsCollapsed(isOpen);
+              else setGroupOpen(groupKey, !isOpen);
+            }}
+          />
+          <div className="truncate min-w-0">
+            <MilestoneIconAndName
+              collapsibleIcon
+              milestone={milestone}
+              // The full source badge renders right beside this — no
+              // duplicate glyph inside the name.
+              showSourceIcon={false}
+            />
           </div>
-        )}
-        <div className="rounded-b-lg mb-4"></div>
+          <MilestoneSourceBadge
+            milestone={milestone}
+            projectId={numericProjectId}
+            integrationProjects={integrationProjects}
+            // This page groups BY milestone but doesn't manage them;
+            // unlinking stays on the milestones pages.
+            showUnlinkAction={false}
+          />
+          <Badge
+            variant="outline"
+            className="shrink-0 hidden @lg:inline-flex text-xs font-normal text-muted-foreground"
+            data-testid={`milestone-group-count-${milestone.id}`}
+          >
+            {t("milestoneGroup.runCount", { count: subtreeRunCount })}
+          </Badge>
+        </div>
 
-        {currentMilestoneTree.map((milestone) =>
-          renderMilestoneWithTestRuns(milestone, 0)
-        )}
-      </>
+        <div className="milestone-status flex gap-2 justify-center">
+          <Badge
+            style={{ backgroundColor: badge }}
+            className="text-secondary-background border-2 border-secondary-foreground text-sm"
+          >
+            {tMilestones(`statusLabels.${status}` as any)}
+          </Badge>
+        </div>
+
+        <div className="milestone-dates flex justify-end">
+          <div className="grow text-sm text-muted-foreground">
+            {canAddEditRun && (
+              <Button
+                variant="link"
+                className="p-0"
+                onClick={() => handleAddTestRun(milestone.id)}
+              >
+                <CirclePlus className="h-4 w-4" />
+                <span className="hidden md:inline">{t("add.title")}</span>
+              </Button>
+            )}
+            <DateTextDisplay
+              responsive
+              startDate={
+                milestone.startedAt ? new Date(milestone.startedAt) : null
+              }
+              endDate={
+                milestone.completedAt ? new Date(milestone.completedAt) : null
+              }
+              isCompleted={milestone.isCompleted}
+            />
+          </div>
+        </div>
+      </div>
     );
   };
 
   return (
     <div className="flex flex-col items-center w-full">
-      <div className="w-full relative">
+      <div className="w-full">
         <div className="flex flex-col w-full">
           {bulkBar}
-          {renderGroupedTestRuns(
-            groupedTestRunData,
-            sortedMilestoneTree,
-            onDuplicateTestRun,
-            batchSummaries
-          )}
+          <div className="w-full bg-muted rounded-lg pb-2">
+            <WindowVirtualizedList
+              items={runListRows}
+              getKey={(row) => row.key}
+              data-testid="run-list"
+              renderItem={renderRunListRow}
+            />
+          </div>
         </div>
       </div>
+
+      {/* Hoisted out of the group headers: those are virtualized rows now, so
+          a header scrolling out of the window would take an open dialog with
+          it. The milestone it targets is held in state instead. */}
+      {isAddTestRunModalOpen && canAddEditRun && (
+        <AddTestRunModal
+          key={selectedMilestoneId ?? "unscheduled"}
+          defaultMilestoneId={selectedMilestoneId ?? undefined}
+          open
+          onClose={() => {
+            setIsAddTestRunModalOpen(false);
+            setModalSelectedTestCases([]);
+            setSelectedMilestoneId(null);
+          }}
+          initialSelectedCaseIds={modalSelectedTestCases}
+          onSelectedCasesChange={setModalSelectedTestCases}
+        />
+      )}
 
       {bulkDialogs}
     </div>

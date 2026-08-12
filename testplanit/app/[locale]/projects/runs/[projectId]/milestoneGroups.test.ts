@@ -11,6 +11,8 @@
 
 import { describe, expect, it } from "vitest";
 import {
+  buildRunListRows,
+  type RunListRow,
   collapsedStorageKey,
   collectRenderedMilestoneKeys,
   countRunsInSubtree,
@@ -138,5 +140,113 @@ describe("collapsedStorageKey", () => {
   // Same project, two independent preferences — one must not clobber the other.
   it("does not collide with the filter-chip key", () => {
     expect(collapsedStorageKey(7)).not.toBe("tpi.runs.7.filters");
+  });
+});
+
+describe("buildRunListRows", () => {
+  interface Run {
+    id: number;
+  }
+  const run = (id: number): Run => ({ id });
+  const getRunId = (r: Run) => r.id;
+
+  interface Node {
+    id: number;
+    children?: Node[];
+  }
+
+  // Release 1.0 holds nothing directly; its two sprints hold the runs.
+  const tree: Node[] = [
+    {
+      id: 1,
+      children: [
+        { id: 2, children: [] },
+        { id: 3, children: [] },
+      ],
+    },
+  ];
+  const grouped = {
+    milestones: {
+      2: { testRuns: [run(20), run(21)] },
+      3: { testRuns: [run(30)] },
+    },
+  };
+
+  const defaults = {
+    unscheduled: [] as Run[],
+    grouped,
+    tree,
+    collapsedGroups: new Set<string>() as ReadonlySet<string>,
+    showUnscheduledHeader: true,
+    getRunId,
+  };
+
+  const build = (over: Partial<typeof defaults> = {}) =>
+    buildRunListRows<Run, Node>({ ...defaults, ...over });
+
+  const shape = (rows: RunListRow<Run, Node>[]) =>
+    rows.map((row) =>
+      row.kind === "run"
+        ? `run-${row.run.id}@${row.depth}`
+        : row.kind === "milestone-header"
+          ? `m${row.milestone.id}@${row.depth}`
+          : "unscheduled"
+    );
+
+  it("emits each milestone's own runs before its children, depth-first", () => {
+    expect(shape(build())).toEqual([
+      "m1@0",
+      "m2@1",
+      "run-20@2",
+      "run-21@2",
+      "m3@1",
+      "run-30@2",
+    ]);
+  });
+
+  it("puts the unscheduled group first, above the tree", () => {
+    const rows = build({ unscheduled: [run(9)] });
+    expect(shape(rows).slice(0, 2)).toEqual(["unscheduled", "run-9@0"]);
+  });
+
+  it("keeps a collapsed milestone's header but drops its runs and its children", () => {
+    const rows = build({ collapsedGroups: new Set(["1"]) });
+    expect(shape(rows)).toEqual(["m1@0"]);
+  });
+
+  it("reports the whole subtree on a header, so a collapsed group says what it hid", () => {
+    const header = build().find((row) => row.kind === "milestone-header");
+    expect(header).toMatchObject({ subtreeRunCount: 3 });
+  });
+
+  it("skips milestones with no runs at or below them", () => {
+    const rows = buildRunListRows<Run, Node>({
+      ...defaults,
+      grouped: { milestones: {} },
+    });
+    expect(rows).toEqual([]);
+  });
+
+  // No header means no chevron, so a stored collapse must not strand the runs.
+  it("ignores a stored collapse when the unscheduled group has no header", () => {
+    const rows = build({
+      unscheduled: [run(9)],
+      showUnscheduledHeader: false,
+      collapsedGroups: new Set([UNSCHEDULED_GROUP_KEY]),
+    });
+    expect(shape(rows).slice(0, 1)).toEqual(["run-9@0"]);
+  });
+
+  it("collapses the unscheduled group when it does have a header", () => {
+    const rows = build({
+      unscheduled: [run(9)],
+      collapsedGroups: new Set([UNSCHEDULED_GROUP_KEY]),
+    });
+    expect(shape(rows).slice(0, 2)).toEqual(["unscheduled", "m1@0"]);
+  });
+
+  it("gives every row a key unique across headers and runs", () => {
+    const rows = build({ unscheduled: [run(9)] });
+    expect(new Set(rows.map((r) => r.key)).size).toBe(rows.length);
   });
 });

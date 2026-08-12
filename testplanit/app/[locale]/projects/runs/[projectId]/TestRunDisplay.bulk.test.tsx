@@ -11,6 +11,23 @@ vi.mock("~/hooks/useProjectPermissions", () => ({
   useProjectPermissions: mockUseProjectPermissions,
 }));
 
+// ── Virtualizer ─────────────────────────────────────────────────────────────
+// The list renders through a window virtualizer, which needs a real layout;
+// jsdom has none, so render every row and keep these tests about selection.
+vi.mock("@tanstack/react-virtual", () => ({
+  useWindowVirtualizer: (opts: { count: number }) => ({
+    getTotalSize: () => opts.count * 96,
+    getVirtualItems: () =>
+      Array.from({ length: opts.count }, (_, index) => ({
+        key: index,
+        index,
+        start: index * 96,
+        size: 96,
+      })),
+    measureElement: () => {},
+  }),
+}));
+
 // ── Environment mocks ───────────────────────────────────────────────────────
 // createColorMap indexes orders [2] and [5] of these families.
 const COLOR_FAMILIES = ["Green", "Black", "Red", "Blue", "Orange"];
