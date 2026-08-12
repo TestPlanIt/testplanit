@@ -46,14 +46,34 @@ describe("resolveStoredCredentials", () => {
     });
   });
 
-  it("refuses a secret stored in cleartext rather than using it as-is", async () => {
-    // The production incident: a cleartext apiToken was forwarded to Jira as
-    // a bearer credential.
-    await expectCorrupt({ email: "a@b.com", apiToken: "plaintext-token" });
+  it("accepts a cleartext secret, which is what the admin UI writes", async () => {
+    // The integration form saves through the generated ZenStack model
+    // endpoint, which stores credentials verbatim. Refusing this shape would
+    // break every integration created through the admin UI.
+    expect(
+      await resolveStoredCredentials(
+        { email: "a@b.com", apiToken: "plaintext-token" },
+        "JIRA"
+      )
+    ).toEqual({ email: "a@b.com", apiToken: "plaintext-token" });
   });
 
-  it("refuses a cleartext password on the Data Center credential shape", async () => {
-    await expectCorrupt({ username: "svc", password: "hunter2" });
+  it("accepts a cleartext OAuth client secret", async () => {
+    expect(
+      await resolveStoredCredentials(
+        { clientId: "abc", clientSecret: "shh" },
+        "JIRA"
+      )
+    ).toEqual({ clientId: "abc", clientSecret: "shh" });
+  });
+
+  it("accepts a cleartext password on the Data Center credential shape", async () => {
+    expect(
+      await resolveStoredCredentials(
+        { username: "svc", password: "hunter2" },
+        "JIRA"
+      )
+    ).toEqual({ username: "svc", password: "hunter2" });
   });
 
   it("refuses an undecryptable blob rather than returning empty credentials", async () => {
