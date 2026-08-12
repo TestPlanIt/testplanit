@@ -351,7 +351,9 @@ describe("POST /api/integrations/test-connection", () => {
       expect(mockFetch).not.toHaveBeenCalled();
     });
 
-    it("refuses a cleartext secret rather than testing with it as-is", async () => {
+    it("tests with a cleartext secret rather than refusing it", async () => {
+      // Cleartext is badly stored, not unreadable. Refusing it made
+      // "Test connection" fail on integrations that work.
       (getServerSession as any).mockResolvedValue(mockSession);
       (baseDb.integration.findUnique as any).mockResolvedValue({
         id: 9,
@@ -361,14 +363,18 @@ describe("POST /api/integrations/test-connection", () => {
         settings: { baseUrl: "https://mycompany.atlassian.net" },
       });
       (isEncrypted as any).mockReturnValue(false);
+      mockFetch.mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve({ accountId: "abc" }),
+      });
 
       const response = await POST(createRequest({ integrationId: 9 }));
       const data = await response.json();
 
-      expect(response.status).toBe(400);
-      expect(data.success).toBe(false);
-      expect(data.error).toMatch(/re-enter/i);
-      expect(mockFetch).not.toHaveBeenCalled();
+      expect(response.status).toBe(200);
+      expect(data.success).toBe(true);
+      expect(mockFetch).toHaveBeenCalled();
     });
   });
 

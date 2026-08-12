@@ -11,9 +11,15 @@ import { credentialsCorruptError } from "./errors";
  *
  * Both shapes are read here, and neither may fall back to using an
  * unreadable value. A credential that cannot be decrypted is a corrupt
- * record, not a credential: forwarding it upstream authenticates nothing,
- * burns a rate-limit slot, and — when the stored value is cleartext — sends
- * the operator's real secret to whatever host the base URL points at.
+ * record, not a credential: forwarding it upstream authenticates nothing and
+ * burns a rate-limit slot.
+ *
+ * "Unreadable" means exactly that — ciphertext we cannot decrypt. A secret
+ * sitting in cleartext is badly *stored*, not unreadable, and is used as-is
+ * with a warning. Refusing it instead breaks integrations that work, with no
+ * migration that would fix them: OAuth2 client credentials predate the
+ * encrypting write path, so those rows hold cleartext `clientSecret` values
+ * and every adapter build for them would fail.
  */
 
 /**
@@ -46,9 +52,9 @@ const hasEncryptedBlob = (
  * Decrypt stored integration credentials into a plain field map.
  *
  * Throws `IntegrationApiError` with kind `credentials_corrupt` when a secret
- * cannot be decrypted or was stored in cleartext. Callers must let that
- * propagate rather than proceeding with partial credentials — the point is
- * that no outbound request is made with a value we could not read.
+ * cannot be decrypted. Callers must let that propagate rather than proceeding
+ * with partial credentials — the point is that no outbound request is made
+ * with a value we could not read.
  */
 export const resolveStoredCredentials = async (
   raw: unknown,
@@ -83,10 +89,19 @@ export const resolveStoredCredentials = async (
       continue;
     }
 
-    // A secret stored in cleartext is refused rather than used. Re-saving the
-    // integration rewrites it through the encrypting write path.
+    // Not ciphertext, so there is nothing to decrypt and nothing unreadable
+    // about it — use it and say so. Re-saving the integration rewrites it
+    // through the encrypting write path. `isEncrypted` requires canonical
+    // base64 over a full salt + IV + tag, which real ciphertext always
+    // satisfies, so this branch cannot swallow a value we should have
+    // decrypted.
     if (!isEncrypted(value)) {
-      throw credentialsCorruptError(provider);
+      console.warn(
+        `[integrations] ${provider} credential "${key}" is stored in cleartext; ` +
+          `re-save the integration to encrypt it at rest.`
+      );
+      resolved[key] = value;
+      continue;
     }
 
     try {

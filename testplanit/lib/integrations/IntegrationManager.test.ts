@@ -30,8 +30,8 @@ vi.mock("@/lib/valkey", () => ({
 // Mock encryption
 // Identity crypto: fixtures store credential values verbatim, so the tests
 // exercise adapter wiring rather than the cipher. `isEncrypted` reports true
-// for the same reason — refusal of cleartext secrets is covered against the
-// real implementation in credentials.test.ts.
+// for the same reason — cleartext and undecryptable handling is covered
+// against the real implementation in credentials.test.ts.
 vi.mock("@/utils/encryption", () => ({
   EncryptionService: {
     decrypt: vi.fn((encrypted: string) => encrypted),
@@ -1113,18 +1113,60 @@ describe("IntegrationManager", () => {
       expect(decrypt).toHaveBeenCalledWith("encrypted-credentials-string");
     });
 
-    it("refuses to build an adapter when a stored secret is cleartext", async () => {
+    it("builds the adapter from cleartext OAuth2 client credentials", async () => {
+      // Regression: OAuth2 client credentials predate the encrypting write
+      // path, so these rows hold a cleartext clientSecret. Refusing them broke
+      // every Jira OAuth2 path — authorize URL, callback, and every later
+      // adapter build — with a re-enter-your-credentials message that
+      // re-entering could not fix.
       vi.mocked(isEncrypted).mockReturnValue(false);
+      vi.stubEnv("NEXTAUTH_URL", "https://app.com");
 
       mockDb.integration.findUnique.mockResolvedValue({
         id: 6,
-        name: "Jira Cleartext",
+        name: "Jira OAuth Cleartext",
+        provider: "JIRA",
+        status: "ACTIVE",
+        authType: "OAUTH2",
+        credentials: {
+          clientId: "cleartext-client-id",
+          // Contains "-", so it is not base64 and isEncrypted reports cleartext.
+          clientSecret: "ATOA-cleartext_client_secret",
+        },
+        settings: { baseUrl: "https://test.atlassian.net" },
+        userIntegrationAuths: [],
+      });
+
+      const adapter = await manager.getAdapter("6");
+
+      expect(adapter).toBeInstanceOf(JiraAdapter);
+      expect(adapter!.getAuthorizationUrl!("state-123")).toContain(
+        "client_id=cleartext-client-id"
+      );
+      expect((adapter as any).config.clientSecret).toBe(
+        "ATOA-cleartext_client_secret"
+      );
+
+      vi.unstubAllEnvs();
+    });
+
+    it("refuses to build an adapter when a stored secret will not decrypt", async () => {
+      // Still refused: ciphertext we cannot read authenticates nothing, so it
+      // must not reach the provider.
+      vi.mocked(isEncrypted).mockReturnValue(true);
+      vi.mocked(decrypt).mockRejectedValueOnce(
+        new Error("Failed to decrypt data")
+      );
+
+      mockDb.integration.findUnique.mockResolvedValue({
+        id: 16,
+        name: "Jira Undecryptable",
         provider: "JIRA",
         status: "ACTIVE",
         authType: "API_KEY",
         credentials: {
           email: "test@example.com",
-          apiToken: "cleartext-token",
+          apiToken: "undecryptable-token",
         },
         settings: { baseUrl: "https://test.atlassian.net" },
         userIntegrationAuths: [],
@@ -1133,7 +1175,7 @@ describe("IntegrationManager", () => {
       const mockFetch = vi.fn();
       global.fetch = mockFetch;
 
-      const error = await manager.getAdapter("6").then(
+      const error = await manager.getAdapter("16").then(
         () => null,
         (e) => e
       );

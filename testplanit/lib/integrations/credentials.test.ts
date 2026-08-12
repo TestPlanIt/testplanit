@@ -46,14 +46,40 @@ describe("resolveStoredCredentials", () => {
     });
   });
 
-  it("refuses a secret stored in cleartext rather than using it as-is", async () => {
-    // The production incident: a cleartext apiToken was forwarded to Jira as
-    // a bearer credential.
-    await expectCorrupt({ email: "a@b.com", apiToken: "plaintext-token" });
+  it("uses a secret stored in cleartext — it is readable, just badly stored", async () => {
+    // OAuth2 client credentials predate the encrypting write path, so these
+    // rows exist in the wild. Refusing them fails every adapter build for the
+    // integration, and no user action short of re-entering the secret fixes it.
+    expect(
+      await resolveStoredCredentials(
+        { email: "a@b.com", apiToken: "plaintext-token" },
+        "JIRA"
+      )
+    ).toEqual({ email: "a@b.com", apiToken: "plaintext-token" });
   });
 
-  it("refuses a cleartext password on the Data Center credential shape", async () => {
-    await expectCorrupt({ username: "svc", password: "hunter2" });
+  it("uses a cleartext password on the Data Center credential shape", async () => {
+    expect(
+      await resolveStoredCredentials(
+        { username: "svc", password: "hunter2" },
+        "JIRA"
+      )
+    ).toEqual({ username: "svc", password: "hunter2" });
+  });
+
+  it("uses the cleartext OAuth2 client credentials that broke Jira OAuth", async () => {
+    // A clientSecret containing "-" is not base64, so isEncrypted correctly
+    // reports cleartext; the adapter still needs the value to build the
+    // authorize URL and to exchange the code.
+    expect(
+      await resolveStoredCredentials(
+        { clientId: "public-client-id", clientSecret: "ATOA-secret_value" },
+        "JIRA"
+      )
+    ).toEqual({
+      clientId: "public-client-id",
+      clientSecret: "ATOA-secret_value",
+    });
   });
 
   it("refuses an undecryptable blob rather than returning empty credentials", async () => {
