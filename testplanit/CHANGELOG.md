@@ -1,3 +1,9 @@
+## [0.44.2](https://github.com/TestPlanIt/testplanit/compare/v0.44.1...v0.44.2) (2026-08-12)
+
+### Bug Fixes
+
+* **integrations:** stop using unreadable credentials and return actionable errors ([#580](https://github.com/TestPlanIt/testplanit/issues/580)) ([6d1080f](https://github.com/TestPlanIt/testplanit/commit/6d1080f77bc49b449ef7298c34ff97f4b8612977))
+
 ## [0.44.1](https://github.com/TestPlanIt/testplanit/compare/v0.44.0...v0.44.1) (2026-08-10)
 
 ### Bug Fixes
