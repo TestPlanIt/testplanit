@@ -4,6 +4,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { AuthenticationService } from "~/lib/integrations/AuthenticationService";
 import { IntegrationManager } from "~/lib/integrations/IntegrationManager";
 import { authOptions } from "~/server/auth";
+import {
+  integrationErrorBody,
+  responseStatusForIntegrationError,
+  toIntegrationError,
+} from "~/lib/integrations/errors";
 
 export async function GET(
   request: NextRequest,
@@ -105,9 +110,14 @@ export async function GET(
   } catch (error) {
     const { type } = await params;
     console.error(`Error in OAuth auth endpoint for ${type}:`, error);
-    return NextResponse.json(
-      { error: "Failed to initiate OAuth flow" },
-      { status: 500 }
-    );
+
+    // Most failures here originate from building the adapter — decrypting the
+    // stored client credentials, or reaching the provider. Those are all
+    // admin-fixable configuration problems, so surface what to fix instead of
+    // a bare 500.
+    const integrationError = toIntegrationError(error, type.toUpperCase());
+    return NextResponse.json(integrationErrorBody(integrationError), {
+      status: responseStatusForIntegrationError(integrationError),
+    });
   }
 }

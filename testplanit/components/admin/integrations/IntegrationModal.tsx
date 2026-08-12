@@ -30,6 +30,7 @@ import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod/v4";
 import { IntegrationConfigForm } from "./IntegrationConfigForm";
+import { IntegrationErrorAlert } from "./IntegrationErrorAlert";
 import { IntegrationTypeSelector } from "./IntegrationTypeSelector";
 
 interface IntegrationModalProps {
@@ -89,6 +90,7 @@ export function IntegrationModal({
   );
   const [isTesting, setIsTesting] = useState(false);
   const [testPassed, setTestPassed] = useState(false);
+  const [testError, setTestError] = useState<string | null>(null);
 
   // Upsert (not create) so re-adding an integration with the same name
   // as a soft-deleted one resurrects the row with the new payload
@@ -175,6 +177,7 @@ export function IntegrationModal({
 
   const handleTestConnection = async () => {
     setIsTesting(true);
+    setTestError(null);
     const values = form.getValues();
 
     try {
@@ -207,6 +210,7 @@ export function IntegrationModal({
           });
         }
         setTestPassed(true);
+        setTestError(null);
       } else {
         // The route returns a `capabilities` object describing each
         // probe it ran (connection / searchIssues / readIssue). When
@@ -230,12 +234,17 @@ export function IntegrationModal({
             ? failed.join("\n")
             : data.error || t("testFailedDescription");
         toast.error(t("testFailed"), { description });
+        // Kept on screen after the toast expires: these messages name the
+        // exact remedy (and sometimes a URL to visit), which is more than a
+        // transient toast can carry.
+        setTestError(description);
         setTestPassed(false);
       }
     } catch {
       toast.error(t("testError"), {
         description: t("testErrorDescription"),
       });
+      setTestError(t("testErrorDescription"));
     } finally {
       setIsTesting(false);
     }
@@ -319,6 +328,7 @@ export function IntegrationModal({
 
   const handleClose = () => {
     setTestPassed(false);
+    setTestError(null);
     onClose();
   };
 
@@ -415,6 +425,13 @@ export function IntegrationModal({
                   }
                   isEdit={!!integration}
                 />
+
+                {testError && (
+                  <IntegrationErrorAlert
+                    title={t("testFailed")}
+                    message={testError}
+                  />
+                )}
 
                 <div className="flex justify-between">
                   <div className="flex gap-2">
