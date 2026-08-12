@@ -6,149 +6,92 @@ installs. You build it yourself from the source attached below.
 
 > ⚠️ This is pre-release software. **Back up your database before trying it.**
 
-### What's new since beta.12
+### What's new since beta.13
 
 #### Test runs & sessions
 
-- **Bulk edit, complete, and delete** — row checkboxes and a bulk action bar
-  on the Test Runs and Sessions lists. Bulk Edit changes milestone, state,
-  and additive tags (plus assignee for sessions); every action is
-  permission-gated per item, with partial failures reported.
-- **Filter chips and collapsible milestone groups** — Manual, Automated, and
-  My Test Runs toggles apply to both the Active and Completed tabs and
-  persist per project. Milestone groups collapse (Alt-click for all) and
-  remember their state, each header carrying a subtree count; summary charts
-  collapse too. Milestones synced from Jira link straight to the sprint or
-  release.
-- **Runs tell you when they're ready to complete** — a notification goes to
-  the people who can actually close a run once every case has a result,
-  sent once per run.
-- **Edit a test case in place from the execution panel** — the details sheet
-  swaps into repository edit mode and back, without leaving the run.
-- **Configuration groups are editable after creation** — runs and sessions
-  can be linked, relinked, and unlinked from their sibling group, so a run
-  created on its own can finally join the group its duplicates formed.
-- Fixes: soft-deleted cases no longer inflate run summary counts, a bulk step
-  replace no longer destroys recorded step results, and loading a run stops
-  hydrating every repository case (with Pass & Next off the ACL-policy path).
-
-#### Repository
-
-- **Filter cases across multiple dimensions** — a new filter bar composes
-  predicates over any combination of fields, tags, issues, and system
-  attributes, independent of the View-by axis. Filters are editable chips,
-  serialized into shareable `?f=` URLs, with any/all/none matching for tags
-  and issues and an Assigned-to-me quick chip in run mode. Exports now honor
-  the filters the table is showing.
-- **An In Review axis and filter** — a project's whole review queue is one
-  click away, showing every case under review rather than only the ones
-  assigned to you. Appears only where the review workflow is enabled.
-- Saved views are offered in the case-selection dialog, and applying a saved
-  view keeps the folder you're standing in.
-- Moving cases within the same project is a pure relocation — no more
-  self-collisions on the unique index or churned case data.
-- The folder search dropdown stays inside the window and marks its matches.
-- Parallel CI workers racing to create the same folder no longer lose
-  results.
-
-#### Reports
-
-- **Metrics read manual and automated results together** — elapsed metrics,
-  their drill-downs, and the Test Case dimension now cover both
-  `TestRunResults` and JUnit results, keyed by repository case so
-  automation-only cases report correctly. Seconds-vs-milliseconds display is
-  corrected across tables, charts, drill-downs, and CSV, and elapsed axes
-  render real durations (45s / 5m 10s / 2h 5m).
-- **Per-dimension value filters** on every custom report, carried through
-  share links.
-- **New cross-project LLM Usage report** — token counts, estimated cost,
-  latency, and success rate, sliceable by feature, model, user, project,
-  integration, and outcome.
-- Test Result History gains a report action that opens Report Builder
-  pre-filtered to that case's elapsed time.
-- Report routes are authorization-gated end to end, and drill-down dimension
-  keys are validated against a per-report whitelist.
+- **The lists handle long projects properly now** — run and session tiles are
+  windowed inside each milestone group and in the all-completed view, so only
+  what's on screen is rendered. The lists scroll with the page instead of in a
+  nested pane, and opening one no longer prefetches a detail page for every
+  other tile in view. Drag-to-reorder has been removed from the runs list.
+- **Start and end dates on runs and sessions** — start comes from the earliest
+  result recorded, end from the latest. End only appears on completed runs and
+  sessions: an open one's newest result is the last thing that happened, not an
+  ending.
+- **Live updates target the run that changed** — a result landing used to wake
+  every tile in the list; it now invalidates just the run it belongs to, and a
+  burst of results is coalesced into one refresh.
+- **Summary cards fill the width available** on both lists.
+- Editing a case in place from the execution panel keeps its state out of the
+  URL, so browser back and forward behave as expected.
+- Child milestones rank the same way here as in every other milestone list.
 
 #### Milestones
 
-- **Cross-project coverage on in-scope issues** — issues whose cases live in
-  other projects now show those cases as a clickable +N list and blend their
-  latest results into the coverage breakdown, readiness rollup, and PDF
-  export. Counts are scoped to the projects the viewer can actually see,
-  closing a leak where linked-case counts included every project.
-- Member coverage falls back to automated results for otherwise-untested
-  cases, and deleted runs no longer skew readiness.
-- Milestone lists sort by urgency — past due first, then started, delayed,
-  upcoming, unscheduled, and completed.
+- Child milestone rows and the milestone pickers show the full, self-collapsing
+  source badge instead of a bare glyph, so a milestone synced from Jira is
+  identifiable wherever it appears.
+- Child milestones order consistently across every list that shows them.
 
-#### Reviews
+#### Sharing & links
 
-- Request and decision comments carry a type badge and color accent in entity
-  threads and mentioned-comment lists.
-- The inbox Decided tab includes decisions on reviews you requested, with a
-  Decided by column, and its filters are searchable multi-selects scoped to
-  what the current tab actually contains.
-- **The MCP server surfaces your review inbox**, so an agent can see what is
-  waiting on you and act on it.
-- Reviews are cancelled when their subject is deleted, and the dashboard's
-  pending-review query is bounded.
+- **A shared link now previews as what it points to.** Pasting a TestPlanIt URL
+  into Slack, Teams, or iMessage produced the same generic card whatever it
+  linked to, because the preview fetch has no session and was being sent to the
+  sign-in page. Runs, cases, sessions, projects, and milestones each get their
+  own card. By default the card names only the *kind* of record, so nothing
+  private reaches a channel; set `LINK_PREVIEW_MODE=names` to show record and
+  project names instead — anyone who can reach the link then sees them without
+  signing in, so enable it only where that's acceptable.
 
-#### Search & pickers
+#### Repository & import
 
-- **Advanced Filters are searchable comboboxes** — the ten checkbox lists
-  become pickers, and several controls that looked functional but filtered
-  nothing (estimate/elapsed ranges, tags and created-by on runs and sessions,
-  case source, date ranges) now work. Re-tagged cases are findable again.
-- Async comboboxes scroll infinitely instead of paging, with a loaded-of-total
-  footer, virtualized long lists, and no more fetch loops or off-screen
-  panels.
-- Numeric queries match entities by exact ID.
+- **Imports no longer fabricate steps or erase step history.** A result that
+  named a step order the case no longer has is routine — Testmo snapshots the
+  step list into each result at execution time — but it caused a live step row
+  to be created for the miss.
+- **Re-importing an unedited export works.** A TestPlanIt export carries each
+  case's own ID and Version columns, so re-importing one asked for a version
+  snapshot that already existed and failed the row; the import now allocates a
+  free version instead.
+- Sorting by the Steps column counts only live steps, so the order matches the
+  number the column shows.
 
 #### Integrations
 
-- **Expired OAuth tokens refresh during background syncs** instead of failing
-  the sync, refreshing five minutes ahead of expiry behind a lock so
-  rotating-refresh-token providers can't have the family revoked. When a
-  refresh is terminally rejected, you get a one-time bell and email notice
-  with a reconnect link.
-- Jira and OAuth callbacks are no longer blocked by stale API grants.
-- Webhook deliveries record the entity they were about, shown as a Reference
-  column.
+- **An integration whose credentials can't be read now says so.** Rather than
+  sending a value it couldn't decrypt, it refuses the request and reports what
+  to do — re-enter the credentials and save. Errors surfaced from providers are
+  typed and actionable instead of generic failures.
 
-#### Tables
+#### Operations & self-hosting
 
-- **One table component for paged and virtualized views** — virtualized
-  tables gain the paged engine's column drag-reorder, resizing, and per-column
-  header menu, with layout remembered per surface.
-- The column-selection popover grows wider instead of scrolling.
-
-#### Import & generation
-
-- Edits made on the Review & Import step of AI generation are kept.
-- CSV import previews every step it will create, validates required fields,
-  and explains ID-field errors instead of failing opaquely.
-- Testmo imports convert tables inside step content.
+- **Auth rate limits are shared across instances.** Both limiters counted
+  attempts in a per-process map, so a load-balanced pair kept separate counters
+  and the effective allowance roughly doubled. They now share state via Valkey.
+- **`/api/health` reports event-loop lag** (`p50` / `p99` / `max`, in
+  milliseconds). The app serves every request from a single JS thread, so this
+  is the capacity signal container CPU% can't show. It's reported for monitoring
+  only and never changes the overall status, so it won't flap a liveness probe.
+- **nginx logs request timing**, and the bundled config loads an http-context
+  include so a deployment can supply its own upstream block.
+- **The request body ceiling is overridable per deployment.** It was pinned
+  inside `location /`, where a per-host override was impossible without editing
+  the tracked file. See `nginx-local/README.md`.
 
 #### Fixes & interface
 
-- **The seed no longer overwrites settings an admin changed.** It re-ran on
-  every deploy and re-asserted defaults onto existing rows — silently
-  re-enabling disabled workflow states and undoing role permission grants,
-  admin account edits, milestone types, and retired priority options. A seed
-  now creates what is missing and leaves the rest alone. (It does not repair
-  data an earlier run already overwrote.)
-- Dialogs and sheets stay open when you press a resize handle inside them —
-  this was closing the Add Test Run wizard, the Add Case dialog, and the run
-  page's case-edit sheet, discarding in-progress edits.
-- **The accessible-theme accessibility gate passes.** Unnamed comboboxes and
-  switches got real labels, and admin-chosen status, tag, and result colors
-  publish a readable foreground that only the accessible themes consume — the
-  brand themes look unchanged.
-- Case-insensitive tag matching in the CLI and auto-tag routes, so CI jobs
-  and the tagger stop creating duplicates that differ only by case.
-- Audit rows attribute child-table and API-token writes to the acting user,
-  by name and email.
-- Upgraded to Next.js 16.3 with dependencies brought current.
+- The loading spinner in async dropdowns stays inside the dropdown instead of
+  drifting outside it before the first page of results lands.
+- In-review filter labels refined across six locales.
+
+#### Documentation
+
+- File Storage listed a configurable 100MB maximum per file. The real limits are
+  per upload type — 10MB for attachments and inline document images, 4MB for
+  project icons, 2MB for avatars — with the bundled nginx capping request bodies
+  at 10MB on top of that.
 
 ### Try it
 
