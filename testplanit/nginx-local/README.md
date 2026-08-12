@@ -44,3 +44,27 @@ To verify the config parses before reloading:
 ```bash
 docker exec testplanit-nginx nginx -t
 ```
+
+## Raising the request body limit
+
+Requests to the app are capped at **10 MB**. A larger upload is rejected by
+nginx with `413 Request Entity Too Large` before it ever reaches the app.
+
+The default is set in http context in `nginx.conf`, and the include here is
+loaded in server context, so a value set here wins:
+
+```nginx
+# nginx-local/body-size.conf
+client_max_body_size 100M;
+```
+
+Two rules matter:
+
+- Put it in `nginx-local/`, never `nginx-local/http/`. `client_max_body_size`
+  hard-fails with `"client_max_body_size" directive is duplicate` if it appears
+  twice in the same context, and nginx then refuses to start.
+- Raise the app's own per-upload limits too if you need files above 10 MB —
+  nginx only sets the outer ceiling. See
+  [File Storage](../../docs/docs/file-storage.md#file-size-limits).
+
+Apply and verify the same way as above.

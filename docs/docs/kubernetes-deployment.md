@@ -280,5 +280,11 @@ kubectl -n testplanit delete pvc -l app.kubernetes.io/instance=testplanit
   required; redis / elasticsearch / storage degrade gracefully):
   `kubectl -n testplanit port-forward svc/testplanit 3000:3000` then
   `curl -s localhost:3000/api/health | jq`.
+- **Event-loop lag** — the same response carries an `eventLoop` object with
+  `p50` / `p99` / `max` lag in milliseconds. The app serves every request from a
+  single JS thread, so this is the capacity signal container CPU% cannot show —
+  a rising `p99` means the thread is saturated even while CPU looks healthy. It
+  is reported for monitoring only and never changes the overall `status`, so it
+  will not flap your liveness probe.
 
 For the Docker Compose deployment, see [Deployment](./deployment.md).

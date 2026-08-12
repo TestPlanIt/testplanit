@@ -821,6 +821,12 @@ curl -H "Authorization: YOUR_API_TOKEN" \
 - Consider using OAuth instead of API keys for accurate per-user attribution without administrator permissions
 - Check user permissions in the external system
 
+**Issue: "The stored credentials for this integration could not be read"**
+
+- The credentials were encrypted with a different `ENCRYPTION_KEY` than the one the instance is running with, most often after a key rotation or a restore onto a new deployment.
+- The integration refuses to make outbound requests in this state rather than sending a value it could not read, so no partial or malformed request reaches the provider.
+- Recover by editing the integration, re-entering its credentials, and saving. That rewrites them with the current key. Every integration stored under the old key needs the same treatment.
+
 **Issue: Rich text formatting lost**
 
 - Verify the integration supports rich text

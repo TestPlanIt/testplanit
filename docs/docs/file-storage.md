@@ -206,11 +206,24 @@ This tells the app to generate presigned URLs using your public domain instead o
 
 ### File Size Limits
 
-Default limits (configurable):
+Each upload type has its own ceiling:
 
-- **Maximum file size**: 100MB per file
+| Upload type            | Maximum size |
+| ---------------------- | ------------ |
+| Attachments            | 10 MB        |
+| Inline document images | 10 MB        |
+| Project icons          | 4 MB         |
+| Avatars                | 2 MB         |
+
+A file over the limit is rejected before it is stored, with a message naming the
+maximum for that type.
+
+The bundled nginx separately caps any request body sent to the app at 10 MB. In
+proxy mode the file travels through the app server, so that ceiling applies to
+the upload as well — raising the app limits alone is not enough. See
+`nginx-local/README.md` for how to raise it per deployment.
+
 - **Total attachments**: No limit per entity
-- **Concurrent uploads**: 5 files maximum
 
 ## Attachment Management
 
