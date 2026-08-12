@@ -144,17 +144,23 @@ export function ProjectIntegrationSettings({
         `/api/integrations/${integration.id}/projects`
       );
 
+      // 401 means the stored authorization must be renewed. Any other failure
+      // is reported with the message the API returned, which names what to
+      // fix — a re-authorize prompt would send the admin somewhere that
+      // cannot resolve a rejected API key or a wrong site URL.
       if (response.status === 401) {
         setNeedsAuth(true);
         return;
       }
 
+      const data = await response.json().catch(() => null);
+
       if (!response.ok) {
-        throw new Error("Failed to load projects");
+        toast.error(data?.error ?? t("integration.loadProjectsError"));
+        return;
       }
 
-      const data = await response.json();
-      setExternalProjects(data.projects || []);
+      setExternalProjects(data?.projects || []);
     } catch {
       toast.error(t("integration.loadProjectsError"));
     } finally {

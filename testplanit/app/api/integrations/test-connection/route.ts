@@ -1,5 +1,9 @@
 import { prisma } from "@/lib/prisma";
-import { decrypt, isEncrypted } from "@/utils/encryption";
+import { resolveStoredCredentials } from "@/lib/integrations/credentials";
+import {
+  isIntegrationApiError,
+  responseStatusForIntegrationError,
+} from "@/lib/integrations/errors";
 import { IntegrationProvider } from "@prisma/client";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
@@ -789,48 +793,29 @@ export const POST = withAuditContext(async (req: NextRequest) => {
       testProvider = integration.provider;
       authType = integration.authType;
 
-      // Decrypt stored credentials for testing
-      if (
-        integration.credentials &&
-        typeof integration.credentials === "object"
-      ) {
-        // Check if credentials are stored with an 'encrypted' key (PUT route format)
-        if (
-          "encrypted" in integration.credentials &&
-          typeof integration.credentials.encrypted === "string"
-        ) {
-          try {
-            const decrypted = await decrypt(integration.credentials.encrypted);
-            Object.assign(testCredentials, JSON.parse(decrypted));
-          } catch (e) {
-            console.error("Failed to decrypt credentials:", e);
-          }
-        } else {
-          // Handle individual field encryption or plain text
-          const encryptedCreds = integration.credentials as Record<
-            string,
-            string
-          >;
-          for (const [key, value] of Object.entries(encryptedCreds)) {
-            if (value && typeof value === "string") {
-              try {
-                // Check if the value is encrypted using the utility function
-                if (isEncrypted(value)) {
-                  testCredentials[key] = await decrypt(value);
-                } else {
-                  // If not encrypted, use as-is
-                  testCredentials[key] = value;
-                }
-              } catch {
-                // If decryption fails, use the value as-is
-                console.warn(
-                  `Failed to decrypt credential ${key}, using as-is`
-                );
-                testCredentials[key] = value;
-              }
-            }
-          }
+      // Decrypt stored credentials for testing. A failure here is reported to
+      // the admin instead of being worked around: the previous fallback sent
+      // the unreadable stored value upstream as if it were a credential.
+      try {
+        Object.assign(
+          testCredentials,
+          await resolveStoredCredentials(
+            integration.credentials,
+            integration.provider
+          )
+        );
+      } catch (error) {
+        if (isIntegrationApiError(error)) {
+          console.error(
+            `Cannot read stored credentials for integration ${integration.id}:`,
+            error.cause ?? error
+          );
+          return NextResponse.json(
+            { success: false, error: error.userMessage },
+            { status: responseStatusForIntegrationError(error) }
+          );
         }
+        throw error;
       }
 
       if (integration.settings && typeof integration.settings === "object") {

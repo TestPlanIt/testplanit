@@ -131,15 +131,28 @@ export const decrypt = async (encryptedText: string): Promise<string> => {
   }
 };
 
-// Utility to check if a string is encrypted (base64 format check)
+/**
+ * Whether a stored string looks like output of `encrypt()`.
+ *
+ * `Buffer.from(value, "base64")` never throws — it skips characters outside
+ * the base64 alphabet — so a length check alone accepted arbitrary plaintext
+ * of sufficient length and, symmetrically, could reject nothing. This checks
+ * that the value is *canonical* base64 (the exact form `toString("base64")`
+ * produces) and that it decodes to a full salt + IV + tag plus at least one
+ * byte of ciphertext.
+ *
+ * A false positive is no longer load-bearing: callers must treat a decrypt
+ * failure as a corrupt credential rather than falling back to the raw value.
+ */
 export const isEncrypted = (value: string): boolean => {
-  try {
-    const decoded = Buffer.from(value, "base64");
-    // Check if the decoded buffer has the expected minimum length
-    return decoded.length >= saltLength + ivLength + tagLength;
-  } catch {
-    return false;
-  }
+  if (typeof value !== "string" || value.length === 0) return false;
+  if (value.length % 4 !== 0) return false;
+  if (!/^[A-Za-z0-9+/]+={0,2}$/.test(value)) return false;
+
+  const decoded = Buffer.from(value, "base64");
+  if (decoded.toString("base64") !== value) return false;
+
+  return decoded.length > saltLength + ivLength + tagLength;
 };
 
 // EncryptionService class for object encryption/decryption

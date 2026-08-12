@@ -2,6 +2,8 @@ import { prisma } from "@/lib/prismaBase";
 import { EncryptionService, getMasterKey } from "@/utils/encryption";
 import type { Integration, IntegrationProvider } from "@prisma/client";
 import { AuthenticationService } from "./AuthenticationService";
+import { resolveStoredCredentials } from "./credentials";
+import { credentialsCorruptError } from "./errors";
 import { AzureDevOpsAdapter } from "./adapters/AzureDevOpsAdapter";
 import { GiteaAdapter } from "./adapters/GiteaAdapter";
 import { GitHubAdapter } from "./adapters/GitHubAdapter";
@@ -139,17 +141,13 @@ export class IntegrationManager {
         integration.authType === "PERSONAL_ACCESS_TOKEN") &&
       integration.credentials
     ) {
-      let credentials = integration.credentials as any;
-
-      // Check if credentials are encrypted
-      if (typeof credentials === "object" && "encrypted" in credentials) {
-        // Decrypt credentials
-        const decrypted = EncryptionService.decrypt(
-          credentials.encrypted as string,
-          masterKey
-        );
-        credentials = JSON.parse(decrypted);
-      }
+      // Throws when a secret cannot be decrypted or was stored in cleartext,
+      // so an unreadable value is never forwarded to the provider as a
+      // credential.
+      const credentials = await resolveStoredCredentials(
+        integration.credentials,
+        integration.provider
+      );
 
       // Add API key auth data from credentials
       if (credentials.email) authData.email = credentials.email;
@@ -176,13 +174,20 @@ export class IntegrationManager {
       const auth = integration.userIntegrationAuths[0];
       authData.expiresAt = auth.tokenExpiresAt || undefined;
 
-      // Decrypt sensitive fields
-      let accessToken = auth.accessToken
-        ? EncryptionService.decrypt(auth.accessToken, masterKey)
-        : undefined;
-      let refreshToken = auth.refreshToken
-        ? EncryptionService.decrypt(auth.refreshToken, masterKey)
-        : undefined;
+      // Decrypt sensitive fields. A stored token that will not decrypt is
+      // surfaced as a re-authorization prompt rather than a raw crypto error.
+      let accessToken: string | undefined;
+      let refreshToken: string | undefined;
+      try {
+        accessToken = auth.accessToken
+          ? EncryptionService.decrypt(auth.accessToken, masterKey)
+          : undefined;
+        refreshToken = auth.refreshToken
+          ? EncryptionService.decrypt(auth.refreshToken, masterKey)
+          : undefined;
+      } catch (error) {
+        throw credentialsCorruptError(integration.provider, { cause: error });
+      }
 
       // Transparently refresh an expired access token. Refresh on behalf of the
       // token's owner: read paths (issue hover/details) borrow a token without
@@ -279,14 +284,10 @@ export class IntegrationManager {
     // register their own OAuth app. Decrypt them and pass them to the adapter
     // along with the redirect URI for the generic OAuth callback route.
     if (integration.authType === "OAUTH2" && integration.credentials) {
-      let credentials = integration.credentials as any;
-      if (typeof credentials === "object" && "encrypted" in credentials) {
-        const decrypted = EncryptionService.decrypt(
-          credentials.encrypted as string,
-          getMasterKey()
-        );
-        credentials = JSON.parse(decrypted);
-      }
+      const credentials = await resolveStoredCredentials(
+        integration.credentials,
+        integration.provider
+      );
       if (credentials.clientId) config.clientId = credentials.clientId;
       if (credentials.clientSecret)
         config.clientSecret = credentials.clientSecret;

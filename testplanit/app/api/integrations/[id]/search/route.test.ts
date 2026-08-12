@@ -237,10 +237,11 @@ describe("GET /api/integrations/[id]/search", () => {
   });
 
   describe("Error handling", () => {
-    it("returns 500 when adapter.searchIssues throws generic error", async () => {
+    it("returns 4xx without echoing the adapter's message when search fails", async () => {
       (getServerSession as any).mockResolvedValue(mockSession);
       mockDb.integration.findUnique.mockResolvedValue({
         id: 1,
+        provider: "JIRA",
         authType: "API_KEY",
         credentials: { apiToken: "key" },
         userIntegrationAuths: [],
@@ -252,27 +253,57 @@ describe("GET /api/integrations/[id]/search", () => {
       const response = await GET(createRequest("test"), params);
       const data = await response.json();
 
-      expect(response.status).toBe(500);
-      expect(data.error).toContain("External search failed");
+      expect(response.status).toBeGreaterThanOrEqual(400);
+      expect(response.status).toBeLessThan(500);
+      expect(data.error).not.toContain("External search failed");
+      expect(data.kind).toBe("upstream");
     });
 
-    it("returns 401 with authUrl when adapter throws 401 error on OAuth integration", async () => {
+    it("returns 401 with authUrl when the provider rejects an OAuth token", async () => {
       (getServerSession as any).mockResolvedValue(mockSession);
       mockDb.integration.findUnique.mockResolvedValue({
         id: 1,
+        provider: "JIRA",
         authType: "OAUTH2",
         credentials: null,
         userIntegrationAuths: [
           { userId: "user-1", accessToken: "expired-token", isActive: true },
         ],
       });
-      mockAdapter.searchIssues.mockRejectedValue(new Error("401 Unauthorized"));
+      // The shape BaseAdapter.makeRequest throws on a non-2xx response.
+      mockAdapter.searchIssues.mockRejectedValue(
+        new Error('HTTP 401: {"message":"Unauthorized"}')
+      );
 
       const response = await GET(createRequest("test"), params);
       const data = await response.json();
 
       expect(response.status).toBe(401);
       expect(data.requiresAuth).toBe(true);
+    });
+
+    it("does not offer re-authorization when an API-key credential is rejected", async () => {
+      (getServerSession as any).mockResolvedValue(mockSession);
+      mockDb.integration.findUnique.mockResolvedValue({
+        id: 1,
+        provider: "JIRA",
+        authType: "API_KEY",
+        credentials: { apiToken: "key" },
+        userIntegrationAuths: [],
+      });
+      mockAdapter.searchIssues.mockRejectedValue(
+        new Error('HTTP 401: {"message":"Unauthorized"}')
+      );
+
+      const response = await GET(createRequest("test"), params);
+      const data = await response.json();
+
+      // Re-authorizing cannot fix a rejected API key, so the actionable
+      // message is returned instead of a re-auth prompt.
+      expect(response.status).toBe(400);
+      expect(data.requiresAuth).toBeUndefined();
+      expect(data.kind).toBe("auth");
+      expect(data.error).toMatch(/API token/);
     });
   });
 });

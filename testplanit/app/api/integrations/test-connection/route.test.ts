@@ -50,7 +50,10 @@ describe("POST /api/integrations/test-connection", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockFetch.mockReset();
-    (isEncrypted as any).mockReturnValue(false);
+    // Identity crypto: stored fixtures are treated as ciphertext that
+    // decrypts to itself. Cleartext secrets are now refused, so a fixture
+    // marked unencrypted would be rejected before any probe runs.
+    (isEncrypted as any).mockReturnValue(true);
     (decrypt as any).mockImplementation((val: string) => Promise.resolve(val));
     (prisma.integration.update as any).mockResolvedValue({});
   });
@@ -325,6 +328,47 @@ describe("POST /api/integrations/test-connection", () => {
       // Activation for OAuth happens only in the authorization callback once
       // a real user token exists — never from the admin-side test.
       expect(prisma.integration.update).not.toHaveBeenCalled();
+    });
+
+    it("reports corrupt credentials instead of testing with an undecryptable value", async () => {
+      (getServerSession as any).mockResolvedValue(mockSession);
+      (prisma.integration.findUnique as any).mockResolvedValue({
+        id: 8,
+        provider: "JIRA",
+        authType: "API_KEY",
+        credentials: { email: "a@b.com", apiToken: "corrupt-ciphertext" },
+        settings: { baseUrl: "https://mycompany.atlassian.net" },
+      });
+      (decrypt as any).mockRejectedValue(new Error("Failed to decrypt data"));
+
+      const response = await POST(createRequest({ integrationId: 8 }));
+      const data = await response.json();
+
+      expect(response.status).toBe(400);
+      expect(data.success).toBe(false);
+      expect(data.error).toMatch(/re-enter/i);
+      // The undecryptable value is never sent upstream as a credential.
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
+
+    it("refuses a cleartext secret rather than testing with it as-is", async () => {
+      (getServerSession as any).mockResolvedValue(mockSession);
+      (prisma.integration.findUnique as any).mockResolvedValue({
+        id: 9,
+        provider: "JIRA",
+        authType: "API_KEY",
+        credentials: { email: "a@b.com", apiToken: "plaintext-token" },
+        settings: { baseUrl: "https://mycompany.atlassian.net" },
+      });
+      (isEncrypted as any).mockReturnValue(false);
+
+      const response = await POST(createRequest({ integrationId: 9 }));
+      const data = await response.json();
+
+      expect(response.status).toBe(400);
+      expect(data.success).toBe(false);
+      expect(data.error).toMatch(/re-enter/i);
+      expect(mockFetch).not.toHaveBeenCalled();
     });
   });
 
@@ -879,7 +923,7 @@ describe("POST /api/integrations/test-connection — Jira Data Center", () => {
 
   describe("D4: persists resolved deploymentType/authScheme", () => {
     beforeEach(() => {
-      (isEncrypted as any).mockReturnValue(false);
+      (isEncrypted as any).mockReturnValue(true);
     });
 
     it("fills in deploymentType/authScheme on a successful test when unset", async () => {

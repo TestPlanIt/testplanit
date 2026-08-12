@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { IntegrationApiError } from "../errors";
 import { JiraAdapter } from "./JiraAdapter";
 
 // Mock global fetch
@@ -230,20 +231,81 @@ describe("JiraAdapter", () => {
       );
     });
 
-    it("should throw error when API authentication fails", async () => {
-      mockFetch.mockResolvedValueOnce({
+    it("should throw a typed auth error when API authentication fails", async () => {
+      // v3 /myself, then the serverInfo deployment probe.
+      mockFetch.mockResolvedValue({
         ok: false,
+        status: 401,
         statusText: "Unauthorized",
       });
 
-      await expect(
-        adapter.authenticate({
+      const error = await adapter
+        .authenticate({
           type: "api_key",
           email: "test@example.com",
           apiToken: "invalid-token",
           baseUrl: "https://test.atlassian.net",
         })
-      ).rejects.toThrow("Jira API authentication failed: Unauthorized");
+        .then(
+          () => null,
+          (e) => e
+        );
+
+      expect(error).toBeInstanceOf(IntegrationApiError);
+      expect(error.kind).toBe("auth");
+      expect(error.status).toBe(401);
+      expect(error.provider).toBe("JIRA");
+      expect(error.userMessage).toMatch(/API token/);
+    });
+
+    it("classifies the failure from response.status, not response.statusText", async () => {
+      // The HTTP reason phrase is optional and servers may omit it. Nothing
+      // downstream may depend on the word "Unauthorized" appearing.
+      mockFetch.mockResolvedValue({
+        ok: false,
+        status: 401,
+        statusText: "",
+      });
+
+      const error = await adapter
+        .authenticate({
+          type: "api_key",
+          email: "test@example.com",
+          apiToken: "invalid-token",
+          baseUrl: "https://test.atlassian.net",
+        })
+        .then(
+          () => null,
+          (e) => e
+        );
+
+      expect(error).toBeInstanceOf(IntegrationApiError);
+      expect(error.kind).toBe("auth");
+      expect(error.status).toBe(401);
+    });
+
+    it("distinguishes a permission failure from a credential failure", async () => {
+      mockFetch.mockResolvedValue({
+        ok: false,
+        status: 403,
+        statusText: "Forbidden",
+      });
+
+      const error = await adapter
+        .authenticate({
+          type: "api_key",
+          email: "test@example.com",
+          apiToken: "valid-token",
+          baseUrl: "https://test.atlassian.net",
+        })
+        .then(
+          () => null,
+          (e) => e
+        );
+
+      expect(error).toBeInstanceOf(IntegrationApiError);
+      expect(error.kind).toBe("permission");
+      expect(error.userMessage).toMatch(/permission/i);
     });
 
     it("throws a clear error for a bare API token against Jira Cloud (no email/username)", async () => {
@@ -262,14 +324,21 @@ describe("JiraAdapter", () => {
         statusText: "Unauthorized",
       });
 
-      await expect(
-        adapter.authenticate({
+      const error = await adapter
+        .authenticate({
           type: "api_key",
           apiToken: "bare-token",
           baseUrl: "https://test.atlassian.net",
         })
-      ).rejects.toThrow(
-        /Jira Cloud authentication requires an email address paired with the API token/
+        .then(
+          () => null,
+          (e) => e
+        );
+
+      expect(error).toBeInstanceOf(IntegrationApiError);
+      expect(error.kind).toBe("auth");
+      expect(error.userMessage).toMatch(
+        /Jira Cloud requires an account email paired with an API token/
       );
     });
 

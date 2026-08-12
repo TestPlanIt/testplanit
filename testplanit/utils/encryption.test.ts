@@ -193,15 +193,36 @@ describe("isEncrypted", () => {
     expect(isEncrypted(shortBase64)).toBe(false);
   });
 
-  it("should return true for base64 strings meeting minimum length", () => {
-    // Create a buffer of exactly the minimum length
-    const minLength = 32 + 16 + 16; // salt + iv + tag
-    const longEnough = Buffer.alloc(minLength).toString("base64");
+  it("should return true for base64 strings carrying a ciphertext body", () => {
+    const header = 32 + 16 + 16; // salt + iv + tag
+    const longEnough = Buffer.alloc(header + 1).toString("base64");
     expect(isEncrypted(longEnough)).toBe(true);
+  });
+
+  it("should return false for a header-sized value with no ciphertext", () => {
+    // salt + iv + tag exactly: structurally impossible for encrypt() output,
+    // which always appends at least one byte of ciphertext.
+    const headerOnly = Buffer.alloc(32 + 16 + 16).toString("base64");
+    expect(isEncrypted(headerOnly)).toBe(false);
   });
 
   it("should return false for invalid base64", () => {
     expect(isEncrypted("not!valid@base64#string")).toBe(false);
+  });
+
+  it("should return false for long plaintext that decodes past the minimum length", () => {
+    // Buffer.from(..., "base64") ignores non-alphabet characters instead of
+    // throwing, so a long passphrase used to decode to >= 64 bytes and get
+    // classified as ciphertext.
+    const plaintext = "correct horse battery staple ".repeat(4);
+    expect(plaintext.length).toBeGreaterThan(64);
+    expect(isEncrypted(plaintext)).toBe(false);
+  });
+
+  it("should return false for non-canonical base64", () => {
+    const encrypted = Buffer.alloc(80).toString("base64");
+    expect(isEncrypted(`${encrypted}\n`)).toBe(false);
+    expect(isEncrypted(encrypted.replace(/=+$/, ""))).toBe(false);
   });
 });
 
