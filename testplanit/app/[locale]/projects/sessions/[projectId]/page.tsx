@@ -44,6 +44,7 @@ import {
 import { usePersistedFilter } from "~/hooks/usePersistedFilter";
 
 import { CollapsibleSummarySection } from "@/components/CollapsibleSummarySection";
+import { SummaryCardGrid } from "@/components/SummaryCardGrid";
 import CompletedRunsLineChart, {
   type MonthlyCount,
 } from "@/components/dataVisualizations/CompletedRunsLineChart";
@@ -794,7 +795,7 @@ const ProjectSessions: React.FC<ProjectSessionsProps> = ({ params }) => {
               <CollapsibleSummarySection
                 storageKey={`tpi.sessions.${numericProjectId}.summaryCollapsed`}
               >
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <SummaryCardGrid>
                   {/* Card 1: Work Distribution - (Modified above) */}
                   {(isLoadingIncomplete ||
                     (workDistributionChartData.children &&
@@ -997,7 +998,7 @@ const ProjectSessions: React.FC<ProjectSessionsProps> = ({ params }) => {
                       </CardContent>
                     </Card>
                   )}
-                </div>
+                </SummaryCardGrid>
               </CollapsibleSummarySection>
               {/* --- End Summary Metrics Display --- */}
 

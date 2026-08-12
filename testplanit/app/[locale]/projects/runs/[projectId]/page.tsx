@@ -4,6 +4,7 @@ import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { AutomationRunsCard } from "@/components/AutomationRunsCard";
 import { CollapsibleSummarySection } from "@/components/CollapsibleSummarySection";
+import { SummaryCardGrid } from "@/components/SummaryCardGrid";
 import CompletedRunsLineChart from "@/components/dataVisualizations/CompletedRunsLineChart";
 import RecentResultsDonut from "@/components/dataVisualizations/RecentResultsDonut";
 import SummarySunburstChart, {
@@ -1213,21 +1214,18 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
               </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col">
-              {/* Summary Metrics Display — column count follows the space the
-                  grid actually has (the project menu makes the viewport a poor
-                  proxy), and a card never drops below 340px: the width its
-                  chart and date-range subtitle need. auto-fill over auto-fit so
-                  a lone card keeps that width instead of stretching. */}
+              {/* Summary Metrics Display */}
               <CollapsibleSummarySection
                 storageKey={`tpi.runs.${numericProjectId}.summaryCollapsed`}
               >
-                <div className="grid grid-cols-[repeat(auto-fill,minmax(340px,1fr))] gap-4">
-                  {numericProjectId != null && (
-                    <AutomationRunsCard
-                      projectId={numericProjectId}
-                      runs={activeAutomatedRuns}
-                    />
-                  )}
+                <SummaryCardGrid>
+                  {numericProjectId != null &&
+                    activeAutomatedRuns.length > 0 && (
+                      <AutomationRunsCard
+                        projectId={numericProjectId}
+                        runs={activeAutomatedRuns}
+                      />
+                    )}
                   {/* Card 1: Work Distribution - Conditional Render */}
                   {(isLoadingIncompleteRuns ||
                     (sunburstChartData.children &&
@@ -1509,7 +1507,7 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
                       </CardContent>
                     </Card>
                   )}
-                </div>
+                </SummaryCardGrid>
               </CollapsibleSummarySection>
 
               <RunFilterChips
