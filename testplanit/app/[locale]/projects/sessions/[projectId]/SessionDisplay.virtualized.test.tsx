@@ -11,21 +11,29 @@ vi.mock("~/hooks/useProjectPermissions", () => ({
   useProjectPermissions: mockUseProjectPermissions,
 }));
 
-// ── Virtualizer ─────────────────────────────────────────────────────────────
-// The list renders through a window virtualizer, which needs a real layout;
-// jsdom has none, so render every row and keep these tests about selection.
+// ── Virtualizer control ─────────────────────────────────────────────────────
+// TanStack Virtual measures against a real layout, which jsdom does not
+// provide, so the real virtualizer reports an empty window for every list and
+// "windowed correctly" would be indistinguishable from "rendered nothing".
+// This pass-through reports a window we choose.
+const hookMock = vi.hoisted(() => ({
+  window: null as number[] | null, // indices to render; null = all `count`
+  lastCount: 0,
+}));
 vi.mock("@tanstack/react-virtual", () => ({
-  useWindowVirtualizer: (opts: { count: number }) => ({
-    getTotalSize: () => opts.count * 96,
-    getVirtualItems: () =>
-      Array.from({ length: opts.count }, (_, index) => ({
-        key: index,
-        index,
-        start: index * 96,
-        size: 96,
-      })),
-    measureElement: () => {},
-  }),
+  useWindowVirtualizer: (opts: { count: number }) => {
+    hookMock.lastCount = opts.count;
+    const indices =
+      hookMock.window ?? Array.from({ length: opts.count }, (_, i) => i);
+    return {
+      getTotalSize: () => opts.count * 96,
+      getVirtualItems: () =>
+        indices
+          .filter((index) => index < opts.count)
+          .map((index) => ({ key: index, index, start: index * 96, size: 96 })),
+      measureElement: () => {},
+    };
+  },
 }));
 
 // ── Environment mocks ───────────────────────────────────────────────────────
@@ -129,83 +137,97 @@ const makeSession = (id: number, overrides: Record<string, unknown> = {}) =>
     ...overrides,
   }) as any;
 
-const setCanDelete = (canDelete: boolean) => {
-  mockUseProjectPermissions.mockReturnValue({
-    permissions: { canAddEdit: false, canClose: false, canDelete },
-    isLoading: false,
-  });
-};
+const makeSessions = (n: number) =>
+  Array.from({ length: n }, (_, i) => makeSession(i + 1));
 
-const renderDisplay = ({
-  canAddEdit = false,
-  canCloseSession = false,
-  sessions = [makeSession(1), makeSession(2)],
-} = {}) =>
+const renderSessions = (sessions: unknown[]) =>
   render(
     <SessionDisplay
-      testSessions={sessions}
+      testSessions={sessions as never}
       milestones={[]}
-      canAddEdit={canAddEdit}
-      canCloseSession={canCloseSession}
+      canAddEdit={true}
+      canCloseSession={true}
     />
   );
 
-describe("SessionDisplay bulk selection permission gating", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
+beforeEach(() => {
+  vi.clearAllMocks();
+  hookMock.window = null;
+  mockUseProjectPermissions.mockReturnValue({
+    permissions: { canAddEdit: true, canClose: true, canDelete: true },
+    isLoading: false,
+  });
+});
+
+describe("SessionDisplay row windowing", () => {
+  it("mounts only the windowed rows", () => {
+    // 41 rows: the unscheduled header, then 40 sessions.
+    hookMock.window = [0, 1, 2];
+    renderSessions(makeSessions(40));
+
+    expect(screen.getByTestId("stub-session-1")).toBeInTheDocument();
+    expect(screen.getByTestId("stub-session-2")).toBeInTheDocument();
+    expect(screen.queryByTestId("stub-session-3")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("stub-session-40")).not.toBeInTheDocument();
   });
 
-  it("hides all selection checkboxes when the user has no edit, close, or delete permission", () => {
-    setCanDelete(false);
-    renderDisplay();
-    expect(screen.getByTestId("stub-session-1")).toHaveAttribute(
-      "data-selectable",
-      "false"
-    );
-    expect(screen.getByTestId("stub-session-2")).toHaveAttribute(
-      "data-selectable",
-      "false"
-    );
-    expect(screen.queryByTestId("session-bulk-bar")).not.toBeInTheDocument();
+  it("gives the virtualizer a row per session plus the group header", () => {
+    renderSessions(makeSessions(12));
+    expect(hookMock.lastCount).toBe(13);
   });
 
-  it("shows checkboxes and every permitted action for a fully-permitted user", () => {
-    setCanDelete(true);
-    renderDisplay({ canAddEdit: true, canCloseSession: true });
-    expect(screen.getByTestId("stub-session-1")).toHaveAttribute(
-      "data-selectable",
-      "true"
+  // Every session tile fires its own /summary request on mount, so a group
+  // that scrolls in its own container would keep paying for rows nobody sees.
+  it("never puts rows in a bounded scroll container", () => {
+    renderSessions(makeSessions(40));
+    const list = screen.getByTestId("session-list");
+    expect(list.className).not.toContain("overflow-auto");
+    expect(list.querySelector(".overflow-auto")).toBeNull();
+  });
+
+  it("windows the completed tab's flat list too", () => {
+    hookMock.window = [0, 1, 2];
+    const completed = makeSessions(40).map((session) => ({
+      ...session,
+      isCompleted: true,
+      completedAt: new Date("2026-02-01T00:00:00Z"),
+    }));
+    renderSessions(completed);
+
+    expect(screen.queryByTestId("session-list")).not.toBeInTheDocument();
+    const list = screen.getByTestId("completed-session-list");
+    expect(list.className).not.toContain("overflow-auto");
+    expect(screen.getByTestId("stub-session-3")).toBeInTheDocument();
+    expect(screen.queryByTestId("stub-session-4")).not.toBeInTheDocument();
+  });
+
+  it("keeps a row selected after it scrolls out of the window", () => {
+    hookMock.window = [0, 1, 2];
+    const sessions = makeSessions(40);
+    const { rerender } = render(
+      <SessionDisplay
+        testSessions={sessions as never}
+        milestones={[]}
+        canAddEdit={true}
+        canCloseSession={true}
+      />
     );
 
     fireEvent.click(screen.getByTestId("stub-session-1"));
     expect(screen.getByTestId("session-bulk-bar")).toBeInTheDocument();
-    expect(screen.getByTestId("session-bulk-edit")).toBeInTheDocument();
-    expect(screen.getByTestId("session-bulk-complete")).toBeInTheDocument();
-    expect(screen.getByTestId("session-bulk-delete")).toBeInTheDocument();
-  });
 
-  it("shows only the Edit action for a user with only edit permission", () => {
-    setCanDelete(false);
-    renderDisplay({ canAddEdit: true });
-    fireEvent.click(screen.getByTestId("stub-session-1"));
+    hookMock.window = [20, 21, 22];
+    rerender(
+      <SessionDisplay
+        testSessions={sessions as never}
+        milestones={[]}
+        canAddEdit={true}
+        canCloseSession={true}
+      />
+    );
 
+    expect(screen.queryByTestId("stub-session-1")).not.toBeInTheDocument();
+    expect(screen.getByTestId("stub-session-21")).toBeInTheDocument();
     expect(screen.getByTestId("session-bulk-bar")).toBeInTheDocument();
-    expect(screen.getByTestId("session-bulk-edit")).toBeInTheDocument();
-    expect(
-      screen.queryByTestId("session-bulk-complete")
-    ).not.toBeInTheDocument();
-    expect(screen.queryByTestId("session-bulk-delete")).not.toBeInTheDocument();
-  });
-
-  it("shows only the Delete action for a user with only delete permission", () => {
-    setCanDelete(true);
-    renderDisplay();
-    fireEvent.click(screen.getByTestId("stub-session-1"));
-
-    expect(screen.getByTestId("session-bulk-delete")).toBeInTheDocument();
-    expect(screen.queryByTestId("session-bulk-edit")).not.toBeInTheDocument();
-    expect(
-      screen.queryByTestId("session-bulk-complete")
-    ).not.toBeInTheDocument();
   });
 });

@@ -10,6 +10,7 @@
 
 import { describe, expect, it } from "vitest";
 import {
+  buildSessionListRows,
   collapsedStorageKey,
   collectRenderedMilestoneKeys,
   countSessionsInSubtree,
@@ -114,5 +115,23 @@ describe("collapsedStorageKey", () => {
   it("does not collide with the summary or run-list keys", () => {
     expect(collapsedStorageKey(7)).not.toBe("tpi.sessions.7.summaryCollapsed");
     expect(collapsedStorageKey(7)).not.toBe("tpi.runs.7.collapsedMilestones");
+  });
+});
+
+// The flattening itself is covered in the runs binding's tests; what is
+// session-specific is which field the group map is read from.
+describe("buildSessionListRows", () => {
+  it("reads each milestone's sessions, not its runs", () => {
+    const rows = buildSessionListRows<{ id: number }, { id: number }>({
+      unscheduled: [],
+      grouped: { milestones: { 5: { testSessions: [{ id: 50 }] } } },
+      tree: [{ id: 5 }],
+      collapsedGroups: new Set<string>(),
+      showUnscheduledHeader: true,
+      getSessionId: (session) => session.id,
+    });
+
+    expect(rows.map((row) => row.kind)).toEqual(["milestone-header", "item"]);
+    expect(rows[1]).toMatchObject({ item: { id: 50 }, depth: 1 });
   });
 });

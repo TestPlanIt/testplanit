@@ -175,6 +175,7 @@ const SessionItem = <T extends SessionItemData>({
     <ItemRow
       id={`session-${testSession.id}`}
       href={`/projects/sessions/${numericProjectId}/${testSession.id}`}
+      prefetch={false}
       name={testSession.name}
       accentColor={testSession.state.color?.value}
       isNew={isNew}
