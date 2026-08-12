@@ -324,56 +324,13 @@ export class AuthenticationService {
     }
   }
 
-  /**
-   * Store API key authentication
-   */
-  static async storeApiKeyAuth(
-    integrationId: number,
-    apiKey: string,
-    additionalConfig?: any
-  ): Promise<void> {
-    const masterKey = getMasterKey();
-
-    // Encrypt the API key
-    const encryptedCredentials = EncryptionService.encryptObject(
-      {
-        apiKey,
-        ...additionalConfig,
-      },
-      masterKey
-    );
-
-    await rawDb.integration.update({
-      where: { id: integrationId },
-      data: {
-        credentials: encryptedCredentials,
-        status: "ACTIVE",
-      },
-    });
-  }
-
-  /**
-   * Get API key authentication
-   */
-  static async getApiKeyAuth(integrationId: number): Promise<{
-    apiKey: string;
-    [key: string]: any;
-  } | null> {
-    const integration = await rawDb.integration.findUnique({
-      where: { id: integrationId },
-      select: { credentials: true },
-    });
-
-    if (!integration?.credentials) {
-      return null;
-    }
-
-    const masterKey = getMasterKey();
-    return EncryptionService.decryptObject(
-      integration.credentials as string,
-      masterKey
-    );
-  }
+  // storeApiKeyAuth / getApiKeyAuth used to live here. Both were unreferenced
+  // since the initial public release, and they wrote `Integration.credentials`
+  // as a bare ciphertext string — a third shape that no other reader
+  // understands. `resolveStoredCredentials` returns {} for a non-object, so a
+  // row written that way would have produced an integration that silently
+  // authenticated with nothing. The admin API routes are the only credential
+  // writers; a key stored through them is readable by every path.
 
   /**
    * Revoke user authentication

@@ -2,33 +2,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import React from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-// --- Stable mock refs via vi.hoisted() ---
-const {
-  mockUseUpsertIntegration,
-  mockUseUpdateIntegration,
-  mockCreateMutate,
-  mockUpdateMutate,
-} = vi.hoisted(() => {
-  const mockCreateMutate = vi.fn();
-  const mockUpdateMutate = vi.fn();
-  return {
-    mockUseUpsertIntegration: vi.fn(),
-    mockUseUpdateIntegration: vi.fn(),
-    mockCreateMutate,
-    mockUpdateMutate,
-  };
-});
-
 // --- Mocks ---
-
-vi.mock("@zenstackhq/tanstack-query/react", () => ({
-  useClientQueries: () => ({
-    integration: {
-      useUpsert: mockUseUpsertIntegration,
-      useUpdate: mockUseUpdateIntegration,
-    },
-  }),
-}));
 
 vi.mock("next-intl", () => ({
   useTranslations: () => (key: string) => key.split(".").pop() ?? key,
@@ -144,21 +118,12 @@ vi.mock("@hookform/resolvers/standard-schema", () => ({
   standardSchemaResolver: () => async (values: any) => ({ values, errors: {} }),
 }));
 
+import { toast } from "sonner";
 import { IntegrationModal } from "./IntegrationModal";
 
 describe("IntegrationModal", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-
-    mockUseUpsertIntegration.mockReturnValue({
-      mutate: mockCreateMutate,
-      status: "idle",
-    });
-
-    mockUseUpdateIntegration.mockReturnValue({
-      mutate: mockUpdateMutate,
-      status: "idle",
-    });
 
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,
@@ -303,7 +268,22 @@ describe("IntegrationModal", () => {
     });
   });
 
-  it("edit mode calls useUpdateIntegration on submit", async () => {
+  // These saves must go through the admin API routes, not a direct model
+  // write: the routes are what encrypt `credentials` at rest, merge partial
+  // credential edits over what is stored, and evict the cached adapter. A
+  // ZenStack mutation persists whatever JSON the client sent, which is how
+  // client secrets ended up in the database in cleartext.
+  const bodyOf = (call: any) => JSON.parse(call[1].body);
+
+  const saveCall = () =>
+    (global.fetch as any).mock.calls.find(
+      (c: any) =>
+        typeof c[0] === "string" &&
+        c[0].startsWith("/api/integrations") &&
+        !c[0].includes("test-connection")
+    );
+
+  it("edit mode saves through PUT /api/integrations/:id", async () => {
     const existingIntegration: any = {
       id: 3,
       name: "Azure DevOps",
@@ -316,10 +296,6 @@ describe("IntegrationModal", () => {
       updatedAt: new Date(),
     };
 
-    mockUpdateMutate.mockImplementation((data: any, callbacks: any) => {
-      callbacks?.onSuccess?.();
-    });
-
     render(
       <IntegrationModal
         isOpen={true}
@@ -329,15 +305,79 @@ describe("IntegrationModal", () => {
       />
     );
 
-    // Submit the form
     const form = document.querySelector("form");
     if (form) {
       fireEvent.submit(form);
     }
 
     await waitFor(() => {
-      // Ensure update mutation was invoked (or form tried to submit)
-      expect(screen.getByTestId("modal")).toBeTruthy();
+      const call = saveCall();
+      expect(call).toBeTruthy();
+      expect(call[0]).toBe("/api/integrations/3");
+      expect(call[1].method).toBe("PUT");
+      // Nothing was retyped, so credentials are omitted entirely and the
+      // stored (encrypted) values are left alone.
+      expect(bodyOf(call)).not.toHaveProperty("credentials");
     });
+  });
+
+  it("create mode saves through POST /api/integrations", async () => {
+    render(
+      <IntegrationModal
+        isOpen={true}
+        onClose={vi.fn()}
+        onSuccess={vi.fn()}
+        integration={null}
+      />
+    );
+
+    const form = document.querySelector("form");
+    if (form) {
+      fireEvent.submit(form);
+    }
+
+    await waitFor(() => {
+      const call = saveCall();
+      expect(call).toBeTruthy();
+      expect(call[0]).toBe("/api/integrations");
+      expect(call[1].method).toBe("POST");
+      // The route encrypts `config` into the single-blob shape before it
+      // reaches the database.
+      expect(bodyOf(call)).toHaveProperty("config");
+    });
+  });
+
+  it("surfaces a failed save as an error toast rather than closing", async () => {
+    const onSuccess = vi.fn();
+    (global.fetch as any).mockResolvedValue({
+      ok: false,
+      status: 400,
+      statusText: "Bad Request",
+      json: async () => ({ error: "An integration with this name exists" }),
+    });
+
+    render(
+      <IntegrationModal
+        isOpen={true}
+        onClose={vi.fn()}
+        onSuccess={onSuccess}
+        integration={null}
+      />
+    );
+
+    const form = document.querySelector("form");
+    if (form) {
+      fireEvent.submit(form);
+    }
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({
+          description: "An integration with this name exists",
+        })
+      );
+    });
+    expect(onSuccess).not.toHaveBeenCalled();
   });
 });

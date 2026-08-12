@@ -96,6 +96,25 @@ describe("resolveStoredCredentials", () => {
     await expectCorrupt({ encrypted: await encrypt("not json at all") });
   });
 
+  it("reads the bare-ciphertext-string shape instead of silently returning {}", async () => {
+    // Written by the since-removed storeApiKeyAuth. Returning {} here handed
+    // callers an integration that authenticated with nothing.
+    const raw = await encrypt(JSON.stringify({ apiToken: "secret-token" }));
+
+    expect(await resolveStoredCredentials(raw, "JIRA")).toEqual({
+      apiToken: "secret-token",
+    });
+  });
+
+  it("refuses a bare ciphertext string that will not decrypt", async () => {
+    const raw = await encrypt(JSON.stringify({ apiToken: "x" }));
+    await expectCorrupt(`${raw.slice(0, -5)}XXXXX`);
+  });
+
+  it("returns an empty map for an empty-string credential column", async () => {
+    expect(await resolveStoredCredentials("", "JIRA")).toEqual({});
+  });
+
   it("passes non-secret identifiers through in the clear", async () => {
     const stored = {
       email: "a@b.com",

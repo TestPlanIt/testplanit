@@ -3,6 +3,7 @@ import { decrypt, encrypt } from "@/utils/encryption";
 import { getServerSession } from "next-auth/next";
 import { NextRequest, NextResponse } from "next/server";
 import { withAuditContext } from "~/lib/auditContextWrappers";
+import { resolveStoredCredentials } from "~/lib/integrations/credentials";
 import { IntegrationManager } from "~/lib/integrations/IntegrationManager";
 import { authOptions } from "~/server/auth";
 
@@ -112,14 +113,39 @@ export const PUT = withAuditContext(
       if (status !== undefined) updateData.status = status;
       if (settings !== undefined) updateData.settings = settings;
 
-      // Encrypt credentials if provided
+      const { id } = await params;
+
+      // Encrypt credentials if provided.
+      //
+      // The client sends only the fields the admin actually retyped — secrets
+      // are never sent back to the browser, so a blank input means "leave it
+      // alone", not "clear it". Writing just those fields would replace the
+      // whole credential object and silently drop the rest: re-entering only a
+      // clientSecret would take clientId with it and break the integration.
+      // Merge over what is already stored instead.
       if (credentials !== undefined) {
-        const credentialsString = JSON.stringify(credentials);
-        const encryptedCredentials = await encrypt(credentialsString);
+        const existing = await baseDb.integration.findUnique({
+          where: { id: parseInt(id) },
+          select: { credentials: true, provider: true },
+        });
+
+        let stored: Record<string, string> = {};
+        try {
+          stored = await resolveStoredCredentials(
+            existing?.credentials,
+            existing?.provider ?? "unknown"
+          );
+        } catch {
+          // Unreadable stored credentials are exactly what this save is here
+          // to replace, so start from empty rather than refusing the write.
+          stored = {};
+        }
+
+        const merged = { ...stored, ...credentials };
+        const encryptedCredentials = await encrypt(JSON.stringify(merged));
         updateData.credentials = { encrypted: encryptedCredentials };
       }
 
-      const { id } = await params;
       const integration = await baseDb.integration.update({
         where: {
           id: parseInt(id),

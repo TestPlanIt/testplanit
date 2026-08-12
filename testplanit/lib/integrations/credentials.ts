@@ -60,7 +60,21 @@ export const resolveStoredCredentials = async (
   raw: unknown,
   provider: string
 ): Promise<Record<string, string>> => {
-  if (!raw || typeof raw !== "object") return {};
+  if (!raw) return {};
+
+  // A bare ciphertext string is a third shape, written by a since-removed
+  // helper (see AuthenticationService). Returning {} for it would hand the
+  // caller an integration that authenticates with nothing and fails upstream
+  // with no hint as to why, so read it — and say so when it will not read.
+  if (typeof raw === "string") {
+    try {
+      return JSON.parse(await decrypt(raw)) as Record<string, string>;
+    } catch (error) {
+      throw credentialsCorruptError(provider, { cause: error });
+    }
+  }
+
+  if (typeof raw !== "object") return {};
 
   const stored = raw as Record<string, unknown>;
 

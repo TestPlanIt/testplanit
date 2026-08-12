@@ -69,7 +69,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
     }
 
     const body = await request.json();
-    const { name, type, authType, config } = body;
+    const { name, type, authType, config, settings, status } = body;
 
     if (!name || !type || !config) {
       return NextResponse.json(
@@ -102,7 +102,16 @@ export const POST = withAuditContext(async (request: NextRequest) => {
       provider: type,
       authType,
       credentials: { encrypted: encryptedConfig },
-      status: IntegrationStatus.ACTIVE,
+      // Provider-specific settings (baseUrl and friends) are not secrets and
+      // are stored in the clear, but they are required for the adapter to
+      // reach the instance at all — dropping them here left every new
+      // integration unable to build a request.
+      ...(settings !== undefined ? { settings } : {}),
+      // An integration is only ACTIVE once something has vouched for it: a
+      // passing connection test on create, or a completed OAuth handshake.
+      // Defaulting to ACTIVE marked OAuth2 rows connected before any token
+      // existed.
+      status: (status as IntegrationStatus) ?? IntegrationStatus.INACTIVE,
     };
     const integration = await baseDb.integration.upsert({
       where: { name },
