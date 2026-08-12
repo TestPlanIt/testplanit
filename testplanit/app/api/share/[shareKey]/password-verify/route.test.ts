@@ -63,9 +63,10 @@ const mockAllowed = {
 describe("POST /api/share/[shareKey]/password-verify", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    (checkPasswordAttemptLimit as any).mockReturnValue(mockAllowed);
-    (clearPasswordAttempts as any).mockReturnValue(undefined);
-    (recordPasswordAttempt as any).mockReturnValue(undefined);
+    // Resolved, not returned: these limiters are Valkey-backed and async.
+    (checkPasswordAttemptLimit as any).mockResolvedValue(mockAllowed);
+    (clearPasswordAttempts as any).mockResolvedValue(undefined);
+    (recordPasswordAttempt as any).mockResolvedValue(undefined);
   });
 
   describe("Input validation", () => {
@@ -81,7 +82,7 @@ describe("POST /api/share/[shareKey]/password-verify", () => {
 
   describe("Rate limiting", () => {
     it("returns 429 when rate limited", async () => {
-      (checkPasswordAttemptLimit as any).mockReturnValue({
+      (checkPasswordAttemptLimit as any).mockResolvedValue({
         allowed: false,
         remainingAttempts: 0,
         resetAt: new Date("2030-01-01"),
@@ -171,8 +172,8 @@ describe("POST /api/share/[shareKey]/password-verify", () => {
       (baseDb.shareLink.findUnique as any).mockResolvedValue(mockShareLink);
       (bcrypt.compare as any).mockResolvedValue(false);
       (checkPasswordAttemptLimit as any)
-        .mockReturnValueOnce(mockAllowed) // initial check
-        .mockReturnValueOnce({
+        .mockResolvedValueOnce(mockAllowed) // initial check
+        .mockResolvedValueOnce({
           allowed: true,
           remainingAttempts: 3,
           resetAt: null,

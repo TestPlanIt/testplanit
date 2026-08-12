@@ -61,18 +61,20 @@ export const POST = withAuditContext(async (req: NextRequest) => {
 
   // Throttle before any account lookup so limits apply uniformly to real and
   // unknown emails (no enumeration signal via 429s).
-  const ipAllowed = checkRateLimit(`passwordless:request:ip:${ip}`, {
-    windowMs: 60_000,
-    maxAttempts: 10,
-  });
-  // Case-folded key so case variants can't sidestep the per-email limit.
-  const emailAllowed = checkRateLimit(
-    `passwordless:request:email:${email.toLowerCase()}`,
-    {
+  // Promise.all rather than two sequential awaits so BOTH limiters are always
+  // counted — `await a || await b` would short-circuit and leave the per-email
+  // counter un-incremented whenever the IP limit already tripped.
+  const [ipAllowed, emailAllowed] = await Promise.all([
+    checkRateLimit(`passwordless:request:ip:${ip}`, {
+      windowMs: 60_000,
+      maxAttempts: 10,
+    }),
+    // Case-folded key so case variants can't sidestep the per-email limit.
+    checkRateLimit(`passwordless:request:email:${email.toLowerCase()}`, {
       windowMs: 60_000,
       maxAttempts: 3,
-    }
-  );
+    }),
+  ]);
   if (!ipAllowed || !emailAllowed) {
     return NextResponse.json(
       { error: "Too many requests. Please wait a moment and try again." },

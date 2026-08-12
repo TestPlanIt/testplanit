@@ -71,10 +71,10 @@ export async function POST(request: NextRequest) {
 
     // Rate limiting check
     if (
-      !checkRateLimit(`saml-callback:${clientIp}`, {
+      !(await checkRateLimit(`saml-callback:${clientIp}`, {
         windowMs: 60000,
         maxAttempts: 20,
-      })
+      }))
     ) {
       return NextResponse.json(
         { error: "Too many requests. Please try again later." },

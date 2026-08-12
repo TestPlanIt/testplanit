@@ -259,11 +259,17 @@ export interface RateLimitConfig {
   maxAttempts: number;
 }
 
+// Fallback counter, used ONLY when Valkey is unreachable. It is per-process, so
+// with more than one app instance it under-counts by roughly the instance count
+// — which is the very bug the Valkey path below exists to close. It is kept
+// anyway so a Valkey outage degrades to a loose limit instead of no limit.
 const rateLimitStore = new Map<string, { count: number; resetAt: number }>();
 
-export function checkRateLimit(
+const RATE_LIMIT_KEY_PREFIX = "rl:auth:";
+
+function checkRateLimitFallback(
   identifier: string,
-  config: RateLimitConfig = { windowMs: 60000, maxAttempts: 5 }
+  config: RateLimitConfig
 ): boolean {
   const now = Date.now();
   const limit = rateLimitStore.get(identifier);
@@ -284,7 +290,57 @@ export function checkRateLimit(
   return true;
 }
 
-// Clean up expired rate limit entries periodically
+/**
+ * Attempt-limit an auth operation. Resolves true when the attempt is allowed.
+ *
+ * Counts in Valkey so the limit is shared across app instances. The app runs as
+ * a load-balanced PAIR (`testplanit-prod-<slot>-{a,b}`), and the per-process
+ * `Map` this replaced gave each instance its own counter: attempts split
+ * between them, so the effective allowance roughly doubled on 2FA verification,
+ * SAML init/callback and passwordless requests.
+ *
+ * `INCR`-and-compare is also atomic, unlike the read-then-increment it replaces,
+ * so two concurrent requests can no longer both pass on the same count. The TTL
+ * is set only on the first increment, so the window runs from the first attempt
+ * and a sustained burst cannot keep pushing it back.
+ */
+export async function checkRateLimit(
+  identifier: string,
+  config: RateLimitConfig = { windowMs: 60000, maxAttempts: 5 }
+): Promise<boolean> {
+  if (!valkeyConnection) {
+    return checkRateLimitFallback(identifier, config);
+  }
+
+  const key = `${RATE_LIMIT_KEY_PREFIX}${identifier}`;
+  try {
+    const count = await valkeyConnection.incr(key);
+    // Only on the first increment, so the window is anchored to it.
+    if (count === 1) {
+      await valkeyConnection.pexpire(key, config.windowMs);
+    }
+    return count <= config.maxAttempts;
+  } catch (error) {
+    // Fail OPEN to the loose in-memory limit rather than locking every user out
+    // of 2FA and SSO if Valkey blips. Logged so the degradation is visible.
+    console.error(
+      "[auth-security] Valkey rate-limit error, falling back to in-memory:",
+      error
+    );
+    return checkRateLimitFallback(identifier, config);
+  }
+}
+
+/**
+ * Clears the in-memory fallback counter. Exported for testing only.
+ * @internal
+ */
+export function _resetRateLimitForTesting(): void {
+  rateLimitStore.clear();
+}
+
+// Sweep expired FALLBACK entries. The Valkey path expires its own keys via
+// PEXPIRE and needs no sweeping.
 setInterval(() => {
   const now = Date.now();
   for (const [key, value] of rateLimitStore.entries()) {

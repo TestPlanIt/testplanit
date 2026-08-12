@@ -43,7 +43,7 @@ export const POST = withAuditContext(
       const rateLimitId = `${shareKey}:${ipAddress}`;
 
       // Check rate limit
-      const rateLimit = checkPasswordAttemptLimit(rateLimitId);
+      const rateLimit = await checkPasswordAttemptLimit(rateLimitId);
       if (!rateLimit.allowed) {
         return NextResponse.json(
           {
@@ -109,11 +109,12 @@ export const POST = withAuditContext(
       const isValid = await bcrypt.compare(password, shareLink.passwordHash);
 
       if (!isValid) {
-        // Record failed attempt
-        recordPasswordAttempt(rateLimitId);
+        // Record failed attempt. Awaited before the re-read below so the
+        // updated count reflects this attempt.
+        await recordPasswordAttempt(rateLimitId);
 
         // Get updated rate limit info
-        const updatedRateLimit = checkPasswordAttemptLimit(rateLimitId);
+        const updatedRateLimit = await checkPasswordAttemptLimit(rateLimitId);
 
         // Audit failed share-link password attempt (brute-force signal per
         // D-05). The attempted password value is NOT logged — only the
@@ -134,7 +135,7 @@ export const POST = withAuditContext(
       }
 
       // Password is valid, clear rate limit
-      clearPasswordAttempts(rateLimitId);
+      await clearPasswordAttempts(rateLimitId);
 
       // Audit successful share-link password verification.
       await auditAuthEvent("SHARE_LINK_PASSWORD_VERIFY", null, "", {

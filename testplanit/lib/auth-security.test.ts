@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  _resetRateLimitForTesting,
   checkRateLimit,
   generateCSRFToken,
   generateSecureState,
@@ -294,41 +295,142 @@ describe("consumeTempSessionToken (single-use)", () => {
   });
 });
 
+// These exercise the in-memory FALLBACK path (valkey is mocked to null at the
+// top of the file). The Valkey path that actually ships is covered by the
+// cross-instance block below.
 describe("checkRateLimit", () => {
   beforeEach(() => {
-    // Clear rate limit store between tests by using unique identifiers
+    _resetRateLimitForTesting();
   });
 
-  it("should allow first request", () => {
+  it("should allow first request", async () => {
     const identifier = `test-${Date.now()}-1`;
-    expect(checkRateLimit(identifier)).toBe(true);
+    expect(await checkRateLimit(identifier)).toBe(true);
   });
 
-  it("should allow requests up to maxAttempts", () => {
+  it("should allow requests up to maxAttempts", async () => {
     const identifier = `test-${Date.now()}-2`;
     const config = { windowMs: 60000, maxAttempts: 3 };
 
-    expect(checkRateLimit(identifier, config)).toBe(true);
-    expect(checkRateLimit(identifier, config)).toBe(true);
-    expect(checkRateLimit(identifier, config)).toBe(true);
+    expect(await checkRateLimit(identifier, config)).toBe(true);
+    expect(await checkRateLimit(identifier, config)).toBe(true);
+    expect(await checkRateLimit(identifier, config)).toBe(true);
   });
 
-  it("should block requests after maxAttempts", () => {
+  it("should block requests after maxAttempts", async () => {
     const identifier = `test-${Date.now()}-3`;
     const config = { windowMs: 60000, maxAttempts: 2 };
 
-    expect(checkRateLimit(identifier, config)).toBe(true);
-    expect(checkRateLimit(identifier, config)).toBe(true);
-    expect(checkRateLimit(identifier, config)).toBe(false);
+    expect(await checkRateLimit(identifier, config)).toBe(true);
+    expect(await checkRateLimit(identifier, config)).toBe(true);
+    expect(await checkRateLimit(identifier, config)).toBe(false);
   });
 
-  it("should use default config when not provided", () => {
+  it("should use default config when not provided", async () => {
     const identifier = `test-${Date.now()}-4`;
     // Default is 5 attempts
     for (let i = 0; i < 5; i++) {
-      expect(checkRateLimit(identifier)).toBe(true);
+      expect(await checkRateLimit(identifier)).toBe(true);
     }
-    expect(checkRateLimit(identifier)).toBe(false);
+    expect(await checkRateLimit(identifier)).toBe(false);
+  });
+});
+
+/**
+ * The reason checkRateLimit is Valkey-backed at all.
+ *
+ * The app runs as a load-balanced PAIR, and the per-process `Map` this replaced
+ * gave each instance its own counter — so attempts split between them and the
+ * effective allowance roughly doubled on 2FA verification, SAML init/callback
+ * and passwordless requests. These tests import the module TWICE against ONE
+ * shared fake Valkey, which is what two app processes sharing a Valkey look
+ * like.
+ */
+describe("checkRateLimit — shared across instances (Valkey path)", () => {
+  function makeFakeValkey() {
+    const store = new Map<string, string>();
+    const ttls = new Map<string, number>();
+    return {
+      ttls,
+      redis: {
+        incr: vi.fn(async (k: string) => {
+          const next = Number(store.get(k) ?? 0) + 1;
+          store.set(k, String(next));
+          return next;
+        }),
+        pexpire: vi.fn(async (k: string, ms: number) => {
+          ttls.set(k, ms);
+          return 1;
+        }),
+      },
+    };
+  }
+
+  async function twoInstances(redis: unknown) {
+    vi.resetModules();
+    vi.doMock("./valkey", () => ({ default: redis }));
+    const a = await import("./auth-security");
+    vi.resetModules();
+    vi.doMock("./valkey", () => ({ default: redis }));
+    const b = await import("./auth-security");
+    return { a, b };
+  }
+
+  afterEach(() => {
+    vi.doUnmock("./valkey");
+  });
+
+  it("counts attempts from both instances against one 2FA limit", async () => {
+    const { redis } = makeFakeValkey();
+    const { a, b } = await twoInstances(redis);
+    const id = "2fa-verify:user-42";
+    const config = { windowMs: 60000, maxAttempts: 5 };
+
+    // Three guesses land on instance A, two on instance B.
+    expect(await a.checkRateLimit(id, config)).toBe(true);
+    expect(await a.checkRateLimit(id, config)).toBe(true);
+    expect(await a.checkRateLimit(id, config)).toBe(true);
+    expect(await b.checkRateLimit(id, config)).toBe(true);
+    expect(await b.checkRateLimit(id, config)).toBe(true);
+
+    // Five total against a max of five: the sixth must be refused no matter
+    // which instance it reaches. Before the port each Map saw only its own
+    // share and both would still have allowed several more.
+    expect(await a.checkRateLimit(id, config)).toBe(false);
+    expect(await b.checkRateLimit(id, config)).toBe(false);
+  });
+
+  it("anchors the window to the first attempt across instances", async () => {
+    const { redis, ttls } = makeFakeValkey();
+    const { a, b } = await twoInstances(redis);
+    const id = "saml-init:198.51.100.4";
+
+    await a.checkRateLimit(id, { windowMs: 60000, maxAttempts: 10 });
+    // A later attempt on the other instance must not extend the window.
+    await b.checkRateLimit(id, { windowMs: 900000, maxAttempts: 10 });
+
+    expect(redis.pexpire).toHaveBeenCalledTimes(1);
+    expect(ttls.get("rl:auth:" + id)).toBe(60000);
+  });
+
+  it("falls back to the in-memory limit when Valkey throws", async () => {
+    const boom = {
+      incr: vi.fn(async () => {
+        throw new Error("valkey down");
+      }),
+      pexpire: vi.fn(async () => 1),
+    };
+    vi.resetModules();
+    vi.doMock("./valkey", () => ({ default: boom }));
+    const mod = await import("./auth-security");
+    const id = `fallback-${Date.now()}`;
+    const config = { windowMs: 60000, maxAttempts: 2 };
+
+    // Degrades to the loose per-process limit rather than locking every user
+    // out of 2FA and SSO.
+    expect(await mod.checkRateLimit(id, config)).toBe(true);
+    expect(await mod.checkRateLimit(id, config)).toBe(true);
+    expect(await mod.checkRateLimit(id, config)).toBe(false);
   });
 });
 

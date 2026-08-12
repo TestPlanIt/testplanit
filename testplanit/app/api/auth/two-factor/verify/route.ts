@@ -47,10 +47,10 @@ export const POST = withAuditContext(async (request: NextRequest) => {
 
     // Rate limit by user ID
     if (
-      !checkRateLimit(`2fa-verify:${pendingAuth.userId}`, {
+      !(await checkRateLimit(`2fa-verify:${pendingAuth.userId}`, {
         windowMs: 60000,
         maxAttempts: 5,
-      })
+      }))
     ) {
       return NextResponse.json(
         { error: "Too many attempts. Please try again later." },
