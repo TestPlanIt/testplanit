@@ -26,6 +26,7 @@ import { schema } from "~/zenstack/schema";
 import { getPoolConfig } from "./db/poolConfig";
 import { createDialect } from "./db/readWriteDialect";
 import { getReplicaUrls } from "./db/replicaConfig";
+import { esSyncPlugin } from "./zenstack-plugins/esSyncPlugin";
 import { sideEffectsPlugin } from "./zenstack-plugins/sideEffectsPlugin";
 
 function createClients() {
@@ -42,7 +43,14 @@ function createClients() {
       getPoolConfig()
     ),
   });
-  const baseClient = rawClient.$use(sideEffectsPlugin);
+  // Two plugins, because the two side effects need opposite transaction
+  // semantics: `sideEffectsPlugin` runs inside the mutation's transaction so
+  // its webhook emits and in-tx writes commit-or-roll-back with the write,
+  // while `esSyncPlugin` runs after commit — its `sync*ToElasticsearch`
+  // functions read the row back through `rawClient` on a separate connection,
+  // which cannot see uncommitted data. Indexing from inside the transaction
+  // silently skipped rows whenever the transaction outlived the read.
+  const baseClient = rawClient.$use(sideEffectsPlugin).$use(esSyncPlugin);
   // dangerouslyAllowRawSql: the sideEffectsPlugin's beforeEntityMutation hook
   // injects the audit-context GUC via a raw `SELECT set_config(...)` inside the
   // mutation's transaction. When a mutation originates from this policy client

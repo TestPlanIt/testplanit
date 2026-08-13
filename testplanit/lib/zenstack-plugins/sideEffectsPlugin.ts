@@ -7,7 +7,6 @@
 // are both empty — CDC triggers are the sole source for row-level audit), so
 // what remains here is:
 //
-//   - Elasticsearch sync          (fire-and-forget, by model)
 //   - outbound webhook emission    (atomic with the write, in-transaction)
 //   - the app.audit_context GUC bridge so the CDC trigger attributes the actor
 //     for standalone hooked-client writes (parity with v2 `withHookTx`)
@@ -19,10 +18,17 @@
 //   - arg-mutating business logic            -> onQuery (can rewrite args)
 //   - GUC SET LOCAL + before-image load      -> beforeEntityMutation
 //       (its client runs inside the mutation's transaction)
-//   - webhook emit / ES sync / in-tx writes  -> afterEntityMutation with
+//   - webhook emit / in-tx writes            -> afterEntityMutation with
 //       runAfterMutationWithinTransaction: true (so emits commit-or-roll-back
 //       with the write; the v2 `proceed()`-inside-$transaction trick does NOT
 //       enrol the write — proven in the Phase 0 spike).
+//
+// Elasticsearch indexing deliberately does NOT live here any more: it must run
+// AFTER the transaction commits, because every `sync*ToElasticsearch` reads the
+// row back through `rawDb` on a separate connection and cannot see uncommitted
+// data. It moved to `esSyncPlugin`, which is the same hook with
+// `runAfterMutationWithinTransaction: false`. See that file for the full
+// rationale and the measurements.
 //
 // Runtime behaviours that differ from a single-op `$extends` and are validated
 // by the Phase 7 E2E pass: GUC attribution lands in the mutation's tx via the
@@ -39,14 +45,6 @@ import {
   cancelReviewsForDeletedEntities,
 } from "~/lib/services/reviewCancellation";
 import { WorkflowType } from "~/zenstack/models";
-
-import { syncRepositoryCaseToElasticsearch } from "~/services/repositoryCaseSync";
-import { syncTestRunToElasticsearch } from "~/services/testRunSearch";
-import { syncSessionToElasticsearch } from "~/services/sessionSearch";
-import { syncSharedStepToElasticsearch } from "~/services/sharedStepSearch";
-import { syncIssueToElasticsearch } from "~/services/issueSearch";
-import { syncMilestoneToElasticsearch } from "~/services/milestoneSearch";
-import { syncProjectToElasticsearch } from "~/services/projectSearch";
 
 import {
   emitTestRunCreated,
@@ -269,14 +267,6 @@ async function cancelReviewsForHardDeleted(
   await cancelAndAnnounceReviews(tx, model, names, "hard-delete");
 }
 
-function logEsError(kind: string, id: unknown) {
-  return (error: unknown) =>
-    console.error(
-      `Failed to sync ${kind} ${String(id)} to Elasticsearch:`,
-      error
-    );
-}
-
 export const sideEffectsPlugin = definePlugin(schema, {
   id: "testplanit-side-effects",
 
@@ -335,9 +325,6 @@ export const sideEffectsPlugin = definePlugin(schema, {
           if (action === "delete") {
             for (const old of before) {
               if (!old?.id) continue;
-              syncRepositoryCaseToElasticsearch(old.id).catch(
-                logEsError("repository case", old.id)
-              );
               await emitCaseDeleted(old, tx);
             }
             await cancelReviewsForHardDeleted(tx, "RepositoryCases", before);
@@ -347,9 +334,6 @@ export const sideEffectsPlugin = definePlugin(schema, {
             const row = after[i];
             const old = before[i] ?? null;
             if (!row?.id) continue;
-            syncRepositoryCaseToElasticsearch(row.id).catch(
-              logEsError("repository case", row.id)
-            );
             if (row.projectId != null) {
               if (old) await emitCaseUpdated(old, row, tx);
               else await emitCaseCreated(row, tx);
@@ -415,24 +399,6 @@ export const sideEffectsPlugin = definePlugin(schema, {
           break;
         }
 
-        // Tags live in the case's Elasticsearch document but are written as
-        // standalone link rows (the case details view and the CSV import both
-        // create/delete RepositoryCaseTag directly, never touching the case).
-        // Without this the index keeps the tags the case had when it was last
-        // saved, so tag search and the tag facet silently miss re-tagged cases.
-        case "RepositoryCaseTag": {
-          const caseIds = new Set<number>();
-          for (const row of [...after, ...before]) {
-            if (row?.caseId != null) caseIds.add(row.caseId);
-          }
-          for (const caseId of caseIds) {
-            syncRepositoryCaseToElasticsearch(caseId).catch(
-              logEsError("repository case", caseId)
-            );
-          }
-          break;
-        }
-
         case "TestRuns": {
           if (action === "delete") {
             await cancelReviewsForHardDeleted(tx, "TestRuns", before);
@@ -442,9 +408,6 @@ export const sideEffectsPlugin = definePlugin(schema, {
             const row = after[i];
             const old = before[i] ?? null;
             if (!row?.id) continue;
-            syncTestRunToElasticsearch(row.id).catch(
-              logEsError("test run", row.id)
-            );
             if (row.projectId != null) {
               if (old) await emitTestRunUpdateEvents(old, row, tx);
               // A duplicate carries the source run id — emit the richer
@@ -502,12 +465,6 @@ export const sideEffectsPlugin = definePlugin(schema, {
 
         case "Sessions": {
           if (action === "delete") {
-            for (const old of before) {
-              if (old?.id)
-                syncSessionToElasticsearch(old.id).catch(
-                  logEsError("session", old.id)
-                );
-            }
             await cancelReviewsForHardDeleted(tx, "Sessions", before);
             break;
           }
@@ -515,9 +472,6 @@ export const sideEffectsPlugin = definePlugin(schema, {
             const row = after[i];
             const old = before[i] ?? null;
             if (!row?.id) continue;
-            syncSessionToElasticsearch(row.id).catch(
-              logEsError("session", row.id)
-            );
             if (row.projectId != null) {
               if (old) await emitSessionUpdateEvents(old, row, tx);
               // A duplicate carries the source session id — emit the richer
@@ -544,7 +498,6 @@ export const sideEffectsPlugin = definePlugin(schema, {
             const row = after[i];
             const old = before[i] ?? null;
             if (!row?.id) continue;
-            syncIssueToElasticsearch(row.id).catch(logEsError("issue", row.id));
             // No projectId gate here — the emitter resolves the full set of
             // target projects (home ∪ linked-entity projects) and no-ops when
             // there is nothing to fan out to. Integration-only issues with a
@@ -552,39 +505,6 @@ export const sideEffectsPlugin = definePlugin(schema, {
             // linked entities live in.
             if (old) await emitIssueUpdated(old, row, tx);
             else await emitIssueCreated(row, tx);
-          }
-          break;
-        }
-
-        case "SharedStepGroup": {
-          if (action === "delete") break;
-          for (const row of after) {
-            if (row?.id)
-              syncSharedStepToElasticsearch(row.id).catch(
-                logEsError("shared step", row.id)
-              );
-          }
-          break;
-        }
-
-        case "Milestones": {
-          if (action === "delete") break;
-          for (const row of after) {
-            if (row?.id)
-              syncMilestoneToElasticsearch(row.id).catch(
-                logEsError("milestone", row.id)
-              );
-          }
-          break;
-        }
-
-        case "Projects": {
-          if (action === "delete") break;
-          for (const row of after) {
-            if (row?.id)
-              syncProjectToElasticsearch(row.id).catch(
-                logEsError("project", row.id)
-              );
           }
           break;
         }
