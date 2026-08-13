@@ -31,6 +31,19 @@ import {
   isTimeoutError,
   recordWorkingBudget,
 } from "./adaptive-budget";
+import { randomUUID } from "crypto";
+import {
+  contextImageTokens,
+  sanitizeContextImages,
+  toContextImageMeta,
+  toImageParts,
+  type ContextImage,
+} from "~/lib/llm/context-images";
+import { stashContextImages } from "~/lib/llm/context-image-stash";
+import {
+  resolveIssueAttachmentImages,
+  type ContextImagesRequestBody,
+} from "../context-image-sources";
 
 export async function POST(request: NextRequest) {
   try {
@@ -51,6 +64,7 @@ export async function POST(request: NextRequest) {
       enrichFromIssue,
       integrationId: sourceIntegrationId,
       issueRef,
+      contextImages: contextImagesRequest,
     } = body as {
       projectId: number;
       issue: IssueData;
@@ -68,6 +82,11 @@ export async function POST(request: NextRequest) {
       // falls back to the project's first active integration.
       integrationId?: number;
       issueRef?: IssueCaseLinkRef;
+      // Opaque selectors for images to include as generation context —
+      // attachment ids of the source issue and/or editor image srcs. The
+      // server re-derives candidates from its own sources and intersects;
+      // client-supplied URLs/bytes are never accepted.
+      contextImages?: ContextImagesRequestBody;
     };
 
     if (!projectId || !issue) {
@@ -182,7 +201,17 @@ export async function POST(request: NextRequest) {
       sourceIntegrationId && allowedIntegrationIds.has(sourceIntegrationId)
         ? sourceIntegrationId
         : project.projectIntegrations[0]?.integrationId;
-    if (enrichFromIssue && targetIntegrationId && issue.key) {
+    // The adapter serves two independent consumers: issue enrichment
+    // (comments + linked issues) and attachment-image context. Either one
+    // justifies resolving it; the enrichment fetches below stay gated on
+    // `enrichFromIssue` so an attachments-only request doesn't grow scope.
+    const wantsAttachmentImages =
+      (contextImagesRequest?.attachmentIds?.length ?? 0) > 0;
+    if (
+      (enrichFromIssue || wantsAttachmentImages) &&
+      targetIntegrationId &&
+      issue.key
+    ) {
       try {
         adapter = await IntegrationManager.getInstance().getAdapter(
           String(targetIntegrationId)
@@ -200,7 +229,7 @@ export async function POST(request: NextRequest) {
     // Source-issue comments come from the adapter server-side (server is the
     // source of truth). Fail-soft to [] — e.g. manual issues with no adapter.
     let sourceComments: IssueComment[] = [];
-    if (adapter?.getIssueComments && issue.key) {
+    if (enrichFromIssue && adapter?.getIssueComments && issue.key) {
       try {
         sourceComments = await adapter.getIssueComments(issue.key);
       } catch (err) {
@@ -219,13 +248,44 @@ export async function POST(request: NextRequest) {
     // re-hit the adapter. Bounded by the starting context budget; folder
     // hierarchy cases claim whatever budget the linked issues don't use and
     // shrink first on a timeout retry.
-    const startingBudget = getStartingBudget(integrationId);
+    // --- Context images (issue attachments; editor images arrive with the
+    // document-tab rework). Resolved before the budget so the flat per-image
+    // token charge is subtracted from what text context may claim. ---
+    const sourceProvider = project.projectIntegrations.find(
+      (pi) => pi.integrationId === targetIntegrationId
+    )?.integration.provider;
+    const resolvedImages: ContextImage[] = await resolveIssueAttachmentImages({
+      adapter,
+      issueKey: issue.key,
+      attachmentIds: contextImagesRequest?.attachmentIds,
+      source:
+        sourceProvider === "AZURE_DEVOPS"
+          ? "ado-attachment"
+          : "jira-attachment",
+    });
+    const { included: sanitizedImages, skipped: skippedImages } =
+      sanitizeContextImages(resolvedImages);
+    const visionSupported =
+      sanitizedImages.length > 0
+        ? await manager.supportsVision(integrationId, resolved.model)
+        : true;
+    const attachedImages = visionSupported ? sanitizedImages : [];
+    const imagesOmittedForVision = visionSupported ? 0 : sanitizedImages.length;
+    const imageTokens = contextImageTokens(attachedImages);
+
+    const startingBudget = Math.max(
+      0,
+      getStartingBudget(integrationId) - imageTokens
+    );
     const linkedResult: {
       included: LinkedIssueContext[];
       dropped: LinkedIssueRef[];
       tokensUsed: number;
     } =
-      startingBudget > 0 && adapter?.getLinkedIssues && issue.key
+      enrichFromIssue &&
+      startingBudget > 0 &&
+      adapter?.getLinkedIssues &&
+      issue.key
         ? await fetchLinkedIssuesContext(adapter, issue.key, startingBudget)
         : { included: [], dropped: [], tokensUsed: 0 };
 
@@ -268,7 +328,16 @@ export async function POST(request: NextRequest) {
       const llmRequest: LlmRequest = {
         messages: [
           { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt },
+          {
+            role: "user",
+            content:
+              attachedImages.length > 0
+                ? [
+                    { type: "text" as const, text: userPrompt },
+                    ...toImageParts(attachedImages),
+                  ]
+                : userPrompt,
+          },
         ],
         temperature: resolvedPrompt.temperature,
         maxTokens,
@@ -279,6 +348,12 @@ export async function POST(request: NextRequest) {
           projectId,
           issueKey: issue.key,
           timestamp: new Date().toISOString(),
+          ...(attachedImages.length > 0
+            ? {
+                imageCount: attachedImages.length,
+                imageTokensEstimated: imageTokens,
+              }
+            : {}),
         },
       };
 
@@ -372,6 +447,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Stash the attached images so the parallel expand calls can reuse them
+    // server-side without re-downloading (bytes never round-trip through the
+    // client). Fail-soft: a stash failure only costs expand-time images.
+    let contextImagesId: string | undefined;
+    if (attachedImages.length > 0) {
+      contextImagesId = randomUUID();
+      try {
+        await stashContextImages(
+          contextImagesId,
+          { userId: session.user.id, projectId },
+          attachedImages
+        );
+      } catch (err) {
+        console.warn(`[outline] Failed to stash context images:`, err);
+        contextImagesId = undefined;
+      }
+    }
+
     // Return the assembled enrichment so the client can thread it into each
     // expand call (fetched once here) and surface any linked issues that were
     // dropped for budget. `comments`/`linkedIssues` are empty for un-enriched
@@ -384,6 +477,14 @@ export async function POST(request: NextRequest) {
         droppedLinkedIssues: linkedResult.dropped.map(
           (r) => r.key ?? String(r.id)
         ),
+        // Image context actually used (metadata only — never bytes), plus
+        // everything that was requested and did not go, with reasons.
+        contextImages: {
+          contextId: contextImagesId,
+          included: toContextImageMeta(attachedImages),
+          skipped: skippedImages,
+          imagesOmittedForVision,
+        },
       },
     });
   } catch (error) {

@@ -175,6 +175,20 @@ export interface FieldMapping {
   transformation?: (value: any) => any;
 }
 
+/**
+ * Metadata for one issue attachment, as returned by `listAttachments`.
+ * `contentUrl` is the provider's download URL — server-internal (requires
+ * the adapter's auth); strip it before returning metadata to a client.
+ */
+export interface IssueAttachmentMeta {
+  id: string;
+  filename: string;
+  mimeType?: string;
+  byteSize?: number;
+  createdAt?: Date;
+  contentUrl?: string;
+}
+
 export interface IssueAdapter {
   /**
    * Get the capabilities of this adapter
@@ -403,6 +417,23 @@ export interface IssueAdapter {
     id: string;
     url: string;
   }>;
+
+  /**
+   * List an issue's attachments (metadata only — no bytes). Optional:
+   * adapters that can't read attachments simply don't implement it and
+   * callers degrade to no attachment context.
+   */
+  listAttachments?(issueId: string): Promise<IssueAttachmentMeta[]>;
+
+  /**
+   * Download one attachment's bytes. `meta` must come from this adapter's
+   * own `listAttachments` (its `contentUrl` is provider-internal and
+   * carries the adapter's auth assumptions — never accept one from a
+   * client).
+   */
+  downloadAttachment?(
+    meta: IssueAttachmentMeta
+  ): Promise<{ buffer: Buffer; mimeType?: string }>;
 
   /**
    * Get field mappings for the integration
