@@ -1,5 +1,31 @@
 import { ProjectAccessType } from "~/zenstack/models";
 import { baseDb } from "~/lib/db";
+import valkeyConnection from "./valkey";
+
+/**
+ * Cache for the resolved accessible-project id list.
+ *
+ * 60s to match MANIFEST_CACHE_TTL_SECONDS in ./access-manifest, which caches the
+ * same class of data (project defaults + user/group permissions + assignments)
+ * read from the same tables. Both are permission data with the same staleness
+ * consequence, so they should expire on the same clock.
+ */
+const PROJECT_IDS_CACHE_TTL_SECONDS = 60;
+const PROJECT_IDS_CACHE_PREFIX = "acl:projectids:";
+
+/**
+ * `access` and `roleId` are part of the key, not just the user id.
+ *
+ * Both feed the precedence ladder below, so a global role or access-level change
+ * alters the answer. Keying on them means such a change lands on a different key
+ * and takes effect IMMEDIATELY rather than after the TTL. What the 60s window
+ * still covers is a change to the permission tables themselves — a granted or
+ * revoked UserProjectPermission / GroupProjectPermission / ProjectAssignment, a
+ * project default, or group membership.
+ */
+function projectIdsCacheKey(user: UserForAuth): string {
+  return `${PROJECT_IDS_CACHE_PREFIX}${user.id}:${user.access}:${user.roleId ?? "none"}`;
+}
 
 /**
  * The user shape callers already have in hand — a User row loaded with its role
@@ -26,10 +52,13 @@ export interface UserForAuth {
 }
 
 /**
- * Resolve every project this user may read.
+ * Resolve every project this user may read. Cache-aside over Valkey with a 60s
+ * TTL; see PROJECT_IDS_CACHE_TTL_SECONDS and projectIdsCacheKey above for what
+ * the window does and does not cover, and buildAuthContext for why caching is
+ * acceptable here at all.
  *
- * This reproduces, once per request, the precedence ladder the per-model read
- * rules used to evaluate per row. A project qualifies when any branch holds:
+ * This reproduces the precedence ladder the per-model read rules used to
+ * evaluate per row. A project qualifies when any branch holds:
  *
  *   1. the user created it
  *   2. a UserProjectPermission row with SPECIFIC_ROLE
@@ -52,6 +81,83 @@ export interface UserForAuth {
  * relative to the rules this replaces.
  */
 export async function resolveAccessibleProjectIds(
+  user: UserForAuth
+): Promise<number[]> {
+  const key = projectIdsCacheKey(user);
+
+  if (valkeyConnection) {
+    try {
+      const raw = await valkeyConnection.get(key);
+      if (raw) return JSON.parse(raw) as number[];
+    } catch {
+      // fall through to the DB — a cache outage must not deny access
+    }
+  }
+
+  const ids = await computeAccessibleProjectIds(user);
+
+  if (valkeyConnection) {
+    try {
+      await valkeyConnection.set(
+        key,
+        JSON.stringify(ids),
+        "EX",
+        PROJECT_IDS_CACHE_TTL_SECONDS
+      );
+    } catch {
+      // non-fatal
+    }
+  }
+
+  return ids;
+}
+
+/**
+ * Invalidate one user's resolved project list. Call wherever permissions, role
+ * assignments, group membership, or project defaults change.
+ *
+ * NOTE: ./access-manifest exports the equivalent `invalidateAccessManifest`, and
+ * as of 2026-08-13 it has NO callers anywhere — that cache relies purely on TTL
+ * expiry. Wiring both from the permission-mutation endpoints is a follow-up; do
+ * them together, since they cache the same underlying data.
+ */
+export async function invalidateAccessibleProjectIds(
+  userId: string
+): Promise<void> {
+  if (!valkeyConnection) return;
+  try {
+    const keys = await valkeyConnection.keys(
+      `${PROJECT_IDS_CACHE_PREFIX}${userId}:*`
+    );
+    if (keys.length > 0) {
+      await valkeyConnection.del(...keys);
+    }
+  } catch {
+    // non-fatal
+  }
+}
+
+/**
+ * Invalidate every user's resolved project list. Call when a change affects many
+ * users at once — a project's defaultAccessType, or a role's permission grid.
+ */
+export async function invalidateAllAccessibleProjectIds(): Promise<void> {
+  if (!valkeyConnection) return;
+  try {
+    const keys = await valkeyConnection.keys(`${PROJECT_IDS_CACHE_PREFIX}*`);
+    if (keys.length > 0) {
+      await valkeyConnection.del(...keys);
+    }
+  } catch {
+    // non-fatal
+  }
+}
+
+/**
+ * The uncached computation. Four queries in one round of parallelism; see
+ * resolveAccessibleProjectIds for why the result is cached.
+ */
+async function computeAccessibleProjectIds(
   user: UserForAuth
 ): Promise<number[]> {
   const hasGlobalRole = user.roleId != null;
@@ -153,9 +259,25 @@ export async function resolveViewerProjectScope(
 /**
  * Build the `AuthCtx` value the access policies are evaluated against.
  *
- * MUST be called per request. Caching the result in the session would leave a
- * revoked project permission in force until the user next signs in — trading a
- * security regression for a saved round trip.
+ * Called per request from getAuthDb (lib/zenstack.ts). The project-id resolution
+ * underneath is now cached for 60s — this comment previously said caching would
+ * be a security regression, which was aimed at caching in the SESSION, where a
+ * revoked permission would survive until the user next signed in. A 60s TTL is a
+ * different trade, and the one already made for the same data in
+ * ./access-manifest.
+ *
+ * Why it changed: the four uncached queries this fans out to were 37% of ALL
+ * database queries on the instance, and 69% of query volume was permission
+ * checks of one kind or another. The cost is not Postgres CPU — each query is
+ * sub-millisecond — it is that every one is a round trip whose Prisma
+ * serialization runs on the single Next.js JS thread, which is the resource that
+ * was actually saturating.
+ *
+ * The accepted trade: a revoked project permission, changed group membership, or
+ * altered project default can remain in force for up to 60s. A changed global
+ * role or access level takes effect immediately, because both are in the cache
+ * key. Call invalidateAccessibleProjectIds to close the window on a known
+ * mutation.
  */
 export async function buildAuthContext(user: UserForAuth) {
   const accessibleProjectIds = await resolveAccessibleProjectIds(user);

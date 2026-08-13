@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 /**
  * Differential test for resolveAccessibleProjectIds.
@@ -22,6 +22,18 @@ const mockProjectsFindMany = vi.fn();
 const mockUppFindMany = vi.fn();
 const mockGppFindMany = vi.fn();
 const mockAssignmentFindMany = vi.fn();
+
+/**
+ * Valkey null so the differential matrix below runs UNCACHED.
+ *
+ * It sweeps 4096 permission combinations through the same user id, so a live
+ * cache would serve combination 1's answer for all of them and the oracle
+ * comparison would be meaningless. Previously this held only because VALKEY_URL
+ * happens to be unset in the test environment — pinning it makes the matrix
+ * deterministic regardless of environment. The cache itself is covered by the
+ * block at the bottom of this file, which injects its own client.
+ */
+vi.mock("./valkey", () => ({ default: null }));
 
 vi.mock("~/lib/db", () => ({
   baseDb: {
@@ -366,5 +378,159 @@ describe("resolveAccessibleProjectIds — named scenarios from the permissions g
         defaultAccessType: "DEFAULT",
       })
     ).not.toContain(1);
+  });
+});
+
+/**
+ * The 60s Valkey cache added 2026-08-13.
+ *
+ * Why it exists: the four queries computeAccessibleProjectIds fans out to were
+ * 37% of ALL database queries on the instance (permission checks of all kinds
+ * were 69%). Each is sub-millisecond, so the cost was never Postgres CPU — it
+ * was that every one is a round trip whose Prisma serialization runs on the
+ * single Next.js JS thread, the resource that was actually saturating.
+ *
+ * These inject their own client via resetModules + doMock, because the module
+ * reads valkeyConnection at import time.
+ */
+describe("resolveAccessibleProjectIds — Valkey cache", () => {
+  function makeFakeValkey() {
+    const store = new Map<string, string>();
+    const ttls = new Map<string, number>();
+    const globToRe = (p: string) =>
+      new RegExp(
+        "^" + p.replace(/[.+?^${}()|[\]\\]/g, "\\$&").replace(/\*/g, ".*") + "$"
+      );
+    return {
+      store,
+      ttls,
+      redis: {
+        get: vi.fn(async (k: string) => store.get(k) ?? null),
+        set: vi.fn(async (k: string, v: string, _ex: string, ttl: number) => {
+          store.set(k, v);
+          ttls.set(k, ttl);
+          return "OK";
+        }),
+        keys: vi.fn(async (pattern: string) =>
+          [...store.keys()].filter((k) => globToRe(pattern).test(k))
+        ),
+        del: vi.fn(async (...ks: string[]) => {
+          let n = 0;
+          for (const k of ks) if (store.delete(k)) n++;
+          return n;
+        }),
+      },
+    };
+  }
+
+  // One project, created by the user, so the answer is unambiguously [1].
+  function primeDb() {
+    mockProjectsFindMany.mockResolvedValue([
+      {
+        id: 1,
+        createdBy: "u1",
+        defaultAccessType: "NO_ACCESS",
+        defaultRoleId: null,
+      },
+    ]);
+    mockUppFindMany.mockResolvedValue([]);
+    mockGppFindMany.mockResolvedValue([]);
+    mockAssignmentFindMany.mockResolvedValue([]);
+  }
+
+  async function withValkey(redis: unknown) {
+    vi.resetModules();
+    vi.doMock("./valkey", () => ({ default: redis }));
+    return import("./authContext");
+  }
+
+  const viewer: UserForAuth = {
+    id: "u1",
+    access: "USER",
+    roleId: 7,
+    role: null,
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    primeDb();
+  });
+
+  afterEach(() => {
+    vi.doUnmock("./valkey");
+  });
+
+  it("serves the second call from cache without touching the database", async () => {
+    const { redis } = makeFakeValkey();
+    const mod = await withValkey(redis);
+
+    expect(await mod.resolveAccessibleProjectIds(viewer)).toEqual([1]);
+    expect(mockProjectsFindMany).toHaveBeenCalledTimes(1);
+
+    expect(await mod.resolveAccessibleProjectIds(viewer)).toEqual([1]);
+    // Still 1: the four-query fan-out did not run again.
+    expect(mockProjectsFindMany).toHaveBeenCalledTimes(1);
+    expect(mockGppFindMany).toHaveBeenCalledTimes(1);
+  });
+
+  it("expires the entry after 60s, matching the access-manifest cache", async () => {
+    const { redis, ttls } = makeFakeValkey();
+    const mod = await withValkey(redis);
+
+    await mod.resolveAccessibleProjectIds(viewer);
+
+    expect([...ttls.values()]).toEqual([60]);
+  });
+
+  it("takes a role or access change into account immediately", async () => {
+    const { redis } = makeFakeValkey();
+    const mod = await withValkey(redis);
+
+    await mod.resolveAccessibleProjectIds(viewer);
+    expect(mockProjectsFindMany).toHaveBeenCalledTimes(1);
+
+    // roleId and access are part of the cache key, so these must NOT be served
+    // the previous answer — a demoted user would otherwise keep their old
+    // project list for up to a minute.
+    await mod.resolveAccessibleProjectIds({ ...viewer, roleId: 9 });
+    expect(mockProjectsFindMany).toHaveBeenCalledTimes(2);
+
+    await mod.resolveAccessibleProjectIds({ ...viewer, access: "NONE" });
+    expect(mockProjectsFindMany).toHaveBeenCalledTimes(3);
+  });
+
+  it("falls through to the database when Valkey fails, rather than denying access", async () => {
+    const boom = {
+      get: vi.fn(async () => {
+        throw new Error("valkey down");
+      }),
+      set: vi.fn(async () => {
+        throw new Error("valkey down");
+      }),
+      keys: vi.fn(async () => []),
+      del: vi.fn(async () => 0),
+    };
+    const mod = await withValkey(boom);
+
+    // Fails OPEN: an empty list here would silently deny every project-scoped
+    // read for the request.
+    expect(await mod.resolveAccessibleProjectIds(viewer)).toEqual([1]);
+    expect(mockProjectsFindMany).toHaveBeenCalledTimes(1);
+  });
+
+  it("invalidateAccessibleProjectIds drops every entry for that user", async () => {
+    const { redis, store } = makeFakeValkey();
+    const mod = await withValkey(redis);
+
+    await mod.resolveAccessibleProjectIds(viewer);
+    await mod.resolveAccessibleProjectIds({ ...viewer, roleId: 9 });
+    expect(store.size).toBe(2);
+
+    await mod.invalidateAccessibleProjectIds("u1");
+    expect(store.size).toBe(0);
+
+    // And the next call recomputes.
+    await mod.resolveAccessibleProjectIds(viewer);
+    expect(mockProjectsFindMany).toHaveBeenCalledTimes(3);
   });
 });
