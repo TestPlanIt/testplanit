@@ -1420,6 +1420,9 @@ export function GenerateTestCasesWizard({
     null
   );
   const [followLinks, setFollowLinks] = useState(false);
+  // URL mode: attach the crawl worker's page screenshots (when the server
+  // has capture enabled) to each page's generation call.
+  const [includeUrlScreenshots, setIncludeUrlScreenshots] = useState(true);
   const [maxDepth, setMaxDepth] = useState(2);
   const [maxPages, setMaxPages] = useState(10);
   const [urlJobId, setUrlJobId] = useState<string | null>(null);
@@ -1434,6 +1437,7 @@ export function GenerateTestCasesWizard({
     url: string;
     title?: string;
     spaWarning: boolean;
+    hasScreenshot?: boolean;
   }
   const [crawledPagesResult, setCrawledPagesResult] = useState<
     CrawledPageDisplay[]
@@ -2590,6 +2594,7 @@ export function GenerateTestCasesWizard({
       title?: string;
       spaWarning: boolean;
       markdown?: string;
+      hasScreenshot?: boolean;
     }>,
     fieldIdsOverride?: number[]
   ) => {
@@ -2693,6 +2698,9 @@ export function GenerateTestCasesWizard({
             autoGenerateTags,
             includeParameters,
             feature: llmFeature,
+            ...(includeUrlScreenshots && page.hasScreenshot && urlJobId
+              ? { urlJobId, pageIndex: pageIdx, includeScreenshot: true }
+              : {}),
           }),
           signal: abortController.signal,
         });
@@ -4497,6 +4505,7 @@ export function GenerateTestCasesWizard({
                                   onClick={() => setIsSearchOpen(true)}
                                   variant="outline"
                                   className="w-full"
+                                  data-testid="search-issues-button"
                                 >
                                   <Search className="w-4 h-4 " />
                                   {t(
@@ -4727,6 +4736,21 @@ export function GenerateTestCasesWizard({
                                     {urlValidationError}
                                   </p>
                                 )}
+                              </div>
+
+                              {/* Page screenshots (used only when the server
+                                  has capture enabled — CRAWL_SCREENSHOTS) */}
+                              <div className="flex items-center space-x-2">
+                                <Switch
+                                  id="include-url-screenshots"
+                                  checked={includeUrlScreenshots}
+                                  onCheckedChange={setIncludeUrlScreenshots}
+                                />
+                                <Label htmlFor="include-url-screenshots">
+                                  {t(
+                                    "generateTestCases.contextImages.includeUrlScreenshots"
+                                  )}
+                                </Label>
                               </div>
 
                               {/* Follow Links Toggle */}

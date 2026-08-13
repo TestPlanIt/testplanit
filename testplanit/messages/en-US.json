@@ -3579,7 +3579,8 @@
         "visionSkippedTitle": "Images were not sent",
         "visionSkipped": "{count, plural, =1 {# image was} other {# images were}} not sent — the configured AI model does not support image input.",
         "includedSummary": "{count, plural, =1 {# image} other {# images}} sent as context: {names}",
-        "skippedSummary": "{count, plural, =1 {# image} other {# images}} skipped (too large or unsupported): {names}"
+        "skippedSummary": "{count, plural, =1 {# image} other {# images}} skipped (too large or unsupported): {names}",
+        "includeUrlScreenshots": "Include page screenshots when available"
       }
     },
     "filterBar": {

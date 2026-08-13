@@ -10,6 +10,11 @@ import { withTenantContext } from "../lib/tenantContext";
 import valkeyConnection from "../lib/valkey";
 import { BULLMQ_PREFIX } from "../lib/bullPrefix";
 import { ssrfSafeFetch, SsrfError } from "../lib/utils/ssrf";
+import {
+  CrawlScreenshotter,
+  screenshotKey,
+  SCREENSHOT_TTL_SECONDS,
+} from "./urlScreenshots";
 import { extractContent } from "../lib/utils/contentExtractor";
 import {
   extractLinks,
@@ -45,6 +50,8 @@ export interface CrawledPageInfo {
   /** Page markdown content — included when mode is "crawl-only" so the
    *  client can stream LLM generation per page via SSE. */
   markdown?: string;
+  /** A page screenshot is stashed in Redis (env-gated capture). */
+  hasScreenshot?: boolean;
 }
 
 export interface GenerateFromUrlJobResult {
@@ -75,6 +82,7 @@ interface PageContent {
   hash: string;
   spaWarning: boolean;
   title?: string;
+  hasScreenshot?: boolean;
 }
 
 function sleep(ms: number): Promise<void> {
@@ -87,6 +95,7 @@ export const processor = async (
   job: Job<GenerateFromUrlJobData>,
   token?: string
 ): Promise<GenerateFromUrlJobResult> => {
+  const screenshotter = new CrawlScreenshotter();
   console.log(
     `Processing generate-from-url job ${job.id} for project ${job.data.projectId}` +
       (job.data.tenantId ? ` (tenant: ${job.data.tenantId})` : "")
@@ -181,12 +190,28 @@ export const processor = async (
         const isDuplicate = pages.some((p) => p.hash === contentHash);
 
         if (!isDuplicate) {
+          // Env-gated screenshot (enhancement — failures never fail the
+          // crawl). finalUrl has already passed ssrfSafeFetch; the
+          // screenshotter additionally guards every sub-resource request.
+          let hasScreenshot = false;
+          const pageIndex = pages.length;
+          const shot = await screenshotter.capture(finalUrl);
+          if (shot) {
+            await redis.set(
+              screenshotKey(String(job.id), pageIndex),
+              shot.toString("base64"),
+              { EX: SCREENSHOT_TTL_SECONDS }
+            );
+            hasScreenshot = true;
+          }
+
           pages.push({
             url: finalUrl,
             markdown: result.markdown,
             hash: contentHash,
             spaWarning: result.spaWarning,
             title,
+            hasScreenshot,
           });
 
           if (result.spaWarning) {
@@ -264,6 +289,7 @@ export const processor = async (
       url: p.url,
       title: p.title,
       spaWarning: p.spaWarning,
+      hasScreenshot: p.hasScreenshot,
     }));
 
     await redis.set(
@@ -296,6 +322,8 @@ export const processor = async (
   } catch (err) {
     // No notification — the wizard polls for status and shows the error directly.
     throw err; // Re-throw so BullMQ marks job as failed
+  } finally {
+    await screenshotter.close();
   }
 };
 
