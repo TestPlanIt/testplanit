@@ -44,11 +44,7 @@ export function toCalendarDate(date: Date): Date {
  * Aug 12 for anyone in a negative offset, highlighting the wrong cell.
  */
 export function fromCalendarDate(date: Date): Date {
-  return new Date(
-    date.getUTCFullYear(),
-    date.getUTCMonth(),
-    date.getUTCDate()
-  );
+  return new Date(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
 }
 
 /**

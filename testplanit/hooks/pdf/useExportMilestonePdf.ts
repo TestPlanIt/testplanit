@@ -107,10 +107,7 @@ export function useExportMilestonePdf({
         pdf.renderField("Path", data.milestone.parentPath.join(" / "));
       }
       pdf.renderField("Started", fmtCalendarDate(data.milestone.startedAt));
-      pdf.renderField(
-        "Completed",
-        fmtCalendarDate(data.milestone.completedAt)
-      );
+      pdf.renderField("Completed", fmtCalendarDate(data.milestone.completedAt));
       pdf.renderField("Created", fmtDate(data.milestone.createdAt));
 
       // --- Aggregate summary (first) ---

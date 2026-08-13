@@ -5,10 +5,7 @@ import type {
   Milestones,
   MilestoneTypes,
 } from "~/zenstack/models";
-import {
-  isCalendarDayAfter,
-  isCalendarDayBefore,
-} from "~/utils/calendarDate";
+import { isCalendarDayAfter, isCalendarDayBefore } from "~/utils/calendarDate";
 
 type MilestoneTypesWithIcon = MilestoneTypes & {
   icon: FieldIcon | null;
