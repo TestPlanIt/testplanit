@@ -539,6 +539,101 @@ describe("AzureDevOpsAdapter", () => {
     });
   });
 
+  describe("listAttachments / downloadAttachment", () => {
+    beforeEach(async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ value: [] }),
+      });
+      await adapter.authenticate({ type: "api_key", apiKey: "test-token" });
+    });
+
+    it("maps AttachedFile relations that mapWorkItemRelations discards", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: () =>
+          Promise.resolve({
+            id: 123,
+            relations: [
+              {
+                rel: "System.LinkTypes.Related",
+                url: "https://dev.azure.com/org/proj/_apis/wit/workItems/200",
+                attributes: { name: "Related" },
+              },
+              {
+                rel: "AttachedFile",
+                url: "https://dev.azure.com/testorg/_apis/wit/attachments/abc-123-def",
+                attributes: {
+                  name: "mockup.png",
+                  resourceSize: 2048,
+                  resourceCreatedDate: "2026-02-01T00:00:00Z",
+                },
+              },
+              {
+                rel: "AttachedFile",
+                url: "https://dev.azure.com/testorg/_apis/wit/attachments/00000000-0000-0000-0000-00000000beef",
+                attributes: {},
+              },
+            ],
+          }),
+      });
+
+      const result = await adapter.listAttachments!("123");
+
+      const [url] = mockFetch.mock.calls.at(-1)!;
+      expect(url).toContain("$expand=relations");
+      expect(result).toEqual([
+        {
+          id: "abc-123-def",
+          filename: "mockup.png",
+          byteSize: 2048,
+          createdAt: new Date("2026-02-01T00:00:00Z"),
+          contentUrl:
+            "https://dev.azure.com/testorg/_apis/wit/attachments/abc-123-def",
+        },
+        {
+          id: "00000000-0000-0000-0000-00000000beef",
+          filename: "attachment-00000000-0000-0000-0000-00000000beef",
+          byteSize: undefined,
+          createdAt: undefined,
+          contentUrl:
+            "https://dev.azure.com/testorg/_apis/wit/attachments/00000000-0000-0000-0000-00000000beef",
+        },
+      ]);
+    });
+
+    it("downloads with download=true, auth header, and octet-stream demoted", async () => {
+      const bytes = new Uint8Array([9, 8, 7]);
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        headers: new Headers({
+          "content-type": "application/octet-stream",
+          "content-length": String(bytes.byteLength),
+        }),
+        arrayBuffer: () => Promise.resolve(bytes.buffer),
+      });
+
+      const result = await adapter.downloadAttachment!({
+        id: "abc-123-def",
+        filename: "mockup.png",
+        contentUrl:
+          "https://dev.azure.com/testorg/_apis/wit/attachments/abc-123-def",
+      });
+
+      const [url, options] = mockFetch.mock.calls.at(-1)!;
+      expect(url).toBe(
+        "https://dev.azure.com/testorg/_apis/wit/attachments/abc-123-def?download=true&api-version=7.0"
+      );
+      expect(options.headers.Authorization).toMatch(/^Basic /);
+      // octet-stream carries no information — the caller infers from the
+      // filename instead.
+      expect(result.mimeType).toBeUndefined();
+      expect(result.buffer).toEqual(Buffer.from(bytes));
+    });
+  });
+
   describe("getLinkedIssues", () => {
     const mockWorkItemWithRelations = {
       id: 123,
