@@ -337,16 +337,29 @@ export async function getAuthOptions(): Promise<NextAuthOptions> {
             void touchLastActive(session.user.id, user);
           }
 
-          // SECURITY-03: Check if password was changed after JWT was issued.
-          // This uses a direct DB query, NOT the Valkey cache, because the cache
-          // TTL (60s) would allow stale sessions to persist after password change.
-          // Only check for credential-based users (SECURITY-04).
-          if (user?.authMethod === "INTERNAL" || user?.authMethod === "BOTH") {
-            const freshUser = await db.user.findUnique({
-              where: { id: session.user.id },
-              select: { passwordChangedAt: true },
-            });
+          // ONE query for both mid-session guards below.
+          //
+          // Both MUST read the database directly rather than the projection from
+          // getCachedSessionUser: its 60s TTL would let a stale session outlive a
+          // password change (SECURITY-03) or a deactivation. That requirement is
+          // unchanged — this is still an uncached read on every session check.
+          //
+          // What changed is that these were two separate findUnique calls
+          // against the SAME row, which made them the two highest-count queries
+          // on the instance (14.0M calls each, 8/s apiece, together 16% of all
+          // query volume). Selecting both columns at once halves that without
+          // weakening either guard. passwordChangedAt is now fetched even for
+          // auth methods that ignore it, which costs one extra column on a
+          // primary-key lookup and saves a whole round trip.
+          const freshUser = await db.user.findUnique({
+            where: { id: session.user.id },
+            select: { passwordChangedAt: true, isActive: true },
+          });
 
+          // SECURITY-03: password changed after this JWT was issued. Only
+          // meaningful for credential-based users (SECURITY-04). Evaluated
+          // FIRST so its invalidation short-circuits before anything below.
+          if (user?.authMethod === "INTERNAL" || user?.authMethod === "BOTH") {
             const dbPasswordChangedAt = freshUser?.passwordChangedAt ?? null;
             const tokenPasswordChangedAt = token.passwordChangedAt
               ? new Date(token.passwordChangedAt)
@@ -365,19 +378,11 @@ export async function getAuthOptions(): Promise<NextAuthOptions> {
             }
           }
 
-          // Mid-session deactivation guard: the cached projection in
-          // getCachedSessionUser does not include isActive, and its 60s TTL
-          // would let a deactivated user retain access until the cache
-          // expires. Re-read isActive directly from the DB on every
-          // session check across ALL authMethods — credential, SSO,
-          // and identity-source-provisioned users alike. A missing row
-          // does NOT short-circuit (a deleted user is a separate concern
-          // handled by the existing not-found behavior downstream).
-          const freshIsActiveRow = await db.user.findUnique({
-            where: { id: session.user.id },
-            select: { isActive: true },
-          });
-          if (freshIsActiveRow && freshIsActiveRow.isActive === false) {
+          // Mid-session deactivation guard, across ALL authMethods —
+          // credential, SSO, and identity-source-provisioned users alike. A
+          // missing row does NOT short-circuit (a deleted user is a separate
+          // concern handled by the existing not-found behavior downstream).
+          if (freshUser && freshUser.isActive === false) {
             return {} as Session;
           }
 
@@ -736,16 +741,30 @@ export const authOptions: NextAuthOptions = {
           void touchLastActive(session.user.id, user);
         }
 
-        // SECURITY-03: Check if password was changed after JWT was issued.
-        // This uses a direct DB query, NOT the Valkey cache, because the cache
-        // TTL (60s) would allow stale sessions to persist after password change.
-        // Only check for credential-based users (SECURITY-04).
-        if (user?.authMethod === "INTERNAL" || user?.authMethod === "BOTH") {
-          const freshUser = await db.user.findUnique({
-            where: { id: session.user.id },
-            select: { passwordChangedAt: true },
-          });
+        // ONE query for both mid-session guards below.
+        //
+        // Both MUST read the database directly rather than the projection from
+        // getCachedSessionUser: its 60s TTL would let a stale session outlive a
+        // password change (SECURITY-03) or a deactivation. That requirement is
+        // unchanged — this is still an uncached read on every session check.
+        //
+        // What changed is that these were two separate findUnique calls against
+        // the SAME row. This callback runs on every getServerSession() across
+        // ~176 call sites, which made them the two highest-count queries on the
+        // instance (14.0M calls each, 8/s apiece, together 16% of all query
+        // volume). Selecting both columns at once halves that without weakening
+        // either guard. passwordChangedAt is now fetched even for auth methods
+        // that ignore it, which costs one extra column on a primary-key lookup
+        // and saves a whole round trip.
+        const freshUser = await db.user.findUnique({
+          where: { id: session.user.id },
+          select: { passwordChangedAt: true, isActive: true },
+        });
 
+        // SECURITY-03: password changed after this JWT was issued. Only
+        // meaningful for credential-based users (SECURITY-04). Evaluated FIRST
+        // so its invalidation short-circuits before anything below.
+        if (user?.authMethod === "INTERNAL" || user?.authMethod === "BOTH") {
           const dbPasswordChangedAt = freshUser?.passwordChangedAt ?? null;
           const tokenPasswordChangedAt = token.passwordChangedAt
             ? new Date(token.passwordChangedAt)
@@ -764,19 +783,11 @@ export const authOptions: NextAuthOptions = {
           }
         }
 
-        // Mid-session deactivation guard: the cached projection in
-        // getCachedSessionUser does not include isActive, and its 60s TTL
-        // would let a deactivated user retain access until the cache
-        // expires. Re-read isActive directly from the DB on every
-        // session check across ALL authMethods — credential, SSO,
-        // and identity-source-provisioned users alike. A missing row
-        // does NOT short-circuit (a deleted user is a separate concern
-        // handled by the existing not-found behavior downstream).
-        const freshIsActiveRow = await db.user.findUnique({
-          where: { id: session.user.id },
-          select: { isActive: true },
-        });
-        if (freshIsActiveRow && freshIsActiveRow.isActive === false) {
+        // Mid-session deactivation guard, across ALL authMethods — credential,
+        // SSO, and identity-source-provisioned users alike. A missing row does
+        // NOT short-circuit (a deleted user is a separate concern handled by the
+        // existing not-found behavior downstream).
+        if (freshUser && freshUser.isActive === false) {
           return {} as Session;
         }
 
