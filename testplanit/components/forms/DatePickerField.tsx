@@ -19,6 +19,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
 import { Control, FieldPath, FieldValues } from "react-hook-form";
 import { cn, type ClassValue } from "~/utils";
+import { fromCalendarDate, toCalendarDate } from "~/utils/calendarDate";
 import { getDateFnsLocale } from "~/utils/locales";
 
 interface DatePickerFieldProps<T extends FieldValues = FieldValues> {
@@ -31,6 +32,18 @@ interface DatePickerFieldProps<T extends FieldValues = FieldValues> {
   maxDate?: Date;
   className?: ClassValue;
   helpKey?: string;
+  /**
+   * Stores the picked day as a calendar date — UTC midnight — instead of
+   * midnight in the browser's zone, so the value means the same day to every
+   * reader and can be rendered without timezone conversion. Set it wherever
+   * the field is displayed with `dateOnly` (milestone start/due dates); see
+   * `~/utils/calendarDate`.
+   *
+   * The conversion runs in both directions, because react-day-picker and
+   * date-fns `format` both read a Date in local time: a stored UTC midnight
+   * would otherwise highlight and label the previous day west of Greenwich.
+   */
+  dateOnly?: boolean;
 }
 
 export function DatePickerField<T extends FieldValues = FieldValues>({
@@ -43,10 +56,15 @@ export function DatePickerField<T extends FieldValues = FieldValues>({
   maxDate = new Date("2099-12-31"),
   className,
   helpKey,
+  dateOnly = false,
 }: DatePickerFieldProps<T>) {
   const locale = useLocale();
   const t = useTranslations("common.actions");
   const [popoverOpen, setPopoverOpen] = useState(false);
+
+  // Local-time view of the stored value, for the calendar grid and the label.
+  const toLocal = (value: Date | null | undefined) =>
+    value && dateOnly ? fromCalendarDate(value) : (value ?? undefined);
 
   return (
     <FormField
@@ -72,7 +90,7 @@ export function DatePickerField<T extends FieldValues = FieldValues>({
                   disabled={disabled}
                 >
                   {field.value ? (
-                    format(field.value, "PPP", {
+                    format(toLocal(field.value)!, "PPP", {
                       locale: getDateFnsLocale(locale),
                     })
                   ) : (
@@ -85,9 +103,11 @@ export function DatePickerField<T extends FieldValues = FieldValues>({
             <PopoverContent className="w-auto p-0" align="start">
               <Calendar
                 mode="single"
-                selected={field.value}
+                selected={toLocal(field.value)}
                 onSelect={(date) => {
-                  field.onChange(date);
+                  field.onChange(
+                    date && dateOnly ? toCalendarDate(date) : date
+                  );
                   setPopoverOpen(false);
                 }}
                 disabled={(date) => date > maxDate || date < minDate}

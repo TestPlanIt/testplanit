@@ -259,6 +259,7 @@ export const MilestoneDisplay: React.FC<MilestoneDisplayProps> = ({
                 </Button>
               )}
               <DateTextDisplay
+                dateOnly
                 startDate={
                   milestone.startedAt ? new Date(milestone.startedAt) : null
                 }
@@ -370,6 +371,7 @@ export const MilestoneDisplay: React.FC<MilestoneDisplayProps> = ({
                 </Button>
               )}
               <DateTextDisplay
+                dateOnly
                 startDate={
                   milestone.startedAt ? new Date(milestone.startedAt) : null
                 }

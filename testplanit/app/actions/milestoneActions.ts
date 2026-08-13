@@ -14,6 +14,7 @@ import {
 import { isReviewFeatureSystemEnabled } from "~/lib/services/reviewFeatureFlag";
 import { assertBulkReviewGatePasses } from "~/lib/services/reviewGate";
 import { getServerAuthSession } from "~/server/auth";
+import { calendarDateToInstant } from "~/utils/calendarDate";
 import { checkUserPermission } from "./permissions";
 
 const CompleteMilestoneSchema = z.object({
@@ -82,6 +83,13 @@ export async function completeMilestoneCascade(
         testRunStateId,
         sessionStateId,
       } = parseResult.data;
+
+      // The dialog sends a calendar date (UTC midnight), which is what the
+      // milestone's own date fields want. Runs and sessions cascaded off it
+      // hold real instants and render in the viewer's timezone, so they need
+      // that day widened — stamping them at UTC midnight would show the
+      // previous evening west of Greenwich.
+      const cascadeCompletedAt = calendarDateToInstant(completionDate);
 
       // Fetch the milestone to check its current status and get projectId
       const currentMilestone = await baseDb.milestones.findUnique({
@@ -319,7 +327,7 @@ export async function completeMilestoneCascade(
               stateId?: number;
             } = {
               isCompleted: true,
-              completedAt: completionDate,
+              completedAt: cascadeCompletedAt,
             };
             if (completedTestRunStateId !== undefined) {
               testRunUpdateData.stateId = completedTestRunStateId;
@@ -392,7 +400,7 @@ export async function completeMilestoneCascade(
               stateId?: number;
             } = {
               isCompleted: true,
-              completedAt: completionDate,
+              completedAt: cascadeCompletedAt,
             };
             if (completedSessionStateId !== undefined) {
               sessionUpdateData.stateId = completedSessionStateId;

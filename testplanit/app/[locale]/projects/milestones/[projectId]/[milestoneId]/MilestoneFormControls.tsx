@@ -231,6 +231,7 @@ export default function MilestoneFormControls({
             <DatePickerField
               control={control}
               name="startedAt"
+              dateOnly
               label={tCommon("fields.startDate")}
               placeholder={tCommon("fields.startDate")}
               disabled={!isEditMode || isSynced}
@@ -258,6 +259,7 @@ export default function MilestoneFormControls({
             <DatePickerField
               control={control}
               name="completedAt"
+              dateOnly
               label={tGlobal("milestones.fields.dueDate")}
               placeholder={tGlobal("milestones.fields.dueDate")}
               disabled={!isEditMode || isSynced}
@@ -348,6 +350,7 @@ export default function MilestoneFormControls({
                 sits at the start (left) of the sidebar. */}
             <div className="w-fit">
               <DateTextDisplay
+                dateOnly
                 startDate={
                   milestone.startedAt ? new Date(milestone.startedAt) : null
                 }

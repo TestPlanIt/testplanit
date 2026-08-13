@@ -6,6 +6,7 @@ import type {
   MilestoneTypes,
 } from "~/zenstack/models"; // Assuming types are available
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+import { toCalendarDate } from "./calendarDate";
 import {
   ColorMap,
   createColorMap,
@@ -474,6 +475,57 @@ describe("Date-Dependent Milestone Utils", () => {
         completedAt: FUTURE_DATE_1, // End date in future
       };
       expect(getCondition(milestone)).toBe("upcomingNoStartDate");
+    });
+
+    // Milestone dates are calendar dates pinned to UTC midnight, so an instant
+    // comparison called a due date of *today* past due the moment UTC midnight
+    // passed — 7:00 PM the previous evening for a reader in GMT-5. These cases
+    // are built off MOCK_NOW rather than a literal, and read its local day the
+    // same way getCondition does, so they stay consistent in any runner zone.
+    // See `~/utils/calendarDate`.
+    const today = toCalendarDate(MOCK_NOW);
+    const yesterday = toCalendarDate(
+      new Date(MOCK_NOW.getTime() - 24 * 60 * 60 * 1000)
+    );
+
+    it("is not past due on the day it is due", () => {
+      const milestone: Milestones = {
+        ...baseMockMilestone,
+        isStarted: true,
+        startedAt: yesterday,
+        completedAt: today,
+      };
+      expect(getCondition(milestone)).toBe("started");
+    });
+
+    it("goes past due once the due day is over", () => {
+      const milestone: Milestones = {
+        ...baseMockMilestone,
+        isStarted: true,
+        startedAt: yesterday,
+        completedAt: yesterday,
+      };
+      expect(getCondition(milestone)).toBe("pastDueStarted");
+    });
+
+    it("treats a start date of today as arrived", () => {
+      const milestone: Milestones = {
+        ...baseMockMilestone,
+        isStarted: false,
+        startedAt: today,
+        completedAt: null,
+      };
+      expect(getCondition(milestone)).toBe("delayed");
+    });
+
+    it("does not count the due day against an unstarted milestone", () => {
+      const milestone: Milestones = {
+        ...baseMockMilestone,
+        isStarted: false,
+        startedAt: today,
+        completedAt: today,
+      };
+      expect(getCondition(milestone)).toBe("delayed");
     });
   });
 

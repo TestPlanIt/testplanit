@@ -9,6 +9,7 @@ import { formatInTimeZone } from "date-fns-tz";
 import { CircleCheck } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
+import { calendarDayKey } from "~/utils/calendarDate";
 import { stripYearFromFormat } from "~/utils/dateFormat";
 import { mapDateTimeFormatString } from "~/utils/mapDateTimeFormat";
 
@@ -32,6 +33,13 @@ interface DateTextDisplayProps {
    * permanently. Only set it inside a container.
    */
   responsive?: boolean;
+  /**
+   * Marks both dates as calendar dates rather than instants — milestone
+   * start/due dates, not moments something happened. They render in UTC (where
+   * they are pinned on write) instead of the viewer's zone, so every reader
+   * sees the day that was authored. See `~/utils/calendarDate`.
+   */
+  dateOnly?: boolean;
 }
 
 export function DateTextDisplay({
@@ -40,6 +48,7 @@ export function DateTextDisplay({
   isCompleted = false,
   startLabel,
   responsive = false,
+  dateOnly = false,
 }: DateTextDisplayProps) {
   const { data: session } = useSession();
   const tGlobal = useTranslations();
@@ -55,13 +64,23 @@ export function DateTextDisplay({
   );
 
   const formatted = (date: Date, format?: string) => (
-    <DateFormatter date={date} formatString={format} timezone={timezone} />
+    <DateFormatter
+      date={date}
+      formatString={format}
+      timezone={timezone}
+      dateOnly={dateOnly}
+    />
   );
 
   // Which calendar day a date falls on depends on where the viewer is, so the
   // comparison runs in their timezone — a result at 23:50 and one at 00:10 the
-  // next morning are two days, and must not collapse.
+  // next morning are two days, and must not collapse. Calendar dates are the
+  // exception: they carry their own day and must key off it, or a same-day
+  // range would fail to collapse for viewers in a negative offset.
   const dayKey = (date: Date) => {
+    if (dateOnly) {
+      return calendarDayKey(date);
+    }
     if (timezone) {
       try {
         return formatInTimeZone(

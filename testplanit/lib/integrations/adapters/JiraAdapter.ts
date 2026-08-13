@@ -1,4 +1,5 @@
 import valkeyConnection from "~/lib/valkey";
+import { parseUpstreamDate } from "~/utils/calendarDate";
 import { BaseAdapter } from "./BaseAdapter";
 import {
   AuthenticationData,
@@ -1011,7 +1012,9 @@ export class JiraAdapter extends BaseAdapter {
       state = "CLOSED";
       rawState = "released";
     } else {
-      const startDate = raw.startDate ? new Date(raw.startDate) : undefined;
+      const startDate = raw.startDate
+        ? parseUpstreamDate(raw.startDate).date
+        : undefined;
       const isFuture = !startDate || startDate.getTime() > Date.now();
       state = isFuture ? "FUTURE" : "ACTIVE";
       rawState = isFuture ? "future" : "active";
@@ -1022,8 +1025,17 @@ export class JiraAdapter extends BaseAdapter {
       kind: "RELEASE",
       name: raw.name ?? String(raw.id),
       description: raw.description,
-      startDate: raw.startDate ? new Date(raw.startDate) : undefined,
-      endDate: raw.releaseDate ? new Date(raw.releaseDate) : undefined,
+      // A version's dates are bare `yyyy-MM-dd` calendar dates — no time, no
+      // offset. They land in `startedAt`/`completedAt`, which are read back in
+      // UTC precisely so a release dated Aug 13 says Aug 13 to every reader
+      // instead of "Aug 12, 7:00 PM" in GMT-5. Sprints differ: see
+      // mapJiraSprint. See `~/utils/calendarDate`.
+      startDate: raw.startDate
+        ? parseUpstreamDate(raw.startDate).date
+        : undefined,
+      endDate: raw.releaseDate
+        ? parseUpstreamDate(raw.releaseDate).date
+        : undefined,
       state,
       rawState,
       // raw.self is the REST resource (JSON) — link users to the project's
@@ -1366,8 +1378,16 @@ export class JiraAdapter extends BaseAdapter {
       kind: "ITERATION",
       name: raw.name ?? String(raw.id),
       description: raw.goal,
-      startDate: raw.startDate ? new Date(raw.startDate) : undefined,
-      endDate: raw.endDate ? new Date(raw.endDate) : undefined,
+      // Unlike a version's, a sprint's dates are full instants with a real
+      // time, so they are stored as sent rather than pinned to a calendar day —
+      // the burndown reads them, and truncating would throw away the boundary.
+      // The date-only display then shows their UTC day, which only diverges
+      // from the reader's for a sprint that starts or ends within a few hours
+      // of UTC midnight.
+      startDate: raw.startDate
+        ? parseUpstreamDate(raw.startDate).date
+        : undefined,
+      endDate: raw.endDate ? parseUpstreamDate(raw.endDate).date : undefined,
       state,
       rawState,
       // Sprints have no user-facing permalink in their payload; the origin

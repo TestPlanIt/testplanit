@@ -98,6 +98,7 @@ import {
   MilestonesWithTypes,
   sortMilestones,
 } from "~/utils/milestoneUtils";
+import { toCalendarDate } from "~/utils/calendarDate";
 import { CompleteMilestoneDialog } from "../../CompleteMilestoneDialog";
 import { DeleteMilestoneModal } from "../DeleteMilestoneModal";
 import MilestoneItemCard from "../MilestoneItemCard";
@@ -755,7 +756,7 @@ export default function MilestoneDetailsPage() {
   const handleStartChildMilestone = async (child: MilestonesWithTypes) => {
     await updateMilestone({
       where: { id: child.id },
-      data: { isStarted: true, startedAt: new Date() },
+      data: { isStarted: true, startedAt: toCalendarDate(new Date()) },
     });
   };
 

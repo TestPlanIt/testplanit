@@ -11,6 +11,7 @@ import {
   MilestonesWithTypes,
   sortMilestones,
 } from "~/utils/milestoneUtils";
+import { toCalendarDate } from "~/utils/calendarDate";
 import { CompleteMilestoneDialog } from "../CompleteMilestoneDialog";
 import { DeleteMilestoneModal } from "./DeleteMilestoneModal";
 import MilestoneItemCard from "./MilestoneItemCard";
@@ -106,7 +107,10 @@ const MilestoneDisplay: React.FC<MilestoneDisplayProps> = ({
   };
 
   const handleStartMilestone = async (milestone: MilestonesWithTypes) => {
-    const startDate = new Date();
+    // `startedAt` is a calendar date, so today's date rather than this instant:
+    // storing the raw time would read back as tomorrow for an evening click
+    // west of Greenwich, since the field renders without tz conversion.
+    const startDate = toCalendarDate(new Date());
     await updateMilestones({
       where: { id: milestone.id },
       data: { isStarted: true, startedAt: startDate },

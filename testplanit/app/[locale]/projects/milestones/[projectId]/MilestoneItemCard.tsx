@@ -178,6 +178,7 @@ const MilestoneItemCard: React.FC<MilestoneItemCardProps> = ({
               <span className="whitespace-nowrap text-sm truncate">
                 <DateTextDisplay
                   responsive
+                  dateOnly
                   startDate={startDate}
                   endDate={endDate}
                   isCompleted={milestone.isCompleted}

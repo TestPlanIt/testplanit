@@ -28,6 +28,7 @@ import { FormProvider, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { completeMilestoneCascade } from "~/app/actions/milestoneActions";
 import { IconName } from "~/types/globals";
+import { toCalendarDate } from "~/utils/calendarDate";
 import type { MilestonesWithTypes } from "~/utils/milestoneUtils";
 
 interface CompleteMilestoneDialogProps {
@@ -69,9 +70,12 @@ export function CompleteMilestoneDialog({
 
   const form = useForm<CompleteMilestoneFormValues>({
     defaultValues: {
+      // Writes straight through to `completedAt`, so it has to be a calendar
+      // date: defaulting to the raw instant would store a time, and would read
+      // back as tomorrow for an evening edit west of Greenwich.
       completionDate: milestoneToComplete?.completedAt
         ? new Date(milestoneToComplete.completedAt)
-        : new Date(),
+        : toCalendarDate(new Date()),
     },
   });
 
@@ -389,6 +393,7 @@ export function CompleteMilestoneDialog({
                   <DatePickerField
                     control={form.control}
                     name="completionDate"
+                    dateOnly
                     placeholder={t("milestones.dates.selectDate")}
                     disabled={isSubmitting}
                   />

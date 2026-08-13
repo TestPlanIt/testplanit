@@ -443,6 +443,7 @@ export function AddMilestone({ open, onClose }: AddMilestoneProps) {
                       <DatePickerField
                         control={control}
                         name="startedAt"
+                        dateOnly
                         label={t("common.fields.startDate")}
                         placeholder={t("common.fields.startDate")}
                         helpKey="milestone.startDate"
@@ -482,6 +483,7 @@ export function AddMilestone({ open, onClose }: AddMilestoneProps) {
                       <DatePickerField
                         control={control}
                         name="completedAt"
+                        dateOnly
                         label={t("milestones.fields.dueDate")}
                         placeholder={t("milestones.fields.dueDate")}
                         helpKey="milestone.dueDate"

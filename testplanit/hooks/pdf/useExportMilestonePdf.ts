@@ -3,6 +3,7 @@
 import { useCallback, useState } from "react";
 import { logDataExport } from "~/lib/services/auditClient";
 import type { MilestoneExportData } from "~/lib/services/milestoneExport";
+import { CALENDAR_DATE_TIMEZONE } from "~/utils/calendarDate";
 import { toHumanReadable } from "~/utils/duration";
 import { hexToRgb, PdfRenderer, type StatusToken } from "./pdfHelpers";
 
@@ -44,6 +45,16 @@ export function useExportMilestonePdf({
 
       const fmtDate = (iso: string | null) =>
         iso ? new Date(iso).toLocaleDateString(locale) : "—";
+      // A milestone's start/due dates are calendar dates pinned to UTC
+      // midnight, so they format in UTC — the local-time formatter above would
+      // print the previous day for any exporter west of Greenwich. See
+      // `~/utils/calendarDate`.
+      const fmtCalendarDate = (iso: string | null) =>
+        iso
+          ? new Date(iso).toLocaleDateString(locale, {
+              timeZone: CALENDAR_DATE_TIMEZONE,
+            })
+          : "—";
       const fmtDateTime = (iso: string | null) =>
         iso ? new Date(iso).toLocaleString(locale) : "—";
       const fmtDuration = (seconds: number) =>
@@ -95,8 +106,11 @@ export function useExportMilestonePdf({
       if (data.milestone.parentPath.length > 0) {
         pdf.renderField("Path", data.milestone.parentPath.join(" / "));
       }
-      pdf.renderField("Started", fmtDate(data.milestone.startedAt));
-      pdf.renderField("Completed", fmtDate(data.milestone.completedAt));
+      pdf.renderField("Started", fmtCalendarDate(data.milestone.startedAt));
+      pdf.renderField(
+        "Completed",
+        fmtCalendarDate(data.milestone.completedAt)
+      );
       pdf.renderField("Created", fmtDate(data.milestone.createdAt));
 
       // --- Aggregate summary (first) ---

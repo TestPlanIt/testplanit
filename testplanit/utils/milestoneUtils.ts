@@ -5,7 +5,10 @@ import type {
   Milestones,
   MilestoneTypes,
 } from "~/zenstack/models";
-import { isAfter, isBefore, parseISO } from "date-fns";
+import {
+  isCalendarDayAfter,
+  isCalendarDayBefore,
+} from "~/utils/calendarDate";
 
 type MilestoneTypesWithIcon = MilestoneTypes & {
   icon: FieldIcon | null;
@@ -109,38 +112,38 @@ export const getStatusStyle = (
 
 export const getCondition = (milestone: Milestones): string => {
   const now = new Date();
-  const startDate = milestone.startedAt
-    ? parseISO(milestone.startedAt.toISOString())
-    : null;
+  const startDate = milestone.startedAt ? new Date(milestone.startedAt) : null;
   const endDate = milestone.completedAt
-    ? parseISO(milestone.completedAt.toISOString())
+    ? new Date(milestone.completedAt)
     : null;
 
+  // Milestone dates are calendar dates, so these compare whole days against
+  // the reader's own day rather than instants against this moment. Comparing
+  // instants made a milestone due Aug 13 go past due at 7:00 PM on Aug 12 for
+  // a reader in GMT-5, because the stored value is Aug 13 at UTC midnight.
+  //
+  // The two ends round in opposite directions, which keeps the day a milestone
+  // is due from counting as late: a start date has arrived once the reader
+  // reaches that day, while a due date is only past once that day is over.
+  const startArrived = !!startDate && !isCalendarDayAfter(startDate, now);
+  const endPastDue = !!endDate && isCalendarDayBefore(endDate, now);
+
   if (milestone.isStarted) {
-    if (endDate && isBefore(endDate, now)) {
-      return "pastDueStarted";
-    }
-    return "started";
+    return endPastDue ? "pastDueStarted" : "started";
   }
 
   // Check for past due with both dates first
-  if (
-    !milestone.isStarted &&
-    startDate &&
-    endDate &&
-    isBefore(startDate, now) &&
-    isBefore(endDate, now)
-  ) {
+  if (startArrived && endPastDue) {
     return "pastDueBothDates";
   }
 
   // Check for past due with only end date (no start date)
-  if (!milestone.isStarted && !startDate && endDate && isBefore(endDate, now)) {
+  if (!startDate && endPastDue) {
     return "pastDueNoStartDate";
   }
 
-  // Check for delayed (past start date, potentially future end date)
-  if (!milestone.isStarted && startDate && isBefore(startDate, now)) {
+  // Check for delayed (start day reached, potentially future end date)
+  if (startArrived) {
     return "delayed";
   }
 
@@ -149,14 +152,10 @@ export const getCondition = (milestone: Milestones): string => {
   }
 
   // Keep upcoming checks
-  if (!milestone.isStarted && startDate && isAfter(startDate, now)) {
+  if (startDate) {
     return "upcoming";
   }
-  if (!milestone.isStarted && !startDate && endDate && isAfter(endDate, now)) {
-    return "upcomingNoStartDate";
-  }
-
-  return "unknown";
+  return "upcomingNoStartDate";
 };
 
 export const getStatus = (milestone: Milestones): string => {
