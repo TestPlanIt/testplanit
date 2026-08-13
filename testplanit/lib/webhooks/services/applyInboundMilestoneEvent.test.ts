@@ -58,9 +58,13 @@ const mocks = vi.hoisted(() => {
   // Drives the webhook burst allowance: `incr` returns the running count of
   // events for this milestone inside the window. 1..5 => refetch (window 0),
   // 6+ => a genuine storm, fall back to the 15s window.
+  // `set`/`exists` drive the lifecycle-transition marker that collapses the
+  // per-WebhookConfig fan-out of a single upstream transition.
   const valkey = {
     incr: vi.fn(async (..._args: any[]): Promise<number> => 1),
     expire: vi.fn(async (..._args: any[]): Promise<number> => 1),
+    set: vi.fn(async (..._args: any[]): Promise<string> => "OK"),
+    exists: vi.fn(async (..._args: any[]): Promise<number> => 0),
   };
   const integrationManagerGetAdapter = vi.fn(
     async (..._args: any[]): Promise<any> => boardAdapter
@@ -193,6 +197,10 @@ const resetMocks = () => {
   mocks.valkey.incr.mockResolvedValue(1);
   mocks.valkey.expire.mockReset();
   mocks.valkey.expire.mockResolvedValue(1);
+  mocks.valkey.set.mockReset();
+  mocks.valkey.set.mockResolvedValue("OK");
+  mocks.valkey.exists.mockReset();
+  mocks.valkey.exists.mockResolvedValue(0);
 
   (mocks.adapter.extractMilestoneEventRef as Mock).mockReset();
   mocks.getAdapter.mockClear();
@@ -371,6 +379,156 @@ describe("applyInboundMilestoneEvent", () => {
     );
     // The transition short-circuits before the counter is even touched.
     expect(mocks.valkey.incr).not.toHaveBeenCalled();
+  });
+
+  /**
+   * Regression cover for the 2026-08-12 swallowed release: seven
+   * `jira:version_released` deliveries landed while an earlier burst of
+   * `jira:version_updated` edits still held every project's sync lock.
+   * `performMilestoneRefresh` reports a missed lock as `{ success: true,
+   * locked: true }`, so all seven acked as `refreshed` in ~100ms without
+   * writing, and the version read `active` across five projects for hours.
+   */
+  describe("lifecycle transitions are never swallowed by a contended sync lock", () => {
+    const releaseInput = () =>
+      baseInput({ eventType: "jira:version_released" });
+
+    const trackedRelease = () => {
+      (mocks.adapter.extractMilestoneEventRef as Mock).mockReturnValue({
+        kind: "RELEASE",
+        externalId: "10100",
+        externalProjectId: "10050",
+        merge: false,
+      });
+      mocks.integrationProjectFindMany.mockResolvedValue([
+        activeIntegrationProject(),
+      ]);
+      mocks.milestonesFindMany.mockResolvedValue([
+        { id: 555, projectId: 7, integrationId: 42 },
+      ]);
+    };
+
+    it("REGRESSION: a transition that loses the lock RETRIES instead of acking as refreshed", async () => {
+      vi.useFakeTimers();
+      try {
+        const applyInboundMilestoneEvent = await importSut();
+        trackedRelease();
+        // Contended on the first attempt, free on the second — the shape of
+        // waiting out the tail of another row's fetch.
+        mocks.performMilestoneRefresh
+          .mockResolvedValueOnce({ success: true, locked: true } as any)
+          .mockResolvedValueOnce({ success: true } as any);
+
+        const pending = applyInboundMilestoneEvent(releaseInput());
+        await vi.advanceTimersByTimeAsync(1_000);
+        const result = await pending;
+
+        expect(mocks.performMilestoneRefresh).toHaveBeenCalledTimes(2);
+        expect(result.outcome).toBe("refreshed");
+        // The retry landed, so nothing is reported as dropped.
+        expect(mocks.captureAuditEvent).toHaveBeenCalledWith(
+          expect.objectContaining({
+            metadata: expect.not.objectContaining({
+              lockContendedRows: expect.anything(),
+            }),
+          })
+        );
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it("REGRESSION: a transition still contended after the budget is audited as dropped, NOT as a clean refresh", async () => {
+      vi.useFakeTimers();
+      try {
+        const applyInboundMilestoneEvent = await importSut();
+        trackedRelease();
+        mocks.performMilestoneRefresh.mockResolvedValue({
+          success: true,
+          locked: true,
+        } as any);
+
+        const pending = applyInboundMilestoneEvent(releaseInput());
+        await vi.advanceTimersByTimeAsync(30_000);
+        await pending;
+
+        // Gave up rather than spinning forever...
+        expect(mocks.performMilestoneRefresh.mock.calls.length).toBeGreaterThan(
+          1
+        );
+        // ...and left a durable signal that the state change did NOT land.
+        expect(mocks.captureAuditEvent).toHaveBeenCalledWith(
+          expect.objectContaining({
+            metadata: expect.objectContaining({
+              outcome: "refreshed",
+              lockContendedRows: 1,
+            }),
+          })
+        );
+        // The marker is only written for a transition that actually applied.
+        expect(mocks.valkey.set).not.toHaveBeenCalled();
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it("records a transition marker once applied, so sibling deliveries can skip it", async () => {
+      const applyInboundMilestoneEvent = await importSut();
+      trackedRelease();
+
+      await applyInboundMilestoneEvent(releaseInput());
+
+      expect(mocks.valkey.set).toHaveBeenCalledWith(
+        "sync-transition:milestone:42:7:10100:jira:version_released",
+        "1",
+        "EX",
+        60
+      );
+    });
+
+    it("FAN-OUT: a sibling delivery of the SAME transition is a no-op — one upstream release must not cost one refetch per WebhookConfig", async () => {
+      const applyInboundMilestoneEvent = await importSut();
+      trackedRelease();
+      // An earlier delivery of this same release already applied it.
+      mocks.valkey.exists.mockResolvedValue(1);
+
+      const result = await applyInboundMilestoneEvent(releaseInput());
+
+      expect(mocks.performMilestoneRefresh).not.toHaveBeenCalled();
+      expect(result.outcome).toBe("refreshed");
+    });
+
+    it("the opposite transition is NOT masked by the marker — released then unreleased is two real state changes", async () => {
+      const applyInboundMilestoneEvent = await importSut();
+      trackedRelease();
+      // Only the `released` marker is present.
+      mocks.valkey.exists.mockImplementation(async (key: any) =>
+        String(key).endsWith("jira:version_released") ? 1 : 0
+      );
+
+      await applyInboundMilestoneEvent(
+        baseInput({ eventType: "jira:version_unreleased" })
+      );
+
+      expect(mocks.performMilestoneRefresh).toHaveBeenCalledTimes(1);
+    });
+
+    it("a plain field edit keeps its existing behaviour — no lock retry, no marker", async () => {
+      const applyInboundMilestoneEvent = await importSut();
+      trackedRelease();
+      mocks.performMilestoneRefresh.mockResolvedValue({
+        success: true,
+        locked: true,
+      } as any);
+
+      await applyInboundMilestoneEvent(baseInput());
+
+      // A contended edit is genuinely redundant — the holder is fetching the
+      // same state — so it still resolves in one call.
+      expect(mocks.performMilestoneRefresh).toHaveBeenCalledTimes(1);
+      expect(mocks.valkey.set).not.toHaveBeenCalled();
+      expect(mocks.valkey.exists).not.toHaveBeenCalled();
+    });
   });
 
   it("opens the burst window on the first event only, so the allowance is per-window", async () => {

@@ -7,7 +7,11 @@ import { milestoneSyncService } from "~/lib/integrations/services/MilestoneSyncS
 import { captureAuditEvent } from "~/lib/services/auditLog";
 import { getAdapter } from "~/lib/webhooks/adapters";
 
-import { webhookFreshnessWindow } from "./webhookFreshness";
+import {
+  markTransitionApplied,
+  transitionAlreadyApplied,
+  webhookFreshnessWindow,
+} from "./webhookFreshness";
 import type { MilestoneEventRef } from "~/lib/webhooks/adapters/types";
 
 import type {
@@ -35,6 +39,44 @@ const STATE_TRANSITION_EVENTS = new Set([
 ]);
 
 /**
+ * Wall-clock budget for waiting out a contended sync lock, shared across a
+ * single event's whole fan-out (NOT per row — a five-project artifact must
+ * not be able to hold the webhook request open for five times this).
+ *
+ * Sized against the work the lock holder is actually doing: one project's
+ * refresh costs a full version-list page-through (measured at ~2.7s for a
+ * 1210-version Jira project), and the holder may be midway through its own
+ * fan-out. A few seconds covers the common case; past that, giving up and
+ * logging loudly beats holding the delivery open until the sender times out
+ * and redelivers.
+ */
+const LOCK_CONTENTION_BUDGET_MS = 8_000;
+
+/**
+ * Backoff between attempts to acquire a contended lock. The first retry is
+ * deliberately short — most contention is the tail of another row's fetch,
+ * not a full pass — then widens so a genuinely busy subject isn't polled
+ * hard for the whole budget.
+ */
+const LOCK_RETRY_DELAYS_MS = [250, 500, 1_000, 2_000];
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * Stable per-row subject key, shared by the freshness counter and the
+ * transition marker.
+ */
+function subjectKeyFor(
+  integrationId: number,
+  projectId: number,
+  externalId: string
+): string {
+  return `milestone:${integrationId}:${projectId}:${externalId}`;
+}
+
+/**
  * Freshness window to refresh this event with. Zero means "always refetch".
  */
 async function freshnessWindowFor(
@@ -45,8 +87,119 @@ async function freshnessWindowFor(
 ): Promise<number> {
   if (STATE_TRANSITION_EVENTS.has(eventType)) return 0;
   return webhookFreshnessWindow(
-    `milestone:${integrationId}:${projectId}:${externalId}`
+    subjectKeyFor(integrationId, projectId, externalId)
   );
+}
+
+/**
+ * Outcome of refreshing ONE tracking row, for the caller's per-event tally.
+ *   applied   — a refresh ran (or the row was a legitimate no-op)
+ *   redundant — this transition was already applied to this row by a
+ *               sibling delivery of the same upstream event
+ *   dropped   — a lifecycle transition that never got the lock inside the
+ *               budget, i.e. the state change did NOT land
+ */
+type RowRefreshOutcome = "applied" | "redundant" | "dropped";
+
+/**
+ * Refresh a single tracking row for an inbound event.
+ *
+ * The subtlety this exists for: `performMilestoneRefresh` reports a missed
+ * sync lock as `{ success: true, locked: true }`, which reads as a clean
+ * refresh to every caller that only checks `success`. For a field edit that
+ * is fine — the holder is fetching the same state we would have. For a
+ * LIFECYCLE TRANSITION it is not: the holder acquired the lock BEFORE the
+ * transition happened, so it is fetching pre-transition state and will write
+ * it back, and the event carrying the state change is discarded.
+ *
+ * Observed in production (2026-08-12): a Jira version release fired seven
+ * `jira:version_released` deliveries nine seconds after a burst of
+ * `jira:version_updated` edits. The edits' fan-out still held every
+ * project's lock, so all seven releases resolved as `locked` in ~100ms —
+ * logged 200/`refreshed`, nothing written — and the version read `active`
+ * across five projects for about seven hours, until an unrelated scheduled
+ * pass happened to touch the rows.
+ *
+ * `STATE_TRANSITION_EVENTS` already exempts these events from the freshness
+ * gate for precisely this reason ("a state change is the one thing that must
+ * never be swallowed"). The lock sits AFTER that gate and needs the same
+ * exemption, so here a contended transition waits for the lock instead of
+ * treating the miss as success.
+ */
+async function refreshTrackedRow(
+  eventType: string,
+  externalId: string,
+  row: { milestoneId: number; projectId: number; integrationId: number },
+  deadlineMs: number
+): Promise<RowRefreshOutcome> {
+  const isTransition = STATE_TRANSITION_EVENTS.has(eventType);
+  const subjectKey = subjectKeyFor(
+    row.integrationId,
+    row.projectId,
+    externalId
+  );
+
+  // A sibling delivery of the same upstream transition already applied it to
+  // this row — re-fetching would cost an upstream page-through to learn
+  // nothing. Only transitions carry a marker; edits keep their existing
+  // burst-counter behaviour untouched.
+  if (isTransition && (await transitionAlreadyApplied(subjectKey, eventType))) {
+    return "redundant";
+  }
+
+  const runRefresh = async () =>
+    milestoneSyncService.performMilestoneRefresh(
+      SYSTEM_ACTOR_ID,
+      row.integrationId,
+      externalId,
+      {
+        minFreshnessSeconds: await freshnessWindowFor(
+          eventType,
+          row.integrationId,
+          externalId,
+          row.projectId
+        ),
+        projectId: row.projectId,
+      }
+    );
+
+  let refreshResult = await runRefresh();
+
+  if (isTransition) {
+    for (
+      let attempt = 0;
+      refreshResult.locked && Date.now() < deadlineMs;
+      attempt++
+    ) {
+      await sleep(
+        LOCK_RETRY_DELAYS_MS[Math.min(attempt, LOCK_RETRY_DELAYS_MS.length - 1)]
+      );
+      // The holder we were waiting on may have been a sibling delivery of
+      // THIS transition, in which case it has now applied it and there is
+      // nothing left to do.
+      if (await transitionAlreadyApplied(subjectKey, eventType)) {
+        return "redundant";
+      }
+      refreshResult = await runRefresh();
+    }
+
+    if (refreshResult.locked) {
+      console.error(
+        `[applyInboundMilestoneEvent] ${eventType} for milestone ${row.milestoneId} (project ${row.projectId}, externalId=${externalId}) never acquired the sync lock within ${LOCK_CONTENTION_BUDGET_MS}ms — the state change was NOT applied; the next event or scheduled pass must reconcile it`
+      );
+      return "dropped";
+    }
+    if (refreshResult.success) {
+      await markTransitionApplied(subjectKey, eventType);
+    }
+  }
+
+  if (!refreshResult.success && !refreshResult.notFound) {
+    console.error(
+      `[applyInboundMilestoneEvent] performMilestoneRefresh failed for externalId=${externalId} project=${row.projectId} integration=${row.integrationId}: ${refreshResult.error ?? "unknown"}`
+    );
+  }
+  return "applied";
 }
 
 /**
@@ -466,6 +619,9 @@ export async function applyInboundMilestoneEvent(
     "refreshed" | "imported" | "converted" | "unmatched" | "error" =
     "unmatched";
   let milestoneId: number | undefined;
+  /** Rows whose lifecycle transition never got the lock — see the audit
+   *  metadata note below. */
+  let droppedRows = 0;
   try {
     const resolved = await resolveMilestoneEventTargets(ref);
     if (
@@ -629,28 +785,18 @@ export async function applyInboundMilestoneEvent(
           finalOutcome = "unmatched";
         } else {
           // Refresh EVERY tracking row — each project's row gates on its
-          // own per-project freshness window and sync lock.
+          // own per-project freshness window and sync lock. The lock budget
+          // is per EVENT, so a many-project artifact can't multiply the
+          // worst-case wait by its project count.
+          const deadlineMs = Date.now() + LOCK_CONTENTION_BUDGET_MS;
           for (const row of resolved.tracked) {
-            const refreshResult =
-              await milestoneSyncService.performMilestoneRefresh(
-                SYSTEM_ACTOR_ID,
-                row.integrationId,
-                ref.externalId,
-                {
-                  minFreshnessSeconds: await freshnessWindowFor(
-                    eventType,
-                    row.integrationId,
-                    ref.externalId,
-                    row.projectId
-                  ),
-                  projectId: row.projectId,
-                }
-              );
-            if (!refreshResult.success && !refreshResult.notFound) {
-              console.error(
-                `[applyInboundMilestoneEvent] performMilestoneRefresh failed for externalId=${ref.externalId} project=${row.projectId} integration=${row.integrationId}: ${refreshResult.error ?? "unknown"}`
-              );
-            }
+            const rowOutcome = await refreshTrackedRow(
+              eventType,
+              ref.externalId,
+              row,
+              deadlineMs
+            );
+            if (rowOutcome === "dropped") droppedRows++;
           }
           milestoneId = resolved.tracked[0].milestoneId;
           finalOutcome = "refreshed";
@@ -677,6 +823,12 @@ export async function applyInboundMilestoneEvent(
       webhookConfigId,
       outcome: finalOutcome,
       ...(milestoneId !== undefined ? { milestoneId } : {}),
+      // A transition that lost its lock race for the whole budget is still
+      // acked (the sender must not redeliver — the dedup row is committed),
+      // so this counter is the ONLY durable signal that the state change did
+      // not land. Without it the delivery reads as a clean `refreshed`,
+      // which is exactly how the 2026-08-12 release went unnoticed.
+      ...(droppedRows > 0 ? { lockContendedRows: droppedRows } : {}),
     },
   });
 

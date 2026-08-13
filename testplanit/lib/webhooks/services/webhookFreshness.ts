@@ -38,8 +38,83 @@ export const WEBHOOK_SYNC_FRESHNESS_SECONDS = 15;
  */
 export const WEBHOOK_BURST_ALLOWANCE = 5;
 
+/**
+ * How long a completed lifecycle transition stays recorded for its subject.
+ *
+ * One upstream transition is delivered once per WebhookConfig subscribed to
+ * it — releasing a Jira version on a site with seven per-project webhooks
+ * produces seven identical `jira:version_released` events, each of which
+ * fans out over every project tracking that version. `payloadDigest` dedup
+ * cannot collapse them: it is scoped per WebhookConfig, and each config
+ * legitimately sees its own first copy.
+ *
+ * Without a marker, teaching the lock to wait (rather than swallow the
+ * event) would turn those redundant deliveries into redundant upstream
+ * fetches — every one of them re-paging the tracker for state an earlier
+ * delivery already applied. The marker records the transition against the
+ * ROW it was applied to, so the redundant deliveries resolve as no-ops
+ * without giving up the guarantee that the transition lands at least once.
+ */
+export const WEBHOOK_TRANSITION_MARKER_SECONDS = 60;
+
 function burstCounterKey(subjectKey: string): string {
   return `sync-burst:${subjectKey}`;
+}
+
+function transitionMarkerKey(subjectKey: string, eventType: string): string {
+  return `sync-transition:${subjectKey}:${eventType}`;
+}
+
+/**
+ * Record that `eventType`'s transition has been applied to `subjectKey` by a
+ * refresh that fetched AFTER the event was received.
+ *
+ * Fails open (silently) — the marker is a redundancy optimization, so a
+ * cache outage costs duplicate upstream fetches rather than a lost
+ * transition.
+ */
+export async function markTransitionApplied(
+  subjectKey: string,
+  eventType: string
+): Promise<void> {
+  if (!valkeyConnection) return;
+  try {
+    await valkeyConnection.set(
+      transitionMarkerKey(subjectKey, eventType),
+      "1",
+      "EX",
+      WEBHOOK_TRANSITION_MARKER_SECONDS
+    );
+  } catch {
+    // Ignored — see fail-open note above.
+  }
+}
+
+/**
+ * True when this exact transition has already been applied to this subject
+ * inside the marker window.
+ *
+ * Keyed by eventType as well as subject so opposite transitions never mask
+ * one another: an `unreleased` immediately following a `released` is a
+ * genuine second state change, not a redundant delivery of the first.
+ *
+ * Fails open — an unreachable cache reports "not applied", which costs an
+ * extra refresh instead of dropping a state change.
+ */
+export async function transitionAlreadyApplied(
+  subjectKey: string,
+  eventType: string
+): Promise<boolean> {
+  if (!valkeyConnection) return false;
+  try {
+    return (
+      (await valkeyConnection.exists(
+        transitionMarkerKey(subjectKey, eventType)
+      )) === 1
+    );
+  } catch {
+    return false;
+  }
 }
 
 /**
