@@ -2,6 +2,7 @@ import type {
   Color,
   ColorFamily,
   FieldIcon,
+  MilestoneExternalKind,
   Milestones,
   MilestoneTypes,
 } from "~/zenstack/models";
@@ -107,6 +108,24 @@ export const getStatusStyle = (
   }
 };
 
+/**
+ * Whether a milestone's start/due dates are calendar dates — days on a
+ * calendar, to be read without timezone conversion — or genuine instants.
+ *
+ * Manual milestones and Jira **releases** are calendar dates: a version's
+ * dates arrive as bare `yyyy-MM-dd` strings and a picker stores UTC midnight.
+ * Jira **sprints** are not: their boundaries carry a real time, typically
+ * midnight or 23:59 in the Jira instance's own zone, which lands a few hours
+ * either side of UTC midnight. Reading those in UTC moves a sprint ending
+ * 23:59 EST onto the following day, so they keep converting to the reader's
+ * zone the way any timestamp does.
+ *
+ * See `~/utils/calendarDate` for the convention itself.
+ */
+export const hasCalendarDates = (milestone: {
+  externalKind?: MilestoneExternalKind | null;
+}): boolean => milestone.externalKind !== "ITERATION";
+
 export const getCondition = (milestone: Milestones): string => {
   const now = new Date();
   const startDate = milestone.startedAt ? new Date(milestone.startedAt) : null;
@@ -114,16 +133,22 @@ export const getCondition = (milestone: Milestones): string => {
     ? new Date(milestone.completedAt)
     : null;
 
-  // Milestone dates are calendar dates, so these compare whole days against
-  // the reader's own day rather than instants against this moment. Comparing
-  // instants made a milestone due Aug 13 go past due at 7:00 PM on Aug 12 for
-  // a reader in GMT-5, because the stored value is Aug 13 at UTC midnight.
+  // Calendar dates compare whole days against the reader's own day rather than
+  // instants against this moment. Comparing instants made a milestone due
+  // Aug 13 go past due at 7:00 PM on Aug 12 for a reader in GMT-5, because the
+  // stored value is Aug 13 at UTC midnight. Sprint boundaries are real instants
+  // and keep comparing as such — see `hasCalendarDates`.
   //
-  // The two ends round in opposite directions, which keeps the day a milestone
-  // is due from counting as late: a start date has arrived once the reader
-  // reaches that day, while a due date is only past once that day is over.
-  const startArrived = !!startDate && !isCalendarDayAfter(startDate, now);
-  const endPastDue = !!endDate && isCalendarDayBefore(endDate, now);
+  // For calendar dates the two ends round in opposite directions, which keeps
+  // the day a milestone is due from counting as late: a start date has arrived
+  // once the reader reaches that day, while a due date is only past once that
+  // day is over.
+  const byDay = hasCalendarDates(milestone);
+  const startArrived =
+    !!startDate &&
+    (byDay ? !isCalendarDayAfter(startDate, now) : startDate <= now);
+  const endPastDue =
+    !!endDate && (byDay ? isCalendarDayBefore(endDate, now) : endDate < now);
 
   if (milestone.isStarted) {
     return endPastDue ? "pastDueStarted" : "started";

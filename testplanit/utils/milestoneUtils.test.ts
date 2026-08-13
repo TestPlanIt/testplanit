@@ -13,6 +13,7 @@ import {
   getCondition,
   getStatus,
   getStatusStyle,
+  hasCalendarDates,
   MilestonesWithTypes,
   sortMilestones,
   sortMilestoneTree,
@@ -526,6 +527,45 @@ describe("Date-Dependent Milestone Utils", () => {
         completedAt: today,
       };
       expect(getCondition(milestone)).toBe("delayed");
+    });
+
+    it("compares a sprint's boundaries as instants, not days", () => {
+      // A sprint ending earlier today has genuinely ended — its `completedAt`
+      // is a real moment, not a day, so the whole-day rounding that protects a
+      // due date must not apply. MOCK_NOW is 12:00 UTC.
+      const endedThisMorning = new Date(MOCK_NOW.getTime() - 60 * 60 * 1000);
+      const sprint: Milestones = {
+        ...baseMockMilestone,
+        externalKind: "ITERATION",
+        isStarted: true,
+        startedAt: yesterday,
+        completedAt: endedThisMorning,
+      };
+      expect(getCondition(sprint)).toBe("pastDueStarted");
+
+      // The same instant on a release is within the current day, so it holds.
+      const release: Milestones = {
+        ...baseMockMilestone,
+        externalKind: "RELEASE",
+        isStarted: true,
+        startedAt: yesterday,
+        completedAt: endedThisMorning,
+      };
+      expect(getCondition(release)).toBe("started");
+    });
+  });
+
+  describe("hasCalendarDates", () => {
+    it("treats manual milestones and releases as calendar dates", () => {
+      expect(hasCalendarDates({ externalKind: null })).toBe(true);
+      expect(hasCalendarDates({})).toBe(true);
+      expect(hasCalendarDates({ externalKind: "RELEASE" })).toBe(true);
+    });
+
+    it("treats sprints as instants", () => {
+      // 77 sprint date values in prod sit within a few hours of UTC midnight,
+      // from Jira storing sprint boundaries in the instance's own zone.
+      expect(hasCalendarDates({ externalKind: "ITERATION" })).toBe(false);
     });
   });
 

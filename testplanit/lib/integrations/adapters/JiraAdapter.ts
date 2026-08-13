@@ -1379,11 +1379,11 @@ export class JiraAdapter extends BaseAdapter {
       name: raw.name ?? String(raw.id),
       description: raw.goal,
       // Unlike a version's, a sprint's dates are full instants with a real
-      // time, so they are stored as sent rather than pinned to a calendar day —
-      // the burndown reads them, and truncating would throw away the boundary.
-      // The date-only display then shows their UTC day, which only diverges
-      // from the reader's for a sprint that starts or ends within a few hours
-      // of UTC midnight.
+      // time — typically midnight or 23:59 in the Jira instance's own zone,
+      // landing a few hours either side of UTC midnight. They are stored as
+      // sent, and `hasCalendarDates` keeps them out of the calendar-date
+      // display path: reading a sprint that ends 23:59 EST in UTC would move
+      // it onto the following day.
       startDate: raw.startDate
         ? parseUpstreamDate(raw.startDate).date
         : undefined,

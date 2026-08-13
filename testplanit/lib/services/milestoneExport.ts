@@ -1,4 +1,5 @@
 import type { MilestoneSegment } from "~/lib/services/milestoneSummary";
+import type { MilestoneExternalKind } from "~/zenstack/models";
 
 /**
  * Pure shaping helpers for the milestone export snapshot.
@@ -109,6 +110,8 @@ export type MilestoneExportData = {
     startedAt: string | null;
     completedAt: string | null;
     createdAt: string;
+    /** Distinguishes calendar dates from instants; see `hasCalendarDates`. */
+    externalKind: MilestoneExternalKind | null;
     ownerName: string | null;
     typeName: string | null;
     parentPath: string[];

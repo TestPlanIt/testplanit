@@ -5,6 +5,7 @@ import { logDataExport } from "~/lib/services/auditClient";
 import type { MilestoneExportData } from "~/lib/services/milestoneExport";
 import { CALENDAR_DATE_TIMEZONE } from "~/utils/calendarDate";
 import { toHumanReadable } from "~/utils/duration";
+import { hasCalendarDates } from "~/utils/milestoneUtils";
 import { hexToRgb, PdfRenderer, type StatusToken } from "./pdfHelpers";
 
 interface UseExportMilestonePdfProps {
@@ -106,8 +107,16 @@ export function useExportMilestonePdf({
       if (data.milestone.parentPath.length > 0) {
         pdf.renderField("Path", data.milestone.parentPath.join(" / "));
       }
-      pdf.renderField("Started", fmtCalendarDate(data.milestone.startedAt));
-      pdf.renderField("Completed", fmtCalendarDate(data.milestone.completedAt));
+      // Sprints hold real instants rather than calendar dates, so they format
+      // in local time like any timestamp. See `hasCalendarDates`.
+      const fmtMilestoneDate = hasCalendarDates(data.milestone)
+        ? fmtCalendarDate
+        : fmtDate;
+      pdf.renderField("Started", fmtMilestoneDate(data.milestone.startedAt));
+      pdf.renderField(
+        "Completed",
+        fmtMilestoneDate(data.milestone.completedAt)
+      );
       pdf.renderField("Created", fmtDate(data.milestone.createdAt));
 
       // --- Aggregate summary (first) ---

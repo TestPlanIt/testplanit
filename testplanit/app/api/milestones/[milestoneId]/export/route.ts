@@ -82,6 +82,9 @@ export async function GET(
         completedAt: true,
         createdAt: true,
         parentId: true,
+        // Decides whether the dates are calendar dates or instants; sprints
+        // are the latter. See `hasCalendarDates` in `~/utils/milestoneUtils`.
+        externalKind: true,
         creator: { select: { name: true } },
         milestoneType: { select: { name: true } },
       },
@@ -355,6 +358,7 @@ export async function GET(
         startedAt: milestone.startedAt?.toISOString() ?? null,
         completedAt: milestone.completedAt?.toISOString() ?? null,
         createdAt: milestone.createdAt.toISOString(),
+        externalKind: milestone.externalKind ?? null,
         ownerName: milestone.creator?.name ?? null,
         typeName: milestone.milestoneType?.name ?? null,
         parentPath,

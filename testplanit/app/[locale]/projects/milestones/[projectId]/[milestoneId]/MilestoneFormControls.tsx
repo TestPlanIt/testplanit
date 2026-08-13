@@ -41,6 +41,7 @@ import {
   ColorMap,
   createColorMap,
   getStatus,
+  hasCalendarDates,
   getStatusStyle,
 } from "~/utils/milestoneUtils";
 
@@ -350,7 +351,7 @@ export default function MilestoneFormControls({
                 sits at the start (left) of the sidebar. */}
             <div className="w-fit">
               <DateTextDisplay
-                dateOnly
+                dateOnly={hasCalendarDates(milestone)}
                 startDate={
                   milestone.startedAt ? new Date(milestone.startedAt) : null
                 }

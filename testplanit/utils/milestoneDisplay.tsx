@@ -9,6 +9,7 @@ import { AddSessionModal } from "~/app/[locale]/projects/sessions/[projectId]/Ad
 import {
   getStatus,
   getStatusStyle,
+  hasCalendarDates,
   MilestonesWithTypes,
   sortMilestones,
 } from "./milestoneUtils";
@@ -259,7 +260,7 @@ export const MilestoneDisplay: React.FC<MilestoneDisplayProps> = ({
                 </Button>
               )}
               <DateTextDisplay
-                dateOnly
+                dateOnly={hasCalendarDates(milestone)}
                 startDate={
                   milestone.startedAt ? new Date(milestone.startedAt) : null
                 }
@@ -371,7 +372,7 @@ export const MilestoneDisplay: React.FC<MilestoneDisplayProps> = ({
                 </Button>
               )}
               <DateTextDisplay
-                dateOnly
+                dateOnly={hasCalendarDates(milestone)}
                 startDate={
                   milestone.startedAt ? new Date(milestone.startedAt) : null
                 }

@@ -37,6 +37,7 @@ import React from "react";
 import {
   ColorMap,
   getStatus,
+  hasCalendarDates,
   getStatusStyle,
   MilestonesWithTypes,
 } from "~/utils/milestoneUtils";
@@ -178,7 +179,7 @@ const MilestoneItemCard: React.FC<MilestoneItemCardProps> = ({
               <span className="whitespace-nowrap text-sm truncate">
                 <DateTextDisplay
                   responsive
-                  dateOnly
+                  dateOnly={hasCalendarDates(milestone)}
                   startDate={startDate}
                   endDate={endDate}
                   isCompleted={milestone.isCompleted}
