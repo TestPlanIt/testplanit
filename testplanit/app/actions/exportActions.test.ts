@@ -1,3 +1,4 @@
+import { JsonNull } from "@zenstackhq/orm";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // Mock dependencies
@@ -84,6 +85,37 @@ describe("exportActions", () => {
           expect.objectContaining({
             where: baseArgs.where,
           })
+        );
+      });
+
+      it("rebuilds the Json-null sentinels the where arrives with", async () => {
+        mockFindMany.mockResolvedValue([]);
+
+        // React Flight cannot encode ZenStack's JsonNull instance, so the
+        // client serializes it to this plain form. Left unrevived it reached
+        // the ORM as an opaque temporary reference and the whole query was
+        // rejected — every export with a custom-field filter came back empty.
+        await fetchAllCasesForExport({
+          ...baseArgs,
+          scope: "allFiltered",
+          where: {
+            AND: [
+              { projectId: 1 },
+              {
+                caseFieldValues: {
+                  some: {
+                    fieldId: 7,
+                    AND: [{ value: { not: { __brand: "JsonNull" } } }],
+                  },
+                },
+              },
+            ],
+          } as any,
+        });
+
+        const passedWhere = mockFindMany.mock.calls.at(-1)![0].where;
+        expect(passedWhere.AND[1].caseFieldValues.some.AND[0].value.not).toBe(
+          JsonNull
         );
       });
 

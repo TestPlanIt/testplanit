@@ -4,6 +4,7 @@ import {
   type QueryClient,
 } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo } from "react";
+import { serializeWhereForTransport } from "~/lib/repository/whereTransport";
 import {
   filterOrphanedFieldValues,
   matchesPostFetchFilters,
@@ -297,9 +298,11 @@ export function useRepositoryCasesQuery(
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          where,
+          // Json-null sentinels are class instances; they go over the wire in
+          // their plain brand form and the route rebuilds them (whereTransport).
+          where: serializeWhereForTransport(where),
           testRunIds,
-          repositoryCaseWhere,
+          repositoryCaseWhere: serializeWhereForTransport(repositoryCaseWhere),
           orderBy,
           select,
           skip,

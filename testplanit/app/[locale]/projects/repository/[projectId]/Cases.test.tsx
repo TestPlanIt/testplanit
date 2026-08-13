@@ -1276,6 +1276,40 @@ describe("Search x filter intersection (spec §9)", () => {
     ).toEqual([7, 3]);
   });
 
+  it("sends the export a where with no unserializable Json-null sentinels", async () => {
+    // "Text Long has any value" compiles to a value-not-null fragment carrying
+    // ZenStack's JsonNull — a class instance React Flight cannot encode. Sent
+    // live it reached the action as an opaque temporary reference, ZenStack
+    // rejected the query and the filtered export produced an empty file.
+    setupMocks({ data: [mockCase] });
+
+    render(
+      <Cases
+        {...defaultProps}
+        {...predicateProps([
+          { dimension: "field_15", operator: "any", values: [] },
+        ])}
+      />
+    );
+    await screen.findByTestId("data-table");
+
+    (fetchAllCasesForExport as any).mockResolvedValue({
+      success: true,
+      data: [],
+    });
+    const exportArgs = (useExportData as any).mock.calls.at(-1)[0];
+    await exportArgs.fetchAllData({ scope: "allFiltered" });
+
+    const sentWhere = (fetchAllCasesForExport as any).mock.calls.at(-1)[0]
+      .where;
+    // The sentinel is there, in its plain wire form...
+    expect(JSON.stringify(sentWhere)).toContain('{"__brand":"JsonNull"}');
+    // ...and nothing in the where is a class instance: toStrictEqual compares
+    // prototypes, so a JSON round-trip that matches exactly proves the whole
+    // clause is plain data.
+    expect(JSON.parse(JSON.stringify(sentWhere))).toStrictEqual(sentWhere);
+  });
+
   it("shows the filters-aware empty state when the intersection is empty", async () => {
     setupMocks({ data: [] });
 

@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { fetchCaseIdsByLatestStatus } from "~/app/actions/caseIdsByLatestStatus";
+import { serializeWhereForTransport } from "~/lib/repository/whereTransport";
 
 /**
  * Page of case ids ordered by the status of each case's most recent result.
@@ -22,7 +23,9 @@ export function useCaseIdsByLatestStatus(args: {
     queryKey: ["caseIdsByLatestStatus", where, direction, skip, take],
     queryFn: async () => {
       const result = await fetchCaseIdsByLatestStatus({
-        where: where as never,
+        // React Flight cannot encode the where's Json-null sentinels; they
+        // travel in their plain form and the action rebuilds them.
+        where: serializeWhereForTransport(where) as never,
         direction,
         skip,
         take,

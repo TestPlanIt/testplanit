@@ -12,6 +12,7 @@ import {
   matchesPostFetchFilters,
   type PostFetchFilter,
 } from "~/lib/repositoryCaseFieldMatchers";
+import { reviveWhereFromTransport } from "~/lib/repository/whereTransport";
 import { resolveSharedSteps } from "~/lib/utils/resolveSharedSteps";
 import { getServerAuthSession } from "~/server/auth";
 
@@ -211,7 +212,11 @@ export async function fetchAllCasesForExport(
   }
 
   try {
-    let finalWhereClause = args.where;
+    // The client's where carries ZenStack's Json-null sentinels, which React
+    // Flight cannot encode — without this they arrive as opaque temporary
+    // references and ZenStack rejects the whole query, so every export with a
+    // custom-field filter active came back empty.
+    let finalWhereClause = reviveWhereFromTransport(args.where);
 
     // If scope is allProject, override the where clause
     if (args.scope === "allProject") {

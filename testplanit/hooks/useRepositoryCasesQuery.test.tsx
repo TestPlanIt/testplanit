@@ -3,6 +3,7 @@ import {
   QueryClientProvider,
   useMutation,
 } from "@tanstack/react-query";
+import { JsonNull } from "@zenstackhq/orm";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import React from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -69,6 +70,34 @@ describe("useRepositoryCasesQuery", () => {
     expect(body.skip).toBe(25);
     // No orderBy => the route keeps Elasticsearch relevance order.
     expect(body.orderBy).toBeUndefined();
+  });
+
+  it("posts Json-null sentinels in the plain form the route revives", async () => {
+    // JsonNull is a class instance; JSON.stringify would flatten it to this
+    // shape anyway, but saying so explicitly is what keeps the wire form and
+    // the route's revival one contract instead of an accident.
+    const { result } = renderHook(
+      () =>
+        useRepositoryCasesQuery({
+          projectId: 42,
+          where: { caseFieldValues: { some: { value: { not: JsonNull } } } },
+          repositoryCaseWhere: { value: { equals: JsonNull } },
+          select: { id: true },
+        }),
+      { wrapper: createWrapper() }
+    );
+
+    await waitFor(() => expect(result.current.data).toHaveLength(2));
+
+    const body = JSON.parse(
+      (fetchMock.mock.calls[0] as [string, RequestInit])[1].body as string
+    );
+    expect(body.where).toEqual({
+      caseFieldValues: { some: { value: { not: { __brand: "JsonNull" } } } },
+    });
+    expect(body.repositoryCaseWhere).toEqual({
+      value: { equals: { __brand: "JsonNull" } },
+    });
   });
 
   it("refetches when the search key changes but not when the id array is rebuilt", async () => {

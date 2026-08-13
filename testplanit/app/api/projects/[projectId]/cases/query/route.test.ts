@@ -1,3 +1,4 @@
+import { JsonNull } from "@zenstackhq/orm";
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -246,6 +247,60 @@ describe("POST /api/projects/[projectId]/cases/query — server-forced scope", (
       { isDeleted: false },
       { projectId: 42 },
     ]);
+  });
+});
+
+describe("POST /api/projects/[projectId]/cases/query — Json-null sentinels", () => {
+  // The compiler's value-not-null fragments carry ZenStack's JsonNull, a class
+  // instance JSON flattens to `{ "__brand": "JsonNull" }`. Passed on as-is the
+  // ORM reads it as an ordinary Json record and compiles "value is not null"
+  // into a comparison against that object — true for every row — so the
+  // fragments with no in-memory half (dropdown "any value", "no value", date
+  // "has a value") quietly matched the wrong cases.
+  const wireSentinel = { __brand: "JsonNull" };
+
+  it("rebuilds them in the client where before the ORM sees it", async () => {
+    const [req, ctx] = buildPost({
+      where: {
+        AND: [
+          {
+            caseFieldValues: {
+              some: { fieldId: 7, value: { not: wireSentinel } },
+            },
+          },
+        ],
+      },
+      orderBy: { name: "asc" },
+      select: SELECT,
+    });
+
+    await POST(req, ctx);
+
+    const clientOperand = andOperands(casesCountMock.mock.calls[0][0].where)[0];
+    expect((clientOperand as any).AND[0].caseFieldValues.some.value.not).toBe(
+      JsonNull
+    );
+  });
+
+  it("rebuilds them in run mode's nested repository where too", async () => {
+    const [req, ctx] = buildPost({
+      testRunIds: [11],
+      where: { isDeleted: false },
+      repositoryCaseWhere: {
+        caseFieldValues: {
+          some: { fieldId: 7, value: { equals: wireSentinel } },
+        },
+      },
+      orderBy: { order: "asc" },
+      select: RUN_SELECT,
+    });
+
+    await POST(req, ctx);
+
+    const nested = andOperands(runCasesCountMock.mock.calls[0][0].where)[1];
+    expect(
+      (nested as any).repositoryCase.caseFieldValues.some.value.equals
+    ).toBe(JsonNull);
   });
 });
 

@@ -1,6 +1,7 @@
 "use server";
 
 import { getEnhancedDb } from "~/lib/auth/utils";
+import { reviveWhereFromTransport } from "~/lib/repository/whereTransport";
 import { orderCaseIdsByLatestStatus } from "~/lib/services/latestTestResults";
 import { getServerAuthSession } from "~/server/auth";
 import type { RepositoryCasesWhereInput } from "~/zenstack/input";
@@ -32,7 +33,9 @@ export async function fetchCaseIdsByLatestStatus(args: {
   try {
     const db = await getEnhancedDb(session);
     const rows = await db.repositoryCases.findMany({
-      where: args.where,
+      // Json-null sentinels don't survive the server-action boundary; rebuild
+      // them before the where reaches the ORM (see whereTransport).
+      where: reviveWhereFromTransport(args.where),
       select: { id: true },
     });
 

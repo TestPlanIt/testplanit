@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { fetchCaseIdsByFieldOption } from "~/app/actions/caseIdsByFieldOption";
+import { serializeWhereForTransport } from "~/lib/repository/whereTransport";
 
 /**
  * Page of case ids ordered by one Dropdown custom field's selected option,
@@ -24,7 +25,9 @@ export function useCaseIdsByFieldOption(args: {
     queryKey: ["caseIdsByFieldOption", where, fieldId, direction, skip, take],
     queryFn: async () => {
       const result = await fetchCaseIdsByFieldOption({
-        where: where as never,
+        // React Flight cannot encode the where's Json-null sentinels; they
+        // travel in their plain form and the action rebuilds them.
+        where: serializeWhereForTransport(where) as never,
         fieldId,
         direction,
         skip,

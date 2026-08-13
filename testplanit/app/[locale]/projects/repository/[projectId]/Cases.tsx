@@ -61,6 +61,7 @@ import {
   compileRunPredicates,
   extractPostFetchFilters,
 } from "~/lib/repository/filterWhereCompiler";
+import { serializeWhereForTransport } from "~/lib/repository/whereTransport";
 import type { FilterPredicate } from "~/lib/schemas/repositoryFilterPredicates";
 import {
   ArrowRightLeft,
@@ -2873,7 +2874,11 @@ export default function Cases({
 
       const response = await fetchAllCasesAction({
         orderBy,
-        where: repositoryCaseWhereClause,
+        // React Flight cannot encode the Json-null sentinels the compiled where
+        // carries — unserialized they reach the action as opaque temporary
+        // references and ZenStack rejects the query, so every filtered export
+        // came back empty. The action rebuilds them (whereTransport).
+        where: serializeWhereForTransport(repositoryCaseWhereClause),
         scope: actionScope,
         projectId: projectId,
         // Text/link/steps operator filters are applied post-fetch (the where

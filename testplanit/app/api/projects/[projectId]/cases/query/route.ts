@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
 import { paginatedFindManyWithRelations } from "~/lib/paginatedFindMany";
+import { reviveWhereFromTransport } from "~/lib/repository/whereTransport";
 import { sanitizeSearchCaseIds } from "~/lib/repositoryCaseSearchIds";
 import { authOptions } from "~/server/auth";
 
@@ -174,9 +175,9 @@ export async function POST(
 
     const body = await request.json();
     const {
-      where,
+      where: transportWhere,
       testRunIds,
-      repositoryCaseWhere,
+      repositoryCaseWhere: transportRepositoryCaseWhere,
       orderBy,
       select,
       skip,
@@ -184,6 +185,15 @@ export async function POST(
       searchCaseIds,
       idsOnly,
     } = requestSchema.parse(body);
+
+    // JSON carries ZenStack's Json-null sentinels as their plain brand form.
+    // Left as-is the ORM reads them as ordinary Json records and compiles
+    // "value is not null" into a comparison against that object — always true —
+    // so the value-not-null fragments silently matched the wrong rows.
+    const where = reviveWhereFromTransport(transportWhere);
+    const repositoryCaseWhere = reviveWhereFromTransport(
+      transportRepositoryCaseWhere
+    );
 
     const runMode = testRunIds !== undefined;
 
