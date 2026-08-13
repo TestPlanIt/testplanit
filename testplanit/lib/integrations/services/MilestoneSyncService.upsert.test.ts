@@ -80,6 +80,15 @@ vi.mock("../IntegrationManager", () => ({
 
 vi.mock("../../valkey", () => ({ default: null }));
 
+// This service writes exclusively through `rawDb`, which by design skips
+// `sideEffectsPlugin` and therefore the Elasticsearch hook a UI-side write
+// gets for free — so the index call has to be explicit here, and asserted.
+const mockSyncMilestoneToElasticsearch = vi.fn().mockResolvedValue(true);
+vi.mock("~/services/milestoneSearch", () => ({
+  syncMilestoneToElasticsearch: (...args: any[]) =>
+    mockSyncMilestoneToElasticsearch(...args),
+}));
+
 import { milestoneSyncService } from "./MilestoneSyncService";
 
 beforeEach(() => {
@@ -153,6 +162,71 @@ describe("Milestone upsert idempotency (MSYNC-03)", () => {
     expect(afterSecond.id).toBe(afterFirst.id);
     expect(afterSecond.isCompleted).toBe(true);
     expect(afterSecond.externalState).toBe("released");
+  });
+
+  /**
+   * Regression: synced milestones were never indexed. `rawDb` is the
+   * "no side-effects" client, so `sideEffectsPlugin`'s `Milestones` ->
+   * Elasticsearch hook never fires for anything this service writes. A
+   * tracker-synced milestone was therefore only in the index if a full
+   * reindex happened to run after it was written — leaving 49 live rows
+   * missing outright, and released versions still indexed as active.
+   */
+  it("REGRESSION: indexes to Elasticsearch on BOTH the create and the update branch (rawDb skips the side-effects plugin)", async () => {
+    const upstream = (state: string, rawState: string) => ({
+      items: [{ id: "7000", kind: "RELEASE", name: "v3.0", state, rawState }],
+      hasMore: false,
+    });
+
+    mockGetExternalMilestones.mockResolvedValueOnce(
+      upstream("ACTIVE", "unreleased")
+    );
+    await milestoneSyncService.performMilestoneRefresh("user-1", 42, "7000", {
+      minFreshnessSeconds: 0,
+    });
+    const createdId = milestonesTable.get("7000:42:100").id;
+    expect(mockSyncMilestoneToElasticsearch).toHaveBeenCalledWith(createdId);
+
+    // The update branch is the one that matters most: it carries the state
+    // change (a release flipping isCompleted), which is exactly what search
+    // was left stale on.
+    mockSyncMilestoneToElasticsearch.mockClear();
+    mockGetExternalMilestones.mockResolvedValueOnce(
+      upstream("CLOSED", "released")
+    );
+    await milestoneSyncService.performMilestoneRefresh("user-1", 42, "7000", {
+      minFreshnessSeconds: 0,
+    });
+    expect(milestonesTable.get("7000:42:100").isCompleted).toBe(true);
+    expect(mockSyncMilestoneToElasticsearch).toHaveBeenCalledWith(createdId);
+  });
+
+  it("a failed index does not fail the sync — the row commit is what matters", async () => {
+    mockSyncMilestoneToElasticsearch.mockRejectedValueOnce(
+      new Error("elasticsearch unreachable")
+    );
+    mockGetExternalMilestones.mockResolvedValueOnce({
+      items: [
+        {
+          id: "7100",
+          kind: "RELEASE",
+          name: "v3.1",
+          state: "CLOSED",
+          rawState: "released",
+        },
+      ],
+      hasMore: false,
+    });
+
+    const result = await milestoneSyncService.performMilestoneRefresh(
+      "user-1",
+      42,
+      "7100",
+      { minFreshnessSeconds: 0 }
+    );
+
+    expect(result.success).toBe(true);
+    expect(milestonesTable.get("7100:42:100").isCompleted).toBe(true);
   });
 
   it("upsert call uses externalId_integrationId_projectId as the where clause (per-project idempotent key)", async () => {

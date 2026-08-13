@@ -2,6 +2,7 @@ import { rawDb as defaultDb } from "@/lib/rawDb";
 import { SYSTEM_ACTOR_ID } from "~/lib/auditContext";
 import { publishMilestoneWakeUp } from "~/lib/live/publish";
 import { captureAuditEvent } from "~/lib/services/auditLog";
+import { syncMilestoneToElasticsearch } from "~/services/milestoneSearch";
 import type { DbClient, TxClient } from "~/lib/zenstack";
 import valkeyConnection from "../../valkey";
 import type { ExternalMilestone, IssueAdapter } from "../adapters/IssueAdapter";
@@ -436,6 +437,27 @@ export class MilestoneSyncService {
       });
     }
 
+    // Index explicitly: every write in this service goes through `rawDb`,
+    // which is the "no side-effects" client by construction — it deliberately
+    // skips `sideEffectsPlugin`, and with it the `Milestones` Elasticsearch
+    // hook that a UI-side write gets for free. Nothing else covers this path,
+    // so a tracker-synced milestone was only ever indexed if a full reindex
+    // happened to run afterwards.
+    //
+    // Unlike the created-only wake-up above, this fires on BOTH branches: an
+    // update carries the tracker's state (a release flipping to
+    // `isCompleted`), and leaving it unindexed is exactly what left search
+    // showing released versions as active.
+    //
+    // Best-effort, mirroring `SyncService.upsertIssueFromExternal` — index
+    // drift is recoverable, the row commit is not.
+    await syncMilestoneToElasticsearch(result.id).catch((error: unknown) => {
+      console.error(
+        `Failed to sync milestone ${result.id} to Elasticsearch:`,
+        error
+      );
+    });
+
     return result;
   }
 
@@ -570,6 +592,16 @@ export class MilestoneSyncService {
       event: "milestone.membership_changed",
       milestoneId,
       projectId: existing.projectId,
+    });
+
+    // Same rawDb-bypasses-the-plugin reason as the shell upsert: conversion
+    // rewrites `externalState` (and may set `mergedToExternalId`) on a row
+    // that stays live and searchable, so the index has to be told.
+    await syncMilestoneToElasticsearch(milestoneId).catch((error: unknown) => {
+      console.error(
+        `Failed to sync converted milestone ${milestoneId} to Elasticsearch:`,
+        error
+      );
     });
 
     return { success: true };
