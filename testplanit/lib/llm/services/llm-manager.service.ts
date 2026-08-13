@@ -10,6 +10,7 @@ import {
   OpenAIAdapter,
 } from "../adapters";
 import { getAllowedPrivateHosts } from "~/lib/utils/ssrf";
+import { modelSupportsVision } from "../model-capabilities";
 
 /**
  * ZenStack v3 accepts a plain number for `Decimal` columns at runtime (its
@@ -481,6 +482,38 @@ export class LlmManager {
     }
 
     return null;
+  }
+
+  /**
+   * Whether the given integration + model accepts image input. One query
+   * (provider + config settings + defaultModel), then the pure heuristic in
+   * `model-capabilities.ts`; the feature layer calls this once after
+   * `resolveIntegration` to decide between attaching image parts and
+   * skipping them with a notice.
+   */
+  async supportsVision(
+    integrationId: number,
+    model?: string | null
+  ): Promise<boolean> {
+    const integration = await this.db.llmIntegration.findUnique({
+      where: { id: integrationId },
+      select: {
+        provider: true,
+        llmProviderConfig: {
+          select: { defaultModel: true, settings: true },
+        },
+      },
+    });
+    if (!integration) return false;
+
+    const resolvedModel = model ?? integration.llmProviderConfig?.defaultModel;
+    return modelSupportsVision(
+      integration.provider,
+      resolvedModel,
+      integration.llmProviderConfig?.settings as {
+        modelCapabilities?: Record<string, { supportsVision?: boolean }>;
+      } | null
+    );
   }
 
   async listAvailableIntegrations(): Promise<

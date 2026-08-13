@@ -7,11 +7,19 @@ import type {
   ModelCapabilities,
   RateLimitInfo,
 } from "../types";
+import { contentImages, flattenToText } from "../content";
 import { BaseLlmAdapter } from "./base.adapter";
+
+type AnthropicContentBlock =
+  | { type: "text"; text: string }
+  | {
+      type: "image";
+      source: { type: "base64"; media_type: string; data: string };
+    };
 
 interface AnthropicMessage {
   role: "user" | "assistant";
-  content: string;
+  content: string | AnthropicContentBlock[];
 }
 
 interface AnthropicRequest {
@@ -494,18 +502,37 @@ export class AnthropicAdapter extends BaseLlmAdapter {
 
     for (const message of messages) {
       if (message.role === "system") {
-        systemMessage = systemMessage
-          ? `${systemMessage}\n\n${message.content}`
-          : message.content;
+        // The top-level `system` field is text-only by API contract.
+        const text = flattenToText(message.content);
+        systemMessage = systemMessage ? `${systemMessage}\n\n${text}` : text;
       } else if (message.role === "user" || message.role === "assistant") {
         userMessages.push({
           role: message.role,
-          content: message.content,
+          content: this.toAnthropicContent(message.content),
         });
       }
     }
 
     return { systemMessage, userMessages };
+  }
+
+  private toAnthropicContent(
+    content: LlmRequest["messages"][number]["content"]
+  ): string | AnthropicContentBlock[] {
+    if (typeof content === "string") return content;
+    if (contentImages(content).length === 0) return flattenToText(content);
+    return content.map((part): AnthropicContentBlock =>
+      part.type === "text"
+        ? { type: "text", text: part.text }
+        : {
+            type: "image",
+            source: {
+              type: "base64",
+              media_type: part.mimeType,
+              data: part.base64,
+            },
+          }
+    );
   }
 
   private async handleErrorResponse(response: Response): Promise<never> {

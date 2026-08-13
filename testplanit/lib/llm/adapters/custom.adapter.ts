@@ -6,6 +6,7 @@ import type {
   LlmStreamResponse,
   RateLimitInfo,
 } from "../types";
+import { contentImages, flattenToText } from "../content";
 import { BaseLlmAdapter } from "./base.adapter";
 
 interface CustomLlmSettings {
@@ -23,13 +24,23 @@ interface CustomLlmSettings {
   requestFieldMappings?: Record<string, string>;
   modelFieldMappings?: Record<string, string>;
   models?: Array<Record<string, unknown>>;
+  /**
+   * Admin opt-in: the endpoint accepts OpenAI-style `image_url` content
+   * parts. Off (default), image parts are flattened to `[image: …]` text
+   * markers — an unknown API shape must never receive parts it may reject.
+   */
+  visionSupport?: boolean;
 }
+
+type CustomContentPart =
+  | { type: "text"; text: string }
+  | { type: "image_url"; image_url: { url: string } };
 
 interface CustomApiRequest {
   model?: string;
   messages: Array<{
     role: string;
-    content: string;
+    content: string | CustomContentPart[];
   }>;
   temperature?: number;
   max_tokens?: number;
@@ -341,23 +352,61 @@ export class CustomLlmAdapter extends BaseLlmAdapter {
     return headers;
   }
 
+  private toCustomMessages(
+    messages: LlmRequest["messages"],
+    visionSupport: boolean
+  ): CustomApiRequest["messages"] {
+    if (!visionSupport) {
+      return messages.map((message) => ({
+        role: message.role,
+        content: flattenToText(message.content),
+      }));
+    }
+    return messages.map((message) => {
+      if (typeof message.content === "string") {
+        return { role: message.role, content: message.content };
+      }
+      if (
+        message.role === "system" ||
+        contentImages(message.content).length === 0
+      ) {
+        return { role: message.role, content: flattenToText(message.content) };
+      }
+      return {
+        role: message.role,
+        content: message.content.map((part): CustomContentPart =>
+          part.type === "text"
+            ? { type: "text", text: part.text }
+            : {
+                type: "image_url",
+                image_url: {
+                  url: `data:${part.mimeType};base64,${part.base64}`,
+                },
+              }
+        ),
+      };
+    });
+  }
+
   private buildCustomRequest(
     request: LlmRequest,
     stream: boolean
   ): CustomApiRequest {
     const template = { ...this.requestTemplate };
+    const settings = this.config.integration
+      .settings as CustomLlmSettings | null;
 
     const customRequest: CustomApiRequest = {
       model: request.model || this.getDefaultModel(),
-      messages: request.messages,
+      messages: this.toCustomMessages(
+        request.messages,
+        settings?.visionSupport === true
+      ),
       temperature: request.temperature ?? this.config.config.defaultTemperature,
       max_tokens: request.maxTokens ?? this.config.config.defaultMaxTokens,
       stream,
       ...template,
     };
-
-    const settings = this.config.integration
-      .settings as CustomLlmSettings | null;
     const fieldMappings = settings?.requestFieldMappings || {};
 
     for (const [standardField, customField] of Object.entries(fieldMappings)) {

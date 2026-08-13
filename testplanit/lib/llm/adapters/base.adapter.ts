@@ -343,6 +343,21 @@ export abstract class BaseLlmAdapter {
       );
     }
 
+    // A parts-array content with zero parts is a caller bug (an all-images
+    // message whose images were stripped upstream should flatten to text
+    // markers, not to []). Catch it here once instead of per provider.
+    if (
+      request.messages.some(
+        (m) => Array.isArray(m.content) && m.content.length === 0
+      )
+    ) {
+      throw this.createError(
+        "Message content parts cannot be empty",
+        "INVALID_REQUEST",
+        400
+      );
+    }
+
     if (
       request.maxTokens &&
       request.maxTokens > this.config.config.maxTokensPerRequest

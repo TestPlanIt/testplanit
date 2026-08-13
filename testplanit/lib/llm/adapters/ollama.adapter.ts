@@ -8,6 +8,7 @@ import type {
   OllamaPullProgress,
   RateLimitInfo,
 } from "../types";
+import { contentImages, flattenToText } from "../content";
 import { BaseLlmAdapter } from "./base.adapter";
 
 interface OllamaSettings {
@@ -20,6 +21,8 @@ interface OllamaGenerateRequest {
   messages?: Array<{
     role: string;
     content: string;
+    /** Ollama vision input: raw base64 strings, no data-URI prefix. */
+    images?: string[];
   }>;
   stream?: boolean;
   think?: boolean;
@@ -80,15 +83,32 @@ export class OllamaAdapter extends BaseLlmAdapter {
     this.keepAlive = settings?.keepAlive || "5m";
   }
 
+  /**
+   * Ollama carries images as a per-message sibling `images` array of raw
+   * base64 strings rather than content parts; text always flattens (image
+   * positions become `[image: …]` markers inside the text).
+   */
+  private toOllamaMessages(
+    messages: LlmRequest["messages"]
+  ): NonNullable<OllamaGenerateRequest["messages"]> {
+    return messages.map((msg) => {
+      const images = contentImages(msg.content);
+      return {
+        role: msg.role,
+        content: flattenToText(msg.content),
+        ...(images.length > 0
+          ? { images: images.map((image) => image.base64) }
+          : {}),
+      };
+    });
+  }
+
   async chat(request: LlmRequest): Promise<LlmResponse> {
     this.validateRequest(request);
 
     const ollamaRequest: OllamaGenerateRequest = {
       model: request.model || this.getDefaultModel(),
-      messages: request.messages.map((msg) => ({
-        role: msg.role,
-        content: msg.content,
-      })),
+      messages: this.toOllamaMessages(request.messages),
       stream: false,
       ...(request.disableThinking ? { think: false } : {}),
       options: {
@@ -147,10 +167,7 @@ export class OllamaAdapter extends BaseLlmAdapter {
 
     const ollamaRequest: OllamaGenerateRequest = {
       model: request.model || this.getDefaultModel(),
-      messages: request.messages.map((msg) => ({
-        role: msg.role,
-        content: msg.content,
-      })),
+      messages: this.toOllamaMessages(request.messages),
       stream: true,
       ...(request.disableThinking ? { think: false } : {}),
       options: {
