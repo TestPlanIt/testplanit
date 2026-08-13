@@ -448,12 +448,19 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
       label: template.templateName,
     })) || [];
 
-  const firstGatedOrder = (workflows ?? [])
-    .filter((w) => w.requiresReview === true)
-    .reduce<number | null>(
-      (acc, w) => (acc === null || w.order < acc ? w.order : acc),
-      null
-    );
+  // `null` for system admins: they bypass the review gate and may create a
+  // case directly at any state, so nothing is disabled and the
+  // gated-states hint stays hidden. Mirrors the server-side
+  // `resolveCreateStateRemap` admin short-circuit.
+  const firstGatedOrder =
+    session?.user?.access === "ADMIN"
+      ? null
+      : (workflows ?? [])
+          .filter((w) => w.requiresReview === true)
+          .reduce<number | null>(
+            (acc, w) => (acc === null || w.order < acc ? w.order : acc),
+            null
+          );
   const workflowOptions =
     workflows?.map((workflow) => ({
       value: workflow.id.toString(),

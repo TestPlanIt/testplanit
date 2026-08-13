@@ -5,6 +5,14 @@ import { isReviewGateError, ReviewGateError } from "~/lib/utils/errors";
 import { isReviewFeatureSystemEnabled } from "~/lib/services/reviewFeatureFlag";
 
 /**
+ * `User.access` value that bypasses the review gate. Compared as a string
+ * rather than the generated enum so callers can hand over the raw session /
+ * API-token access value without importing the enum — matching
+ * `assertResultEditWindowOpen`'s `userAccess: string | null | undefined`.
+ */
+const ADMIN_ACCESS = "ADMIN";
+
+/**
  * Review-gate preflight. Asserts that a state transition to `toStateId` for
  * the given entity is permitted by the Review & Approval gate under
  * **strict transitive** semantics.
@@ -16,6 +24,18 @@ import { isReviewFeatureSystemEnabled } from "~/lib/services/reviewFeatureFlag";
  *      entity update so the gate check and the update are atomic.
  *
  *   2. Feature-flag short-circuits (evaluated first, in order):
+ *
+ *        (0) When `userAccess === "ADMIN"` the helper returns `null`
+ *            immediately and queries nothing. System admins bypass the
+ *            transition gate outright and may set an entity to ANY workflow
+ *            state — the same "small, fully audited footprint" carve-out
+ *            `assertResultEditWindowOpen` grants, and the transition-side
+ *            counterpart to the decide-time bypass in `decideReviewRequest`.
+ *            Returning `null` (rather than a list of approvals) means an
+ *            admin crossing a gate does NOT consume any pending approval:
+ *            the reviewer's decision stays available for the transition it
+ *            was actually raised for. Callers that cannot identify the actor
+ *            omit the argument and the gate applies in full.
  *
  *        (a) When the AppConfig row keyed by `review_feature_enabled` has
  *            `value === false`, the helper returns `null` immediately and
@@ -76,8 +96,13 @@ import { isReviewFeatureSystemEnabled } from "~/lib/services/reviewFeatureFlag";
  * @param entityId    primary key of the entity being updated.
  * @param toStateId   the Workflows.id the caller intends to set on the
  *                    entity. Gate decisions are made against this target.
+ * @param userAccess  the acting user's `User.access`. `"ADMIN"` bypasses the
+ *                    gate entirely (see contract 2.0). Omit — or pass
+ *                    `undefined` — from system-context callers that act on
+ *                    behalf of an approval rather than on behalf of a user.
  *
- * @returns           `null` when the feature is disabled, the transition
+ * @returns           `null` when the caller is a system admin, the feature
+ *                    is disabled, the transition
  *                    is backward / same-state, or no gates lie in the
  *                    path; `{ approvedRequestIds }` (possibly empty? no —
  *                    always populated when non-null) when every blocking
@@ -93,8 +118,14 @@ export async function assertReviewGatePasses(
   tx: TxClient,
   entityType: ReviewEntityType,
   entityId: number,
-  toStateId: number
+  toStateId: number,
+  userAccess?: string | null
 ): Promise<{ approvedRequestIds: string[] } | null> {
+  // (0) System-admin bypass — admins may set any workflow state.
+  if (userAccess === ADMIN_ACCESS) {
+    return null;
+  }
+
   // (a) System kill switch — AppConfig row `review_feature_enabled`.
   if (!(await isReviewFeatureSystemEnabled(tx))) {
     return null;
@@ -216,6 +247,10 @@ export async function assertReviewGatePasses(
  *      stamps `consumedAt` on the full list in one `updateMany` after the
  *      bulk entity update commits — same one-shot invariant as Phase 1 D-05.
  *
+ *   6. **System admins bypass the gate**, exactly as in the single-entity
+ *      helper: `userAccess === "ADMIN"` returns `null` before any query, so
+ *      the whole bulk transition proceeds and consumes no approvals.
+ *
  * Cost: 1× workflow.findUnique (target) + 1× workflow.findMany (gates) +
  *       1× reviewRequest.findMany (all approvals). Constant in the number
  *       of entities — same characteristic as the pre-strict batch path.
@@ -224,8 +259,13 @@ export async function assertBulkReviewGatePasses(
   tx: TxClient,
   entityType: ReviewEntityType,
   entities: ReadonlyArray<{ id: number; currentStateOrder: number | null }>,
-  toStateId: number
+  toStateId: number,
+  userAccess?: string | null
 ): Promise<{ approvedRequestIds: string[] } | null> {
+  if (userAccess === ADMIN_ACCESS) {
+    return null;
+  }
+
   if (entities.length === 0) {
     return null;
   }
@@ -647,6 +687,10 @@ export async function applyApprovedReviewTransition(
 
   let gateResult: { approvedRequestIds: string[] } | null;
   try {
+    // No `userAccess` argument on purpose. This runs as system context on
+    // behalf of an approval, not as the reviewer's own edit — an admin
+    // reviewer must not silently skip an EARLIER unapproved gate (2c) and
+    // land the entity somewhere the approval chain never authorized.
     gateResult = await assertReviewGatePasses(
       tx,
       entityType,
@@ -774,6 +818,11 @@ async function loadEntityForGate(
  * state's `order` in the same scope, the helper returns the default
  * state's id instead. Otherwise the candidate is returned unchanged.
  *
+ * System admins (`userAccess === "ADMIN"`) are never remapped — they may
+ * birth an entity directly at any state, the create-time counterpart of the
+ * transition bypass in `assertReviewGatePasses`. Callers with no actor in
+ * scope (importers, workers) omit the argument and the remap applies.
+ *
  * Returns `null` when no default state exists for the scope on the
  * project — the caller should treat that as an exceptional condition
  * (seed gap) rather than swallow it.
@@ -782,8 +831,13 @@ export async function resolveCreateStateRemap(
   tx: TxClient,
   projectId: number,
   scope: WorkflowScope,
-  candidateStateId: number
+  candidateStateId: number,
+  userAccess?: string | null
 ): Promise<number | null> {
+  if (userAccess === ADMIN_ACCESS) {
+    return candidateStateId;
+  }
+
   if (!(await isReviewFeatureSystemEnabled(tx))) {
     return candidateStateId;
   }

@@ -32,6 +32,14 @@ vi.mock("./useReviewFeatureEnabled", () => ({
     mockUseReviewFeatureEnabled(...args),
 }));
 
+// Both hooks read the session to mirror the server's `userAccess === "ADMIN"`
+// bypass. Defaults to a plain USER so the existing gating assertions below
+// keep exercising the gate rather than the bypass.
+const mockUseSession = vi.fn();
+vi.mock("next-auth/react", () => ({
+  useSession: () => mockUseSession(),
+}));
+
 interface SetupOpts {
   enabled?: boolean;
   workflows?: Array<{
@@ -41,13 +49,17 @@ interface SetupOpts {
     requiresReview: boolean;
   }>;
   approvedToStateIds?: number[];
+  /** `User.access` for the acting session. Defaults to a non-admin. */
+  access?: string;
 }
 
 function setup({
   enabled = true,
   workflows = [],
   approvedToStateIds = [],
+  access = "USER",
 }: SetupOpts) {
+  mockUseSession.mockReturnValue({ data: { user: { access } } });
   mockUseReviewFeatureEnabled.mockReturnValue({ enabled, isLoading: false });
   mockUseFindManyWorkflows.mockReturnValue({
     data: workflows,
@@ -74,6 +86,56 @@ describe("useTransitionGateStatus", () => {
     mockUseReviewFeatureEnabled.mockReset();
     mockUseFindManyWorkflows.mockReset();
     mockUseFindManyReviewRequest.mockReset();
+    mockUseSession.mockReset();
+  });
+
+  describe("system-admin bypass", () => {
+    it("allows a gated transition for an ADMIN with no approvals (mirrors assertReviewGatePasses)", () => {
+      setup({
+        access: "ADMIN",
+        workflows: [
+          workflow(10, 1, false),
+          workflow(40, 4, true, "Ready For Review"),
+          workflow(60, 6, false),
+        ],
+      });
+      const { result } = renderHook(() =>
+        useTransitionGateStatus("CASE", 1, 10, 42)
+      );
+
+      expect(result.current.canTransitionTo(40)).toEqual({
+        allowed: true,
+        blockingGate: null,
+      });
+      expect(result.current.canTransitionTo(60)).toEqual({
+        allowed: true,
+        blockingGate: null,
+      });
+    });
+
+    it("keeps `enabled` reporting the real feature state for an ADMIN so the surrounding review UI still renders", () => {
+      setup({
+        access: "ADMIN",
+        workflows: [workflow(10, 1, false), workflow(40, 4, true)],
+      });
+      const { result } = renderHook(() =>
+        useTransitionGateStatus("CASE", 1, 10, 42)
+      );
+
+      expect(result.current.enabled).toBe(true);
+    });
+
+    it("still blocks a PROJECTADMIN — the bypass is system-admin only", () => {
+      setup({
+        access: "PROJECTADMIN",
+        workflows: [workflow(10, 1, false), workflow(40, 4, true)],
+      });
+      const { result } = renderHook(() =>
+        useTransitionGateStatus("CASE", 1, 10, 42)
+      );
+
+      expect(result.current.canTransitionTo(40).allowed).toBe(false);
+    });
   });
 
   it("treats every transition as allowed when the feature is disabled", () => {
@@ -280,12 +342,14 @@ describe("useBulkTransitionGateStatus", () => {
     mockUseReviewFeatureEnabled.mockReset();
     mockUseFindManyWorkflows.mockReset();
     mockUseFindManyReviewRequest.mockReset();
+    mockUseSession.mockReset();
   });
 
   function setupBulk({
     enabled = true,
     workflows = [],
     approvedByEntity = {},
+    access = "USER",
   }: {
     enabled?: boolean;
     workflows?: Array<{
@@ -296,7 +360,10 @@ describe("useBulkTransitionGateStatus", () => {
     }>;
     /** Map of entityId → list of approved toStateIds. */
     approvedByEntity?: Record<number, number[]>;
+    /** `User.access` for the acting session. Defaults to a non-admin. */
+    access?: string;
   }) {
+    mockUseSession.mockReturnValue({ data: { user: { access } } });
     mockUseReviewFeatureEnabled.mockReturnValue({ enabled, isLoading: false });
     mockUseFindManyWorkflows.mockReturnValue({
       data: workflows,
@@ -322,6 +389,26 @@ describe("useBulkTransitionGateStatus", () => {
       isLoading: false,
     });
   }
+
+  it("returns allowed=true with no blocked cases for an ADMIN (matches assertBulkReviewGatePasses)", () => {
+    setupBulk({
+      access: "ADMIN",
+      workflows: [workflow(10, 1, false), workflow(40, 4, true)],
+      approvedByEntity: {},
+    });
+    const entities = [
+      { id: 1, currentStateId: 10 },
+      { id: 2, currentStateId: 10 },
+    ];
+    const { result } = renderHook(() =>
+      useBulkTransitionGateStatus("CASE", entities, 42)
+    );
+
+    expect(result.current.canBulkTransitionTo(40)).toEqual({
+      allowed: true,
+      blocked: [],
+    });
+  });
 
   it("returns allowed=true with no blocked cases when feature is disabled (matches server short-circuit)", () => {
     setupBulk({

@@ -544,6 +544,25 @@ async function handleRequest(
     const authenticatedUserEmail =
       session?.user?.email ?? apiAuthContext?.email ?? undefined;
 
+    // The actor's `User.access`, for the guards below that grant system
+    // admins a bypass — the review gate (create remap + transition) and the
+    // result edit window. Browser requests read it straight off the session;
+    // API-token requests fall back to a DB lookup, since a token carries a
+    // userId but no access level. Memoized so a request pays for at most one
+    // lookup however many guards ask.
+    let actorAccessPromise: Promise<string | null | undefined> | undefined;
+    const getActorAccess = (): Promise<string | null | undefined> => {
+      if (session?.user?.access) return Promise.resolve(session.user.access);
+      if (!authenticatedUserId) return Promise.resolve(undefined);
+      actorAccessPromise ??= baseDb.user
+        .findUnique({
+          where: { id: authenticatedUserId },
+          select: { access: true },
+        })
+        .then((actor) => actor?.access);
+      return actorAccessPromise;
+    };
+
     // Clone the request body for audit logging and potential modification
     let requestBody: any = null;
     let modifiedReq = req;
@@ -648,7 +667,8 @@ async function handleRequest(
     // in the worker/import paths: when gating is active and the candidate
     // is at-or-beyond a gate, the create silently lands in the default
     // state. When gating is off (system flag, project flag, or no gated
-    // state in scope), the helper returns the candidate unchanged.
+    // state in scope) — or the actor is a system admin — the helper returns
+    // the candidate unchanged.
     if (
       isMutation &&
       parsedPath &&
@@ -678,7 +698,8 @@ async function handleRequest(
           baseDb,
           projectId,
           scope,
-          candidateStateId
+          candidateStateId,
+          await getActorAccess()
         );
         if (
           typeof remapped === "number" &&
@@ -755,6 +776,10 @@ async function handleRequest(
               : NaN;
 
         if (Number.isFinite(entityIdNum) && Number.isFinite(toStateIdNum)) {
+          // Resolved outside the Serializable transaction below: it is an
+          // actor lookup, not part of the gate read that has to stay
+          // conflict-serializable with a concurrent decide/consume.
+          const actorAccess = await getActorAccess();
           try {
             // CR-04: the auto-API path cannot share a transaction with
             // ZenStack's internal handler (baseHandler manages its own
@@ -791,7 +816,8 @@ async function handleRequest(
                   tx,
                   gatedEntityType,
                   entityIdNum,
-                  toStateIdNum
+                  toStateIdNum,
+                  actorAccess
                 );
                 if (gateResult) {
                   // Strict transitive gates: a single transition can cross
@@ -870,12 +896,9 @@ async function handleRequest(
             ? Number(rawResultId)
             : NaN;
       if (Number.isFinite(resultId) && authenticatedUserId) {
-        const actor = await baseDb.user.findUnique({
-          where: { id: authenticatedUserId },
-          select: { access: true },
-        });
+        const actorAccess = await getActorAccess();
         try {
-          await assertResultEditWindowOpen(baseDb, resultId, actor?.access);
+          await assertResultEditWindowOpen(baseDb, resultId, actorAccess);
         } catch (err) {
           if (isEditWindowExpiredError(err)) {
             return NextResponse.json(

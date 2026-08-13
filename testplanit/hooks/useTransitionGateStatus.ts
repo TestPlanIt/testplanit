@@ -3,6 +3,7 @@
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { WorkflowScope } from "~/zenstack/models";
+import { useSession } from "next-auth/react";
 import { useMemo } from "react";
 
 import { useReviewFeatureEnabled } from "./useReviewFeatureEnabled";
@@ -67,6 +68,13 @@ const SCOPE_BY_ENTITY_TYPE: Record<ReviewableEntityType, WorkflowScope> = {
  * gate Y does NOT satisfy gate X, even when X.order < Y.order. Each gate
  * is its own checkpoint with its own reviewer decision.
  *
+ * System admins are never blocked — `canTransitionTo` always allows, which
+ * mirrors the `userAccess === "ADMIN"` short-circuit in
+ * `assertReviewGatePasses`. `enabled` deliberately still reports the real
+ * feature state so the surrounding review UI (request button, pending
+ * banner, gated-state glyph) keeps rendering for admins; only the *block*
+ * is lifted.
+ *
  * Custom hook (lives in `testplanit/hooks/` rather than `lib/hooks/` —
  * the latter is the ZenStack tanstack-query plugin's output directory and
  * is wiped on `pnpm zenstack generate`).
@@ -79,6 +87,8 @@ export function useTransitionGateStatus(
 ): TransitionGateStatus {
   const { enabled, isLoading: featureLoading } =
     useReviewFeatureEnabled(projectId);
+  const { data: sessionData } = useSession();
+  const isSystemAdmin = sessionData?.user?.access === "ADMIN";
 
   // Workflow states in the entity-type's scope. We fetch ALL (gated and
   // non-gated) so the hook can look up the target state's order from the
@@ -156,7 +166,8 @@ export function useTransitionGateStatus(
       enabled: enabled === true,
       isLoading,
       canTransitionTo(toStateId) {
-        if (enabled !== true) {
+        // System admins bypass the gate (mirrors assertReviewGatePasses).
+        if (isSystemAdmin || enabled !== true) {
           return { allowed: true, blockingGate: null };
         }
         if (toStateId == null) {
@@ -194,6 +205,7 @@ export function useTransitionGateStatus(
     approvedRequests,
     approvalsLoading,
     currentStateId,
+    isSystemAdmin,
   ]);
 }
 
@@ -236,6 +248,10 @@ export interface BulkTransitionGateStatus {
  * `blocked` is the list of entities that have at least one blocking gate
  * with no approved + unconsumed request; the first missing gate per
  * entity surfaces on its row.
+ *
+ * As in the single-entity hook, system admins are never blocked: `blocked`
+ * comes back empty regardless of approvals, matching the server-side
+ * `userAccess === "ADMIN"` short-circuit in `assertBulkReviewGatePasses`.
  */
 export function useBulkTransitionGateStatus(
   entityType: ReviewableEntityType,
@@ -244,6 +260,8 @@ export function useBulkTransitionGateStatus(
 ): BulkTransitionGateStatus {
   const { enabled, isLoading: featureLoading } =
     useReviewFeatureEnabled(projectId);
+  const { data: sessionData } = useSession();
+  const isSystemAdmin = sessionData?.user?.access === "ADMIN";
 
   // Project-scoped (see the single-entity hook above): `requiresReview` is a
   // global Workflows column, so an unscoped query would surface gated states
@@ -318,7 +336,8 @@ export function useBulkTransitionGateStatus(
       enabled: enabled === true,
       isLoading,
       canBulkTransitionTo(toStateId) {
-        if (enabled !== true || toStateId == null) {
+        // System admins bypass the gate (mirrors assertBulkReviewGatePasses).
+        if (isSystemAdmin || enabled !== true || toStateId == null) {
           return { allowed: true, blocked: [] };
         }
         const targetOrder = allWorkflows.find((w) => w.id === toStateId)?.order;
@@ -363,5 +382,6 @@ export function useBulkTransitionGateStatus(
     approvedRequests,
     approvalsLoading,
     entities,
+    isSystemAdmin,
   ]);
 }

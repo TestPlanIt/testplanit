@@ -239,12 +239,17 @@ export function AddSessionModal({
       label: template.templateName,
     })) || [];
 
-  const firstGatedSessionOrder = (workflows ?? [])
-    .filter((w) => w.requiresReview === true)
-    .reduce<number | null>(
-      (acc, w) => (acc === null || w.order < acc ? w.order : acc),
-      null
-    );
+  // `null` for system admins — they bypass the review gate on create (see
+  // `resolveCreateStateRemap`), so no state option is disabled.
+  const firstGatedSessionOrder =
+    session?.user?.access === "ADMIN"
+      ? null
+      : (workflows ?? [])
+          .filter((w) => w.requiresReview === true)
+          .reduce<number | null>(
+            (acc, w) => (acc === null || w.order < acc ? w.order : acc),
+            null
+          );
   const workflowsOptions =
     workflows?.map((workflow) => ({
       value: workflow.id.toString(),

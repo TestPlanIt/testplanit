@@ -146,12 +146,17 @@ export function AddCaseRow({ folderId }: AddCaseRowProps) {
     (workflow) => workflow.isDefault
   )?.id;
 
-  const firstGatedOrder = (workflows ?? [])
-    .filter((w) => w.requiresReview === true)
-    .reduce<number | null>(
-      (acc, w) => (acc === null || w.order < acc ? w.order : acc),
-      null
-    );
+  // `null` for system admins — they bypass the review gate on create (see
+  // `resolveCreateStateRemap`), so no state option is disabled.
+  const firstGatedOrder =
+    session?.user?.access === "ADMIN"
+      ? null
+      : (workflows ?? [])
+          .filter((w) => w.requiresReview === true)
+          .reduce<number | null>(
+            (acc, w) => (acc === null || w.order < acc ? w.order : acc),
+            null
+          );
   const workflowOptions =
     workflows?.map((workflow) => ({
       value: workflow.id.toString(),

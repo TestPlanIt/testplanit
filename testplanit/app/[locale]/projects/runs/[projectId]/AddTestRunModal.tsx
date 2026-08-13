@@ -986,14 +986,18 @@ export default function AddTestRunModal({
   const defaultWorkflow = workflows?.find((workflow) => workflow.isDefault);
   const configurationsOptions: ConfigurationOption[] =
     configurations?.map((c) => ({ id: c.id, name: c.name })) || [];
+  // `null` for system admins — they bypass the review gate on create (see
+  // `resolveCreateStateRemap`), so no state option is disabled.
+  const isSystemAdminForGate = session?.user?.access === "ADMIN";
   const firstGatedRunOrder = useMemo(() => {
+    if (isSystemAdminForGate) return null;
     return (workflows ?? [])
       .filter((w) => w.requiresReview === true)
       .reduce<number | null>(
         (acc, w) => (acc === null || w.order < acc ? w.order : acc),
         null
       );
-  }, [workflows]);
+  }, [workflows, isSystemAdminForGate]);
   const workflowsOptions = useMemo(() => {
     return (
       workflows?.map((w) => ({

@@ -76,6 +76,19 @@ By default the seeded `admin` role carries Can approve on all three review-relev
 
 System administrators (access = ADMIN) bypass the Can Approve check at decision time, so an admin can always decide on a pending review even if their project role doesn't carry the permission. This is intentional — admins can unblock stalled reviews — but they still only appear in the assignee dropdown if their role grants Can approve, so the day-to-day reviewer pool stays predictable.
 
+### System administrators bypass the gates entirely
+
+Beyond deciding on reviews, system administrators (access = ADMIN) are never blocked by a workflow-state gate. An admin can move any test case, test run, or session to **any** workflow state — including states marked as gated, and including states several gates ahead of where the entity currently sits — without an approved review request. The same applies when creating an entity: admins can pick a gated state directly instead of being remapped to the project's default state.
+
+This holds everywhere state changes happen: the entity edit forms, bulk edit, milestone completion, the first-result auto-transition, and direct API calls.
+
+A few details worth knowing:
+
+- **No approval is consumed.** When an admin crosses a gate that already has an approved review request waiting, that approval stays unspent and remains available for the transition it was raised for.
+- **The review workflow still runs.** Gated states keep their "requires review" marker in the UI for admins, pending review requests stay visible, and admins can still request reviews like anyone else. Only the block is lifted.
+- **Project administrators do not get this.** The bypass is scoped to system administrators (access = ADMIN). Users with PROJECTADMIN access are gated normally.
+- **Everything is audited.** Admin state changes flow through the same audit trail as any other transition, so a bypass is always attributable.
+
 ### Step 4 — Mark workflow states as gated
 
 This is where the actual gates are defined.
@@ -276,7 +289,7 @@ A role-assigned request that resolves to zero project-eligible reviewers is stil
 Yes. The **Decided** tab in the Review inbox shows requests you decided and decisions made on requests you submitted, with filters for status, requester, and decider. Per-entity history is also available — open the entity, scroll to the review history section, and you'll see the chain of requests and decisions.
 
 **Does Review & Approval apply to API-driven updates?**
-Yes. The gate is enforced at the API layer, so updates from the ZenStack auto-API, server actions, and direct HTTP routes all honor the gate. Service accounts that bypass the gate must be granted explicit project administrator access AND the per-project toggle must be turned off; there is no per-request bypass.
+Yes. The gate is enforced at the API layer, so updates from the ZenStack auto-API, server actions, and direct HTTP routes all honor the gate. There is no per-request bypass flag — the only accounts that skip the gate are system administrators (see [System administrators bypass the gates entirely](#system-administrators-bypass-the-gates-entirely)), and that applies to their API tokens too. To let a service account write gated states, either give it ADMIN access or turn the per-project toggle off.
 
 **Does the feature support custom workflow states per project?**
 Yes — gates honor the project assignments on the underlying workflow state (see [Workflows](./workflows.md)). A gate marked on a state assigned to specific projects only applies to those projects.

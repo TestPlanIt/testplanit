@@ -1,10 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
-import { ReviewEntityType } from "~/zenstack/models";
+import { ReviewEntityType, WorkflowScope } from "~/zenstack/models";
 import { ReviewGateError } from "~/lib/utils/errors";
 import {
   applyApprovedReviewTransition,
   assertBulkReviewGatePasses,
   assertReviewGatePasses,
+  resolveCreateStateRemap,
 } from "./reviewGate";
 
 /**
@@ -104,6 +105,85 @@ function createMockTx(opts: MockTxOptions) {
 }
 
 describe("assertReviewGatePasses (strict transitive)", () => {
+  describe("system-admin bypass", () => {
+    it("returns null + queries nothing at all when userAccess is ADMIN, even with an unapproved gate in the path", async () => {
+      const tx = createMockTx({
+        currentStateOrder: 3,
+        targetState: { order: 6 },
+        // Gate at 4 with NO approval — a non-admin would throw here.
+        gatedStates: [{ id: 40, order: 4 }],
+        approvalsByGateId: {},
+      });
+
+      const result = await assertReviewGatePasses(
+        tx,
+        ReviewEntityType.CASE,
+        1,
+        6,
+        "ADMIN"
+      );
+
+      expect(result).toBeNull();
+      // Bypass is evaluated before the system kill switch, so not even the
+      // AppConfig row is read.
+      expect(tx.appConfig.findUnique).not.toHaveBeenCalled();
+      expect(tx.repositoryCases.findUnique).not.toHaveBeenCalled();
+      expect(tx.workflows.findUnique).not.toHaveBeenCalled();
+      expect(tx.workflows.findMany).not.toHaveBeenCalled();
+      expect(tx.reviewRequest.findFirst).not.toHaveBeenCalled();
+    });
+
+    it("does NOT consume a pending approval when an admin crosses a gate that has one", async () => {
+      const tx = createMockTx({
+        currentStateOrder: 3,
+        targetState: { order: 4 },
+        gatedStates: [{ id: 40, order: 4 }],
+        approvalsByGateId: { 40: { id: "req-40" } },
+      });
+
+      const result = await assertReviewGatePasses(
+        tx,
+        ReviewEntityType.CASE,
+        1,
+        4,
+        "ADMIN"
+      );
+
+      // null (not `{ approvedRequestIds: ["req-40"] }`) — the reviewer's
+      // decision stays available for the transition it was raised for.
+      expect(result).toBeNull();
+      expect(tx.reviewRequest.updateMany).not.toHaveBeenCalled();
+      expect(tx.reviewRequest.update).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      ["PROJECTADMIN", "PROJECTADMIN"],
+      ["USER", "USER"],
+      ["undefined", undefined],
+      ["null", null],
+    ])(
+      "still enforces the gate for non-admin access %s",
+      async (_label, access) => {
+        const tx = createMockTx({
+          currentStateOrder: 3,
+          targetState: { order: 4 },
+          gatedStates: [{ id: 40, order: 4 }],
+          approvalsByGateId: {},
+        });
+
+        await expect(
+          assertReviewGatePasses(
+            tx,
+            ReviewEntityType.CASE,
+            1,
+            4,
+            access as string | null | undefined
+          )
+        ).rejects.toBeInstanceOf(ReviewGateError);
+      }
+    );
+  });
+
   describe("feature-flag short-circuits", () => {
     it("returns null + no entity / workflow / reviewRequest queries when system flag is off", async () => {
       const tx = createMockTx({
@@ -563,6 +643,50 @@ function createBulkMockTx(opts: BulkMockTxOptions) {
 }
 
 describe("assertBulkReviewGatePasses (strict transitive, bulk)", () => {
+  describe("system-admin bypass", () => {
+    it("returns null + queries nothing when userAccess is ADMIN, even with entities missing approvals", async () => {
+      const tx = createBulkMockTx({
+        targetState: { order: 6 },
+        gatedStates: [{ id: 40, order: 4 }],
+        approvals: [],
+      });
+
+      const result = await assertBulkReviewGatePasses(
+        tx,
+        ReviewEntityType.RUN,
+        [
+          { id: 1, currentStateOrder: 1 },
+          { id: 2, currentStateOrder: null },
+        ],
+        60,
+        "ADMIN"
+      );
+
+      expect(result).toBeNull();
+      expect(tx.workflows.findUnique).not.toHaveBeenCalled();
+      expect(tx.workflows.findMany).not.toHaveBeenCalled();
+      expect(tx.reviewRequest.findMany).not.toHaveBeenCalled();
+    });
+
+    it("still enforces the gate for a non-admin caller", async () => {
+      const tx = createBulkMockTx({
+        targetState: { order: 6 },
+        gatedStates: [{ id: 40, order: 4 }],
+        approvals: [],
+      });
+
+      await expect(
+        assertBulkReviewGatePasses(
+          tx,
+          ReviewEntityType.RUN,
+          [{ id: 1, currentStateOrder: 1 }],
+          60,
+          "PROJECTADMIN"
+        )
+      ).rejects.toBeInstanceOf(ReviewGateError);
+    });
+  });
+
   describe("short-circuits", () => {
     it("returns null when entities array is empty (zero work)", async () => {
       const tx = createBulkMockTx({
@@ -1037,5 +1161,74 @@ describe("applyApprovedReviewTransition", () => {
         toStateId: 40,
       })
     ).rejects.toBeInstanceOf(ReviewGateError);
+  });
+});
+
+describe("resolveCreateStateRemap — system-admin bypass", () => {
+  /**
+   * Minimal tx for the create-time remap: a project row carrying the
+   * per-project flag plus the scope's workflow list (the helper reads
+   * `isDefault` / `requiresReview` / `order` off it).
+   */
+  function createRemapMockTx() {
+    return {
+      appConfig: {
+        findUnique: vi.fn().mockResolvedValue({ value: true }),
+      },
+      projects: {
+        findUnique: vi.fn().mockResolvedValue({ reviewWorkflowEnabled: true }),
+      },
+      workflows: {
+        findMany: vi.fn().mockResolvedValue([
+          { id: 10, order: 1, isDefault: true, requiresReview: false },
+          { id: 40, order: 4, isDefault: false, requiresReview: true },
+        ]),
+      },
+    } as any;
+  }
+
+  it("returns the candidate unchanged and queries nothing when userAccess is ADMIN", async () => {
+    const tx = createRemapMockTx();
+
+    // Candidate 40 is the gate itself — a non-admin would be remapped to 10.
+    const result = await resolveCreateStateRemap(
+      tx,
+      1,
+      WorkflowScope.CASES,
+      40,
+      "ADMIN"
+    );
+
+    expect(result).toBe(40);
+    expect(tx.appConfig.findUnique).not.toHaveBeenCalled();
+    expect(tx.projects.findUnique).not.toHaveBeenCalled();
+    expect(tx.workflows.findMany).not.toHaveBeenCalled();
+  });
+
+  it("remaps a gated candidate to the project default for a non-admin", async () => {
+    const tx = createRemapMockTx();
+
+    const result = await resolveCreateStateRemap(
+      tx,
+      1,
+      WorkflowScope.CASES,
+      40,
+      "USER"
+    );
+
+    expect(result).toBe(10);
+  });
+
+  it("remaps when no actor is supplied (importer / worker contexts)", async () => {
+    const tx = createRemapMockTx();
+
+    const result = await resolveCreateStateRemap(
+      tx,
+      1,
+      WorkflowScope.CASES,
+      40
+    );
+
+    expect(result).toBe(10);
   });
 });

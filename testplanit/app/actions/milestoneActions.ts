@@ -348,7 +348,8 @@ export async function completeMilestoneCascade(
                     currentStateOrder: tr.state?.order ?? null,
                   })
                 ),
-                completedTestRunStateId
+                completedTestRunStateId,
+                session.user.access
               );
               consumedApprovalIds = gateResult?.approvedRequestIds ?? [];
             }
@@ -413,7 +414,8 @@ export async function completeMilestoneCascade(
                     currentStateOrder: s.state?.order ?? null,
                   })
                 ),
-                completedSessionStateId
+                completedSessionStateId,
+                session.user.access
               );
               consumedSessionApprovalIds = gateResult?.approvedRequestIds ?? [];
             }

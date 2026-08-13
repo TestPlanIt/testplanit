@@ -745,12 +745,14 @@ export const POST = withAuditContext(async (req: NextRequest) => {
           // in-progress on first result submission is a stateId update
           // path; the schema @@deny rule from Plan 01 covers it via the
           // ZenStack runtime, but this route uses raw baseDb so we call
-          // the app preflight explicitly.
+          // the app preflight explicitly. System admins bypass the gate, so
+          // an admin's first result never stalls the auto-flip.
           const gateApprovals = await assertReviewGatePasses(
             tx,
             "RUN",
             input.testRunId,
-            input.inProgressStateId
+            input.inProgressStateId,
+            user?.access
           );
 
           await tx.testRuns.update({

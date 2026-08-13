@@ -1123,9 +1123,39 @@ describe("ZenStack chokepoint Review & Approval gate", () => {
       expect.anything(),
       "CASE",
       42,
-      99
+      99,
+      // Actor access for the system-admin bypass. `baseDb.user.findUnique`
+      // is an unconfigured stub here, so the lookup yields undefined and the
+      // gate applies in full.
+      undefined
     );
     expect(baseHandlerMock).toHaveBeenCalled();
+  });
+
+  it("threads the actor's ADMIN access into the gate so system admins bypass it", async () => {
+    const { assertReviewGatePasses } =
+      await import("~/lib/services/reviewGate");
+    (assertReviewGatePasses as any).mockResolvedValue(null);
+    const { baseDb } = await import("~/lib/db");
+    (baseDb as any).user.findUnique.mockResolvedValue({ access: "ADMIN" });
+
+    const { PATCH } = await import("./route");
+    const req = makeUpdateRequest({
+      where: { id: 42 },
+      data: { stateId: 99 },
+    });
+    const res = await PATCH(req, {
+      params: Promise.resolve({ path: ["repositoryCases", "update"] }),
+    });
+
+    expect(res.status).toBe(200);
+    expect(assertReviewGatePasses).toHaveBeenCalledWith(
+      expect.anything(),
+      "CASE",
+      42,
+      99,
+      "ADMIN"
+    );
   });
 
   it("does NOT call the gate when the update does not include stateId", async () => {
@@ -1213,7 +1243,8 @@ describe("ZenStack chokepoint Review & Approval gate", () => {
       expect.anything(),
       "RUN",
       5,
-      88
+      88,
+      undefined
     );
   });
 
@@ -1314,7 +1345,8 @@ describe("ZenStack chokepoint Review & Approval gate", () => {
       expect.anything(),
       "CASE",
       42,
-      99
+      99,
+      undefined
     );
     expect(baseHandlerMock).not.toHaveBeenCalled();
   });
@@ -1347,7 +1379,8 @@ describe("ZenStack chokepoint Review & Approval gate", () => {
       expect.anything(),
       "RUN",
       5,
-      88
+      88,
+      undefined
     );
     expect(baseHandlerMock).not.toHaveBeenCalled();
   });

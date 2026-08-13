@@ -245,14 +245,17 @@ export const POST = withAuditContext(
             // schema `@@deny` rule does NOT fire here — this app preflight is
             // the sole gate. A throw inside `baseDb.$transaction` rolls back
             // every prior case in the loop; partial-bulk semantics ("fail
-            // closed") are correct for Phase 1.
+            // closed") are correct for Phase 1. System admins bypass the
+            // gate outright (`session.user.access`), so an admin bulk edit
+            // never fails closed on a missing approval.
             let gateApprovals: { approvedRequestIds: string[] } | null = null;
             if (updateData.stateId !== undefined) {
               gateApprovals = await assertReviewGatePasses(
                 tx,
                 "CASE",
                 caseId,
-                updateData.stateId
+                updateData.stateId,
+                session.user.access
               );
             }
 
