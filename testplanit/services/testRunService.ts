@@ -1,6 +1,7 @@
 "use server";
 import type { TestRunCases } from "~/zenstack/models";
 import { rawDb } from "~/lib/rawDb";
+import { syncTestRunToElasticsearch } from "./testRunSearch";
 
 // Define a type for the structure returned by the findMany query
 type TestRunCaseWithForecast = TestRunCases & {
@@ -65,6 +66,16 @@ export async function updateTestRunForecast(testRunId: number): Promise<void> {
         forecastManual: totalForecastManual,
         forecastAutomated: totalForecastAutomated,
       },
+    });
+
+    // `rawDb` skips `sideEffectsPlugin`, so nothing else reindexes this run —
+    // and both forecast fields are part of the indexed run document.
+    // Best-effort: search drift must not fail the forecast update.
+    await syncTestRunToElasticsearch(testRunId).catch((error: unknown) => {
+      console.error(
+        `Failed to sync run ${testRunId} forecast to Elasticsearch:`,
+        error
+      );
     });
 
     console.log(

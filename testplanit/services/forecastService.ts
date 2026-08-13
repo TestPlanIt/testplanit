@@ -3,6 +3,8 @@
 import type { DbClient } from "~/lib/zenstack";
 import { isAutomatedCaseSource } from "~/utils/testResultTypes";
 import { rawDb as defaultDb } from "../lib/rawDb";
+import { syncRepositoryCaseToElasticsearch } from "./repositoryCaseSync";
+import { syncTestRunToElasticsearch } from "./testRunSearch";
 
 type UpdateRepositoryCaseForecastOptions = {
   skipTestRunUpdate?: boolean;
@@ -179,6 +181,21 @@ export async function updateRepositoryCaseForecast(
             forecastAutomated: avgJunit,
           },
         });
+        // `rawDb` is the no-side-effects client, so `sideEffectsPlugin`'s
+        // Elasticsearch hook never fires for this write — and both forecast
+        // fields ARE part of the indexed case document
+        // (`buildRepositoryCaseDocument`). Without this the index keeps the
+        // forecast the case had when something else last happened to reindex
+        // it. Best-effort: a stale forecast in search must not fail the
+        // forecast recalculation itself.
+        await syncRepositoryCaseToElasticsearch(current.id).catch(
+          (error: unknown) => {
+            console.error(
+              `Failed to sync case ${current.id} forecast to Elasticsearch:`,
+              error
+            );
+          }
+        );
       }
     }
     if (process.env.DEBUG_FORECAST) {
@@ -327,6 +344,14 @@ export async function updateTestRunForecast(
             forecastAutomated: null,
           },
         });
+        // Same rawDb-skips-the-plugin reason as the case write above; the run
+        // document carries both forecast fields too (`testRunSearch`).
+        await syncTestRunToElasticsearch(testRunId).catch((error: unknown) => {
+          console.error(
+            `Failed to sync run ${testRunId} cleared forecast to Elasticsearch:`,
+            error
+          );
+        });
       }
       if (process.env.DEBUG_FORECAST) {
         console.log(
@@ -383,6 +408,13 @@ export async function updateTestRunForecast(
           forecastManual: newForecastManual,
           forecastAutomated: newForecastAutomated,
         },
+      });
+      // See the cleared-forecast write above — same plugin bypass.
+      await syncTestRunToElasticsearch(testRunId).catch((error: unknown) => {
+        console.error(
+          `Failed to sync run ${testRunId} forecast to Elasticsearch:`,
+          error
+        );
       });
     }
 
