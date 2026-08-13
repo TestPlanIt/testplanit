@@ -31,6 +31,8 @@ import type { IconName } from "~/types/globals";
 import { Loader2, Save, Star, TriangleAlert } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useSession } from "next-auth/react";
+import { ApplicationArea } from "~/zenstack/models";
+import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { notFound, useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -167,26 +169,29 @@ export default function AdvancedPage() {
 
   const updateProject = useClientQueries(schema).projects.useUpdate();
 
-  // Access guard: ADMIN or PROJECTADMIN per D-18 / Open Question 4.
+  // Access guard: project-admin tier per D-18 / Open Question 4. Resolved by
+  // `authorizeProjectAdminForProject` server-side, so this admits the same
+  // four tiers it does — system ADMIN, assigned system PROJECTADMIN, holder of
+  // the per-project "Project Admin" role, and the project's creator — rather
+  // than only the two system access levels.
   // Mirrors the quickscript page guard: imperative `notFound()` from useEffect
   // so unauthorized users hit the global not-found surface.
+  const { isProjectAdmin, isLoading: permissionsLoading } =
+    useProjectPermissions(projectId, ApplicationArea.Settings);
+
   useEffect(() => {
-    if (status === "loading") return;
+    if (status === "loading" || permissionsLoading) return;
     if (!session?.user) return;
-    const access = session.user.access;
-    if (access !== "ADMIN" && access !== "PROJECTADMIN") {
+    if (!isProjectAdmin) {
       notFound();
     }
-  }, [session, status]);
+  }, [session, status, permissionsLoading, isProjectAdmin]);
 
   // Bail BEFORE we render the page body for ineligible users — useEffect runs
   // post-paint, so we also need a synchronous guard so the test (and real
   // users) never see the toggle for the wrong access level.
-  if (session?.user) {
-    const access = session.user.access;
-    if (access !== "ADMIN" && access !== "PROJECTADMIN") {
-      notFound();
-    }
+  if (session?.user && !permissionsLoading && !isProjectAdmin) {
+    notFound();
   }
 
   const reviewWorkflowEnabled = project?.reviewWorkflowEnabled ?? true;

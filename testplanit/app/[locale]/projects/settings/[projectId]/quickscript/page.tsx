@@ -67,6 +67,8 @@ import { useEffect, useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod/v4";
+import { ApplicationArea } from "~/zenstack/models";
+import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { useRequireAuth } from "~/hooks/useRequireAuth";
 import { ExportTemplateAssignmentSection } from "./ExportTemplateAssignmentSection";
 import { Link } from "~/lib/navigation";
@@ -201,20 +203,22 @@ export default function QuickScriptPage() {
   );
   const updateProject = useClientQueries(schema).projects.useUpdate();
 
-  // Access control check - must be ADMIN or PROJECTADMIN
-  useEffect(() => {
-    if (!projectLoading && project && session?.user) {
-      const hasAccess =
-        session.user.access === "ADMIN" ||
-        session.user.access === "PROJECTADMIN";
+  // Project-admin authority, resolved server-side by
+  // `authorizeProjectAdminForProject`: system ADMIN, the project's creator, a
+  // holder of the per-project "Project Admin" role, or a system PROJECTADMIN
+  // assigned to this project. Gating on `session.user.access` alone 404'd the
+  // creator/role-holder tiers that the settings APIs already accept.
+  const { isProjectAdmin, isLoading: permissionsLoading } =
+    useProjectPermissions(projectId, ApplicationArea.Settings);
 
-      if (!hasAccess) {
-        notFound();
-      }
-    } else if (!projectLoading && !project && session?.user) {
+  // Access control check - must hold project-admin authority here
+  useEffect(() => {
+    if (projectLoading || permissionsLoading || !session?.user) return;
+
+    if (!project || !isProjectAdmin) {
       notFound();
     }
-  }, [project, projectLoading, session]);
+  }, [project, projectLoading, permissionsLoading, isProjectAdmin, session]);
 
   const handleToggleQuickScript = async (enabled: boolean) => {
     await updateProject.mutateAsync({
@@ -529,7 +533,7 @@ export default function QuickScriptPage() {
   }
 
   // Wait for data to load
-  if (projectLoading || repositoriesLoading) {
+  if (projectLoading || permissionsLoading || repositoriesLoading) {
     return <Loading />;
   }
 

@@ -170,19 +170,22 @@ export default function ProjectsMenu({
     session?.user?.access === "ADMIN" ||
     session?.user?.access === "PROJECTADMIN";
 
-  // Check if user can see Settings
-  // Settings should be visible to:
+  // Check if user can see Settings. `isProjectAdmin` is the same resolution
+  // the settings pages and their server actions gate on
+  // (`authorizeProjectAdminForProject` / `canManageWebhookConfig`):
   // 1. System ADMIN users (always have access to all projects)
-  // 2. System PROJECTADMIN users (have access to settings for any project they can access)
-  // 3. Users with Settings area permissions (Project Admin role)
-  const { permissions: settingsPerms } = useProjectPermissions(
+  // 2. System PROJECTADMIN users, on projects they are assigned to
+  // 3. Users holding the per-project "Project Admin" role
+  // 4. The project's creator
+  //
+  // This deliberately no longer keys off the `Settings` area's `canAddEdit`
+  // bit: nothing on the server honours that bit, so a role carrying it got a
+  // full settings menu whose every page 404'd and whose every write 403'd.
+  const { isProjectAdmin } = useProjectPermissions(
     safeProjectId,
     ApplicationArea.Settings
   );
-  const canSeeSettings =
-    session?.user?.access === "ADMIN" || // System admins always have access
-    session?.user?.access === "PROJECTADMIN" || // PROJECTADMIN users always see settings for accessible projects
-    (settingsPerms && settingsPerms.canAddEdit); // Has Settings permissions
+  const canSeeSettings = isProjectAdmin;
 
   const menuOptions: MenuOption[] = [
     // Project

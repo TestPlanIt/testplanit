@@ -114,6 +114,20 @@ vi.mock("~/hooks/useReviewFeatureEnabled", () => ({
   }),
 }));
 
+// The page's access gate is `isProjectAdmin` — the server's own
+// `authorizeProjectAdminForProject` resolution, surfaced through this hook —
+// not the raw session access level.
+let mockIsProjectAdmin = true;
+let mockPermissionsLoading = false;
+vi.mock("~/hooks/useProjectPermissions", () => ({
+  useProjectPermissions: () => ({
+    permissions: { canAddEdit: false, canDelete: false, canClose: false },
+    isProjectAdmin: mockIsProjectAdmin,
+    isLoading: mockPermissionsLoading,
+    error: null,
+  }),
+}));
+
 import AdvancedPage from "./page";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -134,6 +148,8 @@ describe("AdvancedPage (per-project advanced settings)", () => {
     mockEditWindowConfig = undefined;
     mockAbandonedRunConfig = undefined;
     mockRunWorkflows = [];
+    mockIsProjectAdmin = true;
+    mockPermissionsLoading = false;
   });
 
   it("(a) ADMIN sees the Advanced page", () => {
@@ -151,8 +167,27 @@ describe("AdvancedPage (per-project advanced settings)", () => {
 
   it("(c) regular user triggers notFound()", () => {
     currentSession = { user: { id: "user-1", access: "USER" } };
+    mockIsProjectAdmin = false;
     expect(() => render(<AdvancedPage />)).toThrow("NEXT_NOT_FOUND");
     expect(mockNotFound).toHaveBeenCalled();
+  });
+
+  it("(c2) a USER holding the per-project Project Admin role sees the page", () => {
+    // Project creators and "Project Admin" role holders are system USERs but
+    // carry project-admin authority; the settings APIs already accept them.
+    currentSession = { user: { id: "user-1", access: "USER" } };
+    mockIsProjectAdmin = true;
+    render(<AdvancedPage />);
+    expect(screen.getByTestId("advanced-settings-page")).toBeInTheDocument();
+    expect(mockNotFound).not.toHaveBeenCalled();
+  });
+
+  it("(c3) waits for the permission resolution before deciding", () => {
+    currentSession = { user: { id: "user-1", access: "USER" } };
+    mockIsProjectAdmin = false;
+    mockPermissionsLoading = true;
+    render(<AdvancedPage />);
+    expect(mockNotFound).not.toHaveBeenCalled();
   });
 
   it("(d) Switch reflects the current value (enabled=true)", () => {

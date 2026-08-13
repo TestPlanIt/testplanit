@@ -16,7 +16,9 @@ import { HelpPopover } from "@/components/ui/help-popover";
 import { useTranslations } from "next-intl";
 import { notFound, useParams } from "next/navigation";
 import { useEffect } from "react";
+import { ApplicationArea } from "~/zenstack/models";
 import { ReportBuilder } from "~/components/reports/ReportBuilder";
+import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { useRequireAuth } from "~/hooks/useRequireAuth";
 
 export default function ProjectReportsPage() {
@@ -59,20 +61,27 @@ export default function ProjectReportsPage() {
     }
   );
 
-  // Access control check - must be ADMIN or PROJECTADMIN
-  useEffect(() => {
-    if (!projectLoading && project && session?.user) {
-      const hasAccess =
-        session.user.access === "ADMIN" ||
-        session.user.access === "PROJECTADMIN";
+  // Reports access is a per-project area permission, not a system access
+  // level. ProjectMenu renders the Reports link off this same Reporting
+  // grant, so gating the page on ADMIN/PROJECTADMIN 404'd every USER whose
+  // effective project role carries Reporting. `useProjectPermissions`
+  // resolves system admins and project admins to all-areas-granted, so they
+  // keep the access they had.
+  const { permissions: reportingPerms, isLoading: permissionsLoading } =
+    useProjectPermissions(projectId, ApplicationArea.Reporting);
+  const canSeeReports = !!(
+    reportingPerms &&
+    (reportingPerms.canAddEdit || reportingPerms.canDelete)
+  );
 
-      if (!hasAccess) {
-        notFound();
-      }
-    } else if (!projectLoading && !project && session?.user) {
+  // Access control check - must hold Reporting permissions on this project
+  useEffect(() => {
+    if (projectLoading || permissionsLoading || !session?.user) return;
+
+    if (!project || !canSeeReports) {
       notFound();
     }
-  }, [project, projectLoading, session]);
+  }, [project, projectLoading, permissionsLoading, canSeeReports, session]);
 
   // Wait for session to load
   if (isAuthLoading) {
@@ -80,7 +89,7 @@ export default function ProjectReportsPage() {
   }
 
   // Wait for data to load
-  if (projectLoading) {
+  if (projectLoading || permissionsLoading) {
     return <Loading />;
   }
 

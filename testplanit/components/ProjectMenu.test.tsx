@@ -12,6 +12,7 @@ const mockUseProjectPermissions = vi.hoisted(() => vi.fn());
 // Stable return object for useProjectPermissions — prevents infinite re-renders
 const stablePermissions = vi.hoisted(() => ({
   permissions: { canAddEdit: true, canDelete: true, canClose: true },
+  isProjectAdmin: true,
   isLoading: false,
   error: null,
 }));
@@ -216,6 +217,36 @@ describe("ProjectsMenu", () => {
       // Return false permissions for all calls (SharedSteps, Reporting, Settings)
       mockUseProjectPermissions.mockReturnValue({
         permissions: { canAddEdit: false, canDelete: false, canClose: false },
+        isProjectAdmin: false,
+        isLoading: false,
+        error: null,
+      });
+      render(<ProjectsMenu isCollapsed={false} onToggleCollapse={vi.fn()} />);
+      expect(screen.queryByTestId("project-menu-section-settings")).toBeNull();
+    });
+
+    it("shows settings section for a USER holding the per-project Project Admin role", () => {
+      // `isProjectAdmin` is the server's own resolution
+      // (`authorizeProjectAdminForProject`), which admits project creators and
+      // per-project "Project Admin" role holders regardless of system access.
+      mockUseSession.mockReturnValue(mockRegularSession);
+      mockUseProjectPermissions.mockReturnValue({
+        permissions: { canAddEdit: false, canDelete: false, canClose: false },
+        isProjectAdmin: true,
+        isLoading: false,
+        error: null,
+      });
+      render(<ProjectsMenu isCollapsed={false} onToggleCollapse={vi.fn()} />);
+      expect(screen.getByTestId("project-menu-section-settings")).toBeDefined();
+    });
+
+    it("hides settings section when only the unenforced Settings area bit is set", () => {
+      // Nothing server-side honours `Settings.canAddEdit`, so a role carrying
+      // it used to get a settings menu whose every page 404'd.
+      mockUseSession.mockReturnValue(mockRegularSession);
+      mockUseProjectPermissions.mockReturnValue({
+        permissions: { canAddEdit: true, canDelete: true, canClose: true },
+        isProjectAdmin: false,
         isLoading: false,
         error: null,
       });
@@ -278,6 +309,7 @@ describe("ProjectsMenu", () => {
               canDelete: false,
               canClose: false,
             },
+            isProjectAdmin: false,
             isLoading: false,
             error: null,
           };

@@ -31,6 +31,8 @@ import { useTranslations } from "next-intl";
 import { notFound, useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { ApplicationArea } from "~/zenstack/models";
+import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { useRequireAuth } from "~/hooks/useRequireAuth";
 import { FeatureOverrides } from "./feature-overrides";
 import { LlmIntegrationsList } from "./llm-integrations-list";
@@ -146,23 +148,23 @@ export default function ProjectAiModelsPage() {
     }
   };
 
-  useEffect(() => {
-    if (!projectLoading && project && session?.user) {
-      // Check access to settings:
-      // 1. System ADMIN users always have access
-      // 2. System PROJECTADMIN users have access to any project they can see
-      // 3. TODO: Users with Project Admin role on this specific project
-      const hasAccess =
-        session.user.access === "ADMIN" ||
-        session.user.access === "PROJECTADMIN";
+  // Check access to settings. `isProjectAdmin` resolves the full ladder that
+  // `authorizeProjectAdminForProject` enforces server-side:
+  // 1. System ADMIN users always have access
+  // 2. System PROJECTADMIN users, on projects they are assigned to
+  // 3. Users with the Project Admin role on this specific project
+  // 4. The project's creator
+  // Tiers 3 and 4 were the standing TODO here, and 404'd until now.
+  const { isProjectAdmin, isLoading: permissionsLoading } =
+    useProjectPermissions(projectId, ApplicationArea.Settings);
 
-      if (!hasAccess) {
-        notFound();
-      }
-    } else if (!projectLoading && !project && session?.user) {
+  useEffect(() => {
+    if (projectLoading || permissionsLoading || !session?.user) return;
+
+    if (!project || !isProjectAdmin) {
       notFound();
     }
-  }, [project, projectLoading, session]);
+  }, [project, projectLoading, permissionsLoading, isProjectAdmin, session]);
 
   // Wait for session to load
   if (isAuthLoading) {
@@ -170,7 +172,12 @@ export default function ProjectAiModelsPage() {
   }
 
   // Wait for all data to load - this prevents the flash
-  if (projectLoading || integrationsLoading || projectIntegrationsLoading) {
+  if (
+    projectLoading ||
+    permissionsLoading ||
+    integrationsLoading ||
+    projectIntegrationsLoading
+  ) {
     return <Loading />;
   }
 

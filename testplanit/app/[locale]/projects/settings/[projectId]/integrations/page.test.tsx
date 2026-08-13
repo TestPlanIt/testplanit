@@ -50,6 +50,17 @@ vi.mock("~/hooks/useRequireAuth", () => ({
   }),
 }));
 
+// The page's access gate is `isProjectAdmin` — the server's own
+// `authorizeProjectAdminForProject` resolution — not the session access level.
+vi.mock("~/hooks/useProjectPermissions", () => ({
+  useProjectPermissions: () => ({
+    permissions: { canAddEdit: false, canDelete: false, canClose: false },
+    isProjectAdmin: true,
+    isLoading: false,
+    error: null,
+  }),
+}));
+
 vi.mock("next-intl", () => ({
   useTranslations: () => (key: string) => key,
 }));

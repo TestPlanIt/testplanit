@@ -19,6 +19,8 @@ import { useTranslations } from "next-intl";
 import { notFound, useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
+import { ApplicationArea } from "~/zenstack/models";
+import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { useRequireAuth } from "~/hooks/useRequireAuth";
 import { DatasetCreateDialog } from "../datasets/dataset-create-dialog";
 import { DatasetsList } from "../datasets/datasets-list";
@@ -58,21 +60,20 @@ export default function ProjectParametersSettingsPage() {
     { enabled: isAuthenticated }
   );
 
-  useEffect(() => {
-    if (!projectLoading && project && session?.user) {
-      const isAssignedToThisProject =
-        Array.isArray(project.assignedUsers) &&
-        project.assignedUsers.length > 0;
-      const hasAccess =
-        session.user.access === "ADMIN" ||
-        (session.user.access === "PROJECTADMIN" && isAssignedToThisProject);
-      if (!hasAccess) notFound();
-    } else if (!projectLoading && !project && session?.user) {
-      notFound();
-    }
-  }, [project, projectLoading, session]);
+  // `isProjectAdmin` resolves the same ladder server-side
+  // (`authorizeProjectAdminForProject`), including the PROJECTADMIN
+  // must-be-assigned rule this guard used to spell out inline, plus the
+  // project-creator and per-project "Project Admin" role tiers it missed.
+  const { isProjectAdmin, isLoading: permissionsLoading } =
+    useProjectPermissions(projectId, ApplicationArea.Settings);
 
-  if (isAuthLoading || projectLoading) {
+  useEffect(() => {
+    if (projectLoading || permissionsLoading || !session?.user) return;
+
+    if (!project || !isProjectAdmin) notFound();
+  }, [project, projectLoading, permissionsLoading, isProjectAdmin, session]);
+
+  if (isAuthLoading || projectLoading || permissionsLoading) {
     return <Loading />;
   }
   if (!project) {

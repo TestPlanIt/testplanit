@@ -989,15 +989,15 @@ export function NextStepOnboarding({ children }: NextStepOnboardingProps) {
     reportingPerms &&
     (reportingPerms.canAddEdit || reportingPerms.canDelete)
   );
-  const { permissions: settingsPerms } = useProjectPermissions(
+  // Matches ProjectMenu and the settings pages: `isProjectAdmin` is the
+  // server's own `authorizeProjectAdminForProject` resolution. Nothing
+  // server-side honours the `Settings` area's `canAddEdit` bit, so steering
+  // the tour by it pointed users at pages that 404.
+  const { isProjectAdmin } = useProjectPermissions(
     safeProjectId,
     ApplicationArea.Settings
   );
-  const canSeeSettings = !!(
-    session?.user?.access === "ADMIN" ||
-    session?.user?.access === "PROJECTADMIN" ||
-    (settingsPerms && settingsPerms.canAddEdit)
-  );
+  const canSeeSettings = !!isProjectAdmin;
 
   // Check for tour state in URL parameters
   const tourParam = searchParams.get("tour");

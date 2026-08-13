@@ -19,6 +19,8 @@ import { useTranslations } from "next-intl";
 import { notFound, useParams, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 import { usePathname, useRouter } from "~/lib/navigation";
+import { ApplicationArea } from "~/zenstack/models";
+import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { useRequireAuth } from "~/hooks/useRequireAuth";
 import { WebhookConfigForm } from "./webhook-config-form";
 import { WebhookDeliveriesTab } from "./webhook-deliveries-tab";
@@ -30,10 +32,10 @@ import { WebhookOutboundForm } from "./webhook-outbound-form";
  * Webhooks are a transport-layer concern that crosses many features
  * (issue-tracker inbound sync, outbound event dispatch to Slack/etc).
  *
- * Access: same project-admin policy as the rest of project settings —
- * the page-level gate is `session.user.access ∈ {ADMIN, PROJECTADMIN}`,
- * and the WebhookConfig ZenStack policy + canManageWebhookConfig
- * server-action helper provide the authoritative authorization.
+ * Access: same project-admin policy as the rest of project settings — the
+ * page-level gate is the `isProjectAdmin` resolution, which mirrors the
+ * WebhookConfig ZenStack policy + canManageWebhookConfig server-action
+ * helper that provide the authoritative authorization.
  */
 export default function ProjectWebhooksPage() {
   const params = useParams();
@@ -82,21 +84,23 @@ export default function ProjectWebhooksPage() {
     { enabled: isAuthenticated }
   );
 
+  // Mirrors `canManageWebhookConfig` (lib/webhooks/auth.ts), the server-side
+  // gate on every WebhookConfig write: system ADMIN, project creator,
+  // per-project "Project Admin" role, or an assigned system PROJECTADMIN.
+  // The old `session.user.access` check 404'd tiers 2 and 3.
+  const { isProjectAdmin, isLoading: permissionsLoading } =
+    useProjectPermissions(projectId, ApplicationArea.Settings);
+
   useEffect(() => {
-    if (!projectLoading && project && session?.user) {
-      const hasAccess =
-        session.user.access === "ADMIN" ||
-        session.user.access === "PROJECTADMIN";
-      if (!hasAccess) notFound();
-    } else if (!projectLoading && !project && session?.user) {
-      notFound();
-    }
-  }, [project, projectLoading, session]);
+    if (projectLoading || permissionsLoading || !session?.user) return;
+
+    if (!project || !isProjectAdmin) notFound();
+  }, [project, projectLoading, permissionsLoading, isProjectAdmin, session]);
 
   if (isAuthLoading) {
     return <Loading />;
   }
-  if (projectLoading) {
+  if (projectLoading || permissionsLoading) {
     return <Loading />;
   }
 

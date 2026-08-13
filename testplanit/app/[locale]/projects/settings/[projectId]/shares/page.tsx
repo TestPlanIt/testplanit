@@ -17,6 +17,8 @@ import { HelpPopover } from "@/components/ui/help-popover";
 import { useTranslations } from "next-intl";
 import { notFound, useParams } from "next/navigation";
 import { useEffect } from "react";
+import { ApplicationArea } from "~/zenstack/models";
+import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { useRequireAuth } from "~/hooks/useRequireAuth";
 
 export default function ProjectSharesPage() {
@@ -59,20 +61,22 @@ export default function ProjectSharesPage() {
     }
   );
 
-  // Access control check - must be ADMIN or PROJECTADMIN
-  useEffect(() => {
-    if (!projectLoading && project && session?.user) {
-      const hasAccess =
-        session.user.access === "ADMIN" ||
-        session.user.access === "PROJECTADMIN";
+  // Project-admin authority, resolved server-side by
+  // `authorizeProjectAdminForProject`: system ADMIN, the project's creator, a
+  // holder of the per-project "Project Admin" role, or a system PROJECTADMIN
+  // assigned to this project. Gating on `session.user.access` alone 404'd the
+  // creator/role-holder tiers that the settings APIs already accept.
+  const { isProjectAdmin, isLoading: permissionsLoading } =
+    useProjectPermissions(projectId, ApplicationArea.Settings);
 
-      if (!hasAccess) {
-        notFound();
-      }
-    } else if (!projectLoading && !project && session?.user) {
+  // Access control check - must hold project-admin authority here
+  useEffect(() => {
+    if (projectLoading || permissionsLoading || !session?.user) return;
+
+    if (!project || !isProjectAdmin) {
       notFound();
     }
-  }, [project, projectLoading, session]);
+  }, [project, projectLoading, permissionsLoading, isProjectAdmin, session]);
 
   // Wait for session to load
   if (isAuthLoading) {
@@ -80,7 +84,7 @@ export default function ProjectSharesPage() {
   }
 
   // Wait for data to load
-  if (projectLoading) {
+  if (projectLoading || permissionsLoading) {
     return <Loading />;
   }
 
