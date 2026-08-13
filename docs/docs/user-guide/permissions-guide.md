@@ -127,7 +127,7 @@ Every user has a system-wide access level that determines their baseline permiss
 
 **Setting Access Levels**:
 
-- An ADMIN can set a user's access level manually: navigate to **Administration** > **Users**, edit the user, and select an access level. Changes take effect immediately.
+- An ADMIN can set a user's access level manually: navigate to **Administration** > **Users**, edit the user, and select an access level. No further step is needed, though an already–signed-in user may keep their previous access for up to a minute — see [How Quickly Changes Take Effect](#how-quickly-changes-take-effect).
 - Access levels can also be assigned **automatically by group role mapping** — a group carries a mapped tier (User, Project Admin, or Admin) that its members inherit, highest-wins, with a configurable fallback default. See [Role mapping](./scim.md#role-mapping) and [Groups → Mapped access tier](./groups.md#mapped-access-tier).
 - Editing the access level of a user who is governed by group mapping switches them to manual control.
 
@@ -514,6 +514,31 @@ Result: Alex gets the role from whichever group permission is evaluated first
 To ensure predictable results, avoid assigning a user to multiple groups with different `SPECIFIC_ROLE` assignments on the same project. Instead, assign the user an explicit project-level permission to override group access.
 :::
 
+### How Quickly Changes Take Effect
+
+To keep permission checks off the database on every request, TestPlanIt caches each user's resolved list of accessible projects for **60 seconds**. Most permission changes are therefore visible within a minute rather than instantly.
+
+**Can take up to 60 seconds**
+
+- Granting or revoking a project permission, for a user or for a group
+- Adding or removing a project assignment
+- Changing a project's default access type or default role
+- Adding or removing a user from a group
+- Changing a user's system access level
+
+**Takes effect on the user's next request**
+
+- Deactivating a user account. The active check is read from the database on every request and is never cached.
+- Changing a user's password, which invalidates their existing sessions.
+
+:::caution
+When access needs to be gone **now** — a departing employee, a suspected compromise — deactivate the account. Deactivation applies on the user's next request, whereas revoking project permissions or removing group membership can take up to a minute. Tidy up the permissions afterwards.
+:::
+
+:::note
+Waiting is what clears the server-side cache. Logging out and back in refreshes browser state, but it does not shorten this cache — a user who signs back in within the window can still be served the previous project list until it expires.
+:::
+
 ## Common Permission Scenarios
 
 ### Scenario 1: New Employee Onboarding
@@ -585,6 +610,8 @@ To ensure predictable results, avoid assigning a user to multiple groups with di
 
 **Result**: User has no access
 
+**If the removal is urgent, start with Option C.** Deactivating the account applies on the user's very next request, because the active check is never cached. Options A, B and step 5 all go through the 60-second project-access cache, so an already–signed-in user can retain access for up to a minute after you save. See [How Quickly Changes Take Effect](#how-quickly-changes-take-effect).
+
 ## Troubleshooting Permissions
 
 ### "Access Denied" to Project
@@ -641,17 +668,22 @@ To ensure predictable results, avoid assigning a user to multiple groups with di
 
 **Check**:
 
-1. Browser cache
-2. User logged out/in
-3. Permission changes saved
-4. Session refreshed
+1. How long ago the change was saved — project access is cached for 60 seconds
+2. Permission changes actually saved
+3. Browser cache
+4. Whether the change is one that applies immediately (see below)
 
 **Solutions**:
 
-- Hard refresh browser (Ctrl+Shift+R / Cmd+Shift+R)
-- Log out and log back in
-- Verify changes were saved
-- Wait a moment for changes to propagate
+- Wait up to 60 seconds and retry. This is the usual answer, and it resolves on its own — see [How Quickly Changes Take Effect](#how-quickly-changes-take-effect) for which changes are affected.
+- Verify the change was saved
+- Hard refresh browser (Ctrl+Shift+R / Cmd+Shift+R) to rule out stale page state
+
+:::note
+Logging out and back in does **not** shorten the 60-second server-side cache — the entry is keyed to the user, not to the session. Use it to rule out browser-side staleness, not as a way to force a permission change through.
+:::
+
+If the change still has not applied after a minute, it is not this cache. Confirm the change was saved, then work through [Access Denied to Project](#access-denied-to-project) — the permission may be being overridden by a higher-precedence rule such as a per-user `NO_ACCESS`.
 
 ## Best Practices
 
