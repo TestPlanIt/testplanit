@@ -6,12 +6,20 @@ import {
   CreateIssueData,
   ExternalMilestone,
   IssueAdapterCapabilities,
+  IssueAttachmentMeta,
   IssueComment,
   IssueData,
   IssueSearchOptions,
   LinkedIssueRef,
   UpdateIssueData,
 } from "./IssueAdapter";
+
+/**
+ * Hard cap on attachment downloads, mirroring the app's own 10MB upload
+ * ceiling. Callers with stricter needs (the LLM context pipeline caps
+ * images at 4MB) filter on the listing's byteSize before downloading.
+ */
+const MAX_ATTACHMENT_DOWNLOAD_BYTES = 10 * 1024 * 1024;
 import {
   buildAuthHeader,
   detectJiraDeployment,
@@ -561,6 +569,20 @@ export class JiraAdapter extends BaseAdapter {
   /**
    * Override makeRequest to handle Jira's API key authentication
    */
+  /**
+   * Jira's API-key mode keeps its own credential state (authCreds +
+   * authScheme) instead of the base authData; surface it so the base
+   * class's binary path (makeBinaryRequest) authenticates correctly.
+   */
+  protected buildAuthHeaders(): Record<string, string> {
+    if (this.apiKeyAuthActive) {
+      return {
+        Authorization: buildAuthHeader(this.authCreds, this.authScheme),
+      };
+    }
+    return super.buildAuthHeaders();
+  }
+
   protected async makeRequest<T = any>(
     url: string,
     options: RequestInit = {}
@@ -769,6 +791,65 @@ export class JiraAdapter extends BaseAdapter {
       throw new Error("Failed to upload attachment - no id returned");
     }
     return { id: String(attachment.id), url: attachment.content ?? "" };
+  }
+
+  /**
+   * List an issue's attachments. A dedicated fields=attachment fetch on
+   * purpose — widening the shared getIssue/searchIssues field list would
+   * grow every sync payload for a per-generation need.
+   */
+  async listAttachments(issueId: string): Promise<IssueAttachmentMeta[]> {
+    const response = await this.makeRequest<{
+      fields?: {
+        attachment?: Array<{
+          id: string | number;
+          filename?: string;
+          mimeType?: string;
+          size?: number;
+          created?: string;
+          content?: string;
+        }>;
+      };
+    }>(
+      this.buildUrl(
+        `/rest/api/${this.apiVersion}/issue/${issueId}?fields=attachment`
+      )
+    );
+
+    return (response.fields?.attachment ?? []).map((att) => ({
+      id: String(att.id),
+      filename: att.filename ?? `attachment-${att.id}`,
+      mimeType: att.mimeType,
+      byteSize: att.size,
+      createdAt: att.created ? new Date(att.created) : undefined,
+      contentUrl: att.content,
+    }));
+  }
+
+  /**
+   * Download one attachment's bytes.
+   *
+   * Cloud: the stable content endpoint 302s to a pre-signed media URL;
+   * Node's fetch follows the redirect and drops the Authorization header
+   * cross-origin, which the signed URL neither needs nor accepts.
+   * Server/DC: the listing's `content` URL (`/secure/attachment/…`) is
+   * same-origin, so the auth header rides along.
+   */
+  async downloadAttachment(
+    meta: IssueAttachmentMeta
+  ): Promise<{ buffer: Buffer; mimeType?: string }> {
+    const url =
+      this.deployment === "server" && meta.contentUrl
+        ? meta.contentUrl
+        : this.buildUrl(
+            `/rest/api/${this.apiVersion}/attachment/content/${meta.id}`
+          );
+
+    const { buffer, contentType } = await this.makeBinaryRequest(
+      url,
+      MAX_ATTACHMENT_DOWNLOAD_BYTES
+    );
+    return { buffer, mimeType: contentType ?? meta.mimeType };
   }
 
   async getIssue(issueId: string): Promise<IssueData> {
@@ -1998,6 +2079,30 @@ export class JiraAdapter extends BaseAdapter {
         }
         const tag = node.type === "tableHeader" ? "th" : "td";
         return `<${tag}>${cellContent}</${tag}>`;
+
+      case "mediaSingle":
+      case "mediaGroup":
+        // Containers around media nodes — recurse so the placeholders below
+        // surface. Previously these fell through to default: and, having no
+        // text children, rendered as "" — every embedded screenshot silently
+        // vanished from the issue description.
+        return (node.content ?? [])
+          .map((child: any) => this.convertAdfNodeToHtml(child))
+          .join("");
+
+      case "media":
+      case "mediaInline": {
+        // The bytes live in Jira's media service (and appear in the issue's
+        // attachment list); here we only make the text acknowledge the image
+        // so descriptions read coherently and downstream consumers (LLM
+        // prompts, previews) know something visual was here.
+        const label =
+          node.attrs?.alt ||
+          node.attrs?.title ||
+          node.attrs?.id ||
+          "attachment";
+        return `<p>[image: ${this.escapeHtml(String(label))}]</p>`;
+      }
 
       default:
         // For unknown types, try to extract content from children

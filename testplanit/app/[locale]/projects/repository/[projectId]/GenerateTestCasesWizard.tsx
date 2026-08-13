@@ -176,6 +176,13 @@ interface GeneratedTestCase {
 }
 
 /** Derive folder name from a URL — mirrors the logic in importGeneratedTestCases.ts */
+/** Whole-number KB/MB label for the context-image picker. */
+function formatBytes(bytes: number): string {
+  if (bytes >= 1024 * 1024) return `${Math.round(bytes / (1024 * 1024))} MB`;
+  if (bytes >= 1024) return `${Math.round(bytes / 1024)} KB`;
+  return `${bytes} B`;
+}
+
 function folderNameFromUrl(url: string): string {
   try {
     const parsed = new URL(url);
@@ -1369,6 +1376,27 @@ export function GenerateTestCasesWizard({
   const isAdmin = session?.user?.access === "ADMIN";
   const [linkedIssueRefs, setLinkedIssueRefs] = useState<LinkedIssueRef[]>([]);
   const [droppedLinkedIssues, setDroppedLinkedIssues] = useState<string[]>([]);
+  // Image attachments of the selected issue offered as generation context.
+  // Auto-checked up to the server's cap; the user can uncheck before
+  // generating. `tooLarge` entries render disabled.
+  const [contextImageOptions, setContextImageOptions] = useState<
+    Array<{
+      id: string;
+      filename: string;
+      byteSize?: number;
+      tooLarge: boolean;
+      checked: boolean;
+    }>
+  >([]);
+  const [contextImageMax, setContextImageMax] = useState(5);
+  const [contextVisionSupported, setContextVisionSupported] = useState(true);
+  // What the outline actually sent (metadata from the enrichment envelope),
+  // surfaced on the review step.
+  const [contextImagesUsed, setContextImagesUsed] = useState<{
+    included: Array<{ filename: string }>;
+    skipped: Array<{ filename: string; reason: string }>;
+    imagesOmittedForVision: number;
+  } | null>(null);
   const [generatedTestCases, setGeneratedTestCases] = useState<
     GeneratedTestCase[]
   >([]);
@@ -1486,6 +1514,70 @@ export function GenerateTestCasesWizard({
       });
     return () => ctrl.abort();
   }, [selectedIssue, sourceType, projectId]);
+
+  // Offer the selected issue's image attachments as generation context.
+  // Metadata only; the first `maxImages` non-oversized entries come
+  // pre-checked.
+  useEffect(() => {
+    if (!selectedIssue || sourceType !== "issue") {
+      setContextImageOptions([]);
+      return;
+    }
+    const issueKey =
+      selectedIssue.key ||
+      selectedIssue.externalKey ||
+      String(selectedIssue.id);
+    const ctrl = new AbortController();
+    fetch("/api/llm/generate-test-cases/context-images", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        projectId,
+        issueKey,
+        ...(seedIssue?.integrationId
+          ? { integrationId: seedIssue.integrationId }
+          : {}),
+      }),
+      signal: ctrl.signal,
+    })
+      .then((r) =>
+        r.ok ? r.json() : { attachments: [], visionSupported: true }
+      )
+      .then(
+        (data: {
+          attachments?: Array<{
+            id: string;
+            filename: string;
+            byteSize?: number;
+            tooLarge: boolean;
+          }>;
+          visionSupported?: boolean;
+          maxImages?: number;
+        }) => {
+          const max = data.maxImages ?? 5;
+          let checkedCount = 0;
+          setContextImageMax(max);
+          setContextVisionSupported(data.visionSupported ?? true);
+          setContextImageOptions(
+            (data.attachments ?? []).map((att) => {
+              const checked = !att.tooLarge && checkedCount < max;
+              if (checked) checkedCount++;
+              return { ...att, checked };
+            })
+          );
+        }
+      )
+      .catch((err) => {
+        if (err?.name !== "AbortError") {
+          console.warn(
+            "[GenerateTestCasesWizard] context-images fetch failed:",
+            err
+          );
+          setContextImageOptions([]);
+        }
+      });
+    return () => ctrl.abort();
+  }, [selectedIssue, sourceType, projectId, seedIssue?.integrationId]);
 
   const [isImporting, setIsImporting] = useState(false);
   const [showImportLoader, setShowImportLoader] = useState(false);
@@ -2782,6 +2874,7 @@ export function GenerateTestCasesWizard({
     setGeneratedTestCases([]);
     setSelectedTestCases(new Set());
     setDroppedLinkedIssues([]);
+    setContextImagesUsed(null);
     setLlmWarnings([]);
     setCaseOutlines([]);
     setExpandedCases([]);
@@ -2907,6 +3000,18 @@ export function GenerateTestCasesWizard({
           // outline endpoint accepts-but-ignores includeParameters — kept for
           // uniform wizard plumbing.
           includeParameters,
+          // Selected issue-attachment images (opaque ids — the server
+          // re-lists and intersects; bytes never travel through the client).
+          ...(sourceType === "issue" &&
+          contextImageOptions.some((o) => o.checked)
+            ? {
+                contextImages: {
+                  attachmentIds: contextImageOptions
+                    .filter((o) => o.checked)
+                    .map((o) => o.id),
+                },
+              }
+            : {}),
         }),
         signal: abortController.signal,
       });
@@ -2946,6 +3051,31 @@ export function GenerateTestCasesWizard({
         linkedIssues: enrichment?.linkedIssues ?? [],
       };
       setDroppedLinkedIssues(enrichment?.droppedLinkedIssues ?? []);
+      // Image context the outline actually used, for the review-step panel;
+      // the stash id lets every expand call reuse the same images
+      // server-side.
+      const contextImagesEnvelope = enrichment?.contextImages as
+        | {
+            contextId?: string;
+            included?: Array<{ filename: string }>;
+            skipped?: Array<{ filename: string; reason: string }>;
+            imagesOmittedForVision?: number;
+          }
+        | undefined;
+      setContextImagesUsed(
+        contextImagesEnvelope &&
+          ((contextImagesEnvelope.included?.length ?? 0) > 0 ||
+            (contextImagesEnvelope.skipped?.length ?? 0) > 0 ||
+            (contextImagesEnvelope.imagesOmittedForVision ?? 0) > 0)
+          ? {
+              included: contextImagesEnvelope.included ?? [],
+              skipped: contextImagesEnvelope.skipped ?? [],
+              imagesOmittedForVision:
+                contextImagesEnvelope.imagesOmittedForVision ?? 0,
+            }
+          : null
+      );
+      const contextImagesId = contextImagesEnvelope?.contextId;
 
       // Show outline cards immediately — user sees titles before details arrive
       setCaseOutlines(
@@ -2987,6 +3117,7 @@ export function GenerateTestCasesWizard({
                     outline,
                     autoGenerateTags,
                     includeParameters,
+                    ...(contextImagesId ? { contextImagesId } : {}),
                   }),
                   signal: ac.signal,
                 }
@@ -4183,6 +4314,95 @@ export function GenerateTestCasesWizard({
                                           </div>
                                         </div>
                                       )}
+
+                                      {/* Image attachments offered as generation context */}
+                                      {contextImageOptions.length > 0 && (
+                                        <div data-testid="context-images-picker">
+                                          <Label className="text-xs font-medium text-muted-foreground mb-1">
+                                            {t(
+                                              "generateTestCases.contextImages.pickerHeading",
+                                              { max: contextImageMax }
+                                            )}
+                                          </Label>
+                                          <div className="text-sm text-foreground space-y-1">
+                                            {contextImageOptions.map((opt) => {
+                                              const checkedCount =
+                                                contextImageOptions.filter(
+                                                  (o) => o.checked
+                                                ).length;
+                                              const disabled =
+                                                opt.tooLarge ||
+                                                (!opt.checked &&
+                                                  checkedCount >=
+                                                    contextImageMax);
+                                              return (
+                                                <div
+                                                  key={opt.id}
+                                                  className="flex items-center gap-2"
+                                                >
+                                                  <Checkbox
+                                                    id={`context-image-${opt.id}`}
+                                                    checked={opt.checked}
+                                                    disabled={disabled}
+                                                    onCheckedChange={(
+                                                      checked
+                                                    ) => {
+                                                      setContextImageOptions(
+                                                        (prev) =>
+                                                          prev.map((o) =>
+                                                            o.id === opt.id
+                                                              ? {
+                                                                  ...o,
+                                                                  checked:
+                                                                    checked ===
+                                                                    true,
+                                                                }
+                                                              : o
+                                                          )
+                                                      );
+                                                    }}
+                                                  />
+                                                  <label
+                                                    htmlFor={`context-image-${opt.id}`}
+                                                    className={
+                                                      opt.tooLarge
+                                                        ? "text-muted-foreground line-through"
+                                                        : ""
+                                                    }
+                                                  >
+                                                    {opt.filename}
+                                                  </label>
+                                                  {typeof opt.byteSize ===
+                                                    "number" && (
+                                                    <span className="text-xs text-muted-foreground">
+                                                      {formatBytes(
+                                                        opt.byteSize
+                                                      )}
+                                                    </span>
+                                                  )}
+                                                  {opt.tooLarge && (
+                                                    <Badge
+                                                      variant="outline"
+                                                      className="text-xs"
+                                                    >
+                                                      {t(
+                                                        "generateTestCases.contextImages.tooLarge"
+                                                      )}
+                                                    </Badge>
+                                                  )}
+                                                </div>
+                                              );
+                                            })}
+                                            {!contextVisionSupported && (
+                                              <p className="text-xs text-muted-foreground">
+                                                {t(
+                                                  "generateTestCases.contextImages.noVisionHint"
+                                                )}
+                                              </p>
+                                            )}
+                                          </div>
+                                        </div>
+                                      )}
                                     </div>
 
                                     <Button
@@ -5115,6 +5335,62 @@ export function GenerateTestCasesWizard({
                               </AlertDescription>
                             </Alert>
                           )}
+                          {contextImagesUsed &&
+                            contextImagesUsed.imagesOmittedForVision > 0 && (
+                              <Alert data-testid="context-images-vision-skipped">
+                                <AlertTriangle className="h-4 w-4" />
+                                <AlertTitle>
+                                  {t(
+                                    "generateTestCases.contextImages.visionSkippedTitle"
+                                  )}
+                                </AlertTitle>
+                                <AlertDescription>
+                                  {t(
+                                    "generateTestCases.contextImages.visionSkipped",
+                                    {
+                                      count:
+                                        contextImagesUsed.imagesOmittedForVision,
+                                    }
+                                  )}
+                                </AlertDescription>
+                              </Alert>
+                            )}
+                          {contextImagesUsed &&
+                            (contextImagesUsed.included.length > 0 ||
+                              contextImagesUsed.skipped.length > 0) && (
+                              <div
+                                className="text-xs text-muted-foreground"
+                                data-testid="context-images-summary"
+                              >
+                                {contextImagesUsed.included.length > 0 && (
+                                  <p>
+                                    {t(
+                                      "generateTestCases.contextImages.includedSummary",
+                                      {
+                                        count:
+                                          contextImagesUsed.included.length,
+                                        names: contextImagesUsed.included
+                                          .map((i) => i.filename)
+                                          .join(", "),
+                                      }
+                                    )}
+                                  </p>
+                                )}
+                                {contextImagesUsed.skipped.length > 0 && (
+                                  <p>
+                                    {t(
+                                      "generateTestCases.contextImages.skippedSummary",
+                                      {
+                                        count: contextImagesUsed.skipped.length,
+                                        names: contextImagesUsed.skipped
+                                          .map((s) => s.filename)
+                                          .join(", "),
+                                      }
+                                    )}
+                                  </p>
+                                )}
+                              </div>
+                            )}
                           {caseOutlines.length > 0 && (
                             <div className="space-y-1.5">
                               <div className="flex items-center justify-between text-xs text-muted-foreground">

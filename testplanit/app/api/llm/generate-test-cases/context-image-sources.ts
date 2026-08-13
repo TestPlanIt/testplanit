@@ -19,6 +19,7 @@ import type {
 import {
   isAllowedImageMime,
   MAX_CONTEXT_IMAGES,
+  MAX_IMAGE_BYTES,
   type ContextImage,
   type ContextImageSource,
 } from "~/lib/llm/context-images";
@@ -101,6 +102,10 @@ export async function resolveIssueAttachmentImages(args: {
   const selected = new Set(attachmentIds);
   const candidates = listed
     .filter((meta) => selected.has(meta.id))
+    // Skip files the listing already knows are over the image cap — no
+    // point downloading bytes the sanitizer would reject. Files with an
+    // unknown size are downloaded and caught by the post-download check.
+    .filter((meta) => !meta.byteSize || meta.byteSize <= MAX_IMAGE_BYTES)
     .map((meta) => ({ meta, mimeType: resolveAttachmentImageMime(meta) }))
     .filter(
       (c): c is { meta: IssueAttachmentMeta; mimeType: string } => !!c.mimeType

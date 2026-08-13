@@ -205,28 +205,16 @@ export abstract class BaseAdapter implements IssueAdapter {
   }
 
   /**
-   * Make HTTP request with authentication headers
+   * Authentication headers for the current authData, per provider. Shared
+   * by makeRequest (JSON) and makeBinaryRequest (bytes).
    */
-  protected async makeRequest<T>(
-    url: string,
-    options: RequestInit = {}
-  ): Promise<T> {
+  protected buildAuthHeaders(): Record<string, string> {
     if (!this.authData) {
       throw new Error("Not authenticated");
     }
 
-    const headers: Record<string, string> = {
-      "Content-Type": "application/json",
-      ...((options.headers as Record<string, string>) || {}),
-    };
+    const headers: Record<string, string> = {};
 
-    // A FormData body must let fetch set the multipart boundary itself — a
-    // preset JSON Content-Type would corrupt the upload.
-    if (options.body instanceof FormData) {
-      delete headers["Content-Type"];
-    }
-
-    // Add authentication headers based on auth type
     switch (this.authData.type) {
       case "oauth":
         headers["Authorization"] = `Bearer ${this.authData.accessToken}`;
@@ -262,12 +250,39 @@ export abstract class BaseAdapter implements IssueAdapter {
           }
         }
         break;
-      case "basic":
+      case "basic": {
         const credentials = Buffer.from(
           `${this.authData.username}:${this.authData.password}`
         ).toString("base64");
         headers["Authorization"] = `Basic ${credentials}`;
         break;
+      }
+    }
+
+    return headers;
+  }
+
+  /**
+   * Make HTTP request with authentication headers
+   */
+  protected async makeRequest<T>(
+    url: string,
+    options: RequestInit = {}
+  ): Promise<T> {
+    if (!this.authData) {
+      throw new Error("Not authenticated");
+    }
+
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+      ...((options.headers as Record<string, string>) || {}),
+      ...this.buildAuthHeaders(),
+    };
+
+    // A FormData body must let fetch set the multipart boundary itself — a
+    // preset JSON Content-Type would corrupt the upload.
+    if (options.body instanceof FormData) {
+      delete headers["Content-Type"];
     }
 
     try {
@@ -310,6 +325,68 @@ export abstract class BaseAdapter implements IssueAdapter {
       }
 
       throw error;
+    }
+  }
+
+  /**
+   * Authenticated GET returning raw bytes (attachment downloads).
+   * `makeRequest` always parses JSON so it cannot serve binary content.
+   *
+   * `maxBytes` is a hard cap enforced twice: via Content-Length before the
+   * body is read, and on the actual buffer afterwards (servers may omit or
+   * understate Content-Length). Redirects are followed by fetch; Node's
+   * fetch drops the Authorization header on cross-origin redirects, which
+   * is exactly right for the providers that 302 to pre-signed CDN URLs
+   * (Jira Cloud media).
+   */
+  protected async makeBinaryRequest(
+    url: string,
+    maxBytes: number
+  ): Promise<{ buffer: Buffer; contentType?: string }> {
+    // Auth comes from buildAuthHeaders(), which throws when unauthenticated
+    // — subclasses with their own auth state (Jira's API-key mode) override
+    // it rather than this method.
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), this.requestTimeout);
+    try {
+      const response = await fetch(url, {
+        headers: this.buildAuthHeaders(),
+        signal: controller.signal,
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+      }
+
+      const declaredLength = Number(response.headers.get("content-length"));
+      if (Number.isFinite(declaredLength) && declaredLength > maxBytes) {
+        throw new Error(
+          `Binary response too large: ${declaredLength} bytes (max ${maxBytes})`
+        );
+      }
+
+      const buffer = Buffer.from(await response.arrayBuffer());
+      if (buffer.byteLength > maxBytes) {
+        throw new Error(
+          `Binary response too large: ${buffer.byteLength} bytes (max ${maxBytes})`
+        );
+      }
+
+      return {
+        buffer,
+        contentType:
+          response.headers.get("content-type")?.split(";")[0]?.trim() ||
+          undefined,
+      };
+    } catch (error: any) {
+      if (error.name === "AbortError") {
+        throw new Error(
+          `Request timeout after ${this.requestTimeout}ms: ${url}`
+        );
+      }
+      throw error;
+    } finally {
+      clearTimeout(timeoutId);
     }
   }
 

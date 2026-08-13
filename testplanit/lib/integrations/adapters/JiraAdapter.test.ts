@@ -193,6 +193,169 @@ describe("JiraAdapter", () => {
     });
   });
 
+  describe("listAttachments / downloadAttachment", () => {
+    beforeEach(async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ accountId: "test-user" }),
+      });
+      await adapter.authenticate({
+        type: "api_key",
+        email: "test@example.com",
+        apiToken: "test-token",
+        baseUrl: "https://test.atlassian.net",
+      });
+    });
+
+    it("lists via a dedicated fields=attachment fetch and maps metadata", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: () =>
+          Promise.resolve({
+            fields: {
+              attachment: [
+                {
+                  id: 10500,
+                  filename: "screenshot.png",
+                  mimeType: "image/png",
+                  size: 4096,
+                  created: "2026-01-15T10:00:00.000Z",
+                  content:
+                    "https://test.atlassian.net/rest/api/3/attachment/content/10500",
+                },
+                { id: 10501 },
+              ],
+            },
+          }),
+      });
+
+      const result = await adapter.listAttachments!("TEST-123");
+
+      const [url] = mockFetch.mock.calls.at(-1)!;
+      expect(url).toBe(
+        "https://test.atlassian.net/rest/api/3/issue/TEST-123?fields=attachment"
+      );
+      expect(result).toEqual([
+        {
+          id: "10500",
+          filename: "screenshot.png",
+          mimeType: "image/png",
+          byteSize: 4096,
+          createdAt: new Date("2026-01-15T10:00:00.000Z"),
+          contentUrl:
+            "https://test.atlassian.net/rest/api/3/attachment/content/10500",
+        },
+        {
+          id: "10501",
+          filename: "attachment-10501",
+          mimeType: undefined,
+          byteSize: undefined,
+          createdAt: undefined,
+          contentUrl: undefined,
+        },
+      ]);
+    });
+
+    it("returns [] for an issue with no attachments", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve({ fields: {} }),
+      });
+      expect(await adapter.listAttachments!("TEST-123")).toEqual([]);
+    });
+
+    it("downloads Cloud attachments via the stable content endpoint with auth", async () => {
+      const bytes = new Uint8Array([1, 2, 3, 4]);
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        headers: new Headers({
+          "content-type": "image/png",
+          "content-length": String(bytes.byteLength),
+        }),
+        arrayBuffer: () => Promise.resolve(bytes.buffer),
+      });
+
+      const result = await adapter.downloadAttachment!({
+        id: "10500",
+        filename: "screenshot.png",
+        mimeType: "image/jpeg", // listing mime loses to the response header
+        contentUrl:
+          "https://test.atlassian.net/rest/api/3/attachment/content/10500",
+      });
+
+      const [url, options] = mockFetch.mock.calls.at(-1)!;
+      expect(url).toBe(
+        "https://test.atlassian.net/rest/api/3/attachment/content/10500"
+      );
+      expect(options.headers.Authorization).toMatch(/^Basic /);
+      expect(result.mimeType).toBe("image/png");
+      expect(result.buffer).toEqual(Buffer.from(bytes));
+    });
+
+    it("rejects oversized downloads before reading the body", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        headers: new Headers({
+          "content-type": "image/png",
+          "content-length": String(50 * 1024 * 1024),
+        }),
+        arrayBuffer: () => {
+          throw new Error("body must not be read");
+        },
+      });
+
+      await expect(
+        adapter.downloadAttachment!({ id: "10500", filename: "huge.png" })
+      ).rejects.toThrow(/too large/);
+    });
+  });
+
+  describe("ADF media placeholders", () => {
+    it("renders media/mediaSingle as [image: …] instead of dropping them", () => {
+      const adfContent = [
+        {
+          type: "paragraph",
+          content: [{ type: "text", text: "Proposed layout:" }],
+        },
+        {
+          type: "mediaSingle",
+          content: [
+            {
+              type: "media",
+              attrs: { id: "media-uuid-1", alt: "login-mockup.png" },
+            },
+          ],
+        },
+      ];
+
+      const html = (adapter as any).adfToHtml(adfContent);
+
+      expect(html).toContain("Proposed layout:");
+      expect(html).toContain("[image: login-mockup.png]");
+    });
+
+    it("falls back to the media id, escaped, when no alt exists", () => {
+      const adfContent = [
+        {
+          type: "mediaGroup",
+          content: [
+            { type: "media", attrs: { id: "<uuid&>" } },
+            { type: "media", attrs: {} },
+          ],
+        },
+      ];
+
+      const html = (adapter as any).adfToHtml(adfContent);
+
+      expect(html).toContain("[image: &lt;uuid&amp;&gt;]");
+      expect(html).toContain("[image: attachment]");
+    });
+  });
+
   describe("authenticate", () => {
     it("should authenticate successfully with API key", async () => {
       mockFetch.mockResolvedValueOnce({
