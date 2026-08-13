@@ -41,6 +41,7 @@ import {
 } from "~/lib/llm/context-images";
 import { stashContextImages } from "~/lib/llm/context-image-stash";
 import {
+  resolveEditorImages,
   resolveIssueAttachmentImages,
   type ContextImagesRequestBody,
 } from "../context-image-sources";
@@ -65,6 +66,7 @@ export async function POST(request: NextRequest) {
       integrationId: sourceIntegrationId,
       issueRef,
       contextImages: contextImagesRequest,
+      documentDoc,
     } = body as {
       projectId: number;
       issue: IssueData;
@@ -87,6 +89,9 @@ export async function POST(request: NextRequest) {
       // server re-derives candidates from its own sources and intersects;
       // client-supplied URLs/bytes are never accepted.
       contextImages?: ContextImagesRequestBody;
+      // Document-tab rich text (TipTap JSON). Source of truth for editor
+      // image srcs; resolution only reads own storage / data URIs.
+      documentDoc?: unknown;
     };
 
     if (!projectId || !issue) {
@@ -254,15 +259,21 @@ export async function POST(request: NextRequest) {
     const sourceProvider = project.projectIntegrations.find(
       (pi) => pi.integrationId === targetIntegrationId
     )?.integration.provider;
-    const resolvedImages: ContextImage[] = await resolveIssueAttachmentImages({
-      adapter,
-      issueKey: issue.key,
-      attachmentIds: contextImagesRequest?.attachmentIds,
-      source:
-        sourceProvider === "AZURE_DEVOPS"
-          ? "ado-attachment"
-          : "jira-attachment",
-    });
+    const resolvedImages: ContextImage[] = [
+      ...(await resolveIssueAttachmentImages({
+        adapter,
+        issueKey: issue.key,
+        attachmentIds: contextImagesRequest?.attachmentIds,
+        source:
+          sourceProvider === "AZURE_DEVOPS"
+            ? "ado-attachment"
+            : "jira-attachment",
+      })),
+      ...(await resolveEditorImages(
+        documentDoc,
+        contextImagesRequest?.editorSrcs
+      )),
+    ];
     const { included: sanitizedImages, skipped: skippedImages } =
       sanitizeContextImages(resolvedImages);
     const visionSupported =

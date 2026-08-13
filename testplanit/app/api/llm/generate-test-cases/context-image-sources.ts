@@ -23,6 +23,7 @@ import {
   type ContextImage,
   type ContextImageSource,
 } from "~/lib/llm/context-images";
+import { resolveEditorMediaAttachments } from "~/lib/integrations/editorMediaAttachments";
 
 /** The wizard's `contextImages` request body field. */
 export interface ContextImagesRequestBody {
@@ -59,6 +60,42 @@ export function resolveAttachmentImageMime(
   // back to the filename extension before rejecting.
   const guessed = imageMimeFromFilename(meta.filename);
   return isAllowedImageMime(guessed) ? guessed : undefined;
+}
+
+/**
+ * Resolve the selected embedded images of a rich-text document (the
+ * wizard's Document tab) into ContextImages. The document JSON itself is
+ * the source of truth: srcs are extracted from the submitted doc and
+ * intersected with the selection, and `resolveEditorMediaAttachments` only
+ * ever reads this instance's own storage or data URIs (external URLs are
+ * never fetched), so a crafted selection cannot reach anything else.
+ */
+export async function resolveEditorImages(
+  documentDoc: unknown,
+  selectedSrcs: string[] | undefined
+): Promise<ContextImage[]> {
+  if (!documentDoc || !selectedSrcs?.length) return [];
+
+  const selected = new Set(selectedSrcs);
+  const resolved = await resolveEditorMediaAttachments(documentDoc);
+
+  return resolved
+    .filter(
+      (att) =>
+        selected.has(att.src) &&
+        !!att.mimeType &&
+        isAllowedImageMime(att.mimeType)
+    )
+    .slice(0, MAX_CONTEXT_IMAGES + 1)
+    .map((att, index) => ({
+      id: `editor:${index}:${att.filename}`,
+      source: "editor" as const,
+      filename: att.filename,
+      mimeType: att.mimeType!.toLowerCase(),
+      base64: att.buffer.toString("base64"),
+      byteSize: att.buffer.byteLength,
+      origin: { editorSrc: att.src },
+    }));
 }
 
 /**

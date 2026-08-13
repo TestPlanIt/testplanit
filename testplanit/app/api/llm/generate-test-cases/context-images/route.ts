@@ -31,10 +31,12 @@ export async function POST(request: NextRequest) {
       projectId?: number;
       integrationId?: number;
       issueKey?: string;
+      /** Resolve only the vision flag (document tab — no issue involved). */
+      visionOnly?: boolean;
     };
-    const { projectId, integrationId, issueKey } = body;
+    const { projectId, integrationId, issueKey, visionOnly } = body;
 
-    if (!projectId || !issueKey) {
+    if (!projectId || (!issueKey && !visionOnly)) {
       return NextResponse.json(
         { error: "Missing required parameters" },
         { status: 400 }
@@ -99,9 +101,6 @@ export async function POST(request: NextRequest) {
       integrationId && allowedIntegrationIds.has(integrationId)
         ? integrationId
         : project.projectIntegrations[0]?.integrationId;
-    if (!targetIntegrationId) {
-      return NextResponse.json({ attachments: [], visionSupported: false });
-    }
 
     let attachments: Array<{
       id: string;
@@ -110,29 +109,31 @@ export async function POST(request: NextRequest) {
       /** Over the per-image cap — render disabled in the picker. */
       tooLarge: boolean;
     }> = [];
-    try {
-      const adapter = await IntegrationManager.getInstance().getAdapter(
-        String(targetIntegrationId)
-      );
-      if (adapter?.listAttachments) {
-        const listed = await adapter.listAttachments(issueKey);
-        attachments = listed
-          .filter((meta) => !!resolveAttachmentImageMime(meta))
-          .map((meta) => ({
-            id: meta.id,
-            filename: meta.filename,
-            byteSize: meta.byteSize,
-            tooLarge: !!meta.byteSize && meta.byteSize > MAX_IMAGE_BYTES,
-          }));
+    if (!visionOnly && issueKey && targetIntegrationId) {
+      try {
+        const adapter = await IntegrationManager.getInstance().getAdapter(
+          String(targetIntegrationId)
+        );
+        if (adapter?.listAttachments) {
+          const listed = await adapter.listAttachments(issueKey);
+          attachments = listed
+            .filter((meta) => !!resolveAttachmentImageMime(meta))
+            .map((meta) => ({
+              id: meta.id,
+              filename: meta.filename,
+              byteSize: meta.byteSize,
+              tooLarge: !!meta.byteSize && meta.byteSize > MAX_IMAGE_BYTES,
+            }));
+        }
+      } catch (err) {
+        console.warn(
+          `[context-images] Failed to list attachments for %s:`,
+          issueKey,
+          err
+        );
+        // Fail soft: the picker simply shows no images.
+        attachments = [];
       }
-    } catch (err) {
-      console.warn(
-        `[context-images] Failed to list attachments for %s:`,
-        issueKey,
-        err
-      );
-      // Fail soft: the picker simply shows no images.
-      attachments = [];
     }
 
     // Whether the project's resolved generation model takes image input —

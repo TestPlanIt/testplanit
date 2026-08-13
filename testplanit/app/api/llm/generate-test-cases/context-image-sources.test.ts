@@ -4,9 +4,17 @@ import type {
   IssueAttachmentMeta,
 } from "~/lib/integrations/adapters/IssueAdapter";
 import { MAX_CONTEXT_IMAGES } from "~/lib/llm/context-images";
+
+const mockResolveEditorMediaAttachments = vi.fn();
+vi.mock("~/lib/integrations/editorMediaAttachments", () => ({
+  resolveEditorMediaAttachments: (...args: unknown[]) =>
+    mockResolveEditorMediaAttachments(...args),
+}));
+
 import {
   imageMimeFromFilename,
   resolveAttachmentImageMime,
+  resolveEditorImages,
   resolveIssueAttachmentImages,
 } from "./context-image-sources";
 
@@ -189,5 +197,59 @@ describe("resolveIssueAttachmentImages", () => {
       attachmentIds: ["1"],
     });
     expect(images[0].mimeType).toBe("image/webp");
+  });
+});
+
+describe("resolveEditorImages", () => {
+  const doc = { type: "doc", content: [] };
+  const att = (src: string, mimeType?: string) => ({
+    filename: `f-${src.slice(-6)}`,
+    buffer: Buffer.from("bytes"),
+    mimeType,
+    src,
+  });
+
+  it("returns [] with no doc or no selection, without resolving", async () => {
+    expect(await resolveEditorImages(null, ["a"])).toEqual([]);
+    expect(await resolveEditorImages(doc, [])).toEqual([]);
+    expect(await resolveEditorImages(doc, undefined)).toEqual([]);
+    expect(mockResolveEditorMediaAttachments).not.toHaveBeenCalled();
+  });
+
+  it("filters resolution to the selected srcs and allowed image mimes", async () => {
+    mockResolveEditorMediaAttachments.mockResolvedValueOnce([
+      att("/api/storage/a.png", "image/png"),
+      att("/api/storage/b.png", "image/png"), // not selected
+      att("/api/storage/c.mp4", "video/mp4"), // selected but not an image
+      att("/api/storage/d.png", undefined), // selected but unknown mime
+    ]);
+
+    const images = await resolveEditorImages(doc, [
+      "/api/storage/a.png",
+      "/api/storage/c.mp4",
+      "/api/storage/d.png",
+    ]);
+
+    expect(mockResolveEditorMediaAttachments).toHaveBeenCalledWith(doc);
+    expect(images).toHaveLength(1);
+    expect(images[0]).toMatchObject({
+      source: "editor",
+      mimeType: "image/png",
+      byteSize: 5,
+      origin: { editorSrc: "/api/storage/a.png" },
+    });
+  });
+
+  it("bounds the result at the cap + 1", async () => {
+    const many = Array.from({ length: 20 }, (_, i) =>
+      att(`/api/storage/img${String(i).padStart(2, "0")}.png`, "image/png")
+    );
+    mockResolveEditorMediaAttachments.mockResolvedValueOnce(many);
+
+    const images = await resolveEditorImages(
+      doc,
+      many.map((a) => a.src)
+    );
+    expect(images).toHaveLength(MAX_CONTEXT_IMAGES + 1);
   });
 });
