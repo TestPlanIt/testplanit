@@ -20,6 +20,7 @@ import {
   ListChecks,
   Loader2,
   MessageSquare,
+  Timer,
   User,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
@@ -30,6 +31,7 @@ import type { TestRunSummaryData } from "~/app/api/test-runs/[testRunId]/summary
 import { Link } from "~/lib/navigation";
 import { aggregateRunCounts } from "~/lib/services/testRunSummary-shared";
 import { cn } from "~/utils";
+import { wallClockSecondsBetween } from "~/utils/automatedRunMetrics";
 import { statusSurfaceVars } from "~/utils/contrastingTextColor";
 import { toHumanReadable } from "~/utils/duration";
 import { isAutomatedTestRunType } from "~/utils/testResultTypes";
@@ -165,6 +167,9 @@ export function TestRunCasesSummary({
     let totalElapsed = 0;
     let totalEstimate = 0;
     let commentsCount = 0;
+    // ISO strings compare correctly as strings (all UTC via toISOString).
+    let firstResultAt: string | null = null;
+    let lastResultAt: string | null = null;
     const allIssues: TestRunSummaryData["issues"] = [];
     const allCaseDetails: NonNullable<TestRunSummaryData["caseDetails"]> = [];
 
@@ -173,6 +178,18 @@ export function TestRunCasesSummary({
       totalElapsed += summary.totalElapsed;
       totalEstimate += summary.totalEstimate;
       commentsCount += summary.commentsCount;
+      if (
+        summary.firstResultAt &&
+        (!firstResultAt || summary.firstResultAt < firstResultAt)
+      ) {
+        firstResultAt = summary.firstResultAt;
+      }
+      if (
+        summary.lastResultAt &&
+        (!lastResultAt || summary.lastResultAt > lastResultAt)
+      ) {
+        lastResultAt = summary.lastResultAt;
+      }
 
       // Aggregate status counts
       summary.statusCounts.forEach((sc) => {
@@ -213,6 +230,8 @@ export function TestRunCasesSummary({
       totalElapsed,
       totalEstimate,
       commentsCount,
+      firstResultAt,
+      lastResultAt,
       issues: allIssues,
       caseDetails: allCaseDetails,
       junitSummary: summaries[0].junitSummary, // JUnit summary doesn't aggregate well
@@ -335,13 +354,32 @@ export function TestRunCasesSummary({
           })
         : null;
 
-    const summaryTitle = summaryText
-      ? totalElapsedDisplay
-        ? `${summaryText} • ${tCommon("fields.totalElapsed")}: ${totalElapsedDisplay}`
-        : summaryText
-      : totalElapsedDisplay
-        ? `${tCommon("fields.totalElapsed")}: ${totalElapsedDisplay}`
-        : undefined;
+    // Wall-clock window of the run (first result → last result) — with
+    // parallel execution this is far shorter than the summed test time above.
+    const wallClockSeconds = wallClockSecondsBetween(
+      summaryData.firstResultAt,
+      summaryData.lastResultAt
+    );
+    const runDurationDisplay =
+      wallClockSeconds !== null && wallClockSeconds >= 1
+        ? toHumanReadable(wallClockSeconds, {
+            isSeconds: true,
+            locale,
+          })
+        : null;
+
+    const summaryTitle =
+      [
+        summaryText,
+        runDurationDisplay
+          ? `${tCommon("fields.runDuration")}: ${runDurationDisplay}`
+          : null,
+        totalElapsedDisplay
+          ? `${tCommon("fields.totalElapsed")}: ${totalElapsedDisplay}`
+          : null,
+      ]
+        .filter(Boolean)
+        .join(" • ") || undefined;
 
     return (
       <div className={cn("flex flex-col space-y-1 w-full", className)}>
@@ -414,17 +452,47 @@ export function TestRunCasesSummary({
           >
             {`${tCommon("labels.total")}: ${totalItems} ${tCommon("plural.case", { count: totalItems })}`}
             {summaryText ? ` (${summaryText})` : ""}
+            {runDurationDisplay ? (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span
+                    className="inline-flex items-center ms-1 cursor-default"
+                    data-testid="run-duration-display"
+                  >
+                    {" • "}
+                    <Timer className="h-3 w-3 ms-1" />
+                    {runDurationDisplay}
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <div>
+                    {`${tCommon("fields.runDuration")}: ${runDurationDisplay}`}
+                  </div>
+                  <div className="text-xs opacity-80">
+                    {tCommon("labels.runDurationHint")}
+                  </div>
+                </TooltipContent>
+              </Tooltip>
+            ) : null}
             {totalElapsedDisplay ? (
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <span className="inline-flex items-center ms-1 cursor-default">
+                  <span
+                    className="inline-flex items-center ms-1 cursor-default"
+                    data-testid="total-test-time-display"
+                  >
                     {" • "}
                     <Clock className="h-3 w-3 ms-1" />
                     {totalElapsedDisplay}
                   </span>
                 </TooltipTrigger>
                 <TooltipContent>
-                  {`${tCommon("fields.totalElapsed")}: ${totalElapsedDisplay}`}
+                  <div>
+                    {`${tCommon("fields.totalElapsed")}: ${totalElapsedDisplay}`}
+                  </div>
+                  <div className="text-xs opacity-80">
+                    {tCommon("labels.totalElapsedHint")}
+                  </div>
                 </TooltipContent>
               </Tooltip>
             ) : null}

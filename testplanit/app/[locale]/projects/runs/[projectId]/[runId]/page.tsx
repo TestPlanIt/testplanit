@@ -134,6 +134,7 @@ import { PaginationProvider } from "~/lib/contexts/PaginationContext";
 import { Link, usePathname, useRouter } from "~/lib/navigation";
 import { updateTestRunForecast } from "~/services/testRunService";
 import { IconName } from "~/types/globals";
+import { computeRetryMetrics } from "~/utils/automatedRunMetrics";
 import { fetchSignedUrl } from "~/utils/fetchSignedUrl";
 import { useExportTestRunPdf } from "~/hooks/pdf/useExportTestRunPdf";
 import { isAutomatedTestRunType } from "~/utils/testResultTypes";
@@ -632,6 +633,7 @@ export default function TestRunPage() {
                     className: true,
                     source: true,
                     isDeleted: true,
+                    hasParameters: true,
                     linksFrom: {
                       select: {
                         caseBId: true,
@@ -1396,10 +1398,12 @@ export default function TestRunPage() {
     const mapped = jUnitSuites.flatMap((suite) =>
       (suite.results || []).map((result) => ({
         id: result.repositoryCaseId,
+        resultId: result.id,
         name: result.repositoryCase?.name || String(result.repositoryCaseId),
         className:
           result.repositoryCase?.className || String(result.repositoryCaseId),
         source: result.repositoryCase?.source,
+        hasParameters: result.repositoryCase?.hasParameters || false,
         suiteName: suite.name,
         suiteTests: suite.tests,
         suiteFailures: suite.failures,
@@ -1428,7 +1432,13 @@ export default function TestRunPage() {
         attachments: result.attachments || [],
       }))
     );
-    return mapped;
+    // Mark every attempt row of a fail-then-pass case so the table and the
+    // metrics card can badge it (Allure-style within-run flakiness).
+    const { flakyCaseIds } = computeRetryMetrics(mapped);
+    if (flakyCaseIds.size === 0) return mapped;
+    return mapped.map((testCase) =>
+      flakyCaseIds.has(testCase.id) ? { ...testCase, isFlaky: true } : testCase
+    );
   }, [jUnitSuites, testRunData?.createdBy?.id, testRunData?.createdAt]);
   const [junitTestCasesState, setJunitTestCasesState] = useState<any[]>([]);
   useEffect(() => {

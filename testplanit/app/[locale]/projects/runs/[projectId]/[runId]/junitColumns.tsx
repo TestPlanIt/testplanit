@@ -7,8 +7,13 @@ import { CasesListDisplay } from "@/components/tables/CaseListDisplay";
 import { UserNameCell } from "@/components/tables/UserNameCell";
 import { TestCaseNameDisplay } from "@/components/TestCaseNameDisplay";
 import { Badge } from "@/components/ui/badge";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import type { Attachments } from "~/zenstack/models";
-import { LinkIcon } from "lucide-react";
+import { LinkIcon, Zap } from "lucide-react";
 import type { Session } from "next-auth";
 import { RECORD_TYPES } from "~/lib/recordKey";
 import { toHumanReadable } from "~/utils/duration";
@@ -47,6 +52,20 @@ export function getJunitColumns({
               projectId={isDeleted ? undefined : projectId}
               className="truncate"
             />
+            {row.original.isFlaky && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Zap
+                    className="w-3.5 h-3.5 inline ms-1 shrink-0 text-amber-500"
+                    aria-label={t("common.labels.flakyTestHint")}
+                    data-testid="flaky-test-badge"
+                  />
+                </TooltipTrigger>
+                <TooltipContent>
+                  {t("common.labels.flakyTestHint")}
+                </TooltipContent>
+              </Tooltip>
+            )}
             {!isDeleted && (
               <LinkIcon className="w-4 h-4 inline ms-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
             )}
