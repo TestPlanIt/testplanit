@@ -892,6 +892,13 @@ declare class TestPlanItReporter extends WDIOReporter {
     onAfterCommand(commandArgs: AfterCommandArgs): void;
     onTestPass(test: TestStats): void;
     onTestFail(test: TestStats): void;
+    /**
+     * A failing attempt that WebdriverIO is about to retry (Mocha/Jasmine
+     * per-test retries) arrives here INSTEAD of onTestFail. Report it like any
+     * failed attempt so a fail-then-pass sequence is visible as flaky in
+     * TestPlanIt; the retry itself still flows through onTestPass/onTestFail.
+     */
+    onTestRetry(test: TestStats): void;
     onTestSkip(test: TestStats): void;
     /**
      * Handle test completion

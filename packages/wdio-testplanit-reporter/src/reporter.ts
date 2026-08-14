@@ -1202,6 +1202,20 @@ export default class TestPlanItReporter extends WDIOReporter {
     this.handleTestEnd(test, 'failed');
   }
 
+  /**
+   * A failing attempt that WebdriverIO is about to retry (Mocha/Jasmine
+   * per-test retries) arrives here INSTEAD of onTestFail. Report it like any
+   * failed attempt so a fail-then-pass sequence is visible as flaky in
+   * TestPlanIt; the retry itself still flows through onTestPass/onTestFail.
+   */
+  onTestRetry(test: TestStats): void {
+    // Cucumber funnels per-step events into one scenario result at
+    // onSuiteEnd; folding a to-be-retried step in here would latch the
+    // scenario's final status to failed. Scoped to Mocha/Jasmine.
+    if (this.detectedFramework === 'cucumber') return;
+    this.handleTestEnd(test, 'failed');
+  }
+
   onTestSkip(test: TestStats): void {
     this.handleTestEnd(test, 'skipped');
   }

@@ -503,6 +503,24 @@ describe("TestPlanItReporter", () => {
       expect(result.retryAttempt).toBe(2);
     });
 
+    it("should report a to-be-retried failing attempt via onTestRetry", () => {
+      // Mocha/Jasmine route a failing attempt that will be retried to
+      // test:retry, not test:fail — it must still reach TestPlanIt so the
+      // fail-then-pass sequence reads as flaky.
+      reporter.onTestRetry(
+        createTestStats({
+          title: "[456] flaky test",
+          state: "failed",
+          error: { message: "boom", stack: "Error: boom" } as Error,
+        })
+      );
+      const state = reporter.getState();
+      expect(state.results.size).toBe(1);
+      const result = Array.from(state.results.values())[0];
+      expect(result.status).toBe("failed");
+      expect(result.errorMessage).toBe("boom");
+    });
+
     it("should track test without case ID when autoCreateTestCases is false", () => {
       reporter.onTestPass(createTestStats({ title: "test without case ID" }));
       const state = reporter.getState();
