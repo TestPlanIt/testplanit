@@ -63,10 +63,12 @@ export function StatusBadge({
 }: StatusBadgeProps) {
   return (
     <Badge
-      variant="secondary"
+      variant="outline"
       className={cn(
-        "text-xs",
-        isCompleted ? "text-success" : "text-warning",
+        "text-xs border-transparent",
+        isCompleted
+          ? "bg-success text-success-foreground hover:text-success-foreground"
+          : "bg-warning text-warning-foreground hover:text-warning-foreground",
         className
       )}
     >

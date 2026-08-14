@@ -279,7 +279,10 @@ export function SelectedTestCasesDrawer({
       <SheetTrigger asChild>
         {trigger || (
           <Button size="lg">
-            <Badge variant="outline" className="text-primary-background">
+            <Badge
+              variant="outline"
+              className="text-primary-foreground hover:text-primary-foreground border-primary-foreground/40"
+            >
               {selectedTestCases.length}
             </Badge>
             {t("common.labels.selectedTestCases")}

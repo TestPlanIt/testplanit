@@ -819,7 +819,7 @@ export function QuickScriptModal({
                             <Tooltip>
                               <TooltipTrigger className="ms-1" asChild>
                                 <Badge variant="secondary">
-                                  <Star className="h-3 w-3 fill-current text-primary-background" />
+                                  <Star className="h-3 w-3 fill-current" />
                                 </Badge>
                               </TooltipTrigger>
                               <TooltipContent>
@@ -868,7 +868,7 @@ export function QuickScriptModal({
                                           asChild
                                         >
                                           <Badge variant="secondary">
-                                            <Star className="h-3 w-3 fill-current text-primary-background" />
+                                            <Star className="h-3 w-3 fill-current" />
                                           </Badge>
                                         </TooltipTrigger>
                                         <TooltipContent>

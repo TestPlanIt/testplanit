@@ -16,6 +16,10 @@ import type { Attachments } from "~/zenstack/models";
 import { LinkIcon, Zap } from "lucide-react";
 import type { Session } from "next-auth";
 import { RECORD_TYPES } from "~/lib/recordKey";
+import {
+  contrastingTextColor,
+  statusSurfaceVars,
+} from "~/utils/contrastingTextColor";
 import { toHumanReadable } from "~/utils/duration";
 
 export function getJunitColumns({
@@ -278,8 +282,13 @@ export function getJunitColumns({
         <div className="flex items-center justify-end h-full">
           <Badge
             variant="default"
-            className="text-primary-foreground font-semibold h-full"
-            style={{ backgroundColor: row.original.resultColor }}
+            className="font-semibold h-full"
+            data-status-surface
+            style={{
+              ...statusSurfaceVars(row.original.resultColor),
+              backgroundColor: row.original.resultColor,
+              color: contrastingTextColor(row.original.resultColor),
+            }}
           >
             {row.original.resultStatus}
           </Badge>

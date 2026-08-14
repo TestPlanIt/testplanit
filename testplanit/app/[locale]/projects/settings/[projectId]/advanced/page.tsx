@@ -974,7 +974,7 @@ export default function AdvancedPage() {
                                 <Tooltip>
                                   <TooltipTrigger asChild>
                                     <Badge variant="secondary">
-                                      <Star className="h-3 w-3 fill-current text-primary-background" />
+                                      <Star className="h-3 w-3 fill-current" />
                                     </Badge>
                                   </TooltipTrigger>
                                   <TooltipContent>

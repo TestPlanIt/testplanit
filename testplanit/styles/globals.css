@@ -518,9 +518,7 @@ html:not(.accessible):not(.accessibledark)
 /* Style the close button specifically for the TestRunCaseDetails sheet */
 .test-run-details-sheet > button.absolute.end-4.top-4 {
   background-color: hsl(var(--primary-foreground));
-  color: hsl(
-    var(--primary-background)
-  ); /* Optional: Adjust icon color if needed */
+  color: hsl(var(--primary));
 }
 
 .test-run-details-sheet > button.absolute.end-4.top-4:hover {
