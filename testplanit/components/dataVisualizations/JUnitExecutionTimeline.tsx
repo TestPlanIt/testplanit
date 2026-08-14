@@ -1,6 +1,12 @@
 import * as d3 from "d3";
-import { useTranslations } from "next-intl";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   assignExecutionLanes,
   buildExecutionWindows,
@@ -56,6 +62,36 @@ const JUnitExecutionTimeline: React.FC<JUnitExecutionTimelineProps> = ({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [containerWidth, setContainerWidth] = useState<number>(0);
   const t = useTranslations();
+  const locale = useLocale();
+
+  // Axis ticks in narrow localized units ("2h 5m", "45s", "250ms") — a long
+  // run's axis in raw seconds ("25000s") is unreadable.
+  const formatTick = useCallback(
+    (totalSeconds: number): string => {
+      const unit = (value: number, name: string) =>
+        value.toLocaleString(locale, {
+          style: "unit",
+          unit: name,
+          unitDisplay: "narrow",
+          maximumFractionDigits: 0,
+        } as Intl.NumberFormatOptions);
+      if (totalSeconds > 0 && totalSeconds < 1) {
+        return unit(Math.round(totalSeconds * 1000), "millisecond");
+      }
+      const hours = Math.floor(totalSeconds / 3600);
+      const minutes = Math.floor((totalSeconds % 3600) / 60);
+      let seconds = Math.round(totalSeconds % 60);
+      if (seconds === 60) seconds = 0;
+      const parts: string[] = [];
+      if (hours) parts.push(unit(hours, "hour"));
+      if (minutes) parts.push(unit(minutes, "minute"));
+      // Three units is axis noise — past an hour, minutes are enough.
+      if (seconds && !hours) parts.push(unit(seconds, "second"));
+      if (parts.length === 0) parts.push(unit(seconds, "second"));
+      return parts.join(" ");
+    },
+    [locale]
+  );
 
   // Responsive: track container width
   useEffect(() => {
@@ -172,7 +208,7 @@ const JUnitExecutionTimeline: React.FC<JUnitExecutionTimelineProps> = ({
         d3
           .axisBottom(x)
           .ticks(5)
-          .tickFormat((d) => t("charts.seconds", { seconds: String(d) }))
+          .tickFormat((d) => formatTick(Number(d)))
       );
     const yAxis = g.append("g").call(d3.axisLeft(y));
     // Long suite names (fallback mode) overflow the margin — truncate.
@@ -246,7 +282,7 @@ const JUnitExecutionTimeline: React.FC<JUnitExecutionTimelineProps> = ({
     return () => {
       tooltip.remove();
     };
-  }, [bars, laneNames, height, containerWidth, t, onResultClick]);
+  }, [bars, laneNames, height, containerWidth, t, formatTick, onResultClick]);
 
   return (
     <div
