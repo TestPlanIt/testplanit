@@ -1115,6 +1115,7 @@ export function TestRunCaseDetails({
           caseId={caseId}
           projectId={projectId}
           session={session}
+          currentTestRunId={testRunId}
         />
       </Card>
 

@@ -81,6 +81,39 @@ vi.mock(
   })
 );
 
+// jsdom gives the virtualizer no real geometry, so the hook is replaced with
+// one that reports a configurable window (same pattern as
+// VirtualizedCardList.test.tsx). Small histories pass count: 0 and never
+// consult it, so every other test is unaffected.
+const virtualHookMock = vi.hoisted(() => ({
+  window: null as number[] | null, // indices to render; null = all `count`
+  lastOpts: null as Record<string, unknown> | null,
+}));
+
+vi.mock("~/hooks/useVirtualizedInfiniteList", () => ({
+  useVirtualizedInfiniteList: (opts: { count: number }) => {
+    virtualHookMock.lastOpts = opts as unknown as Record<string, unknown>;
+    const indices =
+      virtualHookMock.window ?? Array.from({ length: opts.count }, (_, i) => i);
+    return {
+      scrollRef: () => {},
+      sentinelRef: { current: null },
+      virtualizer: {},
+      virtualItems: indices.map((index) => ({
+        key: index,
+        index,
+        start: index * 53,
+        size: 53,
+        end: (index + 1) * 53,
+        lane: 0,
+      })),
+      totalSize: opts.count * 53,
+      measureElement: () => {},
+      maxHeight: 600,
+    };
+  },
+}));
+
 vi.mock(
   "~/app/[locale]/projects/repository/[projectId]/[caseId]/FieldValueRenderer",
   () => ({
@@ -522,5 +555,72 @@ describe("TestResultHistory", () => {
     expect(
       screen.queryByRole("button", { name: /actions\.addToTestRun/i })
     ).not.toBeInTheDocument();
+  });
+
+  it("highlights rows of the current test run when currentTestRunId matches", () => {
+    renderWithQueryClient(
+      <TestResultHistory {...defaultProps} currentTestRunId={10} />
+    );
+
+    const badge = screen.getByTestId("current-run-badge");
+    expect(badge).toHaveTextContent("currentRunBadge");
+    expect(badge.closest("tr")).toHaveAttribute("data-current-run", "true");
+  });
+
+  it("highlights the JUnit row when currentTestRunId matches its test run", () => {
+    renderWithQueryClient(
+      <TestResultHistory {...defaultProps} currentTestRunId={5} />
+    );
+
+    const badge = screen.getByTestId("current-run-badge");
+    expect(badge.closest("tr")).toHaveTextContent("Regression Run");
+  });
+
+  it("shows no current-run highlight when currentTestRunId is not provided", () => {
+    renderWithQueryClient(<TestResultHistory {...defaultProps} />);
+
+    expect(screen.queryByTestId("current-run-badge")).not.toBeInTheDocument();
+  });
+
+  describe("virtualization", () => {
+    const manyJunitResults = Array.from({ length: 60 }, (_, i) => ({
+      ...mockJunitResult,
+      id: 1000 + i,
+      executedAt: new Date(
+        Date.parse("2024-01-14T09:00:00Z") + i * 60_000
+      ).toISOString(),
+    }));
+
+    beforeEach(() => {
+      virtualHookMock.window = null;
+      mockUseFindFirstRepositoryCases.mockReturnValue({
+        data: { ...mockTestCase, testRuns: [], junitResults: manyJunitResults },
+        isLoading: false,
+      });
+    });
+
+    it("renders only the virtual window of a massive history", () => {
+      virtualHookMock.window = [0, 1, 2, 3, 4];
+      renderWithQueryClient(<TestResultHistory {...defaultProps} />);
+
+      // The hook was armed with the full row count…
+      expect(virtualHookMock.lastOpts?.count).toBe(60);
+      // …but only the windowed rows are mounted.
+      expect(screen.getAllByTestId(/^expand-result-junit-/)).toHaveLength(5);
+      // The unrendered tail is held open by a spacer row group.
+      const spacers = document.querySelectorAll("tbody[aria-hidden]");
+      expect(spacers.length).toBeGreaterThan(0);
+    });
+
+    it("keeps small histories on the plain table path", () => {
+      mockUseFindFirstRepositoryCases.mockReturnValue({
+        data: mockTestCase,
+        isLoading: false,
+      });
+      renderWithQueryClient(<TestResultHistory {...defaultProps} />);
+
+      expect(virtualHookMock.lastOpts?.count).toBe(0);
+      expect(document.querySelector("tbody[aria-hidden]")).toBeNull();
+    });
   });
 });

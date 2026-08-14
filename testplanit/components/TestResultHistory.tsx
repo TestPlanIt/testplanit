@@ -74,13 +74,14 @@ import {
   SquareStack,
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { emptyEditorContent } from "~/app/constants";
 import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
 import { EditResultModal } from "~/app/[locale]/projects/repository/[projectId]/EditResultModal";
 import FieldValueRenderer from "~/app/[locale]/projects/repository/[projectId]/[caseId]/FieldValueRenderer";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
+import { useVirtualizedInfiniteList } from "~/hooks/useVirtualizedInfiniteList";
 import { resolveEffectiveWindowSeconds } from "~/lib/services/editWindow";
 import { Link, useRouter } from "~/lib/navigation";
 import { statusSurfaceVars } from "~/utils/contrastingTextColor";
@@ -179,10 +180,24 @@ interface PendingTestResult extends UnifiedTestResultBase {
 type UnifiedTestResult =
   ManualTestResult | JUnitTestResultInfo | PendingTestResult;
 
+/**
+ * Above this many rows the history table virtualizes: an automated case can
+ * accumulate thousands of attempt rows, and mounting them all eats browser
+ * memory. Smaller histories keep rendering in full, unchanged.
+ */
+const VIRTUALIZE_THRESHOLD = 50;
+
 interface TestResultHistoryProps {
   caseId: number;
   projectId?: number;
   session?: any; // We'll use any for now since we don't have the full session type
+  /**
+   * Set when rendered from a test run page: rows belonging to this run get
+   * the current-run highlight (accent bar + tint + "Current" badge) so the
+   * user can spot the run they are viewing in the history. Unset on the
+   * repository case page, where no run is "current".
+   */
+  currentTestRunId?: number;
 }
 
 const AddToTestRunDropdown = React.memo(function AddToTestRunDropdown({
@@ -747,6 +762,7 @@ export default function TestResultHistory({
   caseId,
   projectId,
   session,
+  currentTestRunId,
 }: TestResultHistoryProps) {
   const tCommon = useTranslations("common");
   const tCases = useTranslations("repository.cases");
@@ -1047,6 +1063,196 @@ export default function TestResultHistory({
     setSelectedAttachments([]);
   }, []);
 
+  // Build the unified manual + JUnit + pending list once per data change —
+  // an automated case can hold thousands of attempt rows, and rebuilding
+  // (and re-sorting) them every render is what the virtualizer below is
+  // trying NOT to pay for.
+  const sortedResults = useMemo<UnifiedTestResult[]>(() => {
+    if (!fetchedTestCase) return [];
+
+    const allUnifiedResults: UnifiedTestResult[] = [];
+
+    // 1. Process Manual Results from TestRunCases
+    fetchedTestCase.testRuns?.forEach((trc: any) => {
+      trc.results?.forEach((res: any) => {
+        allUnifiedResults.push({
+          displayId: `manual-${res.id}`,
+          sourceType: "manual",
+          originalDbId: res.id,
+          executedAt: new Date(res.executedAt),
+          status: res.status,
+          elapsed: res.elapsed,
+          attachments: res.attachments,
+          issues: res.issues,
+          isPending: false,
+          associatedTestRun: trc.testRun
+            ? {
+                id: trc.testRun.id,
+                name: trc.testRun.name,
+                milestone: trc.testRun.milestone,
+                isCompleted: trc.testRun.isCompleted,
+                isDeleted: trc.testRun.isDeleted,
+                configurationGroupId: trc.testRun.configurationGroupId,
+                configuration: trc.testRun.configuration,
+              }
+            : undefined,
+          associatedTestRunCaseId: trc.id,
+          testRunCaseVersion: res.testRunCaseVersion,
+          executedBy: res.executedBy,
+          editedBy: res.editedBy,
+          editedAt: res.editedAt ? new Date(res.editedAt) : null,
+          notes: res.notes,
+          attempt: res.attempt,
+          resultFieldValues: res.resultFieldValues,
+          // Flatten the snapshot's parametersJson onto the iteration so
+          // downstream consumers (row icon + expanded Parameter Values
+          // block) don't need to traverse through testRunCase.dataSetSnapshot.
+          iteration: res.iteration
+            ? {
+                id: res.iteration.id,
+                label: res.iteration.label,
+                rowIndex: res.iteration.rowIndex,
+                valuesJson: res.iteration.valuesJson,
+                parameterSchema: Array.isArray(
+                  res.iteration.testRunCase?.dataSetSnapshot?.parametersJson
+                )
+                  ? (
+                      res.iteration.testRunCase.dataSetSnapshot
+                        .parametersJson as Array<Record<string, unknown>>
+                    )
+                      .filter(
+                        (p) =>
+                          p &&
+                          typeof p === "object" &&
+                          typeof p.name === "string"
+                      )
+                      .map((p) => ({
+                        name: String(p.name),
+                        type: typeof p.type === "string" ? p.type : "STRING",
+                        sensitive: p.sensitive === true,
+                      }))
+                  : [],
+              }
+            : null,
+          stepResults: (res.stepResults as any[] | undefined)?.map(
+            (stepResItem: any) => ({
+              ...stepResItem,
+              status: stepResItem.stepStatus,
+            })
+          ),
+        });
+      });
+    });
+
+    // 2. Process JUnit Results
+    fetchedTestCase.junitResults?.forEach((jr: any) => {
+      const associatedTestRun =
+        jr.testSuite?.testRunId && jr.testSuite.testRun
+          ? {
+              id: jr.testSuite.testRun.id,
+              name: jr.testSuite.testRun.name,
+              milestone: jr.testSuite.testRun.milestone,
+              isCompleted: jr.testSuite.testRun.isCompleted,
+              isDeleted: jr.testSuite.testRun.isDeleted,
+              configurationGroupId: jr.testSuite.testRun.configurationGroupId,
+              configuration: jr.testSuite.testRun.configuration,
+            }
+          : undefined;
+
+      allUnifiedResults.push({
+        displayId: `junit-${jr.id}`,
+        sourceType: "junit",
+        originalDbId: jr.id,
+        executedAt: new Date(jr.executedAt),
+        status: jr.status,
+        elapsed: jr.time,
+        attachments: jr.attachments || [], // Fallback to empty array
+        issues: [], // JUnitTestResult doesn't have issues relation
+        isPending: false,
+        associatedTestRun,
+        executedBy: jr.createdBy,
+        content: jr.content,
+        systemOut: jr.systemOut,
+        systemErr: jr.systemErr,
+        file: jr.file,
+        line: jr.line,
+        assertions: jr.assertions,
+        message: jr.message,
+        type: jr.type,
+        testSuiteName: jr.testSuite?.name,
+      });
+    });
+
+    // 3. Identify Pending Results
+    const executedOrCoveredTrcIds = new Set<number>();
+    allUnifiedResults.forEach((r) => {
+      // If a manual result exists for a TRC, it's covered.
+      if (r.sourceType === "manual" && r.associatedTestRunCaseId) {
+        executedOrCoveredTrcIds.add(r.associatedTestRunCaseId);
+      }
+      // If a JUnit result is explicitly linked to the same TestRun as a TRC, consider that TRC covered.
+      if (r.sourceType === "junit" && r.associatedTestRun) {
+        const correspondingTrc = fetchedTestCase.testRuns?.find(
+          (trcItem: any) => trcItem.testRun?.id === r.associatedTestRun?.id
+        );
+        if (correspondingTrc) {
+          executedOrCoveredTrcIds.add(correspondingTrc.id);
+        }
+      }
+    });
+
+    fetchedTestCase.testRuns?.forEach((trc: any) => {
+      if (!executedOrCoveredTrcIds.has(trc.id)) {
+        allUnifiedResults.push({
+          displayId: `pending-${trc.id}`, // Use TestRunCases.id for pending displayId
+          sourceType: "pending",
+          executedAt: new Date(),
+          status: {
+            name: tCommon("status.pending"),
+            color: { value: "#B1B2B3" },
+          },
+          isPending: true,
+          associatedTestRun: trc.testRun
+            ? {
+                id: trc.testRun.id,
+                name: trc.testRun.name,
+                milestone: trc.testRun.milestone,
+                isCompleted: trc.testRun.isCompleted,
+                isDeleted: trc.testRun.isDeleted,
+                configurationGroupId: trc.testRun.configurationGroupId,
+                configuration: trc.testRun.configuration,
+              }
+            : undefined,
+          associatedTestRunCaseId: trc.id,
+          executedBy: { id: "", name: "-" },
+        });
+      }
+    });
+
+    // Sort results: pending first, then by executedAt descending
+    return allUnifiedResults.sort((a, b) => {
+      if (a.isPending && !b.isPending) return -1;
+      if (!a.isPending && b.isPending) return 1;
+      return (
+        new Date(b.executedAt).getTime() - new Date(a.executedAt).getTime()
+      );
+    });
+  }, [fetchedTestCase, tCommon]);
+
+  // Massive histories render through the shared virtualizer; below the
+  // threshold the plain table is untouched (count: 0 idles the virtualizer).
+  const shouldVirtualize = sortedResults.length > VIRTUALIZE_THRESHOLD;
+  const noopLoadMore = useCallback(() => {}, []);
+  const { scrollRef, virtualItems, totalSize, measureElement, maxHeight } =
+    useVirtualizedInfiniteList({
+      count: shouldVirtualize ? sortedResults.length : 0,
+      estimateSize: 53,
+      overscan: 10,
+      hasMore: false,
+      isLoading: false,
+      onLoadMore: noopLoadMore,
+    });
+
   if (isLoadingTestCase) {
     return (
       <Card shadow="none">
@@ -1200,170 +1406,6 @@ export default function TestResultHistory({
     );
   };
 
-  const allUnifiedResults: UnifiedTestResult[] = [];
-
-  // 1. Process Manual Results from TestRunCases
-  fetchedTestCase.testRuns?.forEach((trc: any) => {
-    trc.results?.forEach((res: any) => {
-      allUnifiedResults.push({
-        displayId: `manual-${res.id}`,
-        sourceType: "manual",
-        originalDbId: res.id,
-        executedAt: new Date(res.executedAt),
-        status: res.status,
-        elapsed: res.elapsed,
-        attachments: res.attachments,
-        issues: res.issues,
-        isPending: false,
-        associatedTestRun: trc.testRun
-          ? {
-              id: trc.testRun.id,
-              name: trc.testRun.name,
-              milestone: trc.testRun.milestone,
-              isCompleted: trc.testRun.isCompleted,
-              isDeleted: trc.testRun.isDeleted,
-              configurationGroupId: trc.testRun.configurationGroupId,
-              configuration: trc.testRun.configuration,
-            }
-          : undefined,
-        associatedTestRunCaseId: trc.id,
-        testRunCaseVersion: res.testRunCaseVersion,
-        executedBy: res.executedBy,
-        editedBy: res.editedBy,
-        editedAt: res.editedAt ? new Date(res.editedAt) : null,
-        notes: res.notes,
-        attempt: res.attempt,
-        resultFieldValues: res.resultFieldValues,
-        // Flatten the snapshot's parametersJson onto the iteration so
-        // downstream consumers (row icon + expanded Parameter Values
-        // block) don't need to traverse through testRunCase.dataSetSnapshot.
-        iteration: res.iteration
-          ? {
-              id: res.iteration.id,
-              label: res.iteration.label,
-              rowIndex: res.iteration.rowIndex,
-              valuesJson: res.iteration.valuesJson,
-              parameterSchema: Array.isArray(
-                res.iteration.testRunCase?.dataSetSnapshot?.parametersJson
-              )
-                ? (
-                    res.iteration.testRunCase.dataSetSnapshot
-                      .parametersJson as Array<Record<string, unknown>>
-                  )
-                    .filter(
-                      (p) =>
-                        p && typeof p === "object" && typeof p.name === "string"
-                    )
-                    .map((p) => ({
-                      name: String(p.name),
-                      type: typeof p.type === "string" ? p.type : "STRING",
-                      sensitive: p.sensitive === true,
-                    }))
-                : [],
-            }
-          : null,
-        stepResults: (res.stepResults as any[] | undefined)?.map(
-          (stepResItem: any) => ({
-            ...stepResItem,
-            status: stepResItem.stepStatus,
-          })
-        ),
-      });
-    });
-  });
-
-  // 2. Process JUnit Results
-  fetchedTestCase.junitResults?.forEach((jr: any) => {
-    const associatedTestRun =
-      jr.testSuite?.testRunId && jr.testSuite.testRun
-        ? {
-            id: jr.testSuite.testRun.id,
-            name: jr.testSuite.testRun.name,
-            milestone: jr.testSuite.testRun.milestone,
-            isCompleted: jr.testSuite.testRun.isCompleted,
-            isDeleted: jr.testSuite.testRun.isDeleted,
-            configurationGroupId: jr.testSuite.testRun.configurationGroupId,
-            configuration: jr.testSuite.testRun.configuration,
-          }
-        : undefined;
-
-    allUnifiedResults.push({
-      displayId: `junit-${jr.id}`,
-      sourceType: "junit",
-      originalDbId: jr.id,
-      executedAt: new Date(jr.executedAt),
-      status: jr.status,
-      elapsed: jr.time,
-      attachments: jr.attachments || [], // Fallback to empty array
-      issues: [], // JUnitTestResult doesn't have issues relation
-      isPending: false,
-      associatedTestRun,
-      executedBy: jr.createdBy,
-      content: jr.content,
-      systemOut: jr.systemOut,
-      systemErr: jr.systemErr,
-      file: jr.file,
-      line: jr.line,
-      assertions: jr.assertions,
-      message: jr.message,
-      type: jr.type,
-      testSuiteName: jr.testSuite?.name,
-    });
-  });
-
-  // 3. Identify Pending Results
-  const executedOrCoveredTrcIds = new Set<number>();
-  allUnifiedResults.forEach((r) => {
-    // If a manual result exists for a TRC, it's covered.
-    if (r.sourceType === "manual" && r.associatedTestRunCaseId) {
-      executedOrCoveredTrcIds.add(r.associatedTestRunCaseId);
-    }
-    // If a JUnit result is explicitly linked to the same TestRun as a TRC, consider that TRC covered.
-    if (r.sourceType === "junit" && r.associatedTestRun) {
-      const correspondingTrc = fetchedTestCase.testRuns?.find(
-        (trcItem: any) => trcItem.testRun?.id === r.associatedTestRun?.id
-      );
-      if (correspondingTrc) {
-        executedOrCoveredTrcIds.add(correspondingTrc.id);
-      }
-    }
-  });
-
-  fetchedTestCase.testRuns?.forEach((trc: any) => {
-    if (!executedOrCoveredTrcIds.has(trc.id)) {
-      allUnifiedResults.push({
-        displayId: `pending-${trc.id}`, // Use TestRunCases.id for pending displayId
-        sourceType: "pending",
-        executedAt: new Date(),
-        status: {
-          name: tCommon("status.pending"),
-          color: { value: "#B1B2B3" },
-        },
-        isPending: true,
-        associatedTestRun: trc.testRun
-          ? {
-              id: trc.testRun.id,
-              name: trc.testRun.name,
-              milestone: trc.testRun.milestone,
-              isCompleted: trc.testRun.isCompleted,
-              isDeleted: trc.testRun.isDeleted,
-              configurationGroupId: trc.testRun.configurationGroupId,
-              configuration: trc.testRun.configuration,
-            }
-          : undefined,
-        associatedTestRunCaseId: trc.id,
-        executedBy: { id: "", name: "-" },
-      });
-    }
-  });
-
-  // Sort results: pending first, then by executedAt descending
-  const sortedResults = allUnifiedResults.sort((a, b) => {
-    if (a.isPending && !b.isPending) return -1;
-    if (!a.isPending && b.isPending) return 1;
-    return new Date(b.executedAt).getTime() - new Date(a.executedAt).getTime();
-  });
-
   if (!sortedResults.length) {
     return (
       <Card shadow="none">
@@ -1389,6 +1431,561 @@ export default function TestResultHistory({
     nonPendingResults.length > 0 &&
     nonPendingResults.every((r) => expandedResults.has(r.displayId));
 
+  const renderResultRow = (result: UnifiedTestResult) => {
+    const statusColor = result.status?.color?.value || "transparent";
+    const isExpanded = expandedResults.has(result.displayId);
+    const isCurrentRun =
+      currentTestRunId != null &&
+      result.associatedTestRun?.id === currentTestRunId;
+
+    let displayDuration = result.elapsed || 0;
+    if (result.sourceType === "manual" && result.stepResults) {
+      displayDuration = result.elapsed || 0;
+      result.stepResults.forEach((step) => {
+        displayDuration += step.elapsed || 0;
+      });
+    } else if (result.sourceType === "junit") {
+      displayDuration = result.elapsed || 0; // elapsed is mapped from jr.time
+    } else {
+      // pending
+      displayDuration = 0;
+    }
+
+    const isAssociatedTestRunCompleted =
+      result.associatedTestRun?.isCompleted ?? false;
+
+    // System admins always edit (matches the server guard); for
+    // everyone else resolve the effective window from the system
+    // ceiling + the project override.
+    const isSystemAdmin = session?.user.access === "ADMIN";
+    let isEditingAllowedByTime = true;
+    if (
+      !isSystemAdmin &&
+      result.sourceType === "manual" && // Editing only for manual
+      !result.isPending
+    ) {
+      const effectiveWindowSeconds = resolveEffectiveWindowSeconds(
+        editResultsDurationSeconds ?? null,
+        projectEditWindowSeconds
+      );
+      if (effectiveWindowSeconds === 0) {
+        isEditingAllowedByTime = false;
+      } else if (effectiveWindowSeconds !== null) {
+        const timeDifferenceSeconds =
+          (Date.now() - new Date(result.executedAt).getTime()) / 1000;
+        isEditingAllowedByTime =
+          timeDifferenceSeconds <= effectiveWindowSeconds;
+      }
+    }
+
+    const canUserEditThisResult =
+      result.sourceType === "manual" &&
+      (session?.user.access === "ADMIN" ||
+        session?.user.id === result.executedBy.id);
+
+    const showEditButton =
+      result.sourceType === "manual" &&
+      !result.isPending &&
+      !isAssociatedTestRunCompleted && // Check completion of the specific run this result is part of
+      isEditingAllowedByTime &&
+      !isLoadingResultPermissions &&
+      canAddEditResults &&
+      canUserEditThisResult;
+
+    return (
+      <React.Fragment key={result.displayId}>
+        <TableRow
+          className={`${isExpanded ? "border-b-0" : ""} ${
+            isCurrentRun
+              ? "border-s-2 border-s-primary bg-primary/5 hover:bg-primary/10"
+              : isAssociatedTestRunCompleted
+                ? "bg-muted-foreground/20"
+                : ""
+          }`}
+          data-current-run={isCurrentRun || undefined}
+        >
+          <TableCell className="px-2 w-8">
+            {!result.isPending && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6"
+                data-testid={`expand-result-${result.displayId}`}
+                onClick={() => toggleExpanded(result.displayId)}
+                aria-label={tCommon("aria.toggleDetails")}
+              >
+                {isExpanded ? (
+                  <ChevronDown className="h-4 w-4" />
+                ) : (
+                  <ChevronRight className="h-4 w-4" />
+                )}
+              </Button>
+            )}
+          </TableCell>
+          <TableCell className="max-w-[200px]">
+            <div className="flex items-center group">
+              {result.sourceType === "junit" ? (
+                result.associatedTestRun ? (
+                  <div className="font-medium truncate flex items-center">
+                    {result.associatedTestRun.isDeleted ? (
+                      <>
+                        <Trash2 className="w-4 h-4 inline me-1 shrink-0 text-muted-foreground/50" />
+                        <span className="truncate text-muted-foreground/50 line-through">
+                          {result.associatedTestRun.name}
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <Bot className="w-4 h-4 inline me-1 shrink-0 text-primary border border-primary rounded-full p-0.5" />
+                        <Link
+                          href={`/projects/runs/${activeProjectId}/${result.associatedTestRun.id}?selectedCase=${fetchedTestCase.id}&view=status`}
+                          className="hover:underline truncate"
+                        >
+                          {result.associatedTestRun.name}
+                        </Link>
+                      </>
+                    )}
+                  </div>
+                ) : (
+                  <div className="font-medium truncate flex items-center">
+                    <Bot className="w-4 h-4 inline me-1 shrink-0 text-primary border border-primary rounded-full p-0.5" />
+                    <span className="truncate">
+                      {result.testSuiteName || "JUnit Import"}
+                    </span>
+                  </div>
+                )
+              ) : result.associatedTestRun ? (
+                <TestRunNameDisplay
+                  testRun={result.associatedTestRun}
+                  projectId={activeProjectId}
+                  className="truncate"
+                  linkSuffix={`?selectedCase=${fetchedTestCase.id}&view=status`}
+                />
+              ) : (
+                <div className="font-medium truncate flex items-center">
+                  <PlayCircle className="w-4 h-4 inline me-1 shrink-0" />
+                  <span className="truncate">{tCases("unknownRun")}</span>
+                </div>
+              )}
+              {isCurrentRun && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Badge
+                      variant="outline"
+                      className="ms-2 shrink-0 border-primary text-primary"
+                      data-testid="current-run-badge"
+                    >
+                      {tCases("currentRunBadge")}
+                    </Badge>
+                  </TooltipTrigger>
+                  <TooltipContent>{tCases("currentRunTooltip")}</TooltipContent>
+                </Tooltip>
+              )}
+              {result.associatedTestRun &&
+                !result.associatedTestRun.isDeleted &&
+                result.sourceType !== "junit" && (
+                  <LinkIcon className="w-4 h-4 inline ms-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                )}
+            </div>
+          </TableCell>
+          <TableCell className="max-w-[120px]">
+            <Badge
+              variant="outline"
+              data-status-surface
+              style={{
+                ...statusSurfaceVars(statusColor),
+                backgroundColor: statusColor,
+                color: "white",
+                borderColor: statusColor,
+              }}
+            >
+              {result.status.name}
+            </Badge>
+          </TableCell>
+          <TableCell className="max-w-[150px]">
+            {result.executedBy && result.executedBy.id ? (
+              <div className="truncate">
+                <UserNameCell userId={result.executedBy.id} />
+              </div>
+            ) : (
+              <div className="truncate">{result.executedBy?.name || "-"}</div>
+            )}
+          </TableCell>
+          <TableCell className="max-w-[100px]">
+            <RelativeTimeTooltip
+              date={result.executedAt}
+              isPending={result.isPending}
+              dateFnsLocale={dateFnsLocale}
+              dateFormat={session?.user.preferences?.dateFormat}
+              timeFormat={session?.user.preferences?.timeFormat}
+              timezone={session?.user.preferences?.timezone}
+              className="truncate"
+            />
+          </TableCell>
+          <TableCell className="max-w-[80px]">
+            {result.sourceType === "manual" && result.editedAt && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex justify-center">
+                    <History className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <div className="flex gap-1">
+                    <div>{tCommon("lastEditedBy")}</div>
+                    {result.editedBy?.name}
+                    <div>{tCommon("on")}</div>
+                    <div>
+                      <DateFormatter
+                        date={result.editedAt}
+                        formatString={
+                          session?.user.preferences?.dateFormat +
+                          " " +
+                          session?.user.preferences?.timeFormat
+                        }
+                        timezone={session?.user.preferences?.timezone}
+                      />
+                    </div>
+                  </div>
+                </TooltipContent>
+              </Tooltip>
+            )}
+          </TableCell>
+          <TableCell className="max-w-[100px]">
+            {result.sourceType === "manual" && result.iteration && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex justify-center">
+                    <SquareStack
+                      className="h-4 w-4 text-muted-foreground"
+                      aria-label={tParams("iterationResultRowIcon")}
+                    />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {tParams("iterationResultRowIcon")}
+                </TooltipContent>
+              </Tooltip>
+            )}
+          </TableCell>
+          <TableCell className="max-w-[100px]">
+            <div className="truncate">
+              {!result.isPending && displayDuration > 0
+                ? formatSeconds(displayDuration, locale)
+                : "-"}
+            </div>
+          </TableCell>
+          <TableCell className="max-w-[50px]">
+            <div className="flex justify-center">
+              {!result.isPending &&
+                result.attachments &&
+                result.attachments.length > 0 && (
+                  <AttachmentsListDisplay
+                    attachments={result.attachments}
+                    onSelect={handleSelect}
+                  />
+                )}
+            </div>
+          </TableCell>
+          <TableCell className="max-w-[75px]">
+            {!result.isPending && result.issues && result.issues.length > 0 && (
+              <div className="flex justify-center">
+                {activeProjectId && (
+                  <IssuesListDisplay
+                    issues={result.issues.map((issue) => ({
+                      ...issue,
+                      projectIds: [activeProjectId],
+                    }))}
+                  />
+                )}
+              </div>
+            )}
+          </TableCell>
+          <TableCell className="max-w-[50px] text-center">
+            {result.sourceType === "manual" && !result.isPending && (
+              <Link
+                href={`/projects/repository/${activeProjectId}/${caseId}/${result.testRunCaseVersion}`}
+                className="hover:underline"
+              >
+                {result.testRunCaseVersion}
+              </Link>
+            )}
+            {result.sourceType !== "manual" && "-"}
+          </TableCell>
+          <TableCell className="max-w-[50px]">
+            {showEditButton &&
+              result.sourceType === "manual" &&
+              result.associatedTestRun &&
+              result.associatedTestRunCaseId && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6"
+                  aria-label={tCommon("actions.edit")}
+                  onClick={() => {
+                    setEditingResult({
+                      id: result.originalDbId,
+                      testRunId: result.associatedTestRun!.id,
+                      testRunCaseId: result.associatedTestRunCaseId!,
+                    });
+                  }}
+                >
+                  <Pencil className="h-4 w-4" />
+                </Button>
+              )}
+          </TableCell>
+        </TableRow>
+        {!result.isPending && (
+          <TableRow
+            className={`bg-muted/30 hover:bg-muted/30 ${
+              isCurrentRun ? "border-s-2 border-s-primary" : ""
+            }`}
+          >
+            <TableCell colSpan={12} className="py-0 px-2">
+              {" "}
+              {/* ColSpan must match TableHeader column count (12 with iteration icon column) */}
+              <Collapsible open={isExpanded}>
+                <CollapsibleContent className="overflow-hidden data-[state=open]:animate-slide-down data-[state=closed]:animate-slide-up">
+                  <div className="pb-2">
+                    <Separator className="my-2" />
+                    {/* Run details block — Configuration name (+
+                                  group context if present). Shown for any
+                                  result that has an associated TestRun
+                                  configuration. Placement: top of the
+                                  expanded panel so it reads like context
+                                  metadata before the result content. */}
+                    {result.associatedTestRun?.configuration && (
+                      <div className="px-4 py-2 mb-2 bg-muted/50 rounded-md border text-xs space-y-1">
+                        <div className="font-semibold text-primary">
+                          {tParams("iterationResultRunDetails")}
+                        </div>
+                        <div>
+                          <span className="font-medium">
+                            {tCommon("fields.configuration") + ":"}
+                          </span>{" "}
+                          {result.associatedTestRun.configuration.name}
+                        </div>
+                      </div>
+                    )}
+                    {/* Parameter values block — per-result
+                                  iteration parameter values from
+                                  TestRunCaseIteration.valuesJson against
+                                  the snapshot's parameter schema. Sensitive
+                                  values redact for non-admin viewers
+                                  (defense-in-depth client gate; server
+                                  audit boundary is the source of truth). */}
+                    {result.sourceType === "manual" && result.iteration && (
+                      <div className="px-4 py-2 mb-2 bg-muted/50 rounded-md border text-xs space-y-1">
+                        <div className="font-semibold text-primary flex items-center gap-1">
+                          <SquareStack className="h-3 w-3" aria-hidden />
+                          {tParams("iterationResultLabelHeading") +
+                            ` ${result.iteration.rowIndex + 1}`}
+                          {result.iteration.label && (
+                            <span className="font-normal text-muted-foreground">
+                              {": "}
+                              {result.iteration.label}
+                            </span>
+                          )}
+                        </div>
+                        {result.iteration.parameterSchema.length > 0 && (
+                          <table className="w-full text-start mt-1">
+                            <thead>
+                              <tr className="border-b">
+                                <th className="font-medium pe-4 py-1">
+                                  {tParams(
+                                    "iterationIssueTableHeaderParameter"
+                                  )}
+                                </th>
+                                <th className="font-medium py-1">
+                                  {tParams("iterationIssueTableHeaderValue")}
+                                </th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {result.iteration.parameterSchema.map((p) => {
+                                const raw = ((result.iteration!
+                                  .valuesJson as Record<
+                                  string,
+                                  unknown
+                                > | null) ?? {})[p.name];
+                                const canSee =
+                                  !p.sensitive ||
+                                  session?.user?.access === "ADMIN";
+                                let display: string;
+                                if (!canSee) {
+                                  display = "••••••";
+                                } else if (
+                                  raw === null ||
+                                  raw === undefined ||
+                                  raw === ""
+                                ) {
+                                  display = tParams("iterationResultNoValue");
+                                } else if (typeof raw === "string") {
+                                  display = raw;
+                                } else {
+                                  try {
+                                    display = JSON.stringify(raw);
+                                  } catch {
+                                    display = String(raw);
+                                  }
+                                }
+                                return (
+                                  <tr key={p.name}>
+                                    <td className="pe-4 py-1 font-mono">
+                                      {"@"}
+                                      {p.name}
+                                    </td>
+                                    <td className="py-1 break-all">
+                                      {display}
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        )}
+                      </div>
+                    )}
+                    {result.sourceType === "manual" &&
+                      result.notes &&
+                      !isTiptapEmpty(result.notes) && (
+                        <div>
+                          <div className="px-4 text-xs text-muted-foreground">
+                            {tCommon("actions.resultDetails")}
+                          </div>
+                          <div className="px-4">
+                            <TipTapEditor
+                              content={result.notes as object}
+                              readOnly={true}
+                              projectId={
+                                projectId ? String(projectId) : undefined
+                              }
+                              className="h-auto"
+                            />
+                          </div>
+                        </div>
+                      )}
+                    {result.sourceType === "junit" && result.content && (
+                      <div className="px-4 py-2">
+                        <div className="text-xs text-muted-foreground">
+                          {tCommon("fields.notes")}
+                        </div>
+                        <pre className="whitespace-pre-wrap wrap-break-word bg-background border rounded p-2 mt-1 text-sm">
+                          {result.content}
+                        </pre>
+                      </div>
+                    )}
+                    {result.sourceType === "junit" && (
+                      <div className="px-4 py-2 mt-2 bg-muted/50 rounded-md border text-xs space-y-1">
+                        <div className="font-semibold text-primary">
+                          {tCommon("actions.automated.details")}
+                        </div>
+                        {result.testSuiteName && (
+                          <div>
+                            <span className="font-medium">
+                              {tCommon("actions.automated.testSuite")}
+                            </span>{" "}
+                            {result.testSuiteName}
+                          </div>
+                        )}
+                        {result.type && (
+                          <div>
+                            <span className="font-medium">
+                              {tCommon("fields.type") + ":"}
+                            </span>{" "}
+                            {result.type}
+                          </div>
+                        )}
+                        {result.message && (
+                          <div>
+                            <span className="font-medium">
+                              {tCommon("actions.automated.message") + ":"}
+                            </span>{" "}
+                            {result.message}
+                          </div>
+                        )}
+                        {result.file && (
+                          <div>
+                            <span className="font-medium">
+                              {tCommon("file") + ":"}
+                            </span>{" "}
+                            {result.file}
+                          </div>
+                        )}
+                        {typeof result.line === "number" && (
+                          <div>
+                            <span className="font-medium">
+                              {tCommon("actions.automated.line") + ":"}
+                            </span>{" "}
+                            {result.line}
+                          </div>
+                        )}
+                        {typeof result.assertions === "number" && (
+                          <div>
+                            <span className="font-medium">
+                              {tCommon("fields.assertions") + ":"}
+                            </span>{" "}
+                            {result.assertions}
+                          </div>
+                        )}
+                        {result.systemOut && (
+                          <div>
+                            <span className="font-medium">
+                              {tCommon("fields.systemOutput") + ":"}
+                            </span>
+                            <pre className="whitespace-pre-wrap wrap-break-word bg-background border rounded p-2 mt-1 max-h-40 overflow-auto">
+                              {result.systemOut}
+                            </pre>
+                          </div>
+                        )}
+                        {result.systemErr && (
+                          <div>
+                            <span className="font-medium">
+                              {tCommon("fields.systemError") + ":"}
+                            </span>
+                            <pre className="whitespace-pre-wrap wrap-break-word bg-background border rounded p-2 mt-1 max-h-40 overflow-auto">
+                              {result.systemErr}
+                            </pre>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    {result.sourceType === "manual" && result.originalDbId && (
+                      <ResultFieldValuesDisplay
+                        resultId={result.originalDbId}
+                        result={result}
+                        session={session}
+                      />
+                    )}
+                    {result.sourceType === "manual" &&
+                      result.stepResults &&
+                      result.stepResults.length > 0 && (
+                        <div>
+                          <StepResultsDisplay
+                            stepResults={result.stepResults}
+                            projectId={activeProjectId}
+                            resultId={result.originalDbId}
+                          />
+                        </div>
+                      )}
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
+            </TableCell>
+          </TableRow>
+        )}
+      </React.Fragment>
+    );
+  };
+
+  const topPad = shouldVirtualize ? (virtualItems[0]?.start ?? 0) : 0;
+  const lastVirtualItem = virtualItems[virtualItems.length - 1];
+  const bottomPad = shouldVirtualize
+    ? Math.max(0, totalSize - (lastVirtualItem?.end ?? 0))
+    : 0;
+
   return (
     <Card shadow="none">
       <CardHeader
@@ -1407,625 +2004,111 @@ export default function TestResultHistory({
         {renderHeaderActions(true)}
       </CardHeader>
       <CardContent className="p-0">
-        <Table>
-          <TableHeader>
-            <TableRow className="text-nowrap">
-              <TableHead className="w-8">
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6"
-                      aria-label={
-                        allExpanded
-                          ? tCommon("actions.collapse")
-                          : tCommon("actions.expand")
-                      }
-                      onClick={() => {
-                        toggleExpanded("all");
-                      }}
-                    >
-                      {allExpanded ? (
-                        <ChevronDown className="h-4 w-4" />
-                      ) : (
-                        <ChevronRight className="h-4 w-4" />
-                      )}
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    {allExpanded
-                      ? tCommon("actions.collapse")
-                      : tCommon("actions.expand")}
-                  </TooltipContent>
-                </Tooltip>
-              </TableHead>
-              <TableHead className="w-[300px]">
-                {tCommon("actions.junit.import.testRun.label")}
-              </TableHead>
-              <TableHead className="w-[120px]">
-                {tCommon("actions.status")}
-              </TableHead>
-              <TableHead className="w-[150px]">
-                {tCommon("fields.executedBy")}
-              </TableHead>
-              <TableHead className="w-[150px]">
-                {tCommon("fields.executedAt")}
-              </TableHead>
-              <TableHead className="w-[80px] text-center">
-                {tCommon("fields.editedHeader")}
-              </TableHead>
-              <TableHead className="w-[100px]">
-                {tCommon("fields.iterations")}
-              </TableHead>
-              <TableHead className="w-[100px]">
-                {tCommon("fields.duration")}
-              </TableHead>
-              <TableHead className="w-[100px]">
-                {tCommon("fields.attachments")}
-              </TableHead>
-              <TableHead className="w-[75px]">
-                {tCommon("fields.issues")}
-              </TableHead>
-              <TableHead className="w-[50px] text-center">
-                {tCommon("fields.version")}
-              </TableHead>
-              <TableHead className="w-[50px]"></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {sortedResults.map((result) => {
-              const statusColor = result.status?.color?.value || "transparent";
-              const isExpanded = expandedResults.has(result.displayId);
-
-              let displayDuration = result.elapsed || 0;
-              if (result.sourceType === "manual" && result.stepResults) {
-                displayDuration = result.elapsed || 0;
-                result.stepResults.forEach((step) => {
-                  displayDuration += step.elapsed || 0;
-                });
-              } else if (result.sourceType === "junit") {
-                displayDuration = result.elapsed || 0; // elapsed is mapped from jr.time
-              } else {
-                // pending
-                displayDuration = 0;
+        <div
+          ref={shouldVirtualize ? scrollRef : undefined}
+          className={shouldVirtualize ? "overflow-auto" : undefined}
+          style={
+            shouldVirtualize && maxHeight != null ? { maxHeight } : undefined
+          }
+        >
+          <Table>
+            <TableHeader
+              className={
+                shouldVirtualize ? "sticky top-0 z-10 bg-card" : undefined
               }
-
-              const isAssociatedTestRunCompleted =
-                result.associatedTestRun?.isCompleted ?? false;
-
-              // System admins always edit (matches the server guard); for
-              // everyone else resolve the effective window from the system
-              // ceiling + the project override.
-              const isSystemAdmin = session?.user.access === "ADMIN";
-              let isEditingAllowedByTime = true;
-              if (
-                !isSystemAdmin &&
-                result.sourceType === "manual" && // Editing only for manual
-                !result.isPending
-              ) {
-                const effectiveWindowSeconds = resolveEffectiveWindowSeconds(
-                  editResultsDurationSeconds ?? null,
-                  projectEditWindowSeconds
-                );
-                if (effectiveWindowSeconds === 0) {
-                  isEditingAllowedByTime = false;
-                } else if (effectiveWindowSeconds !== null) {
-                  const timeDifferenceSeconds =
-                    (Date.now() - new Date(result.executedAt).getTime()) / 1000;
-                  isEditingAllowedByTime =
-                    timeDifferenceSeconds <= effectiveWindowSeconds;
-                }
-              }
-
-              const canUserEditThisResult =
-                result.sourceType === "manual" &&
-                (session?.user.access === "ADMIN" ||
-                  session?.user.id === result.executedBy.id);
-
-              const showEditButton =
-                result.sourceType === "manual" &&
-                !result.isPending &&
-                !isAssociatedTestRunCompleted && // Check completion of the specific run this result is part of
-                isEditingAllowedByTime &&
-                !isLoadingResultPermissions &&
-                canAddEditResults &&
-                canUserEditThisResult;
-
-              return (
-                <React.Fragment key={result.displayId}>
-                  <TableRow
-                    className={`${isExpanded ? "border-b-0" : ""} ${isAssociatedTestRunCompleted ? "bg-muted-foreground/20" : ""}`}
-                  >
-                    <TableCell className="px-2 w-8">
-                      {!result.isPending && (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6"
-                          data-testid={`expand-result-${result.displayId}`}
-                          onClick={() => toggleExpanded(result.displayId)}
-                          aria-label={tCommon("aria.toggleDetails")}
-                        >
-                          {isExpanded ? (
-                            <ChevronDown className="h-4 w-4" />
-                          ) : (
-                            <ChevronRight className="h-4 w-4" />
-                          )}
-                        </Button>
-                      )}
-                    </TableCell>
-                    <TableCell className="max-w-[200px]">
-                      <div className="flex items-center group">
-                        {result.sourceType === "junit" ? (
-                          result.associatedTestRun ? (
-                            <div className="font-medium truncate flex items-center">
-                              {result.associatedTestRun.isDeleted ? (
-                                <>
-                                  <Trash2 className="w-4 h-4 inline me-1 shrink-0 text-muted-foreground/50" />
-                                  <span className="truncate text-muted-foreground/50 line-through">
-                                    {result.associatedTestRun.name}
-                                  </span>
-                                </>
-                              ) : (
-                                <>
-                                  <Bot className="w-4 h-4 inline me-1 shrink-0 text-primary border border-primary rounded-full p-0.5" />
-                                  <Link
-                                    href={`/projects/runs/${activeProjectId}/${result.associatedTestRun.id}?selectedCase=${fetchedTestCase.id}&view=status`}
-                                    className="hover:underline truncate"
-                                  >
-                                    {result.associatedTestRun.name}
-                                  </Link>
-                                </>
-                              )}
-                            </div>
-                          ) : (
-                            <div className="font-medium truncate flex items-center">
-                              <Bot className="w-4 h-4 inline me-1 shrink-0 text-primary border border-primary rounded-full p-0.5" />
-                              <span className="truncate">
-                                {result.testSuiteName || "JUnit Import"}
-                              </span>
-                            </div>
-                          )
-                        ) : result.associatedTestRun ? (
-                          <TestRunNameDisplay
-                            testRun={result.associatedTestRun}
-                            projectId={activeProjectId}
-                            className="truncate"
-                            linkSuffix={`?selectedCase=${fetchedTestCase.id}&view=status`}
-                          />
-                        ) : (
-                          <div className="font-medium truncate flex items-center">
-                            <PlayCircle className="w-4 h-4 inline me-1 shrink-0" />
-                            <span className="truncate">
-                              {tCases("unknownRun")}
-                            </span>
-                          </div>
-                        )}
-                        {result.associatedTestRun &&
-                          !result.associatedTestRun.isDeleted &&
-                          result.sourceType !== "junit" && (
-                            <LinkIcon className="w-4 h-4 inline ms-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
-                          )}
-                      </div>
-                    </TableCell>
-                    <TableCell className="max-w-[120px]">
-                      <Badge
-                        variant="outline"
-                        data-status-surface
-                        style={{
-                          ...statusSurfaceVars(statusColor),
-                          backgroundColor: statusColor,
-                          color: "white",
-                          borderColor: statusColor,
+            >
+              <TableRow className="text-nowrap">
+                <TableHead className="w-8">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6"
+                        aria-label={
+                          allExpanded
+                            ? tCommon("actions.collapse")
+                            : tCommon("actions.expand")
+                        }
+                        onClick={() => {
+                          toggleExpanded("all");
                         }}
                       >
-                        {result.status.name}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="max-w-[150px]">
-                      {result.executedBy && result.executedBy.id ? (
-                        <div className="truncate">
-                          <UserNameCell userId={result.executedBy.id} />
-                        </div>
-                      ) : (
-                        <div className="truncate">
-                          {result.executedBy?.name || "-"}
-                        </div>
-                      )}
-                    </TableCell>
-                    <TableCell className="max-w-[100px]">
-                      <RelativeTimeTooltip
-                        date={result.executedAt}
-                        isPending={result.isPending}
-                        dateFnsLocale={dateFnsLocale}
-                        dateFormat={session?.user.preferences?.dateFormat}
-                        timeFormat={session?.user.preferences?.timeFormat}
-                        timezone={session?.user.preferences?.timezone}
-                        className="truncate"
-                      />
-                    </TableCell>
-                    <TableCell className="max-w-[80px]">
-                      {result.sourceType === "manual" && result.editedAt && (
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <div className="flex justify-center">
-                              <History className="h-4 w-4 text-muted-foreground" />
-                            </div>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <div className="flex gap-1">
-                              <div>{tCommon("lastEditedBy")}</div>
-                              {result.editedBy?.name}
-                              <div>{tCommon("on")}</div>
-                              <div>
-                                <DateFormatter
-                                  date={result.editedAt}
-                                  formatString={
-                                    session?.user.preferences?.dateFormat +
-                                    " " +
-                                    session?.user.preferences?.timeFormat
-                                  }
-                                  timezone={session?.user.preferences?.timezone}
-                                />
-                              </div>
-                            </div>
-                          </TooltipContent>
-                        </Tooltip>
-                      )}
-                    </TableCell>
-                    <TableCell className="max-w-[100px]">
-                      {result.sourceType === "manual" && result.iteration && (
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <div className="flex justify-center">
-                              <SquareStack
-                                className="h-4 w-4 text-muted-foreground"
-                                aria-label={tParams("iterationResultRowIcon")}
-                              />
-                            </div>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            {tParams("iterationResultRowIcon")}
-                          </TooltipContent>
-                        </Tooltip>
-                      )}
-                    </TableCell>
-                    <TableCell className="max-w-[100px]">
-                      <div className="truncate">
-                        {!result.isPending && displayDuration > 0
-                          ? formatSeconds(displayDuration, locale)
-                          : "-"}
-                      </div>
-                    </TableCell>
-                    <TableCell className="max-w-[50px]">
-                      <div className="flex justify-center">
-                        {!result.isPending &&
-                          result.attachments &&
-                          result.attachments.length > 0 && (
-                            <AttachmentsListDisplay
-                              attachments={result.attachments}
-                              onSelect={handleSelect}
-                            />
-                          )}
-                      </div>
-                    </TableCell>
-                    <TableCell className="max-w-[75px]">
-                      {!result.isPending &&
-                        result.issues &&
-                        result.issues.length > 0 && (
-                          <div className="flex justify-center">
-                            {activeProjectId && (
-                              <IssuesListDisplay
-                                issues={result.issues.map((issue) => ({
-                                  ...issue,
-                                  projectIds: [activeProjectId],
-                                }))}
-                              />
-                            )}
-                          </div>
+                        {allExpanded ? (
+                          <ChevronDown className="h-4 w-4" />
+                        ) : (
+                          <ChevronRight className="h-4 w-4" />
                         )}
-                    </TableCell>
-                    <TableCell className="max-w-[50px] text-center">
-                      {result.sourceType === "manual" && !result.isPending && (
-                        <Link
-                          href={`/projects/repository/${activeProjectId}/${caseId}/${result.testRunCaseVersion}`}
-                          className="hover:underline"
-                        >
-                          {result.testRunCaseVersion}
-                        </Link>
-                      )}
-                      {result.sourceType !== "manual" && "-"}
-                    </TableCell>
-                    <TableCell className="max-w-[50px]">
-                      {showEditButton &&
-                        result.sourceType === "manual" &&
-                        result.associatedTestRun &&
-                        result.associatedTestRunCaseId && (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6"
-                            aria-label={tCommon("actions.edit")}
-                            onClick={() => {
-                              setEditingResult({
-                                id: result.originalDbId,
-                                testRunId: result.associatedTestRun!.id,
-                                testRunCaseId: result.associatedTestRunCaseId!,
-                              });
-                            }}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                        )}
-                    </TableCell>
-                  </TableRow>
-                  {!result.isPending && (
-                    <TableRow className="bg-muted/30 hover:bg-muted/30">
-                      <TableCell colSpan={12} className="py-0 px-2">
-                        {" "}
-                        {/* ColSpan must match TableHeader column count (12 with iteration icon column) */}
-                        <Collapsible open={isExpanded}>
-                          <CollapsibleContent className="overflow-hidden data-[state=open]:animate-slide-down data-[state=closed]:animate-slide-up">
-                            <div className="pb-2">
-                              <Separator className="my-2" />
-                              {/* Run details block — Configuration name (+
-                                  group context if present). Shown for any
-                                  result that has an associated TestRun
-                                  configuration. Placement: top of the
-                                  expanded panel so it reads like context
-                                  metadata before the result content. */}
-                              {result.associatedTestRun?.configuration && (
-                                <div className="px-4 py-2 mb-2 bg-muted/50 rounded-md border text-xs space-y-1">
-                                  <div className="font-semibold text-primary">
-                                    {tParams("iterationResultRunDetails")}
-                                  </div>
-                                  <div>
-                                    <span className="font-medium">
-                                      {tCommon("fields.configuration") + ":"}
-                                    </span>{" "}
-                                    {
-                                      result.associatedTestRun.configuration
-                                        .name
-                                    }
-                                  </div>
-                                </div>
-                              )}
-                              {/* Parameter values block — per-result
-                                  iteration parameter values from
-                                  TestRunCaseIteration.valuesJson against
-                                  the snapshot's parameter schema. Sensitive
-                                  values redact for non-admin viewers
-                                  (defense-in-depth client gate; server
-                                  audit boundary is the source of truth). */}
-                              {result.sourceType === "manual" &&
-                                result.iteration && (
-                                  <div className="px-4 py-2 mb-2 bg-muted/50 rounded-md border text-xs space-y-1">
-                                    <div className="font-semibold text-primary flex items-center gap-1">
-                                      <SquareStack
-                                        className="h-3 w-3"
-                                        aria-hidden
-                                      />
-                                      {tParams("iterationResultLabelHeading") +
-                                        ` ${result.iteration.rowIndex + 1}`}
-                                      {result.iteration.label && (
-                                        <span className="font-normal text-muted-foreground">
-                                          {": "}
-                                          {result.iteration.label}
-                                        </span>
-                                      )}
-                                    </div>
-                                    {result.iteration.parameterSchema.length >
-                                      0 && (
-                                      <table className="w-full text-start mt-1">
-                                        <thead>
-                                          <tr className="border-b">
-                                            <th className="font-medium pe-4 py-1">
-                                              {tParams(
-                                                "iterationIssueTableHeaderParameter"
-                                              )}
-                                            </th>
-                                            <th className="font-medium py-1">
-                                              {tParams(
-                                                "iterationIssueTableHeaderValue"
-                                              )}
-                                            </th>
-                                          </tr>
-                                        </thead>
-                                        <tbody>
-                                          {result.iteration.parameterSchema.map(
-                                            (p) => {
-                                              const raw = ((result.iteration!
-                                                .valuesJson as Record<
-                                                string,
-                                                unknown
-                                              > | null) ?? {})[p.name];
-                                              const canSee =
-                                                !p.sensitive ||
-                                                session?.user?.access ===
-                                                  "ADMIN";
-                                              let display: string;
-                                              if (!canSee) {
-                                                display = "••••••";
-                                              } else if (
-                                                raw === null ||
-                                                raw === undefined ||
-                                                raw === ""
-                                              ) {
-                                                display = tParams(
-                                                  "iterationResultNoValue"
-                                                );
-                                              } else if (
-                                                typeof raw === "string"
-                                              ) {
-                                                display = raw;
-                                              } else {
-                                                try {
-                                                  display = JSON.stringify(raw);
-                                                } catch {
-                                                  display = String(raw);
-                                                }
-                                              }
-                                              return (
-                                                <tr key={p.name}>
-                                                  <td className="pe-4 py-1 font-mono">
-                                                    {"@"}
-                                                    {p.name}
-                                                  </td>
-                                                  <td className="py-1 break-all">
-                                                    {display}
-                                                  </td>
-                                                </tr>
-                                              );
-                                            }
-                                          )}
-                                        </tbody>
-                                      </table>
-                                    )}
-                                  </div>
-                                )}
-                              {result.sourceType === "manual" &&
-                                result.notes &&
-                                !isTiptapEmpty(result.notes) && (
-                                  <div>
-                                    <div className="px-4 text-xs text-muted-foreground">
-                                      {tCommon("actions.resultDetails")}
-                                    </div>
-                                    <div className="px-4">
-                                      <TipTapEditor
-                                        content={result.notes as object}
-                                        readOnly={true}
-                                        projectId={
-                                          projectId
-                                            ? String(projectId)
-                                            : undefined
-                                        }
-                                        className="h-auto"
-                                      />
-                                    </div>
-                                  </div>
-                                )}
-                              {result.sourceType === "junit" &&
-                                result.content && (
-                                  <div className="px-4 py-2">
-                                    <div className="text-xs text-muted-foreground">
-                                      {tCommon("fields.notes")}
-                                    </div>
-                                    <pre className="whitespace-pre-wrap wrap-break-word bg-background border rounded p-2 mt-1 text-sm">
-                                      {result.content}
-                                    </pre>
-                                  </div>
-                                )}
-                              {result.sourceType === "junit" && (
-                                <div className="px-4 py-2 mt-2 bg-muted/50 rounded-md border text-xs space-y-1">
-                                  <div className="font-semibold text-primary">
-                                    {tCommon("actions.automated.details")}
-                                  </div>
-                                  {result.testSuiteName && (
-                                    <div>
-                                      <span className="font-medium">
-                                        {tCommon("actions.automated.testSuite")}
-                                      </span>{" "}
-                                      {result.testSuiteName}
-                                    </div>
-                                  )}
-                                  {result.type && (
-                                    <div>
-                                      <span className="font-medium">
-                                        {tCommon("fields.type") + ":"}
-                                      </span>{" "}
-                                      {result.type}
-                                    </div>
-                                  )}
-                                  {result.message && (
-                                    <div>
-                                      <span className="font-medium">
-                                        {tCommon("actions.automated.message") +
-                                          ":"}
-                                      </span>{" "}
-                                      {result.message}
-                                    </div>
-                                  )}
-                                  {result.file && (
-                                    <div>
-                                      <span className="font-medium">
-                                        {tCommon("file") + ":"}
-                                      </span>{" "}
-                                      {result.file}
-                                    </div>
-                                  )}
-                                  {typeof result.line === "number" && (
-                                    <div>
-                                      <span className="font-medium">
-                                        {tCommon("actions.automated.line") +
-                                          ":"}
-                                      </span>{" "}
-                                      {result.line}
-                                    </div>
-                                  )}
-                                  {typeof result.assertions === "number" && (
-                                    <div>
-                                      <span className="font-medium">
-                                        {tCommon("fields.assertions") + ":"}
-                                      </span>{" "}
-                                      {result.assertions}
-                                    </div>
-                                  )}
-                                  {result.systemOut && (
-                                    <div>
-                                      <span className="font-medium">
-                                        {tCommon("fields.systemOutput") + ":"}
-                                      </span>
-                                      <pre className="whitespace-pre-wrap wrap-break-word bg-background border rounded p-2 mt-1 max-h-40 overflow-auto">
-                                        {result.systemOut}
-                                      </pre>
-                                    </div>
-                                  )}
-                                  {result.systemErr && (
-                                    <div>
-                                      <span className="font-medium">
-                                        {tCommon("fields.systemError") + ":"}
-                                      </span>
-                                      <pre className="whitespace-pre-wrap wrap-break-word bg-background border rounded p-2 mt-1 max-h-40 overflow-auto">
-                                        {result.systemErr}
-                                      </pre>
-                                    </div>
-                                  )}
-                                </div>
-                              )}
-                              {result.sourceType === "manual" &&
-                                result.originalDbId && (
-                                  <ResultFieldValuesDisplay
-                                    resultId={result.originalDbId}
-                                    result={result}
-                                    session={session}
-                                  />
-                                )}
-                              {result.sourceType === "manual" &&
-                                result.stepResults &&
-                                result.stepResults.length > 0 && (
-                                  <div>
-                                    <StepResultsDisplay
-                                      stepResults={result.stepResults}
-                                      projectId={activeProjectId}
-                                      resultId={result.originalDbId}
-                                    />
-                                  </div>
-                                )}
-                            </div>
-                          </CollapsibleContent>
-                        </Collapsible>
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </React.Fragment>
-              );
-            })}
-          </TableBody>
-        </Table>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      {allExpanded
+                        ? tCommon("actions.collapse")
+                        : tCommon("actions.expand")}
+                    </TooltipContent>
+                  </Tooltip>
+                </TableHead>
+                <TableHead className="w-[300px]">
+                  {tCommon("actions.junit.import.testRun.label")}
+                </TableHead>
+                <TableHead className="w-[120px]">
+                  {tCommon("actions.status")}
+                </TableHead>
+                <TableHead className="w-[150px]">
+                  {tCommon("fields.executedBy")}
+                </TableHead>
+                <TableHead className="w-[150px]">
+                  {tCommon("fields.executedAt")}
+                </TableHead>
+                <TableHead className="w-[80px] text-center">
+                  {tCommon("fields.editedHeader")}
+                </TableHead>
+                <TableHead className="w-[100px]">
+                  {tCommon("fields.iterations")}
+                </TableHead>
+                <TableHead className="w-[100px]">
+                  {tCommon("fields.duration")}
+                </TableHead>
+                <TableHead className="w-[100px]">
+                  {tCommon("fields.attachments")}
+                </TableHead>
+                <TableHead className="w-[75px]">
+                  {tCommon("fields.issues")}
+                </TableHead>
+                <TableHead className="w-[50px] text-center">
+                  {tCommon("fields.version")}
+                </TableHead>
+                <TableHead className="w-[50px]"></TableHead>
+              </TableRow>
+            </TableHeader>
+            {shouldVirtualize ? (
+              <>
+                {topPad > 0 && <tbody aria-hidden style={{ height: topPad }} />}
+                {virtualItems.map((virtualRow) => {
+                  const result = sortedResults[virtualRow.index];
+                  if (!result) return null;
+                  return (
+                    <tbody
+                      key={result.displayId}
+                      data-index={virtualRow.index}
+                      ref={
+                        measureElement as unknown as React.Ref<HTMLTableSectionElement>
+                      }
+                    >
+                      {renderResultRow(result)}
+                    </tbody>
+                  );
+                })}
+                {bottomPad > 0 && (
+                  <tbody aria-hidden style={{ height: bottomPad }} />
+                )}
+              </>
+            ) : (
+              <TableBody>{sortedResults.map(renderResultRow)}</TableBody>
+            )}
+          </Table>
+        </div>
         {selectedAttachmentIndex !== null && (
           <AttachmentsCarousel
             attachments={selectedAttachments}
