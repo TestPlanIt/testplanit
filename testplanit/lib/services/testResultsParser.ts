@@ -7,7 +7,7 @@
  */
 
 import { randomUUID } from "crypto";
-import { existsSync, writeFileSync } from "fs";
+import { existsSync, readFileSync, writeFileSync } from "fs";
 import { mkdir, rm } from "fs/promises";
 import { tmpdir } from "os";
 import { join } from "path";
@@ -337,6 +337,17 @@ export async function parseTestResults(
       throw new Error(`Failed to parse ${format} files: ${errorDetails}`);
     }
 
+    // Surefire rerun elements are invisible to the parser library — a
+    // fail-retry-pass test would import as a single clean pass. Materialize
+    // each recorded retry as its own attempt entry.
+    if (format === "junit") {
+      const fileContents: string[] = [];
+      for (const tempFile of tempFiles) {
+        fileContents.push(readFileSync(tempFile, "utf-8"));
+      }
+      injectSurefireRetryAttempts(result, fileContents);
+    }
+
     // Normalize durations from milliseconds to seconds for consistency
     // with existing JUnit data (JUnit XML uses seconds)
     normalizeDurations(result, format);
@@ -656,6 +667,139 @@ function parseTestcasesFromContent(
       const key = getExtendedDataKey(defaultSuiteName, testName, className);
       dataMap.set(key, { systemOut, systemErr, assertions });
     }
+  }
+}
+
+interface SurefireRetryRecord {
+  /** flakyFailure/flakyError — failed attempts BEFORE the final pass. */
+  preAttempts: Array<{ message?: string; stack?: string }>;
+  /** rerunFailure/rerunError — failed attempts AFTER the initial failure. */
+  postAttempts: Array<{ message?: string; stack?: string }>;
+}
+
+/**
+ * Materialize Maven Surefire rerun records as attempt entries in the parsed
+ * result. Surefire keeps ONE `<testcase>` per test and nests each retry as a
+ * `<flakyFailure>`/`<flakyError>` (test ultimately passed) or
+ * `<rerunFailure>`/`<rerunError>` (test ultimately failed) child, which the
+ * parser library ignores. Each becomes a failed attempt entry ordered so the
+ * chronological last attempt carries the test's final status — flaky
+ * attempts before the passing case, rerun attempts after the failing one.
+ */
+export function injectSurefireRetryAttempts(
+  result: ITestResult,
+  fileContents: string[]
+): void {
+  const retryMap = new Map<string, SurefireRetryRecord>();
+
+  const retryChildRegex =
+    /<(flakyFailure|flakyError|rerunFailure|rerunError)\b([^>]*?)(?:\/>|>([\s\S]*?)<\/\1>)/gi;
+
+  for (const content of fileContents) {
+    // NOTE: unlike parseXmlForExtendedData's suite regex, the self-closing
+    // alternative must be exactly `/>` — an optional slash would match the
+    // open tag's own `>` and always yield an empty suite body.
+    const testsuiteRegex =
+      /<testsuite\b([^>]*?)(?:\/>|>([\s\S]*?)<\/testsuite>)/gi;
+    let suiteMatch;
+    while ((suiteMatch = testsuiteRegex.exec(content)) !== null) {
+      const suiteNameMatch = suiteMatch[1].match(/name\s*=\s*["']([^"']*)["']/);
+      const suiteName = suiteNameMatch
+        ? decodeXmlEntities(suiteNameMatch[1])
+        : "Test Suite";
+      const suiteContent = suiteMatch[2] || "";
+
+      const testcaseRegex =
+        /<testcase\s+([^>]*?)(?:\/>|>([\s\S]*?)<\/testcase>)/gi;
+      let caseMatch;
+      while ((caseMatch = testcaseRegex.exec(suiteContent)) !== null) {
+        const caseContent = caseMatch[2] || "";
+        if (!caseContent) continue;
+
+        const preAttempts: SurefireRetryRecord["preAttempts"] = [];
+        const postAttempts: SurefireRetryRecord["postAttempts"] = [];
+        retryChildRegex.lastIndex = 0;
+        let childMatch;
+        while ((childMatch = retryChildRegex.exec(caseContent)) !== null) {
+          const tag = childMatch[1].toLowerCase();
+          const messageMatch = childMatch[2].match(
+            /message\s*=\s*["']([^"']*)["']/
+          );
+          const body = childMatch[3] || "";
+          const stackMatch = body.match(
+            /<stackTrace>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/stackTrace>/i
+          );
+          const attempt = {
+            message: messageMatch
+              ? decodeXmlEntities(messageMatch[1])
+              : undefined,
+            stack: stackMatch
+              ? decodeXmlEntities(stackMatch[1].trim())
+              : undefined,
+          };
+          if (tag.startsWith("flaky")) {
+            preAttempts.push(attempt);
+          } else {
+            postAttempts.push(attempt);
+          }
+        }
+        if (preAttempts.length === 0 && postAttempts.length === 0) continue;
+
+        const testNameMatch = caseMatch[1].match(/name\s*=\s*["']([^"']*)["']/);
+        const classNameMatch = caseMatch[1].match(
+          /classname\s*=\s*["']([^"']*)["']/
+        );
+        const testName = testNameMatch
+          ? decodeXmlEntities(testNameMatch[1])
+          : "";
+        if (!testName) continue;
+        const className = classNameMatch
+          ? decodeXmlEntities(classNameMatch[1])
+          : suiteName;
+        retryMap.set(getExtendedDataKey(suiteName, testName, className), {
+          preAttempts,
+          postAttempts,
+        });
+      }
+    }
+  }
+
+  if (retryMap.size === 0) return;
+
+  for (const suite of result.suites || []) {
+    const cases = suite.cases || [];
+    const withAttempts: ITestCase[] = [];
+    for (const testCase of cases) {
+      const key = getExtendedDataKey(
+        suite.name,
+        testCase.name,
+        extractClassName(testCase, suite)
+      );
+      const record = retryMap.get(key);
+      if (!record) {
+        withAttempts.push(testCase);
+        continue;
+      }
+      retryMap.delete(key);
+      // Steps and attachments stay on the reported (final) entry only, so
+      // attempts never duplicate step rows or attachment uploads.
+      const toAttempt = (attempt: {
+        message?: string;
+        stack?: string;
+      }): ITestCase => ({
+        ...testCase,
+        status: "FAIL",
+        failure: attempt.message ?? "",
+        stack_trace: attempt.stack ?? "",
+        duration: 0,
+        steps: [],
+        attachments: [],
+      });
+      withAttempts.push(...record.preAttempts.map(toAttempt));
+      withAttempts.push(testCase);
+      withAttempts.push(...record.postAttempts.map(toAttempt));
+    }
+    suite.cases = withAttempts;
   }
 }
 

@@ -1,6 +1,7 @@
 import type { ITestCase, ITestResult, ITestSuite } from "test-results-parser";
 import { describe, expect, it } from "vitest";
 import {
+  injectSurefireRetryAttempts,
   countTotalTestCases,
   detectFormat,
   detectFormatFromFiles,
@@ -572,6 +573,114 @@ describe("testResultsParser", () => {
       expect(FORMAT_TO_SOURCE.mstest).toBe("MSTEST");
       expect(FORMAT_TO_SOURCE.mocha).toBe("MOCHA");
       expect(FORMAT_TO_SOURCE.cucumber).toBe("CUCUMBER");
+    });
+  });
+
+  describe("injectSurefireRetryAttempts", () => {
+    const makeCase = (name: string, status: string): ITestCase =>
+      ({
+        name,
+        status,
+        failure: status === "FAIL" ? "boom" : "",
+        stack_trace: "",
+        duration: 1200,
+        steps: [],
+        attachments: [],
+        metadata: {},
+      }) as unknown as ITestCase;
+
+    const makeResult = (): ITestResult =>
+      ({
+        suites: [
+          {
+            name: "com.example.LoginTest",
+            cases: [
+              makeCase("flakyLogin", "PASS"),
+              makeCase("brokenLogout", "FAIL"),
+              makeCase("stable", "PASS"),
+            ],
+          } as unknown as ITestSuite,
+        ],
+      }) as unknown as ITestResult;
+
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.example.LoginTest" tests="3" failures="1">
+  <testcase name="flakyLogin" classname="com.example.LoginTest" time="1.2">
+    <flakyFailure message="expected true" type="AssertionError"><stackTrace>at LoginTest.flakyLogin</stackTrace></flakyFailure>
+  </testcase>
+  <testcase name="brokenLogout" classname="com.example.LoginTest" time="0.4">
+    <failure message="boom">stack</failure>
+    <rerunFailure message="boom again"><stackTrace>at LoginTest.brokenLogout</stackTrace></rerunFailure>
+  </testcase>
+  <testcase name="stable" classname="com.example.LoginTest" time="0.1"/>
+</testsuite>`;
+
+    it("inserts flaky attempts before the pass and rerun attempts after the failure", () => {
+      const result = makeResult();
+      injectSurefireRetryAttempts(result, [xml]);
+      const cases = result.suites[0].cases;
+      expect(cases.map((c) => `${c.name}:${c.status}`)).toEqual([
+        "flakyLogin:FAIL",
+        "flakyLogin:PASS",
+        "brokenLogout:FAIL",
+        "brokenLogout:FAIL",
+        "stable:PASS",
+      ]);
+    });
+
+    it("carries the rerun record's message and stack onto the attempt", () => {
+      const result = makeResult();
+      injectSurefireRetryAttempts(result, [xml]);
+      const attempt = result.suites[0].cases[0];
+      expect(attempt.failure).toBe("expected true");
+      expect(attempt.stack_trace).toBe("at LoginTest.flakyLogin");
+      expect(attempt.duration).toBe(0);
+      expect(attempt.steps).toEqual([]);
+      expect(attempt.attachments).toEqual([]);
+    });
+
+    it("keeps the final entry's own status, steps, and duration intact", () => {
+      const result = makeResult();
+      injectSurefireRetryAttempts(result, [xml]);
+      const finalEntry = result.suites[0].cases[1];
+      expect(finalEntry.status).toBe("PASS");
+      expect(finalEntry.duration).toBe(1200);
+    });
+
+    it("supports multiple recorded attempts for one test", () => {
+      const result = makeResult();
+      const multiXml = xml.replace(
+        "</flakyFailure>",
+        '</flakyFailure><flakyError message="io error"><stackTrace>at io</stackTrace></flakyError>'
+      );
+      injectSurefireRetryAttempts(result, [multiXml]);
+      const flakyEntries = result.suites[0].cases.filter(
+        (c) => c.name === "flakyLogin"
+      );
+      expect(flakyEntries.map((c) => c.status)).toEqual([
+        "FAIL",
+        "FAIL",
+        "PASS",
+      ]);
+    });
+
+    it("leaves results untouched when the XML has no rerun records", () => {
+      const result = makeResult();
+      const plainXml = `<testsuite name="com.example.LoginTest">
+  <testcase name="flakyLogin" classname="com.example.LoginTest" time="1.2"/>
+</testsuite>`;
+      injectSurefireRetryAttempts(result, [plainXml]);
+      expect(result.suites[0].cases).toHaveLength(3);
+    });
+
+    it("does not attach records from a different suite", () => {
+      const result = makeResult();
+      const otherSuiteXml = xml.replace(
+        /com\.example\.LoginTest/g,
+        "com.example.OtherTest"
+      );
+      injectSurefireRetryAttempts(result, [otherSuiteXml]);
+      expect(result.suites[0].cases).toHaveLength(3);
     });
   });
 });
