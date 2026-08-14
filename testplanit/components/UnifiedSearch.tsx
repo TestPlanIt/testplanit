@@ -77,6 +77,7 @@ import {
   UnifiedSearchResult,
 } from "~/types/search";
 import { cn } from "~/utils";
+import { isAutomatedCaseSource } from "~/utils/testResultTypes";
 
 interface UnifiedSearchProps {
   // Context overrides
@@ -1182,7 +1183,14 @@ function SearchResultCard({
   onSelectToggle?: () => void;
 }) {
   const t = useTranslations();
-  const Icon = getEntityIcon(hit.entityType);
+  // Deleted wins over everything (matching TestCaseNameDisplay); automated
+  // repository cases get the bot icon; everything else uses the entity icon.
+  const Icon = hit.source.isDeleted
+    ? "trash-2"
+    : hit.entityType === SearchableEntityType.REPOSITORY_CASE &&
+        (hit.source.automated || isAutomatedCaseSource(hit.source.source))
+      ? "bot"
+      : getEntityIcon(hit.entityType);
 
   const renderEntitySpecificInfo = () => {
     switch (hit.entityType) {
@@ -1250,7 +1258,7 @@ function SearchResultCard({
                   )),
                 hit.source.automated && (
                   <Badge variant="secondary" className="text-xs">
-                    <DynamicIcon name="bot" className="h-3 w-3 text-primary" />
+                    <DynamicIcon name="bot" className="h-3 w-3" />
                   </Badge>
                 ),
                 hit.source.source && hit.source.source !== "MANUAL" && (

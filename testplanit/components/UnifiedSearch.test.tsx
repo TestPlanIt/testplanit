@@ -451,6 +451,86 @@ describe("UnifiedSearch Component", () => {
     });
   });
 
+  it("should show the automated icon for automated test case results", async () => {
+    (global.fetch as any).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        total: 3,
+        hits: [
+          {
+            id: 1,
+            entityType: SearchableEntityType.REPOSITORY_CASE,
+            score: 1.0,
+            source: {
+              id: 1,
+              name: "Imported Automated Case",
+              source: "JUNIT",
+              projectName: "Test Project",
+              projectId: 1,
+            },
+          },
+          {
+            id: 2,
+            entityType: SearchableEntityType.REPOSITORY_CASE,
+            score: 0.9,
+            source: {
+              id: 2,
+              name: "Flagged Automated Case",
+              source: "MANUAL",
+              automated: true,
+              projectName: "Test Project",
+              projectId: 1,
+            },
+          },
+          {
+            id: 3,
+            entityType: SearchableEntityType.REPOSITORY_CASE,
+            score: 0.8,
+            source: {
+              id: 3,
+              name: "Manual Case",
+              source: "MANUAL",
+              projectName: "Test Project",
+              projectId: 1,
+            },
+          },
+          {
+            id: 4,
+            entityType: SearchableEntityType.REPOSITORY_CASE,
+            score: 0.7,
+            source: {
+              id: 4,
+              name: "Deleted Automated Case",
+              source: "JUNIT",
+              isDeleted: true,
+              projectName: "Test Project",
+              projectId: 1,
+            },
+          },
+        ],
+        took: 100,
+      }),
+    });
+
+    render(<UnifiedSearch />);
+
+    const searchInput = screen.getByPlaceholderText(/search/i);
+    fireEvent.change(searchInput, { target: { value: "case" } });
+
+    await waitFor(() => {
+      expect(screen.getAllByTestId("test-case-result")).toHaveLength(4);
+    });
+
+    // Row icons: bot for the JUNIT-sourced case and the automated-flagged
+    // case, the plain entity icon (mocked as file-text) for the manual case,
+    // and trash for the deleted case — deleted wins over automated.
+    // (The metadata bot badge renders inside BadgeList, which is mocked to a
+    // count, so only row icons are counted here.)
+    expect(screen.getAllByTestId("icon-bot")).toHaveLength(2);
+    expect(screen.getAllByTestId("icon-file-text")).toHaveLength(1);
+    expect(screen.getAllByTestId("icon-trash-2")).toHaveLength(1);
+  });
+
   it("should show no results message when search returns empty", async () => {
     (global.fetch as any).mockResolvedValueOnce({
       ok: true,
