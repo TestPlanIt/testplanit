@@ -101,7 +101,7 @@ function MetricTile({
 }
 
 /**
- * Allure-style execution metrics for an automated run: pass rate, the
+ * Execution metrics for an automated run: pass rate, the
  * wall-clock window vs the summed per-test time (and the parallelism the two
  * imply), duration percentiles, and the slowest tests.
  */

@@ -38,7 +38,7 @@ interface TimelineBar {
 }
 
 /**
- * Per-worker execution timeline (Allure-style swimlane): each test is a bar
+ * Per-worker execution timeline swimlane: each test is a bar
  * on a real time axis, packed into the lanes the run's concurrency implies
  * (first-fit over the reconstructed execution windows — stage 2's reporter
  * worker ids will replace the inference with real lane names).

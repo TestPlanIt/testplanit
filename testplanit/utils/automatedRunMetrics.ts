@@ -1,7 +1,7 @@
 /**
- * Execution metrics for automated (JUnit) test runs, in the spirit of the
- * Allure report summary: the wall-clock window the run occupied, the linear
- * sum of every test's own duration, and how the two relate (parallelism).
+ * Execution metrics for automated (JUnit) test runs: the wall-clock window
+ * the run occupied, the linear sum of every test's own duration, and how the
+ * two relate (parallelism).
  *
  * All duration inputs/outputs are SECONDS (JUnit `time` semantics).
  */
@@ -151,7 +151,7 @@ export interface AutomatedAttemptInput {
 }
 
 export interface RetryMetrics {
-  /** Attempts beyond each case's first (Allure's "retries" number). */
+  /** Attempts beyond each case's first. */
   retriesCount: number;
   retriedCaseCount: number;
   /** Cases that failed at least once and passed on their final attempt. */
@@ -169,8 +169,8 @@ function attemptTimeMs(attempt: AutomatedAttemptInput): number {
 }
 
 /**
- * Within-run retry/flaky detection, Allure-style: a case is flaky when an
- * earlier attempt failed and the final attempt passed. Depends on the
+ * Within-run retry/flaky detection: a case is flaky when an earlier attempt
+ * failed and the final attempt passed. Depends on the
  * reporter posting every attempt as its own result row (TestPlanIt's
  * Playwright/WDIO reporters do; final-attempt-only JUnit XML cannot be
  * detected).

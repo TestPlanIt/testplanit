@@ -1451,8 +1451,8 @@ export default function TestRunPage() {
       }))
     );
     // Mark every attempt row of a fail-then-pass case so the table can badge
-    // it (Allure-style within-run flakiness), and every retried case's rows
-    // so the facet filter can find them.
+    // it (within-run flakiness), and every retried case's rows so the facet
+    // filter can find them.
     const { flakyCaseIds, retriedCaseIds } = computeRetryMetrics(mapped);
     if (retriedCaseIds.size === 0) return mapped;
     return mapped.map((testCase) =>
