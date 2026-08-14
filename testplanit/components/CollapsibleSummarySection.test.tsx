@@ -58,6 +58,27 @@ describe("CollapsibleSummarySection", () => {
     );
   });
 
+  it("renders a custom title when provided, the shared Summary label otherwise", () => {
+    const { unmount } = render(
+      <CollapsibleSummarySection storageKey={STORAGE_KEY} title="Metrics">
+        <div />
+      </CollapsibleSummarySection>
+    );
+    expect(screen.getByTestId("summary-section-toggle")).toHaveTextContent(
+      "Metrics"
+    );
+    unmount();
+
+    render(
+      <CollapsibleSummarySection storageKey={STORAGE_KEY}>
+        <div />
+      </CollapsibleSummarySection>
+    );
+    expect(screen.getByTestId("summary-section-toggle")).toHaveTextContent(
+      "fields.summary"
+    );
+  });
+
   it("keeps separate state per storage key", () => {
     window.localStorage.setItem("tpi.sessions.1.summaryCollapsed", "collapsed");
     render(

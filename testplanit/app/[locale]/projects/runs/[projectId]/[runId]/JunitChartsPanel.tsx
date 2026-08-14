@@ -1,3 +1,5 @@
+import AutomatedRunMetrics from "@/components/AutomatedRunMetrics";
+import CollapsibleSummarySection from "@/components/CollapsibleSummarySection";
 import JUnitDurationHistogram from "@/components/dataVisualizations/JUnitDurationHistogram";
 import JUnitStatusTimeline from "@/components/dataVisualizations/JUnitStatusTimeline";
 import TestRunResultsDonut from "@/components/dataVisualizations/TestRunResultsDonut";
@@ -22,6 +24,7 @@ import {
 } from "@/components/ui/dialog";
 import { FormLabel } from "@/components/ui/form";
 import { Maximize2 } from "lucide-react";
+import { useParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { cn } from "~/utils";
 
@@ -48,6 +51,8 @@ export default function JunitChartsPanel({
   statusScope,
   forecastSeconds,
 }: JunitChartsPanelProps) {
+  const params = useParams();
+  const projectId = params.projectId as string | undefined;
   // Group by status for the donut chart.
   const donutChartData = useMemo(() => {
     if (!sortedJunitTestCases) return [];
@@ -112,7 +117,11 @@ export default function JunitChartsPanel({
     if (!carouselApi) return;
     if (carouselHovered) return;
     const interval = setInterval(() => {
-      if (carouselApi) carouselApi.scrollNext();
+      // The carousel unmounts when the section is collapsed, but this state
+      // still holds the destroyed embla instance — don't drive it then.
+      if (carouselApi && carouselApi.rootNode()?.isConnected) {
+        carouselApi.scrollNext();
+      }
     }, 15000);
     return () => clearInterval(interval);
   }, [carouselApi, carouselHovered]);
@@ -133,121 +142,128 @@ export default function JunitChartsPanel({
           <ForecastDisplay seconds={forecastSeconds!} />
         </div>
       )}
-      {/* Charts carousel */}
-      <div
-        onMouseEnter={() => setCarouselHovered(true)}
-        onMouseLeave={() => setCarouselHovered(false)}
+      <CollapsibleSummarySection
+        storageKey={`tpi.runs.${projectId ?? "all"}.metricsChartsCollapsed`}
+        title={t("common.labels.metricsAndCharts")}
       >
-        <Carousel
-          setApi={setCarouselApi}
-          className="mb-4"
-          opts={{ loop: true }}
+        <AutomatedRunMetrics results={sortedJunitTestCases} />
+        {/* Charts carousel */}
+        <div
+          className="mt-4"
+          onMouseEnter={() => setCarouselHovered(true)}
+          onMouseLeave={() => setCarouselHovered(false)}
         >
-          {/* The shared carousel parks its arrows 48px outside the track, which
+          <Carousel
+            setApi={setCarouselApi}
+            className="mb-4"
+            opts={{ loop: true }}
+          >
+            {/* The shared carousel parks its arrows 48px outside the track, which
               overflows this narrow side panel and scrolls it horizontally.
               Overlap the chart edge instead — which means they now need a
               stacking layer to sit above the chart they overlap. */}
-          <CarouselPrevious className="start-0 z-10" />
-          <CarouselContent>
-            <CarouselItem>
-              <Card shadow="none">
-                <CardHeader className="flex flex-row items-center justify-between p-2">
-                  <CardTitle className="text-base font-medium">
-                    {t("common.ui.charts.resultsDistribution")}
-                  </CardTitle>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6"
-                    onClick={() => setZoomedChart("donut")}
-                  >
-                    <Maximize2 className="h-4 w-4" />
-                    <span className="sr-only">
-                      {t("common.ui.charts.zoomDonutChart")}
-                    </span>
-                  </Button>
-                </CardHeader>
-                <CardContent>
-                  <TestRunResultsDonut data={donutChartData} height={220} />
-                </CardContent>
-              </Card>
-            </CarouselItem>
-            <CarouselItem>
-              <Card shadow="none">
-                <CardHeader className="flex flex-row items-center justify-between p-2">
-                  <CardTitle className="text-base font-medium">
-                    {t("common.ui.charts.statusTimeline")}
-                  </CardTitle>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6"
-                    onClick={() => setZoomedChart("timeline")}
-                  >
-                    <Maximize2 className="h-4 w-4" />
-                    <span className="sr-only">
-                      {t("common.ui.charts.zoomStatusTimeline")}
-                    </span>
-                  </Button>
-                </CardHeader>
-                <CardContent>
-                  <JUnitStatusTimeline
-                    jUnitSuites={jUnitSuitesForCharts}
-                    height={180}
-                  />
-                </CardContent>
-              </Card>
-            </CarouselItem>
-            <CarouselItem>
-              <Card shadow="none">
-                <CardHeader className="flex flex-row items-center justify-between p-2">
-                  <CardTitle className="text-base font-medium">
-                    {t("common.ui.charts.testDurationHistogram")}
-                  </CardTitle>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6"
-                    onClick={() => setZoomedChart("histogram")}
-                  >
-                    <Maximize2 className="h-4 w-4" />
-                    <span className="sr-only">
-                      {t("common.ui.charts.zoomHistogramChart")}
-                    </span>
-                  </Button>
-                </CardHeader>
-                <CardContent>
-                  <JUnitDurationHistogram
-                    jUnitSuites={jUnitSuitesForCharts}
-                    height={180}
-                  />
-                </CardContent>
-              </Card>
-            </CarouselItem>
-          </CarouselContent>
-          <CarouselNext className="end-0 z-10" />
-        </Carousel>
-      </div>
-      {/* Slide navigation dots */}
-      <div className="flex justify-center gap-2 mt-2">
-        {[0, 1, 2].map((idx) => (
-          <button
-            key={idx}
-            type="button"
-            className={cn(
-              "h-2 w-8 rounded transition-colors",
-              currentSlide === idx
-                ? "bg-primary"
-                : "bg-muted-foreground/30 hover:bg-muted-foreground/60"
-            )}
-            onClick={() => carouselApi && carouselApi.scrollTo(idx)}
-            aria-label={`Go to slide ${idx + 1}`}
-          />
-        ))}
-      </div>
+            <CarouselPrevious className="start-0 z-10" />
+            <CarouselContent>
+              <CarouselItem>
+                <Card shadow="none">
+                  <CardHeader className="flex flex-row items-center justify-between p-2">
+                    <CardTitle className="text-base font-medium">
+                      {t("common.ui.charts.resultsDistribution")}
+                    </CardTitle>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6"
+                      onClick={() => setZoomedChart("donut")}
+                    >
+                      <Maximize2 className="h-4 w-4" />
+                      <span className="sr-only">
+                        {t("common.ui.charts.zoomDonutChart")}
+                      </span>
+                    </Button>
+                  </CardHeader>
+                  <CardContent>
+                    <TestRunResultsDonut data={donutChartData} height={220} />
+                  </CardContent>
+                </Card>
+              </CarouselItem>
+              <CarouselItem>
+                <Card shadow="none">
+                  <CardHeader className="flex flex-row items-center justify-between p-2">
+                    <CardTitle className="text-base font-medium">
+                      {t("common.ui.charts.statusTimeline")}
+                    </CardTitle>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6"
+                      onClick={() => setZoomedChart("timeline")}
+                    >
+                      <Maximize2 className="h-4 w-4" />
+                      <span className="sr-only">
+                        {t("common.ui.charts.zoomStatusTimeline")}
+                      </span>
+                    </Button>
+                  </CardHeader>
+                  <CardContent>
+                    <JUnitStatusTimeline
+                      jUnitSuites={jUnitSuitesForCharts}
+                      height={180}
+                    />
+                  </CardContent>
+                </Card>
+              </CarouselItem>
+              <CarouselItem>
+                <Card shadow="none">
+                  <CardHeader className="flex flex-row items-center justify-between p-2">
+                    <CardTitle className="text-base font-medium">
+                      {t("common.ui.charts.testDurationHistogram")}
+                    </CardTitle>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6"
+                      onClick={() => setZoomedChart("histogram")}
+                    >
+                      <Maximize2 className="h-4 w-4" />
+                      <span className="sr-only">
+                        {t("common.ui.charts.zoomHistogramChart")}
+                      </span>
+                    </Button>
+                  </CardHeader>
+                  <CardContent>
+                    <JUnitDurationHistogram
+                      jUnitSuites={jUnitSuitesForCharts}
+                      height={180}
+                    />
+                  </CardContent>
+                </Card>
+              </CarouselItem>
+            </CarouselContent>
+            <CarouselNext className="end-0 z-10" />
+          </Carousel>
+        </div>
+        {/* Slide navigation dots */}
+        <div className="flex justify-center gap-2 mt-2">
+          {[0, 1, 2].map((idx) => (
+            <button
+              key={idx}
+              type="button"
+              className={cn(
+                "h-2 w-8 rounded transition-colors",
+                currentSlide === idx
+                  ? "bg-primary"
+                  : "bg-muted-foreground/30 hover:bg-muted-foreground/60"
+              )}
+              onClick={() => carouselApi && carouselApi.scrollTo(idx)}
+              aria-label={`Go to slide ${idx + 1}`}
+            />
+          ))}
+        </div>
+      </CollapsibleSummarySection>
       {/* Full-screen zoom dialog */}
       <Dialog
         open={!!zoomedChart}

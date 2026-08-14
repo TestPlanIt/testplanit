@@ -15,6 +15,8 @@ const SUMMARY_VALUE = "summary";
 interface CollapsibleSummarySectionProps {
   /** localStorage key holding the collapsed state, scoped per page+project. */
   storageKey: string;
+  /** Trigger label; defaults to the shared "Summary" field label. */
+  title?: string;
   children: React.ReactNode;
 }
 
@@ -26,6 +28,7 @@ interface CollapsibleSummarySectionProps {
  */
 export function CollapsibleSummarySection({
   storageKey,
+  title,
   children,
 }: CollapsibleSummarySectionProps) {
   const tCommon = useTranslations("common");
@@ -63,7 +66,7 @@ export function CollapsibleSummarySection({
     >
       <AccordionItem value={SUMMARY_VALUE}>
         <AccordionTrigger data-testid="summary-section-toggle">
-          {tCommon("fields.summary")}
+          {title ?? tCommon("fields.summary")}
         </AccordionTrigger>
         <AccordionContent className="px-3">{children}</AccordionContent>
       </AccordionItem>
