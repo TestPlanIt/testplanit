@@ -1,5 +1,6 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { registerCasesList, type CasesListDeps } from "./list.js";
+import { registerCasesCount, type CasesCountDeps } from "./count.js";
 import { registerCasesGet, type CasesGetDeps } from "./get.js";
 import { registerCasesCreate, type CasesCreateDeps } from "./create.js";
 import {
@@ -15,6 +16,7 @@ import {
 
 export type CasesDeps =
   & CasesListDeps
+  & CasesCountDeps
   & CasesGetDeps
   & CasesCreateDeps
   & CasesCreateManyDeps
@@ -24,6 +26,7 @@ export type CasesDeps =
 
 export function registerCases(server: McpServer, deps: CasesDeps): void {
   registerCasesList(server, deps);
+  registerCasesCount(server, deps);
   registerCasesGet(server, deps);
   registerCasesCreate(server, deps);
   registerCasesCreateMany(server, deps);
@@ -34,6 +37,7 @@ export function registerCases(server: McpServer, deps: CasesDeps): void {
 
 export {
   registerCasesList,
+  registerCasesCount,
   registerCasesGet,
   registerCasesCreate,
   registerCasesCreateMany,
@@ -43,6 +47,7 @@ export {
 };
 export type {
   CasesListDeps,
+  CasesCountDeps,
   CasesGetDeps,
   CasesCreateDeps,
   CasesCreateManyDeps,

@@ -90,7 +90,8 @@ Your MCP client discovers each tool's full parameters automatically, so the list
 
 | Tool | Description |
 | --- | --- |
-| `testplanit_cases_list` | List and filter test cases in a project (by folder, tag, name, state, custom field, linked issue, automation, and more). |
+| `testplanit_cases_list` | List and filter test cases in a project (by folder — optionally with all its descendants — tag, name, state, custom field, linked issue, automation flag, automated-result evidence, and more). Rows can inline the full folder path for leaf-to-area mapping. |
+| `testplanit_cases_count` | Count test cases server-side under the same filters as `cases_list`, optionally grouped by folder, top-level folder, tag, state, source, or creator — coverage rollups in one call instead of paginating. |
 | `testplanit_cases_get` | Get a single test case with its fields and steps. |
 | `testplanit_cases_create` | Create a test case. Optionally pass `templateId` to choose a template (defaults to the project's first enabled template); custom fields are validated against the chosen template. |
 | `testplanit_cases_create_many` | Create many test cases in one call — far faster than per-case creates. Each case takes the same fields as a single create plus optional per-case `folderId`/`stateName`; returns a per-case success/failure result so partial failures are visible. |
@@ -108,8 +109,8 @@ Your MCP client discovers each tool's full parameters automatically, so the list
 
 | Tool | Description |
 | --- | --- |
-| `testplanit_folders_list` | List folders in a project. |
-| `testplanit_folders_get` | Get a single folder. |
+| `testplanit_folders_list` | List a project's folder tree to any depth, with accurate per-folder case counts and optional recursive + automated subtree totals. Nodes cut off by the depth limit are explicitly marked `truncated`. |
+| `testplanit_folders_get` | Get a single folder with breadcrumb, children, and direct + recursive case counts (total and automated). |
 | `testplanit_folders_create` | Create a folder. |
 | `testplanit_folders_update` | Rename or move a folder. |
 | `testplanit_folders_delete` | Delete a folder. |

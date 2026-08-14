@@ -435,7 +435,63 @@ describe("mapCaseRow", () => {
       // contract documented on RawCaseRow.
       lastUpdatedAt: null,
       latestResult: null,
+      // Automation-reality pair: no junitResults in the fixture → no
+      // execution evidence.
+      hasAutomatedResults: false,
+      lastAutomatedResultAt: null,
     });
+  });
+
+  it("automation-reality pair: junitResults rows drive hasAutomatedResults + lastAutomatedResultAt", () => {
+    const row = {
+      ...rawRow,
+      junitResults: [
+        {
+          id: 900,
+          executedAt: "2026-02-01T00:00:00.000Z",
+          status: { id: 1, name: "Passed" },
+        },
+      ],
+    };
+    const result = mapCaseRow(row as never);
+    expect(result.hasAutomatedResults).toBe(true);
+    expect(result.lastAutomatedResultAt).toBe("2026-02-01T00:00:00.000Z");
+  });
+
+  it("automation-reality pair: a result row with null executedAt still counts as evidence, timestamp stays null", () => {
+    const row = {
+      ...rawRow,
+      junitResults: [{ id: 901, executedAt: null, status: null }],
+    };
+    const result = mapCaseRow(row as never);
+    expect(result.hasAutomatedResults).toBe(true);
+    expect(result.lastAutomatedResultAt).toBeNull();
+  });
+
+  it("folderPaths map widens the folder object to path/ancestorIds/rootId/rootName", () => {
+    const paths = new Map([
+      [
+        12,
+        {
+          path: "Content / Documents / Auth",
+          ancestorIds: [1, 5],
+          rootId: 1,
+          rootName: "Content",
+        },
+      ],
+    ]);
+    const result = mapCaseRow(rawRow as never, paths);
+    expect(result.folder).toEqual({
+      id: 12,
+      name: "Auth",
+      path: "Content / Documents / Auth",
+      ancestorIds: [1, 5],
+      rootId: 1,
+      rootName: "Content",
+    });
+    // A folder absent from the map keeps the narrow shape.
+    const miss = mapCaseRow(rawRow as never, new Map());
+    expect(miss.folder).toEqual({ id: 12, name: "Auth" });
   });
 
   it("WR-04: folder is required (schema invariant — folderId is non-nullable)", () => {

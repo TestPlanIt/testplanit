@@ -352,7 +352,17 @@ interface RawCaseRow {
   testRuns?: Array<{ results: RawLatestRunResult[] }>;
 }
 
-export function mapCaseRow(raw: RawCaseRow) {
+export function mapCaseRow(
+  raw: RawCaseRow,
+  // Optional whole-project path map (folders/tree.ts buildPathInfo) — when
+  // present, the folder object widens to carry path/ancestorIds/rootId/
+  // rootName so a leaf-to-area mapping needs no per-folder lookups.
+  folderPaths?: Map<
+    number,
+    { path: string; ancestorIds: number[]; rootId: number; rootName: string }
+  >,
+) {
+  const pathInfo = folderPaths?.get(raw.folder.id);
   return {
     id: raw.id,
     name: raw.name,
@@ -360,7 +370,16 @@ export function mapCaseRow(raw: RawCaseRow) {
     automated: raw.automated,
     createdAt: raw.createdAt,
     project: raw.project ? { id: raw.project.id, name: raw.project.name } : null,
-    folder: { id: raw.folder.id, name: raw.folder.name },
+    folder: pathInfo
+      ? {
+          id: raw.folder.id,
+          name: raw.folder.name,
+          path: pathInfo.path,
+          ancestorIds: pathInfo.ancestorIds,
+          rootId: pathInfo.rootId,
+          rootName: pathInfo.rootName,
+        }
+      : { id: raw.folder.id, name: raw.folder.name },
     state: raw.state ? { id: raw.state.id, name: raw.state.name } : null,
     creator: raw.creator
       ? { id: raw.creator.id, name: raw.creator.name, email: raw.creator.email }
@@ -374,6 +393,12 @@ export function mapCaseRow(raw: RawCaseRow) {
       raw.junitResults?.[0],
       raw.testRuns?.[0]?.results?.[0],
     ),
+    // Automation reality (distinct from the user-set `automated` flag): a
+    // JUnit result row is execution evidence. The include shapes order
+    // junitResults executedAt desc NULLS LAST, so slot 0 carries the most
+    // recent real timestamp when one exists.
+    hasAutomatedResults: (raw.junitResults?.length ?? 0) > 0,
+    lastAutomatedResultAt: raw.junitResults?.[0]?.executedAt ?? null,
   };
 }
 

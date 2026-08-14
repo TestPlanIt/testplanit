@@ -82,6 +82,26 @@ or have never been run?
 
 **What comes back:** each row carries `lastUpdatedAt` and `latestResult` inline so the agent can describe staleness without a follow-up call. The response stamps `truncated: true` when the post-filter scan cap (400) is hit; combine with `repositoryId` to scope.
 
+For "flagged automated but the automation has gone quiet", filter on execution evidence instead: `testplanit_cases_list({ projectId: <P>, automated: true, noAutomatedResultSince: "<30-days-ago ISO>" })` returns cases whose most recent JUnit result is older than the cutoff — including cases that never produced one.
+
+## "How much of each feature area is automated?"
+
+```text
+Break down automation coverage in project Acme by feature area — total cases,
+automated cases, and % automated per top-level folder, with leaf-folder detail.
+```
+
+**Tool calls (2):**
+
+1. `testplanit_cases_count({ projectId: <P>, groupBy: "folderRoot" })` → total cases per top-level folder.
+2. `testplanit_cases_count({ projectId: <P>, automated: true, groupBy: "folderRoot" })` → automated cases per top-level folder.
+
+The agent divides the two group sets locally for the coverage rate. Swap `groupBy: "folder"` for leaf-folder detail — each group key carries `path`, `rootId`, and `rootName`, so leaf rows map to their area without any folder lookups. Scope either call with `folderId` + `includeDescendants: true` to drill into one area, or add any other `cases_list` filter (tags, state, custom field, dates).
+
+**Alternative (1 call):** `testplanit_folders_list({ projectId: <P>, depth: "all", includeRecursiveCounts: true })` returns the whole tree with `caseCountRecursive` and `automatedCaseCountRecursive` on every node — the same report keyed by structure rather than by filter.
+
+**What comes back:** `{ total, groups: [{ key, count }] }` sorted by count descending. Counts are computed server-side with the same query semantics as `cases_list`, so the numbers reconcile with enumeration.
+
 ## "What test cases live in this code repository?"
 
 ```text

@@ -18,12 +18,13 @@ The TestPlanIt MCP server lets AI agents — Claude Desktop, Cursor, custom MCP-
 - Resolve issues by external key (Jira / GitHub / Azure DevOps) and walk the issue → linked test cases graph
 - Traverse the bridge between automated tests (repository cases) and manual test cases via repository case links
 - List code repositories configured in a project (with credentials never returned)
-- List folders and tags scoped to a project, with usage counts and tree relationships preserved
+- List folders and tags scoped to a project, with usage counts and tree relationships preserved — the folder tree to any depth, with recursive and automated-case subtree totals on request
+- Count test cases server-side under any case filter, grouped by folder, top-level area, tag, state, source, or creator — automation-coverage rollups without paginating the repository
 - Generate a QuickScript (AI automation script) from one or more test cases, following the project's connected code repository when one is configured
 - List the review requests assigned to you — the Review inbox queue, covering both direct assignment and assignment to a role you hold — with the subject, the workflow transition being requested, and the requester's note
 - Approve, request changes on, or reject a review request on your behalf — the same eligibility, append-only, and auto-transition rules the app enforces, and refused outright for read-only tokens
 
-See the [npm package README](https://www.npmjs.com/package/@testplanit/mcp-server) for the full tool reference, including request/response schemas for all 49 tools.
+See the [npm package README](https://www.npmjs.com/package/@testplanit/mcp-server) for the full tool reference, including request/response schemas for all 50 tools.
 
 ## Installation
 

@@ -1,15 +1,20 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type {
-  RepositoryCasesInclude,
-  RepositoryCasesWhereInput,
-} from "@db/input";
-import type { JsonValue } from "@zenstackhq/orm";
+import type { RepositoryCasesInclude } from "@db/input";
 import * as z from "zod/v4";
 import { zenstack } from "../../api.js";
 import type { EnvConfig } from "../../env.js";
 import { mapHttpErrorToToolResult } from "../../errors.js";
-import { resolveCustomFields } from "./customFields.js";
+import {
+  buildFolderIndex,
+  buildPathInfo,
+  collectSubtreeIds,
+  fetchProjectFolders,
+  MAX_SUBTREE_FOLDER_IDS,
+  type FolderIndex,
+  type FolderPathInfo,
+} from "../folders/tree.js";
 import { mapCaseRow } from "./shared.js";
+import { buildCasesWhere, CASES_FILTER_SHAPE } from "./where.js";
 
 export interface CasesListDeps {
   env: EnvConfig;
@@ -35,14 +40,18 @@ const CASE_ROW_INCLUDE = {
   caseTags: { select: { tag: { select: { id: true, name: true } } } },
   // Phase 8 D8-02: latest version for lastUpdatedAt + sub-orderings for
   // latestResult union. Each take:1 sub-include carries deterministic
-  // orderBy [{<field>:"desc"},{id:"desc"}] (Pitfall 5 / Phase 7 MED-02).
+  // orderBy (Pitfall 5 / Phase 7 MED-02).
   repositoryCaseVersions: {
     orderBy: [{ version: "desc" }, { id: "desc" }],
     take: 1,
     select: { createdAt: true, version: true },
   },
+  // executedAt is nullable and Postgres puts NULLs first under plain desc,
+  // so a timestampless imported row would shadow the real latest result —
+  // nulls:"last" keeps slot 0 on the greatest non-null executedAt, which
+  // both latestResult and lastAutomatedResultAt read.
   junitResults: {
-    orderBy: [{ executedAt: "desc" }, { id: "desc" }],
+    orderBy: [{ executedAt: { sort: "desc", nulls: "last" } }, { id: "desc" }],
     take: 1,
     select: {
       id: true,
@@ -71,75 +80,20 @@ const CASE_ROW_INCLUDE = {
   },
 } as const satisfies RepositoryCasesInclude;
 
-// Phase 8 D8-02: enum literals for the source filter. Mirrors
-// RepositoryCaseSource on schema.zmodel:1470 — keep synchronized.
-const SOURCE_VALUES = [
-  "MANUAL",
-  "JUNIT",
-  "TESTNG",
-  "XUNIT",
-  "NUNIT",
-  "MSTEST",
-  "MOCHA",
-  "CUCUMBER",
-  "API",
-] as const;
-
 export function registerCasesList(server: McpServer, deps: CasesListDeps): void {
   server.registerTool(
     "testplanit_cases_list",
     {
       description:
-        "List test cases scoped to a project. Filters: folderId, tagIds, name (case-insensitive substring), stateId, customField, issueId (linked Issue numeric id — see issues_list for resolution from external keys). customField takes {name} to match cases that have the field set, or {name, value} to match by value (Dropdown/Multi-Select accept the option name or id; an unknown field name or option returns a validation error rather than unfiltered results). Cursor pagination via the `cursor` returned in `nextCursor`. (per CASE-01 + EXEC-06 chain via D7-03) " +
-        "Phase-8 maintenance filters: automated (user-controlled flag), source (single or array of RepositoryCaseSource), repositoryId, hasNeverExecuted (no junitResults AND no TestRunResults via TestRunCases), staleSinceUpdate (handler-side post-filter — bounded scan of POST_FILTER_SCAN_CAP=400; surfaces truncated:true when scan cap hit), updatedAfter/updatedBefore (filter via the repositoryCaseVersions relation since RepositoryCases has no updatedAt column). Each row carries lastUpdatedAt and latestResult (union of latest junitResults / TestRunResults). " +
-        "Creator and date filters: creatorIds (array of user ids — matches any; deliberately array-shaped while runs_list/sessions_list use single-string createdById), from/to (ISO 8601 createdAt range).",
+        "List test cases scoped to a project. Filters: folderId (exact folder; add includeDescendants:true to cover the folder's entire subtree), tagIds, name (case-insensitive substring), stateId, customField, issueId (linked Issue numeric id — see issues_list for resolution from external keys). customField takes {name} to match cases that have the field set, or {name, value} to match by value (Dropdown/Multi-Select accept the option name or id; an unknown field name or option returns a validation error rather than unfiltered results). Cursor pagination via the `cursor` returned in `nextCursor`. (per CASE-01 + EXEC-06 chain via D7-03) " +
+        "Phase-8 maintenance filters: automated (user-controlled intent flag), source (single or array of RepositoryCaseSource), repositoryId, hasNeverExecuted (no junitResults AND no TestRunResults via TestRunCases), staleSinceUpdate (handler-side post-filter — bounded scan of POST_FILTER_SCAN_CAP=400; surfaces truncated:true when scan cap hit), updatedAfter/updatedBefore (filter via the repositoryCaseVersions relation since RepositoryCases has no updatedAt column). Each row carries lastUpdatedAt, latestResult (union of latest junitResults / TestRunResults), plus the automation-reality pair hasAutomatedResults / lastAutomatedResultAt (JUnit result rows — execution evidence, distinct from the user-set `automated` flag). " +
+        "Automation-reality filters: hasAutomatedResults (a JUnit result row exists), automatedResultSince (has a JUnit result at/after the ISO timestamp), noAutomatedResultSince (NO JUnit result at/after the timestamp — with automated:true this finds flagged-automated cases whose automation has gone quiet). " +
+        "Creator and date filters: creatorIds (array of user ids — matches any; deliberately array-shaped while runs_list/sessions_list use single-string createdById), from/to (ISO 8601 createdAt range). " +
+        "Set includeFolderPath:true to expand each row's folder to {id, name, path, ancestorIds, rootId, rootName} — a full leaf-to-area mapping with no extra folders_get calls. For counts and per-folder rollups use testplanit_cases_count instead of paginating this tool.",
       inputSchema: {
-        projectId: z.number().int().positive(),
-        folderId: z.number().int().positive().optional(),
-        tagIds: z.array(z.number().int().positive()).optional(),
-        name: z.string().min(1).optional(),
-        stateId: z.number().int().positive().optional(),
-        // `{ name }` alone matches cases that have the field set (presence).
-        // `{ name, value }` filters by value: resolveCustomFields canonicalizes
-        // the value the same way the write path stores it (Dropdown/Multi-Select
-        // option name -> option id), so the equality check matches what is
-        // actually persisted in caseFieldValues.value. strictObject rejects any
-        // other key with a validation error instead of silently dropping it.
-        customField: z
-          .strictObject({
-            name: z.string().min(1),
-            value: z
-              .union([
-                z.string(),
-                z.number(),
-                z.boolean(),
-                z.array(z.union([z.string(), z.number()])),
-              ])
-              .optional(),
-          })
-          .optional(),
-        // D7-03: filter cases linked to a specific issue. Pass the internal
-        // numeric Issue.id (the Phase-8 `issues_list` / `issues_get` `id`
-        // field), NOT the externalKey. `externalKey` (e.g. "JIRA-123") is
-        // intentionally NOT a filter dimension here because it is not
-        // globally unique on the schema (`@@unique([externalId,
-        // integrationId])` is the only constraint — multiple integrations
-        // can have the same external key). Phase 8 ships proper issueKey
-        // resolution scoped by integration.
-        issueId: z.number().int().positive().optional(),
-        // Phase-8 D8-02 maintenance filters.
-        automated: z.boolean().optional(),
-        source: z
-          .union([z.enum(SOURCE_VALUES), z.array(z.enum(SOURCE_VALUES))])
-          .optional(),
-        repositoryId: z.number().int().positive().optional(),
-        hasNeverExecuted: z.boolean().optional(),
+        ...CASES_FILTER_SHAPE,
         staleSinceUpdate: z.boolean().optional(),
-        updatedAfter: z.string().datetime({ offset: true }).optional(),
-        updatedBefore: z.string().datetime({ offset: true }).optional(),
-        creatorIds: z.array(z.string().trim().min(1)).optional(),
-        from: z.string().datetime({ offset: true }).optional(),
-        to: z.string().datetime({ offset: true }).optional(),
+        includeFolderPath: z.boolean().optional(),
         cursor: z.number().int().positive().optional(),
         limit: z.number().int().positive().max(MAX_LIMIT).optional(),
       },
@@ -147,107 +101,50 @@ export function registerCasesList(server: McpServer, deps: CasesListDeps): void 
     async (input) => {
       try {
         const limit = input.limit ?? DEFAULT_LIMIT;
-        // REVIEW MED-03 fix: use Prisma's typed where so reintroducing an
-        // unknown column or forgetting a relation accessor TS2353s at
-        // compile time. The previous `Record<string, unknown>` annotation
-        // accepted any shape including `updatedAt` (which doesn't exist on
-        // RepositoryCases — Pitfall 1).
-        const where: RepositoryCasesWhereInput = {
-          projectId: input.projectId,
-          isDeleted: false,
-        };
-        if (input.folderId !== undefined) where.folderId = input.folderId;
-        if (input.tagIds && input.tagIds.length > 0) {
-          // RepositoryCases tags are now on the explicit RepositoryCaseTag
-          // join model — filter through caseTags.tag.
-          where.caseTags = { some: { tag: { id: { in: input.tagIds } } } };
+        const where = await buildCasesWhere(input, deps.env);
+
+        // One flat folder fetch serves both subtree expansion and path
+        // enrichment when either is requested.
+        const wantsSubtree =
+          input.includeDescendants === true && input.folderId !== undefined;
+        let folderIndex: FolderIndex | null = null;
+        if (wantsSubtree || input.includeFolderPath) {
+          folderIndex = buildFolderIndex(
+            await fetchProjectFolders(input.projectId, deps.env),
+          );
         }
-        if (input.name) {
-          where.name = { contains: input.name, mode: "insensitive" };
-        }
-        if (input.stateId !== undefined) where.stateId = input.stateId;
-        if (input.customField) {
-          if (input.customField.value === undefined) {
-            // Presence filter — cases that have this field set (any value).
-            where.caseFieldValues = {
-              some: { field: { displayName: input.customField.name } },
-            };
-          } else {
-            // Value filter — resolve {name, value} to the canonical
-            // {fieldId, value} the write path persists. resolveCustomFields
-            // throws 422 for unknown/ambiguous fields and invalid option
-            // values, so an unmatched filter surfaces an error rather than
-            // returning unfiltered results. It returns exactly one entry per
-            // input key or throws, so [resolved] is always defined here.
-            // Project-wide filter: no single template to scope to, so resolve
-            // against the global catalog (templateId undefined).
-            const [resolved] = await resolveCustomFields(
-              { [input.customField.name]: input.customField.value },
-              undefined,
-              deps.env,
-            );
-            const canonical = resolved!.value as JsonValue;
-            where.caseFieldValues = {
-              some: {
-                fieldId: resolved!.fieldId,
-                value: Array.isArray(resolved!.value)
-                  ? { array_contains: canonical }
-                  : { equals: canonical },
-              },
+        if (wantsSubtree && folderIndex) {
+          if (!folderIndex.byId.has(input.folderId!)) {
+            return {
+              isError: true as const,
+              content: [
+                {
+                  type: "text" as const,
+                  text: `Folder ${input.folderId} not found in project ${input.projectId}.`,
+                },
+              ],
             };
           }
-        }
-        if (input.issueId !== undefined) {
-          // D7-03: RepositoryCases issues now live on the explicit
-          // RepositoryCaseIssue join model — filter through caseIssues.issue.
-          // `issue: { isDeleted: false }` excludes soft-deleted issue links
-          // from matching, consistent with the soft-delete invariant.
-          where.caseIssues = {
-            some: { issue: { id: input.issueId, isDeleted: false } },
-          };
-        }
-        // Phase-8 D8-02 filter appends.
-        if (input.automated !== undefined) where.automated = input.automated;
-        if (input.source !== undefined) {
-          where.source = Array.isArray(input.source)
-            ? { in: input.source }
-            : input.source;
-        }
-        if (input.repositoryId !== undefined) {
-          where.repositoryId = input.repositoryId;
-        }
-        if (input.hasNeverExecuted) {
-          // Pure-where (RESEARCH § 3.1) — no execution exists when
-          // junitResults has no rows AND no TestRunCases junction has any
-          // associated results.
-          where.junitResults = { none: {} };
-          where.testRuns = { none: { results: { some: {} } } };
-        }
-        if (
-          input.updatedAfter !== undefined ||
-          input.updatedBefore !== undefined
-        ) {
-          // Pitfall 1: RepositoryCases has no updatedAt column — go through
-          // the repositoryCaseVersions relation (the row matching
-          // currentVersion carries the canonical lastUpdatedAt).
-          const createdAt: { gte?: Date; lte?: Date } = {};
-          if (input.updatedAfter !== undefined) {
-            createdAt.gte = new Date(input.updatedAfter);
+          const subtreeIds = collectSubtreeIds(folderIndex, input.folderId!);
+          if (subtreeIds.length > MAX_SUBTREE_FOLDER_IDS) {
+            return {
+              isError: true as const,
+              content: [
+                {
+                  type: "text" as const,
+                  text:
+                    `Folder ${input.folderId} has ${subtreeIds.length} folders in its subtree — over the ${MAX_SUBTREE_FOLDER_IDS}-folder limit for includeDescendants on cases_list. ` +
+                    "Use testplanit_cases_count (which scopes subtrees without this limit) for rollups, or list a deeper folder.",
+                },
+              ],
+            };
           }
-          if (input.updatedBefore !== undefined) {
-            createdAt.lte = new Date(input.updatedBefore);
-          }
-          where.repositoryCaseVersions = { some: { createdAt } };
+          where.folderId = { in: subtreeIds };
         }
-        if (input.creatorIds && input.creatorIds.length > 0) {
-          where.creatorId = { in: input.creatorIds };
-        }
-        if (input.from || input.to) {
-          where.createdAt = {
-            ...(input.from ? { gte: new Date(input.from) } : {}),
-            ...(input.to ? { lte: new Date(input.to) } : {}),
-          };
-        }
+        const folderPaths: Map<number, FolderPathInfo> | undefined =
+          input.includeFolderPath && folderIndex
+            ? buildPathInfo(folderIndex)
+            : undefined;
 
         // staleSinceUpdate over-fetches up to POST_FILTER_SCAN_CAP+1 rows so
         // the handler can detect when more rows existed than the post-filter
@@ -315,7 +212,7 @@ export function registerCasesList(server: McpServer, deps: CasesListDeps): void 
           ? scanned.length > limit || staleTruncated
           : rows.length > limit;
         const trimmed = scanned.slice(0, limit);
-        const items = trimmed.map((r) => mapCaseRow(r as never));
+        const items = trimmed.map((r) => mapCaseRow(r as never, folderPaths));
         const nextCursor =
           hasNextPage && items.length > 0
             ? (items[items.length - 1] as { id: number }).id

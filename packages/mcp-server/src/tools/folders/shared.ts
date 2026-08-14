@@ -4,6 +4,12 @@ import type {
 import { zenstack } from "../../api.js";
 import type { EnvConfig } from "../../env.js";
 import { buildFolderBreadcrumb } from "../cases/shared.js";
+import {
+  buildFolderIndex,
+  computeRecursiveCounts,
+  fetchAutomatedCaseCounts,
+  fetchProjectFolders,
+} from "./tree.js";
 
 const FOLDER_DETAIL_INCLUDE = {
   children: {
@@ -24,40 +30,36 @@ const FOLDER_DETAIL_INCLUDE = {
   _count: { select: { cases: { where: { isDeleted: false } } } },
 } as const satisfies RepositoryFoldersInclude;
 
-interface RawFolderNode {
+export interface FolderDetailChild {
   id: number;
   name: string;
-  parentId: number | null;
-  _count?: { cases?: number };
-  children?: RawFolderNode[];
-}
-
-export interface FolderTreeNode {
-  id: number;
-  name: string;
-  parentId: number | null;
   caseCount: number;
-  children: FolderTreeNode[];
-}
-
-export function mapFolderTreeNode(raw: RawFolderNode): FolderTreeNode {
-  return {
-    id: raw.id,
-    name: raw.name,
-    parentId: raw.parentId,
-    caseCount: raw._count?.cases ?? 0,
-    children: (raw.children ?? []).map(mapFolderTreeNode),
-  };
+  caseCountRecursive?: number;
+  automatedCaseCount?: number;
+  automatedCaseCountRecursive?: number;
+  hasChildren?: boolean;
 }
 
 /**
  * Fetch a single folder with breadcrumb + children + cases summary.
  * Reused by create.ts and update.ts to return CASE-07-shaped responses
  * after a write.
+ *
+ * `includeRecursiveCounts` (folders_get passes true) adds whole-subtree
+ * totals — caseCountRecursive, automatedCaseCount,
+ * automatedCaseCountRecursive on the folder and each child, plus each
+ * child's hasChildren — from one flat project-folder fetch + one batched
+ * automated groupBy (folders/tree.ts). The write paths keep the lean shape:
+ * a create/update response doesn't need subtree analytics.
  */
-export async function fetchFolderDetail(folderId: number, env: EnvConfig) {
+export async function fetchFolderDetail(
+  folderId: number,
+  env: EnvConfig,
+  opts?: { includeRecursiveCounts?: boolean },
+) {
   const raw = await zenstack<{
     id: number;
+    projectId: number;
     name: string;
     parentId: number | null;
     children: Array<{ id: number; name: string; _count?: { cases?: number } }>;
@@ -80,7 +82,19 @@ export async function fetchFolderDetail(folderId: number, env: EnvConfig) {
   );
   const fullPath = breadcrumb.map((b) => b.name).join(" / ");
 
-  return {
+  const detail: {
+    id: number;
+    name: string;
+    parentId: number | null;
+    breadcrumb: typeof breadcrumb;
+    fullPath: string;
+    children: FolderDetailChild[];
+    cases: Array<{ id: number; name: string; source: string }>;
+    caseCount: number;
+    caseCountRecursive?: number;
+    automatedCaseCount?: number;
+    automatedCaseCountRecursive?: number;
+  } = {
     id: raw.id,
     name: raw.name,
     parentId: raw.parentId,
@@ -94,4 +108,26 @@ export async function fetchFolderDetail(folderId: number, env: EnvConfig) {
     cases: raw.cases,
     caseCount: raw._count?.cases ?? 0,
   };
+
+  if (opts?.includeRecursiveCounts) {
+    const folders = await fetchProjectFolders(raw.projectId, env);
+    const index = buildFolderIndex(folders);
+    const direct = new Map(folders.map((f) => [f.id, f.caseCount]));
+    const automatedDirect = await fetchAutomatedCaseCounts(raw.projectId, env);
+    const recursive = computeRecursiveCounts(index, direct);
+    const automatedRecursive = computeRecursiveCounts(index, automatedDirect);
+
+    detail.caseCountRecursive = recursive.get(raw.id) ?? 0;
+    detail.automatedCaseCount = automatedDirect.get(raw.id) ?? 0;
+    detail.automatedCaseCountRecursive = automatedRecursive.get(raw.id) ?? 0;
+    detail.children = detail.children.map((c) => ({
+      ...c,
+      caseCountRecursive: recursive.get(c.id) ?? 0,
+      automatedCaseCount: automatedDirect.get(c.id) ?? 0,
+      automatedCaseCountRecursive: automatedRecursive.get(c.id) ?? 0,
+      hasChildren: (index.childrenOf.get(c.id) ?? []).length > 0,
+    }));
+  }
+
+  return detail;
 }

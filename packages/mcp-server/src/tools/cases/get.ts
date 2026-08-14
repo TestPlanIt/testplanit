@@ -93,6 +93,43 @@ export const CASE_DETAIL_INCLUDE = {
       caseA: { select: { id: true, name: true, source: true } },
     },
   },
+  // Same latest-version / latest-result sub-includes as CASE_ROW_INCLUDE so
+  // detail responses (get/create/update) carry truthful lastUpdatedAt,
+  // latestResult, hasAutomatedResults, and lastAutomatedResultAt instead of
+  // the always-null placeholders the mapper emits when these are absent.
+  repositoryCaseVersions: {
+    orderBy: [{ version: "desc" }, { id: "desc" }],
+    take: 1,
+    select: { createdAt: true, version: true },
+  },
+  // nulls:"last" — executedAt is nullable and plain desc puts NULLs first
+  // in Postgres, which would let a timestampless row shadow the latest
+  // real result (see CASE_ROW_INCLUDE).
+  junitResults: {
+    orderBy: [{ executedAt: { sort: "desc", nulls: "last" } }, { id: "desc" }],
+    take: 1,
+    select: {
+      id: true,
+      executedAt: true,
+      status: { select: { id: true, name: true } },
+    },
+  },
+  testRuns: {
+    orderBy: [{ id: "desc" }],
+    take: 1,
+    select: {
+      results: {
+        where: { isDeleted: false },
+        orderBy: [{ executedAt: "desc" }, { id: "desc" }],
+        take: 1,
+        select: {
+          id: true,
+          executedAt: true,
+          status: { select: { id: true, name: true } },
+        },
+      },
+    },
+  },
 } as const satisfies RepositoryCasesInclude;
 
 export interface CasesGetDeps {
