@@ -161,6 +161,12 @@ export class TestPlanItClient {
 
   // Cache for statuses to avoid repeated lookups
   private statusCache: Map<number, Status[]> = new Map();
+  /**
+   * Set after a create is rejected while carrying `worker` — an older server
+   * (schema without JUnitTestResult.worker) fails the whole create over this
+   * optional metadata, so stop sending it for the rest of the run.
+   */
+  private junitWorkerFieldUnsupported = false;
 
   constructor(config: TestPlanItClientConfig) {
     if (!config.baseUrl) {
@@ -2271,12 +2277,26 @@ export class TestPlanItClient {
     if (options.assertions !== undefined) data.assertions = options.assertions;
     if (options.file) data.file = options.file;
     if (options.line !== undefined) data.line = options.line;
+    if (options.worker && !this.junitWorkerFieldUnsupported) {
+      data.worker = options.worker;
+    }
     if (options.systemOut) data.systemOut = options.systemOut;
     if (options.systemErr) data.systemErr = options.systemErr;
 
-    return this.zenstack<JUnitTestResult>("jUnitTestResult", "create", {
-      data,
-    });
+    try {
+      return await this.zenstack<JUnitTestResult>("jUnitTestResult", "create", {
+        data,
+      });
+    } catch (error) {
+      if (data.worker === undefined) throw error;
+      // Retry once without the optional worker metadata rather than losing
+      // the result to a server that doesn't know the field yet.
+      this.junitWorkerFieldUnsupported = true;
+      delete data.worker;
+      return this.zenstack<JUnitTestResult>("jUnitTestResult", "create", {
+        data,
+      });
+    }
   }
 
   /**

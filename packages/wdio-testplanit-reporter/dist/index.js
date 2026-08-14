@@ -1029,6 +1029,7 @@ ${error.stack}` : "";
         platform: this.state.capabilities?.platformName || process.platform,
         screenshots: [],
         retryAttempt: 0,
+        worker: plan.cid || void 0,
         uid: `${plan.cid}_${fullTitle}`,
         specFile: this.currentSpec,
         cucumberStepTitles: stepTitles
@@ -1197,6 +1198,7 @@ ${error.stack}` : "";
       platform: this.state.capabilities?.platformName || process.platform,
       screenshots: [],
       retryAttempt: test.retries || 0,
+      worker: test.cid || this.currentCid || void 0,
       uid,
       specFile: this.currentSpec,
       commandOutput,
@@ -1360,6 +1362,7 @@ ${error.stack}` : "";
         time: durationInSeconds,
         executedAt: result.finishedAt,
         file: result.specFile,
+        worker: result.worker,
         systemOut: result.commandOutput
       });
       this.log("Created JUnit test result:", junitResult.id, "(type:", junitType + ")");

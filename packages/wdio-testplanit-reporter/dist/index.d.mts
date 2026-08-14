@@ -541,6 +541,8 @@ interface TrackedTestResult {
     screenshots: string[];
     /** Retry attempt number (0-based) */
     retryAttempt: number;
+    /** Worker process id the test ran in (WebdriverIO cid, e.g. "0-1") */
+    worker?: string;
     /** Unique identifier for this test (cid + fullTitle) */
     uid: string;
     /** Spec file path */

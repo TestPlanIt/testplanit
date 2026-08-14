@@ -349,6 +349,8 @@ interface TrackedTestResult {
     platform?: string;
     /** Retry attempt number (0-based) */
     retryAttempt: number;
+    /** Worker lane the attempt ran on (Playwright parallelIndex, 0-based) */
+    worker?: string;
     /** Unique identifier for this test attempt */
     uid: string;
     /** Spec file path */

@@ -307,6 +307,51 @@ describe('TestPlanItClient', () => {
     });
   });
 
+  describe('createJUnitTestResult worker field', () => {
+    const baseOptions = {
+      testSuiteId: 10,
+      repositoryCaseId: 20,
+      type: 'PASSED' as const,
+      worker: '0-1',
+    };
+
+    const sentBody = (callIndex: number) =>
+      JSON.parse(mockFetch.mock.calls[callIndex][1].body as string);
+
+    it('sends the worker id with the create', async () => {
+      mockFetch.mockResolvedValueOnce(zenStackResponse({ id: 1 }));
+
+      await client.createJUnitTestResult(baseOptions);
+
+      expect(sentBody(0).data.worker).toBe('0-1');
+    });
+
+    it('retries without worker when the server rejects it, then stops sending it', async () => {
+      // Older server: schema without JUnitTestResult.worker rejects the create.
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 400,
+        statusText: 'Bad Request',
+        headers: { get: () => null },
+        text: async () =>
+          JSON.stringify({ error: { message: 'Unknown field worker' } }),
+      });
+      mockFetch.mockResolvedValueOnce(zenStackResponse({ id: 1 }));
+      mockFetch.mockResolvedValueOnce(zenStackResponse({ id: 2 }));
+
+      const first = await client.createJUnitTestResult(baseOptions);
+      expect(first).toEqual({ id: 1 });
+      expect(sentBody(0).data.worker).toBe('0-1');
+      expect(sentBody(1).data.worker).toBeUndefined();
+
+      // Subsequent creates skip the field entirely — one request each.
+      const second = await client.createJUnitTestResult(baseOptions);
+      expect(second).toEqual({ id: 2 });
+      expect(mockFetch).toHaveBeenCalledTimes(3);
+      expect(sentBody(2).data.worker).toBeUndefined();
+    });
+  });
+
   describe('findTestCases', () => {
     it('should find test cases with query parameters', async () => {
       const mockCases = [

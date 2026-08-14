@@ -132,6 +132,12 @@ var TestPlanItClient = class {
   headers;
   // Cache for statuses to avoid repeated lookups
   statusCache = /* @__PURE__ */ new Map();
+  /**
+   * Set after a create is rejected while carrying `worker` — an older server
+   * (schema without JUnitTestResult.worker) fails the whole create over this
+   * optional metadata, so stop sending it for the rest of the run.
+   */
+  junitWorkerFieldUnsupported = false;
   constructor(config) {
     if (!config.baseUrl) {
       throw new TestPlanItError("baseUrl is required");
@@ -1800,11 +1806,23 @@ var TestPlanItClient = class {
     if (options.assertions !== void 0) data.assertions = options.assertions;
     if (options.file) data.file = options.file;
     if (options.line !== void 0) data.line = options.line;
+    if (options.worker && !this.junitWorkerFieldUnsupported) {
+      data.worker = options.worker;
+    }
     if (options.systemOut) data.systemOut = options.systemOut;
     if (options.systemErr) data.systemErr = options.systemErr;
-    return this.zenstack("jUnitTestResult", "create", {
-      data
-    });
+    try {
+      return await this.zenstack("jUnitTestResult", "create", {
+        data
+      });
+    } catch (error) {
+      if (data.worker === void 0) throw error;
+      this.junitWorkerFieldUnsupported = true;
+      delete data.worker;
+      return this.zenstack("jUnitTestResult", "create", {
+        data
+      });
+    }
   }
   /**
    * Update a JUnit test suite

@@ -213,6 +213,27 @@ describe('TestPlanItReporter (Playwright)', () => {
   });
 
   // -------------------------------------------------------------------------
+  describe('worker reporting', () => {
+    it('sends the attempt parallelIndex as the worker id', async () => {
+      const test = withMeta(makeTest('runs on a lane', buildParent({ project: 'chromium' })), {
+        annotations: [{ type: 'testplanit', description: '1234' }],
+      });
+      await run(reporter, test, makeResult({ parallelIndex: 2 } as any));
+      expect(lastArg(clientMock.createJUnitTestResult).worker).toBe('2');
+    });
+
+    it('omits worker when parallelIndex is unavailable', async () => {
+      const test = withMeta(makeTest('runs somewhere', buildParent({ project: 'chromium' })), {
+        annotations: [{ type: 'testplanit', description: '1234' }],
+      });
+      const result = makeResult();
+      delete (result as any).parallelIndex;
+      await run(reporter, test, result);
+      expect(lastArg(clientMock.createJUnitTestResult).worker).toBeUndefined();
+    });
+  });
+
+  // -------------------------------------------------------------------------
   describe('case ID linking (annotations & tags)', () => {
     it('links via a testplanit annotation without touching the title', async () => {
       const test = withMeta(makeTest('logs in successfully', buildParent({ project: 'chromium' })), {

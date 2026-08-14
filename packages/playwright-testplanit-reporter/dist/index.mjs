@@ -339,6 +339,9 @@ ${error.stack}` : "";
       browser: projectName,
       platform: process.platform,
       retryAttempt: result.retry,
+      // parallelIndex is the stable 0..workers-1 lane; workerIndex increments
+      // on worker restarts and would fragment the timeline.
+      worker: typeof result.parallelIndex === "number" ? String(result.parallelIndex) : void 0,
       uid,
       specFile,
       systemOut: this.joinOutput(result.stdout),
@@ -477,6 +480,7 @@ ${error.stack}` : "";
         // ms → seconds
         executedAt: result.finishedAt,
         file: result.specFile,
+        worker: result.worker,
         systemOut: result.systemOut,
         systemErr: result.systemErr
       });

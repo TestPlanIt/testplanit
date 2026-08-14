@@ -563,6 +563,15 @@ describe("TestPlanItReporter", () => {
       );
     });
 
+    it("sends the runner cid as the worker id", async () => {
+      reporter.onTestPass(testStats({ title: "[789] runs in a worker" }));
+      await flush(reporter);
+
+      expect(apiMocks.createJUnitTestResult).toHaveBeenCalledWith(
+        expect.objectContaining({ worker: "0-0" })
+      );
+    });
+
     it("does not report skipped results when excludeSkipped is enabled", async () => {
       const r = new TestPlanItReporter({ ...defaultOptions, excludeSkipped: true });
       r.onTestSkip(testStats({ title: "[789] is skipped", state: "skipped" }));

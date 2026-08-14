@@ -433,6 +433,7 @@ export interface JUnitTestResult {
   assertions?: number | null;
   file?: string | null;
   line?: number | null;
+  worker?: string | null;
   systemOut?: string | null;
   systemErr?: string | null;
   createdAt: string;
@@ -977,6 +978,8 @@ export interface CreateJUnitTestResultOptions {
   assertions?: number;
   file?: string;
   line?: number;
+  /** Worker/thread id the test ran on (Playwright parallelIndex, WDIO cid). */
+  worker?: string;
   systemOut?: string;
   systemErr?: string;
 }

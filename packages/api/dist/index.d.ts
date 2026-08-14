@@ -377,6 +377,7 @@ interface JUnitTestResult {
     assertions?: number | null;
     file?: string | null;
     line?: number | null;
+    worker?: string | null;
     systemOut?: string | null;
     systemErr?: string | null;
     createdAt: string;
@@ -876,6 +877,8 @@ interface CreateJUnitTestResultOptions {
     assertions?: number;
     file?: string;
     line?: number;
+    /** Worker/thread id the test ran on (Playwright parallelIndex, WDIO cid). */
+    worker?: string;
     systemOut?: string;
     systemErr?: string;
 }
@@ -1031,6 +1034,12 @@ declare class TestPlanItClient {
     private readonly retryDelay;
     private readonly headers;
     private statusCache;
+    /**
+     * Set after a create is rejected while carrying `worker` — an older server
+     * (schema without JUnitTestResult.worker) fails the whole create over this
+     * optional metadata, so stop sending it for the rest of the run.
+     */
+    private junitWorkerFieldUnsupported;
     constructor(config: TestPlanItClientConfig);
     /**
      * Make an authenticated request to the API

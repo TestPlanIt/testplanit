@@ -1067,6 +1067,7 @@ export default class TestPlanItReporter extends WDIOReporter {
         platform: this.state.capabilities?.platformName || process.platform,
         screenshots: [],
         retryAttempt: 0,
+        worker: plan.cid || undefined,
         uid: `${plan.cid}_${fullTitle}`,
         specFile: this.currentSpec,
         cucumberStepTitles: stepTitles,
@@ -1287,6 +1288,7 @@ export default class TestPlanItReporter extends WDIOReporter {
       platform: this.state.capabilities?.platformName || process.platform,
       screenshots: [],
       retryAttempt: test.retries || 0,
+      worker: test.cid || this.currentCid || undefined,
       uid,
       specFile: this.currentSpec,
       commandOutput,
@@ -1533,6 +1535,7 @@ export default class TestPlanItReporter extends WDIOReporter {
         time: durationInSeconds,
         executedAt: result.finishedAt,
         file: result.specFile,
+        worker: result.worker,
         systemOut: result.commandOutput,
       });
 
