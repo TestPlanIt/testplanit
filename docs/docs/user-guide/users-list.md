@@ -5,10 +5,12 @@ sidebar_position: 4 # After Tags List
 
 # Users List Page
 
-This page provides a directory of all active (non-deleted) users within the TestPlanIt system. You can typically navigate here by clicking **Users** in the main header navigation bar.
+This page provides a directory of the active (non-deleted) users you collaborate with. You can typically navigate here by clicking **Users** in the main header navigation bar.
 
 :::info Access
 Users with the `NONE` access level cannot view this page and will be redirected.
+
+The directory is scoped to your collaborators: it lists the users who share at least one project with you (through any form of effective access — explicit permissions, group permissions, project assignments, or a project's default access), plus yourself. Administrators see every user in the system.
 :::
 
 ## Features
@@ -24,4 +26,4 @@ The main part of the page is a table listing the active users with the following
 
 - **Name**: Displays the user's avatar and full name. Clicking on the user's name navigates to their **[User Profile](./user-profile.md)** page.
 - **Email**: Displays the user's registered email address.
-- **Projects**: Displays the count of projects the user is currently assigned to. Hovering over or clicking the number may show the list of projects.
+- **Projects**: Displays the projects the user can access. Non-administrators see only the projects they share with that user; administrators see each user's full project list.

@@ -37,6 +37,13 @@ export default defineConfig({
       : {
           pool: "forks",
           isolate: true,
+          // The live-DB integration suite shares one database and some files
+          // depend on global state other files mutate (e.g. project access
+          // defaults), so their files must not interleave. CI is already
+          // fully serialized by the branch above.
+          ...(process.env.RUN_DB_INTEGRATION === "1"
+            ? { fileParallelism: false }
+            : {}),
         }),
     exclude: [
       "node_modules/",

@@ -6666,7 +6666,7 @@
     "tags": "## Tagi\nTagi etykietują i porządkują przypadki testowe oraz sesje, dzięki czemu możesz grupować i znajdować powiązane zadania w różnych projektach.",
     "issues": "## Problemy\nProblemy to elementy zewnętrznych systemów śledzenia — z Jira, GitHub, Azure DevOps i innych integracji — synchronizowane z TestPlanIt, aby można je było powiązać z przypadkami testowymi, przebiegami i sesjami.",
     "crossProjectReports": "## Raporty międzyprojektowe\nTwórz, uruchamiaj i analizuj raporty obejmujące wiele projektów, takie jak trendy automatyzacji w całym zestawie testów.",
-    "users": "## Użytkownicy\nKatalog osób w TestPlanIt oraz projektów, do których każda z nich ma dostęp.",
+    "users": "## Użytkownicy\nKatalog osób, z którymi współpracujesz — użytkowników, którzy udostępniają Ci przynajmniej jeden projekt — oraz projektów, które z nimi współdzielisz. Administratorzy widzą wszystkich użytkowników i ich pełną listę projektów.",
     "documentation": "## Dokumentacja\nDowolna dokumentacja tego projektu — notatki, odniesienia i szczegóły wdrożeniowe.",
     "projectMilestones": "## Kamienie milowe\nKamienie milowe grupują i śledzą pracę nad tym projektem według celu — wydań, sprintów lub niestandardowych typów — w stanach aktywnych i zakończonych.",
     "projectRepository": "## Repozytorium przypadków testowych\nBiblioteka przypadków testowych tego projektu, uporządkowana w foldery.",

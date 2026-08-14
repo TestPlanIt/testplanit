@@ -12,6 +12,7 @@ import valkeyConnection from "./valkey";
  */
 const PROJECT_IDS_CACHE_TTL_SECONDS = 60;
 const PROJECT_IDS_CACHE_PREFIX = "acl:projectids:";
+const COLLAB_SCOPE_CACHE_PREFIX = "acl:collab:";
 
 /**
  * `access` and `roleId` are part of the key, not just the user id.
@@ -126,9 +127,15 @@ export async function invalidateAccessibleProjectIds(
 ): Promise<void> {
   if (!valkeyConnection) return;
   try {
-    const keys = await valkeyConnection.keys(
-      `${PROJECT_IDS_CACHE_PREFIX}${userId}:*`
-    );
+    // Also drops the user's collaborator scope — it derives from the same
+    // rows. Other viewers' collaborator scopes (which may newly include or
+    // exclude this user) are left to the shared TTL.
+    const keys = (
+      await Promise.all([
+        valkeyConnection.keys(`${PROJECT_IDS_CACHE_PREFIX}${userId}:*`),
+        valkeyConnection.keys(`${COLLAB_SCOPE_CACHE_PREFIX}${userId}:*`),
+      ])
+    ).flat();
     if (keys.length > 0) {
       await valkeyConnection.del(...keys);
     }
@@ -144,7 +151,12 @@ export async function invalidateAccessibleProjectIds(
 export async function invalidateAllAccessibleProjectIds(): Promise<void> {
   if (!valkeyConnection) return;
   try {
-    const keys = await valkeyConnection.keys(`${PROJECT_IDS_CACHE_PREFIX}*`);
+    const keys = (
+      await Promise.all([
+        valkeyConnection.keys(`${PROJECT_IDS_CACHE_PREFIX}*`),
+        valkeyConnection.keys(`${COLLAB_SCOPE_CACHE_PREFIX}*`),
+      ])
+    ).flat();
     if (keys.length > 0) {
       await valkeyConnection.del(...keys);
     }
@@ -233,6 +245,261 @@ async function computeAccessibleProjectIds(
 }
 
 /**
+ * The users a viewer may read under the User model's collaborator scoping:
+ * admins read everyone; everyone else reads users sharing at least one
+ * effectively-accessible project (the same five sources as the project ladder
+ * above, with per-user NO_ACCESS honored per project).
+ *
+ * Users granted a shared project by an enumerable source (creator, explicit
+ * user permission, qualifying group permission, assignment on a
+ * SPECIFIC_ROLE-default project) are listed in `userIds`. Grants that flow
+ * from a project default apply to classes of users too large to enumerate, so
+ * they are carried as flags the policy combines with per-row columns:
+ * `viaOpenDefault` (a shared project's default grants any non-NONE user),
+ * `viaGlobalRoleDefault` (same via a GLOBAL_ROLE default — User.roleId is
+ * non-nullable, so the ladder's global-role requirement always holds), and
+ * `viaAdminAccess` (ADMIN users reach every project, so a viewer with any
+ * accessible project shares one with every admin). The `*Denied` lists carve
+ * out users whose per-user NO_ACCESS rows cover every project of a class.
+ */
+export interface CollaboratorScope {
+  all: boolean;
+  userIds: string[];
+  viaOpenDefault: boolean;
+  viaGlobalRoleDefault: boolean;
+  viaAdminAccess: boolean;
+  openDefaultDenied: string[];
+  globalRoleDefaultDenied: string[];
+}
+
+const EMPTY_COLLABORATOR_SCOPE: CollaboratorScope = {
+  all: false,
+  userIds: [],
+  viaOpenDefault: false,
+  viaGlobalRoleDefault: false,
+  viaAdminAccess: false,
+  openDefaultDenied: [],
+  globalRoleDefaultDenied: [],
+};
+
+function collabScopeCacheKey(user: UserForAuth): string {
+  return `${COLLAB_SCOPE_CACHE_PREFIX}${user.id}:${user.access}:${user.roleId ?? "none"}`;
+}
+
+/**
+ * Resolve the viewer's collaborator scope. Cache-aside over Valkey on the same
+ * 60s clock as the project-id resolution. Unlike that cache, this one also
+ * depends on OTHER users' permission rows — a grant made to someone else puts
+ * them in every eligible viewer's directory — so per-user invalidation cannot
+ * fully cover it; the TTL is the actual staleness bound for third-party grants.
+ */
+export async function resolveCollaboratorScope(
+  user: UserForAuth,
+  accessibleProjectIds?: number[]
+): Promise<CollaboratorScope> {
+  if (user.access === "ADMIN") {
+    return { ...EMPTY_COLLABORATOR_SCOPE, all: true };
+  }
+
+  const key = collabScopeCacheKey(user);
+  if (valkeyConnection) {
+    try {
+      const raw = await valkeyConnection.get(key);
+      if (raw) return JSON.parse(raw) as CollaboratorScope;
+    } catch {
+      // fall through to the DB — a cache outage must not deny access
+    }
+  }
+
+  const ids = accessibleProjectIds ?? (await resolveAccessibleProjectIds(user));
+  const scope = await computeCollaboratorScope(user, ids);
+
+  if (valkeyConnection) {
+    try {
+      await valkeyConnection.set(
+        key,
+        JSON.stringify(scope),
+        "EX",
+        PROJECT_IDS_CACHE_TTL_SECONDS
+      );
+    } catch {
+      // non-fatal
+    }
+  }
+
+  return scope;
+}
+
+/**
+ * Whether a user falls inside a resolved collaborator scope. Mirrors the User
+ * read policy's rule set (minus the viewer-self rule, which callers handle).
+ */
+export function collaboratorScopeIncludes(
+  scope: CollaboratorScope,
+  target: { id: string; access: string }
+): boolean {
+  if (scope.all) return true;
+  if (scope.userIds.includes(target.id)) return true;
+  if (scope.viaAdminAccess && target.access === "ADMIN") return true;
+  if (target.access === "NONE") return false;
+  if (scope.viaOpenDefault && !scope.openDefaultDenied.includes(target.id)) {
+    return true;
+  }
+  if (
+    scope.viaGlobalRoleDefault &&
+    !scope.globalRoleDefaultDenied.includes(target.id)
+  ) {
+    return true;
+  }
+  return false;
+}
+
+/**
+ * The uncached inverse of computeAccessibleProjectIds: given the viewer's
+ * accessible projects, find every user the ladder would grant at least one of
+ * them to. Set-based queries scoped to those projects, assembled with the same
+ * branch semantics (NO_ACCESS outranks, then creator / user permission /
+ * group / assignment / defaults).
+ */
+async function computeCollaboratorScope(
+  viewer: UserForAuth,
+  accessibleProjectIds: number[]
+): Promise<CollaboratorScope> {
+  if (accessibleProjectIds.length === 0) {
+    return { ...EMPTY_COLLABORATOR_SCOPE };
+  }
+
+  const [projects, perms, groupPerms, assignments] = await Promise.all([
+    baseDb.projects.findMany({
+      where: { id: { in: accessibleProjectIds } },
+      select: {
+        id: true,
+        createdBy: true,
+        defaultAccessType: true,
+        defaultRoleId: true,
+      },
+    }),
+    baseDb.userProjectPermission.findMany({
+      where: { projectId: { in: accessibleProjectIds } },
+      select: { userId: true, projectId: true, accessType: true },
+    }),
+    baseDb.groupProjectPermission.findMany({
+      where: { projectId: { in: accessibleProjectIds } },
+      select: {
+        projectId: true,
+        accessType: true,
+        roleId: true,
+        group: { select: { assignedUsers: { select: { userId: true } } } },
+      },
+    }),
+    baseDb.projectAssignment.findMany({
+      where: { projectId: { in: accessibleProjectIds } },
+      select: { userId: true, projectId: true },
+    }),
+  ]);
+
+  const deniedByUser = new Map<string, Set<number>>();
+  for (const perm of perms) {
+    if (perm.accessType === ProjectAccessType.NO_ACCESS) {
+      const denied = deniedByUser.get(perm.userId) ?? new Set<number>();
+      denied.add(perm.projectId);
+      deniedByUser.set(perm.userId, denied);
+    }
+  }
+  const isDenied = (userId: string, projectId: number) =>
+    deniedByUser.get(userId)?.has(projectId) ?? false;
+
+  const projectById = new Map(projects.map((p) => [p.id, p]));
+  const userIds = new Set<string>();
+
+  for (const p of projects) {
+    if (p.createdBy && !isDenied(p.createdBy, p.id)) {
+      userIds.add(p.createdBy);
+    }
+  }
+  // Explicit user permissions grant unconditionally — the GLOBAL_ROLE variant
+  // has no role requirement, the same asymmetry as the forward ladder.
+  for (const perm of perms) {
+    if (
+      perm.accessType === ProjectAccessType.SPECIFIC_ROLE ||
+      perm.accessType === ProjectAccessType.GLOBAL_ROLE
+    ) {
+      userIds.add(perm.userId);
+    }
+  }
+  for (const gp of groupPerms) {
+    // SPECIFIC_ROLE needs the grant's role; GLOBAL_ROLE needs the member's
+    // global role, which User.roleId (non-nullable) always supplies.
+    const qualifies =
+      (gp.accessType === ProjectAccessType.SPECIFIC_ROLE &&
+        gp.roleId != null) ||
+      gp.accessType === ProjectAccessType.GLOBAL_ROLE;
+    if (!qualifies) continue;
+    for (const member of gp.group.assignedUsers) {
+      if (!isDenied(member.userId, gp.projectId)) {
+        userIds.add(member.userId);
+      }
+    }
+  }
+  for (const a of assignments) {
+    const p = projectById.get(a.projectId);
+    if (
+      p &&
+      p.defaultAccessType === ProjectAccessType.SPECIFIC_ROLE &&
+      p.defaultRoleId != null &&
+      !isDenied(a.userId, a.projectId)
+    ) {
+      userIds.add(a.userId);
+    }
+  }
+  // The policy's self rule covers the viewer; keep the list to others.
+  userIds.delete(viewer.id);
+
+  const openDefaultIds: number[] = [];
+  const globalRoleDefaultIds: number[] = [];
+  for (const p of projects) {
+    if (
+      p.defaultAccessType === ProjectAccessType.DEFAULT ||
+      (p.defaultAccessType === ProjectAccessType.SPECIFIC_ROLE &&
+        p.defaultRoleId != null)
+    ) {
+      openDefaultIds.push(p.id);
+    } else if (p.defaultAccessType === ProjectAccessType.GLOBAL_ROLE) {
+      globalRoleDefaultIds.push(p.id);
+    }
+  }
+
+  // A user leaves a default-grant class only when their NO_ACCESS rows cover
+  // every project of that class — one uncovered project still grants.
+  const openDefaultDenied: string[] = [];
+  const globalRoleDefaultDenied: string[] = [];
+  for (const [userId, denied] of deniedByUser) {
+    if (
+      openDefaultIds.length > 0 &&
+      openDefaultIds.every((id) => denied.has(id))
+    ) {
+      openDefaultDenied.push(userId);
+    }
+    if (
+      globalRoleDefaultIds.length > 0 &&
+      globalRoleDefaultIds.every((id) => denied.has(id))
+    ) {
+      globalRoleDefaultDenied.push(userId);
+    }
+  }
+
+  return {
+    all: false,
+    userIds: [...userIds].sort(),
+    viaOpenDefault: openDefaultIds.length > 0,
+    viaGlobalRoleDefault: globalRoleDefaultIds.length > 0,
+    viaAdminAccess: true,
+    openDefaultDenied: openDefaultDenied.sort(),
+    globalRoleDefaultDenied: globalRoleDefaultDenied.sort(),
+  };
+}
+
+/**
  * Resolve the project-visibility scope for a viewer by user id, for services
  * that aggregate across projects with raw SQL (outside the policy layer).
  * Returns `null` for ADMIN (unrestricted — no project filter applies),
@@ -280,7 +547,27 @@ export async function resolveViewerProjectScope(
  * mutation.
  */
 export async function buildAuthContext(user: UserForAuth) {
-  const accessibleProjectIds = await resolveAccessibleProjectIds(user);
+  let accessibleProjectIds: number[] | null = null;
+  let collab: CollaboratorScope | null = null;
+
+  // Read both cached scopes in ONE Valkey round trip — this path runs once per
+  // enhanced-db request, and round trips on the JS thread are the resource the
+  // 60s cache exists to protect. Either miss falls back to its resolver, which
+  // recomputes and repopulates its own key.
+  if (valkeyConnection && user.access !== "ADMIN") {
+    try {
+      const [rawIds, rawCollab] = await valkeyConnection.mget(
+        projectIdsCacheKey(user),
+        collabScopeCacheKey(user)
+      );
+      if (rawIds) accessibleProjectIds = JSON.parse(rawIds) as number[];
+      if (rawCollab) collab = JSON.parse(rawCollab) as CollaboratorScope;
+    } catch {
+      // fall through to the resolvers — a cache outage must not deny access
+    }
+  }
+  accessibleProjectIds ??= await resolveAccessibleProjectIds(user);
+  collab ??= await resolveCollaboratorScope(user, accessibleProjectIds);
 
   return {
     id: user.id,
@@ -301,5 +588,11 @@ export async function buildAuthContext(user: UserForAuth) {
         }
       : null,
     accessibleProjectIds,
+    collabUserIds: collab.userIds,
+    collabViaOpenDefault: collab.viaOpenDefault,
+    collabViaGlobalRoleDefault: collab.viaGlobalRoleDefault,
+    collabViaAdminAccess: collab.viaAdminAccess,
+    collabOpenDefaultDenied: collab.openDefaultDenied,
+    collabGlobalRoleDefaultDenied: collab.globalRoleDefaultDenied,
   };
 }

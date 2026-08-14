@@ -5,12 +5,16 @@ const {
   mockUser,
   mockProjects,
   mockUserProjectPermission,
+  mockGroupProjectPermission,
   mockProjectAssignment,
+  mockGetServerSession,
 } = vi.hoisted(() => ({
-  mockUser: { findMany: vi.fn() },
+  mockUser: { findMany: vi.fn(), findUnique: vi.fn() },
   mockProjects: { findMany: vi.fn() },
   mockUserProjectPermission: { findMany: vi.fn() },
+  mockGroupProjectPermission: { findMany: vi.fn() },
   mockProjectAssignment: { findMany: vi.fn() },
+  mockGetServerSession: vi.fn(),
 }));
 
 // Mock the baseDb singleton
@@ -19,15 +23,34 @@ vi.mock("~/lib/db", () => ({
     user: mockUser,
     projects: mockProjects,
     userProjectPermission: mockUserProjectPermission,
+    groupProjectPermission: mockGroupProjectPermission,
     projectAssignment: mockProjectAssignment,
   },
 }));
+
+// The action is caller-scoped: it authenticates via getServerSession and
+// resolves the viewer row through baseDb.user.findUnique.
+vi.mock("next-auth", () => ({
+  getServerSession: (...a: unknown[]) => mockGetServerSession(...a),
+}));
+vi.mock("~/server/auth", () => ({ authOptions: {} }));
 
 // Import after mocking
 import {
   getUserAccessibleProjects,
   getUsersAccessibleProjects,
 } from "./getUserAccessibleProjects";
+
+/**
+ * Sign the call in as an ADMIN viewer, whose results are unscoped — the
+ * pre-scoping expectations below describe exactly this path. The caller
+ * scoping itself is covered by its own describe at the bottom.
+ */
+function signInAdminViewer() {
+  mockGetServerSession.mockResolvedValue({ user: { id: "test-admin-viewer" } });
+  mockUser.findUnique.mockResolvedValue({ access: "ADMIN", roleId: 1 });
+  mockGroupProjectPermission.findMany.mockResolvedValue([]);
+}
 
 // A project row as returned by the batched `baseDb.projects.findMany` select.
 type ProjectRow = {
@@ -85,6 +108,7 @@ const USER: UserRow = { id: "user-123", access: "USER", roleId: 5 };
 describe("getUserAccessibleProjects (single-user wrapper)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    signInAdminViewer();
   });
 
   afterEach(() => {
@@ -454,6 +478,7 @@ describe("getUserAccessibleProjects (single-user wrapper)", () => {
 describe("getUsersAccessibleProjects (batched)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    signInAdminViewer();
   });
 
   afterEach(() => {
@@ -533,5 +558,93 @@ describe("getUsersAccessibleProjects (batched)", () => {
 
     expect(result["denied"]).toEqual([]);
     expect(projectIds(result["allowed"])).toEqual([500]);
+  });
+});
+
+describe("getUsersAccessibleProjects — caller scoping", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("returns nothing when unauthenticated, without touching the database", async () => {
+    mockGetServerSession.mockResolvedValue(null);
+
+    const result = await getUsersAccessibleProjects(["anyone"]);
+
+    expect(result).toEqual({});
+    expect(mockProjects.findMany).not.toHaveBeenCalled();
+    expect(mockUser.findMany).not.toHaveBeenCalled();
+  });
+
+  it("non-admin callers see only collaborators, and only shared projects", async () => {
+    // Viewer holds P1; "collab" shares P1 (and privately holds P2);
+    // "stranger" holds only P2 and shares nothing with the viewer.
+    mockGetServerSession.mockResolvedValue({ user: { id: "viewer-1" } });
+    mockUser.findUnique.mockResolvedValue({ access: "USER", roleId: 5 });
+    mockProjects.findMany.mockImplementation(
+      async (args?: { where?: { id?: { in?: number[] } } }) => {
+        const all = [
+          {
+            id: 1,
+            name: "Shared",
+            iconUrl: null,
+            createdBy: null,
+            defaultAccessType: "NO_ACCESS",
+            defaultRoleId: null,
+          },
+          {
+            id: 2,
+            name: "Private",
+            iconUrl: null,
+            createdBy: null,
+            defaultAccessType: "NO_ACCESS",
+            defaultRoleId: null,
+          },
+        ];
+        const ids = args?.where?.id?.in;
+        return ids ? all.filter((p) => ids.includes(p.id)) : all;
+      }
+    );
+    const permRows = [
+      { userId: "viewer-1", projectId: 1, accessType: "SPECIFIC_ROLE" },
+      { userId: "collab", projectId: 1, accessType: "SPECIFIC_ROLE" },
+      { userId: "collab", projectId: 2, accessType: "SPECIFIC_ROLE" },
+      { userId: "stranger", projectId: 2, accessType: "SPECIFIC_ROLE" },
+    ];
+    mockUserProjectPermission.findMany.mockImplementation(
+      async (args?: {
+        where?: {
+          userId?: string | { in?: string[] };
+          projectId?: { in?: number[] };
+        };
+      }) => {
+        const w = args?.where ?? {};
+        return permRows.filter(
+          (r) =>
+            (typeof w.userId !== "string" || r.userId === w.userId) &&
+            (typeof w.userId !== "object" ||
+              !w.userId?.in ||
+              w.userId.in.includes(r.userId)) &&
+            (!w.projectId?.in || w.projectId.in.includes(r.projectId))
+        );
+      }
+    );
+    mockGroupProjectPermission.findMany.mockResolvedValue([]);
+    mockProjectAssignment.findMany.mockResolvedValue([]);
+    mockUser.findMany.mockResolvedValue([
+      { id: "collab", access: "USER", roleId: 5, groups: [] },
+      { id: "stranger", access: "USER", roleId: 5, groups: [] },
+    ]);
+
+    const result = await getUsersAccessibleProjects(["collab", "stranger"]);
+
+    // Only the shared project is disclosed — never P2's name.
+    expect(result["collab"].map((p) => p.id)).toEqual([1]);
+    // Non-collaborators resolve to nothing, matching the User read policy.
+    expect(result["stranger"]).toEqual([]);
   });
 });

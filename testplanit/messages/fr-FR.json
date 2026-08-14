@@ -6666,7 +6666,7 @@
     "tags": "## Balises\nLes balises étiquettent et organisent les cas de test et les sessions afin que vous puissiez regrouper et retrouver les travaux associés dans tous les projets.",
     "issues": "## Problèmes\nLes problèmes sont des éléments de suivi externes — provenant de Jira, GitHub, Azure DevOps et d'autres intégrations — synchronisés dans TestPlanIt afin de pouvoir être liés aux cas de test, exécutions et sessions.",
     "crossProjectReports": "## Rapports multi-projets\nCréez, exécutez et analysez des rapports couvrant plusieurs projets, comme les tendances d'automatisation à travers l'ensemble de votre suite de tests.",
-    "users": "## Utilisateurs\nUn annuaire des personnes dans TestPlanIt et des projets auxquels chacune peut accéder.",
+    "users": "## Utilisateurs\nUn répertoire des personnes avec lesquelles vous collaborez — les utilisateurs qui partagent au moins un projet avec vous — et les projets que vous partagez avec chacun d'eux. Les administrateurs voient tous les utilisateurs et leur liste complète de projets.",
     "documentation": "## Documentation\nDocumentation libre pour ce projet — notes, références et informations d'intégration.",
     "projectMilestones": "## Étapes\nLes étapes regroupent et suivent le travail de ce projet par objectif — publications, sprints ou types personnalisés — à travers les états actifs et terminés.",
     "projectRepository": "## Référentiel de cas de test\nLa bibliothèque de cas de test de ce projet, organisée en dossiers.",
