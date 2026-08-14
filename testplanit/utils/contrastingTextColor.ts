@@ -22,9 +22,21 @@ import type { CSSProperties } from "react";
 const BLACK = "#000000";
 const WHITE = "#ffffff";
 
-/** Expands #rgb, tolerates a missing #, returns null for anything else. */
-function parseHexColor(color: string): [number, number, number] | null {
-  const hex = color.trim().replace(/^#/, "");
+/**
+ * Expands #rgb, tolerates a missing #, reads rgb()/rgba() (the JUnit result
+ * fallback colours are rgb() strings), returns null for anything else.
+ */
+function parseColor(color: string): [number, number, number] | null {
+  const trimmed = color.trim();
+  const rgbMatch = trimmed.match(
+    /^rgba?\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*(?:,[^)]*)?\)$/i
+  );
+  if (rgbMatch) {
+    const channels = [rgbMatch[1], rgbMatch[2], rgbMatch[3]].map(Number);
+    if (channels.some((c) => c > 255)) return null;
+    return channels as [number, number, number];
+  }
+  const hex = trimmed.replace(/^#/, "");
   const full =
     hex.length === 3
       ? hex
@@ -55,13 +67,33 @@ function relativeLuminance([r, g, b]: [number, number, number]): number {
  * surfaces these badges sit on.
  */
 export function contrastingTextColor(backgroundColor: string): string {
-  const rgb = parseHexColor(backgroundColor);
+  const rgb = parseColor(backgroundColor);
   if (!rgb) return BLACK;
 
   const luminance = relativeLuminance(rgb);
   const contrastWithWhite = 1.05 / (luminance + 0.05);
   const contrastWithBlack = (luminance + 0.05) / 0.05;
   return contrastWithWhite >= contrastWithBlack ? WHITE : BLACK;
+}
+
+/**
+ * The pick for text set INLINE on a status surface — what the brand themes
+ * show. The strict WCAG comparison above flips to black right at the ratio
+ * tie, where mid-saturation backgrounds (the seeded violet Skipped,
+ * #786AC8, is luminance 0.185 — black "wins" 4.70:1 vs 4.47:1) read far
+ * better with white to human eyes. Prefer white unless black's ratio beats
+ * it by 1.5×, which moves the flip to luminance ~0.23 — light backgrounds
+ * (greens, ambers) still get black. Accessible themes ignore this: they
+ * consume the strict pick via --status-surface-fg (statusSurfaceVars).
+ */
+export function perceptualTextColor(backgroundColor: string): string {
+  const rgb = parseColor(backgroundColor);
+  if (!rgb) return BLACK;
+
+  const luminance = relativeLuminance(rgb);
+  const contrastWithWhite = 1.05 / (luminance + 0.05);
+  const contrastWithBlack = (luminance + 0.05) / 0.05;
+  return contrastWithBlack >= contrastWithWhite * 1.5 ? BLACK : WHITE;
 }
 
 /**

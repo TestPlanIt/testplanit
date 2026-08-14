@@ -11,6 +11,7 @@ import { useParams } from "next/navigation";
 import { useMemo } from "react";
 import {
   computeAutomatedRunMetrics,
+  computeConcurrencyMetrics,
   computeRetryMetrics,
   topSlowestResults,
   type AutomatedResultMetricInput,
@@ -33,6 +34,10 @@ export interface AutomatedRunMetricsResult extends AutomatedResultMetricInput {
 interface AutomatedRunMetricsProps {
   results: AutomatedRunMetricsResult[];
   projectId?: string | number;
+  /** Makes the Flaky Tests tile a filter shortcut when provided. */
+  onFlakyClick?: () => void;
+  /** Makes the Retries tile a filter shortcut when provided. */
+  onRetriesClick?: () => void;
 }
 
 function formatTileDuration(seconds: number, locale: string): string {
@@ -50,19 +55,40 @@ function MetricTile({
   label,
   value,
   hint,
+  onClick,
+  testId,
 }: {
   label: string;
   value: string;
   hint?: string;
+  onClick?: () => void;
+  testId?: string;
 }) {
-  const tile = (
-    <div className="rounded-md border p-2 min-w-0">
+  const body = (
+    <>
       <div className="text-xs text-muted-foreground truncate" title={label}>
         {label}
       </div>
-      <div className="text-sm font-semibold truncate" title={value}>
+      <div
+        className={`text-sm font-semibold truncate${onClick ? " underline decoration-dotted underline-offset-2" : ""}`}
+        title={value}
+      >
         {value}
       </div>
+    </>
+  );
+  const tile = onClick ? (
+    <button
+      type="button"
+      onClick={onClick}
+      data-testid={testId}
+      className="rounded-md border p-2 min-w-0 w-full text-start hover:bg-accent transition-colors"
+    >
+      {body}
+    </button>
+  ) : (
+    <div className="rounded-md border p-2 min-w-0" data-testid={testId}>
+      {body}
     </div>
   );
   if (!hint) return tile;
@@ -82,6 +108,8 @@ function MetricTile({
 export function AutomatedRunMetrics({
   results,
   projectId: propProjectId,
+  onFlakyClick,
+  onRetriesClick,
 }: AutomatedRunMetricsProps) {
   const tCommon = useTranslations("common");
   const locale = useLocale();
@@ -115,9 +143,20 @@ export function AutomatedRunMetrics({
 
   const retryMetrics = useMemo(() => computeRetryMetrics(results), [results]);
 
+  const concurrency = useMemo(
+    () => computeConcurrencyMetrics(results),
+    [results]
+  );
+
   if (results.length === 0) return null;
 
-  const tiles: Array<{ label: string; value: string; hint?: string }> = [];
+  const tiles: Array<{
+    label: string;
+    value: string;
+    hint?: string;
+    onClick?: () => void;
+    testId?: string;
+  }> = [];
 
   if (metrics.passRate !== null) {
     tiles.push({
@@ -129,7 +168,20 @@ export function AutomatedRunMetrics({
       }),
     });
   }
-  if (metrics.parallelism !== null) {
+  if (concurrency !== null) {
+    // Peak concurrent tests — the run's effective worker count — with the
+    // time-weighted average in the hint.
+    tiles.push({
+      label: tCommon("fields.parallelization"),
+      value: `${concurrency.peak.toLocaleString(locale)}×`,
+      hint: tCommon("labels.parallelizationPeakHint", {
+        peak: concurrency.peak,
+        average: concurrency.average.toLocaleString(locale, {
+          maximumFractionDigits: 1,
+        }),
+      }),
+    });
+  } else if (metrics.parallelism !== null) {
     tiles.push({
       label: tCommon("fields.parallelization"),
       value: `${metrics.parallelism.toLocaleString(locale, {
@@ -169,11 +221,15 @@ export function AutomatedRunMetrics({
       label: tCommon("fields.retries"),
       value: retryMetrics.retriesCount.toLocaleString(locale),
       hint: tCommon("labels.retriesHint"),
+      onClick: onRetriesClick,
+      testId: "metric-tile-retries",
     });
     tiles.push({
       label: tCommon("fields.flakyTests"),
       value: retryMetrics.flakyCaseCount.toLocaleString(locale),
       hint: tCommon("labels.flakyTestHint"),
+      onClick: retryMetrics.flakyCaseCount > 0 ? onFlakyClick : undefined,
+      testId: "metric-tile-flaky",
     });
   }
 

@@ -1,7 +1,7 @@
 import AutomatedRunMetrics from "@/components/AutomatedRunMetrics";
 import CollapsibleSummarySection from "@/components/CollapsibleSummarySection";
 import JUnitDurationHistogram from "@/components/dataVisualizations/JUnitDurationHistogram";
-import JUnitStatusTimeline from "@/components/dataVisualizations/JUnitStatusTimeline";
+import JUnitExecutionTimeline from "@/components/dataVisualizations/JUnitExecutionTimeline";
 import TestRunResultsDonut from "@/components/dataVisualizations/TestRunResultsDonut";
 import DynamicIcon from "@/components/DynamicIcon";
 import { ForecastDisplay } from "@/components/ForecastDisplay";
@@ -23,80 +23,174 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { FormLabel } from "@/components/ui/form";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { Maximize2 } from "lucide-react";
 import { useParams } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useRouter } from "~/lib/navigation";
 import { cn } from "~/utils";
+import { schema } from "~/zenstack/schema";
 
 interface JunitChartsPanelProps {
   t: (key: string) => string;
-  jUnitSuites: any[] | undefined;
-  sortedJunitTestCases: any[];
+  runId: number;
   statusScope:
     { name?: string | null; icon?: string | null } | null | undefined;
   forecastSeconds: number | null | undefined;
+  /** Wired to the metrics card's Flaky Tests tile — applies the table filter. */
+  onFlakyTileClick?: () => void;
+  /** Wired to the metrics card's Retries tile — applies the table filter. */
+  onRetriesTileClick?: () => void;
 }
+
+const fallbackColor = (type: string | null | undefined) =>
+  type === "FAILURE" || type === "ERROR"
+    ? "rgb(239, 68, 68)"
+    : type === "SKIPPED"
+      ? "rgb(161, 161, 170)"
+      : "rgb(34, 197, 94)";
 
 /**
  * The right panel of a JUnit (automated) test run: the workflow-scope badge,
- * forecast, and the results chart carousel (donut / status timeline / duration
- * histogram) with a full-screen zoom dialog. Content only — it renders inside
- * the shared run-details shell's right panel in `page.tsx`, above the shared
- * `TestRunFormControls`. Owns its own chart/carousel/zoom state.
+ * forecast, execution metrics, and the results chart carousel (donut /
+ * execution timeline / duration histogram) with a full-screen zoom dialog.
+ * Content only — it renders inside the shared run-details shell's right panel
+ * in `page.tsx`, above the shared `TestRunFormControls`.
+ *
+ * Fetches its own LEAN result rows (no system output, attachments, or case
+ * links) so the metrics and charts render without waiting for the results
+ * table's heavyweight suite query.
  */
 export default function JunitChartsPanel({
   t,
-  jUnitSuites,
-  sortedJunitTestCases,
+  runId,
   statusScope,
   forecastSeconds,
+  onFlakyTileClick,
+  onRetriesTileClick,
 }: JunitChartsPanelProps) {
   const params = useParams();
+  const router = useRouter();
   const projectId = params.projectId as string | undefined;
+
+  const { data: leanResults } = useClientQueries(
+    schema
+  ).jUnitTestResult.useFindMany(
+    {
+      where: { testSuite: { testRunId: runId } },
+      select: {
+        id: true,
+        type: true,
+        time: true,
+        executedAt: true,
+        createdAt: true,
+        worker: true,
+        repositoryCaseId: true,
+        status: {
+          select: { name: true, color: { select: { value: true } } },
+        },
+        repositoryCase: {
+          select: {
+            name: true,
+            source: true,
+            isDeleted: true,
+            hasParameters: true,
+          },
+        },
+        testSuite: { select: { name: true } },
+      },
+      orderBy: { id: "asc" },
+    },
+    { enabled: Number.isFinite(runId) }
+  );
+
+  // One row shape for every consumer: metrics card, donut, timeline, histogram.
+  const chartRows = useMemo(
+    () =>
+      (leanResults ?? []).map((result) => ({
+        id: result.repositoryCaseId,
+        resultId: result.id,
+        name: result.repositoryCase?.name || String(result.repositoryCaseId),
+        source: result.repositoryCase?.source,
+        isDeleted: result.repositoryCase?.isDeleted || false,
+        hasParameters: result.repositoryCase?.hasParameters || false,
+        suiteName: result.testSuite?.name,
+        time: result.time,
+        executedAt: result.executedAt || undefined,
+        createdAt: result.createdAt || undefined,
+        worker: result.worker,
+        resultType: result.type || "PASSED",
+        resultStatus: result.status?.name || result.type || "PASSED",
+        resultColor: result.status?.color?.value || fallbackColor(result.type),
+      })),
+    [leanResults]
+  );
+
   // Group by status for the donut chart.
   const donutChartData = useMemo(() => {
-    if (!sortedJunitTestCases) return [];
     const statusMap: Record<
       string,
       { id: string | number; name: string; color: string; value: number }
     > = {};
-    for (const result of sortedJunitTestCases) {
-      const statusName = result.resultStatus;
-      const statusColor = result.resultColor;
+    for (const row of chartRows) {
+      const statusName = row.resultStatus;
       if (!statusName) continue;
-      const key = statusName;
-      if (!statusMap[key]) {
-        statusMap[key] = {
-          id: key,
+      if (!statusMap[statusName]) {
+        statusMap[statusName] = {
+          id: statusName,
           name: statusName,
-          color: statusColor,
+          color: row.resultColor,
           value: 0,
         };
       }
-      statusMap[key].value++;
+      statusMap[statusName].value++;
     }
     return Object.values(statusMap);
-  }, [sortedJunitTestCases]);
+  }, [chartRows]);
 
-  // Map jUnitSuites to the structure the timeline/histogram charts expect.
-  const jUnitSuitesForCharts = useMemo(() => {
-    if (!jUnitSuites) return [];
-    return jUnitSuites.map((suite: any) => ({
-      name: suite.name,
-      timestamp: suite.timestamp,
-      testCases: (suite.results || []).map((result: any) => ({
-        name: result.repositoryCase?.name || `Case ${result.repositoryCaseId}`,
-        className:
-          result.repositoryCase?.className || String(result.repositoryCaseId),
-        time: result.time,
-        result: {
-          status: result.status
-            ? { name: result.status.name, color: result.status.color }
-            : undefined,
-        },
+  const timelineRows = useMemo(
+    () =>
+      chartRows.map((row) => ({
+        caseId: row.id,
+        resultId: row.resultId,
+        name: row.name,
+        suiteName: row.suiteName,
+        statusName: row.resultStatus,
+        color: row.resultColor,
+        isDeleted: row.isDeleted,
+        time: row.time,
+        executedAt: row.executedAt,
+        createdAt: row.createdAt,
+        worker: row.worker,
       })),
-    }));
-  }, [jUnitSuites]);
+    [chartRows]
+  );
+
+  // The histogram consumes the suite-grouped shape.
+  const suitesForHistogram = useMemo(() => {
+    const bySuite = new Map<
+      string,
+      { name: string; testCases: Array<{ name: string; time?: number | null }> }
+    >();
+    for (const row of chartRows) {
+      const suiteName = row.suiteName || "";
+      let suite = bySuite.get(suiteName);
+      if (!suite) {
+        suite = { name: suiteName, testCases: [] };
+        bySuite.set(suiteName, suite);
+      }
+      suite.testCases.push({ name: row.name, time: row.time });
+    }
+    return Array.from(bySuite.values());
+  }, [chartRows]);
+
+  const handleTimelineResultClick = useCallback(
+    (caseId: number | string) => {
+      if (!projectId) return;
+      router.push(`/projects/repository/${projectId}/${caseId}`);
+    },
+    [router, projectId]
+  );
 
   const [zoomedChart, setZoomedChart] = useState<
     "donut" | "timeline" | "histogram" | null
@@ -146,7 +240,11 @@ export default function JunitChartsPanel({
         storageKey={`tpi.runs.${projectId ?? "all"}.metricsChartsCollapsed`}
         title={t("common.labels.metricsAndCharts")}
       >
-        <AutomatedRunMetrics results={sortedJunitTestCases} />
+        <AutomatedRunMetrics
+          results={chartRows}
+          onFlakyClick={onFlakyTileClick}
+          onRetriesClick={onRetriesTileClick}
+        />
         {/* Charts carousel */}
         <div
           className="mt-4"
@@ -192,7 +290,7 @@ export default function JunitChartsPanel({
                 <Card shadow="none">
                   <CardHeader className="flex flex-row items-center justify-between p-2">
                     <CardTitle className="text-base font-medium">
-                      {t("common.ui.charts.statusTimeline")}
+                      {t("common.ui.charts.executionTimeline")}
                     </CardTitle>
                     <Button
                       type="button"
@@ -203,14 +301,15 @@ export default function JunitChartsPanel({
                     >
                       <Maximize2 className="h-4 w-4" />
                       <span className="sr-only">
-                        {t("common.ui.charts.zoomStatusTimeline")}
+                        {t("common.ui.charts.zoomExecutionTimeline")}
                       </span>
                     </Button>
                   </CardHeader>
                   <CardContent>
-                    <JUnitStatusTimeline
-                      jUnitSuites={jUnitSuitesForCharts}
+                    <JUnitExecutionTimeline
+                      results={timelineRows}
                       height={180}
+                      onResultClick={handleTimelineResultClick}
                     />
                   </CardContent>
                 </Card>
@@ -236,7 +335,7 @@ export default function JunitChartsPanel({
                   </CardHeader>
                   <CardContent>
                     <JUnitDurationHistogram
-                      jUnitSuites={jUnitSuitesForCharts}
+                      jUnitSuites={suitesForHistogram}
                       height={180}
                     />
                   </CardContent>
@@ -277,7 +376,7 @@ export default function JunitChartsPanel({
               {zoomedChart === "donut"
                 ? t("common.ui.charts.resultsDistribution")
                 : zoomedChart === "timeline"
-                  ? t("common.ui.charts.statusTimeline")
+                  ? t("common.ui.charts.executionTimeline")
                   : zoomedChart === "histogram"
                     ? t("common.ui.charts.testDurationHistogram")
                     : ""}
@@ -286,7 +385,7 @@ export default function JunitChartsPanel({
               {zoomedChart === "donut"
                 ? t("common.ui.charts.resultsDistribution")
                 : zoomedChart === "timeline"
-                  ? t("common.ui.charts.statusTimeline")
+                  ? t("common.ui.charts.executionTimeline")
                   : zoomedChart === "histogram"
                     ? t("common.ui.charts.testDurationHistogram")
                     : ""}
@@ -303,14 +402,15 @@ export default function JunitChartsPanel({
                   />
                 )}
                 {zoomedChart === "timeline" && (
-                  <JUnitStatusTimeline
-                    jUnitSuites={jUnitSuitesForCharts}
+                  <JUnitExecutionTimeline
+                    results={timelineRows}
                     height={600}
+                    onResultClick={handleTimelineResultClick}
                   />
                 )}
                 {zoomedChart === "histogram" && (
                   <JUnitDurationHistogram
-                    jUnitSuites={jUnitSuitesForCharts}
+                    jUnitSuites={suitesForHistogram}
                     isZoomed
                     height={600}
                   />

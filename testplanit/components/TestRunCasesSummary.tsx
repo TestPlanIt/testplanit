@@ -447,16 +447,18 @@ export function TestRunCasesSummary({
         {/* Summary text below the bar */}
         <div className="flex justify-between items-center">
           <div
-            className="flex items-center min-w-0 grow me-2 text-muted-foreground text-xs"
+            className="text-muted-foreground text-xs truncate grow me-2"
             title={summaryTitle}
           >
-            {`${tCommon("labels.total")}: ${totalItems} ${tCommon("plural.case", { count: totalItems })}`}
-            {summaryText ? ` (${summaryText})` : ""}
+            <span className="truncate shrink">
+              {`${tCommon("labels.total")}: ${totalItems} ${tCommon("plural.case", { count: totalItems })}`}
+              {summaryText ? ` (${summaryText})` : ""}
+            </span>
             {runDurationDisplay ? (
               <Tooltip>
                 <TooltipTrigger asChild>
                   <span
-                    className="inline-flex items-center ms-1 cursor-default"
+                    className="inline-flex items-center ms-1 cursor-default shrink-[999] min-w-0 overflow-hidden whitespace-nowrap"
                     data-testid="run-duration-display"
                   >
                     {" • "}
@@ -478,7 +480,7 @@ export function TestRunCasesSummary({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <span
-                    className="inline-flex items-center ms-1 cursor-default"
+                    className="inline-flex items-center ms-1 cursor-default shrink-[9999] min-w-0 overflow-hidden whitespace-nowrap"
                     data-testid="total-test-time-display"
                   >
                     {" • "}

@@ -17,7 +17,7 @@ import { LinkIcon, Zap } from "lucide-react";
 import type { Session } from "next-auth";
 import { RECORD_TYPES } from "~/lib/recordKey";
 import {
-  contrastingTextColor,
+  perceptualTextColor,
   statusSurfaceVars,
 } from "~/utils/contrastingTextColor";
 import { toHumanReadable } from "~/utils/duration";
@@ -237,6 +237,15 @@ export function getJunitColumns({
       size: 80,
     },
     {
+      id: "worker",
+      header: t("common.fields.worker"),
+      accessorKey: "worker",
+      enableSorting: true,
+      meta: { isVisible: false },
+      cell: ({ row }: { row: { original: any } }) => row.original.worker,
+      size: 80,
+    },
+    {
       id: "systemOutput",
       header: t("common.fields.systemOutput"),
       accessorKey: "systemOutput",
@@ -287,7 +296,7 @@ export function getJunitColumns({
             style={{
               ...statusSurfaceVars(row.original.resultColor),
               backgroundColor: row.original.resultColor,
-              color: contrastingTextColor(row.original.resultColor),
+              color: perceptualTextColor(row.original.resultColor),
             }}
           >
             {row.original.resultStatus}

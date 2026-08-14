@@ -24,7 +24,7 @@ The item is laid out in two lines: identity above, detail below.
 
 **Detail line**
 
-- **Test Case Summary**: The execution status of the cases in the run, using the `TestRunCasesSummary` component — a segmented bar plus counts, elapsed time and total estimate. Every segment links to its case. The bar **scrolls horizontally** when a run has more cases than it can seat.
+- **Test Case Summary**: The execution status of the cases in the run, using the `TestRunCasesSummary` component — a segmented bar plus counts, elapsed time and total estimate. Every segment links to its case. The bar **scrolls horizontally** when a run has more cases than it can seat. For automated runs the line shows the **run duration** (wall-clock time from first to last result) alongside the **total test time** (summed durations); on narrow rows the line truncates with an ellipsis, and the full values stay available in the tooltips.
 - **Milestone**: The associated [Milestone](./milestones.md), when the run has one and the surrounding list is not already grouped by milestone.
 - **Completion Date**: Shown in place of the members on completed runs.
 - **Members**: User avatars involved with the run (creator, assigned testers, executors), shown at the end of the line using the `MemberList` component. These are the same three roles the [My Test Runs filter](./runs.md#what-counts-as-taking-part) matches on, so filtering by it keeps the runs your avatar appears on.

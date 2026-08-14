@@ -8,6 +8,11 @@ import { useSession } from "next-auth/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePageSizeOptions } from "~/hooks/usePageSizeOptions";
 import { usePagination } from "~/lib/contexts/PaginationContext";
+import JunitFilterBar, {
+  junitFacetsActive,
+  type JunitFacetFilters,
+  type JunitFacetOption,
+} from "./JunitFilterBar";
 import { getJunitColumns } from "./junitColumns";
 
 interface JunitResultsPanelProps {
@@ -22,6 +27,8 @@ interface JunitResultsPanelProps {
   onSortColumn?: (column: string, direction: "asc" | "desc" | null) => void;
   isJUnitLoading: boolean;
   selectedTestCaseId: number | null;
+  facets: JunitFacetFilters;
+  onFacetsChange: (next: JunitFacetFilters) => void;
 }
 
 /**
@@ -43,6 +50,8 @@ export default function JunitResultsPanel({
   onSortColumn,
   isJUnitLoading,
   selectedTestCaseId,
+  facets,
+  onFacetsChange,
 }: JunitResultsPanelProps) {
   const { data: session } = useSession();
   const [junitFilter, setJunitFilter] = useState("");
@@ -62,20 +71,79 @@ export default function JunitResultsPanel({
     endIndex,
   } = usePagination();
 
+  // Facet options with attempt-row counts; flaky/retried count distinct cases.
+  const { statusOptions, suiteOptions, flakyCaseCount, retriedCaseCount } =
+    useMemo(() => {
+      const statusCounts = new Map<string, number>();
+      const suiteCounts = new Map<string, number>();
+      const flakyCases = new Set<number | string>();
+      const retriedCases = new Set<number | string>();
+      for (const tc of sortedJunitTestCases) {
+        if (tc.resultStatus) {
+          statusCounts.set(
+            tc.resultStatus,
+            (statusCounts.get(tc.resultStatus) ?? 0) + 1
+          );
+        }
+        if (tc.suiteName) {
+          suiteCounts.set(
+            tc.suiteName,
+            (suiteCounts.get(tc.suiteName) ?? 0) + 1
+          );
+        }
+        if (tc.isFlaky) flakyCases.add(tc.id);
+        if (tc.isRetried) retriedCases.add(tc.id);
+      }
+      const toOptions = (counts: Map<string, number>): JunitFacetOption[] =>
+        Array.from(counts, ([value, count]) => ({ value, count })).sort(
+          (a, b) => a.value.localeCompare(b.value)
+        );
+      return {
+        statusOptions: toOptions(statusCounts),
+        suiteOptions: toOptions(suiteCounts),
+        flakyCaseCount: flakyCases.size,
+        retriedCaseCount: retriedCases.size,
+      };
+    }, [sortedJunitTestCases]);
+
+  const facetFilteredJunitTestCases = useMemo(() => {
+    if (!junitFacetsActive(facets)) return sortedJunitTestCases;
+    return sortedJunitTestCases.filter((tc: any) => {
+      if (
+        facets.statuses.length > 0 &&
+        !facets.statuses.includes(tc.resultStatus)
+      ) {
+        return false;
+      }
+      if (facets.suites.length > 0 && !facets.suites.includes(tc.suiteName)) {
+        return false;
+      }
+      if (facets.flakyOnly && !tc.isFlaky) return false;
+      if (facets.retriedOnly && !tc.isRetried) return false;
+      return true;
+    });
+  }, [sortedJunitTestCases, facets]);
+
   const filteredJunitTestCases = useMemo(() => {
-    if (!junitFilter) return sortedJunitTestCases;
+    if (!junitFilter) return facetFilteredJunitTestCases;
     const filterLower = junitFilter.toLowerCase();
-    return sortedJunitTestCases.filter((tc: any) =>
+    return facetFilteredJunitTestCases.filter((tc: any) =>
       Object.values(tc).some(
         (val) =>
           typeof val === "string" && val.toLowerCase().includes(filterLower)
       )
     );
-  }, [sortedJunitTestCases, junitFilter]);
+  }, [facetFilteredJunitTestCases, junitFilter]);
 
   useEffect(() => {
     setTotalItems(filteredJunitTestCases.length);
   }, [filteredJunitTestCases.length, setTotalItems]);
+
+  // A facet change can strand the pager past the last page of the narrowed
+  // set — snap back to the first page.
+  useEffect(() => {
+    setJunitPage(1);
+  }, [facets, setJunitPage]);
 
   const pageSizeOptions = usePageSizeOptions(totalItems);
   const effectivePageSize =
@@ -140,6 +208,15 @@ export default function JunitResultsPanel({
 
   return (
     <div className="space-y-4">
+      {/* Facet filters above the whole toolbar row, as on Repository Cases. */}
+      <JunitFilterBar
+        facets={facets}
+        onFacetsChange={onFacetsChange}
+        statusOptions={statusOptions}
+        suiteOptions={suiteOptions}
+        flakyCaseCount={flakyCaseCount}
+        retriedCaseCount={retriedCaseCount}
+      />
       <div className="flex flex-row items-start w-full gap-4 mb-2">
         <div className="flex flex-col grow w-full sm:w-1/2 min-w-[250px]">
           <Filter

@@ -146,6 +146,7 @@ import CompleteTestRunDialog from "./CompleteTestRunDialog";
 import { DistributeAssignmentsModal } from "./DistributeAssignmentsModal";
 import { DeleteTestRunModal } from "./DeleteTestRun";
 import JunitChartsPanel from "./JunitChartsPanel";
+import { EMPTY_JUNIT_FACETS, type JunitFacetFilters } from "./JunitFilterBar";
 import JunitResultsPanel from "./JunitResultsPanel";
 import {
   SelectedConfigurationInfo,
@@ -593,6 +594,10 @@ export default function TestRunPage() {
     // cover the separate suite/result query).
     void queryClient.invalidateQueries({
       queryKey: ["zenstack", "JUnitTestSuite"],
+    });
+    // The charts panel reads its own lean result query (JunitChartsPanel).
+    void queryClient.invalidateQueries({
+      queryKey: ["zenstack", "JUnitTestResult"],
     });
   }, [refetchTestRun, queryClient, runId]);
   const onLiveWakeUp = useCoalescedWakeUp(onWakeUpFlush);
@@ -1393,6 +1398,18 @@ export default function TestRunPage() {
   const [junitSortConfig, setJunitSortConfig] = useState<
     { column: string; direction: "asc" | "desc" } | undefined
   >({ column: "executedAt", direction: "desc" });
+  // Facet filters for the JUnit results table; the metrics card's Flaky and
+  // Retries tiles (right panel) preset them, so the state lives here.
+  const [junitFacets, setJunitFacets] =
+    useState<JunitFacetFilters>(EMPTY_JUNIT_FACETS);
+  const handleFlakyTileClick = useCallback(
+    () => setJunitFacets((prev) => ({ ...prev, flakyOnly: true })),
+    []
+  );
+  const handleRetriesTileClick = useCallback(
+    () => setJunitFacets((prev) => ({ ...prev, retriedOnly: true })),
+    []
+  );
   const junitTestCases = useMemo(() => {
     if (!jUnitSuites) return [];
     const mapped = jUnitSuites.flatMap((suite) =>
@@ -1422,6 +1439,7 @@ export default function TestRunPage() {
         message: result.message,
         time: result.time,
         assertions: result.assertions,
+        worker: result.worker,
         systemOutput: result.systemOut,
         systemError: result.systemErr,
         createdAt: result.createdAt || testRunData?.createdAt,
@@ -1432,12 +1450,19 @@ export default function TestRunPage() {
         attachments: result.attachments || [],
       }))
     );
-    // Mark every attempt row of a fail-then-pass case so the table and the
-    // metrics card can badge it (Allure-style within-run flakiness).
-    const { flakyCaseIds } = computeRetryMetrics(mapped);
-    if (flakyCaseIds.size === 0) return mapped;
+    // Mark every attempt row of a fail-then-pass case so the table can badge
+    // it (Allure-style within-run flakiness), and every retried case's rows
+    // so the facet filter can find them.
+    const { flakyCaseIds, retriedCaseIds } = computeRetryMetrics(mapped);
+    if (retriedCaseIds.size === 0) return mapped;
     return mapped.map((testCase) =>
-      flakyCaseIds.has(testCase.id) ? { ...testCase, isFlaky: true } : testCase
+      retriedCaseIds.has(testCase.id)
+        ? {
+            ...testCase,
+            isFlaky: flakyCaseIds.has(testCase.id),
+            isRetried: true,
+          }
+        : testCase
     );
   }, [jUnitSuites, testRunData?.createdBy?.id, testRunData?.createdAt]);
   const [junitTestCasesState, setJunitTestCasesState] = useState<any[]>([]);
@@ -2188,6 +2213,8 @@ export default function TestRunPage() {
                             onSortColumn={handleJunitSortColumn}
                             isJUnitLoading={isJUnitLoading}
                             selectedTestCaseId={selectedTestCaseId}
+                            facets={junitFacets}
+                            onFacetsChange={setJunitFacets}
                           />
                         </PaginationProvider>
                       </>
@@ -2258,10 +2285,11 @@ export default function TestRunPage() {
                   {isJUnitRun ? (
                     <JunitChartsPanel
                       t={t}
-                      jUnitSuites={jUnitSuites}
-                      sortedJunitTestCases={sortedJunitTestCases}
+                      runId={Number(runId)}
                       statusScope={statusScope}
                       forecastSeconds={testRunData?.forecastManual}
+                      onFlakyTileClick={handleFlakyTileClick}
+                      onRetriesTileClick={handleRetriesTileClick}
                     />
                   ) : (
                     <>

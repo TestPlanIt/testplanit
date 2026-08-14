@@ -3846,6 +3846,7 @@ model JUnitTestResult {
     assertions       Int?
     file             String?
     line             Int?
+    worker           String?
     systemOut        String?
     systemErr        String?
     testSuiteId      Int

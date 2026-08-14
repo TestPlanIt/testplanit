@@ -157,6 +157,8 @@ export interface RetryMetrics {
   /** Cases that failed at least once and passed on their final attempt. */
   flakyCaseCount: number;
   flakyCaseIds: Set<number | string>;
+  /** Cases with more than one attempt row, flaky or not. */
+  retriedCaseIds: Set<number | string>;
 }
 
 function attemptTimeMs(attempt: AutomatedAttemptInput): number {
@@ -189,12 +191,12 @@ export function computeRetryMetrics(
   }
 
   let retriesCount = 0;
-  let retriedCaseCount = 0;
   const flakyCaseIds = new Set<number | string>();
+  const retriedCaseIds = new Set<number | string>();
 
   for (const [caseId, attempts] of byCase) {
     if (attempts.length < 2) continue;
-    retriedCaseCount++;
+    retriedCaseIds.add(caseId);
     retriesCount += attempts.length - 1;
 
     attempts.sort(
@@ -217,8 +219,138 @@ export function computeRetryMetrics(
 
   return {
     retriesCount,
-    retriedCaseCount,
+    retriedCaseCount: retriedCaseIds.size,
     flakyCaseCount: flakyCaseIds.size,
     flakyCaseIds,
+    retriedCaseIds,
   };
+}
+
+export interface ExecutionWindowInput {
+  time?: number | null;
+  executedAt?: Date | string | null;
+  createdAt?: Date | string | null;
+}
+
+export interface ExecutionWindow {
+  startMs: number;
+  endMs: number;
+}
+
+/**
+ * Reconstruct each result's execution window as [end − duration, end].
+ * Reporters post a result when it finishes, so `executedAt` (falling back to
+ * the row's import time) approximates the end. Results without a positive
+ * duration or a parseable timestamp get no window.
+ */
+export function buildExecutionWindows<T extends ExecutionWindowInput>(
+  results: T[]
+): Array<{ result: T; startMs: number; endMs: number }> {
+  const windows: Array<{ result: T; startMs: number; endMs: number }> = [];
+  for (const result of results) {
+    if (typeof result.time !== "number" || !(result.time > 0)) continue;
+    const at = result.executedAt ?? result.createdAt;
+    if (!at) continue;
+    const endMs = new Date(at).getTime();
+    if (Number.isNaN(endMs)) continue;
+    windows.push({ result, startMs: endMs - result.time * 1000, endMs });
+  }
+  return windows;
+}
+
+/**
+ * A bulk XML import stamps every result with the one upload instant, so the
+ * reconstructed windows all share an endpoint and look massively concurrent
+ * when they never were. Real reporter-streamed runs spread their finish
+ * times across the run.
+ */
+export function hasRealExecutionWindows(windows: ExecutionWindow[]): boolean {
+  if (windows.length < 2) return false;
+  let minEnd = Infinity;
+  let maxEnd = -Infinity;
+  for (const w of windows) {
+    if (w.endMs < minEnd) minEnd = w.endMs;
+    if (w.endMs > maxEnd) maxEnd = w.endMs;
+  }
+  return maxEnd - minEnd >= 1000;
+}
+
+export interface ConcurrencyMetrics {
+  /** Most tests executing at any one moment — the effective worker count. */
+  peak: number;
+  /** Time-weighted average concurrency across the run's span. */
+  average: number;
+}
+
+/**
+ * Sweep-line concurrency over the reconstructed execution windows: how many
+ * tests were running at once. Null when the run can't support the
+ * reconstruction (fewer than two timed results, a sub-second span, or every
+ * window ending at practically the same instant — see
+ * hasRealExecutionWindows).
+ */
+export function computeConcurrencyMetrics(
+  results: ExecutionWindowInput[]
+): ConcurrencyMetrics | null {
+  const windows = buildExecutionWindows(results);
+  if (!hasRealExecutionWindows(windows)) return null;
+
+  let minStart = Infinity;
+  let maxEnd = -Infinity;
+  let totalMs = 0;
+  for (const w of windows) {
+    if (w.startMs < minStart) minStart = w.startMs;
+    if (w.endMs > maxEnd) maxEnd = w.endMs;
+    totalMs += w.endMs - w.startMs;
+  }
+  const spanMs = maxEnd - minStart;
+  if (spanMs < 1000) return null;
+
+  // Ends sort before starts at equal timestamps so back-to-back tests in one
+  // worker don't read as overlapping.
+  const events: Array<[number, number]> = [];
+  for (const w of windows) {
+    events.push([w.startMs, 1]);
+    events.push([w.endMs, -1]);
+  }
+  events.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+
+  let current = 0;
+  let peak = 0;
+  for (const [, delta] of events) {
+    current += delta;
+    if (current > peak) peak = current;
+  }
+
+  return { peak, average: totalMs / spanMs };
+}
+
+/**
+ * First-fit lane packing for the execution timeline: each window goes to the
+ * first lane free at its start (1ms grace for float rounding). Returns the
+ * lane index per window, in input order; lanes are created in first-use
+ * order, so lane count == peak concurrency of the packed windows.
+ */
+export function assignExecutionLanes(windows: ExecutionWindow[]): number[] {
+  const order = windows
+    .map((_, index) => index)
+    .sort(
+      (a, b) =>
+        windows[a].startMs - windows[b].startMs ||
+        windows[a].endMs - windows[b].endMs
+    );
+  const laneEnds: number[] = [];
+  const lanes = new Array<number>(windows.length).fill(0);
+  for (const index of order) {
+    const w = windows[index];
+    let lane = laneEnds.findIndex((end) => end <= w.startMs + 1);
+    if (lane === -1) {
+      lane = laneEnds.length;
+      laneEnds.push(w.endMs);
+    } else {
+      laneEnds[lane] = w.endMs;
+    }
+    lanes[index] = lane;
+  }
+  return lanes;
 }

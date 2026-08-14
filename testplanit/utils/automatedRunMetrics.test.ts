@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
+  assignExecutionLanes,
+  buildExecutionWindows,
   computeAutomatedRunMetrics,
+  computeConcurrencyMetrics,
   computeRetryMetrics,
   topSlowestResults,
   wallClockSecondsBetween,
@@ -242,5 +245,114 @@ describe("topSlowestResults", () => {
     ];
     topSlowestResults(results, 1);
     expect(results.map((r) => r.name)).toEqual(["a", "b"]);
+  });
+});
+
+describe("buildExecutionWindows", () => {
+  it("reconstructs [end - duration, end] from executedAt", () => {
+    const windows = buildExecutionWindows([
+      { time: 30, executedAt: "2026-01-01T00:01:00Z" },
+    ]);
+    expect(windows).toHaveLength(1);
+    expect(windows[0].endMs).toBe(Date.parse("2026-01-01T00:01:00Z"));
+    expect(windows[0].startMs).toBe(Date.parse("2026-01-01T00:00:30Z"));
+  });
+
+  it("falls back to createdAt and skips untimed or unstamped results", () => {
+    const windows = buildExecutionWindows([
+      { time: 10, createdAt: "2026-01-01T00:00:10Z" },
+      { time: 0, executedAt: "2026-01-01T00:00:10Z" },
+      { time: null, executedAt: "2026-01-01T00:00:10Z" },
+      { time: 10 },
+      { time: 10, executedAt: "not-a-date" },
+    ]);
+    expect(windows).toHaveLength(1);
+    expect(windows[0].endMs).toBe(Date.parse("2026-01-01T00:00:10Z"));
+  });
+});
+
+describe("computeConcurrencyMetrics", () => {
+  it("finds the peak and time-weighted average concurrency", () => {
+    // Two workers: [0s-30s] + [0s-30s] overlap, then one runs [30s-60s].
+    const metrics = computeConcurrencyMetrics([
+      { time: 30, executedAt: "2026-01-01T00:00:30Z" },
+      { time: 30, executedAt: "2026-01-01T00:00:30Z" },
+      { time: 30, executedAt: "2026-01-01T00:01:00Z" },
+    ]);
+    expect(metrics).not.toBeNull();
+    expect(metrics!.peak).toBe(2);
+    expect(metrics!.average).toBeCloseTo(1.5);
+  });
+
+  it("does not count back-to-back tests in one worker as overlapping", () => {
+    const metrics = computeConcurrencyMetrics([
+      { time: 30, executedAt: "2026-01-01T00:00:30Z" },
+      { time: 30, executedAt: "2026-01-01T00:01:00Z" },
+    ]);
+    expect(metrics!.peak).toBe(1);
+  });
+
+  it("returns null when every window ends at the same instant (bulk import)", () => {
+    expect(
+      computeConcurrencyMetrics([
+        { time: 30, executedAt: "2026-01-01T00:00:00Z" },
+        { time: 60, executedAt: "2026-01-01T00:00:00Z" },
+        { time: 90, executedAt: "2026-01-01T00:00:00.400Z" },
+      ])
+    ).toBeNull();
+  });
+
+  it("returns null for fewer than two timed results", () => {
+    expect(
+      computeConcurrencyMetrics([
+        { time: 30, executedAt: "2026-01-01T00:00:30Z" },
+        { time: null, executedAt: "2026-01-01T00:05:00Z" },
+      ])
+    ).toBeNull();
+  });
+});
+
+describe("assignExecutionLanes", () => {
+  it("packs overlapping windows into separate lanes, reusing freed lanes", () => {
+    const lanes = assignExecutionLanes([
+      { startMs: 0, endMs: 30_000 },
+      { startMs: 10_000, endMs: 40_000 },
+      { startMs: 31_000, endMs: 60_000 },
+    ]);
+    expect(lanes[0]).toBe(0);
+    expect(lanes[1]).toBe(1);
+    // Third starts after the first ended, so lane 0 is free again.
+    expect(lanes[2]).toBe(0);
+  });
+
+  it("returns lane indices in input order regardless of start order", () => {
+    const lanes = assignExecutionLanes([
+      { startMs: 10_000, endMs: 40_000 },
+      { startMs: 0, endMs: 30_000 },
+    ]);
+    expect(lanes).toEqual([1, 0]);
+  });
+
+  it("tolerates 1ms of float rounding between end and next start", () => {
+    const lanes = assignExecutionLanes([
+      { startMs: 0, endMs: 30_000.4 },
+      { startMs: 30_000, endMs: 60_000 },
+    ]);
+    expect(lanes).toEqual([0, 0]);
+  });
+});
+
+describe("computeRetryMetrics retried case ids", () => {
+  it("collects retried case ids including non-flaky retries", () => {
+    const metrics = computeRetryMetrics([
+      { id: 1, resultId: 1, resultType: "FAILURE" },
+      { id: 1, resultId: 2, resultType: "FAILURE" },
+      { id: 2, resultId: 3, resultType: "FAILURE" },
+      { id: 2, resultId: 4, resultType: "PASSED" },
+      { id: 3, resultId: 5, resultType: "PASSED" },
+    ]);
+    expect([...metrics.retriedCaseIds].sort()).toEqual([1, 2]);
+    expect(metrics.retriedCaseCount).toBe(2);
+    expect([...metrics.flakyCaseIds]).toEqual([2]);
   });
 });

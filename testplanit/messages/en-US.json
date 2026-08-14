@@ -446,7 +446,8 @@
         "stateRequired": "State is required",
         "urlRequired": "URL is required",
         "invalidUrl": "Invalid URL format"
-      }
+      },
+      "worker": "Worker"
     },
     "filter": {
       "placeholder": "Filter {item}..."
@@ -795,6 +796,7 @@
       "runDurationHint": "Time from first to last result",
       "totalElapsedHint": "Sum of individual test times",
       "parallelizationHint": "Average number of tests running at the same time",
+      "parallelizationPeakHint": "Peak of {peak, number} tests running at once, {average}× on average",
       "passRateHint": "{passed, number} of {total, number} tests passed",
       "retriesHint": "Attempts beyond each test's first run",
       "flakyTestHint": "Failed, then passed on retry in this run",
@@ -1089,10 +1091,10 @@
       },
       "charts": {
         "resultsDistribution": "Results Distribution",
-        "statusTimeline": "Status Timeline",
+        "executionTimeline": "Execution Timeline",
         "testDurationHistogram": "Test Duration Histogram",
         "zoomDonutChart": "Zoom Donut Chart",
-        "zoomStatusTimeline": "Zoom Status Timeline",
+        "zoomExecutionTimeline": "Zoom Execution Timeline",
         "zoomHistogramChart": "Zoom Histogram Chart",
         "duration": "Duration: {seconds} seconds",
         "durationLabel": "Duration"
@@ -2976,6 +2978,8 @@
       "viewElapsedTimeReport": "Elapsed time report",
       "noTestResults": "No test results found for this test case",
       "unknownRun": "Unknown Run",
+      "currentRunBadge": "Current",
+      "currentRunTooltip": "The test run you are viewing",
       "attempt": "Attempt",
       "invalidProject": "Invalid project",
       "noSearchResults": "No cases match your search criteria.",
@@ -4023,6 +4027,10 @@
     },
     "typeFilter": {
       "both": "Manual & Automated"
+    },
+    "junitFilters": {
+      "retried": "Retried",
+      "clear": "Clear filters"
     }
   },
   "admin": {
@@ -6637,7 +6645,9 @@
     "testCases": "{count, plural, one {# test case} other {# test cases}}",
     "estimate": "Est: {value}",
     "partOf": "(Part of {parent})",
-    "status": "Status: {status}"
+    "status": "Status: {status}",
+    "lane": "Lane {number}",
+    "worker": "Worker {id}"
   },
   "linkedCases": {
     "title": "Linked Test Cases",

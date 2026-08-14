@@ -192,3 +192,45 @@ This table lists all the test cases included in the current test run:
     - **View Execution(s)**: Shows the history of attempts for this case in this run.
     - **Assign**: Allows changing the assigned tester.
     - **Remove**: Removes the test case from this run (not available once the run's [composition is locked](#composition-lock) or completed).
+
+## Automated Test Runs
+
+For automated (JUnit) runs, the page replaces the manual execution layout with a results view built from the reported result rows. Reporters that stream results as they finish — such as the [Playwright](../../sdk/playwright-overview.md) and [WebdriverIO](../../sdk/wdio-overview.md) reporters — record one row per attempt, so retries appear individually.
+
+### Results Table
+
+Each reported attempt is a row. Available columns include the test name, linked cases, suite, class name, execution time, duration, assertions, worker (hidden by default — the worker/thread the attempt ran on, when the reporter sent it), system output and error (opened from popovers), attachments, and the result status. A ⚡ badge next to a name marks a [flaky test](#flaky-and-retried-tests). The filter box, column selection, and pagination work as in other tables.
+
+### Filtering Results
+
+A filter bar above the table narrows the rows:
+
+- **Result** and **Suite**: multi-select comboboxes with search, **Select All**, and **Clear All**. Option counts show how many rows match each value.
+- **Flaky** and **Retried** toggles: shown only when the run recorded retries. Flaky limits the table to fail-then-pass cases; Retried to any case with more than one attempt. Both show every attempt of the matching cases, so the retry history stays visible.
+- **Clear filters** resets everything at once.
+
+Facet filters combine with the text filter box, and the counts in the pagination info reflect the narrowed set.
+
+### Execution Metrics
+
+The right panel's **Metrics & Charts** section opens with an **Execution Metrics** card:
+
+- **Pass Rate**: passed results as a share of all results.
+- **Parallelization**: the peak number of tests running at the same moment, reconstructed from each result's finish time and duration. The tooltip adds the time-weighted average. Shown only when the run's timestamps support the reconstruction — results imported in one bulk upload share a single timestamp and cannot be measured.
+- **Run Duration**: wall-clock time from the first to the last recorded result.
+- **Total Elapsed**: the sum of every test's own duration.
+- **Avg / Median Test Time**.
+- **Retries** and **Flaky Tests**: shown when the run recorded retries. Clicking either tile applies the matching [table filter](#filtering-results).
+- **Slowest Tests**: the five longest results, linked to their repository cases, with ⚡ marking flaky ones.
+
+#### Flaky and Retried Tests
+
+A case is **retried** when it has more than one attempt row in the run, and **flaky** when an earlier attempt failed and the final attempt passed. Detection is within this run only and requires a reporter that records every attempt; parameterized cases are excluded because their rows are iterations, not retries.
+
+### Charts
+
+Below the metrics card, a carousel cycles through three charts, each with a zoom button:
+
+- **Results Distribution**: a donut of results by status.
+- **Execution Timeline**: a swimlane of the run on a real time axis — one bar per result, colored by status, one lane per worker. Lanes use the worker/thread ids the reporter sent (Playwright worker lanes, WebdriverIO runner cids); results without worker ids get lanes inferred from overlapping execution windows. Bulk XML imports without real execution timestamps fall back to one lane per suite with durations laid end to end. Clicking a bar opens the repository case.
+- **Test Duration Histogram**: the distribution of test durations.
