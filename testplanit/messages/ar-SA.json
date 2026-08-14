@@ -446,7 +446,8 @@
         "stateRequired": "الحالة مطلوبة",
         "urlRequired": "عنوان URL مطلوب",
         "invalidUrl": "صيغة عنوان URL غير صالحة"
-      }
+      },
+      "worker": "عامل"
     },
     "filter": {
       "placeholder": "تصفية {item}..."
@@ -795,6 +796,7 @@
       "runDurationHint": "الوقت من أول نتيجة إلى آخر نتيجة",
       "totalElapsedHint": "مجموع أوقات الاختبارات الفردية",
       "parallelizationHint": "متوسط عدد الاختبارات التي تعمل في نفس الوقت",
+      "parallelizationPeakHint": "ذروة {peak, number} اختبار قيد التشغيل في وقت واحد، بمعدل {average}× في المتوسط",
       "passRateHint": "نجح {passed, number} من {total, number} اختبار",
       "retriesHint": "المحاولات بعد أول تشغيل لكل اختبار",
       "flakyTestHint": "فشل، ثم نجح عند إعادة المحاولة في هذا التشغيل",
@@ -1089,10 +1091,10 @@
       },
       "charts": {
         "resultsDistribution": "توزيع النتائج",
-        "statusTimeline": "الجدول الزمني للحالة",
+        "executionTimeline": "الجدول الزمني للتنفيذ",
         "testDurationHistogram": "مدرج تكراري لمدة الاختبار",
         "zoomDonutChart": "تكبير المخطط الدائري",
-        "zoomStatusTimeline": "تكبير الجدول الزمني للحالة",
+        "zoomExecutionTimeline": "تكبير الجدول الزمني للتنفيذ",
         "zoomHistogramChart": "تكبير المخطط المدرج التكراري",
         "duration": "المدة: {seconds} ثانية",
         "durationLabel": "المدة"
@@ -2976,6 +2978,8 @@
       "viewElapsedTimeReport": "تقرير الوقت المنقضي",
       "noTestResults": "لم يتم العثور على نتائج اختبار لهذه حالة الاختبار",
       "unknownRun": "تشغيل غير معروف",
+      "currentRunBadge": "الحالي",
+      "currentRunTooltip": "التشغيل الاختباري الذي تعرضه حاليًا",
       "attempt": "المحاولة",
       "invalidProject": "مشروع غير صالح",
       "noSearchResults": "لا توجد حالات مطابقة لمعايير البحث.",
@@ -4023,6 +4027,10 @@
     },
     "typeFilter": {
       "both": "يدوي وآلي"
+    },
+    "junitFilters": {
+      "retried": "أُعيدت المحاولة",
+      "clear": "مسح الفلاتر"
     }
   },
   "admin": {
@@ -6637,7 +6645,9 @@
     "testCases": "{count, plural, one {# حالة اختبار} other {# حالات اختبار}}",
     "estimate": "التقدير: {value}",
     "partOf": "(جزء من {parent})",
-    "status": "الحالة: {status}"
+    "status": "الحالة: {status}",
+    "lane": "الممر {number}",
+    "worker": "العامل {id}"
   },
   "linkedCases": {
     "title": "حالات الاختبار المرتبطة",

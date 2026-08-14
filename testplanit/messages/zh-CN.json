@@ -446,7 +446,8 @@
         "stateRequired": "州政府要求",
         "urlRequired": "必须提供网址",
         "invalidUrl": "无效的 URL 格式"
-      }
+      },
+      "worker": "工作进程"
     },
     "filter": {
       "placeholder": "筛选 {item}..."
@@ -795,6 +796,7 @@
       "runDurationHint": "从第一个结果到最后一个结果的时间",
       "totalElapsedHint": "各测试时间之和",
       "parallelizationHint": "同时运行的测试的平均数量",
+      "parallelizationPeakHint": "峰值同时运行 {peak, number} 个测试，平均为 {average}×",
       "passRateHint": "{total, number} 个测试中有 {passed, number} 个通过",
       "retriesHint": "每个测试首次运行之外的尝试次数",
       "flakyTestHint": "在本次运行中失败后重试通过",
@@ -1089,10 +1091,10 @@
       },
       "charts": {
         "resultsDistribution": "结果分布",
-        "statusTimeline": "状态时间表",
+        "executionTimeline": "执行时间线",
         "testDurationHistogram": "测试时长直方图",
         "zoomDonutChart": "缩放甜甜圈图",
-        "zoomStatusTimeline": "Zoom 状态时间线",
+        "zoomExecutionTimeline": "缩放执行时间线",
         "zoomHistogramChart": "缩放直方图",
         "duration": "持续时间： {seconds} 秒",
         "durationLabel": "期间"
@@ -2976,6 +2978,8 @@
       "viewElapsedTimeReport": "经过时间报告",
       "noTestResults": "未找到此测试用例的测试结果",
       "unknownRun": "未知运行",
+      "currentRunBadge": "当前",
+      "currentRunTooltip": "您正在查看的测试运行",
       "attempt": "试图",
       "invalidProject": "无效项目",
       "noSearchResults": "没有符合您搜索条件的案例。",
@@ -4023,6 +4027,10 @@
     },
     "typeFilter": {
       "both": "手动和自动"
+    },
+    "junitFilters": {
+      "retried": "已重试",
+      "clear": "清除过滤器"
     }
   },
   "admin": {
@@ -6637,7 +6645,9 @@
     "testCases": "{count, plural, one {# 测试用例} other {# 测试用例}}",
     "estimate": "估计： {value}",
     "partOf": "（ {parent}的一部分）",
-    "status": "状态： {status}"
+    "status": "状态： {status}",
+    "lane": "通道 {number}",
+    "worker": "工作进程 {id}"
   },
   "linkedCases": {
     "title": "关联测试用例",

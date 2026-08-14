@@ -446,7 +446,8 @@
         "stateRequired": "州は必須です",
         "urlRequired": "URLは必須です",
         "invalidUrl": "無効なURL形式"
-      }
+      },
+      "worker": "ワーカー"
     },
     "filter": {
       "placeholder": "フィルター {item}..."
@@ -795,6 +796,7 @@
       "runDurationHint": "最初の結果から最後の結果までの時間",
       "totalElapsedHint": "個々のテスト時間の合計",
       "parallelizationHint": "同時に実行されているテストの平均数",
+      "parallelizationPeakHint": "最大同時実行数 {peak, number}件、平均 {average}×",
       "passRateHint": "{total, number} 件中 {passed, number} 件のテストが合格",
       "retriesHint": "各テストの最初の実行以降の試行回数",
       "flakyTestHint": "失敗後、このラン内のリトライで合格",
@@ -1089,10 +1091,10 @@
       },
       "charts": {
         "resultsDistribution": "結果の分布",
-        "statusTimeline": "ステータスタイムライン",
+        "executionTimeline": "実行タイムライン",
         "testDurationHistogram": "テスト期間ヒストグラム",
         "zoomDonutChart": "ズームドーナツチャート",
-        "zoomStatusTimeline": "Zoomステータスタイムライン",
+        "zoomExecutionTimeline": "実行タイムラインをズーム",
         "zoomHistogramChart": "ズームヒストグラムチャート",
         "duration": "持続時間: {seconds} 秒",
         "durationLabel": "間隔"
@@ -2976,6 +2978,8 @@
       "viewElapsedTimeReport": "経過時間レポート",
       "noTestResults": "このテストケースのテスト結果は見つかりませんでした",
       "unknownRun": "不明な実行",
+      "currentRunBadge": "現在",
+      "currentRunTooltip": "表示中のテスト実行",
       "attempt": "試み",
       "invalidProject": "無効なプロジェクト",
       "noSearchResults": "検索条件に一致するケースはありません。",
@@ -4023,6 +4027,10 @@
     },
     "typeFilter": {
       "both": "手動と自動"
+    },
+    "junitFilters": {
+      "retried": "リトライ済み",
+      "clear": "フィルターをクリア"
     }
   },
   "admin": {
@@ -6637,7 +6645,9 @@
     "testCases": "{count, plural, one {# テストケース} other {# テストケース}}",
     "estimate": "推定: {value}",
     "partOf": "（ {parent}の一部）",
-    "status": "ステータス: {status}"
+    "status": "ステータス: {status}",
+    "lane": "レーン {number}",
+    "worker": "ワーカー {id}"
   },
   "linkedCases": {
     "title": "リンクされたテストケース",

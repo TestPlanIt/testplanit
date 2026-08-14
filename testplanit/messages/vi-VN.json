@@ -446,7 +446,8 @@
         "stateRequired": "Tiểu bang yêu cầu",
         "urlRequired": "URL là bắt buộc",
         "invalidUrl": "Định dạng URL không hợp lệ"
-      }
+      },
+      "worker": "Trình xử lý"
     },
     "filter": {
       "placeholder": "Bộ lọc {item}..."
@@ -795,6 +796,7 @@
       "runDurationHint": "Thời gian từ kết quả đầu tiên đến kết quả cuối cùng",
       "totalElapsedHint": "Tổng thời gian của từng bài kiểm tra",
       "parallelizationHint": "Số lượng bài kiểm tra chạy đồng thời trung bình",
+      "parallelizationPeakHint": "Đỉnh điểm có {peak, number} bài kiểm tra chạy cùng lúc, trung bình {average}×",
       "passRateHint": "{passed, number} trong số {total, number} bài kiểm tra đã đậu",
       "retriesHint": "Số lần thử vượt quá lần chạy đầu tiên của mỗi bài kiểm tra",
       "flakyTestHint": "Thất bại, sau đó đậu khi thử lại trong lần chạy này",
@@ -1089,10 +1091,10 @@
       },
       "charts": {
         "resultsDistribution": "Phân phối kết quả",
-        "statusTimeline": "Dòng thời gian trạng thái",
+        "executionTimeline": "Dòng thời gian thực thi",
         "testDurationHistogram": "Biểu đồ phân bố thời gian thử nghiệm",
         "zoomDonutChart": "Biểu đồ hình bánh donut phóng to",
-        "zoomStatusTimeline": "Dòng thời gian trạng thái Zoom",
+        "zoomExecutionTimeline": "Phóng to dòng thời gian thực thi",
         "zoomHistogramChart": "Biểu đồ tần số phóng to",
         "duration": "Thời lượng: {seconds} giây",
         "durationLabel": "Khoảng thời gian"
@@ -2976,6 +2978,8 @@
       "viewElapsedTimeReport": "Báo cáo thời gian đã trôi qua",
       "noTestResults": "Không tìm thấy kết quả kiểm thử nào cho trường hợp kiểm thử này.",
       "unknownRun": "Chạy không xác định",
+      "currentRunBadge": "Hiện hành",
+      "currentRunTooltip": "Lượt chạy kiểm thử bạn đang xem",
       "attempt": "Nỗ lực",
       "invalidProject": "Dự án không hợp lệ",
       "noSearchResults": "Không có trường hợp nào phù hợp với tiêu chí tìm kiếm của bạn.",
@@ -4023,6 +4027,10 @@
     },
     "typeFilter": {
       "both": "Thủ công & Tự động"
+    },
+    "junitFilters": {
+      "retried": "Đã thử lại",
+      "clear": "Xóa bộ lọc"
     }
   },
   "admin": {
@@ -6637,7 +6645,9 @@
     "testCases": "{count, plural, one {# trường hợp thử nghiệm} other {# các trường hợp thử nghiệm}}",
     "estimate": "Ước tính: {value}",
     "partOf": "(Một phần của {parent})",
-    "status": "Trạng thái: {status}"
+    "status": "Trạng thái: {status}",
+    "lane": "Làn {number}",
+    "worker": "Worker {id}"
   },
   "linkedCases": {
     "title": "Các trường hợp kiểm thử được liên kết",

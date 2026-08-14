@@ -446,7 +446,8 @@
         "stateRequired": "州政府要求",
         "urlRequired": "必須提供網址",
         "invalidUrl": "無效的 URL 格式"
-      }
+      },
+      "worker": "工作者"
     },
     "filter": {
       "placeholder": "篩檢 {item}..."
@@ -795,6 +796,7 @@
       "runDurationHint": "從第一個結果到最後一個結果的時間",
       "totalElapsedHint": "個別測試時間總和",
       "parallelizationHint": "同時執行的測試平均數量",
+      "parallelizationPeakHint": "尖峰時段同時執行 {peak, number} 個測試，平均為 {average}×",
       "passRateHint": "已通過 {total, number} 個測試中的 {passed, number} 個",
       "retriesHint": "每個測試首次執行之外的嘗試次數",
       "flakyTestHint": "失敗後於此次執行中重試通過",
@@ -1089,10 +1091,10 @@
       },
       "charts": {
         "resultsDistribution": "結果分佈",
-        "statusTimeline": "狀態時間表",
+        "executionTimeline": "執行時間軸",
         "testDurationHistogram": "測試時長直方圖",
         "zoomDonutChart": "縮放甜甜圈圖",
-        "zoomStatusTimeline": "Zoom 狀態時間軸",
+        "zoomExecutionTimeline": "縮放執行時間軸",
         "zoomHistogramChart": "縮放直方圖",
         "duration": "持續時間： {seconds} 秒",
         "durationLabel": "期間"
@@ -2976,6 +2978,8 @@
       "viewElapsedTimeReport": "經過時間報表",
       "noTestResults": "未找到此測試案例的測試結果",
       "unknownRun": "未知運行",
+      "currentRunBadge": "目前的",
+      "currentRunTooltip": "您正在檢視的測試執行",
       "attempt": "試圖",
       "invalidProject": "無效項目",
       "noSearchResults": "沒有符合您搜尋條件的案例。",
@@ -4023,6 +4027,10 @@
     },
     "typeFilter": {
       "both": "手動和自動"
+    },
+    "junitFilters": {
+      "retried": "已重試",
+      "clear": "清除過濾器"
     }
   },
   "admin": {
@@ -6637,7 +6645,9 @@
     "testCases": "{count, plural, one {# 測試案例} other {# 測試案例}}",
     "estimate": "估計： {value}",
     "partOf": "（ {parent}的一部份）",
-    "status": "狀態： {status}"
+    "status": "狀態： {status}",
+    "lane": "分道 {number}",
+    "worker": "工作者 {id}"
   },
   "linkedCases": {
     "title": "關聯測試用例",

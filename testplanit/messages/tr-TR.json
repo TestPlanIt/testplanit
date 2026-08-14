@@ -446,7 +446,8 @@
         "stateRequired": "Devletin talebi zorunludur.",
         "urlRequired": "URL gereklidir.",
         "invalidUrl": "Geçersiz URL biçimi"
-      }
+      },
+      "worker": "Çalışan"
     },
     "filter": {
       "placeholder": "Filtre {item}..."
@@ -795,6 +796,7 @@
       "runDurationHint": "İlk sonuçtan son sonuca kadar geçen süre",
       "totalElapsedHint": "Tek tek test sürelerinin toplamı",
       "parallelizationHint": "Aynı anda çalışan ortalama test sayısı",
+      "parallelizationPeakHint": "Aynı anda en fazla {peak, number} test çalışıyor, ortalama {average}×",
       "passRateHint": "{total, number} testten {passed, number} tanesi geçti",
       "retriesHint": "Her testin ilk çalıştırmasından sonraki denemeler",
       "flakyTestHint": "Bu çalıştırmada başarısız olup yeniden denemede geçti",
@@ -1089,10 +1091,10 @@
       },
       "charts": {
         "resultsDistribution": "Sonuç Dağılımı",
-        "statusTimeline": "Durum Zaman Çizelgesi",
+        "executionTimeline": "Yürütme Zaman Çizelgesi",
         "testDurationHistogram": "Test Süresi Histogramı",
         "zoomDonutChart": "Zoom Donut Grafiği",
-        "zoomStatusTimeline": "Zoom Durum Zaman Çizelgesi",
+        "zoomExecutionTimeline": "Yürütme Zaman Çizelgesini Yakınlaştır",
         "zoomHistogramChart": "Histogram Grafiği Yakınlaştırma",
         "duration": "Süre: {seconds} saniye",
         "durationLabel": "Süre"
@@ -2976,6 +2978,8 @@
       "viewElapsedTimeReport": "Geçen süre raporu",
       "noTestResults": "Bu test durumu için herhangi bir test sonucu bulunamadı.",
       "unknownRun": "Bilinmeyen Koşu",
+      "currentRunBadge": "Güncel",
+      "currentRunTooltip": "Görüntülemekte olduğunuz test çalıştırması",
       "attempt": "Girişim",
       "invalidProject": "Geçersiz proje",
       "noSearchResults": "Arama kriterlerinize uyan hiçbir vaka bulunamadı.",
@@ -4023,6 +4027,10 @@
     },
     "typeFilter": {
       "both": "Manuel ve Otomatik"
+    },
+    "junitFilters": {
+      "retried": "Yeniden Denendi",
+      "clear": "Filtreleri temizle"
     }
   },
   "admin": {
@@ -6637,7 +6645,9 @@
     "testCases": "{count, plural, one {# test durumu} other {# test durumları}}",
     "estimate": "Kuruluş: {value}",
     "partOf": "( {parent}'nın bir parçası )",
-    "status": "Durum: {status}"
+    "status": "Durum: {status}",
+    "lane": "Şerit {number}",
+    "worker": "Çalışan {id}"
   },
   "linkedCases": {
     "title": "Bağlantılı Test Senaryoları",

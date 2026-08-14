@@ -446,7 +446,8 @@
         "stateRequired": "Lo stato è obbligatorio",
         "urlRequired": "L'URL è obbligatorio",
         "invalidUrl": "Formato URL non valido"
-      }
+      },
+      "worker": "Lavoratore"
     },
     "filter": {
       "placeholder": "Filtro {item}..."
@@ -795,6 +796,7 @@
       "runDurationHint": "Tempo dal primo all'ultimo risultato",
       "totalElapsedHint": "Somma dei tempi dei singoli test",
       "parallelizationHint": "Numero medio di test eseguiti contemporaneamente",
+      "parallelizationPeakHint": "Picco di {peak, number} test in esecuzione contemporaneamente, {average}× in media",
       "passRateHint": "{passed, number} di {total, number} test superati",
       "retriesHint": "Tentativi oltre la prima esecuzione di ciascun test",
       "flakyTestHint": "Falliti, poi superati al tentativo successivo in questa esecuzione",
@@ -1089,10 +1091,10 @@
       },
       "charts": {
         "resultsDistribution": "Distribuzione dei risultati",
-        "statusTimeline": "Cronologia dello stato",
+        "executionTimeline": "Cronologia di esecuzione",
         "testDurationHistogram": "Istogramma della durata del test",
         "zoomDonutChart": "Grafico a ciambella Zoom",
-        "zoomStatusTimeline": "Cronologia dello stato dello zoom",
+        "zoomExecutionTimeline": "Cronologia di esecuzione dello zoom",
         "zoomHistogramChart": "Grafico istogramma zoom",
         "duration": "Durata: {seconds} secondi",
         "durationLabel": "Durata"
@@ -2976,6 +2978,8 @@
       "viewElapsedTimeReport": "Report tempo trascorso",
       "noTestResults": "Nessun risultato di test trovato per questo caso di test",
       "unknownRun": "Corsa sconosciuta",
+      "currentRunBadge": "Attuale",
+      "currentRunTooltip": "L'esecuzione del test che stai visualizzando",
       "attempt": "Tentativo",
       "invalidProject": "Progetto non valido",
       "noSearchResults": "Nessun caso corrisponde ai tuoi criteri di ricerca.",
@@ -4023,6 +4027,10 @@
     },
     "typeFilter": {
       "both": "Manuale e automatizzato"
+    },
+    "junitFilters": {
+      "retried": "Ripetuto",
+      "clear": "Cancella filtri"
     }
   },
   "admin": {
@@ -6637,7 +6645,9 @@
     "testCases": "{count, plural, one {# caso di test} other {# casi di test}}",
     "estimate": "Previsione: {value}",
     "partOf": "(Parte di {parent})",
-    "status": "Stato: {status}"
+    "status": "Stato: {status}",
+    "lane": "Corsia {number}",
+    "worker": "Worker {id}"
   },
   "linkedCases": {
     "title": "Casi di test collegati",

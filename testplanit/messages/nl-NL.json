@@ -446,7 +446,8 @@
         "stateRequired": "Staat is vereist",
         "urlRequired": "URL is vereist",
         "invalidUrl": "Ongeldige URL-indeling"
-      }
+      },
+      "worker": "Werker"
     },
     "filter": {
       "placeholder": "{item} filteren..."
@@ -795,6 +796,7 @@
       "runDurationHint": "Tijd van eerste tot laatste resultaat",
       "totalElapsedHint": "Som van individuele testtijden",
       "parallelizationHint": "Gemiddeld aantal tests dat tegelijk wordt uitgevoerd",
+      "parallelizationPeakHint": "Piek van {peak, number} tests die tegelijk worden uitgevoerd, gemiddeld {average}×",
       "passRateHint": "{passed, number} van {total, number} tests geslaagd",
       "retriesHint": "Pogingen na de eerste uitvoering van elke test",
       "flakyTestHint": "Mislukt, daarna geslaagd bij nieuwe poging in deze testrun",
@@ -1089,10 +1091,10 @@
       },
       "charts": {
         "resultsDistribution": "Resultatenverdeling",
-        "statusTimeline": "Statustijdlijn",
+        "executionTimeline": "Uitvoeringstijdlijn",
         "testDurationHistogram": "Testduurhistogram",
         "zoomDonutChart": "Zoom Donut-diagram",
-        "zoomStatusTimeline": "Zoom-statustijdlijn",
+        "zoomExecutionTimeline": "Zoom uitvoeringstijdlijn",
         "zoomHistogramChart": "Zoom histogram grafiek",
         "duration": "Duur: {seconds} seconden",
         "durationLabel": "Duur"
@@ -2976,6 +2978,8 @@
       "viewElapsedTimeReport": "Verstreken tijd rapport",
       "noTestResults": "Er zijn geen testresultaten gevonden voor deze testcase",
       "unknownRun": "Onbekende run",
+      "currentRunBadge": "Huidig",
+      "currentRunTooltip": "De testrun die u bekijkt",
       "attempt": "Poging",
       "invalidProject": "Ongeldig project",
       "noSearchResults": "Er zijn geen cases gevonden die aan uw zoekcriteria voldoen.",
@@ -4023,6 +4027,10 @@
     },
     "typeFilter": {
       "both": "Handmatig en geautomatiseerd"
+    },
+    "junitFilters": {
+      "retried": "Opnieuw geprobeerd",
+      "clear": "Filters wissen"
     }
   },
   "admin": {
@@ -6637,7 +6645,9 @@
     "testCases": "{count, plural, one {# testgeval} other {# testgevallen}}",
     "estimate": "Schatting: {value}",
     "partOf": "(Deel van {parent})",
-    "status": "Status: {status}"
+    "status": "Status: {status}",
+    "lane": "Baan {number}",
+    "worker": "Werker {id}"
   },
   "linkedCases": {
     "title": "Gekoppelde testcases",

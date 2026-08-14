@@ -446,7 +446,8 @@
         "stateRequired": "Требуется указание штата.",
         "urlRequired": "URL-адрес обязателен",
         "invalidUrl": "Неверный формат URL"
-      }
+      },
+      "worker": "Обработчик"
     },
     "filter": {
       "placeholder": "Фильтр {item}..."
@@ -795,6 +796,7 @@
       "runDurationHint": "Время от первого до последнего результата",
       "totalElapsedHint": "Сумма времени отдельных тестов",
       "parallelizationHint": "Среднее количество тестов, выполняющихся одновременно",
+      "parallelizationPeakHint": "Пиковое значение: {peak, number} тестов выполняется одновременно, в среднем {average}×",
       "passRateHint": "{passed, number} из {total, number} тестов пройдено",
       "retriesHint": "Попытки сверх первого запуска каждого теста",
       "flakyTestHint": "Не пройден, затем пройден при повторной попытке в этом прогоне",
@@ -1089,10 +1091,10 @@
       },
       "charts": {
         "resultsDistribution": "Распределение результатов",
-        "statusTimeline": "Хронология событий",
+        "executionTimeline": "Хронология выполнения",
         "testDurationHistogram": "Гистограмма продолжительности теста",
         "zoomDonutChart": "Кольцевая диаграмма Zoom",
-        "zoomStatusTimeline": "Хронология состояния Zoom",
+        "zoomExecutionTimeline": "Масштабировать хронологию выполнения",
         "zoomHistogramChart": "Гистограмма с увеличением масштаба",
         "duration": "Длительность: {seconds} секунд",
         "durationLabel": "Продолжительность"
@@ -2976,6 +2978,8 @@
       "viewElapsedTimeReport": "Отчёт о затраченном времени",
       "noTestResults": "Результаты тестирования для данного тестового случая не найдены.",
       "unknownRun": "Неизвестный забег",
+      "currentRunBadge": "Текущий",
+      "currentRunTooltip": "Тестовый прогон, который вы просматриваете",
       "attempt": "Пытаться",
       "invalidProject": "Недействительный проект",
       "noSearchResults": "Ни одно дело не соответствует вашим критериям поиска.",
@@ -4023,6 +4027,10 @@
     },
     "typeFilter": {
       "both": "Ручной и автоматизированный"
+    },
+    "junitFilters": {
+      "retried": "Повторено",
+      "clear": "Очистить фильтры"
     }
   },
   "admin": {
@@ -6637,7 +6645,9 @@
     "testCases": "{count, plural, one {# тестовый случай} other {# тестовые случаи}}",
     "estimate": "Оценка: {value}",
     "partOf": "(Часть {parent})",
-    "status": "Статус: {status}"
+    "status": "Статус: {status}",
+    "lane": "Дорожка {number}",
+    "worker": "Обработчик {id}"
   },
   "linkedCases": {
     "title": "Связанные тестовые примеры",
@@ -8892,7 +8902,7 @@
     "signInTitle": "Войдите в TestPlanIt",
     "signInDescription": "Войдите в ваше рабочее пространство TestPlanIt, чтобы планировать, выполнять и отслеживать тестирование.",
     "inProject": "{label} в {project}",
-    "testRunSummary": "{count, plural, =0 {No test cases} =1 {{count} test case} other {{count} test cases}} in {project}",
-    "projectSummary": "{cases, plural, =1 {{cases} test case} other {{cases} test cases}} · {runs, plural, =1 {{runs} test run} other {{runs} test runs}}"
+    "testRunSummary": "{count, plural, =0 {Нет тестовых примеров} =1 {{count} тестовый пример} other {{count} тестовых примеров}} в {project}",
+    "projectSummary": "{cases, plural, =1 {{cases} тестовый пример} other {{cases} тестовых примеров}} · {runs, plural, =1 {{runs} тестовый прогон} other {{runs} тестовых прогонов}}"
   }
 }

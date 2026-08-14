@@ -446,7 +446,8 @@
         "stateRequired": "El estado es obligatorio",
         "urlRequired": "Se requiere la URL",
         "invalidUrl": "Formato de URL inválido"
-      }
+      },
+      "worker": "Trabajador"
     },
     "filter": {
       "placeholder": "Filtrar {item}..."
@@ -795,6 +796,7 @@
       "runDurationHint": "Tiempo desde el primer hasta el último resultado",
       "totalElapsedHint": "Suma de los tiempos individuales de las pruebas",
       "parallelizationHint": "Número promedio de pruebas ejecutándose al mismo tiempo",
+      "parallelizationPeakHint": "Pico de {peak, number} pruebas ejecutándose a la vez, {average}× de media",
       "passRateHint": "{passed, number} de {total, number} pruebas aprobadas",
       "retriesHint": "Intentos posteriores a la primera ejecución de cada prueba",
       "flakyTestHint": "Falló y luego pasó al reintentar en esta ejecución",
@@ -1089,10 +1091,10 @@
       },
       "charts": {
         "resultsDistribution": "Distribución de resultados",
-        "statusTimeline": "Cronología del estado",
+        "executionTimeline": "Cronología de ejecución",
         "testDurationHistogram": "Histograma de duración de la prueba",
         "zoomDonutChart": "Gráfico de anillos de Zoom",
-        "zoomStatusTimeline": "Cronología del estado de Zoom",
+        "zoomExecutionTimeline": "Ampliar cronología de ejecución",
         "zoomHistogramChart": "Gráfico de histograma de zoom",
         "duration": "Duración: {seconds} segundos",
         "durationLabel": "Duración"
@@ -2976,6 +2978,8 @@
       "viewElapsedTimeReport": "Informe de tiempo transcurrido",
       "noTestResults": "No se han encontrado resultados para este caso de prueba",
       "unknownRun": "Ejecutar desconocido",
+      "currentRunBadge": "Actual",
+      "currentRunTooltip": "La ejecución de prueba que estás viendo",
       "attempt": "Intento",
       "invalidProject": "Proyecto inválido",
       "noSearchResults": "Ningún caso coincide con sus criterios de búsqueda.",
@@ -4023,6 +4027,10 @@
     },
     "typeFilter": {
       "both": "Manual y automatizado"
+    },
+    "junitFilters": {
+      "retried": "Reintentado",
+      "clear": "Limpiar filtros"
     }
   },
   "admin": {
@@ -6637,7 +6645,9 @@
     "testCases": "{count, plural, one {# caja de prueba} other {# cajas de prueba}}",
     "estimate": "Est: {value}",
     "partOf": "(Parte de {parent})",
-    "status": "Estado: {status}"
+    "status": "Estado: {status}",
+    "lane": "Carril {number}",
+    "worker": "Trabajador {id}"
   },
   "linkedCases": {
     "title": "Casos de prueba vinculados",
