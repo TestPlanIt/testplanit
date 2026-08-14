@@ -100,19 +100,18 @@ test.describe("Project Creation Wizard", () => {
 
       await expect(nextButton).toBeVisible({ timeout: 10000 });
 
-      // Retry filling the name until Next is enabled. Multiple async data loads
-      // can each trigger a form reset, so we may need several attempts.
-      for (let attempt = 0; attempt < 10; attempt++) {
-        await nameInput.fill(projectName);
-        try {
-          await expect(nextButton).toBeEnabled({ timeout: 3000 });
-          break;
-        } catch {
-          // Data load reset the form — retry
+      // Retry filling the name until the value SURVIVES with Next enabled.
+      // Multiple async data loads can each trigger a form reset — including
+      // AFTER Next first turns enabled — so a fill-then-break loop can still
+      // hand an emptied input to the assertions below. Poll the whole
+      // sequence (re-fill if cleared, then both conditions) as one unit.
+      await expect(async () => {
+        if ((await nameInput.inputValue()) !== projectName) {
+          await nameInput.fill(projectName);
         }
-      }
-      await expect(nameInput).toHaveValue(projectName);
-      await expect(nextButton).toBeEnabled({ timeout: 5000 });
+        await expect(nameInput).toHaveValue(projectName);
+        await expect(nextButton).toBeEnabled();
+      }).toPass({ timeout: 30000 });
 
       await nextButton.click();
     });

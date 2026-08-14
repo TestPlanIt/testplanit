@@ -249,7 +249,10 @@ test.describe("Issue Operations - External Provider Error Handling", () => {
   let githubIntegrationId: number;
 
   test.beforeAll(async ({ request, baseURL }) => {
-    // Create a GitHub integration with fake PAT for testing error shapes
+    // Create a GitHub integration with fake PAT for testing error shapes.
+    // Vouch it ACTIVE explicitly (creation defaults to INACTIVE) so the
+    // create-issue/search endpoints reach the adapter instead of rejecting
+    // the integration as inactive.
     const integrationResponse = await request.post(
       `${baseURL}/api/integrations`,
       {
@@ -260,6 +263,7 @@ test.describe("Issue Operations - External Provider Error Handling", () => {
           config: {
             personalAccessToken: "ghp_fakeTokenForErrorShapeTesting",
           },
+          status: "ACTIVE",
         },
       }
     );
@@ -341,10 +345,14 @@ test.describe("Issue Operations - External Provider Error Handling", () => {
         }
       );
 
-      // Adapter will fail to reach GitHub — accept any error status
-      expect([401, 404, 500].includes(response.status())).toBe(true);
+      // The adapter cannot reach a real GitHub with a fake PAT. Failures
+      // surface as TYPED integration errors: auth-kind failures on API_KEY/
+      // PAT integrations map to 400 (only permission→403 / rate-limit→429
+      // differ), never a raw upstream status. Assert the typed contract.
+      expect(response.status()).toBeGreaterThanOrEqual(400);
       const body = await response.json();
       expect(body).toHaveProperty("error");
+      expect(body).toHaveProperty("kind");
     });
   });
 

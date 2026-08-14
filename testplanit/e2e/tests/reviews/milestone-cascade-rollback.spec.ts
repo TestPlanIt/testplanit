@@ -3,6 +3,7 @@ import {
   createGatedTestWorkflow,
   deleteReviewRequest,
   setProjectReviewWorkflowEnabled,
+  signInGateActor,
   softDeleteWorkflow,
 } from "./helpers";
 
@@ -57,7 +58,7 @@ test.describe("Milestone cascade rollback", () => {
   });
 
   test("cascade fails with named entity + gate, then succeeds after approval", async ({
-    page,
+    browser,
     request,
     baseURL,
     api,
@@ -70,7 +71,6 @@ test.describe("Milestone cascade rollback", () => {
     let startRunStateId: number | undefined;
     let gateName: string | undefined;
     let milestoneId: number | undefined;
-    const dialog = page.getByRole("dialog");
 
     await test.step("Create project and enable review workflow", async () => {
       projectId = await api.createProject(`Reviews-Cascade ${Date.now()}`);
@@ -145,9 +145,26 @@ test.describe("Milestone cascade rollback", () => {
       });
     });
 
+    // The gate only blocks non-admins (system ADMINs bypass and would
+    // complete the cascade without the error this spec asserts), so the
+    // milestone UI is driven through a signed-in PROJECTADMIN context.
+    // Signed in AFTER the fixtures exist: the accessible-project resolution
+    // is cached for 60s per user, so an earlier session would not see the
+    // fresh project.
+    const { context: actorContext } = await signInGateActor(
+      browser,
+      request,
+      url,
+      api,
+      createdUserIds
+    );
+    const page = await actorContext.newPage();
+    const dialog = page.getByRole("dialog");
+
     await test.step("Open milestone Complete dialog", async () => {
       // Open milestones page and click into the milestone's 3-dot menu.
-      await page.goto(`/en-US/projects/milestones/${projectId}`);
+      // Absolute URL: the actor context does not inherit the config baseURL.
+      await page.goto(`${url}/en-US/projects/milestones/${projectId}`);
       await page.waitForLoadState("load");
 
       // Ensure the Active tab is loaded (milestone seeded with isStarted=true).
@@ -204,5 +221,7 @@ test.describe("Milestone cascade rollback", () => {
       await expect(errorToast).toContainText(runName);
       await expect(errorToast).toContainText(gateName!);
     });
+
+    await actorContext.close();
   });
 });

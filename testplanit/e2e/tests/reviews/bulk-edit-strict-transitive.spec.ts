@@ -1,4 +1,4 @@
-import type { APIRequestContext } from "@playwright/test";
+import type { APIRequestContext, BrowserContext } from "@playwright/test";
 
 import { expect, test } from "../../fixtures";
 import type { ApiHelper } from "../../fixtures/api.fixture";
@@ -10,6 +10,7 @@ import {
   decideReviewRequest,
   getProjectWorkflowIds,
   setProjectReviewWorkflowEnabled,
+  signInGateActor,
   softDeleteWorkflow,
 } from "./helpers";
 
@@ -83,9 +84,18 @@ test.describe("Bulk-edit strict transitive gating", () => {
   const gatedWorkflowIds: number[] = [];
   const createdReviewIds: string[] = [];
   const createdUserIds: string[] = [];
+  // Gate blocking only applies to non-admins (system ADMINs bypass), so each
+  // test drives the UI through a signed-in PROJECTADMIN context.
+  const actorContexts: BrowserContext[] = [];
 
   test.afterEach(async ({ request, baseURL }) => {
     const url = baseURL!;
+    while (actorContexts.length) {
+      await actorContexts
+        .pop()
+        ?.close()
+        .catch(() => {});
+    }
     while (createdReviewIds.length) {
       const id = createdReviewIds.pop();
       if (id) await deleteReviewRequest(request, url, id);
@@ -107,7 +117,7 @@ test.describe("Bulk-edit strict transitive gating", () => {
   });
 
   test("bulk edit blocks Save with case-name inline summary and requires both gate approvals", async ({
-    page,
+    browser,
     request,
     baseURL,
     api,
@@ -181,6 +191,36 @@ test.describe("Bulk-edit strict transitive gating", () => {
       requesterId = requester.data.id;
     });
 
+    // Sign the actor in AFTER the project exists: the accessible-project
+    // resolution is cached for 60s per user, so a session established before
+    // the project's creation would not see it for the rest of the test.
+    const { context: actorContext, userId: actorUserId } =
+      await signInGateActor(browser, request, url, api, createdUserIds);
+    actorContexts.push(actorContext);
+    const page = await actorContext.newPage();
+
+    await test.step("Grant the actor explicit project membership", async () => {
+      // ReviewRequest reads are restricted to requester/assignee/decider,
+      // explicit user/group permissions, or system ADMIN — default-access
+      // (GLOBAL_ROLE) reach is deliberately not enough. Without this row the
+      // actor cannot SEE the gate approvals seeded below, and the final
+      // "Save returns once both gates are approved" assertion would stay
+      // blocked forever.
+      const permRes = await request.post(
+        `${url}/api/model/userProjectPermission/create`,
+        {
+          data: {
+            data: {
+              userId: actorUserId,
+              projectId: projectId!,
+              accessType: "GLOBAL_ROLE",
+            },
+          },
+        }
+      );
+      expect(permRes.ok()).toBe(true);
+    });
+
     await test.step("Seed a folder and two cases in the current state", async () => {
       const folderId = await api.createFolder(
         projectId!,
@@ -201,9 +241,10 @@ test.describe("Bulk-edit strict transitive gating", () => {
         currentStateId!
       );
 
-      // Open repository at the folder our seeded cases live in.
+      // Open repository at the folder our seeded cases live in. Absolute URL:
+      // the actor context does not inherit the config baseURL.
       await page.goto(
-        `/en-US/projects/repository/${projectId}/?node=${folderId}`
+        `${url}/en-US/projects/repository/${projectId}/?node=${folderId}`
       );
       await page.waitForLoadState("networkidle");
     });
@@ -421,7 +462,7 @@ test.describe("Bulk-edit strict transitive gating", () => {
   });
 
   test("mixed-gate selection groups the blocked cases under each gate", async ({
-    page,
+    browser,
     request,
     baseURL,
     api,
@@ -429,6 +470,16 @@ test.describe("Bulk-edit strict transitive gating", () => {
     const url = baseURL!;
     const { projectId, currentStateId, gateA, mid, gateB, folderId } =
       await setupMixedGateProject(request, url, api, gatedWorkflowIds);
+    // Sign in after the project exists — see the 60s cache note in test 1.
+    const { context: actorContext } = await signInGateActor(
+      browser,
+      request,
+      url,
+      api,
+      createdUserIds
+    );
+    actorContexts.push(actorContext);
+    const page = await actorContext.newPage();
 
     // Two cases sitting at different heights, both aimed at gateB:
     //   - low  (before gateA) is blocked on gateA — its FIRST gate.
@@ -450,7 +501,7 @@ test.describe("Bulk-edit strict transitive gating", () => {
     await setProjectReviewWorkflowEnabled(request, url, projectId, true);
 
     await page.goto(
-      `/en-US/projects/repository/${projectId}/?node=${folderId}`
+      `${url}/en-US/projects/repository/${projectId}/?node=${folderId}`
     );
     await page.waitForLoadState("networkidle");
     for (const nm of [nameLow, nameMid]) {
@@ -503,7 +554,7 @@ test.describe("Bulk-edit strict transitive gating", () => {
   });
 
   test("a backward-moving case is excluded from the blocked set", async ({
-    page,
+    browser,
     request,
     baseURL,
     api,
@@ -511,6 +562,16 @@ test.describe("Bulk-edit strict transitive gating", () => {
     const url = baseURL!;
     const { projectId, currentStateId, gateA, mid, folderId } =
       await setupMixedGateProject(request, url, api, gatedWorkflowIds);
+    // Sign in after the project exists — see the 60s cache note in test 1.
+    const { context: actorContext } = await signInGateActor(
+      browser,
+      request,
+      url,
+      api,
+      createdUserIds
+    );
+    actorContexts.push(actorContext);
+    const page = await actorContext.newPage();
 
     // Target gateA — a middle gate. The two cases straddle it:
     //   - fwd  (below gateA) crosses it going forward → blocked.
@@ -531,7 +592,7 @@ test.describe("Bulk-edit strict transitive gating", () => {
     await setProjectReviewWorkflowEnabled(request, url, projectId, true);
 
     await page.goto(
-      `/en-US/projects/repository/${projectId}/?node=${folderId}`
+      `${url}/en-US/projects/repository/${projectId}/?node=${folderId}`
     );
     await page.waitForLoadState("networkidle");
     for (const nm of [nameFwd, nameBack]) {

@@ -3399,6 +3399,12 @@ export class ApiHelper {
           type: provider,
           authType,
           config,
+          // Creation defaults to INACTIVE until a successful test-connection
+          // vouches for the credentials — which fake credentials never pass.
+          // The endpoint accepts an explicit status, so vouch here: specs
+          // need the integration ACTIVE (project assignment rejects inactive
+          // integrations).
+          status: "ACTIVE",
         },
       }
     );

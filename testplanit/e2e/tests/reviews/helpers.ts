@@ -1,4 +1,11 @@
-import type { APIRequestContext } from "@playwright/test";
+import type {
+  APIRequestContext,
+  Browser,
+  BrowserContext,
+} from "@playwright/test";
+
+import type { ApiHelper } from "../../fixtures/api.fixture";
+import { signInSecondaryContext } from "../../utils/secondary-context-login";
 
 /**
  * Helpers shared by review-approval E2E specs. Kept local rather than added to
@@ -7,6 +14,67 @@ import type { APIRequestContext } from "@playwright/test";
  */
 
 export type ReviewableEntityType = "CASE" | "RUN" | "SESSION";
+
+/**
+ * System ADMINs bypass review gates (c490166ab), so specs asserting that a
+ * gate BLOCKS an action must perform it as a non-admin. This mints a fresh
+ * PROJECTADMIN (full project permissions on any accessible project, but no
+ * gate bypass), completes onboarding so the first-run preferences dialog
+ * doesn't swallow clicks, and returns a signed-in browser context.
+ *
+ * The new user's id is pushed onto `createdUserIds` for the caller's cleanup;
+ * the caller is responsible for closing the returned context.
+ */
+export async function signInGateActor(
+  browser: Browser,
+  request: APIRequestContext,
+  url: string,
+  api: ApiHelper,
+  createdUserIds: string[]
+): Promise<{ context: BrowserContext; userId: string }> {
+  const ts = Date.now();
+  const email = `gate-actor-${ts}@example.com`;
+  const password = "S3cure!password";
+  // Pin the seeded "user" role explicitly instead of trusting the signup-time
+  // default: role-management.spec.ts flips which role is isDefault mid-suite,
+  // and an actor minted inside that window would carry the test role (and its
+  // arbitrary permission grid) for the whole test.
+  const roleRes = await request.get(`${url}/api/model/roles/findFirst`, {
+    params: {
+      q: JSON.stringify({
+        where: { name: "user", isDeleted: false },
+        select: { id: true },
+      }),
+    },
+  });
+  const roleId = (await roleRes.json())?.data?.id as number | undefined;
+  const user = await api.createUser({
+    name: `Gate Actor ${ts}`,
+    email,
+    password,
+    isActive: true,
+    emailVerified: true,
+    ...(roleId ? { roleId } : {}),
+  });
+  createdUserIds.push(user.data.id);
+  await api.setUserAccess(user.data.id, "PROJECTADMIN");
+  await request
+    .patch(`${url}/api/model/userPreferences/update`, {
+      data: {
+        where: { userId: user.data.id },
+        data: {
+          // Both first-run mechanisms: the preferences dialog gates on the
+          // first flag; the NextStep tour overlay (which swallows clicks
+          // page-wide) gates on the second.
+          hasCompletedInitialPreferencesSetup: true,
+          hasCompletedWelcomeTour: true,
+        },
+      },
+    })
+    .catch(() => {});
+  const context = await signInSecondaryContext(browser, url, email, password);
+  return { context, userId: user.data.id };
+}
 
 export async function setWorkflowRequiresReview(
   request: APIRequestContext,

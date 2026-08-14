@@ -39,6 +39,11 @@ test.describe("Integration Setup - Admin CRUD via API", () => {
             apiToken: "fake-api-token-for-e2e",
             baseUrl: "https://example.atlassian.net",
           },
+          // Vouch explicitly: creation defaults to INACTIVE until a
+          // test-connection succeeds, and fake credentials never pass one.
+          // The ACTIVE row is also what the duplicate-name test below
+          // collides with (only ACTIVE rows reject duplicates).
+          status: "ACTIVE",
         },
       });
     });
@@ -78,6 +83,10 @@ test.describe("Integration Setup - Admin CRUD via API", () => {
       expect(body).toHaveProperty("id");
       expect(body.provider).toBe("GITHUB");
       expect(body.authType).toBe("PERSONAL_ACCESS_TOKEN");
+      // No status was supplied: creation defaults to INACTIVE until a
+      // successful test-connection (or an explicit status) vouches for the
+      // credentials.
+      expect(body.status).toBe("INACTIVE");
       _githubIntegrationId = body.id;
     });
   });
