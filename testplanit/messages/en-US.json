@@ -6682,7 +6682,7 @@
     "tags": "## Tags\nTags label and organize test cases and sessions so you can group and find related work across projects.",
     "issues": "## Issues\nIssues are external tracker items — from Jira, GitHub, Azure DevOps, and other integrations — synced into TestPlanIt so they can be linked to test cases, runs, and sessions.",
     "crossProjectReports": "## Cross-Project Reports\nBuild, run, and analyze reports that span multiple projects, such as automation trends across your entire test suite.",
-    "users": "## Users\nA directory of people in TestPlanIt and the projects each one can access.",
+    "users": "## Users\nA directory of the people you collaborate with — users who share at least one project with you — and the projects you share with each of them. Administrators see every user and their full project list.",
     "documentation": "## Documentation\nFree-form documentation for this project — notes, references, and onboarding details.",
     "projectMilestones": "## Milestones\nMilestones group and track this project's work by target — releases, sprints, or custom types — across active and completed states.",
     "projectRepository": "## Test Case Repository\nThis project's library of test cases, organized into folders.",

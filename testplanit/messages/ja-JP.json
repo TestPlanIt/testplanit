@@ -3557,7 +3557,7 @@
       "addFilter": "フィルターを追加",
       "removeFilter": "フィルターを削除: {name}",
       "editFilter": "フィルターを編集: {name}",
-      "activeCount": "{count, plural, =1 {# active filter} other {# active filters}}",
+      "activeCount": "{count, plural, =1 {# 件のアクティブなフィルター} other {# 件のアクティブなフィルター}}",
       "assignedToMe": "自分に割り当て",
       "noFilters": "アクティブなフィルターがありません",
       "noMatchingCases": "フィルターに一致するテストケースがありません",
@@ -3567,7 +3567,7 @@
       "filterLimitReached": "フィルターの上限に達しました（最大{count}件）",
       "valueLimitReached": "値の上限に達しました（フィルターごとに最大{count}件）",
       "filtersTruncated": "一部のフィルターが削除されました（最大{count}件）",
-      "valuesTruncated": "{count, plural, =1 {# value} other {# values}} per filter maximum — extra values were dropped"
+      "valuesTruncated": "フィルターごとの上限は{count, plural, =1 {# 件の値} other {# 件の値}}です — 超過分の値は削除されました"
     },
     "savedViews": {
       "title": "保存済みビュー",
@@ -3586,9 +3586,9 @@
       "emptyHint": "後で戻れるように、現在のフィルターを保存してください。",
       "apply": "ビューを適用: {name}",
       "applied": "「{name}」を適用しました",
-      "droppedFilters": "{count, plural, =1 {# filter no longer exists and was skipped} other {# filters no longer exist and were skipped}}",
+      "droppedFilters": "{count, plural, =1 {# 件のフィルターが存在しないためスキップされました} other {# 件のフィルターが存在しないためスキップされました}}",
       "droppedGrouping": "そのグループ化は利用できなくなったため、デフォルトが使用されます。",
-      "unreadable": "{count, plural, =1 {# saved view} other {# saved views}} couldn't be read",
+      "unreadable": "{count, plural, =1 {# 件の保存済みビュー} other {# 件の保存済みビュー}}を読み込めませんでした",
       "rename": "名前を変更",
       "renameTitle": "保存済みビューの名前を変更",
       "renamed": "保存済みビューを更新しました",
@@ -6666,7 +6666,7 @@
     "tags": "## タグ\nタグはテストケースとセッションにラベルを付けて整理し、複数のプロジェクトにまたがる関連作業をグループ化して見つけられるようにします。",
     "issues": "## 課題\n課題は、Jira、GitHub、Azure DevOpsなどの連携先からの外部トラッカーアイテムであり、TestPlanItに同期されてテストケース、テスト実行、セッションにリンクできます。",
     "crossProjectReports": "## クロスプロジェクトレポート\nテストスイート全体の自動化トレンドなど、複数のプロジェクトにまたがるレポートを作成、実行、分析します。",
-    "users": "## ユーザー\nTestPlanIt内のユーザーの一覧と、各ユーザーがアクセスできるプロジェクトです。",
+    "users": "## ユーザー\nあなたが共同作業を行う相手 — 少なくとも1つのプロジェクトを共有しているユーザー — の一覧と、それぞれのユーザーと共有しているプロジェクトを表示します。管理者は、すべてのユーザーとその全プロジェクトの一覧を確認できます。",
     "documentation": "## ドキュメント\nこのプロジェクトの自由形式のドキュメントで、メモや参考資料、オンボーディング情報などを記載できます。",
     "projectMilestones": "## マイルストーン\nマイルストーンは、リリース、スプリント、カスタムタイプなどの目標ごとにこのプロジェクトの作業をグループ化し、進行中および完了状態にわたって追跡します。",
     "projectRepository": "## テストケースリポジトリ\nフォルダに整理された、このプロジェクトのテストケースライブラリです。",

@@ -24,13 +24,23 @@ type AuthRole {
 }
 
 type AuthCtx {
-    id                   String
-    access               Access
-    roleId               Int?
-    role                 AuthRole?
+    id                            String
+    access                        Access
+    roleId                        Int?
+    role                          AuthRole?
     // Every project this user may read, resolved once per request through the
     // same precedence ladder the removed per-row predicates encoded.
-    accessibleProjectIds Int[]
+    accessibleProjectIds          Int[]
+    // Collaborator scope for the User read policy: users sharing ≥1 of the
+    // projects above, resolved alongside them in lib/authContext.ts.
+    // Enumerable grants by id; default-access grants as class flags with
+    // per-user NO_ACCESS carve-out lists.
+    collabUserIds                 String[]
+    collabViaOpenDefault          Boolean
+    collabViaGlobalRoleDefault    Boolean
+    collabViaAdminAccess          Boolean
+    collabOpenDefaultDenied       String[]
+    collabGlobalRoleDefaultDenied String[]
 
     @@auth
 }
@@ -206,7 +216,15 @@ model User {
     @@allow('create', true)
     @@allow('create, delete', (auth().access == 'ADMIN'))
     @@allow('update', (auth().access == 'ADMIN' || auth().id == this.id))
-    @@allow('read', auth().access != null)
+    // Directory scoping: admins and the user themself read freely; everyone
+    // else reads only collaborators — users sharing ≥1 effectively-accessible
+    // project, resolved into AuthCtx per request (lib/authContext.ts).
+    @@allow('read', auth().access == 'ADMIN')
+    @@allow('read', auth().id == this.id)
+    @@allow('read', id in auth().collabUserIds)
+    @@allow('read', auth().collabViaAdminAccess == true && access == 'ADMIN')
+    @@allow('read', auth().collabViaOpenDefault == true && access != 'NONE' && !(id in auth().collabOpenDefaultDenied))
+    @@allow('read', auth().collabViaGlobalRoleDefault == true && access != 'NONE' && !(id in auth().collabGlobalRoleDefaultDenied))
     // SCIM contract: IdP owns the lifecycle of SCIM-provisioned users.
     @@deny('delete', scimGivenName != null)
 }

@@ -6666,7 +6666,7 @@
     "tags": "## Etiketler\nEtiketler, projeler genelinde ilgili çalışmaları gruplandırıp bulabilmeniz için test senaryolarını ve oturumları etiketler ve düzenler.",
     "issues": "## Sorunlar\nSorunlar, Jira, GitHub, Azure DevOps ve diğer entegrasyonlardan gelen harici izleyici öğeleridir; test senaryolarına, çalıştırmalara ve oturumlara bağlanabilmeleri için TestPlanIt'e senkronize edilir.",
     "crossProjectReports": "## Projeler Arası Raporlar\nTüm test paketiniz genelindeki otomasyon eğilimleri gibi, birden fazla projeyi kapsayan raporları oluşturun, çalıştırın ve analiz edin.",
-    "users": "## Kullanıcılar\nTestPlanIt'teki kişilerin ve her birinin erişebildiği projelerin bir dizini.",
+    "users": "## Kullanıcılar\nİşbirliği yaptığınız kişilerin — yani sizinle en az bir projeyi paylaşan kullanıcıların — ve her biriyle paylaştığınız projelerin bir dizini. Yöneticiler tüm kullanıcıları ve bunların tam proje listesini görebilir.",
     "documentation": "## Dokümantasyon\nBu proje için serbest biçimli dokümantasyon — notlar, referanslar ve katılım bilgileri.",
     "projectMilestones": "## Kilometre Taşları\nKilometre taşları, bu projenin çalışmalarını hedefe göre — sürümler, sprintler veya özel türler — aktif ve tamamlanmış durumlar genelinde gruplandırır ve izler.",
     "projectRepository": "## Test Senaryosu Deposu\nBu projenin, klasörler halinde düzenlenmiş test senaryoları kütüphanesi.",

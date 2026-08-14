@@ -6666,7 +6666,7 @@
     "tags": "## Thẻ\nThẻ gắn nhãn và tổ chức các trường hợp kiểm thử và phiên để bạn có thể nhóm và tìm kiếm công việc liên quan trên nhiều dự án.",
     "issues": "## Vấn đề\nVấn đề là các mục theo dõi bên ngoài — từ Jira, GitHub, Azure DevOps và các tích hợp khác — được đồng bộ vào TestPlanIt để có thể liên kết với trường hợp kiểm thử, lần chạy và phiên.",
     "crossProjectReports": "## Báo cáo đa dự án\nXây dựng, chạy và phân tích các báo cáo trải rộng trên nhiều dự án, chẳng hạn như xu hướng tự động hóa trên toàn bộ bộ kiểm thử của bạn.",
-    "users": "## Người dùng\nDanh bạ những người dùng trong TestPlanIt và các dự án mà mỗi người có thể truy cập.",
+    "users": "## Người dùng\nDanh sách những người bạn cộng tác cùng — người dùng có chung ít nhất một dự án với bạn — và các dự án bạn chia sẻ với từng người. Quản trị viên có thể xem tất cả người dùng và danh sách đầy đủ dự án của họ.",
     "documentation": "## Tài liệu\nTài liệu tự do cho dự án này — ghi chú, tài liệu tham khảo và thông tin giới thiệu.",
     "projectMilestones": "## Mốc\nCác mốc nhóm và theo dõi công việc của dự án này theo mục tiêu — phát hành, sprint hoặc loại tùy chỉnh — qua các trạng thái đang hoạt động và đã hoàn thành.",
     "projectRepository": "## Kho trường hợp kiểm thử\nThư viện trường hợp kiểm thử của dự án này, được tổ chức thành các thư mục.",

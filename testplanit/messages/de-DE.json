@@ -6666,7 +6666,7 @@
     "tags": "## Tags\nTags kennzeichnen und organisieren Testfälle und Sitzungen, sodass Sie zusammengehörige Arbeiten projektübergreifend gruppieren und finden können.",
     "issues": "## Issues\nIssues sind externe Tracker-Elemente – aus Jira, GitHub, Azure DevOps und anderen Integrationen –, die mit TestPlanIt synchronisiert werden, sodass sie mit Testfällen, Testläufen und Sitzungen verknüpft werden können.",
     "crossProjectReports": "## Projektübergreifende Berichte\nErstellen, führen Sie aus und analysieren Sie Berichte, die mehrere Projekte umfassen, wie z. B. Automatisierungstrends über Ihre gesamte Testsuite hinweg.",
-    "users": "## Benutzer\nEin Verzeichnis der Personen in TestPlanIt und der Projekte, auf die jede Person zugreifen kann.",
+    "users": "## Benutzer\nEin Verzeichnis der Personen, mit denen Sie zusammenarbeiten – Benutzer, die mindestens ein Projekt mit Ihnen teilen – sowie die Projekte, die Sie mit jedem von ihnen teilen. Administratoren sehen alle Benutzer und deren vollständige Projektliste.",
     "documentation": "## Dokumentation\nFreiformdokumentation für dieses Projekt – Notizen, Referenzen und Onboarding-Details.",
     "projectMilestones": "## Meilensteine\nMeilensteine gruppieren und verfolgen die Arbeit dieses Projekts nach Ziel – Releases, Sprints oder benutzerdefinierte Typen – über aktive und abgeschlossene Status hinweg.",
     "projectRepository": "## Testfall-Repository\nDie Bibliothek der Testfälle dieses Projekts, organisiert in Ordnern.",
@@ -8876,7 +8876,7 @@
     "signInTitle": "Bei TestPlanIt anmelden",
     "signInDescription": "Melden Sie sich bei Ihrem TestPlanIt-Arbeitsbereich an, um Ihre Tests zu planen, durchzuführen und zu verfolgen.",
     "inProject": "{label} in {project}",
-    "testRunSummary": "{count, plural, =0 {No test cases} =1 {{count} test case} other {{count} test cases}} in {project}",
-    "projectSummary": "{cases, plural, =1 {{cases} test case} other {{cases} test cases}} · {runs, plural, =1 {{runs} test run} other {{runs} test runs}}"
+    "testRunSummary": "{count, plural, =0 {Keine Testfälle} =1 {{count} Testfall} other {{count} Testfälle}} in {project}",
+    "projectSummary": "{cases, plural, =1 {{cases} Testfall} other {{cases} Testfälle}} · {runs, plural, =1 {{runs} Testlauf} other {{runs} Testläufe}}"
   }
 }

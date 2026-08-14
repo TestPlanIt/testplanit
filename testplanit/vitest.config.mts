@@ -38,6 +38,14 @@ export default defineConfig({
           pool: "forks",
           isolate: true,
         }),
+    // The live-DB integration suite shares one database and some files depend
+    // on global state other files mutate (e.g. project access defaults), so
+    // their files must not interleave. This must apply in CI too: the CI
+    // branch's `singleThread` is a Vitest 3 option that Vitest 4 only honors
+    // under poolOptions.threads, so it does NOT serialize files there.
+    ...(process.env.RUN_DB_INTEGRATION === "1"
+      ? { fileParallelism: false }
+      : {}),
     exclude: [
       "node_modules/",
       "dist/",

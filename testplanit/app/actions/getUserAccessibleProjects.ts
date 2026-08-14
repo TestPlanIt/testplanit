@@ -1,6 +1,14 @@
 "use server";
 
+import { getServerSession } from "next-auth";
+import { authOptions } from "~/server/auth";
 import { baseDb } from "~/lib/db";
+import {
+  collaboratorScopeIncludes,
+  resolveAccessibleProjectIds,
+  resolveCollaboratorScope,
+  type CollaboratorScope,
+} from "~/lib/authContext";
 
 export interface AccessibleProject {
   id: number;
@@ -20,6 +28,11 @@ export interface AccessibleProject {
  * Runs a constant number of set-based queries regardless of how many users are
  * requested. This lets a table of users resolve every row's projects in a
  * single round-trip instead of firing a ~8-query action per rendered row.
+ *
+ * Scoped to the caller: admins get every user's full project list; everyone
+ * else gets only users inside their collaborator scope (matching the User read
+ * policy), and for those users only the projects shared with the caller —
+ * never the names of projects the caller cannot access themselves.
  */
 export async function getUsersAccessibleProjects(
   userIds: string[]
@@ -29,7 +42,34 @@ export async function getUsersAccessibleProjects(
     return result;
   }
 
+  const session = await getServerSession(authOptions);
+  const viewerId = session?.user?.id;
+  if (!viewerId) {
+    return result;
+  }
+
   try {
+    const viewer = await baseDb.user.findUnique({
+      where: { id: viewerId },
+      select: { access: true, roleId: true },
+    });
+    if (!viewer) {
+      return result;
+    }
+
+    // null ⇒ unrestricted (ADMIN viewer).
+    let viewerProjectIds: Set<number> | null = null;
+    let collabScope: CollaboratorScope | null = null;
+    if (viewer.access !== "ADMIN") {
+      const viewerForAuth = {
+        id: viewerId,
+        access: viewer.access,
+        roleId: viewer.roleId,
+      };
+      const ids = await resolveAccessibleProjectIds(viewerForAuth);
+      collabScope = await resolveCollaboratorScope(viewerForAuth, ids);
+      viewerProjectIds = new Set(ids);
+    }
     const [allProjects, users, permissions, assignments] = await Promise.all([
       // Every live project, with the fields needed to both classify default
       // access and render the badge. This one fetch replaces the per-user
@@ -130,6 +170,9 @@ export async function getUsersAccessibleProjects(
       const seen = new Set<number>();
       for (const id of ids) {
         if (seen.has(id)) continue;
+        // Non-admin callers only ever learn about projects they share with
+        // the target — never the names of projects outside their own set.
+        if (viewerProjectIds && !viewerProjectIds.has(id)) continue;
         const detail = projectById.get(id);
         if (detail) {
           seen.add(id);
@@ -145,6 +188,20 @@ export async function getUsersAccessibleProjects(
 
       // Unknown user or no system access -> no projects.
       if (!user || user.access === "NONE") {
+        result[userId] = [];
+        continue;
+      }
+
+      // Users outside the caller's collaborator scope resolve to nothing,
+      // mirroring the User read policy (their row is not readable either).
+      if (
+        collabScope &&
+        userId !== viewerId &&
+        !collaboratorScopeIncludes(collabScope, {
+          id: userId,
+          access: user.access,
+        })
+      ) {
         result[userId] = [];
         continue;
       }

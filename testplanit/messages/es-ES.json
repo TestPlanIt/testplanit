@@ -6666,7 +6666,7 @@
     "tags": "## Etiquetas\nLas etiquetas identifican y organizan los casos de prueba y las sesiones para que pueda agrupar y encontrar trabajo relacionado en todos los proyectos.",
     "issues": "## Problemas\nLos problemas son elementos de rastreadores externos —de Jira, GitHub, Azure DevOps y otras integraciones— sincronizados con TestPlanIt para poder vincularlos a casos de prueba, ejecuciones y sesiones.",
     "crossProjectReports": "## Informes entre proyectos\nCree, ejecute y analice informes que abarquen varios proyectos, como las tendencias de automatización en todo su conjunto de pruebas.",
-    "users": "## Usuarios\nUn directorio de personas en TestPlanIt y los proyectos a los que cada una puede acceder.",
+    "users": "## Usuarios\nUn directorio de las personas con las que colaboras: usuarios que comparten al menos un proyecto contigo, y los proyectos que compartes con cada uno de ellos. Los administradores ven a todos los usuarios y su lista completa de proyectos.",
     "documentation": "## Documentación\nDocumentación de formato libre para este proyecto: notas, referencias y detalles de incorporación.",
     "projectMilestones": "## Hitos\nLos hitos agrupan y hacen seguimiento del trabajo de este proyecto según su objetivo —lanzamientos, sprints o tipos personalizados— en los estados activo y completado.",
     "projectRepository": "## Repositorio de casos de prueba\nLa biblioteca de casos de prueba de este proyecto, organizada en carpetas.",
