@@ -41,9 +41,18 @@ export function junitResultWhere(
     runFilter?: Record<string, unknown>;
   } = {}
 ) {
+  // requireExecutedAt and the date range both constrain executedAt — they
+  // must merge into one condition, or whichever spreads last silently
+  // discards the other.
+  const executedAtFilter = {
+    ...(opts.requireExecutedAt ? { not: null } : {}),
+    ...(buildDateFilter(filters, "executedAt").executedAt ?? {}),
+  };
   return {
     ...(opts.requireTime ? { time: { gt: 0 } } : {}),
-    ...(opts.requireExecutedAt ? { executedAt: { not: null } } : {}),
+    ...(Object.keys(executedAtFilter).length > 0
+      ? { executedAt: executedAtFilter }
+      : {}),
     // Untested is not an execution, and a null statusId is treated as
     // Untested — both are excluded from every result-level metric.
     statusId: { not: null },
@@ -58,7 +67,6 @@ export function junitResultWhere(
         isDeleted: false,
       },
     },
-    ...buildDateFilter(filters, "executedAt"),
   };
 }
 
@@ -102,6 +110,7 @@ export async function fetchJunitResultRows(
   filters?: { startDate?: string; endDate?: string },
   opts: {
     requireTime?: boolean;
+    requireExecutedAt?: boolean;
     includeStatusFlags?: boolean;
     runFilter?: Record<string, unknown>;
   } = {}
@@ -109,10 +118,11 @@ export async function fetchJunitResultRows(
   const needsFolder = groupBy.includes("folderId");
   const needsTag = groupBy.includes("tagId");
   const junitResults = await db.jUnitTestResult.findMany({
-    where: {
-      ...junitResultWhere(projectId, isProjectSpecific, filters, opts),
-      ...(groupBy.includes("executedAt") ? { executedAt: { not: null } } : {}),
-    },
+    where: junitResultWhere(projectId, isProjectSpecific, filters, {
+      ...opts,
+      requireExecutedAt:
+        opts.requireExecutedAt || groupBy.includes("executedAt"),
+    }),
     select: {
       executedAt: true,
       createdById: true,
@@ -232,14 +242,10 @@ export async function fetchEngagementExecutionRows(
       },
     }),
     db.jUnitTestResult.findMany({
-      where: {
-        ...junitResultWhere(projectId, isProjectSpecific, filters, {
-          requireTime: opts.requireElapsed,
-        }),
-        ...(groupBy.includes("executedAt")
-          ? { executedAt: { not: null } }
-          : {}),
-      },
+      where: junitResultWhere(projectId, isProjectSpecific, filters, {
+        requireTime: opts.requireElapsed,
+        requireExecutedAt: groupBy.includes("executedAt"),
+      }),
       select: {
         executedAt: true,
         createdAt: true,
