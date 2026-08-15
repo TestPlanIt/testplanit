@@ -12,9 +12,37 @@ import type {
 // Re-export the Prisma types
 export type { Integration, LlmProviderConfig, LlmProvider };
 
+export interface LlmTextPart {
+  type: "text";
+  text: string;
+}
+
+export interface LlmImagePart {
+  type: "image";
+  /** image/png | image/jpeg | image/gif | image/webp */
+  mimeType: string;
+  /**
+   * Raw base64 payload with NO `data:` prefix. Ollama requires the bare
+   * form; adapters that need a data URI (OpenAI-style) add the prefix
+   * themselves.
+   */
+  base64: string;
+  /** Display/log label only — never sent to providers. */
+  filename?: string;
+}
+
+export type LlmContentPart = LlmTextPart | LlmImagePart;
+
 export interface LlmMessage {
   role: "system" | "user" | "assistant";
-  content: string;
+  /**
+   * Plain string stays valid so existing callers are untouched. Parts arrays
+   * carry mixed text+image content; adapters that (or whose configured model)
+   * cannot send images flatten via `flattenToText` rather than erroring.
+   * System messages are text-only by contract — adapters flatten them
+   * unconditionally.
+   */
+  content: string | LlmContentPart[];
 }
 
 export interface LlmRequest {
@@ -92,6 +120,13 @@ export interface ModelCapabilities {
    * in the admin UI and as a cache-busting hint.
    */
   probedAt: string;
+  /**
+   * Manual override for image-input support. When set it wins over the
+   * per-provider heuristics in `modelSupportsVision`; when absent the
+   * heuristic decides. Primarily for Custom/Ollama integrations whose model
+   * names carry no signal.
+   */
+  supportsVision?: boolean;
 }
 
 /**

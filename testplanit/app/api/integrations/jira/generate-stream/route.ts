@@ -23,6 +23,18 @@ import {
   type IssueData,
 } from "@/api/llm/generate-test-cases/shared";
 import { NextRequest, NextResponse } from "next/server";
+import {
+  contextImageTokens,
+  sanitizeContextImages,
+  toContextImageMeta,
+  toImageParts,
+  type ContextImage,
+  type ContextImageSkip,
+} from "~/lib/llm/context-images";
+import {
+  resolveAttachmentImageMime,
+  resolveIssueAttachmentImages,
+} from "@/api/llm/generate-test-cases/context-image-sources";
 
 /**
  * Token-authenticated streaming generation for the Jira panel. The browser
@@ -214,11 +226,59 @@ export async function POST(req: NextRequest) {
             4096;
         }
 
+        // Issue-attachment images as context. The panel has no selection UI:
+        // the first images up to the cap ride along automatically when the
+        // resolved model takes image input. One SSE meta event tells the
+        // panel what was included/skipped.
+        let panelImages: ContextImage[] = [];
+        let panelImagesOmittedForVision = 0;
+        let panelImagesSkipped: ContextImageSkip[] = [];
+        if (adapter.listAttachments && adapter.downloadAttachment) {
+          try {
+            const listed = await adapter.listAttachments(lookupId);
+            const imageIds = listed
+              .filter((meta) => !!resolveAttachmentImageMime(meta))
+              .map((meta) => meta.id);
+            const resolvedImages = await resolveIssueAttachmentImages({
+              adapter,
+              issueKey: lookupId,
+              attachmentIds: imageIds,
+              source: "jira-attachment",
+            });
+            const sanitized = sanitizeContextImages(resolvedImages);
+            panelImagesSkipped = sanitized.skipped;
+            if (sanitized.included.length > 0) {
+              const visionSupported = await manager.supportsVision(
+                resolved.integrationId,
+                resolved.model
+              );
+              if (visionSupported) {
+                panelImages = sanitized.included;
+              } else {
+                panelImagesOmittedForVision = sanitized.included.length;
+              }
+            }
+          } catch (err) {
+            console.warn(
+              `[jira-panel] Failed to resolve context images for %s:`,
+              lookupId,
+              err
+            );
+          }
+        }
+        send(controller, {
+          type: "context",
+          images: toContextImageMeta(panelImages),
+          skipped: panelImagesSkipped,
+          imagesOmittedForVision: panelImagesOmittedForVision,
+        });
+
         const CONTENT_BUDGET_RATIO = 0.65;
         const systemPromptTokens = Math.ceil(systemPrompt.length / 4);
         const contentBudget =
           Math.floor(maxTokensPerRequest * CONTENT_BUDGET_RATIO) -
-          systemPromptTokens;
+          systemPromptTokens -
+          contextImageTokens(panelImages);
 
         const baseContext: GenerationContext = {
           folderContext: folderId ?? 0,
@@ -305,7 +365,16 @@ export async function POST(req: NextRequest) {
         const llmRequest: LlmRequest = {
           messages: [
             { role: "system", content: systemPrompt },
-            { role: "user", content: userPrompt },
+            {
+              role: "user",
+              content:
+                panelImages.length > 0
+                  ? [
+                      { type: "text" as const, text: userPrompt },
+                      ...toImageParts(panelImages),
+                    ]
+                  : userPrompt,
+            },
           ],
           temperature: resolvedPrompt.temperature,
           maxTokens,
@@ -318,6 +387,12 @@ export async function POST(req: NextRequest) {
             issueKey: issue.key,
             templateId: template.id,
             timestamp: new Date().toISOString(),
+            ...(panelImages.length > 0
+              ? {
+                  imageCount: panelImages.length,
+                  imageTokensEstimated: contextImageTokens(panelImages),
+                }
+              : {}),
           },
         };
 

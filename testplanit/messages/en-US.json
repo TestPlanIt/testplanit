@@ -3571,7 +3571,17 @@
       },
       "linkedIssuesDroppedTitle": "Some linked issues were not included",
       "linkedIssuesDropped": "{count, plural, =1 {# linked issue was dropped} other {# linked issues were dropped}} due to token budget: {keys}.",
-      "linkedIssuesPreviewHeading": "Linked issues that will be included"
+      "linkedIssuesPreviewHeading": "Linked issues that will be included",
+      "contextImages": {
+        "pickerHeading": "Images to include as context (up to {max})",
+        "tooLarge": "Too large",
+        "noVisionHint": "The configured AI model does not support image input — selected images will not be sent.",
+        "visionSkippedTitle": "Images were not sent",
+        "visionSkipped": "{count, plural, =1 {# image was} other {# images were}} not sent — the configured AI model does not support image input.",
+        "includedSummary": "{count, plural, =1 {# image} other {# images}} sent as context: {names}",
+        "skippedSummary": "{count, plural, =1 {# image} other {# images}} skipped (too large or unsupported): {names}",
+        "includeUrlScreenshots": "Include page screenshots when available"
+      }
     },
     "filterBar": {
       "addFilter": "Add Filter",

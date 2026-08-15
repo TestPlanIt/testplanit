@@ -82,6 +82,72 @@ export function getQuickScriptContextBudget(
 }
 
 /**
+ * Whether a provider + model accepts image input. A per-integration manual
+ * override (`settings.modelCapabilities[model].supportsVision`) always wins;
+ * otherwise best-effort name heuristics in the style of
+ * `getModelContextWindow`. Deliberately conservative for self-hosted
+ * providers: a text-only model receiving image parts is a hard request
+ * failure, whereas a false negative just skips images with a notice.
+ */
+export function modelSupportsVision(
+  provider?: string | null,
+  model?: string | null,
+  settings?: SettingsForVision | null
+): boolean {
+  const m = (model ?? "").toLowerCase();
+
+  const override = model
+    ? settings?.modelCapabilities?.[model]?.supportsVision
+    : undefined;
+  if (typeof override === "boolean") return override;
+
+  switch (provider) {
+    case "ANTHROPIC":
+      return true; // every claude-3+ model is multimodal
+    case "GEMINI":
+      return true; // 1.5/2.x/3.x are all multimodal
+    case "OPENAI":
+    case "AZURE_OPENAI":
+      // Vision-capable families; embeddings/audio/gpt-3.5 are not.
+      if (m.includes("gpt-3.5")) return false;
+      if (m.includes("embedding") || m.includes("audio") || m.includes("tts")) {
+        return false;
+      }
+      return (
+        m.includes("gpt-4o") ||
+        m.includes("gpt-4.1") ||
+        m.includes("gpt-4-1") ||
+        m.includes("gpt-4-turbo") ||
+        m.includes("gpt-5") ||
+        m.startsWith("o1") ||
+        m.startsWith("o3") ||
+        m.includes("omni") ||
+        m.includes("vision")
+      );
+    case "OLLAMA":
+      return /llava|vision|(^|[^a-z])vl([^a-z]|$)|gemma3|minicpm-v|moondream|bakllava|pixtral|mistral-small3/.test(
+        m
+      );
+    case "CUSTOM_LLM":
+    default:
+      return false; // unknown API shape — opt in via override only
+  }
+}
+
+/**
+ * Structural slice of `LlmProviderConfig.settings` this module needs.
+ * Declared locally (rather than importing `SettingsWithCapabilities`) so the
+ * module keeps its no-server-imports property and stays usable from admin
+ * client components.
+ */
+interface SettingsForVision {
+  modelCapabilities?: Record<
+    string,
+    { supportsVision?: boolean } | undefined
+  > | null;
+}
+
+/**
  * Compact token-count label for the admin UI — 64000 → "64K", 1000000 → "1M".
  */
 export function formatTokenCount(n: number): string {

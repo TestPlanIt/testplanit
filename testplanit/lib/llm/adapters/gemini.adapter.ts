@@ -6,13 +6,15 @@ import type {
   LlmStreamResponse,
   RateLimitInfo,
 } from "../types";
+import { flattenToText } from "../content";
 import { BaseLlmAdapter } from "./base.adapter";
+
+type GeminiPart =
+  { text: string } | { inline_data: { mime_type: string; data: string } };
 
 interface GeminiMessage {
   role: "user" | "model";
-  parts: Array<{
-    text: string;
-  }>;
+  parts: GeminiPart[];
 }
 
 interface GeminiGenerateRequest {
@@ -503,7 +505,7 @@ export class GeminiAdapter extends BaseLlmAdapter {
   }
 
   private convertMessagesToGeminiFormat(
-    messages: Array<{ role: string; content: string }>
+    messages: LlmRequest["messages"]
   ): GeminiMessage[] {
     const geminiMessages: GeminiMessage[] = [];
 
@@ -517,7 +519,7 @@ export class GeminiAdapter extends BaseLlmAdapter {
       const role = message.role === "assistant" ? "model" : "user";
       geminiMessages.push({
         role,
-        parts: [{ text: message.content }],
+        parts: this.toGeminiParts(message.content),
       });
     }
 
@@ -529,12 +531,48 @@ export class GeminiAdapter extends BaseLlmAdapter {
       geminiMessages[0].role === "user"
     ) {
       const systemInstructions = systemMessages
-        .map((m) => m.content)
+        .map((m) => flattenToText(m.content))
         .join("\n\n");
-      geminiMessages[0].parts[0].text = `${systemInstructions}\n\n${geminiMessages[0].parts[0].text}`;
+      // The first part is no longer guaranteed to be text (a user message may
+      // lead with an image), so prepend into the first text part if one
+      // exists and otherwise insert a fresh text part at the front.
+      const firstText = geminiMessages[0].parts.find(
+        (part): part is { text: string } => "text" in part
+      );
+      if (firstText) {
+        firstText.text = `${systemInstructions}\n\n${firstText.text}`;
+      } else {
+        geminiMessages[0].parts.unshift({ text: systemInstructions });
+      }
     }
 
     return geminiMessages;
+  }
+
+  /**
+   * Text parts are emitted before image parts so the wire order is
+   * deterministic regardless of how the caller interleaved them; Gemini
+   * treats parts within a content as one turn, so ordering carries no
+   * semantics beyond readability.
+   */
+  private toGeminiParts(
+    content: LlmRequest["messages"][number]["content"]
+  ): GeminiPart[] {
+    if (typeof content === "string") return [{ text: content }];
+    const textParts = content.filter((p) => p.type === "text");
+    const imageParts = content.filter((p) => p.type === "image");
+    const parts: GeminiPart[] = [];
+    if (textParts.length > 0 || imageParts.length === 0) {
+      parts.push({
+        text: textParts.map((p) => p.text).join("\n"),
+      });
+    }
+    for (const image of imageParts) {
+      parts.push({
+        inline_data: { mime_type: image.mimeType, data: image.base64 },
+      });
+    }
+    return parts;
   }
 
   private mapFinishReason(

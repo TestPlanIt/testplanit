@@ -20,6 +20,12 @@ import {
   classifyLlmStreamError,
   type LlmStreamErrorCode,
 } from "../error-codes";
+import {
+  contextImageTokens,
+  toImageParts,
+  type ContextImage,
+} from "~/lib/llm/context-images";
+import { readContextImages } from "~/lib/llm/context-image-stash";
 
 function formatError(err: unknown): string {
   if (!(err instanceof Error)) return "AI generation failed";
@@ -54,6 +60,7 @@ export async function POST(req: NextRequest) {
     outline,
     autoGenerateTags,
     includeParameters,
+    contextImagesId,
   } = body as {
     projectId: number;
     issue: IssueData;
@@ -62,6 +69,10 @@ export async function POST(req: NextRequest) {
     outline: TestCaseOutline;
     autoGenerateTags?: boolean;
     includeParameters?: boolean;
+    // Server-side stash id from the outline response's enrichment envelope.
+    // Bytes never travel through the client; a missing/expired/foreign
+    // stash silently degrades to text-only generation.
+    contextImagesId?: string;
   };
 
   if (!projectId || !issue || !template || !outline) {
@@ -221,10 +232,38 @@ export async function POST(req: NextRequest) {
             4096;
         }
 
+        // Reload the outline call's context images from the server-side
+        // stash (owner-checked). All failure shapes — no id, expired,
+        // foreign owner, Valkey down, non-vision model — degrade to
+        // text-only: the outline already told the client what was included.
+        let contextImages: ContextImage[] = [];
+        if (contextImagesId) {
+          const stashed = await readContextImages(contextImagesId, {
+            userId: session.user.id,
+            projectId,
+          });
+          if (stashed?.length) {
+            const visionSupported = await manager.supportsVision(
+              resolved.integrationId,
+              resolved.model
+            );
+            if (visionSupported) contextImages = stashed;
+          }
+        }
+
         const llmRequest: LlmRequest = {
           messages: [
             { role: "system", content: systemPrompt },
-            { role: "user", content: userPrompt },
+            {
+              role: "user",
+              content:
+                contextImages.length > 0
+                  ? [
+                      { type: "text" as const, text: userPrompt },
+                      ...toImageParts(contextImages),
+                    ]
+                  : userPrompt,
+            },
           ],
           temperature: resolvedPrompt.temperature,
           maxTokens,
@@ -237,6 +276,12 @@ export async function POST(req: NextRequest) {
             issueKey: issue.key,
             templateId: template.id,
             timestamp: new Date().toISOString(),
+            ...(contextImages.length > 0
+              ? {
+                  imageCount: contextImages.length,
+                  imageTokensEstimated: contextImageTokens(contextImages),
+                }
+              : {}),
           },
         };
 

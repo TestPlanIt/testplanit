@@ -218,6 +218,10 @@ FROM node:24-alpine AS workers
 ENV NODE_ENV=production
 WORKDIR /app/testplanit
 RUN apk add --no-cache postgresql-client
+# System chromium for the env-gated URL-crawl screenshot capture
+# (CRAWL_SCREENSHOTS=true). playwright-core drives it — no browser download.
+RUN apk add --no-cache chromium nss freetype harfbuzz ca-certificates ttf-freefont
+ENV CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium-browser
 RUN npm install -g pm2 && pm2 install pm2-logrotate && \
     pm2 set pm2-logrotate:max_size 50M && \
     pm2 set pm2-logrotate:retain 3 && \

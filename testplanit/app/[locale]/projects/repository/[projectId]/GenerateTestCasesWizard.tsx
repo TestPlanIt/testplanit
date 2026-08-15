@@ -111,7 +111,15 @@ import {
   normalizeGeneratedSteps,
 } from "~/utils/generatedSteps";
 import { extractCompleteJsonFields } from "~/utils/partialJson";
-import { extractTextFromNode } from "~/utils/extractTextFromJson";
+import {
+  extractTextFromNode,
+  extractTextWithImageMarkers,
+} from "~/utils/extractTextFromJson";
+import {
+  extractEditorMediaSrcs,
+  filenameForEditorMediaSrc,
+} from "~/lib/tiptap/editorMediaSrcs";
+import TipTapEditor from "@/components/tiptap/TipTapEditor";
 import { sanitizeName } from "~/utils";
 import type { LinkedIssueRef } from "~/lib/integrations/adapters/IssueAdapter";
 import FieldValueRenderer from "./[caseId]/FieldValueRenderer";
@@ -134,8 +142,87 @@ interface ExternalIssue {
 interface DocumentRequirements {
   id: string;
   title: string;
+  /** Flattened text (image nodes become [image N: name] markers). */
   description: string;
+  /** The TipTap JSON — source of truth for embedded image srcs. */
+  doc?: object;
   isDocument: true;
+}
+
+interface ContextImageOption {
+  /** Attachment id (issue source) or editor src (document source). */
+  id: string;
+  filename: string;
+  byteSize?: number;
+  tooLarge: boolean;
+  checked: boolean;
+}
+
+/**
+ * Checkbox list offering images as generation context — shared by the
+ * issue tab (tracker attachments) and the document tab (editor embeds).
+ */
+function ContextImagesPicker({
+  options,
+  max,
+  visionSupported,
+  labels,
+  onToggle,
+}: {
+  options: ContextImageOption[];
+  max: number;
+  visionSupported: boolean;
+  labels: { heading: string; tooLarge: string; noVisionHint: string };
+  onToggle: (id: string, checked: boolean) => void;
+}) {
+  if (options.length === 0) return null;
+  const checkedCount = options.filter((o) => o.checked).length;
+  return (
+    <div data-testid="context-images-picker">
+      <Label className="text-xs font-medium text-muted-foreground mb-1">
+        {labels.heading}
+      </Label>
+      <div className="text-sm text-foreground space-y-1">
+        {options.map((opt) => {
+          const disabled =
+            opt.tooLarge || (!opt.checked && checkedCount >= max);
+          return (
+            <div key={opt.id} className="flex items-center gap-2">
+              <Checkbox
+                id={`context-image-${opt.id}`}
+                checked={opt.checked}
+                disabled={disabled}
+                onCheckedChange={(checked) =>
+                  onToggle(opt.id, checked === true)
+                }
+              />
+              <label
+                htmlFor={`context-image-${opt.id}`}
+                className={
+                  opt.tooLarge ? "text-muted-foreground line-through" : ""
+                }
+              >
+                {opt.filename}
+              </label>
+              {typeof opt.byteSize === "number" && (
+                <span className="text-xs text-muted-foreground">
+                  {formatBytes(opt.byteSize)}
+                </span>
+              )}
+              {opt.tooLarge && (
+                <Badge variant="outline" className="text-xs">
+                  {labels.tooLarge}
+                </Badge>
+              )}
+            </div>
+          );
+        })}
+        {!visionSupported && (
+          <p className="text-xs text-muted-foreground">{labels.noVisionHint}</p>
+        )}
+      </div>
+    </div>
+  );
 }
 
 interface GeneratedTestCase {
@@ -176,6 +263,13 @@ interface GeneratedTestCase {
 }
 
 /** Derive folder name from a URL — mirrors the logic in importGeneratedTestCases.ts */
+/** Whole-number KB/MB label for the context-image picker. */
+function formatBytes(bytes: number): string {
+  if (bytes >= 1024 * 1024) return `${Math.round(bytes / (1024 * 1024))} MB`;
+  if (bytes >= 1024) return `${Math.round(bytes / 1024)} KB`;
+  return `${bytes} B`;
+}
+
 function folderNameFromUrl(url: string): string {
   try {
     const parsed = new URL(url);
@@ -1316,6 +1410,8 @@ export function GenerateTestCasesWizard({
   );
   const [documentRequirements, setDocumentRequirements] =
     useState<DocumentRequirements | null>(null);
+  // Live TipTap JSON while the document tab's editor is open (pre-save).
+  const [documentDraftDoc, setDocumentDraftDoc] = useState<object | null>(null);
   const [urlInput, setUrlInput] = useState("");
   const [urlMode, setUrlMode] = useState<"requirements" | "application">(
     "application"
@@ -1324,6 +1420,9 @@ export function GenerateTestCasesWizard({
     null
   );
   const [followLinks, setFollowLinks] = useState(false);
+  // URL mode: attach the crawl worker's page screenshots (when the server
+  // has capture enabled) to each page's generation call.
+  const [includeUrlScreenshots, setIncludeUrlScreenshots] = useState(true);
   const [maxDepth, setMaxDepth] = useState(2);
   const [maxPages, setMaxPages] = useState(10);
   const [urlJobId, setUrlJobId] = useState<string | null>(null);
@@ -1338,6 +1437,7 @@ export function GenerateTestCasesWizard({
     url: string;
     title?: string;
     spaWarning: boolean;
+    hasScreenshot?: boolean;
   }
   const [crawledPagesResult, setCrawledPagesResult] = useState<
     CrawledPageDisplay[]
@@ -1369,6 +1469,35 @@ export function GenerateTestCasesWizard({
   const isAdmin = session?.user?.access === "ADMIN";
   const [linkedIssueRefs, setLinkedIssueRefs] = useState<LinkedIssueRef[]>([]);
   const [droppedLinkedIssues, setDroppedLinkedIssues] = useState<string[]>([]);
+  // Images offered as generation context — issue attachments (issue tab)
+  // or editor embeds (document tab). Auto-checked up to the server's cap;
+  // the user can uncheck before generating. `tooLarge` entries render
+  // disabled.
+  const [contextImageOptions, setContextImageOptions] = useState<
+    ContextImageOption[]
+  >([]);
+  const [contextImageMax, setContextImageMax] = useState(5);
+  const [contextVisionSupported, setContextVisionSupported] = useState(true);
+  // What the outline actually sent (metadata from the enrichment envelope),
+  // surfaced on the review step.
+  const [contextImagesUsed, setContextImagesUsed] = useState<{
+    included: Array<{ filename: string }>;
+    skipped: Array<{ filename: string; reason: string }>;
+    imagesOmittedForVision: number;
+  } | null>(null);
+
+  const contextImagePickerLabels = {
+    heading: t("generateTestCases.contextImages.pickerHeading", {
+      max: contextImageMax,
+    }),
+    tooLarge: t("generateTestCases.contextImages.tooLarge"),
+    noVisionHint: t("generateTestCases.contextImages.noVisionHint"),
+  };
+  const toggleContextImage = (id: string, checked: boolean) => {
+    setContextImageOptions((prev) =>
+      prev.map((o) => (o.id === id ? { ...o, checked } : o))
+    );
+  };
   const [generatedTestCases, setGeneratedTestCases] = useState<
     GeneratedTestCase[]
   >([]);
@@ -1486,6 +1615,115 @@ export function GenerateTestCasesWizard({
       });
     return () => ctrl.abort();
   }, [selectedIssue, sourceType, projectId]);
+
+  // Offer the selected issue's image attachments as generation context.
+  // Metadata only; the first `maxImages` non-oversized entries come
+  // pre-checked.
+  useEffect(() => {
+    if (!selectedIssue || sourceType !== "issue") {
+      setContextImageOptions([]);
+      return;
+    }
+    const issueKey =
+      selectedIssue.key ||
+      selectedIssue.externalKey ||
+      String(selectedIssue.id);
+    const ctrl = new AbortController();
+    fetch("/api/llm/generate-test-cases/context-images", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        projectId,
+        issueKey,
+        ...(seedIssue?.integrationId
+          ? { integrationId: seedIssue.integrationId }
+          : {}),
+      }),
+      signal: ctrl.signal,
+    })
+      .then((r) =>
+        r.ok ? r.json() : { attachments: [], visionSupported: true }
+      )
+      .then(
+        (data: {
+          attachments?: Array<{
+            id: string;
+            filename: string;
+            byteSize?: number;
+            tooLarge: boolean;
+          }>;
+          visionSupported?: boolean;
+          maxImages?: number;
+        }) => {
+          const max = data.maxImages ?? 5;
+          let checkedCount = 0;
+          setContextImageMax(max);
+          setContextVisionSupported(data.visionSupported ?? true);
+          setContextImageOptions(
+            (data.attachments ?? []).map((att) => {
+              const checked = !att.tooLarge && checkedCount < max;
+              if (checked) checkedCount++;
+              return { ...att, checked };
+            })
+          );
+        }
+      )
+      .catch((err) => {
+        if (err?.name !== "AbortError") {
+          console.warn(
+            "[GenerateTestCasesWizard] context-images fetch failed:",
+            err
+          );
+          setContextImageOptions([]);
+        }
+      });
+    return () => ctrl.abort();
+  }, [selectedIssue, sourceType, projectId, seedIssue?.integrationId]);
+
+  // Document tab: image options come from the saved document's own TipTap
+  // JSON (no server round trip — sizes are enforced server-side at
+  // generation). Declared after the issue effect on purpose: both fire on a
+  // sourceType switch and this one owns document mode.
+  useEffect(() => {
+    if (sourceType !== "document") return;
+    const doc = documentRequirements?.doc;
+    if (!doc) {
+      setContextImageOptions([]);
+      return;
+    }
+    const srcs = extractEditorMediaSrcs(doc).filter(
+      (src) =>
+        !src.startsWith("data:video/") && !/\.(mp4|webm|ogg)(\?|#|$)/i.test(src)
+    );
+    setContextImageOptions(
+      srcs.map((src, i) => ({
+        id: src,
+        filename: filenameForEditorMediaSrc(src, i),
+        // Data URIs carry their size in the string; storage srcs are
+        // validated server-side.
+        byteSize: src.startsWith("data:")
+          ? Math.floor((src.length * 3) / 4)
+          : undefined,
+        tooLarge: false,
+        checked: i < contextImageMax,
+      }))
+    );
+    // Vision capability for the notice — reuses the listing route without an
+    // issue key (attachments skipped server-side).
+    const ctrl = new AbortController();
+    fetch("/api/llm/generate-test-cases/context-images", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ projectId, visionOnly: true }),
+      signal: ctrl.signal,
+    })
+      .then((r) => (r.ok ? r.json() : { visionSupported: true }))
+      .then((data: { visionSupported?: boolean }) =>
+        setContextVisionSupported(data.visionSupported ?? true)
+      )
+      .catch(() => {});
+    return () => ctrl.abort();
+  }, [sourceType, documentRequirements?.doc, projectId, contextImageMax]);
 
   const [isImporting, setIsImporting] = useState(false);
   const [showImportLoader, setShowImportLoader] = useState(false);
@@ -2356,6 +2594,7 @@ export function GenerateTestCasesWizard({
       title?: string;
       spaWarning: boolean;
       markdown?: string;
+      hasScreenshot?: boolean;
     }>,
     fieldIdsOverride?: number[]
   ) => {
@@ -2459,6 +2698,9 @@ export function GenerateTestCasesWizard({
             autoGenerateTags,
             includeParameters,
             feature: llmFeature,
+            ...(includeUrlScreenshots && page.hasScreenshot && urlJobId
+              ? { urlJobId, pageIndex: pageIdx, includeScreenshot: true }
+              : {}),
           }),
           signal: abortController.signal,
         });
@@ -2782,6 +3024,7 @@ export function GenerateTestCasesWizard({
     setGeneratedTestCases([]);
     setSelectedTestCases(new Set());
     setDroppedLinkedIssues([]);
+    setContextImagesUsed(null);
     setLlmWarnings([]);
     setCaseOutlines([]);
     setExpandedCases([]);
@@ -2907,6 +3150,33 @@ export function GenerateTestCasesWizard({
           // outline endpoint accepts-but-ignores includeParameters — kept for
           // uniform wizard plumbing.
           includeParameters,
+          // Selected context images (opaque selectors — the server
+          // re-derives candidates from its own sources and intersects;
+          // bytes never travel through the client). Issue mode sends
+          // attachment ids; document mode sends editor srcs + the doc they
+          // must come from.
+          ...(sourceType === "issue" &&
+          contextImageOptions.some((o) => o.checked)
+            ? {
+                contextImages: {
+                  attachmentIds: contextImageOptions
+                    .filter((o) => o.checked)
+                    .map((o) => o.id),
+                },
+              }
+            : {}),
+          ...(sourceType === "document" &&
+          documentRequirements?.doc &&
+          contextImageOptions.some((o) => o.checked)
+            ? {
+                documentDoc: documentRequirements.doc,
+                contextImages: {
+                  editorSrcs: contextImageOptions
+                    .filter((o) => o.checked)
+                    .map((o) => o.id),
+                },
+              }
+            : {}),
         }),
         signal: abortController.signal,
       });
@@ -2946,6 +3216,31 @@ export function GenerateTestCasesWizard({
         linkedIssues: enrichment?.linkedIssues ?? [],
       };
       setDroppedLinkedIssues(enrichment?.droppedLinkedIssues ?? []);
+      // Image context the outline actually used, for the review-step panel;
+      // the stash id lets every expand call reuse the same images
+      // server-side.
+      const contextImagesEnvelope = enrichment?.contextImages as
+        | {
+            contextId?: string;
+            included?: Array<{ filename: string }>;
+            skipped?: Array<{ filename: string; reason: string }>;
+            imagesOmittedForVision?: number;
+          }
+        | undefined;
+      setContextImagesUsed(
+        contextImagesEnvelope &&
+          ((contextImagesEnvelope.included?.length ?? 0) > 0 ||
+            (contextImagesEnvelope.skipped?.length ?? 0) > 0 ||
+            (contextImagesEnvelope.imagesOmittedForVision ?? 0) > 0)
+          ? {
+              included: contextImagesEnvelope.included ?? [],
+              skipped: contextImagesEnvelope.skipped ?? [],
+              imagesOmittedForVision:
+                contextImagesEnvelope.imagesOmittedForVision ?? 0,
+            }
+          : null
+      );
+      const contextImagesId = contextImagesEnvelope?.contextId;
 
       // Show outline cards immediately — user sees titles before details arrive
       setCaseOutlines(
@@ -2987,6 +3282,7 @@ export function GenerateTestCasesWizard({
                     outline,
                     autoGenerateTags,
                     includeParameters,
+                    ...(contextImagesId ? { contextImagesId } : {}),
                   }),
                   signal: ac.signal,
                 }
@@ -4183,6 +4479,15 @@ export function GenerateTestCasesWizard({
                                           </div>
                                         </div>
                                       )}
+
+                                      {/* Image attachments offered as generation context */}
+                                      <ContextImagesPicker
+                                        options={contextImageOptions}
+                                        max={contextImageMax}
+                                        visionSupported={contextVisionSupported}
+                                        labels={contextImagePickerLabels}
+                                        onToggle={toggleContextImage}
+                                      />
                                     </div>
 
                                     <Button
@@ -4200,6 +4505,7 @@ export function GenerateTestCasesWizard({
                                   onClick={() => setIsSearchOpen(true)}
                                   variant="outline"
                                   className="w-full"
+                                  data-testid="search-issues-button"
                                 >
                                   <Search className="w-4 h-4 " />
                                   {t(
@@ -4432,6 +4738,21 @@ export function GenerateTestCasesWizard({
                                 )}
                               </div>
 
+                              {/* Page screenshots (used only when the server
+                                  has capture enabled — CRAWL_SCREENSHOTS) */}
+                              <div className="flex items-center space-x-2">
+                                <Switch
+                                  id="include-url-screenshots"
+                                  checked={includeUrlScreenshots}
+                                  onCheckedChange={setIncludeUrlScreenshots}
+                                />
+                                <Label htmlFor="include-url-screenshots">
+                                  {t(
+                                    "generateTestCases.contextImages.includeUrlScreenshots"
+                                  )}
+                                </Label>
+                              </div>
+
                               {/* Follow Links Toggle */}
                               <div className="space-y-3">
                                 <div className="flex items-center space-x-2">
@@ -4567,20 +4888,31 @@ export function GenerateTestCasesWizard({
                             {documentRequirements ? (
                               <div className="border rounded-lg p-4 max-h-64 overflow-y-auto">
                                 <div className="flex items-start justify-between">
-                                  <div className="space-y-2">
+                                  <div className="space-y-2 min-w-0">
                                     <h4 className="font-medium">
                                       {documentRequirements.title}
                                     </h4>
                                     <p className="text-sm text-muted-foreground line-clamp-3">
                                       {documentRequirements.description}
                                     </p>
+                                    <ContextImagesPicker
+                                      options={contextImageOptions}
+                                      max={contextImageMax}
+                                      visionSupported={contextVisionSupported}
+                                      labels={contextImagePickerLabels}
+                                      onToggle={toggleContextImage}
+                                    />
                                   </div>
                                   <Button
                                     variant="outline"
                                     size="sm"
-                                    onClick={() =>
-                                      setDocumentRequirements(null)
-                                    }
+                                    onClick={() => {
+                                      setDocumentDraftDoc(
+                                        (documentRequirements.doc as object) ??
+                                          null
+                                      );
+                                      setDocumentRequirements(null);
+                                    }}
                                   >
                                     {tCommon("actions.change")}
                                   </Button>
@@ -4589,38 +4921,54 @@ export function GenerateTestCasesWizard({
                             ) : (
                               <div className="space-y-4">
                                 <div>
-                                  <Label
-                                    htmlFor="doc-description"
-                                    className="text-sm font-medium"
-                                  >
+                                  <Label className="text-sm font-medium">
                                     {t(
                                       "generateTestCases.selectSource.documentDescription"
                                     )}
                                   </Label>
-                                  <Textarea
-                                    id="doc-description"
-                                    placeholder={t(
-                                      "generateTestCases.selectSource.documentDescriptionPlaceholder"
-                                    )}
-                                    rows={8}
+                                  {/* Rich text: pasted screenshots and
+                                      uploaded images become generation
+                                      context alongside the text. */}
+                                  <div
                                     className="mt-1"
-                                  />
+                                    data-testid="document-requirements-editor"
+                                  >
+                                    <TipTapEditor
+                                      content={
+                                        documentDraftDoc ?? {
+                                          type: "doc",
+                                          content: [],
+                                        }
+                                      }
+                                      onUpdate={(newContent: object) =>
+                                        setDocumentDraftDoc(newContent)
+                                      }
+                                      placeholder={t(
+                                        "generateTestCases.selectSource.documentDescriptionPlaceholder"
+                                      )}
+                                      projectId={String(projectId)}
+                                    />
+                                  </div>
                                 </div>
                                 <Button
                                   onClick={() => {
-                                    const description = (
-                                      document.getElementById(
-                                        "doc-description"
-                                      ) as HTMLTextAreaElement
-                                    )?.value;
-
-                                    if (description) {
+                                    if (!documentDraftDoc) return;
+                                    const description =
+                                      extractTextWithImageMarkers(
+                                        documentDraftDoc
+                                      );
+                                    if (
+                                      description ||
+                                      extractEditorMediaSrcs(documentDraftDoc)
+                                        .length > 0
+                                    ) {
                                       setDocumentRequirements({
                                         id: `doc_${Date.now()}`,
                                         title: t(
                                           "generateTestCases.selectSource.documentDescription"
                                         ),
                                         description,
+                                        doc: documentDraftDoc,
                                         isDocument: true,
                                       });
                                     }
@@ -5115,6 +5463,62 @@ export function GenerateTestCasesWizard({
                               </AlertDescription>
                             </Alert>
                           )}
+                          {contextImagesUsed &&
+                            contextImagesUsed.imagesOmittedForVision > 0 && (
+                              <Alert data-testid="context-images-vision-skipped">
+                                <AlertTriangle className="h-4 w-4" />
+                                <AlertTitle>
+                                  {t(
+                                    "generateTestCases.contextImages.visionSkippedTitle"
+                                  )}
+                                </AlertTitle>
+                                <AlertDescription>
+                                  {t(
+                                    "generateTestCases.contextImages.visionSkipped",
+                                    {
+                                      count:
+                                        contextImagesUsed.imagesOmittedForVision,
+                                    }
+                                  )}
+                                </AlertDescription>
+                              </Alert>
+                            )}
+                          {contextImagesUsed &&
+                            (contextImagesUsed.included.length > 0 ||
+                              contextImagesUsed.skipped.length > 0) && (
+                              <div
+                                className="text-xs text-muted-foreground"
+                                data-testid="context-images-summary"
+                              >
+                                {contextImagesUsed.included.length > 0 && (
+                                  <p>
+                                    {t(
+                                      "generateTestCases.contextImages.includedSummary",
+                                      {
+                                        count:
+                                          contextImagesUsed.included.length,
+                                        names: contextImagesUsed.included
+                                          .map((i) => i.filename)
+                                          .join(", "),
+                                      }
+                                    )}
+                                  </p>
+                                )}
+                                {contextImagesUsed.skipped.length > 0 && (
+                                  <p>
+                                    {t(
+                                      "generateTestCases.contextImages.skippedSummary",
+                                      {
+                                        count: contextImagesUsed.skipped.length,
+                                        names: contextImagesUsed.skipped
+                                          .map((s) => s.filename)
+                                          .join(", "),
+                                      }
+                                    )}
+                                  </p>
+                                )}
+                              </div>
+                            )}
                           {caseOutlines.length > 0 && (
                             <div className="space-y-1.5">
                               <div className="flex items-center justify-between text-xs text-muted-foreground">

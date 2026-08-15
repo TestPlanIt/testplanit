@@ -6,6 +6,14 @@ import { baseDb } from "@/lib/db";
 import { ProjectAccessType } from "~/zenstack/models";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
+import {
+  IMAGE_TOKEN_ESTIMATE,
+  toImageParts,
+  type ContextImage,
+} from "~/lib/llm/context-images";
+import { getGenerateFromUrlQueue } from "~/lib/queues";
+import { screenshotKey } from "~/workers/urlScreenshots";
+import { getCurrentTenantId, isMultiTenantMode } from "~/lib/multiTenantDb";
 import { IntegrationManager } from "~/lib/integrations/IntegrationManager";
 import type {
   IssueAdapter,
@@ -63,6 +71,9 @@ export async function POST(req: NextRequest) {
     includeParameters,
     feature: featureOverride,
     issueRef,
+    urlJobId,
+    pageIndex,
+    includeScreenshot,
   } = body as {
     projectId: number;
     issue: IssueData;
@@ -74,6 +85,12 @@ export async function POST(req: NextRequest) {
     /** Optional LLM feature override (e.g., "generate_from_url" or "generate_from_url_app") */
     feature?: string;
     issueRef?: IssueCaseLinkRef;
+    // URL-mode page screenshot (captured by the crawl worker, env-gated).
+    // The screenshot is read server-side from the job's Redis stash; the
+    // job must belong to the requesting user.
+    urlJobId?: string;
+    pageIndex?: number;
+    includeScreenshot?: boolean;
   };
 
   if (!projectId || !issue || !template) {
@@ -261,12 +278,62 @@ export async function POST(req: NextRequest) {
             4096;
         }
 
+        // URL-mode page screenshot: read from the crawl job's Redis stash,
+        // owner-checked (job.data.userId + projectId + tenant). All failure
+        // shapes degrade to text-only.
+        let pageScreenshot: ContextImage | null = null;
+        if (
+          includeScreenshot &&
+          urlJobId &&
+          typeof pageIndex === "number" &&
+          pageIndex >= 0
+        ) {
+          try {
+            const queue = getGenerateFromUrlQueue();
+            const job = queue ? await queue.getJob(urlJobId) : null;
+            const tenantOk =
+              !isMultiTenantMode() ||
+              job?.data?.tenantId === getCurrentTenantId();
+            if (
+              job &&
+              tenantOk &&
+              job.data?.userId === session.user.id &&
+              job.data?.projectId === projectId
+            ) {
+              const connection = await queue!.client;
+              const base64 = await connection.get(
+                screenshotKey(urlJobId, pageIndex)
+              );
+              if (base64) {
+                const visionSupported = await manager.supportsVision(
+                  resolved.integrationId,
+                  resolved.model
+                );
+                if (visionSupported) {
+                  pageScreenshot = {
+                    id: `url-screenshot:${pageIndex}`,
+                    source: "url-screenshot",
+                    filename: `page-${pageIndex + 1}.jpg`,
+                    mimeType: "image/jpeg",
+                    base64,
+                    byteSize: Math.floor((base64.length * 3) / 4),
+                    origin: { url: issue.key },
+                  };
+                }
+              }
+            }
+          } catch (err) {
+            console.warn(`[stream] Failed to load page screenshot:`, err);
+          }
+        }
+
         // TOKEN-05: Calculate content budget
         const CONTENT_BUDGET_RATIO = 0.65;
         const systemPromptTokens = Math.ceil(systemPrompt.length / 4);
         const contentBudget =
           Math.floor(maxTokensPerRequest * CONTENT_BUDGET_RATIO) -
-          systemPromptTokens;
+          systemPromptTokens -
+          (pageScreenshot ? IMAGE_TOKEN_ESTIMATE : 0);
 
         // Resolve the issue-tracking adapter (best-effort). Used for both
         // source-issue comments (D-02 fix — wizard's path is broken) and
@@ -404,7 +471,15 @@ export async function POST(req: NextRequest) {
         const llmRequest: LlmRequest = {
           messages: [
             { role: "system", content: systemPrompt },
-            { role: "user", content: userPrompt },
+            {
+              role: "user",
+              content: pageScreenshot
+                ? [
+                    { type: "text" as const, text: userPrompt },
+                    ...toImageParts([pageScreenshot]),
+                  ]
+                : userPrompt,
+            },
           ],
           temperature: resolvedPrompt.temperature,
           maxTokens,
@@ -417,6 +492,9 @@ export async function POST(req: NextRequest) {
             issueKey: issue.key,
             templateId: template.id,
             timestamp: new Date().toISOString(),
+            ...(pageScreenshot
+              ? { imageCount: 1, imageTokensEstimated: IMAGE_TOKEN_ESTIMATE }
+              : {}),
           },
         };
 

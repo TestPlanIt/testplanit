@@ -207,6 +207,20 @@ Both the **Test Connection** button and the **Update / Create** action probe the
 
 `unsupportedParams: []` means the model accepted everything — the probe still records this so the admin can see when the integration was last verified.
 
+**Vision support override.** Whether a model can receive images (used by [test-case generation's image context](./llm-test-generation.md#images-as-generation-context)) is detected from the model name. When the detection is wrong — a custom deployment name, a fine-tune, or a proxy that strips images — set `supportsVision` for that model in the same `modelCapabilities` map:
+
+```json
+{
+  "modelCapabilities": {
+    "my-custom-model": {
+      "supportsVision": true
+    }
+  }
+}
+```
+
+An explicit `supportsVision` always wins over the name-based detection, in both directions. Custom-provider integrations can also declare vision support for the whole integration via the `visionSupport` setting; without it, image content is flattened to text placeholders before the request is sent.
+
 **When the probe runs.**
 
 - **Clicking Test Connection** runs a probe and captures the result in the form. A success toast confirms the connection.

@@ -449,6 +449,71 @@ describe("LlmManager", () => {
         }),
       });
     });
+
+    it("records estimated PROMPT tokens and input cost (not 0)", async () => {
+      mockDb.llmIntegration.findUnique.mockResolvedValue(mockLlmIntegration);
+      mockDb.llmProviderConfig.findUnique.mockResolvedValue(
+        mockLlmIntegration.llmProviderConfig
+      );
+      mockDb.llmUsage.create.mockResolvedValue({});
+      mockDb.llmRateLimit.upsert.mockResolvedValue({});
+
+      const request: LlmRequest = {
+        // 400 chars → 100 estimated prompt tokens (chars/4).
+        messages: [{ role: "user", content: "a".repeat(400) }],
+        userId: "user-123",
+        feature: "test",
+      };
+
+      for await (const _chunk of manager.chatStream(1, request)) {
+        // drain
+      }
+
+      const created = mockDb.llmUsage.create.mock.calls.at(-1)?.[0].data;
+      expect(created.promptTokens).toBe(100);
+      expect(created.completionTokens).toBeGreaterThan(0);
+      expect(created.totalTokens).toBe(
+        created.promptTokens + created.completionTokens
+      );
+      expect(Number(created.inputCost)).toBeGreaterThan(0);
+      expect(Number(created.totalCost)).toBeCloseTo(
+        Number(created.inputCost) + Number(created.outputCost),
+        10
+      );
+    });
+
+    it("charges the flat image estimate for image parts in the prompt", async () => {
+      mockDb.llmIntegration.findUnique.mockResolvedValue(mockLlmIntegration);
+      mockDb.llmProviderConfig.findUnique.mockResolvedValue(
+        mockLlmIntegration.llmProviderConfig
+      );
+      mockDb.llmUsage.create.mockResolvedValue({});
+      mockDb.llmRateLimit.upsert.mockResolvedValue({});
+
+      const request: LlmRequest = {
+        messages: [
+          {
+            role: "user",
+            content: [
+              { type: "text", text: "a".repeat(400) },
+              { type: "image", mimeType: "image/png", base64: "iVBORw0KGgo=" },
+            ],
+          },
+        ],
+        userId: "user-123",
+        feature: "test",
+      };
+
+      for await (const _chunk of manager.chatStream(1, request)) {
+        // drain
+      }
+
+      const created = mockDb.llmUsage.create.mock.calls.at(-1)?.[0].data;
+      // 400 text chars → 100 tokens, plus the "[image: attached image]"
+      // marker text the flattener adds, plus IMAGE_TOKEN_ESTIMATE (1600).
+      expect(created.promptTokens).toBeGreaterThanOrEqual(1700);
+      expect(created.promptTokens).toBeLessThan(1750);
+    });
   });
 
   describe("getDefaultIntegration", () => {

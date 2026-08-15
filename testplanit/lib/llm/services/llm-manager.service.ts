@@ -10,6 +10,8 @@ import {
   OpenAIAdapter,
 } from "../adapters";
 import { getAllowedPrivateHosts } from "~/lib/utils/ssrf";
+import { modelSupportsVision } from "../model-capabilities";
+import { estimatePromptTokens } from "../content";
 
 /**
  * ZenStack v3 accepts a plain number for `Decimal` columns at runtime (its
@@ -340,7 +342,6 @@ export class LlmManager {
   ): AsyncGenerator<LlmStreamResponse, void, unknown> {
     const adapter = await this.getAdapter(llmIntegrationId);
 
-    const _totalTokens = 0;
     const chunks: string[] = [];
 
     try {
@@ -350,9 +351,19 @@ export class LlmManager {
       }
 
       const fullContent = chunks.join("");
-      const estimatedTokens = Math.ceil(fullContent.length / 4);
+      const estimatedCompletionTokens = Math.ceil(fullContent.length / 4);
+      // Streaming responses aren't parsed for provider usage blocks, so the
+      // prompt side is estimated too (chars/4 + flat per-image charge) —
+      // previously recorded as 0, which hid the entire input cost of every
+      // streaming feature from the usage report.
+      const estimatedPromptTokens = estimatePromptTokens(request.messages);
 
-      await this.trackStreamUsage(llmIntegrationId, request, estimatedTokens);
+      await this.trackStreamUsage(
+        llmIntegrationId,
+        request,
+        estimatedCompletionTokens,
+        estimatedPromptTokens
+      );
     } catch (error) {
       await this.trackError(llmIntegrationId, request, error);
       throw error;
@@ -481,6 +492,38 @@ export class LlmManager {
     }
 
     return null;
+  }
+
+  /**
+   * Whether the given integration + model accepts image input. One query
+   * (provider + config settings + defaultModel), then the pure heuristic in
+   * `model-capabilities.ts`; the feature layer calls this once after
+   * `resolveIntegration` to decide between attaching image parts and
+   * skipping them with a notice.
+   */
+  async supportsVision(
+    integrationId: number,
+    model?: string | null
+  ): Promise<boolean> {
+    const integration = await this.db.llmIntegration.findUnique({
+      where: { id: integrationId },
+      select: {
+        provider: true,
+        llmProviderConfig: {
+          select: { defaultModel: true, settings: true },
+        },
+      },
+    });
+    if (!integration) return false;
+
+    const resolvedModel = model ?? integration.llmProviderConfig?.defaultModel;
+    return modelSupportsVision(
+      integration.provider,
+      resolvedModel,
+      integration.llmProviderConfig?.settings as {
+        modelCapabilities?: Record<string, { supportsVision?: boolean }>;
+      } | null
+    );
   }
 
   async listAvailableIntegrations(): Promise<
@@ -627,7 +670,8 @@ export class LlmManager {
   private async trackStreamUsage(
     llmIntegrationId: number,
     request: LlmRequest,
-    estimatedTokens: number
+    estimatedCompletionTokens: number,
+    estimatedPromptTokens: number
   ): Promise<void> {
     const config = await this.db.llmProviderConfig.findUnique({
       where: { llmIntegrationId },
@@ -635,8 +679,11 @@ export class LlmManager {
 
     if (!config) return;
 
-    const estimatedCost =
-      (estimatedTokens / 1_000_000) * Number(config.costPerOutputToken);
+    const outputCost =
+      (estimatedCompletionTokens / 1_000_000) *
+      Number(config.costPerOutputToken);
+    const inputCost =
+      (estimatedPromptTokens / 1_000_000) * Number(config.costPerInputToken);
 
     await this.db.llmUsage.create({
       data: {
@@ -647,12 +694,12 @@ export class LlmManager {
           : {}),
         feature: request.feature,
         model: request.model || config.defaultModel,
-        promptTokens: 0,
-        completionTokens: estimatedTokens,
-        totalTokens: estimatedTokens,
-        inputCost: asDecimal(0),
-        outputCost: asDecimal(estimatedCost),
-        totalCost: asDecimal(estimatedCost),
+        promptTokens: estimatedPromptTokens,
+        completionTokens: estimatedCompletionTokens,
+        totalTokens: estimatedPromptTokens + estimatedCompletionTokens,
+        inputCost: asDecimal(inputCost),
+        outputCost: asDecimal(outputCost),
+        totalCost: asDecimal(inputCost + outputCost),
         latency: 0, // TODO: Track actual latency for streaming
         success: true,
       },

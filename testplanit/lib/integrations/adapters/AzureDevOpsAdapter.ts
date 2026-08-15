@@ -3,12 +3,16 @@ import {
   AuthenticationData,
   CreateIssueData,
   IssueAdapterCapabilities,
+  IssueAttachmentMeta,
   IssueComment,
   IssueData,
   IssueSearchOptions,
   LinkedIssueRef,
   UpdateIssueData,
 } from "./IssueAdapter";
+
+/** Mirrors the app's 10MB attachment ceiling (same rationale as Jira). */
+const MAX_ATTACHMENT_DOWNLOAD_BYTES = 10 * 1024 * 1024;
 
 /**
  * Azure DevOps integration adapter using Personal Access Token authentication
@@ -545,6 +549,72 @@ export class AzureDevOpsAdapter extends BaseAdapter {
       id: uploadResponse.id,
       url: uploadResponse.url,
     };
+  }
+
+  /**
+   * List a work item's AttachedFile relations. ADO returns these on every
+   * $expand=relations fetch — mapWorkItemRelations deliberately filters to
+   * System.LinkTypes.* for linked-issue semantics, so attachments need
+   * their own accessor. ADO stores no mimeType on attachments; callers
+   * infer from the filename.
+   */
+  async listAttachments(issueId: string): Promise<IssueAttachmentMeta[]> {
+    const encodedId = encodeURIComponent(issueId);
+    const response = await this.makeRequest<any>(
+      this.buildUrl(
+        `/_apis/wit/workitems/${encodedId}?api-version=${this.apiVersion}&$expand=relations`
+      )
+    );
+
+    const relations = Array.isArray(response?.relations)
+      ? response.relations
+      : [];
+    const attachments: IssueAttachmentMeta[] = [];
+    for (const relation of relations) {
+      if (relation?.rel !== "AttachedFile" || !relation.url) continue;
+      // Attachment URLs end in /_apis/wit/attachments/{guid}
+      const guid = /\/_apis\/wit\/attachments\/([0-9a-f-]+)/i.exec(
+        relation.url
+      )?.[1];
+      if (!guid) continue;
+      attachments.push({
+        id: guid,
+        filename: relation.attributes?.name ?? `attachment-${guid}`,
+        byteSize:
+          typeof relation.attributes?.resourceSize === "number"
+            ? relation.attributes.resourceSize
+            : undefined,
+        createdAt: relation.attributes?.resourceCreatedDate
+          ? new Date(relation.attributes.resourceCreatedDate)
+          : undefined,
+        contentUrl: relation.url,
+      });
+    }
+    return attachments;
+  }
+
+  /** Download one attachment's bytes (same-origin — the auth header applies). */
+  async downloadAttachment(
+    meta: IssueAttachmentMeta
+  ): Promise<{ buffer: Buffer; mimeType?: string }> {
+    const url = meta.contentUrl
+      ? `${meta.contentUrl}${meta.contentUrl.includes("?") ? "&" : "?"}download=true&api-version=${this.apiVersion}`
+      : this.buildUrl(
+          `/_apis/wit/attachments/${meta.id}?download=true&api-version=${this.apiVersion}`
+        );
+
+    const { buffer, contentType } = await this.makeBinaryRequest(
+      url,
+      MAX_ATTACHMENT_DOWNLOAD_BYTES
+    );
+    // ADO serves attachments as application/octet-stream — prefer a real
+    // image content type when present, else let the caller infer from the
+    // filename.
+    const mimeType =
+      contentType && contentType !== "application/octet-stream"
+        ? contentType
+        : meta.mimeType;
+    return { buffer, mimeType };
   }
 
   private mapAzureDevOpsComments(response: any): IssueComment[] {
