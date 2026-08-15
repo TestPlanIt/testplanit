@@ -61,6 +61,14 @@ test.describe("AI generation context images", () => {
       projectId = await api.createProject(`E2E CtxImages ${ts}`);
       const llmId = await api.createLlmIntegration(`E2E LLM Ctx ${ts}`);
       await api.linkLlmToProject(projectId, llmId);
+      // The wizard's issue source (and its search button) only renders when
+      // the project has an active issue integration — the picker itself is
+      // route-mocked, but the gate reads the real projectIntegrations.
+      const issueIntegrationId = await api.createIssueIntegration(
+        "JIRA",
+        `E2E Jira Ctx ${ts}`
+      );
+      await api.assignIssueIntegrationToProject(projectId, issueIntegrationId);
       const folderId = await api.createFolder(projectId, `Ctx Folder ${ts}`);
       await api.createTestCase(projectId, folderId, `Existing ${ts}`);
     });
@@ -156,10 +164,17 @@ test.describe("AI generation context images", () => {
 
     await test.step("Open wizard and select the issue", async () => {
       await page.goto(`/en-US/projects/repository/${projectId!}`);
-      await page.waitForLoadState("load");
+      await page.waitForLoadState("networkidle");
       const folderNode = page.locator('[data-testid^="folder-node-"]').first();
       await expect(folderNode).toBeVisible({ timeout: 15000 });
       await folderNode.click();
+
+      // The folder's case list refetch remounts the toolbar; opening the
+      // kebab before it settles detaches the menu mid-click (same sequence
+      // as generate-cases-with-parameters.spec.ts).
+      await expect(
+        page.locator('[data-testid="repository-right-panel-header"]')
+      ).toBeVisible({ timeout: 10000 });
 
       await clickOverflowAction(
         page,
