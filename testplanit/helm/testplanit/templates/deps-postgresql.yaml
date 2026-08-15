@@ -66,6 +66,14 @@ spec:
                 secretKeyRef:
                   name: {{ include "testplanit.secretName" . }}
                   key: POSTGRES_PASSWORD
+            # ICU as the default collation provider: the alpine image's musl
+            # libc cannot collate locales, so without this every ORDER BY on
+            # text sorts in byte order (all capitals before all lowercase).
+            # Only applies when the data volume is first initialized; existing
+            # databases are covered by the app's migrations, which re-collate
+            # the sorted display-name columns.
+            - name: POSTGRES_INITDB_ARGS
+              value: "--locale-provider=icu --icu-locale=und"
             # Pin the classic flat data layout across major-version bumps.
             - name: PGDATA
               value: /var/lib/postgresql/data/pgdata

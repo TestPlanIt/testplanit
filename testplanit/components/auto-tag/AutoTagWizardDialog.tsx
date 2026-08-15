@@ -439,7 +439,7 @@ export function AutoTagWizardDialog({
         }
       }
     }
-    return Array.from(names).sort();
+    return Array.from(names).sort((a, b) => a.localeCompare(b));
   }, [allJobs]);
 
   // Check whether a new tag is currently selected for any entity across all jobs

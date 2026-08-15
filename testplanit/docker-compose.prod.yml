@@ -132,6 +132,12 @@ services:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: password
       POSTGRES_DB: testplanit_prod
+      # ICU as the default collation provider: the alpine image's musl libc
+      # cannot collate locales, so without this every ORDER BY on text sorts in
+      # byte order (all capitals before all lowercase). Only applies when the
+      # data volume is first initialized; existing databases are covered by the
+      # app's migrations, which re-collate the sorted display-name columns.
+      POSTGRES_INITDB_ARGS: "--locale-provider=icu --icu-locale=und"
       # Postgres 18 defaults PGDATA to a version-specific subdirectory
       # (/var/lib/postgresql/18/docker) and expects the volume mounted at
       # /var/lib/postgresql instead of .../data. Pin the old flat layout so the
