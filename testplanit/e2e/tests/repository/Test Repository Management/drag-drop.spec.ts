@@ -373,8 +373,12 @@ test.describe("Drag & Drop", () => {
       // Resolve both bounding boxes inside one retry loop: the folder tree
       // and case list re-render as queries land, and a one-shot boundingBox
       // read can catch an element mid-detach and return null.
-      let caseBox: { x: number; y: number; width: number; height: number } | null =
-        null;
+      let caseBox: {
+        x: number;
+        y: number;
+        width: number;
+        height: number;
+      } | null = null;
       let targetBox: typeof caseBox = null;
       await expect(async () => {
         await testCaseRow.evaluate((el) =>

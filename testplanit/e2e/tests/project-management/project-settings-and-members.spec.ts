@@ -328,11 +328,14 @@ test.describe("Project Member Management", () => {
       // groups exist (ProjectGroupPermissions.tsx), and neither the seed nor
       // this spec's setup creates any — the test only passed when unrelated
       // specs happened to have created groups first. Seed one explicitly.
-      const createResponse = await page.request.post(`/api/model/groups/create`, {
-        data: {
-          data: { name: `E2E Members Group ${Date.now()}` },
-        },
-      });
+      const createResponse = await page.request.post(
+        `/api/model/groups/create`,
+        {
+          data: {
+            data: { name: `E2E Members Group ${Date.now()}` },
+          },
+        }
+      );
       expect(createResponse.ok()).toBe(true);
     });
 

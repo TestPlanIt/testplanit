@@ -3721,9 +3721,7 @@ export class ApiHelper {
               },
             }
           );
-          const seededId = seeded.ok()
-            ? (await seeded.json())?.data?.id
-            : null;
+          const seededId = seeded.ok() ? (await seeded.json())?.data?.id : null;
           if (seededId) {
             await this.request
               .patch(`${this.baseURL}/api/model/templates/update`, {

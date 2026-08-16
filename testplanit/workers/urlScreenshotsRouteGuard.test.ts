@@ -108,9 +108,8 @@ describe.skipIf(!executablePath)(
       async () => {
         const context = await browser.newContext();
         try {
-          await installScreenshotRouteGuard(
-            context,
-            async (url) => url.startsWith(allowedOrigin)
+          await installScreenshotRouteGuard(context, async (url) =>
+            url.startsWith(allowedOrigin)
           );
           const page = await context.newPage();
           await page.goto(`${allowedOrigin}/page`, {

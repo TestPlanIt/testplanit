@@ -34,7 +34,10 @@ import { existsSync } from "fs";
 import { lookup } from "dns/promises";
 import { isIP } from "net";
 import type { Browser, BrowserContext } from "playwright-core";
-import { getAllowedPrivateHosts, isPrivateOrInternalIp } from "~/lib/utils/ssrf";
+import {
+  getAllowedPrivateHosts,
+  isPrivateOrInternalIp,
+} from "~/lib/utils/ssrf";
 
 const WELL_KNOWN_CHROMIUM_PATHS = [
   "/usr/bin/chromium-browser", // alpine (official workers image)
