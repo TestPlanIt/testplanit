@@ -157,6 +157,12 @@ workers:
   # Worker audit-trigger integrity is load-bearing; fail fast if the boot-time
   # trigger bootstrap fails on the worker tier (see docs).
   auditTriggerBootstrapFatal: true
+  # URL-crawl page screenshots (AI test-case generation context). The official
+  # workers image bundles Chromium; each crawled page is captured and offered
+  # as image context to vision-capable models. Set false to disable. The crawl
+  # blocks requests to private/internal addresses; for defense in depth,
+  # restrict this pod's egress to internal ranges with a NetworkPolicy.
+  crawlScreenshots: true
   extraEnv: []
 
 # -----------------------------------------------------------------------------

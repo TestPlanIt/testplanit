@@ -194,7 +194,7 @@ Screenshots and other images from your source material can be sent to the AI alo
 
 - **From Issue**: image attachments on the selected issue — Jira attachments (including screenshots pasted into the description or comments) and files attached to Azure DevOps work items. Images referenced inline in a Jira description render as `[image: filename]` placeholders in the issue preview so you can see where they sit in the text.
 - **From Document**: images embedded in the requirements editor. The saved preview marks each one as `[image N: filename]` at its position in the text.
-- **From URL**: when screenshot capture is enabled for your installation, the crawler captures a screenshot of each page and offers it as context. This is off by default — an administrator enables it with the `CRAWL_SCREENSHOTS=true` environment variable and a Chromium executable (bundled in the official workers image; see `.env.example`).
+- **From URL**: when screenshot capture is enabled for your installation, the crawler captures a screenshot of each page and offers it as context. Deployments using the official workers image (Docker Compose and Helm) have this on by default — an administrator turns it off with the `CRAWL_SCREENSHOTS=false` environment variable (`workers.crawlScreenshots: false` in Helm). Installations running workers outside the official image enable it with `CRAWL_SCREENSHOTS=true` plus a Chromium executable (see `.env.example`).
 
 ### The image picker
 
@@ -303,7 +303,7 @@ When generating from a URL:
 - **robots.txt**: Disallowed paths are skipped (the seed URL itself is always fetched)
 - **SSRF protection**: Private/internal IP addresses and cloud metadata endpoints are blocked. When screenshot capture is enabled, the same blocking applies to every sub-resource the page itself loads during rendering
 - **Incremental saves**: Test cases are saved to a server-side cache after each page completes, so closing the wizard mid-generation preserves all completed pages
-- **Page screenshots** (optional): with `CRAWL_SCREENSHOTS=true` and a Chromium executable configured, each crawled page is also captured as a screenshot and offered to vision-capable models as context — see [Images as Generation Context](#images-as-generation-context)
+- **Page screenshots**: when screenshot capture is enabled (the default on the official workers image), each crawled page is also captured as a screenshot and offered to vision-capable models as context — see [Images as Generation Context](#images-as-generation-context)
 
 ## Best Practices
 

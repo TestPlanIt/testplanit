@@ -173,6 +173,7 @@ commonly changed keys:
 | `ingress.host`, `ingress.tls.*` | Hostname and TLS for the Ingress. |
 | `server.replicaCount`, `server.resources` | Web tier scale/size. |
 | `workers.resources` | Worker tier size (keep `replicaCount` at 1). |
+| `workers.crawlScreenshots` | URL-crawl page screenshots for AI generation context (default `true`; set `false` to disable). |
 | `config.auth.*` | Signup / password / magic-link / email-verification toggles. |
 | `config.email.*`, `secrets.emailPassword` | Outbound SMTP. |
 | `config.extraEnv`, `secrets.extraEnv`, `server.extraEnv`, `workers.extraEnv` | Escape hatches for any other env (OAuth clients, tuning knobs, read replicas, …). |

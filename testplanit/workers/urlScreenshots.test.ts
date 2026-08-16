@@ -6,10 +6,21 @@ import {
   screenshotsEnabled,
 } from "./urlScreenshots";
 
-const publicResolve = async () => ({ address: "93.184.216.34" });
-const privateResolve = async () => ({ address: "10.0.0.5" });
+const publicResolve = async () => [{ address: "93.184.216.34" }];
+const privateResolve = async () => [{ address: "10.0.0.5" }];
+const dualStackResolve = async () => [
+  { address: "93.184.216.34" },
+  { address: "fd00::1" },
+];
 
 describe("isAllowedSubresource", () => {
+  beforeEach(() => {
+    vi.stubEnv("ALLOWED_PRIVATE_HOSTS", "");
+  });
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
   it("allows public http(s) hosts", async () => {
     expect(
       await isAllowedSubresource(
@@ -55,6 +66,31 @@ describe("isAllowedSubresource", () => {
         "https://internal.example.com/x",
         privateResolve
       )
+    ).toBe(false);
+  });
+
+  it("blocks hosts where ANY resolved address is private (dual-stack)", async () => {
+    expect(
+      await isAllowedSubresource("https://dual.example.com/x", dualStackResolve)
+    ).toBe(false);
+  });
+
+  it("blocks hosts that resolve to an empty address list", async () => {
+    expect(
+      await isAllowedSubresource("https://empty.example.com/x", async () => [])
+    ).toBe(false);
+  });
+
+  it("exempts ALLOWED_PRIVATE_HOSTS hostnames without resolving", async () => {
+    vi.stubEnv("ALLOWED_PRIVATE_HOSTS", "staging.internal.corp");
+    const resolve = vi.fn();
+    expect(
+      await isAllowedSubresource("https://staging.internal.corp/app", resolve)
+    ).toBe(true);
+    expect(resolve).not.toHaveBeenCalled();
+    // Non-listed hosts still go through the normal check.
+    expect(
+      await isAllowedSubresource("https://other.corp/x", privateResolve)
     ).toBe(false);
   });
 

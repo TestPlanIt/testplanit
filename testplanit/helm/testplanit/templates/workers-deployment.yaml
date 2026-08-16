@@ -77,6 +77,8 @@ spec:
             - name: AUDIT_TRIGGER_BOOTSTRAP_FATAL
               value: "1"
             {{- end }}
+            - name: CRAWL_SCREENSHOTS
+              value: {{ .Values.workers.crawlScreenshots | quote }}
             {{- with .Values.workers.extraEnv }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
