@@ -103,9 +103,11 @@ import { useCaseIdsByFieldOption } from "~/hooks/useCaseIdsByFieldOption";
 import { LATEST_RESULTS_COUNT } from "~/lib/types/latestTestResults";
 import { AddCaseRow } from "./AddCaseRow";
 import { AddResultModal } from "./AddResultModal";
+import { AssignTestCaseModal } from "./AssignTestCase";
 import { BulkEditModal } from "./BulkEditModal";
 import { CopyMoveDialog } from "@/components/copy-move/CopyMoveDialog";
-import { getColumns } from "./columns";
+import { ExtendedCases, getColumns } from "./columns";
+import { DeleteCaseModal } from "./DeleteCase";
 import { ExportModal, ExportOptions } from "./ExportModal";
 import { QuickScriptModal } from "./QuickScriptModal";
 
@@ -706,6 +708,20 @@ export default function Cases({
     selectedCases?: any[];
     steps?: any[];
     configuration?: { id: number; name: string } | null;
+  }>({ isOpen: false });
+
+  // State for AssignTestCaseModal - lifted from TestRunStatusCell for the same
+  // reason as AddResultModal above
+  const [assignModalState, setAssignModalState] = useState<{
+    isOpen: boolean;
+    testRunId?: number;
+    testRunCaseId?: number;
+    caseId?: number;
+    caseName?: string;
+    projectId?: number;
+    currentAssigneeId?: string | null;
+    isBulkAssign?: boolean;
+    selectedCases?: ExtendedCases[];
   }>({ isOpen: false });
 
   // State for bulk edit selection
@@ -2381,6 +2397,14 @@ export default function Cases({
     setIsCopyMoveOpen(true);
   }, []);
 
+  // Delete confirmation is owned by this component, not by the row action cell:
+  // rebuilding `columns` (or any table remount) would otherwise unmount the cell
+  // and silently close the dialog.
+  const [caseToDelete, setCaseToDelete] = useState<ExtendedCases | null>(null);
+  const handleDeleteCase = useCallback((testcase: ExtendedCases) => {
+    setCaseToDelete(testcase);
+  }, []);
+
   // Open dialog in folder mode when copyMoveFolderId prop is set by ProjectRepository
   useEffect(() => {
     if (copyMoveFolderId != null) {
@@ -2482,7 +2506,12 @@ export default function Cases({
       folderPathMap,
       renderPendingBadge,
       renderLatestResults,
-      excludeNotStartedFromRuns
+      excludeNotStartedFromRuns,
+      handleDeleteCase,
+      // Callback to open AssignTestCaseModal from TestRunStatusCell
+      (modalData) => {
+        setAssignModalState({ isOpen: true, ...modalData });
+      }
     );
   }, [
     userPreferencesForColumns,
@@ -2516,6 +2545,7 @@ export default function Cases({
     renderPendingBadge,
     renderLatestResults,
     excludeNotStartedFromRuns,
+    handleDeleteCase,
     compositionLocked,
     isMultiConfigMode,
   ]);
@@ -3279,6 +3309,16 @@ export default function Cases({
         )}
       </CardContent>
 
+      {/* Delete Case Confirmation */}
+      {caseToDelete && (
+        <DeleteCaseModal
+          key={`delete-case-${caseToDelete.id}`}
+          testcase={caseToDelete}
+          open
+          onClose={() => setCaseToDelete(null)}
+        />
+      )}
+
       {/* Bulk Edit Modal */}
       {isValidProjectId && (
         <BulkEditModal
@@ -3384,6 +3424,32 @@ export default function Cases({
               : addResultModalState.steps
           }
           configuration={addResultModalState.configuration}
+        />
+      )}
+
+      {/* AssignTestCaseModal - lifted from TestRunStatusCell to prevent re-render issues */}
+      {assignModalState.isOpen && assignModalState.testRunId != null && (
+        <AssignTestCaseModal
+          isOpen={assignModalState.isOpen}
+          onClose={() => {
+            setAssignModalState({ isOpen: false });
+            const event = new CustomEvent("modalStateChange", {
+              detail: { isOpen: false },
+            });
+            window.dispatchEvent(event);
+          }}
+          testRunId={assignModalState.testRunId}
+          testRunCaseId={
+            assignModalState.isBulkAssign
+              ? undefined
+              : assignModalState.testRunCaseId
+          }
+          caseId={assignModalState.caseId || 0}
+          caseName={assignModalState.caseName || ""}
+          currentAssigneeId={assignModalState.currentAssigneeId}
+          projectId={assignModalState.projectId || 0}
+          isBulkAssign={assignModalState.isBulkAssign}
+          selectedCases={assignModalState.selectedCases}
         />
       )}
 
