@@ -19,7 +19,10 @@ test.describe("Project Overview Dashboard", () => {
   let testProjectName: string;
 
   test.beforeEach(async ({ api }) => {
-    testProjectName = `E2E Overview ${Date.now()}`;
+    // Random suffix: with fullyParallel, two workers can run this hook in
+    // the same millisecond, and a bare Date.now() name then trips the
+    // Projects_name_key unique constraint.
+    testProjectName = `E2E Overview ${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
     testProjectId = await api.createProject(testProjectName);
   });
 

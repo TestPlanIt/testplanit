@@ -169,7 +169,7 @@ export function EditTag({ tag, open, onClose }: EditTagProps) {
               <Button variant="outline" type="button" onClick={onClose}>
                 {tCommon("cancel")}
               </Button>
-              <Button type="submit" disabled={isSubmitting}>
+              <Button type="submit" disabled={isSubmitting || !allTags}>
                 {isSubmitting
                   ? tCommon("actions.submitting")
                   : tCommon("actions.submit")}

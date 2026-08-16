@@ -370,25 +370,24 @@ test.describe("Drag & Drop", () => {
       await expect(testCaseRow).toBeVisible({ timeout: 10000 });
       await expect(targetFolderElement).toBeVisible({ timeout: 10000 });
 
-      // Wait for elements to have stable bounding boxes (not animating)
+      // Resolve both bounding boxes inside one retry loop: the folder tree
+      // and case list re-render as queries land, and a one-shot boundingBox
+      // read can catch an element mid-detach and return null.
+      let caseBox: { x: number; y: number; width: number; height: number } | null =
+        null;
+      let targetBox: typeof caseBox = null;
       await expect(async () => {
-        const box = await testCaseRow.boundingBox();
-        expect(box).not.toBeNull();
-      }).toPass({ timeout: 5000 });
-
-      // Scroll elements into view
-      await testCaseRow.evaluate((el) =>
-        el.scrollIntoView({ block: "center" })
-      );
-      await targetFolderElement.evaluate((el) =>
-        el.scrollIntoView({ block: "center" })
-      );
-
-      const caseBox = await testCaseRow.boundingBox();
-      const targetBox = await targetFolderElement.boundingBox();
-
-      expect(caseBox).not.toBeNull();
-      expect(targetBox).not.toBeNull();
+        await testCaseRow.evaluate((el) =>
+          el.scrollIntoView({ block: "center" })
+        );
+        await targetFolderElement.evaluate((el) =>
+          el.scrollIntoView({ block: "center" })
+        );
+        caseBox = await testCaseRow.boundingBox();
+        targetBox = await targetFolderElement.boundingBox();
+        expect(caseBox).not.toBeNull();
+        expect(targetBox).not.toBeNull();
+      }).toPass({ timeout: 10000 });
 
       await page.mouse.move(
         caseBox!.x + caseBox!.width / 2,

@@ -81,11 +81,21 @@ test.describe("Milestone manual unlink", () => {
     });
 
     await test.step("Open the badge menu and start unlinking", async () => {
-      await page.getByTestId("milestone-source-badge").click();
-      await expect(
-        page.getByTestId("milestone-source-menu-unlink")
-      ).toBeVisible();
-      await page.getByTestId("milestone-source-menu-unlink").click();
+      // The badge sits in a header that re-renders as page queries land, so
+      // a single click can be swallowed mid-re-render (dispatched between
+      // Playwright's hit-test and the mouse events) and the menu never
+      // opens. Only click the badge while the menu is closed — clicking it
+      // with the menu open would toggle it shut again.
+      const unlinkItem = page.getByTestId("milestone-source-menu-unlink");
+      await expect(async () => {
+        if (!(await unlinkItem.isVisible().catch(() => false))) {
+          await page
+            .getByTestId("milestone-source-badge")
+            .click({ timeout: 2000 });
+        }
+        await expect(unlinkItem).toBeVisible({ timeout: 3000 });
+      }).toPass({ timeout: 15000 });
+      await unlinkItem.click();
 
       // The consequences-confirm AlertDialog appears.
       await expect(page.getByText("Unlink milestone?")).toBeVisible();

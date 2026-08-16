@@ -883,20 +883,17 @@ export class ApiHelper {
    * Waits for completion to ensure the tag is deleted before continuing
    */
   async deleteTag(tagId: number): Promise<void> {
-    const response = await this.request.patch(
-      `${this.baseURL}/api/model/tags/update`,
-      {
+    // Tolerant like every other delete helper: this also runs from the
+    // deferred workerCleanup flush during an UNRELATED test's fixture setup,
+    // where a tag already removed by its own test (404) must not throw.
+    await this.request
+      .patch(`${this.baseURL}/api/model/tags/update`, {
         data: {
           where: { id: tagId },
           data: { isDeleted: true },
         },
-      }
-    );
-
-    if (!response.ok()) {
-      const error = await response.text();
-      throw new Error(`Failed to delete tag: ${error}`);
-    }
+      })
+      .catch(() => {});
   }
 
   /**

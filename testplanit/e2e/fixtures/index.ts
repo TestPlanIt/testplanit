@@ -156,15 +156,22 @@ export const test = base.extend<TestFixtures, WorkerFixtures>({
         for (const [file, tracked] of stores) {
           if (file === keepFile) continue;
           stores.delete(file);
-          adminContext ??= await playwright.request.newContext({
-            baseURL,
-            storageState,
-          });
-          await new ApiHelper(
-            adminContext,
-            baseURL || "http://localhost:3000",
-            tracked
-          ).cleanup();
+          try {
+            adminContext ??= await playwright.request.newContext({
+              baseURL,
+              storageState,
+            });
+            await new ApiHelper(
+              adminContext,
+              baseURL || "http://localhost:3000",
+              tracked
+            ).cleanup();
+          } catch (error) {
+            // A leftover that fails to delete (already removed by its own
+            // test, transient 5xx, ...) must never fail the UNRELATED test
+            // whose fixture setup triggered this flush.
+            console.warn(`[workerCleanup] flush failed for ${file}:`, error);
+          }
         }
       };
 

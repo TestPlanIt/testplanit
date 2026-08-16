@@ -64,19 +64,27 @@ async function pickDimension(page: Page, dimensionKey: string): Promise<void> {
   await ensureEditorClosed(page);
   const addButton = page.getByTestId("filter-bar-add");
   await expect(addButton).toBeVisible({ timeout: 15000 });
-  await addButton.click();
 
+  // The dimension dropdown can dismiss itself mid-pick (a background refetch
+  // re-renders the filter bar and the popover closes), stranding a one-shot
+  // open-then-click sequence. Re-open and retry until the chip editor is up.
+  // Only click Add while the dropdown is closed - clicking it with the menu
+  // open would toggle it shut again.
   const option = page.getByTestId(`filter-dimension-option-${dimensionKey}`);
-  await expect(option).toBeVisible({ timeout: 10000 });
-  await waitForStableBox(option);
-  await option.click();
+  const editor = page.getByTestId("filter-chip-editor");
+  await expect(async () => {
+    if (await editor.isVisible().catch(() => false)) return;
+    if (!(await option.isVisible().catch(() => false))) {
+      await addButton.click({ timeout: 2000 });
+      await expect(option).toBeVisible({ timeout: 3000 });
+    }
+    await option.click({ timeout: 2000 });
+    await expect(editor).toBeVisible({ timeout: 3000 });
+  }).toPass({ timeout: 30000 });
 
   // Dimensions whose seed predicate needs a value (templates/states) open as a
   // draft chip; committable seeds (tags → bare `any`) commit immediately. Both
-  // leave the editor open.
-  await expect(page.getByTestId("filter-chip-editor")).toBeVisible({
-    timeout: 10000,
-  });
+  // leave the editor open (asserted by the retry loop above).
 }
 
 /** Toggles one value in the open chip editor's value list. */
