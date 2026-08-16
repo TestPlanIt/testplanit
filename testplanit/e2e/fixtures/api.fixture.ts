@@ -28,65 +28,104 @@ const SEEDED_CASES_WORKFLOW_NAMES = [
 const SEEDED_DEFAULT_TEMPLATE_NAME = "Default Template";
 
 /**
+ * The ids of every resource an ApiHelper has created, kept separate from the
+ * helper so the ids can outlive any single helper instance. The `api` fixture
+ * shares ONE store per spec file per worker (via the `workerCleanup` fixture
+ * in ./index.ts): every helper instantiated for that file — beforeAll hooks
+ * and tests alike — pushes into the same store, and the store is flushed only
+ * when the worker moves on to the next spec file. That gives file-scoped
+ * resource lifetime: a project created in a beforeAll hook or in an early
+ * test of a serial describe survives every test in the file, then is
+ * reliably deleted.
+ */
+export interface TrackedResources {
+  projectIds: number[];
+  folderIds: number[];
+  caseIds: number[];
+  tagIds: number[];
+  issueIds: number[];
+  testRunIds: number[];
+  testRunCaseIds: number[];
+  caseFieldIds: number[];
+  resultFieldIds: number[];
+  templateIds: number[];
+  fieldOptionIds: number[];
+  shareLinkIds: string[];
+  configurationIds: number[];
+  llmIntegrationIds: number[];
+  projectLlmIntegrationIds: string[];
+  issueIntegrationIds: number[];
+}
+
+export function createTrackedResources(): TrackedResources {
+  return {
+    projectIds: [],
+    folderIds: [],
+    caseIds: [],
+    tagIds: [],
+    issueIds: [],
+    testRunIds: [],
+    testRunCaseIds: [],
+    caseFieldIds: [],
+    resultFieldIds: [],
+    templateIds: [],
+    fieldOptionIds: [],
+    shareLinkIds: [],
+    configurationIds: [],
+    llmIntegrationIds: [],
+    projectLlmIntegrationIds: [],
+    issueIntegrationIds: [],
+  };
+}
+
+/**
  * API Helper for creating and cleaning up test data via the TestPlanIt API.
  * Uses ZenStack auto-generated API endpoints.
  */
 export class ApiHelper {
   private request: APIRequestContext;
   private baseURL: string;
-  private createdProjectIds: number[] = [];
-  private createdFolderIds: number[] = [];
-  private createdCaseIds: number[] = [];
-  private createdTagIds: number[] = [];
-  private createdIssueIds: number[] = [];
-  private createdTestRunIds: number[] = [];
-  private createdTestRunCaseIds: number[] = [];
-  private createdCaseFieldIds: number[] = [];
-  private createdResultFieldIds: number[] = [];
-  private createdTemplateIds: number[] = [];
-  private createdFieldOptionIds: number[] = [];
-  private createdShareLinkIds: string[] = [];
-  private createdConfigurationIds: number[] = [];
-  private createdLlmIntegrationIds: number[] = [];
-  private createdProjectLlmIntegrationIds: string[] = [];
-  private createdIssueIntegrationIds: number[] = [];
+  private tracked: TrackedResources;
   private cachedTemplateIds: Map<number, number> = new Map(); // projectId -> templateId
   private cachedStateIds: Map<number, number> = new Map(); // projectId -> stateId
   private cachedRepositoryIds: Map<number, number> = new Map(); // projectId -> repositoryId
   private cachedStatusIds: Map<string, number> = new Map();
 
-  constructor(request: APIRequestContext, baseURL: string) {
+  constructor(
+    request: APIRequestContext,
+    baseURL: string,
+    tracked: TrackedResources = createTrackedResources()
+  ) {
     this.request = request;
     this.baseURL = baseURL;
+    this.tracked = tracked;
   }
 
   /**
-   * Remove resources from the auto-cleanup tracking lists. Use this from a
-   * `setup` test in a `serial`-mode describe whose later tests need the
-   * resources to outlive the setup test's `api` fixture teardown — without
-   * this, cleanup() schedules deletions that race with subsequent tests
-   * (e.g. a source case getting soft-deleted right before a collision test
-   * tries to read it). The describe is responsible for cleaning up the
-   * resources itself in `afterAll`.
+   * Remove resources from the auto-cleanup tracking lists. Auto-cleanup is
+   * file-scoped (the shared TrackedResources store flushes only after the
+   * worker leaves the spec file), so this is only needed when a resource
+   * must outlive the FILE — e.g. data another spec depends on. The caller
+   * then owns deleting it.
    */
   untrackProject(projectId: number): void {
-    const idx = this.createdProjectIds.indexOf(projectId);
-    if (idx >= 0) this.createdProjectIds.splice(idx, 1);
+    const idx = this.tracked.projectIds.indexOf(projectId);
+    if (idx >= 0) this.tracked.projectIds.splice(idx, 1);
   }
 
   untrackCase(caseId: number): void {
-    const idx = this.createdCaseIds.indexOf(caseId);
-    if (idx >= 0) this.createdCaseIds.splice(idx, 1);
+    const idx = this.tracked.caseIds.indexOf(caseId);
+    if (idx >= 0) this.tracked.caseIds.splice(idx, 1);
   }
 
   untrackFolder(folderId: number): void {
-    const idx = this.createdFolderIds.indexOf(folderId);
-    if (idx >= 0) this.createdFolderIds.splice(idx, 1);
+    const idx = this.tracked.folderIds.indexOf(folderId);
+    if (idx >= 0) this.tracked.folderIds.splice(idx, 1);
   }
 
   untrackTag(tagId: number): void {
-    const idx = this.createdTagIds.indexOf(tagId);
-    if (idx >= 0) this.createdTagIds.splice(idx, 1);
+    const idx = this.tracked.tagIds.indexOf(tagId);
+    if (idx >= 0) this.tracked.tagIds.splice(idx, 1);
   }
 
   /**
@@ -263,7 +302,7 @@ export class ApiHelper {
 
     const result = await response.json();
     const caseId = result.data.id;
-    this.createdCaseIds.push(caseId);
+    this.tracked.caseIds.push(caseId);
     return caseId;
   }
 
@@ -359,7 +398,7 @@ export class ApiHelper {
 
     const result = await response.json();
     const folderId = result.data.id;
-    this.createdFolderIds.push(folderId);
+    this.tracked.folderIds.push(folderId);
     return folderId;
   }
 
@@ -423,7 +462,7 @@ export class ApiHelper {
 
     const result = await response.json();
     const caseId = result.data.id;
-    this.createdCaseIds.push(caseId);
+    this.tracked.caseIds.push(caseId);
 
     // Create version 1 record (matching UI behavior)
     const versionResponse = await this.request.post(
@@ -669,7 +708,7 @@ export class ApiHelper {
 
     const result = await response.json();
     const tagId = result.data.id;
-    this.createdTagIds.push(tagId);
+    this.tracked.tagIds.push(tagId);
     return tagId;
   }
 
@@ -893,7 +932,7 @@ export class ApiHelper {
 
     const result = await response.json();
     const issueId = result.data.id;
-    this.createdIssueIds.push(issueId);
+    this.tracked.issueIds.push(issueId);
     return issueId;
   }
 
@@ -922,7 +961,7 @@ export class ApiHelper {
    * Silently ignores failures - item may already be deleted by the test
    */
   async deleteIssue(issueId: number): Promise<void> {
-    this.request
+    await this.request
       .patch(`${this.baseURL}/api/model/issue/update`, {
         data: {
           where: { id: issueId },
@@ -937,9 +976,10 @@ export class ApiHelper {
    * Silently ignores failures - item may already be deleted by the test
    */
   async deleteFolder(folderId: number): Promise<void> {
-    // Fire and forget - don't wait or check response
-    // Item may already be deleted by the test itself
-    this.request
+    // Awaited so the delete actually lands before the fixture's request
+    // context disposes; errors are still swallowed - the item may already
+    // have been deleted by the test itself
+    await this.request
       .patch(`${this.baseURL}/api/model/repositoryFolders/update`, {
         data: {
           where: { id: folderId },
@@ -954,9 +994,10 @@ export class ApiHelper {
    * Silently ignores failures - item may already be deleted by the test
    */
   async deleteTestCase(caseId: number): Promise<void> {
-    // Fire and forget - don't wait or check response
-    // Item may already be deleted by the test itself
-    this.request
+    // Awaited so the delete actually lands before the fixture's request
+    // context disposes; errors are still swallowed - the item may already
+    // have been deleted by the test itself
+    await this.request
       .patch(`${this.baseURL}/api/model/repositoryCases/update`, {
         data: {
           where: { id: caseId },
@@ -971,9 +1012,10 @@ export class ApiHelper {
    * Silently ignores failures - item may already be deleted by the test
    */
   async deleteProject(projectId: number): Promise<void> {
-    // Fire and forget - don't wait or check response
-    // Item may already be deleted by the test itself
-    this.request
+    // Awaited so the delete actually lands before the fixture's request
+    // context disposes; errors are still swallowed - the item may already
+    // have been deleted by the test itself
+    await this.request
       .patch(`${this.baseURL}/api/model/projects/update`, {
         data: {
           where: { id: projectId },
@@ -1073,7 +1115,7 @@ export class ApiHelper {
 
     const result = await response.json();
     const projectId = result.data.id;
-    this.createdProjectIds.push(projectId);
+    this.tracked.projectIds.push(projectId);
 
     // Create repository for the project (required for many operations)
     const repoResponse = await this.request.post(
@@ -1460,7 +1502,7 @@ export class ApiHelper {
 
     const result = await response.json();
     const configId = result.data.id;
-    this.createdConfigurationIds.push(configId);
+    this.tracked.configurationIds.push(configId);
 
     // Configurations are project-scoped: assign to the project so it shows up
     // in that project's run/session/matrix pickers.
@@ -1578,7 +1620,7 @@ export class ApiHelper {
 
     const result = await response.json();
     const testRunId = result.data.id;
-    this.createdTestRunIds.push(testRunId);
+    this.tracked.testRunIds.push(testRunId);
     return testRunId;
   }
 
@@ -1625,7 +1667,7 @@ export class ApiHelper {
 
     const result = await response.json();
     const testRunCaseId = result.data.id;
-    this.createdTestRunCaseIds.push(testRunCaseId);
+    this.tracked.testRunCaseIds.push(testRunCaseId);
     return testRunCaseId;
   }
 
@@ -1902,7 +1944,7 @@ export class ApiHelper {
    * Silently ignores failures - item may already be deleted by the test
    */
   async deleteTestRun(testRunId: number): Promise<void> {
-    this.request
+    await this.request
       .patch(`${this.baseURL}/api/model/testRuns/update`, {
         data: {
           where: { id: testRunId },
@@ -1918,7 +1960,7 @@ export class ApiHelper {
    * Silently ignores failures
    */
   async deleteTestRunCase(testRunCaseId: number): Promise<void> {
-    this.request
+    await this.request
       .delete(`${this.baseURL}/api/model/testRunCases/delete`, {
         data: {
           where: { id: testRunCaseId },
@@ -1937,7 +1979,7 @@ export class ApiHelper {
    * This method allows tests to register share link IDs for automatic cleanup
    */
   trackShareLink(shareLinkId: string): void {
-    this.createdShareLinkIds.push(shareLinkId);
+    this.tracked.shareLinkIds.push(shareLinkId);
   }
 
   /**
@@ -1989,7 +2031,7 @@ export class ApiHelper {
    * Silently ignores failures - item may already be deleted by the test
    */
   async deleteShareLink(shareLinkId: string): Promise<void> {
-    this.request
+    await this.request
       .patch(`${this.baseURL}/api/model/shareLink/update`, {
         data: {
           where: { id: shareLinkId },
@@ -2095,7 +2137,7 @@ export class ApiHelper {
 
     const result = await response.json();
     const fieldId = result.data.id;
-    this.createdCaseFieldIds.push(fieldId);
+    this.tracked.caseFieldIds.push(fieldId);
     return fieldId;
   }
 
@@ -2103,7 +2145,7 @@ export class ApiHelper {
    * Delete a case field via API (soft delete)
    */
   async deleteCaseField(fieldId: number): Promise<void> {
-    this.request
+    await this.request
       .patch(`${this.baseURL}/api/model/caseFields/update`, {
         data: {
           where: { id: fieldId },
@@ -2170,7 +2212,7 @@ export class ApiHelper {
 
     const result = await response.json();
     const fieldId = result.data.id;
-    this.createdResultFieldIds.push(fieldId);
+    this.tracked.resultFieldIds.push(fieldId);
     return fieldId;
   }
 
@@ -2178,7 +2220,7 @@ export class ApiHelper {
    * Delete a result field via API (soft delete)
    */
   async deleteResultField(fieldId: number): Promise<void> {
-    this.request
+    await this.request
       .patch(`${this.baseURL}/api/model/resultFields/update`, {
         data: {
           where: { id: fieldId },
@@ -2276,7 +2318,7 @@ export class ApiHelper {
 
     const result = await response.json();
     const templateId = result.data.id;
-    this.createdTemplateIds.push(templateId);
+    this.tracked.templateIds.push(templateId);
 
     // Assign case fields if provided
     if (options.caseFieldIds && options.caseFieldIds.length > 0) {
@@ -2332,7 +2374,7 @@ export class ApiHelper {
    * Delete a template via API (soft delete)
    */
   async deleteTemplate(templateId: number): Promise<void> {
-    this.request
+    await this.request
       .patch(`${this.baseURL}/api/model/templates/update`, {
         data: {
           where: { id: templateId },
@@ -2379,7 +2421,7 @@ export class ApiHelper {
 
     const result = await response.json();
     const optionId = result.data.id;
-    this.createdFieldOptionIds.push(optionId);
+    this.tracked.fieldOptionIds.push(optionId);
 
     // Link to case field if provided
     if (options.caseFieldId) {
@@ -2418,7 +2460,7 @@ export class ApiHelper {
    * Delete a field option via API (soft delete)
    */
   async deleteFieldOption(optionId: number): Promise<void> {
-    this.request
+    await this.request
       .patch(`${this.baseURL}/api/model/fieldOptions/update`, {
         data: {
           where: { id: optionId },
@@ -3209,7 +3251,7 @@ export class ApiHelper {
    * Delete a milestone via API (soft delete)
    */
   async deleteMilestone(milestoneId: number): Promise<void> {
-    this.request
+    await this.request
       .patch(`${this.baseURL}/api/model/milestones/update`, {
         data: {
           where: { id: milestoneId },
@@ -3223,7 +3265,7 @@ export class ApiHelper {
    * Delete a session via API (soft delete)
    */
   async deleteSession(sessionId: number): Promise<void> {
-    this.request
+    await this.request
       .patch(`${this.baseURL}/api/model/sessions/update`, {
         data: {
           where: { id: sessionId },
@@ -3329,7 +3371,7 @@ export class ApiHelper {
 
     const result = await response.json();
     const id = result.data.id;
-    this.createdLlmIntegrationIds.push(id);
+    this.tracked.llmIntegrationIds.push(id);
     return id;
   }
 
@@ -3360,7 +3402,7 @@ export class ApiHelper {
 
     const result = await response.json();
     const id = result.data.id;
-    this.createdProjectLlmIntegrationIds.push(id);
+    this.tracked.projectLlmIntegrationIds.push(id);
     return id;
   }
 
@@ -3414,7 +3456,7 @@ export class ApiHelper {
     }
     const body = await response.json();
     const id: number = body.id;
-    this.createdIssueIntegrationIds.push(id);
+    this.tracked.issueIntegrationIds.push(id);
     return id;
   }
 
@@ -3559,115 +3601,115 @@ export class ApiHelper {
    */
   async cleanup(): Promise<void> {
     // Delete test run cases first (they reference test runs and repository cases)
-    for (const testRunCaseId of this.createdTestRunCaseIds) {
+    for (const testRunCaseId of this.tracked.testRunCaseIds) {
       await this.deleteTestRunCase(testRunCaseId);
     }
-    this.createdTestRunCaseIds = [];
+    this.tracked.testRunCaseIds = [];
 
     // Delete test runs (they reference projects)
-    for (const testRunId of this.createdTestRunIds) {
+    for (const testRunId of this.tracked.testRunIds) {
       await this.deleteTestRun(testRunId);
     }
-    this.createdTestRunIds = [];
+    this.tracked.testRunIds = [];
 
     // Delete test cases (they reference folders, tags, and issues)
-    for (const caseId of this.createdCaseIds) {
+    for (const caseId of this.tracked.caseIds) {
       await this.deleteTestCase(caseId);
     }
-    this.createdCaseIds = [];
+    this.tracked.caseIds = [];
 
     // Then delete folders
-    for (const folderId of this.createdFolderIds) {
+    for (const folderId of this.tracked.folderIds) {
       await this.deleteFolder(folderId);
     }
-    this.createdFolderIds = [];
+    this.tracked.folderIds = [];
 
     // Delete tags
-    for (const tagId of this.createdTagIds) {
+    for (const tagId of this.tracked.tagIds) {
       await this.deleteTag(tagId);
     }
-    this.createdTagIds = [];
+    this.tracked.tagIds = [];
 
     // Delete issues
-    for (const issueId of this.createdIssueIds) {
+    for (const issueId of this.tracked.issueIds) {
       await this.deleteIssue(issueId);
     }
-    this.createdIssueIds = [];
+    this.tracked.issueIds = [];
 
     // Delete project LLM integrations (they reference projects and LLM integrations)
-    for (const pliId of this.createdProjectLlmIntegrationIds) {
-      this.request
+    for (const pliId of this.tracked.projectLlmIntegrationIds) {
+      await this.request
         .delete(`${this.baseURL}/api/model/projectLlmIntegration/delete`, {
           data: { where: { id: pliId } },
         })
         .catch(() => {});
     }
-    this.createdProjectLlmIntegrationIds = [];
+    this.tracked.projectLlmIntegrationIds = [];
 
     // Delete LLM integrations
-    for (const llmId of this.createdLlmIntegrationIds) {
-      this.request
+    for (const llmId of this.tracked.llmIntegrationIds) {
+      await this.request
         .delete(`${this.baseURL}/api/model/llmIntegration/delete`, {
           data: { where: { id: llmId } },
         })
         .catch(() => {});
     }
-    this.createdLlmIntegrationIds = [];
+    this.tracked.llmIntegrationIds = [];
 
     // Delete Issue Integrations (Jira/GitHub/ADO admin records). The
     // ProjectIntegration rows that reference them cascade with the
     // project deletion below, so order doesn't matter strictly, but
     // we still try to clean these up before the project tear-down.
-    for (const issueIntegrationId of this.createdIssueIntegrationIds) {
-      this.request
+    for (const issueIntegrationId of this.tracked.issueIntegrationIds) {
+      await this.request
         .delete(`${this.baseURL}/api/model/integration/delete`, {
           data: { where: { id: issueIntegrationId } },
         })
         .catch(() => {});
     }
-    this.createdIssueIntegrationIds = [];
+    this.tracked.issueIntegrationIds = [];
 
     // Delete share links (they reference projects)
-    for (const shareLinkId of this.createdShareLinkIds) {
+    for (const shareLinkId of this.tracked.shareLinkIds) {
       await this.deleteShareLink(shareLinkId);
     }
-    this.createdShareLinkIds = [];
+    this.tracked.shareLinkIds = [];
 
     // Finally delete projects (they reference everything else)
-    for (const projectId of this.createdProjectIds) {
+    for (const projectId of this.tracked.projectIds) {
       await this.deleteProject(projectId);
     }
-    this.createdProjectIds = [];
+    this.tracked.projectIds = [];
 
     // Delete templates (created test data)
-    for (const templateId of this.createdTemplateIds) {
+    for (const templateId of this.tracked.templateIds) {
       await this.deleteTemplate(templateId);
     }
-    this.createdTemplateIds = [];
+    this.tracked.templateIds = [];
 
     // Delete field options
-    for (const optionId of this.createdFieldOptionIds) {
+    for (const optionId of this.tracked.fieldOptionIds) {
       await this.deleteFieldOption(optionId);
     }
-    this.createdFieldOptionIds = [];
+    this.tracked.fieldOptionIds = [];
 
     // Delete case fields
-    for (const fieldId of this.createdCaseFieldIds) {
+    for (const fieldId of this.tracked.caseFieldIds) {
       await this.deleteCaseField(fieldId);
     }
-    this.createdCaseFieldIds = [];
+    this.tracked.caseFieldIds = [];
 
     // Delete result fields
-    for (const fieldId of this.createdResultFieldIds) {
+    for (const fieldId of this.tracked.resultFieldIds) {
       await this.deleteResultField(fieldId);
     }
-    this.createdResultFieldIds = [];
+    this.tracked.resultFieldIds = [];
 
     // Delete configurations
-    for (const configId of this.createdConfigurationIds) {
+    for (const configId of this.tracked.configurationIds) {
       await this.deleteConfiguration(configId);
     }
-    this.createdConfigurationIds = [];
+    this.tracked.configurationIds = [];
   }
 
   /**

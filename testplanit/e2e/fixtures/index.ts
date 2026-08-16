@@ -1,5 +1,9 @@
 import { expect, test as base, type Page, type Route } from "@playwright/test";
-import { ApiHelper } from "./api.fixture";
+import {
+  ApiHelper,
+  createTrackedResources,
+  type TrackedResources,
+} from "./api.fixture";
 
 /**
  * Stub every always-on SSE stream with HTTP 204 so each EventSource stops
@@ -51,9 +55,25 @@ export interface TestFixtures {
 }
 
 /**
+ * Worker-scoped fixtures. See `workerCleanup` below.
+ */
+export interface WorkerFixtures {
+  /** Per-spec-file resource registry backing the `api` fixture's cleanup. */
+  workerCleanup: WorkerCleanup;
+}
+
+export interface WorkerCleanup {
+  /**
+   * Return the shared TrackedResources store for a spec file, flushing
+   * (deleting) every OTHER file's tracked resources first.
+   */
+  forFile(file: string): Promise<TrackedResources>;
+}
+
+/**
  * Extended test with custom fixtures
  */
-export const test = base.extend<TestFixtures>({
+export const test = base.extend<TestFixtures, WorkerFixtures>({
   // Auto-apply the SSE stubs to the fixture's `page`. See stubLiveStreams
   // above for rationale. Manually-created contexts must call it themselves.
   page: async ({ page }, use, testInfo) => {
@@ -91,17 +111,80 @@ export const test = base.extend<TestFixtures>({
   // Default project ID (can be overridden per test)
   projectId: 1,
 
-  // API helper fixture with automatic cleanup
-  api: async ({ request, baseURL }, use) => {
-    const api = new ApiHelper(request, baseURL || "http://localhost:3000");
+  // API helper with automatic FILE-scoped cleanup.
+  //
+  // Every ApiHelper this fixture hands out for a given spec file — whether
+  // instantiated for a beforeAll/afterAll hook or for a test — shares one
+  // TrackedResources store (see workerCleanup). Nothing is deleted while the
+  // worker is still running tests from the file, so hook-created projects and
+  // serial-describe resources created in an early test safely outlive the
+  // instance that created them. The store is flushed when the worker moves to
+  // the next spec file and at worker shutdown.
+  //
+  // There is deliberately NO cleanup() call here: a test-scoped fixture used
+  // by a beforeAll hook is torn down when the hook ends — BEFORE the tests
+  // run — and a per-instance cleanup at that point soft-deletes the resources
+  // the hook just created out from under every test in the file.
+  api: async ({ request, baseURL, workerCleanup }, use, testInfo) => {
+    const tracked = await workerCleanup.forFile(testInfo.file);
+    const api = new ApiHelper(
+      request,
+      baseURL || "http://localhost:3000",
+      tracked
+    );
 
     // Provide the API helper to the test
     // eslint-disable-next-line react-hooks/rules-of-hooks
     await use(api);
-
-    // Cleanup after test
-    await api.cleanup();
   },
+
+  // Per-spec-file resource registry. Deletions run against a dedicated
+  // worker-lifetime admin request context (the built-in `request` fixture is
+  // test-scoped and disposes before a deferred flush could use it) and are
+  // awaited, so they reliably land instead of racing context disposal — the
+  // old fire-and-forget cleanup usually lost that race, which is how a single
+  // full-suite run leaked ~700 live projects.
+  workerCleanup: [
+    async ({ playwright }, use, workerInfo) => {
+      const { baseURL, storageState } = workerInfo.project.use;
+      const stores = new Map<string, TrackedResources>();
+      let adminContext: Awaited<
+        ReturnType<typeof playwright.request.newContext>
+      > | null = null;
+
+      const flushAllExcept = async (keepFile?: string) => {
+        for (const [file, tracked] of stores) {
+          if (file === keepFile) continue;
+          stores.delete(file);
+          adminContext ??= await playwright.request.newContext({
+            baseURL,
+            storageState,
+          });
+          await new ApiHelper(
+            adminContext,
+            baseURL || "http://localhost:3000",
+            tracked
+          ).cleanup();
+        }
+      };
+
+      await use({
+        async forFile(file: string) {
+          await flushAllExcept(file);
+          let tracked = stores.get(file);
+          if (!tracked) {
+            tracked = createTrackedResources();
+            stores.set(file, tracked);
+          }
+          return tracked;
+        },
+      });
+
+      await flushAllExcept();
+      if (adminContext) await adminContext.dispose();
+    },
+    { scope: "worker" },
+  ],
 
   // Admin user ID fixture - fetches the admin user's ID from the API
   adminUserId: async ({ request, baseURL }, use) => {

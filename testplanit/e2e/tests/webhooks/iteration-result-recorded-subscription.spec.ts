@@ -48,13 +48,6 @@ test.describe("Outbound webhook — iteration.result.recorded (INT-04 subscripti
 
   test.beforeAll(async ({ api }) => {
     projectId = await api.createProject(`E2E INT-04 ${uniqueId}`);
-    // The api fixture instance backing this hook tears down when the hook
-    // ends — BEFORE the test runs — and its auto-cleanup fire-and-forgets a
-    // soft-delete of every tracked project. Whether that PATCH escapes the
-    // closing request context is a race; when it lands, the test opens a
-    // soft-deleted project and 404s. Untrack and soft-delete explicitly in
-    // afterAll instead.
-    api.untrackProject(projectId);
     stub = await startStubServer();
     db = createRawDbClient();
 
@@ -187,15 +180,7 @@ test.describe("Outbound webhook — iteration.result.recorded (INT-04 subscripti
 
   test.afterAll(async () => {
     if (stub) await stub.close();
-    if (db) {
-      // Owns the cleanup the untracked api fixture no longer does.
-      if (projectId) {
-        await db.projects
-          .update({ where: { id: projectId }, data: { isDeleted: true } })
-          .catch(() => {});
-      }
-      await db.$disconnect();
-    }
+    if (db) await db.$disconnect();
   });
 
   test("admin opts in to iteration.result.recorded → submit triggers delivery per iteration; test_run.completed NOT delivered", async ({
