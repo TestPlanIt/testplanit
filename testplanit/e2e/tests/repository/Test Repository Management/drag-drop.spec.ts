@@ -379,7 +379,12 @@ test.describe("Drag & Drop", () => {
         width: number;
         height: number;
       } | null = null;
-      let targetBox: typeof caseBox = null;
+      let targetBox: {
+        x: number;
+        y: number;
+        width: number;
+        height: number;
+      } | null = null;
       await expect(async () => {
         await testCaseRow.evaluate((el) =>
           el.scrollIntoView({ block: "center" })

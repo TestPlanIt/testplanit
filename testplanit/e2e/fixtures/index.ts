@@ -1,4 +1,10 @@
-import { expect, test as base, type Page, type Route } from "@playwright/test";
+import {
+  expect,
+  test as base,
+  type APIRequestContext,
+  type Page,
+  type Route,
+} from "@playwright/test";
 import {
   ApiHelper,
   createTrackedResources,
@@ -148,19 +154,19 @@ export const test = base.extend<TestFixtures, WorkerFixtures>({
     async ({ playwright }, use, workerInfo) => {
       const { baseURL, storageState } = workerInfo.project.use;
       const stores = new Map<string, TrackedResources>();
-      let adminContext: Awaited<
-        ReturnType<typeof playwright.request.newContext>
-      > | null = null;
+      // One lightweight admin request context per worker, created eagerly —
+      // lazy init defeats TS closure flow analysis at the final dispose.
+      const adminContext: APIRequestContext =
+        await playwright.request.newContext({
+          baseURL,
+          storageState,
+        });
 
       const flushAllExcept = async (keepFile?: string) => {
         for (const [file, tracked] of stores) {
           if (file === keepFile) continue;
           stores.delete(file);
           try {
-            adminContext ??= await playwright.request.newContext({
-              baseURL,
-              storageState,
-            });
             await new ApiHelper(
               adminContext,
               baseURL || "http://localhost:3000",
@@ -188,7 +194,7 @@ export const test = base.extend<TestFixtures, WorkerFixtures>({
       });
 
       await flushAllExcept();
-      if (adminContext) await adminContext.dispose();
+      await adminContext.dispose();
     },
     { scope: "worker" },
   ],
