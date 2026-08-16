@@ -39,6 +39,27 @@ async function selectCase(page: Page, caseId: number): Promise<void> {
 }
 
 /**
+ * Opens the target-folder picker and clicks the given folder option. The
+ * trigger click can be swallowed while the freshly-opened dialog is still
+ * settling (open animation + async project/folder queries reflow it), so
+ * re-open the popover until the option is actually rendered. Only click the
+ * trigger while the list is closed — clicking it with the popover open would
+ * toggle it shut again.
+ */
+async function pickTargetFolder(page: Page, folderId: number): Promise<void> {
+  const option = page.getByTestId(`copy-move-folder-option-${folderId}`);
+  await expect(async () => {
+    if (!(await option.isVisible().catch(() => false))) {
+      await page
+        .getByTestId("copy-move-target-folder-trigger")
+        .click({ timeout: 2000 });
+    }
+    await expect(option).toBeVisible({ timeout: 3000 });
+  }).toPass({ timeout: 30_000 });
+  await option.click();
+}
+
+/**
  * Same-project copy/move via the wizard dialog. Pure DOM clicks — no HTML5
  * drag, no modifier keys; the flushReactRender / resolveCopyModifier helpers
  * from drag-drop-modifier-aware.spec.ts do not apply here.
@@ -218,14 +239,9 @@ test.describe("Copy/Move dialog same-project", () => {
           .getByTestId("copy-move-project-current-suffix")
       ).toBeVisible();
 
-      // Pick the sibling folder as destination. Wait for the option to render
-      // — AsyncCombobox lazy-loads options after the trigger opens the popover.
-      await page.getByTestId("copy-move-target-folder-trigger").click();
-      const siblingOption = page.getByTestId(
-        `copy-move-folder-option-${siblingFolderId}`
-      );
-      await expect(siblingOption).toBeVisible({ timeout: 30_000 });
-      await siblingOption.click();
+      // Pick the sibling folder as destination (AsyncCombobox lazy-loads
+      // options after the trigger opens the popover).
+      await pickTargetFolder(page, siblingFolderId);
 
       await page.getByTestId("copy-move-next-button").click();
     });
@@ -309,12 +325,7 @@ test.describe("Copy/Move dialog same-project", () => {
 
     await test.step("Pick the nested folder as destination", async () => {
       // Pick the nested folder as destination — different from source root.
-      await page.getByTestId("copy-move-target-folder-trigger").click();
-      const nestedOption = page.getByTestId(
-        `copy-move-folder-option-${nestedFolderId}`
-      );
-      await expect(nestedOption).toBeVisible({ timeout: 15_000 });
-      await nestedOption.click();
+      await pickTargetFolder(page, nestedFolderId);
 
       await page.getByTestId("copy-move-next-button").click();
     });
@@ -434,12 +445,7 @@ test.describe("Copy/Move dialog same-project", () => {
 
       await expect(page.getByTestId("copy-move-dialog")).toBeVisible();
 
-      await page.getByTestId("copy-move-target-folder-trigger").click();
-      const multiSiblingOption = page.getByTestId(
-        `copy-move-folder-option-${siblingFolderId}`
-      );
-      await expect(multiSiblingOption).toBeVisible({ timeout: 15_000 });
-      await multiSiblingOption.click();
+      await pickTargetFolder(page, siblingFolderId);
       await page.getByTestId("copy-move-next-button").click();
     });
 

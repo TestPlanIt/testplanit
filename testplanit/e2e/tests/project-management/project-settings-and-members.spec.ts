@@ -323,6 +323,19 @@ test.describe("Project Member Management", () => {
   });
 
   test("Groups tab shows group permissions table", async ({ page }) => {
+    await test.step("Create a group so the tab renders its table", async () => {
+      // The Groups tab renders "no groups found" (no <table>) when zero
+      // groups exist (ProjectGroupPermissions.tsx), and neither the seed nor
+      // this spec's setup creates any — the test only passed when unrelated
+      // specs happened to have created groups first. Seed one explicitly.
+      const createResponse = await page.request.post(`/api/model/groups/create`, {
+        data: {
+          data: { name: `E2E Members Group ${Date.now()}` },
+        },
+      });
+      expect(createResponse.ok()).toBe(true);
+    });
+
     const dialog = await openEditDialog(page);
 
     await test.step("Open the Groups tab", async () => {
@@ -351,15 +364,16 @@ test.describe("Project Member Management", () => {
       const saveButton = dialog.getByRole("button", { name: /save/i });
       await expect(saveButton).toBeVisible({ timeout: 10000 });
 
-      // Wait for async data to load (permissions queries)
-      await page.waitForTimeout(2000);
-
-      await saveButton.click();
-    });
-
-    await test.step("Verify the dialog closes on successful save", async () => {
-      // Dialog should close on success (toast fires and dialog closes)
-      await expect(dialog).not.toBeVisible({ timeout: 15000 });
+      // The dialog keeps reflowing while its async data (permissions
+      // queries) lands, so a one-shot click can be swallowed mid-re-render.
+      // Click Save while the dialog is open and retry until it closes — a
+      // persistent validation error would keep it open and still fail here.
+      await expect(async () => {
+        if (await dialog.isVisible()) {
+          await saveButton.click({ timeout: 2000 });
+        }
+        await expect(dialog).not.toBeVisible({ timeout: 5000 });
+      }).toPass({ timeout: 30000 });
     });
   });
 
