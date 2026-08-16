@@ -3682,10 +3682,66 @@ export class ApiHelper {
     this.tracked.projectIds = [];
 
     // Delete templates (created test data)
+    const deletedTemplates = this.tracked.templateIds.length > 0;
     for (const templateId of this.tracked.templateIds) {
       await this.deleteTemplate(templateId);
     }
     this.tracked.templateIds = [];
+
+    // A test may have flipped the catalog's single isDefault flag onto its
+    // own template (the tpl_single_default trigger clears the seeded
+    // default's flag when that happens). Deleting that template above then
+    // leaves the catalog with NO live default — and the app (JUnit import,
+    // the project wizard) assumes one exists. Restore the seeded Default
+    // Template whenever a flush leaves the catalog defaultless.
+    if (deletedTemplates) {
+      try {
+        const liveDefault = await this.request.get(
+          `${this.baseURL}/api/model/templates/findFirst`,
+          {
+            params: {
+              q: JSON.stringify({
+                where: { isDefault: true, isDeleted: false },
+                select: { id: true },
+              }),
+            },
+          }
+        );
+        const hasDefault =
+          liveDefault.ok() && !!(await liveDefault.json())?.data;
+        if (!hasDefault) {
+          const seeded = await this.request.get(
+            `${this.baseURL}/api/model/templates/findFirst`,
+            {
+              params: {
+                q: JSON.stringify({
+                  where: {
+                    templateName: SEEDED_DEFAULT_TEMPLATE_NAME,
+                    isDeleted: false,
+                  },
+                  select: { id: true },
+                }),
+              },
+            }
+          );
+          const seededId = seeded.ok()
+            ? (await seeded.json())?.data?.id
+            : null;
+          if (seededId) {
+            await this.request
+              .patch(`${this.baseURL}/api/model/templates/update`, {
+                data: {
+                  where: { id: seededId },
+                  data: { isDefault: true },
+                },
+              })
+              .catch(() => {});
+          }
+        }
+      } catch {
+        // Non-fatal: worst case the next setup-db reseed restores it.
+      }
+    }
 
     // Delete field options
     for (const optionId of this.tracked.fieldOptionIds) {

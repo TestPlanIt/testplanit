@@ -89,28 +89,29 @@ test.describe("Admin Workflows — default workflow edit-save idempotency", () =
       const dialog = page.locator('[role="dialog"]');
       await expect(dialog).toBeVisible({ timeout: 5000 });
 
-      // The Projects multiselect populates asynchronously — one chip per
-      // assigned project, hundreds on a long-lived E2E database. That render
-      // reflows the dialog, and a click aimed before it settles can land
-      // inside the chip box instead of on Submit (the submit then never
-      // fires and the dialog stays open until the close-wait times out).
-      // The Draft workflow is the seeded default and is assigned to every
-      // project, so at least one chip ✕ (role=button inside the multiselect
-      // trigger) always appears once the assignments load.
-      await expect(
-        dialog.locator('[role="combobox"] [role="button"]').first()
-      ).toBeVisible({ timeout: 15000 });
-
       // Save without changes. The submit button label depends on the edit
       // dialog implementation — accept "Save" / "Update" / "Submit".
+      //
+      // The click is retried in a guarded loop: the Projects multiselect
+      // populates asynchronously (one chip per live assigned project, and
+      // parallel workers create/delete projects throughout the run), so the
+      // dialog can reflow between Playwright's actionability check and the
+      // mouse events — mousedown and mouseup then land on different
+      // elements and the submit never fires, with no error reported. If the
+      // dialog is still open after a close-wait, click Submit again; a
+      // mid-submit retry is safe because the button is disabled while
+      // submitting (the inner click times out and the loop re-checks).
       const submit = dialog
         .getByRole("button", { name: /save|update|submit/i })
         .first();
-      await submit.click();
-
-      // Wait for dialog to close (success path) — error toast would keep it
-      // open, which we'd detect via the failed expect.
-      await expect(dialog).not.toBeVisible({ timeout: 30000 });
+      await expect(async () => {
+        if (await dialog.isVisible()) {
+          await submit.click({ timeout: 2000 });
+        }
+        // Dialog closes on success — an error toast/root error would keep
+        // it open, which we'd detect via this failing expect.
+        await expect(dialog).not.toBeVisible({ timeout: 5000 });
+      }).toPass({ timeout: 30000 });
 
       // No error toast surfaced. Confirm by looking for sonner's default
       // role="status" element with the destructive variant — absence is the
