@@ -89,6 +89,18 @@ test.describe("Admin Workflows — default workflow edit-save idempotency", () =
       const dialog = page.locator('[role="dialog"]');
       await expect(dialog).toBeVisible({ timeout: 5000 });
 
+      // The Projects multiselect populates asynchronously — one chip per
+      // assigned project, hundreds on a long-lived E2E database. That render
+      // reflows the dialog, and a click aimed before it settles can land
+      // inside the chip box instead of on Submit (the submit then never
+      // fires and the dialog stays open until the close-wait times out).
+      // The Draft workflow is the seeded default and is assigned to every
+      // project, so at least one chip ✕ (role=button inside the multiselect
+      // trigger) always appears once the assignments load.
+      await expect(
+        dialog.locator('[role="combobox"] [role="button"]').first()
+      ).toBeVisible({ timeout: 15000 });
+
       // Save without changes. The submit button label depends on the edit
       // dialog implementation — accept "Save" / "Update" / "Submit".
       const submit = dialog

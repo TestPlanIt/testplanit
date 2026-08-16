@@ -659,16 +659,16 @@ test.describe("Sorting", () => {
     });
 
     await test.step("Verify the first page is sorted ascending", async () => {
-      // Wait for the table to have content (not empty rows)
+      // The sorted refetch replaces the table contents asynchronously after
+      // the header click — a one-shot read can catch the pre-sort page (the
+      // failure screenshot shows the sorted table rendered moments after the
+      // stale read). Poll until the first row is "Alfa" (first
+      // alphabetically) instead of asserting a single snapshot.
       await expect(async () => {
         const firstPageNames = await getColumnValues(page, "Name");
         expect(firstPageNames.length).toBeGreaterThan(0);
-        expect(firstPageNames[0]).toBeTruthy(); // Not empty
-      }).toPass({ timeout: 5000 });
-
-      // Verify first item is "Alfa" (first alphabetically)
-      const firstPageNames = await getColumnValues(page, "Name");
-      expect(firstPageNames[0]).toContain("Alfa");
+        expect(firstPageNames[0]).toContain("Alfa");
+      }).toPass({ timeout: 10000 });
 
       // Get the sort icon state
       const sortState = await getSortIconState(page, "Name");

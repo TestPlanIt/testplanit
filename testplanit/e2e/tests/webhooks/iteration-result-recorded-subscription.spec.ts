@@ -48,6 +48,13 @@ test.describe("Outbound webhook — iteration.result.recorded (INT-04 subscripti
 
   test.beforeAll(async ({ api }) => {
     projectId = await api.createProject(`E2E INT-04 ${uniqueId}`);
+    // The api fixture instance backing this hook tears down when the hook
+    // ends — BEFORE the test runs — and its auto-cleanup fire-and-forgets a
+    // soft-delete of every tracked project. Whether that PATCH escapes the
+    // closing request context is a race; when it lands, the test opens a
+    // soft-deleted project and 404s. Untrack and soft-delete explicitly in
+    // afterAll instead.
+    api.untrackProject(projectId);
     stub = await startStubServer();
     db = createRawDbClient();
 
@@ -180,7 +187,15 @@ test.describe("Outbound webhook — iteration.result.recorded (INT-04 subscripti
 
   test.afterAll(async () => {
     if (stub) await stub.close();
-    if (db) await db.$disconnect();
+    if (db) {
+      // Owns the cleanup the untracked api fixture no longer does.
+      if (projectId) {
+        await db.projects
+          .update({ where: { id: projectId }, data: { isDeleted: true } })
+          .catch(() => {});
+      }
+      await db.$disconnect();
+    }
   });
 
   test("admin opts in to iteration.result.recorded → submit triggers delivery per iteration; test_run.completed NOT delivered", async ({
@@ -330,16 +345,25 @@ test.describe("Outbound webhook — iteration.result.recorded (INT-04 subscripti
       expect(completedDelivery).toBeUndefined();
 
       // 6. DB-side assertion: WebhookDelivery rows for both iterations.
-      const deliveries = await db.webhookDelivery.findMany({
-        where: {
-          webhookConfig: { projectId },
-          direction: "OUTBOUND",
-          eventType: "iteration.result.recorded",
-        },
-        orderBy: { receivedAt: "desc" },
-        take: 5,
-      });
-      expect(deliveries.length).toBeGreaterThanOrEqual(2);
+      // The dispatcher POSTs to the stub FIRST and persists the delivery
+      // row after (dispatch.ts steps 5→6), so the stub capture resolving
+      // does not mean the second row is committed yet — poll for it.
+      const findDeliveries = () =>
+        db.webhookDelivery.findMany({
+          where: {
+            webhookConfig: { projectId },
+            direction: "OUTBOUND",
+            eventType: "iteration.result.recorded",
+          },
+          orderBy: { receivedAt: "desc" },
+          take: 5,
+        });
+      await expect
+        .poll(async () => (await findDeliveries()).length, {
+          timeout: 15_000,
+        })
+        .toBeGreaterThanOrEqual(2);
+      const deliveries = await findDeliveries();
       for (const d of deliveries) {
         expect(d.statusCode).toBe(200);
         expect(d.error).toBeNull();
