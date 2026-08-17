@@ -47,8 +47,8 @@ import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import type { JsonValue } from "@zenstackhq/orm";
 import { Decimal } from "decimal.js";
 import { AlertCircle, Info, Loader2, RotateCcw } from "lucide-react";
-import { useTranslations } from "next-intl";
-import { useEffect, useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod/v4";
@@ -100,12 +100,16 @@ const createFormSchema = (
 
 type FormData = z.infer<ReturnType<typeof createFormSchema>>;
 
-// Providers that support dynamic model fetching
+// Providers that support dynamic model fetching. Custom LLM endpoints are
+// tried too (LiteLLM, OpenRouter, Together and other OpenAI-compatible
+// gateways serve /models); when the endpoint isn't compatible the dialog
+// silently falls back to manual model entry.
 const PROVIDERS_WITH_DYNAMIC_MODELS = [
   "OPENAI",
   "ANTHROPIC",
   "GEMINI",
   "OLLAMA",
+  "CUSTOM_LLM",
 ];
 
 // Maps form field names to accordion section ids — used to auto-expand
@@ -149,10 +153,19 @@ export function EditLlmIntegration({
   const tLlm = useTranslations("admin.llm");
   const tIntegrations = useTranslations("admin.integrations");
   const tBudgetAlert = useTranslations("admin.llm.budgetAlert");
+  const locale = useLocale();
   const [loading, setLoading] = useState(false);
   const [availableModels, setAvailableModels] = useState<string[]>([]);
   const [fetchingModels, setFetchingModels] = useState(false);
   const [modelsError, setModelsError] = useState<string | null>(null);
+  // Per-model cost in USD per 1M tokens, returned alongside the model list
+  // when the provider exposes pricing (LiteLLM /model/info, OpenRouter,
+  // Together AI). Kept in a ref so reading it never re-triggers the
+  // debounced model-fetch effect. Applied only when the admin picks a
+  // model, so saved costs are never clobbered on open.
+  const modelPricingRef = useRef<
+    Record<string, { input: number; output: number }>
+  >({});
   const [accordionValue, setAccordionValue] = useState<string[]>([]);
   // Captured from /api/admin/llm/test-credentials. When the admin runs Test
   // Connection, the server probes the chosen model for parameter support
@@ -229,6 +242,28 @@ export function EditLlmIntegration({
       } as Record<string, string>
     )[provider] ?? "";
 
+  // When the fetched pricing map knows the newly selected model, fill the
+  // cost fields with it (USD per 1M tokens — the unit the fields use). The
+  // admin can still override the values afterwards.
+  const applyModelPricing = (model: string) => {
+    const pricing = modelPricingRef.current[model];
+    if (!pricing) {
+      return;
+    }
+    form.setValue("costPerInputToken", pricing.input);
+    form.setValue("costPerOutputToken", pricing.output);
+    const formatCost = new Intl.NumberFormat(locale, {
+      maximumFractionDigits: 6,
+    });
+    toast.info(tAdd("pricingAutoFilled"), {
+      description: tAdd("pricingAutoFilledDescription", {
+        model,
+        input: formatCost.format(pricing.input),
+        output: formatCost.format(pricing.output),
+      }),
+    });
+  };
+
   const fetchAvailableModels = async (
     providerType: string,
     apiKey?: string,
@@ -238,9 +273,14 @@ export function EditLlmIntegration({
       return;
     }
 
+    // A custom endpoint has no obligation to be OpenAI-compatible, so a
+    // failed models fetch there just means manual model entry — no error UI.
+    const silent = providerType === "CUSTOM_LLM";
+
     setFetchingModels(true);
     setModelsError(null);
     setAvailableModels([]);
+    modelPricingRef.current = {};
 
     try {
       const response = await fetch("/api/admin/llm/available-models", {
@@ -257,29 +297,32 @@ export function EditLlmIntegration({
 
       if (data.success) {
         setAvailableModels(data.models || []);
+        modelPricingRef.current = data.pricing || {};
         // Don't auto-set the first model when editing - keep the current selection
         if (data.models && data.models.length > 0) {
-          toast.success(`Found ${data.models.length} available models`, {
-            description: "Model list updated successfully",
+          toast.success(tAdd("modelsFound", { count: data.models.length }), {
+            description: t("modelListUpdated"),
           });
-        } else {
+        } else if (!silent) {
           toast.warning(tCommon("errors.noModelsFound"), {
-            description: "The provider returned no available models",
+            description: tAdd("noModelsFoundDescription"),
           });
         }
-      } else {
+      } else if (!silent) {
         setModelsError(data.error || "Failed to fetch models");
         toast.error(tCommon("errors.failedToFetchModels"), {
           description: data.error || "Unknown error",
         });
       }
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Unknown error";
-      setModelsError(errorMessage);
-      toast.error(tCommon("errors.failedToFetchModels"), {
-        description: errorMessage,
-      });
+      if (!silent) {
+        const errorMessage =
+          error instanceof Error ? error.message : "Unknown error";
+        setModelsError(errorMessage);
+        toast.error(tCommon("errors.failedToFetchModels"), {
+          description: errorMessage,
+        });
+      }
     } finally {
       setFetchingModels(false);
     }
@@ -305,6 +348,11 @@ export function EditLlmIntegration({
 
     // For providers that require an API key, wait until one is provided
     if (["OPENAI", "ANTHROPIC", "GEMINI"].includes(provider) && !apiKey) {
+      return;
+    }
+
+    // Ollama and custom providers require an endpoint
+    if (["OLLAMA", "CUSTOM_LLM"].includes(provider) && !endpoint) {
       return;
     }
 
@@ -378,6 +426,12 @@ export function EditLlmIntegration({
         toast.success(tIntegrations("testSuccess"), {
           description: tAdd("connectionSuccessfulDescription"),
         });
+        // Test Connection is an explicit action, so it also refreshes the
+        // cost fields with the provider's current pricing for the selected
+        // model. This is the only way to re-apply pricing without changing
+        // the model — re-selecting the same value in the model dropdown
+        // doesn't fire onValueChange. No-op when pricing is unknown.
+        applyModelPricing(values.defaultModel);
       } else {
         const errorMsg = data.error || tAdd("failedToConnect");
         const endpointVal = values.endpoint?.replace(/\/+$/, "");
@@ -817,7 +871,10 @@ export function EditLlmIntegration({
                                   provider
                                 ) && availableModels.length > 0 ? (
                                   <Select
-                                    onValueChange={field.onChange}
+                                    onValueChange={(value) => {
+                                      field.onChange(value);
+                                      applyModelPricing(value);
+                                    }}
                                     value={field.value}
                                   >
                                     <SelectTrigger>
@@ -859,7 +916,9 @@ export function EditLlmIntegration({
                                       : provider === "OPENAI" ||
                                           provider === "ANTHROPIC"
                                         ? "Enter your API key. We'll fetch the available models automatically."
-                                        : "Models will be fetched automatically from your Ollama instance."}
+                                        : provider === "CUSTOM_LLM"
+                                          ? tAdd("customLlmModelsHint")
+                                          : "Models will be fetched automatically from your Ollama instance."}
                                   </FormDescription>
                                 )}
                               <FormMessage />

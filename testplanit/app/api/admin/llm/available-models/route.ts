@@ -1,7 +1,29 @@
+import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
+import { authOptions } from "~/server/auth";
+import {
+  assertAllowedUrl,
+  extractEmbeddedPricing,
+  fetchLiteLlmPricing,
+  stripChatCompletionsSuffix,
+  type ModelPricingMap,
+} from "./pricing";
+
+interface ModelsResult {
+  models: string[];
+  pricing: ModelPricingMap;
+}
 
 export async function POST(request: NextRequest) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (session.user.access !== "ADMIN") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
     const { provider, apiKey, endpoint } = await request.json();
 
     if (!provider) {
@@ -11,20 +33,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    let models: string[] = [];
+    let result: ModelsResult;
 
     switch (provider) {
       case "OPENAI":
-        models = await fetchOpenAiModels(apiKey, endpoint);
+        result = await fetchOpenAiModels(apiKey, endpoint);
         break;
       case "GEMINI":
-        models = await fetchGeminiModels(apiKey, endpoint);
+        result = await fetchGeminiModels(apiKey, endpoint);
         break;
       case "ANTHROPIC":
-        models = await fetchAnthropicModels(apiKey, endpoint);
+        result = await fetchAnthropicModels(apiKey, endpoint);
         break;
       case "OLLAMA":
-        models = await fetchOllamaModels(endpoint);
+        result = await fetchOllamaModels(endpoint);
+        break;
+      case "CUSTOM_LLM":
+        result = await fetchCustomLlmModels(apiKey, endpoint);
         break;
       default:
         return NextResponse.json(
@@ -35,7 +60,10 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      models: models,
+      models: result.models,
+      // USD per 1M tokens, keyed by model id. Only populated when the
+      // provider exposes pricing (LiteLLM /model/info, OpenRouter, Together).
+      pricing: result.pricing,
     });
   } catch (error) {
     console.error("Error fetching available models:", error);
@@ -49,19 +77,38 @@ export async function POST(request: NextRequest) {
   }
 }
 
+/**
+ * Extract model ids from an OpenAI-compatible /models response. Most providers
+ * wrap the list as `{data: [...]}`; Together AI returns a bare array.
+ */
+function extractModelList(payload: unknown): any[] {
+  if (Array.isArray(payload)) {
+    return payload;
+  }
+  const data = (payload as { data?: unknown })?.data;
+  return Array.isArray(data) ? data : [];
+}
+
 async function fetchOpenAiModels(
   apiKey?: string,
   endpoint?: string
-): Promise<string[]> {
+): Promise<ModelsResult> {
   if (!apiKey) {
     throw new Error("API key is required for OpenAI");
   }
 
   const baseUrl = endpoint?.trim() || "https://api.openai.com/v1";
-  const url = `${baseUrl.replace(/\/$/, "")}/models`;
+  const normalizedBase = baseUrl.replace(/\/$/, "");
+  let isCustomEndpoint = false;
+  try {
+    isCustomEndpoint = new URL(normalizedBase).hostname !== "api.openai.com";
+  } catch {
+    isCustomEndpoint = true;
+  }
+  const url = `${normalizedBase}/models`;
 
   try {
-    const response = await fetch(url, {
+    const response = await fetch(assertAllowedUrl(url).href, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -75,19 +122,27 @@ async function fetchOpenAiModels(
       throw new Error(`OpenAI API error: ${response.status} ${errorText}`);
     }
 
-    const data = await response.json();
+    const list = extractModelList(await response.json());
 
-    if (data?.data && Array.isArray(data.data)) {
-      return data.data
-        .map((model: any) => model?.id)
-        .filter(
-          (id: unknown): id is string =>
-            typeof id === "string" && id.includes("gpt")
-        )
-        .sort();
+    const models = list
+      .map((model: any) => model?.id)
+      .filter(
+        (id: unknown): id is string =>
+          typeof id === "string" &&
+          // The official API lists many non-chat models (embeddings, tts,
+          // dall-e, ...); keep the gpt filter there. Proxies (LiteLLM,
+          // OpenRouter, Together) list exactly what they serve, which is
+          // often not gpt-named — show everything.
+          (isCustomEndpoint || id.includes("gpt"))
+      )
+      .sort();
+
+    const pricing = extractEmbeddedPricing(list);
+    if (isCustomEndpoint) {
+      Object.assign(pricing, await fetchLiteLlmPricing(normalizedBase, apiKey));
     }
 
-    return [];
+    return { models, pricing };
   } catch (error) {
     console.error("Error fetching OpenAI models:", error);
     throw new Error(
@@ -101,7 +156,7 @@ async function fetchOpenAiModels(
 async function fetchGeminiModels(
   apiKey: string,
   endpoint?: string
-): Promise<string[]> {
+): Promise<ModelsResult> {
   if (!apiKey) {
     throw new Error("API key is required for Gemini");
   }
@@ -111,7 +166,7 @@ async function fetchGeminiModels(
   const url = `${baseUrl}/models?key=${apiKey}`;
 
   try {
-    const response = await fetch(url, {
+    const response = await fetch(assertAllowedUrl(url).href, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -128,7 +183,7 @@ async function fetchGeminiModels(
 
     // Extract model names from the response
     if (data.models && Array.isArray(data.models)) {
-      return data.models
+      const models = data.models
         .filter((model: any) => {
           // Filter for generation models only
           return (
@@ -142,9 +197,11 @@ async function fetchGeminiModels(
           return model.name.replace("models/", "");
         })
         .sort();
+      // The Gemini models API exposes no pricing fields.
+      return { models, pricing: {} };
     }
 
-    return [];
+    return { models: [], pricing: {} };
   } catch (error) {
     console.error("Error fetching Gemini models:", error);
     throw new Error(
@@ -156,7 +213,7 @@ async function fetchGeminiModels(
 async function fetchAnthropicModels(
   apiKey?: string,
   endpoint?: string
-): Promise<string[]> {
+): Promise<ModelsResult> {
   if (!apiKey) {
     throw new Error("API key is required for Anthropic");
   }
@@ -179,7 +236,7 @@ async function fetchAnthropicModels(
 
     if (isCustomEndpoint) {
       // LiteLLM and other proxies use OpenAI-compatible /models endpoint with Bearer auth
-      response = await fetch(`${baseUrl}/models`, {
+      response = await fetch(assertAllowedUrl(`${baseUrl}/models`).href, {
         method: "GET",
         headers: {
           Authorization: `Bearer ${apiKey}`,
@@ -187,15 +244,19 @@ async function fetchAnthropicModels(
         signal: AbortSignal.timeout(10000),
       });
     } else {
-      // Direct Anthropic API uses x-api-key auth
-      response = await fetch(`${baseUrl}/models?limit=1000`, {
-        method: "GET",
-        headers: {
-          "x-api-key": apiKey,
-          "anthropic-version": "2023-06-01",
-        },
-        signal: AbortSignal.timeout(10000),
-      });
+      // Direct Anthropic API uses x-api-key auth. Its models API exposes no
+      // pricing fields.
+      response = await fetch(
+        assertAllowedUrl(`${baseUrl}/models?limit=1000`).href,
+        {
+          method: "GET",
+          headers: {
+            "x-api-key": apiKey,
+            "anthropic-version": "2023-06-01",
+          },
+          signal: AbortSignal.timeout(10000),
+        }
+      );
     }
 
     if (!response.ok) {
@@ -203,16 +264,19 @@ async function fetchAnthropicModels(
       throw new Error(`Anthropic API error: ${response.status} ${errorText}`);
     }
 
-    const data = await response.json();
+    const list = extractModelList(await response.json());
 
-    if (data?.data && Array.isArray(data.data)) {
-      return data.data
-        .map((model: any) => model?.id)
-        .filter((id: unknown): id is string => typeof id === "string")
-        .sort();
+    const models = list
+      .map((model: any) => model?.id)
+      .filter((id: unknown): id is string => typeof id === "string")
+      .sort();
+
+    const pricing = isCustomEndpoint ? extractEmbeddedPricing(list) : {};
+    if (isCustomEndpoint) {
+      Object.assign(pricing, await fetchLiteLlmPricing(baseUrl, apiKey));
     }
 
-    return [];
+    return { models, pricing };
   } catch (error) {
     console.error("Error fetching Anthropic models:", error);
     if (error instanceof Error && error.name === "TimeoutError") {
@@ -228,7 +292,7 @@ async function fetchAnthropicModels(
   }
 }
 
-async function fetchOllamaModels(endpoint?: string): Promise<string[]> {
+async function fetchOllamaModels(endpoint?: string): Promise<ModelsResult> {
   if (!endpoint?.trim()) {
     throw new Error("Endpoint URL is required for Ollama");
   }
@@ -236,7 +300,7 @@ async function fetchOllamaModels(endpoint?: string): Promise<string[]> {
   const url = `${baseUrl}/api/tags`;
 
   try {
-    const response = await fetch(url, {
+    const response = await fetch(assertAllowedUrl(url).href, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -253,15 +317,16 @@ async function fetchOllamaModels(endpoint?: string): Promise<string[]> {
 
     const data = await response.json();
 
-    // Extract model names from the response
+    // Extract model names from the response. Ollama is local — no pricing.
     if (data.models && Array.isArray(data.models)) {
-      return data.models
+      const models = data.models
         .map((model: any) => model.name || model.model)
         .filter((name: string) => name) // Remove any undefined/null names
         .sort();
+      return { models, pricing: {} };
     }
 
-    return [];
+    return { models: [], pricing: {} };
   } catch (error) {
     console.error("Error fetching Ollama models:", error);
     if (error instanceof Error && error.name === "TimeoutError") {
@@ -271,6 +336,61 @@ async function fetchOllamaModels(endpoint?: string): Promise<string[]> {
     }
     throw new Error(
       `Failed to fetch Ollama models: ${error instanceof Error ? error.message : "Unknown error"}`
+    );
+  }
+}
+
+/**
+ * Custom LLM endpoints store the full chat URL; many of them (LiteLLM,
+ * OpenRouter, Together, vLLM, LM Studio) are OpenAI-compatible, so try the
+ * sibling /models endpoint. The dialogs treat failures here as "manual model
+ * entry" rather than an error, since a custom endpoint has no obligation to
+ * be OpenAI-compatible.
+ */
+async function fetchCustomLlmModels(
+  apiKey?: string,
+  endpoint?: string
+): Promise<ModelsResult> {
+  if (!endpoint?.trim()) {
+    throw new Error("Endpoint URL is required for a custom LLM");
+  }
+  const baseUrl = stripChatCompletionsSuffix(endpoint);
+
+  try {
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+    };
+    if (apiKey) {
+      headers.Authorization = `Bearer ${apiKey}`;
+    }
+    const response = await fetch(assertAllowedUrl(`${baseUrl}/models`).href, {
+      method: "GET",
+      headers,
+      signal: AbortSignal.timeout(10000),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Custom LLM API error: ${response.status} ${errorText}`);
+    }
+
+    const list = extractModelList(await response.json());
+
+    const models = list
+      .map((model: any) => model?.id)
+      .filter((id: unknown): id is string => typeof id === "string")
+      .sort();
+
+    const pricing = extractEmbeddedPricing(list);
+    Object.assign(pricing, await fetchLiteLlmPricing(baseUrl, apiKey));
+
+    return { models, pricing };
+  } catch (error) {
+    console.error("Error fetching custom LLM models:", error);
+    throw new Error(
+      `Failed to fetch custom LLM models: ${
+        error instanceof Error ? error.message : "Unknown error"
+      }`
     );
   }
 }

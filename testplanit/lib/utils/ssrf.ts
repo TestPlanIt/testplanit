@@ -63,6 +63,30 @@ export function getAllowedPrivateHosts(): Set<string> {
   );
 }
 
+// ─── Cloud Metadata Hostnames ────────────────────────────────────────────────
+
+/**
+ * Returns true for cloud instance-metadata service addresses: the link-local
+ * IP shared by AWS/GCP/Azure, GCP's DNS aliases, and Alibaba Cloud's address.
+ * These serve credentials to the local machine and are never a legitimate
+ * outbound endpoint, so every server-side fetch of a user-configured URL
+ * refuses them — including code paths that deliberately allow other private
+ * addresses (e.g. a local Ollama or LiteLLM instance).
+ *
+ * Deliberately written as explicit `===` comparisons (not a Set/array lookup)
+ * so CodeQL's HostnameSanitizerGuard recognises callers' checks as SSRF
+ * barrier guards.
+ */
+export function isCloudMetadataHostname(hostname: string): boolean {
+  const lower = hostname.toLowerCase();
+  return (
+    lower === "169.254.169.254" || // AWS/GCP/Azure instance metadata
+    lower === "metadata.google.internal" || // GCP metadata
+    lower === "metadata.google" ||
+    lower === "100.100.100.200" // Alibaba Cloud metadata
+  );
+}
+
 // ─── IP Validation ────────────────────────────────────────────────────────────
 
 /**
@@ -96,11 +120,7 @@ export function isPrivateOrInternalIp(ip: string): boolean {
   }
 
   // Cloud metadata and internal DNS names
-  if (
-    lower === "169.254.169.254" ||
-    lower === "metadata.google.internal" ||
-    lower.endsWith(".internal")
-  ) {
+  if (isCloudMetadataHostname(lower) || lower.endsWith(".internal")) {
     return true;
   }
 

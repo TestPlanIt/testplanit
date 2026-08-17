@@ -128,7 +128,7 @@ Max Tokens: 4096
 Temperature: 0.7
 ```
 
-**Note**: Custom LLM endpoints must be compatible with the OpenAI API format.
+**Note**: Custom LLM endpoints must be compatible with the OpenAI API format. When the endpoint is OpenAI-compatible, the model dropdown is populated automatically from its `/models` listing and [model pricing](#model-pricing) is applied when available; endpoints that don't serve `/models` fall back to manual model entry.
 
 ### Token Limits
 
@@ -151,7 +151,7 @@ For security, all custom URLs are validated to prevent Server-Side Request Forge
 
 - `localhost`, `127.0.0.1`, `0.0.0.0`, IPv6 loopback (`::1`)
 - Private IP ranges: `10.x.x.x`, `172.16–31.x.x`, `192.168.x.x`
-- Cloud metadata endpoints: `169.254.169.254`, `metadata.google.internal`, `*.internal`
+- Cloud metadata endpoints: `169.254.169.254`, `metadata.google.internal`, `metadata.google`, `100.100.100.200`, `*.internal`
 
 **Recommended:** Expose self-hosted services (Ollama, LiteLLM, etc.) through a reverse proxy with proper authentication and a publicly accessible URL. This preserves SSRF protection while allowing TestPlanIt to reach your internal services securely.
 
@@ -165,6 +165,19 @@ ALLOWED_PRIVATE_HOSTS="localhost,192.168.1.100,ollama.internal"
 :::warning
 Only add hosts that you trust. `ALLOWED_PRIVATE_HOSTS` disables SSRF protection for every listed address across all features. A reverse proxy is the safer option for production environments.
 :::
+
+### Model Pricing
+
+Each integration stores two cost fields — **Cost Per 1M Input Tokens ($)** and **Cost Per 1M Output Tokens ($)** — used to compute the estimated cost of every AI call (see the [LLM Usage report](./llm-usage-report.md)) and to track spend against the [Monthly Budget](#billing-period).
+
+When the provider reports per-model pricing, both fields are filled in automatically:
+
+- **LiteLLM proxies** — pricing is read from the proxy's `/model/info` endpoint. This works whichever provider type the proxy is configured under (OpenAI, Anthropic, or Custom LLM).
+- **OpenRouter** and **Together AI** — pricing is included in their model listings.
+
+Auto-fill happens when you select a model from the fetched model list, and again after a successful **Test Connection** — the latter is also how you refresh the values for the already-selected model after a provider price change. A toast confirms the applied rates, and you can still edit both fields before saving; nothing is stored until you click **Create**/**Update**. Models whose pricing the provider doesn't report leave the fields untouched.
+
+Direct OpenAI, Anthropic, Gemini, and Azure OpenAI APIs do not report pricing, so enter the values from your provider's pricing page. Locally hosted models (Ollama) cost nothing — leave both fields at `0`.
 
 ### Billing Period
 

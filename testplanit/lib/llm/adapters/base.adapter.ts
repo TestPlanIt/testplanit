@@ -13,26 +13,14 @@ import type {
   RateLimitInfo,
   SettingsWithCapabilities,
 } from "../types";
+import { isCloudMetadataHostname } from "~/lib/utils/ssrf";
 
 /**
- * SSRF prevention for LLM adapter URLs.
- *
- * Unlike the stricter `isSsrfSafe` in `utils/ssrf.ts` (which blocks all
- * private IPs), this check intentionally allows localhost and private
+ * Validates an adapter base URL at construction time: http(s) only and no
+ * cloud metadata endpoints — the same policy `safeFetch` re-applies to the
+ * full URL of every request. Intentionally allows localhost and private
  * network addresses because adapters like Ollama legitimately use local
- * endpoints. It only blocks cloud metadata services and non-HTTP protocols.
- */
-const SSRF_BLOCKED_HOSTS = [
-  "169.254.169.254", // AWS/GCP/Azure instance metadata
-  "metadata.google.internal", // GCP metadata
-  "metadata.google",
-  "100.100.100.200", // Alibaba Cloud metadata
-];
-
-/**
- * Validates a URL against the SSRF blocklist and returns a sanitized URL
- * string derived from the parsed URL object (breaks the taint chain for
- * static analysis tools like CodeQL).
+ * endpoints.
  */
 function sanitizeUrl(url: string): string {
   let parsed: URL;
@@ -47,7 +35,7 @@ function sanitizeUrl(url: string): string {
   }
 
   const hostname = parsed.hostname.toLowerCase();
-  if (SSRF_BLOCKED_HOSTS.includes(hostname)) {
+  if (isCloudMetadataHostname(hostname)) {
     throw new Error(`Requests to ${hostname} are not allowed`);
   }
 
@@ -231,8 +219,13 @@ export abstract class BaseLlmAdapter {
    * Fetch wrapper that validates the URL against SSRF blocklist before
    * making the request. Use this instead of bare `fetch()` in adapters.
    *
-   * Hostname comparisons are inlined with explicit `===` checks so that
-   * CodeQL's HostnameSanitizerGuard recognises them as barrier guards.
+   * Unlike the stricter `ssrfSafeFetch` in `utils/ssrf.ts` (which blocks all
+   * private IPs), this check intentionally allows localhost and private
+   * network addresses because adapters like Ollama legitimately use local
+   * endpoints. It only blocks cloud metadata services and non-HTTP protocols.
+   * The hostname check stays a guard condition in this function — with the
+   * comparisons one call deep as explicit `===` checks — so CodeQL's
+   * HostnameSanitizerGuard recognises it as a barrier guard.
    */
   protected safeFetch(url: string, init?: RequestInit): Promise<Response> {
     const parsed = new URL(url);
@@ -242,12 +235,7 @@ export abstract class BaseLlmAdapter {
     }
 
     const h = parsed.hostname;
-    if (
-      h === "169.254.169.254" ||
-      h === "metadata.google.internal" ||
-      h === "metadata.google" ||
-      h === "100.100.100.200"
-    ) {
+    if (isCloudMetadataHostname(h)) {
       throw new Error(`Requests to ${h} are not allowed`);
     }
 
@@ -271,12 +259,7 @@ export abstract class BaseLlmAdapter {
     }
 
     const h = parsed.hostname;
-    if (
-      h === "169.254.169.254" ||
-      h === "metadata.google.internal" ||
-      h === "metadata.google" ||
-      h === "100.100.100.200"
-    ) {
+    if (isCloudMetadataHostname(h)) {
       throw new Error(`Requests to ${h} are not allowed`);
     }
 

@@ -46,8 +46,8 @@ import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { JsonNull, type JsonValue } from "@zenstackhq/orm";
 import { Decimal } from "decimal.js";
 import { AlertCircle, Loader2 } from "lucide-react";
-import { useTranslations } from "next-intl";
-import { useCallback, useEffect, useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod/v4";
@@ -97,12 +97,16 @@ interface AddLlmIntegrationProps {
   onSuccess: () => void;
 }
 
-// Providers that support dynamic model fetching
+// Providers that support dynamic model fetching. Custom LLM endpoints are
+// tried too (LiteLLM, OpenRouter, Together and other OpenAI-compatible
+// gateways serve /models); when the endpoint isn't compatible the dialog
+// silently falls back to manual model entry.
 const PROVIDERS_WITH_DYNAMIC_MODELS = [
   "OPENAI",
   "ANTHROPIC",
   "GEMINI",
   "OLLAMA",
+  "CUSTOM_LLM",
 ];
 
 // Maps form field names to accordion section ids — used to auto-expand
@@ -203,11 +207,19 @@ export function AddLlmIntegration({
   const tCommon = useTranslations("common");
   const tIntegrations = useTranslations("admin.integrations");
   const tLlm = useTranslations("admin.llm");
+  const locale = useLocale();
   const [loading, setLoading] = useState(false);
   const [testingConnection, setTestingConnection] = useState(false);
   const [availableModels, setAvailableModels] = useState<string[]>([]);
   const [fetchingModels, setFetchingModels] = useState(false);
   const [modelsError, setModelsError] = useState<string | null>(null);
+  // Per-model cost in USD per 1M tokens, returned alongside the model list
+  // when the provider exposes pricing (LiteLLM /model/info, OpenRouter,
+  // Together AI). Kept in a ref so reading it never re-triggers the
+  // debounced model-fetch effect.
+  const modelPricingRef = useRef<
+    Record<string, { input: number; output: number }>
+  >({});
   const [accordionValue, setAccordionValue] = useState<string[]>(["provider"]);
   // Captured from /api/admin/llm/test-credentials. When the admin runs Test
   // Connection, the server probes the chosen model for parameter support
@@ -282,15 +294,45 @@ export function AddLlmIntegration({
       } as Record<string, string>
     )[provider] ?? "";
 
+  // When the fetched pricing map knows the selected model, fill the cost
+  // fields with it (USD per 1M tokens — the unit the fields use). The admin
+  // can still override the values afterwards.
+  const applyModelPricing = useCallback(
+    (model: string) => {
+      const pricing = modelPricingRef.current[model];
+      if (!pricing) {
+        return;
+      }
+      form.setValue("costPerInputToken", pricing.input);
+      form.setValue("costPerOutputToken", pricing.output);
+      const formatCost = new Intl.NumberFormat(locale, {
+        maximumFractionDigits: 6,
+      });
+      toast.info(t("pricingAutoFilled"), {
+        description: t("pricingAutoFilledDescription", {
+          model,
+          input: formatCost.format(pricing.input),
+          output: formatCost.format(pricing.output),
+        }),
+      });
+    },
+    [form, locale, t]
+  );
+
   const fetchAvailableModels = useCallback(
     async (providerType: string, apiKey?: string, endpoint?: string) => {
       if (!PROVIDERS_WITH_DYNAMIC_MODELS.includes(providerType)) {
         return;
       }
 
+      // A custom endpoint has no obligation to be OpenAI-compatible, so a
+      // failed models fetch there just means manual model entry — no error UI.
+      const silent = providerType === "CUSTOM_LLM";
+
       setFetchingModels(true);
       setModelsError(null);
       setAvailableModels([]);
+      modelPricingRef.current = {};
 
       try {
         const response = await fetch("/api/admin/llm/available-models", {
@@ -307,35 +349,41 @@ export function AddLlmIntegration({
 
         if (data.success) {
           setAvailableModels(data.models || []);
+          modelPricingRef.current = data.pricing || {};
           // Set the first model as default if available
           if (data.models && data.models.length > 0) {
             form.setValue("defaultModel", data.models[0]);
-            toast.success(`Found ${data.models.length} available models`, {
-              description: `Selected "${data.models[0]}" as default model`,
+            toast.success(t("modelsFound", { count: data.models.length }), {
+              description: t("modelsFoundDescription", {
+                model: data.models[0],
+              }),
             });
-          } else {
+            applyModelPricing(data.models[0]);
+          } else if (!silent) {
             toast.warning(tCommon("errors.noModelsFound"), {
-              description: "The provider returned no available models",
+              description: t("noModelsFoundDescription"),
             });
           }
-        } else {
+        } else if (!silent) {
           setModelsError(data.error || "Failed to fetch models");
           toast.error(t("failedToFetchModels"), {
             description: data.error || "Unknown error",
           });
         }
       } catch (error) {
-        const errorMessage =
-          error instanceof Error ? error.message : "Unknown error";
-        setModelsError(errorMessage);
-        toast.error(t("failedToFetchModels"), {
-          description: errorMessage,
-        });
+        if (!silent) {
+          const errorMessage =
+            error instanceof Error ? error.message : "Unknown error";
+          setModelsError(errorMessage);
+          toast.error(t("failedToFetchModels"), {
+            description: errorMessage,
+          });
+        }
       } finally {
         setFetchingModels(false);
       }
     },
-    [form, t]
+    [applyModelPricing, form, t, tCommon]
   );
 
   const handleProviderChange = (value: string) => {
@@ -349,6 +397,7 @@ export function AddLlmIntegration({
     // Clear previous models and reset default model
     setAvailableModels([]);
     setModelsError(null);
+    modelPricingRef.current = {};
 
     if (PROVIDERS_WITH_DYNAMIC_MODELS.includes(value)) {
       // For dynamic providers, clear the model field until we fetch the list
@@ -416,6 +465,12 @@ export function AddLlmIntegration({
         toast.success(tIntegrations("testSuccess"), {
           description: t("connectionSuccessfulDescription"),
         });
+        // Test Connection is an explicit action, so it also refreshes the
+        // cost fields with the provider's current pricing for the selected
+        // model. This is the only way to re-apply pricing without changing
+        // the model — re-selecting the same value in the model dropdown
+        // doesn't fire onValueChange. No-op when pricing is unknown.
+        applyModelPricing(values.defaultModel);
       } else {
         const errorMsg = data.error || t("failedToConnect");
         const endpointVal = values.endpoint?.replace(/\/+$/, "");
@@ -779,7 +834,10 @@ export function AddLlmIntegration({
                             {PROVIDERS_WITH_DYNAMIC_MODELS.includes(provider) &&
                             availableModels.length > 0 ? (
                               <Select
-                                onValueChange={field.onChange}
+                                onValueChange={(value) => {
+                                  field.onChange(value);
+                                  applyModelPricing(value);
+                                }}
                                 value={field.value}
                               >
                                 <SelectTrigger>
@@ -816,7 +874,9 @@ export function AddLlmIntegration({
                                   : provider === "OPENAI" ||
                                       provider === "ANTHROPIC"
                                     ? "Enter your API key. We'll fetch the available models automatically."
-                                    : "Models will be fetched automatically from your Ollama instance."}
+                                    : provider === "CUSTOM_LLM"
+                                      ? t("customLlmModelsHint")
+                                      : "Models will be fetched automatically from your Ollama instance."}
                               </FormDescription>
                             )}
                           {!PROVIDERS_WITH_DYNAMIC_MODELS.includes(

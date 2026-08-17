@@ -9,7 +9,10 @@ import {
   OllamaAdapter,
   OpenAIAdapter,
 } from "../adapters";
-import { getAllowedPrivateHosts } from "~/lib/utils/ssrf";
+import {
+  getAllowedPrivateHosts,
+  isCloudMetadataHostname,
+} from "~/lib/utils/ssrf";
 import { modelSupportsVision } from "../model-capabilities";
 import { estimatePromptTokens } from "../content";
 
@@ -69,11 +72,7 @@ function isPrivateOrInternalHost(hostname: string): boolean {
   }
 
   // Block cloud metadata endpoints
-  if (
-    lowerHost === "169.254.169.254" ||
-    lowerHost === "metadata.google.internal" ||
-    lowerHost.endsWith(".internal")
-  ) {
+  if (isCloudMetadataHostname(lowerHost) || lowerHost.endsWith(".internal")) {
     return true;
   }
 
