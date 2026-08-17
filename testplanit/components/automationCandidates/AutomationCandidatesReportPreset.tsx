@@ -972,7 +972,7 @@ function SnapshotMetaBar({
           strategy: strategyLabel,
         })
       : t("sourcedFromAll", {
-          total: String(output.totalManualCases),
+          total: output.totalManualCases,
           strategy: strategyLabel,
         })
     : null;
