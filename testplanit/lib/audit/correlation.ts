@@ -486,6 +486,9 @@ export function summarizeBulkCaseChanges(
 /** Savepoint names for the FK-poison isolation backstop in writeAuditLogRows (constant, not row data). */
 const BATCH_SAVEPOINT = "audit_cdc_batch";
 const ROW_SAVEPOINT = "audit_cdc_row";
+/** Savepoint names for the per-group isolation in pollDataChangeLogsOnce (constant, not row data). */
+const GROUP_SAVEPOINT = "audit_cdc_group";
+const WRITE_SAVEPOINT = "audit_cdc_write";
 
 /** Coerce a materialized row's projectId to a finite integer, or null when absent/unparseable. */
 function toProjectId(raw: string | null): number | null {
@@ -864,6 +867,16 @@ export interface TenantPollClient {
  * One poll pass: read up to `batchSize` unprocessed rows under FOR UPDATE SKIP LOCKED, materialize
  * them into AuditLog, and (unless markProcessed=false) mark the source rows processed=true — ALL in
  * a single transaction so a crash rolls back both the cursor advance and the inserts.
+ *
+ * Every per-group step runs under a SAVEPOINT: a SQL error anywhere aborts the whole Postgres
+ * transaction, and a bare try/catch cannot un-abort it — every later statement fails with 25P02, so
+ * without the savepoints one poison group would mark nothing and re-poll the same head-of-line batch
+ * forever. A failed group's source rows stay processed=false (retried next poll once the underlying
+ * issue clears); the rest of the batch drains normally.
+ *
+ * Returns `processed` = rows whose group COMPLETED this pass (materialized and written), not rows
+ * fetched — the supervisor treats processed>0 as "had work" and skips its idle sleep, so counting a
+ * failed group as progress would spin the loop at full speed against a poison-only batch.
  */
 export async function pollDataChangeLogsOnce(
   db: RawDbClient,
@@ -906,14 +919,20 @@ export async function pollDataChangeLogsOnce(
     };
 
     const groups = groupByOperationId(rows);
-    const materialized: MaterializedRow[] = [];
-    // Source ids of every row in a successfully-materialized group — including
-    // no-op rows that were cancelled (they produce no AuditLog row but ARE done,
-    // so they must still be marked processed or they would re-poll forever).
-    const processedSourceIds = new Set<string>();
+    // One entry per successfully-materialized group: its AuditLog-bound rows plus
+    // the source ids to mark done — including no-op rows that were cancelled (they
+    // produce no AuditLog row but ARE done, so they must still be marked processed
+    // or they would re-poll forever). Kept per group so a write-path failure can
+    // release exactly one group's rows back to the queue (see below).
+    const units: Array<{
+      materialized: MaterializedRow[];
+      sourceIds: string[];
+    }> = [];
 
     for (const group of groups) {
+      await tx.$executeRawUnsafe(`SAVEPOINT ${GROUP_SAVEPOINT}`);
       try {
+        const materialized: MaterializedRow[] = [];
         const rolled = await applyRollupMap(group, twoHopQuery);
 
         // No-op association churn cancel: when a save re-applies an UNCHANGED
@@ -1135,13 +1154,20 @@ export async function pollDataChangeLogsOnce(
             changes,
           });
         }
-        // The whole group materialized successfully — mark every source row done
-        // (materialized OR cancelled) so none re-polls.
-        for (const { row } of rolled) processedSourceIds.add(String(row.id));
+        // The whole group materialized successfully — record every source row as
+        // done (materialized OR cancelled) so none re-polls.
+        units.push({
+          materialized,
+          sourceIds: rolled.map(({ row }) => String(row.id)),
+        });
+        await tx.$executeRawUnsafe(`RELEASE SAVEPOINT ${GROUP_SAVEPOINT}`);
       } catch (err) {
         // Per-group isolation (T-14-05-04): a malformed diff in one group must not wedge the batch.
-        // The group's source rows stay processed=false (we never add them to `ids` below) and are
-        // retried on the next poll once the underlying issue clears.
+        // The rollback also clears any transaction-abort a failed materialization statement caused,
+        // so the remaining groups still drain. The group's source rows stay processed=false (it
+        // never becomes a unit) and are retried on the next poll once the underlying issue clears.
+        await tx.$executeRawUnsafe(`ROLLBACK TO SAVEPOINT ${GROUP_SAVEPOINT}`);
+        await tx.$executeRawUnsafe(`RELEASE SAVEPOINT ${GROUP_SAVEPOINT}`);
         console.error(
           "[correlation] group materialization failed, skipping group:",
           err
@@ -1149,23 +1175,73 @@ export async function pollDataChangeLogsOnce(
       }
     }
 
-    // Scope any row the capture substrate could not: rolled-up children whose
-    // owner was written by an earlier request, and attachments (no project
-    // column of their own). Runs before the merge so every row of a merged
-    // identity carries the same project.
-    await backfillProjectIds(tx, materialized);
+    // Source ids of every completed group; a write failure below removes the failed
+    // group's ids again so only completed rows are marked and counted.
+    const processedSourceIds = new Set(units.flatMap((u) => u.sourceIds));
+    const materialized = units.flatMap((u) => u.materialized);
+    let auditLogsWritten = 0;
 
-    // Merge same-identity rows so multiple children of one owner in one operation
-    // are all preserved instead of being dropped by the idempotency index.
-    const auditLogsWritten = await writeAuditLogRows(
-      tx,
-      summarizeBulkCaseChanges(mergeByIdentity(materialized))
-    );
+    if (materialized.length > 0) {
+      // The shared write path runs under its own SAVEPOINT: writeAuditLogRows isolates
+      // constraint errors internally (the FK-poison backstop), but a failure OUTSIDE
+      // that guard — a project-backfill lookup error, or an abort the backstop cannot
+      // absorb — would otherwise poison the transaction and wedge the batch. On failure
+      // the write rolls back and each group retries in isolation, so one poison group
+      // costs only its own rows (they stay queued) — never the batch.
+      await tx.$executeRawUnsafe(`SAVEPOINT ${WRITE_SAVEPOINT}`);
+      try {
+        // Scope any row the capture substrate could not: rolled-up children whose
+        // owner was written by an earlier request, and attachments (no project
+        // column of their own). Runs before the merge so every row of a merged
+        // identity carries the same project.
+        await backfillProjectIds(tx, materialized);
+
+        // Merge same-identity rows so multiple children of one owner in one operation
+        // are all preserved instead of being dropped by the idempotency index.
+        auditLogsWritten = await writeAuditLogRows(
+          tx,
+          summarizeBulkCaseChanges(mergeByIdentity(materialized))
+        );
+        await tx.$executeRawUnsafe(`RELEASE SAVEPOINT ${WRITE_SAVEPOINT}`);
+      } catch (batchErr) {
+        await tx.$executeRawUnsafe(`ROLLBACK TO SAVEPOINT ${WRITE_SAVEPOINT}`);
+        await tx.$executeRawUnsafe(`RELEASE SAVEPOINT ${WRITE_SAVEPOINT}`);
+        console.error(
+          "[correlation] batch write path failed; retrying groups in isolation:",
+          batchErr
+        );
+        // mergeByIdentity keys on operationId and summarizeBulkCaseChanges maps rows
+        // independently, so per-group output is identical to the batch output — no
+        // merge crosses a group boundary.
+        for (const unit of units) {
+          if (unit.materialized.length === 0) continue; // cancelled-only group: nothing to write
+          await tx.$executeRawUnsafe(`SAVEPOINT ${WRITE_SAVEPOINT}`);
+          try {
+            await backfillProjectIds(tx, unit.materialized);
+            auditLogsWritten += await writeAuditLogRows(
+              tx,
+              summarizeBulkCaseChanges(mergeByIdentity(unit.materialized))
+            );
+            await tx.$executeRawUnsafe(`RELEASE SAVEPOINT ${WRITE_SAVEPOINT}`);
+          } catch (groupErr) {
+            await tx.$executeRawUnsafe(
+              `ROLLBACK TO SAVEPOINT ${WRITE_SAVEPOINT}`
+            );
+            await tx.$executeRawUnsafe(`RELEASE SAVEPOINT ${WRITE_SAVEPOINT}`);
+            for (const id of unit.sourceIds) processedSourceIds.delete(id);
+            console.error(
+              `[correlation] write failed for group ${unit.materialized[0]?.operationId ?? "?"}; leaving its ${unit.sourceIds.length} source row(s) queued:`,
+              groupErr
+            );
+          }
+        }
+      }
+    }
 
     if (markProcessed) {
-      // Mark ONLY the rows whose group materialized successfully (processedSourceIds includes both
-      // the written rows and the no-op-cancelled rows). A group that threw above added nothing, so
-      // its source ids are excluded and it will be re-polled.
+      // Mark ONLY the rows whose group completed (processedSourceIds includes both
+      // the written rows and the no-op-cancelled rows). A group that failed above is
+      // excluded and will be re-polled.
       const ids = rows
         .filter((r) => processedSourceIds.has(String(r.id)))
         .map((r) => BigInt(r.id));
@@ -1176,7 +1252,7 @@ export async function pollDataChangeLogsOnce(
       }
     }
 
-    return { processed: rows.length, auditLogsWritten };
+    return { processed: processedSourceIds.size, auditLogsWritten };
   });
 }
 
