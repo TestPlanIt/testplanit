@@ -99,7 +99,7 @@ export interface MultiLineSeries {
 interface ReportChartProps {
   results: any[];
   dimensions: { value: string; label: string }[];
-  metrics: { value: string; label: string; originalLabel?: string }[];
+  metrics: { value: string; label: string; apiLabel?: string }[];
   reportType?: string; // Optional report type to handle special cases like automation-trends
   projects?: Array<{ id: number; name: string }>; // For automation trends report
   consecutiveRuns?: number; // For flaky tests report
@@ -110,7 +110,7 @@ interface ReportChartProps {
 // Helper to determine chart type
 const getChartType = (
   dimensions: { value: string; label: string }[],
-  metrics: { value: string; label: string; originalLabel?: string }[],
+  metrics: { value: string; label: string; apiLabel?: string }[],
   results: any[] = []
 ): ChartType => {
   const dimCount = dimensions.length;
@@ -278,12 +278,16 @@ const getDimensionLabel = (
 
 const getMetricValue = (
   row: any,
-  metric: { value: string; label: string; originalLabel?: string }
+  metric: { value: string; label: string; apiLabel?: string }
 ): number => {
-  // Try original English label first (for data access), then metric value, then translated label
-  return Number(
-    row[metric.originalLabel || metric.label] || row[metric.value] || 0
-  );
+  // Report API rows are keyed by the registry's English label; `label` may be
+  // localized for display (ReportBuilder), so data access goes through
+  // `apiLabel` when the caller provides one.
+  const raw =
+    (metric.apiLabel !== undefined ? row[metric.apiLabel] : undefined) ??
+    row[metric.label] ??
+    row[metric.value];
+  return Number(raw ?? 0);
 };
 
 // Helper type for issue color functions
@@ -520,7 +524,7 @@ export const ReportChart: React.FC<ReportChartProps> = ({
   const isElapsedTimeMetric = (metric: {
     value: string;
     label: string;
-    originalLabel?: string;
+    apiLabel?: string;
   }): boolean => {
     const unit = metricUnit(metric.value);
     if (unit !== undefined) return unit === "seconds";
@@ -537,7 +541,7 @@ export const ReportChart: React.FC<ReportChartProps> = ({
   const isPercentageMetric = (metric: {
     value: string;
     label: string;
-    originalLabel?: string;
+    apiLabel?: string;
   }): boolean => {
     const unit = metricUnit(metric.value);
     if (unit !== undefined) return unit === "percent";
@@ -558,7 +562,7 @@ export const ReportChart: React.FC<ReportChartProps> = ({
 
   const formatMetricValue = (
     value: number,
-    metric: { value: string; label: string; originalLabel?: string }
+    metric: { value: string; label: string; apiLabel?: string }
   ): string => {
     if (isElapsedTimeMetric(metric)) {
       // Display "-" for zero duration values
