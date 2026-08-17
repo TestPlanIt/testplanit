@@ -121,6 +121,7 @@ overrides:
   'immutable': '^4.3.9'
   'sharp': '>=0.35.0'
   'websocket-driver': '>=0.7.5'
+  'deepmerge-ts': '^8.0.1'
 
 patchedDependencies:
   gray-matter@4.0.3: patches/gray-matter@4.0.3.patch
