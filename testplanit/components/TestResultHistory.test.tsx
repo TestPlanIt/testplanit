@@ -13,6 +13,8 @@ const {
   mockUseFindManyTestRuns,
   mockUseCreateTestRunCases,
   mockUseFindUniqueProjects,
+  mockUseFindUniqueTestRunResults,
+  mockUseFindUniqueJUnitTestResult,
   mockUseProjectPermissions,
   mockUseSession,
   mockUseQueryClient,
@@ -24,6 +26,8 @@ const {
   mockUseFindManyTestRuns: vi.fn(),
   mockUseCreateTestRunCases: vi.fn(),
   mockUseFindUniqueProjects: vi.fn(),
+  mockUseFindUniqueTestRunResults: vi.fn(),
+  mockUseFindUniqueJUnitTestResult: vi.fn(),
   mockUseProjectPermissions: vi.fn(),
   mockUseSession: vi.fn(),
   mockUseQueryClient: vi.fn(),
@@ -40,6 +44,8 @@ vi.mock("@zenstackhq/tanstack-query/react", () => ({
     testRuns: { useFindMany: mockUseFindManyTestRuns },
     testRunCases: { useCreate: mockUseCreateTestRunCases },
     projects: { useFindUnique: mockUseFindUniqueProjects },
+    testRunResults: { useFindUnique: mockUseFindUniqueTestRunResults },
+    jUnitTestResult: { useFindUnique: mockUseFindUniqueJUnitTestResult },
   }),
 }));
 
@@ -198,6 +204,9 @@ function renderWithQueryClient(ui: React.ReactElement) {
 
 // --- Fixtures ---
 
+// Fixtures mirror the eager history query, which is intentionally row-slim:
+// notes, full step results, iteration values, and JUnit logs are lazy-fetched
+// per result on expand (mocked via the useFindUnique mocks below).
 const mockManualResult = {
   id: 1,
   testRunCaseId: 101,
@@ -208,7 +217,6 @@ const mockManualResult = {
   editedBy: null,
   editedAt: null,
   elapsed: 120,
-  notes: null,
   attempt: 1,
   resultFieldValues: [],
   attachments: [],
@@ -220,14 +228,11 @@ const mockJunitResult = {
   id: 10,
   type: "failure",
   message: "Expected 1, got 2",
-  content: "stack trace here",
   executedAt: new Date("2024-01-14T09:00:00Z").toISOString(),
   time: 50,
   assertions: 3,
   file: "test.java",
   line: 42,
-  systemOut: null,
-  systemErr: null,
   status: { name: "Failed", color: { value: "#EF4444" } },
   createdBy: { id: "user-2", name: "CI Bot" },
   testSuite: {
@@ -298,6 +303,14 @@ function setupDefaultMocks() {
   mockUseFindManyTestRuns.mockReturnValue({ data: [] });
   mockUseCreateTestRunCases.mockReturnValue({ mutateAsync: vi.fn() });
   mockUseFindUniqueProjects.mockReturnValue({ data: undefined });
+  mockUseFindUniqueTestRunResults.mockReturnValue({
+    data: undefined,
+    isLoading: false,
+  });
+  mockUseFindUniqueJUnitTestResult.mockReturnValue({
+    data: undefined,
+    isLoading: false,
+  });
   mockUseProjectPermissions.mockReturnValue({
     permissions: { canAddEdit: true, canView: true, canDelete: true },
     isLoading: false,
@@ -485,29 +498,39 @@ describe("TestResultHistory", () => {
         },
       ],
     };
+    // Eager query carries elapsed-only step rows; the full step payload
+    // arrives through the lazy expanded-details query.
     const resultWithSteps = {
       ...mockManualResult,
       id: 2,
-      stepResults: [
-        {
-          id: 901,
-          stepStatus: { name: "Passed", color: { value: "#22C55E" } },
-          notes: null,
-          evidence: null,
-          elapsed: 0,
-          sharedStepItemId: null,
-          step: {
-            id: 401,
-            step: { type: "doc", content: [{ type: "paragraph" }] },
-            // Steps.expectedResult is a Json? scalar — not a nested relation
-            expectedResult: expectedResultDoc,
-            sharedStepGroupId: null,
-            sharedStepGroup: null,
-          },
-          issues: [],
-        },
-      ],
+      stepResults: [{ elapsed: 0 }],
     };
+    mockUseFindUniqueTestRunResults.mockReturnValue({
+      data: {
+        notes: null,
+        iteration: null,
+        stepResults: [
+          {
+            id: 901,
+            stepStatus: { name: "Passed", color: { value: "#22C55E" } },
+            notes: null,
+            evidence: null,
+            elapsed: 0,
+            sharedStepItemId: null,
+            step: {
+              id: 401,
+              step: { type: "doc", content: [{ type: "paragraph" }] },
+              // Steps.expectedResult is a Json? scalar — not a nested relation
+              expectedResult: expectedResultDoc,
+              sharedStepGroupId: null,
+              sharedStepGroup: null,
+            },
+            issues: [],
+          },
+        ],
+      },
+      isLoading: false,
+    });
     const testCaseWithStepResults = {
       ...mockTestCase,
       testRuns: [
@@ -533,6 +556,25 @@ describe("TestResultHistory", () => {
     expect(
       editorContents.some((text) => text.includes("Verify login succeeds"))
     ).toBe(true);
+  });
+
+  it("lazy-loads JUnit log output into the expanded panel", async () => {
+    const user = userEvent.setup();
+    mockUseFindUniqueJUnitTestResult.mockReturnValue({
+      data: {
+        content: "stack trace here",
+        systemOut: "stdout capture",
+        systemErr: null,
+      },
+      isLoading: false,
+    });
+
+    renderWithQueryClient(<TestResultHistory {...defaultProps} />);
+
+    await user.click(screen.getByTestId("expand-result-junit-10"));
+
+    expect(screen.getByText("stack trace here")).toBeInTheDocument();
+    expect(screen.getByText("stdout capture")).toBeInTheDocument();
   });
 
   it("hides Add to Test Run button when user lacks permission", () => {

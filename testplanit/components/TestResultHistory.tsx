@@ -118,52 +118,45 @@ interface ManualTestResult extends UnifiedTestResultBase {
   executedBy: { id: string; name: string };
   editedBy?: { id: string; name: string } | null;
   editedAt?: Date | null;
-  notes?: JsonValue; // Tiptap content
   attempt: number;
   resultFieldValues?: { id: number }[];
   /**
-   * The iteration this result was recorded against. `null` for
-   * non-parameterized test cases. The row-level icon column shows the
-   * SquareStack icon when this is non-null; the expanded panel renders the
-   * parameter values block from `valuesJson` against the snapshot's
-   * parameter schema.
+   * Row-level presence flag only: `{ id }` when the result was recorded
+   * against an iteration (drives the SquareStack icon column), `null` for
+   * non-parameterized cases. The iteration's label/values/schema render in
+   * the expanded panel, which lazy-fetches them on expand.
    */
-  iteration?: {
+  iteration?: { id: number } | null;
+  /**
+   * Elapsed-only step rows: the duration column sums these into the row
+   * total. Full step content/evidence is lazy-fetched on expand
+   * (ManualResultExpandedDetails), keeping the eager history query slim.
+   */
+  stepResults?: Array<{ elapsed: number | null }>;
+}
+
+/** Full per-step detail, lazy-fetched when a manual result row expands. */
+interface StepResultDetail {
+  id: number;
+  status: { name: string; color: { value: string } };
+  notes: JsonValue;
+  evidence: JsonValue;
+  elapsed: number | null;
+  sharedStepItemId?: number | null;
+  step: {
     id: number;
-    label: string | null;
-    rowIndex: number;
-    valuesJson: JsonValue;
-    parameterSchema: Array<{
-      name: string;
-      type: string;
-      sensitive: boolean;
-    }>;
-  } | null;
-  stepResults?: Array<{
-    id: number;
-    status: { name: string; color: { value: string } };
-    notes: JsonValue;
-    evidence: JsonValue;
-    elapsed: number | null;
-    sharedStepItemId?: number | null;
-    step: {
-      id: number;
-      step: JsonValue;
-      expectedResult: JsonValue;
-      sharedStepGroupId?: number | null;
-      sharedStepGroup?: { name: string | null } | null;
-    };
-    issues?: Issue[];
-  }>;
+    step: JsonValue;
+    expectedResult: JsonValue;
+    sharedStepGroupId?: number | null;
+    sharedStepGroup?: { name: string | null } | null;
+  };
+  issues?: Issue[];
 }
 
 interface JUnitTestResultInfo extends UnifiedTestResultBase {
   sourceType: "junit";
   originalDbId: number; // JUnitTestResult.id
   executedBy: { id: string; name: string }; // from JUnitTestResult.createdBy
-  content?: string; // JUnitTestResult.content (raw string)
-  systemOut?: string;
-  systemErr?: string;
   file?: string;
   line?: number;
   assertions?: number;
@@ -337,11 +330,11 @@ const AddToTestRunDropdown = React.memo(function AddToTestRunDropdown({
 const ResultFieldValuesDisplay = ({
   // Renamed to avoid conflict if original is kept
   resultId,
-  result, // Expecting ManualTestResult here
+  hasStepResults,
   session,
 }: {
   resultId: number;
-  result: ManualTestResult;
+  hasStepResults: boolean;
   session: any;
 }) => {
   const tCommon = useTranslations("common");
@@ -385,9 +378,7 @@ const ResultFieldValuesDisplay = ({
   }
 
   if (!fieldValues || fieldValues.length === 0) {
-    // The check against stepResults length is removed as this component is now only for manual results
-    // which might or might not have step results, but custom fields are independent.
-    if (!result.stepResults || result.stepResults.length === 0) {
+    if (!hasStepResults) {
       return (
         <div className="px-4 py-2 text-sm text-muted-foreground">
           {tCommon("status.noCustomFieldData")}
@@ -441,7 +432,7 @@ const StepResultsDisplay = ({
   projectId,
   resultId,
 }: {
-  stepResults: NonNullable<ManualTestResult["stepResults"]>;
+  stepResults: StepResultDetail[];
   projectId: number;
   resultId: number;
 }) => {
@@ -619,7 +610,7 @@ const RenderSharedGroupInHistoryList: React.FC<{
   sharedStepGroupId: number;
   placeholderStepId: number;
   testRunResultId: number;
-  allStepResultsForRun: NonNullable<ManualTestResult["stepResults"]>;
+  allStepResultsForRun: StepResultDetail[];
   projectId: number;
 }> = ({
   sharedStepGroupId,
@@ -758,6 +749,330 @@ const RenderSharedGroupInHistoryList: React.FC<{
   );
 };
 
+// Heavy expanded-panel payload for a manual result — Tiptap notes, the full
+// iteration snapshot, and step results with content/evidence. Mounted inside
+// CollapsibleContent, which unmounts closed panels, so this fetches only when
+// the row is actually expanded and the eager history query stays row-slim.
+const ManualResultExpandedDetails = ({
+  result,
+  projectId,
+  activeProjectId,
+  session,
+}: {
+  result: ManualTestResult;
+  projectId?: number;
+  activeProjectId: number;
+  session: any;
+}) => {
+  const tCommon = useTranslations("common");
+  const tParams = useTranslations("parameters");
+
+  const { data: details, isLoading } = useClientQueries(
+    schema
+  ).testRunResults.useFindUnique({
+    where: { id: result.originalDbId },
+    select: {
+      notes: true,
+      iteration: {
+        select: {
+          id: true,
+          label: true,
+          rowIndex: true,
+          valuesJson: true,
+          testRunCase: {
+            select: {
+              dataSetSnapshot: { select: { parametersJson: true } },
+            },
+          },
+        },
+      },
+      stepResults: {
+        select: {
+          id: true,
+          sharedStepItemId: true,
+          stepStatus: {
+            select: { name: true, color: { select: { value: true } } },
+          },
+          notes: true,
+          evidence: true,
+          elapsed: true,
+          step: {
+            select: {
+              id: true,
+              step: true,
+              expectedResult: true,
+              sharedStepGroupId: true,
+              sharedStepGroup: { select: { name: true } },
+            },
+          },
+          issues: {
+            include: {
+              integration: {
+                select: { id: true, provider: true, name: true },
+              },
+            },
+          },
+        },
+        orderBy: [
+          { step: { order: "asc" } },
+          { sharedStepItem: { order: "asc" } },
+        ],
+        where: { isDeleted: false },
+      },
+    },
+  }) as any;
+
+  if (isLoading) {
+    return (
+      <div className="px-4 py-6">
+        <LoadingSpinner className="h-6" />
+      </div>
+    );
+  }
+
+  const stepResults: StepResultDetail[] = (
+    (details?.stepResults ?? []) as any[]
+  ).map((stepResItem) => ({ ...stepResItem, status: stepResItem.stepStatus }));
+
+  // Flatten the snapshot's parametersJson onto the iteration so the
+  // parameter-values table doesn't traverse testRunCase.dataSetSnapshot.
+  const iteration = details?.iteration
+    ? {
+        id: details.iteration.id as number,
+        label: details.iteration.label as string | null,
+        rowIndex: details.iteration.rowIndex as number,
+        valuesJson: details.iteration.valuesJson as JsonValue,
+        parameterSchema: Array.isArray(
+          details.iteration.testRunCase?.dataSetSnapshot?.parametersJson
+        )
+          ? (
+              details.iteration.testRunCase.dataSetSnapshot
+                .parametersJson as Array<Record<string, unknown>>
+            )
+              .filter(
+                (p) => p && typeof p === "object" && typeof p.name === "string"
+              )
+              .map((p) => ({
+                name: String(p.name),
+                type: typeof p.type === "string" ? p.type : "STRING",
+                sensitive: p.sensitive === true,
+              }))
+          : [],
+      }
+    : null;
+
+  return (
+    <>
+      {/* Parameter values block — per-result iteration parameter values
+          from TestRunCaseIteration.valuesJson against the snapshot's
+          parameter schema. Sensitive values redact for non-admin viewers
+          (defense-in-depth client gate; server audit boundary is the
+          source of truth). */}
+      {iteration && (
+        <div className="px-4 py-2 mb-2 bg-muted/50 rounded-md border text-xs space-y-1">
+          <div className="font-semibold text-primary flex items-center gap-1">
+            <SquareStack className="h-3 w-3" aria-hidden />
+            {tParams("iterationResultLabelHeading") +
+              ` ${iteration.rowIndex + 1}`}
+            {iteration.label && (
+              <span className="font-normal text-muted-foreground">
+                {": "}
+                {iteration.label}
+              </span>
+            )}
+          </div>
+          {iteration.parameterSchema.length > 0 && (
+            <table className="w-full text-start mt-1">
+              <thead>
+                <tr className="border-b">
+                  <th className="font-medium pe-4 py-1">
+                    {tParams("iterationIssueTableHeaderParameter")}
+                  </th>
+                  <th className="font-medium py-1">
+                    {tParams("iterationIssueTableHeaderValue")}
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {iteration.parameterSchema.map((p) => {
+                  const raw = ((iteration.valuesJson as Record<
+                    string,
+                    unknown
+                  > | null) ?? {})[p.name];
+                  const canSee =
+                    !p.sensitive || session?.user?.access === "ADMIN";
+                  let display: string;
+                  if (!canSee) {
+                    display = "••••••";
+                  } else if (raw === null || raw === undefined || raw === "") {
+                    display = tParams("iterationResultNoValue");
+                  } else if (typeof raw === "string") {
+                    display = raw;
+                  } else {
+                    try {
+                      display = JSON.stringify(raw);
+                    } catch {
+                      display = String(raw);
+                    }
+                  }
+                  return (
+                    <tr key={p.name}>
+                      <td className="pe-4 py-1 font-mono">
+                        {"@"}
+                        {p.name}
+                      </td>
+                      <td className="py-1 break-all">{display}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          )}
+        </div>
+      )}
+      {details?.notes && !isTiptapEmpty(details.notes) && (
+        <div>
+          <div className="px-4 text-xs text-muted-foreground">
+            {tCommon("actions.resultDetails")}
+          </div>
+          <div className="px-4">
+            <TipTapEditor
+              content={details.notes as object}
+              readOnly={true}
+              projectId={projectId ? String(projectId) : undefined}
+              className="h-auto"
+            />
+          </div>
+        </div>
+      )}
+      <ResultFieldValuesDisplay
+        resultId={result.originalDbId}
+        hasStepResults={stepResults.length > 0}
+        session={session}
+      />
+      {stepResults.length > 0 && (
+        <div>
+          <StepResultsDisplay
+            stepResults={stepResults}
+            projectId={activeProjectId}
+            resultId={result.originalDbId}
+          />
+        </div>
+      )}
+    </>
+  );
+};
+
+// Raw-log payload for an automated result (JUnit content / system output) —
+// these strings dominate the eager query's payload on automated cases with
+// long histories, so they load per result on expand.
+const JUnitResultExpandedDetails = ({
+  result,
+}: {
+  result: JUnitTestResultInfo;
+}) => {
+  const tCommon = useTranslations("common");
+
+  const { data: details, isLoading } = useClientQueries(
+    schema
+  ).jUnitTestResult.useFindUnique({
+    where: { id: result.originalDbId },
+    select: { content: true, systemOut: true, systemErr: true },
+  });
+
+  if (isLoading) {
+    return (
+      <div className="px-4 py-6">
+        <LoadingSpinner className="h-6" />
+      </div>
+    );
+  }
+
+  return (
+    <>
+      {details?.content && (
+        <div className="px-4 py-2">
+          <div className="text-xs text-muted-foreground">
+            {tCommon("fields.notes")}
+          </div>
+          <pre className="whitespace-pre-wrap wrap-break-word bg-background border rounded p-2 mt-1 text-sm">
+            {details.content}
+          </pre>
+        </div>
+      )}
+      <div className="px-4 py-2 mt-2 bg-muted/50 rounded-md border text-xs space-y-1">
+        <div className="font-semibold text-primary">
+          {tCommon("actions.automated.details")}
+        </div>
+        {result.testSuiteName && (
+          <div>
+            <span className="font-medium">
+              {tCommon("actions.automated.testSuite")}
+            </span>{" "}
+            {result.testSuiteName}
+          </div>
+        )}
+        {result.type && (
+          <div>
+            <span className="font-medium">{tCommon("fields.type") + ":"}</span>{" "}
+            {result.type}
+          </div>
+        )}
+        {result.message && (
+          <div>
+            <span className="font-medium">
+              {tCommon("actions.automated.message") + ":"}
+            </span>{" "}
+            {result.message}
+          </div>
+        )}
+        {result.file && (
+          <div>
+            <span className="font-medium">{tCommon("file") + ":"}</span>{" "}
+            {result.file}
+          </div>
+        )}
+        {typeof result.line === "number" && (
+          <div>
+            <span className="font-medium">
+              {tCommon("actions.automated.line") + ":"}
+            </span>{" "}
+            {result.line}
+          </div>
+        )}
+        {typeof result.assertions === "number" && (
+          <div>
+            <span className="font-medium">
+              {tCommon("fields.assertions") + ":"}
+            </span>{" "}
+            {result.assertions}
+          </div>
+        )}
+        {details?.systemOut && (
+          <div>
+            <span className="font-medium">
+              {tCommon("fields.systemOutput") + ":"}
+            </span>
+            <pre className="whitespace-pre-wrap wrap-break-word bg-background border rounded p-2 mt-1 max-h-40 overflow-auto">
+              {details.systemOut}
+            </pre>
+          </div>
+        )}
+        {details?.systemErr && (
+          <div>
+            <span className="font-medium">
+              {tCommon("fields.systemError") + ":"}
+            </span>
+            <pre className="whitespace-pre-wrap wrap-break-word bg-background border rounded p-2 mt-1 max-h-40 overflow-auto">
+              {details.systemErr}
+            </pre>
+          </div>
+        )}
+      </div>
+    </>
+  );
+};
+
 export default function TestResultHistory({
   caseId,
   projectId,
@@ -852,25 +1167,11 @@ export default function TestResultHistory({
                   id: true,
                   testRunCaseId: true, // This is TestRunCases.id
                   testRunCaseVersion: true,
-                  // Iteration this result was recorded against (if any).
-                  // Drives the SquareStack-icon row indicator + the Parameter
-                  // Values block in the expanded panel. Non-parameterized
-                  // results have iteration: null.
-                  iteration: {
-                    select: {
-                      id: true,
-                      label: true,
-                      rowIndex: true,
-                      valuesJson: true,
-                      testRunCase: {
-                        select: {
-                          dataSetSnapshot: {
-                            select: { parametersJson: true },
-                          },
-                        },
-                      },
-                    },
-                  },
+                  // Row-level presence flag only ({ id }): drives the
+                  // SquareStack-icon row indicator. The expanded panel's
+                  // parameter-values block lazy-fetches the full iteration
+                  // (label/values/schema) on expand.
+                  iteration: { select: { id: true } },
                   status: {
                     select: { name: true, color: { select: { value: true } } },
                   },
@@ -879,7 +1180,6 @@ export default function TestResultHistory({
                   editedBy: { select: { id: true, name: true } },
                   editedAt: true,
                   elapsed: true,
-                  notes: true,
                   attempt: true,
                   resultFieldValues: { select: { id: true }, take: 1 }, // For hasCustomFields check
                   attachments: {
@@ -902,49 +1202,12 @@ export default function TestResultHistory({
                       testRunStepResultId: true,
                     },
                   },
+                  // Elapsed-only step rows: the duration column sums these
+                  // into the row total and the expanded panel needs a
+                  // has-steps flag. Full step content/evidence lazy-loads on
+                  // expand (ManualResultExpandedDetails).
                   stepResults: {
-                    select: {
-                      id: true,
-                      sharedStepItemId: true,
-                      stepStatus: {
-                        // This will be mapped to 'status'
-                        select: {
-                          name: true,
-                          color: { select: { value: true } },
-                        },
-                      },
-                      notes: true,
-                      evidence: true,
-                      elapsed: true,
-                      step: {
-                        select: {
-                          id: true,
-                          step: true,
-                          expectedResult: true,
-                          sharedStepGroupId: true,
-                          sharedStepGroup: {
-                            select: {
-                              name: true,
-                            },
-                          },
-                        },
-                      },
-                      issues: {
-                        include: {
-                          integration: {
-                            select: {
-                              id: true,
-                              provider: true,
-                              name: true,
-                            },
-                          },
-                        },
-                      },
-                    },
-                    orderBy: [
-                      { step: { order: "asc" } },
-                      { sharedStepItem: { order: "asc" } },
-                    ],
+                    select: { elapsed: true },
                     where: { isDeleted: false },
                   },
                   issues: {
@@ -963,18 +1226,18 @@ export default function TestResultHistory({
             },
           },
           junitResults: {
+            // content/systemOut/systemErr (raw log text) intentionally NOT
+            // selected — they dominate the payload on automated cases and
+            // lazy-load per result on expand (JUnitResultExpandedDetails).
             select: {
               id: true,
               type: true,
               message: true,
-              content: true,
               executedAt: true,
               time: true,
               assertions: true,
               file: true,
               line: true,
-              systemOut: true,
-              systemErr: true,
               status: {
                 select: { name: true, color: { select: { value: true } } },
               },
@@ -1101,45 +1364,10 @@ export default function TestResultHistory({
           executedBy: res.executedBy,
           editedBy: res.editedBy,
           editedAt: res.editedAt ? new Date(res.editedAt) : null,
-          notes: res.notes,
           attempt: res.attempt,
           resultFieldValues: res.resultFieldValues,
-          // Flatten the snapshot's parametersJson onto the iteration so
-          // downstream consumers (row icon + expanded Parameter Values
-          // block) don't need to traverse through testRunCase.dataSetSnapshot.
-          iteration: res.iteration
-            ? {
-                id: res.iteration.id,
-                label: res.iteration.label,
-                rowIndex: res.iteration.rowIndex,
-                valuesJson: res.iteration.valuesJson,
-                parameterSchema: Array.isArray(
-                  res.iteration.testRunCase?.dataSetSnapshot?.parametersJson
-                )
-                  ? (
-                      res.iteration.testRunCase.dataSetSnapshot
-                        .parametersJson as Array<Record<string, unknown>>
-                    )
-                      .filter(
-                        (p) =>
-                          p &&
-                          typeof p === "object" &&
-                          typeof p.name === "string"
-                      )
-                      .map((p) => ({
-                        name: String(p.name),
-                        type: typeof p.type === "string" ? p.type : "STRING",
-                        sensitive: p.sensitive === true,
-                      }))
-                  : [],
-              }
-            : null,
-          stepResults: (res.stepResults as any[] | undefined)?.map(
-            (stepResItem: any) => ({
-              ...stepResItem,
-              status: stepResItem.stepStatus,
-            })
-          ),
+          iteration: res.iteration ? { id: res.iteration.id } : null,
+          stepResults: res.stepResults,
         });
       });
     });
@@ -1171,9 +1399,6 @@ export default function TestResultHistory({
         isPending: false,
         associatedTestRun,
         executedBy: jr.createdBy,
-        content: jr.content,
-        systemOut: jr.systemOut,
-        systemErr: jr.systemErr,
         file: jr.file,
         line: jr.line,
         assertions: jr.assertions,
@@ -1241,9 +1466,12 @@ export default function TestResultHistory({
 
   // Massive histories render through the shared virtualizer; below the
   // threshold the plain table is untouched (count: 0 idles the virtualizer).
+  // CSS-bound, not viewport-bound: this card sits at the bottom of a long
+  // scrolling page, so at mount its top edge is below the fold and the
+  // viewport-bound computation clamps to its 200px floor (~5 rows).
   const shouldVirtualize = sortedResults.length > VIRTUALIZE_THRESHOLD;
   const noopLoadMore = useCallback(() => {}, []);
-  const { scrollRef, virtualItems, totalSize, measureElement, maxHeight } =
+  const { scrollRef, virtualItems, totalSize, measureElement } =
     useVirtualizedInfiniteList({
       count: shouldVirtualize ? sortedResults.length : 0,
       estimateSize: 53,
@@ -1251,6 +1479,7 @@ export default function TestResultHistory({
       hasMore: false,
       isLoading: false,
       onLoadMore: noopLoadMore,
+      boundToViewport: false,
     });
 
   if (isLoadingTestCase) {
@@ -1769,207 +1998,21 @@ export default function TestResultHistory({
                         </div>
                       </div>
                     )}
-                    {/* Parameter values block — per-result
-                                  iteration parameter values from
-                                  TestRunCaseIteration.valuesJson against
-                                  the snapshot's parameter schema. Sensitive
-                                  values redact for non-admin viewers
-                                  (defense-in-depth client gate; server
-                                  audit boundary is the source of truth). */}
-                    {result.sourceType === "manual" && result.iteration && (
-                      <div className="px-4 py-2 mb-2 bg-muted/50 rounded-md border text-xs space-y-1">
-                        <div className="font-semibold text-primary flex items-center gap-1">
-                          <SquareStack className="h-3 w-3" aria-hidden />
-                          {tParams("iterationResultLabelHeading") +
-                            ` ${result.iteration.rowIndex + 1}`}
-                          {result.iteration.label && (
-                            <span className="font-normal text-muted-foreground">
-                              {": "}
-                              {result.iteration.label}
-                            </span>
-                          )}
-                        </div>
-                        {result.iteration.parameterSchema.length > 0 && (
-                          <table className="w-full text-start mt-1">
-                            <thead>
-                              <tr className="border-b">
-                                <th className="font-medium pe-4 py-1">
-                                  {tParams(
-                                    "iterationIssueTableHeaderParameter"
-                                  )}
-                                </th>
-                                <th className="font-medium py-1">
-                                  {tParams("iterationIssueTableHeaderValue")}
-                                </th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {result.iteration.parameterSchema.map((p) => {
-                                const raw = ((result.iteration!
-                                  .valuesJson as Record<
-                                  string,
-                                  unknown
-                                > | null) ?? {})[p.name];
-                                const canSee =
-                                  !p.sensitive ||
-                                  session?.user?.access === "ADMIN";
-                                let display: string;
-                                if (!canSee) {
-                                  display = "••••••";
-                                } else if (
-                                  raw === null ||
-                                  raw === undefined ||
-                                  raw === ""
-                                ) {
-                                  display = tParams("iterationResultNoValue");
-                                } else if (typeof raw === "string") {
-                                  display = raw;
-                                } else {
-                                  try {
-                                    display = JSON.stringify(raw);
-                                  } catch {
-                                    display = String(raw);
-                                  }
-                                }
-                                return (
-                                  <tr key={p.name}>
-                                    <td className="pe-4 py-1 font-mono">
-                                      {"@"}
-                                      {p.name}
-                                    </td>
-                                    <td className="py-1 break-all">
-                                      {display}
-                                    </td>
-                                  </tr>
-                                );
-                              })}
-                            </tbody>
-                          </table>
-                        )}
-                      </div>
-                    )}
-                    {result.sourceType === "manual" &&
-                      result.notes &&
-                      !isTiptapEmpty(result.notes) && (
-                        <div>
-                          <div className="px-4 text-xs text-muted-foreground">
-                            {tCommon("actions.resultDetails")}
-                          </div>
-                          <div className="px-4">
-                            <TipTapEditor
-                              content={result.notes as object}
-                              readOnly={true}
-                              projectId={
-                                projectId ? String(projectId) : undefined
-                              }
-                              className="h-auto"
-                            />
-                          </div>
-                        </div>
-                      )}
-                    {result.sourceType === "junit" && result.content && (
-                      <div className="px-4 py-2">
-                        <div className="text-xs text-muted-foreground">
-                          {tCommon("fields.notes")}
-                        </div>
-                        <pre className="whitespace-pre-wrap wrap-break-word bg-background border rounded p-2 mt-1 text-sm">
-                          {result.content}
-                        </pre>
-                      </div>
-                    )}
-                    {result.sourceType === "junit" && (
-                      <div className="px-4 py-2 mt-2 bg-muted/50 rounded-md border text-xs space-y-1">
-                        <div className="font-semibold text-primary">
-                          {tCommon("actions.automated.details")}
-                        </div>
-                        {result.testSuiteName && (
-                          <div>
-                            <span className="font-medium">
-                              {tCommon("actions.automated.testSuite")}
-                            </span>{" "}
-                            {result.testSuiteName}
-                          </div>
-                        )}
-                        {result.type && (
-                          <div>
-                            <span className="font-medium">
-                              {tCommon("fields.type") + ":"}
-                            </span>{" "}
-                            {result.type}
-                          </div>
-                        )}
-                        {result.message && (
-                          <div>
-                            <span className="font-medium">
-                              {tCommon("actions.automated.message") + ":"}
-                            </span>{" "}
-                            {result.message}
-                          </div>
-                        )}
-                        {result.file && (
-                          <div>
-                            <span className="font-medium">
-                              {tCommon("file") + ":"}
-                            </span>{" "}
-                            {result.file}
-                          </div>
-                        )}
-                        {typeof result.line === "number" && (
-                          <div>
-                            <span className="font-medium">
-                              {tCommon("actions.automated.line") + ":"}
-                            </span>{" "}
-                            {result.line}
-                          </div>
-                        )}
-                        {typeof result.assertions === "number" && (
-                          <div>
-                            <span className="font-medium">
-                              {tCommon("fields.assertions") + ":"}
-                            </span>{" "}
-                            {result.assertions}
-                          </div>
-                        )}
-                        {result.systemOut && (
-                          <div>
-                            <span className="font-medium">
-                              {tCommon("fields.systemOutput") + ":"}
-                            </span>
-                            <pre className="whitespace-pre-wrap wrap-break-word bg-background border rounded p-2 mt-1 max-h-40 overflow-auto">
-                              {result.systemOut}
-                            </pre>
-                          </div>
-                        )}
-                        {result.systemErr && (
-                          <div>
-                            <span className="font-medium">
-                              {tCommon("fields.systemError") + ":"}
-                            </span>
-                            <pre className="whitespace-pre-wrap wrap-break-word bg-background border rounded p-2 mt-1 max-h-40 overflow-auto">
-                              {result.systemErr}
-                            </pre>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                    {result.sourceType === "manual" && result.originalDbId && (
-                      <ResultFieldValuesDisplay
-                        resultId={result.originalDbId}
+                    {/* Everything heavy in the expanded panel (notes, the
+                        iteration parameter values, full step results, JUnit
+                        logs) lazy-loads per result on expand — the eager
+                        history query above is row-slim on purpose. */}
+                    {result.sourceType === "manual" && (
+                      <ManualResultExpandedDetails
                         result={result}
+                        projectId={projectId}
+                        activeProjectId={activeProjectId}
                         session={session}
                       />
                     )}
-                    {result.sourceType === "manual" &&
-                      result.stepResults &&
-                      result.stepResults.length > 0 && (
-                        <div>
-                          <StepResultsDisplay
-                            stepResults={result.stepResults}
-                            projectId={activeProjectId}
-                            resultId={result.originalDbId}
-                          />
-                        </div>
-                      )}
+                    {result.sourceType === "junit" && (
+                      <JUnitResultExpandedDetails result={result} />
+                    )}
                   </div>
                 </CollapsibleContent>
               </Collapsible>
@@ -2006,9 +2049,8 @@ export default function TestResultHistory({
       <CardContent className="p-0">
         <div
           ref={shouldVirtualize ? scrollRef : undefined}
-          className={shouldVirtualize ? "overflow-auto" : undefined}
-          style={
-            shouldVirtualize && maxHeight != null ? { maxHeight } : undefined
+          className={
+            shouldVirtualize ? "max-h-[70vh] overflow-auto" : undefined
           }
         >
           <Table>
