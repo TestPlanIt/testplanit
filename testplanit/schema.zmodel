@@ -3350,10 +3350,10 @@ model TestRunCaseDataSetSnapshot {
 model Issue {
     id                 Int                   @id @default(autoincrement())
     name               String                @length(1)
-    title              String                @length(1)
-    description        String?
-    status             String?
-    priority           String?               @default("medium")
+    title              String                @length(1) @deny('update', isRequirement == true && integrationId != null && requirementDetachedAt == null)
+    description        String?               @deny('update', isRequirement == true && integrationId != null && requirementDetachedAt == null)
+    status             String?               @deny('update', isRequirement == true && integrationId != null && requirementDetachedAt == null)
+    priority           String?               @default("medium") @deny('update', isRequirement == true && integrationId != null && requirementDetachedAt == null)
     externalId         String?
     externalKey        String?
     externalUrl        String?               @url
@@ -3381,6 +3381,18 @@ model Issue {
     integrationId      Int?
     integration        Integration?          @relation(fields: [integrationId], references: [id], onDelete: SetNull)
     milestoneIssues    MilestoneIssue[]
+    parentId           Int?                  @deny('update', isRequirement == true && integrationId != null && requirementDetachedAt == null)
+    parent             Issue?                @relation("IssueParent", fields: [parentId], references: [id], onDelete: Cascade)
+    children           Issue[]               @relation("IssueParent")
+    // Three orthogonal states: synced+locked (isRequirement true,
+    // integrationId set, requirementDetachedAt null — tracker-owned fields
+    // locked), detached/local (requirementDetachedAt set — locks lift,
+    // integrationId stays non-null for badge/identity), native
+    // (integrationId null — never locked).
+    requirementDetachedAt DateTime?           @db.Timestamptz(6)
+    // Set by the classification write path; not derived per read.
+    isRequirement      Boolean               @default(false)
+    currentVersion      Int                  @default(1)
 
     @@unique([externalId, integrationId])
     @@index([externalId])
@@ -3388,6 +3400,7 @@ model Issue {
     @@index([createdById])
     @@index([projectId])
     @@index([integrationId])
+    @@index([parentId])
     // Serves the issue-list page: ordering by name over non-deleted issues.
     // Lets Postgres walk issues in name order and short-circuit the linked-
     // entity OR-EXISTS filter per row (O(pageSize)) instead of hashing the
