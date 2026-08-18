@@ -4940,7 +4940,6 @@
       "allFileExtensions": "All Extensions",
       "allLanguages": "All Languages",
       "showEnabled": "Enabled only",
-      "showAll": "All",
       "variableInserter": {
         "placeholder": "Insert variable...",
         "groups": {
@@ -5309,8 +5308,6 @@
       },
       "abandonedRunPolicy": {
         "title": "Abandoned automation cleanup",
-        "modeAria": "Abandoned automation cleanup mode",
-        "modeOff": "Off (abandoned runs stay open)",
         "modeOn": "Close abandoned automated runs automatically",
         "minutesBefore": "Idle for at least:",
         "minutesUnit": "{minutes, plural, one {minute} other {minutes}}",

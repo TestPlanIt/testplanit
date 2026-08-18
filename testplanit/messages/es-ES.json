@@ -4940,7 +4940,6 @@
       "allFileExtensions": "Todas las extensiones",
       "allLanguages": "Todos los idiomas",
       "showEnabled": "Sólo habilitado",
-      "showAll": "Todo",
       "variableInserter": {
         "placeholder": "Insertar variable...",
         "groups": {
@@ -5309,8 +5308,6 @@
       },
       "abandonedRunPolicy": {
         "title": "Limpieza de automatización abandonada",
-        "modeAria": "Modo de limpieza de automatización abandonada",
-        "modeOff": "Desactivado (las ejecuciones abandonadas permanecen abiertas)",
         "modeOn": "Cerrar automáticamente las ejecuciones automatizadas abandonadas",
         "minutesBefore": "Inactivo durante al menos:",
         "minutesUnit": "{minutes, plural, one {minuto} other {minutos}}",

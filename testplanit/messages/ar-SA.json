@@ -3259,7 +3259,7 @@
       "searchPlaceholder": "بحث في القوالب...",
       "noTemplatesFound": "لم يتم العثور على قوالب.",
       "outputModeLabel": "نمط الإخراج",
-      "outputModeSingle": "Single file ({count, plural, one {# case} =2 {both cases} other {all # cases}})",
+      "outputModeSingle": "ملف واحد ({count, plural, one {# حالة} =2 {كلا الحالتين} other {جميع # حالة}})",
       "outputModeIndividual": "{count, plural, zero {ملفات فردية (.zip)} one {ملف فردي (.zip)} two {ملفان فرديان (.zip)} few {ملفات فردية (.zip)} many {ملفات فردية (.zip)} other {ملفات فردية (.zip)}}",
       "casesToExport": "{count, plural, zero {# حالة} one {حالة واحدة} two {حالتان} few {# حالات} many {# حالة} other {# حالة}} للتصدير",
       "exportSuccess": "تم التصدير بنجاح.",
@@ -3577,9 +3577,9 @@
         "tooLarge": "كبير جدًا",
         "noVisionHint": "نموذج الذكاء الاصطناعي المهيأ لا يدعم إدخال الصور — لن يتم إرسال الصور المحددة.",
         "visionSkippedTitle": "لم يتم إرسال الصور",
-        "visionSkipped": "{count, plural, =1 {# image was} other {# images were}} not sent — the configured AI model does not support image input.",
-        "includedSummary": "{count, plural, =1 {# image} other {# images}} sent as context: {names}",
-        "skippedSummary": "{count, plural, =1 {# image} other {# images}} skipped (too large or unsupported): {names}",
+        "visionSkipped": "{count, plural, =1 {# صورة} other {# صور}} لم يتم إرسالها — النموذج الذكي المُهيأ لا يدعم إدخال الصور.",
+        "includedSummary": "{count, plural, =1 {# صورة} other {# صور}} تم إرسالها كسياق: {names}",
+        "skippedSummary": "{count, plural, =1 {# صورة} other {# صور}} تم تخطيها (كبيرة جدًا أو غير مدعومة): {names}",
         "includeUrlScreenshots": "تضمين لقطات شاشة الصفحة عند توفرها"
       }
     },
@@ -4940,7 +4940,6 @@
       "allFileExtensions": "جميع الامتدادات",
       "allLanguages": "جميع اللغات",
       "showEnabled": "المفعّل فقط",
-      "showAll": "الكل",
       "variableInserter": {
         "placeholder": "إدراج متغير...",
         "groups": {
@@ -5309,8 +5308,6 @@
       },
       "abandonedRunPolicy": {
         "title": "تنظيف الأتمتة المهجورة",
-        "modeAria": "وضع تنظيف الأتمتة المهجورة",
-        "modeOff": "إيقاف (تبقى عمليات التشغيل المهجورة مفتوحة)",
         "modeOn": "إغلاق عمليات التشغيل الآلية المهجورة تلقائيًا",
         "minutesBefore": "خامل لمدة لا تقل عن:",
         "minutesUnit": "{minutes, plural, zero {دقيقة} one {دقيقة} two {دقيقتان} few {دقائق} many {دقيقة} other {دقيقة}}",
@@ -8647,7 +8644,7 @@
     "selectSourceConfirm": "تغيير المصدر",
     "datasetRowSelectAria": "تحديد الصف",
     "datasetSelectAllPageTooltip": "انقر لتحديد كل صف في هذه الصفحة. اضغط مع Shift للتحديد على مستوى كل الصفحات.",
-    "datasetSelectAllAcrossPagesTooltip": "Select {count, plural, =1 {# row} =2 {both rows} other {all # rows}} across all pages",
+    "datasetSelectAllAcrossPagesTooltip": "تحديد {count, plural, =1 {# صف} =2 {كلا الصفين} other {كل # صف}} عبر جميع الصفحات",
     "datasetDeselectAllAcrossPagesTooltip": "إلغاء تحديد كل الصفوف عبر جميع الصفحات",
     "datasetLabelColumn": "التسمية",
     "datasetAddRow": "إضافة صف",

@@ -4940,7 +4940,6 @@
       "allFileExtensions": "所有擴充",
       "allLanguages": "所有語言",
       "showEnabled": "僅啟用",
-      "showAll": "全部",
       "variableInserter": {
         "placeholder": "插入變數...",
         "groups": {
@@ -5309,8 +5308,6 @@
       },
       "abandonedRunPolicy": {
         "title": "已放棄自動化清理",
-        "modeAria": "已放棄自動化清理模式",
-        "modeOff": "關閉（已放棄的執行保持開啟）",
         "modeOn": "自動關閉已放棄的自動化執行",
         "minutesBefore": "閒置至少：",
         "minutesUnit": "{minutes, plural, other {分鐘}}",
@@ -6431,7 +6428,7 @@
         "integrationAuthExpiredReconnect": "重新連線",
         "runReadyToCompleteTitle": "測試執行已準備好完成",
         "runReadyToCompleteExecuted": "{count, plural, =2 {兩個測試案例均已執行完成。} other {所有 # 個測試案例均已執行完成。}}",
-        "runReadyToCompleteEmailMessage": "{caseCount, plural, one {# case has} =2 {Both cases have} other {All # cases have}} been executed in test run \"{testRunName}\" (project \"{projectName}\"). The run is ready to be marked completed.",
+        "runReadyToCompleteEmailMessage": "測試執行「{testRunName}」（專案「{projectName}」）中的{caseCount, plural, one {# 個案例已} =2 {兩個案例皆已} other {全部 # 個案例皆已}}執行完畢。此執行已可標記為完成。",
         "runReadyToCompleteReason": "您收到此通知是因為您可以完成此專案中的測試執行。"
       }
     },
@@ -8647,7 +8644,7 @@
     "selectSourceConfirm": "更改來源",
     "datasetRowSelectAria": "選擇行",
     "datasetSelectAllPageTooltip": "按一下以選取此頁面上的每一行。按住 Shift 鍵並點擊以選取所有頁面上的每一行。",
-    "datasetSelectAllAcrossPagesTooltip": "Select {count, plural, =1 {# row} =2 {both rows} other {all # rows}} across all pages",
+    "datasetSelectAllAcrossPagesTooltip": "選取所有頁面中的 {count, plural, =1 {# 行} =2 {兩行} other {全部 # 行}}",
     "datasetDeselectAllAcrossPagesTooltip": "取消選擇所有頁面上的所有行",
     "datasetLabelColumn": "標籤",
     "datasetAddRow": "新增行",

@@ -1366,15 +1366,15 @@
     "overview": {
       "title": "개요",
       "currentMilestones": "현재 주요 성과",
-      "seeAllMilestones": "{count, plural, =1 {See # Milestone} =2 {See both Milestones} other {See all # Milestones}}",
-      "seeAllTestCases": "{count, plural, =1 {See # Test Case} =2 {See both Test Cases} other {See all # Test Cases}}",
+      "seeAllMilestones": "{count, plural, =1 {마일스톤 #개 보기} =2 {마일스톤 #개 모두 보기} other {마일스톤 #개 모두 보기}}",
+      "seeAllTestCases": "{count, plural, =1 {테스트 케이스 #개 보기} =2 {테스트 케이스 #개 모두 보기} other {테스트 케이스 #개 모두 보기}}",
       "latestTestCases": "최신 테스트 사례",
       "createdOn": "생성일:",
-      "seeAllTagsCount": "{count, plural, =1 {See # Tag} =2 {See both Tags} other {See all # Tags}}",
-      "seeAllActiveSessions": "{count, plural, =1 {See # Active Session} =2 {See both Active Sessions} other {See all # Active Sessions}}",
+      "seeAllTagsCount": "{count, plural, =1 {태그 #개 보기} =2 {태그 #개 모두 보기} other {태그 #개 모두 보기}}",
+      "seeAllActiveSessions": "{count, plural, =1 {활성 세션 #개 보기} =2 {활성 세션 #개 모두 보기} other {활성 세션 #개 모두 보기}}",
       "latestSessions": "최신 세션",
       "activeTestRuns": "활성 테스트 실행",
-      "seeAllActiveTestRuns": "{count, plural, =1 {See # Active Test Run} =2 {See both Active Test Runs} other {See all # Active Test Runs}}",
+      "seeAllActiveTestRuns": "{count, plural, =1 {활성 테스트 실행 #개 보기} =2 {활성 테스트 실행 #개 모두 보기} other {활성 테스트 실행 #개 모두 보기}}",
       "latestTestRuns": "최근 테스트 실행 결과",
       "testCaseBreakdown": "테스트 케이스 분석",
       "noTestCases": "프로젝트 저장소가 비어 있습니다. 저장소를 사용하여 테스트 케이스를 추가하세요.",
@@ -4940,7 +4940,6 @@
       "allFileExtensions": "모든 확장 프로그램",
       "allLanguages": "모든 언어",
       "showEnabled": "활성화됨",
-      "showAll": "모두",
       "variableInserter": {
         "placeholder": "변수를 삽입하세요...",
         "groups": {
@@ -5309,8 +5308,6 @@
       },
       "abandonedRunPolicy": {
         "title": "방치된 자동화 정리",
-        "modeAria": "방치된 자동화 정리 모드",
-        "modeOff": "끄기(방치된 실행을 열린 상태로 유지)",
         "modeOn": "방치된 자동화 실행을 자동으로 종료",
         "minutesBefore": "최소 유휴 시간:",
         "minutesUnit": "{minutes, plural, other {분}}",
@@ -6430,8 +6427,8 @@
         "integrationAuthExpiredMessage": "\"{integrationName}\"에 대한 연결이 만료되었습니다. 이슈 동기화를 재개하려면 다시 연결하세요.",
         "integrationAuthExpiredReconnect": "다시 연결",
         "runReadyToCompleteTitle": "테스트 실행 완료 준비됨",
-        "runReadyToCompleteExecuted": "{count, plural, one {# case has} =2 {Both cases have} other {All # cases have}} been executed.",
-        "runReadyToCompleteEmailMessage": "{caseCount, plural, one {# case has} =2 {Both cases have} other {All # cases have}} been executed in test run \"{testRunName}\" (project \"{projectName}\"). The run is ready to be marked completed.",
+        "runReadyToCompleteExecuted": "{count, plural, =2 {두 케이스 모두} other {#개의 케이스 모두}}가 실행되었습니다.",
+        "runReadyToCompleteEmailMessage": "테스트 실행 \"{testRunName}\"(프로젝트 \"{projectName}\")에서 {caseCount, plural, =2 {두 케이스 모두} other {#개의 케이스 모두}}가 실행되었습니다. 이 실행은 완료로 표시할 준비가 되었습니다.",
         "runReadyToCompleteReason": "이 프로젝트에서 테스트 실행을 완료할 수 있는 권한이 있어 이 알림을 받고 있습니다."
       }
     },
@@ -7676,7 +7673,7 @@
         "heuristicBadge": "휴리스틱",
         "heuristicBadgeTooltip": "이 프로젝트에는 LLM 통합이 구성되어 있지 않으므로, 이 순위는 선택 전략 지표를 직접 기반으로 생성되었습니다. 사용자 정의 필드, 연결된 이슈 컨텍스트 및 사례 내용을 고려한 더욱 정교한 추론을 위해 LLM을 구성하십시오(관리 → AI 모델).",
         "sourcedFromNewestN": "{ranked} 의 {total} 에 해당하는 적격 수동 사례들을 {strategy}를 통해 처리합니다.",
-        "sourcedFromAll": "Ranked {total, plural, one {# eligible manual case} =2 {both eligible manual cases} other {all # eligible manual cases}} via {strategy}",
+        "sourcedFromAll": "{strategy}을(를) 통해 {total, plural, =2 {적격한 수동 케이스 두 건 모두} other {적격한 수동 케이스 #건 모두}}의 순위를 매겼습니다",
         "metric": {
           "executions": "{count} 실행",
           "forecast": "{value} 예측",

@@ -4940,7 +4940,6 @@
       "allFileExtensions": "Alle extensies",
       "allLanguages": "Alle talen",
       "showEnabled": "Alleen ingeschakeld",
-      "showAll": "Alle",
       "variableInserter": {
         "placeholder": "Variabele invoegen...",
         "groups": {
@@ -5309,8 +5308,6 @@
       },
       "abandonedRunPolicy": {
         "title": "Opruimen van verlaten automatisering",
-        "modeAria": "Modus voor opruimen van verlaten automatisering",
-        "modeOff": "Uit (verlaten testruns blijven open)",
         "modeOn": "Verlaten geautomatiseerde testruns automatisch sluiten",
         "minutesBefore": "Inactief gedurende ten minste:",
         "minutesUnit": "{minutes, plural, one {minuut} other {minuten}}",

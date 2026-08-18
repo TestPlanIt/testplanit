@@ -4940,7 +4940,6 @@
       "allFileExtensions": "すべての拡張機能",
       "allLanguages": "すべての言語",
       "showEnabled": "有効のみ",
-      "showAll": "全て",
       "variableInserter": {
         "placeholder": "変数を挿入します...",
         "groups": {
@@ -5309,8 +5308,6 @@
       },
       "abandonedRunPolicy": {
         "title": "放棄された自動化のクリーンアップ",
-        "modeAria": "放棄された自動化のクリーンアップモード",
-        "modeOff": "オフ（放棄されたランは開いたままになります）",
         "modeOn": "放棄された自動実行ランを自動的にクローズする",
         "minutesBefore": "アイドル状態が以下の時間以上続いた場合：",
         "minutesUnit": "{minutes, plural, other {分}}",
@@ -6430,7 +6427,7 @@
         "integrationAuthExpiredMessage": "「{integrationName}」への接続が期限切れになりました。課題の同期を再開するには再接続してください。",
         "integrationAuthExpiredReconnect": "再接続",
         "runReadyToCompleteTitle": "テスト実行の完了準備が整いました",
-        "runReadyToCompleteExecuted": "{count, plural, one {# case has} =2 {Both cases have} other {All # cases have}} been executed.",
+        "runReadyToCompleteExecuted": "{count, plural, =2 {両方のケースが}other {すべての#件のケースが}}実行されました。",
         "runReadyToCompleteEmailMessage": "{caseCount, plural, =2 {両方のケースが}other {すべての#件のケースが}}テストラン「{testRunName}」（プロジェクト「{projectName}」）で実行されました。このテストランは完了としてマークする準備ができています。",
         "runReadyToCompleteReason": "このプロジェクトでテスト実行を完了する権限があるため、この通知を受信しています。"
       }

@@ -24,6 +24,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SectionHeader } from "@/components/ui/typography";
 import { HelpPopover } from "@/components/ui/help-popover";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -50,7 +51,7 @@ export default function QuickScriptTemplates() {
   const [filterFramework, setFilterFramework] = useState("__all__");
   const [filterExtension, setFilterExtension] = useState("__all__");
   const [filterLanguage, setFilterLanguage] = useState("__all__");
-  const [filterEnabled, setFilterEnabled] = useState("__all__");
+  const [filterEnabledOnly, setFilterEnabledOnly] = useState(false);
   const [isAlertDialogOpen, setIsAlertDialogOpen] = useState(false);
   const [addTemplateOpen, setAddTemplateOpen] = useState(false);
   const [editingTemplate, setEditingTemplate] =
@@ -158,7 +159,7 @@ export default function QuickScriptTemplates() {
         return false;
       if (filterLanguage !== "__all__" && tmpl.language !== filterLanguage)
         return false;
-      if (filterEnabled !== "__all__" && !tmpl.isEnabled) return false;
+      if (filterEnabledOnly && !tmpl.isEnabled) return false;
       return true;
     });
   }, [
@@ -167,7 +168,7 @@ export default function QuickScriptTemplates() {
     filterFramework,
     filterExtension,
     filterLanguage,
-    filterEnabled,
+    filterEnabledOnly,
   ]);
 
   const groupedByCategory = useMemo(() => {
@@ -279,18 +280,18 @@ export default function QuickScriptTemplates() {
                   ))}
                 </SelectContent>
               </Select>
-              <Select value={filterEnabled} onValueChange={setFilterEnabled}>
-                <SelectTrigger
-                  className="w-35"
+              <Label
+                htmlFor="quickscript-templates-filter-enabled"
+                className="flex items-center gap-2 font-normal"
+              >
+                <Switch
+                  id="quickscript-templates-filter-enabled"
                   data-testid="quickscript-templates-filter-enabled"
-                >
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__all__">{t("showAll")}</SelectItem>
-                  <SelectItem value="enabled">{t("showEnabled")}</SelectItem>
-                </SelectContent>
-              </Select>
+                  checked={filterEnabledOnly}
+                  onCheckedChange={setFilterEnabledOnly}
+                />
+                {t("showEnabled")}
+              </Label>
             </div>
 
             {isLoading ? (

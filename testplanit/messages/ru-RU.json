@@ -4940,7 +4940,6 @@
       "allFileExtensions": "Все расширения",
       "allLanguages": "Все языки",
       "showEnabled": "Включено только",
-      "showAll": "Все",
       "variableInserter": {
         "placeholder": "Вставьте переменную...",
         "groups": {
@@ -5309,8 +5308,6 @@
       },
       "abandonedRunPolicy": {
         "title": "Очистка заброшенной автоматизации",
-        "modeAria": "Режим очистки заброшенной автоматизации",
-        "modeOff": "Выкл. (заброшенные прогоны остаются открытыми)",
         "modeOn": "Автоматически закрывать заброшенные автоматизированные прогоны",
         "minutesBefore": "Простаивает не менее:",
         "minutesUnit": "{minutes, plural, one {минута} few {минуты} many {минут} other {минуты}}",

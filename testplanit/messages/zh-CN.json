@@ -3259,7 +3259,7 @@
       "searchPlaceholder": "搜索模板...",
       "noTemplatesFound": "未找到模板。",
       "outputModeLabel": "输出模式",
-      "outputModeSingle": "Single file ({count, plural, one {# case} =2 {both cases} other {all # cases}})",
+      "outputModeSingle": "单文件（{count, plural, =2 {两个案例} other {所有 # 个案例}}）",
       "outputModeIndividual": "{count, plural, one {单个文件 (.zip)} other {单个文件 (.zip)}}",
       "casesToExport": "{count, plural, one {# 情况} other {# 情况}} 导出",
       "exportSuccess": "导出成功。",
@@ -4940,7 +4940,6 @@
       "allFileExtensions": "所有扩展",
       "allLanguages": "所有语言",
       "showEnabled": "仅启用",
-      "showAll": "全部",
       "variableInserter": {
         "placeholder": "插入变量...",
         "groups": {
@@ -5309,8 +5308,6 @@
       },
       "abandonedRunPolicy": {
         "title": "废弃自动化清理",
-        "modeAria": "废弃自动化清理模式",
-        "modeOff": "关闭（废弃的运行保持打开状态）",
         "modeOn": "自动关闭废弃的自动化运行",
         "minutesBefore": "至少空闲：",
         "minutesUnit": "{minutes, plural, other {分钟}}",
@@ -6431,7 +6428,7 @@
         "integrationAuthExpiredReconnect": "重新连接",
         "runReadyToCompleteTitle": "测试运行已准备好完成",
         "runReadyToCompleteExecuted": "{count, plural, =2 {两个用例都已执行。} other {全部 # 个用例已执行。}}",
-        "runReadyToCompleteEmailMessage": "{caseCount, plural, one {# case has} =2 {Both cases have} other {All # cases have}} been executed in test run \"{testRunName}\" (project \"{projectName}\"). The run is ready to be marked completed.",
+        "runReadyToCompleteEmailMessage": "{caseCount, plural, =2 {两个用例均已} other {全部 # 个用例均已}}在测试运行“{testRunName}”（项目“{projectName}”）中执行完成。该运行已准备好标记为已完成。",
         "runReadyToCompleteReason": "您收到此通知是因为您可以完成此项目中的测试运行。"
       }
     },
@@ -7676,7 +7673,7 @@
         "heuristicBadge": "启发式",
         "heuristicBadgeTooltip": "此项目未配置 LLM 集成，因此该排名直接基于选择策略指标构建。请配置 LLM（管理 → AI 模型）以实现更丰富的推理，该推理会考虑自定义字段、关联问题上下文和案例内容。",
         "sourcedFromNewestN": "通过 {strategy} 提交的 {ranked} 个符合条件的手动案例中，排名前 {ranked} 的案例共 {total} 个。",
-        "sourcedFromAll": "Ranked {total, plural, one {# eligible manual case} =2 {both eligible manual cases} other {all # eligible manual cases}} via {strategy}",
+        "sourcedFromAll": "通过 {strategy} 对{total, plural, =2 {两个符合条件的手动用例} other {全部 # 个符合条件的手动用例}}进行了排序",
         "metric": {
           "executions": "{count} 运行",
           "forecast": "{value} 预测",

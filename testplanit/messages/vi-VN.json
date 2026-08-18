@@ -4940,7 +4940,6 @@
       "allFileExtensions": "Tất cả các phần mở rộng",
       "allLanguages": "Tất cả các ngôn ngữ",
       "showEnabled": "Chỉ được kích hoạt",
-      "showAll": "Tất cả",
       "variableInserter": {
         "placeholder": "Chèn biến...",
         "groups": {
@@ -5309,8 +5308,6 @@
       },
       "abandonedRunPolicy": {
         "title": "Dọn dẹp tự động hóa bị bỏ dở",
-        "modeAria": "Chế độ dọn dẹp tự động hóa bị bỏ dở",
-        "modeOff": "Tắt (các lượt chạy bị bỏ dở vẫn mở)",
         "modeOn": "Tự động đóng các lượt chạy tự động hóa bị bỏ dở",
         "minutesBefore": "Không hoạt động ít nhất:",
         "minutesUnit": "{minutes, plural, other {phút}}",

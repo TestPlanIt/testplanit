@@ -4940,7 +4940,6 @@
       "allFileExtensions": "Alle Erweiterungen",
       "allLanguages": "Alle Sprachen",
       "showEnabled": "Nur aktiviert",
-      "showAll": "Alle",
       "variableInserter": {
         "placeholder": "Variable einfügen...",
         "groups": {
@@ -5309,8 +5308,6 @@
       },
       "abandonedRunPolicy": {
         "title": "Bereinigung verwaister Automatisierungen",
-        "modeAria": "Modus für die Bereinigung verwaister Automatisierungen",
-        "modeOff": "Aus (verwaiste Durchläufe bleiben offen)",
         "modeOn": "Verwaiste automatisierte Durchläufe automatisch schließen",
         "minutesBefore": "Inaktiv für mindestens:",
         "minutesUnit": "{minutes, plural, one {Minute} other {Minuten}}",

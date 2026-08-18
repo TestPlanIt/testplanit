@@ -4940,7 +4940,6 @@
       "allFileExtensions": "Wszystkie rozszerzenia",
       "allLanguages": "Wszystkie języki",
       "showEnabled": "Tylko włączone",
-      "showAll": "Wszystko",
       "variableInserter": {
         "placeholder": "Wstaw zmienną...",
         "groups": {
@@ -5309,8 +5308,6 @@
       },
       "abandonedRunPolicy": {
         "title": "Czyszczenie porzuconej automatyzacji",
-        "modeAria": "Tryb czyszczenia porzuconej automatyzacji",
-        "modeOff": "Wyłączone (porzucone przebiegi pozostają otwarte)",
         "modeOn": "Automatycznie zamykaj porzucone automatyczne przebiegi",
         "minutesBefore": "Bezczynność przez co najmniej:",
         "minutesUnit": "{minutes, plural, one {minuta} few {minuty} many {minut} other {minuty}}",
@@ -6430,7 +6427,7 @@
         "integrationAuthExpiredMessage": "Twoje połączenie z „{integrationName}” wygasło. Połącz się ponownie, aby wznowić synchronizację zgłoszeń.",
         "integrationAuthExpiredReconnect": "Połącz ponownie",
         "runReadyToCompleteTitle": "Przebieg testu gotowy do zakończenia",
-        "runReadyToCompleteExecuted": "{count, plural, one {# case has} =2 {Both cases have} other {All # cases have}} been executed.",
+        "runReadyToCompleteExecuted": "{count, plural, one {# przypadek testowy został wykonany} =2 {Oba przypadki testowe zostały wykonane} few {Wszystkie # przypadki testowe zostały wykonane} many {Wszystkie # przypadków testowych zostało wykonanych} other {Wszystkie # przypadków testowych zostało wykonanych}}.",
         "runReadyToCompleteEmailMessage": "{caseCount, plural, one {Przypadek testowy # został wykonany} =2 {Obydwa przypadki testowe zostały wykonane} few {# przypadki testowe zostały wykonane} many {Wszystkie # przypadków testowych zostało wykonanych} other {Wszystkie # przypadków testowych zostało wykonanych}} w przebiegu testowym „{testRunName}” (projekt „{projectName}”). Przebieg jest gotowy do oznaczenia jako zakończony.",
         "runReadyToCompleteReason": "Otrzymujesz tę wiadomość, ponieważ możesz kończyć przebiegi testów w tym projekcie."
       }

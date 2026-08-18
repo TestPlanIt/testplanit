@@ -4940,7 +4940,6 @@
       "allFileExtensions": "Tüm Uzantılar",
       "allLanguages": "Tüm Diller",
       "showEnabled": "Yalnızca etkinleştirildi",
-      "showAll": "Tüm",
       "variableInserter": {
         "placeholder": "Değişken ekle...",
         "groups": {
@@ -5309,8 +5308,6 @@
       },
       "abandonedRunPolicy": {
         "title": "Terk edilmiş otomasyon temizliği",
-        "modeAria": "Terk edilmiş otomasyon temizliği modu",
-        "modeOff": "Kapalı (terk edilmiş koşumlar açık kalır)",
         "modeOn": "Terk edilmiş otomatik koşumları otomatik olarak kapat",
         "minutesBefore": "En az şu süre boyunca boşta:",
         "minutesUnit": "{minutes, plural, one {dakika} other {dakika}}",

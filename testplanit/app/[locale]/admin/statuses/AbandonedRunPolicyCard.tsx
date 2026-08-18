@@ -8,13 +8,7 @@ import { SectionHeader } from "@/components/ui/typography";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { Save } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
@@ -23,8 +17,6 @@ import {
   ABANDONED_RUN_IDLE_MINUTES_KEY,
   ABANDONED_RUN_MIN_IDLE_MINUTES,
 } from "~/lib/services/abandonedRuns";
-
-type PolicyMode = "off" | "on";
 
 /**
  * System-level abandoned automated-run policy (the default projects inherit):
@@ -41,17 +33,17 @@ export function AbandonedRunPolicyCard() {
   const upsert = useClientQueries(schema).appConfig.useUpsert();
   const remove = useClientQueries(schema).appConfig.useDelete();
 
-  const [mode, setMode] = useState<PolicyMode>("off");
+  const [enabled, setEnabled] = useState(false);
   const [idleMinutes, setIdleMinutes] = useState("");
 
   useEffect(() => {
     const value = config?.value;
     if (value === undefined) return; // not loaded yet
     if (typeof value === "number" && value > 0) {
-      setMode("on");
+      setEnabled(true);
       setIdleMinutes(String(Math.max(1, Math.round(value))));
     } else {
-      setMode("off");
+      setEnabled(false);
       setIdleMinutes("");
     }
   }, [config?.value]);
@@ -60,7 +52,7 @@ export function AbandonedRunPolicyCard() {
 
   const handleSave = async () => {
     try {
-      if (mode === "off") {
+      if (!enabled) {
         if (config) {
           await remove.mutateAsync({
             where: { key: ABANDONED_RUN_IDLE_MINUTES_KEY },
@@ -100,24 +92,20 @@ export function AbandonedRunPolicyCard() {
       </CardHeader>
       <CardContent>
         <div className="flex flex-wrap items-center gap-4">
-          <Select
-            value={mode}
-            onValueChange={(value) => setMode(value as PolicyMode)}
-            disabled={isPending}
+          <Label
+            htmlFor="abandoned-run-policy-mode"
+            className="flex items-center gap-2"
           >
-            <SelectTrigger
-              className="w-full sm:w-80"
-              data-testid="abandoned-run-policy-mode-select"
-              aria-label={t("modeAria")}
-            >
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="off">{t("modeOff")}</SelectItem>
-              <SelectItem value="on">{t("modeOn")}</SelectItem>
-            </SelectContent>
-          </Select>
-          {mode === "on" && (
+            <Switch
+              id="abandoned-run-policy-mode"
+              data-testid="abandoned-run-policy-mode-switch"
+              checked={enabled}
+              onCheckedChange={setEnabled}
+              disabled={isPending}
+            />
+            {t("modeOn")}
+          </Label>
+          {enabled && (
             <div className="flex items-center gap-2 text-sm">
               <Label
                 htmlFor="abandoned-run-policy-minutes"
