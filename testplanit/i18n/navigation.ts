@@ -1,6 +1,7 @@
 // Ordered alphabetically by each language's native name (endonym).
 // Latin-script languages first, then Arabic, Cyrillic, then CJK (no universal alpha order).
 export const locales = [
+  "cs-CZ",
   "de-DE",
   "en-US",
   "es-ES",
@@ -47,6 +48,7 @@ export function localeFromPreference(value: string | null | undefined): Locale {
 }
 
 export const languageNames: Record<string, string> = {
+  "cs-CZ": "Čeština (Česko)",
   "de-DE": "Deutsch (Deutschland)",
   "en-US": "English (US)",
   "es-ES": "Español (España)",
