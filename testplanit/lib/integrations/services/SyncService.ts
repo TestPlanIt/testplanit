@@ -1574,9 +1574,44 @@ export class SyncService {
                 integrationId,
               },
             },
-            select: { id: true },
+            select: {
+              id: true,
+              projectId: true,
+              _count: {
+                select: {
+                  children: true,
+                  caseIssues: true,
+                  milestoneIssues: true,
+                },
+              },
+            },
           })
         : null;
+
+    // The dedup key (externalId, integrationId) carries no projectId, so
+    // two TestPlanIt projects sharing one Integration and both mapped to
+    // the same external issue collide on this same row. Refuse to hand
+    // the row to the second project once it has dependents (children,
+    // case links, or milestone links) — reassigning projectId would
+    // orphan them from the project that actually owns them.
+    const dependentsCount = existing
+      ? (existing._count?.children ?? 0) +
+        (existing._count?.caseIssues ?? 0) +
+        (existing._count?.milestoneIssues ?? 0)
+      : 0;
+    if (
+      existing &&
+      existing.projectId != null &&
+      existing.projectId !== projectId &&
+      dependentsCount > 0
+    ) {
+      throw new Error(
+        `Refusing to reassign Issue ${existing.id} from project ${existing.projectId} to ${projectId}: ` +
+          `it has ${existing._count?.children ?? 0} child issue(s), ${existing._count?.caseIssues ?? 0} case link(s), ` +
+          `and ${existing._count?.milestoneIssues ?? 0} milestone link(s) that would be orphaned. ` +
+          `Investigate the overlapping IntegrationProject configuration mapping both projects to the same external project.`
+      );
+    }
 
     // Resurrect-on-collision: if a prior soft-deleted Issue exists for
     // this (externalId, integrationId), `create` would 23505. Upsert with
