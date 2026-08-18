@@ -7,7 +7,7 @@ TestPlanIt ships with Docker Compose files that let you build and run the full s
 ## 1. Prerequisites
 
 - Docker 24+ and Docker Compose Plugin 2+
-- At least 4 CPUs, 8 GB RAM, and 20 GB free disk space
+- At least 4 CPUs, 8 GB RAM (14 GB recommended for the full stack), and 25 GB free disk space
 - Access to the TestPlanIt source code (clone or release archive)
 
 ---
