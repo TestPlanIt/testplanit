@@ -207,11 +207,53 @@ describeIntegration("Issue requirement-lock @deny (live DB)", () => {
     expect(row?.parentId).toBeNull();
   });
 
-  it.todo(
-    "ALLOWS updating title on a detached requirement (requirementDetachedAt set)"
-  );
-  it.todo(
-    "ALLOWS updating title on an ordinary synced defect (isRequirement=false)"
-  );
-  it.todo("ALLOWS updating note on a synced+locked requirement");
+  it("ALLOWS updating title on a detached requirement (requirementDetachedAt set)", async () => {
+    const edb = await authDbFor(adminUserId);
+
+    const updated = await edb.issue.update({
+      where: { id: detachedRequirementId },
+      data: { title: `${STAMP}-detached-renamed` },
+      select: { id: true, title: true },
+    });
+    expect(updated.title).toBe(`${STAMP}-detached-renamed`);
+  });
+
+  it("ALLOWS updating title on an ordinary synced defect (isRequirement=false)", async () => {
+    const edb = await authDbFor(adminUserId);
+
+    const updated = await edb.issue.update({
+      where: { id: syncedDefectId },
+      data: { title: `${STAMP}-defect-renamed` },
+      select: { id: true, title: true },
+    });
+    expect(updated.title).toBe(`${STAMP}-defect-renamed`);
+  });
+
+  it("ALLOWS updating note on a synced+locked requirement", async () => {
+    const edb = await authDbFor(adminUserId);
+
+    const updated = await edb.issue.update({
+      where: { id: syncedRequirementId },
+      data: { note: { text: `${STAMP}-note` } },
+      select: { id: true, note: true },
+    });
+    expect(updated.note).toEqual({ text: `${STAMP}-note` });
+  });
+
+  it("REJECTS reparenting a synced+locked requirement via parent connect", async () => {
+    const edb = await authDbFor(adminUserId);
+
+    await expect(
+      edb.issue.update({
+        where: { id: syncedRequirementId },
+        data: { parent: { connect: { id: parentCandidateId } } },
+      })
+    ).rejects.toThrow();
+
+    const row = await db.issue.findUnique({
+      where: { id: syncedRequirementId },
+      select: { parentId: true },
+    });
+    expect(row?.parentId).toBeNull();
+  });
 });
