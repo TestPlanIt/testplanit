@@ -14,7 +14,7 @@ TestPlanIt's production Docker setup (`docker-compose.prod.yml`) uses Docker Com
 
 | Profile              | Service         | Purpose                                       |
 | -------------------- | --------------- | --------------------------------------------- |
-| `with-postgres`      | PostgreSQL 15   | Database storage                              |
+| `with-postgres`      | PostgreSQL 18   | Database storage                              |
 | `with-valkey`        | Valkey 8        | Redis-compatible cache and job queue          |
 | `with-elasticsearch` | Elasticsearch 9 | Full-text search engine                       |
 | `with-minio`         | MinIO + Nginx   | S3-compatible file storage with reverse proxy |
@@ -54,7 +54,7 @@ docker compose -f docker-compose.prod.yml \
 
 **Included Services:**
 
-- `postgres` - PostgreSQL 15 database
+- `postgres` - PostgreSQL 18 database
 - `db-init-prod` - Initializes schema and seeds data
 
 **Environment Variables:**
@@ -264,7 +264,8 @@ Configure external AWS RDS (DATABASE*URL) and S3 (AWS*\* vars).
    - Consider hybrid approach: managed database + self-hosted cache
 
 5. **Backup Strategy**:
-   - With Docker services: Backup `./docker-data/` directories
+   - PostgreSQL data lives in the `testplanit-postgres-data` named volume — back it up with `pg_dump` (or snapshot the volume)
+   - Valkey, Elasticsearch, and MinIO data: Backup the `./docker-data/` directories
    - With external services: Use cloud-native backup solutions (RDS snapshots, S3 versioning, etc.)
 
 6. **Networking**:
@@ -287,7 +288,7 @@ Configure external AWS RDS (DATABASE*URL) and S3 (AWS*\* vars).
 
 **Issue**: Data not persisting
 
-- **Solution**: Check `./docker-data/` volumes are mounted correctly for Docker services
+- **Solution**: PostgreSQL persists in the `testplanit-postgres-data` named volume; Valkey, Elasticsearch, and MinIO use `./docker-data/` bind mounts — check the mounts for the affected service
 
 ## See Also
 
