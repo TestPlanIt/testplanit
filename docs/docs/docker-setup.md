@@ -87,6 +87,17 @@ The Docker Compose setup starts these containerized services:
     ```bash
     # REQUIRED CHANGES for production:
 
+    # Database — the bundled Postgres container creates the testplanit_prod database
+    DATABASE_URL="postgresql://user:password@postgres:5432/testplanit_prod?schema=public"
+
+    # Job queue — the shipped default points at localhost, which inside a
+    # container is the container itself; use the valkey service hostname
+    VALKEY_URL="valkey://valkey:6379"
+
+    # Search — same localhost issue; use the elasticsearch service hostname
+    # (leave empty to disable search if you don't run the with-elasticsearch profile)
+    ELASTICSEARCH_NODE="http://elasticsearch:9200"
+
     # Application URL (change to your domain)
     NEXTAUTH_URL="https://yourdomain.com"
 
@@ -110,7 +121,7 @@ The Docker Compose setup starts these containerized services:
     EMAIL_FROM=noreply@yourdomain.com
     ```
 
-    **Important:** The `.env.production` file contains many other variables (database, Valkey, Elasticsearch, MinIO connections) that are already configured correctly for Docker. Only modify the variables shown above unless you're using external services.
+    **Important:** `.env.example` ships with local-development values, so the connection URLs above must be changed to the Docker service hostnames as shown. The remaining variables (MinIO connection, ports, feature flags) work as shipped — only modify them if you're using external services.
 
     ### Optional: Change External Docker Ports
 
