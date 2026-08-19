@@ -1,4 +1,5 @@
 import { baseDb } from "@/lib/db";
+import { upsertLinkedIssueShell } from "~/lib/services/linkedIssueUpsert";
 import { IntegrationProvider } from "~/zenstack/models";
 
 // Supported issue tracking providers (every provider routed through
@@ -51,13 +52,9 @@ export class JiraLinkService {
       }
 
       // Use upsert to create or find the issue atomically
-      const issue = await baseDb.issue.upsert({
-        where: {
-          externalId_integrationId: {
-            externalId: jiraIssueId,
-            integrationId: integrationId,
-          },
-        },
+      const issue = await upsertLinkedIssueShell(baseDb, {
+        externalId: jiraIssueId,
+        integrationId: integrationId,
         create: {
           name: jiraIssueKey,
           title: issueTitle || jiraIssueKey,
@@ -133,13 +130,9 @@ export class JiraLinkService {
       }
 
       // Use upsert to create or find the issue atomically
-      const issue = await baseDb.issue.upsert({
-        where: {
-          externalId_integrationId: {
-            externalId: jiraIssueId,
-            integrationId: integrationId,
-          },
-        },
+      const issue = await upsertLinkedIssueShell(baseDb, {
+        externalId: jiraIssueId,
+        integrationId: integrationId,
         create: {
           name: jiraIssueKey,
           title: issueTitle || jiraIssueKey,
@@ -267,13 +260,9 @@ export class JiraLinkService {
       }
 
       // Use upsert to create or update the issue atomically
-      const issue = await baseDb.issue.upsert({
-        where: {
-          externalId_integrationId: {
-            externalId: jiraIssueId,
-            integrationId: integrationId,
-          },
-        },
+      const issue = await upsertLinkedIssueShell(baseDb, {
+        externalId: jiraIssueId,
+        integrationId: integrationId,
         create: {
           name: jiraIssueKey,
           title: issueTitle || jiraIssueKey,
@@ -760,13 +749,9 @@ export class JiraLinkService {
       const projectId = testRunResult.testRunCase.testRun.projectId;
 
       // Use upsert to create or update the issue atomically
-      const issue = await baseDb.issue.upsert({
-        where: {
-          externalId_integrationId: {
-            externalId: jiraIssueId,
-            integrationId: integrationId,
-          },
-        },
+      const issue = await upsertLinkedIssueShell(baseDb, {
+        externalId: jiraIssueId,
+        integrationId: integrationId,
         create: {
           name: jiraIssueKey,
           title: issueTitle || jiraIssueKey,
@@ -849,13 +834,9 @@ export class JiraLinkService {
       const projectId = sessionResult.session.projectId;
 
       // Use upsert to create or update the issue atomically
-      const issue = await baseDb.issue.upsert({
-        where: {
-          externalId_integrationId: {
-            externalId: jiraIssueId,
-            integrationId: integrationId,
-          },
-        },
+      const issue = await upsertLinkedIssueShell(baseDb, {
+        externalId: jiraIssueId,
+        integrationId: integrationId,
         create: {
           name: jiraIssueKey,
           title: issueTitle || jiraIssueKey,
@@ -1051,13 +1032,9 @@ export class JiraLinkService {
         testRunStepResult.testRunResult.testRunCase.testRun.projectId;
 
       // Use upsert to create or update the issue atomically
-      const issue = await baseDb.issue.upsert({
-        where: {
-          externalId_integrationId: {
-            externalId: jiraIssueId,
-            integrationId: integrationId,
-          },
-        },
+      const issue = await upsertLinkedIssueShell(baseDb, {
+        externalId: jiraIssueId,
+        integrationId: integrationId,
         create: {
           name: jiraIssueKey,
           title: issueTitle || jiraIssueKey,
@@ -1227,6 +1204,10 @@ export class JiraLinkService {
     issueData: any
   ): Promise<void> {
     try {
+      // Deliberately NOT routed through upsertLinkedIssueShell (PROV-06):
+      // this write touches only the `data` JSON blob, which is not one of
+      // LOCKED_ISSUE_FIELDS, so migrating it would add churn with no
+      // security value.
       await baseDb.issue.updateMany({
         where: {
           externalId: jiraIssueId,
