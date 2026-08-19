@@ -68,3 +68,80 @@ export async function getIssueSubtreeIds(
   `;
   return rows.map((row) => row.id);
 }
+
+/**
+ * Rejects a reparent that would put `issueId` under itself or under one of
+ * its own descendants. No-ops when `newParentId` is null (detaching to a
+ * root is never a cycle) — the fast path issues zero queries. The
+ * `depth < 100` cap mirrors `getIssueSubtreeIds`'s, for the same reason:
+ * this is the first authoritative cycle guard on any self-referential model
+ * in this schema, so pre-trigger/rolled-back-trigger data must fail fast
+ * rather than hang the connection.
+ */
+export async function assertNoCycle(
+  db: any,
+  issueId: number,
+  newParentId: number | null
+): Promise<void> {
+  if (newParentId === null) return;
+  if (newParentId === issueId) {
+    throw new Error(`Issue ${issueId} cannot be its own parent`);
+  }
+  const ancestorRows: Array<{ id: number }> = await db.$queryRaw`
+    WITH RECURSIVE ancestors AS (
+      SELECT "parentId" AS id, 1 AS depth FROM "Issue" WHERE id = ${newParentId}
+      UNION ALL
+      SELECT i."parentId", a.depth + 1 FROM "Issue" i
+      INNER JOIN ancestors a ON i.id = a.id
+      WHERE i."parentId" IS NOT NULL AND a.depth < 100
+    )
+    SELECT id FROM ancestors WHERE id = ${issueId}
+  `;
+  if (ancestorRows.length > 0) {
+    throw new Error(
+      `Reparenting Issue ${issueId} under ${newParentId} would create a cycle`
+    );
+  }
+}
+
+/**
+ * Rejects a reparent whose new parent belongs to a different project than
+ * the child. The trigger in plan 21-03 checks cycles only, not project
+ * scoping — a `parentId` pointing at another project's row is a distinct
+ * tampering vector and this is the only layer that closes it. One query
+ * (id-in filter) rather than two separate lookups.
+ */
+export async function assertSameProject(
+  db: any,
+  issueId: number,
+  newParentId: number | null
+): Promise<void> {
+  if (newParentId === null) return;
+  const rows: Array<{ id: number; projectId: number | null }> =
+    await db.issue.findMany({
+      where: { id: { in: [issueId, newParentId] } },
+      select: { id: true, projectId: true },
+    });
+  const child = rows.find((row) => row.id === issueId);
+  const parent = rows.find((row) => row.id === newParentId);
+  if (!parent || child?.projectId !== parent.projectId) {
+    throw new Error(
+      `Issue ${issueId} and new parent ${newParentId} must belong to the same project`
+    );
+  }
+}
+
+/**
+ * Single entry point for a reparent: Phase 22's sync writer and Phase 25's
+ * drag-and-drop handler call this instead of the two guards individually.
+ * Project first because it is the cheaper query and because a cross-project
+ * parent is invalid regardless of cycle status.
+ */
+export async function assertValidReparent(
+  db: any,
+  issueId: number,
+  newParentId: number | null
+): Promise<void> {
+  await assertSameProject(db, issueId, newParentId);
+  await assertNoCycle(db, issueId, newParentId);
+}
