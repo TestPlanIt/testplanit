@@ -11,6 +11,32 @@ import {
 } from "./IssueAdapter";
 
 /**
+ * HTTP failure raised inside the retry loop. The message keeps the
+ * `HTTP <status>: <body>` shape — parseStatusFromError and upstream fail-soft
+ * handlers parse it — while status and any server-requested retry delay ride
+ * along as fields.
+ */
+export class HttpStatusError extends Error {
+  constructor(
+    readonly status: number,
+    body: string,
+    readonly retryAfterMs?: number
+  ) {
+    super(`HTTP ${status}: ${body}`);
+    this.name = "HttpStatusError";
+  }
+}
+
+/** Retry-After header value (delta-seconds or HTTP-date) to milliseconds. */
+const parseRetryAfterMs = (value: string | null): number | undefined => {
+  if (!value) return undefined;
+  const seconds = Number(value);
+  if (Number.isFinite(seconds)) return Math.max(0, seconds * 1000);
+  const at = Date.parse(value);
+  return Number.isNaN(at) ? undefined : Math.max(0, at - Date.now());
+};
+
+/**
  * Base abstract class implementing common functionality for all issue tracking adapters
  */
 export abstract class BaseAdapter implements IssueAdapter {
@@ -25,6 +51,10 @@ export abstract class BaseAdapter implements IssueAdapter {
   // Retry configuration
   protected maxRetries: number = 3;
   protected retryDelay: number = 1000;
+  // Longest Retry-After honored in-band. A window beyond this cannot reset
+  // before the attempts run out, so the request fails fast instead and the
+  // caller's queue-level backoff owns the wait.
+  protected maxRetryAfterMs: number = 30000;
 
   // Request timeout configuration (in milliseconds)
   protected requestTimeout: number = 30000; // 30 seconds default
@@ -168,12 +198,32 @@ export abstract class BaseAdapter implements IssueAdapter {
         lastError = error as Error;
 
         const status = this.parseStatusFromError(lastError);
-        if (status !== null && status >= 400 && status < 500) {
+        // 408/429 are the transient 4xx: the server asked for a retry.
+        // Every other 4xx is permanent.
+        const rateLimited = status === 429 || status === 408;
+        if (status !== null && status >= 400 && status < 500 && !rateLimited) {
+          throw lastError;
+        }
+
+        const retryAfterMs =
+          lastError instanceof HttpStatusError
+            ? lastError.retryAfterMs
+            : undefined;
+        // A Retry-After beyond the in-band cap cannot reset before the
+        // attempts run out — retrying into a closed window just burns them.
+        if (
+          rateLimited &&
+          retryAfterMs !== undefined &&
+          retryAfterMs > this.maxRetryAfterMs
+        ) {
           throw lastError;
         }
 
         if (i < retries) {
-          const delay = this.retryDelay * Math.pow(2, i); // Exponential backoff
+          const delay =
+            rateLimited && retryAfterMs !== undefined
+              ? retryAfterMs
+              : this.retryDelay * Math.pow(2, i); // Exponential backoff
           console.warn(`Request failed, retrying in ${delay}ms...`, error);
           await this.sleep(delay);
         }
@@ -286,6 +336,9 @@ export abstract class BaseAdapter implements IssueAdapter {
     }
 
     try {
+      // The status check lives inside the retried operation so retryable
+      // statuses (408/429/5xx) actually reach executeWithRetry's loop — a
+      // resolved non-2xx Response would otherwise bypass it entirely.
       const response = await this.executeWithRetry(async () => {
         const controller = new AbortController();
         const timeoutId = setTimeout(
@@ -293,20 +346,26 @@ export abstract class BaseAdapter implements IssueAdapter {
           this.requestTimeout
         );
         try {
-          return await fetch(url, {
+          const res = await fetch(url, {
             ...options,
             headers,
             signal: controller.signal,
           });
+          if (!res.ok) {
+            const errorText = await res.text();
+            // Retry-After is only consulted for the retryable-4xx pair, so
+            // permanent-failure paths never depend on the headers object.
+            const retryAfterMs =
+              res.status === 429 || res.status === 408
+                ? parseRetryAfterMs(res.headers.get("Retry-After"))
+                : undefined;
+            throw new HttpStatusError(res.status, errorText, retryAfterMs);
+          }
+          return res;
         } finally {
           clearTimeout(timeoutId);
         }
       });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`HTTP ${response.status}: ${errorText}`);
-      }
 
       // Some APIs answer successful mutations with an empty body (e.g. Redmine
       // returns 204 No Content on issue update). Calling response.json() on an
