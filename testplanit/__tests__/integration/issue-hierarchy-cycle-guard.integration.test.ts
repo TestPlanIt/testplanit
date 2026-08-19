@@ -342,10 +342,10 @@ describeIntegration("Issue hierarchy cycle guard trigger (live DB)", () => {
       // (Y has no parent), so this UPDATE returns immediately, still
       // uncommitted.
       await client1.query("BEGIN");
-      await client1.query(
-        'UPDATE "Issue" SET "parentId" = $1 WHERE id = $2',
-        [y.id, x.id]
-      );
+      await client1.query('UPDATE "Issue" SET "parentId" = $1 WHERE id = $2', [
+        y.id,
+        x.id,
+      ]);
 
       // Session 2: reparent Y under X — the other half of the cycle. This
       // must block on the advisory lock rather than return, because session
