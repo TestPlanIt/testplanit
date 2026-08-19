@@ -22,8 +22,12 @@
 import { describe, it } from "vitest";
 
 describe("Issue raw-write containment (PROV-06, structural)", () => {
-  it.todo("no file outside the reviewed allowlist calls issue.update or issue.upsert");
-  it.todo("jira-link-service routes every issue upsert through the shared shell");
+  it.todo(
+    "no file outside the reviewed allowlist calls issue.update or issue.upsert"
+  );
+  it.todo(
+    "jira-link-service routes every issue upsert through the shared shell"
+  );
   it.todo(
     "the create-issue routes and the test-case importer route through the shared shell"
   );

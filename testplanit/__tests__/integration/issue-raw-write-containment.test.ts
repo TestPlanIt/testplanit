@@ -18,7 +18,9 @@ const describeIntegration =
   RUN_INTEGRATION && HAS_DB_URL ? describe : describe.skip;
 
 describeIntegration("Issue raw-write containment (PROV-06, behavioral)", () => {
-  it.todo("a locked requirement keeps its title when written through the shell");
+  it.todo(
+    "a locked requirement keeps its title when written through the shell"
+  );
   it.todo("a detached requirement accepts a title write through the shell");
   it.todo(
     "a locked requirement keeps its title when linked through JiraLinkService.linkTestCaseToJiraIssue"

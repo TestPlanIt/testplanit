@@ -33,9 +33,7 @@ const describeIntegration =
   RUN_INTEGRATION && HAS_DB_URL ? describe : describe.skip;
 
 describeIntegration("Issue hierarchy cycle guard trigger (live DB)", () => {
-  it.todo(
-    "blocks a raw UPDATE that reparents a node under its own descendant"
-  );
+  it.todo("blocks a raw UPDATE that reparents a node under its own descendant");
   it.todo("blocks a raw UPDATE that makes a node its own parent");
   it.todo("blocks a cycle written inside a multi-row bulk-import transaction");
   it.todo(

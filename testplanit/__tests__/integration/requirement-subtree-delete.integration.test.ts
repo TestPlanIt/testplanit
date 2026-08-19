@@ -27,23 +27,20 @@ const HAS_DB_URL = Boolean(process.env.DATABASE_URL);
 const describeIntegration =
   RUN_INTEGRATION && HAS_DB_URL ? describe : describe.skip;
 
-describeIntegration(
-  "requirement subtree delete and restore (live DB)",
-  () => {
-    it.todo(
-      "deleteRequirementSubtree soft-deletes the root and every descendant in one transaction"
-    );
-    it.todo(
-      "deleteRequirementSubtree leaves a sibling tree in the same project untouched"
-    );
-    it.todo(
-      "deleteRequirementSubtree stamps deletedAt on every row it soft-deletes"
-    );
-    it.todo(
-      "restoreRequirementSubtree restores exactly the rows the matching cascade deleted"
-    );
-    it.todo(
-      "restoreRequirementSubtree leaves a descendant that was already deleted before the cascade deleted"
-    );
-  }
-);
+describeIntegration("requirement subtree delete and restore (live DB)", () => {
+  it.todo(
+    "deleteRequirementSubtree soft-deletes the root and every descendant in one transaction"
+  );
+  it.todo(
+    "deleteRequirementSubtree leaves a sibling tree in the same project untouched"
+  );
+  it.todo(
+    "deleteRequirementSubtree stamps deletedAt on every row it soft-deletes"
+  );
+  it.todo(
+    "restoreRequirementSubtree restores exactly the rows the matching cascade deleted"
+  );
+  it.todo(
+    "restoreRequirementSubtree leaves a descendant that was already deleted before the cascade deleted"
+  );
+});
