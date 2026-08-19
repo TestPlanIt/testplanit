@@ -5,6 +5,7 @@ import {
 } from "~/zenstack/models";
 import { z } from "zod/v4";
 import { auditedTransaction } from "~/lib/audit/auditedTransaction";
+import { upsertLinkedIssueShell } from "~/lib/services/linkedIssueUpsert";
 import { resolveCreateStateRemap } from "~/lib/services/reviewGate";
 import { emptyEditorContent } from "~/app/constants/backend";
 import { ensureTipTapJSON } from "~/utils/tiptapConversion";
@@ -322,13 +323,14 @@ export async function persistGeneratedTestCases(
         externalId: string | null;
       } | null = null;
       if (data.issue) {
-        sharedIssue = await tx.issue.upsert({
-          where: {
-            externalId_integrationId: {
-              externalId: data.issue.externalId,
-              integrationId: data.issue.integrationId,
-            },
-          },
+        // The ninth PROV-06 site: this transaction is opened on the hooked
+        // base client (auditedTransaction), which carries side-effect hooks
+        // but no policy plugin, so the field-level requirement-lock deny
+        // never fires on it either. `tx` (not `baseDb`) is passed through so
+        // the write stays inside this caller's audited transaction.
+        sharedIssue = await upsertLinkedIssueShell(tx, {
+          externalId: data.issue.externalId,
+          integrationId: data.issue.integrationId,
           create: {
             name: data.issue.issueKey,
             title: data.issue.title,

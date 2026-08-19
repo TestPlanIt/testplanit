@@ -1,6 +1,7 @@
 import { IntegrationManager } from "@/lib/integrations/IntegrationManager";
 import { baseDb } from "@/lib/db";
 import { resolveEditorMediaAttachments } from "@/lib/integrations/editorMediaAttachments";
+import { upsertLinkedIssueShell } from "~/lib/services/linkedIssueUpsert";
 import type { JsonValue } from "@zenstackhq/orm";
 import { getServerSession } from "next-auth/next";
 import { NextRequest, NextResponse } from "next/server";
@@ -440,13 +441,9 @@ export async function POST(
       };
 
       // Use upsert to handle cases where the issue already exists
-      const issue = await baseDb.issue.upsert({
-        where: {
-          externalId_integrationId: {
-            externalId: createdIssue.key || createdIssue.id,
-            integrationId: parseInt(integrationId),
-          },
-        },
+      const issue = await upsertLinkedIssueShell(baseDb, {
+        externalId: createdIssue.key || createdIssue.id,
+        integrationId: parseInt(integrationId),
         create: {
           ...trackerFields,
           externalId: createdIssue.key || createdIssue.id,
