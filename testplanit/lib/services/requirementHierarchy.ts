@@ -1,4 +1,6 @@
 import { baseDb } from "~/lib/db";
+import { auditedTransaction } from "~/lib/audit/auditedTransaction";
+import type { TxClient } from "~/lib/zenstack";
 
 /**
  * Builds an issueId -> [self, ...ancestors] map for a project, used to walk
@@ -144,4 +146,173 @@ export async function assertValidReparent(
 ): Promise<void> {
   await assertSameProject(db, issueId, newParentId);
   await assertNoCycle(db, issueId, newParentId);
+}
+
+/**
+ * Returns every soft-deleted descendant of `rootId` — the mirror image of
+ * `getIssueSubtreeIds` (`isDeleted = true` instead of `false`, walked at
+ * every recursion level so a live row can never re-enter the deleted-side
+ * walk). Not exported: it exists only to resolve the cohort
+ * `restoreRequirementSubtree` needs. A second query rather than a boolean
+ * parameter on `getIssueSubtreeIds` — the two filters are opposite at every
+ * level of the recursion, and folding them behind a flag would make both
+ * harder to read for no real code reuse.
+ */
+async function getDeletedIssueSubtreeIds(
+  rootId: number,
+  projectId: number,
+  db: Pick<typeof baseDb, "$queryRaw"> = baseDb
+): Promise<number[]> {
+  const rows: Array<{ id: number }> = await db.$queryRaw`
+    WITH RECURSIVE descendants AS (
+      SELECT id, 1 AS depth FROM "Issue"
+      WHERE "parentId" = ${rootId} AND "projectId" = ${projectId} AND "isDeleted" = true
+      UNION ALL
+      SELECT i.id, d.depth + 1 FROM "Issue" i
+      INNER JOIN descendants d ON i."parentId" = d.id
+      WHERE i."projectId" = ${projectId} AND i."isDeleted" = true AND d.depth < 100
+    )
+    SELECT id FROM descendants
+  `;
+  return rows.map((row) => row.id);
+}
+
+/**
+ * The locked P2/P6 tree-delete policy: cascade soft-delete of `rootId` and
+ * its whole live subtree in ONE transaction, adapted from the shipped
+ * RepositoryFolders subtree-delete route
+ * (app/api/projects/[projectId]/folders/delete-subtree/route.ts). Its
+ * name-suffix rename trick is deliberately NOT copied here — `Issue` has no
+ * name-uniqueness constraint a soft-delete would need to free.
+ *
+ * `Issue.parentId`'s `ON DELETE CASCADE` foreign key is a HARD-delete
+ * mechanism only; it never fires on this path, since a soft-delete is a
+ * plain `isDeleted` UPDATE and touches no foreign key at all. This cascade
+ * is therefore an explicit, separate application-level operation.
+ *
+ * The `deletedAt` column is never set here — the registered soft-delete
+ * stamp trigger (see scripts/apply-triggers.ts) sets it to `now()` (the
+ * transaction timestamp) on the `isDeleted` false->true flip, and letting
+ * the trigger own the value is exactly what makes every row this cascade
+ * touches share one timestamp, which `restoreRequirementSubtree` below keys
+ * its cohort match on.
+ *
+ * Scope boundary: this is the TestPlanIt-initiated delete of a requirement.
+ * It is NOT the "the Jira epic vanished upstream" case — that is a
+ * detach-not-delete question owned by a later phase and must not be
+ * conflated with this function.
+ *
+ * No authorization check here by design: this is a service function, not a
+ * directly client-callable route (unlike the folders precedent). The
+ * caller — Phase 25's delete UI action — is responsible for authorizing the
+ * operation before invoking this.
+ */
+export async function deleteRequirementSubtree(
+  rootId: number,
+  projectId: number,
+  opts?: { tx?: TxClient }
+): Promise<{ deletedIds: number[]; deletedAt: Date | null }> {
+  // Explicit existence/ownership/liveness lookup — never inferred from an
+  // empty descendant list, since a missing/foreign/already-deleted root and
+  // "a leaf with no children" both resolve to zero descendants.
+  const root = await baseDb.issue.findUnique({
+    where: { id: rootId },
+    select: { id: true, projectId: true, isDeleted: true },
+  });
+  if (!root || root.projectId !== projectId || root.isDeleted) {
+    return { deletedIds: [], deletedAt: null };
+  }
+
+  // Resolved BEFORE the transaction opens: the read is cheap and read-only,
+  // and keeping it outside the transaction keeps the write window short.
+  const descendantIds = await getIssueSubtreeIds(rootId, projectId);
+  const ids = [rootId, ...descendantIds];
+
+  const run = async (tx: TxClient): Promise<Date | null> => {
+    // Single parameterized bulk UPDATE. projectId is repeated here even
+    // though the CTE above already scoped it — a bulk soft-delete is the
+    // single highest-blast-radius statement in this phase, and a redundant
+    // scope predicate costs nothing.
+    await tx.$executeRaw`
+      UPDATE "Issue"
+      SET "isDeleted" = true
+      WHERE id = ANY(${ids}::int[])
+        AND "projectId" = ${projectId}
+        AND "isDeleted" = false
+    `;
+    const [stamped] = await tx.$queryRaw<Array<{ deletedAt: Date | null }>>`
+      SELECT "deletedAt" FROM "Issue" WHERE id = ${rootId}
+    `;
+    return stamped?.deletedAt ?? null;
+  };
+
+  // Use the caller's transaction when supplied (a caller already inside an
+  // audited transaction must not nest one, and the integration test drives
+  // the function directly this way); otherwise open one here.
+  const deletedAt = opts?.tx
+    ? await run(opts.tx)
+    : await auditedTransaction(run);
+
+  return { deletedIds: ids, deletedAt };
+}
+
+/**
+ * Symmetric restore for `deleteRequirementSubtree`. Restores `rootId` and
+ * exactly the cohort its matching cascade deleted — never a row soft-deleted
+ * by an unrelated earlier operation, even one inside the same subtree.
+ *
+ * The cohort match is the whole point: it filters on `"deletedAt" = (SELECT
+ * "deletedAt" FROM "Issue" WHERE id = rootId)`, evaluated Postgres-native
+ * inside the single UPDATE statement rather than round-tripped through JS.
+ * `pg` parses `timestamptz` to a millisecond-resolution JS `Date` while
+ * `now()` stores microsecond precision, so reading `deletedAt` into JS and
+ * passing it back as a bind parameter can silently equal-match ZERO rows.
+ * The in-statement subselect avoids that entirely, and it must run inside
+ * the SAME UPDATE statement as the write: the stamp trigger nulls
+ * `deletedAt` on the true->false flip, so a subselect issued afterward
+ * would already see nulls. It works by construction here because a single
+ * UPDATE statement's WHERE-clause subqueries see the pre-statement
+ * snapshot, not any row this same statement has since modified.
+ *
+ * The deleted-side subtree walk returns descendants only (mirroring
+ * `getIssueSubtreeIds`) — `rootId` is prepended to the id list exactly like
+ * delete's own step 1. Without that prepend the root itself would stay
+ * permanently soft-deleted after a "restore".
+ *
+ * Same authorization posture as `deleteRequirementSubtree`: none here by
+ * design, the caller is responsible.
+ */
+export async function restoreRequirementSubtree(
+  rootId: number,
+  projectId: number,
+  opts?: { tx?: TxClient }
+): Promise<{ restoredIds: number[] }> {
+  const root = await baseDb.issue.findUnique({
+    where: { id: rootId },
+    select: { id: true, projectId: true, deletedAt: true },
+  });
+  if (!root || root.projectId !== projectId || root.deletedAt === null) {
+    return { restoredIds: [] };
+  }
+
+  const descendantIds = await getDeletedIssueSubtreeIds(rootId, projectId);
+  const ids = [rootId, ...descendantIds];
+
+  const run = async (tx: TxClient): Promise<void> => {
+    await tx.$executeRaw`
+      UPDATE "Issue"
+      SET "isDeleted" = false
+      WHERE id = ANY(${ids}::int[])
+        AND "projectId" = ${projectId}
+        AND "deletedAt" = (SELECT "deletedAt" FROM "Issue" WHERE id = ${rootId})
+    `;
+  };
+
+  if (opts?.tx) {
+    await run(opts.tx);
+  } else {
+    await auditedTransaction(run);
+  }
+
+  return { restoredIds: ids };
 }
