@@ -19,16 +19,117 @@
 // Run via:
 //   cd testplanit && pnpm exec vitest run lib/services/linkedIssueUpsert.containment.test.ts
 
-import { describe, it } from "vitest";
+import { execSync } from "node:child_process";
+import { readFileSync } from "node:fs";
+
+import { describe, expect, it } from "vitest";
+
+// Reviewed allowlist — the only files permitted to call `issue.update(...)`
+// or `issue.upsert(...)` directly against a raw/base client. Rationale for
+// each entry lives in the header comment above.
+const ALLOWED_FILES = [
+  "lib/integrations/services/SyncService.ts",
+  "lib/services/linkedIssueUpsert.ts",
+  "app/api/issues/[issueId]/link/route.ts",
+  "app/api/issues/[issueId]/unlink/route.ts",
+];
+
+// Test fixtures legitimately write issues directly — never subject to the
+// allowlist gate.
+const TEST_PATH_MARKERS = ["__tests__/", ".test.ts", ".spec.ts", "e2e/"];
+
+function isTestPath(filePath: string): boolean {
+  return TEST_PATH_MARKERS.some((marker) => filePath.includes(marker));
+}
+
+interface GrepHit {
+  file: string;
+  line: string;
+}
+
+/**
+ * Run `git grep -nE <pattern>` scoped to tracked *.ts/*.tsx files from
+ * process.cwd() (vitest runs with cwd = testplanit/, so relative pathspecs
+ * stay inside this package). git grep exits 1 when there are no matches —
+ * that is a valid empty result, not a real failure, so it is caught here
+ * rather than allowed to throw.
+ */
+function gitGrep(pattern: string): GrepHit[] {
+  let raw = "";
+  try {
+    raw = execSync(`git grep -nE '${pattern}' -- '*.ts' '*.tsx'`, {
+      cwd: process.cwd(),
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+  } catch (error: unknown) {
+    const execError = error as { stdout?: string };
+    raw = execError.stdout ?? "";
+  }
+  return raw
+    .split("\n")
+    .filter(Boolean)
+    .map((line) => {
+      const match = /^(.+?):(\d+):/.exec(line);
+      return match
+        ? { file: match[1], line: match[2] }
+        : { file: line, line: "?" };
+    });
+}
+
+function countOccurrences(haystack: string, needle: string): number {
+  return haystack.split(needle).length - 1;
+}
 
 describe("Issue raw-write containment (PROV-06, structural)", () => {
-  it.todo(
-    "no file outside the reviewed allowlist calls issue.update or issue.upsert"
-  );
-  it.todo(
-    "jira-link-service routes every issue upsert through the shared shell"
-  );
-  it.todo(
-    "the create-issue routes and the test-case importer route through the shared shell"
-  );
+  it("no file outside the reviewed allowlist calls issue.update or issue.upsert", () => {
+    const hits = gitGrep(String.raw`\.issue\.(update|upsert)\(`).filter(
+      (hit) => !isTestPath(hit.file)
+    );
+    const offenders = hits.filter((hit) => !ALLOWED_FILES.includes(hit.file));
+
+    if (offenders.length > 0) {
+      const offenderList = offenders
+        .map((hit) => `${hit.file}:${hit.line}`)
+        .join(", ");
+      throw new Error(
+        `Found raw Issue write(s) outside the reviewed allowlist: ${offenderList}. ` +
+          "Route the write through upsertLinkedIssueShell (lib/services/linkedIssueUpsert.ts), " +
+          "or add the file to ALLOWED_FILES here with a written reason after review."
+      );
+    }
+    expect(offenders).toEqual([]);
+
+    // Narrower updateMany check. The pattern above has a trailing open-paren
+    // that deliberately excludes updateMany (a separate, data-blob-only
+    // shape) — without this second assertion that exclusion would be a
+    // silent blind spot for a future raw updateMany write.
+    const updateManyHits = gitGrep(String.raw`\.issue\.updateMany\(`).filter(
+      (hit) => !isTestPath(hit.file)
+    );
+    const updateManyFiles = updateManyHits.map((hit) => hit.file);
+    // lib/services/jira-link-service.ts (syncJiraIssueData) is exempt: it
+    // writes only the `data` JSON blob, which is not one of
+    // LOCKED_ISSUE_FIELDS, so it never touches a locked field.
+    expect(updateManyFiles).toEqual(["lib/services/jira-link-service.ts"]);
+  });
+
+  it("jira-link-service routes every issue upsert through the shared shell", () => {
+    const content = readFileSync("lib/services/jira-link-service.ts", "utf8");
+    expect(countOccurrences(content, "upsertLinkedIssueShell(")).toBe(6);
+    expect(countOccurrences(content, "baseDb.issue.upsert(")).toBe(0);
+  });
+
+  it("the create-issue routes and the test-case importer route through the shared shell", () => {
+    const files = [
+      "app/api/integrations/jira/create/route.ts",
+      "app/api/integrations/[id]/create-issue/route.ts",
+      "lib/services/testCaseImport.ts",
+    ];
+    for (const file of files) {
+      const content = readFileSync(file, "utf8");
+      expect(countOccurrences(content, "upsertLinkedIssueShell(")).toBe(1);
+      expect(countOccurrences(content, "issue.upsert(")).toBe(0);
+    }
+  });
 });
