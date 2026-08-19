@@ -51,6 +51,7 @@ export function getJunitColumns({
                 name: row.original.name,
                 isDeleted,
                 source: row.original.source,
+                automated: row.original.automated,
                 hasParameters: row.original.hasParameters,
               }}
               projectId={isDeleted ? undefined : projectId}
