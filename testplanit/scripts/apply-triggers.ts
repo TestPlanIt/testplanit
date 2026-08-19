@@ -352,6 +352,79 @@ CREATE TRIGGER tpl_composition_lock_guard_upd BEFORE UPDATE OF "order", "isDelet
 `;
 
 /**
+ * Issue hierarchy cycle guard (HIER-03) — the authoritative DB-level guard against a
+ * parentId write that would make an issue its own descendant. Fires for ALL Issue rows
+ * unconditionally, not gated on the requirement-classification flag: a cycle is
+ * structurally wrong for any hierarchy, and an issue's requirement classification can
+ * change after its parent was set. This is the one enforcement point below every
+ * client tier (policy, base, raw, psql, sync) — the declarative @deny policy layer
+ * cannot express recursion.
+ *
+ * BEFORE INSERT: rejects only the self-parent case (parentId = id); a brand-new row
+ * cannot already be an ancestor of anything else.
+ *
+ * BEFORE UPDATE of the parentId column: takes a transaction-scoped advisory lock
+ * (pg_advisory_xact_lock) before walking ancestors. This is the only thing that closes
+ * the concurrent-reparent race, where two sessions each reparent a different node so
+ * that together they form a cycle — each statement's own ancestor walk can read a
+ * snapshot that predates the other session's commit. The lock is deliberately NOT taken
+ * on INSERT: a brand-new row cannot already be an ancestor of anything, and the
+ * parentId foreign key itself already serializes the mutual-insert case by blocking on
+ * the other transaction's uncommitted parent row. Do not "optimize" this lock away.
+ *
+ * The ancestor walk is a WITH RECURSIVE CTE capped at depth < 100 so malformed
+ * pre-existing cyclic data errors out instead of hanging a connection inside a BEFORE
+ * trigger.
+ *
+ * The distinct tpl_issue_hierarchy_* prefix keeps this out of the tpl_audit_% /
+ * tpl_composition_% / tpl_single_default_% / tpl_stamp_% drift checks.
+ */
+export const ISSUE_HIERARCHY_CYCLE_GUARD_SQL = `
+CREATE OR REPLACE FUNCTION tpl_issue_hierarchy_cycle_guard() RETURNS TRIGGER AS $$
+DECLARE
+  found_cycle boolean;
+BEGIN
+  IF NEW."parentId" IS NULL THEN
+    RETURN NEW;
+  END IF;
+
+  IF NEW."parentId" = NEW.id THEN
+    RAISE EXCEPTION 'Issue % cannot be its own parent', NEW.id USING ERRCODE = 'check_violation'; -- 23514
+  END IF;
+
+  IF TG_OP = 'UPDATE' THEN
+    PERFORM pg_advisory_xact_lock(hashtext('tpl_issue_hierarchy_cycle_guard'), 0);
+  END IF;
+
+  SELECT EXISTS (
+    WITH RECURSIVE ancestors AS (
+      SELECT "parentId" AS id, 1 AS depth FROM "Issue" WHERE id = NEW."parentId"
+      UNION ALL
+      SELECT i."parentId", a.depth + 1 FROM "Issue" i
+      INNER JOIN ancestors a ON i.id = a.id
+      WHERE i."parentId" IS NOT NULL AND a.depth < 100
+    )
+    SELECT 1 FROM ancestors WHERE id = NEW.id
+  ) INTO found_cycle;
+
+  IF found_cycle THEN
+    RAISE EXCEPTION 'Reparenting issue % under % would create a cycle', NEW.id, NEW."parentId" USING ERRCODE = 'check_violation'; -- 23514
+  END IF;
+
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS tpl_issue_hierarchy_cycle_guard_ins ON "Issue";
+CREATE TRIGGER tpl_issue_hierarchy_cycle_guard_ins BEFORE INSERT ON "Issue"
+  FOR EACH ROW EXECUTE FUNCTION tpl_issue_hierarchy_cycle_guard();
+
+DROP TRIGGER IF EXISTS tpl_issue_hierarchy_cycle_guard_upd ON "Issue";
+CREATE TRIGGER tpl_issue_hierarchy_cycle_guard_upd BEFORE UPDATE OF "parentId" ON "Issue"
+  FOR EACH ROW EXECUTE FUNCTION tpl_issue_hierarchy_cycle_guard();
+`;
+
+/**
  * Apply the full audit-trigger substrate to one database, idempotently. Importable so the app can
  * self-install on boot (see lib/audit/ensureAuditTriggers + instrumentation.ts) in addition to the
  * CLI / deploy-entrypoint paths — `db push` silently drops these triggers, so they must be
@@ -586,6 +659,13 @@ export async function applyAuditTriggers(
     //     CREATE OR REPLACE + DROP/CREATE TRIGGER. Distinct tpl_composition_*
     //     prefix keeps it out of every drift self-check below.
     await client.query(COMPOSITION_LOCK_GUARD_SQL);
+
+    // 3c. Issue hierarchy cycle guard (HIER-03) — the authoritative DB-level guard
+    //     against a parentId write that reparents an issue under its own descendant.
+    //     Idempotent CREATE OR REPLACE + DROP/CREATE TRIGGER pair. Distinct
+    //     tpl_issue_hierarchy_* prefix keeps it out of every drift self-check below,
+    //     exactly like tpl_composition_* above.
+    await client.query(ISSUE_HIERARCHY_CYCLE_GUARD_SQL);
 
     // 4. GRANT/REVOKE defense-in-depth: the connecting role keeps INSERT/SELECT/UPDATE/DELETE (the
     //    worker cursor + retention purge need UPDATE/DELETE); UPDATE/DELETE revoked from PUBLIC. The
