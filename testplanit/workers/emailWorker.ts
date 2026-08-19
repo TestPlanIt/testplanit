@@ -1,4 +1,5 @@
 import { Job, Worker } from "bullmq";
+import { isEmailServerConfigured } from "../lib/email/emailConfig";
 import {
   sendDigestEmail,
   sendNotificationEmail,
@@ -43,6 +44,15 @@ const processor = async (job: Job) => {
   console.log(
     `Processing email job ${job.id} of type ${job.name}${job.data.tenantId ? ` for tenant ${job.data.tenantId}` : ""}`
   );
+
+  // Without an SMTP transport every send is doomed; completing the job as a
+  // no-op beats failing it through the queue's five retry attempts.
+  if (!isEmailServerConfigured()) {
+    console.warn(
+      `Skipping email job ${job.name}: no email server configured (EMAIL_SERVER_* env not fully set)`
+    );
+    return;
+  }
 
   // Validate multi-tenant job data if in multi-tenant mode
   validateMultiTenantJobData(job.data);

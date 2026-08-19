@@ -36,6 +36,12 @@ vi.mock("../lib/email/notificationTemplates", () => ({
   sendDigestEmail: (...args: any[]) => mockSendDigestEmail(...args),
 }));
 
+// Email is configured by default in tests; individual tests flip this off.
+const mockIsEmailConfigured = vi.fn(() => true);
+vi.mock("../lib/email/emailConfig", () => ({
+  isEmailServerConfigured: () => mockIsEmailConfigured(),
+}));
+
 // Mock server translations
 vi.mock("../lib/server-translations", () => ({
   getServerTranslation: vi.fn((locale: string, key: string) =>
@@ -91,6 +97,24 @@ describe("EmailWorker", () => {
     mockSendNotificationEmail.mockResolvedValue(undefined);
     mockSendDigestEmail.mockResolvedValue(undefined);
     mockDb.notification.updateMany.mockResolvedValue({ count: 1 });
+  });
+
+  describe("unconfigured email server", () => {
+    it("completes email jobs as no-ops without touching the db or sending", async () => {
+      mockIsEmailConfigured.mockReturnValueOnce(false);
+
+      const { processor } = await import("./emailWorker");
+
+      await processor({
+        id: "job-1",
+        name: "send-notification-email",
+        data: { notificationId: "notif-1", userId: "user-1", immediate: true },
+      } as Job);
+
+      expect(mockDb.notification.findUnique).not.toHaveBeenCalled();
+      expect(mockSendNotificationEmail).not.toHaveBeenCalled();
+      expect(mockSendDigestEmail).not.toHaveBeenCalled();
+    });
   });
 
   describe("send-notification-email", () => {

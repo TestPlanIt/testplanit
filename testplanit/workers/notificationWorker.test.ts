@@ -28,6 +28,12 @@ vi.mock("../lib/queues", () => ({
   NOTIFICATION_QUEUE_NAME: "notifications",
 }));
 
+// Email is configured by default in tests; individual tests flip this off.
+const mockIsEmailConfigured = vi.fn(() => true);
+vi.mock("../lib/email/emailConfig", () => ({
+  isEmailServerConfigured: () => mockIsEmailConfigured(),
+}));
+
 // Mock Valkey connection to null to prevent worker creation
 vi.mock("../lib/valkey", () => ({
   default: null,
@@ -219,6 +225,21 @@ describe("NotificationWorker", () => {
   });
 
   describe("JOB_SEND_DAILY_DIGEST", () => {
+    it("skips the digest pass entirely when no email server is configured", async () => {
+      mockIsEmailConfigured.mockReturnValueOnce(false);
+
+      const { processor } = await import("./notificationWorker");
+
+      await processor({
+        id: "job-456",
+        name: "send-daily-digest",
+        data: {},
+      } as Job);
+
+      expect(mockDb.userPreferences.findMany).not.toHaveBeenCalled();
+      expect(mockEmailQueue.add).not.toHaveBeenCalled();
+    });
+
     it("should send daily digest emails", async () => {
       const mockUsers = [
         {

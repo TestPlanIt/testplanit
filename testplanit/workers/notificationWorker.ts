@@ -6,6 +6,7 @@ import {
   MultiTenantJobData,
   validateMultiTenantJobData,
 } from "../lib/multiTenantDb";
+import { isEmailServerConfigured } from "../lib/email/emailConfig";
 import {
   tenantBroadcastChannel,
   userChannel,
@@ -185,6 +186,13 @@ const processor = async (job: Job) => {
 
     case JOB_SEND_DAILY_DIGEST:
       const digestData = job.data as SendDailyDigestJobData;
+
+      if (!isEmailServerConfigured()) {
+        console.log(
+          "Skipping daily digest: no email server configured (EMAIL_SERVER_* env not fully set)"
+        );
+        break;
+      }
 
       try {
         // Get global settings from AppConfig
