@@ -72,7 +72,7 @@ describe("searchIssues", () => {
 
     const where = mockFindMany.mock.calls[0][0].where;
     expect(where).not.toHaveProperty("OR");
-    expect(where).toEqual({ isDeleted: false });
+    expect(where).toEqual({ isDeleted: false, isRequirement: false });
   });
 
   it("scopes to a project when one is given", async () => {
@@ -82,6 +82,35 @@ describe("searchIssues", () => {
       expect.objectContaining({
         where: expect.objectContaining({ projectId: 7 }),
       })
+    );
+  });
+
+  it("excludes requirement-typed rows from the findMany query", async () => {
+    await searchIssues("", 0, 10);
+
+    expect(mockFindMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ isRequirement: false }),
+      })
+    );
+  });
+
+  it("excludes requirement-typed rows from the count query too, so the paging total matches the list", async () => {
+    await searchIssues("", 0, 10);
+
+    expect(mockCount).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ isRequirement: false }),
+      })
+    );
+  });
+
+  it("keeps the requirement exclusion whether or not a search term or projectId is supplied", async () => {
+    await searchIssues("login", 0, 10, 7);
+
+    const where = mockFindMany.mock.calls[0][0].where;
+    expect(where).toEqual(
+      expect.objectContaining({ isRequirement: false, projectId: 7 })
     );
   });
 

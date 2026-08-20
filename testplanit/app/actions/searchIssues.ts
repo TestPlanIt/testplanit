@@ -1,6 +1,7 @@
 "use server";
 
 import { getEnhancedDb } from "~/lib/auth/utils";
+import { DEFECT_SCOPE_WHERE } from "~/lib/services/issueRoleScope";
 import { getServerAuthSession } from "~/server/auth";
 
 export interface IssueSearchOption {
@@ -36,6 +37,7 @@ export async function searchIssues(
     const term = query.trim();
     const where: any = {
       isDeleted: false,
+      ...DEFECT_SCOPE_WHERE,
       ...(projectId ? { projectId } : {}),
       ...(term
         ? {
