@@ -27,7 +27,7 @@ export function registerIssuesList(
     "testplanit_issues_list",
     {
       description:
-        "List issues scoped to a project. Filters: externalSystem (IntegrationProvider enum), integrationId, status (TestPlanIt-side, exact match), externalStatus (externally-synced label, case-insensitive substring). Cursor pagination ordered by createdAt DESC then id DESC (deterministic). Each row carries linkedCaseCount via _count for the dominant fan-out signal. The assignee filter is intentionally omitted — Issue has no native assigneeId column; assignee data lives in Issue.data: Json (provider-shaped) and is not addressable here.",
+        "List issues scoped to a project. Filters: externalSystem (IntegrationProvider enum), integrationId, status (TestPlanIt-side, exact match), externalStatus (externally-synced label, case-insensitive substring). Cursor pagination ordered by createdAt DESC then id DESC (deterministic). Each row carries linkedCaseCount via _count for the dominant fan-out signal. The assignee filter is intentionally omitted — Issue has no native assigneeId column; assignee data lives in Issue.data: Json (provider-shaped) and is not addressable here. By default only defect-context issues are returned; pass includeRequirements: true to widen the result to include requirement-classified issues as well.",
       inputSchema: {
         projectId: z.number().int().positive(),
         externalSystem: z
@@ -36,6 +36,7 @@ export function registerIssuesList(
         integrationId: z.number().int().positive().optional(),
         status: z.string().min(1).optional(),
         externalStatus: z.string().min(1).optional(),
+        includeRequirements: z.boolean().optional(),
         cursor: z.number().int().positive().optional(),
         limit: z.number().int().positive().max(MAX_LIMIT).optional(),
       },
@@ -47,6 +48,16 @@ export function registerIssuesList(
           projectId: input.projectId,
           isDeleted: false,
         };
+        // See testplanit/lib/services/issueRoleScope.ts — the app-side
+        // canonical definition of the requirement/defect row-kind split on
+        // Issue.isRequirement. This package builds and ships separately
+        // from the app and cannot import that module, so the predicate is
+        // mirrored here as a literal. Omitted or false takes the safe,
+        // defect-only branch; only an explicit true widens the query to
+        // both row kinds.
+        if (!input.includeRequirements) {
+          where.isRequirement = false;
+        }
         if (input.externalSystem !== undefined) {
           where.integration = { provider: input.externalSystem };
         }
