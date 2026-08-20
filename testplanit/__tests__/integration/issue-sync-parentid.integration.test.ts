@@ -65,6 +65,12 @@ describeIntegration("SyncService synced parentId (live DB)", () => {
   let integrationId: number;
   let project1Id: number;
   let project2Id: number;
+  // P1's ProjectIntegration row id and the IntegrationProject mapping that
+  // performProjectImport itself resolves (todo 6 / plan 22-05) — neither
+  // is needed by the five pre-existing entries above, only by the final
+  // end-of-run re-resolution case.
+  let projectIntegration1Id: string;
+  let runMappingId: string;
   const allIssueIds: number[] = [];
 
   beforeAll(async () => {
@@ -127,7 +133,7 @@ describeIntegration("SyncService synced parentId (live DB)", () => {
     // P1's requirements config — makes the classification assertion (entry
     // 5) real rather than mocked. isActive: true matches the predicate
     // resolveSyncedRequirementFlag queries on.
-    await db.projectIntegration.create({
+    const projectIntegration1 = await db.projectIntegration.create({
       data: {
         projectId: project1Id,
         integrationId,
@@ -139,11 +145,30 @@ describeIntegration("SyncService synced parentId (live DB)", () => {
           },
         },
       },
+      select: { id: true },
     });
+    projectIntegration1Id = projectIntegration1.id;
+
+    // performProjectImport (todo 6 / plan 22-05) additionally needs a real
+    // IntegrationProject mapping — the five entries above drive
+    // upsertIssueFromExternal directly and never touch this model.
+    const runMapping = await db.integrationProject.create({
+      data: {
+        projectIntegrationId: projectIntegration1Id,
+        externalProjectId: `${STAMP}-run`,
+        externalProjectKey: `${STAMP}-run`,
+        externalProjectName: `${STAMP} run project`,
+        isActive: true,
+      },
+      select: { id: true },
+    });
+    runMappingId = runMapping.id;
   });
 
   afterAll(async () => {
     await db.issue.deleteMany({ where: { id: { in: allIssueIds } } });
+    // FK order: the IntegrationProject mapping references ProjectIntegration.
+    await db.integrationProject.delete({ where: { id: runMappingId } });
     await db.projectIntegration.deleteMany({
       where: { integrationId },
     });
@@ -367,7 +392,69 @@ describeIntegration("SyncService synced parentId (live DB)", () => {
     expect(nonReqRow?.isRequirement).toBe(false);
   });
 
-  it.todo(
-    "completes the hierarchy within one import run when a child is imported before its parent"
-  );
+  it("completes the hierarchy within one import run when a child is imported before its parent", async () => {
+    const { syncService } = await import(
+      "~/lib/integrations/services/SyncService"
+    );
+    const { integrationManager } = await import(
+      "~/lib/integrations/IntegrationManager"
+    );
+
+    const childExternalId = `${STAMP}-run-child`;
+    const parentExternalId = `${STAMP}-run-parent`;
+
+    // Child-first, then parent, in ONE page — the whole point. Parent-first
+    // would still pass even with the end-of-run re-resolution pass deleted,
+    // which is exactly the regression this test exists to catch.
+    const searchIssues = vi.fn().mockResolvedValueOnce({
+      issues: [
+        makeIssueData({
+          id: childExternalId,
+          parent: {
+            id: parentExternalId,
+            key: `${STAMP}-${parentExternalId}`,
+          },
+        }),
+        makeIssueData({ id: parentExternalId }),
+      ],
+      total: 2,
+      hasMore: false,
+    });
+    vi.spyOn(integrationManager, "getAdapter").mockResolvedValueOnce({
+      searchIssues,
+      getCapabilities: vi.fn().mockReturnValue({ searchIssues: true }),
+    } as any);
+
+    // Drive the real entry point through the raw scratch-DB client so the
+    // pass's $executeRaw write and the live cycle-guard trigger both
+    // exercise for real — exactly ONE call. A second call would make this
+    // pass even with the pass under test removed.
+    const result = await syncService.performProjectImport(
+      integrationId,
+      runMappingId,
+      { cap: 50 },
+      undefined,
+      { dbClient: db }
+    );
+
+    expect(result.errors).toHaveLength(0);
+
+    const childRow = await db.issue.findFirst({
+      where: { externalId: childExternalId, integrationId },
+      select: { id: true, parentId: true },
+    });
+    const parentRow = await db.issue.findFirst({
+      where: { externalId: parentExternalId, integrationId },
+      select: { id: true, parentId: true },
+    });
+    if (childRow) allIssueIds.push(childRow.id);
+    if (parentRow) allIssueIds.push(parentRow.id);
+
+    // The case P3a previously deferred to "the next sync pass": correct at
+    // the END of this single run, re-read through the raw client rather
+    // than trusted from the import result.
+    expect(childRow?.parentId).toBe(parentRow?.id);
+    // Proves the pass links the right direction, not both.
+    expect(parentRow?.parentId).toBeNull();
+  });
 });
