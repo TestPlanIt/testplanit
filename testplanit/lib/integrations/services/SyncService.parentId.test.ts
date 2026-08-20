@@ -26,6 +26,7 @@ const mockIssueUpsert = vi.fn();
 const mockIssueUpdate = vi.fn();
 const mockIssueFindFirst = vi.fn();
 const mockIssueFindUnique = vi.fn();
+const mockProjectIntegrationFindFirst = vi.fn();
 
 vi.mock("@/lib/rawDb", () => ({
   rawDb: {
@@ -37,6 +38,9 @@ vi.mock("@/lib/rawDb", () => ({
       update: (...args: any[]) => mockIssueUpdate(...args),
       findFirst: (...args: any[]) => mockIssueFindFirst(...args),
       findUnique: (...args: any[]) => mockIssueFindUnique(...args),
+    },
+    projectIntegration: {
+      findFirst: (...args: any[]) => mockProjectIntegrationFindFirst(...args),
     },
   },
 }));
@@ -252,13 +256,93 @@ describe("SyncService — synced parentId and requirement classification", () =>
     expect(mockIssueUpdate.mock.calls[0][0].data.parentId).toBeUndefined();
   });
 
-  it.todo(
-    "sets isRequirement from the project's configured requirement issue types"
-  );
-  it.todo("clears isRequirement when the issue type is not configured");
-  it.todo(
-    "leaves isRequirement untouched when the db client does not expose projectIntegration"
-  );
+  it("sets isRequirement from the project's configured requirement issue types", async () => {
+    const { SyncService } = await import("./SyncService");
+    const service = new SyncService();
+    const { rawDb } = await import("@/lib/rawDb");
+    const db = rawDb as any;
+
+    mockProjectIntegrationFindFirst.mockResolvedValue({
+      config: { requirements: { enabled: true, issueTypeIds: ["10001"] } },
+    });
+
+    await (service as any).upsertIssueFromExternal(
+      db,
+      1,
+      7,
+      makeIssueData({ id: "ext-req", issueType: { id: "10001" } })
+    );
+
+    const call = mockIssueUpsert.mock.calls[0][0];
+    expect(call.create.isRequirement).toBe(true);
+    expect(call.update.isRequirement).toBe(true);
+  });
+
+  it("clears isRequirement when the issue type is not configured", async () => {
+    const { SyncService } = await import("./SyncService");
+    const service = new SyncService();
+    const { rawDb } = await import("@/lib/rawDb");
+    const db = rawDb as any;
+
+    mockProjectIntegrationFindFirst.mockResolvedValue({
+      config: { requirements: { enabled: true, issueTypeIds: ["10001"] } },
+    });
+
+    await (service as any).upsertIssueFromExternal(
+      db,
+      1,
+      7,
+      makeIssueData({ id: "ext-non-req", issueType: { id: "10002" } })
+    );
+
+    const call = mockIssueUpsert.mock.calls[0][0];
+    expect(call.create.isRequirement).toBe(false);
+    expect(call.update.isRequirement).toBe(false);
+
+    // The enable switch is part of the effective set — a disabled config
+    // classifies false even for a configured type id, so sync and the
+    // recompute route can never disagree.
+    vi.clearAllMocks();
+    mockProjectsFindUnique.mockResolvedValue({ createdBy: "creator-1" });
+    mockIssueUpsert.mockResolvedValue({ id: 555 });
+    mockIssueFindUnique.mockResolvedValue(null);
+    mockProjectIntegrationFindFirst.mockResolvedValue({
+      config: { requirements: { enabled: false, issueTypeIds: ["10001"] } },
+    });
+
+    await (service as any).upsertIssueFromExternal(
+      db,
+      1,
+      7,
+      makeIssueData({ id: "ext-disabled", issueType: { id: "10001" } })
+    );
+
+    const disabledCall = mockIssueUpsert.mock.calls[0][0];
+    expect(disabledCall.create.isRequirement).toBe(false);
+    expect(disabledCall.update.isRequirement).toBe(false);
+  });
+
+  it("leaves isRequirement untouched when the db client does not expose projectIntegration", async () => {
+    const { SyncService } = await import("./SyncService");
+    const service = new SyncService();
+    const { rawDb } = await import("@/lib/rawDb");
+    const db = rawDb as any;
+    delete db.projectIntegration;
+
+    await expect(
+      (service as any).upsertIssueFromExternal(
+        db,
+        1,
+        7,
+        makeIssueData({ id: "ext-no-pi-model", issueType: { id: "10001" } })
+      )
+    ).resolves.not.toThrow();
+
+    const call = mockIssueUpsert.mock.calls[0][0];
+    expect(call.create.isRequirement).toBeUndefined();
+    expect(call.update.isRequirement).toBeUndefined();
+  });
+
   it.todo(
     "reports an unresolved tracker parent through upsertIssueFromExternal's result"
   );

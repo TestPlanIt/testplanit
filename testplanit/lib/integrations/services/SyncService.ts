@@ -11,6 +11,10 @@ import type { IssueAdapter, IssueData } from "../adapters/IssueAdapter";
 import { issueCache } from "../cache/IssueCache";
 import { AuthenticationService } from "../AuthenticationService";
 import { integrationManager } from "../IntegrationManager";
+import {
+  effectiveRequirementTypeIds,
+  readRequirementTypeConfig,
+} from "../requirementTypeConfig";
 
 export interface SyncJobData {
   userId: string;
@@ -172,6 +176,62 @@ export async function resolveSyncedParentId(
     return parentRow.id;
   }
   return undefined;
+}
+
+/**
+ * Classifies a synced issue against the project's stored
+ * `config.requirements` namespace for the `Issue.isRequirement` column —
+ * the write path `schema.zmodel:3393`'s comment names but that nothing
+ * implemented until this phase (P3e). Takes the issue TYPE id, not the
+ * whole `IssueData`, for the same narrow-input reason as
+ * `resolveSyncedParentId`.
+ *
+ * Returns `undefined` (leave the column untouched) when the owning project
+ * is unknown or the db client exposes no `projectIntegration` model — the
+ * second guard is load-bearing, not defensive garnish: eight existing
+ * `SyncService.*.test.ts` files mock `rawDb` with only `projects`/`issue`,
+ * and an unguarded model access would break all of them. Mirrors the
+ * existing `typeof db.issue?.findUnique === "function"` guard shape used
+ * elsewhere in `upsertIssueFromExternal`.
+ *
+ * Cost note: this adds one indexed `findFirst` per synced issue, alongside
+ * the `projects.findUnique` `upsertIssueFromExternal` already runs per
+ * issue. Deliberate — a cached config would open a stale window immediately
+ * after an admin saves a config change, and correctness right after a save
+ * is exactly what CFG-03 exists to guarantee.
+ *
+ * Scope note: this write is unconditional across all synced issues,
+ * mirroring the `parentId` decision (CONTEXT P3b) and Phase 21's
+ * unconditional cycle-trigger reasoning — classification can change after
+ * the fact, so gating the write on the current classification would strand
+ * rows. It is also what makes CFG-01's config govern FUTURE imports rather
+ * than only the rows that existed when the admin saved.
+ */
+export async function resolveSyncedRequirementFlag(
+  db: any,
+  integrationId: number,
+  ownerProjectId: number | null,
+  issueTypeId: string | null | undefined
+): Promise<boolean | undefined> {
+  if (
+    ownerProjectId == null ||
+    typeof db.projectIntegration?.findFirst !== "function"
+  ) {
+    return undefined;
+  }
+
+  const row = await db.projectIntegration.findFirst({
+    where: {
+      projectId: ownerProjectId,
+      integrationId,
+      isActive: true,
+    },
+    select: { config: true },
+  });
+
+  return effectiveRequirementTypeIds(
+    readRequirementTypeConfig(row?.config)
+  ).includes(issueTypeId ?? "");
 }
 
 /**
@@ -1696,14 +1756,21 @@ export class SyncService {
     // tracker payload — what a re-sync of an externally-restored ticket
     // should produce.
     //
-    // PROV-04: resolvedParentId is a plain key below, never inside a
-    // truthy-parent spread guard (see `resolveSyncedParentId`'s doc comment
-    // for why — `undefined` already means "leave unchanged" to the ORM).
+    // PROV-04/P3e: resolvedParentId and resolvedIsRequirement are plain
+    // keys below, never inside a truthy-parent spread guard (see
+    // `resolveSyncedParentId`'s doc comment for why — `undefined` already
+    // means "leave unchanged" to the ORM).
     const resolvedParentId = await resolveSyncedParentId(
       db,
       integrationId,
       projectId,
       issueData.parent
+    );
+    const resolvedIsRequirement = await resolveSyncedRequirementFlag(
+      db,
+      integrationId,
+      projectId,
+      issueData.issueType?.id
     );
     const issueFields = {
       name: issueData.key || issueData.id,
@@ -1724,6 +1791,7 @@ export class SyncService {
       issueTypeName: issueData.issueType?.name,
       issueTypeIconUrl: issueData.issueType?.iconUrl,
       parentId: resolvedParentId,
+      isRequirement: resolvedIsRequirement,
       lastSyncedAt: new Date(),
       projectId,
     };
@@ -1825,15 +1893,22 @@ export class SyncService {
         ? (existingIssue.data as Record<string, unknown>)
         : {};
 
-    // PROV-04: resolve against the EXISTING row's own project — this
+    // PROV-04/P3e: resolve against the EXISTING row's own project — this
     // function receives no projectId parameter (it's an update, not an
-    // upsert). resolvedParentId is a plain key below, never inside a
-    // truthy-parent spread guard (see `resolveSyncedParentId`'s doc comment).
+    // upsert). resolvedParentId/resolvedIsRequirement are plain keys below,
+    // never inside a truthy-parent spread guard (see
+    // `resolveSyncedParentId`'s doc comment).
     const resolvedParentId = await resolveSyncedParentId(
       db,
       integrationId,
       existingIssue.projectId ?? null,
       issueData.parent
+    );
+    const resolvedIsRequirement = await resolveSyncedRequirementFlag(
+      db,
+      integrationId,
+      existingIssue.projectId ?? null,
+      issueData.issueType?.id
     );
 
     const issuePayload = {
@@ -1855,6 +1930,7 @@ export class SyncService {
       issueTypeName: issueData.issueType?.name,
       issueTypeIconUrl: issueData.issueType?.iconUrl,
       parentId: resolvedParentId,
+      isRequirement: resolvedIsRequirement,
       lastSyncedAt: new Date(),
     };
 
