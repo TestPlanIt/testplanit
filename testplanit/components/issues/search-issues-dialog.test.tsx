@@ -785,6 +785,39 @@ describe("SearchIssuesDialog", () => {
     });
   });
 
+  describe("HYG-01: requirement-row exclusion default", () => {
+    it("calls the issue hook with a where carrying isRequirement: false when includeRequirements is not set", () => {
+      render(<SearchIssuesDialog {...defaultProps} />);
+
+      const lastCall = mockUseFindManyIssue.mock.calls.at(-1)?.[0];
+      expect(lastCall?.where).toEqual(
+        expect.objectContaining({ isRequirement: false })
+      );
+    });
+
+    it("calls the issue hook with a where carrying no isRequirement key when includeRequirements is set", () => {
+      render(<SearchIssuesDialog {...defaultProps} includeRequirements />);
+
+      const lastCall = mockUseFindManyIssue.mock.calls.at(-1)?.[0];
+      expect(lastCall?.where).not.toHaveProperty("isRequirement");
+    });
+
+    it("keeps isRequirement: false alongside the search-term OR block", () => {
+      render(<SearchIssuesDialog {...defaultProps} />);
+
+      const searchInput = screen.getByRole("textbox");
+      fireEvent.change(searchInput, { target: { value: "bug" } });
+
+      const lastCall = mockUseFindManyIssue.mock.calls.at(-1)?.[0];
+      expect(lastCall?.where).toEqual(
+        expect.objectContaining({
+          isRequirement: false,
+          OR: expect.any(Array),
+        })
+      );
+    });
+  });
+
   describe("CR-05: iterationContext threading to create-issue dispatcher", () => {
     const jiraIntegration = {
       id: 99,

@@ -24,6 +24,7 @@ import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { isIntegrationAuthCompleteMessage } from "~/lib/integrations/oauthPopup";
+import { DEFECT_SCOPE_WHERE } from "~/lib/services/issueRoleScope";
 import { CreateIssueDialog } from "./create-issue-dialog";
 import { CreateIssueJiraForm } from "./create-issue-jira-form";
 
@@ -78,6 +79,14 @@ interface SearchIssuesDialogProps {
   onIssuesSelected?: (issues: IssueItem[]) => void;
   linkedIssueIds?: (string | number)[]; // IDs of already linked issues
   /**
+   * Every defect-linking surface leaves this off, so the internal search
+   * only ever offers defect-context rows. Milestone membership is the one
+   * caller that turns this on, because a tracked item can legitimately be
+   * both a milestone member and a requirement — those are two different
+   * axes of the same row, not a hygiene leak.
+   */
+  includeRequirements?: boolean;
+  /**
    * INT-05: when set, "Create New Issue" opens with the title +
    * description prefilled from the failed iteration's parameter values
    * and a deep link. The dialog fetches the prefill from
@@ -100,6 +109,7 @@ export function SearchIssuesDialog({
   multiSelect = false,
   onIssuesSelected,
   linkedIssueIds = [],
+  includeRequirements = false,
   iterationContext,
 }: SearchIssuesDialogProps) {
   const t = useTranslations();
@@ -190,6 +200,7 @@ export function SearchIssuesDialog({
     {
       where: {
         projectId,
+        ...(includeRequirements ? {} : DEFECT_SCOPE_WHERE),
         ...(debouncedSearchQuery && {
           OR: [
             { title: { contains: debouncedSearchQuery, mode: "insensitive" } },
