@@ -98,6 +98,83 @@ export function buildSyncedIssueData(issueData: IssueData): SyncedIssueData {
 }
 
 /**
+ * Resolves a tracker parent ref (`IssueData.parent`) to a local `Issue.id`
+ * for the relational `Issue.parentId` column — PROV-04. Takes the parent
+ * REF, not the whole `IssueData`, so plan 22-05's end-of-import
+ * re-resolution pass can call this same function from a context where only
+ * the ref survives, with no second copy of the clause-building logic.
+ *
+ * Three-valued return, by design (CONTEXT P3d):
+ *   number    -> link to this local Issue.id
+ *   null      -> the tracker reports no parent; clear the column
+ *   undefined -> not resolvable this pass (no local row yet, or the
+ *                resolved row belongs to a different project); leave the
+ *                column untouched
+ *
+ * Do NOT write the caller's result through a truthy-parent conditional
+ * spread (`...(x ? {parentId: y} : {})`) the way `buildSyncedIssueData`
+ * above does for `Issue.data.parent` — that shape is a verified staleness
+ * bug (a parent removed upstream is never cleared because the merge never
+ * deletes a key the RHS omits). `undefined` already means "leave unchanged"
+ * to the ORM, which is exactly the third state above — write `parentId:
+ * resolvedParentId` as a plain key instead.
+ */
+export async function resolveSyncedParentId(
+  db: any,
+  integrationId: number,
+  ownerProjectId: number | null,
+  parentRef: { id: string; key?: string } | null | undefined
+): Promise<number | null | undefined> {
+  if (!parentRef || !parentRef.id) {
+    return null;
+  }
+
+  // Guarded like the existing `db.issue?.findUnique` pre-check above (in
+  // `upsertIssueFromExternal`) — some mocked/limited db clients used by
+  // pre-existing SyncService test files don't expose `findFirst` on this
+  // model. Absence reads as "not resolvable this pass", not a crash.
+  if (typeof db.issue?.findFirst !== "function") {
+    return undefined;
+  }
+
+  // Identifier clauses are built CONDITIONALLY: an `undefined` filter value
+  // means "ignore this condition" to this ORM, so an unconditional
+  // `{ externalKey: parentRef.key }` clause with no key present degrades
+  // the OR into a match-anything predicate that could link a child to an
+  // arbitrary row (T-22-02-02). Only add the externalKey clause when the
+  // tracker actually supplied a non-empty key.
+  const clauses: Array<Record<string, string>> = [
+    { externalId: parentRef.id },
+  ];
+  if (typeof parentRef.key === "string" && parentRef.key.length > 0) {
+    clauses.push({ externalKey: parentRef.key });
+  }
+
+  const parentRow = await db.issue.findFirst({
+    where: {
+      integrationId,
+      isDeleted: false,
+      OR: clauses,
+    },
+    select: { id: true, projectId: true },
+  });
+
+  // "Not found" (forward reference — child paged in before its parent) and
+  // "found in another project" (T-22-02-01, a real security boundary the
+  // cycle-guard trigger does not itself check) are treated identically:
+  // no throw, no write this pass. A forward reference is normal tracker
+  // ordering and plan 22-05 completes it within the same run.
+  if (
+    parentRow &&
+    parentRow.projectId != null &&
+    parentRow.projectId === ownerProjectId
+  ) {
+    return parentRow.id;
+  }
+  return undefined;
+}
+
+/**
  * Per-issue Redis lock for `performIssueRefresh` — prevents two concurrent
  * syncs from the same issue from each pulling Jira's API. The TTL is the
  * safety release: if the holder crashes mid-sync, the next caller can
@@ -1618,6 +1695,16 @@ export class SyncService {
     // overwrite + isDeleted: false brings the row back with the freshest
     // tracker payload — what a re-sync of an externally-restored ticket
     // should produce.
+    //
+    // PROV-04: resolvedParentId is a plain key below, never inside a
+    // truthy-parent spread guard (see `resolveSyncedParentId`'s doc comment
+    // for why — `undefined` already means "leave unchanged" to the ORM).
+    const resolvedParentId = await resolveSyncedParentId(
+      db,
+      integrationId,
+      projectId,
+      issueData.parent
+    );
     const issueFields = {
       name: issueData.key || issueData.id,
       title: issueData.title,
@@ -1636,6 +1723,7 @@ export class SyncService {
       issueTypeId: issueData.issueType?.id,
       issueTypeName: issueData.issueType?.name,
       issueTypeIconUrl: issueData.issueType?.iconUrl,
+      parentId: resolvedParentId,
       lastSyncedAt: new Date(),
       projectId,
     };
@@ -1737,6 +1825,17 @@ export class SyncService {
         ? (existingIssue.data as Record<string, unknown>)
         : {};
 
+    // PROV-04: resolve against the EXISTING row's own project — this
+    // function receives no projectId parameter (it's an update, not an
+    // upsert). resolvedParentId is a plain key below, never inside a
+    // truthy-parent spread guard (see `resolveSyncedParentId`'s doc comment).
+    const resolvedParentId = await resolveSyncedParentId(
+      db,
+      integrationId,
+      existingIssue.projectId ?? null,
+      issueData.parent
+    );
+
     const issuePayload = {
       name: issueData.key || issueData.id, // Use key if available, otherwise use id
       title: issueData.title,
@@ -1755,6 +1854,7 @@ export class SyncService {
       issueTypeId: issueData.issueType?.id,
       issueTypeName: issueData.issueType?.name,
       issueTypeIconUrl: issueData.issueType?.iconUrl,
+      parentId: resolvedParentId,
       lastSyncedAt: new Date(),
     };
 
