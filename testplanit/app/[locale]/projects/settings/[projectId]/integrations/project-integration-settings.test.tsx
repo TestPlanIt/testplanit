@@ -1,4 +1,10 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import React from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -39,6 +45,8 @@ vi.mock("@zenstackhq/tanstack-query/react", () => ({
     },
     webhookConfig: { useFindMany: () => mockFindManyWebhookConfig() },
     projectIntegration: { useUpdate: () => ({ mutateAsync: mockUpdatePI }) },
+    // Consumed by RequirementsConfigSettings, mounted as a section here.
+    issue: { useCount: () => ({ data: 0 }) },
   }),
 }));
 
@@ -53,6 +61,11 @@ vi.mock("@tanstack/react-query", () => ({
 
 vi.mock("~/lib/navigation", () => ({
   useRouter: () => ({ refresh: vi.fn() }),
+}));
+
+// Consumed by MilestoneSyncSettings, mounted as a section here.
+vi.mock("next-auth/react", () => ({
+  useSession: () => ({ data: { user: { id: "user-1" } } }),
 }));
 
 vi.mock("sonner", () => ({
@@ -417,13 +430,17 @@ describe("ProjectIntegrationSettings", () => {
     // Start with data (so add button is in 'has projects' state below list)
     render(<ProjectIntegrationSettings {...defaultProps} />);
 
-    // Should not show combobox yet
-    expect(screen.queryByTestId("multi-async-combobox")).toBeNull();
+    // The add-projects panel itself should not be showing yet. (Requirement
+    // Types renders its own always-present MultiAsyncCombobox as a sibling
+    // section now, so the bare "multi-async-combobox" testid is no longer
+    // unique to this panel — scope through the panel's own testid instead.)
+    expect(screen.queryByTestId("add-projects-panel")).toBeNull();
 
     const addButton = screen.getByText("addProjects");
     fireEvent.click(addButton);
 
-    expect(screen.getByTestId("multi-async-combobox")).toBeTruthy();
+    const panel = screen.getByTestId("add-projects-panel");
+    expect(within(panel).getByTestId("multi-async-combobox")).toBeTruthy();
   });
 
   // --- Test 9: Handles undefined data gracefully ---
@@ -512,8 +529,11 @@ describe("ProjectIntegrationSettings", () => {
     const addButton = screen.getByText("addProjects");
     fireEvent.click(addButton);
 
-    // Simulate selecting a project via the mock combobox
-    const selectButton = screen.getByTestId("mock-select-project");
+    // Simulate selecting a project via the mock combobox, scoped to the add
+    // panel (Requirement Types renders its own always-present combobox with
+    // the same mock testids as a sibling section now).
+    const panel = screen.getByTestId("add-projects-panel");
+    const selectButton = within(panel).getByTestId("mock-select-project");
     fireEvent.click(selectButton);
 
     // Click Add Selected
@@ -539,10 +559,99 @@ describe("ProjectIntegrationSettings", () => {
 
     // Open add panel
     fireEvent.click(screen.getByText("addProjects"));
-    expect(screen.getByTestId("multi-async-combobox")).toBeTruthy();
+    expect(screen.getByTestId("add-projects-panel")).toBeTruthy();
 
     // Click cancel
     fireEvent.click(screen.getByText("cancel"));
-    expect(screen.queryByTestId("multi-async-combobox")).toBeNull();
+    expect(screen.queryByTestId("add-projects-panel")).toBeNull();
+  });
+
+  // --- Test 15: Milestone Sync and Requirement Types render as sections
+  // inside the same merged card ---
+  it("renders Milestone Sync and Requirement Types as sections for a milestone+requirement-capable integration (JIRA)", () => {
+    render(<ProjectIntegrationSettings {...defaultProps} />);
+
+    expect(screen.getByTestId("milestone-sync-section")).toBeInTheDocument();
+    expect(
+      screen.getByTestId("requirements-config-section")
+    ).toBeInTheDocument();
+  });
+
+  it("does not render Milestone Sync or Requirement Types sections for a non-capable integration (GITHUB)", () => {
+    const githubProps = {
+      ...defaultProps,
+      integration: { ...defaultProps.integration, provider: "GITHUB" },
+    };
+
+    render(<ProjectIntegrationSettings {...githubProps} />);
+
+    expect(
+      screen.queryByTestId("milestone-sync-section")
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId("requirements-config-section")
+    ).not.toBeInTheDocument();
+  });
+
+  // --- Test 16: Linked Projects save button dirty-tracking ---
+  it("Linked Projects save button starts disabled, enables after an edit, and disables again after a successful save", async () => {
+    mockUpdatePI.mockResolvedValue({});
+
+    // Milestone Sync and Requirement Types render their own "save"-labeled
+    // buttons as sibling sections now, so scope every query to this
+    // section's own testid rather than a bare accessible-name lookup.
+    const { rerender } = render(
+      <ProjectIntegrationSettings {...defaultProps} />
+    );
+    const getSaveButton = () =>
+      within(screen.getByTestId("linked-projects-section")).getByRole(
+        "button",
+        { name: "save" }
+      );
+
+    // No edits yet — starts disabled.
+    expect(getSaveButton()).toBeDisabled();
+
+    // A real edit to this section's Save-gated state: a mapping's default
+    // issue type changes (the query refetches with the new value).
+    mockFindMany.mockReturnValue({
+      data: [
+        {
+          id: "ip-1",
+          externalProjectName: "Project A",
+          externalProjectKey: "PA",
+          externalProjectId: "ext-a",
+          isDefault: true,
+          isActive: true,
+          syncStatus: null,
+          syncError: null,
+          defaultIssueType: "epic-1",
+          defaultIssueTypeName: "Epic",
+          projectIntegrationId: "pi-1",
+        },
+        {
+          id: "ip-2",
+          externalProjectName: "Project B",
+          externalProjectKey: "PB",
+          externalProjectId: "ext-b",
+          isDefault: false,
+          isActive: true,
+          syncStatus: "completed",
+          syncError: null,
+          defaultIssueType: null,
+          defaultIssueTypeName: null,
+          projectIntegrationId: "pi-1",
+        },
+      ],
+      isLoading: false,
+    });
+    rerender(<ProjectIntegrationSettings {...defaultProps} />);
+
+    expect(getSaveButton()).toBeEnabled();
+
+    fireEvent.click(getSaveButton());
+
+    await waitFor(() => expect(mockUpdatePI).toHaveBeenCalled());
+    await waitFor(() => expect(getSaveButton()).toBeDisabled());
   });
 });

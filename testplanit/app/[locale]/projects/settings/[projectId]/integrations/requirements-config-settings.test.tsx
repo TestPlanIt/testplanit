@@ -47,14 +47,6 @@ vi.mock("next-intl", () => ({
   },
 }));
 
-vi.mock("@/components/ui/card", () => ({
-  Card: ({ children }: any) => <div data-testid="card">{children}</div>,
-  CardHeader: ({ children }: any) => <div>{children}</div>,
-  CardTitle: ({ children }: any) => <h2>{children}</h2>,
-  CardDescription: ({ children }: any) => <p>{children}</p>,
-  CardContent: ({ children }: any) => <div>{children}</div>,
-}));
-
 vi.mock("@/components/ui/label", () => ({
   Label: ({ children, htmlFor }: any) => (
     <label htmlFor={htmlFor}>{children}</label>
@@ -301,7 +293,7 @@ describe("RequirementsConfigSettings", () => {
       json: async () => ({ classified: 1, declassified: 0 }),
     }) as any;
 
-    fireEvent.click(screen.getByRole("button", { name: "saveLabel" }));
+    fireEvent.click(screen.getByRole("button", { name: "save" }));
 
     await waitFor(() => expect(global.fetch).toHaveBeenCalled());
 
@@ -332,7 +324,7 @@ describe("RequirementsConfigSettings", () => {
       />
     );
 
-    const saveButton = screen.getByRole("button", { name: "saveLabel" });
+    const saveButton = screen.getByRole("button", { name: "save" });
     expect(saveButton).toBeDisabled();
 
     fireEvent.click(screen.getByTestId("mock-add-type"));

@@ -4,16 +4,11 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Loader2, Save } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { MultiAsyncCombobox } from "@/components/ui/multi-async-combobox";
 import { Switch } from "@/components/ui/switch";
+import { SectionTitle, Text } from "@/components/ui/typography";
 import type { Integration, ProjectIntegration } from "~/zenstack/models";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -69,6 +64,7 @@ export function RequirementsConfigSettings({
   integration,
 }: RequirementsConfigSettingsProps) {
   const t = useTranslations("projects.settings.integrations.integration");
+  const tGlobal = useTranslations();
   const queryClient = useQueryClient();
 
   // Mapped tracker projects — the union issue-type fetcher's data source.
@@ -257,88 +253,97 @@ export function RequirementsConfigSettings({
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-base">
-          {t("requirementsConfig.title")}
-        </CardTitle>
-        <CardDescription>{t("requirementsConfig.description")}</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="flex items-center gap-2">
-          <Switch
-            id="requirementsConfigEnabled"
-            checked={enabled}
-            onCheckedChange={setEnabled}
-            disabled={isSaving}
-          />
-          <Label htmlFor="requirementsConfigEnabled">
-            {t("requirementsConfig.enableLabel")}
-          </Label>
-        </div>
+    <div
+      className="space-y-4 border-t pt-6"
+      data-testid="requirements-config-section"
+    >
+      <div>
+        <SectionTitle>{t("requirementsConfig.title")}</SectionTitle>
+        <Text variant="subtitle">{t("requirementsConfig.description")}</Text>
+      </div>
 
-        <div className="space-y-2">
+      <div className="flex items-center gap-2">
+        <Switch
+          id="requirementsConfigEnabled"
+          checked={enabled}
+          onCheckedChange={setEnabled}
+          disabled={isSaving}
+        />
+        <Label htmlFor="requirementsConfigEnabled">
+          {t("requirementsConfig.enableLabel")}
+        </Label>
+      </div>
+
+      <div className="space-y-2">
+        <Label className="text-sm text-muted-foreground">
+          {t("requirementsConfig.issueTypesLabel")}
+        </Label>
+        <MultiAsyncCombobox<IssueType>
+          value={selected}
+          onValueChange={setSelected}
+          fetchOptions={fetchIssueTypes}
+          renderOption={(issueType) => <span>{issueType.name}</span>}
+          getOptionValue={(issueType) => issueType.id}
+          getOptionLabel={(issueType) => issueType.name}
+          placeholder={t("requirementsConfig.issueTypesPlaceholder")}
+          ariaLabel={t("requirementsConfig.issueTypesAriaLabel")}
+          disabled={!enabled || isSaving}
+        />
+      </div>
+
+      {hasChanges ? (
+        <div className="space-y-1">
           <Label className="text-sm text-muted-foreground">
-            {t("requirementsConfig.issueTypesLabel")}
+            {t("requirementsConfig.previewHeading")}
           </Label>
-          <MultiAsyncCombobox<IssueType>
-            value={selected}
-            onValueChange={setSelected}
-            fetchOptions={fetchIssueTypes}
-            renderOption={(issueType) => <span>{issueType.name}</span>}
-            getOptionValue={(issueType) => issueType.id}
-            getOptionLabel={(issueType) => issueType.name}
-            placeholder={t("requirementsConfig.issueTypesPlaceholder")}
-            ariaLabel={t("requirementsConfig.issueTypesAriaLabel")}
-            disabled={!enabled || isSaving}
-          />
-        </div>
-
-        {hasChanges ? (
-          <div className="space-y-1">
-            <Label className="text-sm text-muted-foreground">
-              {t("requirementsConfig.previewHeading")}
-            </Label>
-            {diff.added.length > 0 && (
-              <p className="text-sm">
-                {t("requirementsConfig.becomingRequirements", {
-                  count: becomingCount ?? 0,
-                })}
-              </p>
-            )}
-            {diff.removed.length > 0 && (
-              <p className="text-sm">
-                {t("requirementsConfig.stoppingRequirements", {
-                  count: stoppingCount ?? 0,
-                })}
-              </p>
-            )}
-            {(detachedOrLocalCount ?? 0) > 0 && (
-              <p className="text-sm text-muted-foreground">
-                {t("requirementsConfig.detachedCallout", {
-                  count: detachedOrLocalCount ?? 0,
-                })}
-              </p>
-            )}
-            <p className="text-xs text-muted-foreground">
-              {t("requirementsConfig.reversibilityNote")}
+          {diff.added.length > 0 && (
+            <p className="text-sm">
+              {t("requirementsConfig.becomingRequirements", {
+                count: becomingCount ?? 0,
+              })}
             </p>
-          </div>
-        ) : (
-          <p className="text-sm text-muted-foreground">
-            {t("requirementsConfig.noChanges")}
+          )}
+          {diff.removed.length > 0 && (
+            <p className="text-sm">
+              {t("requirementsConfig.stoppingRequirements", {
+                count: stoppingCount ?? 0,
+              })}
+            </p>
+          )}
+          {(detachedOrLocalCount ?? 0) > 0 && (
+            <p className="text-sm text-muted-foreground">
+              {t("requirementsConfig.detachedCallout", {
+                count: detachedOrLocalCount ?? 0,
+              })}
+            </p>
+          )}
+          <p className="text-xs text-muted-foreground">
+            {t("requirementsConfig.reversibilityNote")}
           </p>
-        )}
+        </div>
+      ) : (
+        <p className="text-sm text-muted-foreground">
+          {t("requirementsConfig.noChanges")}
+        </p>
+      )}
 
+      <div className="flex justify-end">
         <Button
           onClick={() => void handleSave()}
           disabled={!hasChanges || isSaving}
+          aria-label={tGlobal("admin.notifications.save")}
+          className="group gap-0 transition-all duration-200 hover:gap-2"
         >
-          {isSaving
-            ? t("requirementsConfig.savingLabel")
-            : t("requirementsConfig.saveLabel")}
+          {isSaving ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Save className="h-4 w-4" />
+          )}
+          <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
+            {tGlobal("admin.notifications.save")}
+          </span>
         </Button>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

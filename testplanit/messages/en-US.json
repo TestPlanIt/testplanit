@@ -1525,8 +1525,6 @@
             "detachedCallout": "{count, plural, one {{count} of those is detached from the tracker or was edited locally and will lose its requirement status} other {{count} of those are detached from the tracker or were edited locally and will lose their requirement status}}",
             "reversibilityNote": "Re-adding a type restores the classification. Nothing is deleted.",
             "noChanges": "No classification changes to apply.",
-            "saveLabel": "Save",
-            "savingLabel": "Saving...",
             "settingsSaved": "Requirement type settings saved",
             "saveError": "Failed to save requirement type settings"
           }

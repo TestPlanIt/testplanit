@@ -20,9 +20,7 @@ import { useEffect } from "react";
 import { ApplicationArea } from "~/zenstack/models";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { useRequireAuth } from "~/hooks/useRequireAuth";
-import { MilestoneSyncSettings } from "./milestone-sync-settings";
 import { ProjectIntegrationSettings } from "./project-integration-settings";
-import { RequirementsConfigSettings } from "./requirements-config-settings";
 
 export default function ProjectIntegrationsPage() {
   const params = useParams();
@@ -207,20 +205,10 @@ export default function ProjectIntegrationsPage() {
           </Card>
 
           {currentIntegration && (
-            <>
-              <ProjectIntegrationSettings
-                projectIntegration={currentIntegration}
-                integration={currentIntegration.integration}
-              />
-              <MilestoneSyncSettings
-                projectIntegration={currentIntegration}
-                integration={currentIntegration.integration}
-              />
-              <RequirementsConfigSettings
-                projectIntegration={currentIntegration}
-                integration={currentIntegration.integration}
-              />
-            </>
+            <ProjectIntegrationSettings
+              projectIntegration={currentIntegration}
+              integration={currentIntegration.integration}
+            />
           )}
         </CardContent>
       </Card>

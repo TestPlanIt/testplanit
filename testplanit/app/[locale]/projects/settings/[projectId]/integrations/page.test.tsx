@@ -131,7 +131,7 @@ function makeProjectIntegration(integration: any) {
   };
 }
 
-describe("ProjectIntegrationsPage — milestone sync mount", () => {
+describe("ProjectIntegrationsPage — integration settings mount", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockFindFirstProjects.mockReturnValue({
@@ -146,7 +146,11 @@ describe("ProjectIntegrationsPage — milestone sync mount", () => {
     mockFindManyIntegration.mockReturnValue({ data: [], isLoading: false });
   });
 
-  it("mounts MilestoneSyncSettings alongside ProjectIntegrationSettings for a Jira project integration", () => {
+  // Milestone Sync and Requirement Types now render as sections INSIDE
+  // ProjectIntegrationSettings' single card (see project-integration-settings.test.tsx
+  // for that composition) rather than as page-level siblings, so this page
+  // only needs to prove the merged card mounts with the right integration.
+  it("mounts ProjectIntegrationSettings for the project's active integration", () => {
     mockFindManyProjectIntegration.mockReturnValue({
       data: [makeProjectIntegration(jiraIntegration)],
       isLoading: false,
@@ -157,16 +161,9 @@ describe("ProjectIntegrationsPage — milestone sync mount", () => {
     expect(
       screen.getByTestId("project-integration-settings-stub")
     ).toHaveTextContent("JIRA");
-    // MilestoneSyncSettings renders its title Card for a milestones-capable
-    // (JIRA) integration — proving it is actually mounted, not just
-    // imported.
-    expect(screen.getByText("milestoneSync.title")).toBeInTheDocument();
-    // RequirementsConfigSettings mounts as the third sibling card, also
-    // capable for JIRA.
-    expect(screen.getByText("requirementsConfig.title")).toBeInTheDocument();
   });
 
-  it("does not render milestone sync content for a non-capable provider (GitHub)", () => {
+  it("mounts ProjectIntegrationSettings for a non-milestone-capable provider (GitHub) too", () => {
     mockFindManyProjectIntegration.mockReturnValue({
       data: [makeProjectIntegration(githubIntegration)],
       isLoading: false,
@@ -177,11 +174,5 @@ describe("ProjectIntegrationsPage — milestone sync mount", () => {
     expect(
       screen.getByTestId("project-integration-settings-stub")
     ).toHaveTextContent("GITHUB");
-    expect(screen.queryByText("milestoneSync.title")).not.toBeInTheDocument();
-    // GitHub's adapter has no getIssueTypes, so RequirementsConfigSettings
-    // is also not capable and renders nothing.
-    expect(
-      screen.queryByText("requirementsConfig.title")
-    ).not.toBeInTheDocument();
   });
 });

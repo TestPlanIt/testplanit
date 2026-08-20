@@ -21,6 +21,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { SectionTitle, Text } from "@/components/ui/typography";
 import type { Integration, ProjectIntegration } from "~/zenstack/models";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -38,6 +39,8 @@ import { useRouter } from "~/lib/navigation";
 
 import { removeIntegrationProjectMapping } from "~/app/actions/project-integration";
 import { ImportIssuesDialog } from "./import-issues-dialog";
+import { MilestoneSyncSettings } from "./milestone-sync-settings";
+import { RequirementsConfigSettings } from "./requirements-config-settings";
 
 interface ProjectIntegrationSettingsProps {
   projectIntegration: ProjectIntegration;
@@ -53,6 +56,36 @@ interface ExternalProject {
 interface IssueType {
   id: string;
   name: string;
+}
+
+interface LinkedProjectSnapshotEntry {
+  id: string;
+  defaultIssueType: string | null;
+}
+
+/** Order-independent, primitive-only fingerprint of this section's Save-gated
+ *  editable state: which mappings are linked, and each one's default issue
+ *  type. Everything else in the section (add/remove/set-default) already
+ *  commits immediately via its own mutation, so this exists purely to drive
+ *  the Save button's dirty state. A JSON string of sorted primitives is
+ *  cheap to recompute every render and stays equal across renders that carry
+ *  the same underlying rows, even when the query hook hands back a new array
+ *  reference — the identity-stability `useMemo` needs to avoid a false
+ *  "dirty" reading on every unrelated re-render. */
+function buildLinkedProjectsSnapshotKey(
+  integrationProjects:
+    Array<{ id: string; defaultIssueType?: string | null }> | undefined
+): string | null {
+  if (!integrationProjects) {
+    return null;
+  }
+  const entries: LinkedProjectSnapshotEntry[] = integrationProjects
+    .map((ip) => ({
+      id: ip.id,
+      defaultIssueType: ip.defaultIssueType ?? null,
+    }))
+    .sort((a, b) => a.id.localeCompare(b.id));
+  return JSON.stringify(entries);
 }
 
 export function ProjectIntegrationSettings({
@@ -131,6 +164,27 @@ export function ProjectIntegrationSettings({
   const hasInboundWebhook = (inboundConfigs?.length ?? 0) > 0;
   const isLastActiveMapping = (integrationProjects?.length ?? 0) === 1;
 
+  const currentLinkedProjectsSnapshot = useMemo(
+    () => buildLinkedProjectsSnapshotKey(integrationProjects),
+    [integrationProjects]
+  );
+
+  // Baseline the Save button compares against, seeded once the linked
+  // projects query resolves (never while still loading, so the loading ->
+  // loaded transition itself never reads as a pending edit) and advanced
+  // only by a successful Save.
+  const [savedLinkedProjectsSnapshot, setSavedLinkedProjectsSnapshot] =
+    useState<string | null>(null);
+
+  useEffect(() => {
+    if (
+      savedLinkedProjectsSnapshot === null &&
+      currentLinkedProjectsSnapshot !== null
+    ) {
+      setSavedLinkedProjectsSnapshot(currentLinkedProjectsSnapshot);
+    }
+  }, [currentLinkedProjectsSnapshot, savedLinkedProjectsSnapshot]);
+
   const loadExternalProjects = useCallback(async () => {
     setIsLoadingProjects(true);
 
@@ -184,9 +238,14 @@ export function ProjectIntegrationSettings({
     }
   }, [checkAuthAndLoadProjects, integration.provider]);
 
-  const canSave = useMemo(() => {
-    return true;
-  }, []);
+  // Real dirty-tracking, not a stub: enabled only when the linked-projects
+  // list or a mapping's default issue type differs from the last-saved
+  // snapshot — the same "disabled until dirty" contract Milestone Sync and
+  // Requirement Types use.
+  const canSave =
+    savedLinkedProjectsSnapshot !== null &&
+    currentLinkedProjectsSnapshot !== null &&
+    currentLinkedProjectsSnapshot !== savedLinkedProjectsSnapshot;
 
   const handleSaveSettings = async () => {
     setIsSaving(true);
@@ -201,6 +260,9 @@ export function ProjectIntegrationSettings({
         },
       });
 
+      if (currentLinkedProjectsSnapshot !== null) {
+        setSavedLinkedProjectsSnapshot(currentLinkedProjectsSnapshot);
+      }
       toast.success(t("integration.settingsSaved"));
       router.refresh();
     } catch (error) {
@@ -437,24 +499,17 @@ export function ProjectIntegrationSettings({
           </Alert>
         )}
 
-        {/* Linked External Projects card for integrations that support it */}
+        {/* Linked External Projects section for integrations that support it */}
         {integration.provider !== "SIMPLE_URL" && (
-          <Card
-            className={
-              integrationProjects && integrationProjects.length > 0
-                ? "border-primary"
-                : undefined
-            }
-          >
-            <CardHeader>
-              <CardTitle className="text-base">
-                {t("integration.linkedProjects")}
-              </CardTitle>
-              <CardDescription>
+          <div className="space-y-4" data-testid="linked-projects-section">
+            <div>
+              <SectionTitle>{t("integration.linkedProjects")}</SectionTitle>
+              <Text variant="subtitle">
                 {t("integration.linkedProjectsDescription")}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
+              </Text>
+            </div>
+
+            <div className="space-y-3">
               {isLoadingLinkedProjects ? (
                 <div className="space-y-2">
                   <div className="h-11 w-full animate-pulse rounded bg-muted" />
@@ -682,7 +737,10 @@ export function ProjectIntegrationSettings({
 
               {/* Add Projects inline panel */}
               {showAddPanel && (
-                <div className="border rounded-md p-3 space-y-3">
+                <div
+                  className="border rounded-md p-3 space-y-3"
+                  data-testid="add-projects-panel"
+                >
                   <MultiAsyncCombobox<ExternalProject>
                     value={selectedNewProjects}
                     onValueChange={setSelectedNewProjects}
@@ -731,53 +789,58 @@ export function ProjectIntegrationSettings({
                   </div>
                 </div>
               )}
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Automatic sync via webhooks is not yet implemented - hiding this option
-          {integration.provider !== "SIMPLE_URL" && (
-            <div className="space-y-2">
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="syncEnabled"
-                  checked={config.syncEnabled || false}
-                  onCheckedChange={(checked) =>
-                    setConfig({ ...config, syncEnabled: !!checked })
-                  }
-                />
-                <Label
-                  htmlFor="syncEnabled"
-                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                >
-                  {t("integration.automaticSync")}
-                </Label>
-                <HelpPopover helpKey="projects.settings.integrations.automaticSyncHelp" />
-              </div>
             </div>
-          )}
-          */}
 
-        {/* Only show save button if there are settings to save */}
-        {integration.provider !== "SIMPLE_URL" && (
-          <div className="flex justify-end">
-            <Button
-              onClick={handleSaveSettings}
-              disabled={isSaving || !canSave}
-              aria-label={tGlobal("admin.notifications.save")}
-              className="group gap-0 transition-all duration-200 hover:gap-2"
-            >
-              {isSaving ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Save className="h-4 w-4" />
-              )}
-              <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-                {tGlobal("admin.notifications.save")}
-              </span>
-            </Button>
+            {/* Automatic sync via webhooks is not yet implemented - hiding this option
+              <div className="space-y-2">
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="syncEnabled"
+                    checked={config.syncEnabled || false}
+                    onCheckedChange={(checked) =>
+                      setConfig({ ...config, syncEnabled: !!checked })
+                    }
+                  />
+                  <Label
+                    htmlFor="syncEnabled"
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  >
+                    {t("integration.automaticSync")}
+                  </Label>
+                  <HelpPopover helpKey="projects.settings.integrations.automaticSyncHelp" />
+                </div>
+              </div>
+              */}
+
+            <div className="flex justify-end">
+              <Button
+                onClick={handleSaveSettings}
+                disabled={isSaving || !canSave}
+                aria-label={tGlobal("admin.notifications.save")}
+                className="group gap-0 transition-all duration-200 hover:gap-2"
+              >
+                {isSaving ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Save className="h-4 w-4" />
+                )}
+                <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
+                  {tGlobal("admin.notifications.save")}
+                </span>
+              </Button>
+            </div>
           </div>
         )}
+
+        <MilestoneSyncSettings
+          projectIntegration={projectIntegration}
+          integration={integration}
+        />
+
+        <RequirementsConfigSettings
+          projectIntegration={projectIntegration}
+          integration={integration}
+        />
 
         <ImportIssuesDialog
           integrationId={integration.id}
