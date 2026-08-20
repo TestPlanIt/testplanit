@@ -2,6 +2,7 @@
 
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
+import { DEFECT_SCOPE_WHERE } from "~/lib/services/issueRoleScope";
 import { useDebounce } from "@/components/Debounce";
 import { ProjectIcon } from "@/components/ProjectIcon";
 import { Filter } from "@/components/tables/Filter";
@@ -115,7 +116,11 @@ function ProjectIssues() {
   const { data: statusOptions } = useClientQueries(schema).issue.useGroupBy(
     {
       by: ["status"],
-      where: { isDeleted: false, ...projectFilterForGroupBy },
+      where: {
+        isDeleted: false,
+        ...projectFilterForGroupBy,
+        ...DEFECT_SCOPE_WHERE,
+      },
       orderBy: { status: "asc" },
     },
     {
@@ -127,7 +132,11 @@ function ProjectIssues() {
   const { data: priorityOptions } = useClientQueries(schema).issue.useGroupBy(
     {
       by: ["priority"],
-      where: { isDeleted: false, ...projectFilterForGroupBy },
+      where: {
+        isDeleted: false,
+        ...projectFilterForGroupBy,
+        ...DEFECT_SCOPE_WHERE,
+      },
       orderBy: { priority: "asc" },
     },
     {
@@ -238,6 +247,7 @@ function ProjectIssues() {
     // Combine search filter and project filter using AND
     const conditions: Array<Record<string, unknown>> = [
       { isDeleted: false },
+      DEFECT_SCOPE_WHERE,
       projectFilter,
     ];
 

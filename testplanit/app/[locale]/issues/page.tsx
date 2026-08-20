@@ -2,6 +2,7 @@
 
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
+import { DEFECT_SCOPE_WHERE } from "~/lib/services/issueRoleScope";
 import { useDebounce } from "@/components/Debounce";
 import { Filter } from "@/components/tables/Filter";
 import { DataTable } from "@/components/tables/DataTable";
@@ -66,7 +67,7 @@ function Issues() {
   const { data: statusOptions } = useClientQueries(schema).issue.useGroupBy(
     {
       by: ["status"],
-      where: { isDeleted: false },
+      where: { isDeleted: false, ...DEFECT_SCOPE_WHERE },
       orderBy: { status: "asc" },
     },
     { enabled: status === "authenticated" }
@@ -74,7 +75,7 @@ function Issues() {
   const { data: priorityOptions } = useClientQueries(schema).issue.useGroupBy(
     {
       by: ["priority"],
-      where: { isDeleted: false },
+      where: { isDeleted: false, ...DEFECT_SCOPE_WHERE },
       orderBy: { priority: "asc" },
     },
     { enabled: status === "authenticated" }
@@ -150,6 +151,7 @@ function Issues() {
 
     const conditions: Array<Record<string, unknown>> = [
       { isDeleted: false },
+      DEFECT_SCOPE_WHERE,
       { OR: relations },
     ];
     if (searchFilter.OR) conditions.push(searchFilter);
