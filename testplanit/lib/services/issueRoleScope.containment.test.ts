@@ -51,8 +51,11 @@
 // that IS grep-visible but has no behavioral test of its own.
 
 import { execSync } from "node:child_process";
+import { readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
+
+import { ISSUE_ROLE_SCOPE_SQL_DEFECT } from "./issueRoleScope";
 
 interface GrepHit {
   file: string;
@@ -93,6 +96,10 @@ const TEST_PATH_MARKERS = ["__tests__/", ".test.ts", ".spec.ts", "e2e/"];
 
 function isTestPath(filePath: string): boolean {
   return TEST_PATH_MARKERS.some((marker) => filePath.includes(marker));
+}
+
+function countOccurrences(haystack: string, needle: string): number {
+  return haystack.split(needle).length - 1;
 }
 
 // The two real call shapes this codebase actually uses for issue LISTING
@@ -305,9 +312,159 @@ describe("Issue read-scope containment (HYG-01, structural)", () => {
     expect(hookHits.length).toBeGreaterThanOrEqual(15);
   });
 
-  it.todo("every scoped consumer carries the shared defect-scope predicate");
-  it.todo("the raw-SQL coverage query mirrors the shared predicate literally");
-  it.todo(
-    "both Elasticsearch document call sites write the requirement role"
-  );
+  it("every scoped consumer carries the shared defect-scope predicate", () => {
+    // A MINIMUM, not an exact count: an exact count breaks on a legitimate
+    // second use, and that failure looks identical to a real regression —
+    // which teaches people to edit thresholds reflexively instead of
+    // reading what changed. A floor only fails on removal, which is the
+    // thing actually worth failing on. Every minimum below is the real
+    // occurrence count of the shared predicate token in the file as of
+    // this gate's construction (one import line plus one use per query
+    // site) — verified by direct count, not copied from an earlier plan's
+    // summary without checking.
+    const thresholds: Array<{ file: string; minimum: number; reason: string }> =
+      [
+        {
+          file: "components/issues/search-issues-dialog.tsx",
+          minimum: 2,
+          reason:
+            "1 import + 1 conditional spread guarding the opt-in includeRequirements toggle",
+        },
+        {
+          file: "app/actions/searchIssues.ts",
+          minimum: 2,
+          reason: "1 import + 1 spread into the shared findMany/count where object",
+        },
+        {
+          file: "app/[locale]/issues/page.tsx",
+          minimum: 4,
+          reason:
+            "1 import + 2 useGroupBy where objects + 1 push into the issuesWhere builder's conditions array",
+        },
+        {
+          file: "app/[locale]/projects/issues/[projectId]/page.tsx",
+          minimum: 4,
+          reason:
+            "1 import + 2 useGroupBy where objects + 1 push into the issuesWhere builder's conditions array",
+        },
+        {
+          file: "app/[locale]/admin/issues/page.tsx",
+          minimum: 2,
+          reason:
+            "1 import + 1 spread in the flat issuesWhere builder (this page has no useGroupBy calls)",
+        },
+        {
+          file: "lib/services/milestoneSummary.ts",
+          minimum: 2,
+          reason: "1 import + 1 spread in getMilestoneLinkedIssues's where object",
+        },
+        {
+          file: "utils/reportUtils.ts",
+          minimum: 12,
+          reason:
+            "1 import + 1 use in findProjectIssues + 10 uses across the file's cross-project raw call sites — this file's named under-fix trap, so the floor is deliberately high",
+        },
+        {
+          file: "utils/drillDownQueryBuilders.ts",
+          minimum: 2,
+          reason:
+            "1 import + 1 use in buildIssuesQuery's base where — the ONLY guard this file has, since its query executes through a dynamically-indexed model property invisible to both grep patterns above",
+        },
+        {
+          file: "app/api/report-builder/project-health/route.ts",
+          minimum: 3,
+          reason:
+            "1 import + 2 uses (issue-creator distribution, issue-date series) — this route has no test file of its own, so this is the only guard against a silent regression",
+        },
+      ];
+
+    for (const { file, minimum, reason } of thresholds) {
+      const content = readFileSync(file, "utf8");
+      const actual = countOccurrences(content, "DEFECT_SCOPE_WHERE");
+      if (actual < minimum) {
+        throw new Error(
+          `${file} contains ${actual} occurrence(s) of DEFECT_SCOPE_WHERE; ` +
+            `expected at least ${minimum} (${reason}). ` +
+            "A count below the floor means a query site lost its scope predicate — " +
+            "restore it, or update this threshold only after confirming by reading the file " +
+            "that a site was legitimately removed."
+        );
+      }
+      expect(actual).toBeGreaterThanOrEqual(minimum);
+    }
+  });
+
+  it("the raw-SQL coverage query mirrors the shared predicate literally", () => {
+    // Imports the SQL mirror from the shared module rather than retyping
+    // it — importing is the entire mechanism that keeps the TypeScript
+    // where-object form and the raw-SQL form from drifting apart across a
+    // future column rename.
+    const file = "utils/issueTestCoverageUtils.ts";
+    const content = readFileSync(file, "utf8");
+    const occurrences = countOccurrences(content, ISSUE_ROLE_SCOPE_SQL_DEFECT);
+
+    if (occurrences !== 1) {
+      throw new Error(
+        `${file} contains ${occurrences} occurrence(s) of the raw-SQL defect-scope ` +
+          "mirror exported as ISSUE_ROLE_SCOPE_SQL_DEFECT from lib/services/issueRoleScope.ts; " +
+          "expected exactly 1. If the discriminator column was renamed, update BOTH the " +
+          "SQL fragment in issueRoleScope.ts and this file's raw query in the same commit."
+      );
+    }
+    expect(occurrences).toBe(1);
+  });
+
+  it("both Elasticsearch document call sites write the requirement role", () => {
+    const searchFile = "services/issueSearch.ts";
+    const searchContent = readFileSync(searchFile, "utf8");
+    const roleAssignments = countOccurrences(
+      searchContent,
+      "isRequirement: issue.isRequirement"
+    );
+
+    if (roleAssignments !== 2) {
+      throw new Error(
+        `${searchFile} writes the requirement role in ${roleAssignments} document ` +
+          "literal(s); expected exactly 2 (indexIssue and syncProjectIssuesToElasticsearch — " +
+          "the two-writer invariant made structural). A third writer, or only one of the two " +
+          "being updated, means the live index and the app's role filter can disagree — " +
+          "add the missing assignment, or investigate why a third writer exists."
+      );
+    }
+    expect(roleAssignments).toBe(2);
+
+    // The bulk indexer's own source query must NOT carry the defect-scope
+    // predicate: the index has to contain every row kind so the in-app
+    // role filter (a query-time facet against the indexed field, not a
+    // row-kind exclusion at index time) has something to filter against.
+    // Scoping this query would silently drop every requirement row from
+    // search results.
+    const bulkScopedOccurrences = countOccurrences(
+      searchContent,
+      "DEFECT_SCOPE_WHERE"
+    );
+    if (bulkScopedOccurrences !== 0) {
+      throw new Error(
+        `${searchFile} references DEFECT_SCOPE_WHERE ${bulkScopedOccurrences} time(s); ` +
+          "expected 0. Scoping the bulk indexer's source query to defects only would " +
+          "remove every requirement row from the search index, breaking the role filter " +
+          "this phase enabled — this file indexes every row kind by design."
+      );
+    }
+    expect(bulkScopedOccurrences).toBe(0);
+
+    const mappingFile = "services/unifiedElasticsearchService.ts";
+    const mappingContent = readFileSync(mappingFile, "utf8");
+    const mappingDeclarations = countOccurrences(
+      mappingContent,
+      'isRequirement: { type: "boolean" as const }'
+    );
+    if (mappingDeclarations !== 1) {
+      throw new Error(
+        `${mappingFile} declares the isRequirement field ${mappingDeclarations} time(s) ` +
+          "in ENTITY_MAPPINGS; expected exactly 1 (the ISSUE entity's mapping)."
+      );
+    }
+    expect(mappingDeclarations).toBe(1);
+  });
 });
