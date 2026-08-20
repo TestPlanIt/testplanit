@@ -8233,6 +8233,10 @@
       "noResultsFound": "Aucune séquence d'étapes en double n'a été trouvée.",
       "noResultsDescription": "Effectuez une analyse pour détecter les séquences d'étapes répétées dans vos cas de test.",
       "filterPlaceholder": "Filtrer par nom de dossier...",
+      "minCasesLabel": "Cas min",
+      "minStepsLabel": "Étapes min",
+      "minThresholdOption": "{count, number}+",
+      "noMatchesForFilters": "Aucune correspondance ne répond aux filtres actuels. Réduisez les minimums pour élargir les résultats.",
       "selected": "{count, plural, one {# sélectionné} other {# sélectionné}}",
       "bulkDismiss": "Rejeter ({count, number})",
       "bulkDismissSuccess": "{count, plural, one {# match rejeté} other {# matchs rejetés}}",
@@ -8269,6 +8273,7 @@
         "viewSharedStep": "Afficher le groupe d'étapes partagé",
         "skippedWarning": "{count, plural, one {# cas ignoré} other {# cas ignorés}} (obsolète ou déjà converti).",
         "noCasesSelected": "Sélectionnez au moins un cas à convertir.",
+        "stepsUnavailable": "Les étapes correspondantes ne figurent plus dans ce cas de test. Ignorez cette correspondance et lancez une nouvelle analyse.",
         "selectAll": "Tout sélectionner"
       }
     },

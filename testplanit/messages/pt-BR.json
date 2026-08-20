@@ -8233,6 +8233,10 @@
       "noResultsFound": "Nenhuma sequência de etapas duplicada foi encontrada.",
       "noResultsDescription": "Execute uma varredura para detectar sequências de etapas repetidas em seus casos de teste.",
       "filterPlaceholder": "Filtrar por nome do caso...",
+      "minCasesLabel": "Casos mín.",
+      "minStepsLabel": "Passos mín.",
+      "minThresholdOption": "{count, number}+",
+      "noMatchesForFilters": "Nenhuma correspondência atende aos filtros atuais. Reduza os mínimos para ampliar os resultados.",
       "selected": "{count, plural, one {# selecionado} other {# selecionado}}",
       "bulkDismiss": "Dispensar ({count, number})",
       "bulkDismissSuccess": "{count, plural, one {# partida encerrada} other {# partidas encerradas}}",
@@ -8269,6 +8273,7 @@
         "viewSharedStep": "Ver Grupo de Etapas Compartilhadas",
         "skippedWarning": "{count, plural, one {# caso foi ignorado} other {# casos foram ignorados}} (obsoleto ou já convertido).",
         "noCasesSelected": "Selecione pelo menos um caso para converter.",
+        "stepsUnavailable": "Os passos correspondentes não estão mais neste caso de teste. Descarte esta correspondência e execute uma nova varredura.",
         "selectAll": "Selecionar tudo"
       }
     },

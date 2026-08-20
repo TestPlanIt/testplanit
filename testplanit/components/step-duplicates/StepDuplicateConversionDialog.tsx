@@ -17,7 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AlertTriangle, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { extractTextFromNode } from "~/utils/extractTextFromJson";
@@ -87,50 +87,65 @@ export function StepDuplicateConversionDialog({
 
   const updateMatch = useClientQueries(schema).stepSequenceMatch.useUpdate();
 
-  // Initialize state when match changes
-  useEffect(() => {
-    if (match) {
-      setCheckedCaseIds(new Set(match.members.map((m) => m.caseId)));
-    }
-  }, [match]);
-
+  const matchId = match?.id ?? null;
   const firstMember = match?.members?.[0];
 
-  // Fetch steps for preview from the first member's range
-  const { data: stepsData, isLoading: stepsLoading } = useClientQueries(
+  // Every open starts from a clean slate: React Query hands back cached steps
+  // by the same reference on a reopen, so state left over from the previous
+  // visit would otherwise survive into this one.
+  useEffect(() => {
+    if (!open || !match) return;
+    setCheckedCaseIds(new Set(match.members.map((m) => m.caseId)));
+    setName("");
+    form.reset({ steps: [] });
+  }, [open, matchId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Fetch the canonical case's steps; the matched range is resolved below.
+  const { data: caseSteps, isLoading: stepsLoading } = useClientQueries(
     schema
   ).steps.useFindMany(
     firstMember
       ? {
-          where: {
-            id: { gte: firstMember.startStepId, lte: firstMember.endStepId },
-            testCaseId: firstMember.caseId,
-            isDeleted: false,
-          },
+          where: { testCaseId: firstMember.caseId, isDeleted: false },
           orderBy: { order: "asc" },
         }
       : undefined,
     { enabled: open && !!firstMember }
   );
 
-  // Initialize form steps from fetched data
-  useEffect(() => {
-    if (stepsData && stepsData.length > 0) {
-      const formSteps: StepFormField[] = stepsData.map((s: any) => ({
-        step: parseTipTapJson(s.step),
-        expectedResult: parseTipTapJson(s.expectedResult),
-      }));
-      form.reset({ steps: formSteps });
+  // `startStepId`/`endStepId` mark the ends of the matched run in `order`
+  // sequence, not in id sequence — a case whose steps were reordered or
+  // inserted into can hold an end id lower than its start id. Slice by position
+  // in the ordered list, the way the conversion endpoint resolves the range.
+  const matchedSteps = useMemo(() => {
+    if (!caseSteps || !firstMember) return null;
+    const startIdx = caseSteps.findIndex(
+      (s: { id: number }) => s.id === firstMember.startStepId
+    );
+    const endIdx = caseSteps.findIndex(
+      (s: { id: number }) => s.id === firstMember.endStepId
+    );
+    if (startIdx < 0 || endIdx < 0) return [];
+    const [from, to] =
+      startIdx <= endIdx ? [startIdx, endIdx] : [endIdx, startIdx];
+    return caseSteps.slice(from, to + 1);
+  }, [caseSteps, firstMember?.startStepId, firstMember?.endStepId]); // eslint-disable-line react-hooks/exhaustive-deps
 
-      // Auto-suggest name from first step's text
-      if (!name) {
-        const firstText = extractTextFromNode(stepsData[0].step) || "";
-        if (firstText) {
-          setName(firstText.substring(0, 50));
-        }
-      }
+  // Load the matched range into the editor
+  useEffect(() => {
+    if (!open || !matchedSteps || matchedSteps.length === 0) return;
+    const formSteps: StepFormField[] = matchedSteps.map((s: any) => ({
+      step: parseTipTapJson(s.step),
+      expectedResult: parseTipTapJson(s.expectedResult),
+    }));
+    form.reset({ steps: formSteps });
+
+    // Auto-suggest name from first step's text
+    const firstText = extractTextFromNode(matchedSteps[0].step) || "";
+    if (firstText) {
+      setName((prev) => prev || firstText.substring(0, 50));
     }
-  }, [stepsData]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [open, matchId, matchedSteps]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleCaseToggle = (caseId: number, checked: boolean) => {
     setCheckedCaseIds((prev) => {
@@ -243,6 +258,11 @@ export function StepDuplicateConversionDialog({
           {stepsLoading ? (
             <div className="flex items-center justify-center py-6 text-muted-foreground gap-2">
               <Loader2 className="h-4 w-4 animate-spin" />
+            </div>
+          ) : matchedSteps && matchedSteps.length === 0 ? (
+            <div className="flex items-center gap-2 py-4 text-sm text-amber-600">
+              <AlertTriangle className="h-4 w-4 shrink-0" />
+              <span>{t("stepsUnavailable")}</span>
             </div>
           ) : (
             <Form {...form}>

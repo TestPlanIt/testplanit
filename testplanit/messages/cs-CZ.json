@@ -31,7 +31,7 @@
     "searchTags": "Hledat štítky...",
     "searchRuns": "{count, plural, =0 {Hledat Test Runy} one {Hledat # Test Run} few {Hledat # Test Runy} many {Hledat # Test Runu} other {Hledat # Test Runů}}",
     "searchSessions": "{count, plural, =0 {Hledat relace} one {Hledat # relaci} few {Hledat # relace} many {Hledat # relace} other {Hledat # relací}}",
-    "searchMilestones": "{count, plural, =0 {Hledat milníky} one {Hledat # milník} few {Hledat # milníky} many {Hledat # milníku} other {Hledat # milníků}}",
+    "searchMilestones": "{count, plural, =0 {Hledat milníky} one {Hledat # milník} few {Hledat # milníky} many {Hledat # milníků} other {Hledat # milníky}}",
     "search": "Hledat...",
     "defaultOption": "Výchozí možnost",
     "yes": "Ano",
@@ -156,7 +156,7 @@
             "off": "Vypnuto — shoda podle názvu a třídy",
             "name": "Podle ID v názvu testu",
             "property": "Podle vlastnosti test_id",
-            "auto": "Automaticky — vlastnost, poté název testu"
+            "auto": "Automaticky — atribut, poté název testu"
           },
           "caseIdFormat": {
             "label": "Formát ID případu v názvu testu",
@@ -215,7 +215,7 @@
     },
     "status": {
       "deleted": "Smazáno",
-      "disabled": "Zakázáno",
+      "disabled": "Vypnuto",
       "noCustomFieldData": "Žádné další podrobnosti.",
       "pending": "Čekající",
       "uploading": "Nahrávání...",
@@ -447,7 +447,7 @@
         "urlRequired": "URL je povinná",
         "invalidUrl": "Neplatný formát URL"
       },
-      "worker": "Worker"
+      "worker": "Uzel"
     },
     "filter": {
       "placeholder": "Filtrovat {item}..."
@@ -571,7 +571,7 @@
       "selectATemplate": "Vyberte šablonu...",
       "selectVersion": "Vyberte verzi",
       "selectAModel": "Vyberte model",
-      "selectWorkflowType": "Vyberte typ workflow",
+      "selectWorkflowType": "Vyberte typ postupu",
       "addAnOption": "Přidat možnost",
       "addADescription": "Přidat popis...",
       "optionalDescription": "Volitelný popis...",
@@ -618,7 +618,7 @@
       "unauthorized": "Nemáte oprávnění k provedení této akce.",
       "accessDenied": "Přístup odepřen",
       "sessionNotFound": "Relace nenalezena nebo je neplatná.",
-      "issueTrackerNotConfigured": "Pro tento projekt není nakonfigurován Issue Tracker.",
+      "issueTrackerNotConfigured": "Pro tento projekt není nakonfigurován úkolník.",
       "noUserSession": "Nebyla nalezena žádná uživatelská relace",
       "noProjectId": "Nebylo nalezeno žádné ID projektu",
       "unknownErrorWithMessage": "Došlo k neznámé chybě. {message}",
@@ -643,7 +643,7 @@
       "roleRequiredForSpecificRole": "Role je povinná, pokud je typ přístupu Konkrétní role.",
       "projectCreationFailed": "Vytvoření projektu se nezdařilo, nebylo vráceno žádné ID.",
       "invalidRoleId": "Neplatné ID role",
-      "workflowStateExists": "Stav workflow již existuje. Zvolte prosím nový název.",
+      "workflowStateExists": "Stav postupu již existuje. Zvolte prosím nový název.",
       "failedToLoadCaseData": "Nepodařilo se načíst data případu. Nelze uložit.",
       "atLeastOneTagRequired": "Je vyžadován alespoň jeden štítek",
       "atLeastOneIssueRequired": "Je vyžadován alespoň jeden problém",
@@ -4226,7 +4226,7 @@
           "issue_targets": "Namapujte cíle problémů Testmo na integrace TestPlanIt (Jira, GitHub atd.)."
         },
         "mappingDatasetDefaultDescription": "Zkontrolujte {dataset} detekované v exportu Testmo.",
-        "mappingDatasetCount": "{count, number} record{count, plural, one {} other {s}} detected",
+        "mappingDatasetCount": "Zjištěno {count, number} záznam{count, plural, one {} few {y} many {ů} other {ů}}",
         "mappingDatasetNoEntitiesTitle": "Nic k mapování",
         "mappingDatasetNoEntitiesDescription": "Tato datová sada nevyžaduje mapování. Až budete připraveni, přejděte na další datovou sadu.",
         "mappingDatasetUnsupportedTitle": "Mapování není nutné",
@@ -8233,6 +8233,10 @@
       "noResultsFound": "Nebyly nalezeny žádné duplicity sekvencí kroků",
       "noResultsDescription": "Spusťte skenování a zjistěte opakující se sekvence kroků napříč vašimi testovacími případy.",
       "filterPlaceholder": "Filtrovat podle názvu případu...",
+      "minCasesLabel": "Min. případů",
+      "minStepsLabel": "Min. kroků",
+      "minThresholdOption": "{count, number}+",
+      "noMatchesForFilters": "Žádné shody nesplňují aktuální filtry. Snižte minimální hodnoty a rozšiřte tak výsledky.",
       "selected": "{count, plural, one {# vybráno} few {# vybráno} many {# vybráno} other {# vybráno}}",
       "bulkDismiss": "Zamítnout ({count, number})",
       "bulkDismissSuccess": "{count, plural, one {# shoda zamítnuta} few {# shody zamítnuty} many {# shody zamítnuto} other {# shod zamítnuto}}",
@@ -8269,6 +8273,7 @@
         "viewSharedStep": "Zobrazit skupinu sdílených kroků",
         "skippedWarning": "{count, plural, one {# případ byl přeskočen} few {# případy byly přeskočeny} many {# případu bylo přeskočeno} other {# případů bylo přeskočeno}} (zastaralé nebo již převedené).",
         "noCasesSelected": "Pro převod vyberte alespoň jeden případ.",
+        "stepsUnavailable": "Odpovídající kroky se již v tomto testovacím případu nenacházejí. Zamítněte tuto shodu a spusťte nové skenování.",
         "selectAll": "Vybrat vše"
       }
     },

@@ -8233,6 +8233,10 @@
       "noResultsFound": "Nie znaleziono duplikatów sekwencji kroków",
       "noResultsDescription": "Uruchom skanowanie w celu wykrycia powtarzających się sekwencji kroków w przypadkach testowych.",
       "filterPlaceholder": "Filtruj według nazwy sprawy...",
+      "minCasesLabel": "Min. przypadków",
+      "minStepsLabel": "Min. kroków",
+      "minThresholdOption": "{count, number}+",
+      "noMatchesForFilters": "Brak dopasowań spełniających bieżące filtry. Zmniejsz wartości minimalne, aby poszerzyć wyniki.",
       "selected": "{count, plural, one {# wybrano} other {# wybrano}}",
       "bulkDismiss": "Odrzuć ({count, number})",
       "bulkDismissSuccess": "{count, plural, one {# dopasowanie odrzucone} other {# dopasowania odrzucone}}",
@@ -8269,6 +8273,7 @@
         "viewSharedStep": "Wyświetl wspólną grupę kroków",
         "skippedWarning": "{count, plural, one {# przypadek został pominięty} other {# przypadek został pominięty}} (nieaktualne lub już przekonwertowane).",
         "noCasesSelected": "Wybierz co najmniej jeden przypadek do przekonwertowania.",
+        "stepsUnavailable": "Dopasowane kroki nie znajdują się już w tym przypadku testowym. Odrzuć to dopasowanie i uruchom nowe skanowanie.",
         "selectAll": "Zaznacz wszystko"
       }
     },

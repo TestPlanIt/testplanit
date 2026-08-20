@@ -8233,6 +8233,10 @@
       "noResultsFound": "No step sequence duplicates found",
       "noResultsDescription": "Run a scan to detect repeated step sequences across your test cases.",
       "filterPlaceholder": "Filter by case name...",
+      "minCasesLabel": "Min. Cases",
+      "minStepsLabel": "Min. Steps",
+      "minThresholdOption": "{count, number}+",
+      "noMatchesForFilters": "No matches meet the current filters. Lower the minimums to widen the results.",
       "selected": "{count, plural, one {# selected} other {# selected}}",
       "bulkDismiss": "Dismiss ({count, number})",
       "bulkDismissSuccess": "{count, plural, one {# match dismissed} other {# matches dismissed}}",
@@ -8269,6 +8273,7 @@
         "viewSharedStep": "View Shared Step Group",
         "skippedWarning": "{count, plural, one {# case was skipped} other {# cases were skipped}} (stale or already converted).",
         "noCasesSelected": "Select at least one case to convert.",
+        "stepsUnavailable": "The matched steps are no longer on this test case. Dismiss this match and run a new scan.",
         "selectAll": "Select all"
       }
     },

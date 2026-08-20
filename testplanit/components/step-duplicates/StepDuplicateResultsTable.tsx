@@ -7,6 +7,14 @@ import { Filter } from "@/components/tables/Filter";
 import { PaginationComponent } from "@/components/tables/Pagination";
 import { PaginationInfo } from "@/components/tables/PaginationControls";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useQueryClient } from "@tanstack/react-query";
 import { RowSelectionState, Updater } from "@tanstack/react-table";
 import { CopyX, Loader2 } from "lucide-react";
@@ -14,6 +22,7 @@ import { useTranslations } from "next-intl";
 import React, { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { usePageSizeOptions } from "~/hooks/usePageSizeOptions";
+import { usePersistedFilter } from "~/hooks/usePersistedFilter";
 import { extractTextFromNode } from "~/utils/extractTextFromJson";
 import { type StepDuplicateRow, getColumns } from "./stepDuplicateColumns";
 import { StepDuplicateConversionDialog } from "./StepDuplicateConversionDialog";
@@ -41,6 +50,29 @@ interface MatchWithMembers {
   members: MatchMember[];
 }
 
+const MIN_CASES_STORAGE_PREFIX = "step-duplicates-min-cases:";
+const MIN_STEPS_STORAGE_PREFIX = "step-duplicates-min-steps:";
+
+/** Threshold value meaning "no minimum" — every match qualifies. */
+const NO_MINIMUM = 0;
+
+const parseThreshold = (stored: string | null): number => {
+  if (!stored) return NO_MINIMUM;
+  const parsed = Number(JSON.parse(stored));
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : NO_MINIMUM;
+};
+
+const ascending = (a: number, b: number) => a - b;
+
+/**
+ * Keeps a remembered threshold selectable even when the current scan produced
+ * no match at that level, so the dropdown never renders a blank value.
+ */
+const withCurrentThreshold = (thresholds: number[], current: number) =>
+  current > NO_MINIMUM && !thresholds.includes(current)
+    ? [...thresholds, current].sort(ascending)
+    : thresholds;
+
 interface StepDuplicateResultsTableProps {
   projectId: string;
   onRowClick?: (row: StepDuplicateRow) => void;
@@ -67,6 +99,16 @@ export function StepDuplicateResultsTable({
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState<number>(25);
   const [searchString, setSearchString] = useState("");
+  const [minCases, setMinCases] = usePersistedFilter(
+    `${MIN_CASES_STORAGE_PREFIX}${projectId}`,
+    NO_MINIMUM,
+    parseThreshold
+  );
+  const [minSteps, setMinSteps] = usePersistedFilter(
+    `${MIN_STEPS_STORAGE_PREFIX}${projectId}`,
+    NO_MINIMUM,
+    parseThreshold
+  );
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [lastSelectedIndex, setLastSelectedIndex] = useState<number | null>(
     null
@@ -139,10 +181,38 @@ export function StepDuplicateResultsTable({
     setCurrentPage(1);
   };
 
-  const handleFilterChange = useCallback((value: string) => {
-    setSearchString(value);
+  // Row selection is keyed by index into the filtered list, so anything that
+  // reshuffles that list has to drop the selection — otherwise a bulk dismiss
+  // would land on whichever matches now sit at those indexes.
+  const resetPageAndSelection = useCallback(() => {
     setCurrentPage(1);
+    setRowSelection({});
+    setLastSelectedIndex(null);
   }, []);
+
+  const handleFilterChange = useCallback(
+    (value: string) => {
+      setSearchString(value);
+      resetPageAndSelection();
+    },
+    [resetPageAndSelection]
+  );
+
+  const handleMinCasesChange = useCallback(
+    (value: string) => {
+      setMinCases(Number(value));
+      resetPageAndSelection();
+    },
+    [setMinCases, resetPageAndSelection]
+  );
+
+  const handleMinStepsChange = useCallback(
+    (value: string) => {
+      setMinSteps(Number(value));
+      resetPageAndSelection();
+    },
+    [setMinSteps, resetPageAndSelection]
+  );
 
   const handleRowSelectionChange = useCallback(
     (updater: Updater<RowSelectionState>) => {
@@ -153,9 +223,9 @@ export function StepDuplicateResultsTable({
     []
   );
 
-  const sortedItems: StepDuplicateRow[] = useMemo(() => {
+  const mappedRows: StepDuplicateRow[] = useMemo(() => {
     const raw = allMatches ?? [];
-    let mapped: StepDuplicateRow[] = raw.map((match) => {
+    return raw.map((match) => {
       const members = (match as any).members ?? [];
       const caseNames: string[] = members
         .map((m: any) => m.case?.name ?? "")
@@ -195,40 +265,75 @@ export function StepDuplicateResultsTable({
         status: match.status,
       };
     });
+  }, [allMatches]);
+
+  // Thresholds come from the counts actually present, so every option narrows
+  // the list to something genuinely different. They are derived from the whole
+  // scan rather than the filtered subset so the two dropdowns hold still while
+  // the user dials the focus in.
+  const { caseThresholds, stepThresholds } = useMemo(() => {
+    const cases = new Set<number>();
+    const steps = new Set<number>();
+    for (const row of mappedRows) {
+      cases.add(row.casesCount);
+      steps.add(row.stepCount);
+    }
+    return {
+      caseThresholds: Array.from(cases).sort(ascending),
+      stepThresholds: Array.from(steps).sort(ascending),
+    };
+  }, [mappedRows]);
+
+  const caseOptions = useMemo(
+    () => withCurrentThreshold(caseThresholds, minCases),
+    [caseThresholds, minCases]
+  );
+  const stepOptions = useMemo(
+    () => withCurrentThreshold(stepThresholds, minSteps),
+    [stepThresholds, minSteps]
+  );
+
+  const filtersActive =
+    searchString.length > 0 || minCases > NO_MINIMUM || minSteps > NO_MINIMUM;
+
+  const sortedItems: StepDuplicateRow[] = useMemo(() => {
+    let filtered = mappedRows;
 
     if (searchString) {
       const lower = searchString.toLowerCase();
-      mapped = mapped.filter((item) =>
+      filtered = filtered.filter((item) =>
         item.caseNames.some((name) => name.toLowerCase().includes(lower))
       );
     }
-
-    if (sortConfig) {
-      const { column, direction } = sortConfig;
-      const dir = direction === "asc" ? 1 : -1;
-      mapped.sort((a, b) => {
-        let aVal: string | number;
-        let bVal: string | number;
-        switch (column) {
-          case "stepCount":
-            aVal = a.stepCount;
-            bVal = b.stepCount;
-            break;
-          case "casesCount":
-            aVal = a.casesCount;
-            bVal = b.casesCount;
-            break;
-          default:
-            return 0;
-        }
-        if (aVal < bVal) return -1 * dir;
-        if (aVal > bVal) return 1 * dir;
-        return 0;
-      });
+    if (minCases > NO_MINIMUM) {
+      filtered = filtered.filter((item) => item.casesCount >= minCases);
+    }
+    if (minSteps > NO_MINIMUM) {
+      filtered = filtered.filter((item) => item.stepCount >= minSteps);
     }
 
-    return mapped;
-  }, [allMatches, sortConfig, searchString]);
+    const { column, direction } = sortConfig;
+    const dir = direction === "asc" ? 1 : -1;
+    return [...filtered].sort((a, b) => {
+      let aVal: number;
+      let bVal: number;
+      switch (column) {
+        case "stepCount":
+          aVal = a.stepCount;
+          bVal = b.stepCount;
+          break;
+        case "casesCount":
+          aVal = a.casesCount;
+          bVal = b.casesCount;
+          break;
+        default:
+          return 0;
+      }
+      if (aVal < bVal) return -1 * dir;
+      if (aVal > bVal) return 1 * dir;
+      return 0;
+    });
+  }, [mappedRows, sortConfig, searchString, minCases, minSteps]);
 
   const totalItems = sortedItems.length;
   const totalPages = Math.ceil(totalItems / pageSize);
@@ -403,12 +508,67 @@ export function StepDuplicateResultsTable({
     <div>
       <div className="flex flex-row items-start">
         <div className="flex flex-col grow w-full sm:w-1/2 min-w-[250px]">
-          <div className="text-muted-foreground w-full text-nowrap">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-muted-foreground w-full">
             <Filter
+              className="max-w-xs min-w-[180px]"
               placeholder={t("filterPlaceholder")}
               initialSearchString={searchString}
               onSearchChange={handleFilterChange}
             />
+            <div className="flex items-center gap-2">
+              <Label htmlFor="min-cases-filter" className="text-nowrap">
+                {t("minCasesLabel")}
+              </Label>
+              <Select
+                value={String(minCases)}
+                onValueChange={handleMinCasesChange}
+              >
+                <SelectTrigger
+                  id="min-cases-filter"
+                  className="w-24"
+                  data-testid="min-cases-filter"
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={String(NO_MINIMUM)}>
+                    {tCommon("filters.all")}
+                  </SelectItem>
+                  {caseOptions.map((value) => (
+                    <SelectItem key={value} value={String(value)}>
+                      {t("minThresholdOption", { count: value })}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center gap-2">
+              <Label htmlFor="min-steps-filter" className="text-nowrap">
+                {t("minStepsLabel")}
+              </Label>
+              <Select
+                value={String(minSteps)}
+                onValueChange={handleMinStepsChange}
+              >
+                <SelectTrigger
+                  id="min-steps-filter"
+                  className="w-24"
+                  data-testid="min-steps-filter"
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={String(NO_MINIMUM)}>
+                    {tCommon("filters.all")}
+                  </SelectItem>
+                  {stepOptions.map((value) => (
+                    <SelectItem key={value} value={String(value)}>
+                      {t("minThresholdOption", { count: value })}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </div>
 
@@ -476,6 +636,7 @@ export function StepDuplicateResultsTable({
           columnVisibility={columnVisibility}
           onColumnVisibilityChange={setColumnVisibility}
           isLoading={isLoading}
+          emptyMessage={filtersActive ? t("noMatchesForFilters") : undefined}
           pageSize={pageSize}
           onTestCaseClick={handleTableRowClick}
           rowSelection={rowSelection}

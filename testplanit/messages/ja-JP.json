@@ -8233,6 +8233,10 @@
       "noResultsFound": "ステップシーケンスの重複は見つかりませんでした",
       "noResultsDescription": "スキャンを実行して、テストケース全体で繰り返される手順シーケンスを検出します。",
       "filterPlaceholder": "ケース名で絞り込む...",
+      "minCasesLabel": "最小ケース数",
+      "minStepsLabel": "最小ステップ数",
+      "minThresholdOption": "{count, number}以上",
+      "noMatchesForFilters": "現在のフィルターに一致する結果がありません。最小値を下げて結果を広げてください。",
       "selected": "{count, plural, one {# 選択済み} other {# 選択済み}}",
       "bulkDismiss": "却下 ({count, number})",
       "bulkDismissSuccess": "{count, plural, one {# 試合が却下されました} other {# 試合が却下されました}}",
@@ -8269,6 +8273,7 @@
         "viewSharedStep": "共有ステップグループを表示",
         "skippedWarning": "{count, plural, one {# ケースがスキップされました} other {# ケースがスキップされました}} (古いか、既に変換済み)。",
         "noCasesSelected": "変換するケースを少なくとも1つ選択してください。",
+        "stepsUnavailable": "一致したステップはこのテストケースにはもう存在しません。この一致を却下して新しいスキャンを実行してください。",
         "selectAll": "すべて選択"
       }
     },

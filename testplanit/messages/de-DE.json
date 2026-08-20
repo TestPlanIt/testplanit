@@ -8233,6 +8233,10 @@
       "noResultsFound": "Es wurden keine doppelten Schrittsequenzen gefunden.",
       "noResultsDescription": "Führen Sie einen Scan durch, um wiederkehrende Schrittsequenzen in Ihren Testfällen zu erkennen.",
       "filterPlaceholder": "Nach Fallnamen filtern...",
+      "minCasesLabel": "Min. Fälle",
+      "minStepsLabel": "Min. Schritte",
+      "minThresholdOption": "{count, number}+",
+      "noMatchesForFilters": "Keine Treffer entsprechen den aktuellen Filtern. Verringern Sie die Mindestwerte, um die Ergebnisse zu erweitern.",
       "selected": "{count, plural, one {# ausgewählt} other {# ausgewählt}}",
       "bulkDismiss": "Schließen ({count, number})",
       "bulkDismissSuccess": "{count, plural, one {# Spiel abgebrochen} other {# Spiele abgebrochen}}",
@@ -8269,6 +8273,7 @@
         "viewSharedStep": "Gemeinsame Schrittgruppe anzeigen",
         "skippedWarning": "{count, plural, one {# Fall wurde übersprungen} other {# Fälle wurden übersprungen}} (veraltet oder bereits konvertiert).",
         "noCasesSelected": "Wählen Sie mindestens einen Fall zur Konvertierung aus.",
+        "stepsUnavailable": "Die übereinstimmenden Schritte befinden sich nicht mehr in diesem Testfall. Verwerfen Sie diese Übereinstimmung und führen Sie einen neuen Scan durch.",
         "selectAll": "Alle auswählen"
       }
     },

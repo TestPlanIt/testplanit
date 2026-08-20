@@ -8233,6 +8233,10 @@
       "noResultsFound": "لم يتم العثور على تكرارات في تسلسل الخطوات",
       "noResultsDescription": "شغّل فحصًا لاكتشاف تسلسلات الخطوات المتكررة عبر حالات الاختبار.",
       "filterPlaceholder": "تصفية باسم الحالة...",
+      "minCasesLabel": "الحد الأدنى للحالات",
+      "minStepsLabel": "الحد الأدنى للخطوات",
+      "minThresholdOption": "{count, number}+",
+      "noMatchesForFilters": "لا توجد تطابقات تلبي عوامل التصفية الحالية. قلل الحدود الدنيا لتوسيع النتائج.",
       "selected": "{count, plural, zero {# محدد} one {# محدد} two {محددان} few {# محددة} many {# محدد} other {# محدد}}",
       "bulkDismiss": "تجاهل ({count, number})",
       "bulkDismissSuccess": "{count, plural, zero {# تطابق مرفوض} one {تطابق واحد مرفوض} two {تطابقان مرفوضان} few {# تطابقات مرفوضة} many {# تطابقًا مرفوضًا} other {# تطابق مرفوض}}",
@@ -8269,6 +8273,7 @@
         "viewSharedStep": "عرض مجموعة الخطوات المشتركة",
         "skippedWarning": "{count, plural, zero {تم تخطي # حالة} one {تم تخطي حالة واحدة} two {تم تخطي حالتين} few {تم تخطي # حالات} many {تم تخطي # حالة} other {تم تخطي # حالة}} (قديمة أو محوّلة مسبقًا).",
         "noCasesSelected": "حدد حالة واحدة على الأقل للتحويل.",
+        "stepsUnavailable": "لم تعد الخطوات المتطابقة موجودة في حالة الاختبار هذه. تجاهل هذا التطابق وشغّل فحصًا جديدًا.",
         "selectAll": "تحديد الكل"
       }
     },

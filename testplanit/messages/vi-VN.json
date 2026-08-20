@@ -8233,6 +8233,10 @@
       "noResultsFound": "Không tìm thấy trình tự bước trùng lặp nào.",
       "noResultsDescription": "Chạy quét để phát hiện các chuỗi bước lặp lại trong các trường hợp thử nghiệm của bạn.",
       "filterPlaceholder": "Lọc theo tên vụ việc...",
+      "minCasesLabel": "Số Case tối thiểu",
+      "minStepsLabel": "Số bước tối thiểu",
+      "minThresholdOption": "{count, number}+",
+      "noMatchesForFilters": "Không có kết quả trùng khớp với bộ lọc hiện tại. Hãy giảm giá trị tối thiểu để mở rộng kết quả.",
       "selected": "{count, plural, one {# đã chọn} other {# đã chọn}}",
       "bulkDismiss": "Bỏ qua ({count, number})",
       "bulkDismissSuccess": "{count, plural, one {# trận đấu bị hủy bỏ} other {# các trận đấu bị hủy bỏ}}",
@@ -8269,6 +8273,7 @@
         "viewSharedStep": "Xem Nhóm Bước Chung",
         "skippedWarning": "{count, plural, one {# trường hợp đã bị bỏ qua} other {# trường hợp đã bị bỏ qua}} (cũ hoặc đã được chuyển đổi).",
         "noCasesSelected": "Chọn ít nhất một trường hợp để chuyển đổi.",
+        "stepsUnavailable": "Các bước trùng khớp không còn tồn tại trong test case này. Hãy bỏ qua kết quả trùng khớp này và chạy quét lại.",
         "selectAll": "Chọn tất cả"
       }
     },

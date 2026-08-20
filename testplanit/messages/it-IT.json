@@ -8233,6 +8233,10 @@
       "noResultsFound": "Non sono state trovate sequenze di passaggi duplicate.",
       "noResultsDescription": "Esegui una scansione per rilevare sequenze di passaggi ripetute nei tuoi casi di test.",
       "filterPlaceholder": "Filtra per nome del caso...",
+      "minCasesLabel": "Casi min",
+      "minStepsLabel": "Passaggi min",
+      "minThresholdOption": "{count, number}+",
+      "noMatchesForFilters": "Nessuna corrispondenza soddisfa i filtri attuali. Riduci i valori minimi per ampliare i risultati.",
       "selected": "{count, plural, one {# selezionato} other {# selezionato}}",
       "bulkDismiss": "Ignora ({count, number})",
       "bulkDismissSuccess": "{count, plural, one {# partita annullata} other {# partite annullate}}",
@@ -8269,6 +8273,7 @@
         "viewSharedStep": "Visualizza il gruppo di passi condivisi",
         "skippedWarning": "{count, plural, one {# caso saltato} other {# casi saltati}} (obsoleto o già convertito).",
         "noCasesSelected": "Seleziona almeno un caso da convertire.",
+        "stepsUnavailable": "I passaggi corrispondenti non sono più presenti in questo caso di test. Ignora questa corrispondenza ed esegui una nuova scansione.",
         "selectAll": "Seleziona tutto"
       }
     },
