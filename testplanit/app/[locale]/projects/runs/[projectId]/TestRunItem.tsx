@@ -136,11 +136,7 @@ const TestRunItem: React.FC<TestRunItemProps> = ({
   const showCompleteItem =
     testRun.isCompleted === false && canCloseRun && !isLoadingPermissions;
   const showDuplicateItem =
-    !isAutomatedRun &&
-    testRun.isCompleted === false &&
-    canAddEditRun &&
-    !isLoadingPermissions &&
-    onDuplicate;
+    !isAutomatedRun && canAddEditRun && !isLoadingPermissions && onDuplicate;
 
   const showMoreMenu =
     showActions && (showEditItem || showCompleteItem || showDuplicateItem);

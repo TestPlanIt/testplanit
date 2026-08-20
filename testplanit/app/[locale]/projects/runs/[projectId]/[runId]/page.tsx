@@ -637,6 +637,7 @@ export default function TestRunPage() {
                     name: true,
                     className: true,
                     source: true,
+                    automated: true,
                     isDeleted: true,
                     hasParameters: true,
                     linksFrom: {
@@ -1420,6 +1421,7 @@ export default function TestRunPage() {
         className:
           result.repositoryCase?.className || String(result.repositoryCaseId),
         source: result.repositoryCase?.source,
+        automated: result.repositoryCase?.automated || false,
         hasParameters: result.repositoryCase?.hasParameters || false,
         suiteName: suite.name,
         suiteTests: suite.tests,

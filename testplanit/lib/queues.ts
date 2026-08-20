@@ -191,8 +191,13 @@ export function getSyncQueue(): Queue | null {
   _syncQueue = new Queue(SYNC_QUEUE_NAME, {
     connection: valkeyConnection as any,
     prefix: BULLMQ_PREFIX,
+    // Bespoke (not STANDARD_RETRY): issue-tracker rate-limit windows run
+    // minutes, not seconds (Jira Cloud sends Retry-After of several minutes),
+    // so sync gets more attempts on a slower ramp — waits of 30s/60s/2m/4m
+    // can clear a window that STANDARD_RETRY's 5s/10s never outlasts.
     defaultJobOptions: {
-      ...STANDARD_RETRY,
+      attempts: 5,
+      backoff: { type: "exponential", delay: 30000 },
       removeOnComplete: { age: 3600 * 24 * 3, count: 500 },
       removeOnFail: { age: 3600 * 24 * 7 },
     },

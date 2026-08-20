@@ -1,5 +1,6 @@
 import { type Locale } from "date-fns";
 import { arSA } from "date-fns/locale/ar-SA";
+import { cs } from "date-fns/locale/cs";
 import { enUS } from "date-fns/locale/en-US";
 import { de } from "date-fns/locale/de";
 import { es } from "date-fns/locale/es";
@@ -20,6 +21,7 @@ import { locales } from "./navigation";
 
 export const dateFnsLocaleMap: Record<string, Locale> = {
   "ar-SA": arSA,
+  "cs-CZ": cs,
   "de-DE": de,
   "en-US": enUS,
   "es-ES": es,

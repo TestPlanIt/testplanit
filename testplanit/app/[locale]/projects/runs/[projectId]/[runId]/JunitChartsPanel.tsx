@@ -93,6 +93,7 @@ export default function JunitChartsPanel({
           select: {
             name: true,
             source: true,
+            automated: true,
             isDeleted: true,
             hasParameters: true,
           },
@@ -112,6 +113,7 @@ export default function JunitChartsPanel({
         resultId: result.id,
         name: result.repositoryCase?.name || String(result.repositoryCaseId),
         source: result.repositoryCase?.source,
+        automated: result.repositoryCase?.automated || false,
         isDeleted: result.repositoryCase?.isDeleted || false,
         hasParameters: result.repositoryCase?.hasParameters || false,
         suiteName: result.testSuite?.name,

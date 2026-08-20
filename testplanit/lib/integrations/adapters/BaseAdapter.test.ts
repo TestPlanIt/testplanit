@@ -289,6 +289,7 @@ describe("BaseAdapter", () => {
         ok: false,
         status: 404,
         text: () => Promise.resolve("Not Found"),
+        headers: { get: () => null },
       });
 
       await expect(
@@ -341,6 +342,113 @@ describe("BaseAdapter", () => {
       expect(firstSignal).not.toBe(secondSignal);
       expect(firstSignal!.aborted).toBe(true);
       expect(secondSignal!.aborted).toBe(false);
+    });
+
+    it("retries a 429 honoring Retry-After", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 429,
+        text: () => Promise.resolve("rate limited"),
+        headers: { get: (h: string) => (h === "Retry-After" ? "5" : null) },
+      });
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ data: "recovered" }),
+      });
+
+      const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+      const resultPromise = adapter.testMakeRequest(
+        "https://api.test.com/resource"
+      );
+      // Retry-After of 5s must be honored instead of the 1s exponential base;
+      // at 4s the retry must not have fired yet.
+      await vi.advanceTimersByTimeAsync(4000);
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+      await vi.advanceTimersByTimeAsync(2500);
+
+      const result = await resultPromise;
+      consoleSpy.mockRestore();
+
+      expect(result).toEqual({ data: "recovered" });
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+    });
+
+    it("retries a 429 without Retry-After on the exponential schedule", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 429,
+        text: () => Promise.resolve("rate limited"),
+        headers: { get: () => null },
+      });
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ data: "recovered" }),
+      });
+
+      const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+      const resultPromise = adapter.testMakeRequest(
+        "https://api.test.com/resource"
+      );
+      await vi.advanceTimersByTimeAsync(2500);
+
+      const result = await resultPromise;
+      consoleSpy.mockRestore();
+
+      expect(result).toEqual({ data: "recovered" });
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+    });
+
+    it("fails fast on a 429 whose Retry-After exceeds the in-band cap", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 429,
+        text: () => Promise.resolve("rate limited"),
+        headers: { get: (h: string) => (h === "Retry-After" ? "239" : null) },
+      });
+
+      await expect(
+        adapter.testMakeRequest("https://api.test.com/resource")
+      ).rejects.toThrow("HTTP 429: rate limited");
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+    });
+
+    it("retries a 5xx response", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 503,
+        text: () => Promise.resolve("upstream down"),
+        headers: { get: () => null },
+      });
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ data: "recovered" }),
+      });
+
+      const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+      const resultPromise = adapter.testMakeRequest(
+        "https://api.test.com/resource"
+      );
+      await vi.advanceTimersByTimeAsync(2500);
+
+      const result = await resultPromise;
+      consoleSpy.mockRestore();
+
+      expect(result).toEqual({ data: "recovered" });
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+    });
+
+    it("does not retry a permanent 4xx", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 403,
+        text: () => Promise.resolve("forbidden"),
+        headers: { get: () => null },
+      });
+
+      await expect(
+        adapter.testMakeRequest("https://api.test.com/resource")
+      ).rejects.toThrow("HTTP 403: forbidden");
+      expect(mockFetch).toHaveBeenCalledTimes(1);
     });
   });
 

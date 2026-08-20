@@ -7,6 +7,14 @@ import { Filter } from "@/components/tables/Filter";
 import { PaginationComponent } from "@/components/tables/Pagination";
 import { PaginationInfo } from "@/components/tables/PaginationControls";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useQueryClient } from "@tanstack/react-query";
 import { RowSelectionState, Updater } from "@tanstack/react-table";
 import { CopyX, Loader2 } from "lucide-react";
@@ -14,7 +22,7 @@ import { useTranslations } from "next-intl";
 import React, { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { usePageSizeOptions } from "~/hooks/usePageSizeOptions";
-import { extractTextFromNode } from "~/utils/extractTextFromJson";
+import { usePersistedFilter } from "~/hooks/usePersistedFilter";
 import { type StepDuplicateRow, getColumns } from "./stepDuplicateColumns";
 import { StepDuplicateConversionDialog } from "./StepDuplicateConversionDialog";
 import type { RepositoryCaseSource } from "~/zenstack/models";
@@ -40,6 +48,38 @@ interface MatchWithMembers {
   status: string;
   members: MatchMember[];
 }
+
+const MIN_CASES_STORAGE_PREFIX = "step-duplicates-min-cases:";
+const MIN_STEPS_STORAGE_PREFIX = "step-duplicates-min-steps:";
+
+/** Threshold value meaning "no minimum" — every match qualifies. */
+const NO_MINIMUM = 0;
+
+const parseThreshold = (stored: string | null): number => {
+  if (!stored) return NO_MINIMUM;
+  const parsed = Number(JSON.parse(stored));
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : NO_MINIMUM;
+};
+
+const ascending = (a: number, b: number) => a - b;
+
+const uniqueSorted = (values: number[]) =>
+  Array.from(new Set(values)).sort(ascending);
+
+/**
+ * Snaps a threshold onto counts that are actually reachable: up to the next
+ * real count, which selects the same rows while keeping the dropdown on a value
+ * it offers, and never past the largest one — asking for more cases or steps
+ * than any reachable match has would otherwise empty the table with no option
+ * left to climb back down to.
+ */
+const snapThreshold = (thresholds: number[], stored: number): number => {
+  if (stored <= NO_MINIMUM || thresholds.length === 0) return NO_MINIMUM;
+  return (
+    thresholds.find((value) => value >= stored) ??
+    thresholds[thresholds.length - 1]
+  );
+};
 
 interface StepDuplicateResultsTableProps {
   projectId: string;
@@ -67,6 +107,16 @@ export function StepDuplicateResultsTable({
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState<number>(25);
   const [searchString, setSearchString] = useState("");
+  const [minCases, setMinCases] = usePersistedFilter(
+    `${MIN_CASES_STORAGE_PREFIX}${projectId}`,
+    NO_MINIMUM,
+    parseThreshold
+  );
+  const [minSteps, setMinSteps] = usePersistedFilter(
+    `${MIN_STEPS_STORAGE_PREFIX}${projectId}`,
+    NO_MINIMUM,
+    parseThreshold
+  );
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [lastSelectedIndex, setLastSelectedIndex] = useState<number | null>(
     null
@@ -87,22 +137,17 @@ export function StepDuplicateResultsTable({
       members: {
         where: { case: { isDeleted: false } },
         include: {
+          // Deliberately NO steps here: this query loads every pending match
+          // with every member case, and dragging each case's full step text
+          // along multiplies the payload into hundreds of MB on large
+          // projects — enough to OOM the server process. The conversion
+          // dialog fetches the matched steps for one case on open.
           case: {
             select: {
               id: true,
               name: true,
               source: true,
               automated: true,
-              steps: {
-                where: { isDeleted: false },
-                orderBy: { order: "asc" },
-                select: {
-                  id: true,
-                  step: true,
-                  expectedResult: true,
-                  order: true,
-                },
-              },
             },
           },
         },
@@ -139,10 +184,38 @@ export function StepDuplicateResultsTable({
     setCurrentPage(1);
   };
 
-  const handleFilterChange = useCallback((value: string) => {
-    setSearchString(value);
+  // Row selection is keyed by index into the filtered list, so anything that
+  // reshuffles that list has to drop the selection — otherwise a bulk dismiss
+  // would land on whichever matches now sit at those indexes.
+  const resetPageAndSelection = useCallback(() => {
     setCurrentPage(1);
+    setRowSelection({});
+    setLastSelectedIndex(null);
   }, []);
+
+  const handleFilterChange = useCallback(
+    (value: string) => {
+      setSearchString(value);
+      resetPageAndSelection();
+    },
+    [resetPageAndSelection]
+  );
+
+  const handleMinCasesChange = useCallback(
+    (value: string) => {
+      setMinCases(Number(value));
+      resetPageAndSelection();
+    },
+    [setMinCases, resetPageAndSelection]
+  );
+
+  const handleMinStepsChange = useCallback(
+    (value: string) => {
+      setMinSteps(Number(value));
+      resetPageAndSelection();
+    },
+    [setMinSteps, resetPageAndSelection]
+  );
 
   const handleRowSelectionChange = useCallback(
     (updater: Updater<RowSelectionState>) => {
@@ -153,82 +226,117 @@ export function StepDuplicateResultsTable({
     []
   );
 
-  const sortedItems: StepDuplicateRow[] = useMemo(() => {
+  const mappedRows: StepDuplicateRow[] = useMemo(() => {
     const raw = allMatches ?? [];
-    let mapped: StepDuplicateRow[] = raw.map((match) => {
+    return raw.map((match) => {
       const members = (match as any).members ?? [];
       const caseNames: string[] = members
         .map((m: any) => m.case?.name ?? "")
         .filter(Boolean);
-
-      // Build step preview from the first member's actual steps
-      let matchedStepsPreview = "";
-      const firstMember = members[0];
-      if (firstMember?.case?.steps) {
-        const steps = firstMember.case.steps as Array<{
-          id: number;
-          step: unknown;
-          order: number;
-        }>;
-        const startId = firstMember.startStepId;
-        const endId = firstMember.endStepId;
-        const startIdx = steps.findIndex((s: any) => s.id === startId);
-        const endIdx = steps.findIndex((s: any) => s.id === endId);
-        if (startIdx >= 0 && endIdx >= 0) {
-          const matchedSteps = steps.slice(startIdx, endIdx + 1);
-          matchedStepsPreview = matchedSteps
-            .map((s: any) => extractTextFromNode(s.step))
-            .filter(Boolean)
-            .join(" → ");
-        }
-      }
 
       return {
         id: match.id,
         name: caseNames.join(" / "),
         stepCount: match.stepCount,
         fingerprint: match.fingerprint,
-        matchedStepsPreview:
-          matchedStepsPreview || `${match.stepCount} matched steps`,
+        // Step text is not loaded in the list query (see the include above);
+        // the matched steps themselves are shown by the conversion dialog.
+        matchedStepsPreview: t("matchedStepsCount", { count: match.stepCount }),
         casesCount: members.length,
         caseNames,
         status: match.status,
       };
     });
+  }, [allMatches, t]);
 
-    if (searchString) {
-      const lower = searchString.toLowerCase();
-      mapped = mapped.filter((item) =>
-        item.caseNames.some((name) => name.toLowerCase().includes(lower))
-      );
-    }
+  // Each dropdown is faceted against the other: it offers the counts still
+  // reachable once the other minimum (and the search) has been applied, so no
+  // selection available in either one can empty the table. The pair is resolved
+  // steps-first — matching their order on screen — to keep it acyclic.
+  const {
+    searchRows,
+    stepThresholds,
+    caseThresholds,
+    effectiveMinCases,
+    effectiveMinSteps,
+  } = useMemo(() => {
+    const lower = searchString.toLowerCase();
+    const searchRows = searchString
+      ? mappedRows.filter((item) =>
+          item.caseNames.some((name) => name.toLowerCase().includes(lower))
+        )
+      : mappedRows;
 
-    if (sortConfig) {
-      const { column, direction } = sortConfig;
-      const dir = direction === "asc" ? 1 : -1;
-      mapped.sort((a, b) => {
-        let aVal: string | number;
-        let bVal: string | number;
-        switch (column) {
-          case "stepCount":
-            aVal = a.stepCount;
-            bVal = b.stepCount;
-            break;
-          case "casesCount":
-            aVal = a.casesCount;
-            bVal = b.casesCount;
-            break;
-          default:
-            return 0;
-        }
-        if (aVal < bVal) return -1 * dir;
-        if (aVal > bVal) return 1 * dir;
-        return 0;
-      });
-    }
+    const stepsApplied = snapThreshold(
+      uniqueSorted(searchRows.map((row) => row.stepCount)),
+      minSteps
+    );
+    const rowsAfterSteps = searchRows.filter(
+      (row) => row.stepCount >= stepsApplied
+    );
+    const casesApplied = snapThreshold(
+      uniqueSorted(rowsAfterSteps.map((row) => row.casesCount)),
+      minCases
+    );
 
-    return mapped;
-  }, [allMatches, sortConfig, searchString]);
+    // The applied value is folded back into its own list: resolving steps
+    // before cases can leave a step minimum that no longer names a count under
+    // the case minimum, and a dropdown must always be able to show its own
+    // selection.
+    const withApplied = (values: number[], applied: number) =>
+      uniqueSorted(applied > NO_MINIMUM ? [...values, applied] : values);
+
+    return {
+      searchRows,
+      stepThresholds: withApplied(
+        searchRows
+          .filter((row) => row.casesCount >= casesApplied)
+          .map((row) => row.stepCount),
+        stepsApplied
+      ),
+      caseThresholds: withApplied(
+        rowsAfterSteps.map((row) => row.casesCount),
+        casesApplied
+      ),
+      effectiveMinCases: casesApplied,
+      effectiveMinSteps: stepsApplied,
+    };
+  }, [mappedRows, searchString, minCases, minSteps]);
+
+  const filtersActive =
+    searchString.length > 0 ||
+    effectiveMinCases > NO_MINIMUM ||
+    effectiveMinSteps > NO_MINIMUM;
+
+  const sortedItems: StepDuplicateRow[] = useMemo(() => {
+    const filtered = searchRows.filter(
+      (item) =>
+        item.casesCount >= effectiveMinCases &&
+        item.stepCount >= effectiveMinSteps
+    );
+
+    const { column, direction } = sortConfig;
+    const dir = direction === "asc" ? 1 : -1;
+    return [...filtered].sort((a, b) => {
+      let aVal: number;
+      let bVal: number;
+      switch (column) {
+        case "stepCount":
+          aVal = a.stepCount;
+          bVal = b.stepCount;
+          break;
+        case "casesCount":
+          aVal = a.casesCount;
+          bVal = b.casesCount;
+          break;
+        default:
+          return 0;
+      }
+      if (aVal < bVal) return -1 * dir;
+      if (aVal > bVal) return 1 * dir;
+      return 0;
+    });
+  }, [searchRows, sortConfig, effectiveMinCases, effectiveMinSteps]);
 
   const totalItems = sortedItems.length;
   const totalPages = Math.ceil(totalItems / pageSize);
@@ -401,18 +509,71 @@ export function StepDuplicateResultsTable({
 
   return (
     <div>
-      <div className="flex flex-row items-start">
-        <div className="flex flex-col grow w-full sm:w-1/2 min-w-[250px]">
-          <div className="text-muted-foreground w-full text-nowrap">
-            <Filter
-              placeholder={t("filterPlaceholder")}
-              initialSearchString={searchString}
-              onSearchChange={handleFilterChange}
-            />
+      <div className="flex flex-row items-start gap-4">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-2 grow min-w-[250px] text-muted-foreground">
+          <Filter
+            className="w-56 max-w-full"
+            placeholder={t("filterPlaceholder")}
+            initialSearchString={searchString}
+            onSearchChange={handleFilterChange}
+          />
+          <div className="flex items-center gap-2">
+            <Label htmlFor="min-steps-filter" className="text-nowrap">
+              {t("minStepsLabel")}
+            </Label>
+            <Select
+              value={String(effectiveMinSteps)}
+              onValueChange={handleMinStepsChange}
+            >
+              <SelectTrigger
+                id="min-steps-filter"
+                className="w-20"
+                data-testid="min-steps-filter"
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={String(NO_MINIMUM)}>
+                  {tCommon("filters.all")}
+                </SelectItem>
+                {stepThresholds.map((value) => (
+                  <SelectItem key={value} value={String(value)}>
+                    {t("minThresholdOption", { count: value })}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex items-center gap-2">
+            <Label htmlFor="min-cases-filter" className="text-nowrap">
+              {t("minCasesLabel")}
+            </Label>
+            <Select
+              value={String(effectiveMinCases)}
+              onValueChange={handleMinCasesChange}
+            >
+              <SelectTrigger
+                id="min-cases-filter"
+                className="w-20"
+                data-testid="min-cases-filter"
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={String(NO_MINIMUM)}>
+                  {tCommon("filters.all")}
+                </SelectItem>
+                {caseThresholds.map((value) => (
+                  <SelectItem key={value} value={String(value)}>
+                    {t("minThresholdOption", { count: value })}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
-        <div className="flex flex-col w-full sm:w-2/3 items-end">
+        <div className="flex flex-col items-end">
           {totalItems > 0 && (
             <>
               <div className="justify-end">
@@ -476,6 +637,7 @@ export function StepDuplicateResultsTable({
           columnVisibility={columnVisibility}
           onColumnVisibilityChange={setColumnVisibility}
           isLoading={isLoading}
+          emptyMessage={filtersActive ? t("noMatchesForFilters") : undefined}
           pageSize={pageSize}
           onTestCaseClick={handleTableRowClick}
           rowSelection={rowSelection}

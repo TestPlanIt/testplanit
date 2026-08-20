@@ -25,6 +25,7 @@ export interface AutomatedRunMetricsResult extends AutomatedResultMetricInput {
   resultId?: number;
   name?: string | null;
   source?: string | null;
+  automated?: boolean;
   isDeleted?: boolean;
   hasParameters?: boolean;
   executedAt?: Date | string | null;
@@ -268,7 +269,9 @@ export function AutomatedRunMetrics({
                         id: result.id,
                         name: result.name ?? undefined,
                         source: result.source ?? undefined,
+                        automated: result.automated,
                         isDeleted: result.isDeleted,
+                        hasParameters: result.hasParameters,
                       }}
                       projectId={projectId}
                       size="small"

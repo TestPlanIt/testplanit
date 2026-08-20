@@ -8233,11 +8233,16 @@
       "noResultsFound": "Geen dubbele stappen gevonden",
       "noResultsDescription": "Voer een scan uit om herhaalde stappenreeksen in uw testgevallen te detecteren.",
       "filterPlaceholder": "Filteren op zaaknaam...",
+      "minCasesLabel": "Min. testgevallen",
+      "minStepsLabel": "Min. stappen",
+      "minThresholdOption": "{count, number}+",
+      "noMatchesForFilters": "Geen overeenkomsten voldoen aan de huidige filters. Verlaag de minimums om de resultaten te verbreden.",
       "selected": "{count, plural, one {# geselecteerd} other {# geselecteerd}}",
       "bulkDismiss": "Afwijzen ({count, number})",
       "bulkDismissSuccess": "{count, plural, one {# wedstrijd beëindigd} other {# wedstrijden beëindigd}}",
       "bulkError": "Sommige bewerkingen zijn mislukt. Probeer het opnieuw.",
       "tableHint": "Klik op een rij om een voorbeeld van de overeenkomende stappen te bekijken. Selecteer rijen met selectievakjes voor bulkacties.",
+      "matchedStepsCount": "{count, plural, one {# overeenkomende stap} other {# overeenkomende stappen}}",
       "columns": {
         "matchedSteps": "Overeenkomende stappen",
         "casesCount": "gevallen",
@@ -8269,6 +8274,7 @@
         "viewSharedStep": "Bekijk de gedeelde stappengroep",
         "skippedWarning": "{count, plural, one {# geval overgeslagen} other {# gevallen overgeslagen}} (verouderd of reeds geconverteerd).",
         "noCasesSelected": "Selecteer ten minste één geval om te converteren.",
+        "stepsUnavailable": "De overeenkomende stappen staan niet meer op dit testgeval. Wijs deze overeenkomst af en voer een nieuwe scan uit.",
         "selectAll": "Alles selecteren"
       }
     },

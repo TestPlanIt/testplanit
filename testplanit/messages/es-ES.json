@@ -8233,11 +8233,16 @@
       "noResultsFound": "No se encontraron duplicados en la secuencia de pasos.",
       "noResultsDescription": "Ejecuta un escaneo para detectar secuencias de pasos repetidas en tus casos de prueba.",
       "filterPlaceholder": "Filtrar por nombre del caso...",
+      "minCasesLabel": "Casos mín",
+      "minStepsLabel": "Pasos mín",
+      "minThresholdOption": "{count, number}+",
+      "noMatchesForFilters": "No hay coincidencias que cumplan los filtros actuales. Reduce los mínimos para ampliar los resultados.",
       "selected": "{count, plural, one {# seleccionado} other {# seleccionado}}",
       "bulkDismiss": "Descartar ({count, number})",
       "bulkDismissSuccess": "{count, plural, one {# partida descartada} other {# partidas descartadas}}",
       "bulkError": "Algunas operaciones fallaron. Inténtalo de nuevo.",
       "tableHint": "Haz clic en una fila para previsualizar los pasos coincidentes. Selecciona las filas con casillas de verificación para acciones masivas.",
+      "matchedStepsCount": "{count, plural, one {# paso coincidente} other {# pasos coincidentes}}",
       "columns": {
         "matchedSteps": "Pasos coincidentes",
         "casesCount": "Casos",
@@ -8269,6 +8274,7 @@
         "viewSharedStep": "Ver grupo de pasos compartido",
         "skippedWarning": "{count, plural, one {# caso omitido} other {# casos omitidos}} (obsoleto o ya convertido).",
         "noCasesSelected": "Seleccione al menos un caso para convertir.",
+        "stepsUnavailable": "Los pasos coincidentes ya no están en este caso de prueba. Descarta esta coincidencia y ejecuta un nuevo análisis.",
         "selectAll": "Seleccionar todo"
       }
     },

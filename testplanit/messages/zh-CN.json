@@ -8233,11 +8233,16 @@
       "noResultsFound": "未发现重复步骤。",
       "noResultsDescription": "运行扫描以检测测试用例中重复的步骤序列。",
       "filterPlaceholder": "按案例名称筛选...",
+      "minCasesLabel": "最小案例数",
+      "minStepsLabel": "最小步骤数",
+      "minThresholdOption": "{count, number}+",
+      "noMatchesForFilters": "没有符合当前筛选条件的匹配项。请降低最小值以扩大结果范围。",
       "selected": "{count, plural, one {# 已选择} other {# 已选择}}",
       "bulkDismiss": "驳回（{count, number}）",
       "bulkDismissSuccess": "{count, plural, one {# 比赛已取消} other {# 比赛已取消}}",
       "bulkError": "部分操作失败，请重试。",
       "tableHint": "点击行可预览匹配的步骤。选中带有复选框的行可进行批量操作。",
+      "matchedStepsCount": "{count, plural, other {# 个匹配步骤}}",
       "columns": {
         "matchedSteps": "匹配步骤",
         "casesCount": "案例",
@@ -8269,6 +8274,7 @@
         "viewSharedStep": "查看共享步骤组",
         "skippedWarning": "{count, plural, one {# 跳过案例} other {# 跳过案例}} （已过时或已转换）。",
         "noCasesSelected": "至少选择一个案例进行转换。",
+        "stepsUnavailable": "匹配的步骤已不再存在于此测试用例中。请忽略此匹配项并运行新的扫描。",
         "selectAll": "全选"
       }
     },
@@ -8644,7 +8650,7 @@
     "selectSourceConfirm": "更改源",
     "datasetRowSelectAria": "选择行",
     "datasetSelectAllPageTooltip": "单击以选中此页面上的每一行。按住 Shift 键并单击以选中所有页面上的每一行。",
-    "datasetSelectAllAcrossPagesTooltip": "Select {count, plural, =1 {# row} =2 {both rows} other {all # rows}} across all pages",
+    "datasetSelectAllAcrossPagesTooltip": "在所有页面中选择{count, plural, =1 {# 行} =2 {两行} other {全部 # 行}}",
     "datasetDeselectAllAcrossPagesTooltip": "取消选择所有页面上的所有行",
     "datasetLabelColumn": "标签",
     "datasetAddRow": "添加行",

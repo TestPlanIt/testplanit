@@ -8233,11 +8233,16 @@
       "noResultsFound": "未發現重複步驟。",
       "noResultsDescription": "執行掃描以檢測測試案例中重複的步驟序列。",
       "filterPlaceholder": "按案例名稱篩選...",
+      "minCasesLabel": "最少案例數",
+      "minStepsLabel": "最少步驟數",
+      "minThresholdOption": "{count, number}+",
+      "noMatchesForFilters": "沒有符合目前篩選條件的結果。請降低最小值以擴大搜尋範圍。",
       "selected": "{count, plural, one {# 已選擇} other {# 已選擇}}",
       "bulkDismiss": "駁回（{count, number}）",
       "bulkDismissSuccess": "{count, plural, one {# 比賽已取消} other {# 比賽已取消}}",
       "bulkError": "部分操作失敗，請重試。",
       "tableHint": "點選行可預覽配對的步驟。選取具有複選框的行可進行批次操作。",
+      "matchedStepsCount": "{count, plural, other {# 個相符步驟}}",
       "columns": {
         "matchedSteps": "配對步驟",
         "casesCount": "案例",
@@ -8269,6 +8274,7 @@
         "viewSharedStep": "查看共享步驟組",
         "skippedWarning": "{count, plural, one {# 跳過案例} other {# 跳過案例}} （已過時或已轉換）。",
         "noCasesSelected": "至少選擇一個案例進行轉換。",
+        "stepsUnavailable": "符合的步驟已不在此測試案例中。請忽略此符合項目並重新執行掃描。",
         "selectAll": "全選"
       }
     },

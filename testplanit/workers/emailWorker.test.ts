@@ -36,6 +36,12 @@ vi.mock("../lib/email/notificationTemplates", () => ({
   sendDigestEmail: (...args: any[]) => mockSendDigestEmail(...args),
 }));
 
+// Email is configured by default in tests; individual tests flip this off.
+const mockIsEmailConfigured = vi.fn(() => true);
+vi.mock("../lib/email/emailConfig", () => ({
+  isEmailServerConfigured: () => mockIsEmailConfigured(),
+}));
+
 // Mock server translations
 vi.mock("../lib/server-translations", () => ({
   getServerTranslation: vi.fn((locale: string, key: string) =>
@@ -91,6 +97,24 @@ describe("EmailWorker", () => {
     mockSendNotificationEmail.mockResolvedValue(undefined);
     mockSendDigestEmail.mockResolvedValue(undefined);
     mockDb.notification.updateMany.mockResolvedValue({ count: 1 });
+  });
+
+  describe("unconfigured email server", () => {
+    it("completes email jobs as no-ops without touching the db or sending", async () => {
+      mockIsEmailConfigured.mockReturnValueOnce(false);
+
+      const { processor } = await import("./emailWorker");
+
+      await processor({
+        id: "job-1",
+        name: "send-notification-email",
+        data: { notificationId: "notif-1", userId: "user-1", immediate: true },
+      } as Job);
+
+      expect(mockDb.notification.findUnique).not.toHaveBeenCalled();
+      expect(mockSendNotificationEmail).not.toHaveBeenCalled();
+      expect(mockSendDigestEmail).not.toHaveBeenCalled();
+    });
   });
 
   describe("send-notification-email", () => {
@@ -597,6 +621,103 @@ describe("EmailWorker", () => {
       await processor(mockJob);
 
       expect(mockSendDigestEmail).not.toHaveBeenCalled();
+    });
+
+    it("should only include notifications that are still unread when the job runs", async () => {
+      mockDb.user.findUnique.mockResolvedValue(mockUser);
+      // notif-1 was read in the app after the digest was queued, so the
+      // re-fetch only returns notif-2.
+      mockDb.notification.findMany.mockResolvedValue([
+        {
+          id: "notif-2",
+          type: "SESSION_ASSIGNED",
+          title: "Session",
+          message: "You were assigned a session",
+          data: {
+            projectId: "proj-1",
+            sessionId: "session-1",
+            sessionName: "My Session",
+            projectName: "Project",
+            assignedByName: "Admin",
+          },
+          createdAt: new Date(),
+        },
+      ]);
+
+      const { processor } = await import("./emailWorker");
+
+      const mockJob = {
+        id: "job-14b",
+        name: "send-digest-email",
+        data: {
+          userId: "user-1",
+          notifications: [
+            {
+              id: "notif-1",
+              title: "t1",
+              message: "m1",
+              createdAt: new Date(),
+            },
+            {
+              id: "notif-2",
+              title: "t2",
+              message: "m2",
+              createdAt: new Date(),
+            },
+          ],
+        },
+      } as Job;
+
+      await processor(mockJob);
+
+      expect(mockDb.notification.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            id: { in: ["notif-1", "notif-2"] },
+            userId: "user-1",
+            isRead: false,
+            isDeleted: false,
+          }),
+        })
+      );
+
+      const digestArgs = mockSendDigestEmail.mock.calls[0][0];
+      expect(digestArgs.notifications).toHaveLength(1);
+      expect(digestArgs.notifications[0].id).toBe("notif-2");
+
+      // The already-read notification must not be touched again
+      expect(mockDb.notification.updateMany).toHaveBeenCalledWith({
+        where: { id: { in: ["notif-2"] } },
+        data: { isRead: true },
+      });
+    });
+
+    it("should skip the email when every queued notification was already read", async () => {
+      mockDb.user.findUnique.mockResolvedValue(mockUser);
+      mockDb.notification.findMany.mockResolvedValue([]);
+
+      const { processor } = await import("./emailWorker");
+
+      const mockJob = {
+        id: "job-14c",
+        name: "send-digest-email",
+        data: {
+          userId: "user-1",
+          notifications: [
+            {
+              id: "notif-1",
+              title: "t1",
+              message: "m1",
+              createdAt: new Date(),
+            },
+          ],
+        },
+      } as Job;
+
+      await processor(mockJob);
+
+      expect(mockSendDigestEmail).not.toHaveBeenCalled();
+      expect(mockDb.notification.updateMany).not.toHaveBeenCalled();
     });
 
     it("should build correct URLs for each notification type in digest", async () => {

@@ -1,4 +1,5 @@
 import { Job, Worker } from "bullmq";
+import { isEmailServerConfigured } from "../lib/email/emailConfig";
 import {
   sendDigestEmail,
   sendNotificationEmail,
@@ -43,6 +44,15 @@ const processor = async (job: Job) => {
   console.log(
     `Processing email job ${job.id} of type ${job.name}${job.data.tenantId ? ` for tenant ${job.data.tenantId}` : ""}`
   );
+
+  // Without an SMTP transport every send is doomed; completing the job as a
+  // no-op beats failing it through the queue's five retry attempts.
+  if (!isEmailServerConfigured()) {
+    console.warn(
+      `Skipping email job ${job.name}: no email server configured (EMAIL_SERVER_* env not fully set)`
+    );
+    return;
+  }
 
   // Validate multi-tenant job data if in multi-tenant mode
   validateMultiTenantJobData(job.data);
@@ -539,12 +549,22 @@ const processor = async (job: Job) => {
           return;
         }
 
-        // Fetch full notification data to build URLs
+        // Fetch full notification data to build URLs. Re-check isRead/isDeleted
+        // here because the user may have read or dismissed notifications
+        // between the digest being queued and this job running.
         const fullNotifications = await db.notification.findMany({
           where: {
             id: { in: digestData.notifications.map((n) => n.id) },
+            userId: digestData.userId,
+            isRead: false,
+            isDeleted: false,
           },
+          orderBy: { createdAt: "desc" },
         });
+
+        if (fullNotifications.length === 0) {
+          return;
+        }
 
         // Build URLs and translate content for each notification
         // In multi-tenant mode, use the tenant's baseUrl from config
@@ -857,13 +877,13 @@ const processor = async (job: Job) => {
         // Mark notifications as read after sending digest
         await db.notification.updateMany({
           where: {
-            id: { in: digestData.notifications.map((n) => n.id) },
+            id: { in: fullNotifications.map((n: any) => n.id) },
           },
           data: { isRead: true },
         });
 
         console.log(
-          `Sent digest email to ${user.email} with ${digestData.notifications.length} notifications`
+          `Sent digest email to ${user.email} with ${fullNotifications.length} notifications`
         );
       } catch (error) {
         console.error(`Failed to send digest email:`, error);

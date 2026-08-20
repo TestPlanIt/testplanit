@@ -377,6 +377,7 @@ enum Locale {
     ja_JP
     ko_KR
     ar_SA
+    cs_CZ
 
     @@deny('all', auth() == null)
     @@allow('update', auth().access == 'ADMIN')
