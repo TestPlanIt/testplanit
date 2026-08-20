@@ -41,12 +41,13 @@ export interface ReindexJobData extends MultiTenantJobData {
 /**
  * Count non-deleted issues linked to a test run in the project.
  *
- * Equivalent to `db.issue.count({ where: { isDeleted: false,
- * testRuns: { some: { projectId } } } })`, but ZenStack v3 compiles that `some`
- * filter inside a count into a correlated nested-loop semi-join that materializes
- * every project run against every issue (~413M-row cost, ~60s per call on
- * production data — it stalled the whole reindex). Counting through the join
- * table is a hash join (~25ms). See lib/projectIssueIds.ts for the same pattern.
+ * Semantically the same as an ORM count on the Issue model, filtered to
+ * non-deleted rows with a relation `some` filter across the project's test
+ * runs — but ZenStack v3 compiles that `some` filter inside a count into a
+ * correlated nested-loop semi-join that materializes every project run
+ * against every issue (~413M-row cost, ~60s per call on production data —
+ * it stalled the whole reindex). Counting through the join table is a hash
+ * join (~25ms). See lib/projectIssueIds.ts for the same pattern.
  */
 async function countProjectIssuesLinkedToRuns(
   db: any,

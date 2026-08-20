@@ -71,6 +71,17 @@ describe("unifiedElasticsearchService", () => {
         }
       });
     });
+
+    it("should declare the requirement role as a filterable boolean on the ISSUE mapping", () => {
+      const mapping = ENTITY_MAPPINGS[SearchableEntityType.ISSUE];
+
+      expect(mapping.properties.isRequirement).toEqual({ type: "boolean" });
+
+      // Sibling properties must hold their existing types — a careless edit
+      // to this object should not be able to add a key while breaking one.
+      expect(mapping.properties.isDeleted).toEqual({ type: "boolean" });
+      expect(mapping.properties.externalId).toEqual({ type: "keyword" });
+    });
   });
 
   describe("ENTITY_INDICES", () => {
