@@ -30,7 +30,20 @@ vi.mock("@zenstackhq/tanstack-query/react", () => ({
     integration: {
       useFindMany: (...args: any[]) => mockFindManyIntegration(...args),
     },
+    issue: {
+      useCount: () => ({ data: 0 }),
+    },
   }),
+}));
+
+vi.mock("@tanstack/react-query", () => ({
+  useQueryClient: () => ({ invalidateQueries: vi.fn() }),
+}));
+
+vi.mock("@/components/ui/multi-async-combobox", () => ({
+  MultiAsyncCombobox: ({ placeholder }: any) => (
+    <div data-testid="multi-async-combobox">{placeholder}</div>
+  ),
 }));
 
 vi.mock("next-auth/react", () => ({
@@ -148,6 +161,9 @@ describe("ProjectIntegrationsPage — milestone sync mount", () => {
     // (JIRA) integration — proving it is actually mounted, not just
     // imported.
     expect(screen.getByText("milestoneSync.title")).toBeInTheDocument();
+    // RequirementsConfigSettings mounts as the third sibling card, also
+    // capable for JIRA.
+    expect(screen.getByText("requirementsConfig.title")).toBeInTheDocument();
   });
 
   it("does not render milestone sync content for a non-capable provider (GitHub)", () => {
@@ -162,5 +178,10 @@ describe("ProjectIntegrationsPage — milestone sync mount", () => {
       screen.getByTestId("project-integration-settings-stub")
     ).toHaveTextContent("GITHUB");
     expect(screen.queryByText("milestoneSync.title")).not.toBeInTheDocument();
+    // GitHub's adapter has no getIssueTypes, so RequirementsConfigSettings
+    // is also not capable and renders nothing.
+    expect(
+      screen.queryByText("requirementsConfig.title")
+    ).not.toBeInTheDocument();
   });
 });
