@@ -1,4 +1,5 @@
 import { baseDb } from "~/lib/db";
+import { DEFECT_SCOPE_WHERE } from "~/lib/services/issueRoleScope";
 import { AUTOMATED_TEST_RUN_TYPES } from "~/utils/testResultTypes";
 
 export type MilestoneSegment = {
@@ -427,11 +428,17 @@ export async function getMilestoneLinkedIssues(
       : [];
   sessionResultIssues.forEach((link) => issueIds.add(link.issueId));
 
+  // This is the milestone page's linked-DEFECT card, populated from
+  // run/session/result links — deliberately scoped to defect rows. It is a
+  // different axis from MilestoneIssue MEMBERSHIP (see
+  // MemberIssuesColumns.tsx's header comment), which keeps the opposite
+  // decision: an Epic can be a milestone member and a requirement at once.
   const issues =
     issueIds.size > 0
       ? await baseDb.issue.findMany({
           where: {
             id: { in: Array.from(issueIds) },
+            ...DEFECT_SCOPE_WHERE,
           },
           select: {
             id: true,
