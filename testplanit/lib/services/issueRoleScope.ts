@@ -1,0 +1,48 @@
+/**
+ * The single shared expression of "is this Issue row a requirement" for the
+ * whole phase (HYG-01). Requirement-typed rows and defect-typed rows are
+ * two kinds on the same `Issue` table, discriminated by one boolean column
+ * (schema.zmodel: `isRequirement Boolean @default(false)`, set by the
+ * classification write path — never derived per read; see Phase 22's
+ * transactional recompute on config save, plus per-sync classification on
+ * every synced issue, both of which keep this column authoritative).
+ *
+ * PURE module: zero imports. It is imported by "use client" pages (the
+ * issue list pages, the shared search-issues picker dialog), by server
+ * actions and services, and by a report-building module that is itself
+ * bundled into client components — so it must never reach for a db client,
+ * next-auth, or any server-only module. Doing so would pull server-only
+ * code into the client bundle.
+ *
+ * Consumers apply this predicate at their own query boundary — there is no
+ * shared query wrapper that injects it automatically. This module is data
+ * shaping and reporting correctness, not an access-control boundary: the
+ * `Issue` model's ZenStack read policy is unchanged by this phase, so a
+ * caller who can already read issues can still read requirement rows
+ * through the generic model route if it queries without this predicate.
+ *
+ * The object form (`DEFECT_SCOPE_WHERE` / `REQUIREMENT_SCOPE_WHERE`) and
+ * the raw-SQL form (`ISSUE_ROLE_SCOPE_SQL_DEFECT`) are ONE contract that
+ * must move together: a call site built as a kysely-style tagged template
+ * cannot interpolate a TypeScript where-object, so it mirrors this
+ * predicate as a literal SQL fragment instead. If the discriminator column
+ * is ever renamed, both forms must change in the same commit — an
+ * unscoped read of the Issue model that forgets this predicate (whether
+ * expressed as an ORM call or a raw join) is exactly the leak this module
+ * exists to close, and this repo's structural containment test elsewhere
+ * in this phase asserts every such read site is accounted for.
+ */
+
+export const ISSUE_ROLE_SCOPE_COLUMN = "isRequirement";
+
+export const DEFECT_SCOPE_WHERE: Readonly<{ isRequirement: false }> =
+  Object.freeze({ isRequirement: false });
+
+export const REQUIREMENT_SCOPE_WHERE: Readonly<{ isRequirement: true }> =
+  Object.freeze({ isRequirement: true });
+
+// Raw-SQL mirror (kysely / $queryRaw templates cannot interpolate a
+// TypeScript where-object) — written against alias `i`, the alias already
+// established for the Issue table in utils/issueTestCoverageUtils.ts, the
+// only place this literal is consumed.
+export const ISSUE_ROLE_SCOPE_SQL_DEFECT = 'AND i."isRequirement" = false';
