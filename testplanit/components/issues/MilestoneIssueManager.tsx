@@ -195,6 +195,16 @@ export function MilestoneIssueManager({
           onOpenChange={setIsSearchOpen}
           projectId={projectId}
           linkedIssueIds={linkedIssueIds}
+          // Deliberate opt-in (issue #501's perpendicular-axes design):
+          // milestone membership is the execution/when axis, requirement
+          // classification is the capability/what axis, and one tracked
+          // item can sit on both at once. Every defect-linking surface
+          // built on this same dialog leaves this prop off; this is the
+          // ONE caller that turns it on. Excluding classified rows here
+          // would stop an admin from tracking a classified Epic in a
+          // milestone, which is a functional regression, not a hygiene
+          // fix — do not "fix" this into matching the other callers.
+          includeRequirements
           onIssueSelected={(issue) =>
             void handleIssueSelected(issue as unknown as IssueSelection)
           }
