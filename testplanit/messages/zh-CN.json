@@ -8242,6 +8242,7 @@
       "bulkDismissSuccess": "{count, plural, one {# 比赛已取消} other {# 比赛已取消}}",
       "bulkError": "部分操作失败，请重试。",
       "tableHint": "点击行可预览匹配的步骤。选中带有复选框的行可进行批量操作。",
+      "matchedStepsCount": "{count, plural, other {# 个匹配步骤}}",
       "columns": {
         "matchedSteps": "匹配步骤",
         "casesCount": "案例",

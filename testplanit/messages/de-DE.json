@@ -8242,6 +8242,7 @@
       "bulkDismissSuccess": "{count, plural, one {# Spiel abgebrochen} other {# Spiele abgebrochen}}",
       "bulkError": "Es sind einige Vorgänge fehlgeschlagen. Bitte versuchen Sie es erneut.",
       "tableHint": "Klicken Sie auf eine Zeile, um die zugehörigen Schritte in der Vorschau anzuzeigen. Markieren Sie Zeilen mit Kontrollkästchen, um Massenaktionen durchzuführen.",
+      "matchedStepsCount": "{count, plural, one {# übereinstimmender Schritt} other {# übereinstimmende Schritte}}",
       "columns": {
         "matchedSteps": "Passende Schritte",
         "casesCount": "Fälle",

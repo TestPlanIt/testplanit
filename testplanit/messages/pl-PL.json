@@ -8242,6 +8242,7 @@
       "bulkDismissSuccess": "{count, plural, one {# dopasowanie odrzucone} other {# dopasowania odrzucone}}",
       "bulkError": "Niektóre operacje nie powiodły się. Spróbuj ponownie.",
       "tableHint": "Kliknij wiersz, aby wyświetlić podgląd dopasowanych kroków. Zaznacz wiersze z polami wyboru, aby wykonać działania zbiorcze.",
+      "matchedStepsCount": "{count, plural, one {# dopasowany krok} few {# dopasowane kroki} many {# dopasowanych kroków} other {# dopasowanego kroku}}",
       "columns": {
         "matchedSteps": "Dopasowane kroki",
         "casesCount": "Sprawy",

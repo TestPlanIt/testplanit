@@ -8242,6 +8242,7 @@
       "bulkDismissSuccess": "{count, plural, one {# match dismissed} other {# matches dismissed}}",
       "bulkError": "Some operations failed. Please try again.",
       "tableHint": "Click a row to preview matched steps. Select rows with checkboxes for bulk actions.",
+      "matchedStepsCount": "{count, plural, one {# matched step} other {# matched steps}}",
       "columns": {
         "matchedSteps": "Matched Steps",
         "casesCount": "Cases",

@@ -8242,6 +8242,7 @@
       "bulkDismissSuccess": "{count, plural, one {# wedstrijd beëindigd} other {# wedstrijden beëindigd}}",
       "bulkError": "Sommige bewerkingen zijn mislukt. Probeer het opnieuw.",
       "tableHint": "Klik op een rij om een voorbeeld van de overeenkomende stappen te bekijken. Selecteer rijen met selectievakjes voor bulkacties.",
+      "matchedStepsCount": "{count, plural, one {# overeenkomende stap} other {# overeenkomende stappen}}",
       "columns": {
         "matchedSteps": "Overeenkomende stappen",
         "casesCount": "gevallen",

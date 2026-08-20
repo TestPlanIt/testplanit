@@ -8242,6 +8242,7 @@
       "bulkDismissSuccess": "{count, plural, one {# iptal edilen maçlar} other {# iptal edilen maçlar}}",
       "bulkError": "Bazı işlemler başarısız oldu. Lütfen tekrar deneyin.",
       "tableHint": "Eşleşen adımları önizlemek için bir satıra tıklayın. Toplu işlemler için onay kutulu satırları seçin.",
+      "matchedStepsCount": "{count, plural, one {# eşleşen adım} other {# eşleşen adım}}",
       "columns": {
         "matchedSteps": "Eşleşen Adımlar",
         "casesCount": "Vakalar",

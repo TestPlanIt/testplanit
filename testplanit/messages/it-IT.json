@@ -8242,6 +8242,7 @@
       "bulkDismissSuccess": "{count, plural, one {# partita annullata} other {# partite annullate}}",
       "bulkError": "Alcune operazioni non sono andate a buon fine. Riprova.",
       "tableHint": "Fai clic su una riga per visualizzare in anteprima i passaggi corrispondenti. Seleziona le righe con le caselle di controllo per eseguire azioni in blocco.",
+      "matchedStepsCount": "{count, plural, one {# passaggio corrispondente} other {# passaggi corrispondenti}}",
       "columns": {
         "matchedSteps": "Passi abbinati",
         "casesCount": "Casi",

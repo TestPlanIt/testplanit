@@ -8242,6 +8242,7 @@
       "bulkDismissSuccess": "{count, plural, one {# shoda zamítnuta} few {# shody zamítnuty} many {# shody zamítnuto} other {# shod zamítnuto}}",
       "bulkError": "Některé operace se nezdařily. Zkuste to prosím znovu.",
       "tableHint": "Kliknutím na řádek zobrazíte náhled odpovídajících kroků. Vyberte řádky pomocí zaškrtávacích políček pro hromadné akce.",
+      "matchedStepsCount": "{count, plural, one {# shodný krok} few {# shodné kroky} many {# shodného kroku} other {# shodných kroků}}",
       "columns": {
         "matchedSteps": "Odpovídající kroky",
         "casesCount": "Případy",

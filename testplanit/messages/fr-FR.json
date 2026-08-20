@@ -8242,6 +8242,7 @@
       "bulkDismissSuccess": "{count, plural, one {# match rejeté} other {# matchs rejetés}}",
       "bulkError": "Certaines opérations ont échoué. Veuillez réessayer.",
       "tableHint": "Cliquez sur une ligne pour prévisualiser les étapes correspondantes. Sélectionnez les lignes à l'aide de cases à cocher pour effectuer des actions groupées.",
+      "matchedStepsCount": "{count, plural, one {# étape correspondante} other {# étapes correspondantes}}",
       "columns": {
         "matchedSteps": "Étapes assorties",
         "casesCount": "Cas",

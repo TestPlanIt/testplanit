@@ -8242,6 +8242,7 @@
       "bulkDismissSuccess": "{count, plural, one {# partida descartada} other {# partidas descartadas}}",
       "bulkError": "Algunas operaciones fallaron. Inténtalo de nuevo.",
       "tableHint": "Haz clic en una fila para previsualizar los pasos coincidentes. Selecciona las filas con casillas de verificación para acciones masivas.",
+      "matchedStepsCount": "{count, plural, one {# paso coincidente} other {# pasos coincidentes}}",
       "columns": {
         "matchedSteps": "Pasos coincidentes",
         "casesCount": "Casos",

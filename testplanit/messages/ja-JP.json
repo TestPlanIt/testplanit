@@ -3259,7 +3259,7 @@
       "searchPlaceholder": "テンプレートを検索...",
       "noTemplatesFound": "テンプレートが見つかりませんでした。",
       "outputModeLabel": "出力モード",
-      "outputModeSingle": "Single file ({count, plural, one {# case} =2 {both cases} other {all # cases}})",
+      "outputModeSingle": "単一ファイル ({count, plural, =2 {両方のケース} other {すべて#件のケース}})",
       "outputModeIndividual": "{count, plural, one {個別ファイル (.zip)} other {個別ファイル (.zip)}}",
       "casesToExport": "{count, plural, one {# ケース} other {# ケース}} エクスポートする",
       "exportSuccess": "エクスポートが正常に完了しました。",
@@ -3577,9 +3577,9 @@
         "tooLarge": "サイズが大きすぎます",
         "noVisionHint": "設定されたAIモデルは画像入力に対応していません — 選択した画像は送信されません。",
         "visionSkippedTitle": "画像は送信されませんでした",
-        "visionSkipped": "{count, plural, =1 {# image was} other {# images were}} not sent — the configured AI model does not support image input.",
-        "includedSummary": "{count, plural, =1 {# image} other {# images}} sent as context: {names}",
-        "skippedSummary": "{count, plural, =1 {# image} other {# images}} skipped (too large or unsupported): {names}",
+        "visionSkipped": "{count, plural, =1 {#枚の画像} other {#枚の画像}}が送信されませんでした — 設定されたAIモデルは画像入力をサポートしていません。",
+        "includedSummary": "{count, plural, =1 {#枚の画像} other {#枚の画像}}がコンテキストとして送信されました: {names}",
+        "skippedSummary": "{count, plural, =1 {#枚の画像} other {#枚の画像}}がスキップされました (サイズが大きすぎるか、サポートされていません): {names}",
         "includeUrlScreenshots": "利用可能な場合はページのスクリーンショットを含める"
       }
     },
@@ -8242,6 +8242,7 @@
       "bulkDismissSuccess": "{count, plural, one {# 試合が却下されました} other {# 試合が却下されました}}",
       "bulkError": "一部の操作が失敗しました。もう一度お試しください。",
       "tableHint": "該当する行をクリックすると、一致する手順をプレビューできます。チェックボックスが付いている行を選択すると、一括操作を実行できます。",
+      "matchedStepsCount": "{count, plural, other {一致するステップ #件}}",
       "columns": {
         "matchedSteps": "一致するステップ",
         "casesCount": "事例",

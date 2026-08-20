@@ -8242,6 +8242,7 @@
       "bulkDismissSuccess": "{count, plural, one {# partida encerrada} other {# partidas encerradas}}",
       "bulkError": "Algumas operações falharam. Por favor, tente novamente.",
       "tableHint": "Clique em uma linha para visualizar as etapas correspondentes. Selecione as linhas com caixas de seleção para realizar ações em massa.",
+      "matchedStepsCount": "{count, plural, one {# etapa correspondente} other {# etapas correspondentes}}",
       "columns": {
         "matchedSteps": "Passos correspondentes",
         "casesCount": "Casos",

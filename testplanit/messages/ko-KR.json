@@ -8242,6 +8242,7 @@
       "bulkDismissSuccess": "{count, plural, one {# 일치 항목 해제됨} other {# 일치 항목 해제됨}}",
       "bulkError": "일부 작업에 실패했습니다. 다시 시도해 주세요.",
       "tableHint": "일치하는 단계를 미리 보려면 행을 클릭하세요. 일괄 작업을 하려면 확인란이 있는 행을 선택하세요.",
+      "matchedStepsCount": "{count, plural, other {일치하는 단계 #개}}",
       "columns": {
         "matchedSteps": "일치하는 단계",
         "casesCount": "사례",

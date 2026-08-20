@@ -23,7 +23,6 @@ import React, { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { usePageSizeOptions } from "~/hooks/usePageSizeOptions";
 import { usePersistedFilter } from "~/hooks/usePersistedFilter";
-import { extractTextFromNode } from "~/utils/extractTextFromJson";
 import { type StepDuplicateRow, getColumns } from "./stepDuplicateColumns";
 import { StepDuplicateConversionDialog } from "./StepDuplicateConversionDialog";
 import type { RepositoryCaseSource } from "~/zenstack/models";
@@ -138,22 +137,17 @@ export function StepDuplicateResultsTable({
       members: {
         where: { case: { isDeleted: false } },
         include: {
+          // Deliberately NO steps here: this query loads every pending match
+          // with every member case, and dragging each case's full step text
+          // along multiplies the payload into hundreds of MB on large
+          // projects — enough to OOM the server process. The conversion
+          // dialog fetches the matched steps for one case on open.
           case: {
             select: {
               id: true,
               name: true,
               source: true,
               automated: true,
-              steps: {
-                where: { isDeleted: false },
-                orderBy: { order: "asc" },
-                select: {
-                  id: true,
-                  step: true,
-                  expectedResult: true,
-                  order: true,
-                },
-              },
             },
           },
         },
@@ -240,41 +234,20 @@ export function StepDuplicateResultsTable({
         .map((m: any) => m.case?.name ?? "")
         .filter(Boolean);
 
-      // Build step preview from the first member's actual steps
-      let matchedStepsPreview = "";
-      const firstMember = members[0];
-      if (firstMember?.case?.steps) {
-        const steps = firstMember.case.steps as Array<{
-          id: number;
-          step: unknown;
-          order: number;
-        }>;
-        const startId = firstMember.startStepId;
-        const endId = firstMember.endStepId;
-        const startIdx = steps.findIndex((s: any) => s.id === startId);
-        const endIdx = steps.findIndex((s: any) => s.id === endId);
-        if (startIdx >= 0 && endIdx >= 0) {
-          const matchedSteps = steps.slice(startIdx, endIdx + 1);
-          matchedStepsPreview = matchedSteps
-            .map((s: any) => extractTextFromNode(s.step))
-            .filter(Boolean)
-            .join(" → ");
-        }
-      }
-
       return {
         id: match.id,
         name: caseNames.join(" / "),
         stepCount: match.stepCount,
         fingerprint: match.fingerprint,
-        matchedStepsPreview:
-          matchedStepsPreview || `${match.stepCount} matched steps`,
+        // Step text is not loaded in the list query (see the include above);
+        // the matched steps themselves are shown by the conversion dialog.
+        matchedStepsPreview: t("matchedStepsCount", { count: match.stepCount }),
         casesCount: members.length,
         caseNames,
         status: match.status,
       };
     });
-  }, [allMatches]);
+  }, [allMatches, t]);
 
   // Each dropdown is faceted against the other: it offers the counts still
   // reachable once the other minimum (and the search) has been applied, so no

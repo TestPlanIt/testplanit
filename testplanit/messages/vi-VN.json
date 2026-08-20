@@ -8242,6 +8242,7 @@
       "bulkDismissSuccess": "{count, plural, one {# trận đấu bị hủy bỏ} other {# các trận đấu bị hủy bỏ}}",
       "bulkError": "Một số thao tác đã thất bại. Vui lòng thử lại.",
       "tableHint": "Nhấp vào một hàng để xem trước các bước đã khớp. Chọn các hàng có hộp kiểm để thực hiện các thao tác hàng loạt.",
+      "matchedStepsCount": "{count, plural, other {# bước khớp}}",
       "columns": {
         "matchedSteps": "Các bước phù hợp",
         "casesCount": "Các trường hợp",
