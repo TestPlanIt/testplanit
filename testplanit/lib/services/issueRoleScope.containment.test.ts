@@ -333,7 +333,8 @@ describe("Issue read-scope containment (HYG-01, structural)", () => {
         {
           file: "app/actions/searchIssues.ts",
           minimum: 2,
-          reason: "1 import + 1 spread into the shared findMany/count where object",
+          reason:
+            "1 import + 1 spread into the shared findMany/count where object",
         },
         {
           file: "app/[locale]/issues/page.tsx",
@@ -356,7 +357,8 @@ describe("Issue read-scope containment (HYG-01, structural)", () => {
         {
           file: "lib/services/milestoneSummary.ts",
           minimum: 2,
-          reason: "1 import + 1 spread in getMilestoneLinkedIssues's where object",
+          reason:
+            "1 import + 1 spread in getMilestoneLinkedIssues's where object",
         },
         {
           file: "utils/reportUtils.ts",

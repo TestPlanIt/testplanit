@@ -91,10 +91,12 @@ describe("issueSearch document construction", () => {
 
     const db = {
       issue: {
-        findMany: vi.fn().mockResolvedValue([
-          baseIssue({ id: 10, isRequirement: true }),
-          baseIssue({ id: 11, isRequirement: false }),
-        ]),
+        findMany: vi
+          .fn()
+          .mockResolvedValue([
+            baseIssue({ id: 10, isRequirement: true }),
+            baseIssue({ id: 11, isRequirement: false }),
+          ]),
       },
     };
 
