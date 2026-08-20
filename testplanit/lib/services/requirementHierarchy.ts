@@ -316,3 +316,113 @@ export async function restoreRequirementSubtree(
 
   return { restoredIds: ids };
 }
+
+/** Filters to non-empty strings, de-duplicated. Never throws. */
+function normalizeTypeIds(ids: string[]): string[] {
+  const seen = new Set<string>();
+  const result: string[] = [];
+  for (const id of ids) {
+    if (typeof id !== "string" || id.length === 0) {
+      continue;
+    }
+    if (seen.has(id)) {
+      continue;
+    }
+    seen.add(id);
+    result.push(id);
+  }
+  return result;
+}
+
+/**
+ * Flips `Issue.isRequirement` in BOTH directions for a project's saved
+ * requirements-config change: issues whose `issueTypeId` is in
+ * `addedTypeIds` become requirements, issues whose `issueTypeId` is in
+ * `removedTypeIds` stop being requirements. Adapted line-for-line from
+ * `deleteRequirementSubtree`'s shape above — a `run(tx)` closure of
+ * parameterized `$executeRaw` statements, invoked via `auditedTransaction`
+ * only when the caller has not already supplied one. The
+ * requirements-config route passes its own `tx` so the `ProjectIntegration`
+ * config write and this recompute share ONE atomic transaction (CFG-03 /
+ * T-22-03-05) — a page refresh or dropped connection between two separate
+ * calls would otherwise leave a config saved with no matching reclassify.
+ *
+ * Writes `isRequirement` ONLY. `parentId` is left as-is — a de-classified
+ * node's children keep their FK; how those render is a later phase's
+ * question. `requirementDetachedAt` is left as-is too: the lock predicate on
+ * title/description/status/priority/parentId is an AND of three conditions
+ * (`isRequirement == true && integrationId != null && requirementDetachedAt
+ * == null`), so `isRequirement` flipping to false alone already unlocks the
+ * row completely — clearing the detach timestamp here would erase honest
+ * history across a reclassify round-trip. `title`/`description`/`status`/
+ * `priority` are untouched by this pass.
+ *
+ * The project-scope predicate is unconditional in BOTH statements — this is
+ * the single highest-blast-radius statement in this phase, and an unscoped
+ * or mis-scoped predicate would reclassify rows across projects and tenants
+ * (T-22-03-02). The prior-state predicate keeps each statement's
+ * affected-row count meaningful (a row already in the target state is never
+ * rewritten) and the live-row predicate mirrors
+ * `deleteRequirementSubtree`'s own scoping.
+ *
+ * No authorization check here by design — same posture as every other
+ * function in this file: the caller (the requirements-config route's
+ * `authorizeProjectAdminForProject` gate) is responsible for authorizing the
+ * operation before invoking this.
+ *
+ * No batching machinery here, deliberately: this is at most two
+ * project-scoped statements against a bounded input (issueTypeIds capped by
+ * `sanitizeRequirementTypeIds`'s `MAX_REQUIREMENT_TYPE_IDS`), not a
+ * whole-tenant sweep. Do not copy the SCIM access-recompute worker's
+ * fixed-size batching loop here — that pattern exists for a per-row lookup
+ * across every tenant, a different problem than a pure predicate-membership
+ * flip scoped to one project's issues. Equally, do not repeat that worker's
+ * known unbounded-sweep residual: the statement set here is exactly two
+ * statements, both project-scoped, with the input id lists already capped
+ * by the caller.
+ */
+export async function recomputeRequirementClassification(
+  projectId: number,
+  addedTypeIds: string[],
+  removedTypeIds: string[],
+  opts?: { tx?: TxClient }
+): Promise<{ classified: number; declassified: number }> {
+  const added = normalizeTypeIds(addedTypeIds);
+  const removed = normalizeTypeIds(removedTypeIds);
+
+  if (added.length === 0 && removed.length === 0) {
+    // A no-op save must not open a transaction — and therefore must not
+    // write an audit frame — for nothing.
+    return { classified: 0, declassified: 0 };
+  }
+
+  const run = async (
+    tx: TxClient
+  ): Promise<{ classified: number; declassified: number }> => {
+    let classified = 0;
+    let declassified = 0;
+    if (added.length > 0) {
+      classified = await tx.$executeRaw`
+        UPDATE "Issue"
+        SET "isRequirement" = true
+        WHERE "projectId" = ${projectId}
+          AND "issueTypeId" = ANY(${added}::text[])
+          AND "isRequirement" = false
+          AND "isDeleted" = false
+      `;
+    }
+    if (removed.length > 0) {
+      declassified = await tx.$executeRaw`
+        UPDATE "Issue"
+        SET "isRequirement" = false
+        WHERE "projectId" = ${projectId}
+          AND "issueTypeId" = ANY(${removed}::text[])
+          AND "isRequirement" = true
+          AND "isDeleted" = false
+      `;
+    }
+    return { classified, declassified };
+  };
+
+  return opts?.tx ? run(opts.tx) : auditedTransaction(run);
+}
