@@ -3701,6 +3701,13 @@
       "success": "Prośba o sprawdzenie została anulowana.",
       "error": "Nie udało się anulować prośby o recenzję. Spróbuj ponownie za chwilę."
     },
+    "nudge": {
+      "success": "{count, plural, one {Przypomnienie wysłane do # recenzenta.} few {Przypomnienie wysłane do # recenzentów.} many {Przypomnienie wysłane do # recenzentów.} other {Przypomnienie wysłane do # recenzentów.}}",
+      "error": "Nie udało się wysłać przypomnienia. Spróbuj ponownie za chwilę.",
+      "tooSoon": "Przypomnienie dotyczące tego żądania zostało już wysłane w ciągu ostatniej godziny. Spróbuj ponownie później.",
+      "cooldownTooltip": "Przypomnienie zostało już wysłane {ago}",
+      "noRecipients": "Obecnie nikt nie może podjąć działania w związku z tym żądaniem. Sprawdź, czy przypisana osoba wciąż ma dostęp do projektu."
+    },
     "list": {
       "pendingTooltip": "Oczekuje na sprawdzenie od {assignee}"
     },
@@ -3722,11 +3729,12 @@
       "tabPending": "Aż do",
       "tabDecided": "Zdecydowany",
       "emptyDecided": "Brak podjętych recenzji. Tutaj będą wyświetlane recenzje, które zdecydujesz, oraz decyzje dotyczące recenzji, o które prosiłeś.",
-      "empty": "Brak oczekujących recenzji. Jesteście na bieżąco.",
+      "empty": "Brak oczekujących recenzji. Nic na Tobie nie czeka, a każda zażądana przez Ciebie recenzja została rozstrzygnięta.",
       "featureDisabled": "Funkcja przepływu pracy recenzji jest obecnie wyłączona. Oczekujące recenzje zostaną zachowane i pojawią się ponownie po ponownym włączeniu tej funkcji.",
       "columnEntity": "Podmiot",
       "columnProject": "Projekt",
       "columnRequester": "Wnioskodawca",
+      "columnAssignee": "Przypisana osoba",
       "columnTransition": "Przemiana",
       "columnRequestedAt": "Poproszono o",
       "columnDecidedBy": "Zdecydowano przez",
@@ -3736,6 +3744,7 @@
       "actionApprove": "Zatwierdzić",
       "actionRequestChanges": "Poproś o zmiany",
       "actionReject": "Odrzucić",
+      "actionNudge": "Wyślij przypomnienie",
       "filterEntityType": "Typ jednostki",
       "filterProject": "Projekt",
       "filterRequester": "Wnioskodawca",

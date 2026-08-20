@@ -3701,6 +3701,13 @@
       "success": "Review request cancelled.",
       "error": "Could not cancel the review request. Try again in a moment."
     },
+    "nudge": {
+      "success": "{count, plural, one {Reminder sent to # reviewer.} other {Reminder sent to # reviewers.}}",
+      "error": "Could not send the reminder. Try again in a moment.",
+      "tooSoon": "A reminder for this request already went out in the last hour. Try again later.",
+      "cooldownTooltip": "Reminder already sent {ago}",
+      "noRecipients": "No one can act on this request right now. Check that the assignee still has access to the project."
+    },
     "list": {
       "pendingTooltip": "Pending review from {assignee}"
     },
@@ -3722,11 +3729,12 @@
       "tabPending": "Pending",
       "tabDecided": "Decided",
       "emptyDecided": "No decided reviews yet. Reviews you decide, and decisions on reviews you request, will appear here.",
-      "empty": "No pending reviews. You're all caught up.",
+      "empty": "No pending reviews. Nothing is waiting on you, and every review you've requested has been decided.",
       "featureDisabled": "The review workflow feature is currently disabled. Pending reviews are preserved and will reappear when the feature is re-enabled.",
       "columnEntity": "Entity",
       "columnProject": "Project",
       "columnRequester": "Requester",
+      "columnAssignee": "Assignee",
       "columnTransition": "Transition",
       "columnRequestedAt": "Requested at",
       "columnDecidedBy": "Decided by",
@@ -3736,6 +3744,7 @@
       "actionApprove": "Approve",
       "actionRequestChanges": "Request changes",
       "actionReject": "Reject",
+      "actionNudge": "Send reminder",
       "filterEntityType": "Entity type",
       "filterProject": "Project",
       "filterRequester": "Requester",

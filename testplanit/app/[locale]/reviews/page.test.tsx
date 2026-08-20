@@ -541,6 +541,39 @@ describe("ReviewsInboxPage (/reviews)", () => {
     ).toBe(true);
   });
 
+  it("(c1) Pending tab also scopes in reviews the viewer requested — the queue is everything still awaiting a decision, not just what's parked with the viewer", () => {
+    render(<ReviewsInboxPage />);
+    const args = mockUseFindManyReviewRequest.mock.calls[0]![0] as {
+      where?: { AND?: Array<Record<string, unknown>> };
+    };
+    const conditions = args.where?.AND ?? [];
+    const orClause = conditions.find((c: any) => Array.isArray(c.OR)) as
+      { OR: Array<Record<string, unknown>> } | undefined;
+    expect(orClause).toBeDefined();
+    expect(
+      orClause!.OR.some((sub: any) => sub.requestedByUserId === "user-1")
+    ).toBe(true);
+    // Still one OR — the requester branch widens the existing scope rather
+    // than stacking a second, contradictory condition.
+    expect(conditions.filter((c: any) => Array.isArray(c.OR))).toHaveLength(1);
+  });
+
+  it("(c1b) the viewer's identity and role memberships reach the columns so each row can pick its own action set", () => {
+    render(<ReviewsInboxPage />);
+    const args = mockUseColumns.mock.calls[
+      mockUseColumns.mock.calls.length - 1
+    ]![0] as {
+      viewerUserId?: string;
+      viewerRoleIds?: number[];
+      actions?: Record<string, unknown>;
+    };
+    expect(args.viewerUserId).toBe("user-1");
+    expect(Array.isArray(args.viewerRoleIds)).toBe(true);
+    // Requester-side handlers ride alongside the reviewer's three.
+    expect(typeof args.actions?.onCancel).toBe("function");
+    expect(typeof args.actions?.onNudged).toBe("function");
+  });
+
   it("(c2) Decided tab where-clause swaps to (decidedByUserId OR requestedByUserId) + status IN [APPROVED, CHANGES_REQUESTED, REJECTED]", async () => {
     const user = userEvent.setup();
     render(<ReviewsInboxPage />);

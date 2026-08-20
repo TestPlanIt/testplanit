@@ -3701,6 +3701,13 @@
       "success": "Verzoek om beoordeling geannuleerd.",
       "error": "Het verzoek om beoordeling kon niet worden geannuleerd. Probeer het over een moment opnieuw."
     },
+    "nudge": {
+      "success": "{count, plural, one {Herinnering verzonden naar # beoordelaar.} other {Herinnering verzonden naar # beoordelaars.}}",
+      "error": "De herinnering kon niet worden verzonden. Probeer het over een moment opnieuw.",
+      "tooSoon": "Er is in het afgelopen uur al een herinnering voor dit verzoek verzonden. Probeer het later opnieuw.",
+      "cooldownTooltip": "Herinnering al verzonden {ago}",
+      "noRecipients": "Niemand kan op dit moment actie ondernemen op dit verzoek. Controleer of de toegewezen persoon nog steeds toegang heeft tot het project."
+    },
     "list": {
       "pendingTooltip": "In afwachting van beoordeling door {assignee}"
     },
@@ -3722,11 +3729,12 @@
       "tabPending": "In behandeling",
       "tabDecided": "Besloten",
       "emptyDecided": "Nog geen beoordeelde reviews. Reviews die u beoordeelt, en beslissingen over reviews die u aanvraagt, worden hier weergegeven.",
-      "empty": "Geen openstaande beoordelingen. Alles is weer helemaal bij.",
+      "empty": "Geen openstaande reviews. Er wacht niets op u, en over elke review die u heeft aangevraagd is een beslissing genomen.",
       "featureDisabled": "De functie voor het beoordelingsproces is momenteel uitgeschakeld. Lopende beoordelingen worden bewaard en verschijnen weer zodra de functie opnieuw is ingeschakeld.",
       "columnEntity": "Entiteit",
       "columnProject": "Project",
       "columnRequester": "Aanvrager",
+      "columnAssignee": "Toegewezen aan",
       "columnTransition": "Overgang",
       "columnRequestedAt": "Aangevraagd bij",
       "columnDecidedBy": "Besloten door",
@@ -3736,6 +3744,7 @@
       "actionApprove": "Goedkeuren",
       "actionRequestChanges": "Verzoek om wijzigingen",
       "actionReject": "Afwijzen",
+      "actionNudge": "Herinnering verzenden",
       "filterEntityType": "Entiteitstype",
       "filterProject": "Project",
       "filterRequester": "Aanvrager",

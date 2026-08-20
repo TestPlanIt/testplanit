@@ -3701,6 +3701,13 @@
       "success": "审核请求已取消。",
       "error": "无法取消审核请求。请稍后再试。"
     },
+    "nudge": {
+      "success": "{count, plural, other {提醒已发送给 # 位审阅者。}}",
+      "error": "无法发送提醒。请稍后再试。",
+      "tooSoon": "此请求的提醒已在上一小时内发送过。请稍后再试。",
+      "cooldownTooltip": "提醒已发送 {ago}",
+      "noRecipients": "目前没有人可以处理此请求。请检查受让人是否仍有该项目的访问权限。"
+    },
     "list": {
       "pendingTooltip": "待审核来自 {assignee}"
     },
@@ -3722,11 +3729,12 @@
       "tabPending": "待办的",
       "tabDecided": "已决定",
       "emptyDecided": "暂无已决定的审核。您决定的审核，以及您请求的审核的决定，将显示在此处。",
-      "empty": "没有待审核的评论。您已全部完成审核。",
+      "empty": "没有待处理的审阅。没有任何事项在等待您处理，您请求的所有审阅也都已决定。",
       "featureDisabled": "审核工作流程功能目前已禁用。待审核的审核内容将被保留，并在该功能重新启用后重新显示。",
       "columnEntity": "实体",
       "columnProject": "项目",
       "columnRequester": "请求者",
+      "columnAssignee": "受让人",
       "columnTransition": "过渡",
       "columnRequestedAt": "已请求",
       "columnDecidedBy": "决定人",
@@ -3736,6 +3744,7 @@
       "actionApprove": "批准",
       "actionRequestChanges": "请求更改",
       "actionReject": "拒绝",
+      "actionNudge": "发送提醒",
       "filterEntityType": "实体类型",
       "filterProject": "项目",
       "filterRequester": "请求者",

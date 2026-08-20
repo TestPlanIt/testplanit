@@ -3701,6 +3701,13 @@
       "success": "Solicitação de revisão cancelada.",
       "error": "Não foi possível cancelar a solicitação de revisão. Tente novamente em instantes."
     },
+    "nudge": {
+      "success": "{count, plural, one {Lembrete enviado para # revisor.} other {Lembrete enviado para # revisores.}}",
+      "error": "Não foi possível enviar o lembrete. Tente novamente em instantes.",
+      "tooSoon": "Um lembrete para esta solicitação já foi enviado na última hora. Tente novamente mais tarde.",
+      "cooldownTooltip": "Lembrete já enviado {ago}",
+      "noRecipients": "Ninguém pode agir sobre esta solicitação agora. Verifique se o responsável ainda tem acesso ao projeto."
+    },
     "list": {
       "pendingTooltip": "Aguardando revisão de {assignee}"
     },
@@ -3722,11 +3729,12 @@
       "tabPending": "Pendente",
       "tabDecided": "Decidido",
       "emptyDecided": "Nenhuma revisão decidida ainda. As revisões que você decidir e as decisões sobre revisões que você solicitar aparecerão aqui.",
-      "empty": "Sem avaliações pendentes. Você está em dia com tudo.",
+      "empty": "Nenhuma revisão pendente. Não há nada esperando por você, e todas as revisões que você solicitou já foram decididas.",
       "featureDisabled": "O recurso de fluxo de trabalho de revisão está temporariamente desativado. As revisões pendentes são preservadas e reaparecerão quando o recurso for reativado.",
       "columnEntity": "Entidade",
       "columnProject": "Projeto",
       "columnRequester": "Solicitante",
+      "columnAssignee": "Responsável",
       "columnTransition": "Transição",
       "columnRequestedAt": "Solicitado em",
       "columnDecidedBy": "Decidido por",
@@ -3736,6 +3744,7 @@
       "actionApprove": "Aprovar",
       "actionRequestChanges": "Solicitar alterações",
       "actionReject": "Rejeitar",
+      "actionNudge": "Enviar lembrete",
       "filterEntityType": "Tipo de entidade",
       "filterProject": "Projeto",
       "filterRequester": "Solicitante",

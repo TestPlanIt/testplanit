@@ -3701,6 +3701,13 @@
       "success": "審核請求已取消。",
       "error": "無法取消審核請求。請稍後再試。"
     },
+    "nudge": {
+      "success": "{count, plural, other {已向 # 位審核者傳送提醒。}}",
+      "error": "無法傳送提醒，請稍後再試。",
+      "tooSoon": "此請求已在過去一小時內傳送過提醒，請稍後再試。",
+      "cooldownTooltip": "提醒已於 {ago} 傳送",
+      "noRecipients": "目前沒有人可以處理此請求，請確認受指派人是否仍擁有此專案的存取權限。"
+    },
     "list": {
       "pendingTooltip": "待審核來自 {assignee}"
     },
@@ -3722,11 +3729,12 @@
       "tabPending": "待辦的",
       "tabDecided": "已決定",
       "emptyDecided": "尚無已決定的審核。您所決定的審核，以及您所請求審核的決定，將會顯示在這裡。",
-      "empty": "沒有待審核的評論。您已全部完成審核。",
+      "empty": "沒有待處理的審核。目前沒有任何項目在等待您處理，且您所提出的所有審核請求皆已做出決定。",
       "featureDisabled": "審核工作流程功能目前已停用。待審核的審核內容將會保留，並在該功能重新啟用後重新顯示。",
       "columnEntity": "實體",
       "columnProject": "專案",
       "columnRequester": "請求者",
+      "columnAssignee": "受指派人",
       "columnTransition": "過渡",
       "columnRequestedAt": "已請求",
       "columnDecidedBy": "決定者",
@@ -3736,6 +3744,7 @@
       "actionApprove": "核准",
       "actionRequestChanges": "請求更改",
       "actionReject": "拒絕",
+      "actionNudge": "傳送提醒",
       "filterEntityType": "實體類型",
       "filterProject": "專案",
       "filterRequester": "請求者",

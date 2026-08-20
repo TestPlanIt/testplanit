@@ -20,6 +20,21 @@ export const REVIEW_REMINDER_THRESHOLD_DAYS_KEY =
 export const REVIEW_REMINDER_THRESHOLD_DAYS_DEFAULT = 1;
 
 /**
+ * Minimum gap between two reminder dispatches on the same ReviewRequest,
+ * whichever surface fires them. Both the scheduled scan and the manual
+ * "send reminder" action stamp `lastRemindedAt`, so this one window also
+ * covers a requester nudging a row the hourly worker just pinged — the
+ * reviewer gets one reminder, not two.
+ *
+ * Sized to the scheduler's own cadence (CRON_SCHEDULE_HOURLY); anything
+ * shorter would let a nudge slip between two scans. Lives here rather than
+ * in the server action so the inbox button can grey itself out during the
+ * cooldown instead of round-tripping to discover it — `app/actions/reviews.ts`
+ * is a `"use server"` module and may only export async functions.
+ */
+export const NUDGE_COOLDOWN_MS = 60 * 60 * 1000;
+
+/**
  * Read the review-reminder threshold (days) from the AppConfig table.
  *
  * Server-side helper used by the review-reminder worker case in

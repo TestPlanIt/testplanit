@@ -3701,6 +3701,13 @@
       "success": "レビュー依頼はキャンセルされました。",
       "error": "レビュー依頼をキャンセルできませんでした。しばらくしてからもう一度お試しください。"
     },
+    "nudge": {
+      "success": "{count, plural, other {リマインダーを#人のレビュアーに送信しました。}}",
+      "error": "リマインダーを送信できませんでした。しばらくしてからもう一度お試しください。",
+      "tooSoon": "このリクエストのリマインダーは過去1時間以内に既に送信されています。しばらくしてからもう一度お試しください。",
+      "cooldownTooltip": "リマインダーは{ago}に送信済みです",
+      "noRecipients": "現在このリクエストに対応できる人がいません。担当者がまだプロジェクトへのアクセス権を持っているか確認してください。"
+    },
     "list": {
       "pendingTooltip": "{assignee}からのレビュー待ち"
     },
@@ -3722,11 +3729,12 @@
       "tabPending": "保留中",
       "tabDecided": "決めた",
       "emptyDecided": "決定済みのレビューはまだありません。あなたが決定したレビュー、およびあなたがリクエストしたレビューへの決定がここに表示されます。",
-      "empty": "保留中のレビューはありません。すべて完了しています。",
+      "empty": "保留中のレビューはありません。あなたを待っているものはなく、依頼したレビューはすべて決定済みです。",
       "featureDisabled": "レビューワークフロー機能は現在無効になっています。保留中のレビューは保持されており、機能が再度有効になった際に表示されます。",
       "columnEntity": "実在物",
       "columnProject": "プロジェクト",
       "columnRequester": "依頼者",
+      "columnAssignee": "担当者",
       "columnTransition": "遷移",
       "columnRequestedAt": "リクエスト先",
       "columnDecidedBy": "決定者",
@@ -3736,6 +3744,7 @@
       "actionApprove": "承認する",
       "actionRequestChanges": "変更をリクエストする",
       "actionReject": "拒否する",
+      "actionNudge": "リマインダーを送信",
       "filterEntityType": "エンティティタイプ",
       "filterProject": "プロジェクト",
       "filterRequester": "依頼者",

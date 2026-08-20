@@ -663,13 +663,23 @@ export function NotificationContent({
                 })}
               </div>
             )}
-            {notification.type === "REVIEW_REMINDER" && data.hoursPending && (
-              <div className="text-xs">
-                {t("reviewReminderHoursPending", {
-                  hoursPending: data.hoursPending,
-                })}
-              </div>
-            )}
+            {/* `hoursPending > 0` rather than a bare truthiness check: a
+                reminder sent on a request less than an hour old carries 0,
+                and `0 && <div>` evaluates to 0 — which React renders as a
+                stray "0" in the notification body. Zero also has nothing to
+                say ("Pending for 0 hours"), so the line is simply omitted.
+                Only reachable since reminders became manually sendable — the
+                scheduled scan never looks at a request younger than the
+                threshold, whose minimum is a full day. */}
+            {notification.type === "REVIEW_REMINDER" &&
+              typeof data.hoursPending === "number" &&
+              data.hoursPending > 0 && (
+                <div className="text-xs">
+                  {t("reviewReminderHoursPending", {
+                    hoursPending: data.hoursPending,
+                  })}
+                </div>
+              )}
             {typeof commentText === "string" && commentText.length > 0 && (
               <div className="text-xs italic line-clamp-2">
                 {t("reviewCommentPreview", { comment: commentText })}

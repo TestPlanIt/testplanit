@@ -3701,6 +3701,13 @@
       "success": "Demande de révision annulée.",
       "error": "Impossible d'annuler la demande de révision. Veuillez réessayer dans quelques instants."
     },
+    "nudge": {
+      "success": "{count, plural, one {Rappel envoyé à # relecteur.} other {Rappel envoyé à # relecteurs.}}",
+      "error": "Impossible d'envoyer le rappel. Veuillez réessayer dans un instant.",
+      "tooSoon": "Un rappel pour cette demande a déjà été envoyé au cours de la dernière heure. Veuillez réessayer plus tard.",
+      "cooldownTooltip": "Rappel déjà envoyé {ago}",
+      "noRecipients": "Personne ne peut agir sur cette demande pour le moment. Vérifiez que le cessionnaire a toujours accès au projet."
+    },
     "list": {
       "pendingTooltip": "En attente d'examen par {assignee}"
     },
@@ -3722,11 +3729,12 @@
       "tabPending": "En attente",
       "tabDecided": "Décidé",
       "emptyDecided": "Aucune revue décidée pour le moment. Les revues que vous décidez, ainsi que les décisions sur les revues que vous demandez, apparaîtront ici.",
-      "empty": "Aucun avis en attente. Vous êtes à jour.",
+      "empty": "Aucune révision en attente. Rien ne vous attend, et toutes les révisions que vous avez demandées ont été traitées.",
       "featureDisabled": "La fonctionnalité de flux de révision est actuellement désactivée. Les révisions en attente sont conservées et réapparaîtront lorsque la fonctionnalité sera réactivée.",
       "columnEntity": "Entité",
       "columnProject": "Projet",
       "columnRequester": "Demandeur",
+      "columnAssignee": "Cessionnaire",
       "columnTransition": "Transition",
       "columnRequestedAt": "Demandé à",
       "columnDecidedBy": "Décidé par",
@@ -3736,6 +3744,7 @@
       "actionApprove": "Approuver",
       "actionRequestChanges": "Demander des modifications",
       "actionReject": "Rejeter",
+      "actionNudge": "Envoyer un rappel",
       "filterEntityType": "Type d'entité",
       "filterProject": "Projet",
       "filterRequester": "Demandeur",

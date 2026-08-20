@@ -3701,6 +3701,13 @@
       "success": "İnceleme talebi iptal edildi.",
       "error": "İnceleme isteği iptal edilemedi. Lütfen birazdan tekrar deneyin."
     },
+    "nudge": {
+      "success": "{count, plural, one {Hatırlatma # incelemeciye gönderildi.} other {Hatırlatma # incelemeciye gönderildi.}}",
+      "error": "Hatırlatma gönderilemedi. Lütfen birazdan tekrar deneyin.",
+      "tooSoon": "Bu istek için hatırlatma zaten son bir saat içinde gönderildi. Lütfen daha sonra tekrar deneyin.",
+      "cooldownTooltip": "Hatırlatma zaten {ago} gönderildi",
+      "noRecipients": "Şu anda bu istek üzerinde kimse işlem yapamaz. Atanan kişinin projeye erişiminin devam ettiğinden emin olun."
+    },
     "list": {
       "pendingTooltip": "{assignee} tarafından inceleme bekleniyor."
     },
@@ -3722,11 +3729,12 @@
       "tabPending": "Askıda olması",
       "tabDecided": "Karar verilmiş",
       "emptyDecided": "Henüz karara bağlanmış inceleme yok. Karara bağladığınız incelemeler ve talep ettiğiniz incelemelerle ilgili kararlar burada görünecek.",
-      "empty": "Bekleyen değerlendirme yok. Her şey tamamlandı.",
+      "empty": "Bekleyen inceleme yok. Sizi bekleyen hiçbir şey yok ve talep ettiğiniz tüm incelemeler karara bağlandı.",
       "featureDisabled": "İnceleme iş akışı özelliği şu anda devre dışı bırakılmıştır. Bekleyen incelemeler korunacak ve özellik yeniden etkinleştirildiğinde tekrar görünecektir.",
       "columnEntity": "Varlık",
       "columnProject": "Proje",
       "columnRequester": "Talep Eden",
+      "columnAssignee": "Atanan kişi",
       "columnTransition": "Geçiş",
       "columnRequestedAt": "Talep edildiği yer",
       "columnDecidedBy": "Karar veren",
@@ -3736,6 +3744,7 @@
       "actionApprove": "Onaylamak",
       "actionRequestChanges": "Değişiklik talebi",
       "actionReject": "Reddetmek",
+      "actionNudge": "Hatırlatma gönder",
       "filterEntityType": "Varlık türü",
       "filterProject": "Proje",
       "filterRequester": "Talep Eden",
