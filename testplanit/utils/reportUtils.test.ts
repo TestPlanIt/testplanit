@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import {
   buildDateFilter,
+  createIssueTrackingDimensionRegistry,
   createIssueTrackingMetricRegistry,
   createTestExecutionMetricRegistry,
   createUserEngagementMetricRegistry,
@@ -997,6 +998,124 @@ describe("reportUtils", () => {
           where: expect.objectContaining({
             id: { in: [11, 12, 13] },
             isDeleted: false,
+          }),
+        })
+      );
+    });
+
+    it("findProjectIssues scopes to defect rows by default", async () => {
+      const db = {
+        issue: {
+          findMany: vi
+            .fn()
+            .mockResolvedValue([{ id: 11 }, { id: 12 }, { id: 13 }]),
+        },
+      };
+
+      const registry = createIssueTrackingMetricRegistry(true);
+      await registry.issueCount.aggregate(db, 370, [], {});
+
+      expect(db.issue.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            id: { in: [11, 12, 13] },
+            isDeleted: false,
+            isRequirement: false,
+          }),
+        })
+      );
+    });
+
+    it("a caller-supplied where merges on top of the defect-scope default", async () => {
+      const db = {
+        issue: {
+          findMany: vi.fn().mockResolvedValue([]),
+        },
+      };
+
+      const registry = createIssueTrackingDimensionRegistry(true);
+      await registry.issueStatus.getValues(db, 370);
+
+      expect(db.issue.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            id: { in: [11, 12, 13] },
+            isDeleted: false,
+            isRequirement: false,
+            status: { not: null },
+          }),
+        })
+      );
+    });
+
+    it("cross-project issue-type dimension excludes requirement rows in both queries", async () => {
+      const db = {
+        issue: {
+          count: vi.fn().mockResolvedValue(0),
+          findMany: vi.fn().mockResolvedValue([]),
+        },
+      };
+
+      const registry = createIssueTrackingDimensionRegistry(false);
+      await registry.issueType.getValues(db, undefined);
+
+      expect(db.issue.count).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            isDeleted: false,
+            isRequirement: false,
+          }),
+        })
+      );
+      expect(db.issue.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            isDeleted: false,
+            isRequirement: false,
+          }),
+        })
+      );
+    });
+
+    it("cross-project issueCount metric counts only defect rows", async () => {
+      const db = {
+        issue: {
+          count: vi.fn().mockResolvedValue(5),
+        },
+      };
+
+      const registry = createIssueTrackingMetricRegistry(false);
+      const rows = await registry.issueCount.aggregate(db, undefined, [], {});
+
+      expect(rows).toEqual([{ issueCount: 5 }]);
+      expect(db.issue.count).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            isDeleted: false,
+            isRequirement: false,
+          }),
+        })
+      );
+    });
+
+    it("cross-project groupBy dimension aggregates only defect rows", async () => {
+      const db = {
+        issue: {
+          groupBy: vi
+            .fn()
+            .mockResolvedValue([{ status: "Open", _count: { _all: 2 } }]),
+        },
+      };
+
+      const registry = createIssueTrackingMetricRegistry(false);
+      await registry.issueCount.aggregate(db, undefined, ["status"], {});
+
+      expect(db.issue.groupBy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          by: ["status"],
+          where: expect.objectContaining({
+            isDeleted: false,
+            isRequirement: false,
           }),
         })
       );

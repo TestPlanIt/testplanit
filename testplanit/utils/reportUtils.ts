@@ -1,3 +1,4 @@
+import { DEFECT_SCOPE_WHERE } from "~/lib/services/issueRoleScope";
 import { queryProjectRelevantIssueIds } from "~/lib/projectIssueIdsQuery";
 import {
   buildFolderAncestorMap,
@@ -41,6 +42,7 @@ async function findProjectIssues(
     where: {
       id: { in: relevantIssueIds },
       isDeleted: false,
+      ...DEFECT_SCOPE_WHERE,
       ...(where ?? {}),
     },
     ...rest,
@@ -3121,6 +3123,7 @@ export function createIssueTrackingDimensionRegistry(
           const unknownTypeCount = await db.issue.count({
             where: {
               isDeleted: false,
+              ...DEFECT_SCOPE_WHERE,
               issueTypeName: null,
             },
           });
@@ -3132,6 +3135,7 @@ export function createIssueTrackingDimensionRegistry(
           const issues = await db.issue.findMany({
             where: {
               isDeleted: false,
+              ...DEFECT_SCOPE_WHERE,
               issueTypeName: { not: null },
             },
             select: {
@@ -3202,6 +3206,7 @@ export function createIssueTrackingDimensionRegistry(
           const internalIssueCount = await db.issue.count({
             where: {
               isDeleted: false,
+              ...DEFECT_SCOPE_WHERE,
               integrationId: null,
             },
           });
@@ -3257,6 +3262,7 @@ export function createIssueTrackingDimensionRegistry(
           const issues = await db.issue.findMany({
             where: {
               isDeleted: false,
+              ...DEFECT_SCOPE_WHERE,
               status: { not: null },
             },
             select: { status: true },
@@ -3316,6 +3322,7 @@ export function createIssueTrackingDimensionRegistry(
           const issues = await db.issue.findMany({
             where: {
               isDeleted: false,
+              ...DEFECT_SCOPE_WHERE,
               priority: { not: null },
             },
             select: { priority: true },
@@ -3373,7 +3380,7 @@ export function createIssueTrackingDimensionRegistry(
         } else {
           // Cross-project: Get all issue creation dates
           const dates = await db.issue.findMany({
-            where: { isDeleted: false },
+            where: { isDeleted: false, ...DEFECT_SCOPE_WHERE },
             select: { createdAt: true },
             distinct: ["createdAt"],
             orderBy: { createdAt: "asc" },
@@ -3527,7 +3534,7 @@ export function createIssueTrackingMetricRegistry(
           // Cross-project implementation
           if (groupBy.includes("createdAt")) {
             const results = await db.issue.findMany({
-              where: { isDeleted: false },
+              where: { isDeleted: false, ...DEFECT_SCOPE_WHERE },
               select: {
                 createdAt: true,
                 createdById: true,
@@ -3608,7 +3615,7 @@ export function createIssueTrackingMetricRegistry(
 
           if (groupBy.length === 0) {
             const count = await db.issue.count({
-              where: { isDeleted: false },
+              where: { isDeleted: false, ...DEFECT_SCOPE_WHERE },
             });
             return [{ issueCount: count }];
           }
@@ -3617,7 +3624,7 @@ export function createIssueTrackingMetricRegistry(
           if (!groupBy.includes("projectId")) {
             const rawResults = await db.issue.groupBy({
               by: groupBy as any[],
-              where: { isDeleted: false },
+              where: { isDeleted: false, ...DEFECT_SCOPE_WHERE },
               _count: { _all: true },
             });
 
@@ -3655,7 +3662,7 @@ export function createIssueTrackingMetricRegistry(
 
           // For groupBy with project, we need a more complex query
           const results = await db.issue.findMany({
-            where: { isDeleted: false },
+            where: { isDeleted: false, ...DEFECT_SCOPE_WHERE },
             select: {
               createdById: true,
               integrationId: true,
