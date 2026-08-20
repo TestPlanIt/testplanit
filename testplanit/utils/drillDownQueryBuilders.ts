@@ -22,6 +22,7 @@ import type {
   TestRunsWhereInput,
 } from "~/zenstack/input";
 import type { DrillDownContext } from "~/lib/types/reportDrillDown";
+import { DEFECT_SCOPE_WHERE } from "~/lib/services/issueRoleScope";
 
 /**
  * Dimension ids each report type may send in a drill-down context. A key
@@ -1174,7 +1175,13 @@ export function buildIssuesQuery(
   offset: number,
   limit: number
 ): IssueFindManyArgs {
-  const where: IssueWhereInput = { isDeleted: false };
+  // A report cell's count and the list you get by clicking that cell run
+  // through two different code paths — the aggregate side in
+  // utils/reportUtils.ts and this drill-down builder — and they must filter
+  // identically or the drill-down contradicts the number it came from.
+  // Seeded into the base where, before any dimension filter layers on top,
+  // so no dimension can displace it.
+  const where: IssueWhereInput = { isDeleted: false, ...DEFECT_SCOPE_WHERE };
 
   // Apply project filter. For project-scoped drill-downs the route swaps
   // this for the project-relevant issue population (direct FK plus

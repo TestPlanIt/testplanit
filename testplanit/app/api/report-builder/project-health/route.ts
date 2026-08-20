@@ -1,6 +1,7 @@
 import { baseDb } from "@/lib/db";
 import { getProjectRelevantIssueIds } from "@/lib/projectIssueIds";
 import { NextRequest } from "next/server";
+import { DEFECT_SCOPE_WHERE } from "~/lib/services/issueRoleScope";
 import { authorizeReportRequest } from "~/utils/reportApiUtils";
 import { buildDateFilter } from "~/utils/reportUtils";
 
@@ -88,7 +89,11 @@ const DIMENSION_REGISTRY: Record<
       );
       const issueCreators = relevantIssueIds.length
         ? await baseDb.issue.findMany({
-            where: { id: { in: relevantIssueIds }, isDeleted: false },
+            where: {
+              id: { in: relevantIssueIds },
+              isDeleted: false,
+              ...DEFECT_SCOPE_WHERE,
+            },
             select: {
               createdBy: {
                 select: { id: true, name: true, email: true },
@@ -141,7 +146,11 @@ const DIMENSION_REGISTRY: Record<
       );
       const issueDates = relevantIssueIds.length
         ? await baseDb.issue.findMany({
-            where: { id: { in: relevantIssueIds }, isDeleted: false },
+            where: {
+              id: { in: relevantIssueIds },
+              isDeleted: false,
+              ...DEFECT_SCOPE_WHERE,
+            },
             select: { createdAt: true },
             distinct: ["createdAt"],
             orderBy: { createdAt: "asc" },
