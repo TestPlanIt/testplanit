@@ -27,6 +27,13 @@ const mockIssueUpdate = vi.fn();
 const mockIssueFindFirst = vi.fn();
 const mockIssueFindUnique = vi.fn();
 const mockProjectIntegrationFindFirst = vi.fn();
+// Added for 22-05's performProjectImport re-resolution-pass cases (todos
+// 10-12): the mapping/integration lookups performProjectImport itself
+// makes, plus the raw parameterized write the end-of-run pass issues.
+const mockIpFindUnique = vi.fn();
+const mockIpUpdate = vi.fn();
+const mockIntegrationFindUnique = vi.fn();
+const mockExecuteRaw = vi.fn();
 
 vi.mock("@/lib/rawDb", () => ({
   rawDb: {
@@ -42,6 +49,23 @@ vi.mock("@/lib/rawDb", () => ({
     projectIntegration: {
       findFirst: (...args: any[]) => mockProjectIntegrationFindFirst(...args),
     },
+    integrationProject: {
+      findUnique: (...args: any[]) => mockIpFindUnique(...args),
+      update: (...args: any[]) => mockIpUpdate(...args),
+    },
+    integration: {
+      findUnique: (...args: any[]) => mockIntegrationFindUnique(...args),
+    },
+    $executeRaw: (...args: any[]) => mockExecuteRaw(...args),
+  },
+}));
+
+// performProjectImport resolves its adapter via IntegrationManager —
+// mocked here so the three new cases below never touch a real tracker.
+const mockGetAdapter = vi.fn();
+vi.mock("../IntegrationManager", () => ({
+  integrationManager: {
+    getAdapter: (...args: any[]) => mockGetAdapter(...args),
   },
 }));
 
@@ -343,13 +367,228 @@ describe("SyncService — synced parentId and requirement classification", () =>
     expect(call.update.isRequirement).toBeUndefined();
   });
 
-  it.todo(
-    "reports an unresolved tracker parent through upsertIssueFromExternal's result"
-  );
-  it.todo(
-    "re-resolves deferred parents after the import loop and links the child"
-  );
-  it.todo(
-    "leaves a still-unresolvable deferred parent for a later sync pass"
-  );
+  it("reports an unresolved tracker parent through upsertIssueFromExternal's result", async () => {
+    const { SyncService } = await import("./SyncService");
+    const service = new SyncService();
+    const { rawDb } = await import("@/lib/rawDb");
+    const db = rawDb as any;
+
+    // Parent ref present, but no local row matches yet — a forward
+    // reference (child paged in before its parent).
+    mockIssueFindFirst.mockResolvedValueOnce(null);
+    const deferred = await (service as any).upsertIssueFromExternal(
+      db,
+      1,
+      7,
+      makeIssueData({
+        id: "ext-child-deferred",
+        parent: { id: "not-yet-imported", key: "DEMO-9" },
+      })
+    );
+    expect(deferred.parentUnresolved).toBe(true);
+
+    // Parent ref present and resolves — never reported as unresolved.
+    vi.clearAllMocks();
+    mockProjectsFindUnique.mockResolvedValue({ createdBy: "creator-1" });
+    mockIssueUpsert.mockResolvedValue({ id: 555 });
+    mockIssueFindUnique.mockResolvedValue(null);
+    mockIssueFindFirst.mockResolvedValueOnce({ id: 900, projectId: 7 });
+    const resolved = await (service as any).upsertIssueFromExternal(
+      db,
+      1,
+      7,
+      makeIssueData({
+        id: "ext-child-resolved",
+        parent: { id: "10050", key: "DEMO-1" },
+      })
+    );
+    expect(resolved.parentUnresolved).toBeFalsy();
+
+    // No parent ref at all — never reported as unresolved.
+    vi.clearAllMocks();
+    mockProjectsFindUnique.mockResolvedValue({ createdBy: "creator-1" });
+    mockIssueUpsert.mockResolvedValue({ id: 555 });
+    mockIssueFindUnique.mockResolvedValue(null);
+    const noParent = await (service as any).upsertIssueFromExternal(
+      db,
+      1,
+      7,
+      makeIssueData({ id: "ext-no-parent-at-all" })
+    );
+    expect(noParent.parentUnresolved).toBeFalsy();
+  });
+
+  it("re-resolves deferred parents after the import loop and links the child", async () => {
+    const { SyncService } = await import("./SyncService");
+    const service = new SyncService();
+
+    mockIpFindUnique.mockResolvedValue({
+      id: "ip-1",
+      externalProjectId: "TPI",
+      externalProjectKey: "TPI",
+      externalProjectName: "Test Project",
+      projectIntegration: { projectId: 7, integrationId: 1 },
+    });
+    mockIpUpdate.mockResolvedValue({});
+    mockIntegrationFindUnique.mockResolvedValue({ provider: "JIRA" });
+
+    // Child-first, then parent, in ONE page — the whole point of P3f.
+    const searchIssues = vi.fn().mockResolvedValueOnce({
+      issues: [
+        makeIssueData({
+          id: "ext-child",
+          key: "TPI-2",
+          parent: { id: "ext-parent", key: "TPI-1" },
+        }),
+        makeIssueData({ id: "ext-parent", key: "TPI-1" }),
+      ],
+      total: 2,
+      hasMore: false,
+    });
+    mockGetAdapter.mockResolvedValue({
+      searchIssues,
+      getCapabilities: vi.fn().mockReturnValue({ searchIssues: true }),
+    });
+
+    // Child's inline resolution attempt during the loop: parent row
+    // doesn't exist yet.
+    mockIssueFindFirst.mockResolvedValueOnce(null);
+    mockIssueUpsert
+      .mockResolvedValueOnce({ id: 701 }) // child
+      .mockResolvedValueOnce({ id: 601 }); // parent
+    // End-of-run re-resolution attempt: the parent row now exists.
+    mockIssueFindFirst.mockResolvedValueOnce({ id: 601, projectId: 7 });
+
+    const result = await service.performProjectImport(1, "ip-1", {
+      updatedWithinDays: 90,
+      cap: 200,
+    });
+
+    expect(result.imported).toBe(2);
+    expect(result.errors).toHaveLength(0);
+    expect(mockExecuteRaw).toHaveBeenCalledTimes(1);
+    // Assert on the values the tagged template received (strings array is
+    // call argument 0) rather than an exact SQL string, so whitespace
+    // changes don't make this brittle.
+    const rawValues = mockExecuteRaw.mock.calls[0].slice(1);
+    expect(rawValues).toEqual([601, 701, 7]); // resolved parent, child id, projectId
+  });
+
+  it("leaves a still-unresolvable deferred parent for a later sync pass", async () => {
+    const { SyncService } = await import("./SyncService");
+    const service = new SyncService();
+
+    mockIpFindUnique.mockResolvedValue({
+      id: "ip-1",
+      externalProjectId: "TPI",
+      externalProjectKey: "TPI",
+      externalProjectName: "Test Project",
+      projectIntegration: { projectId: 7, integrationId: 1 },
+    });
+    mockIpUpdate.mockResolvedValue({});
+    mockIntegrationFindUnique.mockResolvedValue({ provider: "JIRA" });
+
+    const searchIssues = vi.fn().mockResolvedValueOnce({
+      issues: [
+        makeIssueData({
+          id: "ext-orphan-child",
+          key: "TPI-9",
+          parent: { id: "ext-parent-never-arrives", key: "TPI-8" },
+        }),
+      ],
+      total: 1,
+      hasMore: false,
+    });
+    mockGetAdapter.mockResolvedValue({
+      searchIssues,
+      getCapabilities: vi.fn().mockReturnValue({ searchIssues: true }),
+    });
+
+    mockIssueUpsert.mockResolvedValueOnce({ id: 801 });
+    // Every findFirst call — the inline attempt and the end-of-run
+    // re-attempt — reports no match: the parent genuinely never showed up
+    // in this run.
+    mockIssueFindFirst.mockResolvedValue(null);
+
+    const result = await service.performProjectImport(1, "ip-1", {
+      updatedWithinDays: 90,
+      cap: 200,
+    });
+
+    expect(result.imported).toBe(1);
+    expect(result.errors).toHaveLength(0);
+    expect(mockExecuteRaw).not.toHaveBeenCalled();
+  });
+
+  // Not one of the three named todos, but directly proves the behavior
+  // CONTEXT P3c requires of the second write path: a per-entry failure
+  // (the live cycle-guard trigger's RAISE, simulated here as a rejected
+  // $executeRaw call) fails only that one link and leaves the rest of the
+  // run — including the other deferred entry's successful link — alone.
+  it("isolates a re-resolution write failure to its own deferred entry", async () => {
+    const { SyncService } = await import("./SyncService");
+    const service = new SyncService();
+
+    mockIpFindUnique.mockResolvedValue({
+      id: "ip-1",
+      externalProjectId: "TPI",
+      externalProjectKey: "TPI",
+      externalProjectName: "Test Project",
+      projectIntegration: { projectId: 7, integrationId: 1 },
+    });
+    mockIpUpdate.mockResolvedValue({});
+    mockIntegrationFindUnique.mockResolvedValue({ provider: "JIRA" });
+
+    const searchIssues = vi.fn().mockResolvedValueOnce({
+      issues: [
+        makeIssueData({
+          id: "ext-child-a",
+          key: "TPI-11",
+          parent: { id: "ext-parent-a", key: "TPI-10" },
+        }),
+        makeIssueData({
+          id: "ext-child-b",
+          key: "TPI-13",
+          parent: { id: "ext-parent-b", key: "TPI-12" },
+        }),
+        makeIssueData({ id: "ext-parent-a", key: "TPI-10" }),
+        makeIssueData({ id: "ext-parent-b", key: "TPI-12" }),
+      ],
+      total: 4,
+      hasMore: false,
+    });
+    mockGetAdapter.mockResolvedValue({
+      searchIssues,
+      getCapabilities: vi.fn().mockReturnValue({ searchIssues: true }),
+    });
+
+    // Inline attempts for both children: neither parent exists yet.
+    mockIssueFindFirst
+      .mockResolvedValueOnce(null) // childA inline
+      .mockResolvedValueOnce(null); // childB inline
+    mockIssueUpsert
+      .mockResolvedValueOnce({ id: 711 }) // childA
+      .mockResolvedValueOnce({ id: 712 }) // childB
+      .mockResolvedValueOnce({ id: 611 }) // parentA
+      .mockResolvedValueOnce({ id: 612 }); // parentB
+    // End-of-run re-resolution: both parents now resolve.
+    mockIssueFindFirst
+      .mockResolvedValueOnce({ id: 611, projectId: 7 }) // childA entry
+      .mockResolvedValueOnce({ id: 612, projectId: 7 }); // childB entry
+
+    mockExecuteRaw
+      .mockResolvedValueOnce(undefined) // childA's write succeeds
+      .mockRejectedValueOnce(new Error("cycle guard rejected reparent")); // childB's write fails
+
+    const result = await service.performProjectImport(1, "ip-1", {
+      updatedWithinDays: 90,
+      cap: 200,
+    });
+
+    expect(result.imported).toBe(4);
+    expect(mockExecuteRaw).toHaveBeenCalledTimes(2);
+    expect(result.errors).toHaveLength(1);
+    expect(result.errors[0]).toContain("712");
+    expect(result.errors[0]).toContain("cycle guard rejected reparent");
+  });
 });

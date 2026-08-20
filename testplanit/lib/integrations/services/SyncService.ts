@@ -1061,6 +1061,15 @@ export class SyncService {
     let skipped = 0;
     let reachedCap = false;
 
+    // PROV-04 / CONTEXT P3f: issues THIS run wrote whose tracker parent ref
+    // was present but not yet resolvable (the parent hadn't been paged in
+    // yet). Scoped strictly to this invocation — never a project-wide
+    // rescan — and drained in one pass after the loop below closes.
+    const deferredParents: Array<{
+      issueId: number;
+      parentRef: { id: string; key?: string };
+    }> = [];
+
     // Resolve the mapping + owning project up front. A bad id is a caller
     // misconfiguration — throw before any status tracking so the worker fails
     // the job loudly (mirrors the sync path's posture).
@@ -1162,13 +1171,22 @@ export class SyncService {
           }
           matched++;
           try {
-            await this.upsertIssueFromExternal(
+            const upsertResult = await this.upsertIssueFromExternal(
               db,
               integrationId,
               projectId,
               issueData
             );
             imported++;
+            // PROV-04 / P3f: only reachable when a parent ref was present
+            // AND resolution failed this attempt — never queue an entry
+            // with no ref to re-check.
+            if (upsertResult.parentUnresolved && issueData.parent) {
+              deferredParents.push({
+                issueId: upsertResult.id,
+                parentRef: issueData.parent,
+              });
+            }
             if (job) {
               await job.updateProgress({
                 current: imported,
@@ -1192,6 +1210,81 @@ export class SyncService {
         // GC breather between pages, mirroring performSync.
         if (hasMore) {
           await new Promise((resolve) => setTimeout(resolve, 10));
+        }
+      }
+
+      // PROV-04 / CONTEXT P3f: end-of-import re-resolution pass. Completes
+      // the hierarchy for exactly this run's own forward references —
+      // issues whose tracker parent ref was present but not resolvable at
+      // first write, typically because the tracker paged the child in
+      // before its parent. By now every row this run wrote is committed,
+      // so one pass is enough: a parent that arrived earlier in the SAME
+      // run resolves now, and chains resolve independently against rows
+      // that already exist — no fixed-point loop needed. A parent that
+      // never showed up in this run (outside the recency window, or never
+      // imported at all) is deliberately left unresolved for the next sync
+      // pass to complete; that is an accepted, documented limitation, not
+      // a bug this pass tries to solve. No Elasticsearch re-index or SSE
+      // publish here — parent linkage isn't part of the indexed document,
+      // and the rows were already indexed/published moments ago when they
+      // were written.
+      for (const entry of deferredParents) {
+        // Reuses resolveSyncedParentId verbatim — the same resolver the
+        // inline write above uses — so the conditional identifier-clause
+        // fix and the parentRow.projectId === ownerProjectId check cover
+        // this second write path by construction (T-22-05-01/02). A
+        // second hand-rolled lookup here would be a second place for both
+        // to reappear.
+        const resolved = await resolveSyncedParentId(
+          db,
+          integrationId,
+          projectId,
+          entry.parentRef
+        );
+        // Write only when resolution yields a number. `undefined` means
+        // still not resolvable this pass — leave it for later. `null`
+        // cannot occur here (every deferred entry had a ref by
+        // definition), but is treated identically rather than risking a
+        // write: writing null could clear a parent a later re-upsert
+        // legitimately set (P3d).
+        if (typeof resolved !== "number") {
+          continue;
+        }
+        try {
+          // Parameterized $executeRaw, NOT an ORM bulk-update call on the
+          // Issue model — this is load-bearing, not a style choice. Phase
+          // 21's containment gate (linkedIssueUpsert.containment.test.ts)
+          // has a SEPARATE hardcoded check (see that file's own source)
+          // for that ORM bulk-update shape with no allowlist mechanism; an
+          // ORM bulk write here would fail it deterministically. This
+          // mirrors the same tagged-template idiom
+          // recomputeRequirementClassification already uses elsewhere in
+          // this phase. The "projectId" predicate stays in the WHERE
+          // clause even though "id" is already a primary key — the same
+          // repeat-the-scope-predicate discipline requirementHierarchy.ts
+          // applies to its own bulk statements.
+          //
+          // Guarded like this file's existing `db.issue?.findUnique`
+          // idiom: some mocked SyncService test clients don't expose
+          // $executeRaw, and this keeps a future fixture gap from turning
+          // into a confusing crash instead of a silent no-op. In
+          // production `rawDb` always has it.
+          if (typeof db.$executeRaw === "function") {
+            await db.$executeRaw`
+              UPDATE "Issue"
+              SET "parentId" = ${resolved}
+              WHERE "id" = ${entry.issueId}
+                AND "projectId" = ${projectId}
+            `;
+          }
+        } catch (error: any) {
+          // P3c isolation, mirrored from the per-issue try/catch above: a
+          // cycle RAISE from the live trigger on this second write path
+          // fails only this one link, not the run. No detect-and-skip, no
+          // new error machinery.
+          errors.push(
+            `Failed to link parent for issue ${entry.issueId}: ${error.message}`
+          );
         }
       }
 
@@ -1684,7 +1777,7 @@ export class SyncService {
     integrationId: number,
     projectId: number,
     issueData: IssueData
-  ): Promise<{ id: number; created: boolean }> {
+  ): Promise<{ id: number; created: boolean; parentUnresolved?: boolean }> {
     // `Projects.createdBy` is the User.id string; the `creator` relation
     // joins to the User row. We just need the FK value here.
     const project = await db.projects.findUnique({
@@ -1834,7 +1927,22 @@ export class SyncService {
       tenantId: getCurrentTenantId() ?? "default",
     });
 
-    return { id: upserted.id, created: !existing };
+    // PROV-04 / plan 22-05: additive third field, derived from the value
+    // already computed above rather than re-queried. Only true when the
+    // tracker actually supplied a parent ref AND resolveSyncedParentId
+    // came back undefined (forward reference — the parent hasn't been
+    // written yet this run). Left absent (not false) otherwise, so the
+    // returned shape stays minimal for the two callers that ignore it
+    // (MilestoneSyncService.ts destructures only `{ id }`; the manual-sync
+    // call site above ignores the result entirely).
+    const parentUnresolved =
+      Boolean(issueData.parent?.id) && resolvedParentId === undefined;
+
+    return {
+      id: upserted.id,
+      created: !existing,
+      ...(parentUnresolved ? { parentUnresolved: true } : {}),
+    };
   }
 
   /**
