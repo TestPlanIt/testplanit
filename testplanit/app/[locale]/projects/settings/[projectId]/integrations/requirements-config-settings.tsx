@@ -262,9 +262,7 @@ export function RequirementsConfigSettings({
         <CardTitle className="text-base">
           {t("requirementsConfig.title")}
         </CardTitle>
-        <CardDescription>
-          {t("requirementsConfig.description")}
-        </CardDescription>
+        <CardDescription>{t("requirementsConfig.description")}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex items-center gap-2">

@@ -47,14 +47,11 @@ import { PUT } from "./route";
 const params = { params: Promise.resolve({ id: "4" }) };
 
 const createRequest = (payload: unknown): NextRequest =>
-  new NextRequest(
-    "http://localhost/api/integrations/4/requirements-config",
-    {
-      method: "PUT",
-      body: JSON.stringify(payload),
-      headers: { "Content-Type": "application/json" },
-    }
-  );
+  new NextRequest("http://localhost/api/integrations/4/requirements-config", {
+    method: "PUT",
+    body: JSON.stringify(payload),
+    headers: { "Content-Type": "application/json" },
+  });
 
 describe("requirements-config route", () => {
   // The transaction client the mocked auditedTransaction hands the route's

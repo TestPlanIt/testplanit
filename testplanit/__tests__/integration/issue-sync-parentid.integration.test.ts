@@ -180,7 +180,8 @@ describeIntegration("SyncService synced parentId (live DB)", () => {
   });
 
   it("links a synced child to its parent row against the live database", async () => {
-    const { syncService } = await import("~/lib/integrations/services/SyncService");
+    const { syncService } =
+      await import("~/lib/integrations/services/SyncService");
 
     const parentExternalId = `${STAMP}-parent-1`;
     const childExternalId = `${STAMP}-child-1`;
@@ -212,7 +213,8 @@ describeIntegration("SyncService synced parentId (live DB)", () => {
   });
 
   it("does not link a parent that lives in a different project", async () => {
-    const { syncService } = await import("~/lib/integrations/services/SyncService");
+    const { syncService } =
+      await import("~/lib/integrations/services/SyncService");
 
     const candidateParentExternalId = `${STAMP}-p2-parent`;
     const childExternalId = `${STAMP}-p1-child`;
@@ -248,7 +250,8 @@ describeIntegration("SyncService synced parentId (live DB)", () => {
   });
 
   it("clears a previously linked parent when the tracker stops reporting one", async () => {
-    const { syncService } = await import("~/lib/integrations/services/SyncService");
+    const { syncService } =
+      await import("~/lib/integrations/services/SyncService");
 
     const parentExternalId = `${STAMP}-clear-parent`;
     const childExternalId = `${STAMP}-clear-child`;
@@ -296,7 +299,8 @@ describeIntegration("SyncService synced parentId (live DB)", () => {
   });
 
   it("a cyclic tracker parent is rejected by the live cycle-guard trigger", async () => {
-    const { syncService } = await import("~/lib/integrations/services/SyncService");
+    const { syncService } =
+      await import("~/lib/integrations/services/SyncService");
 
     const bExternalId = `${STAMP}-cyc-b`;
     const aExternalId = `${STAMP}-cyc-a`;
@@ -352,7 +356,8 @@ describeIntegration("SyncService synced parentId (live DB)", () => {
   });
 
   it("sets isRequirement from the project's stored requirements config", async () => {
-    const { syncService } = await import("~/lib/integrations/services/SyncService");
+    const { syncService } =
+      await import("~/lib/integrations/services/SyncService");
 
     const reqExternalId = `${STAMP}-req-issue`;
     const nonReqExternalId = `${STAMP}-non-req-issue`;
@@ -393,12 +398,10 @@ describeIntegration("SyncService synced parentId (live DB)", () => {
   });
 
   it("completes the hierarchy within one import run when a child is imported before its parent", async () => {
-    const { syncService } = await import(
-      "~/lib/integrations/services/SyncService"
-    );
-    const { integrationManager } = await import(
-      "~/lib/integrations/IntegrationManager"
-    );
+    const { syncService } =
+      await import("~/lib/integrations/services/SyncService");
+    const { integrationManager } =
+      await import("~/lib/integrations/IntegrationManager");
 
     const childExternalId = `${STAMP}-run-child`;
     const parentExternalId = `${STAMP}-run-parent`;

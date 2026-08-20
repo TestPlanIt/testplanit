@@ -66,7 +66,13 @@ vi.mock("@/components/ui/label", () => ({
 // through onValueChange, and additionally renders `value` so seeded chips
 // are assertable.
 vi.mock("@/components/ui/multi-async-combobox", () => ({
-  MultiAsyncCombobox: ({ value, placeholder, ariaLabel, disabled, onValueChange }: any) => (
+  MultiAsyncCombobox: ({
+    value,
+    placeholder,
+    ariaLabel,
+    disabled,
+    onValueChange,
+  }: any) => (
     <div data-testid="multi-async-combobox">
       <span>{placeholder}</span>
       <span>{ariaLabel}</span>

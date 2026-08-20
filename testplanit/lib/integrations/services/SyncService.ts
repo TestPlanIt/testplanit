@@ -147,9 +147,7 @@ export async function resolveSyncedParentId(
   // the OR into a match-anything predicate that could link a child to an
   // arbitrary row (T-22-02-02). Only add the externalKey clause when the
   // tracker actually supplied a non-empty key.
-  const clauses: Array<Record<string, string>> = [
-    { externalId: parentRef.id },
-  ];
+  const clauses: Array<Record<string, string>> = [{ externalId: parentRef.id }];
   if (typeof parentRef.key === "string" && parentRef.key.length > 0) {
     clauses.push({ externalKey: parentRef.key });
   }

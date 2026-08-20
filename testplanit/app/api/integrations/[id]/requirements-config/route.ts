@@ -15,9 +15,7 @@ import {
 import { recomputeRequirementClassification } from "~/lib/services/requirementHierarchy";
 import { authOptions } from "~/server/auth";
 
-function isPlainStringRecord(
-  value: unknown
-): value is Record<string, string> {
+function isPlainStringRecord(value: unknown): value is Record<string, string> {
   if (typeof value !== "object" || value === null || Array.isArray(value)) {
     return false;
   }
@@ -43,10 +41,7 @@ function isPlainStringRecord(
  * this route is the only save path for it.
  */
 export const PUT = withAuditContext(
-  async (
-    req: NextRequest,
-    { params }: { params: Promise<{ id: string }> }
-  ) => {
+  async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     try {
       const session = await getServerSession(authOptions);
       if (!session?.user?.id) {
@@ -162,12 +157,9 @@ export const PUT = withAuditContext(
             config: mergeRequirementTypeConfig(row.config, next) as any,
           },
         });
-        return recomputeRequirementClassification(
-          projectId,
-          added,
-          removed,
-          { tx }
-        );
+        return recomputeRequirementClassification(projectId, added, removed, {
+          tx,
+        });
       });
 
       return NextResponse.json(result);
