@@ -258,7 +258,12 @@ export async function handleIssueTestCoveragePOST(
         AND rc."isDeleted" = false
         AND rc."isArchived" = false
       LEFT JOIN latest_results lr ON lr.test_case_id = rc.id
+      -- Defect-only scope: mirrors the object predicate exported by
+      -- lib/services/issueRoleScope.ts. The raw-SQL form here and that
+      -- module's TypeScript form are one contract — keep both in sync if
+      -- the discriminator column is ever renamed.
       WHERE i."isDeleted" = false
+        AND i."isRequirement" = false
         ${projectFilterSql}
       ORDER BY i.id, rc.id
     `.execute(baseDb.$qb)
