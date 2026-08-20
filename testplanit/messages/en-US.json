@@ -1511,6 +1511,24 @@
             "autoTrackProjectsLabel": "Scan these connected projects for new milestones",
             "settingsSaved": "Milestone sync settings saved",
             "saveError": "Failed to save milestone sync settings"
+          },
+          "requirementsConfig": {
+            "title": "Requirement Types",
+            "description": "Choose which tracker issue types count as requirements. Existing issues are reclassified to match.",
+            "enableLabel": "Enable requirement classification",
+            "issueTypesLabel": "Issue types",
+            "issueTypesPlaceholder": "Select issue types",
+            "issueTypesAriaLabel": "Requirement issue types",
+            "previewHeading": "Impact of this change",
+            "becomingRequirements": "{count, plural, one {{count} issue will become a requirement} other {{count} issues will become requirements}}",
+            "stoppingRequirements": "{count, plural, one {{count} issue will stop being a requirement} other {{count} issues will stop being requirements}}",
+            "detachedCallout": "{count, plural, one {{count} of those is detached from the tracker or was edited locally and will lose its requirement status} other {{count} of those are detached from the tracker or were edited locally and will lose their requirement status}}",
+            "reversibilityNote": "Re-adding a type restores the classification. Nothing is deleted.",
+            "noChanges": "No classification changes to apply.",
+            "saveLabel": "Save",
+            "savingLabel": "Saving...",
+            "settingsSaved": "Requirement type settings saved",
+            "saveError": "Failed to save requirement type settings"
           }
         },
         "integrationAssigned": "Integration assigned successfully",
