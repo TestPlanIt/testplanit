@@ -1,47 +1,310 @@
-// Wave 0 structural scaffold for HYG-01's read-side containment gate.
-// Plan 23-08 converts the five placeholder titles below into real
-// assertions; this file's job right now is to give them a permanent,
-// byte-stable home on the unit lane and to record why the gate must be
-// built the way it is.
-//
-// This is the read-side mirror of PROV-06's write-side containment gate
-// (lib/services/linkedIssueUpsert.containment.test.ts) — same technique (a
+// Unit-lane structural gate for HYG-01's read-side containment — the
+// read-side mirror of PROV-06's write-side gate
+// (lib/services/linkedIssueUpsert.containment.test.ts): same technique (a
 // repo-wide structural search over tracked source, a reviewed allowlist
 // with a written reason per entry, a throw-with-actionable-message before
-// the final empty-array assertion), applied to reads instead of writes.
-// It is co-located under lib/services/ specifically so it runs inside
-// `pnpm precommit`, the always-on unit lane, rather than only a separate
-// CI database lane — the read-side leak this gate defends against has no
-// live-DB precondition, so gating it behind the slower lane would let a
-// regression sit uncaught for an entire review cycle.
+// the final empty-array assertion), pointed at reads instead of writes.
+// Co-located under lib/services/ so it runs inside `pnpm precommit`, the
+// always-on unit lane — the read-side leak this gate defends against has
+// no live-DB precondition, so gating it behind the slower CI database lane
+// would let a regression sit uncaught for an entire review cycle.
 //
-// THE PATTERN TRAP (read before writing this gate in 23-08): an earlier
-// research pass grepped a flattened symbol name for the generated
-// per-model list hook and found it nowhere in this codebase — that symbol
-// does not exist here. The real shape is a dynamic property access: a
-// shared client-queries object is indexed by the issue model's name at
-// runtime, and a specific query method is called off that property. A
-// grep pattern built against the flattened symbol silently matches zero of
-// the real call sites and reports a false "clean" result while every real
-// consumer keeps leaking. 23-08's gate must be built and proven against the
-// real call shape, confirmed by direct reads of the actual consumer files,
-// not against the stale symbol name.
+// THE PATTERN TRAP: an earlier research pass grepped a flattened symbol
+// name for the generated per-model list hook and found it nowhere in this
+// codebase — that symbol does not exist here. The real shape is a dynamic
+// property access: a shared client-queries object is indexed by the issue
+// model's name at runtime, and a specific listing method (find-many,
+// find-first, count, or group-by, in either its raw or its generated-hook
+// form) is called off that property. A grep built against the flattened
+// symbol silently matches zero of the real call sites and reports a false
+// "clean" result while every real consumer keeps leaking. The two patterns
+// below were confirmed against this codebase's actual consumers before
+// being written here, and the pattern self-test further down re-confirms
+// that on every run rather than trusting it once.
 //
 // THE COMMENT-TEXT TRAP (this file's own hazard): `git grep` cannot tell
 // code from comment. A structural gate whose own explanatory comment
 // reproduces the literal substring it greps for becomes a self-inflicted
 // false positive — this happened for real on an earlier phase's write-side
-// gate. This file, and every file 23-08 touches, must describe forbidden
-// call shapes in prose (as done above) and must never paste the literal
-// matched text.
+// gate, when a "do NOT do this" comment reproduced the exact matched call
+// shape. Every comment in this file describes forbidden shapes in prose;
+// the two shapes themselves live only in the String.raw literals passed to
+// gitGrep below, and nowhere else in this file.
+//
+// COVERAGE BOUNDARY: gitGrep below runs with cwd = process.cwd() (vitest's
+// cwd for this package is testplanit/) and relative pathspecs, so it can
+// never see packages/mcp-server — that surface is out of this gate's reach
+// by construction, not by omission, and is covered by its own package
+// tests instead. A dedicated assertion below asserts no hit path begins
+// with "packages/", so this boundary stays visible in the gate itself
+// rather than assumed.
+//
+// DYNAMIC-DISPATCH BLIND SPOT: a query executed by indexing a db client
+// with a runtime-resolved model name (rather than spelling the model name
+// in source text) is invisible to every pattern below, by construction —
+// no regex over source text can see a property name that only exists at
+// runtime. utils/drillDownQueryBuilders.ts's issue query is executed
+// exactly this way, from the report-builder drill-down route. The only
+// guard possible for a site like that is a content assertion that checks
+// for the shared predicate by name rather than by call shape — see the
+// per-file threshold table further down, which also covers a second file
+// that IS grep-visible but has no behavioral test of its own.
 
-import { describe, it } from "vitest";
+import { execSync } from "node:child_process";
+
+import { describe, expect, it } from "vitest";
+
+interface GrepHit {
+  file: string;
+  line: string;
+}
+
+/**
+ * Run `git grep -nE <pattern>` scoped to tracked *.ts/*.tsx files from
+ * process.cwd() (vitest runs with cwd = testplanit/, so relative pathspecs
+ * stay inside this package). git grep exits 1 when there are no matches —
+ * that is a valid empty result, not a real failure, so it is caught here
+ * rather than allowed to throw.
+ */
+function gitGrep(pattern: string): GrepHit[] {
+  let raw = "";
+  try {
+    raw = execSync(`git grep -nE '${pattern}' -- '*.ts' '*.tsx'`, {
+      cwd: process.cwd(),
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+  } catch (error: unknown) {
+    const execError = error as { stdout?: string };
+    raw = execError.stdout ?? "";
+  }
+  return raw
+    .split("\n")
+    .filter(Boolean)
+    .map((line) => {
+      const match = /^(.+?):(\d+):/.exec(line);
+      return match
+        ? { file: match[1], line: match[2] }
+        : { file: line, line: "?" };
+    });
+}
+
+const TEST_PATH_MARKERS = ["__tests__/", ".test.ts", ".spec.ts", "e2e/"];
+
+function isTestPath(filePath: string): boolean {
+  return TEST_PATH_MARKERS.some((marker) => filePath.includes(marker));
+}
+
+// The two real call shapes this codebase actually uses for issue LISTING
+// reads (find-many, find-first, count, group-by) — never the flattened
+// hook-name symbol an earlier research pass grepped and found nothing for.
+// Confirmed against components/issues/search-issues-dialog.tsx and
+// app/[locale]/issues/page.tsx by direct read before being written here.
+const RAW_ISSUE_READ_PATTERN = String.raw`\.issue\.(findMany|findFirst|count|groupBy)\(`;
+const HOOK_ISSUE_READ_PATTERN = String.raw`\.issue\.use(FindMany|InfiniteFindMany|FindFirst|Count|GroupBy)\(`;
+
+// ---------------------------------------------------------------------------
+// Reviewed allowlist, bucketed by REASON. The bucket a file sits in is the
+// reason it is allowed to read issues without the shared defect-scope
+// predicate — a flat list would lose that. Every entry here was opened and
+// read during this gate's construction, not added on the strength of an
+// earlier plan's inventory alone.
+// ---------------------------------------------------------------------------
+
+// SCOPED — carries lib/services/issueRoleScope.ts's DEFECT_SCOPE_WHERE (or
+// the opt-in includeRequirements toggle) at its query boundary. Verified by
+// this file's own per-file occurrence-count table further down, not just by
+// presence in this array.
+const SCOPED_FILES = [
+  "app/actions/searchIssues.ts",
+  "components/issues/search-issues-dialog.tsx",
+  "app/[locale]/issues/page.tsx",
+  "app/[locale]/projects/issues/[projectId]/page.tsx",
+  "app/[locale]/admin/issues/page.tsx",
+  "lib/services/milestoneSummary.ts",
+  "utils/reportUtils.ts",
+  // Grep-invisible: its issue query is dispatched through a db client
+  // indexed by a runtime-resolved model name, so it never appears as a hit
+  // from either pattern above. Listed here defensively (if a future edit
+  // ever added a directly-spelled call, this entry keeps it reviewed) and
+  // guarded for real by the content-assertion table further down.
+  "utils/drillDownQueryBuilders.ts",
+  // Grep-visible but has no behavioral test of its own — the content
+  // assertion further down is the only thing that would catch someone
+  // quietly deleting the spread from inside an otherwise-intact call.
+  "app/api/report-builder/project-health/route.ts",
+];
+
+// ROLE-AWARE BY DESIGN — queries the role explicitly, in both directions,
+// because the surface's whole purpose is to preview how many rows move
+// across the requirement/defect line. Scoping it to defects-only would make
+// half of it always report zero.
+const ROLE_AWARE_BY_DESIGN_FILES = [
+  "app/[locale]/projects/settings/[projectId]/integrations/requirements-config-settings.tsx",
+];
+
+// EXEMPT — the caller already named the exact rows it wants by id (or by an
+// externally-synced key acting as an id), so the requirement/defect
+// distinction does not apply: resolving a row the caller already identified
+// is not a listing operation that could leak an unintended row kind.
+const EXEMPT_IDENTITY_LOOKUP_FILES = [
+  "app/api/issues/[issueId]/link/route.ts",
+  "app/api/issues/[issueId]/unlink/route.ts",
+  "app/api/issues/counts/route.ts",
+  "app/api/issues/projects/route.ts",
+  "app/api/llm/magic-select-cases/route.ts",
+  "app/api/repository-cases/view-options/route.ts",
+  "app/api/sessions/[sessionId]/summary/route.ts",
+  "lib/repositoryCaseFacetCounts.ts",
+  "lib/services/jira-link-service.ts",
+  "lib/webhooks/services/applyInboundIssueUpdate.ts",
+  "components/issues/DeferredIssueManager.tsx",
+  "components/issues/ManageSimpleUrlIssues.tsx",
+  "components/search/FacetedSearchFilters.tsx",
+  "app/[locale]/projects/repository/[projectId]/AddResultModal.tsx",
+  "app/[locale]/projects/repository/[projectId]/[caseId]/[version]/page.tsx",
+  // Fetches project-wide, but the result is used ONLY as a name lookup for
+  // ids already present in local component state (the same file's
+  // linked-issue-id map over the fetched list) — confirmed by reading both
+  // sites, not assumed from an earlier inventory.
+  "app/[locale]/projects/sessions/[projectId]/AddSessionModal.tsx",
+  // Reads issue records for an LLM prompt through a cast client, scoped to
+  // the test run's own linked-issue id set — the caller already named the
+  // specific rows.
+  "workers/magicSelectWorker.ts",
+];
+
+// EXEMPT — milestone membership legitimately spans both row kinds (an Epic
+// can be a milestone member and a requirement at once — a perpendicular
+// design axis, not a leak). MilestoneIssueManager.tsx, the picker caller
+// that opts a milestone member picker IN to seeing requirement rows, never
+// appears in either grep pattern above — it only forwards a prop into
+// search-issues-dialog.tsx, it never queries directly — so it has no entry
+// here. This note exists so a future reader auditing that opt-in prop does
+// not go looking for a missing allowlist line.
+const EXEMPT_MILESTONE_MEMBERSHIP_FILES = [
+  "app/api/report-builder/drill-down/route.ts",
+];
+
+// EXEMPT — resolves rows by an externally-synced key against a tracker's
+// own result set, the same identity-lookup reasoning as the bucket above,
+// kept separate because the identifier is a tracker key rather than a
+// local numeric id.
+const EXEMPT_EXTERNAL_KEY_LOOKUP_FILES = [
+  "app/api/integrations/jira/search/route.ts",
+  "app/api/integrations/jira/test-info/route.ts",
+];
+
+// EXEMPT — ingestion and import must see every row kind, or importing (or
+// re-syncing) a project would silently drop rows.
+const EXEMPT_INGESTION_IMPORT_FILES = [
+  "lib/integrations/services/SyncService.ts",
+  // Its search method doubles as the SIMPLE_URL import enumerator that
+  // SyncService pages through — scoping it would stop importing rows, not
+  // just narrow a picker.
+  "lib/integrations/adapters/SimpleUrlAdapter.ts",
+  "lib/services/testCaseImport.ts",
+  "app/api/repository/import/route.ts",
+  "workers/testmoImport/issueImports.ts",
+];
+
+// EXEMPT — requirement-scoped by design: this module builds the
+// requirement hierarchy's own parent/child map, so it necessarily reads
+// across both row kinds to walk the tree it is building.
+const EXEMPT_REQUIREMENT_SCOPED_FILES = [
+  "lib/services/requirementHierarchy.ts",
+];
+
+// EXEMPT — the search index must contain every row kind so the in-app role
+// filter (a query-time facet against the indexed isRequirement field, not a
+// row-kind exclusion at index time) has something to filter against.
+// Paired with the "bulk indexer is not scoped" assertion further down,
+// which makes the same reasoning structural from the other direction.
+const EXEMPT_SEARCH_INDEX_FILES = [
+  "services/issueSearch.ts",
+  "scripts/reindexAllEntities.ts",
+];
+
+const ALL_ALLOWED_FILES = [
+  ...SCOPED_FILES,
+  ...ROLE_AWARE_BY_DESIGN_FILES,
+  ...EXEMPT_IDENTITY_LOOKUP_FILES,
+  ...EXEMPT_MILESTONE_MEMBERSHIP_FILES,
+  ...EXEMPT_EXTERNAL_KEY_LOOKUP_FILES,
+  ...EXEMPT_INGESTION_IMPORT_FILES,
+  ...EXEMPT_REQUIREMENT_SCOPED_FILES,
+  ...EXEMPT_SEARCH_INDEX_FILES,
+];
 
 describe("Issue read-scope containment (HYG-01, structural)", () => {
-  it.todo(
-    "every issue read call site is either scoped, opt-in, or exempt with a written reason"
-  );
-  it.todo("the grep patterns match the real ZenStack hook call shape");
+  it("every issue read call site is either scoped, opt-in, or exempt with a written reason", () => {
+    const hits = [
+      ...gitGrep(RAW_ISSUE_READ_PATTERN),
+      ...gitGrep(HOOK_ISSUE_READ_PATTERN),
+    ].filter((hit) => !isTestPath(hit.file));
+
+    // This gate's reach stops at this package: gitGrep runs with a
+    // cwd-relative pathspec, so a hit whose path begins with "packages/"
+    // would mean that scoping assumption no longer holds.
+    const packageHits = hits.filter((hit) => hit.file.startsWith("packages/"));
+    expect(packageHits).toEqual([]);
+
+    const offenders = hits.filter(
+      (hit) => !ALL_ALLOWED_FILES.includes(hit.file)
+    );
+
+    if (offenders.length > 0) {
+      const offenderList = offenders
+        .map((hit) => `${hit.file}:${hit.line}`)
+        .join(", ");
+      throw new Error(
+        `Found unreviewed Issue read(s) outside the reviewed allowlist: ${offenderList}. ` +
+          "Scope the query with DEFECT_SCOPE_WHERE / REQUIREMENT_SCOPE_WHERE " +
+          "(lib/services/issueRoleScope.ts), or add the file to the correct " +
+          "bucket array in this file with a written reason after review."
+      );
+    }
+    expect(offenders).toEqual([]);
+  });
+
+  it("the grep patterns match the real ZenStack hook call shape", () => {
+    const rawHits = gitGrep(RAW_ISSUE_READ_PATTERN).filter(
+      (hit) => !isTestPath(hit.file)
+    );
+    const hookHits = gitGrep(HOOK_ISSUE_READ_PATTERN).filter(
+      (hit) => !isTestPath(hit.file)
+    );
+    const rawFiles = new Set(rawHits.map((hit) => hit.file));
+    const hookFiles = new Set(hookHits.map((hit) => hit.file));
+
+    const likelyWrongPattern =
+      "matched far fewer issue read sites than this codebase actually has. " +
+      "That almost certainly means the pattern no longer matches the " +
+      "codebase's real call shape (see the flattened-symbol trap this gate " +
+      "exists to close), not that the codebase shrank.";
+
+    if (rawHits.length < 40 || !rawFiles.has("utils/reportUtils.ts")) {
+      throw new Error(
+        `Raw-shape pattern ${likelyWrongPattern} Expected at least 40 ` +
+          `non-test hits including utils/reportUtils.ts; got ${rawHits.length} ` +
+          `hits across ${rawFiles.size} files.`
+      );
+    }
+    if (
+      hookHits.length < 15 ||
+      !hookFiles.has("components/issues/search-issues-dialog.tsx")
+    ) {
+      throw new Error(
+        `Hook-shape pattern ${likelyWrongPattern} Expected at least 15 ` +
+          "non-test hits including components/issues/search-issues-dialog.tsx; " +
+          `got ${hookHits.length} hits across ${hookFiles.size} files.`
+      );
+    }
+
+    expect(rawHits.length).toBeGreaterThanOrEqual(40);
+    expect(hookHits.length).toBeGreaterThanOrEqual(15);
+  });
+
   it.todo("every scoped consumer carries the shared defect-scope predicate");
   it.todo("the raw-SQL coverage query mirrors the shared predicate literally");
   it.todo(
