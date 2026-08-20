@@ -24,7 +24,6 @@ import { extractTextFromNode } from "~/utils/extractTextFromJson";
 import type { RepositoryCaseSource } from "~/zenstack/models";
 import type { StepFormField } from "@/[locale]/projects/repository/[projectId]/StepsForm";
 import StepsForm from "@/[locale]/projects/repository/[projectId]/StepsForm";
-import { emptyEditorContent } from "~/app/constants";
 
 interface MatchMember {
   id: number;
@@ -50,18 +49,6 @@ interface StepDuplicateConversionDialogProps {
     members: MatchMember[];
   } | null;
   onResolved: () => void;
-}
-
-function parseTipTapJson(value: unknown): object {
-  if (typeof value === "object" && value !== null) return value as object;
-  if (typeof value === "string") {
-    try {
-      return JSON.parse(value);
-    } catch {
-      return emptyEditorContent;
-    }
-  }
-  return emptyEditorContent;
 }
 
 interface StepsFormValues {
@@ -97,7 +84,6 @@ export function StepDuplicateConversionDialog({
     if (!open || !match) return;
     setCheckedCaseIds(new Set(match.members.map((m) => m.caseId)));
     setName("");
-    form.reset({ steps: [] });
   }, [open, matchId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Fetch the canonical case's steps; the matched range is resolved below.
@@ -131,21 +117,16 @@ export function StepDuplicateConversionDialog({
     return caseSteps.slice(from, to + 1);
   }, [caseSteps, firstMember?.startStepId, firstMember?.endStepId]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Load the matched range into the editor
+  // The editor itself is loaded by StepsForm from the `steps` prop below —
+  // it owns the field array and clears it on mount when that prop is absent,
+  // so initialising it from here with form.reset() only races that clear.
   useEffect(() => {
     if (!open || !matchedSteps || matchedSteps.length === 0) return;
-    const formSteps: StepFormField[] = matchedSteps.map((s: any) => ({
-      step: parseTipTapJson(s.step),
-      expectedResult: parseTipTapJson(s.expectedResult),
-    }));
-    form.reset({ steps: formSteps });
-
-    // Auto-suggest name from first step's text
     const firstText = extractTextFromNode(matchedSteps[0].step) || "";
     if (firstText) {
       setName((prev) => prev || firstText.substring(0, 50));
     }
-  }, [open, matchId, matchedSteps]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [open, matchId, matchedSteps]);
 
   const handleCaseToggle = (caseId: number, checked: boolean) => {
     setCheckedCaseIds((prev) => {
@@ -269,6 +250,7 @@ export function StepDuplicateConversionDialog({
               <StepsForm
                 control={form.control}
                 name="steps"
+                steps={matchedSteps ?? []}
                 projectId={match?.projectId ?? 0}
                 hideSharedStepsButtons
               />

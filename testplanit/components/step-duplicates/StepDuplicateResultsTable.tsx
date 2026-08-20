@@ -64,14 +64,23 @@ const parseThreshold = (stored: string | null): number => {
 
 const ascending = (a: number, b: number) => a - b;
 
+const uniqueSorted = (values: number[]) =>
+  Array.from(new Set(values)).sort(ascending);
+
 /**
- * Keeps a remembered threshold selectable even when the current scan produced
- * no match at that level, so the dropdown never renders a blank value.
+ * Snaps a threshold onto counts that are actually reachable: up to the next
+ * real count, which selects the same rows while keeping the dropdown on a value
+ * it offers, and never past the largest one — asking for more cases or steps
+ * than any reachable match has would otherwise empty the table with no option
+ * left to climb back down to.
  */
-const withCurrentThreshold = (thresholds: number[], current: number) =>
-  current > NO_MINIMUM && !thresholds.includes(current)
-    ? [...thresholds, current].sort(ascending)
-    : thresholds;
+const snapThreshold = (thresholds: number[], stored: number): number => {
+  if (stored <= NO_MINIMUM || thresholds.length === 0) return NO_MINIMUM;
+  return (
+    thresholds.find((value) => value >= stored) ??
+    thresholds[thresholds.length - 1]
+  );
+};
 
 interface StepDuplicateResultsTableProps {
   projectId: string;
@@ -267,50 +276,71 @@ export function StepDuplicateResultsTable({
     });
   }, [allMatches]);
 
-  // Thresholds come from the counts actually present, so every option narrows
-  // the list to something genuinely different. They are derived from the whole
-  // scan rather than the filtered subset so the two dropdowns hold still while
-  // the user dials the focus in.
-  const { caseThresholds, stepThresholds } = useMemo(() => {
-    const cases = new Set<number>();
-    const steps = new Set<number>();
-    for (const row of mappedRows) {
-      cases.add(row.casesCount);
-      steps.add(row.stepCount);
-    }
-    return {
-      caseThresholds: Array.from(cases).sort(ascending),
-      stepThresholds: Array.from(steps).sort(ascending),
-    };
-  }, [mappedRows]);
+  // Each dropdown is faceted against the other: it offers the counts still
+  // reachable once the other minimum (and the search) has been applied, so no
+  // selection available in either one can empty the table. The pair is resolved
+  // steps-first — matching their order on screen — to keep it acyclic.
+  const {
+    searchRows,
+    stepThresholds,
+    caseThresholds,
+    effectiveMinCases,
+    effectiveMinSteps,
+  } = useMemo(() => {
+    const lower = searchString.toLowerCase();
+    const searchRows = searchString
+      ? mappedRows.filter((item) =>
+          item.caseNames.some((name) => name.toLowerCase().includes(lower))
+        )
+      : mappedRows;
 
-  const caseOptions = useMemo(
-    () => withCurrentThreshold(caseThresholds, minCases),
-    [caseThresholds, minCases]
-  );
-  const stepOptions = useMemo(
-    () => withCurrentThreshold(stepThresholds, minSteps),
-    [stepThresholds, minSteps]
-  );
+    const stepsApplied = snapThreshold(
+      uniqueSorted(searchRows.map((row) => row.stepCount)),
+      minSteps
+    );
+    const rowsAfterSteps = searchRows.filter(
+      (row) => row.stepCount >= stepsApplied
+    );
+    const casesApplied = snapThreshold(
+      uniqueSorted(rowsAfterSteps.map((row) => row.casesCount)),
+      minCases
+    );
+
+    // The applied value is folded back into its own list: resolving steps
+    // before cases can leave a step minimum that no longer names a count under
+    // the case minimum, and a dropdown must always be able to show its own
+    // selection.
+    const withApplied = (values: number[], applied: number) =>
+      uniqueSorted(applied > NO_MINIMUM ? [...values, applied] : values);
+
+    return {
+      searchRows,
+      stepThresholds: withApplied(
+        searchRows
+          .filter((row) => row.casesCount >= casesApplied)
+          .map((row) => row.stepCount),
+        stepsApplied
+      ),
+      caseThresholds: withApplied(
+        rowsAfterSteps.map((row) => row.casesCount),
+        casesApplied
+      ),
+      effectiveMinCases: casesApplied,
+      effectiveMinSteps: stepsApplied,
+    };
+  }, [mappedRows, searchString, minCases, minSteps]);
 
   const filtersActive =
-    searchString.length > 0 || minCases > NO_MINIMUM || minSteps > NO_MINIMUM;
+    searchString.length > 0 ||
+    effectiveMinCases > NO_MINIMUM ||
+    effectiveMinSteps > NO_MINIMUM;
 
   const sortedItems: StepDuplicateRow[] = useMemo(() => {
-    let filtered = mappedRows;
-
-    if (searchString) {
-      const lower = searchString.toLowerCase();
-      filtered = filtered.filter((item) =>
-        item.caseNames.some((name) => name.toLowerCase().includes(lower))
-      );
-    }
-    if (minCases > NO_MINIMUM) {
-      filtered = filtered.filter((item) => item.casesCount >= minCases);
-    }
-    if (minSteps > NO_MINIMUM) {
-      filtered = filtered.filter((item) => item.stepCount >= minSteps);
-    }
+    const filtered = searchRows.filter(
+      (item) =>
+        item.casesCount >= effectiveMinCases &&
+        item.stepCount >= effectiveMinSteps
+    );
 
     const { column, direction } = sortConfig;
     const dir = direction === "asc" ? 1 : -1;
@@ -333,7 +363,7 @@ export function StepDuplicateResultsTable({
       if (aVal > bVal) return 1 * dir;
       return 0;
     });
-  }, [mappedRows, sortConfig, searchString, minCases, minSteps]);
+  }, [searchRows, sortConfig, effectiveMinCases, effectiveMinSteps]);
 
   const totalItems = sortedItems.length;
   const totalPages = Math.ceil(totalItems / pageSize);
@@ -506,73 +536,71 @@ export function StepDuplicateResultsTable({
 
   return (
     <div>
-      <div className="flex flex-row items-start">
-        <div className="flex flex-col grow w-full sm:w-1/2 min-w-[250px]">
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-muted-foreground w-full">
-            <Filter
-              className="max-w-xs min-w-[180px]"
-              placeholder={t("filterPlaceholder")}
-              initialSearchString={searchString}
-              onSearchChange={handleFilterChange}
-            />
-            <div className="flex items-center gap-2">
-              <Label htmlFor="min-cases-filter" className="text-nowrap">
-                {t("minCasesLabel")}
-              </Label>
-              <Select
-                value={String(minCases)}
-                onValueChange={handleMinCasesChange}
+      <div className="flex flex-row items-start gap-4">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-2 grow min-w-[250px] text-muted-foreground">
+          <Filter
+            className="w-56 max-w-full"
+            placeholder={t("filterPlaceholder")}
+            initialSearchString={searchString}
+            onSearchChange={handleFilterChange}
+          />
+          <div className="flex items-center gap-2">
+            <Label htmlFor="min-steps-filter" className="text-nowrap">
+              {t("minStepsLabel")}
+            </Label>
+            <Select
+              value={String(effectiveMinSteps)}
+              onValueChange={handleMinStepsChange}
+            >
+              <SelectTrigger
+                id="min-steps-filter"
+                className="w-20"
+                data-testid="min-steps-filter"
               >
-                <SelectTrigger
-                  id="min-cases-filter"
-                  className="w-24"
-                  data-testid="min-cases-filter"
-                >
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={String(NO_MINIMUM)}>
-                    {tCommon("filters.all")}
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={String(NO_MINIMUM)}>
+                  {tCommon("filters.all")}
+                </SelectItem>
+                {stepThresholds.map((value) => (
+                  <SelectItem key={value} value={String(value)}>
+                    {t("minThresholdOption", { count: value })}
                   </SelectItem>
-                  {caseOptions.map((value) => (
-                    <SelectItem key={value} value={String(value)}>
-                      {t("minThresholdOption", { count: value })}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex items-center gap-2">
-              <Label htmlFor="min-steps-filter" className="text-nowrap">
-                {t("minStepsLabel")}
-              </Label>
-              <Select
-                value={String(minSteps)}
-                onValueChange={handleMinStepsChange}
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex items-center gap-2">
+            <Label htmlFor="min-cases-filter" className="text-nowrap">
+              {t("minCasesLabel")}
+            </Label>
+            <Select
+              value={String(effectiveMinCases)}
+              onValueChange={handleMinCasesChange}
+            >
+              <SelectTrigger
+                id="min-cases-filter"
+                className="w-20"
+                data-testid="min-cases-filter"
               >
-                <SelectTrigger
-                  id="min-steps-filter"
-                  className="w-24"
-                  data-testid="min-steps-filter"
-                >
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={String(NO_MINIMUM)}>
-                    {tCommon("filters.all")}
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={String(NO_MINIMUM)}>
+                  {tCommon("filters.all")}
+                </SelectItem>
+                {caseThresholds.map((value) => (
+                  <SelectItem key={value} value={String(value)}>
+                    {t("minThresholdOption", { count: value })}
                   </SelectItem>
-                  {stepOptions.map((value) => (
-                    <SelectItem key={value} value={String(value)}>
-                      {t("minThresholdOption", { count: value })}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
-        <div className="flex flex-col w-full sm:w-2/3 items-end">
+        <div className="flex flex-col items-end">
           {totalItems > 0 && (
             <>
               <div className="justify-end">
