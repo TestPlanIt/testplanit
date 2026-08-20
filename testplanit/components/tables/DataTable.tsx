@@ -215,6 +215,7 @@ export interface VirtualizedDataTableProps<TData extends DataRow, TValue = any>
       | "loadMoreError"
       | "onRetryLoadMore"
       | "loadedCount"
+      | "onRowClick"
       | "resetKey"
       | "estimateSize"
       | "fillViewport"

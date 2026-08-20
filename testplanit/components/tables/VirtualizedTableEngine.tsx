@@ -208,6 +208,10 @@ export interface VirtualizedTableEngineProps {
    * selection by row INDEX, which silently re-targets selections when the
    * data is filtered or re-sorted. */
   getRowId?: (originalRow: any, index: number) => string;
+  /** Row-level click, mirroring paged mode's `onTestCaseClick`. Interactive
+   * cell content (checkboxes, buttons) must stop propagation to opt out.
+   * Grouped lead rows never fire it. */
+  onRowClick?: (id: number | string) => void;
 
   /**
    * Id of a column that should flex to absorb any horizontal space left over
@@ -360,6 +364,7 @@ export function VirtualizedTableEngine({
   rowSelection,
   onRowSelectionChange,
   getRowId,
+  onRowClick,
   flexColumnId,
   enableColumnPinning = true,
   pinFirstLast = true,
@@ -954,8 +959,14 @@ export function VirtualizedTableEngine({
                     role="row"
                     data-row-id={row.original?.id}
                     data-testid={`${rowTestIdPrefix}-${row.original?.id ?? vItem.index}`}
+                    onClick={
+                      onRowClick && !isGrouped && row.original?.id != null
+                        ? () => onRowClick(row.original.id)
+                        : undefined
+                    }
                     className={cn(
                       "absolute start-0 top-0 flex border-b",
+                      onRowClick && !isGrouped && "cursor-pointer",
                       tableStyles.rowDivider,
                       isGrouped
                         ? "bg-accent font-semibold text-foreground"
