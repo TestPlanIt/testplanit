@@ -39,14 +39,6 @@ vi.mock("next-intl", () => ({
   useTranslations: () => (key: string) => key.split(".").pop() ?? key,
 }));
 
-vi.mock("@/components/ui/card", () => ({
-  Card: ({ children }: any) => <div data-testid="card">{children}</div>,
-  CardHeader: ({ children }: any) => <div>{children}</div>,
-  CardTitle: ({ children }: any) => <h2>{children}</h2>,
-  CardDescription: ({ children }: any) => <p>{children}</p>,
-  CardContent: ({ children }: any) => <div>{children}</div>,
-}));
-
 vi.mock("@/components/ui/label", () => ({
   Label: ({ children, htmlFor }: any) => (
     <label htmlFor={htmlFor}>{children}</label>
@@ -74,6 +66,10 @@ function makeProjectIntegration(config: Record<string, any> | null = null) {
     integrationId: 1,
     config,
   } as any;
+}
+
+function getSaveButton() {
+  return screen.getByRole("button", { name: "save" });
 }
 
 describe("MilestoneSyncSettings", () => {
@@ -121,7 +117,7 @@ describe("MilestoneSyncSettings", () => {
     expect(container).toBeEmptyDOMElement();
   });
 
-  it("toggling enable calls useUpdate with milestoneSync merged into config (not on Integration.settings)", async () => {
+  it("save button starts disabled, and toggling a setting alone does not persist", async () => {
     render(
       <MilestoneSyncSettings
         projectIntegration={makeProjectIntegration({ existingKey: "keep" })}
@@ -129,8 +125,26 @@ describe("MilestoneSyncSettings", () => {
       />
     );
 
+    expect(getSaveButton()).toBeDisabled();
+
     const enableSwitch = screen.getByRole("switch", { name: /enableLabel/i });
     fireEvent.click(enableSwitch);
+
+    expect(getSaveButton()).toBeEnabled();
+    // Toggling alone must not reach the server — only Save does.
+    expect(mockUpdatePI).not.toHaveBeenCalled();
+  });
+
+  it("clicking Save commits the pending enable toggle, merged into config (not on Integration.settings)", async () => {
+    render(
+      <MilestoneSyncSettings
+        projectIntegration={makeProjectIntegration({ existingKey: "keep" })}
+        integration={jiraIntegration}
+      />
+    );
+
+    fireEvent.click(screen.getByRole("switch", { name: /enableLabel/i }));
+    fireEvent.click(getSaveButton());
 
     await waitFor(() => expect(mockUpdatePI).toHaveBeenCalled());
 
@@ -141,9 +155,15 @@ describe("MilestoneSyncSettings", () => {
     expect(call.data.config.milestoneSync.enabled).toBe(true);
     // No write anywhere resembling Integration.settings.
     expect(call.data).not.toHaveProperty("settings");
+
+    // Save re-disabling itself is covered by the "re-seeds pending state"
+    // test below: like RequirementsConfigSettings, this component has no
+    // self-reset — it relies on the parent re-passing a fresh
+    // ProjectIntegration after query invalidation, which an isolated unit
+    // test simulates via `rerender`, not a bare post-save assertion here.
   });
 
-  it("enabling sync writes autoTrackAdminId = the current user's id", async () => {
+  it("saving after enabling sync writes autoTrackAdminId = the current user's id", async () => {
     render(
       <MilestoneSyncSettings
         projectIntegration={makeProjectIntegration()}
@@ -151,8 +171,8 @@ describe("MilestoneSyncSettings", () => {
       />
     );
 
-    const enableSwitch = screen.getByRole("switch", { name: /enableLabel/i });
-    fireEvent.click(enableSwitch);
+    fireEvent.click(screen.getByRole("switch", { name: /enableLabel/i }));
+    fireEvent.click(getSaveButton());
 
     await waitFor(() => expect(mockUpdatePI).toHaveBeenCalled());
 
@@ -162,7 +182,7 @@ describe("MilestoneSyncSettings", () => {
     );
   });
 
-  it("toggling a kind checkbox calls useUpdate with the updated kinds list", async () => {
+  it("toggling a kind checkbox stages the updated kinds list, committed only on Save", async () => {
     render(
       <MilestoneSyncSettings
         projectIntegration={makeProjectIntegration({
@@ -182,13 +202,17 @@ describe("MilestoneSyncSettings", () => {
     });
     fireEvent.click(sprintsCheckbox);
 
+    expect(mockUpdatePI).not.toHaveBeenCalled();
+
+    fireEvent.click(getSaveButton());
+
     await waitFor(() => expect(mockUpdatePI).toHaveBeenCalled());
 
     const call = mockUpdatePI.mock.calls[0][0];
     expect(call.data.config.milestoneSync.kinds).toEqual(["RELEASE"]);
   });
 
-  it("toggling autoTrack calls useUpdate with the updated autoTrack flag", async () => {
+  it("toggling autoTrack stages the updated flag, committed only on Save", async () => {
     render(
       <MilestoneSyncSettings
         projectIntegration={makeProjectIntegration({
@@ -207,6 +231,7 @@ describe("MilestoneSyncSettings", () => {
       name: /autoTrackLabel/i,
     });
     fireEvent.click(autoTrackSwitch);
+    fireEvent.click(getSaveButton());
 
     await waitFor(() => expect(mockUpdatePI).toHaveBeenCalled());
 
@@ -230,10 +255,8 @@ describe("MilestoneSyncSettings", () => {
       />
     );
 
-    const autoTrackSwitch = screen.getByRole("switch", {
-      name: /autoTrackLabel/i,
-    });
-    fireEvent.click(autoTrackSwitch);
+    fireEvent.click(screen.getByRole("switch", { name: /autoTrackLabel/i }));
+    fireEvent.click(getSaveButton());
 
     await waitFor(() => expect(mockUpdatePI).toHaveBeenCalled());
 
@@ -262,10 +285,8 @@ describe("MilestoneSyncSettings", () => {
       />
     );
 
-    const autoTrackSwitch = screen.getByRole("switch", {
-      name: /autoTrackLabel/i,
-    });
-    fireEvent.click(autoTrackSwitch);
+    fireEvent.click(screen.getByRole("switch", { name: /autoTrackLabel/i }));
+    fireEvent.click(getSaveButton());
 
     await waitFor(() => expect(mockUpdatePI).toHaveBeenCalled());
 
@@ -297,7 +318,7 @@ describe("MilestoneSyncSettings", () => {
     expect(adm).toBeChecked();
   });
 
-  it("unchecking a project persists it into autoTrackExcludedExternalProjectIds and clears the baseline", async () => {
+  it("unchecking a project stages it into autoTrackExcludedExternalProjectIds and clears the baseline, committed only on Save", async () => {
     render(
       <MilestoneSyncSettings
         projectIntegration={makeProjectIntegration({
@@ -314,6 +335,9 @@ describe("MilestoneSyncSettings", () => {
     );
 
     fireEvent.click(screen.getByRole("checkbox", { name: "Admin Tools" }));
+    expect(mockUpdatePI).not.toHaveBeenCalled();
+
+    fireEvent.click(getSaveButton());
 
     await waitFor(() => expect(mockUpdatePI).toHaveBeenCalled());
 
@@ -327,7 +351,7 @@ describe("MilestoneSyncSettings", () => {
     );
   });
 
-  it("re-checking an excluded project removes it from the exclusions and clears the baseline", async () => {
+  it("re-checking an excluded project removes it from the exclusions and clears the baseline, committed only on Save", async () => {
     render(
       <MilestoneSyncSettings
         projectIntegration={makeProjectIntegration({
@@ -347,6 +371,7 @@ describe("MilestoneSyncSettings", () => {
     const adm = screen.getByRole("checkbox", { name: "Admin Tools" });
     expect(adm).not.toBeChecked();
     fireEvent.click(adm);
+    fireEvent.click(getSaveButton());
 
     await waitFor(() => expect(mockUpdatePI).toHaveBeenCalled());
 
@@ -361,7 +386,7 @@ describe("MilestoneSyncSettings", () => {
     );
   });
 
-  it("changing a kind clears the baseline (scope change) while updating kinds", async () => {
+  it("changing a kind clears the baseline (scope change) while updating kinds, committed only on Save", async () => {
     render(
       <MilestoneSyncSettings
         projectIntegration={makeProjectIntegration({
@@ -378,6 +403,7 @@ describe("MilestoneSyncSettings", () => {
     );
 
     fireEvent.click(screen.getByRole("checkbox", { name: /sprintsLabel/i }));
+    fireEvent.click(getSaveButton());
 
     await waitFor(() => expect(mockUpdatePI).toHaveBeenCalled());
 
@@ -389,5 +415,36 @@ describe("MilestoneSyncSettings", () => {
     expect(call.data.config.milestoneSync).not.toHaveProperty(
       "autoTrackBaseline"
     );
+  });
+
+  it("re-seeds pending state (and re-disables Save) when the saved config changes underneath it", () => {
+    const { rerender } = render(
+      <MilestoneSyncSettings
+        projectIntegration={makeProjectIntegration({
+          milestoneSync: {
+            enabled: false,
+            kinds: ["RELEASE"],
+            autoTrack: true,
+          },
+        })}
+        integration={jiraIntegration}
+      />
+    );
+
+    fireEvent.click(screen.getByRole("switch", { name: /enableLabel/i }));
+    expect(getSaveButton()).toBeEnabled();
+
+    // Simulate a successful save re-reading ProjectIntegration with the
+    // enabled flag now persisted.
+    rerender(
+      <MilestoneSyncSettings
+        projectIntegration={makeProjectIntegration({
+          milestoneSync: { enabled: true, kinds: ["RELEASE"], autoTrack: true },
+        })}
+        integration={jiraIntegration}
+      />
+    );
+
+    expect(getSaveButton()).toBeDisabled();
   });
 });
