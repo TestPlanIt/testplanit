@@ -5,6 +5,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -65,15 +66,34 @@ const ResizablePanelGroup = ({
     string | undefined;
   const resolvedId = dataTestId ?? id;
 
-  const [defaultLayout] = useState<Layout | undefined>(() => {
-    if (!storageKey || typeof window === "undefined") return undefined;
+  // Render nothing but a same-sized placeholder until mounted, so the panel
+  // group NEVER server-renders.
+  //
+  // The stored layout is only readable on the client. Reading it during the
+  // initial render made the server (no `window` -> no layout) and the
+  // hydration render (layout restored from localStorage) emit different
+  // panel styles. React reports the mismatch, says "this won't be patched
+  // up", and keeps the SERVER markup — leaving every panel pinned to its
+  // server-rendered `flex-basis` with `flex-grow: 0`. The separator still
+  // hydrates and still drags; it just moves nothing.
+  //
+  // That failure is invisible until someone resizes once: with no saved
+  // layout both sides agree, so it works. The first successful resize writes
+  // localStorage, and every load after it is broken.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
+  const defaultLayout = useMemo<Layout | undefined>(() => {
+    if (!mounted || !storageKey || typeof window === "undefined") {
+      return undefined;
+    }
     try {
       const stored = window.localStorage.getItem(storageKey);
       return stored ? (JSON.parse(stored) as Layout) : undefined;
     } catch {
       return undefined;
     }
-  });
+  }, [mounted, storageKey]);
 
   const onLayoutChanged = useCallback(
     (layout: Layout) => {
@@ -87,6 +107,17 @@ const ResizablePanelGroup = ({
     [storageKey]
   );
 
+  const groupClassName = cn(
+    "flex h-full w-full",
+    direction === "vertical" && "flex-col",
+    className
+  );
+
+  // Same box, same size — so the pre-mount frame does not shift layout.
+  if (!mounted) {
+    return <div className={groupClassName} data-testid={dataTestId} />;
+  }
+
   return (
     <OrientationContext.Provider value={direction}>
       <ResizablePrimitive.Group
@@ -94,11 +125,7 @@ const ResizablePanelGroup = ({
         orientation={direction}
         defaultLayout={defaultLayout}
         onLayoutChanged={storageKey ? onLayoutChanged : undefined}
-        className={cn(
-          "flex h-full w-full",
-          direction === "vertical" && "flex-col",
-          className
-        )}
+        className={groupClassName}
         {...props}
       />
     </OrientationContext.Provider>
