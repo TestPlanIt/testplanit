@@ -23,7 +23,7 @@ import type { Issue } from "~/zenstack/models";
 import {
   ChevronRight,
   MoreVertical,
-  Plus,
+  ClipboardPlus,
   Search,
   SquarePenIcon,
   Trash2Icon,
@@ -733,7 +733,7 @@ export default function RequirementsTreeView({
                     data-testid={`requirement-action-add-child-${data?.issueId}`}
                   >
                     <div className="flex items-center gap-2">
-                      <Plus className="h-4 w-4" />
+                      <ClipboardPlus className="h-4 w-4" />
                       {t("requirements.tree.addChild")}
                     </div>
                   </DropdownMenuItem>
@@ -827,7 +827,7 @@ export default function RequirementsTreeView({
                 })
               }
             >
-              <Plus className="h-4 w-4" />
+              <ClipboardPlus className="h-4 w-4" />
               {t("requirements.tree.addRoot")}
             </Button>
           )}
@@ -901,7 +901,7 @@ export default function RequirementsTreeView({
                 })
               }
             >
-              <Plus className="w-4 shrink-0" />
+              <ClipboardPlus className="w-4 shrink-0" />
               <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
                 {t("requirements.tree.addRoot")}
               </span>
