@@ -341,6 +341,9 @@ describe("ProjectsMenu", () => {
       expect(link).toBeDefined();
       expect(link?.getAttribute("href")).toContain("/projects/milestones/42");
     });
+
+    // Wave 0 scaffold — title only, converted by 25-07.
+    it.todo("renders a Requirements entry linking to /projects/requirements/[projectId]");
   });
 
   describe("collapsed state", () => {
