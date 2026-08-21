@@ -6,6 +6,7 @@ import { HighlightedMatch } from "@/components/HighlightedMatch";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { SimpleDndProvider } from "@/components/ui/SimpleDndProvider";
 import type { Issue } from "~/zenstack/models";
 import { ChevronRight, Search, X } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -17,7 +18,9 @@ import React, {
   useState,
 } from "react";
 import { NodeApi, Tree, TreeApi } from "react-arborist";
+import { useDrop } from "react-dnd";
 import { toast } from "sonner";
+import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { REQUIREMENT_SCOPE_WHERE } from "~/lib/services/issueRoleScope";
 import { RequirementProvenanceBadge } from "./RequirementProvenanceBadge";
 import type { RequirementSelection } from "./RequirementsWorkspace";
@@ -59,11 +62,13 @@ interface RequirementsTreeViewProps extends RequirementSelection {
  * 25-CONTEXT.md's mandate -- see that file's own header comment for the
  * folder-tree precedent this deliberately reuses.
  *
- * Scope discipline: render and select only. Drag-and-drop reparenting is
- * 25-09's job (both `disableDrag`/`disableDrop` stay hard-`true` here, with
- * no `onMove` at all). Create/rename/delete are 25-11's job (no row action
- * menu). Coverage display is entirely Phase 26 (no badge/pip/drill-down
- * beyond the provenance/lock badge this plan already owns).
+ * Scope discipline: render, select, and drag-and-drop reparent (HIER-03's
+ * chosen UX, this plan). Every reparent write goes through 25-05's
+ * server-guarded `reparent` route -- this component never decides validity
+ * and never writes `parentId` through a ZenStack mutation. Create/rename/
+ * delete are 25-11's job (no row action menu). Coverage display is entirely
+ * Phase 26 (no badge/pip/drill-down beyond the provenance/lock badge this
+ * plan already owns).
  */
 export default function RequirementsTreeView({
   projectId,
@@ -83,6 +88,17 @@ export default function RequirementsTreeView({
   const normalizedFilter = filterQuery.trim().toLowerCase();
   const isFiltering = normalizedFilter.length > 0;
 
+  // Reparent's server-side gate (25-05's route) is
+  // `authorizeProjectAdminForProject` -- a project-admin check, not a
+  // per-`ApplicationArea` `canAddEdit` permission -- so this client-side
+  // affordance mirrors `isProjectAdmin`, the same field
+  // `RequirementProvenanceBadge.tsx` already uses for its own detach gate. A
+  // non-admin never even sees the drag affordance; the route's 403 is the
+  // real backstop either way.
+  const { isProjectAdmin: canAddEdit } = useProjectPermissions(
+    Number(projectId)
+  );
+
   // Load every requirement for the project in a single query. react-arborist
   // owns virtualization for render performance, so there is no lazy-load
   // endpoint to protect and expand/collapse never issues a follow-up
@@ -93,6 +109,7 @@ export default function RequirementsTreeView({
     data: allRequirements,
     isLoading: requirementsLoading,
     error: requirementsError,
+    refetch: refetchRequirements,
   } = useClientQueries(schema).issue.useFindMany(
     {
       where: {
@@ -244,9 +261,9 @@ export default function RequirementsTreeView({
             // Always hand react-arborist an array, never `undefined`: it
             // reads `undefined` children as "leaf node, cannot accept a
             // drop." Since everything is loaded up front there is no
-            // lazy-load gate to check first -- 25-09 turns drag back on, so
-            // a childless requirement still needs `[]` here to remain a
-            // valid drop target once that lands.
+            // lazy-load gate to check first, so a childless requirement
+            // still needs `[]` here to remain a valid drop target for the
+            // drag gesture wired below.
             children: hasChildren ? buildTree(child.id) : [],
             data: meta ?? {
               issueId: child.id,
@@ -352,6 +369,95 @@ export default function RequirementsTreeView({
     };
   }, []);
 
+  // The reparent gesture (HIER-03's chosen UX, this plan). Forked from
+  // TreeView.tsx's `handleMove` outer shape only -- `Issue` has no `order`
+  // column, so every line of the fork's sibling-position-recompute block
+  // (between resolving the drop target and its own second `Promise.all`)
+  // has no analog here and is dropped entirely. The one thing this fork
+  // does NOT share with the folder version: it never writes `parentId`
+  // through a ZenStack mutation.
+  // `assertValidReparent` is Node-only (imports `baseDb`) and MUST run
+  // server-side before any write, so every move POSTs to 25-05's guarded
+  // route instead -- the client never decides validity, it only reports the
+  // gesture and reconciles from the server's answer.
+  const handleMove = useCallback(
+    async ({
+      dragIds,
+      parentId,
+    }: {
+      dragIds: string[];
+      parentId: string | null;
+    }) => {
+      if (!canAddEdit || isFiltering || !allRequirements) return;
+      const draggedId = parseInt(dragIds[0]);
+      const newParentId = parentId ? parseInt(parentId) : null;
+      try {
+        const res = await fetch(
+          `/api/projects/${projectId}/requirements/${draggedId}/reparent`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ parentId: newParentId }),
+          }
+        );
+        if (!res.ok) {
+          let serverMessage = "";
+          try {
+            const errorBody = await res.json();
+            if (typeof errorBody?.error === "string") {
+              serverMessage = errorBody.error;
+            }
+          } catch {
+            // No JSON body to read -- fall back to the generic rejection
+            // message alone rather than restating anything client-side.
+          }
+          toast.error(
+            `${t("requirements.tree.moveRejected")} ${serverMessage}`.trim()
+          );
+          // react-arborist may already have moved the node optimistically in
+          // its own internal state before this request resolved. Force the
+          // tree back to the persisted truth by refetching -- never attempt
+          // a manual client-side revert of react-arborist's internal state.
+          void refetchRequirements();
+          return;
+        }
+        toast.success(t("requirements.tree.moveSuccess"));
+        void refetchRequirements();
+      } catch (error) {
+        console.error("Failed to reparent requirement:", error);
+        toast.error(t("requirements.tree.moveFailed"));
+      }
+    },
+    [canAddEdit, isFiltering, allRequirements, projectId, t, refetchRequirements]
+  );
+
+  // Bottom-of-tree drop zone for moving a requirement out to the root level.
+  // `accept: "NODE"` is react-arborist's own internal drag-item type string
+  // for a tree node -- a library constant, not project-specific -- reused
+  // verbatim from TreeView.tsx's identical root-level-move gesture. That
+  // fork's end-of-root-level ordering computation has no analog (`Issue` has
+  // no `order` column), so `index` is simply omitted from the call.
+  const [{ isOverBottom }, bottomDropRef] = useDrop<
+    { id: string; dragIds: string[] },
+    void,
+    { isOverBottom: boolean }
+  >(
+    () => ({
+      accept: "NODE",
+      canDrop: () => canAddEdit && !isFiltering,
+      drop: (item) => {
+        void handleMove({
+          dragIds: item.dragIds || [item.id],
+          parentId: null,
+        });
+      },
+      collect: (monitor) => ({
+        isOverBottom: monitor.isOver() && monitor.canDrop(),
+      }),
+    }),
+    [canAddEdit, isFiltering, handleMove]
+  );
+
   // A memoized node renderer: chevron, name, provenance badge. Nothing else
   // -- no row action menu (25-11's job), no coverage badge/pip (Phase 26).
   const Node = useCallback(
@@ -447,68 +553,99 @@ export default function RequirementsTreeView({
   }
 
   return (
-    <div className="flex h-full flex-col">
-      <div className="relative mb-2 ms-1 me-2 shrink-0">
-        <Search className="pointer-events-none absolute start-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          type="text"
-          value={filterQuery}
-          onChange={(e) => setFilterQuery(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Escape") {
-              e.preventDefault();
-              setFilterQuery("");
-            }
-          }}
-          placeholder={t("requirements.tree.searchPlaceholder")}
-          aria-label={t("requirements.tree.searchPlaceholder")}
-          className="h-7 ps-7 pe-7 text-xs"
-          data-testid="requirements-filter-input"
-        />
-        {isFiltering && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="absolute end-0.5 top-1/2 h-6 w-6 -translate-y-1/2"
-            aria-label={t("common.aria.clearFilter")}
-            data-testid="requirements-filter-clear"
-            onClick={() => setFilterQuery("")}
+    // A fresh top-level route with no ancestor DndProvider (unlike
+    // TreeView.tsx, which is always mounted under ProjectRepository.tsx's
+    // own SimpleDndProvider) -- react-dnd's useDrop below and react-arborist's
+    // internal onMove wiring both need this context to exist somewhere above
+    // them, or dragging fails silently at runtime.
+    <SimpleDndProvider>
+      <div className="flex h-full flex-col">
+        <div className="relative mb-2 ms-1 me-2 shrink-0">
+          <Search className="pointer-events-none absolute start-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            type="text"
+            value={filterQuery}
+            onChange={(e) => setFilterQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Escape") {
+                e.preventDefault();
+                setFilterQuery("");
+              }
+            }}
+            placeholder={t("requirements.tree.searchPlaceholder")}
+            aria-label={t("requirements.tree.searchPlaceholder")}
+            className="h-7 ps-7 pe-7 text-xs"
+            data-testid="requirements-filter-input"
+          />
+          {isFiltering && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute end-0.5 top-1/2 h-6 w-6 -translate-y-1/2"
+              aria-label={t("common.aria.clearFilter")}
+              data-testid="requirements-filter-clear"
+              onClick={() => setFilterQuery("")}
+            >
+              <X className="h-3.5 w-3.5" />
+            </Button>
+          )}
+        </div>
+        <div ref={treeViewportRef} className="relative flex-1">
+          <Tree
+            ref={treeRef}
+            data={treeData}
+            openByDefault={false}
+            initialOpenState={initialOpenState}
+            width="100%"
+            height={treeViewportHeight}
+            indent={24}
+            rowHeight={32}
+            overscanCount={8}
+            rowClassName="min-w-0!"
+            selection={selectedRequirementId?.toString()}
+            onSelect={handleSelect}
+            onMove={canAddEdit && !isFiltering ? handleMove : undefined}
+            disableDrag={!canAddEdit || isFiltering}
+            disableDrop={!canAddEdit || isFiltering}
           >
-            <X className="h-3.5 w-3.5" />
-          </Button>
-        )}
-      </div>
-      <div ref={treeViewportRef} className="relative flex-1">
-        <Tree
-          ref={treeRef}
-          data={treeData}
-          openByDefault={false}
-          initialOpenState={initialOpenState}
-          width="100%"
-          height={treeViewportHeight}
-          indent={24}
-          rowHeight={32}
-          overscanCount={8}
-          rowClassName="min-w-0!"
-          selection={selectedRequirementId?.toString()}
-          onSelect={handleSelect}
-          // Drag-and-drop reparenting is 25-09's job. Both stay hard-`true`
-          // here (no `onMove` at all) rather than left half-wired, so there
-          // is nothing yet for a user to start dragging.
-          disableDrag
-          disableDrop
-        >
-          {Node}
-        </Tree>
-        {isFiltering && treeData.length === 0 && (
+            {Node}
+          </Tree>
+          {isFiltering && treeData.length === 0 && (
+            <div
+              className="px-2 py-4 text-center text-xs text-muted-foreground"
+              data-testid="requirements-filter-no-matches"
+            >
+              {t("common.ui.search.noResultsFound")}
+            </div>
+          )}
+        </div>
+        {canAddEdit && !isFiltering && (
           <div
-            className="px-2 py-4 text-center text-xs text-muted-foreground"
-            data-testid="requirements-filter-no-matches"
+            ref={(el) => {
+              bottomDropRef(el);
+            }}
+            className="h-16 w-full relative shrink-0"
+            data-testid="requirement-tree-end"
           >
-            {t("common.ui.search.noResultsFound")}
+            {isOverBottom && (
+              <div className="absolute top-0 start-0 end-6 flex items-center z-10 pointer-events-none">
+                <div
+                  className="rounded-full"
+                  style={{
+                    width: 4,
+                    height: 4,
+                    boxShadow: "0 0 0 3px #4B91E2",
+                  }}
+                />
+                <div
+                  className="flex-1 rounded-sm"
+                  style={{ height: 2, background: "#4B91E2" }}
+                />
+              </div>
+            )}
           </div>
         )}
       </div>
-    </div>
+    </SimpleDndProvider>
   );
 }
