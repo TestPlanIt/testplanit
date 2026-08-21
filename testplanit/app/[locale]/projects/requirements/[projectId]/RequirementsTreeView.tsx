@@ -130,13 +130,14 @@ interface RequirementsTreeViewProps extends RequirementSelection {
  * 25-CONTEXT.md's mandate -- see that file's own header comment for the
  * folder-tree precedent this deliberately reuses.
  *
- * Scope discipline: render, select, and drag-and-drop reparent (HIER-03's
- * chosen UX, this plan). Every reparent write goes through 25-05's
- * server-guarded `reparent` route -- this component never decides validity
- * and never writes `parentId` through a ZenStack mutation. Create/rename/
- * delete are 25-11's job (no row action menu). Coverage display is entirely
- * Phase 26 (no badge/pip/drill-down beyond the provenance/lock badge this
- * plan already owns).
+ * Scope discipline: render, select, drag-and-drop reparent (HIER-03's chosen
+ * UX, plan 25-09), and create/rename/delete (HIER-02/HIER-04, this plan).
+ * Every reparent write goes through 25-05's server-guarded `reparent` route
+ * -- this component never decides validity and never writes `parentId`
+ * through a ZenStack mutation; delete goes through that same plan's
+ * `delete-subtree` route (`DeleteRequirementModal.tsx`), never a client-side
+ * loop. Coverage display is entirely Phase 26 (no badge/pip/drill-down
+ * beyond the provenance/lock badge this tree already owns).
  */
 export default function RequirementsTreeView({
   projectId,
@@ -607,8 +608,9 @@ export default function RequirementsTreeView({
     [canAddEdit, isFiltering, handleMove]
   );
 
-  // A memoized node renderer: chevron, name, provenance badge. Nothing else
-  // -- no row action menu (25-11's job), no coverage badge/pip (Phase 26).
+  // A memoized node renderer: chevron, name, provenance badge, and the row
+  // action menu (add child / rename / delete, this plan). No coverage
+  // badge/pip -- that stays Phase 26.
   const Node = useCallback(
     ({
       node,
