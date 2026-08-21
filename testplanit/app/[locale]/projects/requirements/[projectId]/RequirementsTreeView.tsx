@@ -5,10 +5,16 @@ import { schema } from "~/zenstack/schema";
 import { HighlightedMatch } from "@/components/HighlightedMatch";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { SimpleDndProvider } from "@/components/ui/SimpleDndProvider";
 import type { Issue } from "~/zenstack/models";
-import { ChevronRight, Search, X } from "lucide-react";
+import { ChevronRight, MoreVertical, Plus, Search, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import React, {
   useCallback,
@@ -22,6 +28,7 @@ import { useDrop } from "react-dnd";
 import { toast } from "sonner";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { REQUIREMENT_SCOPE_WHERE } from "~/lib/services/issueRoleScope";
+import { CreateRequirementDialog } from "./CreateRequirementDialog";
 import { RequirementProvenanceBadge } from "./RequirementProvenanceBadge";
 import type { RequirementSelection } from "./RequirementsWorkspace";
 
@@ -84,6 +91,16 @@ export default function RequirementsTreeView({
     Record<string, boolean> | undefined
   >(undefined);
   const [filterQuery, setFilterQuery] = useState("");
+
+  // HIER-02's create surface — a single dialog reused by both the toolbar's
+  // "Add root" affordance (parentId: null) and every row's "Add child" menu
+  // item (parentId: that row's issueId). parentName is display-only, so the
+  // dialog never has to look the parent back up itself.
+  const [createDialogState, setCreateDialogState] = useState<{
+    open: boolean;
+    parentId: number | null;
+    parentName: string | null;
+  }>({ open: false, parentId: null, parentName: null });
 
   const normalizedFilter = filterQuery.trim().toLowerCase();
   const isFiltering = normalizedFilter.length > 0;
@@ -536,10 +553,49 @@ export default function RequirementsTreeView({
               className="shrink-0"
             />
           )}
+          {canAddEdit && (
+            <div className="ms-1 flex h-6 shrink-0 items-center invisible group-hover:visible">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 p-0"
+                    aria-label={t("common.actions.actionsLabel")}
+                    data-testid={`requirement-actions-trigger-${data?.issueId}`}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <MoreVertical className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  align="end"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <DropdownMenuItem
+                    onClick={() => {
+                      if (!data) return;
+                      setCreateDialogState({
+                        open: true,
+                        parentId: data.issueId,
+                        parentName: node.data.name,
+                      });
+                    }}
+                    data-testid={`requirement-action-add-child-${data?.issueId}`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Plus className="h-4 w-4" />
+                      {t("requirements.tree.addChild")}
+                    </div>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          )}
         </div>
       );
     },
-    [normalizedFilter, projectId, t]
+    [canAddEdit, normalizedFilter, projectId, t]
   );
 
   if (showSpinner || allRequirements === undefined) {
@@ -548,17 +604,51 @@ export default function RequirementsTreeView({
 
   if (requirements.length === 0) {
     return (
-      <div
-        className="flex h-full flex-col items-center justify-center gap-1 p-4 text-center"
-        data-testid="requirements-tree-empty"
-      >
-        <p className="text-sm font-medium">
-          {t("requirements.tree.emptyTitle")}
-        </p>
-        <p className="text-xs text-muted-foreground">
-          {t("requirements.tree.emptyDescription")}
-        </p>
-      </div>
+      <>
+        <div
+          className="flex h-full flex-col items-center justify-center gap-1 p-4 text-center"
+          data-testid="requirements-tree-empty"
+        >
+          <p className="text-sm font-medium">
+            {t("requirements.tree.emptyTitle")}
+          </p>
+          <p className="text-xs text-muted-foreground">
+            {t("requirements.tree.emptyDescription")}
+          </p>
+          {canAddEdit && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="mt-2"
+              data-testid="requirements-tree-empty-add-root"
+              onClick={() =>
+                setCreateDialogState({
+                  open: true,
+                  parentId: null,
+                  parentName: null,
+                })
+              }
+            >
+              <Plus className="h-4 w-4" />
+              {t("requirements.tree.addRoot")}
+            </Button>
+          )}
+        </div>
+        <CreateRequirementDialog
+          projectId={projectId}
+          parentId={createDialogState.parentId}
+          parentName={createDialogState.parentName}
+          open={createDialogState.open}
+          onOpenChange={(nextOpen) =>
+            setCreateDialogState((prev) => ({ ...prev, open: nextOpen }))
+          }
+          onCreated={(id) => {
+            void refetchRequirements();
+            onSelectRequirement(id);
+          }}
+        />
+      </>
     );
   }
 
@@ -570,33 +660,54 @@ export default function RequirementsTreeView({
     // them, or dragging fails silently at runtime.
     <SimpleDndProvider>
       <div className="flex h-full flex-col">
-        <div className="relative mb-2 ms-1 me-2 shrink-0">
-          <Search className="pointer-events-none absolute start-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            type="text"
-            value={filterQuery}
-            onChange={(e) => setFilterQuery(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Escape") {
-                e.preventDefault();
-                setFilterQuery("");
-              }
-            }}
-            placeholder={t("requirements.tree.searchPlaceholder")}
-            aria-label={t("requirements.tree.searchPlaceholder")}
-            className="h-7 ps-7 pe-7 text-xs"
-            data-testid="requirements-filter-input"
-          />
-          {isFiltering && (
+        <div className="mb-2 ms-1 me-2 flex shrink-0 items-center gap-1">
+          <div className="relative min-w-0 flex-1">
+            <Search className="pointer-events-none absolute start-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              type="text"
+              value={filterQuery}
+              onChange={(e) => setFilterQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Escape") {
+                  e.preventDefault();
+                  setFilterQuery("");
+                }
+              }}
+              placeholder={t("requirements.tree.searchPlaceholder")}
+              aria-label={t("requirements.tree.searchPlaceholder")}
+              className="h-7 ps-7 pe-7 text-xs"
+              data-testid="requirements-filter-input"
+            />
+            {isFiltering && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute end-0.5 top-1/2 h-6 w-6 -translate-y-1/2"
+                aria-label={t("common.aria.clearFilter")}
+                data-testid="requirements-filter-clear"
+                onClick={() => setFilterQuery("")}
+              >
+                <X className="h-3.5 w-3.5" />
+              </Button>
+            )}
+          </div>
+          {canAddEdit && (
             <Button
+              type="button"
               variant="ghost"
               size="icon"
-              className="absolute end-0.5 top-1/2 h-6 w-6 -translate-y-1/2"
-              aria-label={t("common.aria.clearFilter")}
-              data-testid="requirements-filter-clear"
-              onClick={() => setFilterQuery("")}
+              className="h-7 w-7 shrink-0"
+              aria-label={t("requirements.tree.addRoot")}
+              data-testid="requirements-tree-add-root"
+              onClick={() =>
+                setCreateDialogState({
+                  open: true,
+                  parentId: null,
+                  parentName: null,
+                })
+              }
             >
-              <X className="h-3.5 w-3.5" />
+              <Plus className="h-4 w-4" />
             </Button>
           )}
         </div>
@@ -656,6 +767,19 @@ export default function RequirementsTreeView({
           </div>
         )}
       </div>
+      <CreateRequirementDialog
+        projectId={projectId}
+        parentId={createDialogState.parentId}
+        parentName={createDialogState.parentName}
+        open={createDialogState.open}
+        onOpenChange={(nextOpen) =>
+          setCreateDialogState((prev) => ({ ...prev, open: nextOpen }))
+        }
+        onCreated={(id) => {
+          void refetchRequirements();
+          onSelectRequirement(id);
+        }}
+      />
     </SimpleDndProvider>
   );
 }
