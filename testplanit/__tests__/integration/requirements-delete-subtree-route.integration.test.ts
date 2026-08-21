@@ -46,10 +46,9 @@ import { POST as deleteSubtreePost } from "~/app/api/projects/[projectId]/requir
 import { POST as restorePost } from "~/app/api/projects/[projectId]/requirements/[issueId]/restore/route";
 
 function postRequest(): NextRequest {
-  return new NextRequest(
-    "http://localhost/api/projects/requirements/op",
-    { method: "POST" }
-  );
+  return new NextRequest("http://localhost/api/projects/requirements/op", {
+    method: "POST",
+  });
 }
 
 function routeParams(projectId: number, issueId: number) {
@@ -229,9 +228,7 @@ describeIntegration(
           where: { id },
           select: { isDeleted: true },
         });
-        expect(row?.isDeleted, `issue ${id} in tree B was touched`).toBe(
-          false
-        );
+        expect(row?.isDeleted, `issue ${id} in tree B was touched`).toBe(false);
       }
     });
 

@@ -38,8 +38,7 @@ export const POST = withAuditContext(
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
       }
 
-      const { projectId: projectIdParam, issueId: issueIdParam } =
-        await params;
+      const { projectId: projectIdParam, issueId: issueIdParam } = await params;
       const projectId = parseInt(projectIdParam);
       const issueId = parseInt(issueIdParam);
       if (isNaN(projectId) || isNaN(issueId)) {

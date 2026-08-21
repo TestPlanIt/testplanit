@@ -30,7 +30,10 @@ vi.mock("@/components/tiptap/TipTapEditor", () => ({
           onUpdate?.({
             type: "doc",
             content: [
-              { type: "paragraph", content: [{ type: "text", text: "Edited" }] },
+              {
+                type: "paragraph",
+                content: [{ type: "text", text: "Edited" }],
+              },
             ],
           })
         }
@@ -71,9 +74,7 @@ import RequirementDetailPanel from "./RequirementDetailPanel";
 
 const sampleDoc = {
   type: "doc",
-  content: [
-    { type: "paragraph", content: [{ type: "text", text: "Hello" }] },
-  ],
+  content: [{ type: "paragraph", content: [{ type: "text", text: "Hello" }] }],
 };
 
 const nativeRequirement = {
@@ -116,9 +117,8 @@ function getFieldDisabledMap(): Record<string, boolean> {
   return {
     title: (screen.getByTestId("requirement-field-title") as HTMLInputElement)
       .disabled,
-    status: (
-      screen.getByTestId("requirement-field-status") as HTMLInputElement
-    ).disabled,
+    status: (screen.getByTestId("requirement-field-status") as HTMLInputElement)
+      .disabled,
     priority: (
       screen.getByTestId("requirement-field-priority") as HTMLInputElement
     ).disabled,
@@ -146,9 +146,7 @@ describe("RequirementDetailPanel", () => {
 
     const editor = screen.getByTestId("tiptap-note");
     expect(editor).toBeInTheDocument();
-    expect(JSON.parse(editor.getAttribute("data-content")!)).toEqual(
-      sampleDoc
-    );
+    expect(JSON.parse(editor.getAttribute("data-content")!)).toEqual(sampleDoc);
   });
 
   it("parses a legacy string note and a structured JSON note identically", () => {
@@ -173,9 +171,7 @@ describe("RequirementDetailPanel", () => {
       .getByTestId("tiptap-note")
       .getAttribute("data-content");
 
-    expect(JSON.parse(legacyContent!)).toEqual(
-      JSON.parse(structuredContent!)
-    );
+    expect(JSON.parse(legacyContent!)).toEqual(JSON.parse(structuredContent!));
   });
 
   it("keeps the note editable on a synced, non-detached requirement", () => {

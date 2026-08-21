@@ -103,10 +103,7 @@ describe("POST /api/projects/[projectId]/requirements/[issueId]/detach", () => {
   });
 
   it("returns 400 when the request body fails schema validation", async () => {
-    const res = await POST(
-      makeRequest({ unexpectedField: "test" }),
-      params()
-    );
+    const res = await POST(makeRequest({ unexpectedField: "test" }), params());
 
     expect(res.status).toBe(400);
     expect(mockedAuth).not.toHaveBeenCalled();

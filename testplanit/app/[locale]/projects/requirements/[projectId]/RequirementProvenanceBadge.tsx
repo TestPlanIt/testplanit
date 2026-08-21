@@ -18,7 +18,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { ExternalLink, Lock, Unlink } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "~/lib/navigation";
@@ -201,10 +205,7 @@ export function RequirementProvenanceBadge({
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>{renderBadge(true)}</DropdownMenuTrigger>
-        <DropdownMenuContent
-          align="start"
-          onClick={(e) => e.stopPropagation()}
-        >
+        <DropdownMenuContent align="start" onClick={(e) => e.stopPropagation()}>
           <DropdownMenuItem
             disabled={!canOpenInTracker}
             className="gap-1"

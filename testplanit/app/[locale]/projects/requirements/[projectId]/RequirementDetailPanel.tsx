@@ -115,9 +115,9 @@ export default function RequirementDetailPanel({
   // changed" effect) means one effect both re-arms the form on selection
   // change AND populates it once the new row's data arrives, with no
   // effect-ordering race between the two concerns.
-  const [loadedRequirementId, setLoadedRequirementId] = useState<
-    number | null
-  >(null);
+  const [loadedRequirementId, setLoadedRequirementId] = useState<number | null>(
+    null
+  );
   const isFormReady = loadedRequirementId === requirementId;
 
   const { data: requirement, isLoading } = useClientQueries(

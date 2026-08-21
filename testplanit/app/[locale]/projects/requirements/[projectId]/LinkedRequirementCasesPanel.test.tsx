@@ -7,9 +7,15 @@ import { describe, it } from "vitest";
 describe("LinkedRequirementCasesPanel", () => {
   it.todo("lists the test cases linked to the requirement");
   it.todo("excludes already-linked cases from the add-link search results");
-  it.todo("commits a new link through the existing /api/issues/[issueId]/link route");
-  it.todo("removes a link through the existing /api/issues/[issueId]/unlink route");
-  it.todo("confirms removal in a popover and never uses a native confirm dialog");
+  it.todo(
+    "commits a new link through the existing /api/issues/[issueId]/link route"
+  );
+  it.todo(
+    "removes a link through the existing /api/issues/[issueId]/unlink route"
+  );
+  it.todo(
+    "confirms removal in a popover and never uses a native confirm dialog"
+  );
   it.todo(
     "remains usable on a synced, locked requirement — linking is not a locked field"
   );

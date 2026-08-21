@@ -346,9 +346,7 @@ describe("ProjectsMenu", () => {
       render(<ProjectsMenu isCollapsed={false} onToggleCollapse={vi.fn()} />);
       const link = document.getElementById("project-requirements-link");
       expect(link).toBeDefined();
-      expect(link?.getAttribute("href")).toContain(
-        "/projects/requirements/42"
-      );
+      expect(link?.getAttribute("href")).toContain("/projects/requirements/42");
     });
   });
 

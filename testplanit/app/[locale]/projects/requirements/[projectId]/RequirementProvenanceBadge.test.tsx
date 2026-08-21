@@ -75,12 +75,8 @@ describe("RequirementProvenanceBadge", () => {
       <RequirementProvenanceBadge requirement={nativeRow} projectId={7} />
     );
     expect(screen.queryByTestId("requirement-provenance-locked")).toBeNull();
-    expect(
-      screen.queryByTestId("requirement-provenance-detached")
-    ).toBeNull();
-    expect(
-      screen.queryByTestId("requirement-provenance-lock-icon")
-    ).toBeNull();
+    expect(screen.queryByTestId("requirement-provenance-detached")).toBeNull();
+    expect(screen.queryByTestId("requirement-provenance-lock-icon")).toBeNull();
   });
 
   it("renders the locked badge for a synced, non-detached requirement", () => {
@@ -102,9 +98,7 @@ describe("RequirementProvenanceBadge", () => {
     const badge = screen.getByTestId("requirement-provenance-detached");
     expect(badge).toBeInTheDocument();
     expect(badge).toHaveTextContent("REQ-100");
-    expect(
-      screen.queryByTestId("requirement-provenance-lock-icon")
-    ).toBeNull();
+    expect(screen.queryByTestId("requirement-provenance-lock-icon")).toBeNull();
   });
 
   it("offers the detach action only to a project admin", () => {

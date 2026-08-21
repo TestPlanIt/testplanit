@@ -11,5 +11,7 @@ describe("LinkedRequirementsPanel", () => {
     "commits a new link through the same /api/issues/[issueId]/link route, with the requirement as the path param"
   );
   it.todo("removes a link through the same /api/issues/[issueId]/unlink route");
-  it.todo("shows the same link the requirement surface shows, from the opposite side");
+  it.todo(
+    "shows the same link the requirement surface shows, from the opposite side"
+  );
 });
