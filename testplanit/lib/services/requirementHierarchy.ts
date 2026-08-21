@@ -295,26 +295,33 @@ export async function restoreRequirementSubtree(
     return { restoredIds: [] };
   }
 
+  // `ids` is the CANDIDATE set only — getDeletedIssueSubtreeIds walks every
+  // currently-deleted descendant regardless of when it was deleted, so it
+  // also contains a descendant that was already soft-deleted before this
+  // cascade ran (the exact row the deletedAt-equality WHERE clause below
+  // must exclude from the actual UPDATE). `RETURNING id` reports precisely
+  // which rows the deletedAt match actually flipped, so `restoredIds` in
+  // the response can never claim a row that stayed deleted.
   const descendantIds = await getDeletedIssueSubtreeIds(rootId, projectId);
   const ids = [rootId, ...descendantIds];
 
-  const run = async (tx: TxClient): Promise<void> => {
-    await tx.$executeRaw`
+  const run = async (tx: TxClient): Promise<number[]> => {
+    const restored = await tx.$queryRaw<Array<{ id: number }>>`
       UPDATE "Issue"
       SET "isDeleted" = false
       WHERE id = ANY(${ids}::int[])
         AND "projectId" = ${projectId}
         AND "deletedAt" = (SELECT "deletedAt" FROM "Issue" WHERE id = ${rootId})
+      RETURNING id
     `;
+    return restored.map((row) => row.id);
   };
 
-  if (opts?.tx) {
-    await run(opts.tx);
-  } else {
-    await auditedTransaction(run);
-  }
+  const restoredIds = opts?.tx
+    ? await run(opts.tx)
+    : await auditedTransaction(run);
 
-  return { restoredIds: ids };
+  return { restoredIds };
 }
 
 /** Filters to non-empty strings, de-duplicated. Never throws. */
