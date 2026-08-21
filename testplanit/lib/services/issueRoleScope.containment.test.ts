@@ -179,6 +179,12 @@ const SCOPED_FILES = [
   // hook rather than asserting on the raw `where` argument, so this
   // allowlist entry is the primary guard against the spread being dropped.
   "app/[locale]/projects/requirements/[projectId]/RequirementDetailPanel.tsx",
+  // 25-14's case-detail-side panel spreads REQUIREMENT_SCOPE_WHERE into its
+  // single findMany call listing the requirements linked to a test case —
+  // the deliberate inverse of Phase 23's defect-scoped case-detail
+  // surfaces. Verified by direct read; LinkedRequirementsPanel.test.tsx
+  // asserts on the mocked hook's own `where` argument for this query.
+  "components/requirements/LinkedRequirementsPanel.tsx",
 ];
 
 // ROLE-AWARE BY DESIGN — queries the role explicitly, in both directions,
