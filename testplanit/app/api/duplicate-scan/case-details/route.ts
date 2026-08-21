@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import { z } from "zod/v4";
 import { baseDb } from "~/lib/db";
+import { getEffectiveRunCaseStatuses } from "~/lib/services/effectiveCaseStatus";
 import { authOptions } from "~/server/auth";
 
 const querySchema = z.object({
@@ -94,16 +95,10 @@ async function fetchCaseDetails(caseId: number) {
   // that dominate duplicate scans.
   const lastRun = result.testRuns?.[0];
   if (lastRun && lastRun.status == null) {
-    const latestAutomated = await baseDb.jUnitTestResult.findFirst({
-      where: {
-        repositoryCaseId: caseId,
-        testSuite: { testRunId: lastRun.testRunId },
-      },
-      select: { status: { select: { id: true, name: true } } },
-      orderBy: [{ executedAt: "desc" }, { id: "desc" }],
-    });
-    if (latestAutomated?.status) {
-      lastRun.status = latestAutomated.status;
+    const effectiveStatuses = await getEffectiveRunCaseStatuses([lastRun.id]);
+    const resolved = effectiveStatuses.get(lastRun.id);
+    if (resolved) {
+      lastRun.status = { id: resolved.id, name: resolved.name };
     }
   }
 

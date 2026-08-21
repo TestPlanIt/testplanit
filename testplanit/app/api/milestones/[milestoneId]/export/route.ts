@@ -282,6 +282,13 @@ export async function GET(
     // status-less run-case is skipped in latest_result and the case falls back
     // to latest_junit. Without that, an automated-only case reported blank,
     // indistinguishable from "Not run", despite having real results.
+    //
+    // latest_result reads the "EffectiveCaseStatus" view; RUN_CASE-sourced
+    // rows are exactly the status-carrying live run-cases. latest_junit stays
+    // hand-rolled because it resolves at a different grain than the view: the
+    // latest non-'untested' automated result per CASE across every in-scope
+    // run, including results whose case was never added to the run's
+    // composition.
     const traceabilityRaw =
       memberRows.length > 0
         ? await baseDb.$queryRaw<
@@ -314,22 +321,20 @@ export async function GET(
               SELECT DISTINCT ON (lc."issueId", lc."caseId")
                 lc."issueId",
                 lc."caseId",
-                trc.id AS "testRunCaseId",
+                ecs."testRunCaseId",
                 s.name AS "statusName",
                 col.value AS "statusColor",
                 tr.name AS "runName",
-                trc."completedAt" AS "completedAt"
+                ecs."executedAt" AS "completedAt"
               FROM linked_cases lc
-              LEFT JOIN "TestRunCases" trc
-                ON trc."repositoryCaseId" = lc."caseId" AND trc."isDeleted" = false
-                AND trc."statusId" IS NOT NULL
-              LEFT JOIN "TestRuns" tr
-                ON tr.id = trc."testRunId"
-                AND tr."milestoneId" = ANY(${allMilestoneIds}::int[])
-              LEFT JOIN "Status" s ON s.id = trc."statusId"
+              JOIN "EffectiveCaseStatus" ecs
+                ON ecs."repositoryCaseId" = lc."caseId"
+                AND ecs."statusSource" = 'RUN_CASE'
+                AND ecs."milestoneId" = ANY(${allMilestoneIds}::int[])
+              JOIN "TestRuns" tr ON tr.id = ecs."testRunId"
+              JOIN "Status" s ON s.id = ecs."statusId"
               LEFT JOIN "Color" col ON col.id = s."colorId"
-              WHERE tr.id IS NOT NULL OR trc.id IS NULL
-              ORDER BY lc."issueId", lc."caseId", trc."completedAt" DESC NULLS LAST, trc.id DESC
+              ORDER BY lc."issueId", lc."caseId", ecs."executedAt" DESC NULLS LAST, ecs."testRunCaseId" DESC
             ),
             latest_junit AS (
               SELECT DISTINCT ON (lc."issueId", lc."caseId")

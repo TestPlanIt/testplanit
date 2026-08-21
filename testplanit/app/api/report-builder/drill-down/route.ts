@@ -13,6 +13,7 @@ import {
 } from "~/app/[locale]/projects/milestones/[projectId]/[milestoneId]/milestoneReadiness";
 import { getEnhancedDb } from "~/lib/auth/utils";
 import { resolveViewerProjectScope } from "~/lib/authContext";
+import { getEffectiveRunCaseStatuses } from "~/lib/services/effectiveCaseStatus";
 import { getMemberCoverage } from "~/lib/services/milestoneMemberCoverage";
 import type {
   DrillDownRequest,
@@ -263,49 +264,23 @@ async function handleMilestoneReadinessDrillDown(
 
 /**
  * Fill in `status` on run-case rows that carry none, from the case's latest
- * JUnitTestResult within the same run. Mutates the rows in place so the
- * response shape stays identical to a manually-executed case — the drill-down
- * columns read `row.status` and shouldn't have to know which table it came
- * from. Rows that genuinely never executed keep a null status.
+ * automated result within the same run (the shared effective-status
+ * accessor). Mutates the rows in place so the response shape stays identical
+ * to a manually-executed case — the drill-down columns read `row.status` and
+ * shouldn't have to know which table it came from. Rows that genuinely never
+ * executed keep a null status.
  */
 async function resolveAutomatedRunCaseStatuses(rows: any[]) {
   const pending = (rows ?? []).filter(
-    (r) =>
-      r?.status == null && r?.repositoryCaseId != null && r?.testRunId != null
+    (r) => r?.status == null && r?.id != null
   );
   if (pending.length === 0) return;
 
-  const results = await baseDb.jUnitTestResult.findMany({
-    where: {
-      repositoryCaseId: {
-        in: [...new Set(pending.map((r) => r.repositoryCaseId))],
-      },
-      testSuite: {
-        testRunId: { in: [...new Set(pending.map((r) => r.testRunId))] },
-      },
-    },
-    select: {
-      id: true,
-      repositoryCaseId: true,
-      testSuite: { select: { testRunId: true } },
-      status: { include: { color: true } },
-    },
-    // Latest first, so the first row seen for a (case, run) pair wins.
-    orderBy: [{ executedAt: "desc" }, { id: "desc" }],
-  });
-
-  const latestByCaseRun = new Map<string, unknown>();
-  for (const result of results) {
-    const key = `${result.repositoryCaseId}:${result.testSuite?.testRunId}`;
-    if (!latestByCaseRun.has(key)) {
-      latestByCaseRun.set(key, result.status);
-    }
-  }
-
+  const effectiveStatuses = await getEffectiveRunCaseStatuses(
+    pending.map((r) => r.id)
+  );
   for (const row of pending) {
-    const resolved = latestByCaseRun.get(
-      `${row.repositoryCaseId}:${row.testRunId}`
-    );
+    const resolved = effectiveStatuses.get(row.id);
     if (resolved) row.status = resolved;
   }
 }

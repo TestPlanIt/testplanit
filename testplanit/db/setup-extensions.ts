@@ -1,3 +1,6 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+
 import { createRawDbClient } from "~/lib/rawDbClient";
 
 const db = createRawDbClient();
@@ -32,6 +35,21 @@ async function setupExtensions() {
   console.log(
     "Partial unique index review_request_one_pending_per_entity ensured."
   );
+
+  // EffectiveCaseStatus view — the single accessor for run-case completion.
+  // Migrated databases get it from its migration; databases built with
+  // `zenstack db push` (E2E, ephemeral CI) never run migrations, so ensure it
+  // here from the same file. CREATE OR REPLACE makes this idempotent.
+  await db.$executeRawUnsafe(
+    readFileSync(
+      join(
+        process.cwd(),
+        "migrations/20260821180000_add_effective_case_status_view/migration.sql"
+      ),
+      "utf8"
+    )
+  );
+  console.log("EffectiveCaseStatus view ensured.");
 }
 
 setupExtensions()

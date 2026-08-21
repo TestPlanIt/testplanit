@@ -25,6 +25,10 @@ vi.mock("~/lib/services/milestoneMemberCoverage", () => ({
   getMemberCoverage: vi.fn(),
 }));
 
+vi.mock("~/lib/services/effectiveCaseStatus", () => ({
+  getEffectiveRunCaseStatuses: vi.fn(),
+}));
+
 vi.mock("~/lib/authContext", () => ({
   resolveViewerProjectScope: vi.fn(),
 }));
@@ -48,6 +52,7 @@ import { baseDb } from "@/lib/db";
 import { getProjectRelevantIssueIds } from "@/lib/projectIssueIds";
 import { getEnhancedDb } from "~/lib/auth/utils";
 import { resolveViewerProjectScope } from "~/lib/authContext";
+import { getEffectiveRunCaseStatuses } from "~/lib/services/effectiveCaseStatus";
 import { getMemberCoverage } from "~/lib/services/milestoneMemberCoverage";
 import { getServerSession } from "next-auth";
 import {
@@ -680,9 +685,10 @@ describe("POST /api/report-builder/drill-down", () => {
   });
 
   // Automated runs leave TestRunCases.statusId empty and record the outcome in
-  // JUnitTestResult, so the milestone-completion drill-down has to resolve the
-  // status from there — otherwise it renders "Completed: No" for every
-  // automated case and contradicts the metric it drills into.
+  // JUnitTestResult, so the milestone-completion drill-down resolves the
+  // status through the effective-case-status accessor — otherwise it renders
+  // "Completed: No" for every automated case and contradicts the metric it
+  // drills into.
   describe("milestoneCompletion automated status resolution", () => {
     const passed = {
       id: 2,
@@ -702,6 +708,7 @@ describe("POST /api/report-builder/drill-down", () => {
         count: vi.fn().mockResolvedValue(rows.length),
         groupBy: vi.fn().mockResolvedValue([]),
       };
+      (getEffectiveRunCaseStatuses as any).mockResolvedValue(new Map());
     };
 
     const request = () =>
@@ -714,29 +721,24 @@ describe("POST /api/report-builder/drill-down", () => {
         },
       });
 
-    it("fills a status-less run-case from its latest JUnit result", async () => {
+    it("fills a status-less run-case from its effective status", async () => {
       setUpRunCases([
         { id: 11, repositoryCaseId: 501, testRunId: 90, status: null },
       ]);
-      (baseDb as any).jUnitTestResult.findMany.mockResolvedValue([
-        {
-          id: 7,
-          repositoryCaseId: 501,
-          testSuite: { testRunId: 90 },
-          status: passed,
-        },
-      ]);
+      (getEffectiveRunCaseStatuses as any).mockResolvedValue(
+        new Map([[11, passed]])
+      );
 
       const data = await (await POST(request())).json();
 
       expect(data.data[0].status).toEqual(passed);
+      expect(getEffectiveRunCaseStatuses).toHaveBeenCalledWith([11]);
     });
 
     it("leaves a genuinely unexecuted run-case without a status", async () => {
       setUpRunCases([
         { id: 12, repositoryCaseId: 502, testRunId: 90, status: null },
       ]);
-      (baseDb as any).jUnitTestResult.findMany.mockResolvedValue([]);
 
       const data = await (await POST(request())).json();
 
@@ -753,20 +755,12 @@ describe("POST /api/report-builder/drill-down", () => {
       setUpRunCases([
         { id: 13, repositoryCaseId: 503, testRunId: 91, status: failed },
       ]);
-      (baseDb as any).jUnitTestResult.findMany.mockResolvedValue([
-        {
-          id: 9,
-          repositoryCaseId: 503,
-          testSuite: { testRunId: 91 },
-          status: passed,
-        },
-      ]);
 
       const data = await (await POST(request())).json();
 
       expect(data.data[0].status).toEqual(failed);
       // A row that already has a status is never looked up.
-      expect((baseDb as any).jUnitTestResult.findMany).not.toHaveBeenCalled();
+      expect(getEffectiveRunCaseStatuses).not.toHaveBeenCalled();
     });
   });
 });

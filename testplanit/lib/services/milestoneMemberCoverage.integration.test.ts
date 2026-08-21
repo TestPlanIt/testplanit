@@ -16,6 +16,8 @@
 
 import { describe, expect, it } from "vitest";
 
+import { ensureEffectiveCaseStatusView } from "~/__tests__/helpers/effectiveCaseStatusView";
+
 const RUN_INTEGRATION = process.env.RUN_DB_INTEGRATION === "1";
 const HAS_DB_URL = Boolean(process.env.DATABASE_URL);
 
@@ -42,6 +44,10 @@ describeIntegration("getMemberCoverage cross-project blend (live DB)", () => {
       await baseDb.$transaction(
         async (tx: any) => {
           try {
+            // The coverage SQL reads the EffectiveCaseStatus view, which
+            // `zenstack db push` does not create — build it from its
+            // migration inside the rollback scope.
+            await ensureEffectiveCaseStatusView(tx);
             captured = await body(tx);
           } catch (err) {
             captureErr = err;
@@ -471,11 +477,27 @@ describeIntegration("getMemberCoverage cross-project blend (live DB)", () => {
     });
   });
 
-  it("prefers an existing run-case rollup over the automated fallback", async () => {
+  it("prefers a status-carrying rollup over the automated fallback, but lets automation decide for a status-less rollup", async () => {
     const { baseDb, getMemberCoverage } = await importDeps();
     await withRollback(baseDb, async (tx) => {
       const lookups = await seedLookups(tx);
       const home = await createProjectWithCase(tx, lookups, "rw");
+      const homeCase = await tx.repositoryCases.findUnique({
+        where: { id: home.caseId },
+        select: { repositoryId: true, folderId: true },
+      });
+      const fallbackCase = await tx.repositoryCases.create({
+        data: {
+          projectId: home.projectId,
+          repositoryId: homeCase.repositoryId,
+          folderId: homeCase.folderId,
+          templateId: lookups.template.id,
+          name: `Case rw-fallback ${Date.now()}`,
+          stateId: lookups.state.id,
+          creatorId: lookups.creator.id,
+        },
+        select: { id: true },
+      });
 
       const milestone = await tx.milestones.create({
         data: {
@@ -501,13 +523,18 @@ describeIntegration("getMemberCoverage cross-project blend (live DB)", () => {
           source: "MANUAL",
         },
       });
-      await tx.repositoryCaseIssue.create({
-        data: { caseId: home.caseId, issueId: issue.id },
-      });
+      for (const caseId of [home.caseId, fallbackCase.id]) {
+        await tx.repositoryCaseIssue.create({
+          data: { caseId, issueId: issue.id },
+        });
+      }
 
-      // A live milestone run holds a rollup with NO status (still untested);
-      // a passed automated result also exists. The rollup wins: the case
-      // stays notRun until the rollup itself completes.
+      // One milestone run holds both cases: a FAILED rollup for the first,
+      // and a STATUS-LESS rollup for the second (the shape every automated
+      // submission leaves behind). Both cases also have a NEWER passed
+      // automated result. The status-carrying rollup must win despite being
+      // older; the status-less one must not — presence is not the test, so
+      // automation decides that case.
       const run = await tx.testRuns.create({
         data: {
           name: `rollup-run-${Date.now()}`,
@@ -524,15 +551,26 @@ describeIntegration("getMemberCoverage cross-project blend (live DB)", () => {
           testRunId: run.id,
           repositoryCaseId: home.caseId,
           order: 0,
+          statusId: lookups.failedStatus.id,
+          completedAt: new Date("2026-01-01T00:00:00Z"),
         },
       });
-      await createJunitResult(tx, lookups, {
-        projectId: home.projectId,
-        caseId: home.caseId,
-        statusId: lookups.passedStatus.id,
-        executedAt: new Date("2026-01-01T00:00:00Z"),
-        milestoneId: milestone.id,
+      await tx.testRunCases.create({
+        data: {
+          testRunId: run.id,
+          repositoryCaseId: fallbackCase.id,
+          order: 1,
+        },
       });
+      for (const caseId of [home.caseId, fallbackCase.id]) {
+        await createJunitResult(tx, lookups, {
+          projectId: home.projectId,
+          caseId,
+          statusId: lookups.passedStatus.id,
+          executedAt: new Date("2026-01-02T00:00:00Z"),
+          milestoneId: milestone.id,
+        });
+      }
 
       const coverage = await getMemberCoverage(
         milestone.id,
@@ -541,10 +579,11 @@ describeIntegration("getMemberCoverage cross-project blend (live DB)", () => {
       );
       const breakdown = coverage[issue.id];
 
-      expect(breakdown.linkedCaseCount).toBe(1);
-      expect(breakdown.passed).toBe(0);
-      expect(breakdown.notRun).toBe(1);
-      expect(breakdown.untested).toBe(1);
+      expect(breakdown.linkedCaseCount).toBe(2);
+      expect(breakdown.failed).toBe(1);
+      expect(breakdown.passed).toBe(1);
+      expect(breakdown.notRun).toBe(0);
+      expect(breakdown.untested).toBe(0);
     });
   });
 });

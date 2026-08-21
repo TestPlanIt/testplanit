@@ -1,4 +1,5 @@
 import { baseDb } from "~/lib/db";
+import { getEffectiveCaseCompletion } from "~/lib/services/effectiveCaseStatus";
 import { AUTOMATED_TEST_RUN_TYPES } from "~/utils/testResultTypes";
 
 export type MilestoneSegment = {
@@ -83,73 +84,17 @@ async function splitRunIdsByAutomation(
 export async function calculateMilestoneCompletion(
   milestoneIds: number[]
 ): Promise<number> {
-  // Automated (JUnit/TestNG/Mocha/etc.) run cases never get a status
-  // denormalized onto TestRunCases.statusId — their real pass/fail outcome
-  // lives in JUnitTestResult (see getAutomatedTestRunSegments below). Reading
-  // TestRunCases.statusId for them unconditionally would count every
-  // automated case as incomplete forever, even after the run finished, so
-  // completion is computed separately for each half and summed.
-  const { regularRunIds, automatedRunIds } =
-    await splitRunIdsByAutomation(milestoneIds);
-
-  const [manual, automated] = await Promise.all([
-    getManualCaseCompletion(regularRunIds),
-    getAutomatedCaseCompletion(automatedRunIds),
-  ]);
-
-  const totalTestCases = manual.total + automated.total;
-  if (totalTestCases === 0) {
+  // Manual and automated run-cases record their outcomes in different
+  // tables; the accessor owns that split.
+  const { total, completed } = await getEffectiveCaseCompletion({
+    milestoneIds,
+  });
+  if (total === 0) {
     return 0;
   }
 
-  const completedTestCases = manual.completed + automated.completed;
-
   // Calculate percentage, capped at 100%
-  return Math.min((completedTestCases / totalTestCases) * 100, 100);
-}
-
-async function getManualCaseCompletion(
-  runIds: number[]
-): Promise<{ total: number; completed: number }> {
-  if (runIds.length === 0) return { total: 0, completed: 0 };
-
-  const result = await baseDb.$queryRaw<
-    Array<{ total: bigint; completed: bigint }>
-  >`
-    SELECT
-      COUNT(*) as total,
-      COUNT(*) FILTER (WHERE s."isCompleted" = true) as completed
-    FROM "TestRunCases" trc
-    LEFT JOIN "Status" s ON trc."statusId" = s.id
-    WHERE trc."testRunId" = ANY(${runIds}::int[])
-      AND trc."isDeleted" = false
-  `;
-  return {
-    total: Number(result[0]?.total || 0),
-    completed: Number(result[0]?.completed || 0),
-  };
-}
-
-async function getAutomatedCaseCompletion(
-  runIds: number[]
-): Promise<{ total: number; completed: number }> {
-  if (runIds.length === 0) return { total: 0, completed: 0 };
-
-  const result = await baseDb.$queryRaw<
-    Array<{ total: bigint; completed: bigint }>
-  >`
-    SELECT
-      COUNT(*) as total,
-      COUNT(*) FILTER (WHERE s."isCompleted" = true) as completed
-    FROM "JUnitTestResult" jr
-    JOIN "JUnitTestSuite" su ON jr."testSuiteId" = su.id
-    LEFT JOIN "Status" s ON jr."statusId" = s.id
-    WHERE su."testRunId" = ANY(${runIds}::int[])
-  `;
-  return {
-    total: Number(result[0]?.total || 0),
-    completed: Number(result[0]?.completed || 0),
-  };
+  return Math.min((completed / total) * 100, 100);
 }
 
 export async function getTestRunSegments(
