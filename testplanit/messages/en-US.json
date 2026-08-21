@@ -371,6 +371,7 @@
       "issues": "Issues",
       "internalIssues": "Internal Issues",
       "externalIssues": "{provider} Issues",
+      "requirements": "Requirements",
       "data": "Data",
       "note": "Note",
       "externalId": "External ID",
@@ -709,6 +710,7 @@
       "userProfile": "User Profile",
       "users": "Users",
       "issues": "Issues",
+      "requirements": "Requirements",
       "tags": "Tags",
       "tagDetails": "Tag Details",
       "aiModels": "AI Models",
@@ -6629,6 +6631,110 @@
       "successDescription": "Your account is now connected. You can close this window and return to what you were doing.",
       "errorTitle": "Authorization failed",
       "errorDescription": "The authorization could not be completed. Close this window and try again."
+    }
+  },
+  "requirements": {
+    "tree": {
+      "searchPlaceholder": "Search requirements...",
+      "emptyTitle": "No requirements yet",
+      "emptyDescription": "Create your first requirement to start building this project's requirements tree.",
+      "loadFailed": "Failed to load requirements.",
+      "addRoot": "Add Requirement",
+      "addChild": "Add Child Requirement",
+      "expandAll": "Expand All",
+      "collapseAll": "Collapse All",
+      "dropToRootHint": "Drop here to move to the top level",
+      "moveSuccess": "Requirement moved.",
+      "moveFailed": "Failed to move requirement.",
+      "moveRejected": "This move was rejected:",
+      "dragDisabled": "This requirement can't be moved right now."
+    },
+    "detail": {
+      "selectPrompt": "Select a requirement to view its details.",
+      "documentation": "Documentation",
+      "documentationEmpty": "No documentation provided",
+      "documentationPlaceholder": "Enter requirement documentation...",
+      "lockedHint": "This field is managed by the connected tracker and can't be edited here.",
+      "saveSuccess": "Requirement saved.",
+      "saveFailed": "Failed to save requirement."
+    },
+    "provenance": {
+      "nativeLabel": "Native",
+      "syncedLabel": "Synced",
+      "detachedLabel": "Detached",
+      "nativeTooltip": "Created directly in TestPlanIt.",
+      "syncedTooltip": "Synced from the connected tracker. Locked fields can't be edited here.",
+      "detachedTooltip": "Detached from the connected tracker. Now fully editable, like a native requirement.",
+      "openInTracker": "Open in {provider}",
+      "detach": "Detach",
+      "detachDialogTitle": "Detach this requirement?",
+      "detachDialogDescription": "Detaching makes this requirement fully editable in TestPlanIt and breaks its link to the connected tracker. This can't be undone — re-attaching to the tracker isn't supported yet.",
+      "detachConfirm": "Detach",
+      "detachSuccess": "Requirement detached.",
+      "detachFailed": "Failed to detach requirement."
+    },
+    "create": {
+      "dialogTitle": "Create Requirement",
+      "dialogDescription": "Add a new requirement to this project's requirements tree.",
+      "nameLabel": "Name",
+      "namePlaceholder": "Enter a requirement name...",
+      "parentLabel": "Parent",
+      "parentNone": "No parent (top level)",
+      "submit": "Create Requirement",
+      "success": "Requirement created.",
+      "failed": "Failed to create requirement."
+    },
+    "edit": {
+      "dialogTitle": "Edit Requirement",
+      "submit": "Save Changes",
+      "success": "Requirement updated.",
+      "failed": "Failed to update requirement.",
+      "lockedTooltip": "This requirement is synced from the connected tracker. Detach it to rename."
+    },
+    "delete": {
+      "dialogTitle": "Delete Requirement",
+      "confirmNoChildren": "Are you sure you want to delete this requirement? This action can be undone.",
+      "confirmWithChildren": "This requirement has {count, plural, one {{count} descendant} other {{count} descendants}} that will also be deleted. This action can be undone.",
+      "submit": "Delete",
+      "success": "Requirement deleted.",
+      "failed": "Failed to delete requirement.",
+      "undo": "Undo",
+      "undoSuccess": "Requirement restored.",
+      "undoFailed": "Failed to restore requirement."
+    },
+    "attachments": {
+      "title": "Attachments",
+      "empty": "No attachments",
+      "uploadSuccess": "Attachment uploaded.",
+      "uploadFailed": "Failed to upload attachment.",
+      "removeSuccess": "Attachment removed.",
+      "removeFailed": "Failed to remove attachment."
+    },
+    "linkedCases": {
+      "title": "Linked Test Cases",
+      "empty": "No linked test cases.",
+      "addLink": "Add Link",
+      "addLinkDialogTitle": "Link Test Cases",
+      "searchPlaceholder": "Search test cases...",
+      "linkSuccess": "Test case linked.",
+      "linkFailed": "Failed to link test case.",
+      "unlinkConfirm": "Are you sure you want to unlink this test case?",
+      "unlinkSuccess": "Test case unlinked.",
+      "unlinkFailed": "Failed to unlink test case.",
+      "columnCase": "Test Case",
+      "columnProject": "Project"
+    },
+    "linkedRequirements": {
+      "title": "Linked Requirements",
+      "empty": "No linked requirements.",
+      "addLink": "Add Link",
+      "addLinkDialogTitle": "Link Requirements",
+      "searchPlaceholder": "Search requirements...",
+      "linkSuccess": "Requirement linked.",
+      "linkFailed": "Failed to link requirement.",
+      "unlinkConfirm": "Are you sure you want to unlink this requirement?",
+      "unlinkSuccess": "Requirement unlinked.",
+      "unlinkFailed": "Failed to unlink requirement."
     }
   },
   "Pages": {
