@@ -51,6 +51,8 @@ vi.mock("@zenstackhq/tanstack-query/react", () => ({
     testRunCases: { useUpdate: mockUseUpdateTestRunCases },
     testRuns: { useUpdate: mockUseUpdateTestRuns },
     templates: { useFindMany: mockUseFindManyTemplates },
+    // The automated-status fallback for status-less run-cases.
+    jUnitTestResult: { useFindMany: () => ({ data: undefined }) },
   }),
 }));
 
