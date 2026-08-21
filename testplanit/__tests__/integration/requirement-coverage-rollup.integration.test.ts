@@ -1,4 +1,4 @@
-// Live-DB integration scaffold for the requirement coverage rollup
+// Live-DB integration proof for the requirement coverage rollup
 // (COV-01/COV-02/COV-03). The rollup's recursive walk through a
 // requirement's whole subtree, its case-linking dedup, and its
 // accessible-project scope gating can only be proven against real
@@ -20,16 +20,26 @@
 // The current_database() guard in beforeAll below refuses to proceed
 // against anything but the scratch database, whatever DATABASE_URL a
 // caller supplies.
+//
+// PROOF DESIGN — why an obvious, symmetric fixture would prove nothing: a
+// tree where every case is linked directly to the requirement that covers
+// it would pass under a query that double-counts, one that stops
+// descending at the first node without the shared role, one that patches
+// missing rows in application code, and one that forgets the viewer's
+// project boundary — every broken variant looks identical on a fixture
+// with no ancestor/descendant overlap, no non-requirement node sitting
+// between two requirements, no requirement that is absent everywhere, no
+// soft-deleted or archived-only case, no cross-run "latest", and no
+// cross-project link. Each node and case below exists to make exactly one
+// of those mistakes produce its own distinct, wrong number.
 
-import { afterAll, beforeAll, describe, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { createRawDbClient } from "~/lib/rawDbClient";
-
-// Deliberately no top-level import of "~/lib/services/requirementCoverage"
-// — that module does not exist yet, and a top-level import of a missing
-// module fails this file at transform time, taking the whole unit lane
-// red for everyone working in parallel. The converting plan adds the
-// import when it builds the fixtures and fills these titles in.
+import {
+  getRequirementCoverage,
+  getRequirementCoveringCases,
+} from "~/lib/services/requirementCoverage";
 
 const RUN_INTEGRATION = process.env.RUN_DB_INTEGRATION === "1";
 const HAS_DB_URL = Boolean(process.env.DATABASE_URL);
@@ -37,13 +47,57 @@ const describeIntegration =
   RUN_INTEGRATION && HAS_DB_URL ? describe : describe.skip;
 
 const db = createRawDbClient();
-// Run-scoped stamp for fixture naming — the converting plan uses this to
-// keep concurrent runs' rows distinguishable and to scope teardown.
+// Run-scoped stamp for fixture naming, keeping concurrent runs' rows
+// distinguishable and scoping the post-teardown cleanliness check below.
 const STAMP = `rc-${Date.now()}`;
 
 describeIntegration(
   "requirement coverage rollup (live DB, COV-01/COV-02/COV-03)",
   () => {
+    let adminUserId: string;
+    let projectOneId: number;
+
+    let repositoryOneId: number;
+    let folderOneId: number;
+
+    let templateId: number;
+    let caseStateId: number;
+    let runStateId: number;
+    let passingStatusId: number;
+    let failingStatusId: number;
+
+    // The primary tree: a requirement whose own child is also a
+    // requirement, reached only through an intermediate node that
+    // deliberately does not carry the shared role — plus four standalone
+    // requirements, each built to expose one specific way the rollup could
+    // be wrong.
+    let reqRootId: number;
+    let storyMidId: number;
+    let reqChildId: number;
+    let reqGapId: number;
+    let reqDeletedId: number;
+    let reqArchivedId: number;
+    let reqLatestId: number;
+
+    let caseSharedId: number;
+    let caseUnderStoryId: number;
+    let casePassingId: number;
+    let caseFailingId: number;
+    let caseDeletedId: number;
+    let caseArchivedId: number;
+    let caseTwoRunsId: number;
+
+    const allIssueIds: number[] = [];
+    const allCaseIds: number[] = [];
+    const allRunIds: number[] = [];
+
+    let unrestrictedCoverage: Awaited<
+      ReturnType<typeof getRequirementCoverage>
+    >;
+    let unrestrictedCovering: Awaited<
+      ReturnType<typeof getRequirementCoveringCases>
+    >;
+
     beforeAll(async () => {
       // Refuse to run against anything but a scratch database — the
       // worktree .env DATABASE_URL resolves to the real, shared dev
@@ -57,31 +111,431 @@ describeIntegration(
           `refusing to run against database "${dbName}" — this suite only runs against the tpi_req20 scratch DB (or tpi_test in CI)`
         );
       }
-      // No fixtures yet — the converting plan builds the requirement
-      // trees, linked cases, and results these titles need.
+
+      const role = await db.roles.findFirst({
+        where: { isDefault: true, isDeleted: false },
+      });
+      if (!role) throw new Error("Test prerequisite: no default role row");
+
+      const admin = await db.user.create({
+        data: {
+          email: `${STAMP}-admin@example.com`,
+          name: `Coverage Rollup Admin ${STAMP}`,
+          authMethod: "INTERNAL",
+          access: "ADMIN",
+          accessSource: "MANUAL",
+          roleId: role.id,
+          password: "$2a$10$placeholderplaceholderplaceholderplaceholder",
+        },
+        select: { id: true },
+      });
+      adminUserId = admin.id;
+
+      const projectOne = await db.projects.create({
+        data: { name: `${STAMP}-project-one`, createdBy: adminUserId },
+        select: { id: true },
+      });
+      projectOneId = projectOne.id;
+
+      const repositoryOne = await db.repositories.create({
+        data: { projectId: projectOneId },
+        select: { id: true },
+      });
+      repositoryOneId = repositoryOne.id;
+
+      const folderOne = await db.repositoryFolders.create({
+        data: {
+          name: `${STAMP}-folder-one`,
+          repositoryId: repositoryOneId,
+          projectId: projectOneId,
+          creatorId: adminUserId,
+        },
+        select: { id: true },
+      });
+      folderOneId = folderOne.id;
+
+      // Global catalogs — reused rather than created, matching this
+      // repository's other fixture chains.
+      const template = await db.templates.findFirst({ select: { id: true } });
+      if (!template)
+        throw new Error("Test prerequisite: no Templates row available");
+      const caseWorkflow = await db.workflows.findFirst({
+        where: { scope: "CASES", isDeleted: false, isEnabled: true },
+        select: { id: true },
+      });
+      if (!caseWorkflow)
+        throw new Error(
+          "Test prerequisite: no CASES-scoped Workflows row available"
+        );
+      const runWorkflow = await db.workflows.findFirst({
+        where: { scope: "RUNS", isDeleted: false, isEnabled: true },
+        select: { id: true },
+      });
+      if (!runWorkflow)
+        throw new Error(
+          "Test prerequisite: no RUNS-scoped Workflows row available"
+        );
+      // Looked up by their boolean columns, never by name or system name —
+      // these are admin-configurable rows, not a hardcoded enum.
+      const passingStatus = await db.status.findFirst({
+        where: { isSuccess: true, isDeleted: false },
+        select: { id: true },
+      });
+      if (!passingStatus)
+        throw new Error(
+          "Test prerequisite: no Status row with isSuccess = true"
+        );
+      const failingStatus = await db.status.findFirst({
+        where: { isFailure: true, isDeleted: false },
+        select: { id: true },
+      });
+      if (!failingStatus)
+        throw new Error(
+          "Test prerequisite: no Status row with isFailure = true"
+        );
+
+      templateId = template.id;
+      caseStateId = caseWorkflow.id;
+      runStateId = runWorkflow.id;
+      passingStatusId = passingStatus.id;
+      failingStatusId = failingStatus.id;
+
+      async function createNode(
+        name: string,
+        projectId: number,
+        parentId: number | null,
+        hasSharedRole: boolean
+      ) {
+        const issue = await db.issue.create({
+          data: {
+            name: `${STAMP}-${name}`,
+            title: `${STAMP}-${name}`,
+            createdById: adminUserId,
+            projectId,
+            parentId,
+            isRequirement: hasSharedRole,
+          },
+          select: { id: true },
+        });
+        allIssueIds.push(issue.id);
+        return issue.id;
+      }
+
+      async function createCase(
+        name: string,
+        projectId: number,
+        repositoryId: number,
+        folderId: number,
+        overrides: Record<string, unknown> = {}
+      ) {
+        const testCase = await db.repositoryCases.create({
+          data: {
+            projectId,
+            repositoryId,
+            folderId,
+            templateId,
+            name: `${STAMP}-${name}`,
+            stateId: caseStateId,
+            creatorId: adminUserId,
+            ...overrides,
+          },
+          select: { id: true },
+        });
+        allCaseIds.push(testCase.id);
+        return testCase.id;
+      }
+
+      async function recordExecution(
+        runId: number,
+        repositoryCaseId: number,
+        statusId: number,
+        executedAt: Date
+      ) {
+        const runCase = await db.testRunCases.create({
+          data: { testRunId: runId, repositoryCaseId },
+          select: { id: true },
+        });
+        await db.testRunResults.create({
+          data: {
+            testRunId: runId,
+            testRunCaseId: runCase.id,
+            statusId,
+            executedById: adminUserId,
+            executedAt,
+          },
+        });
+      }
+
+      // The primary tree. reqChild is reached only through storyMid, a
+      // node that deliberately does not carry the shared role — the
+      // asymmetry a rollup that scopes its descendant walk the same way as
+      // its anchor would silently break through.
+      reqRootId = await createNode("req-root", projectOneId, null, true);
+      storyMidId = await createNode(
+        "story-mid",
+        projectOneId,
+        reqRootId,
+        false
+      );
+      reqChildId = await createNode(
+        "req-child",
+        projectOneId,
+        storyMidId,
+        true
+      );
+      reqGapId = await createNode("req-gap", projectOneId, null, true);
+      reqDeletedId = await createNode(
+        "req-deleted",
+        projectOneId,
+        null,
+        true
+      );
+      reqArchivedId = await createNode(
+        "req-archived",
+        projectOneId,
+        null,
+        true
+      );
+      reqLatestId = await createNode("req-latest", projectOneId, null, true);
+
+      // caseShared is linked at both reqRoot AND reqChild — the same case,
+      // two link rows, one ancestor total if de-duplication is real.
+      caseSharedId = await createCase(
+        "case-shared",
+        projectOneId,
+        repositoryOneId,
+        folderOneId
+      );
+      // caseUnderStory is linked ONLY to the intermediate node — it must
+      // still roll up to reqRoot.
+      caseUnderStoryId = await createCase(
+        "case-under-story",
+        projectOneId,
+        repositoryOneId,
+        folderOneId
+      );
+      casePassingId = await createCase(
+        "case-passing",
+        projectOneId,
+        repositoryOneId,
+        folderOneId
+      );
+      caseFailingId = await createCase(
+        "case-failing",
+        projectOneId,
+        repositoryOneId,
+        folderOneId
+      );
+      caseDeletedId = await createCase(
+        "case-deleted",
+        projectOneId,
+        repositoryOneId,
+        folderOneId,
+        { isDeleted: true, deletedAt: new Date() }
+      );
+      caseArchivedId = await createCase(
+        "case-archived",
+        projectOneId,
+        repositoryOneId,
+        folderOneId,
+        { isArchived: true }
+      );
+      caseTwoRunsId = await createCase(
+        "case-two-runs",
+        projectOneId,
+        repositoryOneId,
+        folderOneId
+      );
+
+      await db.repositoryCaseIssue.createMany({
+        data: [
+          { caseId: caseSharedId, issueId: reqRootId },
+          { caseId: caseSharedId, issueId: reqChildId },
+          { caseId: caseUnderStoryId, issueId: storyMidId },
+          { caseId: casePassingId, issueId: reqChildId },
+          { caseId: caseFailingId, issueId: reqChildId },
+          { caseId: caseDeletedId, issueId: reqDeletedId },
+          { caseId: caseArchivedId, issueId: reqArchivedId },
+          { caseId: caseTwoRunsId, issueId: reqLatestId },
+        ],
+      });
+
+      const runMain = await db.testRuns.create({
+        data: {
+          projectId: projectOneId,
+          name: `${STAMP}-run-main`,
+          stateId: runStateId,
+          createdById: adminUserId,
+        },
+        select: { id: true },
+      });
+      allRunIds.push(runMain.id);
+
+      const now = new Date();
+      await recordExecution(runMain.id, caseSharedId, passingStatusId, now);
+      await recordExecution(
+        runMain.id,
+        caseUnderStoryId,
+        passingStatusId,
+        now
+      );
+      await recordExecution(runMain.id, casePassingId, passingStatusId, now);
+      await recordExecution(runMain.id, caseFailingId, failingStatusId, now);
+
+      // caseTwoRuns: an older execution that failed, in one run, and a
+      // newer one that passed, in a different run — the case's single
+      // latest result must be the newer, passing one.
+      const runOld = await db.testRuns.create({
+        data: {
+          projectId: projectOneId,
+          name: `${STAMP}-run-old`,
+          stateId: runStateId,
+          createdById: adminUserId,
+        },
+        select: { id: true },
+      });
+      allRunIds.push(runOld.id);
+      const runNew = await db.testRuns.create({
+        data: {
+          projectId: projectOneId,
+          name: `${STAMP}-run-new`,
+          stateId: runStateId,
+          createdById: adminUserId,
+        },
+        select: { id: true },
+      });
+      allRunIds.push(runNew.id);
+
+      const executedAtOld = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+      const executedAtNew = now;
+      await recordExecution(
+        runOld.id,
+        caseTwoRunsId,
+        failingStatusId,
+        executedAtOld
+      );
+      await recordExecution(
+        runNew.id,
+        caseTwoRunsId,
+        passingStatusId,
+        executedAtNew
+      );
+
+      unrestrictedCoverage = await getRequirementCoverage(
+        projectOneId,
+        { accessibleProjectIds: null },
+        undefined,
+        db
+      );
+      unrestrictedCovering = await getRequirementCoveringCases(
+        projectOneId,
+        [reqRootId],
+        { accessibleProjectIds: null },
+        db
+      );
     });
 
     afterAll(async () => {
+      await db.testRunResults.deleteMany({
+        where: { testRunId: { in: allRunIds } },
+      });
+      await db.testRunCases.deleteMany({
+        where: { testRunId: { in: allRunIds } },
+      });
+      await db.testRuns.deleteMany({ where: { id: { in: allRunIds } } });
+      await db.repositoryCaseIssue.deleteMany({
+        where: { caseId: { in: allCaseIds } },
+      });
+      await db.repositoryCases.deleteMany({
+        where: { id: { in: allCaseIds } },
+      });
+      await db.issue.deleteMany({ where: { id: { in: allIssueIds } } });
+      await db.repositoryFolders.delete({ where: { id: folderOneId } });
+      await db.repositories.delete({ where: { id: repositoryOneId } });
+      await db.projects.delete({ where: { id: projectOneId } });
+      await db.user.delete({ where: { id: adminUserId } });
+
+      const remainingIssues = await db.issue.count({
+        where: { name: { startsWith: STAMP } },
+      });
+      const remainingCases = await db.repositoryCases.count({
+        where: { name: { startsWith: STAMP } },
+      });
+      console.log(
+        `post-teardown stamp check (${STAMP}): issues=${remainingIssues}, cases=${remainingCases}`
+      );
+
       await db.$disconnect();
     });
 
-    it.todo(
-      "a case linked at both a parent and a descendant counts once toward the parent"
-    );
+    it("a case linked at both a parent and a descendant counts once toward the parent", async () => {
+      const subtreeNodeIds = [reqRootId, storyMidId, reqChildId];
+      const links = await db.repositoryCaseIssue.findMany({
+        where: { issueId: { in: subtreeNodeIds } },
+        select: { caseId: true },
+      });
+      const rawLinkRowCount = links.length;
+      const distinctCaseCount = new Set(links.map((link) => link.caseId))
+        .size;
+      const rollupLinkedCount =
+        unrestrictedCoverage.get(reqRootId)?.linkedCaseCount;
 
-    it.todo(
-      "a requirement with no linked cases anywhere in its subtree returns as an explicit gap row"
-    );
+      expect(
+        rollupLinkedCount,
+        `reqRoot's linkedCaseCount (${rollupLinkedCount}) must equal the distinct covering-case count (${distinctCaseCount}) computed directly from the link table; raw link rows beneath it = ${rawLinkRowCount}`
+      ).toBe(distinctCaseCount);
+      expect(
+        rawLinkRowCount,
+        `raw link-row count beneath reqRoot (${rawLinkRowCount}) must exceed the distinct case count (${distinctCaseCount}) — otherwise the two matching would be a coincidence, not proof of de-duplication`
+      ).toBeGreaterThan(distinctCaseCount);
+    });
 
-    it.todo("one failed covering case makes the whole requirement FAILED");
+    it("a requirement with no linked cases anywhere in its subtree returns as an explicit gap row", async () => {
+      expect(
+        unrestrictedCoverage.has(reqGapId),
+        "reqGap must be a present key in the coverage map, not an absent one"
+      ).toBe(true);
+      const gap = unrestrictedCoverage.get(reqGapId)!;
+      expect(gap.linkedCaseCount).toBe(0);
+      expect(gap.uncovered).toBe(true);
+      expect(gap.status).toBe("UNCOVERED");
+    });
 
-    it.todo(
-      "a case linked only to a non-requirement intermediate node still rolls up to the ancestor requirement"
-    );
+    it("one failed covering case makes the whole requirement FAILED", async () => {
+      const child = unrestrictedCoverage.get(reqChildId)!;
+      expect(child.linkedCaseCount).toBe(3);
+      expect(child.failed).toBe(1);
+      expect(child.passed).toBeGreaterThan(0);
+      expect(child.status).toBe("FAILED");
+    });
 
-    it.todo("a soft-deleted or archived case does not cover a requirement");
+    it("a case linked only to a non-requirement intermediate node still rolls up to the ancestor requirement", async () => {
+      const rootCovering = unrestrictedCovering.get(reqRootId) ?? [];
+      expect(
+        rootCovering.some((entry) => entry.caseId === caseUnderStoryId)
+      ).toBe(true);
+      expect(unrestrictedCoverage.has(storyMidId)).toBe(false);
+    });
 
-    it.todo("the latest result is the most recent execution across every run");
+    it("a soft-deleted or archived case does not cover a requirement", async () => {
+      const deleted = unrestrictedCoverage.get(reqDeletedId)!;
+      expect(deleted.linkedCaseCount).toBe(0);
+      expect(deleted.uncovered).toBe(true);
+      expect(deleted.status).toBe("UNCOVERED");
+
+      const archived = unrestrictedCoverage.get(reqArchivedId)!;
+      expect(archived.linkedCaseCount).toBe(0);
+      expect(archived.uncovered).toBe(true);
+      expect(archived.status).toBe("UNCOVERED");
+    });
+
+    it("the latest result is the most recent execution across every run", async () => {
+      const latest = unrestrictedCoverage.get(reqLatestId)!;
+      expect(latest.linkedCaseCount).toBe(1);
+      expect(latest.passed).toBe(1);
+      expect(latest.failed).toBe(0);
+      expect(latest.status).toBe("PASSED");
+    });
 
     it.todo(
       "cases in another project count and are reported separately as cross-project"
@@ -100,8 +554,3 @@ describeIntegration(
     );
   }
 );
-
-// STAMP is declared for the converting plan's fixture naming; referencing
-// it here keeps this scaffold free of an unused-variable lint failure
-// until that plan builds real fixtures around it.
-void STAMP;
