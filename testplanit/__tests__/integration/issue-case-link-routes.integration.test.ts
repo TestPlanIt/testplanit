@@ -16,6 +16,10 @@ import { NextRequest } from "next/server";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
 import { createRawDbClient } from "~/lib/rawDbClient";
+import {
+  isRequirementLocked,
+  LOCKED_ISSUE_FIELDS,
+} from "~/lib/services/linkedIssueUpsert";
 
 const RUN_INTEGRATION = process.env.RUN_DB_INTEGRATION === "1";
 const HAS_DB_URL = Boolean(process.env.DATABASE_URL);
@@ -61,6 +65,24 @@ describeIntegration(
     let requirementId: number;
     let caseAId: number;
     let caseBId: number;
+
+    // m:n proof fixtures (Task 2): one case linked to two requirements,
+    // and one requirement linked to two cases — kept independent of the
+    // task-1 entities above so neither scenario's assertions depend on
+    // the other's leftover link state.
+    let reqM1Id: number;
+    let reqM2Id: number;
+    let caseM1Id: number;
+    let reqM3Id: number;
+    let caseM2Id: number;
+    let caseM3Id: number;
+
+    // Lock-safety fixture (Task 2): a synced+locked requirement bound to
+    // a real Integration row, plus a case to link it to.
+    let integrationId: number;
+    let parentCandidateId: number;
+    let lockedReqId: number;
+    let caseLockId: number;
 
     const allIssueIds: number[] = [];
     const allCaseIds: number[] = [];
@@ -145,7 +167,10 @@ describeIntegration(
         return created.id;
       }
 
-      async function createRequirement(name: string): Promise<number> {
+      async function createRequirement(
+        name: string,
+        extra: Record<string, unknown> = {}
+      ): Promise<number> {
         const created = await db.issue.create({
           data: {
             name: `${STAMP}-${name}`,
@@ -153,6 +178,7 @@ describeIntegration(
             createdById: adminUserId,
             projectId,
             isRequirement: true,
+            ...extra,
           },
           select: { id: true },
         });
@@ -163,6 +189,41 @@ describeIntegration(
       requirementId = await createRequirement("requirement-1");
       caseAId = await createCase("case-a");
       caseBId = await createCase("case-b");
+
+      // m:n fixtures.
+      reqM1Id = await createRequirement("m-req-1");
+      reqM2Id = await createRequirement("m-req-2");
+      caseM1Id = await createCase("m-case-1");
+      reqM3Id = await createRequirement("m-req-3");
+      caseM2Id = await createCase("m-case-2");
+      caseM3Id = await createCase("m-case-3");
+
+      // Lock-safety fixture: a real Integration row, a native parent
+      // candidate, and a synced+locked requirement whose five
+      // LOCKED_ISSUE_FIELDS all carry real, distinguishable values (not
+      // just null defaults) so an unintended overwrite is observable.
+      const integration = await db.integration.create({
+        data: {
+          name: `${STAMP}-jira`,
+          provider: "JIRA",
+          authType: "OAUTH2",
+          status: "ACTIVE",
+          credentials: {},
+          settings: {},
+        },
+        select: { id: true },
+      });
+      integrationId = integration.id;
+
+      parentCandidateId = await createRequirement("parent-candidate");
+      lockedReqId = await createRequirement("locked-requirement", {
+        integrationId,
+        description: `${STAMP}-locked-description`,
+        status: `${STAMP}-locked-status`,
+        priority: "high",
+        parentId: parentCandidateId,
+      });
+      caseLockId = await createCase("case-lock");
     });
 
     afterAll(async () => {
@@ -178,6 +239,7 @@ describeIntegration(
         where: { id: { in: allCaseIds } },
       });
       await db.issue.deleteMany({ where: { id: { in: allIssueIds } } });
+      await db.integration.delete({ where: { id: integrationId } });
       await db.repositoryFolders.delete({ where: { id: folderId } });
       await db.repositories.delete({ where: { id: repositoryId } });
       await db.projects.delete({ where: { id: projectId } });
@@ -192,7 +254,6 @@ describeIntegration(
       const remainingProjects = await db.projects.count({
         where: { name: { startsWith: STAMP } },
       });
-      // eslint-disable-next-line no-console
       console.log(
         `post-teardown stamp check (${STAMP}): issues=${remainingIssues}, cases=${remainingCases}, projects=${remainingProjects}`
       );
@@ -251,14 +312,141 @@ describeIntegration(
       expect(after).toBe(before);
     });
 
-    it.todo(
-      "one test case can be linked to two different requirements simultaneously"
-    );
-    it.todo(
-      "one requirement can be linked to two different test cases simultaneously"
-    );
-    it.todo(
-      "linking does not mutate any LOCKED_ISSUE_FIELDS value on a synced, locked requirement"
-    );
+    it("one test case can be linked to two different requirements simultaneously", async () => {
+      const linkToReq1 = await linkPost(
+        linkRequest({ entityType: "testCase", entityId: caseM1Id }),
+        { params: Promise.resolve({ issueId: String(reqM1Id) }) }
+      );
+      expect(linkToReq1.status).toBe(200);
+
+      const linkToReq2 = await linkPost(
+        linkRequest({ entityType: "testCase", entityId: caseM1Id }),
+        { params: Promise.resolve({ issueId: String(reqM2Id) }) }
+      );
+      expect(linkToReq2.status).toBe(200);
+
+      const [joinReq1, joinReq2] = await Promise.all([
+        db.repositoryCaseIssue.findUnique({
+          where: { caseId_issueId: { caseId: caseM1Id, issueId: reqM1Id } },
+        }),
+        db.repositoryCaseIssue.findUnique({
+          where: { caseId_issueId: { caseId: caseM1Id, issueId: reqM2Id } },
+        }),
+      ]);
+      expect(joinReq1).not.toBeNull();
+      expect(joinReq2).not.toBeNull();
+
+      const unlinkReq1 = await unlinkPost(
+        linkRequest({ entityType: "testCase", entityId: caseM1Id }),
+        { params: Promise.resolve({ issueId: String(reqM1Id) }) }
+      );
+      expect(unlinkReq1.status).toBe(200);
+
+      const [afterUnlinkReq1, afterUnlinkReq2] = await Promise.all([
+        db.repositoryCaseIssue.findUnique({
+          where: { caseId_issueId: { caseId: caseM1Id, issueId: reqM1Id } },
+        }),
+        db.repositoryCaseIssue.findUnique({
+          where: { caseId_issueId: { caseId: caseM1Id, issueId: reqM2Id } },
+        }),
+      ]);
+      expect(afterUnlinkReq1).toBeNull();
+      expect(afterUnlinkReq2).not.toBeNull();
+    });
+
+    it("one requirement can be linked to two different test cases simultaneously", async () => {
+      const linkCaseM2 = await linkPost(
+        linkRequest({ entityType: "testCase", entityId: caseM2Id }),
+        { params: Promise.resolve({ issueId: String(reqM3Id) }) }
+      );
+      expect(linkCaseM2.status).toBe(200);
+
+      const linkCaseM3 = await linkPost(
+        linkRequest({ entityType: "testCase", entityId: caseM3Id }),
+        { params: Promise.resolve({ issueId: String(reqM3Id) }) }
+      );
+      expect(linkCaseM3.status).toBe(200);
+
+      const [joinCaseM2, joinCaseM3] = await Promise.all([
+        db.repositoryCaseIssue.findUnique({
+          where: { caseId_issueId: { caseId: caseM2Id, issueId: reqM3Id } },
+        }),
+        db.repositoryCaseIssue.findUnique({
+          where: { caseId_issueId: { caseId: caseM3Id, issueId: reqM3Id } },
+        }),
+      ]);
+      expect(joinCaseM2).not.toBeNull();
+      expect(joinCaseM3).not.toBeNull();
+
+      const unlinkCaseM2 = await unlinkPost(
+        linkRequest({ entityType: "testCase", entityId: caseM2Id }),
+        { params: Promise.resolve({ issueId: String(reqM3Id) }) }
+      );
+      expect(unlinkCaseM2.status).toBe(200);
+
+      const [afterUnlinkCaseM2, afterUnlinkCaseM3] = await Promise.all([
+        db.repositoryCaseIssue.findUnique({
+          where: { caseId_issueId: { caseId: caseM2Id, issueId: reqM3Id } },
+        }),
+        db.repositoryCaseIssue.findUnique({
+          where: { caseId_issueId: { caseId: caseM3Id, issueId: reqM3Id } },
+        }),
+      ]);
+      expect(afterUnlinkCaseM2).toBeNull();
+      expect(afterUnlinkCaseM3).not.toBeNull();
+    });
+
+    it("linking does not mutate any LOCKED_ISSUE_FIELDS value on a synced, locked requirement", async () => {
+      const lockedFieldsSelect = Object.fromEntries(
+        LOCKED_ISSUE_FIELDS.map((field) => [field, true])
+      ) as Record<(typeof LOCKED_ISSUE_FIELDS)[number], true>;
+
+      const before = await db.issue.findUnique({
+        where: { id: lockedReqId },
+        select: {
+          ...lockedFieldsSelect,
+          isRequirement: true,
+          integrationId: true,
+          requirementDetachedAt: true,
+        },
+      });
+      expect(before).not.toBeNull();
+      // Fixture-drift guard: if a future change to this file (or to the
+      // schema defaults) accidentally produces an unlocked row, fail
+      // loudly here instead of the field-equality assertions below
+      // silently passing on an unlocked row for the wrong reason.
+      expect(isRequirementLocked(before)).toBe(true);
+
+      const linkRes = await linkPost(
+        linkRequest({ entityType: "testCase", entityId: caseLockId }),
+        { params: Promise.resolve({ issueId: String(lockedReqId) }) }
+      );
+      expect(linkRes.status).toBe(200);
+
+      const join = await db.repositoryCaseIssue.findUnique({
+        where: {
+          caseId_issueId: { caseId: caseLockId, issueId: lockedReqId },
+        },
+      });
+      expect(join).not.toBeNull();
+
+      const after = await db.issue.findUnique({
+        where: { id: lockedReqId },
+        select: {
+          ...lockedFieldsSelect,
+          isRequirement: true,
+          integrationId: true,
+          requirementDetachedAt: true,
+        },
+      });
+      expect(after).not.toBeNull();
+
+      for (const field of LOCKED_ISSUE_FIELDS) {
+        expect(
+          after![field],
+          `LOCKED_ISSUE_FIELDS value "${field}" changed after linking a locked requirement`
+        ).toBe(before![field]);
+      }
+    });
   }
 );
