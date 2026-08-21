@@ -13,9 +13,10 @@ const { toggleSpies } = vi.hoisted(() => ({
 
 const { useFindManyIssueMock } = vi.hoisted(() => ({
   useFindManyIssueMock: vi.fn(
-    (
-      _args?: { where?: Record<string, unknown>; orderBy?: unknown }
-    ): {
+    (_args?: {
+      where?: Record<string, unknown>;
+      orderBy?: unknown;
+    }): {
       data: Record<string, unknown>[];
       isLoading: boolean;
       error: unknown;
@@ -50,12 +51,36 @@ vi.mock("sonner", () => ({
   toast: { success: vi.fn(), error: vi.fn() },
 }));
 
+// Mutable so "disables drag when the viewer cannot edit the project" can
+// flip it false for one test, mirroring RequirementProvenanceBadge.test.tsx's
+// own established `mockIsProjectAdmin` convention for the same hook.
+let mockIsProjectAdmin = true;
 vi.mock("~/hooks/useProjectPermissions", () => ({
   useProjectPermissions: () => ({
     permissions: null,
-    isProjectAdmin: true,
+    isProjectAdmin: mockIsProjectAdmin,
     isLoading: false,
   }),
+}));
+
+// react-dnd's real DndProvider/useDrop needs no jsdom drag choreography for
+// these tests -- only the bottom-drop-zone spec object react-dnd's `useDrop`
+// is handed. Capture it directly rather than trying to simulate a real HTML5
+// drag-and-drop sequence (unassertable in jsdom; see the file-level note in
+// RequirementsTreeView.tsx's own reparent section).
+const { dropSpecRef } = vi.hoisted(() => ({
+  dropSpecRef: { current: null as any },
+}));
+
+vi.mock("react-dnd", () => ({
+  useDrop: (specFactory: () => any) => {
+    dropSpecRef.current = specFactory();
+    return [{ isOverBottom: false }, vi.fn()];
+  },
+}));
+
+vi.mock("@/components/ui/SimpleDndProvider", () => ({
+  SimpleDndProvider: ({ children }: { children: React.ReactNode }) => children,
 }));
 
 // Mock react-arborist's Tree with a thin, controlled render: TreeView.tsx's
@@ -108,6 +133,7 @@ vi.mock("react-arborist", () => ({
 }));
 
 import { Tree } from "react-arborist";
+import { toast } from "sonner";
 import RequirementsTreeView from "./RequirementsTreeView";
 
 beforeAll(() => {
@@ -150,7 +176,11 @@ const deepChainAndSecondRoot = [
   makeRequirement({ id: 2, name: "Child A1", parentId: 1 }),
   makeRequirement({ id: 3, name: "Grandchild A1a", parentId: 2 }),
   makeRequirement({ id: 4, name: "Great-grandchild A1a-i", parentId: 3 }),
-  makeRequirement({ id: 5, name: "Great-great-grandchild A1a-i-x", parentId: 4 }),
+  makeRequirement({
+    id: 5,
+    name: "Great-great-grandchild A1a-i-x",
+    parentId: 4,
+  }),
   makeRequirement({ id: 10, name: "Root B", parentId: null }),
 ];
 
@@ -169,6 +199,9 @@ describe("RequirementsTreeView", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     toggleSpies.clear();
+    dropSpecRef.current = null;
+    mockIsProjectAdmin = true;
+    global.fetch = vi.fn().mockResolvedValue({ ok: true }) as any;
     useFindManyIssueMock.mockReturnValue({
       data: [],
       isLoading: false,
@@ -299,15 +332,151 @@ describe("RequirementsTreeView", () => {
     expect(onSelectRequirement).toHaveBeenCalledWith(10);
   });
 
+  it("posts the dragged node and its new parent to the reparent route rather than writing parentId directly", async () => {
+    useFindManyIssueMock.mockReturnValue({
+      data: deepChainAndSecondRoot,
+      isLoading: false,
+      error: null,
+      refetch: vi.fn(),
+    });
+
+    render(
+      <RequirementsTreeView
+        projectId="42"
+        selectedRequirementId={null}
+        onSelectRequirement={vi.fn()}
+      />
+    );
+
+    const lastCall = vi.mocked(Tree).mock.calls.at(-1)!;
+    const onMove = lastCall[0].onMove;
+    expect(onMove).toBeDefined();
+
+    // Drag requirement id 2 (Child A1) onto id 10 (Root B) as its new parent
+    // -- the exact node-onto-node gesture react-arborist's own onMove
+    // callback owns, with no ambiguous Move/Copy choice to make.
+    await onMove!({
+      dragIds: ["2"],
+      dragNodes: [],
+      parentId: "10",
+      parentNode: null,
+      index: 0,
+    });
+
+    expect(global.fetch).toHaveBeenCalledWith(
+      "/api/projects/42/requirements/2/reparent",
+      expect.objectContaining({
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ parentId: 10 }),
+      })
+    );
+  });
+
+  it("dropping onto the bottom zone reparents the node to the root level", async () => {
+    useFindManyIssueMock.mockReturnValue({
+      data: deepChainAndSecondRoot,
+      isLoading: false,
+      error: null,
+      refetch: vi.fn(),
+    });
+
+    render(
+      <RequirementsTreeView
+        projectId="42"
+        selectedRequirementId={null}
+        onSelectRequirement={vi.fn()}
+      />
+    );
+
+    expect(dropSpecRef.current).toBeTruthy();
+    expect(dropSpecRef.current.accept).toBe("NODE");
+
+    // Node id 3 (Grandchild A1a) dropped on the root zone -- parentId: null
+    // is a first-class root-level move, not a skipped call.
+    await dropSpecRef.current.drop({ id: "3", dragIds: ["3"] });
+
+    expect(global.fetch).toHaveBeenCalledWith(
+      "/api/projects/42/requirements/3/reparent",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({ parentId: null }),
+      })
+    );
+  });
+
+  it("surfaces a server-rejected reparent as an error toast and leaves the tree unchanged", async () => {
+    const refetchSpy = vi.fn();
+    useFindManyIssueMock.mockReturnValue({
+      data: deepChainAndSecondRoot,
+      isLoading: false,
+      error: null,
+      refetch: refetchSpy,
+    });
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 400,
+      json: async () => ({
+        error: "Cannot move a requirement under its own descendant",
+      }),
+    }) as any;
+
+    render(
+      <RequirementsTreeView
+        projectId="42"
+        selectedRequirementId={null}
+        onSelectRequirement={vi.fn()}
+      />
+    );
+
+    const lastCall = vi.mocked(Tree).mock.calls.at(-1)!;
+    const onMove = lastCall[0].onMove;
+
+    await onMove!({
+      dragIds: ["1"],
+      dragNodes: [],
+      parentId: "5",
+      parentNode: null,
+      index: 0,
+    });
+
+    expect(toast.error).toHaveBeenCalledWith(
+      expect.stringContaining(
+        "Cannot move a requirement under its own descendant"
+      )
+    );
+    // The server rejected the move, so the tree must reconcile from the
+    // persisted truth rather than trust react-arborist's own optimistic
+    // internal state -- a refetch, never a manual client-side revert.
+    expect(refetchSpy).toHaveBeenCalled();
+  });
+
+  it("disables drag when the viewer cannot edit the project", () => {
+    mockIsProjectAdmin = false;
+    useFindManyIssueMock.mockReturnValue({
+      data: deepChainAndSecondRoot,
+      isLoading: false,
+      error: null,
+      refetch: vi.fn(),
+    });
+
+    render(
+      <RequirementsTreeView
+        projectId="42"
+        selectedRequirementId={null}
+        onSelectRequirement={vi.fn()}
+      />
+    );
+
+    const lastCall = vi.mocked(Tree).mock.calls.at(-1)!;
+    expect(lastCall[0].onMove).toBeUndefined();
+    expect(lastCall[0].disableDrag).toBe(true);
+    expect(lastCall[0].disableDrop).toBe(true);
+  });
+
   it.todo(
-    "posts the dragged node and its new parent to the reparent route rather than writing parentId directly"
+    "creates a native requirement with isRequirement true and the selected parentId"
   );
-  it.todo("dropping onto the bottom zone reparents the node to the root level");
-  it.todo(
-    "surfaces a server-rejected reparent as an error toast and leaves the tree unchanged"
-  );
-  it.todo("disables drag when the viewer cannot edit the project");
-  it.todo("creates a native requirement with isRequirement true and the selected parentId");
   it.todo("renames a requirement in place through the ZenStack update hook");
   it.todo("does not offer rename on a synced, non-detached requirement");
 });

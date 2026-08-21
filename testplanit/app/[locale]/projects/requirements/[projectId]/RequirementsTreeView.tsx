@@ -191,7 +191,10 @@ export default function RequirementsTreeView({
   }, [requirements]);
 
   const requirementMeta = useMemo(() => {
-    const meta = new Map<number, NonNullable<RequirementArboristNode["data"]>>();
+    const meta = new Map<
+      number,
+      NonNullable<RequirementArboristNode["data"]>
+    >();
     requirements.forEach((requirement) => {
       meta.set(requirement.id, {
         issueId: requirement.id,
@@ -428,7 +431,14 @@ export default function RequirementsTreeView({
         toast.error(t("requirements.tree.moveFailed"));
       }
     },
-    [canAddEdit, isFiltering, allRequirements, projectId, t, refetchRequirements]
+    [
+      canAddEdit,
+      isFiltering,
+      allRequirements,
+      projectId,
+      t,
+      refetchRequirements,
+    ]
   );
 
   // Bottom-of-tree drop zone for moving a requirement out to the root level.
