@@ -74,6 +74,7 @@ async function fetchCaseDetails(caseId: number) {
         take: 1,
         select: {
           id: true,
+          testRunId: true,
           status: { select: { id: true, name: true } },
           createdAt: true,
           testRun: { select: { name: true } },
@@ -84,6 +85,26 @@ async function fetchCaseDetails(caseId: number) {
 
   if (!result) {
     return result;
+  }
+
+  // The last run may be an automated one (JUnit, TestNG, Mocha, etc.), which
+  // records its outcome in JUnitTestResult and leaves TestRunCases.statusId
+  // empty. Without this the panel shows a run name and date with a blank
+  // status — which reads as "never executed" for the automation-heavy cases
+  // that dominate duplicate scans.
+  const lastRun = result.testRuns?.[0];
+  if (lastRun && lastRun.status == null) {
+    const latestAutomated = await baseDb.jUnitTestResult.findFirst({
+      where: {
+        repositoryCaseId: caseId,
+        testSuite: { testRunId: lastRun.testRunId },
+      },
+      select: { status: { select: { id: true, name: true } } },
+      orderBy: [{ executedAt: "desc" }, { id: "desc" }],
+    });
+    if (latestAutomated?.status) {
+      lastRun.status = latestAutomated.status;
+    }
   }
 
   // Remap the explicit join (caseTags) back to the prior tags shape so the
