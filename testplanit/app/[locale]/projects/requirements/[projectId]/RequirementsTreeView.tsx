@@ -3,6 +3,8 @@
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { HighlightedMatch } from "@/components/HighlightedMatch";
+import { IssueTypeIcon } from "~/utils/issueTypeIcons";
+import { formatIssueDisplayText } from "~/utils/issueDisplayText";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,7 +14,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { SimpleDndProvider } from "@/components/ui/SimpleDndProvider";
 import {
   Tooltip,
   TooltipContent,
@@ -37,7 +38,7 @@ import React, {
   useState,
 } from "react";
 import { NodeApi, Tree, TreeApi } from "react-arborist";
-import { useDrop } from "react-dnd";
+import { useDragDropManager, useDrop } from "react-dnd";
 import { toast } from "sonner";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { isRequirementLocked } from "~/lib/services/linkedIssueUpsert";
@@ -146,6 +147,10 @@ export default function RequirementsTreeView({
 }: RequirementsTreeViewProps) {
   const t = useTranslations();
   const treeRef = useRef<TreeApi<RequirementArboristNode>>(null);
+  // The manager from the SimpleDndProvider this component is mounted under
+  // (see RequirementsWorkspace.tsx). Passed to <Tree> below so react-arborist
+  // reuses it rather than standing up a second HTML5 backend.
+  const dndManager = useDragDropManager();
   const treeViewportRef = useRef<HTMLDivElement>(null);
   const [treeViewportHeight, setTreeViewportHeight] =
     useState(MIN_TREE_VIEWPORT);
@@ -371,7 +376,10 @@ export default function RequirementsTreeView({
           const hasChildren = meta?.hasChildren ?? false;
           return {
             id: child.id.toString(),
-            name: child.name,
+            // The shared "KEY: Title" convention every other issue-backed
+            // surface uses. `Issue.name` alone is just the tracker key, which
+            // makes a tree of synced requirements unreadable.
+            name: formatIssueDisplayText(child),
             // Always hand react-arborist an array, never `undefined`: it
             // reads `undefined` children as "leaf node, cannot accept a
             // drop." Since everything is loaded up front there is no
@@ -663,22 +671,35 @@ export default function RequirementsTreeView({
           {node.isEditing ? (
             <RequirementRenameInput node={node} />
           ) : (
-            <span
-              className="ms-1 min-w-0 flex-1 truncate text-sm"
-              title={node.data.name}
-            >
-              <HighlightedMatch
-                text={node.data.name}
-                query={normalizedFilter}
-                testId="requirement-filter-match"
+            <>
+              <IssueTypeIcon
+                issueTypeName={data?.originalData?.issueTypeName}
+                iconUrl={data?.originalData?.issueTypeIconUrl}
+                className="ms-1 h-4 w-4 shrink-0"
               />
-            </span>
+              <span
+                className="ms-1 min-w-0 flex-1 truncate text-sm"
+                title={node.data.name}
+              >
+                <HighlightedMatch
+                  text={node.data.name}
+                  query={normalizedFilter}
+                  testId="requirement-filter-match"
+                />
+              </span>
+            </>
           )}
           {data?.originalData && (
             <RequirementProvenanceBadge
               requirement={data.originalData}
               projectId={Number(projectId)}
-              className="shrink-0"
+              // The badge yields row space before the name does. `shrink-0`
+              // here pinned the badge at full width and squeezed the
+              // requirement title instead — the wrong thing to lose first,
+              // since the title is the identity and the badge is metadata.
+              // Overwhelming shrink weight mirrors MilestoneSourceBadge's
+              // own `shrink-[999]` wrapper.
+              className="min-w-0 shrink-[999] overflow-hidden"
             />
           )}
           {canAddEdit && (
@@ -829,12 +850,7 @@ export default function RequirementsTreeView({
   }
 
   return (
-    // A fresh top-level route with no ancestor DndProvider (unlike
-    // TreeView.tsx, which is always mounted under ProjectRepository.tsx's
-    // own SimpleDndProvider) -- react-dnd's useDrop below and react-arborist's
-    // internal onMove wiring both need this context to exist somewhere above
-    // them, or dragging fails silently at runtime.
-    <SimpleDndProvider>
+    <>
       <div className="flex h-full flex-col">
         <div className="mb-2 ms-1 me-2 flex shrink-0 items-center gap-1">
           <div className="relative min-w-0 flex-1">
@@ -890,6 +906,16 @@ export default function RequirementsTreeView({
         <div ref={treeViewportRef} className="relative flex-1">
           <Tree
             ref={treeRef}
+            // react-arborist ALWAYS mounts its own DndProvider: given a
+            // `dndManager` it reuses that manager, otherwise it constructs a
+            // fresh HTML5Backend. Since this component already sits inside
+            // SimpleDndProvider (so the bottom drop zone's useDrop above --
+            // which lives outside <Tree> and therefore outside react-arborist's
+            // own context -- has a context to attach to), letting it build a
+            // second backend throws "Cannot have two HTML5 backends at the same
+            // time" and the whole tree pane is lost. Handing it the manager we
+            // are already under keeps exactly one backend for the page.
+            dndManager={dndManager}
             data={treeData}
             openByDefault={false}
             initialOpenState={initialOpenState}
@@ -986,6 +1012,6 @@ export default function RequirementsTreeView({
           }}
         />
       )}
-    </SimpleDndProvider>
+    </>
   );
 }

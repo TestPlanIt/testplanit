@@ -91,6 +91,11 @@ const { dropSpecRef } = vi.hoisted(() => ({
 }));
 
 vi.mock("react-dnd", () => ({
+  // Stands in for the manager the real SimpleDndProvider supplies. The
+  // component passes this straight through to <Tree> so react-arborist reuses
+  // it instead of standing up a second HTML5 backend; nothing here calls into
+  // it, so an opaque sentinel is enough.
+  useDragDropManager: () => ({ __mockDndManager: true }),
   useDrop: (specFactory: () => any) => {
     dropSpecRef.current = specFactory();
     return [{ isOverBottom: false }, vi.fn()];

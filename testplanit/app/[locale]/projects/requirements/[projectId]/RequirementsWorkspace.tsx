@@ -6,6 +6,7 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
+import { SimpleDndProvider } from "@/components/ui/SimpleDndProvider";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import RequirementDetailPanel from "./RequirementDetailPanel";
@@ -69,11 +70,19 @@ export default function RequirementsWorkspace({
                 data-testid="requirements-tree-pane"
                 className="h-full overflow-y-auto"
               >
-                <RequirementsTreeView
-                  projectId={projectId}
-                  selectedRequirementId={selectedRequirementId}
-                  onSelectRequirement={setSelectedRequirementId}
-                />
+                {/* The provider must wrap the tree from OUT HERE, not from
+                    inside it: RequirementsTreeView calls react-dnd's useDrop
+                    during its own render, so a provider it rendered itself
+                    would not yet exist in the tree when that hook runs. This
+                    mirrors ProjectRepository.tsx, which wraps TreeView the
+                    same way. */}
+                <SimpleDndProvider>
+                  <RequirementsTreeView
+                    projectId={projectId}
+                    selectedRequirementId={selectedRequirementId}
+                    onSelectRequirement={setSelectedRequirementId}
+                  />
+                </SimpleDndProvider>
               </div>
             </ResizablePanel>
             <ResizableHandle withHandle />
