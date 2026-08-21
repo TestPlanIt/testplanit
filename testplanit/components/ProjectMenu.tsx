@@ -23,6 +23,7 @@ import {
   FolderKanban,
   Home,
   Layers,
+  ListChecks as RequirementsIcon,
   ListTree as RepositoryIcon,
   Milestone,
   PlayCircle as RunsIcon,
@@ -255,6 +256,17 @@ export default function ProjectsMenu({
       label: t("common.fields.issues"),
       path: "issues",
       id: "project-issues-link",
+      section: "management",
+    },
+    // Requirements is a new top-level surface, distinct from Issues (defects)
+    // — a different icon keeps them visually distinguishable in the menu.
+    // No permission gate, matching the Issues entry above: nothing server-side
+    // gates on an ApplicationArea.Issues (or .Requirements) area today.
+    {
+      icon: RequirementsIcon,
+      label: t("common.fields.requirements"),
+      path: "requirements",
+      id: "project-requirements-link",
       section: "management",
     },
     ...(canSeeReports

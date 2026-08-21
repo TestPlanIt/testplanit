@@ -342,8 +342,14 @@ describe("ProjectsMenu", () => {
       expect(link?.getAttribute("href")).toContain("/projects/milestones/42");
     });
 
-    // Wave 0 scaffold — title only, converted by 25-07.
-    it.todo("renders a Requirements entry linking to /projects/requirements/[projectId]");
+    it("renders a Requirements entry linking to /projects/requirements/[projectId]", () => {
+      render(<ProjectsMenu isCollapsed={false} onToggleCollapse={vi.fn()} />);
+      const link = document.getElementById("project-requirements-link");
+      expect(link).toBeDefined();
+      expect(link?.getAttribute("href")).toContain(
+        "/projects/requirements/42"
+      );
+    });
   });
 
   describe("collapsed state", () => {
