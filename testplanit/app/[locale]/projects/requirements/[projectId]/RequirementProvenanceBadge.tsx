@@ -193,7 +193,11 @@ export function RequirementProvenanceBadge({
       // hovered and plain rows alike.
       className={`text-xs gap-1 whitespace-nowrap group min-w-0 max-w-full overflow-hidden bg-background text-foreground ${
         asMenuTrigger || trackerUrl
-          ? "cursor-pointer hover:bg-secondary/80"
+          ? // Pair the hover background with its own foreground token. With
+            // only `hover:bg-secondary/80`, the base `text-foreground` stayed
+            // put and the label went unreadable against the hovered fill in
+            // dark themes.
+            "cursor-pointer hover:bg-secondary/80 hover:text-secondary-foreground"
           : "cursor-default"
       } ${className ?? ""}`}
       onClick={!asMenuTrigger && trackerUrl ? openInTracker : undefined}
