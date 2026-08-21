@@ -12,6 +12,7 @@ import {
   transformFolders,
 } from "@/components/forms/FolderSelect";
 import LinkedCasesPanel from "@/components/LinkedCasesPanel";
+import LinkedRequirementsPanel from "@/components/requirements/LinkedRequirementsPanel";
 import { Loading } from "@/components/Loading";
 import LoadingSpinnerAlert from "@/components/LoadingSpinnerAlert";
 import { ConfigureParametersButton } from "@/components/parameters/ConfigureParametersButton";
@@ -2973,6 +2974,14 @@ export function TestCaseDetailsView({
                   canManageLinks={canAddEdit}
                   projectId={Number(projectId)}
                   session={session}
+                />
+              </div>
+            )}
+            {!isEditMode && !isSubmitting && (
+              <div className="mt-6">
+                <LinkedRequirementsPanel
+                  caseId={testcase.id}
+                  projectId={Number(projectId)}
                 />
               </div>
             )}

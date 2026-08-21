@@ -7,12 +7,7 @@ import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { AsyncCombobox } from "@/components/ui/async-combobox";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -302,8 +297,9 @@ function AddLinkedRequirementDialog({
   isMutating,
 }: AddLinkedRequirementDialogProps) {
   const t = useTranslations("requirements.linkedRequirements");
-  const [selectedRequirement, setSelectedRequirement] =
-    useState<Issue | null>(null);
+  const [selectedRequirement, setSelectedRequirement] = useState<Issue | null>(
+    null
+  );
 
   const handleSubmit = async () => {
     await onSubmit(selectedRequirement);
