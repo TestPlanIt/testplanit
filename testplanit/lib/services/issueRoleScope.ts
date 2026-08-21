@@ -22,15 +22,19 @@
  * through the generic model route if it queries without this predicate.
  *
  * The object form (`DEFECT_SCOPE_WHERE` / `REQUIREMENT_SCOPE_WHERE`) and
- * the raw-SQL form (`ISSUE_ROLE_SCOPE_SQL_DEFECT`) are ONE contract that
+ * the two raw-SQL mirrors (`ISSUE_ROLE_SCOPE_SQL_DEFECT` /
+ * `ISSUE_ROLE_SCOPE_SQL_REQUIREMENT`, one per role) are ONE contract that
  * must move together: a call site built as a kysely-style tagged template
- * cannot interpolate a TypeScript where-object, so it mirrors this
- * predicate as a literal SQL fragment instead. If the discriminator column
- * is ever renamed, both forms must change in the same commit — an
- * unscoped read of the Issue model that forgets this predicate (whether
- * expressed as an ORM call or a raw join) is exactly the leak this module
- * exists to close, and this repo's structural containment test elsewhere
- * in this phase asserts every such read site is accounted for.
+ * cannot interpolate a TypeScript where-object, so each raw-SQL query
+ * mirrors the relevant object form as a literal SQL fragment instead. If
+ * the discriminator column is ever renamed, every form must change in the
+ * same commit — an unscoped read of the Issue model that forgets this
+ * predicate (whether expressed as an ORM call or a raw join) is exactly
+ * the leak this module exists to close, and this repo's structural
+ * containment test elsewhere in this phase asserts every such read site
+ * is accounted for. The defect mirror is consumed by the issue
+ * test-coverage report's query; the requirement mirror is consumed by the
+ * coverage rollup service's closure anchor.
  */
 
 export const ISSUE_ROLE_SCOPE_COLUMN = "isRequirement";
@@ -46,3 +50,7 @@ export const REQUIREMENT_SCOPE_WHERE: Readonly<{ isRequirement: true }> =
 // established for the Issue table in utils/issueTestCoverageUtils.ts, the
 // only place this literal is consumed.
 export const ISSUE_ROLE_SCOPE_SQL_DEFECT = 'AND i."isRequirement" = false';
+
+// Raw-SQL mirror of REQUIREMENT_SCOPE_WHERE, written against the same
+// table alias `i` so both mirrors read identically at their call sites.
+export const ISSUE_ROLE_SCOPE_SQL_REQUIREMENT = 'AND i."isRequirement" = true';
