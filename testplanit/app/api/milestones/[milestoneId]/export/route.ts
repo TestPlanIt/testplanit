@@ -276,6 +276,12 @@ export async function GET(
     // with a null case (a coverage gap); a linked case with no in-scope result
     // is left null ("Not run"). Same descendant-inclusive result scope as
     // coverage; mirrors that query's linked_cases/latest_result CTEs.
+    //
+    // Automated (JUnit/TestNG/Mocha/etc.) runs never denormalise a status onto
+    // TestRunCases.statusId — their outcome lives in JUnitTestResult — so a
+    // status-less run-case is skipped in latest_result and the case falls back
+    // to latest_junit. Without that, an automated-only case reported blank,
+    // indistinguishable from "Not run", despite having real results.
     const traceabilityRaw =
       memberRows.length > 0
         ? await baseDb.$queryRaw<
@@ -288,7 +294,7 @@ export async function GET(
               statusColor: string | null;
               runName: string | null;
               completedAt: Date | null;
-              testRunCaseId: number | null;
+              hasResult: boolean | null;
             }>
           >`
             WITH member_issues AS (
@@ -316,6 +322,7 @@ export async function GET(
               FROM linked_cases lc
               LEFT JOIN "TestRunCases" trc
                 ON trc."repositoryCaseId" = lc."caseId" AND trc."isDeleted" = false
+                AND trc."statusId" IS NOT NULL
               LEFT JOIN "TestRuns" tr
                 ON tr.id = trc."testRunId"
                 AND tr."milestoneId" = ANY(${allMilestoneIds}::int[])
@@ -323,16 +330,53 @@ export async function GET(
               LEFT JOIN "Color" col ON col.id = s."colorId"
               WHERE tr.id IS NOT NULL OR trc.id IS NULL
               ORDER BY lc."issueId", lc."caseId", trc."completedAt" DESC NULLS LAST, trc.id DESC
+            ),
+            latest_junit AS (
+              SELECT DISTINCT ON (lc."issueId", lc."caseId")
+                lc."issueId",
+                lc."caseId",
+                s.name AS "statusName",
+                col.value AS "statusColor",
+                tr.name AS "runName",
+                jr."executedAt" AS "completedAt"
+              FROM linked_cases lc
+              JOIN "JUnitTestResult" jr ON jr."repositoryCaseId" = lc."caseId"
+              JOIN "JUnitTestSuite" js ON js.id = jr."testSuiteId"
+              JOIN "TestRuns" tr
+                ON tr.id = js."testRunId"
+                AND tr."isDeleted" = false
+                AND tr."milestoneId" = ANY(${allMilestoneIds}::int[])
+              JOIN "Status" s
+                ON s.id = jr."statusId"
+                AND s."systemName" IS DISTINCT FROM 'untested'
+              LEFT JOIN "Color" col ON col.id = s."colorId"
+              ORDER BY lc."issueId", lc."caseId", jr."executedAt" DESC NULLS LAST, jr.id DESC
+            ),
+            effective AS (
+              SELECT
+                lc."issueId",
+                lc."caseId",
+                (lr."testRunCaseId" IS NOT NULL OR lj."caseId" IS NOT NULL)
+                  AS "hasResult",
+                COALESCE(lr."statusName", lj."statusName") AS "statusName",
+                COALESCE(lr."statusColor", lj."statusColor") AS "statusColor",
+                COALESCE(lr."runName", lj."runName") AS "runName",
+                COALESCE(lr."completedAt", lj."completedAt") AS "completedAt"
+              FROM linked_cases lc
+              LEFT JOIN latest_result lr
+                ON lr."issueId" = lc."issueId" AND lr."caseId" = lc."caseId"
+              LEFT JOIN latest_junit lj
+                ON lj."issueId" = lc."issueId" AND lj."caseId" = lc."caseId"
             )
             SELECT
               mi."externalKey", mi.title, mi."issueName",
               lc."caseName",
-              lr."statusName", lr."statusColor", lr."runName",
-              lr."completedAt", lr."testRunCaseId"
+              e."statusName", e."statusColor", e."runName",
+              e."completedAt", e."hasResult"
             FROM member_issues mi
             LEFT JOIN linked_cases lc ON lc."issueId" = mi."issueId"
-            LEFT JOIN latest_result lr
-              ON lr."issueId" = lc."issueId" AND lr."caseId" = lc."caseId"
+            LEFT JOIN effective e
+              ON e."issueId" = lc."issueId" AND e."caseId" = lc."caseId"
             ORDER BY mi."externalKey" NULLS LAST, mi."issueName", lc."caseName" NULLS FIRST
           `
         : [];
@@ -340,11 +384,9 @@ export async function GET(
       issueKey: r.externalKey || r.issueName || "",
       issueTitle: r.title || r.issueName || "",
       caseName: r.caseName ?? null,
-      // A row with a linked case but no in-scope TestRunCases id = "Not run".
+      // A row with a linked case but no in-scope result at all = "Not run".
       statusName:
-        r.caseName != null && r.testRunCaseId != null
-          ? (r.statusName ?? null)
-          : null,
+        r.caseName != null && r.hasResult ? (r.statusName ?? null) : null,
       statusColor: r.statusColor ?? null,
       runName: r.runName ?? null,
       executedAt: r.completedAt ? r.completedAt.toISOString() : null,
