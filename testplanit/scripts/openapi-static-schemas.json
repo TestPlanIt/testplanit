@@ -1,0 +1,4586 @@
+{
+  "BatchPayload": {
+    "type": "object",
+    "properties": {
+      "count": {
+        "type": "integer"
+      }
+    }
+  },
+  "BigIntFieldUpdateOperationsInput": {
+    "type": "object",
+    "properties": {
+      "set": {
+        "type": "integer"
+      },
+      "increment": {
+        "type": "integer"
+      },
+      "decrement": {
+        "type": "integer"
+      },
+      "multiply": {
+        "type": "integer"
+      },
+      "divide": {
+        "type": "integer"
+      }
+    }
+  },
+  "BigIntFilter": {
+    "type": "object",
+    "properties": {
+      "equals": {
+        "type": "integer"
+      },
+      "in": {
+        "type": "array",
+        "items": {
+          "type": "integer"
+        }
+      },
+      "notIn": {
+        "type": "array",
+        "items": {
+          "type": "integer"
+        }
+      },
+      "lt": {
+        "type": "integer"
+      },
+      "lte": {
+        "type": "integer"
+      },
+      "gt": {
+        "type": "integer"
+      },
+      "gte": {
+        "type": "integer"
+      },
+      "not": {
+        "oneOf": [
+          {
+            "type": "integer"
+          },
+          {
+            "$ref": "#/components/schemas/NestedBigIntFilter"
+          }
+        ]
+      }
+    }
+  },
+  "BigIntNullableFilter": {
+    "type": "object",
+    "properties": {
+      "equals": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "integer"
+          }
+        ]
+      },
+      "in": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          }
+        ]
+      },
+      "notIn": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          }
+        ]
+      },
+      "lt": {
+        "type": "integer"
+      },
+      "lte": {
+        "type": "integer"
+      },
+      "gt": {
+        "type": "integer"
+      },
+      "gte": {
+        "type": "integer"
+      },
+      "not": {
+        "oneOf": [
+          {
+            "type": "integer"
+          },
+          {
+            "$ref": "#/components/schemas/NestedBigIntNullableFilter"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      }
+    }
+  },
+  "BigIntNullableWithAggregatesFilter": {
+    "type": "object",
+    "properties": {
+      "equals": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "integer"
+          }
+        ]
+      },
+      "in": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          }
+        ]
+      },
+      "notIn": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          }
+        ]
+      },
+      "lt": {
+        "type": "integer"
+      },
+      "lte": {
+        "type": "integer"
+      },
+      "gt": {
+        "type": "integer"
+      },
+      "gte": {
+        "type": "integer"
+      },
+      "not": {
+        "oneOf": [
+          {
+            "type": "integer"
+          },
+          {
+            "$ref": "#/components/schemas/NestedBigIntNullableWithAggregatesFilter"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "_count": {
+        "$ref": "#/components/schemas/NestedIntNullableFilter"
+      },
+      "_avg": {
+        "$ref": "#/components/schemas/NestedFloatNullableFilter"
+      },
+      "_sum": {
+        "$ref": "#/components/schemas/NestedBigIntNullableFilter"
+      },
+      "_min": {
+        "$ref": "#/components/schemas/NestedBigIntNullableFilter"
+      },
+      "_max": {
+        "$ref": "#/components/schemas/NestedBigIntNullableFilter"
+      }
+    }
+  },
+  "BigIntWithAggregatesFilter": {
+    "type": "object",
+    "properties": {
+      "equals": {
+        "type": "integer"
+      },
+      "in": {
+        "type": "array",
+        "items": {
+          "type": "integer"
+        }
+      },
+      "notIn": {
+        "type": "array",
+        "items": {
+          "type": "integer"
+        }
+      },
+      "lt": {
+        "type": "integer"
+      },
+      "lte": {
+        "type": "integer"
+      },
+      "gt": {
+        "type": "integer"
+      },
+      "gte": {
+        "type": "integer"
+      },
+      "not": {
+        "oneOf": [
+          {
+            "type": "integer"
+          },
+          {
+            "$ref": "#/components/schemas/NestedBigIntWithAggregatesFilter"
+          }
+        ]
+      },
+      "_count": {
+        "$ref": "#/components/schemas/NestedIntFilter"
+      },
+      "_avg": {
+        "$ref": "#/components/schemas/NestedFloatFilter"
+      },
+      "_sum": {
+        "$ref": "#/components/schemas/NestedBigIntFilter"
+      },
+      "_min": {
+        "$ref": "#/components/schemas/NestedBigIntFilter"
+      },
+      "_max": {
+        "$ref": "#/components/schemas/NestedBigIntFilter"
+      }
+    }
+  },
+  "BoolFieldUpdateOperationsInput": {
+    "type": "object",
+    "properties": {
+      "set": {
+        "type": "boolean"
+      }
+    }
+  },
+  "BoolFilter": {
+    "type": "object",
+    "properties": {
+      "equals": {
+        "type": "boolean"
+      },
+      "not": {
+        "oneOf": [
+          {
+            "type": "boolean"
+          },
+          {
+            "$ref": "#/components/schemas/NestedBoolFilter"
+          }
+        ]
+      }
+    }
+  },
+  "BoolNullableFilter": {
+    "type": "object",
+    "properties": {
+      "equals": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "boolean"
+          }
+        ]
+      },
+      "not": {
+        "oneOf": [
+          {
+            "type": "boolean"
+          },
+          {
+            "$ref": "#/components/schemas/NestedBoolNullableFilter"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      }
+    }
+  },
+  "BoolNullableWithAggregatesFilter": {
+    "type": "object",
+    "properties": {
+      "equals": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "boolean"
+          }
+        ]
+      },
+      "not": {
+        "oneOf": [
+          {
+            "type": "boolean"
+          },
+          {
+            "$ref": "#/components/schemas/NestedBoolNullableWithAggregatesFilter"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "_count": {
+        "$ref": "#/components/schemas/NestedIntNullableFilter"
+      },
+      "_min": {
+        "$ref": "#/components/schemas/NestedBoolNullableFilter"
+      },
+      "_max": {
+        "$ref": "#/components/schemas/NestedBoolNullableFilter"
+      }
+    }
+  },
+  "BoolWithAggregatesFilter": {
+    "type": "object",
+    "properties": {
+      "equals": {
+        "type": "boolean"
+      },
+      "not": {
+        "oneOf": [
+          {
+            "type": "boolean"
+          },
+          {
+            "$ref": "#/components/schemas/NestedBoolWithAggregatesFilter"
+          }
+        ]
+      },
+      "_count": {
+        "$ref": "#/components/schemas/NestedIntFilter"
+      },
+      "_min": {
+        "$ref": "#/components/schemas/NestedBoolFilter"
+      },
+      "_max": {
+        "$ref": "#/components/schemas/NestedBoolFilter"
+      }
+    }
+  },
+  "DateTimeFieldUpdateOperationsInput": {
+    "type": "object",
+    "properties": {
+      "set": {
+        "type": "string",
+        "format": "date-time"
+      }
+    }
+  },
+  "DateTimeFilter": {
+    "type": "object",
+    "properties": {
+      "equals": {
+        "type": "string",
+        "format": "date-time"
+      },
+      "in": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "notIn": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "lt": {
+        "type": "string",
+        "format": "date-time"
+      },
+      "lte": {
+        "type": "string",
+        "format": "date-time"
+      },
+      "gt": {
+        "type": "string",
+        "format": "date-time"
+      },
+      "gte": {
+        "type": "string",
+        "format": "date-time"
+      },
+      "not": {
+        "oneOf": [
+          {
+            "type": "string",
+            "format": "date-time"
+          },
+          {
+            "$ref": "#/components/schemas/NestedDateTimeFilter"
+          }
+        ]
+      }
+    }
+  },
+  "DateTimeNullableFilter": {
+    "type": "object",
+    "properties": {
+      "equals": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "string",
+            "format": "date-time"
+          }
+        ]
+      },
+      "in": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        ]
+      },
+      "notIn": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        ]
+      },
+      "lt": {
+        "type": "string",
+        "format": "date-time"
+      },
+      "lte": {
+        "type": "string",
+        "format": "date-time"
+      },
+      "gt": {
+        "type": "string",
+        "format": "date-time"
+      },
+      "gte": {
+        "type": "string",
+        "format": "date-time"
+      },
+      "not": {
+        "oneOf": [
+          {
+            "type": "string",
+            "format": "date-time"
+          },
+          {
+            "$ref": "#/components/schemas/NestedDateTimeNullableFilter"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      }
+    }
+  },
+  "DateTimeNullableWithAggregatesFilter": {
+    "type": "object",
+    "properties": {
+      "equals": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "string",
+            "format": "date-time"
+          }
+        ]
+      },
+      "in": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        ]
+      },
+      "notIn": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        ]
+      },
+      "lt": {
+        "type": "string",
+        "format": "date-time"
+      },
+      "lte": {
+        "type": "string",
+        "format": "date-time"
+      },
+      "gt": {
+        "type": "string",
+        "format": "date-time"
+      },
+      "gte": {
+        "type": "string",
+        "format": "date-time"
+      },
+      "not": {
+        "oneOf": [
+          {
+            "type": "string",
+            "format": "date-time"
+          },
+          {
+            "$ref": "#/components/schemas/NestedDateTimeNullableWithAggregatesFilter"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "_count": {
+        "$ref": "#/components/schemas/NestedIntNullableFilter"
+      },
+      "_min": {
+        "$ref": "#/components/schemas/NestedDateTimeNullableFilter"
+      },
+      "_max": {
+        "$ref": "#/components/schemas/NestedDateTimeNullableFilter"
+      }
+    }
+  },
+  "DateTimeWithAggregatesFilter": {
+    "type": "object",
+    "properties": {
+      "equals": {
+        "type": "string",
+        "format": "date-time"
+      },
+      "in": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "notIn": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "lt": {
+        "type": "string",
+        "format": "date-time"
+      },
+      "lte": {
+        "type": "string",
+        "format": "date-time"
+      },
+      "gt": {
+        "type": "string",
+        "format": "date-time"
+      },
+      "gte": {
+        "type": "string",
+        "format": "date-time"
+      },
+      "not": {
+        "oneOf": [
+          {
+            "type": "string",
+            "format": "date-time"
+          },
+          {
+            "$ref": "#/components/schemas/NestedDateTimeWithAggregatesFilter"
+          }
+        ]
+      },
+      "_count": {
+        "$ref": "#/components/schemas/NestedIntFilter"
+      },
+      "_min": {
+        "$ref": "#/components/schemas/NestedDateTimeFilter"
+      },
+      "_max": {
+        "$ref": "#/components/schemas/NestedDateTimeFilter"
+      }
+    }
+  },
+  "DecimalFieldUpdateOperationsInput": {
+    "type": "object",
+    "properties": {
+      "set": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          }
+        ]
+      },
+      "increment": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          }
+        ]
+      },
+      "decrement": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          }
+        ]
+      },
+      "multiply": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          }
+        ]
+      },
+      "divide": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          }
+        ]
+      }
+    }
+  },
+  "DecimalFilter": {
+    "type": "object",
+    "properties": {
+      "equals": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          }
+        ]
+      },
+      "in": {
+        "type": "array",
+        "items": {
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            }
+          ]
+        }
+      },
+      "notIn": {
+        "type": "array",
+        "items": {
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            }
+          ]
+        }
+      },
+      "lt": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          }
+        ]
+      },
+      "lte": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          }
+        ]
+      },
+      "gt": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          }
+        ]
+      },
+      "gte": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          }
+        ]
+      },
+      "not": {
+        "oneOf": [
+          {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "number"
+              }
+            ]
+          },
+          {
+            "$ref": "#/components/schemas/NestedDecimalFilter"
+          }
+        ]
+      }
+    }
+  },
+  "DecimalNullableFilter": {
+    "type": "object",
+    "properties": {
+      "equals": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "in": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "array",
+            "items": {
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "notIn": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "array",
+            "items": {
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "lt": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          }
+        ]
+      },
+      "lte": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          }
+        ]
+      },
+      "gt": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          }
+        ]
+      },
+      "gte": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          }
+        ]
+      },
+      "not": {
+        "oneOf": [
+          {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "number"
+              }
+            ]
+          },
+          {
+            "$ref": "#/components/schemas/NestedDecimalNullableFilter"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      }
+    }
+  },
+  "DecimalNullableWithAggregatesFilter": {
+    "type": "object",
+    "properties": {
+      "equals": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "in": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "array",
+            "items": {
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "notIn": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "array",
+            "items": {
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "lt": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          }
+        ]
+      },
+      "lte": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          }
+        ]
+      },
+      "gt": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          }
+        ]
+      },
+      "gte": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          }
+        ]
+      },
+      "not": {
+        "oneOf": [
+          {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "number"
+              }
+            ]
+          },
+          {
+            "$ref": "#/components/schemas/NestedDecimalNullableWithAggregatesFilter"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "_count": {
+        "$ref": "#/components/schemas/NestedIntNullableFilter"
+      },
+      "_avg": {
+        "$ref": "#/components/schemas/NestedDecimalNullableFilter"
+      },
+      "_sum": {
+        "$ref": "#/components/schemas/NestedDecimalNullableFilter"
+      },
+      "_min": {
+        "$ref": "#/components/schemas/NestedDecimalNullableFilter"
+      },
+      "_max": {
+        "$ref": "#/components/schemas/NestedDecimalNullableFilter"
+      }
+    }
+  },
+  "DecimalWithAggregatesFilter": {
+    "type": "object",
+    "properties": {
+      "equals": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          }
+        ]
+      },
+      "in": {
+        "type": "array",
+        "items": {
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            }
+          ]
+        }
+      },
+      "notIn": {
+        "type": "array",
+        "items": {
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            }
+          ]
+        }
+      },
+      "lt": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          }
+        ]
+      },
+      "lte": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          }
+        ]
+      },
+      "gt": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          }
+        ]
+      },
+      "gte": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          }
+        ]
+      },
+      "not": {
+        "oneOf": [
+          {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "number"
+              }
+            ]
+          },
+          {
+            "$ref": "#/components/schemas/NestedDecimalWithAggregatesFilter"
+          }
+        ]
+      },
+      "_count": {
+        "$ref": "#/components/schemas/NestedIntFilter"
+      },
+      "_avg": {
+        "$ref": "#/components/schemas/NestedDecimalFilter"
+      },
+      "_sum": {
+        "$ref": "#/components/schemas/NestedDecimalFilter"
+      },
+      "_min": {
+        "$ref": "#/components/schemas/NestedDecimalFilter"
+      },
+      "_max": {
+        "$ref": "#/components/schemas/NestedDecimalFilter"
+      }
+    }
+  },
+  "FloatFieldUpdateOperationsInput": {
+    "type": "object",
+    "properties": {
+      "set": {
+        "type": "number"
+      },
+      "increment": {
+        "type": "number"
+      },
+      "decrement": {
+        "type": "number"
+      },
+      "multiply": {
+        "type": "number"
+      },
+      "divide": {
+        "type": "number"
+      }
+    }
+  },
+  "FloatFilter": {
+    "type": "object",
+    "properties": {
+      "equals": {
+        "type": "number"
+      },
+      "in": {
+        "type": "array",
+        "items": {
+          "type": "number"
+        }
+      },
+      "notIn": {
+        "type": "array",
+        "items": {
+          "type": "number"
+        }
+      },
+      "lt": {
+        "type": "number"
+      },
+      "lte": {
+        "type": "number"
+      },
+      "gt": {
+        "type": "number"
+      },
+      "gte": {
+        "type": "number"
+      },
+      "not": {
+        "oneOf": [
+          {
+            "type": "number"
+          },
+          {
+            "$ref": "#/components/schemas/NestedFloatFilter"
+          }
+        ]
+      }
+    }
+  },
+  "FloatNullableFilter": {
+    "type": "object",
+    "properties": {
+      "equals": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "number"
+          }
+        ]
+      },
+      "in": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          }
+        ]
+      },
+      "notIn": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          }
+        ]
+      },
+      "lt": {
+        "type": "number"
+      },
+      "lte": {
+        "type": "number"
+      },
+      "gt": {
+        "type": "number"
+      },
+      "gte": {
+        "type": "number"
+      },
+      "not": {
+        "oneOf": [
+          {
+            "type": "number"
+          },
+          {
+            "$ref": "#/components/schemas/NestedFloatNullableFilter"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      }
+    }
+  },
+  "FloatNullableWithAggregatesFilter": {
+    "type": "object",
+    "properties": {
+      "equals": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "number"
+          }
+        ]
+      },
+      "in": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          }
+        ]
+      },
+      "notIn": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          }
+        ]
+      },
+      "lt": {
+        "type": "number"
+      },
+      "lte": {
+        "type": "number"
+      },
+      "gt": {
+        "type": "number"
+      },
+      "gte": {
+        "type": "number"
+      },
+      "not": {
+        "oneOf": [
+          {
+            "type": "number"
+          },
+          {
+            "$ref": "#/components/schemas/NestedFloatNullableWithAggregatesFilter"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "_count": {
+        "$ref": "#/components/schemas/NestedIntNullableFilter"
+      },
+      "_avg": {
+        "$ref": "#/components/schemas/NestedFloatNullableFilter"
+      },
+      "_sum": {
+        "$ref": "#/components/schemas/NestedFloatNullableFilter"
+      },
+      "_min": {
+        "$ref": "#/components/schemas/NestedFloatNullableFilter"
+      },
+      "_max": {
+        "$ref": "#/components/schemas/NestedFloatNullableFilter"
+      }
+    }
+  },
+  "FloatWithAggregatesFilter": {
+    "type": "object",
+    "properties": {
+      "equals": {
+        "type": "number"
+      },
+      "in": {
+        "type": "array",
+        "items": {
+          "type": "number"
+        }
+      },
+      "notIn": {
+        "type": "array",
+        "items": {
+          "type": "number"
+        }
+      },
+      "lt": {
+        "type": "number"
+      },
+      "lte": {
+        "type": "number"
+      },
+      "gt": {
+        "type": "number"
+      },
+      "gte": {
+        "type": "number"
+      },
+      "not": {
+        "oneOf": [
+          {
+            "type": "number"
+          },
+          {
+            "$ref": "#/components/schemas/NestedFloatWithAggregatesFilter"
+          }
+        ]
+      },
+      "_count": {
+        "$ref": "#/components/schemas/NestedIntFilter"
+      },
+      "_avg": {
+        "$ref": "#/components/schemas/NestedFloatFilter"
+      },
+      "_sum": {
+        "$ref": "#/components/schemas/NestedFloatFilter"
+      },
+      "_min": {
+        "$ref": "#/components/schemas/NestedFloatFilter"
+      },
+      "_max": {
+        "$ref": "#/components/schemas/NestedFloatFilter"
+      }
+    }
+  },
+  "IntFieldUpdateOperationsInput": {
+    "type": "object",
+    "properties": {
+      "set": {
+        "type": "integer"
+      },
+      "increment": {
+        "type": "integer"
+      },
+      "decrement": {
+        "type": "integer"
+      },
+      "multiply": {
+        "type": "integer"
+      },
+      "divide": {
+        "type": "integer"
+      }
+    }
+  },
+  "IntFilter": {
+    "type": "object",
+    "properties": {
+      "equals": {
+        "type": "integer"
+      },
+      "in": {
+        "type": "array",
+        "items": {
+          "type": "integer"
+        }
+      },
+      "notIn": {
+        "type": "array",
+        "items": {
+          "type": "integer"
+        }
+      },
+      "lt": {
+        "type": "integer"
+      },
+      "lte": {
+        "type": "integer"
+      },
+      "gt": {
+        "type": "integer"
+      },
+      "gte": {
+        "type": "integer"
+      },
+      "not": {
+        "oneOf": [
+          {
+            "type": "integer"
+          },
+          {
+            "$ref": "#/components/schemas/NestedIntFilter"
+          }
+        ]
+      }
+    }
+  },
+  "IntNullableFilter": {
+    "type": "object",
+    "properties": {
+      "equals": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "integer"
+          }
+        ]
+      },
+      "in": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          }
+        ]
+      },
+      "notIn": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          }
+        ]
+      },
+      "lt": {
+        "type": "integer"
+      },
+      "lte": {
+        "type": "integer"
+      },
+      "gt": {
+        "type": "integer"
+      },
+      "gte": {
+        "type": "integer"
+      },
+      "not": {
+        "oneOf": [
+          {
+            "type": "integer"
+          },
+          {
+            "$ref": "#/components/schemas/NestedIntNullableFilter"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      }
+    }
+  },
+  "IntNullableWithAggregatesFilter": {
+    "type": "object",
+    "properties": {
+      "equals": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "integer"
+          }
+        ]
+      },
+      "in": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          }
+        ]
+      },
+      "notIn": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          }
+        ]
+      },
+      "lt": {
+        "type": "integer"
+      },
+      "lte": {
+        "type": "integer"
+      },
+      "gt": {
+        "type": "integer"
+      },
+      "gte": {
+        "type": "integer"
+      },
+      "not": {
+        "oneOf": [
+          {
+            "type": "integer"
+          },
+          {
+            "$ref": "#/components/schemas/NestedIntNullableWithAggregatesFilter"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "_count": {
+        "$ref": "#/components/schemas/NestedIntNullableFilter"
+      },
+      "_avg": {
+        "$ref": "#/components/schemas/NestedFloatNullableFilter"
+      },
+      "_sum": {
+        "$ref": "#/components/schemas/NestedIntNullableFilter"
+      },
+      "_min": {
+        "$ref": "#/components/schemas/NestedIntNullableFilter"
+      },
+      "_max": {
+        "$ref": "#/components/schemas/NestedIntNullableFilter"
+      }
+    }
+  },
+  "IntWithAggregatesFilter": {
+    "type": "object",
+    "properties": {
+      "equals": {
+        "type": "integer"
+      },
+      "in": {
+        "type": "array",
+        "items": {
+          "type": "integer"
+        }
+      },
+      "notIn": {
+        "type": "array",
+        "items": {
+          "type": "integer"
+        }
+      },
+      "lt": {
+        "type": "integer"
+      },
+      "lte": {
+        "type": "integer"
+      },
+      "gt": {
+        "type": "integer"
+      },
+      "gte": {
+        "type": "integer"
+      },
+      "not": {
+        "oneOf": [
+          {
+            "type": "integer"
+          },
+          {
+            "$ref": "#/components/schemas/NestedIntWithAggregatesFilter"
+          }
+        ]
+      },
+      "_count": {
+        "$ref": "#/components/schemas/NestedIntFilter"
+      },
+      "_avg": {
+        "$ref": "#/components/schemas/NestedFloatFilter"
+      },
+      "_sum": {
+        "$ref": "#/components/schemas/NestedIntFilter"
+      },
+      "_min": {
+        "$ref": "#/components/schemas/NestedIntFilter"
+      },
+      "_max": {
+        "$ref": "#/components/schemas/NestedIntFilter"
+      }
+    }
+  },
+  "JsonFilter": {
+    "type": "object",
+    "properties": {
+      "equals": {
+        "oneOf": [
+          {},
+          {
+            "$ref": "#/components/schemas/JsonNullValueFilter"
+          }
+        ]
+      },
+      "path": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "mode": {
+        "$ref": "#/components/schemas/QueryMode"
+      },
+      "string_contains": {
+        "type": "string"
+      },
+      "string_starts_with": {
+        "type": "string"
+      },
+      "string_ends_with": {
+        "type": "string"
+      },
+      "array_starts_with": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {}
+        ]
+      },
+      "array_ends_with": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {}
+        ]
+      },
+      "array_contains": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {}
+        ]
+      },
+      "lt": {},
+      "lte": {},
+      "gt": {},
+      "gte": {},
+      "not": {
+        "oneOf": [
+          {},
+          {
+            "$ref": "#/components/schemas/JsonNullValueFilter"
+          }
+        ]
+      }
+    }
+  },
+  "JsonNullableFilter": {
+    "type": "object",
+    "properties": {
+      "equals": {
+        "oneOf": [
+          {},
+          {
+            "$ref": "#/components/schemas/JsonNullValueFilter"
+          }
+        ]
+      },
+      "path": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "mode": {
+        "$ref": "#/components/schemas/QueryMode"
+      },
+      "string_contains": {
+        "type": "string"
+      },
+      "string_starts_with": {
+        "type": "string"
+      },
+      "string_ends_with": {
+        "type": "string"
+      },
+      "array_starts_with": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {}
+        ]
+      },
+      "array_ends_with": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {}
+        ]
+      },
+      "array_contains": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {}
+        ]
+      },
+      "lt": {},
+      "lte": {},
+      "gt": {},
+      "gte": {},
+      "not": {
+        "oneOf": [
+          {},
+          {
+            "$ref": "#/components/schemas/JsonNullValueFilter"
+          }
+        ]
+      }
+    }
+  },
+  "JsonNullableWithAggregatesFilter": {
+    "type": "object",
+    "properties": {
+      "equals": {
+        "oneOf": [
+          {},
+          {
+            "$ref": "#/components/schemas/JsonNullValueFilter"
+          }
+        ]
+      },
+      "path": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "mode": {
+        "$ref": "#/components/schemas/QueryMode"
+      },
+      "string_contains": {
+        "type": "string"
+      },
+      "string_starts_with": {
+        "type": "string"
+      },
+      "string_ends_with": {
+        "type": "string"
+      },
+      "array_starts_with": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {}
+        ]
+      },
+      "array_ends_with": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {}
+        ]
+      },
+      "array_contains": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {}
+        ]
+      },
+      "lt": {},
+      "lte": {},
+      "gt": {},
+      "gte": {},
+      "not": {
+        "oneOf": [
+          {},
+          {
+            "$ref": "#/components/schemas/JsonNullValueFilter"
+          }
+        ]
+      },
+      "_count": {
+        "$ref": "#/components/schemas/NestedIntNullableFilter"
+      },
+      "_min": {
+        "$ref": "#/components/schemas/NestedJsonNullableFilter"
+      },
+      "_max": {
+        "$ref": "#/components/schemas/NestedJsonNullableFilter"
+      }
+    }
+  },
+  "JsonWithAggregatesFilter": {
+    "type": "object",
+    "properties": {
+      "equals": {
+        "oneOf": [
+          {},
+          {
+            "$ref": "#/components/schemas/JsonNullValueFilter"
+          }
+        ]
+      },
+      "path": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "mode": {
+        "$ref": "#/components/schemas/QueryMode"
+      },
+      "string_contains": {
+        "type": "string"
+      },
+      "string_starts_with": {
+        "type": "string"
+      },
+      "string_ends_with": {
+        "type": "string"
+      },
+      "array_starts_with": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {}
+        ]
+      },
+      "array_ends_with": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {}
+        ]
+      },
+      "array_contains": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {}
+        ]
+      },
+      "lt": {},
+      "lte": {},
+      "gt": {},
+      "gte": {},
+      "not": {
+        "oneOf": [
+          {},
+          {
+            "$ref": "#/components/schemas/JsonNullValueFilter"
+          }
+        ]
+      },
+      "_count": {
+        "$ref": "#/components/schemas/NestedIntFilter"
+      },
+      "_min": {
+        "$ref": "#/components/schemas/NestedJsonFilter"
+      },
+      "_max": {
+        "$ref": "#/components/schemas/NestedJsonFilter"
+      }
+    }
+  },
+  "NestedBigIntFilter": {
+    "type": "object",
+    "properties": {
+      "equals": {
+        "type": "integer"
+      },
+      "in": {
+        "type": "array",
+        "items": {
+          "type": "integer"
+        }
+      },
+      "notIn": {
+        "type": "array",
+        "items": {
+          "type": "integer"
+        }
+      },
+      "lt": {
+        "type": "integer"
+      },
+      "lte": {
+        "type": "integer"
+      },
+      "gt": {
+        "type": "integer"
+      },
+      "gte": {
+        "type": "integer"
+      },
+      "not": {
+        "oneOf": [
+          {
+            "type": "integer"
+          },
+          {
+            "$ref": "#/components/schemas/NestedBigIntFilter"
+          }
+        ]
+      }
+    }
+  },
+  "NestedBigIntNullableFilter": {
+    "type": "object",
+    "properties": {
+      "equals": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "integer"
+          }
+        ]
+      },
+      "in": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          }
+        ]
+      },
+      "notIn": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          }
+        ]
+      },
+      "lt": {
+        "type": "integer"
+      },
+      "lte": {
+        "type": "integer"
+      },
+      "gt": {
+        "type": "integer"
+      },
+      "gte": {
+        "type": "integer"
+      },
+      "not": {
+        "oneOf": [
+          {
+            "type": "integer"
+          },
+          {
+            "$ref": "#/components/schemas/NestedBigIntNullableFilter"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      }
+    }
+  },
+  "NestedBigIntNullableWithAggregatesFilter": {
+    "type": "object",
+    "properties": {
+      "equals": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "integer"
+          }
+        ]
+      },
+      "in": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          }
+        ]
+      },
+      "notIn": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          }
+        ]
+      },
+      "lt": {
+        "type": "integer"
+      },
+      "lte": {
+        "type": "integer"
+      },
+      "gt": {
+        "type": "integer"
+      },
+      "gte": {
+        "type": "integer"
+      },
+      "not": {
+        "oneOf": [
+          {
+            "type": "integer"
+          },
+          {
+            "$ref": "#/components/schemas/NestedBigIntNullableWithAggregatesFilter"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "_count": {
+        "$ref": "#/components/schemas/NestedIntNullableFilter"
+      },
+      "_avg": {
+        "$ref": "#/components/schemas/NestedFloatNullableFilter"
+      },
+      "_sum": {
+        "$ref": "#/components/schemas/NestedBigIntNullableFilter"
+      },
+      "_min": {
+        "$ref": "#/components/schemas/NestedBigIntNullableFilter"
+      },
+      "_max": {
+        "$ref": "#/components/schemas/NestedBigIntNullableFilter"
+      }
+    }
+  },
+  "NestedBigIntWithAggregatesFilter": {
+    "type": "object",
+    "properties": {
+      "equals": {
+        "type": "integer"
+      },
+      "in": {
+        "type": "array",
+        "items": {
+          "type": "integer"
+        }
+      },
+      "notIn": {
+        "type": "array",
+        "items": {
+          "type": "integer"
+        }
+      },
+      "lt": {
+        "type": "integer"
+      },
+      "lte": {
+        "type": "integer"
+      },
+      "gt": {
+        "type": "integer"
+      },
+      "gte": {
+        "type": "integer"
+      },
+      "not": {
+        "oneOf": [
+          {
+            "type": "integer"
+          },
+          {
+            "$ref": "#/components/schemas/NestedBigIntWithAggregatesFilter"
+          }
+        ]
+      },
+      "_count": {
+        "$ref": "#/components/schemas/NestedIntFilter"
+      },
+      "_avg": {
+        "$ref": "#/components/schemas/NestedFloatFilter"
+      },
+      "_sum": {
+        "$ref": "#/components/schemas/NestedBigIntFilter"
+      },
+      "_min": {
+        "$ref": "#/components/schemas/NestedBigIntFilter"
+      },
+      "_max": {
+        "$ref": "#/components/schemas/NestedBigIntFilter"
+      }
+    }
+  },
+  "NestedBoolFilter": {
+    "type": "object",
+    "properties": {
+      "equals": {
+        "type": "boolean"
+      },
+      "not": {
+        "oneOf": [
+          {
+            "type": "boolean"
+          },
+          {
+            "$ref": "#/components/schemas/NestedBoolFilter"
+          }
+        ]
+      }
+    }
+  },
+  "NestedBoolNullableFilter": {
+    "type": "object",
+    "properties": {
+      "equals": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "boolean"
+          }
+        ]
+      },
+      "not": {
+        "oneOf": [
+          {
+            "type": "boolean"
+          },
+          {
+            "$ref": "#/components/schemas/NestedBoolNullableFilter"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      }
+    }
+  },
+  "NestedBoolNullableWithAggregatesFilter": {
+    "type": "object",
+    "properties": {
+      "equals": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "boolean"
+          }
+        ]
+      },
+      "not": {
+        "oneOf": [
+          {
+            "type": "boolean"
+          },
+          {
+            "$ref": "#/components/schemas/NestedBoolNullableWithAggregatesFilter"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "_count": {
+        "$ref": "#/components/schemas/NestedIntNullableFilter"
+      },
+      "_min": {
+        "$ref": "#/components/schemas/NestedBoolNullableFilter"
+      },
+      "_max": {
+        "$ref": "#/components/schemas/NestedBoolNullableFilter"
+      }
+    }
+  },
+  "NestedBoolWithAggregatesFilter": {
+    "type": "object",
+    "properties": {
+      "equals": {
+        "type": "boolean"
+      },
+      "not": {
+        "oneOf": [
+          {
+            "type": "boolean"
+          },
+          {
+            "$ref": "#/components/schemas/NestedBoolWithAggregatesFilter"
+          }
+        ]
+      },
+      "_count": {
+        "$ref": "#/components/schemas/NestedIntFilter"
+      },
+      "_min": {
+        "$ref": "#/components/schemas/NestedBoolFilter"
+      },
+      "_max": {
+        "$ref": "#/components/schemas/NestedBoolFilter"
+      }
+    }
+  },
+  "NestedDateTimeFilter": {
+    "type": "object",
+    "properties": {
+      "equals": {
+        "type": "string",
+        "format": "date-time"
+      },
+      "in": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "notIn": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "lt": {
+        "type": "string",
+        "format": "date-time"
+      },
+      "lte": {
+        "type": "string",
+        "format": "date-time"
+      },
+      "gt": {
+        "type": "string",
+        "format": "date-time"
+      },
+      "gte": {
+        "type": "string",
+        "format": "date-time"
+      },
+      "not": {
+        "oneOf": [
+          {
+            "type": "string",
+            "format": "date-time"
+          },
+          {
+            "$ref": "#/components/schemas/NestedDateTimeFilter"
+          }
+        ]
+      }
+    }
+  },
+  "NestedDateTimeNullableFilter": {
+    "type": "object",
+    "properties": {
+      "equals": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "string",
+            "format": "date-time"
+          }
+        ]
+      },
+      "in": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        ]
+      },
+      "notIn": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        ]
+      },
+      "lt": {
+        "type": "string",
+        "format": "date-time"
+      },
+      "lte": {
+        "type": "string",
+        "format": "date-time"
+      },
+      "gt": {
+        "type": "string",
+        "format": "date-time"
+      },
+      "gte": {
+        "type": "string",
+        "format": "date-time"
+      },
+      "not": {
+        "oneOf": [
+          {
+            "type": "string",
+            "format": "date-time"
+          },
+          {
+            "$ref": "#/components/schemas/NestedDateTimeNullableFilter"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      }
+    }
+  },
+  "NestedDateTimeNullableWithAggregatesFilter": {
+    "type": "object",
+    "properties": {
+      "equals": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "string",
+            "format": "date-time"
+          }
+        ]
+      },
+      "in": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        ]
+      },
+      "notIn": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        ]
+      },
+      "lt": {
+        "type": "string",
+        "format": "date-time"
+      },
+      "lte": {
+        "type": "string",
+        "format": "date-time"
+      },
+      "gt": {
+        "type": "string",
+        "format": "date-time"
+      },
+      "gte": {
+        "type": "string",
+        "format": "date-time"
+      },
+      "not": {
+        "oneOf": [
+          {
+            "type": "string",
+            "format": "date-time"
+          },
+          {
+            "$ref": "#/components/schemas/NestedDateTimeNullableWithAggregatesFilter"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "_count": {
+        "$ref": "#/components/schemas/NestedIntNullableFilter"
+      },
+      "_min": {
+        "$ref": "#/components/schemas/NestedDateTimeNullableFilter"
+      },
+      "_max": {
+        "$ref": "#/components/schemas/NestedDateTimeNullableFilter"
+      }
+    }
+  },
+  "NestedDateTimeWithAggregatesFilter": {
+    "type": "object",
+    "properties": {
+      "equals": {
+        "type": "string",
+        "format": "date-time"
+      },
+      "in": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "notIn": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "lt": {
+        "type": "string",
+        "format": "date-time"
+      },
+      "lte": {
+        "type": "string",
+        "format": "date-time"
+      },
+      "gt": {
+        "type": "string",
+        "format": "date-time"
+      },
+      "gte": {
+        "type": "string",
+        "format": "date-time"
+      },
+      "not": {
+        "oneOf": [
+          {
+            "type": "string",
+            "format": "date-time"
+          },
+          {
+            "$ref": "#/components/schemas/NestedDateTimeWithAggregatesFilter"
+          }
+        ]
+      },
+      "_count": {
+        "$ref": "#/components/schemas/NestedIntFilter"
+      },
+      "_min": {
+        "$ref": "#/components/schemas/NestedDateTimeFilter"
+      },
+      "_max": {
+        "$ref": "#/components/schemas/NestedDateTimeFilter"
+      }
+    }
+  },
+  "NestedDecimalFilter": {
+    "type": "object",
+    "properties": {
+      "equals": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          }
+        ]
+      },
+      "in": {
+        "type": "array",
+        "items": {
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            }
+          ]
+        }
+      },
+      "notIn": {
+        "type": "array",
+        "items": {
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            }
+          ]
+        }
+      },
+      "lt": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          }
+        ]
+      },
+      "lte": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          }
+        ]
+      },
+      "gt": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          }
+        ]
+      },
+      "gte": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          }
+        ]
+      },
+      "not": {
+        "oneOf": [
+          {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "number"
+              }
+            ]
+          },
+          {
+            "$ref": "#/components/schemas/NestedDecimalFilter"
+          }
+        ]
+      }
+    }
+  },
+  "NestedDecimalNullableFilter": {
+    "type": "object",
+    "properties": {
+      "equals": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "in": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "array",
+            "items": {
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "notIn": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "array",
+            "items": {
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "lt": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          }
+        ]
+      },
+      "lte": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          }
+        ]
+      },
+      "gt": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          }
+        ]
+      },
+      "gte": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          }
+        ]
+      },
+      "not": {
+        "oneOf": [
+          {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "number"
+              }
+            ]
+          },
+          {
+            "$ref": "#/components/schemas/NestedDecimalNullableFilter"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      }
+    }
+  },
+  "NestedDecimalNullableWithAggregatesFilter": {
+    "type": "object",
+    "properties": {
+      "equals": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "in": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "array",
+            "items": {
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "notIn": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "array",
+            "items": {
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "lt": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          }
+        ]
+      },
+      "lte": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          }
+        ]
+      },
+      "gt": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          }
+        ]
+      },
+      "gte": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          }
+        ]
+      },
+      "not": {
+        "oneOf": [
+          {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "number"
+              }
+            ]
+          },
+          {
+            "$ref": "#/components/schemas/NestedDecimalNullableWithAggregatesFilter"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "_count": {
+        "$ref": "#/components/schemas/NestedIntNullableFilter"
+      },
+      "_avg": {
+        "$ref": "#/components/schemas/NestedDecimalNullableFilter"
+      },
+      "_sum": {
+        "$ref": "#/components/schemas/NestedDecimalNullableFilter"
+      },
+      "_min": {
+        "$ref": "#/components/schemas/NestedDecimalNullableFilter"
+      },
+      "_max": {
+        "$ref": "#/components/schemas/NestedDecimalNullableFilter"
+      }
+    }
+  },
+  "NestedDecimalWithAggregatesFilter": {
+    "type": "object",
+    "properties": {
+      "equals": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          }
+        ]
+      },
+      "in": {
+        "type": "array",
+        "items": {
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            }
+          ]
+        }
+      },
+      "notIn": {
+        "type": "array",
+        "items": {
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            }
+          ]
+        }
+      },
+      "lt": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          }
+        ]
+      },
+      "lte": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          }
+        ]
+      },
+      "gt": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          }
+        ]
+      },
+      "gte": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          }
+        ]
+      },
+      "not": {
+        "oneOf": [
+          {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "number"
+              }
+            ]
+          },
+          {
+            "$ref": "#/components/schemas/NestedDecimalWithAggregatesFilter"
+          }
+        ]
+      },
+      "_count": {
+        "$ref": "#/components/schemas/NestedIntFilter"
+      },
+      "_avg": {
+        "$ref": "#/components/schemas/NestedDecimalFilter"
+      },
+      "_sum": {
+        "$ref": "#/components/schemas/NestedDecimalFilter"
+      },
+      "_min": {
+        "$ref": "#/components/schemas/NestedDecimalFilter"
+      },
+      "_max": {
+        "$ref": "#/components/schemas/NestedDecimalFilter"
+      }
+    }
+  },
+  "NestedFloatFilter": {
+    "type": "object",
+    "properties": {
+      "equals": {
+        "type": "number"
+      },
+      "in": {
+        "type": "array",
+        "items": {
+          "type": "number"
+        }
+      },
+      "notIn": {
+        "type": "array",
+        "items": {
+          "type": "number"
+        }
+      },
+      "lt": {
+        "type": "number"
+      },
+      "lte": {
+        "type": "number"
+      },
+      "gt": {
+        "type": "number"
+      },
+      "gte": {
+        "type": "number"
+      },
+      "not": {
+        "oneOf": [
+          {
+            "type": "number"
+          },
+          {
+            "$ref": "#/components/schemas/NestedFloatFilter"
+          }
+        ]
+      }
+    }
+  },
+  "NestedFloatNullableFilter": {
+    "type": "object",
+    "properties": {
+      "equals": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "number"
+          }
+        ]
+      },
+      "in": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          }
+        ]
+      },
+      "notIn": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          }
+        ]
+      },
+      "lt": {
+        "type": "number"
+      },
+      "lte": {
+        "type": "number"
+      },
+      "gt": {
+        "type": "number"
+      },
+      "gte": {
+        "type": "number"
+      },
+      "not": {
+        "oneOf": [
+          {
+            "type": "number"
+          },
+          {
+            "$ref": "#/components/schemas/NestedFloatNullableFilter"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      }
+    }
+  },
+  "NestedFloatNullableWithAggregatesFilter": {
+    "type": "object",
+    "properties": {
+      "equals": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "number"
+          }
+        ]
+      },
+      "in": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          }
+        ]
+      },
+      "notIn": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          }
+        ]
+      },
+      "lt": {
+        "type": "number"
+      },
+      "lte": {
+        "type": "number"
+      },
+      "gt": {
+        "type": "number"
+      },
+      "gte": {
+        "type": "number"
+      },
+      "not": {
+        "oneOf": [
+          {
+            "type": "number"
+          },
+          {
+            "$ref": "#/components/schemas/NestedFloatNullableWithAggregatesFilter"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "_count": {
+        "$ref": "#/components/schemas/NestedIntNullableFilter"
+      },
+      "_avg": {
+        "$ref": "#/components/schemas/NestedFloatNullableFilter"
+      },
+      "_sum": {
+        "$ref": "#/components/schemas/NestedFloatNullableFilter"
+      },
+      "_min": {
+        "$ref": "#/components/schemas/NestedFloatNullableFilter"
+      },
+      "_max": {
+        "$ref": "#/components/schemas/NestedFloatNullableFilter"
+      }
+    }
+  },
+  "NestedFloatWithAggregatesFilter": {
+    "type": "object",
+    "properties": {
+      "equals": {
+        "type": "number"
+      },
+      "in": {
+        "type": "array",
+        "items": {
+          "type": "number"
+        }
+      },
+      "notIn": {
+        "type": "array",
+        "items": {
+          "type": "number"
+        }
+      },
+      "lt": {
+        "type": "number"
+      },
+      "lte": {
+        "type": "number"
+      },
+      "gt": {
+        "type": "number"
+      },
+      "gte": {
+        "type": "number"
+      },
+      "not": {
+        "oneOf": [
+          {
+            "type": "number"
+          },
+          {
+            "$ref": "#/components/schemas/NestedFloatWithAggregatesFilter"
+          }
+        ]
+      },
+      "_count": {
+        "$ref": "#/components/schemas/NestedIntFilter"
+      },
+      "_avg": {
+        "$ref": "#/components/schemas/NestedFloatFilter"
+      },
+      "_sum": {
+        "$ref": "#/components/schemas/NestedFloatFilter"
+      },
+      "_min": {
+        "$ref": "#/components/schemas/NestedFloatFilter"
+      },
+      "_max": {
+        "$ref": "#/components/schemas/NestedFloatFilter"
+      }
+    }
+  },
+  "NestedIntFilter": {
+    "type": "object",
+    "properties": {
+      "equals": {
+        "type": "integer"
+      },
+      "in": {
+        "type": "array",
+        "items": {
+          "type": "integer"
+        }
+      },
+      "notIn": {
+        "type": "array",
+        "items": {
+          "type": "integer"
+        }
+      },
+      "lt": {
+        "type": "integer"
+      },
+      "lte": {
+        "type": "integer"
+      },
+      "gt": {
+        "type": "integer"
+      },
+      "gte": {
+        "type": "integer"
+      },
+      "not": {
+        "oneOf": [
+          {
+            "type": "integer"
+          },
+          {
+            "$ref": "#/components/schemas/NestedIntFilter"
+          }
+        ]
+      }
+    }
+  },
+  "NestedIntNullableFilter": {
+    "type": "object",
+    "properties": {
+      "equals": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "integer"
+          }
+        ]
+      },
+      "in": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          }
+        ]
+      },
+      "notIn": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          }
+        ]
+      },
+      "lt": {
+        "type": "integer"
+      },
+      "lte": {
+        "type": "integer"
+      },
+      "gt": {
+        "type": "integer"
+      },
+      "gte": {
+        "type": "integer"
+      },
+      "not": {
+        "oneOf": [
+          {
+            "type": "integer"
+          },
+          {
+            "$ref": "#/components/schemas/NestedIntNullableFilter"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      }
+    }
+  },
+  "NestedIntNullableWithAggregatesFilter": {
+    "type": "object",
+    "properties": {
+      "equals": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "integer"
+          }
+        ]
+      },
+      "in": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          }
+        ]
+      },
+      "notIn": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          }
+        ]
+      },
+      "lt": {
+        "type": "integer"
+      },
+      "lte": {
+        "type": "integer"
+      },
+      "gt": {
+        "type": "integer"
+      },
+      "gte": {
+        "type": "integer"
+      },
+      "not": {
+        "oneOf": [
+          {
+            "type": "integer"
+          },
+          {
+            "$ref": "#/components/schemas/NestedIntNullableWithAggregatesFilter"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "_count": {
+        "$ref": "#/components/schemas/NestedIntNullableFilter"
+      },
+      "_avg": {
+        "$ref": "#/components/schemas/NestedFloatNullableFilter"
+      },
+      "_sum": {
+        "$ref": "#/components/schemas/NestedIntNullableFilter"
+      },
+      "_min": {
+        "$ref": "#/components/schemas/NestedIntNullableFilter"
+      },
+      "_max": {
+        "$ref": "#/components/schemas/NestedIntNullableFilter"
+      }
+    }
+  },
+  "NestedIntWithAggregatesFilter": {
+    "type": "object",
+    "properties": {
+      "equals": {
+        "type": "integer"
+      },
+      "in": {
+        "type": "array",
+        "items": {
+          "type": "integer"
+        }
+      },
+      "notIn": {
+        "type": "array",
+        "items": {
+          "type": "integer"
+        }
+      },
+      "lt": {
+        "type": "integer"
+      },
+      "lte": {
+        "type": "integer"
+      },
+      "gt": {
+        "type": "integer"
+      },
+      "gte": {
+        "type": "integer"
+      },
+      "not": {
+        "oneOf": [
+          {
+            "type": "integer"
+          },
+          {
+            "$ref": "#/components/schemas/NestedIntWithAggregatesFilter"
+          }
+        ]
+      },
+      "_count": {
+        "$ref": "#/components/schemas/NestedIntFilter"
+      },
+      "_avg": {
+        "$ref": "#/components/schemas/NestedFloatFilter"
+      },
+      "_sum": {
+        "$ref": "#/components/schemas/NestedIntFilter"
+      },
+      "_min": {
+        "$ref": "#/components/schemas/NestedIntFilter"
+      },
+      "_max": {
+        "$ref": "#/components/schemas/NestedIntFilter"
+      }
+    }
+  },
+  "NestedJsonFilter": {
+    "type": "object",
+    "properties": {
+      "equals": {
+        "oneOf": [
+          {},
+          {
+            "$ref": "#/components/schemas/JsonNullValueFilter"
+          }
+        ]
+      },
+      "path": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "mode": {
+        "$ref": "#/components/schemas/QueryMode"
+      },
+      "string_contains": {
+        "type": "string"
+      },
+      "string_starts_with": {
+        "type": "string"
+      },
+      "string_ends_with": {
+        "type": "string"
+      },
+      "array_starts_with": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {}
+        ]
+      },
+      "array_ends_with": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {}
+        ]
+      },
+      "array_contains": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {}
+        ]
+      },
+      "lt": {},
+      "lte": {},
+      "gt": {},
+      "gte": {},
+      "not": {
+        "oneOf": [
+          {},
+          {
+            "$ref": "#/components/schemas/JsonNullValueFilter"
+          }
+        ]
+      }
+    }
+  },
+  "NestedJsonNullableFilter": {
+    "type": "object",
+    "properties": {
+      "equals": {
+        "oneOf": [
+          {},
+          {
+            "$ref": "#/components/schemas/JsonNullValueFilter"
+          }
+        ]
+      },
+      "path": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "mode": {
+        "$ref": "#/components/schemas/QueryMode"
+      },
+      "string_contains": {
+        "type": "string"
+      },
+      "string_starts_with": {
+        "type": "string"
+      },
+      "string_ends_with": {
+        "type": "string"
+      },
+      "array_starts_with": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {}
+        ]
+      },
+      "array_ends_with": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {}
+        ]
+      },
+      "array_contains": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {}
+        ]
+      },
+      "lt": {},
+      "lte": {},
+      "gt": {},
+      "gte": {},
+      "not": {
+        "oneOf": [
+          {},
+          {
+            "$ref": "#/components/schemas/JsonNullValueFilter"
+          }
+        ]
+      }
+    }
+  },
+  "NestedStringFilter": {
+    "type": "object",
+    "properties": {
+      "equals": {
+        "type": "string"
+      },
+      "in": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "notIn": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "lt": {
+        "type": "string"
+      },
+      "lte": {
+        "type": "string"
+      },
+      "gt": {
+        "type": "string"
+      },
+      "gte": {
+        "type": "string"
+      },
+      "contains": {
+        "type": "string"
+      },
+      "startsWith": {
+        "type": "string"
+      },
+      "endsWith": {
+        "type": "string"
+      },
+      "not": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "$ref": "#/components/schemas/NestedStringFilter"
+          }
+        ]
+      }
+    }
+  },
+  "NestedStringNullableFilter": {
+    "type": "object",
+    "properties": {
+      "equals": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "string"
+          }
+        ]
+      },
+      "in": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        ]
+      },
+      "notIn": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        ]
+      },
+      "lt": {
+        "type": "string"
+      },
+      "lte": {
+        "type": "string"
+      },
+      "gt": {
+        "type": "string"
+      },
+      "gte": {
+        "type": "string"
+      },
+      "contains": {
+        "type": "string"
+      },
+      "startsWith": {
+        "type": "string"
+      },
+      "endsWith": {
+        "type": "string"
+      },
+      "not": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "$ref": "#/components/schemas/NestedStringNullableFilter"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      }
+    }
+  },
+  "NestedStringNullableWithAggregatesFilter": {
+    "type": "object",
+    "properties": {
+      "equals": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "string"
+          }
+        ]
+      },
+      "in": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        ]
+      },
+      "notIn": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        ]
+      },
+      "lt": {
+        "type": "string"
+      },
+      "lte": {
+        "type": "string"
+      },
+      "gt": {
+        "type": "string"
+      },
+      "gte": {
+        "type": "string"
+      },
+      "contains": {
+        "type": "string"
+      },
+      "startsWith": {
+        "type": "string"
+      },
+      "endsWith": {
+        "type": "string"
+      },
+      "not": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "$ref": "#/components/schemas/NestedStringNullableWithAggregatesFilter"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "_count": {
+        "$ref": "#/components/schemas/NestedIntNullableFilter"
+      },
+      "_min": {
+        "$ref": "#/components/schemas/NestedStringNullableFilter"
+      },
+      "_max": {
+        "$ref": "#/components/schemas/NestedStringNullableFilter"
+      }
+    }
+  },
+  "NestedStringWithAggregatesFilter": {
+    "type": "object",
+    "properties": {
+      "equals": {
+        "type": "string"
+      },
+      "in": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "notIn": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "lt": {
+        "type": "string"
+      },
+      "lte": {
+        "type": "string"
+      },
+      "gt": {
+        "type": "string"
+      },
+      "gte": {
+        "type": "string"
+      },
+      "contains": {
+        "type": "string"
+      },
+      "startsWith": {
+        "type": "string"
+      },
+      "endsWith": {
+        "type": "string"
+      },
+      "not": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "$ref": "#/components/schemas/NestedStringWithAggregatesFilter"
+          }
+        ]
+      },
+      "_count": {
+        "$ref": "#/components/schemas/NestedIntFilter"
+      },
+      "_min": {
+        "$ref": "#/components/schemas/NestedStringFilter"
+      },
+      "_max": {
+        "$ref": "#/components/schemas/NestedStringFilter"
+      }
+    }
+  },
+  "NullableBigIntFieldUpdateOperationsInput": {
+    "type": "object",
+    "properties": {
+      "set": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "integer"
+          }
+        ]
+      },
+      "increment": {
+        "type": "integer"
+      },
+      "decrement": {
+        "type": "integer"
+      },
+      "multiply": {
+        "type": "integer"
+      },
+      "divide": {
+        "type": "integer"
+      }
+    }
+  },
+  "NullableBoolFieldUpdateOperationsInput": {
+    "type": "object",
+    "properties": {
+      "set": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "boolean"
+          }
+        ]
+      }
+    }
+  },
+  "NullableDateTimeFieldUpdateOperationsInput": {
+    "type": "object",
+    "properties": {
+      "set": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "string",
+            "format": "date-time"
+          }
+        ]
+      }
+    }
+  },
+  "NullableDecimalFieldUpdateOperationsInput": {
+    "type": "object",
+    "properties": {
+      "set": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "increment": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          }
+        ]
+      },
+      "decrement": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          }
+        ]
+      },
+      "multiply": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          }
+        ]
+      },
+      "divide": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          }
+        ]
+      }
+    }
+  },
+  "NullableFloatFieldUpdateOperationsInput": {
+    "type": "object",
+    "properties": {
+      "set": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "number"
+          }
+        ]
+      },
+      "increment": {
+        "type": "number"
+      },
+      "decrement": {
+        "type": "number"
+      },
+      "multiply": {
+        "type": "number"
+      },
+      "divide": {
+        "type": "number"
+      }
+    }
+  },
+  "NullableIntFieldUpdateOperationsInput": {
+    "type": "object",
+    "properties": {
+      "set": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "integer"
+          }
+        ]
+      },
+      "increment": {
+        "type": "integer"
+      },
+      "decrement": {
+        "type": "integer"
+      },
+      "multiply": {
+        "type": "integer"
+      },
+      "divide": {
+        "type": "integer"
+      }
+    }
+  },
+  "NullableStringFieldUpdateOperationsInput": {
+    "type": "object",
+    "properties": {
+      "set": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "string"
+          }
+        ]
+      }
+    }
+  },
+  "SortOrderInput": {
+    "type": "object",
+    "properties": {
+      "sort": {
+        "$ref": "#/components/schemas/SortOrder"
+      },
+      "nulls": {
+        "$ref": "#/components/schemas/NullsOrder"
+      }
+    },
+    "required": ["sort"]
+  },
+  "StringFieldUpdateOperationsInput": {
+    "type": "object",
+    "properties": {
+      "set": {
+        "type": "string"
+      }
+    }
+  },
+  "StringFilter": {
+    "type": "object",
+    "properties": {
+      "equals": {
+        "type": "string"
+      },
+      "in": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "notIn": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "lt": {
+        "type": "string"
+      },
+      "lte": {
+        "type": "string"
+      },
+      "gt": {
+        "type": "string"
+      },
+      "gte": {
+        "type": "string"
+      },
+      "contains": {
+        "type": "string"
+      },
+      "startsWith": {
+        "type": "string"
+      },
+      "endsWith": {
+        "type": "string"
+      },
+      "mode": {
+        "$ref": "#/components/schemas/QueryMode"
+      },
+      "not": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "$ref": "#/components/schemas/NestedStringFilter"
+          }
+        ]
+      }
+    }
+  },
+  "StringNullableFilter": {
+    "type": "object",
+    "properties": {
+      "equals": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "string"
+          }
+        ]
+      },
+      "in": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        ]
+      },
+      "notIn": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        ]
+      },
+      "lt": {
+        "type": "string"
+      },
+      "lte": {
+        "type": "string"
+      },
+      "gt": {
+        "type": "string"
+      },
+      "gte": {
+        "type": "string"
+      },
+      "contains": {
+        "type": "string"
+      },
+      "startsWith": {
+        "type": "string"
+      },
+      "endsWith": {
+        "type": "string"
+      },
+      "mode": {
+        "$ref": "#/components/schemas/QueryMode"
+      },
+      "not": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "$ref": "#/components/schemas/NestedStringNullableFilter"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      }
+    }
+  },
+  "StringNullableListFilter": {
+    "type": "object",
+    "properties": {
+      "equals": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        ]
+      },
+      "has": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "string"
+          }
+        ]
+      },
+      "hasEvery": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "hasSome": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "isEmpty": {
+        "type": "boolean"
+      }
+    }
+  },
+  "StringNullableWithAggregatesFilter": {
+    "type": "object",
+    "properties": {
+      "equals": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "string"
+          }
+        ]
+      },
+      "in": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        ]
+      },
+      "notIn": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        ]
+      },
+      "lt": {
+        "type": "string"
+      },
+      "lte": {
+        "type": "string"
+      },
+      "gt": {
+        "type": "string"
+      },
+      "gte": {
+        "type": "string"
+      },
+      "contains": {
+        "type": "string"
+      },
+      "startsWith": {
+        "type": "string"
+      },
+      "endsWith": {
+        "type": "string"
+      },
+      "mode": {
+        "$ref": "#/components/schemas/QueryMode"
+      },
+      "not": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "$ref": "#/components/schemas/NestedStringNullableWithAggregatesFilter"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "_count": {
+        "$ref": "#/components/schemas/NestedIntNullableFilter"
+      },
+      "_min": {
+        "$ref": "#/components/schemas/NestedStringNullableFilter"
+      },
+      "_max": {
+        "$ref": "#/components/schemas/NestedStringNullableFilter"
+      }
+    }
+  },
+  "StringWithAggregatesFilter": {
+    "type": "object",
+    "properties": {
+      "equals": {
+        "type": "string"
+      },
+      "in": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "notIn": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "lt": {
+        "type": "string"
+      },
+      "lte": {
+        "type": "string"
+      },
+      "gt": {
+        "type": "string"
+      },
+      "gte": {
+        "type": "string"
+      },
+      "contains": {
+        "type": "string"
+      },
+      "startsWith": {
+        "type": "string"
+      },
+      "endsWith": {
+        "type": "string"
+      },
+      "mode": {
+        "$ref": "#/components/schemas/QueryMode"
+      },
+      "not": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "$ref": "#/components/schemas/NestedStringWithAggregatesFilter"
+          }
+        ]
+      },
+      "_count": {
+        "$ref": "#/components/schemas/NestedIntFilter"
+      },
+      "_min": {
+        "$ref": "#/components/schemas/NestedStringFilter"
+      },
+      "_max": {
+        "$ref": "#/components/schemas/NestedStringFilter"
+      }
+    }
+  },
+  "_Error": {
+    "type": "object",
+    "required": ["error"],
+    "properties": {
+      "error": {
+        "type": "object",
+        "required": ["message"],
+        "properties": {
+          "prisma": {
+            "type": "boolean",
+            "description": "Indicates if the error occurred during a Prisma call"
+          },
+          "rejectedByPolicy": {
+            "type": "boolean",
+            "description": "Indicates if the error was due to rejection by a policy"
+          },
+          "code": {
+            "type": "string",
+            "description": "Prisma error code. Only available when \"prisma\" field is true."
+          },
+          "message": {
+            "type": "string",
+            "description": "Error message"
+          },
+          "reason": {
+            "type": "string",
+            "description": "Detailed error reason"
+          },
+          "zodErrors": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Zod validation errors if the error is due to data validation failure"
+          }
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "_Meta": {
+    "type": "object",
+    "description": "Meta information about the request or response",
+    "properties": {
+      "serialization": {
+        "description": "Serialization metadata"
+      }
+    },
+    "additionalProperties": true
+  },
+  "SortOrder": {
+    "type": "string",
+    "enum": ["asc", "desc"]
+  },
+  "NullsOrder": {
+    "type": "string",
+    "enum": ["first", "last"]
+  },
+  "JsonNullValueInput": {
+    "type": "string",
+    "enum": ["JsonNull"]
+  },
+  "NullableJsonNullValueInput": {
+    "type": "string",
+    "enum": ["DbNull", "JsonNull"]
+  },
+  "JsonNullValueFilter": {
+    "type": "string",
+    "enum": ["DbNull", "JsonNull", "AnyNull"]
+  },
+  "QueryMode": {
+    "type": "string",
+    "enum": ["default", "insensitive"]
+  }
+}

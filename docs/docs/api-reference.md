@@ -74,20 +74,17 @@ TestPlanIt supports two authentication methods:
 API tokens provide persistent authentication for server-to-server integrations, CLI tools, and automated workflows.
 
 ```bash
-curl -X POST "https://your-domain.com/api/model/project/findMany" \
+curl -G "https://your-domain.com/api/model/projects/findMany" \
   -H "Authorization: Bearer tpi_your_token_here" \
-  -H "Content-Type: application/json" \
-  -d '{"where": {"isDeleted": false}}'
+  --data-urlencode 'q={"where": {"isDeleted": false}}'
 ```
 
 ```javascript
-const response = await fetch('/api/model/project/findMany', {
-  method: 'POST',
+const q = encodeURIComponent(JSON.stringify({ where: { isDeleted: false } }));
+const response = await fetch(`/api/model/projects/findMany?q=${q}`, {
   headers: {
-    'Authorization': 'Bearer tpi_your_token_here',
-    'Content-Type': 'application/json'
-  },
-  body: JSON.stringify({ where: { isDeleted: false } })
+    'Authorization': 'Bearer tpi_your_token_here'
+  }
 });
 ```
 
@@ -99,11 +96,9 @@ For browser-based requests, TestPlanIt uses NextAuth.js session cookies. Authent
 
 ```javascript
 // Fetch with automatic session handling
-const response = await fetch('/api/model/project/findMany', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  credentials: 'include', // Include session cookies
-  body: JSON.stringify({ where: { isDeleted: false } })
+const q = encodeURIComponent(JSON.stringify({ where: { isDeleted: false } }));
+const response = await fetch(`/api/model/projects/findMany?q=${q}`, {
+  credentials: 'include' // Include session cookies
 });
 ```
 
@@ -115,14 +110,24 @@ const response = await fetch('/api/model/project/findMany', {
 
 ZenStack generates RESTful endpoints for all data models:
 
+Model names are camelCase and match the schema (for example `projects`,
+`repositoryCases`, `testRuns`, `issue`). Read operations are `GET` requests
+with a URL-encoded `q` query parameter; write operations send a JSON body.
+
 ```text
-/api/model/{entity}/findMany     - List entities with filtering
-/api/model/{entity}/findUnique   - Get single entity by ID
-/api/model/{entity}/create       - Create new entity
-/api/model/{entity}/update       - Update existing entity
-/api/model/{entity}/delete       - Delete entity
-/api/model/{entity}/count        - Count entities
-/api/model/{entity}/aggregate    - Aggregate operations
+GET     /api/model/{model}/findMany     - List records with filtering
+GET     /api/model/{model}/findUnique   - Get a single record by unique key
+GET     /api/model/{model}/findFirst    - Get the first matching record
+GET     /api/model/{model}/count        - Count records
+GET     /api/model/{model}/aggregate    - Aggregate operations
+GET     /api/model/{model}/groupBy      - Group records by fields
+POST    /api/model/{model}/create       - Create a record
+POST    /api/model/{model}/createMany   - Create several records
+POST    /api/model/{model}/upsert       - Create or update a record
+PATCH   /api/model/{model}/update       - Update a record (PUT also accepted)
+PATCH   /api/model/{model}/updateMany   - Update matching records
+DELETE  /api/model/{model}/delete       - Delete a record
+DELETE  /api/model/{model}/deleteMany   - Delete matching records
 ```
 
 ### Custom Endpoints
@@ -144,41 +149,43 @@ All ZenStack endpoints support Prisma-style query parameters:
 
 ```javascript
 // Find all projects with filtering and includes
-const response = await fetch('/api/model/project/findMany', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  credentials: 'include',
-  body: JSON.stringify({
-    where: {
-      name: { contains: 'Test' }
-    },
-    include: {
-      folders: true,
-      assignments: {
-        include: { user: true }
-      }
-    },
-    orderBy: { createdAt: 'desc' },
-    take: 10,
-    skip: 0
-  })
-});
+const query = {
+  where: {
+    name: { contains: 'Test' }
+  },
+  include: {
+    repositories: true,
+    assignedUsers: {
+      include: { user: true }
+    }
+  },
+  orderBy: { createdAt: 'desc' },
+  take: 10,
+  skip: 0
+};
+const response = await fetch(
+  `/api/model/projects/findMany?q=${encodeURIComponent(JSON.stringify(query))}`,
+  { credentials: 'include' }
+);
 ```
 
 ### Creating Records
 
 ```javascript
 // Create a new test case
-const response = await fetch('/api/model/repositoryCase/create', {
+const response = await fetch('/api/model/repositoryCases/create', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   credentials: 'include',
   body: JSON.stringify({
     data: {
-      title: 'Login Test',
-      description: 'Verify user can log in',
+      name: 'Login Test',
       project: { connect: { id: projectId } },
-      folder: { connect: { id: folderId } }
+      repository: { connect: { id: repositoryId } },
+      folder: { connect: { id: folderId } },
+      template: { connect: { id: templateId } },
+      state: { connect: { id: stateId } },
+      creator: { connect: { id: userId } }
     }
   })
 });
@@ -188,15 +195,14 @@ const response = await fetch('/api/model/repositoryCase/create', {
 
 ```javascript
 // Update a test case
-const response = await fetch('/api/model/repositoryCase/update', {
-  method: 'POST',
+const response = await fetch('/api/model/repositoryCases/update', {
+  method: 'PATCH',
   headers: { 'Content-Type': 'application/json' },
   credentials: 'include',
   body: JSON.stringify({
     where: { id: caseId },
     data: {
-      title: 'Updated Title',
-      description: 'Updated description'
+      name: 'Updated Name'
     }
   })
 });
@@ -206,13 +212,10 @@ const response = await fetch('/api/model/repositoryCase/update', {
 
 ```javascript
 // Delete a test case
-const response = await fetch('/api/model/repositoryCase/delete', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  credentials: 'include',
-  body: JSON.stringify({
-    where: { id: caseId }
-  })
+const q = encodeURIComponent(JSON.stringify({ where: { id: caseId } }));
+const response = await fetch(`/api/model/repositoryCases/delete?q=${q}`, {
+  method: 'DELETE',
+  credentials: 'include'
 });
 ```
 
