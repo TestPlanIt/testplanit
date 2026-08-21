@@ -469,4 +469,12 @@ describe("Issue read-scope containment (HYG-01, structural)", () => {
     }
     expect(mappingDeclarations).toBe(1);
   });
+
+  it.todo(
+    "the requirement rollup anchors on the shared requirement predicate exactly once"
+  );
+
+  it.todo(
+    "the requirement rollup's recursive descendant walk carries no requirement-role predicate"
+  );
 });
