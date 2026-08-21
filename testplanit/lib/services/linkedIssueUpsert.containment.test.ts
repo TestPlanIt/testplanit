@@ -15,6 +15,23 @@
 //     through getEnhancedDb, so the field-level requirement-lock deny
 //     predicate already applies to them, and they write relation connects
 //     rather than locked columns directly.
+//   - app/api/projects/[projectId]/requirements/[issueId]/reparent/route.ts
+//     (Phase 25) — resolves its client through getEnhancedDb before writing
+//     parentId. parentId IS one of LOCKED_ISSUE_FIELDS, so unlike the two
+//     entries above this write relies on the schema's field-level @deny for
+//     real enforcement: a synced, non-detached requirement's reparent is
+//     rejected by policy and the route maps that rejection to a 403, never
+//     silently applied. assertValidReparent (Node-only, called beforehand
+//     against baseDb) is the separate structural-validity guard (same
+//     project, no cycle); this enhanced-client write is the field-lock
+//     layer underneath it.
+//   - app/api/projects/[projectId]/requirements/[issueId]/detach/route.ts
+//     (Phase 25) — resolves its client through getEnhancedDb; writes only
+//     requirementDetachedAt, which is deliberately NOT one of
+//     LOCKED_ISSUE_FIELDS, so this write is the same shape as link/unlink's
+//     relation-connect writes above -- it never touches a locked column,
+//     and never writes integrationId (the Jira-reference badge depends on
+//     it surviving detach).
 //
 // Run via:
 //   cd testplanit && pnpm exec vitest run lib/services/linkedIssueUpsert.containment.test.ts
@@ -32,6 +49,8 @@ const ALLOWED_FILES = [
   "lib/services/linkedIssueUpsert.ts",
   "app/api/issues/[issueId]/link/route.ts",
   "app/api/issues/[issueId]/unlink/route.ts",
+  "app/api/projects/[projectId]/requirements/[issueId]/reparent/route.ts",
+  "app/api/projects/[projectId]/requirements/[issueId]/detach/route.ts",
 ];
 
 // Test fixtures legitimately write issues directly — never subject to the

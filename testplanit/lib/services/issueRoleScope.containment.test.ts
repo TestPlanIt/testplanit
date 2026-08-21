@@ -205,6 +205,18 @@ const EXEMPT_IDENTITY_LOOKUP_FILES = [
   // the test run's own linked-issue id set — the caller already named the
   // specific rows.
   "workers/magicSelectWorker.ts",
+  // Phase 25's four requirement routes (reparent, delete-subtree, restore,
+  // detach) each resolve the addressed row by id via baseDb.issue.findFirst
+  // before authorizing/operating on it — an identity lookup, same reasoning
+  // as every other entry in this bucket. Unlike most of this bucket, each
+  // call site ALSO spreads REQUIREMENT_SCOPE_WHERE (defense-in-depth per
+  // T-25-05-03: a route addressed at a non-requirement Issue id must 404,
+  // not silently operate on a defect row), so these are strictly more
+  // scoped than a bare identity lookup, not less.
+  "app/api/projects/[projectId]/requirements/[issueId]/reparent/route.ts",
+  "app/api/projects/[projectId]/requirements/[issueId]/delete-subtree/route.ts",
+  "app/api/projects/[projectId]/requirements/[issueId]/restore/route.ts",
+  "app/api/projects/[projectId]/requirements/[issueId]/detach/route.ts",
 ];
 
 // EXEMPT — milestone membership legitimately spans both row kinds (an Epic
