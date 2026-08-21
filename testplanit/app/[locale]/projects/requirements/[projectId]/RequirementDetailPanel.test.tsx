@@ -11,6 +11,69 @@ vi.mock("sonner", () => ({
   toast: { success: vi.fn(), error: vi.fn() },
 }));
 
+vi.mock("next-auth/react", () => ({
+  useSession: () => ({ data: { user: { id: "user-1" } } }),
+}));
+
+vi.mock("~/lib/navigation", () => ({
+  Link: ({ children, href, ...props }: any) => (
+    <a href={href} {...props}>
+      {children}
+    </a>
+  ),
+}));
+
+vi.mock("~/utils/storageUrl", () => ({
+  getStorageUrlClient: (url: string) => `https://storage.example.com/${url}`,
+}));
+
+const { mockFetchSignedUrl } = vi.hoisted(() => ({
+  mockFetchSignedUrl: vi.fn(),
+}));
+vi.mock("~/utils/fetchSignedUrl", () => ({
+  fetchSignedUrl: mockFetchSignedUrl,
+}));
+
+// Same simplified always-rendered-content convention AttachmentsDisplay.test.tsx
+// already established for this exact primitive -- avoids depending on
+// Radix's real open/portal behavior for a plain click-to-confirm affordance.
+vi.mock("@/components/ui/popover", () => ({
+  Popover: ({ children }: any) => <div data-testid="popover">{children}</div>,
+  PopoverTrigger: ({ children }: any) => (
+    <div data-testid="popover-trigger">{children}</div>
+  ),
+  PopoverContent: ({ children }: any) => (
+    <div data-testid="popover-content">{children}</div>
+  ),
+}));
+
+vi.mock("@/components/AttachmentPreview", () => ({
+  AttachmentPreview: ({ attachment }: any) => (
+    <div data-testid={`attachment-preview-${attachment.id}`} />
+  ),
+}));
+
+// Stand-in for the file picker: a button that hands a fixed File to
+// onFileSelect, mirroring the tiptap-note-simulate-edit convention below.
+vi.mock("@/components/UploadAttachments", () => ({
+  default: ({ onFileSelect, disabled }: any) => (
+    <div data-testid="requirement-attachments-upload">
+      <button
+        type="button"
+        data-testid="requirement-attachments-upload-simulate-select"
+        disabled={disabled}
+        onClick={() =>
+          onFileSelect([
+            new File(["contents"], "spec.pdf", { type: "application/pdf" }),
+          ])
+        }
+      >
+        simulate select
+      </button>
+    </div>
+  ),
+}));
+
 // Same testid + data-readonly convention MilestoneFormControls.test.tsx
 // already established for this exact component. `data-content` is this
 // file's own addition, needed to assert the parsed doc TipTapEditor was
@@ -56,9 +119,18 @@ vi.mock("./RequirementProvenanceBadge", () => ({
   ),
 }));
 
-const { mockUseFindFirst, mockUpdateMutateAsync } = vi.hoisted(() => ({
+const {
+  mockUseFindFirst,
+  mockUpdateMutateAsync,
+  mockAttachmentsFindMany,
+  mockCreateAttachmentMutateAsync,
+  mockUpdateAttachmentMutateAsync,
+} = vi.hoisted(() => ({
   mockUseFindFirst: vi.fn(),
   mockUpdateMutateAsync: vi.fn(),
+  mockAttachmentsFindMany: vi.fn(),
+  mockCreateAttachmentMutateAsync: vi.fn(),
+  mockUpdateAttachmentMutateAsync: vi.fn(),
 }));
 
 vi.mock("@zenstackhq/tanstack-query/react", () => ({
@@ -66,6 +138,11 @@ vi.mock("@zenstackhq/tanstack-query/react", () => ({
     issue: {
       useFindFirst: mockUseFindFirst,
       useUpdate: () => ({ mutateAsync: mockUpdateMutateAsync }),
+    },
+    attachments: {
+      useFindMany: mockAttachmentsFindMany,
+      useCreate: () => ({ mutateAsync: mockCreateAttachmentMutateAsync }),
+      useUpdate: () => ({ mutateAsync: mockUpdateAttachmentMutateAsync }),
     },
   }),
 }));
@@ -129,6 +206,12 @@ describe("RequirementDetailPanel", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockUpdateMutateAsync.mockResolvedValue({});
+    mockAttachmentsFindMany.mockReturnValue({ data: [], isLoading: false });
+    mockCreateAttachmentMutateAsync.mockResolvedValue({ id: 501 });
+    mockUpdateAttachmentMutateAsync.mockResolvedValue({});
+    mockFetchSignedUrl.mockResolvedValue(
+      "https://storage.example.com/spec.pdf"
+    );
     global.fetch = vi.fn();
   });
 
@@ -266,5 +349,80 @@ describe("RequirementDetailPanel", () => {
       });
     });
     expect(global.fetch).not.toHaveBeenCalled();
+  });
+
+  it("uploads an attachment through the signed-url path and creates an Attachments row with issueId", async () => {
+    setRequirement(lockedRequirement);
+    render(<RequirementDetailPanel projectId="7" requirementId={2} />);
+
+    fireEvent.click(
+      screen.getByTestId("requirement-attachments-upload-simulate-select")
+    );
+
+    await waitFor(() => {
+      expect(mockFetchSignedUrl).toHaveBeenCalledWith(
+        expect.any(File),
+        "/api/get-attachment-url/",
+        expect.stringContaining("7")
+      );
+    });
+
+    await waitFor(() => {
+      expect(mockCreateAttachmentMutateAsync).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          issue: { connect: { id: 2 } },
+          url: "https://storage.example.com/spec.pdf",
+          name: "spec.pdf",
+          mimeType: "application/pdf",
+          size: expect.any(BigInt),
+          createdBy: { connect: { id: "user-1" } },
+        }),
+      });
+    });
+    const payload = mockCreateAttachmentMutateAsync.mock.calls[0][0].data;
+    expect(typeof payload.size).toBe("bigint");
+
+    // The zero-consumer legacy upload route must never be reached -- the
+    // signed-url path above is the entire upload mechanism.
+    expect(global.fetch).not.toHaveBeenCalledWith(
+      expect.stringContaining("/api/upload-attachment"),
+      expect.anything()
+    );
+  });
+
+  it("lists the requirement's existing attachments and offers a soft-delete removal", async () => {
+    setRequirement(lockedRequirement);
+    mockAttachmentsFindMany.mockReturnValue({
+      data: [
+        {
+          id: 501,
+          issueId: 2,
+          name: "existing-spec.pdf",
+          url: "requirements/existing-spec.pdf",
+          mimeType: "application/pdf",
+          size: 2048,
+          isDeleted: false,
+          createdAt: new Date().toISOString(),
+          createdById: "user-1",
+        },
+      ],
+      isLoading: false,
+    });
+
+    render(<RequirementDetailPanel projectId="7" requirementId={2} />);
+
+    expect(screen.getByText("existing-spec.pdf")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId("requirement-attachment-remove-501"));
+    fireEvent.click(
+      screen.getByTestId("requirement-attachment-remove-confirm-501")
+    );
+
+    await waitFor(() => {
+      expect(mockUpdateAttachmentMutateAsync).toHaveBeenCalledWith({
+        where: { id: 501 },
+        data: { isDeleted: true },
+      });
+    });
   });
 });
