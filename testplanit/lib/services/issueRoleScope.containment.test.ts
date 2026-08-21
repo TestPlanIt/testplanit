@@ -55,7 +55,11 @@ import { readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
-import { ISSUE_ROLE_SCOPE_SQL_DEFECT } from "./issueRoleScope";
+import {
+  ISSUE_ROLE_SCOPE_COLUMN,
+  ISSUE_ROLE_SCOPE_SQL_DEFECT,
+  ISSUE_ROLE_SCOPE_SQL_REQUIREMENT,
+} from "./issueRoleScope";
 
 interface GrepHit {
   file: string;
@@ -109,6 +113,28 @@ function countOccurrences(haystack: string, needle: string): number {
 // app/[locale]/issues/page.tsx by direct read before being written here.
 const RAW_ISSUE_READ_PATTERN = String.raw`\.issue\.(findMany|findFirst|count|groupBy)\(`;
 const HOOK_ISSUE_READ_PATTERN = String.raw`\.issue\.use(FindMany|InfiniteFindMany|FindFirst|Count|GroupBy)\(`;
+
+// The closure's descendant-arm separator — the SQL keyword that splits the
+// requirement rollup's closure CTE's anchor half from its recursive-descent
+// half. Exactly one occurrence is expected in the service file; a second
+// would make every index-based position assertion below ambiguous about
+// which half of the text a given index actually falls in.
+const DESCENDANT_ARM_SEPARATOR = "UNION ALL";
+
+// The predicates that ARE supposed to repeat in both the anchor and the
+// descendant arm (matching the shipped, tested precedent this closure
+// generalizes), plus the recursion depth cap. Asserting these are present
+// turns "no role predicate here" into the actual invariant this gate
+// exists to prove: the predicates that must repeat did repeat, and the one
+// that must not, did not.
+const PRESERVED_DESCENDANT_ARM_PREDICATES: Array<{
+  needle: string;
+  label: string;
+}> = [
+  { needle: '"projectId"', label: "the project-scoping column" },
+  { needle: '"isDeleted"', label: "the soft-delete column" },
+  { needle: "depth < 100", label: "the recursion depth cap" },
+];
 
 // ---------------------------------------------------------------------------
 // Reviewed allowlist, bucketed by REASON. The bucket a file sits in is the
@@ -470,11 +496,93 @@ describe("Issue read-scope containment (HYG-01, structural)", () => {
     expect(mappingDeclarations).toBe(1);
   });
 
-  it.todo(
-    "the requirement rollup anchors on the shared requirement predicate exactly once"
-  );
+  it("the requirement rollup anchors on the shared requirement predicate exactly once", () => {
+    const file = "lib/services/requirementCoverage.ts";
+    const content = readFileSync(file, "utf8");
 
-  it.todo(
-    "the requirement rollup's recursive descendant walk carries no requirement-role predicate"
-  );
+    const mirrorOccurrences = countOccurrences(
+      content,
+      ISSUE_ROLE_SCOPE_SQL_REQUIREMENT
+    );
+    if (mirrorOccurrences !== 1) {
+      throw new Error(
+        `${file} contains ${mirrorOccurrences} occurrence(s) of the raw-SQL requirement-scope ` +
+          "mirror exported as ISSUE_ROLE_SCOPE_SQL_REQUIREMENT from lib/services/issueRoleScope.ts; " +
+          "expected exactly 1, on the closure's anchor. A second occurrence usually means the " +
+          "predicate was copied onto the recursive descendant arm as well, which silently stops " +
+          "the rollup at the first non-requirement node in every subtree — while every other " +
+          "test in this repository stays green."
+      );
+    }
+    expect(mirrorOccurrences).toBe(1);
+
+    const separatorOccurrences = countOccurrences(
+      content,
+      DESCENDANT_ARM_SEPARATOR
+    );
+    if (separatorOccurrences !== 1) {
+      throw new Error(
+        `${file} contains ${separatorOccurrences} occurrence(s) of the closure's descendant-arm ` +
+          "separator; expected exactly 1. A second occurrence would make every position " +
+          "assertion in this test ambiguous about which half of the text a given index falls in."
+      );
+    }
+    expect(separatorOccurrences).toBe(1);
+
+    const mirrorIndex = content.indexOf(ISSUE_ROLE_SCOPE_SQL_REQUIREMENT);
+    const separatorIndex = content.indexOf(DESCENDANT_ARM_SEPARATOR);
+    if (!(mirrorIndex < separatorIndex)) {
+      throw new Error(
+        `${file}'s requirement-scope mirror occurs at index ${mirrorIndex}, which is not before ` +
+          `the descendant-arm separator at index ${separatorIndex}. The mirror belongs on the ` +
+          "closure's anchor, which is defined before the separator that introduces the " +
+          "recursive descendant arm — its predicate must apply only to the row set the anchor " +
+          "selects, never to every row reachable from it."
+      );
+    }
+    expect(mirrorIndex).toBeLessThan(separatorIndex);
+  });
+
+  it("the requirement rollup's recursive descendant walk carries no requirement-role predicate", () => {
+    const file = "lib/services/requirementCoverage.ts";
+    const content = readFileSync(file, "utf8");
+    const separatorIndex = content.indexOf(DESCENDANT_ARM_SEPARATOR);
+    if (separatorIndex === -1) {
+      throw new Error(
+        `${file} does not contain the closure's descendant-arm separator at all; the rollup's ` +
+          "recursive structure may have changed shape and this gate needs to be re-derived " +
+          "against the new text."
+      );
+    }
+    const descendantArm = content.slice(separatorIndex);
+
+    const roleOccurrences = countOccurrences(
+      descendantArm,
+      ISSUE_ROLE_SCOPE_COLUMN
+    );
+    if (roleOccurrences !== 0) {
+      throw new Error(
+        `${file}'s text from the descendant-arm separator onward contains ${roleOccurrences} ` +
+          "occurrence(s) of the shared role discriminator column name. Adding a role filter to " +
+          "the descendant walk makes a requirement silently stop counting any case linked " +
+          "through an intermediate node beneath it, while every other test in this repository " +
+          "stays green — remove it from the descendant arm; the predicate belongs on the anchor " +
+          "only."
+      );
+    }
+    expect(roleOccurrences).toBe(0);
+
+    for (const { needle, label } of PRESERVED_DESCENDANT_ARM_PREDICATES) {
+      const preservedOccurrences = countOccurrences(descendantArm, needle);
+      if (preservedOccurrences === 0) {
+        throw new Error(
+          `${file}'s text from the descendant-arm separator onward is missing ${label}. This ` +
+            "test exists to prove the two predicates that are supposed to repeat in both arms " +
+            "did repeat, and the one that must not, did not — a missing predicate here would " +
+            "let this test trivially pass on a broken descendant arm, not only a correct one."
+        );
+      }
+      expect(preservedOccurrences).toBeGreaterThan(0);
+    }
+  });
 });
