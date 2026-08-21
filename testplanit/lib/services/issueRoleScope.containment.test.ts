@@ -172,6 +172,13 @@ const SCOPED_FILES = [
   // own RequirementsTreeView.test.tsx asserting on the hook's actual `where`
   // argument rather than by source grep alone.
   "app/[locale]/projects/requirements/[projectId]/RequirementsTreeView.tsx",
+  // 25-10's detail panel spreads REQUIREMENT_SCOPE_WHERE into its single
+  // useFindFirst call (the panel's own read of the selected row) — same
+  // predicate, same reasoning as RequirementsTreeView.tsx above. Verified
+  // by direct read; RequirementDetailPanel.test.tsx exercises the mocked
+  // hook rather than asserting on the raw `where` argument, so this
+  // allowlist entry is the primary guard against the spread being dropped.
+  "app/[locale]/projects/requirements/[projectId]/RequirementDetailPanel.tsx",
 ];
 
 // ROLE-AWARE BY DESIGN — queries the role explicitly, in both directions,

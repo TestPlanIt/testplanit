@@ -110,7 +110,15 @@ export default function RequirementDetailPanel({
   const tCommon = useTranslations("common");
   const [isEditMode, setIsEditMode] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isFormReady, setIsFormReady] = useState(false);
+  // The id the form was last populated from -- tracking the id itself
+  // (rather than a plain "ready" boolean plus a separate "requirementId
+  // changed" effect) means one effect both re-arms the form on selection
+  // change AND populates it once the new row's data arrives, with no
+  // effect-ordering race between the two concerns.
+  const [loadedRequirementId, setLoadedRequirementId] = useState<
+    number | null
+  >(null);
+  const isFormReady = loadedRequirementId === requirementId;
 
   const { data: requirement, isLoading } = useClientQueries(
     schema
@@ -149,18 +157,11 @@ export default function RequirementDetailPanel({
   useEffect(() => {
     if (requirement && !isFormReady) {
       form.reset(buildResetValues(requirement));
-      setIsFormReady(true);
+      setLoadedRequirementId(requirementId);
+      setIsEditMode(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [requirement, isFormReady]);
-
-  // A different requirement was selected in the tree -- re-arm the form for
-  // the newly selected row (the effect above repopulates it once loaded)
-  // and drop out of edit mode rather than carrying over stale edits.
-  useEffect(() => {
-    setIsFormReady(false);
-    setIsEditMode(false);
-  }, [requirementId]);
+  }, [requirement, requirementId, isFormReady]);
 
   const handleCancel = () => {
     setIsEditMode(false);

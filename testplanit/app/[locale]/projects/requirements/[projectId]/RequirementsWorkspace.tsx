@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/resizable";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
+import RequirementDetailPanel from "./RequirementDetailPanel";
 import RequirementsTreeView from "./RequirementsTreeView";
 
 /**
@@ -31,9 +32,9 @@ interface RequirementsWorkspaceProps {
  * 25-CONTEXT.md): a new top-level route, not a tab on `/projects/issues`.
  *
  * The left pane mounts plan 25-08's `<RequirementsTreeView />`; the right
- * pane (once a requirement is selected) is still a placeholder for plan
- * 25-10's `<RequirementDetailPanel />`. No `DataTable`, no filter/sort bar —
- * a tree has different interaction needs than the flat sortable issues list.
+ * pane (once a requirement is selected) mounts plan 25-10's
+ * `<RequirementDetailPanel />`. No `DataTable`, no filter/sort bar — a tree
+ * has different interaction needs than the flat sortable issues list.
  */
 export default function RequirementsWorkspace({
   projectId,
@@ -92,10 +93,9 @@ export default function RequirementsWorkspace({
                     {t("requirements.detail.selectPrompt")}
                   </div>
                 ) : (
-                  // Plan 25-10 replaces this with <RequirementDetailPanel />.
-                  <div
-                    data-testid="requirements-detail-panel-placeholder"
-                    className="h-full"
+                  <RequirementDetailPanel
+                    projectId={projectId}
+                    requirementId={selectedRequirementId}
                   />
                 )}
               </div>
