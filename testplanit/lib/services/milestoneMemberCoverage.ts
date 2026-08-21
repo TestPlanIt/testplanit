@@ -110,6 +110,12 @@ export async function getMemberCoverage(
   // Cases with no run-case rollup at all fall back to their latest in-scope
   // automated (JUnit) result — automated submissions don't always add the
   // case to the run's composition, and those executions still count.
+  //
+  // "No run-case rollup" includes a run-case row that carries no status:
+  // automated (JUnit/TestNG/Mocha/etc.) runs record their outcome in
+  // JUnitTestResult and never denormalise it onto TestRunCases.statusId, so
+  // latest_result skips status-less rows. Without that they'd win precedence
+  // over the JUnit fallback with a NULL status and report "Not run".
   const rows = await db.$queryRaw<
     Array<{
       issueId: number;
@@ -141,6 +147,7 @@ export async function getMemberCoverage(
       LEFT JOIN "TestRunCases" trc
         ON trc."repositoryCaseId" = lc."caseId"
         AND trc."isDeleted" = false
+        AND trc."statusId" IS NOT NULL
       LEFT JOIN "TestRuns" tr
         ON tr.id = trc."testRunId"
         AND tr."isDeleted" = false
@@ -256,6 +263,7 @@ export async function getMemberCoverage(
       LEFT JOIN "TestRunCases" trc
         ON trc."repositoryCaseId" = lc."caseId"
         AND trc."isDeleted" = false
+        AND trc."statusId" IS NOT NULL
       LEFT JOIN "TestRuns" tr
         ON tr.id = trc."testRunId"
         AND tr."isDeleted" = false

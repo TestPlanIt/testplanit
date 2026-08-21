@@ -356,7 +356,7 @@ describe("GET /api/milestones/[milestoneId]/export", () => {
           statusColor: "#0f0",
           runName: "Sprint 1 Run",
           completedAt: new Date("2026-07-01T10:00:00.000Z"),
-          testRunCaseId: 900,
+          hasResult: true,
         },
         {
           externalKey: "ABT-1",
@@ -367,7 +367,7 @@ describe("GET /api/milestones/[milestoneId]/export", () => {
           statusColor: null,
           runName: null,
           completedAt: null,
-          testRunCaseId: null,
+          hasResult: false,
         },
         {
           externalKey: "ABT-2",
@@ -378,7 +378,7 @@ describe("GET /api/milestones/[milestoneId]/export", () => {
           statusColor: null,
           runName: null,
           completedAt: null,
-          testRunCaseId: null,
+          hasResult: false,
         },
       ]);
 
@@ -412,6 +412,56 @@ describe("GET /api/milestones/[milestoneId]/export", () => {
           statusColor: null,
           runName: null,
           executedAt: null,
+        },
+      ]);
+    });
+
+    // Regression: automated (JUnit/TestNG/Mocha/etc.) runs never denormalise a
+    // status onto TestRunCases.statusId, so the query falls back to the case's
+    // latest JUnitTestResult. Such a row arrives with hasResult=true and a real
+    // status but no run-case id — it must export as executed, not blank.
+    it("reports an automated-only case from its JUnit result, not as 'Not run'", async () => {
+      (getServerSession as any).mockResolvedValue(adminSession);
+      (baseDb.milestoneIssue.findMany as any).mockResolvedValue([
+        {
+          issueId: 501,
+          source: "SYNCED",
+          issue: {
+            id: 501,
+            name: "ABT-1",
+            title: "Story one",
+            externalKey: "ABT-1",
+            externalStatus: "Open",
+            status: "open",
+          },
+        },
+      ]);
+      (baseDb.$queryRaw as any).mockResolvedValue([
+        {
+          externalKey: "ABT-1",
+          title: "Story one",
+          issueName: "ABT-1",
+          caseName: "CI smoke test",
+          statusName: "Passed",
+          statusColor: "#0f0",
+          runName: "Web Smoke Tests - DEV #1503",
+          completedAt: new Date("2026-08-14T15:02:30.000Z"),
+          hasResult: true,
+        },
+      ]);
+
+      const [req, ctx] = createRequest("1");
+      const body = await (await GET(req, ctx)).json();
+
+      expect(body.traceability).toEqual([
+        {
+          issueKey: "ABT-1",
+          issueTitle: "Story one",
+          caseName: "CI smoke test",
+          statusName: "Passed",
+          statusColor: "#0f0",
+          runName: "Web Smoke Tests - DEV #1503",
+          executedAt: "2026-08-14T15:02:30.000Z",
         },
       ]);
     });

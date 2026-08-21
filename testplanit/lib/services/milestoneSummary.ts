@@ -52,46 +52,16 @@ export type MilestoneSummaryData = {
   scopeCount: number;
 };
 
-export async function calculateMilestoneCompletion(
+/**
+ * Split a milestone (rollup)'s non-deleted test runs into manual vs.
+ * automated/imported (JUnit, TestNG, Mocha, etc.) run IDs. Automated runs
+ * record their outcomes in JUnitTestResult, not TestRunCases.statusId /
+ * TestRunResults, so any per-case status or elapsed aggregation needs to
+ * treat the two separately.
+ */
+async function splitRunIdsByAutomation(
   milestoneIds: number[]
-): Promise<number> {
-  // Get total test cases in all test runs for these milestones
-  const totalCasesResult = await baseDb.$queryRaw<Array<{ count: bigint }>>`
-    SELECT COUNT(*) as count
-    FROM "TestRunCases" trc
-    JOIN "TestRuns" tr ON trc."testRunId" = tr.id
-    WHERE tr."milestoneId" = ANY(${milestoneIds}::int[])
-      AND tr."isDeleted" = false
-  `;
-  const totalTestCases = Number(totalCasesResult[0]?.count || 0);
-
-  if (totalTestCases === 0) {
-    return 0;
-  }
-
-  // Get count of completed test cases (where TestRunCases.status.isCompleted = true)
-  const completedCasesResult = await baseDb.$queryRaw<Array<{ count: bigint }>>`
-    SELECT COUNT(*) as count
-    FROM "TestRunCases" trc
-    JOIN "TestRuns" tr ON trc."testRunId" = tr.id
-    JOIN "Status" s ON trc."statusId" = s.id
-    WHERE tr."milestoneId" = ANY(${milestoneIds}::int[])
-      AND tr."isDeleted" = false
-      AND s."isCompleted" = true
-  `;
-  const completedTestCases = Number(completedCasesResult[0]?.count || 0);
-
-  // Calculate percentage, capped at 100%
-  return Math.min((completedTestCases / totalTestCases) * 100, 100);
-}
-
-export async function getTestRunSegments(
-  milestoneIds: number[]
-): Promise<MilestoneSegment[]> {
-  // Split the milestone's runs into manual vs. automated. Automated/imported
-  // runs (JUnit, TestNG, etc.) record their outcomes in JUnitTestResult, not
-  // TestRunResults, so they need a separate aggregation path — otherwise every
-  // automated case looks "pending" with zero elapsed.
+): Promise<{ regularRunIds: number[]; automatedRunIds: number[] }> {
   const runs = await baseDb.$queryRaw<
     Array<{ id: number; testRunType: string }>
   >`
@@ -107,6 +77,90 @@ export async function getTestRunSegments(
   const automatedRunIds = runs
     .filter((r) => automatedTypes.has(r.testRunType))
     .map((r) => r.id);
+  return { regularRunIds, automatedRunIds };
+}
+
+export async function calculateMilestoneCompletion(
+  milestoneIds: number[]
+): Promise<number> {
+  // Automated (JUnit/TestNG/Mocha/etc.) run cases never get a status
+  // denormalized onto TestRunCases.statusId — their real pass/fail outcome
+  // lives in JUnitTestResult (see getAutomatedTestRunSegments below). Reading
+  // TestRunCases.statusId for them unconditionally would count every
+  // automated case as incomplete forever, even after the run finished, so
+  // completion is computed separately for each half and summed.
+  const { regularRunIds, automatedRunIds } =
+    await splitRunIdsByAutomation(milestoneIds);
+
+  const [manual, automated] = await Promise.all([
+    getManualCaseCompletion(regularRunIds),
+    getAutomatedCaseCompletion(automatedRunIds),
+  ]);
+
+  const totalTestCases = manual.total + automated.total;
+  if (totalTestCases === 0) {
+    return 0;
+  }
+
+  const completedTestCases = manual.completed + automated.completed;
+
+  // Calculate percentage, capped at 100%
+  return Math.min((completedTestCases / totalTestCases) * 100, 100);
+}
+
+async function getManualCaseCompletion(
+  runIds: number[]
+): Promise<{ total: number; completed: number }> {
+  if (runIds.length === 0) return { total: 0, completed: 0 };
+
+  const result = await baseDb.$queryRaw<
+    Array<{ total: bigint; completed: bigint }>
+  >`
+    SELECT
+      COUNT(*) as total,
+      COUNT(*) FILTER (WHERE s."isCompleted" = true) as completed
+    FROM "TestRunCases" trc
+    LEFT JOIN "Status" s ON trc."statusId" = s.id
+    WHERE trc."testRunId" = ANY(${runIds}::int[])
+      AND trc."isDeleted" = false
+  `;
+  return {
+    total: Number(result[0]?.total || 0),
+    completed: Number(result[0]?.completed || 0),
+  };
+}
+
+async function getAutomatedCaseCompletion(
+  runIds: number[]
+): Promise<{ total: number; completed: number }> {
+  if (runIds.length === 0) return { total: 0, completed: 0 };
+
+  const result = await baseDb.$queryRaw<
+    Array<{ total: bigint; completed: bigint }>
+  >`
+    SELECT
+      COUNT(*) as total,
+      COUNT(*) FILTER (WHERE s."isCompleted" = true) as completed
+    FROM "JUnitTestResult" jr
+    JOIN "JUnitTestSuite" su ON jr."testSuiteId" = su.id
+    LEFT JOIN "Status" s ON jr."statusId" = s.id
+    WHERE su."testRunId" = ANY(${runIds}::int[])
+  `;
+  return {
+    total: Number(result[0]?.total || 0),
+    completed: Number(result[0]?.completed || 0),
+  };
+}
+
+export async function getTestRunSegments(
+  milestoneIds: number[]
+): Promise<MilestoneSegment[]> {
+  // Split the milestone's runs into manual vs. automated. Automated/imported
+  // runs (JUnit, TestNG, etc.) record their outcomes in JUnitTestResult, not
+  // TestRunResults, so they need a separate aggregation path — otherwise every
+  // automated case looks "pending" with zero elapsed.
+  const { regularRunIds, automatedRunIds } =
+    await splitRunIdsByAutomation(milestoneIds);
 
   const [manual, automated] = await Promise.all([
     getManualTestRunSegments(regularRunIds),
@@ -165,6 +219,7 @@ async function getManualTestRunSegments(
       LEFT JOIN "Color" c ON s."colorId" = c.id
       WHERE tr.id = ANY(${runIds}::int[])
         AND tr."isDeleted" = false
+        AND trc."isDeleted" = false
       GROUP BY tr.id, tr.name, tr."testRunType", trc."statusId", s.name, c.value, s.order
     )
     SELECT

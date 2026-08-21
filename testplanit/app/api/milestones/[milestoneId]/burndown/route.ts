@@ -78,6 +78,7 @@ export async function GET(
         JOIN "TestRuns" tr ON trc."testRunId" = tr.id
         WHERE tr."milestoneId" = ANY(${allMilestoneIds}::int[])
           AND tr."isDeleted" = false
+          AND trc."isDeleted" = false
       `,
       baseDb.$queryRaw<Array<{ count: bigint }>>`
         SELECT COUNT(*) AS count
@@ -111,6 +112,7 @@ export async function GET(
               ON trr."testRunCaseId" = trc.id AND trr."isDeleted" = false
             WHERE tr."milestoneId" = ANY(${allMilestoneIds}::int[])
               AND tr."isDeleted" = false
+              AND trc."isDeleted" = false
               AND NOT (tr."testRunType"::text = ANY(${automatedTypes}::text[]))
             GROUP BY trc.id
           ) fe
@@ -123,6 +125,7 @@ export async function GET(
           JOIN "TestRuns" tr ON trc."testRunId" = tr.id
           WHERE tr."milestoneId" = ANY(${allMilestoneIds}::int[])
             AND tr."isDeleted" = false
+            AND trc."isDeleted" = false
             AND tr."testRunType"::text = ANY(${automatedTypes}::text[])
           GROUP BY 1
         `,
