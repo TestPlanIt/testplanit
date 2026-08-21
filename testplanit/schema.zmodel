@@ -2216,6 +2216,8 @@ model Attachments {
     testRunStepResult   TestRunStepResults? @relation(fields: [testRunStepResultId], references: [id], onDelete: Cascade)
     junitTestResultId   Int?
     junitTestResult     JUnitTestResult?    @relation(fields: [junitTestResultId], references: [id], onDelete: Cascade)
+    issueId             Int?
+    issue               Issue?              @relation(fields: [issueId], references: [id], onDelete: Cascade)
 
     @@deny('all', auth() == null)
     @@deny('all', auth().access == 'NONE')
@@ -2228,6 +2230,7 @@ model Attachments {
     @@index([testRunResultsId])
     @@index([testRunStepResultId])
     @@index([junitTestResultId])
+    @@index([issueId])
 }
 
 model Steps {
@@ -3385,6 +3388,7 @@ model Issue {
     parentId              Int?                  @deny('update', isRequirement == true && integrationId != null && requirementDetachedAt == null)
     parent                Issue?                @relation("IssueParent", fields: [parentId], references: [id], onDelete: Cascade)
     children              Issue[]               @relation("IssueParent")
+    attachments           Attachments[]
     // Three orthogonal states: synced+locked (isRequirement true,
     // integrationId set, requirementDetachedAt null — tracker-owned fields
     // locked), detached/local (requirementDetachedAt set — locks lift,
