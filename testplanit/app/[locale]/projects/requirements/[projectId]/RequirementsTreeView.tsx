@@ -25,6 +25,7 @@ import {
   Plus,
   Search,
   SquarePenIcon,
+  Trash2Icon,
   X,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -42,6 +43,7 @@ import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { isRequirementLocked } from "~/lib/services/linkedIssueUpsert";
 import { REQUIREMENT_SCOPE_WHERE } from "~/lib/services/issueRoleScope";
 import { CreateRequirementDialog } from "./CreateRequirementDialog";
+import { DeleteRequirementModal } from "./DeleteRequirementModal";
 import { RequirementProvenanceBadge } from "./RequirementProvenanceBadge";
 import type { RequirementSelection } from "./RequirementsWorkspace";
 
@@ -161,6 +163,16 @@ export default function RequirementsTreeView({
     parentName: string | null;
   }>({ open: false, parentId: null, parentName: null });
 
+  // HIER-04's cascade confirmation. descendantCount is computed once, at
+  // the moment the row menu's "Delete" item is clicked (see countDescendants
+  // below) -- not recomputed reactively inside the modal, so the number the
+  // user confirms against never drifts mid-dialog.
+  const [deleteDialogState, setDeleteDialogState] = useState<{
+    open: boolean;
+    requirementId: number | null;
+    descendantCount: number;
+  }>({ open: false, requirementId: null, descendantCount: 0 });
+
   const normalizedFilter = filterQuery.trim().toLowerCase();
   const isFiltering = normalizedFilter.length > 0;
 
@@ -271,6 +283,22 @@ export default function RequirementsTreeView({
     });
     return map;
   }, [requirements]);
+
+  // HIER-04's descendant count, walked from the tree's own in-memory
+  // childrenMap -- the tree already loads every requirement for the project
+  // (load-all, plan 25-08), so there is no lazy-load gap to bridge the way
+  // `useFindManyRepositoryCasesByDescendants` bridges one for folders. Root
+  // excluded, matching `getIssueSubtreeIds`' own descendant-only contract.
+  const countDescendants = useCallback(
+    (issueId: number): number => {
+      const children = childrenMap.get(issueId) ?? [];
+      return children.reduce(
+        (total, child) => total + 1 + countDescendants(child.id),
+        0
+      );
+    },
+    [childrenMap]
+  );
 
   const requirementMeta = useMemo(() => {
     const meta = new Map<
@@ -717,6 +745,23 @@ export default function RequirementsTreeView({
                       </div>
                     </DropdownMenuItem>
                   )}
+                  <DropdownMenuItem
+                    onClick={() => {
+                      if (!data) return;
+                      setDeleteDialogState({
+                        open: true,
+                        requirementId: data.issueId,
+                        descendantCount: countDescendants(data.issueId),
+                      });
+                    }}
+                    className="text-destructive"
+                    data-testid={`requirement-action-delete-${data?.issueId}`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Trash2Icon className="h-4 w-4" />
+                      {t("requirements.tree.delete")}
+                    </div>
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
@@ -724,7 +769,7 @@ export default function RequirementsTreeView({
         </div>
       );
     },
-    [canAddEdit, normalizedFilter, projectId, t]
+    [canAddEdit, countDescendants, normalizedFilter, projectId, t]
   );
 
   if (showSpinner || allRequirements === undefined) {
@@ -915,6 +960,30 @@ export default function RequirementsTreeView({
           onSelectRequirement(id);
         }}
       />
+      {deleteDialogState.requirementId != null && (
+        <DeleteRequirementModal
+          projectId={projectId}
+          requirementId={deleteDialogState.requirementId}
+          descendantCount={deleteDialogState.descendantCount}
+          open={deleteDialogState.open}
+          onOpenChange={(nextOpen) =>
+            setDeleteDialogState((prev) => ({ ...prev, open: nextOpen }))
+          }
+          onDeleted={(deletedIds) => {
+            void refetchRequirements();
+            // The detail panel would otherwise render a row that no longer
+            // exists -- clear the selection if the deleted node or one of
+            // its descendants was selected. `deletedIds` is the server's own
+            // [rootId, ...descendantIds] list, never recomputed client-side.
+            if (
+              selectedRequirementId != null &&
+              deletedIds.includes(selectedRequirementId)
+            ) {
+              onSelectRequirement(null);
+            }
+          }}
+        />
+      )}
     </SimpleDndProvider>
   );
 }

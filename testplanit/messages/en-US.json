@@ -6642,6 +6642,7 @@
       "addRoot": "Add Requirement",
       "addChild": "Add Child Requirement",
       "rename": "Rename",
+      "delete": "Delete",
       "expandAll": "Expand All",
       "collapseAll": "Collapse All",
       "dropToRootHint": "Drop here to move to the top level",
