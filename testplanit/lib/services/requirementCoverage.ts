@@ -313,3 +313,109 @@ export async function getRequirementCoverage(
   }
   return breakdowns;
 }
+
+/** A single case covering a requirement, carrying the project it lives in
+ * so a cross-project case can be badged and linked into its own project's
+ * repository rather than the requirement's. */
+export interface RequirementCoveringCase {
+  caseId: number;
+  caseName: string;
+  projectId: number;
+  projectName: string;
+}
+
+/** Row shape returned by the covering-case drill-down statement below,
+ * before JS-side coercion. */
+interface RequirementCoveringCaseRow {
+  ancestor_id: number | bigint;
+  case_id: number | bigint;
+  case_name: string;
+  case_project_id: number | bigint;
+  project_name: string;
+}
+
+/**
+ * Lists the individual cases covering a bounded set of requirements — the
+ * per-case counterpart to `getRequirementCoverage`'s counts. Composes the
+ * SAME closure builder above, bounded to `requirementIds` as its root-id
+ * list, so this drill-down can never resolve a different covering-case set
+ * than the rollup whose numbers it sits beneath.
+ *
+ * Each returned case carries its own project id and project name — a
+ * covering case may live in a project other than the requirement's own
+ * (see `RequirementCoverageBreakdown.crossProjectCaseCount`), and a later
+ * phase needs both fields to badge that case and link into its own
+ * project's repository rather than the requirement's.
+ */
+export async function getRequirementCoveringCases(
+  projectId: number,
+  requirementIds: number[],
+  scope: RequirementCoverageScope,
+  db: Pick<typeof baseDb, "$qb"> = baseDb
+): Promise<Map<number, RequirementCoveringCase[]>> {
+  if (!Number.isInteger(projectId)) {
+    throw new Error(
+      `getRequirementCoveringCases: projectId must be an integer, received ${String(projectId)}`
+    );
+  }
+
+  if (requirementIds.length === 0) {
+    // Short-circuit: an explicitly empty requirement list can never
+    // produce a row, and running the statement anyway would be a wasted
+    // round trip for a caller that already knows the answer.
+    return new Map();
+  }
+  if (requirementIds.length > MAX_ROOT_IDS) {
+    throw new RangeError(
+      `getRequirementCoveringCases: requirementIds may not exceed ${MAX_ROOT_IDS} entries, received ${requirementIds.length}`
+    );
+  }
+
+  // Destructured the same way the rollup above does: a null scope means
+  // unrestricted (ADMIN), otherwise the list is the exact set of projects
+  // allowed to contribute. A drill-down listing cases the rollup refused
+  // to count would be both wrong and a disclosure.
+  const unrestricted = scope.accessibleProjectIds === null;
+  const accessibleProjectIds = scope.accessibleProjectIds ?? [];
+
+  const closure = buildClosureFragment(projectId, requirementIds);
+
+  const { rows } = await sql<RequirementCoveringCaseRow>`
+    WITH RECURSIVE ${closure}
+    SELECT DISTINCT
+      cl.ancestor_id,
+      rc.id AS case_id,
+      rc.name AS case_name,
+      rc."projectId" AS case_project_id,
+      p.name AS project_name
+    FROM closure cl
+    JOIN "RepositoryCaseIssue" rci ON rci."issueId" = cl.node_id
+    JOIN "RepositoryCases" rc
+      ON rc.id = rci."caseId"
+      AND rc."isDeleted" = false
+      AND rc."isArchived" = false
+    JOIN "Projects" p ON p.id = rc."projectId"
+    -- Same unrestricted-or-member visibility predicate as the rollup's
+    -- covering_cases CTE above, applied to the same case-project column.
+    WHERE (${unrestricted} OR rc."projectId" = ANY(${accessibleProjectIds}::int[]))
+    ORDER BY cl.ancestor_id, rc.id
+  `.execute(db.$qb);
+
+  const covering = new Map<number, RequirementCoveringCase[]>();
+  for (const row of rows) {
+    const requirementId = Number(row.ancestor_id);
+    const entry: RequirementCoveringCase = {
+      caseId: Number(row.case_id),
+      caseName: row.case_name,
+      projectId: Number(row.case_project_id),
+      projectName: row.project_name,
+    };
+    const existing = covering.get(requirementId);
+    if (existing) {
+      existing.push(entry);
+    } else {
+      covering.set(requirementId, [entry]);
+    }
+  }
+  return covering;
+}
