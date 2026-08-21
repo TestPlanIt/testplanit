@@ -886,9 +886,11 @@ export default function RequirementsTreeView({
           {canAddEdit && (
             <Button
               type="button"
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7 shrink-0"
+              // Same expand-on-hover shape as the repository page's
+              // "Add Folder" button: icon at rest, label revealed on hover.
+              variant="secondary"
+              className="mt-0.5 group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2 shrink-0"
+              title={t("requirements.tree.addRoot")}
               aria-label={t("requirements.tree.addRoot")}
               data-testid="requirements-tree-add-root"
               onClick={() =>
@@ -899,7 +901,10 @@ export default function RequirementsTreeView({
                 })
               }
             >
-              <Plus className="h-4 w-4" />
+              <Plus className="w-4 shrink-0" />
+              <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
+                {t("requirements.tree.addRoot")}
+              </span>
             </Button>
           )}
         </div>

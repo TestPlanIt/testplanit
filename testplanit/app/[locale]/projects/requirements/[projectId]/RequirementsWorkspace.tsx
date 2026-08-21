@@ -6,6 +6,7 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
+import { SectionHeader } from "@/components/ui/typography";
 import { SimpleDndProvider } from "@/components/ui/SimpleDndProvider";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
@@ -48,8 +49,10 @@ export default function RequirementsWorkspace({
   return (
     <main>
       <Card>
-        <CardHeader>
-          <CardTitle>{t("common.fields.requirements")}</CardTitle>
+        <CardHeader id="requirements-page-header" className="w-full">
+          <SectionHeader className="flex items-center gap-2">
+            <CardTitle>{t("common.fields.requirements")}</CardTitle>
+          </SectionHeader>
         </CardHeader>
         <CardContent>
           <ResizablePanelGroup
