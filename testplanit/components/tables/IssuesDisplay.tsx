@@ -20,6 +20,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useIssueUpdateStream } from "~/hooks/useIssueUpdateStream";
 import { Link } from "~/lib/navigation";
 import { IssueTypeIcon } from "~/utils/issueTypeIcons";
+import { formatIssueDisplayText } from "~/utils/issueDisplayText";
 
 interface IssueDisplayProps {
   id: number;
@@ -257,9 +258,9 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
   const iconClassName =
     size === "large" ? "w-5 h-5 shrink-0" : "w-4 h-4 shrink-0";
 
-  // For external issues, show "KEY: Title" format
-  const displayText =
-    externalUrl && title && title !== name ? `${name}: ${title}` : name;
+  // For external issues, show "KEY: Title" format. The rule itself lives in
+  // ~/utils/issueDisplayText so the requirements surface shares it verbatim.
+  const displayText = formatIssueDisplayText({ name, title, externalUrl });
 
   let linkHref: string | undefined | null = undefined;
 

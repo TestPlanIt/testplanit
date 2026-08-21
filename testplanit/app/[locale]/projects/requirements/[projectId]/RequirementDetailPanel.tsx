@@ -31,6 +31,7 @@ import { REQUIREMENT_SCOPE_WHERE } from "~/lib/services/issueRoleScope";
 import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
 import { schema } from "~/zenstack/schema";
 import type { Issue } from "~/zenstack/models";
+import { formatIssueDisplayText } from "~/utils/issueDisplayText";
 import { LinkedRequirementCasesPanel } from "./LinkedRequirementCasesPanel";
 import { RequirementAttachments } from "./RequirementAttachments";
 import {
@@ -230,7 +231,12 @@ export default function RequirementDetailPanel({
         data-testid="requirement-detail-header"
         className="flex items-center justify-between gap-2"
       >
-        <h2 className="text-lg font-semibold">{requirement.name}</h2>
+        {/* Same "KEY: Title" convention as the tree and every other
+            issue-backed surface — the bare tracker key says nothing about
+            what the requirement is. */}
+        <h2 className="text-lg font-semibold">
+          {formatIssueDisplayText(requirement)}
+        </h2>
         <div className="flex items-center gap-2">
           <RequirementProvenanceBadge
             requirement={requirement}
